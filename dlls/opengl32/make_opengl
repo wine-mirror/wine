@@ -90,6 +90,7 @@ my %arg_types =
      "GLfloat" =>              [ "float",  "%f" ],
      "GLhalfNV" =>             [ "long",   "%d" ],
      "GLhandleARB" =>          [ "long",   "%d" ],
+     "int" =>                  [ "long",   "%d" ],
      "GLint" =>                [ "long",   "%d" ],
      "GLint64" =>              [ "int64",  "wine_dbgstr_longlong(%s)" ],
      "GLint64EXT" =>           [ "int64",  "wine_dbgstr_longlong(%s)" ],
@@ -313,6 +314,96 @@ sub generate_win_thunk($$)
     return $ret;
 }
 
+sub get_wow64_arg_type($)
+{
+    my $arg = shift;
+    my $ptype = get_arg_type( $arg );
+    return "void" if $ptype =~ /^void$/;
+    return "PTR32" if $arg->textContent() =~ /(PROC|sizeiptr|intptr|\*|\[)/;
+    return $ptype unless defined $arg_types{$ptype};
+    return "PTR32" if ${$arg_types{$ptype}}[0] =~ /(ptr|str)/;
+    return "PTR32" if ${$arg_types{$ptype}}[1] =~ /%p/;
+    return $ptype;
+}
+
+sub needs_wow64_thunk($$)
+{
+    my ($name, $func) = @_;
+    foreach my $arg (@{$func->[1]})
+    {
+        return 1 if get_wow64_arg_type( $arg ) =~ /PTR32/;
+    }
+    return get_wow64_arg_type( $func->[0] ) =~ /PTR32/;
+}
+
+sub generate_wow64_thunk($$$)
+{
+    my ($name, $func, $prefix) = @_;
+    my $call_args = get_func_args( $func, 0, 1, "params->" );
+    my $func_ret = get_func_ret( $func, 0 );
+    my $need_manual_thunk = 0;
+    my $ret = "";
+
+    $ret .= "static NTSTATUS wow64_$prefix\_$name( void *args )\n";
+    $ret .= "{\n";
+    $ret .= "    struct\n    {\n";
+    foreach my $arg (@{$func->[1]})
+    {
+        my $ptype = get_wow64_arg_type( $arg );
+        my $pname = get_arg_name( $arg );
+        $ret .= "        $ptype $pname;\n";
+        $need_manual_thunk = 1 if $arg->textContent() =~ /(\*.*\*|\[)/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/;
+    }
+    if (!is_void_func($func))
+    {
+        my $ptype = get_wow64_arg_type( $func->[0] );
+        $ret .= "        $ptype ret;\n";
+    }
+    $ret .= "    } *params32 = args;\n";
+    $ret .= "    struct $name\_params params =\n";
+    $ret .= "    {\n";
+    foreach my $arg (@{$func->[1]})
+    {
+        next if $arg->textContent() =~ /(\*.*\*|\[)/ || $arg->textContent() =~ /(sizei|int)ptr.*\*/;
+        my $ptype = get_arg_type( $arg );
+        my $pname = get_arg_name( $arg );
+        if ($arg->textContent() =~ /(sizei|int)ptr/)
+        {
+            $ret .= "        .$pname = ($ptype)ULongToPtr(params32->$pname),\n";
+        }
+        elsif (get_wow64_arg_type( $arg ) =~ /PTR32/)
+        {
+            $ret .= "        .$pname = ULongToPtr(params32->$pname),\n";
+        }
+        else
+        {
+            $ret .= "        .$pname = params32->$pname,\n";
+        }
+    }
+    $ret .= "    };\n";
+
+    if ($need_manual_thunk || get_wow64_arg_type( $func->[0] ) =~ /PTR32/)
+    {
+        $ret .= "    FIXME( \"params32 %p, params %p stub!\\n\", params32, &params );\n";
+        $ret .= "    return STATUS_NOT_IMPLEMENTED;\n";
+        $ret .= "}\n\n";
+        return $ret;
+    }
+
+    $ret .= "    NTSTATUS status;\n";
+    $ret .= "    status = $prefix\_$name( &params );\n";
+    if (!is_void_func( $func ))
+    {
+        $ret .= "    params32->ret = ";
+        $ret .= "(UINT_PTR)" if get_wow64_arg_type( $func->[0] ) =~ /PTR32/;
+        $ret .= "params.ret;\n";
+    }
+    $ret .= "    return status;\n";
+    $ret .= "}\n\n";
+
+    return $ret;
+}
+
 sub generate_null_func($$$)
 {
     my ($name, $func, $callconv) = @_;
@@ -379,9 +470,13 @@ sub is_void_func($)
 
 sub get_arg_type($)
 {
-    my $p = shift;
-    my @type = $p->findnodes("./ptype");
-    return @type ? $type[0]->textContent() : "GLint";
+    my $p = (shift)->cloneNode(1);
+    my @name = $p->findnodes("./name");
+    $p->removeChild(@name) if @name;
+    my $ret = $p->textContent();
+    $ret =~ s/^ +//;
+    $ret =~ s/ +$//;
+    return $ret;
 }
 
 sub get_arg_name($)
@@ -932,6 +1027,11 @@ print OUT "#include \"wingdi.h\"\n\n";
 
 print OUT "#include \"unixlib.h\"\n";
 print OUT "#include \"unix_private.h\"\n\n";
+print OUT "#include \"wine/debug.h\"\n\n";
+
+print OUT "#ifdef _WIN64\n";
+print OUT "WINE_DEFAULT_DEBUG_CHANNEL(wgl);\n";
+print OUT "#endif\n\n";
 
 print OUT "extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;\n";
 foreach (sort keys %wgl_functions)
@@ -993,6 +1093,70 @@ foreach (sort keys %ext_functions)
 }
 print OUT "};\n";
 print OUT "\n";
+
+print OUT "#ifdef _WIN64\n\n";
+print OUT "typedef ULONG PTR32;\n\n";
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if !needs_wow64_thunk($_, $wgl_functions{$_});
+    print OUT generate_wow64_thunk($_, $wgl_functions{$_}, "wgl");
+}
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if !needs_wow64_thunk($_, $norm_functions{$_});
+    print OUT generate_wow64_thunk($_, $norm_functions{$_}, "gl");
+}
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next if !needs_wow64_thunk($_, $ext_functions{$_});
+    print OUT generate_wow64_thunk($_, $ext_functions{$_}, "ext");
+}
+
+print OUT "\nconst unixlib_entry_t __wine_unix_call_wow64_funcs[] =\n";
+print OUT "{\n";
+print OUT "    &thread_attach,\n";
+foreach (sort keys %wgl_functions)
+{
+    next if defined $manual_win_functions{$_};
+    if (needs_wow64_thunk($_, $wgl_functions{$_}))
+    {
+        printf OUT "    &wow64_wgl_%s,\n", $_;
+    }
+    else
+    {
+        printf OUT "    &wgl_%s,\n", $_;
+    }
+}
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    if (needs_wow64_thunk($_, $norm_functions{$_}))
+    {
+        printf OUT "    &wow64_gl_%s,\n", $_;
+    }
+    else
+    {
+        printf OUT "    &gl_%s,\n", $_;
+    }
+}
+foreach (sort keys %ext_functions)
+{
+    next if defined $manual_win_functions{$_};
+    if (needs_wow64_thunk($_, $ext_functions{$_}))
+    {
+        printf OUT "    &wow64_ext_%s,\n", $_;
+    }
+    else
+    {
+        printf OUT "    &ext_%s,\n", $_;
+    }
+}
+print OUT "};\n\n";
+
+print OUT "#endif\n\n";
 
 foreach (sort keys %wgl_functions)
 {

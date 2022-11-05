@@ -16,6 +16,12 @@
 #include "unixlib.h"
 #include "unix_private.h"
 
+#include "wine/debug.h"
+
+#ifdef _WIN64
+WINE_DEFAULT_DEBUG_CHANNEL(wgl);
+#endif
+
 extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglCopyContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
@@ -27190,6 +27196,36969 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     &ext_wglSetPixelFormatWINE,
     &ext_wglSwapIntervalEXT,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_wgl_wglCopyContext( void *args )
+{
+    struct
+    {
+        PTR32 hglrcSrc;
+        PTR32 hglrcDst;
+        UINT mask;
+        BOOL ret;
+    } *params32 = args;
+    struct wglCopyContext_params params =
+    {
+        .hglrcSrc = ULongToPtr(params32->hglrcSrc),
+        .hglrcDst = ULongToPtr(params32->hglrcDst),
+        .mask = params32->mask,
+    };
+    NTSTATUS status;
+    status = wgl_wglCopyContext( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_wgl_wglCreateContext( void *args )
+{
+    struct
+    {
+        PTR32 hDc;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglCreateContext_params params =
+    {
+        .hDc = ULongToPtr(params32->hDc),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_wgl_wglDeleteContext( void *args )
+{
+    struct
+    {
+        PTR32 oldContext;
+        BOOL ret;
+    } *params32 = args;
+    struct wglDeleteContext_params params =
+    {
+        .oldContext = ULongToPtr(params32->oldContext),
+    };
+    NTSTATUS status;
+    status = wgl_wglDeleteContext( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_wgl_wglDescribePixelFormat( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        int ipfd;
+        UINT cjpfd;
+        PTR32 ppfd;
+        int ret;
+    } *params32 = args;
+    struct wglDescribePixelFormat_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+        .ipfd = params32->ipfd,
+        .cjpfd = params32->cjpfd,
+        .ppfd = ULongToPtr(params32->ppfd),
+    };
+    NTSTATUS status;
+    status = wgl_wglDescribePixelFormat( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_wgl_wglGetPixelFormat( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        int ret;
+    } *params32 = args;
+    struct wglGetPixelFormat_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+    };
+    NTSTATUS status;
+    status = wgl_wglGetPixelFormat( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
+{
+    struct
+    {
+        PTR32 lpszProc;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglGetProcAddress_params params =
+    {
+        .lpszProc = ULongToPtr(params32->lpszProc),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_wgl_wglMakeCurrent( void *args )
+{
+    struct
+    {
+        PTR32 hDc;
+        PTR32 newContext;
+        BOOL ret;
+    } *params32 = args;
+    struct wglMakeCurrent_params params =
+    {
+        .hDc = ULongToPtr(params32->hDc),
+        .newContext = ULongToPtr(params32->newContext),
+    };
+    NTSTATUS status;
+    status = wgl_wglMakeCurrent( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_wgl_wglSetPixelFormat( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        int ipfd;
+        PTR32 ppfd;
+        BOOL ret;
+    } *params32 = args;
+    struct wglSetPixelFormat_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+        .ipfd = params32->ipfd,
+        .ppfd = ULongToPtr(params32->ppfd),
+    };
+    NTSTATUS status;
+    status = wgl_wglSetPixelFormat( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_wgl_wglShareLists( void *args )
+{
+    struct
+    {
+        PTR32 hrcSrvShare;
+        PTR32 hrcSrvSource;
+        BOOL ret;
+    } *params32 = args;
+    struct wglShareLists_params params =
+    {
+        .hrcSrvShare = ULongToPtr(params32->hrcSrvShare),
+        .hrcSrvSource = ULongToPtr(params32->hrcSrvSource),
+    };
+    NTSTATUS status;
+    status = wgl_wglShareLists( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_wgl_wglSwapBuffers( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        BOOL ret;
+    } *params32 = args;
+    struct wglSwapBuffers_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+    };
+    NTSTATUS status;
+    status = wgl_wglSwapBuffers( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_gl_glAreTexturesResident( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 textures;
+        PTR32 residences;
+        GLboolean ret;
+    } *params32 = args;
+    struct glAreTexturesResident_params params =
+    {
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+        .residences = ULongToPtr(params32->residences),
+    };
+    NTSTATUS status;
+    status = gl_glAreTexturesResident( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_gl_glBitmap( void *args )
+{
+    struct
+    {
+        GLsizei width;
+        GLsizei height;
+        GLfloat xorig;
+        GLfloat yorig;
+        GLfloat xmove;
+        GLfloat ymove;
+        PTR32 bitmap;
+    } *params32 = args;
+    struct glBitmap_params params =
+    {
+        .width = params32->width,
+        .height = params32->height,
+        .xorig = params32->xorig,
+        .yorig = params32->yorig,
+        .xmove = params32->xmove,
+        .ymove = params32->ymove,
+        .bitmap = ULongToPtr(params32->bitmap),
+    };
+    NTSTATUS status;
+    status = gl_glBitmap( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glCallLists( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        GLenum type;
+        PTR32 lists;
+    } *params32 = args;
+    struct glCallLists_params params =
+    {
+        .n = params32->n,
+        .type = params32->type,
+        .lists = ULongToPtr(params32->lists),
+    };
+    NTSTATUS status;
+    status = gl_glCallLists( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glClipPlane( void *args )
+{
+    struct
+    {
+        GLenum plane;
+        PTR32 equation;
+    } *params32 = args;
+    struct glClipPlane_params params =
+    {
+        .plane = params32->plane,
+        .equation = ULongToPtr(params32->equation),
+    };
+    NTSTATUS status;
+    status = gl_glClipPlane( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor3bv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3bv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor3bv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor3dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor3fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor3iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor3sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor3sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor3ubv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3ubv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor3ubv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor3uiv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3uiv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor3usv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3usv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor3usv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor4bv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4bv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor4bv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor4dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor4fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor4iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor4iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor4sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor4sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor4ubv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4ubv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor4ubv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor4uiv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4uiv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColor4usv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4usv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glColor4usv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glColorPointer( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glColorPointer_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = gl_glColorPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glDeleteTextures( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 textures;
+    } *params32 = args;
+    struct glDeleteTextures_params params =
+    {
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+    };
+    NTSTATUS status;
+    status = gl_glDeleteTextures( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glDrawElements( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+    } *params32 = args;
+    struct glDrawElements_params params =
+    {
+        .mode = params32->mode,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+    };
+    NTSTATUS status;
+    status = gl_glDrawElements( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glDrawPixels( void *args )
+{
+    struct
+    {
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glDrawPixels_params params =
+    {
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = gl_glDrawPixels( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glEdgeFlagPointer( void *args )
+{
+    struct
+    {
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glEdgeFlagPointer_params params =
+    {
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = gl_glEdgeFlagPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glEdgeFlagv( void *args )
+{
+    struct
+    {
+        PTR32 flag;
+    } *params32 = args;
+    struct glEdgeFlagv_params params =
+    {
+        .flag = ULongToPtr(params32->flag),
+    };
+    NTSTATUS status;
+    status = gl_glEdgeFlagv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glEvalCoord1dv( void *args )
+{
+    struct
+    {
+        PTR32 u;
+    } *params32 = args;
+    struct glEvalCoord1dv_params params =
+    {
+        .u = ULongToPtr(params32->u),
+    };
+    NTSTATUS status;
+    status = gl_glEvalCoord1dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glEvalCoord1fv( void *args )
+{
+    struct
+    {
+        PTR32 u;
+    } *params32 = args;
+    struct glEvalCoord1fv_params params =
+    {
+        .u = ULongToPtr(params32->u),
+    };
+    NTSTATUS status;
+    status = gl_glEvalCoord1fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glEvalCoord2dv( void *args )
+{
+    struct
+    {
+        PTR32 u;
+    } *params32 = args;
+    struct glEvalCoord2dv_params params =
+    {
+        .u = ULongToPtr(params32->u),
+    };
+    NTSTATUS status;
+    status = gl_glEvalCoord2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glEvalCoord2fv( void *args )
+{
+    struct
+    {
+        PTR32 u;
+    } *params32 = args;
+    struct glEvalCoord2fv_params params =
+    {
+        .u = ULongToPtr(params32->u),
+    };
+    NTSTATUS status;
+    status = gl_glEvalCoord2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glFeedbackBuffer( void *args )
+{
+    struct
+    {
+        GLsizei size;
+        GLenum type;
+        PTR32 buffer;
+    } *params32 = args;
+    struct glFeedbackBuffer_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .buffer = ULongToPtr(params32->buffer),
+    };
+    NTSTATUS status;
+    status = gl_glFeedbackBuffer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glFogfv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glFogfv_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glFogfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glFogiv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glFogiv_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glFogiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGenTextures( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 textures;
+    } *params32 = args;
+    struct glGenTextures_params params =
+    {
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+    };
+    NTSTATUS status;
+    status = gl_glGenTextures( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetBooleanv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetBooleanv_params params =
+    {
+        .pname = params32->pname,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = gl_glGetBooleanv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetClipPlane( void *args )
+{
+    struct
+    {
+        GLenum plane;
+        PTR32 equation;
+    } *params32 = args;
+    struct glGetClipPlane_params params =
+    {
+        .plane = params32->plane,
+        .equation = ULongToPtr(params32->equation),
+    };
+    NTSTATUS status;
+    status = gl_glGetClipPlane( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetDoublev( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetDoublev_params params =
+    {
+        .pname = params32->pname,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = gl_glGetDoublev( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetFloatv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetFloatv_params params =
+    {
+        .pname = params32->pname,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = gl_glGetFloatv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetIntegerv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetIntegerv_params params =
+    {
+        .pname = params32->pname,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = gl_glGetIntegerv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetLightfv( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetLightfv_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetLightfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetLightiv( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetLightiv_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetLightiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetMapdv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetMapdv_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glGetMapdv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetMapfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetMapfv_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glGetMapfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetMapiv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetMapiv_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glGetMapiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetMaterialfv( void *args )
+{
+    struct
+    {
+        GLenum face;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMaterialfv_params params =
+    {
+        .face = params32->face,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetMaterialfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetMaterialiv( void *args )
+{
+    struct
+    {
+        GLenum face;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMaterialiv_params params =
+    {
+        .face = params32->face,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetMaterialiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetPixelMapfv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetPixelMapfv_params params =
+    {
+        .map = params32->map,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = gl_glGetPixelMapfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetPixelMapuiv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetPixelMapuiv_params params =
+    {
+        .map = params32->map,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = gl_glGetPixelMapuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetPixelMapusv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetPixelMapusv_params params =
+    {
+        .map = params32->map,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = gl_glGetPixelMapusv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetPointerv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetPointerv_params params =
+    {
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_gl_glGetPolygonStipple( void *args )
+{
+    struct
+    {
+        PTR32 mask;
+    } *params32 = args;
+    struct glGetPolygonStipple_params params =
+    {
+        .mask = ULongToPtr(params32->mask),
+    };
+    NTSTATUS status;
+    status = gl_glGetPolygonStipple( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetString( void *args )
+{
+    struct
+    {
+        GLenum name;
+        PTR32 ret;
+    } *params32 = args;
+    struct glGetString_params params =
+    {
+        .name = params32->name,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_gl_glGetTexEnvfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexEnvfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexEnvfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetTexEnviv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexEnviv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexEnviv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetTexGendv( void *args )
+{
+    struct
+    {
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexGendv_params params =
+    {
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexGendv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetTexGenfv( void *args )
+{
+    struct
+    {
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexGenfv_params params =
+    {
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexGenfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetTexGeniv( void *args )
+{
+    struct
+    {
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexGeniv_params params =
+    {
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexGeniv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetTexImage( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glGetTexImage_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetTexLevelParameterfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexLevelParameterfv_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexLevelParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetTexLevelParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexLevelParameteriv_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexLevelParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetTexParameterfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexParameterfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glGetTexParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glGetTexParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glIndexPointer( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glIndexPointer_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = gl_glIndexPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glIndexdv( void *args )
+{
+    struct
+    {
+        PTR32 c;
+    } *params32 = args;
+    struct glIndexdv_params params =
+    {
+        .c = ULongToPtr(params32->c),
+    };
+    NTSTATUS status;
+    status = gl_glIndexdv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glIndexfv( void *args )
+{
+    struct
+    {
+        PTR32 c;
+    } *params32 = args;
+    struct glIndexfv_params params =
+    {
+        .c = ULongToPtr(params32->c),
+    };
+    NTSTATUS status;
+    status = gl_glIndexfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glIndexiv( void *args )
+{
+    struct
+    {
+        PTR32 c;
+    } *params32 = args;
+    struct glIndexiv_params params =
+    {
+        .c = ULongToPtr(params32->c),
+    };
+    NTSTATUS status;
+    status = gl_glIndexiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glIndexsv( void *args )
+{
+    struct
+    {
+        PTR32 c;
+    } *params32 = args;
+    struct glIndexsv_params params =
+    {
+        .c = ULongToPtr(params32->c),
+    };
+    NTSTATUS status;
+    status = gl_glIndexsv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glIndexubv( void *args )
+{
+    struct
+    {
+        PTR32 c;
+    } *params32 = args;
+    struct glIndexubv_params params =
+    {
+        .c = ULongToPtr(params32->c),
+    };
+    NTSTATUS status;
+    status = gl_glIndexubv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glInterleavedArrays( void *args )
+{
+    struct
+    {
+        GLenum format;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glInterleavedArrays_params params =
+    {
+        .format = params32->format,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = gl_glInterleavedArrays( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glLightModelfv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glLightModelfv_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glLightModelfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glLightModeliv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glLightModeliv_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glLightModeliv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glLightfv( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glLightfv_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glLightfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glLightiv( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glLightiv_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glLightiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glLoadMatrixd( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glLoadMatrixd_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = gl_glLoadMatrixd( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glLoadMatrixf( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glLoadMatrixf_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = gl_glLoadMatrixf( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glMap1d( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLdouble u1;
+        GLdouble u2;
+        GLint stride;
+        GLint order;
+        PTR32 points;
+    } *params32 = args;
+    struct glMap1d_params params =
+    {
+        .target = params32->target,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .stride = params32->stride,
+        .order = params32->order,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = gl_glMap1d( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glMap1f( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLfloat u1;
+        GLfloat u2;
+        GLint stride;
+        GLint order;
+        PTR32 points;
+    } *params32 = args;
+    struct glMap1f_params params =
+    {
+        .target = params32->target,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .stride = params32->stride,
+        .order = params32->order,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = gl_glMap1f( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glMap2d( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLdouble u1;
+        GLdouble u2;
+        GLint ustride;
+        GLint uorder;
+        GLdouble v1;
+        GLdouble v2;
+        GLint vstride;
+        GLint vorder;
+        PTR32 points;
+    } *params32 = args;
+    struct glMap2d_params params =
+    {
+        .target = params32->target,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .ustride = params32->ustride,
+        .uorder = params32->uorder,
+        .v1 = params32->v1,
+        .v2 = params32->v2,
+        .vstride = params32->vstride,
+        .vorder = params32->vorder,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = gl_glMap2d( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glMap2f( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLfloat u1;
+        GLfloat u2;
+        GLint ustride;
+        GLint uorder;
+        GLfloat v1;
+        GLfloat v2;
+        GLint vstride;
+        GLint vorder;
+        PTR32 points;
+    } *params32 = args;
+    struct glMap2f_params params =
+    {
+        .target = params32->target,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .ustride = params32->ustride,
+        .uorder = params32->uorder,
+        .v1 = params32->v1,
+        .v2 = params32->v2,
+        .vstride = params32->vstride,
+        .vorder = params32->vorder,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = gl_glMap2f( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glMaterialfv( void *args )
+{
+    struct
+    {
+        GLenum face;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMaterialfv_params params =
+    {
+        .face = params32->face,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glMaterialfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glMaterialiv( void *args )
+{
+    struct
+    {
+        GLenum face;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMaterialiv_params params =
+    {
+        .face = params32->face,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glMaterialiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glMultMatrixd( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glMultMatrixd_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = gl_glMultMatrixd( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glMultMatrixf( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glMultMatrixf_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = gl_glMultMatrixf( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glNormal3bv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glNormal3bv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glNormal3bv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glNormal3dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glNormal3dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glNormal3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glNormal3fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glNormal3fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glNormal3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glNormal3iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glNormal3iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glNormal3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glNormal3sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glNormal3sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glNormal3sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glNormalPointer( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glNormalPointer_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = gl_glNormalPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glPixelMapfv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLsizei mapsize;
+        PTR32 values;
+    } *params32 = args;
+    struct glPixelMapfv_params params =
+    {
+        .map = params32->map,
+        .mapsize = params32->mapsize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = gl_glPixelMapfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glPixelMapuiv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLsizei mapsize;
+        PTR32 values;
+    } *params32 = args;
+    struct glPixelMapuiv_params params =
+    {
+        .map = params32->map,
+        .mapsize = params32->mapsize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = gl_glPixelMapuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glPixelMapusv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLsizei mapsize;
+        PTR32 values;
+    } *params32 = args;
+    struct glPixelMapusv_params params =
+    {
+        .map = params32->map,
+        .mapsize = params32->mapsize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = gl_glPixelMapusv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glPolygonStipple( void *args )
+{
+    struct
+    {
+        PTR32 mask;
+    } *params32 = args;
+    struct glPolygonStipple_params params =
+    {
+        .mask = ULongToPtr(params32->mask),
+    };
+    NTSTATUS status;
+    status = gl_glPolygonStipple( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glPrioritizeTextures( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 textures;
+        PTR32 priorities;
+    } *params32 = args;
+    struct glPrioritizeTextures_params params =
+    {
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+        .priorities = ULongToPtr(params32->priorities),
+    };
+    NTSTATUS status;
+    status = gl_glPrioritizeTextures( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos2dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos2dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos2fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos2fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos2iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos2iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos2iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos2sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos2sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos2sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos3dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos3dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos3fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos3fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos3iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos3iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos3sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos3sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos3sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos4dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos4dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos4fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos4fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos4iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos4iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos4iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRasterPos4sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glRasterPos4sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glRasterPos4sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glReadPixels( void *args )
+{
+    struct
+    {
+        GLint x;
+        GLint y;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glReadPixels_params params =
+    {
+        .x = params32->x,
+        .y = params32->y,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = gl_glReadPixels( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRectdv( void *args )
+{
+    struct
+    {
+        PTR32 v1;
+        PTR32 v2;
+    } *params32 = args;
+    struct glRectdv_params params =
+    {
+        .v1 = ULongToPtr(params32->v1),
+        .v2 = ULongToPtr(params32->v2),
+    };
+    NTSTATUS status;
+    status = gl_glRectdv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRectfv( void *args )
+{
+    struct
+    {
+        PTR32 v1;
+        PTR32 v2;
+    } *params32 = args;
+    struct glRectfv_params params =
+    {
+        .v1 = ULongToPtr(params32->v1),
+        .v2 = ULongToPtr(params32->v2),
+    };
+    NTSTATUS status;
+    status = gl_glRectfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRectiv( void *args )
+{
+    struct
+    {
+        PTR32 v1;
+        PTR32 v2;
+    } *params32 = args;
+    struct glRectiv_params params =
+    {
+        .v1 = ULongToPtr(params32->v1),
+        .v2 = ULongToPtr(params32->v2),
+    };
+    NTSTATUS status;
+    status = gl_glRectiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glRectsv( void *args )
+{
+    struct
+    {
+        PTR32 v1;
+        PTR32 v2;
+    } *params32 = args;
+    struct glRectsv_params params =
+    {
+        .v1 = ULongToPtr(params32->v1),
+        .v2 = ULongToPtr(params32->v2),
+    };
+    NTSTATUS status;
+    status = gl_glRectsv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glSelectBuffer( void *args )
+{
+    struct
+    {
+        GLsizei size;
+        PTR32 buffer;
+    } *params32 = args;
+    struct glSelectBuffer_params params =
+    {
+        .size = params32->size,
+        .buffer = ULongToPtr(params32->buffer),
+    };
+    NTSTATUS status;
+    status = gl_glSelectBuffer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord1dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord1dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord1dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord1fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord1fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord1fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord1iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord1iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord1iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord1sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord1sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord1sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord2dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord2fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord2iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord2iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord2sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord2sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord3dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord3dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord3fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord3fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord3iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord3iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord3sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord3sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord3sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord4dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord4dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord4fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord4fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord4iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord4iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord4iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoord4sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord4sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoord4sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexCoordPointer( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glTexCoordPointer_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = gl_glTexCoordPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexEnvfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexEnvfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glTexEnvfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexEnviv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexEnviv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glTexEnviv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexGendv( void *args )
+{
+    struct
+    {
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexGendv_params params =
+    {
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glTexGendv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexGenfv( void *args )
+{
+    struct
+    {
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexGenfv_params params =
+    {
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glTexGenfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexGeniv( void *args )
+{
+    struct
+    {
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexGeniv_params params =
+    {
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glTexGeniv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexImage1D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint internalformat;
+        GLsizei width;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexImage1D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = gl_glTexImage1D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexImage2D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexImage2D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = gl_glTexImage2D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexParameterfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexParameterfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glTexParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = gl_glTexParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexSubImage1D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexSubImage1D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = gl_glTexSubImage1D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glTexSubImage2D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexSubImage2D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = gl_glTexSubImage2D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex2dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex2dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex2fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex2fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex2iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex2iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex2iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex2sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex2sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex2sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex3dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex3dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex3fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex3fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex3iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex3iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex3sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex3sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex3sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex4dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex4dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex4fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex4fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex4iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex4iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex4iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertex4sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex4sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = gl_glVertex4sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_gl_glVertexPointer( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexPointer_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = gl_glVertexPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glActiveVaryingNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        PTR32 name;
+    } *params32 = args;
+    struct glActiveVaryingNV_params params =
+    {
+        .program = params32->program,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glActiveVaryingNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glAreProgramsResidentNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 programs;
+        PTR32 residences;
+        GLboolean ret;
+    } *params32 = args;
+    struct glAreProgramsResidentNV_params params =
+    {
+        .n = params32->n,
+        .programs = ULongToPtr(params32->programs),
+        .residences = ULongToPtr(params32->residences),
+    };
+    NTSTATUS status;
+    status = ext_glAreProgramsResidentNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glAreTexturesResidentEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 textures;
+        PTR32 residences;
+        GLboolean ret;
+    } *params32 = args;
+    struct glAreTexturesResidentEXT_params params =
+    {
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+        .residences = ULongToPtr(params32->residences),
+    };
+    NTSTATUS status;
+    status = ext_glAreTexturesResidentEXT( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glAsyncCopyBufferSubDataNVX( void *args )
+{
+    struct
+    {
+        GLsizei waitSemaphoreCount;
+        PTR32 waitSemaphoreArray;
+        PTR32 fenceValueArray;
+        GLuint readGpu;
+        GLbitfield writeGpuMask;
+        GLuint readBuffer;
+        GLuint writeBuffer;
+        PTR32 readOffset;
+        PTR32 writeOffset;
+        PTR32 size;
+        GLsizei signalSemaphoreCount;
+        PTR32 signalSemaphoreArray;
+        PTR32 signalValueArray;
+        GLuint ret;
+    } *params32 = args;
+    struct glAsyncCopyBufferSubDataNVX_params params =
+    {
+        .waitSemaphoreCount = params32->waitSemaphoreCount,
+        .waitSemaphoreArray = ULongToPtr(params32->waitSemaphoreArray),
+        .fenceValueArray = ULongToPtr(params32->fenceValueArray),
+        .readGpu = params32->readGpu,
+        .writeGpuMask = params32->writeGpuMask,
+        .readBuffer = params32->readBuffer,
+        .writeBuffer = params32->writeBuffer,
+        .readOffset = (GLintptr)ULongToPtr(params32->readOffset),
+        .writeOffset = (GLintptr)ULongToPtr(params32->writeOffset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .signalSemaphoreCount = params32->signalSemaphoreCount,
+        .signalSemaphoreArray = ULongToPtr(params32->signalSemaphoreArray),
+        .signalValueArray = ULongToPtr(params32->signalValueArray),
+    };
+    NTSTATUS status;
+    status = ext_glAsyncCopyBufferSubDataNVX( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glAsyncCopyImageSubDataNVX( void *args )
+{
+    struct
+    {
+        GLsizei waitSemaphoreCount;
+        PTR32 waitSemaphoreArray;
+        PTR32 waitValueArray;
+        GLuint srcGpu;
+        GLbitfield dstGpuMask;
+        GLuint srcName;
+        GLenum srcTarget;
+        GLint srcLevel;
+        GLint srcX;
+        GLint srcY;
+        GLint srcZ;
+        GLuint dstName;
+        GLenum dstTarget;
+        GLint dstLevel;
+        GLint dstX;
+        GLint dstY;
+        GLint dstZ;
+        GLsizei srcWidth;
+        GLsizei srcHeight;
+        GLsizei srcDepth;
+        GLsizei signalSemaphoreCount;
+        PTR32 signalSemaphoreArray;
+        PTR32 signalValueArray;
+        GLuint ret;
+    } *params32 = args;
+    struct glAsyncCopyImageSubDataNVX_params params =
+    {
+        .waitSemaphoreCount = params32->waitSemaphoreCount,
+        .waitSemaphoreArray = ULongToPtr(params32->waitSemaphoreArray),
+        .waitValueArray = ULongToPtr(params32->waitValueArray),
+        .srcGpu = params32->srcGpu,
+        .dstGpuMask = params32->dstGpuMask,
+        .srcName = params32->srcName,
+        .srcTarget = params32->srcTarget,
+        .srcLevel = params32->srcLevel,
+        .srcX = params32->srcX,
+        .srcY = params32->srcY,
+        .srcZ = params32->srcZ,
+        .dstName = params32->dstName,
+        .dstTarget = params32->dstTarget,
+        .dstLevel = params32->dstLevel,
+        .dstX = params32->dstX,
+        .dstY = params32->dstY,
+        .dstZ = params32->dstZ,
+        .srcWidth = params32->srcWidth,
+        .srcHeight = params32->srcHeight,
+        .srcDepth = params32->srcDepth,
+        .signalSemaphoreCount = params32->signalSemaphoreCount,
+        .signalSemaphoreArray = ULongToPtr(params32->signalSemaphoreArray),
+        .signalValueArray = ULongToPtr(params32->signalValueArray),
+    };
+    NTSTATUS status;
+    status = ext_glAsyncCopyImageSubDataNVX( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindAttribLocation( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint index;
+        PTR32 name;
+    } *params32 = args;
+    struct glBindAttribLocation_params params =
+    {
+        .program = params32->program,
+        .index = params32->index,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glBindAttribLocation( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindAttribLocationARB( void *args )
+{
+    struct
+    {
+        GLhandleARB programObj;
+        GLuint index;
+        PTR32 name;
+    } *params32 = args;
+    struct glBindAttribLocationARB_params params =
+    {
+        .programObj = params32->programObj,
+        .index = params32->index,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glBindAttribLocationARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindBufferOffsetEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLuint buffer;
+        PTR32 offset;
+    } *params32 = args;
+    struct glBindBufferOffsetEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glBindBufferOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindBufferOffsetNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLuint buffer;
+        PTR32 offset;
+    } *params32 = args;
+    struct glBindBufferOffsetNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glBindBufferOffsetNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindBufferRange( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+    } *params32 = args;
+    struct glBindBufferRange_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glBindBufferRange( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindBufferRangeEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+    } *params32 = args;
+    struct glBindBufferRangeEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glBindBufferRangeEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindBufferRangeNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+    } *params32 = args;
+    struct glBindBufferRangeNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glBindBufferRangeNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindBuffersBase( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint first;
+        GLsizei count;
+        PTR32 buffers;
+    } *params32 = args;
+    struct glBindBuffersBase_params params =
+    {
+        .target = params32->target,
+        .first = params32->first,
+        .count = params32->count,
+        .buffers = ULongToPtr(params32->buffers),
+    };
+    NTSTATUS status;
+    status = ext_glBindBuffersBase( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindBuffersRange( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint first;
+        GLsizei count;
+        PTR32 buffers;
+        PTR32 offsets;
+        PTR32 sizes;
+    } *params32 = args;
+    struct glBindBuffersRange_params params =
+    {
+        .target = params32->target,
+        .first = params32->first,
+        .count = params32->count,
+        .buffers = ULongToPtr(params32->buffers),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glBindFragDataLocation( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint color;
+        PTR32 name;
+    } *params32 = args;
+    struct glBindFragDataLocation_params params =
+    {
+        .program = params32->program,
+        .color = params32->color,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glBindFragDataLocation( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindFragDataLocationEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint color;
+        PTR32 name;
+    } *params32 = args;
+    struct glBindFragDataLocationEXT_params params =
+    {
+        .program = params32->program,
+        .color = params32->color,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glBindFragDataLocationEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindFragDataLocationIndexed( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint colorNumber;
+        GLuint index;
+        PTR32 name;
+    } *params32 = args;
+    struct glBindFragDataLocationIndexed_params params =
+    {
+        .program = params32->program,
+        .colorNumber = params32->colorNumber,
+        .index = params32->index,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glBindFragDataLocationIndexed( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindImageTextures( void *args )
+{
+    struct
+    {
+        GLuint first;
+        GLsizei count;
+        PTR32 textures;
+    } *params32 = args;
+    struct glBindImageTextures_params params =
+    {
+        .first = params32->first,
+        .count = params32->count,
+        .textures = ULongToPtr(params32->textures),
+    };
+    NTSTATUS status;
+    status = ext_glBindImageTextures( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindSamplers( void *args )
+{
+    struct
+    {
+        GLuint first;
+        GLsizei count;
+        PTR32 samplers;
+    } *params32 = args;
+    struct glBindSamplers_params params =
+    {
+        .first = params32->first,
+        .count = params32->count,
+        .samplers = ULongToPtr(params32->samplers),
+    };
+    NTSTATUS status;
+    status = ext_glBindSamplers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindTextures( void *args )
+{
+    struct
+    {
+        GLuint first;
+        GLsizei count;
+        PTR32 textures;
+    } *params32 = args;
+    struct glBindTextures_params params =
+    {
+        .first = params32->first,
+        .count = params32->count,
+        .textures = ULongToPtr(params32->textures),
+    };
+    NTSTATUS status;
+    status = ext_glBindTextures( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindVertexBuffer( void *args )
+{
+    struct
+    {
+        GLuint bindingindex;
+        GLuint buffer;
+        PTR32 offset;
+        GLsizei stride;
+    } *params32 = args;
+    struct glBindVertexBuffer_params params =
+    {
+        .bindingindex = params32->bindingindex,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glBindVertexBuffer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBindVertexBuffers( void *args )
+{
+    struct
+    {
+        GLuint first;
+        GLsizei count;
+        PTR32 buffers;
+        PTR32 offsets;
+        PTR32 strides;
+    } *params32 = args;
+    struct glBindVertexBuffers_params params =
+    {
+        .first = params32->first,
+        .count = params32->count,
+        .buffers = ULongToPtr(params32->buffers),
+        .strides = ULongToPtr(params32->strides),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glBindVideoCaptureStreamBufferNV( void *args )
+{
+    struct
+    {
+        GLuint video_capture_slot;
+        GLuint stream;
+        GLenum frame_region;
+        PTR32 offset;
+    } *params32 = args;
+    struct glBindVideoCaptureStreamBufferNV_params params =
+    {
+        .video_capture_slot = params32->video_capture_slot,
+        .stream = params32->stream,
+        .frame_region = params32->frame_region,
+        .offset = (GLintptrARB)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glBindVideoCaptureStreamBufferNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBinormal3bvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glBinormal3bvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glBinormal3bvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBinormal3dvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glBinormal3dvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glBinormal3dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBinormal3fvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glBinormal3fvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glBinormal3fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBinormal3ivEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glBinormal3ivEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glBinormal3ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBinormal3svEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glBinormal3svEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glBinormal3svEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBinormalPointerEXT( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glBinormalPointerEXT_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glBinormalPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBitmapxOES( void *args )
+{
+    struct
+    {
+        GLsizei width;
+        GLsizei height;
+        GLfixed xorig;
+        GLfixed yorig;
+        GLfixed xmove;
+        GLfixed ymove;
+        PTR32 bitmap;
+    } *params32 = args;
+    struct glBitmapxOES_params params =
+    {
+        .width = params32->width,
+        .height = params32->height,
+        .xorig = params32->xorig,
+        .yorig = params32->yorig,
+        .xmove = params32->xmove,
+        .ymove = params32->ymove,
+        .bitmap = ULongToPtr(params32->bitmap),
+    };
+    NTSTATUS status;
+    status = ext_glBitmapxOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBufferAddressRangeNV( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        GLuint index;
+        GLuint64EXT address;
+        PTR32 length;
+    } *params32 = args;
+    struct glBufferAddressRangeNV_params params =
+    {
+        .pname = params32->pname,
+        .index = params32->index,
+        .address = params32->address,
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+    };
+    NTSTATUS status;
+    status = ext_glBufferAddressRangeNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBufferData( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 size;
+        PTR32 data;
+        GLenum usage;
+    } *params32 = args;
+    struct glBufferData_params params =
+    {
+        .target = params32->target,
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+        .usage = params32->usage,
+    };
+    NTSTATUS status;
+    status = ext_glBufferData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBufferDataARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 size;
+        PTR32 data;
+        GLenum usage;
+    } *params32 = args;
+    struct glBufferDataARB_params params =
+    {
+        .target = params32->target,
+        .size = (GLsizeiptrARB)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+        .usage = params32->usage,
+    };
+    NTSTATUS status;
+    status = ext_glBufferDataARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBufferPageCommitmentARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 size;
+        GLboolean commit;
+    } *params32 = args;
+    struct glBufferPageCommitmentARB_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .commit = params32->commit,
+    };
+    NTSTATUS status;
+    status = ext_glBufferPageCommitmentARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBufferStorage( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 size;
+        PTR32 data;
+        GLbitfield flags;
+    } *params32 = args;
+    struct glBufferStorage_params params =
+    {
+        .target = params32->target,
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+        .flags = params32->flags,
+    };
+    NTSTATUS status;
+    status = ext_glBufferStorage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBufferStorageExternalEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 clientBuffer;
+        GLbitfield flags;
+    } *params32 = args;
+    struct glBufferStorageExternalEXT_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .clientBuffer = ULongToPtr(params32->clientBuffer),
+        .flags = params32->flags,
+    };
+    NTSTATUS status;
+    status = ext_glBufferStorageExternalEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBufferStorageMemEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 size;
+        GLuint memory;
+        GLuint64 offset;
+    } *params32 = args;
+    struct glBufferStorageMemEXT_params params =
+    {
+        .target = params32->target,
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .memory = params32->memory,
+        .offset = params32->offset,
+    };
+    NTSTATUS status;
+    status = ext_glBufferStorageMemEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBufferSubData( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glBufferSubData_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glBufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glBufferSubDataARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glBufferSubDataARB_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptrARB)ULongToPtr(params32->offset),
+        .size = (GLsizeiptrARB)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glBufferSubDataARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearBufferData( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glClearBufferData_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glClearBufferData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearBufferSubData( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        PTR32 offset;
+        PTR32 size;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glClearBufferSubData_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glClearBufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearBufferfv( void *args )
+{
+    struct
+    {
+        GLenum buffer;
+        GLint drawbuffer;
+        PTR32 value;
+    } *params32 = args;
+    struct glClearBufferfv_params params =
+    {
+        .buffer = params32->buffer,
+        .drawbuffer = params32->drawbuffer,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glClearBufferfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearBufferiv( void *args )
+{
+    struct
+    {
+        GLenum buffer;
+        GLint drawbuffer;
+        PTR32 value;
+    } *params32 = args;
+    struct glClearBufferiv_params params =
+    {
+        .buffer = params32->buffer,
+        .drawbuffer = params32->drawbuffer,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glClearBufferiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearBufferuiv( void *args )
+{
+    struct
+    {
+        GLenum buffer;
+        GLint drawbuffer;
+        PTR32 value;
+    } *params32 = args;
+    struct glClearBufferuiv_params params =
+    {
+        .buffer = params32->buffer,
+        .drawbuffer = params32->drawbuffer,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glClearBufferuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearNamedBufferData( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum internalformat;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glClearNamedBufferData_params params =
+    {
+        .buffer = params32->buffer,
+        .internalformat = params32->internalformat,
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glClearNamedBufferData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearNamedBufferDataEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum internalformat;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glClearNamedBufferDataEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .internalformat = params32->internalformat,
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glClearNamedBufferDataEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearNamedBufferSubData( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum internalformat;
+        PTR32 offset;
+        PTR32 size;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glClearNamedBufferSubData_params params =
+    {
+        .buffer = params32->buffer,
+        .internalformat = params32->internalformat,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glClearNamedBufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearNamedBufferSubDataEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum internalformat;
+        PTR32 offset;
+        PTR32 size;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glClearNamedBufferSubDataEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .internalformat = params32->internalformat,
+        .offset = (GLsizeiptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glClearNamedBufferSubDataEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearNamedFramebufferfv( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLenum buffer;
+        GLint drawbuffer;
+        PTR32 value;
+    } *params32 = args;
+    struct glClearNamedFramebufferfv_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .buffer = params32->buffer,
+        .drawbuffer = params32->drawbuffer,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glClearNamedFramebufferfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearNamedFramebufferiv( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLenum buffer;
+        GLint drawbuffer;
+        PTR32 value;
+    } *params32 = args;
+    struct glClearNamedFramebufferiv_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .buffer = params32->buffer,
+        .drawbuffer = params32->drawbuffer,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glClearNamedFramebufferiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearNamedFramebufferuiv( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLenum buffer;
+        GLint drawbuffer;
+        PTR32 value;
+    } *params32 = args;
+    struct glClearNamedFramebufferuiv_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .buffer = params32->buffer,
+        .drawbuffer = params32->drawbuffer,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glClearNamedFramebufferuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearTexImage( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glClearTexImage_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glClearTexImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClearTexSubImage( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glClearTexSubImage_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glClearTexSubImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClientWaitSemaphoreui64NVX( void *args )
+{
+    struct
+    {
+        GLsizei fenceObjectCount;
+        PTR32 semaphoreArray;
+        PTR32 fenceValueArray;
+    } *params32 = args;
+    struct glClientWaitSemaphoreui64NVX_params params =
+    {
+        .fenceObjectCount = params32->fenceObjectCount,
+        .semaphoreArray = ULongToPtr(params32->semaphoreArray),
+        .fenceValueArray = ULongToPtr(params32->fenceValueArray),
+    };
+    NTSTATUS status;
+    status = ext_glClientWaitSemaphoreui64NVX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClientWaitSync( void *args )
+{
+    struct
+    {
+        PTR32 sync;
+        GLbitfield flags;
+        GLuint64 timeout;
+        GLenum ret;
+    } *params32 = args;
+    struct glClientWaitSync_params params =
+    {
+        .sync = ULongToPtr(params32->sync),
+        .flags = params32->flags,
+        .timeout = params32->timeout,
+    };
+    NTSTATUS status;
+    status = ext_glClientWaitSync( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClipPlanefOES( void *args )
+{
+    struct
+    {
+        GLenum plane;
+        PTR32 equation;
+    } *params32 = args;
+    struct glClipPlanefOES_params params =
+    {
+        .plane = params32->plane,
+        .equation = ULongToPtr(params32->equation),
+    };
+    NTSTATUS status;
+    status = ext_glClipPlanefOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glClipPlanexOES( void *args )
+{
+    struct
+    {
+        GLenum plane;
+        PTR32 equation;
+    } *params32 = args;
+    struct glClipPlanexOES_params params =
+    {
+        .plane = params32->plane,
+        .equation = ULongToPtr(params32->equation),
+    };
+    NTSTATUS status;
+    status = ext_glClipPlanexOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColor3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 c;
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3fVertex3fvSUN_params params =
+    {
+        .c = ULongToPtr(params32->c),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glColor3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColor3hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor3hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glColor3hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColor3xvOES( void *args )
+{
+    struct
+    {
+        PTR32 components;
+    } *params32 = args;
+    struct glColor3xvOES_params params =
+    {
+        .components = ULongToPtr(params32->components),
+    };
+    NTSTATUS status;
+    status = ext_glColor3xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColor4fNormal3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 c;
+        PTR32 n;
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4fNormal3fVertex3fvSUN_params params =
+    {
+        .c = ULongToPtr(params32->c),
+        .n = ULongToPtr(params32->n),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glColor4fNormal3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColor4hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glColor4hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColor4ubVertex2fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 c;
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4ubVertex2fvSUN_params params =
+    {
+        .c = ULongToPtr(params32->c),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glColor4ubVertex2fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColor4ubVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 c;
+        PTR32 v;
+    } *params32 = args;
+    struct glColor4ubVertex3fvSUN_params params =
+    {
+        .c = ULongToPtr(params32->c),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glColor4ubVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColor4xvOES( void *args )
+{
+    struct
+    {
+        PTR32 components;
+    } *params32 = args;
+    struct glColor4xvOES_params params =
+    {
+        .components = ULongToPtr(params32->components),
+    };
+    NTSTATUS status;
+    status = ext_glColor4xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorP3uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 color;
+    } *params32 = args;
+    struct glColorP3uiv_params params =
+    {
+        .type = params32->type,
+        .color = ULongToPtr(params32->color),
+    };
+    NTSTATUS status;
+    status = ext_glColorP3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorP4uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 color;
+    } *params32 = args;
+    struct glColorP4uiv_params params =
+    {
+        .type = params32->type,
+        .color = ULongToPtr(params32->color),
+    };
+    NTSTATUS status;
+    status = ext_glColorP4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorPointerEXT( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        GLsizei count;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glColorPointerEXT_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .count = params32->count,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glColorPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorPointerListIBM( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLint stride;
+        PTR32 pointer;
+        GLint ptrstride;
+    } *params32 = args;
+    struct glColorPointerListIBM_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .ptrstride = params32->ptrstride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glColorPointervINTEL( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glColorPointervINTEL_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glColorSubTable( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei start;
+        GLsizei count;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glColorSubTable_params params =
+    {
+        .target = params32->target,
+        .start = params32->start,
+        .count = params32->count,
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glColorSubTable( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorSubTableEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei start;
+        GLsizei count;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glColorSubTableEXT_params params =
+    {
+        .target = params32->target,
+        .start = params32->start,
+        .count = params32->count,
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glColorSubTableEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorTable( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 table;
+    } *params32 = args;
+    struct glColorTable_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .table = ULongToPtr(params32->table),
+    };
+    NTSTATUS status;
+    status = ext_glColorTable( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorTableEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalFormat;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 table;
+    } *params32 = args;
+    struct glColorTableEXT_params params =
+    {
+        .target = params32->target,
+        .internalFormat = params32->internalFormat,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .table = ULongToPtr(params32->table),
+    };
+    NTSTATUS status;
+    status = ext_glColorTableEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorTableParameterfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glColorTableParameterfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glColorTableParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorTableParameterfvSGI( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glColorTableParameterfvSGI_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glColorTableParameterfvSGI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorTableParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glColorTableParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glColorTableParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorTableParameterivSGI( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glColorTableParameterivSGI_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glColorTableParameterivSGI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glColorTableSGI( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 table;
+    } *params32 = args;
+    struct glColorTableSGI_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .table = ULongToPtr(params32->table),
+    };
+    NTSTATUS status;
+    status = ext_glColorTableSGI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCombinerParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glCombinerParameterfvNV_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glCombinerParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCombinerParameterivNV( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glCombinerParameterivNV_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glCombinerParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCombinerStageParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum stage;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glCombinerStageParameterfvNV_params params =
+    {
+        .stage = params32->stage,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glCombinerStageParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompileShaderIncludeARB( void *args )
+{
+    struct
+    {
+        GLuint shader;
+        GLsizei count;
+        PTR32 path;
+        PTR32 length;
+    } *params32 = args;
+    struct glCompileShaderIncludeARB_params params =
+    {
+        .shader = params32->shader,
+        .count = params32->count,
+        .length = ULongToPtr(params32->length),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glCompressedMultiTexImage1DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedMultiTexImage1DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedMultiTexImage1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedMultiTexImage2DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedMultiTexImage2DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedMultiTexImage2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedMultiTexImage3DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedMultiTexImage3DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedMultiTexImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedMultiTexSubImage1DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedMultiTexSubImage1DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedMultiTexSubImage1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedMultiTexSubImage2DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedMultiTexSubImage2DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedMultiTexSubImage2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedMultiTexSubImage3DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedMultiTexSubImage3DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedMultiTexSubImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexImage1D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexImage1D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexImage1D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexImage1DARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexImage1DARB_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexImage1DARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexImage2D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexImage2D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexImage2D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexImage2DARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexImage2DARB_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexImage2DARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexImage3D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexImage3D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexImage3D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexImage3DARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexImage3DARB_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexImage3DARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexSubImage1D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexSubImage1D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexSubImage1D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexSubImage1DARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexSubImage1DARB_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexSubImage1DARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexSubImage2D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexSubImage2D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexSubImage2D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexSubImage2DARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexSubImage2DARB_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexSubImage2DARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexSubImage3D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexSubImage3D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexSubImage3D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTexSubImage3DARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTexSubImage3DARB_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTexSubImage3DARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTextureImage1DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedTextureImage1DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTextureImage1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTextureImage2DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedTextureImage2DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTextureImage2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTextureImage3DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLint border;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedTextureImage3DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .border = params32->border,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTextureImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTextureSubImage1D( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTextureSubImage1D_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTextureSubImage1D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTextureSubImage1DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedTextureSubImage1DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTextureSubImage1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTextureSubImage2D( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTextureSubImage2D_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTextureSubImage2D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTextureSubImage2DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedTextureSubImage2DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTextureSubImage2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTextureSubImage3D( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glCompressedTextureSubImage3D_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTextureSubImage3D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCompressedTextureSubImage3DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLsizei imageSize;
+        PTR32 bits;
+    } *params32 = args;
+    struct glCompressedTextureSubImage3DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .imageSize = params32->imageSize,
+        .bits = ULongToPtr(params32->bits),
+    };
+    NTSTATUS status;
+    status = ext_glCompressedTextureSubImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glConvolutionFilter1D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 image;
+    } *params32 = args;
+    struct glConvolutionFilter1D_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .image = ULongToPtr(params32->image),
+    };
+    NTSTATUS status;
+    status = ext_glConvolutionFilter1D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glConvolutionFilter1DEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 image;
+    } *params32 = args;
+    struct glConvolutionFilter1DEXT_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .image = ULongToPtr(params32->image),
+    };
+    NTSTATUS status;
+    status = ext_glConvolutionFilter1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glConvolutionFilter2D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 image;
+    } *params32 = args;
+    struct glConvolutionFilter2D_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .image = ULongToPtr(params32->image),
+    };
+    NTSTATUS status;
+    status = ext_glConvolutionFilter2D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glConvolutionFilter2DEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 image;
+    } *params32 = args;
+    struct glConvolutionFilter2DEXT_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .image = ULongToPtr(params32->image),
+    };
+    NTSTATUS status;
+    status = ext_glConvolutionFilter2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glConvolutionParameterfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glConvolutionParameterfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glConvolutionParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glConvolutionParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glConvolutionParameterfvEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glConvolutionParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glConvolutionParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glConvolutionParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glConvolutionParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glConvolutionParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glConvolutionParameterivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glConvolutionParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glConvolutionParameterxvOES( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glConvolutionParameterxvOES_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glConvolutionParameterxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCopyBufferSubData( void *args )
+{
+    struct
+    {
+        GLenum readTarget;
+        GLenum writeTarget;
+        PTR32 readOffset;
+        PTR32 writeOffset;
+        PTR32 size;
+    } *params32 = args;
+    struct glCopyBufferSubData_params params =
+    {
+        .readTarget = params32->readTarget,
+        .writeTarget = params32->writeTarget,
+        .readOffset = (GLintptr)ULongToPtr(params32->readOffset),
+        .writeOffset = (GLintptr)ULongToPtr(params32->writeOffset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glCopyBufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCopyNamedBufferSubData( void *args )
+{
+    struct
+    {
+        GLuint readBuffer;
+        GLuint writeBuffer;
+        PTR32 readOffset;
+        PTR32 writeOffset;
+        PTR32 size;
+    } *params32 = args;
+    struct glCopyNamedBufferSubData_params params =
+    {
+        .readBuffer = params32->readBuffer,
+        .writeBuffer = params32->writeBuffer,
+        .readOffset = (GLintptr)ULongToPtr(params32->readOffset),
+        .writeOffset = (GLintptr)ULongToPtr(params32->writeOffset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glCopyNamedBufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCoverFillPathInstancedNV( void *args )
+{
+    struct
+    {
+        GLsizei numPaths;
+        GLenum pathNameType;
+        PTR32 paths;
+        GLuint pathBase;
+        GLenum coverMode;
+        GLenum transformType;
+        PTR32 transformValues;
+    } *params32 = args;
+    struct glCoverFillPathInstancedNV_params params =
+    {
+        .numPaths = params32->numPaths,
+        .pathNameType = params32->pathNameType,
+        .paths = ULongToPtr(params32->paths),
+        .pathBase = params32->pathBase,
+        .coverMode = params32->coverMode,
+        .transformType = params32->transformType,
+        .transformValues = ULongToPtr(params32->transformValues),
+    };
+    NTSTATUS status;
+    status = ext_glCoverFillPathInstancedNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCoverStrokePathInstancedNV( void *args )
+{
+    struct
+    {
+        GLsizei numPaths;
+        GLenum pathNameType;
+        PTR32 paths;
+        GLuint pathBase;
+        GLenum coverMode;
+        GLenum transformType;
+        PTR32 transformValues;
+    } *params32 = args;
+    struct glCoverStrokePathInstancedNV_params params =
+    {
+        .numPaths = params32->numPaths,
+        .pathNameType = params32->pathNameType,
+        .paths = ULongToPtr(params32->paths),
+        .pathBase = params32->pathBase,
+        .coverMode = params32->coverMode,
+        .transformType = params32->transformType,
+        .transformValues = ULongToPtr(params32->transformValues),
+    };
+    NTSTATUS status;
+    status = ext_glCoverStrokePathInstancedNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCoverageModulationTableNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 v;
+    } *params32 = args;
+    struct glCoverageModulationTableNV_params params =
+    {
+        .n = params32->n,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glCoverageModulationTableNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateBuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 buffers;
+    } *params32 = args;
+    struct glCreateBuffers_params params =
+    {
+        .n = params32->n,
+        .buffers = ULongToPtr(params32->buffers),
+    };
+    NTSTATUS status;
+    status = ext_glCreateBuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateCommandListsNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 lists;
+    } *params32 = args;
+    struct glCreateCommandListsNV_params params =
+    {
+        .n = params32->n,
+        .lists = ULongToPtr(params32->lists),
+    };
+    NTSTATUS status;
+    status = ext_glCreateCommandListsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateFramebuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 framebuffers;
+    } *params32 = args;
+    struct glCreateFramebuffers_params params =
+    {
+        .n = params32->n,
+        .framebuffers = ULongToPtr(params32->framebuffers),
+    };
+    NTSTATUS status;
+    status = ext_glCreateFramebuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateMemoryObjectsEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 memoryObjects;
+    } *params32 = args;
+    struct glCreateMemoryObjectsEXT_params params =
+    {
+        .n = params32->n,
+        .memoryObjects = ULongToPtr(params32->memoryObjects),
+    };
+    NTSTATUS status;
+    status = ext_glCreateMemoryObjectsEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreatePerfQueryINTEL( void *args )
+{
+    struct
+    {
+        GLuint queryId;
+        PTR32 queryHandle;
+    } *params32 = args;
+    struct glCreatePerfQueryINTEL_params params =
+    {
+        .queryId = params32->queryId,
+        .queryHandle = ULongToPtr(params32->queryHandle),
+    };
+    NTSTATUS status;
+    status = ext_glCreatePerfQueryINTEL( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateProgramPipelines( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 pipelines;
+    } *params32 = args;
+    struct glCreateProgramPipelines_params params =
+    {
+        .n = params32->n,
+        .pipelines = ULongToPtr(params32->pipelines),
+    };
+    NTSTATUS status;
+    status = ext_glCreateProgramPipelines( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateQueries( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glCreateQueries_params params =
+    {
+        .target = params32->target,
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glCreateQueries( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateRenderbuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 renderbuffers;
+    } *params32 = args;
+    struct glCreateRenderbuffers_params params =
+    {
+        .n = params32->n,
+        .renderbuffers = ULongToPtr(params32->renderbuffers),
+    };
+    NTSTATUS status;
+    status = ext_glCreateRenderbuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateSamplers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 samplers;
+    } *params32 = args;
+    struct glCreateSamplers_params params =
+    {
+        .n = params32->n,
+        .samplers = ULongToPtr(params32->samplers),
+    };
+    NTSTATUS status;
+    status = ext_glCreateSamplers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateShaderProgramEXT( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 string;
+        GLuint ret;
+    } *params32 = args;
+    struct glCreateShaderProgramEXT_params params =
+    {
+        .type = params32->type,
+        .string = ULongToPtr(params32->string),
+    };
+    NTSTATUS status;
+    status = ext_glCreateShaderProgramEXT( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateShaderProgramv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei count;
+        PTR32 strings;
+        GLuint ret;
+    } *params32 = args;
+    struct glCreateShaderProgramv_params params =
+    {
+        .type = params32->type,
+        .count = params32->count,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glCreateStatesNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 states;
+    } *params32 = args;
+    struct glCreateStatesNV_params params =
+    {
+        .n = params32->n,
+        .states = ULongToPtr(params32->states),
+    };
+    NTSTATUS status;
+    status = ext_glCreateStatesNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateSyncFromCLeventARB( void *args )
+{
+    struct
+    {
+        PTR32 context;
+        PTR32 event;
+        GLbitfield flags;
+        PTR32 ret;
+    } *params32 = args;
+    struct glCreateSyncFromCLeventARB_params params =
+    {
+        .context = ULongToPtr(params32->context),
+        .event = ULongToPtr(params32->event),
+        .flags = params32->flags,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glCreateTextures( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei n;
+        PTR32 textures;
+    } *params32 = args;
+    struct glCreateTextures_params params =
+    {
+        .target = params32->target,
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+    };
+    NTSTATUS status;
+    status = ext_glCreateTextures( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateTransformFeedbacks( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glCreateTransformFeedbacks_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glCreateTransformFeedbacks( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCreateVertexArrays( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 arrays;
+    } *params32 = args;
+    struct glCreateVertexArrays_params params =
+    {
+        .n = params32->n,
+        .arrays = ULongToPtr(params32->arrays),
+    };
+    NTSTATUS status;
+    status = ext_glCreateVertexArrays( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCullParameterdvEXT( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glCullParameterdvEXT_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glCullParameterdvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glCullParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glCullParameterfvEXT_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glCullParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDebugMessageCallback( void *args )
+{
+    struct
+    {
+        PTR32 callback;
+        PTR32 userParam;
+    } *params32 = args;
+    struct glDebugMessageCallback_params params =
+    {
+        .callback = ULongToPtr(params32->callback),
+        .userParam = ULongToPtr(params32->userParam),
+    };
+    NTSTATUS status;
+    status = ext_glDebugMessageCallback( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDebugMessageCallbackAMD( void *args )
+{
+    struct
+    {
+        PTR32 callback;
+        PTR32 userParam;
+    } *params32 = args;
+    struct glDebugMessageCallbackAMD_params params =
+    {
+        .callback = ULongToPtr(params32->callback),
+        .userParam = ULongToPtr(params32->userParam),
+    };
+    NTSTATUS status;
+    status = ext_glDebugMessageCallbackAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDebugMessageCallbackARB( void *args )
+{
+    struct
+    {
+        PTR32 callback;
+        PTR32 userParam;
+    } *params32 = args;
+    struct glDebugMessageCallbackARB_params params =
+    {
+        .callback = ULongToPtr(params32->callback),
+        .userParam = ULongToPtr(params32->userParam),
+    };
+    NTSTATUS status;
+    status = ext_glDebugMessageCallbackARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDebugMessageControl( void *args )
+{
+    struct
+    {
+        GLenum source;
+        GLenum type;
+        GLenum severity;
+        GLsizei count;
+        PTR32 ids;
+        GLboolean enabled;
+    } *params32 = args;
+    struct glDebugMessageControl_params params =
+    {
+        .source = params32->source,
+        .type = params32->type,
+        .severity = params32->severity,
+        .count = params32->count,
+        .ids = ULongToPtr(params32->ids),
+        .enabled = params32->enabled,
+    };
+    NTSTATUS status;
+    status = ext_glDebugMessageControl( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDebugMessageControlARB( void *args )
+{
+    struct
+    {
+        GLenum source;
+        GLenum type;
+        GLenum severity;
+        GLsizei count;
+        PTR32 ids;
+        GLboolean enabled;
+    } *params32 = args;
+    struct glDebugMessageControlARB_params params =
+    {
+        .source = params32->source,
+        .type = params32->type,
+        .severity = params32->severity,
+        .count = params32->count,
+        .ids = ULongToPtr(params32->ids),
+        .enabled = params32->enabled,
+    };
+    NTSTATUS status;
+    status = ext_glDebugMessageControlARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDebugMessageEnableAMD( void *args )
+{
+    struct
+    {
+        GLenum category;
+        GLenum severity;
+        GLsizei count;
+        PTR32 ids;
+        GLboolean enabled;
+    } *params32 = args;
+    struct glDebugMessageEnableAMD_params params =
+    {
+        .category = params32->category,
+        .severity = params32->severity,
+        .count = params32->count,
+        .ids = ULongToPtr(params32->ids),
+        .enabled = params32->enabled,
+    };
+    NTSTATUS status;
+    status = ext_glDebugMessageEnableAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDebugMessageInsert( void *args )
+{
+    struct
+    {
+        GLenum source;
+        GLenum type;
+        GLuint id;
+        GLenum severity;
+        GLsizei length;
+        PTR32 buf;
+    } *params32 = args;
+    struct glDebugMessageInsert_params params =
+    {
+        .source = params32->source,
+        .type = params32->type,
+        .id = params32->id,
+        .severity = params32->severity,
+        .length = params32->length,
+        .buf = ULongToPtr(params32->buf),
+    };
+    NTSTATUS status;
+    status = ext_glDebugMessageInsert( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDebugMessageInsertAMD( void *args )
+{
+    struct
+    {
+        GLenum category;
+        GLenum severity;
+        GLuint id;
+        GLsizei length;
+        PTR32 buf;
+    } *params32 = args;
+    struct glDebugMessageInsertAMD_params params =
+    {
+        .category = params32->category,
+        .severity = params32->severity,
+        .id = params32->id,
+        .length = params32->length,
+        .buf = ULongToPtr(params32->buf),
+    };
+    NTSTATUS status;
+    status = ext_glDebugMessageInsertAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDebugMessageInsertARB( void *args )
+{
+    struct
+    {
+        GLenum source;
+        GLenum type;
+        GLuint id;
+        GLenum severity;
+        GLsizei length;
+        PTR32 buf;
+    } *params32 = args;
+    struct glDebugMessageInsertARB_params params =
+    {
+        .source = params32->source,
+        .type = params32->type,
+        .id = params32->id,
+        .severity = params32->severity,
+        .length = params32->length,
+        .buf = ULongToPtr(params32->buf),
+    };
+    NTSTATUS status;
+    status = ext_glDebugMessageInsertARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeformationMap3dSGIX( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLdouble u1;
+        GLdouble u2;
+        GLint ustride;
+        GLint uorder;
+        GLdouble v1;
+        GLdouble v2;
+        GLint vstride;
+        GLint vorder;
+        GLdouble w1;
+        GLdouble w2;
+        GLint wstride;
+        GLint worder;
+        PTR32 points;
+    } *params32 = args;
+    struct glDeformationMap3dSGIX_params params =
+    {
+        .target = params32->target,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .ustride = params32->ustride,
+        .uorder = params32->uorder,
+        .v1 = params32->v1,
+        .v2 = params32->v2,
+        .vstride = params32->vstride,
+        .vorder = params32->vorder,
+        .w1 = params32->w1,
+        .w2 = params32->w2,
+        .wstride = params32->wstride,
+        .worder = params32->worder,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glDeformationMap3dSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeformationMap3fSGIX( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLfloat u1;
+        GLfloat u2;
+        GLint ustride;
+        GLint uorder;
+        GLfloat v1;
+        GLfloat v2;
+        GLint vstride;
+        GLint vorder;
+        GLfloat w1;
+        GLfloat w2;
+        GLint wstride;
+        GLint worder;
+        PTR32 points;
+    } *params32 = args;
+    struct glDeformationMap3fSGIX_params params =
+    {
+        .target = params32->target,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .ustride = params32->ustride,
+        .uorder = params32->uorder,
+        .v1 = params32->v1,
+        .v2 = params32->v2,
+        .vstride = params32->vstride,
+        .vorder = params32->vorder,
+        .w1 = params32->w1,
+        .w2 = params32->w2,
+        .wstride = params32->wstride,
+        .worder = params32->worder,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glDeformationMap3fSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteBuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 buffers;
+    } *params32 = args;
+    struct glDeleteBuffers_params params =
+    {
+        .n = params32->n,
+        .buffers = ULongToPtr(params32->buffers),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteBuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteBuffersARB( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 buffers;
+    } *params32 = args;
+    struct glDeleteBuffersARB_params params =
+    {
+        .n = params32->n,
+        .buffers = ULongToPtr(params32->buffers),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteBuffersARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteCommandListsNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 lists;
+    } *params32 = args;
+    struct glDeleteCommandListsNV_params params =
+    {
+        .n = params32->n,
+        .lists = ULongToPtr(params32->lists),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteCommandListsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteFencesAPPLE( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 fences;
+    } *params32 = args;
+    struct glDeleteFencesAPPLE_params params =
+    {
+        .n = params32->n,
+        .fences = ULongToPtr(params32->fences),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteFencesAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteFencesNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 fences;
+    } *params32 = args;
+    struct glDeleteFencesNV_params params =
+    {
+        .n = params32->n,
+        .fences = ULongToPtr(params32->fences),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteFencesNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteFramebuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 framebuffers;
+    } *params32 = args;
+    struct glDeleteFramebuffers_params params =
+    {
+        .n = params32->n,
+        .framebuffers = ULongToPtr(params32->framebuffers),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteFramebuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteFramebuffersEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 framebuffers;
+    } *params32 = args;
+    struct glDeleteFramebuffersEXT_params params =
+    {
+        .n = params32->n,
+        .framebuffers = ULongToPtr(params32->framebuffers),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteFramebuffersEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteMemoryObjectsEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 memoryObjects;
+    } *params32 = args;
+    struct glDeleteMemoryObjectsEXT_params params =
+    {
+        .n = params32->n,
+        .memoryObjects = ULongToPtr(params32->memoryObjects),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteMemoryObjectsEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteNamedStringARB( void *args )
+{
+    struct
+    {
+        GLint namelen;
+        PTR32 name;
+    } *params32 = args;
+    struct glDeleteNamedStringARB_params params =
+    {
+        .namelen = params32->namelen,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteNamedStringARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteNamesAMD( void *args )
+{
+    struct
+    {
+        GLenum identifier;
+        GLuint num;
+        PTR32 names;
+    } *params32 = args;
+    struct glDeleteNamesAMD_params params =
+    {
+        .identifier = params32->identifier,
+        .num = params32->num,
+        .names = ULongToPtr(params32->names),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteNamesAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteOcclusionQueriesNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glDeleteOcclusionQueriesNV_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteOcclusionQueriesNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeletePerfMonitorsAMD( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 monitors;
+    } *params32 = args;
+    struct glDeletePerfMonitorsAMD_params params =
+    {
+        .n = params32->n,
+        .monitors = ULongToPtr(params32->monitors),
+    };
+    NTSTATUS status;
+    status = ext_glDeletePerfMonitorsAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteProgramPipelines( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 pipelines;
+    } *params32 = args;
+    struct glDeleteProgramPipelines_params params =
+    {
+        .n = params32->n,
+        .pipelines = ULongToPtr(params32->pipelines),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteProgramPipelines( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteProgramsARB( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 programs;
+    } *params32 = args;
+    struct glDeleteProgramsARB_params params =
+    {
+        .n = params32->n,
+        .programs = ULongToPtr(params32->programs),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteProgramsARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteProgramsNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 programs;
+    } *params32 = args;
+    struct glDeleteProgramsNV_params params =
+    {
+        .n = params32->n,
+        .programs = ULongToPtr(params32->programs),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteProgramsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteQueries( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glDeleteQueries_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteQueries( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteQueriesARB( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glDeleteQueriesARB_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteQueriesARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteQueryResourceTagNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 tagIds;
+    } *params32 = args;
+    struct glDeleteQueryResourceTagNV_params params =
+    {
+        .n = params32->n,
+        .tagIds = ULongToPtr(params32->tagIds),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteQueryResourceTagNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteRenderbuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 renderbuffers;
+    } *params32 = args;
+    struct glDeleteRenderbuffers_params params =
+    {
+        .n = params32->n,
+        .renderbuffers = ULongToPtr(params32->renderbuffers),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteRenderbuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteRenderbuffersEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 renderbuffers;
+    } *params32 = args;
+    struct glDeleteRenderbuffersEXT_params params =
+    {
+        .n = params32->n,
+        .renderbuffers = ULongToPtr(params32->renderbuffers),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteRenderbuffersEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteSamplers( void *args )
+{
+    struct
+    {
+        GLsizei count;
+        PTR32 samplers;
+    } *params32 = args;
+    struct glDeleteSamplers_params params =
+    {
+        .count = params32->count,
+        .samplers = ULongToPtr(params32->samplers),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteSamplers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteSemaphoresEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 semaphores;
+    } *params32 = args;
+    struct glDeleteSemaphoresEXT_params params =
+    {
+        .n = params32->n,
+        .semaphores = ULongToPtr(params32->semaphores),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteSemaphoresEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteStatesNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 states;
+    } *params32 = args;
+    struct glDeleteStatesNV_params params =
+    {
+        .n = params32->n,
+        .states = ULongToPtr(params32->states),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteStatesNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteSync( void *args )
+{
+    struct
+    {
+        PTR32 sync;
+    } *params32 = args;
+    struct glDeleteSync_params params =
+    {
+        .sync = ULongToPtr(params32->sync),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteSync( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteTexturesEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 textures;
+    } *params32 = args;
+    struct glDeleteTexturesEXT_params params =
+    {
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteTexturesEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteTransformFeedbacks( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glDeleteTransformFeedbacks_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteTransformFeedbacks( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteTransformFeedbacksNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glDeleteTransformFeedbacksNV_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteTransformFeedbacksNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteVertexArrays( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 arrays;
+    } *params32 = args;
+    struct glDeleteVertexArrays_params params =
+    {
+        .n = params32->n,
+        .arrays = ULongToPtr(params32->arrays),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteVertexArrays( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDeleteVertexArraysAPPLE( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 arrays;
+    } *params32 = args;
+    struct glDeleteVertexArraysAPPLE_params params =
+    {
+        .n = params32->n,
+        .arrays = ULongToPtr(params32->arrays),
+    };
+    NTSTATUS status;
+    status = ext_glDeleteVertexArraysAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDepthRangeArraydvNV( void *args )
+{
+    struct
+    {
+        GLuint first;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glDepthRangeArraydvNV_params params =
+    {
+        .first = params32->first,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glDepthRangeArraydvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDepthRangeArrayv( void *args )
+{
+    struct
+    {
+        GLuint first;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glDepthRangeArrayv_params params =
+    {
+        .first = params32->first,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glDepthRangeArrayv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDetailTexFuncSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei n;
+        PTR32 points;
+    } *params32 = args;
+    struct glDetailTexFuncSGIS_params params =
+    {
+        .target = params32->target,
+        .n = params32->n,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glDetailTexFuncSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDispatchComputeIndirect( void *args )
+{
+    struct
+    {
+        PTR32 indirect;
+    } *params32 = args;
+    struct glDispatchComputeIndirect_params params =
+    {
+        .indirect = (GLintptr)ULongToPtr(params32->indirect),
+    };
+    NTSTATUS status;
+    status = ext_glDispatchComputeIndirect( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawArraysIndirect( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 indirect;
+    } *params32 = args;
+    struct glDrawArraysIndirect_params params =
+    {
+        .mode = params32->mode,
+        .indirect = ULongToPtr(params32->indirect),
+    };
+    NTSTATUS status;
+    status = ext_glDrawArraysIndirect( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawBuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 bufs;
+    } *params32 = args;
+    struct glDrawBuffers_params params =
+    {
+        .n = params32->n,
+        .bufs = ULongToPtr(params32->bufs),
+    };
+    NTSTATUS status;
+    status = ext_glDrawBuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawBuffersARB( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 bufs;
+    } *params32 = args;
+    struct glDrawBuffersARB_params params =
+    {
+        .n = params32->n,
+        .bufs = ULongToPtr(params32->bufs),
+    };
+    NTSTATUS status;
+    status = ext_glDrawBuffersARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawBuffersATI( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 bufs;
+    } *params32 = args;
+    struct glDrawBuffersATI_params params =
+    {
+        .n = params32->n,
+        .bufs = ULongToPtr(params32->bufs),
+    };
+    NTSTATUS status;
+    status = ext_glDrawBuffersATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawCommandsAddressNV( void *args )
+{
+    struct
+    {
+        GLenum primitiveMode;
+        PTR32 indirects;
+        PTR32 sizes;
+        GLuint count;
+    } *params32 = args;
+    struct glDrawCommandsAddressNV_params params =
+    {
+        .primitiveMode = params32->primitiveMode,
+        .indirects = ULongToPtr(params32->indirects),
+        .sizes = ULongToPtr(params32->sizes),
+        .count = params32->count,
+    };
+    NTSTATUS status;
+    status = ext_glDrawCommandsAddressNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawCommandsNV( void *args )
+{
+    struct
+    {
+        GLenum primitiveMode;
+        GLuint buffer;
+        PTR32 indirects;
+        PTR32 sizes;
+        GLuint count;
+    } *params32 = args;
+    struct glDrawCommandsNV_params params =
+    {
+        .primitiveMode = params32->primitiveMode,
+        .buffer = params32->buffer,
+        .sizes = ULongToPtr(params32->sizes),
+        .count = params32->count,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glDrawCommandsStatesAddressNV( void *args )
+{
+    struct
+    {
+        PTR32 indirects;
+        PTR32 sizes;
+        PTR32 states;
+        PTR32 fbos;
+        GLuint count;
+    } *params32 = args;
+    struct glDrawCommandsStatesAddressNV_params params =
+    {
+        .indirects = ULongToPtr(params32->indirects),
+        .sizes = ULongToPtr(params32->sizes),
+        .states = ULongToPtr(params32->states),
+        .fbos = ULongToPtr(params32->fbos),
+        .count = params32->count,
+    };
+    NTSTATUS status;
+    status = ext_glDrawCommandsStatesAddressNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawCommandsStatesNV( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 indirects;
+        PTR32 sizes;
+        PTR32 states;
+        PTR32 fbos;
+        GLuint count;
+    } *params32 = args;
+    struct glDrawCommandsStatesNV_params params =
+    {
+        .buffer = params32->buffer,
+        .sizes = ULongToPtr(params32->sizes),
+        .states = ULongToPtr(params32->states),
+        .fbos = ULongToPtr(params32->fbos),
+        .count = params32->count,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glDrawElementsBaseVertex( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+        GLint basevertex;
+    } *params32 = args;
+    struct glDrawElementsBaseVertex_params params =
+    {
+        .mode = params32->mode,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+        .basevertex = params32->basevertex,
+    };
+    NTSTATUS status;
+    status = ext_glDrawElementsBaseVertex( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawElementsIndirect( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLenum type;
+        PTR32 indirect;
+    } *params32 = args;
+    struct glDrawElementsIndirect_params params =
+    {
+        .mode = params32->mode,
+        .type = params32->type,
+        .indirect = ULongToPtr(params32->indirect),
+    };
+    NTSTATUS status;
+    status = ext_glDrawElementsIndirect( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawElementsInstanced( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei instancecount;
+    } *params32 = args;
+    struct glDrawElementsInstanced_params params =
+    {
+        .mode = params32->mode,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+        .instancecount = params32->instancecount,
+    };
+    NTSTATUS status;
+    status = ext_glDrawElementsInstanced( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawElementsInstancedARB( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei primcount;
+    } *params32 = args;
+    struct glDrawElementsInstancedARB_params params =
+    {
+        .mode = params32->mode,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+        .primcount = params32->primcount,
+    };
+    NTSTATUS status;
+    status = ext_glDrawElementsInstancedARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawElementsInstancedBaseInstance( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei instancecount;
+        GLuint baseinstance;
+    } *params32 = args;
+    struct glDrawElementsInstancedBaseInstance_params params =
+    {
+        .mode = params32->mode,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+        .instancecount = params32->instancecount,
+        .baseinstance = params32->baseinstance,
+    };
+    NTSTATUS status;
+    status = ext_glDrawElementsInstancedBaseInstance( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawElementsInstancedBaseVertex( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei instancecount;
+        GLint basevertex;
+    } *params32 = args;
+    struct glDrawElementsInstancedBaseVertex_params params =
+    {
+        .mode = params32->mode,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+        .instancecount = params32->instancecount,
+        .basevertex = params32->basevertex,
+    };
+    NTSTATUS status;
+    status = ext_glDrawElementsInstancedBaseVertex( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawElementsInstancedBaseVertexBaseInstance( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei instancecount;
+        GLint basevertex;
+        GLuint baseinstance;
+    } *params32 = args;
+    struct glDrawElementsInstancedBaseVertexBaseInstance_params params =
+    {
+        .mode = params32->mode,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+        .instancecount = params32->instancecount,
+        .basevertex = params32->basevertex,
+        .baseinstance = params32->baseinstance,
+    };
+    NTSTATUS status;
+    status = ext_glDrawElementsInstancedBaseVertexBaseInstance( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawElementsInstancedEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei primcount;
+    } *params32 = args;
+    struct glDrawElementsInstancedEXT_params params =
+    {
+        .mode = params32->mode,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+        .primcount = params32->primcount,
+    };
+    NTSTATUS status;
+    status = ext_glDrawElementsInstancedEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawMeshTasksIndirectNV( void *args )
+{
+    struct
+    {
+        PTR32 indirect;
+    } *params32 = args;
+    struct glDrawMeshTasksIndirectNV_params params =
+    {
+        .indirect = (GLintptr)ULongToPtr(params32->indirect),
+    };
+    NTSTATUS status;
+    status = ext_glDrawMeshTasksIndirectNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawRangeElements( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLuint start;
+        GLuint end;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+    } *params32 = args;
+    struct glDrawRangeElements_params params =
+    {
+        .mode = params32->mode,
+        .start = params32->start,
+        .end = params32->end,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+    };
+    NTSTATUS status;
+    status = ext_glDrawRangeElements( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawRangeElementsBaseVertex( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLuint start;
+        GLuint end;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+        GLint basevertex;
+    } *params32 = args;
+    struct glDrawRangeElementsBaseVertex_params params =
+    {
+        .mode = params32->mode,
+        .start = params32->start,
+        .end = params32->end,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+        .basevertex = params32->basevertex,
+    };
+    NTSTATUS status;
+    status = ext_glDrawRangeElementsBaseVertex( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glDrawRangeElementsEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLuint start;
+        GLuint end;
+        GLsizei count;
+        GLenum type;
+        PTR32 indices;
+    } *params32 = args;
+    struct glDrawRangeElementsEXT_params params =
+    {
+        .mode = params32->mode,
+        .start = params32->start,
+        .end = params32->end,
+        .count = params32->count,
+        .type = params32->type,
+        .indices = ULongToPtr(params32->indices),
+    };
+    NTSTATUS status;
+    status = ext_glDrawRangeElementsEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glEGLImageTargetTexStorageEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 image;
+        PTR32 attrib_list;
+    } *params32 = args;
+    struct glEGLImageTargetTexStorageEXT_params params =
+    {
+        .target = params32->target,
+        .image = ULongToPtr(params32->image),
+        .attrib_list = ULongToPtr(params32->attrib_list),
+    };
+    NTSTATUS status;
+    status = ext_glEGLImageTargetTexStorageEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glEGLImageTargetTextureStorageEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        PTR32 image;
+        PTR32 attrib_list;
+    } *params32 = args;
+    struct glEGLImageTargetTextureStorageEXT_params params =
+    {
+        .texture = params32->texture,
+        .image = ULongToPtr(params32->image),
+        .attrib_list = ULongToPtr(params32->attrib_list),
+    };
+    NTSTATUS status;
+    status = ext_glEGLImageTargetTextureStorageEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glEdgeFlagPointerEXT( void *args )
+{
+    struct
+    {
+        GLsizei stride;
+        GLsizei count;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glEdgeFlagPointerEXT_params params =
+    {
+        .stride = params32->stride,
+        .count = params32->count,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glEdgeFlagPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glEdgeFlagPointerListIBM( void *args )
+{
+    struct
+    {
+        GLint stride;
+        PTR32 pointer;
+        GLint ptrstride;
+    } *params32 = args;
+    struct glEdgeFlagPointerListIBM_params params =
+    {
+        .stride = params32->stride,
+        .ptrstride = params32->ptrstride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glElementPointerAPPLE( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glElementPointerAPPLE_params params =
+    {
+        .type = params32->type,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glElementPointerAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glElementPointerATI( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glElementPointerATI_params params =
+    {
+        .type = params32->type,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glElementPointerATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glEvalCoord1xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glEvalCoord1xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glEvalCoord1xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glEvalCoord2xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glEvalCoord2xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glEvalCoord2xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glExecuteProgramNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint id;
+        PTR32 params;
+    } *params32 = args;
+    struct glExecuteProgramNV_params params =
+    {
+        .target = params32->target,
+        .id = params32->id,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glExecuteProgramNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFeedbackBufferxOES( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        GLenum type;
+        PTR32 buffer;
+    } *params32 = args;
+    struct glFeedbackBufferxOES_params params =
+    {
+        .n = params32->n,
+        .type = params32->type,
+        .buffer = ULongToPtr(params32->buffer),
+    };
+    NTSTATUS status;
+    status = ext_glFeedbackBufferxOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFenceSync( void *args )
+{
+    struct
+    {
+        GLenum condition;
+        GLbitfield flags;
+        PTR32 ret;
+    } *params32 = args;
+    struct glFenceSync_params params =
+    {
+        .condition = params32->condition,
+        .flags = params32->flags,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glFinishAsyncSGIX( void *args )
+{
+    struct
+    {
+        PTR32 markerp;
+        GLint ret;
+    } *params32 = args;
+    struct glFinishAsyncSGIX_params params =
+    {
+        .markerp = ULongToPtr(params32->markerp),
+    };
+    NTSTATUS status;
+    status = ext_glFinishAsyncSGIX( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFlushMappedBufferRange( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 length;
+    } *params32 = args;
+    struct glFlushMappedBufferRange_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+    };
+    NTSTATUS status;
+    status = ext_glFlushMappedBufferRange( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFlushMappedBufferRangeAPPLE( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 size;
+    } *params32 = args;
+    struct glFlushMappedBufferRangeAPPLE_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glFlushMappedBufferRangeAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFlushMappedNamedBufferRange( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 length;
+    } *params32 = args;
+    struct glFlushMappedNamedBufferRange_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+    };
+    NTSTATUS status;
+    status = ext_glFlushMappedNamedBufferRange( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFlushMappedNamedBufferRangeEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 length;
+    } *params32 = args;
+    struct glFlushMappedNamedBufferRangeEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+    };
+    NTSTATUS status;
+    status = ext_glFlushMappedNamedBufferRangeEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFlushVertexArrayRangeAPPLE( void *args )
+{
+    struct
+    {
+        GLsizei length;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glFlushVertexArrayRangeAPPLE_params params =
+    {
+        .length = params32->length,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glFlushVertexArrayRangeAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFogCoordPointer( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glFogCoordPointer_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glFogCoordPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFogCoordPointerEXT( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glFogCoordPointerEXT_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glFogCoordPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFogCoordPointerListIBM( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLint stride;
+        PTR32 pointer;
+        GLint ptrstride;
+    } *params32 = args;
+    struct glFogCoordPointerListIBM_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .ptrstride = params32->ptrstride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glFogCoorddv( void *args )
+{
+    struct
+    {
+        PTR32 coord;
+    } *params32 = args;
+    struct glFogCoorddv_params params =
+    {
+        .coord = ULongToPtr(params32->coord),
+    };
+    NTSTATUS status;
+    status = ext_glFogCoorddv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFogCoorddvEXT( void *args )
+{
+    struct
+    {
+        PTR32 coord;
+    } *params32 = args;
+    struct glFogCoorddvEXT_params params =
+    {
+        .coord = ULongToPtr(params32->coord),
+    };
+    NTSTATUS status;
+    status = ext_glFogCoorddvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFogCoordfv( void *args )
+{
+    struct
+    {
+        PTR32 coord;
+    } *params32 = args;
+    struct glFogCoordfv_params params =
+    {
+        .coord = ULongToPtr(params32->coord),
+    };
+    NTSTATUS status;
+    status = ext_glFogCoordfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFogCoordfvEXT( void *args )
+{
+    struct
+    {
+        PTR32 coord;
+    } *params32 = args;
+    struct glFogCoordfvEXT_params params =
+    {
+        .coord = ULongToPtr(params32->coord),
+    };
+    NTSTATUS status;
+    status = ext_glFogCoordfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFogCoordhvNV( void *args )
+{
+    struct
+    {
+        PTR32 fog;
+    } *params32 = args;
+    struct glFogCoordhvNV_params params =
+    {
+        .fog = ULongToPtr(params32->fog),
+    };
+    NTSTATUS status;
+    status = ext_glFogCoordhvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFogFuncSGIS( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 points;
+    } *params32 = args;
+    struct glFogFuncSGIS_params params =
+    {
+        .n = params32->n,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glFogFuncSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFogxvOES( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glFogxvOES_params params =
+    {
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glFogxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFragmentLightModelfvSGIX( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glFragmentLightModelfvSGIX_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glFragmentLightModelfvSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFragmentLightModelivSGIX( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glFragmentLightModelivSGIX_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glFragmentLightModelivSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFragmentLightfvSGIX( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glFragmentLightfvSGIX_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glFragmentLightfvSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFragmentLightivSGIX( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glFragmentLightivSGIX_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glFragmentLightivSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFragmentMaterialfvSGIX( void *args )
+{
+    struct
+    {
+        GLenum face;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glFragmentMaterialfvSGIX_params params =
+    {
+        .face = params32->face,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glFragmentMaterialfvSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFragmentMaterialivSGIX( void *args )
+{
+    struct
+    {
+        GLenum face;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glFragmentMaterialivSGIX_params params =
+    {
+        .face = params32->face,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glFragmentMaterialivSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFramebufferDrawBuffersEXT( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLsizei n;
+        PTR32 bufs;
+    } *params32 = args;
+    struct glFramebufferDrawBuffersEXT_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .n = params32->n,
+        .bufs = ULongToPtr(params32->bufs),
+    };
+    NTSTATUS status;
+    status = ext_glFramebufferDrawBuffersEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFramebufferSampleLocationsfvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint start;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glFramebufferSampleLocationsfvARB_params params =
+    {
+        .target = params32->target,
+        .start = params32->start,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glFramebufferSampleLocationsfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFramebufferSampleLocationsfvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint start;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glFramebufferSampleLocationsfvNV_params params =
+    {
+        .target = params32->target,
+        .start = params32->start,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glFramebufferSampleLocationsfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glFramebufferSamplePositionsfvAMD( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint numsamples;
+        GLuint pixelindex;
+        PTR32 values;
+    } *params32 = args;
+    struct glFramebufferSamplePositionsfvAMD_params params =
+    {
+        .target = params32->target,
+        .numsamples = params32->numsamples,
+        .pixelindex = params32->pixelindex,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glFramebufferSamplePositionsfvAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenBuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 buffers;
+    } *params32 = args;
+    struct glGenBuffers_params params =
+    {
+        .n = params32->n,
+        .buffers = ULongToPtr(params32->buffers),
+    };
+    NTSTATUS status;
+    status = ext_glGenBuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenBuffersARB( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 buffers;
+    } *params32 = args;
+    struct glGenBuffersARB_params params =
+    {
+        .n = params32->n,
+        .buffers = ULongToPtr(params32->buffers),
+    };
+    NTSTATUS status;
+    status = ext_glGenBuffersARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenFencesAPPLE( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 fences;
+    } *params32 = args;
+    struct glGenFencesAPPLE_params params =
+    {
+        .n = params32->n,
+        .fences = ULongToPtr(params32->fences),
+    };
+    NTSTATUS status;
+    status = ext_glGenFencesAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenFencesNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 fences;
+    } *params32 = args;
+    struct glGenFencesNV_params params =
+    {
+        .n = params32->n,
+        .fences = ULongToPtr(params32->fences),
+    };
+    NTSTATUS status;
+    status = ext_glGenFencesNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenFramebuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 framebuffers;
+    } *params32 = args;
+    struct glGenFramebuffers_params params =
+    {
+        .n = params32->n,
+        .framebuffers = ULongToPtr(params32->framebuffers),
+    };
+    NTSTATUS status;
+    status = ext_glGenFramebuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenFramebuffersEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 framebuffers;
+    } *params32 = args;
+    struct glGenFramebuffersEXT_params params =
+    {
+        .n = params32->n,
+        .framebuffers = ULongToPtr(params32->framebuffers),
+    };
+    NTSTATUS status;
+    status = ext_glGenFramebuffersEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenNamesAMD( void *args )
+{
+    struct
+    {
+        GLenum identifier;
+        GLuint num;
+        PTR32 names;
+    } *params32 = args;
+    struct glGenNamesAMD_params params =
+    {
+        .identifier = params32->identifier,
+        .num = params32->num,
+        .names = ULongToPtr(params32->names),
+    };
+    NTSTATUS status;
+    status = ext_glGenNamesAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenOcclusionQueriesNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glGenOcclusionQueriesNV_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glGenOcclusionQueriesNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenPerfMonitorsAMD( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 monitors;
+    } *params32 = args;
+    struct glGenPerfMonitorsAMD_params params =
+    {
+        .n = params32->n,
+        .monitors = ULongToPtr(params32->monitors),
+    };
+    NTSTATUS status;
+    status = ext_glGenPerfMonitorsAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenProgramPipelines( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 pipelines;
+    } *params32 = args;
+    struct glGenProgramPipelines_params params =
+    {
+        .n = params32->n,
+        .pipelines = ULongToPtr(params32->pipelines),
+    };
+    NTSTATUS status;
+    status = ext_glGenProgramPipelines( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenProgramsARB( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 programs;
+    } *params32 = args;
+    struct glGenProgramsARB_params params =
+    {
+        .n = params32->n,
+        .programs = ULongToPtr(params32->programs),
+    };
+    NTSTATUS status;
+    status = ext_glGenProgramsARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenProgramsNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 programs;
+    } *params32 = args;
+    struct glGenProgramsNV_params params =
+    {
+        .n = params32->n,
+        .programs = ULongToPtr(params32->programs),
+    };
+    NTSTATUS status;
+    status = ext_glGenProgramsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenQueries( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glGenQueries_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glGenQueries( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenQueriesARB( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glGenQueriesARB_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glGenQueriesARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenQueryResourceTagNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 tagIds;
+    } *params32 = args;
+    struct glGenQueryResourceTagNV_params params =
+    {
+        .n = params32->n,
+        .tagIds = ULongToPtr(params32->tagIds),
+    };
+    NTSTATUS status;
+    status = ext_glGenQueryResourceTagNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenRenderbuffers( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 renderbuffers;
+    } *params32 = args;
+    struct glGenRenderbuffers_params params =
+    {
+        .n = params32->n,
+        .renderbuffers = ULongToPtr(params32->renderbuffers),
+    };
+    NTSTATUS status;
+    status = ext_glGenRenderbuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenRenderbuffersEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 renderbuffers;
+    } *params32 = args;
+    struct glGenRenderbuffersEXT_params params =
+    {
+        .n = params32->n,
+        .renderbuffers = ULongToPtr(params32->renderbuffers),
+    };
+    NTSTATUS status;
+    status = ext_glGenRenderbuffersEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenSamplers( void *args )
+{
+    struct
+    {
+        GLsizei count;
+        PTR32 samplers;
+    } *params32 = args;
+    struct glGenSamplers_params params =
+    {
+        .count = params32->count,
+        .samplers = ULongToPtr(params32->samplers),
+    };
+    NTSTATUS status;
+    status = ext_glGenSamplers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenSemaphoresEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 semaphores;
+    } *params32 = args;
+    struct glGenSemaphoresEXT_params params =
+    {
+        .n = params32->n,
+        .semaphores = ULongToPtr(params32->semaphores),
+    };
+    NTSTATUS status;
+    status = ext_glGenSemaphoresEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenTexturesEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 textures;
+    } *params32 = args;
+    struct glGenTexturesEXT_params params =
+    {
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+    };
+    NTSTATUS status;
+    status = ext_glGenTexturesEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenTransformFeedbacks( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glGenTransformFeedbacks_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glGenTransformFeedbacks( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenTransformFeedbacksNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 ids;
+    } *params32 = args;
+    struct glGenTransformFeedbacksNV_params params =
+    {
+        .n = params32->n,
+        .ids = ULongToPtr(params32->ids),
+    };
+    NTSTATUS status;
+    status = ext_glGenTransformFeedbacksNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenVertexArrays( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 arrays;
+    } *params32 = args;
+    struct glGenVertexArrays_params params =
+    {
+        .n = params32->n,
+        .arrays = ULongToPtr(params32->arrays),
+    };
+    NTSTATUS status;
+    status = ext_glGenVertexArrays( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGenVertexArraysAPPLE( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 arrays;
+    } *params32 = args;
+    struct glGenVertexArraysAPPLE_params params =
+    {
+        .n = params32->n,
+        .arrays = ULongToPtr(params32->arrays),
+    };
+    NTSTATUS status;
+    status = ext_glGenVertexArraysAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveAtomicCounterBufferiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint bufferIndex;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetActiveAtomicCounterBufferiv_params params =
+    {
+        .program = params32->program,
+        .bufferIndex = params32->bufferIndex,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveAtomicCounterBufferiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveAttrib( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint index;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 size;
+        PTR32 type;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetActiveAttrib_params params =
+    {
+        .program = params32->program,
+        .index = params32->index,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .size = ULongToPtr(params32->size),
+        .type = ULongToPtr(params32->type),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveAttrib( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveAttribARB( void *args )
+{
+    struct
+    {
+        GLhandleARB programObj;
+        GLuint index;
+        GLsizei maxLength;
+        PTR32 length;
+        PTR32 size;
+        PTR32 type;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetActiveAttribARB_params params =
+    {
+        .programObj = params32->programObj,
+        .index = params32->index,
+        .maxLength = params32->maxLength,
+        .length = ULongToPtr(params32->length),
+        .size = ULongToPtr(params32->size),
+        .type = ULongToPtr(params32->type),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveAttribARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveSubroutineName( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum shadertype;
+        GLuint index;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetActiveSubroutineName_params params =
+    {
+        .program = params32->program,
+        .shadertype = params32->shadertype,
+        .index = params32->index,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveSubroutineName( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveSubroutineUniformName( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum shadertype;
+        GLuint index;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetActiveSubroutineUniformName_params params =
+    {
+        .program = params32->program,
+        .shadertype = params32->shadertype,
+        .index = params32->index,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveSubroutineUniformName( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveSubroutineUniformiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum shadertype;
+        GLuint index;
+        GLenum pname;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetActiveSubroutineUniformiv_params params =
+    {
+        .program = params32->program,
+        .shadertype = params32->shadertype,
+        .index = params32->index,
+        .pname = params32->pname,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveSubroutineUniformiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveUniform( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint index;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 size;
+        PTR32 type;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetActiveUniform_params params =
+    {
+        .program = params32->program,
+        .index = params32->index,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .size = ULongToPtr(params32->size),
+        .type = ULongToPtr(params32->type),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveUniform( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveUniformARB( void *args )
+{
+    struct
+    {
+        GLhandleARB programObj;
+        GLuint index;
+        GLsizei maxLength;
+        PTR32 length;
+        PTR32 size;
+        PTR32 type;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetActiveUniformARB_params params =
+    {
+        .programObj = params32->programObj,
+        .index = params32->index,
+        .maxLength = params32->maxLength,
+        .length = ULongToPtr(params32->length),
+        .size = ULongToPtr(params32->size),
+        .type = ULongToPtr(params32->type),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveUniformARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveUniformBlockName( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint uniformBlockIndex;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 uniformBlockName;
+    } *params32 = args;
+    struct glGetActiveUniformBlockName_params params =
+    {
+        .program = params32->program,
+        .uniformBlockIndex = params32->uniformBlockIndex,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .uniformBlockName = ULongToPtr(params32->uniformBlockName),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveUniformBlockName( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveUniformBlockiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint uniformBlockIndex;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetActiveUniformBlockiv_params params =
+    {
+        .program = params32->program,
+        .uniformBlockIndex = params32->uniformBlockIndex,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveUniformBlockiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveUniformName( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint uniformIndex;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 uniformName;
+    } *params32 = args;
+    struct glGetActiveUniformName_params params =
+    {
+        .program = params32->program,
+        .uniformIndex = params32->uniformIndex,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .uniformName = ULongToPtr(params32->uniformName),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveUniformName( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveUniformsiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLsizei uniformCount;
+        PTR32 uniformIndices;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetActiveUniformsiv_params params =
+    {
+        .program = params32->program,
+        .uniformCount = params32->uniformCount,
+        .uniformIndices = ULongToPtr(params32->uniformIndices),
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveUniformsiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetActiveVaryingNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint index;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 size;
+        PTR32 type;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetActiveVaryingNV_params params =
+    {
+        .program = params32->program,
+        .index = params32->index,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .size = ULongToPtr(params32->size),
+        .type = ULongToPtr(params32->type),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetActiveVaryingNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetArrayObjectfvATI( void *args )
+{
+    struct
+    {
+        GLenum array;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetArrayObjectfvATI_params params =
+    {
+        .array = params32->array,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetArrayObjectfvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetArrayObjectivATI( void *args )
+{
+    struct
+    {
+        GLenum array;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetArrayObjectivATI_params params =
+    {
+        .array = params32->array,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetArrayObjectivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetAttachedObjectsARB( void *args )
+{
+    struct
+    {
+        GLhandleARB containerObj;
+        GLsizei maxCount;
+        PTR32 count;
+        PTR32 obj;
+    } *params32 = args;
+    struct glGetAttachedObjectsARB_params params =
+    {
+        .containerObj = params32->containerObj,
+        .maxCount = params32->maxCount,
+        .count = ULongToPtr(params32->count),
+        .obj = ULongToPtr(params32->obj),
+    };
+    NTSTATUS status;
+    status = ext_glGetAttachedObjectsARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetAttachedShaders( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLsizei maxCount;
+        PTR32 count;
+        PTR32 shaders;
+    } *params32 = args;
+    struct glGetAttachedShaders_params params =
+    {
+        .program = params32->program,
+        .maxCount = params32->maxCount,
+        .count = ULongToPtr(params32->count),
+        .shaders = ULongToPtr(params32->shaders),
+    };
+    NTSTATUS status;
+    status = ext_glGetAttachedShaders( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetAttribLocation( void *args )
+{
+    struct
+    {
+        GLuint program;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetAttribLocation_params params =
+    {
+        .program = params32->program,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetAttribLocation( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetAttribLocationARB( void *args )
+{
+    struct
+    {
+        GLhandleARB programObj;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetAttribLocationARB_params params =
+    {
+        .programObj = params32->programObj,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetAttribLocationARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetBooleanIndexedvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetBooleanIndexedvEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetBooleanIndexedvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetBooleani_v( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetBooleani_v_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetBooleani_v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetBufferParameteri64v( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetBufferParameteri64v_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetBufferParameteri64v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetBufferParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetBufferParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetBufferParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetBufferParameterivARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetBufferParameterivARB_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetBufferParameterivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetBufferParameterui64vNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetBufferParameterui64vNV_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetBufferParameterui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetBufferPointerv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetBufferPointerv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetBufferPointervARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetBufferPointervARB_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetBufferSubData( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetBufferSubData_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetBufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetBufferSubDataARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetBufferSubDataARB_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptrARB)ULongToPtr(params32->offset),
+        .size = (GLsizeiptrARB)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetBufferSubDataARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetClipPlanefOES( void *args )
+{
+    struct
+    {
+        GLenum plane;
+        PTR32 equation;
+    } *params32 = args;
+    struct glGetClipPlanefOES_params params =
+    {
+        .plane = params32->plane,
+        .equation = ULongToPtr(params32->equation),
+    };
+    NTSTATUS status;
+    status = ext_glGetClipPlanefOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetClipPlanexOES( void *args )
+{
+    struct
+    {
+        GLenum plane;
+        PTR32 equation;
+    } *params32 = args;
+    struct glGetClipPlanexOES_params params =
+    {
+        .plane = params32->plane,
+        .equation = ULongToPtr(params32->equation),
+    };
+    NTSTATUS status;
+    status = ext_glGetClipPlanexOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetColorTable( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        PTR32 table;
+    } *params32 = args;
+    struct glGetColorTable_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .table = ULongToPtr(params32->table),
+    };
+    NTSTATUS status;
+    status = ext_glGetColorTable( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetColorTableEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetColorTableEXT_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetColorTableEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetColorTableParameterfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetColorTableParameterfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetColorTableParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetColorTableParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetColorTableParameterfvEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetColorTableParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetColorTableParameterfvSGI( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetColorTableParameterfvSGI_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetColorTableParameterfvSGI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetColorTableParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetColorTableParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetColorTableParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetColorTableParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetColorTableParameterivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetColorTableParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetColorTableParameterivSGI( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetColorTableParameterivSGI_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetColorTableParameterivSGI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetColorTableSGI( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        PTR32 table;
+    } *params32 = args;
+    struct glGetColorTableSGI_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .table = ULongToPtr(params32->table),
+    };
+    NTSTATUS status;
+    status = ext_glGetColorTableSGI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCombinerInputParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum stage;
+        GLenum portion;
+        GLenum variable;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetCombinerInputParameterfvNV_params params =
+    {
+        .stage = params32->stage,
+        .portion = params32->portion,
+        .variable = params32->variable,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetCombinerInputParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCombinerInputParameterivNV( void *args )
+{
+    struct
+    {
+        GLenum stage;
+        GLenum portion;
+        GLenum variable;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetCombinerInputParameterivNV_params params =
+    {
+        .stage = params32->stage,
+        .portion = params32->portion,
+        .variable = params32->variable,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetCombinerInputParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCombinerOutputParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum stage;
+        GLenum portion;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetCombinerOutputParameterfvNV_params params =
+    {
+        .stage = params32->stage,
+        .portion = params32->portion,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetCombinerOutputParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCombinerOutputParameterivNV( void *args )
+{
+    struct
+    {
+        GLenum stage;
+        GLenum portion;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetCombinerOutputParameterivNV_params params =
+    {
+        .stage = params32->stage,
+        .portion = params32->portion,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetCombinerOutputParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCombinerStageParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum stage;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetCombinerStageParameterfvNV_params params =
+    {
+        .stage = params32->stage,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetCombinerStageParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCompressedMultiTexImageEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint lod;
+        PTR32 img;
+    } *params32 = args;
+    struct glGetCompressedMultiTexImageEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .lod = params32->lod,
+        .img = ULongToPtr(params32->img),
+    };
+    NTSTATUS status;
+    status = ext_glGetCompressedMultiTexImageEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCompressedTexImage( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        PTR32 img;
+    } *params32 = args;
+    struct glGetCompressedTexImage_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .img = ULongToPtr(params32->img),
+    };
+    NTSTATUS status;
+    status = ext_glGetCompressedTexImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCompressedTexImageARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        PTR32 img;
+    } *params32 = args;
+    struct glGetCompressedTexImageARB_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .img = ULongToPtr(params32->img),
+    };
+    NTSTATUS status;
+    status = ext_glGetCompressedTexImageARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCompressedTextureImage( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLsizei bufSize;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glGetCompressedTextureImage_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .bufSize = params32->bufSize,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glGetCompressedTextureImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCompressedTextureImageEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint lod;
+        PTR32 img;
+    } *params32 = args;
+    struct glGetCompressedTextureImageEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .lod = params32->lod,
+        .img = ULongToPtr(params32->img),
+    };
+    NTSTATUS status;
+    status = ext_glGetCompressedTextureImageEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCompressedTextureSubImage( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLsizei bufSize;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glGetCompressedTextureSubImage_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .bufSize = params32->bufSize,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glGetCompressedTextureSubImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetConvolutionFilter( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        PTR32 image;
+    } *params32 = args;
+    struct glGetConvolutionFilter_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .image = ULongToPtr(params32->image),
+    };
+    NTSTATUS status;
+    status = ext_glGetConvolutionFilter( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetConvolutionFilterEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        PTR32 image;
+    } *params32 = args;
+    struct glGetConvolutionFilterEXT_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .image = ULongToPtr(params32->image),
+    };
+    NTSTATUS status;
+    status = ext_glGetConvolutionFilterEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetConvolutionParameterfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetConvolutionParameterfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetConvolutionParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetConvolutionParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetConvolutionParameterfvEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetConvolutionParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetConvolutionParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetConvolutionParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetConvolutionParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetConvolutionParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetConvolutionParameterivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetConvolutionParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetConvolutionParameterxvOES( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetConvolutionParameterxvOES_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetConvolutionParameterxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetCoverageModulationTableNV( void *args )
+{
+    struct
+    {
+        GLsizei bufSize;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetCoverageModulationTableNV_params params =
+    {
+        .bufSize = params32->bufSize,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glGetCoverageModulationTableNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetDebugMessageLog( void *args )
+{
+    struct
+    {
+        GLuint count;
+        GLsizei bufSize;
+        PTR32 sources;
+        PTR32 types;
+        PTR32 ids;
+        PTR32 severities;
+        PTR32 lengths;
+        PTR32 messageLog;
+        GLuint ret;
+    } *params32 = args;
+    struct glGetDebugMessageLog_params params =
+    {
+        .count = params32->count,
+        .bufSize = params32->bufSize,
+        .sources = ULongToPtr(params32->sources),
+        .types = ULongToPtr(params32->types),
+        .ids = ULongToPtr(params32->ids),
+        .severities = ULongToPtr(params32->severities),
+        .lengths = ULongToPtr(params32->lengths),
+        .messageLog = ULongToPtr(params32->messageLog),
+    };
+    NTSTATUS status;
+    status = ext_glGetDebugMessageLog( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetDebugMessageLogAMD( void *args )
+{
+    struct
+    {
+        GLuint count;
+        GLsizei bufSize;
+        PTR32 categories;
+        PTR32 severities;
+        PTR32 ids;
+        PTR32 lengths;
+        PTR32 message;
+        GLuint ret;
+    } *params32 = args;
+    struct glGetDebugMessageLogAMD_params params =
+    {
+        .count = params32->count,
+        .bufSize = params32->bufSize,
+        .categories = ULongToPtr(params32->categories),
+        .severities = ULongToPtr(params32->severities),
+        .ids = ULongToPtr(params32->ids),
+        .lengths = ULongToPtr(params32->lengths),
+        .message = ULongToPtr(params32->message),
+    };
+    NTSTATUS status;
+    status = ext_glGetDebugMessageLogAMD( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetDebugMessageLogARB( void *args )
+{
+    struct
+    {
+        GLuint count;
+        GLsizei bufSize;
+        PTR32 sources;
+        PTR32 types;
+        PTR32 ids;
+        PTR32 severities;
+        PTR32 lengths;
+        PTR32 messageLog;
+        GLuint ret;
+    } *params32 = args;
+    struct glGetDebugMessageLogARB_params params =
+    {
+        .count = params32->count,
+        .bufSize = params32->bufSize,
+        .sources = ULongToPtr(params32->sources),
+        .types = ULongToPtr(params32->types),
+        .ids = ULongToPtr(params32->ids),
+        .severities = ULongToPtr(params32->severities),
+        .lengths = ULongToPtr(params32->lengths),
+        .messageLog = ULongToPtr(params32->messageLog),
+    };
+    NTSTATUS status;
+    status = ext_glGetDebugMessageLogARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetDetailTexFuncSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 points;
+    } *params32 = args;
+    struct glGetDetailTexFuncSGIS_params params =
+    {
+        .target = params32->target,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glGetDetailTexFuncSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetDoubleIndexedvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetDoubleIndexedvEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetDoubleIndexedvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetDoublei_v( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetDoublei_v_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetDoublei_v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetDoublei_vEXT( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetDoublei_vEXT_params params =
+    {
+        .pname = params32->pname,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetDoublei_vEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFenceivNV( void *args )
+{
+    struct
+    {
+        GLuint fence;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFenceivNV_params params =
+    {
+        .fence = params32->fence,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFenceivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFinalCombinerInputParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum variable;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFinalCombinerInputParameterfvNV_params params =
+    {
+        .variable = params32->variable,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFinalCombinerInputParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFinalCombinerInputParameterivNV( void *args )
+{
+    struct
+    {
+        GLenum variable;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFinalCombinerInputParameterivNV_params params =
+    {
+        .variable = params32->variable,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFinalCombinerInputParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFirstPerfQueryIdINTEL( void *args )
+{
+    struct
+    {
+        PTR32 queryId;
+    } *params32 = args;
+    struct glGetFirstPerfQueryIdINTEL_params params =
+    {
+        .queryId = ULongToPtr(params32->queryId),
+    };
+    NTSTATUS status;
+    status = ext_glGetFirstPerfQueryIdINTEL( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFixedvOES( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFixedvOES_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFixedvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFloatIndexedvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetFloatIndexedvEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetFloatIndexedvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFloati_v( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetFloati_v_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetFloati_v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFloati_vEXT( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFloati_vEXT_params params =
+    {
+        .pname = params32->pname,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFloati_vEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFogFuncSGIS( void *args )
+{
+    struct
+    {
+        PTR32 points;
+    } *params32 = args;
+    struct glGetFogFuncSGIS_params params =
+    {
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glGetFogFuncSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFragDataIndex( void *args )
+{
+    struct
+    {
+        GLuint program;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetFragDataIndex_params params =
+    {
+        .program = params32->program,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetFragDataIndex( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFragDataLocation( void *args )
+{
+    struct
+    {
+        GLuint program;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetFragDataLocation_params params =
+    {
+        .program = params32->program,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetFragDataLocation( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFragDataLocationEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetFragDataLocationEXT_params params =
+    {
+        .program = params32->program,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetFragDataLocationEXT( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFragmentLightfvSGIX( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFragmentLightfvSGIX_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFragmentLightfvSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFragmentLightivSGIX( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFragmentLightivSGIX_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFragmentLightivSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFragmentMaterialfvSGIX( void *args )
+{
+    struct
+    {
+        GLenum face;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFragmentMaterialfvSGIX_params params =
+    {
+        .face = params32->face,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFragmentMaterialfvSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFragmentMaterialivSGIX( void *args )
+{
+    struct
+    {
+        GLenum face;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFragmentMaterialivSGIX_params params =
+    {
+        .face = params32->face,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFragmentMaterialivSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFramebufferAttachmentParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum attachment;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFramebufferAttachmentParameteriv_params params =
+    {
+        .target = params32->target,
+        .attachment = params32->attachment,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFramebufferAttachmentParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFramebufferAttachmentParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum attachment;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFramebufferAttachmentParameterivEXT_params params =
+    {
+        .target = params32->target,
+        .attachment = params32->attachment,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFramebufferAttachmentParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFramebufferParameterfvAMD( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        GLuint numsamples;
+        GLuint pixelindex;
+        GLsizei size;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetFramebufferParameterfvAMD_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .numsamples = params32->numsamples,
+        .pixelindex = params32->pixelindex,
+        .size = params32->size,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetFramebufferParameterfvAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFramebufferParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFramebufferParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFramebufferParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFramebufferParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFramebufferParameterivEXT_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFramebufferParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetFramebufferParameterivMESA( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetFramebufferParameterivMESA_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetFramebufferParameterivMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetHistogram( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLboolean reset;
+        GLenum format;
+        GLenum type;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetHistogram_params params =
+    {
+        .target = params32->target,
+        .reset = params32->reset,
+        .format = params32->format,
+        .type = params32->type,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetHistogram( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetHistogramEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLboolean reset;
+        GLenum format;
+        GLenum type;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetHistogramEXT_params params =
+    {
+        .target = params32->target,
+        .reset = params32->reset,
+        .format = params32->format,
+        .type = params32->type,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetHistogramEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetHistogramParameterfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetHistogramParameterfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetHistogramParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetHistogramParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetHistogramParameterfvEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetHistogramParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetHistogramParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetHistogramParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetHistogramParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetHistogramParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetHistogramParameterivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetHistogramParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetHistogramParameterxvOES( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetHistogramParameterxvOES_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetHistogramParameterxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetImageTransformParameterfvHP( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetImageTransformParameterfvHP_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetImageTransformParameterfvHP( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetImageTransformParameterivHP( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetImageTransformParameterivHP_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetImageTransformParameterivHP( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetInfoLogARB( void *args )
+{
+    struct
+    {
+        GLhandleARB obj;
+        GLsizei maxLength;
+        PTR32 length;
+        PTR32 infoLog;
+    } *params32 = args;
+    struct glGetInfoLogARB_params params =
+    {
+        .obj = params32->obj,
+        .maxLength = params32->maxLength,
+        .length = ULongToPtr(params32->length),
+        .infoLog = ULongToPtr(params32->infoLog),
+    };
+    NTSTATUS status;
+    status = ext_glGetInfoLogARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetInteger64i_v( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetInteger64i_v_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetInteger64i_v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetInteger64v( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetInteger64v_params params =
+    {
+        .pname = params32->pname,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetInteger64v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetIntegerIndexedvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetIntegerIndexedvEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetIntegerIndexedvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetIntegeri_v( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetIntegeri_v_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetIntegeri_v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetIntegerui64i_vNV( void *args )
+{
+    struct
+    {
+        GLenum value;
+        GLuint index;
+        PTR32 result;
+    } *params32 = args;
+    struct glGetIntegerui64i_vNV_params params =
+    {
+        .value = params32->value,
+        .index = params32->index,
+        .result = ULongToPtr(params32->result),
+    };
+    NTSTATUS status;
+    status = ext_glGetIntegerui64i_vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetIntegerui64vNV( void *args )
+{
+    struct
+    {
+        GLenum value;
+        PTR32 result;
+    } *params32 = args;
+    struct glGetIntegerui64vNV_params params =
+    {
+        .value = params32->value,
+        .result = ULongToPtr(params32->result),
+    };
+    NTSTATUS status;
+    status = ext_glGetIntegerui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetInternalformatSampleivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLsizei samples;
+        GLenum pname;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetInternalformatSampleivNV_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .samples = params32->samples,
+        .pname = params32->pname,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetInternalformatSampleivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetInternalformati64v( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLenum pname;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetInternalformati64v_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .pname = params32->pname,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetInternalformati64v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetInternalformativ( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLenum pname;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetInternalformativ_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .pname = params32->pname,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetInternalformativ( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetInvariantBooleanvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetInvariantBooleanvEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetInvariantBooleanvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetInvariantFloatvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetInvariantFloatvEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetInvariantFloatvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetInvariantIntegervEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetInvariantIntegervEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetInvariantIntegervEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetLightxOES( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetLightxOES_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetLightxOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetListParameterfvSGIX( void *args )
+{
+    struct
+    {
+        GLuint list;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetListParameterfvSGIX_params params =
+    {
+        .list = params32->list,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetListParameterfvSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetListParameterivSGIX( void *args )
+{
+    struct
+    {
+        GLuint list;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetListParameterivSGIX_params params =
+    {
+        .list = params32->list,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetListParameterivSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetLocalConstantBooleanvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetLocalConstantBooleanvEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetLocalConstantBooleanvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetLocalConstantFloatvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetLocalConstantFloatvEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetLocalConstantFloatvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetLocalConstantIntegervEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetLocalConstantIntegervEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetLocalConstantIntegervEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMapAttribParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMapAttribParameterfvNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMapAttribParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMapAttribParameterivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMapAttribParameterivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMapAttribParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMapControlPointsNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLenum type;
+        GLsizei ustride;
+        GLsizei vstride;
+        GLboolean packed;
+        PTR32 points;
+    } *params32 = args;
+    struct glGetMapControlPointsNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .type = params32->type,
+        .ustride = params32->ustride,
+        .vstride = params32->vstride,
+        .packed = params32->packed,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glGetMapControlPointsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMapParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMapParameterfvNV_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMapParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMapParameterivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMapParameterivNV_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMapParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMapxvOES( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetMapxvOES_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glGetMapxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMemoryObjectDetachedResourcesuivNV( void *args )
+{
+    struct
+    {
+        GLuint memory;
+        GLenum pname;
+        GLint first;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMemoryObjectDetachedResourcesuivNV_params params =
+    {
+        .memory = params32->memory,
+        .pname = params32->pname,
+        .first = params32->first,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMemoryObjectDetachedResourcesuivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMemoryObjectParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint memoryObject;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMemoryObjectParameterivEXT_params params =
+    {
+        .memoryObject = params32->memoryObject,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMemoryObjectParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMinmax( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLboolean reset;
+        GLenum format;
+        GLenum type;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetMinmax_params params =
+    {
+        .target = params32->target,
+        .reset = params32->reset,
+        .format = params32->format,
+        .type = params32->type,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetMinmax( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMinmaxEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLboolean reset;
+        GLenum format;
+        GLenum type;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetMinmaxEXT_params params =
+    {
+        .target = params32->target,
+        .reset = params32->reset,
+        .format = params32->format,
+        .type = params32->type,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetMinmaxEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMinmaxParameterfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMinmaxParameterfv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMinmaxParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMinmaxParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMinmaxParameterfvEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMinmaxParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMinmaxParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMinmaxParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMinmaxParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMinmaxParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMinmaxParameterivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMinmaxParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexEnvfvEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexEnvfvEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexEnvfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexEnvivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexEnvivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexEnvivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexGendvEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexGendvEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexGendvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexGenfvEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexGenfvEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexGenfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexGenivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexGenivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexGenivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexImageEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glGetMultiTexImageEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexImageEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexLevelParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexLevelParameterfvEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexLevelParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexLevelParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexLevelParameterivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexLevelParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexParameterIivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexParameterIivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexParameterIivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexParameterIuivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexParameterIuivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexParameterIuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexParameterfvEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultiTexParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetMultiTexParameterivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultiTexParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultisamplefv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        GLuint index;
+        PTR32 val;
+    } *params32 = args;
+    struct glGetMultisamplefv_params params =
+    {
+        .pname = params32->pname,
+        .index = params32->index,
+        .val = ULongToPtr(params32->val),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultisamplefv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetMultisamplefvNV( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        GLuint index;
+        PTR32 val;
+    } *params32 = args;
+    struct glGetMultisamplefvNV_params params =
+    {
+        .pname = params32->pname,
+        .index = params32->index,
+        .val = ULongToPtr(params32->val),
+    };
+    NTSTATUS status;
+    status = ext_glGetMultisamplefvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedBufferParameteri64v( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedBufferParameteri64v_params params =
+    {
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedBufferParameteri64v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedBufferParameteriv( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedBufferParameteriv_params params =
+    {
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedBufferParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedBufferParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedBufferParameterivEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedBufferParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedBufferParameterui64vNV( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedBufferParameterui64vNV_params params =
+    {
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedBufferParameterui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedBufferPointerv_params params =
+    {
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedBufferPointervEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetNamedBufferSubData( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetNamedBufferSubData_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedBufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedBufferSubDataEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetNamedBufferSubDataEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedBufferSubDataEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedFramebufferAttachmentParameteriv( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLenum attachment;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedFramebufferAttachmentParameteriv_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .attachment = params32->attachment,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedFramebufferAttachmentParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedFramebufferAttachmentParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLenum attachment;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedFramebufferAttachmentParameterivEXT_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .attachment = params32->attachment,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedFramebufferAttachmentParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedFramebufferParameterfvAMD( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLenum pname;
+        GLuint numsamples;
+        GLuint pixelindex;
+        GLsizei size;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetNamedFramebufferParameterfvAMD_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .pname = params32->pname,
+        .numsamples = params32->numsamples,
+        .pixelindex = params32->pixelindex,
+        .size = params32->size,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedFramebufferParameterfvAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedFramebufferParameteriv( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetNamedFramebufferParameteriv_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedFramebufferParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedFramebufferParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedFramebufferParameterivEXT_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedFramebufferParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedProgramLocalParameterIivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedProgramLocalParameterIivEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedProgramLocalParameterIivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedProgramLocalParameterIuivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedProgramLocalParameterIuivEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedProgramLocalParameterIuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedProgramLocalParameterdvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedProgramLocalParameterdvEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedProgramLocalParameterdvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedProgramLocalParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedProgramLocalParameterfvEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedProgramLocalParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedProgramStringEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLenum pname;
+        PTR32 string;
+    } *params32 = args;
+    struct glGetNamedProgramStringEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .pname = params32->pname,
+        .string = ULongToPtr(params32->string),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedProgramStringEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedProgramivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedProgramivEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedProgramivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedRenderbufferParameteriv( void *args )
+{
+    struct
+    {
+        GLuint renderbuffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedRenderbufferParameteriv_params params =
+    {
+        .renderbuffer = params32->renderbuffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedRenderbufferParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedRenderbufferParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint renderbuffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedRenderbufferParameterivEXT_params params =
+    {
+        .renderbuffer = params32->renderbuffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedRenderbufferParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedStringARB( void *args )
+{
+    struct
+    {
+        GLint namelen;
+        PTR32 name;
+        GLsizei bufSize;
+        PTR32 stringlen;
+        PTR32 string;
+    } *params32 = args;
+    struct glGetNamedStringARB_params params =
+    {
+        .namelen = params32->namelen,
+        .name = ULongToPtr(params32->name),
+        .bufSize = params32->bufSize,
+        .stringlen = ULongToPtr(params32->stringlen),
+        .string = ULongToPtr(params32->string),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedStringARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNamedStringivARB( void *args )
+{
+    struct
+    {
+        GLint namelen;
+        PTR32 name;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedStringivARB_params params =
+    {
+        .namelen = params32->namelen,
+        .name = ULongToPtr(params32->name),
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetNamedStringivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetNextPerfQueryIdINTEL( void *args )
+{
+    struct
+    {
+        GLuint queryId;
+        PTR32 nextQueryId;
+    } *params32 = args;
+    struct glGetNextPerfQueryIdINTEL_params params =
+    {
+        .queryId = params32->queryId,
+        .nextQueryId = ULongToPtr(params32->nextQueryId),
+    };
+    NTSTATUS status;
+    status = ext_glGetNextPerfQueryIdINTEL( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetObjectBufferfvATI( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetObjectBufferfvATI_params params =
+    {
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetObjectBufferfvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetObjectBufferivATI( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetObjectBufferivATI_params params =
+    {
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetObjectBufferivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetObjectLabel( void *args )
+{
+    struct
+    {
+        GLenum identifier;
+        GLuint name;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 label;
+    } *params32 = args;
+    struct glGetObjectLabel_params params =
+    {
+        .identifier = params32->identifier,
+        .name = params32->name,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .label = ULongToPtr(params32->label),
+    };
+    NTSTATUS status;
+    status = ext_glGetObjectLabel( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetObjectLabelEXT( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLuint object;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 label;
+    } *params32 = args;
+    struct glGetObjectLabelEXT_params params =
+    {
+        .type = params32->type,
+        .object = params32->object,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .label = ULongToPtr(params32->label),
+    };
+    NTSTATUS status;
+    status = ext_glGetObjectLabelEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetObjectParameterfvARB( void *args )
+{
+    struct
+    {
+        GLhandleARB obj;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetObjectParameterfvARB_params params =
+    {
+        .obj = params32->obj,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetObjectParameterfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetObjectParameterivAPPLE( void *args )
+{
+    struct
+    {
+        GLenum objectType;
+        GLuint name;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetObjectParameterivAPPLE_params params =
+    {
+        .objectType = params32->objectType,
+        .name = params32->name,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetObjectParameterivAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetObjectParameterivARB( void *args )
+{
+    struct
+    {
+        GLhandleARB obj;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetObjectParameterivARB_params params =
+    {
+        .obj = params32->obj,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetObjectParameterivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetObjectPtrLabel( void *args )
+{
+    struct
+    {
+        PTR32 ptr;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 label;
+    } *params32 = args;
+    struct glGetObjectPtrLabel_params params =
+    {
+        .ptr = ULongToPtr(params32->ptr),
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .label = ULongToPtr(params32->label),
+    };
+    NTSTATUS status;
+    status = ext_glGetObjectPtrLabel( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetOcclusionQueryivNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetOcclusionQueryivNV_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetOcclusionQueryivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetOcclusionQueryuivNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetOcclusionQueryuivNV_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetOcclusionQueryuivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathColorGenfvNV( void *args )
+{
+    struct
+    {
+        GLenum color;
+        GLenum pname;
+        PTR32 value;
+    } *params32 = args;
+    struct glGetPathColorGenfvNV_params params =
+    {
+        .color = params32->color,
+        .pname = params32->pname,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathColorGenfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathColorGenivNV( void *args )
+{
+    struct
+    {
+        GLenum color;
+        GLenum pname;
+        PTR32 value;
+    } *params32 = args;
+    struct glGetPathColorGenivNV_params params =
+    {
+        .color = params32->color,
+        .pname = params32->pname,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathColorGenivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathCommandsNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        PTR32 commands;
+    } *params32 = args;
+    struct glGetPathCommandsNV_params params =
+    {
+        .path = params32->path,
+        .commands = ULongToPtr(params32->commands),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathCommandsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathCoordsNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        PTR32 coords;
+    } *params32 = args;
+    struct glGetPathCoordsNV_params params =
+    {
+        .path = params32->path,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathCoordsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathDashArrayNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        PTR32 dashArray;
+    } *params32 = args;
+    struct glGetPathDashArrayNV_params params =
+    {
+        .path = params32->path,
+        .dashArray = ULongToPtr(params32->dashArray),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathDashArrayNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathMetricRangeNV( void *args )
+{
+    struct
+    {
+        GLbitfield metricQueryMask;
+        GLuint firstPathName;
+        GLsizei numPaths;
+        GLsizei stride;
+        PTR32 metrics;
+    } *params32 = args;
+    struct glGetPathMetricRangeNV_params params =
+    {
+        .metricQueryMask = params32->metricQueryMask,
+        .firstPathName = params32->firstPathName,
+        .numPaths = params32->numPaths,
+        .stride = params32->stride,
+        .metrics = ULongToPtr(params32->metrics),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathMetricRangeNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathMetricsNV( void *args )
+{
+    struct
+    {
+        GLbitfield metricQueryMask;
+        GLsizei numPaths;
+        GLenum pathNameType;
+        PTR32 paths;
+        GLuint pathBase;
+        GLsizei stride;
+        PTR32 metrics;
+    } *params32 = args;
+    struct glGetPathMetricsNV_params params =
+    {
+        .metricQueryMask = params32->metricQueryMask,
+        .numPaths = params32->numPaths,
+        .pathNameType = params32->pathNameType,
+        .paths = ULongToPtr(params32->paths),
+        .pathBase = params32->pathBase,
+        .stride = params32->stride,
+        .metrics = ULongToPtr(params32->metrics),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathMetricsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathParameterfvNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLenum pname;
+        PTR32 value;
+    } *params32 = args;
+    struct glGetPathParameterfvNV_params params =
+    {
+        .path = params32->path,
+        .pname = params32->pname,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathParameterivNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLenum pname;
+        PTR32 value;
+    } *params32 = args;
+    struct glGetPathParameterivNV_params params =
+    {
+        .path = params32->path,
+        .pname = params32->pname,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathSpacingNV( void *args )
+{
+    struct
+    {
+        GLenum pathListMode;
+        GLsizei numPaths;
+        GLenum pathNameType;
+        PTR32 paths;
+        GLuint pathBase;
+        GLfloat advanceScale;
+        GLfloat kerningScale;
+        GLenum transformType;
+        PTR32 returnedSpacing;
+    } *params32 = args;
+    struct glGetPathSpacingNV_params params =
+    {
+        .pathListMode = params32->pathListMode,
+        .numPaths = params32->numPaths,
+        .pathNameType = params32->pathNameType,
+        .paths = ULongToPtr(params32->paths),
+        .pathBase = params32->pathBase,
+        .advanceScale = params32->advanceScale,
+        .kerningScale = params32->kerningScale,
+        .transformType = params32->transformType,
+        .returnedSpacing = ULongToPtr(params32->returnedSpacing),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathSpacingNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathTexGenfvNV( void *args )
+{
+    struct
+    {
+        GLenum texCoordSet;
+        GLenum pname;
+        PTR32 value;
+    } *params32 = args;
+    struct glGetPathTexGenfvNV_params params =
+    {
+        .texCoordSet = params32->texCoordSet,
+        .pname = params32->pname,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathTexGenfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPathTexGenivNV( void *args )
+{
+    struct
+    {
+        GLenum texCoordSet;
+        GLenum pname;
+        PTR32 value;
+    } *params32 = args;
+    struct glGetPathTexGenivNV_params params =
+    {
+        .texCoordSet = params32->texCoordSet,
+        .pname = params32->pname,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glGetPathTexGenivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfCounterInfoINTEL( void *args )
+{
+    struct
+    {
+        GLuint queryId;
+        GLuint counterId;
+        GLuint counterNameLength;
+        PTR32 counterName;
+        GLuint counterDescLength;
+        PTR32 counterDesc;
+        PTR32 counterOffset;
+        PTR32 counterDataSize;
+        PTR32 counterTypeEnum;
+        PTR32 counterDataTypeEnum;
+        PTR32 rawCounterMaxValue;
+    } *params32 = args;
+    struct glGetPerfCounterInfoINTEL_params params =
+    {
+        .queryId = params32->queryId,
+        .counterId = params32->counterId,
+        .counterNameLength = params32->counterNameLength,
+        .counterName = ULongToPtr(params32->counterName),
+        .counterDescLength = params32->counterDescLength,
+        .counterDesc = ULongToPtr(params32->counterDesc),
+        .counterOffset = ULongToPtr(params32->counterOffset),
+        .counterDataSize = ULongToPtr(params32->counterDataSize),
+        .counterTypeEnum = ULongToPtr(params32->counterTypeEnum),
+        .counterDataTypeEnum = ULongToPtr(params32->counterDataTypeEnum),
+        .rawCounterMaxValue = ULongToPtr(params32->rawCounterMaxValue),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfCounterInfoINTEL( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfMonitorCounterDataAMD( void *args )
+{
+    struct
+    {
+        GLuint monitor;
+        GLenum pname;
+        GLsizei dataSize;
+        PTR32 data;
+        PTR32 bytesWritten;
+    } *params32 = args;
+    struct glGetPerfMonitorCounterDataAMD_params params =
+    {
+        .monitor = params32->monitor,
+        .pname = params32->pname,
+        .dataSize = params32->dataSize,
+        .data = ULongToPtr(params32->data),
+        .bytesWritten = ULongToPtr(params32->bytesWritten),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfMonitorCounterDataAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfMonitorCounterInfoAMD( void *args )
+{
+    struct
+    {
+        GLuint group;
+        GLuint counter;
+        GLenum pname;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetPerfMonitorCounterInfoAMD_params params =
+    {
+        .group = params32->group,
+        .counter = params32->counter,
+        .pname = params32->pname,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfMonitorCounterInfoAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfMonitorCounterStringAMD( void *args )
+{
+    struct
+    {
+        GLuint group;
+        GLuint counter;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 counterString;
+    } *params32 = args;
+    struct glGetPerfMonitorCounterStringAMD_params params =
+    {
+        .group = params32->group,
+        .counter = params32->counter,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .counterString = ULongToPtr(params32->counterString),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfMonitorCounterStringAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfMonitorCountersAMD( void *args )
+{
+    struct
+    {
+        GLuint group;
+        PTR32 numCounters;
+        PTR32 maxActiveCounters;
+        GLsizei counterSize;
+        PTR32 counters;
+    } *params32 = args;
+    struct glGetPerfMonitorCountersAMD_params params =
+    {
+        .group = params32->group,
+        .numCounters = ULongToPtr(params32->numCounters),
+        .maxActiveCounters = ULongToPtr(params32->maxActiveCounters),
+        .counterSize = params32->counterSize,
+        .counters = ULongToPtr(params32->counters),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfMonitorCountersAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfMonitorGroupStringAMD( void *args )
+{
+    struct
+    {
+        GLuint group;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 groupString;
+    } *params32 = args;
+    struct glGetPerfMonitorGroupStringAMD_params params =
+    {
+        .group = params32->group,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .groupString = ULongToPtr(params32->groupString),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfMonitorGroupStringAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfMonitorGroupsAMD( void *args )
+{
+    struct
+    {
+        PTR32 numGroups;
+        GLsizei groupsSize;
+        PTR32 groups;
+    } *params32 = args;
+    struct glGetPerfMonitorGroupsAMD_params params =
+    {
+        .numGroups = ULongToPtr(params32->numGroups),
+        .groupsSize = params32->groupsSize,
+        .groups = ULongToPtr(params32->groups),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfMonitorGroupsAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfQueryDataINTEL( void *args )
+{
+    struct
+    {
+        GLuint queryHandle;
+        GLuint flags;
+        GLsizei dataSize;
+        PTR32 data;
+        PTR32 bytesWritten;
+    } *params32 = args;
+    struct glGetPerfQueryDataINTEL_params params =
+    {
+        .queryHandle = params32->queryHandle,
+        .flags = params32->flags,
+        .dataSize = params32->dataSize,
+        .data = ULongToPtr(params32->data),
+        .bytesWritten = ULongToPtr(params32->bytesWritten),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfQueryDataINTEL( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfQueryIdByNameINTEL( void *args )
+{
+    struct
+    {
+        PTR32 queryName;
+        PTR32 queryId;
+    } *params32 = args;
+    struct glGetPerfQueryIdByNameINTEL_params params =
+    {
+        .queryName = ULongToPtr(params32->queryName),
+        .queryId = ULongToPtr(params32->queryId),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfQueryIdByNameINTEL( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPerfQueryInfoINTEL( void *args )
+{
+    struct
+    {
+        GLuint queryId;
+        GLuint queryNameLength;
+        PTR32 queryName;
+        PTR32 dataSize;
+        PTR32 noCounters;
+        PTR32 noInstances;
+        PTR32 capsMask;
+    } *params32 = args;
+    struct glGetPerfQueryInfoINTEL_params params =
+    {
+        .queryId = params32->queryId,
+        .queryNameLength = params32->queryNameLength,
+        .queryName = ULongToPtr(params32->queryName),
+        .dataSize = ULongToPtr(params32->dataSize),
+        .noCounters = ULongToPtr(params32->noCounters),
+        .noInstances = ULongToPtr(params32->noInstances),
+        .capsMask = ULongToPtr(params32->capsMask),
+    };
+    NTSTATUS status;
+    status = ext_glGetPerfQueryInfoINTEL( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPixelMapxv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLint size;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetPixelMapxv_params params =
+    {
+        .map = params32->map,
+        .size = params32->size,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetPixelMapxv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPixelTexGenParameterfvSGIS( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetPixelTexGenParameterfvSGIS_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetPixelTexGenParameterfvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPixelTexGenParameterivSGIS( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetPixelTexGenParameterivSGIS_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetPixelTexGenParameterivSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPixelTransformParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetPixelTransformParameterfvEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetPixelTransformParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPixelTransformParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetPixelTransformParameterivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetPixelTransformParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetPointerIndexedvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetPointerIndexedvEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetPointeri_vEXT( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetPointeri_vEXT_params params =
+    {
+        .pname = params32->pname,
+        .index = params32->index,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetPointervEXT( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetPointervEXT_params params =
+    {
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetProgramBinary( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 binaryFormat;
+        PTR32 binary;
+    } *params32 = args;
+    struct glGetProgramBinary_params params =
+    {
+        .program = params32->program,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .binaryFormat = ULongToPtr(params32->binaryFormat),
+        .binary = ULongToPtr(params32->binary),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramBinary( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramEnvParameterIivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramEnvParameterIivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramEnvParameterIivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramEnvParameterIuivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramEnvParameterIuivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramEnvParameterIuivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramEnvParameterdvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramEnvParameterdvARB_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramEnvParameterdvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramEnvParameterfvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramEnvParameterfvARB_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramEnvParameterfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramInfoLog( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 infoLog;
+    } *params32 = args;
+    struct glGetProgramInfoLog_params params =
+    {
+        .program = params32->program,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .infoLog = ULongToPtr(params32->infoLog),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramInfoLog( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramInterfaceiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum programInterface;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramInterfaceiv_params params =
+    {
+        .program = params32->program,
+        .programInterface = params32->programInterface,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramInterfaceiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramLocalParameterIivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramLocalParameterIivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramLocalParameterIivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramLocalParameterIuivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramLocalParameterIuivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramLocalParameterIuivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramLocalParameterdvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramLocalParameterdvARB_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramLocalParameterdvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramLocalParameterfvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramLocalParameterfvARB_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramLocalParameterfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramNamedParameterdvNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLsizei len;
+        PTR32 name;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramNamedParameterdvNV_params params =
+    {
+        .id = params32->id,
+        .len = params32->len,
+        .name = ULongToPtr(params32->name),
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramNamedParameterdvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramNamedParameterfvNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLsizei len;
+        PTR32 name;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramNamedParameterfvNV_params params =
+    {
+        .id = params32->id,
+        .len = params32->len,
+        .name = ULongToPtr(params32->name),
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramNamedParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramParameterdvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramParameterdvNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramParameterdvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramParameterfvNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramPipelineInfoLog( void *args )
+{
+    struct
+    {
+        GLuint pipeline;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 infoLog;
+    } *params32 = args;
+    struct glGetProgramPipelineInfoLog_params params =
+    {
+        .pipeline = params32->pipeline,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .infoLog = ULongToPtr(params32->infoLog),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramPipelineInfoLog( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramPipelineiv( void *args )
+{
+    struct
+    {
+        GLuint pipeline;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramPipelineiv_params params =
+    {
+        .pipeline = params32->pipeline,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramPipelineiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramResourceIndex( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum programInterface;
+        PTR32 name;
+        GLuint ret;
+    } *params32 = args;
+    struct glGetProgramResourceIndex_params params =
+    {
+        .program = params32->program,
+        .programInterface = params32->programInterface,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramResourceIndex( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramResourceLocation( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum programInterface;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetProgramResourceLocation_params params =
+    {
+        .program = params32->program,
+        .programInterface = params32->programInterface,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramResourceLocation( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramResourceLocationIndex( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum programInterface;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetProgramResourceLocationIndex_params params =
+    {
+        .program = params32->program,
+        .programInterface = params32->programInterface,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramResourceLocationIndex( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramResourceName( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum programInterface;
+        GLuint index;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetProgramResourceName_params params =
+    {
+        .program = params32->program,
+        .programInterface = params32->programInterface,
+        .index = params32->index,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramResourceName( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramResourcefvNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum programInterface;
+        GLuint index;
+        GLsizei propCount;
+        PTR32 props;
+        GLsizei count;
+        PTR32 length;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramResourcefvNV_params params =
+    {
+        .program = params32->program,
+        .programInterface = params32->programInterface,
+        .index = params32->index,
+        .propCount = params32->propCount,
+        .props = ULongToPtr(params32->props),
+        .count = params32->count,
+        .length = ULongToPtr(params32->length),
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramResourcefvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramResourceiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum programInterface;
+        GLuint index;
+        GLsizei propCount;
+        PTR32 props;
+        GLsizei count;
+        PTR32 length;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramResourceiv_params params =
+    {
+        .program = params32->program,
+        .programInterface = params32->programInterface,
+        .index = params32->index,
+        .propCount = params32->propCount,
+        .props = ULongToPtr(params32->props),
+        .count = params32->count,
+        .length = ULongToPtr(params32->length),
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramResourceiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramStageiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum shadertype;
+        GLenum pname;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetProgramStageiv_params params =
+    {
+        .program = params32->program,
+        .shadertype = params32->shadertype,
+        .pname = params32->pname,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramStageiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramStringARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 string;
+    } *params32 = args;
+    struct glGetProgramStringARB_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .string = ULongToPtr(params32->string),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramStringARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramStringNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 program;
+    } *params32 = args;
+    struct glGetProgramStringNV_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .program = ULongToPtr(params32->program),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramStringNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramSubroutineParameteruivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetProgramSubroutineParameteruivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramSubroutineParameteruivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramiv_params params =
+    {
+        .program = params32->program,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramivARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramivARB_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetProgramivNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetProgramivNV_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetProgramivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryBufferObjecti64v( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLuint buffer;
+        GLenum pname;
+        PTR32 offset;
+    } *params32 = args;
+    struct glGetQueryBufferObjecti64v_params params =
+    {
+        .id = params32->id,
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryBufferObjecti64v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryBufferObjectiv( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLuint buffer;
+        GLenum pname;
+        PTR32 offset;
+    } *params32 = args;
+    struct glGetQueryBufferObjectiv_params params =
+    {
+        .id = params32->id,
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryBufferObjectiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryBufferObjectui64v( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLuint buffer;
+        GLenum pname;
+        PTR32 offset;
+    } *params32 = args;
+    struct glGetQueryBufferObjectui64v_params params =
+    {
+        .id = params32->id,
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryBufferObjectui64v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryBufferObjectuiv( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLuint buffer;
+        GLenum pname;
+        PTR32 offset;
+    } *params32 = args;
+    struct glGetQueryBufferObjectuiv_params params =
+    {
+        .id = params32->id,
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryBufferObjectuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryIndexediv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryIndexediv_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryIndexediv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryObjecti64v( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryObjecti64v_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryObjecti64v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryObjecti64vEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryObjecti64vEXT_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryObjecti64vEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryObjectiv( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryObjectiv_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryObjectiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryObjectivARB( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryObjectivARB_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryObjectivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryObjectui64v( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryObjectui64v_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryObjectui64v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryObjectui64vEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryObjectui64vEXT_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryObjectui64vEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryObjectuiv( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryObjectuiv_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryObjectuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryObjectuivARB( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryObjectuivARB_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryObjectuivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryiv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryiv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetQueryivARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetQueryivARB_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetQueryivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetRenderbufferParameteriv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetRenderbufferParameteriv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetRenderbufferParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetRenderbufferParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetRenderbufferParameterivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetRenderbufferParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSamplerParameterIiv( void *args )
+{
+    struct
+    {
+        GLuint sampler;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetSamplerParameterIiv_params params =
+    {
+        .sampler = params32->sampler,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetSamplerParameterIiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSamplerParameterIuiv( void *args )
+{
+    struct
+    {
+        GLuint sampler;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetSamplerParameterIuiv_params params =
+    {
+        .sampler = params32->sampler,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetSamplerParameterIuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSamplerParameterfv( void *args )
+{
+    struct
+    {
+        GLuint sampler;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetSamplerParameterfv_params params =
+    {
+        .sampler = params32->sampler,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetSamplerParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSamplerParameteriv( void *args )
+{
+    struct
+    {
+        GLuint sampler;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetSamplerParameteriv_params params =
+    {
+        .sampler = params32->sampler,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetSamplerParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSemaphoreParameterui64vEXT( void *args )
+{
+    struct
+    {
+        GLuint semaphore;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetSemaphoreParameterui64vEXT_params params =
+    {
+        .semaphore = params32->semaphore,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetSemaphoreParameterui64vEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSeparableFilter( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        PTR32 row;
+        PTR32 column;
+        PTR32 span;
+    } *params32 = args;
+    struct glGetSeparableFilter_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .row = ULongToPtr(params32->row),
+        .column = ULongToPtr(params32->column),
+        .span = ULongToPtr(params32->span),
+    };
+    NTSTATUS status;
+    status = ext_glGetSeparableFilter( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSeparableFilterEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        PTR32 row;
+        PTR32 column;
+        PTR32 span;
+    } *params32 = args;
+    struct glGetSeparableFilterEXT_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .row = ULongToPtr(params32->row),
+        .column = ULongToPtr(params32->column),
+        .span = ULongToPtr(params32->span),
+    };
+    NTSTATUS status;
+    status = ext_glGetSeparableFilterEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetShaderInfoLog( void *args )
+{
+    struct
+    {
+        GLuint shader;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 infoLog;
+    } *params32 = args;
+    struct glGetShaderInfoLog_params params =
+    {
+        .shader = params32->shader,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .infoLog = ULongToPtr(params32->infoLog),
+    };
+    NTSTATUS status;
+    status = ext_glGetShaderInfoLog( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetShaderPrecisionFormat( void *args )
+{
+    struct
+    {
+        GLenum shadertype;
+        GLenum precisiontype;
+        PTR32 range;
+        PTR32 precision;
+    } *params32 = args;
+    struct glGetShaderPrecisionFormat_params params =
+    {
+        .shadertype = params32->shadertype,
+        .precisiontype = params32->precisiontype,
+        .range = ULongToPtr(params32->range),
+        .precision = ULongToPtr(params32->precision),
+    };
+    NTSTATUS status;
+    status = ext_glGetShaderPrecisionFormat( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetShaderSource( void *args )
+{
+    struct
+    {
+        GLuint shader;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 source;
+    } *params32 = args;
+    struct glGetShaderSource_params params =
+    {
+        .shader = params32->shader,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .source = ULongToPtr(params32->source),
+    };
+    NTSTATUS status;
+    status = ext_glGetShaderSource( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetShaderSourceARB( void *args )
+{
+    struct
+    {
+        GLhandleARB obj;
+        GLsizei maxLength;
+        PTR32 length;
+        PTR32 source;
+    } *params32 = args;
+    struct glGetShaderSourceARB_params params =
+    {
+        .obj = params32->obj,
+        .maxLength = params32->maxLength,
+        .length = ULongToPtr(params32->length),
+        .source = ULongToPtr(params32->source),
+    };
+    NTSTATUS status;
+    status = ext_glGetShaderSourceARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetShaderiv( void *args )
+{
+    struct
+    {
+        GLuint shader;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetShaderiv_params params =
+    {
+        .shader = params32->shader,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetShaderiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetShadingRateImagePaletteNV( void *args )
+{
+    struct
+    {
+        GLuint viewport;
+        GLuint entry;
+        PTR32 rate;
+    } *params32 = args;
+    struct glGetShadingRateImagePaletteNV_params params =
+    {
+        .viewport = params32->viewport,
+        .entry = params32->entry,
+        .rate = ULongToPtr(params32->rate),
+    };
+    NTSTATUS status;
+    status = ext_glGetShadingRateImagePaletteNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetShadingRateSampleLocationivNV( void *args )
+{
+    struct
+    {
+        GLenum rate;
+        GLuint samples;
+        GLuint index;
+        PTR32 location;
+    } *params32 = args;
+    struct glGetShadingRateSampleLocationivNV_params params =
+    {
+        .rate = params32->rate,
+        .samples = params32->samples,
+        .index = params32->index,
+        .location = ULongToPtr(params32->location),
+    };
+    NTSTATUS status;
+    status = ext_glGetShadingRateSampleLocationivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSharpenTexFuncSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 points;
+    } *params32 = args;
+    struct glGetSharpenTexFuncSGIS_params params =
+    {
+        .target = params32->target,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glGetSharpenTexFuncSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetStringi( void *args )
+{
+    struct
+    {
+        GLenum name;
+        GLuint index;
+        PTR32 ret;
+    } *params32 = args;
+    struct glGetStringi_params params =
+    {
+        .name = params32->name,
+        .index = params32->index,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetSubroutineIndex( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum shadertype;
+        PTR32 name;
+        GLuint ret;
+    } *params32 = args;
+    struct glGetSubroutineIndex_params params =
+    {
+        .program = params32->program,
+        .shadertype = params32->shadertype,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetSubroutineIndex( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSubroutineUniformLocation( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum shadertype;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetSubroutineUniformLocation_params params =
+    {
+        .program = params32->program,
+        .shadertype = params32->shadertype,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetSubroutineUniformLocation( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetSynciv( void *args )
+{
+    struct
+    {
+        PTR32 sync;
+        GLenum pname;
+        GLsizei count;
+        PTR32 length;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetSynciv_params params =
+    {
+        .sync = ULongToPtr(params32->sync),
+        .pname = params32->pname,
+        .count = params32->count,
+        .length = ULongToPtr(params32->length),
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetSynciv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexBumpParameterfvATI( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetTexBumpParameterfvATI_params params =
+    {
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexBumpParameterfvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexBumpParameterivATI( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetTexBumpParameterivATI_params params =
+    {
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexBumpParameterivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexEnvxvOES( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexEnvxvOES_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexEnvxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexFilterFuncSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum filter;
+        PTR32 weights;
+    } *params32 = args;
+    struct glGetTexFilterFuncSGIS_params params =
+    {
+        .target = params32->target,
+        .filter = params32->filter,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexFilterFuncSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexGenxvOES( void *args )
+{
+    struct
+    {
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexGenxvOES_params params =
+    {
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexGenxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexLevelParameterxvOES( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexLevelParameterxvOES_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexLevelParameterxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexParameterIiv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexParameterIiv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexParameterIiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexParameterIivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexParameterIivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexParameterIivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexParameterIuiv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexParameterIuiv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexParameterIuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexParameterIuivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexParameterIuivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexParameterIuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTexParameterPointervAPPLE( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexParameterPointervAPPLE_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetTexParameterxvOES( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTexParameterxvOES_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTexParameterxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureImage( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glGetTextureImage_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureImageEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glGetTextureImageEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureImageEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureLevelParameterfv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureLevelParameterfv_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureLevelParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureLevelParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureLevelParameterfvEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureLevelParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureLevelParameteriv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureLevelParameteriv_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureLevelParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureLevelParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureLevelParameterivEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureLevelParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureParameterIiv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureParameterIiv_params params =
+    {
+        .texture = params32->texture,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureParameterIiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureParameterIivEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureParameterIivEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureParameterIivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureParameterIuiv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureParameterIuiv_params params =
+    {
+        .texture = params32->texture,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureParameterIuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureParameterIuivEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureParameterIuivEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureParameterIuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureParameterfv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureParameterfv_params params =
+    {
+        .texture = params32->texture,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureParameterfvEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureParameteriv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureParameteriv_params params =
+    {
+        .texture = params32->texture,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTextureParameterivEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTextureSubImage( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glGetTextureSubImage_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glGetTextureSubImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTrackMatrixivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint address;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetTrackMatrixivNV_params params =
+    {
+        .target = params32->target,
+        .address = params32->address,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetTrackMatrixivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTransformFeedbackVarying( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint index;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 size;
+        PTR32 type;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetTransformFeedbackVarying_params params =
+    {
+        .program = params32->program,
+        .index = params32->index,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .size = ULongToPtr(params32->size),
+        .type = ULongToPtr(params32->type),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetTransformFeedbackVarying( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTransformFeedbackVaryingEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint index;
+        GLsizei bufSize;
+        PTR32 length;
+        PTR32 size;
+        PTR32 type;
+        PTR32 name;
+    } *params32 = args;
+    struct glGetTransformFeedbackVaryingEXT_params params =
+    {
+        .program = params32->program,
+        .index = params32->index,
+        .bufSize = params32->bufSize,
+        .length = ULongToPtr(params32->length),
+        .size = ULongToPtr(params32->size),
+        .type = ULongToPtr(params32->type),
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetTransformFeedbackVaryingEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTransformFeedbackVaryingNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLuint index;
+        PTR32 location;
+    } *params32 = args;
+    struct glGetTransformFeedbackVaryingNV_params params =
+    {
+        .program = params32->program,
+        .index = params32->index,
+        .location = ULongToPtr(params32->location),
+    };
+    NTSTATUS status;
+    status = ext_glGetTransformFeedbackVaryingNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTransformFeedbacki64_v( void *args )
+{
+    struct
+    {
+        GLuint xfb;
+        GLenum pname;
+        GLuint index;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetTransformFeedbacki64_v_params params =
+    {
+        .xfb = params32->xfb,
+        .pname = params32->pname,
+        .index = params32->index,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetTransformFeedbacki64_v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTransformFeedbacki_v( void *args )
+{
+    struct
+    {
+        GLuint xfb;
+        GLenum pname;
+        GLuint index;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetTransformFeedbacki_v_params params =
+    {
+        .xfb = params32->xfb,
+        .pname = params32->pname,
+        .index = params32->index,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetTransformFeedbacki_v( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetTransformFeedbackiv( void *args )
+{
+    struct
+    {
+        GLuint xfb;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetTransformFeedbackiv_params params =
+    {
+        .xfb = params32->xfb,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetTransformFeedbackiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformBlockIndex( void *args )
+{
+    struct
+    {
+        GLuint program;
+        PTR32 uniformBlockName;
+        GLuint ret;
+    } *params32 = args;
+    struct glGetUniformBlockIndex_params params =
+    {
+        .program = params32->program,
+        .uniformBlockName = ULongToPtr(params32->uniformBlockName),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformBlockIndex( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformIndices( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLsizei uniformCount;
+        PTR32 uniformNames;
+        PTR32 uniformIndices;
+    } *params32 = args;
+    struct glGetUniformIndices_params params =
+    {
+        .program = params32->program,
+        .uniformCount = params32->uniformCount,
+        .uniformIndices = ULongToPtr(params32->uniformIndices),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetUniformLocation( void *args )
+{
+    struct
+    {
+        GLuint program;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetUniformLocation_params params =
+    {
+        .program = params32->program,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformLocation( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformLocationARB( void *args )
+{
+    struct
+    {
+        GLhandleARB programObj;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetUniformLocationARB_params params =
+    {
+        .programObj = params32->programObj,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformLocationARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 ret;
+    } *params32 = args;
+    struct glGetUniformOffsetEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetUniformSubroutineuiv( void *args )
+{
+    struct
+    {
+        GLenum shadertype;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformSubroutineuiv_params params =
+    {
+        .shadertype = params32->shadertype,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformSubroutineuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformdv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformdv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformdv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformfv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformfv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformfvARB( void *args )
+{
+    struct
+    {
+        GLhandleARB programObj;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformfvARB_params params =
+    {
+        .programObj = params32->programObj,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformi64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformi64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformi64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformi64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformi64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformi64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformiv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformivARB( void *args )
+{
+    struct
+    {
+        GLhandleARB programObj;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformivARB_params params =
+    {
+        .programObj = params32->programObj,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformui64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformui64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformui64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformui64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformuiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformuiv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUniformuivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetUniformuivEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetUniformuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUnsignedBytei_vEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetUnsignedBytei_vEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetUnsignedBytei_vEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetUnsignedBytevEXT( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetUnsignedBytevEXT_params params =
+    {
+        .pname = params32->pname,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetUnsignedBytevEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVariantArrayObjectfvATI( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVariantArrayObjectfvATI_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVariantArrayObjectfvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVariantArrayObjectivATI( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVariantArrayObjectivATI_params params =
+    {
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVariantArrayObjectivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVariantBooleanvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetVariantBooleanvEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetVariantBooleanvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVariantFloatvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetVariantFloatvEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetVariantFloatvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVariantIntegervEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetVariantIntegervEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glGetVariantIntegervEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVariantPointervEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum value;
+        PTR32 data;
+    } *params32 = args;
+    struct glGetVariantPointervEXT_params params =
+    {
+        .id = params32->id,
+        .value = params32->value,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetVaryingLocationNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        PTR32 name;
+        GLint ret;
+    } *params32 = args;
+    struct glGetVaryingLocationNV_params params =
+    {
+        .program = params32->program,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glGetVaryingLocationNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexArrayIndexed64iv( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint index;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetVertexArrayIndexed64iv_params params =
+    {
+        .vaobj = params32->vaobj,
+        .index = params32->index,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexArrayIndexed64iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexArrayIndexediv( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint index;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetVertexArrayIndexediv_params params =
+    {
+        .vaobj = params32->vaobj,
+        .index = params32->index,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexArrayIndexediv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexArrayIntegeri_vEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint index;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetVertexArrayIntegeri_vEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .index = params32->index,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexArrayIntegeri_vEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexArrayIntegervEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetVertexArrayIntegervEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexArrayIntegervEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexArrayPointeri_vEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint index;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetVertexArrayPointeri_vEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .index = params32->index,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetVertexArrayPointervEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetVertexArrayPointervEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetVertexArrayiv( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glGetVertexArrayiv_params params =
+    {
+        .vaobj = params32->vaobj,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexArrayiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribArrayObjectfvATI( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribArrayObjectfvATI_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribArrayObjectfvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribArrayObjectivATI( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribArrayObjectivATI_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribArrayObjectivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribIiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribIiv_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribIiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribIivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribIivEXT_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribIivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribIuiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribIuiv_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribIuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribIuivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribIuivEXT_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribIuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribLdv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribLdv_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribLdv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribLdvEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribLdvEXT_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribLdvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribLi64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribLi64vNV_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribLi64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribLui64vARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribLui64vARB_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribLui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribLui64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribLui64vNV_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribLui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribPointerv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glGetVertexAttribPointerv_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribPointervARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glGetVertexAttribPointervARB_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribPointervNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glGetVertexAttribPointervNV_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribdv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribdv_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribdv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribdvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribdvARB_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribdvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribdvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribdvNV_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribdvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribfv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribfv_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribfvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribfvARB_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribfvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribfvNV_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribiv_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribivARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribivARB_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVertexAttribivNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVertexAttribivNV_params params =
+    {
+        .index = params32->index,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVertexAttribivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVideoCaptureStreamdvNV( void *args )
+{
+    struct
+    {
+        GLuint video_capture_slot;
+        GLuint stream;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVideoCaptureStreamdvNV_params params =
+    {
+        .video_capture_slot = params32->video_capture_slot,
+        .stream = params32->stream,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVideoCaptureStreamdvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVideoCaptureStreamfvNV( void *args )
+{
+    struct
+    {
+        GLuint video_capture_slot;
+        GLuint stream;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVideoCaptureStreamfvNV_params params =
+    {
+        .video_capture_slot = params32->video_capture_slot,
+        .stream = params32->stream,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVideoCaptureStreamfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVideoCaptureStreamivNV( void *args )
+{
+    struct
+    {
+        GLuint video_capture_slot;
+        GLuint stream;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVideoCaptureStreamivNV_params params =
+    {
+        .video_capture_slot = params32->video_capture_slot,
+        .stream = params32->stream,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVideoCaptureStreamivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVideoCaptureivNV( void *args )
+{
+    struct
+    {
+        GLuint video_capture_slot;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVideoCaptureivNV_params params =
+    {
+        .video_capture_slot = params32->video_capture_slot,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVideoCaptureivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVideoi64vNV( void *args )
+{
+    struct
+    {
+        GLuint video_slot;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVideoi64vNV_params params =
+    {
+        .video_slot = params32->video_slot,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVideoi64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVideoivNV( void *args )
+{
+    struct
+    {
+        GLuint video_slot;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVideoivNV_params params =
+    {
+        .video_slot = params32->video_slot,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVideoivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVideoui64vNV( void *args )
+{
+    struct
+    {
+        GLuint video_slot;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVideoui64vNV_params params =
+    {
+        .video_slot = params32->video_slot,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVideoui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVideouivNV( void *args )
+{
+    struct
+    {
+        GLuint video_slot;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetVideouivNV_params params =
+    {
+        .video_slot = params32->video_slot,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetVideouivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetVkProcAddrNV( void *args )
+{
+    struct
+    {
+        PTR32 name;
+        PTR32 ret;
+    } *params32 = args;
+    struct glGetVkProcAddrNV_params params =
+    {
+        .name = ULongToPtr(params32->name),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glGetnColorTable( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 table;
+    } *params32 = args;
+    struct glGetnColorTable_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .table = ULongToPtr(params32->table),
+    };
+    NTSTATUS status;
+    status = ext_glGetnColorTable( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnColorTableARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 table;
+    } *params32 = args;
+    struct glGetnColorTableARB_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .table = ULongToPtr(params32->table),
+    };
+    NTSTATUS status;
+    status = ext_glGetnColorTableARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnCompressedTexImage( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint lod;
+        GLsizei bufSize;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glGetnCompressedTexImage_params params =
+    {
+        .target = params32->target,
+        .lod = params32->lod,
+        .bufSize = params32->bufSize,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glGetnCompressedTexImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnCompressedTexImageARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint lod;
+        GLsizei bufSize;
+        PTR32 img;
+    } *params32 = args;
+    struct glGetnCompressedTexImageARB_params params =
+    {
+        .target = params32->target,
+        .lod = params32->lod,
+        .bufSize = params32->bufSize,
+        .img = ULongToPtr(params32->img),
+    };
+    NTSTATUS status;
+    status = ext_glGetnCompressedTexImageARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnConvolutionFilter( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 image;
+    } *params32 = args;
+    struct glGetnConvolutionFilter_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .image = ULongToPtr(params32->image),
+    };
+    NTSTATUS status;
+    status = ext_glGetnConvolutionFilter( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnConvolutionFilterARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 image;
+    } *params32 = args;
+    struct glGetnConvolutionFilterARB_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .image = ULongToPtr(params32->image),
+    };
+    NTSTATUS status;
+    status = ext_glGetnConvolutionFilterARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnHistogram( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLboolean reset;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnHistogram_params params =
+    {
+        .target = params32->target,
+        .reset = params32->reset,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnHistogram( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnHistogramARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLboolean reset;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnHistogramARB_params params =
+    {
+        .target = params32->target,
+        .reset = params32->reset,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnHistogramARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnMapdv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        GLsizei bufSize;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetnMapdv_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .bufSize = params32->bufSize,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glGetnMapdv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnMapdvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        GLsizei bufSize;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetnMapdvARB_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .bufSize = params32->bufSize,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glGetnMapdvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnMapfv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        GLsizei bufSize;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetnMapfv_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .bufSize = params32->bufSize,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glGetnMapfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnMapfvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        GLsizei bufSize;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetnMapfvARB_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .bufSize = params32->bufSize,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glGetnMapfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnMapiv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        GLsizei bufSize;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetnMapiv_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .bufSize = params32->bufSize,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glGetnMapiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnMapivARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum query;
+        GLsizei bufSize;
+        PTR32 v;
+    } *params32 = args;
+    struct glGetnMapivARB_params params =
+    {
+        .target = params32->target,
+        .query = params32->query,
+        .bufSize = params32->bufSize,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glGetnMapivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnMinmax( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLboolean reset;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnMinmax_params params =
+    {
+        .target = params32->target,
+        .reset = params32->reset,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnMinmax( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnMinmaxARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLboolean reset;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnMinmaxARB_params params =
+    {
+        .target = params32->target,
+        .reset = params32->reset,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnMinmaxARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnPixelMapfv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnPixelMapfv_params params =
+    {
+        .map = params32->map,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnPixelMapfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnPixelMapfvARB( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnPixelMapfvARB_params params =
+    {
+        .map = params32->map,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnPixelMapfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnPixelMapuiv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnPixelMapuiv_params params =
+    {
+        .map = params32->map,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnPixelMapuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnPixelMapuivARB( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnPixelMapuivARB_params params =
+    {
+        .map = params32->map,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnPixelMapuivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnPixelMapusv( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnPixelMapusv_params params =
+    {
+        .map = params32->map,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnPixelMapusv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnPixelMapusvARB( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLsizei bufSize;
+        PTR32 values;
+    } *params32 = args;
+    struct glGetnPixelMapusvARB_params params =
+    {
+        .map = params32->map,
+        .bufSize = params32->bufSize,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glGetnPixelMapusvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnPolygonStipple( void *args )
+{
+    struct
+    {
+        GLsizei bufSize;
+        PTR32 pattern;
+    } *params32 = args;
+    struct glGetnPolygonStipple_params params =
+    {
+        .bufSize = params32->bufSize,
+        .pattern = ULongToPtr(params32->pattern),
+    };
+    NTSTATUS status;
+    status = ext_glGetnPolygonStipple( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnPolygonStippleARB( void *args )
+{
+    struct
+    {
+        GLsizei bufSize;
+        PTR32 pattern;
+    } *params32 = args;
+    struct glGetnPolygonStippleARB_params params =
+    {
+        .bufSize = params32->bufSize,
+        .pattern = ULongToPtr(params32->pattern),
+    };
+    NTSTATUS status;
+    status = ext_glGetnPolygonStippleARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnSeparableFilter( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        GLsizei rowBufSize;
+        PTR32 row;
+        GLsizei columnBufSize;
+        PTR32 column;
+        PTR32 span;
+    } *params32 = args;
+    struct glGetnSeparableFilter_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .rowBufSize = params32->rowBufSize,
+        .row = ULongToPtr(params32->row),
+        .columnBufSize = params32->columnBufSize,
+        .column = ULongToPtr(params32->column),
+        .span = ULongToPtr(params32->span),
+    };
+    NTSTATUS status;
+    status = ext_glGetnSeparableFilter( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnSeparableFilterARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLenum type;
+        GLsizei rowBufSize;
+        PTR32 row;
+        GLsizei columnBufSize;
+        PTR32 column;
+        PTR32 span;
+    } *params32 = args;
+    struct glGetnSeparableFilterARB_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .type = params32->type,
+        .rowBufSize = params32->rowBufSize,
+        .row = ULongToPtr(params32->row),
+        .columnBufSize = params32->columnBufSize,
+        .column = ULongToPtr(params32->column),
+        .span = ULongToPtr(params32->span),
+    };
+    NTSTATUS status;
+    status = ext_glGetnSeparableFilterARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnTexImage( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glGetnTexImage_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glGetnTexImage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnTexImageARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 img;
+    } *params32 = args;
+    struct glGetnTexImageARB_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .img = ULongToPtr(params32->img),
+    };
+    NTSTATUS status;
+    status = ext_glGetnTexImageARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformdv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformdv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformdv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformdvARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformdvARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformdvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformfv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformfv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformfvARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformfvARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformi64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformi64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformi64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformiv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformivARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformivARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformui64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformui64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformuiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformuiv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glGetnUniformuivARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei bufSize;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetnUniformuivARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .bufSize = params32->bufSize,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glGetnUniformuivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glIglooInterfaceSGIX( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glIglooInterfaceSGIX_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glIglooInterfaceSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glImageTransformParameterfvHP( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glImageTransformParameterfvHP_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glImageTransformParameterfvHP( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glImageTransformParameterivHP( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glImageTransformParameterivHP_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glImageTransformParameterivHP( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glImportMemoryWin32HandleEXT( void *args )
+{
+    struct
+    {
+        GLuint memory;
+        GLuint64 size;
+        GLenum handleType;
+        PTR32 handle;
+    } *params32 = args;
+    struct glImportMemoryWin32HandleEXT_params params =
+    {
+        .memory = params32->memory,
+        .size = params32->size,
+        .handleType = params32->handleType,
+        .handle = ULongToPtr(params32->handle),
+    };
+    NTSTATUS status;
+    status = ext_glImportMemoryWin32HandleEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glImportMemoryWin32NameEXT( void *args )
+{
+    struct
+    {
+        GLuint memory;
+        GLuint64 size;
+        GLenum handleType;
+        PTR32 name;
+    } *params32 = args;
+    struct glImportMemoryWin32NameEXT_params params =
+    {
+        .memory = params32->memory,
+        .size = params32->size,
+        .handleType = params32->handleType,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glImportMemoryWin32NameEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glImportSemaphoreWin32HandleEXT( void *args )
+{
+    struct
+    {
+        GLuint semaphore;
+        GLenum handleType;
+        PTR32 handle;
+    } *params32 = args;
+    struct glImportSemaphoreWin32HandleEXT_params params =
+    {
+        .semaphore = params32->semaphore,
+        .handleType = params32->handleType,
+        .handle = ULongToPtr(params32->handle),
+    };
+    NTSTATUS status;
+    status = ext_glImportSemaphoreWin32HandleEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glImportSemaphoreWin32NameEXT( void *args )
+{
+    struct
+    {
+        GLuint semaphore;
+        GLenum handleType;
+        PTR32 name;
+    } *params32 = args;
+    struct glImportSemaphoreWin32NameEXT_params params =
+    {
+        .semaphore = params32->semaphore,
+        .handleType = params32->handleType,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glImportSemaphoreWin32NameEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glImportSyncEXT( void *args )
+{
+    struct
+    {
+        GLenum external_sync_type;
+        PTR32 external_sync;
+        GLbitfield flags;
+        PTR32 ret;
+    } *params32 = args;
+    struct glImportSyncEXT_params params =
+    {
+        .external_sync_type = params32->external_sync_type,
+        .external_sync = (GLintptr)ULongToPtr(params32->external_sync),
+        .flags = params32->flags,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glIndexPointerEXT( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei stride;
+        GLsizei count;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glIndexPointerEXT_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .count = params32->count,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glIndexPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glIndexPointerListIBM( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLint stride;
+        PTR32 pointer;
+        GLint ptrstride;
+    } *params32 = args;
+    struct glIndexPointerListIBM_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .ptrstride = params32->ptrstride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glIndexxvOES( void *args )
+{
+    struct
+    {
+        PTR32 component;
+    } *params32 = args;
+    struct glIndexxvOES_params params =
+    {
+        .component = ULongToPtr(params32->component),
+    };
+    NTSTATUS status;
+    status = ext_glIndexxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glInsertEventMarkerEXT( void *args )
+{
+    struct
+    {
+        GLsizei length;
+        PTR32 marker;
+    } *params32 = args;
+    struct glInsertEventMarkerEXT_params params =
+    {
+        .length = params32->length,
+        .marker = ULongToPtr(params32->marker),
+    };
+    NTSTATUS status;
+    status = ext_glInsertEventMarkerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glInstrumentsBufferSGIX( void *args )
+{
+    struct
+    {
+        GLsizei size;
+        PTR32 buffer;
+    } *params32 = args;
+    struct glInstrumentsBufferSGIX_params params =
+    {
+        .size = params32->size,
+        .buffer = ULongToPtr(params32->buffer),
+    };
+    NTSTATUS status;
+    status = ext_glInstrumentsBufferSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glInvalidateBufferSubData( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 length;
+    } *params32 = args;
+    struct glInvalidateBufferSubData_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+    };
+    NTSTATUS status;
+    status = ext_glInvalidateBufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glInvalidateFramebuffer( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei numAttachments;
+        PTR32 attachments;
+    } *params32 = args;
+    struct glInvalidateFramebuffer_params params =
+    {
+        .target = params32->target,
+        .numAttachments = params32->numAttachments,
+        .attachments = ULongToPtr(params32->attachments),
+    };
+    NTSTATUS status;
+    status = ext_glInvalidateFramebuffer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glInvalidateNamedFramebufferData( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLsizei numAttachments;
+        PTR32 attachments;
+    } *params32 = args;
+    struct glInvalidateNamedFramebufferData_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .numAttachments = params32->numAttachments,
+        .attachments = ULongToPtr(params32->attachments),
+    };
+    NTSTATUS status;
+    status = ext_glInvalidateNamedFramebufferData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glInvalidateNamedFramebufferSubData( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLsizei numAttachments;
+        PTR32 attachments;
+        GLint x;
+        GLint y;
+        GLsizei width;
+        GLsizei height;
+    } *params32 = args;
+    struct glInvalidateNamedFramebufferSubData_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .numAttachments = params32->numAttachments,
+        .attachments = ULongToPtr(params32->attachments),
+        .x = params32->x,
+        .y = params32->y,
+        .width = params32->width,
+        .height = params32->height,
+    };
+    NTSTATUS status;
+    status = ext_glInvalidateNamedFramebufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glInvalidateSubFramebuffer( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei numAttachments;
+        PTR32 attachments;
+        GLint x;
+        GLint y;
+        GLsizei width;
+        GLsizei height;
+    } *params32 = args;
+    struct glInvalidateSubFramebuffer_params params =
+    {
+        .target = params32->target,
+        .numAttachments = params32->numAttachments,
+        .attachments = ULongToPtr(params32->attachments),
+        .x = params32->x,
+        .y = params32->y,
+        .width = params32->width,
+        .height = params32->height,
+    };
+    NTSTATUS status;
+    status = ext_glInvalidateSubFramebuffer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glIsNamedStringARB( void *args )
+{
+    struct
+    {
+        GLint namelen;
+        PTR32 name;
+        GLboolean ret;
+    } *params32 = args;
+    struct glIsNamedStringARB_params params =
+    {
+        .namelen = params32->namelen,
+        .name = ULongToPtr(params32->name),
+    };
+    NTSTATUS status;
+    status = ext_glIsNamedStringARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glIsSync( void *args )
+{
+    struct
+    {
+        PTR32 sync;
+        GLboolean ret;
+    } *params32 = args;
+    struct glIsSync_params params =
+    {
+        .sync = ULongToPtr(params32->sync),
+    };
+    NTSTATUS status;
+    status = ext_glIsSync( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLGPUNamedBufferSubDataNVX( void *args )
+{
+    struct
+    {
+        GLbitfield gpuMask;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glLGPUNamedBufferSubDataNVX_params params =
+    {
+        .gpuMask = params32->gpuMask,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glLGPUNamedBufferSubDataNVX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLabelObjectEXT( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLuint object;
+        GLsizei length;
+        PTR32 label;
+    } *params32 = args;
+    struct glLabelObjectEXT_params params =
+    {
+        .type = params32->type,
+        .object = params32->object,
+        .length = params32->length,
+        .label = ULongToPtr(params32->label),
+    };
+    NTSTATUS status;
+    status = ext_glLabelObjectEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLightModelxvOES( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glLightModelxvOES_params params =
+    {
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glLightModelxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLightxvOES( void *args )
+{
+    struct
+    {
+        GLenum light;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glLightxvOES_params params =
+    {
+        .light = params32->light,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glLightxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glListDrawCommandsStatesClientNV( void *args )
+{
+    struct
+    {
+        GLuint list;
+        GLuint segment;
+        PTR32 indirects;
+        PTR32 sizes;
+        PTR32 states;
+        PTR32 fbos;
+        GLuint count;
+    } *params32 = args;
+    struct glListDrawCommandsStatesClientNV_params params =
+    {
+        .list = params32->list,
+        .segment = params32->segment,
+        .sizes = ULongToPtr(params32->sizes),
+        .states = ULongToPtr(params32->states),
+        .fbos = ULongToPtr(params32->fbos),
+        .count = params32->count,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glListParameterfvSGIX( void *args )
+{
+    struct
+    {
+        GLuint list;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glListParameterfvSGIX_params params =
+    {
+        .list = params32->list,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glListParameterfvSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glListParameterivSGIX( void *args )
+{
+    struct
+    {
+        GLuint list;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glListParameterivSGIX_params params =
+    {
+        .list = params32->list,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glListParameterivSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLoadMatrixxOES( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glLoadMatrixxOES_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glLoadMatrixxOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLoadProgramNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint id;
+        GLsizei len;
+        PTR32 program;
+    } *params32 = args;
+    struct glLoadProgramNV_params params =
+    {
+        .target = params32->target,
+        .id = params32->id,
+        .len = params32->len,
+        .program = ULongToPtr(params32->program),
+    };
+    NTSTATUS status;
+    status = ext_glLoadProgramNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLoadTransposeMatrixd( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glLoadTransposeMatrixd_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glLoadTransposeMatrixd( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLoadTransposeMatrixdARB( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glLoadTransposeMatrixdARB_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glLoadTransposeMatrixdARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLoadTransposeMatrixf( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glLoadTransposeMatrixf_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glLoadTransposeMatrixf( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLoadTransposeMatrixfARB( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glLoadTransposeMatrixfARB_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glLoadTransposeMatrixfARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glLoadTransposeMatrixxOES( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glLoadTransposeMatrixxOES_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glLoadTransposeMatrixxOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMTexCoord2fvSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMTexCoord2fvSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMTexCoord2fvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMapBuffer( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapBuffer_params params =
+    {
+        .target = params32->target,
+        .access = params32->access,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMapBufferARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapBufferARB_params params =
+    {
+        .target = params32->target,
+        .access = params32->access,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMapBufferRange( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 length;
+        GLbitfield access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapBufferRange_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+        .access = params32->access,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMapControlPointsNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLenum type;
+        GLsizei ustride;
+        GLsizei vstride;
+        GLint uorder;
+        GLint vorder;
+        GLboolean packed;
+        PTR32 points;
+    } *params32 = args;
+    struct glMapControlPointsNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .type = params32->type,
+        .ustride = params32->ustride,
+        .vstride = params32->vstride,
+        .uorder = params32->uorder,
+        .vorder = params32->vorder,
+        .packed = params32->packed,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glMapControlPointsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMapNamedBuffer( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapNamedBuffer_params params =
+    {
+        .buffer = params32->buffer,
+        .access = params32->access,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMapNamedBufferEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapNamedBufferEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .access = params32->access,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 length;
+        GLbitfield access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapNamedBufferRange_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+        .access = params32->access,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 length;
+        GLbitfield access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapNamedBufferRangeEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+        .access = params32->access,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMapObjectBufferATI( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapObjectBufferATI_params params =
+    {
+        .buffer = params32->buffer,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMapParameterfvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMapParameterfvNV_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMapParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMapParameterivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMapParameterivNV_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMapParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMapTexture2DINTEL( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLbitfield access;
+        PTR32 stride;
+        PTR32 layout;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapTexture2DINTEL_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .access = params32->access,
+        .stride = ULongToPtr(params32->stride),
+        .layout = ULongToPtr(params32->layout),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMapVertexAttrib1dAPPLE( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLuint size;
+        GLdouble u1;
+        GLdouble u2;
+        GLint stride;
+        GLint order;
+        PTR32 points;
+    } *params32 = args;
+    struct glMapVertexAttrib1dAPPLE_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .stride = params32->stride,
+        .order = params32->order,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glMapVertexAttrib1dAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMapVertexAttrib1fAPPLE( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLuint size;
+        GLfloat u1;
+        GLfloat u2;
+        GLint stride;
+        GLint order;
+        PTR32 points;
+    } *params32 = args;
+    struct glMapVertexAttrib1fAPPLE_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .stride = params32->stride,
+        .order = params32->order,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glMapVertexAttrib1fAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMapVertexAttrib2dAPPLE( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLuint size;
+        GLdouble u1;
+        GLdouble u2;
+        GLint ustride;
+        GLint uorder;
+        GLdouble v1;
+        GLdouble v2;
+        GLint vstride;
+        GLint vorder;
+        PTR32 points;
+    } *params32 = args;
+    struct glMapVertexAttrib2dAPPLE_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .ustride = params32->ustride,
+        .uorder = params32->uorder,
+        .v1 = params32->v1,
+        .v2 = params32->v2,
+        .vstride = params32->vstride,
+        .vorder = params32->vorder,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glMapVertexAttrib2dAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMapVertexAttrib2fAPPLE( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLuint size;
+        GLfloat u1;
+        GLfloat u2;
+        GLint ustride;
+        GLint uorder;
+        GLfloat v1;
+        GLfloat v2;
+        GLint vstride;
+        GLint vorder;
+        PTR32 points;
+    } *params32 = args;
+    struct glMapVertexAttrib2fAPPLE_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .u1 = params32->u1,
+        .u2 = params32->u2,
+        .ustride = params32->ustride,
+        .uorder = params32->uorder,
+        .v1 = params32->v1,
+        .v2 = params32->v2,
+        .vstride = params32->vstride,
+        .vorder = params32->vorder,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glMapVertexAttrib2fAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMaterialxvOES( void *args )
+{
+    struct
+    {
+        GLenum face;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glMaterialxvOES_params params =
+    {
+        .face = params32->face,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glMaterialxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixIndexPointerARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glMatrixIndexPointerARB_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixIndexPointerARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixIndexubvARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 indices;
+    } *params32 = args;
+    struct glMatrixIndexubvARB_params params =
+    {
+        .size = params32->size,
+        .indices = ULongToPtr(params32->indices),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixIndexubvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixIndexuivARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 indices;
+    } *params32 = args;
+    struct glMatrixIndexuivARB_params params =
+    {
+        .size = params32->size,
+        .indices = ULongToPtr(params32->indices),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixIndexuivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixIndexusvARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 indices;
+    } *params32 = args;
+    struct glMatrixIndexusvARB_params params =
+    {
+        .size = params32->size,
+        .indices = ULongToPtr(params32->indices),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixIndexusvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixLoad3x2fNV( void *args )
+{
+    struct
+    {
+        GLenum matrixMode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixLoad3x2fNV_params params =
+    {
+        .matrixMode = params32->matrixMode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixLoad3x2fNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixLoad3x3fNV( void *args )
+{
+    struct
+    {
+        GLenum matrixMode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixLoad3x3fNV_params params =
+    {
+        .matrixMode = params32->matrixMode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixLoad3x3fNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixLoadTranspose3x3fNV( void *args )
+{
+    struct
+    {
+        GLenum matrixMode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixLoadTranspose3x3fNV_params params =
+    {
+        .matrixMode = params32->matrixMode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixLoadTranspose3x3fNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixLoadTransposedEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixLoadTransposedEXT_params params =
+    {
+        .mode = params32->mode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixLoadTransposedEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixLoadTransposefEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixLoadTransposefEXT_params params =
+    {
+        .mode = params32->mode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixLoadTransposefEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixLoaddEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixLoaddEXT_params params =
+    {
+        .mode = params32->mode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixLoaddEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixLoadfEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixLoadfEXT_params params =
+    {
+        .mode = params32->mode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixLoadfEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixMult3x2fNV( void *args )
+{
+    struct
+    {
+        GLenum matrixMode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixMult3x2fNV_params params =
+    {
+        .matrixMode = params32->matrixMode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixMult3x2fNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixMult3x3fNV( void *args )
+{
+    struct
+    {
+        GLenum matrixMode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixMult3x3fNV_params params =
+    {
+        .matrixMode = params32->matrixMode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixMult3x3fNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixMultTranspose3x3fNV( void *args )
+{
+    struct
+    {
+        GLenum matrixMode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixMultTranspose3x3fNV_params params =
+    {
+        .matrixMode = params32->matrixMode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixMultTranspose3x3fNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixMultTransposedEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixMultTransposedEXT_params params =
+    {
+        .mode = params32->mode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixMultTransposedEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixMultTransposefEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixMultTransposefEXT_params params =
+    {
+        .mode = params32->mode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixMultTransposefEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixMultdEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixMultdEXT_params params =
+    {
+        .mode = params32->mode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixMultdEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMatrixMultfEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 m;
+    } *params32 = args;
+    struct glMatrixMultfEXT_params params =
+    {
+        .mode = params32->mode,
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMatrixMultfEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMemoryObjectParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint memoryObject;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMemoryObjectParameterivEXT_params params =
+    {
+        .memoryObject = params32->memoryObject,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMemoryObjectParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultMatrixxOES( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glMultMatrixxOES_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMultMatrixxOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultTransposeMatrixd( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glMultTransposeMatrixd_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMultTransposeMatrixd( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultTransposeMatrixdARB( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glMultTransposeMatrixdARB_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMultTransposeMatrixdARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultTransposeMatrixf( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glMultTransposeMatrixf_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMultTransposeMatrixf( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultTransposeMatrixfARB( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glMultTransposeMatrixfARB_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMultTransposeMatrixfARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultTransposeMatrixxOES( void *args )
+{
+    struct
+    {
+        PTR32 m;
+    } *params32 = args;
+    struct glMultTransposeMatrixxOES_params params =
+    {
+        .m = ULongToPtr(params32->m),
+    };
+    NTSTATUS status;
+    status = ext_glMultTransposeMatrixxOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawArrays( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 first;
+        PTR32 count;
+        GLsizei drawcount;
+    } *params32 = args;
+    struct glMultiDrawArrays_params params =
+    {
+        .mode = params32->mode,
+        .first = ULongToPtr(params32->first),
+        .count = ULongToPtr(params32->count),
+        .drawcount = params32->drawcount,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawArrays( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawArraysEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 first;
+        PTR32 count;
+        GLsizei primcount;
+    } *params32 = args;
+    struct glMultiDrawArraysEXT_params params =
+    {
+        .mode = params32->mode,
+        .first = ULongToPtr(params32->first),
+        .count = ULongToPtr(params32->count),
+        .primcount = params32->primcount,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawArraysEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawArraysIndirect( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 indirect;
+        GLsizei drawcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawArraysIndirect_params params =
+    {
+        .mode = params32->mode,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawcount = params32->drawcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawArraysIndirect( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawArraysIndirectAMD( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 indirect;
+        GLsizei primcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawArraysIndirectAMD_params params =
+    {
+        .mode = params32->mode,
+        .indirect = ULongToPtr(params32->indirect),
+        .primcount = params32->primcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawArraysIndirectAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawArraysIndirectBindlessCountNV( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 indirect;
+        GLsizei drawCount;
+        GLsizei maxDrawCount;
+        GLsizei stride;
+        GLint vertexBufferCount;
+    } *params32 = args;
+    struct glMultiDrawArraysIndirectBindlessCountNV_params params =
+    {
+        .mode = params32->mode,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawCount = params32->drawCount,
+        .maxDrawCount = params32->maxDrawCount,
+        .stride = params32->stride,
+        .vertexBufferCount = params32->vertexBufferCount,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawArraysIndirectBindlessCountNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawArraysIndirectBindlessNV( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 indirect;
+        GLsizei drawCount;
+        GLsizei stride;
+        GLint vertexBufferCount;
+    } *params32 = args;
+    struct glMultiDrawArraysIndirectBindlessNV_params params =
+    {
+        .mode = params32->mode,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawCount = params32->drawCount,
+        .stride = params32->stride,
+        .vertexBufferCount = params32->vertexBufferCount,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawArraysIndirectBindlessNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawArraysIndirectCount( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 indirect;
+        PTR32 drawcount;
+        GLsizei maxdrawcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawArraysIndirectCount_params params =
+    {
+        .mode = params32->mode,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawcount = (GLintptr)ULongToPtr(params32->drawcount),
+        .maxdrawcount = params32->maxdrawcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawArraysIndirectCount( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawArraysIndirectCountARB( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 indirect;
+        PTR32 drawcount;
+        GLsizei maxdrawcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawArraysIndirectCountARB_params params =
+    {
+        .mode = params32->mode,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawcount = (GLintptr)ULongToPtr(params32->drawcount),
+        .maxdrawcount = params32->maxdrawcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawArraysIndirectCountARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElementArrayAPPLE( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 first;
+        PTR32 count;
+        GLsizei primcount;
+    } *params32 = args;
+    struct glMultiDrawElementArrayAPPLE_params params =
+    {
+        .mode = params32->mode,
+        .first = ULongToPtr(params32->first),
+        .count = ULongToPtr(params32->count),
+        .primcount = params32->primcount,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawElementArrayAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElements( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei drawcount;
+    } *params32 = args;
+    struct glMultiDrawElements_params params =
+    {
+        .mode = params32->mode,
+        .count = ULongToPtr(params32->count),
+        .type = params32->type,
+        .drawcount = params32->drawcount,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElementsBaseVertex( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei drawcount;
+        PTR32 basevertex;
+    } *params32 = args;
+    struct glMultiDrawElementsBaseVertex_params params =
+    {
+        .mode = params32->mode,
+        .count = ULongToPtr(params32->count),
+        .type = params32->type,
+        .drawcount = params32->drawcount,
+        .basevertex = ULongToPtr(params32->basevertex),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElementsEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        PTR32 count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei primcount;
+    } *params32 = args;
+    struct glMultiDrawElementsEXT_params params =
+    {
+        .mode = params32->mode,
+        .count = ULongToPtr(params32->count),
+        .type = params32->type,
+        .primcount = params32->primcount,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElementsIndirect( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLenum type;
+        PTR32 indirect;
+        GLsizei drawcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawElementsIndirect_params params =
+    {
+        .mode = params32->mode,
+        .type = params32->type,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawcount = params32->drawcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawElementsIndirect( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElementsIndirectAMD( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLenum type;
+        PTR32 indirect;
+        GLsizei primcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawElementsIndirectAMD_params params =
+    {
+        .mode = params32->mode,
+        .type = params32->type,
+        .indirect = ULongToPtr(params32->indirect),
+        .primcount = params32->primcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawElementsIndirectAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElementsIndirectBindlessCountNV( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLenum type;
+        PTR32 indirect;
+        GLsizei drawCount;
+        GLsizei maxDrawCount;
+        GLsizei stride;
+        GLint vertexBufferCount;
+    } *params32 = args;
+    struct glMultiDrawElementsIndirectBindlessCountNV_params params =
+    {
+        .mode = params32->mode,
+        .type = params32->type,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawCount = params32->drawCount,
+        .maxDrawCount = params32->maxDrawCount,
+        .stride = params32->stride,
+        .vertexBufferCount = params32->vertexBufferCount,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawElementsIndirectBindlessCountNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElementsIndirectBindlessNV( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLenum type;
+        PTR32 indirect;
+        GLsizei drawCount;
+        GLsizei stride;
+        GLint vertexBufferCount;
+    } *params32 = args;
+    struct glMultiDrawElementsIndirectBindlessNV_params params =
+    {
+        .mode = params32->mode,
+        .type = params32->type,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawCount = params32->drawCount,
+        .stride = params32->stride,
+        .vertexBufferCount = params32->vertexBufferCount,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawElementsIndirectBindlessNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElementsIndirectCount( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLenum type;
+        PTR32 indirect;
+        PTR32 drawcount;
+        GLsizei maxdrawcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawElementsIndirectCount_params params =
+    {
+        .mode = params32->mode,
+        .type = params32->type,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawcount = (GLintptr)ULongToPtr(params32->drawcount),
+        .maxdrawcount = params32->maxdrawcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawElementsIndirectCount( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawElementsIndirectCountARB( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLenum type;
+        PTR32 indirect;
+        PTR32 drawcount;
+        GLsizei maxdrawcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawElementsIndirectCountARB_params params =
+    {
+        .mode = params32->mode,
+        .type = params32->type,
+        .indirect = ULongToPtr(params32->indirect),
+        .drawcount = (GLintptr)ULongToPtr(params32->drawcount),
+        .maxdrawcount = params32->maxdrawcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawElementsIndirectCountARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawMeshTasksIndirectCountNV( void *args )
+{
+    struct
+    {
+        PTR32 indirect;
+        PTR32 drawcount;
+        GLsizei maxdrawcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawMeshTasksIndirectCountNV_params params =
+    {
+        .indirect = (GLintptr)ULongToPtr(params32->indirect),
+        .drawcount = (GLintptr)ULongToPtr(params32->drawcount),
+        .maxdrawcount = params32->maxdrawcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawMeshTasksIndirectCountNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawMeshTasksIndirectNV( void *args )
+{
+    struct
+    {
+        PTR32 indirect;
+        GLsizei drawcount;
+        GLsizei stride;
+    } *params32 = args;
+    struct glMultiDrawMeshTasksIndirectNV_params params =
+    {
+        .indirect = (GLintptr)ULongToPtr(params32->indirect),
+        .drawcount = params32->drawcount,
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawMeshTasksIndirectNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiDrawRangeElementArrayAPPLE( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLuint start;
+        GLuint end;
+        PTR32 first;
+        PTR32 count;
+        GLsizei primcount;
+    } *params32 = args;
+    struct glMultiDrawRangeElementArrayAPPLE_params params =
+    {
+        .mode = params32->mode,
+        .start = params32->start,
+        .end = params32->end,
+        .first = ULongToPtr(params32->first),
+        .count = ULongToPtr(params32->count),
+        .primcount = params32->primcount,
+    };
+    NTSTATUS status;
+    status = ext_glMultiDrawRangeElementArrayAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiModeDrawArraysIBM( void *args )
+{
+    struct
+    {
+        PTR32 mode;
+        PTR32 first;
+        PTR32 count;
+        GLsizei primcount;
+        GLint modestride;
+    } *params32 = args;
+    struct glMultiModeDrawArraysIBM_params params =
+    {
+        .mode = ULongToPtr(params32->mode),
+        .first = ULongToPtr(params32->first),
+        .count = ULongToPtr(params32->count),
+        .primcount = params32->primcount,
+        .modestride = params32->modestride,
+    };
+    NTSTATUS status;
+    status = ext_glMultiModeDrawArraysIBM( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiModeDrawElementsIBM( void *args )
+{
+    struct
+    {
+        PTR32 mode;
+        PTR32 count;
+        GLenum type;
+        PTR32 indices;
+        GLsizei primcount;
+        GLint modestride;
+    } *params32 = args;
+    struct glMultiModeDrawElementsIBM_params params =
+    {
+        .mode = ULongToPtr(params32->mode),
+        .count = ULongToPtr(params32->count),
+        .type = params32->type,
+        .primcount = params32->primcount,
+        .modestride = params32->modestride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1bvOES( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoord1bvOES_params params =
+    {
+        .texture = params32->texture,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1dv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1dv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1dvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1dvARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1dvSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1dvSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1dvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1fv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1fv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1fvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1fvARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1fvSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1fvSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1fvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1hvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1hvNV_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1iv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1iv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1ivARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1ivARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1ivSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1ivSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1ivSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1sv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1sv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1svARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1svARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1svSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord1svSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1svSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord1xvOES( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoord1xvOES_params params =
+    {
+        .texture = params32->texture,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord1xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2bvOES( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoord2bvOES_params params =
+    {
+        .texture = params32->texture,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2dv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2dv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2dvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2dvARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2dvSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2dvSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2dvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2fv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2fv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2fvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2fvARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2fvSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2fvSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2fvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2hvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2hvNV_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2iv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2iv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2ivARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2ivARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2ivSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2ivSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2ivSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2sv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2sv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2svARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2svARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2svSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord2svSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2svSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord2xvOES( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoord2xvOES_params params =
+    {
+        .texture = params32->texture,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord2xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3bvOES( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoord3bvOES_params params =
+    {
+        .texture = params32->texture,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3dv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3dv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3dvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3dvARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3dvSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3dvSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3dvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3fv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3fv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3fvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3fvARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3fvSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3fvSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3fvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3hvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3hvNV_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3iv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3iv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3ivARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3ivARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3ivSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3ivSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3ivSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3sv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3sv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3svARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3svARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3svSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord3svSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3svSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord3xvOES( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoord3xvOES_params params =
+    {
+        .texture = params32->texture,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord3xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4bvOES( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoord4bvOES_params params =
+    {
+        .texture = params32->texture,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4dv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4dv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4dvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4dvARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4dvSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4dvSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4dvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4fv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4fv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4fvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4fvARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4fvSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4fvSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4fvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4hvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4hvNV_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4iv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4iv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4ivARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4ivARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4ivSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4ivSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4ivSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4sv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4sv_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4svARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4svARB_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4svSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 v;
+    } *params32 = args;
+    struct glMultiTexCoord4svSGIS_params params =
+    {
+        .target = params32->target,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4svSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoord4xvOES( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoord4xvOES_params params =
+    {
+        .texture = params32->texture,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoord4xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoordP1uiv( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        GLenum type;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoordP1uiv_params params =
+    {
+        .texture = params32->texture,
+        .type = params32->type,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoordP1uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoordP2uiv( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        GLenum type;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoordP2uiv_params params =
+    {
+        .texture = params32->texture,
+        .type = params32->type,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoordP2uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoordP3uiv( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        GLenum type;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoordP3uiv_params params =
+    {
+        .texture = params32->texture,
+        .type = params32->type,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoordP3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoordP4uiv( void *args )
+{
+    struct
+    {
+        GLenum texture;
+        GLenum type;
+        PTR32 coords;
+    } *params32 = args;
+    struct glMultiTexCoordP4uiv_params params =
+    {
+        .texture = params32->texture,
+        .type = params32->type,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoordP4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoordPointerEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glMultiTexCoordPointerEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoordPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexCoordPointerSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glMultiTexCoordPointerSGIS_params params =
+    {
+        .target = params32->target,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexCoordPointerSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexEnvfvEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMultiTexEnvfvEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexEnvfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexEnvivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMultiTexEnvivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexEnvivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexGendvEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMultiTexGendvEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexGendvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexGenfvEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMultiTexGenfvEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexGenfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexGenivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMultiTexGenivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexGenivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexImage1DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLint internalformat;
+        GLsizei width;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glMultiTexImage1DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexImage1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexImage2DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLint internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glMultiTexImage2DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexImage2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexImage3DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLint internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glMultiTexImage3DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexParameterIivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMultiTexParameterIivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexParameterIivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexParameterIuivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMultiTexParameterIuivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexParameterIuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMultiTexParameterfvEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMultiTexParameterivEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexSubImage1DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glMultiTexSubImage1DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexSubImage1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexSubImage2DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glMultiTexSubImage2DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexSubImage2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMultiTexSubImage3DEXT( void *args )
+{
+    struct
+    {
+        GLenum texunit;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glMultiTexSubImage3DEXT_params params =
+    {
+        .texunit = params32->texunit,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glMultiTexSubImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMulticastBufferSubDataNV( void *args )
+{
+    struct
+    {
+        GLbitfield gpuMask;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glMulticastBufferSubDataNV_params params =
+    {
+        .gpuMask = params32->gpuMask,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glMulticastBufferSubDataNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMulticastCopyBufferSubDataNV( void *args )
+{
+    struct
+    {
+        GLuint readGpu;
+        GLbitfield writeGpuMask;
+        GLuint readBuffer;
+        GLuint writeBuffer;
+        PTR32 readOffset;
+        PTR32 writeOffset;
+        PTR32 size;
+    } *params32 = args;
+    struct glMulticastCopyBufferSubDataNV_params params =
+    {
+        .readGpu = params32->readGpu,
+        .writeGpuMask = params32->writeGpuMask,
+        .readBuffer = params32->readBuffer,
+        .writeBuffer = params32->writeBuffer,
+        .readOffset = (GLintptr)ULongToPtr(params32->readOffset),
+        .writeOffset = (GLintptr)ULongToPtr(params32->writeOffset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glMulticastCopyBufferSubDataNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMulticastFramebufferSampleLocationsfvNV( void *args )
+{
+    struct
+    {
+        GLuint gpu;
+        GLuint framebuffer;
+        GLuint start;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glMulticastFramebufferSampleLocationsfvNV_params params =
+    {
+        .gpu = params32->gpu,
+        .framebuffer = params32->framebuffer,
+        .start = params32->start,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMulticastFramebufferSampleLocationsfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMulticastGetQueryObjecti64vNV( void *args )
+{
+    struct
+    {
+        GLuint gpu;
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMulticastGetQueryObjecti64vNV_params params =
+    {
+        .gpu = params32->gpu,
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMulticastGetQueryObjecti64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMulticastGetQueryObjectivNV( void *args )
+{
+    struct
+    {
+        GLuint gpu;
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMulticastGetQueryObjectivNV_params params =
+    {
+        .gpu = params32->gpu,
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMulticastGetQueryObjectivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMulticastGetQueryObjectui64vNV( void *args )
+{
+    struct
+    {
+        GLuint gpu;
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMulticastGetQueryObjectui64vNV_params params =
+    {
+        .gpu = params32->gpu,
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMulticastGetQueryObjectui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMulticastGetQueryObjectuivNV( void *args )
+{
+    struct
+    {
+        GLuint gpu;
+        GLuint id;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glMulticastGetQueryObjectuivNV_params params =
+    {
+        .gpu = params32->gpu,
+        .id = params32->id,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glMulticastGetQueryObjectuivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMulticastScissorArrayvNVX( void *args )
+{
+    struct
+    {
+        GLuint gpu;
+        GLuint first;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glMulticastScissorArrayvNVX_params params =
+    {
+        .gpu = params32->gpu,
+        .first = params32->first,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMulticastScissorArrayvNVX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glMulticastViewportArrayvNVX( void *args )
+{
+    struct
+    {
+        GLuint gpu;
+        GLuint first;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glMulticastViewportArrayvNVX_params params =
+    {
+        .gpu = params32->gpu,
+        .first = params32->first,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glMulticastViewportArrayvNVX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferData( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 size;
+        PTR32 data;
+        GLenum usage;
+    } *params32 = args;
+    struct glNamedBufferData_params params =
+    {
+        .buffer = params32->buffer,
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+        .usage = params32->usage,
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferDataEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 size;
+        PTR32 data;
+        GLenum usage;
+    } *params32 = args;
+    struct glNamedBufferDataEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+        .usage = params32->usage,
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferDataEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferPageCommitmentARB( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+        GLboolean commit;
+    } *params32 = args;
+    struct glNamedBufferPageCommitmentARB_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .commit = params32->commit,
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferPageCommitmentARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferPageCommitmentEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+        GLboolean commit;
+    } *params32 = args;
+    struct glNamedBufferPageCommitmentEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .commit = params32->commit,
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferPageCommitmentEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferStorage( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 size;
+        PTR32 data;
+        GLbitfield flags;
+    } *params32 = args;
+    struct glNamedBufferStorage_params params =
+    {
+        .buffer = params32->buffer,
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+        .flags = params32->flags,
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferStorage( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferStorageEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 size;
+        PTR32 data;
+        GLbitfield flags;
+    } *params32 = args;
+    struct glNamedBufferStorageEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+        .flags = params32->flags,
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferStorageEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferStorageExternalEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 clientBuffer;
+        GLbitfield flags;
+    } *params32 = args;
+    struct glNamedBufferStorageExternalEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .clientBuffer = ULongToPtr(params32->clientBuffer),
+        .flags = params32->flags,
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferStorageExternalEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferStorageMemEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 size;
+        GLuint memory;
+        GLuint64 offset;
+    } *params32 = args;
+    struct glNamedBufferStorageMemEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .memory = params32->memory,
+        .offset = params32->offset,
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferStorageMemEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferSubData( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glNamedBufferSubData_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferSubData( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedBufferSubDataEXT( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+        PTR32 data;
+    } *params32 = args;
+    struct glNamedBufferSubDataEXT_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glNamedBufferSubDataEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedCopyBufferSubDataEXT( void *args )
+{
+    struct
+    {
+        GLuint readBuffer;
+        GLuint writeBuffer;
+        PTR32 readOffset;
+        PTR32 writeOffset;
+        PTR32 size;
+    } *params32 = args;
+    struct glNamedCopyBufferSubDataEXT_params params =
+    {
+        .readBuffer = params32->readBuffer,
+        .writeBuffer = params32->writeBuffer,
+        .readOffset = (GLintptr)ULongToPtr(params32->readOffset),
+        .writeOffset = (GLintptr)ULongToPtr(params32->writeOffset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glNamedCopyBufferSubDataEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedFramebufferDrawBuffers( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLsizei n;
+        PTR32 bufs;
+    } *params32 = args;
+    struct glNamedFramebufferDrawBuffers_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .n = params32->n,
+        .bufs = ULongToPtr(params32->bufs),
+    };
+    NTSTATUS status;
+    status = ext_glNamedFramebufferDrawBuffers( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedFramebufferSampleLocationsfvARB( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLuint start;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glNamedFramebufferSampleLocationsfvARB_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .start = params32->start,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glNamedFramebufferSampleLocationsfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedFramebufferSampleLocationsfvNV( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLuint start;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glNamedFramebufferSampleLocationsfvNV_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .start = params32->start,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glNamedFramebufferSampleLocationsfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedFramebufferSamplePositionsfvAMD( void *args )
+{
+    struct
+    {
+        GLuint framebuffer;
+        GLuint numsamples;
+        GLuint pixelindex;
+        PTR32 values;
+    } *params32 = args;
+    struct glNamedFramebufferSamplePositionsfvAMD_params params =
+    {
+        .framebuffer = params32->framebuffer,
+        .numsamples = params32->numsamples,
+        .pixelindex = params32->pixelindex,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glNamedFramebufferSamplePositionsfvAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedProgramLocalParameter4dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glNamedProgramLocalParameter4dvEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glNamedProgramLocalParameter4dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedProgramLocalParameter4fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glNamedProgramLocalParameter4fvEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glNamedProgramLocalParameter4fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedProgramLocalParameterI4ivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glNamedProgramLocalParameterI4ivEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glNamedProgramLocalParameterI4ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedProgramLocalParameterI4uivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glNamedProgramLocalParameterI4uivEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glNamedProgramLocalParameterI4uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedProgramLocalParameters4fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glNamedProgramLocalParameters4fvEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glNamedProgramLocalParameters4fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedProgramLocalParametersI4ivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glNamedProgramLocalParametersI4ivEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glNamedProgramLocalParametersI4ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedProgramLocalParametersI4uivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glNamedProgramLocalParametersI4uivEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glNamedProgramLocalParametersI4uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedProgramStringEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum target;
+        GLenum format;
+        GLsizei len;
+        PTR32 string;
+    } *params32 = args;
+    struct glNamedProgramStringEXT_params params =
+    {
+        .program = params32->program,
+        .target = params32->target,
+        .format = params32->format,
+        .len = params32->len,
+        .string = ULongToPtr(params32->string),
+    };
+    NTSTATUS status;
+    status = ext_glNamedProgramStringEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNamedStringARB( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLint namelen;
+        PTR32 name;
+        GLint stringlen;
+        PTR32 string;
+    } *params32 = args;
+    struct glNamedStringARB_params params =
+    {
+        .type = params32->type,
+        .namelen = params32->namelen,
+        .name = ULongToPtr(params32->name),
+        .stringlen = params32->stringlen,
+        .string = ULongToPtr(params32->string),
+    };
+    NTSTATUS status;
+    status = ext_glNamedStringARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNewObjectBufferATI( void *args )
+{
+    struct
+    {
+        GLsizei size;
+        PTR32 pointer;
+        GLenum usage;
+        GLuint ret;
+    } *params32 = args;
+    struct glNewObjectBufferATI_params params =
+    {
+        .size = params32->size,
+        .pointer = ULongToPtr(params32->pointer),
+        .usage = params32->usage,
+    };
+    NTSTATUS status;
+    status = ext_glNewObjectBufferATI( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormal3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 n;
+        PTR32 v;
+    } *params32 = args;
+    struct glNormal3fVertex3fvSUN_params params =
+    {
+        .n = ULongToPtr(params32->n),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glNormal3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormal3hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glNormal3hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glNormal3hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormal3xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glNormal3xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glNormal3xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormalP3uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 coords;
+    } *params32 = args;
+    struct glNormalP3uiv_params params =
+    {
+        .type = params32->type,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glNormalP3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormalPointerEXT( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei stride;
+        GLsizei count;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glNormalPointerEXT_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .count = params32->count,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glNormalPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormalPointerListIBM( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLint stride;
+        PTR32 pointer;
+        GLint ptrstride;
+    } *params32 = args;
+    struct glNormalPointerListIBM_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .ptrstride = params32->ptrstride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glNormalPointervINTEL( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glNormalPointervINTEL_params params =
+    {
+        .type = params32->type,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glNormalStream3bvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glNormalStream3bvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glNormalStream3bvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormalStream3dvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glNormalStream3dvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glNormalStream3dvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormalStream3fvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glNormalStream3fvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glNormalStream3fvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormalStream3ivATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glNormalStream3ivATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glNormalStream3ivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glNormalStream3svATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glNormalStream3svATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glNormalStream3svATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glObjectLabel( void *args )
+{
+    struct
+    {
+        GLenum identifier;
+        GLuint name;
+        GLsizei length;
+        PTR32 label;
+    } *params32 = args;
+    struct glObjectLabel_params params =
+    {
+        .identifier = params32->identifier,
+        .name = params32->name,
+        .length = params32->length,
+        .label = ULongToPtr(params32->label),
+    };
+    NTSTATUS status;
+    status = ext_glObjectLabel( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glObjectPtrLabel( void *args )
+{
+    struct
+    {
+        PTR32 ptr;
+        GLsizei length;
+        PTR32 label;
+    } *params32 = args;
+    struct glObjectPtrLabel_params params =
+    {
+        .ptr = ULongToPtr(params32->ptr),
+        .length = params32->length,
+        .label = ULongToPtr(params32->label),
+    };
+    NTSTATUS status;
+    status = ext_glObjectPtrLabel( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPatchParameterfv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 values;
+    } *params32 = args;
+    struct glPatchParameterfv_params params =
+    {
+        .pname = params32->pname,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glPatchParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathColorGenNV( void *args )
+{
+    struct
+    {
+        GLenum color;
+        GLenum genMode;
+        GLenum colorFormat;
+        PTR32 coeffs;
+    } *params32 = args;
+    struct glPathColorGenNV_params params =
+    {
+        .color = params32->color,
+        .genMode = params32->genMode,
+        .colorFormat = params32->colorFormat,
+        .coeffs = ULongToPtr(params32->coeffs),
+    };
+    NTSTATUS status;
+    status = ext_glPathColorGenNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathCommandsNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLsizei numCommands;
+        PTR32 commands;
+        GLsizei numCoords;
+        GLenum coordType;
+        PTR32 coords;
+    } *params32 = args;
+    struct glPathCommandsNV_params params =
+    {
+        .path = params32->path,
+        .numCommands = params32->numCommands,
+        .commands = ULongToPtr(params32->commands),
+        .numCoords = params32->numCoords,
+        .coordType = params32->coordType,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glPathCommandsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathCoordsNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLsizei numCoords;
+        GLenum coordType;
+        PTR32 coords;
+    } *params32 = args;
+    struct glPathCoordsNV_params params =
+    {
+        .path = params32->path,
+        .numCoords = params32->numCoords,
+        .coordType = params32->coordType,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glPathCoordsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathDashArrayNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLsizei dashCount;
+        PTR32 dashArray;
+    } *params32 = args;
+    struct glPathDashArrayNV_params params =
+    {
+        .path = params32->path,
+        .dashCount = params32->dashCount,
+        .dashArray = ULongToPtr(params32->dashArray),
+    };
+    NTSTATUS status;
+    status = ext_glPathDashArrayNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathGlyphIndexArrayNV( void *args )
+{
+    struct
+    {
+        GLuint firstPathName;
+        GLenum fontTarget;
+        PTR32 fontName;
+        GLbitfield fontStyle;
+        GLuint firstGlyphIndex;
+        GLsizei numGlyphs;
+        GLuint pathParameterTemplate;
+        GLfloat emScale;
+        GLenum ret;
+    } *params32 = args;
+    struct glPathGlyphIndexArrayNV_params params =
+    {
+        .firstPathName = params32->firstPathName,
+        .fontTarget = params32->fontTarget,
+        .fontName = ULongToPtr(params32->fontName),
+        .fontStyle = params32->fontStyle,
+        .firstGlyphIndex = params32->firstGlyphIndex,
+        .numGlyphs = params32->numGlyphs,
+        .pathParameterTemplate = params32->pathParameterTemplate,
+        .emScale = params32->emScale,
+    };
+    NTSTATUS status;
+    status = ext_glPathGlyphIndexArrayNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
+{
+    struct
+    {
+        GLenum fontTarget;
+        PTR32 fontName;
+        GLbitfield fontStyle;
+        GLuint pathParameterTemplate;
+        GLfloat emScale;
+        PTR32 baseAndCount;
+        GLenum ret;
+    } *params32 = args;
+    struct glPathGlyphIndexRangeNV_params params =
+    {
+        .fontTarget = params32->fontTarget,
+        .fontName = ULongToPtr(params32->fontName),
+        .fontStyle = params32->fontStyle,
+        .pathParameterTemplate = params32->pathParameterTemplate,
+        .emScale = params32->emScale,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glPathGlyphRangeNV( void *args )
+{
+    struct
+    {
+        GLuint firstPathName;
+        GLenum fontTarget;
+        PTR32 fontName;
+        GLbitfield fontStyle;
+        GLuint firstGlyph;
+        GLsizei numGlyphs;
+        GLenum handleMissingGlyphs;
+        GLuint pathParameterTemplate;
+        GLfloat emScale;
+    } *params32 = args;
+    struct glPathGlyphRangeNV_params params =
+    {
+        .firstPathName = params32->firstPathName,
+        .fontTarget = params32->fontTarget,
+        .fontName = ULongToPtr(params32->fontName),
+        .fontStyle = params32->fontStyle,
+        .firstGlyph = params32->firstGlyph,
+        .numGlyphs = params32->numGlyphs,
+        .handleMissingGlyphs = params32->handleMissingGlyphs,
+        .pathParameterTemplate = params32->pathParameterTemplate,
+        .emScale = params32->emScale,
+    };
+    NTSTATUS status;
+    status = ext_glPathGlyphRangeNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathGlyphsNV( void *args )
+{
+    struct
+    {
+        GLuint firstPathName;
+        GLenum fontTarget;
+        PTR32 fontName;
+        GLbitfield fontStyle;
+        GLsizei numGlyphs;
+        GLenum type;
+        PTR32 charcodes;
+        GLenum handleMissingGlyphs;
+        GLuint pathParameterTemplate;
+        GLfloat emScale;
+    } *params32 = args;
+    struct glPathGlyphsNV_params params =
+    {
+        .firstPathName = params32->firstPathName,
+        .fontTarget = params32->fontTarget,
+        .fontName = ULongToPtr(params32->fontName),
+        .fontStyle = params32->fontStyle,
+        .numGlyphs = params32->numGlyphs,
+        .type = params32->type,
+        .charcodes = ULongToPtr(params32->charcodes),
+        .handleMissingGlyphs = params32->handleMissingGlyphs,
+        .pathParameterTemplate = params32->pathParameterTemplate,
+        .emScale = params32->emScale,
+    };
+    NTSTATUS status;
+    status = ext_glPathGlyphsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathMemoryGlyphIndexArrayNV( void *args )
+{
+    struct
+    {
+        GLuint firstPathName;
+        GLenum fontTarget;
+        PTR32 fontSize;
+        PTR32 fontData;
+        GLsizei faceIndex;
+        GLuint firstGlyphIndex;
+        GLsizei numGlyphs;
+        GLuint pathParameterTemplate;
+        GLfloat emScale;
+        GLenum ret;
+    } *params32 = args;
+    struct glPathMemoryGlyphIndexArrayNV_params params =
+    {
+        .firstPathName = params32->firstPathName,
+        .fontTarget = params32->fontTarget,
+        .fontSize = (GLsizeiptr)ULongToPtr(params32->fontSize),
+        .fontData = ULongToPtr(params32->fontData),
+        .faceIndex = params32->faceIndex,
+        .firstGlyphIndex = params32->firstGlyphIndex,
+        .numGlyphs = params32->numGlyphs,
+        .pathParameterTemplate = params32->pathParameterTemplate,
+        .emScale = params32->emScale,
+    };
+    NTSTATUS status;
+    status = ext_glPathMemoryGlyphIndexArrayNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathParameterfvNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLenum pname;
+        PTR32 value;
+    } *params32 = args;
+    struct glPathParameterfvNV_params params =
+    {
+        .path = params32->path,
+        .pname = params32->pname,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glPathParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathParameterivNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLenum pname;
+        PTR32 value;
+    } *params32 = args;
+    struct glPathParameterivNV_params params =
+    {
+        .path = params32->path,
+        .pname = params32->pname,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glPathParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathStringNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLenum format;
+        GLsizei length;
+        PTR32 pathString;
+    } *params32 = args;
+    struct glPathStringNV_params params =
+    {
+        .path = params32->path,
+        .format = params32->format,
+        .length = params32->length,
+        .pathString = ULongToPtr(params32->pathString),
+    };
+    NTSTATUS status;
+    status = ext_glPathStringNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathSubCommandsNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLsizei commandStart;
+        GLsizei commandsToDelete;
+        GLsizei numCommands;
+        PTR32 commands;
+        GLsizei numCoords;
+        GLenum coordType;
+        PTR32 coords;
+    } *params32 = args;
+    struct glPathSubCommandsNV_params params =
+    {
+        .path = params32->path,
+        .commandStart = params32->commandStart,
+        .commandsToDelete = params32->commandsToDelete,
+        .numCommands = params32->numCommands,
+        .commands = ULongToPtr(params32->commands),
+        .numCoords = params32->numCoords,
+        .coordType = params32->coordType,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glPathSubCommandsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathSubCoordsNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLsizei coordStart;
+        GLsizei numCoords;
+        GLenum coordType;
+        PTR32 coords;
+    } *params32 = args;
+    struct glPathSubCoordsNV_params params =
+    {
+        .path = params32->path,
+        .coordStart = params32->coordStart,
+        .numCoords = params32->numCoords,
+        .coordType = params32->coordType,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glPathSubCoordsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPathTexGenNV( void *args )
+{
+    struct
+    {
+        GLenum texCoordSet;
+        GLenum genMode;
+        GLint components;
+        PTR32 coeffs;
+    } *params32 = args;
+    struct glPathTexGenNV_params params =
+    {
+        .texCoordSet = params32->texCoordSet,
+        .genMode = params32->genMode,
+        .components = params32->components,
+        .coeffs = ULongToPtr(params32->coeffs),
+    };
+    NTSTATUS status;
+    status = ext_glPathTexGenNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPixelDataRangeNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei length;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glPixelDataRangeNV_params params =
+    {
+        .target = params32->target,
+        .length = params32->length,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glPixelDataRangeNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPixelMapx( void *args )
+{
+    struct
+    {
+        GLenum map;
+        GLint size;
+        PTR32 values;
+    } *params32 = args;
+    struct glPixelMapx_params params =
+    {
+        .map = params32->map,
+        .size = params32->size,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glPixelMapx( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPixelTexGenParameterfvSGIS( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPixelTexGenParameterfvSGIS_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPixelTexGenParameterfvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPixelTexGenParameterivSGIS( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPixelTexGenParameterivSGIS_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPixelTexGenParameterivSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPixelTransformParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPixelTransformParameterfvEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPixelTransformParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPixelTransformParameterivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPixelTransformParameterivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPixelTransformParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPointAlongPathNV( void *args )
+{
+    struct
+    {
+        GLuint path;
+        GLsizei startSegment;
+        GLsizei numSegments;
+        GLfloat distance;
+        PTR32 x;
+        PTR32 y;
+        PTR32 tangentX;
+        PTR32 tangentY;
+        GLboolean ret;
+    } *params32 = args;
+    struct glPointAlongPathNV_params params =
+    {
+        .path = params32->path,
+        .startSegment = params32->startSegment,
+        .numSegments = params32->numSegments,
+        .distance = params32->distance,
+        .x = ULongToPtr(params32->x),
+        .y = ULongToPtr(params32->y),
+        .tangentX = ULongToPtr(params32->tangentX),
+        .tangentY = ULongToPtr(params32->tangentY),
+    };
+    NTSTATUS status;
+    status = ext_glPointAlongPathNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPointParameterfv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPointParameterfv_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPointParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPointParameterfvARB( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPointParameterfvARB_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPointParameterfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPointParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPointParameterfvEXT_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPointParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPointParameterfvSGIS( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPointParameterfvSGIS_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPointParameterfvSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPointParameteriv( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPointParameteriv_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPointParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPointParameterivNV( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPointParameterivNV_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPointParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPointParameterxvOES( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glPointParameterxvOES_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glPointParameterxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPollAsyncSGIX( void *args )
+{
+    struct
+    {
+        PTR32 markerp;
+        GLint ret;
+    } *params32 = args;
+    struct glPollAsyncSGIX_params params =
+    {
+        .markerp = ULongToPtr(params32->markerp),
+    };
+    NTSTATUS status;
+    status = ext_glPollAsyncSGIX( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPollInstrumentsSGIX( void *args )
+{
+    struct
+    {
+        PTR32 marker_p;
+        GLint ret;
+    } *params32 = args;
+    struct glPollInstrumentsSGIX_params params =
+    {
+        .marker_p = ULongToPtr(params32->marker_p),
+    };
+    NTSTATUS status;
+    status = ext_glPollInstrumentsSGIX( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPrioritizeTexturesEXT( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 textures;
+        PTR32 priorities;
+    } *params32 = args;
+    struct glPrioritizeTexturesEXT_params params =
+    {
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+        .priorities = ULongToPtr(params32->priorities),
+    };
+    NTSTATUS status;
+    status = ext_glPrioritizeTexturesEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPrioritizeTexturesxOES( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 textures;
+        PTR32 priorities;
+    } *params32 = args;
+    struct glPrioritizeTexturesxOES_params params =
+    {
+        .n = params32->n,
+        .textures = ULongToPtr(params32->textures),
+        .priorities = ULongToPtr(params32->priorities),
+    };
+    NTSTATUS status;
+    status = ext_glPrioritizeTexturesxOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramBinary( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLenum binaryFormat;
+        PTR32 binary;
+        GLsizei length;
+    } *params32 = args;
+    struct glProgramBinary_params params =
+    {
+        .program = params32->program,
+        .binaryFormat = params32->binaryFormat,
+        .binary = ULongToPtr(params32->binary),
+        .length = params32->length,
+    };
+    NTSTATUS status;
+    status = ext_glProgramBinary( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramBufferParametersIivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint bindingIndex;
+        GLuint wordIndex;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramBufferParametersIivNV_params params =
+    {
+        .target = params32->target,
+        .bindingIndex = params32->bindingIndex,
+        .wordIndex = params32->wordIndex,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramBufferParametersIivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramBufferParametersIuivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint bindingIndex;
+        GLuint wordIndex;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramBufferParametersIuivNV_params params =
+    {
+        .target = params32->target,
+        .bindingIndex = params32->bindingIndex,
+        .wordIndex = params32->wordIndex,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramBufferParametersIuivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramBufferParametersfvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint bindingIndex;
+        GLuint wordIndex;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramBufferParametersfvNV_params params =
+    {
+        .target = params32->target,
+        .bindingIndex = params32->bindingIndex,
+        .wordIndex = params32->wordIndex,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramBufferParametersfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramEnvParameter4dvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramEnvParameter4dvARB_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramEnvParameter4dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramEnvParameter4fvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramEnvParameter4fvARB_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramEnvParameter4fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramEnvParameterI4ivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramEnvParameterI4ivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramEnvParameterI4ivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramEnvParameterI4uivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramEnvParameterI4uivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramEnvParameterI4uivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramEnvParameters4fvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramEnvParameters4fvEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramEnvParameters4fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramEnvParametersI4ivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramEnvParametersI4ivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramEnvParametersI4ivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramEnvParametersI4uivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramEnvParametersI4uivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramEnvParametersI4uivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramLocalParameter4dvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramLocalParameter4dvARB_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramLocalParameter4dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramLocalParameter4fvARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramLocalParameter4fvARB_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramLocalParameter4fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramLocalParameterI4ivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramLocalParameterI4ivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramLocalParameterI4ivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramLocalParameterI4uivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramLocalParameterI4uivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramLocalParameterI4uivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramLocalParameters4fvEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramLocalParameters4fvEXT_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramLocalParameters4fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramLocalParametersI4ivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramLocalParametersI4ivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramLocalParametersI4ivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramLocalParametersI4uivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramLocalParametersI4uivNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramLocalParametersI4uivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramNamedParameter4dNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLsizei len;
+        PTR32 name;
+        GLdouble x;
+        GLdouble y;
+        GLdouble z;
+        GLdouble w;
+    } *params32 = args;
+    struct glProgramNamedParameter4dNV_params params =
+    {
+        .id = params32->id,
+        .len = params32->len,
+        .name = ULongToPtr(params32->name),
+        .x = params32->x,
+        .y = params32->y,
+        .z = params32->z,
+        .w = params32->w,
+    };
+    NTSTATUS status;
+    status = ext_glProgramNamedParameter4dNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramNamedParameter4dvNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLsizei len;
+        PTR32 name;
+        PTR32 v;
+    } *params32 = args;
+    struct glProgramNamedParameter4dvNV_params params =
+    {
+        .id = params32->id,
+        .len = params32->len,
+        .name = ULongToPtr(params32->name),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glProgramNamedParameter4dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramNamedParameter4fNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLsizei len;
+        PTR32 name;
+        GLfloat x;
+        GLfloat y;
+        GLfloat z;
+        GLfloat w;
+    } *params32 = args;
+    struct glProgramNamedParameter4fNV_params params =
+    {
+        .id = params32->id,
+        .len = params32->len,
+        .name = ULongToPtr(params32->name),
+        .x = params32->x,
+        .y = params32->y,
+        .z = params32->z,
+        .w = params32->w,
+    };
+    NTSTATUS status;
+    status = ext_glProgramNamedParameter4fNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramNamedParameter4fvNV( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLsizei len;
+        PTR32 name;
+        PTR32 v;
+    } *params32 = args;
+    struct glProgramNamedParameter4fvNV_params params =
+    {
+        .id = params32->id,
+        .len = params32->len,
+        .name = ULongToPtr(params32->name),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glProgramNamedParameter4fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramParameter4dvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glProgramParameter4dvNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glProgramParameter4dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramParameter4fvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glProgramParameter4fvNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glProgramParameter4fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramParameters4dvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glProgramParameters4dvNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glProgramParameters4dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramParameters4fvNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glProgramParameters4fvNV_params params =
+    {
+        .target = params32->target,
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glProgramParameters4fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramPathFragmentInputGenNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLenum genMode;
+        GLint components;
+        PTR32 coeffs;
+    } *params32 = args;
+    struct glProgramPathFragmentInputGenNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .genMode = params32->genMode,
+        .components = params32->components,
+        .coeffs = ULongToPtr(params32->coeffs),
+    };
+    NTSTATUS status;
+    status = ext_glProgramPathFragmentInputGenNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramStringARB( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum format;
+        GLsizei len;
+        PTR32 string;
+    } *params32 = args;
+    struct glProgramStringARB_params params =
+    {
+        .target = params32->target,
+        .format = params32->format,
+        .len = params32->len,
+        .string = ULongToPtr(params32->string),
+    };
+    NTSTATUS status;
+    status = ext_glProgramStringARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramSubroutineParametersuivNV( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei count;
+        PTR32 params;
+    } *params32 = args;
+    struct glProgramSubroutineParametersuivNV_params params =
+    {
+        .target = params32->target,
+        .count = params32->count,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glProgramSubroutineParametersuivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1i64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1i64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1i64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1i64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1i64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1iv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1iv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1ivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1ivEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1ui64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1ui64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1ui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1ui64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1ui64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1uiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1uiv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform1uivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform1uivEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform1uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2i64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2i64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2i64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2i64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2i64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2iv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2iv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2ivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2ivEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2ui64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2ui64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2ui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2ui64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2ui64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2uiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2uiv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform2uivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform2uivEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform2uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3i64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3i64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3i64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3i64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3i64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3iv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3iv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3ivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3ivEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3ui64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3ui64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3ui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3ui64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3ui64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3uiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3uiv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform3uivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform3uivEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform3uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4i64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4i64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4i64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4i64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4i64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4iv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4iv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4ivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4ivEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4ui64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4ui64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4ui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4ui64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4ui64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4uiv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4uiv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniform4uivEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniform4uivEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniform4uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformHandleui64vARB( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 values;
+    } *params32 = args;
+    struct glProgramUniformHandleui64vARB_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformHandleui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformHandleui64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 values;
+    } *params32 = args;
+    struct glProgramUniformHandleui64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformHandleui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2x3dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2x3dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2x3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2x3dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2x3dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2x3dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2x3fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2x3fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2x3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2x3fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2x3fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2x3fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2x4dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2x4dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2x4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2x4dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2x4dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2x4dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2x4fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2x4fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2x4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix2x4fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix2x4fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix2x4fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3x2dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3x2dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3x2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3x2dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3x2dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3x2dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3x2fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3x2fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3x2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3x2fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3x2fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3x2fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3x4dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3x4dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3x4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3x4dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3x4dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3x4dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3x4fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3x4fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3x4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix3x4fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix3x4fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix3x4fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4x2dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4x2dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4x2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4x2dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4x2dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4x2dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4x2fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4x2fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4x2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4x2fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4x2fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4x2fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4x3dv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4x3dv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4x3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4x3dvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4x3dvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4x3dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4x3fv( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4x3fv_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4x3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformMatrix4x3fvEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformMatrix4x3fvEXT_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformMatrix4x3fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glProgramUniformui64vNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glProgramUniformui64vNV_params params =
+    {
+        .program = params32->program,
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glProgramUniformui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPushDebugGroup( void *args )
+{
+    struct
+    {
+        GLenum source;
+        GLuint id;
+        GLsizei length;
+        PTR32 message;
+    } *params32 = args;
+    struct glPushDebugGroup_params params =
+    {
+        .source = params32->source,
+        .id = params32->id,
+        .length = params32->length,
+        .message = ULongToPtr(params32->message),
+    };
+    NTSTATUS status;
+    status = ext_glPushDebugGroup( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glPushGroupMarkerEXT( void *args )
+{
+    struct
+    {
+        GLsizei length;
+        PTR32 marker;
+    } *params32 = args;
+    struct glPushGroupMarkerEXT_params params =
+    {
+        .length = params32->length,
+        .marker = ULongToPtr(params32->marker),
+    };
+    NTSTATUS status;
+    status = ext_glPushGroupMarkerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glQueryMatrixxOES( void *args )
+{
+    struct
+    {
+        PTR32 mantissa;
+        PTR32 exponent;
+        GLbitfield ret;
+    } *params32 = args;
+    struct glQueryMatrixxOES_params params =
+    {
+        .mantissa = ULongToPtr(params32->mantissa),
+        .exponent = ULongToPtr(params32->exponent),
+    };
+    NTSTATUS status;
+    status = ext_glQueryMatrixxOES( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glQueryResourceNV( void *args )
+{
+    struct
+    {
+        GLenum queryType;
+        GLint tagId;
+        GLuint count;
+        PTR32 buffer;
+        GLint ret;
+    } *params32 = args;
+    struct glQueryResourceNV_params params =
+    {
+        .queryType = params32->queryType,
+        .tagId = params32->tagId,
+        .count = params32->count,
+        .buffer = ULongToPtr(params32->buffer),
+    };
+    NTSTATUS status;
+    status = ext_glQueryResourceNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glQueryResourceTagNV( void *args )
+{
+    struct
+    {
+        GLint tagId;
+        PTR32 tagString;
+    } *params32 = args;
+    struct glQueryResourceTagNV_params params =
+    {
+        .tagId = params32->tagId,
+        .tagString = ULongToPtr(params32->tagString),
+    };
+    NTSTATUS status;
+    status = ext_glQueryResourceTagNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glRasterPos2xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glRasterPos2xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glRasterPos2xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glRasterPos3xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glRasterPos3xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glRasterPos3xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glRasterPos4xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glRasterPos4xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glRasterPos4xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReadnPixels( void *args )
+{
+    struct
+    {
+        GLint x;
+        GLint y;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glReadnPixels_params params =
+    {
+        .x = params32->x,
+        .y = params32->y,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glReadnPixels( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReadnPixelsARB( void *args )
+{
+    struct
+    {
+        GLint x;
+        GLint y;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        GLsizei bufSize;
+        PTR32 data;
+    } *params32 = args;
+    struct glReadnPixelsARB_params params =
+    {
+        .x = params32->x,
+        .y = params32->y,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .bufSize = params32->bufSize,
+        .data = ULongToPtr(params32->data),
+    };
+    NTSTATUS status;
+    status = ext_glReadnPixelsARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glRectxvOES( void *args )
+{
+    struct
+    {
+        PTR32 v1;
+        PTR32 v2;
+    } *params32 = args;
+    struct glRectxvOES_params params =
+    {
+        .v1 = ULongToPtr(params32->v1),
+        .v2 = ULongToPtr(params32->v2),
+    };
+    NTSTATUS status;
+    status = ext_glRectxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReferencePlaneSGIX( void *args )
+{
+    struct
+    {
+        PTR32 equation;
+    } *params32 = args;
+    struct glReferencePlaneSGIX_params params =
+    {
+        .equation = ULongToPtr(params32->equation),
+    };
+    NTSTATUS status;
+    status = ext_glReferencePlaneSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodePointerSUN( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glReplacementCodePointerSUN_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeubvSUN( void *args )
+{
+    struct
+    {
+        PTR32 code;
+    } *params32 = args;
+    struct glReplacementCodeubvSUN_params params =
+    {
+        .code = ULongToPtr(params32->code),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeubvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeuiColor3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 rc;
+        PTR32 c;
+        PTR32 v;
+    } *params32 = args;
+    struct glReplacementCodeuiColor3fVertex3fvSUN_params params =
+    {
+        .rc = ULongToPtr(params32->rc),
+        .c = ULongToPtr(params32->c),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeuiColor3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeuiColor4fNormal3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 rc;
+        PTR32 c;
+        PTR32 n;
+        PTR32 v;
+    } *params32 = args;
+    struct glReplacementCodeuiColor4fNormal3fVertex3fvSUN_params params =
+    {
+        .rc = ULongToPtr(params32->rc),
+        .c = ULongToPtr(params32->c),
+        .n = ULongToPtr(params32->n),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeuiColor4fNormal3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeuiColor4ubVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 rc;
+        PTR32 c;
+        PTR32 v;
+    } *params32 = args;
+    struct glReplacementCodeuiColor4ubVertex3fvSUN_params params =
+    {
+        .rc = ULongToPtr(params32->rc),
+        .c = ULongToPtr(params32->c),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeuiColor4ubVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeuiNormal3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 rc;
+        PTR32 n;
+        PTR32 v;
+    } *params32 = args;
+    struct glReplacementCodeuiNormal3fVertex3fvSUN_params params =
+    {
+        .rc = ULongToPtr(params32->rc),
+        .n = ULongToPtr(params32->n),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeuiNormal3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 rc;
+        PTR32 tc;
+        PTR32 c;
+        PTR32 n;
+        PTR32 v;
+    } *params32 = args;
+    struct glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN_params params =
+    {
+        .rc = ULongToPtr(params32->rc),
+        .tc = ULongToPtr(params32->tc),
+        .c = ULongToPtr(params32->c),
+        .n = ULongToPtr(params32->n),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 rc;
+        PTR32 tc;
+        PTR32 n;
+        PTR32 v;
+    } *params32 = args;
+    struct glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN_params params =
+    {
+        .rc = ULongToPtr(params32->rc),
+        .tc = ULongToPtr(params32->tc),
+        .n = ULongToPtr(params32->n),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeuiTexCoord2fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 rc;
+        PTR32 tc;
+        PTR32 v;
+    } *params32 = args;
+    struct glReplacementCodeuiTexCoord2fVertex3fvSUN_params params =
+    {
+        .rc = ULongToPtr(params32->rc),
+        .tc = ULongToPtr(params32->tc),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeuiTexCoord2fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeuiVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 rc;
+        PTR32 v;
+    } *params32 = args;
+    struct glReplacementCodeuiVertex3fvSUN_params params =
+    {
+        .rc = ULongToPtr(params32->rc),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeuiVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeuivSUN( void *args )
+{
+    struct
+    {
+        PTR32 code;
+    } *params32 = args;
+    struct glReplacementCodeuivSUN_params params =
+    {
+        .code = ULongToPtr(params32->code),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeuivSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glReplacementCodeusvSUN( void *args )
+{
+    struct
+    {
+        PTR32 code;
+    } *params32 = args;
+    struct glReplacementCodeusvSUN_params params =
+    {
+        .code = ULongToPtr(params32->code),
+    };
+    NTSTATUS status;
+    status = ext_glReplacementCodeusvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glRequestResidentProgramsNV( void *args )
+{
+    struct
+    {
+        GLsizei n;
+        PTR32 programs;
+    } *params32 = args;
+    struct glRequestResidentProgramsNV_params params =
+    {
+        .n = params32->n,
+        .programs = ULongToPtr(params32->programs),
+    };
+    NTSTATUS status;
+    status = ext_glRequestResidentProgramsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSamplerParameterIiv( void *args )
+{
+    struct
+    {
+        GLuint sampler;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glSamplerParameterIiv_params params =
+    {
+        .sampler = params32->sampler,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glSamplerParameterIiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSamplerParameterIuiv( void *args )
+{
+    struct
+    {
+        GLuint sampler;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glSamplerParameterIuiv_params params =
+    {
+        .sampler = params32->sampler,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glSamplerParameterIuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSamplerParameterfv( void *args )
+{
+    struct
+    {
+        GLuint sampler;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glSamplerParameterfv_params params =
+    {
+        .sampler = params32->sampler,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glSamplerParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSamplerParameteriv( void *args )
+{
+    struct
+    {
+        GLuint sampler;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glSamplerParameteriv_params params =
+    {
+        .sampler = params32->sampler,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glSamplerParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glScissorArrayv( void *args )
+{
+    struct
+    {
+        GLuint first;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glScissorArrayv_params params =
+    {
+        .first = params32->first,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glScissorArrayv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glScissorExclusiveArrayvNV( void *args )
+{
+    struct
+    {
+        GLuint first;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glScissorExclusiveArrayvNV_params params =
+    {
+        .first = params32->first,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glScissorExclusiveArrayvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glScissorIndexedv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glScissorIndexedv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glScissorIndexedv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3bv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3bv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3bv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3bvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3bvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3bvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3dvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3dvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3fvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3fvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3ivEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3ivEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3svEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3svEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3svEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3ubv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3ubv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3ubv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3ubvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3ubvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3ubvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3uiv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3uiv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3uivEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3uivEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3usv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3usv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3usv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColor3usvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glSecondaryColor3usvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColor3usvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColorP3uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 color;
+    } *params32 = args;
+    struct glSecondaryColorP3uiv_params params =
+    {
+        .type = params32->type,
+        .color = ULongToPtr(params32->color),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColorP3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColorPointer( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glSecondaryColorPointer_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColorPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColorPointerEXT( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glSecondaryColorPointerEXT_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glSecondaryColorPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSecondaryColorPointerListIBM( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLint stride;
+        PTR32 pointer;
+        GLint ptrstride;
+    } *params32 = args;
+    struct glSecondaryColorPointerListIBM_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .ptrstride = params32->ptrstride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glSelectPerfMonitorCountersAMD( void *args )
+{
+    struct
+    {
+        GLuint monitor;
+        GLboolean enable;
+        GLuint group;
+        GLint numCounters;
+        PTR32 counterList;
+    } *params32 = args;
+    struct glSelectPerfMonitorCountersAMD_params params =
+    {
+        .monitor = params32->monitor,
+        .enable = params32->enable,
+        .group = params32->group,
+        .numCounters = params32->numCounters,
+        .counterList = ULongToPtr(params32->counterList),
+    };
+    NTSTATUS status;
+    status = ext_glSelectPerfMonitorCountersAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSemaphoreParameterui64vEXT( void *args )
+{
+    struct
+    {
+        GLuint semaphore;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glSemaphoreParameterui64vEXT_params params =
+    {
+        .semaphore = params32->semaphore,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glSemaphoreParameterui64vEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSeparableFilter2D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 row;
+        PTR32 column;
+    } *params32 = args;
+    struct glSeparableFilter2D_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .row = ULongToPtr(params32->row),
+        .column = ULongToPtr(params32->column),
+    };
+    NTSTATUS status;
+    status = ext_glSeparableFilter2D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSeparableFilter2DEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 row;
+        PTR32 column;
+    } *params32 = args;
+    struct glSeparableFilter2DEXT_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .row = ULongToPtr(params32->row),
+        .column = ULongToPtr(params32->column),
+    };
+    NTSTATUS status;
+    status = ext_glSeparableFilter2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSetFragmentShaderConstantATI( void *args )
+{
+    struct
+    {
+        GLuint dst;
+        PTR32 value;
+    } *params32 = args;
+    struct glSetFragmentShaderConstantATI_params params =
+    {
+        .dst = params32->dst,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glSetFragmentShaderConstantATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSetInvariantEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum type;
+        PTR32 addr;
+    } *params32 = args;
+    struct glSetInvariantEXT_params params =
+    {
+        .id = params32->id,
+        .type = params32->type,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glSetInvariantEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSetLocalConstantEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum type;
+        PTR32 addr;
+    } *params32 = args;
+    struct glSetLocalConstantEXT_params params =
+    {
+        .id = params32->id,
+        .type = params32->type,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glSetLocalConstantEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSetMultisamplefvAMD( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        GLuint index;
+        PTR32 val;
+    } *params32 = args;
+    struct glSetMultisamplefvAMD_params params =
+    {
+        .pname = params32->pname,
+        .index = params32->index,
+        .val = ULongToPtr(params32->val),
+    };
+    NTSTATUS status;
+    status = ext_glSetMultisamplefvAMD( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glShaderBinary( void *args )
+{
+    struct
+    {
+        GLsizei count;
+        PTR32 shaders;
+        GLenum binaryformat;
+        PTR32 binary;
+        GLsizei length;
+    } *params32 = args;
+    struct glShaderBinary_params params =
+    {
+        .count = params32->count,
+        .shaders = ULongToPtr(params32->shaders),
+        .binaryformat = params32->binaryformat,
+        .binary = ULongToPtr(params32->binary),
+        .length = params32->length,
+    };
+    NTSTATUS status;
+    status = ext_glShaderBinary( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glShaderSource( void *args )
+{
+    struct
+    {
+        GLuint shader;
+        GLsizei count;
+        PTR32 string;
+        PTR32 length;
+    } *params32 = args;
+    struct glShaderSource_params params =
+    {
+        .shader = params32->shader,
+        .count = params32->count,
+        .length = ULongToPtr(params32->length),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glShaderSourceARB( void *args )
+{
+    struct
+    {
+        GLhandleARB shaderObj;
+        GLsizei count;
+        PTR32 string;
+        PTR32 length;
+    } *params32 = args;
+    struct glShaderSourceARB_params params =
+    {
+        .shaderObj = params32->shaderObj,
+        .count = params32->count,
+        .length = ULongToPtr(params32->length),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glShadingRateImagePaletteNV( void *args )
+{
+    struct
+    {
+        GLuint viewport;
+        GLuint first;
+        GLsizei count;
+        PTR32 rates;
+    } *params32 = args;
+    struct glShadingRateImagePaletteNV_params params =
+    {
+        .viewport = params32->viewport,
+        .first = params32->first,
+        .count = params32->count,
+        .rates = ULongToPtr(params32->rates),
+    };
+    NTSTATUS status;
+    status = ext_glShadingRateImagePaletteNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glShadingRateSampleOrderCustomNV( void *args )
+{
+    struct
+    {
+        GLenum rate;
+        GLuint samples;
+        PTR32 locations;
+    } *params32 = args;
+    struct glShadingRateSampleOrderCustomNV_params params =
+    {
+        .rate = params32->rate,
+        .samples = params32->samples,
+        .locations = ULongToPtr(params32->locations),
+    };
+    NTSTATUS status;
+    status = ext_glShadingRateSampleOrderCustomNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSharpenTexFuncSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei n;
+        PTR32 points;
+    } *params32 = args;
+    struct glSharpenTexFuncSGIS_params params =
+    {
+        .target = params32->target,
+        .n = params32->n,
+        .points = ULongToPtr(params32->points),
+    };
+    NTSTATUS status;
+    status = ext_glSharpenTexFuncSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSignalSemaphoreEXT( void *args )
+{
+    struct
+    {
+        GLuint semaphore;
+        GLuint numBufferBarriers;
+        PTR32 buffers;
+        GLuint numTextureBarriers;
+        PTR32 textures;
+        PTR32 dstLayouts;
+    } *params32 = args;
+    struct glSignalSemaphoreEXT_params params =
+    {
+        .semaphore = params32->semaphore,
+        .numBufferBarriers = params32->numBufferBarriers,
+        .buffers = ULongToPtr(params32->buffers),
+        .numTextureBarriers = params32->numTextureBarriers,
+        .textures = ULongToPtr(params32->textures),
+        .dstLayouts = ULongToPtr(params32->dstLayouts),
+    };
+    NTSTATUS status;
+    status = ext_glSignalSemaphoreEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSignalSemaphoreui64NVX( void *args )
+{
+    struct
+    {
+        GLuint signalGpu;
+        GLsizei fenceObjectCount;
+        PTR32 semaphoreArray;
+        PTR32 fenceValueArray;
+    } *params32 = args;
+    struct glSignalSemaphoreui64NVX_params params =
+    {
+        .signalGpu = params32->signalGpu,
+        .fenceObjectCount = params32->fenceObjectCount,
+        .semaphoreArray = ULongToPtr(params32->semaphoreArray),
+        .fenceValueArray = ULongToPtr(params32->fenceValueArray),
+    };
+    NTSTATUS status;
+    status = ext_glSignalSemaphoreui64NVX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSpecializeShader( void *args )
+{
+    struct
+    {
+        GLuint shader;
+        PTR32 pEntryPoint;
+        GLuint numSpecializationConstants;
+        PTR32 pConstantIndex;
+        PTR32 pConstantValue;
+    } *params32 = args;
+    struct glSpecializeShader_params params =
+    {
+        .shader = params32->shader,
+        .pEntryPoint = ULongToPtr(params32->pEntryPoint),
+        .numSpecializationConstants = params32->numSpecializationConstants,
+        .pConstantIndex = ULongToPtr(params32->pConstantIndex),
+        .pConstantValue = ULongToPtr(params32->pConstantValue),
+    };
+    NTSTATUS status;
+    status = ext_glSpecializeShader( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSpecializeShaderARB( void *args )
+{
+    struct
+    {
+        GLuint shader;
+        PTR32 pEntryPoint;
+        GLuint numSpecializationConstants;
+        PTR32 pConstantIndex;
+        PTR32 pConstantValue;
+    } *params32 = args;
+    struct glSpecializeShaderARB_params params =
+    {
+        .shader = params32->shader,
+        .pEntryPoint = ULongToPtr(params32->pEntryPoint),
+        .numSpecializationConstants = params32->numSpecializationConstants,
+        .pConstantIndex = ULongToPtr(params32->pConstantIndex),
+        .pConstantValue = ULongToPtr(params32->pConstantValue),
+    };
+    NTSTATUS status;
+    status = ext_glSpecializeShaderARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSpriteParameterfvSGIX( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glSpriteParameterfvSGIX_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glSpriteParameterfvSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glSpriteParameterivSGIX( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glSpriteParameterivSGIX_params params =
+    {
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glSpriteParameterivSGIX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glStencilFillPathInstancedNV( void *args )
+{
+    struct
+    {
+        GLsizei numPaths;
+        GLenum pathNameType;
+        PTR32 paths;
+        GLuint pathBase;
+        GLenum fillMode;
+        GLuint mask;
+        GLenum transformType;
+        PTR32 transformValues;
+    } *params32 = args;
+    struct glStencilFillPathInstancedNV_params params =
+    {
+        .numPaths = params32->numPaths,
+        .pathNameType = params32->pathNameType,
+        .paths = ULongToPtr(params32->paths),
+        .pathBase = params32->pathBase,
+        .fillMode = params32->fillMode,
+        .mask = params32->mask,
+        .transformType = params32->transformType,
+        .transformValues = ULongToPtr(params32->transformValues),
+    };
+    NTSTATUS status;
+    status = ext_glStencilFillPathInstancedNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glStencilStrokePathInstancedNV( void *args )
+{
+    struct
+    {
+        GLsizei numPaths;
+        GLenum pathNameType;
+        PTR32 paths;
+        GLuint pathBase;
+        GLint reference;
+        GLuint mask;
+        GLenum transformType;
+        PTR32 transformValues;
+    } *params32 = args;
+    struct glStencilStrokePathInstancedNV_params params =
+    {
+        .numPaths = params32->numPaths,
+        .pathNameType = params32->pathNameType,
+        .paths = ULongToPtr(params32->paths),
+        .pathBase = params32->pathBase,
+        .reference = params32->reference,
+        .mask = params32->mask,
+        .transformType = params32->transformType,
+        .transformValues = ULongToPtr(params32->transformValues),
+    };
+    NTSTATUS status;
+    status = ext_glStencilStrokePathInstancedNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glStencilThenCoverFillPathInstancedNV( void *args )
+{
+    struct
+    {
+        GLsizei numPaths;
+        GLenum pathNameType;
+        PTR32 paths;
+        GLuint pathBase;
+        GLenum fillMode;
+        GLuint mask;
+        GLenum coverMode;
+        GLenum transformType;
+        PTR32 transformValues;
+    } *params32 = args;
+    struct glStencilThenCoverFillPathInstancedNV_params params =
+    {
+        .numPaths = params32->numPaths,
+        .pathNameType = params32->pathNameType,
+        .paths = ULongToPtr(params32->paths),
+        .pathBase = params32->pathBase,
+        .fillMode = params32->fillMode,
+        .mask = params32->mask,
+        .coverMode = params32->coverMode,
+        .transformType = params32->transformType,
+        .transformValues = ULongToPtr(params32->transformValues),
+    };
+    NTSTATUS status;
+    status = ext_glStencilThenCoverFillPathInstancedNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glStencilThenCoverStrokePathInstancedNV( void *args )
+{
+    struct
+    {
+        GLsizei numPaths;
+        GLenum pathNameType;
+        PTR32 paths;
+        GLuint pathBase;
+        GLint reference;
+        GLuint mask;
+        GLenum coverMode;
+        GLenum transformType;
+        PTR32 transformValues;
+    } *params32 = args;
+    struct glStencilThenCoverStrokePathInstancedNV_params params =
+    {
+        .numPaths = params32->numPaths,
+        .pathNameType = params32->pathNameType,
+        .paths = ULongToPtr(params32->paths),
+        .pathBase = params32->pathBase,
+        .reference = params32->reference,
+        .mask = params32->mask,
+        .coverMode = params32->coverMode,
+        .transformType = params32->transformType,
+        .transformValues = ULongToPtr(params32->transformValues),
+    };
+    NTSTATUS status;
+    status = ext_glStencilThenCoverStrokePathInstancedNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glStringMarkerGREMEDY( void *args )
+{
+    struct
+    {
+        GLsizei len;
+        PTR32 string;
+    } *params32 = args;
+    struct glStringMarkerGREMEDY_params params =
+    {
+        .len = params32->len,
+        .string = ULongToPtr(params32->string),
+    };
+    NTSTATUS status;
+    status = ext_glStringMarkerGREMEDY( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTangent3bvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTangent3bvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTangent3bvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTangent3dvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTangent3dvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTangent3dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTangent3fvEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTangent3fvEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTangent3fvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTangent3ivEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTangent3ivEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTangent3ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTangent3svEXT( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTangent3svEXT_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTangent3svEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTangentPointerEXT( void *args )
+{
+    struct
+    {
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glTangentPointerEXT_params params =
+    {
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glTangentPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexBufferRange( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum internalformat;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+    } *params32 = args;
+    struct glTexBufferRange_params params =
+    {
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glTexBufferRange( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexBumpParameterfvATI( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glTexBumpParameterfvATI_params params =
+    {
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glTexBumpParameterfvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexBumpParameterivATI( void *args )
+{
+    struct
+    {
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glTexBumpParameterivATI_params params =
+    {
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glTexBumpParameterivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord1bvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoord1bvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord1bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord1hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord1hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord1hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord1xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoord1xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord1xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord2bvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoord2bvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord2bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord2fColor3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 tc;
+        PTR32 c;
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2fColor3fVertex3fvSUN_params params =
+    {
+        .tc = ULongToPtr(params32->tc),
+        .c = ULongToPtr(params32->c),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord2fColor3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord2fColor4fNormal3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 tc;
+        PTR32 c;
+        PTR32 n;
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2fColor4fNormal3fVertex3fvSUN_params params =
+    {
+        .tc = ULongToPtr(params32->tc),
+        .c = ULongToPtr(params32->c),
+        .n = ULongToPtr(params32->n),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord2fColor4fNormal3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord2fColor4ubVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 tc;
+        PTR32 c;
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2fColor4ubVertex3fvSUN_params params =
+    {
+        .tc = ULongToPtr(params32->tc),
+        .c = ULongToPtr(params32->c),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord2fColor4ubVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord2fNormal3fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 tc;
+        PTR32 n;
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2fNormal3fVertex3fvSUN_params params =
+    {
+        .tc = ULongToPtr(params32->tc),
+        .n = ULongToPtr(params32->n),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord2fNormal3fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord2fVertex3fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 tc;
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2fVertex3fvSUN_params params =
+    {
+        .tc = ULongToPtr(params32->tc),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord2fVertex3fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord2hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord2hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord2hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord2xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoord2xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord2xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord3bvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoord3bvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord3bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord3hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord3hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord3hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord3xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoord3xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord3xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord4bvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoord4bvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord4bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord4fColor4fNormal3fVertex4fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 tc;
+        PTR32 c;
+        PTR32 n;
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord4fColor4fNormal3fVertex4fvSUN_params params =
+    {
+        .tc = ULongToPtr(params32->tc),
+        .c = ULongToPtr(params32->c),
+        .n = ULongToPtr(params32->n),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord4fColor4fNormal3fVertex4fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord4fVertex4fvSUN( void *args )
+{
+    struct
+    {
+        PTR32 tc;
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord4fVertex4fvSUN_params params =
+    {
+        .tc = ULongToPtr(params32->tc),
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord4fVertex4fvSUN( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord4hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glTexCoord4hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord4hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoord4xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoord4xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoord4xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoordP1uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoordP1uiv_params params =
+    {
+        .type = params32->type,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoordP1uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoordP2uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoordP2uiv_params params =
+    {
+        .type = params32->type,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoordP2uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoordP3uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoordP3uiv_params params =
+    {
+        .type = params32->type,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoordP3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoordP4uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 coords;
+    } *params32 = args;
+    struct glTexCoordP4uiv_params params =
+    {
+        .type = params32->type,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoordP4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoordPointerEXT( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        GLsizei count;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glTexCoordPointerEXT_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .count = params32->count,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glTexCoordPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexCoordPointerListIBM( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLint stride;
+        PTR32 pointer;
+        GLint ptrstride;
+    } *params32 = args;
+    struct glTexCoordPointerListIBM_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .ptrstride = params32->ptrstride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glTexCoordPointervINTEL( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glTexCoordPointervINTEL_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glTexEnvxvOES( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexEnvxvOES_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTexEnvxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexFilterFuncSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum filter;
+        GLsizei n;
+        PTR32 weights;
+    } *params32 = args;
+    struct glTexFilterFuncSGIS_params params =
+    {
+        .target = params32->target,
+        .filter = params32->filter,
+        .n = params32->n,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glTexFilterFuncSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexGenxvOES( void *args )
+{
+    struct
+    {
+        GLenum coord;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexGenxvOES_params params =
+    {
+        .coord = params32->coord,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTexGenxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexImage3D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexImage3D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTexImage3D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexImage3DEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexImage3DEXT_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTexImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexImage4DSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLenum internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLsizei size4d;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexImage4DSGIS_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .size4d = params32->size4d,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTexImage4DSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexParameterIiv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexParameterIiv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTexParameterIiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexParameterIivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexParameterIivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTexParameterIivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexParameterIuiv( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexParameterIuiv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTexParameterIuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexParameterIuivEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexParameterIuivEXT_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTexParameterIuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexParameterxvOES( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTexParameterxvOES_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTexParameterxvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexSubImage1DEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexSubImage1DEXT_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTexSubImage1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexSubImage2DEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexSubImage2DEXT_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTexSubImage2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexSubImage3D( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexSubImage3D_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTexSubImage3D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexSubImage3DEXT( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexSubImage3DEXT_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTexSubImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTexSubImage4DSGIS( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLint woffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLsizei size4d;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTexSubImage4DSGIS_params params =
+    {
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .woffset = params32->woffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .size4d = params32->size4d,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTexSubImage4DSGIS( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureBufferRange( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum internalformat;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+    } *params32 = args;
+    struct glTextureBufferRange_params params =
+    {
+        .texture = params32->texture,
+        .internalformat = params32->internalformat,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glTextureBufferRange( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureBufferRangeEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLenum internalformat;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+    } *params32 = args;
+    struct glTextureBufferRangeEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .internalformat = params32->internalformat,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glTextureBufferRangeEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureImage1DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLint internalformat;
+        GLsizei width;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTextureImage1DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTextureImage1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureImage2DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLint internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTextureImage2DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTextureImage2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureImage3DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLint internalformat;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLint border;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTextureImage3DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .internalformat = params32->internalformat,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .border = params32->border,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTextureImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureParameterIiv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTextureParameterIiv_params params =
+    {
+        .texture = params32->texture,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTextureParameterIiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureParameterIivEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTextureParameterIivEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTextureParameterIivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureParameterIuiv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTextureParameterIuiv_params params =
+    {
+        .texture = params32->texture,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTextureParameterIuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureParameterIuivEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTextureParameterIuivEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTextureParameterIuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureParameterfv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glTextureParameterfv_params params =
+    {
+        .texture = params32->texture,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glTextureParameterfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureParameterfvEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTextureParameterfvEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTextureParameterfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureParameteriv( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum pname;
+        PTR32 param;
+    } *params32 = args;
+    struct glTextureParameteriv_params params =
+    {
+        .texture = params32->texture,
+        .pname = params32->pname,
+        .param = ULongToPtr(params32->param),
+    };
+    NTSTATUS status;
+    status = ext_glTextureParameteriv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureParameterivEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glTextureParameterivEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glTextureParameterivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureRangeAPPLE( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLsizei length;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glTextureRangeAPPLE_params params =
+    {
+        .target = params32->target,
+        .length = params32->length,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glTextureRangeAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureSubImage1D( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTextureSubImage1D_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTextureSubImage1D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureSubImage1DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLsizei width;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTextureSubImage1DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .width = params32->width,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTextureSubImage1DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureSubImage2D( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTextureSubImage2D_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTextureSubImage2D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureSubImage2DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLsizei width;
+        GLsizei height;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTextureSubImage2DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTextureSubImage2DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureSubImage3D( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTextureSubImage3D_params params =
+    {
+        .texture = params32->texture,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTextureSubImage3D( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTextureSubImage3DEXT( void *args )
+{
+    struct
+    {
+        GLuint texture;
+        GLenum target;
+        GLint level;
+        GLint xoffset;
+        GLint yoffset;
+        GLint zoffset;
+        GLsizei width;
+        GLsizei height;
+        GLsizei depth;
+        GLenum format;
+        GLenum type;
+        PTR32 pixels;
+    } *params32 = args;
+    struct glTextureSubImage3DEXT_params params =
+    {
+        .texture = params32->texture,
+        .target = params32->target,
+        .level = params32->level,
+        .xoffset = params32->xoffset,
+        .yoffset = params32->yoffset,
+        .zoffset = params32->zoffset,
+        .width = params32->width,
+        .height = params32->height,
+        .depth = params32->depth,
+        .format = params32->format,
+        .type = params32->type,
+        .pixels = ULongToPtr(params32->pixels),
+    };
+    NTSTATUS status;
+    status = ext_glTextureSubImage3DEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTransformFeedbackAttribsNV( void *args )
+{
+    struct
+    {
+        GLsizei count;
+        PTR32 attribs;
+        GLenum bufferMode;
+    } *params32 = args;
+    struct glTransformFeedbackAttribsNV_params params =
+    {
+        .count = params32->count,
+        .attribs = ULongToPtr(params32->attribs),
+        .bufferMode = params32->bufferMode,
+    };
+    NTSTATUS status;
+    status = ext_glTransformFeedbackAttribsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTransformFeedbackBufferRange( void *args )
+{
+    struct
+    {
+        GLuint xfb;
+        GLuint index;
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 size;
+    } *params32 = args;
+    struct glTransformFeedbackBufferRange_params params =
+    {
+        .xfb = params32->xfb,
+        .index = params32->index,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .size = (GLsizeiptr)ULongToPtr(params32->size),
+    };
+    NTSTATUS status;
+    status = ext_glTransformFeedbackBufferRange( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTransformFeedbackStreamAttribsNV( void *args )
+{
+    struct
+    {
+        GLsizei count;
+        PTR32 attribs;
+        GLsizei nbuffers;
+        PTR32 bufstreams;
+        GLenum bufferMode;
+    } *params32 = args;
+    struct glTransformFeedbackStreamAttribsNV_params params =
+    {
+        .count = params32->count,
+        .attribs = ULongToPtr(params32->attribs),
+        .nbuffers = params32->nbuffers,
+        .bufstreams = ULongToPtr(params32->bufstreams),
+        .bufferMode = params32->bufferMode,
+    };
+    NTSTATUS status;
+    status = ext_glTransformFeedbackStreamAttribsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTransformFeedbackVaryings( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLsizei count;
+        PTR32 varyings;
+        GLenum bufferMode;
+    } *params32 = args;
+    struct glTransformFeedbackVaryings_params params =
+    {
+        .program = params32->program,
+        .count = params32->count,
+        .bufferMode = params32->bufferMode,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glTransformFeedbackVaryingsEXT( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLsizei count;
+        PTR32 varyings;
+        GLenum bufferMode;
+    } *params32 = args;
+    struct glTransformFeedbackVaryingsEXT_params params =
+    {
+        .program = params32->program,
+        .count = params32->count,
+        .bufferMode = params32->bufferMode,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glTransformFeedbackVaryingsNV( void *args )
+{
+    struct
+    {
+        GLuint program;
+        GLsizei count;
+        PTR32 locations;
+        GLenum bufferMode;
+    } *params32 = args;
+    struct glTransformFeedbackVaryingsNV_params params =
+    {
+        .program = params32->program,
+        .count = params32->count,
+        .locations = ULongToPtr(params32->locations),
+        .bufferMode = params32->bufferMode,
+    };
+    NTSTATUS status;
+    status = ext_glTransformFeedbackVaryingsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glTransformPathNV( void *args )
+{
+    struct
+    {
+        GLuint resultPath;
+        GLuint srcPath;
+        GLenum transformType;
+        PTR32 transformValues;
+    } *params32 = args;
+    struct glTransformPathNV_params params =
+    {
+        .resultPath = params32->resultPath,
+        .srcPath = params32->srcPath,
+        .transformType = params32->transformType,
+        .transformValues = ULongToPtr(params32->transformValues),
+    };
+    NTSTATUS status;
+    status = ext_glTransformPathNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1fvARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1fvARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1i64vARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1i64vARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1i64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1i64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1i64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1iv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1iv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1ivARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1ivARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1ui64vARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1ui64vARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1ui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1ui64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1ui64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1uiv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1uiv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform1uivEXT( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform1uivEXT_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform1uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2fvARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2fvARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2i64vARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2i64vARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2i64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2i64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2i64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2iv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2iv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2ivARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2ivARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2ui64vARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2ui64vARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2ui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2ui64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2ui64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2uiv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2uiv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform2uivEXT( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform2uivEXT_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform2uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3fvARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3fvARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3i64vARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3i64vARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3i64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3i64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3i64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3iv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3iv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3ivARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3ivARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3ui64vARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3ui64vARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3ui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3ui64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3ui64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3uiv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3uiv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform3uivEXT( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform3uivEXT_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform3uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4fvARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4fvARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4i64vARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4i64vARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4i64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4i64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4i64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4iv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4iv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4ivARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4ivARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4ui64vARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4ui64vARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4ui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4ui64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4ui64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4uiv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4uiv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniform4uivEXT( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniform4uivEXT_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniform4uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformHandleui64vARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformHandleui64vARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformHandleui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformHandleui64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformHandleui64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformHandleui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix2dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix2dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix2fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix2fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix2fvARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix2fvARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix2fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix2x3dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix2x3dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix2x3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix2x3fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix2x3fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix2x3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix2x4dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix2x4dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix2x4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix2x4fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix2x4fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix2x4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix3dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix3dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix3fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix3fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix3fvARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix3fvARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix3fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix3x2dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix3x2dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix3x2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix3x2fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix3x2fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix3x2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix3x4dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix3x4dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix3x4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix3x4fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix3x4fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix3x4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix4dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix4dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix4fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix4fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix4fvARB( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix4fvARB_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix4fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix4x2dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix4x2dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix4x2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix4x2fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix4x2fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix4x2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix4x3dv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix4x3dv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix4x3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformMatrix4x3fv( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        GLboolean transpose;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformMatrix4x3fv_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .transpose = params32->transpose,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformMatrix4x3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformSubroutinesuiv( void *args )
+{
+    struct
+    {
+        GLenum shadertype;
+        GLsizei count;
+        PTR32 indices;
+    } *params32 = args;
+    struct glUniformSubroutinesuiv_params params =
+    {
+        .shadertype = params32->shadertype,
+        .count = params32->count,
+        .indices = ULongToPtr(params32->indices),
+    };
+    NTSTATUS status;
+    status = ext_glUniformSubroutinesuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUniformui64vNV( void *args )
+{
+    struct
+    {
+        GLint location;
+        GLsizei count;
+        PTR32 value;
+    } *params32 = args;
+    struct glUniformui64vNV_params params =
+    {
+        .location = params32->location,
+        .count = params32->count,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glUniformui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glUpdateObjectBufferATI( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLuint offset;
+        GLsizei size;
+        PTR32 pointer;
+        GLenum preserve;
+    } *params32 = args;
+    struct glUpdateObjectBufferATI_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = params32->offset,
+        .size = params32->size,
+        .pointer = ULongToPtr(params32->pointer),
+        .preserve = params32->preserve,
+    };
+    NTSTATUS status;
+    status = ext_glUpdateObjectBufferATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVDPAUGetSurfaceivNV( void *args )
+{
+    struct
+    {
+        GLvdpauSurfaceNV surface;
+        GLenum pname;
+        GLsizei count;
+        PTR32 length;
+        PTR32 values;
+    } *params32 = args;
+    struct glVDPAUGetSurfaceivNV_params params =
+    {
+        .surface = params32->surface,
+        .pname = params32->pname,
+        .count = params32->count,
+        .length = ULongToPtr(params32->length),
+        .values = ULongToPtr(params32->values),
+    };
+    NTSTATUS status;
+    status = ext_glVDPAUGetSurfaceivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVDPAUInitNV( void *args )
+{
+    struct
+    {
+        PTR32 vdpDevice;
+        PTR32 getProcAddress;
+    } *params32 = args;
+    struct glVDPAUInitNV_params params =
+    {
+        .vdpDevice = ULongToPtr(params32->vdpDevice),
+        .getProcAddress = ULongToPtr(params32->getProcAddress),
+    };
+    NTSTATUS status;
+    status = ext_glVDPAUInitNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVDPAUMapSurfacesNV( void *args )
+{
+    struct
+    {
+        GLsizei numSurfaces;
+        PTR32 surfaces;
+    } *params32 = args;
+    struct glVDPAUMapSurfacesNV_params params =
+    {
+        .numSurfaces = params32->numSurfaces,
+        .surfaces = ULongToPtr(params32->surfaces),
+    };
+    NTSTATUS status;
+    status = ext_glVDPAUMapSurfacesNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVDPAURegisterOutputSurfaceNV( void *args )
+{
+    struct
+    {
+        PTR32 vdpSurface;
+        GLenum target;
+        GLsizei numTextureNames;
+        PTR32 textureNames;
+        GLvdpauSurfaceNV ret;
+    } *params32 = args;
+    struct glVDPAURegisterOutputSurfaceNV_params params =
+    {
+        .vdpSurface = ULongToPtr(params32->vdpSurface),
+        .target = params32->target,
+        .numTextureNames = params32->numTextureNames,
+        .textureNames = ULongToPtr(params32->textureNames),
+    };
+    NTSTATUS status;
+    status = ext_glVDPAURegisterOutputSurfaceNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVDPAURegisterVideoSurfaceNV( void *args )
+{
+    struct
+    {
+        PTR32 vdpSurface;
+        GLenum target;
+        GLsizei numTextureNames;
+        PTR32 textureNames;
+        GLvdpauSurfaceNV ret;
+    } *params32 = args;
+    struct glVDPAURegisterVideoSurfaceNV_params params =
+    {
+        .vdpSurface = ULongToPtr(params32->vdpSurface),
+        .target = params32->target,
+        .numTextureNames = params32->numTextureNames,
+        .textureNames = ULongToPtr(params32->textureNames),
+    };
+    NTSTATUS status;
+    status = ext_glVDPAURegisterVideoSurfaceNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVDPAURegisterVideoSurfaceWithPictureStructureNV( void *args )
+{
+    struct
+    {
+        PTR32 vdpSurface;
+        GLenum target;
+        GLsizei numTextureNames;
+        PTR32 textureNames;
+        GLboolean isFrameStructure;
+        GLvdpauSurfaceNV ret;
+    } *params32 = args;
+    struct glVDPAURegisterVideoSurfaceWithPictureStructureNV_params params =
+    {
+        .vdpSurface = ULongToPtr(params32->vdpSurface),
+        .target = params32->target,
+        .numTextureNames = params32->numTextureNames,
+        .textureNames = ULongToPtr(params32->textureNames),
+        .isFrameStructure = params32->isFrameStructure,
+    };
+    NTSTATUS status;
+    status = ext_glVDPAURegisterVideoSurfaceWithPictureStructureNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVDPAUUnmapSurfacesNV( void *args )
+{
+    struct
+    {
+        GLsizei numSurface;
+        PTR32 surfaces;
+    } *params32 = args;
+    struct glVDPAUUnmapSurfacesNV_params params =
+    {
+        .numSurface = params32->numSurface,
+        .surfaces = ULongToPtr(params32->surfaces),
+    };
+    NTSTATUS status;
+    status = ext_glVDPAUUnmapSurfacesNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVariantPointerEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        GLenum type;
+        GLuint stride;
+        PTR32 addr;
+    } *params32 = args;
+    struct glVariantPointerEXT_params params =
+    {
+        .id = params32->id,
+        .type = params32->type,
+        .stride = params32->stride,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glVariantPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVariantbvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        PTR32 addr;
+    } *params32 = args;
+    struct glVariantbvEXT_params params =
+    {
+        .id = params32->id,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glVariantbvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVariantdvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        PTR32 addr;
+    } *params32 = args;
+    struct glVariantdvEXT_params params =
+    {
+        .id = params32->id,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glVariantdvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVariantfvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        PTR32 addr;
+    } *params32 = args;
+    struct glVariantfvEXT_params params =
+    {
+        .id = params32->id,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glVariantfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVariantivEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        PTR32 addr;
+    } *params32 = args;
+    struct glVariantivEXT_params params =
+    {
+        .id = params32->id,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glVariantivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVariantsvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        PTR32 addr;
+    } *params32 = args;
+    struct glVariantsvEXT_params params =
+    {
+        .id = params32->id,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glVariantsvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVariantubvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        PTR32 addr;
+    } *params32 = args;
+    struct glVariantubvEXT_params params =
+    {
+        .id = params32->id,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glVariantubvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVariantuivEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        PTR32 addr;
+    } *params32 = args;
+    struct glVariantuivEXT_params params =
+    {
+        .id = params32->id,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glVariantuivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVariantusvEXT( void *args )
+{
+    struct
+    {
+        GLuint id;
+        PTR32 addr;
+    } *params32 = args;
+    struct glVariantusvEXT_params params =
+    {
+        .id = params32->id,
+        .addr = ULongToPtr(params32->addr),
+    };
+    NTSTATUS status;
+    status = ext_glVariantusvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertex2bvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertex2bvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertex2bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertex2hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex2hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertex2hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertex2xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertex2xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertex2xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertex3bvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertex3bvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertex3bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertex3hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex3hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertex3hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertex3xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertex3xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertex3xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertex4bvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertex4bvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertex4bvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertex4hvNV( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glVertex4hvNV_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertex4hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertex4xvOES( void *args )
+{
+    struct
+    {
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertex4xvOES_params params =
+    {
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertex4xvOES( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayBindVertexBufferEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint bindingindex;
+        GLuint buffer;
+        PTR32 offset;
+        GLsizei stride;
+    } *params32 = args;
+    struct glVertexArrayBindVertexBufferEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .bindingindex = params32->bindingindex,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayBindVertexBufferEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayColorOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayColorOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayColorOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayEdgeFlagOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayEdgeFlagOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayEdgeFlagOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayFogCoordOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayFogCoordOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayFogCoordOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayIndexOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayIndexOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayIndexOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayMultiTexCoordOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLenum texunit;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayMultiTexCoordOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .texunit = params32->texunit,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayMultiTexCoordOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayNormalOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayNormalOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayNormalOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayRangeAPPLE( void *args )
+{
+    struct
+    {
+        GLsizei length;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexArrayRangeAPPLE_params params =
+    {
+        .length = params32->length,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayRangeAPPLE( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayRangeNV( void *args )
+{
+    struct
+    {
+        GLsizei length;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexArrayRangeNV_params params =
+    {
+        .length = params32->length,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayRangeNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArraySecondaryColorOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArraySecondaryColorOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArraySecondaryColorOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayTexCoordOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayTexCoordOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayTexCoordOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayVertexAttribIOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLuint index;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayVertexAttribIOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .index = params32->index,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayVertexAttribIOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayVertexAttribLOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLuint index;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayVertexAttribLOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .index = params32->index,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayVertexAttribLOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayVertexAttribOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLuint index;
+        GLint size;
+        GLenum type;
+        GLboolean normalized;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayVertexAttribOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .index = params32->index,
+        .size = params32->size,
+        .type = params32->type,
+        .normalized = params32->normalized,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayVertexAttribOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayVertexBuffer( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint bindingindex;
+        GLuint buffer;
+        PTR32 offset;
+        GLsizei stride;
+    } *params32 = args;
+    struct glVertexArrayVertexBuffer_params params =
+    {
+        .vaobj = params32->vaobj,
+        .bindingindex = params32->bindingindex,
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .stride = params32->stride,
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayVertexBuffer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayVertexBuffers( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint first;
+        GLsizei count;
+        PTR32 buffers;
+        PTR32 offsets;
+        PTR32 strides;
+    } *params32 = args;
+    struct glVertexArrayVertexBuffers_params params =
+    {
+        .vaobj = params32->vaobj,
+        .first = params32->first,
+        .count = params32->count,
+        .buffers = ULongToPtr(params32->buffers),
+        .strides = ULongToPtr(params32->strides),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glVertexArrayVertexOffsetEXT( void *args )
+{
+    struct
+    {
+        GLuint vaobj;
+        GLuint buffer;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 offset;
+    } *params32 = args;
+    struct glVertexArrayVertexOffsetEXT_params params =
+    {
+        .vaobj = params32->vaobj,
+        .buffer = params32->buffer,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+    };
+    NTSTATUS status;
+    status = ext_glVertexArrayVertexOffsetEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1dv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1dv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1dvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1dvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1dvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1dvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1fv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1fv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1fvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1fvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1fvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1fvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1hvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1hvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1sv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1sv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1svARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1svARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib1svNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib1svNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib1svNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2dv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2dv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2dvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2dvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2dvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2dvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2fv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2fv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2fvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2fvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2fvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2fvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2hvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2hvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2sv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2sv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2svARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2svARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib2svNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib2svNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib2svNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3dv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3dv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3dvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3dvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3dvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3dvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3fv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3fv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3fvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3fvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3fvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3fvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3hvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3hvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3sv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3sv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3svARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3svARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib3svNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib3svNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib3svNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4Nbv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4Nbv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4Nbv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4NbvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4NbvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4NbvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4Niv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4Niv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4Niv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4NivARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4NivARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4NivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4Nsv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4Nsv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4Nsv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4NsvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4NsvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4NsvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4Nubv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4Nubv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4Nubv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4NubvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4NubvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4NubvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4Nuiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4Nuiv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4Nuiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4NuivARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4NuivARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4NuivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4Nusv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4Nusv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4Nusv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4NusvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4NusvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4NusvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4bv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4bv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4bv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4bvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4bvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4bvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4dv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4dv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4dvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4dvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4dvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4dvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4fv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4fv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4fvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4fvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4fvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4fvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4hvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4hvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4iv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4iv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4ivARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4ivARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4sv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4sv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4svARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4svARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4svNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4svNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4svNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4ubv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4ubv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4ubv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4ubvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4ubvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4ubvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4ubvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4ubvNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4ubvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4uiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4uiv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4uivARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4uivARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4uivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4usv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4usv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4usv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttrib4usvARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttrib4usvARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttrib4usvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI1iv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI1iv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI1iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI1ivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI1ivEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI1ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI1uiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI1uiv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI1uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI1uivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI1uivEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI1uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI2iv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI2iv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI2iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI2ivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI2ivEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI2ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI2uiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI2uiv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI2uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI2uivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI2uivEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI2uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI3iv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI3iv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI3ivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI3ivEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI3ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI3uiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI3uiv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI3uivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI3uivEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI3uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4bv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4bv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4bv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4bvEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4bvEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4bvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4iv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4iv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4ivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4ivEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4ivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4sv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4sv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4svEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4svEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4svEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4ubv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4ubv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4ubv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4ubvEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4ubvEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4ubvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4uiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4uiv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4uivEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4uivEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4uivEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4usv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4usv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4usv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribI4usvEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribI4usvEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribI4usvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribIPointer( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexAttribIPointer_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribIPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribIPointerEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexAttribIPointerEXT_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribIPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL1dv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL1dv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL1dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL1dvEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL1dvEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL1dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL1i64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL1i64vNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL1i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL1ui64vARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL1ui64vARB_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL1ui64vARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL1ui64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL1ui64vNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL1ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL2dv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL2dv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL2dvEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL2dvEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL2dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL2i64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL2i64vNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL2i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL2ui64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL2ui64vNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL2ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL3dv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL3dv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL3dvEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL3dvEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL3dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL3i64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL3i64vNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL3i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL3ui64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL3ui64vNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL3ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL4dv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL4dv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL4dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL4dvEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL4dvEXT_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL4dvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL4i64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL4i64vNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL4i64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribL4ui64vNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribL4ui64vNV_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribL4ui64vNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribLPointer( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexAttribLPointer_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribLPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribLPointerEXT( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexAttribLPointerEXT_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribLPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribP1uiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum type;
+        GLboolean normalized;
+        PTR32 value;
+    } *params32 = args;
+    struct glVertexAttribP1uiv_params params =
+    {
+        .index = params32->index,
+        .type = params32->type,
+        .normalized = params32->normalized,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribP1uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribP2uiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum type;
+        GLboolean normalized;
+        PTR32 value;
+    } *params32 = args;
+    struct glVertexAttribP2uiv_params params =
+    {
+        .index = params32->index,
+        .type = params32->type,
+        .normalized = params32->normalized,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribP2uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribP3uiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum type;
+        GLboolean normalized;
+        PTR32 value;
+    } *params32 = args;
+    struct glVertexAttribP3uiv_params params =
+    {
+        .index = params32->index,
+        .type = params32->type,
+        .normalized = params32->normalized,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribP3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribP4uiv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLenum type;
+        GLboolean normalized;
+        PTR32 value;
+    } *params32 = args;
+    struct glVertexAttribP4uiv_params params =
+    {
+        .index = params32->index,
+        .type = params32->type,
+        .normalized = params32->normalized,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribP4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribPointer( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLint size;
+        GLenum type;
+        GLboolean normalized;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexAttribPointer_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .type = params32->type,
+        .normalized = params32->normalized,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribPointer( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribPointerARB( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLint size;
+        GLenum type;
+        GLboolean normalized;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexAttribPointerARB_params params =
+    {
+        .index = params32->index,
+        .size = params32->size,
+        .type = params32->type,
+        .normalized = params32->normalized,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribPointerARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribPointerNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLint fsize;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexAttribPointerNV_params params =
+    {
+        .index = params32->index,
+        .fsize = params32->fsize,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribPointerNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs1dvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs1dvNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs1dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs1fvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs1fvNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs1fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs1hvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei n;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs1hvNV_params params =
+    {
+        .index = params32->index,
+        .n = params32->n,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs1hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs1svNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs1svNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs1svNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs2dvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs2dvNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs2dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs2fvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs2fvNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs2fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs2hvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei n;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs2hvNV_params params =
+    {
+        .index = params32->index,
+        .n = params32->n,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs2hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs2svNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs2svNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs2svNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs3dvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs3dvNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs3dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs3fvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs3fvNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs3fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs3hvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei n;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs3hvNV_params params =
+    {
+        .index = params32->index,
+        .n = params32->n,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs3hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs3svNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs3svNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs3svNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs4dvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs4dvNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs4dvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs4fvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs4fvNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs4fvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs4hvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei n;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs4hvNV_params params =
+    {
+        .index = params32->index,
+        .n = params32->n,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs4hvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs4svNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs4svNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs4svNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexAttribs4ubvNV( void *args )
+{
+    struct
+    {
+        GLuint index;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glVertexAttribs4ubvNV_params params =
+    {
+        .index = params32->index,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glVertexAttribs4ubvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexP2uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 value;
+    } *params32 = args;
+    struct glVertexP2uiv_params params =
+    {
+        .type = params32->type,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glVertexP2uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexP3uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 value;
+    } *params32 = args;
+    struct glVertexP3uiv_params params =
+    {
+        .type = params32->type,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glVertexP3uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexP4uiv( void *args )
+{
+    struct
+    {
+        GLenum type;
+        PTR32 value;
+    } *params32 = args;
+    struct glVertexP4uiv_params params =
+    {
+        .type = params32->type,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_glVertexP4uiv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexPointerEXT( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        GLsizei count;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexPointerEXT_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .count = params32->count,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexPointerListIBM( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLint stride;
+        PTR32 pointer;
+        GLint ptrstride;
+    } *params32 = args;
+    struct glVertexPointerListIBM_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .ptrstride = params32->ptrstride,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glVertexPointervINTEL( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexPointervINTEL_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_glVertexStream1dvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream1dvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream1dvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream1fvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream1fvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream1fvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream1ivATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream1ivATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream1ivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream1svATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream1svATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream1svATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream2dvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream2dvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream2dvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream2fvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream2fvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream2fvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream2ivATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream2ivATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream2ivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream2svATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream2svATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream2svATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream3dvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream3dvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream3dvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream3fvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream3fvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream3fvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream3ivATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream3ivATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream3ivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream3svATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream3svATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream3svATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream4dvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream4dvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream4dvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream4fvATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream4fvATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream4fvATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream4ivATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream4ivATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream4ivATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexStream4svATI( void *args )
+{
+    struct
+    {
+        GLenum stream;
+        PTR32 coords;
+    } *params32 = args;
+    struct glVertexStream4svATI_params params =
+    {
+        .stream = params32->stream,
+        .coords = ULongToPtr(params32->coords),
+    };
+    NTSTATUS status;
+    status = ext_glVertexStream4svATI( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexWeightPointerEXT( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glVertexWeightPointerEXT_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glVertexWeightPointerEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexWeightfvEXT( void *args )
+{
+    struct
+    {
+        PTR32 weight;
+    } *params32 = args;
+    struct glVertexWeightfvEXT_params params =
+    {
+        .weight = ULongToPtr(params32->weight),
+    };
+    NTSTATUS status;
+    status = ext_glVertexWeightfvEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVertexWeighthvNV( void *args )
+{
+    struct
+    {
+        PTR32 weight;
+    } *params32 = args;
+    struct glVertexWeighthvNV_params params =
+    {
+        .weight = ULongToPtr(params32->weight),
+    };
+    NTSTATUS status;
+    status = ext_glVertexWeighthvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVideoCaptureNV( void *args )
+{
+    struct
+    {
+        GLuint video_capture_slot;
+        PTR32 sequence_num;
+        PTR32 capture_time;
+        GLenum ret;
+    } *params32 = args;
+    struct glVideoCaptureNV_params params =
+    {
+        .video_capture_slot = params32->video_capture_slot,
+        .sequence_num = ULongToPtr(params32->sequence_num),
+        .capture_time = ULongToPtr(params32->capture_time),
+    };
+    NTSTATUS status;
+    status = ext_glVideoCaptureNV( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVideoCaptureStreamParameterdvNV( void *args )
+{
+    struct
+    {
+        GLuint video_capture_slot;
+        GLuint stream;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glVideoCaptureStreamParameterdvNV_params params =
+    {
+        .video_capture_slot = params32->video_capture_slot,
+        .stream = params32->stream,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glVideoCaptureStreamParameterdvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVideoCaptureStreamParameterfvNV( void *args )
+{
+    struct
+    {
+        GLuint video_capture_slot;
+        GLuint stream;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glVideoCaptureStreamParameterfvNV_params params =
+    {
+        .video_capture_slot = params32->video_capture_slot,
+        .stream = params32->stream,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glVideoCaptureStreamParameterfvNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glVideoCaptureStreamParameterivNV( void *args )
+{
+    struct
+    {
+        GLuint video_capture_slot;
+        GLuint stream;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glVideoCaptureStreamParameterivNV_params params =
+    {
+        .video_capture_slot = params32->video_capture_slot,
+        .stream = params32->stream,
+        .pname = params32->pname,
+        .params = ULongToPtr(params32->params),
+    };
+    NTSTATUS status;
+    status = ext_glVideoCaptureStreamParameterivNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glViewportArrayv( void *args )
+{
+    struct
+    {
+        GLuint first;
+        GLsizei count;
+        PTR32 v;
+    } *params32 = args;
+    struct glViewportArrayv_params params =
+    {
+        .first = params32->first,
+        .count = params32->count,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glViewportArrayv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glViewportIndexedfv( void *args )
+{
+    struct
+    {
+        GLuint index;
+        PTR32 v;
+    } *params32 = args;
+    struct glViewportIndexedfv_params params =
+    {
+        .index = params32->index,
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glViewportIndexedfv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWaitSemaphoreEXT( void *args )
+{
+    struct
+    {
+        GLuint semaphore;
+        GLuint numBufferBarriers;
+        PTR32 buffers;
+        GLuint numTextureBarriers;
+        PTR32 textures;
+        PTR32 srcLayouts;
+    } *params32 = args;
+    struct glWaitSemaphoreEXT_params params =
+    {
+        .semaphore = params32->semaphore,
+        .numBufferBarriers = params32->numBufferBarriers,
+        .buffers = ULongToPtr(params32->buffers),
+        .numTextureBarriers = params32->numTextureBarriers,
+        .textures = ULongToPtr(params32->textures),
+        .srcLayouts = ULongToPtr(params32->srcLayouts),
+    };
+    NTSTATUS status;
+    status = ext_glWaitSemaphoreEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWaitSemaphoreui64NVX( void *args )
+{
+    struct
+    {
+        GLuint waitGpu;
+        GLsizei fenceObjectCount;
+        PTR32 semaphoreArray;
+        PTR32 fenceValueArray;
+    } *params32 = args;
+    struct glWaitSemaphoreui64NVX_params params =
+    {
+        .waitGpu = params32->waitGpu,
+        .fenceObjectCount = params32->fenceObjectCount,
+        .semaphoreArray = ULongToPtr(params32->semaphoreArray),
+        .fenceValueArray = ULongToPtr(params32->fenceValueArray),
+    };
+    NTSTATUS status;
+    status = ext_glWaitSemaphoreui64NVX( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWaitSync( void *args )
+{
+    struct
+    {
+        PTR32 sync;
+        GLbitfield flags;
+        GLuint64 timeout;
+    } *params32 = args;
+    struct glWaitSync_params params =
+    {
+        .sync = ULongToPtr(params32->sync),
+        .flags = params32->flags,
+        .timeout = params32->timeout,
+    };
+    NTSTATUS status;
+    status = ext_glWaitSync( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightPathsNV( void *args )
+{
+    struct
+    {
+        GLuint resultPath;
+        GLsizei numPaths;
+        PTR32 paths;
+        PTR32 weights;
+    } *params32 = args;
+    struct glWeightPathsNV_params params =
+    {
+        .resultPath = params32->resultPath,
+        .numPaths = params32->numPaths,
+        .paths = ULongToPtr(params32->paths),
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glWeightPathsNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightPointerARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        GLenum type;
+        GLsizei stride;
+        PTR32 pointer;
+    } *params32 = args;
+    struct glWeightPointerARB_params params =
+    {
+        .size = params32->size,
+        .type = params32->type,
+        .stride = params32->stride,
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_glWeightPointerARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightbvARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 weights;
+    } *params32 = args;
+    struct glWeightbvARB_params params =
+    {
+        .size = params32->size,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glWeightbvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightdvARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 weights;
+    } *params32 = args;
+    struct glWeightdvARB_params params =
+    {
+        .size = params32->size,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glWeightdvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightfvARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 weights;
+    } *params32 = args;
+    struct glWeightfvARB_params params =
+    {
+        .size = params32->size,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glWeightfvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightivARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 weights;
+    } *params32 = args;
+    struct glWeightivARB_params params =
+    {
+        .size = params32->size,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glWeightivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightsvARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 weights;
+    } *params32 = args;
+    struct glWeightsvARB_params params =
+    {
+        .size = params32->size,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glWeightsvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightubvARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 weights;
+    } *params32 = args;
+    struct glWeightubvARB_params params =
+    {
+        .size = params32->size,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glWeightubvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightuivARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 weights;
+    } *params32 = args;
+    struct glWeightuivARB_params params =
+    {
+        .size = params32->size,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glWeightuivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWeightusvARB( void *args )
+{
+    struct
+    {
+        GLint size;
+        PTR32 weights;
+    } *params32 = args;
+    struct glWeightusvARB_params params =
+    {
+        .size = params32->size,
+        .weights = ULongToPtr(params32->weights),
+    };
+    NTSTATUS status;
+    status = ext_glWeightusvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2dvARB( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2dvARB_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2dvMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2dvMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2dvMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2fvARB( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2fvARB_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2fvMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2fvMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2fvMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2ivARB( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2ivARB_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2ivMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2ivMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2ivMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2svARB( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2svARB_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos2svMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos2svMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos2svMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3dv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3dv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3dv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3dvARB( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3dvARB_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3dvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3dvMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3dvMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3dvMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3fv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3fv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3fv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3fvARB( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3fvARB_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3fvARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3fvMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3fvMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3fvMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3iv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3iv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3iv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3ivARB( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3ivARB_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3ivARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3ivMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3ivMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3ivMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3sv( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3sv_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3sv( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3svARB( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3svARB_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3svARB( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos3svMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos3svMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos3svMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos4dvMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos4dvMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos4dvMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos4fvMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos4fvMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos4fvMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos4ivMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos4ivMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos4ivMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowPos4svMESA( void *args )
+{
+    struct
+    {
+        PTR32 v;
+    } *params32 = args;
+    struct glWindowPos4svMESA_params params =
+    {
+        .v = ULongToPtr(params32->v),
+    };
+    NTSTATUS status;
+    status = ext_glWindowPos4svMESA( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_glWindowRectanglesEXT( void *args )
+{
+    struct
+    {
+        GLenum mode;
+        GLsizei count;
+        PTR32 box;
+    } *params32 = args;
+    struct glWindowRectanglesEXT_params params =
+    {
+        .mode = params32->mode,
+        .count = params32->count,
+        .box = ULongToPtr(params32->box),
+    };
+    NTSTATUS status;
+    status = ext_glWindowRectanglesEXT( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglAllocateMemoryNV( void *args )
+{
+    struct
+    {
+        GLsizei size;
+        GLfloat readfreq;
+        GLfloat writefreq;
+        GLfloat priority;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglAllocateMemoryNV_params params =
+    {
+        .size = params32->size,
+        .readfreq = params32->readfreq,
+        .writefreq = params32->writefreq,
+        .priority = params32->priority,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_wglBindTexImageARB( void *args )
+{
+    struct
+    {
+        PTR32 hPbuffer;
+        int iBuffer;
+        BOOL ret;
+    } *params32 = args;
+    struct wglBindTexImageARB_params params =
+    {
+        .hPbuffer = ULongToPtr(params32->hPbuffer),
+        .iBuffer = params32->iBuffer,
+    };
+    NTSTATUS status;
+    status = ext_wglBindTexImageARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglChoosePixelFormatARB( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        PTR32 piAttribIList;
+        PTR32 pfAttribFList;
+        UINT nMaxFormats;
+        PTR32 piFormats;
+        PTR32 nNumFormats;
+        BOOL ret;
+    } *params32 = args;
+    struct wglChoosePixelFormatARB_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+        .piAttribIList = ULongToPtr(params32->piAttribIList),
+        .pfAttribFList = ULongToPtr(params32->pfAttribFList),
+        .nMaxFormats = params32->nMaxFormats,
+        .piFormats = ULongToPtr(params32->piFormats),
+        .nNumFormats = ULongToPtr(params32->nNumFormats),
+    };
+    NTSTATUS status;
+    status = ext_wglChoosePixelFormatARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args )
+{
+    struct
+    {
+        PTR32 hDC;
+        PTR32 hShareContext;
+        PTR32 attribList;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglCreateContextAttribsARB_params params =
+    {
+        .hDC = ULongToPtr(params32->hDC),
+        .hShareContext = ULongToPtr(params32->hShareContext),
+        .attribList = ULongToPtr(params32->attribList),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_wglCreatePbufferARB( void *args )
+{
+    struct
+    {
+        PTR32 hDC;
+        int iPixelFormat;
+        int iWidth;
+        int iHeight;
+        PTR32 piAttribList;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglCreatePbufferARB_params params =
+    {
+        .hDC = ULongToPtr(params32->hDC),
+        .iPixelFormat = params32->iPixelFormat,
+        .iWidth = params32->iWidth,
+        .iHeight = params32->iHeight,
+        .piAttribList = ULongToPtr(params32->piAttribList),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_wglDestroyPbufferARB( void *args )
+{
+    struct
+    {
+        PTR32 hPbuffer;
+        BOOL ret;
+    } *params32 = args;
+    struct wglDestroyPbufferARB_params params =
+    {
+        .hPbuffer = ULongToPtr(params32->hPbuffer),
+    };
+    NTSTATUS status;
+    status = ext_wglDestroyPbufferARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglFreeMemoryNV( void *args )
+{
+    struct
+    {
+        PTR32 pointer;
+    } *params32 = args;
+    struct wglFreeMemoryNV_params params =
+    {
+        .pointer = ULongToPtr(params32->pointer),
+    };
+    NTSTATUS status;
+    status = ext_wglFreeMemoryNV( &params );
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglGetCurrentReadDCARB( void *args )
+{
+    struct
+    {
+        PTR32 ret;
+    } *params32 = args;
+    struct wglGetCurrentReadDCARB_params params =
+    {
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_wglGetExtensionsStringARB( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglGetExtensionsStringARB_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args )
+{
+    struct
+    {
+        PTR32 ret;
+    } *params32 = args;
+    struct wglGetExtensionsStringEXT_params params =
+    {
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args )
+{
+    struct
+    {
+        PTR32 hPbuffer;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglGetPbufferDCARB_params params =
+    {
+        .hPbuffer = ULongToPtr(params32->hPbuffer),
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_wglGetPixelFormatAttribfvARB( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        int iPixelFormat;
+        int iLayerPlane;
+        UINT nAttributes;
+        PTR32 piAttributes;
+        PTR32 pfValues;
+        BOOL ret;
+    } *params32 = args;
+    struct wglGetPixelFormatAttribfvARB_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+        .iPixelFormat = params32->iPixelFormat,
+        .iLayerPlane = params32->iLayerPlane,
+        .nAttributes = params32->nAttributes,
+        .piAttributes = ULongToPtr(params32->piAttributes),
+        .pfValues = ULongToPtr(params32->pfValues),
+    };
+    NTSTATUS status;
+    status = ext_wglGetPixelFormatAttribfvARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglGetPixelFormatAttribivARB( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        int iPixelFormat;
+        int iLayerPlane;
+        UINT nAttributes;
+        PTR32 piAttributes;
+        PTR32 piValues;
+        BOOL ret;
+    } *params32 = args;
+    struct wglGetPixelFormatAttribivARB_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+        .iPixelFormat = params32->iPixelFormat,
+        .iLayerPlane = params32->iLayerPlane,
+        .nAttributes = params32->nAttributes,
+        .piAttributes = ULongToPtr(params32->piAttributes),
+        .piValues = ULongToPtr(params32->piValues),
+    };
+    NTSTATUS status;
+    status = ext_wglGetPixelFormatAttribivARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args )
+{
+    struct
+    {
+        PTR32 hDrawDC;
+        PTR32 hReadDC;
+        PTR32 hglrc;
+        BOOL ret;
+    } *params32 = args;
+    struct wglMakeContextCurrentARB_params params =
+    {
+        .hDrawDC = ULongToPtr(params32->hDrawDC),
+        .hReadDC = ULongToPtr(params32->hReadDC),
+        .hglrc = ULongToPtr(params32->hglrc),
+    };
+    NTSTATUS status;
+    status = ext_wglMakeContextCurrentARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglQueryCurrentRendererIntegerWINE( void *args )
+{
+    struct
+    {
+        GLenum attribute;
+        PTR32 value;
+        BOOL ret;
+    } *params32 = args;
+    struct wglQueryCurrentRendererIntegerWINE_params params =
+    {
+        .attribute = params32->attribute,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_wglQueryCurrentRendererIntegerWINE( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglQueryCurrentRendererStringWINE( void *args )
+{
+    struct
+    {
+        GLenum attribute;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglQueryCurrentRendererStringWINE_params params =
+    {
+        .attribute = params32->attribute,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_wglQueryPbufferARB( void *args )
+{
+    struct
+    {
+        PTR32 hPbuffer;
+        int iAttribute;
+        PTR32 piValue;
+        BOOL ret;
+    } *params32 = args;
+    struct wglQueryPbufferARB_params params =
+    {
+        .hPbuffer = ULongToPtr(params32->hPbuffer),
+        .iAttribute = params32->iAttribute,
+        .piValue = ULongToPtr(params32->piValue),
+    };
+    NTSTATUS status;
+    status = ext_wglQueryPbufferARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglQueryRendererIntegerWINE( void *args )
+{
+    struct
+    {
+        PTR32 dc;
+        GLint renderer;
+        GLenum attribute;
+        PTR32 value;
+        BOOL ret;
+    } *params32 = args;
+    struct wglQueryRendererIntegerWINE_params params =
+    {
+        .dc = ULongToPtr(params32->dc),
+        .renderer = params32->renderer,
+        .attribute = params32->attribute,
+        .value = ULongToPtr(params32->value),
+    };
+    NTSTATUS status;
+    status = ext_wglQueryRendererIntegerWINE( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args )
+{
+    struct
+    {
+        PTR32 dc;
+        GLint renderer;
+        GLenum attribute;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglQueryRendererStringWINE_params params =
+    {
+        .dc = ULongToPtr(params32->dc),
+        .renderer = params32->renderer,
+        .attribute = params32->attribute,
+    };
+    FIXME( "params32 %p, params %p stub!\n", params32, &params );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS wow64_ext_wglReleasePbufferDCARB( void *args )
+{
+    struct
+    {
+        PTR32 hPbuffer;
+        PTR32 hDC;
+        int ret;
+    } *params32 = args;
+    struct wglReleasePbufferDCARB_params params =
+    {
+        .hPbuffer = ULongToPtr(params32->hPbuffer),
+        .hDC = ULongToPtr(params32->hDC),
+    };
+    NTSTATUS status;
+    status = ext_wglReleasePbufferDCARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglReleaseTexImageARB( void *args )
+{
+    struct
+    {
+        PTR32 hPbuffer;
+        int iBuffer;
+        BOOL ret;
+    } *params32 = args;
+    struct wglReleaseTexImageARB_params params =
+    {
+        .hPbuffer = ULongToPtr(params32->hPbuffer),
+        .iBuffer = params32->iBuffer,
+    };
+    NTSTATUS status;
+    status = ext_wglReleaseTexImageARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglSetPbufferAttribARB( void *args )
+{
+    struct
+    {
+        PTR32 hPbuffer;
+        PTR32 piAttribList;
+        BOOL ret;
+    } *params32 = args;
+    struct wglSetPbufferAttribARB_params params =
+    {
+        .hPbuffer = ULongToPtr(params32->hPbuffer),
+        .piAttribList = ULongToPtr(params32->piAttribList),
+    };
+    NTSTATUS status;
+    status = ext_wglSetPbufferAttribARB( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+static NTSTATUS wow64_ext_wglSetPixelFormatWINE( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        int format;
+        BOOL ret;
+    } *params32 = args;
+    struct wglSetPixelFormatWINE_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+        .format = params32->format,
+    };
+    NTSTATUS status;
+    status = ext_wglSetPixelFormatWINE( &params );
+    params32->ret = params.ret;
+    return status;
+}
+
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    &thread_attach,
+    &wow64_wgl_wglCopyContext,
+    &wow64_wgl_wglCreateContext,
+    &wow64_wgl_wglDeleteContext,
+    &wow64_wgl_wglDescribePixelFormat,
+    &wow64_wgl_wglGetPixelFormat,
+    &wow64_wgl_wglGetProcAddress,
+    &wow64_wgl_wglMakeCurrent,
+    &wow64_wgl_wglSetPixelFormat,
+    &wow64_wgl_wglShareLists,
+    &wow64_wgl_wglSwapBuffers,
+    &gl_glAccum,
+    &gl_glAlphaFunc,
+    &wow64_gl_glAreTexturesResident,
+    &gl_glArrayElement,
+    &gl_glBegin,
+    &gl_glBindTexture,
+    &wow64_gl_glBitmap,
+    &gl_glBlendFunc,
+    &gl_glCallList,
+    &wow64_gl_glCallLists,
+    &gl_glClear,
+    &gl_glClearAccum,
+    &gl_glClearColor,
+    &gl_glClearDepth,
+    &gl_glClearIndex,
+    &gl_glClearStencil,
+    &wow64_gl_glClipPlane,
+    &gl_glColor3b,
+    &wow64_gl_glColor3bv,
+    &gl_glColor3d,
+    &wow64_gl_glColor3dv,
+    &gl_glColor3f,
+    &wow64_gl_glColor3fv,
+    &gl_glColor3i,
+    &wow64_gl_glColor3iv,
+    &gl_glColor3s,
+    &wow64_gl_glColor3sv,
+    &gl_glColor3ub,
+    &wow64_gl_glColor3ubv,
+    &gl_glColor3ui,
+    &wow64_gl_glColor3uiv,
+    &gl_glColor3us,
+    &wow64_gl_glColor3usv,
+    &gl_glColor4b,
+    &wow64_gl_glColor4bv,
+    &gl_glColor4d,
+    &wow64_gl_glColor4dv,
+    &gl_glColor4f,
+    &wow64_gl_glColor4fv,
+    &gl_glColor4i,
+    &wow64_gl_glColor4iv,
+    &gl_glColor4s,
+    &wow64_gl_glColor4sv,
+    &gl_glColor4ub,
+    &wow64_gl_glColor4ubv,
+    &gl_glColor4ui,
+    &wow64_gl_glColor4uiv,
+    &gl_glColor4us,
+    &wow64_gl_glColor4usv,
+    &gl_glColorMask,
+    &gl_glColorMaterial,
+    &wow64_gl_glColorPointer,
+    &gl_glCopyPixels,
+    &gl_glCopyTexImage1D,
+    &gl_glCopyTexImage2D,
+    &gl_glCopyTexSubImage1D,
+    &gl_glCopyTexSubImage2D,
+    &gl_glCullFace,
+    &gl_glDeleteLists,
+    &wow64_gl_glDeleteTextures,
+    &gl_glDepthFunc,
+    &gl_glDepthMask,
+    &gl_glDepthRange,
+    &gl_glDisable,
+    &gl_glDisableClientState,
+    &gl_glDrawArrays,
+    &gl_glDrawBuffer,
+    &wow64_gl_glDrawElements,
+    &wow64_gl_glDrawPixels,
+    &gl_glEdgeFlag,
+    &wow64_gl_glEdgeFlagPointer,
+    &wow64_gl_glEdgeFlagv,
+    &gl_glEnable,
+    &gl_glEnableClientState,
+    &gl_glEnd,
+    &gl_glEndList,
+    &gl_glEvalCoord1d,
+    &wow64_gl_glEvalCoord1dv,
+    &gl_glEvalCoord1f,
+    &wow64_gl_glEvalCoord1fv,
+    &gl_glEvalCoord2d,
+    &wow64_gl_glEvalCoord2dv,
+    &gl_glEvalCoord2f,
+    &wow64_gl_glEvalCoord2fv,
+    &gl_glEvalMesh1,
+    &gl_glEvalMesh2,
+    &gl_glEvalPoint1,
+    &gl_glEvalPoint2,
+    &wow64_gl_glFeedbackBuffer,
+    &gl_glFinish,
+    &gl_glFlush,
+    &gl_glFogf,
+    &wow64_gl_glFogfv,
+    &gl_glFogi,
+    &wow64_gl_glFogiv,
+    &gl_glFrontFace,
+    &gl_glFrustum,
+    &gl_glGenLists,
+    &wow64_gl_glGenTextures,
+    &wow64_gl_glGetBooleanv,
+    &wow64_gl_glGetClipPlane,
+    &wow64_gl_glGetDoublev,
+    &gl_glGetError,
+    &wow64_gl_glGetFloatv,
+    &wow64_gl_glGetIntegerv,
+    &wow64_gl_glGetLightfv,
+    &wow64_gl_glGetLightiv,
+    &wow64_gl_glGetMapdv,
+    &wow64_gl_glGetMapfv,
+    &wow64_gl_glGetMapiv,
+    &wow64_gl_glGetMaterialfv,
+    &wow64_gl_glGetMaterialiv,
+    &wow64_gl_glGetPixelMapfv,
+    &wow64_gl_glGetPixelMapuiv,
+    &wow64_gl_glGetPixelMapusv,
+    &wow64_gl_glGetPointerv,
+    &wow64_gl_glGetPolygonStipple,
+    &wow64_gl_glGetString,
+    &wow64_gl_glGetTexEnvfv,
+    &wow64_gl_glGetTexEnviv,
+    &wow64_gl_glGetTexGendv,
+    &wow64_gl_glGetTexGenfv,
+    &wow64_gl_glGetTexGeniv,
+    &wow64_gl_glGetTexImage,
+    &wow64_gl_glGetTexLevelParameterfv,
+    &wow64_gl_glGetTexLevelParameteriv,
+    &wow64_gl_glGetTexParameterfv,
+    &wow64_gl_glGetTexParameteriv,
+    &gl_glHint,
+    &gl_glIndexMask,
+    &wow64_gl_glIndexPointer,
+    &gl_glIndexd,
+    &wow64_gl_glIndexdv,
+    &gl_glIndexf,
+    &wow64_gl_glIndexfv,
+    &gl_glIndexi,
+    &wow64_gl_glIndexiv,
+    &gl_glIndexs,
+    &wow64_gl_glIndexsv,
+    &gl_glIndexub,
+    &wow64_gl_glIndexubv,
+    &gl_glInitNames,
+    &wow64_gl_glInterleavedArrays,
+    &gl_glIsEnabled,
+    &gl_glIsList,
+    &gl_glIsTexture,
+    &gl_glLightModelf,
+    &wow64_gl_glLightModelfv,
+    &gl_glLightModeli,
+    &wow64_gl_glLightModeliv,
+    &gl_glLightf,
+    &wow64_gl_glLightfv,
+    &gl_glLighti,
+    &wow64_gl_glLightiv,
+    &gl_glLineStipple,
+    &gl_glLineWidth,
+    &gl_glListBase,
+    &gl_glLoadIdentity,
+    &wow64_gl_glLoadMatrixd,
+    &wow64_gl_glLoadMatrixf,
+    &gl_glLoadName,
+    &gl_glLogicOp,
+    &wow64_gl_glMap1d,
+    &wow64_gl_glMap1f,
+    &wow64_gl_glMap2d,
+    &wow64_gl_glMap2f,
+    &gl_glMapGrid1d,
+    &gl_glMapGrid1f,
+    &gl_glMapGrid2d,
+    &gl_glMapGrid2f,
+    &gl_glMaterialf,
+    &wow64_gl_glMaterialfv,
+    &gl_glMateriali,
+    &wow64_gl_glMaterialiv,
+    &gl_glMatrixMode,
+    &wow64_gl_glMultMatrixd,
+    &wow64_gl_glMultMatrixf,
+    &gl_glNewList,
+    &gl_glNormal3b,
+    &wow64_gl_glNormal3bv,
+    &gl_glNormal3d,
+    &wow64_gl_glNormal3dv,
+    &gl_glNormal3f,
+    &wow64_gl_glNormal3fv,
+    &gl_glNormal3i,
+    &wow64_gl_glNormal3iv,
+    &gl_glNormal3s,
+    &wow64_gl_glNormal3sv,
+    &wow64_gl_glNormalPointer,
+    &gl_glOrtho,
+    &gl_glPassThrough,
+    &wow64_gl_glPixelMapfv,
+    &wow64_gl_glPixelMapuiv,
+    &wow64_gl_glPixelMapusv,
+    &gl_glPixelStoref,
+    &gl_glPixelStorei,
+    &gl_glPixelTransferf,
+    &gl_glPixelTransferi,
+    &gl_glPixelZoom,
+    &gl_glPointSize,
+    &gl_glPolygonMode,
+    &gl_glPolygonOffset,
+    &wow64_gl_glPolygonStipple,
+    &gl_glPopAttrib,
+    &gl_glPopClientAttrib,
+    &gl_glPopMatrix,
+    &gl_glPopName,
+    &wow64_gl_glPrioritizeTextures,
+    &gl_glPushAttrib,
+    &gl_glPushClientAttrib,
+    &gl_glPushMatrix,
+    &gl_glPushName,
+    &gl_glRasterPos2d,
+    &wow64_gl_glRasterPos2dv,
+    &gl_glRasterPos2f,
+    &wow64_gl_glRasterPos2fv,
+    &gl_glRasterPos2i,
+    &wow64_gl_glRasterPos2iv,
+    &gl_glRasterPos2s,
+    &wow64_gl_glRasterPos2sv,
+    &gl_glRasterPos3d,
+    &wow64_gl_glRasterPos3dv,
+    &gl_glRasterPos3f,
+    &wow64_gl_glRasterPos3fv,
+    &gl_glRasterPos3i,
+    &wow64_gl_glRasterPos3iv,
+    &gl_glRasterPos3s,
+    &wow64_gl_glRasterPos3sv,
+    &gl_glRasterPos4d,
+    &wow64_gl_glRasterPos4dv,
+    &gl_glRasterPos4f,
+    &wow64_gl_glRasterPos4fv,
+    &gl_glRasterPos4i,
+    &wow64_gl_glRasterPos4iv,
+    &gl_glRasterPos4s,
+    &wow64_gl_glRasterPos4sv,
+    &gl_glReadBuffer,
+    &wow64_gl_glReadPixels,
+    &gl_glRectd,
+    &wow64_gl_glRectdv,
+    &gl_glRectf,
+    &wow64_gl_glRectfv,
+    &gl_glRecti,
+    &wow64_gl_glRectiv,
+    &gl_glRects,
+    &wow64_gl_glRectsv,
+    &gl_glRenderMode,
+    &gl_glRotated,
+    &gl_glRotatef,
+    &gl_glScaled,
+    &gl_glScalef,
+    &gl_glScissor,
+    &wow64_gl_glSelectBuffer,
+    &gl_glShadeModel,
+    &gl_glStencilFunc,
+    &gl_glStencilMask,
+    &gl_glStencilOp,
+    &gl_glTexCoord1d,
+    &wow64_gl_glTexCoord1dv,
+    &gl_glTexCoord1f,
+    &wow64_gl_glTexCoord1fv,
+    &gl_glTexCoord1i,
+    &wow64_gl_glTexCoord1iv,
+    &gl_glTexCoord1s,
+    &wow64_gl_glTexCoord1sv,
+    &gl_glTexCoord2d,
+    &wow64_gl_glTexCoord2dv,
+    &gl_glTexCoord2f,
+    &wow64_gl_glTexCoord2fv,
+    &gl_glTexCoord2i,
+    &wow64_gl_glTexCoord2iv,
+    &gl_glTexCoord2s,
+    &wow64_gl_glTexCoord2sv,
+    &gl_glTexCoord3d,
+    &wow64_gl_glTexCoord3dv,
+    &gl_glTexCoord3f,
+    &wow64_gl_glTexCoord3fv,
+    &gl_glTexCoord3i,
+    &wow64_gl_glTexCoord3iv,
+    &gl_glTexCoord3s,
+    &wow64_gl_glTexCoord3sv,
+    &gl_glTexCoord4d,
+    &wow64_gl_glTexCoord4dv,
+    &gl_glTexCoord4f,
+    &wow64_gl_glTexCoord4fv,
+    &gl_glTexCoord4i,
+    &wow64_gl_glTexCoord4iv,
+    &gl_glTexCoord4s,
+    &wow64_gl_glTexCoord4sv,
+    &wow64_gl_glTexCoordPointer,
+    &gl_glTexEnvf,
+    &wow64_gl_glTexEnvfv,
+    &gl_glTexEnvi,
+    &wow64_gl_glTexEnviv,
+    &gl_glTexGend,
+    &wow64_gl_glTexGendv,
+    &gl_glTexGenf,
+    &wow64_gl_glTexGenfv,
+    &gl_glTexGeni,
+    &wow64_gl_glTexGeniv,
+    &wow64_gl_glTexImage1D,
+    &wow64_gl_glTexImage2D,
+    &gl_glTexParameterf,
+    &wow64_gl_glTexParameterfv,
+    &gl_glTexParameteri,
+    &wow64_gl_glTexParameteriv,
+    &wow64_gl_glTexSubImage1D,
+    &wow64_gl_glTexSubImage2D,
+    &gl_glTranslated,
+    &gl_glTranslatef,
+    &gl_glVertex2d,
+    &wow64_gl_glVertex2dv,
+    &gl_glVertex2f,
+    &wow64_gl_glVertex2fv,
+    &gl_glVertex2i,
+    &wow64_gl_glVertex2iv,
+    &gl_glVertex2s,
+    &wow64_gl_glVertex2sv,
+    &gl_glVertex3d,
+    &wow64_gl_glVertex3dv,
+    &gl_glVertex3f,
+    &wow64_gl_glVertex3fv,
+    &gl_glVertex3i,
+    &wow64_gl_glVertex3iv,
+    &gl_glVertex3s,
+    &wow64_gl_glVertex3sv,
+    &gl_glVertex4d,
+    &wow64_gl_glVertex4dv,
+    &gl_glVertex4f,
+    &wow64_gl_glVertex4fv,
+    &gl_glVertex4i,
+    &wow64_gl_glVertex4iv,
+    &gl_glVertex4s,
+    &wow64_gl_glVertex4sv,
+    &wow64_gl_glVertexPointer,
+    &gl_glViewport,
+    &ext_glAccumxOES,
+    &ext_glAcquireKeyedMutexWin32EXT,
+    &ext_glActiveProgramEXT,
+    &ext_glActiveShaderProgram,
+    &ext_glActiveStencilFaceEXT,
+    &ext_glActiveTexture,
+    &ext_glActiveTextureARB,
+    &wow64_ext_glActiveVaryingNV,
+    &ext_glAlphaFragmentOp1ATI,
+    &ext_glAlphaFragmentOp2ATI,
+    &ext_glAlphaFragmentOp3ATI,
+    &ext_glAlphaFuncxOES,
+    &ext_glAlphaToCoverageDitherControlNV,
+    &ext_glApplyFramebufferAttachmentCMAAINTEL,
+    &ext_glApplyTextureEXT,
+    &wow64_ext_glAreProgramsResidentNV,
+    &wow64_ext_glAreTexturesResidentEXT,
+    &ext_glArrayElementEXT,
+    &ext_glArrayObjectATI,
+    &wow64_ext_glAsyncCopyBufferSubDataNVX,
+    &wow64_ext_glAsyncCopyImageSubDataNVX,
+    &ext_glAsyncMarkerSGIX,
+    &ext_glAttachObjectARB,
+    &ext_glAttachShader,
+    &ext_glBeginConditionalRender,
+    &ext_glBeginConditionalRenderNV,
+    &ext_glBeginConditionalRenderNVX,
+    &ext_glBeginFragmentShaderATI,
+    &ext_glBeginOcclusionQueryNV,
+    &ext_glBeginPerfMonitorAMD,
+    &ext_glBeginPerfQueryINTEL,
+    &ext_glBeginQuery,
+    &ext_glBeginQueryARB,
+    &ext_glBeginQueryIndexed,
+    &ext_glBeginTransformFeedback,
+    &ext_glBeginTransformFeedbackEXT,
+    &ext_glBeginTransformFeedbackNV,
+    &ext_glBeginVertexShaderEXT,
+    &ext_glBeginVideoCaptureNV,
+    &wow64_ext_glBindAttribLocation,
+    &wow64_ext_glBindAttribLocationARB,
+    &ext_glBindBuffer,
+    &ext_glBindBufferARB,
+    &ext_glBindBufferBase,
+    &ext_glBindBufferBaseEXT,
+    &ext_glBindBufferBaseNV,
+    &wow64_ext_glBindBufferOffsetEXT,
+    &wow64_ext_glBindBufferOffsetNV,
+    &wow64_ext_glBindBufferRange,
+    &wow64_ext_glBindBufferRangeEXT,
+    &wow64_ext_glBindBufferRangeNV,
+    &wow64_ext_glBindBuffersBase,
+    &wow64_ext_glBindBuffersRange,
+    &wow64_ext_glBindFragDataLocation,
+    &wow64_ext_glBindFragDataLocationEXT,
+    &wow64_ext_glBindFragDataLocationIndexed,
+    &ext_glBindFragmentShaderATI,
+    &ext_glBindFramebuffer,
+    &ext_glBindFramebufferEXT,
+    &ext_glBindImageTexture,
+    &ext_glBindImageTextureEXT,
+    &wow64_ext_glBindImageTextures,
+    &ext_glBindLightParameterEXT,
+    &ext_glBindMaterialParameterEXT,
+    &ext_glBindMultiTextureEXT,
+    &ext_glBindParameterEXT,
+    &ext_glBindProgramARB,
+    &ext_glBindProgramNV,
+    &ext_glBindProgramPipeline,
+    &ext_glBindRenderbuffer,
+    &ext_glBindRenderbufferEXT,
+    &ext_glBindSampler,
+    &wow64_ext_glBindSamplers,
+    &ext_glBindShadingRateImageNV,
+    &ext_glBindTexGenParameterEXT,
+    &ext_glBindTextureEXT,
+    &ext_glBindTextureUnit,
+    &ext_glBindTextureUnitParameterEXT,
+    &wow64_ext_glBindTextures,
+    &ext_glBindTransformFeedback,
+    &ext_glBindTransformFeedbackNV,
+    &ext_glBindVertexArray,
+    &ext_glBindVertexArrayAPPLE,
+    &wow64_ext_glBindVertexBuffer,
+    &wow64_ext_glBindVertexBuffers,
+    &ext_glBindVertexShaderEXT,
+    &wow64_ext_glBindVideoCaptureStreamBufferNV,
+    &ext_glBindVideoCaptureStreamTextureNV,
+    &ext_glBinormal3bEXT,
+    &wow64_ext_glBinormal3bvEXT,
+    &ext_glBinormal3dEXT,
+    &wow64_ext_glBinormal3dvEXT,
+    &ext_glBinormal3fEXT,
+    &wow64_ext_glBinormal3fvEXT,
+    &ext_glBinormal3iEXT,
+    &wow64_ext_glBinormal3ivEXT,
+    &ext_glBinormal3sEXT,
+    &wow64_ext_glBinormal3svEXT,
+    &wow64_ext_glBinormalPointerEXT,
+    &wow64_ext_glBitmapxOES,
+    &ext_glBlendBarrierKHR,
+    &ext_glBlendBarrierNV,
+    &ext_glBlendColor,
+    &ext_glBlendColorEXT,
+    &ext_glBlendColorxOES,
+    &ext_glBlendEquation,
+    &ext_glBlendEquationEXT,
+    &ext_glBlendEquationIndexedAMD,
+    &ext_glBlendEquationSeparate,
+    &ext_glBlendEquationSeparateEXT,
+    &ext_glBlendEquationSeparateIndexedAMD,
+    &ext_glBlendEquationSeparatei,
+    &ext_glBlendEquationSeparateiARB,
+    &ext_glBlendEquationi,
+    &ext_glBlendEquationiARB,
+    &ext_glBlendFuncIndexedAMD,
+    &ext_glBlendFuncSeparate,
+    &ext_glBlendFuncSeparateEXT,
+    &ext_glBlendFuncSeparateINGR,
+    &ext_glBlendFuncSeparateIndexedAMD,
+    &ext_glBlendFuncSeparatei,
+    &ext_glBlendFuncSeparateiARB,
+    &ext_glBlendFunci,
+    &ext_glBlendFunciARB,
+    &ext_glBlendParameteriNV,
+    &ext_glBlitFramebuffer,
+    &ext_glBlitFramebufferEXT,
+    &ext_glBlitNamedFramebuffer,
+    &wow64_ext_glBufferAddressRangeNV,
+    &ext_glBufferAttachMemoryNV,
+    &wow64_ext_glBufferData,
+    &wow64_ext_glBufferDataARB,
+    &wow64_ext_glBufferPageCommitmentARB,
+    &ext_glBufferParameteriAPPLE,
+    &ext_glBufferRegionEnabled,
+    &wow64_ext_glBufferStorage,
+    &wow64_ext_glBufferStorageExternalEXT,
+    &wow64_ext_glBufferStorageMemEXT,
+    &wow64_ext_glBufferSubData,
+    &wow64_ext_glBufferSubDataARB,
+    &ext_glCallCommandListNV,
+    &ext_glCheckFramebufferStatus,
+    &ext_glCheckFramebufferStatusEXT,
+    &ext_glCheckNamedFramebufferStatus,
+    &ext_glCheckNamedFramebufferStatusEXT,
+    &ext_glClampColor,
+    &ext_glClampColorARB,
+    &ext_glClearAccumxOES,
+    &wow64_ext_glClearBufferData,
+    &wow64_ext_glClearBufferSubData,
+    &ext_glClearBufferfi,
+    &wow64_ext_glClearBufferfv,
+    &wow64_ext_glClearBufferiv,
+    &wow64_ext_glClearBufferuiv,
+    &ext_glClearColorIiEXT,
+    &ext_glClearColorIuiEXT,
+    &ext_glClearColorxOES,
+    &ext_glClearDepthdNV,
+    &ext_glClearDepthf,
+    &ext_glClearDepthfOES,
+    &ext_glClearDepthxOES,
+    &wow64_ext_glClearNamedBufferData,
+    &wow64_ext_glClearNamedBufferDataEXT,
+    &wow64_ext_glClearNamedBufferSubData,
+    &wow64_ext_glClearNamedBufferSubDataEXT,
+    &ext_glClearNamedFramebufferfi,
+    &wow64_ext_glClearNamedFramebufferfv,
+    &wow64_ext_glClearNamedFramebufferiv,
+    &wow64_ext_glClearNamedFramebufferuiv,
+    &wow64_ext_glClearTexImage,
+    &wow64_ext_glClearTexSubImage,
+    &ext_glClientActiveTexture,
+    &ext_glClientActiveTextureARB,
+    &ext_glClientActiveVertexStreamATI,
+    &ext_glClientAttribDefaultEXT,
+    &wow64_ext_glClientWaitSemaphoreui64NVX,
+    &wow64_ext_glClientWaitSync,
+    &ext_glClipControl,
+    &wow64_ext_glClipPlanefOES,
+    &wow64_ext_glClipPlanexOES,
+    &ext_glColor3fVertex3fSUN,
+    &wow64_ext_glColor3fVertex3fvSUN,
+    &ext_glColor3hNV,
+    &wow64_ext_glColor3hvNV,
+    &ext_glColor3xOES,
+    &wow64_ext_glColor3xvOES,
+    &ext_glColor4fNormal3fVertex3fSUN,
+    &wow64_ext_glColor4fNormal3fVertex3fvSUN,
+    &ext_glColor4hNV,
+    &wow64_ext_glColor4hvNV,
+    &ext_glColor4ubVertex2fSUN,
+    &wow64_ext_glColor4ubVertex2fvSUN,
+    &ext_glColor4ubVertex3fSUN,
+    &wow64_ext_glColor4ubVertex3fvSUN,
+    &ext_glColor4xOES,
+    &wow64_ext_glColor4xvOES,
+    &ext_glColorFormatNV,
+    &ext_glColorFragmentOp1ATI,
+    &ext_glColorFragmentOp2ATI,
+    &ext_glColorFragmentOp3ATI,
+    &ext_glColorMaskIndexedEXT,
+    &ext_glColorMaski,
+    &ext_glColorP3ui,
+    &wow64_ext_glColorP3uiv,
+    &ext_glColorP4ui,
+    &wow64_ext_glColorP4uiv,
+    &wow64_ext_glColorPointerEXT,
+    &wow64_ext_glColorPointerListIBM,
+    &wow64_ext_glColorPointervINTEL,
+    &wow64_ext_glColorSubTable,
+    &wow64_ext_glColorSubTableEXT,
+    &wow64_ext_glColorTable,
+    &wow64_ext_glColorTableEXT,
+    &wow64_ext_glColorTableParameterfv,
+    &wow64_ext_glColorTableParameterfvSGI,
+    &wow64_ext_glColorTableParameteriv,
+    &wow64_ext_glColorTableParameterivSGI,
+    &wow64_ext_glColorTableSGI,
+    &ext_glCombinerInputNV,
+    &ext_glCombinerOutputNV,
+    &ext_glCombinerParameterfNV,
+    &wow64_ext_glCombinerParameterfvNV,
+    &ext_glCombinerParameteriNV,
+    &wow64_ext_glCombinerParameterivNV,
+    &wow64_ext_glCombinerStageParameterfvNV,
+    &ext_glCommandListSegmentsNV,
+    &ext_glCompileCommandListNV,
+    &ext_glCompileShader,
+    &ext_glCompileShaderARB,
+    &wow64_ext_glCompileShaderIncludeARB,
+    &wow64_ext_glCompressedMultiTexImage1DEXT,
+    &wow64_ext_glCompressedMultiTexImage2DEXT,
+    &wow64_ext_glCompressedMultiTexImage3DEXT,
+    &wow64_ext_glCompressedMultiTexSubImage1DEXT,
+    &wow64_ext_glCompressedMultiTexSubImage2DEXT,
+    &wow64_ext_glCompressedMultiTexSubImage3DEXT,
+    &wow64_ext_glCompressedTexImage1D,
+    &wow64_ext_glCompressedTexImage1DARB,
+    &wow64_ext_glCompressedTexImage2D,
+    &wow64_ext_glCompressedTexImage2DARB,
+    &wow64_ext_glCompressedTexImage3D,
+    &wow64_ext_glCompressedTexImage3DARB,
+    &wow64_ext_glCompressedTexSubImage1D,
+    &wow64_ext_glCompressedTexSubImage1DARB,
+    &wow64_ext_glCompressedTexSubImage2D,
+    &wow64_ext_glCompressedTexSubImage2DARB,
+    &wow64_ext_glCompressedTexSubImage3D,
+    &wow64_ext_glCompressedTexSubImage3DARB,
+    &wow64_ext_glCompressedTextureImage1DEXT,
+    &wow64_ext_glCompressedTextureImage2DEXT,
+    &wow64_ext_glCompressedTextureImage3DEXT,
+    &wow64_ext_glCompressedTextureSubImage1D,
+    &wow64_ext_glCompressedTextureSubImage1DEXT,
+    &wow64_ext_glCompressedTextureSubImage2D,
+    &wow64_ext_glCompressedTextureSubImage2DEXT,
+    &wow64_ext_glCompressedTextureSubImage3D,
+    &wow64_ext_glCompressedTextureSubImage3DEXT,
+    &ext_glConservativeRasterParameterfNV,
+    &ext_glConservativeRasterParameteriNV,
+    &wow64_ext_glConvolutionFilter1D,
+    &wow64_ext_glConvolutionFilter1DEXT,
+    &wow64_ext_glConvolutionFilter2D,
+    &wow64_ext_glConvolutionFilter2DEXT,
+    &ext_glConvolutionParameterf,
+    &ext_glConvolutionParameterfEXT,
+    &wow64_ext_glConvolutionParameterfv,
+    &wow64_ext_glConvolutionParameterfvEXT,
+    &ext_glConvolutionParameteri,
+    &ext_glConvolutionParameteriEXT,
+    &wow64_ext_glConvolutionParameteriv,
+    &wow64_ext_glConvolutionParameterivEXT,
+    &ext_glConvolutionParameterxOES,
+    &wow64_ext_glConvolutionParameterxvOES,
+    &wow64_ext_glCopyBufferSubData,
+    &ext_glCopyColorSubTable,
+    &ext_glCopyColorSubTableEXT,
+    &ext_glCopyColorTable,
+    &ext_glCopyColorTableSGI,
+    &ext_glCopyConvolutionFilter1D,
+    &ext_glCopyConvolutionFilter1DEXT,
+    &ext_glCopyConvolutionFilter2D,
+    &ext_glCopyConvolutionFilter2DEXT,
+    &ext_glCopyImageSubData,
+    &ext_glCopyImageSubDataNV,
+    &ext_glCopyMultiTexImage1DEXT,
+    &ext_glCopyMultiTexImage2DEXT,
+    &ext_glCopyMultiTexSubImage1DEXT,
+    &ext_glCopyMultiTexSubImage2DEXT,
+    &ext_glCopyMultiTexSubImage3DEXT,
+    &wow64_ext_glCopyNamedBufferSubData,
+    &ext_glCopyPathNV,
+    &ext_glCopyTexImage1DEXT,
+    &ext_glCopyTexImage2DEXT,
+    &ext_glCopyTexSubImage1DEXT,
+    &ext_glCopyTexSubImage2DEXT,
+    &ext_glCopyTexSubImage3D,
+    &ext_glCopyTexSubImage3DEXT,
+    &ext_glCopyTextureImage1DEXT,
+    &ext_glCopyTextureImage2DEXT,
+    &ext_glCopyTextureSubImage1D,
+    &ext_glCopyTextureSubImage1DEXT,
+    &ext_glCopyTextureSubImage2D,
+    &ext_glCopyTextureSubImage2DEXT,
+    &ext_glCopyTextureSubImage3D,
+    &ext_glCopyTextureSubImage3DEXT,
+    &wow64_ext_glCoverFillPathInstancedNV,
+    &ext_glCoverFillPathNV,
+    &wow64_ext_glCoverStrokePathInstancedNV,
+    &ext_glCoverStrokePathNV,
+    &ext_glCoverageModulationNV,
+    &wow64_ext_glCoverageModulationTableNV,
+    &wow64_ext_glCreateBuffers,
+    &wow64_ext_glCreateCommandListsNV,
+    &wow64_ext_glCreateFramebuffers,
+    &wow64_ext_glCreateMemoryObjectsEXT,
+    &wow64_ext_glCreatePerfQueryINTEL,
+    &ext_glCreateProgram,
+    &ext_glCreateProgramObjectARB,
+    &wow64_ext_glCreateProgramPipelines,
+    &ext_glCreateProgressFenceNVX,
+    &wow64_ext_glCreateQueries,
+    &wow64_ext_glCreateRenderbuffers,
+    &wow64_ext_glCreateSamplers,
+    &ext_glCreateShader,
+    &ext_glCreateShaderObjectARB,
+    &wow64_ext_glCreateShaderProgramEXT,
+    &wow64_ext_glCreateShaderProgramv,
+    &wow64_ext_glCreateStatesNV,
+    &wow64_ext_glCreateSyncFromCLeventARB,
+    &wow64_ext_glCreateTextures,
+    &wow64_ext_glCreateTransformFeedbacks,
+    &wow64_ext_glCreateVertexArrays,
+    &wow64_ext_glCullParameterdvEXT,
+    &wow64_ext_glCullParameterfvEXT,
+    &ext_glCurrentPaletteMatrixARB,
+    &wow64_ext_glDebugMessageCallback,
+    &wow64_ext_glDebugMessageCallbackAMD,
+    &wow64_ext_glDebugMessageCallbackARB,
+    &wow64_ext_glDebugMessageControl,
+    &wow64_ext_glDebugMessageControlARB,
+    &wow64_ext_glDebugMessageEnableAMD,
+    &wow64_ext_glDebugMessageInsert,
+    &wow64_ext_glDebugMessageInsertAMD,
+    &wow64_ext_glDebugMessageInsertARB,
+    &ext_glDeformSGIX,
+    &wow64_ext_glDeformationMap3dSGIX,
+    &wow64_ext_glDeformationMap3fSGIX,
+    &ext_glDeleteAsyncMarkersSGIX,
+    &ext_glDeleteBufferRegion,
+    &wow64_ext_glDeleteBuffers,
+    &wow64_ext_glDeleteBuffersARB,
+    &wow64_ext_glDeleteCommandListsNV,
+    &wow64_ext_glDeleteFencesAPPLE,
+    &wow64_ext_glDeleteFencesNV,
+    &ext_glDeleteFragmentShaderATI,
+    &wow64_ext_glDeleteFramebuffers,
+    &wow64_ext_glDeleteFramebuffersEXT,
+    &wow64_ext_glDeleteMemoryObjectsEXT,
+    &wow64_ext_glDeleteNamedStringARB,
+    &wow64_ext_glDeleteNamesAMD,
+    &ext_glDeleteObjectARB,
+    &ext_glDeleteObjectBufferATI,
+    &wow64_ext_glDeleteOcclusionQueriesNV,
+    &ext_glDeletePathsNV,
+    &wow64_ext_glDeletePerfMonitorsAMD,
+    &ext_glDeletePerfQueryINTEL,
+    &ext_glDeleteProgram,
+    &wow64_ext_glDeleteProgramPipelines,
+    &wow64_ext_glDeleteProgramsARB,
+    &wow64_ext_glDeleteProgramsNV,
+    &wow64_ext_glDeleteQueries,
+    &wow64_ext_glDeleteQueriesARB,
+    &wow64_ext_glDeleteQueryResourceTagNV,
+    &wow64_ext_glDeleteRenderbuffers,
+    &wow64_ext_glDeleteRenderbuffersEXT,
+    &wow64_ext_glDeleteSamplers,
+    &wow64_ext_glDeleteSemaphoresEXT,
+    &ext_glDeleteShader,
+    &wow64_ext_glDeleteStatesNV,
+    &wow64_ext_glDeleteSync,
+    &wow64_ext_glDeleteTexturesEXT,
+    &wow64_ext_glDeleteTransformFeedbacks,
+    &wow64_ext_glDeleteTransformFeedbacksNV,
+    &wow64_ext_glDeleteVertexArrays,
+    &wow64_ext_glDeleteVertexArraysAPPLE,
+    &ext_glDeleteVertexShaderEXT,
+    &ext_glDepthBoundsEXT,
+    &ext_glDepthBoundsdNV,
+    &wow64_ext_glDepthRangeArraydvNV,
+    &wow64_ext_glDepthRangeArrayv,
+    &ext_glDepthRangeIndexed,
+    &ext_glDepthRangeIndexeddNV,
+    &ext_glDepthRangedNV,
+    &ext_glDepthRangef,
+    &ext_glDepthRangefOES,
+    &ext_glDepthRangexOES,
+    &ext_glDetachObjectARB,
+    &ext_glDetachShader,
+    &wow64_ext_glDetailTexFuncSGIS,
+    &ext_glDisableClientStateIndexedEXT,
+    &ext_glDisableClientStateiEXT,
+    &ext_glDisableIndexedEXT,
+    &ext_glDisableVariantClientStateEXT,
+    &ext_glDisableVertexArrayAttrib,
+    &ext_glDisableVertexArrayAttribEXT,
+    &ext_glDisableVertexArrayEXT,
+    &ext_glDisableVertexAttribAPPLE,
+    &ext_glDisableVertexAttribArray,
+    &ext_glDisableVertexAttribArrayARB,
+    &ext_glDisablei,
+    &ext_glDispatchCompute,
+    &ext_glDispatchComputeGroupSizeARB,
+    &wow64_ext_glDispatchComputeIndirect,
+    &ext_glDrawArraysEXT,
+    &wow64_ext_glDrawArraysIndirect,
+    &ext_glDrawArraysInstanced,
+    &ext_glDrawArraysInstancedARB,
+    &ext_glDrawArraysInstancedBaseInstance,
+    &ext_glDrawArraysInstancedEXT,
+    &ext_glDrawBufferRegion,
+    &wow64_ext_glDrawBuffers,
+    &wow64_ext_glDrawBuffersARB,
+    &wow64_ext_glDrawBuffersATI,
+    &wow64_ext_glDrawCommandsAddressNV,
+    &wow64_ext_glDrawCommandsNV,
+    &wow64_ext_glDrawCommandsStatesAddressNV,
+    &wow64_ext_glDrawCommandsStatesNV,
+    &ext_glDrawElementArrayAPPLE,
+    &ext_glDrawElementArrayATI,
+    &wow64_ext_glDrawElementsBaseVertex,
+    &wow64_ext_glDrawElementsIndirect,
+    &wow64_ext_glDrawElementsInstanced,
+    &wow64_ext_glDrawElementsInstancedARB,
+    &wow64_ext_glDrawElementsInstancedBaseInstance,
+    &wow64_ext_glDrawElementsInstancedBaseVertex,
+    &wow64_ext_glDrawElementsInstancedBaseVertexBaseInstance,
+    &wow64_ext_glDrawElementsInstancedEXT,
+    &ext_glDrawMeshArraysSUN,
+    &wow64_ext_glDrawMeshTasksIndirectNV,
+    &ext_glDrawMeshTasksNV,
+    &ext_glDrawRangeElementArrayAPPLE,
+    &ext_glDrawRangeElementArrayATI,
+    &wow64_ext_glDrawRangeElements,
+    &wow64_ext_glDrawRangeElementsBaseVertex,
+    &wow64_ext_glDrawRangeElementsEXT,
+    &ext_glDrawTextureNV,
+    &ext_glDrawTransformFeedback,
+    &ext_glDrawTransformFeedbackInstanced,
+    &ext_glDrawTransformFeedbackNV,
+    &ext_glDrawTransformFeedbackStream,
+    &ext_glDrawTransformFeedbackStreamInstanced,
+    &ext_glDrawVkImageNV,
+    &wow64_ext_glEGLImageTargetTexStorageEXT,
+    &wow64_ext_glEGLImageTargetTextureStorageEXT,
+    &ext_glEdgeFlagFormatNV,
+    &wow64_ext_glEdgeFlagPointerEXT,
+    &wow64_ext_glEdgeFlagPointerListIBM,
+    &wow64_ext_glElementPointerAPPLE,
+    &wow64_ext_glElementPointerATI,
+    &ext_glEnableClientStateIndexedEXT,
+    &ext_glEnableClientStateiEXT,
+    &ext_glEnableIndexedEXT,
+    &ext_glEnableVariantClientStateEXT,
+    &ext_glEnableVertexArrayAttrib,
+    &ext_glEnableVertexArrayAttribEXT,
+    &ext_glEnableVertexArrayEXT,
+    &ext_glEnableVertexAttribAPPLE,
+    &ext_glEnableVertexAttribArray,
+    &ext_glEnableVertexAttribArrayARB,
+    &ext_glEnablei,
+    &ext_glEndConditionalRender,
+    &ext_glEndConditionalRenderNV,
+    &ext_glEndConditionalRenderNVX,
+    &ext_glEndFragmentShaderATI,
+    &ext_glEndOcclusionQueryNV,
+    &ext_glEndPerfMonitorAMD,
+    &ext_glEndPerfQueryINTEL,
+    &ext_glEndQuery,
+    &ext_glEndQueryARB,
+    &ext_glEndQueryIndexed,
+    &ext_glEndTransformFeedback,
+    &ext_glEndTransformFeedbackEXT,
+    &ext_glEndTransformFeedbackNV,
+    &ext_glEndVertexShaderEXT,
+    &ext_glEndVideoCaptureNV,
+    &ext_glEvalCoord1xOES,
+    &wow64_ext_glEvalCoord1xvOES,
+    &ext_glEvalCoord2xOES,
+    &wow64_ext_glEvalCoord2xvOES,
+    &ext_glEvalMapsNV,
+    &ext_glEvaluateDepthValuesARB,
+    &wow64_ext_glExecuteProgramNV,
+    &ext_glExtractComponentEXT,
+    &wow64_ext_glFeedbackBufferxOES,
+    &wow64_ext_glFenceSync,
+    &ext_glFinalCombinerInputNV,
+    &wow64_ext_glFinishAsyncSGIX,
+    &ext_glFinishFenceAPPLE,
+    &ext_glFinishFenceNV,
+    &ext_glFinishObjectAPPLE,
+    &ext_glFinishTextureSUNX,
+    &wow64_ext_glFlushMappedBufferRange,
+    &wow64_ext_glFlushMappedBufferRangeAPPLE,
+    &wow64_ext_glFlushMappedNamedBufferRange,
+    &wow64_ext_glFlushMappedNamedBufferRangeEXT,
+    &ext_glFlushPixelDataRangeNV,
+    &ext_glFlushRasterSGIX,
+    &ext_glFlushStaticDataIBM,
+    &wow64_ext_glFlushVertexArrayRangeAPPLE,
+    &ext_glFlushVertexArrayRangeNV,
+    &ext_glFogCoordFormatNV,
+    &wow64_ext_glFogCoordPointer,
+    &wow64_ext_glFogCoordPointerEXT,
+    &wow64_ext_glFogCoordPointerListIBM,
+    &ext_glFogCoordd,
+    &ext_glFogCoorddEXT,
+    &wow64_ext_glFogCoorddv,
+    &wow64_ext_glFogCoorddvEXT,
+    &ext_glFogCoordf,
+    &ext_glFogCoordfEXT,
+    &wow64_ext_glFogCoordfv,
+    &wow64_ext_glFogCoordfvEXT,
+    &ext_glFogCoordhNV,
+    &wow64_ext_glFogCoordhvNV,
+    &wow64_ext_glFogFuncSGIS,
+    &ext_glFogxOES,
+    &wow64_ext_glFogxvOES,
+    &ext_glFragmentColorMaterialSGIX,
+    &ext_glFragmentCoverageColorNV,
+    &ext_glFragmentLightModelfSGIX,
+    &wow64_ext_glFragmentLightModelfvSGIX,
+    &ext_glFragmentLightModeliSGIX,
+    &wow64_ext_glFragmentLightModelivSGIX,
+    &ext_glFragmentLightfSGIX,
+    &wow64_ext_glFragmentLightfvSGIX,
+    &ext_glFragmentLightiSGIX,
+    &wow64_ext_glFragmentLightivSGIX,
+    &ext_glFragmentMaterialfSGIX,
+    &wow64_ext_glFragmentMaterialfvSGIX,
+    &ext_glFragmentMaterialiSGIX,
+    &wow64_ext_glFragmentMaterialivSGIX,
+    &ext_glFrameTerminatorGREMEDY,
+    &ext_glFrameZoomSGIX,
+    &ext_glFramebufferDrawBufferEXT,
+    &wow64_ext_glFramebufferDrawBuffersEXT,
+    &ext_glFramebufferFetchBarrierEXT,
+    &ext_glFramebufferParameteri,
+    &ext_glFramebufferParameteriMESA,
+    &ext_glFramebufferReadBufferEXT,
+    &ext_glFramebufferRenderbuffer,
+    &ext_glFramebufferRenderbufferEXT,
+    &wow64_ext_glFramebufferSampleLocationsfvARB,
+    &wow64_ext_glFramebufferSampleLocationsfvNV,
+    &wow64_ext_glFramebufferSamplePositionsfvAMD,
+    &ext_glFramebufferTexture,
+    &ext_glFramebufferTexture1D,
+    &ext_glFramebufferTexture1DEXT,
+    &ext_glFramebufferTexture2D,
+    &ext_glFramebufferTexture2DEXT,
+    &ext_glFramebufferTexture3D,
+    &ext_glFramebufferTexture3DEXT,
+    &ext_glFramebufferTextureARB,
+    &ext_glFramebufferTextureEXT,
+    &ext_glFramebufferTextureFaceARB,
+    &ext_glFramebufferTextureFaceEXT,
+    &ext_glFramebufferTextureLayer,
+    &ext_glFramebufferTextureLayerARB,
+    &ext_glFramebufferTextureLayerEXT,
+    &ext_glFramebufferTextureMultiviewOVR,
+    &ext_glFreeObjectBufferATI,
+    &ext_glFrustumfOES,
+    &ext_glFrustumxOES,
+    &ext_glGenAsyncMarkersSGIX,
+    &wow64_ext_glGenBuffers,
+    &wow64_ext_glGenBuffersARB,
+    &wow64_ext_glGenFencesAPPLE,
+    &wow64_ext_glGenFencesNV,
+    &ext_glGenFragmentShadersATI,
+    &wow64_ext_glGenFramebuffers,
+    &wow64_ext_glGenFramebuffersEXT,
+    &wow64_ext_glGenNamesAMD,
+    &wow64_ext_glGenOcclusionQueriesNV,
+    &ext_glGenPathsNV,
+    &wow64_ext_glGenPerfMonitorsAMD,
+    &wow64_ext_glGenProgramPipelines,
+    &wow64_ext_glGenProgramsARB,
+    &wow64_ext_glGenProgramsNV,
+    &wow64_ext_glGenQueries,
+    &wow64_ext_glGenQueriesARB,
+    &wow64_ext_glGenQueryResourceTagNV,
+    &wow64_ext_glGenRenderbuffers,
+    &wow64_ext_glGenRenderbuffersEXT,
+    &wow64_ext_glGenSamplers,
+    &wow64_ext_glGenSemaphoresEXT,
+    &ext_glGenSymbolsEXT,
+    &wow64_ext_glGenTexturesEXT,
+    &wow64_ext_glGenTransformFeedbacks,
+    &wow64_ext_glGenTransformFeedbacksNV,
+    &wow64_ext_glGenVertexArrays,
+    &wow64_ext_glGenVertexArraysAPPLE,
+    &ext_glGenVertexShadersEXT,
+    &ext_glGenerateMipmap,
+    &ext_glGenerateMipmapEXT,
+    &ext_glGenerateMultiTexMipmapEXT,
+    &ext_glGenerateTextureMipmap,
+    &ext_glGenerateTextureMipmapEXT,
+    &wow64_ext_glGetActiveAtomicCounterBufferiv,
+    &wow64_ext_glGetActiveAttrib,
+    &wow64_ext_glGetActiveAttribARB,
+    &wow64_ext_glGetActiveSubroutineName,
+    &wow64_ext_glGetActiveSubroutineUniformName,
+    &wow64_ext_glGetActiveSubroutineUniformiv,
+    &wow64_ext_glGetActiveUniform,
+    &wow64_ext_glGetActiveUniformARB,
+    &wow64_ext_glGetActiveUniformBlockName,
+    &wow64_ext_glGetActiveUniformBlockiv,
+    &wow64_ext_glGetActiveUniformName,
+    &wow64_ext_glGetActiveUniformsiv,
+    &wow64_ext_glGetActiveVaryingNV,
+    &wow64_ext_glGetArrayObjectfvATI,
+    &wow64_ext_glGetArrayObjectivATI,
+    &wow64_ext_glGetAttachedObjectsARB,
+    &wow64_ext_glGetAttachedShaders,
+    &wow64_ext_glGetAttribLocation,
+    &wow64_ext_glGetAttribLocationARB,
+    &wow64_ext_glGetBooleanIndexedvEXT,
+    &wow64_ext_glGetBooleani_v,
+    &wow64_ext_glGetBufferParameteri64v,
+    &wow64_ext_glGetBufferParameteriv,
+    &wow64_ext_glGetBufferParameterivARB,
+    &wow64_ext_glGetBufferParameterui64vNV,
+    &wow64_ext_glGetBufferPointerv,
+    &wow64_ext_glGetBufferPointervARB,
+    &wow64_ext_glGetBufferSubData,
+    &wow64_ext_glGetBufferSubDataARB,
+    &wow64_ext_glGetClipPlanefOES,
+    &wow64_ext_glGetClipPlanexOES,
+    &wow64_ext_glGetColorTable,
+    &wow64_ext_glGetColorTableEXT,
+    &wow64_ext_glGetColorTableParameterfv,
+    &wow64_ext_glGetColorTableParameterfvEXT,
+    &wow64_ext_glGetColorTableParameterfvSGI,
+    &wow64_ext_glGetColorTableParameteriv,
+    &wow64_ext_glGetColorTableParameterivEXT,
+    &wow64_ext_glGetColorTableParameterivSGI,
+    &wow64_ext_glGetColorTableSGI,
+    &wow64_ext_glGetCombinerInputParameterfvNV,
+    &wow64_ext_glGetCombinerInputParameterivNV,
+    &wow64_ext_glGetCombinerOutputParameterfvNV,
+    &wow64_ext_glGetCombinerOutputParameterivNV,
+    &wow64_ext_glGetCombinerStageParameterfvNV,
+    &ext_glGetCommandHeaderNV,
+    &wow64_ext_glGetCompressedMultiTexImageEXT,
+    &wow64_ext_glGetCompressedTexImage,
+    &wow64_ext_glGetCompressedTexImageARB,
+    &wow64_ext_glGetCompressedTextureImage,
+    &wow64_ext_glGetCompressedTextureImageEXT,
+    &wow64_ext_glGetCompressedTextureSubImage,
+    &wow64_ext_glGetConvolutionFilter,
+    &wow64_ext_glGetConvolutionFilterEXT,
+    &wow64_ext_glGetConvolutionParameterfv,
+    &wow64_ext_glGetConvolutionParameterfvEXT,
+    &wow64_ext_glGetConvolutionParameteriv,
+    &wow64_ext_glGetConvolutionParameterivEXT,
+    &wow64_ext_glGetConvolutionParameterxvOES,
+    &wow64_ext_glGetCoverageModulationTableNV,
+    &wow64_ext_glGetDebugMessageLog,
+    &wow64_ext_glGetDebugMessageLogAMD,
+    &wow64_ext_glGetDebugMessageLogARB,
+    &wow64_ext_glGetDetailTexFuncSGIS,
+    &wow64_ext_glGetDoubleIndexedvEXT,
+    &wow64_ext_glGetDoublei_v,
+    &wow64_ext_glGetDoublei_vEXT,
+    &wow64_ext_glGetFenceivNV,
+    &wow64_ext_glGetFinalCombinerInputParameterfvNV,
+    &wow64_ext_glGetFinalCombinerInputParameterivNV,
+    &wow64_ext_glGetFirstPerfQueryIdINTEL,
+    &wow64_ext_glGetFixedvOES,
+    &wow64_ext_glGetFloatIndexedvEXT,
+    &wow64_ext_glGetFloati_v,
+    &wow64_ext_glGetFloati_vEXT,
+    &wow64_ext_glGetFogFuncSGIS,
+    &wow64_ext_glGetFragDataIndex,
+    &wow64_ext_glGetFragDataLocation,
+    &wow64_ext_glGetFragDataLocationEXT,
+    &wow64_ext_glGetFragmentLightfvSGIX,
+    &wow64_ext_glGetFragmentLightivSGIX,
+    &wow64_ext_glGetFragmentMaterialfvSGIX,
+    &wow64_ext_glGetFragmentMaterialivSGIX,
+    &wow64_ext_glGetFramebufferAttachmentParameteriv,
+    &wow64_ext_glGetFramebufferAttachmentParameterivEXT,
+    &wow64_ext_glGetFramebufferParameterfvAMD,
+    &wow64_ext_glGetFramebufferParameteriv,
+    &wow64_ext_glGetFramebufferParameterivEXT,
+    &wow64_ext_glGetFramebufferParameterivMESA,
+    &ext_glGetGraphicsResetStatus,
+    &ext_glGetGraphicsResetStatusARB,
+    &ext_glGetHandleARB,
+    &wow64_ext_glGetHistogram,
+    &wow64_ext_glGetHistogramEXT,
+    &wow64_ext_glGetHistogramParameterfv,
+    &wow64_ext_glGetHistogramParameterfvEXT,
+    &wow64_ext_glGetHistogramParameteriv,
+    &wow64_ext_glGetHistogramParameterivEXT,
+    &wow64_ext_glGetHistogramParameterxvOES,
+    &ext_glGetImageHandleARB,
+    &ext_glGetImageHandleNV,
+    &wow64_ext_glGetImageTransformParameterfvHP,
+    &wow64_ext_glGetImageTransformParameterivHP,
+    &wow64_ext_glGetInfoLogARB,
+    &ext_glGetInstrumentsSGIX,
+    &wow64_ext_glGetInteger64i_v,
+    &wow64_ext_glGetInteger64v,
+    &wow64_ext_glGetIntegerIndexedvEXT,
+    &wow64_ext_glGetIntegeri_v,
+    &wow64_ext_glGetIntegerui64i_vNV,
+    &wow64_ext_glGetIntegerui64vNV,
+    &wow64_ext_glGetInternalformatSampleivNV,
+    &wow64_ext_glGetInternalformati64v,
+    &wow64_ext_glGetInternalformativ,
+    &wow64_ext_glGetInvariantBooleanvEXT,
+    &wow64_ext_glGetInvariantFloatvEXT,
+    &wow64_ext_glGetInvariantIntegervEXT,
+    &wow64_ext_glGetLightxOES,
+    &wow64_ext_glGetListParameterfvSGIX,
+    &wow64_ext_glGetListParameterivSGIX,
+    &wow64_ext_glGetLocalConstantBooleanvEXT,
+    &wow64_ext_glGetLocalConstantFloatvEXT,
+    &wow64_ext_glGetLocalConstantIntegervEXT,
+    &wow64_ext_glGetMapAttribParameterfvNV,
+    &wow64_ext_glGetMapAttribParameterivNV,
+    &wow64_ext_glGetMapControlPointsNV,
+    &wow64_ext_glGetMapParameterfvNV,
+    &wow64_ext_glGetMapParameterivNV,
+    &wow64_ext_glGetMapxvOES,
+    &ext_glGetMaterialxOES,
+    &wow64_ext_glGetMemoryObjectDetachedResourcesuivNV,
+    &wow64_ext_glGetMemoryObjectParameterivEXT,
+    &wow64_ext_glGetMinmax,
+    &wow64_ext_glGetMinmaxEXT,
+    &wow64_ext_glGetMinmaxParameterfv,
+    &wow64_ext_glGetMinmaxParameterfvEXT,
+    &wow64_ext_glGetMinmaxParameteriv,
+    &wow64_ext_glGetMinmaxParameterivEXT,
+    &wow64_ext_glGetMultiTexEnvfvEXT,
+    &wow64_ext_glGetMultiTexEnvivEXT,
+    &wow64_ext_glGetMultiTexGendvEXT,
+    &wow64_ext_glGetMultiTexGenfvEXT,
+    &wow64_ext_glGetMultiTexGenivEXT,
+    &wow64_ext_glGetMultiTexImageEXT,
+    &wow64_ext_glGetMultiTexLevelParameterfvEXT,
+    &wow64_ext_glGetMultiTexLevelParameterivEXT,
+    &wow64_ext_glGetMultiTexParameterIivEXT,
+    &wow64_ext_glGetMultiTexParameterIuivEXT,
+    &wow64_ext_glGetMultiTexParameterfvEXT,
+    &wow64_ext_glGetMultiTexParameterivEXT,
+    &wow64_ext_glGetMultisamplefv,
+    &wow64_ext_glGetMultisamplefvNV,
+    &wow64_ext_glGetNamedBufferParameteri64v,
+    &wow64_ext_glGetNamedBufferParameteriv,
+    &wow64_ext_glGetNamedBufferParameterivEXT,
+    &wow64_ext_glGetNamedBufferParameterui64vNV,
+    &wow64_ext_glGetNamedBufferPointerv,
+    &wow64_ext_glGetNamedBufferPointervEXT,
+    &wow64_ext_glGetNamedBufferSubData,
+    &wow64_ext_glGetNamedBufferSubDataEXT,
+    &wow64_ext_glGetNamedFramebufferAttachmentParameteriv,
+    &wow64_ext_glGetNamedFramebufferAttachmentParameterivEXT,
+    &wow64_ext_glGetNamedFramebufferParameterfvAMD,
+    &wow64_ext_glGetNamedFramebufferParameteriv,
+    &wow64_ext_glGetNamedFramebufferParameterivEXT,
+    &wow64_ext_glGetNamedProgramLocalParameterIivEXT,
+    &wow64_ext_glGetNamedProgramLocalParameterIuivEXT,
+    &wow64_ext_glGetNamedProgramLocalParameterdvEXT,
+    &wow64_ext_glGetNamedProgramLocalParameterfvEXT,
+    &wow64_ext_glGetNamedProgramStringEXT,
+    &wow64_ext_glGetNamedProgramivEXT,
+    &wow64_ext_glGetNamedRenderbufferParameteriv,
+    &wow64_ext_glGetNamedRenderbufferParameterivEXT,
+    &wow64_ext_glGetNamedStringARB,
+    &wow64_ext_glGetNamedStringivARB,
+    &wow64_ext_glGetNextPerfQueryIdINTEL,
+    &wow64_ext_glGetObjectBufferfvATI,
+    &wow64_ext_glGetObjectBufferivATI,
+    &wow64_ext_glGetObjectLabel,
+    &wow64_ext_glGetObjectLabelEXT,
+    &wow64_ext_glGetObjectParameterfvARB,
+    &wow64_ext_glGetObjectParameterivAPPLE,
+    &wow64_ext_glGetObjectParameterivARB,
+    &wow64_ext_glGetObjectPtrLabel,
+    &wow64_ext_glGetOcclusionQueryivNV,
+    &wow64_ext_glGetOcclusionQueryuivNV,
+    &wow64_ext_glGetPathColorGenfvNV,
+    &wow64_ext_glGetPathColorGenivNV,
+    &wow64_ext_glGetPathCommandsNV,
+    &wow64_ext_glGetPathCoordsNV,
+    &wow64_ext_glGetPathDashArrayNV,
+    &ext_glGetPathLengthNV,
+    &wow64_ext_glGetPathMetricRangeNV,
+    &wow64_ext_glGetPathMetricsNV,
+    &wow64_ext_glGetPathParameterfvNV,
+    &wow64_ext_glGetPathParameterivNV,
+    &wow64_ext_glGetPathSpacingNV,
+    &wow64_ext_glGetPathTexGenfvNV,
+    &wow64_ext_glGetPathTexGenivNV,
+    &wow64_ext_glGetPerfCounterInfoINTEL,
+    &wow64_ext_glGetPerfMonitorCounterDataAMD,
+    &wow64_ext_glGetPerfMonitorCounterInfoAMD,
+    &wow64_ext_glGetPerfMonitorCounterStringAMD,
+    &wow64_ext_glGetPerfMonitorCountersAMD,
+    &wow64_ext_glGetPerfMonitorGroupStringAMD,
+    &wow64_ext_glGetPerfMonitorGroupsAMD,
+    &wow64_ext_glGetPerfQueryDataINTEL,
+    &wow64_ext_glGetPerfQueryIdByNameINTEL,
+    &wow64_ext_glGetPerfQueryInfoINTEL,
+    &wow64_ext_glGetPixelMapxv,
+    &wow64_ext_glGetPixelTexGenParameterfvSGIS,
+    &wow64_ext_glGetPixelTexGenParameterivSGIS,
+    &wow64_ext_glGetPixelTransformParameterfvEXT,
+    &wow64_ext_glGetPixelTransformParameterivEXT,
+    &wow64_ext_glGetPointerIndexedvEXT,
+    &wow64_ext_glGetPointeri_vEXT,
+    &wow64_ext_glGetPointervEXT,
+    &wow64_ext_glGetProgramBinary,
+    &wow64_ext_glGetProgramEnvParameterIivNV,
+    &wow64_ext_glGetProgramEnvParameterIuivNV,
+    &wow64_ext_glGetProgramEnvParameterdvARB,
+    &wow64_ext_glGetProgramEnvParameterfvARB,
+    &wow64_ext_glGetProgramInfoLog,
+    &wow64_ext_glGetProgramInterfaceiv,
+    &wow64_ext_glGetProgramLocalParameterIivNV,
+    &wow64_ext_glGetProgramLocalParameterIuivNV,
+    &wow64_ext_glGetProgramLocalParameterdvARB,
+    &wow64_ext_glGetProgramLocalParameterfvARB,
+    &wow64_ext_glGetProgramNamedParameterdvNV,
+    &wow64_ext_glGetProgramNamedParameterfvNV,
+    &wow64_ext_glGetProgramParameterdvNV,
+    &wow64_ext_glGetProgramParameterfvNV,
+    &wow64_ext_glGetProgramPipelineInfoLog,
+    &wow64_ext_glGetProgramPipelineiv,
+    &wow64_ext_glGetProgramResourceIndex,
+    &wow64_ext_glGetProgramResourceLocation,
+    &wow64_ext_glGetProgramResourceLocationIndex,
+    &wow64_ext_glGetProgramResourceName,
+    &wow64_ext_glGetProgramResourcefvNV,
+    &wow64_ext_glGetProgramResourceiv,
+    &wow64_ext_glGetProgramStageiv,
+    &wow64_ext_glGetProgramStringARB,
+    &wow64_ext_glGetProgramStringNV,
+    &wow64_ext_glGetProgramSubroutineParameteruivNV,
+    &wow64_ext_glGetProgramiv,
+    &wow64_ext_glGetProgramivARB,
+    &wow64_ext_glGetProgramivNV,
+    &wow64_ext_glGetQueryBufferObjecti64v,
+    &wow64_ext_glGetQueryBufferObjectiv,
+    &wow64_ext_glGetQueryBufferObjectui64v,
+    &wow64_ext_glGetQueryBufferObjectuiv,
+    &wow64_ext_glGetQueryIndexediv,
+    &wow64_ext_glGetQueryObjecti64v,
+    &wow64_ext_glGetQueryObjecti64vEXT,
+    &wow64_ext_glGetQueryObjectiv,
+    &wow64_ext_glGetQueryObjectivARB,
+    &wow64_ext_glGetQueryObjectui64v,
+    &wow64_ext_glGetQueryObjectui64vEXT,
+    &wow64_ext_glGetQueryObjectuiv,
+    &wow64_ext_glGetQueryObjectuivARB,
+    &wow64_ext_glGetQueryiv,
+    &wow64_ext_glGetQueryivARB,
+    &wow64_ext_glGetRenderbufferParameteriv,
+    &wow64_ext_glGetRenderbufferParameterivEXT,
+    &wow64_ext_glGetSamplerParameterIiv,
+    &wow64_ext_glGetSamplerParameterIuiv,
+    &wow64_ext_glGetSamplerParameterfv,
+    &wow64_ext_glGetSamplerParameteriv,
+    &wow64_ext_glGetSemaphoreParameterui64vEXT,
+    &wow64_ext_glGetSeparableFilter,
+    &wow64_ext_glGetSeparableFilterEXT,
+    &wow64_ext_glGetShaderInfoLog,
+    &wow64_ext_glGetShaderPrecisionFormat,
+    &wow64_ext_glGetShaderSource,
+    &wow64_ext_glGetShaderSourceARB,
+    &wow64_ext_glGetShaderiv,
+    &wow64_ext_glGetShadingRateImagePaletteNV,
+    &wow64_ext_glGetShadingRateSampleLocationivNV,
+    &wow64_ext_glGetSharpenTexFuncSGIS,
+    &ext_glGetStageIndexNV,
+    &wow64_ext_glGetStringi,
+    &wow64_ext_glGetSubroutineIndex,
+    &wow64_ext_glGetSubroutineUniformLocation,
+    &wow64_ext_glGetSynciv,
+    &wow64_ext_glGetTexBumpParameterfvATI,
+    &wow64_ext_glGetTexBumpParameterivATI,
+    &wow64_ext_glGetTexEnvxvOES,
+    &wow64_ext_glGetTexFilterFuncSGIS,
+    &wow64_ext_glGetTexGenxvOES,
+    &wow64_ext_glGetTexLevelParameterxvOES,
+    &wow64_ext_glGetTexParameterIiv,
+    &wow64_ext_glGetTexParameterIivEXT,
+    &wow64_ext_glGetTexParameterIuiv,
+    &wow64_ext_glGetTexParameterIuivEXT,
+    &wow64_ext_glGetTexParameterPointervAPPLE,
+    &wow64_ext_glGetTexParameterxvOES,
+    &ext_glGetTextureHandleARB,
+    &ext_glGetTextureHandleNV,
+    &wow64_ext_glGetTextureImage,
+    &wow64_ext_glGetTextureImageEXT,
+    &wow64_ext_glGetTextureLevelParameterfv,
+    &wow64_ext_glGetTextureLevelParameterfvEXT,
+    &wow64_ext_glGetTextureLevelParameteriv,
+    &wow64_ext_glGetTextureLevelParameterivEXT,
+    &wow64_ext_glGetTextureParameterIiv,
+    &wow64_ext_glGetTextureParameterIivEXT,
+    &wow64_ext_glGetTextureParameterIuiv,
+    &wow64_ext_glGetTextureParameterIuivEXT,
+    &wow64_ext_glGetTextureParameterfv,
+    &wow64_ext_glGetTextureParameterfvEXT,
+    &wow64_ext_glGetTextureParameteriv,
+    &wow64_ext_glGetTextureParameterivEXT,
+    &ext_glGetTextureSamplerHandleARB,
+    &ext_glGetTextureSamplerHandleNV,
+    &wow64_ext_glGetTextureSubImage,
+    &wow64_ext_glGetTrackMatrixivNV,
+    &wow64_ext_glGetTransformFeedbackVarying,
+    &wow64_ext_glGetTransformFeedbackVaryingEXT,
+    &wow64_ext_glGetTransformFeedbackVaryingNV,
+    &wow64_ext_glGetTransformFeedbacki64_v,
+    &wow64_ext_glGetTransformFeedbacki_v,
+    &wow64_ext_glGetTransformFeedbackiv,
+    &wow64_ext_glGetUniformBlockIndex,
+    &ext_glGetUniformBufferSizeEXT,
+    &wow64_ext_glGetUniformIndices,
+    &wow64_ext_glGetUniformLocation,
+    &wow64_ext_glGetUniformLocationARB,
+    &wow64_ext_glGetUniformOffsetEXT,
+    &wow64_ext_glGetUniformSubroutineuiv,
+    &wow64_ext_glGetUniformdv,
+    &wow64_ext_glGetUniformfv,
+    &wow64_ext_glGetUniformfvARB,
+    &wow64_ext_glGetUniformi64vARB,
+    &wow64_ext_glGetUniformi64vNV,
+    &wow64_ext_glGetUniformiv,
+    &wow64_ext_glGetUniformivARB,
+    &wow64_ext_glGetUniformui64vARB,
+    &wow64_ext_glGetUniformui64vNV,
+    &wow64_ext_glGetUniformuiv,
+    &wow64_ext_glGetUniformuivEXT,
+    &wow64_ext_glGetUnsignedBytei_vEXT,
+    &wow64_ext_glGetUnsignedBytevEXT,
+    &wow64_ext_glGetVariantArrayObjectfvATI,
+    &wow64_ext_glGetVariantArrayObjectivATI,
+    &wow64_ext_glGetVariantBooleanvEXT,
+    &wow64_ext_glGetVariantFloatvEXT,
+    &wow64_ext_glGetVariantIntegervEXT,
+    &wow64_ext_glGetVariantPointervEXT,
+    &wow64_ext_glGetVaryingLocationNV,
+    &wow64_ext_glGetVertexArrayIndexed64iv,
+    &wow64_ext_glGetVertexArrayIndexediv,
+    &wow64_ext_glGetVertexArrayIntegeri_vEXT,
+    &wow64_ext_glGetVertexArrayIntegervEXT,
+    &wow64_ext_glGetVertexArrayPointeri_vEXT,
+    &wow64_ext_glGetVertexArrayPointervEXT,
+    &wow64_ext_glGetVertexArrayiv,
+    &wow64_ext_glGetVertexAttribArrayObjectfvATI,
+    &wow64_ext_glGetVertexAttribArrayObjectivATI,
+    &wow64_ext_glGetVertexAttribIiv,
+    &wow64_ext_glGetVertexAttribIivEXT,
+    &wow64_ext_glGetVertexAttribIuiv,
+    &wow64_ext_glGetVertexAttribIuivEXT,
+    &wow64_ext_glGetVertexAttribLdv,
+    &wow64_ext_glGetVertexAttribLdvEXT,
+    &wow64_ext_glGetVertexAttribLi64vNV,
+    &wow64_ext_glGetVertexAttribLui64vARB,
+    &wow64_ext_glGetVertexAttribLui64vNV,
+    &wow64_ext_glGetVertexAttribPointerv,
+    &wow64_ext_glGetVertexAttribPointervARB,
+    &wow64_ext_glGetVertexAttribPointervNV,
+    &wow64_ext_glGetVertexAttribdv,
+    &wow64_ext_glGetVertexAttribdvARB,
+    &wow64_ext_glGetVertexAttribdvNV,
+    &wow64_ext_glGetVertexAttribfv,
+    &wow64_ext_glGetVertexAttribfvARB,
+    &wow64_ext_glGetVertexAttribfvNV,
+    &wow64_ext_glGetVertexAttribiv,
+    &wow64_ext_glGetVertexAttribivARB,
+    &wow64_ext_glGetVertexAttribivNV,
+    &wow64_ext_glGetVideoCaptureStreamdvNV,
+    &wow64_ext_glGetVideoCaptureStreamfvNV,
+    &wow64_ext_glGetVideoCaptureStreamivNV,
+    &wow64_ext_glGetVideoCaptureivNV,
+    &wow64_ext_glGetVideoi64vNV,
+    &wow64_ext_glGetVideoivNV,
+    &wow64_ext_glGetVideoui64vNV,
+    &wow64_ext_glGetVideouivNV,
+    &wow64_ext_glGetVkProcAddrNV,
+    &wow64_ext_glGetnColorTable,
+    &wow64_ext_glGetnColorTableARB,
+    &wow64_ext_glGetnCompressedTexImage,
+    &wow64_ext_glGetnCompressedTexImageARB,
+    &wow64_ext_glGetnConvolutionFilter,
+    &wow64_ext_glGetnConvolutionFilterARB,
+    &wow64_ext_glGetnHistogram,
+    &wow64_ext_glGetnHistogramARB,
+    &wow64_ext_glGetnMapdv,
+    &wow64_ext_glGetnMapdvARB,
+    &wow64_ext_glGetnMapfv,
+    &wow64_ext_glGetnMapfvARB,
+    &wow64_ext_glGetnMapiv,
+    &wow64_ext_glGetnMapivARB,
+    &wow64_ext_glGetnMinmax,
+    &wow64_ext_glGetnMinmaxARB,
+    &wow64_ext_glGetnPixelMapfv,
+    &wow64_ext_glGetnPixelMapfvARB,
+    &wow64_ext_glGetnPixelMapuiv,
+    &wow64_ext_glGetnPixelMapuivARB,
+    &wow64_ext_glGetnPixelMapusv,
+    &wow64_ext_glGetnPixelMapusvARB,
+    &wow64_ext_glGetnPolygonStipple,
+    &wow64_ext_glGetnPolygonStippleARB,
+    &wow64_ext_glGetnSeparableFilter,
+    &wow64_ext_glGetnSeparableFilterARB,
+    &wow64_ext_glGetnTexImage,
+    &wow64_ext_glGetnTexImageARB,
+    &wow64_ext_glGetnUniformdv,
+    &wow64_ext_glGetnUniformdvARB,
+    &wow64_ext_glGetnUniformfv,
+    &wow64_ext_glGetnUniformfvARB,
+    &wow64_ext_glGetnUniformi64vARB,
+    &wow64_ext_glGetnUniformiv,
+    &wow64_ext_glGetnUniformivARB,
+    &wow64_ext_glGetnUniformui64vARB,
+    &wow64_ext_glGetnUniformuiv,
+    &wow64_ext_glGetnUniformuivARB,
+    &ext_glGlobalAlphaFactorbSUN,
+    &ext_glGlobalAlphaFactordSUN,
+    &ext_glGlobalAlphaFactorfSUN,
+    &ext_glGlobalAlphaFactoriSUN,
+    &ext_glGlobalAlphaFactorsSUN,
+    &ext_glGlobalAlphaFactorubSUN,
+    &ext_glGlobalAlphaFactoruiSUN,
+    &ext_glGlobalAlphaFactorusSUN,
+    &ext_glHintPGI,
+    &ext_glHistogram,
+    &ext_glHistogramEXT,
+    &wow64_ext_glIglooInterfaceSGIX,
+    &ext_glImageTransformParameterfHP,
+    &wow64_ext_glImageTransformParameterfvHP,
+    &ext_glImageTransformParameteriHP,
+    &wow64_ext_glImageTransformParameterivHP,
+    &ext_glImportMemoryFdEXT,
+    &wow64_ext_glImportMemoryWin32HandleEXT,
+    &wow64_ext_glImportMemoryWin32NameEXT,
+    &ext_glImportSemaphoreFdEXT,
+    &wow64_ext_glImportSemaphoreWin32HandleEXT,
+    &wow64_ext_glImportSemaphoreWin32NameEXT,
+    &wow64_ext_glImportSyncEXT,
+    &ext_glIndexFormatNV,
+    &ext_glIndexFuncEXT,
+    &ext_glIndexMaterialEXT,
+    &wow64_ext_glIndexPointerEXT,
+    &wow64_ext_glIndexPointerListIBM,
+    &ext_glIndexxOES,
+    &wow64_ext_glIndexxvOES,
+    &ext_glInsertComponentEXT,
+    &wow64_ext_glInsertEventMarkerEXT,
+    &wow64_ext_glInstrumentsBufferSGIX,
+    &ext_glInterpolatePathsNV,
+    &ext_glInvalidateBufferData,
+    &wow64_ext_glInvalidateBufferSubData,
+    &wow64_ext_glInvalidateFramebuffer,
+    &wow64_ext_glInvalidateNamedFramebufferData,
+    &wow64_ext_glInvalidateNamedFramebufferSubData,
+    &wow64_ext_glInvalidateSubFramebuffer,
+    &ext_glInvalidateTexImage,
+    &ext_glInvalidateTexSubImage,
+    &ext_glIsAsyncMarkerSGIX,
+    &ext_glIsBuffer,
+    &ext_glIsBufferARB,
+    &ext_glIsBufferResidentNV,
+    &ext_glIsCommandListNV,
+    &ext_glIsEnabledIndexedEXT,
+    &ext_glIsEnabledi,
+    &ext_glIsFenceAPPLE,
+    &ext_glIsFenceNV,
+    &ext_glIsFramebuffer,
+    &ext_glIsFramebufferEXT,
+    &ext_glIsImageHandleResidentARB,
+    &ext_glIsImageHandleResidentNV,
+    &ext_glIsMemoryObjectEXT,
+    &ext_glIsNameAMD,
+    &ext_glIsNamedBufferResidentNV,
+    &wow64_ext_glIsNamedStringARB,
+    &ext_glIsObjectBufferATI,
+    &ext_glIsOcclusionQueryNV,
+    &ext_glIsPathNV,
+    &ext_glIsPointInFillPathNV,
+    &ext_glIsPointInStrokePathNV,
+    &ext_glIsProgram,
+    &ext_glIsProgramARB,
+    &ext_glIsProgramNV,
+    &ext_glIsProgramPipeline,
+    &ext_glIsQuery,
+    &ext_glIsQueryARB,
+    &ext_glIsRenderbuffer,
+    &ext_glIsRenderbufferEXT,
+    &ext_glIsSampler,
+    &ext_glIsSemaphoreEXT,
+    &ext_glIsShader,
+    &ext_glIsStateNV,
+    &wow64_ext_glIsSync,
+    &ext_glIsTextureEXT,
+    &ext_glIsTextureHandleResidentARB,
+    &ext_glIsTextureHandleResidentNV,
+    &ext_glIsTransformFeedback,
+    &ext_glIsTransformFeedbackNV,
+    &ext_glIsVariantEnabledEXT,
+    &ext_glIsVertexArray,
+    &ext_glIsVertexArrayAPPLE,
+    &ext_glIsVertexAttribEnabledAPPLE,
+    &ext_glLGPUCopyImageSubDataNVX,
+    &ext_glLGPUInterlockNVX,
+    &wow64_ext_glLGPUNamedBufferSubDataNVX,
+    &wow64_ext_glLabelObjectEXT,
+    &ext_glLightEnviSGIX,
+    &ext_glLightModelxOES,
+    &wow64_ext_glLightModelxvOES,
+    &ext_glLightxOES,
+    &wow64_ext_glLightxvOES,
+    &ext_glLineWidthxOES,
+    &ext_glLinkProgram,
+    &ext_glLinkProgramARB,
+    &wow64_ext_glListDrawCommandsStatesClientNV,
+    &ext_glListParameterfSGIX,
+    &wow64_ext_glListParameterfvSGIX,
+    &ext_glListParameteriSGIX,
+    &wow64_ext_glListParameterivSGIX,
+    &ext_glLoadIdentityDeformationMapSGIX,
+    &wow64_ext_glLoadMatrixxOES,
+    &wow64_ext_glLoadProgramNV,
+    &wow64_ext_glLoadTransposeMatrixd,
+    &wow64_ext_glLoadTransposeMatrixdARB,
+    &wow64_ext_glLoadTransposeMatrixf,
+    &wow64_ext_glLoadTransposeMatrixfARB,
+    &wow64_ext_glLoadTransposeMatrixxOES,
+    &ext_glLockArraysEXT,
+    &ext_glMTexCoord2fSGIS,
+    &wow64_ext_glMTexCoord2fvSGIS,
+    &ext_glMakeBufferNonResidentNV,
+    &ext_glMakeBufferResidentNV,
+    &ext_glMakeImageHandleNonResidentARB,
+    &ext_glMakeImageHandleNonResidentNV,
+    &ext_glMakeImageHandleResidentARB,
+    &ext_glMakeImageHandleResidentNV,
+    &ext_glMakeNamedBufferNonResidentNV,
+    &ext_glMakeNamedBufferResidentNV,
+    &ext_glMakeTextureHandleNonResidentARB,
+    &ext_glMakeTextureHandleNonResidentNV,
+    &ext_glMakeTextureHandleResidentARB,
+    &ext_glMakeTextureHandleResidentNV,
+    &ext_glMap1xOES,
+    &ext_glMap2xOES,
+    &wow64_ext_glMapBuffer,
+    &wow64_ext_glMapBufferARB,
+    &wow64_ext_glMapBufferRange,
+    &wow64_ext_glMapControlPointsNV,
+    &ext_glMapGrid1xOES,
+    &ext_glMapGrid2xOES,
+    &wow64_ext_glMapNamedBuffer,
+    &wow64_ext_glMapNamedBufferEXT,
+    &wow64_ext_glMapNamedBufferRange,
+    &wow64_ext_glMapNamedBufferRangeEXT,
+    &wow64_ext_glMapObjectBufferATI,
+    &wow64_ext_glMapParameterfvNV,
+    &wow64_ext_glMapParameterivNV,
+    &wow64_ext_glMapTexture2DINTEL,
+    &wow64_ext_glMapVertexAttrib1dAPPLE,
+    &wow64_ext_glMapVertexAttrib1fAPPLE,
+    &wow64_ext_glMapVertexAttrib2dAPPLE,
+    &wow64_ext_glMapVertexAttrib2fAPPLE,
+    &ext_glMaterialxOES,
+    &wow64_ext_glMaterialxvOES,
+    &ext_glMatrixFrustumEXT,
+    &wow64_ext_glMatrixIndexPointerARB,
+    &wow64_ext_glMatrixIndexubvARB,
+    &wow64_ext_glMatrixIndexuivARB,
+    &wow64_ext_glMatrixIndexusvARB,
+    &wow64_ext_glMatrixLoad3x2fNV,
+    &wow64_ext_glMatrixLoad3x3fNV,
+    &ext_glMatrixLoadIdentityEXT,
+    &wow64_ext_glMatrixLoadTranspose3x3fNV,
+    &wow64_ext_glMatrixLoadTransposedEXT,
+    &wow64_ext_glMatrixLoadTransposefEXT,
+    &wow64_ext_glMatrixLoaddEXT,
+    &wow64_ext_glMatrixLoadfEXT,
+    &wow64_ext_glMatrixMult3x2fNV,
+    &wow64_ext_glMatrixMult3x3fNV,
+    &wow64_ext_glMatrixMultTranspose3x3fNV,
+    &wow64_ext_glMatrixMultTransposedEXT,
+    &wow64_ext_glMatrixMultTransposefEXT,
+    &wow64_ext_glMatrixMultdEXT,
+    &wow64_ext_glMatrixMultfEXT,
+    &ext_glMatrixOrthoEXT,
+    &ext_glMatrixPopEXT,
+    &ext_glMatrixPushEXT,
+    &ext_glMatrixRotatedEXT,
+    &ext_glMatrixRotatefEXT,
+    &ext_glMatrixScaledEXT,
+    &ext_glMatrixScalefEXT,
+    &ext_glMatrixTranslatedEXT,
+    &ext_glMatrixTranslatefEXT,
+    &ext_glMaxShaderCompilerThreadsARB,
+    &ext_glMaxShaderCompilerThreadsKHR,
+    &ext_glMemoryBarrier,
+    &ext_glMemoryBarrierByRegion,
+    &ext_glMemoryBarrierEXT,
+    &wow64_ext_glMemoryObjectParameterivEXT,
+    &ext_glMinSampleShading,
+    &ext_glMinSampleShadingARB,
+    &ext_glMinmax,
+    &ext_glMinmaxEXT,
+    &wow64_ext_glMultMatrixxOES,
+    &wow64_ext_glMultTransposeMatrixd,
+    &wow64_ext_glMultTransposeMatrixdARB,
+    &wow64_ext_glMultTransposeMatrixf,
+    &wow64_ext_glMultTransposeMatrixfARB,
+    &wow64_ext_glMultTransposeMatrixxOES,
+    &wow64_ext_glMultiDrawArrays,
+    &wow64_ext_glMultiDrawArraysEXT,
+    &wow64_ext_glMultiDrawArraysIndirect,
+    &wow64_ext_glMultiDrawArraysIndirectAMD,
+    &wow64_ext_glMultiDrawArraysIndirectBindlessCountNV,
+    &wow64_ext_glMultiDrawArraysIndirectBindlessNV,
+    &wow64_ext_glMultiDrawArraysIndirectCount,
+    &wow64_ext_glMultiDrawArraysIndirectCountARB,
+    &wow64_ext_glMultiDrawElementArrayAPPLE,
+    &wow64_ext_glMultiDrawElements,
+    &wow64_ext_glMultiDrawElementsBaseVertex,
+    &wow64_ext_glMultiDrawElementsEXT,
+    &wow64_ext_glMultiDrawElementsIndirect,
+    &wow64_ext_glMultiDrawElementsIndirectAMD,
+    &wow64_ext_glMultiDrawElementsIndirectBindlessCountNV,
+    &wow64_ext_glMultiDrawElementsIndirectBindlessNV,
+    &wow64_ext_glMultiDrawElementsIndirectCount,
+    &wow64_ext_glMultiDrawElementsIndirectCountARB,
+    &wow64_ext_glMultiDrawMeshTasksIndirectCountNV,
+    &wow64_ext_glMultiDrawMeshTasksIndirectNV,
+    &wow64_ext_glMultiDrawRangeElementArrayAPPLE,
+    &wow64_ext_glMultiModeDrawArraysIBM,
+    &wow64_ext_glMultiModeDrawElementsIBM,
+    &ext_glMultiTexBufferEXT,
+    &ext_glMultiTexCoord1bOES,
+    &wow64_ext_glMultiTexCoord1bvOES,
+    &ext_glMultiTexCoord1d,
+    &ext_glMultiTexCoord1dARB,
+    &ext_glMultiTexCoord1dSGIS,
+    &wow64_ext_glMultiTexCoord1dv,
+    &wow64_ext_glMultiTexCoord1dvARB,
+    &wow64_ext_glMultiTexCoord1dvSGIS,
+    &ext_glMultiTexCoord1f,
+    &ext_glMultiTexCoord1fARB,
+    &ext_glMultiTexCoord1fSGIS,
+    &wow64_ext_glMultiTexCoord1fv,
+    &wow64_ext_glMultiTexCoord1fvARB,
+    &wow64_ext_glMultiTexCoord1fvSGIS,
+    &ext_glMultiTexCoord1hNV,
+    &wow64_ext_glMultiTexCoord1hvNV,
+    &ext_glMultiTexCoord1i,
+    &ext_glMultiTexCoord1iARB,
+    &ext_glMultiTexCoord1iSGIS,
+    &wow64_ext_glMultiTexCoord1iv,
+    &wow64_ext_glMultiTexCoord1ivARB,
+    &wow64_ext_glMultiTexCoord1ivSGIS,
+    &ext_glMultiTexCoord1s,
+    &ext_glMultiTexCoord1sARB,
+    &ext_glMultiTexCoord1sSGIS,
+    &wow64_ext_glMultiTexCoord1sv,
+    &wow64_ext_glMultiTexCoord1svARB,
+    &wow64_ext_glMultiTexCoord1svSGIS,
+    &ext_glMultiTexCoord1xOES,
+    &wow64_ext_glMultiTexCoord1xvOES,
+    &ext_glMultiTexCoord2bOES,
+    &wow64_ext_glMultiTexCoord2bvOES,
+    &ext_glMultiTexCoord2d,
+    &ext_glMultiTexCoord2dARB,
+    &ext_glMultiTexCoord2dSGIS,
+    &wow64_ext_glMultiTexCoord2dv,
+    &wow64_ext_glMultiTexCoord2dvARB,
+    &wow64_ext_glMultiTexCoord2dvSGIS,
+    &ext_glMultiTexCoord2f,
+    &ext_glMultiTexCoord2fARB,
+    &ext_glMultiTexCoord2fSGIS,
+    &wow64_ext_glMultiTexCoord2fv,
+    &wow64_ext_glMultiTexCoord2fvARB,
+    &wow64_ext_glMultiTexCoord2fvSGIS,
+    &ext_glMultiTexCoord2hNV,
+    &wow64_ext_glMultiTexCoord2hvNV,
+    &ext_glMultiTexCoord2i,
+    &ext_glMultiTexCoord2iARB,
+    &ext_glMultiTexCoord2iSGIS,
+    &wow64_ext_glMultiTexCoord2iv,
+    &wow64_ext_glMultiTexCoord2ivARB,
+    &wow64_ext_glMultiTexCoord2ivSGIS,
+    &ext_glMultiTexCoord2s,
+    &ext_glMultiTexCoord2sARB,
+    &ext_glMultiTexCoord2sSGIS,
+    &wow64_ext_glMultiTexCoord2sv,
+    &wow64_ext_glMultiTexCoord2svARB,
+    &wow64_ext_glMultiTexCoord2svSGIS,
+    &ext_glMultiTexCoord2xOES,
+    &wow64_ext_glMultiTexCoord2xvOES,
+    &ext_glMultiTexCoord3bOES,
+    &wow64_ext_glMultiTexCoord3bvOES,
+    &ext_glMultiTexCoord3d,
+    &ext_glMultiTexCoord3dARB,
+    &ext_glMultiTexCoord3dSGIS,
+    &wow64_ext_glMultiTexCoord3dv,
+    &wow64_ext_glMultiTexCoord3dvARB,
+    &wow64_ext_glMultiTexCoord3dvSGIS,
+    &ext_glMultiTexCoord3f,
+    &ext_glMultiTexCoord3fARB,
+    &ext_glMultiTexCoord3fSGIS,
+    &wow64_ext_glMultiTexCoord3fv,
+    &wow64_ext_glMultiTexCoord3fvARB,
+    &wow64_ext_glMultiTexCoord3fvSGIS,
+    &ext_glMultiTexCoord3hNV,
+    &wow64_ext_glMultiTexCoord3hvNV,
+    &ext_glMultiTexCoord3i,
+    &ext_glMultiTexCoord3iARB,
+    &ext_glMultiTexCoord3iSGIS,
+    &wow64_ext_glMultiTexCoord3iv,
+    &wow64_ext_glMultiTexCoord3ivARB,
+    &wow64_ext_glMultiTexCoord3ivSGIS,
+    &ext_glMultiTexCoord3s,
+    &ext_glMultiTexCoord3sARB,
+    &ext_glMultiTexCoord3sSGIS,
+    &wow64_ext_glMultiTexCoord3sv,
+    &wow64_ext_glMultiTexCoord3svARB,
+    &wow64_ext_glMultiTexCoord3svSGIS,
+    &ext_glMultiTexCoord3xOES,
+    &wow64_ext_glMultiTexCoord3xvOES,
+    &ext_glMultiTexCoord4bOES,
+    &wow64_ext_glMultiTexCoord4bvOES,
+    &ext_glMultiTexCoord4d,
+    &ext_glMultiTexCoord4dARB,
+    &ext_glMultiTexCoord4dSGIS,
+    &wow64_ext_glMultiTexCoord4dv,
+    &wow64_ext_glMultiTexCoord4dvARB,
+    &wow64_ext_glMultiTexCoord4dvSGIS,
+    &ext_glMultiTexCoord4f,
+    &ext_glMultiTexCoord4fARB,
+    &ext_glMultiTexCoord4fSGIS,
+    &wow64_ext_glMultiTexCoord4fv,
+    &wow64_ext_glMultiTexCoord4fvARB,
+    &wow64_ext_glMultiTexCoord4fvSGIS,
+    &ext_glMultiTexCoord4hNV,
+    &wow64_ext_glMultiTexCoord4hvNV,
+    &ext_glMultiTexCoord4i,
+    &ext_glMultiTexCoord4iARB,
+    &ext_glMultiTexCoord4iSGIS,
+    &wow64_ext_glMultiTexCoord4iv,
+    &wow64_ext_glMultiTexCoord4ivARB,
+    &wow64_ext_glMultiTexCoord4ivSGIS,
+    &ext_glMultiTexCoord4s,
+    &ext_glMultiTexCoord4sARB,
+    &ext_glMultiTexCoord4sSGIS,
+    &wow64_ext_glMultiTexCoord4sv,
+    &wow64_ext_glMultiTexCoord4svARB,
+    &wow64_ext_glMultiTexCoord4svSGIS,
+    &ext_glMultiTexCoord4xOES,
+    &wow64_ext_glMultiTexCoord4xvOES,
+    &ext_glMultiTexCoordP1ui,
+    &wow64_ext_glMultiTexCoordP1uiv,
+    &ext_glMultiTexCoordP2ui,
+    &wow64_ext_glMultiTexCoordP2uiv,
+    &ext_glMultiTexCoordP3ui,
+    &wow64_ext_glMultiTexCoordP3uiv,
+    &ext_glMultiTexCoordP4ui,
+    &wow64_ext_glMultiTexCoordP4uiv,
+    &wow64_ext_glMultiTexCoordPointerEXT,
+    &wow64_ext_glMultiTexCoordPointerSGIS,
+    &ext_glMultiTexEnvfEXT,
+    &wow64_ext_glMultiTexEnvfvEXT,
+    &ext_glMultiTexEnviEXT,
+    &wow64_ext_glMultiTexEnvivEXT,
+    &ext_glMultiTexGendEXT,
+    &wow64_ext_glMultiTexGendvEXT,
+    &ext_glMultiTexGenfEXT,
+    &wow64_ext_glMultiTexGenfvEXT,
+    &ext_glMultiTexGeniEXT,
+    &wow64_ext_glMultiTexGenivEXT,
+    &wow64_ext_glMultiTexImage1DEXT,
+    &wow64_ext_glMultiTexImage2DEXT,
+    &wow64_ext_glMultiTexImage3DEXT,
+    &wow64_ext_glMultiTexParameterIivEXT,
+    &wow64_ext_glMultiTexParameterIuivEXT,
+    &ext_glMultiTexParameterfEXT,
+    &wow64_ext_glMultiTexParameterfvEXT,
+    &ext_glMultiTexParameteriEXT,
+    &wow64_ext_glMultiTexParameterivEXT,
+    &ext_glMultiTexRenderbufferEXT,
+    &wow64_ext_glMultiTexSubImage1DEXT,
+    &wow64_ext_glMultiTexSubImage2DEXT,
+    &wow64_ext_glMultiTexSubImage3DEXT,
+    &ext_glMulticastBarrierNV,
+    &ext_glMulticastBlitFramebufferNV,
+    &wow64_ext_glMulticastBufferSubDataNV,
+    &wow64_ext_glMulticastCopyBufferSubDataNV,
+    &ext_glMulticastCopyImageSubDataNV,
+    &wow64_ext_glMulticastFramebufferSampleLocationsfvNV,
+    &wow64_ext_glMulticastGetQueryObjecti64vNV,
+    &wow64_ext_glMulticastGetQueryObjectivNV,
+    &wow64_ext_glMulticastGetQueryObjectui64vNV,
+    &wow64_ext_glMulticastGetQueryObjectuivNV,
+    &wow64_ext_glMulticastScissorArrayvNVX,
+    &wow64_ext_glMulticastViewportArrayvNVX,
+    &ext_glMulticastViewportPositionWScaleNVX,
+    &ext_glMulticastWaitSyncNV,
+    &ext_glNamedBufferAttachMemoryNV,
+    &wow64_ext_glNamedBufferData,
+    &wow64_ext_glNamedBufferDataEXT,
+    &wow64_ext_glNamedBufferPageCommitmentARB,
+    &wow64_ext_glNamedBufferPageCommitmentEXT,
+    &wow64_ext_glNamedBufferStorage,
+    &wow64_ext_glNamedBufferStorageEXT,
+    &wow64_ext_glNamedBufferStorageExternalEXT,
+    &wow64_ext_glNamedBufferStorageMemEXT,
+    &wow64_ext_glNamedBufferSubData,
+    &wow64_ext_glNamedBufferSubDataEXT,
+    &wow64_ext_glNamedCopyBufferSubDataEXT,
+    &ext_glNamedFramebufferDrawBuffer,
+    &wow64_ext_glNamedFramebufferDrawBuffers,
+    &ext_glNamedFramebufferParameteri,
+    &ext_glNamedFramebufferParameteriEXT,
+    &ext_glNamedFramebufferReadBuffer,
+    &ext_glNamedFramebufferRenderbuffer,
+    &ext_glNamedFramebufferRenderbufferEXT,
+    &wow64_ext_glNamedFramebufferSampleLocationsfvARB,
+    &wow64_ext_glNamedFramebufferSampleLocationsfvNV,
+    &wow64_ext_glNamedFramebufferSamplePositionsfvAMD,
+    &ext_glNamedFramebufferTexture,
+    &ext_glNamedFramebufferTexture1DEXT,
+    &ext_glNamedFramebufferTexture2DEXT,
+    &ext_glNamedFramebufferTexture3DEXT,
+    &ext_glNamedFramebufferTextureEXT,
+    &ext_glNamedFramebufferTextureFaceEXT,
+    &ext_glNamedFramebufferTextureLayer,
+    &ext_glNamedFramebufferTextureLayerEXT,
+    &ext_glNamedProgramLocalParameter4dEXT,
+    &wow64_ext_glNamedProgramLocalParameter4dvEXT,
+    &ext_glNamedProgramLocalParameter4fEXT,
+    &wow64_ext_glNamedProgramLocalParameter4fvEXT,
+    &ext_glNamedProgramLocalParameterI4iEXT,
+    &wow64_ext_glNamedProgramLocalParameterI4ivEXT,
+    &ext_glNamedProgramLocalParameterI4uiEXT,
+    &wow64_ext_glNamedProgramLocalParameterI4uivEXT,
+    &wow64_ext_glNamedProgramLocalParameters4fvEXT,
+    &wow64_ext_glNamedProgramLocalParametersI4ivEXT,
+    &wow64_ext_glNamedProgramLocalParametersI4uivEXT,
+    &wow64_ext_glNamedProgramStringEXT,
+    &ext_glNamedRenderbufferStorage,
+    &ext_glNamedRenderbufferStorageEXT,
+    &ext_glNamedRenderbufferStorageMultisample,
+    &ext_glNamedRenderbufferStorageMultisampleAdvancedAMD,
+    &ext_glNamedRenderbufferStorageMultisampleCoverageEXT,
+    &ext_glNamedRenderbufferStorageMultisampleEXT,
+    &wow64_ext_glNamedStringARB,
+    &ext_glNewBufferRegion,
+    &wow64_ext_glNewObjectBufferATI,
+    &ext_glNormal3fVertex3fSUN,
+    &wow64_ext_glNormal3fVertex3fvSUN,
+    &ext_glNormal3hNV,
+    &wow64_ext_glNormal3hvNV,
+    &ext_glNormal3xOES,
+    &wow64_ext_glNormal3xvOES,
+    &ext_glNormalFormatNV,
+    &ext_glNormalP3ui,
+    &wow64_ext_glNormalP3uiv,
+    &wow64_ext_glNormalPointerEXT,
+    &wow64_ext_glNormalPointerListIBM,
+    &wow64_ext_glNormalPointervINTEL,
+    &ext_glNormalStream3bATI,
+    &wow64_ext_glNormalStream3bvATI,
+    &ext_glNormalStream3dATI,
+    &wow64_ext_glNormalStream3dvATI,
+    &ext_glNormalStream3fATI,
+    &wow64_ext_glNormalStream3fvATI,
+    &ext_glNormalStream3iATI,
+    &wow64_ext_glNormalStream3ivATI,
+    &ext_glNormalStream3sATI,
+    &wow64_ext_glNormalStream3svATI,
+    &wow64_ext_glObjectLabel,
+    &wow64_ext_glObjectPtrLabel,
+    &ext_glObjectPurgeableAPPLE,
+    &ext_glObjectUnpurgeableAPPLE,
+    &ext_glOrthofOES,
+    &ext_glOrthoxOES,
+    &ext_glPNTrianglesfATI,
+    &ext_glPNTrianglesiATI,
+    &ext_glPassTexCoordATI,
+    &ext_glPassThroughxOES,
+    &wow64_ext_glPatchParameterfv,
+    &ext_glPatchParameteri,
+    &wow64_ext_glPathColorGenNV,
+    &wow64_ext_glPathCommandsNV,
+    &wow64_ext_glPathCoordsNV,
+    &ext_glPathCoverDepthFuncNV,
+    &wow64_ext_glPathDashArrayNV,
+    &ext_glPathFogGenNV,
+    &wow64_ext_glPathGlyphIndexArrayNV,
+    &wow64_ext_glPathGlyphIndexRangeNV,
+    &wow64_ext_glPathGlyphRangeNV,
+    &wow64_ext_glPathGlyphsNV,
+    &wow64_ext_glPathMemoryGlyphIndexArrayNV,
+    &ext_glPathParameterfNV,
+    &wow64_ext_glPathParameterfvNV,
+    &ext_glPathParameteriNV,
+    &wow64_ext_glPathParameterivNV,
+    &ext_glPathStencilDepthOffsetNV,
+    &ext_glPathStencilFuncNV,
+    &wow64_ext_glPathStringNV,
+    &wow64_ext_glPathSubCommandsNV,
+    &wow64_ext_glPathSubCoordsNV,
+    &wow64_ext_glPathTexGenNV,
+    &ext_glPauseTransformFeedback,
+    &ext_glPauseTransformFeedbackNV,
+    &wow64_ext_glPixelDataRangeNV,
+    &wow64_ext_glPixelMapx,
+    &ext_glPixelStorex,
+    &ext_glPixelTexGenParameterfSGIS,
+    &wow64_ext_glPixelTexGenParameterfvSGIS,
+    &ext_glPixelTexGenParameteriSGIS,
+    &wow64_ext_glPixelTexGenParameterivSGIS,
+    &ext_glPixelTexGenSGIX,
+    &ext_glPixelTransferxOES,
+    &ext_glPixelTransformParameterfEXT,
+    &wow64_ext_glPixelTransformParameterfvEXT,
+    &ext_glPixelTransformParameteriEXT,
+    &wow64_ext_glPixelTransformParameterivEXT,
+    &ext_glPixelZoomxOES,
+    &wow64_ext_glPointAlongPathNV,
+    &ext_glPointParameterf,
+    &ext_glPointParameterfARB,
+    &ext_glPointParameterfEXT,
+    &ext_glPointParameterfSGIS,
+    &wow64_ext_glPointParameterfv,
+    &wow64_ext_glPointParameterfvARB,
+    &wow64_ext_glPointParameterfvEXT,
+    &wow64_ext_glPointParameterfvSGIS,
+    &ext_glPointParameteri,
+    &ext_glPointParameteriNV,
+    &wow64_ext_glPointParameteriv,
+    &wow64_ext_glPointParameterivNV,
+    &wow64_ext_glPointParameterxvOES,
+    &ext_glPointSizexOES,
+    &wow64_ext_glPollAsyncSGIX,
+    &wow64_ext_glPollInstrumentsSGIX,
+    &ext_glPolygonOffsetClamp,
+    &ext_glPolygonOffsetClampEXT,
+    &ext_glPolygonOffsetEXT,
+    &ext_glPolygonOffsetxOES,
+    &ext_glPopDebugGroup,
+    &ext_glPopGroupMarkerEXT,
+    &ext_glPresentFrameDualFillNV,
+    &ext_glPresentFrameKeyedNV,
+    &ext_glPrimitiveBoundingBoxARB,
+    &ext_glPrimitiveRestartIndex,
+    &ext_glPrimitiveRestartIndexNV,
+    &ext_glPrimitiveRestartNV,
+    &wow64_ext_glPrioritizeTexturesEXT,
+    &wow64_ext_glPrioritizeTexturesxOES,
+    &wow64_ext_glProgramBinary,
+    &wow64_ext_glProgramBufferParametersIivNV,
+    &wow64_ext_glProgramBufferParametersIuivNV,
+    &wow64_ext_glProgramBufferParametersfvNV,
+    &ext_glProgramEnvParameter4dARB,
+    &wow64_ext_glProgramEnvParameter4dvARB,
+    &ext_glProgramEnvParameter4fARB,
+    &wow64_ext_glProgramEnvParameter4fvARB,
+    &ext_glProgramEnvParameterI4iNV,
+    &wow64_ext_glProgramEnvParameterI4ivNV,
+    &ext_glProgramEnvParameterI4uiNV,
+    &wow64_ext_glProgramEnvParameterI4uivNV,
+    &wow64_ext_glProgramEnvParameters4fvEXT,
+    &wow64_ext_glProgramEnvParametersI4ivNV,
+    &wow64_ext_glProgramEnvParametersI4uivNV,
+    &ext_glProgramLocalParameter4dARB,
+    &wow64_ext_glProgramLocalParameter4dvARB,
+    &ext_glProgramLocalParameter4fARB,
+    &wow64_ext_glProgramLocalParameter4fvARB,
+    &ext_glProgramLocalParameterI4iNV,
+    &wow64_ext_glProgramLocalParameterI4ivNV,
+    &ext_glProgramLocalParameterI4uiNV,
+    &wow64_ext_glProgramLocalParameterI4uivNV,
+    &wow64_ext_glProgramLocalParameters4fvEXT,
+    &wow64_ext_glProgramLocalParametersI4ivNV,
+    &wow64_ext_glProgramLocalParametersI4uivNV,
+    &wow64_ext_glProgramNamedParameter4dNV,
+    &wow64_ext_glProgramNamedParameter4dvNV,
+    &wow64_ext_glProgramNamedParameter4fNV,
+    &wow64_ext_glProgramNamedParameter4fvNV,
+    &ext_glProgramParameter4dNV,
+    &wow64_ext_glProgramParameter4dvNV,
+    &ext_glProgramParameter4fNV,
+    &wow64_ext_glProgramParameter4fvNV,
+    &ext_glProgramParameteri,
+    &ext_glProgramParameteriARB,
+    &ext_glProgramParameteriEXT,
+    &wow64_ext_glProgramParameters4dvNV,
+    &wow64_ext_glProgramParameters4fvNV,
+    &wow64_ext_glProgramPathFragmentInputGenNV,
+    &wow64_ext_glProgramStringARB,
+    &wow64_ext_glProgramSubroutineParametersuivNV,
+    &ext_glProgramUniform1d,
+    &ext_glProgramUniform1dEXT,
+    &wow64_ext_glProgramUniform1dv,
+    &wow64_ext_glProgramUniform1dvEXT,
+    &ext_glProgramUniform1f,
+    &ext_glProgramUniform1fEXT,
+    &wow64_ext_glProgramUniform1fv,
+    &wow64_ext_glProgramUniform1fvEXT,
+    &ext_glProgramUniform1i,
+    &ext_glProgramUniform1i64ARB,
+    &ext_glProgramUniform1i64NV,
+    &wow64_ext_glProgramUniform1i64vARB,
+    &wow64_ext_glProgramUniform1i64vNV,
+    &ext_glProgramUniform1iEXT,
+    &wow64_ext_glProgramUniform1iv,
+    &wow64_ext_glProgramUniform1ivEXT,
+    &ext_glProgramUniform1ui,
+    &ext_glProgramUniform1ui64ARB,
+    &ext_glProgramUniform1ui64NV,
+    &wow64_ext_glProgramUniform1ui64vARB,
+    &wow64_ext_glProgramUniform1ui64vNV,
+    &ext_glProgramUniform1uiEXT,
+    &wow64_ext_glProgramUniform1uiv,
+    &wow64_ext_glProgramUniform1uivEXT,
+    &ext_glProgramUniform2d,
+    &ext_glProgramUniform2dEXT,
+    &wow64_ext_glProgramUniform2dv,
+    &wow64_ext_glProgramUniform2dvEXT,
+    &ext_glProgramUniform2f,
+    &ext_glProgramUniform2fEXT,
+    &wow64_ext_glProgramUniform2fv,
+    &wow64_ext_glProgramUniform2fvEXT,
+    &ext_glProgramUniform2i,
+    &ext_glProgramUniform2i64ARB,
+    &ext_glProgramUniform2i64NV,
+    &wow64_ext_glProgramUniform2i64vARB,
+    &wow64_ext_glProgramUniform2i64vNV,
+    &ext_glProgramUniform2iEXT,
+    &wow64_ext_glProgramUniform2iv,
+    &wow64_ext_glProgramUniform2ivEXT,
+    &ext_glProgramUniform2ui,
+    &ext_glProgramUniform2ui64ARB,
+    &ext_glProgramUniform2ui64NV,
+    &wow64_ext_glProgramUniform2ui64vARB,
+    &wow64_ext_glProgramUniform2ui64vNV,
+    &ext_glProgramUniform2uiEXT,
+    &wow64_ext_glProgramUniform2uiv,
+    &wow64_ext_glProgramUniform2uivEXT,
+    &ext_glProgramUniform3d,
+    &ext_glProgramUniform3dEXT,
+    &wow64_ext_glProgramUniform3dv,
+    &wow64_ext_glProgramUniform3dvEXT,
+    &ext_glProgramUniform3f,
+    &ext_glProgramUniform3fEXT,
+    &wow64_ext_glProgramUniform3fv,
+    &wow64_ext_glProgramUniform3fvEXT,
+    &ext_glProgramUniform3i,
+    &ext_glProgramUniform3i64ARB,
+    &ext_glProgramUniform3i64NV,
+    &wow64_ext_glProgramUniform3i64vARB,
+    &wow64_ext_glProgramUniform3i64vNV,
+    &ext_glProgramUniform3iEXT,
+    &wow64_ext_glProgramUniform3iv,
+    &wow64_ext_glProgramUniform3ivEXT,
+    &ext_glProgramUniform3ui,
+    &ext_glProgramUniform3ui64ARB,
+    &ext_glProgramUniform3ui64NV,
+    &wow64_ext_glProgramUniform3ui64vARB,
+    &wow64_ext_glProgramUniform3ui64vNV,
+    &ext_glProgramUniform3uiEXT,
+    &wow64_ext_glProgramUniform3uiv,
+    &wow64_ext_glProgramUniform3uivEXT,
+    &ext_glProgramUniform4d,
+    &ext_glProgramUniform4dEXT,
+    &wow64_ext_glProgramUniform4dv,
+    &wow64_ext_glProgramUniform4dvEXT,
+    &ext_glProgramUniform4f,
+    &ext_glProgramUniform4fEXT,
+    &wow64_ext_glProgramUniform4fv,
+    &wow64_ext_glProgramUniform4fvEXT,
+    &ext_glProgramUniform4i,
+    &ext_glProgramUniform4i64ARB,
+    &ext_glProgramUniform4i64NV,
+    &wow64_ext_glProgramUniform4i64vARB,
+    &wow64_ext_glProgramUniform4i64vNV,
+    &ext_glProgramUniform4iEXT,
+    &wow64_ext_glProgramUniform4iv,
+    &wow64_ext_glProgramUniform4ivEXT,
+    &ext_glProgramUniform4ui,
+    &ext_glProgramUniform4ui64ARB,
+    &ext_glProgramUniform4ui64NV,
+    &wow64_ext_glProgramUniform4ui64vARB,
+    &wow64_ext_glProgramUniform4ui64vNV,
+    &ext_glProgramUniform4uiEXT,
+    &wow64_ext_glProgramUniform4uiv,
+    &wow64_ext_glProgramUniform4uivEXT,
+    &ext_glProgramUniformHandleui64ARB,
+    &ext_glProgramUniformHandleui64NV,
+    &wow64_ext_glProgramUniformHandleui64vARB,
+    &wow64_ext_glProgramUniformHandleui64vNV,
+    &wow64_ext_glProgramUniformMatrix2dv,
+    &wow64_ext_glProgramUniformMatrix2dvEXT,
+    &wow64_ext_glProgramUniformMatrix2fv,
+    &wow64_ext_glProgramUniformMatrix2fvEXT,
+    &wow64_ext_glProgramUniformMatrix2x3dv,
+    &wow64_ext_glProgramUniformMatrix2x3dvEXT,
+    &wow64_ext_glProgramUniformMatrix2x3fv,
+    &wow64_ext_glProgramUniformMatrix2x3fvEXT,
+    &wow64_ext_glProgramUniformMatrix2x4dv,
+    &wow64_ext_glProgramUniformMatrix2x4dvEXT,
+    &wow64_ext_glProgramUniformMatrix2x4fv,
+    &wow64_ext_glProgramUniformMatrix2x4fvEXT,
+    &wow64_ext_glProgramUniformMatrix3dv,
+    &wow64_ext_glProgramUniformMatrix3dvEXT,
+    &wow64_ext_glProgramUniformMatrix3fv,
+    &wow64_ext_glProgramUniformMatrix3fvEXT,
+    &wow64_ext_glProgramUniformMatrix3x2dv,
+    &wow64_ext_glProgramUniformMatrix3x2dvEXT,
+    &wow64_ext_glProgramUniformMatrix3x2fv,
+    &wow64_ext_glProgramUniformMatrix3x2fvEXT,
+    &wow64_ext_glProgramUniformMatrix3x4dv,
+    &wow64_ext_glProgramUniformMatrix3x4dvEXT,
+    &wow64_ext_glProgramUniformMatrix3x4fv,
+    &wow64_ext_glProgramUniformMatrix3x4fvEXT,
+    &wow64_ext_glProgramUniformMatrix4dv,
+    &wow64_ext_glProgramUniformMatrix4dvEXT,
+    &wow64_ext_glProgramUniformMatrix4fv,
+    &wow64_ext_glProgramUniformMatrix4fvEXT,
+    &wow64_ext_glProgramUniformMatrix4x2dv,
+    &wow64_ext_glProgramUniformMatrix4x2dvEXT,
+    &wow64_ext_glProgramUniformMatrix4x2fv,
+    &wow64_ext_glProgramUniformMatrix4x2fvEXT,
+    &wow64_ext_glProgramUniformMatrix4x3dv,
+    &wow64_ext_glProgramUniformMatrix4x3dvEXT,
+    &wow64_ext_glProgramUniformMatrix4x3fv,
+    &wow64_ext_glProgramUniformMatrix4x3fvEXT,
+    &ext_glProgramUniformui64NV,
+    &wow64_ext_glProgramUniformui64vNV,
+    &ext_glProgramVertexLimitNV,
+    &ext_glProvokingVertex,
+    &ext_glProvokingVertexEXT,
+    &ext_glPushClientAttribDefaultEXT,
+    &wow64_ext_glPushDebugGroup,
+    &wow64_ext_glPushGroupMarkerEXT,
+    &ext_glQueryCounter,
+    &wow64_ext_glQueryMatrixxOES,
+    &ext_glQueryObjectParameteruiAMD,
+    &wow64_ext_glQueryResourceNV,
+    &wow64_ext_glQueryResourceTagNV,
+    &ext_glRasterPos2xOES,
+    &wow64_ext_glRasterPos2xvOES,
+    &ext_glRasterPos3xOES,
+    &wow64_ext_glRasterPos3xvOES,
+    &ext_glRasterPos4xOES,
+    &wow64_ext_glRasterPos4xvOES,
+    &ext_glRasterSamplesEXT,
+    &ext_glReadBufferRegion,
+    &ext_glReadInstrumentsSGIX,
+    &wow64_ext_glReadnPixels,
+    &wow64_ext_glReadnPixelsARB,
+    &ext_glRectxOES,
+    &wow64_ext_glRectxvOES,
+    &wow64_ext_glReferencePlaneSGIX,
+    &ext_glReleaseKeyedMutexWin32EXT,
+    &ext_glReleaseShaderCompiler,
+    &ext_glRenderGpuMaskNV,
+    &ext_glRenderbufferStorage,
+    &ext_glRenderbufferStorageEXT,
+    &ext_glRenderbufferStorageMultisample,
+    &ext_glRenderbufferStorageMultisampleAdvancedAMD,
+    &ext_glRenderbufferStorageMultisampleCoverageNV,
+    &ext_glRenderbufferStorageMultisampleEXT,
+    &wow64_ext_glReplacementCodePointerSUN,
+    &ext_glReplacementCodeubSUN,
+    &wow64_ext_glReplacementCodeubvSUN,
+    &ext_glReplacementCodeuiColor3fVertex3fSUN,
+    &wow64_ext_glReplacementCodeuiColor3fVertex3fvSUN,
+    &ext_glReplacementCodeuiColor4fNormal3fVertex3fSUN,
+    &wow64_ext_glReplacementCodeuiColor4fNormal3fVertex3fvSUN,
+    &ext_glReplacementCodeuiColor4ubVertex3fSUN,
+    &wow64_ext_glReplacementCodeuiColor4ubVertex3fvSUN,
+    &ext_glReplacementCodeuiNormal3fVertex3fSUN,
+    &wow64_ext_glReplacementCodeuiNormal3fVertex3fvSUN,
+    &ext_glReplacementCodeuiSUN,
+    &ext_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN,
+    &wow64_ext_glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN,
+    &ext_glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN,
+    &wow64_ext_glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN,
+    &ext_glReplacementCodeuiTexCoord2fVertex3fSUN,
+    &wow64_ext_glReplacementCodeuiTexCoord2fVertex3fvSUN,
+    &ext_glReplacementCodeuiVertex3fSUN,
+    &wow64_ext_glReplacementCodeuiVertex3fvSUN,
+    &wow64_ext_glReplacementCodeuivSUN,
+    &ext_glReplacementCodeusSUN,
+    &wow64_ext_glReplacementCodeusvSUN,
+    &wow64_ext_glRequestResidentProgramsNV,
+    &ext_glResetHistogram,
+    &ext_glResetHistogramEXT,
+    &ext_glResetMemoryObjectParameterNV,
+    &ext_glResetMinmax,
+    &ext_glResetMinmaxEXT,
+    &ext_glResizeBuffersMESA,
+    &ext_glResolveDepthValuesNV,
+    &ext_glResumeTransformFeedback,
+    &ext_glResumeTransformFeedbackNV,
+    &ext_glRotatexOES,
+    &ext_glSampleCoverage,
+    &ext_glSampleCoverageARB,
+    &ext_glSampleMapATI,
+    &ext_glSampleMaskEXT,
+    &ext_glSampleMaskIndexedNV,
+    &ext_glSampleMaskSGIS,
+    &ext_glSampleMaski,
+    &ext_glSamplePatternEXT,
+    &ext_glSamplePatternSGIS,
+    &wow64_ext_glSamplerParameterIiv,
+    &wow64_ext_glSamplerParameterIuiv,
+    &ext_glSamplerParameterf,
+    &wow64_ext_glSamplerParameterfv,
+    &ext_glSamplerParameteri,
+    &wow64_ext_glSamplerParameteriv,
+    &ext_glScalexOES,
+    &wow64_ext_glScissorArrayv,
+    &wow64_ext_glScissorExclusiveArrayvNV,
+    &ext_glScissorExclusiveNV,
+    &ext_glScissorIndexed,
+    &wow64_ext_glScissorIndexedv,
+    &ext_glSecondaryColor3b,
+    &ext_glSecondaryColor3bEXT,
+    &wow64_ext_glSecondaryColor3bv,
+    &wow64_ext_glSecondaryColor3bvEXT,
+    &ext_glSecondaryColor3d,
+    &ext_glSecondaryColor3dEXT,
+    &wow64_ext_glSecondaryColor3dv,
+    &wow64_ext_glSecondaryColor3dvEXT,
+    &ext_glSecondaryColor3f,
+    &ext_glSecondaryColor3fEXT,
+    &wow64_ext_glSecondaryColor3fv,
+    &wow64_ext_glSecondaryColor3fvEXT,
+    &ext_glSecondaryColor3hNV,
+    &wow64_ext_glSecondaryColor3hvNV,
+    &ext_glSecondaryColor3i,
+    &ext_glSecondaryColor3iEXT,
+    &wow64_ext_glSecondaryColor3iv,
+    &wow64_ext_glSecondaryColor3ivEXT,
+    &ext_glSecondaryColor3s,
+    &ext_glSecondaryColor3sEXT,
+    &wow64_ext_glSecondaryColor3sv,
+    &wow64_ext_glSecondaryColor3svEXT,
+    &ext_glSecondaryColor3ub,
+    &ext_glSecondaryColor3ubEXT,
+    &wow64_ext_glSecondaryColor3ubv,
+    &wow64_ext_glSecondaryColor3ubvEXT,
+    &ext_glSecondaryColor3ui,
+    &ext_glSecondaryColor3uiEXT,
+    &wow64_ext_glSecondaryColor3uiv,
+    &wow64_ext_glSecondaryColor3uivEXT,
+    &ext_glSecondaryColor3us,
+    &ext_glSecondaryColor3usEXT,
+    &wow64_ext_glSecondaryColor3usv,
+    &wow64_ext_glSecondaryColor3usvEXT,
+    &ext_glSecondaryColorFormatNV,
+    &ext_glSecondaryColorP3ui,
+    &wow64_ext_glSecondaryColorP3uiv,
+    &wow64_ext_glSecondaryColorPointer,
+    &wow64_ext_glSecondaryColorPointerEXT,
+    &wow64_ext_glSecondaryColorPointerListIBM,
+    &wow64_ext_glSelectPerfMonitorCountersAMD,
+    &ext_glSelectTextureCoordSetSGIS,
+    &ext_glSelectTextureSGIS,
+    &wow64_ext_glSemaphoreParameterui64vEXT,
+    &wow64_ext_glSeparableFilter2D,
+    &wow64_ext_glSeparableFilter2DEXT,
+    &ext_glSetFenceAPPLE,
+    &ext_glSetFenceNV,
+    &wow64_ext_glSetFragmentShaderConstantATI,
+    &wow64_ext_glSetInvariantEXT,
+    &wow64_ext_glSetLocalConstantEXT,
+    &wow64_ext_glSetMultisamplefvAMD,
+    &wow64_ext_glShaderBinary,
+    &ext_glShaderOp1EXT,
+    &ext_glShaderOp2EXT,
+    &ext_glShaderOp3EXT,
+    &wow64_ext_glShaderSource,
+    &wow64_ext_glShaderSourceARB,
+    &ext_glShaderStorageBlockBinding,
+    &ext_glShadingRateImageBarrierNV,
+    &wow64_ext_glShadingRateImagePaletteNV,
+    &wow64_ext_glShadingRateSampleOrderCustomNV,
+    &ext_glShadingRateSampleOrderNV,
+    &wow64_ext_glSharpenTexFuncSGIS,
+    &wow64_ext_glSignalSemaphoreEXT,
+    &wow64_ext_glSignalSemaphoreui64NVX,
+    &ext_glSignalVkFenceNV,
+    &ext_glSignalVkSemaphoreNV,
+    &wow64_ext_glSpecializeShader,
+    &wow64_ext_glSpecializeShaderARB,
+    &ext_glSpriteParameterfSGIX,
+    &wow64_ext_glSpriteParameterfvSGIX,
+    &ext_glSpriteParameteriSGIX,
+    &wow64_ext_glSpriteParameterivSGIX,
+    &ext_glStartInstrumentsSGIX,
+    &ext_glStateCaptureNV,
+    &ext_glStencilClearTagEXT,
+    &wow64_ext_glStencilFillPathInstancedNV,
+    &ext_glStencilFillPathNV,
+    &ext_glStencilFuncSeparate,
+    &ext_glStencilFuncSeparateATI,
+    &ext_glStencilMaskSeparate,
+    &ext_glStencilOpSeparate,
+    &ext_glStencilOpSeparateATI,
+    &ext_glStencilOpValueAMD,
+    &wow64_ext_glStencilStrokePathInstancedNV,
+    &ext_glStencilStrokePathNV,
+    &wow64_ext_glStencilThenCoverFillPathInstancedNV,
+    &ext_glStencilThenCoverFillPathNV,
+    &wow64_ext_glStencilThenCoverStrokePathInstancedNV,
+    &ext_glStencilThenCoverStrokePathNV,
+    &ext_glStopInstrumentsSGIX,
+    &wow64_ext_glStringMarkerGREMEDY,
+    &ext_glSubpixelPrecisionBiasNV,
+    &ext_glSwizzleEXT,
+    &ext_glSyncTextureINTEL,
+    &ext_glTagSampleBufferSGIX,
+    &ext_glTangent3bEXT,
+    &wow64_ext_glTangent3bvEXT,
+    &ext_glTangent3dEXT,
+    &wow64_ext_glTangent3dvEXT,
+    &ext_glTangent3fEXT,
+    &wow64_ext_glTangent3fvEXT,
+    &ext_glTangent3iEXT,
+    &wow64_ext_glTangent3ivEXT,
+    &ext_glTangent3sEXT,
+    &wow64_ext_glTangent3svEXT,
+    &wow64_ext_glTangentPointerEXT,
+    &ext_glTbufferMask3DFX,
+    &ext_glTessellationFactorAMD,
+    &ext_glTessellationModeAMD,
+    &ext_glTestFenceAPPLE,
+    &ext_glTestFenceNV,
+    &ext_glTestObjectAPPLE,
+    &ext_glTexAttachMemoryNV,
+    &ext_glTexBuffer,
+    &ext_glTexBufferARB,
+    &ext_glTexBufferEXT,
+    &wow64_ext_glTexBufferRange,
+    &wow64_ext_glTexBumpParameterfvATI,
+    &wow64_ext_glTexBumpParameterivATI,
+    &ext_glTexCoord1bOES,
+    &wow64_ext_glTexCoord1bvOES,
+    &ext_glTexCoord1hNV,
+    &wow64_ext_glTexCoord1hvNV,
+    &ext_glTexCoord1xOES,
+    &wow64_ext_glTexCoord1xvOES,
+    &ext_glTexCoord2bOES,
+    &wow64_ext_glTexCoord2bvOES,
+    &ext_glTexCoord2fColor3fVertex3fSUN,
+    &wow64_ext_glTexCoord2fColor3fVertex3fvSUN,
+    &ext_glTexCoord2fColor4fNormal3fVertex3fSUN,
+    &wow64_ext_glTexCoord2fColor4fNormal3fVertex3fvSUN,
+    &ext_glTexCoord2fColor4ubVertex3fSUN,
+    &wow64_ext_glTexCoord2fColor4ubVertex3fvSUN,
+    &ext_glTexCoord2fNormal3fVertex3fSUN,
+    &wow64_ext_glTexCoord2fNormal3fVertex3fvSUN,
+    &ext_glTexCoord2fVertex3fSUN,
+    &wow64_ext_glTexCoord2fVertex3fvSUN,
+    &ext_glTexCoord2hNV,
+    &wow64_ext_glTexCoord2hvNV,
+    &ext_glTexCoord2xOES,
+    &wow64_ext_glTexCoord2xvOES,
+    &ext_glTexCoord3bOES,
+    &wow64_ext_glTexCoord3bvOES,
+    &ext_glTexCoord3hNV,
+    &wow64_ext_glTexCoord3hvNV,
+    &ext_glTexCoord3xOES,
+    &wow64_ext_glTexCoord3xvOES,
+    &ext_glTexCoord4bOES,
+    &wow64_ext_glTexCoord4bvOES,
+    &ext_glTexCoord4fColor4fNormal3fVertex4fSUN,
+    &wow64_ext_glTexCoord4fColor4fNormal3fVertex4fvSUN,
+    &ext_glTexCoord4fVertex4fSUN,
+    &wow64_ext_glTexCoord4fVertex4fvSUN,
+    &ext_glTexCoord4hNV,
+    &wow64_ext_glTexCoord4hvNV,
+    &ext_glTexCoord4xOES,
+    &wow64_ext_glTexCoord4xvOES,
+    &ext_glTexCoordFormatNV,
+    &ext_glTexCoordP1ui,
+    &wow64_ext_glTexCoordP1uiv,
+    &ext_glTexCoordP2ui,
+    &wow64_ext_glTexCoordP2uiv,
+    &ext_glTexCoordP3ui,
+    &wow64_ext_glTexCoordP3uiv,
+    &ext_glTexCoordP4ui,
+    &wow64_ext_glTexCoordP4uiv,
+    &wow64_ext_glTexCoordPointerEXT,
+    &wow64_ext_glTexCoordPointerListIBM,
+    &wow64_ext_glTexCoordPointervINTEL,
+    &ext_glTexEnvxOES,
+    &wow64_ext_glTexEnvxvOES,
+    &wow64_ext_glTexFilterFuncSGIS,
+    &ext_glTexGenxOES,
+    &wow64_ext_glTexGenxvOES,
+    &ext_glTexImage2DMultisample,
+    &ext_glTexImage2DMultisampleCoverageNV,
+    &wow64_ext_glTexImage3D,
+    &wow64_ext_glTexImage3DEXT,
+    &ext_glTexImage3DMultisample,
+    &ext_glTexImage3DMultisampleCoverageNV,
+    &wow64_ext_glTexImage4DSGIS,
+    &ext_glTexPageCommitmentARB,
+    &wow64_ext_glTexParameterIiv,
+    &wow64_ext_glTexParameterIivEXT,
+    &wow64_ext_glTexParameterIuiv,
+    &wow64_ext_glTexParameterIuivEXT,
+    &ext_glTexParameterxOES,
+    &wow64_ext_glTexParameterxvOES,
+    &ext_glTexRenderbufferNV,
+    &ext_glTexStorage1D,
+    &ext_glTexStorage2D,
+    &ext_glTexStorage2DMultisample,
+    &ext_glTexStorage3D,
+    &ext_glTexStorage3DMultisample,
+    &ext_glTexStorageMem1DEXT,
+    &ext_glTexStorageMem2DEXT,
+    &ext_glTexStorageMem2DMultisampleEXT,
+    &ext_glTexStorageMem3DEXT,
+    &ext_glTexStorageMem3DMultisampleEXT,
+    &ext_glTexStorageSparseAMD,
+    &wow64_ext_glTexSubImage1DEXT,
+    &wow64_ext_glTexSubImage2DEXT,
+    &wow64_ext_glTexSubImage3D,
+    &wow64_ext_glTexSubImage3DEXT,
+    &wow64_ext_glTexSubImage4DSGIS,
+    &ext_glTextureAttachMemoryNV,
+    &ext_glTextureBarrier,
+    &ext_glTextureBarrierNV,
+    &ext_glTextureBuffer,
+    &ext_glTextureBufferEXT,
+    &wow64_ext_glTextureBufferRange,
+    &wow64_ext_glTextureBufferRangeEXT,
+    &ext_glTextureColorMaskSGIS,
+    &wow64_ext_glTextureImage1DEXT,
+    &wow64_ext_glTextureImage2DEXT,
+    &ext_glTextureImage2DMultisampleCoverageNV,
+    &ext_glTextureImage2DMultisampleNV,
+    &wow64_ext_glTextureImage3DEXT,
+    &ext_glTextureImage3DMultisampleCoverageNV,
+    &ext_glTextureImage3DMultisampleNV,
+    &ext_glTextureLightEXT,
+    &ext_glTextureMaterialEXT,
+    &ext_glTextureNormalEXT,
+    &ext_glTexturePageCommitmentEXT,
+    &wow64_ext_glTextureParameterIiv,
+    &wow64_ext_glTextureParameterIivEXT,
+    &wow64_ext_glTextureParameterIuiv,
+    &wow64_ext_glTextureParameterIuivEXT,
+    &ext_glTextureParameterf,
+    &ext_glTextureParameterfEXT,
+    &wow64_ext_glTextureParameterfv,
+    &wow64_ext_glTextureParameterfvEXT,
+    &ext_glTextureParameteri,
+    &ext_glTextureParameteriEXT,
+    &wow64_ext_glTextureParameteriv,
+    &wow64_ext_glTextureParameterivEXT,
+    &wow64_ext_glTextureRangeAPPLE,
+    &ext_glTextureRenderbufferEXT,
+    &ext_glTextureStorage1D,
+    &ext_glTextureStorage1DEXT,
+    &ext_glTextureStorage2D,
+    &ext_glTextureStorage2DEXT,
+    &ext_glTextureStorage2DMultisample,
+    &ext_glTextureStorage2DMultisampleEXT,
+    &ext_glTextureStorage3D,
+    &ext_glTextureStorage3DEXT,
+    &ext_glTextureStorage3DMultisample,
+    &ext_glTextureStorage3DMultisampleEXT,
+    &ext_glTextureStorageMem1DEXT,
+    &ext_glTextureStorageMem2DEXT,
+    &ext_glTextureStorageMem2DMultisampleEXT,
+    &ext_glTextureStorageMem3DEXT,
+    &ext_glTextureStorageMem3DMultisampleEXT,
+    &ext_glTextureStorageSparseAMD,
+    &wow64_ext_glTextureSubImage1D,
+    &wow64_ext_glTextureSubImage1DEXT,
+    &wow64_ext_glTextureSubImage2D,
+    &wow64_ext_glTextureSubImage2DEXT,
+    &wow64_ext_glTextureSubImage3D,
+    &wow64_ext_glTextureSubImage3DEXT,
+    &ext_glTextureView,
+    &ext_glTrackMatrixNV,
+    &wow64_ext_glTransformFeedbackAttribsNV,
+    &ext_glTransformFeedbackBufferBase,
+    &wow64_ext_glTransformFeedbackBufferRange,
+    &wow64_ext_glTransformFeedbackStreamAttribsNV,
+    &wow64_ext_glTransformFeedbackVaryings,
+    &wow64_ext_glTransformFeedbackVaryingsEXT,
+    &wow64_ext_glTransformFeedbackVaryingsNV,
+    &wow64_ext_glTransformPathNV,
+    &ext_glTranslatexOES,
+    &ext_glUniform1d,
+    &wow64_ext_glUniform1dv,
+    &ext_glUniform1f,
+    &ext_glUniform1fARB,
+    &wow64_ext_glUniform1fv,
+    &wow64_ext_glUniform1fvARB,
+    &ext_glUniform1i,
+    &ext_glUniform1i64ARB,
+    &ext_glUniform1i64NV,
+    &wow64_ext_glUniform1i64vARB,
+    &wow64_ext_glUniform1i64vNV,
+    &ext_glUniform1iARB,
+    &wow64_ext_glUniform1iv,
+    &wow64_ext_glUniform1ivARB,
+    &ext_glUniform1ui,
+    &ext_glUniform1ui64ARB,
+    &ext_glUniform1ui64NV,
+    &wow64_ext_glUniform1ui64vARB,
+    &wow64_ext_glUniform1ui64vNV,
+    &ext_glUniform1uiEXT,
+    &wow64_ext_glUniform1uiv,
+    &wow64_ext_glUniform1uivEXT,
+    &ext_glUniform2d,
+    &wow64_ext_glUniform2dv,
+    &ext_glUniform2f,
+    &ext_glUniform2fARB,
+    &wow64_ext_glUniform2fv,
+    &wow64_ext_glUniform2fvARB,
+    &ext_glUniform2i,
+    &ext_glUniform2i64ARB,
+    &ext_glUniform2i64NV,
+    &wow64_ext_glUniform2i64vARB,
+    &wow64_ext_glUniform2i64vNV,
+    &ext_glUniform2iARB,
+    &wow64_ext_glUniform2iv,
+    &wow64_ext_glUniform2ivARB,
+    &ext_glUniform2ui,
+    &ext_glUniform2ui64ARB,
+    &ext_glUniform2ui64NV,
+    &wow64_ext_glUniform2ui64vARB,
+    &wow64_ext_glUniform2ui64vNV,
+    &ext_glUniform2uiEXT,
+    &wow64_ext_glUniform2uiv,
+    &wow64_ext_glUniform2uivEXT,
+    &ext_glUniform3d,
+    &wow64_ext_glUniform3dv,
+    &ext_glUniform3f,
+    &ext_glUniform3fARB,
+    &wow64_ext_glUniform3fv,
+    &wow64_ext_glUniform3fvARB,
+    &ext_glUniform3i,
+    &ext_glUniform3i64ARB,
+    &ext_glUniform3i64NV,
+    &wow64_ext_glUniform3i64vARB,
+    &wow64_ext_glUniform3i64vNV,
+    &ext_glUniform3iARB,
+    &wow64_ext_glUniform3iv,
+    &wow64_ext_glUniform3ivARB,
+    &ext_glUniform3ui,
+    &ext_glUniform3ui64ARB,
+    &ext_glUniform3ui64NV,
+    &wow64_ext_glUniform3ui64vARB,
+    &wow64_ext_glUniform3ui64vNV,
+    &ext_glUniform3uiEXT,
+    &wow64_ext_glUniform3uiv,
+    &wow64_ext_glUniform3uivEXT,
+    &ext_glUniform4d,
+    &wow64_ext_glUniform4dv,
+    &ext_glUniform4f,
+    &ext_glUniform4fARB,
+    &wow64_ext_glUniform4fv,
+    &wow64_ext_glUniform4fvARB,
+    &ext_glUniform4i,
+    &ext_glUniform4i64ARB,
+    &ext_glUniform4i64NV,
+    &wow64_ext_glUniform4i64vARB,
+    &wow64_ext_glUniform4i64vNV,
+    &ext_glUniform4iARB,
+    &wow64_ext_glUniform4iv,
+    &wow64_ext_glUniform4ivARB,
+    &ext_glUniform4ui,
+    &ext_glUniform4ui64ARB,
+    &ext_glUniform4ui64NV,
+    &wow64_ext_glUniform4ui64vARB,
+    &wow64_ext_glUniform4ui64vNV,
+    &ext_glUniform4uiEXT,
+    &wow64_ext_glUniform4uiv,
+    &wow64_ext_glUniform4uivEXT,
+    &ext_glUniformBlockBinding,
+    &ext_glUniformBufferEXT,
+    &ext_glUniformHandleui64ARB,
+    &ext_glUniformHandleui64NV,
+    &wow64_ext_glUniformHandleui64vARB,
+    &wow64_ext_glUniformHandleui64vNV,
+    &wow64_ext_glUniformMatrix2dv,
+    &wow64_ext_glUniformMatrix2fv,
+    &wow64_ext_glUniformMatrix2fvARB,
+    &wow64_ext_glUniformMatrix2x3dv,
+    &wow64_ext_glUniformMatrix2x3fv,
+    &wow64_ext_glUniformMatrix2x4dv,
+    &wow64_ext_glUniformMatrix2x4fv,
+    &wow64_ext_glUniformMatrix3dv,
+    &wow64_ext_glUniformMatrix3fv,
+    &wow64_ext_glUniformMatrix3fvARB,
+    &wow64_ext_glUniformMatrix3x2dv,
+    &wow64_ext_glUniformMatrix3x2fv,
+    &wow64_ext_glUniformMatrix3x4dv,
+    &wow64_ext_glUniformMatrix3x4fv,
+    &wow64_ext_glUniformMatrix4dv,
+    &wow64_ext_glUniformMatrix4fv,
+    &wow64_ext_glUniformMatrix4fvARB,
+    &wow64_ext_glUniformMatrix4x2dv,
+    &wow64_ext_glUniformMatrix4x2fv,
+    &wow64_ext_glUniformMatrix4x3dv,
+    &wow64_ext_glUniformMatrix4x3fv,
+    &wow64_ext_glUniformSubroutinesuiv,
+    &ext_glUniformui64NV,
+    &wow64_ext_glUniformui64vNV,
+    &ext_glUnlockArraysEXT,
+    &ext_glUnmapBuffer,
+    &ext_glUnmapBufferARB,
+    &ext_glUnmapNamedBuffer,
+    &ext_glUnmapNamedBufferEXT,
+    &ext_glUnmapObjectBufferATI,
+    &ext_glUnmapTexture2DINTEL,
+    &wow64_ext_glUpdateObjectBufferATI,
+    &ext_glUploadGpuMaskNVX,
+    &ext_glUseProgram,
+    &ext_glUseProgramObjectARB,
+    &ext_glUseProgramStages,
+    &ext_glUseShaderProgramEXT,
+    &ext_glVDPAUFiniNV,
+    &wow64_ext_glVDPAUGetSurfaceivNV,
+    &wow64_ext_glVDPAUInitNV,
+    &ext_glVDPAUIsSurfaceNV,
+    &wow64_ext_glVDPAUMapSurfacesNV,
+    &wow64_ext_glVDPAURegisterOutputSurfaceNV,
+    &wow64_ext_glVDPAURegisterVideoSurfaceNV,
+    &wow64_ext_glVDPAURegisterVideoSurfaceWithPictureStructureNV,
+    &ext_glVDPAUSurfaceAccessNV,
+    &wow64_ext_glVDPAUUnmapSurfacesNV,
+    &ext_glVDPAUUnregisterSurfaceNV,
+    &ext_glValidateProgram,
+    &ext_glValidateProgramARB,
+    &ext_glValidateProgramPipeline,
+    &ext_glVariantArrayObjectATI,
+    &wow64_ext_glVariantPointerEXT,
+    &wow64_ext_glVariantbvEXT,
+    &wow64_ext_glVariantdvEXT,
+    &wow64_ext_glVariantfvEXT,
+    &wow64_ext_glVariantivEXT,
+    &wow64_ext_glVariantsvEXT,
+    &wow64_ext_glVariantubvEXT,
+    &wow64_ext_glVariantuivEXT,
+    &wow64_ext_glVariantusvEXT,
+    &ext_glVertex2bOES,
+    &wow64_ext_glVertex2bvOES,
+    &ext_glVertex2hNV,
+    &wow64_ext_glVertex2hvNV,
+    &ext_glVertex2xOES,
+    &wow64_ext_glVertex2xvOES,
+    &ext_glVertex3bOES,
+    &wow64_ext_glVertex3bvOES,
+    &ext_glVertex3hNV,
+    &wow64_ext_glVertex3hvNV,
+    &ext_glVertex3xOES,
+    &wow64_ext_glVertex3xvOES,
+    &ext_glVertex4bOES,
+    &wow64_ext_glVertex4bvOES,
+    &ext_glVertex4hNV,
+    &wow64_ext_glVertex4hvNV,
+    &ext_glVertex4xOES,
+    &wow64_ext_glVertex4xvOES,
+    &ext_glVertexArrayAttribBinding,
+    &ext_glVertexArrayAttribFormat,
+    &ext_glVertexArrayAttribIFormat,
+    &ext_glVertexArrayAttribLFormat,
+    &wow64_ext_glVertexArrayBindVertexBufferEXT,
+    &ext_glVertexArrayBindingDivisor,
+    &wow64_ext_glVertexArrayColorOffsetEXT,
+    &wow64_ext_glVertexArrayEdgeFlagOffsetEXT,
+    &ext_glVertexArrayElementBuffer,
+    &wow64_ext_glVertexArrayFogCoordOffsetEXT,
+    &wow64_ext_glVertexArrayIndexOffsetEXT,
+    &wow64_ext_glVertexArrayMultiTexCoordOffsetEXT,
+    &wow64_ext_glVertexArrayNormalOffsetEXT,
+    &ext_glVertexArrayParameteriAPPLE,
+    &wow64_ext_glVertexArrayRangeAPPLE,
+    &wow64_ext_glVertexArrayRangeNV,
+    &wow64_ext_glVertexArraySecondaryColorOffsetEXT,
+    &wow64_ext_glVertexArrayTexCoordOffsetEXT,
+    &ext_glVertexArrayVertexAttribBindingEXT,
+    &ext_glVertexArrayVertexAttribDivisorEXT,
+    &ext_glVertexArrayVertexAttribFormatEXT,
+    &ext_glVertexArrayVertexAttribIFormatEXT,
+    &wow64_ext_glVertexArrayVertexAttribIOffsetEXT,
+    &ext_glVertexArrayVertexAttribLFormatEXT,
+    &wow64_ext_glVertexArrayVertexAttribLOffsetEXT,
+    &wow64_ext_glVertexArrayVertexAttribOffsetEXT,
+    &ext_glVertexArrayVertexBindingDivisorEXT,
+    &wow64_ext_glVertexArrayVertexBuffer,
+    &wow64_ext_glVertexArrayVertexBuffers,
+    &wow64_ext_glVertexArrayVertexOffsetEXT,
+    &ext_glVertexAttrib1d,
+    &ext_glVertexAttrib1dARB,
+    &ext_glVertexAttrib1dNV,
+    &wow64_ext_glVertexAttrib1dv,
+    &wow64_ext_glVertexAttrib1dvARB,
+    &wow64_ext_glVertexAttrib1dvNV,
+    &ext_glVertexAttrib1f,
+    &ext_glVertexAttrib1fARB,
+    &ext_glVertexAttrib1fNV,
+    &wow64_ext_glVertexAttrib1fv,
+    &wow64_ext_glVertexAttrib1fvARB,
+    &wow64_ext_glVertexAttrib1fvNV,
+    &ext_glVertexAttrib1hNV,
+    &wow64_ext_glVertexAttrib1hvNV,
+    &ext_glVertexAttrib1s,
+    &ext_glVertexAttrib1sARB,
+    &ext_glVertexAttrib1sNV,
+    &wow64_ext_glVertexAttrib1sv,
+    &wow64_ext_glVertexAttrib1svARB,
+    &wow64_ext_glVertexAttrib1svNV,
+    &ext_glVertexAttrib2d,
+    &ext_glVertexAttrib2dARB,
+    &ext_glVertexAttrib2dNV,
+    &wow64_ext_glVertexAttrib2dv,
+    &wow64_ext_glVertexAttrib2dvARB,
+    &wow64_ext_glVertexAttrib2dvNV,
+    &ext_glVertexAttrib2f,
+    &ext_glVertexAttrib2fARB,
+    &ext_glVertexAttrib2fNV,
+    &wow64_ext_glVertexAttrib2fv,
+    &wow64_ext_glVertexAttrib2fvARB,
+    &wow64_ext_glVertexAttrib2fvNV,
+    &ext_glVertexAttrib2hNV,
+    &wow64_ext_glVertexAttrib2hvNV,
+    &ext_glVertexAttrib2s,
+    &ext_glVertexAttrib2sARB,
+    &ext_glVertexAttrib2sNV,
+    &wow64_ext_glVertexAttrib2sv,
+    &wow64_ext_glVertexAttrib2svARB,
+    &wow64_ext_glVertexAttrib2svNV,
+    &ext_glVertexAttrib3d,
+    &ext_glVertexAttrib3dARB,
+    &ext_glVertexAttrib3dNV,
+    &wow64_ext_glVertexAttrib3dv,
+    &wow64_ext_glVertexAttrib3dvARB,
+    &wow64_ext_glVertexAttrib3dvNV,
+    &ext_glVertexAttrib3f,
+    &ext_glVertexAttrib3fARB,
+    &ext_glVertexAttrib3fNV,
+    &wow64_ext_glVertexAttrib3fv,
+    &wow64_ext_glVertexAttrib3fvARB,
+    &wow64_ext_glVertexAttrib3fvNV,
+    &ext_glVertexAttrib3hNV,
+    &wow64_ext_glVertexAttrib3hvNV,
+    &ext_glVertexAttrib3s,
+    &ext_glVertexAttrib3sARB,
+    &ext_glVertexAttrib3sNV,
+    &wow64_ext_glVertexAttrib3sv,
+    &wow64_ext_glVertexAttrib3svARB,
+    &wow64_ext_glVertexAttrib3svNV,
+    &wow64_ext_glVertexAttrib4Nbv,
+    &wow64_ext_glVertexAttrib4NbvARB,
+    &wow64_ext_glVertexAttrib4Niv,
+    &wow64_ext_glVertexAttrib4NivARB,
+    &wow64_ext_glVertexAttrib4Nsv,
+    &wow64_ext_glVertexAttrib4NsvARB,
+    &ext_glVertexAttrib4Nub,
+    &ext_glVertexAttrib4NubARB,
+    &wow64_ext_glVertexAttrib4Nubv,
+    &wow64_ext_glVertexAttrib4NubvARB,
+    &wow64_ext_glVertexAttrib4Nuiv,
+    &wow64_ext_glVertexAttrib4NuivARB,
+    &wow64_ext_glVertexAttrib4Nusv,
+    &wow64_ext_glVertexAttrib4NusvARB,
+    &wow64_ext_glVertexAttrib4bv,
+    &wow64_ext_glVertexAttrib4bvARB,
+    &ext_glVertexAttrib4d,
+    &ext_glVertexAttrib4dARB,
+    &ext_glVertexAttrib4dNV,
+    &wow64_ext_glVertexAttrib4dv,
+    &wow64_ext_glVertexAttrib4dvARB,
+    &wow64_ext_glVertexAttrib4dvNV,
+    &ext_glVertexAttrib4f,
+    &ext_glVertexAttrib4fARB,
+    &ext_glVertexAttrib4fNV,
+    &wow64_ext_glVertexAttrib4fv,
+    &wow64_ext_glVertexAttrib4fvARB,
+    &wow64_ext_glVertexAttrib4fvNV,
+    &ext_glVertexAttrib4hNV,
+    &wow64_ext_glVertexAttrib4hvNV,
+    &wow64_ext_glVertexAttrib4iv,
+    &wow64_ext_glVertexAttrib4ivARB,
+    &ext_glVertexAttrib4s,
+    &ext_glVertexAttrib4sARB,
+    &ext_glVertexAttrib4sNV,
+    &wow64_ext_glVertexAttrib4sv,
+    &wow64_ext_glVertexAttrib4svARB,
+    &wow64_ext_glVertexAttrib4svNV,
+    &ext_glVertexAttrib4ubNV,
+    &wow64_ext_glVertexAttrib4ubv,
+    &wow64_ext_glVertexAttrib4ubvARB,
+    &wow64_ext_glVertexAttrib4ubvNV,
+    &wow64_ext_glVertexAttrib4uiv,
+    &wow64_ext_glVertexAttrib4uivARB,
+    &wow64_ext_glVertexAttrib4usv,
+    &wow64_ext_glVertexAttrib4usvARB,
+    &ext_glVertexAttribArrayObjectATI,
+    &ext_glVertexAttribBinding,
+    &ext_glVertexAttribDivisor,
+    &ext_glVertexAttribDivisorARB,
+    &ext_glVertexAttribFormat,
+    &ext_glVertexAttribFormatNV,
+    &ext_glVertexAttribI1i,
+    &ext_glVertexAttribI1iEXT,
+    &wow64_ext_glVertexAttribI1iv,
+    &wow64_ext_glVertexAttribI1ivEXT,
+    &ext_glVertexAttribI1ui,
+    &ext_glVertexAttribI1uiEXT,
+    &wow64_ext_glVertexAttribI1uiv,
+    &wow64_ext_glVertexAttribI1uivEXT,
+    &ext_glVertexAttribI2i,
+    &ext_glVertexAttribI2iEXT,
+    &wow64_ext_glVertexAttribI2iv,
+    &wow64_ext_glVertexAttribI2ivEXT,
+    &ext_glVertexAttribI2ui,
+    &ext_glVertexAttribI2uiEXT,
+    &wow64_ext_glVertexAttribI2uiv,
+    &wow64_ext_glVertexAttribI2uivEXT,
+    &ext_glVertexAttribI3i,
+    &ext_glVertexAttribI3iEXT,
+    &wow64_ext_glVertexAttribI3iv,
+    &wow64_ext_glVertexAttribI3ivEXT,
+    &ext_glVertexAttribI3ui,
+    &ext_glVertexAttribI3uiEXT,
+    &wow64_ext_glVertexAttribI3uiv,
+    &wow64_ext_glVertexAttribI3uivEXT,
+    &wow64_ext_glVertexAttribI4bv,
+    &wow64_ext_glVertexAttribI4bvEXT,
+    &ext_glVertexAttribI4i,
+    &ext_glVertexAttribI4iEXT,
+    &wow64_ext_glVertexAttribI4iv,
+    &wow64_ext_glVertexAttribI4ivEXT,
+    &wow64_ext_glVertexAttribI4sv,
+    &wow64_ext_glVertexAttribI4svEXT,
+    &wow64_ext_glVertexAttribI4ubv,
+    &wow64_ext_glVertexAttribI4ubvEXT,
+    &ext_glVertexAttribI4ui,
+    &ext_glVertexAttribI4uiEXT,
+    &wow64_ext_glVertexAttribI4uiv,
+    &wow64_ext_glVertexAttribI4uivEXT,
+    &wow64_ext_glVertexAttribI4usv,
+    &wow64_ext_glVertexAttribI4usvEXT,
+    &ext_glVertexAttribIFormat,
+    &ext_glVertexAttribIFormatNV,
+    &wow64_ext_glVertexAttribIPointer,
+    &wow64_ext_glVertexAttribIPointerEXT,
+    &ext_glVertexAttribL1d,
+    &ext_glVertexAttribL1dEXT,
+    &wow64_ext_glVertexAttribL1dv,
+    &wow64_ext_glVertexAttribL1dvEXT,
+    &ext_glVertexAttribL1i64NV,
+    &wow64_ext_glVertexAttribL1i64vNV,
+    &ext_glVertexAttribL1ui64ARB,
+    &ext_glVertexAttribL1ui64NV,
+    &wow64_ext_glVertexAttribL1ui64vARB,
+    &wow64_ext_glVertexAttribL1ui64vNV,
+    &ext_glVertexAttribL2d,
+    &ext_glVertexAttribL2dEXT,
+    &wow64_ext_glVertexAttribL2dv,
+    &wow64_ext_glVertexAttribL2dvEXT,
+    &ext_glVertexAttribL2i64NV,
+    &wow64_ext_glVertexAttribL2i64vNV,
+    &ext_glVertexAttribL2ui64NV,
+    &wow64_ext_glVertexAttribL2ui64vNV,
+    &ext_glVertexAttribL3d,
+    &ext_glVertexAttribL3dEXT,
+    &wow64_ext_glVertexAttribL3dv,
+    &wow64_ext_glVertexAttribL3dvEXT,
+    &ext_glVertexAttribL3i64NV,
+    &wow64_ext_glVertexAttribL3i64vNV,
+    &ext_glVertexAttribL3ui64NV,
+    &wow64_ext_glVertexAttribL3ui64vNV,
+    &ext_glVertexAttribL4d,
+    &ext_glVertexAttribL4dEXT,
+    &wow64_ext_glVertexAttribL4dv,
+    &wow64_ext_glVertexAttribL4dvEXT,
+    &ext_glVertexAttribL4i64NV,
+    &wow64_ext_glVertexAttribL4i64vNV,
+    &ext_glVertexAttribL4ui64NV,
+    &wow64_ext_glVertexAttribL4ui64vNV,
+    &ext_glVertexAttribLFormat,
+    &ext_glVertexAttribLFormatNV,
+    &wow64_ext_glVertexAttribLPointer,
+    &wow64_ext_glVertexAttribLPointerEXT,
+    &ext_glVertexAttribP1ui,
+    &wow64_ext_glVertexAttribP1uiv,
+    &ext_glVertexAttribP2ui,
+    &wow64_ext_glVertexAttribP2uiv,
+    &ext_glVertexAttribP3ui,
+    &wow64_ext_glVertexAttribP3uiv,
+    &ext_glVertexAttribP4ui,
+    &wow64_ext_glVertexAttribP4uiv,
+    &ext_glVertexAttribParameteriAMD,
+    &wow64_ext_glVertexAttribPointer,
+    &wow64_ext_glVertexAttribPointerARB,
+    &wow64_ext_glVertexAttribPointerNV,
+    &wow64_ext_glVertexAttribs1dvNV,
+    &wow64_ext_glVertexAttribs1fvNV,
+    &wow64_ext_glVertexAttribs1hvNV,
+    &wow64_ext_glVertexAttribs1svNV,
+    &wow64_ext_glVertexAttribs2dvNV,
+    &wow64_ext_glVertexAttribs2fvNV,
+    &wow64_ext_glVertexAttribs2hvNV,
+    &wow64_ext_glVertexAttribs2svNV,
+    &wow64_ext_glVertexAttribs3dvNV,
+    &wow64_ext_glVertexAttribs3fvNV,
+    &wow64_ext_glVertexAttribs3hvNV,
+    &wow64_ext_glVertexAttribs3svNV,
+    &wow64_ext_glVertexAttribs4dvNV,
+    &wow64_ext_glVertexAttribs4fvNV,
+    &wow64_ext_glVertexAttribs4hvNV,
+    &wow64_ext_glVertexAttribs4svNV,
+    &wow64_ext_glVertexAttribs4ubvNV,
+    &ext_glVertexBindingDivisor,
+    &ext_glVertexBlendARB,
+    &ext_glVertexBlendEnvfATI,
+    &ext_glVertexBlendEnviATI,
+    &ext_glVertexFormatNV,
+    &ext_glVertexP2ui,
+    &wow64_ext_glVertexP2uiv,
+    &ext_glVertexP3ui,
+    &wow64_ext_glVertexP3uiv,
+    &ext_glVertexP4ui,
+    &wow64_ext_glVertexP4uiv,
+    &wow64_ext_glVertexPointerEXT,
+    &wow64_ext_glVertexPointerListIBM,
+    &wow64_ext_glVertexPointervINTEL,
+    &ext_glVertexStream1dATI,
+    &wow64_ext_glVertexStream1dvATI,
+    &ext_glVertexStream1fATI,
+    &wow64_ext_glVertexStream1fvATI,
+    &ext_glVertexStream1iATI,
+    &wow64_ext_glVertexStream1ivATI,
+    &ext_glVertexStream1sATI,
+    &wow64_ext_glVertexStream1svATI,
+    &ext_glVertexStream2dATI,
+    &wow64_ext_glVertexStream2dvATI,
+    &ext_glVertexStream2fATI,
+    &wow64_ext_glVertexStream2fvATI,
+    &ext_glVertexStream2iATI,
+    &wow64_ext_glVertexStream2ivATI,
+    &ext_glVertexStream2sATI,
+    &wow64_ext_glVertexStream2svATI,
+    &ext_glVertexStream3dATI,
+    &wow64_ext_glVertexStream3dvATI,
+    &ext_glVertexStream3fATI,
+    &wow64_ext_glVertexStream3fvATI,
+    &ext_glVertexStream3iATI,
+    &wow64_ext_glVertexStream3ivATI,
+    &ext_glVertexStream3sATI,
+    &wow64_ext_glVertexStream3svATI,
+    &ext_glVertexStream4dATI,
+    &wow64_ext_glVertexStream4dvATI,
+    &ext_glVertexStream4fATI,
+    &wow64_ext_glVertexStream4fvATI,
+    &ext_glVertexStream4iATI,
+    &wow64_ext_glVertexStream4ivATI,
+    &ext_glVertexStream4sATI,
+    &wow64_ext_glVertexStream4svATI,
+    &wow64_ext_glVertexWeightPointerEXT,
+    &ext_glVertexWeightfEXT,
+    &wow64_ext_glVertexWeightfvEXT,
+    &ext_glVertexWeighthNV,
+    &wow64_ext_glVertexWeighthvNV,
+    &wow64_ext_glVideoCaptureNV,
+    &wow64_ext_glVideoCaptureStreamParameterdvNV,
+    &wow64_ext_glVideoCaptureStreamParameterfvNV,
+    &wow64_ext_glVideoCaptureStreamParameterivNV,
+    &wow64_ext_glViewportArrayv,
+    &ext_glViewportIndexedf,
+    &wow64_ext_glViewportIndexedfv,
+    &ext_glViewportPositionWScaleNV,
+    &ext_glViewportSwizzleNV,
+    &wow64_ext_glWaitSemaphoreEXT,
+    &wow64_ext_glWaitSemaphoreui64NVX,
+    &wow64_ext_glWaitSync,
+    &ext_glWaitVkSemaphoreNV,
+    &wow64_ext_glWeightPathsNV,
+    &wow64_ext_glWeightPointerARB,
+    &wow64_ext_glWeightbvARB,
+    &wow64_ext_glWeightdvARB,
+    &wow64_ext_glWeightfvARB,
+    &wow64_ext_glWeightivARB,
+    &wow64_ext_glWeightsvARB,
+    &wow64_ext_glWeightubvARB,
+    &wow64_ext_glWeightuivARB,
+    &wow64_ext_glWeightusvARB,
+    &ext_glWindowPos2d,
+    &ext_glWindowPos2dARB,
+    &ext_glWindowPos2dMESA,
+    &wow64_ext_glWindowPos2dv,
+    &wow64_ext_glWindowPos2dvARB,
+    &wow64_ext_glWindowPos2dvMESA,
+    &ext_glWindowPos2f,
+    &ext_glWindowPos2fARB,
+    &ext_glWindowPos2fMESA,
+    &wow64_ext_glWindowPos2fv,
+    &wow64_ext_glWindowPos2fvARB,
+    &wow64_ext_glWindowPos2fvMESA,
+    &ext_glWindowPos2i,
+    &ext_glWindowPos2iARB,
+    &ext_glWindowPos2iMESA,
+    &wow64_ext_glWindowPos2iv,
+    &wow64_ext_glWindowPos2ivARB,
+    &wow64_ext_glWindowPos2ivMESA,
+    &ext_glWindowPos2s,
+    &ext_glWindowPos2sARB,
+    &ext_glWindowPos2sMESA,
+    &wow64_ext_glWindowPos2sv,
+    &wow64_ext_glWindowPos2svARB,
+    &wow64_ext_glWindowPos2svMESA,
+    &ext_glWindowPos3d,
+    &ext_glWindowPos3dARB,
+    &ext_glWindowPos3dMESA,
+    &wow64_ext_glWindowPos3dv,
+    &wow64_ext_glWindowPos3dvARB,
+    &wow64_ext_glWindowPos3dvMESA,
+    &ext_glWindowPos3f,
+    &ext_glWindowPos3fARB,
+    &ext_glWindowPos3fMESA,
+    &wow64_ext_glWindowPos3fv,
+    &wow64_ext_glWindowPos3fvARB,
+    &wow64_ext_glWindowPos3fvMESA,
+    &ext_glWindowPos3i,
+    &ext_glWindowPos3iARB,
+    &ext_glWindowPos3iMESA,
+    &wow64_ext_glWindowPos3iv,
+    &wow64_ext_glWindowPos3ivARB,
+    &wow64_ext_glWindowPos3ivMESA,
+    &ext_glWindowPos3s,
+    &ext_glWindowPos3sARB,
+    &ext_glWindowPos3sMESA,
+    &wow64_ext_glWindowPos3sv,
+    &wow64_ext_glWindowPos3svARB,
+    &wow64_ext_glWindowPos3svMESA,
+    &ext_glWindowPos4dMESA,
+    &wow64_ext_glWindowPos4dvMESA,
+    &ext_glWindowPos4fMESA,
+    &wow64_ext_glWindowPos4fvMESA,
+    &ext_glWindowPos4iMESA,
+    &wow64_ext_glWindowPos4ivMESA,
+    &ext_glWindowPos4sMESA,
+    &wow64_ext_glWindowPos4svMESA,
+    &wow64_ext_glWindowRectanglesEXT,
+    &ext_glWriteMaskEXT,
+    &wow64_ext_wglAllocateMemoryNV,
+    &wow64_ext_wglBindTexImageARB,
+    &wow64_ext_wglChoosePixelFormatARB,
+    &wow64_ext_wglCreateContextAttribsARB,
+    &wow64_ext_wglCreatePbufferARB,
+    &wow64_ext_wglDestroyPbufferARB,
+    &wow64_ext_wglFreeMemoryNV,
+    &wow64_ext_wglGetCurrentReadDCARB,
+    &wow64_ext_wglGetExtensionsStringARB,
+    &wow64_ext_wglGetExtensionsStringEXT,
+    &wow64_ext_wglGetPbufferDCARB,
+    &wow64_ext_wglGetPixelFormatAttribfvARB,
+    &wow64_ext_wglGetPixelFormatAttribivARB,
+    &ext_wglGetSwapIntervalEXT,
+    &wow64_ext_wglMakeContextCurrentARB,
+    &wow64_ext_wglQueryCurrentRendererIntegerWINE,
+    &wow64_ext_wglQueryCurrentRendererStringWINE,
+    &wow64_ext_wglQueryPbufferARB,
+    &wow64_ext_wglQueryRendererIntegerWINE,
+    &wow64_ext_wglQueryRendererStringWINE,
+    &wow64_ext_wglReleasePbufferDCARB,
+    &wow64_ext_wglReleaseTexImageARB,
+    &wow64_ext_wglSetPbufferAttribARB,
+    &wow64_ext_wglSetPixelFormatWINE,
+    &ext_wglSwapIntervalEXT,
+};
+
+#endif
 
 static BOOL WINAPI null_wglCopyContext( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask ) { return 0; }
 static struct wgl_context * WINAPI null_wglCreateContext( HDC hDc ) { return 0; }
