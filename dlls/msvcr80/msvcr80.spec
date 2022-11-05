@@ -1108,7 +1108,7 @@
 @ stub _vcprintf_s
 @ stub _vcprintf_s_l
 @ cdecl _vcwprintf(wstr ptr)
-@ stub _vcwprintf_l
+@ cdecl _vcwprintf_l(wstr ptr ptr)
 @ stub _vcwprintf_p
 @ stub _vcwprintf_p_l
 @ stub _vcwprintf_s

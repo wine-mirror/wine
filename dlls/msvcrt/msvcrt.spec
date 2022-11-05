@@ -1042,7 +1042,7 @@
 # stub _vcprintf_s(str ptr)
 # stub _vcprintf_s_l(str ptr ptr)
 @ cdecl _vcwprintf(wstr ptr)
-# stub _vcwprintf_l(wstr ptr ptr)
+@ cdecl _vcwprintf_l(wstr ptr ptr)
 # stub _vcwprintf_p(wstr ptr)
 # stub _vcwprintf_p_l(wstr ptr ptr)
 # stub _vcwprintf_s(wstr ptr)
