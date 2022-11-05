@@ -225,6 +225,7 @@ typedef struct {
     void (*CloseConnection)(object_header_t*);
     DWORD (*QueryOption)(object_header_t*,DWORD,void*,DWORD*,BOOL);
     DWORD (*SetOption)(object_header_t*,DWORD,void*,DWORD);
+    DWORD (*SetFilePointer)(object_header_t*,LONG,DWORD);
     DWORD (*ReadFile)(object_header_t*,void*,DWORD,DWORD*,DWORD,DWORD_PTR);
     DWORD (*WriteFile)(object_header_t*,const void*,DWORD,DWORD*);
     DWORD (*QueryDataAvailable)(object_header_t*,DWORD*,DWORD,DWORD_PTR);
@@ -332,6 +333,7 @@ typedef struct
 
     FILETIME last_modified;
     HANDLE hCacheFile;
+    ULONGLONG cache_size;  /* size of cached data */
     req_file_t *req_file;
     FILETIME expires;
     struct HttpAuthInfo *authInfo;
@@ -339,6 +341,7 @@ typedef struct
 
     CRITICAL_SECTION read_section;  /* section to protect the following fields */
     ULONGLONG contentLength;  /* total number of bytes to be read */
+    ULONGLONG content_pos;    /* content read position */
     BOOL  read_gzip;      /* are we reading in gzip mode? */
     DWORD read_pos;       /* current read position in read_buf */
     DWORD read_size;      /* valid data size in read_buf */

@@ -957,6 +957,7 @@ static const object_vtbl_t APPINFOVtbl = {
     APPINFO_SetOption,
     NULL,
     NULL,
+    NULL,
     NULL
 };
 
@@ -2155,14 +2156,36 @@ INTERNET_STATUS_CALLBACK WINAPI InternetSetStatusCallbackW(
 
 /***********************************************************************
  *           InternetSetFilePointer (WININET.@)
+ *
+ * Sets read position for an open internet file.
+ *
+ * RETURNS
+ *    Current position of the file on success
+ *    INVALID_SET_FILE_POINTER on failure
  */
 DWORD WINAPI InternetSetFilePointer(HINTERNET hFile, LONG lDistanceToMove,
     PVOID pReserved, DWORD dwMoveContext, DWORD_PTR dwContext)
 {
-    FIXME("(%p %ld %p %ld %Ix): stub\n", hFile, lDistanceToMove, pReserved, dwMoveContext, dwContext);
+    object_header_t *hdr;
+    DWORD res;
 
-    SetLastError(ERROR_INTERNET_INVALID_OPERATION);
-    return INVALID_SET_FILE_POINTER;
+    TRACE("(%p %ld %p %ld %Ix)\n", hFile, lDistanceToMove, pReserved, dwMoveContext, dwContext);
+
+    hdr = get_handle_object(hFile);
+    if(!hdr) {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return INVALID_SET_FILE_POINTER;
+    }
+
+    if(hdr->vtbl->SetFilePointer) {
+        res = hdr->vtbl->SetFilePointer(hdr, lDistanceToMove, dwMoveContext);
+    }else {
+        SetLastError(ERROR_INVALID_HANDLE);
+        res = INVALID_SET_FILE_POINTER;
+    }
+
+    WININET_Release(hdr);
+    return res;
 }
 
 /***********************************************************************
