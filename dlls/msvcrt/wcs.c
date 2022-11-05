@@ -1647,6 +1647,22 @@ int WINAPIV _scwprintf_p_l( const wchar_t *format, _locale_t locale, ... )
     return r;
 }
 
+#if _MSVCR_VER>=80
+/*********************************************************************
+ *		_scwprintf_p (MSVCRT.@)
+ */
+int WINAPIV _scwprintf_p( const wchar_t *format, ... )
+{
+    va_list ap;
+    int r;
+
+    va_start( ap, format );
+    r = vswprintf_p_l_opt( NULL, INT_MAX, format, 0, NULL, ap );
+    va_end( ap );
+    return r;
+}
+#endif
+
 /*********************************************************************
  *		_scwprintf (MSVCRT.@)
  */

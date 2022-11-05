@@ -1359,7 +1359,7 @@
 @ varargs _scprintf_p_l(str ptr) msvcr120._scprintf_p_l
 @ varargs _scwprintf(wstr) msvcr120._scwprintf
 @ varargs _scwprintf_l(wstr ptr) msvcr120._scwprintf_l
-@ stub _scwprintf_p
+@ varargs _scwprintf_p(wstr) msvcr120._scwprintf_p
 @ varargs _scwprintf_p_l(wstr ptr) msvcr120._scwprintf_p_l
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr) msvcr120._seh_longjmp_unwind4
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr) msvcr120._seh_longjmp_unwind
