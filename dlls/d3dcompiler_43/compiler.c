@@ -235,8 +235,25 @@ static HRESULT preprocess_shader(const void *data, SIZE_T data_size, const char 
     preprocess_info.include_context = include;
 
     ret = vkd3d_shader_preprocess(&compile_info, &byte_code, &messages);
+
+    if (ret)
+        ERR("Failed to preprocess shader, vkd3d result %d.\n", ret);
+
     if (messages)
     {
+        if (*messages && ERR_ON(d3dcompiler))
+        {
+            const char *ptr = messages;
+            const char *line;
+
+            ERR("Shader log:\n");
+            while ((line = get_line(&ptr)))
+            {
+                ERR("    %.*s", (int)(ptr - line), line);
+            }
+            ERR("\n");
+        }
+
         if (messages_blob)
         {
             size_t size = strlen(messages);
