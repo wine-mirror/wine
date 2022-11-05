@@ -1634,6 +1634,20 @@ int WINAPIV _scwprintf_l( const wchar_t *format, _locale_t locale, ... )
 }
 
 /*********************************************************************
+ *		_scwprintf_p_l (MSVCRT.@)
+ */
+int WINAPIV _scwprintf_p_l( const wchar_t *format, _locale_t locale, ... )
+{
+    va_list ap;
+    int r;
+
+    va_start( ap, locale );
+    r = vswprintf_p_l_opt( NULL, INT_MAX, format, 0, locale, ap );
+    va_end( ap );
+    return r;
+}
+
+/*********************************************************************
  *		_scwprintf (MSVCRT.@)
  */
 int WINAPIV _scwprintf( const wchar_t *format, ... )

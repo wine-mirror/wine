@@ -1360,7 +1360,7 @@
 @ varargs _scwprintf(wstr) msvcr120._scwprintf
 @ varargs _scwprintf_l(wstr ptr) msvcr120._scwprintf_l
 @ stub _scwprintf_p
-@ stub _scwprintf_p_l
+@ varargs _scwprintf_p_l(wstr ptr) msvcr120._scwprintf_p_l
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr) msvcr120._seh_longjmp_unwind4
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr) msvcr120._seh_longjmp_unwind
 @ cdecl -arch=i386 _set_SSE2_enable(long) msvcr120._set_SSE2_enable

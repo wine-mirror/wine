@@ -889,7 +889,7 @@
 @ varargs _scprintf_p_l(str ptr)
 @ varargs _scwprintf(wstr)
 @ varargs _scwprintf_l(wstr ptr)
-# stub _scwprintf_p_l(wstr ptr)
+@ varargs _scwprintf_p_l(wstr ptr)
 @ cdecl _searchenv(str str ptr)
 @ cdecl _searchenv_s(str str ptr long)
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr)
