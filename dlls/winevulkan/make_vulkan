@@ -763,16 +763,12 @@ class VkFunction(object):
 
         # Declare any tmp parameters for conversion.
         for p in self.params:
-            if p.needs_host_type() and conv:
+            if p.needs_variable(conv, unwrap):
+                host_type = p.type + "_host" if conv and p.needs_host_type() else p.type
                 if p.is_dynamic_array():
-                    body += "    {0}_host *{1}_host;\n".format(p.type, p.name)
+                    body += "    {0} *{1}_host;\n".format(host_type, p.name)
                 else:
-                    body += "    {0}_host {1}_host;\n".format(p.type, p.name)
-            elif unwrap and p.needs_unwrapping():
-                if p.is_dynamic_array():
-                    body += "    {0} *{1}_host;\n".format(p.type, p.name)
-                else:
-                    body += "    {0} {1}_host;\n".format(p.type, p.name)
+                    body += "    {0} {1}_host;\n".format(host_type, p.name)
             if p.needs_alloc(conv, unwrap):
                 needs_alloc = True
 
@@ -1195,13 +1191,8 @@ class VkVariable(object):
         # 'parent' param requiring conversion.
         if self.is_struct():
             is_const = self.is_const() if self.is_pointer() else parent_const
-            for m in self.struct:
-                if m.type == self.struct.name:
-                    continue
-                if not m.is_struct():
-                    continue
 
-                conversions.extend(m.get_conversions(unwrap, is_const))
+            conversions.extend(self.struct.get_conversions(unwrap, is_const))
 
             for conv in [False, True]:
                 if self.needs_conversion(conv, unwrap, Direction.INPUT, parent_const):
@@ -1906,6 +1897,9 @@ class VkStruct(Sequence):
         if self.name == "VkAllocationCallbacks":
             return False
 
+        if direction == Direction.INPUT and self.name in STRUCT_CHAIN_CONVERSIONS:
+            return True
+
         # VkSparseImageMemoryRequirements(2) is used by vkGetImageSparseMemoryRequirements(2).
         # This function is tricky to wrap, because how to wrap depends on whether
         # pSparseMemoryRequirements is NULL or not. Luckily for VkSparseImageMemoryRequirements(2)
@@ -1953,6 +1947,9 @@ class VkStruct(Sequence):
     def needs_alloc(self, conv, unwrap):
         """ Check if any struct member needs some memory allocation."""
 
+        if self.name in STRUCT_CHAIN_CONVERSIONS:
+            return True
+
         for m in self.members:
             if self.name == m.type:
                 continue
@@ -1996,6 +1993,24 @@ class VkStruct(Sequence):
         for m in self.members:
             type_info = types[m.type]
             m.set_type_info(type_info)
+
+    def get_conversions(self, unwrap, parent_const):
+        conversions = []
+
+        if self.name in STRUCT_CHAIN_CONVERSIONS:
+            # Collect any conversion for any extension structs.
+            for e in self.struct_extensions:
+                if not e.required:
+                    continue
+                conversions.extend(e.get_conversions(True, parent_const))
+
+        # Collect any conversion for any member structs.
+        for m in self:
+            if m.type == self.name:
+                continue
+            conversions.extend(m.get_conversions(unwrap, parent_const))
+
+        return conversions
 
 
 class StructConversionFunction(object):
@@ -2061,7 +2076,13 @@ class StructConversionFunction(object):
             body += ", ".join(p for p in params)
             body += ")\n"
 
-        body += "{\n    if (!in) return;\n\n"
+        body += "{\n"
+        needs_extensions = self.type in STRUCT_CHAIN_CONVERSIONS
+        if needs_extensions:
+            body += "    const VkBaseInStructure *in_header;\n"
+            body += "    VkBaseOutStructure *out_header = (void *)out;\n\n"
+
+        body += "    if (!in) return;\n\n"
 
         if self.direction == Direction.INPUT and "pNext" in self.operand and self.operand.returnedonly:
             # We are dealing with an input_output parameter. For these we only need to copy
@@ -2073,8 +2094,72 @@ class StructConversionFunction(object):
             body += "    out->sType = in->sType;\n"
         else:
             for m in self.operand:
-                # TODO: support copying of pNext extension structures!
+                if m.name == "pNext" and needs_extensions:
+                    body += "    out->pNext = NULL;\n"
+                    continue
+
                 body += "    " + m.copy("in->", "out->", self.direction, self.conv, self.unwrap)
+
+        if needs_extensions:
+            if self.conv and self.direction == Direction.INPUT:
+                body += "\n    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))\n"
+            else:
+                body += "\n    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)\n"
+            body += "    {\n"
+            body += "        switch (in_header->sType)\n"
+            body += "        {\n"
+
+            ident = "            "
+
+            if self.type in STRUCT_CHAIN_CONVERSIONS:
+                for i in STRUCT_CHAIN_CONVERSIONS[self.type]:
+                    body += "        case {0}:\n".format(i)
+                body += ident + "break;\n"
+
+            for ext in self.operand.struct_extensions:
+                if not ext.required:
+                    continue
+
+                stype = next(x for x in ext.members if x.name == "sType").values
+                host_type = ext.name + "_host" if self.conv and self.operand.needs_host_type() else ext.name
+                if self.direction == Direction.INPUT:
+                    in_type = "const " + ext.name
+                    out_type = host_type
+                else:
+                    in_type = "const " + host_type
+                    out_type = ext_name
+
+                body += "        case {0}:\n".format(stype)
+                body += "        {\n"
+                if self.direction == Direction.INPUT:
+                    body += ident + "{0} *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));\n".format(out_type)
+                else:
+                    body += ident + "{0} *out_ext = find_next_struct(out_header, {1});\n".format(out_type, stype)
+                if self.direction == Direction.OUTPUT or not ext.returnedonly:
+                    body += ident + "{0} *in_ext = ({0} *)in_header;\n".format(in_type)
+
+                for m in ext:
+                    if m.name == "sType":
+                        body += ident + "out_ext->sType = {0};\n".format(stype)
+                        continue
+                    if m.name == "pNext":
+                        body += ident + "out_ext->pNext = NULL;\n"
+                        continue
+
+                    body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, True)
+
+                if self.direction == Direction.INPUT:
+                    body += ident + "out_header->pNext = (void *)out_ext;\n"
+                body += ident + "out_header = (void *)out_ext;\n"
+                body += ident + "break;\n"
+                body += "        }\n"
+
+            body += "        default:\n"
+            if self.direction == Direction.INPUT:
+                body += ident + "FIXME(\"Unhandled sType %u.\", in_header->sType);\n"
+            body += "            break;\n"
+            body += "        }\n"
+            body += "    }\n"
 
         body += "}\n"
         body += "#endif /* USE_STRUCT_CONVERSION */\n\n"
@@ -2203,93 +2288,12 @@ class ArrayConversionFunction(object):
         return body
 
 
-class StructChainConversionFunction(object):
-    def __init__(self, direction, struct, ignores):
-        self.direction = direction
-        self.struct = struct
-        self.ignores = ignores
-        self.type = struct.name
-
-        self.name = "convert_{0}_struct_chain".format(self.type)
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def prototype(self, postfix=""):
-        return "VkResult {0}(struct conversion_context *ctx, const void *pNext, {1} *out_struct) {2}".format(self.name, self.type, postfix).strip()
-
-    def definition(self):
-        body = self.prototype()
-        body += "\n{\n"
-
-        body += "    VkBaseOutStructure *out_header = (VkBaseOutStructure *)out_struct;\n";
-        body += "    const VkBaseInStructure *in_header;\n\n";
-
-        body += "    out_header->pNext = NULL;\n\n"
-
-        body += "    for (in_header = pNext; in_header; in_header = in_header->pNext)\n"
-        body += "    {\n"
-        body += "        switch (in_header->sType)\n"
-        body += "        {\n"
-
-        for i in self.ignores:
-            body += "        case {0}:\n".format(i)
-        body += "            break;\n\n"
-
-        for e in self.struct.struct_extensions:
-            if not e.required:
-                continue
-
-            stype = next(x for x in e.members if x.name == "sType")
-
-            if stype.values in self.ignores:
-                continue
-
-            body += "        case {0}:\n".format(stype.values)
-            body += "        {\n"
-
-            body += "            const {0} *in = (const {0} *)in_header;\n".format(e.name)
-            body += "            {0} *out;\n\n".format(e.name)
-
-            body += "            if (!(out = conversion_context_alloc(ctx, sizeof(*out)))) return VK_ERROR_OUT_OF_HOST_MEMORY;\n\n"
-
-            for m in e:
-                if m.name == "pNext":
-                    body += "            out->pNext = NULL;\n"
-                else:
-                    convert = m.copy("in->", "out->", self.direction, conv=True, unwrap=True)
-                    unwrap = m.copy("in->", "out->", self.direction, conv=False, unwrap=True)
-                    if unwrap == convert:
-                        body += "            " + unwrap
-                    else:
-                        body += "#if defined(USE_STRUCT_CONVERSION)\n"
-                        body += "            " + convert
-                        body += "#else\n"
-                        body += "            " + unwrap
-                        body += "#endif /* USE_STRUCT_CONVERSION */\n"
-
-            body += "\n            out_header->pNext = (VkBaseOutStructure *)out;\n"
-            body += "            out_header = out_header->pNext;\n"
-            body += "            break;\n"
-            body += "        }\n\n"
-
-        body += "        default:\n"
-        body += "            FIXME(\"Application requested a linked structure of type %u.\\n\", in_header->sType);\n"
-
-        body += "        }\n"
-        body += "    }\n\n"
-
-        body += "    return VK_SUCCESS;\n"
-        body += "}\n\n"
-        return body
-
 class VkGenerator(object):
     def __init__(self, registry):
         self.registry = registry
 
         # Build a list conversion functions for struct conversion.
         self.conversions = []
-        self.struct_chain_conversions = []
         self.host_structs = []
         for func in self.registry.funcs.values():
             if not func.needs_exposing():
@@ -2308,18 +2312,6 @@ class VkGenerator(object):
                 # e.g. array vs non-array. Just make sure we pull in each struct once.
                 if not any(s.name == conv.operand.name for s in self.host_structs):
                     self.host_structs.append(conv.operand)
-
-        for struct in self.registry.structs:
-            if struct.name in STRUCT_CHAIN_CONVERSIONS:
-                self.struct_chain_conversions.append(StructChainConversionFunction(Direction.INPUT, struct, STRUCT_CHAIN_CONVERSIONS[struct.name]))
-                # Once we decide to support pNext chains conversion everywhere, move this under get_conversions
-                for e in struct.struct_extensions:
-                    for m in e:
-                        if m.needs_conversion(True, True, Direction.INPUT, False):
-                            conversions = m.get_conversions(True, False)
-                            for conv in conversions:
-                                if not any(c == conv for c in self.conversions):
-                                    self.conversions.append(conv)
 
     def _generate_copyright(self, f, spec_file=False):
         f.write("# " if spec_file else "/* ")
@@ -2368,9 +2360,6 @@ class VkGenerator(object):
 
         # Generate any conversion helper functions.
         for conv in self.conversions:
-            f.write(conv.definition())
-
-        for conv in self.struct_chain_conversions:
             f.write(conv.definition())
 
         # Create thunks for instance and device functions.
@@ -2507,11 +2496,6 @@ class VkGenerator(object):
                 continue
 
             f.write("{0};\n".format(vk_func.prototype(prefix=prefix, postfix="DECLSPEC_HIDDEN", is_thunk=True)))
-        f.write("\n")
-
-        f.write("struct conversion_context;\n")
-        for func in self.struct_chain_conversions:
-            f.write(func.prototype(postfix="DECLSPEC_HIDDEN") + ";\n")
         f.write("\n")
 
         f.write("/* For use by vkDevice and children */\n")
