@@ -5803,6 +5803,17 @@ static inline void convert_VkDeviceFaultAddressInfoEXT_win32_to_host(const VkDev
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDeviceFaultAddressInfoEXT_host_to_win32(const VkDeviceFaultAddressInfoEXT_host *in, VkDeviceFaultAddressInfoEXT *out)
+{
+    if (!in) return;
+
+    out->addressType = in->addressType;
+    out->reportedAddress = in->reportedAddress;
+    out->addressPrecision = in->addressPrecision;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkDeviceFaultAddressInfoEXT_host *convert_VkDeviceFaultAddressInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultAddressInfoEXT *in, uint32_t count)
 {
     VkDeviceFaultAddressInfoEXT_host *out;
@@ -5821,7 +5832,32 @@ static inline VkDeviceFaultAddressInfoEXT_host *convert_VkDeviceFaultAddressInfo
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDeviceFaultAddressInfoEXT_array_host_to_win32(const VkDeviceFaultAddressInfoEXT_host *in, VkDeviceFaultAddressInfoEXT *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkDeviceFaultAddressInfoEXT_host_to_win32(&in[i], &out[i]);
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDeviceFaultVendorInfoEXT_win32_to_host(const VkDeviceFaultVendorInfoEXT *in, VkDeviceFaultVendorInfoEXT_host *out)
+{
+    if (!in) return;
+
+    memcpy(out->description, in->description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
+    out->vendorFaultCode = in->vendorFaultCode;
+    out->vendorFaultData = in->vendorFaultData;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDeviceFaultVendorInfoEXT_host_to_win32(const VkDeviceFaultVendorInfoEXT_host *in, VkDeviceFaultVendorInfoEXT *out)
 {
     if (!in) return;
 
@@ -5850,6 +5886,20 @@ static inline VkDeviceFaultVendorInfoEXT_host *convert_VkDeviceFaultVendorInfoEX
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDeviceFaultVendorInfoEXT_array_host_to_win32(const VkDeviceFaultVendorInfoEXT_host *in, VkDeviceFaultVendorInfoEXT *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkDeviceFaultVendorInfoEXT_host_to_win32(&in[i], &out[i]);
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDeviceFaultInfoEXT_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultInfoEXT *in, VkDeviceFaultInfoEXT_host *out)
 {
     if (!in) return;
@@ -5859,6 +5909,18 @@ static inline void convert_VkDeviceFaultInfoEXT_win32_to_host(struct conversion_
     memcpy(out->description, in->description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
     out->pAddressInfos = convert_VkDeviceFaultAddressInfoEXT_array_win32_to_host(ctx, in->pAddressInfos, 1);
     out->pVendorInfos = convert_VkDeviceFaultVendorInfoEXT_array_win32_to_host(ctx, in->pVendorInfos, 1);
+    out->pVendorBinaryData = in->pVendorBinaryData;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDeviceFaultInfoEXT_host_to_win32(const VkDeviceFaultInfoEXT_host *in, VkDeviceFaultInfoEXT *out)
+{
+    if (!in) return;
+
+    memcpy(out->description, in->description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
+    convert_VkDeviceFaultAddressInfoEXT_array_host_to_win32(in->pAddressInfos, out->pAddressInfos, 1);
+    convert_VkDeviceFaultVendorInfoEXT_array_host_to_win32(in->pVendorInfos, out->pVendorInfos, 1);
     out->pVendorBinaryData = in->pVendorBinaryData;
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -16938,6 +17000,7 @@ static NTSTATUS thunk32_vkGetDeviceFaultInfoEXT(void *args)
     convert_VkDeviceFaultInfoEXT_win32_to_host(&ctx, params->pFaultInfo, &pFaultInfo_host);
     params->result = wine_device_from_handle(params->device)->funcs.p_vkGetDeviceFaultInfoEXT(wine_device_from_handle(params->device)->device, &pFaultCounts_host, &pFaultInfo_host);
     convert_VkDeviceFaultCountsEXT_host_to_win32(&pFaultCounts_host, params->pFaultCounts);
+    convert_VkDeviceFaultInfoEXT_host_to_win32(&pFaultInfo_host, params->pFaultInfo);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }

@@ -1310,12 +1310,12 @@ class VkMember(VkVariable):
         win_type = "win32" if conv else "win64"
         if self.needs_conversion(conv, unwrap, direction, False):
             if self.is_dynamic_array():
+                # Array length is either a variable name (string) or an int.
+                count = self.dyn_array_len if isinstance(self.dyn_array_len, int) else "{0}{1}".format(input, self.dyn_array_len)
+                host_part = "host" if unwrap else "unwrapped_host"
                 if direction == Direction.OUTPUT:
-                    LOGGER.warn("TODO: implement copying of returnedonly dynamic array for {0}.{1}".format(self.type, self.name))
+                    return "convert_{2}_array_{6}_to_{5}({3}{1}, {0}{1}, {4});\n".format(output, self.name, self.type, input, count, win_type, host_part)
                 else:
-                    # Array length is either a variable name (string) or an int.
-                    count = self.dyn_array_len if isinstance(self.dyn_array_len, int) else "{0}{1}".format(input, self.dyn_array_len)
-                    host_part = "host" if unwrap else "unwrapped_host"
                     return "{0}{1} = convert_{2}_array_{5}_to_{6}(ctx, {3}{1}, {4});\n".format(output, self.name, self.type, input, count, win_type, host_part)
             elif self.is_static_array():
                 count = self.array_len
@@ -1900,12 +1900,6 @@ class VkStruct(Sequence):
         # pSparseMemoryRequirements is NULL or not. Luckily for VkSparseImageMemoryRequirements(2)
         # the alignment works out in such a way that no conversion is needed between win32 and Linux.
         if self.name in ["VkSparseImageMemoryRequirements", "VkSparseImageMemoryRequirements2"]:
-            return False
-
-        # FIXME: we can't handle output dynamic arrays yet, remove once we can handle it
-        if direction == Direction.OUTPUT and self.name in ["VkDeviceFaultInfoEXT",
-                                                           "VkDeviceFaultAddressInfoEXT",
-                                                           "VkDeviceFaultVendorInfoEXT"]:
             return False
 
         # pFixedRateFlags field is missing const, but it doesn't need output conversion
