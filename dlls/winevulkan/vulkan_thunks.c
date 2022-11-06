@@ -5626,8 +5626,6 @@ static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win3
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     out->accelerationStructureSize = in->accelerationStructureSize;
     out->updateScratchSize = in->updateScratchSize;
     out->buildScratchSize = in->buildScratchSize;
@@ -5673,8 +5671,8 @@ static inline void convert_VkMemoryRequirements2KHR_win32_to_host(const VkMemory
 {
     if (!in) return;
 
-    out->pNext = in->pNext;
     out->sType = in->sType;
+    out->pNext = in->pNext;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -5683,8 +5681,6 @@ static inline void convert_VkMemoryRequirements2KHR_host_to_win32(const VkMemory
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     convert_VkMemoryRequirements_host_to_win32(&in->memoryRequirements, &out->memoryRequirements);
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -5716,8 +5712,8 @@ static inline void convert_VkMemoryRequirements2_win32_to_host(const VkMemoryReq
 {
     if (!in) return;
 
-    out->pNext = in->pNext;
     out->sType = in->sType;
+    out->pNext = in->pNext;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -5726,8 +5722,6 @@ static inline void convert_VkMemoryRequirements2_host_to_win32(const VkMemoryReq
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     convert_VkMemoryRequirements_host_to_win32(&in->memoryRequirements, &out->memoryRequirements);
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -5791,8 +5785,6 @@ static inline void convert_VkDeviceFaultCountsEXT_host_to_win32(const VkDeviceFa
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     out->addressInfoCount = in->addressInfoCount;
     out->vendorInfoCount = in->vendorInfoCount;
     out->vendorBinarySize = in->vendorBinarySize;
@@ -5936,8 +5928,8 @@ static inline void convert_VkSubresourceLayout2EXT_win32_to_host(const VkSubreso
 {
     if (!in) return;
 
-    out->pNext = in->pNext;
     out->sType = in->sType;
+    out->pNext = in->pNext;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -5946,8 +5938,6 @@ static inline void convert_VkSubresourceLayout2EXT_host_to_win32(const VkSubreso
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     convert_VkSubresourceLayout_host_to_win32(&in->subresourceLayout, &out->subresourceLayout);
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -5957,8 +5947,8 @@ static inline void convert_VkImageViewAddressPropertiesNVX_win32_to_host(const V
 {
     if (!in) return;
 
-    out->pNext = in->pNext;
     out->sType = in->sType;
+    out->pNext = in->pNext;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -5967,8 +5957,6 @@ static inline void convert_VkImageViewAddressPropertiesNVX_host_to_win32(const V
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     out->deviceAddress = in->deviceAddress;
     out->size = in->size;
 }
@@ -6005,8 +5993,6 @@ static inline void convert_VkMicromapBuildSizesInfoEXT_host_to_win32(const VkMic
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     out->micromapSize = in->micromapSize;
     out->buildScratchSize = in->buildScratchSize;
     out->discardable = in->discardable;
@@ -6031,8 +6017,8 @@ static inline void convert_VkImageFormatProperties2_win32_to_host(const VkImageF
 {
     if (!in) return;
 
-    out->pNext = in->pNext;
     out->sType = in->sType;
+    out->pNext = in->pNext;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -6041,8 +6027,6 @@ static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageF
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     convert_VkImageFormatProperties_host_to_win32(&in->imageFormatProperties, &out->imageFormatProperties);
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -6088,8 +6072,8 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(const
 {
     if (!in) return;
 
-    out->pNext = in->pNext;
     out->sType = in->sType;
+    out->pNext = in->pNext;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -6098,8 +6082,6 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_host_to_win32(const
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     convert_VkPhysicalDeviceMemoryProperties_host_to_win32(&in->memoryProperties, &out->memoryProperties);
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -6240,8 +6222,8 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(const VkPhy
 {
     if (!in) return;
 
-    out->pNext = in->pNext;
     out->sType = in->sType;
+    out->pNext = in->pNext;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -6250,8 +6232,6 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
 {
     if (!in) return;
 
-    out->sType = in->sType;
-    out->pNext = in->pNext;
     convert_VkPhysicalDeviceProperties_host_to_win32(&in->properties, &out->properties);
 }
 #endif /* USE_STRUCT_CONVERSION */

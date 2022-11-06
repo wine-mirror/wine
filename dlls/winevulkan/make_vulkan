@@ -1190,15 +1190,16 @@ class VkVariable(object):
         # those functions will be defined prior to usage by the
         # 'parent' param requiring conversion.
         if self.is_struct():
+            struct = self.struct
             is_const = self.is_const() if self.is_pointer() else parent_const
 
-            conversions.extend(self.struct.get_conversions(unwrap, is_const))
+            conversions.extend(struct.get_conversions(unwrap, is_const))
 
             for conv in [False, True]:
-                if self.needs_conversion(conv, unwrap, Direction.INPUT, parent_const):
-                    conversions.append(StructConversionFunction(self.struct, Direction.INPUT, conv, unwrap))
-                if self.needs_conversion(conv, unwrap, Direction.OUTPUT, parent_const):
-                    conversions.append(StructConversionFunction(self.struct, Direction.OUTPUT, conv, unwrap))
+                if struct.needs_conversion(conv, unwrap, Direction.INPUT, is_const):
+                    conversions.append(StructConversionFunction(struct, Direction.INPUT, conv, unwrap, is_const))
+                if struct.needs_conversion(conv, unwrap, Direction.OUTPUT, is_const):
+                    conversions.append(StructConversionFunction(struct, Direction.OUTPUT, conv, unwrap, is_const))
 
         if self.is_static_array() or self.is_dynamic_array():
             for conv in [False, True]:
@@ -1613,13 +1614,7 @@ class VkParam(VkVariable):
         """ Check if param needs conversion. """
 
         if self.is_struct():
-            if self.struct.needs_conversion(conv, unwrap, direction, self.is_const()):
-                return True
-            # we needs input conversion of structs containing struct chain even if it's returnedonly
-            if direction == Direction.INPUT and ("pNext" in self.struct) and \
-               self.struct.needs_conversion(conv, unwrap, Direction.OUTPUT, self.is_const()):
-                return True
-            return False
+            return self.struct.needs_conversion(conv, unwrap, direction, self.is_const())
 
         if self.is_handle():
             # non-array handles are handled inline in thunks
@@ -1922,6 +1917,10 @@ class VkStruct(Sequence):
                 continue
 
             if m.name == "pNext":
+                # we need input conversion of structs containing struct chain even if it's returnedonly
+                if direction == Direction.INPUT and \
+                   self.needs_conversion(conv, unwrap, Direction.OUTPUT, is_const):
+                    return True
                 continue
 
             # for non-pointer members, check for returnedonly and const attributes
@@ -2014,12 +2013,13 @@ class VkStruct(Sequence):
 
 
 class StructConversionFunction(object):
-    def __init__(self, struct, direction, conv, unwrap):
+    def __init__(self, struct, direction, conv, unwrap, const):
         self.direction = direction
         self.operand = struct
         self.type = struct.name
         self.conv = conv
         self.unwrap = unwrap or not self.operand.needs_unwrapping()
+        self.const = const
 
         name = "convert_{0}_".format(self.type)
         win_type = "win32" if self.conv else "win64"
@@ -2032,6 +2032,22 @@ class StructConversionFunction(object):
 
     def __eq__(self, other):
         return self.name == other.name
+
+    def member_needs_copy(self, struct, m):
+        if self.direction == Direction.OUTPUT:
+            if m.name in ["sType", "pNext"]:
+                return False
+            if self.const and not m.is_pointer():
+                return False
+            if m.is_const() and not m.needs_conversion(self.conv, self.unwrap, Direction.OUTPUT, self.const):
+                return False
+        else:
+            if m.name == "pNext":
+                return True
+            if m.name != "sType" and struct.returnedonly and not m.needs_conversion(
+                    self.conv, self.unwrap, Direction.INPUT, self.const):
+                return False
+        return True
 
     def definition(self):
         """ Helper function for generating a struct conversion function. """
@@ -2084,21 +2100,14 @@ class StructConversionFunction(object):
 
         body += "    if (!in) return;\n\n"
 
-        if self.direction == Direction.INPUT and "pNext" in self.operand and self.operand.returnedonly:
-            # We are dealing with an input_output parameter. For these we only need to copy
-            # pNext and sType as the other fields are filled in by the host. We do potentially
-            # have to iterate over pNext and perform conversions based on switch(sType)!
-            # Luckily though no extension structs at this point need conversion.
-            # TODO: support copying of pNext extension structures!
-            body += "    out->pNext = in->pNext;\n"
-            body += "    out->sType = in->sType;\n"
-        else:
-            for m in self.operand:
-                if m.name == "pNext" and needs_extensions:
-                    body += "    out->pNext = NULL;\n"
-                    continue
+        for m in self.operand:
+            if not self.member_needs_copy(self.operand, m):
+                continue
+            if m.name == "pNext" and needs_extensions:
+                body += "    out->pNext = NULL;\n"
+                continue
 
-                body += "    " + m.copy("in->", "out->", self.direction, self.conv, self.unwrap)
+            body += "    " + m.copy("in->", "out->", self.direction, self.conv, self.unwrap)
 
         if needs_extensions:
             if self.conv and self.direction == Direction.INPUT:
@@ -2141,6 +2150,8 @@ class StructConversionFunction(object):
                 for m in ext:
                     if m.name == "sType":
                         body += ident + "out_ext->sType = {0};\n".format(stype)
+                        continue
+                    if not self.member_needs_copy(ext, m):
                         continue
                     if m.name == "pNext":
                         body += ident + "out_ext->pNext = NULL;\n"
