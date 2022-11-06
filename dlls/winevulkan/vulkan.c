@@ -30,19 +30,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
-#define wine_vk_find_struct(s, t) wine_vk_find_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
-static void *wine_vk_find_struct_(void *s, VkStructureType t)
-{
-    VkBaseOutStructure *header;
-
-    for (header = s; header; header = header->pNext)
-    {
-        if (header->sType == t)
-            return header;
-    }
-
-    return NULL;
-}
 
 #define wine_vk_count_struct(s, t) wine_vk_count_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
 static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
@@ -471,7 +458,7 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
     header = (VkBaseInStructure *) dst;
     for (i = 0; i < object->utils_messenger_count; i++)
     {
-        header = wine_vk_find_struct(header->pNext, DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
+        header = find_next_struct(header->pNext, VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT);
         debug_utils_messenger = (VkDebugUtilsMessengerCreateInfoEXT *) header;
 
         object->utils_messengers[i].instance = object;
@@ -486,7 +473,8 @@ static VkResult wine_vk_instance_convert_create_info(struct conversion_context *
         debug_utils_messenger->pUserData = &object->utils_messengers[i];
     }
 
-    debug_report_callback = wine_vk_find_struct(header->pNext, DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT);
+    debug_report_callback = find_next_struct(header->pNext,
+                                             VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT);
     if (debug_report_callback)
     {
         object->default_callback.instance = object;
@@ -1207,7 +1195,8 @@ VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice phys_de
     res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2(phys_dev->phys_dev,
             format_info, properties);
 
-    if ((external_image_properties = wine_vk_find_struct(properties, EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
+    if ((external_image_properties = find_next_struct(properties,
+                                                      VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
     {
         VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
         p->externalMemoryFeatures = 0;
@@ -1229,7 +1218,8 @@ VkResult wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice phys
     res = phys_dev->instance->funcs.p_vkGetPhysicalDeviceImageFormatProperties2KHR(phys_dev->phys_dev,
             format_info, properties);
 
-    if ((external_image_properties = wine_vk_find_struct(properties, EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
+    if ((external_image_properties = find_next_struct(properties,
+                                                      VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES)))
     {
         VkExternalMemoryProperties *p = &external_image_properties->externalMemoryProperties;
         p->externalMemoryFeatures = 0;
@@ -1644,7 +1634,7 @@ static void fixup_pipeline_feedback_info(const void *pipeline_info)
 {
     VkPipelineCreationFeedbackCreateInfo *feedback;
 
-    feedback = wine_vk_find_struct(pipeline_info, PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+    feedback = find_next_struct(pipeline_info, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
 
     if (!feedback)
         return;

@@ -276,4 +276,17 @@ static inline void *conversion_context_alloc(struct conversion_context *pool, si
     }
 }
 
+static inline void *find_next_struct(const void *s, VkStructureType t)
+{
+    VkBaseOutStructure *header;
+
+    for (header = (VkBaseOutStructure *)s; header; header = header->pNext)
+    {
+        if (header->sType == t)
+            return header;
+    }
+
+    return NULL;
+}
+
 #endif /* __WINE_VULKAN_PRIVATE_H */
