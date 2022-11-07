@@ -68,6 +68,43 @@ typedef VkDescriptorSetAllocateInfo VkDescriptorSetAllocateInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkDedicatedAllocationMemoryAllocateInfoNV_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImage image;
+    VkBuffer buffer;
+} VkDedicatedAllocationMemoryAllocateInfoNV_host;
+#else
+typedef VkDedicatedAllocationMemoryAllocateInfoNV VkDedicatedAllocationMemoryAllocateInfoNV_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkMemoryDedicatedAllocateInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImage image;
+    VkBuffer buffer;
+} VkMemoryDedicatedAllocateInfo_host;
+typedef VkMemoryDedicatedAllocateInfo VkMemoryDedicatedAllocateInfoKHR;
+#else
+typedef VkMemoryDedicatedAllocateInfo VkMemoryDedicatedAllocateInfo_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkMemoryOpaqueCaptureAddressAllocateInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint64_t opaqueCaptureAddress;
+} VkMemoryOpaqueCaptureAddressAllocateInfo_host;
+typedef VkMemoryOpaqueCaptureAddressAllocateInfo VkMemoryOpaqueCaptureAddressAllocateInfoKHR;
+#else
+typedef VkMemoryOpaqueCaptureAddressAllocateInfo VkMemoryOpaqueCaptureAddressAllocateInfo_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkMemoryAllocateInfo_host
 {
     VkStructureType sType;
@@ -134,6 +171,18 @@ typedef struct VkBindBufferMemoryInfo_host
 typedef VkBindBufferMemoryInfo VkBindBufferMemoryInfoKHR;
 #else
 typedef VkBindBufferMemoryInfo VkBindBufferMemoryInfo_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkBindImageMemorySwapchainInfoKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkSwapchainKHR swapchain;
+    uint32_t imageIndex;
+} VkBindImageMemorySwapchainInfoKHR_host;
+#else
+typedef VkBindImageMemorySwapchainInfoKHR VkBindImageMemorySwapchainInfoKHR_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
@@ -235,6 +284,31 @@ typedef struct VkRenderingAttachmentInfo_host
 typedef VkRenderingAttachmentInfo VkRenderingAttachmentInfoKHR;
 #else
 typedef VkRenderingAttachmentInfo VkRenderingAttachmentInfo_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkRenderingFragmentShadingRateAttachmentInfoKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImageView imageView;
+    VkImageLayout imageLayout;
+    VkExtent2D shadingRateAttachmentTexelSize;
+} VkRenderingFragmentShadingRateAttachmentInfoKHR_host;
+#else
+typedef VkRenderingFragmentShadingRateAttachmentInfoKHR VkRenderingFragmentShadingRateAttachmentInfoKHR_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkRenderingFragmentDensityMapAttachmentInfoEXT_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImageView imageView;
+    VkImageLayout imageLayout;
+} VkRenderingFragmentDensityMapAttachmentInfoEXT_host;
+#else
+typedef VkRenderingFragmentDensityMapAttachmentInfoEXT VkRenderingFragmentDensityMapAttachmentInfoEXT_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
@@ -828,6 +902,29 @@ typedef VkAccelerationStructureCreateInfoNV VkAccelerationStructureCreateInfoNV_
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkBufferOpaqueCaptureAddressCreateInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint64_t opaqueCaptureAddress;
+} VkBufferOpaqueCaptureAddressCreateInfo_host;
+typedef VkBufferOpaqueCaptureAddressCreateInfo VkBufferOpaqueCaptureAddressCreateInfoKHR;
+#else
+typedef VkBufferOpaqueCaptureAddressCreateInfo VkBufferOpaqueCaptureAddressCreateInfo_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkBufferDeviceAddressCreateInfoEXT_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkDeviceAddress deviceAddress;
+} VkBufferDeviceAddressCreateInfoEXT_host;
+#else
+typedef VkBufferDeviceAddressCreateInfoEXT VkBufferDeviceAddressCreateInfoEXT_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkBufferCreateInfo_host
 {
     VkStructureType sType;
@@ -859,6 +956,30 @@ typedef VkBufferViewCreateInfo VkBufferViewCreateInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkShaderModuleValidationCacheCreateInfoEXT_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkValidationCacheEXT validationCache;
+} VkShaderModuleValidationCacheCreateInfoEXT_host;
+#else
+typedef VkShaderModuleValidationCacheCreateInfoEXT VkShaderModuleValidationCacheCreateInfoEXT_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkDebugUtilsObjectNameInfoEXT_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkObjectType objectType;
+    uint64_t objectHandle;
+    const char *pObjectName;
+} VkDebugUtilsObjectNameInfoEXT_host;
+#else
+typedef VkDebugUtilsObjectNameInfoEXT VkDebugUtilsObjectNameInfoEXT_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPipelineShaderStageCreateInfo_host
 {
     VkStructureType sType;
@@ -871,6 +992,18 @@ typedef struct VkPipelineShaderStageCreateInfo_host
 } VkPipelineShaderStageCreateInfo_host;
 #else
 typedef VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkSubpassShadingPipelineCreateInfoHUAWEI_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkRenderPass renderPass;
+    uint32_t subpass;
+} VkSubpassShadingPipelineCreateInfoHUAWEI_host;
+#else
+typedef VkSubpassShadingPipelineCreateInfoHUAWEI VkSubpassShadingPipelineCreateInfoHUAWEI_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
@@ -937,6 +1070,34 @@ typedef VkFramebufferCreateInfo VkFramebufferCreateInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkGraphicsShaderGroupCreateInfoNV_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint32_t stageCount;
+    const VkPipelineShaderStageCreateInfo_host *pStages;
+    const VkPipelineVertexInputStateCreateInfo *pVertexInputState;
+    const VkPipelineTessellationStateCreateInfo *pTessellationState;
+} VkGraphicsShaderGroupCreateInfoNV_host;
+#else
+typedef VkGraphicsShaderGroupCreateInfoNV VkGraphicsShaderGroupCreateInfoNV_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkGraphicsPipelineShaderGroupsCreateInfoNV_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    uint32_t groupCount;
+    const VkGraphicsShaderGroupCreateInfoNV_host *pGroups;
+    uint32_t pipelineCount;
+    const VkPipeline *pPipelines;
+} VkGraphicsPipelineShaderGroupsCreateInfoNV_host;
+#else
+typedef VkGraphicsPipelineShaderGroupsCreateInfoNV VkGraphicsPipelineShaderGroupsCreateInfoNV_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkGraphicsPipelineCreateInfo_host
 {
     VkStructureType sType;
@@ -961,6 +1122,29 @@ typedef struct VkGraphicsPipelineCreateInfo_host
 } VkGraphicsPipelineCreateInfo_host;
 #else
 typedef VkGraphicsPipelineCreateInfo VkGraphicsPipelineCreateInfo_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkImageSwapchainCreateInfoKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkSwapchainKHR swapchain;
+} VkImageSwapchainCreateInfoKHR_host;
+#else
+typedef VkImageSwapchainCreateInfoKHR VkImageSwapchainCreateInfoKHR_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkSamplerYcbcrConversionInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkSamplerYcbcrConversion conversion;
+} VkSamplerYcbcrConversionInfo_host;
+typedef VkSamplerYcbcrConversionInfo VkSamplerYcbcrConversionInfoKHR;
+#else
+typedef VkSamplerYcbcrConversionInfo VkSamplerYcbcrConversionInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
@@ -1073,6 +1257,19 @@ typedef struct VkRayTracingPipelineCreateInfoNV_host
 } VkRayTracingPipelineCreateInfoNV_host;
 #else
 typedef VkRayTracingPipelineCreateInfoNV VkRayTracingPipelineCreateInfoNV_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkSemaphoreTypeCreateInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkSemaphoreType semaphoreType;
+    uint64_t initialValue;
+} VkSemaphoreTypeCreateInfo_host;
+typedef VkSemaphoreTypeCreateInfo VkSemaphoreTypeCreateInfoKHR;
+#else
+typedef VkSemaphoreTypeCreateInfo VkSemaphoreTypeCreateInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
@@ -1495,6 +1692,18 @@ typedef VkPhysicalDeviceMemoryProperties VkPhysicalDeviceMemoryProperties_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceMemoryBudgetPropertiesEXT_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDeviceSize heapBudget[VK_MAX_MEMORY_HEAPS];
+    VkDeviceSize heapUsage[VK_MAX_MEMORY_HEAPS];
+} VkPhysicalDeviceMemoryBudgetPropertiesEXT_host;
+#else
+typedef VkPhysicalDeviceMemoryBudgetPropertiesEXT VkPhysicalDeviceMemoryBudgetPropertiesEXT_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkPhysicalDeviceMemoryProperties2_host
 {
     VkStructureType sType;
@@ -1635,6 +1844,304 @@ typedef struct VkPhysicalDeviceProperties_host
 } VkPhysicalDeviceProperties_host;
 #else
 typedef VkPhysicalDeviceProperties VkPhysicalDeviceProperties_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceMaintenance3Properties_host
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t maxPerSetDescriptors;
+    VkDeviceSize maxMemoryAllocationSize;
+} VkPhysicalDeviceMaintenance3Properties_host;
+typedef VkPhysicalDeviceMaintenance3Properties VkPhysicalDeviceMaintenance3PropertiesKHR;
+#else
+typedef VkPhysicalDeviceMaintenance3Properties VkPhysicalDeviceMaintenance3Properties_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceMaintenance4Properties_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDeviceSize maxBufferSize;
+} VkPhysicalDeviceMaintenance4Properties_host;
+typedef VkPhysicalDeviceMaintenance4Properties VkPhysicalDeviceMaintenance4PropertiesKHR;
+#else
+typedef VkPhysicalDeviceMaintenance4Properties VkPhysicalDeviceMaintenance4Properties_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceExternalMemoryHostPropertiesEXT_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDeviceSize minImportedHostPointerAlignment;
+} VkPhysicalDeviceExternalMemoryHostPropertiesEXT_host;
+#else
+typedef VkPhysicalDeviceExternalMemoryHostPropertiesEXT VkPhysicalDeviceExternalMemoryHostPropertiesEXT_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceTimelineSemaphoreProperties_host
+{
+    VkStructureType sType;
+    void *pNext;
+    uint64_t maxTimelineSemaphoreValueDifference;
+} VkPhysicalDeviceTimelineSemaphoreProperties_host;
+typedef VkPhysicalDeviceTimelineSemaphoreProperties VkPhysicalDeviceTimelineSemaphorePropertiesKHR;
+#else
+typedef VkPhysicalDeviceTimelineSemaphoreProperties VkPhysicalDeviceTimelineSemaphoreProperties_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceTransformFeedbackPropertiesEXT_host
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t maxTransformFeedbackStreams;
+    uint32_t maxTransformFeedbackBuffers;
+    VkDeviceSize maxTransformFeedbackBufferSize;
+    uint32_t maxTransformFeedbackStreamDataSize;
+    uint32_t maxTransformFeedbackBufferDataSize;
+    uint32_t maxTransformFeedbackBufferDataStride;
+    VkBool32 transformFeedbackQueries;
+    VkBool32 transformFeedbackStreamsLinesTriangles;
+    VkBool32 transformFeedbackRasterizationStreamSelect;
+    VkBool32 transformFeedbackDraw;
+} VkPhysicalDeviceTransformFeedbackPropertiesEXT_host;
+#else
+typedef VkPhysicalDeviceTransformFeedbackPropertiesEXT VkPhysicalDeviceTransformFeedbackPropertiesEXT_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceMemoryDecompressionPropertiesNV_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkMemoryDecompressionMethodFlagsNV decompressionMethods;
+    uint64_t maxDecompressionIndirectCount;
+} VkPhysicalDeviceMemoryDecompressionPropertiesNV_host;
+#else
+typedef VkPhysicalDeviceMemoryDecompressionPropertiesNV VkPhysicalDeviceMemoryDecompressionPropertiesNV_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceAccelerationStructurePropertiesKHR_host
+{
+    VkStructureType sType;
+    void *pNext;
+    uint64_t maxGeometryCount;
+    uint64_t maxInstanceCount;
+    uint64_t maxPrimitiveCount;
+    uint32_t maxPerStageDescriptorAccelerationStructures;
+    uint32_t maxPerStageDescriptorUpdateAfterBindAccelerationStructures;
+    uint32_t maxDescriptorSetAccelerationStructures;
+    uint32_t maxDescriptorSetUpdateAfterBindAccelerationStructures;
+    uint32_t minAccelerationStructureScratchOffsetAlignment;
+} VkPhysicalDeviceAccelerationStructurePropertiesKHR_host;
+#else
+typedef VkPhysicalDeviceAccelerationStructurePropertiesKHR VkPhysicalDeviceAccelerationStructurePropertiesKHR_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceRayTracingPropertiesNV_host
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t shaderGroupHandleSize;
+    uint32_t maxRecursionDepth;
+    uint32_t maxShaderGroupStride;
+    uint32_t shaderGroupBaseAlignment;
+    uint64_t maxGeometryCount;
+    uint64_t maxInstanceCount;
+    uint64_t maxTriangleCount;
+    uint32_t maxDescriptorSetAccelerationStructures;
+} VkPhysicalDeviceRayTracingPropertiesNV_host;
+#else
+typedef VkPhysicalDeviceRayTracingPropertiesNV VkPhysicalDeviceRayTracingPropertiesNV_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceTexelBufferAlignmentProperties_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDeviceSize storageTexelBufferOffsetAlignmentBytes;
+    VkBool32 storageTexelBufferOffsetSingleTexelAlignment;
+    VkDeviceSize uniformTexelBufferOffsetAlignmentBytes;
+    VkBool32 uniformTexelBufferOffsetSingleTexelAlignment;
+} VkPhysicalDeviceTexelBufferAlignmentProperties_host;
+typedef VkPhysicalDeviceTexelBufferAlignmentProperties VkPhysicalDeviceTexelBufferAlignmentPropertiesEXT;
+#else
+typedef VkPhysicalDeviceTexelBufferAlignmentProperties VkPhysicalDeviceTexelBufferAlignmentProperties_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceVulkan11Properties_host
+{
+    VkStructureType sType;
+    void *pNext;
+    uint8_t deviceUUID[VK_UUID_SIZE];
+    uint8_t driverUUID[VK_UUID_SIZE];
+    uint8_t deviceLUID[VK_LUID_SIZE];
+    uint32_t deviceNodeMask;
+    VkBool32 deviceLUIDValid;
+    uint32_t subgroupSize;
+    VkShaderStageFlags subgroupSupportedStages;
+    VkSubgroupFeatureFlags subgroupSupportedOperations;
+    VkBool32 subgroupQuadOperationsInAllStages;
+    VkPointClippingBehavior pointClippingBehavior;
+    uint32_t maxMultiviewViewCount;
+    uint32_t maxMultiviewInstanceIndex;
+    VkBool32 protectedNoFault;
+    uint32_t maxPerSetDescriptors;
+    VkDeviceSize maxMemoryAllocationSize;
+} VkPhysicalDeviceVulkan11Properties_host;
+#else
+typedef VkPhysicalDeviceVulkan11Properties VkPhysicalDeviceVulkan11Properties_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceVulkan12Properties_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDriverId driverID;
+    char driverName[VK_MAX_DRIVER_NAME_SIZE];
+    char driverInfo[VK_MAX_DRIVER_INFO_SIZE];
+    VkConformanceVersion conformanceVersion;
+    VkShaderFloatControlsIndependence denormBehaviorIndependence;
+    VkShaderFloatControlsIndependence roundingModeIndependence;
+    VkBool32 shaderSignedZeroInfNanPreserveFloat16;
+    VkBool32 shaderSignedZeroInfNanPreserveFloat32;
+    VkBool32 shaderSignedZeroInfNanPreserveFloat64;
+    VkBool32 shaderDenormPreserveFloat16;
+    VkBool32 shaderDenormPreserveFloat32;
+    VkBool32 shaderDenormPreserveFloat64;
+    VkBool32 shaderDenormFlushToZeroFloat16;
+    VkBool32 shaderDenormFlushToZeroFloat32;
+    VkBool32 shaderDenormFlushToZeroFloat64;
+    VkBool32 shaderRoundingModeRTEFloat16;
+    VkBool32 shaderRoundingModeRTEFloat32;
+    VkBool32 shaderRoundingModeRTEFloat64;
+    VkBool32 shaderRoundingModeRTZFloat16;
+    VkBool32 shaderRoundingModeRTZFloat32;
+    VkBool32 shaderRoundingModeRTZFloat64;
+    uint32_t maxUpdateAfterBindDescriptorsInAllPools;
+    VkBool32 shaderUniformBufferArrayNonUniformIndexingNative;
+    VkBool32 shaderSampledImageArrayNonUniformIndexingNative;
+    VkBool32 shaderStorageBufferArrayNonUniformIndexingNative;
+    VkBool32 shaderStorageImageArrayNonUniformIndexingNative;
+    VkBool32 shaderInputAttachmentArrayNonUniformIndexingNative;
+    VkBool32 robustBufferAccessUpdateAfterBind;
+    VkBool32 quadDivergentImplicitLod;
+    uint32_t maxPerStageDescriptorUpdateAfterBindSamplers;
+    uint32_t maxPerStageDescriptorUpdateAfterBindUniformBuffers;
+    uint32_t maxPerStageDescriptorUpdateAfterBindStorageBuffers;
+    uint32_t maxPerStageDescriptorUpdateAfterBindSampledImages;
+    uint32_t maxPerStageDescriptorUpdateAfterBindStorageImages;
+    uint32_t maxPerStageDescriptorUpdateAfterBindInputAttachments;
+    uint32_t maxPerStageUpdateAfterBindResources;
+    uint32_t maxDescriptorSetUpdateAfterBindSamplers;
+    uint32_t maxDescriptorSetUpdateAfterBindUniformBuffers;
+    uint32_t maxDescriptorSetUpdateAfterBindUniformBuffersDynamic;
+    uint32_t maxDescriptorSetUpdateAfterBindStorageBuffers;
+    uint32_t maxDescriptorSetUpdateAfterBindStorageBuffersDynamic;
+    uint32_t maxDescriptorSetUpdateAfterBindSampledImages;
+    uint32_t maxDescriptorSetUpdateAfterBindStorageImages;
+    uint32_t maxDescriptorSetUpdateAfterBindInputAttachments;
+    VkResolveModeFlags supportedDepthResolveModes;
+    VkResolveModeFlags supportedStencilResolveModes;
+    VkBool32 independentResolveNone;
+    VkBool32 independentResolve;
+    VkBool32 filterMinmaxSingleComponentFormats;
+    VkBool32 filterMinmaxImageComponentMapping;
+    uint64_t maxTimelineSemaphoreValueDifference;
+    VkSampleCountFlags framebufferIntegerColorSampleCounts;
+} VkPhysicalDeviceVulkan12Properties_host;
+#else
+typedef VkPhysicalDeviceVulkan12Properties VkPhysicalDeviceVulkan12Properties_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceVulkan13Properties_host
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t minSubgroupSize;
+    uint32_t maxSubgroupSize;
+    uint32_t maxComputeWorkgroupSubgroups;
+    VkShaderStageFlags requiredSubgroupSizeStages;
+    uint32_t maxInlineUniformBlockSize;
+    uint32_t maxPerStageDescriptorInlineUniformBlocks;
+    uint32_t maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks;
+    uint32_t maxDescriptorSetInlineUniformBlocks;
+    uint32_t maxDescriptorSetUpdateAfterBindInlineUniformBlocks;
+    uint32_t maxInlineUniformTotalSize;
+    VkBool32 integerDotProduct8BitUnsignedAccelerated;
+    VkBool32 integerDotProduct8BitSignedAccelerated;
+    VkBool32 integerDotProduct8BitMixedSignednessAccelerated;
+    VkBool32 integerDotProduct4x8BitPackedUnsignedAccelerated;
+    VkBool32 integerDotProduct4x8BitPackedSignedAccelerated;
+    VkBool32 integerDotProduct4x8BitPackedMixedSignednessAccelerated;
+    VkBool32 integerDotProduct16BitUnsignedAccelerated;
+    VkBool32 integerDotProduct16BitSignedAccelerated;
+    VkBool32 integerDotProduct16BitMixedSignednessAccelerated;
+    VkBool32 integerDotProduct32BitUnsignedAccelerated;
+    VkBool32 integerDotProduct32BitSignedAccelerated;
+    VkBool32 integerDotProduct32BitMixedSignednessAccelerated;
+    VkBool32 integerDotProduct64BitUnsignedAccelerated;
+    VkBool32 integerDotProduct64BitSignedAccelerated;
+    VkBool32 integerDotProduct64BitMixedSignednessAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating8BitUnsignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating8BitSignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating8BitMixedSignednessAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating4x8BitPackedUnsignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating4x8BitPackedSignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating4x8BitPackedMixedSignednessAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating16BitUnsignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating16BitSignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating16BitMixedSignednessAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating32BitUnsignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating32BitSignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating32BitMixedSignednessAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating64BitUnsignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating64BitSignedAccelerated;
+    VkBool32 integerDotProductAccumulatingSaturating64BitMixedSignednessAccelerated;
+    VkDeviceSize storageTexelBufferOffsetAlignmentBytes;
+    VkBool32 storageTexelBufferOffsetSingleTexelAlignment;
+    VkDeviceSize uniformTexelBufferOffsetAlignmentBytes;
+    VkBool32 uniformTexelBufferOffsetSingleTexelAlignment;
+    VkDeviceSize maxBufferSize;
+} VkPhysicalDeviceVulkan13Properties_host;
+#else
+typedef VkPhysicalDeviceVulkan13Properties VkPhysicalDeviceVulkan13Properties_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceRobustness2PropertiesEXT_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDeviceSize robustStorageBufferAccessSizeAlignment;
+    VkDeviceSize robustUniformBufferAccessSizeAlignment;
+} VkPhysicalDeviceRobustness2PropertiesEXT_host;
+#else
+typedef VkPhysicalDeviceRobustness2PropertiesEXT VkPhysicalDeviceRobustness2PropertiesEXT_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM_host
+{
+    VkStructureType sType;
+    void *pNext;
+    uint64_t shaderCoreMask;
+    uint32_t shaderCoreCount;
+    uint32_t shaderWarpsPerCore;
+} VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM_host;
+#else
+typedef VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
@@ -1809,19 +2316,6 @@ typedef VkSubmitInfo2 VkSubmitInfo2_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
-typedef struct VkDebugUtilsObjectNameInfoEXT_host
-{
-    VkStructureType sType;
-    const void *pNext;
-    VkObjectType objectType;
-    uint64_t objectHandle;
-    const char *pObjectName;
-} VkDebugUtilsObjectNameInfoEXT_host;
-#else
-typedef VkDebugUtilsObjectNameInfoEXT VkDebugUtilsObjectNameInfoEXT_host;
-#endif
-
-#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkDebugUtilsObjectTagInfoEXT_host
 {
     VkStructureType sType;
@@ -1847,6 +2341,20 @@ typedef struct VkSemaphoreSignalInfo_host
 typedef VkSemaphoreSignalInfo VkSemaphoreSignalInfoKHR;
 #else
 typedef VkSemaphoreSignalInfo VkSemaphoreSignalInfo_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkDeviceAddressBindingCallbackDataEXT_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkDeviceAddressBindingFlagsEXT flags;
+    VkDeviceAddress baseAddress;
+    VkDeviceSize size;
+    VkDeviceAddressBindingTypeEXT bindingType;
+} VkDeviceAddressBindingCallbackDataEXT_host;
+#else
+typedef VkDeviceAddressBindingCallbackDataEXT VkDeviceAddressBindingCallbackDataEXT_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
