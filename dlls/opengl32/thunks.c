@@ -915,6 +915,14 @@ void WINAPI glGetFloatv( GLenum pname, GLfloat *data )
     if ((status = UNIX_CALL( glGetFloatv, &args ))) WARN( "glGetFloatv returned %#x\n", status );
 }
 
+void WINAPI glGetIntegerv( GLenum pname, GLint *data )
+{
+    struct glGetIntegerv_params args = { .pname = pname, .data = data, };
+    NTSTATUS status;
+    TRACE( "pname %d, data %p\n", pname, data );
+    if ((status = UNIX_CALL( glGetIntegerv, &args ))) WARN( "glGetIntegerv returned %#x\n", status );
+}
+
 void WINAPI glGetLightfv( GLenum light, GLenum pname, GLfloat *params )
 {
     struct glGetLightfv_params args = { .light = light, .pname = pname, .params = params, };

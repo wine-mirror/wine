@@ -229,7 +229,7 @@ static BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLui
     return (exts_list && *exts_list) || *disabled_exts;
 }
 
-const GLuint *disabled_extensions_index(void)
+static const GLuint *disabled_extensions_index(void)
 {
     struct wgl_handle *ptr = get_current_context_ptr();
     GLuint **disabled = &ptr->u.context->disabled_exts;
@@ -286,6 +286,17 @@ BOOL check_extension_support( const char *extension, const char *available_exten
     return FALSE;
 }
 
+static void WINAPI wrap_glGetIntegerv( GLenum pname, GLint *data )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const GLuint *disabled;
+
+    funcs->gl.p_glGetIntegerv( pname, data );
+
+    if (pname == GL_NUM_EXTENSIONS && (disabled = disabled_extensions_index()))
+        while (*disabled++ != ~0u) (*data)--;
+}
+
 static const GLubyte * WINAPI wrap_glGetString( GLenum name )
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -324,7 +335,7 @@ char *build_extension_list(void)
     GLint len = 0, capacity, i, extensions_count;
     char *extension, *tmp, *available_extensions;
 
-    glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
+    wrap_glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
     capacity = 128 * extensions_count;
 
     if (!(available_extensions = HeapAlloc( GetProcessHeap(), 0, capacity ))) return NULL;
@@ -724,6 +735,13 @@ NTSTATUS wgl_wglShareLists( void *args )
 {
     struct wglShareLists_params *params = args;
     params->ret = wrap_wglShareLists( params->hrcSrvShare, params->hrcSrvSource );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS gl_glGetIntegerv( void *args )
+{
+    struct glGetIntegerv_params *params = args;
+    wrap_glGetIntegerv( params->pname, params->data );
     return STATUS_SUCCESS;
 }
 

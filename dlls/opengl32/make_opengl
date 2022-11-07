@@ -161,7 +161,6 @@ my %manual_win_functions =
     );
 my %manual_win_thunks =
     (
-     "glGetIntegerv" => 1,
      "wglGetCurrentReadDCARB" => 1,
      "wglGetPixelFormat" => 1,
      "wglGetProcAddress" => 1,
@@ -509,7 +508,7 @@ sub needs_wrapper($$)
 {
     my ($name, $func) = @_;
 
-    return 1 if $name =~ /^glDebugMessageCallback|^glGetString/;
+    return 1 if $name =~ /^glDebugMessageCallback|^glGetString|^glGetIntegerv/;
 
     # check if return value needs special handling
     (my $type = $func->[0]->textContent()) =~ s/ $//;

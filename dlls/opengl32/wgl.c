@@ -334,20 +334,6 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
   return 0;
 }
 
-void WINAPI glGetIntegerv(GLenum pname, GLint *data)
-{
-    struct glGetIntegerv_params args = { .pname = pname, .data = data, };
-    const GLuint *disabled;
-    NTSTATUS status;
-
-    TRACE( "pname %d, data %p\n", pname, data );
-
-    if ((status = UNIX_CALL( glGetIntegerv, &args ))) WARN( "glGetIntegerv returned %#x\n", status );
-
-    if (pname == GL_NUM_EXTENSIONS && (disabled = disabled_extensions_index()))
-        while (*disabled++ != ~0u) (*data)--;
-}
-
 static int compar(const void *elt_a, const void *elt_b) {
   return strcmp(((const OpenGL_extension *) elt_a)->name,
 		((const OpenGL_extension *) elt_b)->name);

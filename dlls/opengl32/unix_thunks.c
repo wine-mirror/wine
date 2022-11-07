@@ -18,6 +18,7 @@ extern NTSTATUS wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglShareLists( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS gl_glGetIntegerv( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS gl_glGetString( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glDebugMessageCallback( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glDebugMessageCallbackAMD( void *args ) DECLSPEC_HIDDEN;
@@ -903,14 +904,6 @@ static NTSTATUS gl_glGetFloatv( void *args )
     struct glGetFloatv_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     funcs->gl.p_glGetFloatv( params->pname, params->data );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS gl_glGetIntegerv( void *args )
-{
-    struct glGetIntegerv_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    funcs->gl.p_glGetIntegerv( params->pname, params->data );
     return STATUS_SUCCESS;
 }
 
