@@ -2263,7 +2263,6 @@ static void test_media_session_events(void)
     PropVariantClear(&propvar);
 
     ok(handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
-    todo_wine
     ok(handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
     handler.enum_count = handler.set_current_count = 0;
 
@@ -2342,7 +2341,6 @@ static void test_media_session_events(void)
     PropVariantClear(&propvar);
 
     ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
-    todo_wine
     ok(handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
     handler.enum_count = handler.set_current_count = 0;
 
@@ -3431,8 +3429,6 @@ todo_wine {
             ok(handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
         else
             ok(!handler.enum_count, "got %lu GetMediaTypeByIndex\n", handler.enum_count);
-
-        todo_wine_if(test->flags & LOADER_NO_CURRENT_OUTPUT)
         ok(!handler.set_current_count, "got %lu SetCurrentMediaType\n", handler.set_current_count);
 
         if (handler.current_type)

@@ -596,6 +596,60 @@ static HRESULT session_bind_output_nodes(IMFTopology *topology)
     return hr;
 }
 
+static HRESULT session_init_media_types(IMFTopology *topology)
+{
+    MF_TOPOLOGY_TYPE node_type;
+    WORD node_count, i, j;
+    IMFTopologyNode *node;
+    IMFMediaType *type;
+    DWORD input_count;
+    HRESULT hr;
+
+    if (FAILED(hr = IMFTopology_GetNodeCount(topology, &node_count)))
+        return hr;
+
+    for (i = 0; i < node_count; ++i)
+    {
+        if (FAILED(hr = IMFTopology_GetNode(topology, i, &node)))
+            break;
+
+        if (FAILED(hr = IMFTopologyNode_GetInputCount(node, &input_count))
+                || FAILED(hr = IMFTopologyNode_GetNodeType(node, &node_type))
+                || node_type != MF_TOPOLOGY_OUTPUT_NODE)
+        {
+            IMFTopologyNode_Release(node);
+            continue;
+        }
+
+        for (j = 0; j < input_count; ++j)
+        {
+            IMFMediaTypeHandler *handler;
+            IMFTopologyNode *up_node;
+            DWORD up_output;
+
+            if (SUCCEEDED(hr = IMFTopologyNode_GetInput(node, j, &up_node, &up_output)))
+            {
+                hr = topology_node_init_media_type(up_node, up_output, TRUE, &type);
+                IMFTopologyNode_Release(up_node);
+            }
+            if (FAILED(hr))
+                break;
+
+            if (SUCCEEDED(hr = topology_node_get_type_handler(node, j, FALSE, &handler)))
+            {
+                hr = IMFMediaTypeHandler_SetCurrentMediaType(handler, type);
+                IMFMediaTypeHandler_Release(handler);
+            }
+
+            IMFMediaType_Release(type);
+        }
+
+        IMFTopologyNode_Release(node);
+    }
+
+    return hr;
+}
+
 static void session_set_caps(struct media_session *session, DWORD caps)
 {
     DWORD delta = session->caps ^ caps;
@@ -1768,6 +1822,8 @@ static void session_set_topology(struct media_session *session, DWORD flags, IMF
 
             if (SUCCEEDED(hr))
                 hr = IMFTopoLoader_Load(session->topo_loader, topology, &resolved_topology, NULL /* FIXME? */);
+            if (SUCCEEDED(hr))
+                hr = session_init_media_types(resolved_topology);
 
             if (SUCCEEDED(hr))
             {
