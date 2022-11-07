@@ -533,23 +533,21 @@ static BOOL topology_loader_is_node_d3d_aware(IMFTopologyNode *node)
 static HRESULT topology_loader_create_copier(IMFTopologyNode *upstream_node, DWORD upstream_output,
         IMFTopologyNode *downstream_node, unsigned int downstream_input, IMFTransform **copier)
 {
-    IMFMediaType *input_type = NULL, *output_type = NULL;
+    IMFMediaType *up_type = NULL;
     IMFTransform *transform;
     HRESULT hr;
 
     if (FAILED(hr = MFCreateSampleCopierMFT(&transform)))
         return hr;
 
-    if (FAILED(hr = MFGetTopoNodeCurrentType(upstream_node, upstream_output, TRUE, &input_type)))
+    if (FAILED(hr = MFGetTopoNodeCurrentType(upstream_node, upstream_output, TRUE, &up_type)))
         WARN("Failed to get upstream media type hr %#lx.\n", hr);
 
-    if (SUCCEEDED(hr) && FAILED(hr = MFGetTopoNodeCurrentType(downstream_node, downstream_input, FALSE, &output_type)))
-        WARN("Failed to get downstream media type hr %#lx.\n", hr);
-
-    if (SUCCEEDED(hr) && FAILED(hr = IMFTransform_SetInputType(transform, 0, input_type, 0)))
+    if (SUCCEEDED(hr) && FAILED(hr = IMFTransform_SetInputType(transform, 0, up_type, 0)))
         WARN("Input type wasn't accepted, hr %#lx.\n", hr);
 
-    if (SUCCEEDED(hr) && FAILED(hr = IMFTransform_SetOutputType(transform, 0, output_type, 0)))
+    /* We assume, that up_type is set to a value compatible with the down node by the branch resolver. */
+    if (SUCCEEDED(hr) && FAILED(hr = IMFTransform_SetOutputType(transform, 0, up_type, 0)))
         WARN("Output type wasn't accepted, hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr))
@@ -558,10 +556,8 @@ static HRESULT topology_loader_create_copier(IMFTopologyNode *upstream_node, DWO
         IMFTransform_AddRef(*copier);
     }
 
-    if (input_type)
-        IMFMediaType_Release(input_type);
-    if (output_type)
-        IMFMediaType_Release(output_type);
+    if (up_type)
+        IMFMediaType_Release(up_type);
 
     IMFTransform_Release(transform);
 
