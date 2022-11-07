@@ -162,7 +162,6 @@ my %manual_win_functions =
 my %manual_win_thunks =
     (
      "glGetIntegerv" => 1,
-     "glGetString" => 1,
      "wglGetCurrentReadDCARB" => 1,
      "wglGetPixelFormat" => 1,
      "wglGetProcAddress" => 1,
@@ -510,7 +509,7 @@ sub needs_wrapper($$)
 {
     my ($name, $func) = @_;
 
-    return 1 if $name =~ /^glDebugMessageCallback|^glGetStringi/;
+    return 1 if $name =~ /^glDebugMessageCallback|^glGetString/;
 
     # check if return value needs special handling
     (my $type = $func->[0]->textContent()) =~ s/ $//;
@@ -941,6 +940,12 @@ foreach (sort keys %wgl_functions)
     next unless needs_wrapper( $_, $wgl_functions{$_} );
     print OUT "extern NTSTATUS wgl_$_( void *args ) DECLSPEC_HIDDEN;\n";
 }
+foreach (sort keys %norm_functions)
+{
+    next if defined $manual_win_functions{$_};
+    next unless needs_wrapper( $_, $norm_functions{$_} );
+    print OUT "extern NTSTATUS gl_$_( void *args ) DECLSPEC_HIDDEN;\n";
+}
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -958,6 +963,7 @@ foreach (sort keys %wgl_functions)
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
+    next if needs_wrapper( $_, $norm_functions{$_} );
     print OUT generate_unix_thunk($_, $norm_functions{$_}, "gl");
 }
 foreach (sort keys %ext_functions)

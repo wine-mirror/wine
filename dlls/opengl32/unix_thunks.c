@@ -18,6 +18,7 @@ extern NTSTATUS wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglShareLists( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS gl_glGetString( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glDebugMessageCallback( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glDebugMessageCallbackAMD( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glDebugMessageCallbackARB( void *args ) DECLSPEC_HIDDEN;
@@ -1006,14 +1007,6 @@ static NTSTATUS gl_glGetPolygonStipple( void *args )
     struct glGetPolygonStipple_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     funcs->gl.p_glGetPolygonStipple( params->mask );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS gl_glGetString( void *args )
-{
-    struct glGetString_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->gl.p_glGetString( params->name );
     return STATUS_SUCCESS;
 }
 

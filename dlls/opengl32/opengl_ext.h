@@ -101,7 +101,6 @@ static inline enum wgl_handle_type get_current_context_type(void)
 
 extern int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
 
-extern BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLuint **disabled_exts ) DECLSPEC_HIDDEN;
 extern const GLuint *disabled_extensions_index(void) DECLSPEC_HIDDEN;
 extern BOOL check_extension_support( const char *extension, const char *available_extensions ) DECLSPEC_HIDDEN;
 extern char *build_extension_list(void) DECLSPEC_HIDDEN;

@@ -195,7 +195,7 @@ static GLuint *filter_extensions_index( const char *disabled )
 }
 
 /* build the extension string by filtering out the disabled extensions */
-BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLuint **disabled_exts )
+static BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLuint **disabled_exts )
 {
     static const char *disabled;
 
@@ -284,6 +284,22 @@ BOOL check_extension_support( const char *extension, const char *available_exten
     }
 
     return FALSE;
+}
+
+static const GLubyte * WINAPI wrap_glGetString( GLenum name )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const GLubyte *ret;
+
+    if ((ret = funcs->gl.p_glGetString( name )) && name == GL_EXTENSIONS)
+    {
+        struct wgl_handle *ptr = get_current_context_ptr();
+        GLubyte **extensions = &ptr->u.context->extensions;
+        GLuint **disabled = &ptr->u.context->disabled_exts;
+        if (*extensions || filter_extensions( (const char *)ret, extensions, disabled )) return *extensions;
+    }
+
+    return ret;
 }
 
 static const GLubyte * WINAPI wrap_glGetStringi( GLenum name, GLuint index )
@@ -708,6 +724,13 @@ NTSTATUS wgl_wglShareLists( void *args )
 {
     struct wglShareLists_params *params = args;
     params->ret = wrap_wglShareLists( params->hrcSrvShare, params->hrcSrvSource );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS gl_glGetString( void *args )
+{
+    struct glGetString_params *params = args;
+    params->ret = wrap_glGetString( params->name );
     return STATUS_SUCCESS;
 }
 

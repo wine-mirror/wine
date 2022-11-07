@@ -1011,6 +1011,15 @@ void WINAPI glGetPolygonStipple( GLubyte *mask )
     if ((status = UNIX_CALL( glGetPolygonStipple, &args ))) WARN( "glGetPolygonStipple returned %#x\n", status );
 }
 
+const GLubyte * WINAPI glGetString( GLenum name )
+{
+    struct glGetString_params args = { .name = name, };
+    NTSTATUS status;
+    TRACE( "name %d\n", name );
+    if ((status = UNIX_CALL( glGetString, &args ))) WARN( "glGetString returned %#x\n", status );
+    return args.ret;
+}
+
 void WINAPI glGetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 {
     struct glGetTexEnvfv_params args = { .target = target, .pname = pname, .params = params, };

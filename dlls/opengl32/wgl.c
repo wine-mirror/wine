@@ -955,29 +955,6 @@ GLint WINAPI glDebugEntry( GLint unknown1, GLint unknown2 )
     return 0;
 }
 
-/***********************************************************************
- *              glGetString (OPENGL32.@)
- */
-const GLubyte * WINAPI glGetString( GLenum name )
-{
-    struct glGetString_params args = { .name = name, };
-    NTSTATUS status;
-
-    TRACE( "name %d\n", name );
-
-    if ((status = UNIX_CALL( glGetString, &args ))) WARN( "glGetString returned %#x\n", status );
-
-    if (name == GL_EXTENSIONS && args.ret)
-    {
-        struct wgl_handle *ptr = get_current_context_ptr();
-        GLubyte **extensions = &ptr->u.context->extensions;
-        GLuint **disabled = &ptr->u.context->disabled_exts;
-        if (*extensions || filter_extensions( (const char *)args.ret, extensions, disabled )) return *extensions;
-    }
-
-    return args.ret;
-}
-
 static BOOL WINAPI call_opengl_debug_message_callback( struct wine_gl_debug_message_params *params, ULONG size )
 {
     params->user_callback( params->source, params->type, params->id, params->severity,
