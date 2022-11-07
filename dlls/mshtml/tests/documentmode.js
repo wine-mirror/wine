@@ -1468,7 +1468,7 @@ async_test("storage events", function() {
         ok(e.key === key, "key = " + e.key + ", expected " + key);
         ok(e.oldValue === oldValue, "oldValue = " + e.oldValue + ", expected " + oldValue);
         ok(e.newValue === newValue, "newValue = " + e.newValue + ", expected " + newValue);
-        s = (idx ? iframe.contentWindow : window)["location"]["href"];
+        s = (idx ? iframe.contentWindow : window)["location"]["href"].split('#', 1)[0];
         ok(e.url === s, "url = " + e.url + ", expected " + s);
     }
 

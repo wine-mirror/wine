@@ -235,7 +235,7 @@ struct send_storage_event_ctx {
     BSTR key;
     BSTR old_value;
     BSTR new_value;
-    const WCHAR *url;
+    BSTR url;
 };
 
 static HRESULT push_storage_event_task(struct send_storage_event_ctx *ctx, HTMLInnerWindow *window, BOOL commit)
@@ -324,11 +324,16 @@ static HRESULT send_storage_event(HTMLStorage *storage, BSTR key, BSTR old_value
     BSTR hostname = NULL;
     HRESULT hres = S_OK;
 
+    ctx.url = NULL;
     if(!window)
         goto done;
-    get_top_window(window->base.outer_window, &top_window);
+    if(window->base.outer_window->uri_nofrag) {
+        hres = IUri_GetDisplayUri(window->base.outer_window->uri_nofrag, &ctx.url);
+        if(hres != S_OK)
+            goto done;
+    }
 
-    ctx.url = window->base.outer_window->url;
+    get_top_window(window->base.outer_window, &top_window);
     ctx.key = key;
     ctx.old_value = old_value;
     ctx.new_value = new_value;
@@ -351,9 +356,10 @@ static HRESULT send_storage_event(HTMLStorage *storage, BSTR key, BSTR old_value
         hres = push_storage_event_task(&ctx, window, TRUE);
 
 done:
+    SysFreeString(ctx.url);
     SysFreeString(hostname);
     SysFreeString(old_value);
-    return hres;
+    return FAILED(hres) ? hres : S_OK;
 }
 
 static HRESULT WINAPI HTMLStorage_QueryInterface(IHTMLStorage *iface, REFIID riid, void **ppv)
