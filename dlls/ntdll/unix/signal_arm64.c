@@ -876,56 +876,104 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
 }
 
 
-struct user_callback_frame
-{
-    struct syscall_frame frame;
-    void               **ret_ptr;
-    ULONG               *ret_len;
-    __wine_jmp_buf       jmpbuf;
-    NTSTATUS             status;
-    void                *teb_frame;
-};
+/***********************************************************************
+ *           call_user_mode_callback
+ */
+extern NTSTATUS CDECL call_user_mode_callback( void *func, void *stack, void **ret_ptr,
+                                               ULONG *ret_len, TEB *teb );
+__ASM_GLOBAL_FUNC( call_user_mode_callback,
+                   "stp x29, x30, [sp,#-0xc0]!\n\t"
+                   "mov x29, sp\n\t"
+                   "mov x16, x0\n\t"              /* func */
+                   "mov x17, x1\n\t"              /* stack */
+                   "mov x18, x4\n\t"              /* teb */
+                   "stp x19, x20, [x29, #0x10]\n\t"
+                   "stp x21, x22, [x29, #0x20]\n\t"
+                   "stp x23, x24, [x29, #0x30]\n\t"
+                   "stp x25, x26, [x29, #0x40]\n\t"
+                   "stp x27, x28, [x29, #0x50]\n\t"
+                   "stp d8,  d9,  [x29, #0x60]\n\t"
+                   "stp d10, d11, [x29, #0x70]\n\t"
+                   "stp d12, d13, [x29, #0x80]\n\t"
+                   "stp d14, d15, [x29, #0x90]\n\t"
+                   "stp x2, x3, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
+                   "mrs x5, fpcr\n\t"
+                   "mrs x6, fpsr\n\t"
+                   "bfi x5, x6, #0, #32\n\t"
+                   "ldr x6, [x18]\n\t"            /* teb->Tib.ExceptionList */
+                   "stp x5, x6, [x29, #0xb0]\n\t"
+
+                   "ldr x7, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
+                   "sub x5, sp, #0x330\n\t"       /* sizeof(struct syscall_frame) */
+                   "str x5, [x18, #0x2f8]\n\t"    /* arm64_thread_data()->syscall_frame */
+                   "ldr x8, [x7, #0x118]\n\t"     /* prev_frame->syscall_table */
+                   "ldp x0, x1, [x17]\n\t"        /* id, args */
+                   "ldr x2, [x17, #0x10]\n\t"     /* len */
+                   "mov sp, x17\n\t"
+                   "stp x7, x8, [x5, #0x110]\n\t" /* frame->prev_frame, frame->syscall_table */
+                   "br x16" )
+
+
+/***********************************************************************
+ *           user_mode_callback_return
+ */
+extern void CDECL DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
+                                                               NTSTATUS status, TEB *teb );
+__ASM_GLOBAL_FUNC( user_mode_callback_return,
+                   "ldr x4, [x3, #0x2f8]\n\t"     /* arm64_thread_data()->syscall_frame */
+                   "ldr x5, [x4, #0x110]\n\t"     /* prev_frame */
+                   "str x5, [x3, #0x2f8]\n\t"     /* arm64_thread_data()->syscall_frame */
+                   "add x29, x4, #0x330\n\t"      /* sizeof(struct syscall_frame) */
+                   "ldp x5, x6, [x29, #0xb0]\n\t"
+                   "str x6, [x3]\n\t"             /* teb->Tib.ExceptionList */
+                   "msr fpcr, x5\n\t"
+                   "lsr x5, x5, #32\n\t"
+                   "msr fpsr, x5\n\t"
+                   "ldp x19, x20, [x29, #0x10]\n\t"
+                   "ldp x21, x22, [x29, #0x20]\n\t"
+                   "ldp x23, x24, [x29, #0x30]\n\t"
+                   "ldp x25, x26, [x29, #0x40]\n\t"
+                   "ldp x27, x28, [x29, #0x50]\n\t"
+                   "ldp d8,  d9,  [x29, #0x60]\n\t"
+                   "ldp d10, d11, [x29, #0x70]\n\t"
+                   "ldp d12, d13, [x29, #0x80]\n\t"
+                   "ldp d14, d15, [x29, #0x90]\n\t"
+                   "ldp x5, x6, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
+                   "str x0, [x5]\n\t"             /* ret_ptr */
+                   "str x1, [x6]\n\t"             /* ret_len */
+                   "mov x0, x2\n\t"               /* status */
+                   "mov sp, x29\n\t"
+                   "ldp x29, x30, [sp], #0xc0\n\t"
+                   "ret" )
+
 
 /***********************************************************************
  *           KeUserModeCallback
  */
 NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void **ret_ptr, ULONG *ret_len )
 {
-    struct user_callback_frame callback_frame = { {{ 0 }}, ret_ptr, ret_len };
+    struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
+    void *args_data = (void *)((frame->sp - len) & ~15);
+    ULONG_PTR *stack = args_data;
 
     /* if we have no syscall frame, call the callback directly */
-    if ((char *)&callback_frame < (char *)ntdll_get_thread_data()->kernel_stack ||
-        (char *)&callback_frame > (char *)arm64_thread_data()->syscall_frame)
+    if ((char *)&frame < (char *)ntdll_get_thread_data()->kernel_stack ||
+        (char *)&frame > (char *)arm64_thread_data()->syscall_frame)
     {
         NTSTATUS (WINAPI *func)(const void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
         return func( args, len );
     }
 
-    if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&callback_frame)
+    if ((char *)ntdll_get_thread_data()->kernel_stack + min_kernel_stack > (char *)&frame)
         return STATUS_STACK_OVERFLOW;
 
-    if (!__wine_setjmpex( &callback_frame.jmpbuf, NULL ))
-    {
-        struct syscall_frame *frame = arm64_thread_data()->syscall_frame;
-        void *args_data = (void *)((frame->sp - len) & ~15);
+    memcpy( args_data, args, len );
+    *(--stack) = 0;
+    *(--stack) = len;
+    *(--stack) = (ULONG_PTR)args_data;
+    *(--stack) = id;
 
-        memcpy( args_data, args, len );
-
-        callback_frame.frame.x[0]          = id;
-        callback_frame.frame.x[1]          = (ULONG_PTR)args;
-        callback_frame.frame.x[2]          = len;
-        callback_frame.frame.x[18]         = frame->x[18];
-        callback_frame.frame.sp            = (ULONG_PTR)args_data;
-        callback_frame.frame.pc            = (ULONG_PTR)pKiUserCallbackDispatcher;
-        callback_frame.frame.restore_flags = CONTEXT_INTEGER;
-        callback_frame.frame.syscall_table = frame->syscall_table;
-        callback_frame.frame.prev_frame    = frame;
-        callback_frame.teb_frame           = NtCurrentTeb()->Tib.ExceptionList;
-        arm64_thread_data()->syscall_frame = &callback_frame.frame;
-
-        __wine_syscall_dispatcher_return( &callback_frame.frame, 0 );
-    }
-    return callback_frame.status;
+    return call_user_mode_callback( pKiUserCallbackDispatcher, stack, ret_ptr, ret_len, NtCurrentTeb() );
 }
 
 
@@ -934,16 +982,8 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
  */
 NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status )
 {
-    struct user_callback_frame *frame = (struct user_callback_frame *)arm64_thread_data()->syscall_frame;
-
-    if (!frame->frame.prev_frame) return STATUS_NO_CALLBACK_ACTIVE;
-
-    *frame->ret_ptr = ret_ptr;
-    *frame->ret_len = ret_len;
-    frame->status = status;
-    arm64_thread_data()->syscall_frame = frame->frame.prev_frame;
-    NtCurrentTeb()->Tib.ExceptionList = frame->teb_frame;
-    __wine_longjmp( &frame->jmpbuf, 1 );
+    if (!arm64_thread_data()->syscall_frame->prev_frame) return STATUS_NO_CALLBACK_ACTIVE;
+    user_mode_callback_return( ret_ptr, ret_len, status, NtCurrentTeb() );
 }
 
 
