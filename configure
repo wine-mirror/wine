@@ -1641,6 +1641,7 @@ enable_sdbinst
 enable_secedit
 enable_servicemodelreg
 enable_services
+enable_setx
 enable_shutdown
 enable_spoolsv
 enable_start
@@ -22342,6 +22343,7 @@ wine_fn_config_makefile programs/secedit enable_secedit
 wine_fn_config_makefile programs/servicemodelreg enable_servicemodelreg
 wine_fn_config_makefile programs/services enable_services
 wine_fn_config_makefile programs/services/tests enable_tests
+wine_fn_config_makefile programs/setx enable_setx
 wine_fn_config_makefile programs/shutdown enable_shutdown
 wine_fn_config_makefile programs/spoolsv enable_spoolsv
 wine_fn_config_makefile programs/start enable_start
