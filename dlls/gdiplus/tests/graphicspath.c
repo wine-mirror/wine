@@ -1682,9 +1682,12 @@ static void test_widen_cap(void)
         { LineCapSquareAnchor, 10.0, widenline_capsquareanchor_dashed_path,
                 ARRAY_SIZE(widenline_capsquareanchor_dashed_path), TRUE },
     };
+
+    GpAdjustableArrowCap *arrowcap;
     GpStatus status;
     GpPath *path;
     GpPen *pen;
+
     int i;
 
     status = GdipCreatePath(FillModeAlternate, &path);
@@ -1749,6 +1752,16 @@ static void test_widen_cap(void)
     expect(Ok, status);
     ok_path_fudge(path, widenline_capsquareanchor_multifigure_path,
         ARRAY_SIZE(widenline_capsquareanchor_multifigure_path), FALSE, 0.000005);
+
+    status = GdipCreateAdjustableArrowCap(4.0, 4.0, TRUE, &arrowcap);
+    ok(status == Ok, "Failed to create adjustable cap, %d\n", status);
+    status = GdipSetAdjustableArrowCapMiddleInset(arrowcap, 1.0);
+    ok(status == Ok, "Failed to set middle inset inadjustable cap, %d\n", status);
+    status = GdipSetPenCustomEndCap(pen, (GpCustomLineCap*)arrowcap);
+    ok(status == Ok, "Failed to create custom end cap, %d\n", status);
+    status = GdipWidenPath(path, pen, NULL, FlatnessDefault);
+    expect(Ok, status);
+
     GdipDeletePen(pen);
 
     GdipDeletePath(path);

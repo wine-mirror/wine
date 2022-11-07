@@ -1982,9 +1982,17 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
     }
 }
 
+static void widen_open_figure(const GpPointF *points, int start, int end,
+    GpPen *pen, REAL pen_width, GpLineCap start_cap,
+    GpLineCap end_cap, path_list_node_t **last_point);
+
+static void widen_closed_figure(const GpPointF *points, int start, int end,
+    GpPen *pen, REAL pen_width, path_list_node_t **last_point);
+
 static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
-    REAL pen_width, GpLineCap cap, GpCustomLineCap *custom, path_list_node_t **last_point)
+    GpPen *pen, GpLineCap cap, GpCustomLineCap *custom, path_list_node_t **last_point)
 {
+    REAL pen_width = max(pen->width, 2.0);
     switch (cap)
     {
     default:
@@ -2089,6 +2097,68 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
             endpoint->Y - par_dy, PathPointTypeLine);
         *last_point = add_path_list_node(*last_point, endpoint->X + perp_dx,
             endpoint->Y + perp_dy, PathPointTypeLine);
+        break;
+    }
+    case LineCapCustom:
+    {
+        REAL segment_dy = nextpoint->Y - endpoint->Y;
+        REAL segment_dx = nextpoint->X - endpoint->X;
+        REAL segment_length = sqrtf(segment_dy * segment_dy + segment_dx * segment_dx);
+        REAL posx, posy;
+        REAL perp_dx, perp_dy;
+        REAL sina, cosa;
+        GpPointF *tmp_points;
+
+        if(!custom)
+            break;
+
+        if (custom->type == CustomLineCapTypeAdjustableArrow)
+        {
+            GpAdjustableArrowCap *arrow = (GpAdjustableArrowCap *)custom;
+            TRACE("GpAdjustableArrowCap middle_inset: %f height: %f width: %f\n",
+                arrow->middle_inset, arrow->height, arrow->width);
+        }
+        else
+            TRACE("GpCustomLineCap fill: %d basecap: %d inset: %f join: %d scale: %f pen_width:%f\n",
+                custom->fill, custom->basecap, custom->inset, custom->join, custom->scale, pen_width);
+
+        /* Coordination where cap needs to be drawn */
+        posx = endpoint->X - pen_width * segment_dx / segment_length;
+        posy = endpoint->Y - pen_width * segment_dy / segment_length;
+
+        sina = -pen_width * custom->scale * segment_dx / segment_length;
+        cosa = pen_width * custom->scale * segment_dy / segment_length;
+
+        if (!custom->fill)
+        {
+            tmp_points = heap_alloc_zero(custom->pathdata.Count * sizeof(GpPoint));
+            if (!tmp_points) {
+                ERR("Out of memory\n");
+                return;
+            }
+
+            for (INT i = 0; i < custom->pathdata.Count; i++)
+            {
+                tmp_points[i].X = posx + custom->pathdata.Points[i].X * cosa + (custom->pathdata.Points[i].Y - 1.0) * sina;
+                tmp_points[i].Y = posy + custom->pathdata.Points[i].X * sina - (custom->pathdata.Points[i].Y - 1.0) * cosa;
+            }
+            if ((custom->pathdata.Types[custom->pathdata.Count - 1] & PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
+                widen_closed_figure(tmp_points, 0, custom->pathdata.Count - 1, pen, pen_width, last_point);
+            else
+                widen_open_figure(tmp_points, 0, custom->pathdata.Count - 1, pen, pen_width, LineCapFlat, LineCapFlat, last_point);
+        }
+        else
+        {
+            for (INT i = 0; i < custom->pathdata.Count; i++)
+            {
+                /* rotation of CustomCap according to line */
+                perp_dx = custom->pathdata.Points[i].X * cosa + (custom->pathdata.Points[i].Y - 1.0) * sina;
+                perp_dy = custom->pathdata.Points[i].X * sina - (custom->pathdata.Points[i].Y - 1.0) * cosa;
+                *last_point = add_path_list_node(*last_point, posx + perp_dx,
+                    posy + perp_dy, custom->pathdata.Types[i]);
+            }
+        }
+        /* FIXME: The line should be adjusted by the inset value of the custom cap. */
         break;
     }
     }
@@ -2335,16 +2405,15 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
 
     if (status == Ok)
     {
-        REAL anchor_pen_width = max(pen->width, 2.0);
         REAL pen_width = (pen->unit == UnitWorld) ? max(pen->width, 1.0) : pen->width;
         BYTE *types = flat_path->pathdata.Types;
 
         last_point = points;
 
-        if (pen->endcap > LineCapDiamondAnchor)
+        if (pen->endcap > LineCapDiamondAnchor && pen->endcap != LineCapCustom)
             FIXME("unimplemented end cap %x\n", pen->endcap);
 
-        if (pen->startcap > LineCapDiamondAnchor)
+        if (pen->startcap > LineCapDiamondAnchor && pen->startcap != LineCapCustom)
             FIXME("unimplemented start cap %x\n", pen->startcap);
 
         if (pen->dashcap != DashCapFlat)
@@ -2395,12 +2464,12 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
                 if (pen->startcap & LineCapAnchorMask)
                     add_anchor(&flat_path->pathdata.Points[subpath_start],
                         &flat_path->pathdata.Points[subpath_start+1],
-                        anchor_pen_width, pen->startcap, pen->customstart, &last_point);
+                        pen, pen->startcap, pen->customstart, &last_point);
 
                 if (pen->endcap & LineCapAnchorMask)
                     add_anchor(&flat_path->pathdata.Points[i],
                         &flat_path->pathdata.Points[i-1],
-                        anchor_pen_width, pen->endcap, pen->customend, &last_point);
+                        pen, pen->endcap, pen->customend, &last_point);
             }
         }
 
