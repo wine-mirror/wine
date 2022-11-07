@@ -22293,6 +22293,7 @@ struct wglSwapIntervalEXT_params
 
 enum unix_funcs
 {
+    unix_thread_attach,
     unix_wglCopyContext,
     unix_wglCreateContext,
     unix_wglDeleteContext,
@@ -25349,8 +25350,7 @@ struct wine_gl_debug_message_params
     const GLchar *message;
 };
 
-typedef NTSTATUS (*unixlib_function_t)( void *args );
-extern const unixlib_function_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;
-#define UNIX_CALL( func, params ) __wine_unix_call_funcs[unix_ ## func]( params )
+extern unixlib_handle_t unixlib_handle DECLSPEC_HIDDEN;
+#define UNIX_CALL( func, params ) __wine_unix_call( unixlib_handle, unix_ ## func, params )
 
 #endif /* __WINE_OPENGL32_UNIXLIB_H */

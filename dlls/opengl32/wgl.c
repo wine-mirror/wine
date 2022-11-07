@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
 #include <stdlib.h>
 #include <math.h>
@@ -39,6 +37,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
+
+unixlib_handle_t unixlib_handle;
 
 static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 
@@ -865,25 +865,33 @@ static BOOL WINAPI call_opengl_debug_message_callback( struct wine_gl_debug_mess
     return TRUE;
 }
 
-extern struct opengl_funcs null_opengl_funcs DECLSPEC_HIDDEN;
-
 /***********************************************************************
  *           OpenGL initialisation routine
  */
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     void **kernel_callback_table;
+    NTSTATUS status;
 
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        NtCurrentTeb()->glTable = &null_opengl_funcs;
+        if ((status = NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
+                                            &unixlib_handle, sizeof(unixlib_handle), NULL )))
+        {
+            ERR( "Failed to load unixlib, status %#x\n", status );
+            return FALSE;
+        }
 
         kernel_callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
         kernel_callback_table[NtUserCallOpenGLDebugMessageCallback] = call_opengl_debug_message_callback;
-        break;
+        /* fallthrough */
     case DLL_THREAD_ATTACH:
-        NtCurrentTeb()->glTable = &null_opengl_funcs;
+        if ((status = UNIX_CALL( thread_attach, NULL )))
+        {
+            WARN( "Failed to initialize thread, status %#x\n", status );
+            return FALSE;
+        }
         break;
     }
     return TRUE;

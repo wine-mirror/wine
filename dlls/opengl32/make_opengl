@@ -815,6 +815,7 @@ foreach (sort keys %ext_functions)
 
 print OUT "enum unix_funcs\n";
 print OUT "{\n";
+print OUT "    unix_thread_attach,\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -846,11 +847,10 @@ print OUT "    GLsizei length;\n";
 print OUT "    const GLchar *message;\n";
 print OUT "};\n\n";
 
-print OUT "typedef NTSTATUS (*unixlib_function_t)( void *args );\n";
-print OUT "extern const unixlib_function_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;\n";
-print OUT "#define UNIX_CALL( func, params ) __wine_unix_call_funcs[unix_ ## func]( params )\n";
+print OUT "extern unixlib_handle_t unixlib_handle DECLSPEC_HIDDEN;\n";
+print OUT "#define UNIX_CALL( func, params ) __wine_unix_call( unixlib_handle, unix_ ## func, params )\n\n";
 
-print OUT "\n#endif /* __WINE_OPENGL32_UNIXLIB_H */\n";
+print OUT "#endif /* __WINE_OPENGL32_UNIXLIB_H */\n";
 close OUT;
 
 #
@@ -917,6 +917,10 @@ close OUT;
 open OUT, ">unix_thunks.c" or die "cannot create unix_thunks.c";
 print OUT "/* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */\n\n";
 
+print OUT "#if 0\n";
+print OUT "#pragma makedep unix\n";
+print OUT "#endif\n\n";
+
 print OUT "#include <stdarg.h>\n";
 print OUT "#include <stddef.h>\n\n";
 
@@ -929,6 +933,7 @@ print OUT "#include \"wingdi.h\"\n\n";
 print OUT "#include \"unixlib.h\"\n";
 print OUT "#include \"unix_private.h\"\n\n";
 
+print OUT "extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -968,8 +973,9 @@ foreach (sort keys %ext_functions)
     print OUT generate_unix_thunk($_, $ext_functions{$_}, "ext");
 }
 
-print OUT "const unixlib_function_t __wine_unix_call_funcs[] =\n";
+print OUT "const unixlib_entry_t __wine_unix_call_funcs[] =\n";
 print OUT "{\n";
+print OUT "    &thread_attach,\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};

@@ -1,5 +1,9 @@
 /* Automatically generated from http://www.opengl.org/registry files; DO NOT EDIT! */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include <stdarg.h>
 #include <stddef.h>
 
@@ -12,6 +16,7 @@
 #include "unixlib.h"
 #include "unix_private.h"
 
+extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglCopyContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
@@ -24141,8 +24146,9 @@ static NTSTATUS ext_wglSwapIntervalEXT( void *args )
     return STATUS_SUCCESS;
 }
 
-const unixlib_function_t __wine_unix_call_funcs[] =
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    &thread_attach,
     &wgl_wglCopyContext,
     &wgl_wglCreateContext,
     &wgl_wglDeleteContext,

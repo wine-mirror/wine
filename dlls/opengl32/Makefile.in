@@ -1,10 +1,12 @@
 MODULE    = opengl32.dll
+UNIXLIB   = opengl32.so
 EXTRADEFS = -DWINE_NO_LONG_TYPES -D_OPENGL32_
 IMPORTLIB = opengl32
 IMPORTS   = user32 gdi32 advapi32 win32u
 DELAYIMPORTS = glu32
+UNIX_LIBS    = -lwin32u
 
-EXTRADLLFLAGS = -Wl,--image-base,0x7a800000 -mcygwin
+EXTRADLLFLAGS = -Wl,--image-base,0x7a800000
 
 C_SRCS = \
 	thunks.c \
