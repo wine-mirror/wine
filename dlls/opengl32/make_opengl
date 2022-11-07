@@ -169,7 +169,13 @@ my %manual_win_thunks =
     );
 my %manual_wow64_thunks =
     (
+     "glClientWaitSync" => 1,
+     "glDeleteSync" => 1,
+     "glFenceSync" => 1,
+     "glGetSynciv" => 1,
+     "glIsSync" => 1,
      "glPathGlyphIndexRangeNV" => 1,
+     "glWaitSync" => 1,
      "wglCreateContext" => 1,
      "wglCreateContextAttribsARB" => 1,
      "wglCreatePbufferARB" => 1,

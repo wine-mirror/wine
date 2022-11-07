@@ -4146,7 +4146,7 @@ static NTSTATUS ext_glClientWaitSemaphoreui64NVX( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glClientWaitSync( void *args )
+NTSTATUS ext_glClientWaitSync( void *args )
 {
     struct glClientWaitSync_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -5746,7 +5746,7 @@ static NTSTATUS ext_glDeleteStatesNV( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glDeleteSync( void *args )
+NTSTATUS ext_glDeleteSync( void *args )
 {
     struct glDeleteSync_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -6656,7 +6656,7 @@ static NTSTATUS ext_glFeedbackBufferxOES( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glFenceSync( void *args )
+NTSTATUS ext_glFenceSync( void *args )
 {
     struct glFenceSync_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -9803,7 +9803,7 @@ static NTSTATUS ext_glGetSubroutineUniformLocation( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glGetSynciv( void *args )
+NTSTATUS ext_glGetSynciv( void *args )
 {
     struct glGetSynciv_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -11555,7 +11555,7 @@ static NTSTATUS ext_glIsStateNV( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glIsSync( void *args )
+NTSTATUS ext_glIsSync( void *args )
 {
     struct glIsSync_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -23465,7 +23465,7 @@ static NTSTATUS ext_glWaitSemaphoreui64NVX( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glWaitSync( void *args )
+NTSTATUS ext_glWaitSync( void *args )
 {
     struct glWaitSync_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -31187,27 +31187,6 @@ static NTSTATUS wow64_ext_glClientWaitSemaphoreui64NVX( void *args )
     return status;
 }
 
-static NTSTATUS wow64_ext_glClientWaitSync( void *args )
-{
-    struct
-    {
-        PTR32 sync;
-        GLbitfield flags;
-        GLuint64 timeout;
-        GLenum ret;
-    } *params32 = args;
-    struct glClientWaitSync_params params =
-    {
-        .sync = ULongToPtr(params32->sync),
-        .flags = params32->flags,
-        .timeout = params32->timeout,
-    };
-    NTSTATUS status;
-    status = ext_glClientWaitSync( &params );
-    params32->ret = params.ret;
-    return status;
-}
-
 static NTSTATUS wow64_ext_glClipPlanefOES( void *args )
 {
     struct
@@ -33887,21 +33866,6 @@ static NTSTATUS wow64_ext_glDeleteStatesNV( void *args )
     return status;
 }
 
-static NTSTATUS wow64_ext_glDeleteSync( void *args )
-{
-    struct
-    {
-        PTR32 sync;
-    } *params32 = args;
-    struct glDeleteSync_params params =
-    {
-        .sync = ULongToPtr(params32->sync),
-    };
-    NTSTATUS status;
-    status = ext_glDeleteSync( &params );
-    return status;
-}
-
 static NTSTATUS wow64_ext_glDeleteTexturesEXT( void *args )
 {
     struct
@@ -34675,23 +34639,6 @@ static NTSTATUS wow64_ext_glFeedbackBufferxOES( void *args )
     NTSTATUS status;
     status = ext_glFeedbackBufferxOES( &params );
     return status;
-}
-
-static NTSTATUS wow64_ext_glFenceSync( void *args )
-{
-    struct
-    {
-        GLenum condition;
-        GLbitfield flags;
-        PTR32 ret;
-    } *params32 = args;
-    struct glFenceSync_params params =
-    {
-        .condition = params32->condition,
-        .flags = params32->flags,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS wow64_ext_glFinishAsyncSGIX( void *args )
@@ -41149,29 +41096,6 @@ static NTSTATUS wow64_ext_glGetSubroutineUniformLocation( void *args )
     return status;
 }
 
-static NTSTATUS wow64_ext_glGetSynciv( void *args )
-{
-    struct
-    {
-        PTR32 sync;
-        GLenum pname;
-        GLsizei count;
-        PTR32 length;
-        PTR32 values;
-    } *params32 = args;
-    struct glGetSynciv_params params =
-    {
-        .sync = ULongToPtr(params32->sync),
-        .pname = params32->pname,
-        .count = params32->count,
-        .length = ULongToPtr(params32->length),
-        .values = ULongToPtr(params32->values),
-    };
-    NTSTATUS status;
-    status = ext_glGetSynciv( &params );
-    return status;
-}
-
 static NTSTATUS wow64_ext_glGetTexBumpParameterfvATI( void *args )
 {
     struct
@@ -44313,23 +44237,6 @@ static NTSTATUS wow64_ext_glIsNamedStringARB( void *args )
     };
     NTSTATUS status;
     status = ext_glIsNamedStringARB( &params );
-    params32->ret = params.ret;
-    return status;
-}
-
-static NTSTATUS wow64_ext_glIsSync( void *args )
-{
-    struct
-    {
-        PTR32 sync;
-        GLboolean ret;
-    } *params32 = args;
-    struct glIsSync_params params =
-    {
-        .sync = ULongToPtr(params32->sync),
-    };
-    NTSTATUS status;
-    status = ext_glIsSync( &params );
     params32->ret = params.ret;
     return status;
 }
@@ -59995,25 +59902,6 @@ static NTSTATUS wow64_ext_glWaitSemaphoreui64NVX( void *args )
     return status;
 }
 
-static NTSTATUS wow64_ext_glWaitSync( void *args )
-{
-    struct
-    {
-        PTR32 sync;
-        GLbitfield flags;
-        GLuint64 timeout;
-    } *params32 = args;
-    struct glWaitSync_params params =
-    {
-        .sync = ULongToPtr(params32->sync),
-        .flags = params32->flags,
-        .timeout = params32->timeout,
-    };
-    NTSTATUS status;
-    status = ext_glWaitSync( &params );
-    return status;
-}
-
 static NTSTATUS wow64_ext_glWeightPathsNV( void *args )
 {
     struct
@@ -61002,7 +60890,13 @@ extern NTSTATUS wow64_wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glClientWaitSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glDeleteSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glFenceSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glGetSynciv( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glIsSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glWaitSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args ) DECLSPEC_HIDDEN;

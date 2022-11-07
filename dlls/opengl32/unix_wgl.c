@@ -52,7 +52,8 @@ enum wgl_handle_type
     HANDLE_PBUFFER = 0 << 12,
     HANDLE_CONTEXT = 1 << 12,
     HANDLE_CONTEXT_V3 = 3 << 12,
-    HANDLE_TYPE_MASK = 15 << 12
+    HANDLE_GLSYNC = 4 << 12,
+    HANDLE_TYPE_MASK = 15 << 12,
 };
 
 struct opengl_context
@@ -1058,7 +1059,13 @@ NTSTATUS WINAPI thread_attach( void *args )
 
 typedef ULONG PTR32;
 
+extern NTSTATUS ext_glClientWaitSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glDeleteSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glFenceSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glGetSynciv( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glIsSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glWaitSync( void *args ) DECLSPEC_HIDDEN;
 
 static inline void update_teb32_context(void)
 {
@@ -1251,6 +1258,191 @@ NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
     NTSTATUS status;
     if ((status = ext_glPathGlyphIndexRangeNV( &params ))) return status;
     params32->ret = params.ret;
+    return status;
+}
+
+NTSTATUS wow64_ext_glClientWaitSync( void *args )
+{
+    struct wgl_handle *handle;
+    struct
+    {
+        PTR32 sync;
+        GLbitfield flags;
+        GLuint64 timeout;
+        GLenum ret;
+    } *params32 = args;
+    NTSTATUS status;
+
+    pthread_mutex_lock( &wgl_lock );
+
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+        status = STATUS_INVALID_HANDLE;
+    else
+    {
+        struct glClientWaitSync_params params =
+        {
+            .sync = (GLsync)handle->u.context,
+            .flags = params32->flags,
+            .timeout = params32->timeout,
+        };
+        status = ext_glClientWaitSync( &params );
+        params32->ret = params.ret;
+    }
+
+    pthread_mutex_unlock( &wgl_lock );
+    return status;
+}
+
+NTSTATUS wow64_ext_glDeleteSync( void *args )
+{
+    struct wgl_handle *handle;
+    struct
+    {
+        PTR32 sync;
+    } *params32 = args;
+    NTSTATUS status;
+
+    pthread_mutex_lock( &wgl_lock );
+
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+        status = STATUS_INVALID_HANDLE;
+    else
+    {
+        struct glDeleteSync_params params =
+        {
+            .sync = (GLsync)handle->u.context,
+        };
+        status = ext_glDeleteSync( &params );
+        free_handle_ptr( handle );
+    }
+
+    pthread_mutex_unlock( &wgl_lock );
+    return status;
+}
+
+NTSTATUS wow64_ext_glFenceSync( void *args )
+{
+    struct
+    {
+        GLenum condition;
+        GLbitfield flags;
+        PTR32 ret;
+    } *params32 = args;
+    struct glFenceSync_params params =
+    {
+        .condition = params32->condition,
+        .flags = params32->flags,
+    };
+    NTSTATUS status;
+
+    if ((status = ext_glFenceSync( &params ))) return status;
+
+    pthread_mutex_lock( &wgl_lock );
+
+    if (!(params32->ret = (UINT_PTR)alloc_handle( HANDLE_GLSYNC, NULL, params.ret )))
+    {
+        struct glDeleteSync_params delete_params =
+        {
+            .sync = params.ret,
+        };
+
+        ext_glDeleteSync( &delete_params );
+        status = STATUS_NO_MEMORY;
+    }
+
+    pthread_mutex_unlock( &wgl_lock );
+    return status;
+}
+
+NTSTATUS wow64_ext_glGetSynciv( void *args )
+{
+    struct wgl_handle *handle;
+    struct
+    {
+        PTR32 sync;
+        GLenum pname;
+        GLsizei count;
+        PTR32 length;
+        PTR32 values;
+    } *params32 = args;
+    NTSTATUS status;
+
+    pthread_mutex_lock( &wgl_lock );
+
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+        status = STATUS_INVALID_HANDLE;
+    else
+    {
+        struct glGetSynciv_params params =
+        {
+            .sync = (GLsync)handle->u.context,
+            .pname = params32->pname,
+            .count = params32->count,
+            .length = ULongToPtr(params32->length),
+            .values = ULongToPtr(params32->values),
+        };
+        status = ext_glGetSynciv( &params );
+    }
+
+    pthread_mutex_unlock( &wgl_lock );
+    return status;
+}
+
+NTSTATUS wow64_ext_glIsSync( void *args )
+{
+    struct wgl_handle *handle;
+    struct
+    {
+        PTR32 sync;
+        GLboolean ret;
+    } *params32 = args;
+    NTSTATUS status;
+
+    pthread_mutex_lock( &wgl_lock );
+
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+        status = STATUS_INVALID_HANDLE;
+    else
+    {
+        struct glIsSync_params params =
+        {
+            .sync = (GLsync)handle->u.context,
+        };
+        status = ext_glIsSync( &params );
+        params32->ret = params.ret;
+    }
+
+    pthread_mutex_unlock( &wgl_lock );
+    return status;
+}
+
+NTSTATUS wow64_ext_glWaitSync( void *args )
+{
+    struct wgl_handle *handle;
+    struct
+    {
+        PTR32 sync;
+        GLbitfield flags;
+        GLuint64 timeout;
+    } *params32 = args;
+    NTSTATUS status;
+
+    pthread_mutex_lock( &wgl_lock );
+
+    if (!(handle = get_handle_ptr( ULongToPtr(params32->sync), HANDLE_GLSYNC )))
+        status = STATUS_INVALID_HANDLE;
+    else
+    {
+        struct glWaitSync_params params =
+        {
+            .sync = (GLsync)handle->u.context,
+            .flags = params32->flags,
+            .timeout = params32->timeout,
+        };
+        status = ext_glWaitSync( &params );
+    }
+
+    pthread_mutex_unlock( &wgl_lock );
     return status;
 }
 
