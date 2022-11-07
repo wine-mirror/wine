@@ -161,8 +161,14 @@ static HRESULT get_localstorage(IHTMLDocument2 *doc, IHTMLStorage **storage)
     }
 
     hres = IHTMLWindow6_get_localStorage(window6, storage);
-    ok(hres == S_OK, "get_localStorage failed: %08lx\n", hres);
-    ok(*storage != NULL, "*storage == NULL\n");
+
+    /* w10pro64 testbot VM sometimes returns this for some reason */
+    if(hres == WININET_E_INTERNAL_ERROR)
+        win_skip("localStorage is buggy and not available, skipping tests\n");
+    else {
+        ok(hres == S_OK, "get_localStorage failed: %08lx\n", hres);
+        ok(*storage != NULL, "*storage == NULL\n");
+    }
 
     IHTMLWindow6_Release(window6);
     return hres;
@@ -206,7 +212,11 @@ static void test_HTMLStorage(void)
     doc2 = create_doc_from_url(L"http://www.codeweavers.com/");
 
     hres = get_localstorage(doc, &storage);
-    ok(hres == S_OK, "got %08lx\n", hres);
+    if(hres != S_OK) {
+        IHTMLDocument2_Release(doc2);
+        IHTMLDocument2_Release(doc);
+        return;
+    }
 
     hres = get_localstorage(doc2, &storage2);
     ok(hres == S_OK, "got %08lx\n", hres);

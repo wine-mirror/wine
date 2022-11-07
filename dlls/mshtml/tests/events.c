@@ -4024,12 +4024,19 @@ static void test_storage_events(const char *doc_str)
         ok(hres == S_OK, "Could not get IHTMLWindow6: %08lx\n", hres);
         IHTMLWindow2_Release(window);
 
+        hres = IHTMLWindow6_get_localStorage(window6, &local_storage[i]);
+
+        /* w10pro64 testbot VM sometimes returns this for some reason */
+        if(hres == WININET_E_INTERNAL_ERROR) {
+            win_skip("localStorage is buggy and not available, skipping storage events tests\n");
+            goto done;
+        }
+
+        ok(hres == S_OK, "get_localStorage[%u] failed: %08lx\n", i, hres);
+        ok(local_storage[i] != NULL, "local_storage[%u] == NULL\n", i);
         hres = IHTMLWindow6_get_sessionStorage(window6, &session_storage[i]);
         ok(hres == S_OK, "get_sessionStorage[%u] failed: %08lx\n", i, hres);
         ok(session_storage[i] != NULL, "session_storage[%u] == NULL\n", i);
-        hres = IHTMLWindow6_get_localStorage(window6, &local_storage[i]);
-        ok(hres == S_OK, "get_localStorage[%u] failed: %08lx\n", i, hres);
-        ok(local_storage[i] != NULL, "local_storage[%u] == NULL\n", i);
 
         hres = IHTMLDocument2_QueryInterface(doc[i], &IID_IHTMLDocument6, (void**)&doc6);
         if(SUCCEEDED(hres)) {
@@ -4125,6 +4132,9 @@ static void test_storage_events(const char *doc_str)
     pump_msgs(&called_doc1_onstoragecommit);
     CHECK_CALLED(doc1_onstoragecommit);
 
+    for(i = 0; i < ARRAY_SIZE(local_storage); i++)
+        IHTMLStorage_Release(local_storage[i]);
+
     /* session storage */
     key = SysAllocString(L"foobar");
     hres = IHTMLStorage_removeItem(session_storage[0], key);
@@ -4184,6 +4194,10 @@ static void test_storage_events(const char *doc_str)
     CHECK_CALLED(doc1_onstorage);
     if(document_mode >= 9) CHECK_CALLED(window1_onstorage);
 
+    for(i = 0; i < ARRAY_SIZE(session_storage); i++)
+        IHTMLStorage_Release(session_storage[i]);
+
+done:
     set_client_site(doc[0], FALSE);
     set_client_site(doc[1], FALSE);
     IHTMLDocument2_Release(doc[0]);
