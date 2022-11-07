@@ -3945,6 +3945,7 @@ static void test_contenteditable(IUnknown *unk)
     IHTMLElement3 *elem3 = get_elem3_iface(unk);
     HRESULT hres;
     BSTR str, strDefault;
+    VARIANT_BOOL vbool;
 
     hres = IHTMLElement3_get_contentEditable(elem3, &strDefault);
     ok(hres == S_OK, "get_contentEditable failed: 0x%08lx\n", hres);
@@ -3957,6 +3958,21 @@ static void test_contenteditable(IUnknown *unk)
     ok(hres == S_OK, "get_contentEditable failed: 0x%08lx\n", hres);
     ok(!lstrcmpW(str, L"true"), "Got %s, expected %s\n", wine_dbgstr_w(str), "true");
     SysFreeString(str);
+    hres = IHTMLElement3_get_isContentEditable(elem3, &vbool);
+    ok(hres == S_OK, "get_isContentEditable failed: 0x%08lx\n", hres);
+    ok(vbool == VARIANT_TRUE, "Got %d, expected VARIANT_TRUE\n", vbool);
+
+    str = SysAllocString(L"inherit");
+    hres = IHTMLElement3_put_contentEditable(elem3, str);
+    ok(hres == S_OK, "put_contentEditable(%s) failed: 0x%08lx\n", wine_dbgstr_w(str), hres);
+    SysFreeString(str);
+    hres = IHTMLElement3_get_contentEditable(elem3, &str);
+    ok(hres == S_OK, "get_contentEditable failed: 0x%08lx\n", hres);
+    ok(!lstrcmpW(str, L"inherit"), "Got %s, expected %s\n", wine_dbgstr_w(str), "inherit");
+    SysFreeString(str);
+    hres = IHTMLElement3_get_isContentEditable(elem3, &vbool);
+    ok(hres == S_OK, "get_isContentEditable failed: 0x%08lx\n", hres);
+    ok(vbool == VARIANT_FALSE, "Got %d, expected VARIANT_FALSE\n", vbool);
 
     /* Restore origin contentEditable */
     hres = IHTMLElement3_put_contentEditable(elem3, strDefault);
