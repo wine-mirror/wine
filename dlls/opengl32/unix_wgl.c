@@ -223,6 +223,77 @@ static GLuint *filter_extensions_index( const char *disabled )
     return disabled_index;
 }
 
+static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
+{
+    while (len--) *dst++ = (unsigned char)*src++;
+}
+
+static inline UINT asciiz_to_unicode( WCHAR *dst, const char *src )
+{
+    WCHAR *p = dst;
+    while ((*p++ = *src++));
+    return (p - dst) * sizeof(WCHAR);
+}
+
+static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
+{
+    UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
+    OBJECT_ATTRIBUTES attr;
+    HANDLE ret;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = root;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    return NtOpenKeyEx( &ret, MAXIMUM_ALLOWED, &attr, 0 ) ? 0 : ret;
+}
+
+static HKEY open_hkcu_key( const char *name )
+{
+    WCHAR bufferW[256];
+    static HKEY hkcu;
+
+    if (!hkcu)
+    {
+        char buffer[256];
+        DWORD_PTR sid_data[(sizeof(TOKEN_USER) + SECURITY_MAX_SID_SIZE) / sizeof(DWORD_PTR)];
+        DWORD i, len = sizeof(sid_data);
+        SID *sid;
+
+        if (NtQueryInformationToken( GetCurrentThreadEffectiveToken(), TokenUser, sid_data, len, &len ))
+            return 0;
+
+        sid = ((TOKEN_USER *)sid_data)->User.Sid;
+        len = sprintf( buffer, "\\Registry\\User\\S-%u-%u", sid->Revision,
+                       MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5],
+                                           sid->IdentifierAuthority.Value[4] ),
+                                 MAKEWORD( sid->IdentifierAuthority.Value[3],
+                                           sid->IdentifierAuthority.Value[2] )));
+        for (i = 0; i < sid->SubAuthorityCount; i++)
+            len += sprintf( buffer + len, "-%u", sid->SubAuthority[i] );
+
+        ascii_to_unicode( bufferW, buffer, len );
+        hkcu = reg_open_key( NULL, bufferW, len * sizeof(WCHAR) );
+    }
+
+    return reg_open_key( hkcu, bufferW, asciiz_to_unicode( bufferW, name ) - sizeof(WCHAR) );
+}
+
+static ULONG query_reg_value( HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
+{
+    unsigned int name_size = name ? lstrlenW( name ) * sizeof(WCHAR) : 0;
+    UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
+
+    if (NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
+                         info, size, &size ))
+        return 0;
+
+    return size - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
+}
+
 static char *heap_strdup( const char *str )
 {
     int len = strlen( str ) + 1;
@@ -238,19 +309,18 @@ static BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLui
 
     if (!disabled)
     {
-        HKEY hkey;
-        DWORD size;
         char *str = NULL;
+        HKEY hkey;
 
         /* @@ Wine registry key: HKCU\Software\Wine\OpenGL */
-        if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\OpenGL", &hkey ))
+        if ((hkey = open_hkcu_key( "Software\\Wine\\OpenGL" )))
         {
-            if (!RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, NULL, &size ))
-            {
-                str = HeapAlloc( GetProcessHeap(), 0, size );
-                if (RegQueryValueExA( hkey, "DisabledExtensions", 0, NULL, (BYTE *)str, &size )) *str = 0;
-            }
-            RegCloseKey( hkey );
+            char buffer[4096];
+            KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+            static WCHAR disabled_extensionsW[] = {'D','i','s','a','b','l','e','d','E','x','t','e','n','s','i','o','n','s',0};
+
+            if (query_reg_value( hkey, disabled_extensionsW, value, sizeof(buffer) )) str = heap_strdup( buffer );
+            NtClose( hkey );
         }
         if (str)
         {
