@@ -760,6 +760,7 @@ sync_test("keyboard_event", function() {
     ok(e.location === 0, "location = " + e.location);
     ok(e.detail === 0, "detail = " + e.detail);
     ok(e.which === 0, "which = " + e.which);
+    ok(e.locale === "", "locale = " + e.locale);
 });
 
 sync_test("custom_event", function() {

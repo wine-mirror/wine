@@ -2154,8 +2154,11 @@ static HRESULT WINAPI DOMKeyboardEvent_get_char(IDOMKeyboardEvent *iface, VARIAN
 static HRESULT WINAPI DOMKeyboardEvent_get_locale(IDOMKeyboardEvent *iface, BSTR *p)
 {
     DOMKeyboardEvent *This = impl_from_IDOMKeyboardEvent(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    FIXME("(%p)->(%p) semi-stub\n", This, p);
+
+    *p = SysAllocString(L"");
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static const IDOMKeyboardEventVtbl DOMKeyboardEventVtbl = {
