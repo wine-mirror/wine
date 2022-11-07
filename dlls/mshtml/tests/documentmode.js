@@ -895,6 +895,18 @@ async_test("script_load", function() {
     external.writeStream("simple", "ready_states += 'exec,';");
 });
 
+sync_test("location", function() {
+    document.body.innerHTML = '<a name="testanchor">test</a>';
+
+    ok(location.hash === "", "initial location.hash = " + location.hash);
+    location.hash = "TestAnchor";
+    ok(location.hash === "#TestAnchor", "location.hash after set to TestAnchor = " + location.hash);
+    location.hash = "##foo";
+    ok(location.hash === "##foo", "location.hash after set to ##foo = " + location.hash);
+    location.hash = "#testanchor";
+    ok(location.hash === "#testanchor", "location.hash after set to #testanchor = " + location.hash);
+});
+
 sync_test("navigator", function() {
     var v = document.documentMode, re;
     var app = navigator.appVersion;
