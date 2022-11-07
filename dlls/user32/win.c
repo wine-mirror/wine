@@ -632,7 +632,7 @@ static LONG_PTR set_dialog_proc( HWND hwnd, LONG_PTR newval, BOOL ansi )
     DLGPROC proc;
     LONG_PTR ret;
     newval = NtUserCallTwoParam( newval, ansi, NtUserAllocWinProc );
-    ret = NtUserSetWindowLong( hwnd, DWLP_DLGPROC, newval, ansi );
+    ret = NtUserSetWindowLongPtr( hwnd, DWLP_DLGPROC, newval, ansi );
     proc = NtUserGetDialogProc( (DLGPROC)ret, ansi );
     if (proc) ret = (UINT_PTR)proc;
     return ret;
