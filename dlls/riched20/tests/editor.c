@@ -8949,7 +8949,7 @@ static void test_init_messages(void)
     ok(parent != 0, "Failed to create parent window\n");
     change_received = FALSE;
     edit = new_window("RichEditWithEvents", 0, parent);
-    todo_wine ok(change_received == FALSE, "Creating a RichEdit should not make any EN_CHANGE events\n");
+    ok(change_received == FALSE, "Creating a RichEdit should not make any EN_CHANGE events\n");
     DestroyWindow(edit);
     DestroyWindow(parent);
 }
