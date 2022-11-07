@@ -5926,6 +5926,70 @@ static inline void convert_VkDeviceFaultInfoEXT_host_to_win32(const VkDeviceFaul
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseImageMemoryRequirements_host_to_win32(const VkSparseImageMemoryRequirements_host *in, VkSparseImageMemoryRequirements *out)
+{
+    if (!in) return;
+
+    out->formatProperties = in->formatProperties;
+    out->imageMipTailFirstLod = in->imageMipTailFirstLod;
+    out->imageMipTailSize = in->imageMipTailSize;
+    out->imageMipTailOffset = in->imageMipTailOffset;
+    out->imageMipTailStride = in->imageMipTailStride;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseImageMemoryRequirements2_win32_to_host(const VkSparseImageMemoryRequirements2 *in, VkSparseImageMemoryRequirements2_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseImageMemoryRequirements2_host_to_win32(const VkSparseImageMemoryRequirements2_host *in, VkSparseImageMemoryRequirements2 *out)
+{
+    if (!in) return;
+
+    convert_VkSparseImageMemoryRequirements_host_to_win32(&in->memoryRequirements, &out->memoryRequirements);
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline VkSparseImageMemoryRequirements2_host *convert_VkSparseImageMemoryRequirements2_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryRequirements2 *in, uint32_t count)
+{
+    VkSparseImageMemoryRequirements2_host *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSparseImageMemoryRequirements2_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseImageMemoryRequirements2_array_host_to_win32(const VkSparseImageMemoryRequirements2_host *in, VkSparseImageMemoryRequirements2 *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSparseImageMemoryRequirements2_host_to_win32(&in[i], &out[i]);
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win32_to_host(const VkDeviceMemoryOpaqueCaptureAddressInfo *in, VkDeviceMemoryOpaqueCaptureAddressInfo_host *out)
 {
     if (!in) return;
@@ -5958,6 +6022,20 @@ static inline void convert_VkImageMemoryRequirementsInfo2_win32_to_host(const Vk
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->image = in->image;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSparseImageMemoryRequirements_array_host_to_win32(const VkSparseImageMemoryRequirements_host *in, VkSparseImageMemoryRequirements *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSparseImageMemoryRequirements_host_to_win32(&in[i], &out[i]);
+    }
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -17186,10 +17264,16 @@ static NTSTATUS thunk64_vkGetDeviceImageSparseMemoryRequirements(void *args)
 static NTSTATUS thunk32_vkGetDeviceImageSparseMemoryRequirements(void *args)
 {
     struct vkGetDeviceImageSparseMemoryRequirements_params *params = args;
+    VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
 
-    wine_device_from_handle(params->device)->funcs.p_vkGetDeviceImageSparseMemoryRequirements(wine_device_from_handle(params->device)->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
+    init_conversion_context(&ctx);
+    pSparseMemoryRequirements_host = convert_VkSparseImageMemoryRequirements2_array_win32_to_host(&ctx, params->pSparseMemoryRequirements, *params->pSparseMemoryRequirementCount);
+    wine_device_from_handle(params->device)->funcs.p_vkGetDeviceImageSparseMemoryRequirements(wine_device_from_handle(params->device)->device, params->pInfo, params->pSparseMemoryRequirementCount, pSparseMemoryRequirements_host);
+    convert_VkSparseImageMemoryRequirements2_array_host_to_win32(pSparseMemoryRequirements_host, params->pSparseMemoryRequirements, *params->pSparseMemoryRequirementCount);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -17212,10 +17296,16 @@ static NTSTATUS thunk64_vkGetDeviceImageSparseMemoryRequirementsKHR(void *args)
 static NTSTATUS thunk32_vkGetDeviceImageSparseMemoryRequirementsKHR(void *args)
 {
     struct vkGetDeviceImageSparseMemoryRequirementsKHR_params *params = args;
+    VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
 
-    wine_device_from_handle(params->device)->funcs.p_vkGetDeviceImageSparseMemoryRequirementsKHR(wine_device_from_handle(params->device)->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
+    init_conversion_context(&ctx);
+    pSparseMemoryRequirements_host = convert_VkSparseImageMemoryRequirements2_array_win32_to_host(&ctx, params->pSparseMemoryRequirements, *params->pSparseMemoryRequirementCount);
+    wine_device_from_handle(params->device)->funcs.p_vkGetDeviceImageSparseMemoryRequirementsKHR(wine_device_from_handle(params->device)->device, params->pInfo, params->pSparseMemoryRequirementCount, pSparseMemoryRequirements_host);
+    convert_VkSparseImageMemoryRequirements2_array_host_to_win32(pSparseMemoryRequirements_host, params->pSparseMemoryRequirements, *params->pSparseMemoryRequirementCount);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -17654,10 +17744,16 @@ static NTSTATUS thunk64_vkGetImageSparseMemoryRequirements(void *args)
 static NTSTATUS thunk32_vkGetImageSparseMemoryRequirements(void *args)
 {
     struct vkGetImageSparseMemoryRequirements_params *params = args;
+    VkSparseImageMemoryRequirements_host *pSparseMemoryRequirements_host;
+    struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
 
-    wine_device_from_handle(params->device)->funcs.p_vkGetImageSparseMemoryRequirements(wine_device_from_handle(params->device)->device, params->image, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
+    init_conversion_context(&ctx);
+    pSparseMemoryRequirements_host = (params->pSparseMemoryRequirements && *params->pSparseMemoryRequirementCount) ? conversion_context_alloc(&ctx, sizeof(*pSparseMemoryRequirements_host) * *params->pSparseMemoryRequirementCount) : NULL;
+    wine_device_from_handle(params->device)->funcs.p_vkGetImageSparseMemoryRequirements(wine_device_from_handle(params->device)->device, params->image, params->pSparseMemoryRequirementCount, pSparseMemoryRequirements_host);
+    convert_VkSparseImageMemoryRequirements_array_host_to_win32(pSparseMemoryRequirements_host, params->pSparseMemoryRequirements, *params->pSparseMemoryRequirementCount);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -17681,11 +17777,17 @@ static NTSTATUS thunk32_vkGetImageSparseMemoryRequirements2(void *args)
 {
     struct vkGetImageSparseMemoryRequirements2_params *params = args;
     VkImageSparseMemoryRequirementsInfo2_host pInfo_host;
+    VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
 
+    init_conversion_context(&ctx);
     convert_VkImageSparseMemoryRequirementsInfo2_win32_to_host(params->pInfo, &pInfo_host);
-    wine_device_from_handle(params->device)->funcs.p_vkGetImageSparseMemoryRequirements2(wine_device_from_handle(params->device)->device, &pInfo_host, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
+    pSparseMemoryRequirements_host = convert_VkSparseImageMemoryRequirements2_array_win32_to_host(&ctx, params->pSparseMemoryRequirements, *params->pSparseMemoryRequirementCount);
+    wine_device_from_handle(params->device)->funcs.p_vkGetImageSparseMemoryRequirements2(wine_device_from_handle(params->device)->device, &pInfo_host, params->pSparseMemoryRequirementCount, pSparseMemoryRequirements_host);
+    convert_VkSparseImageMemoryRequirements2_array_host_to_win32(pSparseMemoryRequirements_host, params->pSparseMemoryRequirements, *params->pSparseMemoryRequirementCount);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -17709,11 +17811,17 @@ static NTSTATUS thunk32_vkGetImageSparseMemoryRequirements2KHR(void *args)
 {
     struct vkGetImageSparseMemoryRequirements2KHR_params *params = args;
     VkImageSparseMemoryRequirementsInfo2_host pInfo_host;
+    VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
 
+    init_conversion_context(&ctx);
     convert_VkImageSparseMemoryRequirementsInfo2_win32_to_host(params->pInfo, &pInfo_host);
-    wine_device_from_handle(params->device)->funcs.p_vkGetImageSparseMemoryRequirements2KHR(wine_device_from_handle(params->device)->device, &pInfo_host, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
+    pSparseMemoryRequirements_host = convert_VkSparseImageMemoryRequirements2_array_win32_to_host(&ctx, params->pSparseMemoryRequirements, *params->pSparseMemoryRequirementCount);
+    wine_device_from_handle(params->device)->funcs.p_vkGetImageSparseMemoryRequirements2KHR(wine_device_from_handle(params->device)->device, &pInfo_host, params->pSparseMemoryRequirementCount, pSparseMemoryRequirements_host);
+    convert_VkSparseImageMemoryRequirements2_array_host_to_win32(pSparseMemoryRequirements_host, params->pSparseMemoryRequirements, *params->pSparseMemoryRequirementCount);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 

@@ -791,6 +791,9 @@ class VkFunction(object):
         for p in self.params:
             if p.needs_conversion(conv, unwrap, Direction.INPUT):
                 body += p.copy(Direction.INPUT, conv, unwrap, prefix=params_prefix)
+            elif p.is_dynamic_array() and p.needs_conversion(conv, unwrap, Direction.OUTPUT):
+                body += "    {0}_host = ({2}{0} && {1}) ? conversion_context_alloc(&ctx, sizeof(*{0}_host) * {1}) : NULL;\n".format(
+                    p.name, p.get_dyn_array_len(params_prefix), params_prefix)
 
         # Build list of parameters containing converted and non-converted parameters.
         # The param itself knows if conversion is needed and applies it when we set conv=True.
@@ -1573,9 +1576,9 @@ class VkParam(VkVariable):
 
     def copy(self, direction, conv, unwrap, prefix=""):
         win_type = "win32" if conv else "win64"
+        wrap_part = "" if unwrap or not self.needs_unwrapping() else "unwrapped_"
         if direction == Direction.INPUT:
             ctx_param = "&ctx, " if self.needs_alloc(conv, unwrap) else ""
-            wrap_part = "" if unwrap or not self.needs_unwrapping() else "unwrapped_"
             if self.is_dynamic_array():
                 return "    {1}_host = convert_{2}_array_{4}_to_{6}host({5}{0}{1}, {3});\n".format(
                     prefix, self.name, self.type, self.get_dyn_array_len(prefix), win_type, ctx_param, wrap_part)
@@ -1583,7 +1586,8 @@ class VkParam(VkVariable):
                 return "    convert_{0}_{3}_to_{5}host({4}{1}{2}, &{2}_host);\n".format(self.type, prefix, self.name, win_type, ctx_param, wrap_part)
         else:
             if self.is_dynamic_array():
-                LOGGER.error("Unimplemented output conversion for: {0}".format(self.name))
+                return "    convert_{0}_array_{1}host_to_{2}({3}_host, {4}{3}, {5});\n".format(
+                    self.type, wrap_part, win_type, self.name, prefix, self.get_dyn_array_len(prefix))
             else:
                 return "    convert_{0}_host_to_{3}(&{2}_host, {1}{2});\n".format(self.type, prefix, self.name, win_type)
 
@@ -1921,13 +1925,6 @@ class VkStruct(Sequence):
         if direction == Direction.INPUT and self.name in STRUCT_CHAIN_CONVERSIONS:
             return True
 
-        # VkSparseImageMemoryRequirements(2) is used by vkGetImageSparseMemoryRequirements(2).
-        # This function is tricky to wrap, because how to wrap depends on whether
-        # pSparseMemoryRequirements is NULL or not. Luckily for VkSparseImageMemoryRequirements(2)
-        # the alignment works out in such a way that no conversion is needed between win32 and Linux.
-        if self.name in ["VkSparseImageMemoryRequirements", "VkSparseImageMemoryRequirements2"]:
-            return False
-
         # pFixedRateFlags field is missing const, but it doesn't need output conversion
         if direction == Direction.OUTPUT and self.name == "VkImageCompressionControlEXT":
             return False
@@ -1978,10 +1975,6 @@ class VkStruct(Sequence):
         return False
 
     def needs_host_type(self):
-        # FIXME: Remove once we don't need need it
-        if self.name in ["VkSparseImageMemoryRequirements", "VkSparseImageMemoryRequirements2"]:
-            return False
-
         for m in self.members:
             if self.name == m.type:
                 continue
