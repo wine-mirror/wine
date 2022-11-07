@@ -33,6 +33,7 @@
 
 /* All the basic includes */
 #include <excpt.h>
+#include <sdkddkver.h>
 #include <stdarg.h>
 #include <windef.h>
 #include <winbase.h>

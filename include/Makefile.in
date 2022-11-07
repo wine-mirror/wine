@@ -666,6 +666,7 @@ SOURCES = \
 	schemadef.h \
 	schnlsp.h \
 	sddl.h \
+	sdkddkver.h \
 	secext.h \
 	security.h \
 	sensapi.h \
