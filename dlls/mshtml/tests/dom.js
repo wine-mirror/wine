@@ -722,3 +722,30 @@ sync_test("classList", function() {
     ok(("" + classList) === "  testclass    foobar  ", "Expected classList value '  testclass    foobar  ', got " + classList);
     ok(classList.toString() === "  testclass    foobar  ", "Expected classList toString '  testclass    foobar  ', got " + classList.toString());
 });
+
+sync_test("importNode", function() {
+    var node, node2, orig_node, doc = document.implementation.createHTMLDocument("TestDoc");
+    doc.body.innerHTML = '<div id="test"><span/></div>';
+    orig_node = doc.getElementById("test");
+
+    node = document.importNode(orig_node, false);
+    ok(node !== orig_node, "node = orig_node");
+    ok(orig_node.hasChildNodes() === true, "orig_node does not have child nodes");
+    ok(orig_node.parentNode === doc.body, "orig_node.parentNode = " + orig_node.parentNode);
+    ok(node.hasChildNodes() === false, "node has child nodes with shallow import");
+    ok(node.parentNode === null, "node.parentNode = " + node.parentNode);
+
+    node = document.importNode(orig_node, true);
+    ok(node !== orig_node, "node = orig_node");
+    ok(orig_node.hasChildNodes() === true, "orig_node does not have child nodes");
+    ok(orig_node.parentNode === doc.body, "orig_node.parentNode = " + orig_node.parentNode);
+    ok(node.hasChildNodes() === true, "node does not have child nodes with deep import");
+    ok(node.parentNode === null, "node.parentNode = " + node.parentNode);
+
+    node2 = document.importNode(node, false);
+    ok(node !== node2, "node = node2");
+    ok(node.hasChildNodes() === true, "node does not have child nodes");
+    ok(node.parentNode === null, "node.parentNode = " + node.parentNode);
+    ok(node2.hasChildNodes() === false, "node2 has child nodes");
+    ok(node2.parentNode === null, "node2.parentNode = " + node2.parentNode);
+});

@@ -807,6 +807,8 @@ struct HTMLDOMNode {
     HTMLDocumentNode *doc;
 };
 
+HTMLDOMNode *unsafe_impl_from_IHTMLDOMNode(IHTMLDOMNode*) DECLSPEC_HIDDEN;
+
 static inline void node_addref(HTMLDOMNode *node)
 {
     IHTMLDOMNode_AddRef(&node->IHTMLDOMNode_iface);

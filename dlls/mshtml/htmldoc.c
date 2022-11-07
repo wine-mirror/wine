@@ -4375,8 +4375,41 @@ static HRESULT WINAPI HTMLDocument7_importNode(IHTMLDocument7 *iface, IHTMLDOMNo
         VARIANT_BOOL fDeep, IHTMLDOMNode3 **ppNodeDest)
 {
     HTMLDocumentNode *This = impl_from_IHTMLDocument7(iface);
-    FIXME("(%p)->(%p %x %p)\n", This, pNodeSource, fDeep, ppNodeDest);
-    return E_NOTIMPL;
+    nsIDOMNode *nsnode = NULL;
+    HTMLDOMNode *node;
+    nsresult nsres;
+    HRESULT hres;
+
+    TRACE("(%p)->(%p %x %p)\n", This, pNodeSource, fDeep, ppNodeDest);
+
+    if(!This->nsdoc) {
+        WARN("NULL nsdoc\n");
+        return E_UNEXPECTED;
+    }
+
+    if(!(node = unsafe_impl_from_IHTMLDOMNode(pNodeSource))) {
+        ERR("not our node\n");
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMHTMLDocument_ImportNode(This->nsdoc, node->nsnode, !!fDeep, 1, &nsnode);
+    if(NS_FAILED(nsres)) {
+        ERR("ImportNode failed: %08lx\n", nsres);
+        return map_nsresult(nsres);
+    }
+
+    if(!nsnode) {
+        *ppNodeDest = NULL;
+        return S_OK;
+    }
+
+    hres = get_node(nsnode, TRUE, &node);
+    nsIDOMNode_Release(nsnode);
+    if(FAILED(hres))
+        return hres;
+
+    *ppNodeDest = &node->IHTMLDOMNode3_iface;
+    return hres;
 }
 
 static HRESULT WINAPI HTMLDocument7_get_parentWindow(IHTMLDocument7 *iface, IHTMLWindow2 **p)

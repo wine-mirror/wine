@@ -1067,6 +1067,11 @@ static const IHTMLDOMNodeVtbl HTMLDOMNodeVtbl = {
     HTMLDOMNode_get_nextSibling
 };
 
+HTMLDOMNode *unsafe_impl_from_IHTMLDOMNode(IHTMLDOMNode *iface)
+{
+    return iface->lpVtbl == &HTMLDOMNodeVtbl ? impl_from_IHTMLDOMNode(iface) : NULL;
+}
+
 static HTMLDOMNode *get_node_obj(IHTMLDOMNode *iface)
 {
     HTMLDOMNode *ret;
