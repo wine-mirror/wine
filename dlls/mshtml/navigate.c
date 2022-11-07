@@ -1184,8 +1184,10 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                 (nsIRequest*)&This->nschannel->nsIHttpChannel_iface, This->nscontext,
                 &This->nsstream->nsIInputStream_iface, This->bsc.read-This->nsstream->buf_size,
                 This->nsstream->buf_size);
-        if(NS_FAILED(nsres))
-            ERR("OnDataAvailable failed: %08lx\n", nsres);
+        if(NS_FAILED(nsres)) {
+            WARN("OnDataAvailable failed: %08lx\n", nsres);
+            return map_nsresult(nsres);
+        }
 
         if(This->nsstream->buf_size == sizeof(This->nsstream->buf)) {
             ERR("buffer is full\n");
