@@ -334,98 +334,20 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
   return 0;
 }
 
-static int registry_entry_cmp( const void *a, const void *b )
-{
-    const struct registry_entry *entry_a = a, *entry_b = b;
-    return strcmp( entry_a->name, entry_b->name );
-}
-
-static char *heap_strdup( const char *str )
-{
-    int len = strlen( str ) + 1;
-    char *ret = HeapAlloc( GetProcessHeap(), 0, len );
-    memcpy( ret, str, len );
-    return ret;
-}
-
-/* Check if a GL extension is supported */
-static BOOL is_extension_supported( const char *extension )
-{
-    enum wgl_handle_type type = get_current_context_type();
-    char *available_extensions = NULL;
-    BOOL ret = FALSE;
-
-    if (type == HANDLE_CONTEXT) available_extensions = heap_strdup( (const char *)glGetString( GL_EXTENSIONS ) );
-    if (!available_extensions) available_extensions = build_extension_list();
-
-    if (!available_extensions) ERR( "No OpenGL extensions found, check if your OpenGL setup is correct!\n" );
-    else ret = check_extension_support( extension, available_extensions );
-
-    HeapFree( GetProcessHeap(), 0, available_extensions );
-    return ret;
-}
-
 /***********************************************************************
  *		wglGetProcAddress (OPENGL32.@)
  */
 PROC WINAPI wglGetProcAddress( LPCSTR name )
 {
-    const struct registry_entry entry = {.name = name}, *found;
-    struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    const void **func_ptr, *proc;
+    struct wglGetProcAddress_params args = { .lpszProc = name, };
+    const void *proc;
+    NTSTATUS status;
 
     if (!name) return NULL;
+    if ((status = UNIX_CALL( wglGetProcAddress, &args ))) WARN( "wglGetProcAddress %s returned %#x\n", debugstr_a(name), status );
+    if (args.ret == (void *)-1) return NULL;
 
-    /* Without an active context opengl32 doesn't know to what
-     * driver it has to dispatch wglGetProcAddress.
-     */
-    if (!get_current_context_ptr())
-    {
-        WARN("No active WGL context found\n");
-        return NULL;
-    }
-
-    if (!(found = bsearch( &entry, extension_registry, extension_registry_size,
-                           sizeof(entry), registry_entry_cmp )))
-    {
-        WARN("Function %s unknown\n", name);
-        return NULL;
-    }
-
-    func_ptr = (const void **)&funcs->ext + (found - extension_registry);
-    if (!*func_ptr)
-    {
-        void *driver_func = funcs->wgl.p_wglGetProcAddress( name );
-
-        if (!is_extension_supported(found->extension))
-        {
-            unsigned int i;
-            static const struct { const char *name, *alt; } alternatives[] =
-            {
-                { "glCopyTexSubImage3DEXT", "glCopyTexSubImage3D" },     /* needed by RuneScape */
-                { "glVertexAttribDivisor", "glVertexAttribDivisorARB"},  /* needed by Caffeine */
-            };
-
-            for (i = 0; i < ARRAY_SIZE(alternatives); i++)
-            {
-                if (strcmp( name, alternatives[i].name )) continue;
-                WARN( "Extension %s required for %s not supported, trying %s\n", found->extension,
-                      name, alternatives[i].alt );
-                return wglGetProcAddress( alternatives[i].alt );
-            }
-            WARN( "Extension %s required for %s not supported\n", found->extension, name );
-            return NULL;
-        }
-
-        if (driver_func == NULL)
-        {
-            WARN("Function %s not supported by driver\n", name);
-            return NULL;
-        }
-        *func_ptr = driver_func;
-    }
-
-    proc = extension_procs[found - extension_registry];
+    proc = extension_procs[(UINT_PTR)args.ret];
     TRACE( "returning %s -> %p\n", name, proc );
     return proc;
 }

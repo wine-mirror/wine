@@ -94,15 +94,6 @@ static inline struct wgl_handle *get_current_context_ptr(void)
     return &wgl_handles[LOWORD(NtCurrentTeb()->glCurrentRC) & ~HANDLE_TYPE_MASK];
 }
 
-static inline enum wgl_handle_type get_current_context_type(void)
-{
-    if (!NtCurrentTeb()->glCurrentRC) return HANDLE_CONTEXT;
-    return LOWORD(NtCurrentTeb()->glCurrentRC) & HANDLE_TYPE_MASK;
-}
-
 extern int WINAPI wglDescribePixelFormat( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
-
-extern BOOL check_extension_support( const char *extension, const char *available_extensions ) DECLSPEC_HIDDEN;
-extern char *build_extension_list(void) DECLSPEC_HIDDEN;
 
 #endif /* __DLLS_OPENGL32_OPENGL_EXT_H */

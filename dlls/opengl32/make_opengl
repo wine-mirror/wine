@@ -508,7 +508,7 @@ sub needs_wrapper($$)
 {
     my ($name, $func) = @_;
 
-    return 1 if $name =~ /^glDebugMessageCallback|^glGetString|^glGetIntegerv/;
+    return 1 if $name =~ /^glDebugMessageCallback|^glGetString|^glGetIntegerv|^wglGetProcAddress/;
 
     # check if return value needs special handling
     (my $type = $func->[0]->textContent()) =~ s/ $//;

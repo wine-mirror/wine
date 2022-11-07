@@ -194,6 +194,14 @@ static GLuint *filter_extensions_index( const char *disabled )
     return disabled_index;
 }
 
+static char *heap_strdup( const char *str )
+{
+    int len = strlen( str ) + 1;
+    char *ret = HeapAlloc( GetProcessHeap(), 0, len );
+    memcpy( ret, str, len );
+    return ret;
+}
+
 /* build the extension string by filtering out the disabled extensions */
 static BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLuint **disabled_exts )
 {
@@ -238,7 +246,7 @@ static const GLuint *disabled_extensions_index(void)
 }
 
 /* Check if a GL extension is supported */
-BOOL check_extension_support( const char *extension, const char *available_extensions )
+static BOOL check_extension_support( const char *extension, const char *available_extensions )
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     size_t len;
@@ -330,7 +338,7 @@ static const GLubyte * WINAPI wrap_glGetStringi( GLenum name, GLuint index )
     return funcs->ext.p_glGetStringi( name, index );
 }
 
-char *build_extension_list(void)
+static char *build_extension_list(void)
 {
     GLint len = 0, capacity, i, extensions_count;
     char *extension, *tmp, *available_extensions;
@@ -350,6 +358,94 @@ char *build_extension_list(void)
     if (len) available_extensions[len - 1] = 0;
 
     return available_extensions;
+}
+
+static inline enum wgl_handle_type get_current_context_type(void)
+{
+    if (!NtCurrentTeb()->glCurrentRC) return HANDLE_CONTEXT;
+    return LOWORD(NtCurrentTeb()->glCurrentRC) & HANDLE_TYPE_MASK;
+}
+
+/* Check if a GL extension is supported */
+static BOOL is_extension_supported( const char *extension )
+{
+    enum wgl_handle_type type = get_current_context_type();
+    char *available_extensions = NULL;
+    BOOL ret = FALSE;
+
+    if (type == HANDLE_CONTEXT) available_extensions = heap_strdup( (const char *)wrap_glGetString( GL_EXTENSIONS ) );
+    if (!available_extensions) available_extensions = build_extension_list();
+
+    if (!available_extensions) ERR( "No OpenGL extensions found, check if your OpenGL setup is correct!\n" );
+    else ret = check_extension_support( extension, available_extensions );
+
+    HeapFree( GetProcessHeap(), 0, available_extensions );
+    return ret;
+}
+
+static int registry_entry_cmp( const void *a, const void *b )
+{
+    const struct registry_entry *entry_a = a, *entry_b = b;
+    return strcmp( entry_a->name, entry_b->name );
+}
+
+static PROC WINAPI wrap_wglGetProcAddress( LPCSTR name )
+{
+    const struct registry_entry entry = {.name = name}, *found;
+    struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const void **func_ptr;
+
+    /* Without an active context opengl32 doesn't know to what
+     * driver it has to dispatch wglGetProcAddress.
+     */
+    if (!get_current_context_ptr())
+    {
+        WARN( "No active WGL context found\n" );
+        return (void *)-1;
+    }
+
+    if (!(found = bsearch( &entry, extension_registry, extension_registry_size, sizeof(entry), registry_entry_cmp )))
+    {
+        WARN( "Function %s unknown\n", name );
+        return (void *)-1;
+    }
+
+    func_ptr = (const void **)&funcs->ext + (found - extension_registry);
+    if (!*func_ptr)
+    {
+        void *driver_func = funcs->wgl.p_wglGetProcAddress( name );
+
+        if (!is_extension_supported( found->extension ))
+        {
+            unsigned int i;
+            static const struct { const char *name, *alt; } alternatives[] =
+            {
+                { "glCopyTexSubImage3DEXT", "glCopyTexSubImage3D" },     /* needed by RuneScape */
+                { "glVertexAttribDivisor", "glVertexAttribDivisorARB"},  /* needed by Caffeine */
+            };
+
+            for (i = 0; i < ARRAY_SIZE(alternatives); i++)
+            {
+                if (strcmp( name, alternatives[i].name )) continue;
+                WARN( "Extension %s required for %s not supported, trying %s\n", found->extension,
+                      name, alternatives[i].alt );
+                return wrap_wglGetProcAddress( alternatives[i].alt );
+            }
+
+            WARN( "Extension %s required for %s not supported\n", found->extension, name );
+            return (void *)-1;
+        }
+
+        if (driver_func == NULL)
+        {
+            WARN( "Function %s not supported by driver\n", name );
+            return (void *)-1;
+        }
+
+        *func_ptr = driver_func;
+    }
+
+    return (void *)(UINT_PTR)(found - extension_registry);
 }
 
 static BOOL wrap_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
@@ -721,6 +817,13 @@ NTSTATUS wgl_wglDeleteContext( void *args )
 {
     struct wglDeleteContext_params *params = args;
     params->ret = wrap_wglDeleteContext( params->oldContext );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wgl_wglGetProcAddress( void *args )
+{
+    struct wglGetProcAddress_params *params = args;
+    params->ret = wrap_wglGetProcAddress( params->lpszProc );
     return STATUS_SUCCESS;
 }
 

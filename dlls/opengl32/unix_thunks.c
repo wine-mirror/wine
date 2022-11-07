@@ -16,6 +16,7 @@
 extern NTSTATUS wgl_wglCopyContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wgl_wglGetProcAddress( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglShareLists( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS gl_glGetIntegerv( void *args ) DECLSPEC_HIDDEN;
@@ -50,14 +51,6 @@ static NTSTATUS wgl_wglGetPixelFormat( void *args )
     const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
     if (!funcs || !funcs->wgl.p_wglGetPixelFormat) return STATUS_NOT_IMPLEMENTED;
     params->ret = funcs->wgl.p_wglGetPixelFormat( params->hdc );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS wgl_wglGetProcAddress( void *args )
-{
-    struct wglGetProcAddress_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->wgl.p_wglGetProcAddress( params->lpszProc );
     return STATUS_SUCCESS;
 }
 
