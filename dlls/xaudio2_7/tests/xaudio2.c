@@ -66,6 +66,7 @@ static void WINAPI ECB_OnProcessingPassStart(IXAudio2EngineCallback *This)
 
 static void WINAPI ECB_OnProcessingPassEnd(IXAudio2EngineCallback *This)
 {
+    flaky
     ok(!xaudio27 || pass_state == (buffers_called ? 7 : 5), "Callbacks called out of order: %u\n", pass_state);
     pass_state = 0;
     buffers_called = FALSE;
