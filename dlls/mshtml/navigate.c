@@ -2449,6 +2449,7 @@ HRESULT hlink_frame_navigate(HTMLDocumentObj *doc, LPCWSTR url, nsChannel *nscha
 static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *display_uri, const request_data_t *request_data,
         DWORD flags)
 {
+    DWORD post_data_len = request_data ? request_data->post_data_len : 0;
     nsWineURI *nsuri;
     HRESULT hres;
 
@@ -2458,7 +2459,6 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
         return E_UNEXPECTED;
 
     if(window->browser->doc->webbrowser) {
-        DWORD post_data_len = request_data ? request_data->post_data_len : 0;
         void *post_data = post_data_len ? request_data->post_data : NULL;
         const WCHAR *headers = request_data ? request_data->headers : NULL;
 
@@ -2484,6 +2484,10 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
         if(is_main_content_window(window))
             return super_navigate(window, uri, flags, headers, post_data, post_data_len);
     }
+
+    if(!(flags & BINDING_NOFRAG) && window->uri_nofrag && !post_data_len &&
+       compare_uri_ignoring_frag(window->uri_nofrag, uri))
+         return navigate_fragment(window, uri);
 
     if(is_main_content_window(window)) {
         BOOL cancel;

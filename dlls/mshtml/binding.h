@@ -164,6 +164,7 @@ HRESULT read_stream(BSCallback*,IStream*,void*,DWORD,DWORD*) DECLSPEC_HIDDEN;
 HRESULT create_relative_uri(HTMLOuterWindow*,const WCHAR*,IUri**) DECLSPEC_HIDDEN;
 HRESULT create_uri(const WCHAR*,DWORD,IUri**) DECLSPEC_HIDDEN;
 IUri *get_uri_nofrag(IUri*) DECLSPEC_HIDDEN;
+BOOL compare_uri_ignoring_frag(IUri *uri1, IUri *uri2) DECLSPEC_HIDDEN;
 
 void set_current_mon(HTMLOuterWindow*,IMoniker*,DWORD) DECLSPEC_HIDDEN;
 void set_current_uri(HTMLOuterWindow*,IUri*) DECLSPEC_HIDDEN;

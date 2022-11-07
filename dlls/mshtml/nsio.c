@@ -115,7 +115,7 @@ IUri *get_uri_nofrag(IUri *uri)
     return ret;
 }
 
-static BOOL compare_ignoring_frag(IUri *uri1, IUri *uri2)
+BOOL compare_uri_ignoring_frag(IUri *uri1, IUri *uri2)
 {
     IUri *uri_nofrag1, *uri_nofrag2;
     BOOL ret = FALSE;
@@ -3029,7 +3029,7 @@ static nsresult NSAPI nsURI_EqualsExceptRef(nsIFileURL *iface, nsIURI *other, cp
     }
 
     if(ensure_uri(This) && ensure_uri(other_obj)) {
-        *_retval = compare_ignoring_frag(This->uri, other_obj->uri);
+        *_retval = compare_uri_ignoring_frag(This->uri, other_obj->uri);
         nsres = NS_OK;
     }else {
         nsres = NS_ERROR_UNEXPECTED;
