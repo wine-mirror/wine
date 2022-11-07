@@ -334,9 +334,10 @@ int WINAPI wglGetLayerPaletteEntries(HDC hdc,
   return 0;
 }
 
-static int compar(const void *elt_a, const void *elt_b) {
-  return strcmp(((const OpenGL_extension *) elt_a)->name,
-		((const OpenGL_extension *) elt_b)->name);
+static int registry_entry_cmp( const void *a, const void *b )
+{
+    const struct registry_entry *entry_a = a, *entry_b = b;
+    return strcmp( entry_a->name, entry_b->name );
 }
 
 static char *heap_strdup( const char *str )
@@ -369,10 +370,9 @@ static BOOL is_extension_supported( const char *extension )
  */
 PROC WINAPI wglGetProcAddress( LPCSTR name )
 {
+    const struct registry_entry entry = {.name = name}, *found;
     struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    void **func_ptr;
-    OpenGL_extension  ext;
-    const OpenGL_extension *ext_ret;
+    const void **func_ptr, *proc;
 
     if (!name) return NULL;
 
@@ -385,20 +385,19 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
         return NULL;
     }
 
-    ext.name = name;
-    ext_ret = bsearch(&ext, extension_registry, extension_registry_size, sizeof(ext), compar);
-    if (!ext_ret)
+    if (!(found = bsearch( &entry, extension_registry, extension_registry_size,
+                           sizeof(entry), registry_entry_cmp )))
     {
         WARN("Function %s unknown\n", name);
         return NULL;
     }
 
-    func_ptr = (void **)&funcs->ext + (ext_ret - extension_registry);
+    func_ptr = (const void **)&funcs->ext + (found - extension_registry);
     if (!*func_ptr)
     {
         void *driver_func = funcs->wgl.p_wglGetProcAddress( name );
 
-        if (!is_extension_supported(ext_ret->extension))
+        if (!is_extension_supported(found->extension))
         {
             unsigned int i;
             static const struct { const char *name, *alt; } alternatives[] =
@@ -410,11 +409,11 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
             for (i = 0; i < ARRAY_SIZE(alternatives); i++)
             {
                 if (strcmp( name, alternatives[i].name )) continue;
-                WARN("Extension %s required for %s not supported, trying %s\n",
-                    ext_ret->extension, name, alternatives[i].alt );
+                WARN( "Extension %s required for %s not supported, trying %s\n", found->extension,
+                      name, alternatives[i].alt );
                 return wglGetProcAddress( alternatives[i].alt );
             }
-            WARN("Extension %s required for %s not supported\n", ext_ret->extension, name);
+            WARN( "Extension %s required for %s not supported\n", found->extension, name );
             return NULL;
         }
 
@@ -426,8 +425,9 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
         *func_ptr = driver_func;
     }
 
-    TRACE("returning %s -> %p\n", name, ext_ret->func);
-    return ext_ret->func;
+    proc = extension_procs[found - extension_registry];
+    TRACE( "returning %s -> %p\n", name, proc );
+    return proc;
 }
 
 /***********************************************************************
