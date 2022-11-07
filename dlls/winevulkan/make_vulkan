@@ -2079,14 +2079,17 @@ class StructConversionFunction(object):
 
         needs_alloc = self.direction != Direction.OUTPUT and self.operand.needs_alloc(self.conv, self.unwrap)
         host_type = self.type + "_host" if self.operand.needs_host_type() else self.type
+        win_type = self.type
+        if self.direction == Direction.OUTPUT and self.const:
+            win_type = "const " + win_type
 
         if self.conv:
             body += "static inline void {0}(".format(self.name)
 
             if self.direction == Direction.OUTPUT:
-                params = ["const {0} *in".format(host_type), "{0} *out".format(self.type)]
+                params = ["const {0} *in".format(host_type), "{0} *out".format(win_type)]
             else:
-                params = ["const {0} *in".format(self.type), "{0} *out".format(host_type)]
+                params = ["const {0} *in".format(win_type), "{0} *out".format(host_type)]
 
             # Generate parameter list
             if needs_alloc:
@@ -2241,13 +2244,16 @@ class ArrayConversionFunction(object):
             host_type = "{0}_host".format(self.type)
         else:
             host_type = self.type
+        win_type = self.type
+        if self.direction == Direction.OUTPUT and self.array.is_const():
+            win_type = "const " + win_type
 
         if self.conv:
             if self.direction == Direction.OUTPUT:
-                params = ["const {0} *in".format(host_type), "{0} *out".format(self.type), "uint32_t count"]
+                params = ["const {0} *in".format(host_type), "{0} *out".format(win_type), "uint32_t count"]
                 return_type = None
             else:
-                params = ["const {0} *in".format(self.type), "uint32_t count"]
+                params = ["const {0} *in".format(win_type), "uint32_t count"]
                 return_type = host_type
         else:
             params = ["const {0} *in".format(self.type), "uint32_t count"]
