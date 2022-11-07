@@ -1583,6 +1583,7 @@ enable_aspnet_regiis
 enable_attrib
 enable_cabarc
 enable_cacls
+enable_certutil
 enable_chcp_com
 enable_clock
 enable_cmd
@@ -22275,6 +22276,7 @@ wine_fn_config_makefile programs/aspnet_regiis enable_aspnet_regiis
 wine_fn_config_makefile programs/attrib enable_attrib
 wine_fn_config_makefile programs/cabarc enable_cabarc
 wine_fn_config_makefile programs/cacls enable_cacls
+wine_fn_config_makefile programs/certutil enable_certutil
 wine_fn_config_makefile programs/chcp.com enable_chcp_com
 wine_fn_config_makefile programs/clock enable_clock
 wine_fn_config_makefile programs/cmd enable_cmd
