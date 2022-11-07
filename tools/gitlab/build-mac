@@ -15,3 +15,4 @@ make -s -j8
 cd ..
 
 git reset --hard
+sleep 2
