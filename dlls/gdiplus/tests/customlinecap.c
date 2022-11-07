@@ -165,6 +165,14 @@ static void test_inset(void)
     expect(Ok, stat);
     expectf(0.0, inset);
 
+    stat = GdipSetCustomLineCapBaseInset(custom, 2.0);
+    expect(Ok, stat);
+
+    inset = (REAL)0xdeadbeef;
+    stat = GdipGetCustomLineCapBaseInset(custom, &inset);
+    expect(Ok, stat);
+    ok(inset == 2.0, "Unexpected inset value %f\n", inset);
+
     GdipDeleteCustomLineCap(custom);
     GdipDeletePath(path);
 }

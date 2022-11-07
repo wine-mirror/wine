@@ -220,14 +220,14 @@ GpStatus WINGDIPAPI GdipGetCustomLineCapBaseInset(GpCustomLineCap* custom,
 GpStatus WINGDIPAPI GdipSetCustomLineCapBaseInset(GpCustomLineCap* custom,
     REAL inset)
 {
-    static int calls;
-
     TRACE("(%p,%0.2f)\n", custom, inset);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if(!custom)
+        return InvalidParameter;
 
-    return NotImplemented;
+    custom->inset = inset;
+
+    return Ok;
 }
 
 /*FIXME: LineJoin completely ignored now */
