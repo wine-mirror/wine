@@ -455,39 +455,32 @@ static BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLui
     return (exts_list && *exts_list) || *disabled_exts;
 }
 
+static const GLuint *disabled_extensions_index(void)
+{
+    struct wgl_handle *ptr = get_current_context_ptr();
+    GLuint **disabled = &ptr->u.context->disabled_exts;
+    if (*disabled || filter_extensions( NULL, NULL, disabled )) return *disabled;
+    return NULL;
+}
+
 void WINAPI glGetIntegerv(GLenum pname, GLint *data)
 {
     struct glGetIntegerv_params args = { .pname = pname, .data = data, };
+    const GLuint *disabled;
     NTSTATUS status;
 
     TRACE( "pname %d, data %p\n", pname, data );
 
-    if (pname == GL_NUM_EXTENSIONS)
-    {
-        struct wgl_handle *ptr = get_current_context_ptr();
-        GLuint **disabled = &ptr->u.context->disabled_exts;
-
-        if (*disabled || filter_extensions( NULL, NULL, disabled ))
-        {
-            const GLuint *disabled_exts = *disabled;
-            GLint count, disabled_count = 0;
-
-            args.data = &count;
-            if ((status = UNIX_CALL( glGetIntegerv, &args ))) WARN( "glGetIntegerv returned %#x\n", status );
-
-            while (*disabled_exts++ != ~0u)
-                disabled_count++;
-            *data = count - disabled_count;
-            return;
-        }
-    }
-
     if ((status = UNIX_CALL( glGetIntegerv, &args ))) WARN( "glGetIntegerv returned %#x\n", status );
+
+    if (pname == GL_NUM_EXTENSIONS && (disabled = disabled_extensions_index()))
+        while (*disabled++ != ~0u) (*data)--;
 }
 
 const GLubyte * WINAPI glGetStringi(GLenum name, GLuint index)
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const GLuint *disabled;
 
     TRACE("(%d, %d)\n", name, index);
     if (!funcs->ext.p_glGetStringi)
@@ -497,21 +490,9 @@ const GLubyte * WINAPI glGetStringi(GLenum name, GLuint index)
         *func_ptr = funcs->wgl.p_wglGetProcAddress("glGetStringi");
     }
 
-    if (name == GL_EXTENSIONS)
-    {
-        struct wgl_handle *ptr = get_current_context_ptr();
+    if (name == GL_EXTENSIONS && (disabled = disabled_extensions_index()))
+        while (index >= *disabled++) index++;
 
-        if (ptr->u.context->disabled_exts ||
-            filter_extensions(NULL, NULL, &ptr->u.context->disabled_exts))
-        {
-            const GLuint *disabled_exts = ptr->u.context->disabled_exts;
-            unsigned int disabled_count = 0;
-
-            while (index + disabled_count >= *disabled_exts++)
-                disabled_count++;
-            return funcs->ext.p_glGetStringi(name, index + disabled_count);
-        }
-    }
     return funcs->ext.p_glGetStringi(name, index);
 }
 
