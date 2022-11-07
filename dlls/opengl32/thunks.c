@@ -9898,6 +9898,15 @@ static GLushort WINAPI glGetStageIndexNV( GLenum shadertype )
     return args.ret;
 }
 
+static const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index )
+{
+    struct glGetStringi_params args = { .name = name, .index = index, };
+    NTSTATUS status;
+    TRACE( "name %d, index %d\n", name, index );
+    if ((status = UNIX_CALL( glGetStringi, &args ))) WARN( "glGetStringi returned %#x\n", status );
+    return args.ret;
+}
+
 static GLuint WINAPI glGetSubroutineIndex( GLuint program, GLenum shadertype, const GLchar *name )
 {
     struct glGetSubroutineIndex_params args = { .program = program, .shadertype = shadertype, .name = name, };
@@ -24462,7 +24471,6 @@ static BOOL WINAPI wglSwapIntervalEXT( int interval )
     return args.ret;
 }
 
-extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index ) DECLSPEC_HIDDEN;
 extern HDC WINAPI wglGetCurrentReadDCARB(void) DECLSPEC_HIDDEN;
 
 const int extension_registry_size = 2694;

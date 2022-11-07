@@ -286,6 +286,45 @@ BOOL check_extension_support( const char *extension, const char *available_exten
     return FALSE;
 }
 
+static const GLubyte * WINAPI wrap_glGetStringi( GLenum name, GLuint index )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const GLuint *disabled;
+
+    if (!funcs->ext.p_glGetStringi)
+    {
+        void **func_ptr = (void **)&funcs->ext.p_glGetStringi;
+        *func_ptr = funcs->wgl.p_wglGetProcAddress( "glGetStringi" );
+    }
+
+    if (name == GL_EXTENSIONS && (disabled = disabled_extensions_index()))
+        while (index >= *disabled++) index++;
+
+    return funcs->ext.p_glGetStringi( name, index );
+}
+
+char *build_extension_list(void)
+{
+    GLint len = 0, capacity, i, extensions_count;
+    char *extension, *tmp, *available_extensions;
+
+    glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
+    capacity = 128 * extensions_count;
+
+    if (!(available_extensions = HeapAlloc( GetProcessHeap(), 0, capacity ))) return NULL;
+    for (i = 0; i < extensions_count; ++i)
+    {
+        extension = (char *)wrap_glGetStringi( GL_EXTENSIONS, i );
+        capacity = max( capacity, len + strlen( extension ) + 2 );
+        if (!(tmp = HeapReAlloc( GetProcessHeap(), 0, available_extensions, capacity ))) break;
+        available_extensions = tmp;
+        len += sprintf( available_extensions + len, "%s ", extension );
+    }
+    if (len) available_extensions[len - 1] = 0;
+
+    return available_extensions;
+}
+
 static BOOL wrap_wglCopyContext( HGLRC hglrcSrc, HGLRC hglrcDst, UINT mask )
 {
     struct wgl_handle *src, *dst;
@@ -688,6 +727,13 @@ NTSTATUS ext_glDebugMessageCallbackARB( void *args )
 {
     struct glDebugMessageCallbackARB_params *params = args;
     wrap_glDebugMessageCallbackARB( params->callback, params->userParam );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS ext_glGetStringi( void *args )
+{
+    struct glGetStringi_params *params = args;
+    params->ret = wrap_glGetStringi( params->name, params->index );
     return STATUS_SUCCESS;
 }
 

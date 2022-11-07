@@ -21,6 +21,7 @@ extern NTSTATUS wgl_wglShareLists( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glDebugMessageCallback( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glDebugMessageCallbackAMD( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glDebugMessageCallbackARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glGetStringi( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_wglBindTexImageARB( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_wglCreateContextAttribsARB( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_wglCreatePbufferARB( void *args ) DECLSPEC_HIDDEN;
@@ -9794,14 +9795,6 @@ static NTSTATUS ext_glGetStageIndexNV( void *args )
     struct glGetStageIndexNV_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     params->ret = funcs->ext.p_glGetStageIndexNV( params->shadertype );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS ext_glGetStringi( void *args )
-{
-    struct glGetStringi_params *params = args;
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
-    params->ret = funcs->ext.p_glGetStringi( params->name, params->index );
     return STATUS_SUCCESS;
 }
 
