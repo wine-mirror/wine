@@ -31,9 +31,8 @@
 #include "winreg.h"
 #include "ntuser.h"
 
-#include "opengl_ext.h"
-
 #include "unixlib.h"
+#include "private.h"
 
 #include "wine/glu.h"
 #include "wine/debug.h"
@@ -865,6 +864,8 @@ static BOOL WINAPI call_opengl_debug_message_callback( struct wine_gl_debug_mess
                            params->length, params->message, params->user_data );
     return TRUE;
 }
+
+extern struct opengl_funcs null_opengl_funcs DECLSPEC_HIDDEN;
 
 /***********************************************************************
  *           OpenGL initialisation routine

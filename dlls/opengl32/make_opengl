@@ -868,8 +868,8 @@ print OUT "#include \"windef.h\"\n";
 print OUT "#include \"winbase.h\"\n";
 print OUT "#include \"wingdi.h\"\n\n";
 
-print OUT "#include \"unixlib.h\"\n\n";
-print OUT "#include \"opengl_ext.h\"\n\n";
+print OUT "#include \"unixlib.h\"\n";
+print OUT "#include \"private.h\"\n\n";
 print OUT "#include \"wine/debug.h\"\n\n";
 print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
 
@@ -926,8 +926,8 @@ print OUT "#include \"windef.h\"\n";
 print OUT "#include \"winbase.h\"\n";
 print OUT "#include \"wingdi.h\"\n\n";
 
-print OUT "#include \"unixlib.h\"\n\n";
-print OUT "#include \"opengl_ext.h\"\n\n";
+print OUT "#include \"unixlib.h\"\n";
+print OUT "#include \"unix_private.h\"\n\n";
 
 foreach (sort keys %wgl_functions)
 {

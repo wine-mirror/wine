@@ -30,9 +30,8 @@
 #include "winreg.h"
 #include "ntuser.h"
 
-#include "opengl_ext.h"
-
 #include "unixlib.h"
+#include "unix_private.h"
 
 #include "wine/debug.h"
 

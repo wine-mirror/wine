@@ -10,8 +10,7 @@
 #include "wingdi.h"
 
 #include "unixlib.h"
-
-#include "opengl_ext.h"
+#include "unix_private.h"
 
 extern NTSTATUS wgl_wglCopyContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;

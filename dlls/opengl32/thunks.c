@@ -10,8 +10,7 @@
 #include "wingdi.h"
 
 #include "unixlib.h"
-
-#include "opengl_ext.h"
+#include "private.h"
 
 #include "wine/debug.h"
 
