@@ -351,7 +351,7 @@ struct GpCustomLineCap{
     CustomLineCapType type;
     GpPathData pathdata;
     BOOL fill;      /* TRUE for fill, FALSE for stroke */
-    GpLineCap cap;  /* as far as I can tell, this value is ignored */
+    GpLineCap basecap;  /* cap used together with customLineCap */
     REAL inset;     /* how much to adjust the end of the line */
     GpLineJoin join;
     REAL scale;

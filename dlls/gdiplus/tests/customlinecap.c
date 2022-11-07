@@ -283,13 +283,14 @@ static void test_create_adjustable_cap(void)
     ok(base == LineCapTriangle, "Unexpected base cap %d\n", base);
 
     stat = GdipSetCustomLineCapBaseCap((GpCustomLineCap*)cap, LineCapSquare);
-    todo_wine
     ok(stat == Ok, "Unexpected return code, %d\n", stat);
 
     stat = GdipGetCustomLineCapBaseCap((GpCustomLineCap*)cap, &base);
     ok(stat == Ok, "Unexpected return code, %d\n", stat);
-    todo_wine
     ok(base == LineCapSquare, "Unexpected base cap %d\n", base);
+
+    stat = GdipSetCustomLineCapBaseCap((GpCustomLineCap*)cap, LineCapSquareAnchor);
+    ok(stat == InvalidParameter, "Unexpected return code, %d\n", stat);
 
     /* Base inset */
     stat = GdipGetAdjustableArrowCapWidth(cap, &width);
