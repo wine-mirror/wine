@@ -367,7 +367,7 @@ static NTSTATUS get_parent_device( int fd, char *name, size_t len )
 
     CFDictionaryAddValue( dict, CFSTR("Removable"), kCFBooleanTrue );
 
-    service = IOServiceGetMatchingService( kIOMasterPortDefault, dict );
+    service = IOServiceGetMatchingService( 0, dict );
 
     /* now look for the parent that has the "Whole" attribute set to TRUE */
 

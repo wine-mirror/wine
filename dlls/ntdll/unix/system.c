@@ -1632,7 +1632,7 @@ static NTSTATUS get_smbios_from_iokit( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, 
     struct smbios_prologue *prologue;
     BYTE major_version = 2, minor_version = 0;
 
-    if (!(service = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("AppleSMBIOS"))))
+    if (!(service = IOServiceGetMatchingService(0, IOServiceMatching("AppleSMBIOS"))))
     {
         WARN("can't find AppleSMBIOS service\n");
         return STATUS_NO_MEMORY;
@@ -1727,7 +1727,7 @@ static NTSTATUS generate_smbios( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULONG 
     struct smbios_board_args board_args;
     struct smbios_chassis_args chassis_args;
 
-    platform_expert = IOServiceGetMatchingService(kIOMasterPortDefault, IOServiceMatching("IOPlatformExpertDevice"));
+    platform_expert = IOServiceGetMatchingService(0, IOServiceMatching("IOPlatformExpertDevice"));
     if (!platform_expert)
         return STATUS_NO_MEMORY;
 
@@ -3493,7 +3493,7 @@ static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
     uint32_t value, voltage;
     CFTimeInterval remain;
 
-    if (IOPMCopyBatteryInfo( kIOMasterPortDefault, &batteries ) != kIOReturnSuccess)
+    if (IOPMCopyBatteryInfo( 0, &batteries ) != kIOReturnSuccess)
         return STATUS_ACCESS_DENIED;
 
     if (CFArrayGetCount( batteries ) == 0)
