@@ -29589,6 +29589,46 @@ interface IHTMLDOMConstructorCollection : IDispatch
 }
 
 /*****************************************************************************
+ *    IDOMParser interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510781-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDOMParser : IDispatch
+{
+    [id(DISPID_IDOMPARSER_PARSEFROMSTRING)]
+    HRESULT parseFromString([in] BSTR string, [in] BSTR mimeType, [retval, out] IHTMLDocument2 **ppNode);
+}
+
+/*****************************************************************************
+ *    DispDOMParser dispinterface
+ */
+[
+    hidden,
+    uuid(305900ae-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMParser
+{
+properties:
+methods:
+    [id(DISPID_IDOMPARSER_PARSEFROMSTRING)]
+    IHTMLDocument2 *parseFromString([in] BSTR string, [in] BSTR mimeType);
+}
+
+[
+    noncreatable,
+    uuid(30510782-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass DOMParser
+{
+    [default] dispinterface DispDOMParser;
+    interface IDOMParser;
+}
+
+/*****************************************************************************
  *    IXMLGenericParse interface
  */
 [
