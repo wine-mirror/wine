@@ -1824,12 +1824,12 @@ static void test_connection_shutdown(void)
     buffers[0].pBuffers[1] = buffers[0].pBuffers[0];
 
     status = ApplyControlToken( &context, buffers );
-    todo_wine ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
+    ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
 
     buffers[0].pBuffers[1].cbBuffer = 0;
     buffers[0].pBuffers[1].BufferType = SECBUFFER_EMPTY;
     status = ApplyControlToken( &context, buffers );
-    todo_wine ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
+    ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
 
     *(DWORD *)buf->pvBuffer = SCHANNEL_RENEGOTIATE;
     buffers[0].cBuffers = 1;
@@ -1840,16 +1840,16 @@ static void test_connection_shutdown(void)
     ok( status == SEC_E_INVALID_HANDLE, "got %08lx.\n", status );
 
     status = ApplyControlToken( &context, NULL );
-    todo_wine ok( status == SEC_E_INTERNAL_ERROR, "got %08lx.\n", status );
+    ok( status == SEC_E_INTERNAL_ERROR, "got %08lx.\n", status );
 
     *(DWORD *)buf->pvBuffer = SCHANNEL_SHUTDOWN;
 
     buf->BufferType = SECBUFFER_ALERT;
     status = ApplyControlToken( &context, buffers );
-    todo_wine ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
+    ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
     buf->BufferType = SECBUFFER_DATA;
     status = ApplyControlToken( &context, buffers );
-    todo_wine ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
+    ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
 
     buf->BufferType = SECBUFFER_TOKEN;
 
@@ -1859,10 +1859,10 @@ static void test_connection_shutdown(void)
 
     buf->cbBuffer = sizeof(DWORD) + 1;
     status = ApplyControlToken( &context, buffers );
-    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
+    ok( status == SEC_E_OK, "got %08lx.\n", status );
 
     status = ApplyControlToken( &context, buffers );
-    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
+    ok( status == SEC_E_OK, "got %08lx.\n", status );
 
     buf->cbBuffer = 1000;
     buf->BufferType = SECBUFFER_TOKEN;
@@ -1891,7 +1891,7 @@ static void test_connection_shutdown(void)
     *(DWORD *)buf->pvBuffer = SCHANNEL_SHUTDOWN;
     buf->BufferType = SECBUFFER_TOKEN;
     status = ApplyControlToken( &context, buffers );
-    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
+    ok( status == SEC_E_OK, "got %08lx.\n", status );
 
     buf->cbBuffer = 1000;
     status = InitializeSecurityContextA( &cred_handle, &context, NULL, 0, 0, 0,

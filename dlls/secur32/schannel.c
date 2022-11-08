@@ -1573,6 +1573,25 @@ static SECURITY_STATUS SEC_ENTRY schan_DeleteSecurityContext(PCtxtHandle context
     return SEC_E_OK;
 }
 
+static SECURITY_STATUS SEC_ENTRY schan_ApplyControlToken(PCtxtHandle context_handle, PSecBufferDesc input)
+{
+    TRACE("%p %p\n", context_handle, input);
+
+    dump_buffer_desc(input);
+
+    if (!context_handle) return SEC_E_INVALID_HANDLE;
+    if (!input) return SEC_E_INTERNAL_ERROR;
+
+    if (input->cBuffers != 1) return SEC_E_INVALID_TOKEN;
+    if (input->pBuffers[0].BufferType != SECBUFFER_TOKEN) return SEC_E_INVALID_TOKEN;
+    if (input->pBuffers[0].cbBuffer < sizeof(DWORD)) return SEC_E_UNSUPPORTED_FUNCTION;
+    if (*(DWORD *)input->pBuffers[0].pvBuffer != SCHANNEL_SHUTDOWN) return SEC_E_UNSUPPORTED_FUNCTION;
+
+    FIXME("stub.\n");
+
+    return SEC_E_OK;
+}
+
 static const SecurityFunctionTableA schanTableA = {
     1,
     NULL, /* EnumerateSecurityPackagesA */
@@ -1584,7 +1603,7 @@ static const SecurityFunctionTableA schanTableA = {
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
     schan_DeleteSecurityContext,
-    NULL, /* ApplyControlToken */
+    schan_ApplyControlToken, /* ApplyControlToken */
     schan_QueryContextAttributesA,
     NULL, /* ImpersonateSecurityContext */
     NULL, /* RevertSecurityContext */
@@ -1615,7 +1634,7 @@ static const SecurityFunctionTableW schanTableW = {
     NULL, /* AcceptSecurityContext */
     NULL, /* CompleteAuthToken */
     schan_DeleteSecurityContext,
-    NULL, /* ApplyControlToken */
+    schan_ApplyControlToken, /* ApplyControlToken */
     schan_QueryContextAttributesW,
     NULL, /* ImpersonateSecurityContext */
     NULL, /* RevertSecurityContext */
