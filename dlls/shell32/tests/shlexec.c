@@ -194,6 +194,7 @@ static void init_event(const char* child_file)
     hEvent=CreateEventA(NULL, FALSE, FALSE, event_name);
 }
 
+static HANDLE hChildFile;
 /*
  * This is just to make sure the child won't run forever stuck in a
  * GetMessage() loop when DDE fails for some reason.
@@ -201,6 +202,7 @@ static void init_event(const char* child_file)
 static void CALLBACK childTimeout(HWND wnd, UINT msg, UINT_PTR timer, DWORD time)
 {
     trace("childTimeout called\n");
+    childPrintf(hChildFile, "Timeout=1\r\n");
 
     PostQuitMessage(0);
 }
@@ -217,6 +219,7 @@ static void doChild(int argc, char** argv)
     if (hFile == INVALID_HANDLE_VALUE)
         return;
 
+    hChildFile = hFile;
     /* Arguments */
     childPrintf(hFile, "[Child]\r\n");
     if (winetest_debug > 2)
@@ -654,10 +657,20 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
         c = GetPrivateProfileIntA("Child", "Failures", -1, child_file);
         if (c > 0)
             winetest_add_failures(c);
+        c = GetPrivateProfileIntA("Child", "Timeout", -1, child_file);
+        if (c > 0)
+        {
+            /* Inform caller of the timeout... these two following bits
+             * are directly returned by some Windows10 versions.
+             * Return the same bits when we detect a timeout in child.
+             */
+            SetLastError(ERROR_FILE_NOT_FOUND);
+            rc = SE_ERR_DDEFAIL;
+        }
         /* When NOZONECHECKS is specified the environment variables are not
          * inherited if the process does not have elevated privileges.
          */
-        if ((mask & SEE_MASK_NOZONECHECKS) && skip_shlexec_tests)
+        else if ((mask & SEE_MASK_NOZONECHECKS) && skip_shlexec_tests)
         {
             okChildInt_(file, line, "ShlexecVarLE", 203);
             okChildString_(file, line, "ShlexecVar", "", "");
