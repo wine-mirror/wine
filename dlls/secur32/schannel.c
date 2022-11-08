@@ -945,13 +945,6 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     ctx->req_ctx_attr = fContextReq;
 
     /* Perform the TLS handshake */
-    if (fContextReq & ISC_REQ_ALLOCATE_MEMORY)
-    {
-        alloc_buffer.cbBuffer = extra_size;
-        alloc_buffer.BufferType = SECBUFFER_TOKEN;
-        alloc_buffer.pvBuffer = RtlAllocateHeap( GetProcessHeap(), 0, extra_size );
-    }
-
     memset(&input_desc, 0, sizeof(input_desc));
     if (pInput && (idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_TOKEN)) != -1)
     {
@@ -967,8 +960,13 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     {
         output_desc.cBuffers = 1;
         output_desc.pBuffers = &pOutput->pBuffers[idx];
-        if (!output_desc.pBuffers->pvBuffer)
+        if (!output_desc.pBuffers->pvBuffer || (fContextReq & ISC_REQ_ALLOCATE_MEMORY))
+        {
+            alloc_buffer.cbBuffer = extra_size;
+            alloc_buffer.BufferType = SECBUFFER_TOKEN;
+            alloc_buffer.pvBuffer = RtlAllocateHeap( GetProcessHeap(), 0, extra_size );
             output_desc.pBuffers = &alloc_buffer;
+        }
     }
 
     params.session = ctx->session;
