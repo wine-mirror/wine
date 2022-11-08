@@ -1611,6 +1611,42 @@ static inline void convert_VkBufferViewCreateInfo_win32_to_host(const VkBufferVi
 }
 #endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPipelineCreationFeedback_host_to_win32(const VkPipelineCreationFeedback_host *in, VkPipelineCreationFeedback *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->duration = in->duration;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline VkPipelineCreationFeedback_host *convert_VkPipelineCreationFeedback_array_win32_to_host(struct conversion_context *ctx, const VkPipelineCreationFeedback *in, uint32_t count)
+{
+    VkPipelineCreationFeedback_host *out;
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPipelineCreationFeedback_array_host_to_win32(const VkPipelineCreationFeedback_host *in, VkPipelineCreationFeedback *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkPipelineCreationFeedback_host_to_win32(&in[i], &out[i]);
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
 #if !defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineShaderStageCreateInfo_win64_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo *in, VkPipelineShaderStageCreateInfo *out)
 {
@@ -1852,13 +1888,13 @@ static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conv
         {
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPipelineCreationFeedbackCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             out_ext->pNext = NULL;
-            out_ext->pPipelineCreationFeedback = in_ext->pPipelineCreationFeedback;
+            out_ext->pPipelineCreationFeedback = convert_VkPipelineCreationFeedback_array_win32_to_host(ctx, in_ext->pPipelineCreationFeedback, 1);
             out_ext->pipelineStageCreationFeedbackCount = in_ext->pipelineStageCreationFeedbackCount;
-            out_ext->pPipelineStageCreationFeedbacks = in_ext->pPipelineStageCreationFeedbacks;
+            out_ext->pPipelineStageCreationFeedbacks = convert_VkPipelineCreationFeedback_array_win32_to_host(ctx, in_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -1908,6 +1944,36 @@ static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conv
 }
 #endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkComputePipelineCreateInfo_host_to_win32(const VkComputePipelineCreateInfo_host *in, const VkComputePipelineCreateInfo *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+
+    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
+        {
+            VkPipelineCreationFeedbackCreateInfo *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+            const VkPipelineCreationFeedbackCreateInfo_host *in_ext = (const VkPipelineCreationFeedbackCreateInfo_host *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
+            convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
+            convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineStageCreationFeedbacks, out_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
 #if !defined(USE_STRUCT_CONVERSION)
 static inline VkComputePipelineCreateInfo *convert_VkComputePipelineCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo *in, uint32_t count)
 {
@@ -1941,6 +2007,20 @@ static inline VkComputePipelineCreateInfo_host *convert_VkComputePipelineCreateI
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkComputePipelineCreateInfo_array_host_to_win32(const VkComputePipelineCreateInfo_host *in, const VkComputePipelineCreateInfo *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkComputePipelineCreateInfo_host_to_win32(&in[i], &out[i]);
+    }
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -6035,13 +6115,13 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct con
         }
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPipelineCreationFeedbackCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             out_ext->pNext = NULL;
-            out_ext->pPipelineCreationFeedback = in_ext->pPipelineCreationFeedback;
+            out_ext->pPipelineCreationFeedback = convert_VkPipelineCreationFeedback_array_win32_to_host(ctx, in_ext->pPipelineCreationFeedback, 1);
             out_ext->pipelineStageCreationFeedbackCount = in_ext->pipelineStageCreationFeedbackCount;
-            out_ext->pPipelineStageCreationFeedbacks = in_ext->pPipelineStageCreationFeedbacks;
+            out_ext->pPipelineStageCreationFeedbacks = convert_VkPipelineCreationFeedback_array_win32_to_host(ctx, in_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -6167,6 +6247,36 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct con
 }
 #endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkGraphicsPipelineCreateInfo_host_to_win32(const VkGraphicsPipelineCreateInfo_host *in, const VkGraphicsPipelineCreateInfo *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+
+    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
+        {
+            VkPipelineCreationFeedbackCreateInfo *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+            const VkPipelineCreationFeedbackCreateInfo_host *in_ext = (const VkPipelineCreationFeedbackCreateInfo_host *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
+            convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
+            convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineStageCreationFeedbacks, out_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            break;
+        }
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
 #if !defined(USE_STRUCT_CONVERSION)
 static inline VkGraphicsPipelineCreateInfo *convert_VkGraphicsPipelineCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo *in, uint32_t count)
 {
@@ -6200,6 +6310,20 @@ static inline VkGraphicsPipelineCreateInfo_host *convert_VkGraphicsPipelineCreat
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkGraphicsPipelineCreateInfo_array_host_to_win32(const VkGraphicsPipelineCreateInfo_host *in, const VkGraphicsPipelineCreateInfo *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkGraphicsPipelineCreateInfo_host_to_win32(&in[i], &out[i]);
+    }
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -6673,10 +6797,13 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win64_to_host(struc
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR *in, VkRayTracingPipelineCreateInfoKHR_host *out)
 {
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = in->pNext;
+    out->pNext = NULL;
     out->flags = in->flags;
     out->stageCount = in->stageCount;
     out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(ctx, in->pStages, in->stageCount);
@@ -6689,6 +6816,73 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struc
     out->layout = in->layout;
     out->basePipelineHandle = in->basePipelineHandle;
     out->basePipelineIndex = in->basePipelineIndex;
+
+    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
+        {
+            VkPipelineCreationFeedbackCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->pPipelineCreationFeedback = convert_VkPipelineCreationFeedback_array_win32_to_host(ctx, in_ext->pPipelineCreationFeedback, 1);
+            out_ext->pipelineStageCreationFeedbackCount = in_ext->pipelineStageCreationFeedbackCount;
+            out_ext->pPipelineStageCreationFeedbacks = convert_VkPipelineCreationFeedback_array_win32_to_host(ctx, in_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO_EXT:
+        {
+            VkPipelineRobustnessCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPipelineRobustnessCreateInfoEXT *in_ext = (const VkPipelineRobustnessCreateInfoEXT *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_ROBUSTNESS_CREATE_INFO_EXT;
+            out_ext->pNext = NULL;
+            out_ext->storageBuffers = in_ext->storageBuffers;
+            out_ext->uniformBuffers = in_ext->uniformBuffers;
+            out_ext->vertexInputs = in_ext->vertexInputs;
+            out_ext->images = in_ext->images;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.", in_header->sType);
+            break;
+        }
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkRayTracingPipelineCreateInfoKHR_host_to_win32(const VkRayTracingPipelineCreateInfoKHR_host *in, const VkRayTracingPipelineCreateInfoKHR *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+
+    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
+        {
+            VkPipelineCreationFeedbackCreateInfo *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+            const VkPipelineCreationFeedbackCreateInfo_host *in_ext = (const VkPipelineCreationFeedbackCreateInfo_host *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
+            convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
+            convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineStageCreationFeedbacks, out_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            break;
+        }
+    }
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -6728,6 +6922,20 @@ static inline VkRayTracingPipelineCreateInfoKHR_host *convert_VkRayTracingPipeli
 }
 #endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkRayTracingPipelineCreateInfoKHR_array_host_to_win32(const VkRayTracingPipelineCreateInfoKHR_host *in, const VkRayTracingPipelineCreateInfoKHR *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkRayTracingPipelineCreateInfoKHR_host_to_win32(&in[i], &out[i]);
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
 #if !defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRayTracingPipelineCreateInfoNV_win64_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV *in, VkRayTracingPipelineCreateInfoNV *out)
 {
@@ -6750,10 +6958,13 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_win64_to_host(struct
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV *in, VkRayTracingPipelineCreateInfoNV_host *out)
 {
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = in->pNext;
+    out->pNext = NULL;
     out->flags = in->flags;
     out->stageCount = in->stageCount;
     out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(ctx, in->pStages, in->stageCount);
@@ -6763,6 +6974,59 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct
     out->layout = in->layout;
     out->basePipelineHandle = in->basePipelineHandle;
     out->basePipelineIndex = in->basePipelineIndex;
+
+    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
+        {
+            VkPipelineCreationFeedbackCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
+            out_ext->pNext = NULL;
+            out_ext->pPipelineCreationFeedback = convert_VkPipelineCreationFeedback_array_win32_to_host(ctx, in_ext->pPipelineCreationFeedback, 1);
+            out_ext->pipelineStageCreationFeedbackCount = in_ext->pipelineStageCreationFeedbackCount;
+            out_ext->pPipelineStageCreationFeedbacks = convert_VkPipelineCreationFeedback_array_win32_to_host(ctx, in_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.", in_header->sType);
+            break;
+        }
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkRayTracingPipelineCreateInfoNV_host_to_win32(const VkRayTracingPipelineCreateInfoNV_host *in, const VkRayTracingPipelineCreateInfoNV *out)
+{
+    const VkBaseInStructure *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+
+    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
+        {
+            VkPipelineCreationFeedbackCreateInfo *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+            const VkPipelineCreationFeedbackCreateInfo_host *in_ext = (const VkPipelineCreationFeedbackCreateInfo_host *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
+            convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
+            convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineStageCreationFeedbacks, out_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            break;
+        }
+    }
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -6799,6 +7063,20 @@ static inline VkRayTracingPipelineCreateInfoNV_host *convert_VkRayTracingPipelin
     }
 
     return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkRayTracingPipelineCreateInfoNV_array_host_to_win32(const VkRayTracingPipelineCreateInfoNV_host *in, const VkRayTracingPipelineCreateInfoNV *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkRayTracingPipelineCreateInfoNV_host_to_win32(&in[i], &out[i]);
+    }
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -17045,7 +17323,7 @@ static NTSTATUS thunk64_vkCreateComputePipelines(void *args)
 
     init_conversion_context(&ctx);
     pCreateInfos_host = convert_VkComputePipelineCreateInfo_array_win64_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = wine_vkCreateComputePipelines(params->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateComputePipelines(wine_device_from_handle(params->device)->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -17062,7 +17340,8 @@ static NTSTATUS thunk32_vkCreateComputePipelines(void *args)
 
     init_conversion_context(&ctx);
     pCreateInfos_host = convert_VkComputePipelineCreateInfo_array_win32_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = wine_vkCreateComputePipelines(params->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateComputePipelines(wine_device_from_handle(params->device)->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
+    convert_VkComputePipelineCreateInfo_array_host_to_win32(pCreateInfos_host, params->pCreateInfos, params->createInfoCount);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -17437,7 +17716,7 @@ static NTSTATUS thunk64_vkCreateGraphicsPipelines(void *args)
 
     init_conversion_context(&ctx);
     pCreateInfos_host = convert_VkGraphicsPipelineCreateInfo_array_win64_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = wine_vkCreateGraphicsPipelines(params->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateGraphicsPipelines(wine_device_from_handle(params->device)->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -17454,7 +17733,8 @@ static NTSTATUS thunk32_vkCreateGraphicsPipelines(void *args)
 
     init_conversion_context(&ctx);
     pCreateInfos_host = convert_VkGraphicsPipelineCreateInfo_array_win32_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = wine_vkCreateGraphicsPipelines(params->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateGraphicsPipelines(wine_device_from_handle(params->device)->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
+    convert_VkGraphicsPipelineCreateInfo_array_host_to_win32(pCreateInfos_host, params->pCreateInfos, params->createInfoCount);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -17786,7 +18066,7 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesKHR(void *args)
 
     init_conversion_context(&ctx);
     pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoKHR_array_win64_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = wine_vkCreateRayTracingPipelinesKHR(params->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateRayTracingPipelinesKHR(wine_device_from_handle(params->device)->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -17803,7 +18083,8 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesKHR(void *args)
 
     init_conversion_context(&ctx);
     pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoKHR_array_win32_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = wine_vkCreateRayTracingPipelinesKHR(params->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateRayTracingPipelinesKHR(wine_device_from_handle(params->device)->device, params->deferredOperation, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
+    convert_VkRayTracingPipelineCreateInfoKHR_array_host_to_win32(pCreateInfos_host, params->pCreateInfos, params->createInfoCount);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -17822,7 +18103,7 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesNV(void *args)
 
     init_conversion_context(&ctx);
     pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoNV_array_win64_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = wine_vkCreateRayTracingPipelinesNV(params->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateRayTracingPipelinesNV(wine_device_from_handle(params->device)->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -17839,7 +18120,8 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesNV(void *args)
 
     init_conversion_context(&ctx);
     pCreateInfos_host = convert_VkRayTracingPipelineCreateInfoNV_array_win32_to_host(&ctx, params->pCreateInfos, params->createInfoCount);
-    params->result = wine_vkCreateRayTracingPipelinesNV(params->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, params->pAllocator, params->pPipelines);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateRayTracingPipelinesNV(wine_device_from_handle(params->device)->device, params->pipelineCache, params->createInfoCount, pCreateInfos_host, NULL, params->pPipelines);
+    convert_VkRayTracingPipelineCreateInfoNV_array_host_to_win32(pCreateInfos_host, params->pCreateInfos, params->createInfoCount);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }

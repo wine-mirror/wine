@@ -202,8 +202,6 @@ FUNCTION_OVERRIDES = {
     # Device functions
     "vkAllocateCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkCreateCommandPool" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE, "extra_param" : "client_ptr"},
-    "vkCreateComputePipelines" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-    "vkCreateGraphicsPipelines" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkDestroyCommandPool" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkDestroyDevice" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
     "vkFreeCommandBuffers" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.PRIVATE},
@@ -249,9 +247,6 @@ FUNCTION_OVERRIDES = {
     "vkGetDeviceGroupSurfacePresentModesKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
     "vkGetPhysicalDevicePresentRectanglesKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.PUBLIC},
 
-    # VK_KHR_ray_tracing_pipeline
-    "vkCreateRayTracingPipelinesKHR" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
-
     # VK_EXT_calibrated_timestamps
     "vkGetPhysicalDeviceCalibrateableTimeDomainsEXT" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkGetCalibratedTimestampsEXT" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.NONE},
@@ -263,9 +258,6 @@ FUNCTION_OVERRIDES = {
     # VK_EXT_debug_report
     "vkCreateDebugReportCallbackEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkDestroyDebugReportCallbackEXT" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
-
-    # VK_NV_ray_tracing
-    "vkCreateRayTracingPipelinesNV" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.PRIVATE},
 }
 
 STRUCT_CHAIN_CONVERSIONS = {
@@ -1954,9 +1946,6 @@ class VkStruct(Sequence):
         # FIXME: needs pointer array support
         if self.name == "VkAccelerationStructureGeometryKHR":
             return False
-        # FIXME: get rid of private thunks conversion
-        if self.name == "VkPipelineCreationFeedback":
-            return False
 
         # pFixedRateFlags field is missing const, but it doesn't need output conversion
         if direction == Direction.OUTPUT and self.name == "VkImageCompressionControlEXT":
@@ -2008,10 +1997,6 @@ class VkStruct(Sequence):
         return False
 
     def needs_host_type(self):
-        # FIXME: get rid of private thunks conversion
-        if self.name == "VkPipelineCreationFeedback":
-            return False
-
         for m in self.members:
             if self.name == m.type:
                 continue

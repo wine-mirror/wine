@@ -956,6 +956,17 @@ typedef VkBufferViewCreateInfo VkBufferViewCreateInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPipelineCreationFeedback_host
+{
+    VkPipelineCreationFeedbackFlags flags;
+    uint64_t duration;
+} VkPipelineCreationFeedback_host;
+typedef VkPipelineCreationFeedback VkPipelineCreationFeedbackEXT;
+#else
+typedef VkPipelineCreationFeedback VkPipelineCreationFeedback_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkShaderModuleValidationCacheCreateInfoEXT_host
 {
     VkStructureType sType;
@@ -992,6 +1003,20 @@ typedef struct VkPipelineShaderStageCreateInfo_host
 } VkPipelineShaderStageCreateInfo_host;
 #else
 typedef VkPipelineShaderStageCreateInfo VkPipelineShaderStageCreateInfo_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPipelineCreationFeedbackCreateInfo_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkPipelineCreationFeedback_host *pPipelineCreationFeedback;
+    uint32_t pipelineStageCreationFeedbackCount;
+    VkPipelineCreationFeedback_host *pPipelineStageCreationFeedbacks;
+} VkPipelineCreationFeedbackCreateInfo_host;
+typedef VkPipelineCreationFeedbackCreateInfo VkPipelineCreationFeedbackCreateInfoEXT;
+#else
+typedef VkPipelineCreationFeedbackCreateInfo VkPipelineCreationFeedbackCreateInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
@@ -2398,14 +2423,10 @@ typedef VkCopyDescriptorSet VkCopyDescriptorSet_host;
 /* Functions for which we have custom implementations outside of the thunks. */
 VkResult wine_vkAllocateCommandBuffers(VkDevice device, const VkCommandBufferAllocateInfo_host *pAllocateInfo, VkCommandBuffer *pCommandBuffers) DECLSPEC_HIDDEN;
 VkResult wine_vkCreateCommandPool(VkDevice device, const VkCommandPoolCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkCommandPool *pCommandPool, void *client_ptr) DECLSPEC_HIDDEN;
-VkResult wine_vkCreateComputePipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkComputePipelineCreateInfo_host *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines) DECLSPEC_HIDDEN;
 VkResult wine_vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugReportCallbackEXT *pCallback) DECLSPEC_HIDDEN;
 VkResult wine_vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebugUtilsMessengerCreateInfoEXT *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDebugUtilsMessengerEXT *pMessenger) DECLSPEC_HIDDEN;
 VkResult wine_vkCreateDevice(VkPhysicalDevice physicalDevice, const VkDeviceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkDevice *pDevice, void *client_ptr) DECLSPEC_HIDDEN;
-VkResult wine_vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkGraphicsPipelineCreateInfo_host *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines) DECLSPEC_HIDDEN;
 VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkInstance *pInstance, void *client_ptr) DECLSPEC_HIDDEN;
-VkResult wine_vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperationKHR deferredOperation, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoKHR_host *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines) DECLSPEC_HIDDEN;
-VkResult wine_vkCreateRayTracingPipelinesNV(VkDevice device, VkPipelineCache pipelineCache, uint32_t createInfoCount, const VkRayTracingPipelineCreateInfoNV_host *pCreateInfos, const VkAllocationCallbacks *pAllocator, VkPipeline *pPipelines) DECLSPEC_HIDDEN;
 VkResult wine_vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32SurfaceCreateInfoKHR *pCreateInfo, const VkAllocationCallbacks *pAllocator, VkSurfaceKHR *pSurface) DECLSPEC_HIDDEN;
 void wine_vkDestroyCommandPool(VkDevice device, VkCommandPool commandPool, const VkAllocationCallbacks *pAllocator) DECLSPEC_HIDDEN;
 void wine_vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks *pAllocator) DECLSPEC_HIDDEN;
