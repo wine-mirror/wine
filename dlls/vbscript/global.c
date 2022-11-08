@@ -1348,7 +1348,7 @@ static HRESULT Global_Right(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 
     TRACE("(%s %s)\n", debugstr_variant(args), debugstr_variant(args+1));
 
-    if(V_VT(args+1) == VT_BSTR) {
+    if(V_VT(args) == VT_BSTR) {
         str = V_BSTR(args);
     }else {
         hres = to_string(args, &conv_str);

@@ -840,6 +840,8 @@ TestRight "test", 2, "st"
 TestRight "test", 5, "test"
 TestRight "test", 0, ""
 TestRight 123, 2, "23"
+TestRight "test", "3", "est"
+TestRight 123, "2", "23"
 if isEnglishLang then TestRight true, 2, "ue"
 
 Sub TestTrim(str, exstr)
