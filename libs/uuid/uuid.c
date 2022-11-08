@@ -92,6 +92,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 #include "comsvcs.h"
 #include "directmanipulation.h"
 #include "devguid.h"
+#include "propkey.h"
 
 #define __WINE_INIT_NPI_MODULEID
 #include "netiodef.h"

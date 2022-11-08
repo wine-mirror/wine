@@ -40,8 +40,9 @@
 #include <mmddk.h>
 
 #include "ole2.h"
-#include "initguid.h"
 #include "propkey.h"
+#include "initguid.h"
+#include "propkeydef.h"
 #include "devpkey.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"

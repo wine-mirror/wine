@@ -36,11 +36,11 @@
 #include "dshow.h"
 #include "dsound.h"
 #include "propsys.h"
+#include "propkey.h"
 
 #include "initguid.h"
 #include "ks.h"
 #include "ksmedia.h"
-#include "propkey.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
 #include "endpointvolume.h"

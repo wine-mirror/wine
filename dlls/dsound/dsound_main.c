@@ -55,10 +55,11 @@
 #include "oleidl.h"
 #include "shobjidl.h"
 #include "strmif.h"
+#include "propkey.h"
 
 #include "initguid.h"
+#include "propkeydef.h"
 #include "ksmedia.h"
-#include "propkey.h"
 #include "devpkey.h"
 
 #include "dsound_private.h"
