@@ -2409,7 +2409,6 @@ uint32_t FACTCue_Destroy(FACTCue *pCue)
 {
 	FACTCue *cue, *prev;
 	FAudioMutex mutex;
-	FACTNotification note;
 	if (pCue == NULL)
 	{
 		return 1;

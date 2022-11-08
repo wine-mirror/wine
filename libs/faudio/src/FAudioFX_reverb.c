@@ -130,11 +130,13 @@ static inline float DspDelay_Process(DspDelay *filter, float sample_in)
 	return delay_out;
 }
 
+/* FIXME: This is currently unused! What was it for...? -flibit
 static inline float DspDelay_Tap(DspDelay *filter, uint32_t delay)
 {
 	FAudio_assert(delay <= filter->delay);
 	return filter->buffer[(filter->write_idx - delay + filter->capacity) % filter->capacity];
 }
+*/
 
 static inline void DspDelay_Reset(DspDelay *filter)
 {
