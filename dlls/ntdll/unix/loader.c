@@ -2358,10 +2358,13 @@ static void apple_main_thread(void)
 
     if (!pthread_main_np()) return;
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     /* Multi-processing Services can get confused about the main thread if the
      * first time it's used is on a secondary thread.  Use it here to make sure
      * that doesn't happen. */
     MPTaskIsPreemptive(MPCurrentTaskID());
+#pragma clang diagnostic pop
 
     /* Give ourselves the best chance of having the distributed notification
      * center scheduled on this thread's run loop.  In theory, it's scheduled
