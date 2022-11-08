@@ -26,7 +26,7 @@ use Encode;
 use Time::Local qw(timegm_modern);
 
 my $UNIVERSION = "15.0.0";
-my $CLDRVERSION = "41";
+my $CLDRVERSION = "42";
 my $ISO639VERSION = "20220120";
 my $TZVERSION = "2022a";
 
@@ -39,7 +39,7 @@ my %data_files =
  idna      => { url  => "https://www.unicode.org/Public/idna/$UNIVERSION/IdnaMappingTable.txt", name => "IdnaMappingTable-$UNIVERSION.txt",
                 sha  => "cc8522199541d60326a42a8f91f8748fd15630a42502dd2cf4878e81e2066ead" },
  cldr      => { url  => "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip",
-                sha  => "a2b7aee281ad2f497d47995808cf5e8f24123b0814ca47f7a824556aec8a0d91" },
+                sha  => "275c37b1373a1c8461c14d2fe9e3b7b47ba24ea89e3fdd2dedfe0547ab2f07dc" },
  cldr33    => { url  => "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip",
                 sha  => "fa3490082c086d21257153609642f54fcf788fcfda4966fe67f3f6daca0d58b9" },
  sorting   => { url  => "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498/Windows 10 Sorting Weight Table.txt",
@@ -1156,8 +1156,8 @@ my @locales =
  { name => "nus-SS" },
  { name => "nyn", sopentypelang => "NKL" },
  { name => "nyn-UG" },
- { name => "oc", lcid => 0x00000082, oemcp => 850, ebcdiccp => 20297, dir => "seed" },
- { name => "oc-FR", lcid => 0x00000482, dir => "seed" },
+ { name => "oc", lcid => 0x00000082, oemcp => 850, ebcdiccp => 20297 },
+ { name => "oc-FR", lcid => 0x00000482 },
  { name => "oc-Latn", alias => "oc" },
  { name => "oc-Latn-FR", alias => "oc-FR" },
  { name => "om", lcid => 0x00000072, sopentypelang => "ORO" },
@@ -1309,8 +1309,8 @@ my @locales =
  { name => "smn-FI", lcid => 0x0000243b },
  { name => "smn-Latn", alias => "smn" },
  { name => "smn-Latn-FI", alias => "smn-FI" },
- { name => "sms", lcid => 0x0000743b, sparent => "se", ebcdiccp => 20278, dir => "seed", sopentypelang => "SKS" },
- { name => "sms-FI", lcid => 0x0000203b, dir => "seed" },
+ { name => "sms", lcid => 0x0000743b, sparent => "se", ebcdiccp => 20278, sopentypelang => "SKS" },
+ { name => "sms-FI", lcid => 0x0000203b },
  { name => "sms-Latn", alias => "sms" },
  { name => "sms-Latn-FI", alias => "sms-FI" },
  { name => "sn", sopentypelang => "SNA0" },
@@ -4404,6 +4404,7 @@ sub convert_time_format($)
     my $fmt = shift;
     $fmt =~ s/a+/tt/;
     $fmt =~ s/B+/tt/;
+    $fmt =~ s/\x{202f}/ /;
     return $fmt;
 }
 
@@ -4720,8 +4721,8 @@ sub build_locale_data()
         my $sneginfinity = $sposinfinity ? "-$sposinfinity" : "";
         my $sgrouping = format_to_grouping( loc_query( $loc, "/ldml/numbers/decimalFormats[\@numberSystem='latn']/decimalFormatLength[not(\@type)]/decimalFormat/pattern" ));
         my $percentformat = loc_query( $loc, "/ldml/numbers/percentFormats[\@numberSystem='latn']/percentFormatLength[not(\@type)]/percentFormat/pattern" );
-        my $currencyformat = loc_query( $loc, "/ldml/numbers/currencyFormats[\@numberSystem='latn']/currencyFormatLength[not(\@type)]/currencyFormat[\@type='accounting']/pattern" ) ||
-                             loc_query( $loc, "/ldml/numbers/currencyFormats[\@numberSystem='latn']/currencyFormatLength[not(\@type)]/currencyFormat[\@type='standard']/pattern" );
+        my $currencyformat = loc_query( $loc, "/ldml/numbers/currencyFormats[\@numberSystem='latn']/currencyFormatLength[not(\@type)]/currencyFormat[\@type='accounting']/pattern[not(\@alt)]" ) ||
+                             loc_query( $loc, "/ldml/numbers/currencyFormats[\@numberSystem='latn']/currencyFormatLength[not(\@type)]/currencyFormat[\@type='standard']/pattern[not(\@alt)]" );
         my $smongrouping = format_to_grouping( $currencyformat );
         my ($icurrency, $inegcurr) = parse_currency_format( $sname, $currencyformat );
         my ($ipospercent, $inegpercent) = parse_percent_format( $percentformat );
