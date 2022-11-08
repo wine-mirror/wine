@@ -444,6 +444,8 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
                 info32->CommitSize = info.CommitSize;
                 info32->PartitionId = info.PartitionId;
                 info32->NodePreference = info.NodePreference;
+                if ((ULONG_PTR)info.AllocationBase + info.RegionSize > highest_user_address)
+                    info32->RegionSize = highest_user_address - (ULONG_PTR)info.AllocationBase + 1;
             }
         }
         res_len = sizeof(MEMORY_REGION_INFORMATION32);
