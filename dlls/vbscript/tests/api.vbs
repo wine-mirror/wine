@@ -605,10 +605,59 @@ TestMid "test", 1, 2, "te"
 TestMid "test", 1, 0, ""
 TestMid "test", 1, 0, ""
 TestMid "test", 5, 2, ""
+TestMid 1234, 1, 2, "12"
+TestMid 1234, 5, 2, ""
 TestMid2 "test", 1, "test"
 TestMid2 "test", 2, "est"
 TestMid2 "test", 4, "t"
 TestMid2 "test", 5, ""
+TestMid2 1234, 5, ""
+
+sub TestMidError()
+    on error resume next
+    call Err.clear()
+    call Mid("test", "a", 1)
+    call ok(Err.number = 13, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid("test", "a", null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid("test", "a", empty)
+    call ok(Err.number = 13, "Err.number = " & Err.number)
+    call Mid("test", 0, -1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid("test", -1, -1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid(null, -1, -1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid("test", 0, null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid("test", -1, null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid("test", null, 2)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid("test", null, -1)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid(null, -1, -1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid("test", empty, 1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid("test", 0, empty)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Mid(empty, 0, 0)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+end sub
+call TestMidError()
 
 Sub TestUCase(str, ex)
     x = UCase(str)

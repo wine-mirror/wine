@@ -1391,35 +1391,49 @@ static HRESULT Global_RightB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
     int len = -1, start, str_len;
-    BSTR str;
+    BSTR str, conv_str = NULL;
     HRESULT hres;
 
     TRACE("(%s %s ...)\n", debugstr_variant(args), debugstr_variant(args+1));
 
     assert(args_cnt == 2 || args_cnt == 3);
 
-    if(V_VT(args) != VT_BSTR) {
-        FIXME("args[0] = %s\n", debugstr_variant(args));
-        return E_NOTIMPL;
-    }
+    if(V_VT(args) == VT_EMPTY)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
 
-    str = V_BSTR(args);
+    if(V_VT(args+1) == VT_NULL || (args_cnt == 3 && V_VT(args+2) == VT_NULL))
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if(V_VT(args+1) == VT_EMPTY)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
 
     hres = to_int(args+1, &start);
     if(FAILED(hres))
         return hres;
 
+    if(start < 0)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+
     if(args_cnt == 3) {
+        if(V_VT(args+2) == VT_EMPTY)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+
         hres = to_int(args+2, &len);
         if(FAILED(hres))
             return hres;
 
-        if(len < 0) {
-            FIXME("len = %d\n", len);
-            return E_FAIL;
-        }
+        if(len < 0)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
     }
 
+    if(V_VT(args) == VT_BSTR) {
+        str = V_BSTR(args);
+    }else {
+        hres = to_string(args, &conv_str);
+        if(FAILED(hres))
+            return hres;
+        str = conv_str;
+    }
 
     str_len = SysStringLen(str);
     start--;
@@ -1435,10 +1449,12 @@ static HRESULT Global_Mid(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, V
         V_VT(res) = VT_BSTR;
         V_BSTR(res) = SysAllocStringLen(str+start, len);
         if(!V_BSTR(res))
-            return E_OUTOFMEMORY;
+            hres = E_OUTOFMEMORY;
     }
 
-    return S_OK;
+    SysFreeString(conv_str);
+
+    return hres;
 }
 
 static HRESULT Global_MidB(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
