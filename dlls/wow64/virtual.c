@@ -426,7 +426,11 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
 
     case MemoryRegionInformation: /* MEMORY_REGION_INFORMATION */
     {
-        if (len >= sizeof(MEMORY_REGION_INFORMATION32))
+        if (len < sizeof(MEMORY_REGION_INFORMATION32))
+            status = STATUS_INFO_LENGTH_MISMATCH;
+        if ((ULONG_PTR)addr > highest_user_address)
+            status = STATUS_INVALID_PARAMETER;
+        else
         {
             MEMORY_REGION_INFORMATION info;
             MEMORY_REGION_INFORMATION32 *info32 = ptr;
@@ -442,7 +446,6 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
                 info32->NodePreference = info.NodePreference;
             }
         }
-        else status = STATUS_INFO_LENGTH_MISMATCH;
         res_len = sizeof(MEMORY_REGION_INFORMATION32);
         break;
     }
