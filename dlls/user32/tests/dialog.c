@@ -2151,6 +2151,25 @@ static LRESULT CALLBACK msgbox_hook_proc(INT code, WPARAM wParam, LPARAM lParam)
     return CallNextHookEx(NULL, code, wParam, lParam);
 }
 
+static LRESULT CALLBACK msgbox_sysmodal_hook_proc(INT code, WPARAM wParam, LPARAM lParam)
+{
+    if (code == HCBT_ACTIVATE)
+    {
+        HWND msgbox = (HWND)wParam;
+        LONG exstyles = GetWindowLongA(msgbox, GWL_EXSTYLE);
+
+        if (msgbox)
+        {
+            todo_wine ok(exstyles & WS_EX_TOPMOST, "expected message box to have topmost exstyle set\n");
+
+            SendDlgItemMessageA(msgbox, IDCANCEL, WM_LBUTTONDOWN, 0, 0);
+            SendDlgItemMessageA(msgbox, IDCANCEL, WM_LBUTTONUP, 0, 0);
+        }
+    }
+
+    return CallNextHookEx(NULL, code, wParam, lParam);
+}
+
 static void test_MessageBox(void)
 {
     HHOOK hook;
@@ -2160,6 +2179,13 @@ static void test_MessageBox(void)
 
     ret = MessageBoxA(NULL, "Text", "MSGBOX caption", MB_OKCANCEL);
     ok(ret == IDCANCEL, "got %d\n", ret);
+
+    UnhookWindowsHookEx(hook);
+
+    /* Test for MB_SYSTEMMODAL */
+    hook = SetWindowsHookExA(WH_CBT, msgbox_sysmodal_hook_proc, NULL, GetCurrentThreadId());
+
+    MessageBoxA(NULL, NULL, "system modal", MB_OKCANCEL | MB_SYSTEMMODAL);
 
     UnhookWindowsHookEx(hook);
 }
