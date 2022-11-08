@@ -183,8 +183,13 @@ static DWORD query_align_status(HTMLDocumentNode *doc, const WCHAR *align)
     if(doc->browser->usermode != EDITMODE || doc->outer_window->readystate < READYSTATE_INTERACTIVE)
         return OLECMDF_SUPPORTED;
 
+    if(!doc->html_document) {
+        FIXME("Not implemented for XML document\n");
+        return E_NOTIMPL;
+    }
+
     nsAString_Init(&justify_str, align);
-    nsres = nsIDOMHTMLDocument_QueryCommandState(doc->nsdoc, &justify_str, &b);
+    nsres = nsIDOMHTMLDocument_QueryCommandState(doc->html_document, &justify_str, &b);
     nsAString_Finish(&justify_str);
     if(NS_SUCCEEDED(nsres) && b)
         ret |= OLECMDF_LATCHED;
@@ -1081,8 +1086,8 @@ static HRESULT exec_hyperlink(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *
             return OLECMDERR_E_CANCELED;
     }
 
-    if(!doc->nsdoc) {
-        WARN("NULL nsdoc\n");
+    if(!doc->dom_document) {
+        WARN("NULL dom_document\n");
         return E_UNEXPECTED;
     }
 
@@ -1105,7 +1110,7 @@ static HRESULT exec_hyperlink(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *
         nsIDOMNode *unused_node;
         nsIDOMText *text_node;
 
-        nsIDOMHTMLDocument_CreateTextNode(doc->nsdoc, &ns_url, &text_node);
+        nsIDOMDocument_CreateTextNode(doc->dom_document, &ns_url, &text_node);
 
         /* wrap the <a> tags around the text element */
         nsIDOMElement_AppendChild(anchor_elem, (nsIDOMNode*)text_node, &unused_node);

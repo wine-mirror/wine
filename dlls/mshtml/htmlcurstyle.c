@@ -1316,12 +1316,12 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
     HTMLCurrentStyle *ret;
     nsresult nsres;
 
-    if(!elem->node.doc->nsdoc)  {
-        WARN("NULL nsdoc\n");
+    if(!elem->node.doc->dom_document)  {
+        WARN("NULL dom_document\n");
         return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMHTMLDocument_GetDefaultView(elem->node.doc->nsdoc, &nsview);
+    nsres = nsIDOMDocument_GetDefaultView(elem->node.doc->dom_document, &nsview);
     if(NS_FAILED(nsres)) {
         ERR("GetDefaultView failed: %08lx\n", nsres);
         return E_FAIL;

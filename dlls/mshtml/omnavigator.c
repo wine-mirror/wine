@@ -242,7 +242,6 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
 {
     HTMLDOMImplementation *This = impl_from_IHTMLDOMImplementation2(iface);
     HTMLDocumentNode *new_document_node;
-    nsIDOMHTMLDocument *html_doc;
     nsIDOMDocument *doc;
     nsAString title_str;
     nsresult nsres;
@@ -261,12 +260,8 @@ static HRESULT WINAPI HTMLDOMImplementation2_createHTMLDocument(IHTMLDOMImplemen
         return E_FAIL;
     }
 
-    nsres = nsIDOMDocument_QueryInterface(doc, &IID_nsIDOMHTMLDocument, (void**)&html_doc);
+    hres = create_document_node(doc, This->browser, NULL, dispex_compat_mode(&This->dispex), &new_document_node);
     nsIDOMDocument_Release(doc);
-    assert(nsres == NS_OK);
-
-    hres = create_document_node(html_doc, This->browser, NULL, dispex_compat_mode(&This->dispex), &new_document_node);
-    nsIDOMHTMLDocument_Release(html_doc);
     if(FAILED(hres))
         return hres;
 
@@ -337,7 +332,7 @@ HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementa
     init_dispatch(&dom_implementation->dispex, (IUnknown*)&dom_implementation->IHTMLDOMImplementation_iface,
                   &HTMLDOMImplementation_dispex, doc_node->document_mode);
 
-    nsres = nsIDOMHTMLDocument_GetImplementation(doc_node->nsdoc, &dom_implementation->implementation);
+    nsres = nsIDOMDocument_GetImplementation(doc_node->dom_document, &dom_implementation->implementation);
     if(NS_FAILED(nsres)) {
         ERR("GetDOMImplementation failed: %08lx\n", nsres);
         IHTMLDOMImplementation_Release(&dom_implementation->IHTMLDOMImplementation_iface);

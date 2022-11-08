@@ -1683,7 +1683,12 @@ static nsresult NSAPI nsContextMenuListener_OnShowContextMenu(nsIContextMenuList
     case CONTEXT_TEXT: {
         nsISelection *selection;
 
-        nsres = nsIDOMHTMLDocument_GetSelection(This->doc->doc_node->nsdoc, &selection);
+        if(!This->doc->doc_node->html_document) {
+            FIXME("Not implemented for XML document\n");
+            break;
+        }
+
+        nsres = nsIDOMHTMLDocument_GetSelection(This->doc->doc_node->html_document, &selection);
         if(NS_SUCCEEDED(nsres) && selection) {
             cpp_bool is_collapsed;
 

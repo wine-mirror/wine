@@ -211,7 +211,7 @@ static nsresult run_insert_comment(HTMLDocumentNode *doc, nsISupports *comment_i
     if(replace_html) {
         HRESULT hres;
 
-        hres = replace_node_by_html(doc->nsdoc, (nsIDOMNode*)nscomment, replace_html);
+        hres = replace_node_by_html(doc->dom_document, (nsIDOMNode*)nscomment, replace_html);
         heap_free(replace_html);
         if(FAILED(hres))
             nsres = NS_ERROR_FAILURE;
@@ -971,7 +971,7 @@ void init_document_mutation(HTMLDocumentNode *doc)
 
     doc->nsIDocumentObserver_iface.lpVtbl = &nsDocumentObserverVtbl;
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDocument, (void**)&nsdoc);
+    nsres = nsIDOMDocument_QueryInterface(doc->dom_document, &IID_nsIDocument, (void**)&nsdoc);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDocument: %08lx\n", nsres);
         return;
@@ -986,7 +986,7 @@ void release_document_mutation(HTMLDocumentNode *doc)
     nsIDocument *nsdoc;
     nsresult nsres;
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(doc->nsdoc, &IID_nsIDocument, (void**)&nsdoc);
+    nsres = nsIDOMDocument_QueryInterface(doc->dom_document, &IID_nsIDocument, (void**)&nsdoc);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDocument: %08lx\n", nsres);
         return;
@@ -996,13 +996,13 @@ void release_document_mutation(HTMLDocumentNode *doc)
     nsIDocument_Release(nsdoc);
 }
 
-JSContext *get_context_from_document(nsIDOMHTMLDocument *nsdoc)
+JSContext *get_context_from_document(nsIDOMDocument *nsdoc)
 {
     nsIDocument *doc;
     JSContext *ctx;
     nsresult nsres;
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(nsdoc, &IID_nsIDocument, (void**)&doc);
+    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDocument, (void**)&doc);
     assert(nsres == NS_OK);
 
     ctx = nsIContentUtils_GetContextFromDocument(content_utils, doc);

@@ -160,12 +160,17 @@ static HRESULT WINAPI HTMLSelectionObject_createRange(IHTMLSelectionObject *ifac
 
             TRACE("nsrange_cnt = 0\n");
 
-            if(!This->doc->nsdoc) {
-                WARN("nsdoc is NULL\n");
+            if(!This->doc->dom_document) {
+                WARN("dom_document is NULL\n");
                 return E_UNEXPECTED;
             }
 
-            nsres = nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nsbody);
+            if(!This->doc->html_document) {
+                FIXME("Not implemented for XML document\n");
+                return E_NOTIMPL;
+            }
+
+            nsres = nsIDOMHTMLDocument_GetBody(This->doc->html_document, &nsbody);
             if(NS_FAILED(nsres) || !nsbody) {
                 ERR("Could not get body: %08lx\n", nsres);
                 return E_FAIL;

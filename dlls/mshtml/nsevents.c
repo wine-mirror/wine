@@ -258,14 +258,14 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
                 &doc->outer_window->base.IHTMLWindow2_iface, 0);
 
-    if(doc->nsdoc) {
+    if(doc->dom_document) {
         hres = create_document_event(doc, EVENTID_LOAD, &load_event);
         if(SUCCEEDED(hres)) {
             dispatch_event(&doc->node.event_target, load_event);
             IDOMEvent_Release(&load_event->IDOMEvent_iface);
         }
     }else {
-        WARN("no nsdoc\n");
+        WARN("no dom_document\n");
     }
 
     if(doc->window) {
@@ -383,7 +383,7 @@ static nsIDOMEventTarget *get_default_document_target(HTMLDocumentNode *doc)
     nsISupports *target_iface;
     nsresult nsres;
 
-    target_iface = doc->window ? (nsISupports*)doc->outer_window->nswindow : (nsISupports*)doc->nsdoc;
+    target_iface = doc->window ? (nsISupports*)doc->outer_window->nswindow : (nsISupports*)doc->dom_document;
     nsres = nsISupports_QueryInterface(target_iface, &IID_nsIDOMEventTarget, (void**)&target);
     return NS_SUCCEEDED(nsres) ? target : NULL;
 }

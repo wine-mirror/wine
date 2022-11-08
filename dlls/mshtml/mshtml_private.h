@@ -921,7 +921,8 @@ struct HTMLDocumentNode {
     compat_mode_t document_mode;
     BOOL document_mode_locked;
 
-    nsIDOMHTMLDocument *nsdoc;
+    nsIDOMDocument *dom_document;
+    nsIDOMHTMLDocument *html_document;
     BOOL content_ready;
 
     IHTMLDOMImplementation *dom_implementation;
@@ -949,7 +950,7 @@ struct HTMLDocumentNode {
 HRESULT HTMLDocument_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT MHTMLDocument_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 HRESULT HTMLLoadOptions_Create(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
-HRESULT create_document_node(nsIDOMHTMLDocument*,GeckoBrowser*,HTMLInnerWindow*,
+HRESULT create_document_node(nsIDOMDocument*,GeckoBrowser*,HTMLInnerWindow*,
                              compat_mode_t,HTMLDocumentNode**) DECLSPEC_HIDDEN;
 HRESULT create_doctype_node(HTMLDocumentNode*,nsIDOMNode*,HTMLDOMNode**) DECLSPEC_HIDDEN;
 
@@ -997,7 +998,7 @@ compat_mode_t lock_document_mode(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void init_mutation(nsIComponentManager*) DECLSPEC_HIDDEN;
 void init_document_mutation(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void release_document_mutation(HTMLDocumentNode*) DECLSPEC_HIDDEN;
-JSContext *get_context_from_document(nsIDOMHTMLDocument*) DECLSPEC_HIDDEN;
+JSContext *get_context_from_document(nsIDOMDocument*) DECLSPEC_HIDDEN;
 
 void HTMLDocument_LockContainer(HTMLDocumentObj*,BOOL) DECLSPEC_HIDDEN;
 void show_context_menu(HTMLDocumentObj*,DWORD,POINT*,IDispatch*) DECLSPEC_HIDDEN;
@@ -1082,7 +1083,7 @@ void detach_document_node(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void detach_selection(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 void detach_ranges(HTMLDocumentNode*) DECLSPEC_HIDDEN;
 HRESULT get_node_text(HTMLDOMNode*,BSTR*) DECLSPEC_HIDDEN;
-HRESULT replace_node_by_html(nsIDOMHTMLDocument*,nsIDOMNode*,const WCHAR*) DECLSPEC_HIDDEN;
+HRESULT replace_node_by_html(nsIDOMDocument*,nsIDOMNode*,const WCHAR*) DECLSPEC_HIDDEN;
 
 HRESULT create_nselem(HTMLDocumentNode*,const WCHAR*,nsIDOMElement**) DECLSPEC_HIDDEN;
 HRESULT create_element(HTMLDocumentNode*,const WCHAR*,HTMLElement**) DECLSPEC_HIDDEN;

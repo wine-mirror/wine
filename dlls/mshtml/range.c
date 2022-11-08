@@ -949,7 +949,7 @@ static HRESULT WINAPI HTMLTxtRange_put_text(IHTMLTxtRange *iface, BSTR v)
         return MSHTML_E_NODOC;
 
     nsAString_InitDepend(&text_str, v);
-    nsres = nsIDOMHTMLDocument_CreateTextNode(This->doc->nsdoc, &text_str, &text_node);
+    nsres = nsIDOMDocument_CreateTextNode(This->doc->dom_document, &text_str, &text_node);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateTextNode failed: %08lx\n", nsres);
@@ -1159,7 +1159,12 @@ static HRESULT WINAPI HTMLTxtRange_expand(IHTMLTxtRange *iface, BSTR Unit, VARIA
         nsIDOMHTMLElement *nsbody = NULL;
         nsresult nsres;
 
-        nsres = nsIDOMHTMLDocument_GetBody(This->doc->nsdoc, &nsbody);
+        if(!This->doc->html_document) {
+            FIXME("Not implemented for XML document\n");
+            return E_NOTIMPL;
+        }
+
+        nsres = nsIDOMHTMLDocument_GetBody(This->doc->html_document, &nsbody);
         if(NS_FAILED(nsres) || !nsbody) {
             ERR("Could not get body: %08lx\n", nsres);
             break;
@@ -1657,8 +1662,8 @@ static HRESULT exec_indent(HTMLTxtRange *This, VARIANT *in, VARIANT *out)
 
     TRACE("(%p)->(%p %p)\n", This, in, out);
 
-    if(!This->doc->nsdoc) {
-        WARN("NULL nsdoc\n");
+    if(!This->doc->dom_document) {
+        WARN("NULL dom_document\n");
         return E_NOTIMPL;
     }
 

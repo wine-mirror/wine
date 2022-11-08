@@ -4143,7 +4143,6 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
 {
     HTMLOuterWindow *outer_window = window->base.outer_window;
     compat_mode_t parent_mode = COMPAT_MODE_QUIRKS;
-    nsIDOMHTMLDocument *nshtmldoc;
     nsIDOMDocument *nsdoc;
     nsresult nsres;
     HRESULT hres;
@@ -4159,18 +4158,11 @@ HRESULT update_window_doc(HTMLInnerWindow *window)
         return E_FAIL;
     }
 
-    nsres = nsIDOMDocument_QueryInterface(nsdoc, &IID_nsIDOMHTMLDocument, (void**)&nshtmldoc);
-    nsIDOMDocument_Release(nsdoc);
-    if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMHTMLDocument iface: %08lx\n", nsres);
-        return E_FAIL;
-    }
-
     if(outer_window->parent)
         parent_mode = outer_window->parent->base.inner_window->doc->document_mode;
 
-    hres = create_document_node(nshtmldoc, outer_window->browser, window, parent_mode, &window->doc);
-    nsIDOMHTMLDocument_Release(nshtmldoc);
+    hres = create_document_node(nsdoc, outer_window->browser, window, parent_mode, &window->doc);
+    nsIDOMDocument_Release(nsdoc);
     if(FAILED(hres))
         return hres;
 

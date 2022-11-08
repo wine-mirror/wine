@@ -252,8 +252,8 @@ static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->element.node.doc->nsdoc) {
-        WARN("NULL nsdoc\n");
+    if(!This->element.node.doc->dom_document) {
+        WARN("NULL dom_document\n");
         return E_UNEXPECTED;
     }
 
@@ -275,7 +275,7 @@ static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR
     }
 
     nsAString_InitDepend(&text_str, v);
-    nsres = nsIDOMHTMLDocument_CreateTextNode(This->element.node.doc->nsdoc, &text_str, &text_node);
+    nsres = nsIDOMDocument_CreateTextNode(This->element.node.doc->dom_document, &text_str, &text_node);
     nsAString_Finish(&text_str);
     if(NS_FAILED(nsres)) {
         ERR("CreateTextNode failed: %08lx\n", nsres);

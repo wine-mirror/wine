@@ -503,12 +503,12 @@ static HRESULT get_doc_string(HTMLDocumentNode *This, char **str)
     nsresult nsres;
     HRESULT hres;
 
-    if(!This->nsdoc) {
-        WARN("NULL nsdoc\n");
+    if(!This->dom_document) {
+        WARN("NULL dom_document\n");
         return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMHTMLDocument_QueryInterface(This->nsdoc, &IID_nsIDOMNode, (void**)&nsnode);
+    nsres = nsIDOMDocument_QueryInterface(This->dom_document, &IID_nsIDOMNode, (void**)&nsnode);
     if(NS_FAILED(nsres)) {
         ERR("Could not get nsIDOMNode failed: %08lx\n", nsres);
         return E_FAIL;

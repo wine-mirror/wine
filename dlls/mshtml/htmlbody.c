@@ -669,12 +669,12 @@ static HRESULT WINAPI HTMLBodyElement_createTextRange(IHTMLBodyElement *iface, I
 
     TRACE("(%p)->(%p)\n", This, range);
 
-    if(!This->element.node.doc->nsdoc) {
-        WARN("No nsdoc\n");
+    if(!This->element.node.doc->dom_document) {
+        WARN("No dom_document\n");
         return E_UNEXPECTED;
     }
 
-    nsres = nsIDOMHTMLDocument_CreateRange(This->element.node.doc->nsdoc, &nsrange);
+    nsres = nsIDOMDocument_CreateRange(This->element.node.doc->dom_document, &nsrange);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIDOMRange_SelectNodeContents(nsrange, This->element.node.nsnode);
         if(NS_FAILED(nsres))

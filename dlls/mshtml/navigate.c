@@ -2152,7 +2152,7 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
         swprintf(selector, ARRAY_SIZE(selector_formatW)+SysStringLen(frag), selector_formatW, frag);
         nsAString_InitDepend(&selector_str, selector);
         /* NOTE: Gecko doesn't set result to NULL if there is no match, so nselem must be initialized */
-        nsres = nsIDOMHTMLDocument_QuerySelector(window->base.inner_window->doc->nsdoc, &selector_str, &nselem);
+        nsres = nsIDOMDocument_QuerySelector(window->base.inner_window->doc->dom_document, &selector_str, &nselem);
         nsAString_Finish(&selector_str);
         heap_free(selector);
         if(NS_SUCCEEDED(nsres) && nselem) {
