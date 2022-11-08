@@ -2160,7 +2160,7 @@ static LRESULT CALLBACK msgbox_sysmodal_hook_proc(INT code, WPARAM wParam, LPARA
 
         if (msgbox)
         {
-            todo_wine ok(exstyles & WS_EX_TOPMOST, "expected message box to have topmost exstyle set\n");
+            ok(exstyles & WS_EX_TOPMOST, "expected message box to have topmost exstyle set\n");
 
             SendDlgItemMessageA(msgbox, IDCANCEL, WM_LBUTTONDOWN, 0, 0);
             SendDlgItemMessageA(msgbox, IDCANCEL, WM_LBUTTONUP, 0, 0);
