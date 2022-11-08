@@ -79,20 +79,6 @@ struct tagASSEMBLY
     METADATAHDR *metadatahdr;
 };
 
-static inline LPWSTR strdupW(LPCWSTR src)
-{
-    LPWSTR dest;
-
-    if (!src)
-        return NULL;
-
-    dest = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(src) + 1) * sizeof(WCHAR));
-    if (dest)
-        lstrcpyW(dest, src);
-
-    return dest;
-}
-
 static void* assembly_rva_to_va(ASSEMBLY *assembly, ULONG rva)
 {
     if (assembly->is_mapped_file)
@@ -130,7 +116,7 @@ static HRESULT parse_metadata_header(ASSEMBLY *assembly, DWORD *hdrsz)
 
     metadatahdr = (METADATAHDR *)ptr;
 
-    assembly->metadatahdr = HeapAlloc(GetProcessHeap(), 0, sizeof(METADATAHDR));
+    assembly->metadatahdr = malloc(sizeof(METADATAHDR));
     if (!assembly->metadatahdr)
         return E_OUTOFMEMORY;
 
@@ -210,13 +196,13 @@ HRESULT assembly_create(ASSEMBLY **out, LPCWSTR file)
 
     *out = NULL;
 
-    assembly = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ASSEMBLY));
+    assembly = calloc(1, sizeof(ASSEMBLY));
     if (!assembly)
         return E_OUTOFMEMORY;
 
     assembly->is_mapped_file = TRUE;
 
-    assembly->path = strdupW(file);
+    assembly->path = wcsdup(file);
     if (!assembly->path)
     {
         hr = E_OUTOFMEMORY;
@@ -264,7 +250,7 @@ HRESULT assembly_from_hmodule(ASSEMBLY **out, HMODULE hmodule)
 
     *out = NULL;
 
-    assembly = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ASSEMBLY));
+    assembly = calloc(1, sizeof(ASSEMBLY));
     if (!assembly)
         return E_OUTOFMEMORY;
 
@@ -292,9 +278,9 @@ HRESULT assembly_release(ASSEMBLY *assembly)
         CloseHandle(assembly->hmap);
         CloseHandle(assembly->hfile);
     }
-    HeapFree(GetProcessHeap(), 0, assembly->metadatahdr);
-    HeapFree(GetProcessHeap(), 0, assembly->path);
-    HeapFree(GetProcessHeap(), 0, assembly);
+    free(assembly->metadatahdr);
+    free(assembly->path);
+    free(assembly);
 
     return S_OK;
 }
