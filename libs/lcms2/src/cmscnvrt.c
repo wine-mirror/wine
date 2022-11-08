@@ -386,7 +386,7 @@ cmsBool ComputeConversion(cmsUInt32Number i,
 
         if (BPC) {
 
-            cmsCIEXYZ BlackPointIn, BlackPointOut;
+            cmsCIEXYZ BlackPointIn = { 0, 0, 0}, BlackPointOut = { 0, 0, 0 };
 
             cmsDetectBlackPoint(&BlackPointIn,  hProfiles[i-1], Intent, 0);
             cmsDetectDestinationBlackPoint(&BlackPointOut, hProfiles[i], Intent, 0);
@@ -630,7 +630,7 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
                   ColorSpaceOut == cmsSigRgbData ||
                   ColorSpaceOut == cmsSigCmykData) {
 
-                  cmsStage* clip = _cmsStageClipNegatives(Result->ContextID, cmsChannelsOf(ColorSpaceOut));
+                  cmsStage* clip = _cmsStageClipNegatives(Result->ContextID, cmsChannelsOfColorSpace(ColorSpaceOut));
                   if (clip == NULL) goto Error;
 
                   if (!cmsPipelineInsertStage(Result, cmsAT_END, clip))

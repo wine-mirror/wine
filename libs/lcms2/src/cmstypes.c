@@ -1425,9 +1425,9 @@ void *Type_Measurement_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* 
 {
     cmsICCMeasurementConditions mc;
 
-	
+
     memset(&mc, 0, sizeof(mc));
-	
+
     if (!_cmsReadUInt32Number(io, &mc.Observer)) return NULL;
     if (!_cmsReadXYZNumber(io,    &mc.Backing)) return NULL;
     if (!_cmsReadUInt32Number(io, &mc.Geometry)) return NULL;
@@ -1550,7 +1550,10 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
         Block = (wchar_t*) _cmsMalloc(self ->ContextID, SizeOfTag);
         if (Block == NULL) goto Error;
         NumOfWchar = SizeOfTag / sizeof(wchar_t);
-        if (!_cmsReadWCharArray(io, NumOfWchar, Block)) goto Error;
+        if (!_cmsReadWCharArray(io, NumOfWchar, Block)) {
+            _cmsFree(self->ContextID, Block);
+            goto Error;
+        }
     }
 
     mlu ->MemPool  = Block;
@@ -1935,29 +1938,37 @@ cmsBool  Type_LUT8_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
 
     // That should be all
     if (mpe != NULL) {
-        cmsSignalError(mpe->ContextID, cmsERROR_UNKNOWN_EXTENSION, "LUT is not suitable to be saved as LUT8");
+        cmsSignalError(self->ContextID, cmsERROR_UNKNOWN_EXTENSION, "LUT is not suitable to be saved as LUT8");
         return FALSE;
     }
 
     if (clut == NULL)
         clutPoints = 0;
-    else
-        clutPoints    = clut->Params->nSamples[0];
+    else {
+        // Lut8 only allows same CLUT points in all dimensions
+        clutPoints = clut->Params->nSamples[0];
+        for (i = 1; i < cmsPipelineInputChannels(NewLUT); i++) {
+            if (clut->Params->nSamples[i] != clutPoints) {
+                cmsSignalError(self->ContextID, cmsERROR_UNKNOWN_EXTENSION, "LUT with different samples per dimension not suitable to be saved as LUT16");
+                return FALSE;
+            }
+        }
+    }
 
-    if (!_cmsWriteUInt8Number(io, (cmsUInt8Number) NewLUT ->InputChannels)) return FALSE;
-    if (!_cmsWriteUInt8Number(io, (cmsUInt8Number) NewLUT ->OutputChannels)) return FALSE;
+    if (!_cmsWriteUInt8Number(io, (cmsUInt8Number)cmsPipelineInputChannels(NewLUT))) return FALSE;
+    if (!_cmsWriteUInt8Number(io, (cmsUInt8Number)cmsPipelineOutputChannels(NewLUT))) return FALSE;
     if (!_cmsWriteUInt8Number(io, (cmsUInt8Number) clutPoints)) return FALSE;
     if (!_cmsWriteUInt8Number(io, 0)) return FALSE; // Padding
 
     if (MatMPE != NULL) {
         
-		for (i = 0; i < 9; i++)
-		{
-			if (!_cmsWrite15Fixed16Number(io, MatMPE->Double[i])) return FALSE;
-		}
+        for (i = 0; i < 9; i++)
+        {
+            if (!_cmsWrite15Fixed16Number(io, MatMPE->Double[i])) return FALSE;
+        }
     }
     else {
-		
+
         if (!_cmsWrite15Fixed16Number(io, 1)) return FALSE;
         if (!_cmsWrite15Fixed16Number(io, 0)) return FALSE;
         if (!_cmsWrite15Fixed16Number(io, 0)) return FALSE;
@@ -2072,9 +2083,9 @@ cmsBool Write16bitTables(cmsContext ContextID, cmsIOHANDLER* io, _cmsStageToneCu
 
     _cmsAssert(Tables != NULL);
 
-    nEntries = Tables->TheCurves[0]->nEntries;
-
     for (i=0; i < Tables ->nCurves; i++) {
+
+        nEntries = Tables->TheCurves[i]->nEntries;
 
         for (j=0; j < nEntries; j++) {
 
@@ -2218,7 +2229,7 @@ cmsBool Type_LUT16_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
 
     // That should be all
     if (mpe != NULL) {
-        cmsSignalError(mpe->ContextID, cmsERROR_UNKNOWN_EXTENSION, "LUT is not suitable to be saved as LUT16");
+        cmsSignalError(self->ContextID, cmsERROR_UNKNOWN_EXTENSION, "LUT is not suitable to be saved as LUT16");
         return FALSE;
     }
 
@@ -2227,24 +2238,32 @@ cmsBool Type_LUT16_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
 
     if (clut == NULL)
         clutPoints = 0;
-    else
-        clutPoints    = clut->Params->nSamples[0];
+    else {
+        // Lut16 only allows same CLUT points in all dimensions
+        clutPoints = clut->Params->nSamples[0];
+        for (i = 1; i < InputChannels; i++) {
+            if (clut->Params->nSamples[i] != clutPoints) {
+                cmsSignalError(self->ContextID, cmsERROR_UNKNOWN_EXTENSION, "LUT with different samples per dimension not suitable to be saved as LUT16");
+                return FALSE;
+            }
+        }
+    }
 
     if (!_cmsWriteUInt8Number(io, (cmsUInt8Number) InputChannels)) return FALSE;
     if (!_cmsWriteUInt8Number(io, (cmsUInt8Number) OutputChannels)) return FALSE;
     if (!_cmsWriteUInt8Number(io, (cmsUInt8Number) clutPoints)) return FALSE;
     if (!_cmsWriteUInt8Number(io, 0)) return FALSE; // Padding
-	
+
     if (MatMPE != NULL) {
                 
-		for (i = 0; i < 9; i++)
-		{
-			if (!_cmsWrite15Fixed16Number(io, MatMPE->Double[i])) return FALSE;
-		}
+        for (i = 0; i < 9; i++)
+        {
+            if (!_cmsWrite15Fixed16Number(io, MatMPE->Double[i])) return FALSE;
+        }
       
     }
     else {
-		
+
         if (!_cmsWrite15Fixed16Number(io, 1)) return FALSE;
         if (!_cmsWrite15Fixed16Number(io, 0)) return FALSE;
         if (!_cmsWrite15Fixed16Number(io, 0)) return FALSE;
@@ -2586,31 +2605,31 @@ Error:
 static
 cmsBool  WriteMatrix(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsStage* mpe)
 {
-	cmsUInt32Number i, n;
+    cmsUInt32Number i, n;
 
     _cmsStageMatrixData* m = (_cmsStageMatrixData*) mpe -> Data;
 
-	n = mpe->InputChannels * mpe->OutputChannels;
+    n = mpe->InputChannels * mpe->OutputChannels;
 
-	// Write the Matrix
-	for (i = 0; i < n; i++)
-	{
-		if (!_cmsWrite15Fixed16Number(io, m->Double[i])) return FALSE;
-	}
+    // Write the Matrix
+    for (i = 0; i < n; i++)
+    {
+        if (!_cmsWrite15Fixed16Number(io, m->Double[i])) return FALSE;
+    }
 
-	if (m->Offset != NULL) {
+    if (m->Offset != NULL) {
 
-		for (i = 0; i < mpe->OutputChannels; i++)
-		{
-			if (!_cmsWrite15Fixed16Number(io, m->Offset[i])) return FALSE;
-		}
-	}
-	else {
-		for (i = 0; i < mpe->OutputChannels; i++)
-		{
-			if (!_cmsWrite15Fixed16Number(io, 0)) return FALSE;
-		}
-	}
+        for (i = 0; i < mpe->OutputChannels; i++)
+        {
+            if (!_cmsWrite15Fixed16Number(io, m->Offset[i])) return FALSE;
+        }
+    }
+    else {
+        for (i = 0; i < mpe->OutputChannels; i++)
+        {
+            if (!_cmsWrite15Fixed16Number(io, 0)) return FALSE;
+        }
+    }
 
 
     return TRUE;
@@ -3141,7 +3160,6 @@ void Type_ColorantTable_Free(struct _cms_typehandler_struct* self, void* Ptr)
 static
 void *Type_NamedColor_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
 {
-
     cmsUInt32Number      vendorFlag;     // Bottom 16 bits for ICC use
     cmsUInt32Number      count;          // Count of named colors
     cmsUInt32Number      nDeviceCoords;  // Num of device coordinates
@@ -3471,7 +3489,6 @@ void *Type_ProfileSequenceId_Read(struct _cms_typehandler_struct* self, cmsIOHAN
 
     // Get table count
     if (!_cmsReadUInt32Number(io, &Count)) return NULL;
-    SizeOfTag -= sizeof(cmsUInt32Number);
 
     // Allocate an empty structure
     OutSeq = cmsAllocProfileSequenceDescription(self ->ContextID, Count);
@@ -3489,6 +3506,7 @@ void *Type_ProfileSequenceId_Read(struct _cms_typehandler_struct* self, cmsIOHAN
     *nItems = 1;
     return OutSeq;
 
+    cmsUNUSED_PARAMETER(SizeOfTag);
 }
 
 
@@ -3706,7 +3724,7 @@ country varies for each element:
 
 // Auxiliary, read an string specified as count + string
 static
-cmsBool  ReadCountAndSting(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsMLU* mlu, cmsUInt32Number* SizeOfTag, const char* Section)
+cmsBool  ReadCountAndString(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsMLU* mlu, cmsUInt32Number* SizeOfTag, const char* Section)
 {
     cmsUInt32Number Count;
     char* Text;
@@ -3736,7 +3754,7 @@ cmsBool  ReadCountAndSting(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
 }
 
 static
-cmsBool  WriteCountAndSting(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsMLU* mlu, const char* Section)
+cmsBool  WriteCountAndString(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsMLU* mlu, const char* Section)
 {
  cmsUInt32Number TextSize;
  char* Text;
@@ -3760,11 +3778,11 @@ void *Type_CrdInfo_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     cmsMLU* mlu = cmsMLUalloc(self ->ContextID, 5);
 
     *nItems = 0;
-    if (!ReadCountAndSting(self, io, mlu, &SizeOfTag, "nm")) goto Error;
-    if (!ReadCountAndSting(self, io, mlu, &SizeOfTag, "#0")) goto Error;
-    if (!ReadCountAndSting(self, io, mlu, &SizeOfTag, "#1")) goto Error;
-    if (!ReadCountAndSting(self, io, mlu, &SizeOfTag, "#2")) goto Error;
-    if (!ReadCountAndSting(self, io, mlu, &SizeOfTag, "#3")) goto Error;
+    if (!ReadCountAndString(self, io, mlu, &SizeOfTag, "nm")) goto Error;
+    if (!ReadCountAndString(self, io, mlu, &SizeOfTag, "#0")) goto Error;
+    if (!ReadCountAndString(self, io, mlu, &SizeOfTag, "#1")) goto Error;
+    if (!ReadCountAndString(self, io, mlu, &SizeOfTag, "#2")) goto Error;
+    if (!ReadCountAndString(self, io, mlu, &SizeOfTag, "#3")) goto Error;
 
     *nItems = 1;
     return (void*) mlu;
@@ -3781,11 +3799,11 @@ cmsBool  Type_CrdInfo_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* 
 
     cmsMLU* mlu = (cmsMLU*) Ptr;
 
-    if (!WriteCountAndSting(self, io, mlu, "nm")) goto Error;
-    if (!WriteCountAndSting(self, io, mlu, "#0")) goto Error;
-    if (!WriteCountAndSting(self, io, mlu, "#1")) goto Error;
-    if (!WriteCountAndSting(self, io, mlu, "#2")) goto Error;
-    if (!WriteCountAndSting(self, io, mlu, "#3")) goto Error;
+    if (!WriteCountAndString(self, io, mlu, "nm")) goto Error;
+    if (!WriteCountAndString(self, io, mlu, "#0")) goto Error;
+    if (!WriteCountAndString(self, io, mlu, "#1")) goto Error;
+    if (!WriteCountAndString(self, io, mlu, "#2")) goto Error;
+    if (!WriteCountAndString(self, io, mlu, "#3")) goto Error;
 
     return TRUE;
 
@@ -5383,6 +5401,64 @@ void Type_Dictionary_Free(struct _cms_typehandler_struct* self, void* Ptr)
     cmsUNUSED_PARAMETER(self);
 }
 
+// cicp VideoSignalType
+
+static
+void* Type_VideoSignal_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
+{
+    cmsVideoSignalType* cicp = NULL;
+
+    if (SizeOfTag != 8) return NULL;
+
+    if (!_cmsReadUInt32Number(io, NULL)) return NULL;
+
+    cicp = (cmsVideoSignalType*)_cmsCalloc(self->ContextID, 1, sizeof(cmsVideoSignalType));
+    if (cicp == NULL) return NULL;
+
+    if (!_cmsReadUInt8Number(io, &cicp->ColourPrimaries)) goto Error;
+    if (!_cmsReadUInt8Number(io, &cicp->TransferCharacteristics)) goto Error;
+    if (!_cmsReadUInt8Number(io, &cicp->MatrixCoefficients)) goto Error;
+    if (!_cmsReadUInt8Number(io, &cicp->VideoFullRangeFlag)) goto Error;
+
+    // Success
+    *nItems = 1;
+    return cicp;
+
+Error:
+    if (cicp != NULL) _cmsFree(self->ContextID, cicp);
+    return NULL;
+}
+
+static
+cmsBool Type_VideoSignal_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
+{
+    cmsVideoSignalType* cicp = (cmsVideoSignalType*)Ptr;
+
+    if (!_cmsWriteUInt32Number(io, 0)) return FALSE;
+    if (!_cmsWriteUInt8Number(io, cicp->ColourPrimaries)) return FALSE;
+    if (!_cmsWriteUInt8Number(io, cicp->TransferCharacteristics)) return FALSE;
+    if (!_cmsWriteUInt8Number(io, cicp->MatrixCoefficients)) return FALSE;
+    if (!_cmsWriteUInt8Number(io, cicp->VideoFullRangeFlag)) return FALSE;
+
+    return TRUE;
+
+    cmsUNUSED_PARAMETER(self);
+    cmsUNUSED_PARAMETER(nItems);
+}
+
+void* Type_VideoSignal_Dup(struct _cms_typehandler_struct* self, const void* Ptr, cmsUInt32Number n)
+{
+    return _cmsDupMem(self->ContextID, Ptr, sizeof(cmsVideoSignalType));
+
+    cmsUNUSED_PARAMETER(n);
+}
+
+
+static
+void Type_VideoSignal_Free(struct _cms_typehandler_struct* self, void* Ptr)
+{
+    _cmsFree(self->ContextID, Ptr);
+}
 
 // ********************************************************************************
 // Type support main routines
@@ -5422,6 +5498,7 @@ static const _cmsTagTypeLinkedList SupportedTagTypes[] = {
 {TYPE_HANDLER(cmsMonacoBrokenCurveType,        Curve),              (_cmsTagTypeLinkedList*) &SupportedTagTypes[28] },
 {TYPE_HANDLER(cmsSigProfileSequenceIdType,     ProfileSequenceId),  (_cmsTagTypeLinkedList*) &SupportedTagTypes[29] },
 {TYPE_HANDLER(cmsSigDictType,                  Dictionary),         (_cmsTagTypeLinkedList*) &SupportedTagTypes[30] },
+{TYPE_HANDLER(cmsSigcicpType,                  VideoSignal),        (_cmsTagTypeLinkedList*) &SupportedTagTypes[31] },
 {TYPE_HANDLER(cmsSigVcgtType,                  vcgt),                NULL }
 };
 
@@ -5616,6 +5693,8 @@ static _cmsTagLinkedList SupportedTags[] = {
     { cmsSigProfileSequenceIdTag,   { 1, 1, { cmsSigProfileSequenceIdType},  NULL }, &SupportedTags[62]},
 
     { cmsSigProfileDescriptionMLTag,{ 1, 1, { cmsSigMultiLocalizedUnicodeType}, NULL}, &SupportedTags[63]},
+    { cmsSigcicpTag,                { 1, 1, { cmsSigcicpType},               NULL },   &SupportedTags[64]},
+
     { cmsSigArgyllArtsTag,          { 9, 1, { cmsSigS15Fixed16ArrayType},    NULL}, NULL}
 
 };

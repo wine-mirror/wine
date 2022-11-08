@@ -114,7 +114,7 @@ cmsHPROFILE CMSEXPORT cmsCreateRGBProfileTHR(cmsContext ContextID,
     if (!hICC)                          // can't allocate
         return NULL;
 
-    cmsSetProfileVersion(hICC, 4.3);
+    cmsSetProfileVersion(hICC, 4.4);
 
     cmsSetDeviceClass(hICC,      cmsSigDisplayClass);
     cmsSetColorSpace(hICC,       cmsSigRgbData);
@@ -235,7 +235,7 @@ cmsHPROFILE CMSEXPORT cmsCreateGrayProfileTHR(cmsContext ContextID,
     if (!hICC)                          // can't allocate
         return NULL;
 
-    cmsSetProfileVersion(hICC, 4.3);
+    cmsSetProfileVersion(hICC, 4.4);
 
     cmsSetDeviceClass(hICC,      cmsSigDisplayClass);
     cmsSetColorSpace(hICC,       cmsSigGrayData);
@@ -291,13 +291,13 @@ cmsHPROFILE CMSEXPORT cmsCreateLinearizationDeviceLinkTHR(cmsContext ContextID,
 {
     cmsHPROFILE hICC;
     cmsPipeline* Pipeline;
-    cmsUInt32Number nChannels;
+    cmsInt32Number nChannels;
 
     hICC = cmsCreateProfilePlaceholder(ContextID);
     if (!hICC)
         return NULL;
 
-    cmsSetProfileVersion(hICC, 4.3);
+    cmsSetProfileVersion(hICC, 4.4);
 
     cmsSetDeviceClass(hICC,      cmsSigLinkClass);
     cmsSetColorSpace(hICC,       ColorSpace);
@@ -306,7 +306,7 @@ cmsHPROFILE CMSEXPORT cmsCreateLinearizationDeviceLinkTHR(cmsContext ContextID,
     cmsSetHeaderRenderingIntent(hICC,  INTENT_PERCEPTUAL);
 
     // Set up channels
-    nChannels = cmsChannelsOf(ColorSpace);
+    nChannels = cmsChannelsOfColorSpace(ColorSpace);
 
     // Creates a Pipeline with prelinearization step only
     Pipeline = cmsPipelineAlloc(ContextID, nChannels, nChannels);
@@ -397,7 +397,7 @@ cmsHPROFILE CMSEXPORT cmsCreateInkLimitingDeviceLinkTHR(cmsContext ContextID,
     cmsHPROFILE hICC;
     cmsPipeline* LUT;
     cmsStage* CLUT;
-    cmsUInt32Number nChannels;
+    cmsInt32Number nChannels;
 
     if (ColorSpace != cmsSigCmykData) {
         cmsSignalError(ContextID, cmsERROR_COLORSPACE_CHECK, "InkLimiting: Only CMYK currently supported");
@@ -416,7 +416,7 @@ cmsHPROFILE CMSEXPORT cmsCreateInkLimitingDeviceLinkTHR(cmsContext ContextID,
     if (!hICC)                          // can't allocate
         return NULL;
 
-    cmsSetProfileVersion(hICC, 4.3);
+    cmsSetProfileVersion(hICC, 4.4);
 
     cmsSetDeviceClass(hICC,      cmsSigLinkClass);
     cmsSetColorSpace(hICC,       ColorSpace);
@@ -526,7 +526,7 @@ cmsHPROFILE CMSEXPORT cmsCreateLab4ProfileTHR(cmsContext ContextID, const cmsCIE
     hProfile = cmsCreateRGBProfileTHR(ContextID, WhitePoint == NULL ? cmsD50_xyY() : WhitePoint, NULL, NULL);
     if (hProfile == NULL) return NULL;
 
-    cmsSetProfileVersion(hProfile, 4.3);
+    cmsSetProfileVersion(hProfile, 4.4);
 
     cmsSetDeviceClass(hProfile, cmsSigAbstractClass);
     cmsSetColorSpace(hProfile,  cmsSigLabData);
@@ -572,7 +572,7 @@ cmsHPROFILE CMSEXPORT cmsCreateXYZProfileTHR(cmsContext ContextID)
     hProfile = cmsCreateRGBProfileTHR(ContextID, cmsD50_xyY(), NULL, NULL);
     if (hProfile == NULL) return NULL;
 
-    cmsSetProfileVersion(hProfile, 4.3);
+    cmsSetProfileVersion(hProfile, 4.4);
 
     cmsSetDeviceClass(hProfile, cmsSigAbstractClass);
     cmsSetColorSpace(hProfile,  cmsSigXYZData);
@@ -839,7 +839,7 @@ cmsHPROFILE CMSEXPORT cmsCreateNULLProfileTHR(cmsContext ContextID)
     if (!hProfile)                          // can't allocate
         return NULL;
 
-    cmsSetProfileVersion(hProfile, 4.3);
+    cmsSetProfileVersion(hProfile, 4.4);
 
     if (!SetTextTags(hProfile, L"NULL profile built-in")) goto Error;
 
@@ -974,7 +974,7 @@ cmsHPROFILE CreateNamedColorDevicelink(cmsHTRANSFORM xform)
     // Make sure we have proper formatters
     cmsChangeBuffersFormat(xform, TYPE_NAMED_COLOR_INDEX,
         FLOAT_SH(0) | COLORSPACE_SH(_cmsLCMScolorSpace(v ->ExitColorSpace))
-        | BYTES_SH(2) | CHANNELS_SH(cmsChannelsOf(v ->ExitColorSpace)));
+        | BYTES_SH(2) | CHANNELS_SH(cmsChannelsOfColorSpace(v ->ExitColorSpace)));
 
     // Apply the transfor to colorants.
     for (i=0; i < nColors; i++) {
@@ -1062,8 +1062,9 @@ const cmsAllowedLUT* FindCombination(const cmsPipeline* Lut, cmsBool IsV4, cmsTa
 cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat64Number Version, cmsUInt32Number dwFlags)
 {
     cmsHPROFILE hProfile = NULL;
-    cmsUInt32Number FrmIn, FrmOut, ChansIn, ChansOut;
-    int ColorSpaceBitsIn, ColorSpaceBitsOut;
+	cmsUInt32Number FrmIn, FrmOut;
+	cmsInt32Number ChansIn, ChansOut;
+	int ColorSpaceBitsIn, ColorSpaceBitsOut;
     _cmsTRANSFORM* xform = (_cmsTRANSFORM*) hTransform;
     cmsPipeline* LUT = NULL;
     cmsStage* mpe;
@@ -1114,8 +1115,8 @@ cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat
 
     // Optimize the LUT and precalculate a devicelink
 
-    ChansIn  = cmsChannelsOf(xform -> EntryColorSpace);
-    ChansOut = cmsChannelsOf(xform -> ExitColorSpace);
+    ChansIn  = cmsChannelsOfColorSpace(xform -> EntryColorSpace);
+    ChansOut = cmsChannelsOfColorSpace(xform -> ExitColorSpace);
 
     ColorSpaceBitsIn  = _cmsLCMScolorSpace(xform -> EntryColorSpace);
     ColorSpaceBitsOut = _cmsLCMScolorSpace(xform -> ExitColorSpace);
