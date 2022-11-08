@@ -28,9 +28,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
-/* 1601 to 1970 is 369 years plus 89 leap days */
-#define TIME_EPOCH  ((ULONGLONG)(369 * 365 + 89) * 86400 * 1000)
-
 typedef struct {
     jsdisp_t dispex;
 
@@ -53,6 +50,16 @@ static inline DateInstance *date_this(jsval_t vthis)
 {
     jsdisp_t *jsdisp = is_object_instance(vthis) ? to_jsdisp(get_object(vthis)) : NULL;
     return (jsdisp && is_class(jsdisp, JSCLASS_DATE)) ? date_from_jsdisp(jsdisp) : NULL;
+}
+
+static inline double file_time_to_date_time(const FILETIME *ftime)
+{
+    /* 1601 to 1970 is 369 years plus 89 leap days */
+    const LONGLONG time_epoch = (LONGLONG)(369 * 365 + 89) * 86400 * 1000;
+
+    LONGLONG time = (((ULONGLONG)ftime->dwHighDateTime << 32) | ftime->dwLowDateTime) / 10000;
+
+    return time - time_epoch;
 }
 
 /*ECMA-262 3rd Edition    15.9.1.2 */
@@ -406,12 +413,9 @@ static inline DOUBLE time_clip(DOUBLE time)
 static double date_now(void)
 {
     FILETIME ftime;
-    LONGLONG time;
 
     GetSystemTimeAsFileTime(&ftime);
-    time = ((LONGLONG)ftime.dwHighDateTime << 32) + ftime.dwLowDateTime;
-
-    return time/10000 - TIME_EPOCH;
+    return file_time_to_date_time(&ftime);
 }
 
 static SYSTEMTIME create_systemtime(DOUBLE time)
@@ -2410,14 +2414,11 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, un
 
     case INVOKE_FUNC: {
         FILETIME system_time, local_time;
-        LONGLONG lltime;
 
         GetSystemTimeAsFileTime(&system_time);
         FileTimeToLocalFileTime(&system_time, &local_time);
-        lltime = ((LONGLONG)local_time.dwHighDateTime<<32)
-            + local_time.dwLowDateTime;
 
-        return date_to_string(lltime/10000-TIME_EPOCH, FALSE, 0, r);
+        return date_to_string(file_time_to_date_time(&local_time), FALSE, 0, r);
     }
 
     default:
