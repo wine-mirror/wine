@@ -1348,6 +1348,19 @@ static HRESULT Global_Right(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 
     TRACE("(%s %s)\n", debugstr_variant(args), debugstr_variant(args+1));
 
+    if(V_VT(args+1) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    hres = to_int(args+1, &len);
+    if(FAILED(hres))
+        return hres;
+
+    if(len < 0)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+
+    if(V_VT(args) == VT_NULL)
+        return return_null(res);
+
     if(V_VT(args) == VT_BSTR) {
         str = V_BSTR(args);
     }else {
@@ -1355,15 +1368,6 @@ static HRESULT Global_Right(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         if(FAILED(hres))
             return hres;
         str = conv_str;
-    }
-
-    hres = to_int(args+1, &len);
-    if(FAILED(hres))
-        return hres;
-
-    if(len < 0) {
-        FIXME("len = %d\n", len);
-        return E_FAIL;
     }
 
     str_len = SysStringLen(str);

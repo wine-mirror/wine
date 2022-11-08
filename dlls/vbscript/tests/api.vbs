@@ -842,7 +842,28 @@ TestRight "test", 0, ""
 TestRight 123, 2, "23"
 TestRight "test", "3", "est"
 TestRight 123, "2", "23"
+TestRight empty, 0, ""
+TestRight empty, 1, ""
+TestRight "test", empty, ""
+TestRight "test", empty, ""
 if isEnglishLang then TestRight true, 2, "ue"
+call Right(null, 0)
+call ok(getVT(Right(null, 0)) = "VT_NULL", "getVT(Right(null, 0)) = " & getVT(Right(null, 0)))
+call ok(getVT(Right(null, 1)) = "VT_NULL", "getVT(Right(null, 1)) = " & getVT(Right(null, 1)))
+
+sub TestRightError()
+    on error resume next
+    call Err.clear()
+    call Right("test", -1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Right(null, -1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Right("test", null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+end sub
+call TestRightError()
 
 Sub TestTrim(str, exstr)
     Call ok(Trim(str) = exstr, "Trim(" & str & ") = " & Trim(str))
