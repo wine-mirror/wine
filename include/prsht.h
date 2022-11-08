@@ -61,79 +61,133 @@ typedef LPCDLGTEMPLATEA PROPSHEETPAGE_RESOURCEA;
 typedef LPCDLGTEMPLATEW PROPSHEETPAGE_RESOURCEW;
 DECL_WINELIB_TYPE_AW(PROPSHEETPAGE_RESOURCE)
 
+#define PROPSHEETPAGEA_V1_FIELDS           \
+    DWORD              dwSize;             \
+    DWORD              dwFlags;            \
+    HINSTANCE          hInstance;          \
+    union                                  \
+    {                                      \
+        const char    *pszTemplate;        \
+        PROPSHEETPAGE_RESOURCEA pResource; \
+    } DUMMYUNIONNAME;                      \
+    union                                  \
+    {                                      \
+        HICON          hIcon;              \
+        const char    *pszIcon;            \
+    } DUMMYUNIONNAME2;                     \
+    const char        *pszTitle;           \
+    DLGPROC            pfnDlgProc;         \
+    LPARAM             lParam;             \
+    LPFNPSPCALLBACKA   pfnCallback;        \
+    UINT              *pcRefParent;
+
+typedef struct _PROPSHEETPAGEA_V1
+{
+    PROPSHEETPAGEA_V1_FIELDS
+} PROPSHEETPAGEA_V1, *LPPROPSHEETPAGEA_V1;
+
+typedef struct _PROPSHEETPAGEA_V2
+{
+    PROPSHEETPAGEA_V1_FIELDS
+    const char        *pszHeaderTitle;
+    const char        *pszHeaderSubTitle;
+} PROPSHEETPAGEA_V2, *LPPROPSHEETPAGEA_V2;
+
+typedef struct _PROPSHEETPAGEA_V3
+{
+    PROPSHEETPAGEA_V1_FIELDS
+    const char        *pszHeaderTitle;
+    const char        *pszHeaderSubTitle;
+    HANDLE             hActCtx;
+} PROPSHEETPAGEA_V3, *LPPROPSHEETPAGEA_V3;
+
 typedef struct _PROPSHEETPAGEA
 {
-    DWORD              dwSize;
-    DWORD              dwFlags;
-    HINSTANCE          hInstance;
-    union
-    {
-        LPCSTR         pszTemplate;
-        PROPSHEETPAGE_RESOURCEA pResource;
-    } DUMMYUNIONNAME;
-    union
-    {
-        HICON          hIcon;
-        LPCSTR         pszIcon;
-    } DUMMYUNIONNAME2;
-    LPCSTR             pszTitle;
-    DLGPROC            pfnDlgProc;
-    LPARAM             lParam;
-    LPFNPSPCALLBACKA   pfnCallback;
-    UINT*              pcRefParent;
-    LPCSTR             pszHeaderTitle;
-    LPCSTR             pszHeaderSubTitle;
+    PROPSHEETPAGEA_V1_FIELDS
+    const char        *pszHeaderTitle;
+    const char        *pszHeaderSubTitle;
     HANDLE             hActCtx;
     union
     {
         HBITMAP        hbmHeader;
-        LPCSTR         pszbmHeader;
+        const char    *pszbmHeader;
     } DUMMYUNIONNAME3;
 } PROPSHEETPAGEA, *LPPROPSHEETPAGEA,
+  PROPSHEETPAGEA_V4, *LPPROPSHEETPAGEA_V4,
   PROPSHEETPAGEA_LATEST, *LPPROPSHEETPAGEA_LATEST;
 
-typedef const PROPSHEETPAGEA *LPCPROPSHEETPAGEA, *LPCPROPSHEETPAGEA_LATEST;
-#define PROPSHEETPAGEA_V1_SIZE CCSIZEOF_STRUCT(PROPSHEETPAGEA, pcRefParent)
-#define PROPSHEETPAGEA_V2_SIZE CCSIZEOF_STRUCT(PROPSHEETPAGEA, pszHeaderSubTitle)
-#define PROPSHEETPAGEA_V3_SIZE CCSIZEOF_STRUCT(PROPSHEETPAGEA, hActCtx)
-#define PROPSHEETPAGEA_V4_SIZE sizeof(PROPSHEETPAGEA)
+typedef const PROPSHEETPAGEA_V1 *LPCPROPSHEETPAGEA_V1;
+typedef const PROPSHEETPAGEA_V2 *LPCPROPSHEETPAGEA_V2;
+typedef const PROPSHEETPAGEA_V3 *LPCPROPSHEETPAGEA_V3;
+typedef const PROPSHEETPAGEA_V4 *LPCPROPSHEETPAGEA, *LPCPROPSHEETPAGEA_V4, *LPCPROPSHEETPAGEA_LATEST;
+#define PROPSHEETPAGEA_V1_SIZE sizeof(PROPSHEETPAGEA_V1)
+#define PROPSHEETPAGEA_V2_SIZE sizeof(PROPSHEETPAGEA_V2)
+#define PROPSHEETPAGEA_V3_SIZE sizeof(PROPSHEETPAGEA_V3)
+#define PROPSHEETPAGEA_V4_SIZE sizeof(PROPSHEETPAGEA_V4)
+
+#define PROPSHEETPAGEW_V1_FIELDS           \
+    DWORD              dwSize;             \
+    DWORD              dwFlags;            \
+    HINSTANCE          hInstance;          \
+    union                                  \
+    {                                      \
+        const WCHAR   *pszTemplate;        \
+        PROPSHEETPAGE_RESOURCEW pResource; \
+    } DUMMYUNIONNAME;                      \
+    union                                  \
+    {                                      \
+        HICON          hIcon;              \
+        const WCHAR   *pszIcon;            \
+    } DUMMYUNIONNAME2;                     \
+    const WCHAR       *pszTitle;           \
+    DLGPROC            pfnDlgProc;         \
+    LPARAM             lParam;             \
+    LPFNPSPCALLBACKW   pfnCallback;        \
+    UINT              *pcRefParent;
+
+typedef struct _PROPSHEETPAGEW_V1
+{
+    PROPSHEETPAGEW_V1_FIELDS
+} PROPSHEETPAGEW_V1, *LPPROPSHEETPAGEW_V1;
+
+typedef struct _PROPSHEETPAGEW_V2
+{
+    PROPSHEETPAGEW_V1_FIELDS
+    const WCHAR       *pszHeaderTitle;
+    const WCHAR       *pszHeaderSubTitle;
+} PROPSHEETPAGEW_V2, *LPPROPSHEETPAGEW_V2;
+
+typedef struct _PROPSHEETPAGEW_V3
+{
+    PROPSHEETPAGEW_V1_FIELDS
+    const WCHAR       *pszHeaderTitle;
+    const WCHAR       *pszHeaderSubTitle;
+    HANDLE             hActCtx;
+} PROPSHEETPAGEW_V3, *LPPROPSHEETPAGEW_V3;
 
 typedef struct _PROPSHEETPAGEW
 {
-    DWORD              dwSize;
-    DWORD              dwFlags;
-    HINSTANCE          hInstance;
-    union
-    {
-        LPCWSTR        pszTemplate;
-        PROPSHEETPAGE_RESOURCEW pResource;
-    } DUMMYUNIONNAME;
-    union
-    {
-        HICON          hIcon;
-        LPCWSTR        pszIcon;
-    } DUMMYUNIONNAME2;
-    LPCWSTR            pszTitle;
-    DLGPROC            pfnDlgProc;
-    LPARAM             lParam;
-    LPFNPSPCALLBACKW   pfnCallback;
-    UINT*              pcRefParent;
-    LPCWSTR            pszHeaderTitle;
-    LPCWSTR            pszHeaderSubTitle;
+    PROPSHEETPAGEW_V1_FIELDS
+    const WCHAR       *pszHeaderTitle;
+    const WCHAR       *pszHeaderSubTitle;
     HANDLE             hActCtx;
     union
     {
         HBITMAP        hbmHeader;
-        LPCWSTR        pszbmHeader;
+        const WCHAR   *pszbmHeader;
     } DUMMYUNIONNAME3;
 } PROPSHEETPAGEW, *LPPROPSHEETPAGEW,
+  PROPSHEETPAGEW_V4, *LPPROPSHEETPAGEW_V4,
   PROPSHEETPAGEW_LATEST, *LPPROPSHEETPAGEW_LATEST;
 
-typedef const PROPSHEETPAGEW *LPCPROPSHEETPAGEW, *LPCPROPSHEETPAGEW_LATEST;
-#define PROPSHEETPAGEW_V1_SIZE CCSIZEOF_STRUCT(PROPSHEETPAGEW, pcRefParent)
-#define PROPSHEETPAGEW_V2_SIZE CCSIZEOF_STRUCT(PROPSHEETPAGEW, pszHeaderSubTitle)
-#define PROPSHEETPAGEW_V3_SIZE CCSIZEOF_STRUCT(PROPSHEETPAGEW, hActCtx)
-#define PROPSHEETPAGEW_V4_SIZE sizeof(PROPSHEETPAGEW)
+typedef const PROPSHEETPAGEW_V1 *LPCPROPSHEETPAGEW_V1;
+typedef const PROPSHEETPAGEW_V2 *LPCPROPSHEETPAGEW_V2;
+typedef const PROPSHEETPAGEW_V3 *LPCPROPSHEETPAGEW_V3;
+typedef const PROPSHEETPAGEW *LPCPROPSHEETPAGEW, *LPCPROPSHEETPAGEW_V4, *LPCPROPSHEETPAGEW_LATEST;
+#define PROPSHEETPAGEW_V1_SIZE sizeof(PROPSHEETPAGEW_V1)
+#define PROPSHEETPAGEW_V2_SIZE sizeof(PROPSHEETPAGEW_V2)
+#define PROPSHEETPAGEW_V3_SIZE sizeof(PROPSHEETPAGEW_V3)
+#define PROPSHEETPAGEW_V4_SIZE sizeof(PROPSHEETPAGEW_V4)
 
 
 typedef struct _PROPSHEETHEADERA
@@ -256,6 +310,18 @@ DECL_WINELIB_TYPE_AW(LPFNPSPCALLBACK)
 # define DECL_PRSHT_TYPE_AW(base, suffix)  typedef PRSHT_NAME_AW(base, suffix) base##_##suffix;
 #endif  /* WINE_NO_UNICODE_MACROS */
 
+DECL_PRSHT_TYPE_AW(PROPSHEETPAGE, V1)
+DECL_PRSHT_TYPE_AW(LPPROPSHEETPAGE, V1)
+DECL_PRSHT_TYPE_AW(LPCPROPSHEETPAGE, V1)
+DECL_PRSHT_TYPE_AW(PROPSHEETPAGE, V2)
+DECL_PRSHT_TYPE_AW(LPPROPSHEETPAGE, V2)
+DECL_PRSHT_TYPE_AW(LPCPROPSHEETPAGE, V2)
+DECL_PRSHT_TYPE_AW(PROPSHEETPAGE, V3)
+DECL_PRSHT_TYPE_AW(LPPROPSHEETPAGE, V3)
+DECL_PRSHT_TYPE_AW(LPCPROPSHEETPAGE, V3)
+DECL_PRSHT_TYPE_AW(PROPSHEETPAGE, V4)
+DECL_PRSHT_TYPE_AW(LPPROPSHEETPAGE, V4)
+DECL_PRSHT_TYPE_AW(LPCPROPSHEETPAGE, V4)
 DECL_PRSHT_TYPE_AW(PROPSHEETPAGE, LATEST)
 DECL_PRSHT_TYPE_AW(LPPROPSHEETPAGE, LATEST)
 DECL_PRSHT_TYPE_AW(LPCPROPSHEETPAGE, LATEST)
