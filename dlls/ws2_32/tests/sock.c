@@ -3270,9 +3270,8 @@ static void test_WSASocket(void)
         size = sizeof(info);
         err = getsockopt(sock, SOL_SOCKET, SO_PROTOCOL_INFOW, (char *) &info, &size);
         ok(!err,"got error %d\n", WSAGetLastError());
-        ok(!wcscmp(info.szProtocol, L"MSAFD Tcpip [RAW/IP]")
-                || broken(!wcscmp(info.szProtocol, L"MSAFD-Tcpip [RAW/IP]")) /* Some Win7 machines. */,
-                "got szProtocol %s.\n", debugstr_w(info.szProtocol));
+        /* Protocol name in info.szProtocol is not entirely consistent across Windows versions and
+         * locales, so not testing it. */
         ok(info.iAddressFamily == AF_INET, "got iAddressFamily %d.\n", info.iAddressFamily);
         ok(info.iSocketType == SOCK_RAW, "got iSocketType %d.\n", info.iSocketType);
         ok(info.iMaxSockAddr == 0x10, "got iMaxSockAddr %d.\n", info.iMaxSockAddr);
