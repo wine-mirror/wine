@@ -159,7 +159,7 @@ static IDirect3DDevice9 *create_device(HWND *window)
     IDirect3D9_Release(d3d);
     if (FAILED(hr))
     {
-        skip("Failed to create IDirect3DDevice9 object %#x.\n", hr);
+        skip("Failed to create IDirect3DDevice9 object %#lx.\n", hr);
         DestroyWindow(wnd);
         return NULL;
     }
@@ -241,19 +241,19 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
     ID3DXEffectPool *pool = (ID3DXEffectPool *)0xdeadbeef, *pool2;
 
     hr = D3DXCreateEffect(NULL, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffect(device, NULL, 0, NULL, NULL, 0, NULL, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffect(device, effect_desc, 0, NULL, NULL, 0, NULL, NULL, NULL);
-    ok(hr == E_FAIL, "Got result %x, expected %x (D3DXERR_INVALIDDATA)\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "Got result %lx, expected %lx (D3DXERR_INVALIDDATA)\n", hr, E_FAIL);
 
     hr = D3DXCreateEffect(device, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, NULL, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     hr = D3DXCreateEffect(device, effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, &effect, NULL);
-    todo_wine ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    todo_wine ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
     if (FAILED(hr))
     {
         skip("Failed to compile effect, skipping test.\n");
@@ -261,95 +261,95 @@ static void test_create_effect_and_pool(IDirect3DDevice9 *device)
     }
 
     hr = effect->lpVtbl->QueryInterface(effect, &IID_ID3DXBaseEffect, (void **)&base);
-    ok(hr == E_NOINTERFACE, "QueryInterface failed, got %x, expected %x (E_NOINTERFACE)\n", hr, E_NOINTERFACE);
+    ok(hr == E_NOINTERFACE, "QueryInterface failed, got %lx, expected %lx (E_NOINTERFACE)\n", hr, E_NOINTERFACE);
 
     hr = effect->lpVtbl->GetStateManager(effect, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "GetStateManager failed, got %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "GetStateManager failed, got %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = effect->lpVtbl->GetStateManager(effect, &manager);
-    ok(hr == D3D_OK, "GetStateManager failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "GetStateManager failed, got %lx, expected 0 (D3D_OK)\n", hr);
     ok(!manager, "GetStateManager failed, got %p\n", manager);
 
     /* this works, but it is not recommended! */
     hr = effect->lpVtbl->SetStateManager(effect, (ID3DXEffectStateManager *)device);
-    ok(hr == D3D_OK, "SetStateManager failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "SetStateManager failed, got %lx, expected 0 (D3D_OK)\n", hr);
 
     hr = effect->lpVtbl->GetStateManager(effect, &manager);
-    ok(hr == D3D_OK, "GetStateManager failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "GetStateManager failed, got %lx, expected 0 (D3D_OK)\n", hr);
     ok(manager != NULL, "GetStateManager failed\n");
 
     IDirect3DDevice9_AddRef(device);
     count = IDirect3DDevice9_Release(device);
-    ok(count == 4, "Release failed, got %u, expected 4\n", count);
+    ok(count == 4, "Release failed, got %lu, expected 4\n", count);
 
     count = IUnknown_Release(manager);
-    ok(count == 3, "Release failed, got %u, expected 3\n", count);
+    ok(count == 3, "Release failed, got %lu, expected 3\n", count);
 
     hr = effect->lpVtbl->SetStateManager(effect, NULL);
-    ok(hr == D3D_OK, "SetStateManager failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "SetStateManager failed, got %lx, expected 0 (D3D_OK)\n", hr);
 
     hr = effect->lpVtbl->GetPool(effect, &pool);
-    ok(hr == D3D_OK, "GetPool failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "GetPool failed, got %lx, expected 0 (D3D_OK)\n", hr);
     ok(!pool, "GetPool failed, got %p\n", pool);
 
     hr = effect->lpVtbl->GetPool(effect, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "GetPool failed, got %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "GetPool failed, got %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = effect->lpVtbl->GetDevice(effect, &device2);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     hr = effect->lpVtbl->GetDevice(effect, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "GetDevice failed, got %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "GetDevice failed, got %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     count = IDirect3DDevice9_Release(device2);
-    ok(count == 2, "Release failed, got %u, expected 2\n", count);
+    ok(count == 2, "Release failed, got %lu, expected 2\n", count);
 
     count = effect->lpVtbl->Release(effect);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(count == 0, "Release failed %lu\n", count);
 
     hr = D3DXCreateEffectPool(NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffectPool(&pool);
-    ok(hr == S_OK, "Got result %x, expected 0 (S_OK)\n", hr);
+    ok(hr == S_OK, "Got result %lx, expected 0 (S_OK)\n", hr);
 
     count = pool->lpVtbl->Release(pool);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(count == 0, "Release failed %lu\n", count);
 
     hr = D3DXCreateEffectPool(&pool);
-    ok(hr == S_OK, "Got result %x, expected 0 (S_OK)\n", hr);
+    ok(hr == S_OK, "Got result %lx, expected 0 (S_OK)\n", hr);
 
     hr = D3DXCreateEffect(device, effect_desc, sizeof(effect_desc), NULL, NULL, 0, pool, NULL, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     hr = pool->lpVtbl->QueryInterface(pool, &IID_ID3DXEffectPool, (void **)&pool2);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
     ok(pool == pool2, "Got effect pool %p, expected %p.\n", pool2, pool);
 
     count = pool2->lpVtbl->Release(pool2);
-    ok(count == 1, "Release failed, got %u, expected 1\n", count);
+    ok(count == 1, "Release failed, got %lu, expected 1\n", count);
 
     hr = IDirect3DDevice9_QueryInterface(device, &IID_IDirect3DDevice9, (void **)&device2);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     count = IDirect3DDevice9_Release(device2);
-    ok(count == 1, "Release failed, got %u, expected 1\n", count);
+    ok(count == 1, "Release failed, got %lu, expected 1\n", count);
 
     hr = D3DXCreateEffect(device, effect_desc, sizeof(effect_desc), NULL, NULL, 0, pool, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     hr = effect->lpVtbl->GetPool(effect, &pool);
-    ok(hr == D3D_OK, "GetPool failed, got %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "GetPool failed, got %lx, expected 0 (D3D_OK)\n", hr);
     ok(pool == pool2, "Got effect pool %p, expected %p.\n", pool2, pool);
 
     count = pool2->lpVtbl->Release(pool2);
-    ok(count == 2, "Release failed, got %u, expected 2\n", count);
+    ok(count == 2, "Release failed, got %lu, expected 2\n", count);
 
     count = effect->lpVtbl->Release(effect);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(count == 0, "Release failed %lu\n", count);
 
     count = pool->lpVtbl->Release(pool);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(count == 0, "Release failed %lu\n", count);
 }
 
 static void test_create_effect_compiler(void)
@@ -361,13 +361,13 @@ static void test_create_effect_compiler(void)
     ULONG count;
 
     hr = D3DXCreateEffectCompiler(NULL, 0, NULL, NULL, 0, &compiler, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffectCompiler(NULL, 0, NULL, NULL, 0, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffectCompiler(effect_desc, 0, NULL, NULL, 0, &compiler, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     if (FAILED(hr))
     {
         skip("D3DXCreateEffectCompiler failed, skipping test.\n");
@@ -375,40 +375,40 @@ static void test_create_effect_compiler(void)
     }
 
     count = compiler->lpVtbl->Release(compiler);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(count == 0, "Release failed %lu\n", count);
 
     hr = D3DXCreateEffectCompiler(effect_desc, 0, NULL, NULL, 0, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffectCompiler(NULL, sizeof(effect_desc), NULL, NULL, 0, &compiler, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffectCompiler(NULL, sizeof(effect_desc), NULL, NULL, 0, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffectCompiler(effect_desc, sizeof(effect_desc), NULL, NULL, 0, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateEffectCompiler(effect_desc, sizeof(effect_desc), NULL, NULL, 0, &compiler, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
 
     hr = compiler->lpVtbl->QueryInterface(compiler, &IID_ID3DXBaseEffect, (void **)&base);
-    ok(hr == E_NOINTERFACE, "QueryInterface failed, got %x, expected %x (E_NOINTERFACE)\n", hr, E_NOINTERFACE);
+    ok(hr == E_NOINTERFACE, "QueryInterface failed, got %lx, expected %lx (E_NOINTERFACE)\n", hr, E_NOINTERFACE);
 
     hr = compiler->lpVtbl->QueryInterface(compiler, &IID_ID3DXEffectCompiler, (void **)&compiler2);
-    ok(hr == D3D_OK, "QueryInterface failed, got %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "QueryInterface failed, got %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
 
     hr = compiler->lpVtbl->QueryInterface(compiler, &IID_IUnknown, (void **)&unknown);
-    ok(hr == D3D_OK, "QueryInterface failed, got %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "QueryInterface failed, got %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
 
     count = unknown->lpVtbl->Release(unknown);
-    ok(count == 2, "Release failed, got %u, expected %u\n", count, 2);
+    ok(count == 2, "Release failed, got %lu, expected %u\n", count, 2);
 
     count = compiler2->lpVtbl->Release(compiler2);
-    ok(count == 1, "Release failed, got %u, expected %u\n", count, 1);
+    ok(count == 1, "Release failed, got %lu, expected %u\n", count, 1);
 
     count = compiler->lpVtbl->Release(compiler);
-    ok(count == 0, "Release failed %u\n", count);
+    ok(count == 0, "Release failed %lu\n", count);
 }
 
 /*
@@ -1013,17 +1013,17 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
             || res_desc->Class == D3DXPC_VECTOR
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
 
         for (l = 0; l < res_desc->Bytes / sizeof(*value); ++l)
         {
-            ok(value[l] == res_value[l], "%u - %s: GetValue value[%u] failed, got %#x, expected %#x\n",
+            ok(value[l] == res_value[l], "%u - %s: GetValue value[%u] failed, got %#lx, expected %#lx\n",
                     i, res_full_name, l, value[l], res_value[l]);
         }
 
         for (l = res_desc->Bytes / sizeof(*value); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
-            ok(value[l] == 0xabababab, "%u - %s: GetValue value[%u] failed, got %#x, expected %#x\n",
+            ok(value[l] == 0xabababab, "%u - %s: GetValue value[%u] failed, got %#lx, expected %#x\n",
                     i, res_full_name, l, value[l], 0xabababab);
         }
     }
@@ -1034,7 +1034,7 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
             case D3DXPT_PIXELSHADER:
             case D3DXPT_VERTEXSHADER:
             case D3DXPT_TEXTURE2D:
-                ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
 
                 for (l = 0; l < (res_desc->Elements ? res_desc->Elements : 1); ++l)
                 {
@@ -1044,7 +1044,7 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
                 break;
 
             case D3DXPT_STRING:
-                ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
                 break;
 
             default:
@@ -1054,12 +1054,12 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#lx, expected %#lx\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
 
         for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
-            ok(value[l] == 0xabababab, "%u - %s: GetValue value[%u] failed, got %#x, expected %#x\n",
+            ok(value[l] == 0xabababab, "%u - %s: GetValue value[%u] failed, got %#lx, expected %#x\n",
                     i, res_full_name, l, value[l], 0xabababab);
         }
     }
@@ -1076,13 +1076,13 @@ static void test_effect_parameter_value_GetBool(const struct test_effect_paramet
     hr = effect->lpVtbl->GetBool(effect, parameter, &bvalue);
     if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
     {
-        ok(hr == D3D_OK, "%u - %s: GetBool failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetBool failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
         ok(bvalue == get_bool(res_value), "%u - %s: GetBool bvalue failed, got %#x, expected %#x\n",
                 i, res_full_name, bvalue, get_bool(res_value));
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#lx, expected %#lx\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
         ok(bvalue == 0xabababab, "%u - %s: GetBool bvalue failed, got %#x, expected %#x\n",
                 i, res_full_name, bvalue, 0xabababab);
@@ -1104,7 +1104,7 @@ static void test_effect_parameter_value_GetBoolArray(const struct test_effect_pa
             || res_desc->Class == D3DXPC_VECTOR
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetBoolArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetBoolArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
 
         for (l = 0; l < res_desc->Bytes / sizeof(*bavalue); ++l)
         {
@@ -1118,7 +1118,7 @@ static void test_effect_parameter_value_GetBoolArray(const struct test_effect_pa
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#lx, expected %#lx\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
 
         for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (bavalue[l] != 0xabababab) ++err;
@@ -1137,7 +1137,7 @@ static void test_effect_parameter_value_GetInt(const struct test_effect_paramete
     hr = effect->lpVtbl->GetInt(effect, parameter, &ivalue);
     if (!res_desc->Elements && res_desc->Columns == 1 && res_desc->Rows == 1)
     {
-        ok(hr == D3D_OK, "%u - %s: GetInt failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetInt failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
         ok(ivalue == get_int(res_desc->Type, res_value), "%u - %s: GetInt ivalue failed, got %i, expected %i\n",
                 i, res_full_name, ivalue, get_int(res_desc->Type, res_value));
     }
@@ -1147,7 +1147,7 @@ static void test_effect_parameter_value_GetInt(const struct test_effect_paramete
     {
         INT tmp;
 
-        ok(hr == D3D_OK, "%u - %s: GetInt failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetInt failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
 
         tmp = (INT)(min(max(0.0f, *((FLOAT *)res_value + 2)), 1.0f) * INT_FLOAT_MULTI);
         tmp += ((INT)(min(max(0.0f, *((FLOAT *)res_value + 1)), 1.0f) * INT_FLOAT_MULTI)) << 8;
@@ -1162,7 +1162,7 @@ static void test_effect_parameter_value_GetInt(const struct test_effect_paramete
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#lx, expected %#lx\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
         ok(ivalue == 0xabababab, "%u - %s: GetInt ivalue failed, got %i, expected %i\n",
                 i, res_full_name, ivalue, 0xabababab);
@@ -1184,7 +1184,7 @@ static void test_effect_parameter_value_GetIntArray(const struct test_effect_par
             || res_desc->Class == D3DXPC_VECTOR
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetIntArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetIntArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
 
         for (l = 0; l < res_desc->Bytes / sizeof(*iavalue); ++l)
         {
@@ -1198,7 +1198,7 @@ static void test_effect_parameter_value_GetIntArray(const struct test_effect_par
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#lx, expected %#lx\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
 
         for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (iavalue[l] != 0xabababab) ++err;
@@ -1218,13 +1218,13 @@ static void test_effect_parameter_value_GetFloat(const struct test_effect_parame
     hr = effect->lpVtbl->GetFloat(effect, parameter, &fvalue);
     if (!res_desc->Elements && res_desc->Columns == 1 && res_desc->Rows == 1)
     {
-        ok(hr == D3D_OK, "%u - %s: GetFloat failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetFloat failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
         ok(compare_float(fvalue, get_float(res_desc->Type, res_value), 512), "%u - %s: GetFloat fvalue failed, got %f, expected %f\n",
                 i, res_full_name, fvalue, get_float(res_desc->Type, res_value));
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#lx, expected %#lx\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
         ok(fvalue == *(FLOAT *)&cmp, "%u - %s: GetFloat fvalue failed, got %f, expected %f\n",
                 i, res_full_name, fvalue, *(FLOAT *)&cmp);
@@ -1247,7 +1247,7 @@ static void test_effect_parameter_value_GetFloatArray(const struct test_effect_p
             || res_desc->Class == D3DXPC_VECTOR
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetFloatArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetFloatArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
 
         for (l = 0; l < res_desc->Bytes / sizeof(*favalue); ++l)
         {
@@ -1261,7 +1261,7 @@ static void test_effect_parameter_value_GetFloatArray(const struct test_effect_p
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#lx, expected %#lx\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
 
         for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (favalue[l] != *(FLOAT *)&cmp) ++err;
@@ -1287,7 +1287,7 @@ static void test_effect_parameter_value_GetVector(const struct test_effect_param
     {
         DWORD tmp;
 
-        ok(hr == D3D_OK, "%u - %s: GetVector failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetVector failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
 
         tmp = (DWORD)(*(fvalue + 2) * INT_FLOAT_MULTI);
         tmp += ((DWORD)(*(fvalue + 1) * INT_FLOAT_MULTI)) << 8;
@@ -1298,7 +1298,7 @@ static void test_effect_parameter_value_GetVector(const struct test_effect_param
     }
     else if (!res_desc->Elements && (res_desc->Class == D3DXPC_SCALAR || res_desc->Class == D3DXPC_VECTOR))
     {
-        ok(hr == D3D_OK, "%u - %s: GetVector failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetVector failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
 
         for (l = 0; l < res_desc->Columns; ++l)
         {
@@ -1309,7 +1309,7 @@ static void test_effect_parameter_value_GetVector(const struct test_effect_param
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#x, expected %#x\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#lx, expected %#lx\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
 
         for (l = 0; l < 4; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
@@ -1333,13 +1333,13 @@ static void test_effect_parameter_value_GetVectorArray(const struct test_effect_
         hr = effect->lpVtbl->GetVectorArray(effect, parameter, (D3DXVECTOR4 *)&fvalue, element);
         if (!element)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetVectorArray failed, got %#x, expected %#x\n", i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "%u - %s[%u]: GetVectorArray failed, got %#lx, expected %#lx\n", i, res_full_name, element, hr, D3D_OK);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
         else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_VECTOR)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetVectorArray failed, got %#x, expected %#x\n", i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "%u - %s[%u]: GetVectorArray failed, got %#lx, expected %#lx\n", i, res_full_name, element, hr, D3D_OK);
 
             for (k = 0; k < element; ++k)
             {
@@ -1357,7 +1357,7 @@ static void test_effect_parameter_value_GetVectorArray(const struct test_effect_
         }
         else
         {
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetVectorArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetVectorArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3DERR_INVALIDCALL);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
@@ -1385,7 +1385,7 @@ static void test_effect_parameter_value_GetMatrix(const struct test_effect_param
     hr = effect->lpVtbl->GetMatrix(effect, parameter, (D3DXMATRIX *)&fvalue);
     if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrix failed, got %#x, expected %#x.\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetMatrix failed, got %#lx, expected %#lx.\n", i, res_full_name, hr, D3D_OK);
 
         for (k = 0; k < 4; ++k)
         {
@@ -1403,7 +1403,7 @@ static void test_effect_parameter_value_GetMatrix(const struct test_effect_param
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrix failed, got %#x, expected %#x.\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrix failed, got %#lx, expected %#lx.\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
 
         for (l = 0; l < ARRAY_SIZE(fvalue); ++l)
@@ -1429,13 +1429,13 @@ static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_
         hr = effect->lpVtbl->GetMatrixArray(effect, parameter, (D3DXMATRIX *)&fvalue, element);
         if (!element)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixArray failed, got %#x, expected %#x\n", i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixArray failed, got %#lx, expected %#lx\n", i, res_full_name, element, hr, D3D_OK);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
         else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixArray failed, got %#x, expected %#x\n", i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixArray failed, got %#lx, expected %#lx\n", i, res_full_name, element, hr, D3D_OK);
 
             for (m = 0; m < element; ++m)
             {
@@ -1458,7 +1458,7 @@ static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_
         }
         else
         {
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3DERR_INVALIDCALL);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
@@ -1496,7 +1496,7 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
         hr = effect->lpVtbl->GetMatrixPointerArray(effect, parameter, matrix_pointer_array, element);
         if (!element)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixPointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3D_OK);
 
             for (m = 0; m < ARRAY_SIZE(fvalue); ++m)
@@ -1506,7 +1506,7 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
         }
         else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixPointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3D_OK);
 
             for (m = 0; m < element; ++m)
@@ -1539,7 +1539,7 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
                     if (fvalue[m].f[l] != cmp.f)
                         ++err;
 
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixPointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3DERR_INVALIDCALL);
         }
         ok(!err, "%u - %s[%u]: GetMatrixPointerArray failed with %u errors\n", i, res_full_name, element, err);
@@ -1565,7 +1565,7 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
     hr = effect->lpVtbl->GetMatrixTranspose(effect, parameter, (D3DXMATRIX *)&fvalue);
     if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x.\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx.\n", i, res_full_name, hr, D3D_OK);
 
         for (k = 0; k < 4; ++k)
         {
@@ -1583,7 +1583,7 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
     }
     else if (!res_desc->Elements && (res_desc->Class == D3DXPC_VECTOR || res_desc->Class == D3DXPC_SCALAR))
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x.\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx.\n", i, res_full_name, hr, D3D_OK);
 
         for (k = 0; k < 4; ++k)
         {
@@ -1601,7 +1601,7 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x.\n",
+        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx.\n",
                 i, res_full_name, hr, D3DERR_INVALIDCALL);
 
         for (l = 0; l < ARRAY_SIZE(fvalue); ++l)
@@ -1627,14 +1627,14 @@ static void test_effect_parameter_value_GetMatrixTransposeArray(const struct tes
         hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, (D3DXMATRIX *)&fvalue, element);
         if (!element)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3D_OK);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
         else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3D_OK);
 
             for (m = 0; m < element; ++m)
@@ -1658,7 +1658,7 @@ static void test_effect_parameter_value_GetMatrixTransposeArray(const struct tes
         }
         else
         {
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3DERR_INVALIDCALL);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
@@ -1696,7 +1696,7 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(const str
         hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, parameter, matrix_pointer_array, element);
         if (!element)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3D_OK);
 
             for (m = 0; m < ARRAY_SIZE(fvalue); ++m)
@@ -1706,7 +1706,7 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(const str
         }
         else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3D_OK);
 
             for (m = 0; m < element; ++m)
@@ -1734,7 +1734,7 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(const str
         }
         else
         {
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, element, hr, D3DERR_INVALIDCALL);
 
             for (m = 0; m < ARRAY_SIZE(fvalue); ++m)
@@ -1778,7 +1778,7 @@ static void test_effect_parameter_value_ResetValue(const struct test_effect_para
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
         hr = effect->lpVtbl->SetValue(effect, parameter, res_value, res_desc->Bytes);
-        ok(hr == D3D_OK, "%u - %s: SetValue failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u - %s: SetValue failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
     }
     else
     {
@@ -1815,10 +1815,10 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
         UINT k;
 
         hr = D3DXCreateEffect(device, blob, blob_size, NULL, NULL, 0, NULL, &effect, NULL);
-        ok(hr == D3D_OK, "%u: D3DXCreateEffect failed, got %#x, expected %#x\n", i, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u: D3DXCreateEffect failed, got %#lx, expected %#lx\n", i, hr, D3D_OK);
 
         hr = effect->lpVtbl->GetDesc(effect, &edesc);
-        ok(hr == D3D_OK, "%u: GetDesc failed, got %#x, expected %#x\n", i, hr, D3D_OK);
+        ok(hr == D3D_OK, "%u: GetDesc failed, got %#lx, expected %#lx\n", i, hr, D3D_OK);
         ok(edesc.Parameters == res_count, "%u: Parameters failed, got %u, expected %u\n",
                 i, edesc.Parameters, res_count);
 
@@ -1841,7 +1841,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             ok(parameter != NULL, "%u - %s: GetParameterByName failed\n", i, res_full_name);
 
             hr = effect->lpVtbl->GetParameterDesc(effect, parameter, &pdesc);
-            ok(hr == D3D_OK, "%u - %s: GetParameterDesc failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+            ok(hr == D3D_OK, "%u - %s: GetParameterDesc failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
 
             ok(res_desc->Name ? !strcmp(pdesc.Name, res_desc->Name) : !pdesc.Name,
                     "%u - %s: GetParameterDesc Name failed, got \"%s\", expected \"%s\"\n",
@@ -1863,7 +1863,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     i, res_full_name, pdesc.Annotations, res_desc->Annotations);
             ok(res_desc->StructMembers == pdesc.StructMembers, "%u - %s: GetParameterDesc StructMembers failed, got %u, expected %u\n",
                     i, res_full_name, pdesc.StructMembers, res_desc->StructMembers);
-            ok(res_desc->Flags == pdesc.Flags, "%u - %s: GetParameterDesc Flags failed, got %u, expected %u\n",
+            ok(res_desc->Flags == pdesc.Flags, "%u - %s: GetParameterDesc Flags failed, got %lu, expected %lu\n",
                     i, res_full_name, pdesc.Flags, res_desc->Flags);
             ok(res_desc->Bytes == pdesc.Bytes, "%u - %s: GetParameterDesc Bytes, got %u, expected %u\n",
                     i, res_full_name, pdesc.Bytes, res_desc->Bytes);
@@ -1896,199 +1896,199 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
              * effect->lpVtbl->SetValue(effect, parameter, NULL, res_desc->Bytes);
              */
             hr = effect->lpVtbl->SetBool(effect, NULL, bvalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetBool(effect, NULL, &bvalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetBool(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetBoolArray(effect, NULL, (BOOL *)input_value, res_desc->Bytes / sizeof(BOOL));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBoolArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBoolArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetBoolArray(effect, NULL, (BOOL *)input_value, res_desc->Bytes / sizeof(BOOL));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetBoolArray(effect, parameter, NULL, res_desc->Bytes / sizeof(BOOL));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetInt(effect, NULL, ivalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetInt failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetInt failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetInt(effect, NULL, &ivalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetInt(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetIntArray(effect, NULL, (INT *)input_value, res_desc->Bytes / sizeof(INT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetIntArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetIntArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetIntArray(effect, NULL, (INT *)input_value, res_desc->Bytes / sizeof(INT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetIntArray(effect, parameter, NULL, res_desc->Bytes / sizeof(INT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetFloat(effect, NULL, fvalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloat failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloat failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetFloat(effect, NULL, &fvalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetFloat(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetFloatArray(effect, NULL, (FLOAT *)input_value, res_desc->Bytes / sizeof(FLOAT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloatArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloatArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetFloatArray(effect, NULL, (FLOAT *)input_value, res_desc->Bytes / sizeof(FLOAT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetFloatArray(effect, parameter, NULL, res_desc->Bytes / sizeof(FLOAT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetVector(effect, NULL, (D3DXVECTOR4 *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVector failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVector failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetVector(effect, NULL, (D3DXVECTOR4 *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetVector(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVectorArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVectorArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetVectorArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetMatrix(effect, NULL, (D3DXMATRIX *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrix failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrix failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrix(effect, NULL, (D3DXMATRIX *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrix failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrix failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetMatrixPointerArray(effect, NULL, matrix_pointer_array, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixPointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetMatrixPointerArray(effect, NULL, matrix_pointer_array, 0);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixPointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixPointerArray(effect, NULL, NULL, 0);
-            ok(hr == D3D_OK, "%u - %s: GetMatrixPointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3D_OK, "%u - %s: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3D_OK);
 
             hr = effect->lpVtbl->GetMatrixPointerArray(effect, NULL, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixPointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixPointerArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixPointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetMatrixTranspose(effect, NULL, (D3DXMATRIX *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTranspose failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTranspose failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixTranspose(effect, NULL, (D3DXMATRIX *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixTranspose(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposeArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, NULL, matrix_pointer_array, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, NULL, matrix_pointer_array, 0);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, NULL, NULL, 0);
-            ok(hr == D3D_OK, "%u - %s: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3D_OK, "%u - %s: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3D_OK);
 
             hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, NULL, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetValue(effect, NULL, input_value, res_desc->Bytes);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetValue failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetValue failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->SetValue(effect, parameter, input_value, res_desc->Bytes - 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetValue failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetValue failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetValue(effect, NULL, input_value, res_desc->Bytes);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             hr = effect->lpVtbl->GetValue(effect, parameter, input_value, res_desc->Bytes - 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#x, expected %#x\n",
+            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#lx, expected %#lx\n",
                     i, res_full_name, hr, D3DERR_INVALIDCALL);
 
             test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
@@ -2101,11 +2101,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             {
                 bvalue = TRUE;
                 set_number(expected_value, res_desc->Type, &bvalue, D3DXPT_BOOL);
-                ok(hr == D3D_OK, "%u - %s: SetBool failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: SetBool failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#x, expected %#x\n",
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2127,11 +2127,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 {
                     set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_BOOL);
                 }
-                ok(hr == D3D_OK, "%u - %s: SetBoolArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: SetBoolArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBoolArray failed, got %#x, expected %#x\n",
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBoolArray failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2144,7 +2144,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
             {
                 set_number(expected_value, res_desc->Type, &ivalue, D3DXPT_INT);
-                ok(hr == D3D_OK, "%u - %s: SetInt failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: SetInt failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
             }
             else if(!res_desc->Elements && res_desc->Type == D3DXPT_FLOAT &&
                     ((res_desc->Class == D3DXPC_VECTOR && res_desc->Columns != 2) ||
@@ -2159,12 +2159,12 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 tmp = ((ivalue & 0xff000000) >> 24) * INT_FLOAT_MULTI_INVERSE;
                 set_number(expected_value + 3, res_desc->Type, &tmp, D3DXPT_FLOAT);
 
-                ok(hr == D3D_OK, "%u - %s: SetInt failed, got %#x, expected %#x\n",
+                ok(hr == D3D_OK, "%u - %s: SetInt failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3D_OK);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetInt failed, got %#x, expected %#x\n",
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetInt failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2186,11 +2186,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 {
                     set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_INT);
                 }
-                ok(hr == D3D_OK, "%u - %s: SetIntArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: SetIntArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetIntArray failed, got %#x, expected %#x\n",
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetIntArray failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2203,11 +2203,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
             {
                 set_number(expected_value, res_desc->Type, &fvalue, D3DXPT_FLOAT);
-                ok(hr == D3D_OK, "%u - %s: SetFloat failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: SetFloat failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloat failed, got %#x, expected %#x\n",
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloat failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2230,11 +2230,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 {
                     set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_FLOAT);
                 }
-                ok(hr == D3D_OK, "%u - %s: SetFloatArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: SetFloatArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloatArray failed, got %#x, expected %#x\n",
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloatArray failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2268,11 +2268,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                         set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_FLOAT);
                     }
                 }
-                ok(hr == D3D_OK, "%u - %s: SetVector failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: SetVector failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVector failed, got %#x, expected %#x\n",
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVector failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2298,11 +2298,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                             set_number(expected_value + m * res_desc->Columns + l, res_desc->Type, input_value + m * 4 + l, D3DXPT_FLOAT);
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetVectorArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                    ok(hr == D3D_OK, "%u - %s: SetVectorArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVectorArray failed, got %#x, expected %#x\n",
+                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVectorArray failed, got %#lx, expected %#lx\n",
                             i, res_full_name, hr, D3DERR_INVALIDCALL);
                 }
                 test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2330,11 +2330,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     }
 
                 }
-                ok(hr == D3D_OK, "%u - %s: SetMatrix failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: SetMatrix failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrix failed, got %#x, expected %#x\n",
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrix failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2366,11 +2366,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetMatrixArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                    ok(hr == D3D_OK, "%u - %s: SetMatrixArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixArray failed, got %#x, expected %#x\n",
+                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixArray failed, got %#lx, expected %#lx\n",
                             i, res_full_name, hr, D3DERR_INVALIDCALL);
                 }
                 test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2407,12 +2407,12 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetMatrixPointerArray failed, got %#x, expected %#x\n",
+                    ok(hr == D3D_OK, "%u - %s: SetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                             i, res_full_name, hr, D3D_OK);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixPointerArray failed, got %#x, expected %#x\n",
+                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixPointerArray failed, got %#lx, expected %#lx\n",
                             i, res_full_name, hr, D3DERR_INVALIDCALL);
                 }
                 test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2440,11 +2440,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     }
 
                 }
-                ok(hr == D3D_OK, "%u - %s: SetMatrixTranspose failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "%u - %s: SetMatrixTranspose failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTranspose failed, got %#x, expected %#x\n",
+                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTranspose failed, got %#lx, expected %#lx\n",
                         i, res_full_name, hr, D3DERR_INVALIDCALL);
             }
             test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2476,11 +2476,11 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetMatrixTransposeArray failed, got %#x, expected %#x\n", i, res_full_name, hr, D3D_OK);
+                    ok(hr == D3D_OK, "%u - %s: SetMatrixTransposeArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposeArray failed, got %#x, expected %#x\n",
+                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
                             i, res_full_name, hr, D3DERR_INVALIDCALL);
                 }
                 test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2517,12 +2517,12 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+                    ok(hr == D3D_OK, "%u - %s: SetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                             i, res_full_name, hr, D3D_OK);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposePointerArray failed, got %#x, expected %#x\n",
+                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
                             i, res_full_name, hr, D3DERR_INVALIDCALL);
                 }
                 test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
@@ -2531,7 +2531,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
         }
 
         count = effect->lpVtbl->Release(effect);
-        ok(!count, "Release failed %u\n", count);
+        ok(!count, "Release failed %lu\n", count);
     }
 }
 
@@ -2552,36 +2552,36 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_parameter_value_blob_object,
             sizeof(test_effect_parameter_value_blob_object), NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx, expected 0 (D3D_OK).\n", hr);
 
     parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "tex");
     ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
 
     texture = NULL;
     hr = D3DXCreateTexture(device, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, 0, D3DPOOL_DEFAULT, &texture);
-    ok(hr == D3D_OK, "Got result %#x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx, expected 0 (D3D_OK).\n", hr);
     hr = effect->lpVtbl->SetValue(effect, parameter, &texture, sizeof(texture));
-    ok(hr == D3D_OK, "Got result %#x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx, expected 0 (D3D_OK).\n", hr);
     texture_set = NULL;
     hr = effect->lpVtbl->GetValue(effect, parameter, &texture_set, sizeof(texture_set));
-    ok(hr == D3D_OK, "Got result %#x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx, expected 0 (D3D_OK).\n", hr);
     ok(texture == texture_set, "Texture does not match.\n");
 
     count = IDirect3DTexture9_Release(texture_set);
-    ok(count == 2, "Got reference count %u, expected 2.\n", count);
+    ok(count == 2, "Got reference count %lu, expected 2.\n", count);
     texture_set = NULL;
     hr = effect->lpVtbl->SetValue(effect, parameter, &texture_set, sizeof(texture_set));
-    ok(hr == D3D_OK, "Got result %#x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx, expected 0 (D3D_OK).\n", hr);
     count = IDirect3DTexture9_Release(texture);
-    ok(!count, "Got reference count %u, expected 0.\n", count);
+    ok(!count, "Got reference count %lu, expected 0.\n", count);
 
     hr = effect->lpVtbl->SetString(effect, "s", expected_string);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     string = NULL;
     hr = effect->lpVtbl->GetString(effect, "s", &string);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetString(effect, "s", &string2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ok(string != expected_string, "String pointers are the same.\n");
     ok(string == string2, "String pointers differ.\n");
@@ -2589,24 +2589,24 @@ static void test_effect_setvalue_object(IDirect3DDevice9 *device)
 
     string = expected_string2;
     hr = effect->lpVtbl->SetValue(effect, "s", &string, sizeof(string) - 1);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetValue(effect, "s", &string, sizeof(string));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetValue(effect, "s", &string, sizeof(string) * 2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     string = NULL;
     hr = effect->lpVtbl->GetValue(effect, "s", &string, sizeof(string));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ok(string != expected_string2, "String pointers are the same.\n");
     ok(!strcmp(string, expected_string2), "Unexpected string '%s'.\n", string);
 
     hr = effect->lpVtbl->SetValue(effect, "s_2", expected_string_array,
             sizeof(expected_string_array));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetValue(effect, "s_2", string_array,
             sizeof(string_array));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     for (i = 0; i < ARRAY_SIZE(expected_string_array); ++i)
     {
         ok(!strcmp(string_array[i], expected_string_array[i]), "Unexpected string '%s', i %u.\n",
@@ -2666,7 +2666,7 @@ static void test_effect_variable_names(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_variable_names_blob,
             sizeof(test_effect_variable_names_blob), NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "D3DXCreateEffect failed, got %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXCreateEffect failed, got %#lx, expected %#lx\n", hr, D3D_OK);
 
     /*
      * check invalid calls
@@ -2895,7 +2895,7 @@ static void test_effect_variable_names(IDirect3DDevice9 *device)
     ok(parameter != NULL, "GetParameterByName failed, got %p\n", parameter);
 
     count = effect->lpVtbl->Release(effect);
-    ok(!count, "Release failed %u\n", count);
+    ok(!count, "Release failed %lu\n", count);
 }
 
 static void test_effect_compilation_errors(IDirect3DDevice9 *device)
@@ -2907,13 +2907,13 @@ static void test_effect_compilation_errors(IDirect3DDevice9 *device)
     /* Test binary effect */
     compilation_errors = (ID3DXBuffer*)0xdeadbeef;
     hr = D3DXCreateEffect(NULL, NULL, 0, NULL, NULL, 0, NULL, NULL, &compilation_errors);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateEffect failed, got %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateEffect failed, got %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
     ok(!compilation_errors, "Returned %p\n", compilation_errors);
 
     compilation_errors = (ID3DXBuffer*)0xdeadbeef;
     hr = D3DXCreateEffect(device, test_effect_variable_names_blob,
             sizeof(test_effect_variable_names_blob), NULL, NULL, 0, NULL, &effect, &compilation_errors);
-    ok(hr == D3D_OK, "D3DXCreateEffect failed, got %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXCreateEffect failed, got %#lx, expected %#lx\n", hr, D3D_OK);
     ok(!compilation_errors, "Returned %p\n", compilation_errors);
     effect->lpVtbl->Release(effect);
 }
@@ -3037,7 +3037,7 @@ static void test_effect_clear_vconsts(IDirect3DDevice9 *device)
     for (i = 0; i < 256; ++i)
     {
         hr = IDirect3DDevice9_SetVertexShaderConstantF(device, i, &fvect_filler.x, 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     }
 }
 
@@ -3079,87 +3079,87 @@ static void test_effect_states(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_states_effect_blob, sizeof(test_effect_states_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     /* State affected in passes saved/restored even if no pass
        was performed. States not present in passes are not saved &
        restored */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAFUNC, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = effect->lpVtbl->Begin(effect, &npasses, 0);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(npasses == 1, "Expected 1 pass, got %u\n", npasses);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 3);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAFUNC, 2);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    ok(value == 1, "Got result %u, expected %u.\n", value, 1);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(value == 1, "Got result %lu, expected %u.\n", value, 1);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_ALPHAFUNC, &value);
-    ok(value == 2, "Got result %u, expected %u.\n", value, 2);
+    ok(value == 2, "Got result %lu, expected %u.\n", value, 2);
 
     /* Test states application in BeginPass. No states are restored
        on EndPass. */
     hr = IDirect3DDevice9_SetSamplerState(device, 1, D3DSAMP_MIPFILTER, 0);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, 0);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
         ok(!bval, "Got result %u, expected 0.\n", bval);
 
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(1), &test_mat);
     hr = effect->lpVtbl->Begin(effect, NULL, 0);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix does not match.\n");
 
     test_effect_clear_vconsts(device);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(!memcmp(mat.m, test_mat_world1.m, sizeof(mat)), "World matrix does not match.\n");
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_VIEW, &mat);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(!memcmp(mat.m, test_mat_camera.m, sizeof(mat)), "View matrix does not match.\n");
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    ok(value == 2, "Got result %u, expected %u\n", value, 2);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(value == 2, "Got result %lu, expected %u\n", value, 2);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(vshader != NULL, "Got NULL vshader.\n");
     if (vshader)
     {
         hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+        ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
         byte_code = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, byte_code_size);
         hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+        ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
         ok(byte_code_size > 1, "Got unexpected byte code size %u.\n", byte_code_size);
         ok(!memcmp(byte_code, &test_effect_states_effect_blob[TEST_EFFECT_STATES_VSHADER_POS], byte_code_size),
             "Incorrect shader selected.\n");
@@ -3168,11 +3168,11 @@ static void test_effect_states(IDirect3DDevice9 *device)
     }
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
         ok(bval, "Got result %u, expected TRUE.\n", bval);
     hr = IDirect3DDevice9_GetLight(device, 2, &light);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
         ok(light.Position.x == 4.0f && light.Position.y == 5.0f && light.Position.z == 6.0f,
                 "Got unexpected light position (%f, %f, %f).\n", light.Position.x, light.Position.y, light.Position.z);
@@ -3180,86 +3180,86 @@ static void test_effect_states(IDirect3DDevice9 *device)
     /* Testing first value only for constants 1, 2 as the rest of the vector seem to
      * contain garbage data on native. */
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 1, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(fvect.x == 3.0f, "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 2, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(fvect.x == 1.0f, "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 3, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(fvect.x == 2.0f && fvect.y == 2.0f && fvect.z == 2.0f && fvect.w == 2.0f,
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 4, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(fvect.x == 4.0f && fvect.y == 4.0f && fvect.z == 4.0f && fvect.w == 4.0f,
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 5, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(fvect.x == 0.0f && fvect.y == 0.0f && fvect.z == 0.0f && fvect.w == 0.0f,
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 6, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(fvect.x == 0.0f && fvect.y == 0.0f && fvect.z == 0.0f && fvect.w == 0.0f,
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 7, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(!memcmp(&fvect, &fvect_filler, sizeof(fvect_filler)),
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    ok(value == 2, "Got result %u, expected %u\n", value, 2);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(value == 2, "Got result %lu, expected %u\n", value, 2);
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_ZENABLE, &value);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    ok(value, "Got result %u, expected TRUE.\n", value);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(value, "Got result %lu, expected TRUE.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, 1, D3DSAMP_MIPFILTER, &value);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    ok(value == D3DTEXF_LINEAR, "Unexpected sampler 1 mipfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(value == D3DTEXF_LINEAR, "Unexpected sampler 1 mipfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetTextureStageState(device, 3, D3DTSS_ALPHAOP, &value);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    ok(value == 4, "Unexpected texture stage 3 AlphaOp %u.\n", value);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(value == 4, "Unexpected texture stage 3 AlphaOp %lu.\n", value);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix not restored.\n");
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     if (hr == D3D_OK)
         ok(!bval, "Got result %u, expected 0.\n", bval);
 
     /* State is not restored if effect is released without End call */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 1);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = effect->lpVtbl->Begin(effect, &npasses, 0);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 3);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
 
     effect->lpVtbl->Release(effect);
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
-    ok(value == 3, "Got result %u, expected %u.\n", value, 1);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(value == 3, "Got result %lu, expected %u.\n", value, 1);
 }
 
 /*
@@ -4344,7 +4344,7 @@ static void test_effect_preshader_compare_shader_(unsigned int line, IDirect3DDe
     HRESULT hr;
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok_(__FILE__, line)(hr == D3D_OK, "IDirect3DDevice9_GetVertexShader result %#x.\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "IDirect3DDevice9_GetVertexShader result %#lx.\n", hr);
 
     todo_wine_if(todo)
     ok_(__FILE__, line)(!!vshader, "Got NULL vshader.\n");
@@ -4352,12 +4352,12 @@ static void test_effect_preshader_compare_shader_(unsigned int line, IDirect3DDe
         return;
 
     hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
-    ok_(__FILE__, line)(hr == D3D_OK, "IDirect3DVertexShader9_GetFunction %#x.\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "IDirect3DVertexShader9_GetFunction %#lx.\n", hr);
     ok_(__FILE__, line)(byte_code_size > 1, "Got unexpected byte code size %u.\n", byte_code_size);
 
     byte_code = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, byte_code_size);
     hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
-    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_preshader_compare_shader_bytecode_(line, byte_code,
             byte_code_size, expected_shader_index, todo);
@@ -4423,7 +4423,7 @@ static void test_effect_preshader_op_results_(unsigned int line, IDirect3DDevice
     for (i = 0; i < ARRAY_SIZE(test_effect_preshader_op_expected); ++i)
     {
         hr = IDirect3DDevice9_GetLight(device, i % 8, &light);
-        ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok_(__FILE__, line)(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         v = i < 8 ? &light.Diffuse.r : (i < 16 ? &light.Ambient.r : &light.Specular.r);
         if (!expected_state || expected_state[i] == EXPECTED_STATE_UPDATED)
@@ -4499,7 +4499,7 @@ static void test_effect_preshader_compare_vconsts_(unsigned int line, IDirect3DD
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, &fdata[0].x,
             ARRAY_SIZE(test_effect_preshader_fvect_v));
-    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     if (!const_updated_mask)
     {
@@ -4531,7 +4531,7 @@ static void test_effect_preshader_compare_vconsts_(unsigned int line, IDirect3DD
     for (i = ARRAY_SIZE(test_effect_preshader_fvect_v); i < 256; ++i)
     {
         hr = IDirect3DDevice9_GetVertexShaderConstantF(device, i, &fdata[0].x, 1);
-        ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok_(__FILE__, line)(hr == D3D_OK, "Got result %#lx.\n", hr);
         ok_(__FILE__, line)(!memcmp(fdata, &fvect_filler, sizeof(fvect_filler)),
                 "Vertex shader float constants do not match.\n");
     }
@@ -4552,7 +4552,7 @@ static void test_effect_preshader_clear_pbool_consts(IDirect3DDevice9 *device)
     {
         bval = i < ARRAY_SIZE(test_effect_preshader_bconsts) ? !test_effect_preshader_bconsts[i] : FALSE;
         hr = IDirect3DDevice9_SetPixelShaderConstantB(device, i, &bval, 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     }
 }
 
@@ -4566,7 +4566,7 @@ static void test_effect_preshader_compare_pbool_consts_(unsigned int line, IDire
     HRESULT hr;
 
     hr = IDirect3DDevice9_GetPixelShaderConstantB(device, 0, bdata, ARRAY_SIZE(bdata));
-    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     if (!const_updated_mask)
     {
@@ -4602,7 +4602,7 @@ static void test_effect_preshader_compare_pbool_consts_(unsigned int line, IDire
 
     for (; i < 16; ++i)
     {
-        ok_(__FILE__, line)(!bdata[i], "Got result %#x, boolean register value %u.\n", hr, bdata[i]);
+        ok_(__FILE__, line)(!bdata[i], "Got result %#lx, boolean register value %u.\n", hr, bdata[i]);
     }
 }
 
@@ -4644,7 +4644,7 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     D3DCAPS9 caps;
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#lx.\n", hr);
     if (caps.VertexShaderVersion < D3DVS_VERSION(3, 0)
             || caps.PixelShaderVersion < D3DPS_VERSION(3, 0))
     {
@@ -4654,14 +4654,14 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_clear_vconsts(device);
 
     for (i = 0; i < 224; ++i)
     {
         hr = IDirect3DDevice9_SetPixelShaderConstantF(device, i, &fvect_filler.x, 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     }
 
     test_effect_preshader_clear_pbool_consts(device);
@@ -4669,50 +4669,50 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     for (i = 0; i < 16; ++i)
     {
         hr = IDirect3DDevice9_SetPixelShaderConstantI(device, i, ivect_empty, 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     }
 
     hr = effect->lpVtbl->Begin(effect, &npasses, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     par = effect->lpVtbl->GetParameterByName(effect, NULL, "g_Pos2");
     ok(par != NULL, "GetParameterByName failed.\n");
 
     hr = effect->lpVtbl->SetVector(effect, par, &fvect1);
-    ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "SetVector failed, hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     test_effect_preshader_compare_vconsts(device, NULL, NULL);
 
     hr = IDirect3DDevice9_GetPixelShaderConstantF(device, 0, &fdata[0].x,
             ARRAY_SIZE(test_effect_preshader_fvect_p));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!memcmp(fdata, test_effect_preshader_fvect_p, sizeof(test_effect_preshader_fvect_p)),
             "Pixel shader float constants do not match.\n");
     for (i = ARRAY_SIZE(test_effect_preshader_fvect_p); i < 224; ++i)
     {
         hr = IDirect3DDevice9_GetPixelShaderConstantF(device, i, &fdata[0].x, 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         ok(!memcmp(fdata, &fvect_filler, sizeof(fvect_filler)),
                 "Pixel shader float constants do not match.\n");
     }
     hr = IDirect3DDevice9_GetPixelShaderConstantI(device, 0, idata[0],
             ARRAY_SIZE(test_effect_preshader_iconsts));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!memcmp(idata, test_effect_preshader_iconsts, sizeof(test_effect_preshader_iconsts)),
             "Pixel shader integer constants do not match.\n");
     for (i = ARRAY_SIZE(test_effect_preshader_iconsts); i < 16; ++i)
     {
         hr = IDirect3DDevice9_GetPixelShaderConstantI(device, i, idata[0], 1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         ok(!memcmp(idata[0], ivect_empty, sizeof(ivect_empty)),
                 "Pixel shader integer constants do not match.\n");
     }
@@ -4722,55 +4722,55 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     test_effect_preshader_op_results(device, NULL, NULL);
 
     hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 3, "Unexpected sampler 0 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 3, "Unexpected sampler 0 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    todo_wine ok(value == 3, "Unexpected sampler 0 magfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    todo_wine ok(value == 3, "Unexpected sampler 0 magfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, 1, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 1, "Unexpected sampler 1 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 1, "Unexpected sampler 1 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, 1, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
-    ok(value == 1, "Unexpected sampler 1 magfilter %u.\n", value);
+    ok(value == 1, "Unexpected sampler 1 magfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER0, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 1, "Unexpected vertex sampler 0 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 1, "Unexpected vertex sampler 0 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER0, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
-    ok(value == 1, "Unexpected vertex sampler 0 magfilter %u.\n", value);
+    ok(value == 1, "Unexpected vertex sampler 0 magfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER1, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
-    ok(value == 0, "Unexpected vertex sampler 1 minfilter %u.\n", value);
+    ok(value == 0, "Unexpected vertex sampler 1 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER1, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
-    ok(value == 0, "Unexpected vertex sampler 1 magfilter %u.\n", value);
+    ok(value == 0, "Unexpected vertex sampler 1 magfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER2, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 3, "Unexpected vertex sampler 2 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 3, "Unexpected vertex sampler 2 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER2, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    todo_wine ok(value == 3, "Unexpected vertex sampler 2 magfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    todo_wine ok(value == 3, "Unexpected vertex sampler 2 magfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGDENSITY, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(value == 0, "Unexpected fog density %g.\n", *(float *)&value);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGSTART, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(*(float *)&value == 4.0f, "Unexpected fog start %g.\n", *(float *)&value);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_A, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(*(float *)&value == 4.0f, "Unexpected point scale A %g.\n", *(float *)&value);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_B, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(*(float *)&value == 12.0f, "Unexpected point scale B %g.\n", *(float *)&value);
 
     hr = effect->lpVtbl->EndPass(effect);
@@ -4778,84 +4778,84 @@ static void test_effect_preshader(IDirect3DDevice9 *device)
     par = effect->lpVtbl->GetParameterByName(effect, NULL, "g_iVect");
     ok(par != NULL, "GetParameterByName failed.\n");
     hr = effect->lpVtbl->SetVector(effect, par, &fvect2);
-    ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "SetVector failed, hr %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_preshader_compare_shader(device, 1, FALSE);
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetVector(effect, par, &fvect1);
-    ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "SetVector failed, hr %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!vshader, "Incorrect shader selected.\n");
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->Begin(effect, &npasses, D3DXFX_DONOTSAVESTATE);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 3, "Unexpected sampler 0 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 3, "Unexpected sampler 0 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    todo_wine ok(value == 3, "Unexpected sampler 0 magfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    todo_wine ok(value == 3, "Unexpected sampler 0 magfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, 1, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 1, "Unexpected sampler 1 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 1, "Unexpected sampler 1 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, 1, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
-    ok(value == 1, "Unexpected sampler 1 magfilter %u.\n", value);
+    ok(value == 1, "Unexpected sampler 1 magfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER0, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 1, "Unexpected vertex sampler 0 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 1, "Unexpected vertex sampler 0 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER0, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
-    ok(value == 1, "Unexpected vertex sampler 0 magfilter %u.\n", value);
+    ok(value == 1, "Unexpected vertex sampler 0 magfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER1, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 2, "Unexpected vertex sampler 1 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 2, "Unexpected vertex sampler 1 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER1, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
-    ok(value == 2, "Unexpected vertex sampler 1 magfilter %u.\n", value);
+    ok(value == 2, "Unexpected vertex sampler 1 magfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER2, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 3, "Unexpected vertex sampler 2 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 3, "Unexpected vertex sampler 2 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER2, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
-    ok(value == 3, "Unexpected vertex sampler 2 magfilter %u.\n", value);
+    ok(value == 3, "Unexpected vertex sampler 2 magfilter %lu.\n", value);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     effect->lpVtbl->Release(effect);
 }
 
@@ -5108,11 +5108,11 @@ static void test_effect_preshader_ops(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_ops_blob, sizeof(test_effect_preshader_ops_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(op_tests); ++i)
     {
@@ -5120,16 +5120,16 @@ static void test_effect_preshader_ops(IDirect3DDevice9 *device)
         const float *expected_float = (float *)op_tests[i].expected_result;
 
         hr = effect->lpVtbl->SetVector(effect, "opvect1", &op_tests[i].opvect1);
-        ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "SetVector failed, hr %#lx.\n", hr);
         hr = effect->lpVtbl->SetVector(effect, "opvect2", &op_tests[i].opvect2);
-        ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "SetVector failed, hr %#lx.\n", hr);
         hr = effect->lpVtbl->SetVector(effect, "opvect3", &op_tests[i].opvect3);
-        ok(hr == D3D_OK, "SetVector failed, hr %#x.\n", hr);
+        ok(hr == D3D_OK, "SetVector failed, hr %#lx.\n", hr);
         hr = effect->lpVtbl->CommitChanges(effect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         hr = IDirect3DDevice9_GetLight(device, op_tests[i].result_index, &light);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         for (j = 0; j < 4; ++j)
         {
             todo_wine_if(op_tests[i].todo[j])
@@ -5141,7 +5141,7 @@ static void test_effect_preshader_ops(IDirect3DDevice9 *device)
     }
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     effect->lpVtbl->Release(effect);
 }
 
@@ -5154,7 +5154,7 @@ static void test_isparameterused_children(unsigned int line, ID3DXEffect *effect
     HRESULT hr;
 
     hr = effect->lpVtbl->GetParameterDesc(effect, param, &desc);
-    ok_(__FILE__, line)(hr == D3D_OK, "GetParameterDesc failed, result %#x.\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "GetParameterDesc failed, result %#lx.\n", hr);
     child_count = desc.Elements ? desc.Elements : desc.StructMembers;
     for (i = 0; i < child_count; ++i)
     {
@@ -5222,7 +5222,7 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     tech = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
     ok(!!tech, "GetTechniqueByName failed.\n");
@@ -5233,7 +5233,7 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect2, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(check_parameters); ++i)
         test_isparameterused_param_with_children(effect, effect2, tech, check_parameters[i].name,
@@ -5243,7 +5243,7 @@ static void test_effect_isparameterused(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_states_effect_blob, sizeof(test_effect_states_effect_blob),
             NULL, NULL, 0, NULL, &effect2, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_isparameterused_param_with_children(effect, effect2, tech, "sampler1", TRUE);
     effect2->lpVtbl->Release(effect2);
@@ -5264,7 +5264,7 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
             NULL, NULL, 0, NULL, &effect, NULL);
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ivect[0] = ivect[1] = ivect[3] = 1;
 
@@ -5272,130 +5272,130 @@ static void test_effect_out_of_bounds_selector(IDirect3DDevice9 *device)
     ok(!!param, "GetParameterByName failed.\n");
     ivect[2] = 3;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
 
     /* Second try reports success and selects array element used previously.
      * Probably array index is not recomputed and previous index value is used. */
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_shader(device, 2, FALSE);
 
     /* Confirm that array element selected is the previous good one and does not depend
      * on computed (out of bound) index value. */
     ivect[2] = 1;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_shader(device, 1, FALSE);
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ivect[2] = 3;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_shader(device, 1, FALSE);
 
     /* End and begin effect again to ensure it will not trigger array
      * index recompute and error return from BeginPass. */
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_shader(device, 1, FALSE);
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ivect[2] = -2;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!vshader, "Got non NULL vshader.\n");
 
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_preshader_compare_shader(device, 1, FALSE);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ivect[2] = -1;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_preshader_compare_shader(device, 0, FALSE);
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ivect[2] = 3;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!vshader, "Got non NULL vshader.\n");
 
     ivect[2] = -1;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!vshader, "Got non NULL vshader.\n");
 
     ivect[2] = 1;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_preshader_compare_shader(device, 1, FALSE);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
 }
@@ -5479,19 +5479,19 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "g_iVect");
     ok(!!param, "GetParameterByName failed.\n");
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(check_op_parameters); ++i)
     {
@@ -5500,16 +5500,16 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
         for (j = 0; j < 8; ++j)
         {
             hr = IDirect3DDevice9_SetLight(device, j, &light_filler);
-            ok(hr == D3D_OK, "Got result %#x, i %u, j %u.\n", hr, i, j);
+            ok(hr == D3D_OK, "Got result %#lx, i %u, j %u.\n", hr, i, j);
         }
         param = effect->lpVtbl->GetParameterByName(effect, NULL, check_op_parameters[i].param_name);
         ok(!!param, "Failed to get parameter (test %u).\n", i);
         hr = effect->lpVtbl->GetValue(effect, param, &fvect, sizeof(fvect));
-        ok(hr == D3D_OK, "Failed to get parameter value, hr %#x (test %u).\n", hr, i);
+        ok(hr == D3D_OK, "Failed to get parameter value, hr %#lx (test %u).\n", hr, i);
         hr = effect->lpVtbl->SetValue(effect, param, &fvect, sizeof(fvect));
-        ok(hr == D3D_OK, "Failed to set parameter value, hr %#x (test %u).\n", hr, i);
+        ok(hr == D3D_OK, "Failed to set parameter value, hr %#lx (test %u).\n", hr, i);
         hr = effect->lpVtbl->CommitChanges(effect);
-        ok(hr == D3D_OK, "Failed to commit changes, hr %#x (test %u).\n", hr, i);
+        ok(hr == D3D_OK, "Failed to commit changes, hr %#lx (test %u).\n", hr, i);
 
         test_effect_preshader_op_results(device, check_op_parameters[i].state_updated,
                 check_op_parameters[i].param_name);
@@ -5521,11 +5521,11 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
         param = effect->lpVtbl->GetParameterByName(effect, NULL, check_vconsts_parameters[i].param_name);
         ok(!!param, "GetParameterByName failed.\n");
         hr = effect->lpVtbl->GetValue(effect, param, buffer, sizeof(buffer));
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         hr = effect->lpVtbl->SetValue(effect, param, buffer, sizeof(buffer));
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         hr = effect->lpVtbl->CommitChanges(effect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[i].const_updated_mask,
                 check_vconsts_parameters[i].param_name);
@@ -5537,11 +5537,11 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
         param = effect->lpVtbl->GetParameterByName(effect, NULL, check_bconsts_parameters[i].param_name);
         ok(!!param, "GetParameterByName failed.\n");
         hr = effect->lpVtbl->GetValue(effect, param, buffer, sizeof(buffer));
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         hr = effect->lpVtbl->SetValue(effect, param, buffer, sizeof(buffer));
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         hr = effect->lpVtbl->CommitChanges(effect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         test_effect_preshader_compare_pbool_consts(device, check_bconsts_parameters[i].const_updated_mask,
                 check_bconsts_parameters[i].param_name);
@@ -5552,9 +5552,9 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(!!param, "GetParameterByName failed.\n");
     fvect.x = fvect.y = fvect.z = fvect.w = 0.0f;
     hr = effect->lpVtbl->SetVectorArray(effect, param, &fvect, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[0].const_updated_mask,
                 check_vconsts_parameters[0].param_name);
 
@@ -5564,9 +5564,9 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     param = effect->lpVtbl->GetParameterElement(effect, param, 0);
     ok(!!param, "GetParameterElement failed.\n");
     hr = effect->lpVtbl->SetFloat(effect, param, 92.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_vconsts(device, const_no_update_mask,
                 check_vconsts_parameters[10].param_name);
 
@@ -5577,9 +5577,9 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(!!param, "GetParameterElement failed.\n");
     fvect.x = 93.0f;
     hr = effect->lpVtbl->SetValue(effect, param, &fvect.x, sizeof(fvect.x));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[10].const_updated_mask,
                 check_vconsts_parameters[10].param_name);
 
@@ -5588,9 +5588,9 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(!!param, "GetParameterByName failed.\n");
     fvect.x = 92.0f;
     hr = effect->lpVtbl->SetFloatArray(effect, param, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[10].const_updated_mask,
                 check_vconsts_parameters[10].param_name);
 
@@ -5600,9 +5600,9 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     param = effect->lpVtbl->GetParameterElement(effect, param, 1);
     ok(!!param, "GetParameterElement failed.\n");
     hr = effect->lpVtbl->SetInt(effect, param, 93);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_vconsts(device, const_no_update_mask,
                 check_vconsts_parameters[10].param_name);
 
@@ -5611,9 +5611,9 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(!!param, "GetParameterByName failed.\n");
     fvect.x = fvect.y = fvect.z = fvect.w = 0.0f;
     hr = effect->lpVtbl->SetVector(effect, param, &fvect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[1].const_updated_mask,
                 check_vconsts_parameters[1].param_name);
 
@@ -5626,21 +5626,21 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(!!param, "GetParameterByName failed.\n");
     fvect.x = 12;
     hr = effect->lpVtbl->SetValue(effect, param, &fvect.x, sizeof(float));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[7].const_updated_mask,
                 check_vconsts_parameters[7].param_name);
 
     float_value.f = 9999.0f;
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGDENSITY, float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_A, float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_B, float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "ts2");
     ok(!!param, "GetParameterByName failed.\n");
@@ -5649,35 +5649,35 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     param = effect->lpVtbl->GetParameterByName(effect, param, "v1");
     ok(!!param, "GetParameterByName failed.\n");
     hr = effect->lpVtbl->GetValue(effect, param, &fvect, sizeof(float) * 3);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetValue(effect, param, &fvect, sizeof(float) * 3);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGDENSITY, &float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value.f == 0, "Unexpected fog density %g.\n", float_value.f);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGSTART, &float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value.f == 4.0f, "Unexpected fog start %g.\n", float_value.f);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_A, &float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value.f == 9999.0f, "Unexpected point scale A %g.\n", float_value.f);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_B, &float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value.f == 9999.0f, "Unexpected point scale B %g.\n", float_value.f);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[8].const_updated_mask,
                 check_vconsts_parameters[8].param_name);
 
     float_value.f = 9999.0f;
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGDENSITY, float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_A, float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_B, float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "ts3");
     ok(!!param, "GetParameterByName failed.\n");
@@ -5688,131 +5688,131 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     param = effect->lpVtbl->GetParameterByName(effect, param, "fv");
     ok(!!param, "GetParameterByName failed.\n");
     hr = effect->lpVtbl->GetValue(effect, param, &fvect.x, sizeof(float));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetValue(effect, param, &fvect.x, sizeof(float));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGDENSITY, &float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value.f == 9999.0f, "Unexpected fog density %g.\n", float_value.f);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGSTART, &float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value.f == 9999.0f, "Unexpected fog start %g.\n", float_value.f);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_A, &float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value.f == 4.0f, "Unexpected point scale A %g.\n", float_value.f);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_B, &float_value.dw);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value.f == 12.0f, "Unexpected point scale B %g.\n", float_value.f);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[11].const_updated_mask,
                 check_vconsts_parameters[11].param_name);
 
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER0, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 1, "Unexpected sampler 0 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 1, "Unexpected sampler 0 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER1, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
-    ok(value == 0, "Unexpected sampler 1 minfilter %u.\n", value);
+    ok(value == 0, "Unexpected sampler 1 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER2, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 3, "Unexpected sampler 2 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 3, "Unexpected sampler 2 minfilter %lu.\n", value);
 
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "g_iVect");
     ok(!!param, "GetParameterByName failed.\n");
     ivect[0] = ivect[1] = ivect[2] = ivect[3] = 1;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     for (i = 0; i < 3; ++i)
     {
         hr = IDirect3DDevice9_SetSamplerState(device, D3DVERTEXTEXTURESAMPLER0 + i, D3DSAMP_MINFILTER, 0);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         hr = IDirect3DDevice9_SetSamplerState(device, D3DVERTEXTEXTURESAMPLER0 + i, D3DSAMP_MAGFILTER, 0);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     }
 
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MINFILTER, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_SetVertexShader(device, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_clear_vconsts(device);
 
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!vshader, "Got non NULL vshader.\n");
     test_effect_preshader_compare_vconsts(device, const_no_update_mask,
             "selector g_iVect");
 
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER0, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 0, "Unexpected sampler 0 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 0, "Unexpected sampler 0 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER1, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 0, "Unexpected sampler 1 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 0, "Unexpected sampler 1 minfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER2, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 1, "Unexpected sampler 2 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 1, "Unexpected sampler 2 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, D3DVERTEXTEXTURESAMPLER2, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 0, "Unexpected sampler 2 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 0, "Unexpected sampler 2 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_MINFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 1, "Unexpected sampler 0 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 1, "Unexpected sampler 0 minfilter %lu.\n", value);
     hr = IDirect3DDevice9_GetSamplerState(device, 0, D3DSAMP_MAGFILTER, &value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 0, "Unexpected sampler 0 minfilter %u.\n", value);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(value == 0, "Unexpected sampler 0 minfilter %lu.\n", value);
 
     ivect[3] = 2;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ivect[3] = 1;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!vshader, "Got non NULL vshader.\n");
     test_effect_preshader_compare_vconsts(device, const_no_update_mask,
             "selector g_iVect");
     ivect[3] = 2;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!!vshader, "Got NULL vshader.\n");
     IDirect3DVertexShader9_Release(vshader);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(fvect.x == 0.0f && fvect.y == 0.0f && fvect.z == 0.0f && fvect.w == 0.0f,
             "Vertex shader float constants do not match.\n");
     hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, &fvect_filler.x, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_vconsts(device, const_no_update_mask,
             "selector g_iVect");
     ivect[3] = 1;
     hr = effect->lpVtbl->SetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_vconsts(device, NULL, NULL);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
 }
@@ -5975,41 +5975,41 @@ static void test_effect_preshader_relative_addressing(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect.x = 1001.0f; fvect.y = 1002.0f; fvect.z = 1003.0f; fvect.w = 1004.0f;
     hr = effect->lpVtbl->SetVector(effect, "opvect1", &fvect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect.x = 2001.0f; fvect.y = 2002.0f; fvect.z = 2003.0f; fvect.w = 2004.0f;
     hr = effect->lpVtbl->SetVector(effect, "g_Selector[0]", &fvect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect.x = 3001.0f; fvect.y = 3002.0f; fvect.z = 3003.0f; fvect.w = 3004.0f;
     hr = effect->lpVtbl->SetVector(effect, "g_Selector[1]", &fvect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     v = &light.Specular.r;
     for (i = 0; i < ARRAY_SIZE(test_out_of_bounds_index); ++i)
     {
         hr = effect->lpVtbl->SetVector(effect, "opvect2", &test_out_of_bounds_index[i].opvect2);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         hr = effect->lpVtbl->SetVector(effect, "g_iVect", &test_out_of_bounds_index[i].g_ivect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         hr = IDirect3DDevice9_SetLight(device, 1, &light_filler);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         hr = effect->lpVtbl->CommitChanges(effect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         hr = IDirect3DDevice9_GetLight(device, 1, &light);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         expected = test_out_of_bounds_index[i].expected;
         expected_float = (const float *)expected;
@@ -6023,12 +6023,12 @@ static void test_effect_preshader_relative_addressing(IDirect3DDevice9 *device)
     }
 
     hr = effect->lpVtbl->SetVector(effect, "opvect2", &test_out_of_bounds_index[7].opvect2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetVector(effect, "g_iVect", &test_out_of_bounds_index[7].g_ivect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_SetLight(device, 1, &light_filler);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect = test_out_of_bounds_index[7].g_ivect;
     v = &light.Specular.b;
@@ -6036,12 +6036,12 @@ static void test_effect_preshader_relative_addressing(IDirect3DDevice9 *device)
     {
         fvect.w = i;
         hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         hr = effect->lpVtbl->CommitChanges(effect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         hr = IDirect3DDevice9_GetLight(device, 1, &light);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         expected = expected_light_specular[(unsigned int)i % ARRAY_SIZE(expected_light_specular)].zw;
         expected_float = (const float *)expected;
@@ -6059,12 +6059,12 @@ static void test_effect_preshader_relative_addressing(IDirect3DDevice9 *device)
     {
         fvect.x = fvect.y = fvect.z = fvect.w = test_index_to_immediate_table[i].index_value;
         hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         hr = effect->lpVtbl->CommitChanges(effect);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         hr = IDirect3DDevice9_GetLight(device, 2, &light);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         expected = test_index_to_immediate_table[i].expected;
         expected_float = (const float *)expected;
@@ -6078,9 +6078,9 @@ static void test_effect_preshader_relative_addressing(IDirect3DDevice9 *device)
     }
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
 }
@@ -6408,27 +6408,27 @@ static void test_effect_state_manager(IDirect3DDevice9 *device)
     for (i = 0; i < 8; ++i)
     {
         hr = IDirect3DDevice9_SetLight(device, i, &light_filler);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     }
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetStateManager(effect, &state_manager->ID3DXEffectStateManager_iface);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
 
@@ -6442,7 +6442,7 @@ static void test_effect_state_manager(IDirect3DDevice9 *device)
     {
         ok(!memcmp(&expected_updates[i], &state_manager->update_record[i],
                 sizeof(expected_updates[i])),
-                "Update record mismatch, expected %s, %u, %u, got %s, %u, %u.\n",
+                "Update record mismatch, expected %s, %lu, %lu, got %s, %lu, %lu.\n",
                 test_effect_state_manager_state_names[expected_updates[i].state_op],
                 expected_updates[i].param1, expected_updates[i].param2,
                 test_effect_state_manager_state_names[state_manager->update_record[i].state_op],
@@ -6454,13 +6454,13 @@ static void test_effect_state_manager(IDirect3DDevice9 *device)
         D3DLIGHT9 light;
 
         hr = IDirect3DDevice9_GetLight(device, i, &light);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
         ok(!memcmp(&light, &light_filler, sizeof(light)), "Light %u mismatch.\n", i);
     }
 
     refcount = state_manager->ID3DXEffectStateManager_iface.lpVtbl->Release(
             &state_manager->ID3DXEffectStateManager_iface);
-    ok(!refcount, "State manager was not properly freed, refcount %u.\n", refcount);
+    ok(!refcount, "State manager was not properly freed, refcount %lu.\n", refcount);
 }
 
 static void test_cross_effect_handle(IDirect3DDevice9 *device)
@@ -6473,10 +6473,10 @@ static void test_cross_effect_handle(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect1, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect2, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ok(effect1 != effect2, "Got same effect unexpectedly.\n");
 
@@ -6489,10 +6489,10 @@ static void test_cross_effect_handle(IDirect3DDevice9 *device)
     ok(param1 != param2, "Got same parameter handle unexpectedly.\n");
 
     hr = effect2->lpVtbl->SetValue(effect2, param1, expected_ivect, sizeof(expected_ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect1->lpVtbl->GetValue(effect1, param1, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ok(!memcmp(ivect, expected_ivect, sizeof(expected_ivect)), "Vector value mismatch.\n");
 
@@ -6611,7 +6611,7 @@ static void test_effect_shared_vs_arr_compare_helper_(unsigned int line, ID3DXEf
     ok_(__FILE__, line)(!!param_child2, "GetParameterElement failed.\n");
     ok_(__FILE__, line)(param_child != param_child2, "Got same parameter handle unexpectedly.\n");
     hr = effect->lpVtbl->GetVertexShader(effect, param_child2, &vshader2);
-    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine_if(todo)
     ok_(__FILE__, line)(vshader1 == vshader2, "Shared shader interface pointers differ.\n");
     if (vshader2)
@@ -6627,7 +6627,7 @@ static void test_effect_shared_parameters_compare_vconst_(unsigned int line, IDi
     HRESULT hr;
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, index, &fvect.x, 1);
-    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine_if(todo)
     ok_(__FILE__, line)(!memcmp(&fvect, expected_fvect, sizeof(fvect)),
             "Unexpected constant value %g, %g, %g, %g.\n", fvect.x, fvect.y, fvect.z, fvect.w);
@@ -6645,34 +6645,34 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     float fval[2];
 
     hr = D3DXCreateEffectPool(&pool);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, pool, &effect2, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     effect2->lpVtbl->SetFloat(effect2, "arr2[0]", 28.0f);
     effect2->lpVtbl->Release(effect2);
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, pool, &effect2, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     effect2->lpVtbl->GetFloat(effect2, "arr2[0]", &fvect.x);
     ok(fvect.x == 92.0f, "Unexpected parameter value %g.\n", fvect.x);
     effect2->lpVtbl->SetFloat(effect2, "arr2[0]", 28.0f);
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, pool, &effect1, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     effect1->lpVtbl->GetFloat(effect1, "arr2[0]", &fvect.x);
     ok(fvect.x == 28.0f, "Unexpected parameter value %g.\n", fvect.x);
 
     hr = D3DXCreateEffect(device, test_effect_shared_parameters_blob, sizeof(test_effect_shared_parameters_blob),
             NULL, NULL, 0, pool, &effect3, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = D3DXCreateEffect(device, test_effect_shared_parameters_blob, sizeof(test_effect_shared_parameters_blob),
             NULL, NULL, 0, pool, &effect4, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     effect2->lpVtbl->SetFloat(effect2, "arr2[0]", 3.0f);
     effect2->lpVtbl->SetFloat(effect2, "ts2[0].fv", 3.0f);
@@ -6717,42 +6717,42 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
             "Unexpected IsParameterUsed result.\n");
 
     hr = effect3->lpVtbl->Begin(effect3, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     if (0)
     {
     /*  Native d3dx crashes in BeginPass(). This is the case of shader array declared shared
      *  but initialized with different shaders using different parameters. */
     hr = effect3->lpVtbl->BeginPass(effect3, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect3->lpVtbl->EndPass(effect3);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     }
 
     test_effect_clear_vconsts(device);
     fvect.x = fvect.y = fvect.z = fvect.w = 28.0f;
     hr = effect2->lpVtbl->SetVector(effect2, "g_Pos1", &fvect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect1->lpVtbl->SetVector(effect1, "g_Pos1", &fvect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect3->lpVtbl->BeginPass(effect3, 1);
     todo_wine
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 0, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     todo_wine
     ok(fvect.x == 0.0f && fvect.y == 0.0f && fvect.z == 0.0f && fvect.w == 0.0f,
             "Unexpected vector %g, %g, %g, %g.\n", fvect.x, fvect.y, fvect.z, fvect.w);
 
     hr = effect3->lpVtbl->EndPass(effect3);
     todo_wine
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect3->lpVtbl->End(effect3);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     for (i = 0; i < 2; ++i)
     {
@@ -6761,7 +6761,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
         param_child = effect1->lpVtbl->GetParameterElement(effect1, "vs_arr2", i);
         ok(!!param_child, "GetParameterElement failed.\n");
         hr = effect1->lpVtbl->GetVertexShader(effect1, param_child, &vshader1);
-        ok(hr == D3D_OK, "Got result %#x.\n", hr);
+        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
         test_effect_shared_vs_arr_compare_helper(effect2, param_child, vshader1, i, FALSE);
         test_effect_shared_vs_arr_compare_helper(effect3, param_child, vshader1, i, FALSE);
@@ -6774,10 +6774,10 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
 
     fval[0] = 1.0f;
     hr = effect1->lpVtbl->SetFloatArray(effect1, "arr1", fval, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     fval[0] = 0.0f;
     hr = effect2->lpVtbl->GetFloatArray(effect2, "arr1", fval, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(fval[0] == 91.0f, "Unexpected value %g.\n", fval[0]);
 
     param = effect1->lpVtbl->GetParameterByName(effect1, NULL, "arr2");
@@ -6793,31 +6793,31 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
 
     fval[0] = 33.0f;
     hr = effect1->lpVtbl->SetFloatArray(effect1, "arr2", fval, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     fval[0] = 0.0f;
     hr = effect1->lpVtbl->GetFloatArray(effect1, "arr2", fval, 2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(fval[0] == 33.0f && fval[1] == 93.0f, "Unexpected values %g, %g.\n", fval[0], fval[1]);
     fval[0] = 0.0f;
     hr = effect2->lpVtbl->GetFloatArray(effect2, "arr2", fval, 2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(fval[0] == 33.0f && fval[1] == 93.0f, "Unexpected values %g, %g.\n", fval[0], fval[1]);
 
     hr = effect1->lpVtbl->Begin(effect1, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect2->lpVtbl->Begin(effect2, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect1->lpVtbl->BeginPass(effect1, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect.x = 1.0f;
     fvect.y = fvect.z = fvect.w = 0.0f;
     test_effect_shared_parameters_compare_vconst(device, 32, &fvect, FALSE);
 
     hr = effect1->lpVtbl->BeginPass(effect2, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect.x = 91.0f;
     test_effect_shared_parameters_compare_vconst(device, 32, &fvect, FALSE);
@@ -6827,12 +6827,12 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     fval[0] = 28.0f;
     fval[1] = -1.0f;
     hr = effect1->lpVtbl->SetFloatArray(effect1, "arr2", fval, 2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_clear_vconsts(device);
 
     hr = effect1->lpVtbl->CommitChanges(effect1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect.x = 28.0f;
     test_effect_shared_parameters_compare_vconst(device, 29, &fvect, FALSE);
@@ -6842,13 +6842,13 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     test_effect_clear_vconsts(device);
 
     hr = effect1->lpVtbl->CommitChanges(effect1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_shared_parameters_compare_vconst(device, 29, &fvect_filler, FALSE);
     test_effect_shared_parameters_compare_vconst(device, 30, &fvect_filler, FALSE);
 
     hr = effect2->lpVtbl->CommitChanges(effect2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect.x = 28.0f;
     test_effect_shared_parameters_compare_vconst(device, 29, &fvect, FALSE);
@@ -6857,9 +6857,9 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
 
     fval[0] = -2.0f;
     hr = effect2->lpVtbl->SetFloat(effect2, "arr2[0]", fval[0]);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect1->lpVtbl->CommitChanges(effect1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect.x = -2.0f;
     test_effect_shared_parameters_compare_vconst(device, 29, &fvect, FALSE);
@@ -6868,32 +6868,32 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
 
     fvect.x = fvect.y = fvect.z = fvect.w = 1111.0f;
     hr = effect2->lpVtbl->SetVector(effect2, "g_Pos1", &fvect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect1->lpVtbl->CommitChanges(effect1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_shared_parameters_compare_vconst(device, 31, &fvect_filler, FALSE);
 
     hr = effect1->lpVtbl->CommitChanges(effect2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_shared_parameters_compare_vconst(device, 31, &fvect, FALSE);
 
     hr = effect1->lpVtbl->End(effect1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect2->lpVtbl->End(effect2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     if (0)
     {
         refcount = pool->lpVtbl->Release(pool);
-        ok(refcount == 2, "Unexpected refcount %u.\n", refcount);
+        ok(refcount == 2, "Unexpected refcount %lu.\n", refcount);
 
         refcount = pool->lpVtbl->Release(pool);
-        ok(refcount == 1, "Unexpected refcount %u.\n", refcount);
+        ok(refcount == 1, "Unexpected refcount %lu.\n", refcount);
 
         refcount = pool->lpVtbl->Release(pool);
-        ok(!refcount, "Unexpected refcount %u.\n", refcount);
+        ok(!refcount, "Unexpected refcount %lu.\n", refcount);
 
         /* Native d3dx crashes in GetFloat(). */
         effect2->lpVtbl->GetFloat(effect2, "arr2[0]", &fvect.x);
@@ -6903,7 +6903,7 @@ static void test_effect_shared_parameters(IDirect3DDevice9 *device)
     effect2->lpVtbl->Release(effect2);
 
     refcount = pool->lpVtbl->Release(pool);
-    ok(!refcount, "Effect pool was not properly freed, refcount %u.\n", refcount);
+    ok(!refcount, "Effect pool was not properly freed, refcount %lu.\n", refcount);
 }
 
 static void test_effect_large_address_aware_flag(IDirect3DDevice9 *device)
@@ -6916,16 +6916,16 @@ static void test_effect_large_address_aware_flag(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, D3DXFX_LARGEADDRESSAWARE, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "g_iVect");
     ok(!!param, "GetParameterByName failed.\n");
 
     hr = effect->lpVtbl->SetValue(effect, param, expected_ivect, sizeof(expected_ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetValue(effect, param, ivect, sizeof(ivect));
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ok(!memcmp(ivect, expected_ivect, sizeof(expected_ivect)), "Vector value mismatch.\n");
 
@@ -6933,7 +6933,7 @@ static void test_effect_large_address_aware_flag(IDirect3DDevice9 *device)
     {
         /* Native d3dx crashes in GetValue(). */
         hr = effect->lpVtbl->GetValue(effect, "g_iVect", ivect, sizeof(ivect));
-        ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
     }
 
     effect->lpVtbl->Release(effect);
@@ -6950,68 +6950,68 @@ static void test_effect_get_pass_desc(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     pass = effect->lpVtbl->GetPass(effect, "tech0", 1);
     ok(!!pass, "GetPass() failed.\n");
 
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 2, FALSE);
 
     fvect.x = fvect.y = fvect.w = 0.0f;
     fvect.z = 0.0f;
     hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!desc.pPixelShaderFunction, "Unexpected non null desc.pPixelShaderFunction.\n");
 
     test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 0, FALSE);
 
     fvect.z = 3.0f;
     hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
     ok(!desc.pVertexShaderFunction, "Unexpected non null desc.pVertexShaderFunction.\n");
 
     /* Repeating call to confirm GetPassDesc() returns same error on the second call,
      * as it is not the case sometimes for BeginPass() with out of bound access. */
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
     ok(!desc.pVertexShaderFunction, "Unexpected non null desc.pVertexShaderFunction.\n");
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 0, FALSE);
 
     fvect.z = 2.0f;
     hr = effect->lpVtbl->SetVector(effect, "g_iVect", &fvect);
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     test_effect_preshader_compare_shader_bytecode(desc.pVertexShaderFunction, 0, 2, FALSE);
 
     effect->lpVtbl->Release(effect);
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, D3DXFX_NOT_CLONEABLE, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     pass = effect->lpVtbl->GetPass(effect, "tech0", 1);
     ok(!!pass, "GetPass() failed.\n");
 
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ok(!desc.pVertexShaderFunction, "Unexpected non null desc.pVertexShaderFunction.\n");
     ok(!desc.pPixelShaderFunction, "Unexpected non null desc.pPixelShaderFunction.\n");
@@ -7102,17 +7102,17 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, "v3", 0, NULL, &effect, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, "v4", 0, NULL, &effect, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, "v1;v5;v4", 0, NULL, &effect, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     hr = D3DXCreateEffectEx(device, test_effect_skip_constants_blob, sizeof(test_effect_skip_constants_blob),
             NULL, NULL, " v1#,.+-= &\t\nv2*/!\"'v5 v6[1]", 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ok(!effect->lpVtbl->IsParameterUsed(effect, "v1", "tech0"),
             "Unexpected IsParameterUsed result.\n");
@@ -7128,22 +7128,22 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
             "Unexpected IsParameterUsed result.\n");
 
     hr = effect->lpVtbl->SetFloat(effect, "v1", 28.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "v2", 29.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "v3", 30.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "v4", 31.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "v5", 32.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     test_effect_clear_vconsts(device);
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     fvect.y = fvect.z = fvect.w = 0.0f;
     fvect.x = 30.0f;
@@ -7156,9 +7156,9 @@ static void test_effect_skip_constants(IDirect3DDevice9 *device)
         test_effect_shared_parameters_compare_vconst(device, i, &fvect_filler, FALSE);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
 }
@@ -7247,55 +7247,55 @@ static void test_effect_unsupported_shader(void)
 
     hr = D3DXCreateEffectEx(device, test_effect_unsupported_shader_blob, sizeof(test_effect_unsupported_shader_blob),
             NULL, NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->ValidateTechnique(effect, "missing_technique");
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech0");
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetInt(effect, "i", 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetInt(effect, "i", 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetTechnique(effect, "tech0");
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(!vshader, "Got non NULL vshader.\n");
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetTechnique(effect, "tech1");
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
     ok(!!vshader, "Got NULL vshader.\n");
     hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
-    ok(hr == D3D_OK, "Got result %x.\n", hr);
+    ok(hr == D3D_OK, "Got result %lx.\n", hr);
     byte_code = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, byte_code_size);
     hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
-    ok(hr == D3D_OK, "Got result %x.\n", hr);
+    ok(hr == D3D_OK, "Got result %lx.\n", hr);
     ok(byte_code_size == TEST_EFFECT_UNSUPPORTED_SHADER_BYTECODE_VS_3_0_LEN * sizeof(DWORD),
             "Got unexpected byte code size %u.\n", byte_code_size);
     ok(!memcmp(byte_code,
@@ -7305,17 +7305,17 @@ static void test_effect_unsupported_shader(void)
     IDirect3DVertexShader9_Release(vshader);
 
     hr = effect->lpVtbl->SetInt(effect, "i", 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %x.\n", hr);
+    ok(hr == D3D_OK, "Got result %lx.\n", hr);
     ok(!vshader, "Got non NULL vshader.\n");
 
     effect->lpVtbl->Release(effect);
 
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     DestroyWindow(window);
 }
 
@@ -7380,40 +7380,40 @@ static void test_effect_null_shader(void)
 
     hr = D3DXCreateEffectEx(device, test_effect_null_shader_blob,
             sizeof(test_effect_null_shader_blob), NULL, NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Failed to create effect, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to create effect, hr %#lx.\n", hr);
 
     pass = effect->lpVtbl->GetPass(effect, "tech0", 0);
     ok(!!pass, "GetPass() failed.\n");
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!desc.pVertexShaderFunction, "Got non NULL vertex function.\n");
 
     pass = effect->lpVtbl->GetPass(effect, "tech1", 0);
     ok(!!pass, "GetPass() failed.\n");
     hr = effect->lpVtbl->GetPassDesc(effect, pass, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!desc.pVertexShaderFunction, "Got non NULL vertex function.\n");
 
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech0");
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetInt(effect, "i", 0);
-    ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to set parameter, hr %#lx.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetInt(effect, "i", 1);
-    ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to set parameter, hr %#lx.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetInt(effect, "i", 2);
-    ok(hr == D3D_OK, "Failed to set parameter, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to set parameter, hr %#lx.\n", hr);
     hr = effect->lpVtbl->ValidateTechnique(effect, "tech1");
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
 
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     DestroyWindow(window);
 }
 
@@ -7508,12 +7508,12 @@ static void test_effect_clone(void)
 
     hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_X8R8G8B8,
             D3DPOOL_DEFAULT, (IDirect3DTexture9 **)&texture, NULL);
-    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#lx.\n", hr);
 
     /* D3DXFX_NOT_CLONEABLE */
     hr = D3DXCreateEffect(device, effect_code, sizeof(effect_code),
             NULL, NULL, D3DXFX_NOT_CLONEABLE, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     technique = effect->lpVtbl->GetTechniqueByName(effect, "tech0");
     ok(!!technique, "Expected a technique.\n");
@@ -7522,88 +7522,88 @@ static void test_effect_clone(void)
     ok(technique2 == technique, "Got unexpected technique %p.\n", technique2);
 
     hr = effect->lpVtbl->SetTechnique(effect, "tech1");
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->CloneEffect(effect, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     cloned = (void *)0xdeadbeef;
     hr = effect->lpVtbl->CloneEffect(effect, NULL, &cloned);
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
     ok(cloned == (void *)0xdeadbeef, "Unexpected effect pointer.\n");
 
     hr = effect->lpVtbl->CloneEffect(effect, device, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     cloned = (void *)0xdeadbeef;
     hr = effect->lpVtbl->CloneEffect(effect, device, &cloned);
-    ok(hr == E_FAIL, "Got result %#x.\n", hr);
+    ok(hr == E_FAIL, "Got result %#lx.\n", hr);
     ok(cloned == (void *)0xdeadbeef, "Unexpected effect pointer.\n");
 
     effect->lpVtbl->Release(effect);
 
     hr = D3DXCreateEffectEx(device, effect_code, sizeof(effect_code),
             NULL, NULL, "skipped", 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetStateManager(effect, &state_manager->ID3DXEffectStateManager_iface);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetTexture(effect, "tex", texture);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetFloat(effect, "f", 123.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetString(effect, "s", "tiny silver hammers");
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetFloat(effect, "f@a", 4.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     annotation = effect->lpVtbl->GetAnnotationByName(effect, "tech0", "a");
     ok(!!annotation, "Failed to get annotation.\n");
     hr = effect->lpVtbl->SetFloat(effect, annotation, 4.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     parameter = effect->lpVtbl->GetParameterByName(effect, NULL, "tex");
     ok(!!parameter, "Failed to get parameter.\n");
 
     hr = effect->lpVtbl->GetVertexShader(effect, "vs", &vs);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     ok(!effect->lpVtbl->IsParameterUsed(effect, "skipped", "tech1"),
             "Unexpected IsParameterUsed result.\n");
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->CloneEffect(effect, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     cloned = (void *)0xdeadbeef;
     hr = effect->lpVtbl->CloneEffect(effect, NULL, &cloned);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
     ok(cloned == (void *)0xdeadbeef, "Unexpected effect pointer.\n");
 
     hr = effect->lpVtbl->CloneEffect(effect, device, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->CloneEffect(effect, device, &cloned);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(cloned != effect, "Expected new effect instance.\n");
 
     hr = cloned->lpVtbl->GetStateManager(cloned, &ret_manager);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!ret_manager, "Unexpected state manager %p.\n", ret_manager);
 
     hr = cloned->lpVtbl->GetTexture(cloned, "tex", &texture2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(texture2 == texture, "Expected the same texture.\n");
     IDirect3DBaseTexture9_Release(texture2);
 
     hr = cloned->lpVtbl->GetVertexShader(cloned, "vs", &vs2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(vs2 == vs, "Expected the same vertex shader.\n");
     IDirect3DVertexShader9_Release(vs2);
 
@@ -7612,23 +7612,23 @@ static void test_effect_clone(void)
 
     f = 0.0f;
     hr = cloned->lpVtbl->GetFloat(cloned, "f", &f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(f == 123.0f, "Got float %.8e.\n", f);
 
     hr = cloned->lpVtbl->GetString(cloned, "s", &string);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!strcmp(string, "tiny silver hammers"), "Got string %s.\n", debugstr_a(string));
 
     f = 0.0f;
     hr = cloned->lpVtbl->GetFloat(cloned, "f@a", &f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(f == 4.0f, "Got float %.8e.\n", f);
 
     annotation = cloned->lpVtbl->GetAnnotationByName(cloned, "tech0", "a");
     ok(!!annotation, "Failed to get annotation.\n");
     f = 0.0f;
     hr = cloned->lpVtbl->GetFloat(cloned, annotation, &f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(f == 4.0f, "Got float %.8e.\n", f);
 
     parameter2 = cloned->lpVtbl->GetParameterByName(cloned, NULL, "tex");
@@ -7636,7 +7636,7 @@ static void test_effect_clone(void)
     ok(parameter2 != parameter, "Parameters should not match.\n");
 
     hr = cloned->lpVtbl->BeginPass(cloned, 0);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     technique = cloned->lpVtbl->GetTechniqueByName(cloned, "tech0");
     ok(!!technique, "Expected a technique.\n");
@@ -7650,7 +7650,7 @@ static void test_effect_clone(void)
     device2 = create_device(&window2);
 
     hr = effect->lpVtbl->CloneEffect(effect, device2, &cloned);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(cloned != effect, "Expected new effect instance.\n");
 
     hr = cloned->lpVtbl->GetDevice(cloned, &device3);
@@ -7659,33 +7659,33 @@ static void test_effect_clone(void)
     IDirect3DDevice9_Release(device3);
 
     hr = cloned->lpVtbl->GetTexture(cloned, "tex", &texture2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!texture2, "Expected a NULL texture.\n");
 
     hr = cloned->lpVtbl->GetVertexShader(cloned, "vs", &vs2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(vs2 != vs, "Expected a different vertex shader.\n");
     IDirect3DVertexShader9_Release(vs2);
 
     f = 0.0f;
     hr = cloned->lpVtbl->GetFloat(cloned, "f", &f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(f == 123.0f, "Got float %.8e.\n", f);
 
     hr = cloned->lpVtbl->GetString(cloned, "s", &string);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!strcmp(string, "tiny silver hammers"), "Got string %s.\n", debugstr_a(string));
 
     f = 0.0f;
     hr = cloned->lpVtbl->GetFloat(cloned, "f@a", &f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(f == 4.0f, "Got float %.8e.\n", f);
 
     annotation = cloned->lpVtbl->GetAnnotationByName(cloned, "tech0", "a");
     ok(!!annotation, "Failed to get annotation.\n");
     f = 0.0f;
     hr = cloned->lpVtbl->GetFloat(cloned, annotation, &f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(f == 4.0f, "Got float %.8e.\n", f);
 
     parameter2 = cloned->lpVtbl->GetParameterByName(cloned, NULL, "tex");
@@ -7693,7 +7693,7 @@ static void test_effect_clone(void)
     ok(parameter2 != parameter, "Parameters should not match.\n");
 
     hr = cloned->lpVtbl->BeginPass(cloned, 0);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     technique = cloned->lpVtbl->GetTechniqueByName(cloned, "tech0");
     ok(!!technique, "Expected a technique.\n");
@@ -7704,25 +7704,25 @@ static void test_effect_clone(void)
     cloned->lpVtbl->Release(cloned);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     /* Test parameter blocks (we can't do this above since we can't record a
      * parameter block while started). */
 
     hr = effect->lpVtbl->BeginParameterBlock(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetFloat(effect, "f", 456.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->CloneEffect(effect, device, &cloned);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     block = cloned->lpVtbl->EndParameterBlock(cloned);
     ok(!block, "Expected no active parameter block.\n");
 
@@ -7737,10 +7737,10 @@ static void test_effect_clone(void)
     effect->lpVtbl->Release(effect);
     refcount = state_manager->ID3DXEffectStateManager_iface.lpVtbl->Release(
             &state_manager->ID3DXEffectStateManager_iface);
-    ok(!refcount, "State manager was not properly freed, refcount %u.\n", refcount);
+    ok(!refcount, "State manager was not properly freed, refcount %lu.\n", refcount);
     IDirect3DBaseTexture9_Release(texture);
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     DestroyWindow(window);
 }
 
@@ -7764,21 +7764,21 @@ static void test_refcount(void)
         return;
 
     hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, NULL);
-    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#lx.\n", hr);
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob,
             sizeof(test_effect_preshader_effect_blob), NULL, NULL,
             D3DXFX_DONOTSAVESTATE, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Failed to create effect, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to create effect, hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetTexture(effect, "tex1", (IDirect3DBaseTexture9 *)texture);
-    ok(hr == D3D_OK, "Failed to set texture parameter, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to set texture parameter, hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->Begin(effect, &passes_count, D3DXFX_DONOTSAVESTATE);
-    ok(hr == D3D_OK, "Begin() failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Begin() failed, hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "BeginPass() failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "BeginPass() failed, hr %#lx.\n", hr);
 
     IDirect3DDevice9_GetTexture(device, 0, (IDirect3DBaseTexture9 **)&cur_texture);
     ok(cur_texture == texture, "Unexpected current texture %p.\n", cur_texture);
@@ -7791,73 +7791,73 @@ static void test_refcount(void)
     ok(cur_texture == NULL, "Unexpected current texture %p.\n", cur_texture);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "EndPass() failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "EndPass() failed, hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "BeginPass() failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "BeginPass() failed, hr %#lx.\n", hr);
 
     IDirect3DDevice9_GetTexture(device, 0, (IDirect3DBaseTexture9 **)&cur_texture);
     ok(cur_texture == texture, "Unexpected current texture %p.\n", cur_texture);
     IDirect3DTexture9_Release(cur_texture);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "EndPass() failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "EndPass() failed, hr %#lx.\n", hr);
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "End() failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "End() failed, hr %#lx.\n", hr);
 
     IDirect3DDevice9_GetTexture(device, 0, (IDirect3DBaseTexture9 **)&cur_texture);
     ok(cur_texture == texture, "Unexpected current texture %p.\n", cur_texture);
     IDirect3DTexture9_Release(cur_texture);
     refcount = get_texture_refcount(texture);
-    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+    ok(refcount == 2, "Unexpected texture refcount %lu.\n", refcount);
 
     hr = effect->lpVtbl->OnLostDevice(effect);
-    ok(hr == D3D_OK, "OnLostDevice() failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "OnLostDevice() failed, hr %#lx.\n", hr);
     refcount = get_texture_refcount(texture);
-    ok(refcount == 1, "Unexpected texture refcount %u.\n", refcount);
+    ok(refcount == 1, "Unexpected texture refcount %lu.\n", refcount);
 
     hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED,
             &managed_texture, NULL);
-    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#lx.\n", hr);
     effect->lpVtbl->SetTexture(effect, "tex1", (IDirect3DBaseTexture9 *)managed_texture);
 
     refcount = get_texture_refcount(managed_texture);
-    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+    ok(refcount == 2, "Unexpected texture refcount %lu.\n", refcount);
     hr = effect->lpVtbl->OnLostDevice(effect);
-    ok(hr == D3D_OK, "OnLostDevice() failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "OnLostDevice() failed, hr %#lx.\n", hr);
     refcount = get_texture_refcount(managed_texture);
-    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+    ok(refcount == 2, "Unexpected texture refcount %lu.\n", refcount);
 
     hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM,
             &sysmem_texture, NULL);
-    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#lx.\n", hr);
     effect->lpVtbl->SetTexture(effect, "tex1", (IDirect3DBaseTexture9 *)sysmem_texture);
 
     refcount = get_texture_refcount(managed_texture);
-    ok(refcount == 1, "Unexpected texture refcount %u.\n", refcount);
+    ok(refcount == 1, "Unexpected texture refcount %lu.\n", refcount);
     IDirect3DTexture9_Release(managed_texture);
     refcount = get_texture_refcount(sysmem_texture);
-    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+    ok(refcount == 2, "Unexpected texture refcount %lu.\n", refcount);
     hr = effect->lpVtbl->OnLostDevice(effect);
-    ok(hr == D3D_OK, "OnLostDevice() failed, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "OnLostDevice() failed, hr %#lx.\n", hr);
     refcount = get_texture_refcount(sysmem_texture);
-    ok(refcount == 2, "Unexpected texture refcount %u.\n", refcount);
+    ok(refcount == 2, "Unexpected texture refcount %lu.\n", refcount);
 
     effect->lpVtbl->Release(effect);
 
     refcount = get_texture_refcount(sysmem_texture);
-    ok(refcount == 1, "Unexpected texture refcount %u.\n", refcount);
+    ok(refcount == 1, "Unexpected texture refcount %lu.\n", refcount);
     IDirect3DTexture9_Release(sysmem_texture);
 
     IDirect3DDevice9_GetTexture(device, 0, (IDirect3DBaseTexture9 **)&cur_texture);
     ok(cur_texture == texture, "Unexpected current texture %p.\n", cur_texture);
     IDirect3DTexture9_Release(cur_texture);
     refcount = get_texture_refcount(texture);
-    ok(refcount == 1, "Unexpected texture refcount %u.\n", refcount);
+    ok(refcount == 1, "Unexpected texture refcount %lu.\n", refcount);
     IDirect3DTexture9_Release(texture);
 
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     DestroyWindow(window);
 }
 
@@ -8065,7 +8065,7 @@ static void test_create_effect_from_file(void)
             D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
     if (FAILED(hr))
     {
-        skip("Failed to create IDirect3DDevice9 object, hr %#x.\n", hr);
+        skip("Failed to create IDirect3DDevice9 object, hr %#lx.\n", hr);
         IDirect3D9_Release(d3d);
         DestroyWindow(window);
         return;
@@ -8095,7 +8095,7 @@ static void test_create_effect_from_file(void)
     messages = NULL;
     hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, NULL, NULL,
             0, NULL, &effect, &messages);
-    todo_wine ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     if (messages)
     {
         trace("D3DXCreateEffectFromFileExW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
@@ -8111,7 +8111,7 @@ static void test_create_effect_from_file(void)
     /* This is apparently broken on native, it ends up using the wrong include. */
     hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, NULL, NULL,
             0, NULL, &effect, &messages);
-    ok(hr == E_FAIL, "Unexpected error, hr %#x.\n", hr);
+    ok(hr == E_FAIL, "Unexpected error, hr %#lx.\n", hr);
     if (messages)
     {
         trace("D3DXCreateEffectFromFileExW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
@@ -8136,7 +8136,7 @@ static void test_create_effect_from_file(void)
      * is "ID3DXEffectCompiler: There were no techniques" */
     hr = D3DXCreateEffectFromFileExW(device, filename_w, NULL, &include.ID3DXInclude_iface, NULL,
             0, NULL, &effect, &messages);
-    ok(hr == E_FAIL, "D3DXInclude test failed with error %#x.\n", hr);
+    ok(hr == E_FAIL, "D3DXInclude test failed with error %#lx.\n", hr);
     if (messages)
     {
         trace("D3DXCreateEffectFromFileExW messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
@@ -8144,7 +8144,7 @@ static void test_create_effect_from_file(void)
     }
 
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
 }
@@ -8211,7 +8211,7 @@ static void test_effect_find_next_valid_technique(void)
             D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
     if (FAILED(hr))
     {
-        skip("Failed to create IDirect3DDevice9 object, hr %#x.\n", hr);
+        skip("Failed to create IDirect3DDevice9 object, hr %#lx.\n", hr);
         IDirect3D9_Release(d3d);
         DestroyWindow(window);
         return;
@@ -8219,81 +8219,81 @@ static void test_effect_find_next_valid_technique(void)
 
     hr = D3DXCreateEffectEx(device, test_two_techniques_blob, sizeof(test_two_techniques_blob),
             NULL, NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, NULL, &tech);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!strcmp(desc.Name, "tech0"), "Got unexpected technique %s.\n", desc.Name);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!strcmp(desc.Name, "tech1"), "Got unexpected technique %s.\n", desc.Name);
 
     tech2 = tech;
     hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech2);
-    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+    ok(hr == S_FALSE, "Got result %#lx.\n", hr);
     ok(!tech2, "Unexpected technique handle %p.\n", tech2);
     /* Test GetTechniqueDesc() with a NULL handle. */
     hr = effect->lpVtbl->GetTechniqueDesc(effect, tech2, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!strcmp(desc.Name, "tech0"), "Got unexpected technique %s.\n", desc.Name);
 
     effect->lpVtbl->Release(effect);
 
     hr = D3DXCreateEffectEx(device, test_effect_unsupported_shader_blob, sizeof(test_effect_unsupported_shader_blob),
             NULL, NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, NULL, &tech);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!strcmp(desc.Name, "tech1"), "Got unexpected technique %s.\n", desc.Name);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech2);
-    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+    ok(hr == S_FALSE, "Got result %#lx.\n", hr);
     ok(!tech2, "Unexpected technique handle %p.\n", tech2);
     hr = effect->lpVtbl->GetTechniqueDesc(effect, tech2, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!strcmp(desc.Name, "tech0"), "Got unexpected technique %s.\n", desc.Name);
 
     hr = effect->lpVtbl->SetInt(effect, "i", 1);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     tech = (D3DXHANDLE)0xdeadbeef;
     hr = effect->lpVtbl->FindNextValidTechnique(effect, NULL, &tech);
-    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+    ok(hr == S_FALSE, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!strcmp(desc.Name, "tech0"), "Got unexpected technique %s.\n", desc.Name);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
-    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+    ok(hr == S_FALSE, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetInt(effect, "i", 0);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetTechniqueDesc(effect, tech, &desc);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(!strcmp(desc.Name, "tech1"), "Got unexpected technique %s.\n", desc.Name);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, tech, &tech2);
-    ok(hr == S_FALSE, "Got result %#x.\n", hr);
+    ok(hr == S_FALSE, "Got result %#lx.\n", hr);
     ok(!tech2, "Unexpected technique handle %p.\n", tech2);
 
     hr = effect->lpVtbl->FindNextValidTechnique(effect, "nope", &tech);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
 
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
 }
@@ -8377,26 +8377,26 @@ static void test_effect_parameter_block(void)
             D3DCREATE_HARDWARE_VERTEXPROCESSING, &present_parameters, &device);
     if (FAILED(hr))
     {
-        skip("Failed to create IDirect3DDevice9 object, hr %#x.\n", hr);
+        skip("Failed to create IDirect3DDevice9 object, hr %#lx.\n", hr);
         IDirect3D9_Release(d3d);
         DestroyWindow(window);
         return;
     }
 
     hr = D3DXCreateEffectPool(&pool);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, pool, &effect, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = D3DXCreateEffect(device, test_effect_preshader_effect_blob, sizeof(test_effect_preshader_effect_blob),
             NULL, NULL, 0, pool, &effect2, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginParameterBlock(effect);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->BeginParameterBlock(effect);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
     block = effect->lpVtbl->EndParameterBlock(effect);
     ok(!!block, "Got unexpected block %p.\n", block);
     handle = effect->lpVtbl->EndParameterBlock(effect);
@@ -8405,306 +8405,306 @@ static void test_effect_parameter_block(void)
     /* Block doesn't hold effect reference. */
     effect->lpVtbl->AddRef(effect);
     refcount = effect->lpVtbl->Release(effect);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
 
     hr = effect->lpVtbl->ApplyParameterBlock(effect, block);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->DeleteParameterBlock(effect, block);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginParameterBlock(effect);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "vec3[0]", 1001.0f);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "arr1[0]", 91.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     block = effect->lpVtbl->EndParameterBlock(effect);
     ok(!!block, "Got unexpected block %p.\n", block);
     hr = effect->lpVtbl->ApplyParameterBlock(effect, block);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->DeleteParameterBlock(effect2, block);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->DeleteParameterBlock(effect, block);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->ApplyParameterBlock(effect, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->ApplyParameterBlock(effect, "parameter_block");
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXCreateTexture(device, D3DX_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, 0, D3DPOOL_DEFAULT, &texture);
-    ok(hr == D3D_OK, "Got result %#x, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx, expected 0 (D3D_OK).\n", hr);
 
     hr = effect->lpVtbl->BeginParameterBlock(effect);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Effect parameters are not updated during recording. */
     hr = effect->lpVtbl->SetTexture(effect, "tex1", (IDirect3DBaseTexture9 *)texture);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetTexture(effect, "tex1", (IDirect3DBaseTexture9 **)&tex_test);
-    ok(hr == D3D_OK && !tex_test, "Got unexpected hr %#x, tex_test %p.\n", hr, tex_test);
+    ok(hr == D3D_OK && !tex_test, "Got unexpected hr %#lx, tex_test %p.\n", hr, tex_test);
 
     /* Child parameters and array members are recorded separately (the whole
      * parameter is not updated when parameter block is applied). */
     hr = effect->lpVtbl->SetFloat(effect, "arr2[0]", 92.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "ts1[0].fv", 28.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->GetFloat(effect, "ts1[0].fv", &float_value);
-    ok(hr == D3D_OK && float_value == 12.0, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 12.0, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
 
     float_array[0] = -29.0f;
     hr = effect->lpVtbl->SetFloatArray(effect, "ts1[0].v2", float_array, 1);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->GetFloatArray(effect, "ts1[0].v2", float_array, 1);
-    ok(hr == D3D_OK && float_array[0] == 13.0, "Got unexpected hr %#x, float_array[0] %g.\n",
+    ok(hr == D3D_OK && float_array[0] == 13.0, "Got unexpected hr %#lx, float_array[0] %g.\n",
             hr, float_array[0]);
 
     memset(&mat, 0, sizeof(mat));
     hr = effect->lpVtbl->SetMatrix(effect, "m3x2row", &test_mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2row", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &effect_orig_mat, sizeof(mat)), "Got unexpected matrix.\n");
 
     hr = effect->lpVtbl->SetMatrix(effect, "m3x2column", &test_mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2column", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &effect_orig_mat, sizeof(mat)), "Got unexpected matrix.\n");
 
     /* Setting shared parameter through effect2 is not recorded to effect
      * parameter block. */
     hr = effect2->lpVtbl->SetFloat(effect2, "arr2[1]", -1.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->GetFloat(effect, "arr2[1]", &float_value);
     ok(float_value == -1.0f, "Unexpected value %g.\n", float_value);
 
     IDirect3DTexture9_AddRef(texture);
     refcount = IDirect3DTexture9_Release(texture);
-    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 2, "Got unexpected refcount %lu.\n", refcount);
 
     block = effect->lpVtbl->EndParameterBlock(effect);
     ok(!!block, "Got unexpected block %p.\n", block);
 
     IDirect3DTexture9_AddRef(texture);
     refcount = IDirect3DTexture9_Release(texture);
-    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 2, "Got unexpected refcount %lu.\n", refcount);
 
     hr = effect->lpVtbl->DeleteParameterBlock(effect2, block);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
 
     IDirect3DTexture9_AddRef(texture);
     refcount = IDirect3DTexture9_Release(texture);
-    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 2, "Got unexpected refcount %lu.\n", refcount);
 
     hr = effect->lpVtbl->SetFloat(effect, "arr2[0]", 0.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "arr2[1]", 0.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloatArray(effect, "ts1[0].v1", float_array_zero, 3);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "ts1[0].fv", 0.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloatArray(effect, "ts1[0].v2", float_array_zero, 4);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     memset(&mat, 0, sizeof(mat));
     hr = effect->lpVtbl->SetMatrix(effect, "m3x2row", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetMatrix(effect, "m3x2column", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->ApplyParameterBlock(effect, block);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     IDirect3DTexture9_AddRef(texture);
     refcount = IDirect3DTexture9_Release(texture);
-    ok(refcount == 3, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 3, "Got unexpected refcount %lu.\n", refcount);
 
     hr = effect->lpVtbl->GetFloat(effect, "arr2[0]", &float_value);
-    ok(hr == D3D_OK && float_value == 92.0f, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 92.0f, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
     hr = effect->lpVtbl->GetFloat(effect, "arr2[1]", &float_value);
-    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
 
     hr = effect->lpVtbl->GetFloatArray(effect, "ts1[0].v1", float_array, 3);
     ok(hr == D3D_OK && !memcmp(float_array, float_array_zero, 3 * sizeof(*float_array)),
-            "Got unexpected hr %#x, ts1[0].v1 (%g, %g, %g).\n", hr,
+            "Got unexpected hr %#lx, ts1[0].v1 (%g, %g, %g).\n", hr,
             float_array[0], float_array[1], float_array[2]);
 
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2row", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &test_mat, sizeof(mat)), "Got unexpected matrix.\n");
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2column", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &test_mat, sizeof(mat)), "Got unexpected matrix.\n");
 
     hr = effect->lpVtbl->GetFloat(effect, "ts1[0].fv", &float_value);
-    ok(hr == D3D_OK && float_value == 28.0f, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 28.0f, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
 
     hr = effect->lpVtbl->GetFloatArray(effect, "ts1[0].v2", float_array, 4);
     ok(hr == D3D_OK && float_array[0] == -29.0f
             && !memcmp(float_array + 1, float_array_zero, 3 * sizeof(*float_array)),
-            "Got unexpected hr %#x, ts1[0].v2 (%g, %g, %g, %g).\n", hr,
+            "Got unexpected hr %#lx, ts1[0].v2 (%g, %g, %g, %g).\n", hr,
             float_array[0], float_array[1], float_array[2], float_array[3]);
 
     /* Test applying a parameter block while recording a new one. */
     hr = effect->lpVtbl->SetFloat(effect, "arr2[0]", 0.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "arr2[1]", 0.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloatArray(effect, "ts1[0].v1", float_array_zero, 3);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "ts1[0].fv", 0.0f);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloatArray(effect, "ts1[0].v2", float_array_zero, 4);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     memset(&mat, 0, sizeof(mat));
     hr = effect->lpVtbl->SetMatrix(effect, "m3x2row", &effect_orig_mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->SetMatrix(effect, "m3x2column", &effect_orig_mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginParameterBlock(effect);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->ApplyParameterBlock(effect, block);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetFloat(effect, "arr2[0]", &float_value);
-    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
     hr = effect->lpVtbl->GetFloat(effect, "arr2[1]", &float_value);
-    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
 
     hr = effect->lpVtbl->GetFloatArray(effect, "ts1[0].v1", float_array, 3);
     ok(hr == D3D_OK && !memcmp(float_array, float_array_zero, 3 * sizeof(*float_array)),
-            "Got unexpected hr %#x, ts1[0].v1 (%g, %g, %g).\n", hr,
+            "Got unexpected hr %#lx, ts1[0].v1 (%g, %g, %g).\n", hr,
             float_array[0], float_array[1], float_array[2]);
 
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2row", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &effect_orig_mat, sizeof(mat)), "Got unexpected matrix.\n");
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2column", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &effect_orig_mat, sizeof(mat)), "Got unexpected matrix.\n");
 
     hr = effect->lpVtbl->GetFloat(effect, "ts1[0].fv", &float_value);
-    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
 
     hr = effect->lpVtbl->GetFloatArray(effect, "ts1[0].v2", float_array, 4);
     ok(hr == D3D_OK && float_array[0] == 0.0f
             && !memcmp(float_array + 1, float_array_zero, 3 * sizeof(*float_array)),
-            "Got unexpected hr %#x, ts1[0].v2 (%g, %g, %g, %g).\n", hr,
+            "Got unexpected hr %#lx, ts1[0].v2 (%g, %g, %g, %g).\n", hr,
             float_array[0], float_array[1], float_array[2], float_array[3]);
 
     block2 = effect->lpVtbl->EndParameterBlock(effect);
     ok(!!block2, "Got unexpected block %p.\n", block2);
 
     hr = effect->lpVtbl->ApplyParameterBlock(effect, block2);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetFloat(effect, "arr2[0]", &float_value);
-    ok(hr == D3D_OK && float_value == 92.0f, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 92.0f, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
     hr = effect->lpVtbl->GetFloat(effect, "arr2[1]", &float_value);
-    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 0.0f, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
 
     hr = effect->lpVtbl->GetFloatArray(effect, "ts1[0].v1", float_array, 3);
     ok(hr == D3D_OK && !memcmp(float_array, float_array_zero, 3 * sizeof(*float_array)),
-            "Got unexpected hr %#x, ts1[0].v1 (%g, %g, %g).\n", hr,
+            "Got unexpected hr %#lx, ts1[0].v1 (%g, %g, %g).\n", hr,
             float_array[0], float_array[1], float_array[2]);
 
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2row", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &test_mat, sizeof(mat)), "Got unexpected matrix.\n");
     hr = effect->lpVtbl->GetMatrix(effect, "m3x2column", &mat);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat, &test_mat, sizeof(mat)), "Got unexpected matrix.\n");
 
     hr = effect->lpVtbl->GetFloat(effect, "ts1[0].fv", &float_value);
-    ok(hr == D3D_OK && float_value == 28.0f, "Got unexpected hr %#x, float_value %g.\n", hr, float_value);
+    ok(hr == D3D_OK && float_value == 28.0f, "Got unexpected hr %#lx, float_value %g.\n", hr, float_value);
 
     hr = effect->lpVtbl->GetFloatArray(effect, "ts1[0].v2", float_array, 4);
     ok(hr == D3D_OK && float_array[0] == -29.0f
             && !memcmp(float_array + 1, float_array_zero, 3 * sizeof(*float_array)),
-            "Got unexpected hr %#x, ts1[0].v2 (%g, %g, %g, %g).\n", hr,
+            "Got unexpected hr %#lx, ts1[0].v2 (%g, %g, %g, %g).\n", hr,
             float_array[0], float_array[1], float_array[2], float_array[3]);
 
     hr = effect->lpVtbl->DeleteParameterBlock(effect, block);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->DeleteParameterBlock(effect, block2);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->SetTexture(effect, "tex1", NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = IDirect3DTexture9_Release(texture);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = effect->lpVtbl->Release(effect);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = effect2->lpVtbl->Release(effect2);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = pool->lpVtbl->Release(pool);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     hr = D3DXCreateEffect(device, test_effect_parameter_value_blob_float, sizeof(test_effect_parameter_value_blob_float),
             NULL, NULL, 0, NULL, &effect, NULL);
     hr = effect->lpVtbl->BeginParameterBlock(effect);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     mat_arr[0] = mat_arr[1] = test_mat;
     hr = effect->lpVtbl->SetMatrixArray(effect, "f33_2", mat_arr, 2);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     block = effect->lpVtbl->EndParameterBlock(effect);
     ok(!!block, "Got unexpected block %p.\n", block);
 
     memset(mat_arr, 0, sizeof(mat_arr));
     hr = effect->lpVtbl->SetMatrixArray(effect, "f33_2", mat_arr, 2);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->ApplyParameterBlock(effect, block);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetMatrixArray(effect, "f33_2", mat_arr, 2);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(&mat_arr[0], &test_mat, sizeof(test_mat))
             && !memcmp(&mat_arr[1], &test_mat, sizeof(test_mat)), "Got unexpected matrix array.\n");
 
     refcount = effect->lpVtbl->Release(effect);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     hr = D3DXCreateEffect(device, annotation_code, sizeof(annotation_code),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
 
     hr = effect->lpVtbl->GetFloat(effect, "f@a", &float_value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value == 1.0f, "Got float %.8e.\n", float_value);
     hr = effect->lpVtbl->SetFloat(effect, "f@a", 2.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetFloat(effect, "f@a", &float_value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value == 2.0f, "Got float %.8e.\n", float_value);
 
     hr = effect->lpVtbl->BeginParameterBlock(effect);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->SetFloat(effect, "f@a", 3.0f);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetFloat(effect, "f@a", &float_value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value == 2.0f, "Got float %.8e.\n", float_value);
     block = effect->lpVtbl->EndParameterBlock(effect);
     ok(!!block, "Got unexpected block %p.\n", block);
     hr = effect->lpVtbl->ApplyParameterBlock(effect, block);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     hr = effect->lpVtbl->GetFloat(effect, "f@a", &float_value);
-    ok(hr == D3D_OK, "Got result %#x.\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
     ok(float_value == 3.0f, "Got float %.8e.\n", float_value);
 
     refcount = effect->lpVtbl->Release(effect);
-    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
 }
@@ -8739,7 +8739,7 @@ START_TEST(effect)
     test_effect_skip_constants(device);
 
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     DestroyWindow(wnd);
 
     test_effect_unsupported_shader();

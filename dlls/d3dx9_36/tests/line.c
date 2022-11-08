@@ -68,13 +68,13 @@ static void test_create_line(IDirect3DDevice9* device)
     r11 = 0.1421; r12 = 0.2114; r13 = 0.8027; r14 = 0.4587;
 
     hr = D3DXCreateLine(NULL, &line);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateLine(device, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateLine(device, &line);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     if (FAILED(hr))
     {
@@ -82,10 +82,10 @@ static void test_create_line(IDirect3DDevice9* device)
     }
 
     hr = ID3DXLine_GetDevice(line, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3D_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = ID3DXLine_GetDevice(line, &return_device);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     ok(return_device == device, "Expected line device %p, got %p\n", device, return_device);
 
     D3DXMatrixIdentity(&world);
@@ -93,26 +93,26 @@ static void test_create_line(IDirect3DDevice9* device)
     S(U(world))._11 = r11; S(U(world))._12 = r12; S(U(world))._13 = r13; S(U(world))._14 = r14;
 
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &world);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
 
     hr = ID3DXLine_Begin(line);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLD, &result);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     expect_mat(&identity, &result);
 
     hr = ID3DXLine_End(line);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLD, &result);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     expect_mat(&world, &result);
 
     IDirect3DDevice9_Release(return_device);
 
     ref = ID3DXLine_Release(line);
-    ok(ref == 0, "Got %x references to line %p, expected 0\n", ref, line);
+    ok(ref == 0, "Got %lx references to line %p, expected 0\n", ref, line);
 }
 
 static void test_line_width(IDirect3DDevice9* device)
@@ -123,28 +123,28 @@ static void test_line_width(IDirect3DDevice9* device)
     HRESULT hr;
 
     hr = D3DXCreateLine(device, &line);
-    ok(hr == D3D_OK, "Failed to create a line, hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Failed to create a line, hr %#lx.\n", hr);
 
     width = ID3DXLine_GetWidth(line);
     ok(width == 1.0f, "Unexpected line width %.8e.\n", width);
 
     hr = ID3DXLine_SetWidth(line, 0.0f);
-    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
     width = ID3DXLine_GetWidth(line);
     ok(width == 1.0f, "Unexpected line width %.8e.\n", width);
 
     hr = ID3DXLine_SetWidth(line, -1.0f);
-    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
     width = ID3DXLine_GetWidth(line);
     ok(width == 1.0f, "Unexpected line width %.8e.\n", width);
 
     hr = ID3DXLine_SetWidth(line, 10.0f);
-    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     width = ID3DXLine_GetWidth(line);
     ok(width == 10.0f, "Unexpected line width %.8e.\n", width);
 
     refcount = ID3DXLine_Release(line);
-    ok(!refcount, "Got %u references to line.\n", refcount);
+    ok(!refcount, "Got %lu references to line.\n", refcount);
 }
 
 START_TEST(line)
@@ -173,7 +173,7 @@ START_TEST(line)
     d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
     hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
     if (FAILED(hr)) {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        skip("Failed to create IDirect3DDevice9 object %#lx\n", hr);
         IDirect3D9_Release(d3d);
         DestroyWindow(wnd);
         return;

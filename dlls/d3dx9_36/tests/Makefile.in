@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = d3dx9_36.dll
 IMPORTS   = d3dx9 d3d9 user32 gdi32
 

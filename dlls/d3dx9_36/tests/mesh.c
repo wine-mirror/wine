@@ -138,7 +138,7 @@ static struct test_context *new_test_context(void)
                                  D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
     if (FAILED(hr))
     {
-        skip("Couldn't create IDirect3DDevice9 object %#x\n", hr);
+        skip("Couldn't create IDirect3DDevice9 object %#lx\n", hr);
         goto error;
     }
 
@@ -235,16 +235,16 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
     int expected, i;
 
     number_of_vertices = d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh);
-    ok(number_of_vertices == mesh->number_of_vertices, "Test %s, result %u, expected %d\n",
+    ok(number_of_vertices == mesh->number_of_vertices, "Test %s, result %lu, expected %ld\n",
        name, number_of_vertices, mesh->number_of_vertices);
 
     number_of_faces = d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh);
-    ok(number_of_faces == mesh->number_of_faces, "Test %s, result %u, expected %d\n",
+    ok(number_of_faces == mesh->number_of_faces, "Test %s, result %lu, expected %ld\n",
        name, number_of_faces, mesh->number_of_faces);
 
     /* vertex buffer */
     hr = d3dxmesh->lpVtbl->GetVertexBuffer(d3dxmesh, &vertex_buffer);
-    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+    ok(hr == D3D_OK, "Test %s, result %lx, expected 0 (D3D_OK)\n", name, hr);
 
     if (hr != D3D_OK)
     {
@@ -253,7 +253,7 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
     else
     {
         hr = IDirect3DVertexBuffer9_GetDesc(vertex_buffer, &vertex_buffer_description);
-        ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+        ok(hr == D3D_OK, "Test %s, result %lx, expected 0 (D3D_OK)\n", name, hr);
 
         if (hr != D3D_OK)
         {
@@ -265,10 +265,10 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
                name, vertex_buffer_description.Format, D3DFMT_VERTEXDATA);
             ok(vertex_buffer_description.Type == D3DRTYPE_VERTEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_VERTEXBUFFER)\n",
                name, vertex_buffer_description.Type, D3DRTYPE_VERTEXBUFFER);
-            ok(vertex_buffer_description.Usage == 0, "Test %s, result %x, expected %x\n", name, vertex_buffer_description.Usage, 0);
+            ok(vertex_buffer_description.Usage == 0, "Test %s, result %lx, expected %x\n", name, vertex_buffer_description.Usage, 0);
             ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
                name, vertex_buffer_description.Pool, D3DPOOL_MANAGED);
-            ok(vertex_buffer_description.FVF == mesh->fvf, "Test %s, result %x, expected %x\n",
+            ok(vertex_buffer_description.FVF == mesh->fvf, "Test %s, result %lx, expected %lx\n",
                name, vertex_buffer_description.FVF, mesh->fvf);
             if (mesh->fvf == 0)
             {
@@ -285,7 +285,7 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
         /* specify offset and size to avoid potential overruns */
         hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, number_of_vertices * sizeof(D3DXVECTOR3) * 2,
                 (void **)&vertices, D3DLOCK_DISCARD);
-        ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+        ok(hr == D3D_OK, "Test %s, result %lx, expected 0 (D3D_OK)\n", name, hr);
 
         if (hr != D3D_OK)
         {
@@ -313,7 +313,7 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
 
     /* index buffer */
     hr = d3dxmesh->lpVtbl->GetIndexBuffer(d3dxmesh, &index_buffer);
-    ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+    ok(hr == D3D_OK, "Test %s, result %lx, expected 0 (D3D_OK)\n", name, hr);
 
     if (!index_buffer)
     {
@@ -322,7 +322,7 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
     else
     {
         hr = IDirect3DIndexBuffer9_GetDesc(index_buffer, &index_buffer_description);
-        ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+        ok(hr == D3D_OK, "Test %s, result %lx, expected 0 (D3D_OK)\n", name, hr);
 
         if (hr != D3D_OK)
         {
@@ -334,7 +334,7 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
                name, index_buffer_description.Format, D3DFMT_INDEX16);
             ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, result %x, expected %x (D3DRTYPE_INDEXBUFFER)\n",
                name, index_buffer_description.Type, D3DRTYPE_INDEXBUFFER);
-            ok(index_buffer_description.Usage == 0, "Test %s, result %#x, expected %#x.\n",
+            ok(index_buffer_description.Usage == 0, "Test %s, result %#lx, expected %#x.\n",
                     name, index_buffer_description.Usage, 0);
             ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, result %x, expected %x (D3DPOOL_MANAGED)\n",
                name, index_buffer_description.Pool, D3DPOOL_MANAGED);
@@ -346,7 +346,7 @@ static void compare_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mes
         /* specify offset and size to avoid potential overruns */
         hr = IDirect3DIndexBuffer9_Lock(index_buffer, 0, number_of_faces * sizeof(WORD) * 3,
                 (void **)&faces, D3DLOCK_DISCARD);
-        ok(hr == D3D_OK, "Test %s, result %x, expected 0 (D3D_OK)\n", name, hr);
+        ok(hr == D3D_OK, "Test %s, result %lx, expected 0 (D3D_OK)\n", name, hr);
 
         if (hr != D3D_OK)
         {
@@ -479,7 +479,7 @@ static void D3DXComputeBoundingBoxTest(void)
 
     hr = D3DXComputeBoundingBox(&vertex[3],2,D3DXGetFVFVertexSize(D3DFVF_XYZ),&got_min,&got_max);
 
-    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     ok( compare_vec3(exp_min,got_min), "Expected min: (%f, %f, %f), got: (%f, %f, %f)\n", exp_min.x,exp_min.y,exp_min.z,got_min.x,got_min.y,got_min.z);
     ok( compare_vec3(exp_max,got_max), "Expected max: (%f, %f, %f), got: (%f, %f, %f)\n", exp_max.x,exp_max.y,exp_max.z,got_max.x,got_max.y,got_max.z);
 
@@ -496,7 +496,7 @@ static void D3DXComputeBoundingBoxTest(void)
 
     hr = D3DXComputeBoundingBox(&vertex[0],5,D3DXGetFVFVertexSize(D3DFVF_XYZ),&got_min,&got_max);
 
-    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     ok( compare_vec3(exp_min,got_min), "Expected min: (%f, %f, %f), got: (%f, %f, %f)\n", exp_min.x,exp_min.y,exp_min.z,got_min.x,got_min.y,got_min.z);
     ok( compare_vec3(exp_max,got_max), "Expected max: (%f, %f, %f), got: (%f, %f, %f)\n", exp_max.x,exp_max.y,exp_max.z,got_max.x,got_max.y,got_max.z);
 
@@ -513,21 +513,21 @@ static void D3DXComputeBoundingBoxTest(void)
 
     hr = D3DXComputeBoundingBox(&vertex[0],4,D3DXGetFVFVertexSize(D3DFVF_XYZ),&got_min,&got_max);
 
-    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     ok( compare_vec3(exp_min,got_min), "Expected min: (%f, %f, %f), got: (%f, %f, %f)\n", exp_min.x,exp_min.y,exp_min.z,got_min.x,got_min.y,got_min.z);
     ok( compare_vec3(exp_max,got_max), "Expected max: (%f, %f, %f), got: (%f, %f, %f)\n", exp_max.x,exp_max.y,exp_max.z,got_max.x,got_max.y,got_max.z);
 
 /*________________________*/
     hr = D3DXComputeBoundingBox(NULL,5,D3DXGetFVFVertexSize(D3DFVF_XYZ),&got_min,&got_max);
-    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
 /*________________________*/
     hr = D3DXComputeBoundingBox(&vertex[3],5,D3DXGetFVFVertexSize(D3DFVF_XYZ),NULL,&got_max);
-    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
 /*________________________*/
     hr = D3DXComputeBoundingBox(&vertex[3],5,D3DXGetFVFVertexSize(D3DFVF_XYZ),&got_min,NULL);
-    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 }
 
 static void D3DXComputeBoundingSphereTest(void)
@@ -547,7 +547,7 @@ static void D3DXComputeBoundingSphereTest(void)
 
     hr = D3DXComputeBoundingSphere(&vertex[3],2,D3DXGetFVFVertexSize(D3DFVF_XYZ),&got_cen,&got_rad);
 
-    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     ok( compare(exp_rad, got_rad), "Expected radius: %f, got radius: %f\n", exp_rad, got_rad);
     ok( compare_vec3(exp_cen,got_cen), "Expected center: (%f, %f, %f), got center: (%f, %f, %f)\n", exp_cen.x,exp_cen.y,exp_cen.z,got_cen.x,got_cen.y,got_cen.z);
 
@@ -564,21 +564,21 @@ static void D3DXComputeBoundingSphereTest(void)
 
     hr = D3DXComputeBoundingSphere(&vertex[0],5,D3DXGetFVFVertexSize(D3DFVF_XYZ),&got_cen,&got_rad);
 
-    ok( hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok( hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     ok( compare(exp_rad, got_rad), "Expected radius: %f, got radius: %f\n", exp_rad, got_rad);
     ok( compare_vec3(exp_cen,got_cen), "Expected center: (%f, %f, %f), got center: (%f, %f, %f)\n", exp_cen.x,exp_cen.y,exp_cen.z,got_cen.x,got_cen.y,got_cen.z);
 
 /*________________________*/
     hr = D3DXComputeBoundingSphere(NULL,5,D3DXGetFVFVertexSize(D3DFVF_XYZ),&got_cen,&got_rad);
-    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
 /*________________________*/
     hr = D3DXComputeBoundingSphere(&vertex[3],5,D3DXGetFVFVertexSize(D3DFVF_XYZ),NULL,&got_rad);
-    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
 /*________________________*/
     hr = D3DXComputeBoundingSphere(&vertex[3],5,D3DXGetFVFVertexSize(D3DFVF_XYZ),&got_cen,NULL);
-    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok( hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 }
 
 static void print_elements(const D3DVERTEXELEMENT9 *elements)
@@ -638,7 +638,7 @@ static void test_fvf_to_decl(DWORD test_fvf, const D3DVERTEXELEMENT9 expected_el
 
     hr = D3DXDeclaratorFromFVF(test_fvf, decl);
     ok(hr == expected_hr,
-            "Line %u, test %u: D3DXDeclaratorFromFVF returned %#x, expected %#x.\n",
+            "Line %u, test %u: D3DXDeclaratorFromFVF returned %#lx, expected %#lx.\n",
             line, test_id, hr, expected_hr);
     if (SUCCEEDED(hr)) compare_elements(decl, expected_elements, line, test_id);
 }
@@ -651,11 +651,11 @@ static void test_decl_to_fvf(const D3DVERTEXELEMENT9 *decl, DWORD expected_fvf,
 
     hr = D3DXFVFFromDeclarator(decl, &result_fvf);
     ok(hr == expected_hr,
-       "Line %u, test %u: D3DXFVFFromDeclarator returned %#x, expected %#x.\n",
+       "Line %u, test %u: D3DXFVFFromDeclarator returned %#lx, expected %#lx.\n",
        line, test_id, hr, expected_hr);
     if (SUCCEEDED(hr))
     {
-        ok(expected_fvf == result_fvf, "Line %u, test %u: Got FVF %#x, expected %#x.\n",
+        ok(expected_fvf == result_fvf, "Line %u, test %u: Got FVF %#lx, expected %#lx.\n",
                 line, test_id, result_fvf, expected_fvf);
     }
 }
@@ -1227,10 +1227,10 @@ static void D3DXCreateMeshTest(void)
     };
 
     hr = D3DXCreateMesh(0, 0, 0, NULL, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl1, NULL, &d3dxmesh);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     test_context = new_test_context();
     if (!test_context)
@@ -1241,13 +1241,13 @@ static void D3DXCreateMeshTest(void)
     device = test_context->device;
 
     hr = D3DXCreateMesh(0, 3, D3DXMESH_MANAGED, decl1, device, &d3dxmesh);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMesh(1, 0, D3DXMESH_MANAGED, decl1, device, &d3dxmesh);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMesh(1, 3, 0, decl1, device, &d3dxmesh);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
 
     if (hr == D3D_OK)
     {
@@ -1255,22 +1255,22 @@ static void D3DXCreateMeshTest(void)
     }
 
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, 0, device, &d3dxmesh);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl1, device, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl1, device, &d3dxmesh);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     if (hr == D3D_OK)
     {
         /* device */
         hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
         hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, &test_device);
-        ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
         ok(test_device == device, "Got result %p, expected %p\n", test_device, device);
 
         if (hr == D3D_OK)
@@ -1280,10 +1280,10 @@ static void D3DXCreateMeshTest(void)
 
         /* declaration */
         hr = d3dxmesh->lpVtbl->GetDeclaration(d3dxmesh, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
         hr = d3dxmesh->lpVtbl->GetDeclaration(d3dxmesh, test_decl);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
         if (hr == D3D_OK)
         {
@@ -1302,7 +1302,7 @@ static void D3DXCreateMeshTest(void)
 
         /* options */
         options = d3dxmesh->lpVtbl->GetOptions(d3dxmesh);
-        ok(options == D3DXMESH_MANAGED, "Got result %x, expected %x (D3DXMESH_MANAGED)\n", options, D3DXMESH_MANAGED);
+        ok(options == D3DXMESH_MANAGED, "Got result %lx, expected %x (D3DXMESH_MANAGED)\n", options, D3DXMESH_MANAGED);
 
         /* rest */
         if (!new_mesh(&mesh, 3, 1))
@@ -1325,16 +1325,16 @@ static void D3DXCreateMeshTest(void)
 
     /* Test a declaration that can't be converted to an FVF. */
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl2, device, &d3dxmesh);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     if (hr == D3D_OK)
     {
         /* device */
         hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
         hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, &test_device);
-        ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
         ok(test_device == device, "Got result %p, expected %p\n", test_device, device);
 
         if (hr == D3D_OK)
@@ -1344,7 +1344,7 @@ static void D3DXCreateMeshTest(void)
 
         /* declaration */
         hr = d3dxmesh->lpVtbl->GetDeclaration(d3dxmesh, test_decl);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
         if (hr == D3D_OK)
         {
@@ -1363,7 +1363,7 @@ static void D3DXCreateMeshTest(void)
 
         /* options */
         options = d3dxmesh->lpVtbl->GetOptions(d3dxmesh);
-        ok(options == D3DXMESH_MANAGED, "Got result %x, expected %x (D3DXMESH_MANAGED)\n", options, D3DXMESH_MANAGED);
+        ok(options == D3DXMESH_MANAGED, "Got result %lx, expected %x (D3DXMESH_MANAGED)\n", options, D3DXMESH_MANAGED);
 
         /* rest */
         if (!new_mesh(&mesh, 3, 1))
@@ -1390,7 +1390,7 @@ static void D3DXCreateMeshTest(void)
 
     /* Test a declaration with multiple streams. */
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl3, device, &d3dxmesh);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     free_test_context(test_context);
 }
@@ -1414,10 +1414,10 @@ static void D3DXCreateMeshFVFTest(void)
     };
 
     hr = D3DXCreateMeshFVF(0, 0, 0, 0, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, NULL, &d3dxmesh);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     test_context = new_test_context();
     if (!test_context)
@@ -1428,13 +1428,13 @@ static void D3DXCreateMeshFVFTest(void)
     device = test_context->device;
 
     hr = D3DXCreateMeshFVF(0, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, &d3dxmesh);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMeshFVF(1, 0, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, &d3dxmesh);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMeshFVF(1, 3, 0, D3DFVF_XYZ | D3DFVF_NORMAL, device, &d3dxmesh);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
 
     if (hr == D3D_OK)
     {
@@ -1442,22 +1442,22 @@ static void D3DXCreateMeshFVFTest(void)
     }
 
     hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, 0xdeadbeef, device, &d3dxmesh);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, &d3dxmesh);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     if (hr == D3D_OK)
     {
         /* device */
         hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
         hr = d3dxmesh->lpVtbl->GetDevice(d3dxmesh, &test_device);
-        ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
         ok(test_device == device, "Got result %p, expected %p\n", test_device, device);
 
         if (hr == D3D_OK)
@@ -1467,10 +1467,10 @@ static void D3DXCreateMeshFVFTest(void)
 
         /* declaration */
         hr = d3dxmesh->lpVtbl->GetDeclaration(d3dxmesh, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
         hr = d3dxmesh->lpVtbl->GetDeclaration(d3dxmesh, test_decl);
-        ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+        ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
         if (hr == D3D_OK)
         {
@@ -1490,7 +1490,7 @@ static void D3DXCreateMeshFVFTest(void)
 
         /* options */
         options = d3dxmesh->lpVtbl->GetOptions(d3dxmesh);
-        ok(options == D3DXMESH_MANAGED, "Got result %x, expected %x (D3DXMESH_MANAGED)\n", options, D3DXMESH_MANAGED);
+        ok(options == D3DXMESH_MANAGED, "Got result %lx, expected %x (D3DXMESH_MANAGED)\n", options, D3DXMESH_MANAGED);
 
         /* rest */
         if (!new_mesh(&mesh, 3, 1))
@@ -1523,12 +1523,12 @@ static void check_vertex_buffer_(int line, ID3DXMesh *mesh, const void *vertices
     const void *mesh_vertices;
     HRESULT hr;
 
-    ok_(__FILE__,line)(fvf == mesh_fvf, "expected FVF %x, got %x\n", fvf, mesh_fvf);
+    ok_(__FILE__,line)(fvf == mesh_fvf, "expected FVF %lx, got %lx\n", fvf, mesh_fvf);
     ok_(__FILE__,line)(num_vertices == mesh_num_vertices,
-       "Expected %u vertices, got %u\n", num_vertices, mesh_num_vertices);
+       "Expected %lu vertices, got %lu\n", num_vertices, mesh_num_vertices);
 
     hr = mesh->lpVtbl->LockVertexBuffer(mesh, D3DLOCK_READONLY, (void**)&mesh_vertices);
-    ok_(__FILE__,line)(hr == D3D_OK, "LockVertexBuffer returned %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok_(__FILE__,line)(hr == D3D_OK, "LockVertexBuffer returned %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     if (FAILED(hr))
         return;
 
@@ -1562,39 +1562,39 @@ static void check_vertex_buffer_(int line, ID3DXMesh *mesh, const void *vertices
                     break;
                 case D3DFVF_XYZW: pos_dim = 4; break;
             }
-            sprintf(prefix, "vertex[%u] position, ", i);
+            sprintf(prefix, "vertex[%lu] position, ", i);
             check_floats_(line, prefix, got_float, exp_float, pos_dim);
             exp_float += pos_dim;
             got_float += pos_dim;
 
             if (last_beta_dword) {
                 ok_(__FILE__,line)(*(DWORD*)exp_float == *(DWORD*)got_float,
-                    "Vertex[%u]: Expected last beta %08x, got %08x\n", i, *(DWORD*)exp_float, *(DWORD*)got_float);
+                    "Vertex[%lu]: Expected last beta %08lx, got %08lx\n", i, *(DWORD*)exp_float, *(DWORD*)got_float);
                 exp_float++;
                 got_float++;
             }
 
             if (fvf & D3DFVF_NORMAL) {
-                sprintf(prefix, "vertex[%u] normal, ", i);
+                sprintf(prefix, "vertex[%lu] normal, ", i);
                 check_floats_(line, prefix, got_float, exp_float, 3);
                 exp_float += 3;
                 got_float += 3;
             }
             if (fvf & D3DFVF_PSIZE) {
                 ok_(__FILE__,line)(compare(*exp_float, *got_float),
-                        "Vertex[%u]: Expected psize %g, got %g\n", i, *exp_float, *got_float);
+                        "Vertex[%lu]: Expected psize %g, got %g\n", i, *exp_float, *got_float);
                 exp_float++;
                 got_float++;
             }
             if (fvf & D3DFVF_DIFFUSE) {
                 ok_(__FILE__,line)(*(DWORD*)exp_float == *(DWORD*)got_float,
-                    "Vertex[%u]: Expected diffuse %08x, got %08x\n", i, *(DWORD*)exp_float, *(DWORD*)got_float);
+                    "Vertex[%lu]: Expected diffuse %08lx, got %08lx\n", i, *(DWORD*)exp_float, *(DWORD*)got_float);
                 exp_float++;
                 got_float++;
             }
             if (fvf & D3DFVF_SPECULAR) {
                 ok_(__FILE__,line)(*(DWORD*)exp_float == *(DWORD*)got_float,
-                    "Vertex[%u]: Expected specular %08x, got %08x\n", i, *(DWORD*)exp_float, *(DWORD*)got_float);
+                    "Vertex[%lu]: Expected specular %08lx, got %08lx\n", i, *(DWORD*)exp_float, *(DWORD*)got_float);
                 exp_float++;
                 got_float++;
             }
@@ -1602,7 +1602,7 @@ static void check_vertex_buffer_(int line, ID3DXMesh *mesh, const void *vertices
             texcount = (fvf & D3DFVF_TEXCOUNT_MASK) >> D3DFVF_TEXCOUNT_SHIFT;
             for (j = 0; j < texcount; j++) {
                 DWORD dim = (((fvf >> (16 + 2 * j)) + 1) & 0x03) + 1;
-                sprintf(prefix, "vertex[%u] texture, ", i);
+                sprintf(prefix, "vertex[%lu] texture, ", i);
                 check_floats_(line, prefix, got_float, exp_float, dim);
                 exp_float += dim;
                 got_float += dim;
@@ -1627,12 +1627,12 @@ static void check_index_buffer_(int line, ID3DXMesh *mesh, const void *indices, 
     DWORD i;
 
     ok_(__FILE__,line)(index_size == mesh_index_size,
-        "Expected index size %u, got %u\n", index_size, mesh_index_size);
+        "Expected index size %lu, got %lu\n", index_size, mesh_index_size);
     ok_(__FILE__,line)(num_indices == mesh_num_indices,
-        "Expected %u indices, got %u\n", num_indices, mesh_num_indices);
+        "Expected %lu indices, got %lu\n", num_indices, mesh_num_indices);
 
     hr = mesh->lpVtbl->LockIndexBuffer(mesh, D3DLOCK_READONLY, (void**)&mesh_indices);
-    ok_(__FILE__,line)(hr == D3D_OK, "LockIndexBuffer returned %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok_(__FILE__,line)(hr == D3D_OK, "LockIndexBuffer returned %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     if (FAILED(hr))
         return;
 
@@ -1641,10 +1641,10 @@ static void check_index_buffer_(int line, ID3DXMesh *mesh, const void *indices, 
         {
             if (index_size == 4)
                 ok_(__FILE__,line)(*(DWORD*)indices == *(DWORD*)mesh_indices,
-                    "Index[%u]: expected %u, got %u\n", i, *(DWORD*)indices, *(DWORD*)mesh_indices);
+                    "Index[%lu]: expected %lu, got %lu\n", i, *(DWORD*)indices, *(DWORD*)mesh_indices);
             else
                 ok_(__FILE__,line)(*(WORD*)indices == *(WORD*)mesh_indices,
-                    "Index[%u]: expected %u, got %u\n", i, *(WORD*)indices, *(WORD*)mesh_indices);
+                    "Index[%lu]: expected %u, got %u\n", i, *(WORD*)indices, *(WORD*)mesh_indices);
             indices = (BYTE*)indices + index_size;
             mesh_indices = (BYTE*)mesh_indices + index_size;
         }
@@ -1677,7 +1677,7 @@ static void check_colorvalue_(int line, const char *prefix, const D3DCOLORVALUE 
 static void check_materials_(int line, const D3DXMATERIAL *got, DWORD got_count, const D3DXMATERIAL *expected, DWORD expected_count)
 {
     int i;
-    ok_(__FILE__,line)(expected_count == got_count, "Expected %u materials, got %u\n", expected_count, got_count);
+    ok_(__FILE__,line)(expected_count == got_count, "Expected %lu materials, got %lu\n", expected_count, got_count);
     if (!expected) {
         ok_(__FILE__,line)(got == NULL, "Expected NULL material ptr, got %p\n", got);
         return;
@@ -1712,7 +1712,7 @@ static void check_generated_adjacency_(int line, ID3DXMesh *mesh, const DWORD *g
         return;
     }
     hr = mesh->lpVtbl->GenerateAdjacency(mesh, epsilon, expected);
-    ok_(__FILE__, line)(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok_(__FILE__, line)(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
         int i;
@@ -1721,7 +1721,7 @@ static void check_generated_adjacency_(int line, ID3DXMesh *mesh, const DWORD *g
             ok_(__FILE__, line)(expected[i * 3] == got[i * 3] &&
                     expected[i * 3 + 1] == got[i * 3 + 1] &&
                     expected[i * 3 + 2] == got[i * 3 + 2],
-                    "Face %u adjacencies: Expected (%u, %u, %u), got (%u, %u, %u)\n", i,
+                    "Face %u adjacencies: Expected (%lu, %lu, %lu), got (%lu, %lu, %lu)\n", i,
                     expected[i * 3], expected[i * 3 + 1], expected[i * 3 + 2],
                     got[i * 3], got[i * 3 + 1], got[i * 3 + 2]);
         }
@@ -1760,7 +1760,7 @@ static void check_generated_effects_(int line, const D3DXMATERIAL *materials, DW
         DWORD expected_num_defaults = ARRAY_SIZE(params) + (materials[i].pTextureFilename ? 1 : 0);
 
         ok_(__FILE__,line)(expected_num_defaults == effects[i].NumDefaults,
-                "effect[%u] NumDefaults: Expected %u, got %u\n", i,
+                "effect[%u] NumDefaults: Expected %lu, got %lu\n", i,
                 expected_num_defaults, effects[i].NumDefaults);
         for (j = 0; j < min(ARRAY_SIZE(params), effects[i].NumDefaults); j++)
         {
@@ -1773,7 +1773,7 @@ static void check_generated_effects_(int line, const D3DXMATERIAL *materials, DW
                "effect[%u].pDefaults[%u].Type: Expected %u, got %u\n", i, j,
                D3DXEDT_FLOATS, got_param->Type);
             ok_(__FILE__,line)(params[j].num_bytes == got_param->NumBytes,
-               "effect[%u].pDefaults[%u].NumBytes: Expected %u, got %u\n", i, j,
+               "effect[%u].pDefaults[%u].NumBytes: Expected %lu, got %lu\n", i, j,
                params[j].num_bytes, got_param->NumBytes);
             for (k = 0; k < min(params[j].num_bytes, got_param->NumBytes) / 4; k++)
             {
@@ -1795,7 +1795,7 @@ static void check_generated_effects_(int line, const D3DXMATERIAL *materials, DW
                D3DXEDT_STRING, got_param->Type);
             if (materials[i].pTextureFilename) {
                 ok_(__FILE__,line)(strlen(materials[i].pTextureFilename) + 1 == got_param->NumBytes,
-                   "effect[%u] texture filename length: Expected %u, got %u\n", i,
+                   "effect[%u] texture filename length: Expected %lu, got %lu\n", i,
                    (DWORD)strlen(materials[i].pTextureFilename) + 1, got_param->NumBytes);
                 ok_(__FILE__,line)(!strcmp(materials[i].pTextureFilename, got_param->pValue),
                    "effect[%u] texture filename: Expected '%s', got '%s'\n", i,
@@ -1884,7 +1884,7 @@ static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllo
     LPD3DXMESHCONTAINER mesh_container = NULL;
     int i;
 
-    TRACECALLBACK("ID3DXAllocateHierarchyImpl_CreateMeshContainer(%p, '%s', %u, %p, %p, %p, %d, %p, %p, %p)\n",
+    TRACECALLBACK("ID3DXAllocateHierarchyImpl_CreateMeshContainer(%p, '%s', %u, %p, %p, %p, %ld, %p, %p, %p)\n",
             iface, name, mesh_data->Type, U(*mesh_data).pMesh, materials, effects,
             num_materials, adjacency, skin_info, *new_mesh_container);
 
@@ -2010,7 +2010,7 @@ static void test_LoadMeshFromX_(int line, IDirect3DDevice9 *device, const char *
      * the adjacency data. */
     hr = D3DXLoadMeshFromXInMemory(xfile_str, xfile_strlen, D3DXMESH_MANAGED, device,
             check_adjacency ? &adjacency : NULL, &materials, &effects, &num_materials, &mesh);
-    ok_(__FILE__,line)(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok_(__FILE__,line)(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     if (SUCCEEDED(hr)) {
         D3DXMATERIAL *materials_ptr = materials ? ID3DXBuffer_GetBufferPointer(materials) : NULL;
         D3DXEFFECTINSTANCE *effects_ptr = effects ? ID3DXBuffer_GetBufferPointer(effects) : NULL;
@@ -2393,31 +2393,31 @@ static void D3DXLoadMeshTest(void)
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(NULL, sizeof(simple_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, 0,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1,
             D3DXMESH_MANAGED, NULL, &alloc_hier, NULL, &frame_hier, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1,
             D3DXMESH_MANAGED, device, NULL, NULL, &frame_hier, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(empty_xfile, sizeof(empty_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
-    ok(hr == E_FAIL, "Expected E_FAIL, got %#x\n", hr);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
-    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     if (SUCCEEDED(hr)) {
         D3DXMESHCONTAINER *container = frame_hier->pMeshContainer;
 
@@ -2435,20 +2435,20 @@ static void D3DXLoadMeshTest(void)
         check_generated_effects(container->pMaterials, container->NumMaterials, container->pEffects);
         check_generated_adjacency(mesh, container->pAdjacency, 0.0f);
         hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
-        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
         frame_hier = NULL;
     }
 
     controller = (ID3DXAnimationController *)0xdeadbeef;
     hr = D3DXLoadMeshHierarchyFromXInMemory(box_anim_xfile, sizeof(box_anim_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, &controller);
-    todo_wine ok(hr == D3D_OK, "Expected D3D_OK, got %#x.\n", hr);
+    todo_wine ok(hr == D3D_OK, "Expected D3D_OK, got %#lx.\n", hr);
     if (SUCCEEDED(hr))
     {
         ok(controller != NULL, "Animation Controller NULL.\n");
 
         hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
-        ok(hr == D3D_OK, "Expected D3D_OK, got %#x.\n", hr);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx.\n", hr);
         if (controller)
             controller->lpVtbl->Release(controller);
 
@@ -2458,7 +2458,7 @@ static void D3DXLoadMeshTest(void)
     controller = (ID3DXAnimationController *)0xdeadbeef;
     hr = D3DXLoadMeshHierarchyFromXInMemory(box_xfile, sizeof(box_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, &controller);
-    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     if (SUCCEEDED(hr))
     {
         D3DXMESHCONTAINER *container = frame_hier->pMeshContainer;
@@ -2478,13 +2478,13 @@ static void D3DXLoadMeshTest(void)
         check_generated_effects(container->pMaterials, container->NumMaterials, container->pEffects);
         check_generated_adjacency(mesh, container->pAdjacency, 0.0f);
         hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
-        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
         frame_hier = NULL;
     }
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(framed_xfile, sizeof(framed_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
-    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     if (SUCCEEDED(hr)) {
         D3DXMESHCONTAINER *container = frame_hier->pMeshContainer;
         int i;
@@ -2509,38 +2509,38 @@ static void D3DXLoadMeshTest(void)
         }
         ok(container == NULL, "Expected NULL, got %p\n", container);
         hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
-        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
         frame_hier = NULL;
     }
 
 
     hr = D3DXLoadMeshFromXInMemory(NULL, 0, D3DXMESH_MANAGED,
                                    device, NULL, NULL, NULL, NULL, &mesh);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshFromXInMemory(NULL, sizeof(simple_xfile) - 1, D3DXMESH_MANAGED,
                                    device, NULL, NULL, NULL, NULL, &mesh);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshFromXInMemory(simple_xfile, 0, D3DXMESH_MANAGED,
                                    device, NULL, NULL, NULL, NULL, &mesh);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1, D3DXMESH_MANAGED,
                                    device, NULL, NULL, NULL, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1, D3DXMESH_MANAGED,
                                    NULL, NULL, NULL, NULL, NULL, &mesh);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshFromXInMemory(empty_xfile, sizeof(empty_xfile) - 1, D3DXMESH_MANAGED,
                                    device, NULL, NULL, NULL, NULL, &mesh);
-    ok(hr == E_FAIL, "Expected E_FAIL, got %#x\n", hr);
+    ok(hr == E_FAIL, "Expected E_FAIL, got %#lx\n", hr);
 
     hr = D3DXLoadMeshFromXInMemory(simple_xfile, sizeof(simple_xfile) - 1, D3DXMESH_MANAGED,
                                    device, NULL, NULL, NULL, NULL, &mesh);
-    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(mesh);
 
@@ -2607,7 +2607,7 @@ static void test_box(IDirect3DDevice9 *device, float width, float height, float 
     char name[256];
 
     hr = D3DXCreateBox(device, width, height, depth, &box, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
     if (hr != D3D_OK)
     {
         skip("Couldn't create box\n");
@@ -2655,27 +2655,27 @@ static void D3DXCreateBoxTest(void)
     device = test_context->device;
 
     hr = D3DXCreateBox(device,2.0f,20.0f,4.9f,NULL, &ppBuffer);
-    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
 
     hr = D3DXCreateBox(NULL,22.0f,20.0f,4.9f,&box, &ppBuffer);
-    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
 
     hr = D3DXCreateBox(device,-2.0f,20.0f,4.9f,&box, &ppBuffer);
-    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
 
     hr = D3DXCreateBox(device,22.0f,-20.0f,4.9f,&box, &ppBuffer);
-    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
 
     hr = D3DXCreateBox(device,22.0f,20.0f,-4.9f,&box, &ppBuffer);
-    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
 
     ppBuffer = NULL;
     hr = D3DXCreateBox(device,10.9f,20.0f,4.9f,&box, &ppBuffer);
-    ok(hr==D3D_OK, "Expected D3D_OK, received %#x\n", hr);
+    ok(hr==D3D_OK, "Expected D3D_OK, received %#lx\n", hr);
 
     buffer = ID3DXBuffer_GetBufferPointer(ppBuffer);
     for(i=0; i<36; i++)
-        ok(adjacency[i]==buffer[i], "expected adjacency %d: %#x, received %#x\n",i,adjacency[i], buffer[i]);
+        ok(adjacency[i]==buffer[i], "expected adjacency %d: %#lx, received %#lx\n",i,adjacency[i], buffer[i]);
 
     box->lpVtbl->Release(box);
     ID3DXBuffer_Release(ppBuffer);
@@ -2731,7 +2731,7 @@ static void test_polygon(IDirect3DDevice9 *device, float length, unsigned int si
     char name[64];
 
     hr = D3DXCreatePolygon(device, length, sides, &polygon, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
     if (hr != D3D_OK)
     {
         skip("Couldn't create polygon\n");
@@ -2773,37 +2773,37 @@ static void D3DXCreatePolygonTest(void)
     device = test_context->device;
 
     hr = D3DXCreatePolygon(device, 2.0f, 11, NULL, &adjacency);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
 
     hr = D3DXCreatePolygon(NULL, 2.0f, 11, &polygon, &adjacency);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
 
     hr = D3DXCreatePolygon(device, -2.0f, 11, &polygon, &adjacency);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
 
     polygon = (void *)0xdeadbeef;
     adjacency = (void *)0xdeadbeef;
     hr = D3DXCreatePolygon(device, 2.0f, 0, &polygon, &adjacency);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
     ok(polygon == (void *)0xdeadbeef, "Polygon was changed to %p\n", polygon);
     ok(adjacency == (void *)0xdeadbeef, "Adjacency was changed to %p\n", adjacency);
 
     hr = D3DXCreatePolygon(device, 2.0f, 2, &polygon, &adjacency);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#lx\n", hr);
 
     adjacency = NULL;
     hr = D3DXCreatePolygon(device, 3.0f, 11, &polygon, &adjacency);
-    ok(hr == D3D_OK, "Expected D3D_OK, received %#x\n", hr);
+    ok(hr == D3D_OK, "Expected D3D_OK, received %#lx\n", hr);
 
     buffer_size = ID3DXBuffer_GetBufferSize(adjacency);
-    ok(buffer_size == 33 * sizeof(DWORD), "Wrong adjacency buffer size %u\n", buffer_size);
+    ok(buffer_size == 33 * sizeof(DWORD), "Wrong adjacency buffer size %lu\n", buffer_size);
 
     buffer = ID3DXBuffer_GetBufferPointer(adjacency);
     for (i = 0; i < 11; ++i)
     {
-        ok(buffer[i][0] == (i + 10) % 11, "Wrong adjacency[%d][0] = %u\n", i, buffer[i][0]);
-        ok(buffer[i][1] == ~0U, "Wrong adjacency[%d][1] = %u\n", i, buffer[i][1]);
-        ok(buffer[i][2] == (i + 1) % 11, "Wrong adjacency[%d][2] = %u\n", i, buffer[i][2]);
+        ok(buffer[i][0] == (i + 10) % 11, "Wrong adjacency[%d][0] = %lu\n", i, buffer[i][0]);
+        ok(buffer[i][1] == ~0U, "Wrong adjacency[%d][1] = %lu\n", i, buffer[i][1]);
+        ok(buffer[i][2] == (i + 1) % 11, "Wrong adjacency[%d][2] = %lu\n", i, buffer[i][2]);
     }
 
     polygon->lpVtbl->Release(polygon);
@@ -3008,7 +3008,7 @@ static void test_sphere(IDirect3DDevice9 *device, FLOAT radius, UINT slices, UIN
     char name[256];
 
     hr = D3DXCreateSphere(device, radius, slices, stacks, &sphere, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
     if (hr != D3D_OK)
     {
         skip("Couldn't create sphere\n");
@@ -3040,16 +3040,16 @@ static void D3DXCreateSphereTest(void)
     struct test_context *test_context;
 
     hr = D3DXCreateSphere(NULL, 0.0f, 0, 0, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(NULL, 0.1f, 0, 0, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(NULL, 0.0f, 1, 0, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(NULL, 0.0f, 0, 1, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     if (!(test_context = new_test_context()))
     {
@@ -3059,16 +3059,16 @@ static void D3DXCreateSphereTest(void)
     device = test_context->device;
 
     hr = D3DXCreateSphere(device, 1.0f, 1, 1, &sphere, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(device, 1.0f, 2, 1, &sphere, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(device, 1.0f, 1, 2, &sphere, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateSphere(device, -0.1f, 1, 2, &sphere, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     test_sphere(device, 0.0f, 2, 2);
     test_sphere(device, 1.0f, 2, 2);
@@ -3235,7 +3235,7 @@ static void test_cylinder(IDirect3DDevice9 *device, FLOAT radius1, FLOAT radius2
     char name[256];
 
     hr = D3DXCreateCylinder(device, radius1, radius2, length, slices, stacks, &cylinder, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
     if (hr != D3D_OK)
     {
         skip("Couldn't create cylinder\n");
@@ -3267,10 +3267,10 @@ static void D3DXCreateCylinderTest(void)
     struct test_context *test_context;
 
     hr = D3DXCreateCylinder(NULL, 0.0f, 0.0f, 0.0f, 0, 0, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(NULL, 1.0f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     if (!(test_context = new_test_context()))
     {
@@ -3280,10 +3280,10 @@ static void D3DXCreateCylinderTest(void)
     device = test_context->device;
 
     hr = D3DXCreateCylinder(device, -0.1f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(device, 0.0f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n",hr);
 
     if (SUCCEEDED(hr) && cylinder)
     {
@@ -3291,10 +3291,10 @@ static void D3DXCreateCylinderTest(void)
     }
 
     hr = D3DXCreateCylinder(device, 1.0f, -0.1f, 1.0f, 2, 1, &cylinder, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(device, 1.0f, 0.0f, 1.0f, 2, 1, &cylinder, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n",hr);
 
     if (SUCCEEDED(hr) && cylinder)
     {
@@ -3302,11 +3302,11 @@ static void D3DXCreateCylinderTest(void)
     }
 
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, -0.1f, 2, 1, &cylinder, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     /* Test with length == 0.0f succeeds */
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 0.0f, 2, 1, &cylinder, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n",hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n",hr);
 
     if (SUCCEEDED(hr) && cylinder)
     {
@@ -3314,13 +3314,13 @@ static void D3DXCreateCylinderTest(void)
     }
 
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 1.0f, 1, 1, &cylinder, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 1.0f, 2, 0, &cylinder, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     hr = D3DXCreateCylinder(device, 1.0f, 1.0f, 1.0f, 2, 1, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
     test_cylinder(device, 0.0f, 0.0f, 0.0f, 2, 1);
     test_cylinder(device, 1.0f, 1.0f, 1.0f, 2, 1);
@@ -3399,7 +3399,7 @@ static void test_torus(IDirect3DDevice9 *device, float innerradius, float outerr
     char name[256];
 
     hr = D3DXCreateTorus(device, innerradius, outerradius, sides, rings, &torus, NULL);
-    ok(hr == D3D_OK, "Got result %#x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %#lx, expected 0 (D3D_OK)\n", hr);
     if (hr != D3D_OK)
     {
         skip("Couldn't create torus\n");
@@ -3438,22 +3438,22 @@ static void D3DXCreateTorusTest(void)
     device = test_context->device;
 
     hr = D3DXCreateTorus(NULL, 0.0f, 0.0f, 3, 3, &torus, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx, expected %#lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTorus(device, -1.0f, 0.0f, 3, 3, &torus, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx, expected %#lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTorus(device, 0.0f, -1.0f, 3, 3, &torus, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx, expected %#lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTorus(device, 0.0f, 0.0f, 2, 3, &torus, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx, expected %#lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTorus(device, 0.0f, 0.0f, 3, 2, &torus, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx, expected %#lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTorus(device, 0.0f, 0.0f, 3, 3, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx, expected %#lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     test_torus(device, 0.0f, 0.0f, 3, 3);
     test_torus(device, 1.0f, 1.0f, 3, 3);
@@ -3675,7 +3675,7 @@ static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int da
         pt->corner = POINTTYPE_CORNER;
 
         if (header->dwType != TT_POLYGON_TYPE)
-            trace("Unknown header type %d\n", header->dwType);
+            trace("Unknown header type %ld\n", header->dwType);
 
         while ((char *)curve < (char *)header + header->cb)
         {
@@ -3972,17 +3972,17 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
     number_of_faces = d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh);
 
     hr = d3dxmesh->lpVtbl->GetVertexBuffer(d3dxmesh, &vertex_buffer);
-    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#lx.\n", name, hr);
     hr = IDirect3DVertexBuffer9_GetDesc(vertex_buffer, &vertex_buffer_description);
-    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#lx.\n", name, hr);
     ok(vertex_buffer_description.Format == D3DFMT_VERTEXDATA, "Test %s, unexpected format %u.\n",
             name, vertex_buffer_description.Format);
     ok(vertex_buffer_description.Type == D3DRTYPE_VERTEXBUFFER, "Test %s, unexpected resource type %u.\n",
             name, vertex_buffer_description.Type);
-    ok(!vertex_buffer_description.Usage, "Test %s, unexpected usage %#x.\n", name, vertex_buffer_description.Usage);
+    ok(!vertex_buffer_description.Usage, "Test %s, unexpected usage %#lx.\n", name, vertex_buffer_description.Usage);
     ok(vertex_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, unexpected pool %u.\n",
             name, vertex_buffer_description.Pool);
-    ok(vertex_buffer_description.FVF == mesh->fvf, "Test %s, unexpected FVF %#x (expected %#x).\n",
+    ok(vertex_buffer_description.FVF == mesh->fvf, "Test %s, unexpected FVF %#lx (expected %#lx).\n",
             name, vertex_buffer_description.FVF, mesh->fvf);
     if (!mesh->fvf)
         expected = number_of_vertices * mesh->vertex_size;
@@ -3992,14 +3992,14 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
             name, vertex_buffer_description.Size, expected);
 
     hr = d3dxmesh->lpVtbl->GetIndexBuffer(d3dxmesh, &index_buffer);
-    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#lx.\n", name, hr);
     hr = IDirect3DIndexBuffer9_GetDesc(index_buffer, &index_buffer_description);
-    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#lx.\n", name, hr);
     ok(index_buffer_description.Format == D3DFMT_INDEX16, "Test %s, unexpected format %u.\n",
             name, index_buffer_description.Format);
     ok(index_buffer_description.Type == D3DRTYPE_INDEXBUFFER, "Test %s, unexpected resource type %u.\n",
             name, index_buffer_description.Type);
-    ok(!index_buffer_description.Usage, "Test %s, unexpected usage %#x.\n",
+    ok(!index_buffer_description.Usage, "Test %s, unexpected usage %#lx.\n",
             name, index_buffer_description.Usage);
     ok(index_buffer_description.Pool == D3DPOOL_MANAGED, "Test %s, unexpected pool %u.\n",
             name, index_buffer_description.Pool);
@@ -4009,10 +4009,10 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
 
     hr = IDirect3DVertexBuffer9_Lock(vertex_buffer, 0, number_of_vertices * sizeof(D3DXVECTOR3) * 2,
             (void **)&vertices, D3DLOCK_DISCARD);
-    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#lx.\n", name, hr);
     hr = IDirect3DIndexBuffer9_Lock(index_buffer, 0, number_of_faces * sizeof(WORD) * 3,
             (void **)&faces, D3DLOCK_DISCARD);
-    ok(hr == D3D_OK, "Test %s, unexpected hr %#x.\n", name, hr);
+    ok(hr == D3D_OK, "Test %s, unexpected hr %#lx.\n", name, hr);
     face_idx1 = 0;
     vtx_idx2 = 0;
     face_idx2 = 0;
@@ -4240,7 +4240,7 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
     sprintf(name, "text ('%s', %f, %f)", text, deviation, extrusion);
 
     hr = D3DXCreateTextA(device, hdc, text, deviation, extrusion, &d3dxmesh, NULL, glyphmetrics_float);
-    ok(hr == D3D_OK, "Got result %x, expected 0 (D3D_OK)\n", hr);
+    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK)\n", hr);
 
     /* must select a modified font having lfHeight = otm.otmEMSquare before
      * calling GetGlyphOutline to get the expected values */
@@ -4330,45 +4330,45 @@ static void D3DXCreateTextTest(void)
     GetOutlineTextMetricsA(hdc, sizeof(otm), &otm);
 
     hr = D3DXCreateTextA(device, hdc, "wine", 0.001f, 0.4f, NULL, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     /* D3DXCreateTextA page faults from passing NULL text */
 
     hr = D3DXCreateTextW(device, hdc, NULL, 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTextA(device, hdc, "", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTextA(device, hdc, " ", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTextA(NULL, hdc, "wine", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTextA(device, NULL, "wine", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTextA(device, hdc, "wine", -FLT_MIN, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateTextA(device, hdc, "wine", 0.001f, -FLT_MIN, &d3dxmesh, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
     /* deviation = 0.0f treated as if deviation = 1.0f / otm.otmEMSquare */
     hr = D3DXCreateTextA(device, hdc, "wine", 1.0f / otm.otmEMSquare, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     number_of_vertices = d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh);
     number_of_faces = d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh);
     d3dxmesh->lpVtbl->Release(d3dxmesh);
 
     hr = D3DXCreateTextA(device, hdc, "wine", 0.0f, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     ok(number_of_vertices == d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh),
-       "Got %d vertices, expected %d\n",
+       "Got %ld vertices, expected %d\n",
        d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh), number_of_vertices);
     ok(number_of_faces == d3dxmesh->lpVtbl->GetNumFaces(d3dxmesh),
-       "Got %d faces, expected %d\n",
+       "Got %ld faces, expected %d\n",
        d3dxmesh->lpVtbl->GetNumVertices(d3dxmesh), number_of_faces);
     d3dxmesh->lpVtbl->Release(d3dxmesh);
 
@@ -4377,13 +4377,13 @@ if (0)
     /* too much detail requested, so will appear to hang */
     trace("Waiting for D3DXCreateText to finish with deviation = FLT_MIN ...\n");
     hr = D3DXCreateTextA(device, hdc, "wine", FLT_MIN, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
     trace("D3DXCreateText finish with deviation = FLT_MIN\n");
 }
 
     hr = D3DXCreateTextA(device, hdc, "wine", 0.001f, 0.4f, &d3dxmesh, NULL, NULL);
-    ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
     if (SUCCEEDED(hr) && d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
 
     test_createtext(device, hdc, "wine", FLT_MAX, 0.4f);
@@ -4606,32 +4606,32 @@ static void D3DXGenerateAdjacencyTest(void)
         d3dxmesh = NULL;
 
         hr = D3DXCreateMeshFVF(test_data[i].num_faces, test_data[i].num_vertices, 0, D3DFVF_XYZ, device, &d3dxmesh);
-        ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
 
         hr = d3dxmesh->lpVtbl->LockVertexBuffer(d3dxmesh, D3DLOCK_DISCARD, (void**)&vertices);
-        ok(hr == D3D_OK, "test %d: Got result %x, expected %x (D3D_OK)\n", i, hr, D3D_OK);
+        ok(hr == D3D_OK, "test %d: Got result %lx, expected %lx (D3D_OK)\n", i, hr, D3D_OK);
         if (FAILED(hr)) continue;
         CopyMemory(vertices, test_data[i].vertices, test_data[i].num_vertices * sizeof(test_data[0].vertices[0]));
         d3dxmesh->lpVtbl->UnlockVertexBuffer(d3dxmesh);
 
         hr = d3dxmesh->lpVtbl->LockIndexBuffer(d3dxmesh, D3DLOCK_DISCARD, (void**)&indices);
-        ok(hr == D3D_OK, "test %d: Got result %x, expected %x (D3D_OK)\n", i, hr, D3D_OK);
+        ok(hr == D3D_OK, "test %d: Got result %lx, expected %lx (D3D_OK)\n", i, hr, D3D_OK);
         if (FAILED(hr)) continue;
         CopyMemory(indices, test_data[i].indices, test_data[i].num_faces * 3 * sizeof(test_data[0].indices[0]));
         d3dxmesh->lpVtbl->UnlockIndexBuffer(d3dxmesh);
 
         if (i == 0) {
             hr = d3dxmesh->lpVtbl->GenerateAdjacency(d3dxmesh, 0.0f, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Got result %lx, expected %lx (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
         }
 
         hr = d3dxmesh->lpVtbl->GenerateAdjacency(d3dxmesh, test_data[i].epsilon, adjacency);
-        ok(hr == D3D_OK, "Got result %x, expected %x (D3D_OK)\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "Got result %lx, expected %lx (D3D_OK)\n", hr, D3D_OK);
         if (FAILED(hr)) continue;
 
         for (j = 0; j < test_data[i].num_faces * 3; j++)
             ok(adjacency[j] == test_data[i].adjacency[j],
-               "Test %d adjacency %d: Got result %u, expected %u\n", i, j,
+               "Test %d adjacency %d: Got result %lu, expected %lu\n", i, j,
                adjacency[j], test_data[i].adjacency[j]);
     }
     if (d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
@@ -4744,7 +4744,7 @@ static void test_update_semantics(void)
                         test_context->device, &mesh);
     if (FAILED(hr))
     {
-        skip("Couldn't create test mesh %#x\n", hr);
+        skip("Couldn't create test mesh %#lx\n", hr);
         goto cleanup;
     }
 
@@ -4764,7 +4764,7 @@ static void test_update_semantics(void)
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
     if (FAILED(hr))
     {
-        skip("Couldn't get vertex declaration %#x\n", hr);
+        skip("Couldn't get vertex declaration %#lx\n", hr);
         goto cleanup;
     }
     equal = memcmp(declaration, declaration0, sizeof(declaration0));
@@ -4780,14 +4780,14 @@ static void test_update_semantics(void)
     }
 
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration);
-    ok(hr == D3D_OK, "Test UpdateSemantics, got %#x expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "Test UpdateSemantics, got %#lx expected %#lx\n", hr, D3D_OK);
 
     /* Check that declaration was written by getting it again */
     memset(declaration, 0, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
     if (FAILED(hr))
     {
-        skip("Couldn't get vertex declaration %#x\n", hr);
+        skip("Couldn't get vertex declaration %#lx\n", hr);
         goto cleanup;
     }
 
@@ -4807,10 +4807,10 @@ static void test_update_semantics(void)
     memcpy(declaration, declaration0, sizeof(declaration0));
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration);
     ok(hr == D3D_OK, "Test UpdateSemantics, "
-       "got %#x expected D3D_OK\n", hr);
+       "got %#lx expected D3D_OK\n", hr);
     memset(declaration, 0xbb, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
-    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#lx, expected D3D_OK\n", hr);
     decl_mem = (BYTE *)declaration;
     for (i = sizeof(declaration0); i < sizeof(declaration); ++i)
     {
@@ -4824,7 +4824,7 @@ static void test_update_semantics(void)
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
     if (FAILED(hr))
     {
-        skip("Couldn't get vertex declaration %#x\n", hr);
+        skip("Couldn't get vertex declaration %#lx\n", hr);
         goto cleanup;
     }
 
@@ -4838,12 +4838,12 @@ static void test_update_semantics(void)
 
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration);
     ok(hr == D3D_OK, "Test UpdateSemantics for overlapping fields, "
-       "got %#x expected D3D_OK\n", hr);
+       "got %#lx expected D3D_OK\n", hr);
 
     /* Set the position type to color instead of float3 */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_pos_type_color);
     ok(hr == D3D_OK, "Test UpdateSemantics position type color, "
-       "got %#x expected D3D_OK\n", hr);
+       "got %#lx expected D3D_OK\n", hr);
 
     /* The following test cases show that NULL, smaller or larger declarations,
      * and declarations with non-zero Stream values are not accepted.
@@ -4856,13 +4856,13 @@ static void test_update_semantics(void)
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Test UpdateSemantics null pointer declaration, "
-       "got %#x expected D3DERR_INVALIDCALL\n", hr);
+       "got %#lx expected D3DERR_INVALIDCALL\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
-    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %lu, expected %lu\n",
        vertex_size, exp_vertex_size);
     memset(declaration, 0, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
-    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#lx, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration0, sizeof(declaration0));
     ok(equal == 0, "Vertex declarations were not equal\n");
 
@@ -4870,13 +4870,13 @@ static void test_update_semantics(void)
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_smaller);
     ok(hr == D3DERR_INVALIDCALL, "Test UpdateSemantics for smaller vertex declaration, "
-       "got %#x expected D3DERR_INVALIDCALL\n", hr);
+       "got %#lx expected D3DERR_INVALIDCALL\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
-    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %lu, expected %lu\n",
        vertex_size, exp_vertex_size);
     memset(declaration, 0, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
-    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#lx, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration0, sizeof(declaration0));
     ok(equal == 0, "Vertex declarations were not equal\n");
 
@@ -4884,13 +4884,13 @@ static void test_update_semantics(void)
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_larger);
     ok(hr == D3DERR_INVALIDCALL, "Test UpdateSemantics for larger vertex declaration, "
-       "got %#x expected D3DERR_INVALIDCALL\n", hr);
+       "got %#lx expected D3DERR_INVALIDCALL\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
-    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %lu, expected %lu\n",
        vertex_size, exp_vertex_size);
     memset(declaration, 0, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
-    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#lx, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration0, sizeof(declaration0));
     ok(equal == 0, "Vertex declarations were not equal\n");
 
@@ -4898,13 +4898,13 @@ static void test_update_semantics(void)
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_multiple_streams);
     ok(hr == D3DERR_INVALIDCALL, "Test UpdateSemantics using multiple streams, "
-                 "got %#x expected D3DERR_INVALIDCALL\n", hr);
+                 "got %#lx expected D3DERR_INVALIDCALL\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
-    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %lu, expected %lu\n",
        vertex_size, exp_vertex_size);
     memset(declaration, 0, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
-    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#lx, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration0, sizeof(declaration0));
     ok(equal == 0, "Vertex declarations were not equal\n");
 
@@ -4918,13 +4918,13 @@ static void test_update_semantics(void)
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_double_usage);
     ok(hr == D3D_OK, "Test UpdateSemantics double usage, "
-       "got %#x expected D3D_OK\n", hr);
+       "got %#lx expected D3D_OK\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
-    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %lu, expected %lu\n",
        vertex_size, exp_vertex_size);
     memset(declaration, 0, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
-    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#lx, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration_double_usage, sizeof(declaration_double_usage));
     ok(equal == 0, "Vertex declarations were not equal\n");
 
@@ -4932,13 +4932,13 @@ static void test_update_semantics(void)
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_undefined_type);
     ok(hr == D3D_OK, "Test UpdateSemantics undefined type, "
-       "got %#x expected D3D_OK\n", hr);
+       "got %#lx expected D3D_OK\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
-    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %lu, expected %lu\n",
        vertex_size, exp_vertex_size);
     memset(declaration, 0, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
-    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#lx, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration_undefined_type, sizeof(declaration_undefined_type));
     ok(equal == 0, "Vertex declarations were not equal\n");
 
@@ -4946,13 +4946,13 @@ static void test_update_semantics(void)
     mesh->lpVtbl->UpdateSemantics(mesh, declaration0); /* Set a valid declaration */
     hr = mesh->lpVtbl->UpdateSemantics(mesh, declaration_not_4_byte_aligned_offset);
     ok(hr == D3D_OK, "Test UpdateSemantics not 4 byte aligned offset, "
-       "got %#x expected D3D_OK\n", hr);
+       "got %#lx expected D3D_OK\n", hr);
     vertex_size = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
-    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %u, expected %u\n",
+    ok(vertex_size == exp_vertex_size, "Got vertex declaration size %lu, expected %lu\n",
        vertex_size, exp_vertex_size);
     memset(declaration, 0, sizeof(declaration));
     hr = mesh->lpVtbl->GetDeclaration(mesh, declaration);
-    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "Couldn't get vertex declaration. Got %#lx, expected D3D_OK\n", hr);
     equal = memcmp(declaration, declaration_not_4_byte_aligned_offset,
                    sizeof(declaration_not_4_byte_aligned_offset));
     ok(equal == 0, "Vertex declarations were not equal\n");
@@ -4982,18 +4982,18 @@ static void test_create_skin_info(void)
     HRESULT hr;
 
     hr = D3DXCreateSkinInfo(0, empty_declaration, 0, &skininfo);
-    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     if (skininfo) IUnknown_Release(skininfo);
     skininfo = NULL;
 
     hr = D3DXCreateSkinInfo(1, NULL, 1, &skininfo);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXCreateSkinInfo(1, declaration_with_nonzero_stream, 1, &skininfo);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXCreateSkinInfoFVF(1, 0, 1, &skininfo);
-    ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+    ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
     if (skininfo)
     {
         ID3DXSkinInfo *clone = NULL;
@@ -5005,12 +5005,12 @@ static void test_create_skin_info(void)
 
         /* test initial values */
         hr = skininfo->lpVtbl->GetDeclaration(skininfo, declaration_out);
-        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
         if (SUCCEEDED(hr))
             compare_elements(declaration_out, empty_declaration, __LINE__, 0);
 
         dword_result = skininfo->lpVtbl->GetNumBones(skininfo);
-        ok(dword_result == 1, "Expected 1, got %u\n", dword_result);
+        ok(dword_result == 1, "Expected 1, got %lu\n", dword_result);
 
         flt_result = skininfo->lpVtbl->GetMinBoneInfluence(skininfo);
         ok(flt_result == 0.0f, "Expected 0.0, got %g\n", flt_result);
@@ -5019,32 +5019,32 @@ static void test_create_skin_info(void)
         ok(string_result == NULL, "Expected NULL, got %p\n", string_result);
 
         dword_result = skininfo->lpVtbl->GetFVF(skininfo);
-        ok(dword_result == 0, "Expected 0, got %u\n", dword_result);
+        ok(dword_result == 0, "Expected 0, got %lu\n", dword_result);
 
         dword_result = skininfo->lpVtbl->GetNumBoneInfluences(skininfo, 0);
-        ok(dword_result == 0, "Expected 0, got %u\n", dword_result);
+        ok(dword_result == 0, "Expected 0, got %lu\n", dword_result);
 
         dword_result = skininfo->lpVtbl->GetNumBoneInfluences(skininfo, 1);
-        ok(dword_result == 0, "Expected 0, got %u\n", dword_result);
+        ok(dword_result == 0, "Expected 0, got %lu\n", dword_result);
 
         transform = skininfo->lpVtbl->GetBoneOffsetMatrix(skininfo, -1);
         ok(transform == NULL, "Expected NULL, got %p\n", transform);
 
         hr = skininfo->lpVtbl->Clone(skininfo, &clone);
-        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
         IUnknown_Release(clone);
 
         {
             /* test [GS]etBoneOffsetMatrix */
             hr = skininfo->lpVtbl->SetBoneOffsetMatrix(skininfo, 1, &identity_matrix);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->SetBoneOffsetMatrix(skininfo, 0, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             D3DXMatrixIdentity(&identity_matrix);
             hr = skininfo->lpVtbl->SetBoneOffsetMatrix(skininfo, 0, &identity_matrix);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
 
             transform = skininfo->lpVtbl->GetBoneOffsetMatrix(skininfo, 0);
             check_matrix(transform, &identity_matrix);
@@ -5056,13 +5056,13 @@ static void test_create_skin_info(void)
             const char *string_result2;
 
             hr = skininfo->lpVtbl->SetBoneName(skininfo, 1, name_in);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->SetBoneName(skininfo, 0, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->SetBoneName(skininfo, 0, name_in);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
 
             string_result = skininfo->lpVtbl->GetBoneName(skininfo, 0);
             ok(string_result != NULL, "Expected non-NULL string, got %p\n", string_result);
@@ -5083,21 +5083,21 @@ static void test_create_skin_info(void)
             vertices[0] = 0xdeadbeef;
             weights[0] = FLT_MAX;
             hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, vertices, weights);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
-            ok(vertices[0] == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", vertices[0]);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+            ok(vertices[0] == 0xdeadbeef, "expected 0xdeadbeef, got %#lx\n", vertices[0]);
             ok(weights[0] == FLT_MAX, "expected %g, got %g\n", FLT_MAX, weights[0]);
 
             hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 1, vertices, weights);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, NULL, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, vertices, NULL);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, NULL, weights);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
 
             /* no vertex or weight value checking */
@@ -5108,27 +5108,27 @@ static void test_create_skin_info(void)
             num_influences = 2;
 
             hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 1, num_influences, vertices, weights);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, num_influences, NULL, weights);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, num_influences, vertices, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, num_influences, NULL, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, num_influences, exp_vertices, exp_weights);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
 
             memset(vertices, 0, sizeof(vertices));
             memset(weights, 0, sizeof(weights));
             hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, vertices, weights);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
             for (i = 0; i < num_influences; i++) {
                 ok(exp_vertices[i] == vertices[i],
-                   "influence[%d]: expected vertex %u, got %u\n", i, exp_vertices[i], vertices[i]);
+                   "influence[%d]: expected vertex %lu, got %lu\n", i, exp_vertices[i], vertices[i]);
                 ok((isnan(exp_weights[i]) && isnan(weights[i])) || exp_weights[i] == weights[i],
                    "influence[%d]: expected weights %g, got %g\n", i, exp_weights[i], weights[i]);
             }
@@ -5137,17 +5137,17 @@ static void test_create_skin_info(void)
             memset(vertices, 0, sizeof(vertices));
             memset(weights, 0, sizeof(weights));
             hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, 0, vertices, weights);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
 
             vertices[0] = 0xdeadbeef;
             weights[0] = FLT_MAX;
             hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, vertices, weights);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
-            ok(vertices[0] == 0xdeadbeef, "expected vertex 0xdeadbeef, got %u\n", vertices[0]);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
+            ok(vertices[0] == 0xdeadbeef, "expected vertex 0xdeadbeef, got %lu\n", vertices[0]);
             ok(weights[0] == FLT_MAX, "expected weight %g, got %g\n", FLT_MAX, weights[0]);
 
             hr = skininfo->lpVtbl->SetBoneInfluence(skininfo, 0, num_influences, exp_vertices, exp_weights);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
         }
 
         {
@@ -5157,57 +5157,57 @@ static void test_create_skin_info(void)
 
             fvf = D3DFVF_XYZ;
             hr = skininfo->lpVtbl->SetDeclaration(skininfo, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->SetDeclaration(skininfo, declaration_with_nonzero_stream);
-            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
             hr = skininfo->lpVtbl->SetFVF(skininfo, 0);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
 
             hr = D3DXDeclaratorFromFVF(fvf, declaration_in);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
             hr = skininfo->lpVtbl->SetDeclaration(skininfo, declaration_in);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
             got_fvf = skininfo->lpVtbl->GetFVF(skininfo);
-            ok(fvf == got_fvf, "Expected %#x, got %#x\n", fvf, got_fvf);
+            ok(fvf == got_fvf, "Expected %#lx, got %#lx\n", fvf, got_fvf);
             hr = skininfo->lpVtbl->GetDeclaration(skininfo, declaration_out);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
             compare_elements(declaration_out, declaration_in, __LINE__, 0);
 
             hr = skininfo->lpVtbl->SetDeclaration(skininfo, empty_declaration);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
             got_fvf = skininfo->lpVtbl->GetFVF(skininfo);
-            ok(got_fvf == 0, "Expected 0, got %#x\n", got_fvf);
+            ok(got_fvf == 0, "Expected 0, got %#lx\n", got_fvf);
             hr = skininfo->lpVtbl->GetDeclaration(skininfo, declaration_out);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
             compare_elements(declaration_out, empty_declaration, __LINE__, 0);
 
             hr = skininfo->lpVtbl->SetFVF(skininfo, fvf);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
             got_fvf = skininfo->lpVtbl->GetFVF(skininfo);
-            ok(fvf == got_fvf, "Expected %#x, got %#x\n", fvf, got_fvf);
+            ok(fvf == got_fvf, "Expected %#lx, got %#lx\n", fvf, got_fvf);
             hr = skininfo->lpVtbl->GetDeclaration(skininfo, declaration_out);
-            ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+            ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
             compare_elements(declaration_out, declaration_in, __LINE__, 0);
         }
 
         /* Test Clone() */
         hr = skininfo->lpVtbl->Clone(skininfo, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
         clone = NULL;
         hr = skininfo->lpVtbl->Clone(skininfo, &clone);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = clone->lpVtbl->GetDeclaration(clone, declaration);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
         compare_elements(declaration, declaration_out, __LINE__, 0);
 
         hr = D3DXFVFFromDeclarator(declaration_out, &exp_fvf);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
         fvf = clone->lpVtbl->GetFVF(clone);
-        ok(fvf == exp_fvf, "Got unexpected fvf %#x.\n", fvf);
+        ok(fvf == exp_fvf, "Got unexpected fvf %#lx.\n", fvf);
 
         exp_string = skininfo->lpVtbl->GetBoneName(skininfo, 0);
         string = clone->lpVtbl->GetBoneName(clone, 0);
@@ -5217,13 +5217,13 @@ static void test_create_skin_info(void)
         check_matrix(transform, &identity_matrix);
 
         hr = skininfo->lpVtbl->GetBoneInfluence(skininfo, 0, exp_vertices, exp_weights);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
         hr = clone->lpVtbl->GetBoneInfluence(clone, 0, vertices, weights);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         for (i = 0; i < ARRAY_SIZE(vertices); ++i)
         {
-            ok(vertices[i] == exp_vertices[i], "influence[%u]: got unexpected vertex %u, expected %u.\n",
+            ok(vertices[i] == exp_vertices[i], "influence[%u]: got unexpected vertex %lu, expected %lu.\n",
                     i, vertices[i], exp_vertices[i]);
             ok(((DWORD *)weights)[i] == ((DWORD *)exp_weights)[i],
                     "influence[%u]: got unexpected weight %.8e, expected %.8e.\n", i, weights[i], exp_weights[i]);
@@ -5235,10 +5235,10 @@ static void test_create_skin_info(void)
     skininfo = NULL;
 
     hr = D3DXCreateSkinInfoFVF(1, D3DFVF_XYZ, 1, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 
     hr = D3DXCreateSkinInfo(1, NULL, 1, &skininfo);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %#lx\n", hr);
 }
 
 static void test_convert_adjacency_to_point_reps(void)
@@ -5658,7 +5658,7 @@ static void test_convert_adjacency_to_point_reps(void)
                             test_context->device, &mesh);
         if (FAILED(hr))
         {
-            skip("Couldn't create mesh %d. Got %x expected D3D_OK\n", i, hr);
+            skip("Couldn't create mesh %d. Got %lx expected D3D_OK\n", i, hr);
             goto cleanup;
         }
 
@@ -5724,14 +5724,14 @@ static void test_convert_adjacency_to_point_reps(void)
         for (j = 0; j < tc[i].num_vertices; j++) point_reps[j] = -1;
         hr = mesh->lpVtbl->ConvertAdjacencyToPointReps(mesh, tc[i].adjacency, point_reps);
         ok(hr == D3D_OK, "ConvertAdjacencyToPointReps failed case %d. "
-           "Got %x expected D3D_OK\n", i, hr);
+           "Got %lx expected D3D_OK\n", i, hr);
 
         /* Check point representation */
         for (j = 0; j < tc[i].num_vertices; j++)
         {
             ok(point_reps[j] == tc[i].exp_point_reps[j],
                "Unexpected point representation at (%d, %d)."
-               " Got %d expected %d\n",
+               " Got %ld expected %ld\n",
                i, j, point_reps[j], tc[i].exp_point_reps[j]);
         }
 
@@ -5745,10 +5745,10 @@ static void test_convert_adjacency_to_point_reps(void)
     /* NULL checks */
     hr = mesh_null_check->lpVtbl->ConvertAdjacencyToPointReps(mesh_null_check, tc[0].adjacency, NULL);
     ok(hr == D3DERR_INVALIDCALL, "ConvertAdjacencyToPointReps point_reps NULL. "
-       "Got %x expected D3DERR_INVALIDCALL\n", hr);
+       "Got %lx expected D3DERR_INVALIDCALL\n", hr);
     hr = mesh_null_check->lpVtbl->ConvertAdjacencyToPointReps(mesh_null_check, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "ConvertAdjacencyToPointReps adjacency and point_reps NULL. "
-       "Got %x expected D3DERR_INVALIDCALL\n", hr);
+       "Got %lx expected D3DERR_INVALIDCALL\n", hr);
 
 cleanup:
     if (mesh_null_check)
@@ -6196,7 +6196,7 @@ static void test_convert_point_reps_to_adjacency(void)
                             declaration, test_context->device, &mesh);
         if (FAILED(hr))
         {
-            skip("Couldn't create mesh %d. Got %x expected D3D_OK\n", i, hr);
+            skip("Couldn't create mesh %d. Got %lx expected D3D_OK\n", i, hr);
             goto cleanup;
         }
 
@@ -6262,13 +6262,13 @@ static void test_convert_point_reps_to_adjacency(void)
 
         hr = mesh->lpVtbl->ConvertPointRepsToAdjacency(mesh, tc[i].point_reps, adjacency);
         ok(hr == D3D_OK, "ConvertPointRepsToAdjacency failed case %d. "
-           "Got %x expected D3D_OK\n", i, hr);
+           "Got %lx expected D3D_OK\n", i, hr);
         /* Check adjacency */
         for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
         {
             ok(adjacency[j] == tc[i].exp_adjacency[j],
                "Unexpected adjacency information at (%d, %d)."
-               " Got %d expected %d\n",
+               " Got %ld expected %ld\n",
                i, j, adjacency[j], tc[i].exp_adjacency[j]);
         }
 
@@ -6276,12 +6276,12 @@ static void test_convert_point_reps_to_adjacency(void)
         for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++) adjacency[j] = -2;
         hr = mesh_null_check->lpVtbl->ConvertPointRepsToAdjacency(mesh, NULL, adjacency);
         ok(hr == D3D_OK, "ConvertPointRepsToAdjacency NULL point_reps. "
-                     "Got %x expected D3D_OK\n", hr);
+                     "Got %lx expected D3D_OK\n", hr);
         for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
         {
             ok(adjacency[j] == tc[i].exp_id_adjacency[j],
                "Unexpected adjacency information (id) at (%d, %d)."
-               " Got %d expected %d\n",
+               " Got %ld expected %ld\n",
                i, j, adjacency[j], tc[i].exp_id_adjacency[j]);
         }
 
@@ -6294,10 +6294,10 @@ static void test_convert_point_reps_to_adjacency(void)
     /* NULL checks */
     hr = mesh_null_check->lpVtbl->ConvertPointRepsToAdjacency(mesh_null_check, tc[0].point_reps, NULL);
     ok(hr == D3DERR_INVALIDCALL, "ConvertPointRepsToAdjacency NULL adjacency. "
-       "Got %x expected D3DERR_INVALIDCALL\n", hr);
+       "Got %lx expected D3DERR_INVALIDCALL\n", hr);
     hr = mesh_null_check->lpVtbl->ConvertPointRepsToAdjacency(mesh_null_check, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "ConvertPointRepsToAdjacency NULL point_reps and adjacency. "
-       "Got %x expected D3DERR_INVALIDCALL\n", hr);
+       "Got %lx expected D3DERR_INVALIDCALL\n", hr);
 
 cleanup:
     if (mesh_null_check)
@@ -6322,7 +6322,7 @@ static HRESULT init_test_mesh(const DWORD num_faces, const DWORD num_vertices,
     hr = D3DXCreateMesh(num_faces, num_vertices, options, declaration, device, mesh_ptr);
     if (FAILED(hr))
     {
-        skip("Couldn't create mesh. Got %x expected D3D_OK\n", hr);
+        skip("Couldn't create mesh. Got %lx expected D3D_OK\n", hr);
         goto cleanup;
     }
     mesh = *mesh_ptr;
@@ -8378,7 +8378,7 @@ static void test_weld_vertices(void)
                             tc[i].indices, tc[i].attributes);
         if (FAILED(hr))
         {
-            skip("Couldn't initialize test mesh %d.\n", i);
+            skip("Couldn't initialize test mesh %ld.\n", i);
             goto cleanup;
         }
 
@@ -8398,11 +8398,11 @@ static void test_weld_vertices(void)
 
         hr = D3DXWeldVertices(mesh, tc[i].flags, tc[i].epsilons, tc[i].adjacency,
                               adjacency_out, face_remap, &vertex_remap);
-        ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#lx\n", hr);
         /* Check number of vertices*/
         new_num_vertices = mesh->lpVtbl->GetNumVertices(mesh);
         ok(new_num_vertices == tc[i].exp_new_num_vertices,
-           "Mesh %d: new_num_vertices == %d, expected %d.\n",
+           "Mesh %ld: new_num_vertices == %ld, expected %ld.\n",
            i, new_num_vertices, tc[i].exp_new_num_vertices);
         /* Check index buffer */
         if (tc[i].options & D3DXMESH_32BIT)
@@ -8416,7 +8416,7 @@ static void test_weld_vertices(void)
             for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
             {
                 ok(indices[j] == tc[i].exp_indices[j],
-                   "Mesh %d: indices[%d] == %d, expected %d\n",
+                   "Mesh %ld: indices[%ld] == %ld, expected %ld\n",
                    i, j, indices[j], tc[i].exp_indices[j]);
             }
         }
@@ -8431,7 +8431,7 @@ static void test_weld_vertices(void)
             for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
             {
                 ok(indices_16bit[j] == tc[i].exp_indices[j],
-                   "Mesh %d: indices_16bit[%d] == %d, expected %d\n",
+                   "Mesh %ld: indices_16bit[%ld] == %d, expected %ld\n",
                    i, j, indices_16bit[j], tc[i].exp_indices[j]);
             }
         }
@@ -8442,14 +8442,14 @@ static void test_weld_vertices(void)
         for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
         {
             ok(adjacency_out[j] == tc[i].adjacency[j],
-               "Mesh %d: adjacency_out[%d] == %d, expected %d\n",
+               "Mesh %ld: adjacency_out[%ld] == %ld, expected %ld\n",
                i, j, adjacency_out[j], tc[i].adjacency[j]);
         }
         /* Check face_remap */
         for (j = 0; j < tc[i].num_faces; j++)
         {
             ok(face_remap[j] == tc[i].exp_face_remap[j],
-               "Mesh %d: face_remap[%d] == %d, expected %d\n",
+               "Mesh %ld: face_remap[%ld] == %ld, expected %ld\n",
                i, j, face_remap[j], tc[i].exp_face_remap[j]);
         }
         /* Check vertex_remap */
@@ -8457,7 +8457,7 @@ static void test_weld_vertices(void)
         for (j = 0; j < VERTS_PER_FACE * tc[i].num_faces; j++)
         {
             ok(vertex_remap_ptr[j] == tc[i].exp_vertex_remap[j],
-               "Mesh %d: vertex_remap_ptr[%d] == %d, expected %d\n",
+               "Mesh %ld: vertex_remap_ptr[%ld] == %ld, expected %ld\n",
                i, j, vertex_remap_ptr[j], tc[i].exp_vertex_remap[j]);
         }
         /* Check vertex buffer */
@@ -10168,16 +10168,16 @@ static void test_clone_mesh(void)
                               tc[i].indices, tc[i].attributes);
         if (FAILED(hr))
         {
-            skip("Couldn't initialize test mesh %d. Got %x expected D3D_OK\n", i, hr);
+            skip("Couldn't initialize test mesh %d. Got %lx expected D3D_OK\n", i, hr);
             goto cleanup;
         }
 
         hr = mesh->lpVtbl->CloneMesh(mesh, tc[i].clone_options, tc[i].new_declaration,
                                      test_context->device, &mesh_clone);
-        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#lx.\n", i, hr);
 
         hr = mesh_clone->lpVtbl->GetDeclaration(mesh_clone, new_declaration);
-        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#lx.\n", i, hr);
         /* Check declaration elements */
         for (j = 0; tc[i].new_declaration[j].Stream != 0xFF; j++)
         {
@@ -10237,7 +10237,7 @@ static void test_clone_mesh(void)
     if (FAILED(hr))
     {
         skip("Couldn't initialize test mesh for D3DXMESH_VB_SHARE case."
-             " Got %x expected D3D_OK\n", hr);
+             " Got %lx expected D3D_OK\n", hr);
         goto cleanup;
     }
 
@@ -10245,7 +10245,7 @@ static void test_clone_mesh(void)
                                  tc[2].new_declaration, test_context->device,
                                  &mesh_clone);
     ok(hr == D3DERR_INVALIDCALL, "CloneMesh D3DXMESH_VB_SHARE with new"
-       " declaration. Got %x, expected D3DERR_INVALIDCALL\n",
+       " declaration. Got %lx, expected D3DERR_INVALIDCALL\n",
        hr);
     mesh->lpVtbl->Release(mesh);
     mesh = NULL;
@@ -10358,12 +10358,12 @@ static void test_valid_mesh(void)
                             tc[i].indices, NULL);
         if (FAILED(hr))
         {
-            skip("Couldn't initialize test mesh %d. Got %x expected D3D_OK\n", i, hr);
+            skip("Couldn't initialize test mesh %d. Got %lx expected D3D_OK\n", i, hr);
             goto cleanup;
         }
 
         hr = D3DXValidMesh(mesh, tc[i].adjacency, &errors_and_warnings);
-        todo_wine ok(hr == tc[i].exp_hr, "Test %u, got unexpected hr %#x, expected %#x.\n", i, hr, tc[i].exp_hr);
+        todo_wine ok(hr == tc[i].exp_hr, "Test %u, got unexpected hr %#lx, expected %#lx.\n", i, hr, tc[i].exp_hr);
 
         /* Note errors_and_warnings is deliberately not checked because that
          * would require copying wast amounts of the text output. */
@@ -10505,13 +10505,13 @@ static void test_optimize_faces(void)
         hr = D3DXOptimizeFaces(tc[i].indices, tc[i].num_faces,
                                tc[i].num_vertices, tc[i].indices_are_32bit,
                                face_remap);
-        ok(hr == D3D_OK, "Test %u, got unexpected hr %#x.\n", i, hr);
+        ok(hr == D3D_OK, "Test %u, got unexpected hr %#lx.\n", i, hr);
 
         /* Compare face remap with expected face remap */
         for (j = 0; j < tc[i].num_faces; j++)
         {
             ok(tc[i].exp_face_remap[j] == face_remap[j],
-               "Test case %d: Got face %d at %d, expected %d\n", i,
+               "Test case %d: Got face %ld at %ld, expected %ld\n", i,
                face_remap[j], j, tc[i].exp_face_remap[j]);
         }
 
@@ -10522,13 +10522,13 @@ static void test_optimize_faces(void)
     hr = D3DXOptimizeFaces(tc[0].indices, tc[0].num_faces,
                            tc[0].num_vertices, tc[0].indices_are_32bit,
                            NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     /* Number of faces must be smaller than 2^15 */
     hr = D3DXOptimizeFaces(tc[0].indices, 2 << 15,
                            tc[0].num_vertices, FALSE,
                            &smallest_face_remap);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 }
 
 static HRESULT clear_normals(ID3DXMesh *mesh)
@@ -10623,7 +10623,7 @@ static void compare_normals(unsigned int line, const char *test_name,
     num_vertices = mesh->lpVtbl->GetNumVertices(mesh);
     vertex_stride = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
 
-    ok_(__FILE__, line)(num_vertices == num_normals, "%s: Expected %u vertices, got %u\n", test_name,
+    ok_(__FILE__, line)(num_vertices == num_normals, "%s: Expected %u vertices, got %lu\n", test_name,
             num_normals, num_vertices);
 
     if (FAILED(mesh->lpVtbl->LockVertexBuffer(mesh, 0, (void **)&vertices)))
@@ -10838,7 +10838,7 @@ static void test_compute_normals(void)
     for (i = 0; i < ARRAY_SIZE(compute_normals_funcs); i++)
     {
         hr = compute_normals_funcs[i].apply(NULL, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", compute_normals_funcs[i].name, hr);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#lx, expected D3DERR_INVALIDCALL\n", compute_normals_funcs[i].name, hr);
     }
 
     if (!(test_context = new_test_context()))
@@ -10849,36 +10849,36 @@ static void test_compute_normals(void)
     device = test_context->device;
 
     hr = D3DXCreateBox(device, 1.0f, 1.0f, 1.0f, &mesh, &adjacency);
-    ok(SUCCEEDED(hr), "D3DXCreateBox failed %#x\n", hr);
+    ok(SUCCEEDED(hr), "D3DXCreateBox failed %#lx\n", hr);
 
     /* Check wrong input */
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE, NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#lx, expected D3DERR_INVALIDCALL\n", hr);
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DDECLUSAGE_NORMAL, 0,
             D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA | D3DXTANGENT_WEIGHT_EQUAL,
             NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#lx, expected D3DERR_INVALIDCALL\n", hr);
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, 0, NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#lx, expected D3DERR_INVALIDCALL\n", hr);
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 1, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS,
             NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#lx, expected D3DERR_INVALIDCALL\n", hr);
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DX_DEFAULT, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS,
             NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#lx, expected D3DERR_INVALIDCALL\n", hr);
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_CALCULATE_NORMALS,
             NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#lx, expected D3DERR_INVALIDCALL\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(compute_normals_funcs); i++)
     {
@@ -10886,158 +10886,158 @@ static void test_compute_normals(void)
 
         /* Mesh without normals */
         hr = mesh->lpVtbl->CloneMeshFVF(mesh, 0, D3DFVF_XYZ, device, &cloned_mesh);
-        ok(SUCCEEDED(hr), "CloneMeshFVF failed %#x\n", hr);
+        ok(SUCCEEDED(hr), "CloneMeshFVF failed %#lx\n", hr);
 
         hr = func->apply(cloned_mesh, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", func->name, hr);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#lx, expected D3DERR_INVALIDCALL\n", func->name, hr);
 
         refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
-        ok(!refcount, "Mesh has %u references left\n", refcount);
+        ok(!refcount, "Mesh has %lu references left\n", refcount);
 
         /* Mesh without positions */
         hr = mesh->lpVtbl->CloneMeshFVF(mesh, 0, D3DFVF_NORMAL, device, &cloned_mesh);
-        ok(SUCCEEDED(hr), "CloneMeshFVF failed %#x\n", hr);
+        ok(SUCCEEDED(hr), "CloneMeshFVF failed %#lx\n", hr);
 
         hr = func->apply(cloned_mesh, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", func->name, hr);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#lx, expected D3DERR_INVALIDCALL\n", func->name, hr);
 
         refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
-        ok(!refcount, "Mesh has %u references left\n", refcount);
+        ok(!refcount, "Mesh has %lu references left\n", refcount);
 
         /* Mesh with D3DDECLTYPE_FLOAT1 normals */
         hr = mesh->lpVtbl->CloneMesh(mesh, 0, position3f_normal1f_declaration, device, &cloned_mesh);
-        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#lx\n", hr);
 
         hr = func->apply(cloned_mesh, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", func->name, hr);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#lx, expected D3DERR_INVALIDCALL\n", func->name, hr);
 
         refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
-        ok(!refcount, "Mesh has %u references left\n", refcount);
+        ok(!refcount, "Mesh has %lu references left\n", refcount);
 
         /* Mesh with D3DDECLTYPE_FLOAT2 normals */
         hr = mesh->lpVtbl->CloneMesh(mesh, 0, position3f_normal2f_declaration, device, &cloned_mesh);
-        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#lx\n", hr);
 
         hr = func->apply(cloned_mesh, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", func->name, hr);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#lx, expected D3DERR_INVALIDCALL\n", func->name, hr);
 
         refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
-        ok(!refcount, "Mesh has %u references left\n", refcount);
+        ok(!refcount, "Mesh has %lu references left\n", refcount);
 
         /* Mesh without adjacency data */
         hr = clear_normals(mesh);
-        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#lx\n", hr);
 
         hr = func->apply(mesh, NULL);
-        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+        ok(hr == D3D_OK, "%s returned %#lx, expected D3D_OK\n", func->name, hr);
 
         compare_normals(__LINE__, func->name, mesh, box_normals, ARRAY_SIZE(box_normals));
 
         /* Mesh with adjacency data */
         hr = clear_normals(mesh);
-        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#lx\n", hr);
 
         hr = func->apply(mesh, ID3DXBuffer_GetBufferPointer(adjacency));
-        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+        ok(hr == D3D_OK, "%s returned %#lx, expected D3D_OK\n", func->name, hr);
 
         compare_normals(__LINE__, func->name, mesh, box_normals_adjacency, ARRAY_SIZE(box_normals_adjacency));
 
         /* Mesh with custom vertex format, D3DDECLTYPE_FLOAT4 normals and adjacency */
         hr = mesh->lpVtbl->CloneMesh(mesh, 0, normal4f_position3f_declaration, device, &cloned_mesh);
-        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#lx\n", hr);
 
         hr = clear_normals(cloned_mesh);
-        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#lx\n", hr);
 
         hr = func->apply(cloned_mesh, ID3DXBuffer_GetBufferPointer(adjacency));
-        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+        ok(hr == D3D_OK, "%s returned %#lx, expected D3D_OK\n", func->name, hr);
 
         compare_normals(__LINE__, func->name, cloned_mesh, box_normals_adjacency, ARRAY_SIZE(box_normals_adjacency));
 
         refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
-        ok(!refcount, "Mesh has %u references left\n", refcount);
+        ok(!refcount, "Mesh has %lu references left\n", refcount);
 
         /* Mesh with D3DDECLTYPE_FLOAT1 positions and D3DDECLTYPE_FLOAT3 normals */
         hr = mesh->lpVtbl->CloneMesh(mesh, 0, position1f_normal3f_declaration, device, &cloned_mesh);
-        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#lx\n", hr);
 
         hr = clear_normals(cloned_mesh);
-        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#lx\n", hr);
 
         hr = func->apply(cloned_mesh, ID3DXBuffer_GetBufferPointer(adjacency));
-        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+        ok(hr == D3D_OK, "%s returned %#lx, expected D3D_OK\n", func->name, hr);
 
         compare_normals(__LINE__, func->name, cloned_mesh, box_normals_position1f, ARRAY_SIZE(box_normals_position1f));
 
         refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
-        ok(!refcount, "Mesh has %u references left\n", refcount);
+        ok(!refcount, "Mesh has %lu references left\n", refcount);
 
         /* Mesh with D3DDECLTYPE_FLOAT2 positions and D3DDECLTYPE_FLOAT3 normals */
         hr = mesh->lpVtbl->CloneMesh(mesh, 0, position2f_normal3f_declaration, device, &cloned_mesh);
-        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#lx\n", hr);
 
         hr = clear_normals(cloned_mesh);
-        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#lx\n", hr);
 
         hr = func->apply(cloned_mesh, ID3DXBuffer_GetBufferPointer(adjacency));
-        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+        ok(hr == D3D_OK, "%s returned %#lx, expected D3D_OK\n", func->name, hr);
 
         compare_normals(__LINE__, func->name, cloned_mesh, box_normals_position2f, ARRAY_SIZE(box_normals_position2f));
 
         refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
-        ok(!refcount, "Mesh has %u references left\n", refcount);
+        ok(!refcount, "Mesh has %lu references left\n", refcount);
 
         /* Mesh with D3DDECLTYPE_FLOAT4 positions and D3DDECLTYPE_FLOAT3 normals */
         hr = mesh->lpVtbl->CloneMesh(mesh, 0, position4f_normal3f_declaration, device, &cloned_mesh);
-        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#lx\n", hr);
 
         hr = clear_normals(cloned_mesh);
-        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#lx\n", hr);
 
         hr = func->apply(cloned_mesh, ID3DXBuffer_GetBufferPointer(adjacency));
-        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+        ok(hr == D3D_OK, "%s returned %#lx, expected D3D_OK\n", func->name, hr);
 
         compare_normals(__LINE__, func->name, cloned_mesh, box_normals_adjacency, ARRAY_SIZE(box_normals_adjacency));
 
         refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
-        ok(!refcount, "Mesh has %u references left\n", refcount);
+        ok(!refcount, "Mesh has %lu references left\n", refcount);
     }
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA,
             NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#lx, expected D3D_OK\n", hr);
 
     compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, box_normals, ARRAY_SIZE(box_normals));
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA,
             ID3DXBuffer_GetBufferPointer(adjacency), -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#lx, expected D3D_OK\n", hr);
 
     compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, box_normals_adjacency_area, ARRAY_SIZE(box_normals_adjacency_area));
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_EQUAL,
             NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#lx, expected D3D_OK\n", hr);
 
     compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, box_normals, ARRAY_SIZE(box_normals));
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_EQUAL,
             ID3DXBuffer_GetBufferPointer(adjacency), -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#lx, expected D3D_OK\n", hr);
 
     compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, box_normals_adjacency_area, ARRAY_SIZE(box_normals_adjacency_area));
 
     refcount = mesh->lpVtbl->Release(mesh);
-    ok(!refcount, "Mesh has %u references left\n", refcount);
+    ok(!refcount, "Mesh has %lu references left\n", refcount);
     refcount = ID3DXBuffer_Release(adjacency);
-    ok(!refcount, "Buffer has %u references left\n", refcount);
+    ok(!refcount, "Buffer has %lu references left\n", refcount);
 
     hr = D3DXCreateSphere(device, 1.0f, 4, 6, &mesh, &adjacency);
-    ok(SUCCEEDED(hr), "D3DXCreateSphere failed %#x\n", hr);
+    ok(SUCCEEDED(hr), "D3DXCreateSphere failed %#lx\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(compute_normals_funcs); i++)
     {
@@ -11045,19 +11045,19 @@ static void test_compute_normals(void)
 
         /* Sphere without adjacency data */
         hr = clear_normals(mesh);
-        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#lx\n", hr);
 
         hr = func->apply(mesh, NULL);
-        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+        ok(hr == D3D_OK, "%s returned %#lx, expected D3D_OK\n", func->name, hr);
 
         compare_normals(__LINE__, func->name, mesh, sphere_normals, ARRAY_SIZE(sphere_normals));
 
         /* Sphere with adjacency data */
         hr = clear_normals(mesh);
-        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#lx\n", hr);
 
         hr = func->apply(mesh, ID3DXBuffer_GetBufferPointer(adjacency));
-        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+        ok(hr == D3D_OK, "%s returned %#lx, expected D3D_OK\n", func->name, hr);
 
         compare_normals(__LINE__, func->name, mesh, sphere_normals, ARRAY_SIZE(sphere_normals));
     }
@@ -11065,35 +11065,35 @@ static void test_compute_normals(void)
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA,
             NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#lx, expected D3D_OK\n", hr);
 
     compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, sphere_normals_area, ARRAY_SIZE(sphere_normals_area));
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA,
             ID3DXBuffer_GetBufferPointer(adjacency), -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#lx, expected D3D_OK\n", hr);
 
     compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, sphere_normals_area, ARRAY_SIZE(sphere_normals_area));
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_EQUAL,
             NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#lx, expected D3D_OK\n", hr);
 
     compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, sphere_normals_equal, ARRAY_SIZE(sphere_normals_equal));
 
     hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
             D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_EQUAL,
             ID3DXBuffer_GetBufferPointer(adjacency), -1.01f, -0.01f, -1.01f, NULL, NULL);
-    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#lx, expected D3D_OK\n", hr);
 
     compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, sphere_normals_equal, ARRAY_SIZE(sphere_normals_equal));
 
     refcount = mesh->lpVtbl->Release(mesh);
-    ok(!refcount, "Mesh has %u references left\n", refcount);
+    ok(!refcount, "Mesh has %lu references left\n", refcount);
     refcount = ID3DXBuffer_Release(adjacency);
-    ok(!refcount, "Buffer has %u references left\n", refcount);
+    ok(!refcount, "Buffer has %lu references left\n", refcount);
 
     free_test_context(test_context);
 }
@@ -11105,30 +11105,30 @@ static void D3DXCreateAnimationControllerTest(void)
     UINT value;
 
     hr = D3DXCreateAnimationController(0, 0, 0, 0, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#lx.\n", hr);
 
     animation = (void*)0xdeadbeef;
     hr = D3DXCreateAnimationController(0, 1, 1, 1, &animation);
-    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#lx.\n", hr);
     ok(animation == (void*)0xdeadbeef, "Got unexpected animation %p.\n", animation);
 
     animation = (void*)0xdeadbeef;
     hr = D3DXCreateAnimationController(1, 0, 1, 1, &animation);
-    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#lx.\n", hr);
     ok(animation == (void*)0xdeadbeef, "Got unexpected animation %p.\n", animation);
 
     animation = (void*)0xdeadbeef;
     hr = D3DXCreateAnimationController(1, 1, 0, 1, &animation);
-    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#lx.\n", hr);
     ok(animation == (void*)0xdeadbeef, "Got unexpected animation %p.\n", animation);
 
     animation = (void*)0xdeadbeef;
     hr = D3DXCreateAnimationController(1, 1, 1, 0, &animation);
-    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#lx.\n", hr);
     ok(animation == (void*)0xdeadbeef, "Got unexpected animation %p.\n", animation);
 
     hr = D3DXCreateAnimationController(1, 1, 1, 1, &animation);
-    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#lx.\n", hr);
 
     value = animation->lpVtbl->GetMaxNumAnimationOutputs(animation);
     ok(value == 1, "Got unexpected value %u.\n", value);
@@ -11145,7 +11145,7 @@ static void D3DXCreateAnimationControllerTest(void)
     animation->lpVtbl->Release(animation);
 
     hr = D3DXCreateAnimationController(100, 101, 102, 103, &animation);
-    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#lx.\n", hr);
 
     value = animation->lpVtbl->GetMaxNumAnimationOutputs(animation);
     ok(value == 100, "Got unexpected value %u.\n", value);
@@ -11171,10 +11171,10 @@ static void D3DXCreateKeyframedAnimationSetTest(void)
     HRESULT hr;
 
     hr = D3DXCreateKeyframedAnimationSet("wine_bottle", 5.0, D3DXPLAY_LOOP, 0, 0, NULL, &set);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXCreateKeyframedAnimationSet("wine_bottle", 5.0, D3DXPLAY_LOOP, 10, 0, NULL, &set);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     name = set->lpVtbl->GetName(set);
     ok(!strcmp(name, "wine_bottle"), "Got unexpected name %s.\n", debugstr_a(name));
@@ -11368,7 +11368,7 @@ static void test_load_skin_mesh_from_xof(void)
     IDirect3D9_Release(d3d);
     if (FAILED(hr))
     {
-        skip("Failed to create device, hr %#x.\n", hr);
+        skip("Failed to create device, hr %#lx.\n", hr);
         DestroyWindow(hwnd);
         return;
     }
@@ -11383,46 +11383,46 @@ static void test_load_skin_mesh_from_xof(void)
 
     hr = D3DXLoadSkinMeshFromXof(file_data, 0, device, &adjacency, &materials, &effects, &count,
             &skin_info, &mesh);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!!adjacency, "Got unexpected value %p.\n", adjacency);
     ok(!materials, "Got unexpected value %p.\n", materials);
     ok(!effects, "Got unexpected value %p.\n", effects);
-    ok(!count, "Got unexpected value %u.\n", count);
+    ok(!count, "Got unexpected value %lu.\n", count);
     ok(!!skin_info, "Got unexpected value %p.\n", skin_info);
     ok(!!mesh, "Got unexpected value %p.\n", mesh);
     count = mesh->lpVtbl->GetNumVertices(mesh);
-    ok(count == 3, "Got unexpected value %u.\n", count);
+    ok(count == 3, "Got unexpected value %lu.\n", count);
     count = mesh->lpVtbl->GetNumFaces(mesh);
-    ok(count == 1, "Got unexpected value %u.\n", count);
+    ok(count == 1, "Got unexpected value %lu.\n", count);
 
     hr = skin_info->lpVtbl->GetDeclaration(skin_info, declaration);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     compare_elements(declaration, expected_declaration, __LINE__, 0);
 
     fvf = skin_info->lpVtbl->GetFVF(skin_info);
-    ok(fvf == D3DFVF_XYZ, "Got unexpected value %u.\n", fvf);
+    ok(fvf == D3DFVF_XYZ, "Got unexpected value %lu.\n", fvf);
 
     count = skin_info->lpVtbl->GetNumBones(skin_info);
-    ok(!count, "Got unexpected value %u.\n", count);
+    ok(!count, "Got unexpected value %lu.\n", count);
 
     influence = skin_info->lpVtbl->GetMinBoneInfluence(skin_info);
     ok(!influence, "Got unexpected value %.8e.\n", influence);
 
     memset(max_influences, 0x55, sizeof(max_influences));
     hr = skin_info->lpVtbl->GetMaxVertexInfluences(skin_info, max_influences);
-    todo_wine ok(hr == D3D_OK, "Got unexpected value %#x.\n", hr);
-    todo_wine ok(!max_influences[0], "Got unexpected value %u.\n", max_influences[0]);
-    ok(max_influences[1] == 0x55555555, "Got unexpected value %u.\n", max_influences[1]);
-    ok(max_influences[2] == 0x55555555, "Got unexpected value %u.\n", max_influences[2]);
+    todo_wine ok(hr == D3D_OK, "Got unexpected value %#lx.\n", hr);
+    todo_wine ok(!max_influences[0], "Got unexpected value %lu.\n", max_influences[0]);
+    ok(max_influences[1] == 0x55555555, "Got unexpected value %lu.\n", max_influences[1]);
+    ok(max_influences[2] == 0x55555555, "Got unexpected value %lu.\n", max_influences[2]);
 
     bone_name = skin_info->lpVtbl->GetBoneName(skin_info, 0);
     ok(!bone_name, "Got unexpected value %p.\n", bone_name);
 
     count = skin_info->lpVtbl->GetNumBoneInfluences(skin_info, 0);
-    ok(!count, "Got unexpected value %u.\n", count);
+    ok(!count, "Got unexpected value %lu.\n", count);
 
     count = skin_info->lpVtbl->GetNumBoneInfluences(skin_info, 1);
-    ok(!count, "Got unexpected value %u.\n", count);
+    ok(!count, "Got unexpected value %lu.\n", count);
 
     matrix = skin_info->lpVtbl->GetBoneOffsetMatrix(skin_info, -1);
     ok(!matrix, "Got unexpected value %p.\n", matrix);
@@ -11435,7 +11435,7 @@ static void test_load_skin_mesh_from_xof(void)
     adjacency->lpVtbl->Release(adjacency);
     file_data->lpVtbl->Release(file_data);
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     DestroyWindow(hwnd);
 }
 

@@ -2492,60 +2492,60 @@ static void test_matrix_stack(void)
     }}};
 
     hr = D3DXCreateMatrixStack(0, &stack);
-    ok(SUCCEEDED(hr), "Failed to create a matrix stack, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Failed to create a matrix stack, hr %#lx\n", hr);
     if (FAILED(hr)) return;
 
     ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)),
             "The top of an empty matrix stack should be an identity matrix\n");
 
     hr = ID3DXMatrixStack_Pop(stack);
-    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#lx\n", hr);
 
     hr = ID3DXMatrixStack_Push(stack);
-    ok(SUCCEEDED(hr), "Push failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Push failed, hr %#lx\n", hr);
     ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
 
     hr = ID3DXMatrixStack_Push(stack);
-    ok(SUCCEEDED(hr), "Push failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Push failed, hr %#lx\n", hr);
 
     hr = ID3DXMatrixStack_LoadMatrix(stack, &mat1);
-    ok(SUCCEEDED(hr), "LoadMatrix failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "LoadMatrix failed, hr %#lx\n", hr);
     expect_matrix(&mat1, ID3DXMatrixStack_GetTop(stack), 0);
 
     hr = ID3DXMatrixStack_Push(stack);
-    ok(SUCCEEDED(hr), "Push failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Push failed, hr %#lx\n", hr);
     expect_matrix(&mat1, ID3DXMatrixStack_GetTop(stack), 0);
 
     hr = ID3DXMatrixStack_LoadMatrix(stack, &mat2);
-    ok(SUCCEEDED(hr), "LoadMatrix failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "LoadMatrix failed, hr %#lx\n", hr);
     expect_matrix(&mat2, ID3DXMatrixStack_GetTop(stack), 0);
 
     hr = ID3DXMatrixStack_Push(stack);
-    ok(SUCCEEDED(hr), "Push failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Push failed, hr %#lx\n", hr);
     expect_matrix(&mat2, ID3DXMatrixStack_GetTop(stack), 0);
 
     hr = ID3DXMatrixStack_LoadIdentity(stack);
-    ok(SUCCEEDED(hr), "LoadIdentity failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "LoadIdentity failed, hr %#lx\n", hr);
     ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
 
     hr = ID3DXMatrixStack_Pop(stack);
-    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#lx\n", hr);
     expect_matrix(&mat2, ID3DXMatrixStack_GetTop(stack), 0);
 
     hr = ID3DXMatrixStack_Pop(stack);
-    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#lx\n", hr);
     expect_matrix(&mat1, ID3DXMatrixStack_GetTop(stack), 0);
 
     hr = ID3DXMatrixStack_Pop(stack);
-    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#lx\n", hr);
     ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
 
     hr = ID3DXMatrixStack_Pop(stack);
-    ok(SUCCEEDED(hr), "Pop failed, hr %#x\n", hr);
+    ok(SUCCEEDED(hr), "Pop failed, hr %#lx\n", hr);
     ok(D3DXMatrixIsIdentity(ID3DXMatrixStack_GetTop(stack)), "The top should be an identity matrix\n");
 
     refcount = ID3DXMatrixStack_Release(stack);
-    ok(!refcount, "Matrix stack has %u references left.\n", refcount);
+    ok(!refcount, "Matrix stack has %lu references left.\n", refcount);
 }
 
 static void test_Matrix_AffineTransformation2D(void)
@@ -2997,7 +2997,7 @@ static void test_Matrix_Decompose(void)
     U(pm).m[3][3] = 1.0f;
 
     hr = D3DXMatrixDecompose(&got_scale, &got_rotation, &got_translation, &pm);
-    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %x\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, got %lx\n", hr);
 }
 
 static void test_Matrix_Transformation2D(void)
@@ -3327,12 +3327,12 @@ static void test_D3DXFloat_Array(void)
         out = D3DXFloat16To32Array(&single.f, (D3DXFLOAT16 *)&testdata[i].half_ver1, 1);
         ok(out == &single.f, "Got %p, expected %p.\n", out, &single.f);
         equal = compare_float(single.f, testdata[i].single_out_ver1.f, 0);
-        ok(equal, "Got %#x, expected %#x at index %u.\n", single.d, testdata[i].single_out_ver1.d, i);
+        ok(equal, "Got %#lx, expected %#lx at index %u.\n", single.d, testdata[i].single_out_ver1.d, i);
 
         out = D3DXFloat16To32Array(&single.f, (D3DXFLOAT16 *)&testdata[i].half_ver2, 1);
         ok(out == &single.f, "Got %p, expected %p.\n", out, &single.f);
         equal = compare_float(single.f, testdata[i].single_out_ver2.f, 0);
-        ok(equal, "Got %#x, expected %#x at index %u.\n", single.d, testdata[i].single_out_ver2.d, i);
+        ok(equal, "Got %#lx, expected %#lx at index %u.\n", single.d, testdata[i].single_out_ver2.d, i);
     }
 }
 
@@ -3497,7 +3497,7 @@ static void test_D3DXSHEvalConeLight(void)
             }
 
             hr = D3DXSHEvalConeLight(order, &dir, test[l].radius, 1.7f, 2.6f, 3.5f, test[l].red_received, test[l].green_received, test[l].blue_received);
-            ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+            ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
 
             for (j = 0; j < 49; j++)
             {
@@ -3550,7 +3550,7 @@ static void test_D3DXSHEvalConeLight(void)
         }
 
         hr = D3DXSHEvalConeLight(order, &dir, -0.1f, 1.7f, 2.6f, 3.5f, rout, gout, bout);
-        ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+        ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
         D3DXSHEvalDirectionalLight(order, &dir, 1.7f, 2.6f, 3.5f, red, green, blue);
 
         for (j = 0; j < 49; j++)
@@ -3571,11 +3571,11 @@ static void test_D3DXSHEvalConeLight(void)
 
     /* D3DXSHEvalConeLight accepts order < D3DXSH_MINORDER or order > D3DXSH_MAXORDER. But tests in native windows show that the colour outputs are not set */
     hr = D3DXSHEvalConeLight(7, &dir, 0.5f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
-    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
     hr = D3DXSHEvalConeLight(0, &dir, 0.5f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
-    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
     hr = D3DXSHEvalConeLight(1, &dir, 0.5f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
-    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
 }
 
 static void test_D3DXSHEvalDirection(void)
@@ -3721,7 +3721,7 @@ static void test_D3DXSHEvalDirectionalLight(void)
             }
 
             hr = D3DXSHEvalDirectionalLight(order, &dir, 1.7f, 2.6f, 3.5f, red_out, green_out, blue_out);
-            ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+            ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
 
             for (j = 0; j < ARRAY_SIZE(rout); ++j)
             {
@@ -3762,11 +3762,11 @@ static void test_D3DXSHEvalDirectionalLight(void)
 
     /* D3DXSHEvalDirectionalLight accepts order < D3DXSH_MINORDER or order > D3DXSH_MAXORDER. But tests in native windows show that the colour outputs are not set*/
     hr = D3DXSHEvalDirectionalLight(7, &dir, 1.0f, 2.0f, 3.0f, rout, gout, bout);
-    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
     hr = D3DXSHEvalDirectionalLight(0, &dir, 1.0f, 2.0f, 3.0f, rout, gout, bout);
-    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
     hr = D3DXSHEvalDirectionalLight(1, &dir, 1.0f, 2.0f, 3.0f, rout, gout, bout);
-    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
 }
 
 static void test_D3DXSHEvalHemisphereLight(void)
@@ -3823,7 +3823,7 @@ static void test_D3DXSHEvalHemisphereLight(void)
             }
 
             hr = D3DXSHEvalHemisphereLight(order, &dir, top, bottom, test[l].red_received, test[l].green_received, test[l].blue_received);
-            ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+            ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
 
             for (j = 0; j < 49; j++)
             {
@@ -3977,7 +3977,7 @@ static void test_D3DXSHEvalSphericalLight(void)
             }
 
             hr = D3DXSHEvalSphericalLight(order, &dir, test[l].radius, 1.7f, 2.6f, 3.5f, test[l].red_received, test[l].green_received, test[l].blue_received);
-            ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+            ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
 
             for (j = 0; j < 49; j++)
             {
@@ -4019,11 +4019,11 @@ static void test_D3DXSHEvalSphericalLight(void)
 
     /* D3DXSHEvalSphericalLight accepts order < D3DXSH_MINORDER or order > D3DXSH_MAXORDER. But tests in native windows show that the colour outputs are not set */
     hr = D3DXSHEvalSphericalLight(7, &dir, 17.4f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
-    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
     hr = D3DXSHEvalSphericalLight(0, &dir, 17.4f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
-    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
     hr = D3DXSHEvalSphericalLight(1, &dir, 17.4f, 1.0f, 2.0f, 3.0f, rout, gout, bout);
-    ok(hr == D3D_OK, "Expected %#x, got %#x\n", D3D_OK, hr);
+    ok(hr == D3D_OK, "Expected %#lx, got %#lx\n", D3D_OK, hr);
 }
 
 static void test_D3DXSHMultiply2(void)
@@ -4499,12 +4499,12 @@ static void test_D3DXSHProjectCubeMap(void)
             winetest_pop_context();
             continue;
         }
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         for (face = 0; face < 6; ++face)
         {
             hr = IDirect3DCubeTexture9_LockRect(texture, face, 0, &map_desc, NULL, 0);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
             for (y = 0; y < 8; ++y)
             {
@@ -4515,32 +4515,32 @@ static void test_D3DXSHProjectCubeMap(void)
             }
 
             hr = IDirect3DCubeTexture9_UnlockRect(texture, face, 0);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
             for (level = 1; level < 4; ++level)
             {
                 hr = IDirect3DCubeTexture9_LockRect(texture, face, level, &map_desc, NULL, 0);
-                ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+                ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
                 memset(map_desc.pBits, 0xcc, (8 >> level) * map_desc.Pitch);
                 hr = IDirect3DCubeTexture9_UnlockRect(texture, face, level);
-                ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+                ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
             }
         }
 
         hr = D3DXSHProjectCubeMap(1, texture, red, green, blue);
-        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
         hr = D3DXSHProjectCubeMap(7, texture, red, green, blue);
-        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
         hr = D3DXSHProjectCubeMap(2, NULL, red, green, blue);
-        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
         memset(red, 0, sizeof(red));
         memset(green, 0, sizeof(green));
         memset(blue, 0, sizeof(blue));
         hr = D3DXSHProjectCubeMap(2, texture, red, green, blue);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         for (j = 0; j < 4; ++j)
         {
@@ -4553,13 +4553,13 @@ static void test_D3DXSHProjectCubeMap(void)
         }
 
         hr = D3DXSHProjectCubeMap(2, texture, red, NULL, NULL);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = D3DXSHProjectCubeMap(2, texture, NULL, green, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
         hr = D3DXSHProjectCubeMap(2, texture, NULL, NULL, blue);
-        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
         IDirect3DCubeTexture9_Release(texture);
 
@@ -4567,7 +4567,7 @@ static void test_D3DXSHProjectCubeMap(void)
     }
 
     refcount = IDirect3DDevice9_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
     IDirect3D9_Release(d3d);
     DestroyWindow(window);
 }

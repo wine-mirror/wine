@@ -398,7 +398,7 @@ static void check_dds_pixel_format_(unsigned int line,
     memset(dds.data, 0, sizeof(dds.data));
 
     hr = D3DXGetImageInfoFromFileInMemory(&dds, sizeof(dds), &info);
-    ok_(__FILE__, line)(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x for pixel format %#x, expected %#x\n",
+    ok_(__FILE__, line)(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx for pixel format %#x, expected %#lx\n",
             hr, expected_format, D3D_OK);
     if (SUCCEEDED(hr))
     {
@@ -546,7 +546,7 @@ static void test_dds_header_handling(void)
         dds->header.pixel_format = tests[i].pixel_format;
 
         hr = D3DXGetImageInfoFromFileInMemory(dds, file_size, &info);
-        ok(hr == tests[i].expected.hr, "%d: D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n",
+        ok(hr == tests[i].expected.hr, "%d: D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n",
                 i, hr, tests[i].expected.hr);
         if (SUCCEEDED(hr))
         {
@@ -573,142 +573,142 @@ static void test_D3DXGetImageInfo(void)
     /* D3DXGetImageInfoFromFile */
     if(testbitmap_ok) {
         hr = D3DXGetImageInfoFromFileA("testbitmap.bmp", &info);
-        ok(hr == D3D_OK, "D3DXGetImageInfoFromFile returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXGetImageInfoFromFile returned %#lx, expected %#lx\n", hr, D3D_OK);
 
         hr = D3DXGetImageInfoFromFileA("testbitmap.bmp", NULL); /* valid image, second parameter is NULL */
-        ok(hr == D3D_OK, "D3DXGetImageInfoFromFile returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXGetImageInfoFromFile returned %#lx, expected %#lx\n", hr, D3D_OK);
     } else skip("Couldn't create \"testbitmap.bmp\"\n");
 
     if(testdummy_ok) {
         hr = D3DXGetImageInfoFromFileA("testdummy.bmp", NULL); /* invalid image, second parameter is NULL */
-        ok(hr == D3D_OK, "D3DXGetImageInfoFromFile returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXGetImageInfoFromFile returned %#lx, expected %#lx\n", hr, D3D_OK);
 
         hr = D3DXGetImageInfoFromFileA("testdummy.bmp", &info);
-        ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFile returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+        ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFile returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
     } else skip("Couldn't create \"testdummy.bmp\"\n");
 
     hr = D3DXGetImageInfoFromFileA("filedoesnotexist.bmp", &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFile returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFile returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromFileA("filedoesnotexist.bmp", NULL);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFile returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFile returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromFileA("", &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFile returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFile returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromFileA(NULL, &info);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFile returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFile returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXGetImageInfoFromFileA(NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFile returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFile returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
 
     /* D3DXGetImageInfoFromResource */
     hr = D3DXGetImageInfoFromResourceA(NULL, MAKEINTRESOURCEA(IDB_BITMAP_1x1), &info); /* RT_BITMAP */
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromResource returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromResource returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXGetImageInfoFromResourceA(NULL, MAKEINTRESOURCEA(IDB_BITMAP_1x1), NULL);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromResource returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromResource returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXGetImageInfoFromResourceA(NULL, MAKEINTRESOURCEA(IDD_BITMAPDATA_1x1), &info); /* RT_RCDATA */
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromResource returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromResource returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXGetImageInfoFromResourceA(NULL, MAKEINTRESOURCEA(IDS_STRING), &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromResourceA(NULL, MAKEINTRESOURCEA(IDS_STRING), NULL);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromResourceA(NULL, "resourcedoesnotexist", &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromResourceA(NULL, "resourcedoesnotexist", NULL);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromResourceA(NULL, NULL, NULL);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromResource returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
 
     /* D3DXGetImageInfoFromFileInMemory */
     hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp)+5, &info); /* too large size */
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp), NULL);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXGetImageInfoFromFileInMemory(noimage, sizeof(noimage), NULL);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromResource returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromResource returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXGetImageInfoFromFileInMemory(noimage, sizeof(noimage), &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     todo_wine {
         hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp)-1, &info);
-        ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+        ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
     }
 
     hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp+1, sizeof(bmp_1bpp)-1, &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, 0, &info);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXGetImageInfoFromFileInMemory(noimage, 0, &info);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXGetImageInfoFromFileInMemory(noimage, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXGetImageInfoFromFileInMemory(NULL, 0, &info);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXGetImageInfoFromFileInMemory(NULL, 4, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXGetImageInfoFromFileInMemory(NULL, 4, &info);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXGetImageInfoFromFileInMemory(NULL, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     /* test BMP support */
     hr = D3DXGetImageInfoFromFileInMemory(bmp_1bpp, sizeof(bmp_1bpp), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     ok(info.Depth == 1, "Got depth %u, expected 1\n", info.Depth);
     ok(info.Format == D3DFMT_P8, "Got format %u, expected %u\n", info.Format, D3DFMT_P8);
     hr = D3DXGetImageInfoFromFileInMemory(bmp_2bpp, sizeof(bmp_2bpp), &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
     hr = D3DXGetImageInfoFromFileInMemory(bmp_4bpp, sizeof(bmp_4bpp), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     ok(info.Depth == 1, "Got depth %u, expected 1\n", info.Depth);
     ok(info.Format == D3DFMT_P8, "Got format %u, expected %u\n", info.Format, D3DFMT_P8);
     hr = D3DXGetImageInfoFromFileInMemory(bmp_8bpp, sizeof(bmp_8bpp), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     ok(info.Depth == 1, "Got depth %u, expected 1\n", info.Depth);
     ok(info.Format == D3DFMT_P8, "Got format %u, expected %u\n", info.Format, D3DFMT_P8);
 
     hr = D3DXGetImageInfoFromFileInMemory(bmp_32bpp_xrgb, sizeof(bmp_32bpp_xrgb), &info);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Format == D3DFMT_X8R8G8B8, "Got unexpected format %u.\n", info.Format);
     hr = D3DXGetImageInfoFromFileInMemory(bmp_32bpp_argb, sizeof(bmp_32bpp_argb), &info);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(info.Format == D3DFMT_A8R8G8B8, "Got unexpected format %u.\n", info.Format);
 
     /* Grayscale PNG */
     hr = D3DXGetImageInfoFromFileInMemory(png_grayscale, sizeof(png_grayscale), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     ok(info.Depth == 1, "Got depth %u, expected 1\n", info.Depth);
     ok(info.Format == D3DFMT_L8, "Got format %u, expected %u\n", info.Format, D3DFMT_L8);
 
     /* test DDS support */
     hr = D3DXGetImageInfoFromFileInMemory(dds_24bit, sizeof(dds_24bit), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     if (hr == D3D_OK) {
         ok(info.Width == 2, "Got width %u, expected 2\n", info.Width);
         ok(info.Height == 2, "Got height %u, expected 2\n", info.Height);
@@ -720,7 +720,7 @@ static void test_D3DXGetImageInfo(void)
     } else skip("Couldn't get image info from 24-bit DDS file in memory\n");
 
     hr = D3DXGetImageInfoFromFileInMemory(dds_16bit, sizeof(dds_16bit), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     if (hr == D3D_OK) {
         ok(info.Width == 2, "Got width %u, expected 2\n", info.Width);
         ok(info.Height == 2, "Got height %u, expected 2\n", info.Height);
@@ -733,7 +733,7 @@ static void test_D3DXGetImageInfo(void)
 
     memset(&info, 0, sizeof(info));
     hr = D3DXGetImageInfoFromFileInMemory(dds_8bit, sizeof(dds_8bit), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x\n", hr);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx\n", hr);
     ok(info.Width == 16, "Got width %u.\n", info.Width);
     ok(info.Height == 4, "Got height %u.\n", info.Height);
     ok(info.Depth == 1, "Got depth %u.\n", info.Depth);
@@ -743,7 +743,7 @@ static void test_D3DXGetImageInfo(void)
     ok(info.ImageFileFormat == D3DXIFF_DDS, "Got image file format %#x.\n", info.ImageFileFormat);
 
     hr = D3DXGetImageInfoFromFileInMemory(dds_cube_map, sizeof(dds_cube_map), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     if (hr == D3D_OK) {
         ok(info.Width == 4, "Got width %u, expected 4\n", info.Width);
         ok(info.Height == 4, "Got height %u, expected 4\n", info.Height);
@@ -755,7 +755,7 @@ static void test_D3DXGetImageInfo(void)
     } else skip("Couldn't get image info from cube map in memory\n");
 
     hr = D3DXGetImageInfoFromFileInMemory(dds_volume_map, sizeof(dds_volume_map), &info);
-    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     if (hr == D3D_OK) {
         ok(info.Width == 4, "Got width %u, expected 4\n", info.Width);
         ok(info.Height == 4, "Got height %u, expected 4\n", info.Height);
@@ -801,16 +801,16 @@ static void test_D3DXGetImageInfo(void)
     test_dds_header_handling();
 
     hr = D3DXGetImageInfoFromFileInMemory(dds_16bit, sizeof(dds_16bit) - 1, &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromFileInMemory(dds_24bit, sizeof(dds_24bit) - 1, &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromFileInMemory(dds_cube_map, sizeof(dds_cube_map) - 1, &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXGetImageInfoFromFileInMemory(dds_volume_map, sizeof(dds_volume_map) - 1, &info);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXGetImageInfoFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
 
     /* cleanup */
@@ -829,7 +829,7 @@ static inline void _check_pixel_2bpp(unsigned int line, const D3DLOCKED_RECT *lo
 static inline void _check_pixel_4bpp(unsigned int line, const D3DLOCKED_RECT *lockrect, int x, int y, DWORD expected_color)
 {
    DWORD color = ((DWORD*)lockrect->pBits)[x + y * lockrect->Pitch / 4];
-   ok_(__FILE__, line)(color == expected_color, "Got color 0x%08x, expected 0x%08x\n", color, expected_color);
+   ok_(__FILE__, line)(color == expected_color, "Got color 0x%08lx, expected 0x%08lx\n", color, expected_color);
 }
 
 static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
@@ -856,7 +856,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 256, 256, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf, NULL);
     if(FAILED(hr)) {
-        skip("Failed to create a surface (%#x)\n", hr);
+        skip("Failed to create a surface (%#lx)\n", hr);
         if(testdummy_ok) DeleteFileA("testdummy.bmp");
         if(testbitmap_ok) DeleteFileA("testbitmap.bmp");
         return;
@@ -865,122 +865,122 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     /* D3DXLoadSurfaceFromFile */
     if(testbitmap_ok) {
         hr = D3DXLoadSurfaceFromFileA(surf, NULL, NULL, "testbitmap.bmp", NULL, D3DX_DEFAULT, 0, NULL);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromFile returned %#lx, expected %#lx\n", hr, D3D_OK);
 
         hr = D3DXLoadSurfaceFromFileA(NULL, NULL, NULL, "testbitmap.bmp", NULL, D3DX_DEFAULT, 0, NULL);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFile returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
     } else skip("Couldn't create \"testbitmap.bmp\"\n");
 
     if(testdummy_ok) {
         hr = D3DXLoadSurfaceFromFileA(surf, NULL, NULL, "testdummy.bmp", NULL, D3DX_DEFAULT, 0, NULL);
-        ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+        ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromFile returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
     } else skip("Couldn't create \"testdummy.bmp\"\n");
 
     hr = D3DXLoadSurfaceFromFileA(surf, NULL, NULL, NULL, NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFile returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromFileA(surf, NULL, NULL, "", NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromFile returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromFile returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
 
     /* D3DXLoadSurfaceFromResource */
     hr = D3DXLoadSurfaceFromResourceA(surf, NULL, NULL, NULL,
             MAKEINTRESOURCEA(IDB_BITMAP_1x1), NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromResource returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromResource returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXLoadSurfaceFromResourceA(surf, NULL, NULL, NULL,
             MAKEINTRESOURCEA(IDD_BITMAPDATA_1x1), NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromResource returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromResource returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXLoadSurfaceFromResourceA(surf, NULL, NULL, NULL, NULL, NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromResource returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromResource returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXLoadSurfaceFromResourceA(NULL, NULL, NULL, NULL,
             MAKEINTRESOURCEA(IDB_BITMAP_1x1), NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromResource returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromResource returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromResourceA(surf, NULL, NULL, NULL,
             MAKEINTRESOURCEA(IDS_STRING), NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromResource returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromResource returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
 
     /* D3DXLoadSurfaceFromFileInMemory */
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, bmp_1bpp, sizeof(bmp_1bpp), NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, noimage, sizeof(noimage), NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DXERR_INVALIDDATA);
+    ok(hr == D3DXERR_INVALIDDATA, "D3DXLoadSurfaceFromFileInMemory returned %#lx, expected %#x\n", hr, D3DXERR_INVALIDDATA);
 
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, bmp_1bpp, 0, NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromFileInMemory(NULL, NULL, NULL, bmp_1bpp, sizeof(bmp_1bpp), NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, NULL, 8, NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, NULL, 0, NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromFileInMemory(NULL, NULL, NULL, NULL, 0, NULL, D3DX_DEFAULT, 0, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromFileInMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
 
     /* D3DXLoadSurfaceFromMemory */
     SetRect(&rect, 0, 0, 2, 2);
 
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, 0, NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, NULL, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromMemory(NULL, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, NULL, D3DX_DEFAULT, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata, D3DFMT_UNKNOWN, sizeof(pixdata), NULL, &rect, D3DX_DEFAULT, 0);
-    ok(hr == E_FAIL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, E_FAIL);
 
     SetRect(&destrect, -1, -1, 1, 1); /* destination rect is partially outside texture boundaries */
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     SetRect(&destrect, 255, 255, 257, 257); /* destination rect is partially outside texture boundaries */
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     SetRect(&destrect, 1, 1, 0, 0); /* left > right, top > bottom */
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
     SetRect(&destrect, 1, 2, 1, 2); /* left = right, top = bottom */
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
     /* fails when debug version of d3d9 is used */
-    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
 
     SetRect(&destrect, 257, 257, 257, 257); /* left = right, top = bottom, but invalid values */
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata, D3DFMT_A8R8G8B8, sizeof(pixdata), NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
 
     /* D3DXLoadSurfaceFromSurface */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 256, 256, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &newsurf, NULL);
     if(SUCCEEDED(hr)) {
         hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_DEFAULT, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx\n", hr, D3D_OK);
 
         hr = D3DXLoadSurfaceFromSurface(NULL, NULL, NULL, surf, NULL, NULL, D3DX_DEFAULT, 0);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
         hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, NULL, NULL, NULL, D3DX_DEFAULT, 0);
-        ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
         check_release((IUnknown*)newsurf, 0);
     } else skip("Failed to create a second surface\n");
@@ -991,7 +991,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
 
         hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_DEFAULT, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx\n", hr, D3D_OK);
 
         IDirect3DSurface9_Release(newsurf);
         IDirect3DTexture9_Release(tex);
@@ -999,9 +999,9 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
     /* non-lockable render target */
     hr = IDirect3DDevice9_CreateRenderTarget(device, 256, 256, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &newsurf, NULL);
-    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     IDirect3DSurface9_Release(newsurf);
 
     /* non-lockable multisampled render target */
@@ -1009,7 +1009,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     if (SUCCEEDED(hr))
     {
        hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
-       ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+       ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
        IDirect3DSurface9_Release(newsurf);
     }
@@ -1019,55 +1019,55 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     }
 
     hr = IDirect3DDevice9_GetRenderTarget(device, 0, &newsurf);
-    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderTarget returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "IDirect3DDevice9_GetRenderTarget returned %#lx, expected %#lx.\n", hr, D3D_OK);
 
     hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0xff000000);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_TRIANGLE | D3DX_FILTER_MIRROR, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, NULL, D3DX_FILTER_LINEAR, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
 
     /* rects */
     SetRect(&rect, 2, 2, 1, 1);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3DERR_INVALIDCALL);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, &rect, D3DX_DEFAULT, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3DERR_INVALIDCALL);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, &rect, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3DERR_INVALIDCALL);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, &rect, newsurf, NULL, NULL, D3DX_DEFAULT, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3DERR_INVALIDCALL);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, &rect, newsurf, NULL, NULL, D3DX_FILTER_POINT, 0);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3DERR_INVALIDCALL);
     SetRect(&rect, 1, 1, 1, 1);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, &rect, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, &rect, D3DX_DEFAULT, 0);
-    ok(hr == E_FAIL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, E_FAIL);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, &rect, newsurf, NULL, NULL, D3DX_DEFAULT, 0);
-    ok(hr == E_FAIL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, E_FAIL);
+    ok(hr == E_FAIL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, E_FAIL);
     if (0)
     {
         /* Somehow it crashes with a STATUS_INTEGER_DIVIDE_BY_ZERO exception
          * on Windows. */
         hr = D3DXLoadSurfaceFromSurface(surf, NULL, &rect, newsurf, NULL, NULL, D3DX_FILTER_POINT, 0);
-        ok(hr == E_FAIL, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, E_FAIL);
+        ok(hr == E_FAIL, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, E_FAIL);
     }
     SetRect(&rect, 1, 1, 2, 2);
     SetRect(&destrect, 1, 1, 2, 2);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, &rect, newsurf, NULL, &destrect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, &rect, newsurf, NULL, NULL, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
     hr = D3DXLoadSurfaceFromSurface(surf, NULL, NULL, newsurf, NULL, &destrect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#x, expected %#x.\n", hr, D3D_OK);
+    ok(hr == D3D_OK, "D3DXLoadSurfaceFromSurface returned %#lx, expected %#lx.\n", hr, D3D_OK);
 
     IDirect3DSurface9_Release(newsurf);
 
@@ -1075,10 +1075,10 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
     SetRect(&rect, 1, 1, 2, 2);
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 1, 1, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8b8g8r8,
             D3DFMT_A8R8G8B8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
     check_pixel_4bpp(&lockrect, 0, 0, 0x8dc32bf6);
     IDirect3DSurface9_UnlockRect(surf);
@@ -1088,13 +1088,13 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     SetRect(&rect, 0, 0, 2, 2);
     /* A8R8G8B8 */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_A8R8G8B8, D3DPOOL_DEFAULT, &surf, NULL);
-    if(FAILED(hr)) skip("Failed to create a surface (%#x)\n", hr);
+    if(FAILED(hr)) skip("Failed to create a surface (%#lx)\n", hr);
     else {
         PALETTEENTRY palette;
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8r3g3b2,
                 D3DFMT_A8R3G3B2, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         check_pixel_4bpp(&lockrect, 0, 0, 0x57dbffff);
         check_pixel_4bpp(&lockrect, 1, 0, 0x98ffff00);
@@ -1104,7 +1104,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a1r5g5b5,
                 D3DFMT_A1R5G5B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         check_pixel_4bpp(&lockrect, 0, 0, 0x008cadad);
         check_pixel_4bpp(&lockrect, 1, 0, 0xff317342);
@@ -1114,7 +1114,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_r5g6b5,
                 D3DFMT_R5G6B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         check_pixel_4bpp(&lockrect, 0, 0, 0xff9cdfb5);
         check_pixel_4bpp(&lockrect, 1, 0, 0xff63b26b);
@@ -1124,7 +1124,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_g16r16,
                 D3DFMT_G16R16, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         todo_wine {
             check_pixel_4bpp(&lockrect, 0, 0, 0xff3f08ff);
@@ -1136,9 +1136,9 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8b8g8r8,
                 D3DFMT_A8B8G8R8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
         check_pixel_4bpp(&lockrect, 0, 0, 0xc3f04c39);
         check_pixel_4bpp(&lockrect, 1, 0, 0x2392e85a);
         check_pixel_4bpp(&lockrect, 0, 1, 0x09fd97b1);
@@ -1149,7 +1149,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         SetRect(&destrect, 1, 1, 2, 2);
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, &destrect, pixdata_a8b8g8r8,
                 D3DFMT_A8B8G8R8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         check_pixel_4bpp(&lockrect, 0, 0, 0xc3f04c39);
         check_pixel_4bpp(&lockrect, 1, 0, 0x2392e85a);
@@ -1161,7 +1161,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a2r10g10b10,
                 D3DFMT_A2R10G10B10, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         check_pixel_4bpp(&lockrect, 0, 0, 0x555c95bf);
         check_pixel_4bpp(&lockrect, 1, 0, 0x556d663f);
@@ -1173,15 +1173,15 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8l8,
                 D3DFMT_A8L8, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         check_pixel_4bpp(&lockrect, 0, 0, 0xff000000);
         check_pixel_4bpp(&lockrect, 1, 0, 0x00ffffff);
         check_pixel_4bpp(&lockrect, 0, 1, 0xff303030);
         check_pixel_4bpp(&lockrect, 1, 1, 0x7f7f7f7f);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
         /* Test D3DXLoadSurfaceFromMemory with indexed color image */
         if (0)
@@ -1193,34 +1193,34 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
         palette.peFlags = bmp_1bpp[57]; /* peFlags is the alpha component in DX8 and higher */
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, &bmp_1bpp[62],
                 D3DFMT_P8, 1, (const PALETTEENTRY *)&palette, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx\n", hr);
         ok(*(DWORD*)lockrect.pBits == 0x80f3f2f1,
-                "Pixel color mismatch: got %#x, expected 0x80f3f2f1\n", *(DWORD*)lockrect.pBits);
+                "Pixel color mismatch: got %#lx, expected 0x80f3f2f1\n", *(DWORD*)lockrect.pBits);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx\n", hr);
         }
 
         /* Test D3DXLoadSurfaceFromFileInMemory with indexed color image (alpha is not taken into account for bmp file) */
         hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, bmp_1bpp, sizeof(bmp_1bpp), NULL, D3DX_FILTER_NONE, 0, NULL);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x\n", hr);
-        ok(*(DWORD*)lockrect.pBits == 0xfff3f2f1, "Pixel color mismatch: got %#x, expected 0xfff3f2f1\n", *(DWORD*)lockrect.pBits);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx\n", hr);
+        ok(*(DWORD*)lockrect.pBits == 0xfff3f2f1, "Pixel color mismatch: got %#lx, expected 0xfff3f2f1\n", *(DWORD*)lockrect.pBits);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx\n", hr);
 
         check_release((IUnknown*)surf, 0);
     }
 
     /* A1R5G5B5 */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 2, 2, D3DFMT_A1R5G5B5, D3DPOOL_DEFAULT, &surf, NULL);
-    if(FAILED(hr)) skip("Failed to create a surface (%#x)\n", hr);
+    if(FAILED(hr)) skip("Failed to create a surface (%#lx)\n", hr);
     else {
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8r3g3b2,
                 D3DFMT_A8R3G3B2, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         check_pixel_2bpp(&lockrect, 0, 0, 0x6fff);
         check_pixel_2bpp(&lockrect, 1, 0, 0xffe0);
@@ -1230,7 +1230,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a1r5g5b5,
                 D3DFMT_A1R5G5B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         check_pixel_2bpp(&lockrect, 0, 0, 0x46b5);
         check_pixel_2bpp(&lockrect, 1, 0, 0x99c8);
@@ -1240,7 +1240,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_r5g6b5,
                 D3DFMT_R5G6B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         check_pixel_2bpp(&lockrect, 0, 0, 0xcf76);
         check_pixel_2bpp(&lockrect, 1, 0, 0xb2cd);
@@ -1250,7 +1250,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_g16r16,
                 D3DFMT_G16R16, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         todo_wine {
             check_pixel_2bpp(&lockrect, 0, 0, 0xa03f);
@@ -1262,7 +1262,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8b8g8r8,
                 D3DFMT_A8B8G8R8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         todo_wine {
             check_pixel_2bpp(&lockrect, 0, 0, 0xf527);
@@ -1274,7 +1274,7 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a2r10g10b10,
                 D3DFMT_A2R10G10B10, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
         check_pixel_2bpp(&lockrect, 0, 0, 0x2e57);
         todo_wine {
@@ -1286,15 +1286,15 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8l8,
                 D3DFMT_A8L8, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         check_pixel_2bpp(&lockrect, 0, 0, 0x8000);
         check_pixel_2bpp(&lockrect, 1, 0, 0x7fff);
         check_pixel_2bpp(&lockrect, 0, 1, 0x98c6);
         check_pixel_2bpp(&lockrect, 1, 1, 0x3def);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
         check_release((IUnknown*)surf, 0);
     }
@@ -1302,95 +1302,95 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     /* A8L8 */
     hr = IDirect3DDevice9_CreateTexture(device, 2, 2, 1, 0, D3DFMT_A8L8, D3DPOOL_MANAGED, &tex, NULL);
     if (FAILED(hr))
-        skip("Failed to create A8L8 texture, hr %#x.\n", hr);
+        skip("Failed to create A8L8 texture, hr %#lx.\n", hr);
     else
     {
         hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &surf);
-        ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to get the surface, hr %#lx.\n", hr);
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8r3g3b2,
                 D3DFMT_A8R3G3B2, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         check_pixel_2bpp(&lockrect, 0, 0, 0x57f7);
         check_pixel_2bpp(&lockrect, 1, 0, 0x98ed);
         check_pixel_2bpp(&lockrect, 0, 1, 0xaceb);
         check_pixel_2bpp(&lockrect, 1, 1, 0xc88d);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a1r5g5b5,
                 D3DFMT_A1R5G5B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#x, expected %#x\n", hr, D3D_OK);
+        ok(hr == D3D_OK, "D3DXLoadSurfaceFromMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         check_pixel_2bpp(&lockrect, 0, 0, 0x00a6);
         check_pixel_2bpp(&lockrect, 1, 0, 0xff62);
         check_pixel_2bpp(&lockrect, 0, 1, 0x007f);
         check_pixel_2bpp(&lockrect, 1, 1, 0xff19);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_r5g6b5,
                 D3DFMT_R5G6B5, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         check_pixel_2bpp(&lockrect, 0, 0, 0xffce);
         check_pixel_2bpp(&lockrect, 1, 0, 0xff9c);
         check_pixel_2bpp(&lockrect, 0, 1, 0xff4d);
         check_pixel_2bpp(&lockrect, 1, 1, 0xff59);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_g16r16,
                 D3DFMT_G16R16, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         check_pixel_2bpp(&lockrect, 0, 0, 0xff25);
         check_pixel_2bpp(&lockrect, 1, 0, 0xffbe);
         check_pixel_2bpp(&lockrect, 0, 1, 0xffd6);
         check_pixel_2bpp(&lockrect, 1, 1, 0xffb6);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8b8g8r8,
                 D3DFMT_A8B8G8R8, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         check_pixel_2bpp(&lockrect, 0, 0, 0xc36d);
         check_pixel_2bpp(&lockrect, 1, 0, 0x23cb);
         check_pixel_2bpp(&lockrect, 0, 1, 0x09af);
         check_pixel_2bpp(&lockrect, 1, 1, 0x8d61);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a2r10g10b10,
                 D3DFMT_A2R10G10B10, 8, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         check_pixel_2bpp(&lockrect, 0, 0, 0x558c);
         check_pixel_2bpp(&lockrect, 1, 0, 0x5565);
         check_pixel_2bpp(&lockrect, 0, 1, 0xaa95);
         check_pixel_2bpp(&lockrect, 1, 1, 0xffcb);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
         hr = D3DXLoadSurfaceFromMemory(surf, NULL, NULL, pixdata_a8l8,
                 D3DFMT_A8L8, 4, NULL, &rect, D3DX_FILTER_NONE, 0);
-        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#lx.\n", hr);
         hr = IDirect3DSurface9_LockRect(surf, &lockrect, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#lx.\n", hr);
         check_pixel_2bpp(&lockrect, 0, 0, 0xff00);
         check_pixel_2bpp(&lockrect, 1, 0, 0x00ff);
         check_pixel_2bpp(&lockrect, 0, 1, 0xff30);
         check_pixel_2bpp(&lockrect, 1, 1, 0x7f7f);
         hr = IDirect3DSurface9_UnlockRect(surf);
-        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#lx.\n", hr);
 
         check_release((IUnknown*)surf, 1);
         check_release((IUnknown*)tex, 0);
@@ -1399,19 +1399,19 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
     /* DXT1, DXT2, DXT3, DXT4, DXT5 */
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf, NULL);
     if (FAILED(hr))
-        skip("Failed to create A8R8G8B8 surface, hr %#x.\n", hr);
+        skip("Failed to create A8R8G8B8 surface, hr %#lx.\n", hr);
     else
     {
         hr = D3DXLoadSurfaceFromFileInMemory(surf, NULL, NULL, dds_24bit, sizeof(dds_24bit), NULL, D3DX_FILTER_NONE, 0, NULL);
-        ok(SUCCEEDED(hr), "Failed to load surface, hr %#x.\n", hr);
+        ok(SUCCEEDED(hr), "Failed to load surface, hr %#lx.\n", hr);
 
         hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT2, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT2 texture, hr %#x.\n", hr);
+            skip("Failed to create DXT2 texture, hr %#lx.\n", hr);
         else
         {
             hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
-            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#lx.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             ok(SUCCEEDED(hr), "Failed to convert pixels to DXT2 format.\n");
             check_release((IUnknown*)newsurf, 1);
@@ -1420,11 +1420,11 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT3, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT3 texture, hr %#x.\n", hr);
+            skip("Failed to create DXT3 texture, hr %#lx.\n", hr);
         else
         {
             hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
-            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#lx.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             ok(SUCCEEDED(hr), "Failed to convert pixels to DXT3 format.\n");
             check_release((IUnknown*)newsurf, 1);
@@ -1433,11 +1433,11 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT4, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT4 texture, hr %#x.\n", hr);
+            skip("Failed to create DXT4 texture, hr %#lx.\n", hr);
         else
         {
             hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
-            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#lx.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             ok(SUCCEEDED(hr), "Failed to convert pixels to DXT4 format.\n");
             check_release((IUnknown*)newsurf, 1);
@@ -1446,54 +1446,54 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT5 texture, hr %#x.\n", hr);
+            skip("Failed to create DXT5 texture, hr %#lx.\n", hr);
         else
         {
             hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
-            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#lx.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             ok(SUCCEEDED(hr), "Failed to convert pixels to DXT5 format.\n");
 
             SetRect(&rect, 0, 0, 4, 2);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, &rect, surf, NULL, &rect, D3DX_FILTER_NONE, 0);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
             hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &rect, &dds_dxt5[128],
                     D3DFMT_DXT5, 16, NULL, &rect, D3DX_FILTER_NONE, 0);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
             check_release((IUnknown *)newsurf, 1);
             check_release((IUnknown *)tex, 0);
 
             /* Test a rect larger than but not an integer multiple of the block size. */
             hr = IDirect3DDevice9_CreateTexture(device, 4, 8, 1, 0, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &tex, NULL);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
             hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
             SetRect(&rect, 0, 0, 4, 6);
             hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &rect, &dds_dxt5[112],
                     D3DFMT_DXT5, 16, NULL, &rect, D3DX_FILTER_POINT, 0);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
             check_release((IUnknown *)newsurf, 1);
             check_release((IUnknown *)tex, 0);
 
             /* More misalignment tests. */
             hr = IDirect3DDevice9_CreateTexture(device, 8, 8, 1, 0, D3DFMT_DXT5, D3DPOOL_SYSTEMMEM, &tex, NULL);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
             hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
             SetRect(&rect, 2, 2, 6, 6);
             hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, NULL, &dds_dxt5_8_8[128],
                     D3DFMT_DXT5, 16 * 2, NULL, &rect, D3DX_FILTER_POINT, 0);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
             hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &rect, &dds_dxt5_8_8[128],
                     D3DFMT_DXT5, 16 * 2, NULL, NULL, D3DX_FILTER_POINT, 0);
-            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
             hr = D3DXLoadSurfaceFromMemory(newsurf, NULL, &rect, &dds_dxt5_8_8[128],
                     D3DFMT_DXT5, 16 * 2, NULL, &rect, D3DX_FILTER_POINT, 0);
-            ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+            ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
             check_release((IUnknown *)newsurf, 1);
             check_release((IUnknown *)tex, 0);
@@ -1501,11 +1501,11 @@ static void test_D3DXLoadSurface(IDirect3DDevice9 *device)
 
         hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 1, 0, D3DFMT_DXT1, D3DPOOL_SYSTEMMEM, &tex, NULL);
         if (FAILED(hr))
-            skip("Failed to create DXT1 texture, hr %#x.\n", hr);
+            skip("Failed to create DXT1 texture, hr %#lx.\n", hr);
         else
         {
             hr = IDirect3DTexture9_GetSurfaceLevel(tex, 0, &newsurf);
-            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#x.\n", hr);
+            ok(SUCCEEDED(hr), "Failed to get the surface, hr %#lx.\n", hr);
             hr = D3DXLoadSurfaceFromSurface(newsurf, NULL, NULL, surf, NULL, NULL, D3DX_FILTER_NONE, 0);
             ok(SUCCEEDED(hr), "Failed to convert pixels to DXT1 format.\n");
 
@@ -1560,47 +1560,47 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
     SetRectEmpty(&rect);
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_BMP, surface, NULL, &rect);
     /* fails with the debug version of d3d9 */
-    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "D3DXSaveSurfaceToFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
+    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "D3DXSaveSurfaceToFileInMemory returned %#lx, expected %#lx\n", hr, D3D_OK);
     if (SUCCEEDED(hr)) {
         DWORD size = ID3DXBuffer_GetBufferSize(buffer);
-        ok(size > 0, "ID3DXBuffer_GetBufferSize returned %u, expected > 0\n", size);
+        ok(size > 0, "ID3DXBuffer_GetBufferSize returned %lu, expected > 0\n", size);
         ID3DXBuffer_Release(buffer);
     }
 
     SetRectEmpty(&rect);
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, &rect);
-    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr))
     {
         dds = ID3DXBuffer_GetBufferPointer(buffer);
 
-        ok(dds->magic == MAKEFOURCC('D','D','S',' '), "Got unexpected DDS signature %#x.\n", dds->magic);
-        ok(dds->header.size == sizeof(dds->header), "Got unexpected DDS size %u.\n", dds->header.size);
-        ok(!dds->header.height, "Got unexpected height %u.\n", dds->header.height);
-        ok(!dds->header.width, "Got unexpected width %u.\n", dds->header.width);
-        ok(!dds->header.depth, "Got unexpected depth %u.\n", dds->header.depth);
-        ok(!dds->header.miplevels, "Got unexpected miplevels %u.\n", dds->header.miplevels);
-        ok(!dds->header.pitch_or_linear_size, "Got unexpected pitch_or_linear_size %u.\n", dds->header.pitch_or_linear_size);
-        ok(dds->header.caps == (DDS_CAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %#x.\n", dds->header.caps);
+        ok(dds->magic == MAKEFOURCC('D','D','S',' '), "Got unexpected DDS signature %#lx.\n", dds->magic);
+        ok(dds->header.size == sizeof(dds->header), "Got unexpected DDS size %lu.\n", dds->header.size);
+        ok(!dds->header.height, "Got unexpected height %lu.\n", dds->header.height);
+        ok(!dds->header.width, "Got unexpected width %lu.\n", dds->header.width);
+        ok(!dds->header.depth, "Got unexpected depth %lu.\n", dds->header.depth);
+        ok(!dds->header.miplevels, "Got unexpected miplevels %lu.\n", dds->header.miplevels);
+        ok(!dds->header.pitch_or_linear_size, "Got unexpected pitch_or_linear_size %lu.\n", dds->header.pitch_or_linear_size);
+        ok(dds->header.caps == (DDS_CAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %#lx.\n", dds->header.caps);
         ok(dds->header.flags == (DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT),
-                "Got unexpected flags %#x.\n", dds->header.flags);
+                "Got unexpected flags %#lx.\n", dds->header.flags);
         ID3DXBuffer_Release(buffer);
     }
 
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     dds = ID3DXBuffer_GetBufferPointer(buffer);
-    ok(dds->magic == MAKEFOURCC('D','D','S',' '), "Got unexpected DDS signature %#x.\n", dds->magic);
-    ok(dds->header.size == sizeof(dds->header), "Got unexpected DDS size %u.\n", dds->header.size);
-    ok(dds->header.height == 4, "Got unexpected height %u.\n", dds->header.height);
-    ok(dds->header.width == 4, "Got unexpected width %u.\n", dds->header.width);
-    ok(!dds->header.depth, "Got unexpected depth %u.\n", dds->header.depth);
-    ok(!dds->header.miplevels, "Got unexpected miplevels %u.\n", dds->header.miplevels);
-    ok(!dds->header.pitch_or_linear_size, "Got unexpected pitch_or_linear_size %u.\n", dds->header.pitch_or_linear_size);
-    todo_wine ok(dds->header.caps == (DDS_CAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %#x.\n", dds->header.caps);
+    ok(dds->magic == MAKEFOURCC('D','D','S',' '), "Got unexpected DDS signature %#lx.\n", dds->magic);
+    ok(dds->header.size == sizeof(dds->header), "Got unexpected DDS size %lu.\n", dds->header.size);
+    ok(dds->header.height == 4, "Got unexpected height %lu.\n", dds->header.height);
+    ok(dds->header.width == 4, "Got unexpected width %lu.\n", dds->header.width);
+    ok(!dds->header.depth, "Got unexpected depth %lu.\n", dds->header.depth);
+    ok(!dds->header.miplevels, "Got unexpected miplevels %lu.\n", dds->header.miplevels);
+    ok(!dds->header.pitch_or_linear_size, "Got unexpected pitch_or_linear_size %lu.\n", dds->header.pitch_or_linear_size);
+    todo_wine ok(dds->header.caps == (DDS_CAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %#lx.\n", dds->header.caps);
     ok(dds->header.flags == (DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT),
-            "Got unexpected flags %#x.\n", dds->header.flags);
+            "Got unexpected flags %#lx.\n", dds->header.flags);
     ID3DXBuffer_Release(buffer);
 
     IDirect3DSurface9_Release(surface);
@@ -1609,17 +1609,17 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
     {
         hr = IDirect3DDevice9_CreateTexture(device, 4, 4, 0, test_access_types[i].usage,
                 D3DFMT_A8R8G8B8, test_access_types[i].pool, &texture, NULL);
-        ok(hr == D3D_OK, "Unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == D3D_OK, "Unexpected hr %#lx, i %u.\n", hr, i);
 
         hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface);
-        ok(hr == D3D_OK, "Unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == D3D_OK, "Unexpected hr %#lx, i %u.\n", hr, i);
 
         hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, NULL);
-        ok(hr == D3D_OK, "Unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == D3D_OK, "Unexpected hr %#lx, i %u.\n", hr, i);
         ID3DXBuffer_Release(buffer);
 
         hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_BMP, surface, NULL, NULL);
-        ok(hr == D3D_OK, "Unexpected hr %#x, i %u.\n", hr, i);
+        ok(hr == D3D_OK, "Unexpected hr %#lx, i %u.\n", hr, i);
         ID3DXBuffer_Release(buffer);
 
         IDirect3DSurface9_Release(surface);
@@ -1649,14 +1649,14 @@ static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
     SetRect(&rect, 0, 0, 2, 2);
     hr = D3DXLoadSurfaceFromMemory(surface, NULL, NULL, pixels, D3DFMT_R8G8B8,
             pitch, NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXSaveSurfaceToFileA("saved_surface.bmp", D3DXIFF_BMP, surface, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXLoadSurfaceFromFileA(surface, NULL, NULL, "saved_surface.bmp",
             NULL, D3DX_FILTER_NONE, 0, &image_info);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     ok(image_info.Width == 2, "Wrong width %u.\n", image_info.Width);
     ok(image_info.Height == 2, "Wrong height %u.\n", image_info.Height);
@@ -1664,7 +1664,7 @@ static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
     ok(image_info.ImageFileFormat == D3DXIFF_BMP, "Wrong file format %u.\n", image_info.ImageFileFormat);
 
     hr = IDirect3DSurface9_LockRect(surface, &lock_rect, NULL, D3DLOCK_READONLY);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     ok(!memcmp(lock_rect.pBits, pixels, pitch),
             "Pixel data mismatch in the first row.\n");
@@ -1675,14 +1675,14 @@ static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
 
     SetRect(&rect, 0, 1, 2, 2);
     hr = D3DXSaveSurfaceToFileA("saved_surface.bmp", D3DXIFF_BMP, surface, NULL, &rect);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     SetRect(&rect, 0, 0, 2, 1);
     hr = D3DXLoadSurfaceFromFileA(surface, NULL, &rect, "saved_surface.bmp", NULL,
             D3DX_FILTER_NONE, 0, &image_info);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DSurface9_LockRect(surface, &lock_rect, NULL, D3DLOCK_READONLY);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(lock_rect.pBits, pixels + pitch, pitch),
             "Pixel data mismatch in the first row.\n");
     ok(!memcmp((BYTE *)lock_rect.pBits + lock_rect.Pitch, pixels + pitch, pitch),
@@ -1692,33 +1692,33 @@ static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
     SetRect(&rect, 0, 0, 2, 2);
     hr = D3DXLoadSurfaceFromMemory(surface, NULL, NULL, pixels, D3DFMT_R8G8B8,
             pitch, NULL, &rect, D3DX_FILTER_NONE, 0);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXSaveSurfaceToFileA(NULL, D3DXIFF_BMP, surface, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     /* PPM and TGA are supported, even though MSDN claims they aren't */
     todo_wine
     {
         hr = D3DXSaveSurfaceToFileA("saved_surface.ppm", D3DXIFF_PPM, surface, NULL, NULL);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
         hr = D3DXSaveSurfaceToFileA("saved_surface.tga", D3DXIFF_TGA, surface, NULL, NULL);
-        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     }
 
     hr = D3DXSaveSurfaceToFileA("saved_surface.dds", D3DXIFF_DDS, surface, NULL, NULL);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXLoadSurfaceFromFileA(surface, NULL, NULL, "saved_surface.dds",
             NULL, D3DX_FILTER_NONE, 0, &image_info);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
 
     ok(image_info.Width == 2, "Wrong width %u.\n", image_info.Width);
     ok(image_info.Format == D3DFMT_R8G8B8, "Wrong format %#x.\n", image_info.Format);
     ok(image_info.ImageFileFormat == D3DXIFF_DDS, "Wrong file format %u.\n", image_info.ImageFileFormat);
 
     hr = IDirect3DSurface9_LockRect(surface, &lock_rect, NULL, D3DLOCK_READONLY);
-    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     ok(!memcmp(lock_rect.pBits, pixels, pitch),
             "Pixel data mismatch in the first row.\n");
     ok(!memcmp((BYTE *)lock_rect.pBits + lock_rect.Pitch, pixels + pitch, pitch),
@@ -1726,24 +1726,24 @@ static void test_D3DXSaveSurfaceToFile(IDirect3DDevice9 *device)
     IDirect3DSurface9_UnlockRect(surface);
 
     hr = D3DXSaveSurfaceToFileA("saved_surface", D3DXIFF_PFM + 1, surface, NULL, NULL);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
 
     SetRect(&rect, 0, 0, 4, 4);
     hr = D3DXSaveSurfaceToFileA("saved_surface.bmp", D3DXIFF_BMP, surface, NULL, &rect);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
     SetRect(&rect, 2, 0, 1, 4);
     hr = D3DXSaveSurfaceToFileA("saved_surface.bmp", D3DXIFF_BMP, surface, NULL, &rect);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
     SetRect(&rect, 0, 2, 4, 1);
     hr = D3DXSaveSurfaceToFileA("saved_surface.bmp", D3DXIFF_BMP, surface, NULL, &rect);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
     SetRect(&rect, -1, -1, 2, 2);
     hr = D3DXSaveSurfaceToFileA("saved_surface.bmp", D3DXIFF_BMP, surface, NULL, &rect);
-    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#lx.\n", hr);
     SetRectEmpty(&rect);
     hr = D3DXSaveSurfaceToFileA("saved_surface.bmp", D3DXIFF_BMP, surface, NULL, &rect);
     /* fails when debug version of d3d9 is used */
-    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3D_OK || broken(hr == D3DERR_INVALIDCALL), "Got unexpected hr %#lx.\n", hr);
 
     DeleteFileA("saved_surface.bmp");
     DeleteFileA("saved_surface.ppm");
@@ -1779,7 +1779,7 @@ START_TEST(surface)
     d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
     hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
     if(FAILED(hr)) {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
+        skip("Failed to create IDirect3DDevice9 object %#lx\n", hr);
         IDirect3D9_Release(d3d);
         DestroyWindow(wnd);
         return;
