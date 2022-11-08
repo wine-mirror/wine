@@ -399,6 +399,8 @@ NTSTATUS WINAPI wow64_NtQueryVirtualMemory( UINT *args )
                 info32->State = info.State;
                 info32->Protect = info.Protect;
                 info32->Type = info.Type;
+                if ((ULONG_PTR)info.BaseAddress + info.RegionSize > highest_user_address)
+                    info32->RegionSize = highest_user_address - (ULONG_PTR)info.BaseAddress + 1;
             }
         }
         res_len = sizeof(MEMORY_BASIC_INFORMATION32);
