@@ -42,6 +42,18 @@
     - wine wineboot.exe -u
     - wineserver -w
 
+test-linux-64:
+  extends: .wine-test
+  variables:
+    INCLUDE_TESTS: "dinput"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+  needs:
+    - job: build-linux
+  script:
+    - export WINETEST_COLOR=1
+    - wine usr/local/lib/wine/x86_64-windows/winetest.exe -q -q -o - -t gitlab -u $CI_JOB_URL $INCLUDE_TESTS
+
 test-linux-32:
   extends: .wine-test
   variables:
