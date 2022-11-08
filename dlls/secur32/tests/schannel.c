@@ -1778,6 +1778,133 @@ static void test_dtls(void)
     FreeCredentialsHandle( &cred_handle );
 }
 
+static void test_connection_shutdown(void)
+{
+    static const BYTE message[] = {0x15, 0x03, 0x01, 0x00, 0x02, 0x01, 0x00};
+    CtxtHandle context, context2;
+    SecBufferDesc buffers[2];
+    SECURITY_STATUS status;
+    CredHandle cred_handle;
+    SCHANNEL_CRED cred;
+    SecBuffer *buf;
+    ULONG attrs;
+    void *tmp;
+
+    init_cred(&cred);
+    cred.grbitEnabledProtocols = SP_PROT_TLS1_CLIENT;
+    cred.dwFlags = SCH_CRED_NO_DEFAULT_CREDS | SCH_CRED_MANUAL_CRED_VALIDATION;
+
+    status = AcquireCredentialsHandleA( NULL, (SEC_CHAR *)UNISP_NAME_A, SECPKG_CRED_OUTBOUND, NULL,
+                                        &cred, NULL, NULL, &cred_handle, NULL );
+    ok( status == SEC_E_OK, "got %08lx\n", status );
+
+    init_buffers( &buffers[0], 2, 0 );
+    init_buffers( &buffers[1], 1, 1000 );
+    buffers[0].cBuffers = 1;
+    buffers[0].pBuffers[0].BufferType = SECBUFFER_EMPTY;
+    buffers[1].cBuffers = 1;
+    buffers[1].pBuffers[0].BufferType = SECBUFFER_TOKEN;
+    buffers[1].pBuffers[0].cbBuffer = 1000;
+    tmp = buffers[1].pBuffers[0].pvBuffer;
+    buffers[1].pBuffers[0].pvBuffer = NULL;
+    status = InitializeSecurityContextA( &cred_handle, NULL, (SEC_CHAR *)"localhost",
+                                         ISC_REQ_CONFIDENTIALITY | ISC_REQ_STREAM,
+                                         0, 0, &buffers[0], 0, &context, &buffers[1], &attrs, NULL );
+    ok( status == SEC_I_CONTINUE_NEEDED, "Expected SEC_I_CONTINUE_NEEDED, got %08lx\n", status );
+    todo_wine ok( !!buffers[1].pBuffers[0].pvBuffer, "Got NULL buffer.\n" );
+    FreeContextBuffer( buffers[1].pBuffers[0].pvBuffer );
+    buffers[1].pBuffers[0].pvBuffer = tmp;
+
+    buf = &buffers[0].pBuffers[0];
+    buffers[0].cBuffers = 2;
+    buf->cbBuffer = sizeof(DWORD);
+    *(DWORD *)buf->pvBuffer = SCHANNEL_SHUTDOWN;
+    buf->BufferType = SECBUFFER_TOKEN;
+    buffers[0].pBuffers[1] = buffers[0].pBuffers[0];
+
+    status = ApplyControlToken( &context, buffers );
+    todo_wine ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
+
+    buffers[0].pBuffers[1].cbBuffer = 0;
+    buffers[0].pBuffers[1].BufferType = SECBUFFER_EMPTY;
+    status = ApplyControlToken( &context, buffers );
+    todo_wine ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
+
+    *(DWORD *)buf->pvBuffer = SCHANNEL_RENEGOTIATE;
+    buffers[0].cBuffers = 1;
+    status = ApplyControlToken( &context, buffers );
+    ok( status == SEC_E_UNSUPPORTED_FUNCTION, "got %08lx.\n", status );
+
+    status = ApplyControlToken(NULL, buffers);
+    ok( status == SEC_E_INVALID_HANDLE, "got %08lx.\n", status );
+
+    status = ApplyControlToken( &context, NULL );
+    todo_wine ok( status == SEC_E_INTERNAL_ERROR, "got %08lx.\n", status );
+
+    *(DWORD *)buf->pvBuffer = SCHANNEL_SHUTDOWN;
+
+    buf->BufferType = SECBUFFER_ALERT;
+    status = ApplyControlToken( &context, buffers );
+    todo_wine ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
+    buf->BufferType = SECBUFFER_DATA;
+    status = ApplyControlToken( &context, buffers );
+    todo_wine ok( status == SEC_E_INVALID_TOKEN, "got %08lx.\n", status );
+
+    buf->BufferType = SECBUFFER_TOKEN;
+
+    buf->cbBuffer = 2;
+    status = ApplyControlToken( &context, buffers );
+    ok( status == SEC_E_UNSUPPORTED_FUNCTION, "got %08lx.\n", status );
+
+    buf->cbBuffer = sizeof(DWORD) + 1;
+    status = ApplyControlToken( &context, buffers );
+    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
+
+    status = ApplyControlToken( &context, buffers );
+    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
+
+    buf->cbBuffer = 1000;
+    buf->BufferType = SECBUFFER_TOKEN;
+    context2.dwLower = context2.dwUpper = 0xdeadbeef;
+    status = InitializeSecurityContextA( &cred_handle, &context, NULL, 0, 0, 0, &buffers[1], 0,
+                                         &context2, &buffers[0], &attrs, NULL );
+    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
+    todo_wine ok( context.dwLower == context2.dwLower, "dwLower mismatch, expected %#Ix, got %#Ix\n",
+                                             context.dwLower, context2.dwLower );
+    todo_wine ok( context.dwUpper == context2.dwUpper, "dwUpper mismatch, expected %#Ix, got %#Ix\n",
+                                             context.dwUpper, context2.dwUpper );
+    todo_wine ok( buf->cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buf->cbBuffer );
+    todo_wine ok( !memcmp( buf->pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
+
+    buf->BufferType = SECBUFFER_TOKEN;
+    buf->cbBuffer = 1000;
+    context2.dwLower = context2.dwUpper = 0xdeadbeef;
+    status = InitializeSecurityContextA( &cred_handle, &context, NULL, 0, 0, 0, NULL, 0,
+                                         &context2, &buffers[1], &attrs, NULL );
+    todo_wine ok( status == SEC_E_INCOMPLETE_MESSAGE, "got %08lx.\n", status );
+    ok( buf->cbBuffer == 1000, "got cbBuffer %#lx.\n", buf->cbBuffer );
+    ok( context2.dwLower == 0xdeadbeef, "dwLower mismatch, got %#Ix\n", context2.dwLower );
+    ok( context2.dwUpper == 0xdeadbeef, "dwUpper mismatch, got %#Ix\n", context2.dwUpper );
+
+    buf->cbBuffer = sizeof(DWORD);
+    *(DWORD *)buf->pvBuffer = SCHANNEL_SHUTDOWN;
+    buf->BufferType = SECBUFFER_TOKEN;
+    status = ApplyControlToken( &context, buffers );
+    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
+
+    buf->cbBuffer = 1000;
+    status = InitializeSecurityContextA( &cred_handle, &context, NULL, 0, 0, 0,
+                                         NULL, 0, NULL, &buffers[0], &attrs, NULL );
+    todo_wine ok( status == SEC_E_OK, "got %08lx.\n", status );
+    todo_wine ok( buf->cbBuffer == sizeof(message), "got cbBuffer %#lx.\n", buf->cbBuffer );
+    todo_wine ok( !memcmp( buf->pvBuffer, message, sizeof(message) ), "message data mismatch.\n" );
+
+    free_buffers( &buffers[0] );
+    free_buffers( &buffers[1] );
+    DeleteSecurityContext( &context );
+    FreeCredentialsHandle( &cred_handle );
+}
+
 START_TEST(schannel)
 {
     WSADATA wsa_data;
@@ -1791,4 +1918,5 @@ START_TEST(schannel)
     test_communication();
     test_application_protocol_negotiation();
     test_dtls();
+    test_connection_shutdown();
 }
