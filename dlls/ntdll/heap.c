@@ -1099,7 +1099,7 @@ static BOOL validate_free_block( const struct heap *heap, const SUBHEAP *subheap
         err = "invalid previous free block pointer";
     else if (!(block_get_flags( prev ) & BLOCK_FLAG_FREE) || block_get_type( prev ) != BLOCK_TYPE_FREE)
         err = "invalid previous free block header";
-    else if ((next = next_block( subheap, (struct block *)block )))
+    else if ((next = next_block( subheap, block )))
     {
         if (!(block_get_flags( next ) & BLOCK_FLAG_PREV_FREE))
             err = "invalid next block flags";
