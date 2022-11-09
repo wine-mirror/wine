@@ -414,25 +414,25 @@ static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
         {
             device_luid_valid = VK_TRUE;
             device_node_mask = 1;
-
-            if (id)
-            {
-                memcpy(&id->deviceLUID, &luid, sizeof(id->deviceLUID));
-                id->deviceLUIDValid = device_luid_valid;
-                id->deviceNodeMask = device_node_mask;
-            }
-
-            if (vk11)
-            {
-                memcpy(&vk11->deviceLUID, &luid, sizeof(vk11->deviceLUID));
-                vk11->deviceLUIDValid = device_luid_valid;
-                vk11->deviceNodeMask = device_node_mask;
-            }
             break;
         }
     }
     SetupDiDestroyDeviceInfoList(devinfo);
     release_display_device_init_mutex(mutex);
+
+    if (id)
+    {
+        if (device_luid_valid) memcpy(&id->deviceLUID, &luid, sizeof(id->deviceLUID));
+        id->deviceLUIDValid = device_luid_valid;
+        id->deviceNodeMask = device_node_mask;
+    }
+
+    if (vk11)
+    {
+        if (device_luid_valid) memcpy(&vk11->deviceLUID, &luid, sizeof(vk11->deviceLUID));
+        vk11->deviceLUIDValid = device_luid_valid;
+        vk11->deviceNodeMask = device_node_mask;
+    }
 
     TRACE("deviceName:%s deviceLUIDValid:%d LUID:%08lx:%08lx deviceNodeMask:%#x.\n",
             properties2->properties.deviceName, device_luid_valid, luid.HighPart, luid.LowPart,
