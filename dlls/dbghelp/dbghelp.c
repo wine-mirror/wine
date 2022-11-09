@@ -332,6 +332,16 @@ const WCHAR *process_getenv(const struct process *process, const WCHAR *name)
     return NULL;
 }
 
+const struct cpu* process_get_cpu(const struct process* pcs)
+{
+    const struct module* m = pcs->lmodules;
+
+    /* main module is the last one in list */
+    if (!m) return dbghelp_current_cpu;
+    while (m->next) m = m->next;
+    return m->cpu;
+}
+
 /******************************************************************
  *		check_live_target
  *
