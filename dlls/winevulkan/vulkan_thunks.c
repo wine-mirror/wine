@@ -250,7 +250,7 @@ static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(const Vk
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkCommandBufferInheritanceInfo_host *convert_VkCommandBufferInheritanceInfo_array_win32_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo *in, uint32_t count)
+static inline const VkCommandBufferInheritanceInfo_host *convert_VkCommandBufferInheritanceInfo_array_win32_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo *in, uint32_t count)
 {
     VkCommandBufferInheritanceInfo_host *out;
     unsigned int i;
@@ -295,7 +295,7 @@ static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBindAccelerationStructureMemoryInfoNV_host *convert_VkBindAccelerationStructureMemoryInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkBindAccelerationStructureMemoryInfoNV *in, uint32_t count)
+static inline const VkBindAccelerationStructureMemoryInfoNV_host *convert_VkBindAccelerationStructureMemoryInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkBindAccelerationStructureMemoryInfoNV *in, uint32_t count)
 {
     VkBindAccelerationStructureMemoryInfoNV_host *out;
     unsigned int i;
@@ -326,7 +326,7 @@ static inline void convert_VkBindBufferMemoryInfo_win32_to_host(const VkBindBuff
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBindBufferMemoryInfo_host *convert_VkBindBufferMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindBufferMemoryInfo *in, uint32_t count)
+static inline const VkBindBufferMemoryInfo_host *convert_VkBindBufferMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindBufferMemoryInfo *in, uint32_t count)
 {
     VkBindBufferMemoryInfo_host *out;
     unsigned int i;
@@ -407,7 +407,7 @@ static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBindImageMemoryInfo_host *convert_VkBindImageMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo *in, uint32_t count)
+static inline const VkBindImageMemoryInfo_host *convert_VkBindImageMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo *in, uint32_t count)
 {
     VkBindImageMemoryInfo_host *out;
     unsigned int i;
@@ -444,7 +444,7 @@ static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkAccelerationStructureBuildGeometryInfoKHR_host *convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR *in, uint32_t count)
+static inline const VkAccelerationStructureBuildGeometryInfoKHR_host *convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR *in, uint32_t count)
 {
     VkAccelerationStructureBuildGeometryInfoKHR_host *out;
     unsigned int i;
@@ -483,7 +483,7 @@ static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(const VkMicromap
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkMicromapBuildInfoEXT_host *convert_VkMicromapBuildInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkMicromapBuildInfoEXT *in, uint32_t count)
+static inline const VkMicromapBuildInfoEXT_host *convert_VkMicromapBuildInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkMicromapBuildInfoEXT *in, uint32_t count)
 {
     VkMicromapBuildInfoEXT_host *out;
     unsigned int i;
@@ -547,7 +547,7 @@ static inline void convert_VkRenderingAttachmentInfo_win32_to_host(const VkRende
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkRenderingAttachmentInfo_host *convert_VkRenderingAttachmentInfo_array_win32_to_host(struct conversion_context *ctx, const VkRenderingAttachmentInfo *in, uint32_t count)
+static inline const VkRenderingAttachmentInfo_host *convert_VkRenderingAttachmentInfo_array_win32_to_host(struct conversion_context *ctx, const VkRenderingAttachmentInfo *in, uint32_t count)
 {
     VkRenderingAttachmentInfo_host *out;
     unsigned int i;
@@ -733,7 +733,7 @@ static inline void convert_VkGeometryNV_win32_to_host(const VkGeometryNV *in, Vk
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkGeometryNV_host *convert_VkGeometryNV_array_win32_to_host(struct conversion_context *ctx, const VkGeometryNV *in, uint32_t count)
+static inline const VkGeometryNV_host *convert_VkGeometryNV_array_win32_to_host(struct conversion_context *ctx, const VkGeometryNV *in, uint32_t count)
 {
     VkGeometryNV_host *out;
     unsigned int i;
@@ -803,7 +803,7 @@ static inline void convert_VkBufferCopy_win32_to_host(const VkBufferCopy *in, Vk
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBufferCopy_host *convert_VkBufferCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy *in, uint32_t count)
+static inline const VkBufferCopy_host *convert_VkBufferCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy *in, uint32_t count)
 {
     VkBufferCopy_host *out;
     unsigned int i;
@@ -834,7 +834,7 @@ static inline void convert_VkBufferCopy2_win32_to_host(const VkBufferCopy2 *in, 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBufferCopy2_host *convert_VkBufferCopy2_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy2 *in, uint32_t count)
+static inline const VkBufferCopy2_host *convert_VkBufferCopy2_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy2 *in, uint32_t count)
 {
     VkBufferCopy2_host *out;
     unsigned int i;
@@ -880,7 +880,7 @@ static inline void convert_VkBufferImageCopy_win32_to_host(const VkBufferImageCo
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy *in, uint32_t count)
+static inline const VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy *in, uint32_t count)
 {
     VkBufferImageCopy_host *out;
     unsigned int i;
@@ -914,7 +914,7 @@ static inline void convert_VkBufferImageCopy2_win32_to_host(const VkBufferImageC
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBufferImageCopy2_host *convert_VkBufferImageCopy2_array_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy2 *in, uint32_t count)
+static inline const VkBufferImageCopy2_host *convert_VkBufferImageCopy2_array_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy2 *in, uint32_t count)
 {
     VkBufferImageCopy2_host *out;
     unsigned int i;
@@ -1065,7 +1065,7 @@ static inline void convert_VkDecompressMemoryRegionNV_win32_to_host(const VkDeco
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkDecompressMemoryRegionNV_host *convert_VkDecompressMemoryRegionNV_array_win32_to_host(struct conversion_context *ctx, const VkDecompressMemoryRegionNV *in, uint32_t count)
+static inline const VkDecompressMemoryRegionNV_host *convert_VkDecompressMemoryRegionNV_array_win32_to_host(struct conversion_context *ctx, const VkDecompressMemoryRegionNV *in, uint32_t count)
 {
     VkDecompressMemoryRegionNV_host *out;
     unsigned int i;
@@ -1083,7 +1083,7 @@ static inline VkDecompressMemoryRegionNV_host *convert_VkDecompressMemoryRegionN
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkCommandBuffer *convert_VkCommandBuffer_array_win64_to_host(struct conversion_context *ctx, const VkCommandBuffer *in, uint32_t count)
+static inline const VkCommandBuffer *convert_VkCommandBuffer_array_win64_to_host(struct conversion_context *ctx, const VkCommandBuffer *in, uint32_t count)
 {
     VkCommandBuffer *out;
     unsigned int i;
@@ -1101,7 +1101,7 @@ static inline VkCommandBuffer *convert_VkCommandBuffer_array_win64_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkCommandBuffer *convert_VkCommandBuffer_array_win32_to_host(struct conversion_context *ctx, const VkCommandBuffer *in, uint32_t count)
+static inline const VkCommandBuffer *convert_VkCommandBuffer_array_win32_to_host(struct conversion_context *ctx, const VkCommandBuffer *in, uint32_t count)
 {
     VkCommandBuffer *out;
     unsigned int i;
@@ -1129,7 +1129,7 @@ static inline void convert_VkIndirectCommandsStreamNV_win32_to_host(const VkIndi
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsStreamNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsStreamNV *in, uint32_t count)
+static inline const VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsStreamNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsStreamNV *in, uint32_t count)
 {
     VkIndirectCommandsStreamNV_host *out;
     unsigned int i;
@@ -1187,7 +1187,7 @@ static inline void convert_VkBufferMemoryBarrier_win32_to_host(const VkBufferMem
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBufferMemoryBarrier_host *convert_VkBufferMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier *in, uint32_t count)
+static inline const VkBufferMemoryBarrier_host *convert_VkBufferMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier *in, uint32_t count)
 {
     VkBufferMemoryBarrier_host *out;
     unsigned int i;
@@ -1223,7 +1223,7 @@ static inline void convert_VkImageMemoryBarrier_win32_to_host(const VkImageMemor
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkImageMemoryBarrier_host *convert_VkImageMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier *in, uint32_t count)
+static inline const VkImageMemoryBarrier_host *convert_VkImageMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier *in, uint32_t count)
 {
     VkImageMemoryBarrier_host *out;
     unsigned int i;
@@ -1260,7 +1260,7 @@ static inline void convert_VkBufferMemoryBarrier2_win32_to_host(const VkBufferMe
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBufferMemoryBarrier2_host *convert_VkBufferMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier2 *in, uint32_t count)
+static inline const VkBufferMemoryBarrier2_host *convert_VkBufferMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier2 *in, uint32_t count)
 {
     VkBufferMemoryBarrier2_host *out;
     unsigned int i;
@@ -1298,7 +1298,7 @@ static inline void convert_VkImageMemoryBarrier2_win32_to_host(const VkImageMemo
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkImageMemoryBarrier2_host *convert_VkImageMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier2 *in, uint32_t count)
+static inline const VkImageMemoryBarrier2_host *convert_VkImageMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier2 *in, uint32_t count)
 {
     VkImageMemoryBarrier2_host *out;
     unsigned int i;
@@ -1344,7 +1344,7 @@ static inline void convert_VkDescriptorImageInfo_win32_to_host(const VkDescripto
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorImageInfo *in, uint32_t count)
+static inline const VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorImageInfo *in, uint32_t count)
 {
     VkDescriptorImageInfo_host *out;
     unsigned int i;
@@ -1373,7 +1373,7 @@ static inline void convert_VkDescriptorBufferInfo_win32_to_host(const VkDescript
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkDescriptorBufferInfo_host *convert_VkDescriptorBufferInfo_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorBufferInfo *in, uint32_t count)
+static inline const VkDescriptorBufferInfo_host *convert_VkDescriptorBufferInfo_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorBufferInfo *in, uint32_t count)
 {
     VkDescriptorBufferInfo_host *out;
     unsigned int i;
@@ -1409,7 +1409,7 @@ static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkWriteDescriptorSet_host *convert_VkWriteDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkWriteDescriptorSet *in, uint32_t count)
+static inline const VkWriteDescriptorSet_host *convert_VkWriteDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkWriteDescriptorSet *in, uint32_t count)
 {
     VkWriteDescriptorSet_host *out;
     unsigned int i;
@@ -1478,7 +1478,7 @@ static inline void convert_VkStridedDeviceAddressRegionKHR_win32_to_host(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkDependencyInfo_host *convert_VkDependencyInfo_array_win32_to_host(struct conversion_context *ctx, const VkDependencyInfo *in, uint32_t count)
+static inline const VkDependencyInfo_host *convert_VkDependencyInfo_array_win32_to_host(struct conversion_context *ctx, const VkDependencyInfo *in, uint32_t count)
 {
     VkDependencyInfo_host *out;
     unsigned int i;
@@ -1975,7 +1975,7 @@ static inline void convert_VkComputePipelineCreateInfo_host_to_win32(const VkCom
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkComputePipelineCreateInfo *convert_VkComputePipelineCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo *in, uint32_t count)
+static inline const VkComputePipelineCreateInfo *convert_VkComputePipelineCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo *in, uint32_t count)
 {
     VkComputePipelineCreateInfo *out;
     unsigned int i;
@@ -1993,7 +1993,7 @@ static inline VkComputePipelineCreateInfo *convert_VkComputePipelineCreateInfo_a
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkComputePipelineCreateInfo_host *convert_VkComputePipelineCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo *in, uint32_t count)
+static inline const VkComputePipelineCreateInfo_host *convert_VkComputePipelineCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo *in, uint32_t count)
 {
     VkComputePipelineCreateInfo_host *out;
     unsigned int i;
@@ -2055,7 +2055,7 @@ static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(co
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkPhysicalDevice *convert_VkPhysicalDevice_array_win64_to_host(struct conversion_context *ctx, const VkPhysicalDevice *in, uint32_t count)
+static inline const VkPhysicalDevice *convert_VkPhysicalDevice_array_win64_to_host(struct conversion_context *ctx, const VkPhysicalDevice *in, uint32_t count)
 {
     VkPhysicalDevice *out;
     unsigned int i;
@@ -2073,7 +2073,7 @@ static inline VkPhysicalDevice *convert_VkPhysicalDevice_array_win64_to_host(str
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkPhysicalDevice *convert_VkPhysicalDevice_array_win32_to_host(struct conversion_context *ctx, const VkPhysicalDevice *in, uint32_t count)
+static inline const VkPhysicalDevice *convert_VkPhysicalDevice_array_win32_to_host(struct conversion_context *ctx, const VkPhysicalDevice *in, uint32_t count)
 {
     VkPhysicalDevice *out;
     unsigned int i;
@@ -5738,7 +5738,7 @@ static inline void convert_VkFramebufferCreateInfo_win32_to_host(const VkFramebu
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkPipelineShaderStageCreateInfo *convert_VkPipelineShaderStageCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo *in, uint32_t count)
+static inline const VkPipelineShaderStageCreateInfo *convert_VkPipelineShaderStageCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo *in, uint32_t count)
 {
     VkPipelineShaderStageCreateInfo *out;
     unsigned int i;
@@ -5756,7 +5756,7 @@ static inline VkPipelineShaderStageCreateInfo *convert_VkPipelineShaderStageCrea
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkPipelineShaderStageCreateInfo_host *convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo *in, uint32_t count)
+static inline const VkPipelineShaderStageCreateInfo_host *convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo *in, uint32_t count)
 {
     VkPipelineShaderStageCreateInfo_host *out;
     unsigned int i;
@@ -5802,7 +5802,7 @@ static inline void convert_VkGraphicsShaderGroupCreateInfoNV_win32_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkGraphicsShaderGroupCreateInfoNV *convert_VkGraphicsShaderGroupCreateInfoNV_array_win64_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV *in, uint32_t count)
+static inline const VkGraphicsShaderGroupCreateInfoNV *convert_VkGraphicsShaderGroupCreateInfoNV_array_win64_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV *in, uint32_t count)
 {
     VkGraphicsShaderGroupCreateInfoNV *out;
     unsigned int i;
@@ -5820,7 +5820,7 @@ static inline VkGraphicsShaderGroupCreateInfoNV *convert_VkGraphicsShaderGroupCr
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkGraphicsShaderGroupCreateInfoNV_host *convert_VkGraphicsShaderGroupCreateInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV *in, uint32_t count)
+static inline const VkGraphicsShaderGroupCreateInfoNV_host *convert_VkGraphicsShaderGroupCreateInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV *in, uint32_t count)
 {
     VkGraphicsShaderGroupCreateInfoNV_host *out;
     unsigned int i;
@@ -6278,7 +6278,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_host_to_win32(const VkGr
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkGraphicsPipelineCreateInfo *convert_VkGraphicsPipelineCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo *in, uint32_t count)
+static inline const VkGraphicsPipelineCreateInfo *convert_VkGraphicsPipelineCreateInfo_array_win64_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo *in, uint32_t count)
 {
     VkGraphicsPipelineCreateInfo *out;
     unsigned int i;
@@ -6296,7 +6296,7 @@ static inline VkGraphicsPipelineCreateInfo *convert_VkGraphicsPipelineCreateInfo
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkGraphicsPipelineCreateInfo_host *convert_VkGraphicsPipelineCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo *in, uint32_t count)
+static inline const VkGraphicsPipelineCreateInfo_host *convert_VkGraphicsPipelineCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo *in, uint32_t count)
 {
     VkGraphicsPipelineCreateInfo_host *out;
     unsigned int i;
@@ -6553,7 +6553,7 @@ static inline void convert_VkIndirectCommandsLayoutTokenNV_win32_to_host(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkIndirectCommandsLayoutTokenNV_host *convert_VkIndirectCommandsLayoutTokenNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsLayoutTokenNV *in, uint32_t count)
+static inline const VkIndirectCommandsLayoutTokenNV_host *convert_VkIndirectCommandsLayoutTokenNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsLayoutTokenNV *in, uint32_t count)
 {
     VkIndirectCommandsLayoutTokenNV_host *out;
     unsigned int i;
@@ -6887,7 +6887,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_host_to_win32(const
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkRayTracingPipelineCreateInfoKHR *convert_VkRayTracingPipelineCreateInfoKHR_array_win64_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR *in, uint32_t count)
+static inline const VkRayTracingPipelineCreateInfoKHR *convert_VkRayTracingPipelineCreateInfoKHR_array_win64_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR *in, uint32_t count)
 {
     VkRayTracingPipelineCreateInfoKHR *out;
     unsigned int i;
@@ -6905,7 +6905,7 @@ static inline VkRayTracingPipelineCreateInfoKHR *convert_VkRayTracingPipelineCre
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkRayTracingPipelineCreateInfoKHR_host *convert_VkRayTracingPipelineCreateInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR *in, uint32_t count)
+static inline const VkRayTracingPipelineCreateInfoKHR_host *convert_VkRayTracingPipelineCreateInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR *in, uint32_t count)
 {
     VkRayTracingPipelineCreateInfoKHR_host *out;
     unsigned int i;
@@ -7031,7 +7031,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_host_to_win32(const 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkRayTracingPipelineCreateInfoNV *convert_VkRayTracingPipelineCreateInfoNV_array_win64_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV *in, uint32_t count)
+static inline const VkRayTracingPipelineCreateInfoNV *convert_VkRayTracingPipelineCreateInfoNV_array_win64_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV *in, uint32_t count)
 {
     VkRayTracingPipelineCreateInfoNV *out;
     unsigned int i;
@@ -7049,7 +7049,7 @@ static inline VkRayTracingPipelineCreateInfoNV *convert_VkRayTracingPipelineCrea
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkRayTracingPipelineCreateInfoNV_host *convert_VkRayTracingPipelineCreateInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV *in, uint32_t count)
+static inline const VkRayTracingPipelineCreateInfoNV_host *convert_VkRayTracingPipelineCreateInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV *in, uint32_t count)
 {
     VkRayTracingPipelineCreateInfoNV_host *out;
     unsigned int i;
@@ -7371,7 +7371,7 @@ static inline void convert_VkMappedMemoryRange_win32_to_host(const VkMappedMemor
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_win32_to_host(struct conversion_context *ctx, const VkMappedMemoryRange *in, uint32_t count)
+static inline const VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_win32_to_host(struct conversion_context *ctx, const VkMappedMemoryRange *in, uint32_t count)
 {
     VkMappedMemoryRange_host *out;
     unsigned int i;
@@ -7519,7 +7519,7 @@ static inline void convert_VkDescriptorSetBindingReferenceVALVE_win32_to_host(co
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBufferCreateInfo_host *convert_VkBufferCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo *in, uint32_t count)
+static inline const VkBufferCreateInfo_host *convert_VkBufferCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo *in, uint32_t count)
 {
     VkBufferCreateInfo_host *out;
     unsigned int i;
@@ -7706,7 +7706,7 @@ static inline void convert_VkDeviceFaultInfoEXT_host_to_win32(const VkDeviceFaul
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkImageCreateInfo *convert_VkImageCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkImageCreateInfo *in, uint32_t count)
+static inline const VkImageCreateInfo *convert_VkImageCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkImageCreateInfo *in, uint32_t count)
 {
     VkImageCreateInfo *out;
     unsigned int i;
@@ -9965,7 +9965,7 @@ static inline void convert_VkSparseMemoryBind_win32_to_host(const VkSparseMemory
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseMemoryBind *in, uint32_t count)
+static inline const VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseMemoryBind *in, uint32_t count)
 {
     VkSparseMemoryBind_host *out;
     unsigned int i;
@@ -9994,7 +9994,7 @@ static inline void convert_VkSparseBufferMemoryBindInfo_win32_to_host(struct con
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkSparseBufferMemoryBindInfo_host *convert_VkSparseBufferMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo *in, uint32_t count)
+static inline const VkSparseBufferMemoryBindInfo_host *convert_VkSparseBufferMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo *in, uint32_t count)
 {
     VkSparseBufferMemoryBindInfo_host *out;
     unsigned int i;
@@ -10023,7 +10023,7 @@ static inline void convert_VkSparseImageOpaqueMemoryBindInfo_win32_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkSparseImageOpaqueMemoryBindInfo_host *convert_VkSparseImageOpaqueMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo *in, uint32_t count)
+static inline const VkSparseImageOpaqueMemoryBindInfo_host *convert_VkSparseImageOpaqueMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo *in, uint32_t count)
 {
     VkSparseImageOpaqueMemoryBindInfo_host *out;
     unsigned int i;
@@ -10055,7 +10055,7 @@ static inline void convert_VkSparseImageMemoryBind_win32_to_host(const VkSparseI
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkSparseImageMemoryBind_host *convert_VkSparseImageMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBind *in, uint32_t count)
+static inline const VkSparseImageMemoryBind_host *convert_VkSparseImageMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBind *in, uint32_t count)
 {
     VkSparseImageMemoryBind_host *out;
     unsigned int i;
@@ -10084,7 +10084,7 @@ static inline void convert_VkSparseImageMemoryBindInfo_win32_to_host(struct conv
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkSparseImageMemoryBindInfo_host *convert_VkSparseImageMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo *in, uint32_t count)
+static inline const VkSparseImageMemoryBindInfo_host *convert_VkSparseImageMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo *in, uint32_t count)
 {
     VkSparseImageMemoryBindInfo_host *out;
     unsigned int i;
@@ -10122,7 +10122,7 @@ static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_cont
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkBindSparseInfo_host *convert_VkBindSparseInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo *in, uint32_t count)
+static inline const VkBindSparseInfo_host *convert_VkBindSparseInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo *in, uint32_t count)
 {
     VkBindSparseInfo_host *out;
     unsigned int i;
@@ -10174,7 +10174,7 @@ static inline void convert_VkSubmitInfo_win32_to_host(struct conversion_context 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkSubmitInfo *convert_VkSubmitInfo_array_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo *in, uint32_t count)
+static inline const VkSubmitInfo *convert_VkSubmitInfo_array_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo *in, uint32_t count)
 {
     VkSubmitInfo *out;
     unsigned int i;
@@ -10192,7 +10192,7 @@ static inline VkSubmitInfo *convert_VkSubmitInfo_array_win64_to_host(struct conv
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkSubmitInfo *convert_VkSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo *in, uint32_t count)
+static inline const VkSubmitInfo *convert_VkSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo *in, uint32_t count)
 {
     VkSubmitInfo *out;
     unsigned int i;
@@ -10224,7 +10224,7 @@ static inline void convert_VkSemaphoreSubmitInfo_win32_to_host(const VkSemaphore
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkSemaphoreSubmitInfo_host *convert_VkSemaphoreSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo *in, uint32_t count)
+static inline const VkSemaphoreSubmitInfo_host *convert_VkSemaphoreSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo *in, uint32_t count)
 {
     VkSemaphoreSubmitInfo_host *out;
     unsigned int i;
@@ -10266,7 +10266,7 @@ static inline void convert_VkCommandBufferSubmitInfo_win32_to_host(const VkComma
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_win64_to_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo *in, uint32_t count)
+static inline const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_win64_to_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo *in, uint32_t count)
 {
     VkCommandBufferSubmitInfo *out;
     unsigned int i;
@@ -10284,7 +10284,7 @@ static inline VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo *in, uint32_t count)
+static inline const VkCommandBufferSubmitInfo *convert_VkCommandBufferSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkCommandBufferSubmitInfo *in, uint32_t count)
 {
     VkCommandBufferSubmitInfo *out;
     unsigned int i;
@@ -10336,7 +10336,7 @@ static inline void convert_VkSubmitInfo2_win32_to_host(struct conversion_context
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, uint32_t count)
+static inline const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, uint32_t count)
 {
     VkSubmitInfo2 *out;
     unsigned int i;
@@ -10354,7 +10354,7 @@ static inline VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_host(struct co
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkSubmitInfo2_host *convert_VkSubmitInfo2_array_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, uint32_t count)
+static inline const VkSubmitInfo2_host *convert_VkSubmitInfo2_array_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo2 *in, uint32_t count)
 {
     VkSubmitInfo2_host *out;
     unsigned int i;
@@ -10440,7 +10440,7 @@ static inline void convert_VkSemaphoreSignalInfo_win32_to_host(const VkSemaphore
 #endif /* USE_STRUCT_CONVERSION */
 
 #if !defined(USE_STRUCT_CONVERSION)
-static inline VkDebugUtilsObjectNameInfoEXT *convert_VkDebugUtilsObjectNameInfoEXT_array_win64_to_host(struct conversion_context *ctx, const VkDebugUtilsObjectNameInfoEXT *in, uint32_t count)
+static inline const VkDebugUtilsObjectNameInfoEXT *convert_VkDebugUtilsObjectNameInfoEXT_array_win64_to_host(struct conversion_context *ctx, const VkDebugUtilsObjectNameInfoEXT *in, uint32_t count)
 {
     VkDebugUtilsObjectNameInfoEXT *out;
     unsigned int i;
@@ -10458,7 +10458,7 @@ static inline VkDebugUtilsObjectNameInfoEXT *convert_VkDebugUtilsObjectNameInfoE
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkDebugUtilsObjectNameInfoEXT_host *convert_VkDebugUtilsObjectNameInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDebugUtilsObjectNameInfoEXT *in, uint32_t count)
+static inline const VkDebugUtilsObjectNameInfoEXT_host *convert_VkDebugUtilsObjectNameInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDebugUtilsObjectNameInfoEXT *in, uint32_t count)
 {
     VkDebugUtilsObjectNameInfoEXT_host *out;
     unsigned int i;
@@ -10560,7 +10560,7 @@ static inline void convert_VkCopyDescriptorSet_win32_to_host(const VkCopyDescrip
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkCopyDescriptorSet_host *convert_VkCopyDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkCopyDescriptorSet *in, uint32_t count)
+static inline const VkCopyDescriptorSet_host *convert_VkCopyDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkCopyDescriptorSet *in, uint32_t count)
 {
     VkCopyDescriptorSet_host *out;
     unsigned int i;
@@ -10820,7 +10820,7 @@ static NTSTATUS thunk64_vkBindAccelerationStructureMemoryNV(void *args)
 static NTSTATUS thunk32_vkBindAccelerationStructureMemoryNV(void *args)
 {
     struct vkBindAccelerationStructureMemoryNV_params *params = args;
-    VkBindAccelerationStructureMemoryInfoNV_host *pBindInfos_host;
+    const VkBindAccelerationStructureMemoryInfoNV_host *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -10877,7 +10877,7 @@ static NTSTATUS thunk64_vkBindBufferMemory2(void *args)
 static NTSTATUS thunk32_vkBindBufferMemory2(void *args)
 {
     struct vkBindBufferMemory2_params *params = args;
-    VkBindBufferMemoryInfo_host *pBindInfos_host;
+    const VkBindBufferMemoryInfo_host *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -10908,7 +10908,7 @@ static NTSTATUS thunk64_vkBindBufferMemory2KHR(void *args)
 static NTSTATUS thunk32_vkBindBufferMemory2KHR(void *args)
 {
     struct vkBindBufferMemory2KHR_params *params = args;
-    VkBindBufferMemoryInfo_host *pBindInfos_host;
+    const VkBindBufferMemoryInfo_host *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -10965,7 +10965,7 @@ static NTSTATUS thunk64_vkBindImageMemory2(void *args)
 static NTSTATUS thunk32_vkBindImageMemory2(void *args)
 {
     struct vkBindImageMemory2_params *params = args;
-    VkBindImageMemoryInfo_host *pBindInfos_host;
+    const VkBindImageMemoryInfo_host *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -10996,7 +10996,7 @@ static NTSTATUS thunk64_vkBindImageMemory2KHR(void *args)
 static NTSTATUS thunk32_vkBindImageMemory2KHR(void *args)
 {
     struct vkBindImageMemory2KHR_params *params = args;
-    VkBindImageMemoryInfo_host *pBindInfos_host;
+    const VkBindImageMemoryInfo_host *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -11053,7 +11053,7 @@ static NTSTATUS thunk64_vkBuildAccelerationStructuresKHR(void *args)
 static NTSTATUS thunk32_vkBuildAccelerationStructuresKHR(void *args)
 {
     struct vkBuildAccelerationStructuresKHR_params *params = args;
-    VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
+    const VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->infoCount, params->pInfos, params->ppBuildRangeInfos);
@@ -11084,7 +11084,7 @@ static NTSTATUS thunk64_vkBuildMicromapsEXT(void *args)
 static NTSTATUS thunk32_vkBuildMicromapsEXT(void *args)
 {
     struct vkBuildMicromapsEXT_params *params = args;
-    VkMicromapBuildInfoEXT_host *pInfos_host;
+    const VkMicromapBuildInfoEXT_host *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->infoCount, params->pInfos);
@@ -11766,7 +11766,7 @@ static NTSTATUS thunk64_vkCmdBuildAccelerationStructuresIndirectKHR(void *args)
 static NTSTATUS thunk32_vkCmdBuildAccelerationStructuresIndirectKHR(void *args)
 {
     struct vkCmdBuildAccelerationStructuresIndirectKHR_params *params = args;
-    VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
+    const VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %p, %p, %p\n", params->commandBuffer, params->infoCount, params->pInfos, params->pIndirectDeviceAddresses, params->pIndirectStrides, params->ppMaxPrimitiveCounts);
@@ -11797,7 +11797,7 @@ static NTSTATUS thunk64_vkCmdBuildAccelerationStructuresKHR(void *args)
 static NTSTATUS thunk32_vkCmdBuildAccelerationStructuresKHR(void *args)
 {
     struct vkCmdBuildAccelerationStructuresKHR_params *params = args;
-    VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
+    const VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->infoCount, params->pInfos, params->ppBuildRangeInfos);
@@ -11828,7 +11828,7 @@ static NTSTATUS thunk64_vkCmdBuildMicromapsEXT(void *args)
 static NTSTATUS thunk32_vkCmdBuildMicromapsEXT(void *args)
 {
     struct vkCmdBuildMicromapsEXT_params *params = args;
-    VkMicromapBuildInfoEXT_host *pInfos_host;
+    const VkMicromapBuildInfoEXT_host *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->infoCount, params->pInfos);
@@ -12019,7 +12019,7 @@ static NTSTATUS thunk64_vkCmdCopyBuffer(void *args)
 static NTSTATUS thunk32_vkCmdCopyBuffer(void *args)
 {
     struct vkCmdCopyBuffer_params *params = args;
-    VkBufferCopy_host *pRegions_host;
+    const VkBufferCopy_host *pRegions_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcBuffer), wine_dbgstr_longlong(params->dstBuffer), params->regionCount, params->pRegions);
@@ -12112,7 +12112,7 @@ static NTSTATUS thunk64_vkCmdCopyBufferToImage(void *args)
 static NTSTATUS thunk32_vkCmdCopyBufferToImage(void *args)
 {
     struct vkCmdCopyBufferToImage_params *params = args;
-    VkBufferImageCopy_host *pRegions_host;
+    const VkBufferImageCopy_host *pRegions_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, 0x%s, %#x, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcBuffer), wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions);
@@ -12287,7 +12287,7 @@ static NTSTATUS thunk64_vkCmdCopyImageToBuffer(void *args)
 static NTSTATUS thunk32_vkCmdCopyImageToBuffer(void *args)
 {
     struct vkCmdCopyImageToBuffer_params *params = args;
-    VkBufferImageCopy_host *pRegions_host;
+    const VkBufferImageCopy_host *pRegions_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %#x, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstBuffer), params->regionCount, params->pRegions);
@@ -12702,7 +12702,7 @@ static NTSTATUS thunk64_vkCmdDecompressMemoryNV(void *args)
 static NTSTATUS thunk32_vkCmdDecompressMemoryNV(void *args)
 {
     struct vkCmdDecompressMemoryNV_params *params = args;
-    VkDecompressMemoryRegionNV_host *pDecompressMemoryRegions_host;
+    const VkDecompressMemoryRegionNV_host *pDecompressMemoryRegions_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->decompressRegionCount, params->pDecompressMemoryRegions);
@@ -13579,7 +13579,7 @@ static NTSTATUS thunk32_vkCmdEndTransformFeedbackEXT(void *args)
 static NTSTATUS thunk64_vkCmdExecuteCommands(void *args)
 {
     struct vkCmdExecuteCommands_params *params = args;
-    VkCommandBuffer *pCommandBuffers_host;
+    const VkCommandBuffer *pCommandBuffers_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->commandBufferCount, params->pCommandBuffers);
@@ -13596,7 +13596,7 @@ static NTSTATUS thunk64_vkCmdExecuteCommands(void *args)
 static NTSTATUS thunk32_vkCmdExecuteCommands(void *args)
 {
     struct vkCmdExecuteCommands_params *params = args;
-    VkCommandBuffer *pCommandBuffers_host;
+    const VkCommandBuffer *pCommandBuffers_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->commandBufferCount, params->pCommandBuffers);
@@ -13814,8 +13814,8 @@ static NTSTATUS thunk64_vkCmdPipelineBarrier(void *args)
 static NTSTATUS thunk32_vkCmdPipelineBarrier(void *args)
 {
     struct vkCmdPipelineBarrier_params *params = args;
-    VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
-    VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
+    const VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
+    const VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
     struct conversion_context ctx;
 
     TRACE("%p, %#x, %#x, %#x, %u, %p, %u, %p, %u, %p\n", params->commandBuffer, params->srcStageMask, params->dstStageMask, params->dependencyFlags, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
@@ -13966,7 +13966,7 @@ static NTSTATUS thunk64_vkCmdPushDescriptorSetKHR(void *args)
 static NTSTATUS thunk32_vkCmdPushDescriptorSetKHR(void *args)
 {
     struct vkCmdPushDescriptorSetKHR_params *params = args;
-    VkWriteDescriptorSet_host *pDescriptorWrites_host;
+    const VkWriteDescriptorSet_host *pDescriptorWrites_host;
     struct conversion_context ctx;
 
     TRACE("%p, %#x, 0x%s, %u, %u, %p\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->layout), params->set, params->descriptorWriteCount, params->pDescriptorWrites);
@@ -16761,8 +16761,8 @@ static NTSTATUS thunk64_vkCmdWaitEvents(void *args)
 static NTSTATUS thunk32_vkCmdWaitEvents(void *args)
 {
     struct vkCmdWaitEvents_params *params = args;
-    VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
-    VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
+    const VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
+    const VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %#x, %#x, %u, %p, %u, %p, %u, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->srcStageMask, params->dstStageMask, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
@@ -16794,7 +16794,7 @@ static NTSTATUS thunk64_vkCmdWaitEvents2(void *args)
 static NTSTATUS thunk32_vkCmdWaitEvents2(void *args)
 {
     struct vkCmdWaitEvents2_params *params = args;
-    VkDependencyInfo_host *pDependencyInfos_host;
+    const VkDependencyInfo_host *pDependencyInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->pDependencyInfos);
@@ -16825,7 +16825,7 @@ static NTSTATUS thunk64_vkCmdWaitEvents2KHR(void *args)
 static NTSTATUS thunk32_vkCmdWaitEvents2KHR(void *args)
 {
     struct vkCmdWaitEvents2KHR_params *params = args;
-    VkDependencyInfo_host *pDependencyInfos_host;
+    const VkDependencyInfo_host *pDependencyInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->pDependencyInfos);
@@ -17390,7 +17390,7 @@ static NTSTATUS thunk32_vkCreateCommandPool(void *args)
 static NTSTATUS thunk64_vkCreateComputePipelines(void *args)
 {
     struct vkCreateComputePipelines_params *params = args;
-    VkComputePipelineCreateInfo *pCreateInfos_host;
+    const VkComputePipelineCreateInfo *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -17407,7 +17407,7 @@ static NTSTATUS thunk64_vkCreateComputePipelines(void *args)
 static NTSTATUS thunk32_vkCreateComputePipelines(void *args)
 {
     struct vkCreateComputePipelines_params *params = args;
-    VkComputePipelineCreateInfo_host *pCreateInfos_host;
+    const VkComputePipelineCreateInfo_host *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -17783,7 +17783,7 @@ static NTSTATUS thunk32_vkCreateFramebuffer(void *args)
 static NTSTATUS thunk64_vkCreateGraphicsPipelines(void *args)
 {
     struct vkCreateGraphicsPipelines_params *params = args;
-    VkGraphicsPipelineCreateInfo *pCreateInfos_host;
+    const VkGraphicsPipelineCreateInfo *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -17800,7 +17800,7 @@ static NTSTATUS thunk64_vkCreateGraphicsPipelines(void *args)
 static NTSTATUS thunk32_vkCreateGraphicsPipelines(void *args)
 {
     struct vkCreateGraphicsPipelines_params *params = args;
-    VkGraphicsPipelineCreateInfo_host *pCreateInfos_host;
+    const VkGraphicsPipelineCreateInfo_host *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -18133,7 +18133,7 @@ static NTSTATUS thunk32_vkCreateQueryPool(void *args)
 static NTSTATUS thunk64_vkCreateRayTracingPipelinesKHR(void *args)
 {
     struct vkCreateRayTracingPipelinesKHR_params *params = args;
-    VkRayTracingPipelineCreateInfoKHR *pCreateInfos_host;
+    const VkRayTracingPipelineCreateInfoKHR *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -18150,7 +18150,7 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesKHR(void *args)
 static NTSTATUS thunk32_vkCreateRayTracingPipelinesKHR(void *args)
 {
     struct vkCreateRayTracingPipelinesKHR_params *params = args;
-    VkRayTracingPipelineCreateInfoKHR_host *pCreateInfos_host;
+    const VkRayTracingPipelineCreateInfoKHR_host *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -18170,7 +18170,7 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesKHR(void *args)
 static NTSTATUS thunk64_vkCreateRayTracingPipelinesNV(void *args)
 {
     struct vkCreateRayTracingPipelinesNV_params *params = args;
-    VkRayTracingPipelineCreateInfoNV *pCreateInfos_host;
+    const VkRayTracingPipelineCreateInfoNV *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -18187,7 +18187,7 @@ static NTSTATUS thunk64_vkCreateRayTracingPipelinesNV(void *args)
 static NTSTATUS thunk32_vkCreateRayTracingPipelinesNV(void *args)
 {
     struct vkCreateRayTracingPipelinesNV_params *params = args;
-    VkRayTracingPipelineCreateInfoNV_host *pCreateInfos_host;
+    const VkRayTracingPipelineCreateInfoNV_host *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -19922,7 +19922,7 @@ static NTSTATUS thunk64_vkFlushMappedMemoryRanges(void *args)
 static NTSTATUS thunk32_vkFlushMappedMemoryRanges(void *args)
 {
     struct vkFlushMappedMemoryRanges_params *params = args;
-    VkMappedMemoryRange_host *pMemoryRanges_host;
+    const VkMappedMemoryRange_host *pMemoryRanges_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->memoryRangeCount, params->pMemoryRanges);
@@ -23463,7 +23463,7 @@ static NTSTATUS thunk64_vkInvalidateMappedMemoryRanges(void *args)
 static NTSTATUS thunk32_vkInvalidateMappedMemoryRanges(void *args)
 {
     struct vkInvalidateMappedMemoryRanges_params *params = args;
-    VkMappedMemoryRange_host *pMemoryRanges_host;
+    const VkMappedMemoryRange_host *pMemoryRanges_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->memoryRangeCount, params->pMemoryRanges);
@@ -23598,7 +23598,7 @@ static NTSTATUS thunk64_vkQueueBindSparse(void *args)
 static NTSTATUS thunk32_vkQueueBindSparse(void *args)
 {
     struct vkQueueBindSparse_params *params = args;
-    VkBindSparseInfo_host *pBindInfo_host;
+    const VkBindSparseInfo_host *pBindInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->bindInfoCount, params->pBindInfo, wine_dbgstr_longlong(params->fence));
@@ -23721,7 +23721,7 @@ static NTSTATUS thunk32_vkQueueSetPerformanceConfigurationINTEL(void *args)
 static NTSTATUS thunk64_vkQueueSubmit(void *args)
 {
     struct vkQueueSubmit_params *params = args;
-    VkSubmitInfo *pSubmits_host;
+    const VkSubmitInfo *pSubmits_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
@@ -23738,7 +23738,7 @@ static NTSTATUS thunk64_vkQueueSubmit(void *args)
 static NTSTATUS thunk32_vkQueueSubmit(void *args)
 {
     struct vkQueueSubmit_params *params = args;
-    VkSubmitInfo *pSubmits_host;
+    const VkSubmitInfo *pSubmits_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
@@ -23757,7 +23757,7 @@ static NTSTATUS thunk32_vkQueueSubmit(void *args)
 static NTSTATUS thunk64_vkQueueSubmit2(void *args)
 {
     struct vkQueueSubmit2_params *params = args;
-    VkSubmitInfo2 *pSubmits_host;
+    const VkSubmitInfo2 *pSubmits_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
@@ -23774,7 +23774,7 @@ static NTSTATUS thunk64_vkQueueSubmit2(void *args)
 static NTSTATUS thunk32_vkQueueSubmit2(void *args)
 {
     struct vkQueueSubmit2_params *params = args;
-    VkSubmitInfo2_host *pSubmits_host;
+    const VkSubmitInfo2_host *pSubmits_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
@@ -23793,7 +23793,7 @@ static NTSTATUS thunk32_vkQueueSubmit2(void *args)
 static NTSTATUS thunk64_vkQueueSubmit2KHR(void *args)
 {
     struct vkQueueSubmit2KHR_params *params = args;
-    VkSubmitInfo2 *pSubmits_host;
+    const VkSubmitInfo2 *pSubmits_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
@@ -23810,7 +23810,7 @@ static NTSTATUS thunk64_vkQueueSubmit2KHR(void *args)
 static NTSTATUS thunk32_vkQueueSubmit2KHR(void *args)
 {
     struct vkQueueSubmit2KHR_params *params = args;
-    VkSubmitInfo2_host *pSubmits_host;
+    const VkSubmitInfo2_host *pSubmits_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
@@ -24513,8 +24513,8 @@ static NTSTATUS thunk64_vkUpdateDescriptorSets(void *args)
 static NTSTATUS thunk32_vkUpdateDescriptorSets(void *args)
 {
     struct vkUpdateDescriptorSets_params *params = args;
-    VkWriteDescriptorSet_host *pDescriptorWrites_host;
-    VkCopyDescriptorSet_host *pDescriptorCopies_host;
+    const VkWriteDescriptorSet_host *pDescriptorWrites_host;
+    const VkCopyDescriptorSet_host *pDescriptorCopies_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %u, %p\n", params->device, params->descriptorWriteCount, params->pDescriptorWrites, params->descriptorCopyCount, params->pDescriptorCopies);

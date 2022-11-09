@@ -758,7 +758,8 @@ class VkFunction(object):
             if p.needs_variable(conv, unwrap):
                 host_type = p.type + "_host" if conv and p.needs_host_type() else p.type
                 if p.is_dynamic_array():
-                    body += "    {0} *{1}_host;\n".format(host_type, p.name)
+                    body += "    {2}{0} *{1}_host;\n".format(
+                        host_type, p.name, "const " if p.is_const() else "")
                 elif p.optional:
                     body += "    {0} *{1}_host = NULL;\n".format(host_type, p.name)
                     needs_alloc = True
@@ -2288,7 +2289,8 @@ class ArrayConversionFunction(object):
 
         # Generate function prototype.
         if return_type:
-            body += "static inline {0} *{1}(".format(return_type, self.name)
+            body += "static inline {0}{1} *{2}(".format(
+                "const " if self.array.is_const() else "", return_type, self.name)
         else:
             body += "static inline void {0}(".format(self.name)
         if needs_alloc:
