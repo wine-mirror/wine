@@ -1770,4 +1770,9 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "mov r0, r1\n\t"                /* retval */
                    "bx r2" )
 
+/**********************************************************************
+ *           NtCurrentTeb   (NTDLL.@)
+ */
+__ASM_GLOBAL_FUNC( NtCurrentTeb, "mrc p15, 0, r0, c13, c0, 2; bx lr" )
+
 #endif  /* __arm__ */
