@@ -1,7 +1,0 @@
-MODULE    = openal32.dll
-UNIX_LIBS = $(OPENAL_LIBS)
-
-EXTRADLLFLAGS = -Wb,--prefer-native -mcygwin
-
-C_SRCS = \
-	openal.c

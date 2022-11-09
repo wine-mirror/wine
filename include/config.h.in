@@ -320,12 +320,6 @@
 /* Define to 1 if you have the <net/route.h> header file. */
 #undef HAVE_NET_ROUTE_H
 
-/* Define to 1 if OpenAL is available */
-#undef HAVE_OPENAL
-
-/* Define to 1 if you have the <OpenAL/al.h> header file. */
-#undef HAVE_OPENAL_AL_H
-
 /* Define to 1 if you have the <OpenCL/opencl.h> header file. */
 #undef HAVE_OPENCL_OPENCL_H
 
@@ -837,9 +831,6 @@
 
 /* Define to the soname of the libodbc library. */
 #undef SONAME_LIBODBC
-
-/* Define to the soname of the libopenal library. */
-#undef SONAME_LIBOPENAL
 
 /* Define to the soname of the libOSMesa library. */
 #undef SONAME_LIBOSMESA

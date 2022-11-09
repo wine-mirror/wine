@@ -743,7 +743,6 @@ LIBWINE_SHAREDLIB
 METAL_LIBS
 CARBON_LIBS
 OPENCL_LIBS
-OPENAL_LIBS
 COREAUDIO_LIBS
 SECURITY_LIBS
 DISKARBITRATION_LIBS
@@ -925,7 +924,6 @@ with_krb5
 with_ldap
 with_mingw
 with_netapi
-with_openal
 with_opencl
 with_opengl
 with_osmesa
@@ -1319,7 +1317,6 @@ enable_olepro32
 enable_olesvr32
 enable_olethk32
 enable_opcservices
-enable_openal32
 enable_opencl
 enable_opengl32
 enable_packager
@@ -2433,7 +2430,6 @@ Optional Packages:
   --without-ldap          do not use LDAP
   --without-mingw         do not use the MinGW cross-compiler
   --without-netapi        do not use the Samba NetAPI library
-  --without-openal        do not use OpenAL
   --without-opencl        do not use OpenCL
   --without-opengl        do not use OpenGL
   --without-osmesa        do not use the OSMesa library
@@ -4302,13 +4298,6 @@ fi
 if test ${with_netapi+y}
 then :
   withval=$with_netapi;
-fi
-
-
-# Check whether --with-openal was given.
-if test ${with_openal+y}
-then :
-  withval=$with_openal; if test "x$withval" = "xno"; then ac_cv_header_AL_al_h=no; ac_cv_header_OpenAL_al_h=no; fi
 fi
 
 
@@ -7906,12 +7895,6 @@ then :
   printf "%s\n" "#define HAVE_IOKIT_HID_IOHIDLIB_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "OpenAL/al.h" "ac_cv_header_OpenAL_al_h" "$ac_includes_default"
-if test "x$ac_cv_header_OpenAL_al_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_OPENAL_AL_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "OpenCL/opencl.h" "ac_cv_header_OpenCL_opencl_h" "$ac_includes_default"
 if test "x$ac_cv_header_OpenCL_opencl_h" = xyes
 then :
@@ -9988,15 +9971,6 @@ fi
         COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
 
         enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-yes}
-    fi
-    if test "$ac_cv_header_OpenAL_al_h" = "yes"
-    then
-        OPENAL_LIBS="-framework OpenAL"
-
-
-printf "%s\n" "#define HAVE_OPENAL 1" >>confdefs.h
-
-        ac_cv_lib_openal=yes
     fi
     if test "$ac_cv_header_OpenCL_opencl_h" = "yes"
     then
@@ -18160,79 +18134,6 @@ esac
 
 fi
 
-if test "$ac_cv_header_AL_al_h" = "yes"
-then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lopenal" >&5
-printf %s "checking for -lopenal... " >&6; }
-if test ${ac_cv_lib_soname_openal+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_check_soname_save_LIBS=$LIBS
-LIBS="-lopenal  $LIBS"
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-char alGetSource3i ();
-int
-main (void)
-{
-return alGetSource3i ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  case "$LIBEXT" in
-    dll) ac_cv_lib_soname_openal=`$ac_cv_path_LDD conftest.exe | grep "openal" | sed -e "s/dll.*/dll/"';2,$d'` ;;
-    dylib) ac_cv_lib_soname_openal=`$OTOOL -L conftest$ac_exeext | grep "libopenal\\.[0-9A-Za-z.]*dylib" | sed -e "s/^.*\/\(libopenal\.[0-9A-Za-z.]*dylib\).*$/\1/"';2,$d'` ;;
-    *) ac_cv_lib_soname_openal=`$READELF -d conftest$ac_exeext | grep "NEEDED.*libopenal\\.$LIBEXT" | sed -e "s/^.*\\[\\(libopenal\\.$LIBEXT[^	 ]*\\)\\].*$/\1/"';2,$d'`
-       if ${ac_cv_lib_soname_openal:+false} :
-then :
-  ac_cv_lib_soname_openal=`$LDD conftest$ac_exeext | grep "libopenal\\.$LIBEXT" | sed -e "s/^.*\(libopenal\.$LIBEXT[^	 ]*\).*$/\1/"';2,$d'`
-fi ;;
-  esac
-else $as_nop
-  ac_cv_lib_soname_openal=
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-  LIBS=$ac_check_soname_save_LIBS
-fi
-if ${ac_cv_lib_soname_openal:+false} :
-then :
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: not found" >&5
-printf "%s\n" "not found" >&6; }
-
-else $as_nop
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_soname_openal" >&5
-printf "%s\n" "$ac_cv_lib_soname_openal" >&6; }
-
-printf "%s\n" "#define SONAME_LIBOPENAL \"$ac_cv_lib_soname_openal\"" >>confdefs.h
-
-       OPENAL_LIBS="-lopenal"
-
-                      ac_cv_lib_openal=yes
-
-printf "%s\n" "#define HAVE_OPENAL 1" >>confdefs.h
-
-fi
-fi
-if test "x$ac_cv_lib_openal" != xyes
-then :
-  case "x$with_openal" in
-  x)   as_fn_append wine_notices "|libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported." ;;
-  xno) ;;
-  *)   as_fn_error $? "libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported.
-This is an error since --with-openal was requested." "$LINENO" 5 ;;
-esac
-enable_openal32=${enable_openal32:-no}
-fi
-
 if test "$ac_cv_header_libprocstat_h" = "yes"
 then
     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for procstat_open_sysctl in -lprocstat" >&5
@@ -21889,7 +21790,6 @@ wine_fn_config_makefile dlls/olesvr32 enable_olesvr32
 wine_fn_config_makefile dlls/olethk32 enable_olethk32
 wine_fn_config_makefile dlls/opcservices enable_opcservices
 wine_fn_config_makefile dlls/opcservices/tests enable_tests
-wine_fn_config_makefile dlls/openal32 enable_openal32
 wine_fn_config_makefile dlls/opencl enable_opencl
 wine_fn_config_makefile dlls/opengl32 enable_opengl32
 wine_fn_config_makefile dlls/opengl32/tests enable_tests
@@ -23388,7 +23288,6 @@ SYSTEMCONFIGURATION_LIBS = $SYSTEMCONFIGURATION_LIBS
 DISKARBITRATION_LIBS = $DISKARBITRATION_LIBS
 SECURITY_LIBS = $SECURITY_LIBS
 COREAUDIO_LIBS = $COREAUDIO_LIBS
-OPENAL_LIBS = $OPENAL_LIBS
 OPENCL_LIBS = $OPENCL_LIBS
 CARBON_LIBS = $CARBON_LIBS
 METAL_LIBS = $METAL_LIBS
