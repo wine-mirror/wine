@@ -488,26 +488,28 @@ static void heap_set_status( const struct heap *heap, ULONG flags, NTSTATUS stat
     if (status) RtlSetLastWin32ErrorAndNtStatusFromNtStatus( status );
 }
 
+static size_t get_free_list_block_size( unsigned int index )
+{
+    if (index < HEAP_NB_SMALL_FREE_LISTS)
+        return index * ALIGNMENT + HEAP_MIN_BLOCK_SIZE;
+    return free_list_sizes[index - HEAP_NB_SMALL_FREE_LISTS];
+}
+
 static void heap_dump( const struct heap *heap )
 {
     const struct block *block;
     const ARENA_LARGE *large;
     const SUBHEAP *subheap;
     unsigned int i;
-    SIZE_T size;
 
     TRACE( "heap: %p\n", heap );
     TRACE( "  next %p\n", LIST_ENTRY( heap->entry.next, struct heap, entry ) );
 
     TRACE( "  free_lists: %p\n", heap->free_lists );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
-    {
-        if (i < HEAP_NB_SMALL_FREE_LISTS) size = HEAP_MIN_BLOCK_SIZE + i * ALIGNMENT;
-        else size = free_list_sizes[i - HEAP_NB_SMALL_FREE_LISTS];
-        TRACE( "    %p: size %8Ix, prev %p, next %p\n", heap->free_lists + i, size,
+        TRACE( "    %p: size %8Ix, prev %p, next %p\n", heap->free_lists + i, get_free_list_block_size( i ),
                LIST_ENTRY( heap->free_lists[i].entry.prev, struct entry, entry ),
                LIST_ENTRY( heap->free_lists[i].entry.next, struct entry, entry ) );
-    }
 
     TRACE( "  subheaps: %p\n", &heap->subheap_list );
     LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
