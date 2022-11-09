@@ -1087,12 +1087,20 @@ class VkVariable(object):
         self.type = type
         self.name = name
         self.parent = parent
-        self.pointer = pointer
-        self.array_len = array_len
-        self.dyn_array_len = dyn_array_len
         self.object_type = object_type
         self.optional = optional
         self.returnedonly = returnedonly
+
+        self.pointer = pointer
+        self.array_len = array_len
+        self.dyn_array_len = dyn_array_len
+        self.pointer_array = False
+        if isinstance(dyn_array_len, str):
+            i = dyn_array_len.find(",")
+            if i != -1:
+                self.dyn_array_len = dyn_array_len[0:i]
+                self.pointer_array = True
+
         if type_info:
             self.set_type_info(type_info)
 
@@ -1328,10 +1336,13 @@ class VkMember(VkVariable):
                 # Array length is either a variable name (string) or an int.
                 count = self.get_dyn_array_len(input)
                 host_part = "host" if unwrap else "unwrapped_host"
+                pointer_part = "pointer_" if self.pointer_array else ""
                 if direction == Direction.OUTPUT:
-                    return "convert_{2}_array_{6}_to_{5}({3}{1}, {0}{1}, {4});\n".format(output, self.name, self.type, input, count, win_type, host_part)
+                    return "convert_{2}_{7}array_{6}_to_{5}({3}{1}, {0}{1}, {4});\n".format(
+                        output, self.name, self.type, input, count, win_type, host_part, pointer_part)
                 else:
-                    return "{0}{1} = convert_{2}_array_{5}_to_{6}(ctx, {3}{1}, {4});\n".format(output, self.name, self.type, input, count, win_type, host_part)
+                    return "{0}{1} = convert_{2}_{7}array_{5}_to_{6}(ctx, {3}{1}, {4});\n".format(
+                        output, self.name, self.type, input, count, win_type, host_part, pointer_part)
             elif self.is_static_array():
                 count = self.array_len
                 if direction == Direction.OUTPUT:
@@ -1956,10 +1967,6 @@ class VkStruct(Sequence):
         if self.name == "VkAllocationCallbacks":
             return False
 
-        # FIXME: needs pointer array support
-        if self.name == "VkAccelerationStructureGeometryKHR":
-            return False
-
         # pFixedRateFlags field is missing const, but it doesn't need output conversion
         if direction == Direction.OUTPUT and self.name == "VkImageCompressionControlEXT":
             return False
@@ -2010,10 +2017,6 @@ class VkStruct(Sequence):
         return False
 
     def needs_host_type(self):
-        # FIXME: needs pointer array support
-        if self.name == "VkAccelerationStructureGeometryKHR":
-            return False
-
         for m in self.members:
             if self.name == m.type:
                 continue
@@ -2241,7 +2244,10 @@ class ArrayConversionFunction(object):
         if array.is_static_array() and direction == Direction.INPUT:
             LOGGER.error("Static array input conversion is not supported")
 
-        name = "convert_{0}_array_".format(array.type)
+        name = "convert_{0}_".format(array.type)
+        if array.pointer_array:
+            name += "pointer_"
+        name += "array_"
         win_type = "win32" if self.conv else "win64"
         host_part = "host" if self.unwrap else "unwrapped_host"
         if self.direction == Direction.INPUT:
@@ -2270,27 +2276,25 @@ class ArrayConversionFunction(object):
         else:
             host_type = self.type
         win_type = self.type
+        pointer_part = self.array.pointer if self.array.pointer else "*"
         if self.direction == Direction.OUTPUT and self.array.is_const():
             win_type = "const " + win_type
 
-        if self.conv:
-            if self.direction == Direction.OUTPUT:
-                params = ["const {0} *in".format(host_type), "{0} *out".format(win_type), "uint32_t count"]
-                return_type = None
-            else:
-                params = ["const {0} *in".format(win_type), "uint32_t count"]
-                return_type = host_type
+        if self.direction == Direction.OUTPUT:
+            params = ["const {0} {1}in".format(host_type, pointer_part),
+                      "{0} {1}out".format(win_type, pointer_part), "uint32_t count"]
+            return_type = None
         else:
-            params = ["const {0} *in".format(self.type), "uint32_t count"]
-            return_type = self.type
+            params = ["const {0} {1}in".format(win_type, pointer_part), "uint32_t count"]
+            return_type = host_type
 
         needs_copy = not self.array.is_struct() or self.direction != Direction.INPUT or \
             not self.array.struct.returnedonly or "pNext" in self.array.struct
 
         # Generate function prototype.
         if return_type:
-            body += "static inline {0}{1} *{2}(".format(
-                "const " if self.array.is_const() else "", return_type, self.name)
+            body += "static inline {0}{1} {2}{3}(".format(
+                "const " if self.array.is_const() else "", return_type, pointer_part, self.name)
         else:
             body += "static inline void {0}(".format(self.name)
         if needs_alloc:
@@ -2299,7 +2303,7 @@ class ArrayConversionFunction(object):
         body += ")\n{\n"
 
         if return_type:
-            body += "    {0} *out;\n".format(return_type)
+            body += "    {0} {1}out;\n".format(return_type, "**" if self.array.pointer_array else "*")
         if needs_copy:
             body += "    unsigned int i;\n\n"
 
@@ -2328,9 +2332,24 @@ class ArrayConversionFunction(object):
                 if self.direction == Direction.INPUT and struct.needs_alloc(self.conv, self.unwrap):
                     ctx_part = "ctx, "
 
-                body += "        convert_{0}_{1}({2}&in[i], &out[i]);\n".format(
-                    struct.name, conv_suffix, ctx_part)
+                if not self.array.pointer_array:
+                    body += "        convert_{0}_{1}({2}&in[i], &out[i]);\n".format(
+                        struct.name, conv_suffix, ctx_part)
+                else:
+                    body += "        if (in[i])\n"
+                    body += "        {\n"
+                    body += "            out[i] = conversion_context_alloc(ctx, sizeof(*out[i]));\n"
+                    if struct.needs_conversion(self.conv, self.unwrap, self.direction, False):
+                        body += "            convert_{0}_{1}({2}in[i], out[i]);\n".format(
+                            struct.name, conv_suffix, ctx_part)
+                    else:
+                        body += "            *out[i] = *in[i];\n".format(win_type)
+                    body += "        }\n"
+                    body += "        else\n"
+                    body += "            out[i] = NULL;\n"
             elif self.array.is_handle() and self.direction == Direction.INPUT:
+                if self.array.pointer_array:
+                    LOGGER.error("Unhandled handle pointer arrays")
                 body += "        out[i] = " + self.array.handle.driver_handle("in[i]") + ";\n"
             else:
                 LOGGER.warning("Unhandled conversion operand type")
@@ -2339,7 +2358,7 @@ class ArrayConversionFunction(object):
             body += "    }\n"
 
         if return_type:
-            body += "\n    return out;\n"
+            body += "\n    return {0}out;\n".format("(void *)" if self.array.pointer_array else "")
         body += "}\n"
 
         body += "#endif /* USE_STRUCT_CONVERSION */\n"

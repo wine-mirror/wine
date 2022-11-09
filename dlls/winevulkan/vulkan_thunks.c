@@ -425,7 +425,62 @@ static inline const VkBindImageMemoryInfo_host *convert_VkBindImageMemoryInfo_ar
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(const VkAccelerationStructureBuildGeometryInfoKHR *in, VkAccelerationStructureBuildGeometryInfoKHR_host *out)
+static inline void convert_VkAccelerationStructureGeometryKHR_win32_to_host(const VkAccelerationStructureGeometryKHR *in, VkAccelerationStructureGeometryKHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->geometryType = in->geometryType;
+    out->geometry = in->geometry;
+    out->flags = in->flags;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkAccelerationStructureGeometryKHR_host *convert_VkAccelerationStructureGeometryKHR_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryKHR *in, uint32_t count)
+{
+    VkAccelerationStructureGeometryKHR_host *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkAccelerationStructureGeometryKHR_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkAccelerationStructureGeometryKHR_host * const*convert_VkAccelerationStructureGeometryKHR_pointer_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryKHR * const*in, uint32_t count)
+{
+    VkAccelerationStructureGeometryKHR_host **out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        if (in[i])
+        {
+            out[i] = conversion_context_alloc(ctx, sizeof(*out[i]));
+            convert_VkAccelerationStructureGeometryKHR_win32_to_host(in[i], out[i]);
+        }
+        else
+            out[i] = NULL;
+    }
+
+    return (void *)out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR *in, VkAccelerationStructureBuildGeometryInfoKHR_host *out)
 {
     if (!in) return;
 
@@ -437,8 +492,8 @@ static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_
     out->srcAccelerationStructure = in->srcAccelerationStructure;
     out->dstAccelerationStructure = in->dstAccelerationStructure;
     out->geometryCount = in->geometryCount;
-    out->pGeometries = in->pGeometries;
-    out->ppGeometries = in->ppGeometries;
+    out->pGeometries = convert_VkAccelerationStructureGeometryKHR_array_win32_to_host(ctx, in->pGeometries, in->geometryCount);
+    out->ppGeometries = convert_VkAccelerationStructureGeometryKHR_pointer_array_win32_to_host(ctx, in->ppGeometries, in->geometryCount);
     out->scratchData = in->scratchData;
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -454,7 +509,7 @@ static inline const VkAccelerationStructureBuildGeometryInfoKHR_host *convert_Vk
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(&in[i], &out[i]);
+        convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -20033,13 +20088,16 @@ static NTSTATUS thunk32_vkGetAccelerationStructureBuildSizesKHR(void *args)
     struct vkGetAccelerationStructureBuildSizesKHR_params *params = args;
     VkAccelerationStructureBuildGeometryInfoKHR_host pBuildInfo_host;
     VkAccelerationStructureBuildSizesInfoKHR_host pSizeInfo_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %#x, %p, %p, %p\n", params->device, params->buildType, params->pBuildInfo, params->pMaxPrimitiveCounts, params->pSizeInfo);
 
-    convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(params->pBuildInfo, &pBuildInfo_host);
+    init_conversion_context(&ctx);
+    convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(&ctx, params->pBuildInfo, &pBuildInfo_host);
     convert_VkAccelerationStructureBuildSizesInfoKHR_win32_to_host(params->pSizeInfo, &pSizeInfo_host);
     wine_device_from_handle(params->device)->funcs.p_vkGetAccelerationStructureBuildSizesKHR(wine_device_from_handle(params->device)->device, params->buildType, &pBuildInfo_host, params->pMaxPrimitiveCounts, &pSizeInfo_host);
     convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win32(&pSizeInfo_host, params->pSizeInfo);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 

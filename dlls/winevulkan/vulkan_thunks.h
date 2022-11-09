@@ -200,6 +200,19 @@ typedef VkBindImageMemoryInfo VkBindImageMemoryInfo_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkAccelerationStructureGeometryKHR_host
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkGeometryTypeKHR geometryType;
+    VkAccelerationStructureGeometryDataKHR geometry;
+    VkGeometryFlagsKHR flags;
+} VkAccelerationStructureGeometryKHR_host;
+#else
+typedef VkAccelerationStructureGeometryKHR VkAccelerationStructureGeometryKHR_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkAccelerationStructureBuildGeometryInfoKHR_host
 {
     VkStructureType sType;
@@ -210,8 +223,8 @@ typedef struct VkAccelerationStructureBuildGeometryInfoKHR_host
     VkAccelerationStructureKHR srcAccelerationStructure;
     VkAccelerationStructureKHR dstAccelerationStructure;
     uint32_t geometryCount;
-    const VkAccelerationStructureGeometryKHR *pGeometries;
-    const VkAccelerationStructureGeometryKHR * const*ppGeometries;
+    const VkAccelerationStructureGeometryKHR_host *pGeometries;
+    const VkAccelerationStructureGeometryKHR_host * const*ppGeometries;
     VkDeviceOrHostAddressKHR scratchData;
 } VkAccelerationStructureBuildGeometryInfoKHR_host;
 #else
