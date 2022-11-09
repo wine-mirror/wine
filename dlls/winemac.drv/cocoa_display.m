@@ -250,7 +250,7 @@ static int macdrv_get_gpu_info_from_registry_id(struct macdrv_gpu* gpu, uint64_t
     int ret;
     io_registry_entry_t entry;
 
-    entry = IOServiceGetMatchingService(kIOMasterPortDefault, IORegistryEntryIDMatching(registry_id));
+    entry = IOServiceGetMatchingService(0, IORegistryEntryIDMatching(registry_id));
     ret = macdrv_get_gpu_info_from_entry(gpu, entry);
     IOObjectRelease(entry);
     return ret;
@@ -422,7 +422,7 @@ static int macdrv_get_gpus_from_iokit(struct macdrv_gpu** new_gpus, int* count)
     if (!gpus)
         goto done;
 
-    if (IOServiceGetMatchingServices(kIOMasterPortDefault, IOServiceMatching("IOPCIDevice"), &iterator)
+    if (IOServiceGetMatchingServices(0, IOServiceMatching("IOPCIDevice"), &iterator)
         != kIOReturnSuccess)
         goto done;
 
