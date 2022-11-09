@@ -334,7 +334,7 @@ struct sysparam_binary_entry
 struct sysparam_path_entry
 {
     struct sysparam_entry hdr;
-    WCHAR                 path[MAX_PATH];
+    WCHAR                *path;
 };
 
 struct sysparam_font_entry
@@ -348,7 +348,7 @@ struct sysparam_font_entry
 struct sysparam_pref_entry
 {
     struct sysparam_entry hdr;
-    struct sysparam_binary_entry *parent;
+    union sysparam_all_entry *parent;
     UINT                  offset;
     UINT                  mask;
 };
@@ -3603,7 +3603,7 @@ static BOOL init_font_entry( union sysparam_all_entry *entry )
 /* get a user pref parameter in the registry */
 static BOOL get_userpref_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT dpi )
 {
-    union sysparam_all_entry *parent_entry = (union sysparam_all_entry *)entry->pref.parent;
+    union sysparam_all_entry *parent_entry = entry->pref.parent;
     BYTE prefs[8];
 
     if (!ptr_param) return FALSE;
@@ -3616,7 +3616,7 @@ static BOOL get_userpref_entry( union sysparam_all_entry *entry, UINT int_param,
 /* set a user pref parameter in the registry */
 static BOOL set_userpref_entry( union sysparam_all_entry *entry, UINT int_param, void *ptr_param, UINT flags )
 {
-    union sysparam_all_entry *parent_entry = (union sysparam_all_entry *)entry->pref.parent;
+    union sysparam_all_entry *parent_entry = entry->pref.parent;
     BYTE prefs[8];
 
     parent_entry->hdr.loaded = FALSE;  /* force loading it again */
@@ -3645,53 +3645,41 @@ static BOOL set_entry( void *ptr, UINT int_param, void *ptr_param, UINT flags )
     return entry->hdr.set( entry, int_param, ptr_param, flags );
 }
 
-#define UINT_ENTRY(name,val,base,reg)                                   \
-    struct sysparam_uint_entry entry_##name = { { get_uint_entry, set_uint_entry, init_uint_entry, \
-                                                  base, reg }, (val) }
+#define UINT_ENTRY(name,val,base,reg) union sysparam_all_entry entry_##name = \
+    { .uint = { { get_uint_entry, set_uint_entry, init_uint_entry, base, reg }, (val) } }
 
-#define UINT_ENTRY_MIRROR(name,val,base,reg,mirror_base) \
-    struct sysparam_uint_entry entry_##name = { { get_uint_entry, set_uint_entry, init_uint_entry, \
-                                                  base, reg, mirror_base, reg }, (val) }
+#define UINT_ENTRY_MIRROR(name,val,base,reg,mirror_base) union sysparam_all_entry entry_##name = \
+    { .uint = { { get_uint_entry, set_uint_entry, init_uint_entry, base, reg, mirror_base, reg }, (val) } }
 
-#define INT_ENTRY(name,val,base,reg) \
-    struct sysparam_uint_entry entry_##name = { { get_uint_entry, set_int_entry, init_int_entry, \
-                                                  base, reg }, (val) }
+#define INT_ENTRY(name,val,base,reg) union sysparam_all_entry entry_##name = \
+    { .uint = { { get_uint_entry, set_int_entry, init_int_entry, base, reg }, (val) } }
 
-#define BOOL_ENTRY(name,val,base,reg) \
-    struct sysparam_bool_entry entry_##name = { { get_bool_entry, set_bool_entry, init_bool_entry, \
-                                                  base, reg }, (val) }
+#define BOOL_ENTRY(name,val,base,reg) union sysparam_all_entry entry_##name = \
+    { .bool = { { get_bool_entry, set_bool_entry, init_bool_entry, base, reg }, (val) } }
 
-#define BOOL_ENTRY_MIRROR(name,val,base,reg,mirror_base) \
-    struct sysparam_bool_entry entry_##name = { { get_bool_entry, set_bool_entry, init_bool_entry, \
-                                                  base, reg, mirror_base, reg }, (val) }
+#define BOOL_ENTRY_MIRROR(name,val,base,reg,mirror_base) union sysparam_all_entry entry_##name = \
+    { .bool = { { get_bool_entry, set_bool_entry, init_bool_entry, base, reg, mirror_base, reg }, (val) } }
 
-#define TWIPS_ENTRY(name,val,base,reg) \
-    struct sysparam_uint_entry entry_##name = { { get_twips_entry, set_twips_entry, init_int_entry, \
-                                                  base, reg }, (val) }
+#define TWIPS_ENTRY(name,val,base,reg) union sysparam_all_entry entry_##name = \
+    { .uint = { { get_twips_entry, set_twips_entry, init_int_entry, base, reg }, (val) } }
 
-#define YESNO_ENTRY(name,val,base,reg) \
-    struct sysparam_bool_entry entry_##name = { { get_yesno_entry, set_yesno_entry, init_yesno_entry, \
-                                                  base, reg }, (val) }
+#define YESNO_ENTRY(name,val,base,reg) union sysparam_all_entry entry_##name = \
+    { .bool = { { get_yesno_entry, set_yesno_entry, init_yesno_entry, base, reg }, (val) } }
 
-#define DWORD_ENTRY(name,val,base,reg)                                  \
-    struct sysparam_dword_entry entry_##name = { { get_dword_entry, set_dword_entry, init_dword_entry, \
-                                                   base, reg }, (val) }
+#define DWORD_ENTRY(name,val,base,reg) union sysparam_all_entry entry_##name = \
+    { .dword = { { get_dword_entry, set_dword_entry, init_dword_entry, base, reg }, (val) } }
 
-#define BINARY_ENTRY(name,data,base,reg) \
-    struct sysparam_binary_entry entry_##name = { { get_binary_entry, set_binary_entry, init_binary_entry, \
-                                                    base, reg }, data, sizeof(data) }
+#define BINARY_ENTRY(name,data,base,reg) union sysparam_all_entry entry_##name = \
+    { .bin = { { get_binary_entry, set_binary_entry, init_binary_entry, base, reg }, data, sizeof(data) } }
 
-#define PATH_ENTRY(name,base,reg) \
-    struct sysparam_path_entry entry_##name = { { get_path_entry, set_path_entry, init_path_entry, \
-                                                  base, reg } }
+#define PATH_ENTRY(name,base,reg,buffer) union sysparam_all_entry entry_##name = \
+    { .path = { { get_path_entry, set_path_entry, init_path_entry, base, reg }, buffer } }
 
-#define FONT_ENTRY(name,weight,base,reg) \
-    struct sysparam_font_entry entry_##name = { { get_font_entry, set_font_entry, init_font_entry, \
-                                                  base, reg }, (weight) }
+#define FONT_ENTRY(name,weight,base,reg) union sysparam_all_entry entry_##name = \
+    { .font = { { get_font_entry, set_font_entry, init_font_entry, base, reg }, (weight) } }
 
-#define USERPREF_ENTRY(name,offset,mask) \
-    struct sysparam_pref_entry entry_##name = { { get_userpref_entry, set_userpref_entry }, \
-                                                &entry_USERPREFERENCESMASK, (offset), (mask) }
+#define USERPREF_ENTRY(name,offset,mask) union sysparam_all_entry entry_##name = \
+    { .pref = { { get_userpref_entry, set_userpref_entry }, &entry_USERPREFERENCESMASK, (offset), (mask) } }
 
 static UINT_ENTRY( DRAGWIDTH, 4, DESKTOP_KEY, "DragWidth" );
 static UINT_ENTRY( DRAGHEIGHT, 4, DESKTOP_KEY, "DragHeight" );
@@ -3765,8 +3753,10 @@ static DWORD_ENTRY( LOGPIXELS, 0, DESKTOP_KEY, "LogPixels" );
 static DWORD_ENTRY( MOUSECLICKLOCKTIME, 1200, DESKTOP_KEY, "ClickLockTime" );
 static DWORD_ENTRY( AUDIODESC_LOCALE, 0, AUDIODESC_KEY, "Locale" );
 
-static PATH_ENTRY( DESKPATTERN, DESKTOP_KEY, "Pattern" );
-static PATH_ENTRY( DESKWALLPAPER, DESKTOP_KEY, "Wallpaper" );
+static WCHAR desk_pattern_path[MAX_PATH];
+static WCHAR desk_wallpaper_path[MAX_PATH];
+static PATH_ENTRY( DESKPATTERN, DESKTOP_KEY, "Pattern", desk_pattern_path );
+static PATH_ENTRY( DESKWALLPAPER, DESKTOP_KEY, "Wallpaper", desk_wallpaper_path );
 
 static BYTE user_prefs[8] = { 0x30, 0x00, 0x00, 0x80, 0x12, 0x00, 0x00, 0x00 };
 static BINARY_ENTRY( USERPREFERENCESMASK, user_prefs, DESKTOP_KEY, "UserPreferencesMask" );
