@@ -24,6 +24,7 @@
 #if defined(__i386__)
 #define USE_STRUCT_CONVERSION
 #endif
+#define WINE_VK_HOST
 #define VK_NO_PROTOTYPES
 
 #include <pthread.h>

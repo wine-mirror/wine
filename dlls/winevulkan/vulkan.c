@@ -97,7 +97,7 @@ static uint64_t wine_vk_get_wrapper(struct wine_instance *instance, uint64_t nat
 
 static VkBool32 debug_utils_callback_conversion(VkDebugUtilsMessageSeverityFlagBitsEXT severity,
     VkDebugUtilsMessageTypeFlagsEXT message_types,
-    const VkDebugUtilsMessengerCallbackDataEXT_host *callback_data,
+    const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
     void *user_data)
 {
     struct wine_vk_debug_utils_params params;
@@ -609,7 +609,7 @@ static void wine_vk_instance_free(struct wine_instance *instance)
     free(instance);
 }
 
-VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAllocateInfo_host *allocate_info,
+VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAllocateInfo *allocate_info,
                                        VkCommandBuffer *buffers )
 {
     struct wine_device *device = wine_device_from_handle(handle);
@@ -622,7 +622,7 @@ VkResult wine_vkAllocateCommandBuffers(VkDevice handle, const VkCommandBufferAll
 
     for (i = 0; i < allocate_info->commandBufferCount; i++)
     {
-        VkCommandBufferAllocateInfo_host allocate_info_host;
+        VkCommandBufferAllocateInfo allocate_info_host;
 
         /* TODO: future extensions (none yet) may require pNext conversion. */
         allocate_info_host.pNext = allocate_info->pNext;
@@ -679,7 +679,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
 
     if (TRACE_ON(vulkan))
     {
-        VkPhysicalDeviceProperties_host properties;
+        VkPhysicalDeviceProperties properties;
 
         phys_dev->instance->funcs.p_vkGetPhysicalDeviceProperties(phys_dev->phys_dev, &properties);
 
@@ -1163,7 +1163,7 @@ void wine_vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice phys_d
 
 VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice phys_dev_handle,
                                                         const VkPhysicalDeviceImageFormatInfo2 *format_info,
-                                                        VkImageFormatProperties2_host *properties)
+                                                        VkImageFormatProperties2 *properties)
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(phys_dev_handle);
     VkExternalImageFormatProperties *external_image_properties;
@@ -1186,7 +1186,7 @@ VkResult wine_vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice phys_de
 
 VkResult wine_vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice phys_dev_handle,
                                                            const VkPhysicalDeviceImageFormatInfo2 *format_info,
-                                                           VkImageFormatProperties2_host *properties)
+                                                           VkImageFormatProperties2 *properties)
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(phys_dev_handle);
     VkExternalImageFormatProperties *external_image_properties;
@@ -1454,12 +1454,12 @@ VkResult wine_vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice handle,
 }
 
 VkResult wine_vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice handle,
-                                                         const VkPhysicalDeviceSurfaceInfo2KHR_host *surface_info,
+                                                         const VkPhysicalDeviceSurfaceInfo2KHR *surface_info,
                                                          VkSurfaceCapabilities2KHR *capabilities)
 {
     struct wine_phys_dev *phys_dev = wine_phys_dev_from_handle(handle);
     struct wine_surface *surface = wine_surface_from_handle(surface_info->surface);
-    VkPhysicalDeviceSurfaceInfo2KHR_host host_info;
+    VkPhysicalDeviceSurfaceInfo2KHR host_info;
     VkResult res;
 
     host_info.sType = surface_info->sType;

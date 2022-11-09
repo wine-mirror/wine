@@ -1851,7 +1851,7 @@ static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
 }
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAcquireNextImageInfoKHR_win32_to_host(const VkAcquireNextImageInfoKHR32 *in, VkAcquireNextImageInfoKHR_host *out)
+static inline void convert_VkAcquireNextImageInfoKHR_win32_to_host(const VkAcquireNextImageInfoKHR32 *in, VkAcquireNextImageInfoKHR *out)
 {
     if (!in) return;
 
@@ -1866,7 +1866,7 @@ static inline void convert_VkAcquireNextImageInfoKHR_win32_to_host(const VkAcqui
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAcquireProfilingLockInfoKHR_win32_to_host(const VkAcquireProfilingLockInfoKHR32 *in, VkAcquireProfilingLockInfoKHR_host *out)
+static inline void convert_VkAcquireProfilingLockInfoKHR_win32_to_host(const VkAcquireProfilingLockInfoKHR32 *in, VkAcquireProfilingLockInfoKHR *out)
 {
     if (!in) return;
 
@@ -1878,7 +1878,7 @@ static inline void convert_VkAcquireProfilingLockInfoKHR_win32_to_host(const VkA
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCommandBufferAllocateInfo_win32_to_unwrapped_host(const VkCommandBufferAllocateInfo32 *in, VkCommandBufferAllocateInfo_host *out)
+static inline void convert_VkCommandBufferAllocateInfo_win32_to_unwrapped_host(const VkCommandBufferAllocateInfo32 *in, VkCommandBufferAllocateInfo *out)
 {
     if (!in) return;
 
@@ -1891,7 +1891,7 @@ static inline void convert_VkCommandBufferAllocateInfo_win32_to_unwrapped_host(c
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDescriptorSetAllocateInfo_win32_to_host(const VkDescriptorSetAllocateInfo32 *in, VkDescriptorSetAllocateInfo_host *out)
+static inline void convert_VkDescriptorSetAllocateInfo_win32_to_host(const VkDescriptorSetAllocateInfo32 *in, VkDescriptorSetAllocateInfo *out)
 {
     if (!in) return;
 
@@ -1904,7 +1904,7 @@ static inline void convert_VkDescriptorSetAllocateInfo_win32_to_host(const VkDes
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context *ctx, const VkMemoryAllocateInfo32 *in, VkMemoryAllocateInfo_host *out)
+static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context *ctx, const VkMemoryAllocateInfo32 *in, VkMemoryAllocateInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -1922,7 +1922,7 @@ static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_
         {
         case VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_MEMORY_ALLOCATE_INFO_NV:
         {
-            VkDedicatedAllocationMemoryAllocateInfoNV_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkDedicatedAllocationMemoryAllocateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkDedicatedAllocationMemoryAllocateInfoNV32 *in_ext = (const VkDedicatedAllocationMemoryAllocateInfoNV32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_DEDICATED_ALLOCATION_MEMORY_ALLOCATE_INFO_NV;
             out_ext->pNext = NULL;
@@ -1983,7 +1983,7 @@ static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_
         }
         case VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO:
         {
-            VkMemoryDedicatedAllocateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkMemoryDedicatedAllocateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkMemoryDedicatedAllocateInfo32 *in_ext = (const VkMemoryDedicatedAllocateInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
             out_ext->pNext = NULL;
@@ -2018,7 +2018,7 @@ static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_
         }
         case VK_STRUCTURE_TYPE_MEMORY_OPAQUE_CAPTURE_ADDRESS_ALLOCATE_INFO:
         {
-            VkMemoryOpaqueCaptureAddressAllocateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkMemoryOpaqueCaptureAddressAllocateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkMemoryOpaqueCaptureAddressAllocateInfo32 *in_ext = (const VkMemoryOpaqueCaptureAddressAllocateInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_OPAQUE_CAPTURE_ADDRESS_ALLOCATE_INFO;
             out_ext->pNext = NULL;
@@ -2036,7 +2036,7 @@ static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(const VkCommandBufferInheritanceInfo32 *in, VkCommandBufferInheritanceInfo_host *out)
+static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(const VkCommandBufferInheritanceInfo32 *in, VkCommandBufferInheritanceInfo *out)
 {
     if (!in) return;
 
@@ -2052,9 +2052,9 @@ static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(const Vk
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkCommandBufferInheritanceInfo_host *convert_VkCommandBufferInheritanceInfo_array_win32_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo32 *in, uint32_t count)
+static inline const VkCommandBufferInheritanceInfo *convert_VkCommandBufferInheritanceInfo_array_win32_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo32 *in, uint32_t count)
 {
-    VkCommandBufferInheritanceInfo_host *out;
+    VkCommandBufferInheritanceInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2070,7 +2070,7 @@ static inline const VkCommandBufferInheritanceInfo_host *convert_VkCommandBuffer
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCommandBufferBeginInfo_win32_to_host(struct conversion_context *ctx, const VkCommandBufferBeginInfo32 *in, VkCommandBufferBeginInfo_host *out)
+static inline void convert_VkCommandBufferBeginInfo_win32_to_host(struct conversion_context *ctx, const VkCommandBufferBeginInfo32 *in, VkCommandBufferBeginInfo *out)
 {
     if (!in) return;
 
@@ -2082,7 +2082,7 @@ static inline void convert_VkCommandBufferBeginInfo_win32_to_host(struct convers
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host(const VkBindAccelerationStructureMemoryInfoNV32 *in, VkBindAccelerationStructureMemoryInfoNV_host *out)
+static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host(const VkBindAccelerationStructureMemoryInfoNV32 *in, VkBindAccelerationStructureMemoryInfoNV *out)
 {
     if (!in) return;
 
@@ -2097,9 +2097,9 @@ static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBindAccelerationStructureMemoryInfoNV_host *convert_VkBindAccelerationStructureMemoryInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkBindAccelerationStructureMemoryInfoNV32 *in, uint32_t count)
+static inline const VkBindAccelerationStructureMemoryInfoNV *convert_VkBindAccelerationStructureMemoryInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkBindAccelerationStructureMemoryInfoNV32 *in, uint32_t count)
 {
-    VkBindAccelerationStructureMemoryInfoNV_host *out;
+    VkBindAccelerationStructureMemoryInfoNV *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2115,7 +2115,7 @@ static inline const VkBindAccelerationStructureMemoryInfoNV_host *convert_VkBind
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBindBufferMemoryInfo_win32_to_host(const VkBindBufferMemoryInfo32 *in, VkBindBufferMemoryInfo_host *out)
+static inline void convert_VkBindBufferMemoryInfo_win32_to_host(const VkBindBufferMemoryInfo32 *in, VkBindBufferMemoryInfo *out)
 {
     if (!in) return;
 
@@ -2128,9 +2128,9 @@ static inline void convert_VkBindBufferMemoryInfo_win32_to_host(const VkBindBuff
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBindBufferMemoryInfo_host *convert_VkBindBufferMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindBufferMemoryInfo32 *in, uint32_t count)
+static inline const VkBindBufferMemoryInfo *convert_VkBindBufferMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindBufferMemoryInfo32 *in, uint32_t count)
 {
-    VkBindBufferMemoryInfo_host *out;
+    VkBindBufferMemoryInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2146,7 +2146,7 @@ static inline const VkBindBufferMemoryInfo_host *convert_VkBindBufferMemoryInfo_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo32 *in, VkBindImageMemoryInfo_host *out)
+static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo32 *in, VkBindImageMemoryInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -2179,7 +2179,7 @@ static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion
         }
         case VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_SWAPCHAIN_INFO_KHR:
         {
-            VkBindImageMemorySwapchainInfoKHR_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkBindImageMemorySwapchainInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkBindImageMemorySwapchainInfoKHR32 *in_ext = (const VkBindImageMemorySwapchainInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_BIND_IMAGE_MEMORY_SWAPCHAIN_INFO_KHR;
             out_ext->pNext = NULL;
@@ -2209,9 +2209,9 @@ static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBindImageMemoryInfo_host *convert_VkBindImageMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo32 *in, uint32_t count)
+static inline const VkBindImageMemoryInfo *convert_VkBindImageMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo32 *in, uint32_t count)
 {
-    VkBindImageMemoryInfo_host *out;
+    VkBindImageMemoryInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2227,7 +2227,7 @@ static inline const VkBindImageMemoryInfo_host *convert_VkBindImageMemoryInfo_ar
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureGeometryKHR_win32_to_host(const VkAccelerationStructureGeometryKHR32 *in, VkAccelerationStructureGeometryKHR_host *out)
+static inline void convert_VkAccelerationStructureGeometryKHR_win32_to_host(const VkAccelerationStructureGeometryKHR32 *in, VkAccelerationStructureGeometryKHR *out)
 {
     if (!in) return;
 
@@ -2240,9 +2240,9 @@ static inline void convert_VkAccelerationStructureGeometryKHR_win32_to_host(cons
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkAccelerationStructureGeometryKHR_host *convert_VkAccelerationStructureGeometryKHR_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryKHR32 *in, uint32_t count)
+static inline const VkAccelerationStructureGeometryKHR *convert_VkAccelerationStructureGeometryKHR_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryKHR32 *in, uint32_t count)
 {
-    VkAccelerationStructureGeometryKHR_host *out;
+    VkAccelerationStructureGeometryKHR *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2258,9 +2258,9 @@ static inline const VkAccelerationStructureGeometryKHR_host *convert_VkAccelerat
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkAccelerationStructureGeometryKHR_host * const*convert_VkAccelerationStructureGeometryKHR_pointer_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryKHR32 * const*in, uint32_t count)
+static inline const VkAccelerationStructureGeometryKHR * const*convert_VkAccelerationStructureGeometryKHR_pointer_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryKHR32 * const*in, uint32_t count)
 {
-    VkAccelerationStructureGeometryKHR_host **out;
+    VkAccelerationStructureGeometryKHR **out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2282,7 +2282,7 @@ static inline const VkAccelerationStructureGeometryKHR_host * const*convert_VkAc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR32 *in, VkAccelerationStructureBuildGeometryInfoKHR_host *out)
+static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR32 *in, VkAccelerationStructureBuildGeometryInfoKHR *out)
 {
     if (!in) return;
 
@@ -2301,9 +2301,9 @@ static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkAccelerationStructureBuildGeometryInfoKHR_host *convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR32 *in, uint32_t count)
+static inline const VkAccelerationStructureBuildGeometryInfoKHR *convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR32 *in, uint32_t count)
 {
-    VkAccelerationStructureBuildGeometryInfoKHR_host *out;
+    VkAccelerationStructureBuildGeometryInfoKHR *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2319,7 +2319,7 @@ static inline const VkAccelerationStructureBuildGeometryInfoKHR_host *convert_Vk
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(const VkMicromapBuildInfoEXT32 *in, VkMicromapBuildInfoEXT_host *out)
+static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(const VkMicromapBuildInfoEXT32 *in, VkMicromapBuildInfoEXT *out)
 {
     if (!in) return;
 
@@ -2340,9 +2340,9 @@ static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(const VkMicromap
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkMicromapBuildInfoEXT_host *convert_VkMicromapBuildInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkMicromapBuildInfoEXT32 *in, uint32_t count)
+static inline const VkMicromapBuildInfoEXT *convert_VkMicromapBuildInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkMicromapBuildInfoEXT32 *in, uint32_t count)
 {
-    VkMicromapBuildInfoEXT_host *out;
+    VkMicromapBuildInfoEXT *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2358,7 +2358,7 @@ static inline const VkMicromapBuildInfoEXT_host *convert_VkMicromapBuildInfoEXT_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkConditionalRenderingBeginInfoEXT_win32_to_host(const VkConditionalRenderingBeginInfoEXT32 *in, VkConditionalRenderingBeginInfoEXT_host *out)
+static inline void convert_VkConditionalRenderingBeginInfoEXT_win32_to_host(const VkConditionalRenderingBeginInfoEXT32 *in, VkConditionalRenderingBeginInfoEXT *out)
 {
     if (!in) return;
 
@@ -2371,7 +2371,7 @@ static inline void convert_VkConditionalRenderingBeginInfoEXT_win32_to_host(cons
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkRenderPassBeginInfo_win32_to_host(const VkRenderPassBeginInfo32 *in, VkRenderPassBeginInfo_host *out)
+static inline void convert_VkRenderPassBeginInfo_win32_to_host(const VkRenderPassBeginInfo32 *in, VkRenderPassBeginInfo *out)
 {
     if (!in) return;
 
@@ -2386,7 +2386,7 @@ static inline void convert_VkRenderPassBeginInfo_win32_to_host(const VkRenderPas
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkRenderingAttachmentInfo_win32_to_host(const VkRenderingAttachmentInfo32 *in, VkRenderingAttachmentInfo_host *out)
+static inline void convert_VkRenderingAttachmentInfo_win32_to_host(const VkRenderingAttachmentInfo32 *in, VkRenderingAttachmentInfo *out)
 {
     if (!in) return;
 
@@ -2404,9 +2404,9 @@ static inline void convert_VkRenderingAttachmentInfo_win32_to_host(const VkRende
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkRenderingAttachmentInfo_host *convert_VkRenderingAttachmentInfo_array_win32_to_host(struct conversion_context *ctx, const VkRenderingAttachmentInfo32 *in, uint32_t count)
+static inline const VkRenderingAttachmentInfo *convert_VkRenderingAttachmentInfo_array_win32_to_host(struct conversion_context *ctx, const VkRenderingAttachmentInfo32 *in, uint32_t count)
 {
-    VkRenderingAttachmentInfo_host *out;
+    VkRenderingAttachmentInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2422,7 +2422,7 @@ static inline const VkRenderingAttachmentInfo_host *convert_VkRenderingAttachmen
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_context *ctx, const VkRenderingInfo32 *in, VkRenderingInfo_host *out)
+static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_context *ctx, const VkRenderingInfo32 *in, VkRenderingInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -2471,7 +2471,7 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
         }
         case VK_STRUCTURE_TYPE_RENDERING_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR:
         {
-            VkRenderingFragmentShadingRateAttachmentInfoKHR_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkRenderingFragmentShadingRateAttachmentInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkRenderingFragmentShadingRateAttachmentInfoKHR32 *in_ext = (const VkRenderingFragmentShadingRateAttachmentInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_RENDERING_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR;
             out_ext->pNext = NULL;
@@ -2484,7 +2484,7 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
         }
         case VK_STRUCTURE_TYPE_RENDERING_FRAGMENT_DENSITY_MAP_ATTACHMENT_INFO_EXT:
         {
-            VkRenderingFragmentDensityMapAttachmentInfoEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkRenderingFragmentDensityMapAttachmentInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkRenderingFragmentDensityMapAttachmentInfoEXT32 *in_ext = (const VkRenderingFragmentDensityMapAttachmentInfoEXT32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_RENDERING_FRAGMENT_DENSITY_MAP_ATTACHMENT_INFO_EXT;
             out_ext->pNext = NULL;
@@ -2515,7 +2515,7 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBlitImageInfo2_win32_to_host(const VkBlitImageInfo232 *in, VkBlitImageInfo2_host *out)
+static inline void convert_VkBlitImageInfo2_win32_to_host(const VkBlitImageInfo232 *in, VkBlitImageInfo2 *out)
 {
     if (!in) return;
 
@@ -2532,7 +2532,7 @@ static inline void convert_VkBlitImageInfo2_win32_to_host(const VkBlitImageInfo2
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGeometryTrianglesNV_win32_to_host(const VkGeometryTrianglesNV32 *in, VkGeometryTrianglesNV_host *out)
+static inline void convert_VkGeometryTrianglesNV_win32_to_host(const VkGeometryTrianglesNV32 *in, VkGeometryTrianglesNV *out)
 {
     if (!in) return;
 
@@ -2553,7 +2553,7 @@ static inline void convert_VkGeometryTrianglesNV_win32_to_host(const VkGeometryT
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGeometryAABBNV_win32_to_host(const VkGeometryAABBNV32 *in, VkGeometryAABBNV_host *out)
+static inline void convert_VkGeometryAABBNV_win32_to_host(const VkGeometryAABBNV32 *in, VkGeometryAABBNV *out)
 {
     if (!in) return;
 
@@ -2567,7 +2567,7 @@ static inline void convert_VkGeometryAABBNV_win32_to_host(const VkGeometryAABBNV
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGeometryDataNV_win32_to_host(const VkGeometryDataNV32 *in, VkGeometryDataNV_host *out)
+static inline void convert_VkGeometryDataNV_win32_to_host(const VkGeometryDataNV32 *in, VkGeometryDataNV *out)
 {
     if (!in) return;
 
@@ -2577,7 +2577,7 @@ static inline void convert_VkGeometryDataNV_win32_to_host(const VkGeometryDataNV
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGeometryNV_win32_to_host(const VkGeometryNV32 *in, VkGeometryNV_host *out)
+static inline void convert_VkGeometryNV_win32_to_host(const VkGeometryNV32 *in, VkGeometryNV *out)
 {
     if (!in) return;
 
@@ -2590,9 +2590,9 @@ static inline void convert_VkGeometryNV_win32_to_host(const VkGeometryNV32 *in, 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkGeometryNV_host *convert_VkGeometryNV_array_win32_to_host(struct conversion_context *ctx, const VkGeometryNV32 *in, uint32_t count)
+static inline const VkGeometryNV *convert_VkGeometryNV_array_win32_to_host(struct conversion_context *ctx, const VkGeometryNV32 *in, uint32_t count)
 {
-    VkGeometryNV_host *out;
+    VkGeometryNV *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2608,7 +2608,7 @@ static inline const VkGeometryNV_host *convert_VkGeometryNV_array_win32_to_host(
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureInfoNV_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureInfoNV32 *in, VkAccelerationStructureInfoNV_host *out)
+static inline void convert_VkAccelerationStructureInfoNV_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureInfoNV32 *in, VkAccelerationStructureInfoNV *out)
 {
     if (!in) return;
 
@@ -2623,7 +2623,7 @@ static inline void convert_VkAccelerationStructureInfoNV_win32_to_host(struct co
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyAccelerationStructureInfoKHR_win32_to_host(const VkCopyAccelerationStructureInfoKHR32 *in, VkCopyAccelerationStructureInfoKHR_host *out)
+static inline void convert_VkCopyAccelerationStructureInfoKHR_win32_to_host(const VkCopyAccelerationStructureInfoKHR32 *in, VkCopyAccelerationStructureInfoKHR *out)
 {
     if (!in) return;
 
@@ -2636,7 +2636,7 @@ static inline void convert_VkCopyAccelerationStructureInfoKHR_win32_to_host(cons
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win32_to_host(const VkCopyAccelerationStructureToMemoryInfoKHR32 *in, VkCopyAccelerationStructureToMemoryInfoKHR_host *out)
+static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win32_to_host(const VkCopyAccelerationStructureToMemoryInfoKHR32 *in, VkCopyAccelerationStructureToMemoryInfoKHR *out)
 {
     if (!in) return;
 
@@ -2649,7 +2649,7 @@ static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win32_to_h
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferCopy_win32_to_host(const VkBufferCopy32 *in, VkBufferCopy_host *out)
+static inline void convert_VkBufferCopy_win32_to_host(const VkBufferCopy32 *in, VkBufferCopy *out)
 {
     if (!in) return;
 
@@ -2660,9 +2660,9 @@ static inline void convert_VkBufferCopy_win32_to_host(const VkBufferCopy32 *in, 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBufferCopy_host *convert_VkBufferCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy32 *in, uint32_t count)
+static inline const VkBufferCopy *convert_VkBufferCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy32 *in, uint32_t count)
 {
-    VkBufferCopy_host *out;
+    VkBufferCopy *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2678,7 +2678,7 @@ static inline const VkBufferCopy_host *convert_VkBufferCopy_array_win32_to_host(
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferCopy2_win32_to_host(const VkBufferCopy232 *in, VkBufferCopy2_host *out)
+static inline void convert_VkBufferCopy2_win32_to_host(const VkBufferCopy232 *in, VkBufferCopy2 *out)
 {
     if (!in) return;
 
@@ -2691,9 +2691,9 @@ static inline void convert_VkBufferCopy2_win32_to_host(const VkBufferCopy232 *in
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBufferCopy2_host *convert_VkBufferCopy2_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy232 *in, uint32_t count)
+static inline const VkBufferCopy2 *convert_VkBufferCopy2_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy232 *in, uint32_t count)
 {
-    VkBufferCopy2_host *out;
+    VkBufferCopy2 *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2709,7 +2709,7 @@ static inline const VkBufferCopy2_host *convert_VkBufferCopy2_array_win32_to_hos
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyBufferInfo2_win32_to_host(struct conversion_context *ctx, const VkCopyBufferInfo232 *in, VkCopyBufferInfo2_host *out)
+static inline void convert_VkCopyBufferInfo2_win32_to_host(struct conversion_context *ctx, const VkCopyBufferInfo232 *in, VkCopyBufferInfo2 *out)
 {
     if (!in) return;
 
@@ -2723,7 +2723,7 @@ static inline void convert_VkCopyBufferInfo2_win32_to_host(struct conversion_con
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferImageCopy_win32_to_host(const VkBufferImageCopy32 *in, VkBufferImageCopy_host *out)
+static inline void convert_VkBufferImageCopy_win32_to_host(const VkBufferImageCopy32 *in, VkBufferImageCopy *out)
 {
     if (!in) return;
 
@@ -2737,9 +2737,9 @@ static inline void convert_VkBufferImageCopy_win32_to_host(const VkBufferImageCo
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy32 *in, uint32_t count)
+static inline const VkBufferImageCopy *convert_VkBufferImageCopy_array_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy32 *in, uint32_t count)
 {
-    VkBufferImageCopy_host *out;
+    VkBufferImageCopy *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2755,7 +2755,7 @@ static inline const VkBufferImageCopy_host *convert_VkBufferImageCopy_array_win3
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferImageCopy2_win32_to_host(const VkBufferImageCopy232 *in, VkBufferImageCopy2_host *out)
+static inline void convert_VkBufferImageCopy2_win32_to_host(const VkBufferImageCopy232 *in, VkBufferImageCopy2 *out)
 {
     if (!in) return;
 
@@ -2771,9 +2771,9 @@ static inline void convert_VkBufferImageCopy2_win32_to_host(const VkBufferImageC
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBufferImageCopy2_host *convert_VkBufferImageCopy2_array_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy232 *in, uint32_t count)
+static inline const VkBufferImageCopy2 *convert_VkBufferImageCopy2_array_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy232 *in, uint32_t count)
 {
-    VkBufferImageCopy2_host *out;
+    VkBufferImageCopy2 *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2789,7 +2789,7 @@ static inline const VkBufferImageCopy2_host *convert_VkBufferImageCopy2_array_wi
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyBufferToImageInfo2_win32_to_host(struct conversion_context *ctx, const VkCopyBufferToImageInfo232 *in, VkCopyBufferToImageInfo2_host *out)
+static inline void convert_VkCopyBufferToImageInfo2_win32_to_host(struct conversion_context *ctx, const VkCopyBufferToImageInfo232 *in, VkCopyBufferToImageInfo2 *out)
 {
     if (!in) return;
 
@@ -2804,7 +2804,7 @@ static inline void convert_VkCopyBufferToImageInfo2_win32_to_host(struct convers
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyImageInfo2_win32_to_host(const VkCopyImageInfo232 *in, VkCopyImageInfo2_host *out)
+static inline void convert_VkCopyImageInfo2_win32_to_host(const VkCopyImageInfo232 *in, VkCopyImageInfo2 *out)
 {
     if (!in) return;
 
@@ -2820,7 +2820,7 @@ static inline void convert_VkCopyImageInfo2_win32_to_host(const VkCopyImageInfo2
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyImageToBufferInfo2_win32_to_host(struct conversion_context *ctx, const VkCopyImageToBufferInfo232 *in, VkCopyImageToBufferInfo2_host *out)
+static inline void convert_VkCopyImageToBufferInfo2_win32_to_host(struct conversion_context *ctx, const VkCopyImageToBufferInfo232 *in, VkCopyImageToBufferInfo2 *out)
 {
     if (!in) return;
 
@@ -2835,7 +2835,7 @@ static inline void convert_VkCopyImageToBufferInfo2_win32_to_host(struct convers
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyMemoryToAccelerationStructureInfoKHR_win32_to_host(const VkCopyMemoryToAccelerationStructureInfoKHR32 *in, VkCopyMemoryToAccelerationStructureInfoKHR_host *out)
+static inline void convert_VkCopyMemoryToAccelerationStructureInfoKHR_win32_to_host(const VkCopyMemoryToAccelerationStructureInfoKHR32 *in, VkCopyMemoryToAccelerationStructureInfoKHR *out)
 {
     if (!in) return;
 
@@ -2848,7 +2848,7 @@ static inline void convert_VkCopyMemoryToAccelerationStructureInfoKHR_win32_to_h
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyMemoryToMicromapInfoEXT_win32_to_host(const VkCopyMemoryToMicromapInfoEXT32 *in, VkCopyMemoryToMicromapInfoEXT_host *out)
+static inline void convert_VkCopyMemoryToMicromapInfoEXT_win32_to_host(const VkCopyMemoryToMicromapInfoEXT32 *in, VkCopyMemoryToMicromapInfoEXT *out)
 {
     if (!in) return;
 
@@ -2861,7 +2861,7 @@ static inline void convert_VkCopyMemoryToMicromapInfoEXT_win32_to_host(const VkC
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyMicromapInfoEXT_win32_to_host(const VkCopyMicromapInfoEXT32 *in, VkCopyMicromapInfoEXT_host *out)
+static inline void convert_VkCopyMicromapInfoEXT_win32_to_host(const VkCopyMicromapInfoEXT32 *in, VkCopyMicromapInfoEXT *out)
 {
     if (!in) return;
 
@@ -2874,7 +2874,7 @@ static inline void convert_VkCopyMicromapInfoEXT_win32_to_host(const VkCopyMicro
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyMicromapToMemoryInfoEXT_win32_to_host(const VkCopyMicromapToMemoryInfoEXT32 *in, VkCopyMicromapToMemoryInfoEXT_host *out)
+static inline void convert_VkCopyMicromapToMemoryInfoEXT_win32_to_host(const VkCopyMicromapToMemoryInfoEXT32 *in, VkCopyMicromapToMemoryInfoEXT *out)
 {
     if (!in) return;
 
@@ -2887,7 +2887,7 @@ static inline void convert_VkCopyMicromapToMemoryInfoEXT_win32_to_host(const VkC
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCuLaunchInfoNVX_win32_to_host(const VkCuLaunchInfoNVX32 *in, VkCuLaunchInfoNVX_host *out)
+static inline void convert_VkCuLaunchInfoNVX_win32_to_host(const VkCuLaunchInfoNVX32 *in, VkCuLaunchInfoNVX *out)
 {
     if (!in) return;
 
@@ -2909,7 +2909,7 @@ static inline void convert_VkCuLaunchInfoNVX_win32_to_host(const VkCuLaunchInfoN
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDecompressMemoryRegionNV_win32_to_host(const VkDecompressMemoryRegionNV32 *in, VkDecompressMemoryRegionNV_host *out)
+static inline void convert_VkDecompressMemoryRegionNV_win32_to_host(const VkDecompressMemoryRegionNV32 *in, VkDecompressMemoryRegionNV *out)
 {
     if (!in) return;
 
@@ -2922,9 +2922,9 @@ static inline void convert_VkDecompressMemoryRegionNV_win32_to_host(const VkDeco
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkDecompressMemoryRegionNV_host *convert_VkDecompressMemoryRegionNV_array_win32_to_host(struct conversion_context *ctx, const VkDecompressMemoryRegionNV32 *in, uint32_t count)
+static inline const VkDecompressMemoryRegionNV *convert_VkDecompressMemoryRegionNV_array_win32_to_host(struct conversion_context *ctx, const VkDecompressMemoryRegionNV32 *in, uint32_t count)
 {
-    VkDecompressMemoryRegionNV_host *out;
+    VkDecompressMemoryRegionNV *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -2976,7 +2976,7 @@ static inline const VkCommandBuffer *convert_VkCommandBuffer_array_win32_to_host
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkIndirectCommandsStreamNV_win32_to_host(const VkIndirectCommandsStreamNV32 *in, VkIndirectCommandsStreamNV_host *out)
+static inline void convert_VkIndirectCommandsStreamNV_win32_to_host(const VkIndirectCommandsStreamNV32 *in, VkIndirectCommandsStreamNV *out)
 {
     if (!in) return;
 
@@ -2986,9 +2986,9 @@ static inline void convert_VkIndirectCommandsStreamNV_win32_to_host(const VkIndi
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsStreamNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsStreamNV32 *in, uint32_t count)
+static inline const VkIndirectCommandsStreamNV *convert_VkIndirectCommandsStreamNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsStreamNV32 *in, uint32_t count)
 {
-    VkIndirectCommandsStreamNV_host *out;
+    VkIndirectCommandsStreamNV *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3004,7 +3004,7 @@ static inline const VkIndirectCommandsStreamNV_host *convert_VkIndirectCommandsS
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGeneratedCommandsInfoNV_win32_to_host(struct conversion_context *ctx, const VkGeneratedCommandsInfoNV32 *in, VkGeneratedCommandsInfoNV_host *out)
+static inline void convert_VkGeneratedCommandsInfoNV_win32_to_host(struct conversion_context *ctx, const VkGeneratedCommandsInfoNV32 *in, VkGeneratedCommandsInfoNV *out)
 {
     if (!in) return;
 
@@ -3027,7 +3027,7 @@ static inline void convert_VkGeneratedCommandsInfoNV_win32_to_host(struct conver
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferMemoryBarrier_win32_to_host(const VkBufferMemoryBarrier32 *in, VkBufferMemoryBarrier_host *out)
+static inline void convert_VkBufferMemoryBarrier_win32_to_host(const VkBufferMemoryBarrier32 *in, VkBufferMemoryBarrier *out)
 {
     if (!in) return;
 
@@ -3044,9 +3044,9 @@ static inline void convert_VkBufferMemoryBarrier_win32_to_host(const VkBufferMem
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBufferMemoryBarrier_host *convert_VkBufferMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier32 *in, uint32_t count)
+static inline const VkBufferMemoryBarrier *convert_VkBufferMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier32 *in, uint32_t count)
 {
-    VkBufferMemoryBarrier_host *out;
+    VkBufferMemoryBarrier *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3062,7 +3062,7 @@ static inline const VkBufferMemoryBarrier_host *convert_VkBufferMemoryBarrier_ar
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageMemoryBarrier_win32_to_host(const VkImageMemoryBarrier32 *in, VkImageMemoryBarrier_host *out)
+static inline void convert_VkImageMemoryBarrier_win32_to_host(const VkImageMemoryBarrier32 *in, VkImageMemoryBarrier *out)
 {
     if (!in) return;
 
@@ -3080,9 +3080,9 @@ static inline void convert_VkImageMemoryBarrier_win32_to_host(const VkImageMemor
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkImageMemoryBarrier_host *convert_VkImageMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier32 *in, uint32_t count)
+static inline const VkImageMemoryBarrier *convert_VkImageMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier32 *in, uint32_t count)
 {
-    VkImageMemoryBarrier_host *out;
+    VkImageMemoryBarrier *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3098,7 +3098,7 @@ static inline const VkImageMemoryBarrier_host *convert_VkImageMemoryBarrier_arra
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferMemoryBarrier2_win32_to_host(const VkBufferMemoryBarrier232 *in, VkBufferMemoryBarrier2_host *out)
+static inline void convert_VkBufferMemoryBarrier2_win32_to_host(const VkBufferMemoryBarrier232 *in, VkBufferMemoryBarrier2 *out)
 {
     if (!in) return;
 
@@ -3117,9 +3117,9 @@ static inline void convert_VkBufferMemoryBarrier2_win32_to_host(const VkBufferMe
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBufferMemoryBarrier2_host *convert_VkBufferMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier232 *in, uint32_t count)
+static inline const VkBufferMemoryBarrier2 *convert_VkBufferMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier232 *in, uint32_t count)
 {
-    VkBufferMemoryBarrier2_host *out;
+    VkBufferMemoryBarrier2 *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3135,7 +3135,7 @@ static inline const VkBufferMemoryBarrier2_host *convert_VkBufferMemoryBarrier2_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageMemoryBarrier2_win32_to_host(const VkImageMemoryBarrier232 *in, VkImageMemoryBarrier2_host *out)
+static inline void convert_VkImageMemoryBarrier2_win32_to_host(const VkImageMemoryBarrier232 *in, VkImageMemoryBarrier2 *out)
 {
     if (!in) return;
 
@@ -3155,9 +3155,9 @@ static inline void convert_VkImageMemoryBarrier2_win32_to_host(const VkImageMemo
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkImageMemoryBarrier2_host *convert_VkImageMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier232 *in, uint32_t count)
+static inline const VkImageMemoryBarrier2 *convert_VkImageMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier232 *in, uint32_t count)
 {
-    VkImageMemoryBarrier2_host *out;
+    VkImageMemoryBarrier2 *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3173,7 +3173,7 @@ static inline const VkImageMemoryBarrier2_host *convert_VkImageMemoryBarrier2_ar
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDependencyInfo_win32_to_host(struct conversion_context *ctx, const VkDependencyInfo32 *in, VkDependencyInfo_host *out)
+static inline void convert_VkDependencyInfo_win32_to_host(struct conversion_context *ctx, const VkDependencyInfo32 *in, VkDependencyInfo *out)
 {
     if (!in) return;
 
@@ -3190,7 +3190,7 @@ static inline void convert_VkDependencyInfo_win32_to_host(struct conversion_cont
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDescriptorImageInfo_win32_to_host(const VkDescriptorImageInfo32 *in, VkDescriptorImageInfo_host *out)
+static inline void convert_VkDescriptorImageInfo_win32_to_host(const VkDescriptorImageInfo32 *in, VkDescriptorImageInfo *out)
 {
     if (!in) return;
 
@@ -3201,9 +3201,9 @@ static inline void convert_VkDescriptorImageInfo_win32_to_host(const VkDescripto
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorImageInfo32 *in, uint32_t count)
+static inline const VkDescriptorImageInfo *convert_VkDescriptorImageInfo_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorImageInfo32 *in, uint32_t count)
 {
-    VkDescriptorImageInfo_host *out;
+    VkDescriptorImageInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3219,7 +3219,7 @@ static inline const VkDescriptorImageInfo_host *convert_VkDescriptorImageInfo_ar
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDescriptorBufferInfo_win32_to_host(const VkDescriptorBufferInfo32 *in, VkDescriptorBufferInfo_host *out)
+static inline void convert_VkDescriptorBufferInfo_win32_to_host(const VkDescriptorBufferInfo32 *in, VkDescriptorBufferInfo *out)
 {
     if (!in) return;
 
@@ -3230,9 +3230,9 @@ static inline void convert_VkDescriptorBufferInfo_win32_to_host(const VkDescript
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkDescriptorBufferInfo_host *convert_VkDescriptorBufferInfo_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorBufferInfo32 *in, uint32_t count)
+static inline const VkDescriptorBufferInfo *convert_VkDescriptorBufferInfo_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorBufferInfo32 *in, uint32_t count)
 {
-    VkDescriptorBufferInfo_host *out;
+    VkDescriptorBufferInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3248,7 +3248,7 @@ static inline const VkDescriptorBufferInfo_host *convert_VkDescriptorBufferInfo_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_context *ctx, const VkWriteDescriptorSet32 *in, VkWriteDescriptorSet_host *out)
+static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_context *ctx, const VkWriteDescriptorSet32 *in, VkWriteDescriptorSet *out)
 {
     if (!in) return;
 
@@ -3266,9 +3266,9 @@ static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkWriteDescriptorSet_host *convert_VkWriteDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkWriteDescriptorSet32 *in, uint32_t count)
+static inline const VkWriteDescriptorSet *convert_VkWriteDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkWriteDescriptorSet32 *in, uint32_t count)
 {
-    VkWriteDescriptorSet_host *out;
+    VkWriteDescriptorSet *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3284,7 +3284,7 @@ static inline const VkWriteDescriptorSet_host *convert_VkWriteDescriptorSet_arra
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkResolveImageInfo2_win32_to_host(const VkResolveImageInfo232 *in, VkResolveImageInfo2_host *out)
+static inline void convert_VkResolveImageInfo2_win32_to_host(const VkResolveImageInfo232 *in, VkResolveImageInfo2 *out)
 {
     if (!in) return;
 
@@ -3300,7 +3300,7 @@ static inline void convert_VkResolveImageInfo2_win32_to_host(const VkResolveImag
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPerformanceMarkerInfoINTEL_win32_to_host(const VkPerformanceMarkerInfoINTEL32 *in, VkPerformanceMarkerInfoINTEL_host *out)
+static inline void convert_VkPerformanceMarkerInfoINTEL_win32_to_host(const VkPerformanceMarkerInfoINTEL32 *in, VkPerformanceMarkerInfoINTEL *out)
 {
     if (!in) return;
 
@@ -3311,7 +3311,7 @@ static inline void convert_VkPerformanceMarkerInfoINTEL_win32_to_host(const VkPe
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPerformanceOverrideInfoINTEL_win32_to_host(const VkPerformanceOverrideInfoINTEL32 *in, VkPerformanceOverrideInfoINTEL_host *out)
+static inline void convert_VkPerformanceOverrideInfoINTEL_win32_to_host(const VkPerformanceOverrideInfoINTEL32 *in, VkPerformanceOverrideInfoINTEL *out)
 {
     if (!in) return;
 
@@ -3324,7 +3324,7 @@ static inline void convert_VkPerformanceOverrideInfoINTEL_win32_to_host(const Vk
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkStridedDeviceAddressRegionKHR_win32_to_host(const VkStridedDeviceAddressRegionKHR32 *in, VkStridedDeviceAddressRegionKHR_host *out)
+static inline void convert_VkStridedDeviceAddressRegionKHR_win32_to_host(const VkStridedDeviceAddressRegionKHR32 *in, VkStridedDeviceAddressRegionKHR *out)
 {
     if (!in) return;
 
@@ -3335,9 +3335,9 @@ static inline void convert_VkStridedDeviceAddressRegionKHR_win32_to_host(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkDependencyInfo_host *convert_VkDependencyInfo_array_win32_to_host(struct conversion_context *ctx, const VkDependencyInfo32 *in, uint32_t count)
+static inline const VkDependencyInfo *convert_VkDependencyInfo_array_win32_to_host(struct conversion_context *ctx, const VkDependencyInfo32 *in, uint32_t count)
 {
-    VkDependencyInfo_host *out;
+    VkDependencyInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3353,7 +3353,7 @@ static inline const VkDependencyInfo_host *convert_VkDependencyInfo_array_win32_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureCreateInfoKHR_win32_to_host(const VkAccelerationStructureCreateInfoKHR32 *in, VkAccelerationStructureCreateInfoKHR_host *out)
+static inline void convert_VkAccelerationStructureCreateInfoKHR_win32_to_host(const VkAccelerationStructureCreateInfoKHR32 *in, VkAccelerationStructureCreateInfoKHR *out)
 {
     if (!in) return;
 
@@ -3369,7 +3369,7 @@ static inline void convert_VkAccelerationStructureCreateInfoKHR_win32_to_host(co
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureCreateInfoNV32 *in, VkAccelerationStructureCreateInfoNV_host *out)
+static inline void convert_VkAccelerationStructureCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureCreateInfoNV32 *in, VkAccelerationStructureCreateInfoNV *out)
 {
     if (!in) return;
 
@@ -3381,7 +3381,7 @@ static inline void convert_VkAccelerationStructureCreateInfoNV_win32_to_host(str
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferCreateInfo_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo32 *in, VkBufferCreateInfo_host *out)
+static inline void convert_VkBufferCreateInfo_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo32 *in, VkBufferCreateInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -3425,7 +3425,7 @@ static inline void convert_VkBufferCreateInfo_win32_to_host(struct conversion_co
         }
         case VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO:
         {
-            VkBufferOpaqueCaptureAddressCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkBufferOpaqueCaptureAddressCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkBufferOpaqueCaptureAddressCreateInfo32 *in_ext = (const VkBufferOpaqueCaptureAddressCreateInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_OPAQUE_CAPTURE_ADDRESS_CREATE_INFO;
             out_ext->pNext = NULL;
@@ -3436,7 +3436,7 @@ static inline void convert_VkBufferCreateInfo_win32_to_host(struct conversion_co
         }
         case VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT:
         {
-            VkBufferDeviceAddressCreateInfoEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkBufferDeviceAddressCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkBufferDeviceAddressCreateInfoEXT32 *in_ext = (const VkBufferDeviceAddressCreateInfoEXT32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_CREATE_INFO_EXT;
             out_ext->pNext = NULL;
@@ -3454,7 +3454,7 @@ static inline void convert_VkBufferCreateInfo_win32_to_host(struct conversion_co
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferViewCreateInfo_win32_to_host(const VkBufferViewCreateInfo32 *in, VkBufferViewCreateInfo_host *out)
+static inline void convert_VkBufferViewCreateInfo_win32_to_host(const VkBufferViewCreateInfo32 *in, VkBufferViewCreateInfo *out)
 {
     if (!in) return;
 
@@ -3469,7 +3469,7 @@ static inline void convert_VkBufferViewCreateInfo_win32_to_host(const VkBufferVi
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPipelineCreationFeedback_host_to_win32(const VkPipelineCreationFeedback_host *in, VkPipelineCreationFeedback32 *out)
+static inline void convert_VkPipelineCreationFeedback_host_to_win32(const VkPipelineCreationFeedback *in, VkPipelineCreationFeedback32 *out)
 {
     if (!in) return;
 
@@ -3479,9 +3479,9 @@ static inline void convert_VkPipelineCreationFeedback_host_to_win32(const VkPipe
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkPipelineCreationFeedback_host *convert_VkPipelineCreationFeedback_array_win32_to_host(struct conversion_context *ctx, const VkPipelineCreationFeedback32 *in, uint32_t count)
+static inline VkPipelineCreationFeedback *convert_VkPipelineCreationFeedback_array_win32_to_host(struct conversion_context *ctx, const VkPipelineCreationFeedback32 *in, uint32_t count)
 {
-    VkPipelineCreationFeedback_host *out;
+    VkPipelineCreationFeedback *out;
     if (!in || !count) return NULL;
 
     out = conversion_context_alloc(ctx, count * sizeof(*out));
@@ -3491,7 +3491,7 @@ static inline VkPipelineCreationFeedback_host *convert_VkPipelineCreationFeedbac
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPipelineCreationFeedback_array_host_to_win32(const VkPipelineCreationFeedback_host *in, VkPipelineCreationFeedback32 *out, uint32_t count)
+static inline void convert_VkPipelineCreationFeedback_array_host_to_win32(const VkPipelineCreationFeedback *in, VkPipelineCreationFeedback32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -3607,7 +3607,7 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win64_to_host(struct 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPipelineShaderStageCreateInfo_win32_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo32 *in, VkPipelineShaderStageCreateInfo_host *out)
+static inline void convert_VkPipelineShaderStageCreateInfo_win32_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo32 *in, VkPipelineShaderStageCreateInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -3641,7 +3641,7 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win32_to_host(struct 
         }
         case VK_STRUCTURE_TYPE_SHADER_MODULE_VALIDATION_CACHE_CREATE_INFO_EXT:
         {
-            VkShaderModuleValidationCacheCreateInfoEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkShaderModuleValidationCacheCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkShaderModuleValidationCacheCreateInfoEXT32 *in_ext = (const VkShaderModuleValidationCacheCreateInfoEXT32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SHADER_MODULE_VALIDATION_CACHE_CREATE_INFO_EXT;
             out_ext->pNext = NULL;
@@ -3652,7 +3652,7 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win32_to_host(struct 
         }
         case VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT:
         {
-            VkDebugUtilsObjectNameInfoEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkDebugUtilsObjectNameInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkDebugUtilsObjectNameInfoEXT32 *in_ext = (const VkDebugUtilsObjectNameInfoEXT32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT;
             out_ext->pNext = NULL;
@@ -3724,7 +3724,7 @@ static inline void convert_VkComputePipelineCreateInfo_win64_to_host(struct conv
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo32 *in, VkComputePipelineCreateInfo_host *out)
+static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo32 *in, VkComputePipelineCreateInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -3745,7 +3745,7 @@ static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conv
         {
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPipelineCreationFeedbackCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkPipelineCreationFeedbackCreateInfo32 *in_ext = (const VkPipelineCreationFeedbackCreateInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             out_ext->pNext = NULL;
@@ -3758,7 +3758,7 @@ static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_SUBPASS_SHADING_PIPELINE_CREATE_INFO_HUAWEI:
         {
-            VkSubpassShadingPipelineCreateInfoHUAWEI_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkSubpassShadingPipelineCreateInfoHUAWEI *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkSubpassShadingPipelineCreateInfoHUAWEI32 *in_ext = (const VkSubpassShadingPipelineCreateInfoHUAWEI32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SUBPASS_SHADING_PIPELINE_CREATE_INFO_HUAWEI;
             out_ext->pNext = NULL;
@@ -3802,7 +3802,7 @@ static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conv
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkComputePipelineCreateInfo_host_to_win32(const VkComputePipelineCreateInfo_host *in, const VkComputePipelineCreateInfo32 *out)
+static inline void convert_VkComputePipelineCreateInfo_host_to_win32(const VkComputePipelineCreateInfo *in, const VkComputePipelineCreateInfo32 *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -3817,7 +3817,7 @@ static inline void convert_VkComputePipelineCreateInfo_host_to_win32(const VkCom
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
             VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
-            const VkPipelineCreationFeedbackCreateInfo_host *in_ext = (const VkPipelineCreationFeedbackCreateInfo_host *)in_header;
+            const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineStageCreationFeedbacks, out_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
@@ -3850,9 +3850,9 @@ static inline const VkComputePipelineCreateInfo *convert_VkComputePipelineCreate
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkComputePipelineCreateInfo_host *convert_VkComputePipelineCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo32 *in, uint32_t count)
+static inline const VkComputePipelineCreateInfo *convert_VkComputePipelineCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo32 *in, uint32_t count)
 {
-    VkComputePipelineCreateInfo_host *out;
+    VkComputePipelineCreateInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -3868,7 +3868,7 @@ static inline const VkComputePipelineCreateInfo_host *convert_VkComputePipelineC
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkComputePipelineCreateInfo_array_host_to_win32(const VkComputePipelineCreateInfo_host *in, const VkComputePipelineCreateInfo32 *out, uint32_t count)
+static inline void convert_VkComputePipelineCreateInfo_array_host_to_win32(const VkComputePipelineCreateInfo *in, const VkComputePipelineCreateInfo32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -3882,7 +3882,7 @@ static inline void convert_VkComputePipelineCreateInfo_array_host_to_win32(const
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCuFunctionCreateInfoNVX_win32_to_host(const VkCuFunctionCreateInfoNVX32 *in, VkCuFunctionCreateInfoNVX_host *out)
+static inline void convert_VkCuFunctionCreateInfoNVX_win32_to_host(const VkCuFunctionCreateInfoNVX32 *in, VkCuFunctionCreateInfoNVX *out)
 {
     if (!in) return;
 
@@ -3894,7 +3894,7 @@ static inline void convert_VkCuFunctionCreateInfoNVX_win32_to_host(const VkCuFun
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(const VkDescriptorUpdateTemplateCreateInfo32 *in, VkDescriptorUpdateTemplateCreateInfo_host *out)
+static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(const VkDescriptorUpdateTemplateCreateInfo32 *in, VkDescriptorUpdateTemplateCreateInfo *out)
 {
     if (!in) return;
 
@@ -7578,7 +7578,7 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkFramebufferCreateInfo_win32_to_host(const VkFramebufferCreateInfo32 *in, VkFramebufferCreateInfo_host *out)
+static inline void convert_VkFramebufferCreateInfo_win32_to_host(const VkFramebufferCreateInfo32 *in, VkFramebufferCreateInfo *out)
 {
     if (!in) return;
 
@@ -7613,9 +7613,9 @@ static inline const VkPipelineShaderStageCreateInfo *convert_VkPipelineShaderSta
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkPipelineShaderStageCreateInfo_host *convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo32 *in, uint32_t count)
+static inline const VkPipelineShaderStageCreateInfo *convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo32 *in, uint32_t count)
 {
-    VkPipelineShaderStageCreateInfo_host *out;
+    VkPipelineShaderStageCreateInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -7645,7 +7645,7 @@ static inline void convert_VkGraphicsShaderGroupCreateInfoNV_win64_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGraphicsShaderGroupCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV32 *in, VkGraphicsShaderGroupCreateInfoNV_host *out)
+static inline void convert_VkGraphicsShaderGroupCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV32 *in, VkGraphicsShaderGroupCreateInfoNV *out)
 {
     if (!in) return;
 
@@ -7677,9 +7677,9 @@ static inline const VkGraphicsShaderGroupCreateInfoNV *convert_VkGraphicsShaderG
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkGraphicsShaderGroupCreateInfoNV_host *convert_VkGraphicsShaderGroupCreateInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV32 *in, uint32_t count)
+static inline const VkGraphicsShaderGroupCreateInfoNV *convert_VkGraphicsShaderGroupCreateInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkGraphicsShaderGroupCreateInfoNV32 *in, uint32_t count)
 {
-    VkGraphicsShaderGroupCreateInfoNV_host *out;
+    VkGraphicsShaderGroupCreateInfoNV *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -7900,7 +7900,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win64_to_host(struct con
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo32 *in, VkGraphicsPipelineCreateInfo_host *out)
+static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo32 *in, VkGraphicsPipelineCreateInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -7933,7 +7933,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct con
         {
         case VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_SHADER_GROUPS_CREATE_INFO_NV:
         {
-            VkGraphicsPipelineShaderGroupsCreateInfoNV_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkGraphicsPipelineShaderGroupsCreateInfoNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkGraphicsPipelineShaderGroupsCreateInfoNV32 *in_ext = (const VkGraphicsPipelineShaderGroupsCreateInfoNV32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_SHADER_GROUPS_CREATE_INFO_NV;
             out_ext->pNext = NULL;
@@ -7972,7 +7972,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct con
         }
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPipelineCreationFeedbackCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkPipelineCreationFeedbackCreateInfo32 *in_ext = (const VkPipelineCreationFeedbackCreateInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             out_ext->pNext = NULL;
@@ -8105,7 +8105,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct con
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGraphicsPipelineCreateInfo_host_to_win32(const VkGraphicsPipelineCreateInfo_host *in, const VkGraphicsPipelineCreateInfo32 *out)
+static inline void convert_VkGraphicsPipelineCreateInfo_host_to_win32(const VkGraphicsPipelineCreateInfo *in, const VkGraphicsPipelineCreateInfo32 *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -8120,7 +8120,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_host_to_win32(const VkGr
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
             VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
-            const VkPipelineCreationFeedbackCreateInfo_host *in_ext = (const VkPipelineCreationFeedbackCreateInfo_host *)in_header;
+            const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineStageCreationFeedbacks, out_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
@@ -8153,9 +8153,9 @@ static inline const VkGraphicsPipelineCreateInfo *convert_VkGraphicsPipelineCrea
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkGraphicsPipelineCreateInfo_host *convert_VkGraphicsPipelineCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo32 *in, uint32_t count)
+static inline const VkGraphicsPipelineCreateInfo *convert_VkGraphicsPipelineCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo32 *in, uint32_t count)
 {
-    VkGraphicsPipelineCreateInfo_host *out;
+    VkGraphicsPipelineCreateInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -8171,7 +8171,7 @@ static inline const VkGraphicsPipelineCreateInfo_host *convert_VkGraphicsPipelin
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGraphicsPipelineCreateInfo_array_host_to_win32(const VkGraphicsPipelineCreateInfo_host *in, const VkGraphicsPipelineCreateInfo32 *out, uint32_t count)
+static inline void convert_VkGraphicsPipelineCreateInfo_array_host_to_win32(const VkGraphicsPipelineCreateInfo *in, const VkGraphicsPipelineCreateInfo32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -8236,7 +8236,7 @@ static inline void convert_VkImageCreateInfo_win32_to_host(struct conversion_con
         }
         case VK_STRUCTURE_TYPE_IMAGE_SWAPCHAIN_CREATE_INFO_KHR:
         {
-            VkImageSwapchainCreateInfoKHR_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkImageSwapchainCreateInfoKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkImageSwapchainCreateInfoKHR32 *in_ext = (const VkImageSwapchainCreateInfoKHR32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_SWAPCHAIN_CREATE_INFO_KHR;
             out_ext->pNext = NULL;
@@ -8301,7 +8301,7 @@ static inline void convert_VkImageCreateInfo_win32_to_host(struct conversion_con
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageViewCreateInfo_win32_to_host(struct conversion_context *ctx, const VkImageViewCreateInfo32 *in, VkImageViewCreateInfo_host *out)
+static inline void convert_VkImageViewCreateInfo_win32_to_host(struct conversion_context *ctx, const VkImageViewCreateInfo32 *in, VkImageViewCreateInfo *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -8334,7 +8334,7 @@ static inline void convert_VkImageViewCreateInfo_win32_to_host(struct conversion
         }
         case VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO:
         {
-            VkSamplerYcbcrConversionInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkSamplerYcbcrConversionInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkSamplerYcbcrConversionInfo32 *in_ext = (const VkSamplerYcbcrConversionInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO;
             out_ext->pNext = NULL;
@@ -8387,7 +8387,7 @@ static inline void convert_VkImageViewCreateInfo_win32_to_host(struct conversion
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkIndirectCommandsLayoutTokenNV_win32_to_host(const VkIndirectCommandsLayoutTokenNV32 *in, VkIndirectCommandsLayoutTokenNV_host *out)
+static inline void convert_VkIndirectCommandsLayoutTokenNV_win32_to_host(const VkIndirectCommandsLayoutTokenNV32 *in, VkIndirectCommandsLayoutTokenNV *out)
 {
     if (!in) return;
 
@@ -8410,9 +8410,9 @@ static inline void convert_VkIndirectCommandsLayoutTokenNV_win32_to_host(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkIndirectCommandsLayoutTokenNV_host *convert_VkIndirectCommandsLayoutTokenNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsLayoutTokenNV32 *in, uint32_t count)
+static inline const VkIndirectCommandsLayoutTokenNV *convert_VkIndirectCommandsLayoutTokenNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsLayoutTokenNV32 *in, uint32_t count)
 {
-    VkIndirectCommandsLayoutTokenNV_host *out;
+    VkIndirectCommandsLayoutTokenNV *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -8428,7 +8428,7 @@ static inline const VkIndirectCommandsLayoutTokenNV_host *convert_VkIndirectComm
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkIndirectCommandsLayoutCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsLayoutCreateInfoNV32 *in, VkIndirectCommandsLayoutCreateInfoNV_host *out)
+static inline void convert_VkIndirectCommandsLayoutCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsLayoutCreateInfoNV32 *in, VkIndirectCommandsLayoutCreateInfoNV *out)
 {
     if (!in) return;
 
@@ -8614,7 +8614,7 @@ static inline void convert_VkInstanceCreateInfo_win32_to_host(struct conversion_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMicromapCreateInfoEXT_win32_to_host(const VkMicromapCreateInfoEXT32 *in, VkMicromapCreateInfoEXT_host *out)
+static inline void convert_VkMicromapCreateInfoEXT_win32_to_host(const VkMicromapCreateInfoEXT32 *in, VkMicromapCreateInfoEXT *out)
 {
     if (!in) return;
 
@@ -8652,7 +8652,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win64_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR32 *in, VkRayTracingPipelineCreateInfoKHR_host *out)
+static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR32 *in, VkRayTracingPipelineCreateInfoKHR *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -8680,7 +8680,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struc
         {
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPipelineCreationFeedbackCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkPipelineCreationFeedbackCreateInfo32 *in_ext = (const VkPipelineCreationFeedbackCreateInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             out_ext->pNext = NULL;
@@ -8714,7 +8714,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkRayTracingPipelineCreateInfoKHR_host_to_win32(const VkRayTracingPipelineCreateInfoKHR_host *in, const VkRayTracingPipelineCreateInfoKHR32 *out)
+static inline void convert_VkRayTracingPipelineCreateInfoKHR_host_to_win32(const VkRayTracingPipelineCreateInfoKHR *in, const VkRayTracingPipelineCreateInfoKHR32 *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -8729,7 +8729,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_host_to_win32(const
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
             VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
-            const VkPipelineCreationFeedbackCreateInfo_host *in_ext = (const VkPipelineCreationFeedbackCreateInfo_host *)in_header;
+            const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineStageCreationFeedbacks, out_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
@@ -8762,9 +8762,9 @@ static inline const VkRayTracingPipelineCreateInfoKHR *convert_VkRayTracingPipel
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkRayTracingPipelineCreateInfoKHR_host *convert_VkRayTracingPipelineCreateInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR32 *in, uint32_t count)
+static inline const VkRayTracingPipelineCreateInfoKHR *convert_VkRayTracingPipelineCreateInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR32 *in, uint32_t count)
 {
-    VkRayTracingPipelineCreateInfoKHR_host *out;
+    VkRayTracingPipelineCreateInfoKHR *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -8780,7 +8780,7 @@ static inline const VkRayTracingPipelineCreateInfoKHR_host *convert_VkRayTracing
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkRayTracingPipelineCreateInfoKHR_array_host_to_win32(const VkRayTracingPipelineCreateInfoKHR_host *in, const VkRayTracingPipelineCreateInfoKHR32 *out, uint32_t count)
+static inline void convert_VkRayTracingPipelineCreateInfoKHR_array_host_to_win32(const VkRayTracingPipelineCreateInfoKHR *in, const VkRayTracingPipelineCreateInfoKHR32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -8813,7 +8813,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_win64_to_host(struct
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV32 *in, VkRayTracingPipelineCreateInfoNV_host *out)
+static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV32 *in, VkRayTracingPipelineCreateInfoNV *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -8838,7 +8838,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct
         {
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPipelineCreationFeedbackCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkPipelineCreationFeedbackCreateInfo32 *in_ext = (const VkPipelineCreationFeedbackCreateInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             out_ext->pNext = NULL;
@@ -8858,7 +8858,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkRayTracingPipelineCreateInfoNV_host_to_win32(const VkRayTracingPipelineCreateInfoNV_host *in, const VkRayTracingPipelineCreateInfoNV32 *out)
+static inline void convert_VkRayTracingPipelineCreateInfoNV_host_to_win32(const VkRayTracingPipelineCreateInfoNV *in, const VkRayTracingPipelineCreateInfoNV32 *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -8873,7 +8873,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_host_to_win32(const 
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
             VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
-            const VkPipelineCreationFeedbackCreateInfo_host *in_ext = (const VkPipelineCreationFeedbackCreateInfo_host *)in_header;
+            const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineStageCreationFeedbacks, out_ext->pPipelineStageCreationFeedbacks, in_ext->pipelineStageCreationFeedbackCount);
@@ -8906,9 +8906,9 @@ static inline const VkRayTracingPipelineCreateInfoNV *convert_VkRayTracingPipeli
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkRayTracingPipelineCreateInfoNV_host *convert_VkRayTracingPipelineCreateInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV32 *in, uint32_t count)
+static inline const VkRayTracingPipelineCreateInfoNV *convert_VkRayTracingPipelineCreateInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV32 *in, uint32_t count)
 {
-    VkRayTracingPipelineCreateInfoNV_host *out;
+    VkRayTracingPipelineCreateInfoNV *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -8924,7 +8924,7 @@ static inline const VkRayTracingPipelineCreateInfoNV_host *convert_VkRayTracingP
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkRayTracingPipelineCreateInfoNV_array_host_to_win32(const VkRayTracingPipelineCreateInfoNV_host *in, const VkRayTracingPipelineCreateInfoNV32 *out, uint32_t count)
+static inline void convert_VkRayTracingPipelineCreateInfoNV_array_host_to_win32(const VkRayTracingPipelineCreateInfoNV *in, const VkRayTracingPipelineCreateInfoNV32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -8970,7 +8970,7 @@ static inline void convert_VkSamplerCreateInfo_win32_to_host(struct conversion_c
         {
         case VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO:
         {
-            VkSamplerYcbcrConversionInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkSamplerYcbcrConversionInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkSamplerYcbcrConversionInfo32 *in_ext = (const VkSamplerYcbcrConversionInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_INFO;
             out_ext->pNext = NULL;
@@ -9051,7 +9051,7 @@ static inline void convert_VkSemaphoreCreateInfo_win32_to_host(struct conversion
         }
         case VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO:
         {
-            VkSemaphoreTypeCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkSemaphoreTypeCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkSemaphoreTypeCreateInfo32 *in_ext = (const VkSemaphoreTypeCreateInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
             out_ext->pNext = NULL;
@@ -9089,7 +9089,7 @@ static inline void convert_VkShaderModuleCreateInfo_win32_to_host(struct convers
         {
         case VK_STRUCTURE_TYPE_SHADER_MODULE_VALIDATION_CACHE_CREATE_INFO_EXT:
         {
-            VkShaderModuleValidationCacheCreateInfoEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkShaderModuleValidationCacheCreateInfoEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkShaderModuleValidationCacheCreateInfoEXT32 *in_ext = (const VkShaderModuleValidationCacheCreateInfoEXT32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SHADER_MODULE_VALIDATION_CACHE_CREATE_INFO_EXT;
             out_ext->pNext = NULL;
@@ -9133,7 +9133,7 @@ static inline void convert_VkSwapchainCreateInfoKHR_win64_to_host(const VkSwapch
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSwapchainCreateInfoKHR_win32_to_host(const VkSwapchainCreateInfoKHR32 *in, VkSwapchainCreateInfoKHR_host *out)
+static inline void convert_VkSwapchainCreateInfoKHR_win32_to_host(const VkSwapchainCreateInfoKHR32 *in, VkSwapchainCreateInfoKHR *out)
 {
     if (!in) return;
 
@@ -9172,7 +9172,7 @@ static inline void convert_VkDebugMarkerObjectNameInfoEXT_win64_to_host(const Vk
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDebugMarkerObjectNameInfoEXT_win32_to_host(const VkDebugMarkerObjectNameInfoEXT32 *in, VkDebugMarkerObjectNameInfoEXT_host *out)
+static inline void convert_VkDebugMarkerObjectNameInfoEXT_win32_to_host(const VkDebugMarkerObjectNameInfoEXT32 *in, VkDebugMarkerObjectNameInfoEXT *out)
 {
     if (!in) return;
 
@@ -9200,7 +9200,7 @@ static inline void convert_VkDebugMarkerObjectTagInfoEXT_win64_to_host(const VkD
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDebugMarkerObjectTagInfoEXT_win32_to_host(const VkDebugMarkerObjectTagInfoEXT32 *in, VkDebugMarkerObjectTagInfoEXT_host *out)
+static inline void convert_VkDebugMarkerObjectTagInfoEXT_win32_to_host(const VkDebugMarkerObjectTagInfoEXT32 *in, VkDebugMarkerObjectTagInfoEXT *out)
 {
     if (!in) return;
 
@@ -9215,7 +9215,7 @@ static inline void convert_VkDebugMarkerObjectTagInfoEXT_win32_to_host(const VkD
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMappedMemoryRange_win32_to_host(const VkMappedMemoryRange32 *in, VkMappedMemoryRange_host *out)
+static inline void convert_VkMappedMemoryRange_win32_to_host(const VkMappedMemoryRange32 *in, VkMappedMemoryRange *out)
 {
     if (!in) return;
 
@@ -9228,9 +9228,9 @@ static inline void convert_VkMappedMemoryRange_win32_to_host(const VkMappedMemor
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_win32_to_host(struct conversion_context *ctx, const VkMappedMemoryRange32 *in, uint32_t count)
+static inline const VkMappedMemoryRange *convert_VkMappedMemoryRange_array_win32_to_host(struct conversion_context *ctx, const VkMappedMemoryRange32 *in, uint32_t count)
 {
-    VkMappedMemoryRange_host *out;
+    VkMappedMemoryRange *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -9246,7 +9246,7 @@ static inline const VkMappedMemoryRange_host *convert_VkMappedMemoryRange_array_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_win32_to_host(const VkAccelerationStructureBuildSizesInfoKHR32 *in, VkAccelerationStructureBuildSizesInfoKHR_host *out)
+static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_win32_to_host(const VkAccelerationStructureBuildSizesInfoKHR32 *in, VkAccelerationStructureBuildSizesInfoKHR *out)
 {
     if (!in) return;
 
@@ -9259,7 +9259,7 @@ static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_win32_to_hos
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win32(const VkAccelerationStructureBuildSizesInfoKHR_host *in, VkAccelerationStructureBuildSizesInfoKHR32 *out)
+static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win32(const VkAccelerationStructureBuildSizesInfoKHR *in, VkAccelerationStructureBuildSizesInfoKHR32 *out)
 {
     if (!in) return;
 
@@ -9270,7 +9270,7 @@ static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win3
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureDeviceAddressInfoKHR_win32_to_host(const VkAccelerationStructureDeviceAddressInfoKHR32 *in, VkAccelerationStructureDeviceAddressInfoKHR_host *out)
+static inline void convert_VkAccelerationStructureDeviceAddressInfoKHR_win32_to_host(const VkAccelerationStructureDeviceAddressInfoKHR32 *in, VkAccelerationStructureDeviceAddressInfoKHR *out)
 {
     if (!in) return;
 
@@ -9281,7 +9281,7 @@ static inline void convert_VkAccelerationStructureDeviceAddressInfoKHR_win32_to_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkAccelerationStructureMemoryRequirementsInfoNV_win32_to_host(const VkAccelerationStructureMemoryRequirementsInfoNV32 *in, VkAccelerationStructureMemoryRequirementsInfoNV_host *out)
+static inline void convert_VkAccelerationStructureMemoryRequirementsInfoNV_win32_to_host(const VkAccelerationStructureMemoryRequirementsInfoNV32 *in, VkAccelerationStructureMemoryRequirementsInfoNV *out)
 {
     if (!in) return;
 
@@ -9293,7 +9293,7 @@ static inline void convert_VkAccelerationStructureMemoryRequirementsInfoNV_win32
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryRequirements_host_to_win32(const VkMemoryRequirements_host *in, VkMemoryRequirements32 *out)
+static inline void convert_VkMemoryRequirements_host_to_win32(const VkMemoryRequirements *in, VkMemoryRequirements32 *out)
 {
     if (!in) return;
 
@@ -9304,7 +9304,7 @@ static inline void convert_VkMemoryRequirements_host_to_win32(const VkMemoryRequ
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryRequirements2KHR_win32_to_host(const VkMemoryRequirements2KHR32 *in, VkMemoryRequirements2KHR_host *out)
+static inline void convert_VkMemoryRequirements2KHR_win32_to_host(const VkMemoryRequirements2KHR32 *in, VkMemoryRequirements2KHR *out)
 {
     if (!in) return;
 
@@ -9314,7 +9314,7 @@ static inline void convert_VkMemoryRequirements2KHR_win32_to_host(const VkMemory
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryRequirements2KHR_host_to_win32(const VkMemoryRequirements2KHR_host *in, VkMemoryRequirements2KHR32 *out)
+static inline void convert_VkMemoryRequirements2KHR_host_to_win32(const VkMemoryRequirements2KHR *in, VkMemoryRequirements2KHR32 *out)
 {
     if (!in) return;
 
@@ -9323,7 +9323,7 @@ static inline void convert_VkMemoryRequirements2KHR_host_to_win32(const VkMemory
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferDeviceAddressInfo_win32_to_host(const VkBufferDeviceAddressInfo32 *in, VkBufferDeviceAddressInfo_host *out)
+static inline void convert_VkBufferDeviceAddressInfo_win32_to_host(const VkBufferDeviceAddressInfo32 *in, VkBufferDeviceAddressInfo *out)
 {
     if (!in) return;
 
@@ -9334,7 +9334,7 @@ static inline void convert_VkBufferDeviceAddressInfo_win32_to_host(const VkBuffe
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBufferMemoryRequirementsInfo2_win32_to_host(const VkBufferMemoryRequirementsInfo232 *in, VkBufferMemoryRequirementsInfo2_host *out)
+static inline void convert_VkBufferMemoryRequirementsInfo2_win32_to_host(const VkBufferMemoryRequirementsInfo232 *in, VkBufferMemoryRequirementsInfo2 *out)
 {
     if (!in) return;
 
@@ -9345,7 +9345,7 @@ static inline void convert_VkBufferMemoryRequirementsInfo2_win32_to_host(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryRequirements2_win32_to_host(const VkMemoryRequirements232 *in, VkMemoryRequirements2_host *out)
+static inline void convert_VkMemoryRequirements2_win32_to_host(const VkMemoryRequirements232 *in, VkMemoryRequirements2 *out)
 {
     if (!in) return;
 
@@ -9355,7 +9355,7 @@ static inline void convert_VkMemoryRequirements2_win32_to_host(const VkMemoryReq
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryRequirements2_host_to_win32(const VkMemoryRequirements2_host *in, VkMemoryRequirements232 *out)
+static inline void convert_VkMemoryRequirements2_host_to_win32(const VkMemoryRequirements2 *in, VkMemoryRequirements232 *out)
 {
     if (!in) return;
 
@@ -9364,7 +9364,7 @@ static inline void convert_VkMemoryRequirements2_host_to_win32(const VkMemoryReq
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDescriptorSetBindingReferenceVALVE_win32_to_host(const VkDescriptorSetBindingReferenceVALVE32 *in, VkDescriptorSetBindingReferenceVALVE_host *out)
+static inline void convert_VkDescriptorSetBindingReferenceVALVE_win32_to_host(const VkDescriptorSetBindingReferenceVALVE32 *in, VkDescriptorSetBindingReferenceVALVE *out)
 {
     if (!in) return;
 
@@ -9376,9 +9376,9 @@ static inline void convert_VkDescriptorSetBindingReferenceVALVE_win32_to_host(co
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBufferCreateInfo_host *convert_VkBufferCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo32 *in, uint32_t count)
+static inline const VkBufferCreateInfo *convert_VkBufferCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo32 *in, uint32_t count)
 {
-    VkBufferCreateInfo_host *out;
+    VkBufferCreateInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -9394,7 +9394,7 @@ static inline const VkBufferCreateInfo_host *convert_VkBufferCreateInfo_array_wi
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceBufferMemoryRequirements_win32_to_host(struct conversion_context *ctx, const VkDeviceBufferMemoryRequirements32 *in, VkDeviceBufferMemoryRequirements_host *out)
+static inline void convert_VkDeviceBufferMemoryRequirements_win32_to_host(struct conversion_context *ctx, const VkDeviceBufferMemoryRequirements32 *in, VkDeviceBufferMemoryRequirements *out)
 {
     if (!in) return;
 
@@ -9405,7 +9405,7 @@ static inline void convert_VkDeviceBufferMemoryRequirements_win32_to_host(struct
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultCountsEXT_win32_to_host(const VkDeviceFaultCountsEXT32 *in, VkDeviceFaultCountsEXT_host *out)
+static inline void convert_VkDeviceFaultCountsEXT_win32_to_host(const VkDeviceFaultCountsEXT32 *in, VkDeviceFaultCountsEXT *out)
 {
     if (!in) return;
 
@@ -9418,7 +9418,7 @@ static inline void convert_VkDeviceFaultCountsEXT_win32_to_host(const VkDeviceFa
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultCountsEXT_host_to_win32(const VkDeviceFaultCountsEXT_host *in, VkDeviceFaultCountsEXT32 *out)
+static inline void convert_VkDeviceFaultCountsEXT_host_to_win32(const VkDeviceFaultCountsEXT *in, VkDeviceFaultCountsEXT32 *out)
 {
     if (!in) return;
 
@@ -9429,7 +9429,7 @@ static inline void convert_VkDeviceFaultCountsEXT_host_to_win32(const VkDeviceFa
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultAddressInfoEXT_win32_to_host(const VkDeviceFaultAddressInfoEXT32 *in, VkDeviceFaultAddressInfoEXT_host *out)
+static inline void convert_VkDeviceFaultAddressInfoEXT_win32_to_host(const VkDeviceFaultAddressInfoEXT32 *in, VkDeviceFaultAddressInfoEXT *out)
 {
     if (!in) return;
 
@@ -9440,7 +9440,7 @@ static inline void convert_VkDeviceFaultAddressInfoEXT_win32_to_host(const VkDev
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultAddressInfoEXT_host_to_win32(const VkDeviceFaultAddressInfoEXT_host *in, VkDeviceFaultAddressInfoEXT32 *out)
+static inline void convert_VkDeviceFaultAddressInfoEXT_host_to_win32(const VkDeviceFaultAddressInfoEXT *in, VkDeviceFaultAddressInfoEXT32 *out)
 {
     if (!in) return;
 
@@ -9451,9 +9451,9 @@ static inline void convert_VkDeviceFaultAddressInfoEXT_host_to_win32(const VkDev
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkDeviceFaultAddressInfoEXT_host *convert_VkDeviceFaultAddressInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultAddressInfoEXT32 *in, uint32_t count)
+static inline VkDeviceFaultAddressInfoEXT *convert_VkDeviceFaultAddressInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultAddressInfoEXT32 *in, uint32_t count)
 {
-    VkDeviceFaultAddressInfoEXT_host *out;
+    VkDeviceFaultAddressInfoEXT *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -9469,7 +9469,7 @@ static inline VkDeviceFaultAddressInfoEXT_host *convert_VkDeviceFaultAddressInfo
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultAddressInfoEXT_array_host_to_win32(const VkDeviceFaultAddressInfoEXT_host *in, VkDeviceFaultAddressInfoEXT32 *out, uint32_t count)
+static inline void convert_VkDeviceFaultAddressInfoEXT_array_host_to_win32(const VkDeviceFaultAddressInfoEXT *in, VkDeviceFaultAddressInfoEXT32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -9483,7 +9483,7 @@ static inline void convert_VkDeviceFaultAddressInfoEXT_array_host_to_win32(const
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultVendorInfoEXT_win32_to_host(const VkDeviceFaultVendorInfoEXT32 *in, VkDeviceFaultVendorInfoEXT_host *out)
+static inline void convert_VkDeviceFaultVendorInfoEXT_win32_to_host(const VkDeviceFaultVendorInfoEXT32 *in, VkDeviceFaultVendorInfoEXT *out)
 {
     if (!in) return;
 
@@ -9494,7 +9494,7 @@ static inline void convert_VkDeviceFaultVendorInfoEXT_win32_to_host(const VkDevi
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultVendorInfoEXT_host_to_win32(const VkDeviceFaultVendorInfoEXT_host *in, VkDeviceFaultVendorInfoEXT32 *out)
+static inline void convert_VkDeviceFaultVendorInfoEXT_host_to_win32(const VkDeviceFaultVendorInfoEXT *in, VkDeviceFaultVendorInfoEXT32 *out)
 {
     if (!in) return;
 
@@ -9505,9 +9505,9 @@ static inline void convert_VkDeviceFaultVendorInfoEXT_host_to_win32(const VkDevi
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkDeviceFaultVendorInfoEXT_host *convert_VkDeviceFaultVendorInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultVendorInfoEXT32 *in, uint32_t count)
+static inline VkDeviceFaultVendorInfoEXT *convert_VkDeviceFaultVendorInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultVendorInfoEXT32 *in, uint32_t count)
 {
-    VkDeviceFaultVendorInfoEXT_host *out;
+    VkDeviceFaultVendorInfoEXT *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -9523,7 +9523,7 @@ static inline VkDeviceFaultVendorInfoEXT_host *convert_VkDeviceFaultVendorInfoEX
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultVendorInfoEXT_array_host_to_win32(const VkDeviceFaultVendorInfoEXT_host *in, VkDeviceFaultVendorInfoEXT32 *out, uint32_t count)
+static inline void convert_VkDeviceFaultVendorInfoEXT_array_host_to_win32(const VkDeviceFaultVendorInfoEXT *in, VkDeviceFaultVendorInfoEXT32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -9537,7 +9537,7 @@ static inline void convert_VkDeviceFaultVendorInfoEXT_array_host_to_win32(const 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultInfoEXT_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultInfoEXT32 *in, VkDeviceFaultInfoEXT_host *out)
+static inline void convert_VkDeviceFaultInfoEXT_win32_to_host(struct conversion_context *ctx, const VkDeviceFaultInfoEXT32 *in, VkDeviceFaultInfoEXT *out)
 {
     if (!in) return;
 
@@ -9551,7 +9551,7 @@ static inline void convert_VkDeviceFaultInfoEXT_win32_to_host(struct conversion_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceFaultInfoEXT_host_to_win32(const VkDeviceFaultInfoEXT_host *in, VkDeviceFaultInfoEXT32 *out)
+static inline void convert_VkDeviceFaultInfoEXT_host_to_win32(const VkDeviceFaultInfoEXT *in, VkDeviceFaultInfoEXT32 *out)
 {
     if (!in) return;
 
@@ -9593,7 +9593,7 @@ static inline void convert_VkDeviceImageMemoryRequirements_win32_to_host(struct 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseImageMemoryRequirements_host_to_win32(const VkSparseImageMemoryRequirements_host *in, VkSparseImageMemoryRequirements32 *out)
+static inline void convert_VkSparseImageMemoryRequirements_host_to_win32(const VkSparseImageMemoryRequirements *in, VkSparseImageMemoryRequirements32 *out)
 {
     if (!in) return;
 
@@ -9606,7 +9606,7 @@ static inline void convert_VkSparseImageMemoryRequirements_host_to_win32(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseImageMemoryRequirements2_win32_to_host(const VkSparseImageMemoryRequirements232 *in, VkSparseImageMemoryRequirements2_host *out)
+static inline void convert_VkSparseImageMemoryRequirements2_win32_to_host(const VkSparseImageMemoryRequirements232 *in, VkSparseImageMemoryRequirements2 *out)
 {
     if (!in) return;
 
@@ -9616,7 +9616,7 @@ static inline void convert_VkSparseImageMemoryRequirements2_win32_to_host(const 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseImageMemoryRequirements2_host_to_win32(const VkSparseImageMemoryRequirements2_host *in, VkSparseImageMemoryRequirements232 *out)
+static inline void convert_VkSparseImageMemoryRequirements2_host_to_win32(const VkSparseImageMemoryRequirements2 *in, VkSparseImageMemoryRequirements232 *out)
 {
     if (!in) return;
 
@@ -9625,9 +9625,9 @@ static inline void convert_VkSparseImageMemoryRequirements2_host_to_win32(const 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkSparseImageMemoryRequirements2_host *convert_VkSparseImageMemoryRequirements2_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryRequirements232 *in, uint32_t count)
+static inline VkSparseImageMemoryRequirements2 *convert_VkSparseImageMemoryRequirements2_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryRequirements232 *in, uint32_t count)
 {
-    VkSparseImageMemoryRequirements2_host *out;
+    VkSparseImageMemoryRequirements2 *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -9643,7 +9643,7 @@ static inline VkSparseImageMemoryRequirements2_host *convert_VkSparseImageMemory
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseImageMemoryRequirements2_array_host_to_win32(const VkSparseImageMemoryRequirements2_host *in, VkSparseImageMemoryRequirements232 *out, uint32_t count)
+static inline void convert_VkSparseImageMemoryRequirements2_array_host_to_win32(const VkSparseImageMemoryRequirements2 *in, VkSparseImageMemoryRequirements232 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -9657,7 +9657,7 @@ static inline void convert_VkSparseImageMemoryRequirements2_array_host_to_win32(
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win32_to_host(const VkDeviceMemoryOpaqueCaptureAddressInfo32 *in, VkDeviceMemoryOpaqueCaptureAddressInfo_host *out)
+static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win32_to_host(const VkDeviceMemoryOpaqueCaptureAddressInfo32 *in, VkDeviceMemoryOpaqueCaptureAddressInfo *out)
 {
     if (!in) return;
 
@@ -9668,7 +9668,7 @@ static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win32_to_host(
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoNV_win32_to_host(const VkGeneratedCommandsMemoryRequirementsInfoNV32 *in, VkGeneratedCommandsMemoryRequirementsInfoNV_host *out)
+static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoNV_win32_to_host(const VkGeneratedCommandsMemoryRequirementsInfoNV32 *in, VkGeneratedCommandsMemoryRequirementsInfoNV *out)
 {
     if (!in) return;
 
@@ -9682,7 +9682,7 @@ static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoNV_win32_to_
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageMemoryRequirementsInfo2_win32_to_host(const VkImageMemoryRequirementsInfo232 *in, VkImageMemoryRequirementsInfo2_host *out)
+static inline void convert_VkImageMemoryRequirementsInfo2_win32_to_host(const VkImageMemoryRequirementsInfo232 *in, VkImageMemoryRequirementsInfo2 *out)
 {
     if (!in) return;
 
@@ -9693,7 +9693,7 @@ static inline void convert_VkImageMemoryRequirementsInfo2_win32_to_host(const Vk
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseImageMemoryRequirements_array_host_to_win32(const VkSparseImageMemoryRequirements_host *in, VkSparseImageMemoryRequirements32 *out, uint32_t count)
+static inline void convert_VkSparseImageMemoryRequirements_array_host_to_win32(const VkSparseImageMemoryRequirements *in, VkSparseImageMemoryRequirements32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -9707,7 +9707,7 @@ static inline void convert_VkSparseImageMemoryRequirements_array_host_to_win32(c
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageSparseMemoryRequirementsInfo2_win32_to_host(const VkImageSparseMemoryRequirementsInfo232 *in, VkImageSparseMemoryRequirementsInfo2_host *out)
+static inline void convert_VkImageSparseMemoryRequirementsInfo2_win32_to_host(const VkImageSparseMemoryRequirementsInfo232 *in, VkImageSparseMemoryRequirementsInfo2 *out)
 {
     if (!in) return;
 
@@ -9718,7 +9718,7 @@ static inline void convert_VkImageSparseMemoryRequirementsInfo2_win32_to_host(co
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSubresourceLayout_host_to_win32(const VkSubresourceLayout_host *in, VkSubresourceLayout32 *out)
+static inline void convert_VkSubresourceLayout_host_to_win32(const VkSubresourceLayout *in, VkSubresourceLayout32 *out)
 {
     if (!in) return;
 
@@ -9731,7 +9731,7 @@ static inline void convert_VkSubresourceLayout_host_to_win32(const VkSubresource
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSubresourceLayout2EXT_win32_to_host(const VkSubresourceLayout2EXT32 *in, VkSubresourceLayout2EXT_host *out)
+static inline void convert_VkSubresourceLayout2EXT_win32_to_host(const VkSubresourceLayout2EXT32 *in, VkSubresourceLayout2EXT *out)
 {
     if (!in) return;
 
@@ -9741,7 +9741,7 @@ static inline void convert_VkSubresourceLayout2EXT_win32_to_host(const VkSubreso
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSubresourceLayout2EXT_host_to_win32(const VkSubresourceLayout2EXT_host *in, VkSubresourceLayout2EXT32 *out)
+static inline void convert_VkSubresourceLayout2EXT_host_to_win32(const VkSubresourceLayout2EXT *in, VkSubresourceLayout2EXT32 *out)
 {
     if (!in) return;
 
@@ -9750,7 +9750,7 @@ static inline void convert_VkSubresourceLayout2EXT_host_to_win32(const VkSubreso
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageViewAddressPropertiesNVX_win32_to_host(const VkImageViewAddressPropertiesNVX32 *in, VkImageViewAddressPropertiesNVX_host *out)
+static inline void convert_VkImageViewAddressPropertiesNVX_win32_to_host(const VkImageViewAddressPropertiesNVX32 *in, VkImageViewAddressPropertiesNVX *out)
 {
     if (!in) return;
 
@@ -9760,7 +9760,7 @@ static inline void convert_VkImageViewAddressPropertiesNVX_win32_to_host(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageViewAddressPropertiesNVX_host_to_win32(const VkImageViewAddressPropertiesNVX_host *in, VkImageViewAddressPropertiesNVX32 *out)
+static inline void convert_VkImageViewAddressPropertiesNVX_host_to_win32(const VkImageViewAddressPropertiesNVX *in, VkImageViewAddressPropertiesNVX32 *out)
 {
     if (!in) return;
 
@@ -9770,7 +9770,7 @@ static inline void convert_VkImageViewAddressPropertiesNVX_host_to_win32(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageViewHandleInfoNVX_win32_to_host(const VkImageViewHandleInfoNVX32 *in, VkImageViewHandleInfoNVX_host *out)
+static inline void convert_VkImageViewHandleInfoNVX_win32_to_host(const VkImageViewHandleInfoNVX32 *in, VkImageViewHandleInfoNVX *out)
 {
     if (!in) return;
 
@@ -9783,7 +9783,7 @@ static inline void convert_VkImageViewHandleInfoNVX_win32_to_host(const VkImageV
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMicromapBuildSizesInfoEXT_win32_to_host(const VkMicromapBuildSizesInfoEXT32 *in, VkMicromapBuildSizesInfoEXT_host *out)
+static inline void convert_VkMicromapBuildSizesInfoEXT_win32_to_host(const VkMicromapBuildSizesInfoEXT32 *in, VkMicromapBuildSizesInfoEXT *out)
 {
     if (!in) return;
 
@@ -9796,7 +9796,7 @@ static inline void convert_VkMicromapBuildSizesInfoEXT_win32_to_host(const VkMic
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMicromapBuildSizesInfoEXT_host_to_win32(const VkMicromapBuildSizesInfoEXT_host *in, VkMicromapBuildSizesInfoEXT32 *out)
+static inline void convert_VkMicromapBuildSizesInfoEXT_host_to_win32(const VkMicromapBuildSizesInfoEXT *in, VkMicromapBuildSizesInfoEXT32 *out)
 {
     if (!in) return;
 
@@ -9807,7 +9807,7 @@ static inline void convert_VkMicromapBuildSizesInfoEXT_host_to_win32(const VkMic
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPerformanceValueINTEL_win32_to_host(const VkPerformanceValueINTEL32 *in, VkPerformanceValueINTEL_host *out)
+static inline void convert_VkPerformanceValueINTEL_win32_to_host(const VkPerformanceValueINTEL32 *in, VkPerformanceValueINTEL *out)
 {
     if (!in) return;
 
@@ -9817,7 +9817,7 @@ static inline void convert_VkPerformanceValueINTEL_win32_to_host(const VkPerform
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPerformanceValueINTEL_host_to_win32(const VkPerformanceValueINTEL_host *in, VkPerformanceValueINTEL32 *out)
+static inline void convert_VkPerformanceValueINTEL_host_to_win32(const VkPerformanceValueINTEL *in, VkPerformanceValueINTEL32 *out)
 {
     if (!in) return;
 
@@ -9844,7 +9844,7 @@ static inline void convert_VkPhysicalDeviceExternalSemaphoreInfo_win32_to_host(s
         {
         case VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO:
         {
-            VkSemaphoreTypeCreateInfo_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkSemaphoreTypeCreateInfo *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkSemaphoreTypeCreateInfo32 *in_ext = (const VkSemaphoreTypeCreateInfo32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO;
             out_ext->pNext = NULL;
@@ -9863,7 +9863,7 @@ static inline void convert_VkPhysicalDeviceExternalSemaphoreInfo_win32_to_host(s
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageFormatProperties_host_to_win32(const VkImageFormatProperties_host *in, VkImageFormatProperties32 *out)
+static inline void convert_VkImageFormatProperties_host_to_win32(const VkImageFormatProperties *in, VkImageFormatProperties32 *out)
 {
     if (!in) return;
 
@@ -9876,7 +9876,7 @@ static inline void convert_VkImageFormatProperties_host_to_win32(const VkImageFo
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageFormatProperties2_win32_to_host(const VkImageFormatProperties232 *in, VkImageFormatProperties2_host *out)
+static inline void convert_VkImageFormatProperties2_win32_to_host(const VkImageFormatProperties232 *in, VkImageFormatProperties2 *out)
 {
     if (!in) return;
 
@@ -9886,7 +9886,7 @@ static inline void convert_VkImageFormatProperties2_win32_to_host(const VkImageF
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageFormatProperties2_host *in, VkImageFormatProperties232 *out)
+static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageFormatProperties2 *in, VkImageFormatProperties232 *out)
 {
     if (!in) return;
 
@@ -9895,7 +9895,7 @@ static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageF
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryHeap_host_to_win32(const VkMemoryHeap_host *in, VkMemoryHeap32 *out)
+static inline void convert_VkMemoryHeap_host_to_win32(const VkMemoryHeap *in, VkMemoryHeap32 *out)
 {
     if (!in) return;
 
@@ -9905,7 +9905,7 @@ static inline void convert_VkMemoryHeap_host_to_win32(const VkMemoryHeap_host *i
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMemoryHeap_array_host_to_win32(const VkMemoryHeap_host *in, VkMemoryHeap32 *out, uint32_t count)
+static inline void convert_VkMemoryHeap_array_host_to_win32(const VkMemoryHeap *in, VkMemoryHeap32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -9919,7 +9919,7 @@ static inline void convert_VkMemoryHeap_array_host_to_win32(const VkMemoryHeap_h
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceMemoryProperties_host_to_win32(const VkPhysicalDeviceMemoryProperties_host *in, VkPhysicalDeviceMemoryProperties32 *out)
+static inline void convert_VkPhysicalDeviceMemoryProperties_host_to_win32(const VkPhysicalDeviceMemoryProperties *in, VkPhysicalDeviceMemoryProperties32 *out)
 {
     if (!in) return;
 
@@ -9931,7 +9931,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties_host_to_win32(const 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceMemoryProperties232 *in, VkPhysicalDeviceMemoryProperties2_host *out)
+static inline void convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceMemoryProperties232 *in, VkPhysicalDeviceMemoryProperties2 *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -9947,7 +9947,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(struc
         {
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceMemoryBudgetPropertiesEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceMemoryBudgetPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -9963,7 +9963,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceMemoryProperties2_host_to_win32(const VkPhysicalDeviceMemoryProperties2_host *in, VkPhysicalDeviceMemoryProperties232 *out)
+static inline void convert_VkPhysicalDeviceMemoryProperties2_host_to_win32(const VkPhysicalDeviceMemoryProperties2 *in, VkPhysicalDeviceMemoryProperties232 *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -9979,7 +9979,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_host_to_win32(const
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT:
         {
             VkPhysicalDeviceMemoryBudgetPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT);
-            const VkPhysicalDeviceMemoryBudgetPropertiesEXT_host *in_ext = (const VkPhysicalDeviceMemoryBudgetPropertiesEXT_host *)in_header;
+            const VkPhysicalDeviceMemoryBudgetPropertiesEXT *in_ext = (const VkPhysicalDeviceMemoryBudgetPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
             memcpy(out_ext->heapBudget, in_ext->heapBudget, VK_MAX_MEMORY_HEAPS * sizeof(VkDeviceSize));
             memcpy(out_ext->heapUsage, in_ext->heapUsage, VK_MAX_MEMORY_HEAPS * sizeof(VkDeviceSize));
@@ -9994,7 +9994,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_host_to_win32(const
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceLimits_host_to_win32(const VkPhysicalDeviceLimits_host *in, VkPhysicalDeviceLimits32 *out)
+static inline void convert_VkPhysicalDeviceLimits_host_to_win32(const VkPhysicalDeviceLimits *in, VkPhysicalDeviceLimits32 *out)
 {
     if (!in) return;
 
@@ -10108,7 +10108,7 @@ static inline void convert_VkPhysicalDeviceLimits_host_to_win32(const VkPhysical
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceProperties_host_to_win32(const VkPhysicalDeviceProperties_host *in, VkPhysicalDeviceProperties32 *out)
+static inline void convert_VkPhysicalDeviceProperties_host_to_win32(const VkPhysicalDeviceProperties *in, VkPhysicalDeviceProperties32 *out)
 {
     if (!in) return;
 
@@ -10125,7 +10125,7 @@ static inline void convert_VkPhysicalDeviceProperties_host_to_win32(const VkPhys
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceProperties232 *in, VkPhysicalDeviceProperties2_host *out)
+static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceProperties232 *in, VkPhysicalDeviceProperties2 *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -10267,7 +10267,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES:
         {
-            VkPhysicalDeviceMaintenance3Properties_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceMaintenance3Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10276,7 +10276,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES:
         {
-            VkPhysicalDeviceMaintenance4Properties_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceMaintenance4Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10294,7 +10294,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceExternalMemoryHostPropertiesEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceExternalMemoryHostPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10339,7 +10339,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES:
         {
-            VkPhysicalDeviceTimelineSemaphoreProperties_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceTimelineSemaphoreProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10375,7 +10375,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceTransformFeedbackPropertiesEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceTransformFeedbackPropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10393,7 +10393,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV:
         {
-            VkPhysicalDeviceMemoryDecompressionPropertiesNV_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceMemoryDecompressionPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10429,7 +10429,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR:
         {
-            VkPhysicalDeviceAccelerationStructurePropertiesKHR_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceAccelerationStructurePropertiesKHR *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10447,7 +10447,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV:
         {
-            VkPhysicalDeviceRayTracingPropertiesNV_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceRayTracingPropertiesNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10510,7 +10510,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES:
         {
-            VkPhysicalDeviceTexelBufferAlignmentProperties_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceTexelBufferAlignmentProperties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10546,7 +10546,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES:
         {
-            VkPhysicalDeviceVulkan11Properties_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceVulkan11Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10555,7 +10555,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES:
         {
-            VkPhysicalDeviceVulkan12Properties_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceVulkan12Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10564,7 +10564,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES:
         {
-            VkPhysicalDeviceVulkan13Properties_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceVulkan13Properties *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10593,7 +10593,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceRobustness2PropertiesEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceRobustness2PropertiesEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10706,7 +10706,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM:
         {
-            VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM;
             out_ext->pNext = NULL;
             out_header->pNext = (void *)out_ext;
@@ -10731,7 +10731,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDeviceProperties2_host *in, VkPhysicalDeviceProperties232 *out)
+static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDeviceProperties2 *in, VkPhysicalDeviceProperties232 *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -10906,7 +10906,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES:
         {
             VkPhysicalDeviceMaintenance3Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES);
-            const VkPhysicalDeviceMaintenance3Properties_host *in_ext = (const VkPhysicalDeviceMaintenance3Properties_host *)in_header;
+            const VkPhysicalDeviceMaintenance3Properties *in_ext = (const VkPhysicalDeviceMaintenance3Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
             out_ext->maxPerSetDescriptors = in_ext->maxPerSetDescriptors;
             out_ext->maxMemoryAllocationSize = in_ext->maxMemoryAllocationSize;
@@ -10916,7 +10916,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES:
         {
             VkPhysicalDeviceMaintenance4Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES);
-            const VkPhysicalDeviceMaintenance4Properties_host *in_ext = (const VkPhysicalDeviceMaintenance4Properties_host *)in_header;
+            const VkPhysicalDeviceMaintenance4Properties *in_ext = (const VkPhysicalDeviceMaintenance4Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES;
             out_ext->maxBufferSize = in_ext->maxBufferSize;
             out_header = (void *)out_ext;
@@ -10950,7 +10950,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT:
         {
             VkPhysicalDeviceExternalMemoryHostPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT);
-            const VkPhysicalDeviceExternalMemoryHostPropertiesEXT_host *in_ext = (const VkPhysicalDeviceExternalMemoryHostPropertiesEXT_host *)in_header;
+            const VkPhysicalDeviceExternalMemoryHostPropertiesEXT *in_ext = (const VkPhysicalDeviceExternalMemoryHostPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT;
             out_ext->minImportedHostPointerAlignment = in_ext->minImportedHostPointerAlignment;
             out_header = (void *)out_ext;
@@ -11039,7 +11039,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES:
         {
             VkPhysicalDeviceTimelineSemaphoreProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES);
-            const VkPhysicalDeviceTimelineSemaphoreProperties_host *in_ext = (const VkPhysicalDeviceTimelineSemaphoreProperties_host *)in_header;
+            const VkPhysicalDeviceTimelineSemaphoreProperties *in_ext = (const VkPhysicalDeviceTimelineSemaphoreProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES;
             out_ext->maxTimelineSemaphoreValueDifference = in_ext->maxTimelineSemaphoreValueDifference;
             out_header = (void *)out_ext;
@@ -11081,7 +11081,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT:
         {
             VkPhysicalDeviceTransformFeedbackPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT);
-            const VkPhysicalDeviceTransformFeedbackPropertiesEXT_host *in_ext = (const VkPhysicalDeviceTransformFeedbackPropertiesEXT_host *)in_header;
+            const VkPhysicalDeviceTransformFeedbackPropertiesEXT *in_ext = (const VkPhysicalDeviceTransformFeedbackPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
             out_ext->maxTransformFeedbackStreams = in_ext->maxTransformFeedbackStreams;
             out_ext->maxTransformFeedbackBuffers = in_ext->maxTransformFeedbackBuffers;
@@ -11108,7 +11108,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV:
         {
             VkPhysicalDeviceMemoryDecompressionPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV);
-            const VkPhysicalDeviceMemoryDecompressionPropertiesNV_host *in_ext = (const VkPhysicalDeviceMemoryDecompressionPropertiesNV_host *)in_header;
+            const VkPhysicalDeviceMemoryDecompressionPropertiesNV *in_ext = (const VkPhysicalDeviceMemoryDecompressionPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV;
             out_ext->decompressionMethods = in_ext->decompressionMethods;
             out_ext->maxDecompressionIndirectCount = in_ext->maxDecompressionIndirectCount;
@@ -11186,7 +11186,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR:
         {
             VkPhysicalDeviceAccelerationStructurePropertiesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR);
-            const VkPhysicalDeviceAccelerationStructurePropertiesKHR_host *in_ext = (const VkPhysicalDeviceAccelerationStructurePropertiesKHR_host *)in_header;
+            const VkPhysicalDeviceAccelerationStructurePropertiesKHR *in_ext = (const VkPhysicalDeviceAccelerationStructurePropertiesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
             out_ext->maxGeometryCount = in_ext->maxGeometryCount;
             out_ext->maxInstanceCount = in_ext->maxInstanceCount;
@@ -11218,7 +11218,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV:
         {
             VkPhysicalDeviceRayTracingPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV);
-            const VkPhysicalDeviceRayTracingPropertiesNV_host *in_ext = (const VkPhysicalDeviceRayTracingPropertiesNV_host *)in_header;
+            const VkPhysicalDeviceRayTracingPropertiesNV *in_ext = (const VkPhysicalDeviceRayTracingPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
             out_ext->shaderGroupHandleSize = in_ext->shaderGroupHandleSize;
             out_ext->maxRecursionDepth = in_ext->maxRecursionDepth;
@@ -11294,7 +11294,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES:
         {
             VkPhysicalDeviceTexelBufferAlignmentProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES);
-            const VkPhysicalDeviceTexelBufferAlignmentProperties_host *in_ext = (const VkPhysicalDeviceTexelBufferAlignmentProperties_host *)in_header;
+            const VkPhysicalDeviceTexelBufferAlignmentProperties *in_ext = (const VkPhysicalDeviceTexelBufferAlignmentProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES;
             out_ext->storageTexelBufferOffsetAlignmentBytes = in_ext->storageTexelBufferOffsetAlignmentBytes;
             out_ext->storageTexelBufferOffsetSingleTexelAlignment = in_ext->storageTexelBufferOffsetSingleTexelAlignment;
@@ -11336,7 +11336,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES:
         {
             VkPhysicalDeviceVulkan11Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES);
-            const VkPhysicalDeviceVulkan11Properties_host *in_ext = (const VkPhysicalDeviceVulkan11Properties_host *)in_header;
+            const VkPhysicalDeviceVulkan11Properties *in_ext = (const VkPhysicalDeviceVulkan11Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES;
             memcpy(out_ext->deviceUUID, in_ext->deviceUUID, VK_UUID_SIZE * sizeof(uint8_t));
             memcpy(out_ext->driverUUID, in_ext->driverUUID, VK_UUID_SIZE * sizeof(uint8_t));
@@ -11359,7 +11359,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES:
         {
             VkPhysicalDeviceVulkan12Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES);
-            const VkPhysicalDeviceVulkan12Properties_host *in_ext = (const VkPhysicalDeviceVulkan12Properties_host *)in_header;
+            const VkPhysicalDeviceVulkan12Properties *in_ext = (const VkPhysicalDeviceVulkan12Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
             out_ext->driverID = in_ext->driverID;
             memcpy(out_ext->driverName, in_ext->driverName, VK_MAX_DRIVER_NAME_SIZE * sizeof(char));
@@ -11419,7 +11419,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES:
         {
             VkPhysicalDeviceVulkan13Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES);
-            const VkPhysicalDeviceVulkan13Properties_host *in_ext = (const VkPhysicalDeviceVulkan13Properties_host *)in_header;
+            const VkPhysicalDeviceVulkan13Properties *in_ext = (const VkPhysicalDeviceVulkan13Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES;
             out_ext->minSubgroupSize = in_ext->minSubgroupSize;
             out_ext->maxSubgroupSize = in_ext->maxSubgroupSize;
@@ -11490,7 +11490,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT:
         {
             VkPhysicalDeviceRobustness2PropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT);
-            const VkPhysicalDeviceRobustness2PropertiesEXT_host *in_ext = (const VkPhysicalDeviceRobustness2PropertiesEXT_host *)in_header;
+            const VkPhysicalDeviceRobustness2PropertiesEXT *in_ext = (const VkPhysicalDeviceRobustness2PropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT;
             out_ext->robustStorageBufferAccessSizeAlignment = in_ext->robustStorageBufferAccessSizeAlignment;
             out_ext->robustUniformBufferAccessSizeAlignment = in_ext->robustUniformBufferAccessSizeAlignment;
@@ -11663,7 +11663,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM:
         {
             VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM);
-            const VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM_host *in_ext = (const VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM_host *)in_header;
+            const VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM *in_ext = (const VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM;
             out_ext->shaderCoreMask = in_ext->shaderCoreMask;
             out_ext->shaderCoreCount = in_ext->shaderCoreCount;
@@ -11688,7 +11688,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_unwrapped_host(const VkPhysicalDeviceSurfaceInfo2KHR32 *in, VkPhysicalDeviceSurfaceInfo2KHR_host *out)
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_unwrapped_host(const VkPhysicalDeviceSurfaceInfo2KHR32 *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
 {
     if (!in) return;
 
@@ -11710,7 +11710,7 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win64_to_host(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const VkPhysicalDeviceSurfaceInfo2KHR32 *in, VkPhysicalDeviceSurfaceInfo2KHR_host *out)
+static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const VkPhysicalDeviceSurfaceInfo2KHR32 *in, VkPhysicalDeviceSurfaceInfo2KHR *out)
 {
     if (!in) return;
 
@@ -11721,7 +11721,7 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const V
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPipelineExecutableInfoKHR_win32_to_host(const VkPipelineExecutableInfoKHR32 *in, VkPipelineExecutableInfoKHR_host *out)
+static inline void convert_VkPipelineExecutableInfoKHR_win32_to_host(const VkPipelineExecutableInfoKHR32 *in, VkPipelineExecutableInfoKHR *out)
 {
     if (!in) return;
 
@@ -11733,7 +11733,7 @@ static inline void convert_VkPipelineExecutableInfoKHR_win32_to_host(const VkPip
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPipelineInfoKHR_win32_to_host(const VkPipelineInfoKHR32 *in, VkPipelineInfoKHR_host *out)
+static inline void convert_VkPipelineInfoKHR_win32_to_host(const VkPipelineInfoKHR32 *in, VkPipelineInfoKHR *out)
 {
     if (!in) return;
 
@@ -11744,7 +11744,7 @@ static inline void convert_VkPipelineInfoKHR_win32_to_host(const VkPipelineInfoK
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPipelineExecutableStatisticKHR_win32_to_host(const VkPipelineExecutableStatisticKHR32 *in, VkPipelineExecutableStatisticKHR_host *out)
+static inline void convert_VkPipelineExecutableStatisticKHR_win32_to_host(const VkPipelineExecutableStatisticKHR32 *in, VkPipelineExecutableStatisticKHR *out)
 {
     if (!in) return;
 
@@ -11754,7 +11754,7 @@ static inline void convert_VkPipelineExecutableStatisticKHR_win32_to_host(const 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPipelineExecutableStatisticKHR_host_to_win32(const VkPipelineExecutableStatisticKHR_host *in, VkPipelineExecutableStatisticKHR32 *out)
+static inline void convert_VkPipelineExecutableStatisticKHR_host_to_win32(const VkPipelineExecutableStatisticKHR *in, VkPipelineExecutableStatisticKHR32 *out)
 {
     if (!in) return;
 
@@ -11766,9 +11766,9 @@ static inline void convert_VkPipelineExecutableStatisticKHR_host_to_win32(const 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline VkPipelineExecutableStatisticKHR_host *convert_VkPipelineExecutableStatisticKHR_array_win32_to_host(struct conversion_context *ctx, const VkPipelineExecutableStatisticKHR32 *in, uint32_t count)
+static inline VkPipelineExecutableStatisticKHR *convert_VkPipelineExecutableStatisticKHR_array_win32_to_host(struct conversion_context *ctx, const VkPipelineExecutableStatisticKHR32 *in, uint32_t count)
 {
-    VkPipelineExecutableStatisticKHR_host *out;
+    VkPipelineExecutableStatisticKHR *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -11784,7 +11784,7 @@ static inline VkPipelineExecutableStatisticKHR_host *convert_VkPipelineExecutabl
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPipelineExecutableStatisticKHR_array_host_to_win32(const VkPipelineExecutableStatisticKHR_host *in, VkPipelineExecutableStatisticKHR32 *out, uint32_t count)
+static inline void convert_VkPipelineExecutableStatisticKHR_array_host_to_win32(const VkPipelineExecutableStatisticKHR *in, VkPipelineExecutableStatisticKHR32 *out, uint32_t count)
 {
     unsigned int i;
 
@@ -11798,7 +11798,7 @@ static inline void convert_VkPipelineExecutableStatisticKHR_array_host_to_win32(
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPipelineInfoEXT_win32_to_host(const VkPipelineInfoEXT32 *in, VkPipelineInfoEXT_host *out)
+static inline void convert_VkPipelineInfoEXT_win32_to_host(const VkPipelineInfoEXT32 *in, VkPipelineInfoEXT *out)
 {
     if (!in) return;
 
@@ -11809,7 +11809,7 @@ static inline void convert_VkPipelineInfoEXT_win32_to_host(const VkPipelineInfoE
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseMemoryBind_win32_to_host(const VkSparseMemoryBind32 *in, VkSparseMemoryBind_host *out)
+static inline void convert_VkSparseMemoryBind_win32_to_host(const VkSparseMemoryBind32 *in, VkSparseMemoryBind *out)
 {
     if (!in) return;
 
@@ -11822,9 +11822,9 @@ static inline void convert_VkSparseMemoryBind_win32_to_host(const VkSparseMemory
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseMemoryBind32 *in, uint32_t count)
+static inline const VkSparseMemoryBind *convert_VkSparseMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseMemoryBind32 *in, uint32_t count)
 {
-    VkSparseMemoryBind_host *out;
+    VkSparseMemoryBind *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -11840,7 +11840,7 @@ static inline const VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_wi
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseBufferMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo32 *in, VkSparseBufferMemoryBindInfo_host *out)
+static inline void convert_VkSparseBufferMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo32 *in, VkSparseBufferMemoryBindInfo *out)
 {
     if (!in) return;
 
@@ -11851,9 +11851,9 @@ static inline void convert_VkSparseBufferMemoryBindInfo_win32_to_host(struct con
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkSparseBufferMemoryBindInfo_host *convert_VkSparseBufferMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo32 *in, uint32_t count)
+static inline const VkSparseBufferMemoryBindInfo *convert_VkSparseBufferMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo32 *in, uint32_t count)
 {
-    VkSparseBufferMemoryBindInfo_host *out;
+    VkSparseBufferMemoryBindInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -11869,7 +11869,7 @@ static inline const VkSparseBufferMemoryBindInfo_host *convert_VkSparseBufferMem
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseImageOpaqueMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo32 *in, VkSparseImageOpaqueMemoryBindInfo_host *out)
+static inline void convert_VkSparseImageOpaqueMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo32 *in, VkSparseImageOpaqueMemoryBindInfo *out)
 {
     if (!in) return;
 
@@ -11880,9 +11880,9 @@ static inline void convert_VkSparseImageOpaqueMemoryBindInfo_win32_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkSparseImageOpaqueMemoryBindInfo_host *convert_VkSparseImageOpaqueMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo32 *in, uint32_t count)
+static inline const VkSparseImageOpaqueMemoryBindInfo *convert_VkSparseImageOpaqueMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo32 *in, uint32_t count)
 {
-    VkSparseImageOpaqueMemoryBindInfo_host *out;
+    VkSparseImageOpaqueMemoryBindInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -11898,7 +11898,7 @@ static inline const VkSparseImageOpaqueMemoryBindInfo_host *convert_VkSparseImag
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseImageMemoryBind_win32_to_host(const VkSparseImageMemoryBind32 *in, VkSparseImageMemoryBind_host *out)
+static inline void convert_VkSparseImageMemoryBind_win32_to_host(const VkSparseImageMemoryBind32 *in, VkSparseImageMemoryBind *out)
 {
     if (!in) return;
 
@@ -11912,9 +11912,9 @@ static inline void convert_VkSparseImageMemoryBind_win32_to_host(const VkSparseI
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkSparseImageMemoryBind_host *convert_VkSparseImageMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBind32 *in, uint32_t count)
+static inline const VkSparseImageMemoryBind *convert_VkSparseImageMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBind32 *in, uint32_t count)
 {
-    VkSparseImageMemoryBind_host *out;
+    VkSparseImageMemoryBind *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -11930,7 +11930,7 @@ static inline const VkSparseImageMemoryBind_host *convert_VkSparseImageMemoryBin
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSparseImageMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo32 *in, VkSparseImageMemoryBindInfo_host *out)
+static inline void convert_VkSparseImageMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo32 *in, VkSparseImageMemoryBindInfo *out)
 {
     if (!in) return;
 
@@ -11941,9 +11941,9 @@ static inline void convert_VkSparseImageMemoryBindInfo_win32_to_host(struct conv
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkSparseImageMemoryBindInfo_host *convert_VkSparseImageMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo32 *in, uint32_t count)
+static inline const VkSparseImageMemoryBindInfo *convert_VkSparseImageMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo32 *in, uint32_t count)
 {
-    VkSparseImageMemoryBindInfo_host *out;
+    VkSparseImageMemoryBindInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -11959,7 +11959,7 @@ static inline const VkSparseImageMemoryBindInfo_host *convert_VkSparseImageMemor
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo32 *in, VkBindSparseInfo_host *out)
+static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo32 *in, VkBindSparseInfo *out)
 {
     if (!in) return;
 
@@ -11979,9 +11979,9 @@ static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_cont
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkBindSparseInfo_host *convert_VkBindSparseInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo32 *in, uint32_t count)
+static inline const VkBindSparseInfo *convert_VkBindSparseInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo32 *in, uint32_t count)
 {
-    VkBindSparseInfo_host *out;
+    VkBindSparseInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -12067,7 +12067,7 @@ static inline const VkSubmitInfo *convert_VkSubmitInfo_array_win32_to_host(struc
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSemaphoreSubmitInfo_win32_to_host(const VkSemaphoreSubmitInfo32 *in, VkSemaphoreSubmitInfo_host *out)
+static inline void convert_VkSemaphoreSubmitInfo_win32_to_host(const VkSemaphoreSubmitInfo32 *in, VkSemaphoreSubmitInfo *out)
 {
     if (!in) return;
 
@@ -12081,9 +12081,9 @@ static inline void convert_VkSemaphoreSubmitInfo_win32_to_host(const VkSemaphore
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkSemaphoreSubmitInfo_host *convert_VkSemaphoreSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo32 *in, uint32_t count)
+static inline const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo32 *in, uint32_t count)
 {
-    VkSemaphoreSubmitInfo_host *out;
+    VkSemaphoreSubmitInfo *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -12176,7 +12176,7 @@ static inline void convert_VkSubmitInfo2_win64_to_host(struct conversion_context
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSubmitInfo2_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo232 *in, VkSubmitInfo2_host *out)
+static inline void convert_VkSubmitInfo2_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo232 *in, VkSubmitInfo2 *out)
 {
     if (!in) return;
 
@@ -12211,9 +12211,9 @@ static inline const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win64_to_host(str
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkSubmitInfo2_host *convert_VkSubmitInfo2_array_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo232 *in, uint32_t count)
+static inline const VkSubmitInfo2 *convert_VkSubmitInfo2_array_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo232 *in, uint32_t count)
 {
-    VkSubmitInfo2_host *out;
+    VkSubmitInfo2 *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -12242,7 +12242,7 @@ static inline void convert_VkDebugUtilsObjectNameInfoEXT_win64_to_host(const VkD
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDebugUtilsObjectNameInfoEXT_win32_to_host(const VkDebugUtilsObjectNameInfoEXT32 *in, VkDebugUtilsObjectNameInfoEXT_host *out)
+static inline void convert_VkDebugUtilsObjectNameInfoEXT_win32_to_host(const VkDebugUtilsObjectNameInfoEXT32 *in, VkDebugUtilsObjectNameInfoEXT *out)
 {
     if (!in) return;
 
@@ -12270,7 +12270,7 @@ static inline void convert_VkDebugUtilsObjectTagInfoEXT_win64_to_host(const VkDe
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDebugUtilsObjectTagInfoEXT_win32_to_host(const VkDebugUtilsObjectTagInfoEXT32 *in, VkDebugUtilsObjectTagInfoEXT_host *out)
+static inline void convert_VkDebugUtilsObjectTagInfoEXT_win32_to_host(const VkDebugUtilsObjectTagInfoEXT32 *in, VkDebugUtilsObjectTagInfoEXT *out)
 {
     if (!in) return;
 
@@ -12285,7 +12285,7 @@ static inline void convert_VkDebugUtilsObjectTagInfoEXT_win32_to_host(const VkDe
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkSemaphoreSignalInfo_win32_to_host(const VkSemaphoreSignalInfo32 *in, VkSemaphoreSignalInfo_host *out)
+static inline void convert_VkSemaphoreSignalInfo_win32_to_host(const VkSemaphoreSignalInfo32 *in, VkSemaphoreSignalInfo *out)
 {
     if (!in) return;
 
@@ -12315,9 +12315,9 @@ static inline const VkDebugUtilsObjectNameInfoEXT *convert_VkDebugUtilsObjectNam
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkDebugUtilsObjectNameInfoEXT_host *convert_VkDebugUtilsObjectNameInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDebugUtilsObjectNameInfoEXT32 *in, uint32_t count)
+static inline const VkDebugUtilsObjectNameInfoEXT *convert_VkDebugUtilsObjectNameInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkDebugUtilsObjectNameInfoEXT32 *in, uint32_t count)
 {
-    VkDebugUtilsObjectNameInfoEXT_host *out;
+    VkDebugUtilsObjectNameInfoEXT *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -12353,7 +12353,7 @@ static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win64_to_host(st
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(struct conversion_context *ctx, const VkDebugUtilsMessengerCallbackDataEXT32 *in, VkDebugUtilsMessengerCallbackDataEXT_host *out)
+static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(struct conversion_context *ctx, const VkDebugUtilsMessengerCallbackDataEXT32 *in, VkDebugUtilsMessengerCallbackDataEXT *out)
 {
     const VkBaseInStructure *in_header;
     VkBaseOutStructure *out_header = (void *)out;
@@ -12379,7 +12379,7 @@ static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(st
         {
         case VK_STRUCTURE_TYPE_DEVICE_ADDRESS_BINDING_CALLBACK_DATA_EXT:
         {
-            VkDeviceAddressBindingCallbackDataEXT_host *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            VkDeviceAddressBindingCallbackDataEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
             const VkDeviceAddressBindingCallbackDataEXT32 *in_ext = (const VkDeviceAddressBindingCallbackDataEXT32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_DEVICE_ADDRESS_BINDING_CALLBACK_DATA_EXT;
             out_ext->pNext = NULL;
@@ -12400,7 +12400,7 @@ static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(st
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkCopyDescriptorSet_win32_to_host(const VkCopyDescriptorSet32 *in, VkCopyDescriptorSet_host *out)
+static inline void convert_VkCopyDescriptorSet_win32_to_host(const VkCopyDescriptorSet32 *in, VkCopyDescriptorSet *out)
 {
     if (!in) return;
 
@@ -12417,9 +12417,9 @@ static inline void convert_VkCopyDescriptorSet_win32_to_host(const VkCopyDescrip
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline const VkCopyDescriptorSet_host *convert_VkCopyDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkCopyDescriptorSet32 *in, uint32_t count)
+static inline const VkCopyDescriptorSet *convert_VkCopyDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkCopyDescriptorSet32 *in, uint32_t count)
 {
-    VkCopyDescriptorSet_host *out;
+    VkCopyDescriptorSet *out;
     unsigned int i;
 
     if (!in || !count) return NULL;
@@ -12457,7 +12457,7 @@ static NTSTATUS thunk32_vkAcquireNextImage2KHR(void *args)
         uint32_t *pImageIndex;
         VkResult result;
     } *params = args;
-    VkAcquireNextImageInfoKHR_host pAcquireInfo_host;
+    VkAcquireNextImageInfoKHR pAcquireInfo_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pAcquireInfo, params->pImageIndex);
 
@@ -12557,7 +12557,7 @@ static NTSTATUS thunk32_vkAcquireProfilingLockKHR(void *args)
         const VkAcquireProfilingLockInfoKHR32 *pInfo;
         VkResult result;
     } *params = args;
-    VkAcquireProfilingLockInfoKHR_host pInfo_host;
+    VkAcquireProfilingLockInfoKHR pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -12591,7 +12591,7 @@ static NTSTATUS thunk32_vkAllocateCommandBuffers(void *args)
         VkCommandBuffer *pCommandBuffers;
         VkResult result;
     } *params = args;
-    VkCommandBufferAllocateInfo_host pAllocateInfo_host;
+    VkCommandBufferAllocateInfo pAllocateInfo_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pAllocateInfo, params->pCommandBuffers);
 
@@ -12625,7 +12625,7 @@ static NTSTATUS thunk32_vkAllocateDescriptorSets(void *args)
         VkDescriptorSet *pDescriptorSets;
         VkResult result;
     } *params = args;
-    VkDescriptorSetAllocateInfo_host pAllocateInfo_host;
+    VkDescriptorSetAllocateInfo pAllocateInfo_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pAllocateInfo, params->pDescriptorSets);
 
@@ -12660,7 +12660,7 @@ static NTSTATUS thunk32_vkAllocateMemory(void *args)
         VkDeviceMemory *pMemory;
         VkResult result;
     } *params = args;
-    VkMemoryAllocateInfo_host pAllocateInfo_host;
+    VkMemoryAllocateInfo pAllocateInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pAllocateInfo, params->pAllocator, params->pMemory);
@@ -12696,7 +12696,7 @@ static NTSTATUS thunk32_vkBeginCommandBuffer(void *args)
         const VkCommandBufferBeginInfo32 *pBeginInfo;
         VkResult result;
     } *params = args;
-    VkCommandBufferBeginInfo_host pBeginInfo_host;
+    VkCommandBufferBeginInfo pBeginInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pBeginInfo);
@@ -12733,7 +12733,7 @@ static NTSTATUS thunk32_vkBindAccelerationStructureMemoryNV(void *args)
         const VkBindAccelerationStructureMemoryInfoNV32 *pBindInfos;
         VkResult result;
     } *params = args;
-    const VkBindAccelerationStructureMemoryInfoNV_host *pBindInfos_host;
+    const VkBindAccelerationStructureMemoryInfoNV *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -12803,7 +12803,7 @@ static NTSTATUS thunk32_vkBindBufferMemory2(void *args)
         const VkBindBufferMemoryInfo32 *pBindInfos;
         VkResult result;
     } *params = args;
-    const VkBindBufferMemoryInfo_host *pBindInfos_host;
+    const VkBindBufferMemoryInfo *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -12840,7 +12840,7 @@ static NTSTATUS thunk32_vkBindBufferMemory2KHR(void *args)
         const VkBindBufferMemoryInfo32 *pBindInfos;
         VkResult result;
     } *params = args;
-    const VkBindBufferMemoryInfo_host *pBindInfos_host;
+    const VkBindBufferMemoryInfo *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -12910,7 +12910,7 @@ static NTSTATUS thunk32_vkBindImageMemory2(void *args)
         const VkBindImageMemoryInfo32 *pBindInfos;
         VkResult result;
     } *params = args;
-    const VkBindImageMemoryInfo_host *pBindInfos_host;
+    const VkBindImageMemoryInfo *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -12947,7 +12947,7 @@ static NTSTATUS thunk32_vkBindImageMemory2KHR(void *args)
         const VkBindImageMemoryInfo32 *pBindInfos;
         VkResult result;
     } *params = args;
-    const VkBindImageMemoryInfo_host *pBindInfos_host;
+    const VkBindImageMemoryInfo *pBindInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
@@ -13020,7 +13020,7 @@ static NTSTATUS thunk32_vkBuildAccelerationStructuresKHR(void *args)
         const VkAccelerationStructureBuildRangeInfoKHR * const*ppBuildRangeInfos;
         VkResult result;
     } *params = args;
-    const VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
+    const VkAccelerationStructureBuildGeometryInfoKHR *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->infoCount, params->pInfos, params->ppBuildRangeInfos);
@@ -13058,7 +13058,7 @@ static NTSTATUS thunk32_vkBuildMicromapsEXT(void *args)
         const VkMicromapBuildInfoEXT32 *pInfos;
         VkResult result;
     } *params = args;
-    const VkMicromapBuildInfoEXT_host *pInfos_host;
+    const VkMicromapBuildInfoEXT *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->infoCount, params->pInfos);
@@ -13093,7 +13093,7 @@ static NTSTATUS thunk32_vkCmdBeginConditionalRenderingEXT(void *args)
         VkCommandBuffer commandBuffer;
         const VkConditionalRenderingBeginInfoEXT32 *pConditionalRenderingBegin;
     } *params = args;
-    VkConditionalRenderingBeginInfoEXT_host pConditionalRenderingBegin_host;
+    VkConditionalRenderingBeginInfoEXT pConditionalRenderingBegin_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pConditionalRenderingBegin);
 
@@ -13221,7 +13221,7 @@ static NTSTATUS thunk32_vkCmdBeginRenderPass(void *args)
         const VkRenderPassBeginInfo32 *pRenderPassBegin;
         VkSubpassContents contents;
     } *params = args;
-    VkRenderPassBeginInfo_host pRenderPassBegin_host;
+    VkRenderPassBeginInfo pRenderPassBegin_host;
 
     TRACE("%p, %p, %#x\n", params->commandBuffer, params->pRenderPassBegin, params->contents);
 
@@ -13254,7 +13254,7 @@ static NTSTATUS thunk32_vkCmdBeginRenderPass2(void *args)
         const VkRenderPassBeginInfo32 *pRenderPassBegin;
         const VkSubpassBeginInfo *pSubpassBeginInfo;
     } *params = args;
-    VkRenderPassBeginInfo_host pRenderPassBegin_host;
+    VkRenderPassBeginInfo pRenderPassBegin_host;
 
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
 
@@ -13287,7 +13287,7 @@ static NTSTATUS thunk32_vkCmdBeginRenderPass2KHR(void *args)
         const VkRenderPassBeginInfo32 *pRenderPassBegin;
         const VkSubpassBeginInfo *pSubpassBeginInfo;
     } *params = args;
-    VkRenderPassBeginInfo_host pRenderPassBegin_host;
+    VkRenderPassBeginInfo pRenderPassBegin_host;
 
     TRACE("%p, %p, %p\n", params->commandBuffer, params->pRenderPassBegin, params->pSubpassBeginInfo);
 
@@ -13319,7 +13319,7 @@ static NTSTATUS thunk32_vkCmdBeginRendering(void *args)
         VkCommandBuffer commandBuffer;
         const VkRenderingInfo32 *pRenderingInfo;
     } *params = args;
-    VkRenderingInfo_host pRenderingInfo_host;
+    VkRenderingInfo pRenderingInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pRenderingInfo);
@@ -13354,7 +13354,7 @@ static NTSTATUS thunk32_vkCmdBeginRenderingKHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkRenderingInfo32 *pRenderingInfo;
     } *params = args;
-    VkRenderingInfo_host pRenderingInfo_host;
+    VkRenderingInfo pRenderingInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pRenderingInfo);
@@ -13788,7 +13788,7 @@ static NTSTATUS thunk32_vkCmdBlitImage2(void *args)
         VkCommandBuffer commandBuffer;
         const VkBlitImageInfo232 *pBlitImageInfo;
     } *params = args;
-    VkBlitImageInfo2_host pBlitImageInfo_host;
+    VkBlitImageInfo2 pBlitImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pBlitImageInfo);
 
@@ -13820,7 +13820,7 @@ static NTSTATUS thunk32_vkCmdBlitImage2KHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkBlitImageInfo232 *pBlitImageInfo;
     } *params = args;
-    VkBlitImageInfo2_host pBlitImageInfo_host;
+    VkBlitImageInfo2 pBlitImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pBlitImageInfo);
 
@@ -13859,7 +13859,7 @@ static NTSTATUS thunk32_vkCmdBuildAccelerationStructureNV(void *args)
         VkBuffer DECLSPEC_ALIGN(8) scratch;
         VkDeviceSize DECLSPEC_ALIGN(8) scratchOffset;
     } *params = args;
-    VkAccelerationStructureInfoNV_host pInfo_host;
+    VkAccelerationStructureInfoNV pInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, 0x%s, 0x%s, %u, 0x%s, 0x%s, 0x%s, 0x%s\n", params->commandBuffer, params->pInfo, wine_dbgstr_longlong(params->instanceData), wine_dbgstr_longlong(params->instanceOffset), params->update, wine_dbgstr_longlong(params->dst), wine_dbgstr_longlong(params->src), wine_dbgstr_longlong(params->scratch), wine_dbgstr_longlong(params->scratchOffset));
@@ -13898,7 +13898,7 @@ static NTSTATUS thunk32_vkCmdBuildAccelerationStructuresIndirectKHR(void *args)
         const uint32_t *pIndirectStrides;
         const uint32_t * const*ppMaxPrimitiveCounts;
     } *params = args;
-    const VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
+    const VkAccelerationStructureBuildGeometryInfoKHR *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %p, %p, %p\n", params->commandBuffer, params->infoCount, params->pInfos, params->pIndirectDeviceAddresses, params->pIndirectStrides, params->ppMaxPrimitiveCounts);
@@ -13935,7 +13935,7 @@ static NTSTATUS thunk32_vkCmdBuildAccelerationStructuresKHR(void *args)
         const VkAccelerationStructureBuildGeometryInfoKHR32 *pInfos;
         const VkAccelerationStructureBuildRangeInfoKHR * const*ppBuildRangeInfos;
     } *params = args;
-    const VkAccelerationStructureBuildGeometryInfoKHR_host *pInfos_host;
+    const VkAccelerationStructureBuildGeometryInfoKHR *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->infoCount, params->pInfos, params->ppBuildRangeInfos);
@@ -13971,7 +13971,7 @@ static NTSTATUS thunk32_vkCmdBuildMicromapsEXT(void *args)
         uint32_t infoCount;
         const VkMicromapBuildInfoEXT32 *pInfos;
     } *params = args;
-    const VkMicromapBuildInfoEXT_host *pInfos_host;
+    const VkMicromapBuildInfoEXT *pInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->infoCount, params->pInfos);
@@ -14107,7 +14107,7 @@ static NTSTATUS thunk32_vkCmdCopyAccelerationStructureKHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyAccelerationStructureInfoKHR32 *pInfo;
     } *params = args;
-    VkCopyAccelerationStructureInfoKHR_host pInfo_host;
+    VkCopyAccelerationStructureInfoKHR pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
 
@@ -14171,7 +14171,7 @@ static NTSTATUS thunk32_vkCmdCopyAccelerationStructureToMemoryKHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyAccelerationStructureToMemoryInfoKHR32 *pInfo;
     } *params = args;
-    VkCopyAccelerationStructureToMemoryInfoKHR_host pInfo_host;
+    VkCopyAccelerationStructureToMemoryInfoKHR pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
 
@@ -14206,7 +14206,7 @@ static NTSTATUS thunk32_vkCmdCopyBuffer(void *args)
         uint32_t regionCount;
         const VkBufferCopy32 *pRegions;
     } *params = args;
-    const VkBufferCopy_host *pRegions_host;
+    const VkBufferCopy *pRegions_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcBuffer), wine_dbgstr_longlong(params->dstBuffer), params->regionCount, params->pRegions);
@@ -14241,7 +14241,7 @@ static NTSTATUS thunk32_vkCmdCopyBuffer2(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyBufferInfo232 *pCopyBufferInfo;
     } *params = args;
-    VkCopyBufferInfo2_host pCopyBufferInfo_host;
+    VkCopyBufferInfo2 pCopyBufferInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferInfo);
@@ -14276,7 +14276,7 @@ static NTSTATUS thunk32_vkCmdCopyBuffer2KHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyBufferInfo232 *pCopyBufferInfo;
     } *params = args;
-    VkCopyBufferInfo2_host pCopyBufferInfo_host;
+    VkCopyBufferInfo2 pCopyBufferInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferInfo);
@@ -14315,7 +14315,7 @@ static NTSTATUS thunk32_vkCmdCopyBufferToImage(void *args)
         uint32_t regionCount;
         const VkBufferImageCopy32 *pRegions;
     } *params = args;
-    const VkBufferImageCopy_host *pRegions_host;
+    const VkBufferImageCopy *pRegions_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, 0x%s, %#x, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcBuffer), wine_dbgstr_longlong(params->dstImage), params->dstImageLayout, params->regionCount, params->pRegions);
@@ -14350,7 +14350,7 @@ static NTSTATUS thunk32_vkCmdCopyBufferToImage2(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyBufferToImageInfo232 *pCopyBufferToImageInfo;
     } *params = args;
-    VkCopyBufferToImageInfo2_host pCopyBufferToImageInfo_host;
+    VkCopyBufferToImageInfo2 pCopyBufferToImageInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferToImageInfo);
@@ -14385,7 +14385,7 @@ static NTSTATUS thunk32_vkCmdCopyBufferToImage2KHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyBufferToImageInfo232 *pCopyBufferToImageInfo;
     } *params = args;
-    VkCopyBufferToImageInfo2_host pCopyBufferToImageInfo_host;
+    VkCopyBufferToImageInfo2 pCopyBufferToImageInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyBufferToImageInfo);
@@ -14455,7 +14455,7 @@ static NTSTATUS thunk32_vkCmdCopyImage2(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyImageInfo232 *pCopyImageInfo;
     } *params = args;
-    VkCopyImageInfo2_host pCopyImageInfo_host;
+    VkCopyImageInfo2 pCopyImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageInfo);
 
@@ -14487,7 +14487,7 @@ static NTSTATUS thunk32_vkCmdCopyImage2KHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyImageInfo232 *pCopyImageInfo;
     } *params = args;
-    VkCopyImageInfo2_host pCopyImageInfo_host;
+    VkCopyImageInfo2 pCopyImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageInfo);
 
@@ -14523,7 +14523,7 @@ static NTSTATUS thunk32_vkCmdCopyImageToBuffer(void *args)
         uint32_t regionCount;
         const VkBufferImageCopy32 *pRegions;
     } *params = args;
-    const VkBufferImageCopy_host *pRegions_host;
+    const VkBufferImageCopy *pRegions_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %#x, 0x%s, %u, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->srcImage), params->srcImageLayout, wine_dbgstr_longlong(params->dstBuffer), params->regionCount, params->pRegions);
@@ -14558,7 +14558,7 @@ static NTSTATUS thunk32_vkCmdCopyImageToBuffer2(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyImageToBufferInfo232 *pCopyImageToBufferInfo;
     } *params = args;
-    VkCopyImageToBufferInfo2_host pCopyImageToBufferInfo_host;
+    VkCopyImageToBufferInfo2 pCopyImageToBufferInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageToBufferInfo);
@@ -14593,7 +14593,7 @@ static NTSTATUS thunk32_vkCmdCopyImageToBuffer2KHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyImageToBufferInfo232 *pCopyImageToBufferInfo;
     } *params = args;
-    VkCopyImageToBufferInfo2_host pCopyImageToBufferInfo_host;
+    VkCopyImageToBufferInfo2 pCopyImageToBufferInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pCopyImageToBufferInfo);
@@ -14660,7 +14660,7 @@ static NTSTATUS thunk32_vkCmdCopyMemoryToAccelerationStructureKHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyMemoryToAccelerationStructureInfoKHR32 *pInfo;
     } *params = args;
-    VkCopyMemoryToAccelerationStructureInfoKHR_host pInfo_host;
+    VkCopyMemoryToAccelerationStructureInfoKHR pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
 
@@ -14727,7 +14727,7 @@ static NTSTATUS thunk32_vkCmdCopyMemoryToMicromapEXT(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyMemoryToMicromapInfoEXT32 *pInfo;
     } *params = args;
-    VkCopyMemoryToMicromapInfoEXT_host pInfo_host;
+    VkCopyMemoryToMicromapInfoEXT pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
 
@@ -14759,7 +14759,7 @@ static NTSTATUS thunk32_vkCmdCopyMicromapEXT(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyMicromapInfoEXT32 *pInfo;
     } *params = args;
-    VkCopyMicromapInfoEXT_host pInfo_host;
+    VkCopyMicromapInfoEXT pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
 
@@ -14791,7 +14791,7 @@ static NTSTATUS thunk32_vkCmdCopyMicromapToMemoryEXT(void *args)
         VkCommandBuffer commandBuffer;
         const VkCopyMicromapToMemoryInfoEXT32 *pInfo;
     } *params = args;
-    VkCopyMicromapToMemoryInfoEXT_host pInfo_host;
+    VkCopyMicromapToMemoryInfoEXT pInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pInfo);
 
@@ -14859,7 +14859,7 @@ static NTSTATUS thunk32_vkCmdCuLaunchKernelNVX(void *args)
         VkCommandBuffer commandBuffer;
         const VkCuLaunchInfoNVX32 *pLaunchInfo;
     } *params = args;
-    VkCuLaunchInfoNVX_host pLaunchInfo_host;
+    VkCuLaunchInfoNVX pLaunchInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pLaunchInfo);
 
@@ -15013,7 +15013,7 @@ static NTSTATUS thunk32_vkCmdDecompressMemoryNV(void *args)
         uint32_t decompressRegionCount;
         const VkDecompressMemoryRegionNV32 *pDecompressMemoryRegions;
     } *params = args;
-    const VkDecompressMemoryRegionNV_host *pDecompressMemoryRegions_host;
+    const VkDecompressMemoryRegionNV *pDecompressMemoryRegions_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->decompressRegionCount, params->pDecompressMemoryRegions);
@@ -16170,7 +16170,7 @@ static NTSTATUS thunk32_vkCmdExecuteGeneratedCommandsNV(void *args)
         VkBool32 isPreprocessed;
         const VkGeneratedCommandsInfoNV32 *pGeneratedCommandsInfo;
     } *params = args;
-    VkGeneratedCommandsInfoNV_host pGeneratedCommandsInfo_host;
+    VkGeneratedCommandsInfoNV pGeneratedCommandsInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->commandBuffer, params->isPreprocessed, params->pGeneratedCommandsInfo);
@@ -16399,8 +16399,8 @@ static NTSTATUS thunk32_vkCmdPipelineBarrier(void *args)
         uint32_t imageMemoryBarrierCount;
         const VkImageMemoryBarrier32 *pImageMemoryBarriers;
     } *params = args;
-    const VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
-    const VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
+    const VkBufferMemoryBarrier *pBufferMemoryBarriers_host;
+    const VkImageMemoryBarrier *pImageMemoryBarriers_host;
     struct conversion_context ctx;
 
     TRACE("%p, %#x, %#x, %#x, %u, %p, %u, %p, %u, %p\n", params->commandBuffer, params->srcStageMask, params->dstStageMask, params->dependencyFlags, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
@@ -16436,7 +16436,7 @@ static NTSTATUS thunk32_vkCmdPipelineBarrier2(void *args)
         VkCommandBuffer commandBuffer;
         const VkDependencyInfo32 *pDependencyInfo;
     } *params = args;
-    VkDependencyInfo_host pDependencyInfo_host;
+    VkDependencyInfo pDependencyInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pDependencyInfo);
@@ -16471,7 +16471,7 @@ static NTSTATUS thunk32_vkCmdPipelineBarrier2KHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkDependencyInfo32 *pDependencyInfo;
     } *params = args;
-    VkDependencyInfo_host pDependencyInfo_host;
+    VkDependencyInfo pDependencyInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pDependencyInfo);
@@ -16506,7 +16506,7 @@ static NTSTATUS thunk32_vkCmdPreprocessGeneratedCommandsNV(void *args)
         VkCommandBuffer commandBuffer;
         const VkGeneratedCommandsInfoNV32 *pGeneratedCommandsInfo;
     } *params = args;
-    VkGeneratedCommandsInfoNV_host pGeneratedCommandsInfo_host;
+    VkGeneratedCommandsInfoNV pGeneratedCommandsInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pGeneratedCommandsInfo);
@@ -16579,7 +16579,7 @@ static NTSTATUS thunk32_vkCmdPushDescriptorSetKHR(void *args)
         uint32_t descriptorWriteCount;
         const VkWriteDescriptorSet32 *pDescriptorWrites;
     } *params = args;
-    const VkWriteDescriptorSet_host *pDescriptorWrites_host;
+    const VkWriteDescriptorSet *pDescriptorWrites_host;
     struct conversion_context ctx;
 
     TRACE("%p, %#x, 0x%s, %u, %u, %p\n", params->commandBuffer, params->pipelineBindPoint, wine_dbgstr_longlong(params->layout), params->set, params->descriptorWriteCount, params->pDescriptorWrites);
@@ -16807,7 +16807,7 @@ static NTSTATUS thunk32_vkCmdResolveImage2(void *args)
         VkCommandBuffer commandBuffer;
         const VkResolveImageInfo232 *pResolveImageInfo;
     } *params = args;
-    VkResolveImageInfo2_host pResolveImageInfo_host;
+    VkResolveImageInfo2 pResolveImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pResolveImageInfo);
 
@@ -16839,7 +16839,7 @@ static NTSTATUS thunk32_vkCmdResolveImage2KHR(void *args)
         VkCommandBuffer commandBuffer;
         const VkResolveImageInfo232 *pResolveImageInfo;
     } *params = args;
-    VkResolveImageInfo2_host pResolveImageInfo_host;
+    VkResolveImageInfo2 pResolveImageInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pResolveImageInfo);
 
@@ -18030,7 +18030,7 @@ static NTSTATUS thunk32_vkCmdSetEvent2(void *args)
         VkEvent DECLSPEC_ALIGN(8) event;
         const VkDependencyInfo32 *pDependencyInfo;
     } *params = args;
-    VkDependencyInfo_host pDependencyInfo_host;
+    VkDependencyInfo pDependencyInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->pDependencyInfo);
@@ -18066,7 +18066,7 @@ static NTSTATUS thunk32_vkCmdSetEvent2KHR(void *args)
         VkEvent DECLSPEC_ALIGN(8) event;
         const VkDependencyInfo32 *pDependencyInfo;
     } *params = args;
-    VkDependencyInfo_host pDependencyInfo_host;
+    VkDependencyInfo pDependencyInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %p\n", params->commandBuffer, wine_dbgstr_longlong(params->event), params->pDependencyInfo);
@@ -18497,7 +18497,7 @@ static NTSTATUS thunk32_vkCmdSetPerformanceMarkerINTEL(void *args)
         const VkPerformanceMarkerInfoINTEL32 *pMarkerInfo;
         VkResult result;
     } *params = args;
-    VkPerformanceMarkerInfoINTEL_host pMarkerInfo_host;
+    VkPerformanceMarkerInfoINTEL pMarkerInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pMarkerInfo);
 
@@ -18530,7 +18530,7 @@ static NTSTATUS thunk32_vkCmdSetPerformanceOverrideINTEL(void *args)
         const VkPerformanceOverrideInfoINTEL32 *pOverrideInfo;
         VkResult result;
     } *params = args;
-    VkPerformanceOverrideInfoINTEL_host pOverrideInfo_host;
+    VkPerformanceOverrideInfoINTEL pOverrideInfo_host;
 
     TRACE("%p, %p\n", params->commandBuffer, params->pOverrideInfo);
 
@@ -19735,10 +19735,10 @@ static NTSTATUS thunk32_vkCmdTraceRaysIndirectKHR(void *args)
         const VkStridedDeviceAddressRegionKHR32 *pCallableShaderBindingTable;
         VkDeviceAddress DECLSPEC_ALIGN(8) indirectDeviceAddress;
     } *params = args;
-    VkStridedDeviceAddressRegionKHR_host pRaygenShaderBindingTable_host;
-    VkStridedDeviceAddressRegionKHR_host pMissShaderBindingTable_host;
-    VkStridedDeviceAddressRegionKHR_host pHitShaderBindingTable_host;
-    VkStridedDeviceAddressRegionKHR_host pCallableShaderBindingTable_host;
+    VkStridedDeviceAddressRegionKHR pRaygenShaderBindingTable_host;
+    VkStridedDeviceAddressRegionKHR pMissShaderBindingTable_host;
+    VkStridedDeviceAddressRegionKHR pHitShaderBindingTable_host;
+    VkStridedDeviceAddressRegionKHR pCallableShaderBindingTable_host;
 
     TRACE("%p, %p, %p, %p, %p, 0x%s\n", params->commandBuffer, params->pRaygenShaderBindingTable, params->pMissShaderBindingTable, params->pHitShaderBindingTable, params->pCallableShaderBindingTable, wine_dbgstr_longlong(params->indirectDeviceAddress));
 
@@ -19779,10 +19779,10 @@ static NTSTATUS thunk32_vkCmdTraceRaysKHR(void *args)
         uint32_t height;
         uint32_t depth;
     } *params = args;
-    VkStridedDeviceAddressRegionKHR_host pRaygenShaderBindingTable_host;
-    VkStridedDeviceAddressRegionKHR_host pMissShaderBindingTable_host;
-    VkStridedDeviceAddressRegionKHR_host pHitShaderBindingTable_host;
-    VkStridedDeviceAddressRegionKHR_host pCallableShaderBindingTable_host;
+    VkStridedDeviceAddressRegionKHR pRaygenShaderBindingTable_host;
+    VkStridedDeviceAddressRegionKHR pMissShaderBindingTable_host;
+    VkStridedDeviceAddressRegionKHR pHitShaderBindingTable_host;
+    VkStridedDeviceAddressRegionKHR pCallableShaderBindingTable_host;
 
     TRACE("%p, %p, %p, %p, %p, %u, %u, %u\n", params->commandBuffer, params->pRaygenShaderBindingTable, params->pMissShaderBindingTable, params->pHitShaderBindingTable, params->pCallableShaderBindingTable, params->width, params->height, params->depth);
 
@@ -19902,8 +19902,8 @@ static NTSTATUS thunk32_vkCmdWaitEvents(void *args)
         uint32_t imageMemoryBarrierCount;
         const VkImageMemoryBarrier32 *pImageMemoryBarriers;
     } *params = args;
-    const VkBufferMemoryBarrier_host *pBufferMemoryBarriers_host;
-    const VkImageMemoryBarrier_host *pImageMemoryBarriers_host;
+    const VkBufferMemoryBarrier *pBufferMemoryBarriers_host;
+    const VkImageMemoryBarrier *pImageMemoryBarriers_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %#x, %#x, %u, %p, %u, %p, %u, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->srcStageMask, params->dstStageMask, params->memoryBarrierCount, params->pMemoryBarriers, params->bufferMemoryBarrierCount, params->pBufferMemoryBarriers, params->imageMemoryBarrierCount, params->pImageMemoryBarriers);
@@ -19941,7 +19941,7 @@ static NTSTATUS thunk32_vkCmdWaitEvents2(void *args)
         const VkEvent *pEvents;
         const VkDependencyInfo32 *pDependencyInfos;
     } *params = args;
-    const VkDependencyInfo_host *pDependencyInfos_host;
+    const VkDependencyInfo *pDependencyInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->pDependencyInfos);
@@ -19978,7 +19978,7 @@ static NTSTATUS thunk32_vkCmdWaitEvents2KHR(void *args)
         const VkEvent *pEvents;
         const VkDependencyInfo32 *pDependencyInfos;
     } *params = args;
-    const VkDependencyInfo_host *pDependencyInfos_host;
+    const VkDependencyInfo *pDependencyInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %p\n", params->commandBuffer, params->eventCount, params->pEvents, params->pDependencyInfos);
@@ -20311,7 +20311,7 @@ static NTSTATUS thunk32_vkCopyAccelerationStructureKHR(void *args)
         const VkCopyAccelerationStructureInfoKHR32 *pInfo;
         VkResult result;
     } *params = args;
-    VkCopyAccelerationStructureInfoKHR_host pInfo_host;
+    VkCopyAccelerationStructureInfoKHR pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
 
@@ -20345,7 +20345,7 @@ static NTSTATUS thunk32_vkCopyAccelerationStructureToMemoryKHR(void *args)
         const VkCopyAccelerationStructureToMemoryInfoKHR32 *pInfo;
         VkResult result;
     } *params = args;
-    VkCopyAccelerationStructureToMemoryInfoKHR_host pInfo_host;
+    VkCopyAccelerationStructureToMemoryInfoKHR pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
 
@@ -20379,7 +20379,7 @@ static NTSTATUS thunk32_vkCopyMemoryToAccelerationStructureKHR(void *args)
         const VkCopyMemoryToAccelerationStructureInfoKHR32 *pInfo;
         VkResult result;
     } *params = args;
-    VkCopyMemoryToAccelerationStructureInfoKHR_host pInfo_host;
+    VkCopyMemoryToAccelerationStructureInfoKHR pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
 
@@ -20413,7 +20413,7 @@ static NTSTATUS thunk32_vkCopyMemoryToMicromapEXT(void *args)
         const VkCopyMemoryToMicromapInfoEXT32 *pInfo;
         VkResult result;
     } *params = args;
-    VkCopyMemoryToMicromapInfoEXT_host pInfo_host;
+    VkCopyMemoryToMicromapInfoEXT pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
 
@@ -20447,7 +20447,7 @@ static NTSTATUS thunk32_vkCopyMicromapEXT(void *args)
         const VkCopyMicromapInfoEXT32 *pInfo;
         VkResult result;
     } *params = args;
-    VkCopyMicromapInfoEXT_host pInfo_host;
+    VkCopyMicromapInfoEXT pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
 
@@ -20481,7 +20481,7 @@ static NTSTATUS thunk32_vkCopyMicromapToMemoryEXT(void *args)
         const VkCopyMicromapToMemoryInfoEXT32 *pInfo;
         VkResult result;
     } *params = args;
-    VkCopyMicromapToMemoryInfoEXT_host pInfo_host;
+    VkCopyMicromapToMemoryInfoEXT pInfo_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), params->pInfo);
 
@@ -20516,7 +20516,7 @@ static NTSTATUS thunk32_vkCreateAccelerationStructureKHR(void *args)
         VkAccelerationStructureKHR *pAccelerationStructure;
         VkResult result;
     } *params = args;
-    VkAccelerationStructureCreateInfoKHR_host pCreateInfo_host;
+    VkAccelerationStructureCreateInfoKHR pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pAccelerationStructure);
 
@@ -20551,7 +20551,7 @@ static NTSTATUS thunk32_vkCreateAccelerationStructureNV(void *args)
         VkAccelerationStructureNV *pAccelerationStructure;
         VkResult result;
     } *params = args;
-    VkAccelerationStructureCreateInfoNV_host pCreateInfo_host;
+    VkAccelerationStructureCreateInfoNV pCreateInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pAccelerationStructure);
@@ -20589,7 +20589,7 @@ static NTSTATUS thunk32_vkCreateBuffer(void *args)
         VkBuffer *pBuffer;
         VkResult result;
     } *params = args;
-    VkBufferCreateInfo_host pCreateInfo_host;
+    VkBufferCreateInfo pCreateInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pBuffer);
@@ -20627,7 +20627,7 @@ static NTSTATUS thunk32_vkCreateBufferView(void *args)
         VkBufferView *pView;
         VkResult result;
     } *params = args;
-    VkBufferViewCreateInfo_host pCreateInfo_host;
+    VkBufferViewCreateInfo pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pView);
 
@@ -20703,7 +20703,7 @@ static NTSTATUS thunk32_vkCreateComputePipelines(void *args)
         VkPipeline *pPipelines;
         VkResult result;
     } *params = args;
-    const VkComputePipelineCreateInfo_host *pCreateInfos_host;
+    const VkComputePipelineCreateInfo *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -20742,7 +20742,7 @@ static NTSTATUS thunk32_vkCreateCuFunctionNVX(void *args)
         VkCuFunctionNVX *pFunction;
         VkResult result;
     } *params = args;
-    VkCuFunctionCreateInfoNVX_host pCreateInfo_host;
+    VkCuFunctionCreateInfoNVX pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pFunction);
 
@@ -20974,7 +20974,7 @@ static NTSTATUS thunk32_vkCreateDescriptorUpdateTemplate(void *args)
         VkDescriptorUpdateTemplate *pDescriptorUpdateTemplate;
         VkResult result;
     } *params = args;
-    VkDescriptorUpdateTemplateCreateInfo_host pCreateInfo_host;
+    VkDescriptorUpdateTemplateCreateInfo pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pDescriptorUpdateTemplate);
 
@@ -21009,7 +21009,7 @@ static NTSTATUS thunk32_vkCreateDescriptorUpdateTemplateKHR(void *args)
         VkDescriptorUpdateTemplate *pDescriptorUpdateTemplate;
         VkResult result;
     } *params = args;
-    VkDescriptorUpdateTemplateCreateInfo_host pCreateInfo_host;
+    VkDescriptorUpdateTemplateCreateInfo pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pDescriptorUpdateTemplate);
 
@@ -21154,7 +21154,7 @@ static NTSTATUS thunk32_vkCreateFramebuffer(void *args)
         VkFramebuffer *pFramebuffer;
         VkResult result;
     } *params = args;
-    VkFramebufferCreateInfo_host pCreateInfo_host;
+    VkFramebufferCreateInfo pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pFramebuffer);
 
@@ -21196,7 +21196,7 @@ static NTSTATUS thunk32_vkCreateGraphicsPipelines(void *args)
         VkPipeline *pPipelines;
         VkResult result;
     } *params = args;
-    const VkGraphicsPipelineCreateInfo_host *pCreateInfos_host;
+    const VkGraphicsPipelineCreateInfo *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -21273,7 +21273,7 @@ static NTSTATUS thunk32_vkCreateImageView(void *args)
         VkImageView *pView;
         VkResult result;
     } *params = args;
-    VkImageViewCreateInfo_host pCreateInfo_host;
+    VkImageViewCreateInfo pCreateInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pView);
@@ -21311,7 +21311,7 @@ static NTSTATUS thunk32_vkCreateIndirectCommandsLayoutNV(void *args)
         VkIndirectCommandsLayoutNV *pIndirectCommandsLayout;
         VkResult result;
     } *params = args;
-    VkIndirectCommandsLayoutCreateInfoNV_host pCreateInfo_host;
+    VkIndirectCommandsLayoutCreateInfoNV pCreateInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pIndirectCommandsLayout);
@@ -21392,7 +21392,7 @@ static NTSTATUS thunk32_vkCreateMicromapEXT(void *args)
         VkMicromapEXT *pMicromap;
         VkResult result;
     } *params = args;
-    VkMicromapCreateInfoEXT_host pCreateInfo_host;
+    VkMicromapCreateInfoEXT pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pMicromap);
 
@@ -21633,7 +21633,7 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesKHR(void *args)
         VkPipeline *pPipelines;
         VkResult result;
     } *params = args;
-    const VkRayTracingPipelineCreateInfoKHR_host *pCreateInfos_host;
+    const VkRayTracingPipelineCreateInfoKHR *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->deferredOperation), wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -21679,7 +21679,7 @@ static NTSTATUS thunk32_vkCreateRayTracingPipelinesNV(void *args)
         VkPipeline *pPipelines;
         VkResult result;
     } *params = args;
-    const VkRayTracingPipelineCreateInfoNV_host *pCreateInfos_host;
+    const VkRayTracingPipelineCreateInfoNV *pCreateInfos_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p, %p, %p\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->createInfoCount, params->pCreateInfos, params->pAllocator, params->pPipelines);
@@ -21999,7 +21999,7 @@ static NTSTATUS thunk32_vkCreateSwapchainKHR(void *args)
         VkSwapchainKHR *pSwapchain;
         VkResult result;
     } *params = args;
-    VkSwapchainCreateInfoKHR_host pCreateInfo_host;
+    VkSwapchainCreateInfoKHR pCreateInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pSwapchain);
 
@@ -22100,7 +22100,7 @@ static NTSTATUS thunk32_vkDebugMarkerSetObjectNameEXT(void *args)
         const VkDebugMarkerObjectNameInfoEXT32 *pNameInfo;
         VkResult result;
     } *params = args;
-    VkDebugMarkerObjectNameInfoEXT_host pNameInfo_host;
+    VkDebugMarkerObjectNameInfoEXT pNameInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pNameInfo);
 
@@ -22135,7 +22135,7 @@ static NTSTATUS thunk32_vkDebugMarkerSetObjectTagEXT(void *args)
         const VkDebugMarkerObjectTagInfoEXT32 *pTagInfo;
         VkResult result;
     } *params = args;
-    VkDebugMarkerObjectTagInfoEXT_host pTagInfo_host;
+    VkDebugMarkerObjectTagInfoEXT pTagInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pTagInfo);
 
@@ -23772,7 +23772,7 @@ static NTSTATUS thunk32_vkFlushMappedMemoryRanges(void *args)
         const VkMappedMemoryRange32 *pMemoryRanges;
         VkResult result;
     } *params = args;
-    const VkMappedMemoryRange_host *pMemoryRanges_host;
+    const VkMappedMemoryRange *pMemoryRanges_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->memoryRangeCount, params->pMemoryRanges);
@@ -23906,8 +23906,8 @@ static NTSTATUS thunk32_vkGetAccelerationStructureBuildSizesKHR(void *args)
         const uint32_t *pMaxPrimitiveCounts;
         VkAccelerationStructureBuildSizesInfoKHR32 *pSizeInfo;
     } *params = args;
-    VkAccelerationStructureBuildGeometryInfoKHR_host pBuildInfo_host;
-    VkAccelerationStructureBuildSizesInfoKHR_host pSizeInfo_host;
+    VkAccelerationStructureBuildGeometryInfoKHR pBuildInfo_host;
+    VkAccelerationStructureBuildSizesInfoKHR pSizeInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %#x, %p, %p, %p\n", params->device, params->buildType, params->pBuildInfo, params->pMaxPrimitiveCounts, params->pSizeInfo);
@@ -23945,7 +23945,7 @@ static NTSTATUS thunk32_vkGetAccelerationStructureDeviceAddressKHR(void *args)
         const VkAccelerationStructureDeviceAddressInfoKHR32 *pInfo;
         VkDeviceAddress result;
     } *params = args;
-    VkAccelerationStructureDeviceAddressInfoKHR_host pInfo_host;
+    VkAccelerationStructureDeviceAddressInfoKHR pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -24011,8 +24011,8 @@ static NTSTATUS thunk32_vkGetAccelerationStructureMemoryRequirementsNV(void *arg
         const VkAccelerationStructureMemoryRequirementsInfoNV32 *pInfo;
         VkMemoryRequirements2KHR32 *pMemoryRequirements;
     } *params = args;
-    VkAccelerationStructureMemoryRequirementsInfoNV_host pInfo_host;
-    VkMemoryRequirements2KHR_host pMemoryRequirements_host;
+    VkAccelerationStructureMemoryRequirementsInfoNV pInfo_host;
+    VkMemoryRequirements2KHR pMemoryRequirements_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
 
@@ -24047,7 +24047,7 @@ static NTSTATUS thunk32_vkGetBufferDeviceAddress(void *args)
         const VkBufferDeviceAddressInfo32 *pInfo;
         VkDeviceAddress result;
     } *params = args;
-    VkBufferDeviceAddressInfo_host pInfo_host;
+    VkBufferDeviceAddressInfo pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -24080,7 +24080,7 @@ static NTSTATUS thunk32_vkGetBufferDeviceAddressEXT(void *args)
         const VkBufferDeviceAddressInfo32 *pInfo;
         VkDeviceAddress result;
     } *params = args;
-    VkBufferDeviceAddressInfo_host pInfo_host;
+    VkBufferDeviceAddressInfo pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -24113,7 +24113,7 @@ static NTSTATUS thunk32_vkGetBufferDeviceAddressKHR(void *args)
         const VkBufferDeviceAddressInfo32 *pInfo;
         VkDeviceAddress result;
     } *params = args;
-    VkBufferDeviceAddressInfo_host pInfo_host;
+    VkBufferDeviceAddressInfo pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -24146,7 +24146,7 @@ static NTSTATUS thunk32_vkGetBufferMemoryRequirements(void *args)
         VkBuffer DECLSPEC_ALIGN(8) buffer;
         VkMemoryRequirements32 *pMemoryRequirements;
     } *params = args;
-    VkMemoryRequirements_host pMemoryRequirements_host;
+    VkMemoryRequirements pMemoryRequirements_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->buffer), params->pMemoryRequirements);
 
@@ -24179,8 +24179,8 @@ static NTSTATUS thunk32_vkGetBufferMemoryRequirements2(void *args)
         const VkBufferMemoryRequirementsInfo232 *pInfo;
         VkMemoryRequirements232 *pMemoryRequirements;
     } *params = args;
-    VkBufferMemoryRequirementsInfo2_host pInfo_host;
-    VkMemoryRequirements2_host pMemoryRequirements_host;
+    VkBufferMemoryRequirementsInfo2 pInfo_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
 
@@ -24215,8 +24215,8 @@ static NTSTATUS thunk32_vkGetBufferMemoryRequirements2KHR(void *args)
         const VkBufferMemoryRequirementsInfo232 *pInfo;
         VkMemoryRequirements232 *pMemoryRequirements;
     } *params = args;
-    VkBufferMemoryRequirementsInfo2_host pInfo_host;
-    VkMemoryRequirements2_host pMemoryRequirements_host;
+    VkBufferMemoryRequirementsInfo2 pInfo_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
 
@@ -24251,7 +24251,7 @@ static NTSTATUS thunk32_vkGetBufferOpaqueCaptureAddress(void *args)
         const VkBufferDeviceAddressInfo32 *pInfo;
         uint64_t result;
     } *params = args;
-    VkBufferDeviceAddressInfo_host pInfo_host;
+    VkBufferDeviceAddressInfo pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -24284,7 +24284,7 @@ static NTSTATUS thunk32_vkGetBufferOpaqueCaptureAddressKHR(void *args)
         const VkBufferDeviceAddressInfo32 *pInfo;
         uint64_t result;
     } *params = args;
-    VkBufferDeviceAddressInfo_host pInfo_host;
+    VkBufferDeviceAddressInfo pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -24444,7 +24444,7 @@ static NTSTATUS thunk32_vkGetDescriptorSetLayoutHostMappingInfoVALVE(void *args)
         const VkDescriptorSetBindingReferenceVALVE32 *pBindingReference;
         VkDescriptorSetLayoutHostMappingInfoVALVE *pHostMapping;
     } *params = args;
-    VkDescriptorSetBindingReferenceVALVE_host pBindingReference_host;
+    VkDescriptorSetBindingReferenceVALVE pBindingReference_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pBindingReference, params->pHostMapping);
 
@@ -24570,8 +24570,8 @@ static NTSTATUS thunk32_vkGetDeviceBufferMemoryRequirements(void *args)
         const VkDeviceBufferMemoryRequirements32 *pInfo;
         VkMemoryRequirements232 *pMemoryRequirements;
     } *params = args;
-    VkDeviceBufferMemoryRequirements_host pInfo_host;
-    VkMemoryRequirements2_host pMemoryRequirements_host;
+    VkDeviceBufferMemoryRequirements pInfo_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
@@ -24609,8 +24609,8 @@ static NTSTATUS thunk32_vkGetDeviceBufferMemoryRequirementsKHR(void *args)
         const VkDeviceBufferMemoryRequirements32 *pInfo;
         VkMemoryRequirements232 *pMemoryRequirements;
     } *params = args;
-    VkDeviceBufferMemoryRequirements_host pInfo_host;
-    VkMemoryRequirements2_host pMemoryRequirements_host;
+    VkDeviceBufferMemoryRequirements pInfo_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
@@ -24649,8 +24649,8 @@ static NTSTATUS thunk32_vkGetDeviceFaultInfoEXT(void *args)
         VkDeviceFaultInfoEXT32 *pFaultInfo;
         VkResult result;
     } *params = args;
-    VkDeviceFaultCountsEXT_host pFaultCounts_host;
-    VkDeviceFaultInfoEXT_host *pFaultInfo_host = NULL;
+    VkDeviceFaultCountsEXT pFaultCounts_host;
+    VkDeviceFaultInfoEXT *pFaultInfo_host = NULL;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pFaultCounts, params->pFaultInfo);
@@ -24823,7 +24823,7 @@ static NTSTATUS thunk32_vkGetDeviceImageMemoryRequirements(void *args)
         VkMemoryRequirements232 *pMemoryRequirements;
     } *params = args;
     VkDeviceImageMemoryRequirements pInfo_host;
-    VkMemoryRequirements2_host pMemoryRequirements_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
@@ -24862,7 +24862,7 @@ static NTSTATUS thunk32_vkGetDeviceImageMemoryRequirementsKHR(void *args)
         VkMemoryRequirements232 *pMemoryRequirements;
     } *params = args;
     VkDeviceImageMemoryRequirements pInfo_host;
-    VkMemoryRequirements2_host pMemoryRequirements_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
@@ -24902,7 +24902,7 @@ static NTSTATUS thunk32_vkGetDeviceImageSparseMemoryRequirements(void *args)
         VkSparseImageMemoryRequirements232 *pSparseMemoryRequirements;
     } *params = args;
     VkDeviceImageMemoryRequirements pInfo_host;
-    VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
+    VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
@@ -24942,7 +24942,7 @@ static NTSTATUS thunk32_vkGetDeviceImageSparseMemoryRequirementsKHR(void *args)
         VkSparseImageMemoryRequirements232 *pSparseMemoryRequirements;
     } *params = args;
     VkDeviceImageMemoryRequirements pInfo_host;
-    VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
+    VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
@@ -25011,7 +25011,7 @@ static NTSTATUS thunk32_vkGetDeviceMemoryOpaqueCaptureAddress(void *args)
         const VkDeviceMemoryOpaqueCaptureAddressInfo32 *pInfo;
         uint64_t result;
     } *params = args;
-    VkDeviceMemoryOpaqueCaptureAddressInfo_host pInfo_host;
+    VkDeviceMemoryOpaqueCaptureAddressInfo pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -25044,7 +25044,7 @@ static NTSTATUS thunk32_vkGetDeviceMemoryOpaqueCaptureAddressKHR(void *args)
         const VkDeviceMemoryOpaqueCaptureAddressInfo32 *pInfo;
         uint64_t result;
     } *params = args;
-    VkDeviceMemoryOpaqueCaptureAddressInfo_host pInfo_host;
+    VkDeviceMemoryOpaqueCaptureAddressInfo pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -25204,7 +25204,7 @@ static NTSTATUS thunk32_vkGetDynamicRenderingTilePropertiesQCOM(void *args)
         VkTilePropertiesQCOM *pProperties;
         VkResult result;
     } *params = args;
-    VkRenderingInfo_host pRenderingInfo_host;
+    VkRenderingInfo pRenderingInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pRenderingInfo, params->pProperties);
@@ -25335,8 +25335,8 @@ static NTSTATUS thunk32_vkGetGeneratedCommandsMemoryRequirementsNV(void *args)
         const VkGeneratedCommandsMemoryRequirementsInfoNV32 *pInfo;
         VkMemoryRequirements232 *pMemoryRequirements;
     } *params = args;
-    VkGeneratedCommandsMemoryRequirementsInfoNV_host pInfo_host;
-    VkMemoryRequirements2_host pMemoryRequirements_host;
+    VkGeneratedCommandsMemoryRequirementsInfoNV pInfo_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
 
@@ -25371,7 +25371,7 @@ static NTSTATUS thunk32_vkGetImageMemoryRequirements(void *args)
         VkImage DECLSPEC_ALIGN(8) image;
         VkMemoryRequirements32 *pMemoryRequirements;
     } *params = args;
-    VkMemoryRequirements_host pMemoryRequirements_host;
+    VkMemoryRequirements pMemoryRequirements_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pMemoryRequirements);
 
@@ -25404,8 +25404,8 @@ static NTSTATUS thunk32_vkGetImageMemoryRequirements2(void *args)
         const VkImageMemoryRequirementsInfo232 *pInfo;
         VkMemoryRequirements232 *pMemoryRequirements;
     } *params = args;
-    VkImageMemoryRequirementsInfo2_host pInfo_host;
-    VkMemoryRequirements2_host pMemoryRequirements_host;
+    VkImageMemoryRequirementsInfo2 pInfo_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
 
@@ -25440,8 +25440,8 @@ static NTSTATUS thunk32_vkGetImageMemoryRequirements2KHR(void *args)
         const VkImageMemoryRequirementsInfo232 *pInfo;
         VkMemoryRequirements232 *pMemoryRequirements;
     } *params = args;
-    VkImageMemoryRequirementsInfo2_host pInfo_host;
-    VkMemoryRequirements2_host pMemoryRequirements_host;
+    VkImageMemoryRequirementsInfo2 pInfo_host;
+    VkMemoryRequirements2 pMemoryRequirements_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pInfo, params->pMemoryRequirements);
 
@@ -25477,7 +25477,7 @@ static NTSTATUS thunk32_vkGetImageSparseMemoryRequirements(void *args)
         uint32_t *pSparseMemoryRequirementCount;
         VkSparseImageMemoryRequirements32 *pSparseMemoryRequirements;
     } *params = args;
-    VkSparseImageMemoryRequirements_host *pSparseMemoryRequirements_host;
+    VkSparseImageMemoryRequirements *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
@@ -25515,8 +25515,8 @@ static NTSTATUS thunk32_vkGetImageSparseMemoryRequirements2(void *args)
         uint32_t *pSparseMemoryRequirementCount;
         VkSparseImageMemoryRequirements232 *pSparseMemoryRequirements;
     } *params = args;
-    VkImageSparseMemoryRequirementsInfo2_host pInfo_host;
-    VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
+    VkImageSparseMemoryRequirementsInfo2 pInfo_host;
+    VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
@@ -25555,8 +25555,8 @@ static NTSTATUS thunk32_vkGetImageSparseMemoryRequirements2KHR(void *args)
         uint32_t *pSparseMemoryRequirementCount;
         VkSparseImageMemoryRequirements232 *pSparseMemoryRequirements;
     } *params = args;
-    VkImageSparseMemoryRequirementsInfo2_host pInfo_host;
-    VkSparseImageMemoryRequirements2_host *pSparseMemoryRequirements_host;
+    VkImageSparseMemoryRequirementsInfo2 pInfo_host;
+    VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pInfo, params->pSparseMemoryRequirementCount, params->pSparseMemoryRequirements);
@@ -25595,7 +25595,7 @@ static NTSTATUS thunk32_vkGetImageSubresourceLayout(void *args)
         const VkImageSubresource *pSubresource;
         VkSubresourceLayout32 *pLayout;
     } *params = args;
-    VkSubresourceLayout_host pLayout_host;
+    VkSubresourceLayout pLayout_host;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pSubresource, params->pLayout);
 
@@ -25629,7 +25629,7 @@ static NTSTATUS thunk32_vkGetImageSubresourceLayout2EXT(void *args)
         const VkImageSubresource2EXT *pSubresource;
         VkSubresourceLayout2EXT32 *pLayout;
     } *params = args;
-    VkSubresourceLayout2EXT_host pLayout_host;
+    VkSubresourceLayout2EXT pLayout_host;
 
     TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pSubresource, params->pLayout);
 
@@ -25664,7 +25664,7 @@ static NTSTATUS thunk32_vkGetImageViewAddressNVX(void *args)
         VkImageViewAddressPropertiesNVX32 *pProperties;
         VkResult result;
     } *params = args;
-    VkImageViewAddressPropertiesNVX_host pProperties_host;
+    VkImageViewAddressPropertiesNVX pProperties_host;
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->imageView), params->pProperties);
 
@@ -25698,7 +25698,7 @@ static NTSTATUS thunk32_vkGetImageViewHandleNVX(void *args)
         const VkImageViewHandleInfoNVX32 *pInfo;
         uint32_t result;
     } *params = args;
-    VkImageViewHandleInfoNVX_host pInfo_host;
+    VkImageViewHandleInfoNVX pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
@@ -25765,8 +25765,8 @@ static NTSTATUS thunk32_vkGetMicromapBuildSizesEXT(void *args)
         const VkMicromapBuildInfoEXT32 *pBuildInfo;
         VkMicromapBuildSizesInfoEXT32 *pSizeInfo;
     } *params = args;
-    VkMicromapBuildInfoEXT_host pBuildInfo_host;
-    VkMicromapBuildSizesInfoEXT_host pSizeInfo_host;
+    VkMicromapBuildInfoEXT pBuildInfo_host;
+    VkMicromapBuildSizesInfoEXT pSizeInfo_host;
 
     TRACE("%p, %#x, %p, %p\n", params->device, params->buildType, params->pBuildInfo, params->pSizeInfo);
 
@@ -25802,7 +25802,7 @@ static NTSTATUS thunk32_vkGetPerformanceParameterINTEL(void *args)
         VkPerformanceValueINTEL32 *pValue;
         VkResult result;
     } *params = args;
-    VkPerformanceValueINTEL_host pValue_host;
+    VkPerformanceValueINTEL pValue_host;
 
     TRACE("%p, %#x, %p\n", params->device, params->parameter, params->pValue);
 
@@ -26316,7 +26316,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties(void *args)
         VkImageFormatProperties32 *pImageFormatProperties;
         VkResult result;
     } *params = args;
-    VkImageFormatProperties_host pImageFormatProperties_host;
+    VkImageFormatProperties pImageFormatProperties_host;
 
     TRACE("%p, %#x, %#x, %#x, %#x, %#x, %p\n", params->physicalDevice, params->format, params->type, params->tiling, params->usage, params->flags, params->pImageFormatProperties);
 
@@ -26350,7 +26350,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties2(void *args)
         VkImageFormatProperties232 *pImageFormatProperties;
         VkResult result;
     } *params = args;
-    VkImageFormatProperties2_host pImageFormatProperties_host;
+    VkImageFormatProperties2 pImageFormatProperties_host;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
 
@@ -26385,7 +26385,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceImageFormatProperties2KHR(void *args)
         VkImageFormatProperties232 *pImageFormatProperties;
         VkResult result;
     } *params = args;
-    VkImageFormatProperties2_host pImageFormatProperties_host;
+    VkImageFormatProperties2 pImageFormatProperties_host;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pImageFormatInfo, params->pImageFormatProperties);
 
@@ -26418,7 +26418,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceMemoryProperties(void *args)
         VkPhysicalDevice physicalDevice;
         VkPhysicalDeviceMemoryProperties32 *pMemoryProperties;
     } *params = args;
-    VkPhysicalDeviceMemoryProperties_host pMemoryProperties_host;
+    VkPhysicalDeviceMemoryProperties pMemoryProperties_host;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
 
@@ -26450,7 +26450,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceMemoryProperties2(void *args)
         VkPhysicalDevice physicalDevice;
         VkPhysicalDeviceMemoryProperties232 *pMemoryProperties;
     } *params = args;
-    VkPhysicalDeviceMemoryProperties2_host pMemoryProperties_host;
+    VkPhysicalDeviceMemoryProperties2 pMemoryProperties_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
@@ -26486,7 +26486,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceMemoryProperties2KHR(void *args)
         VkPhysicalDevice physicalDevice;
         VkPhysicalDeviceMemoryProperties232 *pMemoryProperties;
     } *params = args;
-    VkPhysicalDeviceMemoryProperties2_host pMemoryProperties_host;
+    VkPhysicalDeviceMemoryProperties2 pMemoryProperties_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pMemoryProperties);
@@ -26619,7 +26619,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties(void *args)
         VkPhysicalDevice physicalDevice;
         VkPhysicalDeviceProperties32 *pProperties;
     } *params = args;
-    VkPhysicalDeviceProperties_host pProperties_host;
+    VkPhysicalDeviceProperties pProperties_host;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
 
@@ -26651,7 +26651,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties2(void *args)
         VkPhysicalDevice physicalDevice;
         VkPhysicalDeviceProperties232 *pProperties;
     } *params = args;
-    VkPhysicalDeviceProperties2_host pProperties_host;
+    VkPhysicalDeviceProperties2 pProperties_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
@@ -26687,7 +26687,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceProperties2KHR(void *args)
         VkPhysicalDevice physicalDevice;
         VkPhysicalDeviceProperties232 *pProperties;
     } *params = args;
-    VkPhysicalDeviceProperties2_host pProperties_host;
+    VkPhysicalDeviceProperties2 pProperties_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p\n", params->physicalDevice, params->pProperties);
@@ -26981,7 +26981,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceCapabilities2KHR(void *args)
         VkSurfaceCapabilities2KHR *pSurfaceCapabilities;
         VkResult result;
     } *params = args;
-    VkPhysicalDeviceSurfaceInfo2KHR_host pSurfaceInfo_host;
+    VkPhysicalDeviceSurfaceInfo2KHR pSurfaceInfo_host;
 
     TRACE("%p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceCapabilities);
 
@@ -27050,7 +27050,7 @@ static NTSTATUS thunk32_vkGetPhysicalDeviceSurfaceFormats2KHR(void *args)
         VkSurfaceFormat2KHR *pSurfaceFormats;
         VkResult result;
     } *params = args;
-    VkPhysicalDeviceSurfaceInfo2KHR_host pSurfaceInfo_host;
+    VkPhysicalDeviceSurfaceInfo2KHR pSurfaceInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->physicalDevice, params->pSurfaceInfo, params->pSurfaceFormatCount, params->pSurfaceFormats);
 
@@ -27312,7 +27312,7 @@ static NTSTATUS thunk32_vkGetPipelineExecutableInternalRepresentationsKHR(void *
         VkPipelineExecutableInternalRepresentationKHR *pInternalRepresentations;
         VkResult result;
     } *params = args;
-    VkPipelineExecutableInfoKHR_host pExecutableInfo_host;
+    VkPipelineExecutableInfoKHR pExecutableInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pExecutableInfo, params->pInternalRepresentationCount, params->pInternalRepresentations);
 
@@ -27347,7 +27347,7 @@ static NTSTATUS thunk32_vkGetPipelineExecutablePropertiesKHR(void *args)
         VkPipelineExecutablePropertiesKHR *pProperties;
         VkResult result;
     } *params = args;
-    VkPipelineInfoKHR_host pPipelineInfo_host;
+    VkPipelineInfoKHR pPipelineInfo_host;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pPipelineInfo, params->pExecutableCount, params->pProperties);
 
@@ -27382,8 +27382,8 @@ static NTSTATUS thunk32_vkGetPipelineExecutableStatisticsKHR(void *args)
         VkPipelineExecutableStatisticKHR32 *pStatistics;
         VkResult result;
     } *params = args;
-    VkPipelineExecutableInfoKHR_host pExecutableInfo_host;
-    VkPipelineExecutableStatisticKHR_host *pStatistics_host;
+    VkPipelineExecutableInfoKHR pExecutableInfo_host;
+    VkPipelineExecutableStatisticKHR *pStatistics_host;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pExecutableInfo, params->pStatisticCount, params->pStatistics);
@@ -27422,7 +27422,7 @@ static NTSTATUS thunk32_vkGetPipelinePropertiesEXT(void *args)
         VkBaseOutStructure *pPipelineProperties;
         VkResult result;
     } *params = args;
-    VkPipelineInfoEXT_host pPipelineInfo_host;
+    VkPipelineInfoEXT pPipelineInfo_host;
 
     TRACE("%p, %p, %p\n", params->device, params->pPipelineInfo, params->pPipelineProperties);
 
@@ -28053,7 +28053,7 @@ static NTSTATUS thunk32_vkInvalidateMappedMemoryRanges(void *args)
         const VkMappedMemoryRange32 *pMemoryRanges;
         VkResult result;
     } *params = args;
-    const VkMappedMemoryRange_host *pMemoryRanges_host;
+    const VkMappedMemoryRange *pMemoryRanges_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->memoryRangeCount, params->pMemoryRanges);
@@ -28222,7 +28222,7 @@ static NTSTATUS thunk32_vkQueueBindSparse(void *args)
         VkFence DECLSPEC_ALIGN(8) fence;
         VkResult result;
     } *params = args;
-    const VkBindSparseInfo_host *pBindInfo_host;
+    const VkBindSparseInfo *pBindInfo_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->bindInfoCount, params->pBindInfo, wine_dbgstr_longlong(params->fence));
@@ -28429,7 +28429,7 @@ static NTSTATUS thunk32_vkQueueSubmit2(void *args)
         VkFence DECLSPEC_ALIGN(8) fence;
         VkResult result;
     } *params = args;
-    const VkSubmitInfo2_host *pSubmits_host;
+    const VkSubmitInfo2 *pSubmits_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
@@ -28472,7 +28472,7 @@ static NTSTATUS thunk32_vkQueueSubmit2KHR(void *args)
         VkFence DECLSPEC_ALIGN(8) fence;
         VkResult result;
     } *params = args;
-    const VkSubmitInfo2_host *pSubmits_host;
+    const VkSubmitInfo2 *pSubmits_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->submitCount, params->pSubmits, wine_dbgstr_longlong(params->fence));
@@ -28822,7 +28822,7 @@ static NTSTATUS thunk32_vkSetDebugUtilsObjectNameEXT(void *args)
         const VkDebugUtilsObjectNameInfoEXT32 *pNameInfo;
         VkResult result;
     } *params = args;
-    VkDebugUtilsObjectNameInfoEXT_host pNameInfo_host;
+    VkDebugUtilsObjectNameInfoEXT pNameInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pNameInfo);
 
@@ -28857,7 +28857,7 @@ static NTSTATUS thunk32_vkSetDebugUtilsObjectTagEXT(void *args)
         const VkDebugUtilsObjectTagInfoEXT32 *pTagInfo;
         VkResult result;
     } *params = args;
-    VkDebugUtilsObjectTagInfoEXT_host pTagInfo_host;
+    VkDebugUtilsObjectTagInfoEXT pTagInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pTagInfo);
 
@@ -29020,7 +29020,7 @@ static NTSTATUS thunk32_vkSignalSemaphore(void *args)
         const VkSemaphoreSignalInfo32 *pSignalInfo;
         VkResult result;
     } *params = args;
-    VkSemaphoreSignalInfo_host pSignalInfo_host;
+    VkSemaphoreSignalInfo pSignalInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pSignalInfo);
 
@@ -29053,7 +29053,7 @@ static NTSTATUS thunk32_vkSignalSemaphoreKHR(void *args)
         const VkSemaphoreSignalInfo32 *pSignalInfo;
         VkResult result;
     } *params = args;
-    VkSemaphoreSignalInfo_host pSignalInfo_host;
+    VkSemaphoreSignalInfo pSignalInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pSignalInfo);
 
@@ -29092,7 +29092,7 @@ static NTSTATUS thunk32_vkSubmitDebugUtilsMessageEXT(void *args)
         VkDebugUtilsMessageTypeFlagsEXT messageTypes;
         const VkDebugUtilsMessengerCallbackDataEXT32 *pCallbackData;
     } *params = args;
-    VkDebugUtilsMessengerCallbackDataEXT_host pCallbackData_host;
+    VkDebugUtilsMessengerCallbackDataEXT pCallbackData_host;
     struct conversion_context ctx;
 
     TRACE("%p, %#x, %#x, %p\n", params->instance, params->messageSeverity, params->messageTypes, params->pCallbackData);
@@ -29315,8 +29315,8 @@ static NTSTATUS thunk32_vkUpdateDescriptorSets(void *args)
         uint32_t descriptorCopyCount;
         const VkCopyDescriptorSet32 *pDescriptorCopies;
     } *params = args;
-    const VkWriteDescriptorSet_host *pDescriptorWrites_host;
-    const VkCopyDescriptorSet_host *pDescriptorCopies_host;
+    const VkWriteDescriptorSet *pDescriptorWrites_host;
+    const VkCopyDescriptorSet *pDescriptorCopies_host;
     struct conversion_context ctx;
 
     TRACE("%p, %u, %p, %u, %p\n", params->device, params->descriptorWriteCount, params->pDescriptorWrites, params->descriptorCopyCount, params->pDescriptorCopies);
