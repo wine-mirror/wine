@@ -36,10 +36,6 @@
 /* Define to 1 if you have the <cups/ppd.h> header file. */
 #undef HAVE_CUPS_PPD_H
 
-/* Define to 1 if you have the <DiskArbitration/DiskArbitration.h> header
-   file. */
-#undef HAVE_DISKARBITRATION_DISKARBITRATION_H
-
 /* Define to 1 if you have the `dlinfo' function. */
 #undef HAVE_DLINFO
 

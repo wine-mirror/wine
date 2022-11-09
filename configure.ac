@@ -407,7 +407,6 @@ AC_SYS_LARGEFILE()
 AC_CHECK_HEADERS(\
 	AL/al.h \
 	CL/cl.h \
-	DiskArbitration/DiskArbitration.h \
 	EGL/egl.h \
 	IOKit/IOKitLib.h \
 	IOKit/hid/IOHIDLib.h \
@@ -682,6 +681,7 @@ case $host_os in
     dnl declare needed frameworks
     AC_SUBST(CARBON_LIBS,"-framework Carbon")
     AC_SUBST(COREFOUNDATION_LIBS,"-framework CoreFoundation")
+    AC_SUBST(DISKARBITRATION_LIBS,"-framework DiskArbitration -framework CoreFoundation")
     AC_SUBST(IOKIT_LIBS,"-framework IOKit -framework CoreFoundation")
     AC_SUBST(APPLICATIONSERVICES_LIBS,"-framework ApplicationServices")
     AC_SUBST(CORESERVICES_LIBS,"-framework CoreServices")
@@ -710,11 +710,6 @@ case $host_os in
         WINE_WARNING([can't build Wine preloader; many programs won't work])
     fi
 
-    if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
-    then
-        dnl DiskArbitration API is not public on Darwin < 8.0, use it only if header found
-        AC_SUBST(DISKARBITRATION_LIBS,"-framework DiskArbitration -framework CoreFoundation")
-    fi
     if test "$ac_cv_header_Security_Security_h" = "yes"
     then
         AC_SUBST(SECURITY_LIBS,"-framework Security -framework CoreFoundation")
@@ -1428,9 +1423,11 @@ then
             [WINE_CHECK_SONAME(dbus-1, dbus_connection_close,,[DBUS_CFLAGS=""],[$DBUS_LIBS])],
             [DBUS_CFLAGS=""])])
 fi
-WINE_NOTICE_WITH(dbus,[test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
-                            "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"],
-                 [libdbus ${notice_platform}development files not found, no dynamic device support.])
+case $host_os in
+  darwin*|macosx*) ;;
+  *) WINE_NOTICE_WITH(dbus,[test "x$ac_cv_lib_soname_dbus_1" = "x"],
+                      [libdbus ${notice_platform}development files not found, no dynamic device support.]) ;;
+esac
 
 dnl **** Check for libgnutls ****
 if test "x$with_gnutls" != "xno"

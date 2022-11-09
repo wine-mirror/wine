@@ -745,12 +745,12 @@ METAL_LIBS
 OPENCL_LIBS
 COREAUDIO_LIBS
 SECURITY_LIBS
-DISKARBITRATION_LIBS
 SYSTEMCONFIGURATION_LIBS
 APPKIT_LIBS
 CORESERVICES_LIBS
 APPLICATIONSERVICES_LIBS
 IOKIT_LIBS
+DISKARBITRATION_LIBS
 COREFOUNDATION_LIBS
 CARBON_LIBS
 ac_ct_OBJC
@@ -7850,12 +7850,6 @@ then :
   printf "%s\n" "#define HAVE_CL_CL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "DiskArbitration/DiskArbitration.h" "ac_cv_header_DiskArbitration_DiskArbitration_h" "$ac_includes_default"
-if test "x$ac_cv_header_DiskArbitration_DiskArbitration_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_DISKARBITRATION_DISKARBITRATION_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "EGL/egl.h" "ac_cv_header_EGL_egl_h" "$ac_includes_default"
 if test "x$ac_cv_header_EGL_egl_h" = xyes
 then :
@@ -9794,6 +9788,8 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
     COREFOUNDATION_LIBS="-framework CoreFoundation"
 
+    DISKARBITRATION_LIBS="-framework DiskArbitration -framework CoreFoundation"
+
     IOKIT_LIBS="-framework IOKit -framework CoreFoundation"
 
     APPLICATIONSERVICES_LIBS="-framework ApplicationServices"
@@ -9933,11 +9929,6 @@ fi
         as_fn_append wine_warnings "|can't build Wine preloader; many programs won't work"
     fi
 
-    if test "$ac_cv_header_DiskArbitration_DiskArbitration_h" = "yes"
-    then
-                DISKARBITRATION_LIBS="-framework DiskArbitration -framework CoreFoundation"
-
-    fi
     if test "$ac_cv_header_Security_Security_h" = "yes"
     then
         SECURITY_LIBS="-framework Security -framework CoreFoundation"
@@ -16124,8 +16115,9 @@ fi
 CPPFLAGS=$ac_save_CPPFLAGS
 
 fi
-if test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
-                            "x$ac_cv_header_DiskArbitration_DiskArbitration_h" != "xyes"
+case $host_os in
+  darwin*|macosx*) ;;
+  *) if test "x$ac_cv_lib_soname_dbus_1" = "x"
 then :
   case "x$with_dbus" in
   x)   as_fn_append wine_notices "|libdbus ${notice_platform}development files not found, no dynamic device support." ;;
@@ -16134,7 +16126,8 @@ then :
 This is an error since --with-dbus was requested." "$LINENO" 5 ;;
 esac
 
-fi
+fi ;;
+esac
 
 if test "x$with_gnutls" != "xno"
 then
@@ -23248,12 +23241,12 @@ OBJCFLAGS = $OBJCFLAGS
 ac_ct_OBJC = $ac_ct_OBJC
 CARBON_LIBS = $CARBON_LIBS
 COREFOUNDATION_LIBS = $COREFOUNDATION_LIBS
+DISKARBITRATION_LIBS = $DISKARBITRATION_LIBS
 IOKIT_LIBS = $IOKIT_LIBS
 APPLICATIONSERVICES_LIBS = $APPLICATIONSERVICES_LIBS
 CORESERVICES_LIBS = $CORESERVICES_LIBS
 APPKIT_LIBS = $APPKIT_LIBS
 SYSTEMCONFIGURATION_LIBS = $SYSTEMCONFIGURATION_LIBS
-DISKARBITRATION_LIBS = $DISKARBITRATION_LIBS
 SECURITY_LIBS = $SECURITY_LIBS
 COREAUDIO_LIBS = $COREAUDIO_LIBS
 OPENCL_LIBS = $OPENCL_LIBS
