@@ -1871,17 +1871,19 @@ class VkStruct(Sequence):
             postfix (str, optional): text to append to end of struct name, useful for struct renaming.
         """
 
-        # Only define alias structs when doing conversions
-        if self.is_alias() and not conv:
+        if self.is_alias():
             return ""
+
+        if postfix:
+            suffix = postfix
+        else:
+            suffix = ""
 
         if self.union:
             text = "typedef union {0}".format(self.name)
         else:
             text = "typedef struct {0}".format(self.name)
-
-        if postfix is not None:
-            text += postfix
+        text += suffix
 
         text += "\n{\n"
 
@@ -1899,7 +1901,7 @@ class VkStruct(Sequence):
             text += "}} {0};\n".format(self.name)
 
         for aliasee in self.aliased_by:
-            text += "typedef {0} {1};\n".format(self.name, aliasee.name)
+            text += "typedef {0}{2} {1}{2};\n".format(self.name, aliasee.name, suffix)
 
         return text
 
@@ -2582,10 +2584,14 @@ class VkGenerator(object):
         f.write("#define WINE_VK_VERSION VK_API_VERSION_{0}_{1}\n\n".format(WINE_VK_VERSION[0], WINE_VK_VERSION[1]))
 
         for struct in self.host_structs:
+            if struct.is_alias():
+                continue
             f.write("#if defined(USE_STRUCT_CONVERSION)\n")
             f.write(struct.definition(align=False, conv=True, postfix="_host"))
             f.write("#else\n")
             f.write("typedef {0} {0}_host;\n".format(struct.name))
+            for aliasee in struct.aliased_by:
+                f.write("typedef {0}_host {1}_host;\n".format(struct.name, aliasee.name))
             f.write("#endif\n\n")
         f.write("\n")
 
