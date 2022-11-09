@@ -940,7 +940,7 @@ __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "ldp d14, d15, [x29, #0x90]\n\t"
                    "ldp x5, x6, [x29, #0xa0]\n\t" /* ret_ptr, ret_len */
                    "str x0, [x5]\n\t"             /* ret_ptr */
-                   "str x1, [x6]\n\t"             /* ret_len */
+                   "str w1, [x6]\n\t"             /* ret_len */
                    "mov x0, x2\n\t"               /* status */
                    "mov sp, x29\n\t"
                    "ldp x29, x30, [sp], #0xc0\n\t"
