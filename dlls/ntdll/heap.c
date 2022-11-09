@@ -1022,7 +1022,7 @@ static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBH
     while ((ptr = list_next( &heap->free_lists[0].entry, ptr )))
     {
         entry = LIST_ENTRY( ptr, struct entry, entry );
-        block = (struct block *)entry;
+        block = &entry->block;
         if (block_get_flags( block ) == BLOCK_FLAG_FREE_LINK) continue;
         if (block_get_size( block ) >= block_size)
         {
@@ -1062,7 +1062,7 @@ static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBH
 
     entry = first_block( *subheap );
     list_remove( &entry->entry );
-    return (struct block *)entry;
+    return &entry->block;
 }
 
 
@@ -1091,11 +1091,11 @@ static BOOL validate_free_block( const struct heap *heap, const SUBHEAP *subheap
         err = "invalid block flags";
     else if (!contains( base, subheap_size( subheap ), block, block_get_size( block ) ))
         err = "invalid block size";
-    else if (!is_valid_free_block( heap, (next = (struct block *)LIST_ENTRY( entry->entry.next, struct entry, entry )) ))
+    else if (!is_valid_free_block( heap, (next = &LIST_ENTRY( entry->entry.next, struct entry, entry )->block) ))
         err = "invalid next free block pointer";
     else if (!(block_get_flags( next ) & BLOCK_FLAG_FREE) || block_get_type( next ) != BLOCK_TYPE_FREE)
         err = "invalid next free block header";
-    else if (!is_valid_free_block( heap, (prev = (struct block *)LIST_ENTRY( entry->entry.prev, struct entry, entry )) ))
+    else if (!is_valid_free_block( heap, (prev = &LIST_ENTRY( entry->entry.prev, struct entry, entry )->block) ))
         err = "invalid previous free block pointer";
     else if (!(block_get_flags( prev ) & BLOCK_FLAG_FREE) || block_get_type( prev ) != BLOCK_TYPE_FREE)
         err = "invalid previous free block header";
