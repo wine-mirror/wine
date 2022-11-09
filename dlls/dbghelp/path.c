@@ -705,14 +705,24 @@ WCHAR *get_dos_file_name(const WCHAR *filename)
     return dos_path;
 }
 
+static BOOL try_match_file(const WCHAR *name, BOOL (*match)(void*, HANDLE, const WCHAR*), void *param)
+{
+    HANDLE file = CreateFileW(name, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file != INVALID_HANDLE_VALUE)
+    {
+        BOOL ret = match(param, file, name);
+        CloseHandle(file);
+        return ret;
+    }
+    return FALSE;
+}
+
 BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*match)(void*, HANDLE, const WCHAR*), void *param)
 {
     const WCHAR *env;
     WCHAR *p, *end;
     size_t len, i;
-    HANDLE file;
     WCHAR *buf;
-    BOOL ret;
 
     name = file_name(name);
 
@@ -733,13 +743,7 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
         p = end + lstrlenW(end);
         *p++ = '\\';
         lstrcpyW(p, name);
-        file = CreateFileW(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (file != INVALID_HANDLE_VALUE)
-        {
-            ret = match(param, file, buf);
-            CloseHandle(file);
-            if (ret) goto found;
-        }
+        if (try_match_file(buf, match, param)) goto found;
 
         memcpy(end, programsW, sizeof(programsW));
         end += ARRAY_SIZE(programsW);
@@ -749,13 +753,7 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
         p = end + lstrlenW(end);
         *p++ = '\\';
         lstrcpyW(p, name);
-        file = CreateFileW(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (file != INVALID_HANDLE_VALUE)
-        {
-            ret = match(param, file, buf);
-            CloseHandle(file);
-            if (ret) goto found;
-        }
+        if (try_match_file(buf, match, param)) goto found;
 
         heap_free(buf);
     }
@@ -771,21 +769,9 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
             swprintf(buf, len, L"%s%s\\%s", env, so_dir, name);
         else
             swprintf(buf, len, L"%s%s\\%s", env, pe_dir, name);
-        file = CreateFileW(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (file != INVALID_HANDLE_VALUE)
-        {
-            ret = match(param, file, buf);
-            CloseHandle(file);
-            if (ret) goto found;
-        }
+        if (try_match_file(buf, match, param)) goto found;
         swprintf(buf, len, L"%s\\%s", env, name);
-        file = CreateFileW(buf, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-        if (file != INVALID_HANDLE_VALUE)
-        {
-            ret = match(param, file, buf);
-            CloseHandle(file);
-            if (ret) goto found;
-        }
+        if (try_match_file(buf, match, param)) goto found;
         heap_free(buf);
     }
 
@@ -822,13 +808,8 @@ BOOL search_unix_path(const WCHAR *name, const WCHAR *path, BOOL (*match)(void*,
             WideCharToMultiByte(CP_UNIXCP, 0, name, -1, buf + len, size - len, NULL, NULL);
             if ((dos_path = wine_get_dos_file_name(buf)))
             {
-                HANDLE file = CreateFileW(dos_path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-                if (file != INVALID_HANDLE_VALUE)
-                {
-                    ret = match(param, file, dos_path);
-                    CloseHandle(file);
-                    if (ret) TRACE("found %s\n", debugstr_w(dos_path));
-                }
+                ret = try_match_file(dos_path, match, param);
+                if (ret) TRACE("found %s\n", debugstr_w(dos_path));
                 heap_free(dos_path);
                 if (ret) break;
             }
