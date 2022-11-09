@@ -1145,6 +1145,9 @@ class VkVariable(object):
     def is_struct(self):
         return self.struct is not None
 
+    def is_union(self):
+        return self.type_info["category"] == "union"
+
     def is_dynamic_array(self):
         """ Returns if the member is an array element.
         Vulkan uses this for dynamically sized arrays for which
@@ -1177,8 +1180,8 @@ class VkVariable(object):
             return False
         elif self.type in ["uint64_t", "VkDeviceAddress", "VkDeviceSize"]:
             return True
-        elif self.is_struct():
-            return self.struct.needs_alignment()
+        elif self.is_struct() or self.is_union():
+            return self.type_info["data"].needs_alignment()
         elif self.is_handle():
             # Dispatchable handles are pointers to objects, while
             # non-dispatchable are uint64_t and hence need alignment.
@@ -1398,9 +1401,6 @@ class VkMember(VkVariable):
 
     def is_struct_forward_declaration(self):
         return self.struct_fwd_decl
-
-    def is_union(self):
-        return self.type_info["category"] == "union"
 
     def is_bit_field(self):
         return self.bit_width is not None
@@ -2009,6 +2009,10 @@ class VkStruct(Sequence):
         return False
 
     def needs_host_type(self):
+        # FIXME: needs pointer array support
+        if self.name == "VkAccelerationStructureGeometryKHR":
+            return False
+
         for m in self.members:
             if self.name == m.type:
                 continue

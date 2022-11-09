@@ -1670,6 +1670,16 @@ typedef VkMicromapBuildSizesInfoEXT VkMicromapBuildSizesInfoEXT_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPerformanceValueINTEL_host
+{
+    VkPerformanceValueTypeINTEL type;
+    VkPerformanceValueDataINTEL data;
+} VkPerformanceValueINTEL_host;
+#else
+typedef VkPerformanceValueINTEL VkPerformanceValueINTEL_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageFormatProperties_host
 {
     VkExtent3D maxExtent;
@@ -2214,6 +2224,20 @@ typedef struct VkPipelineInfoKHR_host
 typedef VkPipelineInfoKHR VkPipelineInfoEXT;
 #else
 typedef VkPipelineInfoKHR VkPipelineInfoKHR_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
+typedef struct VkPipelineExecutableStatisticKHR_host
+{
+    VkStructureType sType;
+    void *pNext;
+    char name[VK_MAX_DESCRIPTION_SIZE];
+    char description[VK_MAX_DESCRIPTION_SIZE];
+    VkPipelineExecutableStatisticFormatKHR format;
+    VkPipelineExecutableStatisticValueKHR value;
+} VkPipelineExecutableStatisticKHR_host;
+#else
+typedef VkPipelineExecutableStatisticKHR VkPipelineExecutableStatisticKHR_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
@@ -2847,11 +2871,11 @@ struct vulkan_device_funcs
     uint32_t (*p_vkGetImageViewHandleNVX)(VkDevice, const VkImageViewHandleInfoNVX_host *);
     VkResult (*p_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
     void (*p_vkGetMicromapBuildSizesEXT)(VkDevice, VkAccelerationStructureBuildTypeKHR, const VkMicromapBuildInfoEXT_host *, VkMicromapBuildSizesInfoEXT_host *);
-    VkResult (*p_vkGetPerformanceParameterINTEL)(VkDevice, VkPerformanceParameterTypeINTEL, VkPerformanceValueINTEL *);
+    VkResult (*p_vkGetPerformanceParameterINTEL)(VkDevice, VkPerformanceParameterTypeINTEL, VkPerformanceValueINTEL_host *);
     VkResult (*p_vkGetPipelineCacheData)(VkDevice, VkPipelineCache, size_t *, void *);
     VkResult (*p_vkGetPipelineExecutableInternalRepresentationsKHR)(VkDevice, const VkPipelineExecutableInfoKHR_host *, uint32_t *, VkPipelineExecutableInternalRepresentationKHR *);
     VkResult (*p_vkGetPipelineExecutablePropertiesKHR)(VkDevice, const VkPipelineInfoKHR_host *, uint32_t *, VkPipelineExecutablePropertiesKHR *);
-    VkResult (*p_vkGetPipelineExecutableStatisticsKHR)(VkDevice, const VkPipelineExecutableInfoKHR_host *, uint32_t *, VkPipelineExecutableStatisticKHR *);
+    VkResult (*p_vkGetPipelineExecutableStatisticsKHR)(VkDevice, const VkPipelineExecutableInfoKHR_host *, uint32_t *, VkPipelineExecutableStatisticKHR_host *);
     VkResult (*p_vkGetPipelinePropertiesEXT)(VkDevice, const VkPipelineInfoEXT_host *, VkBaseOutStructure *);
     void (*p_vkGetPrivateData)(VkDevice, VkObjectType, uint64_t, VkPrivateDataSlot, uint64_t *);
     void (*p_vkGetPrivateDataEXT)(VkDevice, VkObjectType, uint64_t, VkPrivateDataSlot, uint64_t *);

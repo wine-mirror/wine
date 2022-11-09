@@ -6583,7 +6583,7 @@ typedef union VkPerformanceValueDataINTEL
 typedef struct VkPerformanceValueINTEL
 {
     VkPerformanceValueTypeINTEL type;
-    VkPerformanceValueDataINTEL data;
+    VkPerformanceValueDataINTEL WINE_VK_ALIGN(8) data;
 } VkPerformanceValueINTEL;
 
 typedef struct VkPhysicalDevice16BitStorageFeatures
@@ -10288,7 +10288,7 @@ typedef struct VkAccelerationStructureGeometryAabbsDataKHR
 {
     VkStructureType sType;
     const void *pNext;
-    VkDeviceOrHostAddressConstKHR data;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) data;
     VkDeviceSize WINE_VK_ALIGN(8) stride;
 } VkAccelerationStructureGeometryAabbsDataKHR;
 
@@ -10297,14 +10297,14 @@ typedef struct VkAccelerationStructureGeometryInstancesDataKHR
     VkStructureType sType;
     const void *pNext;
     VkBool32 arrayOfPointers;
-    VkDeviceOrHostAddressConstKHR data;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) data;
 } VkAccelerationStructureGeometryInstancesDataKHR;
 
 typedef struct VkAccelerationStructureGeometryMotionTrianglesDataNV
 {
     VkStructureType sType;
     const void *pNext;
-    VkDeviceOrHostAddressConstKHR vertexData;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) vertexData;
 } VkAccelerationStructureGeometryMotionTrianglesDataNV;
 
 typedef struct VkAccelerationStructureGeometryTrianglesDataKHR
@@ -10312,12 +10312,12 @@ typedef struct VkAccelerationStructureGeometryTrianglesDataKHR
     VkStructureType sType;
     const void *pNext;
     VkFormat vertexFormat;
-    VkDeviceOrHostAddressConstKHR vertexData;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) vertexData;
     VkDeviceSize WINE_VK_ALIGN(8) vertexStride;
     uint32_t maxVertex;
     VkIndexType indexType;
-    VkDeviceOrHostAddressConstKHR indexData;
-    VkDeviceOrHostAddressConstKHR transformData;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) indexData;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) transformData;
 } VkAccelerationStructureGeometryTrianglesDataKHR;
 
 typedef struct VkAccelerationStructureInstanceKHR
@@ -10358,7 +10358,7 @@ typedef struct VkAccelerationStructureTrianglesOpacityMicromapEXT
     VkStructureType sType;
     void *pNext;
     VkIndexType indexType;
-    VkDeviceOrHostAddressConstKHR indexBuffer;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) indexBuffer;
     VkDeviceSize WINE_VK_ALIGN(8) indexStride;
     uint32_t baseTriangle;
     uint32_t usageCountsCount;
@@ -10451,7 +10451,7 @@ typedef struct VkCopyAccelerationStructureToMemoryInfoKHR
     VkStructureType sType;
     const void *pNext;
     VkAccelerationStructureKHR WINE_VK_ALIGN(8) src;
-    VkDeviceOrHostAddressKHR dst;
+    VkDeviceOrHostAddressKHR WINE_VK_ALIGN(8) dst;
     VkCopyAccelerationStructureModeKHR mode;
 } VkCopyAccelerationStructureToMemoryInfoKHR;
 
@@ -10483,7 +10483,7 @@ typedef struct VkCopyMemoryToAccelerationStructureInfoKHR
 {
     VkStructureType sType;
     const void *pNext;
-    VkDeviceOrHostAddressConstKHR src;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) src;
     VkAccelerationStructureKHR WINE_VK_ALIGN(8) dst;
     VkCopyAccelerationStructureModeKHR mode;
 } VkCopyMemoryToAccelerationStructureInfoKHR;
@@ -10502,7 +10502,7 @@ typedef struct VkCopyMemoryToMicromapInfoEXT
 {
     VkStructureType sType;
     const void *pNext;
-    VkDeviceOrHostAddressConstKHR src;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) src;
     VkMicromapEXT WINE_VK_ALIGN(8) dst;
     VkCopyMicromapModeEXT mode;
 } VkCopyMemoryToMicromapInfoEXT;
@@ -10512,7 +10512,7 @@ typedef struct VkCopyMicromapToMemoryInfoEXT
     VkStructureType sType;
     const void *pNext;
     VkMicromapEXT WINE_VK_ALIGN(8) src;
-    VkDeviceOrHostAddressKHR dst;
+    VkDeviceOrHostAddressKHR WINE_VK_ALIGN(8) dst;
     VkCopyMicromapModeEXT mode;
 } VkCopyMicromapToMemoryInfoEXT;
 
@@ -10774,9 +10774,9 @@ typedef struct VkMicromapBuildInfoEXT
     uint32_t usageCountsCount;
     const VkMicromapUsageEXT *pUsageCounts;
     const VkMicromapUsageEXT * const*ppUsageCounts;
-    VkDeviceOrHostAddressConstKHR data;
-    VkDeviceOrHostAddressKHR scratchData;
-    VkDeviceOrHostAddressConstKHR triangleArray;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) data;
+    VkDeviceOrHostAddressKHR WINE_VK_ALIGN(8) scratchData;
+    VkDeviceOrHostAddressConstKHR WINE_VK_ALIGN(8) triangleArray;
     VkDeviceSize WINE_VK_ALIGN(8) triangleArrayStride;
 } VkMicromapBuildInfoEXT;
 
@@ -10852,7 +10852,7 @@ typedef struct VkPipelineExecutableStatisticKHR
     char name[VK_MAX_DESCRIPTION_SIZE];
     char description[VK_MAX_DESCRIPTION_SIZE];
     VkPipelineExecutableStatisticFormatKHR format;
-    VkPipelineExecutableStatisticValueKHR value;
+    VkPipelineExecutableStatisticValueKHR WINE_VK_ALIGN(8) value;
 } VkPipelineExecutableStatisticKHR;
 
 typedef struct VkPipelineLayoutCreateInfo
@@ -11059,7 +11059,7 @@ typedef union VkAccelerationStructureGeometryDataKHR
 {
     VkAccelerationStructureGeometryTrianglesDataKHR WINE_VK_ALIGN(8) triangles;
     VkAccelerationStructureGeometryAabbsDataKHR WINE_VK_ALIGN(8) aabbs;
-    VkAccelerationStructureGeometryInstancesDataKHR instances;
+    VkAccelerationStructureGeometryInstancesDataKHR WINE_VK_ALIGN(8) instances;
 } VkAccelerationStructureGeometryDataKHR;
 
 typedef struct VkAccelerationStructureGeometryKHR
@@ -11067,7 +11067,7 @@ typedef struct VkAccelerationStructureGeometryKHR
     VkStructureType sType;
     const void *pNext;
     VkGeometryTypeKHR geometryType;
-    VkAccelerationStructureGeometryDataKHR geometry;
+    VkAccelerationStructureGeometryDataKHR WINE_VK_ALIGN(8) geometry;
     VkGeometryFlagsKHR flags;
 } VkAccelerationStructureGeometryKHR;
 
@@ -11093,7 +11093,7 @@ typedef struct VkAccelerationStructureMotionInstanceNV
 {
     VkAccelerationStructureMotionInstanceTypeNV type;
     VkAccelerationStructureMotionInstanceFlagsNV flags;
-    VkAccelerationStructureMotionInstanceDataNV data;
+    VkAccelerationStructureMotionInstanceDataNV WINE_VK_ALIGN(8) data;
 } VkAccelerationStructureMotionInstanceNV;
 
 typedef struct VkBindSparseInfo
@@ -11209,7 +11209,7 @@ typedef struct VkAccelerationStructureBuildGeometryInfoKHR
     uint32_t geometryCount;
     const VkAccelerationStructureGeometryKHR *pGeometries;
     const VkAccelerationStructureGeometryKHR * const*ppGeometries;
-    VkDeviceOrHostAddressKHR scratchData;
+    VkDeviceOrHostAddressKHR WINE_VK_ALIGN(8) scratchData;
 } VkAccelerationStructureBuildGeometryInfoKHR;
 
 typedef struct VkAccelerationStructureCreateInfoNV

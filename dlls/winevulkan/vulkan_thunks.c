@@ -7950,6 +7950,26 @@ static inline void convert_VkMicromapBuildSizesInfoEXT_host_to_win32(const VkMic
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPerformanceValueINTEL_win32_to_host(const VkPerformanceValueINTEL *in, VkPerformanceValueINTEL_host *out)
+{
+    if (!in) return;
+
+    out->type = in->type;
+    out->data = in->data;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPerformanceValueINTEL_host_to_win32(const VkPerformanceValueINTEL_host *in, VkPerformanceValueINTEL *out)
+{
+    if (!in) return;
+
+    out->type = in->type;
+    out->data = in->data;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceExternalSemaphoreInfo_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceExternalSemaphoreInfo *in, VkPhysicalDeviceExternalSemaphoreInfo *out)
 {
     const VkBaseInStructure *in_header;
@@ -9863,6 +9883,60 @@ static inline void convert_VkPipelineInfoKHR_win32_to_host(const VkPipelineInfoK
     out->sType = in->sType;
     out->pNext = in->pNext;
     out->pipeline = in->pipeline;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPipelineExecutableStatisticKHR_win32_to_host(const VkPipelineExecutableStatisticKHR *in, VkPipelineExecutableStatisticKHR_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPipelineExecutableStatisticKHR_host_to_win32(const VkPipelineExecutableStatisticKHR_host *in, VkPipelineExecutableStatisticKHR *out)
+{
+    if (!in) return;
+
+    memcpy(out->name, in->name, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
+    memcpy(out->description, in->description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
+    out->format = in->format;
+    out->value = in->value;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline VkPipelineExecutableStatisticKHR_host *convert_VkPipelineExecutableStatisticKHR_array_win32_to_host(struct conversion_context *ctx, const VkPipelineExecutableStatisticKHR *in, uint32_t count)
+{
+    VkPipelineExecutableStatisticKHR_host *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkPipelineExecutableStatisticKHR_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPipelineExecutableStatisticKHR_array_host_to_win32(const VkPipelineExecutableStatisticKHR_host *in, VkPipelineExecutableStatisticKHR *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        convert_VkPipelineExecutableStatisticKHR_host_to_win32(&in[i], &out[i]);
+    }
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -21547,10 +21621,13 @@ static NTSTATUS thunk64_vkGetPerformanceParameterINTEL(void *args)
 static NTSTATUS thunk32_vkGetPerformanceParameterINTEL(void *args)
 {
     struct vkGetPerformanceParameterINTEL_params *params = args;
+    VkPerformanceValueINTEL_host pValue_host;
 
     TRACE("%p, %#x, %p\n", params->device, params->parameter, params->pValue);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetPerformanceParameterINTEL(wine_device_from_handle(params->device)->device, params->parameter, params->pValue);
+    convert_VkPerformanceValueINTEL_win32_to_host(params->pValue, &pValue_host);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetPerformanceParameterINTEL(wine_device_from_handle(params->device)->device, params->parameter, &pValue_host);
+    convert_VkPerformanceValueINTEL_host_to_win32(&pValue_host, params->pValue);
     return STATUS_SUCCESS;
 }
 
@@ -22852,11 +22929,17 @@ static NTSTATUS thunk32_vkGetPipelineExecutableStatisticsKHR(void *args)
 {
     struct vkGetPipelineExecutableStatisticsKHR_params *params = args;
     VkPipelineExecutableInfoKHR_host pExecutableInfo_host;
+    VkPipelineExecutableStatisticKHR_host *pStatistics_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pExecutableInfo, params->pStatisticCount, params->pStatistics);
 
+    init_conversion_context(&ctx);
     convert_VkPipelineExecutableInfoKHR_win32_to_host(params->pExecutableInfo, &pExecutableInfo_host);
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetPipelineExecutableStatisticsKHR(wine_device_from_handle(params->device)->device, &pExecutableInfo_host, params->pStatisticCount, params->pStatistics);
+    pStatistics_host = convert_VkPipelineExecutableStatisticKHR_array_win32_to_host(&ctx, params->pStatistics, *params->pStatisticCount);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetPipelineExecutableStatisticsKHR(wine_device_from_handle(params->device)->device, &pExecutableInfo_host, params->pStatisticCount, pStatistics_host);
+    convert_VkPipelineExecutableStatisticKHR_array_host_to_win32(pStatistics_host, params->pStatistics, *params->pStatisticCount);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
