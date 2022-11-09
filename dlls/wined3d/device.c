@@ -1084,7 +1084,8 @@ static struct wined3d_allocator_block *wined3d_device_gl_allocate_memory(struct 
     return block;
 }
 
-static bool use_buffer_chunk_suballocation(const struct wined3d_gl_info *gl_info, GLenum binding)
+static bool use_buffer_chunk_suballocation(struct wined3d_device_gl *device_gl,
+        const struct wined3d_gl_info *gl_info, GLenum binding)
 {
     switch (binding)
     {
@@ -1094,6 +1095,12 @@ static bool use_buffer_chunk_suballocation(const struct wined3d_gl_info *gl_info
         case GL_PIXEL_UNPACK_BUFFER:
         case GL_UNIFORM_BUFFER:
             return true;
+
+        case GL_ELEMENT_ARRAY_BUFFER:
+            /* There is no way to specify an element array buffer offset for
+             * indirect draws in OpenGL. */
+            return device_gl->d.wined3d->flags & WINED3D_NO_DRAW_INDIRECT
+                    || !gl_info->supported[ARB_DRAW_INDIRECT];
 
         case GL_TEXTURE_BUFFER:
             return gl_info->supported[ARB_TEXTURE_BUFFER_RANGE];
@@ -1117,7 +1124,7 @@ bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct win
 
     if (gl_info->supported[ARB_BUFFER_STORAGE])
     {
-        if (use_buffer_chunk_suballocation(gl_info, binding))
+        if (use_buffer_chunk_suballocation(device_gl, gl_info, binding))
         {
             if ((memory = wined3d_device_gl_allocate_memory(device_gl, context_gl, memory_type_idx, size, &id)))
                 buffer_offset = memory->offset;
