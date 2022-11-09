@@ -507,7 +507,7 @@ static void heap_dump( const struct heap *heap )
 
     TRACE( "  free_lists: %p\n", heap->free_lists );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
-        TRACE( "    %p: size %8Ix, prev %p, next %p\n", heap->free_lists + i, get_free_list_block_size( i ),
+        TRACE( "    %p: size %#8Ix, prev %p, next %p\n", heap->free_lists + i, get_free_list_block_size( i ),
                LIST_ENTRY( heap->free_lists[i].entry.prev, struct entry, entry ),
                LIST_ENTRY( heap->free_lists[i].entry.next, struct entry, entry ) );
 
@@ -801,7 +801,7 @@ static struct block *allocate_large_block( struct heap *heap, DWORD flags, SIZE_
     if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &total_size,
                                  MEM_COMMIT, get_protection_type( flags )))
     {
-        WARN("Could not allocate block for %08Ix bytes\n", size );
+        WARN( "Could not allocate block for %#Ix bytes\n", size );
         return NULL;
     }
 
@@ -860,7 +860,7 @@ static struct block *realloc_large_block( struct heap *heap, DWORD flags, struct
     if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return NULL;
     if (!(block = allocate_large_block( heap, flags, size )))
     {
-        WARN("Could not allocate block for %08Ix bytes\n", size );
+        WARN( "Could not allocate block for %#Ix bytes\n", size );
         return NULL;
     }
 
@@ -934,13 +934,13 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
         if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize,
                                      MEM_RESERVE, get_protection_type( flags ) ))
         {
-            WARN("Could not allocate %08Ix bytes\n", totalSize );
+            WARN( "Could not allocate %#Ix bytes\n", totalSize );
             return NULL;
         }
         if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0,
                                      &commitSize, MEM_COMMIT, get_protection_type( flags ) ))
         {
-            WARN("Could not commit %08Ix bytes for sub-heap %p\n", commitSize, address );
+            WARN( "Could not commit %#Ix bytes for sub-heap %p\n", commitSize, address );
             return NULL;
         }
     }
@@ -1037,7 +1037,7 @@ static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBH
 
     if (!(heap->flags & HEAP_GROWABLE))
     {
-        WARN("Not enough space in heap %p for %08Ix bytes\n", heap, block_size );
+        WARN( "Not enough space in heap %p for %#Ix bytes\n", heap, block_size );
         return NULL;
     }
 
@@ -1058,7 +1058,7 @@ static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBH
                                        max( heap->grow_size, total_size ) );
     }
 
-    TRACE( "created new sub-heap %p of %08Ix bytes for heap %p\n", *subheap, subheap_size( *subheap ), heap );
+    TRACE( "created new sub-heap %p of %#Ix bytes for heap %p\n", *subheap, subheap_size( *subheap ), heap );
 
     entry = first_block( *subheap );
     list_remove( &entry->entry );
