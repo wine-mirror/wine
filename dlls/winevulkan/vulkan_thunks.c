@@ -20582,17 +20582,21 @@ static NTSTATUS thunk32_vkGetDeviceFaultInfoEXT(void *args)
 {
     struct vkGetDeviceFaultInfoEXT_params *params = args;
     VkDeviceFaultCountsEXT_host pFaultCounts_host;
-    VkDeviceFaultInfoEXT_host pFaultInfo_host;
+    VkDeviceFaultInfoEXT_host *pFaultInfo_host = NULL;
     struct conversion_context ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pFaultCounts, params->pFaultInfo);
 
     init_conversion_context(&ctx);
     convert_VkDeviceFaultCountsEXT_win32_to_host(params->pFaultCounts, &pFaultCounts_host);
-    convert_VkDeviceFaultInfoEXT_win32_to_host(&ctx, params->pFaultInfo, &pFaultInfo_host);
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetDeviceFaultInfoEXT(wine_device_from_handle(params->device)->device, &pFaultCounts_host, &pFaultInfo_host);
+    if (params->pFaultInfo)
+    {
+        pFaultInfo_host = conversion_context_alloc(&ctx, sizeof(*pFaultInfo_host));
+        convert_VkDeviceFaultInfoEXT_win32_to_host(&ctx, params->pFaultInfo, pFaultInfo_host);
+    }
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetDeviceFaultInfoEXT(wine_device_from_handle(params->device)->device, &pFaultCounts_host, pFaultInfo_host);
     convert_VkDeviceFaultCountsEXT_host_to_win32(&pFaultCounts_host, params->pFaultCounts);
-    convert_VkDeviceFaultInfoEXT_host_to_win32(&pFaultInfo_host, params->pFaultInfo);
+    convert_VkDeviceFaultInfoEXT_host_to_win32(pFaultInfo_host, params->pFaultInfo);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
