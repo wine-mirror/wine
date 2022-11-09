@@ -241,34 +241,36 @@ static void test_HeapCreate(void)
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
     ret = HeapFree( heap, 0, NULL );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
-#if 0 /* crashes */
-    SetLastError( 0xdeadbeef );
-    ret = HeapFree( heap, 0, (void *)0xdeadbe00 );
-    ok( !ret, "HeapFree succeeded\n" );
-    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
-    SetLastError( 0xdeadbeef );
-    ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
-    ret = HeapFree( heap, 0, ptr );
-    ok( !ret, "HeapFree succeeded\n" );
-    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
-#endif
+    if (0) /* crashes */
+    {
+        SetLastError( 0xdeadbeef );
+        ret = HeapFree( heap, 0, (void *)0xdeadbe00 );
+        ok( !ret, "HeapFree succeeded\n" );
+        ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
+        ret = HeapFree( heap, 0, ptr );
+        ok( !ret, "HeapFree succeeded\n" );
+        ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    }
 
     SetLastError( 0xdeadbeef );
     ptr = HeapReAlloc( heap, 0, NULL, 1 );
     ok( !ptr, "HeapReAlloc succeeded\n" );
     todo_wine
     ok( GetLastError() == NO_ERROR, "got error %lu\n", GetLastError() );
-#if 0 /* crashes */
-    SetLastError( 0xdeadbeef );
-    ptr1 = HeapReAlloc( heap, 0, (void *)0xdeadbe00, 1 );
-    ok( !ptr1, "HeapReAlloc succeeded\n" );
-    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
-    SetLastError( 0xdeadbeef );
-    ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
-    ptr1 = HeapReAlloc( heap, 0, ptr, 1 );
-    ok( !ptr1, "HeapReAlloc succeeded\n" );
-    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
-#endif
+    if (0) /* crashes */
+    {
+        SetLastError( 0xdeadbeef );
+        ptr1 = HeapReAlloc( heap, 0, (void *)0xdeadbe00, 1 );
+        ok( !ptr1, "HeapReAlloc succeeded\n" );
+        ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
+        ptr1 = HeapReAlloc( heap, 0, ptr, 1 );
+        ok( !ptr1, "HeapReAlloc succeeded\n" );
+        ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    }
 
     SetLastError( 0xdeadbeef );
     ret = HeapValidate( heap, 0, NULL );
@@ -1557,14 +1559,18 @@ static void test_GlobalAlloc(void)
     todo_wine
     ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-#if 0 /* corrupts Wine heap */
     SetLastError( 0xdeadbeef );
     tmp_mem = GlobalReAlloc( mem, 0, GMEM_MOVEABLE );
-    todo_wine
     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-#endif
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    {
+        SetLastError( 0xdeadbeef );
+        tmp_mem = GlobalHandle( mem );
+        ok( !tmp_mem, "GlobalHandle succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    }
 
     /* invalid handles are caught */
     SetLastError( 0xdeadbeef );
@@ -1592,6 +1598,20 @@ static void test_GlobalAlloc(void)
     tmp_mem = GlobalReAlloc( invalid_mem, 0, GMEM_MOVEABLE );
     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    {
+        SetLastError( 0xdeadbeef );
+        tmp_mem = GlobalHandle( invalid_mem );
+        ok( !tmp_mem, "GlobalHandle succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, invalid_mem, (void **)&tmp_ptr, &tmp_flags );
+        todo_wine
+        ok( !ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
+        todo_wine
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+    }
 
     /* invalid pointers are caught */
     SetLastError( 0xdeadbeef );
@@ -1624,6 +1644,18 @@ static void test_GlobalAlloc(void)
     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalHandle( invalid_ptr );
+    ok( !tmp_mem, "GlobalHandle succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    if (0) /* crashes */
+    {
+        SetLastError( 0xdeadbeef );
+        ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, invalid_ptr, (void **)&tmp_ptr, &tmp_flags );
+        ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    }
 
     /* GMEM_FIXED block doesn't allow resize, though it succeeds with GMEM_MODIFY */
     mem = GlobalAlloc( GMEM_FIXED, 10 );
@@ -1912,14 +1944,18 @@ static void test_LocalAlloc(void)
     ret = LocalUnlock( mem );
     ok( !ret, "LocalUnlock succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-#if 0 /* corrupts Wine heap */
     SetLastError( 0xdeadbeef );
     tmp_mem = LocalReAlloc( mem, 0, LMEM_MOVEABLE );
-    todo_wine
     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
-#endif
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    {
+        SetLastError( 0xdeadbeef );
+        tmp_mem = LocalHandle( mem );
+        ok( !tmp_mem, "LocalHandle succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    }
 
     /* invalid handles are caught */
     SetLastError( 0xdeadbeef );
@@ -1946,6 +1982,14 @@ static void test_LocalAlloc(void)
     tmp_mem = LocalReAlloc( invalid_mem, 0, LMEM_MOVEABLE );
     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    {
+        SetLastError( 0xdeadbeef );
+        tmp_mem = LocalHandle( invalid_mem );
+        ok( !tmp_mem, "LocalHandle succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    }
 
     /* invalid pointers are caught */
     SetLastError( 0xdeadbeef );
@@ -1975,6 +2019,11 @@ static void test_LocalAlloc(void)
     SetLastError( 0xdeadbeef );
     tmp_mem = LocalReAlloc( invalid_ptr, 0, LMEM_MOVEABLE );
     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = LocalHandle( invalid_ptr );
+    ok( !tmp_mem, "LocalHandle succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
 
