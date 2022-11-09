@@ -5877,6 +5877,7 @@ static void test_EM_STREAMIN(void)
   char buffer[1024] = {0}, tmp[16];
   CHARRANGE range;
   PARAFORMAT2 fmt;
+  DWORD len;
 
   const char * streamText0 = "{\\rtf1\\fi100\\li200\\rtlpar\\qr TestSomeText}";
   const char * streamText0a = "{\\rtf1\\fi100\\li200\\rtlpar\\qr TestSomeText\\par}";
@@ -6084,12 +6085,12 @@ static void test_EM_STREAMIN(void)
   result = SendMessageA(hwndRichEdit, EM_STREAMIN, SF_TEXT, (LPARAM)&es);
   ok(result == 8, "got %Id\n", result);
 
-  WideCharToMultiByte(CP_ACP, 0, UTF8Split_exp, -1, tmp, sizeof(tmp), NULL, NULL);
+  len = WideCharToMultiByte(CP_ACP, 0, UTF8Split_exp, -1, tmp, sizeof(tmp), NULL, NULL);
 
   result = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
-  ok(result  == 3,
+  ok(result + 1 == len,
       "EM_STREAMIN: Test UTF8Split returned %Id\n", result);
-  result = memcmp (buffer, tmp, 3);
+  result = memcmp (buffer, tmp, result);
   ok(result  == 0,
       "EM_STREAMIN: Test UTF8Split set wrong text: Result: %s\n",buffer);
   ok(es.dwError == 0, "EM_STREAMIN: Test UTF8Split set error %ld, expected %d\n", es.dwError, 0);
