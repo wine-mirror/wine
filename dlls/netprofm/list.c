@@ -36,7 +36,6 @@
 #include "olectl.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "netprofm_private.h"
 
@@ -200,7 +199,7 @@ static HRESULT WINAPI connection_point_Advise(
         return CO_E_FAILEDTOOPENTHREADTOKEN;
     }
 
-    sink_entry = heap_alloc( sizeof(*sink_entry) );
+    sink_entry = malloc( sizeof(*sink_entry) );
     if (!sink_entry)
     {
         IUnknown_Release( unk );
@@ -217,7 +216,7 @@ static void sink_entry_release( struct sink_entry *entry )
 {
     list_remove( &entry->entry );
     IUnknown_Release( entry->unk );
-    heap_free( entry );
+    free( entry );
 }
 
 static HRESULT WINAPI connection_point_Unadvise(
@@ -330,7 +329,7 @@ static ULONG WINAPI network_Release(
     {
         list_remove( &network->entry );
         INetworkListManager_Release( network->mgr );
-        heap_free( network );
+        free( network );
     }
     return refs;
 }
@@ -554,7 +553,7 @@ static struct network *create_network( const GUID *id )
 {
     struct network *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
 
     ret->INetwork_iface.lpVtbl = &network_vtbl;
     ret->refs                  = 1;
@@ -738,7 +737,7 @@ static ULONG WINAPI networks_enum_Release(
     if (!(refs = InterlockedDecrement( &iter->refs )))
     {
         INetworkListManager_Release( &iter->mgr->INetworkListManager_iface );
-        heap_free( iter );
+        free( iter );
     }
     return refs;
 }
@@ -883,7 +882,7 @@ static HRESULT create_networks_enum(
     struct networks_enum *iter;
 
     *ret = NULL;
-    if (!(iter = heap_alloc( sizeof(*iter) ))) return E_OUTOFMEMORY;
+    if (!(iter = calloc( 1, sizeof(*iter) ))) return E_OUTOFMEMORY;
 
     iter->IEnumNetworks_iface.lpVtbl = &networks_enum_vtbl;
     iter->cursor = list_head( &mgr->networks );
@@ -952,7 +951,7 @@ static ULONG WINAPI connections_enum_Release(
     if (!(refs = InterlockedDecrement( &iter->refs )))
     {
         INetworkListManager_Release( &iter->mgr->INetworkListManager_iface );
-        heap_free( iter );
+        free( iter );
     }
     return refs;
 }
@@ -1096,7 +1095,7 @@ static HRESULT create_connections_enum(
     struct connections_enum *iter;
 
     *ret = NULL;
-    if (!(iter = heap_alloc( sizeof(*iter) ))) return E_OUTOFMEMORY;
+    if (!(iter = calloc( 1, sizeof(*iter) ))) return E_OUTOFMEMORY;
 
     iter->IEnumNetworkConnections_iface.lpVtbl = &connections_enum_vtbl;
     iter->mgr         = mgr;
@@ -1139,7 +1138,7 @@ static ULONG WINAPI list_manager_Release(
         {
             INetwork_Release( &network->INetwork_iface );
         }
-        heap_free( mgr );
+        free( mgr );
     }
     return refs;
 }
@@ -1496,7 +1495,7 @@ static ULONG WINAPI connection_Release(
     {
         list_remove( &connection->entry );
         INetwork_Release( connection->network );
-        heap_free( connection );
+        free( connection );
     }
     return refs;
 }
@@ -1728,7 +1727,7 @@ static struct connection *create_connection( const GUID *id )
 {
     struct connection *ret;
 
-    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ret = calloc( 1, sizeof(*ret) ))) return NULL;
 
     ret->INetworkConnection_iface.lpVtbl     = &connection_vtbl;
     ret->INetworkConnectionCost_iface.lpVtbl = &connection_cost_vtbl;
@@ -1756,10 +1755,10 @@ static void init_networks( struct list_manager *mgr )
     ret = GetAdaptersAddresses( AF_UNSPEC, flags, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return;
 
-    if (!(buf = heap_alloc( size ))) return;
+    if (!(buf = malloc( size ))) return;
     if (GetAdaptersAddresses( AF_UNSPEC, flags, NULL, buf, &size ))
     {
-        heap_free( buf );
+        free( buf );
         return;
     }
 
@@ -1802,7 +1801,7 @@ static void init_networks( struct list_manager *mgr )
     }
 
 done:
-    heap_free( buf );
+    free( buf );
 }
 
 HRESULT list_manager_create( void **obj )
@@ -1811,7 +1810,7 @@ HRESULT list_manager_create( void **obj )
 
     TRACE( "%p\n", obj );
 
-    if (!(mgr = heap_alloc( sizeof(*mgr) ))) return E_OUTOFMEMORY;
+    if (!(mgr = calloc( 1, sizeof(*mgr) ))) return E_OUTOFMEMORY;
     mgr->INetworkListManager_iface.lpVtbl = &list_manager_vtbl;
     mgr->INetworkCostManager_iface.lpVtbl = &cost_manager_vtbl;
     mgr->IConnectionPointContainer_iface.lpVtbl = &cpc_vtbl;
