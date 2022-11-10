@@ -31,10 +31,18 @@ struct load_so_dll_params
     void                      **module;
 };
 
+struct unwind_builtin_dll_params
+{
+    ULONG                       type;
+    struct _DISPATCHER_CONTEXT *dispatch;
+    CONTEXT                    *context;
+};
+
 enum ntdll_unix_funcs
 {
     unix_load_so_dll,
     unix_init_builtin_dll,
+    unix_unwind_builtin_dll,
 };
 
 extern unixlib_handle_t ntdll_unix_handle;
@@ -42,14 +50,10 @@ extern unixlib_handle_t ntdll_unix_handle;
 #define NTDLL_UNIX_CALL( func, params ) __wine_unix_call( ntdll_unix_handle, unix_ ## func, params )
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 137
+#define NTDLL_UNIXLIB_VERSION 138
 
 struct unix_funcs
 {
-    /* loader functions */
-    NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
-                                               CONTEXT *context );
-    /* other Win32 API functions */
     LONGLONG      (WINAPI *RtlGetSystemTimePrecise)(void);
 };
 

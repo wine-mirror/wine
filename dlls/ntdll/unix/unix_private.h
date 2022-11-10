@@ -108,9 +108,6 @@ extern void     (WINAPI *p__wine_ctrl_routine)(void *) DECLSPEC_HIDDEN;
 extern SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock DECLSPEC_HIDDEN;
 extern LONGLONG CDECL fast_RtlGetSystemTimePrecise(void) DECLSPEC_HIDDEN;
 
-extern NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
-                                          CONTEXT *context ) DECLSPEC_HIDDEN;
-
 struct _FILE_FS_DEVICE_INFORMATION;
 
 extern const char wine_build[] DECLSPEC_HIDDEN;
@@ -230,6 +227,7 @@ extern void virtual_fill_image_information( const pe_image_info_t *pe_info,
 extern void release_builtin_module( void *module ) DECLSPEC_HIDDEN;
 extern void *get_builtin_so_handle( void *module ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_builtin_unixlib( void *module, const char *name ) DECLSPEC_HIDDEN;
+extern NTSTATUS unwind_builtin_dll( void *args ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS get_thread_ldt_entry( HANDLE handle, void *data, ULONG len, ULONG *ret_len ) DECLSPEC_HIDDEN;
 extern void *get_native_context( CONTEXT *context ) DECLSPEC_HIDDEN;

@@ -163,7 +163,9 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
 
     if (!module || (module->Flags & LDR_WINE_INTERNAL))
     {
-        status = unix_funcs->unwind_builtin_dll( type, dispatch, context );
+        struct unwind_builtin_dll_params params = { type, dispatch, context };
+
+        status = NTDLL_UNIX_CALL( unwind_builtin_dll, &params );
         if (status != STATUS_SUCCESS) return status;
 
         if (dispatch->EstablisherFrame)

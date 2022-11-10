@@ -746,8 +746,11 @@ static NTSTATUS libunwind_virtual_unwind( ULONG64 ip, ULONG64 *frame, CONTEXT *c
 /***********************************************************************
  *           unwind_builtin_dll
  */
-NTSTATUS CDECL unwind_builtin_dll( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
+NTSTATUS unwind_builtin_dll( void *args )
 {
+    struct unwind_builtin_dll_params *params = args;
+    DISPATCHER_CONTEXT *dispatch = params->dispatch;
+    CONTEXT *context = params->context;
     struct dwarf_eh_bases bases;
     const struct dwarf_fde *fde = _Unwind_Find_FDE( (void *)(context->Rip - 1), &bases );
 

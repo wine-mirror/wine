@@ -728,8 +728,11 @@ static NTSTATUS libunwind_virtual_unwind( DWORD ip, DWORD *frame, CONTEXT *conte
 /***********************************************************************
  *           unwind_builtin_dll
  */
-NTSTATUS CDECL unwind_builtin_dll( ULONG type, struct _DISPATCHER_CONTEXT *dispatch, CONTEXT *context )
+NTSTATUS unwind_builtin_dll( void *args )
 {
+    struct unwind_builtin_dll_params *params = args;
+    DISPATCHER_CONTEXT *dispatch = params->dispatch;
+    CONTEXT *context = params->context;
     DWORD ip = context->Pc - (dispatch->ControlPcIsUnwound ? 2 : 0);
 #ifdef linux
     const struct exidx_entry *entry = find_exidx_entry( (void *)ip );

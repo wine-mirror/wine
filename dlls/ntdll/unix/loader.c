@@ -2155,7 +2155,6 @@ static ULONG_PTR get_image_address(void)
  */
 static struct unix_funcs unix_funcs =
 {
-    unwind_builtin_dll,
     RtlGetSystemTimePrecise,
 };
 
@@ -2167,11 +2166,13 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     load_so_dll,
     init_builtin_dll,
+    unwind_builtin_dll,
 };
 
 
 static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
 static NTSTATUS wow64_init_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
+static NTSTATUS wow64_unwind_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
 
 /***********************************************************************
  *           __wine_unix_call_wow64_funcs
@@ -2180,6 +2181,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     wow64_load_so_dll,
     wow64_init_builtin_dll,
+    wow64_unwind_builtin_dll,
 };
 
 

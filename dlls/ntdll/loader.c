@@ -4602,12 +4602,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 }
 
 
-static NTSTATUS CDECL unwind_builtin_dll_fallback( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
-                                                   CONTEXT *context )
-{
-    return STATUS_UNSUCCESSFUL;
-}
-
 static LONGLONG WINAPI RtlGetSystemTimePrecise_fallback(void)
 {
     LARGE_INTEGER now;
@@ -4617,7 +4611,6 @@ static LONGLONG WINAPI RtlGetSystemTimePrecise_fallback(void)
 
 static const struct unix_funcs unix_fallbacks =
 {
-    unwind_builtin_dll_fallback,
     RtlGetSystemTimePrecise_fallback,
 };
 
