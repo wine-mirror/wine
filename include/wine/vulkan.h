@@ -4989,10 +4989,10 @@ typedef struct VkBufferMemoryBarrier2
 {
     VkStructureType sType;
     const void *pNext;
-    VkPipelineStageFlags2 srcStageMask;
-    VkAccessFlags2 srcAccessMask;
-    VkPipelineStageFlags2 dstStageMask;
-    VkAccessFlags2 dstAccessMask;
+    VkPipelineStageFlags2 WINE_VK_ALIGN(8) srcStageMask;
+    VkAccessFlags2 WINE_VK_ALIGN(8) srcAccessMask;
+    VkPipelineStageFlags2 WINE_VK_ALIGN(8) dstStageMask;
+    VkAccessFlags2 WINE_VK_ALIGN(8) dstAccessMask;
     uint32_t srcQueueFamilyIndex;
     uint32_t dstQueueFamilyIndex;
     VkBuffer WINE_VK_ALIGN(8) buffer;
@@ -5039,7 +5039,7 @@ typedef struct VkCheckpointData2NV
 {
     VkStructureType sType;
     void *pNext;
-    VkPipelineStageFlags2 stage;
+    VkPipelineStageFlags2 WINE_VK_ALIGN(8) stage;
     void *pCheckpointMarker;
 } VkCheckpointData2NV;
 
@@ -5375,7 +5375,7 @@ typedef struct VkDecompressMemoryRegionNV
     VkDeviceAddress WINE_VK_ALIGN(8) dstAddress;
     VkDeviceSize WINE_VK_ALIGN(8) compressedSize;
     VkDeviceSize WINE_VK_ALIGN(8) decompressedSize;
-    VkMemoryDecompressionMethodFlagsNV decompressionMethod;
+    VkMemoryDecompressionMethodFlagsNV WINE_VK_ALIGN(8) decompressionMethod;
 } VkDecompressMemoryRegionNV;
 
 typedef struct VkDedicatedAllocationBufferCreateInfoNV
@@ -5876,9 +5876,9 @@ typedef struct VkFormatProperties3
 {
     VkStructureType sType;
     void *pNext;
-    VkFormatFeatureFlags2 linearTilingFeatures;
-    VkFormatFeatureFlags2 optimalTilingFeatures;
-    VkFormatFeatureFlags2 bufferFeatures;
+    VkFormatFeatureFlags2 WINE_VK_ALIGN(8) linearTilingFeatures;
+    VkFormatFeatureFlags2 WINE_VK_ALIGN(8) optimalTilingFeatures;
+    VkFormatFeatureFlags2 WINE_VK_ALIGN(8) bufferFeatures;
 } VkFormatProperties3;
 typedef VkFormatProperties3 VkFormatProperties3KHR;
 
@@ -6278,10 +6278,10 @@ typedef struct VkMemoryBarrier2
 {
     VkStructureType sType;
     const void *pNext;
-    VkPipelineStageFlags2 srcStageMask;
-    VkAccessFlags2 srcAccessMask;
-    VkPipelineStageFlags2 dstStageMask;
-    VkAccessFlags2 dstAccessMask;
+    VkPipelineStageFlags2 WINE_VK_ALIGN(8) srcStageMask;
+    VkAccessFlags2 WINE_VK_ALIGN(8) srcAccessMask;
+    VkPipelineStageFlags2 WINE_VK_ALIGN(8) dstStageMask;
+    VkAccessFlags2 WINE_VK_ALIGN(8) dstAccessMask;
 } VkMemoryBarrier2;
 typedef VkMemoryBarrier2 VkMemoryBarrier2KHR;
 
@@ -7670,7 +7670,7 @@ typedef struct VkPhysicalDeviceMemoryDecompressionPropertiesNV
 {
     VkStructureType sType;
     void *pNext;
-    VkMemoryDecompressionMethodFlagsNV decompressionMethods;
+    VkMemoryDecompressionMethodFlagsNV WINE_VK_ALIGN(8) decompressionMethods;
     uint64_t WINE_VK_ALIGN(8) maxDecompressionIndirectCount;
 } VkPhysicalDeviceMemoryDecompressionPropertiesNV;
 
@@ -9376,7 +9376,7 @@ typedef struct VkQueueFamilyCheckpointProperties2NV
 {
     VkStructureType sType;
     void *pNext;
-    VkPipelineStageFlags2 checkpointExecutionStageMask;
+    VkPipelineStageFlags2 WINE_VK_ALIGN(8) checkpointExecutionStageMask;
 } VkQueueFamilyCheckpointProperties2NV;
 
 typedef struct VkQueueFamilyCheckpointPropertiesNV
@@ -9712,7 +9712,7 @@ typedef struct VkSemaphoreSubmitInfo
     const void *pNext;
     VkSemaphore WINE_VK_ALIGN(8) semaphore;
     uint64_t WINE_VK_ALIGN(8) value;
-    VkPipelineStageFlags2 stageMask;
+    VkPipelineStageFlags2 WINE_VK_ALIGN(8) stageMask;
     uint32_t deviceIndex;
 } VkSemaphoreSubmitInfo;
 typedef VkSemaphoreSubmitInfo VkSemaphoreSubmitInfoKHR;
@@ -10708,10 +10708,10 @@ typedef struct VkImageMemoryBarrier2
 {
     VkStructureType sType;
     const void *pNext;
-    VkPipelineStageFlags2 srcStageMask;
-    VkAccessFlags2 srcAccessMask;
-    VkPipelineStageFlags2 dstStageMask;
-    VkAccessFlags2 dstAccessMask;
+    VkPipelineStageFlags2 WINE_VK_ALIGN(8) srcStageMask;
+    VkAccessFlags2 WINE_VK_ALIGN(8) srcAccessMask;
+    VkPipelineStageFlags2 WINE_VK_ALIGN(8) dstStageMask;
+    VkAccessFlags2 WINE_VK_ALIGN(8) dstAccessMask;
     VkImageLayout oldLayout;
     VkImageLayout newLayout;
     uint32_t srcQueueFamilyIndex;

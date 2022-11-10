@@ -1165,6 +1165,9 @@ class VkVariable(object):
     def is_union(self):
         return self.type_info["category"] == "union"
 
+    def is_bitmask(self):
+        return self.type_info["category"] == "bitmask"
+
     def is_dynamic_array(self):
         """ Returns if the member is an array element.
         Vulkan uses this for dynamically sized arrays for which
@@ -1197,6 +1200,8 @@ class VkVariable(object):
             return False
         elif self.type in ["uint64_t", "VkDeviceAddress", "VkDeviceSize"]:
             return True
+        elif self.is_bitmask():
+            return self.type_info["data"].type == "VkFlags64"
         elif self.is_struct() or self.is_union():
             return self.type_info["data"].needs_alignment()
         elif self.is_handle():

@@ -1557,14 +1557,14 @@ struct vkCmdResetEvent2_params
 {
     VkCommandBuffer commandBuffer;
     VkEvent DECLSPEC_ALIGN(8) event;
-    VkPipelineStageFlags2 stageMask;
+    VkPipelineStageFlags2 DECLSPEC_ALIGN(8) stageMask;
 };
 
 struct vkCmdResetEvent2KHR_params
 {
     VkCommandBuffer commandBuffer;
     VkEvent DECLSPEC_ALIGN(8) event;
-    VkPipelineStageFlags2 stageMask;
+    VkPipelineStageFlags2 DECLSPEC_ALIGN(8) stageMask;
 };
 
 struct vkCmdResetQueryPool_params
@@ -2316,7 +2316,7 @@ struct vkCmdWriteAccelerationStructuresPropertiesNV_params
 struct vkCmdWriteBufferMarker2AMD_params
 {
     VkCommandBuffer commandBuffer;
-    VkPipelineStageFlags2 stage;
+    VkPipelineStageFlags2 DECLSPEC_ALIGN(8) stage;
     VkBuffer DECLSPEC_ALIGN(8) dstBuffer;
     VkDeviceSize DECLSPEC_ALIGN(8) dstOffset;
     uint32_t marker;
@@ -2352,7 +2352,7 @@ struct vkCmdWriteTimestamp_params
 struct vkCmdWriteTimestamp2_params
 {
     VkCommandBuffer commandBuffer;
-    VkPipelineStageFlags2 stage;
+    VkPipelineStageFlags2 DECLSPEC_ALIGN(8) stage;
     VkQueryPool DECLSPEC_ALIGN(8) queryPool;
     uint32_t query;
 };
@@ -2360,7 +2360,7 @@ struct vkCmdWriteTimestamp2_params
 struct vkCmdWriteTimestamp2KHR_params
 {
     VkCommandBuffer commandBuffer;
-    VkPipelineStageFlags2 stage;
+    VkPipelineStageFlags2 DECLSPEC_ALIGN(8) stage;
     VkQueryPool DECLSPEC_ALIGN(8) queryPool;
     uint32_t query;
 };
