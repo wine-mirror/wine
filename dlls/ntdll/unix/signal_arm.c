@@ -1546,15 +1546,6 @@ void signal_free_thread( TEB *teb )
 
 
 /**********************************************************************
- *		signal_init_thread
- */
-void signal_init_thread( TEB *teb )
-{
-    __asm__ __volatile__( "mcr p15, 0, %0, c13, c0, 2" : : "r" (teb) );
-}
-
-
-/**********************************************************************
  *		signal_init_process
  */
 void signal_init_process(void)

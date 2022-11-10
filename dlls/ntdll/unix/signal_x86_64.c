@@ -2373,46 +2373,6 @@ static void *mac_thread_gsbase(void)
 
 
 /**********************************************************************
- *		signal_init_thread
- */
-void signal_init_thread( TEB *teb )
-{
-    const WORD fpu_cw = 0x27f;
-
-#if defined __linux__
-    arch_prctl( ARCH_SET_GS, teb );
-    arch_prctl( ARCH_GET_FS, &amd64_thread_data()->pthread_teb );
-    if (fs32_sel) alloc_fs_sel( fs32_sel >> 3, (char *)teb + teb->WowTebOffset );
-#elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
-    amd64_set_gsbase( teb );
-#elif defined(__NetBSD__)
-    sysarch( X86_64_SET_GSBASE, &teb );
-#elif defined (__APPLE__)
-    __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
-                      :
-                      : "r" (teb->Tib.Self), "n" (FIELD_OFFSET(TEB, Tib.Self)));
-    __asm__ volatile (".byte 0x65\n\tmovq %0,%c1"
-                      :
-                      : "r" (teb->ThreadLocalStoragePointer), "n" (FIELD_OFFSET(TEB, ThreadLocalStoragePointer)));
-    amd64_thread_data()->pthread_teb = mac_thread_gsbase();
-
-    /* alloc_tls_slot() needs to poke a value to an address relative to each
-       thread's gsbase.  Have each thread record its gsbase pointer into its
-       TEB so alloc_tls_slot() can find it. */
-    teb->Reserved5[0] = amd64_thread_data()->pthread_teb;
-#else
-# error Please define setting %gs for your architecture
-#endif
-
-#ifdef __GNUC__
-    __asm__ volatile ("fninit; fldcw %0" : : "m" (fpu_cw));
-#else
-    FIXME_(seh)("FPU setup not implemented for this platform.\n");
-#endif
-}
-
-
-/**********************************************************************
  *		signal_init_process
  */
 void signal_init_process(void)
@@ -2509,6 +2469,26 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { 0 };
     I386_CONTEXT *wow_context;
+
+#if defined __linux__
+    arch_prctl( ARCH_SET_GS, teb );
+    arch_prctl( ARCH_GET_FS, &amd64_thread_data()->pthread_teb );
+    if (fs32_sel) alloc_fs_sel( fs32_sel >> 3, (char *)teb + teb->WowTebOffset );
+#elif defined (__FreeBSD__) || defined (__FreeBSD_kernel__)
+    amd64_set_gsbase( teb );
+#elif defined(__NetBSD__)
+    sysarch( X86_64_SET_GSBASE, &teb );
+#elif defined (__APPLE__)
+    __asm__ volatile (".byte 0x65\n\tmovq %0,%c1" :: "r" (teb->Tib.Self), "n" (FIELD_OFFSET(TEB, Tib.Self)));
+    __asm__ volatile (".byte 0x65\n\tmovq %0,%c1" :: "r" (teb->ThreadLocalStoragePointer), "n" (FIELD_OFFSET(TEB, ThreadLocalStoragePointer)));
+    amd64_thread_data()->pthread_teb = mac_thread_gsbase();
+    /* alloc_tls_slot() needs to poke a value to an address relative to each
+       thread's gsbase.  Have each thread record its gsbase pointer into its
+       TEB so alloc_tls_slot() can find it. */
+    teb->Reserved5[0] = amd64_thread_data()->pthread_teb;
+#else
+# error Please define setting %gs for your architecture
+#endif
 
     context.ContextFlags = CONTEXT_ALL;
     context.Rcx    = (ULONG_PTR)entry;

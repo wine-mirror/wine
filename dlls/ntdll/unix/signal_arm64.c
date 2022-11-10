@@ -1339,16 +1339,6 @@ void signal_free_thread( TEB *teb )
 
 
 /**********************************************************************
- *		signal_init_thread
- */
-void signal_init_thread( TEB *teb )
-{
-    /* Win64/ARM applications expect the TEB pointer to be in the x18 platform register. */
-    __asm__ __volatile__( "mov x18, %0" : : "r" (teb) );
-}
-
-
-/**********************************************************************
  *		signal_init_process
  */
 void signal_init_process(void)

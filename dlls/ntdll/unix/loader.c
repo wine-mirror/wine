@@ -2166,7 +2166,6 @@ static void start_main_thread(void)
 
     signal_init_threading();
     signal_alloc_thread( teb );
-    signal_init_thread( teb );
     dbg_init();
     startup_info_size = server_init_process();
     virtual_map_user_shared_data();
