@@ -40,6 +40,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
+TEB * (* WINAPI __wine_current_teb)(void) = NULL;
+
 typedef struct _SCOPE_TABLE
 {
     ULONG Count;
@@ -1528,7 +1530,7 @@ __ASM_STDCALL_FUNC( DbgUserBreakPoint, 0, "brk #0xf000; ret"
  */
 TEB * WINAPI NtCurrentTeb(void)
 {
-    return unix_funcs->NtCurrentTeb();
+    return __wine_current_teb();
 }
 
 #endif  /* __aarch64__ */

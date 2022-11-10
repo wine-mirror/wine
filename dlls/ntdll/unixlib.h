@@ -26,7 +26,7 @@
 struct _DISPATCHER_CONTEXT;
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 134
+#define NTDLL_UNIXLIB_VERSION 135
 
 struct unix_funcs
 {
@@ -37,9 +37,6 @@ struct unix_funcs
                                                CONTEXT *context );
     /* other Win32 API functions */
     LONGLONG      (WINAPI *RtlGetSystemTimePrecise)(void);
-#ifdef __aarch64__
-    TEB *         (WINAPI *NtCurrentTeb)(void);
-#endif
 };
 
 #endif /* __NTDLL_UNIXLIB_H */

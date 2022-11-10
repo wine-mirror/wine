@@ -1071,6 +1071,13 @@ static void load_ntdll_functions( HMODULE module )
         *p__wine_ldt_copy = &__wine_ldt_copy;
     }
 #endif
+#ifdef __aarch64__
+    {
+        void **p__wine_current_teb;
+        GET_FUNC( __wine_current_teb );
+        *p__wine_current_teb = NtCurrentTeb;
+    }
+#endif
 #undef GET_FUNC
 }
 
@@ -2149,9 +2156,6 @@ static struct unix_funcs unix_funcs =
     init_builtin_dll,
     unwind_builtin_dll,
     RtlGetSystemTimePrecise,
-#ifdef __aarch64__
-    NtCurrentTeb,
-#endif
 };
 
 
