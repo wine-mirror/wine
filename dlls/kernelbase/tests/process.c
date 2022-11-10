@@ -204,6 +204,20 @@ static void test_VirtualAlloc2(void)
     view2 = pMapViewOfFile3(section, NULL, placeholder2, 0, size, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
     ok(!!view2, "Failed to map a section.\n");
 
+    memset(&info, 0, sizeof(info));
+    VirtualQuery(placeholder1, &info, sizeof(info));
+    ok(info.AllocationProtect == PAGE_READWRITE, "Unexpected protection %#lx.\n", info.AllocationProtect);
+    ok(info.State == MEM_COMMIT, "Unexpected state %#lx.\n", info.State);
+    ok(info.Type == MEM_MAPPED, "Unexpected type %#lx.\n", info.Type);
+    ok(info.RegionSize == size, "Unexpected size.\n");
+
+    memset(&info, 0, sizeof(info));
+    VirtualQuery(placeholder2, &info, sizeof(info));
+    ok(info.AllocationProtect == PAGE_READWRITE, "Unexpected protection %#lx.\n", info.AllocationProtect);
+    ok(info.State == MEM_COMMIT, "Unexpected state %#lx.\n", info.State);
+    ok(info.Type == MEM_MAPPED, "Unexpected type %#lx.\n", info.Type);
+    ok(info.RegionSize == size, "Unexpected size.\n");
+
     CloseHandle(section);
     UnmapViewOfFile(view1);
     UnmapViewOfFile(view2);
