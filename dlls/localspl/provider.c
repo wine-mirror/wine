@@ -3014,9 +3014,97 @@ static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_in
     return printer->doc ? printer->doc->id : 0;
 }
 
+static job_t * get_job(printer_info_t *info, DWORD job_id)
+{
+    job_t *job;
+
+    LIST_FOR_EACH_ENTRY(job, &info->jobs, job_t, entry)
+    {
+        if(job->id == job_id)
+            return job;
+    }
+    return NULL;
+}
+
+static BOOL WINAPI fpSetJob(HANDLE hprinter, DWORD job_id,
+        DWORD level, BYTE *data, DWORD command)
+{
+    printer_t *printer = (printer_t *)hprinter;
+    BOOL ret = FALSE;
+    job_t *job;
+
+    TRACE("(%p, %ld, %ld, %p, %ld)\n", hprinter, job_id, level, data, command);
+    FIXME("Ignoring everything other than document title\n");
+
+    if (!printer || !printer->info)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return 0;
+    }
+
+    EnterCriticalSection(&printer->info->jobs_cs);
+    job = get_job(printer->info, job_id);
+    if (!job)
+    {
+        LeaveCriticalSection(&printer->info->jobs_cs);
+        return FALSE;
+    }
+
+    switch(level)
+    {
+    case 0:
+        ret = TRUE;
+        break;
+    case 1:
+    {
+        JOB_INFO_1W *info1 = (JOB_INFO_1W *)job;
+        WCHAR *title = wcsdup(info1->pDocument);
+
+        if (title)
+        {
+            free(job->document_title);
+            job->document_title = title;
+            ret = TRUE;
+        }
+        break;
+    }
+    case 2:
+    {
+        JOB_INFO_2W *info2 = (JOB_INFO_2W *)job;
+        WCHAR *title = wcsdup(info2->pDocument);
+        DEVMODEW *devmode = dup_devmode(info2->pDevMode);
+
+        if (!title || !devmode)
+        {
+            free(title);
+            free(devmode);
+        }
+        else
+        {
+            free(job->document_title);
+            free(job->devmode);
+            job->document_title = title;
+            job->devmode = devmode;
+            ret = TRUE;
+        }
+        break;
+      }
+    case 3:
+        FIXME("level 3 stub\n");
+        ret = TRUE;
+        break;
+    default:
+        SetLastError(ERROR_INVALID_LEVEL);
+        break;
+    }
+
+    LeaveCriticalSection(&printer->info->jobs_cs);
+    return ret;
+}
+
 static const PRINTPROVIDOR backend = {
         fpOpenPrinter,
-        NULL,   /* fpSetJob */
+        fpSetJob,
         NULL,   /* fpGetJob */
         NULL,   /* fpEnumJobs */
         NULL,   /* fpAddPrinter */
