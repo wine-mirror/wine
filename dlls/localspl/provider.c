@@ -3102,10 +3102,133 @@ static BOOL WINAPI fpSetJob(HANDLE hprinter, DWORD job_id,
     return ret;
 }
 
+static BOOL WINAPI fpGetJob(HANDLE hprinter, DWORD job_id, DWORD level,
+        BYTE *data, DWORD size, DWORD *needed)
+{
+    printer_t *printer = (printer_t *)hprinter;
+    BOOL ret = TRUE;
+    DWORD s = 0;
+    job_t *job;
+    WCHAR *p;
+
+    TRACE("%p %ld %ld %p %ld %p\n", hprinter, job_id, level, data, size, needed);
+
+    if (!printer || !printer->info)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (!needed)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    EnterCriticalSection(&printer->info->jobs_cs);
+    job = get_job(printer->info, job_id);
+    if (!job)
+    {
+        LeaveCriticalSection(&printer->info->jobs_cs);
+        return FALSE;
+    }
+
+    switch(level)
+    {
+    case 1:
+        s = sizeof(JOB_INFO_1W);
+        s += job->document_title ? (wcslen(job->document_title) + 1) * sizeof(WCHAR) : 0;
+        s += printer->info->name ?
+            (wcslen(printer->info->name) + 1) * sizeof(WCHAR) : 0;
+
+        if (size >= s)
+        {
+            JOB_INFO_1W *info = (JOB_INFO_1W *)data;
+
+            p = (WCHAR *)(info + 1);
+            memset(info, 0, sizeof(*info));
+            info->JobId = job->id;
+            if (job->document_title)
+            {
+                info->pDocument = p;
+                wcscpy(p, job->document_title);
+                p += wcslen(job->document_title) + 1;
+            }
+            if (printer->info->name)
+            {
+                info->pPrinterName = p;
+                wcscpy(p, printer->info->name);
+            }
+        }
+        break;
+    case 2:
+        s = sizeof(JOB_INFO_2W);
+        s += job->document_title ? (wcslen(job->document_title) + 1) * sizeof(WCHAR) : 0;
+        s += printer->info->name ?
+            (wcslen(printer->info->name) + 1) * sizeof(WCHAR) : 0;
+        if (job->devmode)
+        {
+            /* align DEVMODE to a DWORD boundary */
+            s += (4 - (s & 3)) & 3;
+            s += job->devmode->dmSize + job->devmode->dmDriverExtra;
+        }
+
+        if (size >= s)
+        {
+            JOB_INFO_2W *info = (JOB_INFO_2W *)data;
+
+            p = (WCHAR *)(info + 1);
+            memset(info, 0, sizeof(*info));
+            info->JobId = job->id;
+            if (job->document_title)
+            {
+                info->pDocument = p;
+                wcscpy(p, job->document_title);
+                p += wcslen(job->document_title) + 1;
+            }
+            if (printer->info->name)
+            {
+                info->pPrinterName = p;
+                wcscpy(p, printer->info->name);
+                p += wcslen(printer->info->name) + 1;
+            }
+            if (job->devmode)
+            {
+                DEVMODEW *devmode = (DEVMODEW *)(data + s - job->devmode->dmSize
+                        - job->devmode->dmDriverExtra);
+                info->pDevMode = devmode;
+                memcpy(devmode, job->devmode, job->devmode->dmSize + job->devmode->dmDriverExtra);
+            }
+        }
+        break;
+    case 3:
+        FIXME("level 3 stub\n");
+        s = sizeof(JOB_INFO_3);
+
+        if (size >= s)
+            memset(data, 0, sizeof(JOB_INFO_3));
+        break;
+    default:
+        SetLastError(ERROR_INVALID_LEVEL);
+        ret = FALSE;
+        break;
+    }
+
+    LeaveCriticalSection(&printer->info->jobs_cs);
+
+    *needed = s;
+    if (size < s)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        ret = FALSE;
+    }
+    return ret;
+}
+
 static const PRINTPROVIDOR backend = {
         fpOpenPrinter,
         fpSetJob,
-        NULL,   /* fpGetJob */
+        fpGetJob,
         NULL,   /* fpEnumJobs */
         NULL,   /* fpAddPrinter */
         NULL,   /* fpDeletePrinter */
