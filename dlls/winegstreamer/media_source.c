@@ -557,31 +557,35 @@ static HRESULT WINAPI source_async_commands_Invoke(IMFAsyncCallback *iface, IMFA
     IUnknown *state;
     HRESULT hr;
 
-    if (source->state == SOURCE_SHUTDOWN)
-        return S_OK;
-
     if (FAILED(hr = IMFAsyncResult_GetState(result, &state)))
         return hr;
+
+    EnterCriticalSection(&source->cs);
 
     command = impl_from_async_command_IUnknown(state);
     switch (command->op)
     {
         case SOURCE_ASYNC_START:
-            start_pipeline(source, command);
+            if (source->state != SOURCE_SHUTDOWN)
+                start_pipeline(source, command);
             break;
         case SOURCE_ASYNC_PAUSE:
-            pause_pipeline(source);
+            if (source->state != SOURCE_SHUTDOWN)
+                pause_pipeline(source);
             break;
         case SOURCE_ASYNC_STOP:
-            stop_pipeline(source);
+            if (source->state != SOURCE_SHUTDOWN)
+                stop_pipeline(source);
             break;
         case SOURCE_ASYNC_REQUEST_SAMPLE:
             if (source->state == SOURCE_PAUSED)
                 enqueue_token(command->u.request_sample.stream, command->u.request_sample.token);
-            else
+            else if (source->state == SOURCE_RUNNING)
                 wait_on_sample(command->u.request_sample.stream, command->u.request_sample.token);
             break;
     }
+
+    LeaveCriticalSection(&source->cs);
 
     IUnknown_Release(state);
 
