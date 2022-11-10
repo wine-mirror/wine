@@ -815,6 +815,13 @@ static void free_stream(struct wg_parser_stream *stream)
         gst_object_unref(stream->their_src);
     gst_object_unref(stream->my_sink);
 
+    if (stream->buffer)
+    {
+        gst_buffer_unmap(stream->buffer, &stream->map_info);
+        gst_buffer_unref(stream->buffer);
+        stream->buffer = NULL;
+    }
+
     pthread_cond_destroy(&stream->event_cond);
     pthread_cond_destroy(&stream->event_empty_cond);
 
