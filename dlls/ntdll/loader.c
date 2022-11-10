@@ -1574,7 +1574,7 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
     if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return STATUS_SUCCESS;
     if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, reason );
     if (wm->ldr.Flags & LDR_WINE_INTERNAL && reason == DLL_PROCESS_ATTACH)
-        unix_funcs->init_builtin_dll( wm->ldr.DllBase );
+        NTDLL_UNIX_CALL( init_builtin_dll, wm->ldr.DllBase );
     if (!entry) return STATUS_SUCCESS;
 
     if (TRACE_ON(relay))
@@ -4208,7 +4208,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         }
         release_address_space();
         if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_PROCESS_ATTACH );
-        if (wm->ldr.Flags & LDR_WINE_INTERNAL) unix_funcs->init_builtin_dll( wm->ldr.DllBase );
+        if (wm->ldr.Flags & LDR_WINE_INTERNAL) NTDLL_UNIX_CALL( init_builtin_dll, wm->ldr.DllBase );
         if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
         process_breakpoint();
     }
@@ -4602,10 +4602,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 }
 
 
-static void CDECL init_builtin_dll_fallback( void *module )
-{
-}
-
 static NTSTATUS CDECL unwind_builtin_dll_fallback( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                                    CONTEXT *context )
 {
@@ -4621,7 +4617,6 @@ static LONGLONG WINAPI RtlGetSystemTimePrecise_fallback(void)
 
 static const struct unix_funcs unix_fallbacks =
 {
-    init_builtin_dll_fallback,
     unwind_builtin_dll_fallback,
     RtlGetSystemTimePrecise_fallback,
 };

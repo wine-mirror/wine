@@ -1931,7 +1931,7 @@ static BOOL get_relocbase(caddr_t mapbase, caddr_t *relocbase)
 /*************************************************************************
  *              init_builtin_dll
  */
-static void CDECL init_builtin_dll( void *module )
+static NTSTATUS init_builtin_dll( void *module )
 {
 #ifdef HAVE_DLINFO
     void *handle = NULL;
@@ -1945,10 +1945,10 @@ static void CDECL init_builtin_dll( void *module )
     const Elf32_Dyn *dyn;
 #endif
 
-    if (!(handle = get_builtin_so_handle( module ))) return;
+    if (!(handle = get_builtin_so_handle( module ))) return STATUS_SUCCESS;
     if (dlinfo( handle, RTLD_DI_LINKMAP, &map )) map = NULL;
     release_builtin_module( module );
-    if (!map) return;
+    if (!map) return STATUS_SUCCESS;
 
     for (dyn = map->l_ld; dyn->d_tag; dyn++)
     {
@@ -1976,6 +1976,7 @@ static void CDECL init_builtin_dll( void *module )
         for (i = 0; i < init_arraysz / sizeof(*init_array); i++)
             init_array[i]( main_argc, main_argv, main_envp );
 #endif
+    return STATUS_SUCCESS;
 }
 
 
@@ -2154,7 +2155,6 @@ static ULONG_PTR get_image_address(void)
  */
 static struct unix_funcs unix_funcs =
 {
-    init_builtin_dll,
     unwind_builtin_dll,
     RtlGetSystemTimePrecise,
 };
@@ -2166,10 +2166,12 @@ static struct unix_funcs unix_funcs =
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     load_so_dll,
+    init_builtin_dll,
 };
 
 
 static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
+static NTSTATUS wow64_init_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
 
 /***********************************************************************
  *           __wine_unix_call_wow64_funcs
@@ -2177,6 +2179,7 @@ static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FO
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     wow64_load_so_dll,
+    wow64_init_builtin_dll,
 };
 
 

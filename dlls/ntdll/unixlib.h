@@ -34,6 +34,7 @@ struct load_so_dll_params
 enum ntdll_unix_funcs
 {
     unix_load_so_dll,
+    unix_init_builtin_dll,
 };
 
 extern unixlib_handle_t ntdll_unix_handle;
@@ -41,12 +42,11 @@ extern unixlib_handle_t ntdll_unix_handle;
 #define NTDLL_UNIX_CALL( func, params ) __wine_unix_call( ntdll_unix_handle, unix_ ## func, params )
 
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 136
+#define NTDLL_UNIXLIB_VERSION 137
 
 struct unix_funcs
 {
     /* loader functions */
-    void          (CDECL *init_builtin_dll)( void *module );
     NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                                CONTEXT *context );
     /* other Win32 API functions */
