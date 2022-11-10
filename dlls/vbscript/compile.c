@@ -1165,19 +1165,26 @@ static HRESULT compile_dim_statement(compile_ctx_t *ctx, dim_statement_t *stat)
 
 static HRESULT compile_redim_statement(compile_ctx_t *ctx, redim_statement_t *stat)
 {
+    redim_decl_t *decl = stat->redim_decls;
     unsigned arg_cnt;
     HRESULT hres;
 
-    hres = compile_args(ctx, stat->dims, &arg_cnt);
-    if(FAILED(hres))
-        return hres;
+    while(1) {
+        hres = compile_args(ctx, decl->dims, &arg_cnt);
+        if(FAILED(hres))
+            return hres;
 
-    hres = push_instr_bstr_uint(ctx, stat->preserve ? OP_redim_preserve : OP_redim, stat->identifier, arg_cnt);
-    if(FAILED(hres))
-	return hres;
+        hres = push_instr_bstr_uint(ctx, stat->preserve ? OP_redim_preserve : OP_redim, decl->identifier, arg_cnt);
+        if(FAILED(hres))
+            return hres;
 
-    if(!emit_catch(ctx, 0))
-        return E_OUTOFMEMORY;
+        if(!emit_catch(ctx, 0))
+            return E_OUTOFMEMORY;
+
+        if(!decl->next)
+            break;
+        decl = decl->next;
+    }
 
     return S_OK;
 }

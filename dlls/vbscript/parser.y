@@ -51,7 +51,7 @@ static statement_t *new_call_statement(parser_ctx_t*,unsigned,expression_t*);
 static statement_t *new_assign_statement(parser_ctx_t*,unsigned,expression_t*,expression_t*);
 static statement_t *new_set_statement(parser_ctx_t*,unsigned,expression_t*,expression_t*);
 static statement_t *new_dim_statement(parser_ctx_t*,unsigned,dim_decl_t*);
-static statement_t *new_redim_statement(parser_ctx_t*,unsigned,const WCHAR*,BOOL,expression_t*);
+static statement_t *new_redim_statement(parser_ctx_t*,unsigned,BOOL,redim_decl_t*);
 static statement_t *new_while_statement(parser_ctx_t*,unsigned,statement_type_t,expression_t*,statement_t*);
 static statement_t *new_forto_statement(parser_ctx_t*,unsigned,const WCHAR*,expression_t*,expression_t*,expression_t*,statement_t*);
 static statement_t *new_foreach_statement(parser_ctx_t*,unsigned,const WCHAR*,expression_t*,statement_t*);
@@ -64,6 +64,7 @@ static statement_t *new_with_statement(parser_ctx_t*,unsigned,expression_t*,stat
 
 static dim_decl_t *new_dim_decl(parser_ctx_t*,const WCHAR*,BOOL,dim_list_t*);
 static dim_list_t *new_dim(parser_ctx_t*,unsigned,dim_list_t*);
+static redim_decl_t *new_redim_decl(parser_ctx_t*,const WCHAR*,expression_t*);
 static elseif_decl_t *new_elseif_decl(parser_ctx_t*,unsigned,expression_t*,statement_t*);
 static function_decl_t *new_function_decl(parser_ctx_t*,const WCHAR*,function_type_t,unsigned,arg_decl_t*,statement_t*);
 static arg_decl_t *new_argument_decl(parser_ctx_t*,const WCHAR*,BOOL);
@@ -100,6 +101,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
     elseif_decl_t *elseif;
     dim_decl_t *dim_decl;
     dim_list_t *dim_list;
+    redim_decl_t *redim_decl;
     function_decl_t *func_decl;
     arg_decl_t *arg_decl;
     class_decl_t *class_decl;
@@ -150,6 +152,7 @@ static statement_t *link_statements(statement_t*,statement_t*);
 %type <uint> Storage Storage_opt IntegerValue
 %type <dim_decl> DimDeclList DimDecl
 %type <dim_list> DimList
+%type <redim_decl> ReDimDeclList ReDimDecl
 %type <const_decl> ConstDecl ConstDeclList
 %type <string> Identifier
 %type <case_clausule> CaseClausules
@@ -209,8 +212,7 @@ SimpleStatement
     | CallExpression '=' Expression
                                             { $$ = new_assign_statement(ctx, @$, $1, $3); CHECK_ERROR; }
     | tDIM DimDeclList                      { $$ = new_dim_statement(ctx, @$, $2); CHECK_ERROR; }
-    | tREDIM Preserve_opt tIdentifier '(' ArgumentList ')'
-                                            { $$ = new_redim_statement(ctx, @$, $3, $2, $5); CHECK_ERROR; }
+    | tREDIM Preserve_opt ReDimDeclList     { $$ = new_redim_statement(ctx, @$, $2, $3); CHECK_ERROR; }
     | IfStatement                           { $$ = $1; }
     | tWHILE Expression StSep StatementsNl_opt tWEND
                                             { $$ = new_while_statement(ctx, @$, STAT_WHILE, $2, $4); CHECK_ERROR; }
@@ -250,6 +252,13 @@ MemberExpression
 Preserve_opt
     : /* empty */                           { $$ = FALSE; }
     | tPRESERVE                             { $$ = TRUE; }
+
+ReDimDecl
+    : tIdentifier '(' ArgumentList ')'      { $$ = new_redim_decl(ctx, $1, $3); CHECK_ERROR; }
+
+ReDimDeclList
+    : ReDimDecl                             { $$ = $1; }
+    | ReDimDecl ',' ReDimDeclList           { $1->next = $3; $$ = $1; }
 
 DimDeclList
     : DimDecl                               { $$ = $1; }
@@ -846,7 +855,21 @@ static statement_t *new_dim_statement(parser_ctx_t *ctx, unsigned loc, dim_decl_
     return &stat->stat;
 }
 
-static statement_t *new_redim_statement(parser_ctx_t *ctx, unsigned loc, const WCHAR *identifier, BOOL preserve, expression_t *dims)
+static redim_decl_t *new_redim_decl(parser_ctx_t *ctx, const WCHAR *identifier, expression_t *dims)
+{
+    redim_decl_t *decl;
+
+    decl = parser_alloc(ctx, sizeof(*decl));
+    if(!decl)
+        return NULL;
+
+    decl->identifier = identifier;
+    decl->dims = dims;
+    decl->next = NULL;
+    return decl;
+}
+
+static statement_t *new_redim_statement(parser_ctx_t *ctx, unsigned loc, BOOL preserve, redim_decl_t *decls)
 {
     redim_statement_t *stat;
 
@@ -854,9 +877,8 @@ static statement_t *new_redim_statement(parser_ctx_t *ctx, unsigned loc, const W
     if(!stat)
         return NULL;
 
-    stat->identifier = identifier;
     stat->preserve = preserve;
-    stat->dims = dims;
+    stat->redim_decls = decls;
     return &stat->stat;
 }
 

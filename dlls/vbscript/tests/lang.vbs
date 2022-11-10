@@ -1503,6 +1503,44 @@ e = err.number
 on error goto 0
 todo_wine_ok e = 10, "e = " & e
 
+sub TestReDimList
+    dim x, y
+
+    x = Array(1)
+    y = Array(1)
+    redim x(1, 3), y(2)
+    ok ubound(x, 1) = 1, "ubound(x, 1) = " & ubound(x, 1)
+    ok ubound(x, 2) = 3, "ubound(x, 2) = " & ubound(x, 2)
+    ok ubound(y, 1) = 2, "ubound(y, 1) = " & ubound(y, 1)
+
+    x(0,0) = 1.1
+    x(0,1) = 1.2
+    x(0,2) = 1.3
+    x(0,3) = 1.4
+    x(1,0) = 2.1
+    x(1,1) = 2.2
+    x(1,2) = 2.3
+    x(1,3) = 2.4
+
+    y(0) = 2.1
+    y(1) = 2.2
+    y(2) = 2.3
+
+    redim preserve x(1,1), y(3)
+    ok ubound(x, 1) = 1, "ubound(x, 1) = " & ubound(x, 1)
+    ok ubound(x, 2) = 1, "ubound(x, 2) = " & ubound(x, 2)
+    ok x(0,0) = 1.1, "x(0,0) = " & x(0,0)
+    ok x(0,1) = 1.2, "x(0,1) = " & x(0,1)
+    ok x(1,0) = 2.1, "x(1,0) = " & x(1,0)
+    ok x(1,1) = 2.2, "x(1,1) = " & x(1,1)
+    ok ubound(y, 1) = 3, "ubound(y, 1) = " & ubound(y, 1)
+    ok y(0) = 2.1, "y(0) = " & y(0)
+    ok y(1) = 2.2, "y(1) = " & y(1)
+    ok y(2) = 2.3, "y(2) = " & y(2)
+    ok y(3) = vbEmpty, "y(3) = " & y(3)
+end sub
+call TestReDimList
+
 Class ArrClass
     Dim classarr(3)
     Dim classnoarr()

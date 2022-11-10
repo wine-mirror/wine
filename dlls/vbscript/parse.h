@@ -172,11 +172,16 @@ typedef struct _dim_statement_t {
     dim_decl_t *dim_decls;
 } dim_statement_t;
 
+typedef struct _redim_decl_t {
+    const WCHAR *identifier;
+    expression_t *dims;
+    struct _redim_decl_t *next;
+} redim_decl_t;
+
 typedef struct {
     statement_t stat;
-    const WCHAR *identifier;
     BOOL preserve;
-    expression_t *dims;
+    redim_decl_t *redim_decls;
 } redim_statement_t;
 
 typedef struct _arg_decl_t {
