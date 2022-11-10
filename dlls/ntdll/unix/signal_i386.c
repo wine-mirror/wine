@@ -2752,10 +2752,4 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "addl $4,%esp\n\t"        /* get rid of return address */
                    "jmp *20(%ecx)\n\t"       /* jmp_buf.Eip */ )
 
-
-/**********************************************************************
- *           NtCurrentTeb   (NTDLL.@)
- */
-__ASM_STDCALL_FUNC( NtCurrentTeb, 0, ".byte 0x64\n\tmovl 0x18,%eax\n\tret" )
-
 #endif  /* __i386__ */

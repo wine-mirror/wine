@@ -129,8 +129,6 @@ static DWORD64 get_fault_esr( ucontext_t *sigcontext )
 
 #endif /* linux */
 
-static pthread_key_t teb_key;
-
 struct syscall_frame
 {
     ULONG64               x[29];          /* 000 */
@@ -1320,7 +1318,6 @@ NTSTATUS WINAPI NtSetLdtEntries( ULONG sel1, LDT_ENTRY entry1, ULONG sel2, LDT_E
  */
 void signal_init_threading(void)
 {
-    pthread_key_create( &teb_key, NULL );
 }
 
 
@@ -1348,8 +1345,6 @@ void signal_init_thread( TEB *teb )
 {
     /* Win64/ARM applications expect the TEB pointer to be in the x18 platform register. */
     __asm__ __volatile__( "mov x18, %0" : : "r" (teb) );
-
-    pthread_setspecific( teb_key, teb );
 }
 
 
@@ -1633,14 +1628,5 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "ldp d14, d15, [x0, #0xb0]\n\t" /* jmp_buf->D[6-7] */
                    "mov x0, x1\n\t"                /* retval */
                    "ret" )
-
-
-/**********************************************************************
- *           NtCurrentTeb   (NTDLL.@)
- */
-TEB * WINAPI NtCurrentTeb(void)
-{
-    return pthread_getspecific( teb_key );
-}
 
 #endif  /* __aarch64__ */

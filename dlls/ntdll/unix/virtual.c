@@ -2929,6 +2929,7 @@ static TEB *init_teb( void *ptr, BOOL is_wow )
 TEB *virtual_alloc_first_teb(void)
 {
     void *ptr;
+    TEB *teb;
     NTSTATUS status;
     SIZE_T data_size = page_size;
     SIZE_T block_size = signal_stack_mask + 1;
@@ -2950,7 +2951,10 @@ TEB *virtual_alloc_first_teb(void)
     data_size = 2 * block_size;
     NtAllocateVirtualMemory( NtCurrentProcess(), (void **)&ptr, 0, &data_size, MEM_COMMIT, PAGE_READWRITE );
     peb = (PEB *)((char *)teb_block + 31 * block_size + (is_win64 ? 0 : page_size));
-    return init_teb( ptr, FALSE );
+    teb = init_teb( ptr, FALSE );
+    pthread_key_create( &teb_key, NULL );
+    pthread_setspecific( teb_key, teb );
+    return teb;
 }
 
 

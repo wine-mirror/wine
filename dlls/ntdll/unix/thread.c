@@ -73,6 +73,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
+pthread_key_t teb_key = 0;
+
 static int nb_threads = 1;
 
 static inline int get_unix_exit_code( NTSTATUS status )
@@ -1066,6 +1068,7 @@ static void start_thread( TEB *teb )
     BOOL suspend;
 
     thread_data->pthread_id = pthread_self();
+    pthread_setspecific( teb_key, teb );
     signal_init_thread( teb );
     server_init_thread( thread_data->start, &suspend );
     signal_start_thread( thread_data->start, thread_data->param, suspend, teb );
@@ -1520,6 +1523,15 @@ NTSTATUS WINAPI NtRaiseException( EXCEPTION_RECORD *rec, CONTEXT *context, BOOL 
 
     NtTerminateProcess( NtCurrentProcess(), rec->ExceptionCode );
     return STATUS_SUCCESS;
+}
+
+
+/**********************************************************************
+ *           NtCurrentTeb   (NTDLL.@)
+ */
+TEB * WINAPI NtCurrentTeb(void)
+{
+    return pthread_getspecific( teb_key );
 }
 
 

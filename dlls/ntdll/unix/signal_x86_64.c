@@ -2896,9 +2896,4 @@ __ASM_GLOBAL_FUNC( __wine_longjmp,
                    "movq 0x10(%rcx),%rsp\n\t"      /* jmp_buf->Rsp */
                    "jmp *%rdx" )
 
-/**********************************************************************
- *           NtCurrentTeb   (NTDLL.@)
- */
-__ASM_GLOBAL_FUNC( NtCurrentTeb, "movq %gs:0x30,%rax; ret" )
-
 #endif  /* __x86_64__ */
