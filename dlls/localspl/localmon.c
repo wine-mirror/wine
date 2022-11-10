@@ -34,7 +34,6 @@
 #include "localspl_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 
@@ -117,7 +116,7 @@ static BOOL does_port_exist(LPCWSTR myname)
     TRACE("(%s)\n", debugstr_w(myname));
 
     id = EnumPortsW(NULL, 1, NULL, 0, &needed, &returned);
-    pi = heap_alloc(needed);
+    pi = malloc(needed);
     returned = 0;
     if (pi)
         id = EnumPortsW(NULL, 1, (LPBYTE) pi, needed, &needed, &returned);
@@ -128,13 +127,13 @@ static BOOL does_port_exist(LPCWSTR myname)
         {
             if (lstrcmpiW(myname, pi[id].pName) == 0) {
                 TRACE("(%lu) found %s\n", id, debugstr_w(pi[id].pName));
-                heap_free(pi);
+                free(pi);
                 return TRUE;
             }
         }
     }
 
-    heap_free(pi);
+    free(pi);
     return FALSE;
 }
 
@@ -306,7 +305,7 @@ static DWORD get_type_from_local_name(LPCWSTR nameW)
     TRACE("(%s)\n", debugstr_w(myname));
 
     needed = get_ports_from_reg(1, NULL, 0, &numentries);
-    pi = heap_alloc(needed);
+    pi = malloc(needed);
     if (pi)
         needed = get_ports_from_reg(1, (LPBYTE) pi, needed, &numentries);
 
@@ -325,7 +324,7 @@ static DWORD get_type_from_local_name(LPCWSTR nameW)
 
     id = (myname) ? get_type_from_name(myname) : PORT_IS_UNKNOWN;
 
-    heap_free(pi);
+    free(pi);
     return id;
 
 }
@@ -407,7 +406,7 @@ static BOOL WINAPI localmon_ClosePort(HANDLE hPort)
     EnterCriticalSection(&port_handles_cs);
     list_remove(&port->entry);
     LeaveCriticalSection(&port_handles_cs);
-    heap_free(port);
+    free(port);
     return TRUE;
 }
 
@@ -498,7 +497,7 @@ static BOOL WINAPI localmon_OpenPortW(LPWSTR pName, PHANDLE phPort)
     type = get_type_from_local_name(pName);
     if (!type) return FALSE;
 
-    port = heap_alloc(FIELD_OFFSET(port_t, nameW[wcslen(pName) + 1]));
+    port = malloc(FIELD_OFFSET(port_t, nameW[wcslen(pName) + 1]));
     if (!port) return FALSE;
 
     port->type = type;
@@ -535,7 +534,7 @@ static BOOL WINAPI localmon_XcvClosePort(HANDLE hXcv)
     EnterCriticalSection(&xcv_handles_cs);
     list_remove(&xcv->entry);
     LeaveCriticalSection(&xcv_handles_cs);
-    heap_free(xcv);
+    free(xcv);
     return TRUE;
 }
 
@@ -710,7 +709,7 @@ static BOOL WINAPI localmon_XcvOpenPort(LPCWSTR pName, ACCESS_MASK GrantedAccess
 
     TRACE("%s, 0x%lx, %p)\n", debugstr_w(pName), GrantedAccess, phXcv);
     /* No checks for any field is done in Windows */
-    xcv = heap_alloc(FIELD_OFFSET(xcv_t, nameW[wcslen(pName) + 1]));
+    xcv = malloc(FIELD_OFFSET(xcv_t, nameW[wcslen(pName) + 1]));
     if (xcv) {
         xcv->GrantedAccess = GrantedAccess;
         lstrcpyW(xcv->nameW, pName);

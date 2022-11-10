@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #define COBJMACROS
 
@@ -33,7 +34,6 @@
 #include "ddk/winsplp.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "localspl_private.h"
 
@@ -288,7 +288,7 @@ static LPWSTR strdupW(LPCWSTR p)
 
     if(!p) return NULL;
     len = (wcslen(p) + 1) * sizeof(WCHAR);
-    ret = heap_alloc(len);
+    ret = malloc(len);
     if (ret) memcpy(ret, p, len);
     return ret;
 }
@@ -432,9 +432,9 @@ static void monitor_unload(monitor_t * pm)
             pm->monitor.pfnShutdown(pm->hmon);
 
         FreeLibrary(pm->hdll);
-        heap_free(pm->name);
-        heap_free(pm->dllname);
-        heap_free(pm);
+        free(pm->name);
+        free(pm->dllname);
+        free(pm);
     }
     LeaveCriticalSection(&monitor_handles_cs);
 }
@@ -585,7 +585,7 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
     }
 
     if (pm == NULL) {
-        pm = heap_alloc_zero(sizeof(monitor_t));
+        pm = calloc(1, sizeof(monitor_t));
         if (pm == NULL) goto cleanup;
         list_add_tail(&monitor_handles, &pm->entry);
     }
@@ -597,7 +597,7 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
 
         if (name) {
             len = wcslen(monitorsW) + wcslen(name) + 2;
-            regroot = heap_alloc(len * sizeof(WCHAR));
+            regroot = malloc(len * sizeof(WCHAR));
         }
 
         if (regroot) {
@@ -609,7 +609,7 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
                     DWORD   namesize;
                     if (RegQueryValueExW(hroot, L"Driver", NULL, NULL, NULL,
                                         &namesize) == ERROR_SUCCESS) {
-                        driver = heap_alloc(namesize);
+                        driver = malloc(namesize);
                         RegQueryValueExW(hroot, L"Driver", NULL, NULL, (BYTE*)driver, &namesize);
                     }
                 }
@@ -734,9 +734,9 @@ cleanup:
         pm_localport = pm;
     }
     LeaveCriticalSection(&monitor_handles_cs);
-    if (driver != dllname) heap_free(driver);
+    if (driver != dllname) free(driver);
     if (hroot) RegCloseKey(hroot);
-    heap_free(regroot);
+    free(regroot);
     TRACE("=> %p\n", pm);
     return pm;
 }
@@ -848,7 +848,7 @@ static monitor_t * monitor_load_by_port(LPCWSTR portname)
     }
 
     len = MAX_PATH + wcslen(L"\\Ports\\") + wcslen(portname) + 1;
-    buffer = heap_alloc(len * sizeof(WCHAR));
+    buffer = malloc(len * sizeof(WCHAR));
     if (buffer == NULL) return NULL;
 
     if (RegOpenKeyW(HKEY_LOCAL_MACHINE, monitorsW, &hroot) == ERROR_SUCCESS) {
@@ -872,7 +872,7 @@ static monitor_t * monitor_load_by_port(LPCWSTR portname)
         LeaveCriticalSection(&monitor_handles_cs);
         RegCloseKey(hroot);
     }
-    heap_free(buffer);
+    free(buffer);
     return pm;
 }
 
@@ -1177,9 +1177,9 @@ static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf
             pi_returned = 0;
             res = wrap_EnumPorts(pm, NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
             if (!res && (GetLastError() == ERROR_INSUFFICIENT_BUFFER)) {
-                /* Do not use heap_realloc (we do not need the old data in the buffer) */
-                heap_free(pi_buffer);
-                pi_buffer = heap_alloc(pi_needed);
+                /* Do not use realloc (we do not need the old data in the buffer) */
+                free(pi_buffer);
+                pi_buffer = malloc(pi_needed);
                 pi_allocated = (pi_buffer) ? pi_needed : 0;
                 res = wrap_EnumPorts(pm, NULL, level, pi_buffer, pi_allocated, &pi_needed, &pi_returned);
             }
@@ -1216,7 +1216,7 @@ static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf
         }
     }
     /* the temporary portinfo-buffer is no longer needed */
-    heap_free(pi_buffer);
+    free(pi_buffer);
 
     *lpreturned = numentries;
     TRACE("need %ld byte for %ld entries\n", needed, numentries);
@@ -1245,13 +1245,13 @@ static HKEY open_driver_reg(LPCWSTR pEnvironment)
     env = validate_envW(pEnvironment);
     if (!env) return NULL;
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(fmt_driversW) +
-                (wcslen(env->envname) + wcslen(env->versionregpath)) * sizeof(WCHAR));
+    buffer = malloc(sizeof(fmt_driversW) +
+            (wcslen(env->envname) + wcslen(env->versionregpath)) * sizeof(WCHAR));
 
     if (buffer) {
         wsprintfW(buffer, fmt_driversW, env->envname, env->versionregpath);
         RegCreateKeyW(HKEY_LOCAL_MACHINE, buffer, &retval);
-        HeapFree(GetProcessHeap(), 0, buffer);
+        free(buffer);
     }
     return retval;
 }
@@ -1389,9 +1389,9 @@ static VOID printer_free(printer_t * printer)
 
     monitor_unload(printer->pm);
 
-    heap_free(printer->printername);
-    heap_free(printer->name);
-    heap_free(printer);
+    free(printer->printername);
+    free(printer->name);
+    free(printer);
 }
 
 /******************************************************************
@@ -1423,7 +1423,7 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
         return NULL;
     }
 
-    printer = heap_alloc_zero(sizeof(printer_t));
+    printer = calloc(1, sizeof(printer_t));
     if (!printer) goto end;
 
     /* clone the base name. This is NULL for the printserver */
@@ -1631,7 +1631,7 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     if (di.pDependentFiles && *di.pDependentFiles)
     {
         WCHAR *reg, *reg_ptr, *in_ptr;
-        reg = reg_ptr = HeapAlloc( GetProcessHeap(), 0, multi_sz_lenW( di.pDependentFiles ) );
+        reg = reg_ptr = malloc( multi_sz_lenW( di.pDependentFiles ) );
 
         for (in_ptr = di.pDependentFiles; *in_ptr; in_ptr += wcslen( in_ptr ) + 1)
         {
@@ -1644,7 +1644,7 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
         *reg_ptr = 0;
 
         RegSetValueExW( hdrv, L"Dependent Files", 0, REG_MULTI_SZ, (BYTE*)reg, (reg_ptr - reg + 1) * sizeof(WCHAR) );
-        HeapFree( GetProcessHeap(), 0, reg );
+        free( reg );
     }
     else
         RegSetValueExW(hdrv, L"Dependent Files", 0, REG_MULTI_SZ, (const BYTE*)L"", sizeof(L""));
@@ -2446,8 +2446,8 @@ static BOOL WINAPI fpEnumPrintProcessors(LPWSTR pName, LPWSTR pEnvironment, DWOR
     if (!env)
         goto epp_cleanup;   /* ERROR_INVALID_ENVIRONMENT */
 
-    regpathW = heap_alloc(sizeof(fmt_printprocessorsW) +
-                            (wcslen(env->envname) * sizeof(WCHAR)));
+    regpathW = malloc(sizeof(fmt_printprocessorsW) +
+            (wcslen(env->envname) * sizeof(WCHAR)));
 
     if (!regpathW)
         goto epp_cleanup;
@@ -2469,7 +2469,7 @@ static BOOL WINAPI fpEnumPrintProcessors(LPWSTR pName, LPWSTR pEnvironment, DWOR
     res = TRUE;
 
 epp_cleanup:
-    heap_free(regpathW);
+    free(regpathW);
     if (pcbNeeded)  *pcbNeeded = needed;
     if (pcReturned) *pcReturned = numentries;
 
