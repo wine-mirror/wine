@@ -3462,6 +3462,7 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
         }
     }
 
+    TRACE("Created command stream %p.\n", cs);
     return cs;
 
 fail:
