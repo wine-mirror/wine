@@ -267,6 +267,25 @@ STRUCT_CHAIN_CONVERSIONS = {
     "VkInstanceCreateInfo": ["VK_STRUCTURE_TYPE_LOADER_INSTANCE_CREATE_INFO"],
 }
 
+# Some struct members are conditionally ignored and callers are free to leave them uninitialized.
+# We can't deduce that from XML, so we allow expressing it here.
+MEMBER_LENGTH_EXPRESSIONS = {
+    "VkWriteDescriptorSet": {
+        "pImageInfo":
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER || " +
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER || " +
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || " +
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE || " +
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT || " +
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM || " +
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM ? {len} : 0",
+        "pBufferInfo":
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || " +
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || " +
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || " +
+            "{struct}descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ? {len} : 0",
+    }
+}
 
 class Direction(Enum):
     """ Parameter direction: input, output, input_output. """
@@ -1129,12 +1148,16 @@ class VkVariable(object):
             parent = var.struct.members
 
         len += len_str
-        if not len_str in parent:
-            return len
+        if len_str in parent:
+            var = parent[parent.index(len_str)]
+            if var.is_pointer():
+                len = "*" + len
 
-        var = parent[parent.index(len_str)]
-        if var.is_pointer():
-            len = "*" + len
+        if isinstance(self.parent, VkStruct) and self.parent.name in MEMBER_LENGTH_EXPRESSIONS:
+            exprs = MEMBER_LENGTH_EXPRESSIONS[self.parent.name]
+            if self.name in exprs:
+                len = exprs[self.name].format(struct=prefix, len=len)
+
         return len
 
     def is_const(self):
@@ -1786,12 +1809,12 @@ class VkStruct(Sequence):
         structextends = struct.attrib.get("structextends")
         structextends = structextends.split(",") if structextends else []
 
-        members = []
+        s = VkStruct(name, [], returnedonly, structextends, union=union)
         for member in struct.findall("member"):
-            vk_member = VkMember.from_xml(member, returnedonly, members)
-            members.append(vk_member)
+            vk_member = VkMember.from_xml(member, returnedonly, s)
+            s.members.append(vk_member)
 
-        return VkStruct(name, members, returnedonly, structextends, union=union)
+        return s
 
     @staticmethod
     def decouple_structs(structs):

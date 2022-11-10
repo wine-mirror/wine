@@ -3327,8 +3327,8 @@ static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_
     out->dstArrayElement = in->dstArrayElement;
     out->descriptorCount = in->descriptorCount;
     out->descriptorType = in->descriptorType;
-    out->pImageInfo = convert_VkDescriptorImageInfo_array_win32_to_host(ctx, in->pImageInfo, in->descriptorCount);
-    out->pBufferInfo = convert_VkDescriptorBufferInfo_array_win32_to_host(ctx, in->pBufferInfo, in->descriptorCount);
+    out->pImageInfo = convert_VkDescriptorImageInfo_array_win32_to_host(ctx, in->pImageInfo, in->descriptorType == VK_DESCRIPTOR_TYPE_SAMPLER || in->descriptorType == VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER || in->descriptorType == VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE || in->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_IMAGE || in->descriptorType == VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT || in->descriptorType == VK_DESCRIPTOR_TYPE_SAMPLE_WEIGHT_IMAGE_QCOM || in->descriptorType == VK_DESCRIPTOR_TYPE_BLOCK_MATCH_IMAGE_QCOM ? in->descriptorCount : 0);
+    out->pBufferInfo = convert_VkDescriptorBufferInfo_array_win32_to_host(ctx, in->pBufferInfo, in->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || in->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || in->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || in->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ? in->descriptorCount : 0);
     out->pTexelBufferView = in->pTexelBufferView;
 }
 #endif /* USE_STRUCT_CONVERSION */
