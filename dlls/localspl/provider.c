@@ -216,10 +216,23 @@ typedef struct {
     LPCWSTR  versionsubdir;
 } printenv_t;
 
+#define MAX_JOB_ID 99999
+
+typedef struct {
+    struct list entry;
+    DWORD id;
+    WCHAR *filename;
+    WCHAR *document_title;
+    DEVMODEW *devmode;
+} job_t;
+
 typedef struct {
     WCHAR *name;
     struct list entry;
     LONG ref;
+
+    CRITICAL_SECTION jobs_cs;
+    struct list jobs;
 } printer_info_t;
 
 typedef struct {
@@ -227,6 +240,7 @@ typedef struct {
     LPWSTR name;
     monitor_t * pm;
     HANDLE hXcv;
+    DEVMODEW *devmode;
 } printer_t;
 
 /* ############################### */
@@ -235,6 +249,7 @@ static struct list monitor_handles = LIST_INIT( monitor_handles );
 static monitor_t * pm_localport;
 
 static struct list printers = LIST_INIT(printers);
+static LONG last_job_id;
 
 static const WCHAR fmt_driversW[] =
     L"System\\CurrentControlSet\\control\\Print\\Environments\\%s\\Drivers%s";
@@ -485,6 +500,8 @@ static printer_info_t* get_printer_info(const WCHAR *name)
     {
         info->ref = 1;
         list_add_head(&printers, &info->entry);
+        InitializeCriticalSection(&info->jobs_cs);
+        list_init(&info->jobs);
     }
     else if (info)
     {
@@ -494,6 +511,15 @@ static printer_info_t* get_printer_info(const WCHAR *name)
     LeaveCriticalSection(&printers_cs);
 
     return info;
+}
+
+static void free_job(job_t *job)
+{
+    list_remove(&job->entry);
+    free(job->filename);
+    free(job->document_title);
+    free(job->devmode);
+    free(job);
 }
 
 static void release_printer_info(printer_info_t *info)
@@ -508,8 +534,24 @@ static void release_printer_info(printer_info_t *info)
         LeaveCriticalSection(&printers_cs);
 
         free(info->name);
+        DeleteCriticalSection(&info->jobs_cs);
+        while (!list_empty(&info->jobs))
+        {
+            job_t *job = LIST_ENTRY(list_head(&info->jobs), job_t, entry);
+            free_job(job);
+        }
         free(info);
     }
+}
+
+static DEVMODEW * dup_devmode(const DEVMODEW *dm)
+{
+    DEVMODEW *ret;
+
+    if (!dm) return NULL;
+    ret = malloc(dm->dmSize + dm->dmDriverExtra);
+    if (ret) memcpy(ret, dm, dm->dmSize + dm->dmDriverExtra);
+    return ret;
 }
 
 static LONG WINAPI CreateKey(HANDLE hcKey, LPCWSTR pszSubKey, DWORD dwOptions,
@@ -1475,6 +1517,7 @@ static VOID printer_free(printer_t * printer)
 
     release_printer_info(printer->info);
     free(printer->name);
+    free(printer->devmode);
     free(printer);
 }
 
@@ -1571,6 +1614,9 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
     {
         TRACE("using the local printserver\n");
     }
+
+    if (pDefault && pDefault->pDevMode)
+        printer->devmode = dup_devmode(pDefault->pDevMode);
 
 end:
 
@@ -2824,6 +2870,109 @@ static BOOL WINAPI fpEnumForms( HANDLE printer, DWORD level, BYTE *form, DWORD s
     return TRUE;
 }
 
+static size_t get_spool_filename(DWORD job_id, WCHAR *buf, size_t len)
+{
+    static const WCHAR spool_path[] = L"spool\\PRINTERS\\";
+    size_t ret;
+
+    ret = GetSystemDirectoryW(NULL, 0) + ARRAY_SIZE(spool_path) + 10;
+    if (len < ret)
+        return ret;
+
+    ret = GetSystemDirectoryW(buf, ret);
+    if (buf[ret - 1] != '\\')
+        buf[ret++] = '\\';
+    memcpy(buf + ret, spool_path, sizeof(spool_path));
+    ret += ARRAY_SIZE(spool_path) - 1;
+    swprintf(buf + ret, 10, L"%05d.SPL", job_id);
+    ret += 10;
+    return ret;
+}
+
+static job_t* add_job(printer_t *printer, DOC_INFO_1W *info)
+{
+    DWORD job_id, last_id;
+    size_t len;
+    job_t *job;
+
+    job = calloc(1, sizeof(*job));
+    if (!job)
+        return NULL;
+    len = get_spool_filename(0, NULL, 0);
+    job->filename = malloc(len * sizeof(WCHAR));
+    if (!job->filename)
+    {
+        free(job);
+        return NULL;
+    }
+
+    while (1)
+    {
+        last_id = last_job_id;
+        job_id = last_id < MAX_JOB_ID ? last_id + 1 : 1;
+        if (InterlockedCompareExchange(&last_job_id, job_id, last_id) == last_id)
+            break;
+    }
+
+    job->id = job_id;
+    get_spool_filename(job_id, job->filename, len);
+    job->document_title = wcsdup(info->pDocName);
+    job->devmode = dup_devmode(printer->devmode);
+
+    EnterCriticalSection(&printer->info->jobs_cs);
+    list_add_tail(&printer->info->jobs, &job->entry);
+    LeaveCriticalSection(&printer->info->jobs_cs);
+    return job;
+}
+
+static BOOL WINAPI fpAddJob(HANDLE hprinter, DWORD level, BYTE *data, DWORD size, DWORD *needed)
+{
+    ADDJOB_INFO_1W *addjob = (ADDJOB_INFO_1W *)data;
+    printer_t *printer = (printer_t *)hprinter;
+    DOC_INFO_1W doc_info;
+    job_t *job;
+    size_t len;
+
+    TRACE("(%p %ld %p %ld %p)\n", hprinter, level, data, size, needed);
+
+    if (!printer || !printer->info)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (level != 1)
+    {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return FALSE;
+    }
+
+    if (!needed)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    len = get_spool_filename(0, NULL, 0);
+    *needed = sizeof(*addjob) + len * sizeof(WCHAR);
+    if (size < *needed)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    memset(&doc_info, 0, sizeof(doc_info));
+    doc_info.pDocName = (WCHAR *)L"Local Downlevel Document";
+    job = add_job(printer, &doc_info);
+    if (!job)
+        return FALSE;
+
+    addjob->JobId = job->id;
+    addjob->Path = (WCHAR *)(addjob + 1);
+    memcpy(addjob->Path, job->filename, len * sizeof(WCHAR));
+    return TRUE;
+}
+
 static const PRINTPROVIDOR backend = {
         fpOpenPrinter,
         NULL,   /* fpSetJob */
@@ -2851,7 +3000,7 @@ static const PRINTPROVIDOR backend = {
         NULL,   /* fpAbortPrinter */
         NULL,   /* fpReadPrinter */
         NULL,   /* fpEndDocPrinter */
-        NULL,   /* fpAddJob */
+        fpAddJob,
         NULL,   /* fpScheduleJob */
         NULL,   /* fpGetPrinterData */
         NULL,   /* fpSetPrinterData */
