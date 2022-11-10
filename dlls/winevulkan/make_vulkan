@@ -642,18 +642,6 @@ class VkFunction(object):
     def returns_longlong(self):
         return self.type in ["uint64_t", "VkDeviceAddress"]
 
-    def needs_unwrapping(self):
-        """ Check if the function needs any input/output type unwrapping.
-        Functions need input/output unwrapping if struct parameters have
-        wrapped handles.
-        """
-
-        for p in self.params:
-            if p.needs_unwrapping():
-                return True
-
-        return False
-
     def needs_dispatch(self):
         return self.dispatch
 
@@ -747,7 +735,7 @@ class VkFunction(object):
             body += "    return params.result;\n"
         return body
 
-    def body(self, conv, unwrap=True, params_prefix=""):
+    def body(self, conv, unwrap, params_prefix=""):
         body = ""
         needs_alloc = False
 
@@ -2234,17 +2222,6 @@ class StructConversionFunction(object):
         body += "#endif /* USE_STRUCT_CONVERSION */\n\n"
 
         return body
-
-    def _set_name(self):
-        name = "convert_{0}_".format(self.type)
-        win_type = "win32" if self.conv else "win64"
-        host_part = "host" if self.unwrap else "unwrapped_host"
-        if self.direction == Direction.INPUT:
-            name += "{0}_to_{1}".format(win_type, host_part)
-        else: # Direction.OUTPUT
-            name += "{0}_to_{1}".format(host_part, win_type)
-
-        self.name = name
 
 
 class ArrayConversionFunction(object):
