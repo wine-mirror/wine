@@ -229,14 +229,14 @@ static int parse_date_literal(parser_ctx_t *ctx, DATE *ret)
 
     len += ctx->ptr-ptr;
 
-    rptr = heap_alloc((len+1)*sizeof(WCHAR));
+    rptr = malloc((len+1)*sizeof(WCHAR));
     if(!rptr)
         return 0;
 
     memcpy( rptr, ptr, len * sizeof(WCHAR));
     rptr[len] = 0;
     res = VarDateFromStr(rptr, ctx->lcid, 0, ret);
-    heap_free(rptr);
+    free(rptr);
     if (FAILED(res)) {
         FIXME("Invalid date literal\n");
         return 0;

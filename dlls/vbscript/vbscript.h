@@ -31,7 +31,6 @@
 #include "vbscript_classes.h"
 #include "vbscript_defs.h"
 
-#include "wine/heap.h"
 #include "wine/list.h"
 
 typedef struct {
@@ -412,22 +411,6 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,vo
 HRESULT WINAPI VBScriptRegExpFactory_CreateInstance(IClassFactory*,IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 
 BSTR get_vbscript_string(int) DECLSPEC_HIDDEN;
-
-static inline LPWSTR heap_strdupW(LPCWSTR str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD size;
-
-        size = (lstrlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        if(ret)
-            memcpy(ret, str, size);
-    }
-
-    return ret;
-}
 
 #define VBSCRIPT_BUILD_VERSION 16978
 #define VBSCRIPT_MAJOR_VERSION 5

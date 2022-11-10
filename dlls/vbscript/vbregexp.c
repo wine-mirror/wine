@@ -183,9 +183,9 @@ static ULONG WINAPI SubMatches_Release(ISubMatches *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        heap_free(This->match);
-        heap_free(This->result);
-        heap_free(This);
+        free(This->match);
+        free(This->result);
+        free(This);
     }
 
     return ref;
@@ -307,7 +307,7 @@ static HRESULT create_sub_matches(DWORD pos, match_state_t *result, SubMatches *
     if(FAILED(hres))
         return hres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -315,9 +315,9 @@ static HRESULT create_sub_matches(DWORD pos, match_state_t *result, SubMatches *
 
     ret->result = result;
     if(result) {
-        ret->match = heap_alloc((result->match_len+1) * sizeof(WCHAR));
+        ret->match = malloc((result->match_len+1) * sizeof(WCHAR));
         if(!ret->match) {
-            heap_free(ret);
+            free(ret);
             return E_OUTOFMEMORY;
         }
         memcpy(ret->match, result->cp-result->match_len, result->match_len*sizeof(WCHAR));
@@ -391,7 +391,7 @@ static ULONG WINAPI Match2_Release(IMatch2 *iface)
 
     if(!ref) {
         ISubMatches_Release(&This->sub_matches->ISubMatches_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -605,14 +605,14 @@ static HRESULT create_match2(DWORD pos, match_state_t **result, IMatch2 **match)
     if(FAILED(hres))
         return hres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
     ret->index = pos;
     hres = create_sub_matches(pos, result ? *result : NULL, &ret->sub_matches);
     if(FAILED(hres)) {
-        heap_free(ret);
+        free(ret);
         return hres;
     }
     if(result)
@@ -671,7 +671,7 @@ static ULONG WINAPI MatchCollectionEnum_Release(IEnumVARIANT *iface)
 
     if(!ref) {
         IMatchCollection2_Release(This->mc);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -754,7 +754,7 @@ static HRESULT create_enum_variant_mc2(IMatchCollection2 *mc, ULONG pos, IEnumVA
 {
     MatchCollectionEnum *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -827,9 +827,9 @@ static ULONG WINAPI MatchCollection2_Release(IMatchCollection2 *iface)
 
         for(i=0; i<This->count; i++)
             IMatch2_Release(This->matches[i]);
-        heap_free(This->matches);
+        free(This->matches);
 
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1024,12 +1024,12 @@ static HRESULT add_match(IMatchCollection2 *iface, IMatch2 *add)
     TRACE("(%p)->(%p)\n", This, add);
 
     if(!This->size) {
-        This->matches = heap_alloc(8*sizeof(IMatch*));
+        This->matches = malloc(8*sizeof(IMatch*));
         if(!This->matches)
             return E_OUTOFMEMORY;
         This->size = 8;
     }else if(This->size == This->count) {
-        IMatch2 **new_matches = heap_realloc(This->matches, 2*This->size*sizeof(IMatch*));
+        IMatch2 **new_matches = realloc(This->matches, 2*This->size*sizeof(IMatch*));
         if(!new_matches)
             return E_OUTOFMEMORY;
 
@@ -1051,7 +1051,7 @@ static HRESULT create_match_collection2(IMatchCollection2 **match_collection)
     if(FAILED(hres))
         return hres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1116,11 +1116,11 @@ static ULONG WINAPI RegExp2_Release(IRegExp2 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        heap_free(This->pattern);
+        free(This->pattern);
         if(This->regexp)
             regexp_destroy(This->regexp);
         heap_pool_free(&This->pool);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1199,7 +1199,7 @@ static HRESULT WINAPI RegExp2_put_Pattern(IRegExp2 *iface, BSTR pattern)
 
     if(pattern && *pattern) {
         SIZE_T size = (SysStringLen(pattern)+1) * sizeof(WCHAR);
-        new_pattern = heap_alloc(size);
+        new_pattern = malloc(size);
         if(!new_pattern)
             return E_OUTOFMEMORY;
         memcpy(new_pattern, pattern, size);
@@ -1207,7 +1207,7 @@ static HRESULT WINAPI RegExp2_put_Pattern(IRegExp2 *iface, BSTR pattern)
         new_pattern = NULL;
     }
 
-    heap_free(This->pattern);
+    free(This->pattern);
     This->pattern = new_pattern;
 
     if(This->regexp) {
@@ -1363,13 +1363,13 @@ static HRESULT WINAPI RegExp2_Execute(IRegExp2 *iface,
         hres = regexp_execute(This->regexp, NULL, &This->pool,
                 sourceString, SysStringLen(sourceString), result);
         if(hres != S_OK) {
-            heap_free(result);
+            free(result);
             break;
         }
         pos = result->cp;
 
         hres = create_match2(result->cp-result->match_len-sourceString, &result, &add);
-        heap_free(result);
+        free(result);
         if(FAILED(hres))
             break;
         hres = add_match(match_collection, add);
@@ -1454,9 +1454,9 @@ static BOOL strbuf_ensure_size(strbuf_t *buf, unsigned len)
     if(new_size < len)
         new_size = len;
     if(buf->buf)
-        new_buf = heap_realloc(buf->buf, new_size*sizeof(WCHAR));
+        new_buf = realloc(buf->buf, new_size*sizeof(WCHAR));
     else
-        new_buf = heap_alloc(new_size*sizeof(WCHAR));
+        new_buf = malloc(new_size*sizeof(WCHAR));
     if(!new_buf)
         return FALSE;
 
@@ -1606,7 +1606,7 @@ static HRESULT WINAPI RegExp2_Replace(IRegExp2 *iface, BSTR source, VARIANT repl
     }
 
     heap_pool_clear(mark);
-    heap_free(buf.buf);
+    free(buf.buf);
     SysFreeString(replace);
     return hres;
 }
@@ -1673,7 +1673,7 @@ BSTR string_replace(BSTR string, BSTR find, BSTR replace, int from, int cnt, int
             ret = SysAllocStringLen(buf.buf, buf.len);
     }
 
-    heap_free(buf.buf);
+    free(buf.buf);
     return ret;
 }
 
@@ -1817,7 +1817,7 @@ HRESULT create_regexp(IDispatch **ret)
     if(FAILED(hres))
         return hres;
 
-    regexp = heap_alloc_zero(sizeof(*regexp));
+    regexp = calloc(1, sizeof(*regexp));
     if(!regexp)
         return E_OUTOFMEMORY;
 

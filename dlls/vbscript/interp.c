@@ -267,9 +267,9 @@ static HRESULT add_dynamic_var(exec_ctx_t *ctx, const WCHAR *name,
         if(cnt > script_obj->global_vars_size) {
             dynamic_var_t **new_vars;
             if(script_obj->global_vars)
-                new_vars = heap_realloc(script_obj->global_vars, cnt * 2 * sizeof(*new_vars));
+                new_vars = realloc(script_obj->global_vars, cnt * 2 * sizeof(*new_vars));
             else
-                new_vars = heap_alloc(cnt * 2 * sizeof(*new_vars));
+                new_vars = malloc(cnt * 2 * sizeof(*new_vars));
             if(!new_vars)
                 return E_OUTOFMEMORY;
             script_obj->global_vars = new_vars;
@@ -318,7 +318,7 @@ static HRESULT stack_push(exec_ctx_t *ctx, VARIANT *v)
     if(ctx->stack_size == ctx->top) {
         VARIANT *new_stack;
 
-        new_stack = heap_realloc(ctx->stack, ctx->stack_size*2*sizeof(*ctx->stack));
+        new_stack = realloc(ctx->stack, ctx->stack_size*2*sizeof(*ctx->stack));
         if(!new_stack) {
             VariantClear(v);
             return E_OUTOFMEMORY;
@@ -556,7 +556,7 @@ static HRESULT array_access(exec_ctx_t *ctx, SAFEARRAY *array, DISPPARAMS *dp, V
         return E_FAIL;
     }
 
-    indices = heap_alloc(sizeof(*indices) * argc);
+    indices = malloc(sizeof(*indices) * argc);
     if(!indices) {
         SafeArrayUnlock(array);
         return E_OUTOFMEMORY;
@@ -565,7 +565,7 @@ static HRESULT array_access(exec_ctx_t *ctx, SAFEARRAY *array, DISPPARAMS *dp, V
     for(i=0; i<argc; i++) {
         hres = to_int(get_arg(dp, i), (int *)(indices+i));
         if(FAILED(hres)) {
-            heap_free(indices);
+            free(indices);
             SafeArrayUnlock(array);
             return hres;
         }
@@ -573,7 +573,7 @@ static HRESULT array_access(exec_ctx_t *ctx, SAFEARRAY *array, DISPPARAMS *dp, V
 
     hres = SafeArrayPtrOfIndex(array, indices, (void**)ret);
     SafeArrayUnlock(array);
-    heap_free(indices);
+    free(indices);
     return hres;
 }
 
@@ -1216,7 +1216,7 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
         ref_t ref;
 
         if(!ctx->arrays) {
-            ctx->arrays = heap_alloc_zero(ctx->func->array_cnt * sizeof(SAFEARRAY*));
+            ctx->arrays = calloc(ctx->func->array_cnt, sizeof(SAFEARRAY*));
             if(!ctx->arrays)
                 return E_OUTOFMEMORY;
         }
@@ -1260,13 +1260,13 @@ static HRESULT array_bounds_from_stack(exec_ctx_t *ctx, unsigned dim_cnt, SAFEAR
     int dim;
     HRESULT hres;
 
-    if(!(bounds = heap_alloc(dim_cnt * sizeof(*bounds))))
+    if(!(bounds = malloc(dim_cnt * sizeof(*bounds))))
         return E_OUTOFMEMORY;
 
     for(i = 0; i < dim_cnt; i++) {
         hres = to_int(stack_top(ctx, dim_cnt - i - 1), &dim);
         if(FAILED(hres)) {
-            heap_free(bounds);
+            free(bounds);
             return hres;
         }
 
@@ -1306,7 +1306,7 @@ static HRESULT interp_redim(exec_ctx_t *ctx)
         return hres;
 
     array = SafeArrayCreate(VT_VARIANT, dim_cnt, bounds);
-    heap_free(bounds);
+    free(bounds);
     if(!array)
         return E_OUTOFMEMORY;
 
@@ -2398,13 +2398,13 @@ static void release_exec(exec_ctx_t *ctx)
             if(ctx->arrays[i])
                 SafeArrayDestroy(ctx->arrays[i]);
         }
-        heap_free(ctx->arrays);
+        free(ctx->arrays);
     }
 
     heap_pool_free(&ctx->heap);
-    heap_free(ctx->args);
-    heap_free(ctx->vars);
-    heap_free(ctx->stack);
+    free(ctx->args);
+    free(ctx->vars);
+    free(ctx->stack);
 }
 
 HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbdisp_t *vbthis, DISPPARAMS *dp, VARIANT *res)
@@ -2427,7 +2427,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
         VARIANT *v;
         unsigned i;
 
-        exec.args = heap_alloc_zero(func->arg_cnt * sizeof(VARIANT));
+        exec.args = calloc(func->arg_cnt, sizeof(VARIANT));
         if(!exec.args) {
             release_exec(&exec);
             return E_OUTOFMEMORY;
@@ -2454,7 +2454,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
     }
 
     if(func->var_cnt) {
-        exec.vars = heap_alloc_zero(func->var_cnt * sizeof(VARIANT));
+        exec.vars = calloc(func->var_cnt, sizeof(VARIANT));
         if(!exec.vars) {
             release_exec(&exec);
             return E_OUTOFMEMORY;
@@ -2465,7 +2465,7 @@ HRESULT exec_script(script_ctx_t *ctx, BOOL extern_caller, function_t *func, vbd
 
     exec.stack_size = 16;
     exec.top = 0;
-    exec.stack = heap_alloc(exec.stack_size * sizeof(VARIANT));
+    exec.stack = malloc(exec.stack_size * sizeof(VARIANT));
     if(!exec.stack) {
         release_exec(&exec);
         return E_OUTOFMEMORY;

@@ -98,7 +98,7 @@ static ULONG WINAPI Builtin_Release(IDispatch *iface)
 
     if(!ref) {
         assert(!This->ctx);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -249,7 +249,7 @@ static HRESULT WINAPI Builtin_Invoke(IDispatch *iface, DISPID id, REFIID riid, L
     if(argn <= ARRAY_SIZE(args_buf)) {
         args = args_buf;
     }else {
-        args = heap_alloc(argn * sizeof(*args));
+        args = malloc(argn * sizeof(*args));
         if(!args)
             return E_OUTOFMEMORY;
     }
@@ -263,7 +263,7 @@ static HRESULT WINAPI Builtin_Invoke(IDispatch *iface, DISPID id, REFIID riid, L
 
     hres = prop->proc(This, args, dp->cArgs, res);
     if(args != args_buf)
-        heap_free(args);
+        free(args);
     return hres;
 }
 
@@ -281,7 +281,7 @@ static HRESULT create_builtin_dispatch(script_ctx_t *ctx, const builtin_prop_t *
 {
     BuiltinDisp *disp;
 
-    if(!(disp = heap_alloc(sizeof(*disp))))
+    if(!(disp = malloc(sizeof(*disp))))
         return E_OUTOFMEMORY;
 
     disp->IDispatch_iface.lpVtbl = &BuiltinDispVtbl;
@@ -611,7 +611,7 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
         if(orig_title && *orig_title) {
             WCHAR *ptr;
 
-            title = title_buf = heap_alloc(sizeof(L"VBScript") + (lstrlenW(orig_title)+2)*sizeof(WCHAR));
+            title = title_buf = malloc(sizeof(L"VBScript") + (lstrlenW(orig_title)+2)*sizeof(WCHAR));
             if(!title)
                 return E_OUTOFMEMORY;
 
@@ -637,7 +637,7 @@ static HRESULT show_msgbox(script_ctx_t *ctx, BSTR prompt, unsigned type, BSTR o
         }
     }
 
-    heap_free(title_buf);
+    free(title_buf);
     IActiveScriptSiteWindow_Release(acts_window);
     if(FAILED(hres)) {
         FIXME("failed: %08lx\n", hres);
@@ -2630,7 +2630,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
     len = SysStringLen(string);
     count = 0;
 
-    indices = heap_alloc( indices_max * sizeof(int));
+    indices = malloc( indices_max * sizeof(int));
     if(!indices) {
         hres = E_OUTOFMEMORY;
         goto error;
@@ -2651,7 +2651,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 
         if (count == indices_max) {
             indices_max *= 2;
-            indices = heap_realloc( indices, indices_max * sizeof(int));
+            indices = realloc( indices, indices_max * sizeof(int));
             if(!indices) {
                 hres = E_OUTOFMEMORY;
                 goto error;
@@ -2703,7 +2703,7 @@ error:
         SafeArrayDestroy(sa);
     }
 
-    heap_free(indices);
+    free(indices);
     if(V_VT(args) != VT_BSTR)
         SysFreeString(string);
     if(args_cnt > 1 && V_VT(args+1) != VT_BSTR)

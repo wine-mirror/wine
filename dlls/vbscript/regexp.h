@@ -73,7 +73,7 @@ static inline match_state_t* alloc_match_state(regexp_t *regexp,
     size_t size = offsetof(match_state_t, parens) + regexp->parenCount*sizeof(RECapture);
     match_state_t *ret;
 
-    ret = pool ? heap_pool_alloc(pool, size) : heap_alloc(size);
+    ret = pool ? heap_pool_alloc(pool, size) : malloc(size);
     if(!ret)
         return NULL;
 

@@ -77,7 +77,7 @@ static ULONG WINAPI safearray_iter_IEnumVARIANT_Release(IEnumVARIANT *iface)
     if(!ref) {
         if(This->sa)
             SafeArrayUnlock(This->sa);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -170,14 +170,14 @@ HRESULT create_safearray_iter(SAFEARRAY *sa, IEnumVARIANT **ev)
         return E_NOTIMPL;
     }
 
-    iter = heap_alloc(sizeof(*iter));
+    iter = malloc(sizeof(*iter));
     if(!iter)
         return E_OUTOFMEMORY;
 
     if(sa) {
         hres = SafeArrayLock(sa);
         if(FAILED(hres)) {
-            heap_free(iter);
+            free(iter);
             return hres;
         }
     }

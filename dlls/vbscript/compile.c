@@ -155,7 +155,7 @@ static unsigned push_instr(compile_ctx_t *ctx, vbsop_t op)
     if(ctx->instr_size == ctx->instr_cnt) {
         instr_t *new_instr;
 
-        new_instr = heap_realloc(ctx->code->instrs, ctx->instr_size*2*sizeof(instr_t));
+        new_instr = realloc(ctx->code->instrs, ctx->instr_size*2*sizeof(instr_t));
         if(!new_instr)
             return 0;
 
@@ -260,14 +260,14 @@ static HRESULT push_instr_date(compile_ctx_t *ctx, vbsop_t op, DATE arg)
 static BSTR alloc_bstr_arg(compile_ctx_t *ctx, const WCHAR *str)
 {
     if(!ctx->code->bstr_pool_size) {
-        ctx->code->bstr_pool = heap_alloc(8 * sizeof(BSTR));
+        ctx->code->bstr_pool = malloc(8 * sizeof(BSTR));
         if(!ctx->code->bstr_pool)
             return NULL;
         ctx->code->bstr_pool_size = 8;
     }else if(ctx->code->bstr_pool_size == ctx->code->bstr_cnt) {
         BSTR *new_pool;
 
-        new_pool = heap_realloc(ctx->code->bstr_pool, ctx->code->bstr_pool_size*2*sizeof(BSTR));
+        new_pool = realloc(ctx->code->bstr_pool, ctx->code->bstr_pool_size*2*sizeof(BSTR));
         if(!new_pool)
             return NULL;
 
@@ -340,14 +340,14 @@ static HRESULT push_instr_uint_bstr(compile_ctx_t *ctx, vbsop_t op, unsigned arg
 static unsigned alloc_label(compile_ctx_t *ctx)
 {
     if(!ctx->labels_size) {
-        ctx->labels = heap_alloc(8 * sizeof(*ctx->labels));
+        ctx->labels = malloc(8 * sizeof(*ctx->labels));
         if(!ctx->labels)
             return 0;
         ctx->labels_size = 8;
     }else if(ctx->labels_size == ctx->labels_cnt) {
         unsigned *new_labels;
 
-        new_labels = heap_realloc(ctx->labels, 2*ctx->labels_size*sizeof(*ctx->labels));
+        new_labels = realloc(ctx->labels, 2*ctx->labels_size*sizeof(*ctx->labels));
         if(!new_labels)
             return 0;
 
@@ -963,7 +963,7 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
         case_cnt++;
 
     if(case_cnt) {
-        case_labels = heap_alloc(case_cnt*sizeof(*case_labels));
+        case_labels = malloc(case_cnt*sizeof(*case_labels));
         if(!case_labels)
             return E_OUTOFMEMORY;
     }
@@ -995,19 +995,19 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
     }
 
     if(FAILED(hres)) {
-        heap_free(case_labels);
+        free(case_labels);
         return hres;
     }
 
     hres = push_instr_uint(ctx, OP_pop, 1);
     if(FAILED(hres)) {
-        heap_free(case_labels);
+        free(case_labels);
         return hres;
     }
 
     hres = push_instr_addr(ctx, OP_jmp, case_iter ? case_labels[i] : end_label);
     if(FAILED(hres)) {
-        heap_free(case_labels);
+        free(case_labels);
         return hres;
     }
 
@@ -1025,7 +1025,7 @@ static HRESULT compile_select_statement(compile_ctx_t *ctx, select_statement_t *
             break;
     }
 
-    heap_free(case_labels);
+    free(case_labels);
     if(FAILED(hres))
         return hres;
 
@@ -1923,10 +1923,10 @@ void release_vbscode(vbscode_t *code)
         release_named_item(code->named_item);
     heap_pool_free(&code->heap);
 
-    heap_free(code->bstr_pool);
-    heap_free(code->source);
-    heap_free(code->instrs);
-    heap_free(code);
+    free(code->bstr_pool);
+    free(code->source);
+    free(code->instrs);
+    free(code);
 }
 
 static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source, DWORD_PTR cookie, unsigned start_line)
@@ -1938,13 +1938,13 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source, DWORD_P
     if(len > INT32_MAX)
         return NULL;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return NULL;
 
-    ret->source = heap_alloc((len + 1) * sizeof(WCHAR));
+    ret->source = malloc((len + 1) * sizeof(WCHAR));
     if(!ret->source) {
-        heap_free(ret);
+        free(ret);
         return NULL;
     }
     if(len)
@@ -1954,7 +1954,7 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source, DWORD_P
     ret->cookie = cookie;
     ret->start_line = start_line;
 
-    ret->instrs = heap_alloc(32*sizeof(instr_t));
+    ret->instrs = malloc(32*sizeof(instr_t));
     if(!ret->instrs) {
         release_vbscode(ret);
         return NULL;
@@ -1975,7 +1975,7 @@ static vbscode_t *alloc_vbscode(compile_ctx_t *ctx, const WCHAR *source, DWORD_P
 static void release_compiler(compile_ctx_t *ctx)
 {
     parser_release(&ctx->parser);
-    heap_free(ctx->labels);
+    free(ctx->labels);
     if(ctx->code)
         release_vbscode(ctx->code);
 }

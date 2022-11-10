@@ -203,7 +203,7 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
 
             dp.cArgs = arg_cnt(params) + 1;
             if(dp.cArgs > ARRAY_SIZE(buf)) {
-                dp.rgvarg = heap_alloc(dp.cArgs*sizeof(VARIANT));
+                dp.rgvarg = malloc(dp.cArgs*sizeof(VARIANT));
                 if(!dp.rgvarg)
                     return E_OUTOFMEMORY;
             }else {
@@ -213,7 +213,7 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
             hres = get_propput_arg(This->desc->ctx, params, flags, dp.rgvarg, &needs_release);
             if(FAILED(hres)) {
                 if(dp.rgvarg != buf)
-                    heap_free(dp.rgvarg);
+                    free(dp.rgvarg);
                 return hres;
             }
 
@@ -221,7 +221,7 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
             if(!func) {
                 FIXME("no letter/setter\n");
                 if(dp.rgvarg != buf)
-                    heap_free(dp.rgvarg);
+                    free(dp.rgvarg);
                 return DISP_E_MEMBERNOTFOUND;
             }
 
@@ -233,7 +233,7 @@ static HRESULT invoke_vbdisp(vbdisp_t *This, DISPID id, DWORD flags, BOOL extern
             if(needs_release)
                 VariantClear(dp.rgvarg);
             if(dp.rgvarg != buf)
-                heap_free(dp.rgvarg);
+                free(dp.rgvarg);
             return hres;
         }
         default:
@@ -332,8 +332,8 @@ static ULONG WINAPI DispatchEx_Release(IDispatchEx *iface)
     if(!ref && run_terminator(This)) {
         clean_props(This);
         list_remove(&This->entry);
-        heap_free(This->arrays);
-        heap_free(This);
+        free(This->arrays);
+        free(This);
     }
 
     return ref;
@@ -488,7 +488,7 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     vbdisp_t *vbdisp;
     HRESULT hres = S_OK;
 
-    vbdisp = heap_alloc_zero( FIELD_OFFSET( vbdisp_t, props[desc->prop_cnt] ));
+    vbdisp = calloc( 1, FIELD_OFFSET( vbdisp_t, props[desc->prop_cnt] ));
     if(!vbdisp)
         return E_OUTOFMEMORY;
 
@@ -499,7 +499,7 @@ HRESULT create_vbdisp(const class_desc_t *desc, vbdisp_t **ret)
     list_add_tail(&desc->ctx->objects, &vbdisp->entry);
 
     if(desc->array_cnt) {
-        vbdisp->arrays = heap_alloc_zero(desc->array_cnt * sizeof(*vbdisp->arrays));
+        vbdisp->arrays = calloc(desc->array_cnt, sizeof(*vbdisp->arrays));
         if(vbdisp->arrays) {
             unsigned i, j;
 
@@ -633,8 +633,8 @@ static ULONG WINAPI ScriptTypeInfo_Release(ITypeInfo *iface)
             release_vbscode(This->funcs[i].func->code_ctx);
 
         IDispatchEx_Release(&This->disp->IDispatchEx_iface);
-        heap_free(This->funcs);
-        heap_free(This);
+        free(This->funcs);
+        free(This);
     }
     return ref;
 }
@@ -648,7 +648,7 @@ static HRESULT WINAPI ScriptTypeInfo_GetTypeAttr(ITypeInfo *iface, TYPEATTR **pp
 
     if (!ppTypeAttr) return E_INVALIDARG;
 
-    attr = heap_alloc_zero(sizeof(*attr));
+    attr = calloc(1, sizeof(*attr));
     if (!attr) return E_OUTOFMEMORY;
 
     attr->guid = GUID_VBScriptTypeInfo;
@@ -697,7 +697,7 @@ static HRESULT WINAPI ScriptTypeInfo_GetFuncDesc(ITypeInfo *iface, UINT index, F
     func = This->funcs[index].func;
 
     /* Store the parameter array after the FUNCDESC structure */
-    desc = heap_alloc_zero(sizeof(*desc) + sizeof(ELEMDESC) * func->arg_cnt);
+    desc = calloc(1, sizeof(*desc) + sizeof(ELEMDESC) * func->arg_cnt);
     if (!desc) return E_OUTOFMEMORY;
 
     desc->memid = This->funcs[index].memid;
@@ -725,7 +725,7 @@ static HRESULT WINAPI ScriptTypeInfo_GetVarDesc(ITypeInfo *iface, UINT index, VA
     if (!ppVarDesc) return E_INVALIDARG;
     if (index >= This->num_vars) return TYPE_E_ELEMENTNOTFOUND;
 
-    desc = heap_alloc_zero(sizeof(*desc));
+    desc = calloc(1, sizeof(*desc));
     if (!desc) return E_OUTOFMEMORY;
 
     desc->memid = index + 1;
@@ -1061,7 +1061,7 @@ static void WINAPI ScriptTypeInfo_ReleaseTypeAttr(ITypeInfo *iface, TYPEATTR *pT
 
     TRACE("(%p)->(%p)\n", This, pTypeAttr);
 
-    heap_free(pTypeAttr);
+    free(pTypeAttr);
 }
 
 static void WINAPI ScriptTypeInfo_ReleaseFuncDesc(ITypeInfo *iface, FUNCDESC *pFuncDesc)
@@ -1070,7 +1070,7 @@ static void WINAPI ScriptTypeInfo_ReleaseFuncDesc(ITypeInfo *iface, FUNCDESC *pF
 
     TRACE("(%p)->(%p)\n", This, pFuncDesc);
 
-    heap_free(pFuncDesc);
+    free(pFuncDesc);
 }
 
 static void WINAPI ScriptTypeInfo_ReleaseVarDesc(ITypeInfo *iface, VARDESC *pVarDesc)
@@ -1079,7 +1079,7 @@ static void WINAPI ScriptTypeInfo_ReleaseVarDesc(ITypeInfo *iface, VARDESC *pVar
 
     TRACE("(%p)->(%p)\n", This, pVarDesc);
 
-    heap_free(pVarDesc);
+    free(pVarDesc);
 }
 
 static const ITypeInfoVtbl ScriptTypeInfoVtbl = {
@@ -1267,9 +1267,9 @@ static ULONG WINAPI ScriptDisp_Release(IDispatchEx *iface)
             release_dynamic_var(This->global_vars[i]);
 
         heap_pool_free(&This->heap);
-        heap_free(This->global_vars);
-        heap_free(This->global_funcs);
-        heap_free(This);
+        free(This->global_vars);
+        free(This->global_funcs);
+        free(This);
     }
 
     return ref;
@@ -1297,7 +1297,7 @@ static HRESULT WINAPI ScriptDisp_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
     if(iTInfo)
         return DISP_E_BADINDEX;
 
-    if(!(type_info = heap_alloc(sizeof(*type_info))))
+    if(!(type_info = calloc(1, sizeof(*type_info))))
         return E_OUTOFMEMORY;
 
     for(i = 0; i < This->global_funcs_cnt; i++)
@@ -1311,10 +1311,10 @@ static HRESULT WINAPI ScriptDisp_GetTypeInfo(IDispatchEx *iface, UINT iTInfo, LC
     type_info->num_vars = This->global_vars_cnt;
     type_info->disp = This;
 
-    type_info->funcs = heap_alloc(sizeof(*type_info->funcs) * num_funcs);
+    type_info->funcs = calloc(num_funcs, sizeof(*type_info->funcs));
     if(!type_info->funcs)
     {
-        heap_free(type_info);
+        free(type_info);
         return E_OUTOFMEMORY;
     }
 
@@ -1508,7 +1508,7 @@ HRESULT create_script_disp(script_ctx_t *ctx, ScriptDisp **ret)
 {
     ScriptDisp *script_disp;
 
-    script_disp = heap_alloc_zero(sizeof(*script_disp));
+    script_disp = calloc(1, sizeof(*script_disp));
     if(!script_disp)
         return E_OUTOFMEMORY;
 

@@ -66,12 +66,12 @@ void *heap_pool_alloc(heap_pool_t *heap, size_t size)
 
     if(!heap->block_cnt) {
         if(!heap->blocks) {
-            heap->blocks = heap_alloc(sizeof(void*));
+            heap->blocks = malloc(sizeof(void*));
             if(!heap->blocks)
                 return NULL;
         }
 
-        tmp = heap_alloc(block_size(0));
+        tmp = malloc(block_size(0));
         if(!tmp)
             return NULL;
 
@@ -87,12 +87,12 @@ void *heap_pool_alloc(heap_pool_t *heap, size_t size)
 
     if(size <= block_size(heap->last_block+1)) {
         if(heap->last_block+1 == heap->block_cnt) {
-            tmp = heap_realloc(heap->blocks, (heap->block_cnt+1)*sizeof(void*));
+            tmp = realloc(heap->blocks, (heap->block_cnt+1)*sizeof(void*));
             if(!tmp)
                 return NULL;
 
             heap->blocks = tmp;
-            heap->blocks[heap->block_cnt] = heap_alloc(block_size(heap->block_cnt));
+            heap->blocks[heap->block_cnt] = malloc(block_size(heap->block_cnt));
             if(!heap->blocks[heap->block_cnt])
                 return NULL;
 
@@ -104,7 +104,7 @@ void *heap_pool_alloc(heap_pool_t *heap, size_t size)
         return heap->blocks[heap->last_block];
     }
 
-    list = heap_alloc(size + sizeof(struct list));
+    list = malloc(size + sizeof(struct list));
     if(!list)
         return NULL;
 
@@ -137,7 +137,7 @@ void heap_pool_clear(heap_pool_t *heap)
 
     while((tmp = list_next(&heap->custom_blocks, &heap->custom_blocks))) {
         list_remove(tmp);
-        heap_free(tmp);
+        free(tmp);
     }
 
     if(WARN_ON(heap)) {
@@ -158,8 +158,8 @@ void heap_pool_free(heap_pool_t *heap)
     heap_pool_clear(heap);
 
     for(i=0; i < heap->block_cnt; i++)
-        heap_free(heap->blocks[i]);
-    heap_free(heap->blocks);
+        free(heap->blocks[i]);
+    free(heap->blocks);
 
     heap_pool_init(heap);
 }
