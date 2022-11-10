@@ -76,6 +76,8 @@ static DWORD (WINAPI *pCtrlRoutine)(void *);
 
 SYSTEM_DLL_INIT_BLOCK LdrSystemDllInitBlock = { 0xf0 };
 
+unixlib_handle_t ntdll_unix_handle = 0;
+
 /* windows directory */
 const WCHAR windows_dir[] = L"C:\\windows";
 /* system directory with trailing backslash */
@@ -2201,6 +2203,8 @@ static void build_ntdll_module(void)
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
     node_ntdll = wm->ldr.DdagNode;
     if (TRACE_ON(relay)) RELAY_SetupDLL( meminfo.AllocationBase );
+    NtQueryVirtualMemory( GetCurrentProcess(), meminfo.AllocationBase, MemoryWineUnixFuncs,
+                          &ntdll_unix_handle, sizeof(ntdll_unix_handle), NULL );
 }
 
 
@@ -2623,10 +2627,10 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     void *module;
     NTSTATUS status;
     WINE_MODREF *wm;
-    UNICODE_STRING win_name = *nt_name;
+    struct load_so_dll_params params = { *nt_name, &module };
 
-    TRACE( "trying %s as so lib\n", debugstr_us(&win_name) );
-    if ((status = unix_funcs->load_so_dll( &win_name, &module )))
+    TRACE( "trying %s as so lib\n", debugstr_us(nt_name) );
+    if ((status = NTDLL_UNIX_CALL( load_so_dll, &params )))
     {
         WARN( "failed to load .so lib %s\n", debugstr_us(nt_name) );
         if (status == STATUS_INVALID_IMAGE_FORMAT) status = STATUS_INVALID_IMAGE_NOT_MZ;
@@ -2643,7 +2647,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     {
         SECTION_IMAGE_INFORMATION image_info = { 0 };
 
-        if ((status = build_module( load_path, &win_name, &module, &image_info, NULL, flags, FALSE, &wm )))
+        if ((status = build_module( load_path, &params.nt_name, &module, &image_info, NULL, flags, FALSE, &wm )))
         {
             if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
             return status;
@@ -3152,7 +3156,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD fl
     switch (nts)
     {
     case STATUS_INVALID_IMAGE_NOT_MZ:  /* not in PE format, maybe it's a .so file */
-        nts = load_so_dll( load_path, &nt_name, flags, pwm );
+        if (ntdll_unix_handle) nts = load_so_dll( load_path, &nt_name, flags, pwm );
         break;
 
     case STATUS_SUCCESS:  /* valid PE file */
@@ -4598,11 +4602,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 }
 
 
-static NTSTATUS CDECL load_so_dll_fallback( UNICODE_STRING *nt_name, void **module )
-{
-    return STATUS_INVALID_IMAGE_FORMAT;
-}
-
 static void CDECL init_builtin_dll_fallback( void *module )
 {
 }
@@ -4622,7 +4621,6 @@ static LONGLONG WINAPI RtlGetSystemTimePrecise_fallback(void)
 
 static const struct unix_funcs unix_fallbacks =
 {
-    load_so_dll_fallback,
     init_builtin_dll_fallback,
     unwind_builtin_dll_fallback,
     RtlGetSystemTimePrecise_fallback,

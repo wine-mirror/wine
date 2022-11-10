@@ -396,7 +396,7 @@ const char **dll_paths = NULL;
 const char **system_dll_paths = NULL;
 const char *user_name = NULL;
 SECTION_IMAGE_INFORMATION main_image_info = { NULL };
-static HMODULE ntdll_module;
+HMODULE ntdll_module = 0;
 static const IMAGE_EXPORT_DIRECTORY *ntdll_exports;
 
 /* adjust an array of pointers to make them into RVAs */
@@ -1375,9 +1375,11 @@ NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, vo
 /***********************************************************************
  *           load_so_dll
  */
-static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
+static NTSTATUS load_so_dll( void *args )
 {
     static const WCHAR soW[] = {'.','s','o',0};
+    struct load_so_dll_params *params = args;
+    UNICODE_STRING *nt_name = &params->nt_name;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING redir;
     pe_image_info_t info;
@@ -1399,7 +1401,7 @@ static NTSTATUS CDECL load_so_dll( UNICODE_STRING *nt_name, void **module )
     len = nt_name->Length / sizeof(WCHAR);
     if (len > 3 && !wcsicmp( nt_name->Buffer + len - 3, soW )) nt_name->Length -= 3 * sizeof(WCHAR);
 
-    status = dlopen_dll( unix_name, nt_name, module, &info, FALSE );
+    status = dlopen_dll( unix_name, nt_name, params->module, &info, FALSE );
     free( unix_name );
     free( redir.Buffer );
     return status;
@@ -2152,10 +2154,29 @@ static ULONG_PTR get_image_address(void)
  */
 static struct unix_funcs unix_funcs =
 {
-    load_so_dll,
     init_builtin_dll,
     unwind_builtin_dll,
     RtlGetSystemTimePrecise,
+};
+
+
+/***********************************************************************
+ *           __wine_unix_call_funcs
+ */
+const unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    load_so_dll,
+};
+
+
+static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
+
+/***********************************************************************
+ *           __wine_unix_call_wow64_funcs
+ */
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    wow64_load_so_dll,
 };
 
 

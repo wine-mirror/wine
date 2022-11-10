@@ -24,6 +24,7 @@
 #include <sys/types.h>
 
 #include "windef.h"
+#include "winbase.h"
 #include "winnt.h"
 #include "winternl.h"
 #include "unixlib.h"

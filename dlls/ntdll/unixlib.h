@@ -21,17 +21,31 @@
 #ifndef __NTDLL_UNIXLIB_H
 #define __NTDLL_UNIXLIB_H
 
-#include "wine/debug.h"
+#include "wine/unixlib.h"
 
 struct _DISPATCHER_CONTEXT;
 
+struct load_so_dll_params
+{
+    UNICODE_STRING              nt_name;
+    void                      **module;
+};
+
+enum ntdll_unix_funcs
+{
+    unix_load_so_dll,
+};
+
+extern unixlib_handle_t ntdll_unix_handle;
+
+#define NTDLL_UNIX_CALL( func, params ) __wine_unix_call( ntdll_unix_handle, unix_ ## func, params )
+
 /* increment this when you change the function table */
-#define NTDLL_UNIXLIB_VERSION 135
+#define NTDLL_UNIXLIB_VERSION 136
 
 struct unix_funcs
 {
     /* loader functions */
-    NTSTATUS      (CDECL *load_so_dll)( UNICODE_STRING *nt_name, void **module );
     void          (CDECL *init_builtin_dll)( void *module );
     NTSTATUS      (CDECL *unwind_builtin_dll)( ULONG type, struct _DISPATCHER_CONTEXT *dispatch,
                                                CONTEXT *context );

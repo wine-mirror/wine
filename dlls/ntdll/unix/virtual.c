@@ -635,12 +635,18 @@ void *get_builtin_so_handle( void *module )
 /***********************************************************************
  *           get_builtin_unix_funcs
  */
-static NTSTATUS get_builtin_unix_funcs( void *module, BOOL wow, void **funcs )
+static NTSTATUS get_builtin_unix_funcs( void *module, BOOL wow, const void **funcs )
 {
     const char *ptr_name = wow ? "__wine_unix_call_wow64_funcs" : "__wine_unix_call_funcs";
     sigset_t sigset;
     NTSTATUS status = STATUS_DLL_NOT_FOUND;
     struct builtin_module *builtin;
+
+    if (module == ntdll_module)
+    {
+        *funcs = wow ? __wine_unix_call_wow64_funcs : __wine_unix_call_funcs;
+        return STATUS_SUCCESS;
+    }
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
@@ -4422,7 +4428,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
             if (process == GetCurrentProcess())
             {
                 void *module = (void *)addr;
-                void *funcs = NULL;
+                const void *funcs = NULL;
 
                 status = get_builtin_unix_funcs( module, info_class == MemoryWineUnixWow64Funcs, &funcs );
                 if (!status) *(unixlib_handle_t *)buffer = (UINT_PTR)funcs;
