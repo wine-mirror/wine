@@ -287,7 +287,7 @@ static LPWSTR strdupW(LPCWSTR p)
     DWORD len;
 
     if(!p) return NULL;
-    len = (lstrlenW(p) + 1) * sizeof(WCHAR);
+    len = (wcslen(p) + 1) * sizeof(WCHAR);
     ret = heap_alloc(len);
     if (ret) memcpy(ret, p, len);
     return ret;
@@ -360,7 +360,7 @@ static LONG copy_servername_from_name(LPCWSTR name, LPWSTR target)
     server = &name[2];
     /* skip over both backslash, find separator '\' */
     ptr = wcschr(server, '\\');
-    serverlen = (ptr) ? ptr - server : lstrlenW(server);
+    serverlen = (ptr) ? ptr - server : wcslen(server);
 
     /* servername is empty */
     if (serverlen == 0) return 0;
@@ -596,7 +596,7 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
         DWORD   len;
 
         if (name) {
-            len = lstrlenW(monitorsW) + lstrlenW(name) + 2;
+            len = wcslen(monitorsW) + wcslen(name) + 2;
             regroot = heap_alloc(len * sizeof(WCHAR));
         }
 
@@ -847,7 +847,7 @@ static monitor_t * monitor_load_by_port(LPCWSTR portname)
         RegCloseKey(hroot);
     }
 
-    len = MAX_PATH + lstrlenW(L"\\Ports\\") + lstrlenW(portname) + 1;
+    len = MAX_PATH + wcslen(L"\\Ports\\") + wcslen(portname) + 1;
     buffer = heap_alloc(len * sizeof(WCHAR));
     if (buffer == NULL) return NULL;
 
@@ -859,7 +859,7 @@ static monitor_t * monitor_load_by_port(LPCWSTR portname)
             buffer[0] = '\0';
             RegEnumKeyW(hroot, id, buffer, MAX_PATH);
             TRACE("testing %s\n", debugstr_w(buffer));
-            len = lstrlenW(buffer);
+            len = wcslen(buffer);
             lstrcatW(buffer, L"\\Ports\\");
             lstrcatW(buffer, portname);
             if (RegOpenKeyW(hroot, buffer, &hport) == ERROR_SUCCESS) {
@@ -887,7 +887,7 @@ static int multi_sz_lenW(const WCHAR *str)
     if (!str) return 0;
     do
     {
-        ptr += lstrlenW(ptr) + 1;
+        ptr += wcslen(ptr) + 1;
     } while (*ptr);
 
     return (ptr - str + 1) * sizeof(WCHAR);
@@ -999,10 +999,10 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
             if (dllname[0]) {
                 numentries++;
                 needed += entrysize;
-                needed += (len+1) * sizeof(WCHAR);  /* len is lstrlenW(monitorname) */
+                needed += (len+1) * sizeof(WCHAR);  /* len is wcslen(monitorname) */
                 if (level > 1) {
                     /* we install and return only monitors for "Windows NT x86" */
-                    needed += (lstrlenW(x86_envnameW) +1) * sizeof(WCHAR);
+                    needed += (wcslen(x86_envnameW) +1) * sizeof(WCHAR);
                     needed += dllsize;
                 }
 
@@ -1014,11 +1014,11 @@ static DWORD get_local_monitors(DWORD level, LPBYTE pMonitors, DWORD cbBuf, LPDW
                     TRACE("%p: writing MONITOR_INFO_%ldW #%ld\n", mi, level, numentries);
                     mi->pName = ptr;
                     lstrcpyW(ptr, buffer);      /* Name of the Monitor */
-                    ptr += (len+1);               /* len is lstrlenW(monitorname) */
+                    ptr += (len+1);               /* len is wcslen(monitorname) */
                     if (level > 1) {
                         mi->pEnvironment = ptr;
                         lstrcpyW(ptr, x86_envnameW); /* fixed to "Windows NT x86" */
-                        ptr += (lstrlenW(x86_envnameW)+1);
+                        ptr += (wcslen(x86_envnameW)+1);
 
                         mi->pDLLName = ptr;
                         lstrcpyW(ptr, dllname);         /* Name of the Driver-DLL */
@@ -1099,7 +1099,7 @@ static DWORD get_local_printprocessors(LPWSTR regpathW, LPBYTE pPPInfo, DWORD cb
             if (dllname[0]) {
                 numentries++;
                 needed += sizeof(PRINTPROCESSOR_INFO_1W);
-                needed += (len+1) * sizeof(WCHAR);  /* len is lstrlenW(printprocessor name) */
+                needed += (len+1) * sizeof(WCHAR);  /* len is wcslen(printprocessor name) */
 
                 /* required size is calculated. Now fill the user-buffer */
                 if (pPPInfo && (cbBuf >= needed)){
@@ -1109,7 +1109,7 @@ static DWORD get_local_printprocessors(LPWSTR regpathW, LPBYTE pPPInfo, DWORD cb
                     TRACE("%p: writing PRINTPROCESSOR_INFO_1W #%ld\n", ppi, numentries);
                     ppi->pName = ptr;
                     lstrcpyW(ptr, buffer);      /* Name of the Print Processor */
-                    ptr += (len+1);             /* len is lstrlenW(printprosessor name) */
+                    ptr += (len+1);             /* len is wcslen(printprosessor name) */
                 }
             }
             index++;
@@ -1197,15 +1197,15 @@ static DWORD get_ports_from_all_monitors(DWORD level, LPBYTE pPorts, DWORD cbBuf
                     out = (LPPORT_INFO_2W) &pPorts[outindex * entrysize];
                     out->pPortName = ptr;
                     lstrcpyW(ptr, cache->pPortName);
-                    ptr += (lstrlenW(ptr)+1);
+                    ptr += (wcslen(ptr)+1);
                     if (level > 1) {
                         out->pMonitorName = ptr;
                         lstrcpyW(ptr,  cache->pMonitorName);
-                        ptr += (lstrlenW(ptr)+1);
+                        ptr += (wcslen(ptr)+1);
 
                         out->pDescription = ptr;
                         lstrcpyW(ptr,  cache->pDescription);
-                        ptr += (lstrlenW(ptr)+1);
+                        ptr += (wcslen(ptr)+1);
                         out->fPortType = cache->fPortType;
                         out->Reserved = cache->Reserved;
                     }
@@ -1246,7 +1246,7 @@ static HKEY open_driver_reg(LPCWSTR pEnvironment)
     if (!env) return NULL;
 
     buffer = HeapAlloc(GetProcessHeap(), 0, sizeof(fmt_driversW) +
-                (lstrlenW(env->envname) + lstrlenW(env->versionregpath)) * sizeof(WCHAR));
+                (wcslen(env->envname) + wcslen(env->versionregpath)) * sizeof(WCHAR));
 
     if (buffer) {
         wsprintfW(buffer, fmt_driversW, env->envname, env->versionregpath);
@@ -1306,9 +1306,9 @@ static BOOL WINAPI fpGetPrinterDriverDirectory(LPWSTR pName, LPWSTR pEnvironment
     /* GetSystemDirectoryW returns number of WCHAR including the '\0' */
     needed = GetSystemDirectoryW(NULL, 0);
     /* add the Size for the Subdirectories */
-    needed += lstrlenW(L"\\spool");
-    needed += lstrlenW(L"\\drivers\\");
-    needed += lstrlenW(env->subdir);
+    needed += wcslen(L"\\spool");
+    needed += wcslen(L"\\drivers\\");
+    needed += wcslen(env->subdir);
     needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
 
     *pcbNeeded = needed;
@@ -1356,7 +1356,7 @@ static HMODULE driver_load(const printenv_t * env, LPWSTR dllname)
 
     /* build the driverdir */
     len = sizeof(fullname) -
-          (lstrlenW(env->versionsubdir) + 1 + lstrlenW(dllname) + 1) * sizeof(WCHAR);
+          (wcslen(env->versionsubdir) + 1 + wcslen(dllname) + 1) * sizeof(WCHAR);
 
     if (!fpGetPrinterDriverDirectory(NULL, (LPWSTR) env->envname, 1,
                                      (LPBYTE) fullname, len, &len)) {
@@ -1575,10 +1575,10 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     }
     memcpy(apd.dst, apd.src, len);
     lstrcatW(apd.src, L"\\");
-    apd.srclen = lstrlenW(apd.src);
+    apd.srclen = wcslen(apd.src);
     lstrcatW(apd.dst, env->versionsubdir);
     lstrcatW(apd.dst, L"\\");
-    apd.dstlen = lstrlenW(apd.dst);
+    apd.dstlen = wcslen(apd.dst);
     apd.copyflags = dwFileCopyFlags;
     apd.lazy = lazy;
     CreateDirectoryW(apd.src, NULL);
@@ -1607,22 +1607,22 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
                    sizeof(DWORD));
 
     file = get_file_part( di.pDriverPath );
-    RegSetValueExW( hdrv, L"Driver", 0, REG_SZ, (BYTE*)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
+    RegSetValueExW( hdrv, L"Driver", 0, REG_SZ, (BYTE*)file, (wcslen( file ) + 1) * sizeof(WCHAR) );
     apd_copyfile( di.pDriverPath, file, &apd );
 
     file = get_file_part( di.pDataFile );
-    RegSetValueExW( hdrv, L"Data File", 0, REG_SZ, (BYTE*)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
+    RegSetValueExW( hdrv, L"Data File", 0, REG_SZ, (BYTE*)file, (wcslen( file ) + 1) * sizeof(WCHAR) );
     apd_copyfile( di.pDataFile, file, &apd );
 
     file = get_file_part( di.pConfigFile );
-    RegSetValueExW( hdrv, L"Configuration File", 0, REG_SZ, (BYTE*)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
+    RegSetValueExW( hdrv, L"Configuration File", 0, REG_SZ, (BYTE*)file, (wcslen( file ) + 1) * sizeof(WCHAR) );
     apd_copyfile( di.pConfigFile, file, &apd );
 
     /* settings for level 3 */
     if (di.pHelpFile)
     {
         file = get_file_part( di.pHelpFile );
-        RegSetValueExW( hdrv, L"Help File", 0, REG_SZ, (BYTE*)file, (lstrlenW( file ) + 1) * sizeof(WCHAR) );
+        RegSetValueExW( hdrv, L"Help File", 0, REG_SZ, (BYTE*)file, (wcslen( file ) + 1) * sizeof(WCHAR) );
         apd_copyfile( di.pHelpFile, file, &apd );
     }
     else
@@ -1633,10 +1633,10 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
         WCHAR *reg, *reg_ptr, *in_ptr;
         reg = reg_ptr = HeapAlloc( GetProcessHeap(), 0, multi_sz_lenW( di.pDependentFiles ) );
 
-        for (in_ptr = di.pDependentFiles; *in_ptr; in_ptr += lstrlenW( in_ptr ) + 1)
+        for (in_ptr = di.pDependentFiles; *in_ptr; in_ptr += wcslen( in_ptr ) + 1)
         {
             file = get_file_part( in_ptr );
-            len = lstrlenW( file ) + 1;
+            len = wcslen( file ) + 1;
             memcpy( reg_ptr, file, len * sizeof(WCHAR) );
             reg_ptr += len;
             apd_copyfile( in_ptr, file, &apd );
@@ -1652,13 +1652,13 @@ static BOOL myAddPrinterDriverEx(DWORD level, LPBYTE pDriverInfo, DWORD dwFileCo
     /* The language-Monitor was already copied by the caller to "%SystemRoot%\system32" */
     if (di.pMonitorName)
         RegSetValueExW(hdrv, L"Monitor", 0, REG_SZ, (BYTE*)di.pMonitorName,
-                       (lstrlenW(di.pMonitorName)+1)* sizeof(WCHAR));
+                       (wcslen(di.pMonitorName)+1)* sizeof(WCHAR));
     else
         RegSetValueExW(hdrv, L"Monitor", 0, REG_SZ, (const BYTE*)L"", sizeof(L""));
 
     if (di.pDefaultDataType)
         RegSetValueExW(hdrv, L"Datatype", 0, REG_SZ, (BYTE*)di.pDefaultDataType,
-                       (lstrlenW(di.pDefaultDataType)+1)* sizeof(WCHAR));
+                       (wcslen(di.pDefaultDataType)+1)* sizeof(WCHAR));
     else
         RegSetValueExW(hdrv, L"Datatype", 0, REG_SZ, (const BYTE*)L"", sizeof(L""));
 
@@ -1770,7 +1770,7 @@ static BOOL WINAPI fpAddMonitor(LPWSTR pName, DWORD Level, LPBYTE pMonitors)
         else
         {
             INT len;
-            len = (lstrlenW(mi2w->pDLLName) +1) * sizeof(WCHAR);
+            len = (wcslen(mi2w->pDLLName) +1) * sizeof(WCHAR);
             res = (RegSetValueExW(hentry, L"Driver", 0, REG_SZ,
                     (LPBYTE) mi2w->pDLLName, len) == ERROR_SUCCESS);
 
@@ -2447,7 +2447,7 @@ static BOOL WINAPI fpEnumPrintProcessors(LPWSTR pName, LPWSTR pEnvironment, DWOR
         goto epp_cleanup;   /* ERROR_INVALID_ENVIRONMENT */
 
     regpathW = heap_alloc(sizeof(fmt_printprocessorsW) +
-                            (lstrlenW(env->envname) * sizeof(WCHAR)));
+                            (wcslen(env->envname) * sizeof(WCHAR)));
 
     if (!regpathW)
         goto epp_cleanup;
@@ -2529,8 +2529,8 @@ static BOOL WINAPI fpGetPrintProcessorDirectory(LPWSTR pName, LPWSTR pEnvironmen
     /* GetSystemDirectoryW returns number of WCHAR including the '\0' */
     needed = GetSystemDirectoryW(NULL, 0);
     /* add the Size for the Subdirectories */
-    needed += lstrlenW(L"\\spool\\prtprocs\\");
-    needed += lstrlenW(env->subdir);
+    needed += wcslen(L"\\spool\\prtprocs\\");
+    needed += wcslen(env->subdir);
     needed *= sizeof(WCHAR);  /* return-value is size in Bytes */
 
     *pcbNeeded = needed;
@@ -2664,7 +2664,7 @@ static void fill_builtin_form_info( BYTE **base, WCHAR **strings, const struct b
                                     DWORD size, DWORD *used )
 {
     FORM_INFO_2W *info = *(FORM_INFO_2W**)base;
-    DWORD name_len = lstrlenW( form->name ) + 1, res_len, keyword_len, total_size;
+    DWORD name_len = wcslen( form->name ) + 1, res_len, keyword_len, total_size;
     static const WCHAR dll_name[] = L"localspl.dll";
     const WCHAR *resource;
 

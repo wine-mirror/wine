@@ -498,7 +498,7 @@ static BOOL WINAPI localmon_OpenPortW(LPWSTR pName, PHANDLE phPort)
     type = get_type_from_local_name(pName);
     if (!type) return FALSE;
 
-    port = heap_alloc(FIELD_OFFSET(port_t, nameW[lstrlenW(pName) + 1]));
+    port = heap_alloc(FIELD_OFFSET(port_t, nameW[wcslen(pName) + 1]));
     if (!port) return FALSE;
 
     port->type = type;
@@ -679,7 +679,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
             ptr =  ((xcv_t *)hXcv)->nameW;
         }
         lstrcpynW(buffer, ptr, ARRAY_SIZE(buffer));
-        if (buffer[0]) buffer[lstrlenW(buffer)-1] = '\0';  /* remove the ':' */
+        if (buffer[0]) buffer[wcslen(buffer)-1] = '\0';  /* remove the ':' */
         res = SetDefaultCommConfigW(buffer, (LPCOMMCONFIG) pInputData, cbInputData);
         TRACE("got %lu with %lu\n", res, GetLastError() );
         return res ? ERROR_SUCCESS : GetLastError();
@@ -710,7 +710,7 @@ static BOOL WINAPI localmon_XcvOpenPort(LPCWSTR pName, ACCESS_MASK GrantedAccess
 
     TRACE("%s, 0x%lx, %p)\n", debugstr_w(pName), GrantedAccess, phXcv);
     /* No checks for any field is done in Windows */
-    xcv = heap_alloc(FIELD_OFFSET(xcv_t, nameW[lstrlenW(pName) + 1]));
+    xcv = heap_alloc(FIELD_OFFSET(xcv_t, nameW[wcslen(pName) + 1]));
     if (xcv) {
         xcv->GrantedAccess = GrantedAccess;
         lstrcpyW(xcv->nameW, pName);
