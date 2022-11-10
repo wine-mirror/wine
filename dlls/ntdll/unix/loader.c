@@ -116,7 +116,6 @@ void     (WINAPI *pRtlUserThreadStart)( PRTL_THREAD_START_ROUTINE entry, void *a
 void     (WINAPI *p__wine_ctrl_routine)(void*);
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
-static NTSTATUS (CDECL *p__wine_set_unix_funcs)( int version, const struct unix_funcs *funcs );
 static void *p__wine_syscall_dispatcher;
 
 static void * const syscalls[] =
@@ -1062,7 +1061,6 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( LdrSystemDllInitBlock );
     GET_FUNC( RtlUserThreadStart );
     GET_FUNC( __wine_ctrl_routine );
-    GET_FUNC( __wine_set_unix_funcs );
     GET_FUNC( __wine_syscall_dispatcher );
 #ifdef __i386__
     {
@@ -2151,15 +2149,6 @@ static ULONG_PTR get_image_address(void)
 
 
 /***********************************************************************
- *           unix_funcs
- */
-static struct unix_funcs unix_funcs =
-{
-    RtlGetSystemTimePrecise,
-};
-
-
-/***********************************************************************
  *           __wine_unix_call_funcs
  */
 const unixlib_entry_t __wine_unix_call_funcs[] =
@@ -2167,6 +2156,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     load_so_dll,
     init_builtin_dll,
     unwind_builtin_dll,
+    system_time_precise,
 };
 
 
@@ -2182,6 +2172,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_load_so_dll,
     wow64_init_builtin_dll,
     wow64_unwind_builtin_dll,
+    system_time_precise,
 };
 
 
@@ -2191,7 +2182,6 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 static void start_main_thread(void)
 {
     SYSTEM_SERVICE_TABLE syscall_table = { (ULONG_PTR *)syscalls, NULL, ARRAY_SIZE(syscalls), syscall_args };
-    NTSTATUS status;
     TEB *teb = virtual_alloc_first_teb();
 
     signal_init_threading();
@@ -2214,12 +2204,6 @@ static void start_main_thread(void)
     if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
     load_apiset_dll();
     ntdll_init_syscalls( 0, &syscall_table, p__wine_syscall_dispatcher );
-    status = p__wine_set_unix_funcs( NTDLL_UNIXLIB_VERSION, &unix_funcs );
-    if (status == STATUS_REVISION_MISMATCH)
-    {
-        ERR( "ntdll library version mismatch\n" );
-        NtTerminateProcess( GetCurrentProcess(), status );
-    }
     server_init_process_done();
 }
 

@@ -372,7 +372,10 @@ void WINAPI RtlTimeToElapsedTimeFields( const LARGE_INTEGER *Time, PTIME_FIELDS 
  */
 LONGLONG WINAPI RtlGetSystemTimePrecise( void )
 {
-    return unix_funcs->RtlGetSystemTimePrecise();
+    LONGLONG ret;
+
+    NTDLL_UNIX_CALL( system_time_precise, &ret );
+    return ret;
 }
 
 /******************************************************************************

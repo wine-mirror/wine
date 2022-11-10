@@ -1642,17 +1642,22 @@ ULONG WINAPI NtGetTickCount(void)
 /******************************************************************************
  *              RtlGetSystemTimePrecise (NTDLL.@)
  */
-LONGLONG WINAPI RtlGetSystemTimePrecise(void)
+NTSTATUS system_time_precise( void *args )
 {
+    LONGLONG *ret = args;
     struct timeval now;
 #ifdef HAVE_CLOCK_GETTIME
     struct timespec ts;
 
     if (!clock_gettime( CLOCK_REALTIME, &ts ))
-        return ticks_from_time_t( ts.tv_sec ) + (ts.tv_nsec + 50) / 100;
+    {
+        *ret = ticks_from_time_t( ts.tv_sec ) + (ts.tv_nsec + 50) / 100;
+        return STATUS_SUCCESS;
+    }
 #endif
     gettimeofday( &now, 0 );
-    return ticks_from_time_t( now.tv_sec ) + now.tv_usec * 10;
+    *ret = ticks_from_time_t( now.tv_sec ) + now.tv_usec * 10;
+    return STATUS_SUCCESS;
 }
 
 
