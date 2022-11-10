@@ -1203,6 +1203,20 @@ class VkVariable(object):
             return not self.handle.is_dispatchable()
         return False
 
+    def needs_unwrapping(self):
+        """ Returns if variable needs unwrapping of handle. """
+
+        if self.is_struct():
+            return self.struct.needs_unwrapping()
+
+        if self.is_handle():
+            return self.handle.needs_unwrapping()
+
+        if self.is_generic_handle():
+            return True
+
+        return False
+
     def needs_alloc(self, conv, unwrap):
         """ Returns True if conversion needs allocation """
         if self.is_dynamic_array():
@@ -1424,20 +1438,6 @@ class VkMember(VkVariable):
 
     def is_bit_field(self):
         return self.bit_width is not None
-
-    def needs_unwrapping(self):
-        """ Structures with wrapped handles need unwrapping. """
-
-        if self.is_struct():
-            return self.struct.needs_unwrapping()
-
-        if self.is_handle():
-            return self.handle.is_wrapped()
-
-        if self.is_generic_handle():
-            return True
-
-        return False
 
     def needs_conversion(self, conv, unwrap, direction, struct_const):
         """ Check if member needs conversion. """
@@ -1676,18 +1676,6 @@ class VkParam(VkVariable):
             return True
         if self.needs_conversion(conv, unwrap, Direction.OUTPUT):
             return True
-        return False
-
-    def needs_unwrapping(self):
-        """ Returns if parameter needs unwrapping of handle. """
-
-        # Wrapped handle parameters are handled separately, only look for wrapped handles in structs
-        if self.is_struct():
-            return self.struct.needs_unwrapping()
-
-        if self.is_handle() and self.is_dynamic_array():
-            return self.handle.needs_unwrapping()
-
         return False
 
     def spec(self):
