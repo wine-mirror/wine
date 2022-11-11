@@ -1617,16 +1617,20 @@ class VkParam(VkVariable):
                 ret += "        convert_{0}_{3}_to_{5}host({4}{1}{2}, {2}_host);\n".format(self.type, prefix, self.name, win_type, ctx_param, wrap_part)
                 ret += "    }\n"
                 return ret
-            else:
+            elif self.is_struct():
                 return "    convert_{0}_{3}_to_{5}host({4}{1}{2}, &{2}_host);\n".format(self.type, prefix, self.name, win_type, ctx_param, wrap_part)
+            else:
+                return "    {1}_host = *{0}{1};\n".format(prefix, self.name)
         else:
             if self.is_dynamic_array():
                 return "    convert_{0}_array_{1}host_to_{2}({3}_host, {4}{3}, {5});\n".format(
                     self.type, wrap_part, win_type, self.name, prefix, self.get_dyn_array_len(prefix))
-            else:
+            elif self.is_struct():
                 ref_part = "" if self.optional else "&"
                 return "    convert_{0}_host_to_{3}({4}{2}_host, {1}{2});\n".format(
                     self.type, prefix, self.name, win_type, ref_part)
+            else:
+                return "    *{0}{1} = {1}_host;\n".format(prefix, self.name)
 
     def definition(self, postfix=None, is_member=False, conv=False):
         """ Return prototype for the parameter. E.g. 'const char *foo' """
@@ -1684,9 +1688,9 @@ class VkParam(VkVariable):
             return self.struct.needs_conversion(conv, unwrap, direction, self.is_const())
 
         if self.is_handle():
-            # non-array handles are handled inline in thunks
+            # non-pointer handles are handled inline in thunks
             if not self.is_dynamic_array() and not self.is_static_array():
-                return False
+                return conv and self.is_pointer() and self.handle.is_dispatchable()
 
             # vkAllocateCommandBuffers is a special case, we use it in our private thunk as an input param
             param_direction = (Direction.INPUT if self.is_const() else Direction.OUTPUT)
@@ -1699,6 +1703,8 @@ class VkParam(VkVariable):
                 return True
             if conv and self.handle.is_dispatchable():
                 return True
+        elif self.is_pointer() and self.is_pointer_size():
+            return conv
 
         return False
 
