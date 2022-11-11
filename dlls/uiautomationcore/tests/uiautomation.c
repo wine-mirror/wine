@@ -8677,37 +8677,34 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, -1, FALSE, FALSE, (struct UiaCondition *)&UiaTrueCondition);
     hr = UiaFind(node, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
-    todo_wine ok(Provider_child_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child.ref);
-    todo_wine ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
-    todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
-    todo_wine ok(Provider_child2_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child2_child.ref);
-    todo_wine ok(Provider_child2_child_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child2_child_child.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child.ref);
+    ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(Provider_child2_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child2_child.ref);
+    ok(Provider_child2_child_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child2_child_child.ref);
 
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+    add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child", TRUE);
+    add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child_child", TRUE);
+    add_provider_desc(&exp_node_desc[3], L"Main", L"Provider_child_child2", TRUE);
+    add_provider_desc(&exp_node_desc[4], L"Main", L"Provider_child2", TRUE);
+    add_provider_desc(&exp_node_desc[5], L"Main", L"Provider_child2_child", TRUE);
+    add_provider_desc(&exp_node_desc[6], L"Main", L"Provider_child2_child_child", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 7;
+    exp_elems[1] = 1;
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
-        add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child", TRUE);
-        add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child_child", TRUE);
-        add_provider_desc(&exp_node_desc[3], L"Main", L"Provider_child_child2", TRUE);
-        add_provider_desc(&exp_node_desc[4], L"Main", L"Provider_child2", TRUE);
-        add_provider_desc(&exp_node_desc[5], L"Main", L"Provider_child2_child", TRUE);
-        add_provider_desc(&exp_node_desc[6], L"Main", L"Provider_child2_child_child", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = 7;
-        exp_elems[1] = 1;
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-        ok_method_sequence(find_seq1, "find_seq1");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+    ok_method_sequence(find_seq1, "find_seq1");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
@@ -8723,30 +8720,27 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, 1, FALSE, FALSE, (struct UiaCondition *)&UiaTrueCondition);
     hr = UiaFind(node, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
-    todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
 
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+    add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child", TRUE);
+    add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child2", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 3;
+    exp_elems[1] = 1;
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
-        add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child", TRUE);
-        add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child2", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = 3;
-        exp_elems[1] = 1;
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-        ok_method_sequence(find_seq2, "find_seq2");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+    ok_method_sequence(find_seq2, "find_seq2");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
@@ -8762,28 +8756,25 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, 1, FALSE, TRUE, (struct UiaCondition *)&UiaTrueCondition);
     hr = UiaFind(node, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
-    todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
 
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child", TRUE);
+    add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child2", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 2;
+    exp_elems[1] = 1;
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child", TRUE);
-        add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child2", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = 2;
-        exp_elems[1] = 1;
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-        ok_method_sequence(find_seq3, "find_seq3");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+    ok_method_sequence(find_seq3, "find_seq3");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
@@ -8843,27 +8834,24 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, 0, FALSE, FALSE, (struct UiaCondition *)&UiaTrueCondition);
     hr = UiaFind(node2, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
 
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child", TRUE);
+    add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child2", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 2;
+    exp_elems[1] = 1;
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child", TRUE);
-        add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child2", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = 2;
-        exp_elems[1] = 1;
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-        ok_method_sequence(find_seq5, "find_seq5");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+    ok_method_sequence(find_seq5, "find_seq5");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
@@ -8883,24 +8871,21 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, 0, FALSE, FALSE, (struct UiaCondition *)&UiaTrueCondition);
     hr = UiaFind(node2, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = exp_elems[1] = 1;
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = exp_elems[1] = 1;
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-        ok_method_sequence(find_seq6, "find_seq6");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+    ok_method_sequence(find_seq6, "find_seq6");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
@@ -8938,31 +8923,28 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, 1, FALSE, FALSE, (struct UiaCondition *)&prop_cond[1]);
     hr = UiaFind(node, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child.ref);
-    todo_wine ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
-    todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child.ref);
+    ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
 
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+    add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child_child", TRUE);
+    add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child_child2", TRUE);
+    add_provider_desc(&exp_node_desc[3], L"Main", L"Provider_child2", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 4;
+    exp_elems[1] = 1;
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
-        add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child_child", TRUE);
-        add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child_child2", TRUE);
-        add_provider_desc(&exp_node_desc[3], L"Main", L"Provider_child2", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = 4;
-        exp_elems[1] = 1;
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-        ok_method_sequence(find_seq7, "find_seq7");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+    ok_method_sequence(find_seq7, "find_seq7");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
@@ -8994,41 +8976,38 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, 1, FALSE, FALSE, (struct UiaCondition *)&prop_cond[1]);
     hr = UiaFind(node, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child.ref);
-    todo_wine ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
-    todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child.ref);
+    ok(Provider_child_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
 
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
+    add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child_child", TRUE);
+    add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child_child2", TRUE);
+    add_provider_desc(&exp_node_desc[3], L"Main", L"Provider_child2", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 4;
+    exp_elems[1] = 1;
+
+    idx[0] = 2;
+    idx[1] = 0;
+    hr = SafeArrayGetElement(out_req, idx, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+    /* node2 is now set as Provider_child_child2. */
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    IUnknown_AddRef((IUnknown *)node2);
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider", TRUE);
-        add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child_child", TRUE);
-        add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child_child2", TRUE);
-        add_provider_desc(&exp_node_desc[3], L"Main", L"Provider_child2", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = 4;
-        exp_elems[1] = 1;
-
-        idx[0] = 2;
-        idx[1] = 0;
-        hr = SafeArrayGetElement(out_req, idx, &v);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-
-        /* node2 is now set as Provider_child_child2. */
-        hr = UiaHUiaNodeFromVariant(&v, &node2);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        IUnknown_AddRef((IUnknown *)node2);
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-        ok_method_sequence(find_seq8, "find_seq8");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+    ok_method_sequence(find_seq8, "find_seq8");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
@@ -9064,29 +9043,26 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, 1, FALSE, FALSE, (struct UiaCondition *)&prop_cond[1]);
     hr = UiaFind(node2, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
-    todo_wine ok(Provider_child2_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child2_child.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(Provider_child2_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child2_child.ref);
 
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child_child2", TRUE);
+    add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child2", TRUE);
+    add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child2_child", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 3;
+    exp_elems[1] = 1;
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child_child2", TRUE);
-        add_provider_desc(&exp_node_desc[1], L"Main", L"Provider_child2", TRUE);
-        add_provider_desc(&exp_node_desc[2], L"Main", L"Provider_child2_child", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = 3;
-        exp_elems[1] = 1;
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-        ok_method_sequence(find_seq9, "find_seq9");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+    ok_method_sequence(find_seq9, "find_seq9");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
@@ -9096,7 +9072,7 @@ static void test_UiaFind(void)
     for (i = 0; i < ARRAY_SIZE(exp_node_desc); i++)
         init_node_provider_desc(&exp_node_desc[i], GetCurrentProcessId(), NULL);
 
-    todo_wine ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
+    ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
     ok(Provider_child_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child_child2.ref);
 
     /*
@@ -9122,27 +9098,24 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, 1, FALSE, TRUE, (struct UiaCondition *)&prop_cond[1]);
     hr = UiaFind(node, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
 
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child2", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = 1;
+    exp_elems[1] = 1;
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child2", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = 1;
-        exp_elems[1] = 1;
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-
-        ok_method_sequence(find_seq10, "find_seq10");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+
+    ok_method_sequence(find_seq10, "find_seq10");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
