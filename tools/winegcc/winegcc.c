@@ -172,7 +172,6 @@ struct options
     int nodefaultlibs;
     int noshortwchar;
     int data_only;
-    int unix_lib;
     int gui_app;
     int unicode_app;
     int win16_app;
@@ -404,7 +403,7 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
     switch (opts->target.platform)
     {
     case PLATFORM_APPLE:
-        strarray_add( &flags, opts->unix_lib ? "-dynamiclib" : "-bundle" );
+        strarray_add( &flags, "-bundle" );
         strarray_add( &flags, "-multiply_defined" );
         strarray_add( &flags, "suppress" );
         if (opts->image_base)
@@ -413,12 +412,6 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
             strarray_add( &flags, opts->image_base );
         }
         if (opts->strip) strarray_add( &flags, "-Wl,-x" );
-        if (opts->unix_lib)
-        {
-            strarray_add( &flags, "-install_name" );
-            strarray_add( &flags, strmake( "@rpath/%s.so", output_name ) );
-            strarray_add( &flags, "-Wl,-rpath,@loader_path/" );
-        }
         strarray_addall( &link_args, flags );
         return link_args;
 
@@ -522,7 +515,6 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
         }
         if (!try_link( opts->prefix, link_args, "-Wl,-z,max-page-size=0x1000"))
             strarray_add( &flags, "-Wl,-z,max-page-size=0x1000");
-        if (opts->unix_lib) strarray_add( &flags, strmake( "-Wl,-soname,%s.so", output_name ));
         break;
     }
 
@@ -1262,7 +1254,7 @@ static void build(struct options* opts)
     /* set default entry point, if needed */
     if (!opts->entry_point)
     {
-        if (opts->subsystem && !opts->unix_lib && !strcmp( opts->subsystem, "native" ))
+        if (opts->subsystem && !strcmp( opts->subsystem, "native" ))
             entry_point = (is_pe && opts->target.cpu == CPU_i386) ? "DriverEntry@8" : "DriverEntry";
         else if (opts->use_msvcrt && !opts->shared && !opts->win16_app)
             entry_point = opts->unicode_app ? "wmainCRTStartup" : "mainCRTStartup";
@@ -1275,8 +1267,7 @@ static void build(struct options* opts)
         build_data_lib( opts, spec_file, output_file, files );
         return;
     }
-    if (spec_file || !opts->unix_lib)
-        spec_o_name = build_spec_obj( opts, spec_file, output_file, files, lib_dirs, entry_point );
+    spec_o_name = build_spec_obj( opts, spec_file, output_file, files, lib_dirs, entry_point );
 
     if (opts->fake_module) return;  /* nothing else to do */
 
@@ -1413,8 +1404,6 @@ static void build(struct options* opts)
         strarray_add(&tool, output_path);
         spawn(opts->prefix, tool, 0);
     }
-
-    if (opts->unix_lib) return;
 
     if (opts->out_implib && !is_pe)
     {
@@ -1755,12 +1744,6 @@ int main(int argc, char **argv)
 		    else if (strcmp("-mthreads", opts.args.str[i]) == 0)
                     {
                         raw_compiler_arg = 0;
-                    }
-		    else if (strcmp("-munix", opts.args.str[i]) == 0)
-                    {
-			opts.unix_lib = 1;
-                        raw_compiler_arg = 0;
-                        raw_winebuild_arg = 1;
                     }
 		    else if (strcmp("-m16", opts.args.str[i]) == 0)
                     {
