@@ -2189,17 +2189,40 @@ static NTSTATUS decommit_pages( struct file_view *view, size_t start, size_t siz
 
 
 /***********************************************************************
+ *           view_make_placeholder
+ *
+ * Setup placeholder view.
+ * virtual_mutex must be held by caller.
+ */
+static void view_make_placeholder( struct file_view *view )
+{
+    view->protect = VPROT_PLACEHOLDER | VPROT_FREE_PLACEHOLDER;
+    set_page_vprot( view->base, view->size, 0 );
+    anon_mmap_fixed( view->base, view->size, PROT_NONE, 0 );
+}
+
+
+/***********************************************************************
  *           free_pages
  *
  * Free some pages of a given view.
  * virtual_mutex must be held by caller.
  */
-static NTSTATUS free_pages( struct file_view *view, char *base, size_t size )
+static NTSTATUS free_pages( struct file_view *view, char *base, size_t size, BOOL preserve_placeholder )
 {
+    if (preserve_placeholder)
+    {
+        if (!size) return STATUS_INVALID_PARAMETER_3;
+        if (!(view->protect & VPROT_PLACEHOLDER)) return STATUS_CONFLICTING_ADDRESSES;
+        if (view->protect & VPROT_FREE_PLACEHOLDER && size == view->size) return STATUS_CONFLICTING_ADDRESSES;
+    }
+    else if (!size) size = view->size;
+
     if (size == view->size)
     {
         assert( base == view->base );
-        delete_view( view );
+        if (preserve_placeholder) view_make_placeholder( view );
+        else delete_view( view );
         return STATUS_SUCCESS;
     }
     if (view->base != base && base + size != (char *)view->base + view->size)
@@ -2235,6 +2258,20 @@ static NTSTATUS free_pages( struct file_view *view, char *base, size_t size )
 
         register_view( view );
         VIRTUAL_DEBUG_DUMP_VIEW( view );
+    }
+
+    if (preserve_placeholder)
+    {
+        if (!(view = alloc_view()))
+        {
+            ERR( "Out of memory for %p-%p\n", base, base + size );
+            return STATUS_NO_MEMORY;
+        }
+        view->base = base;
+        view->size = size;
+        view_make_placeholder( view );
+        register_view( view );
+        return STATUS_SUCCESS;
     }
 
     set_page_vprot( base, size, 0 );
@@ -4395,10 +4432,10 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     else if (!size && base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
     else if ((char *)view->base + view->size - base < size) status = STATUS_UNABLE_TO_FREE_VM;
     else if (type == MEM_DECOMMIT) status = decommit_pages( view, base - (char *)view->base, size );
-    else if (type == MEM_RELEASE)
+    else if (type == MEM_RELEASE || (type == (MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER)))
     {
+        status = free_pages( view, base, size, type & MEM_PRESERVE_PLACEHOLDER );
         if (!size) size = view->size;
-        status = free_pages( view, base, size );
     }
     else status = STATUS_INVALID_PARAMETER;
 
