@@ -1806,6 +1806,10 @@ class VkStruct(Sequence):
                     "VkPipelineShaderStageRequiredSubgroupSizeCreateInfo"]:
             returnedonly = False
 
+        # Those structs don't have returnedonly in spec, but they could (should?).
+        if name in ["VkSurfaceCapabilitiesPresentBarrierNV"]:
+            returnedonly = True
+
         structextends = struct.attrib.get("structextends")
         structextends = structextends.split(",") if structextends else []
 
@@ -1977,6 +1981,9 @@ class VkStruct(Sequence):
                 continue
 
             if m.name == "pNext":
+                # pNext is a pointer, so it always needs conversion
+                if conv and direction == Direction.INPUT:
+                    return True
                 # we need input conversion of structs containing struct chain even if it's returnedonly
                 if direction == Direction.INPUT and \
                    self.needs_conversion(conv, unwrap, Direction.OUTPUT, is_const):
@@ -2030,6 +2037,8 @@ class VkStruct(Sequence):
         for m in self.members:
             if self.name == m.type:
                 continue
+            if m.name == "pNext":
+                return True
             if m.needs_alignment():
                 return True
             if m.is_struct() and m.struct.needs_host_type():
