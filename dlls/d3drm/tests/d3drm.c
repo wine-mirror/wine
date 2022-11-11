@@ -6163,7 +6163,7 @@ static char *create_bitmap(unsigned int w, unsigned int h, BOOL palettized)
 
     ret = GetTempPathA(MAX_PATH, path);
     ok(ret, "Failed to get temporary file path.\n");
-    filename = HeapAlloc(GetProcessHeap(), 0, MAX_PATH);
+    filename = malloc(MAX_PATH);
     ret = GetTempFileNameA(path, "d3d", 0, filename);
     ok(ret, "Failed to get filename.\n");
     file = CreateFileA(filename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
@@ -6178,7 +6178,7 @@ static char *create_bitmap(unsigned int w, unsigned int h, BOOL palettized)
     ret = WriteFile(file, &file_header, sizeof(file_header), &written, NULL);
     ok(ret && written == sizeof(file_header), "Failed to write file header.\n");
 
-    info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    info = calloc(1, size);
     info->bmiHeader.biSize = sizeof(info->bmiHeader);
     info->bmiHeader.biBitCount = bpp;
     info->bmiHeader.biPlanes = 1;
@@ -6196,10 +6196,10 @@ static char *create_bitmap(unsigned int w, unsigned int h, BOOL palettized)
     }
     ret = WriteFile(file, info, size, &written, NULL);
     ok(ret && written == size, "Failed to write bitmap info.\n");
-    HeapFree(GetProcessHeap(), 0, info);
+    free(info);
 
     size = w * h * (bpp / 8);
-    buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
+    buffer = calloc(1, size);
     for (i = 0, j = 0; i < size;)
     {
         if (palettized)
@@ -6216,7 +6216,7 @@ static char *create_bitmap(unsigned int w, unsigned int h, BOOL palettized)
     }
     ret = WriteFile(file, buffer, size, &written, NULL);
     ok(ret && written == size, "Failed to write bitmap data.\n");
-    HeapFree(GetProcessHeap(), 0, buffer);
+    free(buffer);
 
     CloseHandle(file);
 
@@ -6515,7 +6515,7 @@ static void test_load_texture(void)
 
         ret = DeleteFileA(filename);
         ok(ret, "Failed to delete bitmap \"%s\".\n", filename);
-        HeapFree(GetProcessHeap(), 0, filename);
+        free(filename);
 
         winetest_pop_context();
     }
@@ -6647,7 +6647,7 @@ static void test_texture_qi(void)
     IDirect3DRM_Release(d3drm1);
     check = DeleteFileA(filename);
     ok(check, "Cannot delete image stored in %s (error = %ld).\n", filename, GetLastError());
-    HeapFree(GetProcessHeap(), 0, filename);
+    free(filename);
 }
 
 static void test_viewport_qi(void)
