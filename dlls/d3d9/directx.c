@@ -685,7 +685,7 @@ BOOL d3d9_init(struct d3d9 *d3d9, BOOL extended)
     DWORD flags = WINED3D_PRESENT_CONVERSION | WINED3D_HANDLE_RESTORE | WINED3D_PIXEL_CENTER_INTEGER
             | WINED3D_SRGB_READ_WRITE_CONTROL | WINED3D_LEGACY_UNBOUND_RESOURCE_COLOR
             | WINED3D_NO_PRIMITIVE_RESTART | WINED3D_LEGACY_CUBEMAP_FILTERING
-            | WINED3D_NORMALIZED_DEPTH_BIAS;
+            | WINED3D_NORMALIZED_DEPTH_BIAS | WINED3D_NO_DRAW_INDIRECT;
     unsigned int adapter_idx, output_idx, adapter_count, output_count = 0;
     struct wined3d_adapter *wined3d_adapter;
 
