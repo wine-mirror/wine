@@ -168,9 +168,7 @@ static void test_VirtualAlloc2(void)
 
     /* Placeholder splitting functionality */
     placeholder1 = pVirtualAlloc2(NULL, NULL, 2 * size, MEM_RESERVE_PLACEHOLDER | MEM_RESERVE, PAGE_NOACCESS, NULL, 0);
-    todo_wine
     ok(!!placeholder1, "Failed to create a placeholder range.\n");
-    if (!placeholder1) return;
 
     memset(&info, 0, sizeof(info));
     VirtualQuery(placeholder1, &info, sizeof(info));
@@ -180,14 +178,14 @@ static void test_VirtualAlloc2(void)
     ok(info.RegionSize == 2 * size, "Unexpected size.\n");
 
     ret = VirtualFree(placeholder1, size, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
-    ok(ret, "Failed to split placeholder.\n");
+    todo_wine ok(ret, "Failed to split placeholder.\n");
 
     memset(&info, 0, sizeof(info));
     VirtualQuery(placeholder1, &info, sizeof(info));
     ok(info.AllocationProtect == PAGE_NOACCESS, "Unexpected protection %#lx.\n", info.AllocationProtect);
     ok(info.State == MEM_RESERVE, "Unexpected state %#lx.\n", info.State);
     ok(info.Type == MEM_PRIVATE, "Unexpected type %#lx.\n", info.Type);
-    ok(info.RegionSize == size, "Unexpected size.\n");
+    todo_wine ok(info.RegionSize == size, "Unexpected size.\n");
 
     placeholder2 = (void *)((BYTE *)placeholder1 + size);
     memset(&info, 0, sizeof(info));
@@ -201,10 +199,10 @@ static void test_VirtualAlloc2(void)
     ok(!!section, "Failed to create a section.\n");
 
     view1 = pMapViewOfFile3(section, NULL, placeholder1, 0, size, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
-    ok(!!view1, "Failed to map a section.\n");
+    todo_wine ok(!!view1, "Failed to map a section.\n");
 
     view2 = pMapViewOfFile3(section, NULL, placeholder2, 0, size, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
-    ok(!!view2, "Failed to map a section.\n");
+    todo_wine ok(!!view2, "Failed to map a section.\n");
 
     CloseHandle(section);
     UnmapViewOfFile(view1);
@@ -220,16 +218,19 @@ static void test_VirtualAlloc2(void)
     p1 = p + size / 2;
     p2 = p1 + size / 4;
     ret = VirtualFree(p1, size / 4, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
-    ok(ret, "Failed to split a placeholder.\n");
-    check_region_size(p, size / 2);
-    check_region_size(p1, size / 4);
+    todo_wine ok(ret, "Failed to split a placeholder.\n");
+    if (ret)
+    {
+        check_region_size(p, size / 2);
+        check_region_size(p1, size / 4);
+    }
     check_region_size(p2, 2 * size - size / 2 - size / 4);
     ret = VirtualFree(p, 0, MEM_RELEASE);
     ok(ret, "Failed to release a region.\n");
     ret = VirtualFree(p1, 0, MEM_RELEASE);
-    ok(ret, "Failed to release a region.\n");
+    todo_wine ok(ret, "Failed to release a region.\n");
     ret = VirtualFree(p2, 0, MEM_RELEASE);
-    ok(ret, "Failed to release a region.\n");
+    todo_wine ok(ret, "Failed to release a region.\n");
 
     /* Split in two regions, specifying lower part. */
     p = pVirtualAlloc2(NULL, NULL, 2 * size, MEM_RESERVE_PLACEHOLDER | MEM_RESERVE, PAGE_NOACCESS, NULL, 0);
@@ -238,13 +239,14 @@ static void test_VirtualAlloc2(void)
     p1 = p;
     p2 = p + size / 2;
     ret = VirtualFree(p1, size / 2, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
-    ok(ret, "Failed to split a placeholder.\n");
-    check_region_size(p1, size / 2);
+    todo_wine ok(ret, "Failed to split a placeholder.\n");
+    if (ret)
+        check_region_size(p1, size / 2);
     check_region_size(p2, 2 * size - size / 2);
     ret = VirtualFree(p1, 0, MEM_RELEASE);
     ok(ret, "Failed to release a region.\n");
     ret = VirtualFree(p2, 0, MEM_RELEASE);
-    ok(ret, "Failed to release a region.\n");
+    todo_wine ok(ret, "Failed to release a region.\n");
 
     /* Split in two regions, specifying second half. */
     p = pVirtualAlloc2(NULL, NULL, 2 * size, MEM_RESERVE_PLACEHOLDER | MEM_RESERVE, PAGE_NOACCESS, NULL, 0);
@@ -253,13 +255,14 @@ static void test_VirtualAlloc2(void)
     p1 = p;
     p2 = p + size;
     ret = VirtualFree(p2, size, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
-    ok(ret, "Failed to split a placeholder.\n");
-    check_region_size(p1, size);
+    todo_wine ok(ret, "Failed to split a placeholder.\n");
+    if (ret)
+        check_region_size(p1, size);
     check_region_size(p2, size);
     ret = VirtualFree(p1, 0, MEM_RELEASE);
     ok(ret, "Failed to release a region.\n");
     ret = VirtualFree(p2, 0, MEM_RELEASE);
-    ok(ret, "Failed to release a region.\n");
+    todo_wine ok(ret, "Failed to release a region.\n");
 }
 
 static void test_VirtualAllocFromApp(void)
