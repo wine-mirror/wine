@@ -123,7 +123,7 @@ static void test_MapViewOfFile3(void)
     ok( mapping != 0, "CreateFileMapping error %lu\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
-    ptr = pMapViewOfFile3( mapping, GetCurrentProcess(), NULL, 0, 4096, 0, PAGE_READONLY, NULL, 0);
+    ptr = pMapViewOfFile3( mapping, NULL, NULL, 0, 4096, 0, PAGE_READONLY, NULL, 0);
     ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %lu\n", GetLastError() );
     UnmapViewOfFile( ptr );
 

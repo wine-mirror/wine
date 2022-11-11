@@ -265,6 +265,8 @@ LPVOID WINAPI DECLSPEC_HOTPATCH MapViewOfFile3( HANDLE handle, HANDLE process, P
     LARGE_INTEGER off;
     void *addr;
 
+    if (!process) process = GetCurrentProcess();
+
     addr = baseaddr;
     off.QuadPart = offset;
     if (!set_ntstatus( NtMapViewOfSectionEx( handle, process, &addr, &off, &size, alloc_type, protection,

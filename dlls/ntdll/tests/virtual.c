@@ -1149,6 +1149,12 @@ static void test_NtMapViewOfSection(void)
     ptr = NULL;
     size = 0;
     offset.QuadPart = 0;
+    status = NtMapViewOfSection(mapping, NULL, &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE);
+    ok(status == STATUS_INVALID_HANDLE, "NtMapViewOfSection returned %08lx\n", status);
+
+    ptr = NULL;
+    size = 0;
+    offset.QuadPart = 0;
     status = NtMapViewOfSection(mapping, process, &ptr, 0, 0, &offset, &size, 1, 0, PAGE_READWRITE);
     ok(status == STATUS_SUCCESS, "NtMapViewOfSection returned %08lx\n", status);
     ok(!((ULONG_PTR)ptr & 0xffff), "returned memory %p is not aligned to 64k\n", ptr);
@@ -1418,6 +1424,12 @@ static void test_NtMapViewOfSectionEx(void)
 
     process = create_target_process("sleep");
     ok(process != NULL, "Can't start process\n");
+
+    ptr = NULL;
+    size = 0x1000;
+    offset.QuadPart = 0;
+    status = pNtMapViewOfSectionEx(mapping, NULL, &ptr, &offset, &size, 0, PAGE_READWRITE, NULL, 0);
+    ok(status == STATUS_INVALID_HANDLE, "Unexpected status %08lx\n", status);
 
     ptr = NULL;
     size = 0x1000;
