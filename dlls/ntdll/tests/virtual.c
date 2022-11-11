@@ -1837,21 +1837,85 @@ static void test_syscalls(void)
 
 static void test_NtFreeVirtualMemory(void)
 {
+    void *addr1, *addr;
     NTSTATUS status;
-    void *addr1;
     SIZE_T size;
 
     size = 0x10000;
     addr1 = NULL;
-    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size, MEM_RESERVE, PAGE_READWRITE);
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 
     size = 0;
     status = NtFreeVirtualMemory(NULL, &addr1, &size, MEM_RELEASE);
     ok(status == STATUS_INVALID_HANDLE, "Unexpected status %08lx.\n", status);
 
+    addr = (char *)addr1 + 0x1000;
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    ok(status == STATUS_FREE_VM_NOT_AT_BASE, "Unexpected status %08lx.\n", status);
+
+    size = 0x11000;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
-    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    todo_wine ok(status == STATUS_UNABLE_TO_FREE_VM, "Unexpected status %08lx.\n", status);
+
+    addr = (char *)addr1 + 0x1001;
+    size = 0xffff;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    todo_wine ok(status == STATUS_UNABLE_TO_FREE_VM, "Unexpected status %08lx.\n", status);
+    ok(size == 0xffff, "Unexpected size %p.\n", (void *)size);
+    ok(addr == (char *)addr1 + 0x1001, "Got addr %p, addr1 %p.\n", addr, addr1);
+
+    size = 0xfff;
+    addr = (char *)addr1 + 0x1001;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    *(volatile char *)addr1 = 1;
+    *((volatile char *)addr1 + 0x2000) = 1;
+    todo_wine ok(size == 0x1000, "Unexpected size %p.\n", (void *)size);
+    todo_wine ok(addr == (char *)addr1 + 0x1000, "Got addr %p, addr1 %p.\n", addr, addr1);
+
+    size = 0xfff;
+    addr = (char *)addr1 + 1;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    *((volatile char *)addr1 + 0x2000) = 1;
+    todo_wine ok(size == 0x1000, "Unexpected size %p.\n", (void *)size);
+    todo_wine ok(addr == addr1, "Got addr %p, addr1 %p.\n", addr, addr1);
+
+    size = 0x1000;
+    addr = addr1;
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(addr == addr1, "Unexpected addr %p, addr1 %p.\n", addr, addr1);
+    ok(size == 0x1000, "Unexpected size %p.\n", (void *)size);
+
+    size = 0x10000;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_DECOMMIT);
+    todo_wine ok(status == STATUS_UNABLE_TO_FREE_VM, "Unexpected status %08lx.\n", status);
+
+    size = 0x10000;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+    todo_wine ok(status == STATUS_UNABLE_TO_FREE_VM, "Unexpected status %08lx.\n", status);
+
+    size = 0;
+    addr = (char *)addr1 + 0x1000;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    todo_wine ok(status == STATUS_MEMORY_NOT_ALLOCATED, "Unexpected status %08lx.\n", status);
+
+    size = 0x1000;
+    addr = (char *)addr1 + 0x1000;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_DECOMMIT);
+    todo_wine ok(status == STATUS_MEMORY_NOT_ALLOCATED, "Unexpected status %08lx.\n", status);
+
+    size = 0;
+    addr = (char *)addr1 + 0x2000;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
+    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    size = 0x1000;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 }
 
 static void test_prefetch(void)
