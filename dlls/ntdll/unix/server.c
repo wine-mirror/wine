@@ -615,7 +615,7 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
         result->type = call->type;
         addr = wine_server_get_ptr( call->unmap_view.addr );
         if ((ULONG_PTR)addr == call->unmap_view.addr)
-            result->unmap_view.status = NtUnmapViewOfSection( NtCurrentProcess(), addr );
+            result->unmap_view.status = NtUnmapViewOfSectionEx( NtCurrentProcess(), addr, call->unmap_view.flags );
         else
             result->unmap_view.status = STATUS_INVALID_PARAMETER;
         break;

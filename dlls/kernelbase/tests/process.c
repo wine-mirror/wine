@@ -211,9 +211,9 @@ static void test_VirtualAlloc2(void)
     ret = VirtualFree( view1, size, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER );
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "Got ret %d, error %lu.\n", ret, GetLastError());
     ret = pUnmapViewOfFile2(GetCurrentProcess(), view1, MEM_PRESERVE_PLACEHOLDER);
-    todo_wine ok(!ret && GetLastError() == ERROR_INVALID_ADDRESS, "Got ret %d, error %lu.\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_ADDRESS, "Got ret %d, error %lu.\n", ret, GetLastError());
     ret = pUnmapViewOfFile2(GetCurrentProcess(), view1, 0);
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     view1 = pMapViewOfFile3(section, NULL, placeholder1, 0, size, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
     ok(view1 == placeholder1, "Address does not match.\n");
@@ -248,9 +248,9 @@ static void test_VirtualAlloc2(void)
 
     memset(&info, 0, sizeof(info));
     VirtualQuery(placeholder1, &info, sizeof(info));
-    todo_wine ok(info.AllocationProtect == PAGE_NOACCESS, "Unexpected protection %#lx.\n", info.AllocationProtect);
-    todo_wine ok(info.State == MEM_RESERVE, "Unexpected state %#lx.\n", info.State);
-    todo_wine ok(info.Type == MEM_PRIVATE, "Unexpected type %#lx.\n", info.Type);
+    ok(info.AllocationProtect == PAGE_NOACCESS, "Unexpected protection %#lx.\n", info.AllocationProtect);
+    ok(info.State == MEM_RESERVE, "Unexpected state %#lx.\n", info.State);
+    ok(info.Type == MEM_PRIVATE, "Unexpected type %#lx.\n", info.Type);
     ok(info.RegionSize == size, "Unexpected size.\n");
 
     ret = pUnmapViewOfFile2(GetCurrentProcess(), view1, MEM_PRESERVE_PLACEHOLDER);
@@ -260,21 +260,21 @@ static void test_VirtualAlloc2(void)
     ok(!ret && GetLastError() == ERROR_INVALID_ADDRESS, "Got error %lu.\n", GetLastError());
 
     view1 = pMapViewOfFile3(section, NULL, placeholder1, 0, size, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
-    todo_wine ok(view1 == placeholder1, "Address does not match.\n");
+    ok(view1 == placeholder1, "Address does not match.\n");
     CloseHandle(section);
 
     ret = VirtualFree( view1, size, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER );
     ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "Got ret %d, error %lu.\n", ret, GetLastError());
 
     ret = pUnmapViewOfFile2(GetCurrentProcess(), view1, MEM_UNMAP_WITH_TRANSIENT_BOOST | MEM_PRESERVE_PLACEHOLDER);
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     ret = VirtualFree( placeholder1, size, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER );
     ok(!ret && GetLastError() == ERROR_INVALID_ADDRESS, "Got ret %d, error %lu.\n", ret, GetLastError());
     ret = VirtualFreeEx(GetCurrentProcess(), placeholder1, size, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER );
     ok(!ret && GetLastError() == ERROR_INVALID_ADDRESS, "Got ret %d, error %lu.\n", ret, GetLastError());
     ret = VirtualFree(placeholder1, 0, MEM_RELEASE);
-    todo_wine ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret, "Got error %lu.\n", GetLastError());
 
     UnmapViewOfFile(view2);
 

@@ -614,7 +614,7 @@ typedef union
     struct
     {
         enum apc_type    type;      /* APC_UNMAP_VIEW */
-        int              __pad;
+        unsigned int     flags;     /* unmap flags */
         client_ptr_t     addr;      /* view address */
     } unmap_view;
     struct

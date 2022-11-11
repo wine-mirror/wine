@@ -598,7 +598,7 @@ typedef union
     struct
     {
         enum apc_type    type;
-        int              __pad;
+        unsigned int     flags;
         client_ptr_t     addr;
     } unmap_view;
     struct
@@ -6415,7 +6415,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 770
+#define SERVER_PROTOCOL_VERSION 771
 
 /* ### protocol_version end ### */
 
