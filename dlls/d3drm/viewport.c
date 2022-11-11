@@ -73,7 +73,7 @@ static void d3drm_viewport_destroy(struct d3drm_viewport *viewport)
         IDirect3DRM_Release(viewport->d3drm);
     }
 
-    heap_free(viewport);
+    free(viewport);
 }
 
 static HRESULT WINAPI d3drm_viewport2_QueryInterface(IDirect3DRMViewport2 *iface, REFIID riid, void **out)
@@ -1133,7 +1133,7 @@ HRESULT d3drm_viewport_create(struct d3drm_viewport **viewport, IDirect3DRM *d3d
 
     TRACE("viewport %p, d3drm %p.\n", viewport, d3drm);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMViewport_iface.lpVtbl = &d3drm_viewport1_vtbl;

@@ -67,7 +67,7 @@ static ULONG WINAPI d3drm_light_Release(IDirect3DRMLight *iface)
     {
         d3drm_object_cleanup((IDirect3DRMObject *)iface, &light->obj);
         IDirect3DRM_Release(light->d3drm);
-        heap_free(light);
+        free(light);
     }
 
     return refcount;
@@ -375,7 +375,7 @@ HRESULT d3drm_light_create(struct d3drm_light **light, IDirect3DRM *d3drm)
 
     TRACE("light %p.\n", light);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMLight_iface.lpVtbl = &d3drm_light_vtbl;

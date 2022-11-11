@@ -211,7 +211,7 @@ static inline struct d3drm *impl_from_IDirect3DRM3(IDirect3DRM3 *iface)
 static void d3drm_destroy(struct d3drm *d3drm)
 {
     TRACE("d3drm object %p is being destroyed.\n", d3drm);
-    heap_free(d3drm);
+    free(d3drm);
 }
 
 static HRESULT WINAPI d3drm1_QueryInterface(IDirect3DRM *iface, REFIID riid, void **out)
@@ -2325,7 +2325,7 @@ HRESULT WINAPI Direct3DRMCreate(IDirect3DRM **d3drm)
 
     TRACE("d3drm %p.\n", d3drm);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRM_iface.lpVtbl = &d3drm1_vtbl;

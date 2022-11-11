@@ -276,7 +276,7 @@ BOOL d3drm_array_reserve(void **elements, SIZE_T *capacity, SIZE_T element_count
     if (new_capacity < element_count)
         new_capacity = max_capacity;
 
-    if (!(new_elements = heap_realloc(*elements, new_capacity * element_size)))
+    if (!(new_elements = realloc(*elements, new_capacity * element_size)))
         return FALSE;
 
     *elements = new_elements;
@@ -309,19 +309,19 @@ static void clean_mesh_builder_data(struct d3drm_mesh_builder *mesh_builder)
     DWORD i;
 
     IDirect3DRMMeshBuilder3_SetName(&mesh_builder->IDirect3DRMMeshBuilder3_iface, NULL);
-    heap_free(mesh_builder->vertices);
+    free(mesh_builder->vertices);
     mesh_builder->vertices = NULL;
     mesh_builder->nb_vertices = 0;
     mesh_builder->vertices_size = 0;
-    heap_free(mesh_builder->normals);
+    free(mesh_builder->normals);
     mesh_builder->normals = NULL;
     mesh_builder->nb_normals = 0;
     mesh_builder->normals_size = 0;
-    heap_free(mesh_builder->pFaceData);
+    free(mesh_builder->pFaceData);
     mesh_builder->pFaceData = NULL;
     mesh_builder->face_data_size = 0;
     mesh_builder->nb_faces = 0;
-    heap_free(mesh_builder->pCoords2d);
+    free(mesh_builder->pCoords2d);
     mesh_builder->pCoords2d = NULL;
     mesh_builder->nb_coords2d = 0;
     for (i = 0; i < mesh_builder->nb_materials; i++)
@@ -332,9 +332,9 @@ static void clean_mesh_builder_data(struct d3drm_mesh_builder *mesh_builder)
             IDirect3DRMTexture3_Release(mesh_builder->materials[i].texture);
     }
     mesh_builder->nb_materials = 0;
-    heap_free(mesh_builder->materials);
+    free(mesh_builder->materials);
     mesh_builder->materials = NULL;
-    heap_free(mesh_builder->material_indices);
+    free(mesh_builder->material_indices);
     mesh_builder->material_indices = NULL;
 }
 
@@ -393,7 +393,7 @@ static ULONG WINAPI d3drm_mesh_builder2_Release(IDirect3DRMMeshBuilder2 *iface)
         if (mesh_builder->texture)
             IDirect3DRMTexture3_Release(mesh_builder->texture);
         IDirect3DRM_Release(mesh_builder->d3drm);
-        heap_free(mesh_builder);
+        free(mesh_builder);
     }
 
     return refcount;
@@ -1047,12 +1047,12 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
     {
         char *name;
 
-        if (!(name = heap_alloc(size)))
+        if (!(name = malloc(size)))
             return E_OUTOFMEMORY;
 
         if (SUCCEEDED(hr = IDirectXFileData_GetName(pData, name, &size)))
             IDirect3DRMMeshBuilder3_SetName(iface, name);
-        heap_free(name);
+        free(name);
         if (hr != DXFILE_OK)
             return hr;
     }
@@ -1080,12 +1080,12 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
     }
     memcpy(mesh_builder->vertices, ptr + sizeof(DWORD), mesh_builder->nb_vertices * sizeof(D3DVECTOR));
 
-    faces_vertex_idx_ptr = faces_vertex_idx_data = heap_alloc(faces_vertex_idx_size);
+    faces_vertex_idx_ptr = faces_vertex_idx_data = malloc(faces_vertex_idx_size);
     memcpy(faces_vertex_idx_data, ptr + sizeof(DWORD) + mesh_builder->nb_vertices * sizeof(D3DVECTOR) + sizeof(DWORD),
             faces_vertex_idx_size);
 
     /* Each vertex index will have its normal index counterpart so just allocate twice the size */
-    mesh_builder->pFaceData = heap_alloc(faces_vertex_idx_size * 2);
+    mesh_builder->pFaceData = malloc(faces_vertex_idx_size * 2);
     faces_data_ptr = (DWORD*)mesh_builder->pFaceData;
 
     while (1)
@@ -1137,7 +1137,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
             memcpy(mesh_builder->normals, ptr + sizeof(DWORD), mesh_builder->nb_normals * sizeof(D3DVECTOR));
 
             faces_normal_idx_size = size - (2 * sizeof(DWORD) + mesh_builder->nb_normals * sizeof(D3DVECTOR));
-            faces_normal_idx_ptr = faces_normal_idx_data = heap_alloc(faces_normal_idx_size);
+            faces_normal_idx_ptr = faces_normal_idx_data = malloc(faces_normal_idx_size);
             memcpy(faces_normal_idx_data, ptr + sizeof(DWORD) + mesh_builder->nb_normals * sizeof(D3DVECTOR)
                     + sizeof(DWORD), faces_normal_idx_size);
         }
@@ -1151,7 +1151,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
 
             TRACE("MeshTextureCoords: nb_coords2d = %ld\n", mesh_builder->nb_coords2d);
 
-            mesh_builder->pCoords2d = heap_calloc(mesh_builder->nb_coords2d, sizeof(*mesh_builder->pCoords2d));
+            mesh_builder->pCoords2d = calloc(mesh_builder->nb_coords2d, sizeof(*mesh_builder->pCoords2d));
             memcpy(mesh_builder->pCoords2d, ptr + sizeof(DWORD), mesh_builder->nb_coords2d * sizeof(*mesh_builder->pCoords2d));
         }
         else if (IsEqualGUID(guid, &TID_D3DRMMeshMaterialList))
@@ -1179,15 +1179,15 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
             if (size != data_size)
                 WARN("Returned size %lu does not match expected one %lu\n", size, data_size);
 
-            if (!(mesh_builder->material_indices = heap_calloc(nb_face_indices,
+            if (!(mesh_builder->material_indices = calloc(nb_face_indices,
                     sizeof(*mesh_builder->material_indices))))
                 goto end;
             memcpy(mesh_builder->material_indices, ptr + 2 * sizeof(DWORD),
                     nb_face_indices * sizeof(*mesh_builder->material_indices));
 
-            if (!(mesh_builder->materials = heap_calloc(nb_materials, sizeof(*mesh_builder->materials))))
+            if (!(mesh_builder->materials = calloc(nb_materials, sizeof(*mesh_builder->materials))))
             {
-                heap_free(mesh_builder->material_indices);
+                free(mesh_builder->material_indices);
                 goto end;
             }
             mesh_builder->nb_materials = nb_materials;
@@ -1439,7 +1439,7 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
     if (!mesh_builder->pCoords2d)
     {
         mesh_builder->nb_coords2d = mesh_builder->nb_vertices;
-        mesh_builder->pCoords2d = heap_calloc(mesh_builder->nb_coords2d, sizeof(*mesh_builder->pCoords2d));
+        mesh_builder->pCoords2d = calloc(mesh_builder->nb_coords2d, sizeof(*mesh_builder->pCoords2d));
         for (i = 0; i < mesh_builder->nb_coords2d; ++i)
         {
             mesh_builder->pCoords2d[i].u = 0.0f;
@@ -1453,8 +1453,8 @@ HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *pData,
 
 end:
 
-    heap_free(faces_normal_idx_data);
-    heap_free(faces_vertex_idx_data);
+    free(faces_normal_idx_data);
+    free(faces_vertex_idx_data);
 
     return ret;
 }
@@ -1966,7 +1966,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_CreateMesh(IDirect3DRMMeshBuilder3 *if
         int k;
         D3DRMVERTEX* vertices;
 
-        if (!(vertices = heap_calloc(mesh_builder->nb_vertices, sizeof(*vertices))))
+        if (!(vertices = calloc(mesh_builder->nb_vertices, sizeof(*vertices))))
         {
             IDirect3DRMMesh_Release(*mesh);
             return E_OUTOFMEMORY;
@@ -1974,7 +1974,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_CreateMesh(IDirect3DRMMeshBuilder3 *if
         for (i = 0; i < mesh_builder->nb_vertices; i++)
             vertices[i].position = mesh_builder->vertices[i];
         hr = IDirect3DRMMesh_SetVertices(*mesh, 0, 0, mesh_builder->nb_vertices, vertices);
-        heap_free(vertices);
+        free(vertices);
 
         /* Groups are in reverse order compared to materials list in X file */
         for (k = mesh_builder->nb_materials - 1; k >= 0; k--)
@@ -1987,15 +1987,15 @@ static HRESULT WINAPI d3drm_mesh_builder3_CreateMesh(IDirect3DRMMeshBuilder3 *if
             unsigned nb_vertices = 0;
             unsigned nb_faces = 0;
 
-            if (!(used_vertices = heap_calloc(mesh_builder->face_data_size, sizeof(*used_vertices))))
+            if (!(used_vertices = calloc(mesh_builder->face_data_size, sizeof(*used_vertices))))
             {
                 IDirect3DRMMesh_Release(*mesh);
                 return E_OUTOFMEMORY;
             }
 
-            if (!(face_data = heap_calloc(mesh_builder->face_data_size, sizeof(*face_data))))
+            if (!(face_data = calloc(mesh_builder->face_data_size, sizeof(*face_data))))
             {
-                heap_free(used_vertices);
+                free(used_vertices);
                 IDirect3DRMMesh_Release(*mesh);
                 return E_OUTOFMEMORY;
             }
@@ -2049,8 +2049,8 @@ static HRESULT WINAPI d3drm_mesh_builder3_CreateMesh(IDirect3DRMMeshBuilder3 *if
                     nb_vertices++;
 
             hr = IDirect3DRMMesh_AddGroup(*mesh, nb_vertices, nb_faces, vertex_per_face, face_data, &group);
-            heap_free(used_vertices);
-            heap_free(face_data);
+            free(used_vertices);
+            free(face_data);
             if (SUCCEEDED(hr))
                 hr = IDirect3DRMMesh_SetGroupColor(*mesh, group, mesh_builder->materials[k].color);
             if (SUCCEEDED(hr))
@@ -2340,7 +2340,7 @@ HRESULT d3drm_mesh_builder_create(struct d3drm_mesh_builder **mesh_builder, IDir
 
     TRACE("mesh_builder %p.\n", mesh_builder);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMMeshBuilder2_iface.lpVtbl = &d3drm_mesh_builder2_vtbl;
@@ -2402,15 +2402,15 @@ static ULONG WINAPI d3drm_mesh_Release(IDirect3DRMMesh *iface)
         IDirect3DRM_Release(mesh->d3drm);
         for (i = 0; i < mesh->nb_groups; ++i)
         {
-            heap_free(mesh->groups[i].vertices);
-            heap_free(mesh->groups[i].face_data);
+            free(mesh->groups[i].vertices);
+            free(mesh->groups[i].face_data);
             if (mesh->groups[i].material)
                 IDirect3DRMMaterial2_Release(mesh->groups[i].material);
             if (mesh->groups[i].texture)
                 IDirect3DRMTexture3_Release(mesh->groups[i].texture);
         }
-        heap_free(mesh->groups);
-        heap_free(mesh);
+        free(mesh->groups);
+        free(mesh);
     }
 
     return refcount;
@@ -2531,7 +2531,7 @@ static HRESULT WINAPI d3drm_mesh_AddGroup(IDirect3DRMMesh *iface, unsigned verte
 
     group = mesh->groups + mesh->nb_groups;
 
-    if (!(group->vertices = heap_calloc(vertex_count, sizeof(*group->vertices))))
+    if (!(group->vertices = calloc(vertex_count, sizeof(*group->vertices))))
         return E_OUTOFMEMORY;
     group->nb_vertices = vertex_count;
     group->nb_faces = face_count;
@@ -2556,9 +2556,9 @@ static HRESULT WINAPI d3drm_mesh_AddGroup(IDirect3DRMMesh *iface, unsigned verte
         }
     }
 
-    if (!(group->face_data = heap_calloc(group->face_data_size, sizeof(*group->face_data))))
+    if (!(group->face_data = calloc(group->face_data_size, sizeof(*group->face_data))))
     {
-        heap_free(group->vertices);
+        free(group->vertices);
         return E_OUTOFMEMORY;
     }
     memcpy(group->face_data, face_data, group->face_data_size * sizeof(*face_data));
@@ -2840,7 +2840,7 @@ HRESULT d3drm_mesh_create(struct d3drm_mesh **mesh, IDirect3DRM *d3drm)
 
     TRACE("mesh %p, d3drm %p.\n", mesh, d3drm);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMMesh_iface.lpVtbl = &d3drm_mesh_vtbl;
@@ -2894,7 +2894,7 @@ static ULONG WINAPI d3drm_wrap_Release(IDirect3DRMWrap *iface)
     if (!refcount)
     {
         d3drm_object_cleanup((IDirect3DRMObject *)iface, &wrap->obj);
-        heap_free(wrap);
+        free(wrap);
     }
 
     return refcount;
@@ -3026,7 +3026,7 @@ HRESULT d3drm_wrap_create(struct d3drm_wrap **wrap, IDirect3DRM *d3drm)
 
     TRACE("wrap %p, d3drm %p.\n", wrap, d3drm);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMWrap_iface.lpVtbl = &d3drm_wrap_vtbl;

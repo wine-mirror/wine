@@ -79,7 +79,7 @@ static ULONG WINAPI d3drm_face1_Release(IDirect3DRMFace *iface)
     if (!refcount)
     {
         d3drm_object_cleanup((IDirect3DRMObject *)iface, &face->obj);
-        heap_free(face);
+        free(face);
     }
 
     return refcount;
@@ -624,7 +624,7 @@ HRESULT d3drm_face_create(struct d3drm_face **face)
 
     TRACE("face %p.\n", face);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMFace_iface.lpVtbl = &d3drm_face1_vtbl;

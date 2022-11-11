@@ -206,8 +206,8 @@ static ULONG WINAPI d3drm_frame_array_Release(IDirect3DRMFrameArray *iface)
         {
             IDirect3DRMFrame_Release(array->frames[i]);
         }
-        heap_free(array->frames);
-        heap_free(array);
+        free(array->frames);
+        free(array);
     }
 
     return refcount;
@@ -258,7 +258,7 @@ static struct d3drm_frame_array *d3drm_frame_array_create(unsigned int frame_cou
     struct d3drm_frame_array *array;
     unsigned int i;
 
-    if (!(array = heap_alloc_zero(sizeof(*array))))
+    if (!(array = calloc(1, sizeof(*array))))
         return NULL;
 
     array->IDirect3DRMFrameArray_iface.lpVtbl = &d3drm_frame_array_vtbl;
@@ -267,9 +267,9 @@ static struct d3drm_frame_array *d3drm_frame_array_create(unsigned int frame_cou
 
     if (frame_count)
     {
-        if (!(array->frames = heap_calloc(frame_count, sizeof(*array->frames))))
+        if (!(array->frames = calloc(frame_count, sizeof(*array->frames))))
         {
-            heap_free(array);
+            free(array);
             return NULL;
         }
 
@@ -324,8 +324,8 @@ static ULONG WINAPI d3drm_visual_array_Release(IDirect3DRMVisualArray *iface)
         {
             IDirect3DRMVisual_Release(array->visuals[i]);
         }
-        heap_free(array->visuals);
-        heap_free(array);
+        free(array->visuals);
+        free(array);
     }
 
     return refcount;
@@ -376,7 +376,7 @@ static struct d3drm_visual_array *d3drm_visual_array_create(unsigned int visual_
     struct d3drm_visual_array *array;
     unsigned int i;
 
-    if (!(array = heap_alloc_zero(sizeof(*array))))
+    if (!(array = calloc(1, sizeof(*array))))
         return NULL;
 
     array->IDirect3DRMVisualArray_iface.lpVtbl = &d3drm_visual_array_vtbl;
@@ -385,9 +385,9 @@ static struct d3drm_visual_array *d3drm_visual_array_create(unsigned int visual_
 
     if (visual_count)
     {
-        if (!(array->visuals = heap_calloc(visual_count, sizeof(*array->visuals))))
+        if (!(array->visuals = calloc(visual_count, sizeof(*array->visuals))))
         {
-            heap_free(array);
+            free(array);
             return NULL;
         }
 
@@ -443,8 +443,8 @@ static ULONG WINAPI d3drm_light_array_Release(IDirect3DRMLightArray *iface)
         {
             IDirect3DRMLight_Release(array->lights[i]);
         }
-        heap_free(array->lights);
-        heap_free(array);
+        free(array->lights);
+        free(array);
     }
 
     return refcount;
@@ -495,7 +495,7 @@ static struct d3drm_light_array *d3drm_light_array_create(unsigned int light_cou
     struct d3drm_light_array *array;
     unsigned int i;
 
-    if (!(array = heap_alloc_zero(sizeof(*array))))
+    if (!(array = calloc(1, sizeof(*array))))
         return NULL;
 
     array->IDirect3DRMLightArray_iface.lpVtbl = &d3drm_light_array_vtbl;
@@ -504,9 +504,9 @@ static struct d3drm_light_array *d3drm_light_array_create(unsigned int light_cou
 
     if (light_count)
     {
-        if (!(array->lights = heap_calloc(light_count, sizeof(*array->lights))))
+        if (!(array->lights = calloc(light_count, sizeof(*array->lights))))
         {
-            heap_free(array);
+            free(array);
             return NULL;
         }
 
@@ -613,19 +613,19 @@ static ULONG WINAPI d3drm_frame3_Release(IDirect3DRMFrame3 *iface)
         {
             IDirect3DRMFrame3_Release(frame->children[i]);
         }
-        heap_free(frame->children);
+        free(frame->children);
         for (i = 0; i < frame->nb_visuals; ++i)
         {
             IDirect3DRMVisual_Release(frame->visuals[i]);
         }
-        heap_free(frame->visuals);
+        free(frame->visuals);
         for (i = 0; i < frame->nb_lights; ++i)
         {
             IDirect3DRMLight_Release(frame->lights[i]);
         }
-        heap_free(frame->lights);
+        free(frame->lights);
         IDirect3DRM_Release(frame->d3drm);
-        heap_free(frame);
+        free(frame);
     }
 
     return refcount;
@@ -3134,7 +3134,7 @@ HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, I
 
     TRACE("frame %p, parent_frame %p, d3drm %p.\n", frame, parent_frame, d3drm);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMFrame_iface.lpVtbl = &d3drm_frame1_vtbl;
@@ -3155,7 +3155,7 @@ HRESULT d3drm_frame_create(struct d3drm_frame **frame, IUnknown *parent_frame, I
 
         if (FAILED(hr = IDirect3DRMFrame_QueryInterface(parent_frame, &IID_IDirect3DRMFrame3, (void **)&p)))
         {
-            heap_free(object);
+            free(object);
             return hr;
         }
         IDirect3DRMFrame_Release(parent_frame);
@@ -3232,10 +3232,10 @@ static ULONG WINAPI d3drm_animation2_Release(IDirect3DRMAnimation2 *iface)
     {
         d3drm_object_cleanup((IDirect3DRMObject *)&animation->IDirect3DRMAnimation_iface, &animation->obj);
         IDirect3DRM_Release(animation->d3drm);
-        heap_free(animation->rotate.keys);
-        heap_free(animation->scale.keys);
-        heap_free(animation->position.keys);
-        heap_free(animation);
+        free(animation->rotate.keys);
+        free(animation->scale.keys);
+        free(animation->position.keys);
+        free(animation);
     }
 
     return refcount;
@@ -3886,7 +3886,7 @@ HRESULT d3drm_animation_create(struct d3drm_animation **animation, IDirect3DRM *
 
     TRACE("animation %p, d3drm %p.\n", animation, d3drm);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMAnimation_iface.lpVtbl = &d3drm_animation1_vtbl;

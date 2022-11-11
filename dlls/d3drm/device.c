@@ -58,7 +58,7 @@ void d3drm_device_destroy(struct d3drm_device *device)
         IDirectDraw_Release(device->ddraw);
         IDirect3DRM_Release(device->d3drm);
     }
-    heap_free(device);
+    free(device);
 }
 
 static inline struct d3drm_device *impl_from_IDirect3DRMWinDevice(IDirect3DRMWinDevice *iface)
@@ -1660,7 +1660,7 @@ HRESULT d3drm_device_create(struct d3drm_device **device, IDirect3DRM *d3drm)
 
     TRACE("device %p, d3drm %p.\n", device, d3drm);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMDevice_iface.lpVtbl = &d3drm_device1_vtbl;

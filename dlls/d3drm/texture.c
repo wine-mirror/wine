@@ -47,7 +47,7 @@ static void d3drm_texture_destroy(struct d3drm_texture *texture)
         IDirect3DRM_Release(texture->d3drm);
     if (texture->surface)
         IDirectDrawSurface_Release(texture->surface);
-    heap_free(texture);
+    free(texture);
 }
 
 static BOOL d3drm_validate_image(D3DRMIMAGE *image)
@@ -79,17 +79,17 @@ static BOOL d3drm_image_palettise(D3DRMIMAGE *image, unsigned char *src_data,
     src_pitch = flip ? -w * 3 : w * 3;
     dst_pitch = (w + 3) & ~3;
 
-    if (!(dst_data = heap_alloc(dst_pitch * h)))
+    if (!(dst_data = malloc(dst_pitch * h)))
     {
         WARN("Failed to allocate image buffer.\n");
         return FALSE;
     }
     memset(dst_data, 0xff, dst_pitch * h);
 
-    if (!(palette = heap_alloc(256 * sizeof(*palette))))
+    if (!(palette = malloc(256 * sizeof(*palette))))
     {
         WARN("Failed to allocate palette.\n");
-        heap_free(dst_data);
+        free(dst_data);
         return FALSE;
     }
 
@@ -113,8 +113,8 @@ static BOOL d3drm_image_palettise(D3DRMIMAGE *image, unsigned char *src_data,
             {
                 if (colour_count == 256)
                 {
-                    heap_free(dst_data);
-                    heap_free(palette);
+                    free(dst_data);
+                    free(palette);
                     return FALSE;
                 }
 
@@ -140,7 +140,7 @@ static BOOL d3drm_image_palettise(D3DRMIMAGE *image, unsigned char *src_data,
     image->green_mask = 0xff;
     image->blue_mask = 0xff;
     image->palette_size = colour_count;
-    if (!(image->palette = heap_realloc(palette, colour_count * sizeof(*palette))))
+    if (!(image->palette = realloc(palette, colour_count * sizeof(*palette))))
         image->palette = palette;
 
     return TRUE;
@@ -161,7 +161,7 @@ static HRESULT d3drm_image_load_32(D3DRMIMAGE *image, unsigned char *src_data,
     src_pitch = flip ? -w * 3 : w * 3;
     dst_pitch = w * 4;
 
-    if (!(dst_data = heap_alloc(dst_pitch * h)))
+    if (!(dst_data = malloc(dst_pitch * h)))
     {
         WARN("Failed to allocate image buffer.\n");
         return D3DRMERR_BADALLOC;
@@ -206,16 +206,16 @@ static HRESULT d3drm_image_load_8(D3DRMIMAGE *image, const RGBQUAD *palette,
     if (w > ~(SIZE_T)0 / h)
         return D3DRMERR_BADALLOC;
 
-    if (!(dst_data = heap_alloc(w * h)))
+    if (!(dst_data = malloc(w * h)))
     {
         WARN("Failed to allocate image buffer.\n");
         return D3DRMERR_BADALLOC;
     }
 
-    if (!(image->palette = heap_alloc(256 * sizeof(*image->palette))))
+    if (!(image->palette = malloc(256 * sizeof(*image->palette))))
     {
         WARN("Failed to allocate palette.\n");
-        heap_free(dst_data);
+        free(dst_data);
         return D3DRMERR_BADALLOC;
     }
 
@@ -257,8 +257,8 @@ static void CDECL destroy_image_callback(IDirect3DRMObject *obj, void *arg)
 
     TRACE("texture object %p, image %p.\n", obj, image);
 
-    heap_free(image->buffer1);
-    heap_free(image);
+    free(image->buffer1);
+    free(image);
 }
 
 static HRESULT d3drm_texture_load(struct d3drm_texture *texture,
@@ -294,7 +294,7 @@ static HRESULT d3drm_texture_load(struct d3drm_texture *texture,
         return D3DRMERR_BADVALUE;
 
     hr = D3DRMERR_BADALLOC;
-    if (!(image = heap_alloc_zero(sizeof(*image))))
+    if (!(image = calloc(1, sizeof(*image))))
         goto fail;
 
     hr = D3DRMERR_BADFILE;
@@ -344,7 +344,7 @@ static HRESULT d3drm_texture_load(struct d3drm_texture *texture,
     return hr;
 
 fail:
-    heap_free(image);
+    free(image);
     UnmapViewOfFile(header);
 
     return hr;
@@ -1450,7 +1450,7 @@ HRESULT d3drm_texture_create(struct d3drm_texture **texture, IDirect3DRM *d3drm)
 
     TRACE("texture %p.\n", texture);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DRMTexture_iface.lpVtbl = &d3drm_texture1_vtbl;
