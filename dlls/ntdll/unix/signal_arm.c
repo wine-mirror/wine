@@ -1594,6 +1594,8 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     struct syscall_frame *frame = thread_data->syscall_frame;
     CONTEXT *ctx, context = { CONTEXT_ALL };
 
+    __asm__ __volatile__( "mcr p15, 0, %0, c13, c0, 2" : : "r" (teb) );
+
     context.R0 = (DWORD)entry;
     context.R1 = (DWORD)arg;
     context.Sp = (DWORD)teb->Tib.StackBase;
