@@ -1166,6 +1166,13 @@ class VkVariable(object):
     def is_pointer(self):
         return self.pointer is not None
 
+    def is_pointer_size(self):
+        if self.type in ["size_t", "HWND", "HINSTANCE"]:
+            return True
+        if self.is_handle() and self.handle.is_dispatchable():
+            return True
+        return False
+
     def is_handle(self):
         return self.handle is not None
 
@@ -1807,7 +1814,8 @@ class VkStruct(Sequence):
             returnedonly = False
 
         # Those structs don't have returnedonly in spec, but they could (should?).
-        if name in ["VkSurfaceCapabilitiesPresentBarrierNV"]:
+        if name in ["VkSurfaceCapabilitiesPresentBarrierNV",
+                    "VkCooperativeMatrixPropertiesNV"]:
             returnedonly = True
 
         structextends = struct.attrib.get("structextends")
@@ -1999,8 +2007,10 @@ class VkStruct(Sequence):
                     if is_const or m.is_const():
                         continue
 
-            # check alignment for 32-bit conversions
+            # check alignment and pointer-sized members for 32-bit conversions
             if conv and (direction == Direction.INPUT or not is_const):
+                if m.is_pointer() or m.is_pointer_size():
+                    return True
                 # we don't check structs here, they will will be traversed by needs_conversion chain anyway
                 if not m.is_struct() and m.needs_alignment():
                     return True
@@ -2034,10 +2044,14 @@ class VkStruct(Sequence):
         return False
 
     def needs_host_type(self):
+        # VkAllocationCallbacks never needs conversion
+        if self.name == "VkAllocationCallbacks":
+            return False
+
         for m in self.members:
             if self.name == m.type:
                 continue
-            if m.name == "pNext":
+            if m.is_pointer() or m.is_pointer_size():
                 return True
             if m.needs_alignment():
                 return True

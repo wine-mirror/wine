@@ -994,6 +994,14 @@ typedef struct VkResolveImageInfo232
 } VkResolveImageInfo232;
 typedef VkResolveImageInfo232 VkResolveImageInfo2KHR32;
 
+typedef struct VkCoarseSampleOrderCustomNV32
+{
+    VkShadingRatePaletteEntryNV shadingRate;
+    uint32_t sampleCount;
+    uint32_t sampleLocationCount;
+    const VkCoarseSampleLocationNV *pSampleLocations;
+} VkCoarseSampleOrderCustomNV32;
+
 typedef struct VkPerformanceMarkerInfoINTEL32
 {
     VkStructureType sType;
@@ -1036,6 +1044,12 @@ typedef struct VkVertexInputAttributeDescription2EXT32
     VkFormat format;
     uint32_t offset;
 } VkVertexInputAttributeDescription2EXT32;
+
+typedef struct VkShadingRatePaletteNV32
+{
+    uint32_t shadingRatePaletteEntryCount;
+    const VkShadingRatePaletteEntryNV *pShadingRatePaletteEntries;
+} VkShadingRatePaletteNV32;
 
 typedef struct VkStridedDeviceAddressRegionKHR32
 {
@@ -1140,6 +1154,21 @@ typedef struct VkPipelineCreationFeedback32
 } VkPipelineCreationFeedback32;
 typedef VkPipelineCreationFeedback32 VkPipelineCreationFeedbackEXT32;
 
+typedef struct VkSpecializationMapEntry32
+{
+    uint32_t constantID;
+    uint32_t offset;
+    size_t size;
+} VkSpecializationMapEntry32;
+
+typedef struct VkSpecializationInfo32
+{
+    uint32_t mapEntryCount;
+    const VkSpecializationMapEntry32 *pMapEntries;
+    size_t dataSize;
+    const void *pData;
+} VkSpecializationInfo32;
+
 typedef struct VkShaderModuleCreateInfo32
 {
     VkStructureType sType;
@@ -1199,7 +1228,7 @@ typedef struct VkPipelineShaderStageCreateInfo32
     VkShaderStageFlagBits stage;
     VkShaderModule DECLSPEC_ALIGN(8) module;
     const char *pName;
-    const VkSpecializationInfo *pSpecializationInfo;
+    const VkSpecializationInfo32 *pSpecializationInfo;
 } VkPipelineShaderStageCreateInfo32;
 
 typedef struct VkPipelineCreationFeedbackCreateInfo32
@@ -1274,6 +1303,13 @@ typedef struct VkDebugUtilsMessengerCreateInfoEXT32
     void *pUserData;
 } VkDebugUtilsMessengerCreateInfoEXT32;
 
+typedef struct VkMutableDescriptorTypeListEXT32
+{
+    uint32_t descriptorTypeCount;
+    const VkDescriptorType *pDescriptorTypes;
+} VkMutableDescriptorTypeListEXT32;
+typedef VkMutableDescriptorTypeListEXT32 VkMutableDescriptorTypeListVALVE32;
+
 typedef struct VkDescriptorPoolInlineUniformBlockCreateInfo32
 {
     VkStructureType sType;
@@ -1287,7 +1323,7 @@ typedef struct VkMutableDescriptorTypeCreateInfoEXT32
     VkStructureType sType;
     const void *pNext;
     uint32_t mutableDescriptorTypeListCount;
-    const VkMutableDescriptorTypeListEXT *pMutableDescriptorTypeLists;
+    const VkMutableDescriptorTypeListEXT32 *pMutableDescriptorTypeLists;
 } VkMutableDescriptorTypeCreateInfoEXT32;
 typedef VkMutableDescriptorTypeCreateInfoEXT32 VkMutableDescriptorTypeCreateInfoVALVE32;
 
@@ -1300,6 +1336,15 @@ typedef struct VkDescriptorPoolCreateInfo32
     uint32_t poolSizeCount;
     const VkDescriptorPoolSize *pPoolSizes;
 } VkDescriptorPoolCreateInfo32;
+
+typedef struct VkDescriptorSetLayoutBinding32
+{
+    uint32_t binding;
+    VkDescriptorType descriptorType;
+    uint32_t descriptorCount;
+    VkShaderStageFlags stageFlags;
+    const VkSampler *pImmutableSamplers;
+} VkDescriptorSetLayoutBinding32;
 
 typedef struct VkDescriptorSetLayoutBindingFlagsCreateInfo32
 {
@@ -1316,8 +1361,19 @@ typedef struct VkDescriptorSetLayoutCreateInfo32
     const void *pNext;
     VkDescriptorSetLayoutCreateFlags flags;
     uint32_t bindingCount;
-    const VkDescriptorSetLayoutBinding *pBindings;
+    const VkDescriptorSetLayoutBinding32 *pBindings;
 } VkDescriptorSetLayoutCreateInfo32;
+
+typedef struct VkDescriptorUpdateTemplateEntry32
+{
+    uint32_t dstBinding;
+    uint32_t dstArrayElement;
+    uint32_t descriptorCount;
+    VkDescriptorType descriptorType;
+    size_t offset;
+    size_t stride;
+} VkDescriptorUpdateTemplateEntry32;
+typedef VkDescriptorUpdateTemplateEntry32 VkDescriptorUpdateTemplateEntryKHR32;
 
 typedef struct VkDescriptorUpdateTemplateCreateInfo32
 {
@@ -1325,7 +1381,7 @@ typedef struct VkDescriptorUpdateTemplateCreateInfo32
     const void *pNext;
     VkDescriptorUpdateTemplateCreateFlags flags;
     uint32_t descriptorUpdateEntryCount;
-    const VkDescriptorUpdateTemplateEntry *pDescriptorUpdateEntries;
+    const VkDescriptorUpdateTemplateEntry32 *pDescriptorUpdateEntries;
     VkDescriptorUpdateTemplateType templateType;
     VkDescriptorSetLayout DECLSPEC_ALIGN(8) descriptorSetLayout;
     VkPipelineBindPoint pipelineBindPoint;
@@ -2766,7 +2822,7 @@ typedef struct VkPipelineViewportShadingRateImageStateCreateInfoNV32
     const void *pNext;
     VkBool32 shadingRateImageEnable;
     uint32_t viewportCount;
-    const VkShadingRatePaletteNV *pShadingRatePalettes;
+    const VkShadingRatePaletteNV32 *pShadingRatePalettes;
 } VkPipelineViewportShadingRateImageStateCreateInfoNV32;
 
 typedef struct VkPipelineViewportCoarseSampleOrderStateCreateInfoNV32
@@ -2775,7 +2831,7 @@ typedef struct VkPipelineViewportCoarseSampleOrderStateCreateInfoNV32
     const void *pNext;
     VkCoarseSampleOrderTypeNV sampleOrderType;
     uint32_t customSampleOrderCount;
-    const VkCoarseSampleOrderCustomNV *pCustomSampleOrders;
+    const VkCoarseSampleOrderCustomNV32 *pCustomSampleOrders;
 } VkPipelineViewportCoarseSampleOrderStateCreateInfoNV32;
 
 typedef struct VkPipelineViewportDepthClipControlCreateInfoEXT32
@@ -3411,6 +3467,20 @@ typedef struct VkRayTracingPipelineCreateInfoNV32
     int32_t basePipelineIndex;
 } VkRayTracingPipelineCreateInfoNV32;
 
+typedef struct VkSubpassDescription32
+{
+    VkSubpassDescriptionFlags flags;
+    VkPipelineBindPoint pipelineBindPoint;
+    uint32_t inputAttachmentCount;
+    const VkAttachmentReference *pInputAttachments;
+    uint32_t colorAttachmentCount;
+    const VkAttachmentReference *pColorAttachments;
+    const VkAttachmentReference *pResolveAttachments;
+    const VkAttachmentReference *pDepthStencilAttachment;
+    uint32_t preserveAttachmentCount;
+    const uint32_t *pPreserveAttachments;
+} VkSubpassDescription32;
+
 typedef struct VkRenderPassMultiviewCreateInfo32
 {
     VkStructureType sType;
@@ -3448,7 +3518,7 @@ typedef struct VkRenderPassCreateInfo32
     uint32_t attachmentCount;
     const VkAttachmentDescription *pAttachments;
     uint32_t subpassCount;
-    const VkSubpassDescription *pSubpasses;
+    const VkSubpassDescription32 *pSubpasses;
     uint32_t dependencyCount;
     const VkSubpassDependency *pDependencies;
 } VkRenderPassCreateInfo32;
@@ -5536,12 +5606,18 @@ typedef struct VkBindSparseInfo32
     const VkSemaphore *pSignalSemaphores;
 } VkBindSparseInfo32;
 
+typedef struct VkPresentRegionKHR32
+{
+    uint32_t rectangleCount;
+    const VkRectLayerKHR *pRectangles;
+} VkPresentRegionKHR32;
+
 typedef struct VkPresentRegionsKHR32
 {
     VkStructureType sType;
     const void *pNext;
     uint32_t swapchainCount;
-    const VkPresentRegionKHR *pRegions;
+    const VkPresentRegionKHR32 *pRegions;
 } VkPresentRegionsKHR32;
 
 typedef struct VkDeviceGroupPresentInfoKHR32
@@ -7899,6 +7975,36 @@ static inline void convert_VkResolveImageInfo2_win32_to_host(struct conversion_c
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkCoarseSampleOrderCustomNV_win32_to_host(const VkCoarseSampleOrderCustomNV32 *in, VkCoarseSampleOrderCustomNV *out)
+{
+    if (!in) return;
+
+    out->shadingRate = in->shadingRate;
+    out->sampleCount = in->sampleCount;
+    out->sampleLocationCount = in->sampleLocationCount;
+    out->pSampleLocations = in->pSampleLocations;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkCoarseSampleOrderCustomNV *convert_VkCoarseSampleOrderCustomNV_array_win32_to_host(struct conversion_context *ctx, const VkCoarseSampleOrderCustomNV32 *in, uint32_t count)
+{
+    VkCoarseSampleOrderCustomNV *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkCoarseSampleOrderCustomNV_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPerformanceMarkerInfoINTEL_win32_to_host(const VkPerformanceMarkerInfoINTEL32 *in, VkPerformanceMarkerInfoINTEL *out)
 {
     if (!in) return;
@@ -7991,6 +8097,34 @@ static inline const VkVertexInputAttributeDescription2EXT *convert_VkVertexInput
     for (i = 0; i < count; i++)
     {
         convert_VkVertexInputAttributeDescription2EXT_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkShadingRatePaletteNV_win32_to_host(const VkShadingRatePaletteNV32 *in, VkShadingRatePaletteNV *out)
+{
+    if (!in) return;
+
+    out->shadingRatePaletteEntryCount = in->shadingRatePaletteEntryCount;
+    out->pShadingRatePaletteEntries = in->pShadingRatePaletteEntries;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkShadingRatePaletteNV *convert_VkShadingRatePaletteNV_array_win32_to_host(struct conversion_context *ctx, const VkShadingRatePaletteNV32 *in, uint32_t count)
+{
+    VkShadingRatePaletteNV *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkShadingRatePaletteNV_win32_to_host(&in[i], &out[i]);
     }
 
     return out;
@@ -8215,6 +8349,65 @@ static inline void convert_VkPipelineCreationFeedback_array_host_to_win32(const 
 }
 #endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSpecializationMapEntry_win32_to_host(const VkSpecializationMapEntry32 *in, VkSpecializationMapEntry *out)
+{
+    if (!in) return;
+
+    out->constantID = in->constantID;
+    out->offset = in->offset;
+    out->size = in->size;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkSpecializationMapEntry *convert_VkSpecializationMapEntry_array_win32_to_host(struct conversion_context *ctx, const VkSpecializationMapEntry32 *in, uint32_t count)
+{
+    VkSpecializationMapEntry *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSpecializationMapEntry_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSpecializationInfo_win32_to_host(struct conversion_context *ctx, const VkSpecializationInfo32 *in, VkSpecializationInfo *out)
+{
+    if (!in) return;
+
+    out->mapEntryCount = in->mapEntryCount;
+    out->pMapEntries = convert_VkSpecializationMapEntry_array_win32_to_host(ctx, in->pMapEntries, in->mapEntryCount);
+    out->dataSize = in->dataSize;
+    out->pData = in->pData;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkSpecializationInfo *convert_VkSpecializationInfo_array_win32_to_host(struct conversion_context *ctx, const VkSpecializationInfo32 *in, uint32_t count)
+{
+    VkSpecializationInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSpecializationInfo_win32_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
 #if !defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineShaderStageCreateInfo_win64_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo *in, VkPipelineShaderStageCreateInfo *out)
 {
@@ -8331,7 +8524,7 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win32_to_host(struct 
     out->stage = in->stage;
     out->module = in->module;
     out->pName = in->pName;
-    out->pSpecializationInfo = in->pSpecializationInfo;
+    out->pSpecializationInfo = convert_VkSpecializationInfo_array_win32_to_host(ctx, in->pSpecializationInfo, 1);
 
     for (in_header = in->pNext; in_header; in_header = in_header->pNext)
     {
@@ -8645,6 +8838,34 @@ static inline void convert_VkDebugUtilsMessengerCreateInfoEXT_win32_to_host(cons
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkMutableDescriptorTypeListEXT_win32_to_host(const VkMutableDescriptorTypeListEXT32 *in, VkMutableDescriptorTypeListEXT *out)
+{
+    if (!in) return;
+
+    out->descriptorTypeCount = in->descriptorTypeCount;
+    out->pDescriptorTypes = in->pDescriptorTypes;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkMutableDescriptorTypeListEXT *convert_VkMutableDescriptorTypeListEXT_array_win32_to_host(struct conversion_context *ctx, const VkMutableDescriptorTypeListEXT32 *in, uint32_t count)
+{
+    VkMutableDescriptorTypeListEXT *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkMutableDescriptorTypeListEXT_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDescriptorPoolCreateInfo_win32_to_host(struct conversion_context *ctx, const VkDescriptorPoolCreateInfo32 *in, VkDescriptorPoolCreateInfo *out)
 {
     const VkBaseInStructure *in_header;
@@ -8681,7 +8902,7 @@ static inline void convert_VkDescriptorPoolCreateInfo_win32_to_host(struct conve
             out_ext->sType = VK_STRUCTURE_TYPE_MUTABLE_DESCRIPTOR_TYPE_CREATE_INFO_EXT;
             out_ext->pNext = NULL;
             out_ext->mutableDescriptorTypeListCount = in_ext->mutableDescriptorTypeListCount;
-            out_ext->pMutableDescriptorTypeLists = in_ext->pMutableDescriptorTypeLists;
+            out_ext->pMutableDescriptorTypeLists = convert_VkMutableDescriptorTypeListEXT_array_win32_to_host(ctx, in_ext->pMutableDescriptorTypeLists, in_ext->mutableDescriptorTypeListCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -8691,6 +8912,37 @@ static inline void convert_VkDescriptorPoolCreateInfo_win32_to_host(struct conve
             break;
         }
     }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDescriptorSetLayoutBinding_win32_to_host(const VkDescriptorSetLayoutBinding32 *in, VkDescriptorSetLayoutBinding *out)
+{
+    if (!in) return;
+
+    out->binding = in->binding;
+    out->descriptorType = in->descriptorType;
+    out->descriptorCount = in->descriptorCount;
+    out->stageFlags = in->stageFlags;
+    out->pImmutableSamplers = in->pImmutableSamplers;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkDescriptorSetLayoutBinding *convert_VkDescriptorSetLayoutBinding_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorSetLayoutBinding32 *in, uint32_t count)
+{
+    VkDescriptorSetLayoutBinding *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkDescriptorSetLayoutBinding_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -8706,7 +8958,7 @@ static inline void convert_VkDescriptorSetLayoutCreateInfo_win32_to_host(struct 
     out->pNext = NULL;
     out->flags = in->flags;
     out->bindingCount = in->bindingCount;
-    out->pBindings = in->pBindings;
+    out->pBindings = convert_VkDescriptorSetLayoutBinding_array_win32_to_host(ctx, in->pBindings, in->bindingCount);
 
     for (in_header = in->pNext; in_header; in_header = in_header->pNext)
     {
@@ -8731,7 +8983,7 @@ static inline void convert_VkDescriptorSetLayoutCreateInfo_win32_to_host(struct 
             out_ext->sType = VK_STRUCTURE_TYPE_MUTABLE_DESCRIPTOR_TYPE_CREATE_INFO_EXT;
             out_ext->pNext = NULL;
             out_ext->mutableDescriptorTypeListCount = in_ext->mutableDescriptorTypeListCount;
-            out_ext->pMutableDescriptorTypeLists = in_ext->pMutableDescriptorTypeLists;
+            out_ext->pMutableDescriptorTypeLists = convert_VkMutableDescriptorTypeListEXT_array_win32_to_host(ctx, in_ext->pMutableDescriptorTypeLists, in_ext->mutableDescriptorTypeListCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -8745,7 +8997,39 @@ static inline void convert_VkDescriptorSetLayoutCreateInfo_win32_to_host(struct 
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(const VkDescriptorUpdateTemplateCreateInfo32 *in, VkDescriptorUpdateTemplateCreateInfo *out)
+static inline void convert_VkDescriptorUpdateTemplateEntry_win32_to_host(const VkDescriptorUpdateTemplateEntry32 *in, VkDescriptorUpdateTemplateEntry *out)
+{
+    if (!in) return;
+
+    out->dstBinding = in->dstBinding;
+    out->dstArrayElement = in->dstArrayElement;
+    out->descriptorCount = in->descriptorCount;
+    out->descriptorType = in->descriptorType;
+    out->offset = in->offset;
+    out->stride = in->stride;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkDescriptorUpdateTemplateEntry *convert_VkDescriptorUpdateTemplateEntry_array_win32_to_host(struct conversion_context *ctx, const VkDescriptorUpdateTemplateEntry32 *in, uint32_t count)
+{
+    VkDescriptorUpdateTemplateEntry *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkDescriptorUpdateTemplateEntry_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(struct conversion_context *ctx, const VkDescriptorUpdateTemplateCreateInfo32 *in, VkDescriptorUpdateTemplateCreateInfo *out)
 {
     if (!in) return;
 
@@ -8753,7 +9037,7 @@ static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(co
     out->pNext = in->pNext;
     out->flags = in->flags;
     out->descriptorUpdateEntryCount = in->descriptorUpdateEntryCount;
-    out->pDescriptorUpdateEntries = in->pDescriptorUpdateEntries;
+    out->pDescriptorUpdateEntries = convert_VkDescriptorUpdateTemplateEntry_array_win32_to_host(ctx, in->pDescriptorUpdateEntries, in->descriptorUpdateEntryCount);
     out->templateType = in->templateType;
     out->descriptorSetLayout = in->descriptorSetLayout;
     out->pipelineBindPoint = in->pipelineBindPoint;
@@ -12916,7 +13200,7 @@ static inline void convert_VkPipelineViewportStateCreateInfo_win32_to_host(struc
             out_ext->pNext = NULL;
             out_ext->shadingRateImageEnable = in_ext->shadingRateImageEnable;
             out_ext->viewportCount = in_ext->viewportCount;
-            out_ext->pShadingRatePalettes = in_ext->pShadingRatePalettes;
+            out_ext->pShadingRatePalettes = convert_VkShadingRatePaletteNV_array_win32_to_host(ctx, in_ext->pShadingRatePalettes, in_ext->viewportCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -12929,7 +13213,7 @@ static inline void convert_VkPipelineViewportStateCreateInfo_win32_to_host(struc
             out_ext->pNext = NULL;
             out_ext->sampleOrderType = in_ext->sampleOrderType;
             out_ext->customSampleOrderCount = in_ext->customSampleOrderCount;
-            out_ext->pCustomSampleOrders = in_ext->pCustomSampleOrders;
+            out_ext->pCustomSampleOrders = convert_VkCoarseSampleOrderCustomNV_array_win32_to_host(ctx, in_ext->pCustomSampleOrders, in_ext->customSampleOrderCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -14876,6 +15160,42 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_array_host_to_win32(
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSubpassDescription_win32_to_host(const VkSubpassDescription32 *in, VkSubpassDescription *out)
+{
+    if (!in) return;
+
+    out->flags = in->flags;
+    out->pipelineBindPoint = in->pipelineBindPoint;
+    out->inputAttachmentCount = in->inputAttachmentCount;
+    out->pInputAttachments = in->pInputAttachments;
+    out->colorAttachmentCount = in->colorAttachmentCount;
+    out->pColorAttachments = in->pColorAttachments;
+    out->pResolveAttachments = in->pResolveAttachments;
+    out->pDepthStencilAttachment = in->pDepthStencilAttachment;
+    out->preserveAttachmentCount = in->preserveAttachmentCount;
+    out->pPreserveAttachments = in->pPreserveAttachments;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkSubpassDescription *convert_VkSubpassDescription_array_win32_to_host(struct conversion_context *ctx, const VkSubpassDescription32 *in, uint32_t count)
+{
+    VkSubpassDescription *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSubpassDescription_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRenderPassCreateInfo_win32_to_host(struct conversion_context *ctx, const VkRenderPassCreateInfo32 *in, VkRenderPassCreateInfo *out)
 {
     const VkBaseInStructure *in_header;
@@ -14889,7 +15209,7 @@ static inline void convert_VkRenderPassCreateInfo_win32_to_host(struct conversio
     out->attachmentCount = in->attachmentCount;
     out->pAttachments = in->pAttachments;
     out->subpassCount = in->subpassCount;
-    out->pSubpasses = in->pSubpasses;
+    out->pSubpasses = convert_VkSubpassDescription_array_win32_to_host(ctx, in->pSubpasses, in->subpassCount);
     out->dependencyCount = in->dependencyCount;
     out->pDependencies = in->pDependencies;
 
@@ -16827,14 +17147,6 @@ static inline void convert_VkCooperativeMatrixPropertiesNV_win32_to_host(const V
 
     out->sType = in->sType;
     out->pNext = in->pNext;
-    out->MSize = in->MSize;
-    out->NSize = in->NSize;
-    out->KSize = in->KSize;
-    out->AType = in->AType;
-    out->BType = in->BType;
-    out->CType = in->CType;
-    out->DType = in->DType;
-    out->scope = in->scope;
 }
 #endif /* USE_STRUCT_CONVERSION */
 
@@ -23556,6 +23868,34 @@ static inline const VkBindSparseInfo *convert_VkBindSparseInfo_array_win32_to_ho
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPresentRegionKHR_win32_to_host(const VkPresentRegionKHR32 *in, VkPresentRegionKHR *out)
+{
+    if (!in) return;
+
+    out->rectangleCount = in->rectangleCount;
+    out->pRectangles = in->pRectangles;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline const VkPresentRegionKHR *convert_VkPresentRegionKHR_array_win32_to_host(struct conversion_context *ctx, const VkPresentRegionKHR32 *in, uint32_t count)
+{
+    VkPresentRegionKHR *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkPresentRegionKHR_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPresentInfoKHR_win32_to_host(struct conversion_context *ctx, const VkPresentInfoKHR32 *in, VkPresentInfoKHR *out)
 {
     const VkBaseInStructure *in_header;
@@ -23583,7 +23923,7 @@ static inline void convert_VkPresentInfoKHR_win32_to_host(struct conversion_cont
             out_ext->sType = VK_STRUCTURE_TYPE_PRESENT_REGIONS_KHR;
             out_ext->pNext = NULL;
             out_ext->swapchainCount = in_ext->swapchainCount;
-            out_ext->pRegions = in_ext->pRegions;
+            out_ext->pRegions = convert_VkPresentRegionKHR_array_win32_to_host(ctx, in_ext->pRegions, in_ext->swapchainCount);
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -28809,12 +29149,17 @@ static NTSTATUS thunk32_vkCmdSetCoarseSampleOrderNV(void *args)
         VkCommandBuffer commandBuffer;
         VkCoarseSampleOrderTypeNV sampleOrderType;
         uint32_t customSampleOrderCount;
-        const VkCoarseSampleOrderCustomNV *pCustomSampleOrders;
+        const VkCoarseSampleOrderCustomNV32 *pCustomSampleOrders;
     } *params = args;
+    const VkCoarseSampleOrderCustomNV *pCustomSampleOrders_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %#x, %u, %p\n", params->commandBuffer, params->sampleOrderType, params->customSampleOrderCount, params->pCustomSampleOrders);
 
-    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetCoarseSampleOrderNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->sampleOrderType, params->customSampleOrderCount, params->pCustomSampleOrders);
+    init_conversion_context(&ctx);
+    pCustomSampleOrders_host = convert_VkCoarseSampleOrderCustomNV_array_win32_to_host(&ctx, params->pCustomSampleOrders, params->customSampleOrderCount);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetCoarseSampleOrderNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->sampleOrderType, params->customSampleOrderCount, pCustomSampleOrders_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -31313,12 +31658,17 @@ static NTSTATUS thunk32_vkCmdSetViewportShadingRatePaletteNV(void *args)
         VkCommandBuffer commandBuffer;
         uint32_t firstViewport;
         uint32_t viewportCount;
-        const VkShadingRatePaletteNV *pShadingRatePalettes;
+        const VkShadingRatePaletteNV32 *pShadingRatePalettes;
     } *params = args;
+    const VkShadingRatePaletteNV *pShadingRatePalettes_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %u, %u, %p\n", params->commandBuffer, params->firstViewport, params->viewportCount, params->pShadingRatePalettes);
 
-    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetViewportShadingRatePaletteNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstViewport, params->viewportCount, params->pShadingRatePalettes);
+    init_conversion_context(&ctx);
+    pShadingRatePalettes_host = convert_VkShadingRatePaletteNV_array_win32_to_host(&ctx, params->pShadingRatePalettes, params->viewportCount);
+    wine_cmd_buffer_from_handle(params->commandBuffer)->device->funcs.p_vkCmdSetViewportShadingRatePaletteNV(wine_cmd_buffer_from_handle(params->commandBuffer)->command_buffer, params->firstViewport, params->viewportCount, pShadingRatePalettes_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -32827,11 +33177,14 @@ static NTSTATUS thunk32_vkCreateDescriptorUpdateTemplate(void *args)
         VkResult result;
     } *params = args;
     VkDescriptorUpdateTemplateCreateInfo pCreateInfo_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pDescriptorUpdateTemplate);
 
-    convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(params->pCreateInfo, &pCreateInfo_host);
+    init_conversion_context(&ctx);
+    convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(&ctx, params->pCreateInfo, &pCreateInfo_host);
     params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateDescriptorUpdateTemplate(wine_device_from_handle(params->device)->device, &pCreateInfo_host, NULL, params->pDescriptorUpdateTemplate);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -32862,11 +33215,14 @@ static NTSTATUS thunk32_vkCreateDescriptorUpdateTemplateKHR(void *args)
         VkResult result;
     } *params = args;
     VkDescriptorUpdateTemplateCreateInfo pCreateInfo_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pDescriptorUpdateTemplate);
 
-    convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(params->pCreateInfo, &pCreateInfo_host);
+    init_conversion_context(&ctx);
+    convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(&ctx, params->pCreateInfo, &pCreateInfo_host);
     params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateDescriptorUpdateTemplateKHR(wine_device_from_handle(params->device)->device, &pCreateInfo_host, NULL, params->pDescriptorUpdateTemplate);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
