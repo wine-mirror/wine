@@ -1956,19 +1956,7 @@ class VkStruct(Sequence):
                 # so that we have a chance to allocate buffers
                 if e.needs_conversion(conv, True, Direction.OUTPUT, is_const, check_extensions=False):
                     return True
-            elif not needs_output_copy and not is_const:
-                for m in e:
-                    if m.name in ["sType", "pNext"]:
-                        continue
-                    # pointers will be handled by needs_conversion, but if we have any other non-const
-                    # member, we may need to copy output
-                    if not m.is_pointer() and not m.is_const():
-                        needs_output_copy = True
-                        break
 
-        # if output needs any copy and we need input conversion, then we also need output conversion
-        if needs_output_copy and self.needs_extensions_conversion(conv, Direction.INPUT):
-            return True
         return False
 
     def needs_conversion(self, conv, unwrap, direction, is_const, check_extensions=True):
@@ -1981,6 +1969,8 @@ class VkStruct(Sequence):
         # pFixedRateFlags field is missing const, but it doesn't need output conversion
         if direction == Direction.OUTPUT and self.name == "VkImageCompressionControlEXT":
             return False
+
+        needs_output_copy = False
 
         for m in self.members:
             if self.name == m.type:
@@ -2010,6 +2000,15 @@ class VkStruct(Sequence):
 
             if m.needs_conversion(conv, unwrap, direction, is_const):
                 return True
+
+            # pointers will be handled by needs_conversion, but if we have any other non-const
+            # member, we may need to copy output
+            if direction == Direction.OUTPUT and not m.is_pointer() and not is_const and not m.is_const():
+                needs_output_copy = True
+
+        # if output needs any copy and we need input conversion, then we also need output conversion
+        if needs_output_copy and self.needs_conversion(conv, unwrap, Direction.INPUT, check_extensions):
+            return True
 
         return check_extensions and self.needs_extensions_conversion(conv, direction)
 
