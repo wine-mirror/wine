@@ -108,7 +108,7 @@
 @ stdcall StrongNameSignatureVerification(wstr long ptr)
 @ stdcall StrongNameSignatureVerificationEx(wstr long ptr)
 @ stub StrongNameSignatureVerificationFromImage
-@ stub StrongNameTokenFromAssembly
+@ stdcall StrongNameTokenFromAssembly(wstr ptr ptr)
 @ stub StrongNameTokenFromAssemblyEx
 @ stub StrongNameTokenFromPublicKey
 @ stub TranslateSecurityAttributes

@@ -101,7 +101,7 @@
 @ stdcall StrongNameSignatureVerification(wstr long ptr) mscoree.StrongNameSignatureVerification
 @ stdcall StrongNameSignatureVerificationEx(wstr long ptr) mscoree.StrongNameSignatureVerificationEx
 @ stub StrongNameSignatureVerificationFromImage
-@ stub StrongNameTokenFromAssembly
+@ stdcall StrongNameTokenFromAssembly(wstr ptr ptr) mscoree.StrongNameTokenFromAssembly
 @ stub StrongNameTokenFromAssemblyEx
 @ stub StrongNameTokenFromPublicKey
 @ stub TranslateSecurityAttributes

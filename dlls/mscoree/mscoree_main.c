@@ -625,6 +625,12 @@ BOOLEAN WINAPI StrongNameSignatureVerificationEx(LPCWSTR filename, BOOLEAN force
     return TRUE;
 }
 
+BOOLEAN WINAPI StrongNameTokenFromAssembly(LPCWSTR path, BYTE **token, ULONG *size)
+{
+    FIXME("(%s, %p, %p): stub\n", debugstr_w(path), token, size);
+    return FALSE;
+}
+
 HRESULT WINAPI CreateDebuggingInterfaceFromVersion(int nDebugVersion, LPCWSTR version, IUnknown **ppv)
 {
     static const WCHAR v2_0[] = {'v','2','.','0','.','5','0','7','2','7',0};

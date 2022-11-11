@@ -35,5 +35,6 @@
 
 BOOLEAN __stdcall StrongNameSignatureVerification(const WCHAR *path, DWORD flags, DWORD *ret_flags);
 BOOLEAN __stdcall StrongNameSignatureVerificationEx(const WCHAR *path, BOOLEAN force, BOOLEAN *verified);
+BOOLEAN __stdcall StrongNameTokenFromAssembly(const WCHAR *path, BYTE **token, ULONG *size);
 
 #endif
