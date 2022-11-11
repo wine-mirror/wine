@@ -25,6 +25,70 @@ WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
 static const struct UiaCondition UiaFalseCondition = { ConditionType_False };
 
+static BOOL uia_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size)
+{
+    SIZE_T max_capacity, new_capacity;
+    void *new_elements;
+
+    if (count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(SIZE_T)0 / size;
+    if (count > max_capacity)
+        return FALSE;
+
+    new_capacity = max(1, *capacity);
+    while (new_capacity < count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+    if (new_capacity < count)
+        new_capacity = count;
+
+    if (!*elements)
+        new_elements = heap_alloc_zero(new_capacity * size);
+    else
+        new_elements = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, *elements, new_capacity * size);
+    if (!new_elements)
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return TRUE;
+}
+
+struct uia_node_array {
+    HUIANODE *nodes;
+    int node_count;
+    SIZE_T node_arr_size;
+};
+
+static void clear_node_array(struct uia_node_array *nodes)
+{
+    if (nodes->nodes)
+    {
+        int i;
+
+        for (i = 0; i < nodes->node_count; i++)
+            UiaNodeRelease(nodes->nodes[i]);
+
+        heap_free(nodes->nodes);
+    }
+
+    memset(nodes, 0, sizeof(*nodes));
+}
+
+static HRESULT add_node_to_node_array(struct uia_node_array *out_nodes, HUIANODE node)
+{
+    if (!uia_array_reserve((void **)&out_nodes->nodes, &out_nodes->node_arr_size, out_nodes->node_count + 1,
+                sizeof(node)))
+        return E_OUTOFMEMORY;
+
+    IWineUiaNode_AddRef((IWineUiaNode *)node);
+    out_nodes->nodes[out_nodes->node_count] = node;
+    out_nodes->node_count++;
+
+    return S_OK;
+}
+
 static HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems)
 {
     LONG ubound;
@@ -968,7 +1032,7 @@ static HRESULT traverse_uia_node_tree_siblings(HUIANODE huianode, struct UiaCond
 static HRESULT traverse_uia_node_tree(HUIANODE huianode, struct UiaCondition *view_cond,
         struct UiaCondition *search_cond, struct UiaCondition *pre_sibling_nav_stop_cond,
         struct UiaCondition *ascending_stop_cond, int traversal_opts, BOOL at_root_level, BOOL *root_found,
-        int max_depth, int *cur_depth, HUIANODE *out_node)
+        int max_depth, int *cur_depth, struct uia_node_array *out_nodes)
 {
     HUIANODE node = huianode;
     HRESULT hr;
@@ -999,8 +1063,10 @@ static HRESULT traverse_uia_node_tree(HUIANODE huianode, struct UiaCondition *vi
 
                 if (uia_condition_matched(hr))
                 {
-                    IWineUiaNode_AddRef(&node_data->IWineUiaNode_iface);
-                    *out_node = node;
+                    hr = add_node_to_node_array(out_nodes, node);
+                    if (FAILED(hr))
+                        break;
+
                     hr = S_FALSE;
                     break;
                 }
@@ -1022,7 +1088,7 @@ static HRESULT traverse_uia_node_tree(HUIANODE huianode, struct UiaCondition *vi
 
             if (SUCCEEDED(hr) && node2)
                 hr = traverse_uia_node_tree(node2, view_cond, search_cond, pre_sibling_nav_stop_cond, ascending_stop_cond,
-                        traversal_opts, FALSE, root_found, max_depth, cur_depth, out_node);
+                        traversal_opts, FALSE, root_found, max_depth, cur_depth, out_nodes);
 
             if (FAILED(hr) || hr == S_FALSE)
                 break;
@@ -2756,10 +2822,10 @@ HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, str
     struct uia_node *node = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)huianode);
     SAFEARRAY *runtime_id, *req, *offsets, *tree_structs;
     struct UiaCondition *sibling_stop_cond;
+    struct uia_node_array nodes = { 0 };
     int cur_depth = 0;
     BSTR tree_struct;
     BOOL root_found;
-    HUIANODE node2;
     HRESULT hr;
     LONG idx;
 
@@ -2795,12 +2861,11 @@ HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, str
     else
         root_found = TRUE;
 
-    node2 = NULL;
     IWineUiaNode_AddRef(&node->IWineUiaNode_iface);
     hr = traverse_uia_node_tree(huianode, cache_req->pViewCondition, find_params->pFindCondition, sibling_stop_cond,
             cache_req->pViewCondition, TreeTraversalOptions_Default, TRUE, &root_found, find_params->MaxDepth,
-            &cur_depth, &node2);
-    if (FAILED(hr) || !node2)
+            &cur_depth, &nodes);
+    if (FAILED(hr) || !nodes.node_count)
         goto exit;
 
     if (!(offsets = SafeArrayCreateVector(VT_I4, 0, 1)))
@@ -2815,8 +2880,7 @@ HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, str
         goto exit;
     }
 
-    hr = UiaGetUpdatedCache(node2, cache_req, NormalizeState_None, NULL, &req, &tree_struct);
-    UiaNodeRelease(node2);
+    hr = UiaGetUpdatedCache(nodes.nodes[0], cache_req, NormalizeState_None, NULL, &req, &tree_struct);
     if (FAILED(hr))
         goto exit;
 
@@ -2836,6 +2900,7 @@ HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, str
 
 exit:
     VariantClear(&prop_cond.Value);
+    clear_node_array(&nodes);
 
     if (FAILED(hr))
     {
