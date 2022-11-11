@@ -44,7 +44,6 @@ int force_pointer_size = 0;
 int unwind_tables = 0;
 int use_dlltool = 1;
 int use_msvcrt = 0;
-int unix_lib = 0;
 int safe_seh = 0;
 int prefer_native = 0;
 int data_only = 0;
@@ -408,7 +407,6 @@ static void option_callback( int optc, char *optarg )
         else if (!strcmp( optarg, "arm" )) thumb_mode = 0;
         else if (!strcmp( optarg, "thumb" )) thumb_mode = 1;
         else if (!strcmp( optarg, "no-cygwin" )) use_msvcrt = 1;
-        else if (!strcmp( optarg, "unix" )) unix_lib = 1;
         else if (!strcmp( optarg, "unicode" )) main_spec->unicode_app = 1;
         else if (!strncmp( optarg, "cpu=", 4 )) cpu_option = xstrdup( optarg + 4 );
         else if (!strncmp( optarg, "fpu=", 4 )) fpu_option = xstrdup( optarg + 4 );
@@ -646,7 +644,7 @@ int main(int argc, char **argv)
     case MODE_EXE:
         files = load_resources( files, spec );
         if (spec_file_name && !parse_input_file( spec )) break;
-        if (!spec->init_func && !unix_lib) spec->init_func = xstrdup( get_default_entry_point( spec ));
+        if (!spec->init_func) spec->init_func = xstrdup( get_default_entry_point( spec ));
 
         if (fake_module)
         {

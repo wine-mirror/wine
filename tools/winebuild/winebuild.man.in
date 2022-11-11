@@ -186,9 +186,6 @@ Set code generation options for the assembler.
 Build a library that uses the Windows runtime instead of the Unix C
 library.
 .TP
-.B \-munix
-Build the Unix counterpart of a builtin module.
-.TP
 .BI \-M,\ --main-module= module
 When building a 16-bit dll, set the name of its 32-bit counterpart to
 \fImodule\fR. This is used to enforce that the load order for the

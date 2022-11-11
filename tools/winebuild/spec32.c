@@ -108,7 +108,6 @@ static int has_relays( DLLSPEC *spec )
 
 static int get_exports_count( DLLSPEC *spec )
 {
-    if (unix_lib) return 0;
     if (spec->base > spec->limit) return 0;
     return spec->limit - spec->base + 1;
 }
