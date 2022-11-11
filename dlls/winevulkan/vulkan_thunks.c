@@ -5874,6 +5874,24 @@ static inline void convert_VkCommandBufferAllocateInfo_win32_to_unwrapped_host(c
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline VkCommandBuffer *convert_VkCommandBuffer_array_win32_to_unwrapped_host(struct conversion_context *ctx, const VkCommandBuffer *in, uint32_t count)
+{
+    VkCommandBuffer *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = in[i];
+    }
+
+    return out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDescriptorSetAllocateInfo_win32_to_host(struct conversion_context *ctx, const VkDescriptorSetAllocateInfo32 *in, VkDescriptorSetAllocateInfo *out)
 {
     const VkBaseInStructure *in_header;
@@ -16163,6 +16181,20 @@ static inline void convert_VkPerformanceCounterDescriptionKHR_array_host_to_win3
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPhysicalDevice_array_unwrapped_host_to_win32(const VkPhysicalDevice *in, VkPhysicalDevice *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        out[i] = in[i];
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkMappedMemoryRange_win32_to_host(const VkMappedMemoryRange32 *in, VkMappedMemoryRange *out)
 {
     if (!in) return;
@@ -24680,11 +24712,16 @@ static NTSTATUS thunk32_vkAllocateCommandBuffers(void *args)
         VkResult result;
     } *params = args;
     VkCommandBufferAllocateInfo pAllocateInfo_host;
+    VkCommandBuffer *pCommandBuffers_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %p, %p\n", params->device, params->pAllocateInfo, params->pCommandBuffers);
 
+    init_conversion_context(&ctx);
     convert_VkCommandBufferAllocateInfo_win32_to_unwrapped_host(params->pAllocateInfo, &pAllocateInfo_host);
-    params->result = wine_vkAllocateCommandBuffers(params->device, &pAllocateInfo_host, params->pCommandBuffers);
+    pCommandBuffers_host = convert_VkCommandBuffer_array_win32_to_unwrapped_host(&ctx, params->pCommandBuffers, params->pAllocateInfo->commandBufferCount);
+    params->result = wine_vkAllocateCommandBuffers(params->device, &pAllocateInfo_host, pCommandBuffers_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -36023,10 +36060,16 @@ static NTSTATUS thunk32_vkEnumeratePhysicalDevices(void *args)
         VkPhysicalDevice *pPhysicalDevices;
         VkResult result;
     } *params = args;
+    VkPhysicalDevice *pPhysicalDevices_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %p, %p\n", params->instance, params->pPhysicalDeviceCount, params->pPhysicalDevices);
 
-    params->result = wine_vkEnumeratePhysicalDevices(params->instance, params->pPhysicalDeviceCount, params->pPhysicalDevices);
+    init_conversion_context(&ctx);
+    pPhysicalDevices_host = (params->pPhysicalDevices && *params->pPhysicalDeviceCount) ? conversion_context_alloc(&ctx, sizeof(*pPhysicalDevices_host) * *params->pPhysicalDeviceCount) : NULL;
+    params->result = wine_vkEnumeratePhysicalDevices(params->instance, params->pPhysicalDeviceCount, pPhysicalDevices_host);
+    convert_VkPhysicalDevice_array_unwrapped_host_to_win32(pPhysicalDevices_host, params->pPhysicalDevices, *params->pPhysicalDeviceCount);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 
@@ -36092,10 +36135,15 @@ static NTSTATUS thunk32_vkFreeCommandBuffers(void *args)
         uint32_t commandBufferCount;
         const VkCommandBuffer *pCommandBuffers;
     } *params = args;
+    const VkCommandBuffer *pCommandBuffers_host;
+    struct conversion_context ctx;
 
     TRACE("%p, 0x%s, %u, %p\n", params->device, wine_dbgstr_longlong(params->commandPool), params->commandBufferCount, params->pCommandBuffers);
 
-    wine_vkFreeCommandBuffers(params->device, params->commandPool, params->commandBufferCount, params->pCommandBuffers);
+    init_conversion_context(&ctx);
+    pCommandBuffers_host = convert_VkCommandBuffer_array_win32_to_unwrapped_host(&ctx, params->pCommandBuffers, params->commandBufferCount);
+    wine_vkFreeCommandBuffers(params->device, params->commandPool, params->commandBufferCount, pCommandBuffers_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 

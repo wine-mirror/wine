@@ -1697,6 +1697,8 @@ class VkParam(VkVariable):
 
             if unwrap and self.handle.is_wrapped():
                 return True
+            if conv and self.handle.is_dispatchable():
+                return True
 
         return False
 
@@ -2373,12 +2375,11 @@ class ArrayConversionFunction(object):
                     body += "        }\n"
                     body += "        else\n"
                     body += "            out[i] = NULL;\n"
-            elif self.array.is_handle() and self.direction == Direction.INPUT:
+            elif self.array.is_handle() and self.direction == Direction.INPUT and self.unwrap:
                 if self.array.pointer_array:
                     LOGGER.error("Unhandled handle pointer arrays")
                 body += "        out[i] = " + self.array.handle.driver_handle("in[i]") + ";\n"
             else:
-                LOGGER.warning("Unhandled conversion operand type")
                 body += "        out[i] = in[i];\n"
 
             body += "    }\n"
