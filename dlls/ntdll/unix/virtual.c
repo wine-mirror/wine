@@ -5219,11 +5219,13 @@ NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr
                                 alloc_type, protect, machine );
 }
 
+
 /***********************************************************************
- *             NtUnmapViewOfSection   (NTDLL.@)
- *             ZwUnmapViewOfSection   (NTDLL.@)
+ *             unmap_view_of_section
+ *
+ * NtUnmapViewOfSection[Ex] implementation.
  */
-NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
+static NTSTATUS unmap_view_of_section( HANDLE process, PVOID addr )
 {
     struct file_view *view;
     unsigned int status = STATUS_NOT_MAPPED_VIEW;
@@ -5244,40 +5246,50 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     }
 
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
-    if ((view = find_view( addr, 0 )) && !is_view_valloc( view ))
-    {
-        if (view->protect & VPROT_SYSTEM)
-        {
-            struct builtin_module *builtin;
+    if (!(view = find_view( addr, 0 )) || is_view_valloc( view )) goto done;
 
-            LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+    if (view->protect & VPROT_SYSTEM)
+    {
+        struct builtin_module *builtin;
+
+        LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
+        {
+            if (builtin->module != view->base) continue;
+            if (builtin->refcount > 1)
             {
-                if (builtin->module != view->base) continue;
-                if (builtin->refcount > 1)
-                {
-                    TRACE( "not freeing in-use builtin %p\n", view->base );
-                    builtin->refcount--;
-                    server_leave_uninterrupted_section( &virtual_mutex, &sigset );
-                    return STATUS_SUCCESS;
-                }
+                TRACE( "not freeing in-use builtin %p\n", view->base );
+                builtin->refcount--;
+                server_leave_uninterrupted_section( &virtual_mutex, &sigset );
+                return STATUS_SUCCESS;
             }
         }
-
-        SERVER_START_REQ( unmap_view )
-        {
-            req->base = wine_server_client_ptr( view->base );
-            status = wine_server_call( req );
-        }
-        SERVER_END_REQ;
-        if (!status)
-        {
-            if (view->protect & SEC_IMAGE) release_builtin_module( view->base );
-            delete_view( view );
-        }
-        else FIXME( "failed to unmap %p %x\n", view->base, status );
     }
+
+    SERVER_START_REQ( unmap_view )
+    {
+        req->base = wine_server_client_ptr( view->base );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    if (!status)
+    {
+        if (view->protect & SEC_IMAGE) release_builtin_module( view->base );
+        delete_view( view );
+    }
+    else FIXME( "failed to unmap %p %x\n", view->base, status );
+done:
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
     return status;
+}
+
+
+/***********************************************************************
+ *             NtUnmapViewOfSection   (NTDLL.@)
+ *             ZwUnmapViewOfSection   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
+{
+    return unmap_view_of_section( process, addr );
 }
 
 /***********************************************************************
@@ -5287,7 +5299,7 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
 NTSTATUS WINAPI NtUnmapViewOfSectionEx( HANDLE process, PVOID addr, ULONG flags )
 {
     if (flags) FIXME("Ignoring flags %#x.\n", (int)flags);
-    return NtUnmapViewOfSection( process, addr );
+    return unmap_view_of_section( process, addr );
 }
 
 /******************************************************************************
