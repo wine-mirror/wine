@@ -1577,6 +1577,7 @@ typedef enum _PROCESSINFOCLASS {
     MaxProcessInfoClass,
 #ifdef __WINESRC__
     ProcessWineMakeProcessSystem = 1000,
+    ProcessWineLdtCopy,
 #endif
 } PROCESSINFOCLASS, PROCESS_INFORMATION_CLASS;
 

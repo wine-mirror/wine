@@ -1062,13 +1062,6 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( RtlUserThreadStart );
     GET_FUNC( __wine_ctrl_routine );
     GET_FUNC( __wine_syscall_dispatcher );
-#ifdef __i386__
-    {
-        void **p__wine_ldt_copy;
-        GET_FUNC( __wine_ldt_copy );
-        *p__wine_ldt_copy = &__wine_ldt_copy;
-    }
-#endif
 #ifdef __aarch64__
     {
         void **p__wine_current_teb;

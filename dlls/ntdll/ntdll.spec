@@ -1694,7 +1694,6 @@
 @ stdcall -syscall __wine_unix_spawnvp(long ptr)
 @ stdcall __wine_ctrl_routine(ptr)
 @ extern __wine_syscall_dispatcher
-@ extern -arch=i386 __wine_ldt_copy
 @ extern -arch=arm64 __wine_current_teb
 
 # Debugging

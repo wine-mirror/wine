@@ -59,8 +59,6 @@ static inline struct x86_thread_data *x86_thread_data(void)
     return (struct x86_thread_data *)&NtCurrentTeb()->GdiTebBatch;
 }
 
-struct ldt_copy *__wine_ldt_copy = NULL;
-
 /* Exception record for handling exceptions happening inside exception handlers */
 typedef struct
 {

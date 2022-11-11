@@ -68,12 +68,10 @@ static LDT_ENTRY ldt_make_entry( const void *base, unsigned int limit, unsigned 
  */
 void init_selectors(void)
 {
-    const struct ldt_copy **ldt_copy_ptr;
     if (!is_gdt_sel( get_gs() )) first_ldt_entry += 512;
     if (!is_gdt_sel( get_fs() )) first_ldt_entry += 512;
     RtlSetBits( &ldt_bitmap, 0, first_ldt_entry );
-    ldt_copy_ptr = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "__wine_ldt_copy" );
-    if (ldt_copy_ptr) ldt_copy = *ldt_copy_ptr;
+    NtQueryInformationProcess( GetCurrentProcess(), ProcessWineLdtCopy, &ldt_copy, sizeof(ldt_copy), NULL );
 }
 
 /***********************************************************************
