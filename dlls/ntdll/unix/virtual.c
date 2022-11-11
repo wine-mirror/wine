@@ -2295,6 +2295,53 @@ static NTSTATUS free_pages( struct file_view *view, char *base, size_t size )
 
 
 /***********************************************************************
+ *           coalesce_placeholders
+ *
+ * Coalesce placeholder views.
+ * virtual_mutex must be held by caller.
+ */
+static NTSTATUS coalesce_placeholders( struct file_view *view, char *base, size_t size )
+{
+    struct rb_entry *next;
+    struct file_view *curr_view, *next_view;
+    unsigned int i, view_count = 0;
+    size_t views_size = 0;
+
+    if (!size) return STATUS_INVALID_PARAMETER_3;
+    if (base != view->base) return STATUS_CONFLICTING_ADDRESSES;
+
+    curr_view = view;
+    while (curr_view->protect & VPROT_FREE_PLACEHOLDER)
+    {
+        ++view_count;
+        views_size += curr_view->size;
+        if (views_size >= size) break;
+        if (!(next = rb_next( &curr_view->entry ))) break;
+        next_view = RB_ENTRY_VALUE( next, struct file_view, entry );
+        if ((char *)curr_view->base + curr_view->size != next_view->base) break;
+        curr_view = next_view;
+    }
+
+    if (view_count < 2 || size != views_size) return STATUS_CONFLICTING_ADDRESSES;
+
+    for (i = 1; i < view_count; ++i)
+    {
+        curr_view = RB_ENTRY_VALUE( rb_next( &view->entry ), struct file_view, entry );
+        unregister_view( curr_view );
+        free_view( curr_view );
+    }
+
+    unregister_view( view );
+    view->size = views_size;
+    register_view( view );
+
+    VIRTUAL_DEBUG_DUMP_VIEW( view );
+
+    return STATUS_SUCCESS;
+}
+
+
+/***********************************************************************
  *           allocate_dos_memory
  *
  * Allocate the DOS memory range.
@@ -4445,7 +4492,8 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     else if (!(view = find_view( base, 0 ))) status = STATUS_MEMORY_NOT_ALLOCATED;
     else if (!is_view_valloc( view )) status = STATUS_INVALID_PARAMETER;
     else if (!size && base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
-    else if ((char *)view->base + view->size - base < size) status = STATUS_UNABLE_TO_FREE_VM;
+    else if ((char *)view->base + view->size - base < size && !(type & MEM_COALESCE_PLACEHOLDERS))
+             status = STATUS_UNABLE_TO_FREE_VM;
     else switch (type)
     {
     case MEM_DECOMMIT:
@@ -4457,6 +4505,12 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
         break;
     case MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER:
         status = free_pages_preserve_placeholder( view, base, size );
+        break;
+    case MEM_RELEASE | MEM_COALESCE_PLACEHOLDERS:
+        status = coalesce_placeholders( view, base, size );
+        break;
+    case MEM_COALESCE_PLACEHOLDERS:
+        status = STATUS_INVALID_PARAMETER_4;
         break;
     default:
         status = STATUS_INVALID_PARAMETER;
