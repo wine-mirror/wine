@@ -8800,35 +8800,31 @@ static void test_UiaFind(void)
             AutomationElementMode_Full);
     set_find_params(&find_params, 1, TRUE, TRUE, (struct UiaCondition *)&UiaTrueCondition);
     hr = UiaFind(node, &find_params, &cache_req, &out_req, &offsets, &tree_structs);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
 
-    node2 = NULL;
-    if (SUCCEEDED(hr))
+    add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child", TRUE);
+    exp_lbound[0] = exp_lbound[1] = 0;
+    exp_elems[0] = exp_elems[1] = 1;
+
+    idx[0] = idx[1] = 0;
+    hr = SafeArrayGetElement(out_req, idx, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+
+    /* node2 is now set as Provider_child. */
+    hr = UiaHUiaNodeFromVariant(&v, &node2);
+    ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    IUnknown_AddRef((IUnknown *)node2);
+
+    test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
+
+    for (i = 0; i < exp_elems[0]; i++)
     {
-        add_provider_desc(&exp_node_desc[0], L"Main", L"Provider_child", TRUE);
-        exp_lbound[0] = exp_lbound[1] = 0;
-        exp_elems[0] = exp_elems[1] = 1;
-
-        idx[0] = idx[1] = 0;
-        hr = SafeArrayGetElement(out_req, idx, &v);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-
-        /* node2 is now set as Provider_child. */
-        hr = UiaHUiaNodeFromVariant(&v, &node2);
-        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
-        IUnknown_AddRef((IUnknown *)node2);
-
-        test_cache_req_sa(out_req, exp_lbound, exp_elems, exp_node_desc);
-
-        for (i = 0; i < exp_elems[0]; i++)
-        {
-            exp_offset[i] = i;
-            exp_tree_struct[i] = L"P)";
-        }
-        test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
-        ok_method_sequence(find_seq4, "find_seq4");
+        exp_offset[i] = i;
+        exp_tree_struct[i] = L"P)";
     }
+    test_find_sa_results(tree_structs, offsets, exp_elems[0], exp_tree_struct, exp_offset);
+    ok_method_sequence(find_seq4, "find_seq4");
 
     SafeArrayDestroy(out_req);
     SafeArrayDestroy(offsets);
@@ -8910,7 +8906,7 @@ static void test_UiaFind(void)
     SafeArrayDestroy(offsets);
     SafeArrayDestroy(tree_structs);
 
-    todo_wine ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
+    ok(UiaNodeRelease(node2), "UiaNodeRelease returned FALSE\n");
     ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
 
     initialize_provider_tree(FALSE);

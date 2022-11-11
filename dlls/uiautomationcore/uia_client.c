@@ -967,8 +967,8 @@ static HRESULT traverse_uia_node_tree_siblings(HUIANODE huianode, struct UiaCond
  */
 static HRESULT traverse_uia_node_tree(HUIANODE huianode, struct UiaCondition *view_cond,
         struct UiaCondition *search_cond, struct UiaCondition *pre_sibling_nav_stop_cond,
-        struct UiaCondition *ascending_stop_cond, int traversal_opts, BOOL at_root_level, int max_depth, int *cur_depth,
-        HUIANODE *out_node)
+        struct UiaCondition *ascending_stop_cond, int traversal_opts, BOOL at_root_level, BOOL *root_found,
+        int max_depth, int *cur_depth, HUIANODE *out_node)
 {
     HUIANODE node = huianode;
     HRESULT hr;
@@ -990,17 +990,23 @@ static HRESULT traverse_uia_node_tree(HUIANODE huianode, struct UiaCondition *vi
              * our current depth within the tree.
              */
             incr_depth = TRUE;
-            hr = uia_condition_check(node, search_cond);
-            if (FAILED(hr))
-                break;
 
-            if (uia_condition_matched(hr))
+            if (*root_found)
             {
-                IWineUiaNode_AddRef(&node_data->IWineUiaNode_iface);
-                *out_node = node;
-                hr = S_FALSE;
-                break;
+                hr = uia_condition_check(node, search_cond);
+                if (FAILED(hr))
+                    break;
+
+                if (uia_condition_matched(hr))
+                {
+                    IWineUiaNode_AddRef(&node_data->IWineUiaNode_iface);
+                    *out_node = node;
+                    hr = S_FALSE;
+                    break;
+                }
             }
+
+            *root_found = TRUE;
         }
 
         if (incr_depth)
@@ -1016,7 +1022,7 @@ static HRESULT traverse_uia_node_tree(HUIANODE huianode, struct UiaCondition *vi
 
             if (SUCCEEDED(hr) && node2)
                 hr = traverse_uia_node_tree(node2, view_cond, search_cond, pre_sibling_nav_stop_cond, ascending_stop_cond,
-                        traversal_opts, FALSE, max_depth, cur_depth, out_node);
+                        traversal_opts, FALSE, root_found, max_depth, cur_depth, out_node);
 
             if (FAILED(hr) || hr == S_FALSE)
                 break;
@@ -2752,6 +2758,7 @@ HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, str
     struct UiaCondition *sibling_stop_cond;
     int cur_depth = 0;
     BSTR tree_struct;
+    BOOL root_found;
     HUIANODE node2;
     HRESULT hr;
     LONG idx;
@@ -2769,12 +2776,6 @@ HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, str
         return E_NOTIMPL;
     }
 
-    if (find_params->ExcludeRoot)
-    {
-        FIXME("ExcludeRoot currently unimplemented.\n");
-        return E_NOTIMPL;
-    }
-
     /*
      * If the initial node has a runtime ID, we'll use it as a stop
      * condition.
@@ -2789,10 +2790,16 @@ HRESULT WINAPI UiaFind(HUIANODE huianode, struct UiaFindParams *find_params, str
     else
         sibling_stop_cond =  (struct UiaCondition *)&UiaFalseCondition;
 
+    if (find_params->ExcludeRoot)
+        root_found = FALSE;
+    else
+        root_found = TRUE;
+
     node2 = NULL;
     IWineUiaNode_AddRef(&node->IWineUiaNode_iface);
     hr = traverse_uia_node_tree(huianode, cache_req->pViewCondition, find_params->pFindCondition, sibling_stop_cond,
-            cache_req->pViewCondition, TreeTraversalOptions_Default, TRUE, find_params->MaxDepth, &cur_depth, &node2);
+            cache_req->pViewCondition, TreeTraversalOptions_Default, TRUE, &root_found, find_params->MaxDepth,
+            &cur_depth, &node2);
     if (FAILED(hr) || !node2)
         goto exit;
 
