@@ -198,7 +198,6 @@ struct makefile
     const char     *staticlib;
     const char     *importlib;
     const char     *unixlib;
-    int             native_unix_lib;
     int             use_msvcrt;
     int             data_only;
     int             is_win16;
@@ -2075,7 +2074,7 @@ static const char *get_static_lib( const struct makefile *make, const char *name
  */
 static const char *get_native_unix_lib( const struct makefile *make, const char *name )
 {
-    if (!make->native_unix_lib) return NULL;
+    if (!make->unixlib) return NULL;
     if (strncmp( make->unixlib, name, strlen(name) )) return NULL;
     if (make->unixlib[strlen(name)] != '.') return NULL;
     return obj_dir_path( make, make->unixlib );
@@ -3258,23 +3257,6 @@ static const struct
 
 
 /*******************************************************************
- *         get_unix_lib_name
- */
-static char *get_unix_lib_name( struct makefile *make )
-{
-    struct incl_file *source;
-
-    if (!*dll_ext) return NULL;
-    LIST_FOR_EACH_ENTRY( source, &make->sources, struct incl_file, entry )
-    {
-        if (!(source->file->flags & FLAG_C_UNIX)) continue;
-        return strmake( "%s%s", get_base_name( make->module ), dll_ext );
-    }
-    return NULL;
-}
-
-
-/*******************************************************************
  *         output_fake_module
  */
 static void output_fake_module( struct makefile *make )
@@ -3424,25 +3406,9 @@ static void output_import_lib( struct makefile *make, unsigned int arch )
  */
 static void output_unix_lib( struct makefile *make )
 {
-    struct strarray unix_libs = empty_strarray;
     struct strarray unix_deps = empty_strarray;
-    char *spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
+    struct strarray unix_libs = add_unix_libraries( make, &unix_deps );
     unsigned int arch = 0;  /* unix libs are always native */
-
-    if (!make->native_unix_lib)
-    {
-        struct strarray unix_imports = empty_strarray;
-
-        strarray_add( &unix_imports, "ntdll" );
-        strarray_add( &unix_deps, obj_dir_path( top_makefile, "dlls/ntdll/ntdll.so" ));
-        strarray_add( &unix_imports, "winecrt0" );
-        if (spec_file) strarray_add( &unix_deps, spec_file );
-
-        strarray_addall( &unix_libs, add_import_libs( make, &unix_deps, unix_imports, IMPORT_TYPE_DIRECT, 0 ));
-        strarray_addall( &unix_libs, get_expanded_make_var_array( make, "UNIX_LIBS" ));
-        strarray_addall( &unix_libs, libs );
-    }
-    else unix_libs = add_unix_libraries( make, &unix_deps );
 
     strarray_add( &make->all_targets[arch], make->unixlib );
     add_install_rule( make, make->module, arch, make->unixlib,
@@ -3450,23 +3416,9 @@ static void output_unix_lib( struct makefile *make )
     output( "%s:", obj_dir_path( make, make->unixlib ));
     output_filenames_obj_dir( make, make->unixobj_files );
     output_filenames( unix_deps );
-
-    if (make->native_unix_lib)
-    {
-        output( "\n" );
-        output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
-        output_filenames( get_expanded_make_var_array( make, "UNIXLDFLAGS" ));
-    }
-    else
-    {
-        output_filename( tools_path( make, "winebuild" ));
-        output_filename( tools_path( make, "winegcc" ));
-        output( "\n" );
-        output_winegcc_command( make, 0 );
-        output_filename( "-munix" );
-        output_filename( "-shared" );
-        if (spec_file) output_filename( spec_file );
-    }
+    output( "\n" );
+    output( "\t%s$(CC) -o $@", cmd_prefix( "CCLD" ));
+    output_filenames( get_expanded_make_var_array( make, "UNIXLDFLAGS" ));
     output_filenames_obj_dir( make, make->unixobj_files );
     output_filenames( unix_libs );
     output_filename( "$(LDFLAGS)" );
@@ -4297,7 +4249,6 @@ static void load_sources( struct makefile *make )
                        !strarray_exists( &make->extradllflags, "-mcygwin" );
     make->is_exe     = strarray_exists( &make->extradllflags, "-mconsole" ) ||
                        strarray_exists( &make->extradllflags, "-mwindows" );
-    make->native_unix_lib = !!make->unixlib;
 
     if (make->use_msvcrt) strarray_add_uniq( &make->extradllflags, "-mno-cygwin" );
 
@@ -4356,7 +4307,6 @@ static void load_sources( struct makefile *make )
     }
 
     add_generated_sources( make );
-    if (!make->unixlib) make->unixlib = get_unix_lib_name( make );
 
     if (make->use_msvcrt) strarray_add( &make->define_args, get_crt_define( make ));
 
