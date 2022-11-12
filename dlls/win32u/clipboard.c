@@ -56,7 +56,7 @@ static struct list formats_to_free = LIST_INIT( formats_to_free );
 static const char *debugstr_format( UINT id )
 {
     WCHAR buffer[256];
-    DWORD le = GetLastError();
+    DWORD le = RtlGetLastWin32Error();
     BOOL r = NtUserGetClipboardFormatName( id, buffer, ARRAYSIZE(buffer) );
     RtlSetLastWin32Error(le);
 

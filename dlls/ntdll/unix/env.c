@@ -2392,6 +2392,14 @@ ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
 }
 
 /**********************************************************************
+ *      RtlGetLastWin32Error  (ntdll.so)
+ */
+DWORD WINAPI RtlGetLastWin32Error(void)
+{
+    return NtCurrentTeb()->LastErrorValue;
+}
+
+/**********************************************************************
  *      RtlSetLastWin32Error  (ntdll.so)
  */
 void WINAPI RtlSetLastWin32Error( DWORD err )

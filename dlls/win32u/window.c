@@ -852,7 +852,7 @@ BOOL is_window_enabled( HWND hwnd )
 
     RtlSetLastWin32Error( NO_ERROR );
     ret = get_window_long( hwnd, GWL_STYLE );
-    if (!ret && GetLastError() != NO_ERROR) return FALSE;
+    if (!ret && RtlGetLastWin32Error() != NO_ERROR) return FALSE;
     return !(ret & WS_DISABLED);
 }
 
@@ -4879,7 +4879,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
 
     if (!handle)
     {
-        WARN( "error %d creating window\n", GetLastError() );
+        WARN( "error %d creating window\n", RtlGetLastWin32Error() );
         return NULL;
     }
 

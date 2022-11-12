@@ -2213,7 +2213,7 @@ static void SPY_GetWndName( SPY_INSTANCE *sp_e )
 const char *debugstr_msg_name( UINT msg, HWND hWnd )
 {
     SPY_INSTANCE ext_sp_e;
-    DWORD save_error = GetLastError();
+    DWORD save_error = RtlGetLastWin32Error();
 
     ext_sp_e.msgnum = msg;
     ext_sp_e.msg_hwnd   = hWnd;
@@ -2504,7 +2504,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                     /* for CUSTOMDRAW, dump all the data for TOOLBARs */
                     if (pnmh->code == NM_CUSTOMDRAW) {
                         /* save and restore error code over the next call */
-                        save_error = GetLastError();
+                        save_error = RtlGetLastWin32Error();
                         NtUserGetClassName( pnmh->hwndFrom, FALSE, &str );
                         RtlSetLastWin32Error(save_error);
                         if (wcscmp(TOOLBARCLASSNAMEW, from_class) == 0)
@@ -2597,7 +2597,7 @@ void spy_enter_message( INT iFlag, HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
 {
     SPY_INSTANCE sp_e;
     int indent;
-    DWORD save_error = GetLastError();
+    DWORD save_error = RtlGetLastWin32Error();
 
     if (!spy_init() || exclude_msg(msg)) return;
 
@@ -2652,7 +2652,7 @@ void spy_exit_message( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
 {
     SPY_INSTANCE sp_e;
     int indent;
-    DWORD save_error = GetLastError();
+    DWORD save_error = RtlGetLastWin32Error();
 
     if (!TRACE_ON(message) || exclude_msg(msg) ||
         (exclude_dwp() && iFlag == SPY_RESULT_DEFWND))
