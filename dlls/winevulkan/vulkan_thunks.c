@@ -6485,7 +6485,25 @@ static inline const VkAccelerationStructureBuildGeometryInfoKHR *convert_VkAccel
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(const VkMicromapBuildInfoEXT32 *in, VkMicromapBuildInfoEXT *out)
+static inline const VkMicromapUsageEXT * const*convert_VkMicromapUsageEXT_pointer_array_win32_to_host(struct conversion_context *ctx, const PTR32 *in, uint32_t count)
+{
+    VkMicromapUsageEXT **out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = UlongToPtr(in[i]);
+    }
+
+    return (void *)out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(struct conversion_context *ctx, const VkMicromapBuildInfoEXT32 *in, VkMicromapBuildInfoEXT *out)
 {
     if (!in) return;
 
@@ -6497,7 +6515,7 @@ static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(const VkMicromap
     out->dstMicromap = in->dstMicromap;
     out->usageCountsCount = in->usageCountsCount;
     out->pUsageCounts = (const VkMicromapUsageEXT *)UlongToPtr(in->pUsageCounts);
-    out->ppUsageCounts = UlongToPtr(in->ppUsageCounts);
+    out->ppUsageCounts = convert_VkMicromapUsageEXT_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppUsageCounts), in->usageCountsCount);
     out->data = in->data;
     out->scratchData = in->scratchData;
     out->triangleArray = in->triangleArray;
@@ -6516,7 +6534,7 @@ static inline const VkMicromapBuildInfoEXT *convert_VkMicromapBuildInfoEXT_array
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkMicromapBuildInfoEXT_win32_to_host(&in[i], &out[i]);
+        convert_VkMicromapBuildInfoEXT_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -9156,6 +9174,24 @@ static inline const VkDeviceQueueCreateInfo *convert_VkDeviceQueueCreateInfo_arr
 }
 #endif /* USE_STRUCT_CONVERSION */
 
+#if defined(USE_STRUCT_CONVERSION)
+static inline const char * const*convert_char_pointer_array_win32_to_host(struct conversion_context *ctx, const PTR32 *in, uint32_t count)
+{
+    char **out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = UlongToPtr(in[i]);
+    }
+
+    return (void *)out;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
 #if !defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_context *ctx, const VkDeviceCreateInfo *in, VkDeviceCreateInfo *out)
 {
@@ -10985,9 +11021,9 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
     out->queueCreateInfoCount = in->queueCreateInfoCount;
     out->pQueueCreateInfos = convert_VkDeviceQueueCreateInfo_array_win32_to_host(ctx, (const VkDeviceQueueCreateInfo32 *)UlongToPtr(in->pQueueCreateInfos), in->queueCreateInfoCount);
     out->enabledLayerCount = in->enabledLayerCount;
-    out->ppEnabledLayerNames = UlongToPtr(in->ppEnabledLayerNames);
+    out->ppEnabledLayerNames = convert_char_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppEnabledLayerNames), in->enabledLayerCount);
     out->enabledExtensionCount = in->enabledExtensionCount;
-    out->ppEnabledExtensionNames = UlongToPtr(in->ppEnabledExtensionNames);
+    out->ppEnabledExtensionNames = convert_char_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppEnabledExtensionNames), in->enabledExtensionCount);
     out->pEnabledFeatures = (const VkPhysicalDeviceFeatures *)UlongToPtr(in->pEnabledFeatures);
 
     for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
@@ -14519,9 +14555,9 @@ static inline void convert_VkInstanceCreateInfo_win32_to_host(struct conversion_
     out->flags = in->flags;
     out->pApplicationInfo = convert_VkApplicationInfo_array_win32_to_host(ctx, (const VkApplicationInfo32 *)UlongToPtr(in->pApplicationInfo), 1);
     out->enabledLayerCount = in->enabledLayerCount;
-    out->ppEnabledLayerNames = UlongToPtr(in->ppEnabledLayerNames);
+    out->ppEnabledLayerNames = convert_char_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppEnabledLayerNames), in->enabledLayerCount);
     out->enabledExtensionCount = in->enabledExtensionCount;
-    out->ppEnabledExtensionNames = UlongToPtr(in->ppEnabledExtensionNames);
+    out->ppEnabledExtensionNames = convert_char_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppEnabledExtensionNames), in->enabledExtensionCount);
 
     for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
@@ -38175,13 +38211,16 @@ static NTSTATUS thunk32_vkGetMicromapBuildSizesEXT(void *args)
     } *params = args;
     VkMicromapBuildInfoEXT pBuildInfo_host;
     VkMicromapBuildSizesInfoEXT pSizeInfo_host;
+    struct conversion_context ctx;
 
     TRACE("%#x, %#x, %#x, %#x\n", params->device, params->buildType, params->pBuildInfo, params->pSizeInfo);
 
-    convert_VkMicromapBuildInfoEXT_win32_to_host((const VkMicromapBuildInfoEXT32 *)UlongToPtr(params->pBuildInfo), &pBuildInfo_host);
+    init_conversion_context(&ctx);
+    convert_VkMicromapBuildInfoEXT_win32_to_host(&ctx, (const VkMicromapBuildInfoEXT32 *)UlongToPtr(params->pBuildInfo), &pBuildInfo_host);
     convert_VkMicromapBuildSizesInfoEXT_win32_to_host((VkMicromapBuildSizesInfoEXT32 *)UlongToPtr(params->pSizeInfo), &pSizeInfo_host);
     wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetMicromapBuildSizesEXT(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->buildType, &pBuildInfo_host, &pSizeInfo_host);
     convert_VkMicromapBuildSizesInfoEXT_host_to_win32(&pSizeInfo_host, (VkMicromapBuildSizesInfoEXT32 *)UlongToPtr(params->pSizeInfo));
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 

@@ -1306,10 +1306,6 @@ class VkVariable(object):
         if not conv or not self.needs_ptr32_type() or (not self.is_pointer() and self.type == "size_t"):
             return prefix + self.name
 
-        # FIXME: Use conversion instead
-        if self.name in ["ppUsageCounts", "ppEnabledLayerNames", "ppEnabledExtensionNames"]:
-            return "UlongToPtr({0}{1})".format(prefix, self.name)
-
         cast_type = ""
         if self.const:
             cast_type += "const "
@@ -1533,6 +1529,9 @@ class VkMember(VkVariable):
             # returnedonly members don't needs input conversions
             if not self.is_pointer() and self.returnedonly:
                 return False
+            # pointer arrays always need input conversion
+            if conv and self.is_dynamic_array() and self.pointer_array:
+                return True
 
         if self.is_handle():
             if unwrap and self.handle.is_wrapped():
@@ -2457,21 +2456,21 @@ class ArrayConversionFunction(object):
                     body += "        convert_{0}_{1}({2}&in[i], &out[i]);\n".format(
                         struct.name, conv_suffix, ctx_part)
                 else:
-                    body += "        if (in[i])\n"
-                    body += "        {\n"
-                    body += "            out[i] = conversion_context_alloc(ctx, sizeof(*out[i]));\n"
                     if struct.needs_conversion(self.conv, self.unwrap, self.direction, False):
+                        body += "        if (in[i])\n"
+                        body += "        {\n"
+                        body += "            out[i] = conversion_context_alloc(ctx, sizeof(*out[i]));\n"
                         if self.conv:
                             in_param = "({0} *)UlongToPtr(in[i])".format(win_type)
                         else:
                             in_param = "in[i]"
                         body += "            convert_{0}_{1}({2}{3}, out[i]);\n".format(
                             struct.name, conv_suffix, ctx_part, in_param)
+                        body += "        }\n"
+                        body += "        else\n"
+                        body += "            out[i] = NULL;\n"
                     else:
-                        body += "            *out[i] = *in[i];\n".format(win_type)
-                    body += "        }\n"
-                    body += "        else\n"
-                    body += "            out[i] = NULL;\n"
+                        body += "        out[i] = UlongToPtr(in[i]);\n".format(win_type)
             elif self.array.is_handle():
                 if self.array.pointer_array:
                     LOGGER.error("Unhandled handle pointer arrays")
@@ -2489,6 +2488,8 @@ class ArrayConversionFunction(object):
                     body += "        out[i] = " + handle.driver_handle(input) + ";\n"
                 else:
                     LOGGER.warning("Unhandled handle output conversion")
+            elif self.array.pointer_array:
+                body += "        out[i] = UlongToPtr(in[i]);\n"
             else:
                 body += "        out[i] = in[i];\n"
 
