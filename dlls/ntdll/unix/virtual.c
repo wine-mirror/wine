@@ -1541,6 +1541,31 @@ static struct file_view *alloc_view(void)
 
 
 /***********************************************************************
+ *           free_view
+ *
+ * Free memory for view structure. virtual_mutex must be held by caller.
+ */
+static void free_view( struct file_view *view )
+{
+    *(struct file_view **)view = next_free_view;
+    next_free_view = view;
+}
+
+
+/***********************************************************************
+ *           unregister_view
+ *
+ * Remove view from the tree and update free ranges. virtual_mutex must be held by caller.
+ */
+static void unregister_view( struct file_view *view )
+{
+    if (mmap_is_in_reserved_area( view->base, view->size ))
+        free_ranges_remove_view( view );
+    wine_rb_remove( &views_tree, &view->entry );
+}
+
+
+/***********************************************************************
  *           delete_view
  *
  * Deletes a view. virtual_mutex must be held by caller.
@@ -1550,11 +1575,21 @@ static void delete_view( struct file_view *view ) /* [in] View */
     if (!(view->protect & VPROT_SYSTEM)) unmap_area( view->base, view->size );
     set_page_vprot( view->base, view->size, 0 );
     if (arm64ec_map) clear_arm64ec_range( view->base, view->size );
+    unregister_view( view );
+    free_view( view );
+}
+
+
+/***********************************************************************
+ *           register_view
+ *
+ * Add view to the tree and update free ranges. virtual_mutex must be held by caller.
+ */
+static void register_view( struct file_view *view )
+{
+    wine_rb_put( &views_tree, view->base, &view->entry );
     if (mmap_is_in_reserved_area( view->base, view->size ))
-        free_ranges_remove_view( view );
-    wine_rb_remove( &views_tree, &view->entry );
-    *(struct file_view **)view = next_free_view;
-    next_free_view = view;
+        free_ranges_insert_view( view );
 }
 
 
@@ -1598,9 +1633,7 @@ static NTSTATUS create_view( struct file_view **view_ret, void *base, size_t siz
     view->protect = vprot;
     set_page_vprot( base, size, vprot );
 
-    wine_rb_put( &views_tree, view->base, &view->entry );
-    if (mmap_is_in_reserved_area( view->base, view->size ))
-        free_ranges_insert_view( view );
+    register_view( view );
 
     *view_ret = view;
 
