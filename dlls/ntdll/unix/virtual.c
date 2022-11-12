@@ -4204,26 +4204,36 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
         if (addr == (void *)1 && !size && type == MEM_RELEASE) virtual_release_address_space();
         else status = STATUS_INVALID_PARAMETER;
     }
-    else if (!(view = find_view( base, size )) || !is_view_valloc( view ))
-    {
-        status = STATUS_INVALID_PARAMETER;
-    }
+    else if (!(view = find_view( base, 0 ))) status = STATUS_MEMORY_NOT_ALLOCATED;
+    else if (!is_view_valloc( view )) status = STATUS_INVALID_PARAMETER;
     else if (type == MEM_RELEASE)
     {
         /* Free the pages */
 
-        if (size) status = STATUS_INVALID_PARAMETER;
-        else if (base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
+        if (size && (char *)view->base + view->size - base < size) status = STATUS_UNABLE_TO_FREE_VM;
+        else if (!size && base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
         else
         {
+            if (!size) size = view->size;
+
+            if (size == view->size)
+            {
+                assert( base == view->base );
+                delete_view( view );
+            }
+            else
+            {
+                FIXME( "Parial view release is not supported.\n" );
+                status = STATUS_INVALID_PARAMETER;
+            }
             *addr_ptr = base;
-            *size_ptr = view->size;
-            delete_view( view );
+            *size_ptr = size;
         }
     }
     else if (type == MEM_DECOMMIT)
     {
         if (!size && base != view->base) status = STATUS_FREE_VM_NOT_AT_BASE;
+        else if (base - (char *)view->base + size > view->size) status = STATUS_UNABLE_TO_FREE_VM;
         else status = decommit_pages( view, base - (char *)view->base, size );
         if (status == STATUS_SUCCESS)
         {
