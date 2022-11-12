@@ -2950,7 +2950,14 @@ extern char * CDECL wine_get_unix_file_name( LPCWSTR dos );
 extern WCHAR * CDECL wine_get_dos_file_name( LPCSTR str );
 
 
-#ifdef __WINESRC__
+#ifdef WINE_UNIX_LIB
+
+#define GetCurrentProcess()   NtCurrentProcess()
+#define GetCurrentThread()    NtCurrentThread()
+#define GetCurrentProcessId() HandleToULong(NtCurrentTeb()->ClientId.UniqueProcess)
+#define GetCurrentThreadId()  HandleToULong(NtCurrentTeb()->ClientId.UniqueThread)
+
+#elif defined(__WINESRC__)
 
 static FORCEINLINE HANDLE WINAPI GetCurrentProcess(void)
 {
