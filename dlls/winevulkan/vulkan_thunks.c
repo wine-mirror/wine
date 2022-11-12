@@ -16020,6 +16020,20 @@ static inline void convert_VkDebugMarkerObjectTagInfoEXT_win32_to_host(const VkD
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPhysicalDevice_array_unwrapped_host_to_win32(const VkPhysicalDevice *in, VkPhysicalDevice *out, uint32_t count)
+{
+    unsigned int i;
+
+    if (!in) return;
+
+    for (i = 0; i < count; i++)
+    {
+        out[i] = in[i];
+    }
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceGroupProperties_win32_to_unwrapped_host(const VkPhysicalDeviceGroupProperties32 *in, VkPhysicalDeviceGroupProperties *out)
 {
     if (!in) return;
@@ -16035,7 +16049,7 @@ static inline void convert_VkPhysicalDeviceGroupProperties_unwrapped_host_to_win
     if (!in) return;
 
     out->physicalDeviceCount = in->physicalDeviceCount;
-    memcpy(out->physicalDevices, in->physicalDevices, VK_MAX_DEVICE_GROUP_SIZE * sizeof(VkPhysicalDevice));
+    convert_VkPhysicalDevice_array_unwrapped_host_to_win32(in->physicalDevices, out->physicalDevices, VK_MAX_DEVICE_GROUP_SIZE);
     out->subsetAllocation = in->subsetAllocation;
 }
 #endif /* USE_STRUCT_CONVERSION */
@@ -16176,20 +16190,6 @@ static inline void convert_VkPerformanceCounterDescriptionKHR_array_host_to_win3
     for (i = 0; i < count; i++)
     {
         convert_VkPerformanceCounterDescriptionKHR_host_to_win32(&in[i], &out[i]);
-    }
-}
-#endif /* USE_STRUCT_CONVERSION */
-
-#if defined(USE_STRUCT_CONVERSION)
-static inline void convert_VkPhysicalDevice_array_unwrapped_host_to_win32(const VkPhysicalDevice *in, VkPhysicalDevice *out, uint32_t count)
-{
-    unsigned int i;
-
-    if (!in) return;
-
-    for (i = 0; i < count; i++)
-    {
-        out[i] = in[i];
     }
 }
 #endif /* USE_STRUCT_CONVERSION */
