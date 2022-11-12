@@ -1869,7 +1869,7 @@ static void test_NtFreeVirtualMemory(void)
     size = 0xfff;
     addr = (char *)addr1 + 0x1001;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
-    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
     *(volatile char *)addr1 = 1;
     *((volatile char *)addr1 + 0x2000) = 1;
     ok(size == 0x1000, "Unexpected size %p.\n", (void *)size);
@@ -1878,7 +1878,7 @@ static void test_NtFreeVirtualMemory(void)
     size = 0xfff;
     addr = (char *)addr1 + 1;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
-    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
     *((volatile char *)addr1 + 0x2000) = 1;
     ok(size == 0x1000, "Unexpected size %p.\n", (void *)size);
     ok(addr == addr1, "Got addr %p, addr1 %p.\n", addr, addr1);
@@ -1886,17 +1886,17 @@ static void test_NtFreeVirtualMemory(void)
     size = 0x1000;
     addr = addr1;
     status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr, 0, &size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
     ok(addr == addr1, "Unexpected addr %p, addr1 %p.\n", addr, addr1);
     ok(size == 0x1000, "Unexpected size %p.\n", (void *)size);
 
     size = 0x10000;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_DECOMMIT);
-    todo_wine ok(status == STATUS_UNABLE_TO_FREE_VM, "Unexpected status %08lx.\n", status);
+    ok(status == STATUS_UNABLE_TO_FREE_VM, "Unexpected status %08lx.\n", status);
 
     size = 0x10000;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
-    todo_wine ok(status == STATUS_UNABLE_TO_FREE_VM, "Unexpected status %08lx.\n", status);
+    ok(status == STATUS_UNABLE_TO_FREE_VM, "Unexpected status %08lx.\n", status);
 
     size = 0;
     addr = (char *)addr1 + 0x1000;
@@ -1911,11 +1911,11 @@ static void test_NtFreeVirtualMemory(void)
     size = 0;
     addr = (char *)addr1 + 0x2000;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr, &size, MEM_RELEASE);
-    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 
     size = 0x1000;
     status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
-    todo_wine ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 }
 
 static void test_prefetch(void)

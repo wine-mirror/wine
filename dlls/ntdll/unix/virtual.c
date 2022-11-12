@@ -4258,8 +4258,46 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
             }
             else
             {
-                FIXME( "Parial view release is not supported.\n" );
-                status = STATUS_INVALID_PARAMETER;
+                struct file_view *new_view = NULL;
+
+                if (view->base != base && base + size != (char *)view->base + view->size
+                    && !(new_view = alloc_view()))
+                {
+                    ERR( "out of memory for %p-%p\n", base, (char *)base + size );
+                    return STATUS_NO_MEMORY;
+                }
+                unregister_view( view );
+
+                if (new_view)
+                {
+                    new_view->base    = base + size;
+                    new_view->size    = (char *)view->base + view->size - (char *)new_view->base;
+                    new_view->protect = view->protect;
+
+                    view->size = base - (char *)view->base;
+                    register_view( view );
+                    register_view( new_view );
+
+                    VIRTUAL_DEBUG_DUMP_VIEW( view );
+                    VIRTUAL_DEBUG_DUMP_VIEW( new_view );
+                }
+                else
+                {
+                    if (view->base == base)
+                    {
+                        view->base = base + size;
+                        view->size -= size;
+                    }
+                    else
+                    {
+                        view->size = base - (char *)view->base;
+                    }
+                    register_view( view );
+                    VIRTUAL_DEBUG_DUMP_VIEW( view );
+                }
+
+                set_page_vprot( base, size, 0 );
+                unmap_area( base, size );
             }
             *addr_ptr = base;
             *size_ptr = size;
