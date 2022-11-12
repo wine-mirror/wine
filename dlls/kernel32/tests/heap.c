@@ -1623,7 +1623,6 @@ static void test_GlobalAlloc(void)
     SetLastError( 0xdeadbeef );
     size = GlobalSize( invalid_ptr );
     ok( size == 0, "GlobalSize succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ptr = GlobalLock( invalid_ptr );
@@ -2014,7 +2013,6 @@ static void test_LocalAlloc(void)
     SetLastError( 0xdeadbeef );
     size = LocalSize( invalid_ptr );
     ok( size == 0, "LocalSize succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ptr = LocalLock( invalid_ptr );

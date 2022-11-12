@@ -385,7 +385,8 @@ SIZE_T WINAPI LocalSize( HLOCAL handle )
     TRACE_(globalmem)( "handle %p\n", handle );
 
     RtlLockHeap( heap );
-    if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
+    if ((ptr = unsafe_ptr_from_HLOCAL( handle )) &&
+        HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
         ret = HeapSize( heap, HEAP_NO_SERIALIZE, ptr );
     else if ((mem = unsafe_mem_from_HLOCAL( handle )))
     {
