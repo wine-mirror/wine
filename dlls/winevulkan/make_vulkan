@@ -2268,7 +2268,7 @@ class StructConversionFunction(object):
         for m in self.operand:
             if not self.member_needs_copy(self.operand, m):
                 continue
-            if m.name == "pNext" and needs_extensions:
+            if m.name == "pNext" and (needs_extensions or self.conv):
                 body += "    out->pNext = NULL;\n"
                 continue
 
@@ -2346,6 +2346,9 @@ class StructConversionFunction(object):
             body += "            break;\n"
             body += "        }\n"
             body += "    }\n"
+        elif self.conv and self.direction == Direction.INPUT and "pNext" in self.operand:
+            body += "    if (in->pNext)\n"
+            body += "        FIXME(\"Unexpected pNext\\n\");\n"
 
         body += "}\n"
         if not self.conv:

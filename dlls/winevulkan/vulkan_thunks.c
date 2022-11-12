@@ -5823,12 +5823,14 @@ static inline void convert_VkAcquireNextImageInfoKHR_win32_to_host(const VkAcqui
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->swapchain = in->swapchain;
     out->timeout = in->timeout;
     out->semaphore = in->semaphore;
     out->fence = in->fence;
     out->deviceMask = in->deviceMask;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPerformanceConfigurationAcquireInfoINTEL_win32_to_host(const VkPerformanceConfigurationAcquireInfoINTEL32 *in, VkPerformanceConfigurationAcquireInfoINTEL *out)
@@ -5836,8 +5838,10 @@ static inline void convert_VkPerformanceConfigurationAcquireInfoINTEL_win32_to_h
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->type = in->type;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkAcquireProfilingLockInfoKHR_win32_to_host(const VkAcquireProfilingLockInfoKHR32 *in, VkAcquireProfilingLockInfoKHR *out)
@@ -5845,9 +5849,11 @@ static inline void convert_VkAcquireProfilingLockInfoKHR_win32_to_host(const VkA
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->timeout = in->timeout;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCommandBufferAllocateInfo_win32_to_unwrapped_host(const VkCommandBufferAllocateInfo32 *in, VkCommandBufferAllocateInfo *out)
@@ -5855,10 +5861,12 @@ static inline void convert_VkCommandBufferAllocateInfo_win32_to_unwrapped_host(c
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->commandPool = in->commandPool;
     out->level = in->level;
     out->commandBufferCount = in->commandBufferCount;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline VkCommandBuffer *convert_VkCommandBuffer_array_win32_to_unwrapped_host(struct conversion_context *ctx, const PTR32 *in, uint32_t count)
@@ -6203,12 +6211,14 @@ static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->accelerationStructure = in->accelerationStructure;
     out->memory = in->memory;
     out->memoryOffset = in->memoryOffset;
     out->deviceIndexCount = in->deviceIndexCount;
     out->pDeviceIndices = (const uint32_t *)UlongToPtr(in->pDeviceIndices);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkBindAccelerationStructureMemoryInfoNV *convert_VkBindAccelerationStructureMemoryInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkBindAccelerationStructureMemoryInfoNV32 *in, uint32_t count)
@@ -6361,10 +6371,12 @@ static inline void convert_VkAccelerationStructureGeometryKHR_win32_to_host(cons
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->geometryType = in->geometryType;
     out->geometry = in->geometry;
     out->flags = in->flags;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkAccelerationStructureGeometryKHR *convert_VkAccelerationStructureGeometryKHR_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryKHR32 *in, uint32_t count)
@@ -6410,7 +6422,7 @@ static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->type = in->type;
     out->flags = in->flags;
     out->mode = in->mode;
@@ -6420,6 +6432,8 @@ static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_
     out->pGeometries = convert_VkAccelerationStructureGeometryKHR_array_win32_to_host(ctx, (const VkAccelerationStructureGeometryKHR32 *)UlongToPtr(in->pGeometries), in->geometryCount);
     out->ppGeometries = convert_VkAccelerationStructureGeometryKHR_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppGeometries), in->geometryCount);
     out->scratchData = in->scratchData;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkAccelerationStructureBuildGeometryInfoKHR *convert_VkAccelerationStructureBuildGeometryInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR32 *in, uint32_t count)
@@ -6459,7 +6473,7 @@ static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(struct conversio
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->type = in->type;
     out->flags = in->flags;
     out->mode = in->mode;
@@ -6471,6 +6485,8 @@ static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(struct conversio
     out->scratchData = in->scratchData;
     out->triangleArray = in->triangleArray;
     out->triangleArrayStride = in->triangleArrayStride;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkMicromapBuildInfoEXT *convert_VkMicromapBuildInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkMicromapBuildInfoEXT32 *in, uint32_t count)
@@ -6494,10 +6510,12 @@ static inline void convert_VkConditionalRenderingBeginInfoEXT_win32_to_host(cons
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->buffer = in->buffer;
     out->offset = in->offset;
     out->flags = in->flags;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDebugUtilsLabelEXT_win32_to_host(const VkDebugUtilsLabelEXT32 *in, VkDebugUtilsLabelEXT *out)
@@ -6505,9 +6523,11 @@ static inline void convert_VkDebugUtilsLabelEXT_win32_to_host(const VkDebugUtils
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pLabelName = (const char *)UlongToPtr(in->pLabelName);
     memcpy(out->color, in->color, 4 * sizeof(float));
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSampleLocationsInfoEXT_win32_to_host(const VkSampleLocationsInfoEXT32 *in, VkSampleLocationsInfoEXT *out)
@@ -6515,11 +6535,13 @@ static inline void convert_VkSampleLocationsInfoEXT_win32_to_host(const VkSample
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->sampleLocationsPerPixel = in->sampleLocationsPerPixel;
     out->sampleLocationGridSize = in->sampleLocationGridSize;
     out->sampleLocationsCount = in->sampleLocationsCount;
     out->pSampleLocations = (const VkSampleLocationEXT *)UlongToPtr(in->pSampleLocations);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkAttachmentSampleLocationsEXT_win32_to_host(const VkAttachmentSampleLocationsEXT32 *in, VkAttachmentSampleLocationsEXT *out)
@@ -6651,8 +6673,10 @@ static inline void convert_VkSubpassBeginInfo_win32_to_host(const VkSubpassBegin
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->contents = in->contents;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkRenderingAttachmentInfo_win32_to_host(const VkRenderingAttachmentInfo32 *in, VkRenderingAttachmentInfo *out)
@@ -6660,7 +6684,7 @@ static inline void convert_VkRenderingAttachmentInfo_win32_to_host(const VkRende
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->imageView = in->imageView;
     out->imageLayout = in->imageLayout;
     out->resolveMode = in->resolveMode;
@@ -6669,6 +6693,8 @@ static inline void convert_VkRenderingAttachmentInfo_win32_to_host(const VkRende
     out->loadOp = in->loadOp;
     out->storeOp = in->storeOp;
     out->clearValue = in->clearValue;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkRenderingAttachmentInfo *convert_VkRenderingAttachmentInfo_array_win32_to_host(struct conversion_context *ctx, const VkRenderingAttachmentInfo32 *in, uint32_t count)
@@ -6835,7 +6861,7 @@ static inline void convert_VkBlitImageInfo2_win32_to_host(struct conversion_cont
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcImage = in->srcImage;
     out->srcImageLayout = in->srcImageLayout;
     out->dstImage = in->dstImage;
@@ -6843,6 +6869,8 @@ static inline void convert_VkBlitImageInfo2_win32_to_host(struct conversion_cont
     out->regionCount = in->regionCount;
     out->pRegions = convert_VkImageBlit2_array_win32_to_host(ctx, (const VkImageBlit232 *)UlongToPtr(in->pRegions), in->regionCount);
     out->filter = in->filter;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkGeometryTrianglesNV_win32_to_host(const VkGeometryTrianglesNV32 *in, VkGeometryTrianglesNV *out)
@@ -6850,7 +6878,7 @@ static inline void convert_VkGeometryTrianglesNV_win32_to_host(const VkGeometryT
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->vertexData = in->vertexData;
     out->vertexOffset = in->vertexOffset;
     out->vertexCount = in->vertexCount;
@@ -6862,6 +6890,8 @@ static inline void convert_VkGeometryTrianglesNV_win32_to_host(const VkGeometryT
     out->indexType = in->indexType;
     out->transformData = in->transformData;
     out->transformOffset = in->transformOffset;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkGeometryAABBNV_win32_to_host(const VkGeometryAABBNV32 *in, VkGeometryAABBNV *out)
@@ -6869,11 +6899,13 @@ static inline void convert_VkGeometryAABBNV_win32_to_host(const VkGeometryAABBNV
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->aabbData = in->aabbData;
     out->numAABBs = in->numAABBs;
     out->stride = in->stride;
     out->offset = in->offset;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkGeometryDataNV_win32_to_host(const VkGeometryDataNV32 *in, VkGeometryDataNV *out)
@@ -6889,10 +6921,12 @@ static inline void convert_VkGeometryNV_win32_to_host(const VkGeometryNV32 *in, 
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->geometryType = in->geometryType;
     convert_VkGeometryDataNV_win32_to_host(&in->geometry, &out->geometry);
     out->flags = in->flags;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkGeometryNV *convert_VkGeometryNV_array_win32_to_host(struct conversion_context *ctx, const VkGeometryNV32 *in, uint32_t count)
@@ -6916,12 +6950,14 @@ static inline void convert_VkAccelerationStructureInfoNV_win32_to_host(struct co
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->type = in->type;
     out->flags = in->flags;
     out->instanceCount = in->instanceCount;
     out->geometryCount = in->geometryCount;
     out->pGeometries = convert_VkGeometryNV_array_win32_to_host(ctx, (const VkGeometryNV32 *)UlongToPtr(in->pGeometries), in->geometryCount);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCopyAccelerationStructureInfoKHR_win32_to_host(const VkCopyAccelerationStructureInfoKHR32 *in, VkCopyAccelerationStructureInfoKHR *out)
@@ -6929,10 +6965,12 @@ static inline void convert_VkCopyAccelerationStructureInfoKHR_win32_to_host(cons
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->src = in->src;
     out->dst = in->dst;
     out->mode = in->mode;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win32_to_host(const VkCopyAccelerationStructureToMemoryInfoKHR32 *in, VkCopyAccelerationStructureToMemoryInfoKHR *out)
@@ -6940,10 +6978,12 @@ static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win32_to_h
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->src = in->src;
     out->dst = in->dst;
     out->mode = in->mode;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkBufferCopy_win32_to_host(const VkBufferCopy32 *in, VkBufferCopy *out)
@@ -6976,10 +7016,12 @@ static inline void convert_VkBufferCopy2_win32_to_host(const VkBufferCopy232 *in
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcOffset = in->srcOffset;
     out->dstOffset = in->dstOffset;
     out->size = in->size;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkBufferCopy2 *convert_VkBufferCopy2_array_win32_to_host(struct conversion_context *ctx, const VkBufferCopy232 *in, uint32_t count)
@@ -7003,11 +7045,13 @@ static inline void convert_VkCopyBufferInfo2_win32_to_host(struct conversion_con
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcBuffer = in->srcBuffer;
     out->dstBuffer = in->dstBuffer;
     out->regionCount = in->regionCount;
     out->pRegions = convert_VkBufferCopy2_array_win32_to_host(ctx, (const VkBufferCopy232 *)UlongToPtr(in->pRegions), in->regionCount);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkBufferImageCopy_win32_to_host(const VkBufferImageCopy32 *in, VkBufferImageCopy *out)
@@ -7097,12 +7141,14 @@ static inline void convert_VkCopyBufferToImageInfo2_win32_to_host(struct convers
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcBuffer = in->srcBuffer;
     out->dstImage = in->dstImage;
     out->dstImageLayout = in->dstImageLayout;
     out->regionCount = in->regionCount;
     out->pRegions = convert_VkBufferImageCopy2_array_win32_to_host(ctx, (const VkBufferImageCopy232 *)UlongToPtr(in->pRegions), in->regionCount);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkImageCopy2_win32_to_host(const VkImageCopy232 *in, VkImageCopy2 *out)
@@ -7110,12 +7156,14 @@ static inline void convert_VkImageCopy2_win32_to_host(const VkImageCopy232 *in, 
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcSubresource = in->srcSubresource;
     out->srcOffset = in->srcOffset;
     out->dstSubresource = in->dstSubresource;
     out->dstOffset = in->dstOffset;
     out->extent = in->extent;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkImageCopy2 *convert_VkImageCopy2_array_win32_to_host(struct conversion_context *ctx, const VkImageCopy232 *in, uint32_t count)
@@ -7139,13 +7187,15 @@ static inline void convert_VkCopyImageInfo2_win32_to_host(struct conversion_cont
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcImage = in->srcImage;
     out->srcImageLayout = in->srcImageLayout;
     out->dstImage = in->dstImage;
     out->dstImageLayout = in->dstImageLayout;
     out->regionCount = in->regionCount;
     out->pRegions = convert_VkImageCopy2_array_win32_to_host(ctx, (const VkImageCopy232 *)UlongToPtr(in->pRegions), in->regionCount);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCopyImageToBufferInfo2_win32_to_host(struct conversion_context *ctx, const VkCopyImageToBufferInfo232 *in, VkCopyImageToBufferInfo2 *out)
@@ -7153,12 +7203,14 @@ static inline void convert_VkCopyImageToBufferInfo2_win32_to_host(struct convers
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcImage = in->srcImage;
     out->srcImageLayout = in->srcImageLayout;
     out->dstBuffer = in->dstBuffer;
     out->regionCount = in->regionCount;
     out->pRegions = convert_VkBufferImageCopy2_array_win32_to_host(ctx, (const VkBufferImageCopy232 *)UlongToPtr(in->pRegions), in->regionCount);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCopyMemoryToAccelerationStructureInfoKHR_win32_to_host(const VkCopyMemoryToAccelerationStructureInfoKHR32 *in, VkCopyMemoryToAccelerationStructureInfoKHR *out)
@@ -7166,10 +7218,12 @@ static inline void convert_VkCopyMemoryToAccelerationStructureInfoKHR_win32_to_h
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->src = in->src;
     out->dst = in->dst;
     out->mode = in->mode;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCopyMemoryToMicromapInfoEXT_win32_to_host(const VkCopyMemoryToMicromapInfoEXT32 *in, VkCopyMemoryToMicromapInfoEXT *out)
@@ -7177,10 +7231,12 @@ static inline void convert_VkCopyMemoryToMicromapInfoEXT_win32_to_host(const VkC
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->src = in->src;
     out->dst = in->dst;
     out->mode = in->mode;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCopyMicromapInfoEXT_win32_to_host(const VkCopyMicromapInfoEXT32 *in, VkCopyMicromapInfoEXT *out)
@@ -7188,10 +7244,12 @@ static inline void convert_VkCopyMicromapInfoEXT_win32_to_host(const VkCopyMicro
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->src = in->src;
     out->dst = in->dst;
     out->mode = in->mode;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCopyMicromapToMemoryInfoEXT_win32_to_host(const VkCopyMicromapToMemoryInfoEXT32 *in, VkCopyMicromapToMemoryInfoEXT *out)
@@ -7199,10 +7257,12 @@ static inline void convert_VkCopyMicromapToMemoryInfoEXT_win32_to_host(const VkC
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->src = in->src;
     out->dst = in->dst;
     out->mode = in->mode;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCuLaunchInfoNVX_win32_to_host(const VkCuLaunchInfoNVX32 *in, VkCuLaunchInfoNVX *out)
@@ -7210,7 +7270,7 @@ static inline void convert_VkCuLaunchInfoNVX_win32_to_host(const VkCuLaunchInfoN
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->function = in->function;
     out->gridDimX = in->gridDimX;
     out->gridDimY = in->gridDimY;
@@ -7223,6 +7283,8 @@ static inline void convert_VkCuLaunchInfoNVX_win32_to_host(const VkCuLaunchInfoN
     out->pParams = (const void * const *)UlongToPtr(in->pParams);
     out->extraCount = in->extraCount;
     out->pExtras = (const void * const *)UlongToPtr(in->pExtras);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDebugMarkerMarkerInfoEXT_win32_to_host(const VkDebugMarkerMarkerInfoEXT32 *in, VkDebugMarkerMarkerInfoEXT *out)
@@ -7230,9 +7292,11 @@ static inline void convert_VkDebugMarkerMarkerInfoEXT_win32_to_host(const VkDebu
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pMarkerName = (const char *)UlongToPtr(in->pMarkerName);
     memcpy(out->color, in->color, 4 * sizeof(float));
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDecompressMemoryRegionNV_win32_to_host(const VkDecompressMemoryRegionNV32 *in, VkDecompressMemoryRegionNV *out)
@@ -7358,7 +7422,7 @@ static inline void convert_VkGeneratedCommandsInfoNV_win32_to_host(struct conver
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pipelineBindPoint = in->pipelineBindPoint;
     out->pipeline = in->pipeline;
     out->indirectCommandsLayout = in->indirectCommandsLayout;
@@ -7372,6 +7436,8 @@ static inline void convert_VkGeneratedCommandsInfoNV_win32_to_host(struct conver
     out->sequencesCountOffset = in->sequencesCountOffset;
     out->sequencesIndexBuffer = in->sequencesIndexBuffer;
     out->sequencesIndexOffset = in->sequencesIndexOffset;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkOpticalFlowExecuteInfoNV_win32_to_host(const VkOpticalFlowExecuteInfoNV32 *in, VkOpticalFlowExecuteInfoNV *out)
@@ -7379,10 +7445,12 @@ static inline void convert_VkOpticalFlowExecuteInfoNV_win32_to_host(const VkOpti
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->regionCount = in->regionCount;
     out->pRegions = (const VkRect2D *)UlongToPtr(in->pRegions);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMemoryBarrier_win32_to_host(const VkMemoryBarrier32 *in, VkMemoryBarrier *out)
@@ -7390,9 +7458,11 @@ static inline void convert_VkMemoryBarrier_win32_to_host(const VkMemoryBarrier32
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcAccessMask = in->srcAccessMask;
     out->dstAccessMask = in->dstAccessMask;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkMemoryBarrier *convert_VkMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkMemoryBarrier32 *in, uint32_t count)
@@ -7416,7 +7486,7 @@ static inline void convert_VkBufferMemoryBarrier_win32_to_host(const VkBufferMem
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcAccessMask = in->srcAccessMask;
     out->dstAccessMask = in->dstAccessMask;
     out->srcQueueFamilyIndex = in->srcQueueFamilyIndex;
@@ -7424,6 +7494,8 @@ static inline void convert_VkBufferMemoryBarrier_win32_to_host(const VkBufferMem
     out->buffer = in->buffer;
     out->offset = in->offset;
     out->size = in->size;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkBufferMemoryBarrier *convert_VkBufferMemoryBarrier_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier32 *in, uint32_t count)
@@ -7506,11 +7578,13 @@ static inline void convert_VkMemoryBarrier2_win32_to_host(const VkMemoryBarrier2
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcStageMask = in->srcStageMask;
     out->srcAccessMask = in->srcAccessMask;
     out->dstStageMask = in->dstStageMask;
     out->dstAccessMask = in->dstAccessMask;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkMemoryBarrier2 *convert_VkMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkMemoryBarrier232 *in, uint32_t count)
@@ -7534,7 +7608,7 @@ static inline void convert_VkBufferMemoryBarrier2_win32_to_host(const VkBufferMe
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcStageMask = in->srcStageMask;
     out->srcAccessMask = in->srcAccessMask;
     out->dstStageMask = in->dstStageMask;
@@ -7544,6 +7618,8 @@ static inline void convert_VkBufferMemoryBarrier2_win32_to_host(const VkBufferMe
     out->buffer = in->buffer;
     out->offset = in->offset;
     out->size = in->size;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkBufferMemoryBarrier2 *convert_VkBufferMemoryBarrier2_array_win32_to_host(struct conversion_context *ctx, const VkBufferMemoryBarrier232 *in, uint32_t count)
@@ -7628,7 +7704,7 @@ static inline void convert_VkDependencyInfo_win32_to_host(struct conversion_cont
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->dependencyFlags = in->dependencyFlags;
     out->memoryBarrierCount = in->memoryBarrierCount;
     out->pMemoryBarriers = convert_VkMemoryBarrier2_array_win32_to_host(ctx, (const VkMemoryBarrier232 *)UlongToPtr(in->pMemoryBarriers), in->memoryBarrierCount);
@@ -7636,6 +7712,8 @@ static inline void convert_VkDependencyInfo_win32_to_host(struct conversion_cont
     out->pBufferMemoryBarriers = convert_VkBufferMemoryBarrier2_array_win32_to_host(ctx, (const VkBufferMemoryBarrier232 *)UlongToPtr(in->pBufferMemoryBarriers), in->bufferMemoryBarrierCount);
     out->imageMemoryBarrierCount = in->imageMemoryBarrierCount;
     out->pImageMemoryBarriers = convert_VkImageMemoryBarrier2_array_win32_to_host(ctx, (const VkImageMemoryBarrier232 *)UlongToPtr(in->pImageMemoryBarriers), in->imageMemoryBarrierCount);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDescriptorImageInfo_win32_to_host(const VkDescriptorImageInfo32 *in, VkDescriptorImageInfo *out)
@@ -7774,12 +7852,14 @@ static inline void convert_VkImageResolve2_win32_to_host(const VkImageResolve232
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcSubresource = in->srcSubresource;
     out->srcOffset = in->srcOffset;
     out->dstSubresource = in->dstSubresource;
     out->dstOffset = in->dstOffset;
     out->extent = in->extent;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkImageResolve2 *convert_VkImageResolve2_array_win32_to_host(struct conversion_context *ctx, const VkImageResolve232 *in, uint32_t count)
@@ -7803,13 +7883,15 @@ static inline void convert_VkResolveImageInfo2_win32_to_host(struct conversion_c
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcImage = in->srcImage;
     out->srcImageLayout = in->srcImageLayout;
     out->dstImage = in->dstImage;
     out->dstImageLayout = in->dstImageLayout;
     out->regionCount = in->regionCount;
     out->pRegions = convert_VkImageResolve2_array_win32_to_host(ctx, (const VkImageResolve232 *)UlongToPtr(in->pRegions), in->regionCount);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCoarseSampleOrderCustomNV_win32_to_host(const VkCoarseSampleOrderCustomNV32 *in, VkCoarseSampleOrderCustomNV *out)
@@ -7843,8 +7925,10 @@ static inline void convert_VkPerformanceMarkerInfoINTEL_win32_to_host(const VkPe
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->marker = in->marker;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPerformanceOverrideInfoINTEL_win32_to_host(const VkPerformanceOverrideInfoINTEL32 *in, VkPerformanceOverrideInfoINTEL *out)
@@ -7852,10 +7936,12 @@ static inline void convert_VkPerformanceOverrideInfoINTEL_win32_to_host(const Vk
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->type = in->type;
     out->enable = in->enable;
     out->parameter = in->parameter;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPerformanceStreamMarkerInfoINTEL_win32_to_host(const VkPerformanceStreamMarkerInfoINTEL32 *in, VkPerformanceStreamMarkerInfoINTEL *out)
@@ -7863,8 +7949,10 @@ static inline void convert_VkPerformanceStreamMarkerInfoINTEL_win32_to_host(cons
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->marker = in->marker;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkVertexInputBindingDescription2EXT_win32_to_host(const VkVertexInputBindingDescription2EXT32 *in, VkVertexInputBindingDescription2EXT *out)
@@ -7872,11 +7960,13 @@ static inline void convert_VkVertexInputBindingDescription2EXT_win32_to_host(con
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->binding = in->binding;
     out->stride = in->stride;
     out->inputRate = in->inputRate;
     out->divisor = in->divisor;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkVertexInputBindingDescription2EXT *convert_VkVertexInputBindingDescription2EXT_array_win32_to_host(struct conversion_context *ctx, const VkVertexInputBindingDescription2EXT32 *in, uint32_t count)
@@ -7900,11 +7990,13 @@ static inline void convert_VkVertexInputAttributeDescription2EXT_win32_to_host(c
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->location = in->location;
     out->binding = in->binding;
     out->format = in->format;
     out->offset = in->offset;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkVertexInputAttributeDescription2EXT *convert_VkVertexInputAttributeDescription2EXT_array_win32_to_host(struct conversion_context *ctx, const VkVertexInputAttributeDescription2EXT32 *in, uint32_t count)
@@ -8016,9 +8108,11 @@ static inline void convert_VkAccelerationStructureCreateInfoNV_win32_to_host(str
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->compactedSize = in->compactedSize;
     convert_VkAccelerationStructureInfoNV_win32_to_host(ctx, &in->info, &out->info);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkBufferCreateInfo_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo32 *in, VkBufferCreateInfo *out)
@@ -8097,12 +8191,14 @@ static inline void convert_VkBufferViewCreateInfo_win32_to_host(const VkBufferVi
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->buffer = in->buffer;
     out->format = in->format;
     out->offset = in->offset;
     out->range = in->range;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCommandPoolCreateInfo_win32_to_host(const VkCommandPoolCreateInfo32 *in, VkCommandPoolCreateInfo *out)
@@ -8110,9 +8206,11 @@ static inline void convert_VkCommandPoolCreateInfo_win32_to_host(const VkCommand
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->queueFamilyIndex = in->queueFamilyIndex;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPipelineCreationFeedback_host_to_win32(const VkPipelineCreationFeedback *in, VkPipelineCreationFeedback32 *out)
@@ -8568,9 +8666,11 @@ static inline void convert_VkCuFunctionCreateInfoNVX_win32_to_host(const VkCuFun
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->module = in->module;
     out->pName = (const char *)UlongToPtr(in->pName);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCuModuleCreateInfoNVX_win32_to_host(const VkCuModuleCreateInfoNVX32 *in, VkCuModuleCreateInfoNVX *out)
@@ -8578,9 +8678,11 @@ static inline void convert_VkCuModuleCreateInfoNVX_win32_to_host(const VkCuModul
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->dataSize = in->dataSize;
     out->pData = (const void *)UlongToPtr(in->pData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDebugReportCallbackCreateInfoEXT_win32_to_host(const VkDebugReportCallbackCreateInfoEXT32 *in, VkDebugReportCallbackCreateInfoEXT *out)
@@ -8588,10 +8690,12 @@ static inline void convert_VkDebugReportCallbackCreateInfoEXT_win32_to_host(cons
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->pfnCallback = in->pfnCallback;
     out->pUserData = (void *)UlongToPtr(in->pUserData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDebugUtilsMessengerCreateInfoEXT_win32_to_host(const VkDebugUtilsMessengerCreateInfoEXT32 *in, VkDebugUtilsMessengerCreateInfoEXT *out)
@@ -8599,12 +8703,14 @@ static inline void convert_VkDebugUtilsMessengerCreateInfoEXT_win32_to_host(cons
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->messageSeverity = in->messageSeverity;
     out->messageType = in->messageType;
     out->pfnUserCallback = in->pfnUserCallback;
     out->pUserData = (void *)UlongToPtr(in->pUserData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMutableDescriptorTypeListEXT_win32_to_host(const VkMutableDescriptorTypeListEXT32 *in, VkMutableDescriptorTypeListEXT *out)
@@ -8787,7 +8893,7 @@ static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(st
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->descriptorUpdateEntryCount = in->descriptorUpdateEntryCount;
     out->pDescriptorUpdateEntries = convert_VkDescriptorUpdateTemplateEntry_array_win32_to_host(ctx, (const VkDescriptorUpdateTemplateEntry32 *)UlongToPtr(in->pDescriptorUpdateEntries), in->descriptorUpdateEntryCount);
@@ -8796,6 +8902,8 @@ static inline void convert_VkDescriptorUpdateTemplateCreateInfo_win32_to_host(st
     out->pipelineBindPoint = in->pipelineBindPoint;
     out->pipelineLayout = in->pipelineLayout;
     out->set = in->set;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 #ifdef _WIN64
@@ -12533,8 +12641,10 @@ static inline void convert_VkEventCreateInfo_win32_to_host(const VkEventCreateIn
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkFenceCreateInfo_win32_to_host(struct conversion_context *ctx, const VkFenceCreateInfo32 *in, VkFenceCreateInfo *out)
@@ -12575,7 +12685,7 @@ static inline void convert_VkFramebufferAttachmentImageInfo_win32_to_host(const 
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->usage = in->usage;
     out->width = in->width;
@@ -12583,6 +12693,8 @@ static inline void convert_VkFramebufferAttachmentImageInfo_win32_to_host(const 
     out->layerCount = in->layerCount;
     out->viewFormatCount = in->viewFormatCount;
     out->pViewFormats = (const VkFormat *)UlongToPtr(in->pViewFormats);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkFramebufferAttachmentImageInfo *convert_VkFramebufferAttachmentImageInfo_array_win32_to_host(struct conversion_context *ctx, const VkFramebufferAttachmentImageInfo32 *in, uint32_t count)
@@ -12798,11 +12910,13 @@ static inline void convert_VkGraphicsShaderGroupCreateInfoNV_win32_to_host(struc
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->stageCount = in->stageCount;
     out->pStages = convert_VkPipelineShaderStageCreateInfo_array_win32_to_host(ctx, (const VkPipelineShaderStageCreateInfo32 *)UlongToPtr(in->pStages), in->stageCount);
     out->pVertexInputState = convert_VkPipelineVertexInputStateCreateInfo_array_win32_to_host(ctx, (const VkPipelineVertexInputStateCreateInfo32 *)UlongToPtr(in->pVertexInputState), 1);
     out->pTessellationState = convert_VkPipelineTessellationStateCreateInfo_array_win32_to_host(ctx, (const VkPipelineTessellationStateCreateInfo32 *)UlongToPtr(in->pTessellationState), 1);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 #ifdef _WIN64
@@ -12844,10 +12958,12 @@ static inline void convert_VkPipelineInputAssemblyStateCreateInfo_win32_to_host(
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->topology = in->topology;
     out->primitiveRestartEnable = in->primitiveRestartEnable;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkPipelineInputAssemblyStateCreateInfo *convert_VkPipelineInputAssemblyStateCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkPipelineInputAssemblyStateCreateInfo32 *in, uint32_t count)
@@ -13205,7 +13321,7 @@ static inline void convert_VkPipelineDepthStencilStateCreateInfo_win32_to_host(c
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->depthTestEnable = in->depthTestEnable;
     out->depthWriteEnable = in->depthWriteEnable;
@@ -13216,6 +13332,8 @@ static inline void convert_VkPipelineDepthStencilStateCreateInfo_win32_to_host(c
     out->back = in->back;
     out->minDepthBounds = in->minDepthBounds;
     out->maxDepthBounds = in->maxDepthBounds;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkPipelineDepthStencilStateCreateInfo *convert_VkPipelineDepthStencilStateCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkPipelineDepthStencilStateCreateInfo32 *in, uint32_t count)
@@ -13307,10 +13425,12 @@ static inline void convert_VkPipelineDynamicStateCreateInfo_win32_to_host(const 
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->dynamicStateCount = in->dynamicStateCount;
     out->pDynamicStates = (const VkDynamicState *)UlongToPtr(in->pDynamicStates);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkPipelineDynamicStateCreateInfo *convert_VkPipelineDynamicStateCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkPipelineDynamicStateCreateInfo32 *in, uint32_t count)
@@ -14014,7 +14134,7 @@ static inline void convert_VkIndirectCommandsLayoutTokenNV_win32_to_host(const V
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->tokenType = in->tokenType;
     out->stream = in->stream;
     out->offset = in->offset;
@@ -14028,6 +14148,8 @@ static inline void convert_VkIndirectCommandsLayoutTokenNV_win32_to_host(const V
     out->indexTypeCount = in->indexTypeCount;
     out->pIndexTypes = (const VkIndexType *)UlongToPtr(in->pIndexTypes);
     out->pIndexTypeValues = (const uint32_t *)UlongToPtr(in->pIndexTypeValues);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkIndirectCommandsLayoutTokenNV *convert_VkIndirectCommandsLayoutTokenNV_array_win32_to_host(struct conversion_context *ctx, const VkIndirectCommandsLayoutTokenNV32 *in, uint32_t count)
@@ -14051,13 +14173,15 @@ static inline void convert_VkIndirectCommandsLayoutCreateInfoNV_win32_to_host(st
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->pipelineBindPoint = in->pipelineBindPoint;
     out->tokenCount = in->tokenCount;
     out->pTokens = convert_VkIndirectCommandsLayoutTokenNV_array_win32_to_host(ctx, (const VkIndirectCommandsLayoutTokenNV32 *)UlongToPtr(in->pTokens), in->tokenCount);
     out->streamCount = in->streamCount;
     out->pStreamStrides = (const uint32_t *)UlongToPtr(in->pStreamStrides);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkApplicationInfo_win32_to_host(const VkApplicationInfo32 *in, VkApplicationInfo *out)
@@ -14065,12 +14189,14 @@ static inline void convert_VkApplicationInfo_win32_to_host(const VkApplicationIn
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pApplicationName = (const char *)UlongToPtr(in->pApplicationName);
     out->applicationVersion = in->applicationVersion;
     out->pEngineName = (const char *)UlongToPtr(in->pEngineName);
     out->engineVersion = in->engineVersion;
     out->apiVersion = in->apiVersion;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkApplicationInfo *convert_VkApplicationInfo_array_win32_to_host(struct conversion_context *ctx, const VkApplicationInfo32 *in, uint32_t count)
@@ -14262,13 +14388,15 @@ static inline void convert_VkMicromapCreateInfoEXT_win32_to_host(const VkMicroma
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->createFlags = in->createFlags;
     out->buffer = in->buffer;
     out->offset = in->offset;
     out->size = in->size;
     out->type = in->type;
     out->deviceAddress = in->deviceAddress;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkOpticalFlowSessionCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkOpticalFlowSessionCreateInfoNV32 *in, VkOpticalFlowSessionCreateInfoNV *out)
@@ -14319,10 +14447,12 @@ static inline void convert_VkPipelineCacheCreateInfo_win32_to_host(const VkPipel
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->initialDataSize = in->initialDataSize;
     out->pInitialData = (const void *)UlongToPtr(in->pInitialData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPipelineLayoutCreateInfo_win32_to_host(const VkPipelineLayoutCreateInfo32 *in, VkPipelineLayoutCreateInfo *out)
@@ -14330,12 +14460,14 @@ static inline void convert_VkPipelineLayoutCreateInfo_win32_to_host(const VkPipe
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->setLayoutCount = in->setLayoutCount;
     out->pSetLayouts = (const VkDescriptorSetLayout *)UlongToPtr(in->pSetLayouts);
     out->pushConstantRangeCount = in->pushConstantRangeCount;
     out->pPushConstantRanges = (const VkPushConstantRange *)UlongToPtr(in->pPushConstantRanges);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPrivateDataSlotCreateInfo_win32_to_host(const VkPrivateDataSlotCreateInfo32 *in, VkPrivateDataSlotCreateInfo *out)
@@ -14343,8 +14475,10 @@ static inline void convert_VkPrivateDataSlotCreateInfo_win32_to_host(const VkPri
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkQueryPoolCreateInfo_win32_to_host(struct conversion_context *ctx, const VkQueryPoolCreateInfo32 *in, VkQueryPoolCreateInfo *out)
@@ -14401,13 +14535,15 @@ static inline void convert_VkRayTracingShaderGroupCreateInfoKHR_win32_to_host(co
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->type = in->type;
     out->generalShader = in->generalShader;
     out->closestHitShader = in->closestHitShader;
     out->anyHitShader = in->anyHitShader;
     out->intersectionShader = in->intersectionShader;
     out->pShaderGroupCaptureReplayHandle = (const void *)UlongToPtr(in->pShaderGroupCaptureReplayHandle);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkRayTracingShaderGroupCreateInfoKHR *convert_VkRayTracingShaderGroupCreateInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingShaderGroupCreateInfoKHR32 *in, uint32_t count)
@@ -14431,9 +14567,11 @@ static inline void convert_VkPipelineLibraryCreateInfoKHR_win32_to_host(const Vk
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->libraryCount = in->libraryCount;
     out->pLibraries = (const VkPipeline *)UlongToPtr(in->pLibraries);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkPipelineLibraryCreateInfoKHR *convert_VkPipelineLibraryCreateInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkPipelineLibraryCreateInfoKHR32 *in, uint32_t count)
@@ -14457,9 +14595,11 @@ static inline void convert_VkRayTracingPipelineInterfaceCreateInfoKHR_win32_to_h
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->maxPipelineRayPayloadSize = in->maxPipelineRayPayloadSize;
     out->maxPipelineRayHitAttributeSize = in->maxPipelineRayHitAttributeSize;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkRayTracingPipelineInterfaceCreateInfoKHR *convert_VkRayTracingPipelineInterfaceCreateInfoKHR_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineInterfaceCreateInfoKHR32 *in, uint32_t count)
@@ -14639,12 +14779,14 @@ static inline void convert_VkRayTracingShaderGroupCreateInfoNV_win32_to_host(con
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->type = in->type;
     out->generalShader = in->generalShader;
     out->closestHitShader = in->closestHitShader;
     out->anyHitShader = in->anyHitShader;
     out->intersectionShader = in->intersectionShader;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkRayTracingShaderGroupCreateInfoNV *convert_VkRayTracingShaderGroupCreateInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkRayTracingShaderGroupCreateInfoNV32 *in, uint32_t count)
@@ -15324,7 +15466,7 @@ static inline void convert_VkSamplerYcbcrConversionCreateInfo_win32_to_host(cons
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->format = in->format;
     out->ycbcrModel = in->ycbcrModel;
     out->ycbcrRange = in->ycbcrRange;
@@ -15333,6 +15475,8 @@ static inline void convert_VkSamplerYcbcrConversionCreateInfo_win32_to_host(cons
     out->yChromaOffset = in->yChromaOffset;
     out->chromaFilter = in->chromaFilter;
     out->forceExplicitReconstruction = in->forceExplicitReconstruction;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSemaphoreCreateInfo_win32_to_host(struct conversion_context *ctx, const VkSemaphoreCreateInfo32 *in, VkSemaphoreCreateInfo *out)
@@ -15530,10 +15674,12 @@ static inline void convert_VkValidationCacheCreateInfoEXT_win32_to_host(const Vk
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->initialDataSize = in->initialDataSize;
     out->pInitialData = (const void *)UlongToPtr(in->pInitialData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkWin32SurfaceCreateInfoKHR_win32_to_host(const VkWin32SurfaceCreateInfoKHR32 *in, VkWin32SurfaceCreateInfoKHR *out)
@@ -15541,10 +15687,12 @@ static inline void convert_VkWin32SurfaceCreateInfoKHR_win32_to_host(const VkWin
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->hinstance = (HINSTANCE)UlongToPtr(in->hinstance);
     out->hwnd = (HWND)UlongToPtr(in->hwnd);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 #ifdef _WIN64
@@ -15565,10 +15713,12 @@ static inline void convert_VkDebugMarkerObjectNameInfoEXT_win32_to_host(const Vk
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->objectType = in->objectType;
     out->object = wine_vk_unwrap_handle(in->objectType, in->object);
     out->pObjectName = (const char *)UlongToPtr(in->pObjectName);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 #ifdef _WIN64
@@ -15591,12 +15741,14 @@ static inline void convert_VkDebugMarkerObjectTagInfoEXT_win32_to_host(const VkD
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->objectType = in->objectType;
     out->object = wine_vk_unwrap_handle(in->objectType, in->object);
     out->tagName = in->tagName;
     out->tagSize = in->tagSize;
     out->pTag = (const void *)UlongToPtr(in->pTag);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPhysicalDevice_array_unwrapped_host_to_win32(const VkPhysicalDevice *in, PTR32 *out, uint32_t count)
@@ -15616,7 +15768,9 @@ static inline void convert_VkPhysicalDeviceGroupProperties_win32_to_unwrapped_ho
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPhysicalDeviceGroupProperties_unwrapped_host_to_win32(const VkPhysicalDeviceGroupProperties *in, VkPhysicalDeviceGroupProperties32 *out)
@@ -15661,7 +15815,9 @@ static inline void convert_VkPerformanceCounterKHR_win32_to_host(const VkPerform
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPerformanceCounterKHR_host_to_win32(const VkPerformanceCounterKHR *in, VkPerformanceCounterKHR32 *out)
@@ -15707,7 +15863,9 @@ static inline void convert_VkPerformanceCounterDescriptionKHR_win32_to_host(cons
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPerformanceCounterDescriptionKHR_host_to_win32(const VkPerformanceCounterDescriptionKHR *in, VkPerformanceCounterDescriptionKHR32 *out)
@@ -15753,10 +15911,12 @@ static inline void convert_VkMappedMemoryRange_win32_to_host(const VkMappedMemor
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->memory = in->memory;
     out->offset = in->offset;
     out->size = in->size;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkMappedMemoryRange *convert_VkMappedMemoryRange_array_win32_to_host(struct conversion_context *ctx, const VkMappedMemoryRange32 *in, uint32_t count)
@@ -15780,10 +15940,12 @@ static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_win32_to_hos
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->accelerationStructureSize = in->accelerationStructureSize;
     out->updateScratchSize = in->updateScratchSize;
     out->buildScratchSize = in->buildScratchSize;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkAccelerationStructureBuildSizesInfoKHR_host_to_win32(const VkAccelerationStructureBuildSizesInfoKHR *in, VkAccelerationStructureBuildSizesInfoKHR32 *out)
@@ -15800,8 +15962,10 @@ static inline void convert_VkAccelerationStructureDeviceAddressInfoKHR_win32_to_
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->accelerationStructure = in->accelerationStructure;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkAccelerationStructureMemoryRequirementsInfoNV_win32_to_host(const VkAccelerationStructureMemoryRequirementsInfoNV32 *in, VkAccelerationStructureMemoryRequirementsInfoNV *out)
@@ -15809,9 +15973,11 @@ static inline void convert_VkAccelerationStructureMemoryRequirementsInfoNV_win32
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->type = in->type;
     out->accelerationStructure = in->accelerationStructure;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMemoryRequirements_host_to_win32(const VkMemoryRequirements *in, VkMemoryRequirements32 *out)
@@ -15828,7 +15994,9 @@ static inline void convert_VkMemoryRequirements2KHR_win32_to_host(const VkMemory
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMemoryRequirements2KHR_host_to_win32(const VkMemoryRequirements2KHR *in, VkMemoryRequirements2KHR32 *out)
@@ -15843,8 +16011,10 @@ static inline void convert_VkBufferDeviceAddressInfo_win32_to_host(const VkBuffe
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->buffer = in->buffer;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkBufferMemoryRequirementsInfo2_win32_to_host(const VkBufferMemoryRequirementsInfo232 *in, VkBufferMemoryRequirementsInfo2 *out)
@@ -15852,8 +16022,10 @@ static inline void convert_VkBufferMemoryRequirementsInfo2_win32_to_host(const V
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->buffer = in->buffer;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMemoryRequirements2_win32_to_host(struct conversion_context *ctx, const VkMemoryRequirements232 *in, VkMemoryRequirements2 *out)
@@ -15920,8 +16092,10 @@ static inline void convert_VkCalibratedTimestampInfoEXT_win32_to_host(const VkCa
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->timeDomain = in->timeDomain;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkCalibratedTimestampInfoEXT *convert_VkCalibratedTimestampInfoEXT_array_win32_to_host(struct conversion_context *ctx, const VkCalibratedTimestampInfoEXT32 *in, uint32_t count)
@@ -15945,9 +16119,11 @@ static inline void convert_VkDescriptorSetBindingReferenceVALVE_win32_to_host(co
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->descriptorSetLayout = in->descriptorSetLayout;
     out->binding = in->binding;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDescriptorSetLayoutHostMappingInfoVALVE_win32_to_host(const VkDescriptorSetLayoutHostMappingInfoVALVE32 *in, VkDescriptorSetLayoutHostMappingInfoVALVE *out)
@@ -15955,9 +16131,11 @@ static inline void convert_VkDescriptorSetLayoutHostMappingInfoVALVE_win32_to_ho
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->descriptorOffset = in->descriptorOffset;
     out->descriptorSize = in->descriptorSize;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDescriptorSetLayoutHostMappingInfoVALVE_host_to_win32(const VkDescriptorSetLayoutHostMappingInfoVALVE *in, VkDescriptorSetLayoutHostMappingInfoVALVE32 *out)
@@ -16031,8 +16209,10 @@ static inline void convert_VkAccelerationStructureVersionInfoKHR_win32_to_host(c
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pVersionData = (const uint8_t *)UlongToPtr(in->pVersionData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkBufferCreateInfo *convert_VkBufferCreateInfo_array_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo32 *in, uint32_t count)
@@ -16056,8 +16236,10 @@ static inline void convert_VkDeviceBufferMemoryRequirements_win32_to_host(struct
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pCreateInfo = convert_VkBufferCreateInfo_array_win32_to_host(ctx, (const VkBufferCreateInfo32 *)UlongToPtr(in->pCreateInfo), 1);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDeviceFaultCountsEXT_win32_to_host(const VkDeviceFaultCountsEXT32 *in, VkDeviceFaultCountsEXT *out)
@@ -16065,10 +16247,12 @@ static inline void convert_VkDeviceFaultCountsEXT_win32_to_host(const VkDeviceFa
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->addressInfoCount = in->addressInfoCount;
     out->vendorInfoCount = in->vendorInfoCount;
     out->vendorBinarySize = in->vendorBinarySize;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDeviceFaultCountsEXT_host_to_win32(const VkDeviceFaultCountsEXT *in, VkDeviceFaultCountsEXT32 *out)
@@ -16177,11 +16361,13 @@ static inline void convert_VkDeviceFaultInfoEXT_win32_to_host(struct conversion_
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     memcpy(out->description, in->description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
     out->pAddressInfos = convert_VkDeviceFaultAddressInfoEXT_array_win32_to_host(ctx, (VkDeviceFaultAddressInfoEXT32 *)UlongToPtr(in->pAddressInfos), 1);
     out->pVendorInfos = convert_VkDeviceFaultVendorInfoEXT_array_win32_to_host(ctx, (VkDeviceFaultVendorInfoEXT32 *)UlongToPtr(in->pVendorInfos), 1);
     out->pVendorBinaryData = (void *)UlongToPtr(in->pVendorBinaryData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDeviceFaultInfoEXT_host_to_win32(const VkDeviceFaultInfoEXT *in, VkDeviceFaultInfoEXT32 *out)
@@ -16199,7 +16385,9 @@ static inline void convert_VkDeviceGroupPresentCapabilitiesKHR_win32_to_host(con
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDeviceGroupPresentCapabilitiesKHR_host_to_win32(const VkDeviceGroupPresentCapabilitiesKHR *in, VkDeviceGroupPresentCapabilitiesKHR32 *out)
@@ -16231,9 +16419,11 @@ static inline void convert_VkDeviceImageMemoryRequirements_win32_to_host(struct 
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pCreateInfo = convert_VkImageCreateInfo_array_win32_to_host(ctx, (const VkImageCreateInfo32 *)UlongToPtr(in->pCreateInfo), 1);
     out->planeAspect = in->planeAspect;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSparseImageMemoryRequirements_host_to_win32(const VkSparseImageMemoryRequirements *in, VkSparseImageMemoryRequirements32 *out)
@@ -16252,7 +16442,9 @@ static inline void convert_VkSparseImageMemoryRequirements2_win32_to_host(const 
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSparseImageMemoryRequirements2_host_to_win32(const VkSparseImageMemoryRequirements2 *in, VkSparseImageMemoryRequirements232 *out)
@@ -16295,8 +16487,10 @@ static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win32_to_host(
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->memory = in->memory;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMicromapVersionInfoEXT_win32_to_host(const VkMicromapVersionInfoEXT32 *in, VkMicromapVersionInfoEXT *out)
@@ -16304,8 +16498,10 @@ static inline void convert_VkMicromapVersionInfoEXT_win32_to_host(const VkMicrom
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pVersionData = (const uint8_t *)UlongToPtr(in->pVersionData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkDeviceQueueInfo2_win32_to_host(const VkDeviceQueueInfo232 *in, VkDeviceQueueInfo2 *out)
@@ -16313,10 +16509,12 @@ static inline void convert_VkDeviceQueueInfo2_win32_to_host(const VkDeviceQueueI
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->queueFamilyIndex = in->queueFamilyIndex;
     out->queueIndex = in->queueIndex;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkTilePropertiesQCOM_win32_to_host(const VkTilePropertiesQCOM32 *in, VkTilePropertiesQCOM *out)
@@ -16324,10 +16522,12 @@ static inline void convert_VkTilePropertiesQCOM_win32_to_host(const VkTileProper
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->tileSize = in->tileSize;
     out->apronSize = in->apronSize;
     out->origin = in->origin;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkTilePropertiesQCOM_host_to_win32(const VkTilePropertiesQCOM *in, VkTilePropertiesQCOM32 *out)
@@ -16372,11 +16572,13 @@ static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoNV_win32_to_
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pipelineBindPoint = in->pipelineBindPoint;
     out->pipeline = in->pipeline;
     out->indirectCommandsLayout = in->indirectCommandsLayout;
     out->maxSequencesCount = in->maxSequencesCount;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkImageMemoryRequirementsInfo2_win32_to_host(struct conversion_context *ctx, const VkImageMemoryRequirementsInfo232 *in, VkImageMemoryRequirementsInfo2 *out)
@@ -16429,8 +16631,10 @@ static inline void convert_VkImageSparseMemoryRequirementsInfo2_win32_to_host(co
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->image = in->image;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSubresourceLayout_host_to_win32(const VkSubresourceLayout *in, VkSubresourceLayout32 *out)
@@ -16449,8 +16653,10 @@ static inline void convert_VkImageSubresource2EXT_win32_to_host(const VkImageSub
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->imageSubresource = in->imageSubresource;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSubresourceLayout2EXT_win32_to_host(struct conversion_context *ctx, const VkSubresourceLayout2EXT32 *in, VkSubresourceLayout2EXT *out)
@@ -16517,7 +16723,9 @@ static inline void convert_VkImageViewAddressPropertiesNVX_win32_to_host(const V
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkImageViewAddressPropertiesNVX_host_to_win32(const VkImageViewAddressPropertiesNVX *in, VkImageViewAddressPropertiesNVX32 *out)
@@ -16533,10 +16741,12 @@ static inline void convert_VkImageViewHandleInfoNVX_win32_to_host(const VkImageV
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->imageView = in->imageView;
     out->descriptorType = in->descriptorType;
     out->sampler = in->sampler;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMemoryHostPointerPropertiesEXT_win32_to_host(const VkMemoryHostPointerPropertiesEXT32 *in, VkMemoryHostPointerPropertiesEXT *out)
@@ -16544,7 +16754,9 @@ static inline void convert_VkMemoryHostPointerPropertiesEXT_win32_to_host(const 
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMemoryHostPointerPropertiesEXT_host_to_win32(const VkMemoryHostPointerPropertiesEXT *in, VkMemoryHostPointerPropertiesEXT32 *out)
@@ -16559,10 +16771,12 @@ static inline void convert_VkMicromapBuildSizesInfoEXT_win32_to_host(const VkMic
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->micromapSize = in->micromapSize;
     out->buildScratchSize = in->buildScratchSize;
     out->discardable = in->discardable;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMicromapBuildSizesInfoEXT_host_to_win32(const VkMicromapBuildSizesInfoEXT *in, VkMicromapBuildSizesInfoEXT32 *out)
@@ -16595,7 +16809,9 @@ static inline void convert_VkCooperativeMatrixPropertiesNV_win32_to_host(const V
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCooperativeMatrixPropertiesNV_host_to_win32(const VkCooperativeMatrixPropertiesNV *in, VkCooperativeMatrixPropertiesNV32 *out)
@@ -16645,10 +16861,12 @@ static inline void convert_VkPhysicalDeviceExternalBufferInfo_win32_to_host(cons
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->usage = in->usage;
     out->handleType = in->handleType;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkExternalBufferProperties_win32_to_host(const VkExternalBufferProperties32 *in, VkExternalBufferProperties *out)
@@ -16656,7 +16874,9 @@ static inline void convert_VkExternalBufferProperties_win32_to_host(const VkExte
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkExternalBufferProperties_host_to_win32(const VkExternalBufferProperties *in, VkExternalBufferProperties32 *out)
@@ -16671,8 +16891,10 @@ static inline void convert_VkPhysicalDeviceExternalFenceInfo_win32_to_host(const
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->handleType = in->handleType;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkExternalFenceProperties_win32_to_host(const VkExternalFenceProperties32 *in, VkExternalFenceProperties *out)
@@ -16680,7 +16902,9 @@ static inline void convert_VkExternalFenceProperties_win32_to_host(const VkExter
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkExternalFenceProperties_host_to_win32(const VkExternalFenceProperties *in, VkExternalFenceProperties32 *out)
@@ -16731,7 +16955,9 @@ static inline void convert_VkExternalSemaphoreProperties_win32_to_host(const VkE
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkExternalSemaphoreProperties_host_to_win32(const VkExternalSemaphoreProperties *in, VkExternalSemaphoreProperties32 *out)
@@ -20045,7 +20271,9 @@ static inline void convert_VkPhysicalDeviceFragmentShadingRateKHR_win32_to_host(
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPhysicalDeviceFragmentShadingRateKHR_host_to_win32(const VkPhysicalDeviceFragmentShadingRateKHR *in, VkPhysicalDeviceFragmentShadingRateKHR32 *out)
@@ -20416,7 +20644,9 @@ static inline void convert_VkMultisamplePropertiesEXT_win32_to_host(const VkMult
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkMultisamplePropertiesEXT_host_to_win32(const VkMultisamplePropertiesEXT *in, VkMultisamplePropertiesEXT32 *out)
@@ -20431,8 +20661,10 @@ static inline void convert_VkOpticalFlowImageFormatInfoNV_win32_to_host(const Vk
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->usage = in->usage;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkOpticalFlowImageFormatPropertiesNV_win32_to_host(const VkOpticalFlowImageFormatPropertiesNV32 *in, VkOpticalFlowImageFormatPropertiesNV *out)
@@ -20440,7 +20672,9 @@ static inline void convert_VkOpticalFlowImageFormatPropertiesNV_win32_to_host(co
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkOpticalFlowImageFormatPropertiesNV_host_to_win32(const VkOpticalFlowImageFormatPropertiesNV *in, VkOpticalFlowImageFormatPropertiesNV32 *out)
@@ -22169,10 +22403,12 @@ static inline void convert_VkQueryPoolPerformanceCreateInfoKHR_win32_to_host(con
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->queueFamilyIndex = in->queueFamilyIndex;
     out->counterIndexCount = in->counterIndexCount;
     out->pCounterIndices = (const uint32_t *)UlongToPtr(in->pCounterIndices);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkQueueFamilyProperties2_win32_to_host(struct conversion_context *ctx, const VkQueueFamilyProperties232 *in, VkQueueFamilyProperties2 *out)
@@ -22306,12 +22542,14 @@ static inline void convert_VkPhysicalDeviceSparseImageFormatInfo2_win32_to_host(
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->format = in->format;
     out->type = in->type;
     out->samples = in->samples;
     out->usage = in->usage;
     out->tiling = in->tiling;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSparseImageFormatProperties2_win32_to_host(const VkSparseImageFormatProperties232 *in, VkSparseImageFormatProperties2 *out)
@@ -22319,7 +22557,9 @@ static inline void convert_VkSparseImageFormatProperties2_win32_to_host(const Vk
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSparseImageFormatProperties2_host_to_win32(const VkSparseImageFormatProperties2 *in, VkSparseImageFormatProperties232 *out)
@@ -22362,7 +22602,9 @@ static inline void convert_VkFramebufferMixedSamplesCombinationNV_win32_to_host(
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkFramebufferMixedSamplesCombinationNV_host_to_win32(const VkFramebufferMixedSamplesCombinationNV *in, VkFramebufferMixedSamplesCombinationNV32 *out)
@@ -22408,8 +22650,10 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_unwrapped_ho
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->surface = in->surface;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSurfaceCapabilities2KHR_win32_to_host(struct conversion_context *ctx, const VkSurfaceCapabilities2KHR32 *in, VkSurfaceCapabilities2KHR *out)
@@ -22486,8 +22730,10 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const V
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->surface = wine_surface_from_handle(in->surface)->driver_surface;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSurfaceFormat2KHR_win32_to_host(struct conversion_context *ctx, const VkSurfaceFormat2KHR32 *in, VkSurfaceFormat2KHR *out)
@@ -22582,7 +22828,9 @@ static inline void convert_VkPhysicalDeviceToolProperties_win32_to_host(const Vk
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPhysicalDeviceToolProperties_host_to_win32(const VkPhysicalDeviceToolProperties *in, VkPhysicalDeviceToolProperties32 *out)
@@ -22629,9 +22877,11 @@ static inline void convert_VkPipelineExecutableInfoKHR_win32_to_host(const VkPip
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pipeline = in->pipeline;
     out->executableIndex = in->executableIndex;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPipelineExecutableInternalRepresentationKHR_win32_to_host(const VkPipelineExecutableInternalRepresentationKHR32 *in, VkPipelineExecutableInternalRepresentationKHR *out)
@@ -22639,7 +22889,9 @@ static inline void convert_VkPipelineExecutableInternalRepresentationKHR_win32_t
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPipelineExecutableInternalRepresentationKHR_host_to_win32(const VkPipelineExecutableInternalRepresentationKHR *in, VkPipelineExecutableInternalRepresentationKHR32 *out)
@@ -22686,8 +22938,10 @@ static inline void convert_VkPipelineInfoKHR_win32_to_host(const VkPipelineInfoK
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pipeline = in->pipeline;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPipelineExecutablePropertiesKHR_win32_to_host(const VkPipelineExecutablePropertiesKHR32 *in, VkPipelineExecutablePropertiesKHR *out)
@@ -22695,7 +22949,9 @@ static inline void convert_VkPipelineExecutablePropertiesKHR_win32_to_host(const
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPipelineExecutablePropertiesKHR_host_to_win32(const VkPipelineExecutablePropertiesKHR *in, VkPipelineExecutablePropertiesKHR32 *out)
@@ -22741,7 +22997,9 @@ static inline void convert_VkPipelineExecutableStatisticKHR_win32_to_host(const 
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkPipelineExecutableStatisticKHR_host_to_win32(const VkPipelineExecutableStatisticKHR *in, VkPipelineExecutableStatisticKHR32 *out)
@@ -22787,8 +23045,10 @@ static inline void convert_VkPipelineInfoEXT_win32_to_host(const VkPipelineInfoE
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pipeline = in->pipeline;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCheckpointData2NV_win32_to_host(const VkCheckpointData2NV32 *in, VkCheckpointData2NV *out)
@@ -22796,7 +23056,9 @@ static inline void convert_VkCheckpointData2NV_win32_to_host(const VkCheckpointD
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCheckpointData2NV_host_to_win32(const VkCheckpointData2NV *in, VkCheckpointData2NV32 *out)
@@ -22840,7 +23102,9 @@ static inline void convert_VkCheckpointDataNV_win32_to_host(const VkCheckpointDa
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkCheckpointDataNV_host_to_win32(const VkCheckpointDataNV *in, VkCheckpointDataNV32 *out)
@@ -22884,7 +23148,9 @@ static inline void convert_VkShaderModuleIdentifierEXT_win32_to_host(const VkSha
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkShaderModuleIdentifierEXT_host_to_win32(const VkShaderModuleIdentifierEXT *in, VkShaderModuleIdentifierEXT32 *out)
@@ -22900,8 +23166,10 @@ static inline void convert_VkInitializePerformanceApiInfoINTEL_win32_to_host(con
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->pUserData = (void *)UlongToPtr(in->pUserData);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSparseMemoryBind_win32_to_host(const VkSparseMemoryBind32 *in, VkSparseMemoryBind *out)
@@ -23331,11 +23599,13 @@ static inline void convert_VkSemaphoreSubmitInfo_win32_to_host(const VkSemaphore
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->semaphore = in->semaphore;
     out->value = in->value;
     out->stageMask = in->stageMask;
     out->deviceIndex = in->deviceIndex;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkSemaphoreSubmitInfo *convert_VkSemaphoreSubmitInfo_array_win32_to_host(struct conversion_context *ctx, const VkSemaphoreSubmitInfo32 *in, uint32_t count)
@@ -23371,9 +23641,11 @@ static inline void convert_VkCommandBufferSubmitInfo_win32_to_host(const VkComma
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->commandBuffer = wine_cmd_buffer_from_handle((VkCommandBuffer)UlongToPtr(in->commandBuffer))->command_buffer;
     out->deviceMask = in->deviceMask;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 #ifdef _WIN64
@@ -23518,10 +23790,12 @@ static inline void convert_VkDebugUtilsObjectNameInfoEXT_win32_to_host(const VkD
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->objectType = in->objectType;
     out->objectHandle = wine_vk_unwrap_handle(in->objectType, in->objectHandle);
     out->pObjectName = (const char *)UlongToPtr(in->pObjectName);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 #ifdef _WIN64
@@ -23544,12 +23818,14 @@ static inline void convert_VkDebugUtilsObjectTagInfoEXT_win32_to_host(const VkDe
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->objectType = in->objectType;
     out->objectHandle = wine_vk_unwrap_handle(in->objectType, in->objectHandle);
     out->tagName = in->tagName;
     out->tagSize = in->tagSize;
     out->pTag = (const void *)UlongToPtr(in->pTag);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline void convert_VkSemaphoreSignalInfo_win32_to_host(const VkSemaphoreSignalInfo32 *in, VkSemaphoreSignalInfo *out)
@@ -23557,9 +23833,11 @@ static inline void convert_VkSemaphoreSignalInfo_win32_to_host(const VkSemaphore
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->semaphore = in->semaphore;
     out->value = in->value;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkDebugUtilsLabelEXT *convert_VkDebugUtilsLabelEXT_array_win32_to_host(struct conversion_context *ctx, const VkDebugUtilsLabelEXT32 *in, uint32_t count)
@@ -23682,7 +23960,7 @@ static inline void convert_VkCopyDescriptorSet_win32_to_host(const VkCopyDescrip
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->srcSet = in->srcSet;
     out->srcBinding = in->srcBinding;
     out->srcArrayElement = in->srcArrayElement;
@@ -23690,6 +23968,8 @@ static inline void convert_VkCopyDescriptorSet_win32_to_host(const VkCopyDescrip
     out->dstBinding = in->dstBinding;
     out->dstArrayElement = in->dstArrayElement;
     out->descriptorCount = in->descriptorCount;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 static inline const VkCopyDescriptorSet *convert_VkCopyDescriptorSet_array_win32_to_host(struct conversion_context *ctx, const VkCopyDescriptorSet32 *in, uint32_t count)
@@ -23713,11 +23993,13 @@ static inline void convert_VkSemaphoreWaitInfo_win32_to_host(const VkSemaphoreWa
     if (!in) return;
 
     out->sType = in->sType;
-    out->pNext = (const void *)UlongToPtr(in->pNext);
+    out->pNext = NULL;
     out->flags = in->flags;
     out->semaphoreCount = in->semaphoreCount;
     out->pSemaphores = (const VkSemaphore *)UlongToPtr(in->pSemaphores);
     out->pValues = (const uint64_t *)UlongToPtr(in->pValues);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
 }
 
 #ifdef _WIN64
