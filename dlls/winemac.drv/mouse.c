@@ -957,6 +957,6 @@ void macdrv_release_capture(HWND hwnd, const macdrv_event *event)
     {
         NtUserReleaseCapture();
         if (!NtUserPostMessage(capture, WM_CANCELMODE, 0, 0))
-            WARN("failed to post WM_CANCELMODE; error 0x%08x\n", GetLastError());
+            WARN("failed to post WM_CANCELMODE; error 0x%08x\n", RtlGetLastWin32Error());
     }
 }

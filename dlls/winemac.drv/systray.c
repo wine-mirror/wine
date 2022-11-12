@@ -298,7 +298,7 @@ static BOOL notify_owner(struct tray_icon *icon, UINT msg, int x, int y)
     TRACE("posting msg 0x%04x to hwnd %p id 0x%x\n", msg, icon->owner, icon->id);
     if (!NtUserMessageCall(icon->owner, icon->callback_message, wp, lp,
                            0, NtUserSendNotifyMessage, FALSE) &&
-        (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
+        (RtlGetLastWin32Error() == ERROR_INVALID_WINDOW_HANDLE))
     {
         WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
         delete_icon(icon);
@@ -343,7 +343,7 @@ void macdrv_status_item_mouse_button(const macdrv_event *event)
                 msg += WM_LBUTTONDBLCLK - WM_LBUTTONDOWN;
 
             if (!send_message(icon->owner, WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS, 0, 0) &&
-                GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
+                RtlGetLastWin32Error() == ERROR_INVALID_WINDOW_HANDLE)
             {
                 WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
                 delete_icon(icon);
