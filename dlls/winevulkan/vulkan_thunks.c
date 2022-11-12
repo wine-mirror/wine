@@ -5894,7 +5894,7 @@ static inline VkCommandBuffer *convert_VkCommandBuffer_array_win32_to_unwrapped_
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDescriptorSetAllocateInfo_win32_to_host(struct conversion_context *ctx, const VkDescriptorSetAllocateInfo32 *in, VkDescriptorSetAllocateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -5905,7 +5905,7 @@ static inline void convert_VkDescriptorSetAllocateInfo_win32_to_host(struct conv
     out->descriptorSetCount = in->descriptorSetCount;
     out->pSetLayouts = in->pSetLayouts;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -5932,7 +5932,7 @@ static inline void convert_VkDescriptorSetAllocateInfo_win32_to_host(struct conv
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_context *ctx, const VkMemoryAllocateInfo32 *in, VkMemoryAllocateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -5942,7 +5942,7 @@ static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_
     out->allocationSize = in->allocationSize;
     out->memoryTypeIndex = in->memoryTypeIndex;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -6064,7 +6064,7 @@ static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(struct conversion_context *ctx, const VkCommandBufferInheritanceInfo32 *in, VkCommandBufferInheritanceInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -6078,7 +6078,7 @@ static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(struct c
     out->queryFlags = in->queryFlags;
     out->pipelineStatistics = in->pipelineStatistics;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -6189,7 +6189,7 @@ static inline const VkCommandBufferInheritanceInfo *convert_VkCommandBufferInher
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkCommandBufferBeginInfo_win32_to_host(struct conversion_context *ctx, const VkCommandBufferBeginInfo32 *in, VkCommandBufferBeginInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -6199,7 +6199,7 @@ static inline void convert_VkCommandBufferBeginInfo_win32_to_host(struct convers
     out->flags = in->flags;
     out->pInheritanceInfo = convert_VkCommandBufferInheritanceInfo_array_win32_to_host(ctx, in->pInheritanceInfo, 1);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -6258,7 +6258,7 @@ static inline const VkBindAccelerationStructureMemoryInfoNV *convert_VkBindAccel
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkBindBufferMemoryInfo_win32_to_host(struct conversion_context *ctx, const VkBindBufferMemoryInfo32 *in, VkBindBufferMemoryInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -6269,7 +6269,7 @@ static inline void convert_VkBindBufferMemoryInfo_win32_to_host(struct conversio
     out->memory = in->memory;
     out->memoryOffset = in->memoryOffset;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -6314,7 +6314,7 @@ static inline const VkBindBufferMemoryInfo *convert_VkBindBufferMemoryInfo_array
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo32 *in, VkBindImageMemoryInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -6325,7 +6325,7 @@ static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion
     out->memory = in->memory;
     out->memoryOffset = in->memoryOffset;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -6621,7 +6621,7 @@ static inline const VkSubpassSampleLocationsEXT *convert_VkSubpassSampleLocation
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRenderPassBeginInfo_win32_to_host(struct conversion_context *ctx, const VkRenderPassBeginInfo32 *in, VkRenderPassBeginInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -6634,7 +6634,7 @@ static inline void convert_VkRenderPassBeginInfo_win32_to_host(struct conversion
     out->clearValueCount = in->clearValueCount;
     out->pClearValues = in->pClearValues;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -6746,7 +6746,7 @@ static inline const VkRenderingAttachmentInfo *convert_VkRenderingAttachmentInfo
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_context *ctx, const VkRenderingInfo32 *in, VkRenderingInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -6762,7 +6762,7 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
     out->pDepthAttachment = convert_VkRenderingAttachmentInfo_array_win32_to_host(ctx, in->pDepthAttachment, 1);
     out->pStencilAttachment = convert_VkRenderingAttachmentInfo_array_win32_to_host(ctx, in->pStencilAttachment, 1);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -6839,7 +6839,7 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkImageBlit2_win32_to_host(struct conversion_context *ctx, const VkImageBlit232 *in, VkImageBlit2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -6851,7 +6851,7 @@ static inline void convert_VkImageBlit2_win32_to_host(struct conversion_context 
     out->dstSubresource = in->dstSubresource;
     memcpy(out->dstOffsets, in->dstOffsets, 2 * sizeof(VkOffset3D));
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -7135,7 +7135,7 @@ static inline const VkBufferImageCopy *convert_VkBufferImageCopy_array_win32_to_
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkBufferImageCopy2_win32_to_host(struct conversion_context *ctx, const VkBufferImageCopy232 *in, VkBufferImageCopy2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -7149,7 +7149,7 @@ static inline void convert_VkBufferImageCopy2_win32_to_host(struct conversion_co
     out->imageOffset = in->imageOffset;
     out->imageExtent = in->imageExtent;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -7389,7 +7389,7 @@ static inline const VkDecompressMemoryRegionNV *convert_VkDecompressMemoryRegion
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSubpassEndInfo_win32_to_host(struct conversion_context *ctx, const VkSubpassEndInfo32 *in, VkSubpassEndInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -7397,7 +7397,7 @@ static inline void convert_VkSubpassEndInfo_win32_to_host(struct conversion_cont
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -7589,7 +7589,7 @@ static inline const VkBufferMemoryBarrier *convert_VkBufferMemoryBarrier_array_w
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkImageMemoryBarrier_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier32 *in, VkImageMemoryBarrier *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -7605,7 +7605,7 @@ static inline void convert_VkImageMemoryBarrier_win32_to_host(struct conversion_
     out->image = in->image;
     out->subresourceRange = in->subresourceRange;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -7721,7 +7721,7 @@ static inline const VkBufferMemoryBarrier2 *convert_VkBufferMemoryBarrier2_array
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkImageMemoryBarrier2_win32_to_host(struct conversion_context *ctx, const VkImageMemoryBarrier232 *in, VkImageMemoryBarrier2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -7739,7 +7739,7 @@ static inline void convert_VkImageMemoryBarrier2_win32_to_host(struct conversion
     out->image = in->image;
     out->subresourceRange = in->subresourceRange;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -7861,7 +7861,7 @@ static inline const VkDescriptorBufferInfo *convert_VkDescriptorBufferInfo_array
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_context *ctx, const VkWriteDescriptorSet32 *in, VkWriteDescriptorSet *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -7877,7 +7877,7 @@ static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_
     out->pBufferInfo = convert_VkDescriptorBufferInfo_array_win32_to_host(ctx, in->pBufferInfo, in->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || in->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || in->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC || in->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC ? in->descriptorCount : 0);
     out->pTexelBufferView = in->pTexelBufferView;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -8181,7 +8181,7 @@ static inline const VkDependencyInfo *convert_VkDependencyInfo_array_win32_to_ho
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkAccelerationStructureCreateInfoKHR_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureCreateInfoKHR32 *in, VkAccelerationStructureCreateInfoKHR *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -8195,7 +8195,7 @@ static inline void convert_VkAccelerationStructureCreateInfoKHR_win32_to_host(st
     out->type = in->type;
     out->deviceAddress = in->deviceAddress;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -8234,7 +8234,7 @@ static inline void convert_VkAccelerationStructureCreateInfoNV_win32_to_host(str
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkBufferCreateInfo_win32_to_host(struct conversion_context *ctx, const VkBufferCreateInfo32 *in, VkBufferCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -8248,7 +8248,7 @@ static inline void convert_VkBufferCreateInfo_win32_to_host(struct conversion_co
     out->queueFamilyIndexCount = in->queueFamilyIndexCount;
     out->pQueueFamilyIndices = in->pQueueFamilyIndices;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -8442,7 +8442,7 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win64_to_host(struct 
     out->pName = in->pName;
     out->pSpecializationInfo = in->pSpecializationInfo;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
@@ -8531,7 +8531,7 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win64_to_host(struct 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineShaderStageCreateInfo_win32_to_host(struct conversion_context *ctx, const VkPipelineShaderStageCreateInfo32 *in, VkPipelineShaderStageCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -8544,7 +8544,7 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win32_to_host(struct 
     out->pName = in->pName;
     out->pSpecializationInfo = convert_VkSpecializationInfo_array_win32_to_host(ctx, in->pSpecializationInfo, 1);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -8648,7 +8648,7 @@ static inline void convert_VkComputePipelineCreateInfo_win64_to_host(struct conv
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conversion_context *ctx, const VkComputePipelineCreateInfo32 *in, VkComputePipelineCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -8661,7 +8661,7 @@ static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conv
     out->basePipelineHandle = in->basePipelineHandle;
     out->basePipelineIndex = in->basePipelineIndex;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -8727,18 +8727,18 @@ static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conv
 static inline void convert_VkComputePipelineCreateInfo_host_to_win32(const VkComputePipelineCreateInfo *in, const VkComputePipelineCreateInfo32 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+            VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
             const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
@@ -8886,7 +8886,7 @@ static inline const VkMutableDescriptorTypeListEXT *convert_VkMutableDescriptorT
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDescriptorPoolCreateInfo_win32_to_host(struct conversion_context *ctx, const VkDescriptorPoolCreateInfo32 *in, VkDescriptorPoolCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -8898,7 +8898,7 @@ static inline void convert_VkDescriptorPoolCreateInfo_win32_to_host(struct conve
     out->poolSizeCount = in->poolSizeCount;
     out->pPoolSizes = in->pPoolSizes;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -8967,7 +8967,7 @@ static inline const VkDescriptorSetLayoutBinding *convert_VkDescriptorSetLayoutB
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDescriptorSetLayoutCreateInfo_win32_to_host(struct conversion_context *ctx, const VkDescriptorSetLayoutCreateInfo32 *in, VkDescriptorSetLayoutCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -8978,7 +8978,7 @@ static inline void convert_VkDescriptorSetLayoutCreateInfo_win32_to_host(struct 
     out->bindingCount = in->bindingCount;
     out->pBindings = convert_VkDescriptorSetLayoutBinding_array_win32_to_host(ctx, in->pBindings, in->bindingCount);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -9103,7 +9103,7 @@ static inline const VkPhysicalDevice *convert_VkPhysicalDevice_array_win32_to_ho
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDeviceQueueCreateInfo_win32_to_host(struct conversion_context *ctx, const VkDeviceQueueCreateInfo32 *in, VkDeviceQueueCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -9115,7 +9115,7 @@ static inline void convert_VkDeviceQueueCreateInfo_win32_to_host(struct conversi
     out->queueCount = in->queueCount;
     out->pQueuePriorities = in->pQueuePriorities;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -9175,7 +9175,7 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
     out->ppEnabledExtensionNames = in->ppEnabledExtensionNames;
     out->pEnabledFeatures = in->pEnabledFeatures;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
@@ -10974,7 +10974,7 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_context *ctx, const VkDeviceCreateInfo32 *in, VkDeviceCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -10990,7 +10990,7 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
     out->ppEnabledExtensionNames = in->ppEnabledExtensionNames;
     out->pEnabledFeatures = in->pEnabledFeatures;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -12800,7 +12800,7 @@ static inline void convert_VkEventCreateInfo_win32_to_host(const VkEventCreateIn
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkFenceCreateInfo_win32_to_host(struct conversion_context *ctx, const VkFenceCreateInfo32 *in, VkFenceCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -12809,7 +12809,7 @@ static inline void convert_VkFenceCreateInfo_win32_to_host(struct conversion_con
     out->pNext = NULL;
     out->flags = in->flags;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -12870,7 +12870,7 @@ static inline const VkFramebufferAttachmentImageInfo *convert_VkFramebufferAttac
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkFramebufferCreateInfo_win32_to_host(struct conversion_context *ctx, const VkFramebufferCreateInfo32 *in, VkFramebufferCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -12885,7 +12885,7 @@ static inline void convert_VkFramebufferCreateInfo_win32_to_host(struct conversi
     out->height = in->height;
     out->layers = in->layers;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -12948,7 +12948,7 @@ static inline const VkPipelineShaderStageCreateInfo *convert_VkPipelineShaderSta
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineVertexInputStateCreateInfo_win32_to_host(struct conversion_context *ctx, const VkPipelineVertexInputStateCreateInfo32 *in, VkPipelineVertexInputStateCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -12961,7 +12961,7 @@ static inline void convert_VkPipelineVertexInputStateCreateInfo_win32_to_host(st
     out->vertexAttributeDescriptionCount = in->vertexAttributeDescriptionCount;
     out->pVertexAttributeDescriptions = in->pVertexAttributeDescriptions;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -13006,7 +13006,7 @@ static inline const VkPipelineVertexInputStateCreateInfo *convert_VkPipelineVert
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineTessellationStateCreateInfo_win32_to_host(struct conversion_context *ctx, const VkPipelineTessellationStateCreateInfo32 *in, VkPipelineTessellationStateCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -13016,7 +13016,7 @@ static inline void convert_VkPipelineTessellationStateCreateInfo_win32_to_host(s
     out->flags = in->flags;
     out->patchControlPoints = in->patchControlPoints;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -13155,7 +13155,7 @@ static inline const VkPipelineInputAssemblyStateCreateInfo *convert_VkPipelineIn
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineViewportStateCreateInfo_win32_to_host(struct conversion_context *ctx, const VkPipelineViewportStateCreateInfo32 *in, VkPipelineViewportStateCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -13168,7 +13168,7 @@ static inline void convert_VkPipelineViewportStateCreateInfo_win32_to_host(struc
     out->scissorCount = in->scissorCount;
     out->pScissors = in->pScissors;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -13276,7 +13276,7 @@ static inline const VkPipelineViewportStateCreateInfo *convert_VkPipelineViewpor
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineRasterizationStateCreateInfo_win32_to_host(struct conversion_context *ctx, const VkPipelineRasterizationStateCreateInfo32 *in, VkPipelineRasterizationStateCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -13295,7 +13295,7 @@ static inline void convert_VkPipelineRasterizationStateCreateInfo_win32_to_host(
     out->depthBiasSlopeFactor = in->depthBiasSlopeFactor;
     out->lineWidth = in->lineWidth;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -13401,7 +13401,7 @@ static inline const VkPipelineRasterizationStateCreateInfo *convert_VkPipelineRa
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineMultisampleStateCreateInfo_win32_to_host(struct conversion_context *ctx, const VkPipelineMultisampleStateCreateInfo32 *in, VkPipelineMultisampleStateCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -13416,7 +13416,7 @@ static inline void convert_VkPipelineMultisampleStateCreateInfo_win32_to_host(st
     out->alphaToCoverageEnable = in->alphaToCoverageEnable;
     out->alphaToOneEnable = in->alphaToOneEnable;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -13539,7 +13539,7 @@ static inline const VkPipelineDepthStencilStateCreateInfo *convert_VkPipelineDep
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPipelineColorBlendStateCreateInfo_win32_to_host(struct conversion_context *ctx, const VkPipelineColorBlendStateCreateInfo32 *in, VkPipelineColorBlendStateCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -13553,7 +13553,7 @@ static inline void convert_VkPipelineColorBlendStateCreateInfo_win32_to_host(str
     out->pAttachments = in->pAttachments;
     memcpy(out->blendConstants, in->blendConstants, 4 * sizeof(float));
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -13667,7 +13667,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win64_to_host(struct con
     out->basePipelineHandle = in->basePipelineHandle;
     out->basePipelineIndex = in->basePipelineIndex;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
@@ -13847,7 +13847,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win64_to_host(struct con
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct conversion_context *ctx, const VkGraphicsPipelineCreateInfo32 *in, VkGraphicsPipelineCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -13872,7 +13872,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct con
     out->basePipelineHandle = in->basePipelineHandle;
     out->basePipelineIndex = in->basePipelineIndex;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -14053,18 +14053,18 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct con
 static inline void convert_VkGraphicsPipelineCreateInfo_host_to_win32(const VkGraphicsPipelineCreateInfo *in, const VkGraphicsPipelineCreateInfo32 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+            VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
             const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
@@ -14132,7 +14132,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_array_host_to_win32(cons
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkImageCreateInfo_win32_to_host(struct conversion_context *ctx, const VkImageCreateInfo32 *in, VkImageCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -14153,7 +14153,7 @@ static inline void convert_VkImageCreateInfo_win32_to_host(struct conversion_con
     out->pQueueFamilyIndices = in->pQueueFamilyIndices;
     out->initialLayout = in->initialLayout;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -14248,7 +14248,7 @@ static inline void convert_VkImageCreateInfo_win32_to_host(struct conversion_con
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkImageViewCreateInfo_win32_to_host(struct conversion_context *ctx, const VkImageViewCreateInfo32 *in, VkImageViewCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -14262,7 +14262,7 @@ static inline void convert_VkImageViewCreateInfo_win32_to_host(struct conversion
     out->components = in->components;
     out->subresourceRange = in->subresourceRange;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -14438,7 +14438,7 @@ static inline void convert_VkInstanceCreateInfo_win64_to_host(struct conversion_
     out->enabledExtensionCount = in->enabledExtensionCount;
     out->ppEnabledExtensionNames = in->ppEnabledExtensionNames;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
@@ -14509,7 +14509,7 @@ static inline void convert_VkInstanceCreateInfo_win64_to_host(struct conversion_
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkInstanceCreateInfo_win32_to_host(struct conversion_context *ctx, const VkInstanceCreateInfo32 *in, VkInstanceCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -14523,7 +14523,7 @@ static inline void convert_VkInstanceCreateInfo_win32_to_host(struct conversion_
     out->enabledExtensionCount = in->enabledExtensionCount;
     out->ppEnabledExtensionNames = in->ppEnabledExtensionNames;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -14610,7 +14610,7 @@ static inline void convert_VkMicromapCreateInfoEXT_win32_to_host(const VkMicroma
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkOpticalFlowSessionCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkOpticalFlowSessionCreateInfoNV32 *in, VkOpticalFlowSessionCreateInfoNV *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -14627,7 +14627,7 @@ static inline void convert_VkOpticalFlowSessionCreateInfoNV_win32_to_host(struct
     out->performanceLevel = in->performanceLevel;
     out->flags = in->flags;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -14694,7 +14694,7 @@ static inline void convert_VkPrivateDataSlotCreateInfo_win32_to_host(const VkPri
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkQueryPoolCreateInfo_win32_to_host(struct conversion_context *ctx, const VkQueryPoolCreateInfo32 *in, VkQueryPoolCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -14706,7 +14706,7 @@ static inline void convert_VkQueryPoolCreateInfo_win32_to_host(struct conversion
     out->queryCount = in->queryCount;
     out->pipelineStatistics = in->pipelineStatistics;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -14861,7 +14861,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win64_to_host(struc
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoKHR32 *in, VkRayTracingPipelineCreateInfoKHR *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -14881,7 +14881,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struc
     out->basePipelineHandle = in->basePipelineHandle;
     out->basePipelineIndex = in->basePipelineIndex;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -14924,18 +14924,18 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struc
 static inline void convert_VkRayTracingPipelineCreateInfoKHR_host_to_win32(const VkRayTracingPipelineCreateInfoKHR *in, const VkRayTracingPipelineCreateInfoKHR32 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+            VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
             const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
@@ -15055,7 +15055,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_win64_to_host(struct
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct conversion_context *ctx, const VkRayTracingPipelineCreateInfoNV32 *in, VkRayTracingPipelineCreateInfoNV *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15072,7 +15072,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct
     out->basePipelineHandle = in->basePipelineHandle;
     out->basePipelineIndex = in->basePipelineIndex;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15101,18 +15101,18 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct
 static inline void convert_VkRayTracingPipelineCreateInfoNV_host_to_win32(const VkRayTracingPipelineCreateInfoNV *in, const VkRayTracingPipelineCreateInfoNV32 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO:
         {
-            VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
+            VkPipelineCreationFeedbackCreateInfo32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO);
             const VkPipelineCreationFeedbackCreateInfo *in_ext = (const VkPipelineCreationFeedbackCreateInfo *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PIPELINE_CREATION_FEEDBACK_CREATE_INFO;
             convert_VkPipelineCreationFeedback_array_host_to_win32(in_ext->pPipelineCreationFeedback, out_ext->pPipelineCreationFeedback, 1);
@@ -15216,7 +15216,7 @@ static inline const VkSubpassDescription *convert_VkSubpassDescription_array_win
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRenderPassCreateInfo_win32_to_host(struct conversion_context *ctx, const VkRenderPassCreateInfo32 *in, VkRenderPassCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15231,7 +15231,7 @@ static inline void convert_VkRenderPassCreateInfo_win32_to_host(struct conversio
     out->dependencyCount = in->dependencyCount;
     out->pDependencies = in->pDependencies;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15285,7 +15285,7 @@ static inline void convert_VkRenderPassCreateInfo_win32_to_host(struct conversio
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkAttachmentDescription2_win32_to_host(struct conversion_context *ctx, const VkAttachmentDescription232 *in, VkAttachmentDescription2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15302,7 +15302,7 @@ static inline void convert_VkAttachmentDescription2_win32_to_host(struct convers
     out->initialLayout = in->initialLayout;
     out->finalLayout = in->finalLayout;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15347,7 +15347,7 @@ static inline const VkAttachmentDescription2 *convert_VkAttachmentDescription2_a
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkAttachmentReference2_win32_to_host(struct conversion_context *ctx, const VkAttachmentReference232 *in, VkAttachmentReference2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15358,7 +15358,7 @@ static inline void convert_VkAttachmentReference2_win32_to_host(struct conversio
     out->layout = in->layout;
     out->aspectMask = in->aspectMask;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15402,7 +15402,7 @@ static inline const VkAttachmentReference2 *convert_VkAttachmentReference2_array
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSubpassDescription2_win32_to_host(struct conversion_context *ctx, const VkSubpassDescription232 *in, VkSubpassDescription2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15421,7 +15421,7 @@ static inline void convert_VkSubpassDescription2_win32_to_host(struct conversion
     out->preserveAttachmentCount = in->preserveAttachmentCount;
     out->pPreserveAttachments = in->pPreserveAttachments;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15513,7 +15513,7 @@ static inline const VkSubpassDescription2 *convert_VkSubpassDescription2_array_w
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSubpassDependency2_win32_to_host(struct conversion_context *ctx, const VkSubpassDependency232 *in, VkSubpassDependency2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15529,7 +15529,7 @@ static inline void convert_VkSubpassDependency2_win32_to_host(struct conversion_
     out->dependencyFlags = in->dependencyFlags;
     out->viewOffset = in->viewOffset;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15576,7 +15576,7 @@ static inline const VkSubpassDependency2 *convert_VkSubpassDependency2_array_win
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkRenderPassCreateInfo2_win32_to_host(struct conversion_context *ctx, const VkRenderPassCreateInfo232 *in, VkRenderPassCreateInfo2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15593,7 +15593,7 @@ static inline void convert_VkRenderPassCreateInfo2_win32_to_host(struct conversi
     out->correlatedViewMaskCount = in->correlatedViewMaskCount;
     out->pCorrelatedViewMasks = in->pCorrelatedViewMasks;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15641,7 +15641,7 @@ static inline void convert_VkRenderPassCreateInfo2_win32_to_host(struct conversi
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSamplerCreateInfo_win32_to_host(struct conversion_context *ctx, const VkSamplerCreateInfo32 *in, VkSamplerCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15665,7 +15665,7 @@ static inline void convert_VkSamplerCreateInfo_win32_to_host(struct conversion_c
     out->borderColor = in->borderColor;
     out->unnormalizedCoordinates = in->unnormalizedCoordinates;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15744,7 +15744,7 @@ static inline void convert_VkSamplerYcbcrConversionCreateInfo_win32_to_host(cons
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSemaphoreCreateInfo_win32_to_host(struct conversion_context *ctx, const VkSemaphoreCreateInfo32 *in, VkSemaphoreCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15753,7 +15753,7 @@ static inline void convert_VkSemaphoreCreateInfo_win32_to_host(struct conversion
     out->pNext = NULL;
     out->flags = in->flags;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15791,7 +15791,7 @@ static inline void convert_VkSemaphoreCreateInfo_win32_to_host(struct conversion
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkShaderModuleCreateInfo_win32_to_host(struct conversion_context *ctx, const VkShaderModuleCreateInfo32 *in, VkShaderModuleCreateInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15802,7 +15802,7 @@ static inline void convert_VkShaderModuleCreateInfo_win32_to_host(struct convers
     out->codeSize = in->codeSize;
     out->pCode = in->pCode;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -15854,7 +15854,7 @@ static inline void convert_VkSwapchainCreateInfoKHR_win64_to_host(const VkSwapch
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSwapchainCreateInfoKHR_win32_to_host(struct conversion_context *ctx, const VkSwapchainCreateInfoKHR32 *in, VkSwapchainCreateInfoKHR *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -15878,7 +15878,7 @@ static inline void convert_VkSwapchainCreateInfoKHR_win32_to_host(struct convers
     out->clipped = in->clipped;
     out->oldSwapchain = in->oldSwapchain;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -16327,7 +16327,7 @@ static inline void convert_VkBufferMemoryRequirementsInfo2_win32_to_host(const V
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkMemoryRequirements2_win32_to_host(struct conversion_context *ctx, const VkMemoryRequirements232 *in, VkMemoryRequirements2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -16335,7 +16335,7 @@ static inline void convert_VkMemoryRequirements2_win32_to_host(struct conversion
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -16360,19 +16360,19 @@ static inline void convert_VkMemoryRequirements2_win32_to_host(struct conversion
 static inline void convert_VkMemoryRequirements2_host_to_win32(const VkMemoryRequirements2 *in, VkMemoryRequirements232 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     convert_VkMemoryRequirements_host_to_win32(&in->memoryRequirements, &out->memoryRequirements);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS:
         {
-            VkMemoryDedicatedRequirements32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS);
+            VkMemoryDedicatedRequirements32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS);
             const VkMemoryDedicatedRequirements *in_ext = (const VkMemoryDedicatedRequirements *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_REQUIREMENTS;
             out_ext->prefersDedicatedAllocation = in_ext->prefersDedicatedAllocation;
@@ -16453,7 +16453,7 @@ static inline void convert_VkDescriptorSetLayoutHostMappingInfoVALVE_host_to_win
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDescriptorSetLayoutSupport_win32_to_host(struct conversion_context *ctx, const VkDescriptorSetLayoutSupport32 *in, VkDescriptorSetLayoutSupport *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -16461,7 +16461,7 @@ static inline void convert_VkDescriptorSetLayoutSupport_win32_to_host(struct con
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -16486,19 +16486,19 @@ static inline void convert_VkDescriptorSetLayoutSupport_win32_to_host(struct con
 static inline void convert_VkDescriptorSetLayoutSupport_host_to_win32(const VkDescriptorSetLayoutSupport *in, VkDescriptorSetLayoutSupport32 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     out->supported = in->supported;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_LAYOUT_SUPPORT:
         {
-            VkDescriptorSetVariableDescriptorCountLayoutSupport32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_LAYOUT_SUPPORT);
+            VkDescriptorSetVariableDescriptorCountLayoutSupport32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_LAYOUT_SUPPORT);
             const VkDescriptorSetVariableDescriptorCountLayoutSupport *in_ext = (const VkDescriptorSetVariableDescriptorCountLayoutSupport *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_LAYOUT_SUPPORT;
             out_ext->maxVariableDescriptorCount = in_ext->maxVariableDescriptorCount;
@@ -16932,7 +16932,7 @@ static inline void convert_VkGeneratedCommandsMemoryRequirementsInfoNV_win32_to_
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkImageMemoryRequirementsInfo2_win32_to_host(struct conversion_context *ctx, const VkImageMemoryRequirementsInfo232 *in, VkImageMemoryRequirementsInfo2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -16941,7 +16941,7 @@ static inline void convert_VkImageMemoryRequirementsInfo2_win32_to_host(struct c
     out->pNext = NULL;
     out->image = in->image;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -17016,7 +17016,7 @@ static inline void convert_VkImageSubresource2EXT_win32_to_host(const VkImageSub
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSubresourceLayout2EXT_win32_to_host(struct conversion_context *ctx, const VkSubresourceLayout2EXT32 *in, VkSubresourceLayout2EXT *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -17024,7 +17024,7 @@ static inline void convert_VkSubresourceLayout2EXT_win32_to_host(struct conversi
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -17049,19 +17049,19 @@ static inline void convert_VkSubresourceLayout2EXT_win32_to_host(struct conversi
 static inline void convert_VkSubresourceLayout2EXT_host_to_win32(const VkSubresourceLayout2EXT *in, VkSubresourceLayout2EXT32 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     convert_VkSubresourceLayout_host_to_win32(&in->subresourceLayout, &out->subresourceLayout);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT:
         {
-            VkImageCompressionPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT);
+            VkImageCompressionPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT);
             const VkImageCompressionPropertiesEXT *in_ext = (const VkImageCompressionPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT;
             out_ext->imageCompressionFlags = in_ext->imageCompressionFlags;
@@ -17297,7 +17297,7 @@ static inline void convert_VkExternalFenceProperties_host_to_win32(const VkExter
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceExternalSemaphoreInfo_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceExternalSemaphoreInfo32 *in, VkPhysicalDeviceExternalSemaphoreInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -17306,7 +17306,7 @@ static inline void convert_VkPhysicalDeviceExternalSemaphoreInfo_win32_to_host(s
     out->pNext = NULL;
     out->handleType = in->handleType;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -17354,7 +17354,7 @@ static inline void convert_VkExternalSemaphoreProperties_host_to_win32(const VkE
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceFeatures232 *in, VkPhysicalDeviceFeatures2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -17363,7 +17363,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
     out->pNext = NULL;
     out->features = in->features;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -19105,19 +19105,19 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
 static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysicalDeviceFeatures2 *in, VkPhysicalDeviceFeatures232 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     out->features = in->features;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV:
         {
-            VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV);
+            VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV);
             const VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV *in_ext = (const VkPhysicalDeviceDeviceGeneratedCommandsFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_FEATURES_NV;
             out_ext->deviceGeneratedCommands = in_ext->deviceGeneratedCommands;
@@ -19126,7 +19126,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES:
         {
-            VkPhysicalDevicePrivateDataFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES);
+            VkPhysicalDevicePrivateDataFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES);
             const VkPhysicalDevicePrivateDataFeatures *in_ext = (const VkPhysicalDevicePrivateDataFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIVATE_DATA_FEATURES;
             out_ext->privateData = in_ext->privateData;
@@ -19135,7 +19135,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES:
         {
-            VkPhysicalDeviceVariablePointersFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES);
+            VkPhysicalDeviceVariablePointersFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES);
             const VkPhysicalDeviceVariablePointersFeatures *in_ext = (const VkPhysicalDeviceVariablePointersFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES;
             out_ext->variablePointersStorageBuffer = in_ext->variablePointersStorageBuffer;
@@ -19145,7 +19145,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES:
         {
-            VkPhysicalDeviceMultiviewFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES);
+            VkPhysicalDeviceMultiviewFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES);
             const VkPhysicalDeviceMultiviewFeatures *in_ext = (const VkPhysicalDeviceMultiviewFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_FEATURES;
             out_ext->multiview = in_ext->multiview;
@@ -19156,7 +19156,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_ID_FEATURES_KHR:
         {
-            VkPhysicalDevicePresentIdFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_ID_FEATURES_KHR);
+            VkPhysicalDevicePresentIdFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_ID_FEATURES_KHR);
             const VkPhysicalDevicePresentIdFeaturesKHR *in_ext = (const VkPhysicalDevicePresentIdFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_ID_FEATURES_KHR;
             out_ext->presentId = in_ext->presentId;
@@ -19165,7 +19165,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR:
         {
-            VkPhysicalDevicePresentWaitFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR);
+            VkPhysicalDevicePresentWaitFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR);
             const VkPhysicalDevicePresentWaitFeaturesKHR *in_ext = (const VkPhysicalDevicePresentWaitFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_WAIT_FEATURES_KHR;
             out_ext->presentWait = in_ext->presentWait;
@@ -19174,7 +19174,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES:
         {
-            VkPhysicalDevice16BitStorageFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES);
+            VkPhysicalDevice16BitStorageFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES);
             const VkPhysicalDevice16BitStorageFeatures *in_ext = (const VkPhysicalDevice16BitStorageFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES;
             out_ext->storageBuffer16BitAccess = in_ext->storageBuffer16BitAccess;
@@ -19186,7 +19186,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES:
         {
-            VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES);
+            VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES);
             const VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures *in_ext = (const VkPhysicalDeviceShaderSubgroupExtendedTypesFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_EXTENDED_TYPES_FEATURES;
             out_ext->shaderSubgroupExtendedTypes = in_ext->shaderSubgroupExtendedTypes;
@@ -19195,7 +19195,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES:
         {
-            VkPhysicalDeviceSamplerYcbcrConversionFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES);
+            VkPhysicalDeviceSamplerYcbcrConversionFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES);
             const VkPhysicalDeviceSamplerYcbcrConversionFeatures *in_ext = (const VkPhysicalDeviceSamplerYcbcrConversionFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES;
             out_ext->samplerYcbcrConversion = in_ext->samplerYcbcrConversion;
@@ -19204,7 +19204,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES:
         {
-            VkPhysicalDeviceProtectedMemoryFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES);
+            VkPhysicalDeviceProtectedMemoryFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES);
             const VkPhysicalDeviceProtectedMemoryFeatures *in_ext = (const VkPhysicalDeviceProtectedMemoryFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_FEATURES;
             out_ext->protectedMemory = in_ext->protectedMemory;
@@ -19213,7 +19213,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT:
         {
-            VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT);
+            VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT);
             const VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT *in_ext = (const VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT;
             out_ext->advancedBlendCoherentOperations = in_ext->advancedBlendCoherentOperations;
@@ -19222,7 +19222,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_FEATURES_EXT:
         {
-            VkPhysicalDeviceMultiDrawFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_FEATURES_EXT);
+            VkPhysicalDeviceMultiDrawFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_FEATURES_EXT);
             const VkPhysicalDeviceMultiDrawFeaturesEXT *in_ext = (const VkPhysicalDeviceMultiDrawFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_FEATURES_EXT;
             out_ext->multiDraw = in_ext->multiDraw;
@@ -19231,7 +19231,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES:
         {
-            VkPhysicalDeviceInlineUniformBlockFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES);
+            VkPhysicalDeviceInlineUniformBlockFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES);
             const VkPhysicalDeviceInlineUniformBlockFeatures *in_ext = (const VkPhysicalDeviceInlineUniformBlockFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_FEATURES;
             out_ext->inlineUniformBlock = in_ext->inlineUniformBlock;
@@ -19241,7 +19241,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES:
         {
-            VkPhysicalDeviceMaintenance4Features32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES);
+            VkPhysicalDeviceMaintenance4Features32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES);
             const VkPhysicalDeviceMaintenance4Features *in_ext = (const VkPhysicalDeviceMaintenance4Features *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_FEATURES;
             out_ext->maintenance4 = in_ext->maintenance4;
@@ -19250,7 +19250,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES:
         {
-            VkPhysicalDeviceShaderDrawParametersFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES);
+            VkPhysicalDeviceShaderDrawParametersFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES);
             const VkPhysicalDeviceShaderDrawParametersFeatures *in_ext = (const VkPhysicalDeviceShaderDrawParametersFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
             out_ext->shaderDrawParameters = in_ext->shaderDrawParameters;
@@ -19259,7 +19259,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES:
         {
-            VkPhysicalDeviceShaderFloat16Int8Features32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES);
+            VkPhysicalDeviceShaderFloat16Int8Features32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES);
             const VkPhysicalDeviceShaderFloat16Int8Features *in_ext = (const VkPhysicalDeviceShaderFloat16Int8Features *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_FLOAT16_INT8_FEATURES;
             out_ext->shaderFloat16 = in_ext->shaderFloat16;
@@ -19269,7 +19269,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES:
         {
-            VkPhysicalDeviceHostQueryResetFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
+            VkPhysicalDeviceHostQueryResetFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
             const VkPhysicalDeviceHostQueryResetFeatures *in_ext = (const VkPhysicalDeviceHostQueryResetFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
             out_ext->hostQueryReset = in_ext->hostQueryReset;
@@ -19278,7 +19278,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES_KHR:
         {
-            VkPhysicalDeviceGlobalPriorityQueryFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES_KHR);
+            VkPhysicalDeviceGlobalPriorityQueryFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES_KHR);
             const VkPhysicalDeviceGlobalPriorityQueryFeaturesKHR *in_ext = (const VkPhysicalDeviceGlobalPriorityQueryFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GLOBAL_PRIORITY_QUERY_FEATURES_KHR;
             out_ext->globalPriorityQuery = in_ext->globalPriorityQuery;
@@ -19287,7 +19287,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES:
         {
-            VkPhysicalDeviceDescriptorIndexingFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES);
+            VkPhysicalDeviceDescriptorIndexingFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES);
             const VkPhysicalDeviceDescriptorIndexingFeatures *in_ext = (const VkPhysicalDeviceDescriptorIndexingFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
             out_ext->shaderInputAttachmentArrayDynamicIndexing = in_ext->shaderInputAttachmentArrayDynamicIndexing;
@@ -19315,7 +19315,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES:
         {
-            VkPhysicalDeviceTimelineSemaphoreFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES);
+            VkPhysicalDeviceTimelineSemaphoreFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES);
             const VkPhysicalDeviceTimelineSemaphoreFeatures *in_ext = (const VkPhysicalDeviceTimelineSemaphoreFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_FEATURES;
             out_ext->timelineSemaphore = in_ext->timelineSemaphore;
@@ -19324,7 +19324,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES:
         {
-            VkPhysicalDevice8BitStorageFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES);
+            VkPhysicalDevice8BitStorageFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES);
             const VkPhysicalDevice8BitStorageFeatures *in_ext = (const VkPhysicalDevice8BitStorageFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_8BIT_STORAGE_FEATURES;
             out_ext->storageBuffer8BitAccess = in_ext->storageBuffer8BitAccess;
@@ -19335,7 +19335,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT:
         {
-            VkPhysicalDeviceConditionalRenderingFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT);
+            VkPhysicalDeviceConditionalRenderingFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT);
             const VkPhysicalDeviceConditionalRenderingFeaturesEXT *in_ext = (const VkPhysicalDeviceConditionalRenderingFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT;
             out_ext->conditionalRendering = in_ext->conditionalRendering;
@@ -19345,7 +19345,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES:
         {
-            VkPhysicalDeviceVulkanMemoryModelFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES);
+            VkPhysicalDeviceVulkanMemoryModelFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES);
             const VkPhysicalDeviceVulkanMemoryModelFeatures *in_ext = (const VkPhysicalDeviceVulkanMemoryModelFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_MEMORY_MODEL_FEATURES;
             out_ext->vulkanMemoryModel = in_ext->vulkanMemoryModel;
@@ -19356,7 +19356,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES:
         {
-            VkPhysicalDeviceShaderAtomicInt64Features32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES);
+            VkPhysicalDeviceShaderAtomicInt64Features32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES);
             const VkPhysicalDeviceShaderAtomicInt64Features *in_ext = (const VkPhysicalDeviceShaderAtomicInt64Features *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_INT64_FEATURES;
             out_ext->shaderBufferInt64Atomics = in_ext->shaderBufferInt64Atomics;
@@ -19366,7 +19366,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_FEATURES_EXT:
         {
-            VkPhysicalDeviceShaderAtomicFloatFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_FEATURES_EXT);
+            VkPhysicalDeviceShaderAtomicFloatFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_FEATURES_EXT);
             const VkPhysicalDeviceShaderAtomicFloatFeaturesEXT *in_ext = (const VkPhysicalDeviceShaderAtomicFloatFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_FEATURES_EXT;
             out_ext->shaderBufferFloat32Atomics = in_ext->shaderBufferFloat32Atomics;
@@ -19386,7 +19386,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_2_FEATURES_EXT:
         {
-            VkPhysicalDeviceShaderAtomicFloat2FeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_2_FEATURES_EXT);
+            VkPhysicalDeviceShaderAtomicFloat2FeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_2_FEATURES_EXT);
             const VkPhysicalDeviceShaderAtomicFloat2FeaturesEXT *in_ext = (const VkPhysicalDeviceShaderAtomicFloat2FeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_2_FEATURES_EXT;
             out_ext->shaderBufferFloat16Atomics = in_ext->shaderBufferFloat16Atomics;
@@ -19406,7 +19406,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT:
         {
-            VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT);
+            VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT);
             const VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *in_ext = (const VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_FEATURES_EXT;
             out_ext->vertexAttributeInstanceRateDivisor = in_ext->vertexAttributeInstanceRateDivisor;
@@ -19416,7 +19416,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ASTC_DECODE_FEATURES_EXT:
         {
-            VkPhysicalDeviceASTCDecodeFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ASTC_DECODE_FEATURES_EXT);
+            VkPhysicalDeviceASTCDecodeFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ASTC_DECODE_FEATURES_EXT);
             const VkPhysicalDeviceASTCDecodeFeaturesEXT *in_ext = (const VkPhysicalDeviceASTCDecodeFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ASTC_DECODE_FEATURES_EXT;
             out_ext->decodeModeSharedExponent = in_ext->decodeModeSharedExponent;
@@ -19425,7 +19425,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT:
         {
-            VkPhysicalDeviceTransformFeedbackFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT);
+            VkPhysicalDeviceTransformFeedbackFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT);
             const VkPhysicalDeviceTransformFeedbackFeaturesEXT *in_ext = (const VkPhysicalDeviceTransformFeedbackFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT;
             out_ext->transformFeedback = in_ext->transformFeedback;
@@ -19435,7 +19435,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_REPRESENTATIVE_FRAGMENT_TEST_FEATURES_NV:
         {
-            VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_REPRESENTATIVE_FRAGMENT_TEST_FEATURES_NV);
+            VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_REPRESENTATIVE_FRAGMENT_TEST_FEATURES_NV);
             const VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV *in_ext = (const VkPhysicalDeviceRepresentativeFragmentTestFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_REPRESENTATIVE_FRAGMENT_TEST_FEATURES_NV;
             out_ext->representativeFragmentTest = in_ext->representativeFragmentTest;
@@ -19444,7 +19444,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXCLUSIVE_SCISSOR_FEATURES_NV:
         {
-            VkPhysicalDeviceExclusiveScissorFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXCLUSIVE_SCISSOR_FEATURES_NV);
+            VkPhysicalDeviceExclusiveScissorFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXCLUSIVE_SCISSOR_FEATURES_NV);
             const VkPhysicalDeviceExclusiveScissorFeaturesNV *in_ext = (const VkPhysicalDeviceExclusiveScissorFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXCLUSIVE_SCISSOR_FEATURES_NV;
             out_ext->exclusiveScissor = in_ext->exclusiveScissor;
@@ -19453,7 +19453,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CORNER_SAMPLED_IMAGE_FEATURES_NV:
         {
-            VkPhysicalDeviceCornerSampledImageFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CORNER_SAMPLED_IMAGE_FEATURES_NV);
+            VkPhysicalDeviceCornerSampledImageFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CORNER_SAMPLED_IMAGE_FEATURES_NV);
             const VkPhysicalDeviceCornerSampledImageFeaturesNV *in_ext = (const VkPhysicalDeviceCornerSampledImageFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CORNER_SAMPLED_IMAGE_FEATURES_NV;
             out_ext->cornerSampledImage = in_ext->cornerSampledImage;
@@ -19462,7 +19462,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV:
         {
-            VkPhysicalDeviceComputeShaderDerivativesFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV);
+            VkPhysicalDeviceComputeShaderDerivativesFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV);
             const VkPhysicalDeviceComputeShaderDerivativesFeaturesNV *in_ext = (const VkPhysicalDeviceComputeShaderDerivativesFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COMPUTE_SHADER_DERIVATIVES_FEATURES_NV;
             out_ext->computeDerivativeGroupQuads = in_ext->computeDerivativeGroupQuads;
@@ -19472,7 +19472,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_FOOTPRINT_FEATURES_NV:
         {
-            VkPhysicalDeviceShaderImageFootprintFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_FOOTPRINT_FEATURES_NV);
+            VkPhysicalDeviceShaderImageFootprintFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_FOOTPRINT_FEATURES_NV);
             const VkPhysicalDeviceShaderImageFootprintFeaturesNV *in_ext = (const VkPhysicalDeviceShaderImageFootprintFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_FOOTPRINT_FEATURES_NV;
             out_ext->imageFootprint = in_ext->imageFootprint;
@@ -19481,7 +19481,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEDICATED_ALLOCATION_IMAGE_ALIASING_FEATURES_NV:
         {
-            VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEDICATED_ALLOCATION_IMAGE_ALIASING_FEATURES_NV);
+            VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEDICATED_ALLOCATION_IMAGE_ALIASING_FEATURES_NV);
             const VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV *in_ext = (const VkPhysicalDeviceDedicatedAllocationImageAliasingFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEDICATED_ALLOCATION_IMAGE_ALIASING_FEATURES_NV;
             out_ext->dedicatedAllocationImageAliasing = in_ext->dedicatedAllocationImageAliasing;
@@ -19490,7 +19490,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_FEATURES_NV:
         {
-            VkPhysicalDeviceCopyMemoryIndirectFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_FEATURES_NV);
+            VkPhysicalDeviceCopyMemoryIndirectFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_FEATURES_NV);
             const VkPhysicalDeviceCopyMemoryIndirectFeaturesNV *in_ext = (const VkPhysicalDeviceCopyMemoryIndirectFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_FEATURES_NV;
             out_ext->indirectCopy = in_ext->indirectCopy;
@@ -19499,7 +19499,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV:
         {
-            VkPhysicalDeviceMemoryDecompressionFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV);
+            VkPhysicalDeviceMemoryDecompressionFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV);
             const VkPhysicalDeviceMemoryDecompressionFeaturesNV *in_ext = (const VkPhysicalDeviceMemoryDecompressionFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_FEATURES_NV;
             out_ext->memoryDecompression = in_ext->memoryDecompression;
@@ -19508,7 +19508,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV:
         {
-            VkPhysicalDeviceShadingRateImageFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV);
+            VkPhysicalDeviceShadingRateImageFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV);
             const VkPhysicalDeviceShadingRateImageFeaturesNV *in_ext = (const VkPhysicalDeviceShadingRateImageFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV;
             out_ext->shadingRateImage = in_ext->shadingRateImage;
@@ -19518,7 +19518,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INVOCATION_MASK_FEATURES_HUAWEI:
         {
-            VkPhysicalDeviceInvocationMaskFeaturesHUAWEI32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INVOCATION_MASK_FEATURES_HUAWEI);
+            VkPhysicalDeviceInvocationMaskFeaturesHUAWEI32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INVOCATION_MASK_FEATURES_HUAWEI);
             const VkPhysicalDeviceInvocationMaskFeaturesHUAWEI *in_ext = (const VkPhysicalDeviceInvocationMaskFeaturesHUAWEI *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INVOCATION_MASK_FEATURES_HUAWEI;
             out_ext->invocationMask = in_ext->invocationMask;
@@ -19527,7 +19527,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV:
         {
-            VkPhysicalDeviceMeshShaderFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV);
+            VkPhysicalDeviceMeshShaderFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV);
             const VkPhysicalDeviceMeshShaderFeaturesNV *in_ext = (const VkPhysicalDeviceMeshShaderFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV;
             out_ext->taskShader = in_ext->taskShader;
@@ -19537,7 +19537,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT:
         {
-            VkPhysicalDeviceMeshShaderFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
+            VkPhysicalDeviceMeshShaderFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
             const VkPhysicalDeviceMeshShaderFeaturesEXT *in_ext = (const VkPhysicalDeviceMeshShaderFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
             out_ext->taskShader = in_ext->taskShader;
@@ -19550,7 +19550,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR:
         {
-            VkPhysicalDeviceAccelerationStructureFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR);
+            VkPhysicalDeviceAccelerationStructureFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR);
             const VkPhysicalDeviceAccelerationStructureFeaturesKHR *in_ext = (const VkPhysicalDeviceAccelerationStructureFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR;
             out_ext->accelerationStructure = in_ext->accelerationStructure;
@@ -19563,7 +19563,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR:
         {
-            VkPhysicalDeviceRayTracingPipelineFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR);
+            VkPhysicalDeviceRayTracingPipelineFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR);
             const VkPhysicalDeviceRayTracingPipelineFeaturesKHR *in_ext = (const VkPhysicalDeviceRayTracingPipelineFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR;
             out_ext->rayTracingPipeline = in_ext->rayTracingPipeline;
@@ -19576,7 +19576,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR:
         {
-            VkPhysicalDeviceRayQueryFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR);
+            VkPhysicalDeviceRayQueryFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR);
             const VkPhysicalDeviceRayQueryFeaturesKHR *in_ext = (const VkPhysicalDeviceRayQueryFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR;
             out_ext->rayQuery = in_ext->rayQuery;
@@ -19585,7 +19585,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR:
         {
-            VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR);
+            VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR);
             const VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR *in_ext = (const VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR;
             out_ext->rayTracingMaintenance1 = in_ext->rayTracingMaintenance1;
@@ -19595,7 +19595,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_FEATURES_EXT:
         {
-            VkPhysicalDeviceFragmentDensityMapFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_FEATURES_EXT);
+            VkPhysicalDeviceFragmentDensityMapFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_FEATURES_EXT);
             const VkPhysicalDeviceFragmentDensityMapFeaturesEXT *in_ext = (const VkPhysicalDeviceFragmentDensityMapFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_FEATURES_EXT;
             out_ext->fragmentDensityMap = in_ext->fragmentDensityMap;
@@ -19606,7 +19606,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_FEATURES_EXT:
         {
-            VkPhysicalDeviceFragmentDensityMap2FeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_FEATURES_EXT);
+            VkPhysicalDeviceFragmentDensityMap2FeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_FEATURES_EXT);
             const VkPhysicalDeviceFragmentDensityMap2FeaturesEXT *in_ext = (const VkPhysicalDeviceFragmentDensityMap2FeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_FEATURES_EXT;
             out_ext->fragmentDensityMapDeferred = in_ext->fragmentDensityMapDeferred;
@@ -19615,7 +19615,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_FEATURES_QCOM:
         {
-            VkPhysicalDeviceFragmentDensityMapOffsetFeaturesQCOM32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_FEATURES_QCOM);
+            VkPhysicalDeviceFragmentDensityMapOffsetFeaturesQCOM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_FEATURES_QCOM);
             const VkPhysicalDeviceFragmentDensityMapOffsetFeaturesQCOM *in_ext = (const VkPhysicalDeviceFragmentDensityMapOffsetFeaturesQCOM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_FEATURES_QCOM;
             out_ext->fragmentDensityMapOffset = in_ext->fragmentDensityMapOffset;
@@ -19624,7 +19624,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES:
         {
-            VkPhysicalDeviceScalarBlockLayoutFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES);
+            VkPhysicalDeviceScalarBlockLayoutFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES);
             const VkPhysicalDeviceScalarBlockLayoutFeatures *in_ext = (const VkPhysicalDeviceScalarBlockLayoutFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SCALAR_BLOCK_LAYOUT_FEATURES;
             out_ext->scalarBlockLayout = in_ext->scalarBlockLayout;
@@ -19633,7 +19633,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES:
         {
-            VkPhysicalDeviceUniformBufferStandardLayoutFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES);
+            VkPhysicalDeviceUniformBufferStandardLayoutFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES);
             const VkPhysicalDeviceUniformBufferStandardLayoutFeatures *in_ext = (const VkPhysicalDeviceUniformBufferStandardLayoutFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_UNIFORM_BUFFER_STANDARD_LAYOUT_FEATURES;
             out_ext->uniformBufferStandardLayout = in_ext->uniformBufferStandardLayout;
@@ -19642,7 +19642,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT:
         {
-            VkPhysicalDeviceDepthClipEnableFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT);
+            VkPhysicalDeviceDepthClipEnableFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT);
             const VkPhysicalDeviceDepthClipEnableFeaturesEXT *in_ext = (const VkPhysicalDeviceDepthClipEnableFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT;
             out_ext->depthClipEnable = in_ext->depthClipEnable;
@@ -19651,7 +19651,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT:
         {
-            VkPhysicalDeviceMemoryPriorityFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT);
+            VkPhysicalDeviceMemoryPriorityFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT);
             const VkPhysicalDeviceMemoryPriorityFeaturesEXT *in_ext = (const VkPhysicalDeviceMemoryPriorityFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PRIORITY_FEATURES_EXT;
             out_ext->memoryPriority = in_ext->memoryPriority;
@@ -19660,7 +19660,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PAGEABLE_DEVICE_LOCAL_MEMORY_FEATURES_EXT:
         {
-            VkPhysicalDevicePageableDeviceLocalMemoryFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PAGEABLE_DEVICE_LOCAL_MEMORY_FEATURES_EXT);
+            VkPhysicalDevicePageableDeviceLocalMemoryFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PAGEABLE_DEVICE_LOCAL_MEMORY_FEATURES_EXT);
             const VkPhysicalDevicePageableDeviceLocalMemoryFeaturesEXT *in_ext = (const VkPhysicalDevicePageableDeviceLocalMemoryFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PAGEABLE_DEVICE_LOCAL_MEMORY_FEATURES_EXT;
             out_ext->pageableDeviceLocalMemory = in_ext->pageableDeviceLocalMemory;
@@ -19669,7 +19669,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES:
         {
-            VkPhysicalDeviceBufferDeviceAddressFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
+            VkPhysicalDeviceBufferDeviceAddressFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
             const VkPhysicalDeviceBufferDeviceAddressFeatures *in_ext = (const VkPhysicalDeviceBufferDeviceAddressFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
             out_ext->bufferDeviceAddress = in_ext->bufferDeviceAddress;
@@ -19680,7 +19680,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT:
         {
-            VkPhysicalDeviceBufferDeviceAddressFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT);
+            VkPhysicalDeviceBufferDeviceAddressFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT);
             const VkPhysicalDeviceBufferDeviceAddressFeaturesEXT *in_ext = (const VkPhysicalDeviceBufferDeviceAddressFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_EXT;
             out_ext->bufferDeviceAddress = in_ext->bufferDeviceAddress;
@@ -19691,7 +19691,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES:
         {
-            VkPhysicalDeviceImagelessFramebufferFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES);
+            VkPhysicalDeviceImagelessFramebufferFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES);
             const VkPhysicalDeviceImagelessFramebufferFeatures *in_ext = (const VkPhysicalDeviceImagelessFramebufferFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES;
             out_ext->imagelessFramebuffer = in_ext->imagelessFramebuffer;
@@ -19700,7 +19700,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES:
         {
-            VkPhysicalDeviceTextureCompressionASTCHDRFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES);
+            VkPhysicalDeviceTextureCompressionASTCHDRFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES);
             const VkPhysicalDeviceTextureCompressionASTCHDRFeatures *in_ext = (const VkPhysicalDeviceTextureCompressionASTCHDRFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXTURE_COMPRESSION_ASTC_HDR_FEATURES;
             out_ext->textureCompressionASTC_HDR = in_ext->textureCompressionASTC_HDR;
@@ -19709,7 +19709,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_NV:
         {
-            VkPhysicalDeviceCooperativeMatrixFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_NV);
+            VkPhysicalDeviceCooperativeMatrixFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_NV);
             const VkPhysicalDeviceCooperativeMatrixFeaturesNV *in_ext = (const VkPhysicalDeviceCooperativeMatrixFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_FEATURES_NV;
             out_ext->cooperativeMatrix = in_ext->cooperativeMatrix;
@@ -19719,7 +19719,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT:
         {
-            VkPhysicalDeviceYcbcrImageArraysFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT);
+            VkPhysicalDeviceYcbcrImageArraysFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT);
             const VkPhysicalDeviceYcbcrImageArraysFeaturesEXT *in_ext = (const VkPhysicalDeviceYcbcrImageArraysFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_IMAGE_ARRAYS_FEATURES_EXT;
             out_ext->ycbcrImageArrays = in_ext->ycbcrImageArrays;
@@ -19728,7 +19728,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_BARRIER_FEATURES_NV:
         {
-            VkPhysicalDevicePresentBarrierFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_BARRIER_FEATURES_NV);
+            VkPhysicalDevicePresentBarrierFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_BARRIER_FEATURES_NV);
             const VkPhysicalDevicePresentBarrierFeaturesNV *in_ext = (const VkPhysicalDevicePresentBarrierFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRESENT_BARRIER_FEATURES_NV;
             out_ext->presentBarrier = in_ext->presentBarrier;
@@ -19737,7 +19737,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR:
         {
-            VkPhysicalDevicePerformanceQueryFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR);
+            VkPhysicalDevicePerformanceQueryFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR);
             const VkPhysicalDevicePerformanceQueryFeaturesKHR *in_ext = (const VkPhysicalDevicePerformanceQueryFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR;
             out_ext->performanceCounterQueryPools = in_ext->performanceCounterQueryPools;
@@ -19747,7 +19747,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COVERAGE_REDUCTION_MODE_FEATURES_NV:
         {
-            VkPhysicalDeviceCoverageReductionModeFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COVERAGE_REDUCTION_MODE_FEATURES_NV);
+            VkPhysicalDeviceCoverageReductionModeFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COVERAGE_REDUCTION_MODE_FEATURES_NV);
             const VkPhysicalDeviceCoverageReductionModeFeaturesNV *in_ext = (const VkPhysicalDeviceCoverageReductionModeFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COVERAGE_REDUCTION_MODE_FEATURES_NV;
             out_ext->coverageReductionMode = in_ext->coverageReductionMode;
@@ -19756,7 +19756,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_FUNCTIONS_2_FEATURES_INTEL:
         {
-            VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_FUNCTIONS_2_FEATURES_INTEL);
+            VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_FUNCTIONS_2_FEATURES_INTEL);
             const VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL *in_ext = (const VkPhysicalDeviceShaderIntegerFunctions2FeaturesINTEL *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_FUNCTIONS_2_FEATURES_INTEL;
             out_ext->shaderIntegerFunctions2 = in_ext->shaderIntegerFunctions2;
@@ -19765,7 +19765,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR:
         {
-            VkPhysicalDeviceShaderClockFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR);
+            VkPhysicalDeviceShaderClockFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR);
             const VkPhysicalDeviceShaderClockFeaturesKHR *in_ext = (const VkPhysicalDeviceShaderClockFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CLOCK_FEATURES_KHR;
             out_ext->shaderSubgroupClock = in_ext->shaderSubgroupClock;
@@ -19775,7 +19775,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT:
         {
-            VkPhysicalDeviceIndexTypeUint8FeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT);
+            VkPhysicalDeviceIndexTypeUint8FeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT);
             const VkPhysicalDeviceIndexTypeUint8FeaturesEXT *in_ext = (const VkPhysicalDeviceIndexTypeUint8FeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INDEX_TYPE_UINT8_FEATURES_EXT;
             out_ext->indexTypeUint8 = in_ext->indexTypeUint8;
@@ -19784,7 +19784,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_FEATURES_NV:
         {
-            VkPhysicalDeviceShaderSMBuiltinsFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_FEATURES_NV);
+            VkPhysicalDeviceShaderSMBuiltinsFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_FEATURES_NV);
             const VkPhysicalDeviceShaderSMBuiltinsFeaturesNV *in_ext = (const VkPhysicalDeviceShaderSMBuiltinsFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_FEATURES_NV;
             out_ext->shaderSMBuiltins = in_ext->shaderSMBuiltins;
@@ -19793,7 +19793,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT:
         {
-            VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT);
+            VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT);
             const VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT *in_ext = (const VkPhysicalDeviceFragmentShaderInterlockFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_INTERLOCK_FEATURES_EXT;
             out_ext->fragmentShaderSampleInterlock = in_ext->fragmentShaderSampleInterlock;
@@ -19804,7 +19804,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES:
         {
-            VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES);
+            VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES);
             const VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures *in_ext = (const VkPhysicalDeviceSeparateDepthStencilLayoutsFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SEPARATE_DEPTH_STENCIL_LAYOUTS_FEATURES;
             out_ext->separateDepthStencilLayouts = in_ext->separateDepthStencilLayouts;
@@ -19813,7 +19813,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_TOPOLOGY_LIST_RESTART_FEATURES_EXT:
         {
-            VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_TOPOLOGY_LIST_RESTART_FEATURES_EXT);
+            VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_TOPOLOGY_LIST_RESTART_FEATURES_EXT);
             const VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT *in_ext = (const VkPhysicalDevicePrimitiveTopologyListRestartFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVE_TOPOLOGY_LIST_RESTART_FEATURES_EXT;
             out_ext->primitiveTopologyListRestart = in_ext->primitiveTopologyListRestart;
@@ -19823,7 +19823,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR:
         {
-            VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR);
+            VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR);
             const VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR *in_ext = (const VkPhysicalDevicePipelineExecutablePropertiesFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_EXECUTABLE_PROPERTIES_FEATURES_KHR;
             out_ext->pipelineExecutableInfo = in_ext->pipelineExecutableInfo;
@@ -19832,7 +19832,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES:
         {
-            VkPhysicalDeviceShaderDemoteToHelperInvocationFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES);
+            VkPhysicalDeviceShaderDemoteToHelperInvocationFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES);
             const VkPhysicalDeviceShaderDemoteToHelperInvocationFeatures *in_ext = (const VkPhysicalDeviceShaderDemoteToHelperInvocationFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES;
             out_ext->shaderDemoteToHelperInvocation = in_ext->shaderDemoteToHelperInvocation;
@@ -19841,7 +19841,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT:
         {
-            VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT);
+            VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT);
             const VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT *in_ext = (const VkPhysicalDeviceTexelBufferAlignmentFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_FEATURES_EXT;
             out_ext->texelBufferAlignment = in_ext->texelBufferAlignment;
@@ -19850,7 +19850,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES:
         {
-            VkPhysicalDeviceSubgroupSizeControlFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES);
+            VkPhysicalDeviceSubgroupSizeControlFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES);
             const VkPhysicalDeviceSubgroupSizeControlFeatures *in_ext = (const VkPhysicalDeviceSubgroupSizeControlFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_FEATURES;
             out_ext->subgroupSizeControl = in_ext->subgroupSizeControl;
@@ -19860,7 +19860,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT:
         {
-            VkPhysicalDeviceLineRasterizationFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT);
+            VkPhysicalDeviceLineRasterizationFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT);
             const VkPhysicalDeviceLineRasterizationFeaturesEXT *in_ext = (const VkPhysicalDeviceLineRasterizationFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_FEATURES_EXT;
             out_ext->rectangularLines = in_ext->rectangularLines;
@@ -19874,7 +19874,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES:
         {
-            VkPhysicalDevicePipelineCreationCacheControlFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES);
+            VkPhysicalDevicePipelineCreationCacheControlFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES);
             const VkPhysicalDevicePipelineCreationCacheControlFeatures *in_ext = (const VkPhysicalDevicePipelineCreationCacheControlFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_CREATION_CACHE_CONTROL_FEATURES;
             out_ext->pipelineCreationCacheControl = in_ext->pipelineCreationCacheControl;
@@ -19883,7 +19883,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES:
         {
-            VkPhysicalDeviceVulkan11Features32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES);
+            VkPhysicalDeviceVulkan11Features32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES);
             const VkPhysicalDeviceVulkan11Features *in_ext = (const VkPhysicalDeviceVulkan11Features *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES;
             out_ext->storageBuffer16BitAccess = in_ext->storageBuffer16BitAccess;
@@ -19903,7 +19903,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES:
         {
-            VkPhysicalDeviceVulkan12Features32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES);
+            VkPhysicalDeviceVulkan12Features32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES);
             const VkPhysicalDeviceVulkan12Features *in_ext = (const VkPhysicalDeviceVulkan12Features *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
             out_ext->samplerMirrorClampToEdge = in_ext->samplerMirrorClampToEdge;
@@ -19958,7 +19958,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES:
         {
-            VkPhysicalDeviceVulkan13Features32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES);
+            VkPhysicalDeviceVulkan13Features32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES);
             const VkPhysicalDeviceVulkan13Features *in_ext = (const VkPhysicalDeviceVulkan13Features *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
             out_ext->robustImageAccess = in_ext->robustImageAccess;
@@ -19981,7 +19981,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COHERENT_MEMORY_FEATURES_AMD:
         {
-            VkPhysicalDeviceCoherentMemoryFeaturesAMD32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COHERENT_MEMORY_FEATURES_AMD);
+            VkPhysicalDeviceCoherentMemoryFeaturesAMD32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COHERENT_MEMORY_FEATURES_AMD);
             const VkPhysicalDeviceCoherentMemoryFeaturesAMD *in_ext = (const VkPhysicalDeviceCoherentMemoryFeaturesAMD *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COHERENT_MEMORY_FEATURES_AMD;
             out_ext->deviceCoherentMemory = in_ext->deviceCoherentMemory;
@@ -19990,7 +19990,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT:
         {
-            VkPhysicalDeviceCustomBorderColorFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT);
+            VkPhysicalDeviceCustomBorderColorFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT);
             const VkPhysicalDeviceCustomBorderColorFeaturesEXT *in_ext = (const VkPhysicalDeviceCustomBorderColorFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_FEATURES_EXT;
             out_ext->customBorderColors = in_ext->customBorderColors;
@@ -20000,7 +20000,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BORDER_COLOR_SWIZZLE_FEATURES_EXT:
         {
-            VkPhysicalDeviceBorderColorSwizzleFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BORDER_COLOR_SWIZZLE_FEATURES_EXT);
+            VkPhysicalDeviceBorderColorSwizzleFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BORDER_COLOR_SWIZZLE_FEATURES_EXT);
             const VkPhysicalDeviceBorderColorSwizzleFeaturesEXT *in_ext = (const VkPhysicalDeviceBorderColorSwizzleFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BORDER_COLOR_SWIZZLE_FEATURES_EXT;
             out_ext->borderColorSwizzle = in_ext->borderColorSwizzle;
@@ -20010,7 +20010,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT:
         {
-            VkPhysicalDeviceExtendedDynamicStateFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
+            VkPhysicalDeviceExtendedDynamicStateFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
             const VkPhysicalDeviceExtendedDynamicStateFeaturesEXT *in_ext = (const VkPhysicalDeviceExtendedDynamicStateFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
             out_ext->extendedDynamicState = in_ext->extendedDynamicState;
@@ -20019,7 +20019,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT:
         {
-            VkPhysicalDeviceExtendedDynamicState2FeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT);
+            VkPhysicalDeviceExtendedDynamicState2FeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT);
             const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT *in_ext = (const VkPhysicalDeviceExtendedDynamicState2FeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT;
             out_ext->extendedDynamicState2 = in_ext->extendedDynamicState2;
@@ -20030,7 +20030,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT:
         {
-            VkPhysicalDeviceExtendedDynamicState3FeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
+            VkPhysicalDeviceExtendedDynamicState3FeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
             const VkPhysicalDeviceExtendedDynamicState3FeaturesEXT *in_ext = (const VkPhysicalDeviceExtendedDynamicState3FeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
             out_ext->extendedDynamicState3TessellationDomainOrigin = in_ext->extendedDynamicState3TessellationDomainOrigin;
@@ -20069,7 +20069,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV:
         {
-            VkPhysicalDeviceDiagnosticsConfigFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV);
+            VkPhysicalDeviceDiagnosticsConfigFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV);
             const VkPhysicalDeviceDiagnosticsConfigFeaturesNV *in_ext = (const VkPhysicalDeviceDiagnosticsConfigFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DIAGNOSTICS_CONFIG_FEATURES_NV;
             out_ext->diagnosticsConfig = in_ext->diagnosticsConfig;
@@ -20078,7 +20078,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES:
         {
-            VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES);
+            VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES);
             const VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures *in_ext = (const VkPhysicalDeviceZeroInitializeWorkgroupMemoryFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES;
             out_ext->shaderZeroInitializeWorkgroupMemory = in_ext->shaderZeroInitializeWorkgroupMemory;
@@ -20087,7 +20087,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_FEATURES_KHR:
         {
-            VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_FEATURES_KHR);
+            VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_FEATURES_KHR);
             const VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR *in_ext = (const VkPhysicalDeviceShaderSubgroupUniformControlFlowFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_FEATURES_KHR;
             out_ext->shaderSubgroupUniformControlFlow = in_ext->shaderSubgroupUniformControlFlow;
@@ -20096,7 +20096,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT:
         {
-            VkPhysicalDeviceRobustness2FeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT);
+            VkPhysicalDeviceRobustness2FeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT);
             const VkPhysicalDeviceRobustness2FeaturesEXT *in_ext = (const VkPhysicalDeviceRobustness2FeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_FEATURES_EXT;
             out_ext->robustBufferAccess2 = in_ext->robustBufferAccess2;
@@ -20107,7 +20107,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES:
         {
-            VkPhysicalDeviceImageRobustnessFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES);
+            VkPhysicalDeviceImageRobustnessFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES);
             const VkPhysicalDeviceImageRobustnessFeatures *in_ext = (const VkPhysicalDeviceImageRobustnessFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_ROBUSTNESS_FEATURES;
             out_ext->robustImageAccess = in_ext->robustImageAccess;
@@ -20116,7 +20116,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_FEATURES_KHR:
         {
-            VkPhysicalDeviceWorkgroupMemoryExplicitLayoutFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_FEATURES_KHR);
+            VkPhysicalDeviceWorkgroupMemoryExplicitLayoutFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_FEATURES_KHR);
             const VkPhysicalDeviceWorkgroupMemoryExplicitLayoutFeaturesKHR *in_ext = (const VkPhysicalDeviceWorkgroupMemoryExplicitLayoutFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_FEATURES_KHR;
             out_ext->workgroupMemoryExplicitLayout = in_ext->workgroupMemoryExplicitLayout;
@@ -20128,7 +20128,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT:
         {
-            VkPhysicalDevice4444FormatsFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT);
+            VkPhysicalDevice4444FormatsFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT);
             const VkPhysicalDevice4444FormatsFeaturesEXT *in_ext = (const VkPhysicalDevice4444FormatsFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT;
             out_ext->formatA4R4G4B4 = in_ext->formatA4R4G4B4;
@@ -20138,7 +20138,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_FEATURES_HUAWEI:
         {
-            VkPhysicalDeviceSubpassShadingFeaturesHUAWEI32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_FEATURES_HUAWEI);
+            VkPhysicalDeviceSubpassShadingFeaturesHUAWEI32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_FEATURES_HUAWEI);
             const VkPhysicalDeviceSubpassShadingFeaturesHUAWEI *in_ext = (const VkPhysicalDeviceSubpassShadingFeaturesHUAWEI *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_FEATURES_HUAWEI;
             out_ext->subpassShading = in_ext->subpassShading;
@@ -20147,7 +20147,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT:
         {
-            VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT);
+            VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT);
             const VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT *in_ext = (const VkPhysicalDeviceShaderImageAtomicInt64FeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_ATOMIC_INT64_FEATURES_EXT;
             out_ext->shaderImageInt64Atomics = in_ext->shaderImageInt64Atomics;
@@ -20157,7 +20157,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR:
         {
-            VkPhysicalDeviceFragmentShadingRateFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
+            VkPhysicalDeviceFragmentShadingRateFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
             const VkPhysicalDeviceFragmentShadingRateFeaturesKHR *in_ext = (const VkPhysicalDeviceFragmentShadingRateFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR;
             out_ext->pipelineFragmentShadingRate = in_ext->pipelineFragmentShadingRate;
@@ -20168,7 +20168,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES:
         {
-            VkPhysicalDeviceShaderTerminateInvocationFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES);
+            VkPhysicalDeviceShaderTerminateInvocationFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES);
             const VkPhysicalDeviceShaderTerminateInvocationFeatures *in_ext = (const VkPhysicalDeviceShaderTerminateInvocationFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_TERMINATE_INVOCATION_FEATURES;
             out_ext->shaderTerminateInvocation = in_ext->shaderTerminateInvocation;
@@ -20177,7 +20177,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_FEATURES_NV:
         {
-            VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_FEATURES_NV);
+            VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_FEATURES_NV);
             const VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV *in_ext = (const VkPhysicalDeviceFragmentShadingRateEnumsFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_FEATURES_NV;
             out_ext->fragmentShadingRateEnums = in_ext->fragmentShadingRateEnums;
@@ -20188,7 +20188,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_2D_VIEW_OF_3D_FEATURES_EXT:
         {
-            VkPhysicalDeviceImage2DViewOf3DFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_2D_VIEW_OF_3D_FEATURES_EXT);
+            VkPhysicalDeviceImage2DViewOf3DFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_2D_VIEW_OF_3D_FEATURES_EXT);
             const VkPhysicalDeviceImage2DViewOf3DFeaturesEXT *in_ext = (const VkPhysicalDeviceImage2DViewOf3DFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_2D_VIEW_OF_3D_FEATURES_EXT;
             out_ext->image2DViewOf3D = in_ext->image2DViewOf3D;
@@ -20198,7 +20198,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT:
         {
-            VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT);
+            VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT);
             const VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *in_ext = (const VkPhysicalDeviceMutableDescriptorTypeFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_EXT;
             out_ext->mutableDescriptorType = in_ext->mutableDescriptorType;
@@ -20207,7 +20207,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT:
         {
-            VkPhysicalDeviceDepthClipControlFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT);
+            VkPhysicalDeviceDepthClipControlFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT);
             const VkPhysicalDeviceDepthClipControlFeaturesEXT *in_ext = (const VkPhysicalDeviceDepthClipControlFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_CONTROL_FEATURES_EXT;
             out_ext->depthClipControl = in_ext->depthClipControl;
@@ -20216,7 +20216,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT:
         {
-            VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT);
+            VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT);
             const VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT *in_ext = (const VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT;
             out_ext->vertexInputDynamicState = in_ext->vertexInputDynamicState;
@@ -20225,7 +20225,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT:
         {
-            VkPhysicalDeviceColorWriteEnableFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT);
+            VkPhysicalDeviceColorWriteEnableFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT);
             const VkPhysicalDeviceColorWriteEnableFeaturesEXT *in_ext = (const VkPhysicalDeviceColorWriteEnableFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COLOR_WRITE_ENABLE_FEATURES_EXT;
             out_ext->colorWriteEnable = in_ext->colorWriteEnable;
@@ -20234,7 +20234,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES:
         {
-            VkPhysicalDeviceSynchronization2Features32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES);
+            VkPhysicalDeviceSynchronization2Features32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES);
             const VkPhysicalDeviceSynchronization2Features *in_ext = (const VkPhysicalDeviceSynchronization2Features *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES;
             out_ext->synchronization2 = in_ext->synchronization2;
@@ -20243,7 +20243,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVES_GENERATED_QUERY_FEATURES_EXT:
         {
-            VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVES_GENERATED_QUERY_FEATURES_EXT);
+            VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVES_GENERATED_QUERY_FEATURES_EXT);
             const VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT *in_ext = (const VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVES_GENERATED_QUERY_FEATURES_EXT;
             out_ext->primitivesGeneratedQuery = in_ext->primitivesGeneratedQuery;
@@ -20254,7 +20254,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_DITHERING_FEATURES_EXT:
         {
-            VkPhysicalDeviceLegacyDitheringFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_DITHERING_FEATURES_EXT);
+            VkPhysicalDeviceLegacyDitheringFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_DITHERING_FEATURES_EXT);
             const VkPhysicalDeviceLegacyDitheringFeaturesEXT *in_ext = (const VkPhysicalDeviceLegacyDitheringFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LEGACY_DITHERING_FEATURES_EXT;
             out_ext->legacyDithering = in_ext->legacyDithering;
@@ -20263,7 +20263,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_FEATURES_EXT:
         {
-            VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_FEATURES_EXT);
+            VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_FEATURES_EXT);
             const VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT *in_ext = (const VkPhysicalDeviceMultisampledRenderToSingleSampledFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTISAMPLED_RENDER_TO_SINGLE_SAMPLED_FEATURES_EXT;
             out_ext->multisampledRenderToSingleSampled = in_ext->multisampledRenderToSingleSampled;
@@ -20272,7 +20272,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROTECTED_ACCESS_FEATURES_EXT:
         {
-            VkPhysicalDevicePipelineProtectedAccessFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROTECTED_ACCESS_FEATURES_EXT);
+            VkPhysicalDevicePipelineProtectedAccessFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROTECTED_ACCESS_FEATURES_EXT);
             const VkPhysicalDevicePipelineProtectedAccessFeaturesEXT *in_ext = (const VkPhysicalDevicePipelineProtectedAccessFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROTECTED_ACCESS_FEATURES_EXT;
             out_ext->pipelineProtectedAccess = in_ext->pipelineProtectedAccess;
@@ -20281,7 +20281,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV:
         {
-            VkPhysicalDeviceInheritedViewportScissorFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV);
+            VkPhysicalDeviceInheritedViewportScissorFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV);
             const VkPhysicalDeviceInheritedViewportScissorFeaturesNV *in_ext = (const VkPhysicalDeviceInheritedViewportScissorFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV;
             out_ext->inheritedViewportScissor2D = in_ext->inheritedViewportScissor2D;
@@ -20290,7 +20290,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_2_PLANE_444_FORMATS_FEATURES_EXT:
         {
-            VkPhysicalDeviceYcbcr2Plane444FormatsFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_2_PLANE_444_FORMATS_FEATURES_EXT);
+            VkPhysicalDeviceYcbcr2Plane444FormatsFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_2_PLANE_444_FORMATS_FEATURES_EXT);
             const VkPhysicalDeviceYcbcr2Plane444FormatsFeaturesEXT *in_ext = (const VkPhysicalDeviceYcbcr2Plane444FormatsFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_YCBCR_2_PLANE_444_FORMATS_FEATURES_EXT;
             out_ext->ycbcr2plane444Formats = in_ext->ycbcr2plane444Formats;
@@ -20299,7 +20299,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_FEATURES_EXT:
         {
-            VkPhysicalDeviceProvokingVertexFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_FEATURES_EXT);
+            VkPhysicalDeviceProvokingVertexFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_FEATURES_EXT);
             const VkPhysicalDeviceProvokingVertexFeaturesEXT *in_ext = (const VkPhysicalDeviceProvokingVertexFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_FEATURES_EXT;
             out_ext->provokingVertexLast = in_ext->provokingVertexLast;
@@ -20309,7 +20309,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES:
         {
-            VkPhysicalDeviceShaderIntegerDotProductFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES);
+            VkPhysicalDeviceShaderIntegerDotProductFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES);
             const VkPhysicalDeviceShaderIntegerDotProductFeatures *in_ext = (const VkPhysicalDeviceShaderIntegerDotProductFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_FEATURES;
             out_ext->shaderIntegerDotProduct = in_ext->shaderIntegerDotProduct;
@@ -20318,7 +20318,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR:
         {
-            VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR);
+            VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR);
             const VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR *in_ext = (const VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR;
             out_ext->fragmentShaderBarycentric = in_ext->fragmentShaderBarycentric;
@@ -20327,7 +20327,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MOTION_BLUR_FEATURES_NV:
         {
-            VkPhysicalDeviceRayTracingMotionBlurFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MOTION_BLUR_FEATURES_NV);
+            VkPhysicalDeviceRayTracingMotionBlurFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MOTION_BLUR_FEATURES_NV);
             const VkPhysicalDeviceRayTracingMotionBlurFeaturesNV *in_ext = (const VkPhysicalDeviceRayTracingMotionBlurFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MOTION_BLUR_FEATURES_NV;
             out_ext->rayTracingMotionBlur = in_ext->rayTracingMotionBlur;
@@ -20337,7 +20337,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RGBA10X6_FORMATS_FEATURES_EXT:
         {
-            VkPhysicalDeviceRGBA10X6FormatsFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RGBA10X6_FORMATS_FEATURES_EXT);
+            VkPhysicalDeviceRGBA10X6FormatsFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RGBA10X6_FORMATS_FEATURES_EXT);
             const VkPhysicalDeviceRGBA10X6FormatsFeaturesEXT *in_ext = (const VkPhysicalDeviceRGBA10X6FormatsFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RGBA10X6_FORMATS_FEATURES_EXT;
             out_ext->formatRgba10x6WithoutYCbCrSampler = in_ext->formatRgba10x6WithoutYCbCrSampler;
@@ -20346,7 +20346,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES:
         {
-            VkPhysicalDeviceDynamicRenderingFeatures32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES);
+            VkPhysicalDeviceDynamicRenderingFeatures32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES);
             const VkPhysicalDeviceDynamicRenderingFeatures *in_ext = (const VkPhysicalDeviceDynamicRenderingFeatures *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES;
             out_ext->dynamicRendering = in_ext->dynamicRendering;
@@ -20355,7 +20355,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT:
         {
-            VkPhysicalDeviceImageViewMinLodFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT);
+            VkPhysicalDeviceImageViewMinLodFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT);
             const VkPhysicalDeviceImageViewMinLodFeaturesEXT *in_ext = (const VkPhysicalDeviceImageViewMinLodFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_VIEW_MIN_LOD_FEATURES_EXT;
             out_ext->minLod = in_ext->minLod;
@@ -20364,7 +20364,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_EXT:
         {
-            VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_EXT);
+            VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_EXT);
             const VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT *in_ext = (const VkPhysicalDeviceRasterizationOrderAttachmentAccessFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_EXT;
             out_ext->rasterizationOrderColorAttachmentAccess = in_ext->rasterizationOrderColorAttachmentAccess;
@@ -20375,7 +20375,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINEAR_COLOR_ATTACHMENT_FEATURES_NV:
         {
-            VkPhysicalDeviceLinearColorAttachmentFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINEAR_COLOR_ATTACHMENT_FEATURES_NV);
+            VkPhysicalDeviceLinearColorAttachmentFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINEAR_COLOR_ATTACHMENT_FEATURES_NV);
             const VkPhysicalDeviceLinearColorAttachmentFeaturesNV *in_ext = (const VkPhysicalDeviceLinearColorAttachmentFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINEAR_COLOR_ATTACHMENT_FEATURES_NV;
             out_ext->linearColorAttachment = in_ext->linearColorAttachment;
@@ -20384,7 +20384,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT:
         {
-            VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT);
+            VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT);
             const VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT *in_ext = (const VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT;
             out_ext->graphicsPipelineLibrary = in_ext->graphicsPipelineLibrary;
@@ -20393,7 +20393,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_SET_HOST_MAPPING_FEATURES_VALVE:
         {
-            VkPhysicalDeviceDescriptorSetHostMappingFeaturesVALVE32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_SET_HOST_MAPPING_FEATURES_VALVE);
+            VkPhysicalDeviceDescriptorSetHostMappingFeaturesVALVE32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_SET_HOST_MAPPING_FEATURES_VALVE);
             const VkPhysicalDeviceDescriptorSetHostMappingFeaturesVALVE *in_ext = (const VkPhysicalDeviceDescriptorSetHostMappingFeaturesVALVE *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_SET_HOST_MAPPING_FEATURES_VALVE;
             out_ext->descriptorSetHostMapping = in_ext->descriptorSetHostMapping;
@@ -20402,7 +20402,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_FEATURES_EXT:
         {
-            VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_FEATURES_EXT);
+            VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_FEATURES_EXT);
             const VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT *in_ext = (const VkPhysicalDeviceShaderModuleIdentifierFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_FEATURES_EXT;
             out_ext->shaderModuleIdentifier = in_ext->shaderModuleIdentifier;
@@ -20411,7 +20411,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT:
         {
-            VkPhysicalDeviceImageCompressionControlFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT);
+            VkPhysicalDeviceImageCompressionControlFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT);
             const VkPhysicalDeviceImageCompressionControlFeaturesEXT *in_ext = (const VkPhysicalDeviceImageCompressionControlFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT;
             out_ext->imageCompressionControl = in_ext->imageCompressionControl;
@@ -20420,7 +20420,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT:
         {
-            VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT);
+            VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT);
             const VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT *in_ext = (const VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT;
             out_ext->imageCompressionControlSwapchain = in_ext->imageCompressionControlSwapchain;
@@ -20429,7 +20429,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_MERGE_FEEDBACK_FEATURES_EXT:
         {
-            VkPhysicalDeviceSubpassMergeFeedbackFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_MERGE_FEEDBACK_FEATURES_EXT);
+            VkPhysicalDeviceSubpassMergeFeedbackFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_MERGE_FEEDBACK_FEATURES_EXT);
             const VkPhysicalDeviceSubpassMergeFeedbackFeaturesEXT *in_ext = (const VkPhysicalDeviceSubpassMergeFeedbackFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_MERGE_FEEDBACK_FEATURES_EXT;
             out_ext->subpassMergeFeedback = in_ext->subpassMergeFeedback;
@@ -20438,7 +20438,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_EXT:
         {
-            VkPhysicalDeviceOpacityMicromapFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_EXT);
+            VkPhysicalDeviceOpacityMicromapFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_EXT);
             const VkPhysicalDeviceOpacityMicromapFeaturesEXT *in_ext = (const VkPhysicalDeviceOpacityMicromapFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_FEATURES_EXT;
             out_ext->micromap = in_ext->micromap;
@@ -20449,7 +20449,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT:
         {
-            VkPhysicalDevicePipelinePropertiesFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT);
+            VkPhysicalDevicePipelinePropertiesFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT);
             const VkPhysicalDevicePipelinePropertiesFeaturesEXT *in_ext = (const VkPhysicalDevicePipelinePropertiesFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT;
             out_ext->pipelinePropertiesIdentifier = in_ext->pipelinePropertiesIdentifier;
@@ -20458,7 +20458,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_AMD:
         {
-            VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_AMD);
+            VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_AMD);
             const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD *in_ext = (const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_AMD;
             out_ext->shaderEarlyAndLateFragmentTests = in_ext->shaderEarlyAndLateFragmentTests;
@@ -20467,7 +20467,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NON_SEAMLESS_CUBE_MAP_FEATURES_EXT:
         {
-            VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NON_SEAMLESS_CUBE_MAP_FEATURES_EXT);
+            VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NON_SEAMLESS_CUBE_MAP_FEATURES_EXT);
             const VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT *in_ext = (const VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NON_SEAMLESS_CUBE_MAP_FEATURES_EXT;
             out_ext->nonSeamlessCubeMap = in_ext->nonSeamlessCubeMap;
@@ -20476,7 +20476,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_FEATURES_EXT:
         {
-            VkPhysicalDevicePipelineRobustnessFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_FEATURES_EXT);
+            VkPhysicalDevicePipelineRobustnessFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_FEATURES_EXT);
             const VkPhysicalDevicePipelineRobustnessFeaturesEXT *in_ext = (const VkPhysicalDevicePipelineRobustnessFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_FEATURES_EXT;
             out_ext->pipelineRobustness = in_ext->pipelineRobustness;
@@ -20485,7 +20485,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_FEATURES_QCOM:
         {
-            VkPhysicalDeviceImageProcessingFeaturesQCOM32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_FEATURES_QCOM);
+            VkPhysicalDeviceImageProcessingFeaturesQCOM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_FEATURES_QCOM);
             const VkPhysicalDeviceImageProcessingFeaturesQCOM *in_ext = (const VkPhysicalDeviceImageProcessingFeaturesQCOM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_FEATURES_QCOM;
             out_ext->textureSampleWeighted = in_ext->textureSampleWeighted;
@@ -20496,7 +20496,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_PROPERTIES_FEATURES_QCOM:
         {
-            VkPhysicalDeviceTilePropertiesFeaturesQCOM32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_PROPERTIES_FEATURES_QCOM);
+            VkPhysicalDeviceTilePropertiesFeaturesQCOM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_PROPERTIES_FEATURES_QCOM);
             const VkPhysicalDeviceTilePropertiesFeaturesQCOM *in_ext = (const VkPhysicalDeviceTilePropertiesFeaturesQCOM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_PROPERTIES_FEATURES_QCOM;
             out_ext->tileProperties = in_ext->tileProperties;
@@ -20505,7 +20505,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT:
         {
-            VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT);
+            VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT);
             const VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT *in_ext = (const VkPhysicalDeviceAttachmentFeedbackLoopLayoutFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ATTACHMENT_FEEDBACK_LOOP_LAYOUT_FEATURES_EXT;
             out_ext->attachmentFeedbackLoopLayout = in_ext->attachmentFeedbackLoopLayout;
@@ -20514,7 +20514,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT:
         {
-            VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT);
+            VkPhysicalDeviceDepthClampZeroOneFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT);
             const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *in_ext = (const VkPhysicalDeviceDepthClampZeroOneFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLAMP_ZERO_ONE_FEATURES_EXT;
             out_ext->depthClampZeroOne = in_ext->depthClampZeroOne;
@@ -20523,7 +20523,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ADDRESS_BINDING_REPORT_FEATURES_EXT:
         {
-            VkPhysicalDeviceAddressBindingReportFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ADDRESS_BINDING_REPORT_FEATURES_EXT);
+            VkPhysicalDeviceAddressBindingReportFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ADDRESS_BINDING_REPORT_FEATURES_EXT);
             const VkPhysicalDeviceAddressBindingReportFeaturesEXT *in_ext = (const VkPhysicalDeviceAddressBindingReportFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ADDRESS_BINDING_REPORT_FEATURES_EXT;
             out_ext->reportAddressBinding = in_ext->reportAddressBinding;
@@ -20532,7 +20532,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_FEATURES_NV:
         {
-            VkPhysicalDeviceOpticalFlowFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_FEATURES_NV);
+            VkPhysicalDeviceOpticalFlowFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_FEATURES_NV);
             const VkPhysicalDeviceOpticalFlowFeaturesNV *in_ext = (const VkPhysicalDeviceOpticalFlowFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_FEATURES_NV;
             out_ext->opticalFlow = in_ext->opticalFlow;
@@ -20541,7 +20541,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT:
         {
-            VkPhysicalDeviceFaultFeaturesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT);
+            VkPhysicalDeviceFaultFeaturesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT);
             const VkPhysicalDeviceFaultFeaturesEXT *in_ext = (const VkPhysicalDeviceFaultFeaturesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FAULT_FEATURES_EXT;
             out_ext->deviceFault = in_ext->deviceFault;
@@ -20551,7 +20551,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM:
         {
-            VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM);
+            VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM);
             const VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM *in_ext = (const VkPhysicalDeviceShaderCoreBuiltinsFeaturesARM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM;
             out_ext->shaderCoreBuiltins = in_ext->shaderCoreBuiltins;
@@ -20560,7 +20560,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV:
         {
-            VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV);
+            VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV);
             const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderFeaturesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV;
             out_ext->rayTracingInvocationReorder = in_ext->rayTracingInvocationReorder;
@@ -20577,7 +20577,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_host_to_win32(const VkPhysi
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkFormatProperties2_win32_to_host(struct conversion_context *ctx, const VkFormatProperties232 *in, VkFormatProperties2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -20585,7 +20585,7 @@ static inline void convert_VkFormatProperties2_win32_to_host(struct conversion_c
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -20619,19 +20619,19 @@ static inline void convert_VkFormatProperties2_win32_to_host(struct conversion_c
 static inline void convert_VkFormatProperties2_host_to_win32(const VkFormatProperties2 *in, VkFormatProperties232 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     out->formatProperties = in->formatProperties;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT:
         {
-            VkSubpassResolvePerformanceQueryEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT);
+            VkSubpassResolvePerformanceQueryEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT);
             const VkSubpassResolvePerformanceQueryEXT *in_ext = (const VkSubpassResolvePerformanceQueryEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SUBPASS_RESOLVE_PERFORMANCE_QUERY_EXT;
             out_ext->optimal = in_ext->optimal;
@@ -20640,7 +20640,7 @@ static inline void convert_VkFormatProperties2_host_to_win32(const VkFormatPrope
         }
         case VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3:
         {
-            VkFormatProperties332 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3);
+            VkFormatProperties332 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3);
             const VkFormatProperties3 *in_ext = (const VkFormatProperties3 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_FORMAT_PROPERTIES_3;
             out_ext->linearTilingFeatures = in_ext->linearTilingFeatures;
@@ -20724,7 +20724,7 @@ static inline void convert_VkImageFormatProperties_host_to_win32(const VkImageFo
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceImageFormatInfo2_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceImageFormatInfo232 *in, VkPhysicalDeviceImageFormatInfo2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -20737,7 +20737,7 @@ static inline void convert_VkPhysicalDeviceImageFormatInfo2_win32_to_host(struct
     out->usage = in->usage;
     out->flags = in->flags;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -20821,7 +20821,7 @@ static inline void convert_VkPhysicalDeviceImageFormatInfo2_win32_to_host(struct
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkImageFormatProperties2_win32_to_host(struct conversion_context *ctx, const VkImageFormatProperties232 *in, VkImageFormatProperties2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -20829,7 +20829,7 @@ static inline void convert_VkImageFormatProperties2_win32_to_host(struct convers
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -20890,19 +20890,19 @@ static inline void convert_VkImageFormatProperties2_win32_to_host(struct convers
 static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageFormatProperties2 *in, VkImageFormatProperties232 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     convert_VkImageFormatProperties_host_to_win32(&in->imageFormatProperties, &out->imageFormatProperties);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES:
         {
-            VkExternalImageFormatProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES);
+            VkExternalImageFormatProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES);
             const VkExternalImageFormatProperties *in_ext = (const VkExternalImageFormatProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES;
             out_ext->externalMemoryProperties = in_ext->externalMemoryProperties;
@@ -20911,7 +20911,7 @@ static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageF
         }
         case VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES:
         {
-            VkSamplerYcbcrConversionImageFormatProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES);
+            VkSamplerYcbcrConversionImageFormatProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES);
             const VkSamplerYcbcrConversionImageFormatProperties *in_ext = (const VkSamplerYcbcrConversionImageFormatProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SAMPLER_YCBCR_CONVERSION_IMAGE_FORMAT_PROPERTIES;
             out_ext->combinedImageSamplerDescriptorCount = in_ext->combinedImageSamplerDescriptorCount;
@@ -20920,7 +20920,7 @@ static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageF
         }
         case VK_STRUCTURE_TYPE_TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD:
         {
-            VkTextureLODGatherFormatPropertiesAMD32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD);
+            VkTextureLODGatherFormatPropertiesAMD32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD);
             const VkTextureLODGatherFormatPropertiesAMD *in_ext = (const VkTextureLODGatherFormatPropertiesAMD *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_TEXTURE_LOD_GATHER_FORMAT_PROPERTIES_AMD;
             out_ext->supportsTextureGatherLODBiasAMD = in_ext->supportsTextureGatherLODBiasAMD;
@@ -20929,7 +20929,7 @@ static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageF
         }
         case VK_STRUCTURE_TYPE_FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT:
         {
-            VkFilterCubicImageViewImageFormatPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT);
+            VkFilterCubicImageViewImageFormatPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT);
             const VkFilterCubicImageViewImageFormatPropertiesEXT *in_ext = (const VkFilterCubicImageViewImageFormatPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_FILTER_CUBIC_IMAGE_VIEW_IMAGE_FORMAT_PROPERTIES_EXT;
             out_ext->filterCubic = in_ext->filterCubic;
@@ -20939,7 +20939,7 @@ static inline void convert_VkImageFormatProperties2_host_to_win32(const VkImageF
         }
         case VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT:
         {
-            VkImageCompressionPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT);
+            VkImageCompressionPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT);
             const VkImageCompressionPropertiesEXT *in_ext = (const VkImageCompressionPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT;
             out_ext->imageCompressionFlags = in_ext->imageCompressionFlags;
@@ -20993,7 +20993,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties_host_to_win32(const 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceMemoryProperties232 *in, VkPhysicalDeviceMemoryProperties2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -21001,7 +21001,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(struc
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -21026,19 +21026,19 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(struc
 static inline void convert_VkPhysicalDeviceMemoryProperties2_host_to_win32(const VkPhysicalDeviceMemoryProperties2 *in, VkPhysicalDeviceMemoryProperties232 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     convert_VkPhysicalDeviceMemoryProperties_host_to_win32(&in->memoryProperties, &out->memoryProperties);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceMemoryBudgetPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT);
+            VkPhysicalDeviceMemoryBudgetPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT);
             const VkPhysicalDeviceMemoryBudgetPropertiesEXT *in_ext = (const VkPhysicalDeviceMemoryBudgetPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
             memcpy(out_ext->heapBudget, in_ext->heapBudget, VK_MAX_MEMORY_HEAPS * sizeof(VkDeviceSize));
@@ -21268,7 +21268,7 @@ static inline void convert_VkPhysicalDeviceProperties_host_to_win32(const VkPhys
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conversion_context *ctx, const VkPhysicalDeviceProperties232 *in, VkPhysicalDeviceProperties2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -21276,7 +21276,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -21875,19 +21875,19 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
 static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhysicalDeviceProperties2 *in, VkPhysicalDeviceProperties232 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     convert_VkPhysicalDeviceProperties_host_to_win32(&in->properties, &out->properties);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV:
         {
-            VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV);
+            VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV);
             const VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV *in_ext = (const VkPhysicalDeviceDeviceGeneratedCommandsPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV;
             out_ext->maxGraphicsShaderGroupCount = in_ext->maxGraphicsShaderGroupCount;
@@ -21904,7 +21904,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceMultiDrawPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT);
+            VkPhysicalDeviceMultiDrawPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT);
             const VkPhysicalDeviceMultiDrawPropertiesEXT *in_ext = (const VkPhysicalDeviceMultiDrawPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTI_DRAW_PROPERTIES_EXT;
             out_ext->maxMultiDrawCount = in_ext->maxMultiDrawCount;
@@ -21913,7 +21913,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR:
         {
-            VkPhysicalDevicePushDescriptorPropertiesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR);
+            VkPhysicalDevicePushDescriptorPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR);
             const VkPhysicalDevicePushDescriptorPropertiesKHR *in_ext = (const VkPhysicalDevicePushDescriptorPropertiesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR;
             out_ext->maxPushDescriptors = in_ext->maxPushDescriptors;
@@ -21922,7 +21922,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES:
         {
-            VkPhysicalDeviceDriverProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES);
+            VkPhysicalDeviceDriverProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES);
             const VkPhysicalDeviceDriverProperties *in_ext = (const VkPhysicalDeviceDriverProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES;
             out_ext->driverID = in_ext->driverID;
@@ -21934,7 +21934,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES:
         {
-            VkPhysicalDeviceIDProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES);
+            VkPhysicalDeviceIDProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES);
             const VkPhysicalDeviceIDProperties *in_ext = (const VkPhysicalDeviceIDProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
             memcpy(out_ext->deviceUUID, in_ext->deviceUUID, VK_UUID_SIZE * sizeof(uint8_t));
@@ -21947,7 +21947,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES:
         {
-            VkPhysicalDeviceMultiviewProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES);
+            VkPhysicalDeviceMultiviewProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES);
             const VkPhysicalDeviceMultiviewProperties *in_ext = (const VkPhysicalDeviceMultiviewProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PROPERTIES;
             out_ext->maxMultiviewViewCount = in_ext->maxMultiviewViewCount;
@@ -21957,7 +21957,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceDiscardRectanglePropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT);
+            VkPhysicalDeviceDiscardRectanglePropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT);
             const VkPhysicalDeviceDiscardRectanglePropertiesEXT *in_ext = (const VkPhysicalDeviceDiscardRectanglePropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DISCARD_RECTANGLE_PROPERTIES_EXT;
             out_ext->maxDiscardRectangles = in_ext->maxDiscardRectangles;
@@ -21966,7 +21966,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES:
         {
-            VkPhysicalDeviceSubgroupProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES);
+            VkPhysicalDeviceSubgroupProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES);
             const VkPhysicalDeviceSubgroupProperties *in_ext = (const VkPhysicalDeviceSubgroupProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
             out_ext->subgroupSize = in_ext->subgroupSize;
@@ -21978,7 +21978,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES:
         {
-            VkPhysicalDevicePointClippingProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES);
+            VkPhysicalDevicePointClippingProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES);
             const VkPhysicalDevicePointClippingProperties *in_ext = (const VkPhysicalDevicePointClippingProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_POINT_CLIPPING_PROPERTIES;
             out_ext->pointClippingBehavior = in_ext->pointClippingBehavior;
@@ -21987,7 +21987,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES:
         {
-            VkPhysicalDeviceProtectedMemoryProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES);
+            VkPhysicalDeviceProtectedMemoryProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES);
             const VkPhysicalDeviceProtectedMemoryProperties *in_ext = (const VkPhysicalDeviceProtectedMemoryProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROTECTED_MEMORY_PROPERTIES;
             out_ext->protectedNoFault = in_ext->protectedNoFault;
@@ -21996,7 +21996,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES:
         {
-            VkPhysicalDeviceSamplerFilterMinmaxProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES);
+            VkPhysicalDeviceSamplerFilterMinmaxProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES);
             const VkPhysicalDeviceSamplerFilterMinmaxProperties *in_ext = (const VkPhysicalDeviceSamplerFilterMinmaxProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_FILTER_MINMAX_PROPERTIES;
             out_ext->filterMinmaxSingleComponentFormats = in_ext->filterMinmaxSingleComponentFormats;
@@ -22006,7 +22006,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceSampleLocationsPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT);
+            VkPhysicalDeviceSampleLocationsPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT);
             const VkPhysicalDeviceSampleLocationsPropertiesEXT *in_ext = (const VkPhysicalDeviceSampleLocationsPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLE_LOCATIONS_PROPERTIES_EXT;
             out_ext->sampleLocationSampleCounts = in_ext->sampleLocationSampleCounts;
@@ -22019,7 +22019,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT);
+            VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT);
             const VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT *in_ext = (const VkPhysicalDeviceBlendOperationAdvancedPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT;
             out_ext->advancedBlendMaxColorAttachments = in_ext->advancedBlendMaxColorAttachments;
@@ -22033,7 +22033,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES:
         {
-            VkPhysicalDeviceInlineUniformBlockProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES);
+            VkPhysicalDeviceInlineUniformBlockProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES);
             const VkPhysicalDeviceInlineUniformBlockProperties *in_ext = (const VkPhysicalDeviceInlineUniformBlockProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INLINE_UNIFORM_BLOCK_PROPERTIES;
             out_ext->maxInlineUniformBlockSize = in_ext->maxInlineUniformBlockSize;
@@ -22046,7 +22046,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES:
         {
-            VkPhysicalDeviceMaintenance3Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES);
+            VkPhysicalDeviceMaintenance3Properties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES);
             const VkPhysicalDeviceMaintenance3Properties *in_ext = (const VkPhysicalDeviceMaintenance3Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_3_PROPERTIES;
             out_ext->maxPerSetDescriptors = in_ext->maxPerSetDescriptors;
@@ -22056,7 +22056,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES:
         {
-            VkPhysicalDeviceMaintenance4Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES);
+            VkPhysicalDeviceMaintenance4Properties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES);
             const VkPhysicalDeviceMaintenance4Properties *in_ext = (const VkPhysicalDeviceMaintenance4Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MAINTENANCE_4_PROPERTIES;
             out_ext->maxBufferSize = in_ext->maxBufferSize;
@@ -22065,7 +22065,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES:
         {
-            VkPhysicalDeviceFloatControlsProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES);
+            VkPhysicalDeviceFloatControlsProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES);
             const VkPhysicalDeviceFloatControlsProperties *in_ext = (const VkPhysicalDeviceFloatControlsProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FLOAT_CONTROLS_PROPERTIES;
             out_ext->denormBehaviorIndependence = in_ext->denormBehaviorIndependence;
@@ -22090,7 +22090,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceExternalMemoryHostPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT);
+            VkPhysicalDeviceExternalMemoryHostPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT);
             const VkPhysicalDeviceExternalMemoryHostPropertiesEXT *in_ext = (const VkPhysicalDeviceExternalMemoryHostPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT;
             out_ext->minImportedHostPointerAlignment = in_ext->minImportedHostPointerAlignment;
@@ -22099,7 +22099,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceConservativeRasterizationPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT);
+            VkPhysicalDeviceConservativeRasterizationPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT);
             const VkPhysicalDeviceConservativeRasterizationPropertiesEXT *in_ext = (const VkPhysicalDeviceConservativeRasterizationPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
             out_ext->primitiveOverestimationSize = in_ext->primitiveOverestimationSize;
@@ -22116,7 +22116,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD:
         {
-            VkPhysicalDeviceShaderCorePropertiesAMD32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD);
+            VkPhysicalDeviceShaderCorePropertiesAMD32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD);
             const VkPhysicalDeviceShaderCorePropertiesAMD *in_ext = (const VkPhysicalDeviceShaderCorePropertiesAMD *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_AMD;
             out_ext->shaderEngineCount = in_ext->shaderEngineCount;
@@ -22138,7 +22138,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD:
         {
-            VkPhysicalDeviceShaderCoreProperties2AMD32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD);
+            VkPhysicalDeviceShaderCoreProperties2AMD32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD);
             const VkPhysicalDeviceShaderCoreProperties2AMD *in_ext = (const VkPhysicalDeviceShaderCoreProperties2AMD *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_PROPERTIES_2_AMD;
             out_ext->shaderCoreFeatures = in_ext->shaderCoreFeatures;
@@ -22148,7 +22148,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES:
         {
-            VkPhysicalDeviceDescriptorIndexingProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES);
+            VkPhysicalDeviceDescriptorIndexingProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES);
             const VkPhysicalDeviceDescriptorIndexingProperties *in_ext = (const VkPhysicalDeviceDescriptorIndexingProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES;
             out_ext->maxUpdateAfterBindDescriptorsInAllPools = in_ext->maxUpdateAfterBindDescriptorsInAllPools;
@@ -22179,7 +22179,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES:
         {
-            VkPhysicalDeviceTimelineSemaphoreProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES);
+            VkPhysicalDeviceTimelineSemaphoreProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES);
             const VkPhysicalDeviceTimelineSemaphoreProperties *in_ext = (const VkPhysicalDeviceTimelineSemaphoreProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TIMELINE_SEMAPHORE_PROPERTIES;
             out_ext->maxTimelineSemaphoreValueDifference = in_ext->maxTimelineSemaphoreValueDifference;
@@ -22188,7 +22188,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT);
+            VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT);
             const VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *in_ext = (const VkPhysicalDeviceVertexAttributeDivisorPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_ATTRIBUTE_DIVISOR_PROPERTIES_EXT;
             out_ext->maxVertexAttribDivisor = in_ext->maxVertexAttribDivisor;
@@ -22197,7 +22197,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT:
         {
-            VkPhysicalDevicePCIBusInfoPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT);
+            VkPhysicalDevicePCIBusInfoPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT);
             const VkPhysicalDevicePCIBusInfoPropertiesEXT *in_ext = (const VkPhysicalDevicePCIBusInfoPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PCI_BUS_INFO_PROPERTIES_EXT;
             out_ext->pciDomain = in_ext->pciDomain;
@@ -22209,7 +22209,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES:
         {
-            VkPhysicalDeviceDepthStencilResolveProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES);
+            VkPhysicalDeviceDepthStencilResolveProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES);
             const VkPhysicalDeviceDepthStencilResolveProperties *in_ext = (const VkPhysicalDeviceDepthStencilResolveProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_STENCIL_RESOLVE_PROPERTIES;
             out_ext->supportedDepthResolveModes = in_ext->supportedDepthResolveModes;
@@ -22221,7 +22221,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceTransformFeedbackPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT);
+            VkPhysicalDeviceTransformFeedbackPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT);
             const VkPhysicalDeviceTransformFeedbackPropertiesEXT *in_ext = (const VkPhysicalDeviceTransformFeedbackPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_PROPERTIES_EXT;
             out_ext->maxTransformFeedbackStreams = in_ext->maxTransformFeedbackStreams;
@@ -22239,7 +22239,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_PROPERTIES_NV:
         {
-            VkPhysicalDeviceCopyMemoryIndirectPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_PROPERTIES_NV);
+            VkPhysicalDeviceCopyMemoryIndirectPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_PROPERTIES_NV);
             const VkPhysicalDeviceCopyMemoryIndirectPropertiesNV *in_ext = (const VkPhysicalDeviceCopyMemoryIndirectPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COPY_MEMORY_INDIRECT_PROPERTIES_NV;
             out_ext->supportedQueues = in_ext->supportedQueues;
@@ -22248,7 +22248,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV:
         {
-            VkPhysicalDeviceMemoryDecompressionPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV);
+            VkPhysicalDeviceMemoryDecompressionPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV);
             const VkPhysicalDeviceMemoryDecompressionPropertiesNV *in_ext = (const VkPhysicalDeviceMemoryDecompressionPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_DECOMPRESSION_PROPERTIES_NV;
             out_ext->decompressionMethods = in_ext->decompressionMethods;
@@ -22258,7 +22258,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV:
         {
-            VkPhysicalDeviceShadingRateImagePropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV);
+            VkPhysicalDeviceShadingRateImagePropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV);
             const VkPhysicalDeviceShadingRateImagePropertiesNV *in_ext = (const VkPhysicalDeviceShadingRateImagePropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_PROPERTIES_NV;
             out_ext->shadingRateTexelSize = in_ext->shadingRateTexelSize;
@@ -22269,7 +22269,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV:
         {
-            VkPhysicalDeviceMeshShaderPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV);
+            VkPhysicalDeviceMeshShaderPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV);
             const VkPhysicalDeviceMeshShaderPropertiesNV *in_ext = (const VkPhysicalDeviceMeshShaderPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_NV;
             out_ext->maxDrawMeshTasksCount = in_ext->maxDrawMeshTasksCount;
@@ -22290,7 +22290,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceMeshShaderPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT);
+            VkPhysicalDeviceMeshShaderPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT);
             const VkPhysicalDeviceMeshShaderPropertiesEXT *in_ext = (const VkPhysicalDeviceMeshShaderPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_PROPERTIES_EXT;
             out_ext->maxTaskWorkGroupTotalCount = in_ext->maxTaskWorkGroupTotalCount;
@@ -22326,7 +22326,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR:
         {
-            VkPhysicalDeviceAccelerationStructurePropertiesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR);
+            VkPhysicalDeviceAccelerationStructurePropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR);
             const VkPhysicalDeviceAccelerationStructurePropertiesKHR *in_ext = (const VkPhysicalDeviceAccelerationStructurePropertiesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_PROPERTIES_KHR;
             out_ext->maxGeometryCount = in_ext->maxGeometryCount;
@@ -22342,7 +22342,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR:
         {
-            VkPhysicalDeviceRayTracingPipelinePropertiesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR);
+            VkPhysicalDeviceRayTracingPipelinePropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR);
             const VkPhysicalDeviceRayTracingPipelinePropertiesKHR *in_ext = (const VkPhysicalDeviceRayTracingPipelinePropertiesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;
             out_ext->shaderGroupHandleSize = in_ext->shaderGroupHandleSize;
@@ -22358,7 +22358,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV:
         {
-            VkPhysicalDeviceRayTracingPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV);
+            VkPhysicalDeviceRayTracingPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV);
             const VkPhysicalDeviceRayTracingPropertiesNV *in_ext = (const VkPhysicalDeviceRayTracingPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
             out_ext->shaderGroupHandleSize = in_ext->shaderGroupHandleSize;
@@ -22374,7 +22374,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceFragmentDensityMapPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT);
+            VkPhysicalDeviceFragmentDensityMapPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT);
             const VkPhysicalDeviceFragmentDensityMapPropertiesEXT *in_ext = (const VkPhysicalDeviceFragmentDensityMapPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_PROPERTIES_EXT;
             out_ext->minFragmentDensityTexelSize = in_ext->minFragmentDensityTexelSize;
@@ -22385,7 +22385,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceFragmentDensityMap2PropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_PROPERTIES_EXT);
+            VkPhysicalDeviceFragmentDensityMap2PropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_PROPERTIES_EXT);
             const VkPhysicalDeviceFragmentDensityMap2PropertiesEXT *in_ext = (const VkPhysicalDeviceFragmentDensityMap2PropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_2_PROPERTIES_EXT;
             out_ext->subsampledLoads = in_ext->subsampledLoads;
@@ -22397,7 +22397,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_QCOM:
         {
-            VkPhysicalDeviceFragmentDensityMapOffsetPropertiesQCOM32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_QCOM);
+            VkPhysicalDeviceFragmentDensityMapOffsetPropertiesQCOM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_QCOM);
             const VkPhysicalDeviceFragmentDensityMapOffsetPropertiesQCOM *in_ext = (const VkPhysicalDeviceFragmentDensityMapOffsetPropertiesQCOM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_QCOM;
             out_ext->fragmentDensityOffsetGranularity = in_ext->fragmentDensityOffsetGranularity;
@@ -22406,7 +22406,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV:
         {
-            VkPhysicalDeviceCooperativeMatrixPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV);
+            VkPhysicalDeviceCooperativeMatrixPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV);
             const VkPhysicalDeviceCooperativeMatrixPropertiesNV *in_ext = (const VkPhysicalDeviceCooperativeMatrixPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_COOPERATIVE_MATRIX_PROPERTIES_NV;
             out_ext->cooperativeMatrixSupportedStages = in_ext->cooperativeMatrixSupportedStages;
@@ -22415,7 +22415,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_PROPERTIES_KHR:
         {
-            VkPhysicalDevicePerformanceQueryPropertiesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_PROPERTIES_KHR);
+            VkPhysicalDevicePerformanceQueryPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_PROPERTIES_KHR);
             const VkPhysicalDevicePerformanceQueryPropertiesKHR *in_ext = (const VkPhysicalDevicePerformanceQueryPropertiesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_PROPERTIES_KHR;
             out_ext->allowCommandBufferQueryCopies = in_ext->allowCommandBufferQueryCopies;
@@ -22424,7 +22424,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_PROPERTIES_NV:
         {
-            VkPhysicalDeviceShaderSMBuiltinsPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_PROPERTIES_NV);
+            VkPhysicalDeviceShaderSMBuiltinsPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_PROPERTIES_NV);
             const VkPhysicalDeviceShaderSMBuiltinsPropertiesNV *in_ext = (const VkPhysicalDeviceShaderSMBuiltinsPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SM_BUILTINS_PROPERTIES_NV;
             out_ext->shaderSMCount = in_ext->shaderSMCount;
@@ -22434,7 +22434,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES:
         {
-            VkPhysicalDeviceTexelBufferAlignmentProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES);
+            VkPhysicalDeviceTexelBufferAlignmentProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES);
             const VkPhysicalDeviceTexelBufferAlignmentProperties *in_ext = (const VkPhysicalDeviceTexelBufferAlignmentProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TEXEL_BUFFER_ALIGNMENT_PROPERTIES;
             out_ext->storageTexelBufferOffsetAlignmentBytes = in_ext->storageTexelBufferOffsetAlignmentBytes;
@@ -22446,7 +22446,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES:
         {
-            VkPhysicalDeviceSubgroupSizeControlProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES);
+            VkPhysicalDeviceSubgroupSizeControlProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES);
             const VkPhysicalDeviceSubgroupSizeControlProperties *in_ext = (const VkPhysicalDeviceSubgroupSizeControlProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_SIZE_CONTROL_PROPERTIES;
             out_ext->minSubgroupSize = in_ext->minSubgroupSize;
@@ -22458,7 +22458,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_PROPERTIES_HUAWEI:
         {
-            VkPhysicalDeviceSubpassShadingPropertiesHUAWEI32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_PROPERTIES_HUAWEI);
+            VkPhysicalDeviceSubpassShadingPropertiesHUAWEI32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_PROPERTIES_HUAWEI);
             const VkPhysicalDeviceSubpassShadingPropertiesHUAWEI *in_ext = (const VkPhysicalDeviceSubpassShadingPropertiesHUAWEI *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_SHADING_PROPERTIES_HUAWEI;
             out_ext->maxSubpassShadingWorkgroupSizeAspectRatio = in_ext->maxSubpassShadingWorkgroupSizeAspectRatio;
@@ -22467,7 +22467,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceLineRasterizationPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES_EXT);
+            VkPhysicalDeviceLineRasterizationPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES_EXT);
             const VkPhysicalDeviceLineRasterizationPropertiesEXT *in_ext = (const VkPhysicalDeviceLineRasterizationPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINE_RASTERIZATION_PROPERTIES_EXT;
             out_ext->lineSubPixelPrecisionBits = in_ext->lineSubPixelPrecisionBits;
@@ -22476,7 +22476,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES:
         {
-            VkPhysicalDeviceVulkan11Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES);
+            VkPhysicalDeviceVulkan11Properties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES);
             const VkPhysicalDeviceVulkan11Properties *in_ext = (const VkPhysicalDeviceVulkan11Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES;
             memcpy(out_ext->deviceUUID, in_ext->deviceUUID, VK_UUID_SIZE * sizeof(uint8_t));
@@ -22499,7 +22499,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES:
         {
-            VkPhysicalDeviceVulkan12Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES);
+            VkPhysicalDeviceVulkan12Properties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES);
             const VkPhysicalDeviceVulkan12Properties *in_ext = (const VkPhysicalDeviceVulkan12Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES;
             out_ext->driverID = in_ext->driverID;
@@ -22559,7 +22559,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES:
         {
-            VkPhysicalDeviceVulkan13Properties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES);
+            VkPhysicalDeviceVulkan13Properties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES);
             const VkPhysicalDeviceVulkan13Properties *in_ext = (const VkPhysicalDeviceVulkan13Properties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES;
             out_ext->minSubgroupSize = in_ext->minSubgroupSize;
@@ -22612,7 +22612,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceCustomBorderColorPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT);
+            VkPhysicalDeviceCustomBorderColorPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT);
             const VkPhysicalDeviceCustomBorderColorPropertiesEXT *in_ext = (const VkPhysicalDeviceCustomBorderColorPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CUSTOM_BORDER_COLOR_PROPERTIES_EXT;
             out_ext->maxCustomBorderColorSamplers = in_ext->maxCustomBorderColorSamplers;
@@ -22621,7 +22621,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceExtendedDynamicState3PropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT);
+            VkPhysicalDeviceExtendedDynamicState3PropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT);
             const VkPhysicalDeviceExtendedDynamicState3PropertiesEXT *in_ext = (const VkPhysicalDeviceExtendedDynamicState3PropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT;
             out_ext->dynamicPrimitiveTopologyUnrestricted = in_ext->dynamicPrimitiveTopologyUnrestricted;
@@ -22630,7 +22630,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceRobustness2PropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT);
+            VkPhysicalDeviceRobustness2PropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT);
             const VkPhysicalDeviceRobustness2PropertiesEXT *in_ext = (const VkPhysicalDeviceRobustness2PropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ROBUSTNESS_2_PROPERTIES_EXT;
             out_ext->robustStorageBufferAccessSizeAlignment = in_ext->robustStorageBufferAccessSizeAlignment;
@@ -22640,7 +22640,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR:
         {
-            VkPhysicalDeviceFragmentShadingRatePropertiesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR);
+            VkPhysicalDeviceFragmentShadingRatePropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR);
             const VkPhysicalDeviceFragmentShadingRatePropertiesKHR *in_ext = (const VkPhysicalDeviceFragmentShadingRatePropertiesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
             out_ext->minFragmentShadingRateAttachmentTexelSize = in_ext->minFragmentShadingRateAttachmentTexelSize;
@@ -22665,7 +22665,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV:
         {
-            VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV);
+            VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV);
             const VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV *in_ext = (const VkPhysicalDeviceFragmentShadingRateEnumsPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV;
             out_ext->maxFragmentShadingRateInvocationCount = in_ext->maxFragmentShadingRateInvocationCount;
@@ -22674,7 +22674,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceProvokingVertexPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT);
+            VkPhysicalDeviceProvokingVertexPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT);
             const VkPhysicalDeviceProvokingVertexPropertiesEXT *in_ext = (const VkPhysicalDeviceProvokingVertexPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROVOKING_VERTEX_PROPERTIES_EXT;
             out_ext->provokingVertexModePerPipeline = in_ext->provokingVertexModePerPipeline;
@@ -22684,7 +22684,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES:
         {
-            VkPhysicalDeviceShaderIntegerDotProductProperties32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES);
+            VkPhysicalDeviceShaderIntegerDotProductProperties32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES);
             const VkPhysicalDeviceShaderIntegerDotProductProperties *in_ext = (const VkPhysicalDeviceShaderIntegerDotProductProperties *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_INTEGER_DOT_PRODUCT_PROPERTIES;
             out_ext->integerDotProduct8BitUnsignedAccelerated = in_ext->integerDotProduct8BitUnsignedAccelerated;
@@ -22722,7 +22722,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR:
         {
-            VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR);
+            VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR);
             const VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR *in_ext = (const VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR;
             out_ext->triStripVertexOrderIndependentOfProvokingVertex = in_ext->triStripVertexOrderIndependentOfProvokingVertex;
@@ -22731,7 +22731,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT);
+            VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT);
             const VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT *in_ext = (const VkPhysicalDeviceGraphicsPipelineLibraryPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT;
             out_ext->graphicsPipelineLibraryFastLinking = in_ext->graphicsPipelineLibraryFastLinking;
@@ -22741,7 +22741,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT);
+            VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT);
             const VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT *in_ext = (const VkPhysicalDeviceShaderModuleIdentifierPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_MODULE_IDENTIFIER_PROPERTIES_EXT;
             memcpy(out_ext->shaderModuleIdentifierAlgorithmUUID, in_ext->shaderModuleIdentifierAlgorithmUUID, VK_UUID_SIZE * sizeof(uint8_t));
@@ -22750,7 +22750,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_EXT:
         {
-            VkPhysicalDeviceOpacityMicromapPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_EXT);
+            VkPhysicalDeviceOpacityMicromapPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_EXT);
             const VkPhysicalDeviceOpacityMicromapPropertiesEXT *in_ext = (const VkPhysicalDeviceOpacityMicromapPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPACITY_MICROMAP_PROPERTIES_EXT;
             out_ext->maxOpacity2StateSubdivisionLevel = in_ext->maxOpacity2StateSubdivisionLevel;
@@ -22760,7 +22760,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES_EXT:
         {
-            VkPhysicalDevicePipelineRobustnessPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES_EXT);
+            VkPhysicalDevicePipelineRobustnessPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES_EXT);
             const VkPhysicalDevicePipelineRobustnessPropertiesEXT *in_ext = (const VkPhysicalDevicePipelineRobustnessPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_ROBUSTNESS_PROPERTIES_EXT;
             out_ext->defaultRobustnessStorageBuffers = in_ext->defaultRobustnessStorageBuffers;
@@ -22772,7 +22772,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM:
         {
-            VkPhysicalDeviceImageProcessingPropertiesQCOM32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM);
+            VkPhysicalDeviceImageProcessingPropertiesQCOM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM);
             const VkPhysicalDeviceImageProcessingPropertiesQCOM *in_ext = (const VkPhysicalDeviceImageProcessingPropertiesQCOM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_PROCESSING_PROPERTIES_QCOM;
             out_ext->maxWeightFilterPhases = in_ext->maxWeightFilterPhases;
@@ -22784,7 +22784,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_PROPERTIES_NV:
         {
-            VkPhysicalDeviceOpticalFlowPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_PROPERTIES_NV);
+            VkPhysicalDeviceOpticalFlowPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_PROPERTIES_NV);
             const VkPhysicalDeviceOpticalFlowPropertiesNV *in_ext = (const VkPhysicalDeviceOpticalFlowPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_OPTICAL_FLOW_PROPERTIES_NV;
             out_ext->supportedOutputGridSizes = in_ext->supportedOutputGridSizes;
@@ -22803,7 +22803,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM:
         {
-            VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM);
+            VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM);
             const VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM *in_ext = (const VkPhysicalDeviceShaderCoreBuiltinsPropertiesARM *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_PROPERTIES_ARM;
             out_ext->shaderCoreMask = in_ext->shaderCoreMask;
@@ -22814,7 +22814,7 @@ static inline void convert_VkPhysicalDeviceProperties2_host_to_win32(const VkPhy
         }
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV:
         {
-            VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV);
+            VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV);
             const VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV *in_ext = (const VkPhysicalDeviceRayTracingInvocationReorderPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV;
             out_ext->rayTracingInvocationReorderReorderingHint = in_ext->rayTracingInvocationReorderReorderingHint;
@@ -22844,7 +22844,7 @@ static inline void convert_VkQueryPoolPerformanceCreateInfoKHR_win32_to_host(con
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkQueueFamilyProperties2_win32_to_host(struct conversion_context *ctx, const VkQueueFamilyProperties232 *in, VkQueueFamilyProperties2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -22852,7 +22852,7 @@ static inline void convert_VkQueueFamilyProperties2_win32_to_host(struct convers
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -22898,19 +22898,19 @@ static inline void convert_VkQueueFamilyProperties2_win32_to_host(struct convers
 static inline void convert_VkQueueFamilyProperties2_host_to_win32(const VkQueueFamilyProperties2 *in, VkQueueFamilyProperties232 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     out->queueFamilyProperties = in->queueFamilyProperties;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES_KHR:
         {
-            VkQueueFamilyGlobalPriorityPropertiesKHR32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES_KHR);
+            VkQueueFamilyGlobalPriorityPropertiesKHR32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES_KHR);
             const VkQueueFamilyGlobalPriorityPropertiesKHR *in_ext = (const VkQueueFamilyGlobalPriorityPropertiesKHR *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_GLOBAL_PRIORITY_PROPERTIES_KHR;
             out_ext->priorityCount = in_ext->priorityCount;
@@ -22920,7 +22920,7 @@ static inline void convert_VkQueueFamilyProperties2_host_to_win32(const VkQueueF
         }
         case VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_NV:
         {
-            VkQueueFamilyCheckpointPropertiesNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_NV);
+            VkQueueFamilyCheckpointPropertiesNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_NV);
             const VkQueueFamilyCheckpointPropertiesNV *in_ext = (const VkQueueFamilyCheckpointPropertiesNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_NV;
             out_ext->checkpointExecutionStageMask = in_ext->checkpointExecutionStageMask;
@@ -22929,7 +22929,7 @@ static inline void convert_VkQueueFamilyProperties2_host_to_win32(const VkQueueF
         }
         case VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_2_NV:
         {
-            VkQueueFamilyCheckpointProperties2NV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_2_NV);
+            VkQueueFamilyCheckpointProperties2NV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_2_NV);
             const VkQueueFamilyCheckpointProperties2NV *in_ext = (const VkQueueFamilyCheckpointProperties2NV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_CHECKPOINT_PROPERTIES_2_NV;
             out_ext->checkpointExecutionStageMask = in_ext->checkpointExecutionStageMask;
@@ -23109,7 +23109,7 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_unwrapped_ho
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSurfaceCapabilities2KHR_win32_to_host(struct conversion_context *ctx, const VkSurfaceCapabilities2KHR32 *in, VkSurfaceCapabilities2KHR *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -23117,7 +23117,7 @@ static inline void convert_VkSurfaceCapabilities2KHR_win32_to_host(struct conver
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -23142,19 +23142,19 @@ static inline void convert_VkSurfaceCapabilities2KHR_win32_to_host(struct conver
 static inline void convert_VkSurfaceCapabilities2KHR_host_to_win32(const VkSurfaceCapabilities2KHR *in, VkSurfaceCapabilities2KHR32 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     out->surfaceCapabilities = in->surfaceCapabilities;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_PRESENT_BARRIER_NV:
         {
-            VkSurfaceCapabilitiesPresentBarrierNV32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_PRESENT_BARRIER_NV);
+            VkSurfaceCapabilitiesPresentBarrierNV32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_PRESENT_BARRIER_NV);
             const VkSurfaceCapabilitiesPresentBarrierNV *in_ext = (const VkSurfaceCapabilitiesPresentBarrierNV *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_SURFACE_CAPABILITIES_PRESENT_BARRIER_NV;
             out_ext->presentBarrierSupported = in_ext->presentBarrierSupported;
@@ -23193,7 +23193,7 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(const V
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSurfaceFormat2KHR_win32_to_host(struct conversion_context *ctx, const VkSurfaceFormat2KHR32 *in, VkSurfaceFormat2KHR *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -23201,7 +23201,7 @@ static inline void convert_VkSurfaceFormat2KHR_win32_to_host(struct conversion_c
     out->sType = in->sType;
     out->pNext = NULL;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -23226,19 +23226,19 @@ static inline void convert_VkSurfaceFormat2KHR_win32_to_host(struct conversion_c
 static inline void convert_VkSurfaceFormat2KHR_host_to_win32(const VkSurfaceFormat2KHR *in, VkSurfaceFormat2KHR32 *out)
 {
     const VkBaseInStructure *in_header;
-    VkBaseOutStructure *out_header = (void *)out;
+    VkBaseOutStructure32 *out_header = (void *)out;
 
     if (!in) return;
 
     out->surfaceFormat = in->surfaceFormat;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)
     {
         switch (in_header->sType)
         {
         case VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT:
         {
-            VkImageCompressionPropertiesEXT32 *out_ext = find_next_struct(out_header, VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT);
+            VkImageCompressionPropertiesEXT32 *out_ext = find_next_struct32(out_header, VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT);
             const VkImageCompressionPropertiesEXT *in_ext = (const VkImageCompressionPropertiesEXT *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT;
             out_ext->imageCompressionFlags = in_ext->imageCompressionFlags;
@@ -23825,7 +23825,7 @@ static inline const VkSparseImageMemoryBindInfo *convert_VkSparseImageMemoryBind
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo32 *in, VkBindSparseInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -23843,7 +23843,7 @@ static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_cont
     out->signalSemaphoreCount = in->signalSemaphoreCount;
     out->pSignalSemaphores = in->pSignalSemaphores;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -23930,7 +23930,7 @@ static inline const VkPresentRegionKHR *convert_VkPresentRegionKHR_array_win32_t
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkPresentInfoKHR_win32_to_host(struct conversion_context *ctx, const VkPresentInfoKHR32 *in, VkPresentInfoKHR *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -23944,7 +23944,7 @@ static inline void convert_VkPresentInfoKHR_win32_to_host(struct conversion_cont
     out->pImageIndices = in->pImageIndices;
     out->pResults = in->pResults;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -24013,7 +24013,7 @@ static inline void convert_VkSubmitInfo_win64_to_host(struct conversion_context 
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSubmitInfo_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo32 *in, VkSubmitInfo *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -24028,7 +24028,7 @@ static inline void convert_VkSubmitInfo_win32_to_host(struct conversion_context 
     out->signalSemaphoreCount = in->signalSemaphoreCount;
     out->pSignalSemaphores = in->pSignalSemaphores;
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -24240,7 +24240,7 @@ static inline void convert_VkSubmitInfo2_win64_to_host(struct conversion_context
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkSubmitInfo2_win32_to_host(struct conversion_context *ctx, const VkSubmitInfo232 *in, VkSubmitInfo2 *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -24255,7 +24255,7 @@ static inline void convert_VkSubmitInfo2_win32_to_host(struct conversion_context
     out->signalSemaphoreInfoCount = in->signalSemaphoreInfoCount;
     out->pSignalSemaphoreInfos = convert_VkSemaphoreSubmitInfo_array_win32_to_host(ctx, in->pSignalSemaphoreInfos, in->signalSemaphoreInfoCount);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {
@@ -24459,7 +24459,7 @@ static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win64_to_host(st
 #if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(struct conversion_context *ctx, const VkDebugUtilsMessengerCallbackDataEXT32 *in, VkDebugUtilsMessengerCallbackDataEXT *out)
 {
-    const VkBaseInStructure *in_header;
+    const VkBaseInStructure32 *in_header;
     VkBaseOutStructure *out_header = (void *)out;
 
     if (!in) return;
@@ -24477,7 +24477,7 @@ static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(st
     out->objectCount = in->objectCount;
     out->pObjects = convert_VkDebugUtilsObjectNameInfoEXT_array_win32_to_host(ctx, in->pObjects, in->objectCount);
 
-    for (in_header = in->pNext; in_header; in_header = in_header->pNext)
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
         switch (in_header->sType)
         {

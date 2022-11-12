@@ -2185,8 +2185,18 @@ class StructConversionFunction(object):
 
         body += "{\n"
         if needs_extensions:
-            body += "    const VkBaseInStructure *in_header;\n"
-            body += "    VkBaseOutStructure *out_header = (void *)out;\n\n"
+            if self.direction == Direction.INPUT:
+                if self.conv:
+                    body += "    const VkBaseInStructure32 *in_header;\n"
+                else:
+                    body += "    const VkBaseInStructure *in_header;\n"
+                body += "    VkBaseOutStructure *out_header = (void *)out;\n\n"
+            else:
+                body += "    const VkBaseInStructure *in_header;\n"
+                if self.conv:
+                    body += "    VkBaseOutStructure32 *out_header = (void *)out;\n\n"
+                else:
+                    body += "    VkBaseOutStructure *out_header = (void *)out;\n\n"
 
         body += "    if (!in) return;\n\n"
 
@@ -2200,7 +2210,10 @@ class StructConversionFunction(object):
             body += "    " + m.copy("in->", "out->", self.direction, self.conv, self.unwrap)
 
         if needs_extensions:
-            body += "\n    for (in_header = in->pNext; in_header; in_header = in_header->pNext)\n"
+            if self.conv and self.direction == Direction.INPUT:
+                body += "\n    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))\n"
+            else:
+                body += "\n    for (in_header = (void *)in->pNext; in_header; in_header = (void *)in_header->pNext)\n"
             body += "    {\n"
             body += "        switch (in_header->sType)\n"
             body += "        {\n"
@@ -2232,6 +2245,8 @@ class StructConversionFunction(object):
                 body += "        {\n"
                 if self.direction == Direction.INPUT:
                     body += ident + "{0} *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));\n".format(out_type)
+                elif self.conv:
+                    body += ident + "{0} *out_ext = find_next_struct32(out_header, {1});\n".format(out_type, stype)
                 else:
                     body += ident + "{0} *out_ext = find_next_struct(out_header, {1});\n".format(out_type, stype)
 

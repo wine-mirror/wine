@@ -277,6 +277,33 @@ static inline void *conversion_context_alloc(struct conversion_context *pool, si
     }
 }
 
+typedef UINT32 PTR32;
+
+typedef struct
+{
+    VkStructureType sType;
+    PTR32 pNext;
+} VkBaseInStructure32;
+
+typedef struct
+{
+    VkStructureType sType;
+    PTR32 pNext;
+} VkBaseOutStructure32;
+
+static inline void *find_next_struct32(void *s, VkStructureType t)
+{
+    VkBaseOutStructure32 *header;
+
+    for (header = s; header; header = UlongToPtr(header->pNext))
+    {
+        if (header->sType == t)
+            return header;
+    }
+
+    return NULL;
+}
+
 static inline void *find_next_struct(const void *s, VkStructureType t)
 {
     VkBaseOutStructure *header;
