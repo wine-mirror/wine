@@ -728,17 +728,19 @@ static void free_ranges_insert_view( struct file_view *view )
     assert( range != free_ranges_end );
     assert( range->end > view_base || next != free_ranges_end );
 
-    /* this happens because AT_ROUND_TO_PAGE was used with NtMapViewOfSection to force 4kB aligned mapping. */
-    if ((range->end > view_base && range->base >= view_end) ||
-        (range->end == view_base && next->base >= view_end))
-    {
-        /* on Win64, assert that it's correctly aligned so we're not going to be in trouble later */
-#ifdef _WIN64
-        assert( view->base == view_base );
-#endif
-        WARN( "range %p - %p is already mapped\n", view_base, view_end );
+    /* Free ranges addresses are aligned at granularity_mask while the views may be not. */
+
+    if (range->base > view_base)
+        view_base = range->base;
+    if (range->end < view_end)
+        view_end = range->end;
+    if (range->end == view_base && next->base >= view_end)
+        view_end = view_base;
+
+    TRACE( "%p - %p, aligned %p - %p.\n", view->base, (char *)view->base + view->size, view_base, view_end );
+
+    if (view_end <= view_base)
         return;
-    }
 
     /* this should never happen */
     if (range->base > view_base || range->end < view_end)
@@ -788,9 +790,7 @@ static void free_ranges_remove_view( struct file_view *view )
     struct range_entry *range = free_ranges_lower_bound( view_base );
     struct range_entry *next = range + 1;
 
-    /* It's possible to use AT_ROUND_TO_PAGE on 32bit with NtMapViewOfSection to force 4kB alignment,
-     * and this breaks our assumptions. Look at the views around to check if the range is still in use. */
-#ifndef _WIN64
+    /* Free ranges addresses are aligned at granularity_mask while the views may be not. */
     struct file_view *prev_view = RB_ENTRY_VALUE( rb_prev( &view->entry ), struct file_view, entry );
     struct file_view *next_view = RB_ENTRY_VALUE( rb_next( &view->entry ), struct file_view, entry );
     void *prev_view_base = prev_view ? ROUND_ADDR( prev_view->base, granularity_mask ) : NULL;
@@ -798,13 +798,15 @@ static void free_ranges_remove_view( struct file_view *view )
     void *next_view_base = next_view ? ROUND_ADDR( next_view->base, granularity_mask ) : NULL;
     void *next_view_end = next_view ? ROUND_ADDR( (char *)next_view->base + next_view->size + granularity_mask, granularity_mask ) : NULL;
 
-    if ((prev_view_base < view_end && prev_view_end > view_base) ||
-        (next_view_base < view_end && next_view_end > view_base))
-    {
-        WARN( "range %p - %p is still mapped\n", view_base, view_end );
+    if (prev_view_end && prev_view_end > view_base && prev_view_base < view_end)
+        view_base = prev_view_end;
+    if (next_view_base && next_view_base < view_end && next_view_end > view_base)
+        view_end = next_view_base;
+
+    TRACE( "%p - %p, aligned %p - %p.\n", view->base, (char *)view->base + view->size, view_base, view_end );
+
+    if (view_end <= view_base)
         return;
-    }
-#endif
 
     /* free_ranges initial value is such that the view is either inside range or before another one. */
     assert( range != free_ranges_end );
