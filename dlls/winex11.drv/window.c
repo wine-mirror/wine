@@ -2067,7 +2067,7 @@ HWND create_foreign_window( Display *display, Window xwin )
         class.lpszClassName = classW;
         RtlInitUnicodeString( &class_name, classW );
         if (!NtUserRegisterClassExWOW( &class, &class_name, &version, NULL, 0, 0, NULL ) &&
-            GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+            RtlGetLastWin32Error() != ERROR_CLASS_ALREADY_EXISTS)
         {
             ERR( "Could not register foreign window class\n" );
             return FALSE;

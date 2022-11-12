@@ -1655,7 +1655,7 @@ static UINT *get_clipboard_formats( UINT *size )
         if (!(ids = malloc( *size * sizeof(*ids) ))) return NULL;
         if (NtUserGetUpdatedClipboardFormats( ids, *size, size )) break;
         free( ids );
-        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
+        if (RtlGetLastWin32Error() != ERROR_INSUFFICIENT_BUFFER) return NULL;
     }
     register_win32_formats( ids, *size );
     return ids;
