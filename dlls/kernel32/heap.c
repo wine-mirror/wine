@@ -343,6 +343,7 @@ UINT WINAPI LocalFlags( HLOCAL handle )
  */
 HLOCAL WINAPI LocalHandle( const void *ptr )
 {
+    HANDLE heap = GetProcessHeap();
     HLOCAL handle = (HANDLE)ptr;
     ULONG flags;
 
@@ -354,11 +355,14 @@ HLOCAL WINAPI LocalHandle( const void *ptr )
         return 0;
     }
 
-    if (!RtlGetUserInfoHeap( GetProcessHeap(), 0, (void *)ptr, &handle, &flags ))
+    RtlLockHeap( heap );
+    if (!HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ) ||
+        !RtlGetUserInfoHeap( heap, HEAP_NO_SERIALIZE, (void *)ptr, &handle, &flags ))
     {
         SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
+        handle = 0;
     }
+    RtlUnlockHeap( heap );
 
     return handle;
 }
