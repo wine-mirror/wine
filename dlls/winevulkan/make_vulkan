@@ -774,7 +774,7 @@ class VkFunction(object):
         if needs_alloc:
             body += "    struct conversion_context ctx;\n"
         body += "\n"
-        body += "    {0}\n".format(self.trace(params_prefix=params_prefix))
+        body += "    {0}\n".format(self.trace(params_prefix=params_prefix, conv=conv))
 
         if self.params[0].optional and self.params[0].is_handle():
             if self.type != "void":
@@ -792,16 +792,19 @@ class VkFunction(object):
                 body += p.copy(Direction.INPUT, conv, unwrap, prefix=params_prefix)
             elif p.is_dynamic_array() and p.needs_conversion(conv, unwrap, Direction.OUTPUT):
                 body += "    {0}_host = ({2}{0} && {1}) ? conversion_context_alloc(&ctx, sizeof(*{0}_host) * {1}) : NULL;\n".format(
-                    p.name, p.get_dyn_array_len(params_prefix), params_prefix)
+                    p.name, p.get_dyn_array_len(params_prefix, conv), params_prefix)
 
         # Build list of parameters containing converted and non-converted parameters.
         # The param itself knows if conversion is needed and applies it when we set conv=True.
         params = ", ".join([p.variable(conv=conv, unwrap=unwrap, params_prefix=params_prefix) for p in self.params])
         if self.extra_param:
-            params += ", {0}{1}".format(params_prefix, self.extra_param)
+            if conv:
+                params += ", UlongToPtr({0}{1})".format(params_prefix, self.extra_param)
+            else:
+                params += ", {0}{1}".format(params_prefix, self.extra_param)
 
         if unwrap or self.thunk_type == ThunkType.PUBLIC:
-            func_prefix = "{0}.p_".format(self.params[0].dispatch_table(params_prefix))
+            func_prefix = "{0}.p_".format(self.params[0].dispatch_table(params_prefix, conv))
         else:
             func_prefix = "wine_"
 
@@ -869,7 +872,7 @@ class VkFunction(object):
             for p in self.params:
                 thunk += "        {0};\n".format(p.definition(conv=True, is_member=True))
             if self.extra_param:
-                thunk += "        void *{0};\n".format(self.extra_param)
+                thunk += "        PTR32 {0};\n".format(self.extra_param)
             if self.type != "void":
                 thunk += "        {0} result;\n".format(self.type)
             thunk += "    } *params = args;\n"
@@ -886,7 +889,7 @@ class VkFunction(object):
         thunk += "}\n\n"
         return thunk
 
-    def trace(self, message=None, trace_func=None, params_prefix=""):
+    def trace(self, message=None, trace_func=None, params_prefix="", conv=False):
         """ Create a trace string including all parameters.
 
         Args:
@@ -902,7 +905,7 @@ class VkFunction(object):
             trace += message
 
         # First loop is for all the format strings.
-        trace += ", ".join([p.format_string() for p in self.params])
+        trace += ", ".join([p.format_string(conv) for p in self.params])
         trace += "\\n\""
 
         # Second loop for parameter names and optional conversions.
@@ -1131,7 +1134,7 @@ class VkVariable(object):
         self.handle = type_info["data"] if type_info["category"] == "handle" else None
         self.struct = type_info["data"] if type_info["category"] == "struct" else None
 
-    def get_dyn_array_len(self, prefix):
+    def get_dyn_array_len(self, prefix, conv):
         if isinstance(self.dyn_array_len, int):
             return self.dyn_array_len
 
@@ -1144,14 +1147,16 @@ class VkVariable(object):
         if i != -1:
             var = parent[parent.index(len_str[0:i])]
             len_str = len_str[i+2:]
-            len += var.name + "->"
-            parent = var.struct.members
+            len = "({0})->".format(var.value(len, conv))
+            parent = var.struct
 
-        len += len_str
         if len_str in parent:
             var = parent[parent.index(len_str)]
+            len = var.value(len, conv);
             if var.is_pointer():
                 len = "*" + len
+        else:
+            len += len_str
 
         if isinstance(self.parent, VkStruct) and self.parent.name in MEMBER_LENGTH_EXPRESSIONS:
             exprs = MEMBER_LENGTH_EXPRESSIONS[self.parent.name]
@@ -1290,6 +1295,39 @@ class VkVariable(object):
 
         return conversions
 
+    def needs_ptr32_type(self):
+        """ Check if variable needs to use PTR32 type. """
+
+        return self.is_pointer() or self.is_pointer_size() or self.is_static_array()
+
+    def value(self, prefix, conv):
+        """ Returns code accessing member value, casting 32-bit pointers when needed. """
+
+        if not conv or not self.needs_ptr32_type() or (not self.is_pointer() and self.type == "size_t"):
+            return prefix + self.name
+
+        # FIXME: Use conversion instead
+        if self.name in ["ppUsageCounts", "ppEnabledLayerNames", "ppEnabledExtensionNames"]:
+            return "UlongToPtr({0}{1})".format(prefix, self.name)
+
+        cast_type = ""
+        if self.const:
+            cast_type += "const "
+
+        if self.pointer_array or ((self.is_dynamic_array() or self.is_static_array()) and self.is_pointer_size()):
+            cast_type += "PTR32 *"
+        else:
+            cast_type += self.type
+            if self.needs_host_type():
+                cast_type += "32"
+
+            if self.is_pointer():
+                cast_type += " {0}".format(self.pointer)
+            elif self.is_static_array():
+                cast_type += " *"
+
+        return "({0})UlongToPtr({1}{2})".format(cast_type, prefix, self.name)
+
 
 class VkMember(VkVariable):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
@@ -1383,15 +1421,17 @@ class VkMember(VkVariable):
         if self.needs_conversion(conv, unwrap, direction, False):
             if self.is_dynamic_array():
                 # Array length is either a variable name (string) or an int.
-                count = self.get_dyn_array_len(input)
+                count = self.get_dyn_array_len(input, conv)
                 host_part = "host" if unwrap else "unwrapped_host"
                 pointer_part = "pointer_" if self.pointer_array else ""
                 if direction == Direction.OUTPUT:
-                    return "convert_{2}_{7}array_{6}_to_{5}({3}{1}, {0}{1}, {4});\n".format(
-                        output, self.name, self.type, input, count, win_type, host_part, pointer_part)
+                    return "convert_{2}_{7}array_{6}_to_{5}({3}{1}, {0}, {4});\n".format(
+                        self.value(output, conv), self.name, self.type, input, count, win_type,
+                        host_part, pointer_part)
                 else:
-                    return "{0}{1} = convert_{2}_{7}array_{5}_to_{6}(ctx, {3}{1}, {4});\n".format(
-                        output, self.name, self.type, input, count, win_type, host_part, pointer_part)
+                    return "{0}{1} = convert_{2}_{7}array_{5}_to_{6}(ctx, {3}, {4});\n".format(
+                        output, self.name, self.type, self.value(input, conv), count, win_type,
+                        host_part, pointer_part)
             elif self.is_static_array():
                 count = self.array_len
                 if direction == Direction.OUTPUT:
@@ -1407,7 +1447,7 @@ class VkMember(VkVariable):
                     LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
                 else:
                     handle = self.type_info["data"]
-                    return "{0}{1} = {2};\n".format(output, self.name, handle.driver_handle("{0}{1}".format(input, self.name)))
+                    return "{0}{1} = {2};\n".format(output, self.name, handle.driver_handle(self.value(input, conv)))
             elif self.is_generic_handle():
                 if direction == Direction.OUTPUT:
                     LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
@@ -1423,6 +1463,10 @@ class VkMember(VkVariable):
         elif self.is_static_array():
             bytes_count = "{0} * sizeof({1})".format(self.array_len, self.type)
             return "memcpy({0}{1}, {2}{1}, {3});\n".format(output, self.name, input, bytes_count)
+        elif direction == Direction.INPUT:
+            return "{0}{1} = {2};\n".format(output, self.name, self.value(input, conv))
+        elif conv and direction == Direction.OUTPUT and self.is_pointer():
+            return "{0}{1} = PtrToUlong({2}{1});\n".format(output, self.name, input)
         else:
             return "{0}{1} = {2}{1};\n".format(output, self.name, input)
 
@@ -1433,6 +1477,12 @@ class VkMember(VkVariable):
             align (bool, optional): Enable alignment if a type needs it. This adds WINE_VK_ALIGN(8) to a member.
             conv (bool, optional): Enable conversion if a type needs it. This appends '_host' to the name.
         """
+
+        if conv and (self.is_pointer() or self.is_pointer_size()):
+            text = "PTR32 " + self.name
+            if self.is_static_array():
+                text += "[{0}]".format(self.array_len)
+            return text
 
         text = ""
         if self.is_const():
@@ -1612,32 +1662,39 @@ class VkParam(VkVariable):
         if direction == Direction.INPUT:
             ctx_param = "&ctx, " if self.needs_alloc(conv, unwrap) else ""
             if self.is_dynamic_array():
-                return "    {1}_host = convert_{2}_array_{4}_to_{6}host({5}{0}{1}, {3});\n".format(
-                    prefix, self.name, self.type, self.get_dyn_array_len(prefix), win_type, ctx_param, wrap_part)
+                return "    {0}_host = convert_{2}_array_{4}_to_{6}host({5}{1}, {3});\n".format(
+                    self.name, self.value(prefix, conv), self.type, self.get_dyn_array_len(prefix, conv),
+                    win_type, ctx_param, wrap_part)
             elif self.optional:
                 ret  = "    if ({0}{1})\n".format(prefix, self.name)
                 ret += "    {\n"
                 ret += "        {0}_host = conversion_context_alloc(&ctx, sizeof(*{0}_host));\n".format(self.name)
-                ret += "        convert_{0}_{3}_to_{5}host({4}{1}{2}, {2}_host);\n".format(self.type, prefix, self.name, win_type, ctx_param, wrap_part)
+                ret += "        convert_{0}_{3}_to_{5}host({4}{1}, {2}_host);\n".format(
+                    self.type, self.value(prefix, conv), self.name, win_type, ctx_param, wrap_part)
                 ret += "    }\n"
                 return ret
             elif self.is_struct():
-                return "    convert_{0}_{3}_to_{5}host({4}{1}{2}, &{2}_host);\n".format(self.type, prefix, self.name, win_type, ctx_param, wrap_part)
+                return "    convert_{0}_{3}_to_{5}host({4}{1}, &{2}_host);\n".format(
+                    self.type, self.value(prefix, conv), self.name, win_type, ctx_param, wrap_part)
             else:
-                return "    {1}_host = *{0}{1};\n".format(prefix, self.name)
+                return "    {0}_host = *{1};\n".format(self.name, self.value(prefix, conv))
         else:
             if self.is_dynamic_array():
-                return "    convert_{0}_array_{1}host_to_{2}({3}_host, {4}{3}, {5});\n".format(
-                    self.type, wrap_part, win_type, self.name, prefix, self.get_dyn_array_len(prefix))
+                return "    convert_{0}_array_{1}host_to_{2}({3}_host, {4}, {5});\n".format(
+                    self.type, wrap_part, win_type, self.name, self.value(prefix, conv),
+                    self.get_dyn_array_len(prefix, conv))
             elif self.is_struct():
                 ref_part = "" if self.optional else "&"
-                return "    convert_{0}_host_to_{3}({4}{2}_host, {1}{2});\n".format(
-                    self.type, prefix, self.name, win_type, ref_part)
+                return "    convert_{0}_host_to_{3}({4}{2}_host, {1});\n".format(
+                    self.type, self.value(prefix, conv), self.name, win_type, ref_part)
             else:
-                return "    *{0}{1} = {1}_host;\n".format(prefix, self.name)
+                return "    *{0} = {1}_host;\n".format(self.value(prefix, conv), self.name)
 
     def definition(self, postfix=None, is_member=False, conv=False):
         """ Return prototype for the parameter. E.g. 'const char *foo' """
+
+        if is_member and conv and self.needs_ptr32_type():
+            return "PTR32 {0}".format(self.name)
 
         proto = ""
         if self.const:
@@ -1668,15 +1725,17 @@ class VkParam(VkVariable):
 
         return proto
 
-    def dispatch_table(self, params_prefix=""):
+    def dispatch_table(self, params_prefix, conv):
         """ Return functions dispatch table pointer for dispatchable objects. """
 
         if not self.is_dispatchable():
             return None
 
-        return self.handle.dispatch_table(params_prefix + self.name)
+        return self.handle.dispatch_table(self.value(params_prefix, conv))
 
-    def format_string(self):
+    def format_string(self, conv):
+        if conv and self.needs_ptr32_type() and (self.type != "size_t" or self.is_pointer()):
+            return "%#x"
         return self.format_str
 
     def is_dispatchable(self):
@@ -1765,17 +1824,20 @@ class VkParam(VkVariable):
                 return "{0}_host".format(self.name)
             else:
                 return "&{0}_host".format(self.name)
-        elif unwrap:
+
+        p = self.value(params_prefix, conv)
+
+        if unwrap:
             if self.object_type != None and self.type == "uint64_t":
                 return "wine_vk_unwrap_handle({0}{1}, {0}{2})".format(params_prefix, self.object_type, self.name)
 
             # We need to pass the native handle to the native Vulkan calls and
             # the wine driver's handle to calls which are wrapped by the driver.
-            p = "{0}{1}".format(params_prefix, self.name)
             driver_handle = self.handle.driver_handle(p) if self.is_handle() else None
-            return driver_handle if driver_handle else p
-        else:
-            return "{0}{1}".format(params_prefix, self.name)
+            if driver_handle:
+                return driver_handle
+
+        return p
 
 
 class VkStruct(Sequence):
@@ -2327,8 +2389,11 @@ class ArrayConversionFunction(object):
         needs_alloc = self.direction != Direction.OUTPUT and self.array.needs_alloc(self.conv, self.unwrap)
 
         win_type = self.type
-        if self.conv and self.array.needs_host_type():
-            win_type += "32"
+        if self.conv:
+            if self.array.needs_host_type():
+                win_type += "32"
+            elif self.array.is_handle() and self.array.handle.is_dispatchable():
+                win_type = "PTR32"
         if self.direction == Direction.OUTPUT and self.array.is_const():
             win_type = "const " + win_type
         pointer_part = self.array.pointer if self.array.pointer else "*"
@@ -2337,6 +2402,9 @@ class ArrayConversionFunction(object):
             params = ["const {0} {1}in".format(self.type, pointer_part),
                       "{0} {1}out".format(win_type, pointer_part), "uint32_t count"]
             return_type = None
+        elif self.conv and self.array.pointer_array:
+            params = ["const PTR32 *in", "uint32_t count"]
+            return_type = self.type
         else:
             params = ["const {0} {1}in".format(win_type, pointer_part), "uint32_t count"]
             return_type = self.type
@@ -2393,17 +2461,34 @@ class ArrayConversionFunction(object):
                     body += "        {\n"
                     body += "            out[i] = conversion_context_alloc(ctx, sizeof(*out[i]));\n"
                     if struct.needs_conversion(self.conv, self.unwrap, self.direction, False):
-                        body += "            convert_{0}_{1}({2}in[i], out[i]);\n".format(
-                            struct.name, conv_suffix, ctx_part)
+                        if self.conv:
+                            in_param = "({0} *)UlongToPtr(in[i])".format(win_type)
+                        else:
+                            in_param = "in[i]"
+                        body += "            convert_{0}_{1}({2}{3}, out[i]);\n".format(
+                            struct.name, conv_suffix, ctx_part, in_param)
                     else:
                         body += "            *out[i] = *in[i];\n".format(win_type)
                     body += "        }\n"
                     body += "        else\n"
                     body += "            out[i] = NULL;\n"
-            elif self.array.is_handle() and self.direction == Direction.INPUT and self.unwrap:
+            elif self.array.is_handle():
                 if self.array.pointer_array:
                     LOGGER.error("Unhandled handle pointer arrays")
-                body += "        out[i] = " + self.array.handle.driver_handle("in[i]") + ";\n"
+                handle = self.array.handle
+                if not self.conv or not handle.is_dispatchable():
+                    input = "in[i]"
+                elif self.direction == Direction.INPUT:
+                    input = "UlongToPtr(in[i])"
+                else:
+                    input = "PtrToUlong(in[i])"
+
+                if not self.unwrap or not handle.is_wrapped():
+                    body += "        out[i] = {0};\n".format(input)
+                elif self.direction == Direction.INPUT:
+                    body += "        out[i] = " + handle.driver_handle(input) + ";\n"
+                else:
+                    LOGGER.warning("Unhandled handle output conversion")
             else:
                 body += "        out[i] = in[i];\n"
 
