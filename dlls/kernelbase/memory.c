@@ -903,7 +903,8 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL handle )
     TRACE_(globalmem)( "handle %p\n", handle );
 
     RtlLockHeap( heap );
-    if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
+    if ((ptr = unsafe_ptr_from_HLOCAL( handle )) &&
+        HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
     {
         if (HeapFree( heap, HEAP_NO_SERIALIZE, ptr )) ret = 0;
     }
@@ -985,7 +986,8 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
     if (flags & LMEM_ZEROINIT) heap_flags |= HEAP_ZERO_MEMORY;
 
     RtlLockHeap( heap );
-    if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
+    if ((ptr = unsafe_ptr_from_HLOCAL( handle )) &&
+        HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
     {
         if (flags & LMEM_MODIFY) ret = handle;
         else
