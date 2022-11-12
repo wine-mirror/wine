@@ -22,6 +22,9 @@
 #pragma makedep unix
 #endif
 
+/* this is actually part of a static lib linked into a .exe.so module, not a real Unix library */
+#undef WINE_UNIX_LIB
+
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
