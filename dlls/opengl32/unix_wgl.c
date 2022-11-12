@@ -234,6 +234,11 @@ static inline UINT asciiz_to_unicode( WCHAR *dst, const char *src )
     return (p - dst) * sizeof(WCHAR);
 }
 
+static inline void unicode_to_ascii( char *dst, const WCHAR *src, size_t len )
+{
+    while (len--) *dst++ = *src++;
+}
+
 static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
 {
     UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
@@ -281,16 +286,12 @@ static HKEY open_hkcu_key( const char *name )
     return reg_open_key( hkcu, bufferW, asciiz_to_unicode( bufferW, name ) - sizeof(WCHAR) );
 }
 
-static ULONG query_reg_value( HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
+static NTSTATUS query_reg_value( HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
 {
     unsigned int name_size = name ? lstrlenW( name ) * sizeof(WCHAR) : 0;
     UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };
 
-    if (NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation,
-                         info, size, &size ))
-        return 0;
-
-    return size - FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data);
+    return NtQueryValueKey( hkey, &nameW, KeyValuePartialInformation, info, size, &size );
 }
 
 /* build the extension string by filtering out the disabled extensions */
@@ -310,7 +311,14 @@ static BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLui
             KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
             static WCHAR disabled_extensionsW[] = {'D','i','s','a','b','l','e','d','E','x','t','e','n','s','i','o','n','s',0};
 
-            if (query_reg_value( hkey, disabled_extensionsW, value, sizeof(buffer) )) str = strdup( buffer );
+            if (!query_reg_value( hkey, disabled_extensionsW, value, sizeof(buffer) ))
+            {
+                ULONG len = value->DataLength / sizeof(WCHAR);
+
+                unicode_to_ascii( buffer, (WCHAR *)value->Data, len );
+                buffer[len] = 0;
+                str = strdup( buffer );
+            }
             NtClose( hkey );
         }
         if (str)
