@@ -2025,7 +2025,7 @@ static void WCMD_parse_line(CMD_LIST    *cmdStart,
   }
 
   /* Execute the body of the foor loop with these values */
-  if (forloopcontext.variable[varidx] && forloopcontext.variable[varidx][0] != forf_eol) {
+  if (varidx >= 0 && forloopcontext.variable[varidx] && forloopcontext.variable[varidx][0] != forf_eol) {
     CMD_LIST *thisCmdStart = cmdStart;
     *doExecuted = TRUE;
     WCMD_part_execute(&thisCmdStart, firstCmd, FALSE, TRUE);
