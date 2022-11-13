@@ -3156,7 +3156,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResultEx( HANDLE file, OVERLAPPED *ov
 
     TRACE( "(%p %p %p %lu %d)\n", file, overlapped, result, timeout, alertable );
 
-    status = overlapped->Internal;
+    /* Paired with the write-release in set_async_iosb() in ntdll; see the
+     * latter for details. */
+    status = ReadAcquire( (LONG *)&overlapped->Internal );
     if (status == STATUS_PENDING)
     {
         if (!timeout)
@@ -3173,6 +3175,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetOverlappedResultEx( HANDLE file, OVERLAPPED *ov
             return FALSE;
         }
 
+        /* We don't need to give this load acquire semantics; the wait above
+         * already guarantees that the IOSB and output buffer are filled. */
         status = overlapped->Internal;
         if (status == STATUS_PENDING) status = STATUS_SUCCESS;
     }

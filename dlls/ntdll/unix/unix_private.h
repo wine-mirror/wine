@@ -367,6 +367,24 @@ static inline void set_async_iosb( client_ptr_t iosb, NTSTATUS status, ULONG_PTR
 {
     if (!iosb) return;
 
+    /* GetOverlappedResult() and WSAGetOverlappedResult() expect that if the
+     * status is written, that the information (and buffer, which was written
+     * earlier from the async callback) will be available. Hence we need to
+     * store the status last, with release semantics to ensure that those
+     * writes are visible. This release is paired with a read-acquire in
+     * GetOverlappedResult() and WSAGetOverlappedResult():
+     *
+     * CPU 0 (set_async_iosb)            CPU 1 (GetOverlappedResultEx)
+     * ===========================       ===========================
+     * write buffer
+     * write Information
+     * WriteRelease(Status) <--------.
+     *                               |
+     *                               |
+     *                (paired with)  `-> ReadAcquire(Status)
+     *                                   read Information
+     */
+
     if (in_wow64_call())
     {
         struct iosb32
@@ -374,18 +392,18 @@ static inline void set_async_iosb( client_ptr_t iosb, NTSTATUS status, ULONG_PTR
             NTSTATUS Status;
             ULONG    Information;
         } *io = wine_server_get_ptr( iosb );
-        io->Status = status;
         io->Information = info;
+        WriteRelease( &io->Status, status );
     }
     else
     {
         IO_STATUS_BLOCK *io = wine_server_get_ptr( iosb );
-#ifdef NONAMELESSUNION
-        io->u.Status = status;
-#else
-        io->Status = status;
-#endif
         io->Information = info;
+#ifdef NONAMELESSUNION
+        WriteRelease( &io->u.Status, status );
+#else
+        WriteRelease( &io->Status, status );
+#endif
     }
 }
 
