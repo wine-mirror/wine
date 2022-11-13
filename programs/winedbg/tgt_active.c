@@ -153,7 +153,7 @@ static BOOL dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
 
     if (addr.Mode != dbg_curr_thread->addr_mode)
     {
-        const char* name = NULL;
+        const char* name;
 
         switch (addr.Mode)
         {
@@ -162,6 +162,7 @@ static BOOL dbg_exception_prolog(BOOL is_debug, const EXCEPTION_RECORD* rec)
         case AddrModeReal: name = "vm86";       break;
         case AddrModeFlat: name = dbg_curr_process->be_cpu->pointer_size == 4
                                   ? "32 bit" : "64 bit"; break;
+        default: return FALSE;
         }
         dbg_printf("In %s mode.\n", name);
         dbg_curr_thread->addr_mode = addr.Mode;
