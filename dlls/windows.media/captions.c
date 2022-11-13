@@ -35,6 +35,7 @@ const char *debugstr_hstring( HSTRING hstr )
 struct captions_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IClosedCaptionPropertiesStatics IClosedCaptionPropertiesStatics_iface;
     LONG ref;
 };
 
@@ -54,6 +55,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IClosedCaptionPropertiesStatics ))
+    {
+        *out = &impl->IClosedCaptionPropertiesStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -116,9 +124,108 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( captions, IClosedCaptionPropertiesStatics, struct captions_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI captions_get_FontColor( IClosedCaptionPropertiesStatics *iface, ClosedCaptionColor *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_ComputedFontColor( IClosedCaptionPropertiesStatics *iface, Color *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_FontOpacity( IClosedCaptionPropertiesStatics *iface, ClosedCaptionOpacity *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_FontSize( IClosedCaptionPropertiesStatics *iface, ClosedCaptionSize *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_FontStyle( IClosedCaptionPropertiesStatics *iface, ClosedCaptionStyle *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_FontEffect( IClosedCaptionPropertiesStatics *iface, ClosedCaptionEdgeEffect *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_BackgroundColor( IClosedCaptionPropertiesStatics *iface, ClosedCaptionColor *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_ComputedBackgroundColor( IClosedCaptionPropertiesStatics *iface, Color *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_BackgroundOpacity( IClosedCaptionPropertiesStatics *iface, ClosedCaptionOpacity *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_RegionColor( IClosedCaptionPropertiesStatics *iface, ClosedCaptionColor *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_ComputedRegionColor( IClosedCaptionPropertiesStatics *iface, Color *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI captions_get_RegionOpacity( IClosedCaptionPropertiesStatics *iface, ClosedCaptionOpacity *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IClosedCaptionPropertiesStaticsVtbl captions_statics_vtbl =
+{
+    captions_QueryInterface,
+    captions_AddRef,
+    captions_Release,
+    /* IInspectable methods */
+    captions_GetIids,
+    captions_GetRuntimeClassName,
+    captions_GetTrustLevel,
+    /* IClosedCaptionPropertiesStatics methods */
+    captions_get_FontColor,
+    captions_get_ComputedFontColor,
+    captions_get_FontOpacity,
+    captions_get_FontSize,
+    captions_get_FontStyle,
+    captions_get_FontEffect,
+    captions_get_BackgroundColor,
+    captions_get_ComputedBackgroundColor,
+    captions_get_BackgroundOpacity,
+    captions_get_RegionColor,
+    captions_get_ComputedRegionColor,
+    captions_get_RegionOpacity,
+};
+
 static struct captions_statics captions_statics =
 {
     {&factory_vtbl},
+    {&captions_statics_vtbl},
     1,
 };
 

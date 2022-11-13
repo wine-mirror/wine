@@ -25,6 +25,11 @@
 
 #include "roapi.h"
 
+#define WIDL_using_Windows_Foundation
+#include "windows.foundation.h"
+#define WIDL_using_Windows_Media_ClosedCaptioning
+#include "windows.media.closedcaptioning.h"
+
 #include "wine/test.h"
 
 #define check_interface( obj, iid, exp ) check_interface_( __LINE__, obj, iid, exp )
@@ -45,6 +50,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL
 static void test_CaptionStatics(void)
 {
     static const WCHAR *caption_properties_name = L"Windows.Media.ClosedCaptioning.ClosedCaptionProperties";
+    IClosedCaptionPropertiesStatics *caption_statics;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -66,6 +72,11 @@ static void test_CaptionStatics(void)
     check_interface( factory, &IID_IInspectable, TRUE );
     check_interface( factory, &IID_IAgileObject, FALSE );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IClosedCaptionPropertiesStatics, (void **)&caption_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IClosedCaptionPropertiesStatics_Release( caption_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
