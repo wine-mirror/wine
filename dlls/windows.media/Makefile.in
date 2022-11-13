@@ -1,0 +1,9 @@
+MODULE  = windows.media.dll
+IMPORTS = combase
+
+C_SRCS = \
+	captions.c \
+	main.c
+
+IDL_SRCS = \
+	classes.idl
