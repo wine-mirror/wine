@@ -928,7 +928,6 @@ static void test_HeapCreate(void)
 
     ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
     ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
-    todo_wine
     ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
 
     ret = HeapDestroy( heap );
@@ -1219,7 +1218,6 @@ static void test_HeapCreate(void)
 
     ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
     ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
-    todo_wine
     ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
 
     /* locking is serialized */

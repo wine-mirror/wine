@@ -90,7 +90,7 @@ struct block
     WORD block_size;
     /* unused size (used block) / high size bits (free block) */
     WORD tail_size;
-    /* offset to region base */
+    /* offset to region base / first group block (LFH block) */
     WORD base_offset;
     BYTE block_type;
     BYTE block_flags;
@@ -193,6 +193,76 @@ typedef struct DECLSPEC_ALIGN(BLOCK_ALIGN) tagSUBHEAP
 C_ASSERT( sizeof(SUBHEAP) == offsetof(SUBHEAP, block) + sizeof(struct block) );
 C_ASSERT( sizeof(SUBHEAP) == 4 * BLOCK_ALIGN );
 
+
+/* LFH block size bins */
+
+#define BIN_SIZE_MIN_0        0
+#define BIN_SIZE_MIN_1    0x100
+#define BIN_SIZE_MIN_2    0x200
+#define BIN_SIZE_MIN_3    0x400
+#define BIN_SIZE_MIN_4    0x800
+#define BIN_SIZE_MIN_5   0x1000
+#define BIN_SIZE_MIN_6   0x2000
+#define BIN_SIZE_MIN_7   0x4000
+#define BIN_SIZE_MAX     0x8000
+
+#define BIN_SIZE_STEP_0                   (16)
+#define BIN_SIZE_STEP_1  (BIN_SIZE_MIN_1 >> 4)
+#define BIN_SIZE_STEP_2  (BIN_SIZE_MIN_2 >> 4)
+#define BIN_SIZE_STEP_3  (BIN_SIZE_MIN_3 >> 4)
+#define BIN_SIZE_STEP_4  (BIN_SIZE_MIN_4 >> 4)
+#define BIN_SIZE_STEP_5  (BIN_SIZE_MIN_5 >> 4)
+#define BIN_SIZE_STEP_6  (BIN_SIZE_MIN_6 >> 4)
+#define BIN_SIZE_STEP_7  (BIN_SIZE_MIN_7 >> 4)
+
+#define BLOCK_BIN_SIZE_N( n, bin )   (BIN_SIZE_MIN_##n + (bin + 1) * BIN_SIZE_STEP_##n)
+#define BLOCK_SIZE_BIN_N( n, size )  (((size) - 1 - BIN_SIZE_MIN_##n) / BIN_SIZE_STEP_##n)
+
+#define BLOCK_BIN_SIZE( bin )   ((bin) >= 0x80 ? ~(SIZE_T)0 : \
+                                 (bin) >= 0x70 ? BLOCK_BIN_SIZE_N( 7, bin - 0x70 ) : \
+                                 (bin) >= 0x60 ? BLOCK_BIN_SIZE_N( 6, bin - 0x60 ) : \
+                                 (bin) >= 0x50 ? BLOCK_BIN_SIZE_N( 5, bin - 0x50 ) : \
+                                 (bin) >= 0x40 ? BLOCK_BIN_SIZE_N( 4, bin - 0x40 ) : \
+                                 (bin) >= 0x30 ? BLOCK_BIN_SIZE_N( 3, bin - 0x30 ) : \
+                                 (bin) >= 0x20 ? BLOCK_BIN_SIZE_N( 2, bin - 0x20 ) : \
+                                 (bin) >= 0x10 ? BLOCK_BIN_SIZE_N( 1, bin - 0x10 ) : \
+                                 BLOCK_BIN_SIZE_N( 0, bin ))
+
+#define BLOCK_SIZE_BIN( size )  ((size) > BIN_SIZE_MAX   ? 0x80 : \
+                                 (size) > BIN_SIZE_MIN_7 ? 0x70 + BLOCK_SIZE_BIN_N( 7, size ) : \
+                                 (size) > BIN_SIZE_MIN_6 ? 0x60 + BLOCK_SIZE_BIN_N( 6, size ) : \
+                                 (size) > BIN_SIZE_MIN_5 ? 0x50 + BLOCK_SIZE_BIN_N( 5, size ) : \
+                                 (size) > BIN_SIZE_MIN_4 ? 0x40 + BLOCK_SIZE_BIN_N( 4, size ) : \
+                                 (size) > BIN_SIZE_MIN_3 ? 0x30 + BLOCK_SIZE_BIN_N( 3, size ) : \
+                                 (size) > BIN_SIZE_MIN_2 ? 0x20 + BLOCK_SIZE_BIN_N( 2, size ) : \
+                                 (size) > BIN_SIZE_MIN_1 ? 0x10 + BLOCK_SIZE_BIN_N( 1, size ) : \
+                                 (size) <= BIN_SIZE_MIN_0 ?   0 : BLOCK_SIZE_BIN_N( 0, size ))
+
+#define BLOCK_SIZE_BIN_COUNT    (BLOCK_SIZE_BIN( BIN_SIZE_MAX + 1 ) + 1)
+
+/* macros sanity checks */
+C_ASSERT( BLOCK_SIZE_BIN( 0 ) == 0 );
+C_ASSERT( BLOCK_SIZE_BIN( 0x10 ) == 0 );
+C_ASSERT( BLOCK_BIN_SIZE( 0 ) == BIN_SIZE_MIN_0 + 1 * BIN_SIZE_STEP_0 );
+C_ASSERT( BLOCK_SIZE_BIN( 0x11 ) == 1 );
+C_ASSERT( BLOCK_BIN_SIZE( 1 ) == BIN_SIZE_MIN_0 + 2 * BIN_SIZE_STEP_0 );
+C_ASSERT( BLOCK_SIZE_BIN( BIN_SIZE_MAX ) == 0x7f );
+C_ASSERT( BLOCK_BIN_SIZE( 0x7f ) == BIN_SIZE_MAX );
+C_ASSERT( BLOCK_SIZE_BIN( BIN_SIZE_MAX + 1 ) == 0x80 );
+C_ASSERT( BLOCK_BIN_SIZE( 0x80 ) == ~(SIZE_T)0 );
+
+/* difference between block classes and all possible validation overhead must fit into block tail_size */
+C_ASSERT( BIN_SIZE_STEP_7 + 3 * BLOCK_ALIGN <= FIELD_MAX( struct block, tail_size ) );
+
+/* a bin, tracking heap blocks of a certain size */
+struct bin
+{
+    /* counters for LFH activation */
+    LONG count_alloc;
+    LONG count_freed;
+    LONG enabled;
+};
+
 struct heap
 {                                  /* win32/win64 */
     DWORD_PTR        unknown1[2];   /* 0000/0000 */
@@ -216,6 +286,7 @@ struct heap
     struct block   **pending_free;  /* Ring buffer for pending free requests */
     RTL_CRITICAL_SECTION cs;
     struct entry     free_lists[HEAP_NB_FREE_LISTS];
+    struct bin      *bins;
     SUBHEAP          subheap;
 };
 
@@ -547,6 +618,16 @@ static void heap_dump( const struct heap *heap )
 
     TRACE( "heap: %p\n", heap );
     TRACE( "  next %p\n", LIST_ENTRY( heap->entry.next, struct heap, entry ) );
+
+    TRACE( "  bins:\n" );
+    for (i = 0; heap->bins && i < BLOCK_SIZE_BIN_COUNT; i++)
+    {
+        const struct bin *bin = heap->bins + i;
+        ULONG alloc = ReadNoFence( &bin->count_alloc ), freed = ReadNoFence( &bin->count_freed );
+        if (!alloc && !freed) continue;
+        TRACE( "    %3u: size %#4Ix, alloc %ld, freed %ld, enabled %lu\n", i, BLOCK_BIN_SIZE( i ),
+               alloc, freed, ReadNoFence( &bin->enabled ) );
+    }
 
     TRACE( "  free_lists: %p\n", heap->free_lists );
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++)
@@ -1434,6 +1515,13 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
 
     heap_set_debug_flags( heap );
 
+    if (heap->flags & HEAP_GROWABLE)
+    {
+        SIZE_T size = sizeof(struct bin) * BLOCK_SIZE_BIN_COUNT;
+        NtAllocateVirtualMemory( NtCurrentProcess(), (void *)&heap->bins,
+                                 0, &size, MEM_COMMIT, PAGE_READWRITE );
+    }
+
     /* link it into the per-process heap list */
     if (process_heap)
     {
@@ -1519,6 +1607,11 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE handle )
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
     valgrind_notify_free_all( &heap->subheap, heap );
+    if ((addr = heap->bins))
+    {
+        size = 0;
+        NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
+    }
     size = 0;
     addr = heap;
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
@@ -1576,6 +1669,27 @@ static NTSTATUS heap_allocate_block( struct heap *heap, ULONG flags, SIZE_T bloc
     return STATUS_SUCCESS;
 }
 
+static void bin_try_enable( struct heap *heap, struct bin *bin )
+{
+    ULONG alloc = ReadNoFence( &bin->count_alloc ), freed = ReadNoFence( &bin->count_freed );
+    SIZE_T block_size = BLOCK_BIN_SIZE( bin - heap->bins );
+    BOOL enable = FALSE;
+
+    if (bin == heap->bins && alloc > 0x10) enable = TRUE;
+    else if (bin - heap->bins < 0x30 && alloc > 0x800) enable = TRUE;
+    else if (bin - heap->bins < 0x30 && alloc - freed > 0x10) enable = TRUE;
+    else if (alloc - freed > 0x400000 / block_size) enable = TRUE;
+    if (!enable) return;
+
+    if (ReadNoFence( &heap->compat_info ) != HEAP_LFH)
+    {
+        ULONG info = HEAP_LFH;
+        RtlSetHeapInformation( heap, HeapCompatibilityInformation, &info, sizeof(info) );
+    }
+
+    WriteNoFence( &bin->enabled, TRUE );
+}
+
 /***********************************************************************
  *           RtlAllocateHeap   (NTDLL.@)
  */
@@ -1598,6 +1712,13 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
         heap_lock( heap, heap_flags );
         status = heap_allocate_block( heap, heap_flags, block_size, size, &ptr );
         heap_unlock( heap, heap_flags );
+
+        if (!status && heap->bins)
+        {
+            SIZE_T bin = BLOCK_SIZE_BIN( block_get_size( (struct block *)ptr - 1 ) );
+            InterlockedIncrement( &heap->bins[bin].count_alloc );
+            if (!ReadNoFence( &heap->bins[bin].enabled )) bin_try_enable( heap, &heap->bins[bin] );
+        }
     }
 
     if (!status) valgrind_notify_alloc( ptr, size, flags & HEAP_ZERO_MEMORY );
@@ -1632,9 +1753,13 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
         status = STATUS_SUCCESS;
     else
     {
+        SIZE_T block_size = block_get_size( block ), bin = BLOCK_SIZE_BIN( block_size );
+
         heap_lock( heap, heap_flags );
         status = heap_free_block( heap, heap_flags, block );
         heap_unlock( heap, heap_flags );
+
+        if (!status && heap->bins) InterlockedIncrement( &heap->bins[bin].count_freed );
     }
 
     TRACE( "handle %p, flags %#lx, ptr %p, return %u, status %#lx.\n", handle, flags, ptr, !status, status );
@@ -1646,7 +1771,7 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block 
                                    SIZE_T size, SIZE_T *old_size, void **ret )
 {
     SUBHEAP *subheap = block_get_subheap( heap, block );
-    SIZE_T old_block_size;
+    SIZE_T old_bin, old_block_size;
     struct entry *entry;
     struct block *next;
 
@@ -1673,6 +1798,7 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block 
 
     old_block_size = block_get_size( block );
     *old_size = old_block_size - block_get_overhead( block );
+    old_bin = BLOCK_SIZE_BIN( old_block_size );
 
     if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE) return STATUS_NO_MEMORY;  /* growing small block to large block */
 
@@ -1711,6 +1837,14 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block 
     if ((next = next_block( subheap, block ))) block_set_flags( next, BLOCK_FLAG_PREV_FREE, 0 );
 
     heap_unlock( heap, flags );
+
+    if (heap->bins)
+    {
+        SIZE_T new_bin = BLOCK_SIZE_BIN( block_size );
+        InterlockedIncrement( &heap->bins[old_bin].count_freed );
+        InterlockedIncrement( &heap->bins[new_bin].count_alloc );
+        if (!ReadNoFence( &heap->bins[new_bin].enabled )) bin_try_enable( heap, &heap->bins[new_bin] );
+    }
 
     *ret = block + 1;
     return STATUS_SUCCESS;
