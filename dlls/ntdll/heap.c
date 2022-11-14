@@ -749,21 +749,32 @@ static void create_free_block( struct heap *heap, ULONG flags, SUBHEAP *subheap,
 }
 
 
+static struct block *heap_delay_free( struct heap *heap, ULONG flags, struct block *block )
+{
+    struct block *tmp;
+
+    if (!heap->pending_free) return block;
+
+    block_set_type( block, BLOCK_TYPE_DEAD );
+    mark_block_free( block + 1, block_get_size( block ) - sizeof(*block), flags );
+
+    heap_lock( heap, flags );
+
+    tmp = heap->pending_free[heap->pending_pos];
+    heap->pending_free[heap->pending_pos] = block;
+    heap->pending_pos = (heap->pending_pos + 1) % MAX_FREE_PENDING;
+
+    heap_unlock( heap, flags );
+
+    return tmp;
+}
+
+
 static NTSTATUS heap_free_block( struct heap *heap, ULONG flags, struct block *block )
 {
     struct entry *entry;
     SIZE_T block_size;
     SUBHEAP *subheap;
-
-    if (heap->pending_free)
-    {
-        struct block *tmp = heap->pending_free[heap->pending_pos];
-        heap->pending_free[heap->pending_pos] = block;
-        heap->pending_pos = (heap->pending_pos + 1) % MAX_FREE_PENDING;
-        block_set_type( block, BLOCK_TYPE_DEAD );
-        mark_block_free( block + 1, block_get_size( block ) - sizeof(*block), heap->flags );
-        if (!(block = tmp)) return STATUS_SUCCESS;
-    }
 
     block_size = block_get_size( block );
     if (block_get_flags( block ) & BLOCK_FLAG_PREV_FREE)
@@ -1579,6 +1590,8 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
         status = STATUS_INVALID_PARAMETER;
     else if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
         status = heap_free_large( heap, heap_flags, block );
+    else if (!(block = heap_delay_free( heap, heap_flags, block )))
+        status = STATUS_SUCCESS;
     else
     {
         heap_lock( heap, heap_flags );
