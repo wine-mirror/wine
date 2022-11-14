@@ -2450,6 +2450,10 @@ static HRESULT Global_DatePart(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
 
 static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
+    ITypeInfo *typeinfo;
+    BSTR name = NULL;
+    HRESULT hres;
+
     TRACE("(%s)\n", debugstr_variant(arg));
 
     assert(args_cnt == 1);
@@ -2482,6 +2486,18 @@ static HRESULT Global_TypeName(BuiltinDisp *This, VARIANT *arg, unsigned args_cn
             return return_string(res, L"Empty");
         case VT_NULL:
             return return_string(res, L"Null");
+        case VT_DISPATCH:
+            if (SUCCEEDED(IDispatch_GetTypeInfo(V_DISPATCH(arg), 0, GetUserDefaultLCID(), &typeinfo)))
+            {
+                hres = ITypeInfo_GetDocumentation(typeinfo, MEMBERID_NIL, &name, NULL, NULL, NULL);
+                ITypeInfo_Release(typeinfo);
+
+                if (SUCCEEDED(hres) && name && *name)
+                    return return_bstr(res, name);
+
+                SysFreeString(name);
+            }
+            return return_string(res, L"Object");
         default:
             FIXME("arg %s not supported\n", debugstr_variant(arg));
             return E_NOTIMPL;

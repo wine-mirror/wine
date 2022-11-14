@@ -1555,6 +1555,10 @@ Call ok(TypeName(True) = "Boolean", "TypeName(True) = " & TypeName(True))
 Call ok(getVT(TypeName(True)) = "VT_BSTR", "getVT(TypeName(True)) = " & getVT(TypeName(True)))
 Call ok(TypeName(arr) = "Variant()", "TypeName(arr) = " & TypeName(arr))
 Call ok(getVT(TypeName(arr)) = "VT_BSTR", "getVT(TypeName(arr)) = " & getVT(TypeName(arr)))
+Call ok(TypeName(collectionObj) = "Object", "TypeName(collectionObj) = " & TypeName(collectionObj))
+Dim regex
+set regex = new RegExp
+Call ok(TypeName(regex) = "IRegExp2", "TypeName(regex) = " & TypeName(regex))
 
 Call ok(VarType(Empty) = vbEmpty, "VarType(Empty) = " & VarType(Empty))
 Call ok(getVT(VarType(Empty)) = "VT_I2", "getVT(VarType(Empty)) = " & getVT(VarType(Empty)))

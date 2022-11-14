@@ -1140,8 +1140,12 @@ static HRESULT WINAPI RegExp2_GetTypeInfo(IRegExp2 *iface,
         UINT iTInfo, LCID lcid, ITypeInfo **ppTInfo)
 {
     RegExp2 *This = impl_from_IRegExp2(iface);
-    FIXME("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%u %lu %p)\n", This, iTInfo, lcid, ppTInfo);
+
+    *ppTInfo = typeinfos[RegExp2_tid];
+    ITypeInfo_AddRef(*ppTInfo);
+    return S_OK;
 }
 
 static HRESULT WINAPI RegExp2_GetIDsOfNames(IRegExp2 *iface, REFIID riid,
