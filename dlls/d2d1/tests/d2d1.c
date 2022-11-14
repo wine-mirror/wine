@@ -1835,6 +1835,7 @@ static void test_state_block(BOOL d3d11)
     ID2D1Factory *factory;
     ULONG refcount;
     HRESULT hr;
+    void *ptr;
     static const D2D1_MATRIX_3X2_F identity =
     {{{
         1.0f, 0.0f,
@@ -2078,6 +2079,15 @@ static void test_state_block(BOOL d3d11)
 
     refcount = IDWriteRenderingParams_Release(text_rendering_params1);
     ok(!refcount, "Rendering params %lu references left.\n", refcount);
+
+    /* State block object pointer is validated, but does not result in an error state. */
+    ptr = (void *)0xdeadbeef;
+    ID2D1RenderTarget_BeginDraw(rt);
+    ID2D1RenderTarget_SaveDrawingState(rt, (ID2D1DrawingStateBlock *)&ptr);
+    ID2D1RenderTarget_RestoreDrawingState(rt, (ID2D1DrawingStateBlock *)&ptr);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
     release_test_context(&ctx);
 }
 

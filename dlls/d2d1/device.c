@@ -1735,11 +1735,12 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_Flush(ID2D1DeviceContext1 *i
 static void STDMETHODCALLTYPE d2d_device_context_SaveDrawingState(ID2D1DeviceContext1 *iface,
         ID2D1DrawingStateBlock *state_block)
 {
-    struct d2d_state_block *state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block);
     struct d2d_device_context *render_target = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_state_block *state_block_impl;
 
     TRACE("iface %p, state_block %p.\n", iface, state_block);
 
+    if (!(state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block))) return;
     state_block_impl->drawing_state = render_target->drawing_state;
     if (render_target->text_rendering_params)
         IDWriteRenderingParams_AddRef(render_target->text_rendering_params);
@@ -1751,11 +1752,12 @@ static void STDMETHODCALLTYPE d2d_device_context_SaveDrawingState(ID2D1DeviceCon
 static void STDMETHODCALLTYPE d2d_device_context_RestoreDrawingState(ID2D1DeviceContext1 *iface,
         ID2D1DrawingStateBlock *state_block)
 {
-    struct d2d_state_block *state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block);
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_state_block *state_block_impl;
 
     TRACE("iface %p, state_block %p.\n", iface, state_block);
 
+    if (!(state_block_impl = unsafe_impl_from_ID2D1DrawingStateBlock(state_block))) return;
     if (context->target.type == D2D_TARGET_COMMAND_LIST)
     {
         struct d2d_command_list *command_list = context->target.command_list;
