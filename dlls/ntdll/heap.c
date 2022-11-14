@@ -819,23 +819,21 @@ static inline void shrink_used_block( struct heap *heap, ULONG flags, struct blo
 }
 
 
-/***********************************************************************
- *           allocate_large_block
- */
-static struct block *allocate_large_block( struct heap *heap, DWORD flags, SIZE_T size )
+static NTSTATUS heap_allocate_large( struct heap *heap, ULONG flags, SIZE_T block_size,
+                                     SIZE_T size, void **ret )
 {
     ARENA_LARGE *arena;
     SIZE_T total_size = ROUND_SIZE( sizeof(*arena) + size, REGION_ALIGN - 1 );
     LPVOID address = NULL;
     struct block *block;
 
-    if (!(flags & HEAP_GROWABLE)) return NULL;
-    if (total_size < size) return NULL;  /* overflow */
+    if (!(flags & HEAP_GROWABLE)) return STATUS_NO_MEMORY;
+    if (total_size < size) return STATUS_NO_MEMORY;  /* overflow */
     if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &total_size, MEM_COMMIT,
                                  get_protection_type( heap->flags ) ))
     {
         WARN( "Could not allocate block for %#Ix bytes\n", size );
-        return NULL;
+        return STATUS_NO_MEMORY;
     }
 
     arena = address;
@@ -847,11 +845,16 @@ static struct block *allocate_large_block( struct heap *heap, DWORD flags, SIZE_
     block_set_base( block, arena );
     block_set_flags( block, ~0, BLOCK_FLAG_LARGE | BLOCK_USER_FLAGS( flags ) );
     block_set_size( block, 0 );
+
+    heap_lock( heap, flags );
     list_add_tail( &heap->large_list, &arena->entry );
+    heap_unlock( heap, flags );
+
     valgrind_make_noaccess( (char *)block + sizeof(*block) + arena->data_size,
                             arena->block_size - sizeof(*block) - arena->data_size );
 
-    return block;
+    *ret = block + 1;
+    return STATUS_SUCCESS;
 }
 
 
@@ -1501,18 +1504,10 @@ static SIZE_T heap_get_block_size( const struct heap *heap, ULONG flags, SIZE_T 
     return block_size;
 }
 
-static NTSTATUS heap_allocate( struct heap *heap, ULONG flags, SIZE_T block_size, SIZE_T size, void **ret )
+static NTSTATUS heap_allocate_block( struct heap *heap, ULONG flags, SIZE_T block_size, SIZE_T size, void **ret )
 {
     SIZE_T old_block_size;
     struct block *block;
-
-    if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
-    {
-        if (!(block = allocate_large_block( heap, flags, size ))) return STATUS_NO_MEMORY;
-
-        *ret = block + 1;
-        return STATUS_SUCCESS;
-    }
 
     /* Locate a suitable free block */
 
@@ -1545,10 +1540,12 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
         status = STATUS_INVALID_HANDLE;
     else if ((block_size = heap_get_block_size( heap, heap_flags, size )) == ~0U)
         status = STATUS_NO_MEMORY;
+    else if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
+        status = heap_allocate_large( heap, heap_flags, block_size, size, &ptr );
     else
     {
         heap_lock( heap, heap_flags );
-        status = heap_allocate( heap, heap_flags, block_size, size, &ptr );
+        status = heap_allocate_block( heap, heap_flags, block_size, size, &ptr );
         heap_unlock( heap, heap_flags );
     }
 
