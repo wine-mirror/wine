@@ -170,6 +170,7 @@ my %manual_win_thunks =
 my %manual_wow64_thunks =
     (
      "glPathGlyphIndexRangeNV" => 1,
+     "wglGetProcAddress" => 1,
     );
 
 #

@@ -542,6 +542,9 @@ static PROC WINAPI wrap_wglGetProcAddress( LPCSTR name )
         *func_ptr = driver_func;
     }
 
+    /* Return the index into the extension registry instead of a useless
+     * function pointer, PE side will returns its own function pointers.
+     */
     return (void *)(UINT_PTR)(found - extension_registry);
 }
 
@@ -1056,6 +1059,23 @@ NTSTATUS WINAPI thread_attach( void *args )
 typedef ULONG PTR32;
 
 extern NTSTATUS ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
+
+NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
+{
+    struct
+    {
+        PTR32 lpszProc;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglGetProcAddress_params params =
+    {
+        .lpszProc = ULongToPtr(params32->lpszProc),
+    };
+    NTSTATUS status;
+    if ((status = wgl_wglGetProcAddress( &params ))) return status;
+    params32->ret = (UINT_PTR)params.ret;
+    return STATUS_SUCCESS;
+}
 
 NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
 {
