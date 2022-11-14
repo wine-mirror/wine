@@ -725,16 +725,6 @@ static void create_free_block( struct heap *heap, ULONG flags, SUBHEAP *subheap,
     if (end > commit_end) end = commit_end;
     if (end > (char *)(entry + 1)) mark_block_free( entry + 1, end - (char *)(entry + 1), flags );
 
-    if ((next = next_block( subheap, block )) && (block_get_flags( next ) & BLOCK_FLAG_FREE))
-    {
-        /* merge with the next block if it is free */
-        struct entry *next_entry = (struct entry *)next;
-        list_remove( &next_entry->entry );
-        block_size += block_get_size( next );
-        block_set_size( block, block_size );
-        mark_block_free( next_entry, sizeof(*next_entry), flags );
-    }
-
     if ((next = next_block( subheap, block )))
     {
         /* set the next block PREV_FREE flag and back pointer */
@@ -772,40 +762,44 @@ static struct block *heap_delay_free( struct heap *heap, ULONG flags, struct blo
 
 static NTSTATUS heap_free_block( struct heap *heap, ULONG flags, struct block *block )
 {
+    SUBHEAP *subheap = block_get_subheap( heap, block );
+    SIZE_T block_size = block_get_size( block );
     struct entry *entry;
-    SIZE_T block_size;
-    SUBHEAP *subheap;
+    struct block *next;
 
-    block_size = block_get_size( block );
+    if ((next = next_block( subheap, block )) && (block_get_flags( next ) & BLOCK_FLAG_FREE))
+    {
+        /* merge with next block if it is free */
+        entry = (struct entry *)next;
+        block_size += block_get_size( &entry->block );
+        list_remove( &entry->entry );
+        next = next_block( subheap, next );
+    }
+
     if (block_get_flags( block ) & BLOCK_FLAG_PREV_FREE)
     {
         /* merge with previous block if it is free */
-        block = *((struct block **)block - 1);
-        block_size += block_get_size( block );
-        entry = (struct entry *)block;
+        entry = *((struct entry **)block - 1);
+        block_size += block_get_size( &entry->block );
         list_remove( &entry->entry );
+        block = &entry->block;
     }
-    else entry = (struct entry *)block;
 
-    subheap = block_get_subheap( heap, block );
-    create_free_block( heap, flags, subheap, block, block_size );
-    if (next_block( subheap, block )) return STATUS_SUCCESS;  /* not the last block */
-
-    if (block == first_block( subheap ) && subheap != &heap->subheap)
+    if (block == first_block( subheap ) && !next && subheap != &heap->subheap)
     {
         /* free the subheap if it's empty and not the main one */
         void *addr = subheap_base( subheap );
         SIZE_T size = 0;
 
-        list_remove( &entry->entry );
         list_remove( &subheap->entry );
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
+        return STATUS_SUCCESS;
     }
-    else
-    {
-        /* keep room for a full committed block as hysteresis */
-        subheap_decommit( heap, subheap, (char *)(entry + 1) + REGION_ALIGN );
-    }
+
+    create_free_block( heap, flags, subheap, block, block_size );
+
+    /* keep room for a full committed block as hysteresis */
+    if (!next) subheap_decommit( heap, subheap, (char *)((struct entry *)block + 1) + REGION_ALIGN );
 
     return STATUS_SUCCESS;
 }
