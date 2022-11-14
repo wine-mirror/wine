@@ -712,10 +712,7 @@ static void show_taskbar_contextmenu( HWND button, LPARAM lparam )
 
 static void do_hide_systray(void)
 {
-    SetWindowPos( tray_window, 0,
-                  GetSystemMetrics(SM_XVIRTUALSCREEN) + GetSystemMetrics(SM_CXVIRTUALSCREEN),
-                  GetSystemMetrics(SM_YVIRTUALSCREEN) + GetSystemMetrics(SM_CYVIRTUALSCREEN),
-                  0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+    ShowWindow( tray_window, SW_HIDE );
 }
 
 static BOOL notify_owner( struct icon *icon, UINT msg, POINT pt )
@@ -899,6 +896,7 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
 {
     WNDCLASSEXW class;
     static const WCHAR classname[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
+    RECT work_rect, primary_rect, taskbar_rect;
 
     if (using_root && graphics_driver) wine_notify_icon = (void *)GetProcAddress( graphics_driver, "wine_notify_icon" );
 
@@ -924,8 +922,13 @@ void initialize_systray( HMODULE graphics_driver, BOOL using_root, BOOL arg_enab
         return;
     }
 
-    tray_window = CreateWindowExW( WS_EX_NOACTIVATE, classname, NULL, WS_POPUP,
-                                   0, GetSystemMetrics( SM_CYSCREEN ), 0, 0, 0, 0, 0, 0 );
+    SystemParametersInfoW( SPI_GETWORKAREA, 0, &work_rect, 0 );
+    SetRect( &primary_rect, 0, 0, GetSystemMetrics( SM_CXSCREEN ), GetSystemMetrics( SM_CYSCREEN ) );
+    SubtractRect( &taskbar_rect, &primary_rect, &work_rect );
+
+    tray_window = CreateWindowExW( WS_EX_NOACTIVATE, classname, NULL, WS_POPUP, taskbar_rect.left,
+                                   taskbar_rect.top, taskbar_rect.right - taskbar_rect.left,
+                                   taskbar_rect.bottom - taskbar_rect.top, 0, 0, 0, 0 );
     if (!tray_window)
     {
         WINE_ERR("Could not create tray window\n");
