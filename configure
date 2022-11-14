@@ -10795,7 +10795,7 @@ fi
     CFLAGS=${CROSSCFLAGS:-"-g -O2"}
     eval CC=\$${wine_arch}_CC
     eval ${wine_arch}_CFLAGS=\$CFLAGS
-    eval ${wine_arch}_LDFLAGS=\$LDFLAGS
+    eval ${wine_arch}_LDFLAGS=\$CROSSLDFLAGS
     eval "${wine_arch}_EXTRACFLAGS=\"-D__WINE_PE_BUILD -Wall\""
 
     target=""

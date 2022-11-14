@@ -914,7 +914,7 @@ do
     CFLAGS=${CROSSCFLAGS:-"-g -O2"}
     AS_VAR_COPY([CC],[${wine_arch}_CC])
     AS_VAR_COPY([${wine_arch}_CFLAGS],[CFLAGS])
-    AS_VAR_COPY([${wine_arch}_LDFLAGS],[LDFLAGS])
+    AS_VAR_COPY([${wine_arch}_LDFLAGS],[CROSSLDFLAGS])
     AS_VAR_SET([${wine_arch}_EXTRACFLAGS],["-D__WINE_PE_BUILD -Wall"])
 
     target=""
