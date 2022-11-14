@@ -931,6 +931,7 @@ SOURCES = \
 	wshisotp.h \
 	wsipx.h \
 	wsnwlink.h \
+	wspiapi.h \
 	wtsapi32.h \
 	wtypes.idl \
 	wuapi.idl \
