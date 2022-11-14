@@ -1272,15 +1272,17 @@ static BOOL heap_validate( const struct heap *heap )
     return TRUE;
 }
 
-static inline struct block *unsafe_block_from_ptr( const struct heap *heap, const void *ptr )
+static inline struct block *unsafe_block_from_ptr( struct heap *heap, ULONG flags, const void *ptr )
 {
     struct block *block = (struct block *)ptr - 1;
     const char *err = NULL;
     SUBHEAP *subheap;
 
-    if (heap->flags & HEAP_VALIDATE)
+    if (flags & HEAP_VALIDATE)
     {
-        if (!heap_validate_ptr( heap, ptr )) return NULL;
+        heap_lock( heap, flags );
+        if (!heap_validate_ptr( heap, ptr )) block = NULL;
+        heap_unlock( heap, flags );
         return block;
     }
 
@@ -1596,14 +1598,10 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
 }
 
 
-static NTSTATUS heap_free( struct heap *heap, ULONG flags, void *ptr )
+static NTSTATUS heap_free( struct heap *heap, ULONG flags, struct block *block )
 {
-    struct block *block;
-
-    if (!(block = unsafe_block_from_ptr( heap, ptr ))) return STATUS_INVALID_PARAMETER;
     if (block_get_flags( block ) & BLOCK_FLAG_LARGE) free_large_block( heap, block );
     else free_used_block( heap, flags, block );
-
     return STATUS_SUCCESS;
 }
 
@@ -1612,6 +1610,7 @@ static NTSTATUS heap_free( struct heap *heap, ULONG flags, void *ptr )
  */
 BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *ptr )
 {
+    struct block *block;
     struct heap *heap;
     ULONG heap_flags;
     NTSTATUS status;
@@ -1622,10 +1621,12 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
 
     if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
         status = STATUS_INVALID_PARAMETER;
+    else if (!(block = unsafe_block_from_ptr( heap, heap_flags, ptr )))
+        status = STATUS_INVALID_PARAMETER;
     else
     {
         heap_lock( heap, heap_flags );
-        status = heap_free( heap, heap_flags, ptr );
+        status = heap_free( heap, heap_flags, block );
         heap_unlock( heap, heap_flags );
     }
 
@@ -1635,14 +1636,13 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
 }
 
 
-static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr,
+static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *block,
                                  SIZE_T block_size, SIZE_T size, void **ret )
 {
     SIZE_T old_block_size, old_size;
-    struct block *next, *block;
+    struct block *next;
     NTSTATUS status;
 
-    if (!(block = unsafe_block_from_ptr( heap, ptr ))) return STATUS_INVALID_PARAMETER;
     if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
     {
         if (!(block = realloc_large_block( heap, flags, block, size ))) return STATUS_NO_MEMORY;
@@ -1675,7 +1675,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr,
             valgrind_notify_alloc( *ret, size, 0 );
             memcpy( *ret, block + 1, old_size );
             if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + old_size, 0, size - old_size );
-            valgrind_notify_free( ptr );
+            valgrind_notify_free( block + 1 );
             free_used_block( heap, flags, block );
             return STATUS_SUCCESS;
         }
@@ -1697,6 +1697,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr,
  */
 void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T size )
 {
+    struct block *block;
     struct heap *heap;
     SIZE_T block_size;
     ULONG heap_flags;
@@ -1709,10 +1710,12 @@ void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T si
         status = STATUS_INVALID_HANDLE;
     else if ((block_size = heap_get_block_size( heap, heap_flags, size )) == ~0U)
         status = STATUS_NO_MEMORY;
+    else if (!(block = unsafe_block_from_ptr( heap, heap_flags, ptr )))
+        status = STATUS_INVALID_PARAMETER;
     else
     {
         heap_lock( heap, heap_flags );
-        status = heap_reallocate( heap, heap_flags, ptr, block_size, size, &ret );
+        status = heap_reallocate( heap, heap_flags, block, block_size, size, &ret );
         heap_unlock( heap, heap_flags );
     }
 
@@ -1789,11 +1792,8 @@ BOOLEAN WINAPI RtlUnlockHeap( HANDLE handle )
 }
 
 
-static NTSTATUS heap_size( const struct heap *heap, const void *ptr, SIZE_T *size )
+static NTSTATUS heap_size( const struct heap *heap, struct block *block, SIZE_T *size )
 {
-    const struct block *block;
-
-    if (!(block = unsafe_block_from_ptr( heap, ptr ))) return STATUS_INVALID_PARAMETER;
     if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
     {
         const ARENA_LARGE *large_arena = CONTAINING_RECORD( block, ARENA_LARGE, block );
@@ -1810,16 +1810,19 @@ static NTSTATUS heap_size( const struct heap *heap, const void *ptr, SIZE_T *siz
 SIZE_T WINAPI RtlSizeHeap( HANDLE handle, ULONG flags, const void *ptr )
 {
     SIZE_T size = ~(SIZE_T)0;
+    struct block *block;
     struct heap *heap;
     ULONG heap_flags;
     NTSTATUS status;
 
     if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
         status = STATUS_INVALID_PARAMETER;
+    else if (!(block = unsafe_block_from_ptr( heap, heap_flags, ptr )))
+        status = STATUS_INVALID_PARAMETER;
     else
     {
         heap_lock( heap, heap_flags );
-        status = heap_size( heap, ptr, &size );
+        status = heap_size( heap, block, &size );
         heap_unlock( heap, heap_flags );
     }
 
@@ -2061,12 +2064,10 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
 
     *user_flags = 0;
 
-    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags ))) return TRUE;
-
-    heap_lock( heap, heap_flags );
-    if (!(block = unsafe_block_from_ptr( heap, ptr )))
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
+        status = STATUS_SUCCESS;
+    else if (!(block = unsafe_block_from_ptr( heap, heap_flags, ptr )))
     {
-        WARN( "Failed to find block %p in heap %p\n", ptr, handle );
         status = STATUS_INVALID_PARAMETER;
         *user_value = 0;
     }
@@ -2080,12 +2081,15 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
     }
     else
     {
+        heap_lock( heap, heap_flags );
+
         tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
         if ((heap_flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += BLOCK_ALIGN;
         *user_flags = *user_flags & ~HEAP_ADD_USER_INFO;
         *user_value = *(void **)tmp;
+
+        heap_unlock( heap, heap_flags );
     }
-    heap_unlock( heap, heap_flags );
 
     heap_set_status( heap, flags, status );
     return !status;
@@ -2097,20 +2101,19 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
 BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void *user_value )
 {
     struct block *block;
-    BOOLEAN ret = FALSE;
     struct heap *heap;
     ULONG heap_flags;
+    BOOLEAN ret;
     char *tmp;
 
     TRACE( "handle %p, flags %#lx, ptr %p, user_value %p.\n", handle, flags, ptr, user_value );
 
-    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags ))) return TRUE;
-
-    heap_lock( heap, heap_flags );
-    if (!(block = unsafe_block_from_ptr( heap, ptr )))
-        WARN( "Failed to find block %p in heap %p\n", ptr, handle );
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
+        ret = TRUE;
+    else if (!(block = unsafe_block_from_ptr( heap, heap_flags, ptr )))
+        ret = FALSE;
     else if (!(block_get_flags( block ) & BLOCK_FLAG_USER_INFO))
-        WARN( "Block %p wasn't allocated with user info\n", ptr );
+        ret = FALSE;
     else if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
     {
         ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
@@ -2119,12 +2122,15 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
     }
     else
     {
+        heap_lock( heap, heap_flags );
+
         tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
         if ((heap_flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += BLOCK_ALIGN;
         *(void **)tmp = user_value;
         ret = TRUE;
+
+        heap_unlock( heap, heap_flags );
     }
-    heap_unlock( heap, heap_flags );
 
     return ret;
 }
@@ -2135,9 +2141,9 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
 BOOLEAN WINAPI RtlSetUserFlagsHeap( HANDLE handle, ULONG flags, void *ptr, ULONG clear, ULONG set )
 {
     struct block *block;
-    BOOLEAN ret = FALSE;
     struct heap *heap;
     ULONG heap_flags;
+    BOOLEAN ret;
 
     TRACE( "handle %p, flags %#lx, ptr %p, clear %#lx, set %#lx.\n", handle, flags, ptr, clear, set );
 
@@ -2147,19 +2153,17 @@ BOOLEAN WINAPI RtlSetUserFlagsHeap( HANDLE handle, ULONG flags, void *ptr, ULONG
         return FALSE;
     }
 
-    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags ))) return TRUE;
-
-    heap_lock( heap, heap_flags );
-    if (!(block = unsafe_block_from_ptr( heap, ptr )))
-        WARN( "Failed to find block %p in heap %p\n", ptr, handle );
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
+        ret = TRUE;
+    else if (!(block = unsafe_block_from_ptr( heap, heap_flags, ptr )))
+        ret = FALSE;
     else if (!(block_get_flags( block ) & BLOCK_FLAG_USER_INFO))
-        WARN( "Block %p wasn't allocated with user info\n", ptr );
+        ret = FALSE;
     else
     {
         block_set_flags( block, BLOCK_USER_FLAGS( clear ), BLOCK_USER_FLAGS( set ) );
         ret = TRUE;
     }
-    heap_unlock( heap, heap_flags );
 
     return ret;
 }
