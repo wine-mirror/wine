@@ -31,6 +31,7 @@
 #include "mshtmhst.h"
 #include "docobj.h"
 #include "hlink.h"
+#include "wininet.h"
 #include "shdeprecated.h"
 #include "dispex.h"
 
@@ -62,6 +63,7 @@
 #define CLEAR_CALLED(func) \
     expect_ ## func = called_ ## func = FALSE
 
+DEFINE_EXPECT(docobj_onclick);
 DEFINE_EXPECT(document_onclick);
 DEFINE_EXPECT(body_onclick);
 DEFINE_EXPECT(doc_onclick_attached);
@@ -145,6 +147,8 @@ static const char input_doc_str[] =
 
 static const char iframe_doc_str[] =
     "<html><body><iframe id=\"ifr\">Testing</iframe></body></html>";
+
+static void navigate(IHTMLDocument2*,const WCHAR*);
 
 static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 {
@@ -966,6 +970,16 @@ static HRESULT WINAPI DispatchEx_GetNameSpaceParent(IDispatchEx *iface, IUnknown
         DispatchEx_GetNameSpaceParent \
     }; \
     static IDispatchEx event ## _obj = { &event ## FuncVtbl };
+
+static HRESULT WINAPI docobj_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(docobj_onclick);
+    test_event_args(document_mode < 9 ? &DIID_DispHTMLDocument : NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(docobj_onclick);
 
 static HRESULT WINAPI document_onclick(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
@@ -2731,6 +2745,71 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
     IHTMLDocument2_Release(iframes_doc);
 }
 
+static void test_doc_obj(IHTMLDocument2 *doc)
+{
+    int orig_doc_mode = document_mode;
+    IEventTarget *event_target;
+    IHTMLElement *body;
+    HRESULT hres;
+    BSTR bstr;
+
+    event_target = (void*)0xdeadbeef;
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IEventTarget, (void**)&event_target);
+    if(document_mode < 9) {
+        ok(hres == E_NOINTERFACE, "hres = %08lx, expected E_NOINTERFACE\n", hres);
+        ok(!event_target, "event_target != NULL\n");
+    }else {
+        IHTMLDocument2 *tmp;
+
+        ok(hres == S_OK, "hres = %08lx, expected S_OK\n", hres);
+        ok(!!event_target, "event_target = NULL\n");
+
+        bstr = SysAllocString(L"click");
+        IEventTarget_addEventListener(event_target, bstr, (IDispatch*)&docobj_onclick_obj, TRUE);
+        ok(hres == S_OK, "addEventListener failed: %08lx\n", hres);
+        SysFreeString(bstr);
+
+        hres = IEventTarget_QueryInterface(event_target, &IID_IHTMLDocument2, (void**)&tmp);
+        ok(hres == S_OK, "Could not get IHTMLDocument2: %08lx\n", hres);
+        IEventTarget_Release(event_target);
+
+        ok(doc == tmp, "IHTMLDocument2 from IEventTarget not same as original\n");
+        IHTMLDocument2_Release(tmp);
+
+        body = doc_get_body(doc);
+        SET_EXPECT(docobj_onclick);
+        hres = IHTMLElement_click(body);
+        ok(hres == S_OK, "click failed: %08lx\n", hres);
+        IHTMLElement_Release(body);
+
+        pump_msgs(&called_docobj_onclick);
+        CHECK_CALLED(docobj_onclick);
+    }
+
+    /* Navigate to a different document mode page, checking using the same doc obj.
+       Test that it breaks COM rules, since IEventTarget is conditionally exposed.
+       All the events registered on the old doc node are also removed. */
+    navigate(doc, document_mode < 9 ? L"doc_with_prop_ie9.html" : L"doc_with_prop.html");
+    ok(document_mode == (orig_doc_mode < 9 ? 9 : 5), "new document_mode = %d\n", document_mode);
+
+    event_target = (void*)0xdeadbeef;
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IEventTarget, (void**)&event_target);
+    if(document_mode < 9) {
+        ok(hres == E_NOINTERFACE, "hres = %08lx, expected E_NOINTERFACE\n", hres);
+        ok(!event_target, "event_target != NULL\n");
+
+        body = doc_get_body(doc);
+        hres = IHTMLElement_click(body);
+        ok(hres == S_OK, "click failed: %08lx\n", hres);
+        IHTMLElement_Release(body);
+        pump_msgs(NULL);
+    }else {
+        ok(hres == S_OK, "hres = %08lx, expected S_OK\n", hres);
+        ok(!!event_target, "event_target = NULL\n");
+        IEventTarget_Release(event_target);
+    }
+}
+
 static void test_create_event(IHTMLDocument2 *doc)
 {
     IDOMKeyboardEvent *keyboard_event;
@@ -3325,9 +3404,11 @@ static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocum
     hres = IOleDocumentView_QueryInterface(pViewToActivate, &IID_IOleDocument, (void**)&document);
     ok(hres == S_OK, "could not get IOleDocument: %08lx\n", hres);
 
-    hres = IOleDocument_CreateView(document, &InPlaceSite, NULL, 0, &view);
+    if(!view) {
+        hres = IOleDocument_CreateView(document, &InPlaceSite, NULL, 0, &view);
+        ok(hres == S_OK, "CreateView failed: %08lx\n", hres);
+    }
     IOleDocument_Release(document);
-    ok(hres == S_OK, "CreateView failed: %08lx\n", hres);
 
     hres = IOleDocumentView_SetInPlaceSite(view, &InPlaceSite);
     ok(hres == S_OK, "SetInPlaceSite failed: %08lx\n", hres);
@@ -4689,23 +4770,11 @@ static IClassFactory protocol_cf = { &ProtocolCFVtbl };
 
 static void doc_load_string(IHTMLDocument2 *doc, const char *str)
 {
-    IInternetSession *internet_session;
     IPersistStreamInit *init;
     IStream *stream;
     HRESULT hres;
     HGLOBAL mem;
     SIZE_T len;
-
-    if(protocol_doc_str) {
-        hres = CoInternetGetSession(0, &internet_session, 0);
-        ok(hres == S_OK, "CoInternetGetSession failed: %08lx\n", hres);
-
-        hres = IInternetSession_UnregisterNameSpace(internet_session, &protocol_cf, L"http");
-        ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
-
-        IInternetSession_Release(internet_session);
-        protocol_doc_str = NULL;
-    }
 
     notif_doc = doc;
 
@@ -4722,6 +4791,51 @@ static void doc_load_string(IHTMLDocument2 *doc, const char *str)
     IPersistStreamInit_Load(init, stream);
     IPersistStreamInit_Release(init);
     IStream_Release(stream);
+}
+
+static void doc_load_res(IHTMLDocument2 *doc, const WCHAR *file)
+{
+    static const WCHAR res[] = { 'r','e','s',':','/','/' };
+    WCHAR url[INTERNET_MAX_URL_LENGTH];
+    IPersistMoniker *persist;
+    IHlinkTarget *hlink;
+    IBindCtx *bind;
+    IMoniker *mon;
+    HRESULT hres;
+    DWORD len;
+    BSTR bstr;
+
+    wcscpy(url, SZ_HTML_CLIENTSITE_OBJECTPARAM);
+    CreateBindCtx(0, &bind);
+    IBindCtx_RegisterObjectParam(bind, url, (IUnknown*)&ClientSite);
+
+    notif_doc = doc;
+    doc_complete = FALSE;
+
+    memcpy(url, res, sizeof(res));
+    len = 6 + GetModuleFileNameW(NULL, url + ARRAY_SIZE(res), ARRAY_SIZE(url) - ARRAY_SIZE(res) - 1);
+    url[len++] = '/';
+    lstrcpynW(url + len, file, ARRAY_SIZE(url) - len);
+
+    bstr = SysAllocString(url);
+    hres = CreateURLMoniker(NULL, bstr, &mon);
+    SysFreeString(bstr);
+    ok(hres == S_OK, "CreateUrlMoniker failed: %08lx\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistMoniker, (void**)&persist);
+    ok(hres == S_OK, "Could not get IPersistMoniker iface: %08lx\n", hres);
+
+    hres = IPersistMoniker_Load(persist, FALSE, mon, bind, 0x12);
+    ok(hres == S_OK, "Load failed: %08lx\n", hres);
+    IPersistMoniker_Release(persist);
+    IBindCtx_Release(bind);
+    IMoniker_Release(mon);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHlinkTarget, (void**)&hlink);
+    ok(hres == S_OK, "Could not get IHlinkTarget iface: %08lx\n", hres);
+    hres = IHlinkTarget_Navigate(hlink, 0, NULL);
+    ok(hres == S_OK, "Navigate failed: %08lx\n", hres);
+    IHlinkTarget_Release(hlink);
 }
 
 static void do_advise(IUnknown *unk, REFIID riid, IUnknown *unk_advise)
@@ -4776,6 +4890,51 @@ static void set_client_site(IHTMLDocument2 *doc, BOOL set)
 
     IOleObject_Release(oleobj);
 }
+
+static void navigate(IHTMLDocument2 *doc, const WCHAR *url)
+{
+    IHTMLLocation *location;
+    IHTMLDocument6 *doc6;
+    HRESULT hres;
+    VARIANT res;
+    BSTR bstr;
+    MSG msg;
+
+    location = NULL;
+    hres = IHTMLDocument2_get_location(doc, &location);
+    ok(hres == S_OK, "get_location failed: %08lx\n", hres);
+    ok(location != NULL, "location == NULL\n");
+
+    doc_complete = FALSE;
+    bstr = SysAllocString(url);
+    hres = IHTMLLocation_replace(location, bstr);
+    ok(hres == S_OK, "replace failed: %08lx\n", hres);
+    IHTMLLocation_Release(location);
+    SysFreeString(bstr);
+
+    while(!doc_complete && GetMessageW(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument6, (void**)&doc6);
+    if(SUCCEEDED(hres)) {
+        hres = IHTMLDocument6_get_documentMode(doc6, &res);
+        ok(hres == S_OK, "get_documentMode failed: %08lx\n", hres);
+        ok(V_VT(&res) == VT_R4, "V_VT(documentMode) = %u\n", V_VT(&res));
+        document_mode = V_R4(&res);
+        IHTMLDocument6_Release(doc6);
+    }else {
+        document_mode = 0;
+    }
+
+    if(window)
+        IHTMLWindow2_Release(window);
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+    ok(window != NULL, "window == NULL\n");
+}
+
 static IHTMLDocument2 *create_document(void)
 {
     IHTMLDocument2 *doc;
@@ -4844,8 +5003,9 @@ static IHTMLDocument2 *create_document_with_origin(const char *str)
 
 typedef void (*testfunc_t)(IHTMLDocument2*);
 
-static void run_test(const char *str, testfunc_t test)
+static void run_test_impl(const char *str, const WCHAR *res, testfunc_t test)
 {
+    IInternetSession *internet_session;
     IHTMLDocument2 *doc;
     IHTMLElement *body = NULL;
     MSG msg;
@@ -4855,7 +5015,23 @@ static void run_test(const char *str, testfunc_t test)
     if (!doc)
         return;
     set_client_site(doc, TRUE);
-    doc_load_string(doc, str);
+
+    if(protocol_doc_str) {
+        hres = CoInternetGetSession(0, &internet_session, 0);
+        ok(hres == S_OK, "CoInternetGetSession failed: %08lx\n", hres);
+
+        hres = IInternetSession_UnregisterNameSpace(internet_session, &protocol_cf, L"http");
+        ok(hres == S_OK, "RegisterNameSpace failed: %08lx\n", hres);
+
+        IInternetSession_Release(internet_session);
+        protocol_doc_str = NULL;
+    }
+
+    if(res)
+        doc_load_res(doc, res);
+    else
+        doc_load_string(doc, str);
+
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
     while(!doc_complete && GetMessageA(&msg, NULL, 0, 0)) {
@@ -4897,6 +5073,16 @@ static void run_test(const char *str, testfunc_t test)
 
     set_client_site(doc, FALSE);
     IHTMLDocument2_Release(doc);
+}
+
+static void run_test(const char *str, testfunc_t test)
+{
+    return run_test_impl(str, NULL, test);
+}
+
+static void run_test_from_res(const WCHAR *res, testfunc_t test)
+{
+    return run_test_impl(NULL, res, test);
 }
 
 static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
@@ -5216,8 +5402,11 @@ START_TEST(events)
         run_test(empty_doc_str, test_submit);
         run_test(empty_doc_ie9_str, test_submit);
         run_test(iframe_doc_str, test_iframe_connections);
-        if(is_ie9plus)
+        if(is_ie9plus) {
+            run_test_from_res(L"doc_with_prop.html", test_doc_obj);
+            run_test_from_res(L"doc_with_prop_ie9.html", test_doc_obj);
             run_test(empty_doc_ie9_str, test_create_event);
+        }
 
         test_empty_document();
         test_storage_events(empty_doc_str);

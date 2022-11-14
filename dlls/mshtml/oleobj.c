@@ -3238,6 +3238,52 @@ static const IDocumentRangeVtbl DocObjDocumentRangeVtbl = {
     DocObjDocumentRange_createRange
 };
 
+/**********************************************************
+ * IEventTarget implementation
+ */
+static inline HTMLDocumentObj *impl_from_IEventTarget(IEventTarget *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLDocumentObj, IEventTarget_iface);
+}
+
+HTMLDOCUMENTOBJ_IDISPATCH_METHODS(EventTarget)
+
+static HRESULT WINAPI DocObjEventTarget_addEventListener(IEventTarget *iface, BSTR type, IDispatch *listener,
+        VARIANT_BOOL capture)
+{
+    HTMLDocumentObj *This = impl_from_IEventTarget(iface);
+
+    return IEventTarget_addEventListener(&This->doc_node->node.event_target.IEventTarget_iface, type, listener, capture);
+}
+
+static HRESULT WINAPI DocObjEventTarget_removeEventListener(IEventTarget *iface, BSTR type, IDispatch *listener,
+        VARIANT_BOOL capture)
+{
+    HTMLDocumentObj *This = impl_from_IEventTarget(iface);
+
+    return IEventTarget_removeEventListener(&This->doc_node->node.event_target.IEventTarget_iface, type, listener, capture);
+}
+
+static HRESULT WINAPI DocObjEventTarget_dispatchEvent(IEventTarget *iface, IDOMEvent *event_iface, VARIANT_BOOL *result)
+{
+    HTMLDocumentObj *This = impl_from_IEventTarget(iface);
+
+    return IEventTarget_dispatchEvent(&This->doc_node->node.event_target.IEventTarget_iface, event_iface, result);
+}
+
+static const IEventTargetVtbl DocObjEventTargetVtbl = {
+    DocObjEventTarget_QueryInterface,
+    DocObjEventTarget_AddRef,
+    DocObjEventTarget_Release,
+    DocObjEventTarget_GetTypeInfoCount,
+    DocObjEventTarget_GetTypeInfo,
+    DocObjEventTarget_GetIDsOfNames,
+    DocObjEventTarget_Invoke,
+    DocObjEventTarget_addEventListener,
+    DocObjEventTarget_removeEventListener,
+    DocObjEventTarget_dispatchEvent
+};
+
 static inline HTMLDocumentObj *impl_from_IUnknown(IUnknown *iface)
 {
     return CONTAINING_RECORD(iface, HTMLDocumentObj, IUnknown_inner);
@@ -3339,6 +3385,14 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
         *ppv = &This->ITargetContainer_iface;
     }else if(IsEqualGUID(&IID_IConnectionPointContainer, riid)) {
         *ppv = &This->cp_container.IConnectionPointContainer_iface;
+    }else if(IsEqualGUID(&IID_IEventTarget, riid)) {
+        /* IEventTarget is conditionally exposed. This breaks COM rules when
+           it changes its compat mode, but it is how native works (see tests). */
+        if(!This->doc_node || dispex_compat_mode(&This->doc_node->node.event_target.dispex) < COMPAT_MODE_IE9) {
+            *ppv = NULL;
+            return E_NOINTERFACE;
+        }
+        *ppv = &This->IEventTarget_iface;
     }else if(IsEqualGUID(&CLSID_CMarkup, riid)) {
         FIXME("(%p)->(CLSID_CMarkup %p)\n", This, ppv);
         *ppv = NULL;
@@ -3734,6 +3788,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->IMarkupContainer_iface.lpVtbl = &DocObjMarkupContainerVtbl;
     doc->IDisplayServices_iface.lpVtbl = &DocObjDisplayServicesVtbl;
     doc->IDocumentRange_iface.lpVtbl = &DocObjDocumentRangeVtbl;
+    doc->IEventTarget_iface.lpVtbl = &DocObjEventTargetVtbl;
 
     doc->outer_unk = outer ? outer : &doc->IUnknown_inner;
 

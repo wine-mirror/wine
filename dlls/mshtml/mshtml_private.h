@@ -677,6 +677,7 @@ struct HTMLDocumentObj {
     IObjectSafety IObjectSafety_iface;
     IServiceProvider IServiceProvider_iface;
     ITargetContainer ITargetContainer_iface;
+    IEventTarget IEventTarget_iface;
 
     IWindowForBindingUI IWindowForBindingUI_iface;
 
