@@ -27,6 +27,7 @@
 #include "ole2.h"
 #include "mshtml.h"
 #include "mshtmcid.h"
+#include "mshtmdid.h"
 #include "mshtmhst.h"
 #include "docobj.h"
 #include "hlink.h"
@@ -5288,6 +5289,98 @@ static void _test_doc_set_title(unsigned line, IHTMLDocument2 *doc, const WCHAR 
     SysFreeString(tmp);
 }
 
+static void test_doc_GetIDsOfNames(IHTMLDocument2 *doc)
+{
+    DISPID dispids[3];
+    HRESULT hres;
+    BSTR bstr[3];
+
+    bstr[0] = SysAllocString(L"createStyleSheet");
+    bstr[1] = SysAllocString(L"bstrHref");
+    bstr[2] = SysAllocString(L"lIndex");
+    dispids[0] = 0;
+    dispids[1] = 0xdead;
+    dispids[2] = 0xbeef;
+    hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, bstr, 3, 0, dispids);
+    ok(hres == S_OK, "GetIDsOfNames failed: %08lx\n", hres);
+    ok(dispids[0] == DISPID_IHTMLDOCUMENT2_CREATESTYLESHEET, "createStyleSheet dispid = %ld\n", dispids[0]);
+    ok(dispids[1] == 0xdead, "bstrHref dispid = %ld\n", dispids[1]);
+    ok(dispids[2] == 0xbeef, "lIndex dispid = %ld\n", dispids[2]);
+    SysFreeString(bstr[2]);
+    SysFreeString(bstr[1]);
+    SysFreeString(bstr[0]);
+}
+
+static void test_window_GetIDsOfNames(IHTMLWindow2 *window)
+{
+    DISPID dispids[3];
+    HRESULT hres;
+    BSTR bstr[3];
+
+    bstr[0] = SysAllocString(L"showHelp");
+    bstr[1] = SysAllocString(L"helpURL");
+    bstr[2] = SysAllocString(L"helpArg");
+    dispids[0] = 0;
+    dispids[1] = 0xdead;
+    dispids[2] = 0xbeef;
+    hres = IHTMLWindow2_GetIDsOfNames(window, &IID_NULL, bstr, 3, 0, dispids);
+    ok(hres == S_OK, "GetIDsOfNames failed: %08lx\n", hres);
+    ok(dispids[0] == DISPID_IHTMLWINDOW2_SHOWHELP, "showHelp dispid = %ld\n", dispids[0]);
+    ok(dispids[1] == 0xdead, "helpURL dispid = %ld\n", dispids[1]);
+    ok(dispids[2] == 0xbeef, "helpArg dispid = %ld\n", dispids[2]);
+    SysFreeString(bstr[2]);
+    SysFreeString(bstr[1]);
+    SysFreeString(bstr[0]);
+}
+
+static void test_elem_GetIDsOfNames(IHTMLElement *elem)
+{
+    DISPID dispids[3];
+    HRESULT hres;
+    BSTR bstr[3];
+
+    /* IE9+ use something like js proxies even on native and have different dispids */
+    if(compat_mode >= COMPAT_IE9)
+        return;
+
+    bstr[0] = SysAllocString(L"insertAdjacentText");
+    bstr[1] = SysAllocString(L"where");
+    bstr[2] = SysAllocString(L"text");
+    dispids[0] = 0;
+    dispids[1] = 0xdead;
+    dispids[2] = 0xbeef;
+    hres = IHTMLElement_GetIDsOfNames(elem, &IID_NULL, bstr, 3, 0, dispids);
+    ok(hres == S_OK, "GetIDsOfNames failed: %08lx\n", hres);
+    ok(dispids[0] == DISPID_IHTMLELEMENT_INSERTADJACENTTEXT, "insertAdjacentText dispid = %ld\n", dispids[0]);
+    ok(dispids[1] == 0xdead, "where dispid = %ld\n", dispids[1]);
+    ok(dispids[2] == 0xbeef, "text dispid = %ld\n", dispids[2]);
+    SysFreeString(bstr[2]);
+    SysFreeString(bstr[1]);
+    SysFreeString(bstr[0]);
+}
+
+static void test_attr_GetIDsOfNames(IHTMLDOMAttribute *attr)
+{
+    DISPID dispids[3];
+    HRESULT hres;
+    BSTR bstr[3];
+
+    bstr[0] = SysAllocString(L"insertBefore");
+    bstr[1] = SysAllocString(L"newChild");
+    bstr[2] = SysAllocString(L"refChild");
+    dispids[0] = 0;
+    dispids[1] = 0xdead;
+    dispids[2] = 0xbeef;
+    hres = IHTMLDOMAttribute_GetIDsOfNames(attr, &IID_NULL, bstr, 3, 0, dispids);
+    ok(hres == S_OK, "GetIDsOfNames failed: %08lx\n", hres);
+    ok(dispids[0] == DISPID_IHTMLDOMATTRIBUTE2_INSERTBEFORE, "insertBefore dispid = %ld\n", dispids[0]);
+    ok(dispids[1] == 0xdead, "newChild dispid = %ld\n", dispids[1]);
+    ok(dispids[2] == 0xbeef, "refChild dispid = %ld\n", dispids[2]);
+    SysFreeString(bstr[2]);
+    SysFreeString(bstr[1]);
+    SysFreeString(bstr[0]);
+}
+
 static void test_elem_bounding_client_rect(IUnknown *unk)
 {
     IHTMLRectCollection *rects;
@@ -5462,6 +5555,7 @@ static IHTMLElement *get_elem_by_id(IHTMLDocument2 *doc, const WCHAR *id, BOOL e
     elem = get_elem_iface((IUnknown*)disp);
     IDispatch_Release(disp);
 
+    test_elem_GetIDsOfNames(elem);
     return elem;
 }
 
@@ -5482,6 +5576,8 @@ static IHTMLElement *get_doc_elem_by_id(IHTMLDocument2 *doc, const WCHAR *id)
 
     IHTMLDocument3_Release(doc3);
 
+    if(elem)
+        test_elem_GetIDsOfNames(elem);
     return elem;
 }
 
@@ -6854,6 +6950,8 @@ static void test_doc_elem(IHTMLDocument2 *doc)
     HRESULT hres;
     BSTR bstr;
 
+    test_doc_GetIDsOfNames(doc);
+
     hres = IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDocument3, (void**)&doc3);
     ok(hres == S_OK, "QueryInterface(IID_IHTMLDocument3) failed: %08lx\n", hres);
 
@@ -6875,6 +6973,7 @@ static void test_doc_elem(IHTMLDocument2 *doc)
     owner_doc = get_owner_doc((IUnknown*)elem);
     ok(iface_cmp((IUnknown *)doc_node, (IUnknown *)owner_doc), "doc_node != owner_doc\n");
     IHTMLDocument2_Release(owner_doc);
+    test_doc_GetIDsOfNames(doc_node);
 
     owner_doc = get_owner_doc((IUnknown*)doc_node);
     ok(!owner_doc, "owner_doc = %p\n", owner_doc);
@@ -7158,6 +7257,7 @@ static void test_window(IHTMLDocument2 *doc)
         win_skip("IID_ITravelLogClient not supported\n");
 
     test_disp((IUnknown*)window, &DIID_DispHTMLWindow2, &CLSID_HTMLWindow2, L"[object]");
+    test_window_GetIDsOfNames(window);
 
     hres = IHTMLWindow2_get_document(window, &doc2);
     ok(hres == S_OK, "get_document failed: %08lx\n", hres);
@@ -9796,6 +9896,7 @@ static void test_attr(IHTMLDocument2 *doc, IHTMLElement *elem)
     test_no_iface((IUnknown*)attr, &IID_IHTMLDOMNode);
     test_attr_specified(attr, VARIANT_TRUE);
     test_attr_parent(attr);
+    test_attr_GetIDsOfNames(attr);
 
     attr2 = get_elem_attr_node((IUnknown*)elem, L"id", TRUE);
     ok(iface_cmp((IUnknown*)attr, (IUnknown*)attr2), "attr != attr2\n");

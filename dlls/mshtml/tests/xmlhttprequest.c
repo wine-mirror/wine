@@ -25,6 +25,7 @@
 #include "winbase.h"
 #include "ole2.h"
 #include "mshtml.h"
+#include "mshtmdid.h"
 #include "objsafe.h"
 #include "wine/test.h"
 
@@ -400,6 +401,35 @@ static void create_xmlhttprequest(IHTMLDocument2 *doc)
     IHTMLXMLHttpRequestFactory_Release(factory);
     ok(hres == S_OK, "create failed: %08lx\n", hres);
     ok(xhr != NULL, "xhr == NULL\n");
+}
+
+static void test_GetIDsOfNames(IHTMLDocument2 *doc)
+{
+    DISPID dispids[3];
+    HRESULT hres;
+    BSTR bstr[3];
+
+    create_xmlhttprequest(doc);
+    if(!xhr)
+        return;
+
+    bstr[0] = SysAllocString(L"open");
+    bstr[1] = SysAllocString(L"bstrMethod");
+    bstr[2] = SysAllocString(L"varAsync");
+    dispids[0] = 0;
+    dispids[1] = 0xdead;
+    dispids[2] = 0xbeef;
+    hres = IHTMLXMLHttpRequest_GetIDsOfNames(xhr, &IID_NULL, bstr, 3, 0, dispids);
+    ok(hres == S_OK, "GetIDsOfNames failed: %08lx\n", hres);
+    ok(dispids[0] == DISPID_IHTMLXMLHTTPREQUEST_OPEN, "open dispid = %ld\n", dispids[0]);
+    ok(dispids[1] == 0xdead, "bstrMethod dispid = %ld\n", dispids[1]);
+    ok(dispids[2] == 0xbeef, "varAsync dispid = %ld\n", dispids[2]);
+    SysFreeString(bstr[2]);
+    SysFreeString(bstr[1]);
+    SysFreeString(bstr[0]);
+
+    IHTMLXMLHttpRequest_Release(xhr);
+    xhr = NULL;
 }
 
 static void test_header(const struct HEADER_TYPE expect[], int num)
@@ -1100,6 +1130,7 @@ START_TEST(xmlhttprequest)
     content_type = SysAllocString(L"Content-Type");
     doc = create_doc_from_url(start_url);
     if(doc) {
+        test_GetIDsOfNames(doc);
         test_sync_xhr(doc, xml_url, expect_response_text);
         test_sync_xhr(doc, large_page_url, NULL);
         test_async_xhr(doc, xml_url, expect_response_text);
