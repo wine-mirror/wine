@@ -28,8 +28,10 @@
 #include "ole2.h"
 #include "mshtml.h"
 #include "mshtmdid.h"
+#include "mshtmhst.h"
 #include "docobj.h"
 #include "hlink.h"
+#include "shdeprecated.h"
 #include "dispex.h"
 
 #define DEFINE_EXPECT(func) \
@@ -2996,6 +2998,8 @@ static HRESULT WINAPI window2_onstorage(IDispatchEx *iface, DISPID id, LCID lcid
 EVENT_HANDLER_FUNC_OBJ(window2_onstorage);
 
 static HRESULT QueryInterface(REFIID,void**);
+static HRESULT browserservice_qi(REFIID,void**);
+static HRESULT wb_qi(REFIID,void**);
 
 static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
 {
@@ -3349,6 +3353,964 @@ static const IOleDocumentSiteVtbl DocumentSiteVtbl = {
 
 static IOleDocumentSite DocumentSite = { &DocumentSiteVtbl };
 
+static HRESULT WINAPI TravelLog_QueryInterface(ITravelLog *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_ITravelLog, riid))
+        *ppv = iface;
+    else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    return S_OK;
+}
+
+static ULONG WINAPI TravelLog_AddRef(ITravelLog *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI TravelLog_Release(ITravelLog *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI TravelLog_AddEntry(ITravelLog *iface, IUnknown *punk, BOOL fIsLocalAnchor)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_UpdateEntry(ITravelLog *iface, IUnknown *punk, BOOL fIsLocalAnchor)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_UpdateExternal(ITravelLog *iface, IUnknown *punk, IUnknown *punkHLBrowseContext)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_Travel(ITravelLog *iface, IUnknown *punk, int iOffset)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_GetTravelEntry(ITravelLog *iface, IUnknown *punk, int iOffset, ITravelEntry **ppte)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_FindTravelEntry(ITravelLog *iface, IUnknown *punk, LPCITEMIDLIST pidl, ITravelEntry **ppte)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_GetTooltipText(ITravelLog *iface, IUnknown *punk, int iOffset, int idsTemplate, LPWSTR pwzText, DWORD cchText)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_InsertMenuEntries(ITravelLog *iface, IUnknown *punk, HMENU hmenu, int nPos, int idFirst, int idLast, DWORD dwFlags)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI TravelLog_Clone(ITravelLog *iface, ITravelLog **pptl)
+{
+    return E_NOTIMPL;
+}
+
+static DWORD WINAPI TravelLog_CountEntries(ITravelLog *iface, IUnknown *punk)
+{
+    return 0;
+}
+
+static HRESULT WINAPI TravelLog_Revert(ITravelLog *iface)
+{
+    return E_NOTIMPL;
+}
+
+static const ITravelLogVtbl TravelLogVtbl = {
+    TravelLog_QueryInterface,
+    TravelLog_AddRef,
+    TravelLog_Release,
+    TravelLog_AddEntry,
+    TravelLog_UpdateEntry,
+    TravelLog_UpdateExternal,
+    TravelLog_Travel,
+    TravelLog_GetTravelEntry,
+    TravelLog_FindTravelEntry,
+    TravelLog_GetTooltipText,
+    TravelLog_InsertMenuEntries,
+    TravelLog_Clone,
+    TravelLog_CountEntries,
+    TravelLog_Revert
+};
+
+static ITravelLog TravelLog = { &TravelLogVtbl };
+
+static HRESULT WINAPI BrowserService_QueryInterface(IBrowserService *iface, REFIID riid, void **ppv)
+{
+    return browserservice_qi(riid, ppv);
+}
+
+static ULONG WINAPI BrowserService_AddRef(IBrowserService* This)
+{
+    return 2;
+}
+
+static ULONG WINAPI BrowserService_Release(IBrowserService* This)
+{
+    return 1;
+}
+
+static HRESULT WINAPI BrowserService_GetParentSite(IBrowserService* This, IOleInPlaceSite **ppipsite)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_SetTitle(IBrowserService* This, IShellView *psv, LPCWSTR pszName)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetTitle(IBrowserService* This, IShellView *psv, LPWSTR pszName, DWORD cchName)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetOleObject(IBrowserService* This, IOleObject **ppobjv)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetTravelLog(IBrowserService* This, ITravelLog **pptl)
+{
+    *pptl = &TravelLog;
+    return S_OK;
+}
+
+static HRESULT WINAPI BrowserService_ShowControlWindow(IBrowserService* This, UINT id, BOOL fShow)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_IsControlWindowShown(IBrowserService* This, UINT id, BOOL *pfShown)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_IEGetDisplayName(IBrowserService* This, PCIDLIST_ABSOLUTE pidl, LPWSTR pwszName, UINT uFlags)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_IEParseDisplayName(IBrowserService* This, UINT uiCP, LPCWSTR pwszPath, PIDLIST_ABSOLUTE *ppidlOut)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_DisplayParseError(IBrowserService* This, HRESULT hres, LPCWSTR pwszPath)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_NavigateToPidl(IBrowserService* This, PCIDLIST_ABSOLUTE pidl, DWORD grfHLNF)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_SetNavigateState(IBrowserService* This, BNSTATE bnstate)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetNavigateState(IBrowserService* This, BNSTATE *pbnstate)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_NotifyRedirect(IBrowserService* This, IShellView *psv, PCIDLIST_ABSOLUTE pidl, BOOL *pfDidBrowse)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_UpdateWindowList(IBrowserService* This)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_UpdateBackForwardState(IBrowserService* This)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI BrowserService_SetFlags(IBrowserService* This, DWORD dwFlags, DWORD dwFlagMask)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetFlags(IBrowserService* This, DWORD *pdwFlags)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_CanNavigateNow(IBrowserService* This)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetPidl(IBrowserService* This, PIDLIST_ABSOLUTE *ppidl)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_SetReferrer(IBrowserService* This, PCIDLIST_ABSOLUTE pidl)
+{
+    return E_NOTIMPL;
+}
+
+static DWORD WINAPI BrowserService_GetBrowserIndex(IBrowserService* This)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetBrowserByIndex(IBrowserService* This, DWORD dwID, IUnknown **ppunk)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetHistoryObject(IBrowserService* This, IOleObject **ppole, IStream **pstm, IBindCtx **ppbc)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_SetHistoryObject(IBrowserService* This, IOleObject *pole, BOOL fIsLocalAnchor)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_CacheOLEServer(IBrowserService* This, IOleObject *pole)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetSetCodePage(IBrowserService* This, VARIANT *pvarIn, VARIANT *pvarOut)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_OnHttpEquiv(IBrowserService* This, IShellView *psv, BOOL fDone, VARIANT *pvarargIn, VARIANT *pvarargOut)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_GetPalette(IBrowserService* This, HPALETTE *hpal)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI BrowserService_RegisterWindow(IBrowserService* This, BOOL fForceRegister, int swc)
+{
+    return E_NOTIMPL;
+}
+
+static IBrowserServiceVtbl BrowserServiceVtbl = {
+    BrowserService_QueryInterface,
+    BrowserService_AddRef,
+    BrowserService_Release,
+    BrowserService_GetParentSite,
+    BrowserService_SetTitle,
+    BrowserService_GetTitle,
+    BrowserService_GetOleObject,
+    BrowserService_GetTravelLog,
+    BrowserService_ShowControlWindow,
+    BrowserService_IsControlWindowShown,
+    BrowserService_IEGetDisplayName,
+    BrowserService_IEParseDisplayName,
+    BrowserService_DisplayParseError,
+    BrowserService_NavigateToPidl,
+    BrowserService_SetNavigateState,
+    BrowserService_GetNavigateState,
+    BrowserService_NotifyRedirect,
+    BrowserService_UpdateWindowList,
+    BrowserService_UpdateBackForwardState,
+    BrowserService_SetFlags,
+    BrowserService_GetFlags,
+    BrowserService_CanNavigateNow,
+    BrowserService_GetPidl,
+    BrowserService_SetReferrer,
+    BrowserService_GetBrowserIndex,
+    BrowserService_GetBrowserByIndex,
+    BrowserService_GetHistoryObject,
+    BrowserService_SetHistoryObject,
+    BrowserService_CacheOLEServer,
+    BrowserService_GetSetCodePage,
+    BrowserService_OnHttpEquiv,
+    BrowserService_GetPalette,
+    BrowserService_RegisterWindow
+};
+
+static IBrowserService BrowserService = { &BrowserServiceVtbl };
+
+static HRESULT WINAPI ShellBrowser_QueryInterface(IShellBrowser *iface, REFIID riid, void **ppv)
+{
+    return browserservice_qi(riid, ppv);
+}
+
+static ULONG WINAPI ShellBrowser_AddRef(IShellBrowser *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ShellBrowser_Release(IShellBrowser *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ShellBrowser_GetWindow(IShellBrowser *iface, HWND *phwnd)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_ContextSensitiveHelp(IShellBrowser *iface, BOOL fEnterMode)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_InsertMenusSB(IShellBrowser *iface, HMENU hmenuShared, LPOLEMENUGROUPWIDTHS lpMenuWidths)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_SetMenuSB(IShellBrowser *iface, HMENU hmenuShared, HOLEMENU holemenuReserved, HWND hwndActiveObject)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_RemoveMenusSB(IShellBrowser *iface, HMENU hmenuShared)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_SetStatusTextSB(IShellBrowser *iface, LPCOLESTR pszStatusText)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_EnableModelessSB(IShellBrowser *iface, BOOL fEnable)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_TranslateAcceleratorSB(IShellBrowser *iface, MSG *pmsg, WORD wID)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_BrowseObject(IShellBrowser *iface, LPCITEMIDLIST pidl, UINT wFlags)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_GetViewStateStream(IShellBrowser *iface, DWORD grfMode, IStream **ppStrm)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_GetControlWindow(IShellBrowser *iface, UINT id, HWND *phwnd)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_SendControlMsg(IShellBrowser *iface, UINT id, UINT uMsg, WPARAM wParam, LPARAM lParam, LRESULT *pret)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_QueryActiveShellView(IShellBrowser *iface, IShellView **ppshv)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_OnViewWindowActive(IShellBrowser* iface, IShellView *pshv)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ShellBrowser_SetToolbarItems(IShellBrowser *iface, LPTBBUTTONSB lpButtons, UINT nButtons, UINT uFlags)
+{
+    return E_NOTIMPL;
+}
+
+static const IShellBrowserVtbl ShellBrowserVtbl = {
+    ShellBrowser_QueryInterface,
+    ShellBrowser_AddRef,
+    ShellBrowser_Release,
+    ShellBrowser_GetWindow,
+    ShellBrowser_ContextSensitiveHelp,
+    ShellBrowser_InsertMenusSB,
+    ShellBrowser_SetMenuSB,
+    ShellBrowser_RemoveMenusSB,
+    ShellBrowser_SetStatusTextSB,
+    ShellBrowser_EnableModelessSB,
+    ShellBrowser_TranslateAcceleratorSB,
+    ShellBrowser_BrowseObject,
+    ShellBrowser_GetViewStateStream,
+    ShellBrowser_GetControlWindow,
+    ShellBrowser_SendControlMsg,
+    ShellBrowser_QueryActiveShellView,
+    ShellBrowser_OnViewWindowActive,
+    ShellBrowser_SetToolbarItems
+};
+
+static IShellBrowser ShellBrowser = { &ShellBrowserVtbl };
+
+static HRESULT browserservice_qi(REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IShellBrowser, riid))
+        *ppv = &ShellBrowser;
+    else if(IsEqualGUID(&IID_IBrowserService, riid))
+        *ppv = &BrowserService;
+    else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI WebBrowser_QueryInterface(IWebBrowser2 *iface, REFIID riid, void **ppv)
+{
+    return wb_qi(riid, ppv);
+}
+
+static ULONG WINAPI WebBrowser_AddRef(IWebBrowser2 *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI WebBrowser_Release(IWebBrowser2 *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI WebBrowser_GetTypeInfoCount(IWebBrowser2 *iface, UINT *pctinfo)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_GetTypeInfo(IWebBrowser2 *iface, UINT iTInfo, LCID lcid, LPTYPEINFO *ppTInfo)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_GetIDsOfNames(IWebBrowser2 *iface, REFIID riid, LPOLESTR *rgszNames, UINT cNames,
+        LCID lcid, DISPID *rgDispId)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_Invoke(IWebBrowser2 *iface, DISPID dispIdMember, REFIID riid, LCID lcid, WORD wFlags,
+        DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExepInfo, UINT *puArgErr)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_GoBack(IWebBrowser2 *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_GoForward(IWebBrowser2 *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_GoHome(IWebBrowser2 *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_GoSearch(IWebBrowser2 *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_Navigate(IWebBrowser2 *iface, BSTR szUrl, VARIANT *Flags, VARIANT *TargetFrameName,
+        VARIANT *PostData, VARIANT *Headers)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_Refresh(IWebBrowser2 *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_Refresh2(IWebBrowser2 *iface, VARIANT *Level)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_Stop(IWebBrowser2 *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Application(IWebBrowser2 *iface, IDispatch **ppDisp)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Parent(IWebBrowser2 *iface, IDispatch **ppDisp)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Container(IWebBrowser2 *iface, IDispatch **ppDisp)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Document(IWebBrowser2 *iface, IDispatch **ppDisp)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_TopLevelContainer(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Type(IWebBrowser2 *iface, BSTR *Type)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Left(IWebBrowser2 *iface, LONG *pl)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_Left(IWebBrowser2 *iface, LONG Left)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Top(IWebBrowser2 *iface, LONG *pl)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_Top(IWebBrowser2 *iface, LONG Top)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Width(IWebBrowser2 *iface, LONG *pl)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_Width(IWebBrowser2 *iface, LONG Width)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Height(IWebBrowser2 *iface, LONG *pl)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_Height(IWebBrowser2 *iface, LONG Height)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_LocationName(IWebBrowser2 *iface, BSTR *LocationName)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_LocationURL(IWebBrowser2 *iface, BSTR *LocationURL)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Busy(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_Quit(IWebBrowser2 *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_ClientToWindow(IWebBrowser2 *iface, int *pcx, int *pcy)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_PutProperty(IWebBrowser2 *iface, BSTR szProperty, VARIANT vtValue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_GetProperty(IWebBrowser2 *iface, BSTR szProperty, VARIANT *pvtValue)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Name(IWebBrowser2 *iface, BSTR *Name)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_HWND(IWebBrowser2 *iface, SHANDLE_PTR *pHWND)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_FullName(IWebBrowser2 *iface, BSTR *FullName)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Path(IWebBrowser2 *iface, BSTR *Path)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Visible(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_Visible(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL *pBool)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_StatusBar(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_StatusText(IWebBrowser2 *iface, BSTR *StatusText)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_StatusText(IWebBrowser2 *iface, BSTR StatusText)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_ToolBar(IWebBrowser2 *iface, int *Value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_ToolBar(IWebBrowser2 *iface, int Value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL *Value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_MenuBar(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_FullScreen(IWebBrowser2 *iface, VARIANT_BOOL *pbFullScreen)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_FullScreen(IWebBrowser2 *iface, VARIANT_BOOL bFullScreen)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_Navigate2(IWebBrowser2 *iface, VARIANT *URL, VARIANT *Flags,
+        VARIANT *TargetFrameName, VARIANT *PostData, VARIANT *Headers)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_QueryStatusWB(IWebBrowser2 *iface, OLECMDID cmdID, OLECMDF *pcmdf)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_ExecWB(IWebBrowser2 *iface, OLECMDID cmdID,
+        OLECMDEXECOPT cmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_ShowBrowserBar(IWebBrowser2 *iface, VARIANT *pvaClsid,
+        VARIANT *pvarShow, VARIANT *pvarSize)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_ReadyState(IWebBrowser2 *iface, READYSTATE *lpReadyState)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Offline(IWebBrowser2 *iface, VARIANT_BOOL *pbOffline)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_Offline(IWebBrowser2 *iface, VARIANT_BOOL bOffline)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Silent(IWebBrowser2 *iface, VARIANT_BOOL *pbSilent)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_Silent(IWebBrowser2 *iface, VARIANT_BOOL bSilent)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_RegisterAsBrowser(IWebBrowser2 *iface,
+        VARIANT_BOOL *pbRegister)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_RegisterAsBrowser(IWebBrowser2 *iface,
+        VARIANT_BOOL bRegister)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_RegisterAsDropTarget(IWebBrowser2 *iface,
+        VARIANT_BOOL *pbRegister)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_RegisterAsDropTarget(IWebBrowser2 *iface,
+        VARIANT_BOOL bRegister)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_TheaterMode(IWebBrowser2 *iface, VARIANT_BOOL *pbRegister)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_TheaterMode(IWebBrowser2 *iface, VARIANT_BOOL bRegister)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_AddressBar(IWebBrowser2 *iface, VARIANT_BOOL *Value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_AddressBar(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_get_Resizable(IWebBrowser2 *iface, VARIANT_BOOL *Value)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI WebBrowser_put_Resizable(IWebBrowser2 *iface, VARIANT_BOOL Value)
+{
+    return E_NOTIMPL;
+}
+
+static const IWebBrowser2Vtbl WebBrowser2Vtbl =
+{
+    WebBrowser_QueryInterface,
+    WebBrowser_AddRef,
+    WebBrowser_Release,
+    WebBrowser_GetTypeInfoCount,
+    WebBrowser_GetTypeInfo,
+    WebBrowser_GetIDsOfNames,
+    WebBrowser_Invoke,
+    WebBrowser_GoBack,
+    WebBrowser_GoForward,
+    WebBrowser_GoHome,
+    WebBrowser_GoSearch,
+    WebBrowser_Navigate,
+    WebBrowser_Refresh,
+    WebBrowser_Refresh2,
+    WebBrowser_Stop,
+    WebBrowser_get_Application,
+    WebBrowser_get_Parent,
+    WebBrowser_get_Container,
+    WebBrowser_get_Document,
+    WebBrowser_get_TopLevelContainer,
+    WebBrowser_get_Type,
+    WebBrowser_get_Left,
+    WebBrowser_put_Left,
+    WebBrowser_get_Top,
+    WebBrowser_put_Top,
+    WebBrowser_get_Width,
+    WebBrowser_put_Width,
+    WebBrowser_get_Height,
+    WebBrowser_put_Height,
+    WebBrowser_get_LocationName,
+    WebBrowser_get_LocationURL,
+    WebBrowser_get_Busy,
+    WebBrowser_Quit,
+    WebBrowser_ClientToWindow,
+    WebBrowser_PutProperty,
+    WebBrowser_GetProperty,
+    WebBrowser_get_Name,
+    WebBrowser_get_HWND,
+    WebBrowser_get_FullName,
+    WebBrowser_get_Path,
+    WebBrowser_get_Visible,
+    WebBrowser_put_Visible,
+    WebBrowser_get_StatusBar,
+    WebBrowser_put_StatusBar,
+    WebBrowser_get_StatusText,
+    WebBrowser_put_StatusText,
+    WebBrowser_get_ToolBar,
+    WebBrowser_put_ToolBar,
+    WebBrowser_get_MenuBar,
+    WebBrowser_put_MenuBar,
+    WebBrowser_get_FullScreen,
+    WebBrowser_put_FullScreen,
+    WebBrowser_Navigate2,
+    WebBrowser_QueryStatusWB,
+    WebBrowser_ExecWB,
+    WebBrowser_ShowBrowserBar,
+    WebBrowser_get_ReadyState,
+    WebBrowser_get_Offline,
+    WebBrowser_put_Offline,
+    WebBrowser_get_Silent,
+    WebBrowser_put_Silent,
+    WebBrowser_get_RegisterAsBrowser,
+    WebBrowser_put_RegisterAsBrowser,
+    WebBrowser_get_RegisterAsDropTarget,
+    WebBrowser_put_RegisterAsDropTarget,
+    WebBrowser_get_TheaterMode,
+    WebBrowser_put_TheaterMode,
+    WebBrowser_get_AddressBar,
+    WebBrowser_put_AddressBar,
+    WebBrowser_get_Resizable,
+    WebBrowser_put_Resizable
+};
+
+static IWebBrowser2 WebBrowser2 = { &WebBrowser2Vtbl };
+
+static HRESULT WINAPI WebBrowserPriv_QueryInterface(IWebBrowserPriv *iface, REFIID riid, void **ppv)
+{
+    return wb_qi(riid, ppv);
+}
+
+static ULONG WINAPI WebBrowserPriv_AddRef(IWebBrowserPriv *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI WebBrowserPriv_Release(IWebBrowserPriv *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI WebBrowserPriv_NavigateWithBindCtx(IWebBrowserPriv *iface, VARIANT *uri, VARIANT *flags,
+        VARIANT *target_frame, VARIANT *post_data, VARIANT *headers, IBindCtx *bind_ctx, LPOLESTR url_fragment)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI WebBrowserPriv_OnClose(IWebBrowserPriv *iface)
+{
+    return E_NOTIMPL;
+}
+
+static const IWebBrowserPrivVtbl WebBrowserPrivVtbl = {
+    WebBrowserPriv_QueryInterface,
+    WebBrowserPriv_AddRef,
+    WebBrowserPriv_Release,
+    WebBrowserPriv_NavigateWithBindCtx,
+    WebBrowserPriv_OnClose
+};
+
+static IWebBrowserPriv WebBrowserPriv = { &WebBrowserPrivVtbl };
+
+static HRESULT wb_qi(REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IWebBrowser, riid) ||
+       IsEqualGUID(&IID_IWebBrowserApp, riid) || IsEqualGUID(&IID_IWebBrowser2, riid))
+        *ppv = &WebBrowser2;
+    else if(IsEqualGUID(riid, &IID_IWebBrowserPriv))
+        *ppv = &WebBrowserPriv;
+    else {
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+    return S_OK;
+}
+
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    return QueryInterface(riid, ppv);
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guidService, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IShellBrowser, guidService)) {
+        ok(IsEqualGUID(&IID_IBrowserService, riid), "unexpected riid\n");
+        *ppv = &BrowserService;
+        return S_OK;
+    }
+
+    if(IsEqualGUID(&IID_IWebBrowserApp, guidService)) {
+        ok(IsEqualGUID(&IID_IWebBrowser2, riid), "unexpected riid\n");
+        *ppv = &WebBrowser2;
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService
+};
+
+static IServiceProvider ServiceProvider = { &ServiceProviderVtbl };
+
 static HRESULT QueryInterface(REFIID riid, void **ppv)
 {
     *ppv = NULL;
@@ -3359,6 +4321,8 @@ static HRESULT QueryInterface(REFIID riid, void **ppv)
         *ppv = &DocumentSite;
     else if(IsEqualGUID(&IID_IOleWindow, riid) || IsEqualGUID(&IID_IOleInPlaceSite, riid))
         *ppv = &InPlaceSite;
+    else if(IsEqualGUID(&IID_IServiceProvider, riid))
+        *ppv = &ServiceProvider;
 
     return *ppv ? S_OK : E_NOINTERFACE;
 }
