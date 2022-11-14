@@ -663,11 +663,12 @@ static ULONG export_gnutls_datum( UCHAR *buffer, ULONG buflen, gnutls_datum_t *d
     return size;
 }
 
-#define EXPORT_SIZE(d,f,p) export_gnutls_datum( NULL, key->u.a.bitlen / f, &d, p )
+#define EXPORT_SIZE(d,l,p) export_gnutls_datum( NULL, l, &d, p )
 static NTSTATUS key_export_rsa_public( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
 {
     BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)buf;
     gnutls_datum_t m, e;
+    ULONG size = key->u.a.bitlen / 8;
     UCHAR *dst;
     int ret;
 
@@ -684,14 +685,14 @@ static NTSTATUS key_export_rsa_public( struct key *key, UCHAR *buf, ULONG len, U
         return STATUS_INTERNAL_ERROR;
     }
 
-    *ret_len = sizeof(*rsa_blob) + EXPORT_SIZE(e,8,0) + EXPORT_SIZE(m,8,1);
+    *ret_len = sizeof(*rsa_blob) + EXPORT_SIZE( e, size, 0 ) + EXPORT_SIZE( m, size, 1 );
     if (len >= *ret_len && buf)
     {
         dst = (UCHAR *)(rsa_blob + 1);
-        rsa_blob->cbPublicExp = export_gnutls_datum( dst, key->u.a.bitlen / 8, &e, 0 );
+        rsa_blob->cbPublicExp = export_gnutls_datum( dst, size, &e, 0 );
 
         dst += rsa_blob->cbPublicExp;
-        rsa_blob->cbModulus = export_gnutls_datum( dst, key->u.a.bitlen / 8, &m, 1 );
+        rsa_blob->cbModulus = export_gnutls_datum( dst, size, &m, 1 );
 
         rsa_blob->Magic     = BCRYPT_RSAPUBLIC_MAGIC;
         rsa_blob->BitLength = key->u.a.bitlen;
@@ -759,16 +760,14 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    *ret_len = sizeof(*ecc_blob) + size * 2;
+    *ret_len = sizeof(*ecc_blob) + EXPORT_SIZE( x, size, 1 ) + EXPORT_SIZE( y, size, 1 );
     if (len >= *ret_len && buf)
     {
         ecc_blob->dwMagic = magic;
         ecc_blob->cbKey   = size;
 
         dst = (UCHAR *)(ecc_blob + 1);
-        export_gnutls_datum( dst, size, &x, 1 );
-
-        dst += size;
+        dst += export_gnutls_datum( dst, size, &x, 1 );
         export_gnutls_datum( dst, size, &y, 1 );
     }
 
@@ -780,8 +779,16 @@ static NTSTATUS key_export_dsa_public( struct key *key, UCHAR *buf, ULONG len, U
 {
     BCRYPT_DSA_KEY_BLOB *dsa_blob = (BCRYPT_DSA_KEY_BLOB *)buf;
     gnutls_datum_t p, q, g, y;
+    ULONG size = key->u.a.bitlen / 8;
+    NTSTATUS status = STATUS_SUCCESS;
     UCHAR *dst;
     int ret;
+
+    if (key->u.a.bitlen > 1024)
+    {
+        FIXME( "bitlen > 1024 not supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
 
     if (key_data(key)->a.pubkey)
         ret = pgnutls_pubkey_export_dsa_raw( key_data(key)->a.pubkey, &p, &q, &g, &y );
@@ -796,35 +803,32 @@ static NTSTATUS key_export_dsa_public( struct key *key, UCHAR *buf, ULONG len, U
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (key->u.a.bitlen > 1024)
+    if (EXPORT_SIZE( q, sizeof(dsa_blob->q), 1 ) > sizeof(dsa_blob->q))
     {
-        FIXME( "bitlen > 1024 not supported\n" );
-        return STATUS_NOT_IMPLEMENTED;
+        status = STATUS_INVALID_PARAMETER;
+        goto done;
     }
 
-    *ret_len = sizeof(*dsa_blob) + key->u.a.bitlen / 8 * 3;
+    *ret_len = sizeof(*dsa_blob) + EXPORT_SIZE( p, size, 1 ) + EXPORT_SIZE( g, size, 1 ) + EXPORT_SIZE( y, size, 1 );
     if (len >= *ret_len && buf)
     {
         dst = (UCHAR *)(dsa_blob + 1);
-        export_gnutls_datum( dst, key->u.a.bitlen / 8, &p, 1 );
-
-        dst += key->u.a.bitlen / 8;
-        export_gnutls_datum( dst, key->u.a.bitlen / 8, &g, 1 );
-
-        dst += key->u.a.bitlen / 8;
-        export_gnutls_datum( dst, key->u.a.bitlen / 8, &y, 1 );
+        dst += export_gnutls_datum( dst, size, &p, 1 );
+        dst += export_gnutls_datum( dst, size, &g, 1 );
+        export_gnutls_datum( dst, size, &y, 1 );
 
         dst = dsa_blob->q;
         export_gnutls_datum( dst, sizeof(dsa_blob->q), &q, 1 );
 
         dsa_blob->dwMagic = BCRYPT_DSA_PUBLIC_MAGIC;
-        dsa_blob->cbKey   = key->u.a.bitlen / 8;
+        dsa_blob->cbKey   = size;
         memset( dsa_blob->Count, 0, sizeof(dsa_blob->Count) ); /* FIXME */
         memset( dsa_blob->Seed, 0, sizeof(dsa_blob->Seed) ); /* FIXME */
     }
 
+done:
     free( p.data ); free( q.data ); free( g.data ); free( y.data );
-    return STATUS_SUCCESS;
+    return status;
 }
 
 static void reverse_bytes( UCHAR *buf, ULONG len )
@@ -846,8 +850,10 @@ static NTSTATUS key_export_dsa_capi_public( struct key *key, UCHAR *buf, ULONG l
     BLOBHEADER *hdr = (BLOBHEADER *)buf;
     DSSPUBKEY *dsskey;
     gnutls_datum_t p, q, g, y;
+    ULONG size = key->u.a.bitlen / 8;
+    NTSTATUS status = STATUS_SUCCESS;
     UCHAR *dst;
-    int ret, size = sizeof(*hdr) + sizeof(*dsskey) + sizeof(key->u.a.dss_seed);
+    int ret;
 
     if (key->u.a.bitlen > 1024)
     {
@@ -868,7 +874,14 @@ static NTSTATUS key_export_dsa_capi_public( struct key *key, UCHAR *buf, ULONG l
         return STATUS_INTERNAL_ERROR;
     }
 
-    *ret_len = size + key->u.a.bitlen / 8 * 3 + Q_SIZE;
+    if (EXPORT_SIZE( q, Q_SIZE, 1 ) > Q_SIZE)
+    {
+        status = STATUS_INVALID_PARAMETER;
+        goto done;
+    }
+
+    *ret_len = sizeof(*hdr) + sizeof(*dsskey) + sizeof(key->u.a.dss_seed) +
+               EXPORT_SIZE( p, size, 1 ) + Q_SIZE + EXPORT_SIZE( g, size, 1 ) + EXPORT_SIZE( y, size, 1 );
     if (len >= *ret_len && buf)
     {
         hdr->bType    = PUBLICKEYBLOB;
@@ -881,27 +894,28 @@ static NTSTATUS key_export_dsa_capi_public( struct key *key, UCHAR *buf, ULONG l
         dsskey->bitlen = key->u.a.bitlen;
 
         dst = (UCHAR *)(dsskey + 1);
-        export_gnutls_datum( dst, key->u.a.bitlen / 8, &p, 1 );
-        reverse_bytes( dst, key->u.a.bitlen / 8 );
-        dst += key->u.a.bitlen / 8;
+        export_gnutls_datum( dst, size, &p, 1 );
+        reverse_bytes( dst, size );
+        dst += size;
 
         export_gnutls_datum( dst, Q_SIZE, &q, 1 );
         reverse_bytes( dst, Q_SIZE );
         dst += Q_SIZE;
 
-        export_gnutls_datum( dst, key->u.a.bitlen / 8, &g, 1 );
-        reverse_bytes( dst, key->u.a.bitlen / 8 );
-        dst += key->u.a.bitlen / 8;
+        export_gnutls_datum( dst, size, &g, 1 );
+        reverse_bytes( dst, size );
+        dst += size;
 
-        export_gnutls_datum( dst, key->u.a.bitlen / 8, &y, 1 );
-        reverse_bytes( dst, key->u.a.bitlen / 8 );
-        dst += key->u.a.bitlen / 8;
+        export_gnutls_datum( dst, size, &y, 1 );
+        reverse_bytes( dst, size );
+        dst += size;
 
         memcpy( dst, &key->u.a.dss_seed, sizeof(key->u.a.dss_seed) );
     }
 
+done:
     free( p.data ); free( q.data ); free( g.data ); free( y.data );
-    return STATUS_SUCCESS;
+    return status;
 }
 
 static NTSTATUS key_asymmetric_generate( void *args )
@@ -1029,7 +1043,7 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    *ret_len = sizeof(*ecc_blob) + size * 3;
+    *ret_len = sizeof(*ecc_blob) + EXPORT_SIZE( x, size, 1 ) + EXPORT_SIZE( y, size, 1 ) + EXPORT_SIZE( d, size, 1 );
     if (len >= *ret_len && buf)
     {
         ecc_blob = (BCRYPT_ECCKEY_BLOB *)buf;
@@ -1037,12 +1051,8 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
         ecc_blob->cbKey   = size;
 
         dst = (UCHAR *)(ecc_blob + 1);
-        export_gnutls_datum( dst, size, &x, 1 );
-        dst += size;
-
-        export_gnutls_datum( dst, size, &y, 1 );
-        dst += size;
-
+        dst += export_gnutls_datum( dst, size, &x, 1 );
+        dst += export_gnutls_datum( dst, size, &y, 1 );
         export_gnutls_datum( dst, size, &d, 1 );
     }
 
@@ -1105,7 +1115,7 @@ static NTSTATUS key_export_rsa( struct key *key, ULONG flags, UCHAR *buf, ULONG 
 {
     BCRYPT_RSAKEY_BLOB *rsa_blob;
     gnutls_datum_t m, e, d, p, q, u, e1, e2;
-    ULONG bitlen = key->u.a.bitlen;
+    ULONG size = key->u.a.bitlen / 8;
     BOOL full = (flags & KEY_EXPORT_FLAG_RSA_FULL);
     UCHAR *dst;
     int ret;
@@ -1118,40 +1128,43 @@ static NTSTATUS key_export_rsa( struct key *key, ULONG flags, UCHAR *buf, ULONG 
         return STATUS_INTERNAL_ERROR;
     }
 
-    *ret_len = sizeof(*rsa_blob) + EXPORT_SIZE(e,8,0) + EXPORT_SIZE(m,8,1) + EXPORT_SIZE(p,16,1) + EXPORT_SIZE(q,16,1);
-    if (full) *ret_len += EXPORT_SIZE(e1,16,1) + EXPORT_SIZE(e2,16,1) + EXPORT_SIZE(u,16,1) + EXPORT_SIZE(d,8,1);
+    *ret_len = sizeof(*rsa_blob) + EXPORT_SIZE( e, size, 0 ) + EXPORT_SIZE( m, size, 1 ) +
+               EXPORT_SIZE( p, size / 2, 1 ) + EXPORT_SIZE( q, size / 2, 1 );
+
+    if (full) *ret_len += EXPORT_SIZE( e1, size / 2, 1 ) + EXPORT_SIZE( e2, size / 2, 1 ) +
+                          EXPORT_SIZE( u, size / 2, 1 ) + EXPORT_SIZE( d, size, 1 );
 
     if (len >= *ret_len && buf)
     {
         rsa_blob = (BCRYPT_RSAKEY_BLOB *)buf;
         rsa_blob->Magic     = full ? BCRYPT_RSAFULLPRIVATE_MAGIC : BCRYPT_RSAPRIVATE_MAGIC;
-        rsa_blob->BitLength = bitlen;
+        rsa_blob->BitLength = key->u.a.bitlen;
 
         dst = (UCHAR *)(rsa_blob + 1);
-        rsa_blob->cbPublicExp = export_gnutls_datum( dst, bitlen / 8, &e, 0 );
+        rsa_blob->cbPublicExp = export_gnutls_datum( dst, size, &e, 0 );
 
         dst += rsa_blob->cbPublicExp;
-        rsa_blob->cbModulus = export_gnutls_datum( dst, bitlen / 8, &m, 1 );
+        rsa_blob->cbModulus = export_gnutls_datum( dst, size, &m, 1 );
 
         dst += rsa_blob->cbModulus;
-        rsa_blob->cbPrime1 = export_gnutls_datum( dst, bitlen / 16, &p, 1 );
+        rsa_blob->cbPrime1 = export_gnutls_datum( dst, size / 2, &p, 1 );
 
         dst += rsa_blob->cbPrime1;
-        rsa_blob->cbPrime2 = export_gnutls_datum( dst, bitlen / 16, &q, 1 );
+        rsa_blob->cbPrime2 = export_gnutls_datum( dst, size / 2, &q, 1 );
 
         if (full)
         {
             dst += rsa_blob->cbPrime2;
-            export_gnutls_datum( dst, bitlen / 16, &e1, 1 );
+            export_gnutls_datum( dst, size / 2, &e1, 1 );
 
             dst += rsa_blob->cbPrime1;
-            export_gnutls_datum( dst, bitlen / 16, &e2, 1 );
+            export_gnutls_datum( dst, size / 2, &e2, 1 );
 
             dst += rsa_blob->cbPrime2;
-            export_gnutls_datum( dst, bitlen / 16, &u, 1 );
+            export_gnutls_datum( dst, size / 2, &u, 1 );
 
             dst += rsa_blob->cbPrime1;
-            export_gnutls_datum( dst, bitlen / 8, &d, 1 );
+            export_gnutls_datum( dst, size, &d, 1 );
         }
     }
 
@@ -1199,8 +1212,9 @@ static NTSTATUS key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG len, ULO
     BLOBHEADER *hdr;
     DSSPUBKEY *pubkey;
     gnutls_datum_t p, q, g, y, x;
+    ULONG size = key->u.a.bitlen / 8;
     UCHAR *dst;
-    int ret, size;
+    int ret;
 
     if (!key_data(key)->a.privkey) return STATUS_INVALID_PARAMETER;
 
@@ -1217,8 +1231,8 @@ static NTSTATUS key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG len, ULO
         return STATUS_NOT_SUPPORTED;
     }
 
-    size = key->u.a.bitlen / 8;
-    *ret_len = sizeof(*hdr) + sizeof(*pubkey) + size * 2 + 40 + sizeof(key->u.a.dss_seed);
+    *ret_len = sizeof(*hdr) + sizeof(*pubkey) + sizeof(key->u.a.dss_seed) +
+               EXPORT_SIZE( p, size, 1 ) + 20 + EXPORT_SIZE( g, size, 1 ) + 20;
     if (len >= *ret_len && buf)
     {
         hdr = (BLOBHEADER *)buf;
