@@ -1090,6 +1090,27 @@ NTSTATUS wow64_wgl_wglCreateContext( void *args )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args )
+{
+    struct
+    {
+        PTR32 hDC;
+        PTR32 hShareContext;
+        PTR32 attribList;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglCreateContextAttribsARB_params params =
+    {
+        .hDC = ULongToPtr(params32->hDC),
+        .hShareContext = ULongToPtr(params32->hShareContext),
+        .attribList = ULongToPtr(params32->attribList),
+    };
+    NTSTATUS status;
+    if ((status = ext_wglCreateContextAttribsARB( &params ))) return status;
+    params32->ret = (UINT_PTR)params.ret;
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS wow64_wgl_wglDeleteContext( void *args )
 {
     struct
