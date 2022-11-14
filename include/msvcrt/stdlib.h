@@ -9,6 +9,7 @@
 #define __WINE_STDLIB_H
 
 #include <corecrt_wstdlib.h>
+#include <limits.h>
 
 #include <pshpack8.h>
 
