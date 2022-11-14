@@ -60717,21 +60717,6 @@ static NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args )
-{
-    struct
-    {
-        PTR32 hPbuffer;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglGetPbufferDCARB_params params =
-    {
-        .hPbuffer = ULongToPtr(params32->hPbuffer),
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS wow64_ext_wglGetPixelFormatAttribfvARB( void *args )
 {
     struct
@@ -60966,6 +60951,7 @@ extern NTSTATUS wow64_wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args ) DECLSPEC_HIDDEN;
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =

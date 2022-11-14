@@ -1193,6 +1193,23 @@ NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args )
     return status;
 }
 
+NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args )
+{
+    struct
+    {
+        PTR32 hPbuffer;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglGetPbufferDCARB_params params =
+    {
+        .hPbuffer = (HPBUFFERARB)ULongToPtr(params32->hPbuffer),
+    };
+    NTSTATUS status;
+    if ((status = ext_wglGetPbufferDCARB( &params ))) return status;
+    params32->ret = (UINT_PTR)params.ret;
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
 {
     struct
