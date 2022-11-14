@@ -640,7 +640,6 @@ struct  ConnectionPoint {
 };
 
 struct HTMLDocumentObj {
-    DispatchEx dispex;
     IUnknown IUnknown_inner;
     IDispatchEx IDispatchEx_iface;
     ICustomDoc ICustomDoc_iface;

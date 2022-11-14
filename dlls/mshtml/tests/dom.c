@@ -9477,10 +9477,37 @@ static void test_elems(IHTMLDocument2 *doc)
     elem = get_doc_elem_by_id(doc, L"objid");
     ok(elem != NULL, "elem == NULL\n");
     if(elem) {
+        IDispatchEx *dispex = get_dispex_iface((IUnknown*)doc);
+        DISPPARAMS dp = { 0 };
+        DISPID dispid;
+        VARIANT var;
+        BSTR name;
+
         test_object_vspace((IUnknown*)elem, 100);
         test_object_name(elem, L"objname");
+
+        name = SysAllocString(L"objname");
+        hres = IDispatchEx_GetDispID(dispex, name, fdexNameCaseSensitive, &dispid);
+        ok(hres == S_OK, "GetDispID(objname) returned: %08lx\n", hres);
+        SysFreeString(name);
+
+        hres = IDispatchEx_Invoke(dispex, dispid, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &var, NULL, NULL);
+        ok(hres == S_OK, "Invoke(objname) failed: %08lx\n", hres);
+        ok(V_VT(&var) == VT_DISPATCH, "VT = %d\n", V_VT(&var));
+        ok(V_DISPATCH(&var) != NULL, "objname = null\n");
+
+        elem2 = get_elem_iface((IUnknown*)V_DISPATCH(&var));
+        IDispatch_Release(V_DISPATCH(&var));
+
+        test_object_vspace((IUnknown*)elem2, 100);
+        test_object_name(elem2, L"objname");
+        todo_wine
+        ok(elem != elem2, "elem == elem2\n");
+        IHTMLElement_Release(elem2);
+
         set_object_name(elem, L"test");
         set_object_name(elem, NULL);
+        IDispatchEx_Release(dispex);
         IHTMLElement_Release(elem);
     }
 

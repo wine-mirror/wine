@@ -2747,9 +2747,13 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 
 static void test_doc_obj(IHTMLDocument2 *doc)
 {
+    DISPID dispid, import_node_id, has_own_prop_id;
     int orig_doc_mode = document_mode;
     IEventTarget *event_target;
+    DISPPARAMS dp = { 0 };
+    IDispatchEx *dispex;
     IHTMLElement *body;
+    VARIANT res, arg;
     HRESULT hres;
     BSTR bstr;
 
@@ -2793,9 +2797,74 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     ok(!wcscmp(bstr, (document_mode < 9 ? L"[object]" : L"[object Document]")), "toString returned %s\n", wine_dbgstr_w(bstr));
     SysFreeString(bstr);
 
+    /* IHTMLDocument6 prop */
+    bstr = SysAllocString(L"onstoragecommit");
+    hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &bstr, 1, 0, &dispid);
+    ok(hres == S_OK, "GetIDsOfNames(onstoragecommit) returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    /* IHTMLDocument7 method */
+    bstr = SysAllocString(L"importNode");
+    hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &bstr, 1, 0, &dispid);
+    ok(hres == (document_mode < 9 ? DISP_E_UNKNOWNNAME : S_OK), "GetIDsOfNames(importNode) returned: %08lx\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameEnsure, &import_node_id);
+    ok(hres == S_OK, "GetDispID(importNode) returned: %08lx\n", hres);
+    if(document_mode >= 9)
+        ok(import_node_id == dispid, "GetDispID(importNode) != GetIDsOfNames(importNode)\n");
+    IDispatchEx_Release(dispex);
+    SysFreeString(bstr);
+
+    /* prop set via script on node */
+    bstr = SysAllocString(L"prop");
+    hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &bstr, 1, 0, &dispid);
+    ok(hres == S_OK, "GetIDsOfNames(prop) returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    hres = IHTMLDocument2_Invoke(doc, dispid, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &res, NULL, NULL);
+    ok(hres == S_OK, "Invoke(prop) failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_I4, "VT(prop) = %d\n", V_VT(&res));
+    ok(V_I4(&res) == 137, "prop = %ld\n", V_I4(&res));
+
+    /* jscript prop on prototype chain */
+    bstr = SysAllocString(L"hasOwnProperty");
+    hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &bstr, 1, 0, &has_own_prop_id);
+    todo_wine_if(document_mode >= 9)
+    ok(hres == (document_mode < 9 ? DISP_E_UNKNOWNNAME : S_OK), "GetIDsOfNames(hasOwnProperty) returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    if(hres == S_OK) {
+        dp.cArgs = 1;
+        dp.rgvarg = &arg;
+        V_VT(&arg) = VT_BSTR;
+        V_BSTR(&arg) = SysAllocString(L"createElement");
+        hres = IHTMLDocument2_Invoke(doc, has_own_prop_id, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, NULL, NULL);
+        ok(hres == S_OK, "Invoke(hasOwnProperty(\"createElement\")) failed: %08lx\n", hres);
+        ok(V_VT(&res) == VT_BOOL, "VT = %d\n", V_VT(&res));
+        todo_wine
+        ok(V_BOOL(&res) == VARIANT_FALSE, "hasOwnProperty(\"createElement\") = %d\n", V_BOOL(&res));
+
+        hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &V_BSTR(&arg), 1, 0, &dispid);
+        ok(hres == S_OK, "GetIDsOfNames(createElement) returned: %08lx\n", hres);
+        SysFreeString(V_BSTR(&arg));
+
+        V_BSTR(&arg) = SysAllocString(L"prop");
+        hres = IHTMLDocument2_Invoke(doc, has_own_prop_id, &IID_NULL, 0, DISPATCH_METHOD, &dp, &res, NULL, NULL);
+        ok(hres == S_OK, "Invoke(hasOwnProperty(\"prop\")) failed: %08lx\n", hres);
+        ok(V_VT(&res) == VT_BOOL, "VT = %d\n", V_VT(&res));
+        ok(V_BOOL(&res) == VARIANT_TRUE, "hasOwnProperty(\"prop\") = %d\n", V_BOOL(&res));
+        SysFreeString(V_BSTR(&arg));
+    }
+
     /* Navigate to a different document mode page, checking using the same doc obj.
        Test that it breaks COM rules, since IEventTarget is conditionally exposed.
-       All the events registered on the old doc node are also removed. */
+       All the events registered on the old doc node are also removed.
+
+       DISPIDs are forwarded to the node, and thus it also breaks Dispatch rules,
+       where the same name will potentially receive a different DISPID. */
     navigate(doc, document_mode < 9 ? L"doc_with_prop_ie9.html" : L"doc_with_prop.html");
     ok(document_mode == (orig_doc_mode < 9 ? 9 : 5), "new document_mode = %d\n", document_mode);
 
@@ -2810,10 +2879,25 @@ static void test_doc_obj(IHTMLDocument2 *doc)
         ok(hres == S_OK, "click failed: %08lx\n", hres);
         IHTMLElement_Release(body);
         pump_msgs(NULL);
+
+        hres = IHTMLDocument2_QueryInterface(doc, &IID_IDispatchEx, (void**)&dispex);
+        ok(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+
+        bstr = SysAllocString(L"importNode");
+        hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameEnsure, &dispid);
+        ok(hres == S_OK, "GetDispID(importNode) returned: %08lx\n", hres);
+        ok(dispid != import_node_id, "importNode on new doc node == old importNode\n");
+        IDispatchEx_Release(dispex);
+        SysFreeString(bstr);
     }else {
         ok(hres == S_OK, "hres = %08lx, expected S_OK\n", hres);
         ok(!!event_target, "event_target = NULL\n");
         IEventTarget_Release(event_target);
+
+        bstr = SysAllocString(L"importNode");
+        hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &bstr, 1, 0, &dispid);
+        ok(hres == S_OK, "GetIDsOfNames(importNode) returned: %08lx\n", hres);
+        ok(dispid != import_node_id, "importNode on new doc node == old created importNode\n");
     }
 }
 
