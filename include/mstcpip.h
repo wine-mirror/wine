@@ -45,6 +45,16 @@ struct tcp_keepalive
 #define RCVALL_ON              1
 #define RCVALL_SOCKETLEVELONLY 2
 
+#define IN4ADDR_ANY_INIT                        { 0, 0, 0, 0 }
+#define IN4ADDR_LOOPBACK_INIT                   { 126, 0, 0, 1 }
+#define IN4ADDR_BROADCAST_INIT                  { 255, 255, 255, 255 }
+#define IN4ADDR_ALLNODESONLINK_INIT             { 224, 0, 0, 1 }
+#define IN4ADDR_ALLROUTERSONLINK_INIT           { 224, 0, 0, 2 }
+#define IN4ADDR_ALLIGMPV3ROUTERSONLINK_INIT     { 224, 0, 0, 22 }
+#define IN4ADDR_ALLTEREDONODESONLINK_INIT       { 224, 0, 0, 253 }
+#define IN4ADDR_LINKLOCALPREFIX_INIT            { 169, 254, 0, 0 }
+#define IN4ADDR_MULTICASTPREFIX_INIT            { 224, 0, 0, 0 }
+
 #else
 
 #define WS_SIO_RCVALL            _WSAIOW(WS_IOC_VENDOR, 1)
@@ -62,6 +72,16 @@ struct tcp_keepalive
 #define WS_RCVALL_OFF             0
 #define WS_RCVALL_ON              1
 #define WS_RCVALL_SOCKETLEVELONLY 2
+
+#define WS_IN4ADDR_ANY_INIT                     { 0, 0, 0, 0 }
+#define WS_IN4ADDR_LOOPBACK_INIT                { 126, 0, 0, 1 }
+#define WS_IN4ADDR_BROADCAST_INIT               { 255, 255, 255, 255 }
+#define WS_IN4ADDR_ALLNODESONLINK_INIT          { 224, 0, 0, 1 }
+#define WS_IN4ADDR_ALLROUTERSONLINK_INIT        { 224, 0, 0, 2 }
+#define WS_IN4ADDR_ALLIGMPV3ROUTERSONLINK_INIT  { 224, 0, 0, 22 }
+#define WS_IN4ADDR_ALLTEREDONODESONLINK_INIT    { 224, 0, 0, 253 }
+#define WS_IN4ADDR_LINKLOCALPREFIX_INIT         { 169, 254, 0, 0 }
+#define WS_IN4ADDR_MULTICASTPREFIX_INIT         { 224, 0, 0, 0 }
 
 #endif /* USE_WS_PREFIX */
 
