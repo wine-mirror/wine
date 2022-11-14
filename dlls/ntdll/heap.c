@@ -1558,7 +1558,7 @@ static NTSTATUS heap_free( struct heap *heap, void *ptr )
     SUBHEAP *subheap;
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
-    if (!subheap) free_large_block( heap, block );
+    if (block_get_flags( block ) & BLOCK_FLAG_LARGE) free_large_block( heap, block );
     else free_used_block( heap, subheap, block );
 
     return STATUS_SUCCESS;
@@ -1603,7 +1603,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE
     if (block_size < HEAP_MIN_BLOCK_SIZE) block_size = HEAP_MIN_BLOCK_SIZE;
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
-    if (!subheap)
+    if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
     {
         if (!(block = realloc_large_block( heap, flags, block, size ))) return STATUS_NO_MEMORY;
 
@@ -1747,7 +1747,7 @@ static NTSTATUS heap_size( const struct heap *heap, const void *ptr, SIZE_T *siz
     SUBHEAP *subheap;
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
-    if (!subheap)
+    if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
     {
         const ARENA_LARGE *large_arena = CONTAINING_RECORD( block, ARENA_LARGE, block );
         *size = large_arena->data_size;
@@ -2023,7 +2023,7 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
     }
     else if (!(*user_flags = HEAP_USER_FLAGS(block_get_flags( block ))))
         WARN( "Block %p wasn't allocated with user info\n", ptr );
-    else if (!subheap)
+    else if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
     {
         const ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
         *user_flags = *user_flags & ~HEAP_ADD_USER_INFO;
@@ -2062,7 +2062,7 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
         WARN( "Failed to find block %p in heap %p\n", ptr, handle );
     else if (!(block_get_flags( block ) & BLOCK_FLAG_USER_INFO))
         WARN( "Block %p wasn't allocated with user info\n", ptr );
-    else if (!subheap)
+    else if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
     {
         ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
         large->user_value = user_value;
