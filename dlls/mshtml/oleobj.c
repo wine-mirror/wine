@@ -2384,16 +2384,7 @@ HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onbeforeupdate, VARIANT)
 HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onbeforeupdate, VARIANT*)
 HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, put_onerrorupdate, VARIANT)
 HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, get_onerrorupdate, VARIANT*)
-
-static HRESULT WINAPI DocObjHTMLDocument2_toString(IHTMLDocument2 *iface, BSTR *String)
-{
-    HTMLDocumentObj *This = impl_from_IHTMLDocument2(iface);
-
-    TRACE("(%p)->(%p)\n", This, String);
-
-    return dispex_to_string(&This->dispex, String);
-}
-
+HTMLDOCUMENTOBJ_FWD_TO_NODE_1(HTMLDocument2, toString, BSTR*)
 HTMLDOCUMENTOBJ_FWD_TO_NODE_3(HTMLDocument2, createStyleSheet, BSTR,LONG,IHTMLStyleSheet**)
 
 static const IHTMLDocument2Vtbl DocObjHTMLDocument2Vtbl = {

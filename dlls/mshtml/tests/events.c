@@ -2786,6 +2786,13 @@ static void test_doc_obj(IHTMLDocument2 *doc)
         CHECK_CALLED(docobj_onclick);
     }
 
+    bstr = NULL;
+    hres = IHTMLDocument2_toString(doc, &bstr);
+    ok(hres == S_OK, "toString failed: %08lx\n", hres);
+    todo_wine_if(document_mode >= 9)
+    ok(!wcscmp(bstr, (document_mode < 9 ? L"[object]" : L"[object Document]")), "toString returned %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
     /* Navigate to a different document mode page, checking using the same doc obj.
        Test that it breaks COM rules, since IEventTarget is conditionally exposed.
        All the events registered on the old doc node are also removed. */
