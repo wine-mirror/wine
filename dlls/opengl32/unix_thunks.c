@@ -27222,38 +27222,6 @@ static NTSTATUS wow64_wgl_wglCopyContext( void *args )
     return status;
 }
 
-static NTSTATUS wow64_wgl_wglCreateContext( void *args )
-{
-    struct
-    {
-        PTR32 hDc;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglCreateContext_params params =
-    {
-        .hDc = ULongToPtr(params32->hDc),
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS wow64_wgl_wglDeleteContext( void *args )
-{
-    struct
-    {
-        PTR32 oldContext;
-        BOOL ret;
-    } *params32 = args;
-    struct wglDeleteContext_params params =
-    {
-        .oldContext = ULongToPtr(params32->oldContext),
-    };
-    NTSTATUS status;
-    status = wgl_wglDeleteContext( &params );
-    params32->ret = params.ret;
-    return status;
-}
-
 static NTSTATUS wow64_wgl_wglDescribePixelFormat( void *args )
 {
     struct
@@ -27290,25 +27258,6 @@ static NTSTATUS wow64_wgl_wglGetPixelFormat( void *args )
     };
     NTSTATUS status;
     status = wgl_wglGetPixelFormat( &params );
-    params32->ret = params.ret;
-    return status;
-}
-
-static NTSTATUS wow64_wgl_wglMakeCurrent( void *args )
-{
-    struct
-    {
-        PTR32 hDc;
-        PTR32 newContext;
-        BOOL ret;
-    } *params32 = args;
-    struct wglMakeCurrent_params params =
-    {
-        .hDc = ULongToPtr(params32->hDc),
-        .newContext = ULongToPtr(params32->newContext),
-    };
-    NTSTATUS status;
-    status = wgl_wglMakeCurrent( &params );
     params32->ret = params.ret;
     return status;
 }
@@ -60879,27 +60828,6 @@ static NTSTATUS wow64_ext_wglGetPixelFormatAttribivARB( void *args )
     return status;
 }
 
-static NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args )
-{
-    struct
-    {
-        PTR32 hDrawDC;
-        PTR32 hReadDC;
-        PTR32 hglrc;
-        BOOL ret;
-    } *params32 = args;
-    struct wglMakeContextCurrentARB_params params =
-    {
-        .hDrawDC = ULongToPtr(params32->hDrawDC),
-        .hReadDC = ULongToPtr(params32->hReadDC),
-        .hglrc = ULongToPtr(params32->hglrc),
-    };
-    NTSTATUS status;
-    status = ext_wglMakeContextCurrentARB( &params );
-    params32->ret = params.ret;
-    return status;
-}
-
 static NTSTATUS wow64_ext_wglQueryCurrentRendererIntegerWINE( void *args )
 {
     struct
@@ -61073,8 +61001,12 @@ static NTSTATUS wow64_ext_wglSetPixelFormatWINE( void *args )
     return status;
 }
 
+extern NTSTATUS wow64_wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args ) DECLSPEC_HIDDEN;
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {

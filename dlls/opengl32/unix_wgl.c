@@ -1060,6 +1060,93 @@ typedef ULONG PTR32;
 
 extern NTSTATUS ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
 
+static inline void update_teb32_context(void)
+{
+    TEB *teb = NtCurrentTeb();
+    void *teb32;
+
+    if (!teb->WowTebOffset) return;
+    teb32 = (char *)teb + teb->WowTebOffset;
+
+    ((TEB32 *)teb32)->glCurrentRC = (UINT_PTR)teb->glCurrentRC;
+    ((TEB32 *)teb32)->glReserved1[0] = (UINT_PTR)teb->glReserved1[0];
+    ((TEB32 *)teb32)->glReserved1[1] = (UINT_PTR)teb->glReserved1[1];
+}
+
+NTSTATUS wow64_wgl_wglCreateContext( void *args )
+{
+    struct
+    {
+        PTR32 hDc;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglCreateContext_params params =
+    {
+        .hDc = ULongToPtr(params32->hDc),
+    };
+    NTSTATUS status;
+    if ((status = wgl_wglCreateContext( &params ))) return status;
+    params32->ret = (UINT_PTR)params.ret;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_wgl_wglDeleteContext( void *args )
+{
+    struct
+    {
+        PTR32 oldContext;
+        BOOL ret;
+    } *params32 = args;
+    struct wglDeleteContext_params params =
+    {
+        .oldContext = ULongToPtr(params32->oldContext),
+    };
+    NTSTATUS status;
+    if (!(status = wgl_wglDeleteContext( &params ))) update_teb32_context();
+    params32->ret = params.ret;
+    return status;
+}
+
+NTSTATUS wow64_wgl_wglMakeCurrent( void *args )
+{
+    struct
+    {
+        PTR32 hDc;
+        PTR32 newContext;
+        BOOL ret;
+    } *params32 = args;
+    struct wglMakeCurrent_params params =
+    {
+        .hDc = ULongToPtr(params32->hDc),
+        .newContext = ULongToPtr(params32->newContext),
+    };
+    NTSTATUS status;
+    if (!(status = wgl_wglMakeCurrent( &params ))) update_teb32_context();
+    params32->ret = params.ret;
+    return status;
+}
+
+NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args )
+{
+    struct
+    {
+        PTR32 hDrawDC;
+        PTR32 hReadDC;
+        PTR32 hglrc;
+        BOOL ret;
+    } *params32 = args;
+    struct wglMakeContextCurrentARB_params params =
+    {
+        .hDrawDC = ULongToPtr(params32->hDrawDC),
+        .hReadDC = ULongToPtr(params32->hReadDC),
+        .hglrc = ULongToPtr(params32->hglrc),
+    };
+    NTSTATUS status;
+    if (!(status = ext_wglMakeContextCurrentARB( &params ))) update_teb32_context();
+    params32->ret = params.ret;
+    return status;
+}
+
 NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
 {
     struct
