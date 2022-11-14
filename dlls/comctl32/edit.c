@@ -1292,6 +1292,7 @@ static BOOL EDIT_MakeFit(EDITSTATE *es, UINT size)
 static BOOL EDIT_MakeUndoFit(EDITSTATE *es, UINT size)
 {
 	UINT alloc_size;
+	WCHAR *new_undo_text;
 
 	if (size <= es->undo_buffer_size)
 		return TRUE;
@@ -1299,7 +1300,8 @@ static BOOL EDIT_MakeUndoFit(EDITSTATE *es, UINT size)
 	TRACE("trying to ReAlloc to %d+1\n", size);
 
 	alloc_size = ROUND_TO_GROW((size + 1) * sizeof(WCHAR));
-	if ((es->undo_text = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, es->undo_text, alloc_size))) {
+	if ((new_undo_text = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, es->undo_text, alloc_size))) {
+		es->undo_text = new_undo_text;
 		es->undo_buffer_size = alloc_size/sizeof(WCHAR) - 1;
 		return TRUE;
 	}
