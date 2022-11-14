@@ -1111,6 +1111,31 @@ NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS wow64_ext_wglCreatePbufferARB( void *args )
+{
+    struct
+    {
+        PTR32 hDC;
+        GLint iPixelFormat;
+        GLint iWidth;
+        GLint iHeight;
+        PTR32 piAttribList;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglCreatePbufferARB_params params =
+    {
+        .hDC = ULongToPtr(params32->hDC),
+        .iPixelFormat = params32->iPixelFormat,
+        .iWidth = params32->iWidth,
+        .iHeight = params32->iHeight,
+        .piAttribList = ULongToPtr(params32->piAttribList),
+    };
+    NTSTATUS status;
+    if ((status = ext_wglCreatePbufferARB( &params ))) return status;
+    params32->ret = (UINT_PTR)params.ret;
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS wow64_wgl_wglDeleteContext( void *args )
 {
     struct
