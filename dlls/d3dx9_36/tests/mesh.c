@@ -142,7 +142,7 @@ static struct test_context *new_test_context(void)
         goto error;
     }
 
-    test_context = HeapAlloc(GetProcessHeap(), 0, sizeof(*test_context));
+    test_context = malloc(sizeof(*test_context));
     if (!test_context)
     {
         skip("Couldn't allocate memory for test_context\n");
@@ -181,7 +181,7 @@ static void free_test_context(struct test_context *test_context)
     if (test_context->hwnd)
         DestroyWindow(test_context->hwnd);
 
-    HeapFree(GetProcessHeap(), 0, test_context);
+    free(test_context);
 }
 
 struct mesh
@@ -198,23 +198,23 @@ struct mesh
 
 static void free_mesh(struct mesh *mesh)
 {
-    HeapFree(GetProcessHeap(), 0, mesh->faces);
-    HeapFree(GetProcessHeap(), 0, mesh->vertices);
+    free(mesh->faces);
+    free(mesh->vertices);
 }
 
 static BOOL new_mesh(struct mesh *mesh, DWORD number_of_vertices, DWORD number_of_faces)
 {
-    mesh->vertices = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, number_of_vertices * sizeof(*mesh->vertices));
+    mesh->vertices = calloc(number_of_vertices, sizeof(*mesh->vertices));
     if (!mesh->vertices)
     {
         return FALSE;
     }
     mesh->number_of_vertices = number_of_vertices;
 
-    mesh->faces = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, number_of_faces * sizeof(*mesh->faces));
+    mesh->faces = calloc(number_of_faces, sizeof(*mesh->faces));
     if (!mesh->faces)
     {
-        HeapFree(GetProcessHeap(), 0, mesh->vertices);
+        free(mesh->vertices);
         return FALSE;
     }
     mesh->number_of_faces = number_of_faces;
@@ -1706,7 +1706,7 @@ static void check_generated_adjacency_(int line, ID3DXMesh *mesh, const DWORD *g
     DWORD num_faces = mesh->lpVtbl->GetNumFaces(mesh);
     HRESULT hr;
 
-    expected = HeapAlloc(GetProcessHeap(), 0, num_faces * sizeof(DWORD) * 3);
+    expected = malloc(num_faces * sizeof(DWORD) * 3);
     if (!expected) {
         skip_(__FILE__, line)("Out of memory\n");
         return;
@@ -1726,7 +1726,7 @@ static void check_generated_adjacency_(int line, ID3DXMesh *mesh, const DWORD *g
                     got[i * 3], got[i * 3 + 1], got[i * 3 + 2]);
         }
     }
-    HeapFree(GetProcessHeap(), 0, expected);
+    free(expected);
 }
 
 #define check_generated_effects(materials, num_materials, effects) \
@@ -1805,21 +1805,12 @@ static void check_generated_effects_(int line, const D3DXMATERIAL *materials, DW
     }
 }
 
-static char *strdupA(const char *p)
-{
-    char *ret;
-    if (!p) return NULL;
-    ret = HeapAlloc(GetProcessHeap(), 0, strlen(p) + 1);
-    if (ret) strcpy(ret, p);
-    return ret;
-}
-
 static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_DestroyFrame(ID3DXAllocateHierarchy *iface, LPD3DXFRAME frame)
 {
     TRACECALLBACK("ID3DXAllocateHierarchyImpl_DestroyFrame(%p, %p)\n", iface, frame);
     if (frame) {
-        HeapFree(GetProcessHeap(), 0, frame->Name);
-        HeapFree(GetProcessHeap(), 0, frame);
+        free(frame->Name);
+        free(frame);
     }
     return D3D_OK;
 }
@@ -1830,13 +1821,13 @@ static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_CreateFrame(ID3DXAllocateHier
     D3DXFRAME *frame;
 
     TRACECALLBACK("ID3DXAllocateHierarchyImpl_CreateFrame(%p, '%s', %p)\n", iface, name, new_frame);
-    frame = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*frame));
+    frame = calloc(1, sizeof(*frame));
     if (!frame)
         return E_OUTOFMEMORY;
     if (name) {
-        frame->Name = strdupA(name);
+        frame->Name = strdup(name);
         if (!frame->Name) {
-            HeapFree(GetProcessHeap(), 0, frame);
+            free(frame);
             return E_OUTOFMEMORY;
         }
     }
@@ -1850,32 +1841,32 @@ static HRESULT destroy_mesh_container(LPD3DXMESHCONTAINER mesh_container)
 
     if (!mesh_container)
         return D3D_OK;
-    HeapFree(GetProcessHeap(), 0, mesh_container->Name);
+    free(mesh_container->Name);
     if (U(mesh_container->MeshData).pMesh)
         IUnknown_Release(U(mesh_container->MeshData).pMesh);
     if (mesh_container->pMaterials) {
         for (i = 0; i < mesh_container->NumMaterials; i++)
-            HeapFree(GetProcessHeap(), 0, mesh_container->pMaterials[i].pTextureFilename);
-        HeapFree(GetProcessHeap(), 0, mesh_container->pMaterials);
+            free(mesh_container->pMaterials[i].pTextureFilename);
+        free(mesh_container->pMaterials);
     }
     if (mesh_container->pEffects) {
         for (i = 0; i < mesh_container->NumMaterials; i++) {
-            HeapFree(GetProcessHeap(), 0, mesh_container->pEffects[i].pEffectFilename);
+            free(mesh_container->pEffects[i].pEffectFilename);
             if (mesh_container->pEffects[i].pDefaults) {
                 int j;
                 for (j = 0; j < mesh_container->pEffects[i].NumDefaults; j++) {
-                    HeapFree(GetProcessHeap(), 0, mesh_container->pEffects[i].pDefaults[j].pParamName);
-                    HeapFree(GetProcessHeap(), 0, mesh_container->pEffects[i].pDefaults[j].pValue);
+                    free(mesh_container->pEffects[i].pDefaults[j].pParamName);
+                    free(mesh_container->pEffects[i].pDefaults[j].pValue);
                 }
-                HeapFree(GetProcessHeap(), 0, mesh_container->pEffects[i].pDefaults);
+                free(mesh_container->pEffects[i].pDefaults);
             }
         }
-        HeapFree(GetProcessHeap(), 0, mesh_container->pEffects);
+        free(mesh_container->pEffects);
     }
-    HeapFree(GetProcessHeap(), 0, mesh_container->pAdjacency);
+    free(mesh_container->pAdjacency);
     if (mesh_container->pSkinInfo)
         IUnknown_Release(mesh_container->pSkinInfo);
-    HeapFree(GetProcessHeap(), 0, mesh_container);
+    free(mesh_container);
     return D3D_OK;
 }
 
@@ -1897,19 +1888,19 @@ static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllo
             iface, name, mesh_data->Type, U(*mesh_data).pMesh, materials, effects,
             num_materials, adjacency, skin_info, *new_mesh_container);
 
-    mesh_container = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*mesh_container));
+    mesh_container = calloc(1, sizeof(*mesh_container));
     if (!mesh_container)
         return E_OUTOFMEMORY;
 
     if (name) {
-        mesh_container->Name = strdupA(name);
+        mesh_container->Name = strdup(name);
         if (!mesh_container->Name)
             goto error;
     }
 
     mesh_container->NumMaterials = num_materials;
     if (num_materials) {
-        mesh_container->pMaterials = HeapAlloc(GetProcessHeap(), 0, num_materials * sizeof(*materials));
+        mesh_container->pMaterials = malloc(num_materials * sizeof(*materials));
         if (!mesh_container->pMaterials)
             goto error;
 
@@ -1918,13 +1909,13 @@ static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllo
             mesh_container->pMaterials[i].pTextureFilename = NULL;
         for (i = 0; i < num_materials; i++) {
             if (materials[i].pTextureFilename) {
-                mesh_container->pMaterials[i].pTextureFilename = strdupA(materials[i].pTextureFilename);
+                mesh_container->pMaterials[i].pTextureFilename = strdup(materials[i].pTextureFilename);
                 if (!mesh_container->pMaterials[i].pTextureFilename)
                     goto error;
             }
         }
 
-        mesh_container->pEffects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, num_materials * sizeof(*effects));
+        mesh_container->pEffects = calloc(num_materials, sizeof(*effects));
         if (!mesh_container->pEffects)
             goto error;
         for (i = 0; i < num_materials; i++) {
@@ -1933,12 +1924,11 @@ static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllo
             D3DXEFFECTINSTANCE *effect_dest = &mesh_container->pEffects[i];
 
             if (effect_src->pEffectFilename) {
-                effect_dest->pEffectFilename = strdupA(effect_src->pEffectFilename);
+                effect_dest->pEffectFilename = strdup(effect_src->pEffectFilename);
                 if (!effect_dest->pEffectFilename)
                     goto error;
             }
-            effect_dest->pDefaults = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    effect_src->NumDefaults * sizeof(*effect_src->pDefaults));
+            effect_dest->pDefaults = calloc(effect_src->NumDefaults, sizeof(*effect_src->pDefaults));
             if (!effect_dest->pDefaults)
                 goto error;
             effect_dest->NumDefaults = effect_src->NumDefaults;
@@ -1947,13 +1937,13 @@ static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllo
                 D3DXEFFECTDEFAULT *default_dest = &effect_dest->pDefaults[j];
 
                 if (default_src->pParamName) {
-                    default_dest->pParamName = strdupA(default_src->pParamName);
+                    default_dest->pParamName = strdup(default_src->pParamName);
                     if (!default_dest->pParamName)
                         goto error;
                 }
                 default_dest->NumBytes = default_src->NumBytes;
                 default_dest->Type = default_src->Type;
-                default_dest->pValue = HeapAlloc(GetProcessHeap(), 0, default_src->NumBytes);
+                default_dest->pValue = malloc(default_src->NumBytes);
                 memcpy(default_dest->pValue, default_src->pValue, default_src->NumBytes);
             }
         }
@@ -1965,7 +1955,7 @@ static HRESULT CALLBACK ID3DXAllocateHierarchyImpl_CreateMeshContainer(ID3DXAllo
             ID3DXBaseMesh *basemesh = (ID3DXBaseMesh*)U(*mesh_data).pMesh;
             DWORD num_faces = basemesh->lpVtbl->GetNumFaces(basemesh);
             size_t size = num_faces * sizeof(DWORD) * 3;
-            mesh_container->pAdjacency = HeapAlloc(GetProcessHeap(), 0, size);
+            mesh_container->pAdjacency = malloc(size);
             if (!mesh_container->pAdjacency)
                 goto error;
             memcpy(mesh_container->pAdjacency, adjacency, size);
@@ -2837,8 +2827,8 @@ struct sincos_table
 
 static void free_sincos_table(struct sincos_table *sincos_table)
 {
-    HeapFree(GetProcessHeap(), 0, sincos_table->cos);
-    HeapFree(GetProcessHeap(), 0, sincos_table->sin);
+    free(sincos_table->cos);
+    free(sincos_table->sin);
 }
 
 /* pre compute sine and cosine tables; caller must free */
@@ -2847,15 +2837,15 @@ static BOOL compute_sincos_table(struct sincos_table *sincos_table, float angle_
     float angle;
     int i;
 
-    sincos_table->sin = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*sincos_table->sin));
+    sincos_table->sin = malloc(n * sizeof(*sincos_table->sin));
     if (!sincos_table->sin)
     {
         return FALSE;
     }
-    sincos_table->cos = HeapAlloc(GetProcessHeap(), 0, n * sizeof(*sincos_table->cos));
+    sincos_table->cos = malloc(n * sizeof(*sincos_table->cos));
     if (!sincos_table->cos)
     {
-        HeapFree(GetProcessHeap(), 0, sincos_table->sin);
+        free(sincos_table->sin);
         return FALSE;
     }
 
@@ -3524,10 +3514,10 @@ static BOOL reserve(struct dynamic_array *array, int count, int itemsize)
         int new_capacity;
         if (array->items && array->capacity) {
             new_capacity = max(array->capacity * 2, count);
-            new_buffer = HeapReAlloc(GetProcessHeap(), 0, array->items, new_capacity * itemsize);
+            new_buffer = realloc(array->items, new_capacity * itemsize);
         } else {
             new_capacity = max(16, count);
-            new_buffer = HeapAlloc(GetProcessHeap(), 0, new_capacity * itemsize);
+            new_buffer = malloc(new_capacity * itemsize);
         }
         if (!new_buffer)
             return FALSE;
@@ -3808,7 +3798,7 @@ static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int da
 
 static void free_outline(struct outline *outline)
 {
-    HeapFree(GetProcessHeap(), 0, outline->items);
+    free(outline->items);
 }
 
 static void free_glyphinfo(struct glyphinfo *glyph)
@@ -3817,7 +3807,7 @@ static void free_glyphinfo(struct glyphinfo *glyph)
 
     for (i = 0; i < glyph->outlines.count; ++i)
         free_outline(&glyph->outlines.items[i]);
-    HeapFree(GetProcessHeap(), 0, glyph->outlines.items);
+    free(glyph->outlines.items);
 }
 
 static void compute_text_mesh(struct mesh *mesh, const char *text,
@@ -4239,7 +4229,7 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
     OUTLINETEXTMETRICA otm;
     GLYPHMETRICS gm;
     struct glyphinfo *glyphs;
-    GLYPHMETRICSFLOAT *glyphmetrics_float = HeapAlloc(GetProcessHeap(), 0, sizeof(GLYPHMETRICSFLOAT) * strlen(text));
+    GLYPHMETRICSFLOAT *glyphmetrics_float = malloc(sizeof(GLYPHMETRICSFLOAT) * strlen(text));
     int i;
     LOGFONTA lf;
     float offset_x;
@@ -4261,7 +4251,7 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
     ok(!!(font = CreateFontIndirectA(&lf)), "Failed to create font.\n");
 
     textlen = strlen(text);
-    glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, textlen * sizeof(*glyphs));
+    glyphs = calloc(textlen, sizeof(*glyphs));
     oldfont = SelectObject(hdc, font);
 
     for (i = 0; i < textlen; i++)
@@ -4287,11 +4277,11 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
 
         datasize = GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, 0, NULL, &identity);
         ok(datasize != GDI_ERROR, "Failed to retrieve GDI glyph outline size.\n");
-        raw_outline = HeapAlloc(GetProcessHeap(), 0, datasize);
+        raw_outline = malloc(datasize);
         datasize = GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, datasize, raw_outline, &identity);
         ok(datasize != GDI_ERROR, "Failed to retrieve GDI glyph outline.\n");
         create_outline(&glyphs[i], raw_outline, datasize, deviation, otm.otmEMSquare);
-        HeapFree(GetProcessHeap(), 0, raw_outline);
+        free(raw_outline);
 
         offset_x += gm.gmCellIncX / (float)otm.otmEMSquare;
     }
@@ -4306,11 +4296,11 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
     free_mesh(&mesh);
     d3dxmesh->lpVtbl->Release(d3dxmesh);
     DeleteObject(font);
-    HeapFree(GetProcessHeap(), 0, glyphmetrics_float);
+    free(glyphmetrics_float);
 
     for (i = 0; i < textlen; i++)
         free_glyphinfo(&glyphs[i]);
-    HeapFree(GetProcessHeap(), 0, glyphs);
+    free(glyphs);
 }
 
 static void D3DXCreateTextTest(void)
@@ -5675,7 +5665,7 @@ static void test_convert_adjacency_to_point_reps(void)
         if (i == 0) /* Save first mesh for later NULL checks */
             mesh_null_check = mesh;
 
-        point_reps = HeapAlloc(GetProcessHeap(), 0, tc[i].num_vertices * sizeof(*point_reps));
+        point_reps = malloc(tc[i].num_vertices * sizeof(*point_reps));
         if (!point_reps)
         {
             skip("Couldn't allocate point reps array.\n");
@@ -5745,7 +5735,7 @@ static void test_convert_adjacency_to_point_reps(void)
                i, j, point_reps[j], tc[i].exp_point_reps[j]);
         }
 
-        HeapFree(GetProcessHeap(), 0, point_reps);
+        free(point_reps);
         point_reps = NULL;
 
         if (i != 0) /* First mesh will be freed during cleanup */
@@ -5763,7 +5753,7 @@ static void test_convert_adjacency_to_point_reps(void)
 cleanup:
     if (mesh_null_check)
         mesh_null_check->lpVtbl->Release(mesh_null_check);
-    HeapFree(GetProcessHeap(), 0, point_reps);
+    free(point_reps);
     free_test_context(test_context);
 }
 
@@ -6213,7 +6203,7 @@ static void test_convert_point_reps_to_adjacency(void)
         if (i == 0) /* Save first mesh for later NULL checks */
             mesh_null_check = mesh;
 
-        adjacency = HeapAlloc(GetProcessHeap(), 0, VERTS_PER_FACE * tc[i].num_faces * sizeof(*adjacency));
+        adjacency = malloc(VERTS_PER_FACE * tc[i].num_faces * sizeof(*adjacency));
         if (!adjacency)
         {
             skip("Couldn't allocate adjacency array.\n");
@@ -6295,7 +6285,7 @@ static void test_convert_point_reps_to_adjacency(void)
                i, j, adjacency[j], tc[i].exp_id_adjacency[j]);
         }
 
-        HeapFree(GetProcessHeap(), 0, adjacency);
+        free(adjacency);
         adjacency = NULL;
         if (i != 0) /* First mesh will be freed during cleanup */
             mesh->lpVtbl->Release(mesh);
@@ -6312,7 +6302,7 @@ static void test_convert_point_reps_to_adjacency(void)
 cleanup:
     if (mesh_null_check)
         mesh_null_check->lpVtbl->Release(mesh_null_check);
-    HeapFree(GetProcessHeap(), 0, adjacency);
+    free(adjacency);
     free_test_context(test_context);
 }
 
@@ -8393,13 +8383,13 @@ static void test_weld_vertices(void)
         }
 
         /* Allocate out parameters */
-        adjacency_out = HeapAlloc(GetProcessHeap(), 0, VERTS_PER_FACE * tc[i].num_faces * sizeof(*adjacency_out));
+        adjacency_out = malloc(VERTS_PER_FACE * tc[i].num_faces * sizeof(*adjacency_out));
         if (!adjacency_out)
         {
             skip("Couldn't allocate adjacency_out array.\n");
             goto cleanup;
         }
-        face_remap = HeapAlloc(GetProcessHeap(), 0, tc[i].num_faces * sizeof(*face_remap));
+        face_remap = malloc(tc[i].num_faces * sizeof(*face_remap));
         if (!face_remap)
         {
             skip("Couldn't allocate face_remap array.\n");
@@ -8487,9 +8477,9 @@ static void test_weld_vertices(void)
         vertices = NULL;
 
         /* Free mesh and output data */
-        HeapFree(GetProcessHeap(), 0, adjacency_out);
+        free(adjacency_out);
         adjacency_out = NULL;
-        HeapFree(GetProcessHeap(), 0, face_remap);
+        free(face_remap);
         face_remap = NULL;
         vertex_remap->lpVtbl->Release(vertex_remap);
         vertex_remap = NULL;
@@ -8498,8 +8488,8 @@ static void test_weld_vertices(void)
     }
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, adjacency_out);
-    HeapFree(GetProcessHeap(), 0, face_remap);
+    free(adjacency_out);
+    free(face_remap);
     if (indices) mesh->lpVtbl->UnlockIndexBuffer(mesh);
     if (indices_16bit) mesh->lpVtbl->UnlockIndexBuffer(mesh);
     if (mesh) mesh->lpVtbl->Release(mesh);
@@ -10510,8 +10500,7 @@ static void test_optimize_faces(void)
     {
         DWORD j;
         DWORD *face_remap;
-        face_remap = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                               tc[i].num_faces*sizeof(*face_remap));
+        face_remap = calloc(tc[i].num_faces, sizeof(*face_remap));
 
         hr = D3DXOptimizeFaces(tc[i].indices, tc[i].num_faces,
                                tc[i].num_vertices, tc[i].indices_are_32bit,
@@ -10526,7 +10515,7 @@ static void test_optimize_faces(void)
                face_remap[j], j, tc[i].exp_face_remap[j]);
         }
 
-        HeapFree(GetProcessHeap(), 0, face_remap);
+        free(face_remap);
     }
 
     /* face_remap must not be NULL */
