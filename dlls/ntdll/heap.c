@@ -749,7 +749,7 @@ static void create_free_block( struct heap *heap, ULONG flags, SUBHEAP *subheap,
 }
 
 
-static void free_used_block( struct heap *heap, ULONG flags, struct block *block )
+static NTSTATUS heap_free_block( struct heap *heap, ULONG flags, struct block *block )
 {
     struct entry *entry;
     SIZE_T block_size;
@@ -761,8 +761,8 @@ static void free_used_block( struct heap *heap, ULONG flags, struct block *block
         heap->pending_free[heap->pending_pos] = block;
         heap->pending_pos = (heap->pending_pos + 1) % MAX_FREE_PENDING;
         block_set_type( block, BLOCK_TYPE_DEAD );
-        mark_block_free( block + 1, block_get_size( block ) - sizeof(*block), flags );
-        if (!(block = tmp)) return;
+        mark_block_free( block + 1, block_get_size( block ) - sizeof(*block), heap->flags );
+        if (!(block = tmp)) return STATUS_SUCCESS;
     }
 
     block_size = block_get_size( block );
@@ -778,7 +778,7 @@ static void free_used_block( struct heap *heap, ULONG flags, struct block *block
 
     subheap = block_get_subheap( heap, block );
     create_free_block( heap, flags, subheap, block, block_size );
-    if (next_block( subheap, block )) return;  /* not the last block */
+    if (next_block( subheap, block )) return STATUS_SUCCESS;  /* not the last block */
 
     if (block == first_block( subheap ) && subheap != &heap->subheap)
     {
@@ -795,6 +795,8 @@ static void free_used_block( struct heap *heap, ULONG flags, struct block *block
         /* keep room for a full committed block as hysteresis */
         subheap_decommit( heap, subheap, (char *)(entry + 1) + REGION_ALIGN );
     }
+
+    return STATUS_SUCCESS;
 }
 
 
@@ -858,17 +860,17 @@ static NTSTATUS heap_allocate_large( struct heap *heap, ULONG flags, SIZE_T bloc
 }
 
 
-/***********************************************************************
- *           free_large_block
- */
-static void free_large_block( struct heap *heap, struct block *block )
+static NTSTATUS heap_free_large( struct heap *heap, ULONG flags, struct block *block )
 {
     ARENA_LARGE *arena = CONTAINING_RECORD( block, ARENA_LARGE, block );
     LPVOID address = arena;
     SIZE_T size = 0;
 
+    heap_lock( heap, flags );
     list_remove( &arena->entry );
-    NtFreeVirtualMemory( NtCurrentProcess(), &address, &size, MEM_RELEASE );
+    heap_unlock( heap, flags );
+
+    return NtFreeVirtualMemory( NtCurrentProcess(), &address, &size, MEM_RELEASE );
 }
 
 
@@ -1447,7 +1449,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE handle )
     {
         heap->pending_free = NULL;
         for (tmp = pending; *tmp && tmp != pending + MAX_FREE_PENDING; ++tmp)
-            free_used_block( heap, heap->flags, *tmp );
+            heap_free_block( heap, heap->flags, *tmp );
         RtlFreeHeap( handle, 0, pending );
     }
 
@@ -1557,13 +1559,6 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
 }
 
 
-static NTSTATUS heap_free( struct heap *heap, ULONG flags, struct block *block )
-{
-    if (block_get_flags( block ) & BLOCK_FLAG_LARGE) free_large_block( heap, block );
-    else free_used_block( heap, flags, block );
-    return STATUS_SUCCESS;
-}
-
 /***********************************************************************
  *           RtlFreeHeap   (NTDLL.@)
  */
@@ -1582,10 +1577,12 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
         status = STATUS_INVALID_PARAMETER;
     else if (!(block = unsafe_block_from_ptr( heap, heap_flags, ptr )))
         status = STATUS_INVALID_PARAMETER;
+    else if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
+        status = heap_free_large( heap, heap_flags, block );
     else
     {
         heap_lock( heap, heap_flags );
-        status = heap_free( heap, heap_flags, block );
+        status = heap_free_block( heap, heap_flags, block );
         heap_unlock( heap, heap_flags );
     }
 
