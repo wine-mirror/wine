@@ -98,6 +98,7 @@ struct builtin_module
     unsigned int refcount;
     void        *handle;
     void        *module;
+    char        *unix_path;
     void        *unix_handle;
 };
 
@@ -583,6 +584,7 @@ static void add_builtin_module( void *module, void *handle )
     builtin->handle      = handle;
     builtin->module      = module;
     builtin->refcount    = 1;
+    builtin->unix_path   = NULL;
     builtin->unix_handle = NULL;
     list_add_tail( &builtin_modules, &builtin->entry );
 }
@@ -603,6 +605,7 @@ void release_builtin_module( void *module )
             list_remove( &builtin->entry );
             if (builtin->handle) dlclose( builtin->handle );
             if (builtin->unix_handle) dlclose( builtin->unix_handle );
+            free( builtin->unix_path );
             free( builtin );
         }
         break;
@@ -652,6 +655,8 @@ static NTSTATUS get_builtin_unix_funcs( void *module, BOOL wow, const void **fun
     LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
     {
         if (builtin->module != module) continue;
+        if (builtin->unix_path && !builtin->unix_handle)
+            builtin->unix_handle = dlopen( builtin->unix_path, RTLD_NOW );
         if (builtin->unix_handle)
         {
             *funcs = dlsym( builtin->unix_handle, ptr_name );
@@ -669,26 +674,19 @@ static NTSTATUS get_builtin_unix_funcs( void *module, BOOL wow, const void **fun
  */
 NTSTATUS load_builtin_unixlib( void *module, const char *name )
 {
-    void *handle;
     sigset_t sigset;
-    NTSTATUS status = STATUS_DLL_NOT_FOUND;
+    NTSTATUS status = STATUS_SUCCESS;
     struct builtin_module *builtin;
 
-    if (!(handle = dlopen( name, RTLD_NOW ))) return status;
     server_enter_uninterrupted_section( &virtual_mutex, &sigset );
     LIST_FOR_EACH_ENTRY( builtin, &builtin_modules, struct builtin_module, entry )
     {
         if (builtin->module != module) continue;
-        if (!builtin->unix_handle)
-        {
-            builtin->unix_handle = handle;
-            status = STATUS_SUCCESS;
-        }
+        if (!builtin->unix_path) builtin->unix_path = strdup( name );
         else status = STATUS_IMAGE_ALREADY_LOADED;
         break;
     }
     server_leave_uninterrupted_section( &virtual_mutex, &sigset );
-    if (status) dlclose( handle );
     return status;
 }
 
