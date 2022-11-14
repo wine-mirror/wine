@@ -5,6 +5,7 @@ DELAYIMPORTS = dnsapi advapi32 iphlpapi user32
 
 C_SRCS = \
 	async.c \
+	inaddr.c \
 	protocol.c \
 	socket.c \
 	unixlib.c

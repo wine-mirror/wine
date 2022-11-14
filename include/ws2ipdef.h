@@ -386,6 +386,32 @@ typedef struct WS(in6_pktinfo) {
 #define WS_SIO_IDEAL_SEND_BACKLOG_QUERY  WS__IOR('t', 123, ULONG)
 #endif
 
+#ifndef USE_WS_PREFIX
+extern const IN_ADDR in4addr_alligmpv3routersonlink;
+extern const IN_ADDR in4addr_allnodesonlink;
+extern const IN_ADDR in4addr_allroutersonlink;
+extern const IN_ADDR in4addr_allteredohostsonlink;
+extern const IN_ADDR in4addr_any;
+extern const IN_ADDR in4addr_broadcast;
+extern const IN_ADDR in4addr_linklocalprefix;
+extern const IN_ADDR in4addr_loopback;
+extern const IN_ADDR in4addr_multicastprefix;
+extern const IN6_ADDR in6addr_6to4prefix;
+extern const IN6_ADDR in6addr_allmldv2routersonlink;
+extern const IN6_ADDR in6addr_allnodesonlink;
+extern const IN6_ADDR in6addr_allnodesonnode;
+extern const IN6_ADDR in6addr_allroutersonlink;
+extern const IN6_ADDR in6addr_any;
+extern const IN6_ADDR in6addr_linklocalprefix;
+extern const IN6_ADDR in6addr_loopback;
+extern const IN6_ADDR in6addr_multicastprefix;
+extern const IN6_ADDR in6addr_solicitednodemulticastprefix;
+extern const IN6_ADDR in6addr_teredoinitiallinklocaladdress;
+extern const IN6_ADDR in6addr_teredoprefix;
+extern const IN6_ADDR in6addr_teredoprefix_old;
+extern const IN6_ADDR in6addr_v4mappedprefix;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
