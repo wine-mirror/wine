@@ -39,6 +39,7 @@ char *convert_string_utf8( const string_t *str, int codepage );
 void free_string( string_t *str );
 int check_valid_utf8( const string_t *str, int codepage );
 int get_language_codepage( language_t lang );
+language_t get_language_from_name( const char *name );
 int is_valid_codepage(int cp);
 
 #endif

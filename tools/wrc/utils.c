@@ -223,6 +223,14 @@ int get_language_codepage( language_t lang )
     return codepage;
 }
 
+language_t get_language_from_name( const char *name )
+{
+    WCHAR nameW[LOCALE_NAME_MAX_LENGTH];
+
+    MultiByteToWideChar( 1252, 0, name, -1, nameW, ARRAY_SIZE(nameW) );
+    return LocaleNameToLCID( nameW, LOCALE_ALLOW_NEUTRAL_NAMES );
+}
+
 #else  /* _WIN32 */
 
 struct nls_info
@@ -360,6 +368,35 @@ static void load_locale_nls(void)
     error( "unable to load locale.nls\n" );
 }
 
+static int compare_locale_names( const char *n1, const WCHAR *n2 )
+{
+    for (;;)
+    {
+        WCHAR ch1 = (unsigned char)*n1++;
+        WCHAR ch2 = *n2++;
+        if (ch1 >= 'a' && ch1 <= 'z') ch1 -= 'a' - 'A';
+        if (ch2 >= 'a' && ch2 <= 'z') ch2 -= 'a' - 'A';
+        if (!ch1 || ch1 != ch2) return ch1 - ch2;
+    }
+}
+
+static const NLS_LOCALE_LCNAME_INDEX *find_lcname_entry( const char *name )
+{
+    int min = 0, max = locale_table->nb_lcnames - 1;
+
+    if (!name) return NULL;
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        const WCHAR *str = locale_strings + lcnames_index[pos].name;
+        res = compare_locale_names( name, str + 1 );
+        if (res < 0) max = pos - 1;
+        else if (res > 0) min = pos + 1;
+        else return &lcnames_index[pos];
+    }
+    return NULL;
+}
+
 static const NLS_LOCALE_LCID_INDEX *find_lcid_entry( LCID lcid )
 {
     int min = 0, max = locale_table->nb_lcids - 1;
@@ -389,6 +426,15 @@ int get_language_codepage( language_t lang )
     if (!locale_table) load_locale_nls();
     if (!(entry = find_lcid_entry( lang ))) return -1;
     return get_locale_data( entry->idx )->idefaultansicodepage;
+}
+
+language_t get_language_from_name( const char *name )
+{
+    const NLS_LOCALE_LCNAME_INDEX *entry;
+
+    if (!locale_table) load_locale_nls();
+    if (!(entry = find_lcname_entry( name ))) return 0;
+    return get_locale_data( entry->idx )->unique_lcid;
 }
 
 #endif  /* _WIN32 */
