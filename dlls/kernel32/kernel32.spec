@@ -1095,6 +1095,7 @@
 @ stdcall -import MapViewOfFile(long long long long long)
 @ stdcall -import MapViewOfFileEx(long long long long long ptr)
 @ stdcall -import MapViewOfFileExNuma(long long long long long ptr long)
+@ stdcall MapViewOfFileFromApp(long long int64 long) kernelbase.MapViewOfFileFromApp
 @ stdcall Module32First(long ptr)
 @ stdcall Module32FirstW(long ptr)
 @ stdcall Module32Next(long ptr)
