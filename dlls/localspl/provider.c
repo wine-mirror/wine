@@ -232,6 +232,8 @@ typedef struct {
     struct list entry;
     LONG ref;
 
+    WCHAR *port;
+
     CRITICAL_SECTION jobs_cs;
     struct list jobs;
 } printer_info_t;
@@ -474,7 +476,9 @@ static printer_info_t* get_printer_info(const WCHAR *name)
 {
     HKEY hkey, hprinter = NULL;
     printer_info_t *info;
+    WCHAR port[MAX_PATH];
     LSTATUS ret;
+    DWORD size;
 
     EnterCriticalSection(&printers_cs);
     LIST_FOR_EACH_ENTRY(info, &printers, printer_info_t, entry)
@@ -491,6 +495,9 @@ static printer_info_t* get_printer_info(const WCHAR *name)
     if (ret == ERROR_SUCCESS)
         ret = RegOpenKeyW(hkey, name, &hprinter);
     RegCloseKey(hkey);
+    size = sizeof(port);
+    if (ret == ERROR_SUCCESS)
+        ret = RegQueryValueExW(hprinter, L"Port", 0, NULL, (BYTE*)port, &size);
     RegCloseKey(hprinter);
     if (ret != ERROR_SUCCESS)
     {
@@ -498,7 +505,8 @@ static printer_info_t* get_printer_info(const WCHAR *name)
         return NULL;
     }
 
-    if ((info = calloc(1, sizeof(*info))) && (info->name = wcsdup(name)))
+    if ((info = calloc(1, sizeof(*info))) && (info->name = wcsdup(name)) &&
+            (info->port = wcsdup(port)))
     {
         info->ref = 1;
         list_add_head(&printers, &info->entry);
@@ -507,6 +515,7 @@ static printer_info_t* get_printer_info(const WCHAR *name)
     }
     else if (info)
     {
+        free(info->name);
         free(info);
         info = NULL;
     }
@@ -537,6 +546,7 @@ static void release_printer_info(printer_info_t *info)
         LeaveCriticalSection(&printers_cs);
 
         free(info->name);
+        free(info->port);
         DeleteCriticalSection(&info->jobs_cs);
         while (!list_empty(&info->jobs))
         {
@@ -3225,6 +3235,93 @@ static BOOL WINAPI fpGetJob(HANDLE hprinter, DWORD job_id, DWORD level,
     return ret;
 }
 
+static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
+{
+    BOOL ret_startdoc = FALSE, ret_open = FALSE, ret = TRUE;
+    printer_t *printer = (printer_t *)hprinter;
+    const WCHAR *port_name, *port;
+    DOC_INFO_1W info;
+    monitor_t *mon;
+    BYTE buf[4096];
+    HANDLE hport;
+    DWORD r, w;
+    job_t *job;
+    HANDLE hf;
+
+    TRACE("%p %ld\n", hprinter, job_id);
+
+    if (!printer || !printer->info)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    EnterCriticalSection(&printer->info->jobs_cs);
+    job = get_job(printer->info, job_id);
+    if (!job)
+    {
+        LeaveCriticalSection(&printer->info->jobs_cs);
+        return FALSE;
+    }
+
+    port = job->port;
+    if (!port)
+        port = printer->info->port;
+    TRACE("need to schedule job %ld filename %s to port %s\n", job->id,
+            debugstr_w(job->filename), debugstr_w(port));
+
+    hf = CreateFileW(job->filename, GENERIC_READ, FILE_SHARE_READ,
+            NULL, OPEN_EXISTING, 0, NULL);
+    if (hf == INVALID_HANDLE_VALUE)
+    {
+        DeleteFileW(job->filename);
+        free_job(job);
+        LeaveCriticalSection(&printer->info->jobs_cs);
+    }
+
+    /* TODO: use print processor */
+    if (isalpha(port[0]) && port[1] == ':')
+        port_name = L"FILE:";
+    else
+        port_name = port;
+
+    if (!(mon = monitor_load_by_port(port_name)) || !mon->monitor.pfnOpenPort ||
+            !mon->monitor.pfnStartDocPort || !mon->monitor.pfnWritePort ||
+            !mon->monitor.pfnEndDocPort || !mon->monitor.pfnClosePort)
+    {
+        FIXME("port not supported: %s\n", debugstr_w(port_name));
+        ret = FALSE;
+    }
+
+    if (ret)
+        ret = ret_open = mon->monitor.pfnOpenPort(mon->hmon, (WCHAR *)port_name, &hport);
+
+    if (ret)
+    {
+        info.pDocName = job->document_title;
+        info.pOutputFile = (WCHAR *)port;
+        info.pDatatype = NULL;
+        ret = ret_startdoc = mon->monitor.pfnStartDocPort(hport, printer->info->name,
+                job_id, 1, (BYTE *)&info);
+    }
+
+    while (ret && ReadFile(hf, buf, sizeof(buf), &r, NULL) && r)
+        ret = mon->monitor.pfnWritePort(hport, buf, r, &w) && r == w;
+
+    if (ret_startdoc)
+        mon->monitor.pfnEndDocPort(hport);
+    if (ret_open)
+        mon->monitor.pfnClosePort(hport);
+    if (mon)
+        monitor_unload(mon);
+
+    CloseHandle(hf);
+    DeleteFileW(job->filename);
+    free_job(job);
+    LeaveCriticalSection(&printer->info->jobs_cs);
+    return ret;
+}
+
 static const PRINTPROVIDOR backend = {
         fpOpenPrinter,
         fpSetJob,
@@ -3253,7 +3350,7 @@ static const PRINTPROVIDOR backend = {
         NULL,   /* fpReadPrinter */
         NULL,   /* fpEndDocPrinter */
         fpAddJob,
-        NULL,   /* fpScheduleJob */
+        fpScheduleJob,
         NULL,   /* fpGetPrinterData */
         NULL,   /* fpSetPrinterData */
         NULL,   /* fpWaitForPrinterChange */
