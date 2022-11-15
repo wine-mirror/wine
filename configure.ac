@@ -951,9 +951,16 @@ do
                             AS_VAR_SET([${wine_arch}_DELAYLOADFLAG],["-Wl,-delayload,"])
                             AS_VAR_APPEND([${wine_arch}_EXTRACFLAGS],[" -target $target"])
                             CFLAGS="$CFLAGS -target $target $llvm_cflags"])
-        AS_VAR_SET([${wine_arch}_TARGET],[$target])
-        PE_ARCHS="$PE_ARCHS $wine_arch"])
+        AS_VAR_SET([${wine_arch}_TARGET],[$target])])
     AS_VAR_POPDEF([wine_cv_crosscc])
+
+    if test -z "$target"
+    then
+        CC=$saved_CC
+        CFLAGS=$saved_CFLAGS
+        continue
+    fi
+    AS_VAR_APPEND([PE_ARCHS],[" $wine_arch"])
 
     AS_VAR_PUSHDEF([wine_cv_crosscc_c99],[ac_cv_${wine_arch}_crosscc_c99])
     AC_MSG_CHECKING([for $CC option to enable C99 features])
