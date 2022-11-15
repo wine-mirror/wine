@@ -285,6 +285,7 @@
 @ stdcall -import CreateFileA(str long long ptr long long long)
 @ stdcall CreateFileMappingA(long ptr long long long str)
 # @ stub CreateFileMappingNumaA
+@ stdcall CreateFileMappingFromApp(long ptr long int64 wstr) kernelbase.CreateFileMappingFromApp
 @ stdcall -import CreateFileMappingNumaW(long ptr long long long wstr long)
 @ stdcall -import CreateFileMappingW(long ptr long long long wstr)
 @ stdcall -import CreateFileW(wstr long long ptr long long long)
