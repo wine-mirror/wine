@@ -28,6 +28,7 @@
 #include <ctype.h>
 
 #include "wmc.h"
+#include "winternl.h"
 #include "winnls.h"
 #include "utils.h"
 
@@ -327,6 +328,14 @@ WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstl
     return dst;
 }
 
+unsigned int get_language_from_name( const char *name )
+{
+    WCHAR nameW[LOCALE_NAME_MAX_LENGTH];
+
+    MultiByteToWideChar( 1252, 0, name, -1, nameW, ARRAY_SIZE(nameW) );
+    return LocaleNameToLCID( nameW, LOCALE_ALLOW_NEUTRAL_NAMES );
+}
+
 #else  /* _WIN32 */
 
 struct nls_info
@@ -354,28 +363,39 @@ static void init_nls_info( struct nls_info *info, unsigned short *ptr )
     info->dbcs_offsets  = *ptr ? ptr + 1 : NULL;
 }
 
+static void *load_nls_file( const char *name )
+{
+    unsigned int i;
+    void *data;
+    size_t size;
+
+    for (i = 0; nlsdirs[i]; i++)
+    {
+        char *path = strmake( "%s/%s", nlsdirs[i], name );
+        if ((data = read_file( path, &size )))
+        {
+            free( path );
+            return data;
+        }
+        free( path );
+    }
+    return NULL;
+}
+
 static const struct nls_info *get_nls_info( unsigned int codepage )
 {
     unsigned short *data;
-    char *path;
     unsigned int i;
-    size_t size;
 
     for (i = 0; i < ARRAY_SIZE(nlsinfo) && nlsinfo[i].codepage; i++)
         if (nlsinfo[i].codepage == codepage) return &nlsinfo[i];
 
     assert( i < ARRAY_SIZE(nlsinfo) );
 
-    for (i = 0; nlsdirs[i]; i++)
+    if ((data = load_nls_file( strmake( "c_%03u.nls", codepage ))))
     {
-        path = strmake( "%s/c_%03u.nls", nlsdirs[i], codepage );
-        if ((data = read_file( path, &size )))
-        {
-            free( path );
-            init_nls_info( &nlsinfo[i], data );
-            return &nlsinfo[i];
-        }
-        free( path );
+        init_nls_info( &nlsinfo[i], data );
+        return &nlsinfo[i];
     }
     return NULL;
 }
@@ -425,6 +445,76 @@ WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstl
     dst[i] = 0;
     *dstlen = i;
     return dst;
+}
+
+static const NLS_LOCALE_LCID_INDEX *lcids_index;
+static const NLS_LOCALE_HEADER *locale_table;
+static const NLS_LOCALE_LCNAME_INDEX *lcnames_index;
+static const WCHAR *locale_strings;
+
+static void load_locale_nls(void)
+{
+    struct
+    {
+        unsigned int ctypes;
+        unsigned int unknown1;
+        unsigned int unknown2;
+        unsigned int unknown3;
+        unsigned int locales;
+        unsigned int charmaps;
+        unsigned int geoids;
+        unsigned int scripts;
+    } *header;
+
+    if (!(header = load_nls_file( "locale.nls" ))) error( "unable to load locale.nls\n" );
+    locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
+    lcids_index = (const NLS_LOCALE_LCID_INDEX *)((char *)locale_table + locale_table->lcids_offset);
+    lcnames_index = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
+    locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
+}
+
+static int compare_locale_names( const char *n1, const WCHAR *n2 )
+{
+    for (;;)
+    {
+        WCHAR ch1 = (unsigned char)*n1++;
+        WCHAR ch2 = *n2++;
+        if (ch1 >= 'a' && ch1 <= 'z') ch1 -= 'a' - 'A';
+        if (ch2 >= 'a' && ch2 <= 'z') ch2 -= 'a' - 'A';
+        if (!ch1 || ch1 != ch2) return ch1 - ch2;
+    }
+}
+
+static const NLS_LOCALE_LCNAME_INDEX *find_lcname_entry( const char *name )
+{
+    int min = 0, max = locale_table->nb_lcnames - 1;
+
+    if (!name) return NULL;
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        const WCHAR *str = locale_strings + lcnames_index[pos].name;
+        res = compare_locale_names( name, str + 1 );
+        if (res < 0) max = pos - 1;
+        else if (res > 0) min = pos + 1;
+        else return &lcnames_index[pos];
+    }
+    return NULL;
+}
+
+static const NLS_LOCALE_DATA *get_locale_data( UINT idx )
+{
+    ULONG offset = locale_table->locales_offset + idx * locale_table->locale_size;
+    return (const NLS_LOCALE_DATA *)((const char *)locale_table + offset);
+}
+
+unsigned int get_language_from_name( const char *name )
+{
+    const NLS_LOCALE_LCNAME_INDEX *entry;
+
+    if (!locale_table) load_locale_nls();
+    if (!(entry = find_lcname_entry( name ))) return 0;
+    return get_locale_data( entry->idx )->unique_lcid;
 }
 
 #endif  /* _WIN32 */

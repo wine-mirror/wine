@@ -2781,6 +2781,7 @@ static void output_source_mc( struct makefile *make, struct incl_file *source, c
     output( "%s.pot %s.res: %s", obj_path, obj_path, source->filename );
     output_filename( tools_path( make, "wmc" ));
     output_filenames( source->dependencies );
+    if (make->src_dir) output_filename( "nls/locale.nls" );
     output( "\n" );
     output( "\t%s%s -u -o $@ %s", cmd_prefix( "WMC" ), tools_path( make, "wmc" ), source->filename );
     if (linguas.count)

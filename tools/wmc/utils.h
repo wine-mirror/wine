@@ -40,5 +40,6 @@ WCHAR *utf8_to_unicode( const char *src, int srclen, int *dstlen );
 char *unicode_to_utf8( const WCHAR *src, int srclen, int *dstlen );
 int is_valid_codepage(int id);
 WCHAR *codepage_to_unicode( int codepage, const char *src, int srclen, int *dstlen );
+unsigned int get_language_from_name( const char *name );
 
 #endif
