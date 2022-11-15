@@ -22063,6 +22063,7 @@ wine_fn_config_makefile programs/dxdiag enable_dxdiag
 wine_fn_config_makefile programs/eject enable_eject
 wine_fn_config_makefile programs/expand enable_expand
 wine_fn_config_makefile programs/explorer enable_explorer
+wine_fn_config_makefile programs/explorer/tests enable_tests
 wine_fn_config_makefile programs/extrac32 enable_extrac32
 wine_fn_config_makefile programs/fc enable_fc
 wine_fn_config_makefile programs/find enable_find
