@@ -671,7 +671,8 @@ static const struct notification websocket_test[] =
     { winhttp_receive_response,           WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE },
     { winhttp_receive_response,           WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED },
     { winhttp_receive_response,           WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, NF_SIGNAL },
-    { winhttp_websocket_complete_upgrade, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED, NF_SIGNAL },
+    { winhttp_websocket_complete_upgrade, WINHTTP_CALLBACK_STATUS_HANDLE_CREATED },
+    { winhttp_websocket_complete_upgrade, WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, NF_SIGNAL },
     { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_MAIN_THREAD | NF_SIGNAL },
     { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_MAIN_THREAD | NF_SIGNAL },
     { winhttp_websocket_send,             WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE, NF_MAIN_THREAD | NF_SIGNAL },
@@ -680,7 +681,6 @@ static const struct notification websocket_test[] =
     { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SAVE_BUFFER | NF_SIGNAL },
     { winhttp_websocket_receive,          WINHTTP_CALLBACK_STATUS_READ_COMPLETE, NF_SAVE_BUFFER | NF_SIGNAL },
     { winhttp_websocket_close,            WINHTTP_CALLBACK_STATUS_CLOSE_COMPLETE, NF_SIGNAL },
-    { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING },
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, NF_SIGNAL },
 };
 
@@ -911,6 +911,9 @@ static void test_websocket(BOOL secure)
     err = GetLastError();
     ok( socket != NULL, "got %lu\n", err );
     ok( err == ERROR_SUCCESS, "got %lu\n", err );
+
+    WinHttpCloseHandle( request );
+
     WaitForSingleObject( info.wait, INFINITE );
 
     /* The send is executed synchronously (even if sending a reasonably big buffer exceeding SSL buffer size).
@@ -1029,7 +1032,6 @@ static void test_websocket(BOOL secure)
 
     setup_test( &info, winhttp_close_handle, __LINE__ );
     WinHttpCloseHandle( socket );
-    WinHttpCloseHandle( request );
 
     WaitForSingleObject( info.wait, INFINITE );
     end_test( &info, __LINE__ );

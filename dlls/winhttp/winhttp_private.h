@@ -256,7 +256,6 @@ enum fragment_type
 struct socket
 {
     struct object_header hdr;
-    struct request *request;
     struct netconn *netconn;
     int keepalive_interval;
     unsigned int send_buffer_size;
