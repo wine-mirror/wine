@@ -2945,10 +2945,36 @@ static HRESULT Global_ScriptEngineBuildVersion(BuiltinDisp *This, VARIANT *arg, 
     return return_int(res, VBSCRIPT_BUILD_VERSION);
 }
 
-static HRESULT Global_FormatNumber(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_FormatNumber(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    union
+    {
+        struct
+        {
+            int num_dig, inc_lead, use_parens, group;
+        } s;
+        int val[4];
+    } int_args = { .s.num_dig = -1, .s.inc_lead = -2, .s.use_parens = -2, .s.group = -2 };
+    HRESULT hres;
+    BSTR str;
+    int i;
+
+    TRACE("\n");
+
+    assert(1 <= args_cnt && args_cnt <= 5);
+
+    for (i = 1; i < args_cnt; ++i)
+    {
+        if (V_VT(args+i) == VT_ERROR) continue;
+        if (V_VT(args+i) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        if (FAILED(hres = to_int(args+i, &int_args.val[i-1]))) return hres;
+    }
+
+    hres = VarFormatNumber(args, int_args.s.num_dig, int_args.s.inc_lead, int_args.s.use_parens,
+        int_args.s.group, 0, &str);
+    if (FAILED(hres)) return hres;
+
+    return return_bstr(res, str);
 }
 
 static HRESULT Global_FormatCurrency(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)

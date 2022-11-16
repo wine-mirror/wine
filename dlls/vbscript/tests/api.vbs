@@ -2436,4 +2436,40 @@ end sub
 call testFormatDateTime()
 call testFormatDateTimeError()
 
+sub testFormatNumberError()
+    on error resume next
+    dim x
+    call Err.clear()
+    x = FormatNumber(null)
+    call ok(Err.number = 13, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatNumber(.10,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatNumber(.10,0,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatNumber(.10,0,0,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatNumber(.10,0,0,0,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+end sub
+
+sub testFormatNumber()
+    dim x
+
+    x = FormatNumber(0)
+    x = FormatNumber(.12,,,-1)
+    call ok(getVT(x) = "VT_BSTR*", "getVT = " & getVT(x))
+end sub
+
+call testFormatNumber()
+call testFormatNumberError()
+
 Call reportSuccess()
