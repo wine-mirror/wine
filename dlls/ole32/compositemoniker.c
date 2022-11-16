@@ -751,7 +751,11 @@ static HRESULT WINAPI CompositeMonikerImpl_CommonPrefixWith(IMoniker *iface, IMo
         heap_free(components);
         heap_free(other_components);
 
-        if (!prefix_len) return MK_E_NOPREFIX;
+        if (!prefix_len)
+        {
+            heap_free(prefix_components);
+            return MK_E_NOPREFIX;
+        }
 
         last = prefix_components[0];
         for (i = 1; i < prefix_len; ++i)
