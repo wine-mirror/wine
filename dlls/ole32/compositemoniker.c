@@ -1658,7 +1658,7 @@ static HRESULT composite_get_leftmost(CompositeMonikerImpl *composite, IMoniker 
 
     if (!(node = moniker_tree_get_leftmost(root)))
     {
-        WARN("Couldn't get right most component.\n");
+        WARN("Couldn't get left most component.\n");
         return E_FAIL;
     }
 
