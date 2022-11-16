@@ -22,18 +22,9 @@
 #include "winsvc.h"
 #include "winternl.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(http);
-
-static WCHAR *heap_strdupW(const WCHAR *str)
-{
-    int len = wcslen(str) + 1;
-    WCHAR *ret = heap_alloc(len * sizeof(WCHAR));
-    wcscpy(ret, str);
-    return ret;
-}
 
 /***********************************************************************
  *        HttpInitialize       (HTTPAPI.@)
@@ -216,7 +207,7 @@ static ULONG add_url(HANDLE queue, const WCHAR *urlW, HTTP_URL_CONTEXT context)
     int len;
 
     len = WideCharToMultiByte(CP_ACP, 0, urlW, -1, NULL, 0, NULL, NULL);
-    if (!(params = heap_alloc(offsetof(struct http_add_url_params, url[len]))))
+    if (!(params = malloc(offsetof(struct http_add_url_params, url[len]))))
         return ERROR_OUTOFMEMORY;
     WideCharToMultiByte(CP_ACP, 0, urlW, -1, params->url, len, NULL, NULL);
     params->context = context;
@@ -227,7 +218,7 @@ static ULONG add_url(HANDLE queue, const WCHAR *urlW, HTTP_URL_CONTEXT context)
             offsetof(struct http_add_url_params, url[len]), NULL, 0, NULL, &ovl))
         ret = GetLastError();
     CloseHandle(ovl.hEvent);
-    heap_free(params);
+    free(params);
     return ret;
 }
 
@@ -249,7 +240,7 @@ static ULONG remove_url(HANDLE queue, const WCHAR *urlW)
     int len;
 
     len = WideCharToMultiByte(CP_ACP, 0, urlW, -1, NULL, 0, NULL, NULL);
-    if (!(url = heap_alloc(len)))
+    if (!(url = malloc(len)))
         return ERROR_OUTOFMEMORY;
     WideCharToMultiByte(CP_ACP, 0, urlW, -1, url, len, NULL, NULL);
 
@@ -258,7 +249,7 @@ static ULONG remove_url(HANDLE queue, const WCHAR *urlW)
     if (!DeviceIoControl(queue, IOCTL_HTTP_REMOVE_URL, url, len, NULL, 0, NULL, &ovl))
         ret = GetLastError();
     CloseHandle(ovl.hEvent);
-    heap_free(url);
+    free(url);
     return ret;
 }
 
@@ -470,7 +461,7 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
     }
     len += 2;
 
-    if (!(buffer = heap_alloc(offsetof(struct http_response, buffer[len]))))
+    if (!(buffer = malloc(offsetof(struct http_response, buffer[len]))))
         return ERROR_OUTOFMEMORY;
     buffer->id = id;
     buffer->len = len;
@@ -512,7 +503,7 @@ ULONG WINAPI HttpSendHttpResponse(HANDLE queue, HTTP_REQUEST_ID id, ULONG flags,
             offsetof(struct http_response, buffer[len]), NULL, 0, NULL, ovl))
         ret = GetLastError();
 
-    heap_free(buffer);
+    free(buffer);
     return ret;
 }
 
@@ -573,7 +564,7 @@ ULONG WINAPI HttpCreateServerSession(HTTPAPI_VERSION version, HTTP_SERVER_SESSIO
             || version.HttpApiMinorVersion)
         return ERROR_REVISION_MISMATCH;
 
-    if (!(session = heap_alloc(sizeof(*session))))
+    if (!(session = malloc(sizeof(*session))))
         return ERROR_OUTOFMEMORY;
 
     list_add_tail(&server_sessions, &session->entry);
@@ -601,7 +592,7 @@ ULONG WINAPI HttpCloseServerSession(HTTP_SERVER_SESSION_ID id)
         HttpCloseUrlGroup((ULONG_PTR)group);
     }
     list_remove(&session->entry);
-    heap_free(session);
+    free(session);
     return ERROR_SUCCESS;
 }
 
@@ -619,7 +610,7 @@ ULONG WINAPI HttpCreateUrlGroup(HTTP_SERVER_SESSION_ID session_id, HTTP_URL_GROU
     if (!(session = get_server_session(session_id)))
         return ERROR_INVALID_PARAMETER;
 
-    if (!(group = heap_alloc_zero(sizeof(*group))))
+    if (!(group = calloc(1, sizeof(*group))))
         return ERROR_OUTOFMEMORY;
     list_add_tail(&url_groups, &group->entry);
     list_add_tail(&session->groups, &group->session_entry);
@@ -643,7 +634,7 @@ ULONG WINAPI HttpCloseUrlGroup(HTTP_URL_GROUP_ID id)
 
     list_remove(&group->session_entry);
     list_remove(&group->entry);
-    heap_free(group);
+    free(group);
 
     return ERROR_SUCCESS;
 }
@@ -704,7 +695,7 @@ ULONG WINAPI HttpAddUrlToUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url,
             return ret;
     }
 
-    if (!(group->url = heap_strdupW(url)))
+    if (!(group->url = wcsdup(url)))
         return ERROR_OUTOFMEMORY;
     group->context = context;
 
@@ -726,7 +717,7 @@ ULONG WINAPI HttpRemoveUrlFromUrlGroup(HTTP_URL_GROUP_ID id, const WCHAR *url, U
     if (flags)
         FIXME("Ignoring flags %#lx.\n", flags);
 
-    heap_free(group->url);
+    free(group->url);
     group->url = NULL;
 
     if (group->queue)
