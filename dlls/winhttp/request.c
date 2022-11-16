@@ -3192,6 +3192,7 @@ static void socket_destroy( struct object_header *hdr )
 
     netconn_release( socket->netconn );
     release_object( &socket->request->hdr );
+    free( socket->read_buffer );
     free( socket->send_frame_buffer );
     free( socket );
 }
@@ -3266,6 +3267,19 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
     socket->hdr.flags = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC;
     socket->keepalive_interval = 30000;
     socket->send_buffer_size = request->websocket_send_buffer_size;
+    if (request->read_size)
+    {
+        if (!(socket->read_buffer = malloc( request->read_size )))
+        {
+            ERR( "No memory.\n" );
+            free( socket );
+            release_object( &request->hdr );
+            return NULL;
+        }
+        socket->bytes_in_read_buffer = request->read_size;
+        memcpy( socket->read_buffer, request->read_buf + request->read_pos, request->read_size );
+        request->read_pos = request->read_size = 0;
+    }
     InitializeSRWLock( &socket->send_lock );
     init_queue( &socket->send_q );
     init_queue( &socket->recv_q );
@@ -3674,11 +3688,12 @@ static DWORD receive_bytes( struct socket *socket, char *buf, DWORD len, DWORD *
     char *ptr = buf;
     int received;
 
-    if (socket->request->read_size)
+    if (socket->bytes_in_read_buffer)
     {
-        size = min( needed, socket->request->read_size );
-        memcpy( ptr, socket->request->read_buf + socket->request->read_pos, size );
-        remove_data( socket->request, size );
+        size = min( needed, socket->bytes_in_read_buffer );
+        memcpy( ptr, socket->read_buffer, size );
+        memmove( socket->read_buffer, socket->read_buffer + size, socket->bytes_in_read_buffer - size );
+        socket->bytes_in_read_buffer -= size;
         needed -= size;
         ptr += size;
     }

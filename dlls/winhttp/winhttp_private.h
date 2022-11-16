@@ -277,6 +277,8 @@ struct socket
     unsigned int send_remaining_size;
     unsigned int bytes_in_send_frame_buffer;
     unsigned int client_buffer_offset;
+    char *read_buffer;
+    unsigned int bytes_in_read_buffer;
     SRWLOCK send_lock;
     volatile LONG pending_noncontrol_send;
     enum fragment_type sending_fragment_type;
