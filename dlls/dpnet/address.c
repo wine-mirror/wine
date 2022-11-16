@@ -36,22 +36,13 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dpnet);
 
 
-static char *heap_strdupA( const char *str )
-{
-    char *ret;
-
-    if (!str) return NULL;
-    if ((ret = HeapAlloc( GetProcessHeap(), 0, strlen(str) + 1 ))) strcpy( ret, str );
-    return ret;
-}
-
 static BOOL add_component(IDirectPlay8AddressImpl *This, struct component *item)
 {
     if(This->comp_count == This->comp_array_size)
     {
         struct component **temp;
 
-        temp = heap_realloc(This->components, sizeof(*temp) * This->comp_array_size * 2 );
+        temp = realloc(This->components, sizeof(*temp) * This->comp_array_size * 2);
         if(!temp)
         {
             return FALSE;
@@ -115,22 +106,22 @@ static ULONG WINAPI IDirectPlay8AddressImpl_Release(IDirectPlay8Address *iface)
             switch(entry->type)
             {
                 case DPNA_DATATYPE_STRING:
-                    heap_free(entry->data.string);
+                    free(entry->data.string);
                     break;
                 case DPNA_DATATYPE_STRING_ANSI:
-                    heap_free(entry->data.ansi);
+                    free(entry->data.ansi);
                     break;
                 case DPNA_DATATYPE_BINARY:
-                    heap_free(entry->data.binary);
+                    free(entry->data.binary);
                     break;
             }
 
-            heap_free(entry->name);
-            heap_free(entry);
+            free(entry->name);
+            free(entry);
         }
 
-        heap_free(This->components);
-        heap_free(This);
+        free(This->components);
+        free(This);
     }
     return ref;
 }
@@ -326,7 +317,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLA(IDirectPlay8Address *iface
         return DPNERR_INVALIDPOINTER;
 
     if(url && *length)
-        buffer = heap_alloc(*length * sizeof(WCHAR));
+        buffer = malloc(*length * sizeof(WCHAR));
 
     hr = IDirectPlay8Address_GetURLW(iface, buffer, length);
     if(hr == DPN_OK)
@@ -341,7 +332,7 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_GetURLA(IDirectPlay8Address *iface
             hr = DPNERR_BUFFERTOOSMALL;
         }
     }
-    heap_free(buffer);
+    free(buffer);
     return hr;
 }
 
@@ -589,11 +580,11 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
             found = TRUE;
 
             if(entry->type == DPNA_DATATYPE_STRING_ANSI)
-                heap_free(entry->data.ansi);
+                free(entry->data.ansi);
             else if(entry->type == DPNA_DATATYPE_STRING)
-                heap_free(entry->data.string);
+                free(entry->data.string);
             else if(entry->type == DPNA_DATATYPE_BINARY)
-                heap_free(entry->data.binary);
+                free(entry->data.binary);
 
             break;
         }
@@ -602,21 +593,21 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
     if(!found)
     {
         /* Create a new one */
-        entry = heap_alloc(sizeof(struct component));
+        entry = malloc(sizeof(struct component));
         if(!entry)
             return E_OUTOFMEMORY;
 
-        entry->name = heap_strdupW(pwszName);
+        entry->name = wcsdup(pwszName);
         if(!entry->name)
         {
-            heap_free(entry);
+            free(entry);
             return E_OUTOFMEMORY;
         }
 
         if(!add_component(This, entry))
         {
-           heap_free(entry->name);
-           heap_free(entry);
+           free(entry->name);
+           free(entry);
            return E_OUTOFMEMORY;
         }
     }
@@ -632,15 +623,15 @@ static HRESULT WINAPI IDirectPlay8AddressImpl_AddComponent(IDirectPlay8Address *
             TRACE("(%p, %lu): GUID Type -> %s\n", lpvData, dwDataSize, debugstr_guid(lpvData));
             break;
         case DPNA_DATATYPE_STRING:
-            entry->data.string = heap_strdupW((WCHAR*)lpvData);
+            entry->data.string = wcsdup((WCHAR*)lpvData);
             TRACE("(%p, %lu): STRING Type -> %s\n", lpvData, dwDataSize, debugstr_w((WCHAR*)lpvData));
             break;
         case DPNA_DATATYPE_STRING_ANSI:
-            entry->data.ansi = heap_strdupA((CHAR*)lpvData);
+            entry->data.ansi = strdup((char*)lpvData);
             TRACE("(%p, %lu): ANSI STRING Type -> %s\n", lpvData, dwDataSize, (const CHAR*) lpvData);
             break;
         case DPNA_DATATYPE_BINARY:
-            entry->data.binary = heap_alloc(dwDataSize);
+            entry->data.binary = malloc(dwDataSize);
             memcpy(entry->data.binary, lpvData, dwDataSize);
             TRACE("(%p, %lu): BINARY Type\n", lpvData, dwDataSize);
             break;
@@ -709,17 +700,17 @@ HRESULT DPNET_CreateDirectPlay8Address(IClassFactory *iface, IUnknown *pUnkOuter
 
     *ppobj = NULL;
 
-    client = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlay8AddressImpl));
+    client = calloc(1, sizeof(IDirectPlay8AddressImpl));
     if (!client)
         return E_OUTOFMEMORY;
 
     client->IDirectPlay8Address_iface.lpVtbl = &DirectPlay8Address_Vtbl;
     client->ref = 1;
     client->comp_array_size = 4;
-    client->components = heap_alloc( sizeof(*client->components) * client->comp_array_size );
+    client->components = malloc(sizeof(*client->components) * client->comp_array_size);
     if(!client->components)
     {
-        heap_free(client);
+        free(client);
         return E_OUTOFMEMORY;
     }
 
