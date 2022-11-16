@@ -2199,20 +2199,25 @@ class StructConversionFunction(object):
                     body += ident + "{0} *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));\n".format(out_type)
                 else:
                     body += ident + "{0} *out_ext = find_next_struct(out_header, {1});\n".format(out_type, stype)
-                if self.direction == Direction.OUTPUT or not ext.returnedonly:
-                    body += ident + "{0} *in_ext = ({0} *)in_header;\n".format(in_type)
+
+                copy_body = ""
 
                 for m in ext:
                     if m.name == "sType":
-                        body += ident + "out_ext->sType = {0};\n".format(stype)
+                        copy_body += ident + "out_ext->sType = {0};\n".format(stype)
                         continue
                     if not self.member_needs_copy(ext, m):
                         continue
                     if m.name == "pNext":
-                        body += ident + "out_ext->pNext = NULL;\n"
+                        copy_body += ident + "out_ext->pNext = NULL;\n"
                         continue
 
-                    body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, True)
+                    copy_body += ident + m.copy("in_ext->", "out_ext->", self.direction, self.conv, True)
+
+                # Generate the definition of "in_ext" if we need it
+                if "in_ext->" in copy_body:
+                    body += ident + "{0} *in_ext = ({0} *)in_header;\n".format(in_type)
+                body += copy_body
 
                 if self.direction == Direction.INPUT:
                     body += ident + "out_header->pNext = (void *)out_ext;\n"
