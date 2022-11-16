@@ -5464,12 +5464,13 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ID3DXEffect *effect;
     HRESULT hr;
     D3DXHANDLE param;
-    unsigned int i, passes_count, value;
+    unsigned int i, passes_count;
     union
     {
         DWORD dw;
         float f;
     } float_value;
+    DWORD value;
     int ivect[4];
     D3DXVECTOR4 fvect;
     IDirect3DVertexShader9 *vshader;
