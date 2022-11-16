@@ -497,7 +497,7 @@ static void openldap_ldap_init_w_env(
 	}
 }
 
-#if defined(__GNUC__)
+#if defined(__GNUC__) || defined(__clang__)
 /* Declare this function as a destructor so that it will automatically be
  * invoked either at program exit (if libldap is a static library) or
  * at unload time (if libldap is a dynamic library).
@@ -574,7 +574,7 @@ void ldap_int_initialize_global_options( struct ldapoptions *gopts, int *dbglvl 
 	 */
 	ldap_url_parselist(&gopts->ldo_defludp, "ldap://localhost/");
 	gopts->ldo_defport = LDAP_PORT;
-#if !defined(__GNUC__) && !defined(PIC)
+#if !defined(__GNUC__) && !defined(__clang__) && !defined(PIC)
 	/* Do this only for a static library, and only if we can't
 	 * arrange for it to be executed as a library destructor
 	 */
