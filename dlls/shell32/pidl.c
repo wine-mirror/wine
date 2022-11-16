@@ -1290,12 +1290,20 @@ BOOL WINAPI SHGetPathFromIDListEx(LPCITEMIDLIST pidl, WCHAR *path, DWORD path_si
  */
 HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCITEMIDLIST *ppidlLast)
 {
-    IShellFolder    * psfDesktop;
-    HRESULT         hr=E_FAIL;
+    return SHBindToFolderIDListParent(NULL, pidl, riid, ppv, ppidlLast);
+}
 
-    TRACE_(shell)("pidl=%p\n", pidl);
+/*************************************************************************
+ * SHBindToFolderIDListParent             [SHELL32.@]
+ */
+HRESULT WINAPI SHBindToFolderIDListParent(IShellFolder *psf, LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCITEMIDLIST *ppidlLast)
+{
+    IShellFolder *psfDesktop = NULL;
+    HRESULT hr;
+
+    TRACE_(shell)("%p,%p,%s\n", psf, pidl, debugstr_guid(riid));
     pdump(pidl);
-    
+
     if (!pidl || !ppv)
         return E_INVALIDARG;
     
@@ -1303,29 +1311,34 @@ HRESULT WINAPI SHBindToParent(LPCITEMIDLIST pidl, REFIID riid, LPVOID *ppv, LPCI
     if (ppidlLast)
         *ppidlLast = NULL;
 
-    hr = SHGetDesktopFolder(&psfDesktop);
-    if (FAILED(hr))
-        return hr;
+    if (!psf)
+    {
+        hr = SHGetDesktopFolder(&psfDesktop);
+        if (FAILED(hr))
+            return hr;
+        psf = psfDesktop;
+    }
 
     if (_ILIsPidlSimple(pidl))
     {
         /* we are on desktop level */
-        hr = IShellFolder_QueryInterface(psfDesktop, riid, ppv);
+        hr = IShellFolder_QueryInterface(psf, riid, ppv);
     }
     else
     {
         LPITEMIDLIST pidlParent = ILClone(pidl);
         ILRemoveLastID(pidlParent);
-        hr = IShellFolder_BindToObject(psfDesktop, pidlParent, NULL, riid, ppv);
+        hr = IShellFolder_BindToObject(psf, pidlParent, NULL, riid, ppv);
         SHFree (pidlParent);
     }
 
-    IShellFolder_Release(psfDesktop);
+    if (psfDesktop)
+        IShellFolder_Release(psfDesktop);
 
     if (SUCCEEDED(hr) && ppidlLast)
         *ppidlLast = ILFindLastID(pidl);
 
-    TRACE_(shell)("-- psf=%p pidl=%p ret=0x%08lx\n", *ppv, (ppidlLast)?*ppidlLast:NULL, hr);
+    TRACE_(shell)("-- ppv=%p pidl=%p ret=0x%08lx\n", *ppv, (ppidlLast)?*ppidlLast:NULL, hr);
     return hr;
 }
 

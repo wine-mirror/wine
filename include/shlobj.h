@@ -1748,6 +1748,9 @@ WINSHELLAPI HRESULT WINAPI SHGetFolderPathW(HWND hwnd, int nFolder, HANDLE hToke
  */
 WINSHELLAPI HRESULT WINAPI SHGetDesktopFolder(IShellFolder * *);
 
+WINSHELLAPI HRESULT WINAPI SHBindToFolderIDListParent(IShellFolder *psf, LPCITEMIDLIST pidl, REFIID riid,
+                                                      LPVOID *ppv, LPCITEMIDLIST *ppidlLast);
+
 /****************************************************************************
  * SHBindToParent API
  */
