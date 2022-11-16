@@ -1012,7 +1012,11 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
     }
 
     spec_o_name = get_temp_file(output_name, ".spec.o");
-    if (opts->pic && !is_pe) strarray_add(&spec_args, "-fPIC");
+    if (!is_pe)
+    {
+        if (opts->pic) strarray_add(&spec_args, "-fPIC");
+        if (opts->use_msvcrt) strarray_add(&spec_args, "-mno-cygwin");
+    }
     strarray_add(&spec_args, opts->shared ? "--dll" : "--exe");
     if (opts->fake_module)
     {
@@ -1718,7 +1722,6 @@ int main(int argc, char **argv)
                     {
 			opts.use_msvcrt = 1;
                         raw_compiler_arg = 0;
-                        raw_winebuild_arg = 1;
                     }
 		    if (strcmp("-mcygwin", opts.args.str[i]) == 0)
                     {
@@ -1980,7 +1983,7 @@ int main(int argc, char **argv)
     if (opts.processor == proc_cpp) linking = 0;
     if (linking == -1) error("Static linking is not supported\n");
 
-    if (!opts.wine_objdir && is_pe_target( &opts )) opts.use_msvcrt = 1;
+    if (is_pe_target( &opts )) opts.use_msvcrt = 1;
 
     if (opts.files.count == 0 && !opts.fake_module) forward(&opts);
     else if (linking) build(&opts);
