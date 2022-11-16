@@ -659,6 +659,19 @@ static void test_VarFormatCurrency(void)
     VariantClear(&in);
 }
 
+static void test_VarFormatDateTime(void)
+{
+    VARIANT in;
+    HRESULT hr;
+    BSTR str;
+
+    V_VT(&in) = VT_NULL;
+    str = (void *)0xdeadbeef;
+    hr = VarFormatDateTime(&in, 0, 0, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!str, "Unexpected out string %p.\n", str);
+}
+
 START_TEST(varformat)
 {
     test_VarFormatNumber();
@@ -667,4 +680,5 @@ START_TEST(varformat)
     test_VarFormatFromTokens();
     test_GetAltMonthNames();
     test_VarFormatCurrency();
+    test_VarFormatDateTime();
 }
