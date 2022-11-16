@@ -17,6 +17,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -52,7 +53,7 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeStringsAsAuthIdentity(
     if (username) size += (len_username + 1) * sizeof(WCHAR);
     if (domainname) size += (len_domainname + 1) * sizeof(WCHAR);
     if (creds) size += (len_password + 1) * sizeof(WCHAR);
-    if (!(id = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) return ERROR_OUTOFMEMORY;
+    if (!(id = calloc( 1, size ))) return ERROR_OUTOFMEMORY;
     ptr = (WCHAR *)(id + 1);
 
     if (username)
@@ -96,15 +97,6 @@ void SEC_ENTRY SspiZeroAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
     memset( id, 0, sizeof(*id) );
 }
 
-static inline WCHAR *strdupW( const WCHAR *src )
-{
-    WCHAR *dst;
-    if (!src) return NULL;
-    if ((dst = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( src ) + 1) * sizeof(WCHAR) )))
-        lstrcpyW( dst, src );
-    return dst;
-}
-
 /***********************************************************************
  *		SspiEncodeAuthIdentityAsStrings (SECUR32.0)
  */
@@ -116,9 +108,9 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeAuthIdentityAsStrings(
 
     FIXME("%p %p %p %p\n", opaque_id, username, domainname, creds);
 
-    *username = strdupW( id->User );
-    *domainname = strdupW( id->Domain );
-    *creds = strdupW( id->Password );
+    *username = wcsdup( id->User );
+    *domainname = wcsdup( id->Domain );
+    *creds = wcsdup( id->Password );
 
     return SEC_E_OK;
 }
@@ -129,7 +121,7 @@ SECURITY_STATUS SEC_ENTRY SspiEncodeAuthIdentityAsStrings(
 void SEC_ENTRY SspiFreeAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
 {
     TRACE( "%p\n", opaque_id );
-    HeapFree( GetProcessHeap(), 0, opaque_id );
+    free( opaque_id );
 }
 
 /***********************************************************************
@@ -138,7 +130,7 @@ void SEC_ENTRY SspiFreeAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
 void SEC_ENTRY SspiLocalFree( void *ptr )
 {
     TRACE( "%p\n", ptr );
-    HeapFree( GetProcessHeap(), 0, ptr );
+    free( ptr );
 }
 
 /***********************************************************************
@@ -158,7 +150,7 @@ SECURITY_STATUS SEC_ENTRY SspiPrepareForCredWrite( PSEC_WINNT_AUTH_IDENTITY_OPAQ
     if (id->DomainLength)
     {
         len = (id->DomainLength + id->UserLength + 2) * sizeof(WCHAR);
-        if (!(str = HeapAlloc(GetProcessHeap(), 0 , len ))) return SEC_E_INSUFFICIENT_MEMORY;
+        if (!(str = malloc( len ))) return SEC_E_INSUFFICIENT_MEMORY;
         memcpy( str, id->Domain, id->DomainLength * sizeof(WCHAR) );
         str[id->DomainLength] = '\\';
         memcpy( str + id->DomainLength + 1, id->User, id->UserLength * sizeof(WCHAR) );
@@ -167,23 +159,23 @@ SECURITY_STATUS SEC_ENTRY SspiPrepareForCredWrite( PSEC_WINNT_AUTH_IDENTITY_OPAQ
     else
     {
         len = (id->UserLength + 1) * sizeof(WCHAR);
-        if (!(str = HeapAlloc(GetProcessHeap(), 0 , len ))) return SEC_E_INSUFFICIENT_MEMORY;
+        if (!(str = malloc( len ))) return SEC_E_INSUFFICIENT_MEMORY;
         memcpy( str, id->User, id->UserLength * sizeof(WCHAR) );
         str[id->UserLength] = 0;
     }
 
-    str2 = target ? strdupW( target ) : strdupW( str );
+    str2 = target ? wcsdup( target ) : wcsdup( str );
     if (!str2)
     {
-        HeapFree( GetProcessHeap(), 0, str );
+        free( str );
         return SEC_E_INSUFFICIENT_MEMORY;
     }
 
     len = id->PasswordLength * sizeof(WCHAR);
-    if (!(password = HeapAlloc(GetProcessHeap(), 0 , len )))
+    if (!(password = malloc( len )))
     {
-        HeapFree( GetProcessHeap(), 0, str );
-        HeapFree( GetProcessHeap(), 0, str2 );
+        free( str );
+        free( str2 );
         return SEC_E_INSUFFICIENT_MEMORY;
     }
     memcpy( password, id->Password, len );
