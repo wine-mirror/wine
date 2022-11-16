@@ -2339,4 +2339,40 @@ end sub
 call testRandomize()
 call testRandomizeError()
 
+sub testFormatCurrencyError()
+    on error resume next
+    dim x
+    call Err.clear()
+    x = FormatCurrency(null)
+    call ok(Err.number = 13, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatCurrency(1000,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatCurrency(1000,0,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatCurrency(1000,0,0,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatCurrency(1000,0,0,0,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+end sub
+
+sub testFormatCurrency()
+    dim x
+
+    x = FormatCurrency(0)
+    x = FormatCurrency(-1000,,,-1)
+    call ok(getVT(x) = "VT_BSTR*", "getVT = " & getVT(x))
+end sub
+
+call testFormatCurrency()
+call testFormatCurrencyError()
+
 Call reportSuccess()
