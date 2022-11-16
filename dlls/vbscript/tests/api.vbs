@@ -2375,4 +2375,40 @@ end sub
 call testFormatCurrency()
 call testFormatCurrencyError()
 
+sub testFormatPercentError()
+    on error resume next
+    dim x
+    call Err.clear()
+    x = FormatPercent(null)
+    call ok(Err.number = 13, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatPercent(.10,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatPercent(.10,0,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatPercent(.10,0,0,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatPercent(.10,0,0,0,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+end sub
+
+sub testFormatPercent()
+    dim x
+
+    x = FormatPercent(0)
+    x = FormatPercent(.12,,,-1)
+    call ok(getVT(x) = "VT_BSTR*", "getVT = " & getVT(x))
+end sub
+
+call testFormatPercent()
+call testFormatPercentError()
+
 Call reportSuccess()
