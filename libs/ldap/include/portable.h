@@ -211,10 +211,10 @@
 #define HAVE_GETNAMEINFO 1
 
 /* Define to 1 if you have the `getopt' function. */
-#define HAVE_GETOPT 1
+/* #undef HAVE_GETOPT */
 
 /* Define to 1 if you have the <getopt.h> header file. */
-#define HAVE_GETOPT_H 1
+/* #undef HAVE_GETOPT_H */
 
 /* Define to 1 if you have the `getpassphrase' function. */
 /* #undef HAVE_GETPASSPHRASE */
