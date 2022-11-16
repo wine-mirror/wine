@@ -39,9 +39,13 @@ UINT NlsAnsiCodePage = 0;
 BYTE NlsMbCodePageTag = 0;
 BYTE NlsMbOemCodePageTag = 0;
 
+static LCID user_resource_lcid;
+static LCID user_resource_neutral_lcid;
+static LCID system_lcid;
 static NLSTABLEINFO nls_info = { { CP_UTF8 }, { CP_UTF8 } };
 static struct norm_table *norm_tables[16];
 static const NLS_LOCALE_HEADER *locale_table;
+static const WCHAR *locale_strings;
 
 
 static WCHAR casemap( USHORT *table, WCHAR ch )
@@ -94,7 +98,6 @@ void locale_init(void)
     WCHAR locale[LOCALE_NAME_MAX_LENGTH];
     LARGE_INTEGER unused;
     SIZE_T size;
-    LCID system_lcid;
     UINT ansi_cp = 1252, oem_cp = 437;
     void *ansi_ptr = utf8, *oem_ptr = utf8, *case_ptr;
     NTSTATUS status;
@@ -107,6 +110,7 @@ void locale_init(void)
         return;
     }
     locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
+    locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
 
     if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED)
     {
@@ -118,6 +122,26 @@ void locale_init(void)
         ansi_cp = get_locale_data( locale_table, entry->idx )->idefaultansicodepage;
         oem_cp = get_locale_data( locale_table, entry->idx )->idefaultcodepage;
     }
+
+    NtQueryDefaultLocale( TRUE, &user_resource_lcid );
+    user_resource_neutral_lcid = PRIMARYLANGID( user_resource_lcid );
+    if (user_resource_lcid == LOCALE_CUSTOM_UNSPECIFIED)
+    {
+        const NLS_LOCALE_LCNAME_INDEX *entry;
+        const WCHAR *parent;
+        WCHAR bufferW[LOCALE_NAME_MAX_LENGTH];
+        SIZE_T len;
+
+        if (!RtlQueryEnvironmentVariable( NULL, L"WINEUSERLOCALE", 14, bufferW, ARRAY_SIZE(bufferW), &len )
+            && (entry = find_lcname_entry( locale_table, bufferW )))
+        {
+            user_resource_lcid = get_locale_data( locale_table, entry->idx )->unique_lcid;
+            parent = locale_strings + get_locale_data( locale_table, entry->idx )->sparent;
+            if (*parent && (entry = find_lcname_entry( locale_table, parent + 1 )))
+                user_resource_neutral_lcid = get_locale_data( locale_table, entry->idx )->unique_lcid;
+        }
+    }
+    TRACE( "resources: %04x/%04x/%04x\n", user_resource_lcid, user_resource_neutral_lcid, system_lcid );
 
     if (!RtlQueryActivationContextApplicationSettings( 0, NULL, L"http://schemas.microsoft.com/SMI/2019/WindowsSettings",
                                                        L"activeCodePage", locale, ARRAY_SIZE(locale), NULL ))
@@ -156,6 +180,15 @@ void locale_init(void)
     NlsAnsiCodePage     = nls_info.AnsiTableInfo.CodePage;
     NlsMbCodePageTag    = nls_info.AnsiTableInfo.DBCSCodePage;
     NlsMbOemCodePageTag = nls_info.OemTableInfo.DBCSCodePage;
+}
+
+
+/* return LCIDs to use for resource lookup */
+void get_resource_lcids( LANGID *user, LANGID *user_neutral, LANGID *system )
+{
+    *user = LANGIDFROMLCID( user_resource_lcid );
+    *user_neutral = LANGIDFROMLCID( user_resource_neutral_lcid );
+    *system = LANGIDFROMLCID( system_lcid );
 }
 
 
@@ -841,7 +874,6 @@ BOOLEAN WINAPI RtlIsValidLocaleName( const WCHAR *name, ULONG flags )
  */
 NTSTATUS WINAPI RtlLcidToLocaleName( LCID lcid, UNICODE_STRING *str, ULONG flags, BOOLEAN alloc )
 {
-    const WCHAR *strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
     const NLS_LOCALE_LCID_INDEX *entry;
     const WCHAR *name;
     ULONG len;
@@ -855,7 +887,7 @@ NTSTATUS WINAPI RtlLcidToLocaleName( LCID lcid, UNICODE_STRING *str, ULONG flags
         break;
     case LOCALE_SYSTEM_DEFAULT:
     case LOCALE_CUSTOM_DEFAULT:
-        NtQueryDefaultLocale( FALSE, &lcid );
+        lcid = system_lcid;
         break;
     case LOCALE_CUSTOM_UI_DEFAULT:
         return STATUS_UNSUCCESSFUL;
@@ -868,7 +900,7 @@ NTSTATUS WINAPI RtlLcidToLocaleName( LCID lcid, UNICODE_STRING *str, ULONG flags
     if (!(flags & 2) && !get_locale_data( locale_table, entry->idx )->inotneutral)
         return STATUS_INVALID_PARAMETER_1;
 
-    name = strings + entry->name;
+    name = locale_strings + entry->name;
     len = *name++;
 
     if (alloc)

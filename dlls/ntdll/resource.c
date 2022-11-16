@@ -175,7 +175,6 @@ static const IMAGE_RESOURCE_DIRECTORY *find_entry_by_name( const IMAGE_RESOURCE_
 static NTSTATUS find_entry( HMODULE hmod, const LDR_RESOURCE_INFO *info,
                             ULONG level, const void **ret, int want_dir )
 {
-    static LCID user_lcid, system_lcid;
     ULONG size;
     const void *root;
     const IMAGE_RESOURCE_DIRECTORY *resdirptr;
@@ -210,29 +209,28 @@ static NTSTATUS find_entry( HMODULE hmod, const LDR_RESOURCE_INFO *info,
     /* if no explicitly specified language, try some defaults */
     if (PRIMARYLANGID(info->Language) == LANG_NEUTRAL)
     {
+        LANGID user_lang, user_neutral_lang, system_lang;
+
+        get_resource_lcids( &user_lang, &user_neutral_lang, &system_lang );
+
         /* user defaults, unless SYS_DEFAULT sublanguage specified  */
         if (SUBLANGID(info->Language) != SUBLANG_SYS_DEFAULT)
         {
-            if (!user_lcid) NtQueryDefaultLocale( TRUE, &user_lcid );
-
             /* 4. current thread locale language */
             pos = push_language( list, pos, LANGIDFROMLCID(NtCurrentTeb()->CurrentLocale) );
 
             /* 5. user locale language */
-            pos = push_language( list, pos, LANGIDFROMLCID(user_lcid) );
+            pos = push_language( list, pos, user_lang );
 
             /* 6. user locale language with neutral sublanguage  */
-            pos = push_language( list, pos, MAKELANGID( PRIMARYLANGID(user_lcid), SUBLANG_NEUTRAL ) );
+            pos = push_language( list, pos, user_neutral_lang );
         }
 
-        /* now system defaults */
-        if (!system_lcid) NtQueryDefaultLocale( FALSE, &system_lcid );
-
         /* 7. system locale language */
-        pos = push_language( list, pos, LANGIDFROMLCID( system_lcid ) );
+        pos = push_language( list, pos, system_lang );
 
         /* 8. system locale language with neutral sublanguage */
-        pos = push_language( list, pos, MAKELANGID( PRIMARYLANGID(system_lcid), SUBLANG_NEUTRAL ) );
+        pos = push_language( list, pos, PRIMARYLANGID( system_lang ));
 
         /* 9. English */
         pos = push_language( list, pos, MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT ) );

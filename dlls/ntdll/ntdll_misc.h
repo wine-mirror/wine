@@ -72,6 +72,7 @@ extern void actctx_init(void) DECLSPEC_HIDDEN;
 extern void locale_init(void) DECLSPEC_HIDDEN;
 extern void init_user_process_params(void) DECLSPEC_HIDDEN;
 extern void CDECL DECLSPEC_NORETURN signal_start_thread( CONTEXT *ctx ) DECLSPEC_HIDDEN;
+extern void get_resource_lcids( LANGID *user, LANGID *user_neutral, LANGID *system ) DECLSPEC_HIDDEN;
 
 /* module handling */
 extern LIST_ENTRY tls_links DECLSPEC_HIDDEN;
