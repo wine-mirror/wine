@@ -250,56 +250,60 @@ static DEVMODEW *dup_devmode( const DEVMODEW *dm )
     return ret;
 }
 
-/***********************************************************
- * DEVMODEdupWtoA
- * Creates an ansi copy of supplied devmode
+/* stringWtoA
+ * Converts Unicode string to Ansi (possibly in place).
  */
-static DEVMODEA *DEVMODEdupWtoA( const DEVMODEW *dmW )
+static void stringWtoA( const WCHAR *strW, char *strA, size_t size )
 {
-    LPDEVMODEA dmA;
-    DWORD size;
+    DWORD ret;
+    char *str;
+
+    str = (char *)strW == strA ? malloc( size ) : strA;
+    ret = WideCharToMultiByte( CP_ACP, 0, strW, -1, str, size, NULL, NULL );
+    if (str != strA)
+    {
+        memcpy( strA, str, ret );
+        free( str );
+    }
+    memset( strA + ret, 0, size - ret );
+}
+
+/***********************************************************
+ * DEVMODEWtoA
+ * Converts DEVMODEW to DEVMODEA (possibly in place).
+ * Allocates DEVMODEA if needed.
+ */
+static DEVMODEA *DEVMODEWtoA( const DEVMODEW *dmW, DEVMODEA *dmA )
+{
+    DWORD size, sizeW;
 
     if (!dmW) return NULL;
-    size = dmW->dmSize - CCHDEVICENAME -
-                        ((dmW->dmSize > FIELD_OFFSET( DEVMODEW, dmFormName )) ? CCHFORMNAME : 0);
+    sizeW = dmW->dmSize;
+    size = sizeW - CCHDEVICENAME -
+                        ((sizeW > FIELD_OFFSET( DEVMODEW, dmFormName )) ? CCHFORMNAME : 0);
 
-    dmA = calloc( 1, size + dmW->dmDriverExtra );
+    if (!dmA)
+        dmA = calloc( 1, size + dmW->dmDriverExtra );
     if (!dmA) return NULL;
 
-    WideCharToMultiByte( CP_ACP, 0, dmW->dmDeviceName, -1,
-                         (LPSTR)dmA->dmDeviceName, CCHDEVICENAME, NULL, NULL );
+    stringWtoA( dmW->dmDeviceName, (char *)dmA->dmDeviceName, CCHDEVICENAME );
 
-    if (FIELD_OFFSET( DEVMODEW, dmFormName ) >= dmW->dmSize)
+    if (FIELD_OFFSET( DEVMODEW, dmFormName ) >= sizeW)
     {
-        memcpy( &dmA->dmSpecVersion, &dmW->dmSpecVersion,
-                dmW->dmSize - FIELD_OFFSET( DEVMODEW, dmSpecVersion ) );
+        memmove( &dmA->dmSpecVersion, &dmW->dmSpecVersion,
+                sizeW - FIELD_OFFSET( DEVMODEW, dmSpecVersion ) );
     }
     else
     {
-        memcpy( &dmA->dmSpecVersion, &dmW->dmSpecVersion,
+        memmove( &dmA->dmSpecVersion, &dmW->dmSpecVersion,
                 FIELD_OFFSET( DEVMODEW, dmFormName ) - FIELD_OFFSET( DEVMODEW, dmSpecVersion ) );
-        WideCharToMultiByte( CP_ACP, 0, dmW->dmFormName, -1,
-                             (LPSTR)dmA->dmFormName, CCHFORMNAME, NULL, NULL );
-
-        memcpy( &dmA->dmLogPixels, &dmW->dmLogPixels, dmW->dmSize - FIELD_OFFSET( DEVMODEW, dmLogPixels ) );
+        stringWtoA( dmW->dmFormName, (char *)dmA->dmFormName, CCHFORMNAME );
+        memmove( &dmA->dmLogPixels, &dmW->dmLogPixels, sizeW - FIELD_OFFSET( DEVMODEW, dmLogPixels ) );
     }
 
     dmA->dmSize = size;
-    memcpy( (char *)dmA + dmA->dmSize, (const char *)dmW + dmW->dmSize, dmW->dmDriverExtra );
+    memmove( (char *)dmA + dmA->dmSize, (const char *)dmW + sizeW, dmW->dmDriverExtra );
     return dmA;
-}
-
-static void packed_string_WtoA( WCHAR *strW )
-{
-    DWORD len = wcslen( strW ), size = (len + 1) * sizeof(WCHAR), ret;
-    char *str;
-
-    if (!len) return;
-    str = malloc( size );
-    ret = WideCharToMultiByte( CP_ACP, 0, strW, len, str, size - 1, NULL, NULL );
-    memcpy( strW, str, ret );
-    memset( (BYTE *)strW + ret, 0, size - ret );
-    free( str );
 }
 
 /*********************************************************************
@@ -316,7 +320,7 @@ static void packed_struct_WtoA( BYTE *data, const DWORD *string_info )
     while (*string_info != ~0u)
     {
         strW = *(WCHAR **)(data + *string_info);
-        if (strW) packed_string_WtoA( strW );
+        if (strW) stringWtoA( strW, (char *)strW, (wcslen(strW) + 1) * sizeof(WCHAR) );
         string_info++;
     }
 }
@@ -894,7 +898,7 @@ static inline DWORD set_reg_szW(HKEY hkey, const WCHAR *keyname, const WCHAR *va
 
 static inline DWORD set_reg_devmode( HKEY key, const WCHAR *name, const DEVMODEW *dm )
 {
-    DEVMODEA *dmA = DEVMODEdupWtoA( dm );
+    DEVMODEA *dmA = DEVMODEWtoA( dm, NULL );
     DWORD ret = ERROR_FILE_NOT_FOUND;
 
     /* FIXME: Write DEVMODEA not DEVMODEW into reg.  This is what win9x does
@@ -1282,7 +1286,6 @@ static void convert_printerinfo_W_to_A(LPBYTE out, LPBYTE pPrintersW,
                 {
                     PRINTER_INFO_2W * piW = (PRINTER_INFO_2W *) pPrintersW;
                     PRINTER_INFO_2A * piA = (PRINTER_INFO_2A *) out;
-                    LPDEVMODEA dmA;
 
                     TRACE("(%lu) #%lu: %s\n", level, id, debugstr_w(piW->pPrinterName));
                     if (piW->pServerName) {
@@ -1335,17 +1338,16 @@ static void convert_printerinfo_W_to_A(LPBYTE out, LPBYTE pPrintersW,
                         outlen -= len;
                     }
 
-                    dmA = DEVMODEdupWtoA(piW->pDevMode);
-                    if (dmA) {
+                    if (piW->pDevMode)
+                    {
                         /* align DEVMODEA to a DWORD boundary */
                         len = (4 - ( (DWORD_PTR) ptr & 3)) & 3;
                         ptr += len;
                         outlen -= len;
 
                         piA->pDevMode = (LPDEVMODEA) ptr;
-                        len = dmA->dmSize + dmA->dmDriverExtra;
-                        memcpy(ptr, dmA, len);
-                        free(dmA);
+                        DEVMODEWtoA(piW->pDevMode, piA->pDevMode);
+                        len = piA->pDevMode->dmSize + piA->pDevMode->dmDriverExtra;
 
                         ptr += len;
                         outlen -= len;
@@ -1458,25 +1460,22 @@ static void convert_printerinfo_W_to_A(LPBYTE out, LPBYTE pPrintersW,
                 {
                     PRINTER_INFO_9W * piW = (PRINTER_INFO_9W *) pPrintersW;
                     PRINTER_INFO_9A * piA = (PRINTER_INFO_9A *) out;
-                    LPDEVMODEA dmA;
 
                     TRACE("(%lu) #%lu\n", level, id);
-                    dmA = DEVMODEdupWtoA(piW->pDevMode);
-                    if (dmA) {
+                    if (piW->pDevMode)
+                    {
                         /* align DEVMODEA to a DWORD boundary */
                         len = (4 - ( (DWORD_PTR) ptr & 3)) & 3;
                         ptr += len;
                         outlen -= len;
 
                         piA->pDevMode = (LPDEVMODEA) ptr;
-                        len = dmA->dmSize + dmA->dmDriverExtra;
-                        memcpy(ptr, dmA, len);
-                        free(dmA);
+                        DEVMODEWtoA(piW->pDevMode, piA->pDevMode);
+                        len = piA->pDevMode->dmSize + piA->pDevMode->dmDriverExtra;
 
                         ptr += len;
                         outlen -= len;
                     }
-
                     break;
                 }
 
@@ -1890,11 +1889,8 @@ LONG WINAPI DocumentPropertiesA(HWND hwnd, HANDLE printer, char *device_name, DE
 
     ret = DocumentPropertiesW(hwnd, printer, device, outputW, inputW, mode);
 
-    if (ret >= 0 && outputW && (mode & (DM_COPY | DM_UPDATE))) {
-        DEVMODEA *dmA = DEVMODEdupWtoA( outputW );
-        if (dmA) memcpy(output, dmA, dmA->dmSize + dmA->dmDriverExtra);
-        free(dmA);
-    }
+    if (ret >= 0 && outputW && (mode & (DM_COPY | DM_UPDATE)))
+        DEVMODEWtoA( outputW, output );
 
     free(device);
     free(inputW);
@@ -7621,7 +7617,7 @@ static BOOL get_job_info_2(job_t *job, JOB_INFO_2W *ji2, LPBYTE buf, DWORD cbBuf
     {
         if (!unicode)
         {
-            dmA = DEVMODEdupWtoA(job->devmode);
+            dmA = DEVMODEWtoA(job->devmode, NULL);
             devmode = (LPDEVMODEW) dmA;
             if (dmA) size = dmA->dmSize + dmA->dmDriverExtra;
         }
