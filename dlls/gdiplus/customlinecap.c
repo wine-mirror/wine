@@ -305,18 +305,18 @@ static void arrowcap_update_path(GpAdjustableArrowCap *cap)
         points[2].X = cap->width / 2.0;
         points[2].Y = -cap->height;
         points[3].X = 0.0;
-        points[3].Y = -cap->height - cap->middle_inset;
+        points[3].Y = -cap->height + cap->middle_inset;
     }
     else
     {
         memcpy(cap->cap.pathdata.Types, types_unfilled, sizeof(types_unfilled));
         cap->cap.pathdata.Count = 3;
-        points[0].X = -cap->width / 4.0;
-        points[0].Y = -cap->height / 2.0;
+        points[0].X = -cap->width / 2.0;
+        points[0].Y = -cap->height;
         points[1].X = 0.0;
         points[1].Y = 0.0;
-        points[2].X = cap->width / 4.0;
-        points[2].Y = -cap->height / 2.0;
+        points[2].X = cap->width / 2.0;
+        points[2].Y = -cap->height;
     }
 
     if (cap->width == 0.0)
