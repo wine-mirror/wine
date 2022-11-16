@@ -16,32 +16,22 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdarg.h>
+#include "initguid.h"
+#include "private.h"
+
 #include <assert.h>
 
-#define COBJMACROS
-#include "windef.h"
-#include "winbase.h"
-#include "winstring.h"
 #include "wine/debug.h"
 #include "objbase.h"
 
-#include "initguid.h"
-#include "activation.h"
-
 #include "bcrypt.h"
 
-#define WIDL_using_Windows_Foundation
-#define WIDL_using_Windows_Foundation_Collections
-#include "windows.foundation.h"
-#define WIDL_using_Windows_Storage_Streams
-#include "windows.storage.streams.h"
 #define WIDL_using_Windows_Security_Cryptography
 #include "windows.security.cryptography.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypto);
 
-static const char *debugstr_hstring(HSTRING hstr)
+const char *debugstr_hstring(HSTRING hstr)
 {
     const WCHAR *str;
     UINT32 len;
@@ -60,11 +50,6 @@ struct cryptobuffer_factory
 static inline struct cryptobuffer_factory *impl_from_IActivationFactory(IActivationFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct cryptobuffer_factory, IActivationFactory_iface);
-}
-
-static inline struct cryptobuffer_factory *impl_from_ICryptographicBufferStatics(ICryptographicBufferStatics *iface)
-{
-    return CONTAINING_RECORD(iface, struct cryptobuffer_factory, ICryptographicBufferStatics_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE cryptobuffer_factory_QueryInterface(
@@ -157,45 +142,7 @@ static const struct IActivationFactoryVtbl cryptobuffer_factory_vtbl =
     cryptobuffer_factory_ActivateInstance,
 };
 
-static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_QueryInterface(
-        ICryptographicBufferStatics *iface, REFIID iid, void **object)
-{
-    struct cryptobuffer_factory *factory = impl_from_ICryptographicBufferStatics(iface);
-    return IActivationFactory_QueryInterface(&factory->IActivationFactory_iface, iid, object);
-}
-
-static ULONG STDMETHODCALLTYPE cryptobuffer_statics_AddRef(ICryptographicBufferStatics *iface)
-{
-    struct cryptobuffer_factory *factory = impl_from_ICryptographicBufferStatics(iface);
-    return IActivationFactory_AddRef(&factory->IActivationFactory_iface);
-}
-
-static ULONG STDMETHODCALLTYPE cryptobuffer_statics_Release(ICryptographicBufferStatics *iface)
-{
-    struct cryptobuffer_factory *factory = impl_from_ICryptographicBufferStatics(iface);
-    return IActivationFactory_Release(&factory->IActivationFactory_iface);
-}
-
-static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_GetIids(
-        ICryptographicBufferStatics *iface, ULONG *iid_count, IID **iids)
-{
-    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_GetRuntimeClassName(
-        ICryptographicBufferStatics *iface, HSTRING *class_name)
-{
-    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
-    return E_NOTIMPL;
-}
-
-static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_GetTrustLevel(
-        ICryptographicBufferStatics *iface, TrustLevel *trust_level)
-{
-    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
-    return E_NOTIMPL;
-}
+DEFINE_IINSPECTABLE(cryptobuffer_statics, ICryptographicBufferStatics, struct cryptobuffer_factory, IActivationFactory_iface);
 
 static HRESULT STDMETHODCALLTYPE cryptobuffer_statics_Compare(
         ICryptographicBufferStatics *iface, IBuffer *object1, IBuffer *object2, boolean *is_equal)
