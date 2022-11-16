@@ -38235,7 +38235,7 @@ static NTSTATUS thunk64_vkMapMemory(void *args)
 
     TRACE("%p, 0x%s, 0x%s, 0x%s, %#x, %p\n", params->device, wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->size), params->flags, params->ppData);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkMapMemory(wine_device_from_handle(params->device)->device, params->memory, params->offset, params->size, params->flags, params->ppData);
+    params->result = wine_vkMapMemory(params->device, params->memory, params->offset, params->size, params->flags, params->ppData);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -38255,7 +38255,7 @@ static NTSTATUS thunk32_vkMapMemory(void *args)
 
     TRACE("%#x, 0x%s, 0x%s, 0x%s, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->offset), wine_dbgstr_longlong(params->size), params->flags, params->ppData);
 
-    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkMapMemory(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->memory, params->offset, params->size, params->flags, (void **)UlongToPtr(params->ppData));
+    params->result = wine_vkMapMemory((VkDevice)UlongToPtr(params->device), params->memory, params->offset, params->size, params->flags, (void **)UlongToPtr(params->ppData));
     return STATUS_SUCCESS;
 }
 

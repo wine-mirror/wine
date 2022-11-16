@@ -1441,6 +1441,27 @@ void wine_vkDestroySurfaceKHR(VkInstance handle, VkSurfaceKHR surface,
     free(object);
 }
 
+VkResult wine_vkMapMemory(VkDevice handle, VkDeviceMemory memory, VkDeviceSize offset,
+                          VkDeviceSize size, VkMemoryMapFlags flags, void **data)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+    VkResult result;
+
+    result = device->funcs.p_vkMapMemory(device->device, memory, offset, size, flags, data);
+
+#ifdef _WIN64
+    if (NtCurrentTeb()->WowTebOffset && result == VK_SUCCESS && (UINT_PTR)*data >> 32)
+    {
+        FIXME("returned mapping %p does not fit 32-bit pointer\n", *data);
+        device->funcs.p_vkUnmapMemory(device->device, memory);
+        *data = NULL;
+        result = VK_ERROR_OUT_OF_HOST_MEMORY;
+    }
+#endif
+
+    return result;
+}
+
 static inline void adjust_max_image_count(struct wine_phys_dev *phys_dev, VkSurfaceCapabilitiesKHR* capabilities)
 {
     /* Many Windows games, for example Strange Brigade, No Man's Sky, Path of Exile
