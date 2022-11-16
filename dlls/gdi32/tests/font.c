@@ -3687,8 +3687,8 @@ static const LANGID mac_langid_table[] =
     0,                                                       /* TT_MAC_LANGID_RUANDA */
     0,                                                       /* TT_MAC_LANGID_RUNDI */
     0,                                                       /* TT_MAC_LANGID_CHEWA */
-    MAKELANGID(LANG_MALAGASY,SUBLANG_DEFAULT),               /* TT_MAC_LANGID_MALAGASY */
-    MAKELANGID(LANG_ESPERANTO,SUBLANG_DEFAULT),              /* TT_MAC_LANGID_ESPERANTO */
+    0,                                                       /* TT_MAC_LANGID_MALAGASY */
+    0,                                                       /* TT_MAC_LANGID_ESPERANTO */
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,       /* 95-111 */
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,          /* 112-127 */
     MAKELANGID(LANG_WELSH,SUBLANG_DEFAULT),                  /* TT_MAC_LANGID_WELSH */
@@ -3708,7 +3708,7 @@ static const LANGID mac_langid_table[] =
     MAKELANGID(LANG_BRETON,SUBLANG_DEFAULT),                 /* TT_MAC_LANGID_BRETON */
     MAKELANGID(LANG_INUKTITUT,SUBLANG_DEFAULT),              /* TT_MAC_LANGID_INUKTITUT */
     MAKELANGID(LANG_SCOTTISH_GAELIC,SUBLANG_DEFAULT),        /* TT_MAC_LANGID_SCOTTISH_GAELIC */
-    MAKELANGID(LANG_MANX_GAELIC,SUBLANG_DEFAULT),            /* TT_MAC_LANGID_MANX_GAELIC */
+    0,                                                       /* TT_MAC_LANGID_MANX_GAELIC */
     MAKELANGID(LANG_IRISH,SUBLANG_IRISH_IRELAND),            /* TT_MAC_LANGID_IRISH_GAELIC */
     0,                                                       /* TT_MAC_LANGID_TONGAN */
     0,                                                       /* TT_MAC_LANGID_GREEK_POLYTONIC */
