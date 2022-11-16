@@ -264,15 +264,18 @@ sync_test("builtin_toString", function() {
 sync_test("elem_props", function() {
     var elem = document.documentElement;
 
-    function test_exposed(prop, expect) {
+    function test_exposed(prop, expect, is_todo) {
+        var ok_ = is_todo ? todo_wine.ok : ok;
         if(expect)
-            ok(prop in elem, prop + " not found in element.");
+            ok_(prop in elem, prop + " not found in element.");
         else
-            ok(!(prop in elem), prop + " found in element.");
+            ok_(!(prop in elem), prop + " found in element.");
     }
 
     var v = document.documentMode;
 
+    test_exposed("attachEvent", v < 11, v >= 11);
+    test_exposed("detachEvent", v < 11, v >= 11);
     test_exposed("doScroll", v < 11);
     test_exposed("readyState", v < 11);
     test_exposed("clientTop", true);
@@ -285,7 +288,7 @@ sync_test("elem_props", function() {
     test_exposed("getElementsByClassName", v >= 9);
     test_exposed("removeAttributeNS", v >= 9);
     test_exposed("addEventListener", v >= 9);
-    if (v != 8 /* todo_wine */) test_exposed("hasAttribute", v >= 8);
+    test_exposed("hasAttribute", v >= 8, v === 8);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
     test_exposed("msSetPointerCapture", v >= 10);
@@ -300,19 +303,28 @@ sync_test("elem_props", function() {
     test_exposed("readyState", v < 11);
     test_exposed("styleSheet", v < 11);
     test_exposed("classList", v >= 10);
+
+    elem = document.createElement("img");
+    test_exposed("fileSize", v < 11, v >= 11);
 });
 
 sync_test("doc_props", function() {
-    function test_exposed(prop, expect) {
+    function test_exposed(prop, expect, is_todo) {
+        var ok_ = is_todo ? todo_wine.ok : ok;
         if(expect)
-            ok(prop in document, prop + " not found in document.");
+            ok_(prop in document, prop + " not found in document.");
         else
-            ok(!(prop in document), prop + " found in document.");
+            ok_(!(prop in document), prop + " found in document.");
     }
 
     var v = document.documentMode;
     ok(document.mimeType === external.getExpectedMimeType("text/html"), "mimeType = " + document.mimeType);
 
+    test_exposed("attachEvent", v < 11, v >= 11);
+    test_exposed("detachEvent", v < 11, v >= 11);
+    test_exposed("createStyleSheet",v < 11, v >= 11);
+    test_exposed("fileSize", v < 11, v >= 11);
+    test_exposed("selection", v < 11, v >= 11);
     test_exposed("onstorage", v < 9);
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);
@@ -343,15 +355,20 @@ sync_test("docfrag_props", function() {
 });
 
 sync_test("window_props", function() {
-    function test_exposed(prop, expect) {
+    function test_exposed(prop, expect, is_todo) {
+        var ok_ = is_todo ? todo_wine.ok : ok;
         if(expect)
-            ok(prop in window, prop + " not found in window.");
+            ok_(prop in window, prop + " not found in window.");
         else
-            ok(!(prop in window), prop + " found in window.");
+            ok_(!(prop in window), prop + " found in window.");
     }
 
     var v = document.documentMode;
 
+    test_exposed("attachEvent", v < 11, v >= 11);
+    test_exposed("detachEvent", v < 11, v >= 11);
+    test_exposed("execScript", v < 11, v >= 11);
+    test_exposed("createPopup", v < 11, v >= 11);
     test_exposed("postMessage", true);
     test_exposed("sessionStorage", true);
     test_exposed("localStorage", true);
@@ -587,11 +604,12 @@ sync_test("createElement_inline_attr", function() {
 sync_test("JS objs", function() {
     var g = window;
 
-    function test_exposed(func, obj, expect) {
+    function test_exposed(func, obj, expect, is_todo) {
+        var ok_ = is_todo ? todo_wine.ok : ok;
         if(expect)
-            ok(func in obj, func + " not found in " + obj);
+            ok_(func in obj, func + " not found in " + obj);
         else
-            ok(!(func in obj), func + " found in " + obj);
+            ok_(!(func in obj), func + " found in " + obj);
     }
 
     function test_parses(code, expect) {
@@ -622,11 +640,9 @@ sync_test("JS objs", function() {
     test_exposed("map", Array.prototype, v >= 9);
 
     /* FIXME: IE8 implements weird semi-functional property descriptors. */
-    if(v != 8) {
-        test_exposed("getOwnPropertyDescriptor", Object, v >= 8);
-        test_exposed("defineProperty", Object, v >= 8);
-        test_exposed("defineProperties", Object, v >= 8);
-    }
+    test_exposed("getOwnPropertyDescriptor", Object, v >= 8, v === 8);
+    test_exposed("defineProperty", Object, v >= 8, v === 8);
+    test_exposed("defineProperties", Object, v >= 9);
 
     test_exposed("getPrototypeOf", Object, v >= 9);
 
