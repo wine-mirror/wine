@@ -3952,8 +3952,23 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
         {DISPID_IHTMLWINDOW2_LOCATION, IHTMLWindow2_location_hook},
         {DISPID_UNKNOWN}
     };
+    static const dispex_hook_t window2_ie11_hooks[] = {
+        {DISPID_IHTMLWINDOW2_LOCATION,   IHTMLWindow2_location_hook},
+        {DISPID_IHTMLWINDOW2_EXECSCRIPT, NULL},
+        {DISPID_UNKNOWN}
+    };
     static const dispex_hook_t window3_hooks[] = {
         {DISPID_IHTMLWINDOW3_SETTIMEOUT, IHTMLWindow3_setTimeout_hook},
+        {DISPID_UNKNOWN}
+    };
+    static const dispex_hook_t window3_ie11_hooks[] = {
+        {DISPID_IHTMLWINDOW3_SETTIMEOUT,  IHTMLWindow3_setTimeout_hook},
+        {DISPID_IHTMLWINDOW3_ATTACHEVENT, NULL},
+        {DISPID_IHTMLWINDOW3_DETACHEVENT, NULL},
+        {DISPID_UNKNOWN}
+    };
+    static const dispex_hook_t window4_ie11_hooks[] = {
+        {DISPID_IHTMLWINDOW4_CREATEPOPUP, NULL},
         {DISPID_UNKNOWN}
     };
 
@@ -3965,8 +3980,9 @@ static void HTMLWindow_init_dispex_info(dispex_data_t *info, compat_mode_t compa
         dispex_info_add_interface(info, IWineHTMLWindowPrivate_tid, NULL);
 
     dispex_info_add_interface(info, IHTMLWindow5_tid, NULL);
-    dispex_info_add_interface(info, IHTMLWindow3_tid, window3_hooks);
-    dispex_info_add_interface(info, IHTMLWindow2_tid, window2_hooks);
+    dispex_info_add_interface(info, IHTMLWindow4_tid, compat_mode >= COMPAT_MODE_IE11 ? window4_ie11_hooks : NULL);
+    dispex_info_add_interface(info, IHTMLWindow3_tid, compat_mode >= COMPAT_MODE_IE11 ? window3_ie11_hooks : window3_hooks);
+    dispex_info_add_interface(info, IHTMLWindow2_tid, compat_mode >= COMPAT_MODE_IE11 ? window2_ie11_hooks : window2_hooks);
     EventTarget_init_dispex_info(info, compat_mode);
 }
 
@@ -3996,7 +4012,6 @@ static const event_target_vtbl_t HTMLWindow_event_target_vtbl = {
 };
 
 static const tid_t HTMLWindow_iface_tids[] = {
-    IHTMLWindow4_tid,
     IHTMLWindow6_tid,
     0
 };

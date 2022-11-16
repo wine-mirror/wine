@@ -6149,6 +6149,19 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
         {DISPID_IHTMLDOCUMENT2_LOCATION, HTMLDocumentNode_location_hook},
         {DISPID_UNKNOWN}
     };
+    static const dispex_hook_t document2_ie11_hooks[] = {
+        {DISPID_IHTMLDOCUMENT2_URL,              NULL, L"URL"},
+        {DISPID_IHTMLDOCUMENT2_LOCATION,         HTMLDocumentNode_location_hook},
+        {DISPID_IHTMLDOCUMENT2_CREATESTYLESHEET, NULL},
+        {DISPID_IHTMLDOCUMENT2_FILESIZE,         NULL},
+        {DISPID_IHTMLDOCUMENT2_SELECTION,        NULL},
+        {DISPID_UNKNOWN}
+    };
+    static const dispex_hook_t document3_ie11_hooks[] = {
+        {DISPID_IHTMLDOCUMENT3_ATTACHEVENT, NULL},
+        {DISPID_IHTMLDOCUMENT3_DETACHEVENT, NULL},
+        {DISPID_UNKNOWN}
+    };
     static const dispex_hook_t document6_ie9_hooks[] = {
         {DISPID_IHTMLDOCUMENT6_ONSTORAGE},
         {DISPID_UNKNOWN}
@@ -6168,9 +6181,9 @@ static void HTMLDocumentNode_init_dispex_info(dispex_data_t *info, compat_mode_t
         dispex_info_add_interface(info, IHTMLDocument6_tid, NULL);
     }else {
         dispex_info_add_interface(info, IHTMLDocument6_tid, mode >= COMPAT_MODE_IE9 ? document6_ie9_hooks : NULL);
-        dispex_info_add_interface(info, IHTMLDocument3_tid, NULL);
+        dispex_info_add_interface(info, IHTMLDocument3_tid, mode >= COMPAT_MODE_IE11 ? document3_ie11_hooks : NULL);
     }
-    dispex_info_add_interface(info, IHTMLDocument2_tid, document2_hooks);
+    dispex_info_add_interface(info, IHTMLDocument2_tid, mode >= COMPAT_MODE_IE11 ? document2_ie11_hooks : document2_hooks);
 }
 
 static dispex_static_data_t HTMLDocumentNode_dispex = {

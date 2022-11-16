@@ -274,8 +274,8 @@ sync_test("elem_props", function() {
 
     var v = document.documentMode;
 
-    test_exposed("attachEvent", v < 11, v >= 11);
-    test_exposed("detachEvent", v < 11, v >= 11);
+    test_exposed("attachEvent", v < 11);
+    test_exposed("detachEvent", v < 11);
     test_exposed("doScroll", v < 11);
     test_exposed("readyState", v < 11);
     test_exposed("clientTop", true);
@@ -305,7 +305,7 @@ sync_test("elem_props", function() {
     test_exposed("classList", v >= 10);
 
     elem = document.createElement("img");
-    test_exposed("fileSize", v < 11, v >= 11);
+    test_exposed("fileSize", v < 11);
 });
 
 sync_test("doc_props", function() {
@@ -320,11 +320,11 @@ sync_test("doc_props", function() {
     var v = document.documentMode;
     ok(document.mimeType === external.getExpectedMimeType("text/html"), "mimeType = " + document.mimeType);
 
-    test_exposed("attachEvent", v < 11, v >= 11);
-    test_exposed("detachEvent", v < 11, v >= 11);
-    test_exposed("createStyleSheet",v < 11, v >= 11);
-    test_exposed("fileSize", v < 11, v >= 11);
-    test_exposed("selection", v < 11, v >= 11);
+    test_exposed("attachEvent", v < 11);
+    test_exposed("detachEvent", v < 11);
+    test_exposed("createStyleSheet",v < 11);
+    test_exposed("fileSize", v < 11);
+    test_exposed("selection", v < 11);
     test_exposed("onstorage", v < 9);
     test_exposed("textContent", v >= 9);
     test_exposed("prefix", v >= 9);
@@ -365,10 +365,10 @@ sync_test("window_props", function() {
 
     var v = document.documentMode;
 
-    test_exposed("attachEvent", v < 11, v >= 11);
-    test_exposed("detachEvent", v < 11, v >= 11);
-    test_exposed("execScript", v < 11, v >= 11);
-    test_exposed("createPopup", v < 11, v >= 11);
+    test_exposed("attachEvent", v < 11);
+    test_exposed("detachEvent", v < 11);
+    test_exposed("execScript", v < 11);
+    test_exposed("createPopup", v < 11);
     test_exposed("postMessage", true);
     test_exposed("sessionStorage", true);
     test_exposed("localStorage", true);

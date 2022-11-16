@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "mshtmdid.h"
 
 #include "wine/debug.h"
 
@@ -727,15 +728,27 @@ static const NodeImplVtbl HTMLImgElementImplVtbl = {
 
 static const tid_t HTMLImgElement_iface_tids[] = {
     HTMLELEMENT_TIDS,
-    IHTMLImgElement_tid,
     0
 };
+
+static void HTMLImgElement_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    static const dispex_hook_t img_ie11_hooks[] = {
+        {DISPID_IHTMLIMGELEMENT_FILESIZE, NULL},
+        {DISPID_UNKNOWN}
+    };
+
+    HTMLElement_init_dispex_info(info, mode);
+
+    dispex_info_add_interface(info, IHTMLImgElement_tid, mode >= COMPAT_MODE_IE11 ? img_ie11_hooks : NULL);
+}
+
 static dispex_static_data_t HTMLImgElement_dispex = {
     L"HTMLImageElement",
     NULL,
     DispHTMLImg_tid,
     HTMLImgElement_iface_tids,
-    HTMLElement_init_dispex_info
+    HTMLImgElement_init_dispex_info
 };
 
 HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElement **elem)
