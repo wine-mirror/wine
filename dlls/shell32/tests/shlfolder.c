@@ -60,6 +60,7 @@ static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 static HRESULT (WINAPI *pSHCreateDefaultContextMenu)(const DEFCONTEXTMENU*,REFIID,void**);
 static BOOL (WINAPI *pSHGetPathFromIDListEx)(PCIDLIST_ABSOLUTE,WCHAR*,DWORD,GPFIDL_FLAGS);
 static HRESULT (WINAPI *pSHGetSetFolderCustomSettings)(LPSHFOLDERCUSTOMSETTINGS,PCWSTR,DWORD);
+static HRESULT (WINAPI *pSHBindToFolderIDListParent)(IShellFolder*,LPCITEMIDLIST,REFIID,void **,LPCITEMIDLIST*);
 
 static WCHAR *make_wstr(const char *str)
 {
@@ -120,6 +121,7 @@ static void init_function_pointers(void)
     hmod = GetModuleHandleA("shell32.dll");
 
 #define MAKEFUNC(f) (p##f = (void*)GetProcAddress(hmod, #f))
+    MAKEFUNC(SHBindToFolderIDListParent);
     MAKEFUNC(SHCreateItemFromIDList);
     MAKEFUNC(SHCreateItemFromParsingName);
     MAKEFUNC(SHCreateItemFromRelativeName);
@@ -5550,6 +5552,56 @@ static void test_SHOpenFolderAndSelectItems(void)
     ILFree(folder);
 }
 
+static void test_SHBindToFolderIDListParent(void)
+{
+    IShellFolder *psf_desktop;
+    LPITEMIDLIST pidl;
+    HRESULT hr;
+    WCHAR path[MAX_PATH];
+    SHITEMID empty_item = { 0, { 0 } };
+    LPITEMIDLIST pidl_empty = (LPITEMIDLIST)&empty_item;
+    LPCITEMIDLIST pidl_last;
+    IShellFolder *psf;
+
+    if (!pSHBindToFolderIDListParent)
+    {
+        win_skip("SHBindToFolderIDListParent not available\n");
+        return;
+    }
+
+    GetTempPathW(ARRAY_SIZE(path), path);
+    SHGetDesktopFolder(&psf_desktop);
+
+    hr = IShellFolder_ParseDisplayName(psf_desktop, NULL, NULL, path, NULL, &pidl, 0);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    pidl_last = NULL;
+    hr = pSHBindToFolderIDListParent(psf_desktop, pidl, &IID_IShellFolder, (void **)&psf, &pidl_last);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(pidl_last != NULL, "got %p\n", pidl_last);
+    IShellFolder_Release(psf);
+
+    hr = pSHBindToFolderIDListParent(NULL, pidl_empty, &IID_IShellFolder, (void **)&psf, &pidl_last);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(pidl_last == pidl_empty, "got %p\n", pidl_last);
+    IShellFolder_Release(psf);
+
+    hr = pSHBindToFolderIDListParent(NULL, pidl, &IID_IShellFolder, (void **)&psf, NULL);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    IShellFolder_Release(psf);
+
+    if (0) /* crashes under Windows */
+        hr = pSHBindToFolderIDListParent(NULL, pidl, &IID_IShellFolder, NULL, NULL);
+
+    ILFree(pidl);
+    IShellFolder_Release(psf_desktop);
+
+    pidl_last = (LPITEMIDLIST)0xdeadbeef;
+    hr = pSHBindToFolderIDListParent(NULL, NULL, &IID_IShellFolder, (void **)&psf, &pidl_last);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+    todo_wine ok(pidl_last == NULL, "got %p\n", pidl_last);
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -5557,6 +5609,7 @@ START_TEST(shlfolder)
        CO_E_NOTINITIALIZED for malformed directory names */
     OleInitialize(NULL);
 
+    test_SHBindToFolderIDListParent();
     test_ParseDisplayName();
     test_SHParseDisplayName();
     test_BindToObject();
