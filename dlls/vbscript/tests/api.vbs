@@ -2411,4 +2411,29 @@ end sub
 call testFormatPercent()
 call testFormatPercentError()
 
+sub testFormatDateTimeError()
+    on error resume next
+    dim x
+    call Err.clear()
+    x = FormatDateTime(null)
+    call ok(Err.number = 13, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    x = FormatDateTime(.10,null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+end sub
+
+sub testFormatDateTime()
+    dim x
+
+    x = FormatDateTime(0)
+    call ok(getVT(x) = "VT_BSTR*", "getVT = " & getVT(x))
+    x = FormatDateTime(0.1,1)
+    call ok(getVT(x) = "VT_BSTR*", "getVT = " & getVT(x))
+end sub
+
+call testFormatDateTime()
+call testFormatDateTimeError()
+
 Call reportSuccess()

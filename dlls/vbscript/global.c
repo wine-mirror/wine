@@ -3015,10 +3015,32 @@ static HRESULT Global_FormatPercent(BuiltinDisp *This, VARIANT *args, unsigned a
     return return_bstr(res, str);
 }
 
-static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_FormatDateTime(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int format = 0;
+    HRESULT hres;
+    BSTR str;
+
+    TRACE("\n");
+
+    assert(1 <= args_cnt && args_cnt <= 2);
+
+    if (V_VT(args) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
+
+    if (args_cnt == 2)
+    {
+        if (V_VT(args+1) == VT_NULL) return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+        if (V_VT(args+1) != VT_ERROR)
+        {
+            if (FAILED(hres = to_int(args+1, &format))) return hres;
+        }
+    }
+
+    hres = VarFormatDateTime(args, format, 0, &str);
+    if (FAILED(hres)) return hres;
+
+    return return_bstr(res, str);
 }
 
 static HRESULT Global_WeekdayName(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
