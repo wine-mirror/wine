@@ -318,6 +318,7 @@ ElseIf
 Else_opt
     : /* empty */                           { $$ = NULL; }
     | tELSE tNL StatementsNl_opt            { $$ = $3; }
+    | tELSE StatementsNl_opt                { $$ = $2; }
 
 CaseClausules
     : /* empty */                          { $$ = NULL; }

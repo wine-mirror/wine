@@ -282,6 +282,14 @@ Else
 End If
 Call ok(x, "else not called?")
 
+' Else without following newline
+x = false
+If false Then
+   Call ok(false, "inside if false")
+Else x = true
+End If
+Call ok(x, "else not called?")
+
 x = false
 If false Then
    Call ok(false, "inside if false")
