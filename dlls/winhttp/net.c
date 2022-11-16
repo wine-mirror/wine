@@ -278,6 +278,11 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
     return ERROR_SUCCESS;
 }
 
+void netconn_addref( struct netconn *conn )
+{
+    InterlockedIncrement( &conn->refs );
+}
+
 void netconn_release( struct netconn *conn )
 {
     if (InterlockedDecrement( &conn->refs )) return;

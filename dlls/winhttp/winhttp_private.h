@@ -257,6 +257,7 @@ struct socket
 {
     struct object_header hdr;
     struct request *request;
+    struct netconn *netconn;
     int keepalive_interval;
     unsigned int send_buffer_size;
     enum socket_state state;
@@ -371,6 +372,7 @@ void close_connection( struct request * ) DECLSPEC_HIDDEN;
 void init_queue( struct queue *queue ) DECLSPEC_HIDDEN;
 void stop_queue( struct queue * ) DECLSPEC_HIDDEN;
 
+void netconn_addref( struct netconn * ) DECLSPEC_HIDDEN;
 void netconn_release( struct netconn * ) DECLSPEC_HIDDEN;
 DWORD netconn_create( struct hostdata *, const struct sockaddr_storage *, int, struct netconn ** ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;

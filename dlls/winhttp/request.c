@@ -3164,7 +3164,7 @@ static void socket_handle_closing( struct object_header *hdr )
     pending_tasks = cancel_queue( &socket->recv_q ) || pending_tasks;
 
     if (pending_tasks)
-        netconn_cancel_io( socket->request->netconn );
+        netconn_cancel_io( socket->netconn );
 }
 
 static BOOL socket_query_option( struct object_header *hdr, DWORD option, void *buffer, DWORD *buflen )
@@ -3190,6 +3190,7 @@ static void socket_destroy( struct object_header *hdr )
     stop_queue( &socket->send_q );
     stop_queue( &socket->recv_q );
 
+    netconn_release( socket->netconn );
     release_object( &socket->request->hdr );
     free( socket->send_frame_buffer );
     free( socket );
@@ -3212,7 +3213,7 @@ static BOOL socket_set_option( struct object_header *hdr, DWORD option, void *bu
             return FALSE;
         }
         socket->keepalive_interval = interval;
-        netconn_set_timeout( socket->request->netconn, FALSE, socket->keepalive_interval );
+        netconn_set_timeout( socket->netconn, FALSE, socket->keepalive_interval );
         SetLastError( ERROR_SUCCESS );
         TRACE( "WINHTTP_OPTION_WEB_SOCKET_KEEPALIVE_INTERVAL %lu.\n", interval);
         return TRUE;
@@ -3267,11 +3268,13 @@ HINTERNET WINAPI WinHttpWebSocketCompleteUpgrade( HINTERNET hrequest, DWORD_PTR 
     InitializeSRWLock( &socket->send_lock );
     init_queue( &socket->send_q );
     init_queue( &socket->recv_q );
+    netconn_addref( request->netconn );
+    socket->netconn = request->netconn;
 
     addref_object( &request->hdr );
     socket->request = request;
 
-    netconn_set_timeout( socket->request->netconn, FALSE, socket->keepalive_interval );
+    netconn_set_timeout( socket->netconn, FALSE, socket->keepalive_interval );
 
     if ((hsocket = alloc_handle( &socket->hdr )))
     {
@@ -3289,7 +3292,7 @@ static DWORD send_bytes( struct socket *socket, char *bytes, int len, int *sent,
 {
     int count;
     DWORD err;
-    err = netconn_send( socket->request->netconn, bytes, len, &count, ovr );
+    err = netconn_send( socket->netconn, bytes, len, &count, ovr );
     if (sent) *sent = count;
     if (err) return err;
     return (count == len || (ovr && count)) ? ERROR_SUCCESS : ERROR_INTERNAL_ERROR;
@@ -3401,7 +3404,7 @@ static DWORD complete_send_frame( struct socket *socket, WSAOVERLAPPED *ovr, con
 {
     DWORD ret, len, i;
 
-    if (!netconn_wait_overlapped_result( socket->request->netconn, ovr, &len ))
+    if (!netconn_wait_overlapped_result( socket->netconn, ovr, &len ))
         return WSAGetLastError();
 
     if (socket->bytes_in_send_frame_buffer)
@@ -3680,7 +3683,7 @@ static DWORD receive_bytes( struct socket *socket, char *buf, DWORD len, DWORD *
     }
     while (size != len)
     {
-        if ((err = netconn_recv( socket->request->netconn, ptr, needed, 0, &received ))) return err;
+        if ((err = netconn_recv( socket->netconn, ptr, needed, 0, &received ))) return err;
         if (!received) break;
         size += received;
         if (!read_full_buffer) break;
