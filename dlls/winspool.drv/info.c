@@ -7725,14 +7725,69 @@ end:
     return ret;
 }
 
+static inline const DWORD *job_string_info(DWORD level)
+{
+    static const DWORD info_1[] =
+    {
+        sizeof(JOB_INFO_1W),
+        FIELD_OFFSET(JOB_INFO_1W, pPrinterName),
+        FIELD_OFFSET(JOB_INFO_1W, pMachineName),
+        FIELD_OFFSET(JOB_INFO_1W, pUserName),
+        FIELD_OFFSET(JOB_INFO_1W, pDocument),
+        FIELD_OFFSET(JOB_INFO_1W, pDatatype),
+        FIELD_OFFSET(JOB_INFO_1W, pStatus),
+        ~0u
+    };
+    static const DWORD info_2[] =
+    {
+        sizeof(JOB_INFO_2W),
+        FIELD_OFFSET(JOB_INFO_2W, pPrinterName),
+        FIELD_OFFSET(JOB_INFO_2W, pMachineName),
+        FIELD_OFFSET(JOB_INFO_2W, pUserName),
+        FIELD_OFFSET(JOB_INFO_2W, pDocument),
+        FIELD_OFFSET(JOB_INFO_2W, pNotifyName),
+        FIELD_OFFSET(JOB_INFO_2W, pDatatype),
+        FIELD_OFFSET(JOB_INFO_2W, pPrintProcessor),
+        FIELD_OFFSET(JOB_INFO_2W, pParameters),
+        FIELD_OFFSET(JOB_INFO_2W, pDriverName),
+        FIELD_OFFSET(JOB_INFO_2W, pStatus),
+        ~0u
+    };
+    static const DWORD info_3[] =
+    {
+        sizeof(JOB_INFO_3),
+        ~0u
+    };
+
+    switch (level)
+    {
+    case 1: return info_1;
+    case 2: return info_2;
+    case 3: return info_3;
+    }
+
+    SetLastError( ERROR_INVALID_LEVEL );
+    return NULL;
+}
+
 /*****************************************************************************
  *          GetJobA [WINSPOOL.@]
  *
  */
-BOOL WINAPI GetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level, LPBYTE pJob,
-                    DWORD cbBuf, LPDWORD pcbNeeded)
+BOOL WINAPI GetJobA(HANDLE printer, DWORD job_id, DWORD level, BYTE *data,
+        DWORD size, DWORD *needed)
 {
-    return get_job_info(hPrinter, JobId, Level, pJob, cbBuf, pcbNeeded, FALSE);
+    const DWORD *string_info = job_string_info(level);
+
+    if (!string_info)
+        return FALSE;
+
+    if (!GetJobW(printer, job_id, level, data, size, needed))
+        return FALSE;
+    packed_struct_WtoA(data, string_info);
+    if (level == 2)
+        DEVMODEWtoA(((JOB_INFO_2W *)data)->pDevMode, ((JOB_INFO_2A *)data)->pDevMode);
+    return TRUE;
 }
 
 /*****************************************************************************
