@@ -1039,10 +1039,10 @@ NTSTATUS WINAPI BCryptHashData( BCRYPT_HASH_HANDLE handle, UCHAR *input, ULONG s
     return hash_update( &hash->inner, hash->alg_id, input, size );
 }
 
-static NTSTATUS hash_finalize( struct hash *hash, UCHAR *output, ULONG size )
+static NTSTATUS hash_finalize( struct hash *hash, UCHAR *output )
 {
     UCHAR buffer[MAX_HASH_OUTPUT_BYTES];
-    int hash_length;
+    ULONG hash_length = builtin_algorithms[hash->alg_id].hash_length;
     NTSTATUS status;
 
     if (!(hash->flags & HASH_FLAG_HMAC))
@@ -1052,7 +1052,6 @@ static NTSTATUS hash_finalize( struct hash *hash, UCHAR *output, ULONG size )
         return STATUS_SUCCESS;
     }
 
-    hash_length = builtin_algorithms[hash->alg_id].hash_length;
     if ((status = hash_finish( &hash->inner, hash->alg_id, buffer ))) return status;
     if ((status = hash_update( &hash->outer, hash->alg_id, buffer, hash_length ))) return status;
     if ((status = hash_finish( &hash->outer, hash->alg_id, output ))) return status;
@@ -1070,7 +1069,7 @@ NTSTATUS WINAPI BCryptFinishHash( BCRYPT_HASH_HANDLE handle, UCHAR *output, ULON
     if (!hash) return STATUS_INVALID_HANDLE;
     if (!output || size != builtin_algorithms[hash->alg_id].hash_length) return STATUS_INVALID_PARAMETER;
 
-    return hash_finalize( hash, output, size );
+    return hash_finalize( hash, output );
 }
 
 NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE handle, UCHAR *secret, ULONG secret_len,
@@ -1096,7 +1095,7 @@ NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE handle, UCHAR *secret, ULONG secre
         hash_destroy( hash );
         return status;
     }
-    status = hash_finalize( hash, output, output_len );
+    status = hash_finalize( hash, output );
     hash_destroy( hash );
     return status;
 }
@@ -2159,9 +2158,9 @@ NTSTATUS WINAPI BCryptDeriveKeyCapi( BCRYPT_HASH_HANDLE handle, BCRYPT_ALG_HANDL
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    len = builtin_algorithms[hash->alg_id].hash_length;
-    if ((status = hash_finalize( hash, buf, len ))) return status;
+    if ((status = hash_finalize( hash, buf ))) return status;
 
+    len = builtin_algorithms[hash->alg_id].hash_length;
     if (len < keylen)
     {
         UCHAR pad1[HMAC_PAD_LEN], pad2[HMAC_PAD_LEN];
@@ -2175,11 +2174,11 @@ NTSTATUS WINAPI BCryptDeriveKeyCapi( BCRYPT_HASH_HANDLE handle, BCRYPT_ALG_HANDL
 
         if ((status = hash_prepare( hash )) ||
             (status = hash_update( &hash->inner, hash->alg_id, pad1, sizeof(pad1) )) ||
-            (status = hash_finalize( hash, buf, len ))) return status;
+            (status = hash_finalize( hash, buf ))) return status;
 
         if ((status = hash_prepare( hash )) ||
             (status = hash_update( &hash->inner, hash->alg_id, pad2, sizeof(pad2) )) ||
-            (status = hash_finalize( hash, buf + len, len ))) return status;
+            (status = hash_finalize( hash, buf + len ))) return status;
     }
 
     memcpy( key, buf, keylen );
@@ -2219,7 +2218,7 @@ static NTSTATUS pbkdf2( struct hash *hash, UCHAR *pwd, ULONG pwd_len, UCHAR *sal
             return status;
         }
 
-        if ((status = hash_finalize( hash, buf, hash_len )))
+        if ((status = hash_finalize( hash, buf )))
         {
             free( buf );
             return status;
