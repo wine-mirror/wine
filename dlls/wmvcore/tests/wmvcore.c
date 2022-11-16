@@ -2101,6 +2101,7 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
 {
     struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
     struct teststream *stream = callback->stream;
+    DWORD output = 2 - stream_number;
 
     if (winetest_debug > 1)
         trace("%lu: %04lx: IWMReaderCallbackAdvanced::OnStreamSample(stream %u, pts %I64u, duration %I64u, flags %#lx)\n",
@@ -2118,15 +2119,15 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
         callback->last_pts = pts;
     }
 
-    if (!callback->output_tid[stream_number - 1])
-        callback->output_tid[stream_number - 1] = GetCurrentThreadId();
+    if (!callback->output_tid[output])
+        callback->output_tid[output] = GetCurrentThreadId();
     else
-        ok(callback->output_tid[stream_number - 1] == GetCurrentThreadId(), "got wrong thread\n");
+        ok(callback->output_tid[output] == GetCurrentThreadId(), "got wrong thread\n");
 
-    if (callback->dedicated_threads && callback->output_tid[2 - stream_number])
+    if (callback->dedicated_threads && callback->output_tid[1 - output])
     {
         todo_wine
-        ok(callback->output_tid[2 - stream_number] != GetCurrentThreadId(), "got wrong thread\n");
+        ok(callback->output_tid[1 - output] != GetCurrentThreadId(), "got wrong thread\n");
     }
 
     if (stream)
