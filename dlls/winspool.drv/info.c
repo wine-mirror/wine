@@ -240,18 +240,6 @@ static inline PWSTR asciitounicode( UNICODE_STRING * usBufferPtr, LPCSTR src )
     return NULL;
 }
 
-static LPWSTR strdupW(LPCWSTR p)
-{
-    LPWSTR ret;
-    DWORD len;
-
-    if(!p) return NULL;
-    len = (wcslen( p ) + 1) * sizeof(WCHAR);
-    ret = malloc(len);
-    memcpy(ret, p, len);
-    return ret;
-}
-
 static DEVMODEW *dup_devmode( const DEVMODEW *dm )
 {
     DEVMODEW *ret;
@@ -940,7 +928,7 @@ static LPWSTR get_servername_from_name(LPCWSTR name)
     if (name == NULL) return NULL;
     if ((name[0] != '\\') || (name[1] != '\\')) return NULL;
 
-    server = strdupW(&name[2]);     /* skip over both backslash */
+    server = wcsdup(&name[2]);     /* skip over both backslash */
     if (server == NULL) return NULL;
 
     /* strip '\' and the printername */
@@ -1083,10 +1071,10 @@ static HANDLE get_opened_printer_entry(LPWSTR name, LPPRINTER_DEFAULTSW pDefault
     }
 
     /* clone the base name. This is NULL for the printserver */
-    printer->printername = strdupW(printername);
+    printer->printername = wcsdup(printername);
 
     /* clone the full name */
-    printer->name = strdupW(name);
+    printer->name = wcsdup(name);
     if (name && (!printer->name)) {
         handle = 0;
         goto end;
@@ -2566,8 +2554,8 @@ BOOL WINAPI AddJobW(HANDLE hPrinter, DWORD Level, LPBYTE pData, DWORD cbBuf, LPD
     job->filename = malloc((len + 1) * sizeof(WCHAR));
     memcpy(job->filename, filename, (len + 1) * sizeof(WCHAR));
     job->portname = NULL;
-    job->document_title = strdupW( L"Local Downlevel Document" );
-    job->printer_name = strdupW( printer->name );
+    job->document_title = wcsdup( L"Local Downlevel Document" );
+    job->printer_name = wcsdup( printer->name );
     job->devmode = dup_devmode( printer->devmode );
     list_add_tail(&printer->queue->jobs, &job->entry);
 
@@ -3248,14 +3236,14 @@ BOOL WINAPI SetJobW(HANDLE hPrinter, DWORD JobId, DWORD Level,
       {
         JOB_INFO_1W *info1 = (JOB_INFO_1W*)pJob;
         free(job->document_title);
-        job->document_title = strdupW(info1->pDocument);
+        job->document_title = wcsdup(info1->pDocument);
         break;
       }
     case 2:
       {
         JOB_INFO_2W *info2 = (JOB_INFO_2W*)pJob;
         free(job->document_title);
-        job->document_title = strdupW(info2->pDocument);
+        job->document_title = wcsdup(info2->pDocument);
         free(job->devmode);
         job->devmode = dup_devmode( info2->pDevMode );
         break;
@@ -3421,7 +3409,7 @@ DWORD WINAPI StartDocPrinterW(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
     printer->doc->hf = hf;
     ret = printer->doc->job_id = addjob->JobId;
     job = get_job(hPrinter, ret);
-    job->portname = strdupW(doc->pOutputFile);
+    job->portname = wcsdup(doc->pOutputFile);
 
 end:
     LeaveCriticalSection(&printer_handles_cs);
