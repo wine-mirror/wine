@@ -659,7 +659,7 @@ static ULONG export_gnutls_datum( UCHAR *buffer, ULONG buflen, gnutls_datum_t *d
         size = buflen;
     }
 
-    if (buffer) memcpy( buffer + offset, src, size );
+    if (buffer) memcpy( buffer + offset, src, size - offset );
     return size;
 }
 
