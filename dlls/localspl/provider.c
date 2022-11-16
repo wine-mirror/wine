@@ -276,24 +276,6 @@ static const DWORD di_sizeof[] = {0, sizeof(DRIVER_INFO_1W), sizeof(DRIVER_INFO_
 
 
 /******************************************************************
- * strdupW [internal]
- *
- * create a copy of a unicode-string
- *
- */
-static LPWSTR strdupW(LPCWSTR p)
-{
-    LPWSTR ret;
-    DWORD len;
-
-    if(!p) return NULL;
-    len = (wcslen(p) + 1) * sizeof(WCHAR);
-    ret = malloc(len);
-    if (ret) memcpy(ret, p, len);
-    return ret;
-}
-
-/******************************************************************
  *  apd_copyfile [internal]
  *
  * Copy a file from the driverdirectory to the versioned directory
@@ -618,8 +600,8 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
                 WARN("%s not found\n", debugstr_w(regroot));
         }
 
-        pm->name = strdupW(name);
-        pm->dllname = strdupW(driver);
+        pm->name = wcsdup(name);
+        pm->dllname = wcsdup(driver);
 
         if ((name && (!regroot || !pm->name)) || !pm->dllname) {
             monitor_unload(pm);
@@ -1427,10 +1409,10 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
     if (!printer) goto end;
 
     /* clone the base name. This is NULL for the printserver */
-    printer->printername = strdupW(printername);
+    printer->printername = wcsdup(printername);
 
     /* clone the full name */
-    printer->name = strdupW(name);
+    printer->name = wcsdup(name);
     if (name && (!printer->name)) {
         printer_free(printer);
         printer = NULL;
