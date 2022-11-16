@@ -1823,9 +1823,11 @@ struct callback
     unsigned int closed_count, started_count, end_of_streaming_count, eof_count, sample_count;
     bool all_streams_off;
     bool allocated_samples;
+    bool allocated_compressed_samples;
     void *expect_context;
 
     bool read_compressed;
+    bool todo_compressed;
     DWORD max_stream_sample_size[2];
 
     bool dedicated_threads;
@@ -1985,16 +1987,27 @@ static void check_async_sample(struct callback *callback, INSSBuffer *sample)
     BYTE *data, *data2;
     HRESULT hr;
 
-    if (callback->allocated_samples)
+    if (callback->read_compressed ? callback->allocated_compressed_samples : callback->allocated_samples)
     {
         struct buffer *buffer = impl_from_INSSBuffer(sample);
 
+        /* FIXME: Wine badly synchronize compressed reads and user time, spurious
+         * samples are possible making todo condition inconsistent. */
+        todo_wine_if(callback->todo_compressed && sample->lpVtbl != &buffer_vtbl)
         ok(sample->lpVtbl == &buffer_vtbl, "Buffer vtbl didn't match.\n");
+        if (sample->lpVtbl != &buffer_vtbl)
+            return;
+
         ok(buffer->size > 0 && buffer->size <= buffer->capacity, "Got size %ld.\n", buffer->size);
     }
     else
     {
+        /* FIXME: Wine badly synchronize compressed reads and user time, spurious
+         * samples are possible making todo condition inconsistent. */
+        todo_wine_if(callback->todo_compressed && sample->lpVtbl == &buffer_vtbl)
         ok(sample->lpVtbl != &buffer_vtbl, "Buffer vtbl shouldn't match.\n");
+        if (sample->lpVtbl == &buffer_vtbl)
+            return;
 
         hr = INSSBuffer_GetBufferAndLength(sample, &data, &size);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2210,7 +2223,8 @@ static HRESULT WINAPI callback_advanced_AllocateForStream(IWMReaderCallbackAdvan
     }
 
     ok(callback->read_compressed, "AllocateForStream() should only be called when reading compressed samples.\n");
-    ok(callback->allocated_samples, "AllocateForStream() should only be called when using a custom allocator.\n");
+    ok(callback->allocated_compressed_samples,
+            "AllocateForStream() should only be called when using a custom allocator.\n");
 
     ok(size <= max_size, "Got size %lu, max stream sample size %lu.\n", size, max_size);
 
@@ -2323,7 +2337,7 @@ static HRESULT WINAPI callback_allocator_AllocateForStreamEx(IWMReaderAllocatorE
     struct callback *callback = impl_from_IWMReaderAllocatorEx(iface);
     struct buffer *object;
 
-    ok(callback->allocated_samples, "Unexpected call.\n");
+    ok(callback->allocated_compressed_samples, "Unexpected call.\n");
     ok(stream_number, "got stream_number %u.\n", stream_number);
     ok(!flags, "got flags %#lx.\n", flags);
     ok(!pts, "got pts %I64d.\n", pts);
@@ -2637,6 +2651,77 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
         }
     }
 
+    /* try changing compressed / allocation mode dynamically */
+    if (callback->read_compressed)
+    {
+        callback->expect_time = 6500000;
+        hr = IWMReaderAdvanced2_DeliverTime(advanced, 6500000);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        wait_ontime_callback(callback);
+        ok(callback->last_pts[0] == 6500000, "Got pts %I64d.\n", callback->last_pts[0]);
+        todo_wine
+        ok(callback->next_pts[0] == 6960000, "Got pts %I64d.\n", callback->next_pts[0]);
+        ok(callback->last_pts[1] == 6460000, "Got pts %I64d.\n", callback->last_pts[1]);
+        todo_wine
+        ok(callback->next_pts[1] == 6470000, "Got pts %I64d.\n", callback->next_pts[1]);
+        ok(callback->sample_count > 0, "Got no samples.\n");
+        callback->sample_count = 0;
+
+        callback->todo_compressed = true;
+        callback->read_compressed = false;
+        hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, FALSE);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, FALSE);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, TRUE);
+        todo_wine
+        ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+        hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, TRUE);
+        todo_wine
+        ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+        hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, TRUE);
+        todo_wine
+        ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+        hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, TRUE);
+        todo_wine
+        ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+
+        hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, callback->allocated_samples);
+        todo_wine
+        ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+        hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, callback->allocated_samples);
+        todo_wine
+        ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+        hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, callback->allocated_compressed_samples);
+        todo_wine
+        ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+        hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, callback->allocated_compressed_samples);
+        todo_wine
+        ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+
+        callback->expect_time = 13460000;
+        hr = IWMReaderAdvanced2_DeliverTime(advanced, 13460000);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        wait_ontime_callback(callback);
+        todo_wine
+        ok(callback->last_pts[0] == 13460000, "Got pts %I64d.\n", callback->last_pts[0]);
+        todo_wine
+        ok(callback->next_pts[0] == 13930000, "Got pts %I64d.\n", callback->next_pts[0]);
+        todo_wine
+        ok(callback->last_pts[1] == 13260000, "Got pts %I64d.\n", callback->last_pts[1]);
+        todo_wine
+        ok(callback->next_pts[1] == 13270000, "Got pts %I64d.\n", callback->next_pts[1]);
+        ok(callback->sample_count > 0, "Got no samples.\n");
+        callback->sample_count = 0;
+
+        callback->read_compressed = true;
+        hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 1, TRUE);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, TRUE);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    }
+
     callback->expect_time = test_wmv_duration * 2;
     hr = IWMReaderAdvanced2_DeliverTime(advanced, test_wmv_duration * 2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2668,6 +2753,7 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
     wait_stopped_callback(callback);
     wait_stopped_callback(callback);
 
+    callback->todo_compressed = false;
     ok(!outstanding_buffers, "Got %ld outstanding buffers.\n", outstanding_buffers);
 }
 
@@ -2678,6 +2764,7 @@ static void test_async_reader_allocate(IWMReader *reader,
     HRESULT hr;
 
     callback->allocated_samples = true;
+    callback->allocated_compressed_samples = false;
 
     hr = IWMReaderAdvanced2_GetAllocateForOutput(advanced, 0, &allocate);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2723,6 +2810,7 @@ static void test_async_reader_allocate(IWMReader *reader,
     run_async_reader(reader, advanced, callback);
 
     callback->allocated_samples = false;
+    callback->allocated_compressed_samples = true;
 
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 0, FALSE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2758,6 +2846,8 @@ static void test_async_reader_allocate(IWMReader *reader,
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 2, FALSE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    callback->allocated_compressed_samples = false;
 }
 
 static void test_async_reader_selection(IWMReader *reader,
@@ -2881,7 +2971,7 @@ static void test_async_reader_allocate_compressed(IWMReader *reader,
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, TRUE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    callback->allocated_samples = true;
+    callback->allocated_compressed_samples = true;
 
     hr = IWMReaderAdvanced2_SetAllocateForStream(advanced, 1, TRUE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2900,7 +2990,8 @@ static void test_async_reader_allocate_compressed(IWMReader *reader,
     hr = IWMReaderAdvanced2_SetAllocateForOutput(advanced, 1, TRUE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
-    callback->allocated_samples = false;
+    callback->allocated_compressed_samples = false;
+    callback->allocated_samples = true;
 
     run_async_reader(reader, advanced, callback);
 
@@ -2914,6 +3005,7 @@ static void test_async_reader_allocate_compressed(IWMReader *reader,
     hr = IWMReaderAdvanced2_SetReceiveStreamSamples(advanced, 2, FALSE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
+    callback->allocated_samples = false;
     callback->read_compressed = false;
 }
 
@@ -3746,6 +3838,7 @@ static void test_sync_reader_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     callback.allocated_samples = true;
+    callback.allocated_compressed_samples = true;
 
     hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3764,7 +3857,7 @@ static void test_sync_reader_allocator(void)
     INSSBuffer_Release(sample);
 
     callback.allocated_samples = false;
-
+    callback.allocated_compressed_samples = false;
 
     /* without compressed sample read, allocator isn't used */
     hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 0, &stream_num);
@@ -3796,6 +3889,7 @@ static void test_sync_reader_allocator(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     callback.allocated_samples = true;
+    callback.allocated_compressed_samples = true;
 
     hr = IWMSyncReader2_GetStreamNumberForOutput(reader, 1, &stream_num);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3816,7 +3910,7 @@ static void test_sync_reader_allocator(void)
     INSSBuffer_Release(sample);
 
     callback.allocated_samples = false;
-
+    callback.allocated_compressed_samples = false;
 
     IWMSyncReader2_Release(reader);
 
