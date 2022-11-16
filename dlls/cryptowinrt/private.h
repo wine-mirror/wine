@@ -34,8 +34,12 @@
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Storage_Streams
 #include "windows.storage.streams.h"
+#define WIDL_using_Windows_Security_Credentials
+#include "windows.security.credentials.h"
 
 extern const char *debugstr_hstring( HSTRING hstr );
+
+extern IActivationFactory *credentials_activation_factory;
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

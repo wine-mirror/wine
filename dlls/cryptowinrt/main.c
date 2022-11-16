@@ -264,6 +264,8 @@ static struct cryptobuffer_factory cryptobuffer_factory =
     .refcount = 1,
 };
 
+IActivationFactory *cryptobuffer_activation_factory = &cryptobuffer_factory.IActivationFactory_iface;
+
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
 {
     FIXME("clsid %s, riid %s, out %p stub!\n", debugstr_guid(clsid), debugstr_guid(riid), out);
@@ -279,10 +281,9 @@ HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **fac
     *factory = NULL;
 
     if (!wcscmp(name, RuntimeClass_Windows_Security_Cryptography_CryptographicBuffer))
-    {
-        *factory = &cryptobuffer_factory.IActivationFactory_iface;
-        IUnknown_AddRef(*factory);
-    }
+        IActivationFactory_QueryInterface(cryptobuffer_activation_factory, &IID_IActivationFactory, (void **)factory);
+    if (!wcscmp(name, RuntimeClass_Windows_Security_Credentials_KeyCredentialManager))
+        IActivationFactory_QueryInterface(credentials_activation_factory, &IID_IActivationFactory, (void **)factory);
 
     if (*factory) return S_OK;
     return CLASS_E_CLASSNOTAVAILABLE;

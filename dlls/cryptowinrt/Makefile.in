@@ -2,6 +2,7 @@ MODULE = cryptowinrt.dll
 IMPORTS = combase bcrypt uuid
 
 C_SRCS = \
+	credentials.c \
 	main.c
 
 IDL_SRCS = classes.idl

@@ -32,6 +32,8 @@
 #include "windows.storage.streams.h"
 #define WIDL_using_Windows_Security_Cryptography
 #include "windows.security.cryptography.h"
+#define WIDL_using_Windows_Security_Credentials
+#include "windows.security.credentials.h"
 
 #include "wine/test.h"
 
@@ -81,6 +83,40 @@ static void test_CryptobufferStatics(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_Credentials_Statics(void)
+{
+    static const WCHAR *credentials_statics_name = L"Windows.Security.Credentials.KeyCredentialManager";
+    IKeyCredentialManagerStatics *credentials_statics;
+    IActivationFactory *factory;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( credentials_statics_name, wcslen( credentials_statics_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( credentials_statics_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown );
+    check_interface( factory, &IID_IInspectable );
+    check_interface( factory, &IID_IAgileObject );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IKeyCredentialManagerStatics, (void **)&credentials_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IKeyCredentialManagerStatics_Release( credentials_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(crypto)
 {
     HRESULT hr;
@@ -89,6 +125,7 @@ START_TEST(crypto)
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
     test_CryptobufferStatics();
+    test_Credentials_Statics();
 
     RoUninitialize();
 }
