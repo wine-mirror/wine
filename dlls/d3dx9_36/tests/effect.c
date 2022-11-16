@@ -5465,6 +5465,11 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     HRESULT hr;
     D3DXHANDLE param;
     unsigned int i, passes_count, value;
+    union
+    {
+        DWORD dw;
+        float f;
+    } float_value;
     int ivect[4];
     D3DXVECTOR4 fvect;
     IDirect3DVertexShader9 *vshader;
@@ -5626,14 +5631,14 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[7].const_updated_mask,
                 check_vconsts_parameters[7].param_name);
 
-    *(float *)&value = 9999.0f;
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGDENSITY, value);
+    float_value.f = 9999.0f;
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGDENSITY, float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, value);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_A, value);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_A, float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_B, value);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_B, float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "ts2");
@@ -5648,29 +5653,29 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGDENSITY, &value);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGDENSITY, &float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(value == 0, "Unexpected fog density %g.\n", *(float *)&value);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGSTART, &value);
+    ok(float_value.f == 0, "Unexpected fog density %g.\n", float_value.f);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGSTART, &float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(*(float *)&value == 4.0f, "Unexpected fog start %g.\n", *(float *)&value);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_A, &value);
+    ok(float_value.f == 4.0f, "Unexpected fog start %g.\n", float_value.f);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_A, &float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(*(float *)&value == 9999.0f, "Unexpected point scale A %g.\n", *(float *)&value);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_B, &value);
+    ok(float_value.f == 9999.0f, "Unexpected point scale A %g.\n", float_value.f);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_B, &float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(*(float *)&value == 9999.0f, "Unexpected point scale B %g.\n", *(float *)&value);
+    ok(float_value.f == 9999.0f, "Unexpected point scale B %g.\n", float_value.f);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[8].const_updated_mask,
                 check_vconsts_parameters[8].param_name);
 
-    *(float *)&value = 9999.0f;
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGDENSITY, value);
+    float_value.f = 9999.0f;
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGDENSITY, float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, value);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGSTART, float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_A, value);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_A, float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_B, value);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_B, float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     test_effect_clear_vconsts(device);
     param = effect->lpVtbl->GetParameterByName(effect, NULL, "ts3");
@@ -5687,18 +5692,18 @@ static void test_effect_commitchanges(IDirect3DDevice9 *device)
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
     hr = effect->lpVtbl->CommitChanges(effect);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGDENSITY, &value);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGDENSITY, &float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(*(float *)&value == 9999.0f, "Unexpected fog density %g.\n", *(float *)&value);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGSTART, &value);
+    ok(float_value.f == 9999.0f, "Unexpected fog density %g.\n", float_value.f);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_FOGSTART, &float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(*(float *)&value == 9999.0f, "Unexpected fog start %g.\n", *(float *)&value);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_A, &value);
+    ok(float_value.f == 9999.0f, "Unexpected fog start %g.\n", float_value.f);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_A, &float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(*(float *)&value == 4.0f, "Unexpected point scale A %g.\n", *(float *)&value);
-    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_B, &value);
+    ok(float_value.f == 4.0f, "Unexpected point scale A %g.\n", float_value.f);
+    hr = IDirect3DDevice9_GetRenderState(device, D3DRS_POINTSCALE_B, &float_value.dw);
     ok(hr == D3D_OK, "Got result %#x.\n", hr);
-    ok(*(float *)&value == 12.0f, "Unexpected point scale B %g.\n", *(float *)&value);
+    ok(float_value.f == 12.0f, "Unexpected point scale B %g.\n", float_value.f);
     test_effect_preshader_compare_vconsts(device, check_vconsts_parameters[11].const_updated_mask,
                 check_vconsts_parameters[11].param_name);
 
