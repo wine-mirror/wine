@@ -85,22 +85,6 @@ static inline void* __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t siz
     return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size);
 }
 
-static inline LPWSTR heap_strdupW(LPCWSTR str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD size;
-
-        size = (lstrlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        if(ret)
-            memcpy(ret, str, size);
-    }
-
-    return ret;
-}
-
 /* XSLProcessor parameter list */
 struct xslprocessor_par
 {
