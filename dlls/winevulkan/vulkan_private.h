@@ -264,7 +264,7 @@ static inline void *conversion_context_alloc(struct conversion_context *pool, si
     if (pool->used + size <= sizeof(pool->buffer))
     {
         void *ret = pool->buffer + pool->used;
-        pool->used += size;
+        pool->used += (size + sizeof(UINT64) - 1) & ~(sizeof(UINT64) - 1);
         return ret;
     }
     else
