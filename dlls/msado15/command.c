@@ -24,7 +24,6 @@
 #include "msado15_backcompat.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "msado15_private.h"
 
@@ -83,8 +82,8 @@ static ULONG WINAPI command_Release( _Command *iface )
     {
         TRACE( "destroying %p\n", command );
         if (command->connection) _Connection_Release(command->connection);
-        heap_free( command->text );
-        heap_free( command );
+        free( command->text );
+        free( command );
     }
     return ref;
 }
@@ -196,8 +195,8 @@ static HRESULT WINAPI command_put_CommandText( _Command *iface, BSTR text )
 
     TRACE( "%p, %s\n", command, debugstr_w( text ) );
 
-    if (text && !(source = strdupW( text ))) return E_OUTOFMEMORY;
-    heap_free( command->text );
+    if (text && !(source = wcsdup( text ))) return E_OUTOFMEMORY;
+    free( command->text );
     command->text = source;
     return S_OK;
 }
@@ -379,7 +378,7 @@ HRESULT Command_create( void **obj )
 {
     struct command *command;
 
-    if (!(command = heap_alloc( sizeof(*command) ))) return E_OUTOFMEMORY;
+    if (!(command = malloc( sizeof(*command) ))) return E_OUTOFMEMORY;
     command->Command_iface.lpVtbl = &command_vtbl;
     command->type = adCmdUnknown;
     command->text = NULL;
