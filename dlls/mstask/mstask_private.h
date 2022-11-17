@@ -32,14 +32,4 @@ extern HRESULT TaskConstructor(ITaskService *service, const WCHAR *task_name, IT
 extern HRESULT task_set_trigger(ITask *task, WORD idx, const TASK_TRIGGER *trigger) DECLSPEC_HIDDEN;
 extern HRESULT task_get_trigger(ITask *task, WORD idx, TASK_TRIGGER *trigger) DECLSPEC_HIDDEN;
 
-static inline WCHAR *heap_strdupW(const WCHAR *src)
-{
-    WCHAR *dst;
-    unsigned len;
-    if (!src) return NULL;
-    len = (lstrlenW(src) + 1) * sizeof(WCHAR);
-    if ((dst = heap_alloc(len))) memcpy(dst, src, len);
-    return dst;
-}
-
 #endif /* __MSTASK_PRIVATE_H__ */

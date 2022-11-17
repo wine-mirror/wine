@@ -89,11 +89,11 @@ static void TaskDestructor(TaskImpl *This)
     if (This->action)
         IExecAction_Release(This->action);
     ITaskDefinition_Release(This->task);
-    heap_free(This->data);
-    heap_free(This->task_name);
-    heap_free(This->accountName);
-    heap_free(This->trigger);
-    heap_free(This);
+    free(This->data);
+    free(This->task_name);
+    free(This->accountName);
+    free(This->trigger);
+    free(This);
     InterlockedDecrement(&dll_ref);
 }
 
@@ -322,9 +322,9 @@ static HRESULT WINAPI MSTASK_ITask_CreateTrigger(ITask *iface, WORD *idx, ITaskT
     if (hr != S_OK) return hr;
 
     if (This->trigger)
-        new_trigger = heap_realloc(This->trigger, sizeof(This->trigger[0]) * (This->trigger_count + 1));
+        new_trigger = realloc(This->trigger, sizeof(This->trigger[0]) * (This->trigger_count + 1));
     else
-        new_trigger = heap_alloc(sizeof(This->trigger[0]));
+        new_trigger = malloc(sizeof(This->trigger[0]));
     if (!new_trigger)
     {
         ITaskTrigger_Release(*task_trigger);
@@ -365,7 +365,7 @@ static HRESULT WINAPI MSTASK_ITask_DeleteTrigger(ITask *iface, WORD idx)
     This->trigger_count--;
     memmove(&This->trigger[idx], &This->trigger[idx + 1], (This->trigger_count - idx) * sizeof(This->trigger[0]));
     /* this shouldn't fail in practice since we're shrinking the memory block */
-    This->trigger = heap_realloc(This->trigger, sizeof(This->trigger[0]) * This->trigger_count);
+    This->trigger = realloc(This->trigger, sizeof(This->trigger[0]) * This->trigger_count);
 
     return S_OK;
 }
@@ -829,8 +829,8 @@ static HRESULT WINAPI MSTASK_ITask_SetWorkItemData(ITask *iface, WORD count, BYT
     {
         if (!data) return E_INVALIDARG;
 
-        heap_free(This->data);
-        This->data = heap_alloc(count);
+        free(This->data);
+        This->data = malloc(count);
         if (!This->data) return E_OUTOFMEMORY;
         memcpy(This->data, data, count);
         This->data_count = count;
@@ -839,7 +839,7 @@ static HRESULT WINAPI MSTASK_ITask_SetWorkItemData(ITask *iface, WORD count, BYT
     {
         if (data) return E_INVALIDARG;
 
-        heap_free(This->data);
+        free(This->data);
         This->data = NULL;
         This->data_count = 0;
     }
@@ -933,11 +933,11 @@ static HRESULT WINAPI MSTASK_ITask_SetAccountInformation(
         FIXME("Partial stub ignores passwords\n");
 
     n = (lstrlenW(pwszAccountName) + 1);
-    tmp_account_name = heap_alloc(n * sizeof(WCHAR));
+    tmp_account_name = malloc(n * sizeof(WCHAR));
     if (!tmp_account_name)
         return E_OUTOFMEMORY;
     lstrcpyW(tmp_account_name, pwszAccountName);
-    heap_free(This->accountName);
+    free(This->accountName);
     This->accountName = tmp_account_name;
     This->is_dirty = TRUE;
     return S_OK;
@@ -983,7 +983,7 @@ static HRESULT WINAPI MSTASK_ITask_SetApplicationName(ITask *iface, LPCWSTR appn
     {
         LPWSTR tmp_name;
 
-        tmp_name = heap_alloc(len * sizeof(WCHAR));
+        tmp_name = malloc(len * sizeof(WCHAR));
         if (!tmp_name)
             return E_OUTOFMEMORY;
         len = SearchPathW(NULL, appname, NULL, len, tmp_name, NULL);
@@ -995,7 +995,7 @@ static HRESULT WINAPI MSTASK_ITask_SetApplicationName(ITask *iface, LPCWSTR appn
         else
             hr = HRESULT_FROM_WIN32(GetLastError());
 
-        heap_free(tmp_name);
+        free(tmp_name);
         return hr;
     }
 
@@ -1792,8 +1792,8 @@ failed:
             DeleteFileW(task_name);
         else if (remember)
         {
-            heap_free(This->task_name);
-            This->task_name = heap_strdupW(task_name);
+            free(This->task_name);
+            This->task_name = wcsdup(task_name);
         }
     }
     return hr;
@@ -1901,7 +1901,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     hr = ITaskService_NewTask(service, 0, &taskdef);
     if (hr != S_OK) return hr;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if (!This)
     {
         ITaskDefinition_Release(taskdef);
@@ -1914,7 +1914,7 @@ HRESULT TaskConstructor(ITaskService *service, const WCHAR *name, ITask **task)
     This->task = taskdef;
     This->data = NULL;
     This->data_count = 0;
-    This->task_name = heap_strdupW(task_name);
+    This->task_name = wcsdup(task_name);
     This->flags = 0;
     This->status = SCHED_S_TASK_NOT_SCHEDULED;
     This->exit_code = 0;
