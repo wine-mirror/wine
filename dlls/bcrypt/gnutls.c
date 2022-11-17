@@ -1877,16 +1877,10 @@ static NTSTATUS key_asymmetric_destroy( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS key_asymmetric_duplicate( void *args )
+static NTSTATUS dup_privkey( struct key *key_orig, struct key *key_copy )
 {
-    const struct key_asymmetric_duplicate_params *params = args;
-    struct key *key_orig = params->key_orig;
-    struct key *key_copy = params->key_copy;
     gnutls_privkey_t privkey;
-    gnutls_pubkey_t pubkey;
     int ret;
-
-    if (!key_data(key_orig)->a.privkey) return STATUS_SUCCESS;
 
     if ((ret = pgnutls_privkey_init( &privkey )))
     {
@@ -1959,25 +1953,100 @@ static NTSTATUS key_asymmetric_duplicate( void *args )
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (key_data(key_orig)->a.pubkey)
+    key_data(key_copy)->a.privkey = privkey;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS dup_pubkey( struct key *key_orig, struct key *key_copy )
+{
+    gnutls_pubkey_t pubkey;
+    int ret;
+
+    if ((ret = pgnutls_pubkey_init( &pubkey )))
     {
-        if ((ret = pgnutls_pubkey_init( &pubkey )))
-        {
-            pgnutls_perror( ret );
-            pgnutls_privkey_deinit( privkey );
-            return STATUS_INTERNAL_ERROR;
-        }
-        if ((ret = pgnutls_pubkey_import_privkey( pubkey, key_data(key_orig)->a.privkey, 0, 0 )))
-        {
-            pgnutls_perror( ret );
-            pgnutls_pubkey_deinit( pubkey );
-            pgnutls_privkey_deinit( privkey );
-            return STATUS_INTERNAL_ERROR;
-        }
-        key_data(key_copy)->a.pubkey = pubkey;
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
     }
 
-    key_data(key_copy)->a.privkey = privkey;
+    switch (key_orig->alg_id)
+    {
+    case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
+    {
+        gnutls_datum_t m, e;
+        if ((ret = pgnutls_pubkey_export_rsa_raw( key_data(key_orig)->a.pubkey, &m, &e )))
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        ret = pgnutls_pubkey_import_rsa_raw( pubkey, &m, &e );
+        free( m.data ); free( e.data );
+        if (ret)
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        break;
+    }
+    case ALG_ID_DSA:
+    {
+        gnutls_datum_t p, q, g, y;
+        if ((ret = pgnutls_pubkey_export_dsa_raw( key_data(key_orig)->a.pubkey, &p, &q, &g, &y )))
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        ret = pgnutls_pubkey_import_dsa_raw( pubkey, &p, &q, &g, &y );
+        free( p.data ); free( q.data ); free( g.data ); free( y.data );
+        if (ret)
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
+        break;
+    }
+    case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDH_P384:
+    case ALG_ID_ECDSA_P256:
+    case ALG_ID_ECDSA_P384:
+    {
+        gnutls_ecc_curve_t curve;
+        gnutls_datum_t x, y;
+        if ((ret = pgnutls_pubkey_export_ecc_raw( key_data(key_orig)->a.pubkey, &curve, &x, &y )))
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        ret = pgnutls_pubkey_import_ecc_raw( pubkey, curve, &x, &y );
+        free( x.data ); free( y.data );
+        if (ret)
+        {
+            pgnutls_perror( ret );
+            return STATUS_INTERNAL_ERROR;
+        }
+        break;
+    }
+    default:
+        ERR( "unhandled algorithm %u\n", key_orig->alg_id );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    key_data(key_copy)->a.pubkey = pubkey;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_asymmetric_duplicate( void *args )
+{
+    const struct key_asymmetric_duplicate_params *params = args;
+    NTSTATUS status;
+
+    if (key_data(params->key_orig)->a.privkey && (status = dup_privkey( params->key_orig, params->key_copy )))
+        return status;
+
+    if (key_data(params->key_orig)->a.pubkey && (status = dup_pubkey( params->key_orig, params->key_copy )))
+        return status;
+
     return STATUS_SUCCESS;
 }
 
