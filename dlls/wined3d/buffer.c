@@ -34,6 +34,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 #define VB_MAXFULLCONVERSIONS 5       /* Number of full conversions before we stop converting */
 #define VB_RESETFULLCONVS     20      /* Reset full conversion counts after that number of draws */
 
+#define SB_MIN_SIZE (512 * 1024)    /* Minimum size of an allocated streaming buffer. */
+
 struct wined3d_buffer_ops
 {
     BOOL (*buffer_prepare_location)(struct wined3d_buffer *buffer,
@@ -1665,7 +1667,7 @@ static HRESULT wined3d_streaming_buffer_prepare(struct wined3d_device *device,
             return S_OK;
     }
 
-    size = max(old_size * 2, min_size);
+    size = max(SB_MIN_SIZE, max(old_size * 2, min_size));
     TRACE("Growing buffer to %u bytes.\n", size);
 
     desc.byte_width = size;
