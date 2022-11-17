@@ -106,6 +106,7 @@ struct connect
 struct netconn
 {
     struct list entry;
+    LONG refs;
     int socket;
     struct sockaddr_storage sockaddr;
     BOOL secure; /* SSL active on connection? */
@@ -370,7 +371,7 @@ void close_connection( struct request * ) DECLSPEC_HIDDEN;
 void init_queue( struct queue *queue ) DECLSPEC_HIDDEN;
 void stop_queue( struct queue * ) DECLSPEC_HIDDEN;
 
-void netconn_close( struct netconn * ) DECLSPEC_HIDDEN;
+void netconn_release( struct netconn * ) DECLSPEC_HIDDEN;
 DWORD netconn_create( struct hostdata *, const struct sockaddr_storage *, int, struct netconn ** ) DECLSPEC_HIDDEN;
 void netconn_unload( void ) DECLSPEC_HIDDEN;
 ULONG netconn_query_data_available( struct netconn * ) DECLSPEC_HIDDEN;

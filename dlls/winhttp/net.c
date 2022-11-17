@@ -214,6 +214,7 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
     winsock_init();
 
     if (!(conn = calloc( 1, sizeof(*conn) ))) return ERROR_OUTOFMEMORY;
+    conn->refs = 1;
     conn->host = host;
     conn->sockaddr = *sockaddr;
     if ((conn->socket = WSASocketW( sockaddr->ss_family, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED )) == -1)
@@ -277,8 +278,10 @@ DWORD netconn_create( struct hostdata *host, const struct sockaddr_storage *sock
     return ERROR_SUCCESS;
 }
 
-void netconn_close( struct netconn *conn )
+void netconn_release( struct netconn *conn )
 {
+    if (InterlockedDecrement( &conn->refs )) return;
+    TRACE( "Closing connection %p.\n", conn );
     if (conn->secure)
     {
         free( conn->peek_msg_mem );
