@@ -119,7 +119,7 @@ static void add_unix_device(const struct usb_add_device_event *event)
     if ((status = IoCreateDevice(driver_obj, sizeof(*device), &string,
             FILE_DEVICE_USB, 0, FALSE, &device_obj)))
     {
-        ERR("Failed to create device, status %#x.\n", status);
+        ERR("Failed to create device, status %#lx.\n", status);
         return;
     }
 
@@ -586,7 +586,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device_obj, IRP *irp
     NTSTATUS status = STATUS_NOT_IMPLEMENTED;
     BOOL removed;
 
-    TRACE("device_obj %p, irp %p, code %#x.\n", device_obj, irp, code);
+    TRACE("device_obj %p, irp %p, code %#lx.\n", device_obj, irp, code);
 
     EnterCriticalSection(&wineusb_cs);
     removed = device->removed;
@@ -606,7 +606,7 @@ static NTSTATUS WINAPI driver_internal_ioctl(DEVICE_OBJECT *device_obj, IRP *irp
             break;
 
         default:
-            FIXME("Unhandled ioctl %#x (device %#x, access %#x, function %#x, method %#x).\n",
+            FIXME("Unhandled ioctl %#lx (device %#lx, access %#lx, function %#lx, method %#lx).\n",
                     code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
     }
 
@@ -626,7 +626,7 @@ static NTSTATUS WINAPI driver_add_device(DRIVER_OBJECT *driver, DEVICE_OBJECT *p
 
     if ((ret = IoCreateDevice(driver, 0, NULL, FILE_DEVICE_BUS_EXTENDER, 0, FALSE, &bus_fdo)))
     {
-        ERR("Failed to create FDO, status %#x.\n", ret);
+        ERR("Failed to create FDO, status %#lx.\n", ret);
         return ret;
     }
 
@@ -652,7 +652,7 @@ NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
     if ((status = NtQueryVirtualMemory(GetCurrentProcess(), instance,
             MemoryWineUnixFuncs, &unix_handle, sizeof(unix_handle), NULL)))
     {
-        ERR("Failed to initialize Unix library, status %#x.\n", status);
+        ERR("Failed to initialize Unix library, status %#lx.\n", status);
         return status;
     }
 

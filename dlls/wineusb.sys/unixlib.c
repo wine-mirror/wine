@@ -502,7 +502,7 @@ static NTSTATUS usb_submit_urb(void *args)
             if (req->TransferFlags & USBD_TRANSFER_DIRECTION_IN)
                 req_type |= LIBUSB_ENDPOINT_IN;
             if (req->TransferFlags & ~USBD_TRANSFER_DIRECTION_IN)
-                FIXME("Unhandled flags %#x.\n", req->TransferFlags);
+                FIXME("Unhandled flags %#x.\n", (int)req->TransferFlags);
 
             if (req->TransferBufferMDL)
                 FIXME("Unhandled MDL output buffer.\n");
