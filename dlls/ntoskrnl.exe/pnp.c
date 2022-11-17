@@ -256,6 +256,7 @@ static BOOL install_device_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVIN
         DIF_INSTALLDEVICE,
         DIF_NEWDEVICEWIZARD_FINISHINSTALL,
     };
+    static const DWORD config_flags = 0;
 
     NTSTATUS status;
     unsigned int i;
@@ -280,6 +281,14 @@ static BOOL install_device_driver( DEVICE_OBJECT *device, HDEVINFO set, SP_DEVIN
     SetupDiSetDeviceRegistryPropertyW( set, sp_device, SPDRP_COMPATIBLEIDS, (BYTE *)ids,
             sizeof_multiszW( ids ) * sizeof(WCHAR) );
     ExFreePool( ids );
+
+    /* Set the config flags. setupapi won't do this for us if we couldn't find
+     * a driver to install, but raw devices should still have this key
+     * populated. */
+
+    if (!SetupDiSetDeviceRegistryPropertyW( set, sp_device, SPDRP_CONFIGFLAGS,
+            (BYTE *)&config_flags, sizeof(config_flags) ))
+        ERR("Failed to set config flags, error %#lx.\n", GetLastError());
 
     if (!SetupDiBuildDriverInfoList( set, sp_device, SPDIT_COMPATDRIVER ))
     {
