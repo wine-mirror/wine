@@ -3003,7 +3003,7 @@ BOOL WINAPI SetupDiGetDeviceInterfaceDetailA(HDEVINFO devinfo, SP_DEVICE_INTERFA
 
     if (iface->symlink)
         bytesNeeded += WideCharToMultiByte(CP_ACP, 0, iface->symlink, -1,
-                NULL, 0, NULL, NULL);
+                NULL, 0, NULL, NULL) - 1;
     if (DeviceInterfaceDetailDataSize >= bytesNeeded)
     {
         if (iface->symlink)
