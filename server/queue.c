@@ -3362,7 +3362,7 @@ DECL_HANDLER(get_rawinput_buffer)
         free_message( msg );
 
         size += next_size;
-        pos += sizeof(*data);
+        pos += sizeof(*data) + extra_size;
         count++;
     }
 
