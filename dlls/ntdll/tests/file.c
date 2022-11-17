@@ -2957,6 +2957,7 @@ static void test_file_disposition_information(void)
     NTSTATUS res;
     IO_STATUS_BLOCK io;
     FILE_DISPOSITION_INFORMATION fdi;
+    FILE_STANDARD_INFORMATION fsi;
     BOOL fileDeleted;
     DWORD fdi2, size;
     void *view;
@@ -3141,18 +3142,23 @@ static void test_file_disposition_information(void)
     GetTempFileNameA( tmp_path, "dis", 0, buffer );
     handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, 0, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    res = NtQueryInformationFile(handle, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    ok(!fsi.DeletePending, "Handle shouldn't be marked for deletion\n");
     fileDeleted = DeleteFileA( buffer );
     ok( fileDeleted, "File should have been deleted\n" );
-    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
-    ok( !fileDeleted, "File shouldn't have been deleted\n" );
+    res = NtQueryInformationFile(handle, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    todo_wine
+    ok(fsi.DeletePending, "Handle should be marked for deletion\n");
     res = nt_get_file_attrs( buffer, &fdi2 );
     todo_wine
-    ok( res == STATUS_DELETE_PENDING, "got %#lx\n", res );
+    ok( res == STATUS_OBJECT_NAME_NOT_FOUND || broken(res == STATUS_DELETE_PENDING), "got %#lx\n", res );
     /* can't open the deleted file */
     handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0, 0);
     ok( handle2 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
     todo_wine
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "got %lu\n", GetLastError());
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND || broken(GetLastError() == ERROR_ACCESS_DENIED), "got %lu\n", GetLastError());
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( fileDeleted, "File should have been deleted\n" );
@@ -3190,19 +3196,24 @@ static void test_file_disposition_information(void)
     ok( CreateDirectoryA( buffer, NULL ), "CreateDirectory failed\n" );
     handle = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
     ok( handle != INVALID_HANDLE_VALUE, "failed to open a directory\n" );
+    res = NtQueryInformationFile(handle, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    ok(!fsi.DeletePending, "Handle shouldn't be marked for deletion\n");
     fileDeleted = RemoveDirectoryA( buffer );
     ok( fileDeleted, "Directory should have been deleted\n" );
-    fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
-    ok( !fileDeleted, "Directory shouldn't have been deleted\n" );
+    res = NtQueryInformationFile(handle, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    todo_wine
+    ok(fsi.DeletePending, "Handle should be marked for deletion\n");
     res = nt_get_file_attrs( buffer, &fdi2 );
     todo_wine
-    ok( res == STATUS_DELETE_PENDING, "got %#lx\n", res );
+    ok( res == STATUS_OBJECT_NAME_NOT_FOUND || broken(res == STATUS_DELETE_PENDING), "got %#lx\n", res );
     /* can't open the deleted directory */
     handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
     todo_wine
     ok( handle2 == INVALID_HANDLE_VALUE, "CreateFile should fail\n" );
     todo_wine
-    ok(GetLastError() == ERROR_ACCESS_DENIED, "got %lu\n", GetLastError());
+    ok(GetLastError() == ERROR_FILE_NOT_FOUND || broken(GetLastError() == ERROR_ACCESS_DENIED), "got %lu\n", GetLastError());
     if (handle2 != INVALID_HANDLE_VALUE) CloseHandle( handle2 );
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
