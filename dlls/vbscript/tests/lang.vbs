@@ -1004,6 +1004,7 @@ Call ok(getVT(x) = "VT_DISPATCH*", "getVT(x) = " & getVT(x))
 
 Class TestClass
     Public publicProp
+    Public publicArrayProp
 
     Private privateProp
 
@@ -1058,6 +1059,11 @@ Class TestClass
 
     Public Sub Class_Initialize
         publicProp2 = 2
+        ReDim publicArrayProp(2)
+
+        publicArrayProp(0) = 1
+        publicArrayProp(1) = 2
+
         privateProp = true
         Call ok(getVT(privateProp) = "VT_BOOL*", "getVT(privateProp) = " & getVT(privateProp))
         Call ok(getVT(publicProp2) = "VT_I2*", "getVT(publicProp2) = " & getVT(publicProp2))
@@ -1109,6 +1115,13 @@ Call ok(funcCalled = "GetDefVal", "funcCalled = " & funcCalled)
 
 Call obj.Class_Initialize
 Call ok(obj.getPrivateProp() = true, "obj.getPrivateProp() = " & obj.getPrivateProp())
+
+'Accessing array property by index
+Call ok(obj.publicArrayProp(0) = 1, "obj.publicArrayProp(0) = " & obj.publicArrayProp(0))
+Call ok(obj.publicArrayProp(1) = 2, "obj.publicArrayProp(1) = " & obj.publicArrayProp(1))
+x = obj.publicArrayProp(2)
+Call ok(getVT(x) = "VT_EMPTY*", "getVT(x) = " & getVT(x))
+Call ok(obj.publicArrayProp("0") = 1, "obj.publicArrayProp(0) = " & obj.publicArrayProp("0"))
 
 x = (New testclass).publicProp
 

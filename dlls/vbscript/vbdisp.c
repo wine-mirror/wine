@@ -122,8 +122,17 @@ static HRESULT invoke_variant_prop(script_ctx_t *ctx, VARIANT *v, WORD flags, DI
     case DISPATCH_PROPERTYGET|DISPATCH_METHOD:
     case DISPATCH_PROPERTYGET:
         if(dp->cArgs) {
-            WARN("called with arguments\n");
-            return DISP_E_MEMBERNOTFOUND; /* That's what tests show */
+            if (!V_ISARRAY(v))
+            {
+                WARN("called with arguments for non-array property\n");
+                return DISP_E_MEMBERNOTFOUND; /* That's what tests show */
+            }
+
+            if (FAILED(hres = array_access(V_ARRAY(v), dp, &v)))
+            {
+                WARN("failed to access array element\n");
+                return hres;
+            }
         }
 
         hres = VariantCopyInd(res, v);

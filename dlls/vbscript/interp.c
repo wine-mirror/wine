@@ -535,7 +535,7 @@ static void vbstack_to_dp(exec_ctx_t *ctx, unsigned arg_cnt, BOOL is_propput, DI
     }
 }
 
-static HRESULT array_access(exec_ctx_t *ctx, SAFEARRAY *array, DISPPARAMS *dp, VARIANT **ret)
+HRESULT array_access(SAFEARRAY *array, DISPPARAMS *dp, VARIANT **ret)
 {
     unsigned i, argc = arg_cnt(dp);
     LONG *indices;
@@ -611,7 +611,7 @@ static HRESULT variant_call(exec_ctx_t *ctx, VARIANT *v, unsigned arg_cnt, VARIA
         }
 
         vbstack_to_dp(ctx, arg_cnt, FALSE, &dp);
-        hres = array_access(ctx, array, &dp, &v);
+        hres = array_access(array, &dp, &v);
         if(FAILED(hres))
             return hres;
 
@@ -894,7 +894,7 @@ static HRESULT assign_ident(exec_ctx_t *ctx, BSTR name, WORD flags, DISPPARAMS *
                 return E_FAIL;
             }
 
-            hres = array_access(ctx, array, dp, &v);
+            hres = array_access(array, dp, &v);
             if(FAILED(hres))
                 return hres;
         }else if(V_VT(v) == (VT_ARRAY|VT_BYREF|VT_VARIANT)) {

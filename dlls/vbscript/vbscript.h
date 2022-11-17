@@ -383,6 +383,7 @@ void clear_ei(EXCEPINFO*) DECLSPEC_HIDDEN;
 HRESULT report_script_error(script_ctx_t*,const vbscode_t*,unsigned) DECLSPEC_HIDDEN;
 void detach_global_objects(script_ctx_t*) DECLSPEC_HIDDEN;
 HRESULT get_builtin_id(BuiltinDisp*,const WCHAR*,DISPID*) DECLSPEC_HIDDEN;
+HRESULT array_access(SAFEARRAY *array, DISPPARAMS *dp, VARIANT **ret) DECLSPEC_HIDDEN;
 
 void release_regexp_typelib(void) DECLSPEC_HIDDEN;
 HRESULT get_dispatch_typeinfo(ITypeInfo**) DECLSPEC_HIDDEN;
