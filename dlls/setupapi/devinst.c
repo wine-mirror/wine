@@ -5163,6 +5163,7 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
     static const WCHAR addserviceW[] = {'A','d','d','S','e','r','v','i','c','e',0};
     static const WCHAR rootW[] = {'r','o','o','t','\\',0};
     WCHAR section_ext[LINE_LEN], subsection[LINE_LEN], inf_path[MAX_PATH], *extptr, *filepart;
+    static const DWORD config_flags = 0;
     UINT install_flags = SPINST_ALL;
     HKEY driver_key, device_key;
     SC_HANDLE manager, service;
@@ -5209,6 +5210,10 @@ BOOL WINAPI SetupDiInstallDevice(HDEVINFO devinfo, SP_DEVINFO_DATA *device_data)
         SetupCloseInfFile(hinf);
         return FALSE;
     }
+
+    if (!SETUPDI_SetDeviceRegistryPropertyW(device, SPDRP_CONFIGFLAGS,
+            (BYTE *)&config_flags, sizeof(config_flags)))
+        ERR("Failed to set config flags, error %#lx.\n", GetLastError());
 
     if (device->params.Flags & DI_NOFILECOPY)
         install_flags &= ~SPINST_FILES;

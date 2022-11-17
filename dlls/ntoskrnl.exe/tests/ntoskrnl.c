@@ -1820,12 +1820,9 @@ static void test_pnp_driver(struct testsign_context *ctx)
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CONFIGFLAGS,
             &type, (BYTE *)&dword, sizeof(dword), NULL);
-    todo_wine ok(ret, "got error %#lx\n", GetLastError());
-    if (ret)
-    {
-        ok(!dword, "got flags %#lx\n", dword);
-        ok(type == REG_DWORD, "got type %lu\n", type);
-    }
+    ok(ret, "got error %#lx\n", GetLastError());
+    ok(!dword, "got flags %#lx\n", dword);
+    ok(type == REG_DWORD, "got type %lu\n", type);
 
     /* Tests. */
 
