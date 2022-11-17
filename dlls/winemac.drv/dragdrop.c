@@ -134,7 +134,7 @@ static ULONG WINAPI dddo_AddRef(IDataObject* iface)
     DragDropDataObject *This = impl_from_IDataObject(iface);
     ULONG refCount = InterlockedIncrement(&This->ref);
 
-    TRACE("(%p)->(count=%u)\n", This, refCount - 1);
+    TRACE("(%p)->(count=%lu)\n", This, refCount - 1);
 
     return refCount;
 }
@@ -145,7 +145,7 @@ static ULONG WINAPI dddo_Release(IDataObject* iface)
     DragDropDataObject *This = impl_from_IDataObject(iface);
     ULONG refCount = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(count=%u)\n", This, refCount + 1);
+    TRACE("(%p)->(count=%lu)\n", This, refCount + 1);
     if (refCount)
         return refCount;
 
@@ -190,7 +190,7 @@ static HRESULT WINAPI dddo_QueryGetData(IDataObject* iface, FORMATETC* formatEtc
     struct dnd_have_format_params params;
     HRESULT hr = DV_E_FORMATETC;
 
-    TRACE("This %p formatEtc %p={.tymed=0x%x, .dwAspect=%d, .cfFormat=%s}\n",
+    TRACE("This %p formatEtc %p={.tymed=0x%lx, .dwAspect=%ld, .cfFormat=%s}\n",
           This, formatEtc, formatEtc->tymed, formatEtc->dwAspect,
           debugstr_format(formatEtc->cfFormat));
 
@@ -210,7 +210,7 @@ static HRESULT WINAPI dddo_QueryGetData(IDataObject* iface, FORMATETC* formatEtc
     if (MACDRV_CALL(dnd_have_format, &params))
         hr = S_OK;
 
-    TRACE(" -> 0x%x\n", hr);
+    TRACE(" -> 0x%lx\n", hr);
     return hr;
 }
 
@@ -220,7 +220,7 @@ static HRESULT WINAPI dddo_GetConicalFormatEtc(IDataObject* iface, FORMATETC* fo
 {
     DragDropDataObject *This = impl_from_IDataObject(iface);
 
-    TRACE("This %p formatEtc %p={.tymed=0x%x, .dwAspect=%d, .cfFormat=%s}\n",
+    TRACE("This %p formatEtc %p={.tymed=0x%lx, .dwAspect=%ld, .cfFormat=%s}\n",
           This, formatEtc, formatEtc->tymed, formatEtc->dwAspect,
           debugstr_format(formatEtc->cfFormat));
 
@@ -235,7 +235,7 @@ static HRESULT WINAPI dddo_SetData(IDataObject* iface, FORMATETC* formatEtc,
 {
     DragDropDataObject *This = impl_from_IDataObject(iface);
 
-    TRACE("This %p formatEtc %p={.tymed=0x%x, .dwAspect=%d, .cfFormat=%s} medium %p fRelease %d\n",
+    TRACE("This %p formatEtc %p={.tymed=0x%lx, .dwAspect=%ld, .cfFormat=%s} medium %p fRelease %d\n",
           This, formatEtc, formatEtc->tymed, formatEtc->dwAspect,
           debugstr_format(formatEtc->cfFormat), medium, fRelease);
 
@@ -251,7 +251,7 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
     UINT count;
     HRESULT hr;
 
-    TRACE("This %p direction %u enumFormatEtc %p\n", This, direction, enumFormatEtc);
+    TRACE("This %p direction %lu enumFormatEtc %p\n", This, direction, enumFormatEtc);
 
     if (direction != DATADIR_GET)
     {
@@ -286,7 +286,7 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
     else
         hr = SHCreateStdEnumFmtEtc(0, NULL, enumFormatEtc);
 
-    TRACE(" -> 0x%x\n", hr);
+    TRACE(" -> 0x%lx\n", hr);
     return hr;
 }
 
@@ -294,7 +294,7 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
 static HRESULT WINAPI dddo_DAdvise(IDataObject* iface, FORMATETC* formatEtc, DWORD advf,
                                    IAdviseSink* pAdvSink, DWORD* pdwConnection)
 {
-    FIXME("(%p, %p, %u, %p, %p): stub\n", iface, formatEtc, advf,
+    FIXME("(%p, %p, %lu, %p, %p): stub\n", iface, formatEtc, advf,
           pAdvSink, pdwConnection);
     return OLE_E_ADVISENOTSUPPORTED;
 }
@@ -302,7 +302,7 @@ static HRESULT WINAPI dddo_DAdvise(IDataObject* iface, FORMATETC* formatEtc, DWO
 
 static HRESULT WINAPI dddo_DUnadvise(IDataObject* iface, DWORD dwConnection)
 {
-    FIXME("(%p, %u): stub\n", iface, dwConnection);
+    FIXME("(%p, %lu): stub\n", iface, dwConnection);
     return OLE_E_ADVISENOTSUPPORTED;
 }
 
@@ -449,7 +449,7 @@ NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size)
 
         pointl.x = pt.x;
         pointl.y = pt.y;
-        TRACE("Drop hwnd %p droptarget %p pointl (%d,%d) effect 0x%08x\n", last_droptarget_hwnd,
+        TRACE("Drop hwnd %p droptarget %p pointl (%ld,%ld) effect 0x%08lx\n", last_droptarget_hwnd,
               droptarget, pointl.x, pointl.y, effect);
         hr = IDropTarget_Drop(droptarget, active_data_object, MK_LBUTTON, pointl, &effect);
         if (SUCCEEDED(hr))
@@ -463,7 +463,7 @@ NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size)
                 TRACE("the application refused the drop\n");
         }
         else
-            WARN("drop failed, error 0x%08X\n", hr);
+            WARN("drop failed, error 0x%08lx\n", hr);
         IDropTarget_Release(droptarget);
     }
     else
@@ -524,7 +524,7 @@ NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size)
         TRACE("DragLeave hwnd %p droptarget %p\n", last_droptarget_hwnd, droptarget);
         hr = IDropTarget_DragLeave(droptarget);
         if (FAILED(hr))
-            WARN("IDropTarget_DragLeave failed, error 0x%08X\n", hr);
+            WARN("IDropTarget_DragLeave failed, error 0x%08lx\n", hr);
         IDropTarget_Release(droptarget);
     }
 
@@ -575,7 +575,7 @@ NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size)
                 TRACE("DragLeave hwnd %p droptarget %p\n", last_droptarget_hwnd, old_droptarget);
                 hr = IDropTarget_DragLeave(old_droptarget);
                 if (FAILED(hr))
-                    WARN("IDropTarget_DragLeave failed, error 0x%08X\n", hr);
+                    WARN("IDropTarget_DragLeave failed, error 0x%08lx\n", hr);
                 IDropTarget_Release(old_droptarget);
             }
         }
@@ -594,11 +594,11 @@ NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size)
                                        pointl, &effect);
             if (SUCCEEDED(hr))
             {
-                TRACE("    effect %d\n", effect);
+                TRACE("    effect %ld\n", effect);
                 ret = TRUE;
             }
             else
-                WARN("IDropTarget_DragEnter failed, error 0x%08X\n", hr);
+                WARN("IDropTarget_DragEnter failed, error 0x%08lx\n", hr);
             IDropTarget_Release(droptarget);
         }
     }
@@ -610,11 +610,11 @@ NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size)
         hr = IDropTarget_DragOver(droptarget, MK_LBUTTON, pointl, &effect);
         if (SUCCEEDED(hr))
         {
-            TRACE("    effect %d\n", effect);
+            TRACE("    effect %ld\n", effect);
             ret = TRUE;
         }
         else
-            WARN("IDropTarget_DragOver failed, error 0x%08X\n", hr);
+            WARN("IDropTarget_DragOver failed, error 0x%08lx\n", hr);
         IDropTarget_Release(droptarget);
     }
 

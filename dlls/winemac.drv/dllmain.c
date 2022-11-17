@@ -102,7 +102,7 @@ static void CALLBACK quit_callback(HWND hwnd, UINT msg, ULONG_PTR data, LRESULT 
 
     if (msg == WM_QUERYENDSESSION)
     {
-        TRACE("got WM_QUERYENDSESSION result %ld from win %p (%u of %u done)\n", result,
+        TRACE("got WM_QUERYENDSESSION result %Id from win %p (%u of %u done)\n", result,
               hwnd, qi->done, qi->count);
 
         if (!result && !IsWindow(hwnd))
@@ -132,12 +132,12 @@ static void CALLBACK quit_callback(HWND hwnd, UINT msg, ULONG_PTR data, LRESULT 
             qi->done = 0;
             for (i = 0; i < qi->count; i++)
             {
-                TRACE("sending WM_ENDSESSION to win %p result %d flags 0x%08x\n", qi->wins[i],
+                TRACE("sending WM_ENDSESSION to win %p result %d flags 0x%08lx\n", qi->wins[i],
                       qi->result, qi->flags);
                 if (!SendMessageCallbackW(qi->wins[i], WM_ENDSESSION, qi->result, qi->flags,
                                           quit_callback, (ULONG_PTR)qi))
                 {
-                    WARN("failed to send WM_ENDSESSION to win %p; error 0x%08x\n",
+                    WARN("failed to send WM_ENDSESSION to win %p; error 0x%08lx\n",
                          qi->wins[i], RtlGetLastWin32Error());
                     quit_callback(qi->wins[i], WM_ENDSESSION, (ULONG_PTR)qi, 0);
                 }
@@ -203,7 +203,7 @@ NTSTATUS WINAPI macdrv_app_quit_request(void *arg, ULONG size)
                 TRACE("failed to send WM_QUERYENDSESSION to win %p because it's invalid; assuming success\n",
                      qi->wins[i]);
             else
-                WARN("failed to send WM_QUERYENDSESSION to win %p; error 0x%08x; assuming refusal\n",
+                WARN("failed to send WM_QUERYENDSESSION to win %p; error 0x%08lx; assuming refusal\n",
                      qi->wins[i], error);
             quit_callback(qi->wins[i], WM_QUERYENDSESSION, (ULONG_PTR)qi, invalid);
         }
