@@ -675,7 +675,7 @@ static NTSTATUS android_error_to_status( int err )
     }
 }
 
-static int status_to_android_error( NTSTATUS status )
+static int status_to_android_error( unsigned int status )
 {
     switch (status)
     {
@@ -1147,7 +1147,7 @@ NTSTATUS android_dispatch_ioctl( void *arg )
     }
     else
     {
-        FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
+        FIXME( "ioctl %x not supported\n", (int)irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
     }
     return STATUS_SUCCESS;

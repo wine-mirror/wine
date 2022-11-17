@@ -74,14 +74,14 @@ static DWORD CALLBACK device_thread( void *arg )
     NTSTATUS status;
     DWORD ret;
 
-    TRACE( "starting process %x\n", GetCurrentProcessId() );
+    TRACE( "starting process %lx\n", GetCurrentProcessId() );
 
     if (ANDROID_CALL( java_init, NULL )) return 0;  /* not running under Java */
 
     RtlInitUnicodeString( &nameW, driver_nameW );
     if ((status = IoCreateDriver( &nameW, init_android_driver )))
     {
-        FIXME( "failed to create driver error %x\n", status );
+        FIXME( "failed to create driver error %lx\n", status );
         return status;
     }
 

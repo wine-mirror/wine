@@ -264,7 +264,7 @@ static BOOL CDECL ANDROID_DeleteDC( PHYSDEV dev )
  */
 LONG ANDROID_ChangeDisplaySettings( LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
-    FIXME( "(%p,%s,%p,0x%08x,%p)\n", displays, debugstr_w(primary_name), hwnd, flags, lpvoid );
+    FIXME( "(%p,%s,%p,0x%08x,%p)\n", displays, debugstr_w(primary_name), hwnd, (int)flags, lpvoid );
     return DISP_CHANGE_SUCCESSFUL;
 }
 
@@ -320,8 +320,8 @@ BOOL ANDROID_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LPDEVMODE
     devmode->dmFields = DM_POSITION | DM_DISPLAYORIENTATION | DM_PELSWIDTH | DM_PELSHEIGHT |
                         DM_BITSPERPEL | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
     TRACE( "current mode -- %dx%d %d bpp @%d Hz\n",
-           devmode->dmPelsWidth, devmode->dmPelsHeight,
-           devmode->dmBitsPerPel, devmode->dmDisplayFrequency );
+           (int)devmode->dmPelsWidth, (int)devmode->dmPelsHeight,
+           (int)devmode->dmBitsPerPel, (int)devmode->dmDisplayFrequency );
     return TRUE;
 }
 

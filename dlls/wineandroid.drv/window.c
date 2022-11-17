@@ -490,16 +490,16 @@ static int process_events( DWORD mask )
 
                 if (event->data.motion.input.u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN|MOUSEEVENTF_MIDDLEDOWN))
                     TRACE( "BUTTONDOWN pos %d,%d hwnd %p flags %x\n",
-                           event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
-                           event->data.motion.hwnd, event->data.motion.input.u.mi.dwFlags );
+                           (int)event->data.motion.input.u.mi.dx, (int)event->data.motion.input.u.mi.dy,
+                           event->data.motion.hwnd, (int)event->data.motion.input.u.mi.dwFlags );
                 else if (event->data.motion.input.u.mi.dwFlags & (MOUSEEVENTF_LEFTUP|MOUSEEVENTF_RIGHTUP|MOUSEEVENTF_MIDDLEUP))
                     TRACE( "BUTTONUP pos %d,%d hwnd %p flags %x\n",
-                           event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
-                           event->data.motion.hwnd, event->data.motion.input.u.mi.dwFlags );
+                           (int)event->data.motion.input.u.mi.dx, (int)event->data.motion.input.u.mi.dy,
+                           event->data.motion.hwnd, (int)event->data.motion.input.u.mi.dwFlags );
                 else
                     TRACE( "MOUSEMOVE pos %d,%d hwnd %p flags %x\n",
-                           event->data.motion.input.u.mi.dx, event->data.motion.input.u.mi.dy,
-                           event->data.motion.hwnd, event->data.motion.input.u.mi.dwFlags );
+                           (int)event->data.motion.input.u.mi.dx, (int)event->data.motion.input.u.mi.dy,
+                           event->data.motion.hwnd, (int)event->data.motion.input.u.mi.dwFlags );
                 if (!capture && (event->data.motion.input.u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE))
                 {
                     RECT rect;
@@ -735,8 +735,8 @@ static void android_surface_flush( struct window_surface *window_surface )
 
     TRACE( "flushing %p hwnd %p surface %s rect %s bits %p alpha %02x key %08x region %u rects\n",
            surface, surface->hwnd, wine_dbgstr_rect( &surface->header.rect ),
-           wine_dbgstr_rect( &rect ), surface->bits, surface->alpha, surface->color_key,
-           surface->region_data ? surface->region_data->rdh.nCount : 0 );
+           wine_dbgstr_rect( &rect ), surface->bits, surface->alpha, (int)surface->color_key,
+           surface->region_data ? (int)surface->region_data->rdh.nCount : 0 );
 
     rc.left   = rect.left;
     rc.top    = rect.top;
@@ -1302,7 +1302,7 @@ BOOL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
 
     TRACE( "win %p window %s client %s style %08x flags %08x\n",
            hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
-           NtUserGetWindowLongW( hwnd, GWL_STYLE ), swp_flags );
+           (int)NtUserGetWindowLongW( hwnd, GWL_STYLE ), swp_flags );
 
     if (!data && !(data = create_win_data( hwnd, window_rect, client_rect ))) return TRUE;
 
@@ -1351,7 +1351,7 @@ void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                struct window_surface *surface )
 {
     struct android_win_data *data;
-    DWORD new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
+    UINT new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     HWND owner = 0;
 
     if (!(data = get_win_data( hwnd ))) return;
@@ -1665,7 +1665,7 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
         }
         return 0;
     default:
-        FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, wp, lp );
+        FIXME( "got window msg %x hwnd %p wp %lx lp %lx\n", msg, hwnd, (long)wp, lp );
         return 0;
     }
 }

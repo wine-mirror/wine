@@ -812,7 +812,7 @@ INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
         if (len) buffer[--len] = 0;
     }
 
-    TRACE( "lparam 0x%08x -> %s\n", lparam, debugstr_w( buffer ));
+    TRACE( "lparam 0x%08x -> %s\n", (int)lparam, debugstr_w( buffer ));
     return len;
 }
 
