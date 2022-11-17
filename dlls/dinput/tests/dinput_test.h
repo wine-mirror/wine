@@ -50,7 +50,6 @@ extern const GUID expect_guid_product;
 extern const WCHAR expect_path[];
 extern const WCHAR expect_path_end[];
 
-extern typeof(DirectInputCreateEx) *pDirectInputCreateEx;
 extern HANDLE device_added, device_removed;
 extern HINSTANCE instance;
 extern BOOL localized; /* object names get translated */

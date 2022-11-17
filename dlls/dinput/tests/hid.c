@@ -60,7 +60,6 @@
 
 #include "dinput_test.h"
 
-typeof(DirectInputCreateEx) *pDirectInputCreateEx;
 HINSTANCE instance;
 BOOL localized; /* object names get translated */
 
@@ -3483,7 +3482,6 @@ void dinput_test_init_( const char *file, int line )
     instance = GetModuleHandleW( NULL );
     localized = GetUserDefaultLCID() != MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
     pSignerSign = (void *)GetProcAddress( LoadLibraryW( L"mssign32" ), "SignerSign" );
-    pDirectInputCreateEx = (void *)GetProcAddress( LoadLibraryW(L"dinput.dll"), "DirectInputCreateEx" );
 
     if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
     {

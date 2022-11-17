@@ -315,14 +315,8 @@ static void test_DirectInputCreateEx( DWORD version )
     HRESULT hr;
     int i;
 
-    if (!pDirectInputCreateEx)
-    {
-        win_skip("DirectInputCreateEx is not available\n");
-        return;
-    }
-
     unknown = (void *)0xdeadbeef;
-    hr = pDirectInputCreateEx( instance, version, &IID_IDirectInputW, (void **)&unknown, &outer );
+    hr = DirectInputCreateEx( instance, version, &IID_IDirectInputW, (void **)&unknown, &outer );
     ok( hr == DI_OK, "DirectInputCreateW returned %#lx\n", hr );
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
 
@@ -330,8 +324,8 @@ static void test_DirectInputCreateEx( DWORD version )
     {
         winetest_push_context( "%u", i );
         unknown = (void *)0xdeadbeef;
-        hr = pDirectInputCreateEx( create_tests[i].instance, create_tests[i].version, create_tests[i].iid,
-                                   (void **)create_tests[i].out, NULL );
+        hr = DirectInputCreateEx( create_tests[i].instance, create_tests[i].version, create_tests[i].iid,
+                                  (void **)create_tests[i].out, NULL );
         todo_wine_if( version == 0x300 && i == 7 )
         ok( hr == create_tests[i].expected_hr, "DirectInputCreateEx returned %#lx\n", hr );
         if (SUCCEEDED(hr)) IUnknown_Release( unknown );
@@ -343,7 +337,7 @@ static void test_DirectInputCreateEx( DWORD version )
     {
         winetest_push_context( "%u", i );
         unknown = (void *)0xdeadbeef;
-        hr = pDirectInputCreateEx( instance, version, dinput8_interfaces[i], (void **)&unknown, NULL );
+        hr = DirectInputCreateEx( instance, version, dinput8_interfaces[i], (void **)&unknown, NULL );
         ok( hr == DIERR_NOINTERFACE, "DirectInputCreateEx returned %#lx\n", hr );
         ok( unknown == (void *)0xdeadbeef, "got IUnknown %p\n", unknown );
         winetest_pop_context();
@@ -353,7 +347,7 @@ static void test_DirectInputCreateEx( DWORD version )
     {
         winetest_push_context( "%u", i );
         unknown = NULL;
-        hr = pDirectInputCreateEx( instance, version, dinput7_interfaces[i], (void **)&unknown, NULL );
+        hr = DirectInputCreateEx( instance, version, dinput7_interfaces[i], (void **)&unknown, NULL );
         if (version < 0x800) ok( hr == DI_OK, "DirectInputCreateEx returned %#lx\n", hr );
         else ok( hr == DIERR_OLDDIRECTINPUTVERSION, "DirectInputCreateEx returned %#lx\n", hr );
         if (version < 0x800) ok( unknown != NULL, "got IUnknown NULL\n" );
