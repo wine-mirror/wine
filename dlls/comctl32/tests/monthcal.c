@@ -2021,7 +2021,7 @@ static void test_sel_notify(void)
 
     HWND hwnd;
     RECT rc;
-    MCHITTESTINFO mchit = {sizeof(MCHITTESTINFO)};
+    MCHITTESTINFO mchit = {MCHITTESTINFO_V1_SIZE};
     SYSTEMTIME st;
     Monthcal_style styles[] = {
         {MCS_NOTODAY,                    "MCS_NOTODAY"},
@@ -2039,15 +2039,19 @@ static void test_sel_notify(void)
         MoveWindow(hwnd, 0, 0, rc.right, rc.bottom, FALSE);
         /* Simulate mouse click on some unselected day to generate
             MCN_SELECT and MCN_SELCHANGE notifications */
-        mchit.pt.x = rc.right / 2;
-        mchit.pt.y = rc.bottom / 2;
-        SendMessageA(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
+        mchit.pt.x = mchit.pt.y = 0;
         SendMessageA(hwnd, MCM_GETCURSEL, 0, (LPARAM)&st);
-        while(st.wDay == mchit.st.wDay) /* Ensure that mchit.pt points to unselected day */
+
+        do
         {
-            mchit.pt.y++;
+            /* we assume box for day is larger than 3x3 */
+            if ((mchit.pt.y += 3) >= rc.bottom)
+            {
+                mchit.pt.y = 0;
+                if ((mchit.pt.x += 3) >= rc.right) break;
+            }
             SendMessageA(hwnd, MCM_HITTEST, 0, (LPARAM)&mchit);
-        }
+        } while (mchit.uHit != MCHT_CALENDARDATE || st.wDay == mchit.st.wDay); /* Ensure that mchit.pt points to unselected day */
         got_MCN_SELECT = got_MCN_SELCHANGE = FALSE;
         SendMessageA(hwnd, WM_LBUTTONDOWN, 0, MAKELPARAM(mchit.pt.x, mchit.pt.y));
         if (styles[i].val & MCS_MULTISELECT)
