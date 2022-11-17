@@ -1204,6 +1204,16 @@ static void test_sync_reader_streaming(void)
         ref = IWMStreamConfig_Release(config2);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
 
+        hr = IWMProfile_GetStreamByNumber(profile, i + 1, &config2);
+        todo_wine
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr == S_OK)
+        {
+        ok(config2 != config, "Expected different objects.\n");
+        ref = IWMStreamConfig_Release(config2);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
+        }
+
         stream_numbers[i] = 0xdead;
         hr = IWMStreamConfig_GetStreamNumber(config, &stream_numbers[i]);
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1215,6 +1225,12 @@ static void test_sync_reader_streaming(void)
 
     hr = IWMProfile_GetStream(profile, 2, &config);
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+    hr = IWMProfile_GetStreamByNumber(profile, 0, &config);
+    todo_wine
+    ok(hr == NS_E_NO_STREAM, "Got hr %#lx.\n", hr);
+    hr = IWMProfile_GetStreamByNumber(profile, 3, &config);
+    todo_wine
+    ok(hr == NS_E_NO_STREAM, "Got hr %#lx.\n", hr);
 
     while (!eos[0] || !eos[1])
     {
