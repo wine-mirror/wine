@@ -213,12 +213,16 @@ HRESULT WINAPI DwmRegisterThumbnail(HWND dest, HWND src, PHTHUMBNAIL thumbnail_i
 
 static int get_display_frequency(void)
 {
-    DEVMODEA mode;
+    DEVMODEW mode;
+    BOOL ret;
 
     memset(&mode, 0, sizeof(mode));
     mode.dmSize = sizeof(mode);
-    if (EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &mode))
+    ret = EnumDisplaySettingsExW(NULL, ENUM_CURRENT_SETTINGS, &mode, 0);
+    if (ret && mode.dmFields & DM_DISPLAYFREQUENCY && mode.dmDisplayFrequency)
+    {
         return mode.dmDisplayFrequency;
+    }
     else
     {
         WARN("Failed to query display frequency, returning a fallback value.\n");
