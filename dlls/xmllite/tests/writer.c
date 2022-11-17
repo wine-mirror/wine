@@ -1335,6 +1335,8 @@ static void test_WriteCData(void)
 
 static void test_WriteRaw(void)
 {
+    static const WCHAR surrogates[] = {0xdc00, 0xd800, '\0'};
+    static const WCHAR invalid[] = {0x8, '\0'};
     static const WCHAR rawW[] = L"a<:";
     IXmlWriter *writer;
     IStream *stream;
@@ -1350,6 +1352,15 @@ static void test_WriteRaw(void)
     ok(hr == E_UNEXPECTED, "Unexpected hr %#lx.\n", hr);
 
     stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteRaw(writer, surrogates);
+    ok(hr == WR_E_INVALIDSURROGATEPAIR, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteRaw(writer, L"\uffff");
+    ok(hr == WC_E_XMLCHARACTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteRaw(writer, invalid);
+    ok(hr == WC_E_XMLCHARACTER, "Unexpected hr %#lx.\n", hr);
 
     hr = IXmlWriter_WriteRaw(writer, NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -1885,6 +1896,7 @@ static void test_WriteCharEntity(void)
 
 static void test_WriteString(void)
 {
+    static const WCHAR surrogates[] = {0xd800, 0xdc00, 'x', 'y', '\0'};
     IXmlWriter *writer;
     IStream *stream;
     HRESULT hr;
@@ -1902,6 +1914,27 @@ static void test_WriteString(void)
 
     hr = IXmlWriter_WriteString(writer, L"");
     ok(hr == E_UNEXPECTED, "Unexpected hr %#lx.\n", hr);
+
+    stream = writer_set_output(writer);
+
+    hr = IXmlWriter_WriteStartElement(writer, NULL, L"sub", NULL);
+    ok(hr == S_OK, "Unexpected hr #%lx.\n", hr);
+
+    hr = IXmlWriter_WriteString(writer, L"\v");
+    ok(hr == WC_E_XMLCHARACTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteString(writer, L"\ufffe");
+    ok(hr == WC_E_XMLCHARACTER, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_WriteString(writer, surrogates);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IXmlWriter_Flush(writer);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    CHECK_OUTPUT(stream,
+        "<sub>\U00010000xy");
+    IStream_Release(stream);
 
     stream = writer_set_output(writer);
 

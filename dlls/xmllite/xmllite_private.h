@@ -63,6 +63,17 @@ BOOL is_pubchar(WCHAR ch) DECLSPEC_HIDDEN;
 BOOL is_namestartchar(WCHAR ch) DECLSPEC_HIDDEN;
 BOOL is_namechar(WCHAR ch) DECLSPEC_HIDDEN;
 
+/* [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF] */
+static inline BOOL is_char(WCHAR ch)
+{
+    return (ch == '\t') || (ch == '\r') || (ch == '\n') ||
+           (ch >= 0x20 && ch <= 0xd7ff) ||
+           (ch >= 0xd800 && ch <= 0xdbff) || /* high surrogate */
+           (ch >= 0xdc00 && ch <= 0xdfff) || /* low surrogate */
+           (ch >= 0xe000 && ch <= 0xfffd);
+}
+
+/* [3] S ::= (#x20 | #x9 | #xD | #xA)+ */
 static inline BOOL is_wchar_space(WCHAR ch)
 {
     return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';

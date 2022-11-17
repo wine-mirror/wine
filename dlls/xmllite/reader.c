@@ -1466,16 +1466,6 @@ static HRESULT reader_parse_comment(xmlreader *reader)
     return S_OK;
 }
 
-/* [2] Char ::= #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF] */
-static inline BOOL is_char(WCHAR ch)
-{
-    return (ch == '\t') || (ch == '\r') || (ch == '\n') ||
-           (ch >= 0x20 && ch <= 0xd7ff) ||
-           (ch >= 0xd800 && ch <= 0xdbff) || /* high surrogate */
-           (ch >= 0xdc00 && ch <= 0xdfff) || /* low surrogate */
-           (ch >= 0xe000 && ch <= 0xfffd);
-}
-
 /* [13] PubidChar ::= #x20 | #xD | #xA | [a-zA-Z0-9] | [-'()+,./:=?;!*#@$_%] */
 BOOL is_pubchar(WCHAR ch)
 {
