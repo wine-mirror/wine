@@ -92,10 +92,10 @@ static ULONG WINAPI IDirectPlay8PeerImpl_Release(IDirectPlay8Peer *iface)
 
     if(!RefCount)
     {
-        heap_free(This->username);
-        heap_free(This->data);
+        free(This->username);
+        free(This->data);
 
-        heap_free(This);
+        free(This);
     }
 
     return RefCount;
@@ -389,12 +389,12 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_SetPeerInfo(IDirectPlay8Peer *iface,
 
     if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_NAME)
     {
-        heap_free(This->username);
+        free(This->username);
         This->username = NULL;
 
         if(pdpnPlayerInfo->pwszName)
         {
-            This->username = heap_strdupW(pdpnPlayerInfo->pwszName);
+            This->username = wcsdup(pdpnPlayerInfo->pwszName);
             if (!This->username)
                 return E_OUTOFMEMORY;
         }
@@ -402,10 +402,10 @@ static HRESULT WINAPI IDirectPlay8PeerImpl_SetPeerInfo(IDirectPlay8Peer *iface,
 
     if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_DATA)
     {
-        heap_free(This->data);
+        free(This->data);
 
         This->datasize = pdpnPlayerInfo->dwDataSize;
-        This->data = heap_alloc(pdpnPlayerInfo->dwDataSize);
+        This->data = malloc(pdpnPlayerInfo->dwDataSize);
         if (!This->data)
             return E_OUTOFMEMORY;
 
@@ -638,7 +638,7 @@ HRESULT DPNET_CreateDirectPlay8Peer(IClassFactory *iface, IUnknown *pUnkOuter, R
     IDirectPlay8PeerImpl* Client;
     HRESULT ret;
 
-    Client = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlay8PeerImpl));
+    Client = calloc(1, sizeof(IDirectPlay8PeerImpl));
 
     *ppobj = NULL;
 
