@@ -33,6 +33,7 @@
 #include "propvarutil.h"
 #include "uuids.h"
 #include "wmcodecdsp.h"
+#include "mediaerr.h"
 
 #include "mf_test.h"
 
@@ -1045,6 +1046,33 @@ DWORD check_mf_sample_collection_(const char *file, int line, IMFCollection *sam
     ok_(file, line)(hr == S_OK, "GetElementCount returned %#lx\n", hr);
 
     return ctx.diff / count;
+}
+
+#define check_dmo_media_type(a, b) check_dmo_media_type_(__LINE__, a, b)
+static void check_dmo_media_type_(int line, DMO_MEDIA_TYPE *media_type, const DMO_MEDIA_TYPE *expected)
+{
+    ok_(__FILE__, line)(IsEqualGUID(&media_type->majortype, &expected->majortype),
+            "Got unexpected majortype %s, expected %s.\n",
+            debugstr_guid(&media_type->majortype), debugstr_guid(&expected->majortype));
+    ok_(__FILE__, line)(IsEqualGUID(&media_type->subtype, &expected->subtype),
+            "Got unexpected subtype %s, expected %s.\n",
+            debugstr_guid(&media_type->subtype), debugstr_guid(&expected->subtype));
+    ok_(__FILE__, line)(media_type->bFixedSizeSamples == expected->bFixedSizeSamples,
+            "Got unexpected bFixedSizeSamples %d, expected %d.\n",
+            media_type->bFixedSizeSamples, expected->bFixedSizeSamples);
+    ok_(__FILE__, line)(media_type->bTemporalCompression == expected->bTemporalCompression,
+            "Got unexpected bTemporalCompression %d, expected %d.\n",
+            media_type->bTemporalCompression, expected->bTemporalCompression);
+    ok_(__FILE__, line)(media_type->lSampleSize == expected->lSampleSize,
+            "Got unexpected lSampleSize %lu, expected %lu.\n",
+            media_type->lSampleSize, expected->lSampleSize);
+
+    ok_(__FILE__, line)(IsEqualGUID(&media_type->formattype, &GUID_NULL),
+            "Got unexpected formattype %s.\n",
+            debugstr_guid(&media_type->formattype));
+    ok_(__FILE__, line)(media_type->pUnk == NULL, "Got unexpected pUnk %p.\n", media_type->pUnk);
+    ok_(__FILE__, line)(media_type->cbFormat == 0, "Got unexpected cbFormat %lu.\n", media_type->cbFormat);
+    ok_(__FILE__, line)(media_type->pbFormat == NULL, "Got unexpected pbFormat %p.\n", media_type->pbFormat);
 }
 
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
@@ -4478,10 +4506,23 @@ failed:
 static void test_wmv_decoder_media_object(void)
 {
     const GUID *const class_id = &CLSID_CWMVDecMediaObject;
+    const DMO_MEDIA_TYPE expected_input_types[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_WMV1,        FALSE, TRUE, FALSE},
+        {MFMediaType_Video, MFVideoFormat_WMV2,        FALSE, TRUE, FALSE},
+        {MFMediaType_Video, MEDIASUBTYPE_WMVA,         FALSE, TRUE, FALSE},
+        {MFMediaType_Video, MEDIASUBTYPE_WMVP,         FALSE, TRUE, FALSE},
+        {MFMediaType_Video, MEDIASUBTYPE_WVP2,         FALSE, TRUE, FALSE},
+        {MFMediaType_Video, MFVideoFormat_WMV_Unknown, FALSE, TRUE, FALSE},
+        {MFMediaType_Video, MFVideoFormat_WVC1,        FALSE, TRUE, FALSE},
+        {MFMediaType_Video, MFVideoFormat_WMV3,        FALSE, TRUE, FALSE},
+        {MFMediaType_Video, MFVideoFormat_VC1S,        FALSE, TRUE, FALSE},
+    };
     IMediaObject *media_object;
+    DMO_MEDIA_TYPE media_type;
     DWORD in_count, out_count;
+    ULONG ret, i;
     HRESULT hr;
-    ULONG ret;
 
     winetest_push_context("wmvdec");
 
@@ -4513,6 +4554,40 @@ static void test_wmv_decoder_media_object(void)
     hr = IMediaObject_GetStreamCount(media_object, &in_count, NULL);
     ok(hr == E_POINTER, "GetStreamCount returned %#lx.\n", hr);
     ok(in_count == 0xdeadbeef, "Got unexpected in_count %lu.\n", in_count);
+
+    /* Test GetInputType. */
+    i = -1;
+    while (SUCCEEDED(hr = IMediaObject_GetInputType(media_object, 0, ++i, &media_type)))
+    {
+        winetest_push_context("in %lu", i);
+        check_dmo_media_type(&media_type, &expected_input_types[i]);
+        winetest_pop_context();
+    }
+    todo_wine
+    ok(i == ARRAY_SIZE(expected_input_types), "%lu input types.\n", i);
+
+    /* Test GetInputType with invalid arguments. */
+    hr = IMediaObject_GetInputType(media_object, 0, ARRAY_SIZE(expected_input_types) - 1, &media_type);
+    todo_wine
+    ok(hr == S_OK, "GetInputType returned unexpected hr %#lx.\n", hr);
+    hr = IMediaObject_GetInputType(media_object, 0, ARRAY_SIZE(expected_input_types), &media_type);
+    todo_wine
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned unexpected hr %#lx.\n", hr);
+    hr = IMediaObject_GetInputType(media_object, 1, 0, &media_type);
+    todo_wine
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned unexpected hr %#lx.\n", hr);
+    hr = IMediaObject_GetInputType(media_object, 0, 0, NULL);
+    todo_wine
+    ok(hr == S_OK, "GetInputType returned unexpected hr %#lx.\n", hr);
+    hr = IMediaObject_GetInputType(media_object, 1, ARRAY_SIZE(expected_input_types), &media_type);
+    todo_wine
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned unexpected hr %#lx.\n", hr);
+    hr = IMediaObject_GetInputType(media_object, 0, ARRAY_SIZE(expected_input_types), NULL);
+    todo_wine
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned unexpected hr %#lx.\n", hr);
+    hr = IMediaObject_GetInputType(media_object, 1, 0, NULL);
+    todo_wine
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned unexpected hr %#lx.\n", hr);
 
     ret = IMediaObject_Release(media_object);
     ok(ret == 0, "Release returned %lu\n", ret);
