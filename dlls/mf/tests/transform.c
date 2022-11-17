@@ -4475,6 +4475,57 @@ failed:
     CoUninitialize();
 }
 
+static void test_wmv_decoder_media_object(void)
+{
+    const GUID *const class_id = &CLSID_CWMVDecMediaObject;
+    IMediaObject *media_object;
+    DWORD in_count, out_count;
+    HRESULT hr;
+    ULONG ret;
+
+    winetest_push_context("wmvdec");
+
+    if (!has_video_processor)
+    {
+        win_skip("Skipping inconsistent WMV decoder media object tests on Win7.\n");
+        winetest_pop_context();
+        return;
+    }
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "CoInitialize failed, hr %#lx.\n", hr);
+
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&media_object);
+    ok(hr == S_OK, "CoCreateInstance returned %#lx.\n", hr);
+
+    /* Test GetStreamCount. */
+    in_count = out_count = 0xdeadbeef;
+    hr = IMediaObject_GetStreamCount(media_object, &in_count, &out_count);
+    todo_wine
+    ok(hr == S_OK, "GetStreamCount returned %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+    ok(in_count == 1, "Got unexpected in_count %lu.\n", in_count);
+    ok(out_count == 1, "Got unexpected in_count %lu.\n", out_count);
+    }
+
+    /* Test GetStreamCount with invalid arguments. */
+    in_count = out_count = 0xdeadbeef;
+    hr = IMediaObject_GetStreamCount(media_object, NULL, &out_count);
+    todo_wine
+    ok(hr == E_POINTER, "GetStreamCount returned %#lx.\n", hr);
+    ok(out_count == 0xdeadbeef, "Got unexpected out_count %lu.\n", out_count);
+    hr = IMediaObject_GetStreamCount(media_object, &in_count, NULL);
+    todo_wine
+    ok(hr == E_POINTER, "GetStreamCount returned %#lx.\n", hr);
+    ok(in_count == 0xdeadbeef, "Got unexpected in_count %lu.\n", in_count);
+
+    ret = IMediaObject_Release(media_object);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    CoUninitialize();
+    winetest_pop_context();
+}
+
 static void test_color_convert(void)
 {
     const GUID *const class_id = &CLSID_CColorConvertDMO;
@@ -5776,6 +5827,7 @@ START_TEST(transform)
     test_h264_decoder();
     test_wmv_encoder();
     test_wmv_decoder();
+    test_wmv_decoder_media_object();
     test_audio_convert();
     test_color_convert();
     test_video_processor();
