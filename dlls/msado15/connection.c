@@ -29,7 +29,6 @@
 #include "msado15_backcompat.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "msado15_private.h"
 
@@ -108,10 +107,10 @@ static ULONG WINAPI connection_Release( _Connection *iface )
                 IUnknown_Release( connection->cp_connev.sinks[i] );
         }
         if (connection->session) IUnknown_Release( connection->session );
-        heap_free( connection->cp_connev.sinks );
-        heap_free( connection->provider );
-        heap_free( connection->datasource );
-        heap_free( connection );
+        free( connection->cp_connev.sinks );
+        free( connection->provider );
+        free( connection->datasource );
+        free( connection );
     }
     return refs;
 }
@@ -234,8 +233,8 @@ static HRESULT WINAPI connection_put_ConnectionString( _Connection *iface, BSTR 
 
     TRACE( "%p, %s\n", connection, debugstr_w( str && !wcsstr( str, L"Password" ) ? L"<hidden>" : str ) );
 
-    if (str && !(source = strdupW( str ))) return E_OUTOFMEMORY;
-    heap_free( connection->datasource );
+    if (str && !(source = wcsdup( str ))) return E_OUTOFMEMORY;
+    free( connection->datasource );
     connection->datasource = source;
     return S_OK;
 }
@@ -518,8 +517,8 @@ static HRESULT WINAPI connection_put_Provider( _Connection *iface, BSTR str )
 
     if (!str) return MAKE_ADO_HRESULT(adErrInvalidArgument);
 
-    if (!(provider = strdupW( str ))) return E_OUTOFMEMORY;
-    heap_free( connection->provider );
+    if (!(provider = wcsdup( str ))) return E_OUTOFMEMORY;
+    free( connection->provider );
     connection->provider = provider;
     return S_OK;
 }
@@ -751,15 +750,16 @@ static HRESULT WINAPI connpoint_Advise( IConnectionPoint *iface, IUnknown *unk_s
         if (i == connpoint->sinks_size)
         {
             new_size = connpoint->sinks_size * 2;
-            if (!(tmp = heap_realloc_zero( connpoint->sinks, new_size * sizeof(*connpoint->sinks) )))
+            if (!(tmp = realloc( connpoint->sinks, new_size * sizeof(*connpoint->sinks) )))
                 return E_OUTOFMEMORY;
+            memset( tmp + connpoint->sinks_size, 0, (new_size - connpoint->sinks_size) * sizeof(*connpoint->sinks) );
             connpoint->sinks = tmp;
             connpoint->sinks_size = new_size;
         }
     }
     else
     {
-        if (!(connpoint->sinks = heap_alloc_zero( sizeof(*connpoint->sinks) ))) return E_OUTOFMEMORY;
+        if (!(connpoint->sinks = calloc( 1, sizeof(*connpoint->sinks) ))) return E_OUTOFMEMORY;
         connpoint->sinks_size = 1;
         i = 0;
     }
@@ -860,7 +860,7 @@ HRESULT Connection_create( void **obj )
 {
     struct connection *connection;
 
-    if (!(connection = heap_alloc( sizeof(*connection) ))) return E_OUTOFMEMORY;
+    if (!(connection = malloc( sizeof(*connection) ))) return E_OUTOFMEMORY;
     connection->Connection_iface.lpVtbl = &connection_vtbl;
     connection->ISupportErrorInfo_iface.lpVtbl = &support_error_vtbl;
     connection->IConnectionPointContainer_iface.lpVtbl = &connpointcontainer_vtbl;
@@ -869,9 +869,9 @@ HRESULT Connection_create( void **obj )
     connection->state = adStateClosed;
     connection->timeout = 30;
     connection->datasource = NULL;
-    if (!(connection->provider = strdupW( L"MSDASQL" )))
+    if (!(connection->provider = wcsdup( L"MSDASQL" )))
     {
-        heap_free( connection );
+        free( connection );
         return E_OUTOFMEMORY;
     }
     connection->mode = adModeUnknown;
