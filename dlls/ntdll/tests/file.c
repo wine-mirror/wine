@@ -3000,6 +3000,10 @@ static void test_file_disposition_information(void)
     fdi.DoDeleteFile = TRUE;
     res = pNtSetInformationFile( handle, &io, &fdi, sizeof fdi, FileDispositionInformation );
     ok( res == STATUS_SUCCESS, "unexpected FileDispositionInformation result (expected STATUS_SUCCESS, got %lx)\n", res );
+    res = NtQueryInformationFile(handle, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    todo_wine
+    ok(fsi.DeletePending, "Handle should be marked for deletion\n");
     CloseHandle( handle );
     fileDeleted = GetFileAttributesA( buffer ) == INVALID_FILE_ATTRIBUTES && GetLastError() == ERROR_FILE_NOT_FOUND;
     ok( fileDeleted, "File should have been deleted\n" );
@@ -3408,6 +3412,68 @@ static void test_file_disposition_information(void)
     res = DeleteFileA( buffer );
     ok( !res, "expected failure\n" );
     ok( GetLastError() == ERROR_FILE_NOT_FOUND, "got error %lu\n", GetLastError() );
+
+    /* pending delete flag is shared across handles */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    res = NtQueryInformationFile(handle, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    ok(!fsi.DeletePending, "Handle shouldn't be marked for deletion\n");
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    ok( handle2 != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    res = NtQueryInformationFile(handle2, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    ok(!fsi.DeletePending, "Handle shouldn't be marked for deletion\n");
+    fdi.DoDeleteFile = TRUE;
+    res = NtSetInformationFile(handle, &io, &fdi, sizeof(fdi), FileDispositionInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    res = NtQueryInformationFile(handle2, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    todo_wine
+    ok(fsi.DeletePending, "Handle should be marked for deletion\n");
+    fdi.DoDeleteFile = FALSE;
+    res = NtSetInformationFile(handle2, &io, &fdi, sizeof(fdi), FileDispositionInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    res = NtQueryInformationFile(handle, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    ok(!fsi.DeletePending, "Handle shouldn't be marked for deletion\n");
+    CloseHandle(handle);
+    CloseHandle(handle2);
+    res = GetFileAttributesA( buffer );
+    todo_wine
+    ok( res != INVALID_FILE_ATTRIBUTES, "expected file to exist\n" );
+
+    /* pending delete flag is shared across handles (even after closing) */
+    GetTempFileNameA( tmp_path, "dis", 0, buffer );
+    handle = CreateFileA(buffer, GENERIC_WRITE | DELETE, FILE_SHARE_DELETE, NULL, CREATE_ALWAYS, 0, 0);
+    ok( handle != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    res = NtQueryInformationFile(handle, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    ok(!fsi.DeletePending, "Handle shouldn't be marked for deletion\n");
+    handle2 = CreateFileA(buffer, DELETE, FILE_SHARE_DELETE | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    ok( handle2 != INVALID_HANDLE_VALUE, "failed to create temp file\n" );
+    res = NtQueryInformationFile(handle2, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    ok(!fsi.DeletePending, "Handle shouldn't be marked for deletion\n");
+    fdi.DoDeleteFile = TRUE;
+    res = NtSetInformationFile(handle, &io, &fdi, sizeof(fdi), FileDispositionInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    res = NtQueryInformationFile(handle2, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    todo_wine
+    ok(fsi.DeletePending, "Handle should be marked for deletion\n");
+    fdi.DoDeleteFile = FALSE;
+    res = NtSetInformationFile(handle2, &io, &fdi, sizeof(fdi), FileDispositionInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    CloseHandle(handle2);
+    res = NtQueryInformationFile(handle, &io, &fsi, sizeof(fsi), FileStandardInformation);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile failed %lx\n", res);
+    ok(!fsi.DeletePending, "Handle shouldn't be marked for deletion\n");
+    CloseHandle(handle);
+    res = GetFileAttributesA( buffer );
+    todo_wine
+    ok( res != INVALID_FILE_ATTRIBUTES, "expected file to exist\n" );
 }
 
 static void test_file_name_information(void)
