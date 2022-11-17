@@ -2199,8 +2199,9 @@ static struct symt_function* codeview_create_inline_site(const struct msc_debug_
             inlined->ranges[index++].high = top_func->ranges[0].low + offset;
             break;
         case BA_OP_ChangeCodeLength:
-            /* this op doesn't seem widely used... */
-            inline_site_update_last_range(inlined, index, inlined->ranges[index - 1].low + cvba.arg1);
+            /* this op isn't widely used by MSVC, but clang uses it a lot... */
+            offset += cvba.arg1;
+            inline_site_update_last_range(inlined, index, top_func->ranges[0].low + offset);
             break;
         case BA_OP_ChangeFile:
             chksms = CV_RECORD_GAP(hdr_files, cvba.arg1);
