@@ -7039,7 +7039,7 @@ static HRESULT WINAPI fontfacereference1_GetFontAxisValues(IDWriteFontFaceRefere
     if (value_count < reference->axis_values_count)
         return E_NOT_SUFFICIENT_BUFFER;
 
-    memcpy(axis_values, reference->axis_values, value_count * sizeof(*axis_values));
+    memcpy(axis_values, reference->axis_values, reference->axis_values_count * sizeof(*axis_values));
 
     return S_OK;
 }
