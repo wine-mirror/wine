@@ -95,9 +95,9 @@ static ULONG WINAPI IDirectPlay8ServerImpl_Release(IDirectPlay8Server *iface)
 
     if (!ref)
     {
-        heap_free(This->servername);
-        heap_free(This->data);
-        heap_free(This);
+        free(This->servername);
+        free(This->data);
+        free(This);
     }
 
     return ref;
@@ -182,12 +182,12 @@ static HRESULT WINAPI IDirectPlay8ServerImpl_SetServerInfo(IDirectPlay8Server *i
 
     if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_NAME)
     {
-        heap_free(This->servername);
+        free(This->servername);
         This->servername = NULL;
 
         if(pdpnPlayerInfo->pwszName)
         {
-            This->servername = heap_strdupW(pdpnPlayerInfo->pwszName);
+            This->servername = wcsdup(pdpnPlayerInfo->pwszName);
             if (!This->servername)
                 return E_OUTOFMEMORY;
         }
@@ -195,7 +195,7 @@ static HRESULT WINAPI IDirectPlay8ServerImpl_SetServerInfo(IDirectPlay8Server *i
 
     if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_DATA)
     {
-        heap_free(This->data);
+        free(This->data);
         This->data = NULL;
         This->datasize = 0;
 
@@ -204,7 +204,7 @@ static HRESULT WINAPI IDirectPlay8ServerImpl_SetServerInfo(IDirectPlay8Server *i
 
         if(pdpnPlayerInfo->dwDataSize && pdpnPlayerInfo->pvData)
         {
-            This->data = heap_alloc(pdpnPlayerInfo->dwDataSize);
+            This->data = malloc(pdpnPlayerInfo->dwDataSize);
             if (!This->data)
                 return E_OUTOFMEMORY;
 
@@ -460,7 +460,7 @@ HRESULT DPNET_CreateDirectPlay8Server(IClassFactory *iface, IUnknown *pUnkOuter,
     if(pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    server = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlay8ServerImpl));
+    server = calloc(1, sizeof(IDirectPlay8ServerImpl));
     if (!server)
         return E_OUTOFMEMORY;
 
