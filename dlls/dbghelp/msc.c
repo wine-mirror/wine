@@ -2245,6 +2245,24 @@ static struct symt_function* codeview_create_inline_site(const struct msc_debug_
     return inlined;
 }
 
+static struct symt_compiland* codeview_new_compiland(const struct msc_debug_info* msc_dbg, const char* objname)
+{
+    unsigned int    src_idx = source_new(msc_dbg->module, NULL, objname);
+    unsigned int    i;
+
+    /* In some cases MSVC generates several compiland entries with same pathname in PDB file.
+     * (for example: for an import library, one compiland entry per imported function is generated).
+     * But native dbghelp (in this case) merges in a single compiland instance.
+     */
+    for (i = 0; i < msc_dbg->module->top->vchildren.num_elts; i++)
+    {
+        struct symt_compiland** p = vector_at(&msc_dbg->module->top->vchildren, i);
+        if (symt_check_tag(&(*p)->symt, SymTagCompiland) && (*p)->source == src_idx)
+            return *p;
+    }
+    return symt_new_compiland(msc_dbg->module, src_idx);
+}
+
 static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
                            const BYTE* root, unsigned offset, unsigned size,
                            const struct cv_module_snarf* cvmod,
@@ -2260,7 +2278,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
 
     /* overwrite compiland name from outter context (if any) */
     if (objname)
-        compiland = symt_new_compiland(msc_dbg->module, source_new(msc_dbg->module, NULL, objname));
+        compiland = codeview_new_compiland(msc_dbg, objname);
     /*
      * Loop over the different types of records and whenever we
      * find something we are interested in, record it and move on.
@@ -2522,17 +2540,13 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
         case S_OBJNAME:
             TRACE("S-ObjName-V3 %s\n", sym->objname_v3.name);
             if (!compiland)
-                compiland = symt_new_compiland(msc_dbg->module,
-                                               source_new(msc_dbg->module, NULL,
-                                                          sym->objname_v3.name));
+                compiland = codeview_new_compiland(msc_dbg, sym->objname_v3.name);
             break;
 
         case S_OBJNAME_ST:
             TRACE("S-ObjName-V1 %s\n", terminate_string(&sym->objname_v1.p_name));
             if (!compiland)
-                compiland = symt_new_compiland(msc_dbg->module,
-                                               source_new(msc_dbg->module, NULL,
-                                                          terminate_string(&sym->objname_v1.p_name)));
+                compiland = codeview_new_compiland(msc_dbg, terminate_string(&sym->objname_v1.p_name));
             break;
 
         case S_LABEL32_ST:
