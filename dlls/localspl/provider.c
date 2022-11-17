@@ -176,6 +176,15 @@ static CRITICAL_SECTION_DEBUG monitor_handles_cs_debug =
 };
 static CRITICAL_SECTION monitor_handles_cs = { &monitor_handles_cs_debug, -1, 0, 0, 0, 0 };
 
+static CRITICAL_SECTION printers_cs;
+static CRITICAL_SECTION_DEBUG printers_cs_debug =
+{
+    0, 0, &printers_cs,
+    { &printers_cs_debug.ProcessLocksList, &printers_cs_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": printers_cs") }
+};
+static CRITICAL_SECTION printers_cs = { &printers_cs_debug, -1, 0, 0, 0, 0 };
+
 /* ############################### */
 
 typedef struct {
@@ -208,8 +217,14 @@ typedef struct {
 } printenv_t;
 
 typedef struct {
+    WCHAR *name;
+    struct list entry;
+    LONG ref;
+} printer_info_t;
+
+typedef struct {
+    printer_info_t *info;
     LPWSTR name;
-    LPWSTR printername;
     monitor_t * pm;
     HANDLE hXcv;
 } printer_t;
@@ -218,6 +233,8 @@ typedef struct {
 
 static struct list monitor_handles = LIST_INIT( monitor_handles );
 static monitor_t * pm_localport;
+
+static struct list printers = LIST_INIT(printers);
 
 static const WCHAR fmt_driversW[] =
     L"System\\CurrentControlSet\\control\\Print\\Environments\\%s\\Drivers%s";
@@ -434,6 +451,65 @@ static void monitor_unloadall(void)
         if (pm->monitor.cbSize) monitor_unload(pm);
     }
     LeaveCriticalSection(&monitor_handles_cs);
+}
+
+static printer_info_t* get_printer_info(const WCHAR *name)
+{
+    HKEY hkey, hprinter = NULL;
+    printer_info_t *info;
+    LSTATUS ret;
+
+    EnterCriticalSection(&printers_cs);
+    LIST_FOR_EACH_ENTRY(info, &printers, printer_info_t, entry)
+    {
+        if (!wcscmp(info->name, name))
+        {
+            InterlockedIncrement(&info->ref);
+            LeaveCriticalSection(&printers_cs);
+            return info;
+        }
+    }
+
+    ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, printersW, &hkey);
+    if (ret == ERROR_SUCCESS)
+        ret = RegOpenKeyW(hkey, name, &hprinter);
+    RegCloseKey(hkey);
+    RegCloseKey(hprinter);
+    if (ret != ERROR_SUCCESS)
+    {
+        LeaveCriticalSection(&printers_cs);
+        return NULL;
+    }
+
+    if ((info = calloc(1, sizeof(*info))) && (info->name = wcsdup(name)))
+    {
+        info->ref = 1;
+        list_add_head(&printers, &info->entry);
+    }
+    else if (info)
+    {
+        free(info);
+        info = NULL;
+    }
+    LeaveCriticalSection(&printers_cs);
+
+    return info;
+}
+
+static void release_printer_info(printer_info_t *info)
+{
+    if (!info)
+        return;
+
+    if (!InterlockedDecrement(&info->ref))
+    {
+        EnterCriticalSection(&printers_cs);
+        list_remove(&info->entry);
+        LeaveCriticalSection(&printers_cs);
+
+        free(info->name);
+        free(info);
+    }
 }
 
 static LONG WINAPI CreateKey(HANDLE hcKey, LPCWSTR pszSubKey, DWORD dwOptions,
@@ -1397,7 +1473,7 @@ static VOID printer_free(printer_t * printer)
 
     monitor_unload(printer->pm);
 
-    free(printer->printername);
+    release_printer_info(printer->info);
     free(printer->name);
     free(printer);
 }
@@ -1412,8 +1488,6 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
     WCHAR servername[MAX_COMPUTERNAME_LENGTH + 1];
     printer_t *printer = NULL;
     LPCWSTR printername;
-    HKEY    hkeyPrinters;
-    HKEY    hkeyPrinter;
     DWORD   len;
 
     if (copy_servername_from_name(name, servername)) {
@@ -1433,9 +1507,6 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
 
     printer = calloc(1, sizeof(printer_t));
     if (!printer) goto end;
-
-    /* clone the base name. This is NULL for the printserver */
-    printer->printername = wcsdup(printername);
 
     /* clone the full name */
     printer->name = wcsdup(name);
@@ -1486,24 +1557,14 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
         }
         else
         {
-            /* Does the Printer exist? */
-            if (RegCreateKeyW(HKEY_LOCAL_MACHINE, printersW, &hkeyPrinters) != ERROR_SUCCESS) {
-                ERR("Can't create Printers key\n");
+            printer->info = get_printer_info(printername);
+            if (!printer->info)
+            {
                 printer_free(printer);
                 SetLastError(ERROR_INVALID_PRINTER_NAME);
                 printer = NULL;
                 goto end;
             }
-            if (RegOpenKeyW(hkeyPrinters, printername, &hkeyPrinter) != ERROR_SUCCESS) {
-                WARN("Printer not found in Registry: %s\n", debugstr_w(printername));
-                RegCloseKey(hkeyPrinters);
-                printer_free(printer);
-                SetLastError(ERROR_INVALID_PRINTER_NAME);
-                printer = NULL;
-                goto end;
-            }
-            RegCloseKey(hkeyPrinter);
-            RegCloseKey(hkeyPrinters);
         }
     }
     else
