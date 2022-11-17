@@ -87,9 +87,9 @@ static ULONG WINAPI IDirectPlay8ClientImpl_Release(IDirectPlay8Client *iface)
 
     if (!ref)
     {
-        heap_free(This->username);
-        heap_free(This->data);
-        heap_free(This);
+        free(This->username);
+        free(This->data);
+        free(This);
     }
     return ref;
 }
@@ -217,12 +217,12 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_SetClientInfo(IDirectPlay8Client *i
 
     if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_NAME)
     {
-        heap_free(This->username);
+        free(This->username);
         This->username = NULL;
 
         if(pdpnPlayerInfo->pwszName)
         {
-            This->username = heap_strdupW(pdpnPlayerInfo->pwszName);
+            This->username = wcsdup(pdpnPlayerInfo->pwszName);
             if (!This->username)
                 return E_OUTOFMEMORY;
         }
@@ -230,7 +230,7 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_SetClientInfo(IDirectPlay8Client *i
 
     if (pdpnPlayerInfo->dwInfoFlags & DPNINFO_DATA)
     {
-        heap_free(This->data);
+        free(This->data);
         This->data = NULL;
         This->datasize = 0;
 
@@ -239,7 +239,7 @@ static HRESULT WINAPI IDirectPlay8ClientImpl_SetClientInfo(IDirectPlay8Client *i
 
         if(pdpnPlayerInfo->dwDataSize && pdpnPlayerInfo->pvData)
         {
-            This->data = heap_alloc(pdpnPlayerInfo->dwDataSize);
+            This->data = malloc(pdpnPlayerInfo->dwDataSize);
             if (!This->data)
                 return E_OUTOFMEMORY;
 
@@ -393,7 +393,7 @@ HRESULT DPNET_CreateDirectPlay8Client(IClassFactory *iface, IUnknown *pUnkOuter,
     if(pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    client = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectPlay8ClientImpl));
+    client = calloc(1, sizeof(IDirectPlay8ClientImpl));
     if (!client)
         return E_OUTOFMEMORY;
 
@@ -448,7 +448,7 @@ static ULONG WINAPI lobbyclient_Release(IDirectPlay8LobbyClient *iface)
 
     if (!ref)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -564,7 +564,7 @@ HRESULT DPNET_CreateDirectPlay8LobbyClient(IClassFactory *iface, IUnknown *outer
 
     TRACE("%p (%p, %s, %p)\n", iface, outer, debugstr_guid(riid), obj);
 
-    client = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*client));
+    client = calloc(1, sizeof(*client));
     if (!client)
     {
         *obj = NULL;
