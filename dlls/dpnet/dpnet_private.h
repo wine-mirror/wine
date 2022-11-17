@@ -21,7 +21,6 @@
 #ifndef __WINE_DPNET_PRIVATE_H
 #define __WINE_DPNET_PRIVATE_H
 
-#include "wine/heap.h"
 #include <wine/list.h>
 #include "winsock2.h"
 
@@ -149,13 +148,5 @@ typedef struct {
 
 #define FE(x) { x, #x }	
 #define GE(x) { &x, #x }
-
-static inline WCHAR *heap_strdupW( const WCHAR *src )
-{
-    WCHAR *dst;
-    if (!src) return NULL;
-    if ((dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
-    return dst;
-}
 
 #endif
