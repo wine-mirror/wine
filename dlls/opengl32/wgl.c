@@ -79,7 +79,7 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
     int i, count, best_format;
     int bestDBuffer = -1, bestStereo = -1;
 
-    TRACE_(wgl)( "%p %p: size %u version %u flags %u type %u color %u %u,%u,%u,%u "
+    TRACE_(wgl)( "%p %p: size %u version %u flags %lu type %u color %u %u,%u,%u,%u "
                  "accum %u depth %u stencil %u aux %u\n",
                  hdc, ppfd, ppfd->nSize, ppfd->nVersion, ppfd->dwFlags, ppfd->iPixelType,
                  ppfd->cColorBits, ppfd->cRedBits, ppfd->cGreenBits, ppfd->cBlueBits, ppfd->cAlphaBits,
@@ -252,7 +252,7 @@ INT WINAPI wglGetPixelFormat(HDC hdc)
 
     if ((status = UNIX_CALL( wglGetPixelFormat, &args )))
     {
-        WARN( "wglGetPixelFormat returned %#x\n", status );
+        WARN( "wglGetPixelFormat returned %#lx\n", status );
         SetLastError( ERROR_INVALID_PIXEL_FORMAT );
     }
 
@@ -267,7 +267,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH wglSwapBuffers( HDC hdc )
     struct wglSwapBuffers_params args = { .hdc = hdc, };
     NTSTATUS status;
 
-    if ((status = UNIX_CALL( wglSwapBuffers, &args ))) WARN( "wglSwapBuffers returned %#x\n", status );
+    if ((status = UNIX_CALL( wglSwapBuffers, &args ))) WARN( "wglSwapBuffers returned %#lx\n", status );
     else if (TRACE_ON(fps))
     {
         static long prev_time, start_time;
@@ -339,7 +339,8 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
     NTSTATUS status;
 
     if (!name) return NULL;
-    if ((status = UNIX_CALL( wglGetProcAddress, &args ))) WARN( "wglGetProcAddress %s returned %#x\n", debugstr_a(name), status );
+    if ((status = UNIX_CALL( wglGetProcAddress, &args )))
+        WARN( "wglGetProcAddress %s returned %#lx\n", debugstr_a(name), status );
     if (args.ret == (void *)-1) return NULL;
 
     proc = extension_procs[(UINT_PTR)args.ret];
@@ -421,7 +422,7 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
          else
              needed_size = GetGlyphOutlineA(hdc, glyph, GGO_BITMAP, &gm, 0, NULL, &identity);
 
-         TRACE("Glyph: %3d / List: %d size %d\n", glyph, listBase, needed_size);
+         TRACE("Glyph: %3d / List: %ld size %d\n", glyph, listBase, needed_size);
          if (needed_size == GDI_ERROR) {
              ret = FALSE;
              break;
@@ -449,7 +450,7 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
              unsigned char *bitmap_ = bitmap;
 
              TRACE("  - bbox: %d x %d\n", gm.gmBlackBoxX, gm.gmBlackBoxY);
-             TRACE("  - origin: (%d, %d)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
+             TRACE("  - origin: (%ld, %ld)\n", gm.gmptGlyphOrigin.x, gm.gmptGlyphOrigin.y);
              TRACE("  - increment: %d - %d\n", gm.gmCellIncX, gm.gmCellIncY);
              if (needed_size != 0) {
                  TRACE("  - bitmap:\n");
@@ -612,7 +613,7 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
     UINT em_size = 1024;
     RECT rc;
 
-    TRACE("(%p, %d, %d, %d, %f, %f, %d, %p, %s)\n", hdc, first, count,
+    TRACE("(%p, %ld, %ld, %ld, %f, %f, %d, %p, %s)\n", hdc, first, count,
           listBase, deviation, extrusion, format, lpgmf, unicode ? "W" : "A");
 
     if(deviation <= 0.0)
@@ -878,7 +879,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         if ((status = NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
                                             &unixlib_handle, sizeof(unixlib_handle), NULL )))
         {
-            ERR( "Failed to load unixlib, status %#x\n", status );
+            ERR( "Failed to load unixlib, status %#lx\n", status );
             return FALSE;
         }
 
@@ -888,7 +889,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     case DLL_THREAD_ATTACH:
         if ((status = UNIX_CALL( thread_attach, NULL )))
         {
-            WARN( "Failed to initialize thread, status %#x\n", status );
+            WARN( "Failed to initialize thread, status %#lx\n", status );
             return FALSE;
         }
         break;

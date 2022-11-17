@@ -94,12 +94,12 @@ my %arg_types =
      "GLint" =>                [ "long",   "%d" ],
      "GLint64" =>              [ "int64",  "wine_dbgstr_longlong(%s)" ],
      "GLint64EXT" =>           [ "int64",  "wine_dbgstr_longlong(%s)" ],
-     "GLintptr" =>             [ "long",   "%ld" ],
-     "GLintptrARB" =>          [ "long",   "%ld" ],
+     "GLintptr" =>             [ "long",   "%Id" ],
+     "GLintptrARB" =>          [ "long",   "%Id" ],
      "GLshort" =>              [ "long",   "%d" ],
      "GLsizei" =>              [ "long",   "%d" ],
-     "GLsizeiptr" =>           [ "long",   "%ld" ],
-     "GLsizeiptrARB" =>        [ "long",   "%ld" ],
+     "GLsizeiptr" =>           [ "long",   "%Id" ],
+     "GLsizeiptrARB" =>        [ "long",   "%Id" ],
      "GLstring" =>             [ "str",    "wine_dbgstr_a(%s)" ],
      "GLsync" =>               [ "ptr",    "%p" ],
      "GLubyte" =>              [ "long",   "%d" ],
@@ -107,7 +107,7 @@ my %arg_types =
      "GLuint64" =>             [ "int64",  "wine_dbgstr_longlong(%s)" ],
      "GLuint64EXT" =>          [ "int64",  "wine_dbgstr_longlong(%s)" ],
      "GLushort" =>             [ "long",   "%d" ],
-     "GLvdpauSurfaceNV" =>     [ "long",   "%ld" ],
+     "GLvdpauSurfaceNV" =>     [ "long",   "%Id" ],
      "GLDEBUGPROC" =>          [ "ptr",    "%p" ],
      "GLDEBUGPROCARB" =>       [ "ptr",    "%p" ],
      "GLDEBUGPROCAMD" =>       [ "ptr",    "%p" ],
@@ -120,7 +120,7 @@ my %arg_types =
      "LPGLYPHMETRICSFLOAT" =>  [ "ptr",    "%p" ],
      "LPCSTR" =>               [ "str",    "wine_dbgstr_a(%s)" ],
      "UINT" =>                 [ "long",   "%u" ],
-     "DWORD" =>                [ "long",   "%u" ],
+     "DWORD" =>                [ "long",   "%lu" ],
      "BOOL" =>                 [ "long",   "%u" ],
      "FLOAT" =>                [ "float",  "%f" ],
     );
@@ -316,7 +316,7 @@ sub generate_win_thunk($$)
         $ret .= "    memcpy( args.$pname, $pname, sizeof(args.$pname) );\n" if $arg->textContent() =~ /\[/;
     }
     $ret .= "    " . get_func_trace( $name, $func, 1 ) if $gen_traces;
-    $ret .= "    if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#x\\n\", status );\n";
+    $ret .= "    if ((status = UNIX_CALL( $name, &args ))) WARN( \"$name returned %#lx\\n\", status );\n";
     $ret .= "    return args.ret;\n" unless is_void_func($func);
     $ret .= "}\n";
 
