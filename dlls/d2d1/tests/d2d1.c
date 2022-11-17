@@ -5201,15 +5201,15 @@ static void test_shared_bitmap(BOOL d3d11)
             { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_IGNORE },
               { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
 
-            { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+            { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, D2DERR_UNSUPPORTED_PIXEL_FORMAT },
 
-            { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+            { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, D2DERR_UNSUPPORTED_PIXEL_FORMAT },
 
             { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE },
               { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
 
-            { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
-            { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+            { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, D2DERR_UNSUPPORTED_PIXEL_FORMAT },
+            { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, D2DERR_UNSUPPORTED_PIXEL_FORMAT },
         };
         unsigned int i;
 
@@ -8974,7 +8974,7 @@ static void check_rt_bitmap_surface_(unsigned int line, ID2D1RenderTarget *rt, B
     {
         hr = ID2D1RenderTarget_CreateCompatibleRenderTarget(rt, NULL, NULL, NULL,
                  D2D1_COMPATIBLE_RENDER_TARGET_OPTIONS_NONE, &compatible_rt);
-        ok_(__FILE__, line)(hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT, "Unexpected hr %#lx.\n", hr);
+        ok_(__FILE__, line)(hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT, "Unexpected hr %#lx.\n", hr);
     }
 
     ID2D1DeviceContext_Release(context);
@@ -9032,19 +9032,19 @@ static void test_bitmap_surface(BOOL d3d11)
         { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED },
           { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED } },
 
-        { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+        { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, D2DERR_UNSUPPORTED_PIXEL_FORMAT },
 
         { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_IGNORE },
           { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
 
-        { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+        { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, D2DERR_UNSUPPORTED_PIXEL_FORMAT },
 
-        { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+        { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_UNKNOWN }, { 0 }, D2DERR_UNSUPPORTED_PIXEL_FORMAT },
 
         { { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE },
           { DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE } },
 
-        { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT },
+        { { DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_STRAIGHT }, { 0 }, D2DERR_UNSUPPORTED_PIXEL_FORMAT },
     };
     D2D1_HWND_RENDER_TARGET_PROPERTIES hwnd_rt_desc;
     D2D1_RENDER_TARGET_PROPERTIES rt_desc;
@@ -9104,7 +9104,7 @@ static void test_bitmap_surface(BOOL d3d11)
         bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
 
         hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, ctx.surface, &bitmap_desc, &bitmap);
-        todo_wine_if(bitmap_format_tests[i].hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT)
+        todo_wine_if(bitmap_format_tests[i].hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT)
         ok(hr == bitmap_format_tests[i].hr, "%u: Got unexpected hr %#lx.\n", i, hr);
 
         if (SUCCEEDED(hr) && hr == bitmap_format_tests[i].hr)
@@ -9125,7 +9125,7 @@ static void test_bitmap_surface(BOOL d3d11)
     surface2 = create_surface(ctx.device, DXGI_FORMAT_A8_UNORM);
 
     hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(device_context, surface2, NULL, &bitmap);
-    ok(hr == S_OK || broken(hr == WINCODEC_ERR_UNSUPPORTEDPIXELFORMAT) /* Win7 */,
+    ok(hr == S_OK || broken(hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT) /* Win7 */,
             "Got unexpected hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr))
