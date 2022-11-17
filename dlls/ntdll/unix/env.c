@@ -859,7 +859,7 @@ static void init_locale(void)
     if ((header = read_nls_file( "locale.nls" )))
     {
         locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
-        if ((locale =  get_win_locale( locale_table, system_locale )))
+        if ((locale =  get_win_locale( locale_table, system_locale )) && locale->idefaultlanguage != LOCALE_CUSTOM_UNSPECIFIED)
             system_lcid = locale->idefaultlanguage;
         if ((locale =  get_win_locale( locale_table, user_locale )))
             user_lcid = locale->idefaultlanguage;

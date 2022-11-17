@@ -94,6 +94,7 @@ invalid:
 
 void locale_init(void)
 {
+    const NLS_LOCALE_LCID_INDEX *entry;
     USHORT utf8[2] = { 0, CP_UTF8 };
     WCHAR locale[LOCALE_NAME_MAX_LENGTH];
     LARGE_INTEGER unused;
@@ -112,16 +113,9 @@ void locale_init(void)
     locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
     locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
 
-    if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED)
-    {
-        ansi_cp = oem_cp = CP_UTF8;
-    }
-    else
-    {
-        const NLS_LOCALE_LCID_INDEX *entry = find_lcid_entry( locale_table, system_lcid );
-        ansi_cp = get_locale_data( locale_table, entry->idx )->idefaultansicodepage;
-        oem_cp = get_locale_data( locale_table, entry->idx )->idefaultcodepage;
-    }
+    entry = find_lcid_entry( locale_table, system_lcid );
+    ansi_cp = get_locale_data( locale_table, entry->idx )->idefaultansicodepage;
+    oem_cp = get_locale_data( locale_table, entry->idx )->idefaultcodepage;
 
     NtQueryDefaultLocale( TRUE, &user_resource_lcid );
     user_resource_neutral_lcid = PRIMARYLANGID( user_resource_lcid );
