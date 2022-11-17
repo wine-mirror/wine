@@ -25,7 +25,6 @@
 #include "msado15_backcompat.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "msado15_private.h"
 
@@ -64,9 +63,9 @@ static ULONG WINAPI stream_Release( _Stream *iface )
     if (!refs)
     {
         TRACE( "destroying %p\n", stream );
-        heap_free( stream->charset );
-        heap_free( stream->buf );
-        heap_free( stream );
+        free( stream->charset );
+        free( stream->buf );
+        free( stream );
     }
     return refs;
 }
@@ -183,7 +182,8 @@ static HRESULT resize_buffer( struct stream *stream, LONG size )
     {
         BYTE *tmp;
         LONG new_size = max( size, stream->allocated * 2 );
-        if (!(tmp = heap_realloc_zero( stream->buf, new_size ))) return E_OUTOFMEMORY;
+        if (!(tmp = realloc( stream->buf, new_size ))) return E_OUTOFMEMORY;
+        memset( tmp + stream->allocated, 0, new_size - stream->allocated );
         stream->buf = tmp;
         stream->allocated = new_size;
     }
@@ -289,8 +289,8 @@ static HRESULT WINAPI stream_put_Charset( _Stream *iface, BSTR charset )
 
     TRACE( "%p, %s\n", stream, debugstr_w(charset) );
 
-    if (!(str = strdupW( charset ))) return E_OUTOFMEMORY;
-    heap_free( stream->charset );
+    if (!(str = wcsdup( charset ))) return E_OUTOFMEMORY;
+    free( stream->charset );
     stream->charset = str;
     return S_OK;
 }
@@ -360,7 +360,7 @@ static HRESULT WINAPI stream_Close( _Stream *iface )
 
     if (stream->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
 
-    heap_free( stream->buf );
+    free( stream->buf );
     stream->buf  = NULL;
     stream->size = stream->allocated = stream->pos = 0;
 
@@ -539,7 +539,7 @@ HRESULT Stream_create( void **obj )
 {
     struct stream *stream;
 
-    if (!(stream = heap_alloc_zero( sizeof(*stream) ))) return E_OUTOFMEMORY;
+    if (!(stream = calloc( 1, sizeof(*stream) ))) return E_OUTOFMEMORY;
     stream->Stream_iface.lpVtbl = &stream_vtbl;
     stream->refs = 1;
     stream->type = adTypeText;
