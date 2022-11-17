@@ -1704,10 +1704,8 @@ void close_connection( struct request *request )
 {
     if (!request->netconn) return;
 
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0, 0 );
     netconn_release( request->netconn );
     request->netconn = NULL;
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0, 0 );
 }
 
 static DWORD add_host_header( struct request *request, DWORD modifier )
@@ -1868,7 +1866,7 @@ static DWORD refill_buffer( struct request *request, BOOL notify )
 
 static void finished_reading( struct request *request )
 {
-    BOOL close = FALSE;
+    BOOL close = FALSE, notify;
     WCHAR connection[20];
     DWORD size = sizeof(connection);
 
@@ -1884,7 +1882,18 @@ static void finished_reading( struct request *request )
     else if (!wcscmp( request->version, L"HTTP/1.0" )) close = TRUE;
 
     if (close)
+    {
+        size = sizeof(connection);
+        notify = (!query_headers( request, WINHTTP_QUERY_CONNECTION | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                                  NULL, connection, &size, NULL )
+                  || !query_headers( request, WINHTTP_QUERY_PROXY_CONNECTION | WINHTTP_QUERY_FLAG_REQUEST_HEADERS,
+                                     NULL, connection, &size, NULL ))
+                 && !wcsicmp( connection, L"close" );
+
+        if (notify) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CLOSING_CONNECTION, 0, 0 );
         netconn_release( request->netconn );
+        if (notify) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_CONNECTION_CLOSED, 0, 0 );
+    }
     else
         cache_connection( request->netconn );
     request->netconn = NULL;
