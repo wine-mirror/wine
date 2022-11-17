@@ -320,8 +320,14 @@ static ULONG WINAPI media_object_Release(IMediaObject *iface)
 
 static HRESULT WINAPI media_object_GetStreamCount(IMediaObject *iface, DWORD *input, DWORD *output)
 {
-    FIXME("iface %p, input %p, output %p stub!\n", iface, input, output);
-    return E_NOTIMPL;
+    TRACE("iface %p, input %p, output %p.\n", iface, input, output);
+
+    if (!input || !output)
+        return E_POINTER;
+
+    *input = *output = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_GetInputStreamInfo(IMediaObject *iface, DWORD index, DWORD *flags)

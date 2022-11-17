@@ -4501,22 +4501,16 @@ static void test_wmv_decoder_media_object(void)
     /* Test GetStreamCount. */
     in_count = out_count = 0xdeadbeef;
     hr = IMediaObject_GetStreamCount(media_object, &in_count, &out_count);
-    todo_wine
     ok(hr == S_OK, "GetStreamCount returned %#lx.\n", hr);
-    if (hr == S_OK)
-    {
     ok(in_count == 1, "Got unexpected in_count %lu.\n", in_count);
     ok(out_count == 1, "Got unexpected in_count %lu.\n", out_count);
-    }
 
     /* Test GetStreamCount with invalid arguments. */
     in_count = out_count = 0xdeadbeef;
     hr = IMediaObject_GetStreamCount(media_object, NULL, &out_count);
-    todo_wine
     ok(hr == E_POINTER, "GetStreamCount returned %#lx.\n", hr);
     ok(out_count == 0xdeadbeef, "Got unexpected out_count %lu.\n", out_count);
     hr = IMediaObject_GetStreamCount(media_object, &in_count, NULL);
-    todo_wine
     ok(hr == E_POINTER, "GetStreamCount returned %#lx.\n", hr);
     ok(in_count == 0xdeadbeef, "Got unexpected in_count %lu.\n", in_count);
 
