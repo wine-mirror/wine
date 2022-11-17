@@ -26,7 +26,6 @@
 #include "oledb.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "msado15_private.h"
 
@@ -102,8 +101,8 @@ static ULONG WINAPI field_Release( Field *iface )
     if (!refs)
     {
         TRACE( "destroying %p\n", field );
-        heap_free( field->name );
-        heap_free( field );
+        free( field->name );
+        free( field );
     }
     return refs;
 }
@@ -591,14 +590,14 @@ static HRESULT Field_create( const WCHAR *name, LONG index, struct recordset *re
 {
     struct field *field;
 
-    if (!(field = heap_alloc_zero( sizeof(*field) ))) return E_OUTOFMEMORY;
+    if (!(field = calloc( 1, sizeof(*field) ))) return E_OUTOFMEMORY;
     field->Field_iface.lpVtbl = &field_vtbl;
     field->ISupportErrorInfo_iface.lpVtbl = &field_supporterrorinfo_vtbl;
     field->Properties_iface.lpVtbl = &field_properties_vtbl;
     field->refs = 1;
-    if (!(field->name = strdupW( name )))
+    if (!(field->name = wcsdup( name )))
     {
-        heap_free( field );
+        free( field );
         return E_OUTOFMEMORY;
     }
     field->index = index;
@@ -799,7 +798,7 @@ static BOOL resize_fields( struct fields *fields, ULONG count )
     {
         Field **tmp;
         ULONG new_size = max( count, fields->allocated * 2 );
-        if (!(tmp = heap_realloc( fields->field, new_size * sizeof(*tmp) ))) return FALSE;
+        if (!(tmp = realloc( fields->field, new_size * sizeof(*tmp) ))) return FALSE;
         fields->field = tmp;
         fields->allocated = new_size;
     }
@@ -976,7 +975,7 @@ static HRESULT fields_create( struct recordset *recordset, struct fields **ret )
 {
     struct fields *fields;
 
-    if (!(fields = heap_alloc_zero( sizeof(*fields) ))) return E_OUTOFMEMORY;
+    if (!(fields = calloc( 1, sizeof(*fields) ))) return E_OUTOFMEMORY;
     fields->Fields_iface.lpVtbl = &fields_vtbl;
     fields->ISupportErrorInfo_iface.lpVtbl = &fields_supporterrorinfo_vtbl;
     fields->refs = 1;
@@ -1034,7 +1033,7 @@ static void close_recordset( struct recordset *recordset )
         for (col = 0; col < col_count; col++) VariantClear( &recordset->data[row * col_count + col] );
 
     recordset->count = recordset->allocated = recordset->index = 0;
-    heap_free( recordset->data );
+    free( recordset->data );
     recordset->data = NULL;
 }
 
@@ -1047,7 +1046,7 @@ static ULONG WINAPI recordset_Release( _Recordset *iface )
     {
         TRACE( "destroying %p\n", recordset );
         close_recordset( recordset );
-        heap_free( recordset );
+        free( recordset );
     }
     return refs;
 }
@@ -1339,7 +1338,8 @@ static BOOL resize_recordset( struct recordset *recordset, ULONG row_count )
     {
         VARIANT *tmp;
         ULONG count = max( row_count, recordset->allocated * 2 );
-        if (!(tmp = heap_realloc_zero( recordset->data, count * row_size ))) return FALSE;
+        if (!(tmp = realloc( recordset->data, count * row_size ))) return FALSE;
+        memset( tmp + recordset->allocated, 0, (count - recordset->allocated) * row_size );
         recordset->data = tmp;
         recordset->allocated = count;
     }
@@ -2121,7 +2121,7 @@ HRESULT Recordset_create( void **obj )
 {
     struct recordset *recordset;
 
-    if (!(recordset = heap_alloc_zero( sizeof(*recordset) ))) return E_OUTOFMEMORY;
+    if (!(recordset = calloc( 1, sizeof(*recordset) ))) return E_OUTOFMEMORY;
     recordset->Recordset_iface.lpVtbl = &recordset_vtbl;
     recordset->ISupportErrorInfo_iface.lpVtbl = &recordset_supporterrorinfo_vtbl;
     recordset->ADORecordsetConstruction_iface.lpVtbl = &rsconstruction_vtbl;
