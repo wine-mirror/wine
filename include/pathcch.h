@@ -26,6 +26,10 @@
 
 #define PATHCCH_MAX_CCH 0x8000
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 HRESULT WINAPI PathAllocCanonicalize(const WCHAR *path_in, DWORD flags, WCHAR **path_out);
 HRESULT WINAPI PathAllocCombine(const WCHAR *path1, const WCHAR *path2, DWORD flags, WCHAR **out);
 HRESULT WINAPI PathCchAddBackslash(WCHAR *path, SIZE_T size);
@@ -48,3 +52,7 @@ HRESULT WINAPI PathCchSkipRoot(const WCHAR *path, const WCHAR **root_end);
 HRESULT WINAPI PathCchStripPrefix(WCHAR *path, SIZE_T size);
 HRESULT WINAPI PathCchStripToRoot(WCHAR *path, SIZE_T size);
 BOOL    WINAPI PathIsUNCEx(const WCHAR *path, const WCHAR **server);
+
+#ifdef __cplusplus
+}
+#endif
