@@ -19,6 +19,7 @@
 
 #include "mfapi.h"
 #include "mferror.h"
+#include "mediaerr.h"
 #include "mfobjects.h"
 #include "mftransform.h"
 #include "wmcodecdsp.h"
@@ -27,6 +28,23 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
+
+extern const GUID MFVideoFormat_VC1S;
+
+DEFINE_GUID(MFVideoFormat_WMV_Unknown, 0x7ce12ca9,0xbfbf,0x43d9,0x9d,0x00,0x82,0xb8,0xed,0x54,0x31,0x6b);
+
+static const GUID *const wmv_decoder_input_types[] =
+{
+    &MFVideoFormat_WMV1,
+    &MFVideoFormat_WMV2,
+    &MEDIASUBTYPE_WMVA,
+    &MEDIASUBTYPE_WMVP,
+    &MEDIASUBTYPE_WVP2,
+    &MFVideoFormat_WMV_Unknown,
+    &MFVideoFormat_WVC1,
+    &MFVideoFormat_WMV3,
+    &MFVideoFormat_VC1S,
+};
 
 struct wmv_decoder
 {
@@ -345,8 +363,23 @@ static HRESULT WINAPI media_object_GetOutputStreamInfo(IMediaObject *iface, DWOR
 static HRESULT WINAPI media_object_GetInputType(IMediaObject *iface, DWORD index, DWORD type_index,
         DMO_MEDIA_TYPE *type)
 {
-    FIXME("iface %p, index %lu, type_index %lu, type %p stub!\n", iface, index, type_index, type);
-    return E_NOTIMPL;
+    TRACE("iface %p, index %lu, type_index %lu, type %p.\n", iface, index, type_index, type);
+
+    if (index > 0)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (type_index >= ARRAY_SIZE(wmv_decoder_input_types))
+        return DMO_E_NO_MORE_ITEMS;
+    if (!type)
+        return S_OK;
+
+    memset(type, 0, sizeof(*type));
+    type->majortype = MFMediaType_Video;
+    type->subtype = *wmv_decoder_input_types[type_index];
+    type->bFixedSizeSamples = FALSE;
+    type->bTemporalCompression = TRUE;
+    type->lSampleSize = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD index, DWORD type_index,

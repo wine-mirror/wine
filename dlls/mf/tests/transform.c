@@ -4563,30 +4563,22 @@ static void test_wmv_decoder_media_object(void)
         check_dmo_media_type(&media_type, &expected_input_types[i]);
         winetest_pop_context();
     }
-    todo_wine
     ok(i == ARRAY_SIZE(expected_input_types), "%lu input types.\n", i);
 
     /* Test GetInputType with invalid arguments. */
     hr = IMediaObject_GetInputType(media_object, 0, ARRAY_SIZE(expected_input_types) - 1, &media_type);
-    todo_wine
     ok(hr == S_OK, "GetInputType returned unexpected hr %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 0, ARRAY_SIZE(expected_input_types), &media_type);
-    todo_wine
     ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned unexpected hr %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 1, 0, &media_type);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned unexpected hr %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 0, 0, NULL);
-    todo_wine
     ok(hr == S_OK, "GetInputType returned unexpected hr %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 1, ARRAY_SIZE(expected_input_types), &media_type);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned unexpected hr %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 0, ARRAY_SIZE(expected_input_types), NULL);
-    todo_wine
     ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned unexpected hr %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 1, 0, NULL);
-    todo_wine
     ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned unexpected hr %#lx.\n", hr);
 
     ret = IMediaObject_Release(media_object);
