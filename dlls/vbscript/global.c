@@ -1842,10 +1842,12 @@ static HRESULT Global_Asc(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
 
     if(!SysStringLen(str))
         hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+    else if (This->ctx->codepage == CP_UTF8)
+        hres = return_short(res, *str);
     else {
         unsigned char buf[2];
         short val = 0;
-        int n = WideCharToMultiByte(CP_ACP, 0, str, 1, (char*)buf, sizeof(buf), NULL, NULL);
+        int n = WideCharToMultiByte(This->ctx->codepage, 0, str, 1, (char*)buf, sizeof(buf), NULL, NULL);
         switch(n) {
         case 1:
             val = buf[0];
@@ -1865,9 +1867,6 @@ static HRESULT Global_Asc(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
     return hres;
 }
 
-/* The function supports only single-byte and double-byte character sets. It
- * ignores language specified by IActiveScriptSite::GetLCID. The argument needs
- * to be in range of short or unsigned short. */
 static HRESULT Global_Chr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
     int cp, c, len = 0;
@@ -1882,7 +1881,7 @@ static HRESULT Global_Chr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
     if(FAILED(hres))
         return hres;
 
-    cp = GetACP();
+    cp = This->ctx->codepage;
     if(!GetCPInfo(cp, &cpi))
         cpi.MaxCharSize = 1;
 
@@ -1892,13 +1891,20 @@ static HRESULT Global_Chr(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VA
         return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
     }
 
-    if(c>>8)
-        buf[len++] = c>>8;
-    if(!len || IsDBCSLeadByteEx(cp, buf[0]))
-        buf[len++] = c;
-    if(!MultiByteToWideChar(CP_ACP, 0, buf, len, &ch, 1)) {
-        WARN("invalid arg %d, cp %d\n", c, cp);
-        return E_FAIL;
+    if (cp == CP_UTF8)
+    {
+        ch = c;
+    }
+    else
+    {
+        if(c>>8)
+            buf[len++] = c>>8;
+        if(!len || IsDBCSLeadByteEx(cp, buf[0]))
+            buf[len++] = c;
+        if(!MultiByteToWideChar(cp, 0, buf, len, &ch, 1)) {
+            WARN("invalid arg %d, cp %d\n", c, cp);
+            return E_FAIL;
+        }
     }
 
     if(res) {

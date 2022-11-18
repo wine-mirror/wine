@@ -183,6 +183,7 @@ static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
 struct _script_ctx_t {
     IActiveScriptSite *site;
     LCID lcid;
+    UINT codepage;
 
     IInternetHostSecurityManager *secmgr;
     DWORD safeopt;

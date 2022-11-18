@@ -555,8 +555,8 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
 static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScriptSite *pass)
 {
     VBScript *This = impl_from_IActiveScript(iface);
+    LCID lcid = LOCALE_USER_DEFAULT;
     named_item_t *item;
-    LCID lcid;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, pass);
@@ -590,9 +590,12 @@ static HRESULT WINAPI VBScript_SetScriptSite(IActiveScript *iface, IActiveScript
     This->ctx->site = pass;
     IActiveScriptSite_AddRef(This->ctx->site);
 
-    hres = IActiveScriptSite_GetLCID(This->ctx->site, &lcid);
-    if(hres == S_OK)
-        This->ctx->lcid = lcid;
+    IActiveScriptSite_GetLCID(This->ctx->site, &lcid);
+    This->ctx->lcid = IsValidLocale(lcid, 0) ? lcid : GetUserDefaultLCID();
+    GetLocaleInfoW(lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER, (WCHAR *)&This->ctx->codepage,
+            sizeof(This->ctx->codepage)/sizeof(WCHAR));
+    if (!This->ctx->codepage)
+        This->ctx->codepage = CP_UTF8;
 
     if(This->is_initialized)
         change_state(This, SCRIPTSTATE_INITIALIZED);
