@@ -37,16 +37,45 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
+#define EVENTLISTENER_VTBL(handler) \
+    { \
+        nsDOMEventListener_QueryInterface, \
+        nsDOMEventListener_AddRef, \
+        nsDOMEventListener_Release, \
+        handler, \
+    }
+static nsresult NSAPI nsDOMEventListener_QueryInterface(nsIDOMEventListener*,nsIIDRef,void**);
+static nsrefcnt NSAPI nsDOMEventListener_AddRef(nsIDOMEventListener*);
+static nsrefcnt NSAPI nsDOMEventListener_Release(nsIDOMEventListener*);
+
 typedef struct {
     nsIDOMEventListener nsIDOMEventListener_iface;
     nsDocumentEventListener *This;
 } nsEventListener;
 
+static nsresult NSAPI handle_blur(nsIDOMEventListener*,nsIDOMEvent*);
+static nsresult NSAPI handle_focus(nsIDOMEventListener*,nsIDOMEvent*);
+static nsresult NSAPI handle_keypress(nsIDOMEventListener*,nsIDOMEvent*);
+static nsresult NSAPI handle_load(nsIDOMEventListener*,nsIDOMEvent*);
+
+enum doc_event_listener_flags {
+    BUBBLES  = 0x0001,
+    OVERRIDE = 0x0002,
+};
+
+static const struct {
+    eventid_t id;
+    enum doc_event_listener_flags flags;
+    nsIDOMEventListenerVtbl vtbl;
+} doc_event_listeners[] = {
+    { EVENTID_BLUR,         0,                  EVENTLISTENER_VTBL(handle_blur) },
+    { EVENTID_FOCUS,        0,                  EVENTLISTENER_VTBL(handle_focus) },
+    { EVENTID_KEYPRESS,     BUBBLES,            EVENTLISTENER_VTBL(handle_keypress) },
+    { EVENTID_LOAD,         OVERRIDE,           EVENTLISTENER_VTBL(handle_load), },
+};
+
 struct nsDocumentEventListener {
-    nsEventListener blur_listener;
-    nsEventListener focus_listener;
-    nsEventListener keypress_listener;
-    nsEventListener load_listener;
+    nsEventListener listener[ARRAY_SIZE(doc_event_listeners)];
     nsEventListener htmlevent_listener;
 
     LONG ref;
@@ -346,18 +375,6 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
     return NS_OK;
 }
 
-#define EVENTLISTENER_VTBL(handler) \
-    { \
-        nsDOMEventListener_QueryInterface, \
-        nsDOMEventListener_AddRef, \
-        nsDOMEventListener_Release, \
-        handler, \
-    }
-
-static const nsIDOMEventListenerVtbl blur_vtbl =      EVENTLISTENER_VTBL(handle_blur);
-static const nsIDOMEventListenerVtbl focus_vtbl =     EVENTLISTENER_VTBL(handle_focus);
-static const nsIDOMEventListenerVtbl keypress_vtbl =  EVENTLISTENER_VTBL(handle_keypress);
-static const nsIDOMEventListenerVtbl load_vtbl =      EVENTLISTENER_VTBL(handle_load);
 static const nsIDOMEventListenerVtbl htmlevent_vtbl = EVENTLISTENER_VTBL(handle_htmlevent);
 
 static void init_event(nsIDOMEventTarget *target, const PRUnichar *type,
@@ -438,16 +455,15 @@ void detach_nsevent(HTMLDocumentNode *doc, const WCHAR *type)
 void release_nsevents(HTMLDocumentNode *doc)
 {
     nsDocumentEventListener *listener = doc->nsevent_listener;
+    unsigned i;
 
     TRACE("%p %p\n", doc, doc->nsevent_listener);
 
     if(!listener)
         return;
 
-    detach_nslistener(doc, L"blur",     &listener->blur_listener,     TRUE);
-    detach_nslistener(doc, L"focus",    &listener->focus_listener,    TRUE);
-    detach_nslistener(doc, L"keypress", &listener->keypress_listener, FALSE);
-    detach_nslistener(doc, L"load",     &listener->load_listener,     TRUE);
+    for(i = 0; i < ARRAY_SIZE(doc_event_listeners); i++)
+        detach_nslistener(doc, get_event_name(doc_event_listeners[i].id), &listener->listener[i], !(doc_event_listeners[i].flags & BUBBLES));
 
     listener->doc = NULL;
     release_listener(listener);
@@ -458,6 +474,7 @@ void init_nsevents(HTMLDocumentNode *doc)
 {
     nsDocumentEventListener *listener;
     nsIDOMEventTarget *target;
+    unsigned i;
 
     listener = heap_alloc(sizeof(nsDocumentEventListener));
     if(!listener)
@@ -468,11 +485,9 @@ void init_nsevents(HTMLDocumentNode *doc)
     listener->ref = 1;
     listener->doc = doc;
 
-    init_listener(&listener->blur_listener,        listener, &blur_vtbl);
-    init_listener(&listener->focus_listener,       listener, &focus_vtbl);
-    init_listener(&listener->keypress_listener,    listener, &keypress_vtbl);
-    init_listener(&listener->load_listener,        listener, &load_vtbl);
-    init_listener(&listener->htmlevent_listener,   listener, &htmlevent_vtbl);
+    for(i = 0; i < ARRAY_SIZE(doc_event_listeners); i++)
+        init_listener(&listener->listener[i], listener, &doc_event_listeners[i].vtbl);
+    init_listener(&listener->htmlevent_listener, listener, &htmlevent_vtbl);
 
     doc->nsevent_listener = listener;
 
@@ -480,13 +495,13 @@ void init_nsevents(HTMLDocumentNode *doc)
     if(!target)
         return;
 
-    init_event(target, L"blur",     &listener->blur_listener.nsIDOMEventListener_iface,     TRUE);
-    init_event(target, L"focus",    &listener->focus_listener.nsIDOMEventListener_iface,    TRUE);
-    init_event(target, L"keypress", &listener->keypress_listener.nsIDOMEventListener_iface, FALSE);
-    init_event(target, L"load",     &listener->load_listener.nsIDOMEventListener_iface,     TRUE);
+    for(i = 0; i < ARRAY_SIZE(doc_event_listeners); i++) {
+        init_event(target, get_event_name(doc_event_listeners[i].id), &listener->listener[i].nsIDOMEventListener_iface,
+                   !(doc_event_listeners[i].flags & BUBBLES));
+
+        if(doc_event_listeners[i].flags & OVERRIDE)
+            doc->event_vector[doc_event_listeners[i].id] = TRUE;
+    }
 
     nsIDOMEventTarget_Release(target);
-
-    /* handle_load already takes care of dispatching the load event */
-    doc->event_vector[EVENTID_LOAD] = TRUE;
 }
