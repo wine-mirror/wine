@@ -58,6 +58,7 @@ static nsresult NSAPI handle_focus(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_keypress(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_pageshow(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_load(nsIDOMEventListener*,nsIDOMEvent*);
+static nsresult NSAPI handle_beforeunload(nsIDOMEventListener*,nsIDOMEvent*);
 
 enum doc_event_listener_flags {
     BUBBLES  = 0x0001,
@@ -74,6 +75,7 @@ static const struct {
     { EVENTID_KEYPRESS,     BUBBLES,            EVENTLISTENER_VTBL(handle_keypress) },
     { EVENTID_PAGESHOW,     OVERRIDE,           EVENTLISTENER_VTBL(handle_pageshow), },
     { EVENTID_LOAD,         OVERRIDE,           EVENTLISTENER_VTBL(handle_load), },
+    { EVENTID_BEFOREUNLOAD, OVERRIDE,           EVENTLISTENER_VTBL(handle_beforeunload), },
 };
 
 struct nsDocumentEventListener {
@@ -330,6 +332,27 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     }
 
     IHTMLDOMNode_Release(&doc->node.IHTMLDOMNode_iface);
+    return NS_OK;
+}
+
+static nsresult NSAPI handle_beforeunload(nsIDOMEventListener *iface, nsIDOMEvent *nsevent)
+{
+    nsEventListener *This = impl_from_nsIDOMEventListener(iface);
+    HTMLDocumentNode *doc = This->This->doc;
+    HTMLInnerWindow *window;
+    DOMEvent *event;
+    HRESULT hres;
+
+    if(!doc || !(window = doc->window))
+        return NS_OK;
+
+    /* Gecko dispatches this to the document, but IE dispatches it to the window */
+    hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), &event);
+    if(SUCCEEDED(hres)) {
+        dispatch_event(&window->event_target, event);
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+    }
+
     return NS_OK;
 }
 

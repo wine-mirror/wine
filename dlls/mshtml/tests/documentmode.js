@@ -20,6 +20,8 @@ var compat_version;
 var tests = [];
 
 var pageshow_fired = false;
+window.onbeforeunload = function() { ok(false, "beforeunload fired"); };
+
 if(window.addEventListener) {
     window.addEventListener("pageshow", function(e) {
         pageshow_fired = true;
@@ -32,6 +34,9 @@ if(window.addEventListener) {
     }, true);
 
     document.addEventListener("visibilitychange", function() { ok(false, "visibilitychange fired"); });
+    document.addEventListener("beforeunload", function() { ok(false, "beforeunload fired on document"); });
+}else {
+    document.attachEvent("onbeforeunload", function() { ok(false, "beforeunload fired on document"); });
 }
 
 sync_test("page transition events", function() {
