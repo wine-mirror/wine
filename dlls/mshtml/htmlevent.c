@@ -3683,10 +3683,7 @@ HRESULT ensure_doc_nsevent_handler(HTMLDocumentNode *doc, nsIDOMNode *nsnode, ev
 
     if(event_info[eid].flags & EVENT_DEFAULTLISTENER) {
         nsnode = NULL;
-    }else if(event_info[eid].flags & EVENT_BIND_TO_TARGET) {
-        if(!nsnode)
-            nsnode = doc->node.nsnode;
-    }else {
+    }else if(!(event_info[eid].flags & EVENT_BIND_TO_TARGET)) {
         return S_OK;
     }
 
