@@ -368,10 +368,10 @@ void __RPC_USER IrotContextHandle_rundown(IrotContextHandle ctxt_handle)
 
 void * __RPC_USER MIDL_user_allocate(SIZE_T size)
 {
-    return malloc(size);
+    return I_RpcAllocate(size);
 }
 
 void __RPC_USER MIDL_user_free(void * p)
 {
-    free(p);
+    I_RpcFree(p);
 }
