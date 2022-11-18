@@ -97,6 +97,7 @@ DEFINE_EXPECT(submit_onclick_attached_check_cancel);
 DEFINE_EXPECT(submit_onclick_setret);
 DEFINE_EXPECT(elem2_cp_onclick);
 DEFINE_EXPECT(iframe_onload);
+DEFINE_EXPECT(visibilitychange);
 DEFINE_EXPECT(doc1_onstorage);
 DEFINE_EXPECT(doc1_onstoragecommit);
 DEFINE_EXPECT(window1_onstorage);
@@ -1406,6 +1407,30 @@ static HRESULT WINAPI iframe_onreadystatechange(IDispatchEx *iface, DISPID id, L
 
 EVENT_HANDLER_FUNC_OBJ(iframe_onreadystatechange);
 
+static HRESULT WINAPI onvisibilitychange(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    IDispatchEx *dispex;
+    HRESULT hres;
+    BSTR bstr;
+
+    CHECK_EXPECT(visibilitychange);
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&pdp->rgvarg[1]), &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+
+    bstr = SysAllocString(L"toString");
+    hres = IDispatchEx_GetDispID(dispex, bstr, 0, &id);
+    todo_wine
+    ok(hres == S_OK, "GetDispID(\"toString\") failed: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(onvisibilitychange);
+
 static HRESULT WINAPI nocall(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -2385,6 +2410,54 @@ static void test_focus(IHTMLDocument2 *doc)
 
     IHTMLElement2_Release(elem2);
     IHTMLElement4_Release(div);
+}
+
+static void test_visibilitychange(IHTMLDocument2 *doc)
+{
+    if(!winetest_interactive) {
+        ShowWindow(container_hwnd, SW_SHOW);
+        pump_msgs(NULL);
+    }
+    add_event_listener((IUnknown*)doc, L"visibilitychange", (IDispatch*)&onvisibilitychange_obj, VARIANT_TRUE);
+
+    ShowWindow(container_hwnd, SW_HIDE);
+    pump_msgs(NULL);
+
+    ShowWindow(container_hwnd, SW_SHOW);
+    pump_msgs(NULL);
+
+    if(document_mode < 10) {
+        ShowWindow(container_hwnd, SW_MINIMIZE);
+        pump_msgs(NULL);
+
+        ShowWindow(container_hwnd, SW_RESTORE);
+        pump_msgs(NULL);
+    }else {
+        /* FIXME: currently not implemented in Wine, so we can't wait for it */
+        BOOL *expect = broken(1) ? &called_visibilitychange : NULL;
+
+        SET_EXPECT(visibilitychange);
+        ShowWindow(container_hwnd, SW_MINIMIZE);
+        pump_msgs(expect);
+        todo_wine
+        CHECK_CALLED(visibilitychange);
+
+        SET_EXPECT(visibilitychange);
+        ShowWindow(container_hwnd, SW_RESTORE);
+        pump_msgs(expect);
+        todo_wine
+        CHECK_CALLED(visibilitychange);
+    }
+
+    navigate(doc, document_mode < 10 ? L"blank_ie10.html" : L"blank.html");
+
+    if(document_mode >= 9)
+        add_event_listener((IUnknown*)doc, L"visibilitychange", (IDispatch*)&onvisibilitychange_obj, VARIANT_TRUE);
+
+    if(!winetest_interactive) {
+        ShowWindow(container_hwnd, SW_HIDE);
+        pump_msgs(NULL);
+    }
 }
 
 static void test_submit(IHTMLDocument2 *doc)
@@ -5091,6 +5164,10 @@ static IHTMLDocument2 *create_document_with_origin(const char *str)
     return doc;
 }
 
+static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
 
 typedef void (*testfunc_t)(IHTMLDocument2*);
 
@@ -5154,6 +5231,7 @@ static void run_test_impl(const char *str, const WCHAR *res, testfunc_t test)
         ok(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
         ok(window != NULL, "window == NULL\n");
 
+        ok((WNDPROC)GetWindowLongPtrA(container_hwnd, GWLP_WNDPROC) == wnd_proc, "container_hwnd is subclassed\n");
         test(doc);
 
         IHTMLWindow2_Release(window);
@@ -5174,11 +5252,6 @@ static void run_test(const char *str, testfunc_t test)
 static void run_test_from_res(const WCHAR *res, testfunc_t test)
 {
     return run_test_impl(NULL, res, test);
-}
-
-static LRESULT WINAPI wnd_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-    return DefWindowProcA(hwnd, msg, wParam, lParam);
 }
 
 static HWND create_container_window(void)
@@ -5496,6 +5569,8 @@ START_TEST(events)
         if(is_ie9plus) {
             run_test_from_res(L"doc_with_prop.html", test_doc_obj);
             run_test_from_res(L"doc_with_prop_ie9.html", test_doc_obj);
+            run_test_from_res(L"doc_with_prop_ie9.html", test_visibilitychange);
+            run_test_from_res(L"blank_ie10.html", test_visibilitychange);
             run_test(empty_doc_ie9_str, test_create_event);
         }
 

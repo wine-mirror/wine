@@ -63,6 +63,7 @@ typedef enum {
     EVENTID_SUBMIT,
     EVENTID_TIMEOUT,
     EVENTID_UNLOAD,
+    EVENTID_VISIBILITYCHANGE,
     EVENTID_LAST
 } eventid_t;
 

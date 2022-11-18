@@ -19,6 +19,11 @@
 var compat_version;
 var tests = [];
 
+if(window.addEventListener) {
+    document.addEventListener("visibilitychange", function() { ok(false, "visibilitychange fired"); });
+}
+
+
 sync_test("builtin_toString", function() {
     var tags = [
         [ "abbr",            "Phrase" ],

@@ -206,6 +206,8 @@ static const event_info_t event_info[] = {
         EVENT_BIND_TO_TARGET},
     {L"unload",            EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONUNLOAD,
         EVENT_FIXME},
+    {L"visibilitychange",  EVENT_TYPE_EVENT,     DISPID_EVPROP_VISIBILITYCHANGE,
+        EVENT_FIXME | EVENT_BUBBLES},
 
     /* EVENTID_LAST special entry */
     {NULL,                 EVENT_TYPE_EVENT,     0, 0}
