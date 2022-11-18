@@ -209,7 +209,7 @@ static const event_info_t event_info[] = {
     {L"timeout",           EVENT_TYPE_PROGRESS,  DISPID_EVPROP_TIMEOUT,
         EVENT_BIND_TO_TARGET},
     {L"unload",            EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONUNLOAD,
-        EVENT_FIXME},
+        EVENT_BIND_TO_TARGET},
     {L"visibilitychange",  EVENT_TYPE_EVENT,     DISPID_EVPROP_VISIBILITYCHANGE,
         EVENT_FIXME | EVENT_BUBBLES},
 

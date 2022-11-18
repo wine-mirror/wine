@@ -20,7 +20,12 @@ var compat_version;
 var tests = [];
 
 var pageshow_fired = false;
+document.doc_unload_events_called = false;
 window.onbeforeunload = function() { ok(false, "beforeunload fired"); };
+window.onunload = function() {
+    document.doc_unload_events_called = true;
+    ok(document.readyState === "complete", "unload readyState = " + document.readyState);
+};
 
 if(window.addEventListener) {
     window.addEventListener("pageshow", function(e) {
@@ -35,8 +40,10 @@ if(window.addEventListener) {
 
     document.addEventListener("visibilitychange", function() { ok(false, "visibilitychange fired"); });
     document.addEventListener("beforeunload", function() { ok(false, "beforeunload fired on document"); });
+    document.addEventListener("unload", function() { ok(false, "unload fired on document"); });
 }else {
     document.attachEvent("onbeforeunload", function() { ok(false, "beforeunload fired on document"); });
+    document.attachEvent("onunload", function() { ok(false, "unload fired on document"); });
 }
 
 sync_test("page transition events", function() {
@@ -44,6 +51,11 @@ sync_test("page transition events", function() {
         ok(pageshow_fired === false, "pageshow fired");
     else
         ok(pageshow_fired === true, "pageshow not fired");
+
+    if(document.body.addEventListener)
+        document.body.addEventListener("unload", function() { ok(false, "unload fired on document.body"); });
+    else
+        document.body.attachEvent("onunload", function() { ok(false, "unload fired on document.body"); });
 });
 
 sync_test("builtin_toString", function() {

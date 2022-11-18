@@ -924,7 +924,8 @@ struct HTMLDocumentNode {
 
     nsIDOMDocument *dom_document;
     nsIDOMHTMLDocument *html_document;
-    BOOL content_ready;
+    BOOL content_ready : 1;
+    BOOL unload_sent : 1;
 
     IHTMLDOMImplementation *dom_implementation;
     IHTMLNamespaceCollection *namespaces;

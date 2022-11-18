@@ -100,6 +100,8 @@ DEFINE_EXPECT(iframe_onload);
 DEFINE_EXPECT(visibilitychange);
 DEFINE_EXPECT(onbeforeunload);
 DEFINE_EXPECT(iframe_onbeforeunload);
+DEFINE_EXPECT(onunload);
+DEFINE_EXPECT(iframe_onunload);
 DEFINE_EXPECT(doc1_onstorage);
 DEFINE_EXPECT(doc1_onstoragecommit);
 DEFINE_EXPECT(window1_onstorage);
@@ -1448,11 +1450,38 @@ static HRESULT WINAPI iframe_onbeforeunload(IDispatchEx *iface, DISPID id, LCID 
 {
     CHECK_EXPECT(iframe_onbeforeunload);
     ok(called_onbeforeunload, "beforeunload not fired on parent window before iframe\n");
+    ok(!called_onunload, "unload fired on parent window before beforeunload on iframe\n");
+    ok(!called_iframe_onunload, "unload fired before beforeunload on iframe\n");
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     return S_OK;
 }
 
 EVENT_HANDLER_FUNC_OBJ(iframe_onbeforeunload);
+
+static HRESULT WINAPI onunload(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(onunload);
+    if(expect_iframe_onunload) {
+        ok(called_onbeforeunload, "beforeunload not fired before unload\n");
+        ok(called_iframe_onbeforeunload, "beforeunload not fired on iframe before unload\n");
+    }
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(onunload);
+
+static HRESULT WINAPI iframe_onunload(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(iframe_onunload);
+    ok(called_onunload, "unload not fired on parent window before iframe\n");
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(iframe_onunload);
 
 static HRESULT WINAPI nocall(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
@@ -2495,6 +2524,17 @@ static void test_unload_event(IHTMLDocument2 *doc)
     BSTR bstr;
 
     V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&onunload_obj;
+    hres = IHTMLWindow2_put_onunload(window, v);
+    ok(hres == S_OK, "put_onunload failed: %08lx\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLWindow2_get_onunload(window, &v);
+    ok(hres == S_OK, "get_onunload failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(onunload) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == (IDispatch*)&onunload_obj, "V_DISPATCH(onunload) = %p\n", V_DISPATCH(&v));
+
+    V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)&onbeforeunload_obj;
     hres = IHTMLWindow2_put_onbeforeunload(window, v);
     ok(hres == S_OK, "put_onbeforeunload failed: %08lx\n", hres);
@@ -2524,6 +2564,17 @@ static void test_unload_event(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_document failed: %08lx\n", hres);
 
     V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&iframe_onunload_obj;
+    hres = IHTMLWindow2_put_onunload(child, v);
+    ok(hres == S_OK, "put_onunload failed: %08lx\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLWindow2_get_onunload(child, &v);
+    ok(hres == S_OK, "get_onunload failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(onunload) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == (IDispatch*)&iframe_onunload_obj, "V_DISPATCH(onunload) = %p\n", V_DISPATCH(&v));
+
+    V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)&iframe_onbeforeunload_obj;
     hres = IHTMLWindow2_put_onbeforeunload(child, v);
     ok(hres == S_OK, "put_onbeforeunload failed: %08lx\n", hres);
@@ -2536,12 +2587,18 @@ static void test_unload_event(IHTMLDocument2 *doc)
 
     add_event_listener((IUnknown*)doc, L"beforeunload", (IDispatch*)&nocall_obj, VARIANT_TRUE);
     add_event_listener((IUnknown*)child_doc, L"beforeunload", (IDispatch*)&nocall_obj, VARIANT_TRUE);
+    add_event_listener((IUnknown*)doc, L"unload", (IDispatch*)&nocall_obj, VARIANT_TRUE);
+    add_event_listener((IUnknown*)child_doc, L"unload", (IDispatch*)&nocall_obj, VARIANT_TRUE);
     IHTMLDocument2_Release(child_doc);
     IHTMLWindow2_Release(child);
 
     SET_EXPECT(onbeforeunload);
     SET_EXPECT(iframe_onbeforeunload);
+    SET_EXPECT(onunload);
+    SET_EXPECT(iframe_onunload);
     navigate(doc, L"blank.html");
+    CHECK_CALLED(iframe_onunload);
+    CHECK_CALLED(onunload);
     CHECK_CALLED(iframe_onbeforeunload);
     CHECK_CALLED(onbeforeunload);
 
@@ -2549,6 +2606,17 @@ static void test_unload_event(IHTMLDocument2 *doc)
     hres = IHTMLWindow2_get_onbeforeunload(window, &v);
     ok(hres == S_OK, "get_onbeforeunload failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_NULL, "V_VT(onbeforeunload) = %d\n", V_VT(&v));
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = (IDispatch*)&onunload_obj;
+    hres = IHTMLWindow2_put_onunload(window, v);
+    ok(hres == S_OK, "put_onunload failed: %08lx\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IHTMLWindow2_get_onunload(window, &v);
+    ok(hres == S_OK, "get_onunload failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(onunload) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == (IDispatch*)&onunload_obj, "V_DISPATCH(onunload) = %p\n", V_DISPATCH(&v));
 
     V_VT(&v) = VT_DISPATCH;
     V_DISPATCH(&v) = (IDispatch*)&onbeforeunload_obj;
@@ -2560,6 +2628,16 @@ static void test_unload_event(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_onbeforeunload failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(onbeforeunload) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) == (IDispatch*)&onbeforeunload_obj, "V_DISPATCH(onbeforeunload) = %p\n", V_DISPATCH(&v));
+
+    IOleDocumentView_Show(view, FALSE);
+
+    SET_EXPECT(onunload);
+    IOleDocumentView_CloseView(view, 0);
+    CHECK_CALLED(onunload);
+
+    IOleDocumentView_SetInPlaceSite(view, NULL);
+    IOleDocumentView_Release(view);
+    view = NULL;
 }
 
 static void test_submit(IHTMLDocument2 *doc)

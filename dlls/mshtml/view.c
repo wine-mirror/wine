@@ -31,6 +31,7 @@
 #include "wine/debug.h"
 
 #include "mshtml_private.h"
+#include "htmlevent.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
@@ -407,6 +408,37 @@ HRESULT call_set_active_object(IOleInPlaceUIWindow *window, IOleInPlaceActiveObj
     return IOleInPlaceUIWindow_SetActiveObject(window, act_obj, act_obj ? html_documentW : NULL);
 }
 
+static void send_unload_events_impl(HTMLInnerWindow *window)
+{
+    HTMLOuterWindow *child;
+    DOMEvent *event;
+    HRESULT hres;
+
+    if(!window)
+        return;
+
+    if(window->doc && !window->doc->unload_sent) {
+        window->doc->unload_sent = TRUE;
+
+        hres = create_document_event(window->doc, EVENTID_UNLOAD, &event);
+        if(SUCCEEDED(hres)) {
+            dispatch_event(&window->event_target, event);
+            IDOMEvent_Release(&event->IDOMEvent_iface);
+        }
+    }
+
+    LIST_FOR_EACH_ENTRY(child, &window->children, HTMLOuterWindow, sibling_entry)
+        send_unload_events_impl(child->base.inner_window);
+}
+
+static void send_unload_events(HTMLDocumentObj *doc)
+{
+    if(!doc->doc_node || !doc->window || !doc->doc_node->content_ready)
+        return;
+
+    send_unload_events_impl(doc->window->base.inner_window);
+}
+
 /**********************************************************
  * IOleDocumentView implementation
  */
@@ -670,6 +702,7 @@ static HRESULT WINAPI OleDocumentView_CloseView(IOleDocumentView *iface, DWORD d
     if(dwReserved)
         WARN("dwReserved = %ld\n", dwReserved);
 
+    send_unload_events(This);
     IOleDocumentView_Show(iface, FALSE);
     return S_OK;
 }

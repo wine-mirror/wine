@@ -3892,8 +3892,10 @@ static void test_simple_script(void)
 
 static void run_from_moniker(IMoniker *mon)
 {
+    DISPID dispid = DISPID_UNKNOWN;
     IPersistMoniker *persist;
     IHTMLDocument2 *doc;
+    BSTR bstr;
     MSG msg;
     HRESULT hres;
 
@@ -3921,8 +3923,28 @@ static void run_from_moniker(IMoniker *mon)
 
     CHECK_CALLED(external_success);
 
+    /* check prop set by events fired during document unload */
+    bstr = SysAllocString(L"doc_unload_events_called");
+    hres = IHTMLDocument2_GetIDsOfNames(doc, &IID_NULL, &bstr, 1, 0, &dispid);
+    SysFreeString(bstr);
+    if(hres == DISP_E_UNKNOWNNAME)
+        dispid = DISPID_UNKNOWN;
+    else
+        ok(hres == S_OK, "GetIDsOfNames failed %08lx\n", hres);
+
     free_registered_streams();
     set_client_site(doc, FALSE);
+
+    if(dispid != DISPID_UNKNOWN) {
+        DISPPARAMS dp = { 0 };
+        UINT argerr;
+        VARIANT v;
+
+        hres = IHTMLDocument2_Invoke(doc, dispid, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, &argerr);
+        ok(hres == S_OK, "Invoke failed %08lx\n", hres);
+        ok(V_VT(&v) == VT_BOOL, "V_VT(doc_unload_events_called) = %d\n", V_VT(&v));
+        ok(V_BOOL(&v) == VARIANT_TRUE, "doc_unload_events_called is not true\n");
+    }
     IHTMLDocument2_Release(doc);
 }
 
