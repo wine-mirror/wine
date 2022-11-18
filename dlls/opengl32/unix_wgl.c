@@ -1067,8 +1067,25 @@ typedef ULONG PTR32;
 extern NTSTATUS ext_glClientWaitSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glDeleteSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glFenceSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glGetBufferPointerv( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glGetBufferPointervARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glGetNamedBufferPointerv( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glGetNamedBufferPointervEXT( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glGetSynciv( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glIsSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glMapBuffer( void *args ) DECLSPEC_HIDDEN;
+
+extern NTSTATUS ext_glUnmapBuffer( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glUnmapBufferARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glUnmapNamedBuffer( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glUnmapNamedBufferEXT( void *args ) DECLSPEC_HIDDEN;
+
+extern NTSTATUS ext_glMapBufferARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glMapBufferRange( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glMapNamedBuffer( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glMapNamedBufferEXT( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glMapNamedBufferRange( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_glMapNamedBufferRangeEXT( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glWaitSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_wglGetExtensionsStringARB( void *args ) DECLSPEC_HIDDEN;
@@ -1638,6 +1655,335 @@ NTSTATUS wow64_ext_glWaitSync( void *args )
 
     pthread_mutex_unlock( &wgl_lock );
     return status;
+}
+
+static GLint get_buffer_param( GLenum target, GLenum param )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    typeof(*funcs->ext.p_glGetBufferParameteriv) *func;
+    GLint size = 0;
+    if (!(func = funcs->ext.p_glGetBufferParameteriv)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glGetBufferParameteriv" );
+    if (func) func( target, param, &size );
+    return size;
+}
+
+static void *get_buffer_pointer( GLenum target )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    typeof(*funcs->ext.p_glGetBufferPointerv) *func;
+    void *ptr = NULL;
+    if (!(func = funcs->ext.p_glGetBufferPointerv)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glGetBufferPointerv" );
+    if (func) func( target, GL_BUFFER_MAP_POINTER, &ptr );
+    return ptr;
+}
+
+static GLint get_named_buffer_param( GLint buffer, GLenum param )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    typeof(*funcs->ext.p_glGetNamedBufferParameteriv) *func;
+    GLint size = 0;
+    if (!(func = funcs->ext.p_glGetNamedBufferParameteriv)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glGetNamedBufferParameteriv" );
+    if (func) func( buffer, param, &size );
+    return size;
+}
+
+static void *get_named_buffer_pointer( GLint buffer )
+{
+    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    typeof(*funcs->ext.p_glGetNamedBufferPointerv) *func;
+    void *ptr = NULL;
+    if (!(func = funcs->ext.p_glGetNamedBufferPointerv)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glGetNamedBufferPointerv" );
+    if (func) func( buffer, GL_BUFFER_MAP_POINTER, &ptr );
+    return ptr;
+}
+
+static NTSTATUS wow64_map_buffer( GLint buffer, GLenum target, void *ptr, SIZE_T size, GLbitfield access, PTR32 *ret )
+{
+    if (*ret)  /* wow64 pointer provided, map buffer to it */
+    {
+        if (access & GL_MAP_READ_BIT)
+        {
+            TRACE( "Copying %#zx from buffer at %p to wow64 buffer %p\n", size, ptr, UlongToPtr(*ret) );
+            memcpy( UlongToPtr(*ret), ptr, size );
+        }
+
+        /* save the wow64 pointer in the buffer data, we'll overwrite it on unmap */
+        *(PTR32 *)ptr = (UINT_PTR)*ret;
+        return STATUS_SUCCESS;
+    }
+
+    if (ULongToPtr(*ret = PtrToUlong(ptr)) == ptr) return STATUS_SUCCESS;  /* we're lucky */
+    if (access & GL_MAP_PERSISTENT_BIT)
+    {
+        FIXME( "GL_MAP_PERSISTENT_BIT not supported!\n" );
+        return STATUS_NOT_SUPPORTED;
+    }
+
+    if (!size) size = buffer ? get_named_buffer_param( buffer, GL_BUFFER_SIZE ) : get_buffer_param( target, GL_BUFFER_SIZE );
+    if ((PTR32)size != size) return STATUS_NO_MEMORY;  /* overflow */
+    if (size < sizeof(PTR32))
+    {
+        FIXME( "Buffer too small for metadata!\n" );
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    *ret = size;
+    return STATUS_INVALID_ADDRESS;
+}
+
+static NTSTATUS wow64_unmap_buffer( void *ptr, SIZE_T size, GLbitfield access )
+{
+    void *wow_ptr;
+
+    if (ULongToPtr(PtrToUlong(ptr)) == ptr) return STATUS_SUCCESS;  /* we're lucky */
+
+    wow_ptr = UlongToPtr(*(PTR32 *)ptr);
+    if (access & GL_MAP_WRITE_BIT)
+    {
+        TRACE( "Copying %#zx from wow64 buffer %p to buffer %p\n", size, wow_ptr, ptr );
+        memcpy( ptr, wow_ptr, size );
+    }
+
+    return STATUS_INVALID_ADDRESS;
+}
+
+NTSTATUS wow64_ext_glGetBufferPointerv( void *args )
+{
+    PTR32 *ptr; /* pointer to the buffer data, where we saved the wow64 pointer */
+    struct
+    {
+        GLenum target;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetBufferPointerv_params params =
+    {
+        .target = params32->target,
+        .pname = params32->pname,
+        .params = (void **)&ptr,
+    };
+    PTR32 *wow_ptr = UlongToPtr(params32->params);
+    NTSTATUS status;
+
+    if ((status = ext_glGetBufferPointerv( &params ))) return status;
+    if (params.pname != GL_BUFFER_MAP_POINTER) return STATUS_NOT_IMPLEMENTED;
+    if (ULongToPtr(*wow_ptr = PtrToUlong(ptr)) == ptr) return STATUS_SUCCESS;  /* we're lucky */
+    *wow_ptr = ptr[0];
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_ext_glGetBufferPointervARB( void *args )
+{
+    return wow64_ext_glGetBufferPointerv( args );
+}
+
+NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args )
+{
+    PTR32 *ptr; /* pointer to the buffer data, where we saved the wow64 pointer */
+    struct
+    {
+        GLuint buffer;
+        GLenum pname;
+        PTR32 params;
+    } *params32 = args;
+    struct glGetNamedBufferPointerv_params params =
+    {
+        .buffer = params32->buffer,
+        .pname = params32->pname,
+        .params = (void **)&ptr,
+    };
+    PTR32 *wow_ptr = UlongToPtr(params32->params);
+    NTSTATUS status;
+
+    if ((status = ext_glGetNamedBufferPointerv( &params ))) return status;
+    if (params.pname != GL_BUFFER_MAP_POINTER) return STATUS_NOT_IMPLEMENTED;
+    if (ULongToPtr(*wow_ptr = PtrToUlong(ptr)) == ptr) return STATUS_SUCCESS;  /* we're lucky */
+    *wow_ptr = ptr[0];
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args )
+{
+    return wow64_ext_glGetNamedBufferPointerv( args );
+}
+
+NTSTATUS wow64_ext_glMapBuffer( void *args )
+{
+    struct
+    {
+        GLenum target;
+        GLenum access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapBuffer_params params =
+    {
+        .target = params32->target,
+        .access = params32->access,
+    };
+    struct glUnmapBuffer_params unmap_params = { .target = params.target };
+    NTSTATUS status;
+
+    /* already mapped, we're being called again with a wow64 pointer */
+    if (params32->ret) params.ret = get_buffer_pointer( params.target );
+    else if ((status = ext_glMapBuffer( &params ))) return status;
+
+    status = wow64_map_buffer( 0, params.target, params.ret, 0, params.access, &params32->ret );
+    if (!status || status == STATUS_INVALID_ADDRESS) return status;
+
+    ext_glUnmapBuffer( &unmap_params );
+    return status;
+}
+
+NTSTATUS wow64_ext_glMapBufferARB( void *args )
+{
+    return wow64_ext_glMapBuffer( args );
+}
+
+NTSTATUS wow64_ext_glMapBufferRange( void *args )
+{
+    struct
+    {
+        GLenum target;
+        PTR32 offset;
+        PTR32 length;
+        GLbitfield access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapBufferRange_params params =
+    {
+        .target = params32->target,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+        .access = params32->access,
+    };
+    struct glUnmapBuffer_params unmap_params = { .target = params.target };
+    NTSTATUS status;
+
+    /* already mapped, we're being called again with a wow64 pointer */
+    if (params32->ret) params.ret = (char *)get_buffer_pointer( params.target );
+    else if ((status = ext_glMapBufferRange( &params ))) return status;
+
+    status = wow64_map_buffer( 0, params.target, params.ret, params.length, params.access, &params32->ret );
+    if (!status || status == STATUS_INVALID_ADDRESS) return status;
+
+    ext_glUnmapBuffer( &unmap_params );
+    return status;
+}
+
+NTSTATUS wow64_ext_glMapNamedBuffer( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        GLenum access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapNamedBuffer_params params =
+    {
+        .buffer = params32->buffer,
+        .access = params32->access,
+    };
+    struct glUnmapNamedBuffer_params unmap_params = { .buffer = params.buffer };
+    NTSTATUS status;
+
+    /* already mapped, we're being called again with a wow64 pointer */
+    if (params32->ret) params.ret = get_named_buffer_pointer( params.buffer );
+    else if ((status = ext_glMapNamedBuffer( &params ))) return status;
+
+    status = wow64_map_buffer( params.buffer, 0, params.ret, 0, params.access, &params32->ret );
+    if (!status || status == STATUS_INVALID_ADDRESS) return status;
+
+    ext_glUnmapNamedBuffer( &unmap_params );
+    return status;
+}
+
+NTSTATUS wow64_ext_glMapNamedBufferEXT( void *args )
+{
+    return wow64_ext_glMapNamedBuffer( args );
+}
+
+NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
+{
+    struct
+    {
+        GLuint buffer;
+        PTR32 offset;
+        PTR32 length;
+        GLbitfield access;
+        PTR32 ret;
+    } *params32 = args;
+    struct glMapNamedBufferRange_params params =
+    {
+        .buffer = params32->buffer,
+        .offset = (GLintptr)ULongToPtr(params32->offset),
+        .length = (GLsizeiptr)ULongToPtr(params32->length),
+        .access = params32->access,
+    };
+    struct glUnmapNamedBuffer_params unmap_params = { .buffer = params.buffer };
+    NTSTATUS status;
+
+    /* already mapped, we're being called again with a wow64 pointer */
+    if (params32->ret) params.ret = get_named_buffer_pointer( params.buffer );
+    else if ((status = ext_glMapNamedBufferRange( &params ))) return status;
+
+    status = wow64_map_buffer( params.buffer, 0, params.ret, params.length, params.access, &params32->ret );
+    if (!status || status == STATUS_INVALID_ADDRESS) return status;
+
+    ext_glUnmapNamedBuffer( &unmap_params );
+    return status;
+}
+
+NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args )
+{
+    return wow64_ext_glMapNamedBufferRange( args );
+}
+
+NTSTATUS wow64_ext_glUnmapBuffer( void *args )
+{
+    PTR32 *ptr;
+    struct
+    {
+        GLenum target;
+        GLboolean ret;
+    } *params32 = args;
+    NTSTATUS status;
+
+    if (!(ptr = get_buffer_pointer( params32->target ))) return STATUS_SUCCESS;
+
+    status = wow64_unmap_buffer( ptr, get_buffer_param( params32->target, GL_BUFFER_MAP_LENGTH ),
+                                 get_buffer_param( params32->target, GL_BUFFER_ACCESS_FLAGS ) );
+    ext_glUnmapBuffer( args );
+
+    return status;
+}
+
+NTSTATUS wow64_ext_glUnmapBufferARB( void *args )
+{
+    return wow64_ext_glUnmapBuffer( args );
+}
+
+NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args )
+{
+    PTR32 *ptr;
+    struct
+    {
+        GLint buffer;
+        GLboolean ret;
+    } *params32 = args;
+    NTSTATUS status;
+
+    if (!(ptr = get_named_buffer_pointer( params32->buffer ))) return STATUS_SUCCESS;
+
+    status = wow64_unmap_buffer( ptr, get_named_buffer_param( params32->buffer, GL_BUFFER_MAP_LENGTH ),
+                                 get_named_buffer_param( params32->buffer, GL_BUFFER_ACCESS_FLAGS ) );
+    ext_glUnmapNamedBuffer( args );
+
+    return status;
+}
+
+NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args )
+{
+    return wow64_ext_glUnmapNamedBuffer( args );
 }
 
 NTSTATUS WINAPI wow64_process_detach( void *args )

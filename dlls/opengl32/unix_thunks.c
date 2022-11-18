@@ -7748,7 +7748,7 @@ static NTSTATUS ext_glGetBufferParameterui64vNV( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glGetBufferPointerv( void *args )
+NTSTATUS ext_glGetBufferPointerv( void *args )
 {
     struct glGetBufferPointerv_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -7756,7 +7756,7 @@ static NTSTATUS ext_glGetBufferPointerv( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glGetBufferPointervARB( void *args )
+NTSTATUS ext_glGetBufferPointervARB( void *args )
 {
     struct glGetBufferPointervARB_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -8796,7 +8796,7 @@ static NTSTATUS ext_glGetNamedBufferParameterui64vNV( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glGetNamedBufferPointerv( void *args )
+NTSTATUS ext_glGetNamedBufferPointerv( void *args )
 {
     struct glGetNamedBufferPointerv_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -8804,7 +8804,7 @@ static NTSTATUS ext_glGetNamedBufferPointerv( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glGetNamedBufferPointervEXT( void *args )
+NTSTATUS ext_glGetNamedBufferPointervEXT( void *args )
 {
     struct glGetNamedBufferPointervEXT_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -11971,7 +11971,7 @@ static NTSTATUS ext_glMap2xOES( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glMapBuffer( void *args )
+NTSTATUS ext_glMapBuffer( void *args )
 {
     struct glMapBuffer_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -11979,7 +11979,7 @@ static NTSTATUS ext_glMapBuffer( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glMapBufferARB( void *args )
+NTSTATUS ext_glMapBufferARB( void *args )
 {
     struct glMapBufferARB_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -11987,7 +11987,7 @@ static NTSTATUS ext_glMapBufferARB( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glMapBufferRange( void *args )
+NTSTATUS ext_glMapBufferRange( void *args )
 {
     struct glMapBufferRange_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -12019,7 +12019,7 @@ static NTSTATUS ext_glMapGrid2xOES( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glMapNamedBuffer( void *args )
+NTSTATUS ext_glMapNamedBuffer( void *args )
 {
     struct glMapNamedBuffer_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -12027,7 +12027,7 @@ static NTSTATUS ext_glMapNamedBuffer( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glMapNamedBufferEXT( void *args )
+NTSTATUS ext_glMapNamedBufferEXT( void *args )
 {
     struct glMapNamedBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -12035,7 +12035,7 @@ static NTSTATUS ext_glMapNamedBufferEXT( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glMapNamedBufferRange( void *args )
+NTSTATUS ext_glMapNamedBufferRange( void *args )
 {
     struct glMapNamedBufferRange_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -12043,7 +12043,7 @@ static NTSTATUS ext_glMapNamedBufferRange( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glMapNamedBufferRangeEXT( void *args )
+NTSTATUS ext_glMapNamedBufferRangeEXT( void *args )
 {
     struct glMapNamedBufferRangeEXT_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -20515,7 +20515,7 @@ static NTSTATUS ext_glUnlockArraysEXT( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glUnmapBuffer( void *args )
+NTSTATUS ext_glUnmapBuffer( void *args )
 {
     struct glUnmapBuffer_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -20523,7 +20523,7 @@ static NTSTATUS ext_glUnmapBuffer( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glUnmapBufferARB( void *args )
+NTSTATUS ext_glUnmapBufferARB( void *args )
 {
     struct glUnmapBufferARB_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -20531,7 +20531,7 @@ static NTSTATUS ext_glUnmapBufferARB( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glUnmapNamedBuffer( void *args )
+NTSTATUS ext_glUnmapNamedBuffer( void *args )
 {
     struct glUnmapNamedBuffer_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -20539,7 +20539,7 @@ static NTSTATUS ext_glUnmapNamedBuffer( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_glUnmapNamedBufferEXT( void *args )
+NTSTATUS ext_glUnmapNamedBufferEXT( void *args )
 {
     struct glUnmapNamedBufferEXT_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -36058,40 +36058,6 @@ static NTSTATUS wow64_ext_glGetBufferParameterui64vNV( void *args )
     return status;
 }
 
-static NTSTATUS wow64_ext_glGetBufferPointerv( void *args )
-{
-    struct
-    {
-        GLenum target;
-        GLenum pname;
-        PTR32 params;
-    } *params32 = args;
-    struct glGetBufferPointerv_params params =
-    {
-        .target = params32->target,
-        .pname = params32->pname,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS wow64_ext_glGetBufferPointervARB( void *args )
-{
-    struct
-    {
-        GLenum target;
-        GLenum pname;
-        PTR32 params;
-    } *params32 = args;
-    struct glGetBufferPointervARB_params params =
-    {
-        .target = params32->target,
-        .pname = params32->pname,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS wow64_ext_glGetBufferSubData( void *args )
 {
     struct
@@ -38537,40 +38503,6 @@ static NTSTATUS wow64_ext_glGetNamedBufferParameterui64vNV( void *args )
     NTSTATUS status;
     status = ext_glGetNamedBufferParameterui64vNV( &params );
     return status;
-}
-
-static NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args )
-{
-    struct
-    {
-        GLuint buffer;
-        GLenum pname;
-        PTR32 params;
-    } *params32 = args;
-    struct glGetNamedBufferPointerv_params params =
-    {
-        .buffer = params32->buffer,
-        .pname = params32->pname,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args )
-{
-    struct
-    {
-        GLuint buffer;
-        GLenum pname;
-        PTR32 params;
-    } *params32 = args;
-    struct glGetNamedBufferPointervEXT_params params =
-    {
-        .buffer = params32->buffer,
-        .pname = params32->pname,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS wow64_ext_glGetNamedBufferSubData( void *args )
@@ -44486,61 +44418,6 @@ static NTSTATUS wow64_ext_glMTexCoord2fvSGIS( void *args )
     return status;
 }
 
-static NTSTATUS wow64_ext_glMapBuffer( void *args )
-{
-    struct
-    {
-        GLenum target;
-        GLenum access;
-        PTR32 ret;
-    } *params32 = args;
-    struct glMapBuffer_params params =
-    {
-        .target = params32->target,
-        .access = params32->access,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS wow64_ext_glMapBufferARB( void *args )
-{
-    struct
-    {
-        GLenum target;
-        GLenum access;
-        PTR32 ret;
-    } *params32 = args;
-    struct glMapBufferARB_params params =
-    {
-        .target = params32->target,
-        .access = params32->access,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS wow64_ext_glMapBufferRange( void *args )
-{
-    struct
-    {
-        GLenum target;
-        PTR32 offset;
-        PTR32 length;
-        GLbitfield access;
-        PTR32 ret;
-    } *params32 = args;
-    struct glMapBufferRange_params params =
-    {
-        .target = params32->target,
-        .offset = (GLintptr)ULongToPtr(params32->offset),
-        .length = (GLsizeiptr)ULongToPtr(params32->length),
-        .access = params32->access,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS wow64_ext_glMapControlPointsNV( void *args )
 {
     struct
@@ -44570,82 +44447,6 @@ static NTSTATUS wow64_ext_glMapControlPointsNV( void *args )
     NTSTATUS status;
     status = ext_glMapControlPointsNV( &params );
     return status;
-}
-
-static NTSTATUS wow64_ext_glMapNamedBuffer( void *args )
-{
-    struct
-    {
-        GLuint buffer;
-        GLenum access;
-        PTR32 ret;
-    } *params32 = args;
-    struct glMapNamedBuffer_params params =
-    {
-        .buffer = params32->buffer,
-        .access = params32->access,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS wow64_ext_glMapNamedBufferEXT( void *args )
-{
-    struct
-    {
-        GLuint buffer;
-        GLenum access;
-        PTR32 ret;
-    } *params32 = args;
-    struct glMapNamedBufferEXT_params params =
-    {
-        .buffer = params32->buffer,
-        .access = params32->access,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
-{
-    struct
-    {
-        GLuint buffer;
-        PTR32 offset;
-        PTR32 length;
-        GLbitfield access;
-        PTR32 ret;
-    } *params32 = args;
-    struct glMapNamedBufferRange_params params =
-    {
-        .buffer = params32->buffer,
-        .offset = (GLintptr)ULongToPtr(params32->offset),
-        .length = (GLsizeiptr)ULongToPtr(params32->length),
-        .access = params32->access,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args )
-{
-    struct
-    {
-        GLuint buffer;
-        PTR32 offset;
-        PTR32 length;
-        GLbitfield access;
-        PTR32 ret;
-    } *params32 = args;
-    struct glMapNamedBufferRangeEXT_params params =
-    {
-        .buffer = params32->buffer,
-        .offset = (GLintptr)ULongToPtr(params32->offset),
-        .length = (GLsizeiptr)ULongToPtr(params32->length),
-        .access = params32->access,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS wow64_ext_glMapObjectBufferATI( void *args )
@@ -60803,10 +60604,25 @@ extern NTSTATUS wow64_gl_glGetString( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glClientWaitSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glDeleteSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glFenceSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glGetBufferPointerv( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glGetBufferPointervARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glGetStringi( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glGetSynciv( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glIsSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glMapBuffer( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glMapBufferARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glMapBufferRange( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glMapNamedBuffer( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glMapNamedBufferEXT( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glMapNamedBufferRange( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glUnmapBuffer( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glUnmapBufferARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glWaitSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args ) DECLSPEC_HIDDEN;
@@ -63397,10 +63213,10 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     &ext_glUniformui64NV,
     &wow64_ext_glUniformui64vNV,
     &ext_glUnlockArraysEXT,
-    &ext_glUnmapBuffer,
-    &ext_glUnmapBufferARB,
-    &ext_glUnmapNamedBuffer,
-    &ext_glUnmapNamedBufferEXT,
+    &wow64_ext_glUnmapBuffer,
+    &wow64_ext_glUnmapBufferARB,
+    &wow64_ext_glUnmapNamedBuffer,
+    &wow64_ext_glUnmapNamedBufferEXT,
     &ext_glUnmapObjectBufferATI,
     &ext_glUnmapTexture2DINTEL,
     &wow64_ext_glUpdateObjectBufferATI,
