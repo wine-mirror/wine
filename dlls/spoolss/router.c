@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -31,7 +32,6 @@
 #include "spoolss.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(spoolss);
 
@@ -154,25 +154,6 @@ static CRITICAL_SECTION backend_cs = { &backend_cs_debug, -1, 0, 0, 0, 0 };
 static WCHAR localsplW[] = L"localspl.dll";
 
 /******************************************************************
- * strdupW [internal]
- *
- * create a copy of a unicode-string
- *
- */
-
-static LPWSTR strdupW(LPCWSTR p)
-{
-    LPWSTR ret;
-    DWORD len;
-
-    if(!p) return NULL;
-    len = (lstrlenW(p) + 1) * sizeof(WCHAR);
-    ret = heap_alloc(len);
-    memcpy(ret, p, len);
-    return ret;
-}
-
-/******************************************************************
  * backend_unload_all [internal]
  *
  * unload all backends
@@ -183,10 +164,10 @@ void backend_unload_all(void)
     while (used_backends > 0) {
         used_backends--;
         FreeLibrary(backend[used_backends]->dll);
-        heap_free(backend[used_backends]->dllname);
-        heap_free(backend[used_backends]->name);
-        heap_free(backend[used_backends]->regroot);
-        heap_free(backend[used_backends]);
+        free(backend[used_backends]->dllname);
+        free(backend[used_backends]->name);
+        free(backend[used_backends]->regroot);
+        free(backend[used_backends]);
         backend[used_backends] = NULL;
     }
     LeaveCriticalSection(&backend_cs);
@@ -217,15 +198,15 @@ static backend_t * backend_load(LPWSTR dllname, LPWSTR name, LPWSTR regroot)
     EnterCriticalSection(&backend_cs);
     id = used_backends;
 
-    backend[id] = heap_alloc_zero(sizeof(backend_t));
+    backend[id] = calloc(1, sizeof(backend_t));
     if (!backend[id]) {
         LeaveCriticalSection(&backend_cs);
         return NULL;
     }
 
-    backend[id]->dllname = strdupW(dllname);
-    backend[id]->name = strdupW(name);
-    backend[id]->regroot = strdupW(regroot);
+    backend[id]->dllname = wcsdup(dllname);
+    backend[id]->name = wcsdup(name);
+    backend[id]->regroot = wcsdup(regroot);
 
     backend[id]->dll = LoadLibraryW(dllname);
     if (backend[id]->dll) {
@@ -244,10 +225,10 @@ static backend_t * backend_load(LPWSTR dllname, LPWSTR name, LPWSTR regroot)
         }
         FreeLibrary(backend[id]->dll);
     }
-    heap_free(backend[id]->dllname);
-    heap_free(backend[id]->name);
-    heap_free(backend[id]->regroot);
-    heap_free(backend[id]);
+    free(backend[id]->dllname);
+    free(backend[id]->name);
+    free(backend[id]->regroot);
+    free(backend[id]);
     backend[id] = NULL;
     LeaveCriticalSection(&backend_cs);
     WARN("failed to init %s: %lu\n", debugstr_w(dllname), GetLastError());
