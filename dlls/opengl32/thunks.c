@@ -1018,15 +1018,6 @@ void WINAPI glGetPolygonStipple( GLubyte *mask )
     if ((status = UNIX_CALL( glGetPolygonStipple, &args ))) WARN( "glGetPolygonStipple returned %#lx\n", status );
 }
 
-const GLubyte * WINAPI glGetString( GLenum name )
-{
-    struct glGetString_params args = { .name = name, };
-    NTSTATUS status;
-    TRACE( "name %d\n", name );
-    if ((status = UNIX_CALL( glGetString, &args ))) WARN( "glGetString returned %#lx\n", status );
-    return args.ret;
-}
-
 void WINAPI glGetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 {
     struct glGetTexEnvfv_params args = { .target = target, .pname = pname, .params = params, };
@@ -9911,15 +9902,6 @@ static GLushort WINAPI glGetStageIndexNV( GLenum shadertype )
     NTSTATUS status;
     TRACE( "shadertype %d\n", shadertype );
     if ((status = UNIX_CALL( glGetStageIndexNV, &args ))) WARN( "glGetStageIndexNV returned %#lx\n", status );
-    return args.ret;
-}
-
-static const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index )
-{
-    struct glGetStringi_params args = { .name = name, .index = index, };
-    NTSTATUS status;
-    TRACE( "name %d, index %d\n", name, index );
-    if ((status = UNIX_CALL( glGetStringi, &args ))) WARN( "glGetStringi returned %#lx\n", status );
     return args.ret;
 }
 
@@ -24334,24 +24316,6 @@ static void WINAPI wglFreeMemoryNV( void *pointer )
     if ((status = UNIX_CALL( wglFreeMemoryNV, &args ))) WARN( "wglFreeMemoryNV returned %#lx\n", status );
 }
 
-static const char * WINAPI wglGetExtensionsStringARB( HDC hdc )
-{
-    struct wglGetExtensionsStringARB_params args = { .hdc = hdc, };
-    NTSTATUS status;
-    TRACE( "hdc %p\n", hdc );
-    if ((status = UNIX_CALL( wglGetExtensionsStringARB, &args ))) WARN( "wglGetExtensionsStringARB returned %#lx\n", status );
-    return args.ret;
-}
-
-static const char * WINAPI wglGetExtensionsStringEXT(void)
-{
-    struct wglGetExtensionsStringEXT_params args = {0};
-    NTSTATUS status;
-    TRACE( "\n" );
-    if ((status = UNIX_CALL( wglGetExtensionsStringEXT, &args ))) WARN( "wglGetExtensionsStringEXT returned %#lx\n", status );
-    return args.ret;
-}
-
 static HDC WINAPI wglGetPbufferDCARB( HPBUFFERARB hPbuffer )
 {
     struct wglGetPbufferDCARB_params args = { .hPbuffer = hPbuffer, };
@@ -24406,15 +24370,6 @@ static BOOL WINAPI wglQueryCurrentRendererIntegerWINE( GLenum attribute, GLuint 
     return args.ret;
 }
 
-static const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute )
-{
-    struct wglQueryCurrentRendererStringWINE_params args = { .attribute = attribute, };
-    NTSTATUS status;
-    TRACE( "attribute %d\n", attribute );
-    if ((status = UNIX_CALL( wglQueryCurrentRendererStringWINE, &args ))) WARN( "wglQueryCurrentRendererStringWINE returned %#lx\n", status );
-    return args.ret;
-}
-
 static BOOL WINAPI wglQueryPbufferARB( HPBUFFERARB hPbuffer, int iAttribute, int *piValue )
 {
     struct wglQueryPbufferARB_params args = { .hPbuffer = hPbuffer, .iAttribute = iAttribute, .piValue = piValue, };
@@ -24430,15 +24385,6 @@ static BOOL WINAPI wglQueryRendererIntegerWINE( HDC dc, GLint renderer, GLenum a
     NTSTATUS status;
     TRACE( "dc %p, renderer %d, attribute %d, value %p\n", dc, renderer, attribute, value );
     if ((status = UNIX_CALL( wglQueryRendererIntegerWINE, &args ))) WARN( "wglQueryRendererIntegerWINE returned %#lx\n", status );
-    return args.ret;
-}
-
-static const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute )
-{
-    struct wglQueryRendererStringWINE_params args = { .dc = dc, .renderer = renderer, .attribute = attribute, };
-    NTSTATUS status;
-    TRACE( "dc %p, renderer %d, attribute %d\n", dc, renderer, attribute );
-    if ((status = UNIX_CALL( wglQueryRendererStringWINE, &args ))) WARN( "wglQueryRendererStringWINE returned %#lx\n", status );
     return args.ret;
 }
 
@@ -24487,7 +24433,12 @@ static BOOL WINAPI wglSwapIntervalEXT( int interval )
     return args.ret;
 }
 
+extern const GLubyte * WINAPI glGetStringi( GLenum name, GLuint index ) DECLSPEC_HIDDEN;
 extern HDC WINAPI wglGetCurrentReadDCARB(void) DECLSPEC_HIDDEN;
+extern const char * WINAPI wglGetExtensionsStringARB( HDC hdc ) DECLSPEC_HIDDEN;
+extern const char * WINAPI wglGetExtensionsStringEXT(void) DECLSPEC_HIDDEN;
+extern const GLchar * WINAPI wglQueryCurrentRendererStringWINE( GLenum attribute ) DECLSPEC_HIDDEN;
+extern const GLchar * WINAPI wglQueryRendererStringWINE( HDC dc, GLint renderer, GLenum attribute ) DECLSPEC_HIDDEN;
 const void *extension_procs[] =
 {
     glAccumxOES,

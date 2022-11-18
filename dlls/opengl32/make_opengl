@@ -162,9 +162,15 @@ my %manual_win_functions =
     );
 my %manual_win_thunks =
     (
+     "glGetString" => 1,
+     "glGetStringi" => 1,
      "wglGetCurrentReadDCARB" => 1,
+     "wglGetExtensionsStringARB" => 1,
+     "wglGetExtensionsStringEXT" => 1,
      "wglGetPixelFormat" => 1,
      "wglGetProcAddress" => 1,
+     "wglQueryCurrentRendererStringWINE" => 1,
+     "wglQueryRendererStringWINE" => 1,
      "wglSwapBuffers" => 1,
     );
 my %manual_wow64_thunks =
@@ -172,6 +178,8 @@ my %manual_wow64_thunks =
      "glClientWaitSync" => 1,
      "glDeleteSync" => 1,
      "glFenceSync" => 1,
+     "glGetString" => 1,
+     "glGetStringi" => 1,
      "glGetSynciv" => 1,
      "glIsSync" => 1,
      "glPathGlyphIndexRangeNV" => 1,
@@ -180,10 +188,15 @@ my %manual_wow64_thunks =
      "wglCreateContextAttribsARB" => 1,
      "wglCreatePbufferARB" => 1,
      "wglDeleteContext" => 1,
+     "wglGetExtensionsStringARB" => 1,
+     "wglGetExtensionsStringEXT" => 1,
      "wglGetPbufferDCARB" => 1,
+     "wglGetProcAddress" => 1,
      "wglGetProcAddress" => 1,
      "wglMakeContextCurrentARB" => 1,
      "wglMakeCurrent" => 1,
+     "wglQueryCurrentRendererStringWINE" => 1,
+     "wglQueryRendererStringWINE" => 1,
     );
 my %pointer_array_count =
     (
@@ -967,6 +980,7 @@ foreach (sort keys %ext_functions)
 print OUT "enum unix_funcs\n";
 print OUT "{\n";
 print OUT "    unix_thread_attach,\n";
+print OUT "    unix_process_detach,\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -1090,6 +1104,7 @@ print OUT "WINE_DEFAULT_DEBUG_CHANNEL(wgl);\n";
 print OUT "#endif\n\n";
 
 print OUT "extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;\n";
+print OUT "extern NTSTATUS process_detach( void *args ) DECLSPEC_HIDDEN;\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -1135,6 +1150,7 @@ foreach (sort keys %ext_functions)
 print OUT "const unixlib_entry_t __wine_unix_call_funcs[] =\n";
 print OUT "{\n";
 print OUT "    &thread_attach,\n";
+print OUT "    &process_detach,\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -1155,6 +1171,7 @@ print OUT "\n";
 
 print OUT "#ifdef _WIN64\n\n";
 print OUT "typedef ULONG PTR32;\n\n";
+print OUT "extern NTSTATUS wow64_process_detach( void *args ) DECLSPEC_HIDDEN;\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
@@ -1196,6 +1213,7 @@ foreach (sort keys %ext_functions)
 print OUT "\nconst unixlib_entry_t __wine_unix_call_wow64_funcs[] =\n";
 print OUT "{\n";
 print OUT "    &thread_attach,\n";
+print OUT "    &wow64_process_detach,\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};

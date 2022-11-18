@@ -23,6 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(wgl);
 #endif
 
 extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS process_detach( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglCopyContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
@@ -24058,7 +24059,7 @@ static NTSTATUS ext_wglGetCurrentReadDCARB( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_wglGetExtensionsStringARB( void *args )
+NTSTATUS ext_wglGetExtensionsStringARB( void *args )
 {
     struct wglGetExtensionsStringARB_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->hdc );
@@ -24067,7 +24068,7 @@ static NTSTATUS ext_wglGetExtensionsStringARB( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_wglGetExtensionsStringEXT( void *args )
+NTSTATUS ext_wglGetExtensionsStringEXT( void *args )
 {
     struct wglGetExtensionsStringEXT_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -24109,7 +24110,7 @@ static NTSTATUS ext_wglQueryCurrentRendererIntegerWINE( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args )
+NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args )
 {
     struct wglQueryCurrentRendererStringWINE_params *params = args;
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
@@ -24126,7 +24127,7 @@ static NTSTATUS ext_wglQueryRendererIntegerWINE( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ext_wglQueryRendererStringWINE( void *args )
+NTSTATUS ext_wglQueryRendererStringWINE( void *args )
 {
     struct wglQueryRendererStringWINE_params *params = args;
     const struct opengl_funcs *funcs = get_dc_funcs( params->dc );
@@ -24155,6 +24156,7 @@ static NTSTATUS ext_wglSwapIntervalEXT( void *args )
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     &thread_attach,
+    &process_detach,
     &wgl_wglCopyContext,
     &wgl_wglCreateContext,
     &wgl_wglDeleteContext,
@@ -27201,6 +27203,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
 typedef ULONG PTR32;
 
+extern NTSTATUS wow64_process_detach( void *args ) DECLSPEC_HIDDEN;
 static NTSTATUS wow64_wgl_wglCopyContext( void *args )
 {
     struct
@@ -28184,21 +28187,6 @@ static NTSTATUS wow64_gl_glGetPolygonStipple( void *args )
     NTSTATUS status;
     status = gl_glGetPolygonStipple( &params );
     return status;
-}
-
-static NTSTATUS wow64_gl_glGetString( void *args )
-{
-    struct
-    {
-        GLenum name;
-        PTR32 ret;
-    } *params32 = args;
-    struct glGetString_params params =
-    {
-        .name = params32->name,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS wow64_gl_glGetTexEnvfv( void *args )
@@ -41035,23 +41023,6 @@ static NTSTATUS wow64_ext_glGetSharpenTexFuncSGIS( void *args )
     NTSTATUS status;
     status = ext_glGetSharpenTexFuncSGIS( &params );
     return status;
-}
-
-static NTSTATUS wow64_ext_glGetStringi( void *args )
-{
-    struct
-    {
-        GLenum name;
-        GLuint index;
-        PTR32 ret;
-    } *params32 = args;
-    struct glGetStringi_params params =
-    {
-        .name = params32->name,
-        .index = params32->index,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS wow64_ext_glGetSubroutineIndex( void *args )
@@ -60631,34 +60602,6 @@ static NTSTATUS wow64_ext_wglGetCurrentReadDCARB( void *args )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static NTSTATUS wow64_ext_wglGetExtensionsStringARB( void *args )
-{
-    struct
-    {
-        PTR32 hdc;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglGetExtensionsStringARB_params params =
-    {
-        .hdc = ULongToPtr(params32->hdc),
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
-static NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args )
-{
-    struct
-    {
-        PTR32 ret;
-    } *params32 = args;
-    struct wglGetExtensionsStringEXT_params params =
-    {
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS wow64_ext_wglGetPixelFormatAttribfvARB( void *args )
 {
     struct
@@ -60732,21 +60675,6 @@ static NTSTATUS wow64_ext_wglQueryCurrentRendererIntegerWINE( void *args )
     return status;
 }
 
-static NTSTATUS wow64_ext_wglQueryCurrentRendererStringWINE( void *args )
-{
-    struct
-    {
-        GLenum attribute;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglQueryCurrentRendererStringWINE_params params =
-    {
-        .attribute = params32->attribute,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
-}
-
 static NTSTATUS wow64_ext_wglQueryPbufferARB( void *args )
 {
     struct
@@ -60789,25 +60717,6 @@ static NTSTATUS wow64_ext_wglQueryRendererIntegerWINE( void *args )
     status = ext_wglQueryRendererIntegerWINE( &params );
     params32->ret = params.ret;
     return status;
-}
-
-static NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args )
-{
-    struct
-    {
-        PTR32 dc;
-        GLint renderer;
-        GLenum attribute;
-        PTR32 ret;
-    } *params32 = args;
-    struct wglQueryRendererStringWINE_params params =
-    {
-        .dc = ULongToPtr(params32->dc),
-        .renderer = params32->renderer,
-        .attribute = params32->attribute,
-    };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS wow64_ext_wglReleasePbufferDCARB( void *args )
@@ -60890,21 +60799,28 @@ extern NTSTATUS wow64_wgl_wglCreateContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wgl_wglDeleteContext( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wgl_wglGetProcAddress( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wgl_wglMakeCurrent( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_gl_glGetString( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glClientWaitSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glDeleteSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glFenceSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_glGetStringi( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glGetSynciv( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glIsSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_glWaitSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglCreatePbufferARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_wglGetExtensionsStringARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_wglQueryCurrentRendererStringWINE( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args ) DECLSPEC_HIDDEN;
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     &thread_attach,
+    &wow64_process_detach,
     &wow64_wgl_wglCopyContext,
     &wow64_wgl_wglCreateContext,
     &wow64_wgl_wglDeleteContext,

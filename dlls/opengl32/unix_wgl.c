@@ -1055,6 +1055,11 @@ NTSTATUS WINAPI thread_attach( void *args )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS WINAPI process_detach( void *args )
+{
+    return STATUS_SUCCESS;
+}
+
 #ifdef _WIN64
 
 typedef ULONG PTR32;
@@ -1066,6 +1071,47 @@ extern NTSTATUS ext_glGetSynciv( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glIsSync( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glPathGlyphIndexRangeNV( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS ext_glWaitSync( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglGetExtensionsStringARB( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglGetExtensionsStringEXT( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglQueryCurrentRendererStringWINE( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS ext_wglQueryRendererStringWINE( void *args ) DECLSPEC_HIDDEN;
+
+struct wow64_string_entry
+{
+    const char *str;
+    PTR32 wow64_str;
+};
+static struct wow64_string_entry *wow64_strings;
+static SIZE_T wow64_strings_count;
+
+static PTR32 find_wow64_string( const char *str, PTR32 wow64_str )
+{
+    void *tmp;
+    SIZE_T i;
+
+    pthread_mutex_lock( &wgl_lock );
+
+    for (i = 0; i < wow64_strings_count; i++) if (wow64_strings[i].str == str) break;
+    if (i == wow64_strings_count && (tmp = realloc( wow64_strings, (i + 1) * sizeof(*wow64_strings) )))
+    {
+        wow64_strings = tmp;
+        wow64_strings[i].str = str;
+        wow64_strings[i].wow64_str = 0;
+        wow64_strings_count += 1;
+    }
+
+    if (i == wow64_strings_count) ERR( "Failed to allocate memory for wow64 strings\n" );
+    else if (wow64_strings[i].wow64_str) wow64_str = wow64_strings[i].wow64_str;
+    else if (wow64_str)
+    {
+        strcpy( UlongToPtr(wow64_str), (char *)str );
+        wow64_strings[i].wow64_str = wow64_str;
+    }
+
+    pthread_mutex_unlock( &wgl_lock );
+
+    return wow64_str;
+}
 
 static inline void update_teb32_context(void)
 {
@@ -1234,6 +1280,56 @@ NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
     return STATUS_SUCCESS;
 }
 
+NTSTATUS wow64_gl_glGetString( void *args )
+{
+    struct
+    {
+        GLenum name;
+        PTR32 ret;
+    } *params32 = args;
+    struct glGetString_params params =
+    {
+        .name = params32->name,
+    };
+    NTSTATUS status;
+
+    if ((status = gl_glGetString( &params ))) return status;
+
+    if (!(params32->ret = find_wow64_string( (char *)params.ret, params32->ret )))
+    {
+        params32->ret = strlen( (char *)params.ret ) + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_ext_glGetStringi( void *args )
+{
+    struct
+    {
+        GLenum name;
+        GLuint index;
+        PTR32 ret;
+    } *params32 = args;
+    struct glGetStringi_params params =
+    {
+        .name = params32->name,
+        .index = params32->index,
+    };
+    NTSTATUS status;
+
+    if ((status = ext_glGetStringi( &params ))) return status;
+
+    if (!(params32->ret = find_wow64_string( (char *)params.ret, params32->ret )))
+    {
+        params32->ret = strlen( (char *)params.ret ) + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
 {
     struct
@@ -1259,6 +1355,104 @@ NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
     if ((status = ext_glPathGlyphIndexRangeNV( &params ))) return status;
     params32->ret = params.ret;
     return status;
+}
+
+NTSTATUS wow64_ext_wglGetExtensionsStringARB( void *args )
+{
+    struct
+    {
+        PTR32 hdc;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglGetExtensionsStringARB_params params =
+    {
+        .hdc = ULongToPtr(params32->hdc),
+    };
+    NTSTATUS status;
+
+    if ((status = ext_wglGetExtensionsStringARB( &params ))) return status;
+
+    if (!(params32->ret = find_wow64_string( params.ret, params32->ret )))
+    {
+        params32->ret = strlen( params.ret ) + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args )
+{
+    struct
+    {
+        PTR32 ret;
+    } *params32 = args;
+    struct wglGetExtensionsStringEXT_params params =
+    {
+    };
+    NTSTATUS status;
+
+    if ((status = ext_wglGetExtensionsStringEXT( &params ))) return status;
+
+    if (!(params32->ret = find_wow64_string( params.ret, params32->ret )))
+    {
+        params32->ret = strlen( params.ret ) + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_ext_wglQueryCurrentRendererStringWINE( void *args )
+{
+    struct
+    {
+        GLenum attribute;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglQueryCurrentRendererStringWINE_params params =
+    {
+        .attribute = params32->attribute,
+    };
+    NTSTATUS status;
+
+    if ((status = ext_wglQueryCurrentRendererStringWINE( &params ))) return status;
+
+    if (!(params32->ret = find_wow64_string( params.ret, params32->ret )))
+    {
+        params32->ret = strlen( params.ret ) + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args )
+{
+    struct
+    {
+        PTR32 dc;
+        GLint renderer;
+        GLenum attribute;
+        PTR32 ret;
+    } *params32 = args;
+    struct wglQueryRendererStringWINE_params params =
+    {
+        .dc = ULongToPtr(params32->dc),
+        .renderer = params32->renderer,
+        .attribute = params32->attribute,
+    };
+    NTSTATUS status;
+
+    if ((status = ext_wglQueryRendererStringWINE( &params ))) return status;
+
+    if (!(params32->ret = find_wow64_string( params.ret, params32->ret )))
+    {
+        params32->ret = strlen( params.ret ) + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS wow64_ext_glClientWaitSync( void *args )
@@ -1444,6 +1638,19 @@ NTSTATUS wow64_ext_glWaitSync( void *args )
 
     pthread_mutex_unlock( &wgl_lock );
     return status;
+}
+
+NTSTATUS WINAPI wow64_process_detach( void *args )
+{
+    NTSTATUS status;
+
+    if ((status = process_detach( NULL ))) return status;
+
+    free( wow64_strings );
+    wow64_strings = NULL;
+    wow64_strings_count = 0;
+
+    return STATUS_SUCCESS;
 }
 
 #endif

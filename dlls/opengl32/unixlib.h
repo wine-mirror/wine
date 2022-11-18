@@ -22294,6 +22294,7 @@ struct wglSwapIntervalEXT_params
 enum unix_funcs
 {
     unix_thread_attach,
+    unix_process_detach,
     unix_wglCopyContext,
     unix_wglCreateContext,
     unix_wglDeleteContext,
