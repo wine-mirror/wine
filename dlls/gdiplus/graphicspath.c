@@ -2129,7 +2129,7 @@ static void widen_open_figure(const GpPointF *points, int start, int end,
     (*last_point)->type |= PathPointTypeCloseSubpath;
 }
 
-static void widen_closed_figure(GpPath *path, int start, int end,
+static void widen_closed_figure(const GpPointF *points, int start, int end,
     GpPen *pen, REAL pen_width, path_list_node_t **last_point)
 {
     int i;
@@ -2141,15 +2141,15 @@ static void widen_closed_figure(GpPath *path, int start, int end,
     /* left outline */
     prev_point = *last_point;
 
-    widen_joint(&path->pathdata.Points[end], &path->pathdata.Points[start],
-        &path->pathdata.Points[start+1], pen, pen_width, last_point);
+    widen_joint(&points[end], &points[start],
+        &points[start+1], pen, pen_width, last_point);
 
     for (i=start+1; i<end; i++)
-        widen_joint(&path->pathdata.Points[i-1], &path->pathdata.Points[i],
-            &path->pathdata.Points[i+1], pen, pen_width, last_point);
+        widen_joint(&points[i-1], &points[i],
+            &points[i+1], pen, pen_width, last_point);
 
-    widen_joint(&path->pathdata.Points[end-1], &path->pathdata.Points[end],
-        &path->pathdata.Points[start], pen, pen_width, last_point);
+    widen_joint(&points[end-1], &points[end],
+        &points[start], pen, pen_width, last_point);
 
     prev_point->next->type = PathPointTypeStart;
     (*last_point)->type |= PathPointTypeCloseSubpath;
@@ -2157,15 +2157,15 @@ static void widen_closed_figure(GpPath *path, int start, int end,
     /* right outline */
     prev_point = *last_point;
 
-    widen_joint(&path->pathdata.Points[start], &path->pathdata.Points[end],
-        &path->pathdata.Points[end-1], pen, pen_width, last_point);
+    widen_joint(&points[start], &points[end],
+        &points[end-1], pen, pen_width, last_point);
 
     for (i=end-1; i>start; i--)
-        widen_joint(&path->pathdata.Points[i+1], &path->pathdata.Points[i],
-            &path->pathdata.Points[i-1], pen, pen_width, last_point);
+        widen_joint(&points[i+1], &points[i],
+            &points[i-1], pen, pen_width, last_point);
 
-    widen_joint(&path->pathdata.Points[start+1], &path->pathdata.Points[start],
-        &path->pathdata.Points[end], pen, pen_width, last_point);
+    widen_joint(&points[start+1], &points[start],
+        &points[end], pen, pen_width, last_point);
 
     prev_point->next->type = PathPointTypeStart;
     (*last_point)->type |= PathPointTypeCloseSubpath;
@@ -2369,7 +2369,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
                 if (pen->dash != DashStyleSolid)
                     widen_dashed_figure(flat_path, subpath_start, i, 1, pen, pen_width, &last_point);
                 else
-                    widen_closed_figure(flat_path, subpath_start, i, pen, pen_width, &last_point);
+                    widen_closed_figure(flat_path->pathdata.Points, subpath_start, i, pen, pen_width, &last_point);
             }
             else if (i == flat_path->pathdata.Count-1 ||
                 (types[i+1]&PathPointTypePathTypeMask) == PathPointTypeStart)
