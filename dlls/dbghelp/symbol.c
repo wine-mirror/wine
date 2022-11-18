@@ -150,11 +150,10 @@ static BOOL symt_grow_sorttab(struct module* module, unsigned sz)
     return TRUE;
 }
 
-static void symt_add_module_ht(struct module* module, struct symt_ht* ht)
+static void symt_add_module_addr(struct module* module, struct symt_ht* ht)
 {
     ULONG64             addr;
 
-    hash_table_add(&module->ht_symbols, &ht->hash_elt);
     /* Don't store in sorttab a symbol without address, they are of
      * no use here (e.g. constant values)
      */
@@ -164,6 +163,12 @@ static void symt_add_module_ht(struct module* module, struct symt_ht* ht)
         module->addr_sorttab[module->num_symbols++] = ht;
         module->sortlist_valid = FALSE;
     }
+}
+
+static void symt_add_module_ht(struct module* module, struct symt_ht* ht)
+{
+    hash_table_add(&module->ht_symbols, &ht->hash_elt);
+    symt_add_module_addr(module, ht);
 }
 
 static WCHAR* file_regex(const char* srcfile)
@@ -488,6 +493,8 @@ struct symt_data* symt_add_func_local(struct module* module,
     else
         p = vector_add(&func->vchildren, &module->pool);
     *p = &locsym->symt;
+    if (dt == DataIsStaticLocal)
+        symt_add_module_addr(module, (struct symt_ht*)locsym);
     return locsym;
 }
 
