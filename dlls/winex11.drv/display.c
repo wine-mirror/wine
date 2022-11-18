@@ -163,7 +163,7 @@ void init_registry_display_settings(void)
     DISPLAY_DEVICEW dd = {sizeof(dd)};
     UNICODE_STRING device_name;
     DWORD i = 0;
-    LONG ret;
+    int ret;
 
     while (!NtUserEnumDisplayDevices( NULL, i++, &dd, 0 ))
     {

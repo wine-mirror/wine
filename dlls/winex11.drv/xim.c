@@ -61,17 +61,16 @@ static XIMStyle ximStyle = 0;
 static XIMStyle ximStyleRoot = 0;
 static XIMStyle ximStyleRequest = STYLE_CALLBACK;
 
-static void X11DRV_ImmSetInternalString(DWORD dwOffset,
-                                        DWORD selLength, LPWSTR lpComp, DWORD dwCompLen)
+static void X11DRV_ImmSetInternalString(UINT offset, UINT selLength, LPWSTR lpComp, UINT len)
 {
     /* Composition strings are edited in chunks */
-    unsigned int byte_length = dwCompLen * sizeof(WCHAR);
-    unsigned int byte_offset = dwOffset * sizeof(WCHAR);
+    unsigned int byte_length = len * sizeof(WCHAR);
+    unsigned int byte_offset = offset * sizeof(WCHAR);
     unsigned int byte_selection = selLength * sizeof(WCHAR);
     int byte_expansion = byte_length - byte_selection;
     LPBYTE ptr_new;
 
-    TRACE("( %i, %i, %p, %d):\n", dwOffset, selLength, lpComp, dwCompLen );
+    TRACE("( %i, %i, %p, %d):\n", offset, selLength, lpComp, len );
 
     if (byte_expansion + dwCompStringLength >= dwCompStringSize)
     {
@@ -96,7 +95,7 @@ static void X11DRV_ImmSetInternalString(DWORD dwOffset,
                         CompositionString, dwCompStringLength );
 }
 
-void X11DRV_XIMLookupChars( const char *str, DWORD count )
+void X11DRV_XIMLookupChars( const char *str, UINT count )
 {
     WCHAR *output;
     DWORD len;

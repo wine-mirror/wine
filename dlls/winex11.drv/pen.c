@@ -51,7 +51,7 @@ static DWORD get_user_dashes( char *res, const DWORD *style, DWORD len )
         }
         else dashes[pos++] = dashes[i];
     }
-    for (i = 0; i < pos; i++) res[i] = min( dashes[i], 255 );
+    for (i = 0; i < pos; i++) res[i] = (char)min( dashes[i], 255 );
     return pos;
 }
 
@@ -147,7 +147,7 @@ HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern 
        (logpen.lopnStyle & PS_STYLE_MASK) != PS_USERSTYLE &&
        (logpen.lopnStyle & PS_STYLE_MASK) != PS_ALTERNATE)
         for(i = 0; i < physDev->pen.dash_len; i++)
-            physDev->pen.dashes[i] = min( physDev->pen.dashes[i] * physDev->pen.width, 255 );
+            physDev->pen.dashes[i] = (char)min( physDev->pen.dashes[i] * physDev->pen.width, 255 );
 
     free( elp );
 

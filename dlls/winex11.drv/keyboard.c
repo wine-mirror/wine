@@ -1132,7 +1132,7 @@ static WORD EVENT_event_to_vkey( XIC xic, XKeyEvent *e)
 /***********************************************************************
  *           X11DRV_send_keyboard_input
  */
-static void X11DRV_send_keyboard_input( HWND hwnd, WORD vkey, WORD scan, DWORD flags, DWORD time )
+static void X11DRV_send_keyboard_input( HWND hwnd, WORD vkey, WORD scan, UINT flags, UINT time )
 {
     INPUT input;
 
@@ -1275,7 +1275,7 @@ static void adjust_lock_state( BYTE *keystate, HWND hwnd, WORD vkey, WORD scan, 
     }
 }
 
-static void update_lock_state( HWND hwnd, WORD vkey, UINT state, DWORD time )
+static void update_lock_state( HWND hwnd, WORD vkey, UINT state, UINT time )
 {
     BYTE keystate[256];
 

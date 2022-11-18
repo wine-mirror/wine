@@ -1704,7 +1704,7 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
         IO_STATUS_BLOCK io;
         UINT64 hash = 0;
         HANDLE file;
-        NTSTATUS status;
+        int status;
 
         for (i = 0; i < buflen; i++) hash = (hash << 16) - hash + buffer[i];
         for (i = 0; i < sizeof(hash) * 2; i++)

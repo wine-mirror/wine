@@ -1268,7 +1268,7 @@ static int get_window_wm_state( Display *display, Window window )
 static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL update_window )
 {
     struct x11drv_win_data *data = get_win_data( hwnd );
-    DWORD style;
+    UINT style;
 
     if (!data) return;
 
@@ -1781,7 +1781,7 @@ static DWORD xdnd_action_to_drop_effect( long action )
 }
 
 
-static long drop_effect_to_xdnd_action( DWORD effect )
+static long drop_effect_to_xdnd_action( UINT effect )
 {
     if (effect == DROPEFFECT_COPY)
         return x11drv_atom(XdndActionCopy);
@@ -1801,7 +1801,7 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
 {
     struct dnd_position_event_params params;
     XClientMessageEvent e;
-    DWORD effect;
+    UINT effect;
 
     params.hwnd = HandleToUlong( hwnd );
     params.point = root_to_virtual_screen( event->data.l[2] >> 16, event->data.l[2] & 0xFFFF );
