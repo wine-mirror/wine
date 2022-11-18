@@ -97,6 +97,8 @@ static GpStatus init_custom_linecap(GpCustomLineCap *cap, GpPathData *pathdata, 
 
     cap->inset = base_inset;
     cap->basecap = basecap;
+    cap->strokeStartCap = LineCapFlat;
+    cap->strokeEndCap = LineCapFlat;
     cap->join = LineJoinMiter;
     cap->scale = 1.0;
 
@@ -177,19 +179,17 @@ GpStatus WINGDIPAPI GdipGetCustomLineCapWidthScale(GpCustomLineCap* custom,
 }
 
 GpStatus WINGDIPAPI GdipSetCustomLineCapStrokeCaps(GpCustomLineCap* custom,
-    GpLineCap start, GpLineCap end)
+    GpLineCap startcap, GpLineCap endcap)
 {
-    static int calls;
+    TRACE("(%p,%u,%u)\n", custom, startcap, endcap);
 
-    TRACE("(%p,%u,%u)\n", custom, start, end);
-
-    if(!custom)
+    if(!custom || startcap > LineCapTriangle || endcap > LineCapTriangle)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    custom->strokeStartCap = startcap;
+    custom->strokeEndCap = endcap;
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetCustomLineCapBaseCap(GpCustomLineCap* custom,

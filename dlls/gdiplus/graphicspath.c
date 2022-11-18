@@ -2145,7 +2145,7 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
             if ((custom->pathdata.Types[custom->pathdata.Count - 1] & PathPointTypeCloseSubpath) == PathPointTypeCloseSubpath)
                 widen_closed_figure(tmp_points, 0, custom->pathdata.Count - 1, pen, pen_width, last_point);
             else
-                widen_open_figure(tmp_points, 0, custom->pathdata.Count - 1, pen, pen_width, LineCapFlat, LineCapFlat, last_point);
+                widen_open_figure(tmp_points, 0, custom->pathdata.Count - 1, pen, pen_width, custom->strokeEndCap, custom->strokeStartCap, last_point);
         }
         else
         {

@@ -353,6 +353,8 @@ struct GpCustomLineCap{
     BOOL fill;      /* TRUE for fill, FALSE for stroke */
     GpLineCap basecap;  /* cap used together with customLineCap */
     REAL inset;      /* distance between line end and cap beginning */
+    GpLineCap strokeStartCap;
+    GpLineCap strokeEndCap;
     GpLineJoin join; /* joins used for drawing custom cap*/
     REAL scale;
 };
