@@ -287,8 +287,8 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
     nsEventListener *This = impl_from_nsIDOMEventListener(iface);
     HTMLDocumentNode *doc = This->This->doc;
     nsIDOMEventTarget *event_target;
+    EventTarget *target;
     nsIDOMNode *nsnode;
-    HTMLDOMNode *node;
     DOMEvent *event;
     nsresult nsres;
     HRESULT hres;
@@ -309,18 +309,22 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
     nsres = nsIDOMEventTarget_QueryInterface(event_target, &IID_nsIDOMNode, (void**)&nsnode);
     nsIDOMEventTarget_Release(event_target);
     if(NS_FAILED(nsres)) {
-        ERR("Could not get nsIDOMNode: %08lx\n", nsres);
-        return NS_OK;
+        if(!doc->window)
+            return S_OK;
+        target = &doc->window->event_target;
+        IHTMLWindow2_AddRef(&doc->window->base.IHTMLWindow2_iface);
+    }else {
+        HTMLDOMNode *node;
+        hres = get_node(nsnode, TRUE, &node);
+        nsIDOMNode_Release(nsnode);
+        if(FAILED(hres))
+            return NS_OK;
+        target = &node->event_target;
     }
-
-    hres = get_node(nsnode, TRUE, &node);
-    nsIDOMNode_Release(nsnode);
-    if(FAILED(hres))
-        return NS_OK;
 
     hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), &event);
     if(FAILED(hres)) {
-        node_release(node);
+        IEventTarget_Release(&target->IEventTarget_iface);
         return NS_OK;
     }
 
@@ -330,15 +334,15 @@ static nsresult NSAPI handle_htmlevent(nsIDOMEventListener *iface, nsIDOMEvent *
 
         hres = create_document_event(doc, event->event_id == EVENTID_FOCUS ? EVENTID_FOCUSIN : EVENTID_FOCUSOUT, &focus_event);
         if(SUCCEEDED(hres)) {
-            dispatch_event(&node->event_target, focus_event);
+            dispatch_event(target, focus_event);
             IDOMEvent_Release(&focus_event->IDOMEvent_iface);
         }
     }
 
-    dispatch_event(&node->event_target, event);
+    dispatch_event(target, event);
 
     IDOMEvent_Release(&event->IDOMEvent_iface);
-    node_release(node);
+    IEventTarget_Release(&target->IEventTarget_iface);
     return NS_OK;
 }
 
