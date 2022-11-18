@@ -58,7 +58,7 @@ static WCHAR *get_full_name(const WCHAR *path, WCHAR **relative_path)
     len = GetSystemDirectoryW(NULL, 0);
     len += lstrlenW(tasksW) + lstrlenW(path);
 
-    target = heap_alloc(len * sizeof(WCHAR));
+    target = malloc(len * sizeof(WCHAR));
     if (target)
     {
         GetSystemDirectoryW(target, len);
@@ -80,7 +80,7 @@ static HRESULT create_directory(const WCHAR *path)
     WCHAR *new_path;
     int len;
 
-    new_path = heap_alloc((lstrlenW(path) + 1) * sizeof(WCHAR));
+    new_path = malloc((lstrlenW(path) + 1) * sizeof(WCHAR));
     if (!new_path) return E_OUTOFMEMORY;
 
     lstrcpyW(new_path, path);
@@ -110,7 +110,7 @@ static HRESULT create_directory(const WCHAR *path)
         new_path[len] = '\\';
     }
 
-    heap_free(new_path);
+    free(new_path);
     return hr;
 }
 
@@ -132,7 +132,7 @@ static HRESULT write_xml_utf8(const WCHAR *name, DWORD disposition, const WCHAR 
     }
 
     size = WideCharToMultiByte(CP_UTF8, 0, xmlW, -1, NULL, 0, NULL, NULL);
-    xml = heap_alloc(size);
+    xml = malloc(size);
     if (!xml)
     {
         CloseHandle(hfile);
@@ -167,7 +167,7 @@ static HRESULT write_xml_utf8(const WCHAR *name, DWORD disposition, const WCHAR 
     }
 
 failed:
-    heap_free(xml);
+    free(xml);
     CloseHandle(hfile);
     return hr;
 }
@@ -202,7 +202,7 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
             hr = create_directory(full_name);
             if (hr != S_OK && hr != HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS))
             {
-                heap_free(full_name);
+                free(full_name);
                 return hr;
             }
             *p = '\\';
@@ -241,11 +241,11 @@ HRESULT __cdecl SchRpcRegisterTask(const WCHAR *path, const WCHAR *xml, DWORD fl
     hr = write_xml_utf8(full_name, disposition, xml);
     if (hr == S_OK)
     {
-        *actual_path = heap_strdupW(relative_path);
+        *actual_path = wcsdup(relative_path);
         schedsvc_auto_start();
     }
 
-    heap_free(full_name);
+    free(full_name);
     return hr;
 }
 
@@ -286,7 +286,7 @@ static HRESULT read_xml(const WCHAR *name, WCHAR **xml)
         return HRESULT_FROM_WIN32(GetLastError());
 
     size = GetFileSize(hfile, NULL);
-    buff = src = heap_alloc(size + 2);
+    buff = src = malloc(size + 2);
     if (!src)
     {
         CloseHandle(hfile);
@@ -310,12 +310,12 @@ static HRESULT read_xml(const WCHAR *name, WCHAR **xml)
         src += sizeof(bom_utf8);
 
     size = MultiByteToWideChar(cp, 0, src, -1, NULL, 0);
-    *xml = heap_alloc(size * sizeof(WCHAR));
+    *xml = malloc(size * sizeof(WCHAR));
     if (*xml)
         MultiByteToWideChar(cp, 0, src, -1, *xml, size);
     else
         hr = E_OUTOFMEMORY;
-    heap_free(buff);
+    free(buff);
 
     return hr;
 }
@@ -539,7 +539,7 @@ HRESULT __cdecl SchRpcRetrieveTask(const WCHAR *path, const WCHAR *languages, UL
     hr = read_xml(full_name, xml);
     if (hr != S_OK) *xml = NULL;
 
-    heap_free(full_name);
+    free(full_name);
     return hr;
 }
 
@@ -557,7 +557,7 @@ HRESULT __cdecl SchRpcCreateFolder(const WCHAR *path, const WCHAR *sddl, DWORD f
 
     hr = create_directory(full_name);
 
-    heap_free(full_name);
+    free(full_name);
     return hr;
 }
 
@@ -578,9 +578,9 @@ static void free_list(TASK_NAMES list, LONG count)
     LONG i;
 
     for (i = 0; i < count; i++)
-        heap_free(list[i]);
+        free(list[i]);
 
-    heap_free(list);
+    free(list);
 }
 
 static inline BOOL is_directory(const WIN32_FIND_DATAW *data)
@@ -628,17 +628,17 @@ HRESULT __cdecl SchRpcEnumFolders(const WCHAR *path, DWORD flags, DWORD *start_i
 
     if (lstrlenW(full_name) + 2 > MAX_PATH)
     {
-        heap_free(full_name);
+        free(full_name);
         return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
     }
 
     lstrcpyW(pathW, full_name);
     lstrcatW(pathW, allW);
 
-    heap_free(full_name);
+    free(full_name);
 
     allocated = 64;
-    list = heap_alloc(allocated * sizeof(list[0]));
+    list = malloc(allocated * sizeof(list[0]));
     if (!list) return E_OUTOFMEMORY;
 
     index = count = 0;
@@ -646,7 +646,7 @@ HRESULT __cdecl SchRpcEnumFolders(const WCHAR *path, DWORD flags, DWORD *start_i
     handle = FindFirstFileW(pathW, &data);
     if (handle == INVALID_HANDLE_VALUE)
     {
-        heap_free(list);
+        free(list);
         if (GetLastError() == ERROR_PATH_NOT_FOUND)
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
         return HRESULT_FROM_WIN32(GetLastError());
@@ -671,7 +671,7 @@ HRESULT __cdecl SchRpcEnumFolders(const WCHAR *path, DWORD flags, DWORD *start_i
 
             TRACE("adding %s\n", debugstr_w(data.cFileName));
 
-            list[count] = heap_strdupW(data.cFileName);
+            list[count] = wcsdup(data.cFileName);
             if (!list[count])
             {
                 hr = E_OUTOFMEMORY;
@@ -705,7 +705,7 @@ HRESULT __cdecl SchRpcEnumFolders(const WCHAR *path, DWORD flags, DWORD *start_i
         return hr;
     }
 
-    heap_free(list);
+    free(list);
     *names = NULL;
     return *start_index ? S_FALSE : S_OK;
 }
@@ -736,17 +736,17 @@ HRESULT __cdecl SchRpcEnumTasks(const WCHAR *path, DWORD flags, DWORD *start_ind
 
     if (lstrlenW(full_name) + 2 > MAX_PATH)
     {
-        heap_free(full_name);
+        free(full_name);
         return HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE);
     }
 
     lstrcpyW(pathW, full_name);
     lstrcatW(pathW, allW);
 
-    heap_free(full_name);
+    free(full_name);
 
     allocated = 64;
-    list = heap_alloc(allocated * sizeof(list[0]));
+    list = malloc(allocated * sizeof(list[0]));
     if (!list) return E_OUTOFMEMORY;
 
     index = count = 0;
@@ -754,7 +754,7 @@ HRESULT __cdecl SchRpcEnumTasks(const WCHAR *path, DWORD flags, DWORD *start_ind
     handle = FindFirstFileW(pathW, &data);
     if (handle == INVALID_HANDLE_VALUE)
     {
-        heap_free(list);
+        free(list);
         if (GetLastError() == ERROR_PATH_NOT_FOUND)
             return HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND);
         return HRESULT_FROM_WIN32(GetLastError());
@@ -779,7 +779,7 @@ HRESULT __cdecl SchRpcEnumTasks(const WCHAR *path, DWORD flags, DWORD *start_ind
 
             TRACE("adding %s\n", debugstr_w(data.cFileName));
 
-            list[count] = heap_strdupW(data.cFileName);
+            list[count] = wcsdup(data.cFileName);
             if (!list[count])
             {
                 hr = E_OUTOFMEMORY;
@@ -813,7 +813,7 @@ HRESULT __cdecl SchRpcEnumTasks(const WCHAR *path, DWORD flags, DWORD *start_ind
         return hr;
     }
 
-    heap_free(list);
+    free(list);
     *names = NULL;
     return *start_index ? S_FALSE : S_OK;
 }
@@ -874,7 +874,7 @@ HRESULT __cdecl SchRpcDelete(const WCHAR *path, DWORD flags)
             hr = DeleteFileW(full_name) ? S_OK : HRESULT_FROM_WIN32(GetLastError());
     }
 
-    heap_free(full_name);
+    free(full_name);
     return hr;
 }
 
@@ -910,10 +910,10 @@ HRESULT __cdecl SchRpcGetTaskInfo(const WCHAR *path, DWORD flags, DWORD *enabled
     if (!full_name) return E_OUTOFMEMORY;
 
     hr = read_xml(full_name, &xml);
-    heap_free(full_name);
+    free(full_name);
     if (hr != S_OK) return hr;
     hr = read_task_info_from_xml(xml, &info);
-    heap_free(xml);
+    free(xml);
     if (FAILED(hr)) return hr;
 
     *enabled = info.enabled;
