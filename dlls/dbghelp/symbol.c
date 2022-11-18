@@ -2804,6 +2804,55 @@ DWORD WINAPI SymAddrIncludeInlineTrace(HANDLE hProcess, DWORD64 addr)
 }
 
 /******************************************************************
+ *		SymQueryInlineTrace (DBGHELP.@)
+ *
+ */
+BOOL WINAPI SymQueryInlineTrace(HANDLE hProcess, DWORD64 StartAddress, DWORD StartContext,
+                                DWORD64 StartRetAddress, DWORD64 CurAddress,
+                                LPDWORD CurContext, LPDWORD CurFrameIndex)
+{
+    struct module_pair  pair;
+    struct symt_ht*     sym_curr;
+    struct symt_ht*     sym_start;
+    struct symt_ht*     sym_startret;
+    DWORD               depth;
+
+    TRACE("(%p, %#I64x, 0x%lx, %#I64x, %I64x, %p, %p)\n",
+          hProcess, StartAddress, StartContext, StartRetAddress, CurAddress, CurContext, CurFrameIndex);
+
+    if (!module_init_pair(&pair, hProcess, CurAddress)) return FALSE;
+    if (!(sym_curr = symt_find_symbol_at(pair.effective, CurAddress))) return FALSE;
+    if (!symt_check_tag(&sym_curr->symt, SymTagFunction)) return FALSE;
+
+    sym_start = symt_find_symbol_at(pair.effective, StartAddress);
+    sym_startret = symt_find_symbol_at(pair.effective, StartRetAddress);
+    if (sym_start != sym_curr && sym_startret != sym_curr)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+    if (sym_start != sym_curr || StartContext)
+    {
+        FIXME("(%p, %#I64x, 0x%lx, %#I64x, %I64x, %p, %p): semi-stub\n",
+              hProcess, StartAddress, StartContext, StartRetAddress, CurAddress, CurContext, CurFrameIndex);
+        return ERROR_CALL_NOT_IMPLEMENTED;
+    }
+
+    depth = SymAddrIncludeInlineTrace(hProcess, CurAddress);
+    if (depth)
+    {
+        *CurContext = IFC_MODE_INLINE; /* deepest inline site */
+        *CurFrameIndex = depth;
+    }
+    else
+    {
+        *CurContext = IFC_MODE_REGULAR;
+        *CurFrameIndex = 0;
+    }
+    return TRUE;
+}
+
+/******************************************************************
  *      SymSrvGetFileIndexInfo (DBGHELP.@)
  *
  */
