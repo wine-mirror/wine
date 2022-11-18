@@ -19,10 +19,27 @@
 var compat_version;
 var tests = [];
 
+var pageshow_fired = false;
 if(window.addEventListener) {
+    window.addEventListener("pageshow", function(e) {
+        pageshow_fired = true;
+
+        var r = Object.prototype.toString.call(e);
+        todo_wine.
+        ok(r === "[object PageTransitionEvent]", "pageshow toString = " + r);
+        ok("persisted" in e, "'persisted' not in pageshow event");
+        ok(document.readyState === "complete", "pageshow readyState = " + document.readyState);
+    }, true);
+
     document.addEventListener("visibilitychange", function() { ok(false, "visibilitychange fired"); });
 }
 
+sync_test("page transition events", function() {
+    if(document.documentMode < 11)
+        ok(pageshow_fired === false, "pageshow fired");
+    else
+        ok(pageshow_fired === true, "pageshow not fired");
+});
 
 sync_test("builtin_toString", function() {
     var tags = [

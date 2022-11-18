@@ -162,6 +162,20 @@ interface IWineDOMTokenList : IDispatch
     HRESULT toString([retval, out] BSTR *String);
 }
 
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(25508c5d-6a54-6888-8f41-75ff3ae8706b)
+]
+interface IWinePageTransitionEvent : IDispatch
+{
+    [propget, id(1)]
+    HRESULT persisted([retval, out] VARIANT_BOOL *ret);
+}
+
+
 const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSE = 1;
 const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_RESPONSETYPE = 2;
 const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_UPLOAD = 3;

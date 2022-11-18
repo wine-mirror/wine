@@ -56,6 +56,7 @@ typedef struct {
 static nsresult NSAPI handle_blur(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_focus(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_keypress(nsIDOMEventListener*,nsIDOMEvent*);
+static nsresult NSAPI handle_pageshow(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_load(nsIDOMEventListener*,nsIDOMEvent*);
 
 enum doc_event_listener_flags {
@@ -71,6 +72,7 @@ static const struct {
     { EVENTID_BLUR,         0,                  EVENTLISTENER_VTBL(handle_blur) },
     { EVENTID_FOCUS,        0,                  EVENTLISTENER_VTBL(handle_focus) },
     { EVENTID_KEYPRESS,     BUBBLES,            EVENTLISTENER_VTBL(handle_keypress) },
+    { EVENTID_PAGESHOW,     OVERRIDE,           EVENTLISTENER_VTBL(handle_pageshow), },
     { EVENTID_LOAD,         OVERRIDE,           EVENTLISTENER_VTBL(handle_load), },
 };
 
@@ -204,6 +206,26 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
     update_doc(doc->browser->doc, UPDATE_UI);
     if(doc->browser->usermode == EDITMODE)
         handle_edit_event(doc, event);
+
+    return NS_OK;
+}
+
+static nsresult NSAPI handle_pageshow(nsIDOMEventListener *iface, nsIDOMEvent *nsevent)
+{
+    nsEventListener *This = impl_from_nsIDOMEventListener(iface);
+    HTMLDocumentNode *doc = This->This->doc;
+    HTMLInnerWindow *window;
+    DOMEvent *event;
+    HRESULT hres;
+
+    if(!doc || !(window = doc->window) || !doc->dom_document || doc->document_mode < COMPAT_MODE_IE11)
+        return NS_OK;
+
+    hres = create_document_event(doc, EVENTID_PAGESHOW, &event);
+    if(SUCCEEDED(hres)) {
+        dispatch_event(&window->event_target, event);
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+    }
 
     return NS_OK;
 }
