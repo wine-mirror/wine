@@ -354,15 +354,15 @@ static DWORD load_unicode_strings(const char *data, DWORD limit, struct job_t *j
         switch (i)
         {
         case 0:
-            job->info.Command = heap_strdupW((const WCHAR *)data);
+            job->info.Command = wcsdup((const WCHAR *)data);
             break;
 
         case 1:
-            job->params = heap_strdupW((const WCHAR *)data);
+            job->params = wcsdup((const WCHAR *)data);
             break;
 
         case 2:
-            job->curdir = heap_strdupW((const WCHAR *)data);
+            job->curdir = wcsdup((const WCHAR *)data);
             break;
 
         default:
@@ -504,7 +504,7 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
         return FALSE;
     }
 
-    info->trigger = heap_alloc(info->trigger_count * sizeof(info->trigger[0]));
+    info->trigger = malloc(info->trigger_count * sizeof(info->trigger[0]));
     if (!info->trigger)
     {
         TRACE("not enough memory for trigger data\n");
@@ -596,24 +596,24 @@ static BOOL load_job(const WCHAR *name, struct job_t *info)
 
 static void free_job_info(AT_ENUM *info)
 {
-    heap_free(info->Command);
+    free(info->Command);
 }
 
 static void free_job(struct job_t *job)
 {
     free_job_info(&job->info);
-    heap_free(job->name);
-    heap_free(job->params);
-    heap_free(job->curdir);
-    heap_free(job->trigger);
-    heap_free(job);
+    free(job->name);
+    free(job->params);
+    free(job->curdir);
+    free(job->trigger);
+    free(job);
 }
 
 void add_job(const WCHAR *name)
 {
     struct job_t *job;
 
-    job = heap_alloc_zero(sizeof(*job));
+    job = calloc(1, sizeof(*job));
     if (!job) return;
 
     if (!load_job(name, job))
@@ -623,7 +623,7 @@ void add_job(const WCHAR *name)
     }
 
     EnterCriticalSection(&at_job_list_section);
-    job->name = heap_strdupW(name);
+    job->name = wcsdup(name);
     job->info.JobId = current_jobid++;
     list_add_tail(&at_job_list, &job->entry);
     LeaveCriticalSection(&at_job_list_section);
@@ -920,7 +920,7 @@ void update_process_status(DWORD pid)
                 {
                     CloseHandle(runjob->process);
                     list_remove(&runjob->entry);
-                    heap_free(runjob);
+                    free(runjob);
 
                     job->data.exit_code = exit_code;
                     job->data.status = SCHED_S_TASK_TERMINATED;
@@ -969,7 +969,7 @@ void check_task_state(void)
             if (job->instance_count)
                 FIXME("process %s is already running\n", debugstr_w(job->info.Command));
 
-            runjob = heap_alloc(sizeof(*runjob));
+            runjob = malloc(sizeof(*runjob));
             if (runjob)
             {
                 static WCHAR winsta0[] = { 'W','i','n','S','t','a','0',0 };
@@ -1179,9 +1179,9 @@ static void free_container(AT_ENUM_CONTAINER *container)
     DWORD i;
 
     for (i = 0; i < container->EntriesRead; i++)
-        heap_free(container->Buffer[i].Command);
+        free(container->Buffer[i].Command);
 
-    heap_free(container->Buffer);
+    free(container->Buffer);
 }
 
 DWORD __cdecl NetrJobEnum(ATSVC_HANDLE server_name, AT_ENUM_CONTAINER *container,
@@ -1197,7 +1197,7 @@ DWORD __cdecl NetrJobEnum(ATSVC_HANDLE server_name, AT_ENUM_CONTAINER *container
     container->EntriesRead = 0;
 
     allocated = 64;
-    container->Buffer = heap_alloc(allocated * sizeof(AT_ENUM));
+    container->Buffer = malloc(allocated * sizeof(AT_ENUM));
     if (!container->Buffer) return ERROR_NOT_ENOUGH_MEMORY;
 
     EnterCriticalSection(&at_job_list_section);
@@ -1215,7 +1215,7 @@ DWORD __cdecl NetrJobEnum(ATSVC_HANDLE server_name, AT_ENUM_CONTAINER *container
             AT_ENUM *new_buffer;
 
             allocated *= 2;
-            new_buffer = heap_realloc(container->Buffer, allocated * sizeof(AT_ENUM));
+            new_buffer = realloc(container->Buffer, allocated * sizeof(AT_ENUM));
             if (!new_buffer)
             {
                 free_container(container);
@@ -1226,7 +1226,7 @@ DWORD __cdecl NetrJobEnum(ATSVC_HANDLE server_name, AT_ENUM_CONTAINER *container
         }
 
         container->Buffer[container->EntriesRead] = job->info;
-        container->Buffer[container->EntriesRead].Command = heap_strdupW(job->info.Command);
+        container->Buffer[container->EntriesRead].Command = wcsdup(job->info.Command);
         container->EntriesRead++;
     }
 
@@ -1249,7 +1249,7 @@ DWORD __cdecl NetrJobGetInfo(ATSVC_HANDLE server_name, DWORD jobid, AT_INFO **in
     job = find_job(jobid, NULL, NULL);
     if (job)
     {
-        AT_INFO *info_ret = heap_alloc(sizeof(*info_ret));
+        AT_INFO *info_ret = malloc(sizeof(*info_ret));
         if (!info_ret)
             ret = ERROR_NOT_ENOUGH_MEMORY;
         else
@@ -1258,7 +1258,7 @@ DWORD __cdecl NetrJobGetInfo(ATSVC_HANDLE server_name, DWORD jobid, AT_INFO **in
             info_ret->DaysOfMonth = job->info.DaysOfMonth;
             info_ret->DaysOfWeek = job->info.DaysOfWeek;
             info_ret->Flags = job->info.Flags;
-            info_ret->Command = heap_strdupW(job->info.Command);
+            info_ret->Command = wcsdup(job->info.Command);
             *info = info_ret;
             ret = ERROR_SUCCESS;
         }
