@@ -29,7 +29,6 @@
 #include "oledb_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oledb);
@@ -191,7 +190,7 @@ static ULONG WINAPI dbinit_Release(IDBInitialize *iface)
 
     ref = InterlockedDecrement(&This->ref);
     if(ref == 0)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -231,7 +230,7 @@ static HRESULT create_db_init(IUnknown **obj)
 
     *obj = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IDBInitialize_iface.lpVtbl = &dbinit_vtbl;
@@ -282,7 +281,7 @@ static ULONG WINAPI datainit_Release(IDataInitialize *iface)
 
     ref = InterlockedDecrement(&This->ref);
     if(ref == 0)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -400,7 +399,7 @@ static HRESULT add_dbprop_to_list(struct dbprops *props, BSTR name, BSTR value)
 {
     struct dbprop_pair *pair;
 
-    pair = heap_alloc(sizeof(*pair));
+    pair = malloc(sizeof(*pair));
     if (!pair)
         return E_OUTOFMEMORY;
 
@@ -419,7 +418,7 @@ static void free_dbprop_list(struct dbprops *props)
         list_remove(&p->entry);
         SysFreeString(p->name);
         SysFreeString(p->value);
-        heap_free(p);
+        free(p);
     }
 }
 
@@ -604,26 +603,16 @@ static void datasource_release(BOOL created, IUnknown **datasource)
     *datasource = NULL;
 }
 
-static inline WCHAR *strdupW(const WCHAR *src)
-{
-    WCHAR *dest;
-    if (!src) return NULL;
-    dest = heap_alloc((lstrlenW(src)+1)*sizeof(WCHAR));
-    if (dest)
-        lstrcpyW(dest, src);
-    return dest;
-}
-
 static WCHAR *strstriW(const WCHAR *str, const WCHAR *sub)
 {
     LPWSTR strlower, sublower, r;
-    strlower = CharLowerW(strdupW(str));
-    sublower = CharLowerW(strdupW(sub));
+    strlower = CharLowerW(wcsdup(str));
+    sublower = CharLowerW(wcsdup(sub));
     r = wcsstr(strlower, sublower);
     if (r)
         r = (LPWSTR)str + (r - strlower);
-    heap_free(strlower);
-    heap_free(sublower);
+    free(strlower);
+    free(sublower);
     return r;
 }
 
@@ -1017,7 +1006,7 @@ HRESULT create_data_init(IUnknown *outer, void **obj)
 
     *obj = NULL;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     if(!This) return E_OUTOFMEMORY;
 
     This->IDataInitialize_iface.lpVtbl = &datainit_vtbl;
