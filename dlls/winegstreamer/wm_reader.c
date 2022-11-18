@@ -777,8 +777,18 @@ static HRESULT WINAPI profile_GetStream(IWMProfile3 *iface, DWORD index, IWMStre
 
 static HRESULT WINAPI profile_GetStreamByNumber(IWMProfile3 *iface, WORD stream_number, IWMStreamConfig **config)
 {
-    FIXME("iface %p, stream_number %u, config %p, stub!\n", iface, stream_number, config);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("iface %p, stream_number %u, config %p.\n", iface, stream_number, config);
+
+    if (!stream_number)
+        return NS_E_NO_STREAM;
+
+    hr = profile_GetStream(iface, stream_number - 1, config);
+    if (hr == E_INVALIDARG)
+        hr = NS_E_NO_STREAM;
+
+    return hr;
 }
 
 static HRESULT WINAPI profile_RemoveStream(IWMProfile3 *iface, IWMStreamConfig *config)
