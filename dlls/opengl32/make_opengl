@@ -1142,7 +1142,7 @@ print OUT "#include \"unix_private.h\"\n\n";
 print OUT "#include \"wine/debug.h\"\n\n";
 
 print OUT "#ifdef _WIN64\n";
-print OUT "WINE_DEFAULT_DEBUG_CHANNEL(wgl);\n";
+print OUT "WINE_DEFAULT_DEBUG_CHANNEL(opengl);\n";
 print OUT "#endif\n\n";
 
 print OUT "extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;\n";

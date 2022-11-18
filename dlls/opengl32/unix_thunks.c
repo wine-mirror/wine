@@ -19,7 +19,7 @@
 #include "wine/debug.h"
 
 #ifdef _WIN64
-WINE_DEFAULT_DEBUG_CHANNEL(wgl);
+WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 #endif
 
 extern NTSTATUS thread_attach( void *args ) DECLSPEC_HIDDEN;

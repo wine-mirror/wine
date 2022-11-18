@@ -36,7 +36,7 @@
 #include "wine/glu.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wgl);
+WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
 unixlib_handle_t unixlib_handle = 0;
@@ -120,11 +120,11 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
     int i, count, best_format;
     int bestDBuffer = -1, bestStereo = -1;
 
-    TRACE_(wgl)( "%p %p: size %u version %u flags %lu type %u color %u %u,%u,%u,%u "
-                 "accum %u depth %u stencil %u aux %u\n",
-                 hdc, ppfd, ppfd->nSize, ppfd->nVersion, ppfd->dwFlags, ppfd->iPixelType,
-                 ppfd->cColorBits, ppfd->cRedBits, ppfd->cGreenBits, ppfd->cBlueBits, ppfd->cAlphaBits,
-                 ppfd->cAccumBits, ppfd->cDepthBits, ppfd->cStencilBits, ppfd->cAuxBuffers );
+    TRACE( "%p %p: size %u version %u flags %lu type %u color %u %u,%u,%u,%u "
+           "accum %u depth %u stencil %u aux %u\n",
+           hdc, ppfd, ppfd->nSize, ppfd->nVersion, ppfd->dwFlags, ppfd->iPixelType,
+           ppfd->cColorBits, ppfd->cRedBits, ppfd->cGreenBits, ppfd->cBlueBits, ppfd->cAlphaBits,
+           ppfd->cAccumBits, ppfd->cDepthBits, ppfd->cStencilBits, ppfd->cAuxBuffers );
 
     count = wglDescribePixelFormat( hdc, 0, 0, NULL );
     if (!count) return 0;
@@ -486,7 +486,8 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
              if (!ret) break;
          }
 
-         if (TRACE_ON(wgl)) {
+         if (TRACE_ON(opengl))
+         {
              unsigned int bitmask;
              unsigned char *bitmap_ = bitmap;
 

@@ -41,7 +41,7 @@
 
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(wgl);
+WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 
 static pthread_mutex_t wgl_lock = PTHREAD_MUTEX_INITIALIZER;
 
