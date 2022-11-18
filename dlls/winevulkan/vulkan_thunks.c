@@ -6024,6 +6024,8 @@ static uint64_t wine_vk_unwrap_handle(uint32_t type, uint64_t handle)
         return (uint64_t) wine_debug_utils_messenger_from_handle(handle)->debug_messenger;
     case VK_OBJECT_TYPE_DEVICE:
         return (uint64_t) (uintptr_t) wine_device_from_handle(((VkDevice) (uintptr_t) handle))->device;
+    case VK_OBJECT_TYPE_DEVICE_MEMORY:
+        return (uint64_t) wine_device_memory_from_handle(handle)->memory;
     case VK_OBJECT_TYPE_INSTANCE:
         return (uint64_t) (uintptr_t) wine_instance_from_handle(((VkInstance) (uintptr_t) handle))->instance;
     case VK_OBJECT_TYPE_PHYSICAL_DEVICE:
@@ -6425,6 +6427,21 @@ static inline void convert_VkCommandBufferBeginInfo_win32_to_host(struct convers
     }
 }
 
+#ifdef _WIN64
+static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win64_to_host(const VkBindAccelerationStructureMemoryInfoNV *in, VkBindAccelerationStructureMemoryInfoNV *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->accelerationStructure = in->accelerationStructure;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
+    out->memoryOffset = in->memoryOffset;
+    out->deviceIndexCount = in->deviceIndexCount;
+    out->pDeviceIndices = in->pDeviceIndices;
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host(const VkBindAccelerationStructureMemoryInfoNV32 *in, VkBindAccelerationStructureMemoryInfoNV *out)
 {
     if (!in) return;
@@ -6432,13 +6449,31 @@ static inline void convert_VkBindAccelerationStructureMemoryInfoNV_win32_to_host
     out->sType = in->sType;
     out->pNext = NULL;
     out->accelerationStructure = in->accelerationStructure;
-    out->memory = in->memory;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
     out->memoryOffset = in->memoryOffset;
     out->deviceIndexCount = in->deviceIndexCount;
     out->pDeviceIndices = (const uint32_t *)UlongToPtr(in->pDeviceIndices);
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
+
+#ifdef _WIN64
+static inline const VkBindAccelerationStructureMemoryInfoNV *convert_VkBindAccelerationStructureMemoryInfoNV_array_win64_to_host(struct conversion_context *ctx, const VkBindAccelerationStructureMemoryInfoNV *in, uint32_t count)
+{
+    VkBindAccelerationStructureMemoryInfoNV *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkBindAccelerationStructureMemoryInfoNV_win64_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
 
 static inline const VkBindAccelerationStructureMemoryInfoNV *convert_VkBindAccelerationStructureMemoryInfoNV_array_win32_to_host(struct conversion_context *ctx, const VkBindAccelerationStructureMemoryInfoNV32 *in, uint32_t count)
 {
@@ -6456,6 +6491,19 @@ static inline const VkBindAccelerationStructureMemoryInfoNV *convert_VkBindAccel
     return out;
 }
 
+#ifdef _WIN64
+static inline void convert_VkBindBufferMemoryInfo_win64_to_host(const VkBindBufferMemoryInfo *in, VkBindBufferMemoryInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->buffer = in->buffer;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
+    out->memoryOffset = in->memoryOffset;
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkBindBufferMemoryInfo_win32_to_host(struct conversion_context *ctx, const VkBindBufferMemoryInfo32 *in, VkBindBufferMemoryInfo *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -6466,7 +6514,7 @@ static inline void convert_VkBindBufferMemoryInfo_win32_to_host(struct conversio
     out->sType = in->sType;
     out->pNext = NULL;
     out->buffer = in->buffer;
-    out->memory = in->memory;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
     out->memoryOffset = in->memoryOffset;
 
     for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
@@ -6492,6 +6540,24 @@ static inline void convert_VkBindBufferMemoryInfo_win32_to_host(struct conversio
     }
 }
 
+#ifdef _WIN64
+static inline const VkBindBufferMemoryInfo *convert_VkBindBufferMemoryInfo_array_win64_to_host(struct conversion_context *ctx, const VkBindBufferMemoryInfo *in, uint32_t count)
+{
+    VkBindBufferMemoryInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkBindBufferMemoryInfo_win64_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
+
 static inline const VkBindBufferMemoryInfo *convert_VkBindBufferMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindBufferMemoryInfo32 *in, uint32_t count)
 {
     VkBindBufferMemoryInfo *out;
@@ -6508,6 +6574,19 @@ static inline const VkBindBufferMemoryInfo *convert_VkBindBufferMemoryInfo_array
     return out;
 }
 
+#ifdef _WIN64
+static inline void convert_VkBindImageMemoryInfo_win64_to_host(const VkBindImageMemoryInfo *in, VkBindImageMemoryInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->image = in->image;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
+    out->memoryOffset = in->memoryOffset;
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo32 *in, VkBindImageMemoryInfo *out)
 {
     const VkBaseInStructure32 *in_header;
@@ -6518,7 +6597,7 @@ static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion
     out->sType = in->sType;
     out->pNext = NULL;
     out->image = in->image;
-    out->memory = in->memory;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
     out->memoryOffset = in->memoryOffset;
 
     for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
@@ -6568,6 +6647,24 @@ static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion
         }
     }
 }
+
+#ifdef _WIN64
+static inline const VkBindImageMemoryInfo *convert_VkBindImageMemoryInfo_array_win64_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo *in, uint32_t count)
+{
+    VkBindImageMemoryInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkBindImageMemoryInfo_win64_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
 
 static inline const VkBindImageMemoryInfo *convert_VkBindImageMemoryInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindImageMemoryInfo32 *in, uint32_t count)
 {
@@ -16373,18 +16470,49 @@ static inline void convert_VkPerformanceCounterDescriptionKHR_array_host_to_win3
     }
 }
 
+#ifdef _WIN64
+static inline void convert_VkMappedMemoryRange_win64_to_host(const VkMappedMemoryRange *in, VkMappedMemoryRange *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
+    out->offset = in->offset;
+    out->size = in->size;
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkMappedMemoryRange_win32_to_host(const VkMappedMemoryRange32 *in, VkMappedMemoryRange *out)
 {
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->memory = in->memory;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
     out->offset = in->offset;
     out->size = in->size;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
+
+#ifdef _WIN64
+static inline const VkMappedMemoryRange *convert_VkMappedMemoryRange_array_win64_to_host(struct conversion_context *ctx, const VkMappedMemoryRange *in, uint32_t count)
+{
+    VkMappedMemoryRange *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkMappedMemoryRange_win64_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
 
 static inline const VkMappedMemoryRange *convert_VkMappedMemoryRange_array_win32_to_host(struct conversion_context *ctx, const VkMappedMemoryRange32 *in, uint32_t count)
 {
@@ -17039,13 +17167,24 @@ static inline void convert_VkSparseImageMemoryRequirements2_array_host_to_win32(
     }
 }
 
+#ifdef _WIN64
+static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win64_to_host(const VkDeviceMemoryOpaqueCaptureAddressInfo *in, VkDeviceMemoryOpaqueCaptureAddressInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win32_to_host(const VkDeviceMemoryOpaqueCaptureAddressInfo32 *in, VkDeviceMemoryOpaqueCaptureAddressInfo *out)
 {
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->memory = in->memory;
+    out->memory = wine_device_memory_from_handle(in->memory)->memory;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -23892,16 +24031,47 @@ static inline void convert_VkInitializePerformanceApiInfoINTEL_win32_to_host(con
         FIXME("Unexpected pNext\n");
 }
 
+#ifdef _WIN64
+static inline void convert_VkSparseMemoryBind_win64_to_host(const VkSparseMemoryBind *in, VkSparseMemoryBind *out)
+{
+    if (!in) return;
+
+    out->resourceOffset = in->resourceOffset;
+    out->size = in->size;
+    out->memory = in->memory ? wine_device_memory_from_handle(in->memory)->memory : 0;
+    out->memoryOffset = in->memoryOffset;
+    out->flags = in->flags;
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkSparseMemoryBind_win32_to_host(const VkSparseMemoryBind32 *in, VkSparseMemoryBind *out)
 {
     if (!in) return;
 
     out->resourceOffset = in->resourceOffset;
     out->size = in->size;
-    out->memory = in->memory;
+    out->memory = in->memory ? wine_device_memory_from_handle(in->memory)->memory : 0;
     out->memoryOffset = in->memoryOffset;
     out->flags = in->flags;
 }
+
+#ifdef _WIN64
+static inline const VkSparseMemoryBind *convert_VkSparseMemoryBind_array_win64_to_host(struct conversion_context *ctx, const VkSparseMemoryBind *in, uint32_t count)
+{
+    VkSparseMemoryBind *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSparseMemoryBind_win64_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
 
 static inline const VkSparseMemoryBind *convert_VkSparseMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseMemoryBind32 *in, uint32_t count)
 {
@@ -23919,6 +24089,17 @@ static inline const VkSparseMemoryBind *convert_VkSparseMemoryBind_array_win32_t
     return out;
 }
 
+#ifdef _WIN64
+static inline void convert_VkSparseBufferMemoryBindInfo_win64_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo *in, VkSparseBufferMemoryBindInfo *out)
+{
+    if (!in) return;
+
+    out->buffer = in->buffer;
+    out->bindCount = in->bindCount;
+    out->pBinds = convert_VkSparseMemoryBind_array_win64_to_host(ctx, in->pBinds, in->bindCount);
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkSparseBufferMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo32 *in, VkSparseBufferMemoryBindInfo *out)
 {
     if (!in) return;
@@ -23927,6 +24108,24 @@ static inline void convert_VkSparseBufferMemoryBindInfo_win32_to_host(struct con
     out->bindCount = in->bindCount;
     out->pBinds = convert_VkSparseMemoryBind_array_win32_to_host(ctx, (const VkSparseMemoryBind32 *)UlongToPtr(in->pBinds), in->bindCount);
 }
+
+#ifdef _WIN64
+static inline const VkSparseBufferMemoryBindInfo *convert_VkSparseBufferMemoryBindInfo_array_win64_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo *in, uint32_t count)
+{
+    VkSparseBufferMemoryBindInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSparseBufferMemoryBindInfo_win64_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
 
 static inline const VkSparseBufferMemoryBindInfo *convert_VkSparseBufferMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseBufferMemoryBindInfo32 *in, uint32_t count)
 {
@@ -23944,6 +24143,17 @@ static inline const VkSparseBufferMemoryBindInfo *convert_VkSparseBufferMemoryBi
     return out;
 }
 
+#ifdef _WIN64
+static inline void convert_VkSparseImageOpaqueMemoryBindInfo_win64_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo *in, VkSparseImageOpaqueMemoryBindInfo *out)
+{
+    if (!in) return;
+
+    out->image = in->image;
+    out->bindCount = in->bindCount;
+    out->pBinds = convert_VkSparseMemoryBind_array_win64_to_host(ctx, in->pBinds, in->bindCount);
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkSparseImageOpaqueMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo32 *in, VkSparseImageOpaqueMemoryBindInfo *out)
 {
     if (!in) return;
@@ -23952,6 +24162,24 @@ static inline void convert_VkSparseImageOpaqueMemoryBindInfo_win32_to_host(struc
     out->bindCount = in->bindCount;
     out->pBinds = convert_VkSparseMemoryBind_array_win32_to_host(ctx, (const VkSparseMemoryBind32 *)UlongToPtr(in->pBinds), in->bindCount);
 }
+
+#ifdef _WIN64
+static inline const VkSparseImageOpaqueMemoryBindInfo *convert_VkSparseImageOpaqueMemoryBindInfo_array_win64_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo *in, uint32_t count)
+{
+    VkSparseImageOpaqueMemoryBindInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSparseImageOpaqueMemoryBindInfo_win64_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
 
 static inline const VkSparseImageOpaqueMemoryBindInfo *convert_VkSparseImageOpaqueMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageOpaqueMemoryBindInfo32 *in, uint32_t count)
 {
@@ -23969,6 +24197,20 @@ static inline const VkSparseImageOpaqueMemoryBindInfo *convert_VkSparseImageOpaq
     return out;
 }
 
+#ifdef _WIN64
+static inline void convert_VkSparseImageMemoryBind_win64_to_host(const VkSparseImageMemoryBind *in, VkSparseImageMemoryBind *out)
+{
+    if (!in) return;
+
+    out->subresource = in->subresource;
+    out->offset = in->offset;
+    out->extent = in->extent;
+    out->memory = in->memory ? wine_device_memory_from_handle(in->memory)->memory : 0;
+    out->memoryOffset = in->memoryOffset;
+    out->flags = in->flags;
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkSparseImageMemoryBind_win32_to_host(const VkSparseImageMemoryBind32 *in, VkSparseImageMemoryBind *out)
 {
     if (!in) return;
@@ -23976,10 +24218,28 @@ static inline void convert_VkSparseImageMemoryBind_win32_to_host(const VkSparseI
     out->subresource = in->subresource;
     out->offset = in->offset;
     out->extent = in->extent;
-    out->memory = in->memory;
+    out->memory = in->memory ? wine_device_memory_from_handle(in->memory)->memory : 0;
     out->memoryOffset = in->memoryOffset;
     out->flags = in->flags;
 }
+
+#ifdef _WIN64
+static inline const VkSparseImageMemoryBind *convert_VkSparseImageMemoryBind_array_win64_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBind *in, uint32_t count)
+{
+    VkSparseImageMemoryBind *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSparseImageMemoryBind_win64_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
 
 static inline const VkSparseImageMemoryBind *convert_VkSparseImageMemoryBind_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBind32 *in, uint32_t count)
 {
@@ -23997,6 +24257,17 @@ static inline const VkSparseImageMemoryBind *convert_VkSparseImageMemoryBind_arr
     return out;
 }
 
+#ifdef _WIN64
+static inline void convert_VkSparseImageMemoryBindInfo_win64_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo *in, VkSparseImageMemoryBindInfo *out)
+{
+    if (!in) return;
+
+    out->image = in->image;
+    out->bindCount = in->bindCount;
+    out->pBinds = convert_VkSparseImageMemoryBind_array_win64_to_host(ctx, in->pBinds, in->bindCount);
+}
+#endif /* _WIN64 */
+
 static inline void convert_VkSparseImageMemoryBindInfo_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo32 *in, VkSparseImageMemoryBindInfo *out)
 {
     if (!in) return;
@@ -24005,6 +24276,24 @@ static inline void convert_VkSparseImageMemoryBindInfo_win32_to_host(struct conv
     out->bindCount = in->bindCount;
     out->pBinds = convert_VkSparseImageMemoryBind_array_win32_to_host(ctx, (const VkSparseImageMemoryBind32 *)UlongToPtr(in->pBinds), in->bindCount);
 }
+
+#ifdef _WIN64
+static inline const VkSparseImageMemoryBindInfo *convert_VkSparseImageMemoryBindInfo_array_win64_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo *in, uint32_t count)
+{
+    VkSparseImageMemoryBindInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkSparseImageMemoryBindInfo_win64_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
 
 static inline const VkSparseImageMemoryBindInfo *convert_VkSparseImageMemoryBindInfo_array_win32_to_host(struct conversion_context *ctx, const VkSparseImageMemoryBindInfo32 *in, uint32_t count)
 {
@@ -24021,6 +24310,26 @@ static inline const VkSparseImageMemoryBindInfo *convert_VkSparseImageMemoryBind
 
     return out;
 }
+
+#ifdef _WIN64
+static inline void convert_VkBindSparseInfo_win64_to_host(struct conversion_context *ctx, const VkBindSparseInfo *in, VkBindSparseInfo *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->waitSemaphoreCount = in->waitSemaphoreCount;
+    out->pWaitSemaphores = in->pWaitSemaphores;
+    out->bufferBindCount = in->bufferBindCount;
+    out->pBufferBinds = convert_VkSparseBufferMemoryBindInfo_array_win64_to_host(ctx, in->pBufferBinds, in->bufferBindCount);
+    out->imageOpaqueBindCount = in->imageOpaqueBindCount;
+    out->pImageOpaqueBinds = convert_VkSparseImageOpaqueMemoryBindInfo_array_win64_to_host(ctx, in->pImageOpaqueBinds, in->imageOpaqueBindCount);
+    out->imageBindCount = in->imageBindCount;
+    out->pImageBinds = convert_VkSparseImageMemoryBindInfo_array_win64_to_host(ctx, in->pImageBinds, in->imageBindCount);
+    out->signalSemaphoreCount = in->signalSemaphoreCount;
+    out->pSignalSemaphores = in->pSignalSemaphores;
+}
+#endif /* _WIN64 */
 
 static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo32 *in, VkBindSparseInfo *out)
 {
@@ -24078,6 +24387,24 @@ static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_cont
         }
     }
 }
+
+#ifdef _WIN64
+static inline const VkBindSparseInfo *convert_VkBindSparseInfo_array_win64_to_host(struct conversion_context *ctx, const VkBindSparseInfo *in, uint32_t count)
+{
+    VkBindSparseInfo *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkBindSparseInfo_win64_to_host(ctx, &in[i], &out[i]);
+    }
+
+    return out;
+}
+#endif /* _WIN64 */
 
 static inline const VkBindSparseInfo *convert_VkBindSparseInfo_array_win32_to_host(struct conversion_context *ctx, const VkBindSparseInfo32 *in, uint32_t count)
 {
@@ -24917,7 +25244,7 @@ static NTSTATUS thunk64_vkAllocateMemory(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pAllocateInfo, params->pAllocator, params->pMemory);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkAllocateMemory(wine_device_from_handle(params->device)->device, params->pAllocateInfo, NULL, params->pMemory);
+    params->result = wine_vkAllocateMemory(params->device, params->pAllocateInfo, params->pAllocator, params->pMemory);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -24939,7 +25266,7 @@ static NTSTATUS thunk32_vkAllocateMemory(void *args)
 
     init_conversion_context(&ctx);
     convert_VkMemoryAllocateInfo_win32_to_host(&ctx, (const VkMemoryAllocateInfo32 *)UlongToPtr(params->pAllocateInfo), &pAllocateInfo_host);
-    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkAllocateMemory(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, &pAllocateInfo_host, NULL, (VkDeviceMemory *)UlongToPtr(params->pMemory));
+    params->result = wine_vkAllocateMemory((VkDevice)UlongToPtr(params->device), &pAllocateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkDeviceMemory *)UlongToPtr(params->pMemory));
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -24980,10 +25307,15 @@ static NTSTATUS thunk32_vkBeginCommandBuffer(void *args)
 static NTSTATUS thunk64_vkBindAccelerationStructureMemoryNV(void *args)
 {
     struct vkBindAccelerationStructureMemoryNV_params *params = args;
+    const VkBindAccelerationStructureMemoryInfoNV *pBindInfos_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindAccelerationStructureMemoryNV(wine_device_from_handle(params->device)->device, params->bindInfoCount, params->pBindInfos);
+    init_conversion_context(&ctx);
+    pBindInfos_host = convert_VkBindAccelerationStructureMemoryInfoNV_array_win64_to_host(&ctx, params->pBindInfos, params->bindInfoCount);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindAccelerationStructureMemoryNV(wine_device_from_handle(params->device)->device, params->bindInfoCount, pBindInfos_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -25016,7 +25348,7 @@ static NTSTATUS thunk64_vkBindBufferMemory(void *args)
 
     TRACE("%p, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindBufferMemory(wine_device_from_handle(params->device)->device, params->buffer, params->memory, params->memoryOffset);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindBufferMemory(wine_device_from_handle(params->device)->device, params->buffer, wine_device_memory_from_handle(params->memory)->memory, params->memoryOffset);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -25034,7 +25366,7 @@ static NTSTATUS thunk32_vkBindBufferMemory(void *args)
 
     TRACE("%#x, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->buffer), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
-    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkBindBufferMemory(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->buffer, params->memory, params->memoryOffset);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkBindBufferMemory(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->buffer, wine_device_memory_from_handle(params->memory)->memory, params->memoryOffset);
     return STATUS_SUCCESS;
 }
 
@@ -25042,10 +25374,15 @@ static NTSTATUS thunk32_vkBindBufferMemory(void *args)
 static NTSTATUS thunk64_vkBindBufferMemory2(void *args)
 {
     struct vkBindBufferMemory2_params *params = args;
+    const VkBindBufferMemoryInfo *pBindInfos_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindBufferMemory2(wine_device_from_handle(params->device)->device, params->bindInfoCount, params->pBindInfos);
+    init_conversion_context(&ctx);
+    pBindInfos_host = convert_VkBindBufferMemoryInfo_array_win64_to_host(&ctx, params->pBindInfos, params->bindInfoCount);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindBufferMemory2(wine_device_from_handle(params->device)->device, params->bindInfoCount, pBindInfos_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -25075,10 +25412,15 @@ static NTSTATUS thunk32_vkBindBufferMemory2(void *args)
 static NTSTATUS thunk64_vkBindBufferMemory2KHR(void *args)
 {
     struct vkBindBufferMemory2KHR_params *params = args;
+    const VkBindBufferMemoryInfo *pBindInfos_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindBufferMemory2KHR(wine_device_from_handle(params->device)->device, params->bindInfoCount, params->pBindInfos);
+    init_conversion_context(&ctx);
+    pBindInfos_host = convert_VkBindBufferMemoryInfo_array_win64_to_host(&ctx, params->pBindInfos, params->bindInfoCount);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindBufferMemory2KHR(wine_device_from_handle(params->device)->device, params->bindInfoCount, pBindInfos_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -25111,7 +25453,7 @@ static NTSTATUS thunk64_vkBindImageMemory(void *args)
 
     TRACE("%p, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->image), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindImageMemory(wine_device_from_handle(params->device)->device, params->image, params->memory, params->memoryOffset);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindImageMemory(wine_device_from_handle(params->device)->device, params->image, wine_device_memory_from_handle(params->memory)->memory, params->memoryOffset);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -25129,7 +25471,7 @@ static NTSTATUS thunk32_vkBindImageMemory(void *args)
 
     TRACE("%#x, 0x%s, 0x%s, 0x%s\n", params->device, wine_dbgstr_longlong(params->image), wine_dbgstr_longlong(params->memory), wine_dbgstr_longlong(params->memoryOffset));
 
-    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkBindImageMemory(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->image, params->memory, params->memoryOffset);
+    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkBindImageMemory(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->image, wine_device_memory_from_handle(params->memory)->memory, params->memoryOffset);
     return STATUS_SUCCESS;
 }
 
@@ -25137,10 +25479,15 @@ static NTSTATUS thunk32_vkBindImageMemory(void *args)
 static NTSTATUS thunk64_vkBindImageMemory2(void *args)
 {
     struct vkBindImageMemory2_params *params = args;
+    const VkBindImageMemoryInfo *pBindInfos_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindImageMemory2(wine_device_from_handle(params->device)->device, params->bindInfoCount, params->pBindInfos);
+    init_conversion_context(&ctx);
+    pBindInfos_host = convert_VkBindImageMemoryInfo_array_win64_to_host(&ctx, params->pBindInfos, params->bindInfoCount);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindImageMemory2(wine_device_from_handle(params->device)->device, params->bindInfoCount, pBindInfos_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -25170,10 +25517,15 @@ static NTSTATUS thunk32_vkBindImageMemory2(void *args)
 static NTSTATUS thunk64_vkBindImageMemory2KHR(void *args)
 {
     struct vkBindImageMemory2KHR_params *params = args;
+    const VkBindImageMemoryInfo *pBindInfos_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->bindInfoCount, params->pBindInfos);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindImageMemory2KHR(wine_device_from_handle(params->device)->device, params->bindInfoCount, params->pBindInfos);
+    init_conversion_context(&ctx);
+    pBindInfos_host = convert_VkBindImageMemoryInfo_array_win64_to_host(&ctx, params->pBindInfos, params->bindInfoCount);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkBindImageMemory2KHR(wine_device_from_handle(params->device)->device, params->bindInfoCount, pBindInfos_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -34974,10 +35326,15 @@ static NTSTATUS thunk32_vkEnumeratePhysicalDevices(void *args)
 static NTSTATUS thunk64_vkFlushMappedMemoryRanges(void *args)
 {
     struct vkFlushMappedMemoryRanges_params *params = args;
+    const VkMappedMemoryRange *pMemoryRanges_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->memoryRangeCount, params->pMemoryRanges);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkFlushMappedMemoryRanges(wine_device_from_handle(params->device)->device, params->memoryRangeCount, params->pMemoryRanges);
+    init_conversion_context(&ctx);
+    pMemoryRanges_host = convert_VkMappedMemoryRange_array_win64_to_host(&ctx, params->pMemoryRanges, params->memoryRangeCount);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkFlushMappedMemoryRanges(wine_device_from_handle(params->device)->device, params->memoryRangeCount, pMemoryRanges_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -35072,7 +35429,7 @@ static NTSTATUS thunk64_vkFreeMemory(void *args)
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->memory), params->pAllocator);
 
-    wine_device_from_handle(params->device)->funcs.p_vkFreeMemory(wine_device_from_handle(params->device)->device, params->memory, NULL);
+    wine_vkFreeMemory(params->device, params->memory, params->pAllocator);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -35088,7 +35445,7 @@ static NTSTATUS thunk32_vkFreeMemory(void *args)
 
     TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->memory), params->pAllocator);
 
-    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkFreeMemory(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->memory, NULL);
+    wine_vkFreeMemory((VkDevice)UlongToPtr(params->device), params->memory, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator));
     return STATUS_SUCCESS;
 }
 
@@ -36234,7 +36591,7 @@ static NTSTATUS thunk64_vkGetDeviceMemoryCommitment(void *args)
 
     TRACE("%p, 0x%s, %p\n", params->device, wine_dbgstr_longlong(params->memory), params->pCommittedMemoryInBytes);
 
-    wine_device_from_handle(params->device)->funcs.p_vkGetDeviceMemoryCommitment(wine_device_from_handle(params->device)->device, params->memory, params->pCommittedMemoryInBytes);
+    wine_device_from_handle(params->device)->funcs.p_vkGetDeviceMemoryCommitment(wine_device_from_handle(params->device)->device, wine_device_memory_from_handle(params->memory)->memory, params->pCommittedMemoryInBytes);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -36250,7 +36607,7 @@ static NTSTATUS thunk32_vkGetDeviceMemoryCommitment(void *args)
 
     TRACE("%#x, 0x%s, %#x\n", params->device, wine_dbgstr_longlong(params->memory), params->pCommittedMemoryInBytes);
 
-    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetDeviceMemoryCommitment(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->memory, (VkDeviceSize *)UlongToPtr(params->pCommittedMemoryInBytes));
+    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetDeviceMemoryCommitment(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, wine_device_memory_from_handle(params->memory)->memory, (VkDeviceSize *)UlongToPtr(params->pCommittedMemoryInBytes));
     return STATUS_SUCCESS;
 }
 
@@ -36258,10 +36615,12 @@ static NTSTATUS thunk32_vkGetDeviceMemoryCommitment(void *args)
 static NTSTATUS thunk64_vkGetDeviceMemoryOpaqueCaptureAddress(void *args)
 {
     struct vkGetDeviceMemoryOpaqueCaptureAddress_params *params = args;
+    VkDeviceMemoryOpaqueCaptureAddressInfo pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetDeviceMemoryOpaqueCaptureAddress(wine_device_from_handle(params->device)->device, params->pInfo);
+    convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win64_to_host(params->pInfo, &pInfo_host);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetDeviceMemoryOpaqueCaptureAddress(wine_device_from_handle(params->device)->device, &pInfo_host);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -36287,10 +36646,12 @@ static NTSTATUS thunk32_vkGetDeviceMemoryOpaqueCaptureAddress(void *args)
 static NTSTATUS thunk64_vkGetDeviceMemoryOpaqueCaptureAddressKHR(void *args)
 {
     struct vkGetDeviceMemoryOpaqueCaptureAddressKHR_params *params = args;
+    VkDeviceMemoryOpaqueCaptureAddressInfo pInfo_host;
 
     TRACE("%p, %p\n", params->device, params->pInfo);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetDeviceMemoryOpaqueCaptureAddressKHR(wine_device_from_handle(params->device)->device, params->pInfo);
+    convert_VkDeviceMemoryOpaqueCaptureAddressInfo_win64_to_host(params->pInfo, &pInfo_host);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkGetDeviceMemoryOpaqueCaptureAddressKHR(wine_device_from_handle(params->device)->device, &pInfo_host);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -39247,10 +39608,15 @@ static NTSTATUS thunk32_vkInitializePerformanceApiINTEL(void *args)
 static NTSTATUS thunk64_vkInvalidateMappedMemoryRanges(void *args)
 {
     struct vkInvalidateMappedMemoryRanges_params *params = args;
+    const VkMappedMemoryRange *pMemoryRanges_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %u, %p\n", params->device, params->memoryRangeCount, params->pMemoryRanges);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkInvalidateMappedMemoryRanges(wine_device_from_handle(params->device)->device, params->memoryRangeCount, params->pMemoryRanges);
+    init_conversion_context(&ctx);
+    pMemoryRanges_host = convert_VkMappedMemoryRange_array_win64_to_host(&ctx, params->pMemoryRanges, params->memoryRangeCount);
+    params->result = wine_device_from_handle(params->device)->funcs.p_vkInvalidateMappedMemoryRanges(wine_device_from_handle(params->device)->device, params->memoryRangeCount, pMemoryRanges_host);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -39397,10 +39763,15 @@ static NTSTATUS thunk32_vkQueueBeginDebugUtilsLabelEXT(void *args)
 static NTSTATUS thunk64_vkQueueBindSparse(void *args)
 {
     struct vkQueueBindSparse_params *params = args;
+    const VkBindSparseInfo *pBindInfo_host;
+    struct conversion_context ctx;
 
     TRACE("%p, %u, %p, 0x%s\n", params->queue, params->bindInfoCount, params->pBindInfo, wine_dbgstr_longlong(params->fence));
 
-    params->result = wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueBindSparse(wine_queue_from_handle(params->queue)->queue, params->bindInfoCount, params->pBindInfo, params->fence);
+    init_conversion_context(&ctx);
+    pBindInfo_host = convert_VkBindSparseInfo_array_win64_to_host(&ctx, params->pBindInfo, params->bindInfoCount);
+    params->result = wine_queue_from_handle(params->queue)->device->funcs.p_vkQueueBindSparse(wine_queue_from_handle(params->queue)->queue, params->bindInfoCount, pBindInfo_host, params->fence);
+    free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -39997,7 +40368,7 @@ static NTSTATUS thunk64_vkSetDeviceMemoryPriorityEXT(void *args)
 
     TRACE("%p, 0x%s, %f\n", params->device, wine_dbgstr_longlong(params->memory), params->priority);
 
-    wine_device_from_handle(params->device)->funcs.p_vkSetDeviceMemoryPriorityEXT(wine_device_from_handle(params->device)->device, params->memory, params->priority);
+    wine_device_from_handle(params->device)->funcs.p_vkSetDeviceMemoryPriorityEXT(wine_device_from_handle(params->device)->device, wine_device_memory_from_handle(params->memory)->memory, params->priority);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -40013,7 +40384,7 @@ static NTSTATUS thunk32_vkSetDeviceMemoryPriorityEXT(void *args)
 
     TRACE("%#x, 0x%s, %f\n", params->device, wine_dbgstr_longlong(params->memory), params->priority);
 
-    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkSetDeviceMemoryPriorityEXT(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->memory, params->priority);
+    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkSetDeviceMemoryPriorityEXT(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, wine_device_memory_from_handle(params->memory)->memory, params->priority);
     return STATUS_SUCCESS;
 }
 
@@ -40286,7 +40657,7 @@ static NTSTATUS thunk64_vkUnmapMemory(void *args)
 
     TRACE("%p, 0x%s\n", params->device, wine_dbgstr_longlong(params->memory));
 
-    wine_device_from_handle(params->device)->funcs.p_vkUnmapMemory(wine_device_from_handle(params->device)->device, params->memory);
+    wine_vkUnmapMemory(params->device, params->memory);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -40301,7 +40672,7 @@ static NTSTATUS thunk32_vkUnmapMemory(void *args)
 
     TRACE("%#x, 0x%s\n", params->device, wine_dbgstr_longlong(params->memory));
 
-    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkUnmapMemory(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->memory);
+    wine_vkUnmapMemory((VkDevice)UlongToPtr(params->device), params->memory);
     return STATUS_SUCCESS;
 }
 
@@ -40867,6 +41238,7 @@ BOOL wine_vk_is_type_wrapped(VkObjectType type)
         type == VK_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT ||
         type == VK_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT ||
         type == VK_OBJECT_TYPE_DEVICE ||
+        type == VK_OBJECT_TYPE_DEVICE_MEMORY ||
         type == VK_OBJECT_TYPE_INSTANCE ||
         type == VK_OBJECT_TYPE_PHYSICAL_DEVICE ||
         type == VK_OBJECT_TYPE_QUEUE ||

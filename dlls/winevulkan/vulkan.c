@@ -1441,25 +1441,68 @@ void wine_vkDestroySurfaceKHR(VkInstance handle, VkSurfaceKHR surface,
     free(object);
 }
 
-VkResult wine_vkMapMemory(VkDevice handle, VkDeviceMemory memory, VkDeviceSize offset,
+VkResult wine_vkAllocateMemory(VkDevice handle, const VkMemoryAllocateInfo *alloc_info,
+                               const VkAllocationCallbacks *allocator, VkDeviceMemory *ret)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device_memory *memory;
+    VkResult result;
+
+    if (!(memory = malloc(sizeof(*memory))))
+        return VK_ERROR_OUT_OF_HOST_MEMORY;
+
+    result = device->funcs.p_vkAllocateMemory(device->device, alloc_info, NULL, &memory->memory);
+    if (result != VK_SUCCESS)
+    {
+        free(memory);
+        return result;
+    }
+
+    *ret = (VkDeviceMemory)(uintptr_t)memory;
+    return VK_SUCCESS;
+}
+
+void wine_vkFreeMemory(VkDevice handle, VkDeviceMemory memory_handle, const VkAllocationCallbacks *allocator)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device_memory *memory;
+
+    if (!memory_handle)
+        return;
+    memory = wine_device_memory_from_handle(memory_handle);
+
+    device->funcs.p_vkFreeMemory(device->device, memory->memory, NULL);
+    free(memory);
+}
+
+VkResult wine_vkMapMemory(VkDevice handle, VkDeviceMemory memory_handle, VkDeviceSize offset,
                           VkDeviceSize size, VkMemoryMapFlags flags, void **data)
 {
     struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device_memory *memory = wine_device_memory_from_handle(memory_handle);
     VkResult result;
 
-    result = device->funcs.p_vkMapMemory(device->device, memory, offset, size, flags, data);
+    result = device->funcs.p_vkMapMemory(device->device, memory->memory, offset, size, flags, data);
 
 #ifdef _WIN64
     if (NtCurrentTeb()->WowTebOffset && result == VK_SUCCESS && (UINT_PTR)*data >> 32)
     {
         FIXME("returned mapping %p does not fit 32-bit pointer\n", *data);
-        device->funcs.p_vkUnmapMemory(device->device, memory);
+        device->funcs.p_vkUnmapMemory(device->device, memory->memory);
         *data = NULL;
         result = VK_ERROR_OUT_OF_HOST_MEMORY;
     }
 #endif
 
     return result;
+}
+
+void wine_vkUnmapMemory(VkDevice handle, VkDeviceMemory memory_handle)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+    struct wine_device_memory *memory = wine_device_memory_from_handle(memory_handle);
+
+    device->funcs.p_vkUnmapMemory(device->device, memory->memory);
 }
 
 static inline void adjust_max_image_count(struct wine_phys_dev *phys_dev, VkSurfaceCapabilitiesKHR* capabilities)

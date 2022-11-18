@@ -209,7 +209,10 @@ FUNCTION_OVERRIDES = {
     "vkGetDeviceProcAddr" : {"dispatch" : False, "driver" : True, "thunk" : ThunkType.NONE, "loader_thunk" : ThunkType.NONE},
     "vkGetDeviceQueue" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
     "vkGetDeviceQueue2" : {"dispatch": True, "driver" : False, "thunk" : ThunkType.NONE},
+    "vkAllocateMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
+    "vkFreeMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkMapMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
+    "vkUnmapMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
 
     # VK_KHR_surface
     "vkDestroySurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.NONE},
@@ -1079,6 +1082,8 @@ class VkHandle(object):
             return "wine_device_from_handle({0})->device".format(name)
         if self.name == "VkInstance":
             return "wine_instance_from_handle({0})->instance".format(name)
+        if self.name == "VkDeviceMemory":
+            return "wine_device_memory_from_handle({0})->memory".format(name)
         if self.name == "VkPhysicalDevice":
             return "wine_phys_dev_from_handle({0})->phys_dev".format(name)
         if self.name == "VkQueue":

@@ -169,6 +169,16 @@ static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool hand
     return (struct wine_cmd_pool *)(uintptr_t)client_ptr->unix_handle;
 }
 
+struct wine_device_memory
+{
+    VkDeviceMemory memory;
+};
+
+static inline struct wine_device_memory *wine_device_memory_from_handle(VkDeviceMemory handle)
+{
+    return (struct wine_device_memory *)(uintptr_t)handle;
+}
+
 struct wine_debug_utils_messenger
 {
     struct wine_instance *instance; /* parent */
