@@ -88,7 +88,7 @@ void script_release(script_ctx_t *ctx)
     ctx->jscaller->ctx = NULL;
     IServiceProvider_Release(&ctx->jscaller->IServiceProvider_iface);
 
-    heap_free(ctx);
+    free(ctx);
 }
 
 static void script_globals_release(script_ctx_t *ctx)
@@ -192,8 +192,8 @@ void release_named_item(named_item_t *item)
 {
     if(--item->ref) return;
 
-    heap_free(item->name);
-    heap_free(item);
+    free(item->name);
+    free(item);
 }
 
 static inline JScriptError *impl_from_IActiveScriptError(IActiveScriptError *iface)
@@ -240,7 +240,7 @@ static ULONG WINAPI JScriptError_Release(IActiveScriptError *iface)
 
     if(!ref) {
         reset_ei(&This->ei);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -367,7 +367,7 @@ HRESULT leave_script(script_ctx_t *ctx, HRESULT result)
     }
     if(FAILED(result)) {
         WARN("%08lx\n", result);
-        if(ctx->site && (error = heap_alloc(sizeof(*error)))) {
+        if(ctx->site && (error = malloc(sizeof(*error)))) {
             HRESULT hres;
 
             error->IActiveScriptError_iface.lpVtbl = &JScriptErrorVtbl;
@@ -575,7 +575,7 @@ static ULONG WINAPI AXSite_Release(IServiceProvider *iface)
         if(This->sp)
             IServiceProvider_Release(This->sp);
 
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -612,7 +612,7 @@ IUnknown *create_ax_site(script_ctx_t *ctx)
         TRACE("Could not get IServiceProvider iface: %08lx\n", hres);
     }
 
-    ret = heap_alloc(sizeof(AXSite));
+    ret = malloc(sizeof(AXSite));
     if(!ret) {
         IServiceProvider_Release(sp);
         return NULL;
@@ -695,7 +695,7 @@ static ULONG WINAPI JScript_Release(IActiveScript *iface)
             This->ctx->active_script = NULL;
             script_release(This->ctx);
         }
-        heap_free(This);
+        free(This);
         unlock_module();
     }
 
@@ -722,7 +722,7 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
         return E_UNEXPECTED;
 
     if(!This->ctx) {
-        script_ctx_t *ctx = heap_alloc_zero(sizeof(script_ctx_t));
+        script_ctx_t *ctx = calloc(1, sizeof(script_ctx_t));
         if(!ctx)
             return E_OUTOFMEMORY;
 
@@ -738,7 +738,7 @@ static HRESULT WINAPI JScript_SetScriptSite(IActiveScript *iface,
 
         hres = create_jscaller(ctx);
         if(FAILED(hres)) {
-            heap_free(ctx);
+            free(ctx);
             return hres;
         }
 
@@ -895,7 +895,7 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
         }
     }
 
-    item = heap_alloc(sizeof(*item));
+    item = malloc(sizeof(*item));
     if(!item) {
         if(disp)
             IDispatch_Release(disp);
@@ -906,11 +906,11 @@ static HRESULT WINAPI JScript_AddNamedItem(IActiveScript *iface,
     item->disp = disp;
     item->flags = dwFlags;
     item->script_obj = NULL;
-    item->name = heap_strdupW(pstrName);
+    item->name = wcsdup(pstrName);
     if(!item->name) {
         if(disp)
             IDispatch_Release(disp);
-        heap_free(item);
+        free(item);
         return E_OUTOFMEMORY;
     }
 
@@ -1414,7 +1414,7 @@ HRESULT create_jscript_object(BOOL is_encode, REFIID riid, void **ppv)
     JScript *ret;
     HRESULT hres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
