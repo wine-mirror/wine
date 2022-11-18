@@ -170,11 +170,11 @@ static Pixmap BRUSH_DitherMono( COLORREF color )
     static const char gray_dither[][2] = {{ 0x1, 0x0 }, /* DKGRAY */
                                           { 0x2, 0x1 }, /* GRAY */
                                           { 0x1, 0x3 }, /* LTGRAY */
-    };                                      
+    };
     int gray = (30 * GetRValue(color) + 59 * GetGValue(color) + 11 * GetBValue(color)) / 100;
     int idx = gray * (ARRAY_SIZE( gray_dither ) + 1)/256 - 1;
 
-    TRACE("color=%06x -> gray=%x\n", color, gray);
+    TRACE("color=%s -> gray=%x\n", debugstr_color(color), gray);
     return XCreateBitmapFromData( gdi_display, root_window, gray_dither[idx], 2, 2 );
 }
 

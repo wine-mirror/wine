@@ -508,7 +508,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 
         sysPixel[i] = color.pixel;
 
-        TRACE("syscolor(%x) -> pixel %i\n", *(const COLORREF*)(sys_pal_template+i),
+        TRACE("syscolor %s -> pixel %i\n", debugstr_color(*(const COLORREF *)(sys_pal_template+i)),
               (int)color.pixel);
 
         /* Set EGA mapping if color in the first or last eight */
@@ -932,7 +932,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 
             if (!get_palette_entries( hPal, idx, 1, &entry ))
             {
-                WARN("PALETTEINDEX(%x) : idx %d is out of bounds, assuming black\n", color, idx);
+                WARN("%s: out of bounds, assuming black\n", debugstr_color(color));
                 return 0;
             }
             if (mapping) return mapping[idx];
@@ -990,7 +990,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
         {
             index = LOWORD( color );
             if (!get_palette_entries( hPal, index, 1, &entry ))
-                WARN("PALETTEINDEX(%x) : index %i is out of bounds\n", color, index);
+                WARN("%s: out of bounds\n", debugstr_color(color));
             else if (mapping) index = mapping[index];
         }
         else if (color >> 24 == 2)  /* PALETTERGB */
@@ -1287,7 +1287,7 @@ UINT CDECL X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
         if( !prev_mapping || mapping[i] != index ) iRemapped++;
         mapping[i] = index;
 
-        TRACE("entry %i (%x) -> pixel %i\n", i, *(COLORREF*)&entries[i], index);
+        TRACE("entry %i %s -> pixel %i\n", i, debugstr_color(*(COLORREF *)&entries[i]), index);
 
     }
     pthread_mutex_unlock( &palette_mutex );
@@ -1334,7 +1334,7 @@ UINT CDECL X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, 
         entries[i].peGreen = COLOR_sysPal[start + i].peGreen;
         entries[i].peBlue  = COLOR_sysPal[start + i].peBlue;
         entries[i].peFlags = 0;
-        TRACE("\tidx(%02x) -> RGB(%08x)\n", start + i, *(COLORREF*)(entries + i) );
+        TRACE("\tidx(%02x) -> %s\n", start + i, debugstr_color(*(COLORREF *)(entries + i)) );
     }
     pthread_mutex_unlock( &palette_mutex );
     return count;
@@ -1368,7 +1368,7 @@ COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
 
         if (!get_palette_entries( hpal, index, 1, &entry ))
         {
-            WARN("RGB(%x) : idx %d is out of bounds, assuming NULL\n", color, index );
+            WARN("%s: idx %d is out of bounds, assuming NULL\n", debugstr_color(color), index );
             if (!get_palette_entries( hpal, 0, 1, &entry )) return CLR_INVALID;
         }
         color = RGB( entry.peRed,  entry.peGreen, entry.peBlue );
@@ -1378,7 +1378,7 @@ COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
     nearest = (0x00ffffff & *(COLORREF*)(COLOR_sysPal + X11DRV_SysPaletteLookupPixel(color, FALSE)));
     pthread_mutex_unlock( &palette_mutex );
 
-    TRACE("(%06x): returning %06x\n", color, nearest );
+    TRACE("(%s): returning %s\n", debugstr_color(color), debugstr_color(nearest) );
     return nearest;
 }
 

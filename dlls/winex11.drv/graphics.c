@@ -1445,7 +1445,7 @@ BOOL CDECL X11DRV_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT 
     RECT rect, bounds;
     POINT pt;
 
-    TRACE("X11DRV_ExtFloodFill %d,%d %06x %d\n", x, y, color, fillType );
+    TRACE("X11DRV_ExtFloodFill %d,%d %s %d\n", x, y, debugstr_color(color), fillType );
 
     pt.x = x;
     pt.y = y;

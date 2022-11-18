@@ -66,6 +66,7 @@ typedef int Status;
 #include "wine/gdi_driver.h"
 #include "unixlib.h"
 #include "wine/list.h"
+#include "wine/debug.h"
 
 #define MAX_DASHLEN 16
 
@@ -321,6 +322,15 @@ extern COLORREF X11DRV_PALETTE_ToLogical(X11DRV_PDEVICE *physDev, int pixel) DEC
 extern int X11DRV_PALETTE_ToPhysical(X11DRV_PDEVICE *physDev, COLORREF color) DECLSPEC_HIDDEN;
 extern COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color ) DECLSPEC_HIDDEN;
 extern int *get_window_surface_mapping( int bpp, int *mapping ) DECLSPEC_HIDDEN;
+
+static inline const char *debugstr_color( COLORREF color )
+{
+    if (color & (1 << 24))  /* PALETTEINDEX */
+        return wine_dbg_sprintf( "PALETTEINDEX(%u)", LOWORD(color) );
+    if (color >> 16 == 0x10ff)  /* DIBINDEX */
+        return wine_dbg_sprintf( "DIBINDEX(%u)", LOWORD(color) );
+    return wine_dbg_sprintf( "RGB(%02x,%02x,%02x)", GetRValue(color), GetGValue(color), GetBValue(color) );
+}
 
 /* GDI escapes */
 
