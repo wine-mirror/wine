@@ -482,4 +482,7 @@ void init_nsevents(HTMLDocumentNode *doc)
     init_event(target, L"load",     &listener->load_listener.nsIDOMEventListener_iface,     TRUE);
 
     nsIDOMEventTarget_Release(target);
+
+    /* handle_load already takes care of dispatching the load event */
+    doc->event_vector[EVENTID_LOAD] = TRUE;
 }
