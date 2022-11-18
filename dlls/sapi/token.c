@@ -101,7 +101,7 @@ static ULONG WINAPI data_key_Release( ISpRegDataKey *iface )
     if (!ref)
     {
         if (This->key) RegCloseKey( This->key );
-        heap_free( This );
+        free( This );
     }
 
     return ref;
@@ -270,7 +270,7 @@ const struct ISpRegDataKeyVtbl data_key_vtbl =
 
 HRESULT data_key_create( IUnknown *outer, REFIID iid, void **obj )
 {
-    struct data_key *This = heap_alloc( sizeof(*This) );
+    struct data_key *This = malloc( sizeof(*This) );
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;
@@ -338,7 +338,7 @@ static ULONG WINAPI token_category_Release( ISpObjectTokenCategory *iface )
     if (!ref)
     {
         if (This->data_key) ISpRegDataKey_Release( This->data_key );
-        heap_free( This );
+        free( This );
     }
     return ref;
 }
@@ -637,7 +637,7 @@ const struct ISpObjectTokenCategoryVtbl token_category_vtbl =
 
 HRESULT token_category_create( IUnknown *outer, REFIID iid, void **obj )
 {
-    struct token_category *This = heap_alloc( sizeof(*This) );
+    struct token_category *This = malloc( sizeof(*This) );
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;
@@ -692,9 +692,9 @@ static ULONG WINAPI token_enum_Release( ISpObjectTokenEnumBuilder *iface )
     {
         if (This->key)
             RegCloseKey(This->key);
-        heap_free( This->req );
-        heap_free( This->opt );
-        heap_free( This );
+        free( This->req );
+        free( This->opt );
+        free( This );
     }
 
     return ref;
@@ -721,14 +721,14 @@ static HRESULT WINAPI token_enum_Next( ISpObjectTokenEnumBuilder *iface,
 
     RegQueryInfoKeyW( This->key, NULL, NULL, NULL, NULL, &size, NULL, NULL, NULL, NULL, NULL, NULL );
     size = (size+1) * sizeof(WCHAR);
-    subkey_name = heap_alloc(size);
+    subkey_name = malloc( size );
     if (!subkey_name)
         return E_OUTOFMEMORY;
 
     retCode = RegEnumKeyExW( This->key, This->index, subkey_name, &size, NULL, NULL, NULL, NULL );
     if (retCode != ERROR_SUCCESS)
     {
-        heap_free(subkey_name);
+        free( subkey_name );
         return S_FALSE;
     }
 
@@ -736,14 +736,14 @@ static HRESULT WINAPI token_enum_Next( ISpObjectTokenEnumBuilder *iface,
 
     if (RegOpenKeyExW( This->key, subkey_name, 0, KEY_READ, &sub_key ) != ERROR_SUCCESS)
     {
-        heap_free(subkey_name);
+        free( subkey_name );
         return E_FAIL;
     }
 
     hr = token_create( NULL, &IID_ISpObjectToken, (void**)tokens );
     if (FAILED(hr))
     {
-        heap_free(subkey_name);
+        free( subkey_name );
         return hr;
     }
 
@@ -794,28 +794,28 @@ static HRESULT WINAPI token_enum_Item( ISpObjectTokenEnumBuilder *iface,
 
     RegQueryInfoKeyW(This->key, NULL, NULL, NULL, NULL, &size, NULL, NULL, NULL, NULL, NULL, NULL);
     size = (size+1) * sizeof(WCHAR);
-    subkey = heap_alloc(size);
+    subkey = malloc( size );
     if (!subkey)
         return E_OUTOFMEMORY;
 
     ret = RegEnumKeyExW(This->key, index, subkey, &size, NULL, NULL, NULL, NULL);
     if (ret != ERROR_SUCCESS)
     {
-        heap_free(subkey);
+        free( subkey );
         return HRESULT_FROM_WIN32(ret);
     }
 
     ret = RegOpenKeyExW (This->key, subkey, 0, KEY_READ, &key);
     if (ret != ERROR_SUCCESS)
     {
-        heap_free(subkey);
+        free( subkey );
         return HRESULT_FROM_WIN32(ret);
     }
 
     hr = token_create( NULL, &IID_ISpObjectToken, (void**)&subtoken );
     if (FAILED(hr))
     {
-        heap_free(subkey);
+        free( subkey );
         return hr;
     }
 
@@ -852,13 +852,13 @@ static HRESULT WINAPI token_enum_SetAttribs( ISpObjectTokenEnumBuilder *iface,
 
     if (req)
     {
-        This->req = heap_strdupW( req );
+        This->req = wcsdup( req );
         if (!This->req) goto out_of_mem;
     }
 
     if (opt)
     {
-        This->opt = heap_strdupW( opt );
+        This->opt = wcsdup( opt );
         if (!This->opt) goto out_of_mem;
     }
 
@@ -866,7 +866,7 @@ static HRESULT WINAPI token_enum_SetAttribs( ISpObjectTokenEnumBuilder *iface,
     return S_OK;
 
 out_of_mem:
-    heap_free( This->req );
+    free( This->req );
     return E_OUTOFMEMORY;
 }
 
@@ -919,7 +919,7 @@ const struct ISpObjectTokenEnumBuilderVtbl token_enum_vtbl =
 
 HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj )
 {
-    struct token_enum *This = heap_alloc( sizeof(*This) );
+    struct token_enum *This = malloc( sizeof(*This) );
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;
@@ -978,8 +978,8 @@ static ULONG WINAPI token_Release( ISpObjectToken *iface )
     if (!ref)
     {
         if (This->token_key) RegCloseKey( This->token_key );
-        free(This->token_id);
-        heap_free( This );
+        free( This->token_id );
+        free( This );
     }
 
     return ref;
@@ -1265,7 +1265,7 @@ const struct ISpObjectTokenVtbl token_vtbl =
 
 HRESULT token_create( IUnknown *outer, REFIID iid, void **obj )
 {
-    struct object_token *This = heap_alloc( sizeof(*This) );
+    struct object_token *This = malloc( sizeof(*This) );
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;

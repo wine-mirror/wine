@@ -28,18 +28,3 @@ HRESULT speech_voice_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_
 HRESULT token_category_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT token_enum_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
 HRESULT token_create( IUnknown *outer, REFIID iid, void **obj ) DECLSPEC_HIDDEN;
-
-static inline LPWSTR heap_strdupW(LPCWSTR str)
-{
-    LPWSTR ret = NULL;
-    DWORD size;
-
-    if (str)
-    {
-        size = (lstrlenW( str ) + 1) * sizeof(WCHAR);
-        ret = heap_alloc( size );
-        if (ret) memcpy( ret, str, size );
-    }
-
-    return ret;
-}
