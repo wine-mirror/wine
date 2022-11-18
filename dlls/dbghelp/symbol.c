@@ -2795,6 +2795,16 @@ BOOL WINAPI SymGetLineFromInlineContextW(HANDLE hProcess, DWORD64 addr, ULONG in
 }
 
 /******************************************************************
+ *		SymAddrIncludeInlineTrace (DBGHELP.@)
+ *
+ */
+DWORD WINAPI SymAddrIncludeInlineTrace(HANDLE hProcess, DWORD64 addr)
+{
+    FIXME("(%p, %I64x): stub\n", hProcess, addr);
+    return 0;
+}
+
+/******************************************************************
  *      SymSrvGetFileIndexInfo (DBGHELP.@)
  *
  */
