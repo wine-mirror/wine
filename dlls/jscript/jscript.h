@@ -70,22 +70,6 @@ void heap_pool_clear(heap_pool_t*) DECLSPEC_HIDDEN;
 void heap_pool_free(heap_pool_t*) DECLSPEC_HIDDEN;
 heap_pool_t *heap_pool_mark(heap_pool_t*) DECLSPEC_HIDDEN;
 
-static inline LPWSTR heap_strdupW(LPCWSTR str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD size;
-
-        size = (lstrlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        if(ret)
-            memcpy(ret, str, size);
-    }
-
-    return ret;
-}
-
 typedef struct jsdisp_t jsdisp_t;
 
 extern HINSTANCE jscript_hinstance DECLSPEC_HIDDEN;
