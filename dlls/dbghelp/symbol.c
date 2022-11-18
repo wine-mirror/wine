@@ -1265,27 +1265,6 @@ struct symt_function* symt_find_inlined_site(struct module* module, DWORD64 addr
     return NULL;
 }
 
-DWORD symt_get_inlinesite_depth(HANDLE hProcess, DWORD64 addr)
-{
-    struct module_pair pair;
-    DWORD depth = 0;
-
-    if (module_init_pair(&pair, hProcess, addr))
-    {
-        struct symt_ht* symt = symt_find_symbol_at(pair.effective, addr);
-        if (symt_check_tag(&symt->symt, SymTagFunction))
-        {
-            struct symt_function* inlined = symt_find_lowest_inlined((struct symt_function*)symt, addr);
-            if (inlined)
-            {
-                for ( ; &inlined->symt != &symt->symt; inlined = (struct symt_function*)symt_get_upper_inlined(inlined))
-                    ++depth;
-            }
-        }
-    }
-    return depth;
-}
-
 /******************************************************************
  *		sym_enum
  *
@@ -2797,11 +2776,31 @@ BOOL WINAPI SymGetLineFromInlineContextW(HANDLE hProcess, DWORD64 addr, ULONG in
 /******************************************************************
  *		SymAddrIncludeInlineTrace (DBGHELP.@)
  *
+ * MSDN doesn't state that the maximum depth (of embedded inline sites) at <addr>
+ * is actually returned. (It just says non zero means that there are some inline site(s)).
+ * But this is what native actually returns.
  */
 DWORD WINAPI SymAddrIncludeInlineTrace(HANDLE hProcess, DWORD64 addr)
 {
-    FIXME("(%p, %I64x): stub\n", hProcess, addr);
-    return 0;
+    struct module_pair pair;
+    DWORD depth = 0;
+
+    TRACE("(%p, %#I64x)\n", hProcess, addr);
+
+    if (module_init_pair(&pair, hProcess, addr))
+    {
+        struct symt_ht* symt = symt_find_symbol_at(pair.effective, addr);
+        if (symt_check_tag(&symt->symt, SymTagFunction))
+        {
+            struct symt_function* inlined = symt_find_lowest_inlined((struct symt_function*)symt, addr);
+            if (inlined)
+            {
+                for ( ; &inlined->symt != &symt->symt; inlined = (struct symt_function*)symt_get_upper_inlined(inlined))
+                    ++depth;
+            }
+        }
+    }
+    return depth;
 }
 
 /******************************************************************

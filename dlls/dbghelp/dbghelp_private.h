@@ -953,7 +953,6 @@ static inline struct symt_function*
 extern struct symt_function*
                     symt_find_inlined_site(struct module* module,
                                            DWORD64 addr, DWORD inline_ctx) DECLSPEC_HIDDEN;
-extern DWORD        symt_get_inlinesite_depth(HANDLE hProcess, DWORD64 addr) DECLSPEC_HIDDEN;
 
 /* Inline context encoding (different from what native does):
  * bits 31:30: 3 ignore (includes INLINE_FRAME_CONTEXT_IGNORE=0xFFFFFFFF)

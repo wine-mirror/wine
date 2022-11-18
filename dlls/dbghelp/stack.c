@@ -312,7 +312,7 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
 
     if (IFC_MODE(frame->InlineFrameContext) == IFC_MODE_INLINE)
     {
-        DWORD depth = symt_get_inlinesite_depth(hProcess, addr);
+        DWORD depth = SymAddrIncludeInlineTrace(hProcess, addr);
         if (IFC_DEPTH(frame->InlineFrameContext) + 1 < depth) /* move to next inlined function? */
         {
             TRACE("found inline ctx: depth=%lu current=%lu++\n",
@@ -330,7 +330,7 @@ BOOL WINAPI StackWalkEx(DWORD MachineType, HANDLE hProcess, HANDLE hThread,
         if (frame->InlineFrameContext != INLINE_FRAME_CONTEXT_IGNORE)
         {
             addr = sw_xlat_addr(&csw, &frame->AddrPC);
-            frame->InlineFrameContext = symt_get_inlinesite_depth(hProcess, addr) == 0 ? IFC_MODE_REGULAR : IFC_MODE_INLINE;
+            frame->InlineFrameContext = SymAddrIncludeInlineTrace(hProcess, addr) == 0 ? IFC_MODE_REGULAR : IFC_MODE_INLINE;
             TRACE("setting IFC mode to %lx\n", frame->InlineFrameContext);
         }
     }
