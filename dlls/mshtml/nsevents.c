@@ -57,6 +57,7 @@ static nsresult NSAPI handle_blur(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_focus(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_keypress(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_pageshow(nsIDOMEventListener*,nsIDOMEvent*);
+static nsresult NSAPI handle_pagehide(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_load(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_beforeunload(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_unload(nsIDOMEventListener*,nsIDOMEvent*);
@@ -75,6 +76,7 @@ static const struct {
     { EVENTID_FOCUS,        0,                  EVENTLISTENER_VTBL(handle_focus) },
     { EVENTID_KEYPRESS,     BUBBLES,            EVENTLISTENER_VTBL(handle_keypress) },
     { EVENTID_PAGESHOW,     OVERRIDE,           EVENTLISTENER_VTBL(handle_pageshow), },
+    { EVENTID_PAGEHIDE,     OVERRIDE,           EVENTLISTENER_VTBL(handle_pagehide), },
     { EVENTID_LOAD,         OVERRIDE,           EVENTLISTENER_VTBL(handle_load), },
     { EVENTID_BEFOREUNLOAD, OVERRIDE,           EVENTLISTENER_VTBL(handle_beforeunload), },
     { EVENTID_UNLOAD,       OVERRIDE,           EVENTLISTENER_VTBL(handle_unload) },
@@ -226,6 +228,26 @@ static nsresult NSAPI handle_pageshow(nsIDOMEventListener *iface, nsIDOMEvent *n
         return NS_OK;
 
     hres = create_document_event(doc, EVENTID_PAGESHOW, &event);
+    if(SUCCEEDED(hres)) {
+        dispatch_event(&window->event_target, event);
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+    }
+
+    return NS_OK;
+}
+
+static nsresult NSAPI handle_pagehide(nsIDOMEventListener *iface, nsIDOMEvent *nsevent)
+{
+    nsEventListener *This = impl_from_nsIDOMEventListener(iface);
+    HTMLDocumentNode *doc = This->This->doc;
+    HTMLInnerWindow *window;
+    DOMEvent *event;
+    HRESULT hres;
+
+    if(!doc || !(window = doc->window) || !doc->dom_document || doc->document_mode < COMPAT_MODE_IE11 || doc->unload_sent)
+        return NS_OK;
+
+    hres = create_document_event(doc, EVENTID_PAGEHIDE, &event);
     if(SUCCEEDED(hres)) {
         dispatch_event(&window->event_target, event);
         IDOMEvent_Release(&event->IDOMEvent_iface);

@@ -101,7 +101,9 @@ DEFINE_EXPECT(visibilitychange);
 DEFINE_EXPECT(onbeforeunload);
 DEFINE_EXPECT(iframe_onbeforeunload);
 DEFINE_EXPECT(onunload);
+DEFINE_EXPECT(pagehide);
 DEFINE_EXPECT(iframe_onunload);
+DEFINE_EXPECT(iframe_pagehide);
 DEFINE_EXPECT(doc1_onstorage);
 DEFINE_EXPECT(doc1_onstoragecommit);
 DEFINE_EXPECT(window1_onstorage);
@@ -1458,6 +1460,17 @@ static HRESULT WINAPI iframe_onbeforeunload(IDispatchEx *iface, DISPID id, LCID 
 
 EVENT_HANDLER_FUNC_OBJ(iframe_onbeforeunload);
 
+static HRESULT WINAPI pagehide(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(pagehide);
+    ok(!called_onunload, "unload fired before pagehide\n");
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(pagehide);
+
 static HRESULT WINAPI onunload(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
@@ -1465,18 +1478,34 @@ static HRESULT WINAPI onunload(IDispatchEx *iface, DISPID id, LCID lcid, WORD wF
     if(expect_iframe_onunload) {
         ok(called_onbeforeunload, "beforeunload not fired before unload\n");
         ok(called_iframe_onbeforeunload, "beforeunload not fired on iframe before unload\n");
-    }
+        ok(called_pagehide, "pagehide not fired before unload\n");
+    }else
+        ok(!called_pagehide, "pagehide fired before unload in quirks mode\n");
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     return S_OK;
 }
 
 EVENT_HANDLER_FUNC_OBJ(onunload);
 
+static HRESULT WINAPI iframe_pagehide(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    CHECK_EXPECT(iframe_pagehide);
+    ok(called_pagehide, "pagehide not fired on parent window before iframe\n");
+    ok(called_onunload, "unload not fired on parent window before pagehide on iframe\n");
+    ok(!called_iframe_onunload, "unload fired before pagehide on iframe\n");
+    test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    return S_OK;
+}
+
+EVENT_HANDLER_FUNC_OBJ(iframe_pagehide);
+
 static HRESULT WINAPI iframe_onunload(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     CHECK_EXPECT(iframe_onunload);
     ok(called_onunload, "unload not fired on parent window before iframe\n");
+    ok(called_iframe_pagehide, "pagehide not fired before unload on iframe\n");
     test_event_args(NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     return S_OK;
 }
@@ -2585,6 +2614,8 @@ static void test_unload_event(IHTMLDocument2 *doc)
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(onbeforeunload) = %d\n", V_VT(&v));
     ok(V_DISPATCH(&v) == (IDispatch*)&iframe_onbeforeunload_obj, "V_DISPATCH(onbeforeunload) = %p\n", V_DISPATCH(&v));
 
+    add_event_listener((IUnknown*)window, L"pagehide", (IDispatch*)&pagehide_obj, VARIANT_TRUE);
+    add_event_listener((IUnknown*)child, L"pagehide", (IDispatch*)&iframe_pagehide_obj, VARIANT_TRUE);
     add_event_listener((IUnknown*)doc, L"beforeunload", (IDispatch*)&nocall_obj, VARIANT_TRUE);
     add_event_listener((IUnknown*)child_doc, L"beforeunload", (IDispatch*)&nocall_obj, VARIANT_TRUE);
     add_event_listener((IUnknown*)doc, L"unload", (IDispatch*)&nocall_obj, VARIANT_TRUE);
@@ -2595,9 +2626,13 @@ static void test_unload_event(IHTMLDocument2 *doc)
     SET_EXPECT(onbeforeunload);
     SET_EXPECT(iframe_onbeforeunload);
     SET_EXPECT(onunload);
+    SET_EXPECT(pagehide);
     SET_EXPECT(iframe_onunload);
+    SET_EXPECT(iframe_pagehide);
     navigate(doc, L"blank.html");
+    CHECK_CALLED(iframe_pagehide);
     CHECK_CALLED(iframe_onunload);
+    CHECK_CALLED(pagehide);
     CHECK_CALLED(onunload);
     CHECK_CALLED(iframe_onbeforeunload);
     CHECK_CALLED(onbeforeunload);

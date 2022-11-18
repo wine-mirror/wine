@@ -19,12 +19,16 @@
 var compat_version;
 var tests = [];
 
-var pageshow_fired = false;
+var pageshow_fired = false, pagehide_fired = false;
 document.doc_unload_events_called = false;
 window.onbeforeunload = function() { ok(false, "beforeunload fired"); };
 window.onunload = function() {
     document.doc_unload_events_called = true;
     ok(document.readyState === "complete", "unload readyState = " + document.readyState);
+    if(document.documentMode < 11)
+        ok(pagehide_fired === false, "pagehide fired before unload");
+    else
+        ok(pagehide_fired === true, "pagehide not fired before unload");
 };
 
 if(window.addEventListener) {
@@ -36,6 +40,16 @@ if(window.addEventListener) {
         ok(r === "[object PageTransitionEvent]", "pageshow toString = " + r);
         ok("persisted" in e, "'persisted' not in pageshow event");
         ok(document.readyState === "complete", "pageshow readyState = " + document.readyState);
+    }, true);
+
+    window.addEventListener("pagehide", function(e) {
+        pagehide_fired = true;
+        ok(document.documentMode >= 11, "pagehide fired");
+
+        var r = Object.prototype.toString.call(e);
+        todo_wine.
+        ok(r === "[object PageTransitionEvent]", "pagehide toString = " + r);
+        ok("persisted" in e, "'persisted' not in pagehide event");
     }, true);
 
     document.addEventListener("visibilitychange", function() { ok(false, "visibilitychange fired"); });
@@ -51,6 +65,7 @@ sync_test("page transition events", function() {
         ok(pageshow_fired === false, "pageshow fired");
     else
         ok(pageshow_fired === true, "pageshow not fired");
+    ok(pagehide_fired === false, "pagehide fired");
 
     if(document.body.addEventListener)
         document.body.addEventListener("unload", function() { ok(false, "unload fired on document.body"); });

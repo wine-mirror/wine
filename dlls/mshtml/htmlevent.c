@@ -184,6 +184,8 @@ static const event_info_t event_info[] = {
         EVENT_FIXME},
     {L"msthumbnailclick",  EVENT_TYPE_MOUSE,     DISPID_EVPROP_ONMSTHUMBNAILCLICK,
         EVENT_FIXME},
+    {L"pagehide",          EVENT_TYPE_PAGETRANSITION, DISPID_EVPROP_ONPAGEHIDE,
+        0},
     {L"pageshow",          EVENT_TYPE_PAGETRANSITION, DISPID_EVPROP_ONPAGESHOW,
         0},
     {L"paste",             EVENT_TYPE_CLIPBOARD, DISPID_EVMETH_ONPASTE,

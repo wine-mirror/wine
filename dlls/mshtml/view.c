@@ -420,6 +420,16 @@ static void send_unload_events_impl(HTMLInnerWindow *window)
     if(window->doc && !window->doc->unload_sent) {
         window->doc->unload_sent = TRUE;
 
+        /* Native sends pagehide events prior to unload on the same window
+           before it moves on to the next window, so they're interleaved. */
+        if(window->doc->document_mode >= COMPAT_MODE_IE11) {
+            hres = create_document_event(window->doc, EVENTID_PAGEHIDE, &event);
+            if(SUCCEEDED(hres)) {
+                dispatch_event(&window->event_target, event);
+                IDOMEvent_Release(&event->IDOMEvent_iface);
+            }
+        }
+
         hres = create_document_event(window->doc, EVENTID_UNLOAD, &event);
         if(SUCCEEDED(hres)) {
             dispatch_event(&window->event_target, event);
