@@ -1817,21 +1817,17 @@ static void test_GlobalAlloc(void)
         if (!(flags & GMEM_MODIFY) && ((flags & GMEM_DISCARDABLE) || !(flags & GMEM_MOVEABLE)))
             ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
         else
-        {
-            todo_wine
             ok( tmp_mem == mem, "GlobalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         entry = *mem_entry_from_HANDLE( mem );
         if ((flags & GMEM_DISCARDABLE) && (flags & GMEM_MODIFY)) expect_entry.flags |= 4;
         if (flags == GMEM_MOVEABLE)
-            todo_wine ok( entry.ptr != expect_entry.ptr, "got unexpected ptr %p\n", entry.ptr );
+            ok( entry.ptr != expect_entry.ptr, "got unexpected ptr %p\n", entry.ptr );
         else
             ok( entry.ptr == expect_entry.ptr, "got ptr %p\n", entry.ptr );
-        todo_wine_if((flags & GMEM_MODIFY) && (flags & GMEM_MOVEABLE) && flags != (GMEM_MODIFY | GMEM_MOVEABLE))
         ok( entry.flags == expect_entry.flags, "got flags %#Ix was %#Ix\n", entry.flags, expect_entry.flags );
         size = GlobalSize( mem );
         if (flags == GMEM_MOVEABLE)
-            todo_wine ok( size == 512, "GlobalSize returned %Iu\n", size );
+            ok( size == 512, "GlobalSize returned %Iu\n", size );
         else
             ok( size == 10, "GlobalSize returned %Iu\n", size );
 
@@ -1852,17 +1848,16 @@ static void test_GlobalAlloc(void)
         if (!(flags & GMEM_MODIFY) && (flags & GMEM_DISCARDABLE))
             ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
         else
-            todo_wine ok( tmp_mem == mem, "GlobalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
+            ok( tmp_mem == mem, "GlobalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
         entry = *mem_entry_from_HANDLE( mem );
         if ((flags & GMEM_DISCARDABLE) && (flags & GMEM_MODIFY)) expect_entry.flags |= 4;
         ok( entry.ptr == expect_entry.ptr, "got ptr %p was %p\n", entry.ptr, expect_entry.ptr );
-        todo_wine_if((flags & GMEM_DISCARDABLE) && (flags & GMEM_MODIFY))
         ok( entry.flags == expect_entry.flags, "got flags %#Ix was %#Ix\n", entry.flags, expect_entry.flags );
         size = GlobalSize( mem );
         if ((flags & GMEM_DISCARDABLE) || (flags & GMEM_MODIFY))
             ok( size == 12, "GlobalSize returned %Iu\n", size );
         else
-            todo_wine_if(!(flags & GMEM_MODIFY)) ok( size == 10, "GlobalSize returned %Iu\n", size );
+            ok( size == 10, "GlobalSize returned %Iu\n", size );
 
         ret = GlobalUnlock( mem );
         ok( !ret, "GlobalUnlock succeeded\n" );
@@ -1879,13 +1874,12 @@ static void test_GlobalAlloc(void)
 
         tmp_mem = GlobalReAlloc( mem, 0, flags );
         if (flags & GMEM_MODIFY)
-            todo_wine ok( tmp_mem == mem, "GlobalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
+            ok( tmp_mem == mem, "GlobalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
         else
             ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
         entry = *mem_entry_from_HANDLE( mem );
         if ((flags & GMEM_DISCARDABLE) && (flags & GMEM_MODIFY)) expect_entry.flags |= 4;
         ok( entry.ptr == expect_entry.ptr, "got ptr %p was %p\n", entry.ptr, expect_entry.ptr );
-        todo_wine_if((flags & GMEM_MODIFY) && (flags & GMEM_DISCARDABLE))
         ok( entry.flags == expect_entry.flags, "got flags %#Ix was %#Ix\n", entry.flags, expect_entry.flags );
         size = GlobalSize( mem );
         ok( size == 12, "GlobalSize returned %Iu\n", size );

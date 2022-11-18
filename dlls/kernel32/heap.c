@@ -195,7 +195,10 @@ HGLOBAL WINAPI GlobalReAlloc( HGLOBAL handle, SIZE_T size, UINT flags )
     struct mem_entry *mem;
     void *ptr;
 
-    if ((mem = unsafe_mem_from_HLOCAL( handle )) && mem->lock) return 0;
+    if (!(flags & GMEM_MODIFY) && (mem = unsafe_mem_from_HLOCAL( handle )) &&
+        mem->lock && (!size || (flags & GMEM_DISCARDABLE)))
+        return 0;
+
     if (!(handle = LocalReAlloc( handle, size, flags ))) return 0;
 
     /* GlobalReAlloc allows changing GMEM_FIXED to GMEM_MOVEABLE with GMEM_MODIFY */
