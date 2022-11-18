@@ -550,7 +550,7 @@ BOOL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
     INT gpu_count, adapter_count, monitor_count;
     INT gpu, adapter, monitor;
     DEVMODEW *modes, *mode;
-    DWORD mode_count;
+    UINT mode_count;
 
     if (!force && !force_display_devices_refresh) return TRUE;
     force_display_devices_refresh = FALSE;

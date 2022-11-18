@@ -1150,7 +1150,7 @@ NTSTATUS CDECL X11DRV_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *des
     VkPhysicalDevice *vk_physical_devices = NULL;
     VkPhysicalDeviceProperties2 properties2;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
-    DWORD device_count, device_idx = 0;
+    UINT device_count, device_idx = 0;
     struct x11_d3dkmt_adapter *adapter;
     VkInstanceCreateInfo create_info;
     VkPhysicalDeviceIDProperties id;

@@ -182,7 +182,7 @@ HWND *build_hwnd_list(void)
 {
     NTSTATUS status;
     HWND *list;
-    UINT count = 128;
+    ULONG count = 128;
 
     for (;;)
     {
