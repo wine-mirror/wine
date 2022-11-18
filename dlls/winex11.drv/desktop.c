@@ -217,7 +217,8 @@ static BOOL X11DRV_desktop_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
 static LONG X11DRV_desktop_set_current_mode( ULONG_PTR id, const DEVMODEW *mode )
 {
     if (mode->dmFields & DM_BITSPERPEL && mode->dmBitsPerPel != screen_bpp)
-        WARN("Cannot change screen color depth from %dbits to %dbits!\n", screen_bpp, mode->dmBitsPerPel);
+        WARN("Cannot change screen color depth from %dbits to %dbits!\n",
+             screen_bpp, (int)mode->dmBitsPerPel);
 
     desktop_width = mode->dmPelsWidth;
     desktop_height = mode->dmPelsHeight;

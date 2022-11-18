@@ -298,7 +298,8 @@ static LONG xrandr10_set_current_mode( ULONG_PTR id, const DEVMODEW *mode )
     }
 
     if (mode->dmFields & DM_BITSPERPEL && mode->dmBitsPerPel != screen_bpp)
-        WARN("Cannot change screen bit depth from %dbits to %dbits!\n", screen_bpp, mode->dmBitsPerPel);
+        WARN("Cannot change screen bit depth from %dbits to %dbits!\n",
+             screen_bpp, (int)mode->dmBitsPerPel);
 
     root = DefaultRootWindow( gdi_display );
     screen_config = pXRRGetScreenInfo( gdi_display, root );
@@ -1556,7 +1557,8 @@ static LONG xrandr14_set_current_mode( ULONG_PTR id, const DEVMODEW *mode )
     RRMode rrmode;
 
     if (mode->dmFields & DM_BITSPERPEL && mode->dmBitsPerPel != screen_bpp)
-        WARN("Cannot change screen color depth from %ubits to %ubits!\n", screen_bpp, mode->dmBitsPerPel);
+        WARN("Cannot change screen color depth from %ubits to %ubits!\n",
+             screen_bpp, (int)mode->dmBitsPerPel);
 
     screen_resources = xrandr_get_screen_resources();
     if (!screen_resources)

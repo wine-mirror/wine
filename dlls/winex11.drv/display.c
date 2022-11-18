@@ -180,8 +180,8 @@ void init_registry_display_settings(void)
         }
 
         TRACE("Device %s current display mode %ux%u %ubits %uHz at %d,%d.\n",
-              wine_dbgstr_w(dd.DeviceName), dm.dmPelsWidth, dm.dmPelsHeight, dm.dmBitsPerPel,
-              dm.dmDisplayFrequency, dm.dmPosition.x, dm.dmPosition.y);
+              wine_dbgstr_w(dd.DeviceName), (int)dm.dmPelsWidth, (int)dm.dmPelsHeight,
+              (int)dm.dmBitsPerPel, (int)dm.dmDisplayFrequency, (int)dm.dmPosition.x, (int)dm.dmPosition.y);
 
         ret = NtUserChangeDisplaySettings( &device_name, &dm, NULL,
                                            CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, NULL );
@@ -348,9 +348,9 @@ static LONG apply_display_settings( DEVMODEW *displays, ULONG_PTR *ids, BOOL do_
         TRACE("handler:%s changing %s to position:(%d,%d) resolution:%ux%u frequency:%uHz "
               "depth:%ubits orientation:%#x.\n", settings_handler.name,
               wine_dbgstr_w(mode->dmDeviceName),
-              full_mode->dmPosition.x, full_mode->dmPosition.y, full_mode->dmPelsWidth,
-              full_mode->dmPelsHeight, full_mode->dmDisplayFrequency, full_mode->dmBitsPerPel,
-              full_mode->dmDisplayOrientation);
+              (int)full_mode->dmPosition.x, (int)full_mode->dmPosition.y, (int)full_mode->dmPelsWidth,
+              (int)full_mode->dmPelsHeight, (int)full_mode->dmDisplayFrequency,
+              (int)full_mode->dmBitsPerPel, (int)full_mode->dmDisplayOrientation);
 
         ret = settings_handler.set_current_mode(*id, full_mode);
         if (attached_mode && ret == DISP_CHANGE_SUCCESSFUL)

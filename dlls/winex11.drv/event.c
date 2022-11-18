@@ -701,7 +701,8 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
         HWND last_focus = x11drv_thread_data()->last_focus;
 
         TRACE( "got take focus msg for %p, enabled=%d, visible=%d (style %08x), focus=%p, active=%p, fg=%p, last=%p\n",
-               hwnd, NtUserIsWindowEnabled(hwnd), NtUserIsWindowVisible(hwnd), NtUserGetWindowLongW(hwnd, GWL_STYLE),
+               hwnd, NtUserIsWindowEnabled(hwnd), NtUserIsWindowVisible(hwnd),
+               (int)NtUserGetWindowLongW(hwnd, GWL_STYLE),
                get_focus(), get_active_window(), NtUserGetForegroundWindow(), last_focus );
 
         if (can_activate_window(hwnd))
@@ -1137,7 +1138,8 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     if (root_coords) NtUserMapWindowPoints( 0, parent, (POINT *)&rect, 2 );
 
     TRACE( "win %p/%lx new X rect %d,%d,%dx%d (event %d,%d,%dx%d)\n",
-           hwnd, data->whole_window, rect.left, rect.top, rect.right-rect.left, rect.bottom-rect.top,
+           hwnd, data->whole_window, (int)rect.left, (int)rect.top,
+           (int)(rect.right-rect.left), (int)(rect.bottom-rect.top),
            event->x, event->y, event->width, event->height );
 
     /* Compare what has changed */
@@ -1153,7 +1155,7 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     if (data->window_rect.left == x && data->window_rect.top == y) flags |= SWP_NOMOVE;
     else
         TRACE( "%p moving from (%d,%d) to (%d,%d)\n",
-               hwnd, data->window_rect.left, data->window_rect.top, x, y );
+               hwnd, (int)data->window_rect.left, (int)data->window_rect.top, x, y );
 
     if ((data->window_rect.right - data->window_rect.left == cx &&
          data->window_rect.bottom - data->window_rect.top == cy) ||
@@ -1161,8 +1163,8 @@ static BOOL X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
         flags |= SWP_NOSIZE;
     else
         TRACE( "%p resizing from (%dx%d) to (%dx%d)\n",
-               hwnd, data->window_rect.right - data->window_rect.left,
-               data->window_rect.bottom - data->window_rect.top, cx, cy );
+               hwnd, (int)(data->window_rect.right - data->window_rect.left),
+               (int)(data->window_rect.bottom - data->window_rect.top), cx, cy );
 
     style = NtUserGetWindowLongW( data->hwnd, GWL_STYLE );
     if ((style & WS_CAPTION) == WS_CAPTION || !NtUserIsWindowRectFullScreen( &data->whole_rect ))
@@ -1810,7 +1812,7 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
     effect = x11drv_client_func( client_func_dnd_position_event, &params, sizeof(params) );
 
     TRACE( "actionRequested(%ld) chosen(0x%x) at x(%d),y(%d)\n",
-           event->data.l[4], effect, params.point.x, params.point.y );
+           event->data.l[4], effect, (int)params.point.x, (int)params.point.y );
 
     /*
      * Let source know if we're accepting the drop by

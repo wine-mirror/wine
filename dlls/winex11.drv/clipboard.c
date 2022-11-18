@@ -2240,7 +2240,7 @@ static BOOL clipboard_init( HWND hwnd )
     xfixes_init();
     request_selection_contents( clipboard_display, TRUE );
 
-    TRACE( "clipboard thread %04x running\n", GetCurrentThreadId() );
+    TRACE( "clipboard thread running\n" );
     return TRUE;
 }
 

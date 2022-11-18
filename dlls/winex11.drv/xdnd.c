@@ -191,7 +191,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
             {
                 hr = IDropTarget_DragLeave(dropTarget);
                 if (FAILED(hr))
-                    WARN("IDropTarget_DragLeave failed, error 0x%08X\n", hr);
+                    WARN("IDropTarget_DragLeave failed, error 0x%08lx\n", hr);
                 IDropTarget_Release(dropTarget);
             }
         }
@@ -210,12 +210,12 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
             if (hr == S_OK)
             {
                 XDNDAccepted = TRUE;
-                TRACE("the application accepted the drop (effect = %d)\n", effect_ignore);
+                TRACE("the application accepted the drop (effect = %ld)\n", effect_ignore);
             }
             else
             {
                 XDNDAccepted = FALSE;
-                WARN("IDropTarget_DragEnter failed, error 0x%08X\n", hr);
+                WARN("IDropTarget_DragEnter failed, error 0x%08lx\n", hr);
             }
             IDropTarget_Release(dropTarget);
         }
@@ -230,7 +230,7 @@ NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
             if (hr == S_OK)
                 XDNDDropEffect = effect;
             else
-                WARN("IDropTarget_DragOver failed, error 0x%08X\n", hr);
+                WARN("IDropTarget_DragOver failed, error 0x%08lx\n", hr);
             IDropTarget_Release(dropTarget);
         }
     }
@@ -283,10 +283,10 @@ NTSTATUS x11drv_dnd_drop_event( UINT arg )
                     TRACE("the application refused the drop\n");
             }
             else if (FAILED(hr))
-                WARN("drop failed, error 0x%08X\n", hr);
+                WARN("drop failed, error 0x%08lx\n", hr);
             else
             {
-                WARN("drop returned 0x%08X\n", hr);
+                WARN("drop returned 0x%08lx\n", hr);
                 drop_file = FALSE;
             }
             IDropTarget_Release(dropTarget);
@@ -295,7 +295,7 @@ NTSTATUS x11drv_dnd_drop_event( UINT arg )
         {
             HRESULT hr = IDropTarget_DragLeave(dropTarget);
             if (FAILED(hr))
-                WARN("IDropTarget_DragLeave failed, error 0x%08X\n", hr);
+                WARN("IDropTarget_DragLeave failed, error 0x%08lx\n", hr);
             IDropTarget_Release(dropTarget);
         }
     }
@@ -318,7 +318,7 @@ NTSTATUS x11drv_dnd_drop_event( UINT arg )
         }
     }
 
-    TRACE("effectRequested(0x%x) accept(%d) performed(0x%x) at x(%d),y(%d)\n",
+    TRACE("effectRequested(0x%lx) accept(%d) performed(0x%lx) at x(%ld),y(%ld)\n",
           XDNDDropEffect, accept, effect, XDNDxy.x, XDNDxy.y);
 
     return accept ? effect : 0;
@@ -343,7 +343,7 @@ NTSTATUS x11drv_dnd_leave_event( UINT arg )
         {
             HRESULT hr = IDropTarget_DragLeave(dropTarget);
             if (FAILED(hr))
-                WARN("IDropTarget_DragLeave failed, error 0x%08X\n", hr);
+                WARN("IDropTarget_DragLeave failed, error 0x%08lx\n", hr);
             IDropTarget_Release(dropTarget);
         }
     }
@@ -428,7 +428,7 @@ static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
             lpDrop->fNC  = !(ScreenToClient(hwnd, &lpDrop->pt) &&
                              GetClientRect(hwnd, &rect) &&
                              PtInRect(&rect, lpDrop->pt));
-            TRACE("Sending WM_DROPFILES: hWnd=0x%p, fNC=%d, x=%d, y=%d, files=%p(%s)\n", hwnd,
+            TRACE("Sending WM_DROPFILES: hWnd=0x%p, fNC=%d, x=%ld, y=%ld, files=%p(%s)\n", hwnd,
                     lpDrop->fNC, lpDrop->pt.x, lpDrop->pt.y, ((char*)lpDrop) + lpDrop->pFiles,
                     debugstr_w((WCHAR*)(((char*)lpDrop) + lpDrop->pFiles)));
             GlobalUnlock(dropHandle);
@@ -593,7 +593,7 @@ static HRESULT WINAPI XDNDDATAOBJECT_QueryGetData(IDataObject *dataObject,
     struct format_entry *iter;
     char formatDesc[1024];
 
-    TRACE("(%p, %p={.tymed=0x%x, .dwAspect=%d, .cfFormat=%d}\n",
+    TRACE("(%p, %p={.tymed=0x%lx, .dwAspect=%ld, .cfFormat=%d}\n",
         dataObject, formatEtc, formatEtc->tymed, formatEtc->dwAspect, formatEtc->cfFormat);
     X11DRV_XDND_DescribeClipboardFormat(formatEtc->cfFormat, formatDesc, sizeof(formatDesc));
 
@@ -644,7 +644,7 @@ static HRESULT WINAPI XDNDDATAOBJECT_EnumFormatEtc(IDataObject *dataObject,
     DWORD count = 0;
     FORMATETC *formats;
 
-    TRACE("(%p, %u, %p)\n", dataObject, dwDirection, ppEnumFormatEtc);
+    TRACE("(%p, %lu, %p)\n", dataObject, dwDirection, ppEnumFormatEtc);
 
     if (dwDirection != DATADIR_GET)
     {
@@ -681,7 +681,7 @@ static HRESULT WINAPI XDNDDATAOBJECT_DAdvise(IDataObject *dataObject,
                                              IAdviseSink *adviseSink,
                                              DWORD *pdwConnection)
 {
-    FIXME("(%p, %p, %u, %p, %p): stub\n", dataObject, formatEtc, advf,
+    FIXME("(%p, %p, %lu, %p, %p): stub\n", dataObject, formatEtc, advf,
         adviseSink, pdwConnection);
     return OLE_E_ADVISENOTSUPPORTED;
 }
@@ -689,7 +689,7 @@ static HRESULT WINAPI XDNDDATAOBJECT_DAdvise(IDataObject *dataObject,
 static HRESULT WINAPI XDNDDATAOBJECT_DUnadvise(IDataObject *dataObject,
                                                DWORD dwConnection)
 {
-    FIXME("(%p, %u): stub\n", dataObject, dwConnection);
+    FIXME("(%p, %lu): stub\n", dataObject, dwConnection);
     return OLE_E_ADVISENOTSUPPORTED;
 }
 

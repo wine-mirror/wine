@@ -766,7 +766,7 @@ int CDECL wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
         cleanup_icons( data->hWnd );
         break;
     default:
-        FIXME( "unhandled tray message: %u\n", msg );
+        FIXME( "unhandled tray message: %lu\n", msg );
         break;
     }
     return ret;
@@ -784,7 +784,7 @@ LRESULT WINAPI foreign_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     case WM_PARENTNOTIFY:
         if (LOWORD(wparam) == WM_DESTROY)
         {
-            TRACE( "%p: got parent notify destroy for win %lx\n", hwnd, lparam );
+            TRACE( "%p: got parent notify destroy for win %Ix\n", hwnd, lparam );
             PostMessageW( hwnd, WM_CLOSE, 0, 0 );  /* so that we come back here once the child is gone */
         }
         return 0;

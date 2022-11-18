@@ -228,7 +228,8 @@ static LONG xf86vm_set_current_mode(ULONG_PTR id, const DEVMODEW *mode)
     }
 
     if (mode->dmFields & DM_BITSPERPEL && mode->dmBitsPerPel != screen_bpp)
-        WARN("Cannot change screen bit depth from %dbits to %dbits!\n", screen_bpp, mode->dmBitsPerPel);
+        WARN("Cannot change screen bit depth from %dbits to %dbits!\n",
+             screen_bpp, (int)mode->dmBitsPerPel);
 
     assert(mode->dmDriverExtra == sizeof(XF86VidModeModeInfo *));
     memcpy(&xf86vm_mode, (BYTE *)mode + sizeof(*mode), sizeof(xf86vm_mode));
