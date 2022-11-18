@@ -5213,10 +5213,11 @@ static void test_window_threading(void)
     };
     WCHAR *filename = load_resource(L"test.avi");
     IFilterGraph2 *graph = create_graph();
+    HWND hwnd, hwnd2, parent;
+    IFilterGraph2 *graph2;
     IVideoWindow *window;
-    HWND hwnd, parent;
+    DWORD tid, tid2;
     HRESULT hr;
-    DWORD tid;
     ULONG ref;
     BOOL ret;
 
@@ -5253,6 +5254,17 @@ static void test_window_threading(void)
         ok(hr == S_OK, "Got hr %#lx.\n", hr);
         IVideoWindow_Release(window);
         ok(!(GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_NOPARENTNOTIFY), "Window has WS_EX_NOPARENTNOTIFY.\n");
+
+        graph2 = create_graph();
+        hr = IFilterGraph2_RenderFile(graph2, filename, NULL);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        hwnd2 = get_renderer_hwnd(graph);
+        ok(!!hwnd2, "Failed to get renderer window.\n");
+        tid2 = GetWindowThreadProcessId(hwnd, NULL);
+        ok(tid2 == tid, "Expected thread to be shared.\n");
+
+        ref = IFilterGraph2_Release(graph2);
+        ok(!ref, "Got outstanding refcount %ld.\n", ref);
     }
     else
         skip("Could not find renderer window.\n");
