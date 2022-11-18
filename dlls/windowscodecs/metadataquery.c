@@ -86,8 +86,8 @@ static ULONG WINAPI mqr_Release(IWICMetadataQueryReader *iface)
     if (!ref)
     {
         IWICMetadataBlockReader_Release(This->block);
-        HeapFree(GetProcessHeap(), 0, This->root);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->root);
+        free(This);
     }
     return ref;
 }
@@ -461,7 +461,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
 
     len = lstrlenW(query) + 1;
     if (This->root) len += lstrlenW(This->root);
-    full_query = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    full_query = malloc(len * sizeof(WCHAR));
     full_query[0] = 0;
     if (This->root)
         lstrcpyW(full_query, This->root);
@@ -591,7 +591,7 @@ static HRESULT WINAPI mqr_GetMetadataByName(IWICMetadataQueryReader *iface, LPCW
     else
         PropVariantClear(&new_value);
 
-    HeapFree(GetProcessHeap(), 0, full_query);
+    free(full_query);
 
     return hr;
 }
@@ -730,7 +730,7 @@ HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *mbr, const W
 {
     QueryReader *obj;
 
-    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
+    obj = calloc(1, sizeof(*obj));
     if (!obj)
         return E_OUTOFMEMORY;
 
@@ -740,7 +740,7 @@ HRESULT MetadataQueryReader_CreateInstance(IWICMetadataBlockReader *mbr, const W
     IWICMetadataBlockReader_AddRef(mbr);
     obj->block = mbr;
 
-    obj->root = root ? heap_strdupW(root) : NULL;
+    obj->root = wcsdup(root);
 
     *out = &obj->IWICMetadataQueryReader_iface;
 
@@ -804,8 +804,8 @@ static ULONG WINAPI mqw_Release(IWICMetadataQueryWriter *iface)
     if (!ref)
     {
         IWICMetadataBlockWriter_Release(writer->block);
-        HeapFree(GetProcessHeap(), 0, writer->root);
-        HeapFree(GetProcessHeap(), 0, writer);
+        free(writer->root);
+        free(writer);
     }
     return ref;
 }
@@ -870,7 +870,7 @@ HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *mbw, const W
 {
     QueryWriter *obj;
 
-    obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj));
+    obj = calloc(1, sizeof(*obj));
     if (!obj)
         return E_OUTOFMEMORY;
 
@@ -880,7 +880,7 @@ HRESULT MetadataQueryWriter_CreateInstance(IWICMetadataBlockWriter *mbw, const W
     IWICMetadataBlockWriter_AddRef(mbw);
     obj->block = mbw;
 
-    obj->root = root ? heap_strdupW(root) : NULL;
+    obj->root = wcsdup(root);
 
     *out = &obj->IWICMetadataQueryWriter_iface;
 
