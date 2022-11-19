@@ -990,6 +990,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
         HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
     {
         if (flags & LMEM_MODIFY) ret = handle;
+        else if (flags & LMEM_DISCARDABLE) SetLastError( ERROR_INVALID_PARAMETER );
         else if (flags & LMEM_MOVEABLE)
         {
             ret = HeapReAlloc( heap, heap_flags, ptr, size );
@@ -1005,6 +1006,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
             if (flags & LMEM_DISCARDABLE) mem->flags |= MEM_FLAG_DISCARDABLE;
             ret = handle;
         }
+        else if (flags & LMEM_DISCARDABLE) SetLastError( ERROR_INVALID_PARAMETER );
         else
         {
             if (size)
