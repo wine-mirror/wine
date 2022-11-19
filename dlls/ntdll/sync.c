@@ -155,6 +155,13 @@ static BOOL crit_section_has_debuginfo( const RTL_CRITICAL_SECTION *crit )
     return crit->DebugInfo != NULL && crit->DebugInfo != no_debug_info_marker;
 }
 
+static const char *crit_section_get_name( const RTL_CRITICAL_SECTION *crit )
+{
+    if (crit_section_has_debuginfo( crit ))
+        return (char *)crit->DebugInfo->Spare[0];
+    return "?";
+}
+
 static inline HANDLE get_semaphore( RTL_CRITICAL_SECTION *crit )
 {
     HANDLE ret = crit->LockSemaphore;
@@ -311,9 +318,8 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
 
         if ( status == STATUS_TIMEOUT )
         {
-            const char *name = NULL;
-            if (crit_section_has_debuginfo( crit )) name = (char *)crit->DebugInfo->Spare[0];
-            if (!name) name = "?";
+            const char *name = crit_section_get_name( crit );
+
             ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (60 sec)\n",
                  crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
             status = wait_semaphore( crit, 60 );
@@ -461,7 +467,7 @@ NTSTATUS WINAPI RtlLeaveCriticalSection( RTL_CRITICAL_SECTION *crit )
     if (--crit->RecursionCount)
     {
         if (crit->RecursionCount > 0) InterlockedDecrement( &crit->LockCount );
-        else ERR( "section %p is not acquired\n", crit );
+        else ERR( "section %p %s is not acquired\n", crit, debugstr_a( crit_section_get_name( crit )));
     }
     else
     {
