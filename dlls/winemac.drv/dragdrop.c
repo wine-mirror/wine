@@ -105,7 +105,7 @@ static HANDLE get_pasteboard_data(UINT64 pasteboard, UINT desired_format)
         params.data = GlobalLock(handle);
         status = MACDRV_CALL(dnd_get_data, &params);
         GlobalUnlock(handle);
-        if (!status) return GlobalReAlloc(handle, params.size, 0);
+        if (!status) return GlobalReAlloc(handle, params.size, GMEM_MOVEABLE);
         GlobalFree(handle);
         if (status != STATUS_BUFFER_OVERFLOW) return 0;
     }
