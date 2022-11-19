@@ -990,13 +990,13 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
         HeapValidate( heap, HEAP_NO_SERIALIZE, ptr ))
     {
         if (flags & LMEM_MODIFY) ret = handle;
-        else
+        else if (flags & LMEM_MOVEABLE)
         {
-            if (!(flags & LMEM_MOVEABLE)) heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
             ret = HeapReAlloc( heap, heap_flags, ptr, size );
             if (ret) RtlSetUserValueHeap( heap, heap_flags, ret, ret );
             else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         }
+        else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
     }
     else if ((mem = unsafe_mem_from_HLOCAL( handle )))
     {
