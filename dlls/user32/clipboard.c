@@ -189,7 +189,7 @@ static HANDLE marshal_data( UINT format, HANDLE handle, size_t *ret_size )
 /* rebuild the target handle from the data received in GetClipboardData */
 static HANDLE unmarshal_data( UINT format, void *data, data_size_t size )
 {
-    HANDLE handle = GlobalReAlloc( data, size, 0 );  /* release unused space */
+    HANDLE handle = GlobalReAlloc( data, size, GMEM_MOVEABLE );  /* release unused space */
 
     switch (format)
     {
