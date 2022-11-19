@@ -252,7 +252,7 @@ static HGLOBAL update_devmode_handleW(HGLOBAL hdm, DEVMODEW *dm)
     /* Increase / alloc the global memory block, when needed */
     if ((dm->dmSize + dm->dmDriverExtra) > size) {
         if (hdm)
-            hdm = GlobalReAlloc(hdm, dm->dmSize + dm->dmDriverExtra, 0);
+            hdm = GlobalReAlloc(hdm, dm->dmSize + dm->dmDriverExtra, GMEM_MOVEABLE);
         else
             hdm = GlobalAlloc(GMEM_MOVEABLE, dm->dmSize + dm->dmDriverExtra);
     }
@@ -280,7 +280,7 @@ static HGLOBAL update_devmode_handleA(HGLOBAL hdm, DEVMODEA *dm)
     /* Increase / alloc the global memory block, when needed */
     if ((dm->dmSize + dm->dmDriverExtra) > size) {
         if (hdm)
-            hdm = GlobalReAlloc(hdm, dm->dmSize + dm->dmDriverExtra, 0);
+            hdm = GlobalReAlloc(hdm, dm->dmSize + dm->dmDriverExtra, GMEM_MOVEABLE);
         else
             hdm = GlobalAlloc(GMEM_MOVEABLE, dm->dmSize + dm->dmDriverExtra);
     }
