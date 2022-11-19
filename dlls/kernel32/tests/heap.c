@@ -1740,7 +1740,7 @@ static void test_GlobalAlloc(void)
         if (flags == GMEM_MOVEABLE) ok( size == 512, "GlobalSize returned %Iu\n", size );
         else
         {
-            todo_wine_if(flags && (flags & GMEM_MOVEABLE) && !(flags & GMEM_MODIFY))
+            todo_wine_if((flags & GMEM_DISCARDABLE) && !(flags & GMEM_MODIFY))
             ok( size == 10, "GlobalSize returned %Iu\n", size );
         }
 
@@ -1774,7 +1774,7 @@ static void test_GlobalAlloc(void)
         if (flags == GMEM_MOVEABLE) ok( size == 10, "GlobalSize returned %Iu\n", size );
         else if (flags)
         {
-            todo_wine_if((flags & GMEM_MOVEABLE) && !(flags & GMEM_MODIFY))
+            todo_wine_if((flags & GMEM_DISCARDABLE) && (flags & (GMEM_MODIFY | GMEM_MOVEABLE | GMEM_DISCARDABLE)) != (GMEM_MODIFY | GMEM_MOVEABLE | GMEM_DISCARDABLE))
             ok( size == 12, "GlobalSize returned %Iu\n", size );
         }
         else ok( size == 12 || broken( size == 10 ) /* w8 */, "GlobalSize returned %Iu\n", size );
@@ -1917,10 +1917,7 @@ static void test_GlobalAlloc(void)
         if (!(flags & GMEM_MODIFY) && (flags & GMEM_DISCARDABLE))
             todo_wine ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
         else
-        {
-            todo_wine_if(flags && (!(flags & GMEM_MOVEABLE) || flags == (GMEM_MODIFY | GMEM_MOVEABLE)))
             ok( tmp_mem == mem, "GlobalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         entry = *mem_entry_from_HANDLE( mem );
         if ((flags & GMEM_DISCARDABLE) && (flags & GMEM_MODIFY)) expect_entry.flags |= 4;
         if ((flags & GMEM_DISCARDABLE) || (flags & GMEM_MODIFY))
@@ -1947,10 +1944,7 @@ static void test_GlobalAlloc(void)
         if (!(flags & GMEM_MODIFY) && (flags & GMEM_DISCARDABLE))
             todo_wine ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
         else
-        {
-            todo_wine_if(flags && (!(flags & GMEM_MOVEABLE) || flags == (GMEM_MODIFY | GMEM_MOVEABLE)))
             ok( tmp_mem == mem, "GlobalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         entry = *mem_entry_from_HANDLE( mem );
         if ((flags & GMEM_DISCARDABLE) && (flags & GMEM_MODIFY)) expect_entry.flags |= 4;
         ok( entry.ptr == expect_entry.ptr, "got ptr %p was %p\n", entry.ptr, expect_entry.ptr );
@@ -1976,10 +1970,7 @@ static void test_GlobalAlloc(void)
         else if (!(flags & GMEM_MODIFY) && (flags & GMEM_DISCARDABLE))
             todo_wine ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
         else
-        {
-            todo_wine_if(!(flags & GMEM_MOVEABLE) || flags == (GMEM_MODIFY | GMEM_MOVEABLE))
             ok( tmp_mem == mem, "GlobalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         entry = *mem_entry_from_HANDLE( mem );
         if (flags == GMEM_MOVEABLE)
         {
@@ -2474,10 +2465,7 @@ static void test_LocalAlloc(void)
         if (!(flags & LMEM_MODIFY) && ((flags & LMEM_DISCARDABLE) || !(flags & LMEM_MOVEABLE)))
             todo_wine ok( !tmp_mem, "LocalReAlloc succeeded\n" );
         else
-        {
-            todo_wine_if((!(flags & LMEM_MOVEABLE) || flags == (LMEM_MODIFY | LMEM_MOVEABLE)))
             ok( tmp_mem == mem, "LocalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         entry = *mem_entry_from_HANDLE( mem );
         if ((flags & LMEM_DISCARDABLE) && (flags & LMEM_MODIFY)) expect_entry.flags |= 4;
         if (flags == LMEM_MOVEABLE) ok( entry.ptr != expect_entry.ptr, "got unexpected ptr %p\n", entry.ptr );
@@ -2504,10 +2492,7 @@ static void test_LocalAlloc(void)
         if (!(flags & LMEM_MODIFY) && (flags & LMEM_DISCARDABLE))
             todo_wine ok( !tmp_mem, "LocalReAlloc succeeded\n" );
         else
-        {
-            todo_wine_if(flags && (!(flags & LMEM_MOVEABLE) || flags == (LMEM_MODIFY | LMEM_MOVEABLE)))
             ok( tmp_mem == mem, "LocalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         entry = *mem_entry_from_HANDLE( mem );
         if ((flags & LMEM_DISCARDABLE) && (flags & LMEM_MODIFY)) expect_entry.flags |= 4;
         ok( entry.ptr == expect_entry.ptr, "got ptr %p was %p\n", entry.ptr, expect_entry.ptr );
@@ -2533,10 +2518,7 @@ static void test_LocalAlloc(void)
 
         tmp_mem = LocalReAlloc( mem, 0, flags );
         if (flags & LMEM_MODIFY)
-        {
-            todo_wine_if(!(flags & LMEM_MOVEABLE) || (flags == (LMEM_MOVEABLE | LMEM_MODIFY)))
             ok( tmp_mem == mem, "LocalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         else
             todo_wine ok( !tmp_mem, "LocalReAlloc succeeded\n" );
         entry = *mem_entry_from_HANDLE( mem );
@@ -2564,10 +2546,7 @@ static void test_LocalAlloc(void)
         if (!(flags & LMEM_MODIFY) && (flags & LMEM_DISCARDABLE))
             todo_wine ok( !tmp_mem, "LocalReAlloc succeeded\n" );
         else
-        {
-            todo_wine_if(flags && (!(flags & LMEM_MOVEABLE) || flags == (LMEM_MODIFY | LMEM_MOVEABLE)))
             ok( tmp_mem == mem, "LocalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         entry = *mem_entry_from_HANDLE( mem );
         if ((flags & LMEM_DISCARDABLE) && (flags & LMEM_MODIFY)) expect_entry.flags |= 4;
         if ((flags & LMEM_DISCARDABLE) || (flags & LMEM_MODIFY))
@@ -2594,10 +2573,7 @@ static void test_LocalAlloc(void)
         if (!(flags & LMEM_MODIFY) && (flags & LMEM_DISCARDABLE))
             todo_wine ok( !tmp_mem, "LocalReAlloc succeeded\n" );
         else
-        {
-            todo_wine_if(flags && (!(flags & LMEM_MOVEABLE) || flags == (LMEM_MODIFY | LMEM_MOVEABLE)))
             ok( tmp_mem == mem, "LocalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         entry = *mem_entry_from_HANDLE( mem );
         if ((flags & LMEM_DISCARDABLE) && (flags & LMEM_MODIFY)) expect_entry.flags |= 4;
         ok( entry.ptr == expect_entry.ptr, "got ptr %p was %p\n", entry.ptr, expect_entry.ptr );
@@ -2623,10 +2599,7 @@ static void test_LocalAlloc(void)
         else if (!(flags & LMEM_MODIFY) && (flags & LMEM_DISCARDABLE))
             todo_wine ok( !tmp_mem, "LocalReAlloc succeeded\n" );
         else
-        {
-            todo_wine_if(!(flags & LMEM_MOVEABLE) || flags == (LMEM_MODIFY | LMEM_MOVEABLE))
             ok( tmp_mem == mem, "LocalReAlloc returned %p, error %lu\n", tmp_mem, GetLastError() );
-        }
         entry = *mem_entry_from_HANDLE( mem );
         if (flags == LMEM_MOVEABLE)
         {

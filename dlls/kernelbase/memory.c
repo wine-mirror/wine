@@ -1000,7 +1000,12 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
     }
     else if ((mem = unsafe_mem_from_HLOCAL( handle )))
     {
-        if (!(flags & LMEM_MODIFY))
+        if (flags & LMEM_MODIFY)
+        {
+            if (flags & LMEM_DISCARDABLE) mem->flags |= MEM_FLAG_DISCARDABLE;
+            ret = handle;
+        }
+        else
         {
             if (size)
             {
@@ -1025,12 +1030,6 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
                 ret = handle;
             }
         }
-        else if (flags & LMEM_DISCARDABLE)
-        {
-            mem->flags |= MEM_FLAG_DISCARDABLE;
-            ret = handle;
-        }
-        else SetLastError( ERROR_INVALID_PARAMETER );
     }
     else SetLastError( ERROR_INVALID_HANDLE );
     RtlUnlockHeap( heap );
