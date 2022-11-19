@@ -375,7 +375,7 @@ static DWORD CALLBACK ME_AppendToHGLOBAL(DWORD_PTR dwCookie, LPBYTE lpBuff, LONG
     if (pData->nLength+cb+1 >= cb) {
         /* round up to 2^17 */
         int nNewSize = (((nMaxSize+cb+1)|0x1FFFF)+1) & 0xFFFE0000;
-        pData->hData = GlobalReAlloc(pData->hData, nNewSize, 0);
+        pData->hData = GlobalReAlloc(pData->hData, nNewSize, GMEM_MOVEABLE);
     }
     pDest = GlobalLock(pData->hData);
     memcpy(pDest + pData->nLength, lpBuff, cb);
@@ -397,7 +397,7 @@ static HGLOBAL get_rtf_text(ME_TextEditor *editor, const ME_Cursor *start, int n
     es.dwCookie = (DWORD_PTR)&gds;
     es.pfnCallback = ME_AppendToHGLOBAL;
     ME_StreamOutRange(editor, SF_RTF, start, nChars, &es);
-    GlobalReAlloc(gds.hData, gds.nLength+1, 0);
+    GlobalReAlloc(gds.hData, gds.nLength+1, GMEM_MOVEABLE);
     return gds.hData;
 }
 
