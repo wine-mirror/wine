@@ -1011,6 +1011,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
         {
             if (size)
             {
+                if (mem->lock && !(flags & LMEM_MOVEABLE)) heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
                 if (!mem->ptr) ptr = HeapAlloc( heap, heap_flags, size );
                 else ptr = HeapReAlloc( heap, heap_flags, mem->ptr, size );
 
