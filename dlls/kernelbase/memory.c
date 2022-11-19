@@ -1024,14 +1024,14 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
                     ret = handle;
                 }
             }
-            else
+            else if ((flags & LMEM_MOVEABLE) && !mem->lock)
             {
                 HeapFree( heap, heap_flags, mem->ptr );
                 mem->flags |= MEM_FLAG_DISCARDED;
-                mem->lock = 0;
                 mem->ptr = NULL;
                 ret = handle;
             }
+            else SetLastError( ERROR_INVALID_PARAMETER );
         }
     }
     else SetLastError( ERROR_INVALID_HANDLE );
