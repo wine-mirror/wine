@@ -2777,6 +2777,8 @@ static BOOL broadcast_message( struct send_message_info *info, DWORD_PTR *res_pt
                 break;
             }
         }
+
+        free( list );
     }
 
     if (res_ptr) *res_ptr = 1;
