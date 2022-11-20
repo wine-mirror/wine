@@ -1452,7 +1452,8 @@ static void check_audio_type(const WM_MEDIA_TYPE *mt)
     ok(wave_format->wFormatTag == WAVE_FORMAT_PCM, "Got tag %#x.\n", wave_format->wFormatTag);
 }
 
-static void test_stream_media_props(IWMStreamConfig *config, const GUID *majortype)
+static void test_stream_media_props(IWMStreamConfig *config,
+        const GUID *majortype, const GUID *subtype, const GUID *formattype, BOOL todo_subtype)
 {
     char mt_buffer[2000];
     WM_MEDIA_TYPE *mt = (WM_MEDIA_TYPE *)mt_buffer;
@@ -1482,6 +1483,11 @@ static void test_stream_media_props(IWMStreamConfig *config, const GUID *majorty
             sizeof(WM_MEDIA_TYPE) + mt->cbFormat, size);
     ok(IsEqualGUID(&mt->majortype, majortype), "Expected major type %s, got %s.\n",
             debugstr_guid(majortype), debugstr_guid(&mt->majortype));
+    todo_wine_if(todo_subtype)
+    ok(IsEqualGUID(&mt->subtype, subtype), "Expected sub type %s, got %s.\n",
+            debugstr_guid(subtype), debugstr_guid(&mt->subtype));
+    ok(IsEqualGUID(&mt->formattype, formattype), "Expected format type %s, got %s.\n",
+            debugstr_guid(formattype), debugstr_guid(&mt->formattype));
 
     IWMMediaProps_Release(props);
 }
@@ -1538,7 +1544,10 @@ static void test_sync_reader_types(void)
         else
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
 
-        test_stream_media_props(config, &majortype);
+        if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
+            test_stream_media_props(config, &MEDIATYPE_Audio, &MEDIASUBTYPE_MSAUDIO1, &FORMAT_WaveFormatEx, TRUE);
+        else
+            test_stream_media_props(config, &MEDIATYPE_Video, &MEDIASUBTYPE_WMV1, &FORMAT_VideoInfo, TRUE);
 
         ref = IWMStreamConfig_Release(config);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
@@ -1638,6 +1647,7 @@ static void test_sync_reader_types(void)
         else
         {
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Video), "Got major type %s.\n", debugstr_guid(&majortype));
+            ok(IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_RGB24), "Got subtype %s.\n", debugstr_guid(&mt->subtype));
             got_video = true;
             check_video_type(mt);
         }
@@ -3414,7 +3424,10 @@ static void test_async_reader_types(void)
         else
             ok(IsEqualGUID(&majortype, &MEDIATYPE_Audio), "Got major type %s.\n", debugstr_guid(&majortype));
 
-        test_stream_media_props(config, &majortype);
+        if (IsEqualGUID(&majortype, &MEDIATYPE_Audio))
+            test_stream_media_props(config, &MEDIATYPE_Audio, &MEDIASUBTYPE_MSAUDIO1, &FORMAT_WaveFormatEx, TRUE);
+        else
+            test_stream_media_props(config, &MEDIATYPE_Video, &MEDIASUBTYPE_WMV1, &FORMAT_VideoInfo, TRUE);
 
         ref = IWMStreamConfig_Release(config);
         ok(!ref, "Got outstanding refcount %ld.\n", ref);
