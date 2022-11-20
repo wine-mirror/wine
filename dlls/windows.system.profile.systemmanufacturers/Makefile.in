@@ -1,0 +1,8 @@
+MODULE  = windows.system.profile.systemmanufacturers.dll
+IMPORTS = combase
+
+C_SRCS = \
+	main.c
+
+IDL_SRCS = \
+	classes.idl
