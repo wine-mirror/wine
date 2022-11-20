@@ -781,7 +781,7 @@ static HRESULT WINAPI fields_get_Item( Fields *iface, VARIANT index, Field **obj
 {
     struct fields *fields = impl_from_Fields( iface );
     HRESULT hr;
-    ULONG i;
+    ULONG i = 0;
 
     TRACE( "%p, %s, %p\n", fields, debugstr_variant(&index), obj );
 
