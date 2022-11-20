@@ -80,6 +80,7 @@ static void test_profile_int(void)
          { SECTION, KEY,  "B4294967297", TESTFILE,  1, 0},
     };
     int i, num_test = ARRAY_SIZE(profileInt);
+    char section[64];
     UINT res;
 
     DeleteFileA( TESTFILE);
@@ -91,6 +92,12 @@ static void test_profile_int(void)
 
        res = GetPrivateProfileIntA(profileInt[i].section, profileInt[i].key, 
                  profileInt[i].defaultVal, profileInt[i].iniFile); 
+       ok((res == profileInt[i].result), "test<%02d>: ret<%010u> exp<%010u>\n",
+            i, res, profileInt[i].result);
+
+       sprintf(section, "  %s   ", profileInt[i].section);
+       res = GetPrivateProfileIntA(profileInt[i].section, profileInt[i].key,
+                 profileInt[i].defaultVal, profileInt[i].iniFile);
        ok((res == profileInt[i].result), "test<%02d>: ret<%010u> exp<%010u>\n",
             i, res, profileInt[i].result);
     }
@@ -270,7 +277,7 @@ static void test_profile_sections_names(void)
     DWORD count;
     char buf[100];
     WCHAR bufW[100];
-    static const char content[]="[section1]\r\n[section2]\r\n[section3]\r\n";
+    static const char content[]="[ section1 ]\r\n[section2]\r\n[section3]\r\n";
     static const char testfile3[]=".\\testwine3.ini";
     static const WCHAR testfile3W[]={ '.','\\','t','e','s','t','w','i','n','e','3','.','i','n','i',0 };
     static const WCHAR not_here[] = {'.','\\','n','o','t','_','h','e','r','e','.','i','n','i',0};
@@ -288,6 +295,7 @@ static void test_profile_sections_names(void)
     ok( ret == 27, "expected return size 27, got %d\n", ret );
     ok( (buf[ret-1] == 0 && buf[ret] == 0),
         "returned buffer not terminated with double-null\n" );
+    ok( !strcmp(buf, "section1"), "Unexpected content %s.\n", debugstr_a(buf));
 
     /* Test with exactly fitting buffer */
     memset(buf, 0xc, sizeof(buf));

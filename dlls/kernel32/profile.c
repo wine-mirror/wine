@@ -292,6 +292,16 @@ static inline ENCODING PROFILE_DetectTextEncoding(const void * buffer, int * len
     return ENCODING_ANSI;
 }
 
+static void profile_trim_spaces(WCHAR **start, WCHAR **end)
+{
+    WCHAR *s = *start, *e = *end;
+
+    while (s < e && PROFILE_isspaceW(*s)) s++;
+    while ((e > s) && PROFILE_isspaceW(e[-1])) e--;
+
+    *start = s;
+    *end = e;
+}
 
 /***********************************************************************
  *           PROFILE_Load
@@ -302,8 +312,8 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
 {
     void *buffer_base, *pBuffer;
     WCHAR * szFile;
-    const WCHAR *szLineStart, *szLineEnd;
-    const WCHAR *szValueStart, *szEnd, *next_line;
+    WCHAR *szLineStart, *szLineEnd, *next_line;
+    const WCHAR *szValueStart, *szEnd;
     int len;
     PROFILESECTION *section, *first_section;
     PROFILESECTION **next_section;
@@ -400,8 +410,7 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
         szLineEnd = next_line;
 
         /* get rid of white space */
-        while (szLineStart < szLineEnd && PROFILE_isspaceW(*szLineStart)) szLineStart++;
-        while ((szLineEnd > szLineStart) && PROFILE_isspaceW(szLineEnd[-1])) szLineEnd--;
+        profile_trim_spaces(&szLineStart, &szLineEnd);
 
         if (szLineStart >= szLineEnd) continue;
 
@@ -415,8 +424,13 @@ static PROFILESECTION *PROFILE_Load(HANDLE hFile, ENCODING * pEncoding)
             }
             else
             {
+                /* Skip brackets */
                 szLineStart++;
                 len -= 2;
+                szLineEnd = szLineStart + len;
+                profile_trim_spaces(&szLineStart, &szLineEnd);
+                len = szLineEnd - szLineStart;
+
                 /* no need to allocate +1 for NULL terminating character as
                  * already included in structure */
                 if (!(section = HeapAlloc( GetProcessHeap(), 0, sizeof(*section) + len * sizeof(WCHAR) )))
