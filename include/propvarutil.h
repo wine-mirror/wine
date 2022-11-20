@@ -205,6 +205,8 @@ inline BOOL IsPropVariantString(REFPROPVARIANT propvar)
 #endif /* NO_PROPVAR_INLINES */
 #endif /* __cplusplus */
 
+HRESULT WINAPI StgSerializePropVariant(const PROPVARIANT *ppropvar, SERIALIZEDPROPERTYVALUE **ppprop, ULONG *pcb);
+HRESULT WINAPI StgDeserializePropVariant(const SERIALIZEDPROPERTYVALUE *pprop, ULONG cbmax, PROPVARIANT *ppropvar);
 
 #ifdef __cplusplus
 }
