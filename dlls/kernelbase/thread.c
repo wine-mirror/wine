@@ -512,13 +512,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetThreadGroupAffinity( HANDLE thread, const GROUP
  */
 DWORD WINAPI DECLSPEC_HOTPATCH SetThreadIdealProcessor( HANDLE thread, DWORD proc )
 {
-    FIXME( "(%p %lu): stub\n", thread, proc );
-    if (proc > MAXIMUM_PROCESSORS)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return ~0u;
-    }
-    return 0;
+    NTSTATUS status;
+
+    status = NtSetInformationThread( thread, ThreadIdealProcessor, &proc, sizeof(proc) );
+    if (NT_SUCCESS(status)) return status;
+
+    SetLastError( RtlNtStatusToDosError( status ));
+    return ~0u;
 }
 
 

@@ -2177,6 +2177,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         if (ret_len) *ret_len = sizeof(BOOLEAN);
         return STATUS_SUCCESS;
 
+    case ThreadIdealProcessor:
     case ThreadEnableAlignmentFaultFixup:
         return STATUS_INVALID_INFO_CLASS;
 
@@ -2186,7 +2187,6 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadEventPair_Reusable:
     case ThreadZeroTlsCell:
     case ThreadPerformanceCount:
-    case ThreadIdealProcessor:
     case ThreadPriorityBoost:
     case ThreadSetTlsArrayAddress:
     default:
@@ -2379,6 +2379,16 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         FIXME( "ThreadPowerThrottling stub!\n" );
         return STATUS_SUCCESS;
 
+    case ThreadIdealProcessor:
+    {
+        const ULONG *number = data;
+
+        if (length != sizeof(*number)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (*number > MAXIMUM_PROCESSORS) return STATUS_INVALID_PARAMETER;
+        FIXME( "ThreadIdealProcessor stub!\n" );
+        return STATUS_SUCCESS;
+    }
+
     case ThreadBasicInformation:
     case ThreadTimes:
     case ThreadPriority:
@@ -2386,7 +2396,6 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadEventPair_Reusable:
     case ThreadPerformanceCount:
     case ThreadAmILastThread:
-    case ThreadIdealProcessor:
     case ThreadPriorityBoost:
     case ThreadSetTlsArrayAddress:
     case ThreadIsIoPending:

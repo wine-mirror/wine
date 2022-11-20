@@ -3356,6 +3356,27 @@ static void test_thread_lookup(void)
     ok( !handle || broken(handle == (HANDLE)0xdeadbeef) /* vista */, "handle set %p\n", handle );
 }
 
+static void test_thread_ideal_processor(void)
+{
+    ULONG number, len;
+    NTSTATUS status;
+
+    number = 0;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadIdealProcessor, &number, sizeof(number) );
+    ok(NT_SUCCESS(status), "Unexpected status %#lx.\n", status);
+
+    number = 64 + 1;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadIdealProcessor, &number, sizeof(number) );
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %#lx.\n", status);
+
+    number = 0;
+    status = pNtSetInformationThread( GetCurrentThread(), ThreadIdealProcessor, &number, sizeof(number) );
+    ok(!status, "Unexpected status %#lx.\n", status);
+
+    status = pNtQueryInformationThread( GetCurrentThread(), ThreadIdealProcessor, &number, sizeof(number), &len );
+    ok(status == STATUS_INVALID_INFO_CLASS, "Unexpected status %#lx.\n", status);
+}
+
 static void test_thread_info(void)
 {
     NTSTATUS status;
@@ -3613,6 +3634,7 @@ START_TEST(info)
     test_HideFromDebugger();
     test_thread_start_address();
     test_thread_lookup();
+    test_thread_ideal_processor();
 
     test_affinity();
     test_debug_object();
