@@ -82,7 +82,8 @@ struct block
     WORD block_size;   /* block size in multiple of BLOCK_ALIGN */
     BYTE block_flags;
     BYTE tail_size;    /* unused size (used block) / high size bits (free block) */
-    DWORD block_type;
+    WORD base_offset;  /* offset to the region base in multiple of REGION_ALIGN */
+    WORD block_type;
 };
 
 C_ASSERT( sizeof(struct block) == 8 );
@@ -123,10 +124,10 @@ typedef struct
 C_ASSERT( sizeof(ARENA_LARGE) == offsetof(ARENA_LARGE, block) + sizeof(struct block) );
 C_ASSERT( sizeof(ARENA_LARGE) == 4 * BLOCK_ALIGN );
 
-#define BLOCK_TYPE_USED        0x455355
-#define BLOCK_TYPE_DEAD        0xbedead
-#define BLOCK_TYPE_FREE        0x45455246
-#define BLOCK_TYPE_LARGE       0x6752614c
+#define BLOCK_TYPE_USED        0x5355
+#define BLOCK_TYPE_DEAD        0xdead
+#define BLOCK_TYPE_FREE        0x5246
+#define BLOCK_TYPE_LARGE       0x614c
 
 #define BLOCK_FILL_USED        0x55
 #define BLOCK_FILL_TAIL        0xab
@@ -134,14 +135,26 @@ C_ASSERT( sizeof(ARENA_LARGE) == 4 * BLOCK_ALIGN );
 
 #define ROUND_ADDR(addr, mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
 #define ROUND_SIZE(size, mask) ((((SIZE_T)(size) + (mask)) & ~(SIZE_T)(mask)))
+#define FIELD_MAX(type, field) (((SIZE_T)1 << (sizeof(((type *)0)->field) * 8)) - 1)
 
 #define HEAP_MIN_BLOCK_SIZE   ROUND_SIZE(sizeof(struct entry) + BLOCK_ALIGN, BLOCK_ALIGN - 1)
 
 C_ASSERT( sizeof(struct block) <= HEAP_MIN_BLOCK_SIZE );
 C_ASSERT( sizeof(struct entry) <= HEAP_MIN_BLOCK_SIZE );
 
+/* used block size is coded into block_size */
+#define HEAP_MAX_USED_BLOCK_SIZE    (FIELD_MAX( struct block, block_size ) * BLOCK_ALIGN)
+/* free block size is coded into block_size + tail_size */
+#define HEAP_MAX_FREE_BLOCK_SIZE    (HEAP_MAX_USED_BLOCK_SIZE + (FIELD_MAX( struct block, tail_size ) << 16) * BLOCK_ALIGN)
+/* subheap distance is coded into base_offset */
+#define HEAP_MAX_BLOCK_REGION_SIZE  (FIELD_MAX( struct block, base_offset ) * REGION_ALIGN)
+
+C_ASSERT( HEAP_MAX_USED_BLOCK_SIZE == 512 * 1024 * (sizeof(void *) / 4) - BLOCK_ALIGN );
+C_ASSERT( HEAP_MAX_FREE_BLOCK_SIZE == 128 * 1024 * 1024 * (sizeof(void *) / 4) - BLOCK_ALIGN );
+C_ASSERT( HEAP_MAX_BLOCK_REGION_SIZE >= HEAP_MAX_FREE_BLOCK_SIZE );
+
 /* minimum size to start allocating large blocks */
-#define HEAP_MIN_LARGE_BLOCK_SIZE  (0x10000 * BLOCK_ALIGN - 0x1000)
+#define HEAP_MIN_LARGE_BLOCK_SIZE  (HEAP_MAX_USED_BLOCK_SIZE - 0x1000)
 
 /* There will be a free list bucket for every arena size up to and including this value */
 #define HEAP_MAX_SMALL_FREE_LIST 0x100
@@ -231,6 +244,12 @@ static inline UINT block_get_flags( const struct block *block )
 static inline UINT block_get_type( const struct block *block )
 {
     return block->block_type;
+}
+
+static inline void block_set_base( struct block *block, const void *base )
+{
+    const char *offset = ROUND_ADDR( block, REGION_ALIGN - 1 );
+    block->base_offset = (offset - (char *)base) / REGION_ALIGN;
 }
 
 static inline void block_set_type( struct block *block, UINT type )
@@ -689,6 +708,7 @@ static void create_free_block( struct heap *heap, ULONG flags, SUBHEAP *subheap,
 
     valgrind_make_writable( block, sizeof(*entry) );
     block_set_type( block, BLOCK_TYPE_FREE );
+    block_set_base( block, subheap_base( subheap ) );
     block_set_flags( block, ~0, BLOCK_FLAG_FREE );
     block_set_size( block, block_size );
 
@@ -812,6 +832,7 @@ static struct block *allocate_large_block( struct heap *heap, DWORD flags, SIZE_
     arena->block_size = (char *)address + total_size - (char *)block;
 
     block_set_type( block, BLOCK_TYPE_LARGE );
+    block_set_base( block, arena );
     block_set_flags( block, ~0, BLOCK_FLAG_LARGE | BLOCK_USER_FLAGS( flags ) );
     block_set_size( block, 0 );
     list_add_tail( &heap->large_list, &arena->entry );
@@ -980,6 +1001,7 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
             block_set_flags( &pEntry->block, ~0, BLOCK_FLAG_FREE_LINK );
             block_set_size( &pEntry->block, 0 );
             block_set_type( &pEntry->block, BLOCK_TYPE_FREE );
+            block_set_base( &pEntry->block, heap );
             if (i) list_add_after( &pEntry[-1].entry, &pEntry->entry );
         }
 
@@ -1049,7 +1071,7 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
     if ((*subheap = HEAP_CreateSubHeap( &heap, NULL, flags, total_size,
                                         max( heap->grow_size, total_size ) )))
     {
-        if (heap->grow_size < 128 * 1024 * 1024) heap->grow_size *= 2;
+        if (heap->grow_size <= HEAP_MAX_FREE_BLOCK_SIZE / 2) heap->grow_size *= 2;
     }
     else while (!*subheap)  /* shrink the grow size again if we are running out of space */
     {
