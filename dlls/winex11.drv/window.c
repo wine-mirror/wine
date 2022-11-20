@@ -80,6 +80,7 @@ WINE_DECLARE_DEBUG_CHANNEL(systray);
 
 static const unsigned int net_wm_state_atoms[NB_NET_WM_STATES] =
 {
+    XATOM__KDE_NET_WM_STATE_SKIP_SWITCHER,
     XATOM__NET_WM_STATE_FULLSCREEN,
     XATOM__NET_WM_STATE_ABOVE,
     XATOM__NET_WM_STATE_MAXIMIZED_VERT,
@@ -1040,7 +1041,7 @@ void update_net_wm_states( struct x11drv_win_data *data )
     {
         if (data->skip_taskbar || (ex_style & WS_EX_NOACTIVATE)
             || (ex_style & WS_EX_TOOLWINDOW && !(ex_style & WS_EX_APPWINDOW)))
-            new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER);
+            new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR) | (1 << NET_WM_STATE_SKIP_PAGER) | (1 << KDE_NET_WM_STATE_SKIP_SWITCHER);
         else if (!(ex_style & WS_EX_APPWINDOW) && NtUserGetWindowRelative( data->hwnd, GW_OWNER ))
             new_state |= (1 << NET_WM_STATE_SKIP_TASKBAR);
     }

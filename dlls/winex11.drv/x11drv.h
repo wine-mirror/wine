@@ -482,6 +482,7 @@ enum x11drv_atoms
     XATOM_DndProtocol,
     XATOM_DndSelection,
     XATOM__ICC_PROFILE,
+    XATOM__KDE_NET_WM_STATE_SKIP_SWITCHER,
     XATOM__MOTIF_WM_HINTS,
     XATOM__NET_STARTUP_INFO_BEGIN,
     XATOM__NET_STARTUP_INFO,
@@ -594,6 +595,7 @@ enum x11drv_window_messages
 /* _NET_WM_STATE properties that we keep track of */
 enum x11drv_net_wm_state
 {
+    KDE_NET_WM_STATE_SKIP_SWITCHER,
     NET_WM_STATE_FULLSCREEN,
     NET_WM_STATE_ABOVE,
     NET_WM_STATE_MAXIMIZED,
