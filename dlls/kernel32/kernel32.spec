@@ -1448,6 +1448,7 @@
 @ stdcall -import SetProcessAffinityUpdateMode(long long)
 @ stdcall -import SetProcessDefaultCpuSets(ptr ptr long)
 @ stdcall SetProcessDEPPolicy(long)
+@ stdcall -import SetProcessInformation(long long ptr long)
 @ stdcall -import SetProcessMitigationPolicy(long ptr long)
 @ stdcall -import SetProcessPreferredUILanguages(long ptr ptr)
 @ stdcall -import SetProcessPriorityBoost(long long)

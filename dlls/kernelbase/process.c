@@ -691,6 +691,26 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessW( const WCHAR *app_name, WCHAR *cmd_
 }
 
 
+/**********************************************************************
+ *           SetProcessInformation   (kernelbase.@)
+ */
+BOOL WINAPI SetProcessInformation( HANDLE process, PROCESS_INFORMATION_CLASS info_class, void *info, DWORD size )
+{
+    switch (info_class)
+    {
+        case ProcessMemoryPriority:
+            return set_ntstatus( NtSetInformationProcess( process, ProcessPagePriority, info, size ));
+        case ProcessPowerThrottling:
+            return set_ntstatus( NtSetInformationProcess( process, ProcessPowerThrottlingState, info, size ));
+        case ProcessLeapSecondInfo:
+            return set_ntstatus( NtSetInformationProcess( process, ProcessLeapSecondInformation, info, size ));
+        default:
+            FIXME("Unrecognized information class %d.\n", info_class);
+            return FALSE;
+    }
+}
+
+
 /*********************************************************************
  *           DuplicateHandle   (kernelbase.@)
  */
