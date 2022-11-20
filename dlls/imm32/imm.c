@@ -80,6 +80,9 @@ typedef struct _tagImmHkl{
     DWORD (WINAPI *pImeGetImeMenuItems)(HIMC, DWORD, DWORD, IMEMENUITEMINFOW *, IMEMENUITEMINFOW *, DWORD);
 } ImmHkl;
 
+static HRESULT (WINAPI *pCoRevokeInitializeSpy)(ULARGE_INTEGER cookie);
+static void (WINAPI *pCoUninitialize)(void);
+
 typedef struct tagInputContextData
 {
         HIMC            handle;
@@ -249,7 +252,7 @@ static void imm_couninit_thread(BOOL cleanup)
 
     if (cleanup && spy->cookie.QuadPart)
     {
-        CoRevokeInitializeSpy(spy->cookie);
+        pCoRevokeInitializeSpy(spy->cookie);
         spy->cookie.QuadPart = 0;
     }
 
@@ -261,7 +264,7 @@ static void imm_couninit_thread(BOOL cleanup)
     {
         spy->apt_flags &= ~IMM_APT_CREATED;
         if (spy->apt_flags & IMM_APT_CAN_FREE)
-            CoUninitialize();
+            pCoUninitialize();
     }
     if (cleanup)
         spy->apt_flags = 0;
@@ -359,10 +362,19 @@ static const IInitializeSpyVtbl InitializeSpyVtbl =
     InitializeSpy_PostUninitialize,
 };
 
+static BOOL WINAPI init_ole32_funcs( INIT_ONCE *once, void *param, void **context )
+{
+    HMODULE module_ole32 = GetModuleHandleA("ole32");
+    pCoRevokeInitializeSpy = (void*)GetProcAddress(module_ole32, "CoRevokeInitializeSpy");
+    pCoUninitialize = (void*)GetProcAddress(module_ole32, "CoUninitialize");
+    return TRUE;
+}
+
 static void imm_coinit_thread(void)
 {
     struct coinit_spy *spy;
     HRESULT hr;
+    static INIT_ONCE init_ole32_once = INIT_ONCE_STATIC_INIT;
 
     TRACE("implicit COM initialization\n");
 
@@ -391,6 +403,8 @@ static void imm_coinit_thread(void)
     hr = CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
     if (SUCCEEDED(hr))
         spy->apt_flags |= IMM_APT_CREATED;
+
+    InitOnceExecuteOnce(&init_ole32_once, init_ole32_funcs, NULL, NULL);
 }
 
 static BOOL IMM_IsDefaultContext(HIMC imc)
