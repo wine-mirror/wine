@@ -32414,7 +32414,7 @@ static NTSTATUS thunk64_vkCreateBuffer(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pBuffer);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateBuffer(wine_device_from_handle(params->device)->device, params->pCreateInfo, NULL, params->pBuffer);
+    params->result = wine_vkCreateBuffer(params->device, params->pCreateInfo, params->pAllocator, params->pBuffer);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -32436,7 +32436,7 @@ static NTSTATUS thunk32_vkCreateBuffer(void *args)
 
     init_conversion_context(&ctx);
     convert_VkBufferCreateInfo_win32_to_host(&ctx, (const VkBufferCreateInfo32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
-    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateBuffer(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, &pCreateInfo_host, NULL, (VkBuffer *)UlongToPtr(params->pBuffer));
+    params->result = wine_vkCreateBuffer((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkBuffer *)UlongToPtr(params->pBuffer));
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -33025,7 +33025,7 @@ static NTSTATUS thunk64_vkCreateImage(void *args)
 
     TRACE("%p, %p, %p, %p\n", params->device, params->pCreateInfo, params->pAllocator, params->pImage);
 
-    params->result = wine_device_from_handle(params->device)->funcs.p_vkCreateImage(wine_device_from_handle(params->device)->device, params->pCreateInfo, NULL, params->pImage);
+    params->result = wine_vkCreateImage(params->device, params->pCreateInfo, params->pAllocator, params->pImage);
     return STATUS_SUCCESS;
 }
 #endif /* _WIN64 */
@@ -33047,7 +33047,7 @@ static NTSTATUS thunk32_vkCreateImage(void *args)
 
     init_conversion_context(&ctx);
     convert_VkImageCreateInfo_win32_to_host(&ctx, (const VkImageCreateInfo32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
-    params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkCreateImage(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, &pCreateInfo_host, NULL, (VkImage *)UlongToPtr(params->pImage));
+    params->result = wine_vkCreateImage((VkDevice)UlongToPtr(params->device), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), (VkImage *)UlongToPtr(params->pImage));
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }

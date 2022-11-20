@@ -31,6 +31,21 @@
 WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 
 
+static BOOL is_wow64(void)
+{
+    return sizeof(void *) == sizeof(UINT64) && NtCurrentTeb()->WowTebOffset;
+}
+
+static BOOL use_external_memory(void)
+{
+    return is_wow64();
+}
+
+static ULONG_PTR zero_bits(void)
+{
+    return is_wow64() ? 0x7fffffff : 0;
+}
+
 #define wine_vk_count_struct(s, t) wine_vk_count_struct_((void *)s, VK_STRUCTURE_TYPE_##t)
 static uint32_t wine_vk_count_struct_(void *s, VkStructureType t)
 {
@@ -214,6 +229,7 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
     struct wine_phys_dev *object;
     uint32_t num_host_properties, num_properties = 0;
     VkExtensionProperties *host_properties = NULL;
+    BOOL have_external_memory_host = FALSE;
     VkResult res;
     unsigned int i, j;
 
@@ -226,6 +242,8 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
 
     handle->base.unix_handle = (uintptr_t)object;
     WINE_VK_ADD_DISPATCHABLE_MAPPING(instance, handle, phys_dev, object);
+
+    instance->funcs.p_vkGetPhysicalDeviceMemoryProperties(phys_dev, &object->memory_properties);
 
     res = instance->funcs.p_vkEnumerateDeviceExtensionProperties(phys_dev,
             NULL, &num_host_properties, NULL);
@@ -264,6 +282,8 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
         {
             TRACE("Skipping extension '%s', no implementation found in winevulkan.\n", host_properties[i].extensionName);
         }
+        if (!strcmp(host_properties[i].extensionName, "VK_EXT_external_memory_host"))
+            have_external_memory_host = TRUE;
     }
 
     TRACE("Host supported extensions %u, Wine supported extensions %u\n", num_host_properties, num_properties);
@@ -283,6 +303,24 @@ static struct wine_phys_dev *wine_vk_physical_device_alloc(struct wine_instance 
         }
     }
     object->extension_count = num_properties;
+
+    if (use_external_memory() && have_external_memory_host)
+    {
+        VkPhysicalDeviceExternalMemoryHostPropertiesEXT host_mem_props =
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_MEMORY_HOST_PROPERTIES_EXT,
+        };
+        VkPhysicalDeviceProperties2 props =
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
+            .pNext = &host_mem_props,
+        };
+        instance->funcs.p_vkGetPhysicalDeviceProperties2KHR(phys_dev, &props);
+        object->external_memory_align = host_mem_props.minImportedHostPointerAlignment;
+        if (object->external_memory_align)
+            TRACE("Using VK_EXT_external_memory_host for memory mapping with alignment: %u\n",
+                  object->external_memory_align);
+    }
 
     free(host_properties);
     return object;
@@ -353,7 +391,8 @@ static void wine_vk_device_get_queues(struct wine_device *device,
     }
 }
 
-static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src, VkDeviceCreateInfo *dst)
+static VkResult wine_vk_device_convert_create_info(struct wine_phys_dev *phys_dev,
+        struct conversion_context *ctx, const VkDeviceCreateInfo *src, VkDeviceCreateInfo *dst)
 {
     unsigned int i;
 
@@ -373,6 +412,19 @@ static VkResult wine_vk_device_convert_create_info(const VkDeviceCreateInfo *src
             WARN("Extension %s is not supported.\n", debugstr_a(extension_name));
             return VK_ERROR_EXTENSION_NOT_PRESENT;
         }
+    }
+
+    if (phys_dev->external_memory_align)
+    {
+        const char **new_extensions;
+
+        new_extensions = conversion_context_alloc(ctx, (dst->enabledExtensionCount + 2) *
+                                                  sizeof(*dst->ppEnabledExtensionNames));
+        memcpy(new_extensions, src->ppEnabledExtensionNames,
+               dst->enabledExtensionCount * sizeof(*dst->ppEnabledExtensionNames));
+        new_extensions[dst->enabledExtensionCount++] = "VK_KHR_external_memory";
+        new_extensions[dst->enabledExtensionCount++] = "VK_EXT_external_memory_host";
+        dst->ppEnabledExtensionNames = new_extensions;
     }
 
     return VK_SUCCESS;
@@ -447,8 +499,8 @@ NTSTATUS init_vulkan32(void *args)
  * This function takes care of extensions handled at winevulkan layer, a Wine graphics
  * driver is responsible for handling e.g. surface extensions.
  */
-static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo *src,
-        VkInstanceCreateInfo *dst, struct wine_instance *object)
+static VkResult wine_vk_instance_convert_create_info(struct conversion_context *ctx,
+        const VkInstanceCreateInfo *src, VkInstanceCreateInfo *dst, struct wine_instance *object)
 {
     VkDebugUtilsMessengerCreateInfoEXT *debug_utils_messenger;
     VkDebugReportCallbackCreateInfoEXT *debug_report_callback;
@@ -514,6 +566,19 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
         {
             object->enable_wrapper_list = VK_TRUE;
         }
+    }
+
+    if (use_external_memory())
+    {
+        const char **new_extensions;
+
+        new_extensions = conversion_context_alloc(ctx, (dst->enabledExtensionCount + 2) *
+                                                  sizeof(*dst->ppEnabledExtensionNames));
+        memcpy(new_extensions, src->ppEnabledExtensionNames,
+               dst->enabledExtensionCount * sizeof(*dst->ppEnabledExtensionNames));
+        new_extensions[dst->enabledExtensionCount++] = "VK_KHR_get_physical_device_properties2";
+        new_extensions[dst->enabledExtensionCount++] = "VK_KHR_external_memory_capabilities";
+        dst->ppEnabledExtensionNames = new_extensions;
     }
 
     return VK_SUCCESS;
@@ -689,6 +754,7 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
     VkDeviceCreateInfo create_info_host;
     struct VkQueue_T *queue_handles;
     struct wine_queue *next_queue;
+    struct conversion_context ctx;
     struct wine_device *object;
     unsigned int i;
     VkResult res;
@@ -712,10 +778,12 @@ VkResult wine_vkCreateDevice(VkPhysicalDevice phys_dev_handle, const VkDeviceCre
 
     object->phys_dev = phys_dev;
 
-    res = wine_vk_device_convert_create_info(create_info, &create_info_host);
+    init_conversion_context(&ctx);
+    res = wine_vk_device_convert_create_info(phys_dev, &ctx, create_info, &create_info_host);
     if (res == VK_SUCCESS)
         res = phys_dev->instance->funcs.p_vkCreateDevice(phys_dev->phys_dev,
                 &create_info_host, NULL /* allocator */, &object->device);
+    free_conversion_context(&ctx);
     WINE_VK_ADD_DISPATCHABLE_MAPPING(phys_dev->instance, device_handle, object->device, object);
     if (res != VK_SUCCESS)
     {
@@ -780,6 +848,7 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     VkInstance client_instance = client_ptr;
     VkInstanceCreateInfo create_info_host;
     const VkApplicationInfo *app_info;
+    struct conversion_context ctx;
     struct wine_instance *object;
     VkResult res;
 
@@ -794,9 +863,11 @@ VkResult wine_vkCreateInstance(const VkInstanceCreateInfo *create_info,
     list_init(&object->wrappers);
     pthread_rwlock_init(&object->wrapper_lock, NULL);
 
-    res = wine_vk_instance_convert_create_info(create_info, &create_info_host, object);
+    init_conversion_context(&ctx);
+    res = wine_vk_instance_convert_create_info(&ctx, create_info, &create_info_host, object);
     if (res == VK_SUCCESS)
         res = vk_funcs->p_vkCreateInstance(&create_info_host, NULL /* allocator */, &object->instance);
+    free_conversion_context(&ctx);
     if (res != VK_SUCCESS)
     {
         ERR("Failed to create instance, res=%d\n", res);
@@ -1446,18 +1517,91 @@ VkResult wine_vkAllocateMemory(VkDevice handle, const VkMemoryAllocateInfo *allo
 {
     struct wine_device *device = wine_device_from_handle(handle);
     struct wine_device_memory *memory;
+    VkMemoryAllocateInfo info = *alloc_info;
+    VkImportMemoryHostPointerInfoEXT host_pointer_info;
+    uint32_t mem_flags;
+    void *mapping = NULL;
     VkResult result;
+
+    /* For host visible memory, we try to use VK_EXT_external_memory_host on wow64
+     * to ensure that mapped pointer is 32-bit. */
+    mem_flags = device->phys_dev->memory_properties.memoryTypes[alloc_info->memoryTypeIndex].propertyFlags;
+    if (device->phys_dev->external_memory_align && (mem_flags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT) &&
+        !find_next_struct(alloc_info->pNext, VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT))
+    {
+        VkMemoryHostPointerPropertiesEXT props =
+        {
+            .sType = VK_STRUCTURE_TYPE_MEMORY_HOST_POINTER_PROPERTIES_EXT,
+        };
+        uint32_t i, align = device->phys_dev->external_memory_align - 1;
+        SIZE_T alloc_size = info.allocationSize;
+        static int once;
+
+        if (!once++)
+            FIXME("Using VK_EXT_external_memory_host\n");
+
+        if (NtAllocateVirtualMemory(GetCurrentProcess(), &mapping, zero_bits(), &alloc_size,
+                                    MEM_COMMIT, PAGE_READWRITE))
+        {
+            ERR("NtAllocateVirtualMemory failed\n");
+            return VK_ERROR_OUT_OF_HOST_MEMORY;
+        }
+
+        result = device->funcs.p_vkGetMemoryHostPointerPropertiesEXT(device->device,
+                VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT, mapping, &props);
+        if (result != VK_SUCCESS)
+        {
+            ERR("vkGetMemoryHostPointerPropertiesEXT failed: %d\n", result);
+            return result;
+        }
+
+        if (!(props.memoryTypeBits & (1u << info.memoryTypeIndex)))
+        {
+            /* If requested memory type is not allowed to use external memory,
+             * try to find a supported compatible type. */
+            uint32_t mask = mem_flags & ~VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
+            for (i = 0; i < device->phys_dev->memory_properties.memoryTypeCount; i++)
+            {
+                if (!(props.memoryTypeBits & (1u << i)))
+                    continue;
+                if ((device->phys_dev->memory_properties.memoryTypes[i].propertyFlags & mask) != mask)
+                    continue;
+
+                TRACE("Memory type not compatible with host memory, using %u instead\n", i);
+                info.memoryTypeIndex = i;
+                break;
+            }
+            if (i == device->phys_dev->memory_properties.memoryTypeCount)
+            {
+                FIXME("Not found compatible memory type\n");
+                alloc_size = 0;
+                NtFreeVirtualMemory(GetCurrentProcess(), &mapping, &alloc_size, MEM_RELEASE);
+            }
+        }
+
+        if (props.memoryTypeBits & (1u << info.memoryTypeIndex))
+        {
+            host_pointer_info.sType = VK_STRUCTURE_TYPE_IMPORT_MEMORY_HOST_POINTER_INFO_EXT;
+            host_pointer_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+            host_pointer_info.pHostPointer = mapping;
+            host_pointer_info.pNext = info.pNext;
+            info.pNext = &host_pointer_info;
+
+            info.allocationSize = (info.allocationSize + align) & ~align;
+        }
+    }
 
     if (!(memory = malloc(sizeof(*memory))))
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
-    result = device->funcs.p_vkAllocateMemory(device->device, alloc_info, NULL, &memory->memory);
+    result = device->funcs.p_vkAllocateMemory(device->device, &info, NULL, &memory->memory);
     if (result != VK_SUCCESS)
     {
         free(memory);
         return result;
     }
 
+    memory->mapping = mapping;
     *ret = (VkDeviceMemory)(uintptr_t)memory;
     return VK_SUCCESS;
 }
@@ -1472,6 +1616,13 @@ void wine_vkFreeMemory(VkDevice handle, VkDeviceMemory memory_handle, const VkAl
     memory = wine_device_memory_from_handle(memory_handle);
 
     device->funcs.p_vkFreeMemory(device->device, memory->memory, NULL);
+
+    if (memory->mapping)
+    {
+        SIZE_T alloc_size = 0;
+        NtFreeVirtualMemory(GetCurrentProcess(), &memory->mapping, &alloc_size, MEM_RELEASE);
+    }
+
     free(memory);
 }
 
@@ -1481,6 +1632,13 @@ VkResult wine_vkMapMemory(VkDevice handle, VkDeviceMemory memory_handle, VkDevic
     struct wine_device *device = wine_device_from_handle(handle);
     struct wine_device_memory *memory = wine_device_memory_from_handle(memory_handle);
     VkResult result;
+
+    if (memory->mapping)
+    {
+        *data = (char *)memory->mapping + offset;
+        TRACE("returning %p\n", *data);
+        return VK_SUCCESS;
+    }
 
     result = device->funcs.p_vkMapMemory(device->device, memory->memory, offset, size, flags, data);
 
@@ -1502,7 +1660,46 @@ void wine_vkUnmapMemory(VkDevice handle, VkDeviceMemory memory_handle)
     struct wine_device *device = wine_device_from_handle(handle);
     struct wine_device_memory *memory = wine_device_memory_from_handle(memory_handle);
 
-    device->funcs.p_vkUnmapMemory(device->device, memory->memory);
+    if (!memory->mapping)
+        device->funcs.p_vkUnmapMemory(device->device, memory->memory);
+}
+
+VkResult wine_vkCreateBuffer(VkDevice handle, const VkBufferCreateInfo *create_info,
+                             const VkAllocationCallbacks *allocator, VkBuffer *buffer)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+    VkExternalMemoryBufferCreateInfo external_memory_info;
+    VkBufferCreateInfo info = *create_info;
+
+    if (device->phys_dev->external_memory_align &&
+        !find_next_struct(info.pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO))
+    {
+        external_memory_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_BUFFER_CREATE_INFO;
+        external_memory_info.pNext = info.pNext;
+        external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+        info.pNext = &external_memory_info;
+    }
+
+    return device->funcs.p_vkCreateBuffer(device->device, &info, NULL, buffer);
+}
+
+VkResult wine_vkCreateImage(VkDevice handle, const VkImageCreateInfo *create_info,
+                            const VkAllocationCallbacks *allocator, VkImage *image)
+{
+    struct wine_device *device = wine_device_from_handle(handle);
+    VkExternalMemoryImageCreateInfo external_memory_info;
+    VkImageCreateInfo info = *create_info;
+
+    if (device->phys_dev->external_memory_align &&
+        !find_next_struct(info.pNext, VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO))
+    {
+        external_memory_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+        external_memory_info.pNext = info.pNext;
+        external_memory_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_HOST_ALLOCATION_BIT_EXT;
+        info.pNext = &external_memory_info;
+    }
+
+    return device->funcs.p_vkCreateImage(device->device, &info, NULL, image);
 }
 
 static inline void adjust_max_image_count(struct wine_phys_dev *phys_dev, VkSurfaceCapabilitiesKHR* capabilities)

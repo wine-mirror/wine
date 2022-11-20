@@ -125,8 +125,11 @@ struct wine_phys_dev
     VkPhysicalDevice handle; /* client physical device */
     VkPhysicalDevice phys_dev; /* native physical device */
 
+    VkPhysicalDeviceMemoryProperties memory_properties;
     VkExtensionProperties *extensions;
     uint32_t extension_count;
+
+    uint32_t external_memory_align;
 
     struct wine_vk_mapping mapping;
 };
@@ -172,6 +175,7 @@ static inline struct wine_cmd_pool *wine_cmd_pool_from_handle(VkCommandPool hand
 struct wine_device_memory
 {
     VkDeviceMemory memory;
+    void *mapping;
 };
 
 static inline struct wine_device_memory *wine_device_memory_from_handle(VkDeviceMemory handle)

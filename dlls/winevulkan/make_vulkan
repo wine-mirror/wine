@@ -213,6 +213,8 @@ FUNCTION_OVERRIDES = {
     "vkFreeMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkMapMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
     "vkUnmapMemory" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
+    "vkCreateBuffer" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
+    "vkCreateImage" : {"dispatch" : True, "driver" : False, "thunk" : ThunkType.PRIVATE},
 
     # VK_KHR_surface
     "vkDestroySurfaceKHR" : {"dispatch" : True, "driver" : True, "thunk" : ThunkType.NONE},
