@@ -542,14 +542,6 @@ static inline char *strdupU( const char *src )
     return dst;
 }
 
-static inline WCHAR *strdupW( const WCHAR *src )
-{
-    WCHAR *dst;
-    if (!src) return NULL;
-    if ((dst = malloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
-    return dst;
-}
-
 static inline char *strWtoU( const WCHAR *str )
 {
     char *ret = NULL;
@@ -652,7 +644,7 @@ static inline WCHAR **strarraydupW( WCHAR **strarray )
         {
             WCHAR **p = strarray, **q = ret;
 
-            while (*p) *q++ = strdupW( *p++ );
+            while (*p) *q++ = wcsdup( *p++ );
             *q = NULL;
         }
     }
@@ -1225,7 +1217,7 @@ static inline LDAPControlW *controldupW( LDAPControlW *control )
         return NULL;
     }
 
-    ret->ldctl_oid = strdupW( control->ldctl_oid );
+    ret->ldctl_oid = wcsdup( control->ldctl_oid );
     ret->ldctl_value.bv_len = len;
     ret->ldctl_value.bv_val = val;
     ret->ldctl_iscritical = control->ldctl_iscritical;

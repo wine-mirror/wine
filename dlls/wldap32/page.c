@@ -297,8 +297,8 @@ LDAPSearch * CDECL ldap_search_init_pageW( LDAP *ld, WCHAR *dn, ULONG scope, WCH
         return NULL;
     }
 
-    if (dn && !(search->dn = strdupW( dn ))) goto fail;
-    if (filter && !(search->filter = strdupW( filter ))) goto fail;
+    if (dn && !(search->dn = wcsdup( dn ))) goto fail;
+    if (filter && !(search->filter = wcsdup( filter ))) goto fail;
     if (attrs && !(search->attrs = strarraydupW( attrs ))) goto fail;
 
     len = serverctrls ? controlarraylenW( serverctrls ) : 0;

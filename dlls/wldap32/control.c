@@ -215,7 +215,7 @@ ULONG CDECL ldap_encode_sort_controlW( LDAP *ld, LDAPSortKeyW **sortkeys, LDAPCo
 
     if ((result = ldap_create_sort_controlW( ld, sortkeys, critical, &control )) == WLDAP32_LDAP_SUCCESS)
     {
-        ret->ldctl_oid = strdupW(control->ldctl_oid);
+        ret->ldctl_oid = wcsdup( control->ldctl_oid );
         bv_val_dup( &control->ldctl_value, &ret->ldctl_value );
         ret->ldctl_iscritical = control->ldctl_iscritical;
         ldap_control_freeW( control );
