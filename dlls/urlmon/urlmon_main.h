@@ -281,18 +281,4 @@ static inline LPWSTR heap_strdupAtoW(const char *str)
     return ret;
 }
 
-static inline char *heap_strdupWtoA(const WCHAR *str)
-{
-    char *ret = NULL;
-
-    if(str) {
-        size_t size = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
-        ret = heap_alloc(size);
-        if(ret)
-            WideCharToMultiByte(CP_ACP, 0, str, -1, ret, size, NULL, NULL);
-    }
-
-    return ret;
-}
-
 #endif /* __WINE_URLMON_MAIN_H */
