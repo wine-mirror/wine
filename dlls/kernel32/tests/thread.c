@@ -79,7 +79,6 @@ static void (WINAPI *pGetCurrentThreadStackLimits)(PULONG_PTR,PULONG_PTR);
 static BOOL (WINAPI *pGetThreadPriorityBoost)(HANDLE,PBOOL);
 static HANDLE (WINAPI *pOpenThread)(DWORD,BOOL,DWORD);
 static BOOL (WINAPI *pQueueUserWorkItem)(LPTHREAD_START_ROUTINE,PVOID,ULONG);
-static DWORD (WINAPI *pSetThreadIdealProcessor)(HANDLE,DWORD);
 static BOOL (WINAPI *pSetThreadPriorityBoost)(HANDLE,BOOL);
 static BOOL (WINAPI *pSetThreadStackGuarantee)(ULONG*);
 static BOOL (WINAPI *pRegisterWaitForSingleObject)(PHANDLE,HANDLE,WAITORTIMERCALLBACK,PVOID,ULONG,ULONG);
@@ -854,8 +853,8 @@ static VOID test_thread_processor(void)
    HANDLE curthread,curproc;
    DWORD_PTR processMask,systemMask,retMask;
    SYSTEM_INFO sysInfo;
-   int error=0;
    BOOL is_wow64;
+   DWORD ret;
 
    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
@@ -896,43 +895,33 @@ static VOID test_thread_processor(void)
        retMask = SetThreadAffinityMask(curthread,~(ULONG_PTR)0 >> 3);
        ok(retMask == processMask, "SetThreadAffinityMask failed\n");
    }
-/* NOTE: This only works on WinNT/2000/XP) */
-    if (pSetThreadIdealProcessor)
+
+    SetLastError(0xdeadbeef);
+    ret = SetThreadIdealProcessor(GetCurrentThread(), 0);
+    ok(ret != ~0u, "Unexpected return value %lu.\n", ret);
+
+    if (is_wow64)
     {
         SetLastError(0xdeadbeef);
-        error=pSetThreadIdealProcessor(curthread,0);
-        if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
-        {
-            ok(error!=-1, "SetThreadIdealProcessor failed\n");
+        ret = SetThreadIdealProcessor(GetCurrentThread(), MAXIMUM_PROCESSORS + 1);
+        todo_wine
+        ok(ret != ~0u, "Unexpected return value %lu.\n", ret);
 
-            if (is_wow64)
-            {
-                SetLastError(0xdeadbeef);
-                error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS+1);
-                todo_wine
-                ok(error!=-1, "SetThreadIdealProcessor failed for %u on Wow64\n", MAXIMUM_PROCESSORS+1);
-
-                SetLastError(0xdeadbeef);
-                error=pSetThreadIdealProcessor(curthread,65);
-                ok(error==-1, "SetThreadIdealProcessor succeeded with an illegal processor #\n");
-                ok(GetLastError()==ERROR_INVALID_PARAMETER,
-                   "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
-            }
-            else
-            {
-                SetLastError(0xdeadbeef);
-                error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS+1);
-                ok(error==-1, "SetThreadIdealProcessor succeeded with an illegal processor #\n");
-                ok(GetLastError()==ERROR_INVALID_PARAMETER,
-                   "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
-            }
-
-            error=pSetThreadIdealProcessor(curthread,MAXIMUM_PROCESSORS);
-            ok(error!=-1, "SetThreadIdealProcessor failed\n");
-        }
-        else
-            win_skip("SetThreadIdealProcessor is not implemented\n");
+        SetLastError(0xdeadbeef);
+        ret = SetThreadIdealProcessor(GetCurrentThread(), 65);
+        ok(ret == ~0u, "Unexpected return value %lu.\n", ret);
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected error %ld.\n", GetLastError());
     }
+    else
+    {
+        SetLastError(0xdeadbeef);
+        ret = SetThreadIdealProcessor(GetCurrentThread(), MAXIMUM_PROCESSORS+1);
+        ok(ret == ~0u, "Unexpected return value %lu.\n", ret);
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "Unexpected error %ld.\n", GetLastError());
+    }
+
+    ret = SetThreadIdealProcessor(GetCurrentThread(), MAXIMUM_PROCESSORS);
+    ok(ret != ~0u, "Unexpected return value %lu.\n", ret);
 
     if (pGetThreadGroupAffinity && pSetThreadGroupAffinity)
     {
@@ -2583,7 +2572,6 @@ static void init_funcs(void)
     X(GetThreadPriorityBoost);
     X(OpenThread);
     X(QueueUserWorkItem);
-    X(SetThreadIdealProcessor);
     X(SetThreadPriorityBoost);
     X(SetThreadStackGuarantee);
     X(RegisterWaitForSingleObject);
