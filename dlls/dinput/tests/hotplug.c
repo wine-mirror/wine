@@ -50,12 +50,10 @@
 #include "windows.gaming.input.custom.h"
 #undef Size
 
-#define MAKE_FUNC(f) static typeof(f) *p ## f
-MAKE_FUNC( RoGetActivationFactory );
-MAKE_FUNC( RoInitialize );
-MAKE_FUNC( WindowsCreateString );
-MAKE_FUNC( WindowsDeleteString );
-#undef MAKE_FUNC
+static HRESULT WINAPI (*pRoGetActivationFactory)( HSTRING, REFIID, void** );
+static HRESULT WINAPI (*pRoInitialize)( RO_INIT_TYPE );
+static HRESULT WINAPI (*pWindowsCreateString)( const WCHAR*, UINT32, HSTRING* );
+static HRESULT WINAPI (*pWindowsDeleteString)( HSTRING str );
 
 static BOOL load_combase_functions(void)
 {
