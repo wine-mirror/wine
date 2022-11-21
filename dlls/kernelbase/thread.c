@@ -248,11 +248,9 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetThreadId( HANDLE thread )
 /***********************************************************************
  *           GetThreadIdealProcessorEx   (kernelbase.@)
  */
-BOOL WINAPI /* DECLSPEC_HOTPATCH */ GetThreadIdealProcessorEx( HANDLE thread, PROCESSOR_NUMBER *ideal )
+BOOL WINAPI DECLSPEC_HOTPATCH GetThreadIdealProcessorEx( HANDLE thread, PROCESSOR_NUMBER *ideal )
 {
-    FIXME( "(%p %p): stub\n", thread, ideal );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    return set_ntstatus( NtQueryInformationThread( thread, ThreadIdealProcessorEx, ideal, sizeof(*ideal), NULL));
 }
 
 
