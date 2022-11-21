@@ -5744,6 +5744,15 @@ INT WINAPI DECLSPEC_HOTPATCH GetGeoInfoW( GEOID id, GEOTYPE type, WCHAR *data, i
 }
 
 
+INT WINAPI DECLSPEC_HOTPATCH GetGeoInfoEx( WCHAR *location, GEOTYPE type, WCHAR *data, int data_count )
+{
+    FIXME( "stub: %s %lx %p %d\n", wine_dbgstr_w(location), type, data, data_count );
+
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return 0;
+}
+
+
 /******************************************************************************
  *	GetLocaleInfoA   (kernelbase.@)
  */
