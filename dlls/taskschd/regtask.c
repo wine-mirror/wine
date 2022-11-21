@@ -60,8 +60,8 @@ static ULONG WINAPI regtask_Release(IRegisteredTask *iface)
     {
         TRACE("destroying %p\n", iface);
         ITaskDefinition_Release(regtask->taskdef);
-        heap_free(regtask->path);
-        heap_free(regtask);
+        free(regtask->path);
+        free(regtask);
     }
 
     return ref;
@@ -328,10 +328,10 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
         if (!full_name) return E_OUTOFMEMORY;
     }
 
-    regtask = heap_alloc(sizeof(*regtask));
+    regtask = malloc(sizeof(*regtask));
     if (!regtask)
     {
-        heap_free(full_name);
+        free(full_name);
         return E_OUTOFMEMORY;
     }
 
@@ -344,15 +344,15 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
         hr = ITaskDefinition_get_XmlText(definition, &xml);
         if (hr != S_OK || (hr = SchRpcRegisterTask(full_name, xml, flags, NULL, logon, 0, NULL, &actual_path, &error_info)) != S_OK)
         {
-            heap_free(full_name);
-            heap_free(regtask);
+            free(full_name);
+            free(regtask);
             SysFreeString(xml);
             return hr;
         }
         SysFreeString(xml);
 
-        heap_free(full_name);
-        full_name = heap_strdupW(actual_path);
+        free(full_name);
+        full_name = wcsdup(actual_path);
         MIDL_user_free(actual_path);
     }
     else
@@ -363,8 +363,8 @@ HRESULT RegisteredTask_create(const WCHAR *path, const WCHAR *name, ITaskDefinit
         hr = SchRpcRetrieveTask(full_name, L"", &count, &xml);
         if (hr != S_OK || (hr = ITaskDefinition_put_XmlText(definition, xml)) != S_OK)
         {
-            heap_free(full_name);
-            heap_free(regtask);
+            free(full_name);
+            free(regtask);
             MIDL_user_free(xml);
             return hr;
         }
@@ -408,8 +408,8 @@ static ULONG WINAPI regtasks_Release(IRegisteredTaskCollection *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        heap_free(regtasks->path);
-        heap_free(regtasks);
+        free(regtasks->path);
+        free(regtasks);
     }
 
     return ref;
@@ -499,12 +499,12 @@ HRESULT RegisteredTaskCollection_create(const WCHAR *path, IRegisteredTaskCollec
 {
     RegisteredTaskCollection *regtasks;
 
-    regtasks = heap_alloc(sizeof(*regtasks));
+    regtasks = malloc(sizeof(*regtasks));
     if (!regtasks) return E_OUTOFMEMORY;
 
     regtasks->IRegisteredTaskCollection_iface.lpVtbl = &RegisteredTaskCollection_vtbl;
     regtasks->ref = 1;
-    regtasks->path = heap_strdupW(path);
+    regtasks->path = wcsdup(path);
     *obj = &regtasks->IRegisteredTaskCollection_iface;
 
     TRACE("created %p\n", *obj);
