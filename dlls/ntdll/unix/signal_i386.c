@@ -439,22 +439,22 @@ struct syscall_frame
 {
     WORD                  syscall_flags;  /* 000 */
     WORD                  restore_flags;  /* 002 */
-    DWORD                 eflags;         /* 004 */
-    DWORD                 eip;            /* 008 */
-    DWORD                 esp;            /* 00c */
+    UINT                  eflags;         /* 004 */
+    UINT                  eip;            /* 008 */
+    UINT                  esp;            /* 00c */
     WORD                  cs;             /* 010 */
     WORD                  ss;             /* 012 */
     WORD                  ds;             /* 014 */
     WORD                  es;             /* 016 */
     WORD                  fs;             /* 018 */
     WORD                  gs;             /* 01a */
-    DWORD                 eax;            /* 01c */
-    DWORD                 ebx;            /* 020 */
-    DWORD                 ecx;            /* 024 */
-    DWORD                 edx;            /* 028 */
-    DWORD                 edi;            /* 02c */
-    DWORD                 esi;            /* 030 */
-    DWORD                 ebp;            /* 034 */
+    UINT                  eax;            /* 01c */
+    UINT                  ebx;            /* 020 */
+    UINT                  ecx;            /* 024 */
+    UINT                  edx;            /* 028 */
+    UINT                  edi;            /* 02c */
+    UINT                  esi;            /* 030 */
+    UINT                  ebp;            /* 034 */
     SYSTEM_SERVICE_TABLE *syscall_table;  /* 038 */
     struct syscall_frame *prev_frame;     /* 03c */
     union                                 /* 040 */
@@ -472,14 +472,14 @@ C_ASSERT( sizeof(struct syscall_frame) == 0x380 );
 
 struct x86_thread_data
 {
-    DWORD              fs;            /* 1d4 TEB selector */
-    DWORD              gs;            /* 1d8 libc selector; update winebuild if you move this! */
-    DWORD              dr0;           /* 1dc debug registers */
-    DWORD              dr1;           /* 1e0 */
-    DWORD              dr2;           /* 1e4 */
-    DWORD              dr3;           /* 1e8 */
-    DWORD              dr6;           /* 1ec */
-    DWORD              dr7;           /* 1f0 */
+    UINT               fs;            /* 1d4 TEB selector */
+    UINT               gs;            /* 1d8 libc selector; update winebuild if you move this! */
+    UINT               dr0;           /* 1dc debug registers */
+    UINT               dr1;           /* 1e0 */
+    UINT               dr2;           /* 1e4 */
+    UINT               dr3;           /* 1e8 */
+    UINT               dr6;           /* 1ec */
+    UINT               dr7;           /* 1f0 */
     void              *exit_frame;    /* 1f4 exit frame pointer */
     struct syscall_frame *syscall_frame; /* 1f8 frame pointer on syscall entry */
 };
@@ -1275,37 +1275,37 @@ union atl_thunk
 {
     struct
     {
-        DWORD movl;  /* movl this,4(%esp) */
-        DWORD this;
+        UINT  movl;  /* movl this,4(%esp) */
+        UINT  this;
         BYTE  jmp;   /* jmp func */
         int   func;
     } t1;
     struct
     {
         BYTE  movl;  /* movl this,ecx */
-        DWORD this;
+        UINT  this;
         BYTE  jmp;   /* jmp func */
         int   func;
     } t2;
     struct
     {
         BYTE  movl1; /* movl this,edx */
-        DWORD this;
+        UINT  this;
         BYTE  movl2; /* movl func,ecx */
-        DWORD func;
+        UINT  func;
         WORD  jmp;   /* jmp ecx */
     } t3;
     struct
     {
         BYTE  movl1; /* movl this,ecx */
-        DWORD this;
+        UINT  this;
         BYTE  movl2; /* movl func,eax */
-        DWORD func;
+        UINT  func;
         WORD  jmp;   /* jmp eax */
     } t4;
     struct
     {
-        DWORD inst1; /* pop ecx
+        UINT  inst1; /* pop ecx
                       * pop eax
                       * push ecx
                       * jmp 4(%eax) */
@@ -1769,7 +1769,7 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
                                   EXCEPTION_RECORD *rec, CONTEXT *context )
 {
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
-    DWORD i, *stack;
+    UINT i, *stack;
 
     if (!is_inside_syscall( sigcontext ) && !ntdll_get_thread_data()->jmp_buf) return FALSE;
 
@@ -1800,9 +1800,9 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
     else
     {
         TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->eip, rec->ExceptionCode );
-        stack = (DWORD *)frame;
+        stack = (UINT *)frame;
         *(--stack) = rec->ExceptionCode;
-        *(--stack) = (DWORD)frame;
+        *(--stack) = (UINT)frame;
         *(--stack) = 0xdeadbabe;  /* return address */
         ESP_sig(sigcontext) = (DWORD)stack;
         EIP_sig(sigcontext) = (DWORD)__wine_syscall_dispatcher_return;

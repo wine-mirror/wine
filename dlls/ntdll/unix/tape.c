@@ -253,7 +253,7 @@ static NTSTATUS TAPE_GetMediaParams( int fd, TAPE_GET_MEDIA_PARAMETERS *data )
 /******************************************************************
  *      TAPE_GetPosition
  */
-static NTSTATUS TAPE_GetPosition( int fd, ULONG type, TAPE_GET_POSITION *data )
+static NTSTATUS TAPE_GetPosition( int fd, UINT type, TAPE_GET_POSITION *data )
 {
 #ifdef HAVE_SYS_MTIO_H
     struct mtget get;

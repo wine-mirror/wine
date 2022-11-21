@@ -144,7 +144,7 @@ struct async_transmit_ioctl
     unsigned int buffer_cursor; /* amount of data currently in the buffer already sent */
     unsigned int tail_cursor;   /* amount of tail data already sent */
     unsigned int file_len;      /* total file length to send */
-    DWORD flags;
+    unsigned int flags;
     const char *head;
     const char *tail;
     unsigned int head_len;

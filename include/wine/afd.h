@@ -27,8 +27,8 @@
 
 struct afd_wsabuf_32
 {
-    ULONG len;
-    ULONG buf;
+    UINT len;
+    UINT buf;
 };
 
 #ifdef USE_WS_PREFIX

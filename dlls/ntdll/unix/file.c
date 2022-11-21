@@ -1600,7 +1600,7 @@ static int fd_get_file_info( int fd, unsigned int options, struct stat *st, ULON
 }
 
 
-static int fd_set_dos_attrib( int fd, ULONG attr )
+static int fd_set_dos_attrib( int fd, UINT attr )
 {
     /* we only store the HIDDEN and SYSTEM attributes */
     attr &= XATTR_ATTRIBS_MASK;
@@ -1618,7 +1618,7 @@ static int fd_set_dos_attrib( int fd, ULONG attr )
 
 
 /* set the stat info and file attributes for a file (by file descriptor) */
-NTSTATUS fd_set_file_info( int fd, ULONG attr )
+NTSTATUS fd_set_file_info( int fd, UINT attr )
 {
     struct stat st;
 
@@ -5338,7 +5338,7 @@ NTSTATUS WINAPI NtReadFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, vo
     unsigned int options;
     struct io_timeouts timeouts;
     NTSTATUS status, ret_status;
-    ULONG total = 0;
+    UINT total = 0;
     client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
@@ -5540,7 +5540,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     int result, unix_handle, needs_close;
     unsigned int options;
     NTSTATUS status;
-    ULONG pos = 0, total = 0;
+    UINT pos = 0, total = 0;
     client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
@@ -5619,7 +5619,7 @@ NTSTATUS WINAPI NtWriteFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, v
     unsigned int options;
     struct io_timeouts timeouts;
     NTSTATUS status, ret_status;
-    ULONG total = 0;
+    UINT total = 0;
     client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
@@ -5848,7 +5848,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
     int result, unix_handle, needs_close;
     unsigned int options;
     NTSTATUS status;
-    ULONG pos = 0, total = 0;
+    UINT pos = 0, total = 0;
     client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
     ULONG_PTR cvalue = apc ? 0 : (ULONG_PTR)apc_user;
@@ -7094,8 +7094,8 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
         OBJECT_TYPE_INFORMATION *p;
         struct object_type_info *buffer;
         /* assume at most 32 types, with an average 16-char name */
-        ULONG size = 32 * (sizeof(struct object_type_info) + 16 * sizeof(WCHAR));
-        ULONG i, count, pos, total, align = sizeof(DWORD_PTR) - 1;
+        UINT size = 32 * (sizeof(struct object_type_info) + 16 * sizeof(WCHAR));
+        UINT i, count, pos, total, align = sizeof(DWORD_PTR) - 1;
 
         buffer = malloc( size );
         SERVER_START_REQ( get_object_types )

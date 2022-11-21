@@ -295,7 +295,7 @@ static NTSTATUS get_line_control(int fd, SERIAL_LINE_CONTROL* slc)
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_modem_status(int fd, DWORD* lpModemStat)
+static NTSTATUS get_modem_status(int fd, UINT* lpModemStat)
 {
     NTSTATUS    status = STATUS_NOT_SUPPORTED;
     int         mstat;
@@ -418,7 +418,7 @@ static void stop_waiting( HANDLE handle )
     SERVER_END_REQ;
 }
 
-static NTSTATUS get_wait_mask(HANDLE hDevice, DWORD *mask, DWORD *cookie, DWORD *pending_write, BOOL start_wait)
+static NTSTATUS get_wait_mask(HANDLE hDevice, UINT *mask, UINT *cookie, BOOL *pending_write, BOOL start_wait)
 {
     NTSTATUS    status;
 
@@ -831,10 +831,10 @@ typedef struct async_commio
     DWORD*              events;
     client_ptr_t        iosb;
     HANDLE              hEvent;
-    DWORD               evtmask;
-    DWORD               cookie;
-    DWORD               mstat;
-    DWORD               pending_write;
+    UINT                evtmask;
+    UINT                cookie;
+    UINT                mstat;
+    BOOL                pending_write;
     serial_irq_info     irq_info;
 } async_commio;
 
@@ -890,10 +890,10 @@ static NTSTATUS get_irq_info(int fd, serial_irq_info *irq_info)
 }
 
 
-static DWORD check_events(int fd, DWORD mask,
+static DWORD check_events(int fd, UINT mask,
                           const serial_irq_info *new,
                           const serial_irq_info *old,
-                          DWORD new_mstat, DWORD old_mstat, DWORD pending_write)
+                          UINT new_mstat, UINT old_mstat, BOOL pending_write)
 {
     DWORD ret = 0, queue;
 
@@ -946,7 +946,7 @@ static void CALLBACK wait_for_event(LPVOID arg)
     if (!server_get_unix_fd( commio->hDevice, FILE_READ_DATA | FILE_WRITE_DATA, &fd, &needs_close, NULL, NULL ))
     {
         serial_irq_info new_irq_info;
-        DWORD new_mstat, dummy, cookie;
+        UINT new_mstat, dummy, cookie;
         LARGE_INTEGER time;
 
         TRACE("device=%p fd=0x%08x mask=0x%08x buffer=%p event=%p irq_info=%p\n",

@@ -85,7 +85,7 @@ const WCHAR system_dir[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','
 
 static CPTABLEINFO unix_cp = { CP_UTF8, 4, '?', 0xfffd, '?', '?' };
 
-static char *get_nls_file_path( ULONG type, ULONG id )
+static char *get_nls_file_path( UINT type, UINT id )
 {
     const char *dir = build_dir ? build_dir : data_dir;
     const char *name = NULL;
@@ -169,7 +169,7 @@ static NTSTATUS open_nls_data_file( const char *path, const WCHAR *sysdir, HANDL
     return status;
 }
 
-static NTSTATUS get_nls_section_name( ULONG type, ULONG id, WCHAR name[32] )
+static NTSTATUS get_nls_section_name( UINT type, UINT id, WCHAR name[32] )
 {
     char buffer[32];
 
@@ -1068,7 +1068,7 @@ static void add_system_dll_path_var( WCHAR **env, SIZE_T *pos, SIZE_T *size )
 static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
 {
     const char *overrides = getenv( "WINEDLLOVERRIDES" );
-    DWORD i;
+    unsigned int i;
     char str[22];
 
     add_path_var( env, pos, size, "WINEDATADIR", data_dir );

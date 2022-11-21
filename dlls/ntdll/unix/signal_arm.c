@@ -176,28 +176,28 @@ enum arm_trap_code
 
 struct syscall_frame
 {
-    DWORD                 r0;             /* 000 */
-    DWORD                 r1;             /* 004 */
-    DWORD                 r2;             /* 008 */
-    DWORD                 r3;             /* 00c */
-    DWORD                 r4;             /* 010 */
-    DWORD                 r5;             /* 014 */
-    DWORD                 r6;             /* 018 */
-    DWORD                 r7;             /* 01c */
-    DWORD                 r8;             /* 020 */
-    DWORD                 r9;             /* 024 */
-    DWORD                 r10;            /* 028 */
-    DWORD                 r11;            /* 02c */
-    DWORD                 r12;            /* 030 */
-    DWORD                 pc;             /* 034 */
-    DWORD                 sp;             /* 038 */
-    DWORD                 lr;             /* 03c */
-    DWORD                 cpsr;           /* 040 */
-    DWORD                 restore_flags;  /* 044 */
-    DWORD                 fpscr;          /* 048 */
+    UINT                  r0;             /* 000 */
+    UINT                  r1;             /* 004 */
+    UINT                  r2;             /* 008 */
+    UINT                  r3;             /* 00c */
+    UINT                  r4;             /* 010 */
+    UINT                  r5;             /* 014 */
+    UINT                  r6;             /* 018 */
+    UINT                  r7;             /* 01c */
+    UINT                  r8;             /* 020 */
+    UINT                  r9;             /* 024 */
+    UINT                  r10;            /* 028 */
+    UINT                  r11;            /* 02c */
+    UINT                  r12;            /* 030 */
+    UINT                  pc;             /* 034 */
+    UINT                  sp;             /* 038 */
+    UINT                  lr;             /* 03c */
+    UINT                  cpsr;           /* 040 */
+    UINT                  restore_flags;  /* 044 */
+    UINT                  fpscr;          /* 048 */
     struct syscall_frame *prev_frame;     /* 04c */
     SYSTEM_SERVICE_TABLE *syscall_table;  /* 050 */
-    DWORD                 align[3];       /* 054 */
+    UINT                  align[3];       /* 054 */
     ULONGLONG             d[32];          /* 060 */
 };
 
@@ -301,7 +301,7 @@ static uint32_t regmask(int first_bit, int n_bits)
 /***********************************************************************
  *           ehabi_virtual_unwind
  */
-static NTSTATUS ehabi_virtual_unwind( DWORD ip, DWORD *frame, CONTEXT *context,
+static NTSTATUS ehabi_virtual_unwind( UINT ip, DWORD *frame, CONTEXT *context,
                                       const struct exidx_entry *entry,
                                       PEXCEPTION_ROUTINE *handler, void **handler_data )
 {
@@ -314,12 +314,11 @@ static NTSTATUS ehabi_virtual_unwind( DWORD ip, DWORD *frame, CONTEXT *context,
     int extra_words;
     int finish = 0;
     int set_pc = 0;
-    DWORD func_begin = prel31_to_abs(&entry->addr);
+    UINT func_begin = prel31_to_abs(&entry->addr);
 
     *frame = context->Sp;
 
-    TRACE( "ip %#x function %#lx\n",
-           ip, (unsigned long)func_begin );
+    TRACE( "ip %#x function %#x\n", ip, func_begin );
 
     if (entry->data == 1)
     {
@@ -1255,7 +1254,7 @@ NTSTATUS WINAPI NtCallbackReturn( void *ret_ptr, ULONG ret_len, NTSTATUS status 
 static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
 {
     struct syscall_frame *frame = arm_thread_data()->syscall_frame;
-    DWORD i;
+    UINT i;
 
     if (!is_inside_syscall( context ) && !ntdll_get_thread_data()->jmp_buf) return FALSE;
 

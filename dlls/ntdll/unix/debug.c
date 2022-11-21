@@ -299,7 +299,7 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
     {
         if (TRACE_ON(timestamp))
         {
-            ULONG ticks = NtGetTickCount();
+            UINT ticks = NtGetTickCount();
             pos += sprintf( pos, "%3u.%03u:", ticks / 1000, ticks % 1000 );
         }
         if (TRACE_ON(pid)) pos += sprintf( pos, "%04x:", GetCurrentProcessId() );
