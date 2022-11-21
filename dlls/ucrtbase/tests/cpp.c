@@ -192,21 +192,36 @@ static void test___std_type_info(void)
 
 static void test___unDName(void)
 {
-    static struct {const char *in; const char *out; const char *broken;} und_tests[] =
+    static struct {const char *in; const char *out; const char *broken; unsigned int flags;} und_tests[] =
     {
-/*   1 */ {"??4QDnsDomainNameRecord@@QAEAAV0@$$QAV0@@Z",
+/*   0 */ {"??4QDnsDomainNameRecord@@QAEAAV0@$$QAV0@@Z",
            "public: class QDnsDomainNameRecord & __thiscall QDnsDomainNameRecord::operator=(class QDnsDomainNameRecord &&)"},
-/*   2 */ {"??4QDnsDomainNameRecord@@QAEAAV0@$$QEAV0@@Z",
+/*   1 */ {"??4QDnsDomainNameRecord@@QAEAAV0@$$QEAV0@@Z",
           "public: class QDnsDomainNameRecord & __thiscall QDnsDomainNameRecord::operator=(class QDnsDomainNameRecord && __ptr64)"},
-/*   3 */ {"??__K_l@@YA?AUCC@@I@Z", "struct CC __cdecl operator \"\" _l(unsigned int)",
+/*   2 */ {"??__K_l@@YA?AUCC@@I@Z", "struct CC __cdecl operator \"\" _l(unsigned int)",
            "??__K_l@@YA?AUCC@@I@Z" /* W10 1507 fails on this :-( */},
+/*   3 */ {"?meth@Q@@QEGBA?AV1@XZ",
+           "public: class Q __cdecl Q::meth(void)const __ptr64& ",
+           "public: ?? :: ?? ::XZ::V1" /* W10 1507 fails on this :-( */},
+/*   4 */ {"?meth@Q@@QEHAA?AV1@XZ",
+           "public: class Q __cdecl Q::meth(void) __ptr64&& ",
+           "public: ?? :: ?? ::XZ::V1" /* W10 1507 fails on this :-( */},
+/*   5 */ {"?meth@Q@@QEGBA?AV1@XZ",
+           "public: class Q Q::meth(void)const & ",
+           "public: ?? :: ?? ::XZ::V1" /* W10 1507 fails on this :-( */,
+           0x02 /*UNDNAME_NO_MS_KEYWORDS*/},
+/*   6 */ {"?meth@Q@@QEHAA?AV1@XZ",
+           "public: class Q Q::meth(void)&& ",
+           "public: ?? :: ?? ::XZ::V1" /* W10 1507 fails on this :-( */,
+           0x02 /*UNDNAME_NO_MS_KEYWORDS*/},
     };
     unsigned i;
     for (i = 0; i < ARRAY_SIZE(und_tests); i++)
     {
-        char *name = p___unDName(0, und_tests[i].in, 0, malloc, free, 0);
+        char *name = p___unDName(0, und_tests[i].in, 0, malloc, free, und_tests[i].flags);
+        todo_wine_if(i >= 3)
         ok(!strcmp(name, und_tests[i].out) ||
-           (broken(und_tests[i].broken && !strcmp(und_tests[i].broken, name))),
+           broken(und_tests[i].broken && !strcmp(und_tests[i].broken, name)),
            "unDName returned %s for #%u\n", wine_dbgstr_a(name), i);
         free(name);
     }
