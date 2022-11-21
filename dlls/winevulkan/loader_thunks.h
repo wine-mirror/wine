@@ -45,6 +45,8 @@ enum unix_call
     unix_vkCmdBeginRendering,
     unix_vkCmdBeginRenderingKHR,
     unix_vkCmdBeginTransformFeedbackEXT,
+    unix_vkCmdBindDescriptorBufferEmbeddedSamplersEXT,
+    unix_vkCmdBindDescriptorBuffersEXT,
     unix_vkCmdBindDescriptorSets,
     unix_vkCmdBindIndexBuffer,
     unix_vkCmdBindInvocationMaskHUAWEI,
@@ -182,6 +184,7 @@ enum unix_call
     unix_vkCmdSetDepthTestEnableEXT,
     unix_vkCmdSetDepthWriteEnable,
     unix_vkCmdSetDepthWriteEnableEXT,
+    unix_vkCmdSetDescriptorBufferOffsetsEXT,
     unix_vkCmdSetDeviceMask,
     unix_vkCmdSetDeviceMaskKHR,
     unix_vkCmdSetDiscardRectangleEXT,
@@ -368,6 +371,7 @@ enum unix_call
     unix_vkGetAccelerationStructureDeviceAddressKHR,
     unix_vkGetAccelerationStructureHandleNV,
     unix_vkGetAccelerationStructureMemoryRequirementsNV,
+    unix_vkGetAccelerationStructureOpaqueCaptureDescriptorDataEXT,
     unix_vkGetBufferDeviceAddress,
     unix_vkGetBufferDeviceAddressEXT,
     unix_vkGetBufferDeviceAddressKHR,
@@ -376,11 +380,15 @@ enum unix_call
     unix_vkGetBufferMemoryRequirements2KHR,
     unix_vkGetBufferOpaqueCaptureAddress,
     unix_vkGetBufferOpaqueCaptureAddressKHR,
+    unix_vkGetBufferOpaqueCaptureDescriptorDataEXT,
     unix_vkGetCalibratedTimestampsEXT,
     unix_vkGetDeferredOperationMaxConcurrencyKHR,
     unix_vkGetDeferredOperationResultKHR,
+    unix_vkGetDescriptorEXT,
     unix_vkGetDescriptorSetHostMappingVALVE,
+    unix_vkGetDescriptorSetLayoutBindingOffsetEXT,
     unix_vkGetDescriptorSetLayoutHostMappingInfoVALVE,
+    unix_vkGetDescriptorSetLayoutSizeEXT,
     unix_vkGetDescriptorSetLayoutSupport,
     unix_vkGetDescriptorSetLayoutSupportKHR,
     unix_vkGetDeviceAccelerationStructureCompatibilityKHR,
@@ -410,6 +418,7 @@ enum unix_call
     unix_vkGetImageMemoryRequirements,
     unix_vkGetImageMemoryRequirements2,
     unix_vkGetImageMemoryRequirements2KHR,
+    unix_vkGetImageOpaqueCaptureDescriptorDataEXT,
     unix_vkGetImageSparseMemoryRequirements,
     unix_vkGetImageSparseMemoryRequirements2,
     unix_vkGetImageSparseMemoryRequirements2KHR,
@@ -417,6 +426,7 @@ enum unix_call
     unix_vkGetImageSubresourceLayout2EXT,
     unix_vkGetImageViewAddressNVX,
     unix_vkGetImageViewHandleNVX,
+    unix_vkGetImageViewOpaqueCaptureDescriptorDataEXT,
     unix_vkGetMemoryHostPointerPropertiesEXT,
     unix_vkGetMicromapBuildSizesEXT,
     unix_vkGetPerformanceParameterINTEL,
@@ -479,6 +489,7 @@ enum unix_call
     unix_vkGetRayTracingShaderGroupHandlesNV,
     unix_vkGetRayTracingShaderGroupStackSizeKHR,
     unix_vkGetRenderAreaGranularity,
+    unix_vkGetSamplerOpaqueCaptureDescriptorDataEXT,
     unix_vkGetSemaphoreCounterValue,
     unix_vkGetSemaphoreCounterValueKHR,
     unix_vkGetShaderInfoAMD,
@@ -757,6 +768,21 @@ struct vkCmdBeginTransformFeedbackEXT_params
     uint32_t counterBufferCount;
     const VkBuffer *pCounterBuffers;
     const VkDeviceSize *pCounterBufferOffsets;
+};
+
+struct vkCmdBindDescriptorBufferEmbeddedSamplersEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    VkPipelineBindPoint pipelineBindPoint;
+    VkPipelineLayout DECLSPEC_ALIGN(8) layout;
+    uint32_t set;
+};
+
+struct vkCmdBindDescriptorBuffersEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    uint32_t bufferCount;
+    const VkDescriptorBufferBindingInfoEXT *pBindingInfos;
 };
 
 struct vkCmdBindDescriptorSets_params
@@ -1815,6 +1841,17 @@ struct vkCmdSetDepthWriteEnableEXT_params
 {
     VkCommandBuffer commandBuffer;
     VkBool32 depthWriteEnable;
+};
+
+struct vkCmdSetDescriptorBufferOffsetsEXT_params
+{
+    VkCommandBuffer commandBuffer;
+    VkPipelineBindPoint pipelineBindPoint;
+    VkPipelineLayout DECLSPEC_ALIGN(8) layout;
+    uint32_t firstSet;
+    uint32_t setCount;
+    const uint32_t *pBufferIndices;
+    const VkDeviceSize *pOffsets;
 };
 
 struct vkCmdSetDeviceMask_params
@@ -3272,6 +3309,14 @@ struct vkGetAccelerationStructureMemoryRequirementsNV_params
     VkMemoryRequirements2KHR *pMemoryRequirements;
 };
 
+struct vkGetAccelerationStructureOpaqueCaptureDescriptorDataEXT_params
+{
+    VkDevice device;
+    const VkAccelerationStructureCaptureDescriptorDataInfoEXT *pInfo;
+    void *pData;
+    VkResult result;
+};
+
 struct vkGetBufferDeviceAddress_params
 {
     VkDevice device;
@@ -3328,6 +3373,14 @@ struct vkGetBufferOpaqueCaptureAddressKHR_params
     uint64_t result;
 };
 
+struct vkGetBufferOpaqueCaptureDescriptorDataEXT_params
+{
+    VkDevice device;
+    const VkBufferCaptureDescriptorDataInfoEXT *pInfo;
+    void *pData;
+    VkResult result;
+};
+
 struct vkGetCalibratedTimestampsEXT_params
 {
     VkDevice device;
@@ -3352,6 +3405,14 @@ struct vkGetDeferredOperationResultKHR_params
     VkResult result;
 };
 
+struct vkGetDescriptorEXT_params
+{
+    VkDevice device;
+    const VkDescriptorGetInfoEXT *pDescriptorInfo;
+    size_t dataSize;
+    void *pDescriptor;
+};
+
 struct vkGetDescriptorSetHostMappingVALVE_params
 {
     VkDevice device;
@@ -3359,11 +3420,26 @@ struct vkGetDescriptorSetHostMappingVALVE_params
     void **ppData;
 };
 
+struct vkGetDescriptorSetLayoutBindingOffsetEXT_params
+{
+    VkDevice device;
+    VkDescriptorSetLayout DECLSPEC_ALIGN(8) layout;
+    uint32_t binding;
+    VkDeviceSize *pOffset;
+};
+
 struct vkGetDescriptorSetLayoutHostMappingInfoVALVE_params
 {
     VkDevice device;
     const VkDescriptorSetBindingReferenceVALVE *pBindingReference;
     VkDescriptorSetLayoutHostMappingInfoVALVE *pHostMapping;
+};
+
+struct vkGetDescriptorSetLayoutSizeEXT_params
+{
+    VkDevice device;
+    VkDescriptorSetLayout DECLSPEC_ALIGN(8) layout;
+    VkDeviceSize *pLayoutSizeInBytes;
 };
 
 struct vkGetDescriptorSetLayoutSupport_params
@@ -3582,6 +3658,14 @@ struct vkGetImageMemoryRequirements2KHR_params
     VkMemoryRequirements2 *pMemoryRequirements;
 };
 
+struct vkGetImageOpaqueCaptureDescriptorDataEXT_params
+{
+    VkDevice device;
+    const VkImageCaptureDescriptorDataInfoEXT *pInfo;
+    void *pData;
+    VkResult result;
+};
+
 struct vkGetImageSparseMemoryRequirements_params
 {
     VkDevice device;
@@ -3635,6 +3719,14 @@ struct vkGetImageViewHandleNVX_params
     VkDevice device;
     const VkImageViewHandleInfoNVX *pInfo;
     uint32_t result;
+};
+
+struct vkGetImageViewOpaqueCaptureDescriptorDataEXT_params
+{
+    VkDevice device;
+    const VkImageViewCaptureDescriptorDataInfoEXT *pInfo;
+    void *pData;
+    VkResult result;
 };
 
 struct vkGetMemoryHostPointerPropertiesEXT_params
@@ -4131,6 +4223,14 @@ struct vkGetRenderAreaGranularity_params
     VkDevice device;
     VkRenderPass DECLSPEC_ALIGN(8) renderPass;
     VkExtent2D *pGranularity;
+};
+
+struct vkGetSamplerOpaqueCaptureDescriptorDataEXT_params
+{
+    VkDevice device;
+    const VkSamplerCaptureDescriptorDataInfoEXT *pInfo;
+    void *pData;
+    VkResult result;
 };
 
 struct vkGetSemaphoreCounterValue_params
