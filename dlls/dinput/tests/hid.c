@@ -1806,11 +1806,8 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     report[17] = 0xa5;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                  8, preparsed_data, report, caps.InputReportByteLength );
-    todo_wine
     ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
-    todo_wine
     ok( report[16] == (char)8, "got value %#x\n", report[16] );
-    todo_wine
     ok( report[17] == (char)0, "got value %#x\n", report[17] );
 
     status = HidP_GetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, buffer,
@@ -1832,9 +1829,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     report[17] = 0xff;
     status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                  &value, preparsed_data, report, caps.InputReportByteLength );
-    todo_wine
     ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
-    todo_wine
     ok( value == 0xffff, "got value %ld\n", value );
 
     value = -128;
@@ -2317,14 +2312,11 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     {
         status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1,
                                      i, preparsed_data, report, caps.FeatureReportByteLength );
-        todo_wine
         ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
 
         status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1,
                                      &value, preparsed_data, report, caps.FeatureReportByteLength );
-        todo_wine
         ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
-        todo_wine
         ok( value == i, "got value %#lx, expected %#x\n", value, i );
 
         status = HidP_SetUsageValueArray( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1, (void *)&value,
@@ -2340,19 +2332,15 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     {
         status = HidP_SetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1,
                                            i * 16, preparsed_data, report, caps.FeatureReportByteLength );
-        todo_wine
         ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#lx\n", status );
 
         status = HidP_GetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1,
                                            (LONG *)&value, preparsed_data, report, caps.FeatureReportByteLength );
-        todo_wine
         ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
-        todo_wine
         ok( value == i * 16, "got value %#lx, expected %#x\n", value, i * 16 );
 
         buffer[i + 21] = i;
     }
-    todo_wine
     ok( !memcmp( buffer, report, sizeof(buffer) ), "unexpected report data\n" );
 
     test_hidp_get_input( file, report_id, caps.InputReportByteLength, preparsed_data );
