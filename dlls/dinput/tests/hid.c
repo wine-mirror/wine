@@ -1188,7 +1188,7 @@ static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len,
             .report_buf =
             {
                 report_id,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                0,0,0,0,0,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,
+                0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                 0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,0xcd,
             },
             .ret_length = 3,
@@ -1226,7 +1226,8 @@ static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len,
             {
                 0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,
                 0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,
-                0x5a,0x5a,0x5a,0x5a,0x5a,
+                0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,
+                0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,0x5a,
             },
             .ret_length = 3,
             .ret_status = STATUS_SUCCESS,
@@ -1558,8 +1559,8 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
             .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
             .CollectionType = 1,
-            .NumberOfChildren = 7,
-            .FirstChild = 9,
+            .NumberOfChildren = 8,
+            .FirstChild = 10,
         },
         {
             .LinkUsage = HID_USAGE_GENERIC_JOYSTICK,
@@ -1582,6 +1583,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         { .DataIndex = 39, .RawValue = 1, },
     };
 
+    DWORD waveform_list, collection_count, generic_output_list;
     OVERLAPPED overlapped = {0}, overlapped2 = {0};
     HIDP_LINK_COLLECTION_NODE collections[16];
     PHIDP_PREPARSED_DATA preparsed_data;
@@ -1589,8 +1591,6 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     HIDP_BUTTON_CAPS button_caps[32];
     HIDP_VALUE_CAPS value_caps[16];
     char buffer[200], report[200];
-    DWORD collection_count;
-    DWORD waveform_list;
     HIDP_DATA data[64];
     USAGE usages[16];
     ULONG off, value;
@@ -2038,7 +2038,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     value = HidP_MaxDataListLength( HidP_Output, preparsed_data );
     ok( value == 0, "HidP_MaxDataListLength(HidP_Output) returned %ld, expected %d\n", value, 0 );
     value = HidP_MaxDataListLength( HidP_Feature, preparsed_data );
-    ok( value == 14, "HidP_MaxDataListLength(HidP_Feature) returned %ld, expected %d\n", value, 14 );
+    ok( value == 24, "HidP_MaxDataListLength(HidP_Feature) returned %ld, expected %d\n", value, 24 );
 
     value = 1;
     status = HidP_GetData( HidP_Input, data, &value, preparsed_data, report, caps.InputReportByteLength );
@@ -2270,6 +2270,66 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
                                  &value, preparsed_data, report, caps.FeatureReportByteLength );
     ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
     ok( value == 0xfffffd0b, "got value %#lx, expected %#x\n", value, 0xfffffd0b );
+
+    memset( report, 0xcd, sizeof(report) );
+    status = HidP_InitializeReportForID( HidP_Feature, report_id, preparsed_data, report,
+                                         caps.FeatureReportByteLength );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_InitializeReportForID returned %#lx\n", status );
+
+    memset( buffer, 0xcd, sizeof(buffer) );
+    memset( buffer, 0, caps.FeatureReportByteLength );
+    buffer[0] = report_id;
+    ok( !memcmp( buffer, report, sizeof(buffer) ), "unexpected report data\n" );
+
+    for (i = 0; i < caps.NumberLinkCollectionNodes; ++i)
+    {
+        if (collections[i].LinkUsagePage != HID_USAGE_PAGE_GENERIC) continue;
+        if (collections[i].LinkUsage == HID_USAGE_GENERIC_SYSTEM_CTL) break;
+    }
+    ok( i < caps.NumberLinkCollectionNodes, "HID_USAGE_GENERIC_SYSTEM_CTL collection not found\n" );
+    generic_output_list = i;
+
+    for (i = 0; i < 5; ++i)
+    {
+        status = HidP_SetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1,
+                                     i, preparsed_data, report, caps.FeatureReportByteLength );
+        todo_wine
+        ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
+
+        status = HidP_GetUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1,
+                                     &value, preparsed_data, report, caps.FeatureReportByteLength );
+        todo_wine
+        ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
+        todo_wine
+        ok( value == i, "got value %#lx, expected %#x\n", value, i );
+
+        status = HidP_SetUsageValueArray( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1, (void *)&value,
+                                          sizeof(value), preparsed_data, report, caps.FeatureReportByteLength );
+        ok( status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_SetUsageValue returned %#lx\n", status );
+        status = HidP_GetUsageValueArray( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1, (void *)&value,
+                                          sizeof(value), preparsed_data, report, caps.FeatureReportByteLength );
+        ok( status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_SetUsageValue returned %#lx\n", status );
+
+        buffer[i + 21] = i;
+    }
+    for (i = 5; i < 10; ++i)
+    {
+        status = HidP_SetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1,
+                                           i * 16, preparsed_data, report, caps.FeatureReportByteLength );
+        todo_wine
+        ok( status == HIDP_STATUS_SUCCESS, "HidP_SetScaledUsageValue returned %#lx\n", status );
+
+        status = HidP_GetScaledUsageValue( HidP_Feature, HID_USAGE_PAGE_ORDINAL, generic_output_list, i + 1,
+                                           (LONG *)&value, preparsed_data, report, caps.FeatureReportByteLength );
+        todo_wine
+        ok( status == HIDP_STATUS_SUCCESS, "HidP_GetScaledUsageValue returned %#lx\n", status );
+        todo_wine
+        ok( value == i * 16, "got value %#lx, expected %#x\n", value, i * 16 );
+
+        buffer[i + 21] = i;
+    }
+    todo_wine
+    ok( !memcmp( buffer, report, sizeof(buffer) ), "unexpected report data\n" );
 
     test_hidp_get_input( file, report_id, caps.InputReportByteLength, preparsed_data );
     test_hidp_get_feature( file, report_id, caps.FeatureReportByteLength, preparsed_data );
@@ -2865,6 +2925,26 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
             END_COLLECTION,
 
             USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+            USAGE(1, HID_USAGE_GENERIC_SYSTEM_CTL),
+            COLLECTION(1, Report),
+                REPORT_ID_OR_USAGE_PAGE(1, report_id, 0),
+                REPORT_COUNT(1, 10),
+                REPORT_SIZE(1, 8),
+                LOGICAL_MINIMUM(2, 0x0000),
+                LOGICAL_MAXIMUM(2, 0x00ff),
+                PHYSICAL_MINIMUM(2, 0x0000),
+                PHYSICAL_MAXIMUM(2, 0x0ff0),
+                USAGE_PAGE(1, HID_USAGE_PAGE_ORDINAL),
+                STRING_MINIMUM(1, 6),
+                STRING_MAXIMUM(1, 16),
+                USAGE_MINIMUM(1, 1),  /* Instance 1 */
+                USAGE_MAXIMUM(1, 10), /* Instance 10 */
+                FEATURE(1, Data|Var|Abs),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(1, 0),
+            END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
             USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
             COLLECTION(1, Report),
                 REPORT_ID_OR_USAGE_PAGE(1, report_id, 1),
@@ -2911,14 +2991,14 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
         .UsagePage = HID_USAGE_PAGE_GENERIC,
         .InputReportByteLength = report_id ? 32 : 33,
         .OutputReportByteLength = report_id ? 2 : 3,
-        .FeatureReportByteLength = report_id ? 21 : 22,
-        .NumberLinkCollectionNodes = 10,
+        .FeatureReportByteLength = report_id ? 31 : 32,
+        .NumberLinkCollectionNodes = 11,
         .NumberInputButtonCaps = 17,
         .NumberInputValueCaps = 7,
         .NumberInputDataIndices = 47,
         .NumberFeatureButtonCaps = 1,
-        .NumberFeatureValueCaps = 6,
-        .NumberFeatureDataIndices = 8,
+        .NumberFeatureValueCaps = 7,
+        .NumberFeatureDataIndices = 18,
     };
     const struct hid_expect expect_in =
     {
