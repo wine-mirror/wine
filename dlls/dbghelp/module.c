@@ -745,6 +745,7 @@ struct image_file_map* image_load_debugaltlink(struct image_file_map* fmap, stru
 static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE* id, unsigned idlen)
 {
     struct image_file_map* fmap_link = NULL;
+    DWORD sz;
     WCHAR* p;
     WCHAR* z;
 
@@ -764,7 +765,7 @@ static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE
             z = append_hex(z, id + 1, id + idlen);
         }
     }
-    memcpy(z, L".debug", sizeof(L".debug"));
+    wcscpy(z, L".debug");
     TRACE("checking %s\n", wine_dbgstr_w(p));
 
     if (image_check_debug_link_gnu_id(p, fmap_link, id, idlen))
@@ -772,6 +773,27 @@ static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE
         free(p);
         fmap->alternate = fmap_link;
         return TRUE;
+    }
+
+    sz = GetEnvironmentVariableW(L"WINEHOMEDIR", NULL, 0);
+    if (sz)
+    {
+        p = realloc(p, sz * sizeof(WCHAR) +
+                    sizeof(L"\\.cache\\debuginfod_client\\") +
+                    idlen * 2 * sizeof(WCHAR) + sizeof(L"\\debuginfo") + 500);
+        GetEnvironmentVariableW(L"WINEHOMEDIR", p, sz);
+        z = p + sz - 1;
+        wcscpy(z, L"\\.cache\\debuginfod_client\\");
+        z += wcslen(z);
+        z = append_hex(z, id, id + idlen);
+        wcscpy(z, L"\\debuginfo");
+        TRACE("checking %ls\n", p);
+        if (image_check_debug_link_gnu_id(p, fmap_link, id, idlen))
+        {
+            free(p);
+            fmap->alternate = fmap_link;
+            return TRUE;
+        }
     }
 
     TRACE("not found\n");
