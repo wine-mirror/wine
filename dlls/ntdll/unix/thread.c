@@ -2177,6 +2177,16 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
         if (ret_len) *ret_len = sizeof(BOOLEAN);
         return STATUS_SUCCESS;
 
+    case ThreadPriorityBoost:
+    {
+        DWORD *value = data;
+
+        if (length != sizeof(ULONG)) return STATUS_INFO_LENGTH_MISMATCH;
+        if (ret_len) *ret_len = sizeof(ULONG);
+        *value = 0;
+        return STATUS_SUCCESS;
+    }
+
     case ThreadIdealProcessor:
     case ThreadEnableAlignmentFaultFixup:
         return STATUS_INVALID_INFO_CLASS;
@@ -2187,7 +2197,6 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadEventPair_Reusable:
     case ThreadZeroTlsCell:
     case ThreadPerformanceCount:
-    case ThreadPriorityBoost:
     case ThreadSetTlsArrayAddress:
     default:
         FIXME( "info class %d not supported yet\n", class );
@@ -2389,6 +2398,10 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
         return STATUS_SUCCESS;
     }
 
+    case ThreadPriorityBoost:
+        WARN("Unimplemented class ThreadPriorityBoost.\n");
+        return STATUS_SUCCESS;
+
     case ThreadBasicInformation:
     case ThreadTimes:
     case ThreadPriority:
@@ -2396,7 +2409,6 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadEventPair_Reusable:
     case ThreadPerformanceCount:
     case ThreadAmILastThread:
-    case ThreadPriorityBoost:
     case ThreadSetTlsArrayAddress:
     case ThreadIsIoPending:
     default:

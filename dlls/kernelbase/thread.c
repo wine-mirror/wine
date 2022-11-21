@@ -286,8 +286,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetThreadPriority( HANDLE thread )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetThreadPriorityBoost( HANDLE thread, BOOL *state )
 {
-    if (state) *state = FALSE;
-    return TRUE;
+    return set_ntstatus( NtQueryInformationThread( thread, ThreadPriorityBoost, state, sizeof(*state), NULL ));
 }
 
 
@@ -568,7 +567,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetThreadPriority( HANDLE thread, INT priority )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH SetThreadPriorityBoost( HANDLE thread, BOOL disable )
 {
-    return TRUE;
+    return set_ntstatus( NtSetInformationThread( thread, ThreadPriorityBoost, &disable, sizeof(disable) ));
 }
 
 
