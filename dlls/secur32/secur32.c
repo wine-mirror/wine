@@ -174,13 +174,6 @@ PSecurityFunctionTableW WINAPI InitSecurityInterfaceW(void)
     return &securityFunctionTableW;
 }
 
-static WCHAR *strdupW( const WCHAR *str )
-{
-    WCHAR *ret = NULL;
-    if (str && (ret = malloc( (wcslen(str) + 1) * sizeof(WCHAR) ))) wcscpy( ret, str );
-    return ret;
-}
-
 static void _makeFnTableA(PSecurityFunctionTableA fnTableA,
  const SecurityFunctionTableA *inFnTableA,
  const SecurityFunctionTableW *inFnTableW)
@@ -345,8 +338,8 @@ static void _copyPackageInfo(PSecPkgInfoW info, const SecPkgInfoA *inInfoA,
         memcpy(info, inInfoW ? inInfoW : (const SecPkgInfoW *)inInfoA, sizeof(*info));
         if (inInfoW)
         {
-            info->Name = strdupW(inInfoW->Name);
-            info->Comment = strdupW(inInfoW->Comment);
+            info->Name = wcsdup(inInfoW->Name);
+            info->Comment = wcsdup(inInfoW->Comment);
         }
         else
         {
@@ -385,14 +378,14 @@ SecureProvider *SECUR32_addProvider(const SecurityFunctionTableA *fnTableA,
 
     if (fnTableA || fnTableW)
     {
-        ret->moduleName = moduleName ? strdupW(moduleName) : NULL;
+        ret->moduleName = wcsdup(moduleName);
         _makeFnTableA(&ret->fnTableA, fnTableA, fnTableW);
         _makeFnTableW(&ret->fnTableW, fnTableA, fnTableW);
         ret->loaded = !moduleName;
     }
     else
     {
-        ret->moduleName = strdupW(moduleName);
+        ret->moduleName = wcsdup(moduleName);
         ret->loaded = FALSE;
     }
 
