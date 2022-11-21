@@ -2155,16 +2155,29 @@ INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
 {
     DC_ATTR *dc_attr;
     ABORTPROC proc;
+    DOCINFOW info;
+
+    TRACE("%p %p\n", hdc, doc);
+
+    if (doc)
+    {
+        info = *doc;
+    }
+    else
+    {
+        memset( &info, 0, sizeof(info) );
+        info.cbSize = sizeof(info);
+    }
 
     TRACE("DocName %s, Output %s, Datatype %s, fwType %#lx\n",
-          debugstr_w(doc->lpszDocName), debugstr_w(doc->lpszOutput),
-          debugstr_w(doc->lpszDatatype), doc->fwType);
+          debugstr_w(info.lpszDocName), debugstr_w(info.lpszOutput),
+          debugstr_w(info.lpszDatatype), info.fwType);
 
     if (!(dc_attr = get_dc_attr( hdc ))) return SP_ERROR;
 
     proc = (ABORTPROC)(UINT_PTR)dc_attr->abort_proc;
     if (proc && !proc( hdc, 0 )) return 0;
-    return NtGdiStartDoc( hdc, doc, NULL, 0 );
+    return NtGdiStartDoc( hdc, &info, NULL, 0 );
 }
 
 /***********************************************************************
@@ -2175,6 +2188,8 @@ INT WINAPI StartDocA( HDC hdc, const DOCINFOA *doc )
     WCHAR *doc_name = NULL, *output = NULL, *data_type = NULL;
     DOCINFOW docW;
     INT ret, len;
+
+    if (!doc) return StartDocW(hdc, NULL);
 
     docW.cbSize = doc->cbSize;
     if (doc->lpszDocName)
