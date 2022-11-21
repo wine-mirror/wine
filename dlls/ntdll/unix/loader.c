@@ -1813,7 +1813,7 @@ NTSTATUS load_main_exe( const WCHAR *dos_name, const char *unix_name, const WCHA
     UNICODE_STRING nt_name;
     WCHAR *tmp = NULL;
     BOOL contains_path;
-    NTSTATUS status;
+    unsigned int status;
     SIZE_T size;
     struct stat st;
     WORD machine;
@@ -1872,7 +1872,7 @@ NTSTATUS load_start_exe( WCHAR **image, void **module )
 {
     static const WCHAR startW[] = {'s','t','a','r','t','.','e','x','e',0};
     UNICODE_STRING nt_name;
-    NTSTATUS status;
+    unsigned int status;
     SIZE_T size;
 
     *image = malloc( sizeof("\\??\\C:\\windows\\system32\\start.exe") * sizeof(WCHAR) );
@@ -1979,7 +1979,7 @@ static void load_ntdll(void)
     static WCHAR path[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                            's','y','s','t','e','m','3','2','\\','n','t','d','l','l','.','d','l','l',0};
     const char *pe_dir = get_pe_dir( current_machine );
-    NTSTATUS status;
+    unsigned int status;
     SECTION_IMAGE_INFORMATION info;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING str;
@@ -2021,7 +2021,7 @@ static void load_apiset_dll(void)
     API_SET_NAMESPACE *map;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING str;
-    NTSTATUS status;
+    unsigned int status;
     HANDLE handle, mapping;
     SIZE_T size;
     char *name;
@@ -2087,7 +2087,7 @@ static void load_wow64_ntdll( USHORT machine )
     SECTION_IMAGE_INFORMATION info;
     UNICODE_STRING nt_name;
     void *module;
-    NTSTATUS status;
+    unsigned int status;
     SIZE_T size;
     WCHAR *path = malloc( sizeof("\\??\\C:\\windows\\system32\\ntdll.dll") * sizeof(WCHAR) );
 

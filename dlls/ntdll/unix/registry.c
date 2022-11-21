@@ -75,7 +75,7 @@ NTSTATUS open_hkcu_key( const char *path, HANDLE *key )
 NTSTATUS WINAPI NtCreateKey( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
                              ULONG index, const UNICODE_STRING *class, ULONG options, ULONG *dispos )
 {
-    NTSTATUS ret;
+    unsigned int ret;
     data_size_t len;
     struct object_attributes *objattr;
 
@@ -133,7 +133,7 @@ NTSTATUS WINAPI NtCreateKeyTransacted( HANDLE *key, ACCESS_MASK access, const OB
  */
 NTSTATUS WINAPI NtOpenKeyEx( HANDLE *key, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, ULONG options )
 {
-    NTSTATUS ret;
+    unsigned int ret;
     ULONG attributes;
 
     *key = 0;
@@ -196,7 +196,7 @@ NTSTATUS WINAPI NtOpenKeyTransacted( HANDLE *key, ACCESS_MASK access, const OBJE
  */
 NTSTATUS WINAPI NtDeleteKey( HANDLE key )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p)\n", key );
 
@@ -215,7 +215,7 @@ NTSTATUS WINAPI NtDeleteKey( HANDLE key )
  */
 NTSTATUS WINAPI NtRenameKey( HANDLE key, UNICODE_STRING *name )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p %s)\n", key, debugstr_us(name) );
 
@@ -242,7 +242,7 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
                                void *info, DWORD length, DWORD *result_len )
 
 {
-    NTSTATUS ret;
+    unsigned int ret;
     void *data_ptr;
     size_t fixed_size;
 
@@ -437,7 +437,7 @@ static void copy_key_value_info( KEY_VALUE_INFORMATION_CLASS info_class, void *i
 NTSTATUS WINAPI NtEnumerateValueKey( HANDLE handle, ULONG index, KEY_VALUE_INFORMATION_CLASS info_class,
                                      void *info, DWORD length, DWORD *result_len )
 {
-    NTSTATUS ret;
+    unsigned int ret;
     void *ptr;
     size_t fixed_size;
 
@@ -481,7 +481,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
                                  KEY_VALUE_INFORMATION_CLASS info_class,
                                  void *info, DWORD length, DWORD *result_len )
 {
-    NTSTATUS ret;
+    unsigned int ret;
     UCHAR *data_ptr;
     unsigned int fixed_size, min_size;
 
@@ -560,7 +560,7 @@ NTSTATUS WINAPI NtQueryMultipleValueKey( HANDLE key, KEY_MULTIPLE_VALUE_INFORMAT
 NTSTATUS WINAPI NtSetValueKey( HANDLE key, const UNICODE_STRING *name, ULONG index,
                                ULONG type, const void *data, ULONG count )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p,%s,%d,%p,%d)\n", key, debugstr_us(name), type, data, count );
 
@@ -585,7 +585,7 @@ NTSTATUS WINAPI NtSetValueKey( HANDLE key, const UNICODE_STRING *name, ULONG ind
  */
 NTSTATUS WINAPI NtDeleteValueKey( HANDLE key, const UNICODE_STRING *name )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p,%s)\n", key, debugstr_us(name) );
 
@@ -610,7 +610,7 @@ NTSTATUS WINAPI NtNotifyChangeMultipleKeys( HANDLE key, ULONG count, OBJECT_ATTR
                                             IO_STATUS_BLOCK *io, ULONG filter, BOOLEAN subtree,
                                             void *buffer, ULONG length, BOOLEAN async )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p,%u,%p,%p,%p,%p,%p,0x%08x, 0x%08x,%p,0x%08x,0x%08x)\n",
            key, count, attr, event, apc, apc_context, io, filter, async, buffer, length, subtree );
@@ -662,7 +662,7 @@ NTSTATUS WINAPI NtNotifyChangeKey( HANDLE key, HANDLE event, PIO_APC_ROUTINE apc
  */
 NTSTATUS WINAPI NtFlushKey( HANDLE key )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "key=%p\n", key );
 
@@ -699,7 +699,7 @@ NTSTATUS WINAPI NtLoadKey2( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fi
 NTSTATUS WINAPI NtLoadKeyEx( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *file, ULONG flags, HANDLE trustkey,
                              HANDLE event, ACCESS_MASK access, HANDLE *roothandle, IO_STATUS_BLOCK *iostatus )
 {
-    NTSTATUS ret;
+    unsigned int ret;
     HANDLE key;
     data_size_t len;
     struct object_attributes *objattr;
@@ -749,7 +749,7 @@ NTSTATUS WINAPI NtLoadKeyEx( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *f
  */
 NTSTATUS WINAPI NtUnloadKey( OBJECT_ATTRIBUTES *attr )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p)\n", attr );
 
@@ -774,7 +774,7 @@ NTSTATUS WINAPI NtUnloadKey( OBJECT_ATTRIBUTES *attr )
  */
 NTSTATUS WINAPI NtSaveKey( HANDLE key, HANDLE file )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p,%p)\n", key, file );
 

@@ -630,7 +630,7 @@ static ssize_t fixup_icmp_over_dgram( struct msghdr *hdr, union unix_sockaddr *u
 {
     unsigned int tot_len = sizeof(struct ip_hdr) + recv_len;
     struct icmp_hdr *icmp_h = NULL;
-    NTSTATUS fixup_status;
+    unsigned int fixup_status;
     struct cmsghdr *cmsg;
     struct ip_hdr ip_h;
     size_t buf_len;
@@ -854,8 +854,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
 {
     HANDLE wait_handle;
     BOOL nonblocking;
-    NTSTATUS status;
-    unsigned int i;
+    unsigned int i, status;
     ULONG options;
 
     for (i = 0; i < async->count; ++i)
@@ -1101,7 +1100,7 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
 {
     HANDLE wait_handle;
     BOOL nonblocking;
-    NTSTATUS status;
+    unsigned int status;
     ULONG options;
 
     SERVER_START_REQ( send_socket )
@@ -1334,7 +1333,7 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     union unix_sockaddr addr;
     socklen_t addr_len;
     HANDLE wait_handle;
-    NTSTATUS status;
+    unsigned int status;
     ULONG options;
 
     addr_len = sizeof(addr);

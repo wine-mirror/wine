@@ -406,7 +406,7 @@ static NTSTATUS get_status(int fd, SERIAL_STATUS* ss)
 
 static void stop_waiting( HANDLE handle )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     SERVER_START_REQ( set_serial_info )
     {
@@ -420,7 +420,7 @@ static void stop_waiting( HANDLE handle )
 
 static NTSTATUS get_wait_mask(HANDLE hDevice, UINT *mask, UINT *cookie, BOOL *pending_write, BOOL start_wait)
 {
-    NTSTATUS    status;
+    unsigned int status;
 
     SERVER_START_REQ( get_serial_info )
     {

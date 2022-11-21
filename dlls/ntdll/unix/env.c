@@ -1994,7 +1994,7 @@ void init_startup_info(void)
 {
     WCHAR *src, *dst, *env, *image;
     void *module = NULL;
-    NTSTATUS status;
+    unsigned int status;
     SIZE_T size, info_size, env_size, env_pos;
     RTL_USER_PROCESS_PARAMETERS *params = NULL;
     startup_info_t *info;

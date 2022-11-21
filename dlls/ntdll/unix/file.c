@@ -1935,10 +1935,10 @@ static NTSTATUS fill_file_info( const struct stat *st, ULONG attr, void *ptr,
 }
 
 
-static NTSTATUS server_get_unix_name( HANDLE handle, char **unix_name )
+static unsigned int server_get_unix_name( HANDLE handle, char **unix_name )
 {
     data_size_t size = 1024;
-    NTSTATUS ret;
+    unsigned int ret;
     char *name;
 
     for (;;)
@@ -2051,10 +2051,10 @@ static NTSTATUS server_get_file_info( HANDLE handle, IO_STATUS_BLOCK *io, void *
 }
 
 
-static NTSTATUS server_open_file_object( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
-                                         ULONG sharing, ULONG options )
+static unsigned int server_open_file_object( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
+                                             ULONG sharing, ULONG options )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     SERVER_START_REQ( open_file_object )
     {
@@ -2178,7 +2178,7 @@ static NTSTATUS get_mountmgr_fs_info( HANDLE handle, int fd, struct mountmgr_uni
     char *unix_name;
     IO_STATUS_BLOCK io = {0};
     HANDLE mountmgr;
-    NTSTATUS status;
+    unsigned int status;
     int letter;
 
     if ((status = server_get_unix_name( handle, &unix_name ))) return status;
@@ -2551,12 +2551,12 @@ static NTSTATUS init_cached_dir_data( struct dir_data **data_ret, int fd, const 
  *
  * Retrieve the cached directory data, or initialize it if necessary.
  */
-static NTSTATUS get_cached_dir_data( HANDLE handle, struct dir_data **data_ret, int fd,
-                                     const UNICODE_STRING *mask )
+static unsigned int get_cached_dir_data( HANDLE handle, struct dir_data **data_ret, int fd,
+                                         const UNICODE_STRING *mask )
 {
     unsigned int i;
     int entry = -1, free_entries[16];
-    NTSTATUS status;
+    unsigned int status;
 
     SERVER_START_REQ( get_directory_cache_entry )
     {
@@ -2611,7 +2611,7 @@ NTSTATUS WINAPI NtQueryDirectoryFile( HANDLE handle, HANDLE event, PIO_APC_ROUTI
     int cwd, fd, needs_close;
     enum server_fd_type type;
     struct dir_data *data;
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE("(%p %p %p %p %p %p 0x%08x 0x%08x 0x%08x %s 0x%08x\n",
           handle, event, apc_routine, apc_context, io, buffer,
@@ -3932,7 +3932,7 @@ NTSTATUS open_unix_file( HANDLE *handle, const char *unix_name, ACCESS_MASK acce
                          ULONG options, void *ea_buffer, ULONG ea_length )
 {
     struct object_attributes *objattr;
-    NTSTATUS status;
+    unsigned int status;
     data_size_t len;
 
     if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
@@ -3967,7 +3967,7 @@ NTSTATUS WINAPI NtCreateFile( HANDLE *handle, ACCESS_MASK access, OBJECT_ATTRIBU
     UNICODE_STRING nt_name;
     char *unix_name;
     BOOL created = FALSE;
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE( "handle=%p access=%08x name=%s objattr=%08x root=%p sec=%p io=%p alloc_size=%p "
            "attr=%08x sharing=%08x disp=%d options=%08x ea=%p.0x%08x\n",
@@ -4077,7 +4077,7 @@ NTSTATUS WINAPI NtCreateMailslotFile( HANDLE *handle, ULONG access, OBJECT_ATTRI
                                       IO_STATUS_BLOCK *io, ULONG options, ULONG quota, ULONG msg_size,
                                       LARGE_INTEGER *timeout )
 {
-    NTSTATUS status;
+    unsigned int status;
     data_size_t len;
     struct object_attributes *objattr;
 
@@ -4112,7 +4112,7 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( HANDLE *handle, ULONG access, OBJECT_ATTR
                                        ULONG max_inst, ULONG inbound_quota, ULONG outbound_quota,
                                        LARGE_INTEGER *timeout )
 {
-    NTSTATUS status;
+    unsigned int status;
     data_size_t len;
     struct object_attributes *objattr;
 
@@ -4184,7 +4184,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
                                            FILE_NETWORK_OPEN_INFORMATION *info )
 {
     char *unix_name;
-    NTSTATUS status;
+    unsigned int status;
     UNICODE_STRING redir;
     OBJECT_ATTRIBUTES new_attr = *attr;
 
@@ -4229,7 +4229,7 @@ NTSTATUS WINAPI NtQueryFullAttributesFile( const OBJECT_ATTRIBUTES *attr,
 NTSTATUS WINAPI NtQueryAttributesFile( const OBJECT_ATTRIBUTES *attr, FILE_BASIC_INFORMATION *info )
 {
     char *unix_name;
-    NTSTATUS status;
+    unsigned int status;
     UNICODE_STRING redir;
     OBJECT_ATTRIBUTES new_attr = *attr;
 
@@ -4334,7 +4334,7 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
     int fd, needs_close = FALSE;
     ULONG attr;
     unsigned int options;
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class);
 
@@ -4552,7 +4552,7 @@ NTSTATUS WINAPI NtSetInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                                       void *ptr, ULONG len, FILE_INFORMATION_CLASS class )
 {
     int fd, needs_close;
-    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int status = STATUS_SUCCESS;
 
     TRACE( "(%p,%p,%p,0x%08x,0x%08x)\n", handle, io, ptr, len, class );
 
@@ -5017,12 +5017,12 @@ static BOOL async_write_proc( void *user, ULONG_PTR *info, unsigned int *status 
 }
 
 /* do a read call through the server */
-static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context,
-                                  IO_STATUS_BLOCK *io, void *buffer, ULONG size,
-                                  LARGE_INTEGER *offset, ULONG *key )
+static unsigned int server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context,
+                                      IO_STATUS_BLOCK *io, void *buffer, ULONG size,
+                                      LARGE_INTEGER *offset, ULONG *key )
 {
     struct async_irp *async;
-    NTSTATUS status;
+    unsigned int status;
     HANDLE wait_handle;
     ULONG options;
 
@@ -5055,12 +5055,12 @@ static NTSTATUS server_read_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE a
 }
 
 /* do a write call through the server */
-static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context,
-                                   IO_STATUS_BLOCK *io, const void *buffer, ULONG size,
-                                   LARGE_INTEGER *offset, ULONG *key )
+static unsigned int server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_context,
+                                       IO_STATUS_BLOCK *io, const void *buffer, ULONG size,
+                                       LARGE_INTEGER *offset, ULONG *key )
 {
     struct async_irp *async;
-    NTSTATUS status;
+    unsigned int status;
     HANDLE wait_handle;
     ULONG options;
 
@@ -5100,7 +5100,7 @@ static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
                                    PVOID out_buffer, UINT out_size )
 {
     struct async_irp *async;
-    NTSTATUS status;
+    unsigned int status;
     HANDLE wait_handle;
     ULONG options;
 
@@ -5146,10 +5146,10 @@ struct io_timeouts
 };
 
 /* retrieve the I/O timeouts to use for a given handle */
-static NTSTATUS get_io_timeouts( HANDLE handle, enum server_fd_type type, ULONG count, BOOL is_read,
-                                 struct io_timeouts *timeouts )
+static unsigned int get_io_timeouts( HANDLE handle, enum server_fd_type type, ULONG count, BOOL is_read,
+                                     struct io_timeouts *timeouts )
 {
-    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int status = STATUS_SUCCESS;
 
     timeouts->interval = timeouts->total = -1;
 
@@ -5269,13 +5269,13 @@ static NTSTATUS get_io_avail_mode( HANDLE handle, enum server_fd_type type, BOOL
 }
 
 /* register an async I/O for a file read; helper for NtReadFile */
-static NTSTATUS register_async_file_read( HANDLE handle, HANDLE event,
-                                          PIO_APC_ROUTINE apc, void *apc_user,
-                                          client_ptr_t iosb, void *buffer,
-                                          ULONG already, ULONG length, BOOL avail_mode )
+static unsigned int register_async_file_read( HANDLE handle, HANDLE event,
+                                              PIO_APC_ROUTINE apc, void *apc_user,
+                                              client_ptr_t iosb, void *buffer,
+                                              ULONG already, ULONG length, BOOL avail_mode )
 {
     struct async_fileio_read *fileio;
-    NTSTATUS status;
+    unsigned int status;
 
     if (!(fileio = (struct async_fileio_read *)alloc_fileio( sizeof(*fileio), async_read_proc, handle )))
         return STATUS_NO_MEMORY;
@@ -5312,9 +5312,9 @@ void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULONG info
     SERVER_END_REQ;
 }
 
-static NTSTATUS set_pending_write( HANDLE device )
+static unsigned int set_pending_write( HANDLE device )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     SERVER_START_REQ( set_serial_info )
     {
@@ -5337,7 +5337,7 @@ NTSTATUS WINAPI NtReadFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, vo
     int result, unix_handle, needs_close;
     unsigned int options;
     struct io_timeouts timeouts;
-    NTSTATUS status, ret_status;
+    unsigned int status, ret_status;
     UINT total = 0;
     client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
@@ -5538,8 +5538,7 @@ NTSTATUS WINAPI NtReadFileScatter( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
                                    ULONG length, LARGE_INTEGER *offset, ULONG *key )
 {
     int result, unix_handle, needs_close;
-    unsigned int options;
-    NTSTATUS status;
+    unsigned int options, status;
     UINT pos = 0, total = 0;
     client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
@@ -5618,7 +5617,7 @@ NTSTATUS WINAPI NtWriteFile( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, v
     int result, unix_handle, needs_close;
     unsigned int options;
     struct io_timeouts timeouts;
-    NTSTATUS status, ret_status;
+    unsigned int status, ret_status;
     UINT total = 0;
     client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
@@ -5846,8 +5845,7 @@ NTSTATUS WINAPI NtWriteFileGather( HANDLE file, HANDLE event, PIO_APC_ROUTINE ap
                                    ULONG length, LARGE_INTEGER *offset, ULONG *key )
 {
     int result, unix_handle, needs_close;
-    unsigned int options;
-    NTSTATUS status;
+    unsigned int options, status;
     UINT pos = 0, total = 0;
     client_ptr_t iosb_ptr = iosb_client_ptr(io);
     enum server_fd_type type;
@@ -6172,7 +6170,7 @@ NTSTATUS WINAPI NtFlushBuffersFile( HANDLE handle, IO_STATUS_BLOCK *io )
  */
 NTSTATUS WINAPI NtCancelIoFile( HANDLE handle, IO_STATUS_BLOCK *io_status )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE( "%p %p\n", handle, io_status );
 
@@ -6197,7 +6195,7 @@ NTSTATUS WINAPI NtCancelIoFile( HANDLE handle, IO_STATUS_BLOCK *io_status )
  */
 NTSTATUS WINAPI NtCancelIoFileEx( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_BLOCK *io_status )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE( "%p %p %p\n", handle, io, io_status );
 
@@ -6222,7 +6220,7 @@ NTSTATUS WINAPI NtCancelIoFileEx( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_
  */
 NTSTATUS WINAPI NtCancelSynchronousIoFile( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_BLOCK *io_status )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE( "(%p %p %p)\n", handle, io, io_status );
 
@@ -6247,7 +6245,7 @@ NTSTATUS WINAPI NtLockFile( HANDLE file, HANDLE event, PIO_APC_ROUTINE apc, void
                             LARGE_INTEGER *count, ULONG *key, BOOLEAN dont_wait, BOOLEAN exclusive )
 {
     static int warn;
-    NTSTATUS ret;
+    unsigned int ret;
     HANDLE handle;
     BOOLEAN async;
 
@@ -6304,7 +6302,7 @@ NTSTATUS WINAPI NtLockFile( HANDLE file, HANDLE event, PIO_APC_ROUTINE apc, void
 NTSTATUS WINAPI NtUnlockFile( HANDLE handle, IO_STATUS_BLOCK *io_status, LARGE_INTEGER *offset,
                               LARGE_INTEGER *count, ULONG *key )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE( "%p %x%08x %x%08x\n",
            handle, offset->u.HighPart, offset->u.LowPart, count->u.HighPart, count->u.LowPart );
@@ -6417,7 +6415,7 @@ NTSTATUS WINAPI NtNotifyChangeDirectoryFile( HANDLE handle, HANDLE event, PIO_AP
                                              ULONG buffer_size, ULONG filter, BOOLEAN subtree )
 {
     struct async_fileio_read_changes *fileio;
-    NTSTATUS status;
+    unsigned int status;
     ULONG size = max( 4096, buffer_size );
 
     TRACE( "%p %p %p %p %p %p %u %u %d\n",
@@ -6660,7 +6658,7 @@ NTSTATUS WINAPI NtQueryVolumeInformationFile( HANDLE handle, IO_STATUS_BLOCK *io
                                               FS_INFORMATION_CLASS info_class )
 {
     int fd, needs_close;
-    NTSTATUS status;
+    unsigned int status;
 
     status = server_get_unix_fd( handle, 0, &fd, &needs_close, NULL, NULL );
     if (status == STATUS_BAD_DEVICE_TYPE)
@@ -6965,7 +6963,7 @@ static void *put_object_type_info( OBJECT_TYPE_INFORMATION *p, struct object_typ
 NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
                                void *ptr, ULONG len, ULONG *used_len )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE("(%p,0x%08x,%p,0x%08x,%p)\n", handle, info_class, ptr, len, used_len);
 
@@ -7164,7 +7162,7 @@ NTSTATUS WINAPI NtQueryObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_clas
 NTSTATUS WINAPI NtSetInformationObject( HANDLE handle, OBJECT_INFORMATION_CLASS info_class,
                                         void *ptr, ULONG len )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE("(%p,0x%08x,%p,0x%08x)\n", handle, info_class, ptr, len);
 

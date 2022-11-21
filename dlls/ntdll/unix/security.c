@@ -51,7 +51,7 @@ NTSTATUS WINAPI NtOpenProcessToken( HANDLE process, DWORD access, HANDLE *handle
  */
 NTSTATUS WINAPI NtOpenProcessTokenEx( HANDLE process, DWORD access, DWORD attributes, HANDLE *handle )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p,0x%08x,0x%08x,%p)\n", process, access, attributes, handle );
 
@@ -86,7 +86,7 @@ NTSTATUS WINAPI NtOpenThreadToken( HANDLE thread, DWORD access, BOOLEAN self, HA
 NTSTATUS WINAPI NtOpenThreadTokenEx( HANDLE thread, DWORD access, BOOLEAN self, DWORD attributes,
                                      HANDLE *handle )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p,0x%08x,%u,0x%08x,%p)\n", thread, access, self, attributes, handle );
 
@@ -113,7 +113,7 @@ NTSTATUS WINAPI NtOpenThreadTokenEx( HANDLE thread, DWORD access, BOOLEAN self, 
 NTSTATUS WINAPI NtDuplicateToken( HANDLE token, ACCESS_MASK access, OBJECT_ATTRIBUTES *attr,
                                   SECURITY_IMPERSONATION_LEVEL level, TOKEN_TYPE type, HANDLE *handle )
 {
-    NTSTATUS status;
+    unsigned int status;
     data_size_t len;
     struct object_attributes *objattr;
 
@@ -198,7 +198,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
     };
 
     ULONG len = 0;
-    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int status = STATUS_SUCCESS;
 
     TRACE( "(%p,%d,%p,%d,%p)\n", token, class, info, length, retlen );
 
@@ -492,7 +492,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
 NTSTATUS WINAPI NtSetInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS class,
                                        void *info, ULONG length )
 {
-    NTSTATUS ret = STATUS_NOT_IMPLEMENTED;
+    unsigned int ret = STATUS_NOT_IMPLEMENTED;
 
     TRACE( "%p %d %p %u\n", token, class, info, length );
 
@@ -584,7 +584,7 @@ NTSTATUS WINAPI NtAdjustGroupsToken( HANDLE token, BOOLEAN reset, TOKEN_GROUPS *
 NTSTATUS WINAPI NtAdjustPrivilegesToken( HANDLE token, BOOLEAN disable, TOKEN_PRIVILEGES *privs,
                                          DWORD length, TOKEN_PRIVILEGES *prev, DWORD *retlen )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     TRACE( "(%p,0x%08x,%p,0x%08x,%p,%p)\n", token, disable, privs, length, prev, retlen );
 
@@ -620,7 +620,7 @@ NTSTATUS WINAPI NtFilterToken( HANDLE token, ULONG flags, TOKEN_GROUPS *disable_
     data_size_t privileges_len = 0;
     data_size_t sids_len = 0;
     SID *sids = NULL;
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE( "%p %#x %p %p %p %p\n", token, flags, disable_sids, privileges,
            restrict_sids, new_token );
@@ -679,7 +679,7 @@ NTSTATUS WINAPI NtFilterToken( HANDLE token, ULONG flags, TOKEN_GROUPS *disable_
  */
 NTSTATUS WINAPI NtPrivilegeCheck( HANDLE token, PRIVILEGE_SET *privs, BOOLEAN *res )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     SERVER_START_REQ( check_token_privileges )
     {
@@ -715,7 +715,7 @@ NTSTATUS WINAPI NtAccessCheck( PSECURITY_DESCRIPTOR descr, HANDLE token, ACCESS_
     struct object_attributes *objattr;
     data_size_t len;
     OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
+    unsigned int status;
     ULONG priv_len;
 
     TRACE( "(%p, %p, %08x, %p, %p, %p, %p, %p)\n",
@@ -783,7 +783,7 @@ NTSTATUS WINAPI NtQuerySecurityObject( HANDLE handle, SECURITY_INFORMATION info,
                                        PSECURITY_DESCRIPTOR descr, ULONG length, ULONG *retlen )
 {
     SECURITY_DESCRIPTOR_RELATIVE *psd = descr;
-    NTSTATUS status;
+    unsigned int status;
     void *buffer;
     unsigned int buffer_size = 512;
 
@@ -845,7 +845,7 @@ NTSTATUS WINAPI NtSetSecurityObject( HANDLE handle, SECURITY_INFORMATION info, P
     struct security_descriptor *sd;
     data_size_t len;
     OBJECT_ATTRIBUTES attr;
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE( "%p 0x%08x %p\n", handle, info, descr );
 
@@ -886,7 +886,7 @@ NTSTATUS WINAPI NtSetSecurityObject( HANDLE handle, SECURITY_INFORMATION info, P
  */
 NTSTATUS WINAPI NtAllocateLocallyUniqueId( LUID *luid )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE( "%p\n", luid );
 

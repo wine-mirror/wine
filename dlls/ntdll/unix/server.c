@@ -1074,7 +1074,7 @@ done:
  */
 NTSTATUS CDECL wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes, HANDLE *handle )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     *handle = 0;
     wine_server_send_fd( fd );
@@ -1575,7 +1575,7 @@ size_t server_init_process(void)
 void server_init_process_done(void)
 {
     void *entry, *teb;
-    NTSTATUS status;
+    unsigned int status;
     int suspend;
     FILE_FS_DEVICE_INFORMATION info;
 
@@ -1651,7 +1651,7 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
                                    ACCESS_MASK access, ULONG attributes, ULONG options )
 {
     sigset_t sigset;
-    NTSTATUS ret;
+    unsigned int ret;
     int fd = -1;
 
     if (dest) *dest = 0;
@@ -1711,7 +1711,7 @@ NTSTATUS WINAPI NtDuplicateObject( HANDLE source_process, HANDLE source, HANDLE 
  */
 NTSTATUS WINAPI NtCompareObjects( HANDLE first, HANDLE second )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     SERVER_START_REQ( compare_objects )
     {
@@ -1732,7 +1732,7 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
 {
     sigset_t sigset;
     HANDLE port;
-    NTSTATUS ret;
+    unsigned int ret;
     int fd;
 
     if (HandleToLong( handle ) >= ~5 && HandleToLong( handle ) <= ~0)

@@ -2385,13 +2385,13 @@ static void read_dev_urandom( void *buf, ULONG len )
     else WARN( "can't open /dev/urandom\n" );
 }
 
-static NTSTATUS get_system_process_info( SYSTEM_INFORMATION_CLASS class, void *info, ULONG size, ULONG *len )
+static unsigned int get_system_process_info( SYSTEM_INFORMATION_CLASS class, void *info, ULONG size, ULONG *len )
 {
     unsigned int process_count, total_thread_count, total_name_len, i, j;
     unsigned int thread_info_size;
     unsigned int pos = 0;
     char *buffer = NULL;
-    NTSTATUS ret;
+    unsigned int ret;
 
 C_ASSERT( sizeof(struct thread_info) <= sizeof(SYSTEM_THREAD_INFORMATION) );
 C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
@@ -2514,7 +2514,7 @@ C_ASSERT( sizeof(struct process_info) <= sizeof(SYSTEM_PROCESS_INFORMATION) );
 NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
                                           void *info, ULONG size, ULONG *ret_size )
 {
-    NTSTATUS ret = STATUS_SUCCESS;
+    unsigned int ret = STATUS_SUCCESS;
     ULONG len = 0;
 
     TRACE( "(0x%08x,%p,0x%08x,%p)\n", class, info, size, ret_size );
@@ -3207,7 +3207,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
                                             void *info, ULONG size, ULONG *ret_size )
 {
     ULONG len = 0;
-    NTSTATUS ret = STATUS_NOT_IMPLEMENTED;
+    unsigned int ret = STATUS_NOT_IMPLEMENTED;
 
     TRACE( "(0x%08x,%p,%u,%p,%u,%p) stub\n", class, query, query_len, info, size, ret_size );
 

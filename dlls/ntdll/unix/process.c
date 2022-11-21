@@ -247,9 +247,9 @@ static BOOL get_so_file_info( int fd, pe_image_info_t *info )
 /***********************************************************************
  *           get_pe_file_info
  */
-static NTSTATUS get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_image_info_t *info )
+static unsigned int get_pe_file_info( OBJECT_ATTRIBUTES *attr, HANDLE *handle, pe_image_info_t *info )
 {
-    NTSTATUS status;
+    unsigned int status;
     HANDLE mapping;
     char *unix_name;
 
@@ -680,7 +680,7 @@ NTSTATUS WINAPI NtCreateUserProcess( HANDLE *process_handle_ptr, HANDLE *thread_
                                      RTL_USER_PROCESS_PARAMETERS *params, PS_CREATE_INFO *info,
                                      PS_ATTRIBUTE_LIST *ps_attr )
 {
-    NTSTATUS status;
+    unsigned int status;
     BOOL success = FALSE;
     HANDLE file_handle, process_info = 0, process_handle = 0, thread_handle = 0;
     struct object_attributes *objattr;
@@ -944,7 +944,7 @@ done:
  */
 NTSTATUS WINAPI NtTerminateProcess( HANDLE handle, LONG exit_code )
 {
-    NTSTATUS ret;
+    unsigned int ret;
     BOOL self;
 
     SERVER_START_REQ( terminate_process )
@@ -1066,7 +1066,7 @@ void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid )
 NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class, void *info,
                                            ULONG size, ULONG *ret_len )
 {
-    NTSTATUS ret = STATUS_SUCCESS;
+    unsigned int ret = STATUS_SUCCESS;
     ULONG len = 0;
 
     TRACE( "(%p,0x%08x,%p,0x%08x,%p)\n", handle, class, info, size, ret_len );
@@ -1531,7 +1531,7 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
  */
 NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, void *info, ULONG size )
 {
-    NTSTATUS ret = STATUS_SUCCESS;
+    unsigned int ret = STATUS_SUCCESS;
 
     switch (class)
     {
@@ -1658,7 +1658,7 @@ NTSTATUS WINAPI NtSetInformationProcess( HANDLE handle, PROCESSINFOCLASS class, 
 NTSTATUS WINAPI NtOpenProcess( HANDLE *handle, ACCESS_MASK access,
                                const OBJECT_ATTRIBUTES *attr, const CLIENT_ID *id )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     *handle = 0;
 
@@ -1680,7 +1680,7 @@ NTSTATUS WINAPI NtOpenProcess( HANDLE *handle, ACCESS_MASK access,
  */
 NTSTATUS WINAPI NtSuspendProcess( HANDLE handle )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     SERVER_START_REQ( suspend_process )
     {
@@ -1697,7 +1697,7 @@ NTSTATUS WINAPI NtSuspendProcess( HANDLE handle )
  */
 NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     SERVER_START_REQ( resume_process )
     {
@@ -1714,7 +1714,7 @@ NTSTATUS WINAPI NtResumeProcess( HANDLE handle )
  */
 NTSTATUS WINAPI NtDebugActiveProcess( HANDLE process, HANDLE debug )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     SERVER_START_REQ( debug_process )
     {
@@ -1733,7 +1733,7 @@ NTSTATUS WINAPI NtDebugActiveProcess( HANDLE process, HANDLE debug )
  */
 NTSTATUS WINAPI NtRemoveProcessDebug( HANDLE process, HANDLE debug )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     SERVER_START_REQ( debug_process )
     {
@@ -1752,7 +1752,7 @@ NTSTATUS WINAPI NtRemoveProcessDebug( HANDLE process, HANDLE debug )
  */
 NTSTATUS WINAPI NtDebugContinue( HANDLE handle, CLIENT_ID *client, NTSTATUS status )
 {
-    NTSTATUS ret;
+    unsigned int ret;
 
     SERVER_START_REQ( continue_debug_event )
     {

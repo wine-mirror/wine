@@ -2380,12 +2380,12 @@ static NTSTATUS map_image_into_view( struct file_view *view, const WCHAR *filena
 /***********************************************************************
  *             get_mapping_info
  */
-static NTSTATUS get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigned int *sec_flags,
-                                  mem_size_t *full_size, HANDLE *shared_file, pe_image_info_t **info )
+static unsigned int get_mapping_info( HANDLE handle, ACCESS_MASK access, unsigned int *sec_flags,
+                                      mem_size_t *full_size, HANDLE *shared_file, pe_image_info_t **info )
 {
     pe_image_info_t *image_info;
     SIZE_T total, size = 1024;
-    NTSTATUS status;
+    unsigned int status;
 
     for (;;)
     {
@@ -2439,7 +2439,7 @@ static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **ad
     int shared_fd = -1, shared_needs_close = 0;
     SIZE_T size = image_info->map_size;
     struct file_view *view;
-    NTSTATUS status;
+    unsigned int status;
     sigset_t sigset;
     void *base;
 
@@ -2479,7 +2479,7 @@ static NTSTATUS virtual_map_image( HANDLE mapping, ACCESS_MASK access, void **ad
         }
         SERVER_END_REQ;
     }
-    if (status >= 0)
+    if (NT_SUCCESS(status))
     {
         if (is_builtin) add_builtin_module( view->base, NULL );
         *addr_ptr = view->base;
@@ -2501,11 +2501,11 @@ done:
  *
  * Map a file section into memory.
  */
-static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR zero_bits,
-                                     SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
-                                     ULONG alloc_type, ULONG protect )
+static unsigned int virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR zero_bits,
+                                         SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
+                                         ULONG alloc_type, ULONG protect )
 {
-    NTSTATUS res;
+    unsigned int res;
     mem_size_t full_size;
     ACCESS_MASK access;
     SIZE_T size;
@@ -2605,7 +2605,7 @@ static NTSTATUS virtual_map_section( HANDLE handle, PVOID *addr_ptr, ULONG_PTR z
     }
     else ERR( "mapping %p %lx %x%08x failed\n", view->base, size, offset.u.HighPart, offset.u.LowPart );
 
-    if (res >= 0)
+    if (NT_SUCCESS(res))
     {
         *addr_ptr = view->base;
         *size_ptr = size;
@@ -3860,7 +3860,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemory( HANDLE process, PVOID *ret, ULONG_PTR z
     {
         apc_call_t call;
         apc_result_t result;
-        NTSTATUS status;
+        unsigned int status;
 
         memset( &call, 0, sizeof(call) );
 
@@ -3959,7 +3959,7 @@ NTSTATUS WINAPI NtAllocateVirtualMemoryEx( HANDLE process, PVOID *ret, SIZE_T *s
     {
         apc_call_t call;
         apc_result_t result;
-        NTSTATUS status;
+        unsigned int status;
 
         memset( &call, 0, sizeof(call) );
 
@@ -3994,7 +3994,7 @@ NTSTATUS WINAPI NtFreeVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T *si
     struct file_view *view;
     char *base;
     sigset_t sigset;
-    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int status = STATUS_SUCCESS;
     LPVOID addr = *addr_ptr;
     SIZE_T size = *size_ptr;
 
@@ -4083,7 +4083,7 @@ NTSTATUS WINAPI NtProtectVirtualMemory( HANDLE process, PVOID *addr_ptr, SIZE_T 
 {
     struct file_view *view;
     sigset_t sigset;
-    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int status = STATUS_SUCCESS;
     char *base;
     BYTE vprot;
     SIZE_T size = *size_ptr;
@@ -4195,7 +4195,7 @@ static int get_free_mem_state_callback( void *start, SIZE_T size, void *arg )
     return 1;
 }
 
-static NTSTATUS fill_basic_memory_info( const void *addr, MEMORY_BASIC_INFORMATION *info )
+static unsigned int fill_basic_memory_info( const void *addr, MEMORY_BASIC_INFORMATION *info )
 {
     char *base, *alloc_base = 0, *alloc_end = working_set_limit;
     struct wine_rb_entry *ptr;
@@ -4279,18 +4279,17 @@ static NTSTATUS fill_basic_memory_info( const void *addr, MEMORY_BASIC_INFORMATI
 }
 
 /* get basic information about a memory block */
-static NTSTATUS get_basic_memory_info( HANDLE process, LPCVOID addr,
-                                       MEMORY_BASIC_INFORMATION *info,
-                                       SIZE_T len, SIZE_T *res_len )
+static unsigned int get_basic_memory_info( HANDLE process, LPCVOID addr,
+                                           MEMORY_BASIC_INFORMATION *info,
+                                           SIZE_T len, SIZE_T *res_len )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     if (len < sizeof(*info))
         return STATUS_INFO_LENGTH_MISMATCH;
 
     if (process != NtCurrentProcess())
     {
-        NTSTATUS status;
         apc_call_t call;
         apc_result_t result;
 
@@ -4323,11 +4322,11 @@ static NTSTATUS get_basic_memory_info( HANDLE process, LPCVOID addr,
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_memory_region_info( HANDLE process, LPCVOID addr, MEMORY_REGION_INFORMATION *info,
-        SIZE_T len, SIZE_T *res_len )
+static unsigned int get_memory_region_info( HANDLE process, LPCVOID addr, MEMORY_REGION_INFORMATION *info,
+                                            SIZE_T len, SIZE_T *res_len )
 {
     MEMORY_BASIC_INFORMATION basic_info;
-    NTSTATUS status;
+    unsigned int status;
 
     if (len < FIELD_OFFSET(MEMORY_REGION_INFORMATION, CommitSize))
         return STATUS_INFO_LENGTH_MISMATCH;
@@ -4468,10 +4467,10 @@ static NTSTATUS get_working_set_ex( HANDLE process, LPCVOID addr,
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS get_memory_section_name( HANDLE process, LPCVOID addr,
-                                         MEMORY_SECTION_NAME *info, SIZE_T len, SIZE_T *ret_len )
+static unsigned int get_memory_section_name( HANDLE process, LPCVOID addr,
+                                             MEMORY_SECTION_NAME *info, SIZE_T len, SIZE_T *ret_len )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     if (!info) return STATUS_ACCESS_VIOLATION;
 
@@ -4555,7 +4554,7 @@ NTSTATUS WINAPI NtQueryVirtualMemory( HANDLE process, LPCVOID addr,
  */
 NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, ULONG unknown )
 {
-    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int status = STATUS_SUCCESS;
 
     if (process != NtCurrentProcess())
     {
@@ -4592,7 +4591,7 @@ NTSTATUS WINAPI NtLockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, 
  */
 NTSTATUS WINAPI NtUnlockVirtualMemory( HANDLE process, PVOID *addr, SIZE_T *size, ULONG unknown )
 {
-    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int status = STATUS_SUCCESS;
 
     if (process != NtCurrentProcess())
     {
@@ -4631,7 +4630,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
                                     SIZE_T commit_size, const LARGE_INTEGER *offset_ptr, SIZE_T *size_ptr,
                                     SECTION_INHERIT inherit, ULONG alloc_type, ULONG protect )
 {
-    NTSTATUS res;
+    unsigned int res;
     SIZE_T mask = granularity_mask;
     LARGE_INTEGER offset;
 
@@ -4685,7 +4684,7 @@ NTSTATUS WINAPI NtMapViewOfSection( HANDLE handle, HANDLE process, PVOID *addr_p
         res = server_queue_process_apc( process, &call, &result );
         if (res != STATUS_SUCCESS) return res;
 
-        if ((NTSTATUS)result.map_view.status >= 0)
+        if (NT_SUCCESS(result.map_view.status))
         {
             *addr_ptr = wine_server_get_ptr( result.map_view.addr );
             *size_ptr = result.map_view.size;
@@ -4717,7 +4716,7 @@ NTSTATUS WINAPI NtMapViewOfSectionEx( HANDLE handle, HANDLE process, PVOID *addr
 NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
 {
     struct file_view *view;
-    NTSTATUS status = STATUS_NOT_MAPPED_VIEW;
+    unsigned int status = STATUS_NOT_MAPPED_VIEW;
     sigset_t sigset;
 
     if (process != NtCurrentProcess())
@@ -4822,7 +4821,7 @@ void virtual_fill_image_information( const pe_image_info_t *pe_info, SECTION_IMA
 NTSTATUS WINAPI NtQuerySection( HANDLE handle, SECTION_INFORMATION_CLASS class, void *ptr,
                                 SIZE_T size, SIZE_T *ret_size )
 {
-    NTSTATUS status;
+    unsigned int status;
     pe_image_info_t image_info;
 
     switch (class)
@@ -4877,7 +4876,7 @@ NTSTATUS WINAPI NtFlushVirtualMemory( HANDLE process, LPCVOID *addr_ptr,
                                       SIZE_T *size_ptr, ULONG unknown )
 {
     struct file_view *view;
-    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int status = STATUS_SUCCESS;
     sigset_t sigset;
     void *addr = ROUND_ADDR( *addr_ptr, page_mask );
 
@@ -4998,7 +4997,7 @@ NTSTATUS WINAPI NtResetWriteWatch( HANDLE process, PVOID base, SIZE_T size )
 NTSTATUS WINAPI NtReadVirtualMemory( HANDLE process, const void *addr, void *buffer,
                                      SIZE_T size, SIZE_T *bytes_read )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     if (virtual_check_buffer_for_write( buffer, size ))
     {
@@ -5028,7 +5027,7 @@ NTSTATUS WINAPI NtReadVirtualMemory( HANDLE process, const void *addr, void *buf
 NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *buffer,
                                       SIZE_T size, SIZE_T *bytes_written )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     if (virtual_check_buffer_for_read( buffer, size ))
     {
@@ -5058,7 +5057,7 @@ NTSTATUS WINAPI NtWriteVirtualMemory( HANDLE process, void *addr, const void *bu
 NTSTATUS WINAPI NtAreMappedFilesTheSame(PVOID addr1, PVOID addr2)
 {
     struct file_view *view1, *view2;
-    NTSTATUS status;
+    unsigned int status;
     sigset_t sigset;
 
     TRACE("%p %p\n", addr1, addr2);
@@ -5207,7 +5206,7 @@ NTSTATUS WINAPI NtWow64AllocateVirtualMemory64( HANDLE process, ULONG64 *ret, UL
 {
     void *base;
     SIZE_T size;
-    NTSTATUS status;
+    unsigned int status;
 
     TRACE("%p %s %s %x %08x\n", process,
           wine_dbgstr_longlong(*ret), wine_dbgstr_longlong(*size_ptr), type, protect );
@@ -5261,7 +5260,7 @@ NTSTATUS WINAPI NtWow64AllocateVirtualMemory64( HANDLE process, ULONG64 *ret, UL
 NTSTATUS WINAPI NtWow64ReadVirtualMemory64( HANDLE process, ULONG64 addr, void *buffer,
                                             ULONG64 size, ULONG64 *bytes_read )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     if (size > MAXLONG) size = MAXLONG;
 
@@ -5293,7 +5292,7 @@ NTSTATUS WINAPI NtWow64ReadVirtualMemory64( HANDLE process, ULONG64 addr, void *
 NTSTATUS WINAPI NtWow64WriteVirtualMemory64( HANDLE process, ULONG64 addr, const void *buffer,
                                              ULONG64 size, ULONG64 *bytes_written )
 {
-    NTSTATUS status;
+    unsigned int status;
 
     if (size > MAXLONG) size = MAXLONG;
 
