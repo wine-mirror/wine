@@ -252,21 +252,21 @@ extern void fill_vm_counters( VM_COUNTERS_EX *pvmi, int unix_pid ) DECLSPEC_HIDD
 extern NTSTATUS open_hkcu_key( const char *path, HANDLE *key ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                                       IO_STATUS_BLOCK *io, ULONG code, void *in_buffer,
-                                       ULONG in_size, void *out_buffer, ULONG out_size ) DECLSPEC_HIDDEN;
+                                       IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
+                                       UINT in_size, void *out_buffer, UINT out_size ) DECLSPEC_HIDDEN;
 extern NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                                        IO_STATUS_BLOCK *io, ULONG code, void *in_buffer,
-                                        ULONG in_size, void *out_buffer, ULONG out_size ) DECLSPEC_HIDDEN;
+                                        IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
+                                        UINT in_size, void *out_buffer, UINT out_size ) DECLSPEC_HIDDEN;
 extern NTSTATUS serial_FlushBuffersFile( int fd ) DECLSPEC_HIDDEN;
 extern NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
-                            ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size ) DECLSPEC_HIDDEN;
+                            UINT code, void *in_buffer, UINT in_size, void *out_buffer, UINT out_size ) DECLSPEC_HIDDEN;
 extern NTSTATUS sock_read( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                            IO_STATUS_BLOCK *io, void *buffer, ULONG length ) DECLSPEC_HIDDEN;
 extern NTSTATUS sock_write( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
                             IO_STATUS_BLOCK *io, const void *buffer, ULONG length ) DECLSPEC_HIDDEN;
 extern NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                                      IO_STATUS_BLOCK *io, ULONG code, void *in_buffer,
-                                      ULONG in_size, void *out_buffer, ULONG out_size ) DECLSPEC_HIDDEN;
+                                      IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
+                                      UINT in_size, void *out_buffer, UINT out_size ) DECLSPEC_HIDDEN;
 
 extern struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE handle ) DECLSPEC_HIDDEN;
 extern void release_fileio( struct async_fileio *io ) DECLSPEC_HIDDEN;

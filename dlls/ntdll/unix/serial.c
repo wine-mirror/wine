@@ -71,7 +71,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(comm);
 
-static const char* iocode2str(DWORD ioc)
+static const char* iocode2str(UINT ioc)
 {
     switch (ioc)
     {
@@ -1096,8 +1096,8 @@ static NTSTATUS xmit_immediate(HANDLE hDevice, int fd, const char* ptr)
 }
 
 static NTSTATUS io_control( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                            IO_STATUS_BLOCK *io, ULONG code, void *in_buffer,
-                            ULONG in_size, void *out_buffer, ULONG out_size )
+                            IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
+                            UINT in_size, void *out_buffer, UINT out_size )
 {
     DWORD sz = 0, access = FILE_READ_DATA;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1320,8 +1320,8 @@ static NTSTATUS io_control( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, vo
  *		serial_DeviceIoControl
  */
 NTSTATUS serial_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                                 IO_STATUS_BLOCK *io, ULONG code, void *in_buffer,
-                                 ULONG in_size, void *out_buffer, ULONG out_size )
+                                 IO_STATUS_BLOCK *io, UINT code, void *in_buffer,
+                                 UINT in_size, void *out_buffer, UINT out_size )
 {
     NTSTATUS    status;
 

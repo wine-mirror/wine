@@ -66,7 +66,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(tape);
 
-static const char *io2str( DWORD io )
+static const char *io2str( unsigned int io )
 {
     switch (io)
     {
@@ -519,8 +519,8 @@ static NTSTATUS TAPE_WriteMarks( int fd, const TAPE_WRITE_MARKS *data )
  *		tape_DeviceIoControl
  */
 NTSTATUS tape_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                               IO_STATUS_BLOCK *io, ULONG code,
-                               void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
+                               IO_STATUS_BLOCK *io, UINT code,
+                               void *in_buffer, UINT in_size, void *out_buffer, UINT out_size )
 {
     DWORD sz = 0;
     NTSTATUS status = STATUS_INVALID_PARAMETER;

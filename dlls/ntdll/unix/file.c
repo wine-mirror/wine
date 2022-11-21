@@ -5095,9 +5095,9 @@ static NTSTATUS server_write_file( HANDLE handle, HANDLE event, PIO_APC_ROUTINE 
 /* do an ioctl call through the server */
 static NTSTATUS server_ioctl_file( HANDLE handle, HANDLE event,
                                    PIO_APC_ROUTINE apc, PVOID apc_context,
-                                   IO_STATUS_BLOCK *io, ULONG code,
-                                   const void *in_buffer, ULONG in_size,
-                                   PVOID out_buffer, ULONG out_size )
+                                   IO_STATUS_BLOCK *io, UINT code,
+                                   const void *in_buffer, UINT in_size,
+                                   PVOID out_buffer, UINT out_size )
 {
     struct async_irp *async;
     NTSTATUS status;

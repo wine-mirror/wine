@@ -1487,7 +1487,7 @@ static int get_sock_type( HANDLE handle )
 
 
 NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
-                     ULONG code, void *in_buffer, ULONG in_size, void *out_buffer, ULONG out_size )
+                     UINT code, void *in_buffer, UINT in_size, void *out_buffer, UINT out_size )
 {
     int fd, needs_close = FALSE;
     NTSTATUS status;
