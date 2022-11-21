@@ -219,7 +219,6 @@ static void test___unDName(void)
     for (i = 0; i < ARRAY_SIZE(und_tests); i++)
     {
         char *name = p___unDName(0, und_tests[i].in, 0, malloc, free, und_tests[i].flags);
-        todo_wine_if(i >= 3)
         ok(!strcmp(name, und_tests[i].out) ||
            broken(und_tests[i].broken && !strcmp(und_tests[i].broken, name)),
            "unDName returned %s for #%u\n", wine_dbgstr_a(name), i);

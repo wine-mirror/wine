@@ -80,6 +80,7 @@ struct parsed_symbol
 enum datatype_e
 {
     DT_NO_LEADING_WS = 0x01,
+    DT_NO_LRSEP_WS = 0x02,
 };
 
 /* Type for parsing mangled types */
@@ -407,28 +408,35 @@ static char* get_args(struct parsed_symbol* sym, struct array* pmt_ref, BOOL z_t
     return args_str;
 }
 
-static void append_extended_qualifier(struct parsed_symbol *sym, const char **where, const char *str)
+static void append_extended_qualifier(struct parsed_symbol *sym, const char **where,
+                                      const char *str, BOOL is_ms_keyword)
 {
-    if (!(sym->flags & UNDNAME_NO_MS_KEYWORDS))
+    if (!is_ms_keyword || !(sym->flags & UNDNAME_NO_MS_KEYWORDS))
     {
-        if (sym->flags & UNDNAME_NO_LEADING_UNDERSCORES)
+        if (is_ms_keyword && (sym->flags & UNDNAME_NO_LEADING_UNDERSCORES))
             str += 2;
-        *where = *where ? str_printf(sym, "%s %s", *where, str) : str;
+        *where = *where ? str_printf(sym, "%s%s%s%s", *where, is_ms_keyword ? " " : "", str, is_ms_keyword ? "" : " ") :
+            str_printf(sym, "%s%s", str, is_ms_keyword ? "" : " ");
     }
 }
 
 static void get_extended_qualifier(struct parsed_symbol *sym, struct datatype_t *xdt)
 {
+    unsigned fl = 0;
     xdt->left = xdt->right = NULL;
     xdt->flags = 0;
     for (;;)
     {
         switch (*sym->current)
         {
-        case 'E': append_extended_qualifier(sym, &xdt->right, "__ptr64");     break;
-        case 'F': append_extended_qualifier(sym, &xdt->left,  "__unaligned"); break;
-        case 'I': append_extended_qualifier(sym, &xdt->right, "__restrict");  break;
-        default: return;
+        case 'E': append_extended_qualifier(sym, &xdt->right, "__ptr64", TRUE);     fl |= 2; break;
+        case 'F': append_extended_qualifier(sym, &xdt->left,  "__unaligned", TRUE); fl |= 2; break;
+#ifdef _UCRT
+        case 'G': append_extended_qualifier(sym, &xdt->right, "&", FALSE);          fl |= 1; break;
+        case 'H': append_extended_qualifier(sym, &xdt->right, "&&", FALSE);         fl |= 1; break;
+#endif
+        case 'I': append_extended_qualifier(sym, &xdt->right, "__restrict", TRUE);  fl |= 2; break;
+        default: if (fl == 1 || (fl == 3 && (sym->flags & UNDNAME_NO_MS_KEYWORDS))) xdt->flags = DT_NO_LRSEP_WS; return;
         }
         sym->current++;
     }
@@ -457,7 +465,10 @@ static BOOL get_qualifier(struct parsed_symbol *sym, struct datatype_t *xdt, con
     default: return FALSE;
     }
     if (qualif)
+    {
+        xdt->flags &= ~DT_NO_LRSEP_WS;
         xdt->left = xdt->left ? str_printf(sym, "%s %s", qualif, xdt->left) : qualif;
+    }
     if (ch >= 'Q' && ch <= 'T') /* pointer to member, fetch class */
     {
         const char* class = get_class_name(sym);
@@ -470,6 +481,16 @@ static BOOL get_qualifier(struct parsed_symbol *sym, struct datatype_t *xdt, con
         *pclass = class;
     }
     else if (pclass) *pclass = NULL;
+    return TRUE;
+}
+
+static BOOL get_function_qualifier(struct parsed_symbol *sym, const char** qualif)
+{
+    struct datatype_t   xdt;
+
+    if (!get_qualifier(sym, &xdt, NULL)) return FALSE;
+    *qualif = (xdt.left || xdt.right) ?
+        str_printf(sym, "%s%s%s", xdt.left, (xdt.flags & DT_NO_LRSEP_WS) ? "" : " ", xdt.right) : NULL;
     return TRUE;
 }
 
@@ -949,24 +970,20 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
             {
                 struct function_signature       fs;
                 const char*                     class;
-                struct datatype_t               xdt;
+                const char*                     function_qualifier;
 
                 sym->current++;
 
                 if (!(class = get_class_name(sym)))
                     goto done;
-                if (!get_qualifier(sym, &xdt, NULL))
+                if (!get_function_qualifier(sym, &function_qualifier))
                     goto done;
                 if (!get_function_signature(sym, pmt_ref, &fs))
                      goto done;
-                if (xdt.left)
-                    xdt.left = str_printf(sym, "%s %s", xdt.left, xdt.right);
-                else if (xdt.right)
-                    xdt.left = str_printf(sym, " %s", xdt.right);
 
                 ct->left  = str_printf(sym, "%s%s (%s %s::*",
                                        fs.return_ct.left, fs.return_ct.right, fs.call_conv, class);
-                ct->right = str_printf(sym, ")%s%s", fs.arguments, xdt.left);
+                ct->right = str_printf(sym, ")%s%s", fs.arguments, function_qualifier);
             }
             else if (*sym->current == '6')
             {
@@ -1233,7 +1250,7 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
     const char*         member_type = NULL;
     struct datatype_t   ct_ret;
     const char*         call_conv;
-    struct datatype_t   xdt = {NULL};
+    const char*         function_qualifier = NULL;
     const char*         exported;
     const char*         args_str = NULL;
     const char*         name = NULL;
@@ -1362,9 +1379,7 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
                 (accmem <= 'X' && (accmem - 'A') % 8 != 2 && (accmem - 'A') % 8 != 3)))
     {
         /* Implicit 'this' pointer */
-        /* If there is an implicit this pointer, const qualifier follows */
-        if (!get_qualifier(sym, &xdt, NULL)) goto done;
-        if (xdt.left || xdt.right) xdt.left = str_printf(sym, "%s %s", xdt.left, xdt.right);
+        if (!get_function_qualifier(sym, &function_qualifier)) goto done;
     }
 
     if (!get_calling_convention(*sym->current++, &call_conv, &exported,
@@ -1395,8 +1410,8 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
 
     mark = sym->stack.num;
     if (has_args && !(args_str = get_args(sym, &array_pmt, TRUE, '(', ')'))) goto done;
-    if (sym->flags & UNDNAME_NAME_ONLY) args_str = xdt.left = NULL;
-    if (sym->flags & UNDNAME_NO_THISTYPE) xdt.left = NULL;
+    if (sym->flags & UNDNAME_NAME_ONLY) args_str = function_qualifier = NULL;
+    if (sym->flags & UNDNAME_NO_THISTYPE) function_qualifier = NULL;
     sym->stack.num = mark;
 
     /* Note: '()' after 'Z' means 'throws', but we don't care here
@@ -1406,7 +1421,7 @@ static BOOL handle_method(struct parsed_symbol* sym, BOOL cast_op)
                              access, member_type, ct_ret.left,
                              (ct_ret.left && !ct_ret.right) ? " " : NULL,
                              call_conv, call_conv ? " " : NULL, exported,
-                             name, args_str, xdt.left, ct_ret.right);
+                             name, args_str, function_qualifier, ct_ret.right);
     ret = TRUE;
 done:
     return ret;
