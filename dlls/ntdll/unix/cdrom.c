@@ -24,7 +24,6 @@
 #if 0
 #pragma makedep unix
 #endif
-#define WINE_NO_LONG_TYPES
 
 #include "config.h"
 
@@ -1457,8 +1456,8 @@ static NTSTATUS CDROM_RawRead(int fd, const RAW_READ_INFO* raw, void* buffer, DW
     dk_cd_read_t cdrd;
 #endif
 
-    TRACE("RAW_READ_INFO: DiskOffset=%i,%i SectorCount=%i TrackMode=%i\n buffer=%p len=%i sz=%p\n",
-          raw->DiskOffset.u.HighPart, raw->DiskOffset.u.LowPart, raw->SectorCount, raw->TrackMode, buffer, len, sz);
+    TRACE("RAW_READ_INFO: DiskOffset=%s SectorCount=%i TrackMode=%i\n buffer=%p len=%i sz=%p\n",
+          wine_dbgstr_longlong(raw->DiskOffset.QuadPart), (int)raw->SectorCount, (int)raw->TrackMode, buffer, (int)len, sz);
 
     if (len < raw->SectorCount * 2352) return STATUS_BUFFER_TOO_SMALL;
 
@@ -3057,11 +3056,11 @@ NTSTATUS cdrom_DeviceIoControl( HANDLE device, HANDLE event, PIO_APC_ROUTINE apc
         else if (out_size < sz) status = STATUS_BUFFER_TOO_SMALL;
         else
         {
-            TRACE("before in 0x%08x out 0x%08x\n",(in_buffer)?*(PDVD_SESSION_ID)in_buffer:0,
-                  *(PDVD_SESSION_ID)out_buffer);
+            TRACE("before in 0x%08x out 0x%08x\n",(int)(in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0),
+                  (int)*(DVD_SESSION_ID *)out_buffer);
             status = DVD_StartSession(fd, in_buffer, out_buffer);
-            TRACE("before in 0x%08x out 0x%08x\n",(in_buffer)?*(PDVD_SESSION_ID)in_buffer:0,
-                  *(PDVD_SESSION_ID)out_buffer);
+            TRACE("before in 0x%08x out 0x%08x\n",(int)(in_buffer ? *(DVD_SESSION_ID *)in_buffer : 0),
+                  (int)*(DVD_SESSION_ID *)out_buffer);
         }
         break;
     case IOCTL_DVD_END_SESSION:

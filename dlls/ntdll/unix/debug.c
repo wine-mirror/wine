@@ -21,7 +21,6 @@
 #if 0
 #pragma makedep unix
 #endif
-#define WINE_NO_LONG_TYPES
 
 #include "config.h"
 
@@ -303,8 +302,8 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
             UINT ticks = NtGetTickCount();
             pos += sprintf( pos, "%3u.%03u:", ticks / 1000, ticks % 1000 );
         }
-        if (TRACE_ON(pid)) pos += sprintf( pos, "%04x:", GetCurrentProcessId() );
-        pos += sprintf( pos, "%04x:", GetCurrentThreadId() );
+        if (TRACE_ON(pid)) pos += sprintf( pos, "%04x:", (UINT)GetCurrentProcessId() );
+        pos += sprintf( pos, "%04x:", (UINT)GetCurrentThreadId() );
     }
     if (function && cls < ARRAY_SIZE( classes ))
         pos += snprintf( pos, sizeof(info->output) - (pos - info->output), "%s:%s:%s ",
@@ -340,8 +339,8 @@ void dbg_init(void)
 NTSTATUS WINAPI NtTraceControl( ULONG code, void *inbuf, ULONG inbuf_len,
                                 void *outbuf, ULONG outbuf_len, ULONG *size )
 {
-    FIXME( "code %u, inbuf %p, inbuf_len %u, outbuf %p, outbuf_len %u, size %p\n", code, inbuf, inbuf_len,
-           outbuf, outbuf_len, size );
+    FIXME( "code %u, inbuf %p, inbuf_len %u, outbuf %p, outbuf_len %u, size %p\n",
+           (int)code, inbuf, (int)inbuf_len, outbuf, (int)outbuf_len, size );
     return STATUS_SUCCESS;
 }
 
@@ -351,7 +350,7 @@ NTSTATUS WINAPI NtTraceControl( ULONG code, void *inbuf, ULONG inbuf_len,
  */
 NTSTATUS WINAPI NtSetDebugFilterState( ULONG component_id, ULONG level, BOOLEAN state )
 {
-    FIXME( "component_id %#x, level %u, state %#x stub.\n", component_id, level, state );
+    FIXME( "component_id %#x, level %u, state %#x stub.\n", (int)component_id, (int)level, state );
 
     return STATUS_SUCCESS;
 }

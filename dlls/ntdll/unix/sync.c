@@ -24,7 +24,6 @@
 #if 0
 #pragma makedep unix
 #endif
-#define WINE_NO_LONG_TYPES
 
 #include "config.h"
 
@@ -324,11 +323,11 @@ NTSTATUS WINAPI NtQuerySemaphore( HANDLE handle, SEMAPHORE_INFORMATION_CLASS cla
     unsigned int ret;
     SEMAPHORE_BASIC_INFORMATION *out = info;
 
-    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, len, ret_len);
+    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, (int)len, ret_len);
 
     if (class != SemaphoreBasicInformation)
     {
-        FIXME("(%p,%d,%u) Unknown class\n", handle, class, len);
+        FIXME("(%p,%d,%u) Unknown class\n", handle, class, (int)len);
         return STATUS_INVALID_INFO_CLASS;
     }
 
@@ -501,12 +500,11 @@ NTSTATUS WINAPI NtQueryEvent( HANDLE handle, EVENT_INFORMATION_CLASS class,
     unsigned int ret;
     EVENT_BASIC_INFORMATION *out = info;
 
-    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, len, ret_len);
+    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, (int)len, ret_len);
 
     if (class != EventBasicInformation)
     {
-        FIXME("(%p, %d, %d) Unknown class\n",
-              handle, class, len);
+        FIXME("(%p, %d, %d) Unknown class\n", handle, class, (int)len);
         return STATUS_INVALID_INFO_CLASS;
     }
 
@@ -607,11 +605,11 @@ NTSTATUS WINAPI NtQueryMutant( HANDLE handle, MUTANT_INFORMATION_CLASS class,
     unsigned int ret;
     MUTANT_BASIC_INFORMATION *out = info;
 
-    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, len, ret_len);
+    TRACE("(%p, %u, %p, %u, %p)\n", handle, class, info, (int)len, ret_len);
 
     if (class != MutantBasicInformation)
     {
-        FIXME( "(%p, %d, %d) Unknown class\n", handle, class, len );
+        FIXME( "(%p, %d, %d) Unknown class\n", handle, class, (int)len );
         return STATUS_INVALID_INFO_CLASS;
     }
 
@@ -690,7 +688,7 @@ NTSTATUS WINAPI NtTerminateJobObject( HANDLE handle, NTSTATUS status )
 {
     unsigned int ret;
 
-    TRACE( "(%p, %d)\n", handle, status );
+    TRACE( "(%p, %d)\n", handle, (int)status );
 
     SERVER_START_REQ( terminate_job )
     {
@@ -712,7 +710,7 @@ NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS c
 {
     unsigned int ret;
 
-    TRACE( "semi-stub: %p %u %p %u %p\n", handle, class, info, len, ret_len );
+    TRACE( "semi-stub: %p %u %p %u %p\n", handle, class, info, (int)len, ret_len );
 
     if (class >= MaxJobObjectInfoClass) return STATUS_INVALID_PARAMETER;
 
@@ -809,7 +807,7 @@ NTSTATUS WINAPI NtSetInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS cla
     ULONG info_size = sizeof(JOBOBJECT_BASIC_LIMIT_INFORMATION);
     DWORD limit_flags = JOB_OBJECT_BASIC_LIMIT_VALID_FLAGS;
 
-    TRACE( "(%p, %u, %p, %u)\n", handle, class, info, len );
+    TRACE( "(%p, %u, %p, %u)\n", handle, class, info, (int)len );
 
     if (class >= MaxJobObjectInfoClass) return STATUS_INVALID_PARAMETER;
 
@@ -848,7 +846,7 @@ NTSTATUS WINAPI NtSetInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS cla
         status = STATUS_SUCCESS;
         /* fall through */
     default:
-        FIXME( "stub: %p %u %p %u\n", handle, class, info, len );
+        FIXME( "stub: %p %u %p %u\n", handle, class, info, (int)len );
     }
     return status;
 }
@@ -1325,7 +1323,7 @@ NTSTATUS WINAPI NtSetTimer( HANDLE handle, const LARGE_INTEGER *when, PTIMER_APC
 {
     unsigned int ret = STATUS_SUCCESS;
 
-    TRACE( "(%p,%p,%p,%p,%08x,0x%08x,%p)\n", handle, when, callback, arg, resume, period, state );
+    TRACE( "(%p,%p,%p,%p,%08x,0x%08x,%p)\n", handle, when, callback, arg, resume, (int)period, state );
 
     SERVER_START_REQ( set_timer )
     {
@@ -1373,7 +1371,7 @@ NTSTATUS WINAPI NtQueryTimer( HANDLE handle, TIMER_INFORMATION_CLASS class,
     unsigned int ret;
     LARGE_INTEGER now;
 
-    TRACE( "(%p,%d,%p,0x%08x,%p)\n", handle, class, info, len, ret_len );
+    TRACE( "(%p,%d,%p,0x%08x,%p)\n", handle, class, info, (int)len, ret_len );
 
     switch (class)
     {
@@ -1599,7 +1597,7 @@ NTSTATUS WINAPI NtSetTimerResolution( ULONG res, BOOLEAN set, ULONG *current_res
 {
     static BOOL has_request = FALSE;
 
-    TRACE( "(%u,%u,%p), semi-stub!\n", res, set, current_res );
+    TRACE( "(%u,%u,%p), semi-stub!\n", (int)res, set, current_res );
 
     /* Wine has no support for anything other that 1 ms and does not keep of
      * track resolution requests anyway.
@@ -1625,7 +1623,7 @@ NTSTATUS WINAPI NtSetTimerResolution( ULONG res, BOOLEAN set, ULONG *current_res
  */
 NTSTATUS WINAPI NtSetIntervalProfile( ULONG interval, KPROFILE_SOURCE source )
 {
-    FIXME( "%u,%d\n", interval, source );
+    FIXME( "%u,%d\n", (int)interval, source );
     return STATUS_SUCCESS;
 }
 
@@ -1761,7 +1759,7 @@ NTSTATUS WINAPI NtCreateIoCompletion( HANDLE *handle, ACCESS_MASK access, OBJECT
     data_size_t len;
     struct object_attributes *objattr;
 
-    TRACE( "(%p, %x, %p, %d)\n", handle, access, attr, threads );
+    TRACE( "(%p, %x, %p, %d)\n", handle, (int)access, attr, (int)threads );
 
     *handle = 0;
     if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
@@ -1813,7 +1811,7 @@ NTSTATUS WINAPI NtSetIoCompletion( HANDLE handle, ULONG_PTR key, ULONG_PTR value
 {
     unsigned int ret;
 
-    TRACE( "(%p, %lx, %lx, %x, %lx)\n", handle, key, value, status, count );
+    TRACE( "(%p, %lx, %lx, %x, %lx)\n", handle, key, value, (int)status, count );
 
     SERVER_START_REQ( add_completion )
     {
@@ -1869,7 +1867,7 @@ NTSTATUS WINAPI NtRemoveIoCompletionEx( HANDLE handle, FILE_IO_COMPLETION_INFORM
     unsigned int status;
     ULONG i = 0;
 
-    TRACE( "%p %p %u %p %p %u\n", handle, info, count, written, timeout, alertable );
+    TRACE( "%p %p %u %p %p %u\n", handle, info, (int)count, written, timeout, alertable );
 
     for (;;)
     {
@@ -1911,7 +1909,7 @@ NTSTATUS WINAPI NtQueryIoCompletion( HANDLE handle, IO_COMPLETION_INFORMATION_CL
 {
     unsigned int status;
 
-    TRACE( "(%p, %d, %p, 0x%x, %p)\n", handle, class, buffer, len, ret_len );
+    TRACE( "(%p, %d, %p, 0x%x, %p)\n", handle, class, buffer, (int)len, ret_len );
 
     if (!buffer) return STATUS_INVALID_PARAMETER;
 
@@ -2026,7 +2024,7 @@ NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_
 NTSTATUS WINAPI NtCreatePort( HANDLE *handle, OBJECT_ATTRIBUTES *attr, ULONG info_len,
                               ULONG data_len, ULONG *reserved )
 {
-    FIXME( "(%p,%p,%u,%u,%p),stub!\n", handle, attr, info_len, data_len, reserved );
+    FIXME( "(%p,%p,%u,%u,%p),stub!\n", handle, attr, (int)info_len, (int)data_len, reserved );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -2074,7 +2072,7 @@ NTSTATUS WINAPI NtListenPort( HANDLE handle, LPC_MESSAGE *msg )
 NTSTATUS WINAPI NtAcceptConnectPort( HANDLE *handle, ULONG id, LPC_MESSAGE *msg, BOOLEAN accept,
                                      LPC_SECTION_WRITE *write, LPC_SECTION_READ *read )
 {
-    FIXME("(%p,%u,%p,%d,%p,%p),stub!\n", handle, id, msg, accept, write, read );
+    FIXME("(%p,%u,%p,%d,%p,%p),stub!\n", handle, (int)id, msg, accept, write, read );
     return STATUS_NOT_IMPLEMENTED;
 }
 

@@ -22,7 +22,6 @@
 #if 0
 #pragma makedep unix
 #endif
-#define WINE_NO_LONG_TYPES
 
 #ifdef __arm__
 
@@ -529,14 +528,14 @@ static NTSTATUS ehabi_virtual_unwind( UINT ip, DWORD *frame, CONTEXT *context,
      * describes how both of them are restored separately, and as long as
      * the unwind info restored Pc, it doesn't have to be set from Lr. */
 
-    TRACE( "next function pc=%08x\n", context->Pc );
-    TRACE("  r0=%08x  r1=%08x  r2=%08x  r3=%08x\n",
+    TRACE( "next function pc=%08lx\n", context->Pc );
+    TRACE("  r0=%08lx  r1=%08lx  r2=%08lx  r3=%08lx\n",
           context->R0, context->R1, context->R2, context->R3 );
-    TRACE("  r4=%08x  r5=%08x  r6=%08x  r7=%08x\n",
+    TRACE("  r4=%08lx  r5=%08lx  r6=%08lx  r7=%08lx\n",
           context->R4, context->R5, context->R6, context->R7 );
-    TRACE("  r8=%08x  r9=%08x r10=%08x r11=%08x\n",
+    TRACE("  r8=%08lx  r9=%08lx r10=%08lx r11=%08lx\n",
           context->R8, context->R9, context->R10, context->R11 );
-    TRACE(" r12=%08x  sp=%08x  lr=%08x  pc=%08x\n",
+    TRACE(" r12=%08lx  sp=%08lx  lr=%08lx  pc=%08lx\n",
           context->R12, context->Sp, context->Lr, context->Pc );
 
     return STATUS_SUCCESS;
@@ -712,14 +711,14 @@ static NTSTATUS libunwind_virtual_unwind( DWORD ip, DWORD *frame, CONTEXT *conte
         context->Lr = *orig_lr;
     }
 
-    TRACE( "next function pc=%08x%s\n", context->Pc, rc ? "" : " (last frame)" );
-    TRACE("  r0=%08x  r1=%08x  r2=%08x  r3=%08x\n",
+    TRACE( "next function pc=%08lx%s\n", context->Pc, rc ? "" : " (last frame)" );
+    TRACE("  r0=%08lx  r1=%08lx  r2=%08lx  r3=%08lx\n",
           context->R0, context->R1, context->R2, context->R3 );
-    TRACE("  r4=%08x  r5=%08x  r6=%08x  r7=%08x\n",
+    TRACE("  r4=%08lx  r5=%08lx  r6=%08lx  r7=%08lx\n",
           context->R4, context->R5, context->R6, context->R7 );
-    TRACE("  r8=%08x  r9=%08x r10=%08x r11=%08x\n",
+    TRACE("  r8=%08lx  r9=%08lx r10=%08lx r11=%08lx\n",
           context->R8, context->R9, context->R10, context->R11 );
-    TRACE(" r12=%08x  sp=%08x  lr=%08x  pc=%08x\n",
+    TRACE(" r12=%08lx  sp=%08lx  lr=%08lx  pc=%08lx\n",
           context->R12, context->Sp, context->Lr, context->Pc );
     return STATUS_SUCCESS;
 }
@@ -1259,19 +1258,18 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
 
     if (!is_inside_syscall( context ) && !ntdll_get_thread_data()->jmp_buf) return FALSE;
 
-    TRACE( "code=%x flags=%x addr=%p pc=%08x tid=%04x\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
-           (DWORD)PC_sig(context), GetCurrentThreadId() );
+    TRACE( "code=%lx flags=%lx addr=%p pc=%08lx\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, (DWORD)PC_sig(context) );
     for (i = 0; i < rec->NumberParameters; i++)
         TRACE( " info[%d]=%08lx\n", i, rec->ExceptionInformation[i] );
 
-    TRACE( " r0=%08x r1=%08x r2=%08x r3=%08x r4=%08x r5=%08x\n",
+    TRACE( " r0=%08lx r1=%08lx r2=%08lx r3=%08lx r4=%08lx r5=%08lx\n",
            (DWORD)REGn_sig(0, context), (DWORD)REGn_sig(1, context), (DWORD)REGn_sig(2, context),
            (DWORD)REGn_sig(3, context), (DWORD)REGn_sig(4, context), (DWORD)REGn_sig(5, context) );
-    TRACE( " r6=%08x r7=%08x r8=%08x r9=%08x r10=%08x r11=%08x\n",
+    TRACE( " r6=%08lx r7=%08lx r8=%08lx r9=%08lx r10=%08lx r11=%08lx\n",
            (DWORD)REGn_sig(6, context), (DWORD)REGn_sig(7, context), (DWORD)REGn_sig(8, context),
            (DWORD)REGn_sig(9, context), (DWORD)REGn_sig(10, context), (DWORD)FP_sig(context) );
-    TRACE( " r12=%08x sp=%08x lr=%08x pc=%08x cpsr=%08x\n",
+    TRACE( " r12=%08lx sp=%08lx lr=%08lx pc=%08lx cpsr=%08lx\n",
            (DWORD)IP_sig(context), (DWORD)SP_sig(context), (DWORD)LR_sig(context),
            (DWORD)PC_sig(context), (DWORD)CPSR_sig(context) );
 
@@ -1285,7 +1283,7 @@ static BOOL handle_syscall_fault( ucontext_t *context, EXCEPTION_RECORD *rec )
     }
     else
     {
-        TRACE( "returning to user mode ip=%08x ret=%08x\n", frame->pc, rec->ExceptionCode );
+        TRACE( "returning to user mode ip=%08x ret=%08lx\n", frame->pc, rec->ExceptionCode );
         REGn_sig(0, context) = (DWORD)frame;
         REGn_sig(1, context) = rec->ExceptionCode;
         PC_sig(context)      = (DWORD)__wine_syscall_dispatcher_return;

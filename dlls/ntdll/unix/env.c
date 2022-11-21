@@ -22,7 +22,6 @@
 #if 0
 #pragma makedep unix
 #endif
-#define WINE_NO_LONG_TYPES
 
 #include "config.h"
 
@@ -1561,7 +1560,7 @@ static WCHAR *build_command_line( WCHAR **wargv )
     *p = 0;
     if (p - ret >= 32767)
     {
-        ERR( "command line too long (%u)\n", (DWORD)(p - ret) );
+        ERR( "command line too long (%zu)\n", p - ret );
         NtTerminateProcess( GetCurrentProcess(), 1 );
     }
     return ret;
@@ -1587,7 +1586,7 @@ static void run_wineboot( WCHAR *env, SIZE_T size )
     UNICODE_STRING nameW;
     OBJECT_ATTRIBUTES attr;
     LARGE_INTEGER timeout;
-    NTSTATUS status;
+    unsigned int status;
     int count = 1;
 
     init_unicode_string( &nameW, eventW );

@@ -21,7 +21,6 @@
 #if 0
 #pragma makedep unix
 #endif
-#define WINE_NO_LONG_TYPES
 
 #include "config.h"
 
@@ -160,7 +159,7 @@ static DECLSPEC_NORETURN void server_protocol_error( const char *err, ... )
     va_list args;
 
     va_start( args, err );
-    fprintf( stderr, "wine client error:%x: ", GetCurrentThreadId() );
+    fprintf( stderr, "wine client error:%x: ", (int)GetCurrentThreadId() );
     vfprintf( stderr, err, args );
     va_end( args );
     abort_thread(1);
@@ -172,7 +171,7 @@ static DECLSPEC_NORETURN void server_protocol_error( const char *err, ... )
  */
 static DECLSPEC_NORETURN void server_protocol_perror( const char *err )
 {
-    fprintf( stderr, "wine client error:%x: ", GetCurrentThreadId() );
+    fprintf( stderr, "wine client error:%x: ", (int)GetCurrentThreadId() );
     perror( err );
     abort_thread(1);
 }

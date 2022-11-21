@@ -21,7 +21,6 @@
 #if 0
 #pragma makedep unix
 #endif
-#define WINE_NO_LONG_TYPES
 
 #include "config.h"
 
@@ -767,7 +766,7 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
 
     sprintf( socket_env, "WINESERVERSOCKET=%u", socketfd );
     sprintf( preloader_reserve, "WINEPRELOADRESERVE=%x%08x-%x%08x",
-             (ULONG)(res_start >> 32), (ULONG)res_start, (ULONG)(res_end >> 32), (ULONG)res_end );
+             (UINT)(res_start >> 32), (UINT)res_start, (UINT)(res_end >> 32), (UINT)res_end );
 
     putenv( preloader_reserve );
     putenv( socket_env );

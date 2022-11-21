@@ -21,7 +21,6 @@
 #if 0
 #pragma makedep unix
 #endif
-#define WINE_NO_LONG_TYPES
 
 #include "config.h"
 
@@ -1172,7 +1171,7 @@ static NTSTATUS create_logical_proc_info(void)
  */
 void init_cpu_info(void)
 {
-    NTSTATUS status;
+    unsigned int status;
     long num;
 
 #ifdef _SC_NPROCESSORS_ONLN
@@ -1199,8 +1198,8 @@ void init_cpu_info(void)
     peb->NumberOfProcessors = num;
     get_cpuinfo( &cpu_info );
     TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
-           cpu_info.ProcessorArchitecture, cpu_info.ProcessorLevel, cpu_info.ProcessorRevision,
-           cpu_info.ProcessorFeatureBits );
+           (int)cpu_info.ProcessorArchitecture, (int)cpu_info.ProcessorLevel,
+           (int)cpu_info.ProcessorRevision, (int)cpu_info.ProcessorFeatureBits );
 
     if ((status = create_logical_proc_info()))
     {
@@ -1616,7 +1615,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
                                      &bios_args, &system_args, &board_args, &chassis_args );
     }
     default:
-        FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION provider %08x\n", sfti->ProviderSignature);
+        FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION provider %08x\n", (int)sfti->ProviderSignature);
         return STATUS_NOT_IMPLEMENTED;
     }
 }
@@ -2195,19 +2194,19 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
         reg_tzi.StandardDate = tz_data.std_date;
         reg_tzi.DaylightDate = tz_data.dlt_date;
 
-        TRACE("%s: bias %d\n", debugstr_us(&nameW), reg_tzi.Bias);
+        TRACE("%s: bias %d\n", debugstr_us(&nameW), (int)reg_tzi.Bias);
         TRACE("std (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
               reg_tzi.StandardDate.wDay, reg_tzi.StandardDate.wMonth,
               reg_tzi.StandardDate.wYear, reg_tzi.StandardDate.wDayOfWeek,
               reg_tzi.StandardDate.wHour, reg_tzi.StandardDate.wMinute,
               reg_tzi.StandardDate.wSecond, reg_tzi.StandardDate.wMilliseconds,
-              reg_tzi.StandardBias);
+              (int)reg_tzi.StandardBias);
         TRACE("dst (d/m/y): %u/%02u/%04u day of week %u %u:%02u:%02u.%03u bias %d\n",
               reg_tzi.DaylightDate.wDay, reg_tzi.DaylightDate.wMonth,
               reg_tzi.DaylightDate.wYear, reg_tzi.DaylightDate.wDayOfWeek,
               reg_tzi.DaylightDate.wHour, reg_tzi.DaylightDate.wMinute,
               reg_tzi.DaylightDate.wSecond, reg_tzi.DaylightDate.wMilliseconds,
-              reg_tzi.DaylightBias);
+              (int)reg_tzi.DaylightBias);
 
         if (match_tz_info( tzi, &reg_tzi ) && match_tz_name( tz_name, &reg_tzi ))
         {
@@ -2225,7 +2224,7 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, const char*
 
     FIXME("Can't find matching timezone information in the registry for "
           "%s, bias %d, std (d/m/y): %u/%02u/%04u, dlt (d/m/y): %u/%02u/%04u\n",
-          tz_name, tzi->Bias,
+          tz_name, (int)tzi->Bias,
           tzi->StandardDate.wDay, tzi->StandardDate.wMonth, tzi->StandardDate.wYear,
           tzi->DaylightDate.wDay, tzi->DaylightDate.wMonth, tzi->DaylightDate.wYear);
 }
@@ -2340,7 +2339,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
             tzi->DaylightDate.wYear, tzi->DaylightDate.wDayOfWeek,
             tzi->DaylightDate.wHour, tzi->DaylightDate.wMinute,
             tzi->DaylightDate.wSecond, tzi->DaylightDate.wMilliseconds,
-            tzi->DaylightBias);
+            (int)tzi->DaylightBias);
 
         tmp = std - tzi->Bias * 60 - tzi->DaylightBias * 60;
         tm = gmtime(&tmp);
@@ -2361,7 +2360,7 @@ static void get_timezone_info( RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi )
             tzi->StandardDate.wYear, tzi->StandardDate.wDayOfWeek,
             tzi->StandardDate.wHour, tzi->StandardDate.wMinute,
             tzi->StandardDate.wSecond, tzi->StandardDate.wMilliseconds,
-            tzi->StandardBias);
+            (int)tzi->StandardBias);
     }
 
     find_reg_tz_info(tzi, tz_name, current_year + 1900);
@@ -2518,7 +2517,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     unsigned int ret = STATUS_SUCCESS;
     ULONG len = 0;
 
-    TRACE( "(0x%08x,%p,0x%08x,%p)\n", class, info, size, ret_size );
+    TRACE( "(0x%08x,%p,0x%08x,%p)\n", class, info, (int)size, ret_size );
 
     switch (class)
     {
@@ -3139,7 +3138,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     {
         SYSTEM_CODEINTEGRITY_INFORMATION *integrity_info = info;
 
-        FIXME("SystemCodeIntegrityInformation, size %u, info %p, stub!\n", size, info);
+        FIXME("SystemCodeIntegrityInformation, size %u, info %p, stub!\n", (int)size, info);
 
         len = sizeof(SYSTEM_CODEINTEGRITY_INFORMATION);
 
@@ -3186,7 +3185,7 @@ NTSTATUS WINAPI NtQuerySystemInformation( SYSTEM_INFORMATION_CLASS class,
     }
 
     default:
-	FIXME( "(0x%08x,%p,0x%08x,%p) stub\n", class, info, size, ret_size );
+	FIXME( "(0x%08x,%p,0x%08x,%p) stub\n", class, info, (int)size, ret_size );
 
         /* Several Information Classes are not implemented on Windows and return 2 different values
          * STATUS_NOT_IMPLEMENTED or STATUS_INVALID_INFO_CLASS
@@ -3210,7 +3209,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
     ULONG len = 0;
     unsigned int ret = STATUS_NOT_IMPLEMENTED;
 
-    TRACE( "(0x%08x,%p,%u,%p,%u,%p) stub\n", class, query, query_len, info, size, ret_size );
+    TRACE( "(0x%08x,%p,%u,%p,%u,%p) stub\n", class, query, (int)query_len, info, (int)size, ret_size );
 
     switch (class)
     {
@@ -3311,7 +3310,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
     }
 
     default:
-        FIXME( "(0x%08x,%p,%u,%p,%u,%p) stub\n", class, query, query_len, info, size, ret_size );
+        FIXME( "(0x%08x,%p,%u,%p,%u,%p) stub\n", class, query, (int)query_len, info, (int)size, ret_size );
         break;
     }
     if (ret_size) *ret_size = len;
@@ -3324,7 +3323,7 @@ NTSTATUS WINAPI NtQuerySystemInformationEx( SYSTEM_INFORMATION_CLASS class,
  */
 NTSTATUS WINAPI NtSetSystemInformation( SYSTEM_INFORMATION_CLASS class, void *info, ULONG length )
 {
-    FIXME( "(0x%08x,%p,0x%08x) stub\n", class, info, length );
+    FIXME( "(0x%08x,%p,0x%08x) stub\n", class, info, (int)length );
     return STATUS_SUCCESS;
 }
 
@@ -3335,7 +3334,7 @@ NTSTATUS WINAPI NtSetSystemInformation( SYSTEM_INFORMATION_CLASS class, void *in
 NTSTATUS WINAPI NtQuerySystemEnvironmentValue( UNICODE_STRING *name, WCHAR *buffer, ULONG length,
                                                ULONG *retlen )
 {
-    FIXME( "(%s, %p, %u, %p), stub\n", debugstr_us(name), buffer, length, retlen );
+    FIXME( "(%s, %p, %u, %p), stub\n", debugstr_us(name), buffer, (int)length, retlen );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -3358,7 +3357,8 @@ NTSTATUS WINAPI NtQuerySystemEnvironmentValueEx( UNICODE_STRING *name, GUID *ven
 NTSTATUS WINAPI NtSystemDebugControl( SYSDBG_COMMAND command, void *in_buff, ULONG in_len,
                                       void *out_buff, ULONG out_len, ULONG *retlen )
 {
-    FIXME( "(%d, %p, %d, %p, %d, %p), stub\n", command, in_buff, in_len, out_buff, out_len, retlen );
+    FIXME( "(%d, %p, %d, %p, %d, %p), stub\n",
+           command, in_buff, (int)in_len, out_buff, (int)out_len, retlen );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -3612,7 +3612,7 @@ static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
 NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, ULONG in_size,
                                     void *output, ULONG out_size )
 {
-    TRACE( "(%d,%p,%d,%p,%d)\n", level, input, in_size, output, out_size );
+    TRACE( "(%d,%p,%d,%p,%d)\n", level, input, (int)in_size, output, (int)out_size );
     switch (level)
     {
     case SystemPowerCapabilities:
@@ -3778,9 +3778,9 @@ NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, 
         WARN("Unable to detect CPU MHz for this platform. Reporting %d MHz.\n", cannedMHz);
 #endif
         for(i = 0; i < out_cpus; i++) {
-            TRACE("cpu_power[%d] = %u %u %u %u %u %u\n", i, cpu_power[i].Number,
-                  cpu_power[i].MaxMhz, cpu_power[i].CurrentMhz, cpu_power[i].MhzLimit,
-                  cpu_power[i].MaxIdleState, cpu_power[i].CurrentIdleState);
+            TRACE("cpu_power[%d] = %u %u %u %u %u %u\n", i, (int)cpu_power[i].Number,
+                  (int)cpu_power[i].MaxMhz, (int)cpu_power[i].CurrentMhz, (int)cpu_power[i].MhzLimit,
+                  (int)cpu_power[i].MaxIdleState, (int)cpu_power[i].CurrentIdleState);
         }
         return STATUS_SUCCESS;
     }
@@ -3830,7 +3830,7 @@ NTSTATUS WINAPI NtRaiseHardError( NTSTATUS status, ULONG count,
                                   UNICODE_STRING *params_mask, void **params,
                                   HARDERROR_RESPONSE_OPTION option, HARDERROR_RESPONSE *response )
 {
-    FIXME( "%08x stub\n", status );
+    FIXME( "%08x stub\n", (int)status );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -3841,7 +3841,7 @@ NTSTATUS WINAPI NtRaiseHardError( NTSTATUS status, ULONG count,
 NTSTATUS WINAPI NtInitiatePowerAction( POWER_ACTION action, SYSTEM_POWER_STATE state,
                                        ULONG flags, BOOLEAN async )
 {
-    FIXME( "(%d,%d,0x%08x,%d),stub\n", action, state, flags, async );
+    FIXME( "(%d,%d,0x%08x,%d),stub\n", action, state, (int)flags, async );
     return STATUS_NOT_IMPLEMENTED;
 }
 
@@ -3853,7 +3853,7 @@ NTSTATUS WINAPI NtSetThreadExecutionState( EXECUTION_STATE new_state, EXECUTION_
 {
     static EXECUTION_STATE current = ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED | ES_USER_PRESENT;
 
-    WARN( "(0x%x, %p): stub, harmless.\n", new_state, old_state );
+    WARN( "(0x%x, %p): stub, harmless.\n", (int)new_state, old_state );
     *old_state = current;
     if (!(current & ES_CONTINUOUS) || (new_state & ES_CONTINUOUS)) current = new_state;
     return STATUS_SUCCESS;
