@@ -121,19 +121,8 @@ static inline WCHAR *strdupAtoW(const char *str)
     WCHAR *ret;
     if(!str) return NULL;
     len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+    ret = malloc(len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
-    return ret;
-}
-
-static inline WCHAR *strdupW(const WCHAR *str)
-{
-    DWORD len;
-    WCHAR *ret;
-    if(!str) return NULL;
-    len = lstrlenW(str) + 1;
-    ret = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-    memcpy(ret, str, len * sizeof(WCHAR));
     return ret;
 }
 
@@ -152,9 +141,9 @@ static void get_descriptors(HWND hdlg, ps_struct_t *ps_struct)
     {
         OBJECTDESCRIPTOR *obj_desc = GlobalLock(stg.u.hGlobal);
         if(obj_desc->dwSrcOfCopy)
-            ps_struct->source_name = strdupW((WCHAR*)((char*)obj_desc + obj_desc->dwSrcOfCopy));
+            ps_struct->source_name = wcsdup((WCHAR*)((char*)obj_desc + obj_desc->dwSrcOfCopy));
         if(obj_desc->dwFullUserTypeName)
-            ps_struct->type_name = strdupW((WCHAR*)((char*)obj_desc + obj_desc->dwFullUserTypeName));
+            ps_struct->type_name = wcsdup((WCHAR*)((char*)obj_desc + obj_desc->dwFullUserTypeName));
         OleRegGetUserType(&obj_desc->clsid, USERCLASSTYPE_APPNAME, &ps_struct->app_name);
         /* Get the icon here.  If dwDrawAspect & DVASCPECT_ICON call GetData(CF_METAFILEPICT), otherwise
            native calls OleGetIconFromClass(obj_desc->clsid) */
@@ -171,9 +160,9 @@ static void get_descriptors(HWND hdlg, ps_struct_t *ps_struct)
     {
         OBJECTDESCRIPTOR *obj_desc = GlobalLock(stg.u.hGlobal);
         if(obj_desc->dwSrcOfCopy)
-            ps_struct->link_source_name = strdupW((WCHAR*)((char*)obj_desc + obj_desc->dwSrcOfCopy));
+            ps_struct->link_source_name = wcsdup((WCHAR*)((char*)obj_desc + obj_desc->dwSrcOfCopy));
         if(obj_desc->dwFullUserTypeName)
-            ps_struct->link_type_name = strdupW((WCHAR*)((char*)obj_desc + obj_desc->dwFullUserTypeName));
+            ps_struct->link_type_name = wcsdup((WCHAR*)((char*)obj_desc + obj_desc->dwFullUserTypeName));
         GlobalUnlock(stg.u.hGlobal);
         GlobalFree(stg.u.hGlobal);
     }
@@ -182,14 +171,14 @@ static void get_descriptors(HWND hdlg, ps_struct_t *ps_struct)
     {
         WCHAR buf[200];
         LoadStringW(OLEDLG_hInstance, IDS_PS_UNKNOWN_SRC, buf, ARRAY_SIZE(buf));
-        ps_struct->source_name = strdupW(buf);
+        ps_struct->source_name = wcsdup(buf);
     }
 
     if(ps_struct->type_name == NULL && ps_struct->link_type_name == NULL)
     {
         WCHAR buf[200];
         LoadStringW(OLEDLG_hInstance, IDS_PS_UNKNOWN_TYPE, buf, ARRAY_SIZE(buf));
-        ps_struct->type_name = strdupW(buf);
+        ps_struct->type_name = wcsdup(buf);
     }
 }
 
@@ -436,7 +425,7 @@ static void update_result_text(HWND hdlg, const ps_struct_t *ps_struct)
         /* FIXME handle %s in ResultText. Sub appname if IDS_PS_PASTE_OBJECT{_AS_ICON}.  Else sub appropriate type name */
         size_t result_txt_len = lstrlenW(pent->lpstrResultText);
         ptrdiff_t offs = (char*)ptr - (char*)resource_txt;
-        result_txt = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(resource_txt) + result_txt_len - 1) * sizeof(WCHAR));
+        result_txt = malloc((wcslen(resource_txt) + result_txt_len - 1) * sizeof(WCHAR));
         memcpy(result_txt, resource_txt, offs);
         memcpy((char*)result_txt + offs, pent->lpstrResultText, result_txt_len * sizeof(WCHAR));
         memcpy((char*)result_txt + offs + result_txt_len * sizeof(WCHAR), ptr + 2, (lstrlenW(ptr + 2) + 1) * sizeof(WCHAR));
@@ -447,7 +436,7 @@ static void update_result_text(HWND hdlg, const ps_struct_t *ps_struct)
     SetDlgItemTextW(hdlg, IDC_PS_RESULTTEXT, result_txt);
 
     if(result_txt != resource_txt)
-        HeapFree(GetProcessHeap(), 0, result_txt);
+        free(result_txt);
 
 }
 
@@ -500,12 +489,12 @@ static void update_structure(HWND hdlg, ps_struct_t *ps_struct)
 
 static void free_structure(ps_struct_t *ps_struct)
 {
-    HeapFree(GetProcessHeap(), 0, ps_struct->type_name);
-    HeapFree(GetProcessHeap(), 0, ps_struct->source_name);
-    HeapFree(GetProcessHeap(), 0, ps_struct->link_type_name);
-    HeapFree(GetProcessHeap(), 0, ps_struct->link_source_name);
+    free(ps_struct->type_name);
+    free(ps_struct->source_name);
+    free(ps_struct->link_type_name);
+    free(ps_struct->link_source_name);
     CoTaskMemFree(ps_struct->app_name);
-    HeapFree(GetProcessHeap(), 0, ps_struct);
+    free(ps_struct);
 }
 
 static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
@@ -535,7 +524,7 @@ static INT_PTR CALLBACK ps_dlg_proc(HWND hdlg, UINT msg, WPARAM wp, LPARAM lp)
     {
     case WM_INITDIALOG:
     {
-        ps_struct = HeapAlloc(GetProcessHeap(), 0, sizeof(*ps_struct));
+        ps_struct = malloc(sizeof(*ps_struct));
         ps_struct->ps = (OLEUIPASTESPECIALW*)lp;
         ps_struct->type_name = NULL;
         ps_struct->source_name = NULL;
@@ -649,7 +638,7 @@ UINT WINAPI OleUIPasteSpecialA(LPOLEUIPASTESPECIALA psA)
         DWORD size = psA->cPasteEntries * sizeof(ps.arrPasteEntries[0]);
         INT i;
 
-        ps.arrPasteEntries = HeapAlloc(GetProcessHeap(), 0, size);
+        ps.arrPasteEntries = malloc(size);
         memcpy(ps.arrPasteEntries, psA->arrPasteEntries, size);
         for(i = 0; i < psA->cPasteEntries; i++)
         {
@@ -667,14 +656,14 @@ UINT WINAPI OleUIPasteSpecialA(LPOLEUIPASTESPECIALA psA)
         INT i;
         for(i = 0; i < psA->cPasteEntries; i++)
         {
-            HeapFree(GetProcessHeap(), 0, (WCHAR*)ps.arrPasteEntries[i].lpstrFormatName);
-            HeapFree(GetProcessHeap(), 0, (WCHAR*)ps.arrPasteEntries[i].lpstrResultText);
+            free((WCHAR*)ps.arrPasteEntries[i].lpstrFormatName);
+            free((WCHAR*)ps.arrPasteEntries[i].lpstrResultText);
         }
-        HeapFree(GetProcessHeap(), 0, ps.arrPasteEntries);
+        free(ps.arrPasteEntries);
     }
     if(!IS_INTRESOURCE(ps.lpszTemplate))
-        HeapFree(GetProcessHeap(), 0, (WCHAR*)ps.lpszTemplate);
-    HeapFree(GetProcessHeap(), 0, (WCHAR*)ps.lpszCaption);
+        free((WCHAR*)ps.lpszTemplate);
+    free((WCHAR*)ps.lpszCaption);
 
     /* Copy back the output fields */
     psA->dwFlags = ps.dwFlags;
