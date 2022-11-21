@@ -380,6 +380,7 @@ static HRESULT WINAPI rowpos_cp_Advise(IConnectionPoint *iface, IUnknown *unksin
 {
     rowpos_cp *This = impl_from_IConnectionPoint(iface);
     IRowPositionChange *sink;
+    IRowPositionChange **new_sinks;
     HRESULT hr;
     DWORD i;
 
@@ -404,14 +405,19 @@ static HRESULT WINAPI rowpos_cp_Advise(IConnectionPoint *iface, IUnknown *unksin
 
         if (i == This->sinks_size)
         {
+            new_sinks = heap_realloc_zero(This->sinks, 2 * This->sinks_size * sizeof(*This->sinks));
+            if (!new_sinks)
+                return E_OUTOFMEMORY;
+            This->sinks = new_sinks;
             This->sinks_size *= 2;
-            This->sinks = heap_realloc_zero(This->sinks, This->sinks_size*sizeof(*This->sinks));
         }
     }
     else
     {
+        This->sinks = heap_alloc_zero(10 * sizeof(*This->sinks));
+        if (!This->sinks)
+            return E_OUTOFMEMORY;
         This->sinks_size = 10;
-        This->sinks = heap_alloc_zero(This->sinks_size*sizeof(*This->sinks));
         i = 0;
     }
 
