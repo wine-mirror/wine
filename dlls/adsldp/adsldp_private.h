@@ -21,14 +21,6 @@
 
 #include "wine/heap.h"
 
-static inline WCHAR *strdupW(const WCHAR *src)
-{
-    WCHAR *dst;
-    if (!src) return NULL;
-    if ((dst = heap_alloc((wcslen(src) + 1) * sizeof(WCHAR)))) wcscpy(dst, src);
-    return dst;
-}
-
 static inline LPWSTR strnUtoW( LPCSTR str, DWORD inlen, DWORD *outlen )
 {
     LPWSTR ret = NULL;
