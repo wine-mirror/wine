@@ -308,14 +308,83 @@ typedef struct VkBindImageMemoryInfo32
 } VkBindImageMemoryInfo32;
 typedef VkBindImageMemoryInfo32 VkBindImageMemoryInfoKHR32;
 
+typedef union VkDeviceOrHostAddressConstKHR32
+{
+    VkDeviceAddress DECLSPEC_ALIGN(8) deviceAddress;
+    PTR32 hostAddress;
+} VkDeviceOrHostAddressConstKHR32;
+
+typedef struct VkAccelerationStructureGeometryMotionTrianglesDataNV32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) vertexData;
+} VkAccelerationStructureGeometryMotionTrianglesDataNV32;
+
+typedef struct VkAccelerationStructureTrianglesOpacityMicromapEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkIndexType indexType;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) indexBuffer;
+    VkDeviceSize DECLSPEC_ALIGN(8) indexStride;
+    uint32_t baseTriangle;
+    uint32_t usageCountsCount;
+    PTR32 pUsageCounts;
+    PTR32 ppUsageCounts;
+    VkMicromapEXT DECLSPEC_ALIGN(8) micromap;
+} VkAccelerationStructureTrianglesOpacityMicromapEXT32;
+
+typedef struct VkAccelerationStructureGeometryTrianglesDataKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkFormat vertexFormat;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) vertexData;
+    VkDeviceSize DECLSPEC_ALIGN(8) vertexStride;
+    uint32_t maxVertex;
+    VkIndexType indexType;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) indexData;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) transformData;
+} VkAccelerationStructureGeometryTrianglesDataKHR32;
+
+typedef struct VkAccelerationStructureGeometryAabbsDataKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) data;
+    VkDeviceSize DECLSPEC_ALIGN(8) stride;
+} VkAccelerationStructureGeometryAabbsDataKHR32;
+
+typedef struct VkAccelerationStructureGeometryInstancesDataKHR32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkBool32 arrayOfPointers;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) data;
+} VkAccelerationStructureGeometryInstancesDataKHR32;
+
+typedef union VkAccelerationStructureGeometryDataKHR32
+{
+    VkAccelerationStructureGeometryTrianglesDataKHR32 DECLSPEC_ALIGN(8) triangles;
+    VkAccelerationStructureGeometryAabbsDataKHR32 DECLSPEC_ALIGN(8) aabbs;
+    VkAccelerationStructureGeometryInstancesDataKHR32 DECLSPEC_ALIGN(8) instances;
+} VkAccelerationStructureGeometryDataKHR32;
+
 typedef struct VkAccelerationStructureGeometryKHR32
 {
     VkStructureType sType;
     PTR32 pNext;
     VkGeometryTypeKHR geometryType;
-    VkAccelerationStructureGeometryDataKHR DECLSPEC_ALIGN(8) geometry;
+    VkAccelerationStructureGeometryDataKHR32 DECLSPEC_ALIGN(8) geometry;
     VkGeometryFlagsKHR flags;
 } VkAccelerationStructureGeometryKHR32;
+
+typedef union VkDeviceOrHostAddressKHR32
+{
+    VkDeviceAddress DECLSPEC_ALIGN(8) deviceAddress;
+    PTR32 hostAddress;
+} VkDeviceOrHostAddressKHR32;
 
 typedef struct VkAccelerationStructureBuildGeometryInfoKHR32
 {
@@ -329,7 +398,7 @@ typedef struct VkAccelerationStructureBuildGeometryInfoKHR32
     uint32_t geometryCount;
     PTR32 pGeometries;
     PTR32 ppGeometries;
-    VkDeviceOrHostAddressKHR DECLSPEC_ALIGN(8) scratchData;
+    VkDeviceOrHostAddressKHR32 DECLSPEC_ALIGN(8) scratchData;
 } VkAccelerationStructureBuildGeometryInfoKHR32;
 
 typedef struct VkMicromapBuildInfoEXT32
@@ -343,9 +412,9 @@ typedef struct VkMicromapBuildInfoEXT32
     uint32_t usageCountsCount;
     PTR32 pUsageCounts;
     PTR32 ppUsageCounts;
-    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) data;
-    VkDeviceOrHostAddressKHR DECLSPEC_ALIGN(8) scratchData;
-    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) triangleArray;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) data;
+    VkDeviceOrHostAddressKHR32 DECLSPEC_ALIGN(8) scratchData;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) triangleArray;
     VkDeviceSize DECLSPEC_ALIGN(8) triangleArrayStride;
 } VkMicromapBuildInfoEXT32;
 
@@ -597,7 +666,7 @@ typedef struct VkCopyAccelerationStructureToMemoryInfoKHR32
     VkStructureType sType;
     PTR32 pNext;
     VkAccelerationStructureKHR DECLSPEC_ALIGN(8) src;
-    VkDeviceOrHostAddressKHR DECLSPEC_ALIGN(8) dst;
+    VkDeviceOrHostAddressKHR32 DECLSPEC_ALIGN(8) dst;
     VkCopyAccelerationStructureModeKHR mode;
 } VkCopyAccelerationStructureToMemoryInfoKHR32;
 
@@ -705,7 +774,7 @@ typedef struct VkCopyMemoryToAccelerationStructureInfoKHR32
 {
     VkStructureType sType;
     PTR32 pNext;
-    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) src;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) src;
     VkAccelerationStructureKHR DECLSPEC_ALIGN(8) dst;
     VkCopyAccelerationStructureModeKHR mode;
 } VkCopyMemoryToAccelerationStructureInfoKHR32;
@@ -714,7 +783,7 @@ typedef struct VkCopyMemoryToMicromapInfoEXT32
 {
     VkStructureType sType;
     PTR32 pNext;
-    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) src;
+    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) src;
     VkMicromapEXT DECLSPEC_ALIGN(8) dst;
     VkCopyMicromapModeEXT mode;
 } VkCopyMemoryToMicromapInfoEXT32;
@@ -733,7 +802,7 @@ typedef struct VkCopyMicromapToMemoryInfoEXT32
     VkStructureType sType;
     PTR32 pNext;
     VkMicromapEXT DECLSPEC_ALIGN(8) src;
-    VkDeviceOrHostAddressKHR DECLSPEC_ALIGN(8) dst;
+    VkDeviceOrHostAddressKHR32 DECLSPEC_ALIGN(8) dst;
     VkCopyMicromapModeEXT mode;
 } VkCopyMicromapToMemoryInfoEXT32;
 
@@ -4168,10 +4237,19 @@ typedef struct VkMicromapBuildSizesInfoEXT32
     VkBool32 discardable;
 } VkMicromapBuildSizesInfoEXT32;
 
+typedef union VkPerformanceValueDataINTEL32
+{
+    uint32_t value32;
+    uint64_t DECLSPEC_ALIGN(8) value64;
+    float valueFloat;
+    VkBool32 valueBool;
+    PTR32 valueString;
+} VkPerformanceValueDataINTEL32;
+
 typedef struct VkPerformanceValueINTEL32
 {
     VkPerformanceValueTypeINTEL type;
-    VkPerformanceValueDataINTEL DECLSPEC_ALIGN(8) data;
+    VkPerformanceValueDataINTEL32 DECLSPEC_ALIGN(8) data;
 } VkPerformanceValueINTEL32;
 
 typedef struct VkCooperativeMatrixPropertiesNV32
@@ -5486,6 +5564,14 @@ typedef struct VkPipelineExecutablePropertiesKHR32
     uint32_t subgroupSize;
 } VkPipelineExecutablePropertiesKHR32;
 
+typedef union VkPipelineExecutableStatisticValueKHR32
+{
+    VkBool32 b32;
+    int64_t i64;
+    uint64_t DECLSPEC_ALIGN(8) u64;
+    double f64;
+} VkPipelineExecutableStatisticValueKHR32;
+
 typedef struct VkPipelineExecutableStatisticKHR32
 {
     VkStructureType sType;
@@ -5493,7 +5579,7 @@ typedef struct VkPipelineExecutableStatisticKHR32
     char name[VK_MAX_DESCRIPTION_SIZE];
     char description[VK_MAX_DESCRIPTION_SIZE];
     VkPipelineExecutableStatisticFormatKHR format;
-    VkPipelineExecutableStatisticValueKHR DECLSPEC_ALIGN(8) value;
+    VkPipelineExecutableStatisticValueKHR32 DECLSPEC_ALIGN(8) value;
 } VkPipelineExecutableStatisticKHR32;
 
 
@@ -6366,14 +6452,131 @@ static inline const VkBindImageMemoryInfo *convert_VkBindImageMemoryInfo_array_w
     return out;
 }
 
-static inline void convert_VkAccelerationStructureGeometryKHR_win32_to_host(const VkAccelerationStructureGeometryKHR32 *in, VkAccelerationStructureGeometryKHR *out)
+static inline void convert_VkDeviceOrHostAddressConstKHR_win32_to_host(const VkDeviceOrHostAddressConstKHR32 *in, VkDeviceOrHostAddressConstKHR *out)
+{
+    if (!in) return;
+
+    out->deviceAddress = in->deviceAddress;
+    out->hostAddress = (const void *)UlongToPtr(in->hostAddress);
+}
+
+static inline const VkMicromapUsageEXT * const*convert_VkMicromapUsageEXT_pointer_array_win32_to_host(struct conversion_context *ctx, const PTR32 *in, uint32_t count)
+{
+    VkMicromapUsageEXT **out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        out[i] = UlongToPtr(in[i]);
+    }
+
+    return (void *)out;
+}
+
+static inline void convert_VkAccelerationStructureGeometryTrianglesDataKHR_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryTrianglesDataKHR32 *in, VkAccelerationStructureGeometryTrianglesDataKHR *out)
+{
+    const VkBaseInStructure32 *in_header;
+    VkBaseOutStructure *out_header = (void *)out;
+
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->vertexFormat = in->vertexFormat;
+    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->vertexData, &out->vertexData);
+    out->vertexStride = in->vertexStride;
+    out->maxVertex = in->maxVertex;
+    out->indexType = in->indexType;
+    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->indexData, &out->indexData);
+    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->transformData, &out->transformData);
+
+    for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
+    {
+        switch (in_header->sType)
+        {
+        case VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_MOTION_TRIANGLES_DATA_NV:
+        {
+            VkAccelerationStructureGeometryMotionTrianglesDataNV *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkAccelerationStructureGeometryMotionTrianglesDataNV32 *in_ext = (const VkAccelerationStructureGeometryMotionTrianglesDataNV32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_MOTION_TRIANGLES_DATA_NV;
+            out_ext->pNext = NULL;
+            convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in_ext->vertexData, &out_ext->vertexData);
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        case VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_EXT:
+        {
+            VkAccelerationStructureTrianglesOpacityMicromapEXT *out_ext = conversion_context_alloc(ctx, sizeof(*out_ext));
+            const VkAccelerationStructureTrianglesOpacityMicromapEXT32 *in_ext = (const VkAccelerationStructureTrianglesOpacityMicromapEXT32 *)in_header;
+            out_ext->sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_EXT;
+            out_ext->pNext = NULL;
+            out_ext->indexType = in_ext->indexType;
+            convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in_ext->indexBuffer, &out_ext->indexBuffer);
+            out_ext->indexStride = in_ext->indexStride;
+            out_ext->baseTriangle = in_ext->baseTriangle;
+            out_ext->usageCountsCount = in_ext->usageCountsCount;
+            out_ext->pUsageCounts = (const VkMicromapUsageEXT *)UlongToPtr(in_ext->pUsageCounts);
+            out_ext->ppUsageCounts = convert_VkMicromapUsageEXT_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in_ext->ppUsageCounts), in_ext->usageCountsCount);
+            out_ext->micromap = in_ext->micromap;
+            out_header->pNext = (void *)out_ext;
+            out_header = (void *)out_ext;
+            break;
+        }
+        default:
+            FIXME("Unhandled sType %u.", in_header->sType);
+            break;
+        }
+    }
+}
+
+static inline void convert_VkAccelerationStructureGeometryAabbsDataKHR_win32_to_host(const VkAccelerationStructureGeometryAabbsDataKHR32 *in, VkAccelerationStructureGeometryAabbsDataKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->data, &out->data);
+    out->stride = in->stride;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkAccelerationStructureGeometryInstancesDataKHR_win32_to_host(const VkAccelerationStructureGeometryInstancesDataKHR32 *in, VkAccelerationStructureGeometryInstancesDataKHR *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->arrayOfPointers = in->arrayOfPointers;
+    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->data, &out->data);
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline void convert_VkAccelerationStructureGeometryDataKHR_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryDataKHR32 *in, VkAccelerationStructureGeometryDataKHR *out, VkFlags selector)
+{
+    if (!in) return;
+
+    if (selector == VK_GEOMETRY_TYPE_TRIANGLES_KHR)
+        convert_VkAccelerationStructureGeometryTrianglesDataKHR_win32_to_host(ctx, &in->triangles, &out->triangles);
+    if (selector == VK_GEOMETRY_TYPE_AABBS_KHR)
+        convert_VkAccelerationStructureGeometryAabbsDataKHR_win32_to_host(&in->aabbs, &out->aabbs);
+    if (selector == VK_GEOMETRY_TYPE_INSTANCES_KHR)
+        convert_VkAccelerationStructureGeometryInstancesDataKHR_win32_to_host(&in->instances, &out->instances);
+}
+
+static inline void convert_VkAccelerationStructureGeometryKHR_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureGeometryKHR32 *in, VkAccelerationStructureGeometryKHR *out)
 {
     if (!in) return;
 
     out->sType = in->sType;
     out->pNext = NULL;
     out->geometryType = in->geometryType;
-    out->geometry = in->geometry;
+    convert_VkAccelerationStructureGeometryDataKHR_win32_to_host(ctx, &in->geometry, &out->geometry, in->geometryType);
     out->flags = in->flags;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -6389,7 +6592,7 @@ static inline const VkAccelerationStructureGeometryKHR *convert_VkAccelerationSt
     out = conversion_context_alloc(ctx, count * sizeof(*out));
     for (i = 0; i < count; i++)
     {
-        convert_VkAccelerationStructureGeometryKHR_win32_to_host(&in[i], &out[i]);
+        convert_VkAccelerationStructureGeometryKHR_win32_to_host(ctx, &in[i], &out[i]);
     }
 
     return out;
@@ -6408,13 +6611,21 @@ static inline const VkAccelerationStructureGeometryKHR * const*convert_VkAcceler
         if (in[i])
         {
             out[i] = conversion_context_alloc(ctx, sizeof(*out[i]));
-            convert_VkAccelerationStructureGeometryKHR_win32_to_host((VkAccelerationStructureGeometryKHR32 *)UlongToPtr(in[i]), out[i]);
+            convert_VkAccelerationStructureGeometryKHR_win32_to_host(ctx, (VkAccelerationStructureGeometryKHR32 *)UlongToPtr(in[i]), out[i]);
         }
         else
             out[i] = NULL;
     }
 
     return (void *)out;
+}
+
+static inline void convert_VkDeviceOrHostAddressKHR_win32_to_host(const VkDeviceOrHostAddressKHR32 *in, VkDeviceOrHostAddressKHR *out)
+{
+    if (!in) return;
+
+    out->deviceAddress = in->deviceAddress;
+    out->hostAddress = (void *)UlongToPtr(in->hostAddress);
 }
 
 static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR32 *in, VkAccelerationStructureBuildGeometryInfoKHR *out)
@@ -6431,7 +6642,7 @@ static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_
     out->geometryCount = in->geometryCount;
     out->pGeometries = convert_VkAccelerationStructureGeometryKHR_array_win32_to_host(ctx, (const VkAccelerationStructureGeometryKHR32 *)UlongToPtr(in->pGeometries), in->geometryCount);
     out->ppGeometries = convert_VkAccelerationStructureGeometryKHR_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppGeometries), in->geometryCount);
-    out->scratchData = in->scratchData;
+    convert_VkDeviceOrHostAddressKHR_win32_to_host(&in->scratchData, &out->scratchData);
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -6452,22 +6663,6 @@ static inline const VkAccelerationStructureBuildGeometryInfoKHR *convert_VkAccel
     return out;
 }
 
-static inline const VkMicromapUsageEXT * const*convert_VkMicromapUsageEXT_pointer_array_win32_to_host(struct conversion_context *ctx, const PTR32 *in, uint32_t count)
-{
-    VkMicromapUsageEXT **out;
-    unsigned int i;
-
-    if (!in || !count) return NULL;
-
-    out = conversion_context_alloc(ctx, count * sizeof(*out));
-    for (i = 0; i < count; i++)
-    {
-        out[i] = UlongToPtr(in[i]);
-    }
-
-    return (void *)out;
-}
-
 static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(struct conversion_context *ctx, const VkMicromapBuildInfoEXT32 *in, VkMicromapBuildInfoEXT *out)
 {
     if (!in) return;
@@ -6481,9 +6676,9 @@ static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(struct conversio
     out->usageCountsCount = in->usageCountsCount;
     out->pUsageCounts = (const VkMicromapUsageEXT *)UlongToPtr(in->pUsageCounts);
     out->ppUsageCounts = convert_VkMicromapUsageEXT_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppUsageCounts), in->usageCountsCount);
-    out->data = in->data;
-    out->scratchData = in->scratchData;
-    out->triangleArray = in->triangleArray;
+    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->data, &out->data);
+    convert_VkDeviceOrHostAddressKHR_win32_to_host(&in->scratchData, &out->scratchData);
+    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->triangleArray, &out->triangleArray);
     out->triangleArrayStride = in->triangleArrayStride;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -6980,7 +7175,7 @@ static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win32_to_h
     out->sType = in->sType;
     out->pNext = NULL;
     out->src = in->src;
-    out->dst = in->dst;
+    convert_VkDeviceOrHostAddressKHR_win32_to_host(&in->dst, &out->dst);
     out->mode = in->mode;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -7219,7 +7414,7 @@ static inline void convert_VkCopyMemoryToAccelerationStructureInfoKHR_win32_to_h
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->src = in->src;
+    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->src, &out->src);
     out->dst = in->dst;
     out->mode = in->mode;
     if (in->pNext)
@@ -7232,7 +7427,7 @@ static inline void convert_VkCopyMemoryToMicromapInfoEXT_win32_to_host(const VkC
 
     out->sType = in->sType;
     out->pNext = NULL;
-    out->src = in->src;
+    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->src, &out->src);
     out->dst = in->dst;
     out->mode = in->mode;
     if (in->pNext)
@@ -7259,7 +7454,7 @@ static inline void convert_VkCopyMicromapToMemoryInfoEXT_win32_to_host(const VkC
     out->sType = in->sType;
     out->pNext = NULL;
     out->src = in->src;
-    out->dst = in->dst;
+    convert_VkDeviceOrHostAddressKHR_win32_to_host(&in->dst, &out->dst);
     out->mode = in->mode;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -16788,12 +16983,34 @@ static inline void convert_VkMicromapBuildSizesInfoEXT_host_to_win32(const VkMic
     out->discardable = in->discardable;
 }
 
-static inline void convert_VkPerformanceValueINTEL_win32_to_host(const VkPerformanceValueINTEL32 *in, VkPerformanceValueINTEL *out)
+static inline void convert_VkPerformanceValueDataINTEL_win32_to_host(const VkPerformanceValueDataINTEL32 *in, VkPerformanceValueDataINTEL *out, VkFlags selector)
 {
     if (!in) return;
 
-    out->type = in->type;
-    out->data = in->data;
+    if (selector == VK_PERFORMANCE_VALUE_TYPE_UINT32_INTEL)
+        out->value32 = in->value32;
+    if (selector == VK_PERFORMANCE_VALUE_TYPE_UINT64_INTEL)
+        out->value64 = in->value64;
+    if (selector == VK_PERFORMANCE_VALUE_TYPE_FLOAT_INTEL)
+        out->valueFloat = in->valueFloat;
+    if (selector == VK_PERFORMANCE_VALUE_TYPE_BOOL_INTEL)
+        out->valueBool = in->valueBool;
+    if (selector == VK_PERFORMANCE_VALUE_TYPE_STRING_INTEL)
+        out->valueString = (const char *)UlongToPtr(in->valueString);
+}
+
+static inline void convert_VkPerformanceValueDataINTEL_host_to_win32(const VkPerformanceValueDataINTEL *in, VkPerformanceValueDataINTEL32 *out, VkFlags selector)
+{
+    if (!in) return;
+
+    if (selector == VK_PERFORMANCE_VALUE_TYPE_UINT32_INTEL)
+        out->value32 = in->value32;
+    if (selector == VK_PERFORMANCE_VALUE_TYPE_UINT64_INTEL)
+        out->value64 = in->value64;
+    if (selector == VK_PERFORMANCE_VALUE_TYPE_FLOAT_INTEL)
+        out->valueFloat = in->valueFloat;
+    if (selector == VK_PERFORMANCE_VALUE_TYPE_BOOL_INTEL)
+        out->valueBool = in->valueBool;
 }
 
 static inline void convert_VkPerformanceValueINTEL_host_to_win32(const VkPerformanceValueINTEL *in, VkPerformanceValueINTEL32 *out)
@@ -16801,7 +17018,7 @@ static inline void convert_VkPerformanceValueINTEL_host_to_win32(const VkPerform
     if (!in) return;
 
     out->type = in->type;
-    out->data = in->data;
+    convert_VkPerformanceValueDataINTEL_host_to_win32(&in->data, &out->data, in->type);
 }
 
 static inline void convert_VkCooperativeMatrixPropertiesNV_win32_to_host(const VkCooperativeMatrixPropertiesNV32 *in, VkCooperativeMatrixPropertiesNV *out)
@@ -22992,6 +23209,20 @@ static inline void convert_VkPipelineExecutablePropertiesKHR_array_host_to_win32
     }
 }
 
+static inline void convert_VkPipelineExecutableStatisticValueKHR_host_to_win32(const VkPipelineExecutableStatisticValueKHR *in, VkPipelineExecutableStatisticValueKHR32 *out, VkFlags selector)
+{
+    if (!in) return;
+
+    if (selector == VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_BOOL32_KHR)
+        out->b32 = in->b32;
+    if (selector == VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_INT64_KHR)
+        out->i64 = in->i64;
+    if (selector == VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_UINT64_KHR)
+        out->u64 = in->u64;
+    if (selector == VK_PIPELINE_EXECUTABLE_STATISTIC_FORMAT_FLOAT64_KHR)
+        out->f64 = in->f64;
+}
+
 static inline void convert_VkPipelineExecutableStatisticKHR_win32_to_host(const VkPipelineExecutableStatisticKHR32 *in, VkPipelineExecutableStatisticKHR *out)
 {
     if (!in) return;
@@ -23009,7 +23240,7 @@ static inline void convert_VkPipelineExecutableStatisticKHR_host_to_win32(const 
     memcpy(out->name, in->name, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
     memcpy(out->description, in->description, VK_MAX_DESCRIPTION_SIZE * sizeof(char));
     out->format = in->format;
-    out->value = in->value;
+    convert_VkPipelineExecutableStatisticValueKHR_host_to_win32(&in->value, &out->value, in->format);
 }
 
 static inline VkPipelineExecutableStatisticKHR *convert_VkPipelineExecutableStatisticKHR_array_win32_to_host(struct conversion_context *ctx, const VkPipelineExecutableStatisticKHR32 *in, uint32_t count)
@@ -36057,7 +36288,6 @@ static NTSTATUS thunk32_vkGetPerformanceParameterINTEL(void *args)
 
     TRACE("%#x, %#x, %#x\n", params->device, params->parameter, params->pValue);
 
-    convert_VkPerformanceValueINTEL_win32_to_host((VkPerformanceValueINTEL32 *)UlongToPtr(params->pValue), &pValue_host);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetPerformanceParameterINTEL(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->parameter, &pValue_host);
     convert_VkPerformanceValueINTEL_host_to_win32(&pValue_host, (VkPerformanceValueINTEL32 *)UlongToPtr(params->pValue));
     return STATUS_SUCCESS;

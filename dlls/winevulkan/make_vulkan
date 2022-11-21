@@ -1105,7 +1105,8 @@ class VkHandle(object):
 
 class VkVariable(object):
     def __init__(self, const=False, type_info=None, type=None, name=None, pointer=None, array_len=None,
-                 dyn_array_len=None, object_type=None, optional=False, returnedonly=False, parent=None):
+                 dyn_array_len=None, object_type=None, optional=False, returnedonly=False, parent=None,
+                 selection=None, selector=None):
         self.const = const
         self.type_info = type_info
         self.type = type
@@ -1114,6 +1115,8 @@ class VkVariable(object):
         self.object_type = object_type
         self.optional = optional
         self.returnedonly = returnedonly
+        self.selection = selection
+        self.selector = selector
 
         self.pointer = pointer
         self.array_len = array_len
@@ -1139,7 +1142,7 @@ class VkVariable(object):
         """
         self.type_info = type_info
         self.handle = type_info["data"] if type_info["category"] == "handle" else None
-        self.struct = type_info["data"] if type_info["category"] == "struct" else None
+        self.struct = type_info["data"] if type_info["category"] == "struct" or type_info["category"] == "union" else None
 
     def get_dyn_array_len(self, prefix, conv):
         if isinstance(self.dyn_array_len, int):
@@ -1189,7 +1192,7 @@ class VkVariable(object):
         return self.handle is not None
 
     def is_struct(self):
-        return self.struct is not None
+        return self.type_info["category"] == "struct"
 
     def is_union(self):
         return self.type_info["category"] == "union"
@@ -1264,10 +1267,10 @@ class VkVariable(object):
             return self.needs_conversion(conv, unwrap, Direction.INPUT, False) \
                 or self.needs_conversion(conv, unwrap, Direction.OUTPUT, False)
 
-        return self.is_struct() and self.struct.needs_alloc(conv, unwrap)
+        return (self.is_struct() or self.is_union()) and self.struct.needs_alloc(conv, unwrap)
 
     def needs_host_type(self):
-        return self.is_struct() and self.struct.needs_host_type()
+        return (self.is_struct() or self.is_union()) and self.struct.needs_host_type()
 
     def get_conversions(self, unwrap, parent_const=False):
         """ Get a list of conversions required for this parameter if any.
@@ -1281,7 +1284,7 @@ class VkVariable(object):
         # Collect any member conversions first, so we can guarantee
         # those functions will be defined prior to usage by the
         # 'parent' param requiring conversion.
-        if self.is_struct():
+        if self.is_struct() or self.is_union():
             struct = self.struct
             is_const = self.is_const() if self.is_pointer() else parent_const
 
@@ -1335,10 +1338,10 @@ class VkVariable(object):
 class VkMember(VkVariable):
     def __init__(self, const=False, struct_fwd_decl=False,_type=None, pointer=None, name=None, array_len=None,
                  dyn_array_len=None, optional=False, values=None, object_type=None, bit_width=None,
-                 returnedonly=False, parent=None):
+                 returnedonly=False, parent=None, selection=None, selector=None):
         VkVariable.__init__(self, const=const, type=_type, name=name, pointer=pointer, array_len=array_len,
                             dyn_array_len=dyn_array_len, object_type=object_type, optional=optional,
-                            returnedonly=returnedonly, parent=parent)
+                            returnedonly=returnedonly, parent=parent, selection=selection, selector=selector)
         self.struct_fwd_decl = struct_fwd_decl
         self.values = values
         self.bit_width = bit_width
@@ -1411,10 +1414,13 @@ class VkMember(VkVariable):
             LOGGER.debug("Found bit field")
             bit_width = int(name_elem.tail[1:])
 
+        selection = member.get("selection").split(',') if member.get("selection") else None
+        selector = member.get("selector", None)
+
         return VkMember(const=const, struct_fwd_decl=struct_fwd_decl, _type=member_type, pointer=pointer,
                         name=name_elem.text, array_len=array_len, dyn_array_len=dyn_array_len, optional=optional,
                         values=values, object_type=object_type, bit_width=bit_width, returnedonly=returnedonly,
-                        parent=parent)
+                        parent=parent, selection=selection, selector=selector)
 
     def copy(self, input, output, direction, conv, unwrap):
         """ Helper method for use by conversion logic to generate a C-code statement to copy this member.
@@ -1457,12 +1463,13 @@ class VkMember(VkVariable):
                 else:
                     return "{0}{1} = wine_vk_unwrap_handle({2}{3}, {2}{1});\n".format(output, self.name, input, self.object_type)
             else:
+                selector_part = ", {0}{1}".format(input, self.selector) if self.selector else ""
                 if direction == Direction.OUTPUT:
-                    return "convert_{0}_host_to_{4}(&{2}{1}, &{3}{1});\n".format(self.type, self.name, input, output, win_type)
+                    return "convert_{0}_host_to_{4}(&{2}{1}, &{3}{1}{5});\n".format(self.type, self.name, input, output, win_type, selector_part)
                 else:
                     ctx_param = "ctx, " if self.needs_alloc(conv, unwrap) else ""
                     host_part = "host" if unwrap else "unwrapped_host"
-                    return "convert_{0}_{4}_to_{6}({5}&{2}{1}, &{3}{1});\n".format(self.type, self.name, input, output, win_type, ctx_param, host_part)
+                    return "convert_{0}_{4}_to_{6}({5}&{2}{1}, &{3}{1}{7});\n".format(self.type, self.name, input, output, win_type, ctx_param, host_part, selector_part)
         elif self.is_static_array():
             bytes_count = "{0} * sizeof({1})".format(self.array_len, self.type)
             return "memcpy({0}{1}, {2}{1}, {3});\n".format(output, self.name, input, bytes_count)
@@ -1548,7 +1555,7 @@ class VkMember(VkVariable):
         elif self.is_generic_handle():
             if unwrap:
                 return True
-        elif self.is_struct():
+        elif self.is_struct() or self.is_union():
             if self.struct.needs_conversion(conv, unwrap, direction, is_const):
                 return True
 
@@ -1895,7 +1902,8 @@ class VkStruct(Sequence):
 
         # Those structs don't have returnedonly in spec, but they could (should?).
         if name in ["VkSurfaceCapabilitiesPresentBarrierNV",
-                    "VkCooperativeMatrixPropertiesNV"]:
+                    "VkCooperativeMatrixPropertiesNV",
+                    "VkPerformanceValueINTEL"]:
             returnedonly = True
 
         structextends = struct.attrib.get("structextends")
@@ -2135,7 +2143,7 @@ class VkStruct(Sequence):
                 return True
             if m.needs_alignment():
                 return True
-            if m.is_struct() and m.struct.needs_host_type():
+            if (m.is_struct() or m.is_union()) and m.struct.needs_host_type():
                 return True
 
     def set_type_info(self, types):
@@ -2230,6 +2238,9 @@ class StructConversionFunction(object):
             else:
                 params = ["const {0} *in".format(win_type), "{0} *out".format(self.type)]
 
+            if self.operand[0].selection:
+                params.append("VkFlags selector")
+
             # Generate parameter list
             if needs_alloc:
                 body += "struct conversion_context *ctx, "
@@ -2272,6 +2283,11 @@ class StructConversionFunction(object):
             if m.name == "pNext" and (needs_extensions or self.conv):
                 body += "    out->pNext = NULL;\n"
                 continue
+
+            if m.selection:
+                body += "    if ("
+                body += " || ".join("selector == {}".format(s) for s in m.selection)
+                body += ")\n    "
 
             body += "    " + m.copy("in->", "out->", self.direction, self.conv, self.unwrap)
 
