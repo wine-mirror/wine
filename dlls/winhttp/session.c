@@ -322,20 +322,20 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     InitializeCriticalSection( &session->cs );
     session->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": session.cs");
 
-    if (agent && !(session->agent = strdupW( agent ))) goto end;
+    if (agent && !(session->agent = wcsdup( agent ))) goto end;
     if (access == WINHTTP_ACCESS_TYPE_DEFAULT_PROXY)
     {
         WINHTTP_PROXY_INFO info;
 
         WinHttpGetDefaultProxyConfiguration( &info );
         session->access = info.dwAccessType;
-        if (info.lpszProxy && !(session->proxy_server = strdupW( info.lpszProxy )))
+        if (info.lpszProxy && !(session->proxy_server = wcsdup( info.lpszProxy )))
         {
             GlobalFree( info.lpszProxy );
             GlobalFree( info.lpszProxyBypass );
             goto end;
         }
-        if (info.lpszProxyBypass && !(session->proxy_bypass = strdupW( info.lpszProxyBypass )))
+        if (info.lpszProxyBypass && !(session->proxy_bypass = wcsdup( info.lpszProxyBypass )))
         {
             GlobalFree( info.lpszProxy );
             GlobalFree( info.lpszProxyBypass );
@@ -345,8 +345,8 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
     else if (access == WINHTTP_ACCESS_TYPE_NAMED_PROXY)
     {
         session->access = access;
-        if (proxy && !(session->proxy_server = strdupW( proxy ))) goto end;
-        if (bypass && !(session->proxy_bypass = strdupW( bypass ))) goto end;
+        if (proxy && !(session->proxy_server = wcsdup( proxy ))) goto end;
+        if (bypass && !(session->proxy_bypass = wcsdup( bypass ))) goto end;
     }
 
     handle = alloc_handle( &session->hdr );
@@ -556,7 +556,7 @@ BOOL set_server_for_hostname( struct connect *connect, const WCHAR *server, INTE
             {
                 free( connect->servername );
                 connect->resolved = FALSE;
-                if (!(connect->servername = strdupW( session->proxy_server )))
+                if (!(connect->servername = wcsdup( session->proxy_server )))
                 {
                     ret = FALSE;
                     goto end;
@@ -569,7 +569,7 @@ BOOL set_server_for_hostname( struct connect *connect, const WCHAR *server, INTE
     {
         free( connect->servername );
         connect->resolved = FALSE;
-        if (!(connect->servername = strdupW( server )))
+        if (!(connect->servername = wcsdup( server )))
         {
             ret = FALSE;
             goto end;
@@ -624,7 +624,7 @@ HINTERNET WINAPI WinHttpConnect( HINTERNET hsession, const WCHAR *server, INTERN
     addref_object( &session->hdr );
     connect->session = session;
 
-    if (!(connect->hostname = strdupW( server ))) goto end;
+    if (!(connect->hostname = wcsdup( server ))) goto end;
     connect->hostport = port;
     if (!set_server_for_hostname( connect, server, port )) goto end;
 
@@ -1273,11 +1273,11 @@ HINTERNET WINAPI WinHttpOpenRequest( HINTERNET hconnect, const WCHAR *verb, cons
     request->websocket_set_send_buffer_size = request->websocket_send_buffer_size;
 
     if (!verb || !verb[0]) verb = L"GET";
-    if (!(request->verb = strdupW( verb ))) goto end;
+    if (!(request->verb = wcsdup( verb ))) goto end;
     if (!(request->path = get_request_path( object ))) goto end;
 
     if (!version || !version[0]) version = L"HTTP/1.1";
-    if (!(request->version = strdupW( version ))) goto end;
+    if (!(request->version = wcsdup( version ))) goto end;
     if (!(add_accept_types_header( request, types ))) goto end;
 
     if ((hrequest = alloc_handle( &request->hdr )))

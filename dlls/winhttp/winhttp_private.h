@@ -398,16 +398,6 @@ DWORD process_header( struct request *, const WCHAR *, const WCHAR *, DWORD, BOO
 extern HRESULT WinHttpRequest_create( void ** ) DECLSPEC_HIDDEN;
 void release_typelib( void ) DECLSPEC_HIDDEN;
 
-static inline WCHAR *strdupW( const WCHAR *src )
-{
-    WCHAR *dst;
-
-    if (!src) return NULL;
-    dst = malloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) );
-    if (dst) lstrcpyW( dst, src );
-    return dst;
-}
-
 static inline WCHAR *strdupAW( const char *src )
 {
     WCHAR *dst = NULL;

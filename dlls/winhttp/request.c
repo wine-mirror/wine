@@ -371,8 +371,8 @@ static DWORD insert_header( struct request *request, struct header *header )
     if (!hdrs) return ERROR_OUTOFMEMORY;
 
     request->headers = hdrs;
-    request->headers[count - 1].field = strdupW( header->field );
-    request->headers[count - 1].value = strdupW( header->value );
+    request->headers[count - 1].field = wcsdup( header->field );
+    request->headers[count - 1].value = wcsdup( header->value );
     request->headers[count - 1].is_request = header->is_request;
     request->num_headers = count;
     return ERROR_SUCCESS;
@@ -1562,7 +1562,7 @@ static DWORD open_connection( struct request *request )
             host->secure = is_secure;
             host->port = port;
             list_init( &host->connections );
-            if ((host->hostname = strdupW( connect->servername )))
+            if ((host->hostname = wcsdup( connect->servername )))
             {
                 list_add_head( &connection_pool, &host->entry );
             }
@@ -2309,7 +2309,7 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, const WCHAR *headers, DWORD 
             SetLastError( ERROR_OUTOFMEMORY );
             return FALSE;
         }
-        s->headers      = strdupW( headers );
+        s->headers      = wcsdup( headers );
         s->headers_len  = headers_len;
         s->optional     = optional;
         s->optional_len = optional_len;
@@ -2344,22 +2344,22 @@ static DWORD set_credentials( struct request *request, DWORD target, DWORD schem
     {
         free( request->creds[TARGET_SERVER][scheme].username );
         if (!username) request->creds[TARGET_SERVER][scheme].username = NULL;
-        else if (!(request->creds[TARGET_SERVER][scheme].username = strdupW( username ))) return ERROR_OUTOFMEMORY;
+        else if (!(request->creds[TARGET_SERVER][scheme].username = wcsdup( username ))) return ERROR_OUTOFMEMORY;
 
         free( request->creds[TARGET_SERVER][scheme].password );
         if (!password) request->creds[TARGET_SERVER][scheme].password = NULL;
-        else if (!(request->creds[TARGET_SERVER][scheme].password = strdupW( password ))) return ERROR_OUTOFMEMORY;
+        else if (!(request->creds[TARGET_SERVER][scheme].password = wcsdup( password ))) return ERROR_OUTOFMEMORY;
         break;
     }
     case WINHTTP_AUTH_TARGET_PROXY:
     {
         free( request->creds[TARGET_PROXY][scheme].username );
         if (!username) request->creds[TARGET_PROXY][scheme].username = NULL;
-        else if (!(request->creds[TARGET_PROXY][scheme].username = strdupW( username ))) return ERROR_OUTOFMEMORY;
+        else if (!(request->creds[TARGET_PROXY][scheme].username = wcsdup( username ))) return ERROR_OUTOFMEMORY;
 
         free( request->creds[TARGET_PROXY][scheme].password );
         if (!password) request->creds[TARGET_PROXY][scheme].password = NULL;
-        else if (!(request->creds[TARGET_PROXY][scheme].password = strdupW( password ))) return ERROR_OUTOFMEMORY;
+        else if (!(request->creds[TARGET_PROXY][scheme].password = wcsdup( password ))) return ERROR_OUTOFMEMORY;
         break;
     }
     default:
@@ -2735,13 +2735,13 @@ static DWORD handle_redirect( struct request *request, DWORD status )
             memcpy( request->path, uc.lpszUrlPath, (len + 1) * sizeof(WCHAR) );
             request->path[len] = 0;
         }
-        else request->path = strdupW( L"/" );
+        else request->path = wcsdup( L"/" );
     }
 
     if (status != HTTP_STATUS_REDIRECT_KEEP_VERB && !wcscmp( request->verb, L"POST" ))
     {
         free( request->verb );
-        request->verb = strdupW( L"GET" );
+        request->verb = wcsdup( L"GET" );
         request->optional = NULL;
         request->optional_len = 0;
     }
@@ -4659,12 +4659,12 @@ static HRESULT WINAPI winhttp_request_SetProxy(
         if (V_VT( &proxy_server ) == VT_BSTR)
         {
             free( request->proxy.lpszProxy );
-            request->proxy.lpszProxy = strdupW( V_BSTR( &proxy_server ) );
+            request->proxy.lpszProxy = wcsdup( V_BSTR( &proxy_server ) );
         }
         if (V_VT( &bypass_list ) == VT_BSTR)
         {
             free( request->proxy.lpszProxyBypass );
-            request->proxy.lpszProxyBypass = strdupW( V_BSTR( &bypass_list ) );
+            request->proxy.lpszProxyBypass = wcsdup( V_BSTR( &bypass_list ) );
         }
         break;
 
@@ -4796,7 +4796,7 @@ static HRESULT WINAPI winhttp_request_Open(
     memcpy( path, uc.lpszUrlPath, (uc.dwUrlPathLength + uc.dwExtraInfoLength) * sizeof(WCHAR) );
     path[uc.dwUrlPathLength + uc.dwExtraInfoLength] = 0;
 
-    if (!(verb = strdupW( method ))) goto error;
+    if (!(verb = wcsdup( method ))) goto error;
     if (SUCCEEDED( VariantChangeType( &async, &async, 0, VT_BOOL )) && V_BOOL( &async )) request->async = TRUE;
     else request->async = FALSE;
 

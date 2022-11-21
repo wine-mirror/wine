@@ -54,7 +54,7 @@ static struct domain *add_domain( struct session *session, WCHAR *name )
     list_init( &domain->entry );
     list_init( &domain->cookies );
 
-    domain->name = strdupW( name );
+    domain->name = wcsdup( name );
     list_add_tail( &session->cookie_cache, &domain->entry );
 
     TRACE("%s\n", debugstr_w(domain->name));
@@ -135,7 +135,7 @@ static BOOL add_cookie( struct session *session, struct cookie *cookie, WCHAR *d
     struct cookie *old_cookie;
     struct list *item;
 
-    if (!(cookie->path = strdupW( path ))) return FALSE;
+    if (!(cookie->path = wcsdup( path ))) return FALSE;
 
     EnterCriticalSection( &session->cs );
 
@@ -303,8 +303,8 @@ BOOL set_cookies( struct request *request, const WCHAR *cookies )
         len -= used;
         p += used;
     }
-    if (!cookie_domain && !(cookie_domain = strdupW( request->connect->servername ))) goto end;
-    if (!cookie_path && !(cookie_path = strdupW( request->path ))) goto end;
+    if (!cookie_domain && !(cookie_domain = wcsdup( request->connect->servername ))) goto end;
+    if (!cookie_path && !(cookie_path = wcsdup( request->path ))) goto end;
 
     if ((p = wcsrchr( cookie_path, '/' )) && p != cookie_path) *p = 0;
     ret = add_cookie( session, cookie, cookie_domain, cookie_path );
