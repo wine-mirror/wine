@@ -153,7 +153,7 @@ static BOOL alloc_local_scope(compiler_ctx_t *ctx, unsigned int *scope_index)
     if (scope == ctx->local_scope_size)
     {
         new_size = max(1, ctx->local_scope_size * 2);
-        if (!(new_alloc = heap_realloc(ctx->local_scopes, new_size * sizeof(*ctx->local_scopes))))
+        if (!(new_alloc = realloc(ctx->local_scopes, new_size * sizeof(*ctx->local_scopes))))
             return FALSE;
         ctx->local_scopes = new_alloc;
         ctx->local_scope_size = new_size;
@@ -191,14 +191,14 @@ jsstr_t *compiler_alloc_string_len(compiler_ctx_t *ctx, const WCHAR *str, unsign
     jsstr_t *new_str;
 
     if(!ctx->code->str_pool_size) {
-        ctx->code->str_pool = heap_alloc(8 * sizeof(jsstr_t*));
+        ctx->code->str_pool = malloc(8 * sizeof(jsstr_t*));
         if(!ctx->code->str_pool)
             return NULL;
         ctx->code->str_pool_size = 8;
     }else if(ctx->code->str_pool_size == ctx->code->str_cnt) {
         jsstr_t **new_pool;
 
-        new_pool = heap_realloc(ctx->code->str_pool, ctx->code->str_pool_size*2*sizeof(jsstr_t*));
+        new_pool = realloc(ctx->code->str_pool, ctx->code->str_pool_size*2*sizeof(jsstr_t*));
         if(!new_pool)
             return NULL;
 
@@ -222,14 +222,14 @@ static jsstr_t *compiler_alloc_string(compiler_ctx_t *ctx, const WCHAR *str)
 static BOOL ensure_bstr_slot(compiler_ctx_t *ctx)
 {
     if(!ctx->code->bstr_pool_size) {
-        ctx->code->bstr_pool = heap_alloc(8 * sizeof(BSTR));
+        ctx->code->bstr_pool = malloc(8 * sizeof(BSTR));
         if(!ctx->code->bstr_pool)
             return FALSE;
         ctx->code->bstr_pool_size = 8;
     }else if(ctx->code->bstr_pool_size == ctx->code->bstr_cnt) {
         BSTR *new_pool;
 
-        new_pool = heap_realloc(ctx->code->bstr_pool, ctx->code->bstr_pool_size*2*sizeof(BSTR));
+        new_pool = realloc(ctx->code->bstr_pool, ctx->code->bstr_pool_size*2*sizeof(BSTR));
         if(!new_pool)
             return FALSE;
 
@@ -276,7 +276,7 @@ static unsigned push_instr(compiler_ctx_t *ctx, jsop_t op)
     if(ctx->code_size == ctx->code_off) {
         instr_t *new_instrs;
 
-        new_instrs = heap_realloc(ctx->code->instrs, ctx->code_size*2*sizeof(instr_t));
+        new_instrs = realloc(ctx->code->instrs, ctx->code_size*2*sizeof(instr_t));
         if(!new_instrs)
             return 0;
 
@@ -457,14 +457,14 @@ static HRESULT compile_member_expression(compiler_ctx_t *ctx, member_expression_
 static unsigned alloc_label(compiler_ctx_t *ctx)
 {
     if(!ctx->labels_size) {
-        ctx->labels = heap_alloc(8 * sizeof(*ctx->labels));
+        ctx->labels = malloc(8 * sizeof(*ctx->labels));
         if(!ctx->labels)
             return 0;
         ctx->labels_size = 8;
     }else if(ctx->labels_size == ctx->labels_cnt) {
         unsigned *new_labels;
 
-        new_labels = heap_realloc(ctx->labels, 2*ctx->labels_size*sizeof(*ctx->labels));
+        new_labels = realloc(ctx->labels, 2*ctx->labels_size*sizeof(*ctx->labels));
         if(!new_labels)
             return 0;
 
@@ -1741,7 +1741,7 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
             case_cnt++;
     }
 
-    case_jmps = heap_alloc(case_cnt * sizeof(*case_jmps));
+    case_jmps = malloc(case_cnt * sizeof(*case_jmps));
     if(!case_jmps)
         return E_OUTOFMEMORY;
 
@@ -1775,7 +1775,7 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
     }
 
     if(FAILED(hres)) {
-        heap_free(case_jmps);
+        free(case_jmps);
         return hres;
     }
 
@@ -1798,7 +1798,7 @@ static HRESULT compile_switch_statement(compiler_ctx_t *ctx, switch_statement_t 
             break;
     }
 
-    heap_free(case_jmps);
+    free(case_jmps);
     if(FAILED(hres))
         return hres;
     assert(i == case_cnt);
@@ -2466,12 +2466,12 @@ void release_bytecode(bytecode_t *code)
 
     if(code->named_item)
         release_named_item(code->named_item);
-    heap_free(code->source);
+    free(code->source);
     heap_pool_free(&code->heap);
-    heap_free(code->bstr_pool);
-    heap_free(code->str_pool);
-    heap_free(code->instrs);
-    heap_free(code);
+    free(code->bstr_pool);
+    free(code->str_pool);
+    free(code->instrs);
+    free(code);
 }
 
 static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source, UINT64 source_context, unsigned start_line)
@@ -2481,7 +2481,7 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source, UINT64 s
     if(len > INT32_MAX)
         return E_OUTOFMEMORY;
 
-    compiler->code = heap_alloc_zero(sizeof(bytecode_t));
+    compiler->code = calloc(1, sizeof(bytecode_t));
     if(!compiler->code)
         return E_OUTOFMEMORY;
 
@@ -2490,7 +2490,7 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source, UINT64 s
     compiler->code->start_line = start_line;
     heap_pool_init(&compiler->code->heap);
 
-    compiler->code->source = heap_alloc((len + 1) * sizeof(WCHAR));
+    compiler->code->source = malloc((len + 1) * sizeof(WCHAR));
     if(!compiler->code->source) {
         release_bytecode(compiler->code);
         return E_OUTOFMEMORY;
@@ -2499,7 +2499,7 @@ static HRESULT init_code(compiler_ctx_t *compiler, const WCHAR *source, UINT64 s
         memcpy(compiler->code->source, source, len * sizeof(WCHAR));
     compiler->code->source[len] = 0;
 
-    compiler->code->instrs = heap_alloc(64 * sizeof(instr_t));
+    compiler->code->instrs = malloc(64 * sizeof(instr_t));
     if(!compiler->code->instrs) {
         release_bytecode(compiler->code);
         return E_OUTOFMEMORY;
@@ -2751,7 +2751,7 @@ HRESULT compile_script(script_ctx_t *ctx, const WCHAR *code, UINT64 source_conte
 
     heap_pool_init(&compiler.heap);
     hres = compile_function(&compiler, compiler.parser->source, NULL, from_eval, &compiler.code->global_code);
-    heap_free(compiler.local_scopes);
+    free(compiler.local_scopes);
     heap_pool_free(&compiler.heap);
     parser_release(compiler.parser);
     if(FAILED(hres)) {

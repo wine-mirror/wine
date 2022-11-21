@@ -1604,7 +1604,7 @@ void parser_release(parser_ctx_t *ctx)
 {
     script_release(ctx->script);
     heap_pool_free(&ctx->heap);
-    heap_free(ctx);
+    free(ctx);
 }
 
 HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, bytecode_t *code, const WCHAR *delimiter, BOOL from_eval,
@@ -1614,7 +1614,7 @@ HRESULT script_parse(script_ctx_t *ctx, struct _compiler_ctx_t *compiler, byteco
     heap_pool_t *mark;
     HRESULT hres;
 
-    parser_ctx = heap_alloc_zero(sizeof(parser_ctx_t));
+    parser_ctx = calloc(1, sizeof(parser_ctx_t));
     if(!parser_ctx)
         return E_OUTOFMEMORY;
 

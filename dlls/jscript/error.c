@@ -162,7 +162,7 @@ static HRESULT alloc_error(script_ctx_t *ctx, jsdisp_t *prototype,
     jsdisp_t *err;
     HRESULT hres;
 
-    err = heap_alloc_zero(sizeof(*err));
+    err = calloc(1, sizeof(*err));
     if(!err)
         return E_OUTOFMEMORY;
 
@@ -172,7 +172,7 @@ static HRESULT alloc_error(script_ctx_t *ctx, jsdisp_t *prototype,
         hres = init_dispex_from_constr(err, ctx, &ErrorInst_info,
             constr ? constr : ctx->error_constr);
     if(FAILED(hres)) {
-        heap_free(err);
+        free(err);
         return hres;
     }
 

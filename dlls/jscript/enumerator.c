@@ -85,7 +85,7 @@ static void Enumerator_destructor(jsdisp_t *dispex)
     TRACE("\n");
 
     jsval_release(This->item);
-    heap_free(dispex);
+    free(dispex);
 }
 
 static HRESULT Enumerator_atEnd(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
@@ -197,7 +197,7 @@ static HRESULT alloc_enumerator(script_ctx_t *ctx, jsdisp_t *object_prototype, E
     EnumeratorInstance *enumerator;
     HRESULT hres;
 
-    enumerator = heap_alloc_zero(sizeof(EnumeratorInstance));
+    enumerator = calloc(1, sizeof(EnumeratorInstance));
     if(!enumerator)
         return E_OUTOFMEMORY;
 
@@ -209,7 +209,7 @@ static HRESULT alloc_enumerator(script_ctx_t *ctx, jsdisp_t *object_prototype, E
 
     if(FAILED(hres))
     {
-        heap_free(enumerator);
+        free(enumerator);
         return hres;
     }
 

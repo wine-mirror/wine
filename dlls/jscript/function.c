@@ -105,11 +105,11 @@ static void Arguments_destructor(jsdisp_t *jsdisp)
         unsigned i;
         for(i = 0; i < arguments->argc; i++)
             jsval_release(arguments->buf[i]);
-        heap_free(arguments->buf);
+        free(arguments->buf);
     }
 
     jsdisp_release(&arguments->function->function.dispex);
-    heap_free(arguments);
+    free(arguments);
 }
 
 static unsigned Arguments_idx_length(jsdisp_t *jsdisp)
@@ -182,13 +182,13 @@ HRESULT setup_arguments_object(script_ctx_t *ctx, call_frame_t *frame)
     ArgumentsInstance *args;
     HRESULT hres;
 
-    args = heap_alloc_zero(sizeof(*args));
+    args = calloc(1, sizeof(*args));
     if(!args)
         return E_OUTOFMEMORY;
 
     hres = init_dispex_from_constr(&args->jsdisp, ctx, &Arguments_info, ctx->object_constr);
     if(FAILED(hres)) {
-        heap_free(args);
+        free(args);
         return hres;
     }
 
@@ -226,7 +226,7 @@ void detach_arguments_object(jsdisp_t *args_disp)
 
     /* Don't bother coppying arguments if call frame holds the last reference. */
     if(arguments->jsdisp.ref > 1) {
-        arguments->buf = heap_alloc(arguments->argc * sizeof(*arguments->buf));
+        arguments->buf = malloc(arguments->argc * sizeof(*arguments->buf));
         if(arguments->buf) {
             int i;
 
@@ -315,7 +315,7 @@ static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, unsigned *a
     if(FAILED(hres))
         return hres;
 
-    argv = heap_alloc(length * sizeof(*argv));
+    argv = malloc(length * sizeof(*argv));
     if(!argv)
         return E_OUTOFMEMORY;
 
@@ -326,7 +326,7 @@ static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, unsigned *a
         }else if(FAILED(hres)) {
             while(i--)
                 jsval_release(argv[i]);
-            heap_free(argv);
+            free(argv);
             return hres;
         }
     }
@@ -405,7 +405,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
     jsval_release(this_val);
     for(i=0; i < cnt; i++)
         jsval_release(args[i]);
-    heap_free(args);
+    free(args);
     return hres;
 }
 
@@ -551,7 +551,7 @@ static void Function_destructor(jsdisp_t *dispex)
 {
     FunctionInstance *function = function_from_jsdisp(dispex);
     function->vtbl->destructor(function);
-    heap_free(function);
+    free(function);
 }
 
 static const builtin_prop_t Function_props[] = {
@@ -592,7 +592,7 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
     FunctionInstance *function;
     HRESULT hres;
 
-    function = heap_alloc_zero(size);
+    function = calloc(1, size);
     if(!function)
         return E_OUTOFMEMORY;
 
@@ -603,7 +603,7 @@ static HRESULT create_function(script_ctx_t *ctx, const builtin_info_t *builtin_
     else
         hres = init_dispex_from_constr(&function->dispex, ctx, &FunctionInst_info, ctx->function_constr);
     if(FAILED(hres)) {
-        heap_free(function);
+        free(function);
         return hres;
     }
 
@@ -840,7 +840,7 @@ static HRESULT BindFunction_call(script_ctx_t *ctx, FunctionInstance *func, jsva
 
     call_argc = function->argc + argc;
     if(call_argc) {
-        call_args = heap_alloc(call_argc * sizeof(*call_args));
+        call_args = malloc(call_argc * sizeof(*call_args));
         if(!call_args)
             return E_OUTOFMEMORY;
 
@@ -852,7 +852,7 @@ static HRESULT BindFunction_call(script_ctx_t *ctx, FunctionInstance *func, jsva
 
     hres = function->target->vtbl->call(ctx, function->target, function->this, flags, call_argc, call_args, r);
 
-    heap_free(call_args);
+    free(call_args);
     return hres;
 }
 
@@ -936,7 +936,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
     static const WCHAR function_endW[] = L"\n}";
 
     if(argc) {
-        params = heap_alloc(argc*sizeof(*params));
+        params = malloc(argc*sizeof(*params));
         if(!params)
             return E_OUTOFMEMORY;
 
@@ -952,7 +952,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
 
     if(SUCCEEDED(hres)) {
         len += ARRAY_SIZE(function_anonymousW) + ARRAY_SIZE(function_beginW) + ARRAY_SIZE(function_endW) - 2;
-        str = heap_alloc(len*sizeof(WCHAR));
+        str = malloc(len*sizeof(WCHAR));
         if(str) {
             memcpy(str, function_anonymousW, sizeof(function_anonymousW));
             ptr = str + ARRAY_SIZE(function_anonymousW) - 1;
@@ -979,13 +979,13 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
 
     while(i)
         jsstr_release(params[--i]);
-    heap_free(params);
+    free(params);
     if(FAILED(hres))
         return hres;
 
     hres = compile_script(ctx, str, 0, 0, NULL, NULL, FALSE, FALSE,
                           ctx->call_ctx ? ctx->call_ctx->bytecode->named_item : NULL, &code);
-    heap_free(str);
+    free(str);
     if(FAILED(hres))
         return hres;
 

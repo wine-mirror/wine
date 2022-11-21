@@ -73,20 +73,20 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
     if(argc < SafeArrayGetDim(vbarray->safearray))
         return JS_E_SUBSCRIPT_OUT_OF_RANGE;
 
-    indexes = heap_alloc(sizeof(indexes[0])*argc);
+    indexes = malloc(sizeof(indexes[0])*argc);
     if(!indexes)
         return E_OUTOFMEMORY;
 
     for(i=0; i<argc; i++) {
         hres = to_long(ctx, argv[i], indexes + i);
         if(FAILED(hres)) {
-            heap_free(indexes);
+            free(indexes);
             return hres;
         }
     }
 
     hres = SafeArrayGetElement(vbarray->safearray, indexes, (void*)&out);
-    heap_free(indexes);
+    free(indexes);
     if(hres == DISP_E_BADINDEX)
         return JS_E_SUBSCRIPT_OUT_OF_RANGE;
     else if(FAILED(hres))
@@ -235,7 +235,7 @@ static void VBArray_destructor(jsdisp_t *dispex)
     VBArrayInstance *vbarray = vbarray_from_jsdisp(dispex);
 
     SafeArrayDestroy(vbarray->safearray);
-    heap_free(vbarray);
+    free(vbarray);
 }
 
 static const builtin_prop_t VBArray_props[] = {
@@ -260,7 +260,7 @@ static HRESULT alloc_vbarray(script_ctx_t *ctx, jsdisp_t *object_prototype, VBAr
     VBArrayInstance *vbarray;
     HRESULT hres;
 
-    vbarray = heap_alloc_zero(sizeof(VBArrayInstance));
+    vbarray = calloc(1, sizeof(VBArrayInstance));
     if(!vbarray)
         return E_OUTOFMEMORY;
 
@@ -270,7 +270,7 @@ static HRESULT alloc_vbarray(script_ctx_t *ctx, jsdisp_t *object_prototype, VBAr
         hres = init_dispex_from_constr(&vbarray->dispex, ctx, &VBArray_info, ctx->vbarray_constr);
 
     if(FAILED(hres)) {
-        heap_free(vbarray);
+        free(vbarray);
         return hres;
     }
 

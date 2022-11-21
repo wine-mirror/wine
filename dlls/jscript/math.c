@@ -519,13 +519,13 @@ HRESULT create_math(script_ctx_t *ctx, jsdisp_t **ret)
         {L"SQRT2",    M_SQRT2},    /* ECMA-262 3rd Edition    15.8.1.8 */
     };
 
-    math = heap_alloc_zero(sizeof(jsdisp_t));
+    math = calloc(1, sizeof(jsdisp_t));
     if(!math)
         return E_OUTOFMEMORY;
 
     hres = init_dispex_from_constr(math, ctx, &Math_info, ctx->object_constr);
     if(FAILED(hres)) {
-        heap_free(math);
+        free(math);
         return hres;
     }
 

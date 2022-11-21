@@ -134,7 +134,7 @@ static void release_map_entry(struct jsval_map_entry *entry)
     jsval_release(entry->key);
     jsval_release(entry->value);
     list_remove(&entry->list_entry);
-    heap_free(entry);
+    free(entry);
 }
 
 static void delete_map_entry(MapInstance *map, struct jsval_map_entry *entry)
@@ -159,7 +159,7 @@ static HRESULT set_map_entry(MapInstance *map, jsval_t key, jsval_t value, jsval
         jsval_release(entry->value);
         entry->value = val;
     }else {
-        if(!(entry = heap_alloc_zero(sizeof(*entry)))) return E_OUTOFMEMORY;
+        if(!(entry = calloc(1, sizeof(*entry)))) return E_OUTOFMEMORY;
 
         hres = jsval_copy(key, &entry->key);
         if(SUCCEEDED(hres)) {
@@ -168,7 +168,7 @@ static HRESULT set_map_entry(MapInstance *map, jsval_t key, jsval_t value, jsval
                 jsval_release(entry->key);
         }
         if(FAILED(hres)) {
-            heap_free(entry);
+            free(entry);
             return hres;
         }
         grab_map_entry(entry);
@@ -366,7 +366,7 @@ static void Map_destructor(jsdisp_t *dispex)
         release_map_entry(entry);
     }
 
-    heap_free(map);
+    free(map);
 }
 static const builtin_prop_t Map_prototype_props[] = {
     {L"clear",      Map_clear,     PROPF_METHOD},
@@ -411,7 +411,7 @@ static HRESULT Map_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
 
         if(!r)
             return S_OK;
-        if(!(map = heap_alloc_zero(sizeof(*map))))
+        if(!(map = calloc(1, sizeof(*map))))
             return E_OUTOFMEMORY;
 
         hres = init_dispex(&map->dispex, ctx, &Map_info, ctx->map_prototype);
@@ -563,7 +563,7 @@ static HRESULT Set_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
 
         if(!r)
             return S_OK;
-        if(!(set = heap_alloc_zero(sizeof(*set))))
+        if(!(set = calloc(1, sizeof(*set))))
             return E_OUTOFMEMORY;
 
         hres = init_dispex(&set->dispex, ctx, &Set_info, ctx->set_prototype);

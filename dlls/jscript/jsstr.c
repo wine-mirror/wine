@@ -45,7 +45,7 @@ void jsstr_free(jsstr_t *str)
 {
     switch(jsstr_tag(str)) {
     case JSSTR_HEAP:
-        heap_free(jsstr_as_heap(str)->buf);
+        free(jsstr_as_heap(str)->buf);
         break;
     case JSSTR_ROPE: {
         jsstr_rope_t *rope = jsstr_as_rope(str);
@@ -57,7 +57,7 @@ void jsstr_free(jsstr_t *str)
         break;
     }
 
-    heap_free(str);
+    free(str);
 }
 
 static inline void jsstr_init(jsstr_t *str, unsigned len, jsstr_tag_t tag)
@@ -73,7 +73,7 @@ jsstr_t *jsstr_alloc_buf(unsigned len, WCHAR **buf)
     if(len > JSSTR_MAX_LENGTH)
         return NULL;
 
-    ret = heap_alloc(FIELD_OFFSET(jsstr_inline_t, buf[len+1]));
+    ret = malloc(FIELD_OFFSET(jsstr_inline_t, buf[len+1]));
     if(!ret)
         return NULL;
 
@@ -234,7 +234,7 @@ jsstr_t *jsstr_concat(jsstr_t *str1, jsstr_t *str2)
             if(len1+len2 > JSSTR_MAX_LENGTH)
                 return NULL;
 
-            rope = heap_alloc(sizeof(*rope));
+            rope = malloc(sizeof(*rope));
             if(!rope)
                 return NULL;
 
@@ -262,7 +262,7 @@ const WCHAR *jsstr_rope_flatten(jsstr_rope_t *str)
 {
     WCHAR *buf;
 
-    buf = heap_alloc((jsstr_length(&str->str)+1) * sizeof(WCHAR));
+    buf = malloc((jsstr_length(&str->str)+1) * sizeof(WCHAR));
     if(!buf)
         return NULL;
 

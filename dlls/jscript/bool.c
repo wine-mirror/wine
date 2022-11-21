@@ -180,7 +180,7 @@ static HRESULT alloc_bool(script_ctx_t *ctx, jsdisp_t *object_prototype, BoolIns
     BoolInstance *bool;
     HRESULT hres;
 
-    bool = heap_alloc_zero(sizeof(BoolInstance));
+    bool = calloc(1, sizeof(BoolInstance));
     if(!bool)
         return E_OUTOFMEMORY;
 
@@ -190,7 +190,7 @@ static HRESULT alloc_bool(script_ctx_t *ctx, jsdisp_t *object_prototype, BoolIns
         hres = init_dispex_from_constr(&bool->dispex, ctx, &BoolInst_info, ctx->bool_constr);
 
     if(FAILED(hres)) {
-        heap_free(bool);
+        free(bool);
         return hres;
     }
 

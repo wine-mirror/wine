@@ -362,7 +362,7 @@ static HRESULT String_concat(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsig
         jsstr_t **strs;
         WCHAR *ptr;
 
-        strs = heap_alloc_zero(str_cnt * sizeof(*strs));
+        strs = calloc(str_cnt, sizeof(*strs));
         if(!strs) {
             jsstr_release(str);
             return E_OUTOFMEMORY;
@@ -397,7 +397,7 @@ static HRESULT String_concat(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsig
 
         while(i--)
             jsstr_release(strs[i]);
-        heap_free(strs);
+        free(strs);
         if(FAILED(hres))
             return hres;
     }
@@ -628,9 +628,9 @@ static BOOL strbuf_ensure_size(strbuf_t *buf, unsigned len)
     if(new_size < len)
         new_size = len;
     if(buf->buf)
-        new_buf = heap_realloc(buf->buf, new_size*sizeof(WCHAR));
+        new_buf = realloc(buf->buf, new_size*sizeof(WCHAR));
     else
-        new_buf = heap_alloc(new_size*sizeof(WCHAR));
+        new_buf = malloc(new_size*sizeof(WCHAR));
     if(!new_buf)
         return FALSE;
 
@@ -673,7 +673,7 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func,
     HRESULT hres = S_OK;
 
     argc = match->paren_count+3;
-    argv = heap_alloc_zero(sizeof(*argv)*argc);
+    argv = calloc(argc, sizeof(*argv));
     if(!argv)
         return E_OUTOFMEMORY;
 
@@ -706,7 +706,7 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func,
 
     for(i=0; i <= match->paren_count; i++)
         jsstr_release(get_string(argv[i]));
-    heap_free(argv);
+    free(argv);
 
     if(FAILED(hres))
         return hres;
@@ -909,7 +909,7 @@ static HRESULT String_replace(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
     if(match_str)
         jsstr_release(match_jsstr);
     if(regexp)
-        heap_free(match);
+        free(match);
 
     if(SUCCEEDED(hres) && last_match.cp && regexp) {
         jsstr_release(ctx->last_match);
@@ -933,7 +933,7 @@ static HRESULT String_replace(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
         *r = jsval_string(ret_str);
     }
 
-    heap_free(ret.buf);
+    free(ret.buf);
     return hres;
 }
 
@@ -1500,7 +1500,7 @@ static void String_destructor(jsdisp_t *dispex)
     StringInstance *This = string_from_jsdisp(dispex);
 
     jsstr_release(This->str);
-    heap_free(This);
+    free(This);
 }
 
 static unsigned String_idx_length(jsdisp_t *jsdisp)
@@ -1681,7 +1681,7 @@ static HRESULT string_alloc(script_ctx_t *ctx, jsdisp_t *object_prototype, jsstr
     StringInstance *string;
     HRESULT hres;
 
-    string = heap_alloc_zero(sizeof(StringInstance));
+    string = calloc(1, sizeof(StringInstance));
     if(!string)
         return E_OUTOFMEMORY;
 
@@ -1690,7 +1690,7 @@ static HRESULT string_alloc(script_ctx_t *ctx, jsdisp_t *object_prototype, jsstr
     else
         hres = init_dispex_from_constr(&string->dispex, ctx, &StringInst_info, ctx->string_constr);
     if(FAILED(hres)) {
-        heap_free(string);
+        free(string);
         return hres;
     }
 

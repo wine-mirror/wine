@@ -820,10 +820,10 @@ void release_cc(cc_ctx_t *cc)
 
     for(iter = cc->vars; iter; iter = next) {
         next = iter->next;
-        heap_free(iter);
+        free(iter);
     }
 
-    heap_free(cc);
+    free(cc);
 }
 
 static BOOL new_cc_var(cc_ctx_t *cc, const WCHAR *name, int len, ccval_t v)
@@ -833,7 +833,7 @@ static BOOL new_cc_var(cc_ctx_t *cc, const WCHAR *name, int len, ccval_t v)
     if(len == -1)
         len = lstrlenW(name);
 
-    new_v = heap_alloc(sizeof(cc_var_t) + (len+1)*sizeof(WCHAR));
+    new_v = malloc(sizeof(cc_var_t) + (len+1)*sizeof(WCHAR));
     if(!new_v)
         return FALSE;
 
@@ -864,7 +864,7 @@ static BOOL init_cc(parser_ctx_t *ctx)
     if(ctx->script->cc)
         return TRUE;
 
-    cc = heap_alloc(sizeof(cc_ctx_t));
+    cc = malloc(sizeof(cc_ctx_t));
     if(!cc) {
         lex_error(ctx, E_OUTOFMEMORY);
         return FALSE;

@@ -74,7 +74,7 @@ static HRESULT parse_json_string(json_parse_ctx_t *ctx, WCHAR **r)
     }
 
     len = ctx->ptr-ptr;
-    buf = heap_alloc((len+1)*sizeof(WCHAR));
+    buf = malloc((len+1)*sizeof(WCHAR));
     if(!buf)
         return E_OUTOFMEMORY;
     if(len)
@@ -82,7 +82,7 @@ static HRESULT parse_json_string(json_parse_ctx_t *ctx, WCHAR **r)
 
     if(!unescape(buf, &len)) {
         FIXME("unescape failed\n");
-        heap_free(buf);
+        free(buf);
         return E_FAIL;
     }
 
@@ -144,7 +144,7 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
 
             if(skip_spaces(ctx) != ':') {
                 FIXME("missing ':'\n");
-                heap_free(prop_name);
+                free(prop_name);
                 break;
             }
 
@@ -154,7 +154,7 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
                 hres = jsdisp_propput_name(obj, prop_name, val);
                 jsval_release(val);
             }
-            heap_free(prop_name);
+            free(prop_name);
             if(FAILED(hres))
                 break;
 
@@ -186,7 +186,7 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
 
         /* FIXME: avoid reallocation */
         str = jsstr_alloc(string);
-        heap_free(string);
+        free(string);
         if(!str)
             return E_OUTOFMEMORY;
 
@@ -435,14 +435,14 @@ typedef struct {
 static BOOL stringify_push_obj(stringify_ctx_t *ctx, jsdisp_t *obj)
 {
     if(!ctx->stack_size) {
-        ctx->stack = heap_alloc(4*sizeof(*ctx->stack));
+        ctx->stack = malloc(4*sizeof(*ctx->stack));
         if(!ctx->stack)
             return FALSE;
         ctx->stack_size = 4;
     }else if(ctx->stack_top == ctx->stack_size) {
         jsdisp_t **new_stack;
 
-        new_stack = heap_realloc(ctx->stack, ctx->stack_size*2*sizeof(*ctx->stack));
+        new_stack = realloc(ctx->stack, ctx->stack_size*2*sizeof(*ctx->stack));
         if(!new_stack)
             return FALSE;
         ctx->stack = new_stack;
@@ -471,7 +471,7 @@ static BOOL is_on_stack(stringify_ctx_t *ctx, jsdisp_t *obj)
 static BOOL append_string_len(stringify_ctx_t *ctx, const WCHAR *str, size_t len)
 {
     if(!ctx->buf_size) {
-        ctx->buf = heap_alloc(len*2*sizeof(WCHAR));
+        ctx->buf = malloc(len*2*sizeof(WCHAR));
         if(!ctx->buf)
             return FALSE;
         ctx->buf_size = len*2;
@@ -480,7 +480,7 @@ static BOOL append_string_len(stringify_ctx_t *ctx, const WCHAR *str, size_t len
         size_t new_size;
 
         new_size = ctx->buf_size * 2 + len;
-        new_buf = heap_realloc(ctx->buf, new_size*sizeof(WCHAR));
+        new_buf = realloc(ctx->buf, new_size*sizeof(WCHAR));
         if(!new_buf)
             return FALSE;
         ctx->buf = new_buf;
@@ -938,8 +938,8 @@ fail:
         jsdisp_release(obj);
     if(stringify_ctx.replacer)
         jsdisp_release(stringify_ctx.replacer);
-    heap_free(stringify_ctx.buf);
-    heap_free(stringify_ctx.stack);
+    free(stringify_ctx.buf);
+    free(stringify_ctx.stack);
     return hres;
 }
 
@@ -962,13 +962,13 @@ HRESULT create_json(script_ctx_t *ctx, jsdisp_t **ret)
     jsdisp_t *json;
     HRESULT hres;
 
-    json = heap_alloc_zero(sizeof(*json));
+    json = calloc(1, sizeof(*json));
     if(!json)
         return E_OUTOFMEMORY;
 
     hres = init_dispex_from_constr(json, ctx, &JSON_info, ctx->object_constr);
     if(FAILED(hres)) {
-        heap_free(json);
+        free(json);
         return hres;
     }
 

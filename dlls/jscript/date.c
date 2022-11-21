@@ -1924,7 +1924,7 @@ static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE
 
     GetTimeZoneInformation(&tzi);
 
-    date = heap_alloc_zero(sizeof(DateInstance));
+    date = calloc(1, sizeof(DateInstance));
     if(!date)
         return E_OUTOFMEMORY;
 
@@ -1933,7 +1933,7 @@ static HRESULT create_date(script_ctx_t *ctx, jsdisp_t *object_prototype, DOUBLE
     else
         hres = init_dispex_from_constr(&date->dispex, ctx, &DateInst_info, ctx->date_constr);
     if(FAILED(hres)) {
-        heap_free(date);
+        free(date);
         return hres;
     }
 
@@ -1986,7 +1986,7 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
         else if(!nest_level) parse_len++;
     }
 
-    parse = heap_alloc((parse_len+1)*sizeof(WCHAR));
+    parse = malloc((parse_len+1)*sizeof(WCHAR));
     if(!parse)
         return E_OUTOFMEMORY;
     nest_level = 0;
@@ -2009,12 +2009,12 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
     lcid_en = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
     for(i=0; i<ARRAY_SIZE(string_ids); i++) {
         size = GetLocaleInfoW(lcid_en, string_ids[i], NULL, 0);
-        strings[i] = heap_alloc((size+1)*sizeof(WCHAR));
+        strings[i] = malloc((size+1)*sizeof(WCHAR));
         if(!strings[i]) {
             i--;
             while(i-- >= 0)
-                heap_free(strings[i]);
-            heap_free(parse);
+                free(strings[i]);
+            free(parse);
             return E_OUTOFMEMORY;
         }
         GetLocaleInfoW(lcid_en, string_ids[i], strings[i], size);
@@ -2222,8 +2222,8 @@ static inline HRESULT date_parse(jsstr_t *input_str, double *ret) {
     }
 
     for(i=0; i<ARRAY_SIZE(string_ids); i++)
-        heap_free(strings[i]);
-    heap_free(parse);
+        free(strings[i]);
+    free(parse);
 
     return S_OK;
 }

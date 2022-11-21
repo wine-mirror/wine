@@ -447,7 +447,7 @@ done:
 
 static void Object_destructor(jsdisp_t *dispex)
 {
-    heap_free(dispex);
+    free(dispex);
 }
 
 static const builtin_prop_t Object_props[] = {
@@ -1137,13 +1137,13 @@ HRESULT create_object(script_ctx_t *ctx, jsdisp_t *constr, jsdisp_t **ret)
     jsdisp_t *object;
     HRESULT hres;
 
-    object = heap_alloc_zero(sizeof(jsdisp_t));
+    object = calloc(1, sizeof(jsdisp_t));
     if(!object)
         return E_OUTOFMEMORY;
 
     hres = init_dispex_from_constr(object, ctx, &ObjectInst_info, constr ? constr : ctx->object_constr);
     if(FAILED(hres)) {
-        heap_free(object);
+        free(object);
         return hres;
     }
 
