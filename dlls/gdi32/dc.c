@@ -199,8 +199,11 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     UNICODE_STRING device_str, output_str;
     driver_entry_point entry_point = NULL;
     const WCHAR *display = NULL, *p;
+    WCHAR buf[300], *port = NULL;
     BOOL is_display = FALSE;
-    WCHAR buf[300];
+    HANDLE hspool = NULL;
+    DC_ATTR *dc_attr;
+    HDC ret;
 
     if (!device || !get_driver_name( device, buf, 300 ))
     {
@@ -210,6 +213,12 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
             return 0;
         }
         lstrcpyW(buf, driver);
+    }
+
+    if (output)
+    {
+        output_str.Length = output_str.MaximumLength = lstrlenW(output) * sizeof(WCHAR);
+        output_str.Buffer = (WCHAR *)output;
     }
 
     if (is_display_device( driver ))
@@ -231,6 +240,15 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         ERR( "no driver found for %s\n", debugstr_w(buf) );
         return 0;
     }
+    else if (!OpenPrinterW( (WCHAR *)device, &hspool, NULL ))
+    {
+        return 0;
+    }
+    else if (output && !(port = HeapAlloc( GetProcessHeap(), 0, output_str.Length )))
+    {
+        ClosePrinter( hspool );
+        return 0;
+    }
 
     if (display)
     {
@@ -247,14 +265,23 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
         device_str.Buffer = (WCHAR *)device;
     }
 
-    if (output)
+    ret = NtGdiOpenDCW( device || display ? &device_str : NULL, devmode, output ? &output_str : NULL,
+                        0, is_display, entry_point, NULL, NULL );
+
+    if (ret && hspool && (dc_attr = get_dc_attr( ret )))
     {
-        output_str.Length = output_str.MaximumLength = lstrlenW(output) * sizeof(WCHAR);
-        output_str.Buffer = (WCHAR *)output;
+        if (port)
+            memcpy( port, output, output_str.Length );
+        dc_attr->hspool = HandleToULong( hspool );
+        dc_attr->output = (ULONG_PTR)port;
+    }
+    else if (hspool)
+    {
+        ClosePrinter( hspool );
+        HeapFree( GetProcessHeap(), 0, port );
     }
 
-    return NtGdiOpenDCW( device || display ? &device_str : NULL, devmode, output ? &output_str : NULL,
-                         0, is_display, entry_point, NULL, NULL );
+    return ret;
 }
 
 /***********************************************************************
@@ -371,6 +398,10 @@ BOOL WINAPI DeleteDC( HDC hdc )
 
     if (is_meta_dc( hdc )) return METADC_DeleteDC( hdc );
     if (!(dc_attr = get_dc_attr( hdc ))) return FALSE;
+    HeapFree( GetProcessHeap(), 0, (WCHAR *)(ULONG_PTR)dc_attr->output );
+    dc_attr->output = 0;
+    if (dc_attr->hspool) ClosePrinter( ULongToHandle(dc_attr->hspool) );
+    dc_attr->hspool = 0;
     if (dc_attr->emf) EMFDC_DeleteDC( dc_attr );
     return NtGdiDeleteObjectApp( hdc );
 }
@@ -2153,9 +2184,11 @@ BOOL WINAPI CancelDC(HDC hdc)
  */
 INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
 {
+    WCHAR *output = NULL;
     DC_ATTR *dc_attr;
     ABORTPROC proc;
     DOCINFOW info;
+    INT ret;
 
     TRACE("%p %p\n", hdc, doc);
 
@@ -2177,7 +2210,17 @@ INT WINAPI StartDocW( HDC hdc, const DOCINFOW *doc )
 
     proc = (ABORTPROC)(UINT_PTR)dc_attr->abort_proc;
     if (proc && !proc( hdc, 0 )) return 0;
-    return NtGdiStartDoc( hdc, &info, NULL, 0 );
+
+    if (dc_attr->hspool)
+    {
+        if (!info.lpszOutput) info.lpszOutput = (const WCHAR *)(ULONG_PTR)dc_attr->output;
+        output = StartDocDlgW( ULongToHandle( dc_attr->hspool ), &info );
+        if (output) info.lpszOutput = output;
+    }
+
+    ret = NtGdiStartDoc( hdc, &info, NULL, 0 );
+    HeapFree( GetProcessHeap(), 0, output );
+    return ret;
 }
 
 /***********************************************************************

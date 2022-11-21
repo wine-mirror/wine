@@ -198,6 +198,8 @@ typedef struct DC_ATTR
     RECTL     emf_bounds;
     UINT64    emf;                 /* client EMF record pointer */
     UINT64    abort_proc;          /* AbortProc for printing */
+    UINT64    hspool;
+    UINT64    output;
 } DC_ATTR;
 
 struct font_enum_entry
