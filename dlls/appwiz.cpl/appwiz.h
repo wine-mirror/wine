@@ -16,7 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "wine/heap.h"
 #include "winnls.h"
 
 typedef enum {
@@ -28,23 +27,7 @@ BOOL install_addon(addon_t) DECLSPEC_HIDDEN;
 
 extern HINSTANCE hInst DECLSPEC_HIDDEN;
 
-static inline WCHAR *heap_strdupW(const WCHAR *str)
-{
-    WCHAR *ret;
-
-    if(str) {
-        size_t size = lstrlenW(str)+1;
-        ret = heap_alloc(size*sizeof(WCHAR));
-        if(ret)
-            memcpy(ret, str, size*sizeof(WCHAR));
-    }else {
-        ret = NULL;
-    }
-
-    return ret;
-}
-
-static inline WCHAR *heap_strdupAtoW(const char *str)
+static inline WCHAR *strdupAtoW(const char *str)
 {
     WCHAR *ret = NULL;
 
@@ -52,7 +35,7 @@ static inline WCHAR *heap_strdupAtoW(const char *str)
         size_t len;
 
         len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        ret = heap_alloc(len*sizeof(WCHAR));
+        ret = malloc(len * sizeof(WCHAR));
         if(ret)
             MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
     }
