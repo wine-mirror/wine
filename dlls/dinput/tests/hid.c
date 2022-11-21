@@ -1543,7 +1543,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
             .LinkUsagePage = HID_USAGE_PAGE_GENERIC,
             .LinkCollection = 1,
             .IsAbsolute = TRUE,
-            .BitSize = 4,
+            .BitSize = 24,
             .ReportCount = 2,
             .LogicalMin = 1,
             .LogicalMax = 8,
@@ -1792,26 +1792,50 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     status = HidP_SetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, buffer,
                                       sizeof(buffer), preparsed_data, report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_SetUsageValueArray returned %#lx\n", status );
-    memset( buffer, 0xcd, sizeof(buffer) );
+    memset( buffer, 0xa5, sizeof(buffer) );
     status = HidP_SetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                       buffer, 0, preparsed_data, report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_SetUsageValueArray returned %#lx\n", status );
     status = HidP_SetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                       buffer, 8, preparsed_data, report, caps.InputReportByteLength );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValueArray returned %#lx\n", status );
+    ok( report[16] == (char)0xa5, "got report value %d\n", report[16] );
+    ok( report[17] == (char)0xa5, "got report value %d\n", report[17] );
+
+    report[16] = 0xa5;
+    report[17] = 0xa5;
+    status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
+                                 8, preparsed_data, report, caps.InputReportByteLength );
     todo_wine
-    ok( status == HIDP_STATUS_NOT_IMPLEMENTED, "HidP_SetUsageValueArray returned %#lx\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_SetUsageValue returned %#lx\n", status );
+    todo_wine
+    ok( report[16] == (char)8, "got value %#x\n", report[16] );
+    todo_wine
+    ok( report[17] == (char)0, "got value %#x\n", report[17] );
 
     status = HidP_GetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, buffer,
                                       sizeof(buffer), preparsed_data, report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_NOT_VALUE_ARRAY, "HidP_GetUsageValueArray returned %#lx\n", status );
-    memset( buffer, 0xcd, sizeof(buffer) );
+    memset( buffer, 0xa5, sizeof(buffer) );
     status = HidP_GetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                       buffer, 0, preparsed_data, report, caps.InputReportByteLength );
     ok( status == HIDP_STATUS_BUFFER_TOO_SMALL, "HidP_GetUsageValueArray returned %#lx\n", status );
+    report[16] = 0xcd;
+    report[17] = 0xcd;
     status = HidP_GetUsageValueArray( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
                                       buffer, 8, preparsed_data, report, caps.InputReportByteLength );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValueArray returned %#lx\n", status );
+    ok( buffer[0] == (char)0xcd, "got report value %#x\n", buffer[0] );
+    ok( buffer[1] == (char)0xcd, "got report value %#x\n", buffer[1] );
+
+    report[16] = 0xff;
+    report[17] = 0xff;
+    status = HidP_GetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_HATSWITCH,
+                                 &value, preparsed_data, report, caps.InputReportByteLength );
     todo_wine
-    ok( status == HIDP_STATUS_NOT_IMPLEMENTED, "HidP_GetUsageValueArray returned %#lx\n", status );
+    ok( status == HIDP_STATUS_SUCCESS, "HidP_GetUsageValue returned %#lx\n", status );
+    todo_wine
+    ok( value == 0xffff, "got value %ld\n", value );
 
     value = -128;
     status = HidP_SetUsageValue( HidP_Input, HID_USAGE_PAGE_GENERIC, 0, HID_USAGE_GENERIC_X, value,
@@ -2787,7 +2811,7 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
                 USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
                 LOGICAL_MINIMUM(1, 1),
                 LOGICAL_MAXIMUM(1, 8),
-                REPORT_SIZE(1, 4),
+                REPORT_SIZE(1, 24),
                 REPORT_COUNT(1, 2),
                 INPUT(1, Data|Var|Abs),
 
@@ -2989,7 +3013,7 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     {
         .Usage = HID_USAGE_GENERIC_JOYSTICK,
         .UsagePage = HID_USAGE_PAGE_GENERIC,
-        .InputReportByteLength = report_id ? 32 : 33,
+        .InputReportByteLength = report_id ? 37 : 38,
         .OutputReportByteLength = report_id ? 2 : 3,
         .FeatureReportByteLength = report_id ? 31 : 32,
         .NumberLinkCollectionNodes = 11,
