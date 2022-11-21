@@ -4903,7 +4903,7 @@ struct async_fileio *alloc_fileio( DWORD size, async_callback_t callback, HANDLE
 }
 
 /* callback for irp async I/O completion */
-static BOOL irp_completion( void *user, ULONG_PTR *info, NTSTATUS *status )
+static BOOL irp_completion( void *user, ULONG_PTR *info, unsigned int *status )
 {
     struct async_irp *async = user;
 
@@ -4921,7 +4921,7 @@ static BOOL irp_completion( void *user, ULONG_PTR *info, NTSTATUS *status )
     return TRUE;
 }
 
-static BOOL async_read_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
+static BOOL async_read_proc( void *user, ULONG_PTR *info, unsigned int *status )
 {
     struct async_fileio_read *fileio = user;
     int fd, needs_close, result;
@@ -4971,7 +4971,7 @@ static BOOL async_read_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
     return TRUE;
 }
 
-static BOOL async_write_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
+static BOOL async_write_proc( void *user, ULONG_PTR *info, unsigned int *status )
 {
     struct async_fileio_write *fileio = user;
     int result, fd, needs_close;
@@ -6327,7 +6327,7 @@ NTSTATUS WINAPI NtUnlockFile( HANDLE handle, IO_STATUS_BLOCK *io_status, LARGE_I
 }
 
 
-static BOOL read_changes_apc( void *user, ULONG_PTR *info, NTSTATUS *status )
+static BOOL read_changes_apc( void *user, ULONG_PTR *info, unsigned int *status )
 {
     struct async_fileio_read_changes *fileio = user;
     int size = 0;

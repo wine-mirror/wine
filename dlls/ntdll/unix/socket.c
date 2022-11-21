@@ -809,7 +809,7 @@ static NTSTATUS try_recv( int fd, struct async_recv_ioctl *async, ULONG_PTR *siz
     return status;
 }
 
-static BOOL async_recv_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
+static BOOL async_recv_proc( void *user, ULONG_PTR *info, unsigned int *status )
 {
     struct async_recv_ioctl *async = user;
     int fd, needs_close;
@@ -1046,7 +1046,7 @@ static NTSTATUS try_send( int fd, struct async_send_ioctl *async )
     return STATUS_SUCCESS;
 }
 
-static BOOL async_send_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
+static BOOL async_send_proc( void *user, ULONG_PTR *info, unsigned int *status )
 {
     struct async_send_ioctl *async = user;
     int fd, needs_close;
@@ -1293,7 +1293,7 @@ static NTSTATUS try_transmit( int sock_fd, int file_fd, struct async_transmit_io
     return STATUS_SUCCESS;
 }
 
-static BOOL async_transmit_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
+static BOOL async_transmit_proc( void *user, ULONG_PTR *info, unsigned int *status )
 {
     int sock_fd, file_fd = -1, sock_needs_close = FALSE, file_needs_close = FALSE;
     struct async_transmit_ioctl *async = user;

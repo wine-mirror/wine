@@ -76,7 +76,7 @@ static inline struct ntdll_thread_data *ntdll_get_thread_data(void)
 }
 
 /* returns TRUE if the async is complete; FALSE if it should be restarted */
-typedef BOOL async_callback_t( void *user, ULONG_PTR *info, NTSTATUS *status );
+typedef BOOL async_callback_t( void *user, ULONG_PTR *info, unsigned int *status );
 
 struct async_fileio
 {
