@@ -91,8 +91,8 @@ static ULONG WINAPI DailyTrigger_Release(IDailyTrigger *iface)
     if(!ref)
     {
         TRACE("destroying %p\n", iface);
-        heap_free(This->start_boundary);
-        heap_free(This);
+        free(This->start_boundary);
+        free(This);
     }
 
     return ref;
@@ -199,8 +199,8 @@ static HRESULT WINAPI DailyTrigger_put_StartBoundary(IDailyTrigger *iface, BSTR 
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(start));
 
-    if (start && !(str = heap_strdupW(start))) return E_OUTOFMEMORY;
-    heap_free(This->start_boundary);
+    if (start && !(str = wcsdup(start))) return E_OUTOFMEMORY;
+    free(This->start_boundary);
     This->start_boundary = str;
 
     return S_OK;
@@ -373,7 +373,7 @@ static ULONG WINAPI TriggerCollection_Release(ITriggerCollection *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -503,14 +503,14 @@ static ULONG WINAPI RegistrationInfo_Release(IRegistrationInfo *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        heap_free(reginfo->description);
-        heap_free(reginfo->author);
-        heap_free(reginfo->version);
-        heap_free(reginfo->date);
-        heap_free(reginfo->documentation);
-        heap_free(reginfo->uri);
-        heap_free(reginfo->source);
-        heap_free(reginfo);
+        free(reginfo->description);
+        free(reginfo->author);
+        free(reginfo->version);
+        free(reginfo->date);
+        free(reginfo->documentation);
+        free(reginfo->uri);
+        free(reginfo->source);
+        free(reginfo);
     }
 
     return ref;
@@ -584,8 +584,8 @@ static HRESULT WINAPI RegistrationInfo_put_Description(IRegistrationInfo *iface,
 
     TRACE("%p,%s\n", iface, debugstr_w(description));
 
-    if (description && !(str = heap_strdupW(description))) return E_OUTOFMEMORY;
-    heap_free(reginfo->description);
+    if (description && !(str = wcsdup(description))) return E_OUTOFMEMORY;
+    free(reginfo->description);
     reginfo->description = str;
     return S_OK;
 }
@@ -611,8 +611,8 @@ static HRESULT WINAPI RegistrationInfo_put_Author(IRegistrationInfo *iface, BSTR
 
     TRACE("%p,%s\n", iface, debugstr_w(author));
 
-    if (author && !(str = heap_strdupW(author))) return E_OUTOFMEMORY;
-    heap_free(reginfo->author);
+    if (author && !(str = wcsdup(author))) return E_OUTOFMEMORY;
+    free(reginfo->author);
     reginfo->author = str;
     return S_OK;
 }
@@ -638,8 +638,8 @@ static HRESULT WINAPI RegistrationInfo_put_Version(IRegistrationInfo *iface, BST
 
     TRACE("%p,%s\n", iface, debugstr_w(version));
 
-    if (version && !(str = heap_strdupW(version))) return E_OUTOFMEMORY;
-    heap_free(reginfo->version);
+    if (version && !(str = wcsdup(version))) return E_OUTOFMEMORY;
+    free(reginfo->version);
     reginfo->version = str;
     return S_OK;
 }
@@ -665,8 +665,8 @@ static HRESULT WINAPI RegistrationInfo_put_Date(IRegistrationInfo *iface, BSTR d
 
     TRACE("%p,%s\n", iface, debugstr_w(date));
 
-    if (date && !(str = heap_strdupW(date))) return E_OUTOFMEMORY;
-    heap_free(reginfo->date);
+    if (date && !(str = wcsdup(date))) return E_OUTOFMEMORY;
+    free(reginfo->date);
     reginfo->date = str;
     return S_OK;
 }
@@ -692,8 +692,8 @@ static HRESULT WINAPI RegistrationInfo_put_Documentation(IRegistrationInfo *ifac
 
     TRACE("%p,%s\n", iface, debugstr_w(doc));
 
-    if (doc && !(str = heap_strdupW(doc))) return E_OUTOFMEMORY;
-    heap_free(reginfo->documentation);
+    if (doc && !(str = wcsdup(doc))) return E_OUTOFMEMORY;
+    free(reginfo->documentation);
     reginfo->documentation = str;
     return S_OK;
 }
@@ -731,8 +731,8 @@ static HRESULT WINAPI RegistrationInfo_put_URI(IRegistrationInfo *iface, BSTR ur
 
     TRACE("%p,%s\n", iface, debugstr_w(uri));
 
-    if (uri && !(str = heap_strdupW(uri))) return E_OUTOFMEMORY;
-    heap_free(reginfo->uri);
+    if (uri && !(str = wcsdup(uri))) return E_OUTOFMEMORY;
+    free(reginfo->uri);
     reginfo->uri = str;
     return S_OK;
 }
@@ -770,8 +770,8 @@ static HRESULT WINAPI RegistrationInfo_put_Source(IRegistrationInfo *iface, BSTR
 
     TRACE("%p,%s\n", iface, debugstr_w(source));
 
-    if (source && !(str = heap_strdupW(source))) return E_OUTOFMEMORY;
-    heap_free(reginfo->source);
+    if (source && !(str = wcsdup(source))) return E_OUTOFMEMORY;
+    free(reginfo->source);
     reginfo->source = str;
     return S_OK;
 }
@@ -863,10 +863,10 @@ static ULONG WINAPI TaskSettings_Release(ITaskSettings *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        heap_free(taskset->restart_interval);
-        heap_free(taskset->execution_time_limit);
-        heap_free(taskset->delete_expired_task_after);
-        heap_free(taskset);
+        free(taskset->restart_interval);
+        free(taskset->execution_time_limit);
+        free(taskset->delete_expired_task_after);
+        free(taskset);
     }
 
     return ref;
@@ -970,8 +970,8 @@ static HRESULT WINAPI TaskSettings_put_RestartInterval(ITaskSettings *iface, BST
 
     TRACE("%p,%s\n", iface, debugstr_w(interval));
 
-    if (interval && !(str = heap_strdupW(interval))) return E_OUTOFMEMORY;
-    heap_free(taskset->restart_interval);
+    if (interval && !(str = wcsdup(interval))) return E_OUTOFMEMORY;
+    free(taskset->restart_interval);
     taskset->restart_interval = str;
 
     return S_OK;
@@ -1184,8 +1184,8 @@ static HRESULT WINAPI TaskSettings_put_ExecutionTimeLimit(ITaskSettings *iface, 
 
     TRACE("%p,%s\n", iface, debugstr_w(limit));
 
-    if (limit && !(str = heap_strdupW(limit))) return E_OUTOFMEMORY;
-    heap_free(taskset->execution_time_limit);
+    if (limit && !(str = wcsdup(limit))) return E_OUTOFMEMORY;
+    free(taskset->execution_time_limit);
     taskset->execution_time_limit = str;
 
     return S_OK;
@@ -1236,8 +1236,8 @@ static HRESULT WINAPI TaskSettings_put_DeleteExpiredTaskAfter(ITaskSettings *ifa
 
     TRACE("%p,%s\n", iface, debugstr_w(delay));
 
-    if (delay && !(str = heap_strdupW(delay))) return E_OUTOFMEMORY;
-    heap_free(taskset->delete_expired_task_after);
+    if (delay && !(str = wcsdup(delay))) return E_OUTOFMEMORY;
+    free(taskset->delete_expired_task_after);
     taskset->delete_expired_task_after = str;
 
     return S_OK;
@@ -1449,7 +1449,7 @@ static HRESULT TaskSettings_create(ITaskSettings **obj)
     taskset->ref = 1;
     /* set the defaults */
     taskset->restart_interval = NULL;
-    taskset->execution_time_limit = heap_strdupW(L"PT72H");
+    taskset->execution_time_limit = wcsdup(L"PT72H");
     taskset->delete_expired_task_after = NULL;
     taskset->restart_count = 0;
     taskset->priority = 7;
@@ -1498,7 +1498,7 @@ static ULONG WINAPI Principal_Release(IPrincipal *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        heap_free(principal);
+        free(principal);
     }
 
     return ref;
@@ -1692,11 +1692,11 @@ static ULONG WINAPI ExecAction_Release(IExecAction *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        heap_free(action->path);
-        heap_free(action->directory);
-        heap_free(action->args);
-        heap_free(action->id);
-        heap_free(action);
+        free(action->path);
+        free(action->directory);
+        free(action->args);
+        free(action->id);
+        free(action);
     }
 
     return ref;
@@ -1771,8 +1771,8 @@ static HRESULT WINAPI ExecAction_put_Id(IExecAction *iface, BSTR id)
 
     TRACE("%p,%s\n", iface, debugstr_w(id));
 
-    if (id && !(str = heap_strdupW((id)))) return E_OUTOFMEMORY;
-    heap_free(action->id);
+    if (id && !(str = wcsdup((id)))) return E_OUTOFMEMORY;
+    free(action->id);
     action->id = str;
 
     return S_OK;
@@ -1810,8 +1810,8 @@ static HRESULT WINAPI ExecAction_put_Path(IExecAction *iface, BSTR path)
 
     TRACE("%p,%s\n", iface, debugstr_w(path));
 
-    if (path && !(str = heap_strdupW((path)))) return E_OUTOFMEMORY;
-    heap_free(action->path);
+    if (path && !(str = wcsdup((path)))) return E_OUTOFMEMORY;
+    free(action->path);
     action->path = str;
 
     return S_OK;
@@ -1838,8 +1838,8 @@ static HRESULT WINAPI ExecAction_put_Arguments(IExecAction *iface, BSTR argument
 
     TRACE("%p,%s\n", iface, debugstr_w(arguments));
 
-    if (arguments && !(str = heap_strdupW((arguments)))) return E_OUTOFMEMORY;
-    heap_free(action->args);
+    if (arguments && !(str = wcsdup((arguments)))) return E_OUTOFMEMORY;
+    free(action->args);
     action->args = str;
 
     return S_OK;
@@ -1866,8 +1866,8 @@ static HRESULT WINAPI ExecAction_put_WorkingDirectory(IExecAction *iface, BSTR d
 
     TRACE("%p,%s\n", iface, debugstr_w(directory));
 
-    if (directory && !(str = heap_strdupW((directory)))) return E_OUTOFMEMORY;
-    heap_free(action->directory);
+    if (directory && !(str = wcsdup((directory)))) return E_OUTOFMEMORY;
+    free(action->directory);
     action->directory = str;
 
     return S_OK;
@@ -1939,7 +1939,7 @@ static ULONG WINAPI Actions_Release(IActionCollection *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        heap_free(actions);
+        free(actions);
     }
 
     return ref;
@@ -2141,7 +2141,7 @@ static ULONG WINAPI TaskDefinition_Release(ITaskDefinition *iface)
         if (taskdef->actions)
             IActionCollection_Release(taskdef->actions);
 
-        heap_free(taskdef);
+        free(taskdef);
     }
 
     return ref;
@@ -3708,7 +3708,7 @@ static ULONG WINAPI TaskService_Release(ITaskService *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        heap_free(task_svc);
+        free(task_svc);
     }
 
     return ref;
