@@ -113,7 +113,7 @@ struct async_recv_ioctl
     void *control;
     struct WS_sockaddr *addr;
     int *addr_len;
-    DWORD *ret_flags;
+    unsigned int *ret_flags;
     int unix_flags;
     unsigned int count;
     BOOL icmp_over_dgram;
@@ -907,7 +907,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
 
 static NTSTATUS sock_ioctl_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user, IO_STATUS_BLOCK *io,
                                  int fd, const void *buffers_ptr, unsigned int count, WSABUF *control,
-                                 struct WS_sockaddr *addr, int *addr_len, DWORD *ret_flags, int unix_flags, int force_async )
+                                 struct WS_sockaddr *addr, int *addr_len, unsigned int *ret_flags, int unix_flags, int force_async )
 {
     struct async_recv_ioctl *async;
     DWORD async_size;

@@ -79,7 +79,7 @@ WINE_DECLARE_DEBUG_CHANNEL(threadname);
 
 pthread_key_t teb_key = 0;
 
-static int nb_threads = 1;
+static LONG nb_threads = 1;
 
 static inline int get_unix_exit_code( NTSTATUS status )
 {

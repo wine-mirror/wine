@@ -777,7 +777,7 @@ static BOOL logical_proc_info_add_group( DWORD num_cpus, ULONG_PTR mask )
 static BOOL sysfs_parse_bitmap(const char *filename, ULONG_PTR *mask)
 {
     FILE *f;
-    DWORD r;
+    unsigned int r;
 
     f = fopen(filename, "r");
     if (!f) return FALSE;
@@ -802,7 +802,7 @@ static BOOL sysfs_parse_bitmap(const char *filename, ULONG_PTR *mask)
  * - /sys/devices/system/cpu/cpu0/cache/index0/shared_cpu_list
  * - /sys/devices/system/cpu/cpu0/topology/thread_siblings_list.
  */
-static BOOL sysfs_count_list_elements(const char *filename, DWORD *result)
+static BOOL sysfs_count_list_elements(const char *filename, unsigned int *result)
 {
     FILE *f;
 
@@ -812,7 +812,7 @@ static BOOL sysfs_count_list_elements(const char *filename, DWORD *result)
     while (!feof(f))
     {
         char op;
-        DWORD beg, end;
+        unsigned int beg, end;
 
         if (!fscanf(f, "%u%c ", &beg, &op)) break;
         if(op == '-')
@@ -834,7 +834,7 @@ static NTSTATUS create_logical_proc_info(void)
     static const char numa_info[] = "/sys/devices/system/node/node%u/cpumap";
 
     FILE *fcpu_list, *fnuma_list, *f;
-    DWORD beg, end, i, j, r, num_cpus = 0, max_cpus = 0;
+    unsigned int beg, end, i, j, r, num_cpus = 0, max_cpus = 0;
     char op, name[MAX_PATH];
     ULONG_PTR all_cpus_mask = 0;
 
@@ -863,7 +863,7 @@ static NTSTATUS create_logical_proc_info(void)
 
         for(i = beg; i <= end; i++)
         {
-            DWORD phys_core = 0;
+            unsigned int phys_core = 0;
             ULONG_PTR thread_mask = 0;
 
             if (i > 8 * sizeof(ULONG_PTR))
@@ -3682,14 +3682,15 @@ NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, 
         if ((out_size / sizeof(PROCESSOR_POWER_INFORMATION)) < out_cpus) return STATUS_BUFFER_TOO_SMALL;
 #if defined(linux)
         {
+            unsigned int val;
             char filename[128];
             FILE* f;
 
             for(i = 0; i < out_cpus; i++) {
                 sprintf(filename, "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", i);
                 f = fopen(filename, "r");
-                if (f && (fscanf(f, "%d", &cpu_power[i].MaxMhz) == 1)) {
-                    cpu_power[i].MaxMhz /= 1000;
+                if (f && (fscanf(f, "%u", &val) == 1)) {
+                    cpu_power[i].MaxMhz = val / 1000;
                     fclose(f);
                     cpu_power[i].CurrentMhz = cpu_power[i].MaxMhz;
                 }
@@ -3707,8 +3708,8 @@ NTSTATUS WINAPI NtPowerInformation( POWER_INFORMATION_LEVEL level, void *input, 
 
                 sprintf(filename, "/sys/devices/system/cpu/cpu%d/cpufreq/scaling_max_freq", i);
                 f = fopen(filename, "r");
-                if(f && (fscanf(f, "%d", &cpu_power[i].MhzLimit) == 1)) {
-                    cpu_power[i].MhzLimit /= 1000;
+                if(f && (fscanf(f, "%u", &val) == 1)) {
+                    cpu_power[i].MhzLimit = val / 1000;
                     fclose(f);
                 }
                 else

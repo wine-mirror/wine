@@ -474,11 +474,12 @@ static void invoke_system_apc( const apc_call_t *call, apc_result_t *result, BOO
         size = call->virtual_protect.size;
         if ((ULONG_PTR)addr == call->virtual_protect.addr && size == call->virtual_protect.size)
         {
+            ULONG prot;
             result->virtual_protect.status = NtProtectVirtualMemory( NtCurrentProcess(), &addr, &size,
-                                                                     call->virtual_protect.prot,
-                                                                     &result->virtual_protect.prot );
+                                                                     call->virtual_protect.prot, &prot );
             result->virtual_protect.addr = wine_server_client_ptr( addr );
             result->virtual_protect.size = size;
+            result->virtual_protect.prot = prot;
         }
         else result->virtual_protect.status = STATUS_INVALID_PARAMETER;
         break;

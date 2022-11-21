@@ -109,7 +109,7 @@ static inline ULONGLONG monotonic_counter(void)
 
 static int futex_private = 128;
 
-static inline int futex_wait( const int *addr, int val, struct timespec *timeout )
+static inline int futex_wait( const LONG *addr, int val, struct timespec *timeout )
 {
 #if (defined(__i386__) || defined(__arm__)) && _TIME_BITS==64
     if (timeout && sizeof(*timeout) != 8)
@@ -125,14 +125,14 @@ static inline int futex_wait( const int *addr, int val, struct timespec *timeout
     return syscall( __NR_futex, addr, FUTEX_WAIT | futex_private, val, timeout, 0, 0 );
 }
 
-static inline int futex_wake( const int *addr, int val )
+static inline int futex_wake( const LONG *addr, int val )
 {
     return syscall( __NR_futex, addr, FUTEX_WAKE | futex_private, val, NULL, 0, 0 );
 }
 
 static inline int use_futexes(void)
 {
-    static int supported = -1;
+    static LONG supported = -1;
 
     if (supported == -1)
     {
@@ -2309,7 +2309,7 @@ union tid_alert_entry
 #else
     HANDLE event;
 #ifdef __linux__
-    int futex;
+    LONG futex;
 #endif
 #endif
 };
@@ -2395,7 +2395,7 @@ NTSTATUS WINAPI NtAlertThreadByThreadId( HANDLE tid )
 #ifdef __linux__
     if (use_futexes())
     {
-        int *futex = &entry->futex;
+        LONG *futex = &entry->futex;
         if (!InterlockedExchange( futex, 1 ))
             futex_wake( futex, 1 );
         return STATUS_SUCCESS;
@@ -2496,7 +2496,7 @@ NTSTATUS WINAPI NtWaitForAlertByThreadId( const void *address, const LARGE_INTEG
 #ifdef __linux__
     if (use_futexes())
     {
-        int *futex = &entry->futex;
+        LONG *futex = &entry->futex;
         ULONGLONG end;
         int ret;
 
