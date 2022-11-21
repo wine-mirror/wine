@@ -486,12 +486,12 @@ static void call_ldr_notifications( ULONG reason, LDR_DATA_TABLE_ENTRY *module )
 
     LIST_FOR_EACH_ENTRY_SAFE( notify, notify_next, &ldr_notifications, struct ldr_notification, entry )
     {
-        TRACE_(relay)("\1Call LDR notification callback (proc=%p,reason=%u,data=%p,context=%p)\n",
+        TRACE_(relay)("\1Call LDR notification callback (proc=%p,reason=%lu,data=%p,context=%p)\n",
                 notify->callback, reason, &data, notify->context );
 
         notify->callback(reason, &data, notify->context);
 
-        TRACE_(relay)("\1Ret  LDR notification callback (proc=%p,reason=%u,data=%p,context=%p)\n",
+        TRACE_(relay)("\1Ret  LDR notification callback (proc=%p,reason=%lu,data=%p,context=%p)\n",
                 notify->callback, reason, &data, notify->context );
     }
 }
@@ -929,7 +929,7 @@ static FARPROC find_ordinal_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY
 
     if (ordinal >= exports->NumberOfFunctions)
     {
-        TRACE("	ordinal %d out of range!\n", ordinal + exports->Base );
+        TRACE("	ordinal %ld out of range!\n", ordinal + exports->Base );
         return NULL;
     }
     if (!functions[ordinal]) return NULL;
@@ -1072,7 +1072,7 @@ static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LP
             ERR("Library %s (which is needed by %s) not found\n",
                 name, debugstr_w(current_modref->ldr.FullDllName.Buffer));
         else
-            ERR("Loading library %s (which is needed by %s) failed (error %x).\n",
+            ERR("Loading library %s (which is needed by %s) failed (error %lx).\n",
                 name, debugstr_w(current_modref->ldr.FullDllName.Buffer), status);
         return FALSE;
     }
@@ -1241,7 +1241,7 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
             break;
     }
 
-    TRACE( "module %p data %p-%p zerofill %u index %p callback %p flags %x -> slot %u\n", mod->DllBase,
+    TRACE( "module %p data %p-%p zerofill %lu index %p callback %p flags %lx -> slot %lu\n", mod->DllBase,
            (void *)dir->StartAddressOfRawData, (void *)dir->EndAddressOfRawData, dir->SizeOfZeroFill,
            (void *)dir->AddressOfIndex, (void *)dir->AddressOfCallBacks, dir->Characteristics, i );
 
@@ -1269,7 +1269,7 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
 #ifdef __x86_64__  /* macOS-specific hack */
             if (teb->Reserved5[0]) ((TEB *)teb->Reserved5[0])->ThreadLocalStoragePointer = new;
 #endif
-            TRACE( "thread %04lx tls block %p -> %p\n", (ULONG_PTR)teb->ClientId.UniqueThread, old, new );
+            TRACE( "thread %04lx tls block %p -> %p\n", HandleToULong(teb->ClientId.UniqueThread), old, new );
             /* FIXME: can't free old block here, should be freed at thread exit */
         }
 
@@ -1286,8 +1286,8 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
         memcpy( new_ptr, (void *)dir->StartAddressOfRawData, size );
         memset( (char *)new_ptr + size, 0, dir->SizeOfZeroFill );
 
-        TRACE( "thread %04lx slot %u: %u/%u bytes at %p\n",
-               (ULONG_PTR)teb->ClientId.UniqueThread, i, size, dir->SizeOfZeroFill, new_ptr );
+        TRACE( "thread %04lx slot %lu: %lu/%lu bytes at %p\n",
+               HandleToULong(teb->ClientId.UniqueThread), i, size, dir->SizeOfZeroFill, new_ptr );
 
         RtlFreeHeap( GetProcessHeap(), 0,
                      InterlockedExchangePointer( (void **)teb->ThreadLocalStoragePointer + i, new_ptr ));
@@ -1514,8 +1514,7 @@ static NTSTATUS alloc_thread_tls(void)
         memcpy( pointers[i], (void *)dir->StartAddressOfRawData, size );
         memset( (char *)pointers[i] + size, 0, dir->SizeOfZeroFill );
 
-        TRACE( "thread %04x slot %u: %u/%u bytes at %p\n",
-               GetCurrentThreadId(), i, size, dir->SizeOfZeroFill, pointers[i] );
+        TRACE( "slot %u: %u/%lu bytes at %p\n", i, size, dir->SizeOfZeroFill, pointers[i] );
     }
     NtCurrentTeb()->ThreadLocalStoragePointer = pointers;
 #ifdef __x86_64__  /* macOS-specific hack */
@@ -1548,7 +1547,7 @@ static void call_tls_callbacks( HMODULE module, UINT reason )
         }
         __EXCEPT_ALL
         {
-            TRACE_(relay)("\1exception %08x in TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
+            TRACE_(relay)("\1exception %08lx in TLS callback (proc=%p,module=%p,reason=%s,reserved=0)\n",
                           GetExceptionCode(), callback, module, reason_names[reason] );
             return;
         }
@@ -1597,7 +1596,7 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
     __EXCEPT_ALL
     {
         status = GetExceptionCode();
-        TRACE_(relay)("\1exception %08x in PE entry point (proc=%p,module=%p,reason=%s,res=%p)\n",
+        TRACE_(relay)("\1exception %08lx in PE entry point (proc=%p,module=%p,reason=%s,res=%p)\n",
                       status, entry, module, reason_names[reason], lpReserved );
     }
     __ENDTRY
@@ -1855,13 +1854,13 @@ NTSTATUS WINAPI LdrRegisterDllNotification(ULONG flags, PLDR_DLL_NOTIFICATION_FU
 {
     struct ldr_notification *notify;
 
-    TRACE( "(%x, %p, %p, %p)\n", flags, callback, context, cookie );
+    TRACE( "(%lx, %p, %p, %p)\n", flags, callback, context, cookie );
 
     if (!callback || !cookie)
         return STATUS_INVALID_PARAMETER;
 
     if (flags)
-        FIXME( "ignoring flags %x\n", flags );
+        FIXME( "ignoring flags %lx\n", flags );
 
     notify = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*notify) );
     if (!notify) return STATUS_NO_MEMORY;
@@ -1903,7 +1902,7 @@ NTSTATUS WINAPI LdrUnregisterDllNotification( void *cookie )
  */
 NTSTATUS WINAPI LdrLockLoaderLock( ULONG flags, ULONG *result, ULONG_PTR *magic )
 {
-    if (flags & ~0x2) FIXME( "flags %x not supported\n", flags );
+    if (flags & ~0x2) FIXME( "flags %lx not supported\n", flags );
 
     if (result) *result = 0;
     if (magic) *magic = 0;
@@ -2696,7 +2695,7 @@ static WINE_MODREF *build_main_module(void)
     RtlFreeUnicodeString( &nt_name );
     if (!status) return wm;
 failed:
-    MESSAGE( "wine: failed to create main module for %s, status %x\n",
+    MESSAGE( "wine: failed to create main module for %s, status %lx\n",
              debugstr_us(&params->ImagePathName), status );
     NtTerminateProcess( GetCurrentProcess(), status );
     return NULL;  /* unreached */
@@ -3173,7 +3172,7 @@ done:
     if (nts == STATUS_SUCCESS)
         TRACE("Loaded module %s at %p\n", debugstr_us(&nt_name), (*pwm)->ldr.DllBase);
     else
-        WARN("Failed to load module %s; status=%x\n", debugstr_w(libname), nts);
+        WARN("Failed to load module %s; status=%lx\n", debugstr_w(libname), nts);
 
     if (mapping) NtClose( mapping );
     RtlFreeUnicodeString( &nt_name );
@@ -3267,7 +3266,7 @@ NTSTATUS WINAPI LdrGetDllHandleEx( ULONG flags, LPCWSTR load_path, ULONG *dll_ch
     WCHAR *dllname;
     HANDLE mapping;
 
-    TRACE( "flags %#x, load_path %p, dll_characteristics %p, name %p, base %p.\n",
+    TRACE( "flags %#lx, load_path %p, dll_characteristics %p, name %p, base %p.\n",
             flags, load_path, dll_characteristics, name, base );
 
     if (flags & ~valid_flags) return STATUS_INVALID_PARAMETER;
@@ -3276,7 +3275,7 @@ NTSTATUS WINAPI LdrGetDllHandleEx( ULONG flags, LPCWSTR load_path, ULONG *dll_ch
                  == (LDR_GET_DLL_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT | LDR_GET_DLL_HANDLE_EX_FLAG_PIN))
         return STATUS_INVALID_PARAMETER;
 
-    if (flags & ~supported_flags) FIXME( "Unsupported flags %#x.\n", flags );
+    if (flags & ~supported_flags) FIXME( "Unsupported flags %#lx.\n", flags );
     if (dll_characteristics) FIXME( "dll_characteristics unsupported.\n" );
 
     dllname = append_dll_ext( name->Buffer );
@@ -3326,7 +3325,7 @@ NTSTATUS WINAPI LdrAddRefDll( ULONG flags, HMODULE module )
     NTSTATUS ret = STATUS_SUCCESS;
     WINE_MODREF *wm;
 
-    if (flags & ~LDR_ADDREF_DLL_PIN) FIXME( "%p flags %x not implemented\n", module, flags );
+    if (flags & ~LDR_ADDREF_DLL_PIN) FIXME( "%p flags %lx not implemented\n", module, flags );
 
     RtlEnterCriticalSection( &loader_section );
 
@@ -3581,7 +3580,7 @@ void* WINAPI LdrResolveDelayLoadedAPI( void* base, const IMAGE_DELAYLOAD_DESCRIP
     FARPROC fp;
     DWORD id;
 
-    TRACE( "(%p, %p, %p, %p, %p, 0x%08x)\n", base, desc, dllhook, syshook, addr, flags );
+    TRACE( "(%p, %p, %p, %p, %p, 0x%08lx)\n", base, desc, dllhook, syshook, addr, flags );
 
     phmod = get_rva(base, desc->ModuleHandleRVA);
     pIAT = get_rva(base, desc->ImportAddressTableRVA);
@@ -3984,7 +3983,7 @@ static void init_wow64( CONTEXT *context )
 
         if ((status = load_dll( NULL, wow64_path, 0, &wm, FALSE )))
         {
-            ERR( "could not load %s, status %x\n", debugstr_w(wow64_path), status );
+            ERR( "could not load %s, status %lx\n", debugstr_w(wow64_path), status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
         wow64 = wm->ldr.DllBase;
@@ -4020,7 +4019,7 @@ static void map_wow64cpu(void)
     if ((status = NtOpenFile( &file, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ,
                               FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE )))
     {
-        WARN("failed to open wow64cpu, status %#x\n", status);
+        WARN("failed to open wow64cpu, status %#lx\n", status);
         return;
     }
     if (!NtCreateSection( &section, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
@@ -4135,7 +4134,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
 
         if ((status = load_dll( NULL, L"kernel32.dll", 0, &kernel32, FALSE )) != STATUS_SUCCESS)
         {
-            MESSAGE( "wine: could not load kernel32.dll, status %x\n", status );
+            MESSAGE( "wine: could not load kernel32.dll, status %lx\n", status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
         node_kernel32 = kernel32->ldr.DdagNode;
@@ -4143,7 +4142,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         if ((status = LdrGetProcedureAddress( kernel32->ldr.DllBase, &func_name,
                                               0, (void **)&pBaseThreadInitThunk )) != STATUS_SUCCESS)
         {
-            MESSAGE( "wine: could not find BaseThreadInitThunk in kernel32.dll, status %x\n", status );
+            MESSAGE( "wine: could not find BaseThreadInitThunk in kernel32.dll, status %lx\n", status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
         RtlInitAnsiString( &func_name, "CtrlRoutine" );
@@ -4158,7 +4157,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
 
         if (status)
         {
-            ERR( "Importing dlls for %s failed, status %x\n",
+            ERR( "Importing dlls for %s failed, status %lx\n",
                  debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
@@ -4181,7 +4180,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         attach_done = 1;
         if ((status = alloc_thread_tls()) != STATUS_SUCCESS)
         {
-            ERR( "TLS init  failed when loading %s, status %x\n",
+            ERR( "TLS init  failed when loading %s, status %lx\n",
                  debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
@@ -4192,7 +4191,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         if ((status = process_attach( node_ntdll, context ))
              || (status = process_attach( node_kernel32, context )))
         {
-            ERR( "Initializing system dll for %s failed, status %x\n",
+            ERR( "Initializing system dll for %s failed, status %lx\n",
                  debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }
@@ -4202,7 +4201,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
             if (last_failed_modref)
                 ERR( "%s failed to initialize, aborting\n",
                      debugstr_w(last_failed_modref->ldr.BaseDllName.Buffer) + 1 );
-            ERR( "Initializing dlls for %s failed, status %x\n",
+            ERR( "Initializing dlls for %s failed, status %lx\n",
                  debugstr_w(NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer), status );
             NtTerminateProcess( GetCurrentProcess(), status );
         }

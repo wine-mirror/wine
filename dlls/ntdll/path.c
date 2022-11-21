@@ -723,7 +723,7 @@ DWORD WINAPI RtlGetFullPathName_U(const WCHAR* name, ULONG size, WCHAR* buffer,
     DWORD       dosdev;
     DWORD       reqsize;
 
-    TRACE("(%s %u %p %p)\n", debugstr_w(name), size, buffer, file_part);
+    TRACE("(%s %lu %p %p)\n", debugstr_w(name), size, buffer, file_part);
 
     if (!name || !*name) return 0;
 
@@ -879,7 +879,7 @@ ULONG WINAPI RtlGetCurrentDirectory_U(ULONG buflen, LPWSTR buf)
     UNICODE_STRING*     us;
     ULONG               len;
 
-    TRACE("(%u %p)\n", buflen, buf);
+    TRACE("(%lu %p)\n", buflen, buf);
 
     RtlAcquirePebLock();
 

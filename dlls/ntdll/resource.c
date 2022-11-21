@@ -264,7 +264,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrFindResourceDirectory_U( HMODULE hmod, cons
 
     __TRY
     {
-	if (info) TRACE( "module %p type %s name %s lang %04x level %d\n",
+	if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
                      hmod, debugstr_w((LPCWSTR)info->Type),
                      level > 1 ? debugstr_w((LPCWSTR)info->Name) : "",
                      level > 2 ? info->Language : 0, level );
@@ -292,7 +292,7 @@ NTSTATUS WINAPI DECLSPEC_HOTPATCH LdrFindResource_U( HMODULE hmod, const LDR_RES
 
     __TRY
     {
-	if (info) TRACE( "module %p type %s name %s lang %04x level %d\n",
+	if (info) TRACE( "module %p type %s name %s lang %04lx level %ld\n",
                      hmod, debugstr_w((LPCWSTR)info->Type),
                      level > 1 ? debugstr_w((LPCWSTR)info->Name) : "",
                      level > 2 ? info->Language : 0, level );

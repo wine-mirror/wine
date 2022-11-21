@@ -244,7 +244,7 @@ NTSTATUS WINAPI WinSqmEndSession(HANDLE session)
  */
 void WINAPI WinSqmIncrementDWORD(DWORD unk1, DWORD unk2, DWORD unk3)
 {
-    FIXME("(%d, %d, %d): stub\n", unk1, unk2, unk3);
+    FIXME("(%ld, %ld, %ld): stub\n", unk1, unk2, unk3);
 }
 
 /*********************************************************************
@@ -261,7 +261,7 @@ BOOL WINAPI WinSqmIsOptedIn(void)
  */
 HANDLE WINAPI WinSqmStartSession(GUID *sessionguid, DWORD sessionid, DWORD unknown1)
 {
-    FIXME("(%p, 0x%x, 0x%x): stub\n", sessionguid, sessionid, unknown1);
+    FIXME("(%p, 0x%lx, 0x%lx): stub\n", sessionguid, sessionid, unknown1);
     return INVALID_HANDLE_VALUE;
 }
 
@@ -270,7 +270,7 @@ HANDLE WINAPI WinSqmStartSession(GUID *sessionguid, DWORD sessionid, DWORD unkno
  */
 void WINAPI WinSqmSetDWORD(HANDLE session, DWORD datapoint_id, DWORD datapoint_value)
 {
-    FIXME("(%p, %d, %d): stub\n", session, datapoint_id, datapoint_value);
+    FIXME("(%p, %ld, %ld): stub\n", session, datapoint_id, datapoint_value);
 }
 
 /******************************************************************************
@@ -280,7 +280,7 @@ ULONG WINAPI EtwEventActivityIdControl(ULONG code, GUID *guid)
 {
     static int once;
 
-    if (!once++) FIXME("0x%x, %p: stub\n", code, guid);
+    if (!once++) FIXME("0x%lx, %p: stub\n", code, guid);
     return ERROR_SUCCESS;
 }
 
@@ -322,7 +322,7 @@ ULONG WINAPI EtwEventUnregister( REGHANDLE handle )
 ULONG WINAPI EtwEventSetInformation( REGHANDLE handle, EVENT_INFO_CLASS class, void *info,
                                      ULONG length )
 {
-    FIXME("(%s, %u, %p, %u) stub\n", wine_dbgstr_longlong(handle), class, info, length);
+    FIXME("(%s, %u, %p, %lu) stub\n", wine_dbgstr_longlong(handle), class, info, length);
     return ERROR_SUCCESS;
 }
 
@@ -342,7 +342,7 @@ ULONG WINAPI EtwEventWriteString( REGHANDLE handle, UCHAR level, ULONGLONG keywo
 ULONG WINAPI EtwEventWriteTransfer( REGHANDLE handle, PCEVENT_DESCRIPTOR descriptor, LPCGUID activity,
                                     LPCGUID related, ULONG count, PEVENT_DATA_DESCRIPTOR data )
 {
-    FIXME("%s, %p, %s, %s, %u, %p: stub\n", wine_dbgstr_longlong(handle), descriptor,
+    FIXME("%s, %p, %s, %s, %lu, %p: stub\n", wine_dbgstr_longlong(handle), descriptor,
           debugstr_guid(activity), debugstr_guid(related), count, data);
     return ERROR_SUCCESS;
 }
@@ -372,7 +372,7 @@ ULONG WINAPI EtwRegisterTraceGuidsW( WMIDPREQUEST RequestAddress,
                 TRACE_GUID_REGISTRATION *TraceGuidReg, const WCHAR *MofImagePath,
                 const WCHAR *MofResourceName, TRACEHANDLE *RegistrationHandle )
 {
-    WARN("(%p, %p, %s, %u, %p, %s, %s, %p): stub\n", RequestAddress, RequestContext,
+    WARN("(%p, %p, %s, %lu, %p, %s, %s, %p): stub\n", RequestAddress, RequestContext,
           debugstr_guid(ControlGuid), GuidCount, TraceGuidReg, debugstr_w(MofImagePath),
           debugstr_w(MofResourceName), RegistrationHandle);
 
@@ -397,7 +397,7 @@ ULONG WINAPI EtwRegisterTraceGuidsA( WMIDPREQUEST RequestAddress,
                 TRACE_GUID_REGISTRATION *TraceGuidReg, const char *MofImagePath,
                 const char *MofResourceName, TRACEHANDLE *RegistrationHandle )
 {
-    WARN("(%p, %p, %s, %u, %p, %s, %s, %p): stub\n", RequestAddress, RequestContext,
+    WARN("(%p, %p, %s, %lu, %p, %s, %s, %p): stub\n", RequestAddress, RequestContext,
           debugstr_guid(ControlGuid), GuidCount, TraceGuidReg, debugstr_a(MofImagePath),
           debugstr_a(MofResourceName), RegistrationHandle);
     return ERROR_SUCCESS;
@@ -430,7 +430,7 @@ BOOLEAN WINAPI EtwEventEnabled( REGHANDLE handle, const EVENT_DESCRIPTOR *descri
 ULONG WINAPI EtwEventWrite( REGHANDLE handle, const EVENT_DESCRIPTOR *descriptor, ULONG count,
     EVENT_DATA_DESCRIPTOR *data )
 {
-    FIXME("(%s, %p, %u, %p): stub\n", wine_dbgstr_longlong(handle), descriptor, count, data);
+    FIXME("(%s, %p, %lu, %p): stub\n", wine_dbgstr_longlong(handle), descriptor, count, data);
     return ERROR_SUCCESS;
 }
 
@@ -476,7 +476,7 @@ ULONG WINAPI EtwLogTraceEvent( TRACEHANDLE SessionHandle, PEVENT_TRACE_HEADER Ev
 ULONG WINAPI EtwTraceMessageVa( TRACEHANDLE handle, ULONG flags, LPGUID guid, USHORT number,
                                 va_list args )
 {
-    FIXME("(%s %x %s %d) : stub\n", wine_dbgstr_longlong(handle), flags, debugstr_guid(guid), number);
+    FIXME("(%s %lx %s %d) : stub\n", wine_dbgstr_longlong(handle), flags, debugstr_guid(guid), number);
     return ERROR_SUCCESS;
 }
 

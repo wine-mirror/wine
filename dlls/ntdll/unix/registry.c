@@ -24,6 +24,7 @@
 #if 0
 #pragma makedep unix
 #endif
+#define WINE_NO_LONG_TYPES
 
 #include <stdarg.h>
 #include <string.h>

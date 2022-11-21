@@ -229,7 +229,7 @@ NTSTATUS WINAPI RtlOpenCurrentUser(
 	UNICODE_STRING ObjectName;
 	NTSTATUS ret;
 
-	TRACE("(0x%08x, %p)\n",DesiredAccess, KeyHandle);
+	TRACE("(0x%08lx, %p)\n",DesiredAccess, KeyHandle);
 
         if ((ret = RtlFormatCurrentUserKeyPath(&ObjectName))) return ret;
 	InitializeObjectAttributes(&ObjectAttributes,&ObjectName,OBJ_CASE_INSENSITIVE,0, NULL);
@@ -475,7 +475,7 @@ NTSTATUS WINAPI RtlQueryRegistryValues(IN ULONG RelativeTo, IN PCWSTR Path,
     NTSTATUS status=STATUS_SUCCESS, ret = STATUS_SUCCESS;
     INT i;
 
-    TRACE("(%d, %s, %p, %p, %p)\n", RelativeTo, debugstr_w(Path), QueryTable, Context, Environment);
+    TRACE("(%ld, %s, %p, %p, %p)\n", RelativeTo, debugstr_w(Path), QueryTable, Context, Environment);
 
     if(Path == NULL)
         return STATUS_INVALID_PARAMETER;
@@ -643,7 +643,7 @@ NTSTATUS WINAPI RtlCheckRegistryKey(IN ULONG RelativeTo, IN PWSTR Path)
     HANDLE handle;
     NTSTATUS status;
 
-    TRACE("(%d, %s)\n", RelativeTo, debugstr_w(Path));
+    TRACE("(%ld, %s)\n", RelativeTo, debugstr_w(Path));
 
     if(!RelativeTo && (Path == NULL || Path[0] == 0))
         return STATUS_OBJECT_PATH_SYNTAX_BAD;
@@ -712,7 +712,7 @@ NTSTATUS WINAPI RtlDeleteRegistryValue(IN ULONG RelativeTo, IN PCWSTR Path, IN P
     HANDLE handle;
     UNICODE_STRING Value;
 
-    TRACE("(%d, %s, %s)\n", RelativeTo, debugstr_w(Path), debugstr_w(ValueName));
+    TRACE("(%ld, %s, %s)\n", RelativeTo, debugstr_w(Path), debugstr_w(ValueName));
 
     RtlInitUnicodeString(&Value, ValueName);
     if(RelativeTo == RTL_REGISTRY_HANDLE)
@@ -750,7 +750,7 @@ NTSTATUS WINAPI RtlWriteRegistryValue( ULONG RelativeTo, PCWSTR path, PCWSTR nam
     NTSTATUS status;
     UNICODE_STRING str;
 
-    TRACE( "(%d, %s, %s) -> %d: %p [%d]\n", RelativeTo, debugstr_w(path), debugstr_w(name),
+    TRACE( "(%ld, %s, %s) -> %ld: %p [%ld]\n", RelativeTo, debugstr_w(path), debugstr_w(name),
            type, data, length );
 
     RtlInitUnicodeString( &str, name );

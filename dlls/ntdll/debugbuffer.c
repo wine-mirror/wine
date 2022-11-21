@@ -36,17 +36,17 @@ static void dump_DEBUG_MODULE_INFORMATION(const DEBUG_MODULE_INFORMATION *iBuf)
 {
   TRACE( "MODULE_INFORMATION:%p\n", iBuf );
   if (NULL == iBuf) return ;
-  TRACE( "Base:%d\n", iBuf->Base );
-  TRACE( "Size:%d\n", iBuf->Size );
-  TRACE( "Flags:%d\n", iBuf->Flags );
+  TRACE( "Base:%lx\n", iBuf->Base );
+  TRACE( "Size:%lx\n", iBuf->Size );
+  TRACE( "Flags:%lx\n", iBuf->Flags );
 }
 
 static void dump_DEBUG_HEAP_INFORMATION(const DEBUG_HEAP_INFORMATION *iBuf)
 {
   TRACE( "HEAP_INFORMATION:%p\n", iBuf );
   if (NULL == iBuf) return ;
-  TRACE( "Base:%d\n", iBuf->Base );
-  TRACE( "Flags:%d\n", iBuf->Flags );
+  TRACE( "Base:%lx\n", iBuf->Base );
+  TRACE( "Flags:%lx\n", iBuf->Flags );
 }
 
 static void dump_DEBUG_LOCK_INFORMATION(const DEBUG_LOCK_INFORMATION *iBuf)
@@ -58,13 +58,13 @@ static void dump_DEBUG_LOCK_INFORMATION(const DEBUG_LOCK_INFORMATION *iBuf)
   TRACE( "Address:%p\n", iBuf->Address );
   TRACE( "Type:%d\n", iBuf->Type );
   TRACE( "CreatorBackTraceIndex:%d\n", iBuf->CreatorBackTraceIndex );
-  TRACE( "OwnerThreadId:%d\n", iBuf->OwnerThreadId );
-  TRACE( "ActiveCount:%d\n", iBuf->ActiveCount );
-  TRACE( "ContentionCount:%d\n", iBuf->ContentionCount );
-  TRACE( "EntryCount:%d\n", iBuf->EntryCount );
-  TRACE( "RecursionCount:%d\n", iBuf->RecursionCount );
-  TRACE( "NumberOfSharedWaiters:%d\n", iBuf->NumberOfSharedWaiters );
-  TRACE( "NumberOfExclusiveWaiters:%d\n", iBuf->NumberOfExclusiveWaiters );
+  TRACE( "OwnerThreadId:%lx\n", iBuf->OwnerThreadId );
+  TRACE( "ActiveCount:%ld\n", iBuf->ActiveCount );
+  TRACE( "ContentionCount:%ld\n", iBuf->ContentionCount );
+  TRACE( "EntryCount:%ld\n", iBuf->EntryCount );
+  TRACE( "RecursionCount:%ld\n", iBuf->RecursionCount );
+  TRACE( "NumberOfSharedWaiters:%ld\n", iBuf->NumberOfSharedWaiters );
+  TRACE( "NumberOfExclusiveWaiters:%ld\n", iBuf->NumberOfExclusiveWaiters );
 }
 
 static void dump_DEBUG_BUFFER(const DEBUG_BUFFER *iBuf)
@@ -73,13 +73,13 @@ static void dump_DEBUG_BUFFER(const DEBUG_BUFFER *iBuf)
   TRACE( "SectionHandle:%p\n", iBuf->SectionHandle);
   TRACE( "SectionBase:%p\n", iBuf->SectionBase);
   TRACE( "RemoteSectionBase:%p\n", iBuf->RemoteSectionBase);
-  TRACE( "SectionBaseDelta:%d\n", iBuf->SectionBaseDelta);
+  TRACE( "SectionBaseDelta:%lx\n", iBuf->SectionBaseDelta);
   TRACE( "EventPairHandle:%p\n", iBuf->EventPairHandle);
   TRACE( "RemoteThreadHandle:%p\n", iBuf->RemoteThreadHandle);
-  TRACE( "InfoClassMask:%x\n", iBuf->InfoClassMask);
-  TRACE( "SizeOfInfo:%d\n", iBuf->SizeOfInfo);
-  TRACE( "AllocatedSize:%d\n", iBuf->AllocatedSize);
-  TRACE( "SectionSize:%d\n", iBuf->SectionSize);
+  TRACE( "InfoClassMask:%lx\n", iBuf->InfoClassMask);
+  TRACE( "SizeOfInfo:%ld\n", iBuf->SizeOfInfo);
+  TRACE( "AllocatedSize:%ld\n", iBuf->AllocatedSize);
+  TRACE( "SectionSize:%ld\n", iBuf->SectionSize);
   TRACE( "BackTraceInfo:%p\n", iBuf->BackTraceInformation);
   dump_DEBUG_MODULE_INFORMATION(iBuf->ModuleInformation);
   dump_DEBUG_HEAP_INFORMATION(iBuf->HeapInformation);
@@ -89,13 +89,13 @@ static void dump_DEBUG_BUFFER(const DEBUG_BUFFER *iBuf)
 PDEBUG_BUFFER WINAPI RtlCreateQueryDebugBuffer(IN ULONG iSize, IN BOOLEAN iEventPair) 
 {
    PDEBUG_BUFFER oBuf;
-   FIXME("(%d, %d): stub\n", iSize, iEventPair);
+   FIXME("(%ld, %d): stub\n", iSize, iEventPair);
    if (iSize < sizeof(DEBUG_BUFFER)) {
      iSize = sizeof(DEBUG_BUFFER);
    }
    oBuf = RtlAllocateHeap(GetProcessHeap(), 0, iSize);
    memset(oBuf, 0, iSize);
-   FIXME("(%d, %d): returning %p\n", iSize, iEventPair, oBuf);
+   FIXME("(%ld, %d): returning %p\n", iSize, iEventPair, oBuf);
    return oBuf;
 }
 
@@ -124,9 +124,9 @@ NTSTATUS WINAPI RtlQueryProcessDebugInformation(IN ULONG iProcessId, IN ULONG iD
     if ((status = NtOpenProcess( &process, PROCESS_QUERY_LIMITED_INFORMATION, NULL, &cid ))) return status;
     NtClose( process );
 
-   FIXME("(%d, %x, %p): stub\n", iProcessId, iDebugInfoMask, iBuf);
+   FIXME("(%ld, %lx, %p): stub\n", iProcessId, iDebugInfoMask, iBuf);
    iBuf->InfoClassMask = iDebugInfoMask;
-   
+
    if (iDebugInfoMask & PDI_MODULES) {
      PDEBUG_MODULE_INFORMATION info = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(DEBUG_MODULE_INFORMATION));
      memset(info, 0, sizeof(DEBUG_MODULE_INFORMATION));

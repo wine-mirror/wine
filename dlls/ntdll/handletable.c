@@ -47,7 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
  */
 void WINAPI RtlInitializeHandleTable(ULONG MaxHandleCount, ULONG HandleSize, RTL_HANDLE_TABLE * HandleTable)
 {
-    TRACE("(%u, %u, %p)\n", MaxHandleCount, HandleSize, HandleTable);
+    TRACE("(%lu, %lu, %p)\n", MaxHandleCount, HandleSize, HandleTable);
 
     memset(HandleTable, 0, sizeof(*HandleTable));
     HandleTable->MaxHandleCount = MaxHandleCount;
@@ -292,7 +292,7 @@ BOOLEAN WINAPI RtlIsValidIndexHandle(const RTL_HANDLE_TABLE * HandleTable, ULONG
 {
     RTL_HANDLE * Handle;
 
-    TRACE("(%p, %u, %p)\n", HandleTable, Index, ValidHandle);
+    TRACE("(%p, %lu, %p)\n", HandleTable, Index, ValidHandle);
     Handle = (RTL_HANDLE *)
         ((char *)HandleTable->FirstHandle + Index * HandleTable->HandleSize);
 

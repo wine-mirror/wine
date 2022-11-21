@@ -578,7 +578,7 @@ static const char *debugstr_heap_entry( struct rtl_heap_entry *entry )
     const char *str = wine_dbg_sprintf( "data %p, size %#Ix, overhead %#x, region %#x, flags %#x", entry->lpData,
                                         entry->cbData, entry->cbOverhead, entry->iRegionIndex, entry->wFlags );
     if (!(entry->wFlags & RTL_HEAP_ENTRY_REGION)) return str;
-    return wine_dbg_sprintf( "%s, commit %#x, uncommit %#x, first %p, last %p", str, entry->Region.dwCommittedSize,
+    return wine_dbg_sprintf( "%s, commit %#lx, uncommit %#lx, first %p, last %p", str, entry->Region.dwCommittedSize,
                              entry->Region.dwUnCommittedSize, entry->Region.lpFirstBlock, entry->Region.lpLastBlock );
 }
 
@@ -799,7 +799,7 @@ static struct block *allocate_large_block( struct heap *heap, DWORD flags, SIZE_
     if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &total_size,
                                  MEM_COMMIT, get_protection_type( flags )))
     {
-        WARN("Could not allocate block for %08lx bytes\n", size );
+        WARN("Could not allocate block for %08Ix bytes\n", size );
         return NULL;
     }
 
@@ -858,7 +858,7 @@ static struct block *realloc_large_block( struct heap *heap, DWORD flags, struct
     if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return NULL;
     if (!(block = allocate_large_block( heap, flags, size )))
     {
-        WARN("Could not allocate block for %08lx bytes\n", size );
+        WARN("Could not allocate block for %08Ix bytes\n", size );
         return NULL;
     }
 
@@ -932,13 +932,13 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
         if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize,
                                      MEM_RESERVE, get_protection_type( flags ) ))
         {
-            WARN("Could not allocate %08lx bytes\n", totalSize );
+            WARN("Could not allocate %08Ix bytes\n", totalSize );
             return NULL;
         }
         if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0,
                                      &commitSize, MEM_COMMIT, get_protection_type( flags ) ))
         {
-            WARN("Could not commit %08lx bytes for sub-heap %p\n", commitSize, address );
+            WARN("Could not commit %08Ix bytes for sub-heap %p\n", commitSize, address );
             return NULL;
         }
     }
@@ -1035,7 +1035,7 @@ static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBH
 
     if (!(heap->flags & HEAP_GROWABLE))
     {
-        WARN("Not enough space in heap %p for %08lx bytes\n", heap, block_size );
+        WARN("Not enough space in heap %p for %08Ix bytes\n", heap, block_size );
         return NULL;
     }
 
@@ -1056,7 +1056,7 @@ static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBH
                                        max( heap->grow_size, total_size ) );
     }
 
-    TRACE( "created new sub-heap %p of %08lx bytes for heap %p\n", *subheap, subheap_size( *subheap ), heap );
+    TRACE( "created new sub-heap %p of %08Ix bytes for heap %p\n", *subheap, subheap_size( *subheap ), heap );
 
     entry = first_block( *subheap );
     list_remove( &entry->entry );
@@ -1546,7 +1546,7 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
 
     if (!status) valgrind_notify_alloc( ptr, size, flags & HEAP_ZERO_MEMORY );
 
-    TRACE( "handle %p, flags %#x, size %#Ix, return %p, status %#x.\n", handle, flags, size, ptr, status );
+    TRACE( "handle %p, flags %#lx, size %#Ix, return %p, status %#lx.\n", handle, flags, size, ptr, status );
     heap_set_status( heap, flags, status );
     return ptr;
 }
@@ -1585,7 +1585,7 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
         heap_unlock( heap, flags );
     }
 
-    TRACE( "handle %p, flags %#x, ptr %p, return %u, status %#x.\n", handle, flags, ptr, !status, status );
+    TRACE( "handle %p, flags %#lx, ptr %p, return %u, status %#lx.\n", handle, flags, ptr, !status, status );
     heap_set_status( heap, flags, status );
     return !status;
 }
@@ -1670,7 +1670,7 @@ void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T si
         heap_unlock( heap, flags );
     }
 
-    TRACE( "handle %p, flags %#x, ptr %p, size %#Ix, return %p, status %#x.\n", handle, flags, ptr, size, ret, status );
+    TRACE( "handle %p, flags %#lx, ptr %p, size %#Ix, return %p, status %#lx.\n", handle, flags, ptr, size, ret, status );
     heap_set_status( heap, flags, status );
     return ret;
 }
@@ -1694,7 +1694,7 @@ void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T si
 ULONG WINAPI RtlCompactHeap( HANDLE handle, ULONG flags )
 {
     static BOOL reported;
-    if (!reported++) FIXME( "handle %p, flags %#x stub!\n", handle, flags );
+    if (!reported++) FIXME( "handle %p, flags %#lx stub!\n", handle, flags );
     return 0;
 }
 
@@ -1775,7 +1775,7 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE handle, ULONG flags, const void *ptr )
         heap_unlock( heap, flags );
     }
 
-    TRACE( "handle %p, flags %#x, ptr %p, return %#Ix, status %#x.\n", handle, flags, ptr, size, status );
+    TRACE( "handle %p, flags %#lx, ptr %p, return %#Ix, status %#lx.\n", handle, flags, ptr, size, status );
     heap_set_status( heap, flags, status );
     return size;
 }
@@ -1800,7 +1800,7 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE handle, ULONG flags, const void *ptr )
         heap_unlock( heap, flags );
     }
 
-    TRACE( "handle %p, flags %#x, ptr %p, return %u.\n", handle, flags, ptr, !!ret );
+    TRACE( "handle %p, flags %#lx, ptr %p, return %u.\n", handle, flags, ptr, !!ret );
     return ret;
 }
 
@@ -1928,7 +1928,7 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE handle, void *entry_ptr )
         heap_unlock( heap, 0 );
     }
 
-    TRACE( "handle %p, entry %p %s, return %#x\n", handle, entry,
+    TRACE( "handle %p, entry %p %s, return %#lx\n", handle, entry,
            status ? "<empty>" : debugstr_heap_entry(entry), status );
     return status;
 }
@@ -1992,7 +1992,7 @@ NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS i
  */
 NTSTATUS WINAPI RtlSetHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS info_class, void *info, SIZE_T size )
 {
-    FIXME( "handle %p, info_class %d, info %p, size %ld stub!\n", handle, info_class, info, size );
+    FIXME( "handle %p, info_class %d, info %p, size %Id stub!\n", handle, info_class, info, size );
     return STATUS_SUCCESS;
 }
 
@@ -2007,7 +2007,7 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
     SUBHEAP *subheap;
     char *tmp;
 
-    TRACE( "handle %p, flags %#x, ptr %p, user_value %p, user_flags %p semi-stub!\n",
+    TRACE( "handle %p, flags %#lx, ptr %p, user_value %p, user_flags %p semi-stub!\n",
            handle, flags, ptr, user_value, user_flags );
 
     *user_flags = 0;
@@ -2053,7 +2053,7 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
     SUBHEAP *subheap;
     char *tmp;
 
-    TRACE( "handle %p, flags %#x, ptr %p, user_value %p.\n", handle, flags, ptr, user_value );
+    TRACE( "handle %p, flags %#lx, ptr %p, user_value %p.\n", handle, flags, ptr, user_value );
 
     if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
 
@@ -2090,7 +2090,7 @@ BOOLEAN WINAPI RtlSetUserFlagsHeap( HANDLE handle, ULONG flags, void *ptr, ULONG
     struct heap *heap;
     SUBHEAP *subheap;
 
-    TRACE( "handle %p, flags %#x, ptr %p, clear %#x, set %#x.\n", handle, flags, ptr, clear, set );
+    TRACE( "handle %p, flags %#lx, ptr %p, clear %#lx, set %#lx.\n", handle, flags, ptr, clear, set );
 
     if ((clear | set) & ~(0xe00))
     {

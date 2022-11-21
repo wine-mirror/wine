@@ -324,11 +324,11 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
         switch (arg_types[i])
         {
         case 'j': /* int64 */
-            TRACE( "%x%08x", stack[pos+1], stack[pos] );
+            TRACE( "%lx%08lx", stack[pos+1], stack[pos] );
             pos += 2;
             break;
         case 'k': /* int128 */
-            TRACE( "{%08x,%08x,%08x,%08x}", stack[pos], stack[pos+1], stack[pos+2], stack[pos+3] );
+            TRACE( "{%08lx,%08lx,%08lx,%08lx}", stack[pos], stack[pos+1], stack[pos+2], stack[pos+3] );
             pos += 4;
             break;
         case 's': /* str */
@@ -346,7 +346,7 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
             break;
         case 'i': /* long */
         default:
-            TRACE( "%08x", stack[pos++] );
+            TRACE( "%08lx", stack[pos++] );
             break;
         }
         if (!is_ret_val( arg_types[i+1] )) TRACE( "," );
@@ -357,7 +357,7 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
         *nb_args |= 0x80000000;  /* thiscall/fastcall */
         if (arg_types[1] == 't') *nb_args |= 0x40000000;  /* fastcall */
     }
-    TRACE( ") ret=%08x\n", stack[-1] );
+    TRACE( ") ret=%08lx\n", stack[-1] );
     return entry_point->orig_func;
 }
 
@@ -624,13 +624,13 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
             break;
         case 'i': /* long */
         default:
-            TRACE( "%08zx", stack[i] );
+            TRACE( "%08Ix", stack[i] );
             break;
         }
         if (!is_ret_val( arg_types[i + 1] )) TRACE( "," );
     }
     *nb_args = i;
-    TRACE( ") ret=%08zx\n", stack[-1] );
+    TRACE( ") ret=%08Ix\n", stack[-1] );
     return entry_point->orig_func;
 }
 
@@ -640,7 +640,7 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
 DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
                                               INT_PTR retaddr, INT_PTR retval )
 {
-    TRACE( "\1Ret  %s() retval=%08zx ret=%08zx\n",
+    TRACE( "\1Ret  %s() retval=%08Ix ret=%08Ix\n",
            func_name( descr->private, LOWORD(idx) ), retval, retaddr );
 }
 
@@ -730,13 +730,13 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
             break;
         case 'i': /* long */
         default:
-            TRACE( "%08zx", stack[i] );
+            TRACE( "%08Ix", stack[i] );
             break;
         }
         if (!is_ret_val( arg_types[i+1] )) TRACE( "," );
     }
     *nb_args = i;
-    TRACE( ") ret=%08zx\n", stack[-1] );
+    TRACE( ") ret=%08Ix\n", stack[-1] );
     return entry_point->orig_func;
 }
 
@@ -746,7 +746,7 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
 DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
                                               INT_PTR retaddr, INT_PTR retval )
 {
-    TRACE( "\1Ret  %s() retval=%08zx ret=%08zx\n",
+    TRACE( "\1Ret  %s() retval=%08Ix ret=%08Ix\n",
            func_name( descr->private, LOWORD(idx) ), retval, retaddr );
 }
 
@@ -1157,7 +1157,7 @@ static void SNOOP_PrintArg(DWORD x)
 {
     int i,nostring;
 
-    TRACE_(snoop)("%08x",x);
+    TRACE_(snoop)("%08lx",x);
     if (IS_INTARG(x) || TRACE_ON(seh)) return; /* trivial reject to avoid faults */
     __TRY
     {
@@ -1255,7 +1255,7 @@ void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Entry( void **stack )
         if (!TRACE_ON(snoop)) return;
 
 	if (fun->name) TRACE_(snoop)("\1CALL %s.%s(", dll->name, fun->name);
-	else TRACE_(snoop)("\1CALL %s.%d(", dll->name, dll->ordbase+ret->ordinal);
+	else TRACE_(snoop)("\1CALL %s.%ld(", dll->name, dll->ordbase+ret->ordinal);
 	if (fun->nrofargs>0) {
 		max = fun->nrofargs; if (max>16) max=16;
 		for (i=0;i<max;i++)
@@ -1271,7 +1271,7 @@ void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Entry( void **stack )
                                             0,16*sizeof(DWORD));
 		memcpy(ret->args, stack + 2, sizeof(DWORD)*16);
 	}
-	TRACE_(snoop)(") ret=%08x\n",(DWORD)ret->origreturn);
+	TRACE_(snoop)(") ret=%08lx\n",(DWORD)ret->origreturn);
 }
 
 void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Return( void **stack )
@@ -1300,7 +1300,7 @@ void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Return( void **stack )
                 if (fun->name)
                     TRACE_(snoop)("\1RET  %s.%s(", ret->dll->name, fun->name);
                 else
-                    TRACE_(snoop)("\1RET  %s.%d(", ret->dll->name, ret->dll->ordbase+ret->ordinal);
+                    TRACE_(snoop)("\1RET  %s.%ld(", ret->dll->name, ret->dll->ordbase+ret->ordinal);
 
 		max = fun->nrofargs;
 		if (max>16) max=16;
@@ -1310,17 +1310,17 @@ void WINAPI DECLSPEC_HIDDEN __regs_SNOOP_Return( void **stack )
                     SNOOP_PrintArg(ret->args[i]);
                     if (i<max-1) TRACE_(snoop)(",");
                 }
-		TRACE_(snoop)(") retval=%08x ret=%08x\n", retval, (DWORD)ret->origreturn );
+		TRACE_(snoop)(") retval=%08lx ret=%08lx\n", retval, (DWORD)ret->origreturn );
 		RtlFreeHeap(GetProcessHeap(),0,ret->args);
 		ret->args = NULL;
 	}
         else
         {
             if (fun->name)
-		TRACE_(snoop)("\1RET  %s.%s() retval=%08x ret=%08x\n",
+		TRACE_(snoop)("\1RET  %s.%s() retval=%08lx ret=%08lx\n",
                         ret->dll->name, fun->name, retval, (DWORD)ret->origreturn);
             else
-		TRACE_(snoop)("\1RET  %s.%d() retval=%08x ret=%08x\n",
+		TRACE_(snoop)("\1RET  %s.%ld() retval=%08lx ret=%08lx\n",
 			ret->dll->name,ret->dll->ordbase+ret->ordinal,
 			retval, (DWORD)ret->origreturn);
         }

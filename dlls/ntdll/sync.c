@@ -218,7 +218,7 @@ NTSTATUS WINAPI RtlInitializeCriticalSectionAndSpinCount( RTL_CRITICAL_SECTION *
 NTSTATUS WINAPI RtlInitializeCriticalSectionEx( RTL_CRITICAL_SECTION *crit, ULONG spincount, ULONG flags )
 {
     if (flags & (RTL_CRITICAL_SECTION_FLAG_DYNAMIC_SPIN|RTL_CRITICAL_SECTION_FLAG_STATIC_INIT))
-        FIXME("(%p,%u,0x%08x) semi-stub\n", crit, spincount, flags);
+        FIXME("(%p,%lu,0x%08lx) semi-stub\n", crit, spincount, flags);
 
     /* FIXME: if RTL_CRITICAL_SECTION_FLAG_STATIC_INIT is given, we should use
      * memory from a static pool to hold the debug info. Then heap.c could pass
@@ -314,14 +314,14 @@ NTSTATUS WINAPI RtlpWaitForCriticalSection( RTL_CRITICAL_SECTION *crit )
             const char *name = NULL;
             if (crit_section_has_debuginfo( crit )) name = (char *)crit->DebugInfo->Spare[0];
             if (!name) name = "?";
-            ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (60 sec)\n",
+            ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (60 sec)\n",
                  crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
             status = wait_semaphore( crit, 60 );
             timeout -= 60;
 
             if ( status == STATUS_TIMEOUT && TRACE_ON(relay) )
             {
-                ERR( "section %p %s wait timed out in thread %04x, blocked by %04x, retrying (5 min)\n",
+                ERR( "section %p %s wait timed out in thread %04lx, blocked by %04lx, retrying (5 min)\n",
                      crit, debugstr_a(name), GetCurrentThreadId(), HandleToULong(crit->OwningThread) );
                 status = wait_semaphore( crit, 300 );
                 timeout -= 300;
@@ -936,7 +936,7 @@ NTSTATUS WINAPI RtlWaitOnAddress( const void *addr, const void *cmp, SIZE_T size
         list_remove( &entry.entry );
     spin_unlock( &queue->lock );
 
-    TRACE("returning %#x\n", ret);
+    TRACE("returning %#lx\n", ret);
 
     if (ret == STATUS_ALERTED) ret = STATUS_SUCCESS;
     return ret;

@@ -134,10 +134,10 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
         }
 
         /* Call handler */
-        TRACE( "calling handler at %p code=%x flags=%x\n",
+        TRACE( "calling handler at %p code=%lx flags=%lx\n",
                frame->Handler, rec->ExceptionCode, rec->ExceptionFlags );
         res = EXC_CallHandler( rec, frame, context, &dispatch, frame->Handler, raise_handler );
-        TRACE( "handler at %p returned %x\n", frame->Handler, res );
+        TRACE( "handler at %p returned %lx\n", frame->Handler, res );
 
         if (frame == nested_frame)
         {
@@ -174,11 +174,10 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     NTSTATUS status;
     DWORD c;
 
-    TRACE( "code=%x flags=%x addr=%p ip=%08x tid=%04x\n",
-           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
-           context->Eip, GetCurrentThreadId() );
+    TRACE( "code=%lx flags=%lx addr=%p ip=%08lx\n",
+           rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Eip );
     for (c = 0; c < rec->NumberParameters; c++)
-        TRACE( " info[%d]=%08lx\n", c, rec->ExceptionInformation[c] );
+        TRACE( " info[%ld]=%08Ix\n", c, rec->ExceptionInformation[c] );
 
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
     {
@@ -196,7 +195,7 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
         if ((DWORD)rec->ExceptionInformation[2] == -1)
             WARN_(threadname)( "Thread renamed to %s\n", debugstr_a((char *)rec->ExceptionInformation[1]) );
         else
-            WARN_(threadname)( "Thread ID %04x renamed to %s\n", (DWORD)rec->ExceptionInformation[2],
+            WARN_(threadname)( "Thread ID %04lx renamed to %s\n", (DWORD)rec->ExceptionInformation[2],
                                debugstr_a((char *)rec->ExceptionInformation[1]) );
 
         set_native_thread_name((DWORD)rec->ExceptionInformation[2], (char *)rec->ExceptionInformation[1]);
@@ -212,14 +211,14 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
     else
     {
         if (rec->ExceptionCode == STATUS_ASSERTION_FAILURE)
-            ERR( "%s exception (code=%x) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
+            ERR( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
         else
-            WARN( "%s exception (code=%x) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
+            WARN( "%s exception (code=%lx) raised\n", debugstr_exception_code(rec->ExceptionCode), rec->ExceptionCode );
 
-        TRACE(" eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n",
+        TRACE(" eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
               context->Eax, context->Ebx, context->Ecx,
               context->Edx, context->Esi, context->Edi );
-        TRACE(" ebp=%08x esp=%08x cs=%04x ss=%04x ds=%04x es=%04x fs=%04x gs=%04x flags=%08x\n",
+        TRACE(" ebp=%08lx esp=%08lx cs=%04lx ss=%04lx ds=%04lx es=%04lx fs=%04lx gs=%04lx flags=%08lx\n",
               context->Ebp, context->Esp, context->SegCs, context->SegSs, context->SegDs,
               context->SegEs, context->SegFs, context->SegGs, context->EFlags );
     }
@@ -393,10 +392,10 @@ void WINAPI DECLSPEC_HIDDEN __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEn
 
     pRecord->ExceptionFlags |= EH_UNWINDING | (pEndFrame ? 0 : EH_EXIT_UNWIND);
 
-    TRACE( "code=%x flags=%x\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
-    TRACE( "eax=%08x ebx=%08x ecx=%08x edx=%08x esi=%08x edi=%08x\n",
+    TRACE( "code=%lx flags=%lx\n", pRecord->ExceptionCode, pRecord->ExceptionFlags );
+    TRACE( "eax=%08lx ebx=%08lx ecx=%08lx edx=%08lx esi=%08lx edi=%08lx\n",
            context->Eax, context->Ebx, context->Ecx, context->Edx, context->Esi, context->Edi );
-    TRACE( "ebp=%08x esp=%08x eip=%08x cs=%04x ds=%04x fs=%04x gs=%04x flags=%08x\n",
+    TRACE( "ebp=%08lx esp=%08lx eip=%08lx cs=%04x ds=%04x fs=%04x gs=%04x flags=%08lx\n",
            context->Ebp, context->Esp, context->Eip, LOWORD(context->SegCs), LOWORD(context->SegDs),
            LOWORD(context->SegFs), LOWORD(context->SegGs), context->EFlags );
 
@@ -411,10 +410,10 @@ void WINAPI DECLSPEC_HIDDEN __regs_RtlUnwind( EXCEPTION_REGISTRATION_RECORD* pEn
         if (!is_valid_frame( frame )) raise_status( STATUS_BAD_STACK, pRecord );
 
         /* Call handler */
-        TRACE( "calling handler at %p code=%x flags=%x\n",
+        TRACE( "calling handler at %p code=%lx flags=%lx\n",
                frame->Handler, pRecord->ExceptionCode, pRecord->ExceptionFlags );
         res = EXC_CallHandler( pRecord, frame, context, &dispatch, frame->Handler, unwind_handler );
-        TRACE( "handler at %p returned %x\n", frame->Handler, res );
+        TRACE( "handler at %p returned %lx\n", frame->Handler, res );
 
         switch(res)
         {

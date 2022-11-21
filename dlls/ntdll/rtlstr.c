@@ -1835,7 +1835,7 @@ NTSTATUS WINAPI RtlFormatMessageEx( const WCHAR *src, ULONG width, BOOLEAN ignor
     WCHAR *line  = buffer;                         /* start of last line */
     WCHAR *space = NULL;                           /* last space */
 
-    if (flags) FIXME( "%s unknown flags %x\n", debugstr_w(src), flags );
+    if (flags) FIXME( "%s unknown flags %lx\n", debugstr_w(src), flags );
 
     args_data.last  = 0;
     args_data.array = is_array ? (ULONG_PTR *)args : NULL;
