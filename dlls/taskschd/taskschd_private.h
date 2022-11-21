@@ -31,14 +31,4 @@ HRESULT RegisteredTaskCollection_create(const WCHAR *path, IRegisteredTaskCollec
 
 WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path) DECLSPEC_HIDDEN;
 
-static inline WCHAR *heap_strdupW(const WCHAR *src)
-{
-    WCHAR *dst;
-    unsigned len;
-    if (!src) return NULL;
-    len = (lstrlenW(src) + 1) * sizeof(WCHAR);
-    if ((dst = heap_alloc(len))) memcpy(dst, src, len);
-    return dst;
-}
-
 #endif /* __WINE_TASKSCHD_PRIVATE_H__ */
