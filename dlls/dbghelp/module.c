@@ -644,100 +644,6 @@ static WCHAR* append_hex(WCHAR* dst, const BYTE* id, const BYTE* end)
 }
 
 /******************************************************************
- *		image_load_debugaltlink
- *
- * Handle a (potential) .gnu_debugaltlink section and the link to
- * (another) alternate debug file.
- * Return an heap-allocated image_file_map when the section .gnu_debugaltlink is present,
- * and a matching debug file has been located.
- */
-struct image_file_map* image_load_debugaltlink(struct image_file_map* fmap, struct module* module)
-{
-    struct image_section_map debugaltlink_sect;
-    const char* data;
-    struct image_file_map* fmap_link = NULL;
-    BOOL ret = FALSE;
-
-    for (; fmap; fmap = fmap->alternate)
-    {
-        if (image_find_section(fmap, ".gnu_debugaltlink", &debugaltlink_sect)) break;
-    }
-    if (!fmap)
-    {
-        TRACE("No .gnu_debugaltlink section found for %s\n", debugstr_w(module->modulename));
-        return NULL;
-    }
-
-    data = image_map_section(&debugaltlink_sect);
-    if (data != IMAGE_NO_MAP)
-    {
-        unsigned sect_len;
-        const BYTE* id;
-        /* The content of the section is:
-         * + a \0 terminated string
-         * + followed by the build-id
-         * We try loading the dwz_alternate, either as absolute path, or relative to the embedded build-id
-         */
-        sect_len = image_get_map_size(&debugaltlink_sect);
-        id = memchr(data, '\0', sect_len);
-        if (id++)
-        {
-            unsigned idlen = (const BYTE*)data + sect_len - id;
-            fmap_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*fmap_link));
-            if (fmap_link)
-            {
-                unsigned filename_len = MultiByteToWideChar(CP_UNIXCP, 0, data, -1, NULL, 0);
-                /* Trying absolute path */
-                WCHAR* dst = HeapAlloc(GetProcessHeap(), 0, filename_len * sizeof(WCHAR));
-                if (dst)
-                {
-                    MultiByteToWideChar(CP_UNIXCP, 0, data, -1, dst, filename_len);
-                    ret = image_check_debug_link_gnu_id(dst, fmap_link, id, idlen);
-                    HeapFree(GetProcessHeap(), 0, dst);
-                }
-                /* Trying relative path to build-id directory */
-                if (!ret)
-                {
-                    dst = HeapAlloc(GetProcessHeap(), 0,
-                                    sizeof(L"/usr/lib/debug/.build-id/") + (3 + filename_len + idlen * 2) * sizeof(WCHAR));
-                    if (dst)
-                    {
-                        WCHAR* p;
-
-                        /* SIGH....
-                         * some relative links are relative to /usr/lib/debug/.build-id, some others are from the directory
-                         * where the alternate file is...
-                         * so try both
-                         */
-                        p = memcpy(dst, L"/usr/lib/debug/.build-id/", sizeof(L"/usr/lib/debug/.build-id/"));
-                        p += wcslen(dst);
-                        MultiByteToWideChar(CP_UNIXCP, 0, data, -1, p, filename_len);
-                        ret = image_check_debug_link_gnu_id(dst, fmap_link, id, idlen);
-                        if (!ret)
-                        {
-                            p = append_hex(p, id, id + idlen);
-                            *p++ = '/';
-                            MultiByteToWideChar(CP_UNIXCP, 0, data, -1, p, filename_len);
-                            ret = image_check_debug_link_gnu_id(dst, fmap_link, id, idlen);
-                        }
-                        HeapFree(GetProcessHeap(), 0, dst);
-                    }
-                }
-                if (!ret)
-                {
-                    HeapFree(GetProcessHeap(), 0, fmap_link);
-                    WARN("Couldn't find a match for .gnu_debugaltlink section %s for %s\n", data, debugstr_w(module->modulename));
-                    fmap_link = NULL;
-                }
-            }
-        }
-    }
-    image_unmap_section(&debugaltlink_sect);
-    if (fmap_link) TRACE("Found match .gnu_debugaltlink section for %s\n", debugstr_w(module->modulename));
-    return fmap_link;
-}
-
-/******************************************************************
  *		image_locate_build_id_target
  *
  * Try to find the .so file containing the debug info out of the build-id note information
@@ -800,6 +706,108 @@ static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE
     free(p);
     HeapFree(GetProcessHeap(), 0, fmap_link);
     return FALSE;
+}
+
+/******************************************************************
+ *		image_load_debugaltlink
+ *
+ * Handle a (potential) .gnu_debugaltlink section and the link to
+ * (another) alternate debug file.
+ * Return an heap-allocated image_file_map when the section .gnu_debugaltlink is present,
+ * and a matching debug file has been located.
+ */
+struct image_file_map* image_load_debugaltlink(struct image_file_map* fmap, struct module* module)
+{
+    struct image_section_map debugaltlink_sect;
+    const char* data;
+    struct image_file_map* fmap_link = NULL;
+    BOOL ret = FALSE;
+
+    for (; fmap; fmap = fmap->alternate)
+    {
+        if (image_find_section(fmap, ".gnu_debugaltlink", &debugaltlink_sect)) break;
+    }
+    if (!fmap)
+    {
+        TRACE("No .gnu_debugaltlink section found for %s\n", debugstr_w(module->modulename));
+        return NULL;
+    }
+
+    data = image_map_section(&debugaltlink_sect);
+    if (data != IMAGE_NO_MAP)
+    {
+        unsigned sect_len;
+        const BYTE* id;
+        /* The content of the section is:
+         * + a \0 terminated string (filename)
+         * + followed by the build-id
+         * We try loading the dwz_alternate:
+         * - from the filename: either as absolute path, or relative to the embedded build-id
+         * - from the build-id
+         * In both cases, checking that found .so file matches the requested build-id
+         */
+        sect_len = image_get_map_size(&debugaltlink_sect);
+        id = memchr(data, '\0', sect_len);
+        if (id++)
+        {
+            unsigned idlen = (const BYTE*)data + sect_len - id;
+            fmap_link = HeapAlloc(GetProcessHeap(), 0, sizeof(*fmap_link));
+            if (fmap_link)
+            {
+                unsigned filename_len = MultiByteToWideChar(CP_UNIXCP, 0, data, -1, NULL, 0);
+                /* Trying absolute path */
+                WCHAR* dst = HeapAlloc(GetProcessHeap(), 0, filename_len * sizeof(WCHAR));
+                if (dst)
+                {
+                    MultiByteToWideChar(CP_UNIXCP, 0, data, -1, dst, filename_len);
+                    ret = image_check_debug_link_gnu_id(dst, fmap_link, id, idlen);
+                    HeapFree(GetProcessHeap(), 0, dst);
+                }
+                /* Trying relative path to build-id directory */
+                if (!ret)
+                {
+                    dst = HeapAlloc(GetProcessHeap(), 0,
+                                    sizeof(L"/usr/lib/debug/.build-id/") + (3 + filename_len + idlen * 2) * sizeof(WCHAR));
+                    if (dst)
+                    {
+                        WCHAR* p;
+
+                        /* SIGH....
+                         * some relative links are relative to /usr/lib/debug/.build-id, some others are from the directory
+                         * where the alternate file is...
+                         * so try both
+                         */
+                        p = memcpy(dst, L"/usr/lib/debug/.build-id/", sizeof(L"/usr/lib/debug/.build-id/"));
+                        p += wcslen(dst);
+                        MultiByteToWideChar(CP_UNIXCP, 0, data, -1, p, filename_len);
+                        ret = image_check_debug_link_gnu_id(dst, fmap_link, id, idlen);
+                        if (!ret)
+                        {
+                            p = append_hex(p, id, id + idlen);
+                            *p++ = '/';
+                            MultiByteToWideChar(CP_UNIXCP, 0, data, -1, p, filename_len);
+                            ret = image_check_debug_link_gnu_id(dst, fmap_link, id, idlen);
+                        }
+                        HeapFree(GetProcessHeap(), 0, dst);
+                    }
+                }
+                if (!ret)
+                {
+                    HeapFree(GetProcessHeap(), 0, fmap_link);
+                    /* didn't work out with filename, try file lookup based on build-id */
+                    ret = image_locate_build_id_target(fmap, id, idlen);
+                    if (!ret)
+                    {
+                        WARN("Couldn't find a match for .gnu_debugaltlink section %s for %s\n", data, debugstr_w(module->modulename));
+                        fmap_link = NULL;
+                    }
+                }
+            }
+        }
+    }
+    image_unmap_section(&debugaltlink_sect);
+    if (fmap_link) TRACE("Found match .gnu_debugaltlink section for %s\n", debugstr_w(module->modulename));
+    return fmap_link;
 }
 
 /******************************************************************
