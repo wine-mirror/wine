@@ -28170,8 +28170,10 @@ static NTSTATUS wow64_gl_glGetPointerv( void *args )
     {
         .pname = params32->pname,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    status = gl_glGetPointerv( &params );
+    params32->params = PtrToUlong( params.params );
+    return status;
 }
 
 static NTSTATUS wow64_gl_glGetPolygonStipple( void *args )
@@ -39693,8 +39695,10 @@ static NTSTATUS wow64_ext_glGetPointervEXT( void *args )
     {
         .pname = params32->pname,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    status = ext_glGetPointervEXT( &params );
+    params32->params = PtrToUlong( params.params );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glGetProgramBinary( void *args )
@@ -42563,8 +42567,10 @@ static NTSTATUS wow64_ext_glGetVertexAttribPointerv( void *args )
         .index = params32->index,
         .pname = params32->pname,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    status = ext_glGetVertexAttribPointerv( &params );
+    params32->pointer = PtrToUlong( params.pointer );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glGetVertexAttribPointervARB( void *args )
@@ -42580,8 +42586,10 @@ static NTSTATUS wow64_ext_glGetVertexAttribPointervARB( void *args )
         .index = params32->index,
         .pname = params32->pname,
     };
-    FIXME( "params32 %p, params %p stub!\n", params32, &params );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+    status = ext_glGetVertexAttribPointervARB( &params );
+    params32->pointer = PtrToUlong( params.pointer );
+    return status;
 }
 
 static NTSTATUS wow64_ext_glGetVertexAttribPointervNV( void *args )
