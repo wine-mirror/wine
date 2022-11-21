@@ -300,8 +300,12 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
     TRACE("adding %s...\n", debugstr_w(name));
 
     if(info == data->funcs+data->func_cnt) {
-        if(data->func_cnt == data->func_size)
-            data->funcs = heap_realloc_zero(data->funcs, (data->func_size <<= 1)*sizeof(func_info_t));
+        if(data->func_cnt == data->func_size) {
+            info = heap_realloc_zero(data->funcs, (data->func_size <<= 1) * sizeof(func_info_t));
+            if(!info)
+                return;
+            data->funcs = info;
+        }
         info = data->funcs+data->func_cnt;
 
         data->func_cnt++;
