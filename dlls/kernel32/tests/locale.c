@@ -78,6 +78,7 @@ static INT (WINAPI *pCompareStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT
                                       LPNLSVERSIONINFO, LPVOID, LPARAM);
 static INT (WINAPI *pGetGeoInfoA)(GEOID, GEOTYPE, LPSTR, INT, LANGID);
 static INT (WINAPI *pGetGeoInfoW)(GEOID, GEOTYPE, LPWSTR, INT, LANGID);
+static INT (WINAPI *pGetGeoInfoEx)(const WCHAR *, GEOTYPE, PWSTR, INT);
 static INT (WINAPI *pGetUserDefaultGeoName)(LPWSTR, int);
 static BOOL (WINAPI *pSetUserGeoName)(PWSTR);
 static BOOL (WINAPI *pEnumSystemGeoID)(GEOCLASS, GEOID, GEO_ENUMPROC);
@@ -132,6 +133,7 @@ static void InitFunctionPointers(void)
   X(CompareStringEx);
   X(GetGeoInfoA);
   X(GetGeoInfoW);
+  X(GetGeoInfoEx);
   X(GetUserDefaultGeoName);
   X(SetUserGeoName);
   X(EnumSystemGeoID);
@@ -5856,6 +5858,7 @@ static void test_CompareStringOrdinal(void)
 static void test_GetGeoInfo(void)
 {
     char buffA[20];
+    WCHAR buffW[20];
     INT ret;
 
     if (!pGetGeoInfoA)
@@ -5964,6 +5967,37 @@ static void test_GetGeoInfo(void)
     ret = pGetGeoInfoA(203, GEO_ID + 1, NULL, 0, 0);
     ok(ret == 0, "got %d\n", ret);
     ok(GetLastError() == ERROR_INVALID_FLAGS, "got %ld\n", GetLastError());
+
+    /* Test for GetGeoInfoEx */
+    if (!pGetGeoInfoEx)
+    {
+        win_skip("GetGeoInfoEx is not available\n");
+        return;
+    }
+
+    /* Test with ISO 3166-1 */
+    ret = pGetGeoInfoEx(L"AR", GEO_ISO3, buffW, ARRAYSIZE(buffW));
+    todo_wine ok(ret != 0, "GetGeoInfoEx failed %ld.\n", GetLastError());
+    todo_wine ok(!wcscmp(buffW, L"ARG"), "expected string to be ARG, got %ls\n", buffW);
+
+    /* Test with UN M.49 */
+    SetLastError(0xdeadbeef);
+    ret = pGetGeoInfoEx(L"032", GEO_ISO3, buffW, ARRAYSIZE(buffW));
+    ok(ret == 0, "expected GetGeoInfoEx to fail.\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER,
+                 "expected ERROR_INVALID_PARAMETER got %ld.\n", GetLastError());
+
+    /* Test GEO_ID */
+    ret = pGetGeoInfoEx(L"AR", GEO_ID, buffW, ARRAYSIZE(buffW));
+    todo_wine ok(ret != 0, "GetGeoInfoEx failed %ld.\n", GetLastError());
+    todo_wine ok(!wcscmp(buffW, L"11"), "expected string to be 11, got %ls\n", buffW);
+
+    /* Test with invalid geo type */
+    SetLastError(0xdeadbeef);
+    ret = pGetGeoInfoEx(L"AR", GEO_LCID, buffW, ARRAYSIZE(buffW));
+    ok(ret == 0, "expected GetGeoInfoEx to fail.\n");
+    todo_wine ok(GetLastError() == ERROR_INVALID_FLAGS,
+                 "expected ERROR_INVALID_PARAMETER got %ld.\n", GetLastError());
 }
 
 static int geoidenum_count;
