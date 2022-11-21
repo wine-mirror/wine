@@ -5746,10 +5746,23 @@ INT WINAPI DECLSPEC_HOTPATCH GetGeoInfoW( GEOID id, GEOTYPE type, WCHAR *data, i
 
 INT WINAPI DECLSPEC_HOTPATCH GetGeoInfoEx( WCHAR *location, GEOTYPE type, WCHAR *data, int data_count )
 {
-    FIXME( "stub: %s %lx %p %d\n", wine_dbgstr_w(location), type, data, data_count );
+    const struct geo_id *ptr = find_geo_name_entry( location );
 
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return 0;
+    TRACE( "%s %lx %p %d\n", wine_dbgstr_w(location), type, data, data_count );
+
+    if (!ptr)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (type == GEO_LCID || type == GEO_NATION || type == GEO_RFC1766)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    return get_geo_info( ptr, type, data, data_count, 0 );
 }
 
 

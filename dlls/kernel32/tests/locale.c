@@ -5977,26 +5977,26 @@ static void test_GetGeoInfo(void)
 
     /* Test with ISO 3166-1 */
     ret = pGetGeoInfoEx(L"AR", GEO_ISO3, buffW, ARRAYSIZE(buffW));
-    todo_wine ok(ret != 0, "GetGeoInfoEx failed %ld.\n", GetLastError());
-    todo_wine ok(!wcscmp(buffW, L"ARG"), "expected string to be ARG, got %ls\n", buffW);
+    ok(ret != 0, "GetGeoInfoEx failed %ld.\n", GetLastError());
+    ok(!wcscmp(buffW, L"ARG"), "expected string to be ARG, got %ls\n", buffW);
 
     /* Test with UN M.49 */
     SetLastError(0xdeadbeef);
     ret = pGetGeoInfoEx(L"032", GEO_ISO3, buffW, ARRAYSIZE(buffW));
     ok(ret == 0, "expected GetGeoInfoEx to fail.\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_PARAMETER,
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
                  "expected ERROR_INVALID_PARAMETER got %ld.\n", GetLastError());
 
     /* Test GEO_ID */
     ret = pGetGeoInfoEx(L"AR", GEO_ID, buffW, ARRAYSIZE(buffW));
-    todo_wine ok(ret != 0, "GetGeoInfoEx failed %ld.\n", GetLastError());
-    todo_wine ok(!wcscmp(buffW, L"11"), "expected string to be 11, got %ls\n", buffW);
+    ok(ret != 0, "GetGeoInfoEx failed %ld.\n", GetLastError());
+    ok(!wcscmp(buffW, L"11"), "expected string to be 11, got %ls\n", buffW);
 
     /* Test with invalid geo type */
     SetLastError(0xdeadbeef);
     ret = pGetGeoInfoEx(L"AR", GEO_LCID, buffW, ARRAYSIZE(buffW));
     ok(ret == 0, "expected GetGeoInfoEx to fail.\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_FLAGS,
+    ok(GetLastError() == ERROR_INVALID_FLAGS,
                  "expected ERROR_INVALID_PARAMETER got %ld.\n", GetLastError());
 }
 
