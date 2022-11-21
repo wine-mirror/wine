@@ -78,13 +78,6 @@ typedef enum _XDR_DT {
 
 extern HINSTANCE MSXML_hInstance DECLSPEC_HIDDEN;
 
-/* memory allocation functions */
-
-static inline void* __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size);
-}
-
 /* XSLProcessor parameter list */
 struct xslprocessor_par
 {

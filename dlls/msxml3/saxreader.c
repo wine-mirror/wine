@@ -466,13 +466,13 @@ static element_entry* alloc_element_entry(const xmlChar *local, const xmlChar *p
     element_entry *ret;
     int i;
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if (!ret) return ret;
 
     ret->local  = bstr_from_xmlChar(local);
     ret->prefix = bstr_from_xmlChar(prefix);
     ret->qname  = build_qname(ret->prefix, ret->local);
-    ret->ns = nb_ns ? heap_alloc(nb_ns*sizeof(ns)) : NULL;
+    ret->ns = nb_ns ? malloc(nb_ns * sizeof(ns)) : NULL;
     ret->ns_count = nb_ns;
 
     for (i=0; i < nb_ns; i++)
@@ -498,8 +498,8 @@ static void free_element_entry(element_entry *element)
     SysFreeString(element->local);
     SysFreeString(element->qname);
 
-    heap_free(element->ns);
-    heap_free(element);
+    free(element->ns);
+    free(element);
 }
 
 static void push_element_ns(saxlocator *locator, element_entry *element)
@@ -567,7 +567,7 @@ static BOOL bstr_pool_insert(struct bstrpool *pool, BSTR pool_entry)
 {
     if (!pool->pool)
     {
-        pool->pool = heap_alloc(16 * sizeof(*pool->pool));
+        pool->pool = malloc(16 * sizeof(*pool->pool));
         if (!pool->pool)
             return FALSE;
 
@@ -576,12 +576,12 @@ static BOOL bstr_pool_insert(struct bstrpool *pool, BSTR pool_entry)
     }
     else if (pool->index == pool->len)
     {
-        BSTR *realloc = heap_realloc(pool->pool, pool->len * 2 * sizeof(*realloc));
+        BSTR *new_pool = realloc(pool->pool, pool->len * 2 * sizeof(*new_pool));
 
-        if (!realloc)
+        if (!new_pool)
             return FALSE;
 
-        pool->pool = realloc;
+        pool->pool = new_pool;
         pool->len *= 2;
     }
 
@@ -596,7 +596,7 @@ static void free_bstr_pool(struct bstrpool *pool)
     for (i = 0; i < pool->index; i++)
         SysFreeString(pool->pool[i]);
 
-    heap_free(pool->pool);
+    free(pool->pool);
 
     pool->pool = NULL;
     pool->index = pool->len = 0;
@@ -1399,7 +1399,7 @@ static BSTR saxreader_get_unescaped_value(const xmlChar *buf, int len)
     str_len = MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, NULL, 0);
     if (len != -1) str_len++;
 
-    str = heap_alloc(str_len*sizeof(WCHAR));
+    str = malloc(str_len * sizeof(WCHAR));
     if (!str) return NULL;
 
     MultiByteToWideChar(CP_UTF8, 0, (LPCSTR)buf, len, str, str_len);
@@ -1421,7 +1421,7 @@ static BSTR saxreader_get_unescaped_value(const xmlChar *buf, int len)
     }
 
     bstr = SysAllocString(str);
-    heap_free(str);
+    free(str);
 
     return bstr;
 }
@@ -1461,13 +1461,15 @@ static HRESULT SAXAttributes_populate(saxlocator *locator,
     if(locator->attr_count > locator->attr_alloc_count)
     {
         int new_size = locator->attr_count * 2;
-        attrs = heap_realloc_zero(locator->attributes, new_size * sizeof(struct _attributes));
+        attrs = realloc(locator->attributes, new_size * sizeof(*locator->attributes));
         if(!attrs)
         {
             free_attribute_values(locator);
             locator->attr_count = 0;
             return E_OUTOFMEMORY;
         }
+        memset(attrs + locator->attr_alloc_count, 0,
+                (new_size - locator->attr_alloc_count) * sizeof(*locator->attributes));
         locator->attributes = attrs;
         locator->attr_alloc_count = new_size;
     }
@@ -1930,7 +1932,7 @@ static void WINAPIV libxmlFatalError(void *ctx, const char *msg, ...)
     va_end(args);
 
     len = MultiByteToWideChar(CP_UNIXCP, 0, message, -1, NULL, 0);
-    error = heap_alloc(sizeof(WCHAR)*len);
+    error = malloc(sizeof(WCHAR) * len);
     if(error)
     {
         MultiByteToWideChar(CP_UNIXCP, 0, message, -1, error, len);
@@ -1941,7 +1943,7 @@ static void WINAPIV libxmlFatalError(void *ctx, const char *msg, ...)
     {
         xmlStopParser(This->pParserCtxt);
         This->ret = E_FAIL;
-        heap_free(error);
+        free(error);
         return;
     }
 
@@ -1957,7 +1959,7 @@ static void WINAPIV libxmlFatalError(void *ctx, const char *msg, ...)
     else
         ISAXErrorHandler_fatalError(handler->handler, &This->ISAXLocator_iface, error, E_FAIL);
 
-    heap_free(error);
+    free(error);
 
     xmlStopParser(This->pParserCtxt);
     This->ret = E_FAIL;
@@ -2335,7 +2337,7 @@ static ULONG WINAPI isaxlocator_Release(
             SysFreeString(This->attributes[index].szValue);
             SysFreeString(This->attributes[index].szQName);
         }
-        heap_free(This->attributes);
+        free(This->attributes);
 
         /* element stack */
         LIST_FOR_EACH_ENTRY_SAFE(element, element2, &This->elements, element_entry, entry)
@@ -2345,7 +2347,7 @@ static ULONG WINAPI isaxlocator_Release(
         }
 
         ISAXXMLReader_Release(&This->saxreader->ISAXXMLReader_iface);
-        heap_free( This );
+        free(This);
     }
 
     return ref;
@@ -2434,7 +2436,7 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
 
     saxlocator *locator;
 
-    locator = heap_alloc( sizeof (*locator) );
+    locator = malloc(sizeof(*locator));
     if( !locator )
         return E_OUTOFMEMORY;
 
@@ -2461,18 +2463,18 @@ static HRESULT SAXLocator_create(saxreader *reader, saxlocator **ppsaxlocator, B
     if(!locator->namespaceUri)
     {
         ISAXXMLReader_Release(&reader->ISAXXMLReader_iface);
-        heap_free(locator);
+        free(locator);
         return E_OUTOFMEMORY;
     }
 
     locator->attr_alloc_count = 8;
     locator->attr_count = 0;
-    locator->attributes = heap_alloc_zero(sizeof(struct _attributes)*locator->attr_alloc_count);
+    locator->attributes = calloc(locator->attr_alloc_count, sizeof(*locator->attributes));
     if(!locator->attributes)
     {
         ISAXXMLReader_Release(&reader->ISAXXMLReader_iface);
         SysFreeString(locator->namespaceUri);
-        heap_free(locator);
+        free(locator);
         return E_OUTOFMEMORY;
     }
 
@@ -2948,7 +2950,7 @@ static ULONG WINAPI saxxmlreader_Release(
         SysFreeString(This->xmldecl_version);
         free_bstr_pool(&This->pool);
 
-        heap_free( This );
+        free(This);
     }
 
     return ref;
@@ -3437,7 +3439,7 @@ HRESULT SAXXMLReader_create(MSXML_VERSION version, LPVOID *ppObj)
 
     TRACE("(%p)\n", ppObj);
 
-    reader = heap_alloc( sizeof (*reader) );
+    reader = malloc(sizeof(*reader));
     if( !reader )
         return E_OUTOFMEMORY;
 
