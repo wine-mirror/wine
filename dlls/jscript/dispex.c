@@ -462,7 +462,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
         break;
     case PROP_ACCESSOR:
         if(prop->u.accessor.getter) {
-            hres = jsdisp_call_value(prop->u.accessor.getter, to_disp(This),
+            hres = jsdisp_call_value(prop->u.accessor.getter, jsval_obj(This),
                                      DISPATCH_METHOD, 0, NULL, r);
         }else {
             *r = jsval_undefined();
@@ -529,7 +529,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
             TRACE("no setter\n");
             return S_OK;
         }
-        return jsdisp_call_value(prop->u.accessor.setter, to_disp(This), DISPATCH_METHOD, 1, &val, NULL);
+        return jsdisp_call_value(prop->u.accessor.setter, jsval_obj(This), DISPATCH_METHOD, 1, &val, NULL);
     case PROP_IDX:
         if(!This->builtin_info->idx_put) {
             TRACE("no put_idx\n");
@@ -1602,16 +1602,18 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     case DISPATCH_METHOD:
     case DISPATCH_CONSTRUCT: {
         jsval_t *argv, buf[6], r;
+        IDispatch *passed_this;
         unsigned argc;
 
         hres = convert_params(This->ctx, pdp, buf, &argc, &argv);
         if(FAILED(hres))
             break;
 
+        passed_this = get_this(pdp);
         if(prop)
-            hres = invoke_prop_func(This, get_this(pdp), prop, wFlags, argc, argv, pvarRes ? &r : NULL, pspCaller);
+            hres = invoke_prop_func(This, passed_this, prop, wFlags, argc, argv, pvarRes ? &r : NULL, pspCaller);
         else
-            hres = jsdisp_call_value(This, get_this(pdp), wFlags, argc, argv, pvarRes ? &r : NULL);
+            hres = jsdisp_call_value(This, passed_this ? jsval_disp(passed_this) : jsval_undefined(), wFlags, argc, argv, pvarRes ? &r : NULL);
 
         if(argv != buf)
             free(argv);
@@ -1991,14 +1993,14 @@ HRESULT jsdisp_get_id(jsdisp_t *jsdisp, const WCHAR *name, DWORD flags, DISPID *
     return DISP_E_UNKNOWNNAME;
 }
 
-HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+HRESULT jsdisp_call_value(jsdisp_t *jsfunc, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     HRESULT hres;
 
     assert(!(flags & ~(DISPATCH_METHOD|DISPATCH_CONSTRUCT|DISPATCH_JSCRIPT_INTERNAL_MASK)));
 
     if(is_class(jsfunc, JSCLASS_FUNCTION)) {
-        hres = Function_invoke(jsfunc, jsthis, flags, argc, argv, r);
+        hres = Function_invoke(jsfunc, vthis, flags, argc, argv, r);
     }else {
         if(!jsfunc->builtin_info->call) {
             WARN("Not a function\n");
@@ -2009,7 +2011,7 @@ HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsig
             return E_UNEXPECTED;
 
         flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
-        hres = jsfunc->builtin_info->call(jsfunc->ctx, jsthis ? jsval_disp(jsthis) : jsval_null(), flags, argc, argv, r);
+        hres = jsfunc->builtin_info->call(jsfunc->ctx, vthis, flags, argc, argv, r);
     }
     return hres;
 }
@@ -2202,7 +2204,7 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
 
     jsdisp = iface_to_jsdisp(disp);
     if(jsdisp && jsdisp->ctx == ctx) {
-        hres = jsdisp_call_value(jsdisp, jsthis, flags, argc, argv, r);
+        hres = jsdisp_call_value(jsdisp, jsthis ? jsval_disp(jsthis) : jsval_undefined(), flags, argc, argv, r);
         jsdisp_release(jsdisp);
         return hres;
     }

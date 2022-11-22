@@ -702,7 +702,7 @@ static HRESULT rep_call(script_ctx_t *ctx, jsdisp_t *func,
     }
 
     if(SUCCEEDED(hres))
-        hres = jsdisp_call_value(func, NULL, DISPATCH_METHOD, argc, argv, &val);
+        hres = jsdisp_call_value(func, jsval_undefined(), DISPATCH_METHOD, argc, argv, &val);
 
     for(i=0; i <= match->paren_count; i++)
         jsstr_release(get_string(argv[i]));

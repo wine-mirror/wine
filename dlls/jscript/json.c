@@ -775,7 +775,7 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsdisp_t *object, const WCHAR *na
         }
         args[0] = jsval_string(name_str);
         args[1] = value;
-        hres = jsdisp_call_value(ctx->replacer, to_disp(object), DISPATCH_METHOD, ARRAY_SIZE(args), args, &v);
+        hres = jsdisp_call_value(ctx->replacer, jsval_obj(object), DISPATCH_METHOD, ARRAY_SIZE(args), args, &v);
         jsstr_release(name_str);
         jsval_release(value);
         if(FAILED(hres))

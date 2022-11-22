@@ -247,12 +247,11 @@ void detach_arguments_object(jsdisp_t *args_disp)
     jsdisp_release(frame->arguments_obj);
 }
 
-HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+HRESULT Function_invoke(jsdisp_t *func_this, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     FunctionInstance *function;
-    jsval_t vthis;
 
-    TRACE("func %p this %p\n", func_this, jsthis);
+    TRACE("func %p this %s\n", func_this, debugstr_jsval(vthis));
 
     assert(is_class(func_this, JSCLASS_FUNCTION));
     function = function_from_jsdisp(func_this);
@@ -262,10 +261,6 @@ HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsi
         return E_UNEXPECTED;
     }
 
-    if(jsthis)
-        vthis = jsval_disp(jsthis);
-    else
-        vthis = function->dispex.ctx->version < SCRIPTLANGUAGEVERSION_ES5 ? jsval_null() : jsval_undefined();
     return function->vtbl->call(function->dispex.ctx, function, vthis, flags, argc, argv, r);
 }
 
