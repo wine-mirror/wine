@@ -53,6 +53,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 #include "windef.h"
 #include "winbase.h"
@@ -62,7 +63,6 @@
 #include "commctrl.h"
 #include "comctl32.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pager);
 
@@ -576,7 +576,7 @@ PAGER_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     INT ret;
 
     /* allocate memory for info structure */
-    infoPtr = heap_alloc_zero (sizeof(*infoPtr));
+    infoPtr = calloc(1, sizeof(*infoPtr));
     if (!infoPtr) return -1;
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
@@ -611,8 +611,8 @@ static LRESULT
 PAGER_Destroy (PAGER_INFO *infoPtr)
 {
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
-    heap_free (infoPtr->pwszBuffer);
-    heap_free (infoPtr);
+    free (infoPtr->pwszBuffer);
+    free (infoPtr);
     return 0;
 }
 
@@ -1099,9 +1099,9 @@ static UINT PAGER_GetAnsiNtfCode(UINT code)
 static BOOL PAGER_AdjustBuffer(PAGER_INFO *infoPtr, INT size)
 {
     if (!infoPtr->pwszBuffer)
-        infoPtr->pwszBuffer = heap_alloc(size);
+        infoPtr->pwszBuffer = malloc(size);
     else if (infoPtr->nBufferSize < size)
-        infoPtr->pwszBuffer = heap_realloc(infoPtr->pwszBuffer, size);
+        infoPtr->pwszBuffer = realloc(infoPtr->pwszBuffer, size);
 
     if (!infoPtr->pwszBuffer) return FALSE;
     if (infoPtr->nBufferSize < size) infoPtr->nBufferSize = size;
@@ -1153,7 +1153,7 @@ static LRESULT PAGER_SendConvertedNotify(PAGER_INFO *infoPtr, NMHDR *hdr, UINT *
     if ((*text && flags & (CONVERT_SEND | ZERO_SEND)) || (!*text && flags & SEND_EMPTY_IF_NULL))
     {
         bufferSize = textMax ? *textMax : lstrlenW(*text) + 1;
-        sendBuffer = heap_alloc_zero(bufferSize);
+        sendBuffer = calloc(1, bufferSize);
         if (!sendBuffer) goto done;
         if (!(flags & ZERO_SEND)) WideCharToMultiByte(CP_ACP, 0, *text, -1, sendBuffer, bufferSize, NULL, FALSE);
         *text = (WCHAR *)sendBuffer;
@@ -1167,18 +1167,18 @@ static LRESULT PAGER_SendConvertedNotify(PAGER_INFO *infoPtr, NMHDR *hdr, UINT *
         if (*text == oldText)
         {
             bufferSize = lstrlenA((CHAR *)*text)  + 1;
-            receiveBuffer = heap_alloc(bufferSize);
+            receiveBuffer = malloc(bufferSize);
             if (!receiveBuffer) goto done;
             memcpy(receiveBuffer, *text, bufferSize);
             MultiByteToWideChar(CP_ACP, 0, receiveBuffer, bufferSize, oldText, oldTextMax);
-            heap_free(receiveBuffer);
+            free(receiveBuffer);
         }
         else
             MultiByteToWideChar(CP_ACP, 0, (CHAR *)*text, -1, oldText, oldTextMax);
     }
 
 done:
-    heap_free(sendBuffer);
+    free(sendBuffer);
     *text = oldText;
     return ret;
 }
