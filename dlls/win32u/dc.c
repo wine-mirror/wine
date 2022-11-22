@@ -1491,7 +1491,7 @@ BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCH
 /***********************************************************************
  *      __wine_get_wgl_driver  (win32u.@)
  */
-struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
+struct opengl_funcs *__wine_get_wgl_driver( HDC hdc, UINT version )
 {
     BOOL is_display, is_memdc;
     DC *dc;
