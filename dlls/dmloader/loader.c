@@ -903,7 +903,7 @@ static HRESULT DMUSIC_GetDefaultGMPath (WCHAR wszPath[MAX_PATH]) {
 }
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmloader(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmloader(REFIID lpcGUID, void **ppobj)
 {
 	IDirectMusicLoaderImpl *obj;
 	DMUS_OBJECTDESC Desc;

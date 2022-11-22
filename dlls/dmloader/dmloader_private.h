@@ -62,11 +62,11 @@ typedef struct IDirectMusicLoaderGenericStream  IDirectMusicLoaderGenericStream;
 /*****************************************************************************
  * Creation helpers
  */
-extern HRESULT WINAPI create_dmloader(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmcontainer(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderFileStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderResourceStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderGenericStream (LPVOID *ppobj) DECLSPEC_HIDDEN;
+extern HRESULT create_dmloader(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmcontainer(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicLoaderFileStream(void **ppobj) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicLoaderResourceStream(void **ppobj) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicLoaderGenericStream(void **ppobj) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectMusicLoaderFileStream implementation structure

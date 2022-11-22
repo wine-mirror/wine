@@ -647,7 +647,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmcontainer(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmcontainer(REFIID lpcGUID, void **ppobj)
 {
 	IDirectMusicContainerImpl* obj;
         HRESULT hr;

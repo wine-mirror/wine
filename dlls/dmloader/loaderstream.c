@@ -288,7 +288,7 @@ static const IDirectMusicGetLoaderVtbl DirectMusicLoaderFileStream_GetLoader_Vtb
 	IDirectMusicLoaderFileStream_IDirectMusicGetLoader_GetLoader
 };
 
-HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderFileStream (LPVOID* ppobj) {
+HRESULT DMUSIC_CreateDirectMusicLoaderFileStream (void** ppobj) {
 	IDirectMusicLoaderFileStream *obj;
 
 	TRACE("(%p)\n", ppobj);
@@ -545,7 +545,7 @@ static const IDirectMusicGetLoaderVtbl DirectMusicLoaderResourceStream_GetLoader
 	IDirectMusicLoaderResourceStream_IDirectMusicGetLoader_GetLoader
 };
 
-HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderResourceStream (LPVOID* ppobj) {
+HRESULT DMUSIC_CreateDirectMusicLoaderResourceStream (void** ppobj) {
 	IDirectMusicLoaderResourceStream *obj;
 
 	TRACE("(%p)\n", ppobj);
@@ -797,7 +797,7 @@ static const IDirectMusicGetLoaderVtbl DirectMusicLoaderGenericStream_GetLoader_
 	IDirectMusicLoaderGenericStream_IDirectMusicGetLoader_GetLoader
 };
 
-HRESULT WINAPI DMUSIC_CreateDirectMusicLoaderGenericStream (LPVOID* ppobj) {
+HRESULT DMUSIC_CreateDirectMusicLoaderGenericStream (void** ppobj) {
 	IDirectMusicLoaderGenericStream *obj;
 
 	TRACE("(%p)\n", ppobj);
