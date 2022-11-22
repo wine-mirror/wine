@@ -1283,6 +1283,7 @@ static HRESULT interp_redim(exec_ctx_t *ctx)
 {
     BSTR identifier = ctx->instr->arg1.bstr;
     const unsigned dim_cnt = ctx->instr->arg2.uint;
+    VARIANT *v;
     SAFEARRAYBOUND *bounds;
     SAFEARRAY *array;
     ref_t ref;
@@ -1312,9 +1313,16 @@ static HRESULT interp_redim(exec_ctx_t *ctx)
 
     /* FIXME: We should check if we're not modifying an existing static array here */
 
-    VariantClear(ref.u.v);
-    V_VT(ref.u.v) = VT_ARRAY|VT_VARIANT;
-    V_ARRAY(ref.u.v) = array;
+    v = ref.u.v;
+
+    if(V_VT(v) == (VT_VARIANT|VT_BYREF)) {
+        v = V_VARIANTREF(v);
+    }
+
+    VariantClear(v);
+    V_VT(v) = VT_ARRAY|VT_VARIANT;
+    V_ARRAY(v) = array;
+
     return S_OK;
 }
 
@@ -1323,6 +1331,7 @@ static HRESULT interp_redim_preserve(exec_ctx_t *ctx)
     BSTR identifier = ctx->instr->arg1.bstr;
     const unsigned dim_cnt = ctx->instr->arg2.uint;
     unsigned i;
+    VARIANT *v;
     SAFEARRAYBOUND *bounds;
     SAFEARRAY *array;
     ref_t ref;
@@ -1341,12 +1350,18 @@ static HRESULT interp_redim_preserve(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    if(!(V_VT(ref.u.v) & VT_ARRAY)) {
-        FIXME("ReDim Preserve not valid on type %d\n", V_VT(ref.u.v));
+    v = ref.u.v;
+
+    if(V_VT(v) == (VT_VARIANT|VT_BYREF)) {
+        v = V_VARIANTREF(v);
+    }
+
+    if(!(V_VT(v) & VT_ARRAY)) {
+        FIXME("ReDim Preserve not valid on type %d\n", V_VT(v));
         return E_FAIL;
     }
 
-    array = V_ARRAY(ref.u.v);
+    array = V_ARRAY(v);
 
     hres = array_bounds_from_stack(ctx, dim_cnt, &bounds);
     if(FAILED(hres))
@@ -1355,9 +1370,9 @@ static HRESULT interp_redim_preserve(exec_ctx_t *ctx)
     if(array == NULL || array->cDims == 0) {
         /* can initially allocate the array */
         array = SafeArrayCreate(VT_VARIANT, dim_cnt, bounds);
-        VariantClear(ref.u.v);
-        V_VT(ref.u.v) = VT_ARRAY|VT_VARIANT;
-        V_ARRAY(ref.u.v) = array;
+        VariantClear(v);
+        V_VT(v) = VT_ARRAY|VT_VARIANT;
+        V_ARRAY(v) = array;
         return S_OK;
     } else if(array->cDims != dim_cnt) {
         /* can't otherwise change the number of dimensions */

@@ -1562,6 +1562,28 @@ sub TestReDimList
 end sub
 call TestReDimList
 
+dim rx(4)
+sub TestReDimByRef(byref x)
+   ok ubound(x) = 4, "ubound(x) = " & ubound(x)
+   redim x(6)
+   ok ubound(x) = 6, "ubound(x) = " & ubound(x)
+end sub
+call TestReDimByRef(rx)
+ok ubound(rx) = 6, "ubound(rx) = " & ubound(rx)
+
+redim rx(5)
+rx(3)=2
+sub TestReDimPreserveByRef(byref x)
+   ok ubound(x) = 5, "ubound(x) = " & ubound(x)
+   ok x(3) = 2, "x(3) = " & x(3)
+   redim preserve x(7)
+   ok ubound(x) = 7, "ubound(x) = " & ubound(x)
+   ok x(3) = 2, "x(3) = " & x(3)
+end sub
+call TestReDimPreserveByRef(rx)
+ok ubound(rx) = 7, "ubound(rx) = " & ubound(rx)
+ok rx(3) = 2, "rx(3) = " & rx(3)
+
 Class ArrClass
     Dim classarr(3)
     Dim classnoarr()
