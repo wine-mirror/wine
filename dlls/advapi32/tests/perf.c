@@ -31,12 +31,10 @@
 
 #include "initguid.h"
 
-#define DEFINE_FUNCTION(name) static typeof(name) *p##name;
-DEFINE_FUNCTION(PerfCloseQueryHandle);
-DEFINE_FUNCTION(PerfOpenQueryHandle);
-DEFINE_FUNCTION(PerfAddCounters);
-DEFINE_FUNCTION(PerfQueryCounterData);
-#undef DEFINE_FUNCTION
+ULONG (WINAPI *pPerfCloseQueryHandle)(HANDLE);
+ULONG (WINAPI *pPerfOpenQueryHandle)(const WCHAR*, HANDLE*);
+ULONG (WINAPI *pPerfAddCounters)(HANDLE, PERF_COUNTER_IDENTIFIER*, DWORD);
+ULONG (WINAPI *pPerfQueryCounterData)(HANDLE, PERF_DATA_HEADER*, DWORD, DWORD*);
 
 static void init_functions(void)
 {
