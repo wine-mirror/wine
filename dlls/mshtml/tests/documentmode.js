@@ -31,6 +31,8 @@ ok(performance.timing.responseEnd >= performance.timing.responseStart, "response
 ok(performance.timing.domLoading >= performance.timing.responseEnd, "domLoading < responseEnd");
 ok(performance.timing.domInteractive === 0, "domInteractive != 0");
 ok(performance.timing.domComplete === 0, "domComplete != 0");
+ok(performance.timing.domContentLoadedEventStart === 0, "domContentLoadedEventStart != 0");
+ok(performance.timing.domContentLoadedEventEnd === 0, "domContentLoadedEventEnd != 0");
 ok(performance.timing.unloadEventStart === 0, "unloadEventStart != 0");
 ok(performance.timing.unloadEventEnd === 0, "unloadEventEnd != 0");
 ok(performance.timing.redirectStart === 0, "redirectStart != 0");
@@ -79,7 +81,9 @@ if(window.addEventListener) {
 
 sync_test("performance timing", function() {
     ok(performance.timing.domInteractive >= performance.timing.domLoading, "domInteractive < domLoading");
-    ok(performance.timing.domComplete >= performance.timing.domInteractive, "domComplete < domInteractive");
+    ok(performance.timing.domContentLoadedEventStart >= performance.timing.domInteractive, "domContentLoadedEventStart < domInteractive");
+    ok(performance.timing.domContentLoadedEventEnd >= performance.timing.domContentLoadedEventStart, "domContentLoadedEventEnd < domContentLoadedEventStart");
+    ok(performance.timing.domComplete >= performance.timing.domContentLoadedEventEnd, "domComplete < domContentLoadedEventEnd");
 });
 
 sync_test("page transition events", function() {

@@ -520,6 +520,8 @@ typedef struct {
     ULONGLONG response_end_time;
     ULONGLONG dom_interactive_time;
     ULONGLONG dom_complete_time;
+    ULONGLONG dom_content_loaded_event_start_time;
+    ULONGLONG dom_content_loaded_event_end_time;
 } HTMLPerformanceTiming;
 
 typedef struct nsChannelBSC nsChannelBSC;

@@ -117,7 +117,7 @@ typedef struct {
 /* Keep these sorted case sensitively */
 static const event_info_t event_info[] = {
     {L"DOMContentLoaded",  EVENT_TYPE_EVENT,     0,
-        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
+        EVENT_BUBBLES | EVENT_CANCELABLE},
     {L"abort",             EVENT_TYPE_EVENT,     DISPID_EVMETH_ONABORT,
         EVENT_BIND_TO_TARGET},
     {L"animationend",      EVENT_TYPE_EVENT,     DISPID_EVPROP_ONANIMATIONEND,

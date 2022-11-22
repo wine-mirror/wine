@@ -56,6 +56,7 @@ typedef struct {
 static nsresult NSAPI handle_blur(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_focus(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_keypress(nsIDOMEventListener*,nsIDOMEvent*);
+static nsresult NSAPI handle_dom_content_loaded(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_pageshow(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_pagehide(nsIDOMEventListener*,nsIDOMEvent*);
 static nsresult NSAPI handle_load(nsIDOMEventListener*,nsIDOMEvent*);
@@ -72,14 +73,15 @@ static const struct {
     enum doc_event_listener_flags flags;
     nsIDOMEventListenerVtbl vtbl;
 } doc_event_listeners[] = {
-    { EVENTID_BLUR,         0,                  EVENTLISTENER_VTBL(handle_blur) },
-    { EVENTID_FOCUS,        0,                  EVENTLISTENER_VTBL(handle_focus) },
-    { EVENTID_KEYPRESS,     BUBBLES,            EVENTLISTENER_VTBL(handle_keypress) },
-    { EVENTID_PAGESHOW,     OVERRIDE,           EVENTLISTENER_VTBL(handle_pageshow), },
-    { EVENTID_PAGEHIDE,     OVERRIDE,           EVENTLISTENER_VTBL(handle_pagehide), },
-    { EVENTID_LOAD,         OVERRIDE,           EVENTLISTENER_VTBL(handle_load), },
-    { EVENTID_BEFOREUNLOAD, OVERRIDE,           EVENTLISTENER_VTBL(handle_beforeunload), },
-    { EVENTID_UNLOAD,       OVERRIDE,           EVENTLISTENER_VTBL(handle_unload) },
+    { EVENTID_BLUR,             0,                  EVENTLISTENER_VTBL(handle_blur) },
+    { EVENTID_FOCUS,            0,                  EVENTLISTENER_VTBL(handle_focus) },
+    { EVENTID_KEYPRESS,         BUBBLES,            EVENTLISTENER_VTBL(handle_keypress) },
+    { EVENTID_DOMCONTENTLOADED, OVERRIDE,           EVENTLISTENER_VTBL(handle_dom_content_loaded) },
+    { EVENTID_PAGESHOW,         OVERRIDE,           EVENTLISTENER_VTBL(handle_pageshow) },
+    { EVENTID_PAGEHIDE,         OVERRIDE,           EVENTLISTENER_VTBL(handle_pagehide) },
+    { EVENTID_LOAD,             OVERRIDE,           EVENTLISTENER_VTBL(handle_load) },
+    { EVENTID_BEFOREUNLOAD,     OVERRIDE,           EVENTLISTENER_VTBL(handle_beforeunload) },
+    { EVENTID_UNLOAD,           OVERRIDE,           EVENTLISTENER_VTBL(handle_unload) },
 };
 
 struct nsDocumentEventListener {
@@ -212,6 +214,31 @@ static nsresult NSAPI handle_keypress(nsIDOMEventListener *iface,
     update_doc(doc->browser->doc, UPDATE_UI);
     if(doc->browser->usermode == EDITMODE)
         handle_edit_event(doc, event);
+
+    return NS_OK;
+}
+
+static nsresult NSAPI handle_dom_content_loaded(nsIDOMEventListener *iface, nsIDOMEvent *nsevent)
+{
+    nsEventListener *This = impl_from_nsIDOMEventListener(iface);
+    HTMLDocumentNode *doc = This->This->doc;
+    DOMEvent *event;
+    HRESULT hres;
+
+    if(!doc)
+        return NS_OK;
+
+    if(doc->window)
+        doc->window->performance_timing->dom_content_loaded_event_start_time = get_time_stamp();
+
+    hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), &event);
+    if(SUCCEEDED(hres)) {
+        dispatch_event(&doc->node.event_target, event);
+        IDOMEvent_Release(&event->IDOMEvent_iface);
+    }
+
+    if(doc->window)
+        doc->window->performance_timing->dom_content_loaded_event_end_time = get_time_stamp();
 
     return NS_OK;
 }

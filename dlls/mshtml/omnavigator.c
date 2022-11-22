@@ -1766,9 +1766,9 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domContentLoadedEventStart(IHTML
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->dom_content_loaded_event_start_time;
     return S_OK;
 }
 
@@ -1776,9 +1776,9 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domContentLoadedEventEnd(IHTMLPe
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->dom_content_loaded_event_end_time;
     return S_OK;
 }
 
