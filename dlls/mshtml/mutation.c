@@ -305,6 +305,8 @@ static nsresult run_end_load(HTMLDocumentNode *This, nsISupports *arg1, nsISuppo
     }
 
     bind_event_scripts(This);
+
+    This->window->performance_timing->dom_interactive_time = get_time_stamp();
     set_ready_state(This->outer_window, READYSTATE_INTERACTIVE);
     return NS_OK;
 }

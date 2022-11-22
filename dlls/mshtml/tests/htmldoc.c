@@ -450,6 +450,85 @@ static void _test_current_url(unsigned line, IUnknown *unk, const WCHAR *exurl)
     IHTMLDocument2_Release(doc);
 }
 
+#define test_performance_timing(a,b) _test_performance_timing(__LINE__,a,b)
+static void _test_performance_timing(unsigned line, IUnknown *unk, const WCHAR *prop)
+{
+    BOOL expect_non_zero = FALSE;
+    DISPPARAMS dp = { 0 };
+    IHTMLWindow2 *window;
+    IHTMLDocument2 *doc;
+    IDispatchEx *dispex;
+    DISPID dispid;
+    HRESULT hres;
+    VARIANT var;
+    BSTR bstr;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLDocument2, (void**)&doc);
+    ok_(__FILE__,line)(hres == S_OK, "QueryInterface(IID_IHTMLDocument2) failed: %08lx\n", hres);
+
+    hres = IHTMLDocument2_get_readyState(doc, &bstr);
+    ok_(__FILE__,line)(hres == S_OK, "get_readyState failed: %08lx\n", hres);
+    if(!wcscmp(bstr, L"interactive"))
+        expect_non_zero = !wcscmp(prop, L"domInteractive");
+    else if(!wcscmp(bstr, L"complete"))
+        expect_non_zero = TRUE;
+    SysFreeString(bstr);
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok_(__FILE__,line)(hres == S_OK, "get_parentWindow failed: %08lx\n", hres);
+    IHTMLDocument2_Release(doc);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IDispatchEx, (void**)&dispex);
+    ok_(__FILE__,line)(hres == S_OK, "QueryInterface(IID_IDispatchEx) failed: %08lx\n", hres);
+    IHTMLWindow2_Release(window);
+
+    bstr = SysAllocString(L"performance");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    ok_(__FILE__,line)(hres == S_OK, "GetDispID(performance) failed: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    V_VT(&var) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(dispex, dispid, 0, DISPATCH_PROPERTYGET, &dp, &var, NULL, NULL);
+    ok_(__FILE__,line)(hres == S_OK, "InvokeEx(performance) failed: %08lx\n", hres);
+    ok_(__FILE__,line)(V_VT(&var) == VT_DISPATCH, "V_VT(performance) = %d\n", V_VT(&var));
+    ok_(__FILE__,line)(V_DISPATCH(&var) != NULL, "V_DISPATCH(performance) = NULL\n");
+    IDispatchEx_Release(dispex);
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IDispatchEx, (void**)&dispex);
+    ok_(__FILE__,line)(hres == S_OK, "QueryInterface(IID_IDispatchEx) failed: %08lx\n", hres);
+    VariantClear(&var);
+
+    bstr = SysAllocString(L"timing");
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    ok_(__FILE__,line)(hres == S_OK, "GetDispID(timing) failed: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    hres = IDispatchEx_InvokeEx(dispex, dispid, 0, DISPATCH_PROPERTYGET, &dp, &var, NULL, NULL);
+    ok_(__FILE__,line)(hres == S_OK, "InvokeEx(timing) failed: %08lx\n", hres);
+    ok_(__FILE__,line)(V_VT(&var) == VT_DISPATCH, "V_VT(timing) = %d\n", V_VT(&var));
+    ok_(__FILE__,line)(V_DISPATCH(&var) != NULL, "V_DISPATCH(timing) = NULL\n");
+    IDispatchEx_Release(dispex);
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&var), &IID_IDispatchEx, (void**)&dispex);
+    ok_(__FILE__,line)(hres == S_OK, "QueryInterface(IID_IDispatchEx) failed: %08lx\n", hres);
+    VariantClear(&var);
+
+    bstr = SysAllocString(prop);
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameCaseSensitive, &dispid);
+    ok_(__FILE__,line)(hres == S_OK, "GetDispID(%s) failed: %08lx\n", wine_dbgstr_w(prop), hres);
+    SysFreeString(bstr);
+
+    hres = IDispatchEx_InvokeEx(dispex, dispid, 0, DISPATCH_PROPERTYGET, &dp, &var, NULL, NULL);
+    ok_(__FILE__,line)(hres == S_OK, "InvokeEx(%s) failed: %08lx\n", wine_dbgstr_w(prop), hres);
+    ok_(__FILE__,line)(V_VT(&var) == VT_UI8, "V_VT(%s) = %d\n", wine_dbgstr_w(prop), V_VT(&var));
+    IDispatchEx_Release(dispex);
+
+    if(expect_non_zero)
+        ok_(__FILE__,line)(V_UI8(&var) != 0, "%s is 0\n", wine_dbgstr_w(prop));
+    else
+        ok_(__FILE__,line)(V_UI8(&var) == 0, "%s is not 0\n", wine_dbgstr_w(prop));
+}
+
 static BSTR get_mime_type_display_name(const WCHAR *content_type)
 {
     WCHAR buffer[128], ext[128], *str, *progid;
@@ -1039,6 +1118,10 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
         if(!editmode)
             test_readyState(NULL);
         readystate_set_interactive = (load_state != LD_INTERACTIVE);
+
+        /* w10pro64_ja has it set to zero despite readyState being interactive, for whatever reason */
+        if(!is_mhtml)
+            test_performance_timing(doc_unk, L"domInteractive");
         return S_OK;
     case 1012:
         CHECK_EXPECT2(OnChanged_1012);
@@ -3574,6 +3657,7 @@ static HRESULT  WINAPI DocObjectService_FireNavigateComplete2(
 {
     CHECK_EXPECT(FireNavigateComplete2);
     test_readyState(NULL);
+    test_performance_timing(doc_unk, L"domInteractive");
 
     if(loading_hash)
         ok(dwFlags == 0x10 || broken(!dwFlags), "dwFlags = %lx, expected 0x10\n", dwFlags);
