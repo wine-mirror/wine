@@ -1357,8 +1357,10 @@ static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
 
-    if(This->is_doc_channel)
+    if(This->is_doc_channel) {
         This->bsc.window->base.outer_window->base.inner_window->doc->skip_mutation_notif = FALSE;
+        This->bsc.window->performance_timing->navigation_start_time = get_time_stamp();
+    }
 
     return S_OK;
 }

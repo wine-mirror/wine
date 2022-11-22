@@ -508,6 +508,8 @@ typedef struct {
     IHTMLPerformanceTiming IHTMLPerformanceTiming_iface;
 
     LONG ref;
+
+    ULONGLONG navigation_start_time;
 } HTMLPerformanceTiming;
 
 typedef struct nsChannelBSC nsChannelBSC;
