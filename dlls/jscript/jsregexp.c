@@ -585,7 +585,7 @@ static const builtin_info_t RegExpInst_info = {
     NULL
 };
 
-static HRESULT alloc_regexp(script_ctx_t *ctx, jsdisp_t *object_prototype, RegExpInstance **ret)
+static HRESULT alloc_regexp(script_ctx_t *ctx, jsstr_t *str, jsdisp_t *object_prototype, RegExpInstance **ret)
 {
     RegExpInstance *regexp;
     HRESULT hres;
@@ -604,6 +604,9 @@ static HRESULT alloc_regexp(script_ctx_t *ctx, jsdisp_t *object_prototype, RegEx
         return hres;
     }
 
+    regexp->str = jsstr_addref(str);
+    regexp->last_index_val = jsval_number(0);
+
     *ret = regexp;
     return S_OK;
 }
@@ -620,12 +623,9 @@ HRESULT create_regexp(script_ctx_t *ctx, jsstr_t *src, DWORD flags, jsdisp_t **r
 
     TRACE("%s %lx\n", debugstr_wn(str, jsstr_length(src)), flags);
 
-    hres = alloc_regexp(ctx, NULL, &regexp);
+    hres = alloc_regexp(ctx, src, NULL, &regexp);
     if(FAILED(hres))
         return hres;
-
-    regexp->str = jsstr_addref(src);
-    regexp->last_index_val = jsval_number(0);
 
     regexp->jsregexp = regexp_new(ctx, &ctx->tmp_heap, str, jsstr_length(regexp->str), flags, FALSE);
     if(!regexp->jsregexp) {
@@ -959,10 +959,12 @@ static const builtin_info_t RegExpConstr_info = {
 
 HRESULT create_regexp_constr(script_ctx_t *ctx, jsdisp_t *object_prototype, jsdisp_t **ret)
 {
+    jsstr_t *str = jsstr_empty();
     RegExpInstance *regexp;
     HRESULT hres;
 
-    hres = alloc_regexp(ctx, object_prototype, &regexp);
+    hres = alloc_regexp(ctx, str, object_prototype, &regexp);
+    jsstr_release(str);
     if(FAILED(hres))
         return hres;
 

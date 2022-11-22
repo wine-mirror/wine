@@ -335,6 +335,8 @@ ok(obj.hasOwnProperty('source'), "obj.hasOwnProperty('source') is false");
 ok(!RegExp.hasOwnProperty('exec'), "RegExp.hasOwnProperty('exec') is true");
 ok(!RegExp.hasOwnProperty('source'), "RegExp.hasOwnProperty('source') is true");
 ok(RegExp.prototype.hasOwnProperty('source'), "RegExp.prototype.hasOwnProperty('source') is false");
+ok(RegExp.prototype.source === "", "RegExp.prototype.source = " + RegExp.prototype.source);
+ok(RegExp.prototype.lastIndex === 0, "RegExp.prototype.lastIndex = " + RegExp.prototype.lastIndex);
 
 String();
 new String();
