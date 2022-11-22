@@ -513,6 +513,9 @@ typedef struct {
     ULONGLONG unload_event_start_time;
     ULONGLONG unload_event_end_time;
     ULONGLONG redirect_time;
+    ULONGLONG dns_lookup_time;
+    ULONGLONG connect_time;
+    ULONGLONG request_time;
 } HTMLPerformanceTiming;
 
 typedef struct nsChannelBSC nsChannelBSC;

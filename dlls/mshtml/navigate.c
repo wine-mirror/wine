@@ -1720,6 +1720,18 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG progress, ULONG t
         if(This->is_doc_channel && !This->bsc.window->performance_timing->redirect_time)
             This->bsc.window->performance_timing->redirect_time = get_time_stamp();
         return handle_redirect(This, status_text);
+    case BINDSTATUS_FINDINGRESOURCE:
+        if(This->is_doc_channel && !This->bsc.window->performance_timing->dns_lookup_time)
+            This->bsc.window->performance_timing->dns_lookup_time = get_time_stamp();
+        break;
+    case BINDSTATUS_CONNECTING:
+        if(This->is_doc_channel)
+            This->bsc.window->performance_timing->connect_time = get_time_stamp();
+        break;
+    case BINDSTATUS_SENDINGREQUEST:
+        if(This->is_doc_channel)
+            This->bsc.window->performance_timing->request_time = get_time_stamp();
+        break;
     case BINDSTATUS_BEGINDOWNLOADDATA: {
         IWinInetHttpInfo *http_info;
         DWORD status, size = sizeof(DWORD);

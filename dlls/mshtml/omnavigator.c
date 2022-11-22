@@ -1587,6 +1587,24 @@ static HRESULT WINAPI HTMLPerformanceTiming_Invoke(IHTMLPerformanceTiming *iface
 
 #define TIMING_FAKE_TIMESTAMP 0xdeadbeef
 
+static ULONGLONG get_fetch_time(HTMLPerformanceTiming *This)
+{
+    /* If there's no prior doc unloaded and no redirects, fetch time == navigationStart time */
+    if(!This->unload_event_end_time && !This->redirect_time)
+        return This->navigation_start_time;
+
+    if(This->dns_lookup_time)
+        return This->dns_lookup_time;
+    if(This->connect_time)
+        return This->connect_time;
+    if(This->request_time)
+        return This->request_time;
+    if(This->unload_event_end_time)
+        return This->unload_event_end_time;
+
+    return This->redirect_time;
+}
+
 static HRESULT WINAPI HTMLPerformanceTiming_get_navigationStart(IHTMLPerformanceTiming *iface, ULONGLONG *p)
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
@@ -1631,9 +1649,9 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_redirectEnd(IHTMLPerformanceTimi
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->redirect_time ? get_fetch_time(This) : 0;
     return S_OK;
 }
 
@@ -1641,9 +1659,9 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_fetchStart(IHTMLPerformanceTimin
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = get_fetch_time(This);
     return S_OK;
 }
 
@@ -1651,9 +1669,9 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domainLookupStart(IHTMLPerforman
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
@@ -1661,9 +1679,10 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domainLookupEnd(IHTMLPerformance
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->connect_time    ? This->connect_time    :
+         This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
@@ -1671,9 +1690,10 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_connectStart(IHTMLPerformanceTim
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->connect_time    ? This->connect_time    :
+         This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
@@ -1681,9 +1701,11 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_connectEnd(IHTMLPerformanceTimin
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->request_time    ? This->request_time    :
+         This->connect_time    ? This->connect_time    :
+         This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
@@ -1691,9 +1713,11 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_requestStart(IHTMLPerformanceTim
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->request_time    ? This->request_time    :
+         This->connect_time    ? This->connect_time    :
+         This->dns_lookup_time ? This->dns_lookup_time : get_fetch_time(This);
     return S_OK;
 }
 
