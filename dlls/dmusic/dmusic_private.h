@@ -95,8 +95,8 @@ typedef struct instrument_articulation {
  */
 
 /* CLSID */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicImpl (LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl(LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *pUnkOuter) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicCollectionImpl(REFIID riid, void **ppobj, IUnknown *pUnkOuter) DECLSPEC_HIDDEN;
 
 /* Internal */
 extern HRESULT DMUSIC_CreateDirectMusicBufferImpl(LPDMUS_BUFFERDESC desc, LPVOID* ret_iface) DECLSPEC_HIDDEN;

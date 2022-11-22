@@ -43,7 +43,7 @@ LONG DMUSIC_refCount = 0;
 
 typedef struct {
         IClassFactory IClassFactory_iface;
-        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
+        HRESULT (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
 } IClassFactoryImpl;
 
 /******************************************************************

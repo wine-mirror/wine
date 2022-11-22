@@ -522,7 +522,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 
-HRESULT WINAPI DMUSIC_CreateDirectMusicCollectionImpl(LPCGUID lpcGUID, LPVOID* ppobj, LPUNKNOWN pUnkOuter)
+HRESULT DMUSIC_CreateDirectMusicCollectionImpl(REFIID lpcGUID, void **ppobj, IUnknown *pUnkOuter)
 {
 	IDirectMusicCollectionImpl* obj;
         HRESULT hr;

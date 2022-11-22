@@ -588,7 +588,7 @@ static void create_system_ports_list(IDirectMusic8Impl* object)
 }
 
 /* For ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicImpl(LPCGUID riid, LPVOID* ret_iface, LPUNKNOWN unkouter)
+HRESULT DMUSIC_CreateDirectMusicImpl(REFIID riid, void **ret_iface, IUnknown *unkouter)
 {
     IDirectMusic8Impl *dmusic;
     HRESULT ret;
