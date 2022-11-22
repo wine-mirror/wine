@@ -373,14 +373,10 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         WARN("no dom_document\n");
     }
 
-    if(doc->window) {
-        hres = create_event_from_nsevent(event, dispex_compat_mode(&doc->node.event_target.dispex), &load_event);
-        if(SUCCEEDED(hres)) {
-            dispatch_event(&doc->window->event_target, load_event);
-            IDOMEvent_Release(&load_event->IDOMEvent_iface);
-        }
-    }else {
-        WARN("no window\n");
+    hres = create_event_from_nsevent(event, dispex_compat_mode(&doc->node.event_target.dispex), &load_event);
+    if(SUCCEEDED(hres)) {
+        dispatch_event(&doc->window->event_target, load_event);
+        IDOMEvent_Release(&load_event->IDOMEvent_iface);
     }
 
     IHTMLDOMNode_Release(&doc->node.IHTMLDOMNode_iface);
