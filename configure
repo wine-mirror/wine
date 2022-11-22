@@ -653,6 +653,7 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 TAGSFLAGS
 RT_LIBS
+WINELOADER_PROGRAMS
 DELAYLOADFLAG
 MSVCRTFLAGS
 NETAPI_LIBS
@@ -755,7 +756,6 @@ COREFOUNDATION_LIBS
 ac_ct_OBJC
 OBJCFLAGS
 OBJC
-WINELOADER_PROGRAMS
 CONFIGURE_TARGETS
 DISABLED_SUBDIRS
 SUBDIRS
@@ -9471,10 +9471,6 @@ $ac_links:
     for f in $ac_links; do as_fn_append CONFIGURE_TARGETS " $f"; done
 }
 
-wine_binary="wine"
-test "$HOST_ARCH" != x86_64 || wine_binary="wine64"
-WINELOADER_PROGRAMS="$wine_binary"
-
 libwine_soversion=`expr $libwine_version : '\([0-9]*\)\..*'`
 
 case $host_os in
@@ -9946,8 +9942,6 @@ if test "x$ac_cv_cflags__Wl__no_pie" = xyes
 then :
   WINEPRELOADER_LDFLAGS="-Wl,-no_pie $WINEPRELOADER_LDFLAGS"
 fi
-        test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine-preloader"
-        WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
                 WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -mmacosx-version-min=10.7"
     else
         as_fn_append wine_warnings "|can't build Wine preloader; many programs won't work"
@@ -19600,6 +19594,14 @@ then
 fi
 
 
+case "$HOST_ARCH,$PE_ARCHS" in
+  x86_64,*i386*) wine_binary="wine" ;;
+  x86_64,*) wine_binary="wine64" ;;
+  *) wine_binary="wine" ;;
+esac
+WINELOADER_PROGRAMS="$wine_binary"
+
+
 case $host_os in
   linux*)
     case $host_cpu in
@@ -19608,6 +19610,13 @@ case $host_os in
         WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
         ;;
     esac
+    ;;
+  darwin*|macosx*)
+    if test "$wine_can_build_preloader" = "yes"
+    then
+        test "$wine_binary" = wine || as_fn_append CONFIGURE_TARGETS " loader/wine-preloader"
+        WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+    fi
     ;;
 esac
 
@@ -23151,7 +23160,6 @@ READELF = $READELF
 SUBDIRS = $SUBDIRS
 DISABLED_SUBDIRS = $DISABLED_SUBDIRS
 CONFIGURE_TARGETS = $CONFIGURE_TARGETS
-WINELOADER_PROGRAMS = $WINELOADER_PROGRAMS
 OBJC = $OBJC
 OBJCFLAGS = $OBJCFLAGS
 ac_ct_OBJC = $ac_ct_OBJC
@@ -23254,6 +23262,7 @@ NETAPI_CFLAGS = $NETAPI_CFLAGS
 NETAPI_LIBS = $NETAPI_LIBS
 MSVCRTFLAGS = $MSVCRTFLAGS
 DELAYLOADFLAG = $DELAYLOADFLAG
+WINELOADER_PROGRAMS = $WINELOADER_PROGRAMS
 RT_LIBS = $RT_LIBS
 TAGSFLAGS = $TAGSFLAGS
 LIBOBJS = $LIBOBJS
