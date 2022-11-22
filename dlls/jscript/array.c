@@ -1026,9 +1026,10 @@ static HRESULT Array_toLocaleString(script_ctx_t *ctx, jsval_t vthis, WORD flags
 static HRESULT Array_every(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    IDispatch *context_obj = NULL, *callback;
+    jsval_t context_this = jsval_undefined();
     jsval_t value, args[3], res;
     BOOL boolval, ret = TRUE;
+    IDispatch *callback;
     unsigned length, i;
     jsdisp_t *jsthis;
     HRESULT hres;
@@ -1053,7 +1054,7 @@ static HRESULT Array_every(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
             hres = E_NOTIMPL;
             goto done;
         }
-        context_obj = get_object(argv[1]);
+        context_this = argv[1];
     }
 
     for(i = 0; i < length; i++) {
@@ -1066,7 +1067,7 @@ static HRESULT Array_every(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
         args[0] = value;
         args[1] = jsval_number(i);
         args[2] = jsval_obj(jsthis);
-        hres = disp_call_value(ctx, callback, context_obj, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
+        hres = disp_call_value(ctx, callback, context_this, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
         jsval_release(value);
         if(FAILED(hres))
             goto done;
@@ -1092,10 +1093,11 @@ done:
 static HRESULT Array_filter(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    IDispatch *context_obj = NULL, *callback;
+    jsval_t context_this = jsval_undefined();
     jsval_t value, args[3], res;
     unsigned length, i, j = 0;
     jsdisp_t *jsthis, *arr;
+    IDispatch *callback;
     HRESULT hres;
     BOOL boolval;
 
@@ -1119,7 +1121,7 @@ static HRESULT Array_filter(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsign
             hres = E_NOTIMPL;
             goto done;
         }
-        context_obj = get_object(argv[1]);
+        context_this = argv[1];
     }
 
     hres = create_array(ctx, 0, &arr);
@@ -1138,7 +1140,7 @@ static HRESULT Array_filter(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsign
         args[0] = value;
         args[1] = jsval_number(i);
         args[2] = jsval_obj(jsthis);
-        hres = disp_call_value(ctx, callback, context_obj, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
+        hres = disp_call_value(ctx, callback, context_this, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
         if(SUCCEEDED(hres)) {
             hres = to_boolean(res, &boolval);
             jsval_release(res);
@@ -1166,8 +1168,9 @@ done:
 static HRESULT Array_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    IDispatch *context_obj = NULL, *callback;
+    jsval_t context_this = jsval_undefined();
     jsval_t value, args[3], res;
+    IDispatch *callback;
     jsdisp_t *jsthis;
     unsigned length, i;
     HRESULT hres;
@@ -1192,7 +1195,7 @@ static HRESULT Array_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsig
             hres = E_NOTIMPL;
             goto done;
         }
-        context_obj = get_object(argv[1]);
+        context_this = argv[1];
     }
 
     for(i = 0; i < length; i++) {
@@ -1205,7 +1208,7 @@ static HRESULT Array_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsig
         args[0] = value;
         args[1] = jsval_number(i);
         args[2] = jsval_obj(jsthis);
-        hres = disp_call_value(ctx, callback, context_obj, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
+        hres = disp_call_value(ctx, callback, context_this, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
         jsval_release(value);
         if(FAILED(hres))
             goto done;
@@ -1341,9 +1344,10 @@ done:
 
 static HRESULT Array_map(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
-    IDispatch *context_this = NULL, *callback;
+    jsval_t context_this = jsval_undefined();
     jsval_t callback_args[3], mapped_value;
     jsdisp_t *jsthis, *array;
+    IDispatch *callback;
     UINT32 length, k;
     HRESULT hres;
 
@@ -1365,7 +1369,7 @@ static HRESULT Array_map(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned 
 
     if(argc > 1) {
         if(is_object_instance(argv[1])) {
-            context_this = get_object(argv[1]);
+            context_this = argv[1];
         }else if(!is_undefined(argv[1])) {
             FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
             hres = E_NOTIMPL;
@@ -1407,9 +1411,9 @@ done:
 
 static HRESULT Array_reduce(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
-    IDispatch *context_this = NULL, *callback;
     jsval_t callback_args[4], acc, new_acc;
     BOOL have_value = FALSE;
+    IDispatch *callback;
     jsdisp_t *jsthis;
     UINT32 length, k;
     HRESULT hres;
@@ -1453,7 +1457,7 @@ static HRESULT Array_reduce(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsign
         callback_args[0] = acc;
         callback_args[2] = jsval_number(k);
         callback_args[3] = jsval_obj(jsthis);
-        hres = disp_call_value(ctx, callback, context_this, DISPATCH_METHOD, ARRAY_SIZE(callback_args), callback_args, &new_acc);
+        hres = disp_call_value(ctx, callback, jsval_undefined(), DISPATCH_METHOD, ARRAY_SIZE(callback_args), callback_args, &new_acc);
         jsval_release(callback_args[1]);
         if(FAILED(hres))
             break;
@@ -1479,9 +1483,10 @@ done:
 static HRESULT Array_some(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    IDispatch *context_obj = NULL, *callback;
+    jsval_t context_this = jsval_undefined();
     jsval_t value, args[3], res;
     BOOL boolval, ret = FALSE;
+    IDispatch *callback;
     unsigned length, i;
     jsdisp_t *jsthis;
     HRESULT hres;
@@ -1506,7 +1511,7 @@ static HRESULT Array_some(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned
             hres = E_NOTIMPL;
             goto done;
         }
-        context_obj = get_object(argv[1]);
+        context_this = argv[1];
     }
 
     for(i = 0; i < length; i++) {
@@ -1519,7 +1524,7 @@ static HRESULT Array_some(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned
         args[0] = value;
         args[1] = jsval_number(i);
         args[2] = jsval_obj(jsthis);
-        hres = disp_call_value(ctx, callback, context_obj, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
+        hres = disp_call_value(ctx, callback, context_this, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
         jsval_release(value);
         if(FAILED(hres))
             goto done;

@@ -573,7 +573,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
         TRACE("call %s %p\n", debugstr_w(prop->name), get_object(prop->u.val));
 
         return disp_call_value(This->ctx, get_object(prop->u.val),
-                               jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface,
+                               jsval_disp(jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface),
                                flags, argc, argv, r);
     }
     case PROP_ACCESSOR:
@@ -586,7 +586,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
 
         if(is_object_instance(val)) {
             hres = disp_call_value(This->ctx, get_object(val),
-                                   jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface,
+                                   jsval_disp(jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface),
                                    flags, argc, argv, r);
         }else {
             FIXME("invoke %s\n", debugstr_jsval(val));
@@ -2189,10 +2189,11 @@ HRESULT disp_call_name(script_ctx_t *ctx, IDispatch *disp, const WCHAR *name, WO
     return disp_call(ctx, disp, id, flags, argc, argv, ret);
 }
 
-HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     VARIANT buf[6], retv, *args = buf;
+    IDispatch *jsthis;
     jsdisp_t *jsdisp;
     DISPPARAMS dp;
     unsigned i;
@@ -2204,12 +2205,21 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
 
     jsdisp = iface_to_jsdisp(disp);
     if(jsdisp && jsdisp->ctx == ctx) {
-        hres = jsdisp_call_value(jsdisp, jsthis ? jsval_disp(jsthis) : jsval_undefined(), flags, argc, argv, r);
+        hres = jsdisp_call_value(jsdisp, vthis, flags, argc, argv, r);
         jsdisp_release(jsdisp);
         return hres;
     }
     if(jsdisp)
         jsdisp_release(jsdisp);
+
+    if(is_undefined(vthis))
+        jsthis = NULL;
+    else if(is_object_instance(vthis))
+        jsthis = get_object(vthis);
+    else {
+        FIXME("Unimplemented 'this' passed to host object: %s\n", debugstr_jsval(vthis));
+        return E_NOTIMPL;
+    }
 
     flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
     if(r && argc && flags == DISPATCH_METHOD)
