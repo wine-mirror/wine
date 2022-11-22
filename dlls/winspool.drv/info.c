@@ -1748,7 +1748,7 @@ static void free_printer_info( void *data, DWORD level )
         free( piW->pDriverName );
         free( piW->pComment );
         free( piW->pLocation );
-        free( piW->pDevMode );
+        heap_free( piW->pDevMode );
         free( piW->pSepFile );
         free( piW->pPrintProcessor );
         free( piW->pDatatype );
@@ -1761,7 +1761,7 @@ static void free_printer_info( void *data, DWORD level )
     {
         PRINTER_INFO_9W *piW = (PRINTER_INFO_9W *)data;
 
-        free( piW->pDevMode );
+        heap_free( piW->pDevMode );
         break;
     }
 
@@ -1827,7 +1827,7 @@ INT WINAPI DeviceCapabilitiesA(const char *device, const char *portA, WORD cap,
     }
 cleanup:
     free(device_name);
-    free(devmode);
+    heap_free(devmode);
     free(port);
     return ret;
 }
@@ -1893,7 +1893,7 @@ LONG WINAPI DocumentPropertiesA(HWND hwnd, HANDLE printer, char *device_name, DE
         DEVMODEWtoA( outputW, output );
 
     free(device);
-    free(inputW);
+    heap_free(inputW);
     free(outputW);
 
     if (!mode && ret > 0) ret -= CCHDEVICENAME + CCHFORMNAME;
@@ -2113,7 +2113,7 @@ BOOL WINAPI OpenPrinter2A(LPSTR name, HANDLE *printer,
     if (p_defaultsW)
     {
         RtlFreeUnicodeString(&datatypeU);
-        free(defaultsW.pDevMode);
+        heap_free(defaultsW.pDevMode);
     }
     RtlFreeUnicodeString(&nameU);
 
@@ -3197,7 +3197,7 @@ BOOL WINAPI SetJobA(HANDLE hPrinter, DWORD JobId, DWORD Level,
         free(info2W->pDatatype);
         free(info2W->pPrintProcessor);
         free(info2W->pParameters);
-        free(info2W->pDevMode);
+        heap_free(info2W->pDevMode);
         free(info2W->pStatus);
         break;
       }
@@ -3677,7 +3677,7 @@ static BOOL WINSPOOL_GetDevModeFromReg(HKEY hkey, LPCWSTR ValueName,
     if (ptr && (buflen >= sz)) {
         DEVMODEW *dmW = GdiConvertToDevmodeW((DEVMODEA*)ptr);
         memcpy(ptr, dmW, sz);
-        free(dmW);
+        heap_free(dmW);
     }
     *needed = sz;
     return TRUE;
