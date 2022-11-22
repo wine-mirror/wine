@@ -30,9 +30,6 @@
 /* Define to 1 if you have the <CL/cl.h> header file. */
 #undef HAVE_CL_CL_H
 
-/* Define to 1 if you have the <CoreAudio/CoreAudio.h> header file. */
-#undef HAVE_COREAUDIO_COREAUDIO_H
-
 /* Define to 1 if you have the <cups/cups.h> header file. */
 #undef HAVE_CUPS_CUPS_H
 

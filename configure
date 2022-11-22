@@ -4189,7 +4189,7 @@ fi
 # Check whether --with-coreaudio was given.
 if test ${with_coreaudio+y}
 then :
-  withval=$with_coreaudio; if test "x$withval" = "xno"; then ac_cv_header_CoreAudio_CoreAudio_h=no; fi
+  withval=$with_coreaudio;
 fi
 
 
@@ -7850,12 +7850,6 @@ then :
   printf "%s\n" "#define HAVE_CL_CL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "CoreAudio/CoreAudio.h" "ac_cv_header_CoreAudio_CoreAudio_h" "$ac_includes_default"
-if test "x$ac_cv_header_CoreAudio_CoreAudio_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_COREAUDIO_COREAUDIO_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "DiskArbitration/DiskArbitration.h" "ac_cv_header_DiskArbitration_DiskArbitration_h" "$ac_includes_default"
 if test "x$ac_cv_header_DiskArbitration_DiskArbitration_h" = xyes
 then :
@@ -9949,7 +9943,7 @@ fi
         SECURITY_LIBS="-framework Security -framework CoreFoundation"
 
     fi
-    if test "$ac_cv_header_CoreAudio_CoreAudio_h" = "yes"
+    if test "x$with_coreaudio" != "xno";
     then
         COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
 
