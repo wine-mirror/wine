@@ -52,13 +52,10 @@ static BOOLEAN (WINAPI *pRtlSetUserFlagsHeap)(HANDLE,ULONG,void*,ULONG,ULONG);
 static HGLOBAL (WINAPI *pGlobalAlloc)(UINT,SIZE_T);
 static HGLOBAL (WINAPI *pGlobalFree)(HGLOBAL);
 static HGLOBAL (WINAPI *pLocalFree)(HLOCAL);
-
-#define MAKE_FUNC(f) static typeof(f) *p ## f
-MAKE_FUNC( HeapQueryInformation );
-MAKE_FUNC( HeapSetInformation );
-MAKE_FUNC( GlobalFlags );
-MAKE_FUNC( RtlGetNtGlobalFlags );
-#undef MAKE_FUNC
+static BOOL (WINAPI *pHeapQueryInformation)(HANDLE,HEAP_INFORMATION_CLASS,void*,SIZE_T,SIZE_T*);
+static BOOL (WINAPI *pHeapSetInformation)(HANDLE,HEAP_INFORMATION_CLASS,void*,SIZE_T);
+static UINT (WINAPI *pGlobalFlags)(HGLOBAL);
+static ULONG (WINAPI *pRtlGetNtGlobalFlags)(void);
 
 static void load_functions(void)
 {
