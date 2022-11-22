@@ -1170,7 +1170,7 @@ static HRESULT Global_LBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
 {
     SAFEARRAY *sa;
     HRESULT hres;
-    LONG ubound;
+    LONG lbound;
     int dim;
 
     assert(args_cnt == 1 || args_cnt == 2);
@@ -1197,11 +1197,11 @@ static HRESULT Global_LBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
         dim = 1;
     }
 
-    hres = SafeArrayGetLBound(sa, dim, &ubound);
+    hres = SafeArrayGetLBound(sa, dim, &lbound);
     if(FAILED(hres))
         return hres;
 
-    return return_int(res, ubound);
+    return return_int(res, lbound);
 }
 
 static HRESULT Global_UBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
