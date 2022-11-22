@@ -317,8 +317,7 @@ static const IPersistStreamVtbl persist_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicScriptTrack(REFIID riid, void **ret_iface,
-        IUnknown *pUnkOuter)
+HRESULT DMUSIC_CreateDirectMusicScriptTrack(REFIID riid, void **ret_iface, IUnknown *pUnkOuter)
 {
     DirectMusicScriptTrack *track;
     HRESULT hr;

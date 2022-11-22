@@ -42,10 +42,10 @@ LONG DMSCRIPT_refCount = 0;
 
 typedef struct {
         IClassFactory IClassFactory_iface;
-        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
+        HRESULT (*fnCreateInstance)(REFIID riid, void **ppv, IUnknown *pUnkOuter);
 } IClassFactoryImpl;
 
-static HRESULT WINAPI create_unimpl_instance(REFIID riid, void **ppv, IUnknown *pUnkOuter)
+static HRESULT create_unimpl_instance(REFIID riid, void **ppv, IUnknown *pUnkOuter)
 {
         FIXME("(%p, %s, %p) stub\n", pUnkOuter, debugstr_dmguid(riid), ppv);
 
