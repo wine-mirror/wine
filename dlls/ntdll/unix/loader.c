@@ -691,35 +691,32 @@ static void preloader_exec( char **argv )
     execv( argv[1], argv + 1 );
 }
 
-static NTSTATUS loader_exec( const char *loader, char **argv, WORD machine )
+/* exec the appropriate wine loader for the specified machine */
+static NTSTATUS loader_exec( char **argv, WORD machine )
 {
-    char *p, *path;
-
-    if (build_dir)
+    if (machine != current_machine)
     {
-        argv[1] = build_path( build_dir, (machine == IMAGE_FILE_MACHINE_AMD64) ? "loader/wine64" : "loader/wine" );
-        preloader_exec( argv );
-        return STATUS_INVALID_IMAGE_FORMAT;
-    }
-
-    if ((p = strrchr( loader, '/' ))) loader = p + 1;
-
-    argv[1] = build_path( bin_dir, loader );
-    preloader_exec( argv );
-
-    argv[1] = getenv( "WINELOADER" );
-    if (argv[1]) preloader_exec( argv );
-
-    if ((path = getenv( "PATH" )))
-    {
-        for (p = strtok( strdup( path ), ":" ); p; p = strtok( NULL, ":" ))
+        if (machine == IMAGE_FILE_MACHINE_AMD64)  /* try the 64-bit loader */
         {
-            argv[1] = build_path( p, loader );
+            size_t len = strlen(wineloader);
+
+            if (len <= 2 || strcmp( wineloader + len - 2, "64" ))
+            {
+                argv[1] = malloc( len + 3 );
+                strcpy( argv[1], wineloader );
+                strcat( argv[1], "64" );
+                preloader_exec( argv );
+                return STATUS_INVALID_IMAGE_FORMAT;
+            }
+        }
+        else if ((argv[1] = remove_tail( wineloader, "64" )))
+        {
             preloader_exec( argv );
+            return STATUS_INVALID_IMAGE_FORMAT;
         }
     }
 
-    argv[1] = build_path( BINDIR, loader );
+    argv[1] = strdup( wineloader );
     preloader_exec( argv );
     return STATUS_INVALID_IMAGE_FORMAT;
 }
@@ -735,26 +732,10 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
     WORD machine = pe_info->machine;
     ULONGLONG res_start = pe_info->base;
     ULONGLONG res_end = pe_info->base + pe_info->map_size;
-    const char *loader = wineloader;
     char preloader_reserve[64], socket_env[64];
-    BOOL is_child_64bit;
 
     if (pe_info->image_flags & IMAGE_FLAGS_WineFakeDll) res_start = res_end = 0;
     if (pe_info->image_flags & IMAGE_FLAGS_ComPlusNativeReady) machine = native_machine;
-
-    is_child_64bit = is_machine_64bit( machine );
-
-    if (!is_win64 ^ !is_child_64bit)
-    {
-        int len = strlen( loader );
-        char *env = malloc( len + 2 );
-
-        if (!env) return STATUS_NO_MEMORY;
-        strcpy( env, loader );
-        if (is_child_64bit) strcat( env, "64" );
-        else if (!strcmp( env + len - 2, "64" )) env[len - 2] = 0;
-        loader = env;
-    }
 
     signal( SIGPIPE, SIG_DFL );
 
@@ -765,7 +746,7 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
     putenv( preloader_reserve );
     putenv( socket_env );
 
-    return loader_exec( loader, argv, machine );
+    return loader_exec( argv, machine );
 }
 
 
@@ -2504,7 +2485,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 
             memcpy( new_argv + 1, argv, (argc + 1) * sizeof(*argv) );
             putenv( noexec );
-            loader_exec( wineloader, new_argv, current_machine );
+            loader_exec( new_argv, current_machine );
             fatal_error( "could not exec the wine loader\n" );
         }
     }
