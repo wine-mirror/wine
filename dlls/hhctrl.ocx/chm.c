@@ -32,18 +32,25 @@ WINE_DEFAULT_DEBUG_CHANNEL(htmlhelp);
 static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
 {
     LPCSTR str;
+    char **new_strings;
 
     if(!chm->strings_stream)
         return NULL;
 
     if(chm->strings_size <= (offset >> BLOCK_BITS)) {
         chm->strings_size = (offset >> BLOCK_BITS)+1;
-        if(chm->strings)
-            chm->strings = heap_realloc_zero(chm->strings,
+        if(chm->strings) {
+            new_strings = heap_realloc_zero(chm->strings,
                     chm->strings_size*sizeof(char*));
-        else
+            if(!new_strings)
+                return NULL;
+            chm->strings = new_strings;
+        }else {
             chm->strings = heap_alloc_zero(
                     chm->strings_size*sizeof(char*));
+            if(!chm->strings)
+                return NULL;
+        }
 
     }
 
