@@ -973,7 +973,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmstyle(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmstyle(REFIID lpcGUID, void **ppobj)
 {
   IDirectMusicStyle8Impl* obj;
   HRESULT hr;

@@ -41,10 +41,10 @@ LONG DMSTYLE_refCount = 0;
 
 typedef struct {
         IClassFactory IClassFactory_iface;
-        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ret_iface);
+        HRESULT (*fnCreateInstance)(REFIID riid, void **ret_iface);
 } IClassFactoryImpl;
 
-static HRESULT WINAPI create_direct_music_section(REFIID riid, void **ret_iface)
+static HRESULT create_direct_music_section(REFIID riid, void **ret_iface)
 {
         FIXME("(%s, %p) stub\n", debugstr_dmguid(riid), ret_iface);
 
