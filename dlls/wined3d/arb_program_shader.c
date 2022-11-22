@@ -5787,7 +5787,7 @@ static void arbfp_get_caps(const struct wined3d_adapter *adapter, struct fragmen
     caps->MaxSimultaneousTextures = min(gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL], WINED3D_MAX_TEXTURES);
 }
 
-static DWORD arbfp_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int arbfp_get_emul_mask(const struct wined3d_gl_info *gl_info)
 {
     return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
 }

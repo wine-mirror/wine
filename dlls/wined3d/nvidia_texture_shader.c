@@ -750,7 +750,7 @@ static void nvrc_fragment_get_caps(const struct wined3d_adapter *adapter, struct
     caps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
-static DWORD nvrc_fragment_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int nvrc_fragment_get_emul_mask(const struct wined3d_gl_info *gl_info)
 {
     return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
 }

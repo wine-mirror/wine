@@ -11547,7 +11547,7 @@ static void glsl_vertex_pipe_vp_get_caps(const struct wined3d_adapter *adapter, 
     caps->raster_caps = WINED3DPRASTERCAPS_FOGRANGE;
 }
 
-static DWORD glsl_vertex_pipe_vp_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int glsl_vertex_pipe_vp_get_emul_mask(const struct wined3d_gl_info *gl_info)
 {
     if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
         return GL_EXT_EMUL_ARB_MULTITEXTURE;
@@ -12062,7 +12062,7 @@ static void glsl_fragment_pipe_get_caps(const struct wined3d_adapter *adapter, s
     caps->MaxSimultaneousTextures = min(gl_info->limits.samplers[WINED3D_SHADER_TYPE_PIXEL], WINED3D_MAX_TEXTURES);
 }
 
-static DWORD glsl_fragment_pipe_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int glsl_fragment_pipe_get_emul_mask(const struct wined3d_gl_info *gl_info)
 {
     if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
         return GL_EXT_EMUL_ARB_MULTITEXTURE;

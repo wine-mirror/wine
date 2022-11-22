@@ -5405,7 +5405,7 @@ static void vp_ffp_get_caps(const struct wined3d_adapter *adapter, struct wined3
         caps->raster_caps |= WINED3DPRASTERCAPS_FOGRANGE;
 }
 
-static DWORD vp_ffp_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int vp_ffp_get_emul_mask(const struct wined3d_gl_info *gl_info)
 {
     return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
 }
@@ -5463,7 +5463,7 @@ static void ffp_fragment_get_caps(const struct wined3d_adapter *adapter, struct 
     caps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
-static DWORD ffp_fragment_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int ffp_fragment_get_emul_mask(const struct wined3d_gl_info *gl_info)
 {
     return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
 }
@@ -5510,7 +5510,7 @@ static void vp_none_get_caps(const struct wined3d_adapter *adapter, struct wined
     memset(caps, 0, sizeof(*caps));
 }
 
-static DWORD vp_none_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int vp_none_get_emul_mask(const struct wined3d_gl_info *gl_info)
 {
     return 0;
 }
@@ -5530,7 +5530,7 @@ static void fp_none_get_caps(const struct wined3d_adapter *adapter, struct fragm
     memset(caps, 0, sizeof(*caps));
 }
 
-static DWORD fp_none_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int fp_none_get_emul_mask(const struct wined3d_gl_info *gl_info)
 {
     return 0;
 }
