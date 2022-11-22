@@ -1201,6 +1201,13 @@ sync_test("func_scope", function() {
 sync_test("set_obj", function() {
     if(!("Set" in window)) return;
 
+    try {
+        var s = Set();
+        ok(false, "expected exception calling constructor as method");
+    }catch(e) {
+        ok(e.number === 0xa13fc - 0x80000000, "calling constructor as method threw " + e.number);
+    }
+
     var s = new Set, r;
     ok(Object.getPrototypeOf(s) === Set.prototype, "unexpected Set prototype");
 
