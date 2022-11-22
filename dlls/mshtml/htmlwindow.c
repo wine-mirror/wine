@@ -308,6 +308,8 @@ static void release_inner_window(HTMLInnerWindow *This)
         IHTMLStorage_Release(This->local_storage);
     }
 
+    VariantClear(&This->performance);
+
     if(This->mon)
         IMoniker_Release(This->mon);
 
