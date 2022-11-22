@@ -57,7 +57,7 @@
 
 #define IAsyncHandler_IInspectable_iface IAsyncOperationCompletedHandler_IInspectable_iface
 
-HRESULT WINAPI (*pDllGetActivationFactory)(HSTRING, IActivationFactory **);
+HRESULT (WINAPI *pDllGetActivationFactory)(HSTRING, IActivationFactory **);
 static BOOL is_win10_1507 = FALSE;
 static BOOL is_win10_1709 = FALSE;
 
