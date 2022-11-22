@@ -27,8 +27,3 @@ HRESULT get_data_source(IUnknown *outer, DWORD clsctx, LPWSTR initstring, REFIID
     IUnknown **datasource) DECLSPEC_HIDDEN;
 
 extern HINSTANCE instance;
-
-static inline void* __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size);
-}
