@@ -60,7 +60,7 @@ static char *get_thread_dll_path(void)
 
 static void set_thead_dll_detach_event(HANDLE dll, HANDLE event)
 {
-    void WINAPI (*_set_detach_event)(HANDLE event);
+    void (WINAPI *_set_detach_event)(HANDLE event);
     _set_detach_event = (void*) GetProcAddress(dll, "set_detach_event");
     ok(_set_detach_event != NULL, "Failed to get set_detach_event: %lu\n", GetLastError());
     _set_detach_event(event);
