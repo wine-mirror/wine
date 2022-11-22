@@ -1323,9 +1323,6 @@
 # Graphics drivers
 @ cdecl __wine_send_input(long ptr ptr)
 
-# OpenGL
-@ cdecl __wine_get_wgl_driver(long long)
-
 # gdi32
 @ stdcall SetDIBits(long long long long ptr ptr long)
 @ cdecl __wine_get_brush_bitmap_info(long ptr ptr ptr)

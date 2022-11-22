@@ -798,12 +798,6 @@ BOOL CDECL __wine_get_file_outline_text_metric( const WCHAR *path, OUTLINETEXTME
     return unix_funcs->get_file_outline_text_metric( path, otm );
 }
 
-struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
-{
-    if (!unix_funcs) return NULL;
-    return unix_funcs->get_wgl_driver( hdc, version );
-}
-
 BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput )
 {
     if (!unix_funcs) return FALSE;
