@@ -39,7 +39,6 @@
 #include "vsstyle.h"
 #include "vssym32.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ipaddress);
 
@@ -210,7 +209,7 @@ static LRESULT IPADDRESS_Create (HWND hwnd, const CREATESTRUCTA *lpCreate)
     SetWindowLongW (hwnd, GWL_STYLE,
 		    GetWindowLongW(hwnd, GWL_STYLE) & ~WS_BORDER);
 
-    infoPtr = heap_alloc_zero (sizeof(*infoPtr));
+    infoPtr = calloc (1, sizeof(*infoPtr));
     if (!infoPtr) return -1;
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
@@ -273,7 +272,7 @@ static LRESULT IPADDRESS_Destroy (IPADDRESS_INFO *infoPtr)
     SetWindowLongPtrW (infoPtr->Self, 0, 0);
     theme = GetWindowTheme (infoPtr->Self);
     CloseThemeData (theme);
-    heap_free (infoPtr);
+    free (infoPtr);
     return 0;
 }
 
