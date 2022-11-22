@@ -1585,8 +1585,6 @@ static HRESULT WINAPI HTMLPerformanceTiming_Invoke(IHTMLPerformanceTiming *iface
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
-#define TIMING_FAKE_TIMESTAMP 0xdeadbeef
-
 static ULONGLONG get_fetch_time(HTMLPerformanceTiming *This)
 {
     /* If there's no prior doc unloaded and no redirects, fetch time == navigationStart time */
@@ -1816,9 +1814,9 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_msFirstPaint(IHTMLPerformanceTim
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->first_paint_time;
     return S_OK;
 }
 

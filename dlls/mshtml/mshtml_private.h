@@ -524,6 +524,7 @@ typedef struct {
     ULONGLONG dom_content_loaded_event_end_time;
     ULONGLONG load_event_start_time;
     ULONGLONG load_event_end_time;
+    ULONGLONG first_paint_time;
 } HTMLPerformanceTiming;
 
 typedef struct nsChannelBSC nsChannelBSC;

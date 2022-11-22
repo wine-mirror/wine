@@ -50,6 +50,9 @@ static void paint_document(HTMLDocumentObj *This)
     RECT rect;
     HDC hdc;
 
+    if(This->window && This->window->base.inner_window && !This->window->base.inner_window->performance_timing->first_paint_time)
+        This->window->base.inner_window->performance_timing->first_paint_time = get_time_stamp();
+
     GetClientRect(This->hwnd, &rect);
 
     hdc = BeginPaint(This->hwnd, &ps);

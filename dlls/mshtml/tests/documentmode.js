@@ -39,6 +39,7 @@ ok(performance.timing.unloadEventStart === 0, "unloadEventStart != 0");
 ok(performance.timing.unloadEventEnd === 0, "unloadEventEnd != 0");
 ok(performance.timing.redirectStart === 0, "redirectStart != 0");
 ok(performance.timing.redirectEnd === 0, "redirectEnd != 0");
+ok(performance.timing.msFirstPaint === 0, "msFirstPaint != 0");
 
 var pageshow_fired = false, pagehide_fired = false;
 document.doc_unload_events_called = false;
