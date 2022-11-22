@@ -1293,7 +1293,8 @@ sync_test("set_obj", function() {
         r++;
         s.clear();
         ok(s.size === 0, "size = " + s.size);
-    });
+        ok(this.valueOf() === 42, "this.valueOf() = " + this.valueOf());
+    }, 42);
     ok(r === 1, "r = " + r);
 });
 
@@ -1447,7 +1448,8 @@ sync_test("map_obj", function() {
         r++;
         s.clear();
         ok(s.size === 0, "size = " + s.size);
-    });
+        ok(this.valueOf() === 42, "this.valueOf() = " + this.valueOf());
+    }, 42);
     ok(r === 1, "r = " + r);
 });
 

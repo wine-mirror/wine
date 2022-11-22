@@ -192,13 +192,8 @@ static HRESULT iterate_map(MapInstance *map, script_ctx_t *ctx, unsigned argc, j
         return E_FAIL;
     }
 
-    if(argc > 1 && !is_undefined(argv[1])) {
-        if(!is_object_instance(argv[1])) {
-            FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
-            return E_NOTIMPL;
-        }
+    if(argc > 1)
         context_this = argv[1];
-    }
 
     while(iter) {
         struct jsval_map_entry *entry = LIST_ENTRY(iter, struct jsval_map_entry, list_entry);

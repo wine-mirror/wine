@@ -280,6 +280,8 @@ sync_test("filter", function() {
     test(["a","b"], function(v) { if(v === "b") delete arr[0]; return typeof v === "string"; });
     test(["b"], function(v) { if(arr[arr.length - 1] !== "c") arr.push("c"); return typeof v === "string"; });
     test([true,"b",42,Math,arr[9],"c"], function(v) { return v; }, Object);
+
+    [0].filter(function() { ok(this.valueOf() === "wine", "this.valueOf() = " + this.valueOf()); return true; }, "wine");
 });
 
 sync_test("every & some", function() {
@@ -314,6 +316,9 @@ sync_test("every & some", function() {
     test(false, false, function(v) { return v; });
     arr.push(1);
     test(false, true, function(v) { return v; });
+
+    [0].every(function() { ok(this.valueOf() === 42, "this.valueOf() = " + this.valueOf()); return true; }, 42);
+    [0].some(function() { ok(this.valueOf() === 137, "this.valueOf() = " + this.valueOf()); return false; }, 137);
 });
 
 sync_test("forEach", function() {
@@ -347,6 +352,8 @@ sync_test("forEach", function() {
         ok(array === a, "array != a");
         ok(this === o, "this != o");
     }, o);
+
+    a.forEach(function() { ok(this.valueOf() === "foobar", "this.valueOf() = " + this.valueOf()); }, "foobar");
 });
 
 sync_test("isArray", function() {
@@ -412,6 +419,9 @@ sync_test("array_map", function() {
     [1,2].map(function() {
         ok(this === window, "this != window");
     }, undefined);
+    [1,2].map(function() {
+        ok(this.valueOf() === 137, "this.valueOf() = " + this.valueOf());
+    }, 137);
 });
 
 sync_test("array_sort", function() {
