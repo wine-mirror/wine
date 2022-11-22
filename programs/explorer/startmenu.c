@@ -371,8 +371,8 @@ static void fill_menu(struct menu_item* item)
 
 static void run_dialog(void)
 {
-    void WINAPI (*pRunFileDlg)(HWND hWndOwner, HICON hIcon, LPCSTR lpszDir,
-                               LPCSTR lpszTitle, LPCSTR lpszDesc, DWORD dwFlags);
+    void (WINAPI *pRunFileDlg)(HWND owner, HICON icon, const char *dir,
+                               const char *title, const char *desc, DWORD flags);
     HMODULE hShell32;
 
     hShell32 = LoadLibraryW(L"shell32");
