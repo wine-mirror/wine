@@ -75,7 +75,7 @@
 # include <sys/scsiio.h>
 #endif
 
-#ifdef HAVE_IOKIT_IOKITLIB_H
+#ifdef __APPLE__
 # include <libkern/OSByteOrder.h>
 # include <sys/disk.h>
 # include <IOKit/IOKitLib.h>

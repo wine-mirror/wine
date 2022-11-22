@@ -54,14 +54,12 @@
 #ifdef HAVE_SYS_RESOURCE_H
 # include <sys/resource.h>
 #endif
-#ifdef HAVE_IOKIT_IOKITLIB_H
+#ifdef __APPLE__
 # include <CoreFoundation/CoreFoundation.h>
 # include <IOKit/IOKitLib.h>
 # include <IOKit/pwr_mgt/IOPM.h>
 # include <IOKit/pwr_mgt/IOPMLib.h>
 # include <IOKit/ps/IOPowerSources.h>
-#endif
-#ifdef __APPLE__
 # include <mach/mach.h>
 # include <mach/machine.h>
 # include <mach/mach_init.h>
@@ -3484,7 +3482,7 @@ static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
     return STATUS_SUCCESS;
 }
 
-#elif defined(HAVE_IOKIT_IOKITLIB_H)
+#elif defined(__APPLE__)
 
 static NTSTATUS fill_battery_state( SYSTEM_BATTERY_STATE *bs )
 {

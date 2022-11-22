@@ -7856,12 +7856,6 @@ then :
   printf "%s\n" "#define HAVE_EGL_EGL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "IOKit/IOKitLib.h" "ac_cv_header_IOKit_IOKitLib_h" "$ac_includes_default"
-if test "x$ac_cv_header_IOKit_IOKitLib_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_IOKIT_IOKITLIB_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "OpenCL/opencl.h" "ac_cv_header_OpenCL_opencl_h" "$ac_includes_default"
 if test "x$ac_cv_header_OpenCL_opencl_h" = xyes
 then :

@@ -408,7 +408,6 @@ AC_CHECK_HEADERS(\
 	AL/al.h \
 	CL/cl.h \
 	EGL/egl.h \
-	IOKit/IOKitLib.h \
 	OpenCL/opencl.h \
 	Security/Security.h \
 	SystemConfiguration/SCDynamicStoreCopyDHCPInfo.h \
