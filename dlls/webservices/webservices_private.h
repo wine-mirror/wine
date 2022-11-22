@@ -406,8 +406,3 @@ static inline BOOL is_valid_parent( const struct node *node )
     if (!node) return FALSE;
     return (node_type( node ) == WS_XML_NODE_TYPE_ELEMENT || node_type( node ) == WS_XML_NODE_TYPE_BOF);
 }
-
-static inline void* __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size);
-}
