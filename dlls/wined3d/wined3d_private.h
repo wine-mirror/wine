@@ -4433,8 +4433,8 @@ struct wined3d_resource
 
     struct list resource_list_entry;
 
-    int32_t srv_bind_count_device;
-    int32_t rtv_bind_count_device;
+    LONG srv_bind_count_device;
+    LONG rtv_bind_count_device;
 };
 
 static inline ULONG wined3d_resource_incref(struct wined3d_resource *resource)
@@ -5092,7 +5092,7 @@ struct wined3d_cs
     BOOL queries_flushed;
 
     HANDLE event;
-    BOOL waiting_for_event;
+    LONG waiting_for_event;
     LONG pending_presents;
 };
 
