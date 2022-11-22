@@ -407,7 +407,6 @@ AC_SYS_LARGEFILE()
 
 AC_CHECK_HEADERS(\
 	AL/al.h \
-	ApplicationServices/ApplicationServices.h \
 	CL/cl.h \
 	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \

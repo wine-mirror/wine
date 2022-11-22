@@ -41,7 +41,7 @@
 #include <cups/ppd.h>
 #endif
 
-#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
+#ifdef __APPLE__
 #define GetCurrentProcess GetCurrentProcess_Mac
 #define GetCurrentThread GetCurrentThread_Mac
 #define LoadResource LoadResource_Mac
@@ -386,7 +386,7 @@ static NTSTATUS get_ppd( void *args )
 
 static NTSTATUS get_default_page_size( void *args )
 {
-#ifdef HAVE_APPLICATIONSERVICES_APPLICATIONSERVICES_H
+#ifdef __APPLE__
     const struct get_default_page_size_params *params = args;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     PMPrintSession session = NULL;
