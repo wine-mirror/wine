@@ -170,16 +170,18 @@ static HRESULT WINAPI wine_provider_get_Type( IWineGameControllerProvider *iface
 {
     struct provider *impl = impl_from_IWineGameControllerProvider( iface );
     DIDEVICEINSTANCEW instance = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+    const WCHAR *tmp;
     HRESULT hr;
 
     TRACE( "iface %p, value %p.\n", iface, value );
 
     if (FAILED(hr = IDirectInputDevice8_GetDeviceInfo( impl->dinput_device, &instance ))) return hr;
 
-    switch (GET_DIDEVICE_TYPE( instance.dwDevType ))
+    if ((tmp = wcschr( impl->device_path + 8, '#' )) && !wcsnicmp( tmp - 6, L"&XI_", 4 ))
+        *value = WineGameControllerType_Gamepad;
+    else switch (GET_DIDEVICE_TYPE( instance.dwDevType ))
     {
     case DI8DEVTYPE_DRIVING: *value = WineGameControllerType_RacingWheel; break;
-    case DI8DEVTYPE_GAMEPAD: *value = WineGameControllerType_Gamepad; break;
     default:
     {
         DWORD count = 0;

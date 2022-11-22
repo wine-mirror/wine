@@ -5174,7 +5174,6 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "get_Gamepads returned %#lx\n", hr );
     hr = IVectorView_Gamepad_get_Size( gamepads_view, &size );
     ok( hr == S_OK, "get_Size returned %#lx\n", hr );
-    todo_wine /* but Wine currently intentionally does */
     ok( size == 0, "got size %u\n", size );
     IVectorView_Gamepad_Release( gamepads_view );
     IGamepadStatics_Release( gamepad_statics );
