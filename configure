@@ -9807,6 +9807,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
+    enable_winemac_drv=${enable_winemac_drv:-yes}
         COREFOUNDATION_LIBS="-framework CoreFoundation"
 
     IOKIT_LIBS="-framework IOKit -framework CoreFoundation"
@@ -10034,19 +10035,6 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-    fi
-
-        if test "$ac_cv_header_ApplicationServices_ApplicationServices_h" = "yes"
-    then
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $APPLICATIONSERVICES_LIBS"
-        ac_fn_c_check_func "$LINENO" "CGDisplayModeGetWidth" "ac_cv_func_CGDisplayModeGetWidth"
-if test "x$ac_cv_func_CGDisplayModeGetWidth" = xyes
-then :
-  enable_winemac_drv=${enable_winemac_drv:-yes}
-fi
-
-        LIBS="$ac_save_LIBS"
     fi
 
     UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"

@@ -682,6 +682,7 @@ case $host_os in
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
+    enable_winemac_drv=${enable_winemac_drv:-yes}
     dnl declare needed frameworks
     AC_SUBST(COREFOUNDATION_LIBS,"-framework CoreFoundation")
     AC_SUBST(IOKIT_LIBS,"-framework IOKit -framework CoreFoundation")
@@ -758,15 +759,6 @@ case $host_os in
                                AC_DEFINE(HAVE_MTLDEVICE_REGISTRYID, 1, [Define if MTLDevice protocol has registryID property.])],
                               [AC_MSG_RESULT(no)])
         AC_LANG_POP([Objective C])
-    fi
-
-    dnl Enable Mac driver on Mac OS X 10.6 or later
-    if test "$ac_cv_header_ApplicationServices_ApplicationServices_h" = "yes"
-    then
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $APPLICATIONSERVICES_LIBS"
-        AC_CHECK_FUNC(CGDisplayModeGetWidth,enable_winemac_drv=${enable_winemac_drv:-yes})
-        LIBS="$ac_save_LIBS"
     fi
 
     UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"
