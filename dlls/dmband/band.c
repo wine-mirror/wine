@@ -510,7 +510,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmband(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmband(REFIID lpcGUID, void **ppobj)
 {
   IDirectMusicBandImpl* obj;
   HRESULT hr;

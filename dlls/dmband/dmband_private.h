@@ -44,8 +44,8 @@
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI create_dmband(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmbandtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmband(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmbandtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
 
 /*****************************************************************************
