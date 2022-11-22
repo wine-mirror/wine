@@ -706,14 +706,9 @@ static NTSTATUS loader_exec( char **argv, WORD machine )
                 strcpy( argv[1], wineloader );
                 strcat( argv[1], "64" );
                 preloader_exec( argv );
-                return STATUS_INVALID_IMAGE_FORMAT;
             }
         }
-        else if ((argv[1] = remove_tail( wineloader, "64" )))
-        {
-            preloader_exec( argv );
-            return STATUS_INVALID_IMAGE_FORMAT;
-        }
+        else if ((argv[1] = remove_tail( wineloader, "64" ))) preloader_exec( argv );
     }
 
     argv[1] = strdup( wineloader );
