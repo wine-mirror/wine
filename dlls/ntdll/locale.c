@@ -193,12 +193,15 @@ static NTSTATUS get_dummy_preferred_ui_language( DWORD flags, LANGID lang, ULONG
     NTSTATUS status;
     ULONG len;
 
-    FIXME("(0x%lx %p %p %p) returning a dummy value (current locale)\n", flags, count, buffer, size);
+    FIXME("(0x%lx %#x %p %p %p) returning a dummy value (current locale)\n", flags, lang, count, buffer, size);
 
     if (flags & MUI_LANGUAGE_ID) swprintf( name, ARRAY_SIZE(name), L"%04lX", lang );
     else
     {
         UNICODE_STRING str;
+
+        if (lang == LOCALE_CUSTOM_UNSPECIFIED)
+            NtQueryInstallUILanguage( &lang );
 
         str.Buffer = name;
         str.MaximumLength = sizeof(name);
