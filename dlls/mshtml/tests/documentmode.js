@@ -26,6 +26,8 @@ ok(performance.timing.domainLookupEnd >= performance.timing.domainLookupStart, "
 ok(performance.timing.connectStart >= performance.timing.domainLookupEnd, "connectStart < domainLookupEnd");
 ok(performance.timing.connectEnd >= performance.timing.connectStart, "connectEnd < connectStart");
 ok(performance.timing.requestStart >= performance.timing.connectEnd, "requestStart < connectEnd");
+ok(performance.timing.responseStart >= performance.timing.requestStart, "responseStart < requestStart");
+ok(performance.timing.responseEnd >= performance.timing.responseStart, "responseEnd < responseStart");
 ok(performance.timing.unloadEventStart === 0, "unloadEventStart != 0");
 ok(performance.timing.unloadEventEnd === 0, "unloadEventEnd != 0");
 ok(performance.timing.redirectStart === 0, "redirectStart != 0");
