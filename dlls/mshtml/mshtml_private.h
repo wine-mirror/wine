@@ -510,6 +510,7 @@ typedef struct {
     LONG ref;
 
     ULONGLONG navigation_start_time;
+    ULONGLONG redirect_time;
 } HTMLPerformanceTiming;
 
 typedef struct nsChannelBSC nsChannelBSC;

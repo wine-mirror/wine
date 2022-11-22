@@ -20,6 +20,7 @@ var compat_version;
 var tests = [];
 
 ok(performance.timing.navigationStart > 0, "navigationStart <= 0");
+ok(performance.timing.redirectStart === 0, "redirectStart != 0");
 
 var pageshow_fired = false, pagehide_fired = false;
 document.doc_unload_events_called = false;
