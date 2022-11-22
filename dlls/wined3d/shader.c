@@ -978,7 +978,7 @@ static HRESULT shader_calculate_clip_or_cull_distance_mask(
     return WINED3D_OK;
 }
 
-static void wined3d_insert_interpolation_mode(DWORD *packed_interpolation_mode,
+static void wined3d_insert_interpolation_mode(uint32_t *packed_interpolation_mode,
         unsigned int register_idx, enum wined3d_shader_interpolation_mode mode)
 {
     if (mode > WINED3DSIM_LINEAR_NOPERSPECTIVE_SAMPLE)
@@ -3516,7 +3516,7 @@ HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *sh
     return WINED3D_OK;
 }
 
-static void init_interpolation_compile_args(DWORD *interpolation_args,
+static void init_interpolation_compile_args(uint32_t *interpolation_args,
         const struct wined3d_shader *pixel_shader, const struct wined3d_d3d_info *d3d_info)
 {
     if (!d3d_info->shader_output_interpolation || !pixel_shader

@@ -1945,7 +1945,7 @@ static const char *shader_glsl_interpolation_qualifiers(enum wined3d_shader_inte
 }
 
 static enum wined3d_shader_interpolation_mode wined3d_extract_interpolation_mode(
-        const DWORD *packed_interpolation_mode, unsigned int register_idx)
+        const uint32_t *packed_interpolation_mode, unsigned int register_idx)
 {
     return wined3d_extract_bits(packed_interpolation_mode,
             register_idx * WINED3D_PACKED_INTERPOLATION_BIT_COUNT, WINED3D_PACKED_INTERPOLATION_BIT_COUNT);
@@ -1953,7 +1953,7 @@ static enum wined3d_shader_interpolation_mode wined3d_extract_interpolation_mode
 
 static void shader_glsl_declare_shader_inputs(const struct wined3d_gl_info *gl_info,
         struct wined3d_string_buffer *buffer, unsigned int element_count,
-        const DWORD *interpolation_mode, BOOL unroll)
+        const uint32_t *interpolation_mode, BOOL unroll)
 {
     enum wined3d_shader_interpolation_mode mode;
     unsigned int i;
@@ -1991,7 +1991,7 @@ static BOOL needs_interpolation_qualifiers_for_shader_outputs(const struct wined
 
 static void shader_glsl_declare_shader_outputs(const struct wined3d_gl_info *gl_info,
         struct wined3d_string_buffer *buffer, unsigned int element_count, BOOL rasterizer_setup,
-        const DWORD *interpolation_mode)
+        const uint32_t *interpolation_mode)
 {
     enum wined3d_shader_interpolation_mode mode;
     unsigned int i;
@@ -7335,7 +7335,7 @@ static void shader_glsl_generate_stream_output_setup(struct wined3d_string_buffe
 
 static void shader_glsl_generate_sm4_output_setup(struct shader_glsl_priv *priv,
         const struct wined3d_shader *shader, unsigned int input_count,
-        const struct wined3d_gl_info *gl_info, BOOL rasterizer_setup, const DWORD *interpolation_mode)
+        const struct wined3d_gl_info *gl_info, BOOL rasterizer_setup, const uint32_t *interpolation_mode)
 {
     const char *prefix = shader_glsl_get_prefix(shader->reg_maps.shader_version.type);
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
