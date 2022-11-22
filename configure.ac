@@ -409,7 +409,6 @@ AC_CHECK_HEADERS(\
 	CL/cl.h \
 	EGL/egl.h \
 	IOKit/IOKitLib.h \
-	IOKit/hid/IOHIDLib.h \
 	OpenCL/opencl.h \
 	Security/Security.h \
 	SystemConfiguration/SCDynamicStoreCopyDHCPInfo.h \
@@ -723,13 +722,6 @@ case $host_os in
     then
         AC_SUBST(OPENCL_LIBS,"-framework OpenCL")
         ac_cv_lib_OpenCL_clGetPlatformInfo=yes
-    fi
-    if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
-    then
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $IOKIT_LIBS"
-        AC_CHECK_FUNCS(IOHIDManagerCreate)
-        LIBS="$ac_save_LIBS"
     fi
 
     if test "$ac_cv_header_Metal_Metal_h" = "yes"

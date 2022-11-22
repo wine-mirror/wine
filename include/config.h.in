@@ -111,12 +111,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `IOHIDManagerCreate' function. */
-#undef HAVE_IOHIDMANAGERCREATE
-
-/* Define to 1 if you have the <IOKit/hid/IOHIDLib.h> header file. */
-#undef HAVE_IOKIT_HID_IOHIDLIB_H
-
 /* Define to 1 if you have the <IOKit/IOKitLib.h> header file. */
 #undef HAVE_IOKIT_IOKITLIB_H
 

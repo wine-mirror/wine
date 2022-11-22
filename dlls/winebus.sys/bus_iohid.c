@@ -26,7 +26,7 @@
 #include <stdarg.h>
 #include <sys/types.h>
 
-#if defined(HAVE_IOKIT_HID_IOHIDLIB_H)
+#ifdef __APPLE__
 #define DWORD UInt32
 #define LPDWORD UInt32*
 #define LONG SInt32
@@ -81,7 +81,7 @@
 #undef LPLONG
 #undef E_PENDING
 #undef PAGE_SHIFT
-#endif /* HAVE_IOKIT_HID_IOHIDLIB_H */
+#endif /* __APPLE__ */
 
 #include <pthread.h>
 
@@ -98,7 +98,7 @@
 #include "unix_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
-#ifdef HAVE_IOHIDMANAGERCREATE
+#ifdef __APPLE__
 
 static pthread_mutex_t iohid_cs = PTHREAD_MUTEX_INITIALIZER;
 
@@ -441,4 +441,4 @@ NTSTATUS iohid_bus_stop(void *args)
     return STATUS_NOT_IMPLEMENTED;
 }
 
-#endif /* HAVE_IOHIDMANAGERCREATE */
+#endif /* __APPLE__ */

@@ -7862,12 +7862,6 @@ then :
   printf "%s\n" "#define HAVE_IOKIT_IOKITLIB_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "IOKit/hid/IOHIDLib.h" "ac_cv_header_IOKit_hid_IOHIDLib_h" "$ac_includes_default"
-if test "x$ac_cv_header_IOKit_hid_IOHIDLib_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_IOKIT_HID_IOHIDLIB_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "OpenCL/opencl.h" "ac_cv_header_OpenCL_opencl_h" "$ac_includes_default"
 if test "x$ac_cv_header_OpenCL_opencl_h" = xyes
 then :
@@ -9945,19 +9939,6 @@ fi
         OPENCL_LIBS="-framework OpenCL"
 
         ac_cv_lib_OpenCL_clGetPlatformInfo=yes
-    fi
-    if test "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes"
-    then
-        ac_save_LIBS="$LIBS"
-        LIBS="$LIBS $IOKIT_LIBS"
-        ac_fn_c_check_func "$LINENO" "IOHIDManagerCreate" "ac_cv_func_IOHIDManagerCreate"
-if test "x$ac_cv_func_IOHIDManagerCreate" = xyes
-then :
-  printf "%s\n" "#define HAVE_IOHIDMANAGERCREATE 1" >>confdefs.h
-
-fi
-
-        LIBS="$ac_save_LIBS"
     fi
 
     if test "$ac_cv_header_Metal_Metal_h" = "yes"
