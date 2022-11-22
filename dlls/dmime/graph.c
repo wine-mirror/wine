@@ -251,7 +251,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmgraph(REFIID riid, void **ret_iface)
+HRESULT create_dmgraph(REFIID riid, void **ret_iface)
 {
     IDirectMusicGraphImpl* obj;
     HRESULT hr;

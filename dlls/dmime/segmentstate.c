@@ -144,7 +144,7 @@ static const IDirectMusicSegmentState8Vtbl DirectMusicSegmentState8Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmsegmentstate(REFIID riid, void **ret_iface)
+HRESULT create_dmsegmentstate(REFIID riid, void **ret_iface)
 {
     IDirectMusicSegmentState8Impl* obj;
     HRESULT hr;

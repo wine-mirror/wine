@@ -256,7 +256,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmsysextrack(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmsysextrack(REFIID lpcGUID, void **ppobj)
 {
     IDirectMusicSysExTrack *track;
     HRESULT hr;

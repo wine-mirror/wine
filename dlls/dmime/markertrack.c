@@ -221,7 +221,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmmarkertrack(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmmarkertrack(REFIID lpcGUID, void **ppobj)
 {
     IDirectMusicMarkerTrack *track;
     HRESULT hr;

@@ -343,7 +343,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmlyricstrack(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmlyricstrack(REFIID lpcGUID, void **ppobj)
 {
     IDirectMusicLyricsTrack *track;
     HRESULT hr;

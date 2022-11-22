@@ -42,7 +42,7 @@ LONG DMIME_refCount = 0;
 
 typedef struct {
         IClassFactory IClassFactory_iface;
-        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ret_iface);
+        HRESULT (*fnCreateInstance)(REFIID riid, void **ret_iface);
 } IClassFactoryImpl;
 
 /******************************************************************

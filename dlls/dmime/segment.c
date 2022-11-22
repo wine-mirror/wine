@@ -827,7 +827,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmsegment(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmsegment(REFIID lpcGUID, void **ppobj)
 {
   IDirectMusicSegment8Impl* obj;
   HRESULT hr;

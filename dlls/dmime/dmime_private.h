@@ -51,21 +51,21 @@ typedef struct IDirectMusicAudioPathImpl IDirectMusicAudioPathImpl;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI create_dmperformance(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmsegment(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmsegmentstate(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmgraph(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmaudiopath(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmperformance(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmsegment(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmsegmentstate(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmgraph(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmaudiopath(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
-extern HRESULT WINAPI create_dmlyricstrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmmarkertrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmparamcontroltrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmsegtriggertrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmseqtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmsysextrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmtempotrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmtimesigtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmwavetrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmlyricstrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmmarkertrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmparamcontroltrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmsegtriggertrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmseqtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmsysextrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmtempotrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmtimesigtrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmwavetrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
 extern void set_audiopath_perf_pointer(IDirectMusicAudioPath*,IDirectMusicPerformance8*) DECLSPEC_HIDDEN;
 extern void set_audiopath_dsound_buffer(IDirectMusicAudioPath*,IDirectSoundBuffer*) DECLSPEC_HIDDEN;

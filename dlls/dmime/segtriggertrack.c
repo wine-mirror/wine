@@ -382,7 +382,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmsegtriggertrack(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmsegtriggertrack(REFIID lpcGUID, void **ppobj)
 {
     IDirectMusicSegTriggerTrack *track;
     HRESULT hr;

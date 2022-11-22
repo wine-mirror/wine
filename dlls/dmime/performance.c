@@ -1284,7 +1284,7 @@ static const IDirectMusicPerformance8Vtbl DirectMusicPerformance8_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmperformance(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmperformance(REFIID lpcGUID, void **ppobj)
 {
 	IDirectMusicPerformance8Impl *obj;
 

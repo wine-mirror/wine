@@ -257,7 +257,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmparamcontroltrack(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmparamcontroltrack(REFIID lpcGUID, void **ppobj)
 {
     IDirectMusicParamControlTrack *track;
     HRESULT hr;

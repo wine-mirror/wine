@@ -325,7 +325,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmaudiopath(REFIID riid, void **ppobj)
+HRESULT create_dmaudiopath(REFIID riid, void **ppobj)
 {
     IDirectMusicAudioPathImpl* obj;
     HRESULT hr;

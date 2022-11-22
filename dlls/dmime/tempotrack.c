@@ -370,7 +370,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmtempotrack(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmtempotrack(REFIID lpcGUID, void **ppobj)
 {
     IDirectMusicTempoTrack *track;
     HRESULT hr;
