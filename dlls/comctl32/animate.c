@@ -36,7 +36,6 @@
 #include "mmsystem.h"
 #include "comctl32.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(animate);
 
@@ -188,20 +187,20 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
             FreeResource(infoPtr->hRes);
             infoPtr->hRes = 0;
         }
-        heap_free (infoPtr->lpIndex);
+        free (infoPtr->lpIndex);
         infoPtr->lpIndex = NULL;
         if (infoPtr->hic)
         {
             fnIC.fnICClose(infoPtr->hic);
             infoPtr->hic = 0;
         }
-        heap_free (infoPtr->inbih);
+        free (infoPtr->inbih);
         infoPtr->inbih = NULL;
-        heap_free (infoPtr->outbih);
+        free (infoPtr->outbih);
         infoPtr->outbih = NULL;
-        heap_free (infoPtr->indata);
+        free (infoPtr->indata);
         infoPtr->indata = NULL;
-        heap_free (infoPtr->outdata);
+        free (infoPtr->outdata);
         infoPtr->outdata = NULL;
         if (infoPtr->hbmPrevFrame)
         {
@@ -565,7 +564,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 	return FALSE;
     }
 
-    infoPtr->inbih = heap_alloc_zero(mmckInfo.cksize);
+    infoPtr->inbih = calloc(1, mmckInfo.cksize);
     if (!infoPtr->inbih) {
 	WARN("Can't alloc input BIH\n");
 	return FALSE;
@@ -612,7 +611,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 
     /* FIXME: should handle the 'rec ' LIST when present */
 
-    infoPtr->lpIndex = heap_alloc_zero(infoPtr->mah.dwTotalFrames * sizeof(DWORD));
+    infoPtr->lpIndex = calloc(infoPtr->mah.dwTotalFrames, sizeof(DWORD));
     if (!infoPtr->lpIndex) 
 	return FALSE;
 
@@ -636,7 +635,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
         infoPtr->ash.dwSuggestedBufferSize = insize;
     }
 
-    infoPtr->indata = heap_alloc_zero(infoPtr->ash.dwSuggestedBufferSize);
+    infoPtr->indata = calloc(1, infoPtr->ash.dwSuggestedBufferSize);
     if (!infoPtr->indata) 
 	return FALSE;
 
@@ -667,9 +666,8 @@ static BOOL ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
     outSize = fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT,
 			    (DWORD_PTR)infoPtr->inbih, 0L);
 
-    infoPtr->outbih = heap_alloc_zero(outSize);
-    if (!infoPtr->outbih)
-	return FALSE;
+    if (!(infoPtr->outbih = calloc(1, outSize)))
+        return FALSE;
 
     if (fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT,
 		      (DWORD_PTR)infoPtr->inbih, (DWORD_PTR)infoPtr->outbih) != ICERR_OK) 
@@ -678,9 +676,8 @@ static BOOL ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
 	return FALSE;
     }
 
-    infoPtr->outdata = heap_alloc_zero(infoPtr->outbih->biSizeImage);
-    if (!infoPtr->outdata) 
-	return FALSE;
+    if (!(infoPtr->outdata = calloc(1, infoPtr->outbih->biSizeImage)))
+        return FALSE;
 
     if (fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_BEGIN,
 		      (DWORD_PTR)infoPtr->inbih, (DWORD_PTR)infoPtr->outbih) != ICERR_OK) {
@@ -772,12 +769,12 @@ static BOOL ANIMATE_OpenA(ANIMATE_INFO *infoPtr, HINSTANCE hInstance, LPSTR lpsz
         return ANIMATE_OpenW(infoPtr, hInstance, (LPWSTR)lpszName);
 
     len = MultiByteToWideChar(CP_ACP, 0, lpszName, -1, NULL, 0);
-    lpwszName = heap_alloc(len * sizeof(WCHAR));
+    lpwszName = malloc(len * sizeof(WCHAR));
     if (!lpwszName) return FALSE;
     MultiByteToWideChar(CP_ACP, 0, lpszName, -1, lpwszName, len);
 
     result = ANIMATE_OpenW(infoPtr, hInstance, lpwszName);
-    heap_free (lpwszName);
+    free (lpwszName);
     return result;
 }
 
@@ -809,7 +806,7 @@ static BOOL ANIMATE_Create(HWND hWnd, const CREATESTRUCTW *lpcs)
     }
 
     /* allocate memory for info structure */
-    infoPtr = heap_alloc_zero(sizeof(*infoPtr));
+    infoPtr = calloc(1, sizeof(*infoPtr));
     if (!infoPtr) return FALSE;
 
     /* store crossref hWnd <-> info structure */
@@ -839,7 +836,7 @@ static LRESULT ANIMATE_Destroy(ANIMATE_INFO *infoPtr)
 
     infoPtr->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&infoPtr->cs);
-    heap_free(infoPtr);
+    free(infoPtr);
 
     return 0;
 }
