@@ -298,7 +298,7 @@ static const IKsControlVtbl DMSynthSinkImpl_IKsControl_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ret_iface)
+HRESULT DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ret_iface)
 {
     IDirectMusicSynthSinkImpl *obj;
     HRESULT hr;

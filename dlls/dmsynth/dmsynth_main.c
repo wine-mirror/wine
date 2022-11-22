@@ -29,7 +29,7 @@ LONG DMSYNTH_refCount = 0;
 
 typedef struct {
         IClassFactory IClassFactory_iface;
-        HRESULT WINAPI (*fnCreateInstance)(REFIID riid, void **ppv);
+        HRESULT (*fnCreateInstance)(REFIID riid, void **ppv);
 } IClassFactoryImpl;
 
 /******************************************************************

@@ -729,7 +729,7 @@ static const IKsControlVtbl DMSynthImpl_IKsControl_Vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
+HRESULT DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj)
 {
     IDirectMusicSynth8Impl *obj;
     HRESULT hr;

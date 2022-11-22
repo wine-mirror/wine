@@ -49,8 +49,8 @@ typedef struct IDirectMusicSynthSinkImpl IDirectMusicSynthSinkImpl;
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicSynthImpl(REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
+extern HRESULT DMUSIC_CreateDirectMusicSynthSinkImpl(REFIID riid, void **ppobj) DECLSPEC_HIDDEN;
 
 /*****************************************************************************
  * IDirectMusicSynth8Impl implementation structure
