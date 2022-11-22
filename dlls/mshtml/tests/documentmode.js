@@ -33,6 +33,8 @@ ok(performance.timing.domInteractive === 0, "domInteractive != 0");
 ok(performance.timing.domComplete === 0, "domComplete != 0");
 ok(performance.timing.domContentLoadedEventStart === 0, "domContentLoadedEventStart != 0");
 ok(performance.timing.domContentLoadedEventEnd === 0, "domContentLoadedEventEnd != 0");
+ok(performance.timing.loadEventStart === 0, "loadEventStart != 0");
+ok(performance.timing.loadEventEnd === 0, "loadEventEnd != 0");
 ok(performance.timing.unloadEventStart === 0, "unloadEventStart != 0");
 ok(performance.timing.unloadEventEnd === 0, "unloadEventEnd != 0");
 ok(performance.timing.redirectStart === 0, "redirectStart != 0");
@@ -59,6 +61,7 @@ if(window.addEventListener) {
         ok(r === "[object PageTransitionEvent]", "pageshow toString = " + r);
         ok("persisted" in e, "'persisted' not in pageshow event");
         ok(document.readyState === "complete", "pageshow readyState = " + document.readyState);
+        ok(performance.timing.loadEventEnd > 0, "loadEventEnd <= 0 in pageshow handler");
     }, true);
 
     window.addEventListener("pagehide", function(e) {
@@ -84,6 +87,8 @@ sync_test("performance timing", function() {
     ok(performance.timing.domContentLoadedEventStart >= performance.timing.domInteractive, "domContentLoadedEventStart < domInteractive");
     ok(performance.timing.domContentLoadedEventEnd >= performance.timing.domContentLoadedEventStart, "domContentLoadedEventEnd < domContentLoadedEventStart");
     ok(performance.timing.domComplete >= performance.timing.domContentLoadedEventEnd, "domComplete < domContentLoadedEventEnd");
+    ok(performance.timing.loadEventStart >= performance.timing.domComplete, "loadEventStart < domComplete");
+    ok(performance.timing.loadEventEnd >= performance.timing.loadEventStart, "loadEventEnd < loadEventStart");
 });
 
 sync_test("page transition events", function() {

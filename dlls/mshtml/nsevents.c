@@ -363,6 +363,8 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
                 &doc->outer_window->base.IHTMLWindow2_iface, 0);
 
+    doc->window->performance_timing->load_event_start_time = get_time_stamp();
+
     if(doc->dom_document) {
         hres = create_document_event(doc, EVENTID_LOAD, &load_event);
         if(SUCCEEDED(hres)) {
@@ -378,6 +380,8 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         dispatch_event(&doc->window->event_target, load_event);
         IDOMEvent_Release(&load_event->IDOMEvent_iface);
     }
+
+    doc->window->performance_timing->load_event_end_time = get_time_stamp();
 
     IHTMLDOMNode_Release(&doc->node.IHTMLDOMNode_iface);
     return NS_OK;
