@@ -29,7 +29,7 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sys/stat.h>
-#ifdef HAVE_SECURITY_SECURITY_H
+#ifdef __APPLE__
 #include <Security/Security.h>
 #endif
 #ifdef SONAME_LIBGNUTLS
@@ -625,7 +625,7 @@ static void load_root_certs(void)
 {
     unsigned int i;
 
-#ifdef HAVE_SECURITY_SECURITY_H
+#ifdef __APPLE__
     const SecTrustSettingsDomain domains[] = {
         kSecTrustSettingsDomainSystem,
         kSecTrustSettingsDomainAdmin,

@@ -746,8 +746,8 @@ OBJCFLAGS
 OBJC
 OPENCL_LIBS
 COREAUDIO_LIBS
-SECURITY_LIBS
 SYSTEMCONFIGURATION_LIBS
+SECURITY_LIBS
 APPKIT_LIBS
 CORESERVICES_LIBS
 APPLICATIONSERVICES_LIBS
@@ -7829,12 +7829,6 @@ then :
   printf "%s\n" "#define HAVE_OPENCL_OPENCL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "Security/Security.h" "ac_cv_header_Security_Security_h" "$ac_includes_default"
-if test "x$ac_cv_header_Security_Security_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SECURITY_SECURITY_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "SystemConfiguration/SCDynamicStoreCopyDHCPInfo.h" "ac_cv_header_SystemConfiguration_SCDynamicStoreCopyDHCPInfo_h" "$ac_includes_default"
 if test "x$ac_cv_header_SystemConfiguration_SCDynamicStoreCopyDHCPInfo_h" = xyes
 then :
@@ -9466,6 +9460,8 @@ fi ;;
 
     APPKIT_LIBS="-framework AppKit"
 
+    SECURITY_LIBS="-framework Security -framework CoreFoundation"
+
     SYSTEMCONFIGURATION_LIBS="-framework SystemConfiguration"
 
 
@@ -9597,11 +9593,6 @@ fi
         as_fn_append wine_warnings "|can't build Wine preloader; many programs won't work"
     fi
 
-    if test "$ac_cv_header_Security_Security_h" = "yes"
-    then
-        SECURITY_LIBS="-framework Security -framework CoreFoundation"
-
-    fi
     if test "x$with_coreaudio" != "xno";
     then
         COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
@@ -23160,8 +23151,8 @@ METAL_LIBS = $METAL_LIBS
 APPLICATIONSERVICES_LIBS = $APPLICATIONSERVICES_LIBS
 CORESERVICES_LIBS = $CORESERVICES_LIBS
 APPKIT_LIBS = $APPKIT_LIBS
-SYSTEMCONFIGURATION_LIBS = $SYSTEMCONFIGURATION_LIBS
 SECURITY_LIBS = $SECURITY_LIBS
+SYSTEMCONFIGURATION_LIBS = $SYSTEMCONFIGURATION_LIBS
 COREAUDIO_LIBS = $COREAUDIO_LIBS
 OPENCL_LIBS = $OPENCL_LIBS
 OBJC = $OBJC
