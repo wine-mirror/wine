@@ -83,7 +83,7 @@ static ULONG WINAPI ShellBrowser_Release(IShellBrowser* iface)
 
     if(!ref) {
         assert(!This->doc_host);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -922,7 +922,7 @@ HRESULT create_browser_service(DocHost *doc_host, ShellBrowser **ret)
 {
     ShellBrowser *sb;
 
-    sb = heap_alloc(sizeof(ShellBrowser));
+    sb = malloc(sizeof(ShellBrowser));
     if(!sb)
         return E_OUTOFMEMORY;
 

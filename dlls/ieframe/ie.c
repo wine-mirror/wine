@@ -92,7 +92,7 @@ static ULONG WINAPI InternetExplorer_Release(IWebBrowser2 *iface)
         if(This->frame_hwnd)
             DestroyWindow(This->frame_hwnd);
         list_remove(&This->entry);
-        heap_free(This);
+        free(This);
 
         released_obj();
     }

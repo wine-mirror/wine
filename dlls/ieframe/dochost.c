@@ -269,7 +269,7 @@ static void ready_state_task_destr(task_header_t *_task)
     ready_state_task_t *task = (ready_state_task_t*)_task;
 
     IUnknown_Release(task->doc);
-    heap_free(task);
+    free(task);
 }
 
 static void ready_state_proc(DocHost *This, task_header_t *_task)
@@ -282,7 +282,7 @@ static void ready_state_proc(DocHost *This, task_header_t *_task)
 
 static void push_ready_state_task(DocHost *This, READYSTATE ready_state)
 {
-    ready_state_task_t *task = heap_alloc(sizeof(ready_state_task_t));
+    ready_state_task_t *task = malloc(sizeof(ready_state_task_t));
 
     IUnknown_AddRef(This->document);
     task->doc = This->document;
@@ -293,7 +293,7 @@ static void push_ready_state_task(DocHost *This, READYSTATE ready_state)
 
 static void object_available_task_destr(task_header_t *task)
 {
-    heap_free(task);
+    free(task);
 }
 
 static void object_available_proc(DocHost *This, task_header_t *task)
@@ -331,7 +331,7 @@ HRESULT dochost_object_available(DocHost *This, IUnknown *doc)
 
     /* FIXME: Call SetAdvise */
 
-    task = heap_alloc(sizeof(*task));
+    task = malloc(sizeof(*task));
     push_dochost_task(This, task, object_available_proc, object_available_task_destr, FALSE);
 
     hres = get_doc_ready_state(This, &ready_state);
@@ -388,7 +388,7 @@ static void free_travellog_entry(travellog_entry_t *entry)
         IStream_Release(entry->stream);
         entry->stream = NULL;
     }
-    heap_free(entry->url);
+    free(entry->url);
     entry->url = NULL;
 }
 
@@ -436,7 +436,7 @@ static void update_travellog(DocHost *This)
     }
 
     if(!This->travellog.log) {
-        This->travellog.log = heap_alloc(4 * sizeof(*This->travellog.log));
+        This->travellog.log = malloc(4 * sizeof(*This->travellog.log));
         if(!This->travellog.log)
             return;
 
@@ -444,7 +444,7 @@ static void update_travellog(DocHost *This)
     }else if(This->travellog.size < This->travellog.position+1) {
         travellog_entry_t *new_travellog;
 
-        new_travellog = heap_realloc(This->travellog.log, This->travellog.size*2*sizeof(*This->travellog.log));
+        new_travellog = realloc(This->travellog.log, This->travellog.size * 2 * sizeof(*This->travellog.log));
         if(!new_travellog)
             return;
 
@@ -460,7 +460,7 @@ static void update_travellog(DocHost *This)
 
     new_entry = This->travellog.log + This->travellog.position;
 
-    new_entry->url = heap_strdupW(This->url);
+    new_entry->url = wcsdup(This->url);
     TRACE("Adding %s at %d\n", debugstr_w(This->url), This->travellog.position);
     if(!new_entry->url)
         return;
@@ -1169,7 +1169,7 @@ void DocHost_Release(DocHost *This)
 
     while(This->travellog.length)
         free_travellog_entry(This->travellog.log + --This->travellog.length);
-    heap_free(This->travellog.log);
+    free(This->travellog.log);
 
-    heap_free(This->url);
+    free(This->url);
 }

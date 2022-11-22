@@ -181,7 +181,7 @@ static ULONG WINAPI EnumConnections_Release(IEnumConnections *iface)
 
     if(!ref) {
         IConnectionPoint_Release(&This->cp->IConnectionPoint_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -324,10 +324,9 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
         }
 
         if(i == This->sinks_size)
-            This->sinks = heap_realloc(This->sinks,
-                                          (++This->sinks_size)*sizeof(*This->sinks));
+            This->sinks = realloc(This->sinks, (++This->sinks_size) * sizeof(*This->sinks));
     }else {
-        This->sinks = heap_alloc(sizeof(*This->sinks));
+        This->sinks = malloc(sizeof(*This->sinks));
         This->sinks_size = 1;
         i = 0;
     }
@@ -361,7 +360,7 @@ static HRESULT WINAPI ConnectionPoint_EnumConnections(IConnectionPoint *iface,
 
     TRACE("(%p)->(%p)\n", This, ppEnum);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -402,7 +401,7 @@ void call_sink(ConnectionPoint *This, DISPID dispid, DISPPARAMS *dispparams)
 static void ConnectionPoint_Create(REFIID riid, ConnectionPoint **cp,
                                    IConnectionPointContainer *container)
 {
-    ConnectionPoint *ret = heap_alloc(sizeof(ConnectionPoint));
+    ConnectionPoint *ret = malloc(sizeof(ConnectionPoint));
 
     ret->IConnectionPoint_iface.lpVtbl = &ConnectionPointVtbl;
 
@@ -424,8 +423,8 @@ static void ConnectionPoint_Destroy(ConnectionPoint *This)
             IDispatch_Release(This->sinks[i]);
     }
 
-    heap_free(This->sinks);
-    heap_free(This);
+    free(This->sinks);
+    free(This);
 }
 
 void ConnectionPointContainer_Init(ConnectionPointContainer *This, IUnknown *impl)

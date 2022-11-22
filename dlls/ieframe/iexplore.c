@@ -116,7 +116,7 @@ static void free_fav_menu_data(HMENU menu)
     int i;
 
     for(i = 0; (url = get_fav_url_from_id(menu, ID_BROWSE_GOTOFAV_FIRST + i)); i++)
-        heap_free( url );
+        free( url );
 }
 
 static int get_menu_item_count(HMENU menu)
@@ -152,7 +152,7 @@ static void add_fav_to_menu(HMENU favmenu, HMENU menu, LPWSTR title, LPCWSTR url
         return;
     }
 
-    urlbuf = heap_alloc((lstrlenW(url) + 1) * sizeof(WCHAR));
+    urlbuf = malloc((wcslen(url) + 1) * sizeof(WCHAR));
 
     if(!urlbuf)
         return;
@@ -801,7 +801,7 @@ static HRESULT create_ie(InternetExplorer **ret_obj)
 {
     InternetExplorer *ret;
 
-    ret = heap_alloc_zero(sizeof(InternetExplorer));
+    ret = calloc(1, sizeof(InternetExplorer));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -888,7 +888,7 @@ static ULONG WINAPI InternetExplorerManager_Release(IInternetExplorerManager *if
 
     if (ref == 0)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         released_obj();
     }
 
@@ -917,7 +917,7 @@ HRESULT WINAPI InternetExplorerManager_Create(IClassFactory *iface, IUnknown *pO
 
     TRACE("(%p %s %p)\n", pOuter, debugstr_guid(riid), ppv);
 
-    if (!(ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret))))
+    if (!(ret = calloc(1, sizeof(*ret))))
         return E_OUTOFMEMORY;
 
     ret->IInternetExplorerManager_iface.lpVtbl = &InternetExplorerManager_vtbl;
@@ -1057,19 +1057,19 @@ static HDDEDATA WINAPI dde_proc(UINT type, UINT uFmt, HCONV hConv, HSZ hsz1, HSZ
             break;
         }
 
-        url = heap_alloc(size);
+        url = malloc(size);
         if(!url)
             break;
 
         if(DdeGetData(data, (BYTE*)url, size, 0) != size) {
             ERR("error during read\n");
-            heap_free(url);
+            free(url);
             break;
         }
 
         ret = open_dde_url(url);
 
-        heap_free(url);
+        free(url);
         return ret;
     }
 

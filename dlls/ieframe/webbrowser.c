@@ -180,7 +180,7 @@ static ULONG WINAPI WebBrowser_Release(IUnknown *iface)
 
         WebBrowser_OleObject_Destroy(This);
 
-        heap_free(This);
+        free(This);
         unlock_module();
     }
 
@@ -1287,7 +1287,7 @@ static HRESULT create_webbrowser(int version, IUnknown *outer, REFIID riid, void
     if (outer && !IsEqualIID(riid, &IID_IUnknown))
         return CLASS_E_NOAGGREGATION;
 
-    ret = heap_alloc_zero(sizeof(WebBrowser));
+    ret = calloc(1, sizeof(WebBrowser));
 
     ret->IUnknown_inner.lpVtbl = &internal_unk_vtbl;
     ret->IWebBrowser2_iface.lpVtbl = &WebBrowser2Vtbl;

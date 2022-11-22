@@ -76,7 +76,7 @@ static ULONG WINAPI ShellUIHelper2_Release(IShellUIHelper2 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -370,7 +370,7 @@ HRESULT create_shell_ui_helper(IShellUIHelper2 **_ret)
 {
     ShellUIHelper *ret;
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 

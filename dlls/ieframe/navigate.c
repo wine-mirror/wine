@@ -132,14 +132,14 @@ HRESULT set_dochost_url(DocHost *This, const WCHAR *url)
     WCHAR *new_url;
 
     if(url) {
-        new_url = heap_strdupW(url);
+        new_url = wcsdup(url);
         if(!new_url)
             return E_OUTOFMEMORY;
     }else {
         new_url = NULL;
     }
 
-    heap_free(This->url);
+    free(This->url);
     This->url = new_url;
 
     This->container_vtbl->set_url(This, This->url);
@@ -215,7 +215,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallback *iface)
             GlobalFree(This->post_data);
         SysFreeString(This->headers);
         SysFreeString(This->url);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -546,7 +546,7 @@ static const IHttpSecurityVtbl HttpSecurityVtbl = {
 static BindStatusCallback *create_callback(DocHost *doc_host, LPCWSTR url, PBYTE post_data,
         ULONG post_data_len, LPCWSTR headers)
 {
-    BindStatusCallback *ret = heap_alloc(sizeof(BindStatusCallback));
+    BindStatusCallback *ret = malloc(sizeof(BindStatusCallback));
 
     ret->IBindStatusCallback_iface.lpVtbl = &BindStatusCallbackVtbl;
     ret->IHttpNegotiate_iface.lpVtbl      = &HttpNegotiateVtbl;
@@ -780,7 +780,7 @@ static void doc_navigate_task_destr(task_header_t *t)
     SysFreeString(task->headers);
     if(task->post_data)
         SafeArrayDestroy(task->post_data);
-    heap_free(task);
+    free(task);
 }
 
 static void doc_navigate_proc(DocHost *This, task_header_t *t)
@@ -819,7 +819,7 @@ static HRESULT async_doc_navigate(DocHost *This, LPCWSTR url, LPCWSTR headers, P
 
     TRACE("%s\n", debugstr_w(url));
 
-    task = heap_alloc_zero(sizeof(*task));
+    task = calloc(1, sizeof(*task));
     if(!task)
         return E_OUTOFMEMORY;
 
@@ -920,7 +920,7 @@ static void navigate_bsc_task_destr(task_header_t *t)
     task_navigate_bsc_t *task = (task_navigate_bsc_t*)t;
 
     IBindStatusCallback_Release(&task->bsc->IBindStatusCallback_iface);
-    heap_free(task);
+    free(task);
 }
 
 static void navigate_bsc_proc(DocHost *This, task_header_t *t)
@@ -993,7 +993,7 @@ HRESULT navigate_url(DocHost *This, LPCWSTR url, const VARIANT *Flags,
     }else {
         task_navigate_bsc_t *task;
 
-        task = heap_alloc(sizeof(*task));
+        task = malloc(sizeof(*task));
         task->bsc = create_callback(This, url, post_data, post_data_len, headers);
         push_dochost_task(This, &task->header, navigate_bsc_proc, navigate_bsc_task_destr, This->url == NULL);
     }

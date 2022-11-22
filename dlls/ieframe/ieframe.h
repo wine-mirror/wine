@@ -37,7 +37,6 @@
 #include "shdeprecated.h"
 #include "docobjectservice.h"
 
-#include "wine/heap.h"
 #include "wine/list.h"
 
 typedef struct ConnectionPoint ConnectionPoint;
@@ -338,22 +337,6 @@ static inline void lock_module(void) {
 
 static inline void unlock_module(void) {
     InterlockedDecrement(&module_ref);
-}
-
-static inline LPWSTR heap_strdupW(LPCWSTR str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD size;
-
-        size = (lstrlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        if(ret)
-            memcpy(ret, str, size);
-    }
-
-    return ret;
 }
 
 static inline LPWSTR co_strdupW(LPCWSTR str)
