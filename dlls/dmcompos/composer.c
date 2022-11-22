@@ -144,7 +144,7 @@ static const IDirectMusicComposerVtbl dmcomposer_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmcomposer(REFIID riid, void **ret_iface)
+HRESULT create_dmcomposer(REFIID riid, void **ret_iface)
 {
     IDirectMusicComposerImpl *obj;
     HRESULT hr;

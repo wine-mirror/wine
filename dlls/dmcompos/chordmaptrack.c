@@ -285,7 +285,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmchordmaptrack(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmchordmaptrack(REFIID lpcGUID, void **ppobj)
 {
     IDirectMusicChordMapTrack* track;
     HRESULT hr;

@@ -44,10 +44,10 @@
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI create_dmchordmap(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmcomposer(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmchordmaptrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
-extern HRESULT WINAPI create_dmsignposttrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmchordmap(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmcomposer(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmchordmaptrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dmsignposttrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dmcompos.dll

@@ -273,7 +273,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dmsignposttrack(REFIID lpcGUID, void **ppobj)
+HRESULT create_dmsignposttrack(REFIID lpcGUID, void **ppobj)
 {
     IDirectMusicSignPostTrack *track;
     HRESULT hr;
