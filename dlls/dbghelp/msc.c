@@ -703,8 +703,8 @@ static BOOL codeview_type_is_forward(const union codeview_type* cvtype)
     case LF_UNION_V2:     property = cvtype->union_v2.property;        break;
     case LF_UNION_V3:     property = cvtype->union_v3.property;        break;
     case LF_ENUM_V1:      property = cvtype->enumeration_v1.property;  break;
-    case LF_ENUM_V2:      property = cvtype->enumeration_v1.property;  break;
-    case LF_ENUM_V3:      property = cvtype->enumeration_v1.property;  break;
+    case LF_ENUM_V2:      property = cvtype->enumeration_v2.property;  break;
+    case LF_ENUM_V3:      property = cvtype->enumeration_v3.property;  break;
     default:
         return FALSE;
     }
