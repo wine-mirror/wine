@@ -190,25 +190,11 @@ static LPWSTR GetWideString(const char *src)
   if (!src)
     return NULL;
 
-  ret = HeapAlloc(GetProcessHeap(), 0, (2*INTERNET_MAX_URL_LENGTH) * sizeof(WCHAR));
+  ret = malloc(2 * INTERNET_MAX_URL_LENGTH * sizeof(WCHAR));
 
   MultiByteToWideChar(CP_ACP, 0, src, -1, ret, INTERNET_MAX_URL_LENGTH);
 
   return ret;
-}
-
-static void FreeWideString(LPWSTR wszString)
-{
-   HeapFree(GetProcessHeap(), 0, wszString);
-}
-
-static LPSTR strdupA(LPCSTR p)
-{
-    LPSTR ret;
-    DWORD len = (strlen(p) + 1);
-    ret = HeapAlloc(GetProcessHeap(), 0, len);
-    memcpy(ret, p, len);
-    return ret;
 }
 
 /* ################ */
@@ -326,8 +312,8 @@ static void test_PathCreateFromUrl(void)
                     ok(len2 == len + 1, "got len = %ld expected %ld from url %s\n", len2, len + 1, TEST_PATHFROMURL[i].url);
             }
 
-            FreeWideString(urlW);
-            FreeWideString(pathW);
+            free(urlW);
+            free(pathW);
         }
     }
 
@@ -340,7 +326,7 @@ static void test_PathCreateFromUrl(void)
         ret = pPathCreateFromUrlAlloc(fileW, &pathW, 0);
         ok(ret == S_OK, "got 0x%08lx expected S_OK\n", ret);
         ok(lstrcmpiW(pathW, fooW) == 0, "got %s expected %s\n", wine_dbgstr_w(pathW), wine_dbgstr_w(fooW));
-        HeapFree(GetProcessHeap(), 0, pathW);
+        LocalFree(pathW);
     }
 }
 
@@ -513,7 +499,7 @@ static void test_PathCombineW(void)
         return;
     }
 
-    wszString2 = HeapAlloc(GetProcessHeap(), 0, MAX_PATH * sizeof(WCHAR));
+    wszString2 = malloc(MAX_PATH * sizeof(WCHAR));
 
     /* NULL test */
     wszString = pPathCombineW(NULL, NULL, NULL);
@@ -529,7 +515,7 @@ static void test_PathCombineW(void)
         broken(wszString2[0] == 'a'), /* Win95 and some W2K */
         "Destination string not empty\n");
 
-    HeapFree(GetProcessHeap(), 0, wszString2);
+    free(wszString2);
 
     /* overflow test */
     wstr2[0] = wstr2[1] = wstr2[2] = 'A';
@@ -1430,7 +1416,7 @@ static void test_PathUnquoteSpaces(void)
     int i;
     for (i = 0; i < ARRAY_SIZE(TEST_PATH_UNQUOTE_SPACES); i++)
     {
-        char *path = strdupA(TEST_PATH_UNQUOTE_SPACES[i].path);
+        char *path = strdup(TEST_PATH_UNQUOTE_SPACES[i].path);
         WCHAR *pathW = GetWideString(TEST_PATH_UNQUOTE_SPACES[i].path);
         WCHAR *resultW = GetWideString(TEST_PATH_UNQUOTE_SPACES[i].result);
 
@@ -1442,9 +1428,9 @@ static void test_PathUnquoteSpaces(void)
         PathUnquoteSpacesW(pathW);
         ok(!lstrcmpW(pathW, resultW), "%s (W): strings differ\n",
            TEST_PATH_UNQUOTE_SPACES[i].path);
-        FreeWideString(pathW);
-        FreeWideString(resultW);
-        HeapFree(GetProcessHeap(), 0, path);
+        free(pathW);
+        free(resultW);
+        free(path);
     }
 }
 
@@ -1680,7 +1666,7 @@ static void test_PathIsRelativeW(void)
           "PathIsRelativeW(\"%s\") expects %d, got %d.\n",
           test_path_is_relative[i].path, test_path_is_relative[i].expect, ret);
 
-        FreeWideString(path);
+        free(path);
     }
 }
 
