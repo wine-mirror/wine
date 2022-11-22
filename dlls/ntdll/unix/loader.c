@@ -378,10 +378,10 @@ static const BOOL use_preloader = TRUE;
 static const BOOL use_preloader = FALSE;
 #endif
 
-static char *argv0;
 static const char *bin_dir;
 static const char *dll_dir;
 static const char *ntdll_dir;
+static const char *wineloader;
 static SIZE_T dll_path_maxlen;
 static int *p___wine_main_argc;
 static char ***p___wine_main_argv;
@@ -618,8 +618,10 @@ static void set_config_dir(void)
 static void init_paths( char *argv[] )
 {
     Dl_info info;
+    char *basename, *env;
 
-    argv0 = strdup( argv[0] );
+    if ((basename = strrchr( argv[0], '/' ))) basename++;
+    else basename = argv[0];
 
     if (!dladdr( init_paths, &info ) || !(ntdll_dir = realpath_dirname( info.dli_fname )))
         fatal_error( "cannot get path to ntdll.so\n" );
@@ -639,11 +641,18 @@ static void init_paths( char *argv[] )
             free( path );
         }
 #else
-        bin_dir = realpath_dirname( argv0 );
+        bin_dir = realpath_dirname( argv[0] );
 #endif
         if (!bin_dir) bin_dir = build_path( dll_dir, DLL_TO_BINDIR );
         data_dir = build_path( bin_dir, BIN_TO_DATADIR );
+        wineloader = build_path( bin_dir, basename );
     }
+    else wineloader = build_path( build_path( build_dir, "loader" ), basename );
+
+    env = malloc( sizeof("WINELOADER=") + strlen(wineloader) );
+    strcpy( env, "WINELOADER=" );
+    strcat( env, wineloader );
+    putenv( env );
 
     set_dll_path();
     set_system_dll_path();
@@ -726,8 +735,7 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
     WORD machine = pe_info->machine;
     ULONGLONG res_start = pe_info->base;
     ULONGLONG res_end = pe_info->base + pe_info->map_size;
-    const char *loader = argv0;
-    const char *loader_env = getenv( "WINELOADER" );
+    const char *loader = wineloader;
     char preloader_reserve[64], socket_env[64];
     BOOL is_child_64bit;
 
@@ -738,28 +746,14 @@ NTSTATUS exec_wineloader( char **argv, int socketfd, const pe_image_info_t *pe_i
 
     if (!is_win64 ^ !is_child_64bit)
     {
-        /* remap WINELOADER to the alternate 32/64-bit version if necessary */
-        if (loader_env)
-        {
-            int len = strlen( loader_env );
-            char *env = malloc( sizeof("WINELOADER=") + len + 2 );
+        int len = strlen( loader );
+        char *env = malloc( len + 2 );
 
-            if (!env) return STATUS_NO_MEMORY;
-            strcpy( env, "WINELOADER=" );
-            strcat( env, loader_env );
-            if (is_child_64bit)
-            {
-                strcat( env, "64" );
-            }
-            else
-            {
-                len += sizeof("WINELOADER=") - 1;
-                if (!strcmp( env + len - 2, "64" )) env[len - 2] = 0;
-            }
-            loader = env;
-            putenv( env );
-        }
-        else loader = is_child_64bit ? "wine64" : "wine";
+        if (!env) return STATUS_NO_MEMORY;
+        strcpy( env, loader );
+        if (is_child_64bit) strcat( env, "64" );
+        else if (!strcmp( env + len - 2, "64" )) env[len - 2] = 0;
+        loader = env;
     }
 
     signal( SIGPIPE, SIG_DFL );
@@ -2510,7 +2504,7 @@ void __wine_main( int argc, char *argv[], char *envp[] )
 
             memcpy( new_argv + 1, argv, (argc + 1) * sizeof(*argv) );
             putenv( noexec );
-            loader_exec( argv0, new_argv, current_machine );
+            loader_exec( wineloader, new_argv, current_machine );
             fatal_error( "could not exec the wine loader\n" );
         }
     }
