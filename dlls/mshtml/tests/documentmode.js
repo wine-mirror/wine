@@ -1301,6 +1301,13 @@ sync_test("set_obj", function() {
 sync_test("map_obj", function() {
     if(!("Map" in window)) return;
 
+    try {
+        var s = Map();
+        ok(false, "expected exception calling constructor as method");
+    }catch(e) {
+        ok(e.number === 0xa13fc - 0x80000000, "calling constructor as method threw " + e.number);
+    }
+
     var s = new Map, r, i;
     ok(Object.getPrototypeOf(s) === Map.prototype, "unexpected Map prototype");
 

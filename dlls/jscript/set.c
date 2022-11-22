@@ -417,6 +417,9 @@ static HRESULT Map_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
         *r = jsval_obj(&map->dispex);
         return S_OK;
 
+    case DISPATCH_METHOD:
+        return throw_error(ctx, JS_E_WRONG_THIS, L"Map");
+
     default:
         FIXME("unimplemented flags %x\n", flags);
         return E_NOTIMPL;
