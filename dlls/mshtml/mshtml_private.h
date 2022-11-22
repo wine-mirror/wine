@@ -503,6 +503,13 @@ typedef struct {
     HTMLInnerWindow *window;
 } OmHistory;
 
+typedef struct {
+    DispatchEx dispex;
+    IHTMLPerformanceTiming IHTMLPerformanceTiming_iface;
+
+    LONG ref;
+} HTMLPerformanceTiming;
+
 typedef struct nsChannelBSC nsChannelBSC;
 
 struct HTMLWindow {
@@ -579,6 +586,7 @@ struct HTMLInnerWindow {
 
     BOOL performance_initialized;
     VARIANT performance;
+    HTMLPerformanceTiming *performance_timing;
 
     unsigned parser_callback_cnt;
     struct list script_queue;
@@ -966,7 +974,8 @@ HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow*,HTMLXMLHttpRequestFact
 HRESULT HTMLLocation_Create(HTMLInnerWindow*,HTMLLocation**) DECLSPEC_HIDDEN;
 HRESULT create_navigator(compat_mode_t,IOmNavigator**) DECLSPEC_HIDDEN;
 HRESULT create_html_screen(compat_mode_t,IHTMLScreen**) DECLSPEC_HIDDEN;
-HRESULT create_performance(compat_mode_t,IHTMLPerformance**) DECLSPEC_HIDDEN;
+HRESULT create_performance(HTMLInnerWindow*,IHTMLPerformance**) DECLSPEC_HIDDEN;
+HRESULT create_performance_timing(HTMLPerformanceTiming**) DECLSPEC_HIDDEN;
 HRESULT create_history(HTMLInnerWindow*,OmHistory**) DECLSPEC_HIDDEN;
 HRESULT create_namespace_collection(compat_mode_t,IHTMLNamespaceCollection**) DECLSPEC_HIDDEN;
 HRESULT create_dom_implementation(HTMLDocumentNode*,IHTMLDOMImplementation**) DECLSPEC_HIDDEN;

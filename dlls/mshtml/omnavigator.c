@@ -1497,13 +1497,6 @@ HRESULT create_navigator(compat_mode_t compat_mode, IOmNavigator **navigator)
     return S_OK;
 }
 
-typedef struct {
-    DispatchEx dispex;
-    IHTMLPerformanceTiming IHTMLPerformanceTiming_iface;
-
-    LONG ref;
-} HTMLPerformanceTiming;
-
 static inline HTMLPerformanceTiming *impl_from_IHTMLPerformanceTiming(IHTMLPerformanceTiming *iface)
 {
     return CONTAINING_RECORD(iface, HTMLPerformanceTiming, IHTMLPerformanceTiming_iface);
@@ -1549,7 +1542,8 @@ static ULONG WINAPI HTMLPerformanceTiming_Release(IHTMLPerformanceTiming *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        release_dispex(&This->dispex);
+        if(This->dispex.outer)
+            release_dispex(&This->dispex);
         heap_free(This);
     }
 
@@ -1863,6 +1857,22 @@ static dispex_static_data_t HTMLPerformanceTiming_dispex = {
     HTMLPerformanceTiming_iface_tids
 };
 
+HRESULT create_performance_timing(HTMLPerformanceTiming **ret)
+{
+    HTMLPerformanceTiming *timing;
+
+    timing = heap_alloc_zero(sizeof(*timing));
+    if(!timing)
+        return E_OUTOFMEMORY;
+
+    timing->IHTMLPerformanceTiming_iface.lpVtbl = &HTMLPerformanceTimingVtbl;
+    timing->ref = 1;
+
+    /* Defer initializing the dispex until it's actually needed (for compat mode) */
+    *ret = timing;
+    return S_OK;
+}
+
 typedef struct {
     DispatchEx dispex;
     IHTMLPerformanceNavigation IHTMLPerformanceNavigation_iface;
@@ -2070,8 +2080,7 @@ static ULONG WINAPI HTMLPerformance_Release(IHTMLPerformance *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        if(This->timing)
-            IHTMLPerformanceTiming_Release(This->timing);
+        IHTMLPerformanceTiming_Release(This->timing);
         if(This->navigation)
             IHTMLPerformanceNavigation_Release(This->navigation);
         release_dispex(&This->dispex);
@@ -2148,21 +2157,6 @@ static HRESULT WINAPI HTMLPerformance_get_timing(IHTMLPerformance *iface, IHTMLP
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!This->timing) {
-        HTMLPerformanceTiming *timing;
-
-        timing = heap_alloc_zero(sizeof(*timing));
-        if(!timing)
-            return E_OUTOFMEMORY;
-
-        timing->IHTMLPerformanceTiming_iface.lpVtbl = &HTMLPerformanceTimingVtbl;
-        timing->ref = 1;
-        init_dispatch(&timing->dispex, (IUnknown*)&timing->IHTMLPerformanceTiming_iface,
-                      &HTMLPerformanceTiming_dispex, dispex_compat_mode(&This->dispex));
-
-        This->timing = &timing->IHTMLPerformanceTiming_iface;
-    }
-
     IHTMLPerformanceTiming_AddRef(*p = This->timing);
     return S_OK;
 }
@@ -2208,8 +2202,9 @@ static dispex_static_data_t HTMLPerformance_dispex = {
     HTMLPerformance_iface_tids
 };
 
-HRESULT create_performance(compat_mode_t compat_mode, IHTMLPerformance **ret)
+HRESULT create_performance(HTMLInnerWindow *window, IHTMLPerformance **ret)
 {
+    compat_mode_t compat_mode = dispex_compat_mode(&window->event_target.dispex);
     HTMLPerformance *performance;
 
     performance = heap_alloc_zero(sizeof(*performance));
@@ -2221,6 +2216,12 @@ HRESULT create_performance(compat_mode_t compat_mode, IHTMLPerformance **ret)
 
     init_dispatch(&performance->dispex, (IUnknown*)&performance->IHTMLPerformance_iface,
                   &HTMLPerformance_dispex, compat_mode);
+
+    performance->timing = &window->performance_timing->IHTMLPerformanceTiming_iface;
+    IHTMLPerformanceTiming_AddRef(performance->timing);
+
+    init_dispatch(&window->performance_timing->dispex, (IUnknown*)&window->performance_timing->IHTMLPerformanceTiming_iface,
+                  &HTMLPerformanceTiming_dispex, compat_mode);
 
     *ret = &performance->IHTMLPerformance_iface;
     return S_OK;
