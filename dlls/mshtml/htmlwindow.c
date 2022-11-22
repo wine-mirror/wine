@@ -4125,6 +4125,9 @@ HRESULT create_outer_window(GeckoBrowser *browser, mozIDOMWindowProxy *mozwindow
         return hres;
     }
 
+    /* Initial empty doc does not have unload events or timings */
+    window->base.inner_window->doc->unload_sent = TRUE;
+
     if(parent) {
         IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
 

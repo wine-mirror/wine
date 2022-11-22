@@ -384,6 +384,7 @@ static nsresult NSAPI handle_unload(nsIDOMEventListener *iface, nsIDOMEvent *nse
 {
     nsEventListener *This = impl_from_nsIDOMEventListener(iface);
     HTMLDocumentNode *doc = This->This->doc;
+    HTMLPerformanceTiming *timing = NULL;
     HTMLInnerWindow *window;
     DOMEvent *event;
     HRESULT hres;
@@ -392,11 +393,20 @@ static nsresult NSAPI handle_unload(nsIDOMEventListener *iface, nsIDOMEvent *nse
         return NS_OK;
     doc->unload_sent = TRUE;
 
+    if(window->base.outer_window->pending_window)
+        timing = window->base.outer_window->pending_window->performance_timing;
+
+    if(timing)
+        timing->unload_event_start_time = get_time_stamp();
+
     hres = create_event_from_nsevent(nsevent, dispex_compat_mode(&doc->node.event_target.dispex), &event);
     if(SUCCEEDED(hres)) {
         dispatch_event(&window->event_target, event);
         IDOMEvent_Release(&event->IDOMEvent_iface);
     }
+
+    if(timing)
+        timing->unload_event_end_time = get_time_stamp();
 
     return NS_OK;
 }

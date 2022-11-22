@@ -510,6 +510,8 @@ typedef struct {
     LONG ref;
 
     ULONGLONG navigation_start_time;
+    ULONGLONG unload_event_start_time;
+    ULONGLONG unload_event_end_time;
     ULONGLONG redirect_time;
 } HTMLPerformanceTiming;
 
