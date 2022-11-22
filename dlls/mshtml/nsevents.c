@@ -319,6 +319,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
     if(doc_obj)
         handle_docobj_load(doc_obj);
 
+    doc->window->performance_timing->dom_complete_time = get_time_stamp();
     set_ready_state(doc->outer_window, READYSTATE_COMPLETE);
 
     if(doc_obj) {

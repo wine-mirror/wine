@@ -1786,9 +1786,9 @@ static HRESULT WINAPI HTMLPerformanceTiming_get_domComplete(IHTMLPerformanceTimi
 {
     HTMLPerformanceTiming *This = impl_from_IHTMLPerformanceTiming(iface);
 
-    FIXME("(%p)->(%p) returning fake value\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = TIMING_FAKE_TIMESTAMP;
+    *p = This->dom_complete_time;
     return S_OK;
 }
 

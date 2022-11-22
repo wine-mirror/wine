@@ -2986,6 +2986,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ok(nCmdexecopt == 0, "nCmdexecopts=%08lx\n", nCmdexecopt);
             ok(pvaOut == NULL, "pvaOut=%p\n", pvaOut);
             ok(pvaIn == NULL, "pvaIn=%p\n", pvaIn);
+            test_performance_timing(doc_unk, L"domComplete");
             readystate_set_loading = FALSE;
             readystate_set_interactive = FALSE;
             load_state = LD_COMPLETE;
@@ -3133,6 +3134,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             ok(pvaOut == NULL, "pvaOut != NULL\n");
 
             test_readyState(NULL);
+            test_performance_timing(doc_unk, L"domComplete");
             return E_NOTIMPL;
 
         case 105:
@@ -3195,6 +3197,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             CHECK_EXPECT(Exec_MSHTML_PARSECOMPLETE);
             ok(pvaIn == NULL, "pvaIn != NULL\n");
             ok(pvaOut == NULL, "pvaOut != NULL\n");
+            test_performance_timing(doc_unk, L"domComplete");
             return S_OK;
         default:
             ok(0, "unexpected command %ld\n", nCmdID);
