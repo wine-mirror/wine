@@ -48,11 +48,11 @@
 #include "windows.gaming.input.forcefeedback.h"
 #undef Size
 
-static HRESULT WINAPI (*pRoGetActivationFactory)( HSTRING, REFIID, void** );
-static HRESULT WINAPI (*pRoInitialize)( RO_INIT_TYPE );
-static HRESULT WINAPI (*pWindowsCreateString)( const WCHAR*, UINT32, HSTRING* );
-static HRESULT WINAPI (*pWindowsDeleteString)( HSTRING str );
-static const WCHAR* WINAPI (*pWindowsGetStringRawBuffer)( HSTRING, UINT32* );
+static HRESULT (WINAPI *pRoGetActivationFactory)( HSTRING, REFIID, void** );
+static HRESULT (WINAPI *pRoInitialize)( RO_INIT_TYPE );
+static HRESULT (WINAPI *pWindowsCreateString)( const WCHAR*, UINT32, HSTRING* );
+static HRESULT (WINAPI *pWindowsDeleteString)( HSTRING str );
+static const WCHAR* (WINAPI *pWindowsGetStringRawBuffer)( HSTRING, UINT32* );
 
 static BOOL load_combase_functions(void)
 {

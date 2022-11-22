@@ -50,10 +50,10 @@
 #include "windows.gaming.input.custom.h"
 #undef Size
 
-static HRESULT WINAPI (*pRoGetActivationFactory)( HSTRING, REFIID, void** );
-static HRESULT WINAPI (*pRoInitialize)( RO_INIT_TYPE );
-static HRESULT WINAPI (*pWindowsCreateString)( const WCHAR*, UINT32, HSTRING* );
-static HRESULT WINAPI (*pWindowsDeleteString)( HSTRING str );
+static HRESULT (WINAPI *pRoGetActivationFactory)( HSTRING, REFIID, void** );
+static HRESULT (WINAPI *pRoInitialize)( RO_INIT_TYPE );
+static HRESULT (WINAPI *pWindowsCreateString)( const WCHAR*, UINT32, HSTRING* );
+static HRESULT (WINAPI *pWindowsDeleteString)( HSTRING str );
 
 static BOOL load_combase_functions(void)
 {
