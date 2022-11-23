@@ -241,9 +241,9 @@ DLGPROC get_dialog_proc( DLGPROC ret, BOOL ansi )
 {
     WINDOWPROC *proc;
 
-    if (!(proc = get_winproc_ptr( ret ))) return ret;
+    if (!(proc = get_winproc_ptr( (WNDPROC)ret ))) return ret;
     if (proc == WINPROC_PROC16) return WINPROC_PROC16;
-    return ansi ? proc->procA : proc->procW;
+    return (DLGPROC)(ansi ? proc->procA : proc->procW);
 }
 
 static void init_user(void)

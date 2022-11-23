@@ -229,11 +229,11 @@ static inline void get_color_masks( DC *dc, const dib_info *dib, UINT rop, COLOR
     calc_rop_masks( rop, color, bg_mask );
 }
 
-static inline void order_end_points(int *s, int *e)
+static inline void order_end_points(LONG *s, LONG *e)
 {
     if(*s > *e)
     {
-        int tmp;
+        LONG tmp;
         tmp = *s + 1;
         *s = *e + 1;
         *e = tmp;

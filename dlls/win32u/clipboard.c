@@ -570,6 +570,7 @@ void release_clipboard_owner( HWND hwnd )
 NTSTATUS WINAPI NtUserSetClipboardData( UINT format, HANDLE data, struct set_clipboard_params *params )
 {
     struct cached_format *cache = NULL, *prev = NULL;
+    LCID lcid;
     void *ptr = NULL;
     data_size_t size = 0;
     NTSTATUS status = STATUS_SUCCESS;
@@ -603,13 +604,14 @@ NTSTATUS WINAPI NtUserSetClipboardData( UINT format, HANDLE data, struct set_cli
             make_gdi_object_system( cache->handle, TRUE );
         }
     }
+    NtQueryDefaultLocale( TRUE, &lcid );
 
     pthread_mutex_lock( &clipboard_mutex );
 
     SERVER_START_REQ( set_clipboard_data )
     {
         req->format = format;
-        NtQueryDefaultLocale( TRUE, &req->lcid );
+        req->lcid = lcid;
         wine_server_add_data( req, ptr, size );
         if (!(status = wine_server_call( req )))
         {

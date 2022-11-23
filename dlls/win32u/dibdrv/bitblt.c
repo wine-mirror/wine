@@ -1111,8 +1111,8 @@ update_format:
  */
 static DWORD calc_1d_stretch_params( INT dst_start, INT dst_length, INT dst_vis_start, INT dst_vis_end,
                                      INT src_start, INT src_length, INT src_vis_start, INT src_vis_end,
-                                     INT *dst_clipped_start, INT *src_clipped_start,
-                                     INT *dst_clipped_end, INT *src_clipped_end,
+                                     LONG *dst_clipped_start, LONG *src_clipped_start,
+                                     LONG *dst_clipped_end, LONG *src_clipped_end,
                                      struct stretch_params *stretch_params, BOOL *stretch )
 {
     bres_params bres_params;

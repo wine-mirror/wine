@@ -5337,7 +5337,7 @@ BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *va
 }
 
 
-static DPI_AWARENESS dpi_awareness;
+static LONG dpi_awareness;
 
 /***********************************************************************
  *	     NtUserSetProcessDpiAwarenessContext    (win32u.@)

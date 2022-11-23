@@ -138,7 +138,7 @@ struct unix_funcs
                                      INT width, INT height, HBITMAP mask, INT x_mask, INT y_mask,
                                      DWORD bk_color );
     BOOL     (WINAPI *pNtGdiPolyDraw)(HDC hdc, const POINT *points, const BYTE *types, DWORD count );
-    ULONG    (WINAPI *pNtGdiPolyPolyDraw)( HDC hdc, const POINT *points, const UINT *counts,
+    ULONG    (WINAPI *pNtGdiPolyPolyDraw)( HDC hdc, const POINT *points, const ULONG *counts,
                                            DWORD count, UINT function );
     BOOL     (WINAPI *pNtGdiPtVisible)( HDC hdc, INT x, INT y );
     BOOL     (WINAPI *pNtGdiRectVisible)( HDC hdc, const RECT *rect );
