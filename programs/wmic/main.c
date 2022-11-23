@@ -168,14 +168,53 @@ static HRESULT process_property_list( IWbemClassObject *obj, const WCHAR *propli
 
 static void convert_to_bstr( VARIANT *v )
 {
+    BSTR out = NULL;
     VARTYPE vt;
 
     if (SUCCEEDED(VariantChangeType( v, v, 0, VT_BSTR ))) return;
     vt = V_VT(v);
+    if (vt == (VT_ARRAY | VT_BSTR))
+    {
+        unsigned int i, count, len;
+        BSTR *strings;
+        WCHAR *ptr;
+
+        if (FAILED(SafeArrayAccessData( V_ARRAY(v), (void **)&strings )))
+        {
+            WINE_ERR( "Could not access array.\n" );
+            goto done;
+        }
+        count = V_ARRAY(v)->rgsabound->cElements;
+        len = 0;
+        for (i = 0; i < count; ++i)
+            len += wcslen( strings[i] );
+        len += count * 2 + 2;
+        if (count) len += 2 * (count - 1);
+        out = SysAllocStringLen( NULL, len );
+        ptr = out;
+        *ptr++ = '{';
+        for (i = 0; i < count; ++i)
+        {
+            if (i)
+            {
+                memcpy( ptr, L", ", 2 * sizeof(*ptr) );
+                ptr += 2;
+            }
+            *ptr++ = '\"';
+            len = wcslen( strings[i] );
+            memcpy( ptr, strings[i], len * sizeof(*ptr) );
+            ptr += len;
+            *ptr++ = '\"';
+        }
+        *ptr++ = '}';
+        *ptr = 0;
+        SafeArrayUnaccessData( V_ARRAY(v) );
+    }
+done:
     VariantClear( v );
     V_VT(v) = VT_BSTR;
-    V_BSTR(v) = SysAllocString( L"" );
-    if (vt != VT_NULL && vt != VT_EMPTY)
+    V_BSTR(v) = out ? out : SysAllocString( L"" );
+    if (vt != VT_NULL && vt != VT_EMPTY && !out)
         WINE_FIXME( "Could not convert variant, vt %u.\n", vt );
 }
 
