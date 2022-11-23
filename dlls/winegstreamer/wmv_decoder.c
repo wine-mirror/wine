@@ -55,6 +55,8 @@ struct wmv_decoder
     IPropertyStore IPropertyStore_iface;
     IUnknown *outer;
     LONG refcount;
+
+    struct wg_format input_format;
 };
 
 static inline struct wmv_decoder *impl_from_IUnknown(IUnknown *iface)
@@ -392,8 +394,41 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
 static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index,
         const DMO_MEDIA_TYPE *type, DWORD flags)
 {
-    FIXME("iface %p, index %lu, type %p, flags %#lx stub!\n", iface, index, type, flags);
-    return E_NOTIMPL;
+    struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
+    struct wg_format wg_format;
+    unsigned int i;
+
+    TRACE("iface %p, index %lu, type %p, flags %#lx.\n", iface, index, type, flags);
+
+    if (index > 0)
+        return DMO_E_INVALIDSTREAMINDEX;
+
+    if (!type)
+    {
+        if (flags & DMO_SET_TYPEF_CLEAR)
+        {
+            memset(&decoder->input_format, 0, sizeof(decoder->input_format));
+            return S_OK;
+        }
+        return DMO_E_TYPE_NOT_ACCEPTED;
+    }
+
+    if (!IsEqualGUID(&type->majortype, &MEDIATYPE_Video))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    for (i = 0; i < ARRAY_SIZE(wmv_decoder_input_types); ++i)
+        if (IsEqualGUID(&type->subtype, wmv_decoder_input_types[i]))
+            break;
+    if (i == ARRAY_SIZE(wmv_decoder_input_types))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    if (!amt_to_wg_format((const AM_MEDIA_TYPE *)type, &wg_format))
+        return DMO_E_TYPE_NOT_ACCEPTED;
+
+    if (!(flags & DMO_SET_TYPEF_TEST_ONLY))
+        decoder->input_format = wg_format;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD index,

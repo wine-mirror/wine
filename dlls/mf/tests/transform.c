@@ -4669,10 +4669,8 @@ static void test_wmv_decoder_media_object(void)
         /* Test setting the type. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
         hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
-        todo_wine
         ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
         header->dwBitRate = 0xdeadbeef;
         header->dwBitErrorRate = 0xdeadbeef;
@@ -4683,41 +4681,35 @@ static void test_wmv_decoder_media_object(void)
         header->bmiHeader.biXPelsPerMeter = 0xdead;
         header->bmiHeader.biYPelsPerMeter = 0xdead;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
-        todo_wine
         ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
 
         /* Test invalid major type. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         input_type->majortype = MFMediaType_Default;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
 
         /* Test invalid subtype. */
         init_dmo_media_type_video(input_type, &MEDIASUBTYPE_None, 96, 96);
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
 
         /* Test invalid format type. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         input_type->formattype = FORMAT_None;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
 
         /* Test invalid format size. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         input_type->cbFormat = 1;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
 
         /* Test NULL format pointer. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         input_type->pbFormat = NULL;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
 
         /* Test video header struct size. */
@@ -4751,7 +4743,6 @@ static void test_wmv_decoder_media_object(void)
         ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
         header->bmiHeader.biWidth = 4096;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
 
         /* Test height. */
@@ -4766,11 +4757,9 @@ static void test_wmv_decoder_media_object(void)
         ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
         header->bmiHeader.biHeight = 4096;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
         header->bmiHeader.biHeight = -4096;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
 
         /* Test compression. */
@@ -4781,15 +4770,12 @@ static void test_wmv_decoder_media_object(void)
         ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
         header->bmiHeader.biCompression = 1;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
         header->bmiHeader.biCompression = 2;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
         header->bmiHeader.biCompression = 0xdeadbeef;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        todo_wine
         ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
 
         winetest_pop_context();
@@ -4813,7 +4799,6 @@ static void test_wmv_decoder_media_object(void)
             type = NULL;
 
         hr = IMediaObject_SetInputType(media_object, test->stream_index, type, test->flags);
-        todo_wine
         ok(hr == test->hr, "SetInputType returned unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
 
         winetest_pop_context();
