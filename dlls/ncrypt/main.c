@@ -413,6 +413,33 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
     return ERROR_SUCCESS;
 }
 
+SECURITY_STATUS WINAPI NCryptExportKey(NCRYPT_KEY_HANDLE key, NCRYPT_KEY_HANDLE encrypt_key, const WCHAR *type,
+                                       NCryptBufferDesc *params, BYTE *output, DWORD output_len, DWORD *ret_len,
+                                       DWORD flags)
+{
+    struct object *object = (struct object *)key;
+
+    TRACE("(%#Ix, %#Ix, %s, %p, %p, %lu, %p, %#lx)\n", key, encrypt_key, wine_dbgstr_w(type), params, output,
+          output_len, ret_len, flags);
+
+    if (encrypt_key)
+    {
+        FIXME("Key blob encryption not implemented\n");
+        return NTE_NOT_SUPPORTED;
+    }
+    if (params)
+    {
+        FIXME("Parameter information not implemented\n");
+        return NTE_NOT_SUPPORTED;
+    }
+    if (flags == NCRYPT_SILENT_FLAG)
+    {
+        FIXME("Silent flag not implemented\n");
+    }
+
+    return map_ntstatus(BCryptExportKey(object->key.bcrypt_key, NULL, type, output, output_len, ret_len, 0));
+}
+
 SECURITY_STATUS WINAPI NCryptIsAlgSupported(NCRYPT_PROV_HANDLE provider, const WCHAR *algid, DWORD flags)
 {
     static const ULONG supported = BCRYPT_CIPHER_OPERATION |\
