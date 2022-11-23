@@ -525,6 +525,20 @@ SECURITY_STATUS WINAPI NCryptSetProperty(NCRYPT_HANDLE handle, const WCHAR *name
     return set_object_property(object, name, input, insize);
 }
 
+SECURITY_STATUS WINAPI NCryptSignHash(NCRYPT_KEY_HANDLE handle, void *padding, BYTE *value, DWORD value_len,
+                                      BYTE *sig, DWORD sig_len, DWORD *ret_len, DWORD flags)
+{
+    struct object *object = (struct object *)handle;
+
+    TRACE("(%#Ix, %p, %p, %lu, %p, %lu, %#lx)\n", handle, padding, value, value_len, sig, sig_len, flags);
+    if (flags & NCRYPT_SILENT_FLAG) FIXME("Silent flag not implemented\n");
+
+    if (!object || object->type != KEY) return NTE_INVALID_HANDLE;
+
+    return map_ntstatus(BCryptSignHash(object->key.bcrypt_key, padding, value, value_len, sig, sig_len,
+                                       ret_len, flags & ~NCRYPT_SILENT_FLAG));
+}
+
 SECURITY_STATUS WINAPI NCryptVerifySignature(NCRYPT_KEY_HANDLE handle, void *padding, BYTE *hash, DWORD hash_size,
                                              BYTE *signature, DWORD signature_size, DWORD flags)
 {

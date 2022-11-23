@@ -91,7 +91,7 @@
 @ stub NCryptSecretAgreement
 @ stub NCryptSetAuditingInterface
 @ stdcall NCryptSetProperty(ptr wstr ptr long long)
-@ stub NCryptSignHash
+@ stdcall NCryptSignHash(long ptr ptr long ptr long ptr long)
 @ stub NCryptStreamClose
 @ stub NCryptStreamOpenToProtect
 @ stub NCryptStreamOpenToUnprotect
