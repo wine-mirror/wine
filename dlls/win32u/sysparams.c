@@ -438,7 +438,7 @@ static void adapter_release( struct adapter *adapter )
 
 C_ASSERT(sizeof(DEVMODEW) - offsetof(DEVMODEW, dmFields) == 0x94);
 
-static BOOL write_adapter_mode( HKEY adapter_key, DWORD index, const DEVMODEW *mode )
+static BOOL write_adapter_mode( HKEY adapter_key, UINT index, const DEVMODEW *mode )
 {
     WCHAR bufferW[MAX_PATH] = {0};
     char buffer[MAX_PATH];
@@ -448,7 +448,7 @@ static BOOL write_adapter_mode( HKEY adapter_key, DWORD index, const DEVMODEW *m
     return set_reg_value( adapter_key, bufferW, REG_BINARY, &mode->dmFields, sizeof(*mode) - offsetof(DEVMODEW, dmFields) );
 }
 
-static BOOL read_adapter_mode( HKEY adapter_key, DWORD index, DEVMODEW *mode )
+static BOOL read_adapter_mode( HKEY adapter_key, UINT index, DEVMODEW *mode )
 {
     char value_buf[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(*mode)])];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)value_buf;
@@ -712,7 +712,7 @@ static BOOL read_display_adapter_settings( unsigned int index, struct adapter *i
     return TRUE;
 }
 
-static BOOL read_monitor_settings( struct adapter *adapter, DWORD index, struct monitor *monitor )
+static BOOL read_monitor_settings( struct adapter *adapter, UINT index, struct monitor *monitor )
 {
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
@@ -1998,7 +1998,7 @@ LONG WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_in
 }
 
 /* display_lock mutex must be held */
-static struct display_device *find_monitor_device( struct display_device *adapter, DWORD index )
+static struct display_device *find_monitor_device( struct display_device *adapter, UINT index )
 {
     struct monitor *monitor;
 
@@ -2011,7 +2011,7 @@ static struct display_device *find_monitor_device( struct display_device *adapte
 }
 
 /* display_lock mutex must be held */
-static struct display_device *find_adapter_device_by_id( DWORD index )
+static struct display_device *find_adapter_device_by_id( UINT index )
 {
     struct adapter *adapter;
 
@@ -2571,7 +2571,7 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
     return ret;
 }
 
-static BOOL adapter_enum_display_settings( const struct adapter *adapter, DWORD index, DEVMODEW *devmode, DWORD flags )
+static BOOL adapter_enum_display_settings( const struct adapter *adapter, UINT index, DEVMODEW *devmode, UINT flags )
 {
     DEVMODEW current_mode = {.dmSize = sizeof(DEVMODEW)};
     const DEVMODEW *adapter_mode;
@@ -2777,7 +2777,7 @@ BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info )
     return FALSE;
 }
 
-HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi )
+HMONITOR monitor_from_rect( const RECT *rect, UINT flags, UINT dpi )
 {
     HMONITOR primary = 0, nearest = 0, ret = 0;
     UINT max_area = 0, min_distance = ~0u;
@@ -2843,7 +2843,7 @@ HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi )
     return ret;
 }
 
-HMONITOR monitor_from_point( POINT pt, DWORD flags, UINT dpi )
+HMONITOR monitor_from_point( POINT pt, UINT flags, UINT dpi )
 {
     RECT rect;
     SetRect( &rect, pt.x, pt.y, pt.x + 1, pt.y + 1 );
@@ -2851,7 +2851,7 @@ HMONITOR monitor_from_point( POINT pt, DWORD flags, UINT dpi )
 }
 
 /* see MonitorFromWindow */
-HMONITOR monitor_from_window( HWND hwnd, DWORD flags, UINT dpi )
+HMONITOR monitor_from_window( HWND hwnd, UINT flags, UINT dpi )
 {
     RECT rect;
     WINDOWPLACEMENT wp;
