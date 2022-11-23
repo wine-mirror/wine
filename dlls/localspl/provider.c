@@ -222,6 +222,7 @@ typedef struct {
     struct list entry;
     DWORD id;
     WCHAR *filename;
+    WCHAR *port;
     WCHAR *document_title;
     DEVMODEW *devmode;
 } job_t;
@@ -241,6 +242,7 @@ typedef struct {
     monitor_t * pm;
     HANDLE hXcv;
     DEVMODEW *devmode;
+    job_t *doc;
 } printer_t;
 
 /* ############################### */
@@ -517,6 +519,7 @@ static void free_job(job_t *job)
 {
     list_remove(&job->entry);
     free(job->filename);
+    free(job->port);
     free(job->document_title);
     free(job->devmode);
     free(job);
@@ -2905,6 +2908,13 @@ static job_t* add_job(printer_t *printer, DOC_INFO_1W *info)
         free(job);
         return NULL;
     }
+    job->port = wcsdup(info->pOutputFile);
+    if (info->pOutputFile && !job->port)
+    {
+        free(job->filename);
+        free(job);
+        return NULL;
+    }
 
     while (1)
     {
@@ -2973,6 +2983,37 @@ static BOOL WINAPI fpAddJob(HANDLE hprinter, DWORD level, BYTE *data, DWORD size
     return TRUE;
 }
 
+static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_info)
+{
+    printer_t *printer = (printer_t *)hprinter;
+    DOC_INFO_1W *info = (DOC_INFO_1W *)doc_info;
+
+    TRACE("(%p %ld %p {pDocName = %s, pOutputFile = %s, pDatatype = %s})\n",
+            hprinter, level, doc_info, debugstr_w(info->pDocName),
+            debugstr_w(info->pOutputFile), debugstr_w(info->pDatatype));
+
+    if (!printer || !printer->info)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return 0;
+    }
+
+    if (level < 1 || level > 3)
+    {
+        SetLastError(ERROR_INVALID_LEVEL);
+        return 0;
+    }
+
+    if (printer->doc)
+    {
+        SetLastError(ERROR_INVALID_PRINTER_STATE);
+        return 0;
+    }
+
+    printer->doc = add_job(printer, info);
+    return printer->doc ? printer->doc->id : 0;
+}
+
 static const PRINTPROVIDOR backend = {
         fpOpenPrinter,
         NULL,   /* fpSetJob */
@@ -2993,7 +3034,7 @@ static const PRINTPROVIDOR backend = {
         fpGetPrintProcessorDirectory,
         NULL,   /* fpDeletePrintProcessor */
         NULL,   /* fpEnumPrintProcessorDatatypes */
-        NULL,   /* fpStartDocPrinter */
+        fpStartDocPrinter,
         NULL,   /* fpStartPagePrinter */
         NULL,   /* fpWritePrinter */
         NULL,   /* fpEndPagePrinter */
