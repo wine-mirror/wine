@@ -313,24 +313,23 @@ struct gdi_font
 struct font_backend_funcs
 {
     void  (*load_fonts)(void);
-    BOOL  (*enum_family_fallbacks)( DWORD pitch_and_family, int index, WCHAR buffer[LF_FACESIZE] );
-    INT   (*add_font)( const WCHAR *file, DWORD flags );
-    INT   (*add_mem_font)( void *ptr, SIZE_T size, DWORD flags );
+    BOOL  (*enum_family_fallbacks)( UINT pitch_and_family, int index, WCHAR buffer[LF_FACESIZE] );
+    INT   (*add_font)( const WCHAR *file, UINT flags );
+    INT   (*add_mem_font)( void *ptr, SIZE_T size, UINT flags );
 
     BOOL  (*load_font)( struct gdi_font *gdi_font );
-    DWORD (*get_font_data)( struct gdi_font *gdi_font, DWORD table, DWORD offset,
-                            void *buf, DWORD count );
+    UINT  (*get_font_data)( struct gdi_font *gdi_font, UINT table, UINT offset, void *buf, UINT count );
     UINT  (*get_aa_flags)( struct gdi_font *font, UINT aa_flags, BOOL antialias_fakes );
     BOOL  (*get_glyph_index)( struct gdi_font *gdi_font, UINT *glyph, BOOL use_encoding );
     UINT  (*get_default_glyph)( struct gdi_font *gdi_font );
-    DWORD (*get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
-                                GLYPHMETRICS *gm, ABC *abc, DWORD buflen, void *buf,
+    UINT  (*get_glyph_outline)( struct gdi_font *font, UINT glyph, UINT format,
+                                GLYPHMETRICS *gm, ABC *abc, UINT buflen, void *buf,
                                 const MAT2 *mat, BOOL tategaki );
-    DWORD (*get_unicode_ranges)( struct gdi_font *font, GLYPHSET *gs );
+    UINT  (*get_unicode_ranges)( struct gdi_font *font, GLYPHSET *gs );
     BOOL  (*get_char_width_info)( struct gdi_font *font, struct char_width_info *info );
     BOOL  (*set_outline_text_metrics)( struct gdi_font *font );
     BOOL  (*set_bitmap_text_metrics)( struct gdi_font *font );
-    DWORD (*get_kerning_pairs)( struct gdi_font *gdi_font, KERNINGPAIR **kern_pair );
+    UINT  (*get_kerning_pairs)( struct gdi_font *gdi_font, KERNINGPAIR **kern_pair );
     void  (*destroy_font)( struct gdi_font *font );
 };
 

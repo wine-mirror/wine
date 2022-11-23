@@ -84,9 +84,9 @@ struct gdi_font_face
     SIZE_T        data_size;
     UINT          face_index;
     FONTSIGNATURE fs;
-    DWORD         ntmFlags;
-    DWORD         version;
-    DWORD         flags;                 /* ADDFONT flags */
+    UINT          ntmFlags;
+    UINT          version;
+    UINT          flags;                 /* ADDFONT flags */
     BOOL          scalable;
     struct bitmap_font_size    size;     /* set if face is a bitmap */
     struct gdi_font_family    *family;
@@ -2706,7 +2706,7 @@ static void *get_GSUB_vert_feature( struct gdi_font *font )
     GSUB_Script *script;
     GSUB_LangSys *language;
     GSUB_Feature *feature;
-    DWORD length = font_funcs->get_font_data( font, MS_GSUB_TAG, 0, NULL, 0 );
+    UINT length = font_funcs->get_font_data( font, MS_GSUB_TAG, 0, NULL, 0 );
 
     if (length == GDI_ERROR) return NULL;
 

@@ -1000,7 +1000,7 @@ static inline void get_fontsig( FT_Face ft_face, FONTSIGNATURE *fs )
     }
 }
 
-static FT_Face new_ft_face( const char *file, void *font_data_ptr, DWORD font_data_size,
+static FT_Face new_ft_face( const char *file, void *font_data_ptr, UINT font_data_size,
                             FT_Long face_index, BOOL allow_bitmap )
 {
     FT_Error err;
@@ -1166,8 +1166,8 @@ struct unix_face
     struct bitmap_font_size size;
 };
 
-static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr, DWORD data_size,
-                                           UINT face_index, DWORD flags )
+static struct unix_face *unix_face_create( const char *unix_name, void *data_ptr, UINT data_size,
+                                           UINT face_index, UINT flags )
 {
     static const WCHAR space_w[] = {' ',0};
 
@@ -1366,7 +1366,7 @@ static char *get_unix_file_name( LPCWSTR path )
 }
 
 static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *font_data_ptr,
-                         DWORD font_data_size, DWORD flags)
+                         UINT font_data_size, UINT flags)
 {
     DWORD face_index = 0, num_faces;
     INT ret = 0;
@@ -1409,7 +1409,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
 /*************************************************************
  * freetype_add_font
  */
-static INT freetype_add_font( const WCHAR *file, DWORD flags )
+static INT freetype_add_font( const WCHAR *file, UINT flags )
 {
     int ret = 0;
     char *unixname = get_unix_file_name( file );
@@ -1425,7 +1425,7 @@ static INT freetype_add_font( const WCHAR *file, DWORD flags )
 /*************************************************************
  * freetype_add_mem_font
  */
-static INT freetype_add_mem_font( void *ptr, SIZE_T size, DWORD flags )
+static INT freetype_add_mem_font( void *ptr, SIZE_T size, UINT flags )
 {
     return AddFontToList( NULL, NULL, ptr, size, flags );
 }
@@ -1522,7 +1522,7 @@ static FcPattern *create_family_pattern( const char *name, FcPattern **cached )
     return ret;
 }
 
-static void fontconfig_add_font( FcPattern *pattern, DWORD flags )
+static void fontconfig_add_font( FcPattern *pattern, UINT flags )
 {
     const char *unix_name, *format;
     WCHAR *dos_name;
@@ -1626,7 +1626,7 @@ static void init_fontconfig(void)
     }
 }
 
-static void fontconfig_add_fonts_from_dir_list( FcConfig *config, FcStrList *dir_list, FcStrSet *done_set, DWORD flags )
+static void fontconfig_add_fonts_from_dir_list( FcConfig *config, FcStrList *dir_list, FcStrSet *done_set, UINT flags )
 {
     const FcChar8 *dir;
     FcFontSet *font_set = NULL;
@@ -1898,13 +1898,13 @@ static inline USHORT get_fixed_windescent(USHORT windescent)
     return abs((SHORT)windescent);
 }
 
-static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
+static int calc_ppem_for_height(FT_Face ft_face, int height)
 {
     TT_OS2 *pOS2;
     TT_HoriHeader *pHori;
 
-    LONG ppem;
-    const LONG MAX_PPEM = (1 << 16) - 1;
+    int ppem;
+    const int MAX_PPEM = (1 << 16) - 1;
 
     pOS2 = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_os2);
     pHori = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_hhea);
@@ -1927,7 +1927,7 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
 
     if(height > 0) {
         USHORT windescent = get_fixed_windescent(pOS2->usWinDescent);
-        LONG units;
+        int units;
 
         if(pOS2->usWinAscent + windescent == 0)
             units = pHori->Ascender - pHori->Descender;
@@ -2005,7 +2005,7 @@ static void unmap_font_file( struct font_mapping *mapping )
     }
 }
 
-static LONG load_VDMX(struct gdi_font *font, LONG height);
+static int load_VDMX(struct gdi_font *font, int height);
 
 /*************************************************************
  * freetype_destroy_font
@@ -2022,8 +2022,8 @@ static void freetype_destroy_font( struct gdi_font *font )
 /*************************************************************
  * freetype_get_font_data
  */
-static DWORD freetype_get_font_data( struct gdi_font *font, DWORD table, DWORD offset,
-                                     void *buf, DWORD cbData)
+static UINT freetype_get_font_data( struct gdi_font *font, UINT table, UINT offset,
+                                     void *buf, UINT cbData)
 {
     FT_Face ft_face = get_ft_face( font );
     FT_ULong len;
@@ -2095,15 +2095,14 @@ typedef struct {
     WORD yMin;
 } VDMX_vTable;
 
-static LONG load_VDMX(struct gdi_font *font, LONG height)
+static int load_VDMX(struct gdi_font *font, int height)
 {
     VDMX_Header hdr;
     VDMX_group group;
     BYTE devXRatio, devYRatio;
     USHORT numRecs, numRatios;
-    DWORD result, offset = -1;
-    LONG ppem = 0;
-    int i;
+    UINT result, offset = -1;
+    int i, ppem = 0;
 
     result = freetype_get_font_data(font, MS_VDMX_TAG, 0, &hdr, sizeof(hdr));
 
@@ -2303,7 +2302,7 @@ static FT_Encoding pick_charmap( FT_Face face, int charset )
 static BOOL get_gasp_flags( struct gdi_font *font, WORD *flags )
 {
     FT_Face ft_face = get_ft_face( font );
-    DWORD size;
+    UINT size;
     WORD buf[16]; /* Enough for seven ranges before we need to alloc */
     WORD *alloced = NULL, *ptr = buf;
     WORD num_recs, version;
@@ -2347,7 +2346,7 @@ done:
 /*************************************************************
  * fontconfig_enum_family_fallbacks
  */
-static BOOL fontconfig_enum_family_fallbacks( DWORD pitch_and_family, int index,
+static BOOL fontconfig_enum_family_fallbacks( UINT pitch_and_family, int index,
                                               WCHAR buffer[LF_FACESIZE] )
 {
 #ifdef SONAME_LIBFONTCONFIG
@@ -3434,9 +3433,9 @@ static FT_Int get_load_flags( UINT format )
 /*************************************************************
  * freetype_get_glyph_outline
  */
-static DWORD freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT format,
-                                         GLYPHMETRICS *lpgm, ABC *abc, DWORD buflen, void *buf,
-                                         const MAT2 *lpmat, BOOL tategaki )
+static UINT freetype_get_glyph_outline( struct gdi_font *font, UINT glyph, UINT format,
+                                        GLYPHMETRICS *lpgm, ABC *abc, UINT buflen, void *buf,
+                                        const MAT2 *lpmat, BOOL tategaki )
 {
     struct gdi_font *base_font = font->base_font ? font->base_font : font;
     FT_Face ft_face = get_ft_face( font );
@@ -3954,10 +3953,10 @@ static BOOL freetype_get_char_width_info( struct gdi_font *font, struct char_wid
  * Can be called with NULL gs to calculate the buffer size. Returns
  * the number of ranges found.
  */
-static DWORD freetype_get_unicode_ranges( struct gdi_font *font, GLYPHSET *gs )
+static UINT freetype_get_unicode_ranges( struct gdi_font *font, GLYPHSET *gs )
 {
     FT_Face ft_face = get_ft_face( font );
-    DWORD num_ranges = 0;
+    UINT num_ranges = 0;
 
     if (ft_face->charmap->encoding == FT_ENCODING_UNICODE)
     {
@@ -4113,10 +4112,10 @@ static DWORD parse_format0_kern_subtable(struct gdi_font *font,
 /*************************************************************
  * freetype_get_kerning_pairs
  */
-static DWORD freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAIR **pairs )
+static UINT freetype_get_kerning_pairs( struct gdi_font *font, KERNINGPAIR **pairs )
 {
     FT_Face ft_face = get_ft_face( font );
-    DWORD length, count = 0;
+    UINT length, count = 0;
     void *buf;
     const struct TT_kern_table *tt_kern_table;
     const struct TT_kern_subtable *tt_kern_subtable;
