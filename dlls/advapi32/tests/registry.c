@@ -2582,13 +2582,6 @@ static void _check_key_value( int line, HANDLE root, const char *name, DWORD fla
 }
 #define check_key_value(root,name,flags,expect) _check_key_value( __LINE__, root, name, flags, expect )
 
-static void _todo_check_key_value( int line, HANDLE root, const char *name, DWORD flags, DWORD expect, BOOL todo )
-{
-    DWORD dw = get_key_value( root, name, flags );
-    todo_wine_if(todo) ok_(__FILE__,line)( dw == expect, "%08lx: wrong value %lu/%lu\n", flags, dw, expect );
-}
-#define todo_check_key_value(root,name,flags,expect, todo) _todo_check_key_value( __LINE__, root, name, flags, expect, todo )
-
 static void _check_enum_value( int line, const char *name, DWORD flags, DWORD subkeys_in, BOOL found_in)
 {
     char buffer[1024];
@@ -2679,12 +2672,9 @@ static void test_redirection(void)
     err = RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software", 0, NULL, 0,
                            KEY_ALL_ACCESS, NULL, &key, NULL );
     ok( err == ERROR_SUCCESS, "RegCreateKeyExA failed: %lu\n", err );
-
     check_key_value( key, "Wine\\Winetest", 0, ptr_size );
     check_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY, ptr_size );
-    dw = get_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY );
-    todo_wine_if (ptr_size == 64) ok( dw == 32, "wrong value %lu\n", dw );
-
+    check_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY, 32 );
     check_key_value( key, "Wow6432Node\\Wine\\Winetest", 0, ptr_size == 32 ? 0 : 32 );
     check_key_value( key, "Wow6432Node\\Wine\\Winetest", KEY_WOW64_64KEY, ptr_size == 32 ? 0 : 32 );
     check_key_value( key, "Wow6432Node\\Wine\\Winetest", KEY_WOW64_32KEY, ptr_size == 32 ? 0 : 32 );
@@ -2696,8 +2686,7 @@ static void test_redirection(void)
     dw = get_key_value( key, "Wine\\Winetest", 0 );
     ok( dw == 64 || broken(dw == 32) /* win7 */, "wrong value %lu\n", dw );
     check_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY, 64 );
-    dw = get_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY );
-    todo_wine_if (ptr_size == 64) ok( dw == 32, "wrong value %lu\n", dw );
+    check_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY, 32 );
     check_key_value( key, "Wow6432Node\\Wine\\Winetest", 0, 32 );
     check_key_value( key, "Wow6432Node\\Wine\\Winetest", KEY_WOW64_64KEY, 32 );
     check_key_value( key, "Wow6432Node\\Wine\\Winetest", KEY_WOW64_32KEY, 32 );
@@ -2774,9 +2763,7 @@ static void test_redirection(void)
     ok( err == ERROR_SUCCESS, "RegCreateKeyExA failed: %lu\n", err );
     check_key_value( key, "Winetest", 0, ptr_size );
     check_key_value( key, "Winetest", KEY_WOW64_64KEY, ptr_size );
-    dw = get_key_value( key, "Winetest", KEY_WOW64_32KEY );
-    todo_wine_if (ptr_size != 32)
-        ok( dw == 32, "wrong value %lu\n", dw );
+    check_key_value( key, "Winetest", KEY_WOW64_32KEY, 32 );
     RegCloseKey( key );
 
     err = RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
@@ -2784,8 +2771,7 @@ static void test_redirection(void)
     ok( err == ERROR_SUCCESS, "RegCreateKeyExA failed: %lu\n", err );
     check_key_value( key, "Winetest", 0, 64 );
     check_key_value( key, "Winetest", KEY_WOW64_64KEY, 64 );
-    dw = get_key_value( key, "Winetest", KEY_WOW64_32KEY );
-    todo_wine_if (ptr_size == 64) ok( dw == 32, "wrong value %lu\n", dw );
+    check_key_value( key, "Winetest", KEY_WOW64_32KEY, 32 );
     RegCloseKey( key );
 
     err = RegCreateKeyExA( HKEY_LOCAL_MACHINE, "Software\\Wine", 0, NULL, 0,
@@ -2967,7 +2953,7 @@ static void test_redirection(void)
     ok( err == ERROR_SUCCESS, "RegCreateKeyA failed: %lu\n", err );
 
     err = RegOpenKeyExA( root, "Wine", 0, KEY_ALL_ACCESS, &key );
-    todo_wine_if(ptr_size == 64) ok( err == (ptr_size == 64 ? ERROR_FILE_NOT_FOUND : ERROR_SUCCESS),
+    ok( err == (ptr_size == 64 ? ERROR_FILE_NOT_FOUND : ERROR_SUCCESS),
         "RegOpenKeyExA failed: %lu\n", err );
     if (!err) RegCloseKey( key );
 
@@ -3031,7 +3017,7 @@ static void test_redirection(void)
     ok( err == ERROR_SUCCESS, "RegCreateKeyA failed: %lu\n", err );
 
     err = RegOpenKeyExA( root, "Wine", 0, KEY_ALL_ACCESS, &key );
-    todo_wine_if(ptr_size == 64) ok( err == (ptr_size == 64 ? ERROR_FILE_NOT_FOUND : ERROR_SUCCESS),
+    ok( err == (ptr_size == 64 ? ERROR_FILE_NOT_FOUND : ERROR_SUCCESS),
         "RegOpenKeyExA failed: %lu\n", err );
     if (!err) RegCloseKey( key );
 
@@ -3058,10 +3044,10 @@ static void test_redirection(void)
     ok( err == ERROR_SUCCESS, "RegCreateKeyA failed: %lu\n", err );
 
     err = RegOpenKeyExA( root32, "Wine", 0, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &key );
-    todo_wine_if(ptr_size == 64) ok( err == ERROR_FILE_NOT_FOUND, "RegOpenKeyExA failed: %lu\n", err );
+    ok( err == ERROR_FILE_NOT_FOUND, "RegOpenKeyExA failed: %lu\n", err );
 
     err = RegOpenKeyExA( root32, "Wine", 0, KEY_ALL_ACCESS, &key );
-    todo_wine_if(ptr_size == 64) ok( err == ERROR_FILE_NOT_FOUND, "RegOpenKeyExA failed: %lu\n", err );
+    ok( err == ERROR_FILE_NOT_FOUND, "RegOpenKeyExA failed: %lu\n", err );
 
     err = RegCreateKeyExA( root32, "Wine", 0, NULL, 0,
                            KEY_ALL_ACCESS, NULL, &key32, NULL);
@@ -3077,43 +3063,43 @@ static void test_redirection(void)
 
     check_key_value( root64, "Wine", 0, 64 );
     check_key_value( root64, "Wine", KEY_WOW64_64KEY, 64 );
-    todo_check_key_value( root64, "Wine", KEY_WOW64_32KEY, 32, ptr_size == 64 );
-    todo_check_key_value( root32, "Wine", 0, 32, ptr_size == 64 );
-    todo_check_key_value( root32, "Wine", KEY_WOW64_64KEY, 32, ptr_size == 64 );
-    todo_check_key_value( root32, "Wine", KEY_WOW64_32KEY, 32, ptr_size == 64 );
+    check_key_value( root64, "Wine", KEY_WOW64_32KEY, 32 );
+    check_key_value( root32, "Wine", 0, 32 );
+    check_key_value( root32, "Wine", KEY_WOW64_64KEY, 32 );
+    check_key_value( root32, "Wine", KEY_WOW64_32KEY, 32 );
 
     err = RegOpenKeyExA( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface",
                          0, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &key );
     ok( err == ERROR_SUCCESS, "RegOpenKeyExA failed: %lu\n", err );
     check_key_value( key, "Wine", 0, 64 );
     check_key_value( key, "Wine", KEY_WOW64_64KEY, 64 );
-    todo_check_key_value( key, "Wine", KEY_WOW64_32KEY, 32, ptr_size == 64 );
+    check_key_value( key, "Wine", KEY_WOW64_32KEY, 32 );
     RegCloseKey( key );
 
     err = RegOpenKeyExA( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface",
                          0, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &key );
     ok( err == ERROR_SUCCESS, "RegOpenKeyExA failed: %lu\n", err );
-    todo_check_key_value( key, "Wine", 0, 32, ptr_size == 64 );
-    todo_check_key_value( key, "Wine", KEY_WOW64_64KEY, 32, ptr_size == 64 );
-    todo_check_key_value( key, "Wine", KEY_WOW64_32KEY, 32, ptr_size == 64 );
+    check_key_value( key, "Wine", 0, 32 );
+    check_key_value( key, "Wine", KEY_WOW64_64KEY, 32 );
+    check_key_value( key, "Wine", KEY_WOW64_32KEY, 32 );
     RegCloseKey( key );
 
     check_key_value( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface\\Wine", 0, ptr_size );
     check_key_value( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface\\Wine", KEY_WOW64_64KEY, 64 );
-    todo_check_key_value( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface\\Wine", KEY_WOW64_32KEY, 32, ptr_size == 64 );
+    check_key_value( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface\\Wine", KEY_WOW64_32KEY, 32 );
 
     RegDeleteKeyA( key32, "" );
     RegCloseKey( key32 );
 
-    todo_check_key_value( root64, "Wine", 0, 64, ptr_size == 64 );
-    todo_check_key_value( root64, "Wine", KEY_WOW64_64KEY, 64, ptr_size == 64 );
+    check_key_value( root64, "Wine", 0, 64 );
+    check_key_value( root64, "Wine", KEY_WOW64_64KEY, 64 );
     check_key_value( root64, "Wine", KEY_WOW64_32KEY, 0 );
     check_key_value( root32, "Wine", 0, 0 );
     check_key_value( root32, "Wine", KEY_WOW64_64KEY, 0 );
     check_key_value( root32, "Wine", KEY_WOW64_32KEY, 0 );
 
-    todo_wine_if(ptr_size == 64) check_key_value( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface\\Wine", 0, ptr_size == 64 ? 64 : 0 );
-    todo_wine_if(ptr_size == 64) check_key_value( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface\\Wine", KEY_WOW64_64KEY, 64 );
+    check_key_value( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface\\Wine", 0, ptr_size == 64 ? 64 : 0 );
+    check_key_value( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface\\Wine", KEY_WOW64_64KEY, 64 );
     check_key_value( HKEY_LOCAL_MACHINE, "Software\\Classes\\Interface\\Wine", KEY_WOW64_32KEY, 0 );
 
     RegDeleteKeyA( key64, "" );
@@ -3127,8 +3113,8 @@ static void test_redirection(void)
     err = RegSetValueExA( key32, "value", 0, REG_DWORD, (BYTE *)&dw, sizeof(dw) );
     ok( err == ERROR_SUCCESS, "RegSetValueExA failed: %lu\n", err );
 
-    todo_check_key_value( root64, "Wine", 0, 0, ptr_size == 64 );
-    todo_check_key_value( root64, "Wine", KEY_WOW64_64KEY, 0, ptr_size == 64 );
+    check_key_value( root64, "Wine", 0, 0 );
+    check_key_value( root64, "Wine", KEY_WOW64_64KEY, 0 );
     check_key_value( root64, "Wine", KEY_WOW64_32KEY, 32 );
     check_key_value( root32, "Wine", 0, 32 );
     check_key_value( root32, "Wine", KEY_WOW64_64KEY, 32 );

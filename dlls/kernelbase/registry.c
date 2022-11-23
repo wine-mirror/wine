@@ -264,6 +264,51 @@ static NTSTATUS open_subkey( HKEY *subkey, HKEY root, UNICODE_STRING *name, DWOR
     return status;
 }
 
+static NTSTATUS open_wow6432node_parent( HKEY *retkey, HKEY root, DWORD options, ACCESS_MASK access )
+{
+    char buffer[256], *buf_ptr = buffer;
+    KEY_NAME_INFORMATION *info = (KEY_NAME_INFORMATION *)buffer;
+    DWORD len = sizeof(buffer);
+    UNICODE_STRING name;
+    NTSTATUS status;
+
+    /* Obtain the name of the root key */
+    status = NtQueryKey( root, KeyNameInformation, info, len, &len );
+    if (status && status != STATUS_BUFFER_OVERFLOW) return status;
+
+    /* Retry with a dynamically allocated buffer */
+    while (status == STATUS_BUFFER_OVERFLOW)
+    {
+        if (buf_ptr != buffer) heap_free( buf_ptr );
+        if (!(buf_ptr = heap_alloc( len )))
+            return STATUS_NO_MEMORY;
+        info = (KEY_NAME_INFORMATION *)buf_ptr;
+        status = NtQueryKey( root, KeyNameInformation, info, len, &len );
+    }
+
+    if (status)
+    {
+        if (buf_ptr != buffer) heap_free( buf_ptr );
+        return status;
+    }
+
+    name.Buffer = info->Name;
+    name.Length = info->NameLength;
+    root = 0;
+
+    /* Obtain the parent Wow6432Node if it exists */
+    while (!status && name.Length)
+    {
+        status = open_subkey( retkey, root, &name, options & ~REG_OPTION_OPEN_LINK, access );
+        if (root) NtClose( root );
+        root = *retkey;
+    }
+
+    if (buf_ptr != buffer) heap_free( buf_ptr );
+
+    return status;
+}
+
 /* wrapper for NtOpenKeyEx to handle Wow6432 nodes */
 static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD options, ACCESS_MASK access, BOOL create )
 {
@@ -295,7 +340,9 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING *name, DWORD o
         return status;
     }
 
-    if (root && is_wow64 && !(access & KEY_WOW64_64KEY) && !is_wow6432node( name ))
+    if (root && (access & KEY_WOW64_32KEY) && !is_wow6432node( name ))
+        status = open_wow6432node_parent( &subkey_root, root, options, access );
+    else if (root && is_wow64 && !(access & KEY_WOW64_64KEY) && !is_wow6432node( name ))
     {
         subkey_root = open_wow6432node( root );
         if (!is_classes_wow6432node( subkey_root ) && subkey_root != root)
