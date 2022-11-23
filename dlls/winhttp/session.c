@@ -1901,6 +1901,50 @@ static BOOL parse_script_result( const char *result, WINHTTP_PROXY_INFO *info )
     return TRUE;
 }
 
+static SRWLOCK cache_lock = SRWLOCK_INIT;
+static DWORD cached_script_size;
+static ULONGLONG cache_update_time;
+static char *cached_script;
+static WCHAR *cached_url;
+
+static BOOL get_cached_script( const WCHAR *url, char **buffer, DWORD *out_size )
+{
+    BOOL ret = FALSE;
+
+    *buffer = NULL;
+    *out_size = 0;
+
+    AcquireSRWLockExclusive( &cache_lock );
+    if (cached_url && !wcscmp( cached_url, url ) && GetTickCount64() - cache_update_time < 60000)
+    {
+        ret = TRUE;
+        if (cached_script && (*buffer = malloc( cached_script_size )))
+        {
+            memcpy( *buffer, cached_script, cached_script_size );
+            *out_size = cached_script_size;
+        }
+    }
+    ReleaseSRWLockExclusive( &cache_lock );
+    return ret;
+}
+
+static void cache_script( const WCHAR *url, char *buffer, DWORD size )
+{
+    AcquireSRWLockExclusive( &cache_lock );
+    free( cached_url );
+    free( cached_script );
+    cached_script_size = 0;
+    cached_script = NULL;
+
+    if ((cached_url = wcsdup( url )) && buffer && (cached_script = malloc( size )))
+    {
+        memcpy( cached_script, buffer, size );
+        cached_script_size = size;
+    }
+    cache_update_time = GetTickCount64();
+    ReleaseSRWLockExclusive( &cache_lock );
+}
+
 static char *download_script( const WCHAR *url, DWORD *out_size )
 {
     static const WCHAR *acceptW[] = {L"*/*", NULL};
@@ -1908,9 +1952,14 @@ static char *download_script( const WCHAR *url, DWORD *out_size )
     WCHAR *hostname;
     URL_COMPONENTSW uc;
     DWORD status, size = sizeof(status), offset, to_read, bytes_read, flags = 0;
-    char *tmp, *buffer = NULL;
+    char *tmp, *buffer;
 
-    *out_size = 0;
+    if (get_cached_script( url, &buffer, out_size ))
+    {
+        TRACE( "Returning cached result.\n" );
+        if (!buffer) SetLastError( ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT );
+        return buffer;
+    }
 
     memset( &uc, 0, sizeof(uc) );
     uc.dwStructSize = sizeof(uc);
@@ -1957,6 +2006,7 @@ done:
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
     free( hostname );
+    cache_script( url, buffer, *out_size );
     if (!buffer) SetLastError( ERROR_WINHTTP_UNABLE_TO_DOWNLOAD_SCRIPT );
     return buffer;
 }
