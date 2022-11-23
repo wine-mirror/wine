@@ -3323,8 +3323,10 @@ static void output_module( struct makefile *make, unsigned int arch )
         if (delay_load_flags[arch])
         {
             for (i = 0; i < make->delayimports.count; i++)
-                strarray_add( &all_libs, strmake( "%s%s%s", delay_load_flags[arch], make->delayimports.str[i],
-                                                  strchr( make->delayimports.str[i], '.' ) ? "" : ".dll" ));
+            {
+                struct makefile *import = get_static_lib( make->delayimports.str[i], arch );
+                if (import) strarray_add( &all_libs, strmake( "%s%s", delay_load_flags[arch], import->module ));
+            }
         }
     }
     else module_name = strmake( "%s%s", arch_pe_dirs[arch], make->module );
