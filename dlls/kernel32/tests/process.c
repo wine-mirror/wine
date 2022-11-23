@@ -1374,14 +1374,12 @@ static void test_Environment(void)
     strcpy(ptr, "BAR=FOOBAR");
     ptr += strlen(ptr) + 1;
     /* copy all existing variables except:
-     * - WINELOADER
      * - PATH (already set above)
      * - the directory definitions (=[A-Z]:=)
      */
     for (ptr2 = env; *ptr2; ptr2 += strlen(ptr2) + 1)
     {
         if (strncmp(ptr2, "PATH=", 5) != 0 &&
-            strncmp(ptr2, "WINELOADER=", 11) != 0 &&
             !is_str_env_drive_dir(ptr2))
         {
             strcpy(ptr, ptr2);
@@ -1420,7 +1418,7 @@ static  void    test_SuspendFlag(void)
     ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startup, &info), "CreateProcess\n");
 
     ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running\n");
-    Sleep(1000);
+    Sleep(100);
     ok(GetExitCodeThread(info.hThread, &exit_status) && exit_status == STILL_ACTIVE, "thread still running\n");
     ok(ResumeThread(info.hThread) == 1, "Resuming thread\n");
 
