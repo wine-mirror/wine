@@ -224,6 +224,7 @@ static int query_prop( const WCHAR *class, const WCHAR *propnames )
         IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
         if (!count) break;
 
+        IWbemClassObject_BeginEnumeration( obj, 0 );
         while (IWbemClassObject_Next( obj, 0, &name, &v, NULL, NULL ) == S_OK)
         {
             VariantChangeType( &v, &v, 0, VT_BSTR );
@@ -241,6 +242,7 @@ static int query_prop( const WCHAR *class, const WCHAR *propnames )
     IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
     if (count)
     {
+        IWbemClassObject_BeginEnumeration( obj, 0 );
         while (IWbemClassObject_Next( obj, 0, &name, NULL, NULL, NULL ) == S_OK)
         {
             output_text( name, width );
@@ -256,7 +258,7 @@ static int query_prop( const WCHAR *class, const WCHAR *propnames )
     {
         IEnumWbemClassObject_Next( result, WBEM_INFINITE, 1, &obj, &count );
         if (!count) break;
-
+        IWbemClassObject_BeginEnumeration( obj, 0 );
         while (IWbemClassObject_Next( obj, 0, NULL, &v, NULL, NULL ) == S_OK)
         {
             VariantChangeType( &v, &v, 0, VT_BSTR );
