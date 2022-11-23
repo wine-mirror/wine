@@ -835,6 +835,23 @@ static void media_engine_get_frame_size(struct media_engine *engine, IMFTopology
     IMFMediaType_Release(media_type);
 }
 
+static void media_engine_apply_volume(const struct media_engine *engine)
+{
+    IMFSimpleAudioVolume *sa_volume;
+    HRESULT hr;
+
+    if (!engine->session)
+        return;
+
+    if (FAILED(MFGetService((IUnknown *)engine->session, &MR_POLICY_VOLUME_SERVICE, &IID_IMFSimpleAudioVolume, (void **)&sa_volume)))
+        return;
+
+    if (FAILED(hr = IMFSimpleAudioVolume_SetMasterVolume(sa_volume, engine->volume)))
+        WARN("Failed to set master volume, hr %#lx.\n", hr);
+
+    IMFSimpleAudioVolume_Release(sa_volume);
+}
+
 static HRESULT WINAPI media_engine_callback_QueryInterface(IMFAsyncCallback *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IMFAsyncCallback) ||
@@ -917,6 +934,8 @@ static HRESULT WINAPI media_engine_session_events_Invoke(IMFAsyncCallback *iface
             topology = (IMFTopology *)value.punkVal;
 
             EnterCriticalSection(&engine->cs);
+
+            media_engine_apply_volume(engine);
 
             engine->ready_state = MF_MEDIA_ENGINE_READY_HAVE_METADATA;
 
@@ -2009,6 +2028,7 @@ static HRESULT WINAPI media_engine_SetVolume(IMFMediaEngineEx *iface, double vol
     else if (volume != engine->volume)
     {
         engine->volume = volume;
+        media_engine_apply_volume(engine);
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_VOLUMECHANGE, 0, 0);
     }
     LeaveCriticalSection(&engine->cs);
