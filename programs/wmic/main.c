@@ -165,6 +165,19 @@ static HRESULT process_property_list( IWbemClassObject *obj, const WCHAR *propli
     return hr;
 }
 
+static void convert_to_bstr( VARIANT *v )
+{
+    VARTYPE vt;
+
+    if (SUCCEEDED(VariantChangeType( v, v, 0, VT_BSTR ))) return;
+    vt = V_VT(v);
+    VariantClear( v );
+    V_VT(v) = VT_BSTR;
+    V_BSTR(v) = SysAllocString( L"" );
+    if (vt != VT_NULL && vt != VT_EMPTY)
+        WINE_FIXME( "Could not convert variant, vt %u.\n", vt );
+}
+
 static int query_prop( const WCHAR *class, const WCHAR *propnames )
 {
     HRESULT hr;
@@ -227,7 +240,7 @@ static int query_prop( const WCHAR *class, const WCHAR *propnames )
         IWbemClassObject_BeginEnumeration( obj, 0 );
         while (IWbemClassObject_Next( obj, 0, &name, &v, NULL, NULL ) == S_OK)
         {
-            VariantChangeType( &v, &v, 0, VT_BSTR );
+            convert_to_bstr( &v );
             width = max( lstrlenW( V_BSTR( &v ) ), width );
             VariantClear( &v );
             SysFreeString( name );
@@ -261,7 +274,7 @@ static int query_prop( const WCHAR *class, const WCHAR *propnames )
         IWbemClassObject_BeginEnumeration( obj, 0 );
         while (IWbemClassObject_Next( obj, 0, NULL, &v, NULL, NULL ) == S_OK)
         {
-            VariantChangeType( &v, &v, 0, VT_BSTR );
+            convert_to_bstr( &v );
             output_text( V_BSTR( &v ), width );
             VariantClear( &v );
         }
