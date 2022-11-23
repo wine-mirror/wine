@@ -469,15 +469,15 @@ static inline ULONG heap_get_flags( const struct heap *heap, ULONG flags )
     return heap->flags | flags;
 }
 
-static void heap_lock( struct heap *heap, ULONG flags )
+static inline void heap_lock( struct heap *heap, ULONG flags )
 {
-    if (heap_get_flags( heap, flags ) & HEAP_NO_SERIALIZE) return;
+    if (flags & HEAP_NO_SERIALIZE) return;
     RtlEnterCriticalSection( &heap->cs );
 }
 
-static void heap_unlock( struct heap *heap, ULONG flags )
+static inline void heap_unlock( struct heap *heap, ULONG flags )
 {
-    if (heap_get_flags( heap, flags ) & HEAP_NO_SERIALIZE) return;
+    if (flags & HEAP_NO_SERIALIZE) return;
     RtlLeaveCriticalSection( &heap->cs );
 }
 
@@ -582,7 +582,7 @@ static const char *debugstr_heap_entry( struct rtl_heap_entry *entry )
                              entry->Region.dwUnCommittedSize, entry->Region.lpFirstBlock, entry->Region.lpLastBlock );
 }
 
-static struct heap *unsafe_heap_from_handle( HANDLE handle )
+static struct heap *unsafe_heap_from_handle( HANDLE handle, ULONG flags, ULONG *heap_flags )
 {
     struct heap *heap = handle;
     BOOL valid = TRUE;
@@ -605,6 +605,7 @@ static struct heap *unsafe_heap_from_handle( HANDLE handle )
         }
     }
 
+    *heap_flags = heap_get_flags( heap, flags );
     return valid ? heap : NULL;
 }
 
@@ -629,7 +630,6 @@ static SUBHEAP *find_subheap( const struct heap *heap, const struct block *block
 static inline BOOL subheap_commit( const struct heap *heap, SUBHEAP *subheap, const struct block *block, SIZE_T block_size )
 {
     const char *end = (char *)subheap_base( subheap ) + subheap_size( subheap ), *commit_end;
-    ULONG flags = heap->flags;
     SIZE_T size;
     void *addr;
 
@@ -643,7 +643,7 @@ static inline BOOL subheap_commit( const struct heap *heap, SUBHEAP *subheap, co
     size = commit_end - (char *)addr;
 
     if (NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size, MEM_COMMIT,
-                                 get_protection_type( flags ) ))
+                                 get_protection_type( heap->flags ) ))
     {
         WARN( "Could not commit %#Ix bytes at %p for heap %p\n", size, addr, heap );
         return FALSE;
@@ -677,11 +677,10 @@ static inline BOOL subheap_decommit( const struct heap *heap, SUBHEAP *subheap, 
 }
 
 
-static void create_free_block( struct heap *heap, SUBHEAP *subheap, struct block *block, SIZE_T block_size )
+static void create_free_block( struct heap *heap, ULONG flags, SUBHEAP *subheap, struct block *block, SIZE_T block_size )
 {
     const char *end = (char *)block + block_size, *commit_end = subheap_commit_end( subheap );
     struct entry *entry = (struct entry *)block, *list;
-    DWORD flags = heap->flags;
     struct block *next;
 
     valgrind_make_writable( block, sizeof(*entry) );
@@ -718,7 +717,7 @@ static void create_free_block( struct heap *heap, SUBHEAP *subheap, struct block
 }
 
 
-static void free_used_block( struct heap *heap, SUBHEAP *subheap, struct block *block )
+static void free_used_block( struct heap *heap, ULONG flags, SUBHEAP *subheap, struct block *block )
 {
     struct entry *entry;
     SIZE_T block_size;
@@ -729,7 +728,7 @@ static void free_used_block( struct heap *heap, SUBHEAP *subheap, struct block *
         heap->pending_free[heap->pending_pos] = block;
         heap->pending_pos = (heap->pending_pos + 1) % MAX_FREE_PENDING;
         block_set_type( block, BLOCK_TYPE_DEAD );
-        mark_block_free( block + 1, block_get_size( block ) - sizeof(*block), heap->flags );
+        mark_block_free( block + 1, block_get_size( block ) - sizeof(*block), flags );
         if (!(block = tmp) || !(subheap = find_subheap( heap, block, FALSE ))) return;
     }
 
@@ -744,7 +743,7 @@ static void free_used_block( struct heap *heap, SUBHEAP *subheap, struct block *
     }
     else entry = (struct entry *)block;
 
-    create_free_block( heap, subheap, block, block_size );
+    create_free_block( heap, flags, subheap, block, block_size );
     if (next_block( subheap, block )) return;  /* not the last block */
 
     if (block == first_block( subheap ) && subheap != &heap->subheap)
@@ -765,14 +764,14 @@ static void free_used_block( struct heap *heap, SUBHEAP *subheap, struct block *
 }
 
 
-static inline void shrink_used_block( struct heap *heap, SUBHEAP *subheap, struct block *block,
+static inline void shrink_used_block( struct heap *heap, ULONG flags, SUBHEAP *subheap, struct block *block,
                                       SIZE_T old_block_size, SIZE_T block_size, SIZE_T size )
 {
     if (old_block_size >= block_size + HEAP_MIN_BLOCK_SIZE)
     {
         block_set_size( block, block_size );
         block->tail_size = block_size - sizeof(*block) - size;
-        create_free_block( heap, subheap, next_block( subheap, block ), old_block_size - block_size );
+        create_free_block( heap, flags, subheap, next_block( subheap, block ), old_block_size - block_size );
     }
     else
     {
@@ -796,8 +795,8 @@ static struct block *allocate_large_block( struct heap *heap, DWORD flags, SIZE_
 
     if (!(flags & HEAP_GROWABLE)) return NULL;
     if (total_size < size) return NULL;  /* overflow */
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &total_size,
-                                 MEM_COMMIT, get_protection_type( flags )))
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &total_size, MEM_COMMIT,
+                                 get_protection_type( heap->flags ) ))
     {
         WARN( "Could not allocate block for %#Ix bytes\n", size );
         return NULL;
@@ -929,14 +928,14 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
         commitSize = min( totalSize, (SIZE_T)ROUND_ADDR( commitSize + REGION_ALIGN - 1, REGION_ALIGN - 1 ) );
 
         /* allocate the memory block */
-        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize,
-                                     MEM_RESERVE, get_protection_type( flags ) ))
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize, MEM_RESERVE,
+                                     get_protection_type( flags ) ))
         {
             WARN( "Could not allocate %#Ix bytes\n", totalSize );
             return NULL;
         }
-        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0,
-                                     &commitSize, MEM_COMMIT, get_protection_type( flags ) ))
+        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &commitSize, MEM_COMMIT,
+                                     get_protection_type( flags ) ))
         {
             WARN( "Could not commit %#Ix bytes for sub-heap %p\n", commitSize, address );
             return NULL;
@@ -1001,14 +1000,14 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
 
     block_size = subheap_size( subheap ) - subheap_overhead( subheap );
     block_size &= ~(BLOCK_ALIGN - 1);
-    create_free_block( heap, subheap, first_block( subheap ), block_size );
+    create_free_block( heap, flags, subheap, first_block( subheap ), block_size );
 
     *heap_ptr = heap;
     return subheap;
 }
 
 
-static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBHEAP **subheap )
+static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T block_size, SUBHEAP **subheap )
 {
     struct list *ptr = &find_free_list( heap, block_size, FALSE )->entry;
     struct entry *entry;
@@ -1033,7 +1032,7 @@ static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBH
 
     /* If no block was found, attempt to grow the heap */
 
-    if (!(heap->flags & HEAP_GROWABLE))
+    if (!(flags & HEAP_GROWABLE))
     {
         WARN( "Not enough space in heap %p for %#Ix bytes\n", heap, block_size );
         return NULL;
@@ -1043,7 +1042,7 @@ static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBH
     total_size = sizeof(SUBHEAP) + block_size + sizeof(struct entry);
     if (total_size < block_size) return NULL;  /* overflow */
 
-    if ((*subheap = HEAP_CreateSubHeap( &heap, NULL, heap->flags, total_size,
+    if ((*subheap = HEAP_CreateSubHeap( &heap, NULL, flags, total_size,
                                         max( heap->grow_size, total_size ) )))
     {
         if (heap->grow_size < 128 * 1024 * 1024) heap->grow_size *= 2;
@@ -1052,7 +1051,7 @@ static struct block *find_free_block( struct heap *heap, SIZE_T block_size, SUBH
     {
         if (heap->grow_size <= total_size || heap->grow_size <= 4 * 1024 * 1024) return NULL;
         heap->grow_size /= 2;
-        *subheap = HEAP_CreateSubHeap( &heap, NULL, heap->flags, total_size,
+        *subheap = HEAP_CreateSubHeap( &heap, NULL, flags, total_size,
                                        max( heap->grow_size, total_size ) );
     }
 
@@ -1294,13 +1293,14 @@ static DWORD heap_flags_from_global_flag( DWORD flag )
  */
 static void heap_set_debug_flags( HANDLE handle )
 {
-    struct heap *heap = unsafe_heap_from_handle( handle );
     ULONG global_flags = RtlGetNtGlobalFlags();
-    DWORD flags, force_flags;
+    DWORD dummy, flags, force_flags;
+    struct heap *heap;
 
     if (TRACE_ON(heap)) global_flags |= FLG_HEAP_VALIDATE_ALL;
     if (WARN_ON(heap)) global_flags |= FLG_HEAP_VALIDATE_PARAMETERS;
 
+    heap = unsafe_heap_from_handle( handle, 0, &dummy );
     flags = heap_flags_from_global_flag( global_flags );
     force_flags = (heap->flags | flags) & ~(HEAP_SHARED|HEAP_DISABLE_COALESCE_ON_FREE);
 
@@ -1420,12 +1420,13 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE handle )
     ARENA_LARGE *arena, *arena_next;
     struct block **pending, **tmp;
     struct heap *heap;
+    ULONG heap_flags;
     SIZE_T size;
     void *addr;
 
     TRACE( "handle %p\n", handle );
 
-    if (!(heap = unsafe_heap_from_handle( handle )) && handle &&
+    if (!(heap = unsafe_heap_from_handle( handle, 0, &heap_flags )) && handle &&
         (((struct heap *)handle)->flags & HEAP_VALIDATE_PARAMS) &&
         NtCurrentTeb()->Peb->BeingDebugged)
     {
@@ -1439,7 +1440,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE handle )
         heap->pending_free = NULL;
         for (tmp = pending; *tmp && tmp != pending + MAX_FREE_PENDING; ++tmp)
             if ((subheap = find_subheap( heap, *tmp, FALSE )))
-                free_used_block( heap, subheap, *tmp );
+                free_used_block( heap, heap->flags, subheap, *tmp );
         RtlFreeHeap( handle, 0, pending );
     }
 
@@ -1512,13 +1513,13 @@ static NTSTATUS heap_allocate( struct heap *heap, ULONG flags, SIZE_T size, void
 
     /* Locate a suitable free block */
 
-    if (!(block = find_free_block( heap, block_size, &subheap ))) return STATUS_NO_MEMORY;
+    if (!(block = find_free_block( heap, flags, block_size, &subheap ))) return STATUS_NO_MEMORY;
     /* read the free block size, changing block type or flags may alter it */
     old_block_size = block_get_size( block );
 
     block_set_type( block, BLOCK_TYPE_USED );
     block_set_flags( block, ~0, BLOCK_USER_FLAGS( flags ) );
-    shrink_used_block( heap, subheap, block, old_block_size, block_size, size );
+    shrink_used_block( heap, flags, subheap, block, old_block_size, block_size, size );
     initialize_block( block + 1, size, flags );
     mark_block_tail( block, flags );
 
@@ -1533,15 +1534,16 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
 {
     struct heap *heap;
     void *ptr = NULL;
+    ULONG heap_flags;
     NTSTATUS status;
 
-    if (!(heap = unsafe_heap_from_handle( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
         status = STATUS_INVALID_HANDLE;
     else
     {
-        heap_lock( heap, flags );
-        status = heap_allocate( heap, heap_get_flags( heap, flags ), size, &ptr );
-        heap_unlock( heap, flags );
+        heap_lock( heap, heap_flags );
+        status = heap_allocate( heap, heap_flags, size, &ptr );
+        heap_unlock( heap, heap_flags );
     }
 
     if (!status) valgrind_notify_alloc( ptr, size, flags & HEAP_ZERO_MEMORY );
@@ -1552,14 +1554,14 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
 }
 
 
-static NTSTATUS heap_free( struct heap *heap, void *ptr )
+static NTSTATUS heap_free( struct heap *heap, ULONG flags, void *ptr )
 {
     struct block *block;
     SUBHEAP *subheap;
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
     if (block_get_flags( block ) & BLOCK_FLAG_LARGE) free_large_block( heap, block );
-    else free_used_block( heap, subheap, block );
+    else free_used_block( heap, flags, subheap, block );
 
     return STATUS_SUCCESS;
 }
@@ -1570,19 +1572,20 @@ static NTSTATUS heap_free( struct heap *heap, void *ptr )
 BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *ptr )
 {
     struct heap *heap;
+    ULONG heap_flags;
     NTSTATUS status;
 
     if (!ptr) return TRUE;
 
     valgrind_notify_free( ptr );
 
-    if (!(heap = unsafe_heap_from_handle( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
         status = STATUS_INVALID_PARAMETER;
     else
     {
-        heap_lock( heap, flags );
-        status = heap_free( heap, ptr );
-        heap_unlock( heap, flags );
+        heap_lock( heap, heap_flags );
+        status = heap_free( heap, heap_flags, ptr );
+        heap_unlock( heap, heap_flags );
     }
 
     TRACE( "handle %p, flags %#lx, ptr %p, return %u, status %#lx.\n", handle, flags, ptr, !status, status );
@@ -1634,14 +1637,14 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE
             memcpy( *ret, block + 1, old_size );
             if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + old_size, 0, size - old_size );
             valgrind_notify_free( ptr );
-            free_used_block( heap, subheap, block );
+            free_used_block( heap, flags, subheap, block );
             return STATUS_SUCCESS;
         }
     }
 
     valgrind_notify_resize( block + 1, old_size, size );
     block_set_flags( block, BLOCK_FLAG_USER_MASK, BLOCK_USER_FLAGS( flags ) );
-    shrink_used_block( heap, subheap, block, old_block_size, block_size, size );
+    shrink_used_block( heap, flags, subheap, block, old_block_size, block_size, size );
 
     if (size > old_size) initialize_block( (char *)(block + 1) + old_size, size - old_size, flags );
     mark_block_tail( block, flags );
@@ -1656,18 +1659,19 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE
 void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T size )
 {
     struct heap *heap;
+    ULONG heap_flags;
     void *ret = NULL;
     NTSTATUS status;
 
     if (!ptr) return NULL;
 
-    if (!(heap = unsafe_heap_from_handle( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
         status = STATUS_INVALID_HANDLE;
     else
     {
-        heap_lock( heap, flags );
-        status = heap_reallocate( heap, heap_get_flags( heap, flags ), ptr, size, &ret );
-        heap_unlock( heap, flags );
+        heap_lock( heap, heap_flags );
+        status = heap_reallocate( heap, heap_flags, ptr, size, &ret );
+        heap_unlock( heap, heap_flags );
     }
 
     TRACE( "handle %p, flags %#lx, ptr %p, size %#Ix, return %p, status %#lx.\n", handle, flags, ptr, size, ret, status );
@@ -1713,9 +1717,10 @@ ULONG WINAPI RtlCompactHeap( HANDLE handle, ULONG flags )
  */
 BOOLEAN WINAPI RtlLockHeap( HANDLE handle )
 {
-    struct heap *heap = unsafe_heap_from_handle( handle );
-    if (!heap) return FALSE;
-    heap_lock( heap, 0 );
+    struct heap *heap;
+    ULONG heap_flags;
+    if (!(heap = unsafe_heap_from_handle( handle, 0, &heap_flags ))) return FALSE;
+    heap_lock( heap, heap_flags );
     return TRUE;
 }
 
@@ -1734,9 +1739,10 @@ BOOLEAN WINAPI RtlLockHeap( HANDLE handle )
  */
 BOOLEAN WINAPI RtlUnlockHeap( HANDLE handle )
 {
-    struct heap *heap = unsafe_heap_from_handle( handle );
-    if (!heap) return FALSE;
-    heap_unlock( heap, 0 );
+    struct heap *heap;
+    ULONG heap_flags;
+    if (!(heap = unsafe_heap_from_handle( handle, 0, &heap_flags ))) return FALSE;
+    heap_unlock( heap, heap_flags );
     return TRUE;
 }
 
@@ -1764,15 +1770,16 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE handle, ULONG flags, const void *ptr )
 {
     SIZE_T size = ~(SIZE_T)0;
     struct heap *heap;
+    ULONG heap_flags;
     NTSTATUS status;
 
-    if (!(heap = unsafe_heap_from_handle( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
         status = STATUS_INVALID_PARAMETER;
     else
     {
-        heap_lock( heap, flags );
+        heap_lock( heap, heap_flags );
         status = heap_size( heap, ptr, &size );
-        heap_unlock( heap, flags );
+        heap_unlock( heap, heap_flags );
     }
 
     TRACE( "handle %p, flags %#lx, ptr %p, return %#Ix, status %#lx.\n", handle, flags, ptr, size, status );
@@ -1788,16 +1795,17 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE handle, ULONG flags, const void *ptr )
 {
     struct heap *heap;
     SUBHEAP *subheap;
+    ULONG heap_flags;
     BOOLEAN ret;
 
-    if (!(heap = unsafe_heap_from_handle( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
         ret = FALSE;
     else
     {
-        heap_lock( heap, flags );
+        heap_lock( heap, heap_flags );
         if (ptr) ret = heap_validate_ptr( heap, ptr, &subheap );
         else ret = heap_validate( heap );
-        heap_unlock( heap, flags );
+        heap_unlock( heap, heap_flags );
     }
 
     TRACE( "handle %p, flags %#lx, ptr %p, return %u.\n", handle, flags, ptr, !!ret );
@@ -1915,17 +1923,18 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE handle, void *entry_ptr )
 {
     struct rtl_heap_entry *entry = entry_ptr;
     struct heap *heap;
+    ULONG heap_flags;
     NTSTATUS status;
 
     if (!entry) return STATUS_INVALID_PARAMETER;
 
-    if (!(heap = unsafe_heap_from_handle( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle, 0, &heap_flags )))
         status = STATUS_INVALID_HANDLE;
     else
     {
-        heap_lock( heap, 0 );
+        heap_lock( heap, heap_flags );
         status = heap_walk( heap, entry );
-        heap_unlock( heap, 0 );
+        heap_unlock( heap, heap_flags );
     }
 
     TRACE( "handle %p, entry %p %s, return %#lx\n", handle, entry,
@@ -2005,6 +2014,7 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
     struct block *block;
     struct heap *heap;
     SUBHEAP *subheap;
+    ULONG heap_flags;
     char *tmp;
 
     TRACE( "handle %p, flags %#lx, ptr %p, user_value %p, user_flags %p semi-stub!\n",
@@ -2012,9 +2022,9 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
 
     *user_flags = 0;
 
-    if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags ))) return TRUE;
 
-    heap_lock( heap, flags );
+    heap_lock( heap, heap_flags );
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap )))
     {
         WARN( "Failed to find block %p in heap %p\n", ptr, handle );
@@ -2032,11 +2042,11 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
     else
     {
         tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
-        if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += BLOCK_ALIGN;
+        if ((heap_flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += BLOCK_ALIGN;
         *user_flags = *user_flags & ~HEAP_ADD_USER_INFO;
         *user_value = *(void **)tmp;
     }
-    heap_unlock( heap, flags );
+    heap_unlock( heap, heap_flags );
 
     heap_set_status( heap, flags, status );
     return !status;
@@ -2051,13 +2061,14 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
     BOOLEAN ret = FALSE;
     struct heap *heap;
     SUBHEAP *subheap;
+    ULONG heap_flags;
     char *tmp;
 
     TRACE( "handle %p, flags %#lx, ptr %p, user_value %p.\n", handle, flags, ptr, user_value );
 
-    if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags ))) return TRUE;
 
-    heap_lock( heap, flags );
+    heap_lock( heap, heap_flags );
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap )))
         WARN( "Failed to find block %p in heap %p\n", ptr, handle );
     else if (!(block_get_flags( block ) & BLOCK_FLAG_USER_INFO))
@@ -2071,11 +2082,11 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
     else
     {
         tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
-        if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += BLOCK_ALIGN;
+        if ((heap_flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += BLOCK_ALIGN;
         *(void **)tmp = user_value;
         ret = TRUE;
     }
-    heap_unlock( heap, flags );
+    heap_unlock( heap, heap_flags );
 
     return ret;
 }
@@ -2089,6 +2100,7 @@ BOOLEAN WINAPI RtlSetUserFlagsHeap( HANDLE handle, ULONG flags, void *ptr, ULONG
     BOOLEAN ret = FALSE;
     struct heap *heap;
     SUBHEAP *subheap;
+    ULONG heap_flags;
 
     TRACE( "handle %p, flags %#lx, ptr %p, clear %#lx, set %#lx.\n", handle, flags, ptr, clear, set );
 
@@ -2098,9 +2110,9 @@ BOOLEAN WINAPI RtlSetUserFlagsHeap( HANDLE handle, ULONG flags, void *ptr, ULONG
         return FALSE;
     }
 
-    if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
+    if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags ))) return TRUE;
 
-    heap_lock( heap, flags );
+    heap_lock( heap, heap_flags );
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap )))
         WARN( "Failed to find block %p in heap %p\n", ptr, handle );
     else if (!(block_get_flags( block ) & BLOCK_FLAG_USER_INFO))
@@ -2110,7 +2122,7 @@ BOOLEAN WINAPI RtlSetUserFlagsHeap( HANDLE handle, ULONG flags, void *ptr, ULONG
         block_set_flags( block, BLOCK_USER_FLAGS( clear ), BLOCK_USER_FLAGS( set ) );
         ret = TRUE;
     }
-    heap_unlock( heap, flags );
+    heap_unlock( heap, heap_flags );
 
     return ret;
 }
