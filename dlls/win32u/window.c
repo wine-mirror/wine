@@ -2066,7 +2066,7 @@ BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
 {
     BOOL ret;
 
-    TRACE( "(%p,%08x,%d,%x)\n", hwnd, key, alpha, flags );
+    TRACE( "(%p,%s,%d,%x)\n", hwnd, debugstr_color(key), alpha, flags );
 
     SERVER_START_REQ( set_window_layered_info )
     {

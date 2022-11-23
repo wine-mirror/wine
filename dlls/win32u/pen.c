@@ -59,7 +59,7 @@ HPEN create_pen( INT style, INT width, COLORREF color )
     PENOBJ *penPtr;
     HPEN hpen;
 
-    TRACE( "%d %d %06x\n", style, width, color );
+    TRACE( "%d %d %s\n", style, width, debugstr_color(color) );
 
     switch (style)
     {

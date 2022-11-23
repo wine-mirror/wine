@@ -384,7 +384,7 @@ UINT WINAPI NtGdiGetNearestPaletteIndex( HPALETTE hpalette, COLORREF color )
         }
         GDI_ReleaseObj( hpalette );
     }
-    TRACE("(%p,%06x): returning %d\n", hpalette, color, index );
+    TRACE("(%p,%s): returning %d\n", hpalette, debugstr_color(color), index );
     return index;
 }
 
@@ -413,7 +413,7 @@ COLORREF CDECL nulldrv_GetNearestColor( PHYSDEV dev, COLORREF color )
 
         if (!get_palette_entries( hpal, index, 1, &entry ))
         {
-            WARN("RGB(%x) : idx %d is out of bounds, assuming NULL\n", color, index );
+            WARN("%s: idx %d is out of bounds, assuming NULL\n", debugstr_color(color), index );
             if (!get_palette_entries( hpal, 0, 1, &entry )) return CLR_INVALID;
         }
         color = RGB( entry.peRed, entry.peGreen, entry.peBlue );

@@ -506,4 +506,13 @@ static inline const char *debugstr_us( const UNICODE_STRING *us )
     return debugstr_wn( us->Buffer, us->Length / sizeof(WCHAR) );
 }
 
+static inline const char *debugstr_color( COLORREF color )
+{
+    if (color & (1 << 24))  /* PALETTEINDEX */
+        return wine_dbg_sprintf( "PALETTEINDEX(%u)", LOWORD(color) );
+    if (color >> 16 == 0x10ff)  /* DIBINDEX */
+        return wine_dbg_sprintf( "DIBINDEX(%u)", LOWORD(color) );
+    return wine_dbg_sprintf( "RGB(%02x,%02x,%02x)", GetRValue(color), GetGValue(color), GetBValue(color) );
+}
+
 #endif /* __WINE_WIN32U_PRIVATE */

@@ -222,7 +222,7 @@ HBRUSH WINAPI NtGdiCreateHatchBrushInternal( INT style, COLORREF color, BOOL pen
 {
     LOGBRUSH logbrush;
 
-    TRACE( "%d %06x\n", style, color );
+    TRACE( "%d %s\n", style, debugstr_color(color) );
 
     logbrush.lbStyle = BS_HATCHED;
     logbrush.lbColor = color;
@@ -282,7 +282,7 @@ HBRUSH WINAPI NtGdiCreateSolidBrush( COLORREF color, HBRUSH brush )
 {
     LOGBRUSH logbrush;
 
-    TRACE("%06x\n", color );
+    TRACE("%s\n", debugstr_color(color) );
 
     logbrush.lbStyle = BS_SOLID;
     logbrush.lbColor = color;
