@@ -171,7 +171,7 @@ static int query_prop( const WCHAR *class, const WCHAR *propnames )
     IWbemLocator *locator = NULL;
     IWbemServices *services = NULL;
     IEnumWbemClassObject *result = NULL;
-    LONG flags = WBEM_FLAG_RETURN_IMMEDIATELY | WBEM_FLAG_FORWARD_ONLY;
+    LONG flags = WBEM_FLAG_RETURN_IMMEDIATELY;
     BSTR path = NULL, wql = NULL, query = NULL, name, str = NULL;
     WCHAR *proplist = NULL;
     int len, ret = -1;
