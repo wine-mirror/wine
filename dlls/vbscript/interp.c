@@ -1246,6 +1246,7 @@ static HRESULT interp_dim(exec_ctx_t *ctx)
         *array_ref = SafeArrayCreate(VT_VARIANT, array_desc->dim_cnt, array_desc->bounds);
         if(!*array_ref)
             return E_OUTOFMEMORY;
+        (*array_ref)->fFeatures |= (FADF_FIXEDSIZE | FADF_STATIC);
     }
 
     V_VT(v) = VT_ARRAY|VT_BYREF|VT_VARIANT;
@@ -1302,6 +1303,18 @@ static HRESULT interp_redim(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
+    v = ref.u.v;
+
+    if(V_VT(v) == (VT_VARIANT|VT_BYREF)) {
+        v = V_VARIANTREF(v);
+    }
+
+    if(V_ISARRAY(v)) {
+        SAFEARRAY *sa = V_ISBYREF(v) ? *V_ARRAYREF(v) : V_ARRAY(v);
+        if(sa->fFeatures & FADF_FIXEDSIZE)
+            return MAKE_VBSERROR(VBSE_ARRAY_LOCKED);
+    }
+
     hres = array_bounds_from_stack(ctx, dim_cnt, &bounds);
     if(FAILED(hres))
         return hres;
@@ -1310,14 +1323,6 @@ static HRESULT interp_redim(exec_ctx_t *ctx)
     free(bounds);
     if(!array)
         return E_OUTOFMEMORY;
-
-    /* FIXME: We should check if we're not modifying an existing static array here */
-
-    v = ref.u.v;
-
-    if(V_VT(v) == (VT_VARIANT|VT_BYREF)) {
-        v = V_VARIANTREF(v);
-    }
 
     VariantClear(v);
     V_VT(v) = VT_ARRAY|VT_VARIANT;
@@ -1361,7 +1366,7 @@ static HRESULT interp_redim_preserve(exec_ctx_t *ctx)
         return E_FAIL;
     }
 
-    array = V_ARRAY(v);
+    array = V_ISBYREF(v) ? *V_ARRAYREF(v) : V_ARRAY(v);
 
     hres = array_bounds_from_stack(ctx, dim_cnt, &bounds);
     if(FAILED(hres))

@@ -1531,12 +1531,48 @@ e = err.number
 on error goto 0
 ok e = 9, "e = " & e ' VBSE_OUT_OF_BOUNDS, can only change rightmost dimension
 
-dim staticarray(4)
-on error resume next
-redim staticarray(3)
-e = err.number
-on error goto 0
-todo_wine_ok e = 10, "e = " & e
+sub TestReDimFixed
+    on error resume next
+
+    dim staticarray(4)
+    err.clear
+    redim staticarray(3)
+    call ok(err.number = 10, "err.number = " & err.number)
+    call ok(isArrayFixed(staticarray), "Expected fixed size array")
+
+    err.clear
+    redim staticarray("abc")
+    call ok(err.number = 10, "err.number = " & err.number)
+
+    dim staticarray2(4)
+    err.clear
+    redim preserve staticarray2(5)
+    call ok(err.number = 10, "err.number = " & err.number)
+    call ok(isArrayFixed(staticarray2), "Expected fixed size array")
+
+    err.clear
+    redim preserve staticarray2("abc")
+    ' Win10+ builds return INVALID_CALL (5)
+    call ok(err.number = 5 or err.number = 13, "err.number = " & err.number)
+end sub
+Call TestRedimFixed
+
+sub TestRedimInputArg
+    on error resume next
+
+    dim x
+
+    x = Array(1)
+    err.clear
+    redim x("abc")
+    call ok(err.number = 13, "err.number = " & err.number)
+
+    err.clear
+    redim preserve x("abc")
+    ' Win10+ builds return INVALID_CALL (5)
+    call ok(err.number = 5 or err.number = 13, "err.number = " & err.number)
+end sub
+Call TestRedimInputArg
 
 sub TestReDimList
     dim x, y

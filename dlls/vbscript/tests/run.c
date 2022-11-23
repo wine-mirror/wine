@@ -146,6 +146,7 @@ DEFINE_EXPECT(OnLeaveScript);
 #define DISPID_GLOBAL_PROPARGSET      1025
 #define DISPID_GLOBAL_UNKOBJ          1026
 #define DISPID_GLOBAL_THROWEXCEPTION  1027
+#define DISPID_GLOBAL_ISARRAYFIXED    1028
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -568,7 +569,6 @@ static void test_safearray(SAFEARRAY *safearray, unsigned indims)
     if(!exdims)
         exdims = 1;
     ok(safearray->cDims == exdims, "safearray->cDims = %d, expected %d\n", safearray->cDims, exdims);
-    todo_wine
     ok(safearray->fFeatures == (FADF_VARIANT|FADF_HAVEVARTYPE|FADF_FIXEDSIZE|FADF_STATIC),
        "safearray->fFeatures = %x\n", safearray->fFeatures);
     ok(safearray->cbElements == sizeof(VARIANT), "safearray->cbElements = %lx\n", safearray->cbElements);
@@ -1163,7 +1163,8 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         { L"testOptionalArg", DISPID_GLOBAL_TESTOPTIONALARG },
         { L"testErrorObject", DISPID_GLOBAL_TESTERROROBJECT },
         { L"throwWithDesc",   DISPID_GLOBAL_THROWWITHDESC },
-        { L"unkObj",          DISPID_GLOBAL_UNKOBJ }
+        { L"unkObj",          DISPID_GLOBAL_UNKOBJ },
+        { L"isArrayFixed",    DISPID_GLOBAL_ISARRAYFIXED },
     };
 
     test_grfdex(grfdex, fdexNameCaseInsensitive);
@@ -1737,6 +1738,34 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
         V_VT(pvarRes) = VT_UNKNOWN;
         V_UNKNOWN(pvarRes) = &unkObj;
         return S_OK;
+
+    case DISPID_GLOBAL_ISARRAYFIXED:
+    {
+        BOOL is_fixed = FALSE;
+        VARIANT *v;
+
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        ok(V_VT(pdp->rgvarg) == (VT_VARIANT|VT_BYREF), "Unexpected argument type %d.\n", V_VT(pdp->rgvarg));
+        v = V_VARIANTREF(pdp->rgvarg);
+        ok(V_VT(v) == (VT_VARIANT|VT_ARRAY|VT_BYREF), "Unexpected argument type %d.\n", V_VT(v));
+        if (V_ISARRAY(v))
+        {
+            SAFEARRAY *sa = V_ISBYREF(v) ? *V_ARRAYREF(v) : V_ARRAY(v);
+            is_fixed = (sa->fFeatures & (FADF_FIXEDSIZE | FADF_STATIC)) == (FADF_FIXEDSIZE | FADF_STATIC);
+        }
+
+        V_VT(pvarRes) = VT_BOOL;
+        V_BOOL(pvarRes) = is_fixed ? VARIANT_TRUE : VARIANT_FALSE;
+        return S_OK;
+    }
     }
 
     ok(0, "unexpected call %ld\n", id);
