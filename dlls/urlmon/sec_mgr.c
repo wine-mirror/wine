@@ -304,15 +304,15 @@ static HRESULT search_domain_for_zone(HKEY domains, LPCWSTR domain, DWORD domain
                 WCHAR *component;
                 DWORD i;
 
-                subdomain = heap_alloc((subdomain_len+1)*sizeof(WCHAR));
+                subdomain = malloc((subdomain_len + 1) * sizeof(WCHAR));
                 if(!subdomain) {
                     RegCloseKey(domain_key);
                     return E_OUTOFMEMORY;
                 }
 
-                component = heap_strndupW(host, matched-host-1);
+                component = strndupW(host, matched-host - 1);
                 if(!component) {
-                    heap_free(subdomain);
+                    free(subdomain);
                     RegCloseKey(domain_key);
                     return E_OUTOFMEMORY;
                 }
@@ -323,8 +323,8 @@ static HRESULT search_domain_for_zone(HKEY domains, LPCWSTR domain, DWORD domain
 
                     res = RegEnumKeyExW(domain_key, i, subdomain, &len, NULL, NULL, NULL, NULL);
                     if(res != ERROR_SUCCESS) {
-                        heap_free(component);
-                        heap_free(subdomain);
+                        free(component);
+                        free(subdomain);
                         RegCloseKey(domain_key);
                         return E_UNEXPECTED;
                     }
@@ -336,8 +336,8 @@ static HRESULT search_domain_for_zone(HKEY domains, LPCWSTR domain, DWORD domain
                         if(res != ERROR_SUCCESS) {
                             ERR("Unable to open subdomain key %s of %s: %ld\n", debugstr_w(subdomain),
                                 debugstr_w(domain), res);
-                            heap_free(component);
-                            heap_free(subdomain);
+                            free(component);
+                            free(subdomain);
                             RegCloseKey(domain_key);
                             return E_UNEXPECTED;
                         }
@@ -348,8 +348,8 @@ static HRESULT search_domain_for_zone(HKEY domains, LPCWSTR domain, DWORD domain
                         break;
                     }
                 }
-                heap_free(subdomain);
-                heap_free(component);
+                free(subdomain);
+                free(component);
             }
 
             /* There's a chance that 'host' implicitly mapped into 'domain', in
@@ -400,7 +400,7 @@ static HRESULT search_for_domain_mapping(HKEY domains, LPCWSTR schema, LPCWSTR h
     if(!domain_count)
         return S_FALSE;
 
-    domain = heap_alloc((domain_len+1)*sizeof(WCHAR));
+    domain = malloc((domain_len + 1) * sizeof(WCHAR));
     if(!domain)
         return E_OUTOFMEMORY;
 
@@ -409,7 +409,7 @@ static HRESULT search_for_domain_mapping(HKEY domains, LPCWSTR schema, LPCWSTR h
 
         res = RegEnumKeyExW(domains, i, domain, &len, NULL, NULL, NULL, NULL);
         if(res != ERROR_SUCCESS) {
-            heap_free(domain);
+            free(domain);
             return E_UNEXPECTED;
         }
 
@@ -418,7 +418,7 @@ static HRESULT search_for_domain_mapping(HKEY domains, LPCWSTR schema, LPCWSTR h
             break;
     }
 
-    heap_free(domain);
+    free(domain);
     return hres;
 }
 
@@ -863,7 +863,7 @@ static ULONG WINAPI SecManagerImpl_Release(IInternetSecurityManagerEx2* iface)
         if(This->custom_manager)
             IInternetSecurityManager_Release(This->custom_manager);
 
-        heap_free(This);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -1208,7 +1208,7 @@ HRESULT SecManagerImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
     SecManagerImpl *This;
 
     TRACE("(%p,%p)\n",pUnkOuter,ppobj);
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
 
     /* Initialize the virtual function table. */
     This->IInternetSecurityManagerEx2_iface.lpVtbl = &VT_SecManagerImpl;
@@ -1262,7 +1262,7 @@ static LPDWORD build_zonemap_from_reg(void)
     if (res)
         return NULL;
 
-    data = heap_alloc(allocated * sizeof(DWORD));
+    data = malloc(allocated * sizeof(DWORD));
     if (!data)
         goto cleanup;
 
@@ -1276,12 +1276,13 @@ static LPDWORD build_zonemap_from_reg(void)
             if (used == allocated) {
                 LPDWORD new_data;
 
-                allocated *= 2;
-                new_data = heap_realloc_zero(data, allocated * sizeof(DWORD));
+                new_data = realloc(data, allocated * sizeof(DWORD));
                 if (!new_data)
                     goto cleanup;
+                memset(new_data + allocated, 0, allocated * sizeof(DWORD));
 
                 data = new_data;
+                allocated *= 2;
             }
             data[used] = wcstol(name, NULL, 10);
         }
@@ -1295,7 +1296,7 @@ static LPDWORD build_zonemap_from_reg(void)
 cleanup:
     /* something failed */
     RegCloseKey(hkey);
-    heap_free(data);
+    free(data);
     return NULL;
 }
 
@@ -1356,9 +1357,9 @@ static ULONG WINAPI ZoneMgrImpl_Release(IInternetZoneManagerEx2* iface)
     TRACE("(%p)->(ref before=%lu)\n",This, refCount + 1);
 
     if(!refCount) {
-        while (This->zonemap_count) heap_free(This->zonemaps[--This->zonemap_count]);
-        heap_free(This->zonemaps);
-        heap_free(This);
+        while (This->zonemap_count) free(This->zonemaps[--This->zonemap_count]);
+        free(This->zonemaps);
+        free(This);
         URLMON_UnlockModule();
     }
     
@@ -1571,18 +1572,20 @@ static HRESULT WINAPI ZoneMgrImpl_CreateZoneEnumerator(IInternetZoneManagerEx2* 
 
     if (This->zonemaps) {
         /* try to double the nr. of pointers in the array */
-        new_maps = heap_realloc_zero(This->zonemaps, This->zonemap_count * 2 * sizeof(LPDWORD));
-        if (new_maps)
+        new_maps = realloc(This->zonemaps, This->zonemap_count * 2 * sizeof(DWORD*));
+        if (new_maps) {
+            memset(new_maps + This->zonemap_count, 0, This->zonemap_count * sizeof(DWORD*));
             This->zonemap_count *= 2;
+        }
     }
     else
     {
         This->zonemap_count = 2;
-        new_maps = heap_alloc_zero(This->zonemap_count * sizeof(LPDWORD));
+        new_maps = calloc(This->zonemap_count, sizeof(DWORD*));
     }
 
     if (!new_maps) {
-        heap_free(data);
+        free(data);
         return E_FAIL;
     }
     This->zonemaps = new_maps;
@@ -1631,7 +1634,7 @@ static HRESULT WINAPI ZoneMgrImpl_DestroyZoneEnumerator(IInternetZoneManagerEx2*
     if (dwEnum < This->zonemap_count) {
         if ((data = This->zonemaps[dwEnum])) {
             This->zonemaps[dwEnum] = NULL;
-            heap_free(data);
+            free(data);
             return S_OK;
         }
     }
@@ -1787,7 +1790,7 @@ static const IInternetZoneManagerEx2Vtbl ZoneMgrImplVtbl = {
 
 HRESULT ZoneMgrImpl_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 {
-    ZoneMgrImpl* ret = heap_alloc_zero(sizeof(ZoneMgrImpl));
+    ZoneMgrImpl *ret = calloc(1, sizeof(ZoneMgrImpl));
 
     TRACE("(%p %p)\n", pUnkOuter, ppobj);
     ret->IInternetZoneManagerEx2_iface.lpVtbl = &ZoneMgrImplVtbl;

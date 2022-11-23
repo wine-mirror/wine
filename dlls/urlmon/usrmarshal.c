@@ -131,7 +131,7 @@ static HRESULT marshal_stgmed(STGMEDIUM *stgmed, RemSTGMEDIUM **ret)
         IStream_Seek(stream, zero, STREAM_SEEK_SET, &off);
     }
 
-    rem_stgmed = heap_alloc_zero(FIELD_OFFSET(RemSTGMEDIUM, data[size]));
+    rem_stgmed = calloc(1, FIELD_OFFSET(RemSTGMEDIUM, data[size]));
     if(!rem_stgmed) {
         if(stream)
             IStream_Release(stream);
@@ -333,7 +333,7 @@ HRESULT CALLBACK IBindStatusCallback_OnDataAvailable_Proxy(
 
     hres = IBindStatusCallback_RemoteOnDataAvailable_Proxy(This, grfBSCF, dwSize, &rem_formatetc, rem_stgmed);
 
-    heap_free(rem_stgmed);
+    free(rem_stgmed);
     return hres;
 }
 

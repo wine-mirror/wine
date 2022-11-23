@@ -57,8 +57,8 @@ static void release_install_ctx(install_ctx_t *ctx)
         IUri_Release(ctx->uri);
     if(ctx->callback)
         IBindStatusCallback_Release(ctx->callback);
-    heap_free(ctx->install_file);
-    heap_free(ctx);
+    free(ctx->install_file);
+    free(ctx);
 }
 
 static inline BOOL file_exists(const WCHAR *file_name)
@@ -80,7 +80,7 @@ static HRESULT extract_cab_file(install_ctx_t *ctx)
 
     path_len = lstrlenW(ctx->tmp_dir);
     file_len = lstrlenW(ctx->file_name);
-    ctx->install_file = heap_alloc((path_len+file_len+2)*sizeof(WCHAR));
+    ctx->install_file = malloc((path_len + file_len + 2) * sizeof(WCHAR));
     if(!ctx->install_file)
         return E_OUTOFMEMORY;
 
@@ -192,13 +192,13 @@ static HRESULT process_hook_section(install_ctx_t *ctx, const WCHAR *sect_name)
 
             expand_command(ctx, val, NULL, &size);
 
-            cmd = heap_alloc(size*sizeof(WCHAR));
+            cmd = malloc(size * sizeof(WCHAR));
             if(!cmd)
                 return E_OUTOFMEMORY;
 
             expand_command(ctx, val, cmd, &size);
             hres = RunSetupCommandW(ctx->hwnd, cmd, NULL, ctx->tmp_dir, NULL, NULL, 0, NULL);
-            heap_free(cmd);
+            free(cmd);
             if(FAILED(hres))
                 return hres;
         }else {
@@ -505,13 +505,13 @@ HRESULT WINAPI AsyncInstallDistributionUnit(const WCHAR *szDistUnit, const WCHAR
     if(szDistUnit || szTYPE || szExt)
         FIXME("Unsupported arguments\n");
 
-    ctx = heap_alloc_zero(sizeof(*ctx));
+    ctx = calloc(1, sizeof(*ctx));
     if(!ctx)
         return E_OUTOFMEMORY;
 
     hres = CreateUri(szURL, 0, 0, &ctx->uri);
     if(FAILED(hres)) {
-        heap_free(ctx);
+        free(ctx);
         return E_OUTOFMEMORY;
     }
 

@@ -133,7 +133,7 @@ static ULONG WINAPI GopherProtocol_Release(IInternetProtocol *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        heap_free(This);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -317,7 +317,7 @@ HRESULT GopherProtocol_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 
     URLMON_LockModule();
 
-    ret = heap_alloc_zero(sizeof(GopherProtocol));
+    ret = calloc(1, sizeof(GopherProtocol));
 
     ret->base.vtbl = &AsyncProtocolVtbl;
     ret->IInternetProtocol_iface.lpVtbl = &GopherProtocolVtbl;

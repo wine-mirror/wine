@@ -2966,7 +2966,7 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
         return E_INVALIDARG;
     }
 
-    uri->canon_uri = heap_alloc((len+1)*sizeof(WCHAR));
+    uri->canon_uri = malloc((len + 1) * sizeof(WCHAR));
     if(!uri->canon_uri)
         return E_OUTOFMEMORY;
 
@@ -3001,7 +3001,7 @@ static HRESULT canonicalize_uri(const parse_data *data, Uri *uri, DWORD flags) {
         /* This happens if the URI is hierarchical and dot
          * segments were removed from its path.
          */
-        WCHAR *tmp = heap_realloc(uri->canon_uri, (uri->canon_len+1)*sizeof(WCHAR));
+        WCHAR *tmp = realloc(uri->canon_uri, (uri->canon_len + 1) * sizeof(WCHAR));
         if(!tmp)
             return E_OUTOFMEMORY;
 
@@ -3034,7 +3034,7 @@ static HRESULT get_builder_component(LPWSTR *component, DWORD *component_len,
         /* Allocate 'component', and copy the contents from 'source'
          * into the new allocation.
          */
-        *component = heap_alloc((source_len+1)*sizeof(WCHAR));
+        *component = malloc((source_len + 1) * sizeof(WCHAR));
         if(!(*component))
             return E_OUTOFMEMORY;
 
@@ -3057,7 +3057,7 @@ static HRESULT get_builder_component(LPWSTR *component, DWORD *component_len,
 static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LPCWSTR new_value,
                                      WCHAR prefix, DWORD *flags, DWORD success_flag)
 {
-    heap_free(*component);
+    free(*component);
 
     if(!new_value) {
         *component = NULL;
@@ -3069,9 +3069,9 @@ static HRESULT set_builder_component(LPWSTR *component, DWORD *component_len, LP
 
         if(prefix && *new_value != prefix) {
             add_prefix = TRUE;
-            *component = heap_alloc((len+2)*sizeof(WCHAR));
+            *component = malloc((len + 2) * sizeof(WCHAR));
         } else
-            *component = heap_alloc((len+1)*sizeof(WCHAR));
+            *component = malloc((len + 1) * sizeof(WCHAR));
 
         if(!(*component))
             return E_OUTOFMEMORY;
@@ -3092,31 +3092,31 @@ static void reset_builder(UriBuilder *builder) {
         IUri_Release(&builder->uri->IUri_iface);
     builder->uri = NULL;
 
-    heap_free(builder->fragment);
+    free(builder->fragment);
     builder->fragment = NULL;
     builder->fragment_len = 0;
 
-    heap_free(builder->host);
+    free(builder->host);
     builder->host = NULL;
     builder->host_len = 0;
 
-    heap_free(builder->password);
+    free(builder->password);
     builder->password = NULL;
     builder->password_len = 0;
 
-    heap_free(builder->path);
+    free(builder->path);
     builder->path = NULL;
     builder->path_len = 0;
 
-    heap_free(builder->query);
+    free(builder->query);
     builder->query = NULL;
     builder->query_len = 0;
 
-    heap_free(builder->scheme);
+    free(builder->scheme);
     builder->scheme = NULL;
     builder->scheme_len = 0;
 
-    heap_free(builder->username);
+    free(builder->username);
     builder->username = NULL;
     builder->username_len = 0;
 
@@ -3474,12 +3474,12 @@ static HRESULT compare_file_paths(const Uri *a, const Uri *b, BOOL *ret)
     len_a = canonicalize_path_hierarchical(a->canon_uri+a->path_start, a->path_len, a->scheme_type, FALSE, 0, FALSE, NULL);
     len_b = canonicalize_path_hierarchical(b->canon_uri+b->path_start, b->path_len, b->scheme_type, FALSE, 0, FALSE, NULL);
 
-    canon_path_a = heap_alloc(len_a*sizeof(WCHAR));
+    canon_path_a = malloc(len_a * sizeof(WCHAR));
     if(!canon_path_a)
         return E_OUTOFMEMORY;
-    canon_path_b = heap_alloc(len_b*sizeof(WCHAR));
+    canon_path_b = malloc(len_b * sizeof(WCHAR));
     if(!canon_path_b) {
-        heap_free(canon_path_a);
+        free(canon_path_a);
         return E_OUTOFMEMORY;
     }
 
@@ -3488,8 +3488,8 @@ static HRESULT compare_file_paths(const Uri *a, const Uri *b, BOOL *ret)
 
     *ret = len_a == len_b && !wcsnicmp(canon_path_a, canon_path_b, len_a);
 
-    heap_free(canon_path_a);
-    heap_free(canon_path_b);
+    free(canon_path_a);
+    free(canon_path_b);
     return S_OK;
 }
 
@@ -3789,8 +3789,8 @@ static inline Uri* impl_from_IUri(IUri *iface)
 static inline void destroy_uri_obj(Uri *This)
 {
     SysFreeString(This->raw_uri);
-    heap_free(This->canon_uri);
-    heap_free(This);
+    free(This->canon_uri);
+    free(This);
 }
 
 static HRESULT WINAPI Uri_QueryInterface(IUri *iface, REFIID riid, void **ppv)
@@ -4771,33 +4771,33 @@ static HRESULT WINAPI PersistStream_Load(IPersistStream *iface, IStream *pStm)
     hr = IStream_Read(pStm, &size, sizeof(DWORD), NULL);
     if(FAILED(hr))
         return hr;
-    data = heap_alloc(size);
+    data = malloc(size);
     if(!data)
         return E_OUTOFMEMORY;
     hr = IStream_Read(pStm, data->unk1, size-sizeof(DWORD)-2, NULL);
     if(FAILED(hr)) {
-        heap_free(data);
+        free(data);
         return hr;
     }
 
     if(size < sizeof(struct persist_uri)) {
-        heap_free(data);
+        free(data);
         return S_OK;
     }
 
     if(*(DWORD*)data->data != Uri_PROPERTY_RAW_URI) {
-        heap_free(data);
+        free(data);
         ERR("Can't find raw_uri\n");
         return E_UNEXPECTED;
     }
 
     This->raw_uri = SysAllocString((WCHAR*)(data->data+sizeof(DWORD)*2));
     if(!This->raw_uri) {
-        heap_free(data);
+        free(data);
         return E_OUTOFMEMORY;
     }
     This->create_flags = data->create_flags;
-    heap_free(data);
+    free(data);
     TRACE("%lx %s\n", This->create_flags, debugstr_w(This->raw_uri));
 
     memset(&parse, 0, sizeof(parse_data));
@@ -4928,14 +4928,14 @@ static HRESULT WINAPI PersistStream_Save(IPersistStream *iface, IStream *pStm, B
     if(FAILED(hres))
         return hres;
 
-    data = heap_alloc_zero(size.u.LowPart);
+    data = calloc(1, size.u.LowPart);
     if(!data)
         return E_OUTOFMEMORY;
     data->size = size.u.LowPart;
     persist_stream_save(This, pStm, FALSE, data);
 
     hres = IStream_Write(pStm, data, data->size-2, NULL);
-    heap_free(data);
+    free(data);
     return hres;
 }
 
@@ -5108,7 +5108,7 @@ static HRESULT WINAPI Marshal_MarshalInterface(IMarshal *iface, IStream *pStm, R
     if(FAILED(hres))
         return hres;
 
-    data = heap_alloc_zero(size);
+    data = calloc(1, size);
     if(!data)
         return E_OUTOFMEMORY;
 
@@ -5118,7 +5118,7 @@ static HRESULT WINAPI Marshal_MarshalInterface(IMarshal *iface, IStream *pStm, R
     persist_stream_save(This, pStm, TRUE, (struct persist_uri*)(data+2));
 
     hres = IStream_Write(pStm, data, data[0]-2, NULL);
-    heap_free(data);
+    free(data);
     return hres;
 }
 
@@ -5233,7 +5233,7 @@ static const IMarshalVtbl MarshalVtbl = {
 
 HRESULT Uri_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 {
-    Uri *ret = heap_alloc_zero(sizeof(Uri));
+    Uri *ret = calloc(1, sizeof(Uri));
 
     TRACE("(%p %p)\n", pUnkOuter, ppobj);
 
@@ -5322,7 +5322,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
         ret->raw_uri = SysAllocString(pwzURI);
 
     if(!ret->raw_uri) {
-        heap_free(ret);
+        free(ret);
         return E_OUTOFMEMORY;
     }
 
@@ -5403,9 +5403,9 @@ HRESULT WINAPI CreateUriWithFragment(LPCWSTR pwzURI, LPCWSTR pwzFragment, DWORD 
         add_pound = *pwzFragment != '#';
 
         if(add_pound)
-            uriW = heap_alloc((uri_len+frag_len+2)*sizeof(WCHAR));
+            uriW = malloc((uri_len + frag_len + 2) * sizeof(WCHAR));
         else
-            uriW = heap_alloc((uri_len+frag_len+1)*sizeof(WCHAR));
+            uriW = malloc((uri_len + frag_len + 1) * sizeof(WCHAR));
 
         if(!uriW)
             return E_OUTOFMEMORY;
@@ -5417,7 +5417,7 @@ HRESULT WINAPI CreateUriWithFragment(LPCWSTR pwzURI, LPCWSTR pwzFragment, DWORD 
 
         hres = CreateUri(uriW, dwFlags, 0, ppURI);
 
-        heap_free(uriW);
+        free(uriW);
     } else
         /* A fragment string wasn't specified, so just forward the call. */
         hres = CreateUri(pwzURI, dwFlags, 0, ppURI);
@@ -5527,14 +5527,14 @@ static ULONG WINAPI UriBuilder_Release(IUriBuilder *iface)
 
     if(!ref) {
         if(This->uri) IUri_Release(&This->uri->IUri_iface);
-        heap_free(This->fragment);
-        heap_free(This->host);
-        heap_free(This->password);
-        heap_free(This->path);
-        heap_free(This->query);
-        heap_free(This->scheme);
-        heap_free(This->username);
-        heap_free(This);
+        free(This->fragment);
+        free(This->host);
+        free(This->password);
+        free(This->path);
+        free(This->query);
+        free(This->scheme);
+        free(This->username);
+        free(This);
     }
 
     return ref;
@@ -5937,7 +5937,7 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
     if(!ppIUriBuilder)
         return E_POINTER;
 
-    ret = heap_alloc_zero(sizeof(UriBuilder));
+    ret = calloc(1, sizeof(UriBuilder));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -5949,7 +5949,7 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
 
         if((uri = get_uri_obj(pIUri))) {
             if(!uri->create_flags) {
-                heap_free(ret);
+                free(ret);
                 return E_UNEXPECTED;
             }
             IUri_AddRef(pIUri);
@@ -5960,7 +5960,7 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
                 ret->port = uri->port;
 
         } else {
-            heap_free(ret);
+            free(ret);
             *ppIUriBuilder = NULL;
             FIXME("(%p %lx %Ix %p): Unknown IUri types not supported yet.\n", pIUri, dwFlags,
                   dwReserved, ppIUriBuilder);
@@ -6005,7 +6005,7 @@ static HRESULT merge_paths(parse_data *data, const WCHAR *base, DWORD base_len, 
     }
 
     if (end) base_copy_len = (end+1)-base;
-    *result = heap_alloc((base_copy_len+relative_len+1)*sizeof(WCHAR));
+    *result = malloc((base_copy_len + relative_len + 1) * sizeof(WCHAR));
 
     if(!(*result)) {
         *result_len = 0;
@@ -6160,7 +6160,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
 
                 path_len += relative->path_len;
 
-                path = heap_alloc((path_len+1)*sizeof(WCHAR));
+                path = malloc((path_len + 1) * sizeof(WCHAR));
                 if(!path) {
                     *result = NULL;
                     return E_OUTOFMEMORY;
@@ -6203,9 +6203,9 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
                 DWORD new_len = remove_dot_segments(path+offset,path_len-offset);
 
                 if(new_len != path_len) {
-                    WCHAR *tmp = heap_realloc(path, (offset+new_len+1)*sizeof(WCHAR));
+                    WCHAR *tmp = realloc(path, (offset + new_len + 1) * sizeof(WCHAR));
                     if(!tmp) {
-                        heap_free(path);
+                        free(path);
                         *result = NULL;
                         return E_OUTOFMEMORY;
                     }
@@ -6226,7 +6226,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
             pptr = &ptr;
             if((data.is_opaque && !parse_path_opaque(pptr, &data, 0)) ||
                (!data.is_opaque && !parse_path_hierarchical(pptr, &data, 0))) {
-                heap_free(path);
+                free(path);
                 *result = NULL;
                 return E_INVALIDARG;
             }
@@ -6245,7 +6245,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
         len = generate_raw_uri(&data, data.uri, raw_flags);
         data.uri = SysAllocStringLen(NULL, len);
         if(!data.uri) {
-            heap_free(path);
+            free(path);
             *result = NULL;
             return E_OUTOFMEMORY;
         }
@@ -6255,7 +6255,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
         hr = Uri_Construct(NULL, (void**)&ret);
         if(FAILED(hr)) {
             SysFreeString(data.uri);
-            heap_free(path);
+            free(path);
             *result = NULL;
             return hr;
         }
@@ -6280,7 +6280,7 @@ static HRESULT combine_uri(Uri *base, Uri *relative, DWORD flags, IUri **result,
         ret->create_flags = create_flags;
         *result = &ret->IUri_iface;
 
-        heap_free(path);
+        free(path);
     }
 
     return S_OK;

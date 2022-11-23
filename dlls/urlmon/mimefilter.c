@@ -77,7 +77,7 @@ static ULONG WINAPI MimeFilterProtocol_Release(IInternetProtocol *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        heap_free(This);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -251,7 +251,7 @@ HRESULT MimeFilter_Construct(IUnknown *pUnkOuter, LPVOID *ppobj)
 
     URLMON_LockModule();
 
-    ret = heap_alloc_zero(sizeof(MimeFilter));
+    ret = calloc(1, sizeof(MimeFilter));
 
     ret->IInternetProtocol_iface.lpVtbl = &MimeFilterProtocolVtbl;
     ret->IInternetProtocolSink_iface.lpVtbl = &InternetProtocolSinkVtbl;
@@ -467,7 +467,7 @@ static HRESULT find_mime_from_url(const WCHAR *url, WCHAR **ret)
     if(*end_ptr) {
         unsigned len = end_ptr-ptr;
 
-        ext = heap_alloc((len+1)*sizeof(WCHAR));
+        ext = malloc((len + 1) * sizeof(WCHAR));
         if(!ext)
             return E_OUTOFMEMORY;
 
@@ -476,7 +476,7 @@ static HRESULT find_mime_from_url(const WCHAR *url, WCHAR **ret)
     }
 
     hres = find_mime_from_ext(ext ? ext : ptr, ret);
-    heap_free(ext);
+    free(ext);
     return hres;
 }
 

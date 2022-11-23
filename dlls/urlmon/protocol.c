@@ -171,12 +171,12 @@ static void WINAPI internet_status_callback(HINTERNET internet, DWORD_PTR contex
 
         TRACE("%p INTERNET_STATUS_CONNECTING_TO_SERVER %s\n", protocol, (const char*)status_info);
 
-        info = heap_strdupAtoW(status_info);
+        info = strdupAtoW(status_info);
         if(!info)
             return;
 
         report_progress(protocol, BINDSTATUS_CONNECTING, info);
-        heap_free(info);
+        free(info);
         break;
     }
 
@@ -274,7 +274,7 @@ static HINTERNET create_internet_session(IInternetBindInfo *bind_info)
         global_user_agent = get_useragent();
 
     ret = InternetOpenW(user_agent ? user_agent : global_user_agent, 0, NULL, NULL, INTERNET_FLAG_ASYNC);
-    heap_free(global_user_agent);
+    free(global_user_agent);
     CoTaskMemFree(user_agent);
     if(!ret) {
         WARN("InternetOpen failed: %ld\n", GetLastError());

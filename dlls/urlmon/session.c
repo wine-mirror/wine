@@ -76,12 +76,12 @@ static HRESULT get_protocol_cf(LPCWSTR schema, DWORD schema_len, CLSID *pclsid, 
     static const WCHAR wszProtocolsKey[] =
         {'P','R','O','T','O','C','O','L','S','\\','H','a','n','d','l','e','r','\\'};
 
-    wszKey = heap_alloc(sizeof(wszProtocolsKey)+(schema_len+1)*sizeof(WCHAR));
+    wszKey = malloc(sizeof(wszProtocolsKey) + (schema_len + 1) * sizeof(WCHAR));
     memcpy(wszKey, wszProtocolsKey, sizeof(wszProtocolsKey));
     memcpy(wszKey + ARRAY_SIZE(wszProtocolsKey), schema, (schema_len+1)*sizeof(WCHAR));
 
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, wszKey, &hkey);
-    heap_free(wszKey);
+    free(wszKey);
     if(res != ERROR_SUCCESS) {
         TRACE("Could not open protocol handler key\n");
         return MK_E_SYNTAX;
@@ -115,14 +115,14 @@ HRESULT register_namespace(IClassFactory *cf, REFIID clsid, LPCWSTR protocol, BO
 {
     name_space *new_name_space;
 
-    new_name_space = heap_alloc(sizeof(name_space));
+    new_name_space = malloc(sizeof(name_space));
 
     if(!urlmon_protocol)
         IClassFactory_AddRef(cf);
     new_name_space->cf = cf;
     new_name_space->clsid = *clsid;
     new_name_space->urlmon = urlmon_protocol;
-    new_name_space->protocol = heap_strdupW(protocol);
+    new_name_space->protocol = wcsdup(protocol);
 
     EnterCriticalSection(&session_cs);
 
@@ -147,8 +147,8 @@ static HRESULT unregister_namespace(IClassFactory *cf, LPCWSTR protocol)
 
             if(!iter->urlmon)
                 IClassFactory_Release(iter->cf);
-            heap_free(iter->protocol);
-            heap_free(iter);
+            free(iter->protocol);
+            free(iter);
             return S_OK;
         }
     }
@@ -370,12 +370,12 @@ static HRESULT WINAPI InternetSession_RegisterMimeFilter(IInternetSession *iface
 
     TRACE("(%p %s %s)\n", pCF, debugstr_guid(rclsid), debugstr_w(pwzType));
 
-    filter = heap_alloc(sizeof(mime_filter));
+    filter = malloc(sizeof(mime_filter));
 
     IClassFactory_AddRef(pCF);
     filter->cf = pCF;
     filter->clsid = *rclsid;
-    filter->mime = heap_strdupW(pwzType);
+    filter->mime = wcsdup(pwzType);
 
     EnterCriticalSection(&session_cs);
 
@@ -402,8 +402,8 @@ static HRESULT WINAPI InternetSession_UnregisterMimeFilter(IInternetSession *ifa
             LeaveCriticalSection(&session_cs);
 
             IClassFactory_Release(iter->cf);
-            heap_free(iter->mime);
-            heap_free(iter);
+            free(iter->mime);
+            free(iter);
             return S_OK;
         }
     }
@@ -609,7 +609,7 @@ static void ensure_user_agent(void)
     if(!user_agent) {
         WCHAR buf[1024];
         obtain_user_agent(0, buf, ARRAY_SIZE(buf));
-        user_agent = heap_strdupW(buf);
+        user_agent = wcsdup(buf);
     }
 
     LeaveCriticalSection(&session_cs);
@@ -622,7 +622,7 @@ LPWSTR get_useragent(void)
     ensure_user_agent();
 
     EnterCriticalSection(&session_cs);
-    ret = heap_strdupW(user_agent);
+    ret = wcsdup(user_agent);
     LeaveCriticalSection(&session_cs);
 
     return ret;
@@ -705,7 +705,7 @@ HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBuf
         TRACE("Setting user agent %s\n", debugstr_an(buf, len));
 
         size = MultiByteToWideChar(CP_ACP, 0, buf, len, NULL, 0);
-        new_user_agent = heap_alloc((size+1)*sizeof(WCHAR));
+        new_user_agent = malloc((size + 1) * sizeof(WCHAR));
         if(!new_user_agent)
             return E_OUTOFMEMORY;
         MultiByteToWideChar(CP_ACP, 0, buf, len, new_user_agent, size);
@@ -713,7 +713,7 @@ HRESULT WINAPI UrlMkSetSessionOption(DWORD dwOption, LPVOID pBuffer, DWORD dwBuf
 
         EnterCriticalSection(&session_cs);
 
-        heap_free(user_agent);
+        free(user_agent);
         user_agent = new_user_agent;
         user_agent_set = TRUE;
         update_user_agent(user_agent);
@@ -800,15 +800,15 @@ void free_session(void)
     LIST_FOR_EACH_ENTRY_SAFE(ns_iter, ns_last, &name_space_list, name_space, entry) {
             if(!ns_iter->urlmon)
                 IClassFactory_Release(ns_iter->cf);
-            heap_free(ns_iter->protocol);
-            heap_free(ns_iter);
+            free(ns_iter->protocol);
+            free(ns_iter);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(mf_iter, mf_last, &mime_filter_list, mime_filter, entry) {
             IClassFactory_Release(mf_iter->cf);
-            heap_free(mf_iter->mime);
-            heap_free(mf_iter);
+            free(mf_iter->mime);
+            free(mf_iter);
     }
 
-    heap_free(user_agent);
+    free(user_agent);
 }

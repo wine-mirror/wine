@@ -224,8 +224,8 @@ static void mime_available(BindProtocol *This, LPCWSTR mime, BOOL verified)
     IInternetProtocol *mime_filter;
     HRESULT hres;
 
-    heap_free(This->mime);
-    This->mime = heap_strdupW(mime);
+    free(This->mime);
+    This->mime = wcsdup(mime);
 
     if(This->protocol_handler==&This->default_protocol_handler.IInternetProtocol_iface
             && (mime_filter = get_mime_filter(mime))) {
@@ -348,8 +348,8 @@ static ULONG WINAPI BindProtocol_Release(IInternetProtocolEx *iface)
         This->section.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->section);
 
-        heap_free(This->mime);
-        heap_free(This);
+        free(This->mime);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -670,7 +670,7 @@ static HRESULT WINAPI ProtocolHandler_Continue(IInternetProtocol *iface, PROTOCO
 
     hres = IInternetProtocol_Continue(protocol ? protocol : This->protocol, pProtocolData);
 
-    heap_free(pProtocolData);
+    free(pProtocolData);
     if(protocol)
         IInternetProtocol_Release(protocol);
     return hres;
@@ -754,7 +754,7 @@ static HRESULT WINAPI ProtocolHandler_Read(IInternetProtocol *iface, void *pv,
         memcpy(pv, This->buf, read);
 
         if(read == This->buf_size) {
-            heap_free(This->buf);
+            free(This->buf);
             This->buf = NULL;
         }else {
             memmove(This->buf, This->buf+cb, This->buf_size-cb);
@@ -933,13 +933,13 @@ static HRESULT report_data(BindProtocol *This)
                 return hres;
 
             if(!This->buf) {
-                This->buf = heap_alloc(BUFFER_SIZE);
+                This->buf = malloc(BUFFER_SIZE);
                 if(!This->buf)
                     return E_OUTOFMEMORY;
             }else if(read + This->buf_size > BUFFER_SIZE) {
                 BYTE *tmp;
 
-                tmp = heap_realloc(This->buf, read+This->buf_size);
+                tmp = realloc(This->buf, read + This->buf_size);
                 if(!tmp)
                     return E_OUTOFMEMORY;
                 This->buf = tmp;
@@ -969,8 +969,8 @@ static HRESULT report_data(BindProtocol *This)
             if(FAILED(hres))
                 return hres;
 
-            heap_free(This->mime);
-            This->mime = heap_strdupW(mime);
+            free(This->mime);
+            This->mime = wcsdup(mime);
             CoTaskMemFree(mime);
             This->reported_mime = TRUE;
             if(This->protocol_sink)
@@ -1222,7 +1222,7 @@ static void switch_proc(BindProtocol *bind, task_header_t *t)
 
     IInternetProtocol_Continue(bind->protocol_handler, task->data);
 
-    heap_free(task);
+    free(task);
 }
 
 static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface,
@@ -1236,7 +1236,7 @@ static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface
     TRACE("flags %lx state %lx data %p cb %lu\n", pProtocolData->grfFlags, pProtocolData->dwState,
           pProtocolData->pData, pProtocolData->cbData);
 
-    data = heap_alloc(sizeof(PROTOCOLDATA));
+    data = malloc(sizeof(PROTOCOLDATA));
     if(!data)
         return E_OUTOFMEMORY;
     memcpy(data, pProtocolData, sizeof(PROTOCOLDATA));
@@ -1245,10 +1245,10 @@ static HRESULT WINAPI BPInternetProtocolSink_Switch(IInternetProtocolSink *iface
             || !do_direct_notif(This)) {
         switch_task_t *task;
 
-        task = heap_alloc(sizeof(switch_task_t));
+        task = malloc(sizeof(switch_task_t));
         if(!task)
         {
-            heap_free(data);
+            free(data);
             return E_OUTOFMEMORY;
         }
 
@@ -1274,8 +1274,8 @@ static void on_progress_proc(BindProtocol *This, task_header_t *t)
 
     IInternetProtocolSink_ReportProgress(This->protocol_sink_handler, task->status_code, task->status_text);
 
-    heap_free(task->status_text);
-    heap_free(task);
+    free(task->status_text);
+    free(task);
 }
 
 static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSink *iface,
@@ -1290,10 +1290,10 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportProgress(IInternetProtocolSin
     }else {
         on_progress_task_t *task;
 
-        task = heap_alloc(sizeof(on_progress_task_t));
+        task = malloc(sizeof(on_progress_task_t));
 
         task->status_code = ulStatusCode;
-        task->status_text = heap_strdupW(szStatusText);
+        task->status_text = wcsdup(szStatusText);
 
         push_task(This, &task->header, on_progress_proc);
     }
@@ -1315,7 +1315,7 @@ static void report_data_proc(BindProtocol *This, task_header_t *t)
     IInternetProtocolSink_ReportData(This->protocol_sink_handler,
             task->bscf, task->progress, task->progress_max);
 
-    heap_free(task);
+    free(task);
 }
 
 static HRESULT WINAPI BPInternetProtocolSink_ReportData(IInternetProtocolSink *iface,
@@ -1331,7 +1331,7 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportData(IInternetProtocolSink *i
     if(!do_direct_notif(This)) {
         report_data_task_t *task;
 
-        task = heap_alloc(sizeof(report_data_task_t));
+        task = malloc(sizeof(report_data_task_t));
         if(!task)
             return E_OUTOFMEMORY;
 
@@ -1361,8 +1361,8 @@ static void report_result_proc(BindProtocol *This, task_header_t *t)
 
     IInternetProtocolSink_ReportResult(This->protocol_sink_handler, task->hres, task->err, task->str);
 
-    heap_free(task->str);
-    heap_free(task);
+    free(task->str);
+    free(task);
 }
 
 static HRESULT WINAPI BPInternetProtocolSink_ReportResult(IInternetProtocolSink *iface,
@@ -1379,13 +1379,13 @@ static HRESULT WINAPI BPInternetProtocolSink_ReportResult(IInternetProtocolSink 
     if(!do_direct_notif(This)) {
         report_result_task_t *task;
 
-        task = heap_alloc(sizeof(report_result_task_t));
+        task = malloc(sizeof(report_result_task_t));
         if(!task)
             return E_OUTOFMEMORY;
 
         task->hres = hrResult;
         task->err = dwError;
-        task->str = heap_strdupW(szResult);
+        task->str = wcsdup(szResult);
 
         push_task(This, &task->header, report_result_proc);
         return S_OK;
@@ -1450,7 +1450,7 @@ static const IServiceProviderVtbl ServiceProviderVtbl = {
 
 HRESULT create_binding_protocol(BindProtocol **protocol)
 {
-    BindProtocol *ret = heap_alloc_zero(sizeof(BindProtocol));
+    BindProtocol *ret = calloc(1, sizeof(BindProtocol));
 
     ret->IInternetProtocolEx_iface.lpVtbl   = &BindProtocolVtbl;
     ret->IInternetBindInfo_iface.lpVtbl     = &InternetBindInfoVtbl;

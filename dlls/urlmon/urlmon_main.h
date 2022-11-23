@@ -31,7 +31,6 @@
 #include "urlmon.h"
 #include "wininet.h"
 
-#include "wine/heap.h"
 #include "wine/list.h"
 
 extern HINSTANCE hProxyDll DECLSPEC_HIDDEN;
@@ -231,33 +230,12 @@ void release_notif_hwnd(HWND) DECLSPEC_HIDDEN;
 
 const char *debugstr_bindstatus(ULONG) DECLSPEC_HIDDEN;
 
-static inline void* __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t size)
-{
-    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size);
-}
-
-static inline LPWSTR heap_strdupW(LPCWSTR str)
+static inline WCHAR *strndupW(LPCWSTR str, int len)
 {
     LPWSTR ret = NULL;
 
     if(str) {
-        DWORD size;
-
-        size = (lstrlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        if(ret)
-            memcpy(ret, str, size);
-    }
-
-    return ret;
-}
-
-static inline LPWSTR heap_strndupW(LPCWSTR str, int len)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        ret = heap_alloc((len+1)*sizeof(WCHAR));
+        ret = malloc((len + 1) * sizeof(WCHAR));
         if(ret) {
             memcpy(ret, str, len*sizeof(WCHAR));
             ret[len] = 0;
@@ -267,13 +245,13 @@ static inline LPWSTR heap_strndupW(LPCWSTR str, int len)
     return ret;
 }
 
-static inline LPWSTR heap_strdupAtoW(const char *str)
+static inline WCHAR *strdupAtoW(const char *str)
 {
     LPWSTR ret = NULL;
 
     if(str) {
         DWORD len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        ret = heap_alloc(len*sizeof(WCHAR));
+        ret = malloc(len * sizeof(WCHAR));
         if(ret)
             MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
     }

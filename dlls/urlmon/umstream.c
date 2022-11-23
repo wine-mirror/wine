@@ -269,7 +269,7 @@ HRESULT WINAPI URLOpenBlockingStreamA(LPUNKNOWN pCaller, LPCSTR szURL,
         return E_INVALIDARG;
 
     len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
-    szURLW = heap_alloc(len * sizeof(WCHAR));
+    szURLW = malloc(len * sizeof(WCHAR));
     if (!szURLW)
     {
         *ppStream = NULL;
@@ -279,7 +279,7 @@ HRESULT WINAPI URLOpenBlockingStreamA(LPUNKNOWN pCaller, LPCSTR szURL,
 
     hr = URLOpenBlockingStreamW(pCaller, szURLW, ppStream, dwReserved, lpfnCB);
 
-    heap_free(szURLW);
+    free(szURLW);
 
     return hr;
 }
@@ -321,14 +321,14 @@ HRESULT WINAPI URLOpenStreamA(LPUNKNOWN pCaller, LPCSTR szURL, DWORD dwReserved,
         return E_INVALIDARG;
 
     len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
-    szURLW = heap_alloc(len * sizeof(WCHAR));
+    szURLW = malloc(len * sizeof(WCHAR));
     if (!szURLW)
         return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, szURL, -1, szURLW, len);
 
     hr = URLOpenStreamW(pCaller, szURLW, dwReserved, lpfnCB);
 
-    heap_free(szURLW);
+    free(szURLW);
 
     return hr;
 }

@@ -74,8 +74,8 @@ static ULONG WINAPI EnumFORMATETC_Release(IEnumFORMATETC *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        heap_free(This->fetc);
-        heap_free(This);
+        free(This->fetc);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -156,7 +156,7 @@ static const IEnumFORMATETCVtbl EnumFORMATETCVtbl = {
 
 static IEnumFORMATETC *EnumFORMATETC_Create(UINT cfmtetc, const FORMATETC *rgfmtetc, UINT it)
 {
-    EnumFORMATETC *ret = heap_alloc(sizeof(EnumFORMATETC));
+    EnumFORMATETC *ret = malloc(sizeof(EnumFORMATETC));
 
     URLMON_LockModule();
 
@@ -165,7 +165,7 @@ static IEnumFORMATETC *EnumFORMATETC_Create(UINT cfmtetc, const FORMATETC *rgfmt
     ret->it = it;
     ret->fetc_cnt = cfmtetc;
 
-    ret->fetc = heap_alloc(cfmtetc*sizeof(FORMATETC));
+    ret->fetc = malloc(cfmtetc * sizeof(FORMATETC));
     memcpy(ret->fetc, rgfmtetc, cfmtetc*sizeof(FORMATETC));
 
     return &ret->IEnumFORMATETC_iface;

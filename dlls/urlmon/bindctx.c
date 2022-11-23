@@ -162,7 +162,7 @@ static ULONG WINAPI BindStatusCallback_Release(IBindStatusCallbackEx *iface)
         if(This->serv_prov)
             IServiceProvider_Release(This->serv_prov);
         IBindStatusCallback_Release(This->callback);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -579,7 +579,7 @@ HRESULT wrap_callback(IBindStatusCallback *bsc, IBindStatusCallback **ret_iface)
 {
     BindStatusCallback *ret;
 
-    ret = heap_alloc_zero(sizeof(BindStatusCallback));
+    ret = calloc(1, sizeof(BindStatusCallback));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -751,7 +751,7 @@ static ULONG WINAPI AsyncBindCtx_Release(IBindCtx *iface)
 
     if(!ref) {
         IBindCtx_Release(This->bindctx);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -951,7 +951,7 @@ HRESULT WINAPI CreateAsyncBindCtxEx(IBindCtx *ibind, DWORD options,
             return hres;
     }
 
-    ret = heap_alloc(sizeof(AsyncBindCtx));
+    ret = malloc(sizeof(AsyncBindCtx));
 
     ret->IBindCtx_iface.lpVtbl = &AsyncBindCtxVtbl;
     ret->ref = 1;

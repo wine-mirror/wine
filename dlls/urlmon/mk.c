@@ -89,7 +89,7 @@ static ULONG WINAPI MkProtocolUnk_Release(IUnknown *iface)
         if(This->stream)
             IStream_Release(This->stream);
 
-        heap_free(This);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -293,7 +293,7 @@ static HRESULT WINAPI MkProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUri,
     }
 
     len = lstrlenW(path);
-    display_name = heap_alloc((len+1)*sizeof(WCHAR));
+    display_name = malloc((len + 1) * sizeof(WCHAR));
     memcpy(display_name, path, (len+1)*sizeof(WCHAR));
 
     progid[colon_ptr-progid] = 0; /* overwrite ':' with NULL terminator */
@@ -301,7 +301,7 @@ static HRESULT WINAPI MkProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUri,
     SysFreeString(path);
     if(FAILED(hres))
     {
-        heap_free(display_name);
+        free(display_name);
         return report_result(pOIProtSink, INET_E_RESOURCE_NOT_FOUND, ERROR_INVALID_PARAMETER);
     }
 
@@ -309,12 +309,12 @@ static HRESULT WINAPI MkProtocol_StartEx(IInternetProtocolEx *iface, IUri *pUri,
             &IID_IParseDisplayName, (void**)&pdn);
     if(FAILED(hres)) {
         WARN("Could not create object %s\n", debugstr_guid(&clsid));
-        heap_free(display_name);
+        free(display_name);
         return report_result(pOIProtSink, hres, ERROR_INVALID_PARAMETER);
     }
 
     hres = IParseDisplayName_ParseDisplayName(pdn, NULL /* FIXME */, display_name, &eaten, &mon);
-    heap_free(display_name);
+    free(display_name);
     IParseDisplayName_Release(pdn);
     if(FAILED(hres)) {
         WARN("ParseDisplayName failed: %08lx\n", hres);
@@ -370,7 +370,7 @@ HRESULT MkProtocol_Construct(IUnknown *outer, void **ppv)
 
     URLMON_LockModule();
 
-    ret = heap_alloc(sizeof(MkProtocol));
+    ret = malloc(sizeof(MkProtocol));
 
     ret->IUnknown_inner.lpVtbl = &MkProtocolUnkVtbl;
     ret->IInternetProtocolEx_iface.lpVtbl = &MkProtocolVtbl;

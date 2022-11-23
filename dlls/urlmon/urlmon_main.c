@@ -75,7 +75,7 @@ tls_data_t *get_tls_data(void)
 
     data = TlsGetValue(urlmon_tls);
     if(!data) {
-        data = heap_alloc_zero(sizeof(tls_data_t));
+        data = calloc(1, sizeof(tls_data_t));
         if(!data)
             return NULL;
 
@@ -99,7 +99,7 @@ static void free_tls_list(void)
     while(!list_empty(&tls_list)) {
         data = LIST_ENTRY(list_head(&tls_list), tls_data_t, entry);
         list_remove(&data->entry);
-        heap_free(data);
+        free(data);
     }
 
     TlsFree(urlmon_tls);
@@ -125,7 +125,7 @@ static void detach_thread(void)
         DestroyWindow(data->notif_hwnd);
     }
 
-    heap_free(data);
+    free(data);
 }
 
 static void process_detach(void)

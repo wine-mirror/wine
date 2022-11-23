@@ -102,7 +102,7 @@ static ULONG WINAPI URLMoniker_Release(IMoniker *iface)
         if(This->uri)
             IUri_Release(This->uri);
         SysFreeString(This->URLName);
-        heap_free(This);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -162,7 +162,7 @@ static HRESULT WINAPI URLMoniker_Load(IMoniker* iface,IStream* pStm)
     if(got != sizeof(ULONG))
         return E_FAIL;
 
-    new_uri_str = heap_alloc(size+sizeof(WCHAR));
+    new_uri_str = malloc(size + sizeof(WCHAR));
     if(!new_uri_str)
         return E_OUTOFMEMORY;
 
@@ -170,7 +170,7 @@ static HRESULT WINAPI URLMoniker_Load(IMoniker* iface,IStream* pStm)
     new_uri_str[size/sizeof(WCHAR)] = 0;
     if(SUCCEEDED(hres))
         hres = CreateUri(new_uri_str, 0, 0, &new_uri);
-    heap_free(new_uri_str);
+    free(new_uri_str);
     if(FAILED(hres))
         return hres;
 
@@ -557,7 +557,7 @@ static HRESULT create_moniker(IUri *uri, URLMoniker **ret)
     URLMoniker *mon;
     HRESULT hres;
 
-    mon = heap_alloc(sizeof(*mon));
+    mon = malloc(sizeof(*mon));
     if(!mon)
         return E_OUTOFMEMORY;
 
@@ -569,7 +569,7 @@ static HRESULT create_moniker(IUri *uri, URLMoniker **ret)
         /* FIXME: try to avoid it */
         hres = IUri_GetDisplayUri(uri, &mon->URLName);
         if(FAILED(hres)) {
-            heap_free(mon);
+            free(mon);
             return hres;
         }
 
@@ -843,12 +843,12 @@ HRESULT WINAPI URLDownloadToCacheFileA(LPUNKNOWN lpUnkCaller, LPCSTR szURL, LPST
 
     if(szURL) {
         len = MultiByteToWideChar(CP_ACP, 0, szURL, -1, NULL, 0);
-        url = heap_alloc(len*sizeof(WCHAR));
+        url = malloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, szURL, -1, url, len);
     }
 
     if(szFileName)
-        file_name = heap_alloc(dwBufLength*sizeof(WCHAR));
+        file_name = malloc(dwBufLength * sizeof(WCHAR));
 
     hres = URLDownloadToCacheFileW(lpUnkCaller, url, file_name, dwBufLength*sizeof(WCHAR),
             dwReserved, pBSC);
@@ -856,8 +856,8 @@ HRESULT WINAPI URLDownloadToCacheFileA(LPUNKNOWN lpUnkCaller, LPCSTR szURL, LPST
     if(SUCCEEDED(hres) && file_name)
         WideCharToMultiByte(CP_ACP, 0, file_name, -1, szFileName, dwBufLength, NULL, NULL);
 
-    heap_free(url);
-    heap_free(file_name);
+    free(url);
+    free(file_name);
 
     return hres;
 }

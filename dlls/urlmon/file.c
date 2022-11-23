@@ -102,7 +102,7 @@ static ULONG WINAPI FileProtocolUnk_Release(IUnknown *iface)
     if(!ref) {
         if(This->file != INVALID_HANDLE_VALUE)
             CloseHandle(This->file);
-        heap_free(This);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -425,7 +425,7 @@ HRESULT FileProtocol_Construct(IUnknown *outer, LPVOID *ppobj)
 
     URLMON_LockModule();
 
-    ret = heap_alloc(sizeof(FileProtocol));
+    ret = malloc(sizeof(FileProtocol));
 
     ret->IUnknown_inner.lpVtbl = &FileProtocolUnkVtbl;
     ret->IInternetProtocolEx_iface.lpVtbl = &FileProtocolExVtbl;

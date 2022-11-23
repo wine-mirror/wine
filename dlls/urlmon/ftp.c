@@ -177,7 +177,7 @@ static ULONG WINAPI FtpProtocolUnk_Release(IUnknown *iface)
 
     if(!ref) {
         protocol_close_connection(&This->base);
-        heap_free(This);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -459,7 +459,7 @@ HRESULT FtpProtocol_Construct(IUnknown *outer, void **ppv)
 
     URLMON_LockModule();
 
-    ret = heap_alloc_zero(sizeof(FtpProtocol));
+    ret = calloc(1, sizeof(FtpProtocol));
 
     ret->base.vtbl = &AsyncProtocolVtbl;
     ret->IUnknown_inner.lpVtbl            = &FtpProtocolUnkVtbl;

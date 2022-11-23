@@ -96,9 +96,9 @@ static ULONG WINAPI DownloadBSC_Release(IBindStatusCallback *iface)
             IBindStatusCallback_Release(This->callback);
         if(This->binding)
             IBinding_Release(This->binding);
-        heap_free(This->file_name);
-        heap_free(This->cache_file);
-        heap_free(This);
+        free(This->file_name);
+        free(This->cache_file);
+        free(This);
     }
 
     return ref;
@@ -176,7 +176,7 @@ static HRESULT WINAPI DownloadBSC_OnProgress(IBindStatusCallback *iface, ULONG u
 
     case BINDSTATUS_CACHEFILENAMEAVAILABLE:
         hres = on_progress(This, ulProgress, ulProgressMax, ulStatusCode, szStatusText);
-        This->cache_file = heap_strdupW(szStatusText);
+        This->cache_file = wcsdup(szStatusText);
         break;
 
     case BINDSTATUS_FINDINGRESOURCE: /* FIXME */
@@ -334,7 +334,7 @@ static HRESULT DownloadBSC_Create(IBindStatusCallback *callback, LPCWSTR file_na
 {
     DownloadBSC *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -343,9 +343,9 @@ static HRESULT DownloadBSC_Create(IBindStatusCallback *callback, LPCWSTR file_na
     ret->ref = 1;
 
     if(file_name) {
-        ret->file_name = heap_strdupW(file_name);
+        ret->file_name = wcsdup(file_name);
         if(!ret->file_name) {
-            heap_free(ret);
+            free(ret);
             return E_OUTOFMEMORY;
         }
     }
@@ -487,13 +487,13 @@ HRESULT WINAPI URLDownloadToFileA(LPUNKNOWN pCaller, LPCSTR szURL, LPCSTR szFile
 
     TRACE("(%p %s %s %ld %p)\n", pCaller, debugstr_a(szURL), debugstr_a(szFileName), dwReserved, lpfnCB);
 
-    urlW = heap_strdupAtoW(szURL);
-    file_nameW = heap_strdupAtoW(szFileName);
+    urlW = strdupAtoW(szURL);
+    file_nameW = strdupAtoW(szFileName);
 
     hres = URLDownloadToFileW(pCaller, urlW, file_nameW, dwReserved, lpfnCB);
 
-    heap_free(urlW);
-    heap_free(file_nameW);
+    free(urlW);
+    free(file_nameW);
 
     return hres;
 }

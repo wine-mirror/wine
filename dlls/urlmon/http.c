@@ -75,12 +75,12 @@ static LPWSTR query_http_info(HttpProtocol *This, DWORD option)
 
     res = HttpQueryInfoW(This->base.request, option, NULL, &len, NULL);
     if (!res && GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-        ret = heap_alloc(len);
+        ret = malloc(len);
         res = HttpQueryInfoW(This->base.request, option, ret, &len, NULL);
     }
     if(!res) {
         TRACE("HttpQueryInfoW(%ld) failed: %08lx\n", option, GetLastError());
-        heap_free(ret);
+        free(ret);
         return NULL;
     }
 
@@ -408,7 +408,7 @@ static HRESULT HttpProtocol_open_request(Protocol *prot, IUri *uri, DWORD reques
 
     len = addl_header ? lstrlenW(addl_header) : 0;
 
-    This->full_header = heap_alloc(len*sizeof(WCHAR)+sizeof(default_headersW));
+    This->full_header = malloc(len * sizeof(WCHAR) + sizeof(default_headersW));
     if(!This->full_header) {
         IServiceProvider_Release(service_provider);
         return E_OUTOFMEMORY;
@@ -529,7 +529,7 @@ static HRESULT HttpProtocol_start_downloading(Protocol *prot)
             location = query_http_info(This, HTTP_QUERY_LOCATION);
             This->base.flags |= FLAG_RESULT_REPORTED | FLAG_LAST_DATA_REPORTED;
             IInternetProtocolSink_ReportResult(This->base.protocol_sink, INET_E_REDIRECT_FAILED, 0, location);
-            heap_free(location);
+            free(location);
             return INET_E_REDIRECT_FAILED;
         }
 
@@ -537,7 +537,7 @@ static HRESULT HttpProtocol_start_downloading(Protocol *prot)
         if(response_headers) {
             hres = IHttpNegotiate_OnResponse(This->http_negotiate, status_code, response_headers,
                     NULL, NULL);
-            heap_free(response_headers);
+            free(response_headers);
             if (hres != S_OK) {
                 WARN("IHttpNegotiate_OnResponse failed: %08lx\n", hres);
                 return S_OK;
@@ -550,7 +550,7 @@ static HRESULT HttpProtocol_start_downloading(Protocol *prot)
     ranges = query_http_info(This, HTTP_QUERY_ACCEPT_RANGES);
     if(ranges) {
         IInternetProtocolSink_ReportProgress(This->base.protocol_sink, BINDSTATUS_ACCEPTRANGES, NULL);
-        heap_free(ranges);
+        free(ranges);
     }
 
     content_type = query_http_info(This, HTTP_QUERY_CONTENT_TYPE);
@@ -563,7 +563,7 @@ static HRESULT HttpProtocol_start_downloading(Protocol *prot)
                 (This->base.bindf & BINDF_FROMURLMON)
                  ? BINDSTATUS_MIMETYPEAVAILABLE : BINDSTATUS_RAWMIMETYPE,
                  content_type);
-        heap_free(content_type);
+        free(content_type);
     }else {
         WARN("HttpQueryInfo failed: %ld\n", GetLastError());
         IInternetProtocolSink_ReportProgress(This->base.protocol_sink,
@@ -574,7 +574,7 @@ static HRESULT HttpProtocol_start_downloading(Protocol *prot)
     content_length = query_http_info(This, HTTP_QUERY_CONTENT_LENGTH);
     if(content_length) {
         This->base.content_length = wcstol(content_length, NULL, 10);
-        heap_free(content_length);
+        free(content_length);
     }
 
     return S_OK;
@@ -589,7 +589,7 @@ static void HttpProtocol_close_connection(Protocol *prot)
         This->http_negotiate = NULL;
     }
 
-    heap_free(This->full_header);
+    free(This->full_header);
     This->full_header = NULL;
 }
 
@@ -677,7 +677,7 @@ static ULONG WINAPI HttpProtocolUnk_Release(IUnknown *iface)
 
     if(!ref) {
         protocol_close_connection(&This->base);
-        heap_free(This);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -956,7 +956,7 @@ static HRESULT create_http_protocol(BOOL https, IUnknown *outer, void **ppobj)
 {
     HttpProtocol *ret;
 
-    ret = heap_alloc_zero(sizeof(HttpProtocol));
+    ret = calloc(1, sizeof(HttpProtocol));
     if(!ret)
         return E_OUTOFMEMORY;
 

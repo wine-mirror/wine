@@ -160,8 +160,8 @@ static void dump_BINDINFO(BINDINFO *bi)
 
 static void mime_available(Binding *This, LPCWSTR mime)
 {
-    heap_free(This->mime);
-    This->mime = heap_strdupW(mime);
+    free(This->mime);
+    This->mime = wcsdup(mime);
 
     if(!This->mime || !This->report_mime)
         return;
@@ -199,31 +199,31 @@ static LPWSTR get_mime_clsid(LPCWSTR mime, CLSID *clsid)
          'C','o','n','t','e','n','t',' ','T','y','p','e','\\'};
 
     len = lstrlenW(mime)+1;
-    key_name = heap_alloc(sizeof(mime_keyW) + len*sizeof(WCHAR));
+    key_name = malloc(sizeof(mime_keyW) + len * sizeof(WCHAR));
     memcpy(key_name, mime_keyW, sizeof(mime_keyW));
     lstrcpyW(key_name + ARRAY_SIZE(mime_keyW), mime);
 
     res = RegOpenKeyW(HKEY_CLASSES_ROOT, key_name, &hkey);
-    heap_free(key_name);
+    free(key_name);
     if(res != ERROR_SUCCESS) {
         WARN("Could not open MIME key: %lx\n", res);
         return NULL;
     }
 
     size = 50*sizeof(WCHAR);
-    ret = heap_alloc(size);
+    ret = malloc(size);
     res = RegQueryValueExW(hkey, L"CLSID", NULL, &type, (BYTE*)ret, &size);
     RegCloseKey(hkey);
     if(res != ERROR_SUCCESS) {
         WARN("Could not get CLSID: %08lx\n", res);
-        heap_free(ret);
+        free(ret);
         return NULL;
     }
 
     hres = CLSIDFromString(ret, clsid);
     if(FAILED(hres)) {
         WARN("Could not parse CLSID: %08lx\n", hres);
-        heap_free(ret);
+        free(ret);
         return NULL;
     }
 
@@ -307,7 +307,7 @@ static void create_object(Binding *binding)
 
     if(clsid_str) {
         hres = create_mime_object(binding, &clsid, clsid_str);
-        heap_free(clsid_str);
+        free(clsid_str);
     }else {
         FIXME("Could not find object for MIME %s\n", debugstr_w(binding->mime));
         hres = REGDB_E_CLASSNOTREG;
@@ -323,8 +323,8 @@ static void create_object(Binding *binding)
 
 static void cache_file_available(Binding *This, const WCHAR *file_name)
 {
-    heap_free(This->stgmed_buf->cache_file);
-    This->stgmed_buf->cache_file = heap_strdupW(file_name);
+    free(This->stgmed_buf->cache_file);
+    This->stgmed_buf->cache_file = wcsdup(file_name);
 
     if(This->use_cache_file) {
         This->stgmed_buf->file = CreateFileW(file_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL,
@@ -378,8 +378,8 @@ static ULONG WINAPI StgMedUnk_Release(IUnknown *iface)
         if(This->file != INVALID_HANDLE_VALUE)
             CloseHandle(This->file);
         IInternetProtocolEx_Release(This->protocol);
-        heap_free(This->cache_file);
-        heap_free(This);
+        free(This->cache_file);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -395,7 +395,7 @@ static const IUnknownVtbl StgMedUnkVtbl = {
 
 static stgmed_buf_t *create_stgmed_buf(IInternetProtocolEx *protocol)
 {
-    stgmed_buf_t *ret = heap_alloc(sizeof(*ret));
+    stgmed_buf_t *ret = malloc(sizeof(*ret));
 
     ret->IUnknown_iface.lpVtbl = &StgMedUnkVtbl;
     ret->ref = 1;
@@ -471,7 +471,7 @@ static ULONG WINAPI ProtocolStream_Release(IStream *iface)
 
     if(!ref) {
         IUnknown_Release(&This->buf->IUnknown_iface);
-        heap_free(This);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -701,7 +701,7 @@ typedef struct {
 
 static stgmed_obj_t *create_stgmed_stream(stgmed_buf_t *buf)
 {
-    ProtocolStream *ret = heap_alloc(sizeof(ProtocolStream));
+    ProtocolStream *ret = malloc(sizeof(ProtocolStream));
 
     ret->stgmed_obj.vtbl = &stgmed_stream_vtbl;
     ret->IStream_iface.lpVtbl = &ProtocolStreamVtbl;
@@ -720,7 +720,7 @@ static void stgmed_file_release(stgmed_obj_t *obj)
     stgmed_file_obj_t *file_obj = (stgmed_file_obj_t*)obj;
 
     IUnknown_Release(&file_obj->buf->IUnknown_iface);
-    heap_free(file_obj);
+    free(file_obj);
 }
 
 static HRESULT stgmed_file_fill_stgmed(stgmed_obj_t *obj, STGMEDIUM *stgmed)
@@ -754,7 +754,7 @@ static const stgmed_obj_vtbl stgmed_file_vtbl = {
 
 static stgmed_obj_t *create_stgmed_file(stgmed_buf_t *buf)
 {
-    stgmed_file_obj_t *ret = heap_alloc(sizeof(*ret));
+    stgmed_file_obj_t *ret = malloc(sizeof(*ret));
 
     ret->stgmed_obj.vtbl = &stgmed_file_vtbl;
 
@@ -868,9 +868,9 @@ static ULONG WINAPI Binding_Release(IBinding *iface)
         This->section.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->section);
         SysFreeString(This->url);
-        heap_free(This->mime);
-        heap_free(This->redirect_url);
-        heap_free(This);
+        free(This->mime);
+        free(This->redirect_url);
+        free(This);
 
         URLMON_UnlockModule();
     }
@@ -1036,8 +1036,8 @@ static HRESULT WINAPI InternetProtocolSink_ReportProgress(IInternetProtocolSink 
         on_progress(This, 0, 0, BINDSTATUS_CONNECTING, szStatusText);
         break;
     case BINDSTATUS_REDIRECTING:
-        heap_free(This->redirect_url);
-        This->redirect_url = heap_strdupW(szStatusText);
+        free(This->redirect_url);
+        This->redirect_url = wcsdup(szStatusText);
         on_progress(This, 0, 0, BINDSTATUS_REDIRECTING, szStatusText);
         break;
     case BINDSTATUS_BEGINDOWNLOADDATA:
@@ -1448,7 +1448,7 @@ static HRESULT Binding_Create(IMoniker *mon, Binding *binding_ctx, IUri *uri, IB
 
     URLMON_LockModule();
 
-    ret = heap_alloc_zero(sizeof(Binding));
+    ret = calloc(1, sizeof(Binding));
 
     ret->IBinding_iface.lpVtbl = &BindingVtbl;
     ret->IInternetProtocolSink_iface.lpVtbl = &InternetProtocolSinkVtbl;
