@@ -1922,6 +1922,7 @@ static char *download_script( const WCHAR *url, DWORD *out_size )
     hostname[uc.dwHostNameLength] = 0;
 
     if (!(ses = WinHttpOpen( NULL, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 ))) goto done;
+    WinHttpSetTimeouts( ses, 5000, 60000, 30000, 30000 );
     if (!(con = WinHttpConnect( ses, hostname, uc.nPort, 0 ))) goto done;
     if (uc.nScheme == INTERNET_SCHEME_HTTPS) flags |= WINHTTP_FLAG_SECURE;
     if (!(req = WinHttpOpenRequest( con, NULL, uc.lpszUrlPath, NULL, NULL, acceptW, flags ))) goto done;
