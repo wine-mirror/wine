@@ -455,7 +455,7 @@ static LPVOID strdupX( LPCVOID src, DNS_CHARSET in, DNS_CHARSET out )
     {
         switch (out)
         {
-        case DnsCharSetUnicode: return strdup_w( src );
+        case DnsCharSetUnicode: return wcsdup( src );
         case DnsCharSetUtf8:    return strdup_wu( src );
         case DnsCharSetAnsi:    return strdup_wa( src );
         default:
@@ -468,7 +468,7 @@ static LPVOID strdupX( LPCVOID src, DNS_CHARSET in, DNS_CHARSET out )
         switch (out)
         {
         case DnsCharSetUnicode: return strdup_uw( src );
-        case DnsCharSetUtf8:    return strdup_u( src );
+        case DnsCharSetUtf8:    return strdup( src );
         case DnsCharSetAnsi:    return strdup_ua( src );
         default:
             WARN( "unhandled target charset: %d\n", out );
@@ -480,7 +480,7 @@ static LPVOID strdupX( LPCVOID src, DNS_CHARSET in, DNS_CHARSET out )
         {
         case DnsCharSetUnicode: return strdup_aw( src );
         case DnsCharSetUtf8:    return strdup_au( src );
-        case DnsCharSetAnsi:    return strdup_a( src );
+        case DnsCharSetAnsi:    return strdup( src );
         default:
             WARN( "unhandled target charset: %d\n", out );
             break;
