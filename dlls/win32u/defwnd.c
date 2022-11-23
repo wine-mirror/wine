@@ -668,9 +668,9 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     DWORD msg_pos = NtUserGetThreadInfo()->message_pos;
     BOOL thickframe, drag_full_windows = TRUE, moved = FALSE;
     RECT sizing_rect, mouse_rect, orig_rect;
-    LONG hittest = wparam & 0x0f;
-    WPARAM syscommand = wparam & 0xfff0;
-    LONG style = get_window_long( hwnd, GWL_STYLE );
+    UINT hittest = wparam & 0x0f;
+    UINT syscommand = wparam & 0xfff0;
+    UINT style = get_window_long( hwnd, GWL_STYLE );
     POINT capture_point, pt;
     MINMAXINFO minmax;
     HMONITOR mon = 0;
@@ -688,7 +688,7 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     capture_point = pt;
     NtUserClipCursor( NULL );
 
-    TRACE( "hwnd %p command %04lx, hittest %d, pos %d,%d\n",
+    TRACE( "hwnd %p command %04x, hittest %d, pos %d,%d\n",
            hwnd, syscommand, hittest, pt.x, pt.y );
 
     if (syscommand == SC_MOVE)

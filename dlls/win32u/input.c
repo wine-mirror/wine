@@ -994,7 +994,8 @@ BOOL WINAPI NtUserGetKeyboardLayoutName( WCHAR *name )
     KEY_NODE_INFORMATION *key = (KEY_NODE_INFORMATION *)buffer;
     KEY_VALUE_PARTIAL_INFORMATION *value = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
     WCHAR klid[KL_NAMELENGTH];
-    DWORD tmp, i = 0;
+    UINT id;
+    ULONG len, i = 0;
     HKEY hkey, subkey;
     HKL layout;
 
@@ -1014,27 +1015,27 @@ BOOL WINAPI NtUserGetKeyboardLayoutName( WCHAR *name )
     }
 
     layout = NtUserGetKeyboardLayout( 0 );
-    tmp = HandleToUlong( layout );
-    if (HIWORD( tmp ) == LOWORD( tmp )) tmp = LOWORD( tmp );
-    sprintf( buffer, "%08X", tmp );
+    id = HandleToUlong( layout );
+    if (HIWORD( id ) == LOWORD( id )) id = LOWORD( id );
+    sprintf( buffer, "%08X", id );
     asciiz_to_unicode( name, buffer );
 
     if ((hkey = reg_open_key( NULL, keyboard_layouts_keyW, sizeof(keyboard_layouts_keyW) )))
     {
         while (!NtEnumerateKey( hkey, i++, KeyNodeInformation, key,
-                                sizeof(buffer) - sizeof(WCHAR), &tmp ))
+                                sizeof(buffer) - sizeof(WCHAR), &len ))
         {
             if (!(subkey = reg_open_key( hkey, key->Name, key->NameLength ))) continue;
             memcpy( klid, key->Name, key->NameLength );
             klid[key->NameLength / sizeof(WCHAR)] = 0;
             if (query_reg_ascii_value( subkey, "Layout Id", value, sizeof(buffer) ) &&
                 value->Type == REG_SZ)
-                tmp = 0xf000 | (wcstoul( (const WCHAR *)value->Data, NULL, 16 ) & 0xfff);
+                id = 0xf000 | (wcstoul( (const WCHAR *)value->Data, NULL, 16 ) & 0xfff);
             else
-                tmp = wcstoul( klid, NULL, 16 );
+                id = wcstoul( klid, NULL, 16 );
             NtClose( subkey );
 
-            if (HIWORD( layout ) == tmp)
+            if (HIWORD( layout ) == id)
             {
                 lstrcpynW( name, klid, KL_NAMELENGTH );
                 break;

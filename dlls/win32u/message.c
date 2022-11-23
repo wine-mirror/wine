@@ -1715,7 +1715,7 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
 
             if ((get_window_long( hwndTop, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) != WS_CHILD)
             {
-                LONG ret = send_message( msg->hwnd, WM_MOUSEACTIVATE, (WPARAM)hwndTop,
+                UINT ret = send_message( msg->hwnd, WM_MOUSEACTIVATE, (WPARAM)hwndTop,
                                          MAKELONG( hittest, msg->message ) );
                 switch(ret)
                 {
@@ -2458,7 +2458,7 @@ static void wait_message_reply( UINT flags )
 static LRESULT retrieve_reply( const struct send_message_info *info,
                                size_t reply_size, LRESULT *result )
 {
-    NTSTATUS status;
+    unsigned int status;
     void *reply_data = NULL;
 
     if (reply_size)

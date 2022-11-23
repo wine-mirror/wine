@@ -49,7 +49,7 @@ typedef struct tagDC
     HDC          hSelf;            /* Handle to this DC */
     struct gdi_physdev nulldrv;    /* physdev for the null driver */
     PHYSDEV      physDev;          /* current top of the physdev stack */
-    DWORD        thread;           /* thread owning the DC */
+    UINT         thread;           /* thread owning the DC */
     LONG         refcount;         /* thread refcount */
     LONG         dirty;            /* dirty flag */
     DC_ATTR     *attr;             /* DC attributes accessible by client */
@@ -229,7 +229,7 @@ extern const struct gdi_dc_funcs *get_display_driver(void) DECLSPEC_HIDDEN;
 
 struct font_gamma_ramp
 {
-    DWORD gamma;
+    UINT  gamma;
     BYTE  encode[256];
     BYTE  decode[256];
 };

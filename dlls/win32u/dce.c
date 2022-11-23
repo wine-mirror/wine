@@ -40,7 +40,7 @@ struct dce
     HDC         hdc;
     HWND        hwnd;
     HRGN        clip_rgn;
-    DWORD       flags;
+    UINT        flags;
     LONG        count;         /* usage count; 0 or 1 for cache DCEs, always 1 for window DCEs,
                                   always >= 1 for class DCEs */
 };

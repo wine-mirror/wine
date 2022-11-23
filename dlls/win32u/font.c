@@ -2309,7 +2309,7 @@ static struct font_handle_entry font_handles[MAX_FONT_HANDLES];
 static struct font_handle_entry *next_free;
 static struct font_handle_entry *next_unused = font_handles;
 
-static struct font_handle_entry *handle_entry( DWORD handle )
+static struct font_handle_entry *handle_entry( unsigned int handle )
 {
     unsigned int idx = LOWORD(handle) - FIRST_FONT_HANDLE;
 
@@ -2322,7 +2322,7 @@ static struct font_handle_entry *handle_entry( DWORD handle )
     return NULL;
 }
 
-static struct gdi_font *get_font_from_handle( DWORD handle )
+static struct gdi_font *get_font_from_handle( unsigned int handle )
 {
     struct font_handle_entry *entry = handle_entry( handle );
 
@@ -3041,7 +3041,7 @@ static void update_font_association_info(void)
         reg_delete_tree( NULL, font_assoc_keyW, sizeof(font_assoc_keyW) );
 }
 
-static void set_multi_value_key( HKEY hkey, const WCHAR *name, const char *value, DWORD len )
+static void set_multi_value_key( HKEY hkey, const WCHAR *name, const char *value, UINT len )
 {
     WCHAR *valueW;
 
@@ -3112,7 +3112,7 @@ static void update_codepage( UINT screen_dpi )
     HKEY hkey;
     DWORD size;
     UINT i;
-    DWORD font_dpi = 0;
+    UINT font_dpi = 0;
     BOOL done = FALSE, cp_match = FALSE;
 
     static const WCHAR log_pixelsW[] = {'L','o','g','P','i','x','e','l','s',0};
@@ -3459,7 +3459,7 @@ static BOOL enum_face_charsets( const struct gdi_font_family *family, struct gdi
 {
     ENUMLOGFONTEXW elf;
     NEWTEXTMETRICEXW ntm;
-    DWORD type, i;
+    UINT type, i;
 
     if (!face->cached_enum_data)
     {
@@ -3523,7 +3523,7 @@ static BOOL CDECL font_EnumFonts( PHYSDEV dev, LOGFONTW *lf, FONTENUMPROCW proc,
     struct gdi_font_family *family;
     struct gdi_font_face *face;
     struct enum_charset enum_charsets[32];
-    DWORD count, charset;
+    UINT count, charset;
 
     charset = lf ? lf->lfCharSet : DEFAULT_CHARSET;
 
@@ -4960,7 +4960,7 @@ HFONT WINAPI NtGdiHfontCreate( const void *logfont, ULONG size, ULONG type,
 
 static DWORD get_associated_charset_info(void)
 {
-    static DWORD associated_charset = -1;
+    static int associated_charset = -1;
 
     if (associated_charset == -1)
     {

@@ -428,7 +428,7 @@ HWND get_desktop_window(void)
         WCHAR desktop[MAX_PATH];
         PEB *peb = NtCurrentTeb()->Peb;
         HANDLE process, thread;
-        NTSTATUS status;
+        unsigned int status;
 
         SERVER_START_REQ( set_user_object_info )
         {

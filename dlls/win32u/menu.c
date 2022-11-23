@@ -68,7 +68,7 @@ struct menu
     UINT        nTotalHeight;   /* total height of menu items inside menu */
     RECT        items_rect;     /* rectangle within which the items lie, excludes margins and scroll arrows */
     LONG        refcount;
-    DWORD       dwStyle;        /* extended menu style */
+    UINT        dwStyle;        /* extended menu style */
     UINT        cyMax;          /* max height of the whole menu, 0 is screen height */
     HBRUSH      hbrBack;        /* brush for menu background */
     DWORD       dwContextHelpID;
@@ -1994,7 +1994,9 @@ static void calc_menu_item_size( HDC hdc, struct menu_item *item, HWND owner, IN
 
     if (!menucharsize.cx)
     {
-        menucharsize.cx = get_char_dimensions( hdc, NULL, &menucharsize.cy );
+        int height;
+        menucharsize.cx = get_char_dimensions( hdc, NULL, &height );
+        menucharsize.cy = height;
         /* Win95/98/ME will use menucharsize.cy here. Testing is possible
          * but it is unlikely an application will depend on that */
         od_item_height = HIWORD( get_dialog_base_units() );

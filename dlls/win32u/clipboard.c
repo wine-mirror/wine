@@ -475,7 +475,7 @@ HWND WINAPI NtUserGetOpenClipboardWindow(void)
  */
 DWORD WINAPI NtUserGetClipboardSequenceNumber(void)
 {
-    DWORD seqno = 0;
+    unsigned int seqno = 0;
 
     SERVER_START_REQ( get_clipboard_info )
     {
@@ -641,7 +641,7 @@ done:
 HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *params )
 {
     struct cached_format *cache = NULL;
-    NTSTATUS status;
+    unsigned int status;
     UINT from, data_seqno;
     size_t size;
     HWND owner;

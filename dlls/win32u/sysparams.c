@@ -2551,7 +2551,7 @@ LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devm
                                          DWORD flags, void *lparam )
 {
     DEVMODEW full_mode = {.dmSize = sizeof(DEVMODEW)};
-    LONG ret = DISP_CHANGE_SUCCESSFUL;
+    int ret = DISP_CHANGE_SUCCESSFUL;
     struct adapter *adapter;
 
     TRACE( "%s %p %p %#x %p\n", debugstr_us(devname), devmode, hwnd, flags, lparam );
@@ -3447,7 +3447,7 @@ static void get_real_fontname( LOGFONTW *lf, WCHAR fullname[LF_FACESIZE] )
         lstrcpyW( fullname, lf->lfFaceName );
 }
 
-LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, LONG *height )
+LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, int *height )
 {
     SIZE sz;
     static const WCHAR abcdW[] =
@@ -3488,7 +3488,7 @@ static void get_text_metr_size( HDC hdc, LOGFONTW *lf, TEXTMETRICW *metric, UINT
 
 DWORD get_dialog_base_units(void)
 {
-    static LONG cx, cy;
+    static int cx, cy;
 
     if (!cx)
     {

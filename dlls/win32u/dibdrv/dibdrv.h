@@ -102,7 +102,7 @@ typedef struct dibdrv_physdev
     struct cached_font *font;
 
     /* pen */
-    DWORD pen_style, pen_endcap, pen_join;
+    UINT pen_style, pen_endcap, pen_join;
     BOOL pen_uses_region, pen_is_ext;
     int pen_width;
     dib_brush pen_brush;

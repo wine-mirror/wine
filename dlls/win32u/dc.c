@@ -1451,7 +1451,7 @@ UINT WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags )
  */
 DWORD WINAPI NtGdiSetLayout( HDC hdc, LONG wox, DWORD layout )
 {
-    DWORD old_layout = GDI_ERROR;
+    UINT old_layout = GDI_ERROR;
     DC *dc;
 
     if ((dc = get_dc_ptr( hdc )))

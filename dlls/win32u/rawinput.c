@@ -223,7 +223,7 @@ static struct device *add_device( HKEY key, DWORD type )
     struct device *device;
     RID_DEVICE_INFO info;
     IO_STATUS_BLOCK io;
-    NTSTATUS status;
+    unsigned int status;
     UINT32 handle;
     void *buffer;
     SIZE_T size;
