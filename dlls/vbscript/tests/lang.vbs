@@ -1562,7 +1562,8 @@ sub TestReDimList
 end sub
 call TestReDimList
 
-dim rx(4)
+dim rx
+redim rx(4)
 sub TestReDimByRef(byref x)
    ok ubound(x) = 4, "ubound(x) = " & ubound(x)
    redim x(6)
