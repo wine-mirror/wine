@@ -29,6 +29,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -37,7 +38,6 @@
 #include "commctrl.h"
 #include "uxtheme.h"
 
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 #include "comctl32.h"
@@ -94,7 +94,7 @@ static struct static_extra_info *get_extra_ptr( HWND hwnd, BOOL force )
     struct static_extra_info *extra = (struct static_extra_info *)GetWindowLongPtrW( hwnd, 0 );
     if (!extra && force)
     {
-        extra = heap_alloc_zero( sizeof(*extra) );
+        extra = calloc( 1, sizeof(*extra) );
         if (extra)
             SetWindowLongPtrW( hwnd, 0, (ULONG_PTR)extra );
     }
@@ -470,7 +470,7 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
             {
                 if (extra->image_has_alpha)
                     DeleteObject( extra->image.hbitmap );
-                heap_free( extra );
+                free( extra );
             }
 /*
  * FIXME
@@ -751,13 +751,13 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style )
     }
 
     buf_size = 256;
-    if (!(text = HeapAlloc( GetProcessHeap(), 0, buf_size * sizeof(WCHAR) )))
+    if (!(text = malloc( buf_size * sizeof(WCHAR) )))
         goto no_TextOut;
 
     while ((len = InternalGetWindowText( hwnd, text, buf_size )) == buf_size - 1)
     {
         buf_size *= 2;
-        if (!(text = HeapReAlloc( GetProcessHeap(), 0, text, buf_size * sizeof(WCHAR) )))
+        if (!(text = realloc( text, buf_size * sizeof(WCHAR) )))
             goto no_TextOut;
     }
 
@@ -777,7 +777,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style )
     }
 
 no_TextOut:
-    HeapFree( GetProcessHeap(), 0, text );
+    free( text );
 
     if (hFont)
         SelectObject( hdc, hOldFont );
