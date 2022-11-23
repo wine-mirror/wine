@@ -1481,7 +1481,7 @@ static SIZE_T heap_get_block_size( const struct heap *heap, ULONG flags, SIZE_T 
 {
     static const ULONG padd_flags = HEAP_VALIDATE | HEAP_VALIDATE_ALL | HEAP_VALIDATE_PARAMS | HEAP_ADD_USER_INFO;
     static const ULONG check_flags = HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_CHECKING_ENABLED;
-    SIZE_T overhead;
+    SIZE_T overhead, block_size;
 
     if ((flags & check_flags)) overhead = BLOCK_ALIGN;
     else overhead = sizeof(struct block);
@@ -1490,18 +1490,18 @@ static SIZE_T heap_get_block_size( const struct heap *heap, ULONG flags, SIZE_T 
     if (flags & padd_flags) overhead += BLOCK_ALIGN;
 
     if (size < BLOCK_ALIGN) size = BLOCK_ALIGN;
-    return ROUND_SIZE( size + overhead, BLOCK_ALIGN - 1 );
+    block_size = ROUND_SIZE( size + overhead, BLOCK_ALIGN - 1 );
+
+    if (block_size < size) return ~0U;  /* overflow */
+    if (block_size < HEAP_MIN_BLOCK_SIZE) block_size = HEAP_MIN_BLOCK_SIZE;
+    return block_size;
 }
 
-static NTSTATUS heap_allocate( struct heap *heap, ULONG flags, SIZE_T size, void **ret )
+static NTSTATUS heap_allocate( struct heap *heap, ULONG flags, SIZE_T block_size, SIZE_T size, void **ret )
 {
-    SIZE_T old_block_size, block_size;
+    SIZE_T old_block_size;
     struct block *block;
     SUBHEAP *subheap;
-
-    block_size = heap_get_block_size( heap, flags, size );
-    if (block_size < size) return STATUS_NO_MEMORY;  /* overflow */
-    if (block_size < HEAP_MIN_BLOCK_SIZE) block_size = HEAP_MIN_BLOCK_SIZE;
 
     if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
     {
@@ -1533,16 +1533,19 @@ static NTSTATUS heap_allocate( struct heap *heap, ULONG flags, SIZE_T size, void
 void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE_T size )
 {
     struct heap *heap;
+    SIZE_T block_size;
     void *ptr = NULL;
     ULONG heap_flags;
     NTSTATUS status;
 
     if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
         status = STATUS_INVALID_HANDLE;
+    else if ((block_size = heap_get_block_size( heap, heap_flags, size )) == ~0U)
+        status = STATUS_NO_MEMORY;
     else
     {
         heap_lock( heap, heap_flags );
-        status = heap_allocate( heap, heap_flags, size, &ptr );
+        status = heap_allocate( heap, heap_flags, block_size, size, &ptr );
         heap_unlock( heap, heap_flags );
     }
 
@@ -1594,16 +1597,13 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
 }
 
 
-static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE_T size, void **ret )
+static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr,
+                                 SIZE_T block_size, SIZE_T size, void **ret )
 {
-    SIZE_T old_block_size, old_size, block_size;
+    SIZE_T old_block_size, old_size;
     struct block *next, *block;
     SUBHEAP *subheap;
     NTSTATUS status;
-
-    block_size = heap_get_block_size( heap, flags, size );
-    if (block_size < size) return STATUS_NO_MEMORY;  /* overflow */
-    if (block_size < HEAP_MIN_BLOCK_SIZE) block_size = HEAP_MIN_BLOCK_SIZE;
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
     if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
@@ -1632,7 +1632,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE
         else
         {
             if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
-            if ((status = heap_allocate( heap, flags & ~HEAP_ZERO_MEMORY, size, ret ))) return status;
+            if ((status = heap_allocate( heap, flags & ~HEAP_ZERO_MEMORY, block_size, size, ret ))) return status;
             valgrind_notify_alloc( *ret, size, 0 );
             memcpy( *ret, block + 1, old_size );
             if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + old_size, 0, size - old_size );
@@ -1659,6 +1659,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE
 void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T size )
 {
     struct heap *heap;
+    SIZE_T block_size;
     ULONG heap_flags;
     void *ret = NULL;
     NTSTATUS status;
@@ -1667,10 +1668,12 @@ void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T si
 
     if (!(heap = unsafe_heap_from_handle( handle, flags, &heap_flags )))
         status = STATUS_INVALID_HANDLE;
+    else if ((block_size = heap_get_block_size( heap, heap_flags, size )) == ~0U)
+        status = STATUS_NO_MEMORY;
     else
     {
         heap_lock( heap, heap_flags );
-        status = heap_reallocate( heap, heap_flags, ptr, size, &ret );
+        status = heap_reallocate( heap, heap_flags, ptr, block_size, size, &ret );
         heap_unlock( heap, heap_flags );
     }
 
