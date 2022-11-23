@@ -1291,35 +1291,6 @@ static void test_SafeArrayGetPutElement_IUnknown(void)
   ok(xtunk.ref == 2,"Failed to decrement refcount of iface.\n");
 }
 
-static void test_SafeArrayRedim_IUnknown(void)
-{
-  SAFEARRAYBOUND sab;
-  LONG indices[1];
-  SAFEARRAY *sa;
-  HRESULT hres;
-
-  sab.lLbound = 1;
-  sab.cElements = 2;
-  sa = SafeArrayCreate(VT_UNKNOWN, 1, &sab);
-  ok(sa != NULL, "UNKNOWN test couldn't create array\n");
-  if (!sa)
-    return;
-
-  ok(sa->cbElements == sizeof(LPUNKNOWN), "LPUNKNOWN size mismatch\n");
-
-  indices[0] = 2;
-  xtunk.ref = 1;
-  hres = SafeArrayPutElement(sa, indices, &xtunk.IUnknown_iface);
-  ok(hres == S_OK, "Failed to put IUnknown element hres 0x%lx\n", hres);
-  ok(xtunk.ref == 2,"Failed to increment refcount of iface.\n");
-  sab.cElements = 1;
-  hres = SafeArrayRedim(sa, &sab);
-  ok(hres == S_OK, "Failed to shrink array hres 0x%lx\n", hres);
-  ok(xtunk.ref == 1, "Failed to decrement refcount\n");
-  hres = SafeArrayDestroy(sa);
-  ok(hres == S_OK, "got 0x%08lx\n", hres);
-}
-
 static void test_SafeArrayGetPutElement_VARIANT(void)
 {
   SAFEARRAYBOUND sab;
@@ -2063,6 +2034,77 @@ static void test_safearray_layout(void)
     IRecordInfo_Release(&irec->IRecordInfo_iface);
 }
 
+static void test_SafeArrayRedim(void)
+{
+    SAFEARRAYBOUND sab;
+    LONG indices[1];
+    SAFEARRAY *sa;
+    HRESULT hres;
+
+    sab.lLbound = 1;
+    sab.cElements = 2;
+    hres = SafeArrayRedim(NULL, &sab);
+    ok(hres == E_INVALIDARG, "Unexpected hr %#lx.\n", hres);
+    sa = SafeArrayCreate(VT_UNKNOWN, 1, &sab);
+    ok(!!sa, "Failed to create an array.\n");
+    hres = SafeArrayRedim(sa, NULL);
+    ok(hres == E_INVALIDARG, "Unexpected hr %#lx.\n", hres);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+
+    /* VT_UNKNOWN */
+    sab.lLbound = 1;
+    sab.cElements = 2;
+    sa = SafeArrayCreate(VT_UNKNOWN, 1, &sab);
+    ok(!!sa, "Failed to create an array.\n");
+    ok(sa->cbElements == sizeof(IUnknown *), "Unexpected element size.\n");
+
+    indices[0] = 2;
+    xtunk.ref = 1;
+    hres = SafeArrayPutElement(sa, indices, &xtunk.IUnknown_iface);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+    ok(xtunk.ref == 2,"Failed to increment refcount of iface.\n");
+    sab.cElements = 1;
+    hres = SafeArrayRedim(sa, &sab);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+    ok(xtunk.ref == 1, "Failed to decrement refcount\n");
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+
+    /* FADF_FIXEDSIZE */
+    sab.lLbound = 1;
+    sab.cElements = 2;
+    sa = SafeArrayCreate(VT_I4, 1, &sab);
+    ok(!!sa, "Failed to create an array.\n");
+    sab.cElements = 3;
+    hres = SafeArrayRedim(sa, &sab);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+    sab.cElements = 4;
+    sa->fFeatures |= FADF_FIXEDSIZE;
+    hres = SafeArrayRedim(sa, &sab);
+    ok(hres == DISP_E_ARRAYISLOCKED, "Unexpected hr %#lx.\n", hres);
+    sa->fFeatures &= ~FADF_FIXEDSIZE;
+    hres = SafeArrayRedim(sa, &sab);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+
+    /* Locked array */
+    sab.lLbound = 1;
+    sab.cElements = 2;
+    sa = SafeArrayCreate(VT_I4, 1, &sab);
+    ok(!!sa, "Failed to create an array.\n");
+    hres = SafeArrayLock(sa);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+    sab.cElements = 3;
+    hres = SafeArrayRedim(sa, &sab);
+    ok(hres == DISP_E_ARRAYISLOCKED, "Unexpected hr %#lx.\n", hres);
+    hres = SafeArrayUnlock(sa);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+    hres = SafeArrayDestroy(sa);
+    ok(hres == S_OK, "Unexpected hr %#lx.\n", hres);
+}
+
 START_TEST(safearray)
 {
     hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -2089,7 +2131,7 @@ START_TEST(safearray)
     test_SafeArrayGetPutElement();
     test_SafeArrayGetPutElement_BSTR();
     test_SafeArrayGetPutElement_IUnknown();
-    test_SafeArrayRedim_IUnknown();
+    test_SafeArrayRedim();
     test_SafeArrayGetPutElement_VARIANT();
     test_safearray_layout();
 }

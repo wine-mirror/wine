@@ -1460,10 +1460,10 @@ HRESULT WINAPI SafeArrayRedim(SAFEARRAY *psa, SAFEARRAYBOUND *psabound)
 
   TRACE("(%p,%p)\n", psa, psabound);
   
-  if (!psa || psa->fFeatures & FADF_FIXEDSIZE || !psabound)
+  if (!psa || !psabound)
     return E_INVALIDARG;
 
-  if (psa->cLocks > 0)
+  if (psa->fFeatures & FADF_FIXEDSIZE || psa->cLocks)
     return DISP_E_ARRAYISLOCKED;
 
   hr = SafeArrayLock(psa);
