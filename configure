@@ -15974,11 +15974,12 @@ fi
 
 if test "x$with_inotify" != "xno"
 then
-    if ${INOTIFY_CFLAGS:+false} :
+    rm -f conftest.err
+if ${INOTIFY_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  INOTIFY_CFLAGS=`$PKG_CONFIG --cflags libinotify 2>/dev/null`
+  INOTIFY_CFLAGS=`$PKG_CONFIG --cflags libinotify 2>conftest.err`
 fi
 fi
 
@@ -15993,6 +15994,11 @@ fi
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libinotify cflags: $INOTIFY_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libinotify libs: $INOTIFY_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libinotify errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $INOTIFY_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "sys/inotify.h" "ac_cv_header_sys_inotify_h" "$ac_includes_default"
@@ -16060,11 +16066,12 @@ fi
 
 if test "x$with_dbus" != "xno"
 then
-    if ${DBUS_CFLAGS:+false} :
+    rm -f conftest.err
+if ${DBUS_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  DBUS_CFLAGS=`$PKG_CONFIG --cflags dbus-1 2>/dev/null`
+  DBUS_CFLAGS=`$PKG_CONFIG --cflags dbus-1 2>conftest.err`
 fi
 fi
 
@@ -16079,6 +16086,11 @@ fi
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: dbus-1 cflags: $DBUS_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: dbus-1 libs: $DBUS_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: dbus-1 errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $DBUS_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "dbus/dbus.h" "ac_cv_header_dbus_dbus_h" "$ac_includes_default"
@@ -16159,11 +16171,12 @@ fi
 
 if test "x$with_gnutls" != "xno"
 then
-    if ${GNUTLS_CFLAGS:+false} :
+    rm -f conftest.err
+if ${GNUTLS_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  GNUTLS_CFLAGS=`$PKG_CONFIG --cflags gnutls 2>/dev/null`
+  GNUTLS_CFLAGS=`$PKG_CONFIG --cflags gnutls 2>conftest.err`
 fi
 fi
 
@@ -16178,6 +16191,11 @@ fi
 GNUTLS_LIBS=${GNUTLS_LIBS:-"-lgnutls"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: gnutls cflags: $GNUTLS_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: gnutls libs: $GNUTLS_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: gnutls errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GNUTLS_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gnutls/gnutls.h" "ac_cv_header_gnutls_gnutls_h" "$ac_includes_default"
@@ -16289,11 +16307,12 @@ fi
 
 if test "x$with_sane" != "xno"
 then
-    if ${SANE_CFLAGS:+false} :
+    rm -f conftest.err
+if ${SANE_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  SANE_CFLAGS=`$PKG_CONFIG --cflags sane-backends 2>/dev/null`
+  SANE_CFLAGS=`$PKG_CONFIG --cflags sane-backends 2>conftest.err`
 fi
 fi
 test "$cross_compiling" = yes || SANE_CFLAGS=${SANE_CFLAGS:-`${SANE_CONFIG:-sane-config} --cflags 2>/dev/null`}
@@ -16308,6 +16327,11 @@ test "$cross_compiling" = yes || SANE_LIBS=${SANE_LIBS:-`${SANE_CONFIG:-sane-con
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: sane-backends cflags: $SANE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: sane-backends libs: $SANE_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: sane-backends errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $SANE_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "sane/sane.h" "ac_cv_header_sane_sane_h" "$ac_includes_default"
@@ -16371,11 +16395,12 @@ fi
 
 if test "x$with_usb" != "xno"
 then
-    if ${USB_CFLAGS:+false} :
+    rm -f conftest.err
+if ${USB_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  USB_CFLAGS=`$PKG_CONFIG --cflags libusb-1.0 2>/dev/null`
+  USB_CFLAGS=`$PKG_CONFIG --cflags libusb-1.0 2>conftest.err`
 fi
 fi
 
@@ -16390,6 +16415,11 @@ fi
 USB_LIBS=${USB_LIBS:-"-lusb-1.0"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libusb-1.0 cflags: $USB_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libusb-1.0 libs: $USB_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libusb-1.0 errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $USB_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "libusb.h" "ac_cv_header_libusb_h" "$ac_includes_default"
@@ -16525,11 +16555,12 @@ fi
 
 if test "x$with_gphoto" != "xno"
 then
-    if ${GPHOTO2_CFLAGS:+false} :
+    rm -f conftest.err
+if ${GPHOTO2_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  GPHOTO2_CFLAGS=`$PKG_CONFIG --cflags libgphoto2 2>/dev/null`
+  GPHOTO2_CFLAGS=`$PKG_CONFIG --cflags libgphoto2 2>conftest.err`
 fi
 fi
 test "$cross_compiling" = yes || GPHOTO2_CFLAGS=${GPHOTO2_CFLAGS:-`${GPHOTO2_CONFIG:-gphoto2-config} --cflags 2>/dev/null`}
@@ -16544,6 +16575,11 @@ test "$cross_compiling" = yes || GPHOTO2_LIBS=${GPHOTO2_LIBS:-`${GPHOTO2_CONFIG:
 GPHOTO2_LIBS=${GPHOTO2_LIBS:-"-lgphoto2"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libgphoto2 cflags: $GPHOTO2_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libgphoto2 libs: $GPHOTO2_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libgphoto2 errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GPHOTO2_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gphoto2-camera.h" "ac_cv_header_gphoto2_camera_h" "$ac_includes_default"
@@ -16593,11 +16629,12 @@ fi
 
 CPPFLAGS=$ac_save_CPPFLAGS
 
-    if ${GPHOTO2_PORT_CFLAGS:+false} :
+    rm -f conftest.err
+if ${GPHOTO2_PORT_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  GPHOTO2_PORT_CFLAGS=`$PKG_CONFIG --cflags libgphoto2_port 2>/dev/null`
+  GPHOTO2_PORT_CFLAGS=`$PKG_CONFIG --cflags libgphoto2_port 2>conftest.err`
 fi
 fi
 test "$cross_compiling" = yes || GPHOTO2_PORT_CFLAGS=${GPHOTO2_PORT_CFLAGS:-`${GPHOTO2_PORT_CONFIG:-gphoto2-port-config} --cflags 2>/dev/null`}
@@ -16612,6 +16649,11 @@ test "$cross_compiling" = yes || GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-`${GPHOT
 GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-"-lgphoto2_port"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libgphoto2_port cflags: $GPHOTO2_PORT_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libgphoto2_port libs: $GPHOTO2_PORT_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libgphoto2_port errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GPHOTO2_PORT_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gphoto2-port.h" "ac_cv_header_gphoto2_port_h" "$ac_includes_default"
@@ -16788,11 +16830,12 @@ fi
 
 if test "x$with_freetype" != "xno"
 then
-    if ${FREETYPE_CFLAGS:+false} :
+    rm -f conftest.err
+if ${FREETYPE_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  FREETYPE_CFLAGS=`$PKG_CONFIG --cflags freetype2 2>/dev/null`
+  FREETYPE_CFLAGS=`$PKG_CONFIG --cflags freetype2 2>conftest.err`
 fi
 fi
 test "$cross_compiling" = yes || FREETYPE_CFLAGS=${FREETYPE_CFLAGS:-`(${FREETYPE_CONFIG:-freetype-config} --cflags || ${FREETYPE2_CONFIG:-freetype2-config} --cflags) 2>/dev/null`}
@@ -16807,6 +16850,11 @@ test "$cross_compiling" = yes || FREETYPE_LIBS=${FREETYPE_LIBS:-`(${FREETYPE_CON
 FREETYPE_LIBS=${FREETYPE_LIBS:-"-lfreetype"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: freetype2 cflags: $FREETYPE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: freetype2 libs: $FREETYPE_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: freetype2 errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FREETYPE_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "ft2build.h" "ac_cv_header_ft2build_h" "$ac_includes_default"
@@ -16986,11 +17034,12 @@ fi
 
 if test "x$with_pulse" != "xno";
 then
-    if ${PULSE_CFLAGS:+false} :
+    rm -f conftest.err
+if ${PULSE_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  PULSE_CFLAGS=`$PKG_CONFIG --cflags libpulse 2>/dev/null`
+  PULSE_CFLAGS=`$PKG_CONFIG --cflags libpulse 2>conftest.err`
 fi
 fi
 
@@ -17005,6 +17054,11 @@ fi
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libpulse cflags: $PULSE_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libpulse libs: $PULSE_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libpulse errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $PULSE_CFLAGS"
        for ac_header in pulse/pulseaudio.h
@@ -17076,11 +17130,12 @@ fi
 
 if test "x$with_gstreamer" != "xno"
 then
-    if ${GSTREAMER_CFLAGS:+false} :
+    rm -f conftest.err
+if ${GSTREAMER_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  GSTREAMER_CFLAGS=`$PKG_CONFIG --cflags gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 2>/dev/null`
+  GSTREAMER_CFLAGS=`$PKG_CONFIG --cflags gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 2>conftest.err`
 fi
 fi
 
@@ -17095,6 +17150,11 @@ fi
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 cflags: $GSTREAMER_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 libs: $GSTREAMER_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GSTREAMER_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gst/gst.h" "ac_cv_header_gst_gst_h" "$ac_includes_default"
@@ -17323,11 +17383,12 @@ fi
 
 if test "x$with_udev" != "xno"
 then
-    if ${UDEV_CFLAGS:+false} :
+    rm -f conftest.err
+if ${UDEV_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  UDEV_CFLAGS=`$PKG_CONFIG --cflags libudev 2>/dev/null`
+  UDEV_CFLAGS=`$PKG_CONFIG --cflags libudev 2>conftest.err`
 fi
 fi
 
@@ -17342,6 +17403,11 @@ fi
 UDEV_LIBS=${UDEV_LIBS:-"-ludev"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libudev cflags: $UDEV_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libudev libs: $UDEV_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libudev errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $UDEV_CFLAGS"
        for ac_header in libudev.h
@@ -17415,11 +17481,12 @@ fi
 
 if test "x$with_unwind" != xno
 then
-    if ${UNWIND_CFLAGS:+false} :
+    rm -f conftest.err
+if ${UNWIND_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  UNWIND_CFLAGS=`$PKG_CONFIG --cflags libunwind 2>/dev/null`
+  UNWIND_CFLAGS=`$PKG_CONFIG --cflags libunwind 2>conftest.err`
 fi
 fi
 
@@ -17434,6 +17501,11 @@ fi
 UNWIND_LIBS=${UNWIND_LIBS:-"-lunwind"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libunwind cflags: $UNWIND_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: libunwind libs: $UNWIND_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: libunwind errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $UNWIND_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for unw_step" >&5
@@ -17527,11 +17599,12 @@ esac
 
 if test "x$with_sdl" != "xno"
 then
-    if ${SDL2_CFLAGS:+false} :
+    rm -f conftest.err
+if ${SDL2_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  SDL2_CFLAGS=`$PKG_CONFIG --cflags sdl2 2>/dev/null`
+  SDL2_CFLAGS=`$PKG_CONFIG --cflags sdl2 2>conftest.err`
 fi
 fi
 
@@ -17546,6 +17619,11 @@ fi
 SDL2_LIBS=${SDL2_LIBS:-"-lSDL2"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: sdl2 cflags: $SDL2_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: sdl2 libs: $SDL2_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: sdl2 errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $SDL2_CFLAGS"
        for ac_header in SDL.h
@@ -17627,11 +17705,12 @@ fi
 
 if test "x$with_capi" != "xno"
 then
-    if ${CAPI20_CFLAGS:+false} :
+    rm -f conftest.err
+if ${CAPI20_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  CAPI20_CFLAGS=`$PKG_CONFIG --cflags capi20 2>/dev/null`
+  CAPI20_CFLAGS=`$PKG_CONFIG --cflags capi20 2>conftest.err`
 fi
 fi
 
@@ -17646,6 +17725,11 @@ fi
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: capi20 cflags: $CAPI20_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: capi20 libs: $CAPI20_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: capi20 errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $CAPI20_CFLAGS"
     ac_fn_c_check_header_compile "$LINENO" "capi20.h" "ac_cv_header_capi20_h" "#define __user
@@ -17724,11 +17808,12 @@ fi
 
 if test "x$with_cups" != "xno"
 then
-    if ${CUPS_CFLAGS:+false} :
+    rm -f conftest.err
+if ${CUPS_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  CUPS_CFLAGS=`$PKG_CONFIG --cflags cups 2>/dev/null`
+  CUPS_CFLAGS=`$PKG_CONFIG --cflags cups 2>conftest.err`
 fi
 fi
 test "$cross_compiling" = yes || CUPS_CFLAGS=${CUPS_CFLAGS:-`${CUPS_CONFIG:-cups-config} --cflags 2>/dev/null`}
@@ -17743,6 +17828,11 @@ test "$cross_compiling" = yes || CUPS_LIBS=${CUPS_LIBS:-`${CUPS_CONFIG:-cups-con
 CUPS_LIBS=${CUPS_LIBS:-"-lcups"}
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: cups cflags: $CUPS_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: cups libs: $CUPS_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: cups errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $CUPS_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "cups/cups.h" "ac_cv_header_cups_cups_h" "$ac_includes_default"
@@ -17834,11 +17924,12 @@ fi
 
 if test "x$with_fontconfig" != "xno"
 then
-    if ${FONTCONFIG_CFLAGS:+false} :
+    rm -f conftest.err
+if ${FONTCONFIG_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  FONTCONFIG_CFLAGS=`$PKG_CONFIG --cflags fontconfig 2>/dev/null`
+  FONTCONFIG_CFLAGS=`$PKG_CONFIG --cflags fontconfig 2>conftest.err`
 fi
 fi
 test "$cross_compiling" = yes || FONTCONFIG_CFLAGS=${FONTCONFIG_CFLAGS:-$X_CFLAGS}
@@ -17853,6 +17944,11 @@ test "$cross_compiling" = yes || FONTCONFIG_LIBS=${FONTCONFIG_LIBS:-$X_LIBS}
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: fontconfig cflags: $FONTCONFIG_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: fontconfig libs: $FONTCONFIG_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: fontconfig errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $FONTCONFIG_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "fontconfig/fontconfig.h" "ac_cv_header_fontconfig_fontconfig_h" "$ac_includes_default"
@@ -17937,11 +18033,12 @@ fi
 
 if test "x$with_krb5" != "xno"
 then
-    if ${KRB5_CFLAGS:+false} :
+    rm -f conftest.err
+if ${KRB5_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  KRB5_CFLAGS=`$PKG_CONFIG --cflags krb5 2>/dev/null`
+  KRB5_CFLAGS=`$PKG_CONFIG --cflags krb5 2>conftest.err`
 fi
 fi
 test "$cross_compiling" = yes || KRB5_CFLAGS=${KRB5_CFLAGS:-`${KRB5_CONFIG:-krb5-config} --cflags 2>/dev/null`}
@@ -17956,6 +18053,11 @@ test "$cross_compiling" = yes || KRB5_LIBS=${KRB5_LIBS:-`${KRB5_CONFIG:-krb5-con
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: krb5 cflags: $KRB5_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: krb5 libs: $KRB5_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: krb5 errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $KRB5_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "krb5/krb5.h" "ac_cv_header_krb5_krb5_h" "$ac_includes_default"
@@ -18041,11 +18143,12 @@ test "x$ac_cv_lib_soname_krb5" != "x" || with_gssapi=${with_gssapi:-no}
 
 if test "x$with_gssapi" != "xno"
 then
-    if ${GSSAPI_CFLAGS:+false} :
+    rm -f conftest.err
+if ${GSSAPI_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  GSSAPI_CFLAGS=`$PKG_CONFIG --cflags krb5-gssapi 2>/dev/null`
+  GSSAPI_CFLAGS=`$PKG_CONFIG --cflags krb5-gssapi 2>conftest.err`
 fi
 fi
 test "$cross_compiling" = yes || GSSAPI_CFLAGS=${GSSAPI_CFLAGS:-`${KRB5_CONFIG:-krb5-config} --cflags gssapi 2>/dev/null`}
@@ -18060,6 +18163,11 @@ test "$cross_compiling" = yes || GSSAPI_LIBS=${GSSAPI_LIBS:-`${KRB5_CONFIG:-krb5
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: krb5-gssapi cflags: $GSSAPI_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: krb5-gssapi libs: $GSSAPI_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: krb5-gssapi errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GSSAPI_CFLAGS"
 ac_fn_c_check_header_compile "$LINENO" "gssapi/gssapi.h" "ac_cv_header_gssapi_gssapi_h" "$ac_includes_default"
@@ -18254,11 +18362,12 @@ fi
 
 if test "x$with_netapi" != "xno"
 then
-    if ${NETAPI_CFLAGS:+false} :
+    rm -f conftest.err
+if ${NETAPI_CFLAGS:+false} :
 then :
   if test ${PKG_CONFIG+y}
 then :
-  NETAPI_CFLAGS=`$PKG_CONFIG --cflags netapi 2>/dev/null`
+  NETAPI_CFLAGS=`$PKG_CONFIG --cflags netapi 2>conftest.err`
 fi
 fi
 
@@ -18273,6 +18382,11 @@ fi
 
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: netapi cflags: $NETAPI_CFLAGS" >&5
 printf "%s\n" "$as_me:${as_lineno-$LINENO}: netapi libs: $NETAPI_LIBS" >&5
+if test -s conftest.err; then
+     printf %s "$as_me:${as_lineno-$LINENO}: netapi errors: " >&5
+     cat conftest.err >&5
+fi
+rm -f conftest.err
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $NETAPI_CFLAGS"
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for -lnetapi" >&5
