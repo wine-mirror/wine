@@ -234,7 +234,7 @@ static BOOL PATH_AddEntry(struct gdi_path *pPath, const POINT *pPoint, BYTE flag
     /* FIXME: If newStroke is true, perhaps we want to check that we're
      * getting a PT_MOVETO
      */
-    TRACE("(%d,%d) - %d\n", pPoint->x, pPoint->y, flags);
+    TRACE("(%d,%d) - %d\n", (int)pPoint->x, (int)pPoint->y, flags);
 
     /* Reserve enough memory for an extra path entry */
     if(!PATH_ReserveEntries(pPath, pPath->count+1))
@@ -1448,7 +1448,7 @@ static BOOL PATH_add_outline(struct path_physdev *physdev, INT x, INT y,
 
         if (header->dwType != TT_POLYGON_TYPE)
         {
-            FIXME("Unknown header type %d\n", header->dwType);
+            FIXME("Unknown header type %d\n", (int)header->dwType);
             return FALSE;
         }
 

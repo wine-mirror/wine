@@ -423,7 +423,7 @@ HKL WINAPI NtUserGetKeyboardLayout( DWORD thread_id )
     HKL layout = thread->kbd_layout;
 
     if (thread_id && thread_id != GetCurrentThreadId())
-        FIXME( "couldn't return keyboard layout for thread %04x\n", thread_id );
+        FIXME( "couldn't return keyboard layout for thread %04x\n", (int)thread_id );
 
     if (!layout) return get_locale_kbd_layout();
     return layout;
@@ -756,7 +756,7 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     const char *const *vscname;
     const UINT *vsc2vk;
 
-    TRACE_(keyboard)( "lparam %d, buffer %p, size %d.\n", lparam, buffer, size );
+    TRACE_(keyboard)( "lparam %d, buffer %p, size %d.\n", (int)lparam, buffer, size );
 
     if (!buffer || !size) return 0;
     if ((len = user_driver->pGetKeyNameText( lparam, buffer, size )) >= 0) return len;
@@ -1124,7 +1124,7 @@ int WINAPI NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUSEMOV
     unsigned int i;
 
 
-    TRACE( "%d, %p, %p, %d, %d\n", size, ptin, ptout, count, resolution );
+    TRACE( "%d, %p, %p, %d, %d\n", size, ptin, ptout, count, (int)resolution );
 
     if ((size != sizeof(MOUSEMOVEPOINT)) || (count < 0) || (count > ARRAY_SIZE( positions )))
     {
@@ -1316,11 +1316,11 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
     POINT pos;
 
     TRACE( "size %u, flags %#x, hwnd %p, time %u\n",
-           info->cbSize, info->dwFlags, info->hwndTrack, info->dwHoverTime );
+           (int)info->cbSize, (int)info->dwFlags, info->hwndTrack, (int)info->dwHoverTime );
 
     if (info->cbSize != sizeof(TRACKMOUSEEVENT))
     {
-        WARN( "wrong size %u\n", info->cbSize );
+        WARN( "wrong size %u\n", (int)info->cbSize );
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
@@ -1348,7 +1348,7 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
     TRACE( "point %s hwnd %p hittest %d\n", wine_dbgstr_point(&pos), hwnd, hittest );
 
     if (info->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT))
-        FIXME( "ignoring flags %#x\n", info->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT) );
+        FIXME( "ignoring flags %#x\n", (int)info->dwFlags & ~(TME_CANCEL | TME_HOVER | TME_LEAVE | TME_NONCLIENT) );
 
     if (info->dwFlags & TME_CANCEL)
     {

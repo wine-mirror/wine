@@ -689,7 +689,7 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
     NtUserClipCursor( NULL );
 
     TRACE( "hwnd %p command %04x, hittest %d, pos %d,%d\n",
-           hwnd, syscommand, hittest, pt.x, pt.y );
+           hwnd, syscommand, hittest, (int)pt.x, (int)pt.y );
 
     if (syscommand == SC_MOVE)
     {
@@ -946,7 +946,7 @@ static void track_nc_scroll_bar( HWND hwnd, WPARAM wparam, POINT pt )
 
 static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
-    TRACE( "hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, wparam, lparam );
+    TRACE( "hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, (long)wparam, lparam );
 
     if (!is_window_enabled( hwnd )) return 0;
 
@@ -1007,7 +1007,7 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
     case SC_ARRANGE:
     case SC_NEXTWINDOW:
     case SC_PREVWINDOW:
-        FIXME( "unimplemented WM_SYSCOMMAND %04lx\n", wparam );
+        FIXME( "unimplemented WM_SYSCOMMAND %04lx\n", (long)wparam );
         break;
 
     default:
@@ -1856,7 +1856,7 @@ static void handle_nc_calc_size( HWND hwnd, WPARAM wparam, RECT *win_rect )
         if (((style & (WS_CHILD | WS_POPUP)) != WS_CHILD) && get_menu( hwnd ))
         {
             TRACE( "getting menu bar height with hwnd %p, width %d, at (%d, %d)\n",
-                   hwnd, win_rect->right - win_rect->left, -rect.left, -rect.top );
+                   hwnd, (int)(win_rect->right - win_rect->left), (int)-rect.left, (int)-rect.top );
 
             win_rect->top += get_menu_bar_height( hwnd, win_rect->right - win_rect->left,
                                                   -rect.left, -rect.top );
@@ -1901,7 +1901,7 @@ LRESULT handle_nc_hit_test( HWND hwnd, POINT pt )
     RECT rect, client_rect;
     DWORD style, ex_style;
 
-    TRACE( "hwnd %p pt %d,%d\n", hwnd, pt.x, pt.y );
+    TRACE( "hwnd %p pt %d,%d\n", hwnd, (int)pt.x, (int)pt.y );
 
     get_window_rects( hwnd, COORDS_SCREEN, &rect, &client_rect, get_thread_dpi() );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
@@ -2343,7 +2343,7 @@ static LRESULT handle_nc_mouse_move( HWND hwnd, WPARAM wparam, LPARAM lparam )
     RECT rect;
     POINT pt;
 
-    TRACE( "hwnd=%p wparam=%#lx lparam=%#lx\n", hwnd, wparam, lparam );
+    TRACE( "hwnd=%p wparam=%#lx lparam=%#lx\n", hwnd, (long)wparam, lparam );
 
     if (wparam != HTHSCROLL && wparam != HTVSCROLL)
         return 0;
@@ -2996,7 +2996,7 @@ BOOL WINAPI NtUserGetTitleBarInfo( HWND hwnd, TITLEBARINFO *info )
 
     if (info->cbSize != sizeof(TITLEBARINFO))
     {
-        TRACE( "Invalid TITLEBARINFO size: %d\n", info->cbSize );
+        TRACE( "Invalid TITLEBARINFO size: %d\n", (int)info->cbSize );
         RtlSetLastWin32Error( ERROR_INVALID_PARAMETER );
         return FALSE;
     }

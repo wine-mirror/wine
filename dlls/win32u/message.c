@@ -1859,7 +1859,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
         TRACE( "got type %d msg %x (%s) hwnd %p wp %lx lp %lx\n",
                info.type, info.msg.message,
                (info.type == MSG_WINEVENT) ? "MSG_WINEVENT" : debugstr_msg_name(info.msg.message, info.msg.hwnd),
-               info.msg.hwnd, info.msg.wParam, info.msg.lParam );
+               info.msg.hwnd, (long)info.msg.wParam, info.msg.lParam );
 
         switch(info.type)
         {
@@ -1924,7 +1924,8 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                 hook.time        = info.msg.time;
                 hook.dwExtraInfo = msg_data->hardware.info;
                 TRACE( "calling keyboard LL hook vk %x scan %x flags %x time %u info %lx\n",
-                       hook.vkCode, hook.scanCode, hook.flags, hook.time, hook.dwExtraInfo );
+                       (int)hook.vkCode, (int)hook.scanCode, (int)hook.flags,
+                       (int)hook.time, (long)hook.dwExtraInfo );
                 result = call_hooks( WH_KEYBOARD_LL, HC_ACTION, info.msg.wParam,
                                      (LPARAM)&hook, sizeof(hook) );
             }
@@ -1938,7 +1939,8 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                 hook.time        = info.msg.time;
                 hook.dwExtraInfo = msg_data->hardware.info;
                 TRACE( "calling mouse LL hook pos %d,%d data %x flags %x time %u info %lx\n",
-                       hook.pt.x, hook.pt.y, hook.mouseData, hook.flags, hook.time, hook.dwExtraInfo );
+                       (int)hook.pt.x, (int)hook.pt.y, (int)hook.mouseData, (int)hook.flags,
+                       (int)hook.time, (long)hook.dwExtraInfo );
                 result = call_hooks( WH_MOUSE_LL, HC_ACTION, info.msg.wParam,
                                      (LPARAM)&hook, sizeof(hook) );
             }
@@ -2483,7 +2485,7 @@ static LRESULT retrieve_reply( const struct send_message_info *info,
     free( reply_data );
 
     TRACE( "hwnd %p msg %x (%s) wp %lx lp %lx got reply %lx (err=%d)\n",
-           info->hwnd, info->msg, debugstr_msg_name(info->msg, info->hwnd), info->wparam,
+           info->hwnd, info->msg, debugstr_msg_name(info->msg, info->hwnd), (long)info->wparam,
            info->lparam, *result, status );
 
     /* MSDN states that last error is 0 on timeout, but at least NT4 returns ERROR_TIMEOUT */
@@ -2499,7 +2501,8 @@ static LRESULT send_inter_thread_message( const struct send_message_info *info, 
     size_t reply_size = 0;
 
     TRACE( "hwnd %p msg %x (%s) wp %lx lp %lx\n",
-           info->hwnd, info->msg, debugstr_msg_name(info->msg, info->hwnd), info->wparam, info->lparam );
+           info->hwnd, info->msg, debugstr_msg_name(info->msg, info->hwnd),
+           (long)info->wparam, info->lparam );
 
     user_check_not_lock();
 
@@ -2911,7 +2914,7 @@ UINT_PTR WINAPI NtUserSetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC 
     }
     SERVER_END_REQ;
 
-    TRACE( "Added %p %lx %p timeout %d\n", hwnd, id, winproc, timeout );
+    TRACE( "Added %p %lx %p timeout %d\n", hwnd, (long)id, winproc, timeout );
     return ret;
 }
 
@@ -2922,7 +2925,7 @@ UINT_PTR WINAPI NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout )
 {
     UINT_PTR ret;
 
-    TRACE( "window %p, id %#lx, timeout %u\n", hwnd, id, timeout );
+    TRACE( "window %p, id %#lx, timeout %u\n", hwnd, (long)id, timeout );
 
     timeout = min( max( USER_TIMER_MINIMUM, timeout ), USER_TIMER_MAXIMUM );
 
@@ -3113,7 +3116,7 @@ BOOL WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
     }
 
     TRACE( "hwnd %p msg %x (%s) wp %lx lp %lx\n",
-           hwnd, msg, debugstr_msg_name(msg, hwnd), wparam, lparam );
+           hwnd, msg, debugstr_msg_name(msg, hwnd), (long)wparam, lparam );
 
     info.type   = MSG_POSTED;
     info.hwnd   = hwnd;
@@ -3230,7 +3233,7 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         return 0;
 
     default:
-        FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, wparam, lparam, result_info, type, ansi );
+        FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, (long)wparam, lparam, result_info, (int)type, ansi );
     }
     return 0;
 }
@@ -3250,8 +3253,8 @@ BOOL WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags )
     if (msg->message < WM_KEYFIRST || msg->message > WM_KEYLAST) return FALSE;
     if (msg->message != WM_KEYDOWN && msg->message != WM_SYSKEYDOWN) return TRUE;
 
-    TRACE_(key)( "Translating key %s (%04lX), scancode %04x\n",
-                 debugstr_vkey_name( msg->wParam ), msg->wParam, HIWORD(msg->lParam) );
+    TRACE_(key)( "Translating key %s (%04x), scancode %04x\n",
+                 debugstr_vkey_name( msg->wParam ), LOWORD(msg->wParam), HIWORD(msg->lParam) );
 
     switch (msg->wParam)
     {

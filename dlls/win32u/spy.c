@@ -2344,7 +2344,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             {
                 LPPOINT point = (LPPOINT) sp_e->lParam;
                 if (point) {
-                    TRACE("lParam point x=%d, y=%d\n", point->x, point->y);
+                    TRACE("lParam point x=%d, y=%d\n", (int)point->x, (int)point->y);
                 }
                 break;
             }
@@ -2370,14 +2370,14 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             if (enter && sp_e->lParam)
             {
                 CHARRANGE *cr = (CHARRANGE *) sp_e->lParam;
-                TRACE("CHARRANGE: cpMin=%d cpMax=%d\n", cr->cpMin, cr->cpMax);
+                TRACE("CHARRANGE: cpMin=%d cpMax=%d\n", (int)cr->cpMin, (int)cr->cpMax);
             }
             break;
         case EM_SETCHARFORMAT:
             if (enter && sp_e->lParam)
             {
                 CHARFORMATW *cf = (CHARFORMATW *) sp_e->lParam;
-                TRACE("CHARFORMAT: dwMask=0x%08x dwEffects=", cf->dwMask);
+                TRACE("CHARFORMAT: dwMask=0x%08x dwEffects=", (int)cf->dwMask);
                 if ((cf->dwMask & CFM_BOLD) && (cf->dwEffects & CFE_BOLD))
                     TRACE(" CFE_BOLD");
                 if ((cf->dwMask & CFM_COLOR) && (cf->dwEffects & CFE_AUTOCOLOR))
@@ -2392,11 +2392,11 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                     TRACE(" CFE_UNDERLINE");
                 TRACE("\n");
                 if (cf->dwMask & CFM_SIZE)
-                    TRACE("yHeight=%d\n", cf->yHeight);
+                    TRACE("yHeight=%d\n", (int)cf->yHeight);
                 if (cf->dwMask & CFM_OFFSET)
-                    TRACE("yOffset=%d\n", cf->yOffset);
+                    TRACE("yOffset=%d\n", (int)cf->yOffset);
                 if ((cf->dwMask & CFM_COLOR) && !(cf->dwEffects & CFE_AUTOCOLOR))
-                    TRACE("crTextColor=%x\n", cf->crTextColor);
+                    TRACE("crTextColor=%x\n", (int)cf->crTextColor);
                 TRACE("bCharSet=%x bPitchAndFamily=%x\n", cf->bCharSet, cf->bPitchAndFamily);
                 /* FIXME: we should try to be a bit more intelligent about
                  * whether this is in ANSI or Unicode (it could be either) */
@@ -2441,7 +2441,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             TRACE("%s %s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
                   unicode ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
                   unicode ? debugstr_w((LPCWSTR)cs->lpszClass) : debugstr_a(cs->lpszClass),
-                  cs->dwExStyle, cs->style, cs->x, cs->y, cs->cx, cs->cy,
+                  (int)cs->dwExStyle, (int)cs->style, cs->x, cs->y, cs->cx, cs->cy,
                   cs->hwndParent, cs->hMenu, cs->hInstance, cs->lpCreateParams);
             break;
         }
@@ -2465,7 +2465,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
             {
                 LPSTYLESTRUCT ss = (LPSTYLESTRUCT) sp_e->lParam;
                 TRACE("STYLESTRUCT: StyleOld=0x%08x, StyleNew=0x%08x\n",
-                      ss->styleOld, ss->styleNew);
+                      (int)ss->styleOld, (int)ss->styleNew);
             }
             break;
         case WM_NCCALCSIZE:
@@ -2498,7 +2498,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                 p = SPY_Bsearch_Notify( pnmh->code );
                 if (p) {
                     TRACE("NMHDR hwndFrom=%p idFrom=0x%08lx code=%s<0x%08x>, extra=0x%x\n",
-                          pnmh->hwndFrom, pnmh->idFrom, p->name, pnmh->code, p->len);
+                          pnmh->hwndFrom, (long)pnmh->idFrom, p->name, pnmh->code, p->len);
                     dumplen = p->len;
 
                     /* for CUSTOMDRAW, dump all the data for TOOLBARs */
@@ -2520,7 +2520,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                 }
                 else
                     TRACE("NMHDR hwndFrom=%p idFrom=0x%08lx code=0x%08x\n",
-                          pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
+                          pnmh->hwndFrom, (long)pnmh->idFrom, pnmh->code);
             }
             break;
         default:
@@ -2614,8 +2614,8 @@ void spy_enter_message( INT iFlag, HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     {
     case SPY_DISPATCHMESSAGE:
         TRACE("%*s(%p) %-16s [%04x] %s dispatched  wp=%08lx lp=%08lx\n",
-                        indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
-                        sp_e.msg_name, wParam, lParam);
+              indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
+              sp_e.msg_name, (long)wParam, lParam);
         break;
 
     case SPY_SENDMESSAGE:
@@ -2624,11 +2624,11 @@ void spy_enter_message( INT iFlag, HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
             DWORD tid = get_window_thread( hWnd, NULL );
 
             if (tid == GetCurrentThreadId()) strcpy( taskName, "self" );
-            else sprintf( taskName, "tid %04x", GetCurrentThreadId() );
+            else sprintf( taskName, "tid %04x", (int)GetCurrentThreadId() );
 
             TRACE("%*s(%p) %-16s [%04x] %s sent from %s wp=%08lx lp=%08lx\n",
                   indent, "", hWnd, debugstr_w(sp_e.wnd_name), msg,
-                  sp_e.msg_name, taskName, wParam, lParam );
+                  sp_e.msg_name, taskName, (long)wParam, lParam );
             SPY_DumpStructure(&sp_e, TRUE);
         }
         break;
@@ -2636,7 +2636,7 @@ void spy_enter_message( INT iFlag, HWND hWnd, UINT msg, WPARAM wParam, LPARAM lP
     case SPY_DEFWNDPROC:
         if (exclude_dwp()) return;
         TRACE("%*s(%p)  DefWindowProc:[%04x] %s  wp=%08lx lp=%08lx\n",
-              indent, "", hWnd, msg, sp_e.msg_name, wParam, lParam );
+              indent, "", hWnd, msg, sp_e.msg_name, (long)wParam, lParam );
         break;
     }
     set_indent_level( indent + SPY_INDENT_UNIT );

@@ -2066,7 +2066,7 @@ BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
 {
     BOOL ret;
 
-    TRACE( "(%p,%s,%d,%x)\n", hwnd, debugstr_color(key), alpha, flags );
+    TRACE( "(%p,%s,%d,%x)\n", hwnd, debugstr_color(key), alpha, (int)flags );
 
     SERVER_START_REQ( set_window_layered_info )
     {
@@ -2245,7 +2245,7 @@ HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
     }
     ret = list[i];
     free( list );
-    TRACE( "scope %p (%d,%d) returning %p\n", hwnd, pt.x, pt.y, ret );
+    TRACE( "scope %p (%d,%d) returning %p\n", hwnd, (int)pt.x, (int)pt.y, ret );
     return ret;
 }
 
@@ -2450,8 +2450,8 @@ BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
     release_win_ptr( win );
 
     TRACE( "%p: returning min %d,%d max %d,%d normal %s\n",
-           hwnd, placement->ptMinPosition.x, placement->ptMinPosition.y,
-           placement->ptMaxPosition.x, placement->ptMaxPosition.y,
+           hwnd, (int)placement->ptMinPosition.x, (int)placement->ptMinPosition.y,
+           (int)placement->ptMaxPosition.x, (int)placement->ptMaxPosition.y,
            wine_dbgstr_rect(&placement->rcNormalPosition) );
     return TRUE;
 }
@@ -2510,10 +2510,11 @@ static BOOL set_window_placement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT 
     if (flags & PLACE_RECT) make_rect_onscreen( &wp.rcNormalPosition );
 
     TRACE( "%p: setting min %d,%d max %d,%d normal %s flags %x adjusted to min %d,%d max %d,%d normal %s\n",
-           hwnd, wndpl->ptMinPosition.x, wndpl->ptMinPosition.y,
-           wndpl->ptMaxPosition.x, wndpl->ptMaxPosition.y,
+           hwnd, (int)wndpl->ptMinPosition.x, (int)wndpl->ptMinPosition.y,
+           (int)wndpl->ptMaxPosition.x, (int)wndpl->ptMaxPosition.y,
            wine_dbgstr_rect(&wndpl->rcNormalPosition), flags,
-           wp.ptMinPosition.x, wp.ptMinPosition.y, wp.ptMaxPosition.x, wp.ptMaxPosition.y,
+           (int)wp.ptMinPosition.x, (int)wp.ptMinPosition.y,
+           (int)wp.ptMaxPosition.x, (int)wp.ptMaxPosition.y,
            wine_dbgstr_rect(&wp.rcNormalPosition) );
 
     if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
@@ -3850,10 +3851,10 @@ MINMAXINFO get_min_max_info( HWND hwnd )
     }
 
     TRACE( "%d %d / %d %d / %d %d / %d %d\n",
-           minmax.ptMaxSize.x, minmax.ptMaxSize.y,
-           minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
-           minmax.ptMaxTrackSize.x, minmax.ptMaxTrackSize.y,
-           minmax.ptMinTrackSize.x, minmax.ptMinTrackSize.y );
+           (int)minmax.ptMaxSize.x, (int)minmax.ptMaxSize.y,
+           (int)minmax.ptMaxPosition.x, (int)minmax.ptMaxPosition.y,
+           (int)minmax.ptMaxTrackSize.x, (int)minmax.ptMaxTrackSize.y,
+           (int)minmax.ptMinTrackSize.x, (int)minmax.ptMinTrackSize.y );
 
     minmax.ptMaxTrackSize.x = max( minmax.ptMaxTrackSize.x, minmax.ptMinTrackSize.x );
     minmax.ptMaxTrackSize.y = max( minmax.ptMaxTrackSize.y, minmax.ptMinTrackSize.y );
@@ -4879,7 +4880,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
 
     if (!handle)
     {
-        WARN( "error %d creating window\n", RtlGetLastWin32Error() );
+        WARN( "error %d creating window\n", (int)RtlGetLastWin32Error() );
         return NULL;
     }
 
@@ -5417,7 +5418,7 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
         return HandleToUlong( is_current_thread_window( hwnd ));
 
     default:
-        FIXME( "invalid code %u\n", code );
+        FIXME( "invalid code %u\n", (int)code );
         return 0;
     }
 }
@@ -5535,7 +5536,7 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         }
 
     default:
-        FIXME( "invalid code %u\n", code );
+        FIXME( "invalid code %u\n", (int)code );
         return 0;
     }
 }

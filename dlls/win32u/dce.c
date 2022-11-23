@@ -364,7 +364,7 @@ BOOL create_dib_surface( HDC hdc, const BITMAPINFO *info )
     memcpy( &surface->info, info, surface->info_size );
 
     TRACE( "created %p %ux%u for info %p bits %p\n",
-           surface, rect.right, rect.bottom, info, surface->bits );
+           surface, (int)rect.right, (int)rect.bottom, info, surface->bits );
 
     region = NtGdiCreateRectRgn( rect.left, rect.top, rect.right, rect.bottom );
     set_visible_region( hdc, region, &rect, &rect, &surface->header );
@@ -890,7 +890,7 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
     if (!hwnd) hwnd = get_desktop_window();
     else hwnd = get_full_window_handle( hwnd );
 
-    TRACE( "hwnd %p, clip_rgn %p, flags %08x\n", hwnd, clip_rgn, flags );
+    TRACE( "hwnd %p, clip_rgn %p, flags %08x\n", hwnd, clip_rgn, (int)flags );
 
     if (!is_window(hwnd)) return 0;
 
@@ -1016,7 +1016,7 @@ HDC WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags )
 
     if (update_vis_rgn) update_visible_region( dce );
 
-    TRACE( "(%p,%p,0x%x): returning %p%s\n", hwnd, clip_rgn, flags, dce->hdc,
+    TRACE( "(%p,%p,0x%x): returning %p%s\n", hwnd, clip_rgn, (int)flags, dce->hdc,
            update_vis_rgn ? " (updated)" : "" );
     return dce->hdc;
 }

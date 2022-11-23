@@ -84,7 +84,7 @@ HIMC WINAPI NtUserCreateInputContext( UINT_PTR client_ptr )
         return 0;
     }
 
-    TRACE( "%lx returning %p\n", client_ptr, handle );
+    TRACE( "%lx returning %p\n", (long)client_ptr, handle );
     return handle;
 }
 
@@ -115,7 +115,7 @@ BOOL WINAPI NtUserUpdateInputContext( HIMC handle, UINT attr, UINT_PTR value )
     struct imc *imc;
     BOOL ret = TRUE;
 
-    TRACE( "%p %u %lx\n", handle, attr, value );
+    TRACE( "%p %u %lx\n", handle, attr, (long)value );
 
     if (!(imc = get_imc_ptr( handle ))) return FALSE;
 
@@ -171,7 +171,7 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
     WND *win;
     UINT ret = AICR_OK;
 
-    TRACE( "%p %p %x\n", hwnd, ctx, flags );
+    TRACE( "%p %p %x\n", hwnd, ctx, (int)flags );
 
     switch (flags)
     {
@@ -181,7 +181,7 @@ UINT WINAPI NtUserAssociateInputContext( HWND hwnd, HIMC ctx, ULONG flags )
         break;
 
     default:
-        FIXME( "unknown flags 0x%x\n", flags );
+        FIXME( "unknown flags 0x%x\n", (int)flags );
         return AICR_FAILED;
     }
 
