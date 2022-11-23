@@ -55,7 +55,6 @@
 #include "uxtheme.h"
 #include "vssym32.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "comctl32.h"
 
@@ -255,7 +254,7 @@ static inline void paint_button( BUTTON_INFO *infoPtr, LONG style, UINT action )
 static inline WCHAR *get_button_text( const BUTTON_INFO *infoPtr )
 {
     INT len = GetWindowTextLengthW( infoPtr->hwnd );
-    WCHAR *buffer = heap_alloc( (len + 1) * sizeof(WCHAR) );
+    WCHAR *buffer = malloc( (len + 1) * sizeof(WCHAR) );
     if (buffer)
         GetWindowTextW( infoPtr->hwnd, buffer, len + 1 );
     return buffer;
@@ -335,7 +334,7 @@ HRGN set_control_clipping( HDC hdc, const RECT *rect )
 static WCHAR *heap_strndupW(const WCHAR *src, size_t length)
 {
     size_t size = (length + 1) * sizeof(WCHAR);
-    WCHAR *dst = heap_alloc(size);
+    WCHAR *dst = malloc(size);
     if (dst) memcpy(dst, src, size);
     return dst;
 }
@@ -504,7 +503,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
     {
         CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
 
-        infoPtr = heap_alloc_zero( sizeof(*infoPtr) );
+        infoPtr = calloc( 1, sizeof(*infoPtr) );
         SetWindowLongPtrW( hWnd, 0, (LONG_PTR)infoPtr );
         infoPtr->hwnd = hWnd;
         infoPtr->parent = cs->hwndParent;
@@ -521,8 +520,8 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
             DeleteObject(infoPtr->u.bitmap);
         else if (infoPtr->image_type == IMAGE_ICON)
             DestroyIcon(infoPtr->u.icon);
-        heap_free(infoPtr->note);
-        heap_free(infoPtr);
+        free(infoPtr->note);
+        free(infoPtr);
         break;
 
     case WM_CREATE:
@@ -782,7 +781,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
             return FALSE;
         }
 
-        heap_free(infoPtr->note);
+        free(infoPtr->note);
         if (note)
         {
             infoPtr->note_length = lstrlenW(note);
@@ -792,7 +791,7 @@ static LRESULT CALLBACK BUTTON_WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, L
         if (!note || !infoPtr->note)
         {
             infoPtr->note_length = 0;
-            infoPtr->note = heap_alloc_zero(sizeof(WCHAR));
+            infoPtr->note = calloc(1, sizeof(WCHAR));
         }
 
         SetLastError(NO_ERROR);
@@ -1289,7 +1288,7 @@ static void BUTTON_GetTextIdealSize(BUTTON_INFO *infoPtr, LONG maxWidth, SIZE *s
     hdc = GetDC(infoPtr->hwnd);
     rect = BUTTON_GetTextRect(infoPtr, hdc, text, maxWidth);
     ReleaseDC(infoPtr->hwnd, hdc);
-    heap_free(text);
+    free(text);
 
     size->cx = rect.right - rect.left + margin->left + margin->right;
     size->cy = rect.bottom - rect.top + margin->top + margin->bottom;
@@ -1489,7 +1488,7 @@ static BOOL CL_GetIdealSize(BUTTON_INFO *infoPtr, SIZE *size)
             RECT r;
             GetThemeTextExtent(theme, hdc, BP_COMMANDLINK, CMDLS_NORMAL,
                                text, -1, flags, &text_bound, &r);
-            heap_free(text);
+            free(text);
             text_w = r.right - r.left;
             text_h = r.bottom - r.top;
         }
@@ -1527,7 +1526,7 @@ static BOOL CL_GetIdealSize(BUTTON_INFO *infoPtr, SIZE *size)
                     RECT r = text_bound;
                     old_font = SelectObject(hdc, font);
                     DrawTextW(hdc, text, -1, &r, flags | DT_CALCRECT);
-                    heap_free(text);
+                    free(text);
 
                     text_w = r.right - r.left;
                     text_h = r.bottom - r.top;
@@ -1596,7 +1595,7 @@ static UINT BUTTON_CalcLayoutRects(const BUTTON_INFO *infoPtr, HDC hdc, RECT *la
        SetRectEmpty(labelRc);
        SetRectEmpty(imageRc);
        SetRectEmpty(textRc);
-       heap_free(text);
+       free(text);
        return (UINT)-1;
    }
 
@@ -1699,7 +1698,7 @@ static UINT BUTTON_CalcLayoutRects(const BUTTON_INFO *infoPtr, HDC hdc, RECT *la
            SetRectEmpty(&imageRect);
        }
    }
-   heap_free(text);
+   free(text);
 
    CopyRect(labelRc, &labelRect);
    CopyRect(imageRc, &imageRect);
@@ -1792,7 +1791,7 @@ static void BUTTON_DrawLabel(const BUTTON_INFO *infoPtr, HDC hdc, UINT dtFlags, 
    if (!(text = get_button_text(infoPtr))) return;
    DrawStateW(hdc, hbr, BUTTON_DrawTextCallback, (LPARAM)text, dtFlags, textRect->left, textRect->top,
               textRect->right - textRect->left, textRect->bottom - textRect->top, flags);
-   heap_free(text);
+   free(text);
 }
 
 static void BUTTON_DrawThemedLabel(const BUTTON_INFO *info, HDC hdc, UINT text_flags,
@@ -1824,7 +1823,7 @@ static void BUTTON_DrawThemedLabel(const BUTTON_INFO *info, HDC hdc, UINT text_f
        return;
 
    DrawThemeText(theme, hdc, part, state, text, lstrlenW(text), text_flags, 0, text_rect);
-   heap_free(text);
+   free(text);
 }
 
 /**********************************************************************
@@ -2660,7 +2659,7 @@ static void CL_Paint( const BUTTON_INFO *infoPtr, HDC hDC, UINT action )
                     SelectObject(hDC, font);
                     txt_h = DrawTextW(hDC, text, -1, &r,
                                       DT_TOP | DT_LEFT | DT_WORDBREAK | DT_END_ELLIPSIS);
-                    heap_free(text);
+                    free(text);
                 }
                 DeleteObject(font);
             }
@@ -3153,7 +3152,7 @@ static void CL_ThemedPaint(HTHEME theme, const BUTTON_INFO *infoPtr, HDC hDC, in
             DrawThemeText(theme, hDC, part, state, text, len, dtFlags | DT_END_ELLIPSIS, 0, &r);
 
             txt_h = text_rect.bottom - text_rect.top;
-            heap_free(text);
+            free(text);
         }
 
         /* Draw the note */
