@@ -115,34 +115,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(winspool);
 
-static const WCHAR CUPS_Port[] = { 'C','U','P','S',':',0 };
-static const WCHAR LPR_Port[] = { 'L','P','R',':',0 };
-
 #ifdef SONAME_LIBCUPS
 
 static void *libcups_handle;
 
 #define CUPS_FUNCS \
-    DO_FUNC(cupsAddOption); \
     DO_FUNC(cupsFreeDests); \
-    DO_FUNC(cupsFreeOptions); \
     DO_FUNC(cupsGetDests); \
-    DO_FUNC(cupsGetOption); \
-    DO_FUNC(cupsParseOptions); \
-    DO_FUNC(cupsPrintFile)
+    DO_FUNC(cupsGetOption);
 #define CUPS_OPT_FUNCS \
-    DO_FUNC(cupsGetNamedDest); \
     DO_FUNC(cupsGetPPD); \
-    DO_FUNC(cupsGetPPD3); \
-    DO_FUNC(cupsLastErrorString)
+    DO_FUNC(cupsGetPPD3);
 
 #define DO_FUNC(f) static typeof(f) *p##f
 CUPS_FUNCS;
 #undef DO_FUNC
-static cups_dest_t * (*pcupsGetNamedDest)(http_t *, const char *, const char *);
 static const char *  (*pcupsGetPPD)(const char *);
 static http_status_t (*pcupsGetPPD3)(http_t *, const char *, time_t *, char *, size_t);
-static const char *  (*pcupsLastErrorString)(void);
 
 #endif /* SONAME_LIBCUPS */
 
@@ -281,56 +270,6 @@ static http_status_t cupsGetPPD3_wrapper( http_t *http, const char *name, time_t
         if (!res) return HTTP_NOT_FOUND;
     }
     return HTTP_OK;
-}
-
-/*****************************************************************************
- *          get_cups_jobs_ticket_options
- *
- * Explicitly set CUPS options based on any %cupsJobTicket lines.
- * The CUPS scheduler only looks for these in Print-File requests, and since
- * cupsPrintFile uses Create-Job / Send-Document, the ticket lines don't get
- * parsed.
- */
-static int get_cups_job_ticket_options( const char *file, int num_options, cups_option_t **options )
-{
-    FILE *fp = fopen( file, "r" );
-    char buf[257]; /* DSC max of 256 + '\0' */
-    const char *ps_adobe = "%!PS-Adobe-";
-    const char *cups_job = "%cupsJobTicket:";
-
-    if (!fp) return num_options;
-    if (!fgets( buf, sizeof(buf), fp )) goto end;
-    if (strncmp( buf, ps_adobe, strlen( ps_adobe ) )) goto end;
-    while (fgets( buf, sizeof(buf), fp ))
-    {
-        if (strncmp( buf, cups_job, strlen( cups_job ) )) break;
-        num_options = pcupsParseOptions( buf + strlen( cups_job ), num_options, options );
-    }
-
-end:
-    fclose( fp );
-    return num_options;
-}
-
-static int get_cups_default_options( const char *printer, int num_options, cups_option_t **options )
-{
-    cups_dest_t *dest;
-    int i;
-
-    if (!pcupsGetNamedDest) return num_options;
-
-    dest = pcupsGetNamedDest( NULL, printer, NULL );
-    if (!dest) return num_options;
-
-    for (i = 0; i < dest->num_options; i++)
-    {
-        if (!pcupsGetOption( dest->options[i].name, num_options, *options ))
-            num_options = pcupsAddOption( dest->options[i].name, dest->options[i].value,
-                                          num_options, options );
-    }
-
-    pcupsFreeDests( 1, dest );
-    return num_options;
 }
 #endif /* SONAME_LIBCUPS */
 
@@ -486,206 +425,12 @@ end:
 #endif
 }
 
-/*****************************************************************************
- *          schedule_pipe
- */
-static BOOL schedule_pipe( const WCHAR *cmd, const WCHAR *filename )
-{
-    char *unixname, *cmdA;
-    DWORD len;
-    int fds[2] = { -1, -1 }, file_fd = -1, no_read;
-    BOOL ret = FALSE;
-    char buf[1024];
-    pid_t pid, wret;
-    int status;
-
-    if (!(unixname = get_unix_file_name( filename ))) return FALSE;
-
-    len = wcslen( cmd );
-    cmdA = malloc( len * 3 + 1);
-    ntdll_wcstoumbs( cmd, len + 1, cmdA, len * 3 + 1, FALSE );
-
-    TRACE( "printing with: %s\n", cmdA );
-
-    if ((file_fd = open( unixname, O_RDONLY )) == -1) goto end;
-
-    if (pipe( fds ))
-    {
-        ERR( "pipe() failed!\n" );
-        goto end;
-    }
-
-    if ((pid = fork()) == 0)
-    {
-        close( 0 );
-        dup2( fds[0], 0 );
-        close( fds[1] );
-
-        /* reset signals that we previously set to SIG_IGN */
-        signal( SIGPIPE, SIG_DFL );
-
-        execl( "/bin/sh", "/bin/sh", "-c", cmdA, NULL );
-        _exit( 1 );
-    }
-    else if (pid == -1)
-    {
-        ERR( "fork() failed!\n" );
-        goto end;
-    }
-
-    close( fds[0] );
-    fds[0] = -1;
-    while ((no_read = read( file_fd, buf, sizeof(buf) )) > 0)
-        write( fds[1], buf, no_read );
-
-    close( fds[1] );
-    fds[1] = -1;
-
-    /* reap child */
-    do {
-        wret = waitpid( pid, &status, 0 );
-    } while (wret < 0 && errno == EINTR);
-    if (wret < 0)
-    {
-        ERR( "waitpid() failed!\n" );
-        goto end;
-    }
-    if (!WIFEXITED(status) || WEXITSTATUS(status))
-    {
-        ERR( "child process failed! %d\n", status );
-        goto end;
-    }
-
-    ret = TRUE;
-
-end:
-    if (file_fd != -1) close( file_fd );
-    if (fds[0] != -1) close( fds[0] );
-    if (fds[1] != -1) close( fds[1] );
-
-    free( cmdA );
-    free( unixname );
-    return ret;
-}
-
-/*****************************************************************************
- *          schedule_unixfile
- */
-static BOOL schedule_unixfile( const WCHAR *output, const WCHAR *filename )
-{
-    char *unixname, *outputA;
-    DWORD len;
-    BOOL ret;
-
-    if (!(unixname = get_unix_file_name( filename ))) return FALSE;
-
-    len = wcslen( output );
-    outputA = malloc( len * 3 + 1);
-    ntdll_wcstoumbs( output, len + 1, outputA, len * 3 + 1, FALSE );
-
-    ret = copy_file( unixname, outputA );
-
-    free( outputA );
-    free( unixname );
-    return ret;
-}
-
-/*****************************************************************************
- *          schedule_lpr
- */
-static BOOL schedule_lpr( const WCHAR *printer_name, const WCHAR *filename )
-{
-    static const WCHAR lpr[] = { 'l','p','r',' ','-','P','\'' };
-    static const WCHAR quote[] = { '\'',0 };
-    int printer_len = wcslen( printer_name );
-    WCHAR *cmd;
-    BOOL ret;
-
-    cmd = malloc( printer_len * sizeof(WCHAR) + sizeof(lpr) + sizeof(quote) );
-    memcpy( cmd, lpr, sizeof(lpr) );
-    memcpy( cmd + ARRAY_SIZE(lpr), printer_name, printer_len * sizeof(WCHAR) );
-    memcpy( cmd + ARRAY_SIZE(lpr) + printer_len, quote, sizeof(quote) );
-
-    ret = schedule_pipe( cmd, filename );
-
-    free( cmd );
-    return ret;
-}
-
-/*****************************************************************************
- *          schedule_cups
- */
-static BOOL schedule_cups( const WCHAR *printer_name, const WCHAR *filename, const WCHAR *document_title )
-{
-#ifdef SONAME_LIBCUPS
-    if (pcupsPrintFile)
-    {
-        char *unixname, *queue, *unix_doc_title;
-        cups_option_t *options = NULL;
-        int num_options = 0, i;
-        DWORD len;
-        BOOL ret;
-
-        if (!(unixname = get_unix_file_name( filename ))) return FALSE;
-        len = wcslen( printer_name );
-        queue = malloc( len * 3 + 1);
-        ntdll_wcstoumbs( printer_name, len + 1, queue, len * 3 + 1, FALSE );
-
-        len = wcslen( document_title );
-        unix_doc_title = malloc( len * 3 + 1 );
-        ntdll_wcstoumbs( document_title, len + 1, unix_doc_title, len + 3 + 1, FALSE );
-
-        num_options = get_cups_job_ticket_options( unixname, num_options, &options );
-        num_options = get_cups_default_options( queue, num_options, &options );
-
-        TRACE( "printing via cups with options:\n" );
-        for (i = 0; i < num_options; i++)
-            TRACE( "\t%d: %s = %s\n", i, options[i].name, options[i].value );
-
-        ret = pcupsPrintFile( queue, unixname, unix_doc_title, num_options, options );
-        if (ret == 0 && pcupsLastErrorString)
-            WARN( "cupsPrintFile failed with error %s\n", debugstr_a( pcupsLastErrorString() ) );
-
-        pcupsFreeOptions( num_options, options );
-
-        free( unix_doc_title );
-        free( queue );
-        free( unixname );
-        return ret;
-    }
-    else
-#endif
-    {
-        return schedule_lpr( printer_name, filename );
-    }
-}
-
-static NTSTATUS schedule_job( void *args )
-{
-    const struct schedule_job_params *params = args;
-
-    if (params->wine_port[0] == '|')
-        return schedule_pipe( params->wine_port + 1, params->filename );
-
-    if (params->wine_port[0])
-        return schedule_unixfile( params->wine_port, params->filename );
-
-    if (!wcsncmp( params->port, LPR_Port, ARRAY_SIZE(LPR_Port) - 1 ))
-        return schedule_lpr( params->port + ARRAY_SIZE(LPR_Port) - 1, params->filename );
-
-    if (!wcsncmp( params->port, CUPS_Port, ARRAY_SIZE(CUPS_Port) - 1 ))
-        return schedule_cups( params->port + ARRAY_SIZE(CUPS_Port) - 1, params->filename, params->document_title );
-
-    return FALSE;
-}
-
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     process_attach,
     enum_printers,
     get_default_page_size,
     get_ppd,
-    schedule_job,
 };
 
 #ifdef _WIN64
@@ -770,34 +515,12 @@ static NTSTATUS wow64_get_ppd( void *args )
     return get_ppd( &params );
 }
 
-static NTSTATUS wow64_schedule_job( void *args )
-{
-    struct
-    {
-        PTR32 filename;
-        PTR32 port;
-        PTR32 document_title;
-        PTR32 wine_port;
-    } const *params32 = args;
-
-    struct schedule_job_params params =
-    {
-        ULongToPtr( params32->filename ),
-        ULongToPtr( params32->port ),
-        ULongToPtr( params32->document_title ),
-        ULongToPtr( params32->wine_port )
-    };
-
-    return schedule_job( &params );
-}
-
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     process_attach,
     wow64_enum_printers,
     wow64_get_default_page_size,
     wow64_get_ppd,
-    wow64_schedule_job,
 };
 
 #endif  /* _WIN64 */
