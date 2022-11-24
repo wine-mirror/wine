@@ -43,8 +43,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(coreaudio);
 
-unixlib_handle_t coreaudio_handle = 0;
-
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
 static const REFERENCE_TIME DefaultPeriod = 100000;
@@ -199,8 +197,7 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls(dll);
-        if(NtQueryVirtualMemory(GetCurrentProcess(), dll, MemoryWineUnixFuncs,
-                                &coreaudio_handle, sizeof(coreaudio_handle), NULL))
+        if (__wine_init_unix_call())
             return FALSE;
         g_timer_q = CreateTimerQueue();
         if(!g_timer_q)

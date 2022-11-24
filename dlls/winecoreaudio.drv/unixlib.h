@@ -33,6 +33,4 @@ NTSTATUS unix_wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS unix_wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 #endif
 
-extern unixlib_handle_t coreaudio_handle;
-
-#define UNIX_CALL( func, params ) __wine_unix_call( coreaudio_handle, func, params )
+#define UNIX_CALL( func, params ) WINE_UNIX_CALL( func, params )
