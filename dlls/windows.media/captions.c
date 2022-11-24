@@ -188,8 +188,10 @@ static HRESULT WINAPI captions_get_ComputedBackgroundColor( IClosedCaptionProper
 
 static HRESULT WINAPI captions_get_BackgroundOpacity( IClosedCaptionPropertiesStatics *iface, ClosedCaptionOpacity *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    FIXME( "iface %p, value %p semi-stub.\n", iface, value );
+
+    *value = ClosedCaptionOpacity_Default;
+    return S_OK;
 }
 
 static HRESULT WINAPI captions_get_RegionColor( IClosedCaptionPropertiesStatics *iface, ClosedCaptionColor *value )

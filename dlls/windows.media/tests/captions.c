@@ -127,8 +127,8 @@ static void test_CaptionStatics(void)
 
     opacity = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_BackgroundOpacity( caption_statics, &opacity );
-    todo_wine ok( hr == S_OK, "get_BackgroundOpacity returned %#lx\n", hr );
-    todo_wine ok( opacity == ClosedCaptionOpacity_Default, "expected default background opacity, got %d\n", opacity );
+    ok( hr == S_OK, "get_BackgroundOpacity returned %#lx\n", hr );
+    ok( opacity == ClosedCaptionOpacity_Default, "expected default background opacity, got %d\n", opacity );
 
     color = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_RegionColor( caption_statics, &color );
