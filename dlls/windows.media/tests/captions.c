@@ -132,8 +132,8 @@ static void test_CaptionStatics(void)
 
     color = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_RegionColor( caption_statics, &color );
-    todo_wine ok( hr == S_OK, "get_RegionColor returned %#lx\n", hr );
-    todo_wine ok( color == ClosedCaptionColor_Default, "expected default region color, got %d\n", color );
+    ok( hr == S_OK, "get_RegionColor returned %#lx\n", hr );
+    ok( color == ClosedCaptionColor_Default, "expected default region color, got %d\n", color );
 
     hr = IClosedCaptionPropertiesStatics_get_ComputedRegionColor( caption_statics, &computed_color );
     todo_wine ok( hr == E_INVALIDARG, "get_ComputedRegionColor returned %#lx\n", hr );
