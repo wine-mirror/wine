@@ -378,7 +378,7 @@ HRESULT HTMLDOMTextNode_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDO
     HTMLDOMTextNode *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 

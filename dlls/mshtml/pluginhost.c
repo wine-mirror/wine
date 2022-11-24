@@ -53,9 +53,9 @@ static void free_prop(param_prop_t *prop)
 {
     list_remove(&prop->entry);
 
-    heap_free(prop->name);
-    heap_free(prop->value);
-    heap_free(prop);
+    free(prop->name);
+    free(prop->value);
+    free(prop);
 }
 
 static param_prop_t *find_prop(PropertyBag *prop_bag, const WCHAR *name)
@@ -79,12 +79,12 @@ static HRESULT add_prop(PropertyBag *prop_bag, const WCHAR *name, const WCHAR *v
 
     TRACE("%p %s %s\n", prop_bag, debugstr_w(name), debugstr_w(value));
 
-    prop = heap_alloc(sizeof(*prop));
+    prop = malloc(sizeof(*prop));
     if(!prop)
         return E_OUTOFMEMORY;
 
-    prop->name = heap_strdupW(name);
-    prop->value = heap_strdupW(value);
+    prop->name = wcsdup(name);
+    prop->value = wcsdup(value);
     if(!prop->name || !prop->value) {
         list_init(&prop->entry);
         free_prop(prop);
@@ -143,7 +143,7 @@ static ULONG WINAPI PropertyBag_Release(IPropertyBag *iface)
     if(!ref) {
         while(!list_empty(&This->props))
             free_prop(LIST_ENTRY(This->props.next, param_prop_t, entry));
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -331,7 +331,7 @@ static HRESULT create_param_prop_bag(nsIDOMElement *nselem, IPropertyBag **ret)
     PropertyBag *prop_bag;
     HRESULT hres;
 
-    prop_bag = heap_alloc(sizeof(*prop_bag));
+    prop_bag = malloc(sizeof(*prop_bag));
     if(!prop_bag)
         return E_OUTOFMEMORY;
 
@@ -734,14 +734,14 @@ HRESULT get_plugin_dispid(HTMLPluginContainer *plugin_container, WCHAR *name, DI
     }
 
     if(!plugin_container->props) {
-        plugin_container->props = heap_alloc(8*sizeof(DISPID));
+        plugin_container->props = malloc(8 * sizeof(DISPID));
         if(!plugin_container->props)
             return E_OUTOFMEMORY;
         plugin_container->props_size = 8;
     }else if(plugin_container->props_len == plugin_container->props_size) {
         DISPID *new_props;
 
-        new_props = heap_realloc(plugin_container->props, plugin_container->props_size*2*sizeof(DISPID));
+        new_props = realloc(plugin_container->props, plugin_container->props_size * 2 * sizeof(DISPID));
         if(!new_props)
             return E_OUTOFMEMORY;
 
@@ -822,14 +822,14 @@ static void add_sink_handler(PHEventSink *sink, DISPID id, IDispatch *disp)
             IDispatch_Release(entry->disp);
     }else {
         if(!sink->handlers_size) {
-            sink->handlers = heap_alloc(4*sizeof(*sink->handlers));
+            sink->handlers = malloc(4 * sizeof(*sink->handlers));
             if(!sink->handlers)
                 return;
             sink->handlers_size = 4;
         }else if(sink->handlers_cnt == sink->handlers_size) {
             sink_entry_t *new_handlers;
 
-            new_handlers = heap_realloc(sink->handlers, 2*sink->handlers_size*sizeof(*sink->handlers));
+            new_handlers = realloc(sink->handlers, 2 * sink->handlers_size * sizeof(*sink->handlers));
             if(!new_handlers)
                 return;
             sink->handlers = new_handlers;
@@ -897,8 +897,8 @@ static ULONG WINAPI PHEventSink_Release(IDispatch *iface)
             if(This->handlers[i].disp)
                 IDispatch_Release(This->handlers[i].disp);
         }
-        heap_free(This->handlers);
-        heap_free(This);
+        free(This->handlers);
+        free(This);
     }
 
     return ref;
@@ -1015,7 +1015,7 @@ static PHEventSink *create_event_sink(PluginHost *plugin_host, ITypeInfo *typein
         return NULL;
     }
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(ret) {
         ret->IDispatch_iface.lpVtbl = &PHCPDispatchVtbl;
         ret->ref = 1;
@@ -1190,7 +1190,7 @@ static ULONG WINAPI InPlaceFrame_Release(IOleInPlaceFrame *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -1309,7 +1309,7 @@ static HRESULT create_ip_frame(IOleInPlaceFrame **ret)
 {
     InPlaceFrame *frame;
 
-    frame = heap_alloc_zero(sizeof(*frame));
+    frame = calloc(1, sizeof(*frame));
     if(!frame)
         return E_OUTOFMEMORY;
 
@@ -1370,7 +1370,7 @@ static ULONG WINAPI InPlaceUIWindow_Release(IOleInPlaceUIWindow *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -1437,7 +1437,7 @@ static HRESULT create_ip_window(IOleInPlaceUIWindow **ret)
 {
     InPlaceUIWindow *uiwindow;
 
-    uiwindow = heap_alloc_zero(sizeof(*uiwindow));
+    uiwindow = calloc(1, sizeof(*uiwindow));
     if(!uiwindow)
         return E_OUTOFMEMORY;
 
@@ -1553,7 +1553,7 @@ static ULONG WINAPI PHClientSite_Release(IOleClientSite *iface)
         list_remove(&This->entry);
         if(This->element)
             This->element->plugin_host = NULL;
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -2355,7 +2355,7 @@ static ULONG WINAPI InstallCallback_Release(IBindStatusCallback *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -2499,7 +2499,7 @@ static void install_codebase(const WCHAR *url)
     IBindCtx *bctx;
     HRESULT hres;
 
-    callback = heap_alloc(sizeof(*callback));
+    callback = malloc(sizeof(*callback));
     if(!callback)
         return;
 
@@ -2555,7 +2555,7 @@ static void check_codebase(HTMLInnerWindow *window, nsIDOMElement *nselem)
     }
 
     if(!is_on_list) {
-        iter = heap_alloc(sizeof(*iter));
+        iter = malloc(sizeof(*iter));
         if(iter) {
             IUri_AddRef(uri);
             iter->uri = uri;
@@ -2694,7 +2694,7 @@ HRESULT create_plugin_host(HTMLDocumentNode *doc, HTMLPluginContainer *container
     if(!unk)
         return E_FAIL;
 
-    host = heap_alloc_zero(sizeof(*host));
+    host = calloc(1, sizeof(*host));
     if(!host) {
         IUnknown_Release(unk);
         return E_OUTOFMEMORY;

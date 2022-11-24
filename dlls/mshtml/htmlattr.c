@@ -83,8 +83,8 @@ static ULONG WINAPI HTMLDOMAttribute_Release(IHTMLDOMAttribute *iface)
         assert(!This->elem);
         release_dispex(&This->dispex);
         VariantClear(&This->value);
-        heap_free(This->name);
-        heap_free(This);
+        free(This->name);
+        free(This);
     }
 
     return ref;
@@ -503,7 +503,7 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
     HTMLDOMAttribute *ret;
     HRESULT hres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -530,7 +530,7 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR *name, HTMLElement *elem, DISPID dis
 
     /* For detached attributes we may still do most operations if we have its name available. */
     if(name) {
-        ret->name = heap_strdupW(name);
+        ret->name = wcsdup(name);
         if(!ret->name) {
             IHTMLDOMAttribute_Release(&ret->IHTMLDOMAttribute_iface);
             return E_OUTOFMEMORY;

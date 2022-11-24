@@ -88,7 +88,7 @@ static ULONG WINAPI EnumUnknown_Release(IEnumUnknown *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -1895,7 +1895,7 @@ static HRESULT WINAPI DocObjOleContainer_EnumObjects(IOleContainer *iface, DWORD
 
     TRACE("(%p)->(%lx %p)\n", This, grfFlags, ppenum);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -3467,14 +3467,14 @@ static ULONG WINAPI HTMLDocumentObj_Release(IUnknown *iface)
 
         if(This->hwnd)
             DestroyWindow(This->hwnd);
-        heap_free(This->mime);
+        free(This->mime);
 
         remove_target_tasks(This->task_magic);
         ConnectionPointContainer_Destroy(&This->cp_container);
 
         if(This->nscontainer)
             detach_gecko_browser(This->nscontainer);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -3647,7 +3647,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     if(!get_security_manager())
         return E_OUTOFMEMORY;
 
-    doc = heap_alloc_zero(sizeof(HTMLDocumentObj));
+    doc = calloc(1, sizeof(HTMLDocumentObj));
     if(!doc)
         return E_OUTOFMEMORY;
 

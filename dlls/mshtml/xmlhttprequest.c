@@ -38,11 +38,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static HRESULT bstr_to_nsacstr(BSTR bstr, nsACString *str)
 {
-    char *cstr = heap_strdupWtoU(bstr);
+    char *cstr = strdupWtoU(bstr);
     if(!cstr)
         return E_OUTOFMEMORY;
     nsACString_Init(str, cstr);
-    heap_free(cstr);
+    free(cstr);
     return S_OK;
 }
 
@@ -215,7 +215,7 @@ static nsrefcnt NSAPI XMLHttpReqEventListener_Release(nsIDOMEventListener *iface
 
     if(!ref) {
         assert(!This->xhr);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -303,7 +303,7 @@ static ULONG WINAPI HTMLXMLHttpRequest_Release(IHTMLXMLHttpRequest *iface)
         release_event_target(&This->event_target);
         release_dispex(&This->event_target.dispex);
         nsIXMLHttpRequest_Release(This->nsxhr);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -703,14 +703,14 @@ static HRESULT WINAPI HTMLXMLHttpRequest_getResponseHeader(IHTMLXMLHttpRequest *
         return E_FAIL;
     }
 
-    cstr = heap_strdupWtoU(bstrHeader);
+    cstr = strdupWtoU(bstrHeader);
     nsACString_InitDepend(&header, cstr);
     nsACString_Init(&ret, NULL);
 
     nsres = nsIXMLHttpRequest_GetResponseHeader(This->nsxhr, &header, &ret);
 
     nsACString_Finish(&header);
-    heap_free(cstr);
+    free(cstr);
     return return_nscstr(nsres, &ret, p);
 }
 
@@ -723,13 +723,13 @@ static HRESULT WINAPI HTMLXMLHttpRequest_setRequestHeader(IHTMLXMLHttpRequest *i
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(bstrHeader), debugstr_w(bstrValue));
 
-    header_u = heap_strdupWtoU(bstrHeader);
+    header_u = strdupWtoU(bstrHeader);
     if(bstrHeader && !header_u)
         return E_OUTOFMEMORY;
 
-    value_u = heap_strdupWtoU(bstrValue);
+    value_u = strdupWtoU(bstrValue);
     if(bstrValue && !value_u) {
-        heap_free(header_u);
+        free(header_u);
         return E_OUTOFMEMORY;
     }
 
@@ -738,8 +738,8 @@ static HRESULT WINAPI HTMLXMLHttpRequest_setRequestHeader(IHTMLXMLHttpRequest *i
     nsres = nsIXMLHttpRequest_SetRequestHeader(This->nsxhr, &header, &value);
     nsACString_Finish(&header);
     nsACString_Finish(&value);
-    heap_free(header_u);
-    heap_free(value_u);
+    free(header_u);
+    free(value_u);
     if(NS_FAILED(nsres)) {
         ERR("SetRequestHeader failed: %08lx\n", nsres);
         return E_FAIL;
@@ -1073,7 +1073,7 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_overrideMimeType(IWineXMLHttpRe
 
     if(mimeType) {
         if(mimeType[0]) {
-            if(!(lowercase = heap_strdupW(mimeType)))
+            if(!(lowercase = wcsdup(mimeType)))
                 return E_OUTOFMEMORY;
             _wcslwr(lowercase);
             type = lowercase;
@@ -1084,7 +1084,7 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_overrideMimeType(IWineXMLHttpRe
     nsAString_InitDepend(&nsstr, type);
     nsres = nsIXMLHttpRequest_SlowOverrideMimeType(This->nsxhr, &nsstr);
     nsAString_Finish(&nsstr);
-    heap_free(lowercase);
+    free(lowercase);
     return map_nsresult(nsres);
 }
 
@@ -1299,7 +1299,7 @@ static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, eventid_t eid)
         return;
 
     if(!This->event_listener) {
-        This->event_listener = heap_alloc(sizeof(*This->event_listener));
+        This->event_listener = malloc(sizeof(*This->event_listener));
         if(!This->event_listener)
             return;
 
@@ -1424,7 +1424,7 @@ static ULONG WINAPI HTMLXMLHttpRequestFactory_Release(IHTMLXMLHttpRequestFactory
 
     if(!ref) {
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1474,7 +1474,7 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
     if(!nsxhr)
         return E_FAIL;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret) {
         nsIXMLHttpRequest_Release(nsxhr);
         return E_OUTOFMEMORY;
@@ -1551,7 +1551,7 @@ HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow* window, HTMLXMLHttpReq
 {
     HTMLXMLHttpRequestFactory *ret;
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 

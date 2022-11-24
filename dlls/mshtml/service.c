@@ -81,7 +81,7 @@ static ULONG WINAPI OleUndoManager_Release(IOleUndoManager *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -193,7 +193,7 @@ static const IOleUndoManagerVtbl OleUndoManagerVtbl = {
 
 static IOleUndoManager *create_undomgr(void)
 {
-    UndoManager *ret = heap_alloc(sizeof(UndoManager));
+    UndoManager *ret = malloc(sizeof(UndoManager));
 
     if (!ret) return NULL;
 
@@ -250,7 +250,7 @@ static ULONG WINAPI editsvcs_Release(IHTMLEditServices *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -317,7 +317,7 @@ static const IHTMLEditServicesVtbl editsvcsVtbl = {
 
 static IHTMLEditServices *create_editsvcs(void)
 {
-    editsvcs *ret = heap_alloc(sizeof(*ret));
+    editsvcs *ret = malloc(sizeof(*ret));
 
     if (ret) {
         ret->IHTMLEditServices_iface.lpVtbl = &editsvcsVtbl;

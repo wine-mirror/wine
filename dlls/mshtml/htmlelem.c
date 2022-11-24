@@ -434,7 +434,7 @@ static HRESULT create_nselem_parse(HTMLDocumentNode *doc, const WCHAR *tag, nsID
     if(NS_FAILED(nsres))
         return map_nsresult(nsres);
 
-    if(!(p = heap_alloc(sizeof(prefix) + size))) {
+    if(!(p = malloc(sizeof(prefix) + size))) {
         nsIDOMRange_Release(nsrange);
         return E_OUTOFMEMORY;
     }
@@ -445,7 +445,7 @@ static HRESULT create_nselem_parse(HTMLDocumentNode *doc, const WCHAR *tag, nsID
     nsIDOMRange_CreateContextualFragment(nsrange, &str, &nsfragment);
     nsIDOMRange_Release(nsrange);
     nsAString_Finish(&str);
-    heap_free(p);
+    free(p);
     if(NS_FAILED(nsres))
         return map_nsresult(nsres);
 
@@ -460,7 +460,7 @@ static HRESULT create_nselem_parse(HTMLDocumentNode *doc, const WCHAR *tag, nsID
     if(NS_FAILED(nsres))
         return E_FAIL;
 
-    if(!(p = heap_alloc((name_len + 1) * sizeof(WCHAR))))
+    if(!(p = malloc((name_len + 1) * sizeof(WCHAR))))
         hres = E_OUTOFMEMORY;
     else {
         memcpy(p, tag + 1, name_len * sizeof(WCHAR));
@@ -469,7 +469,7 @@ static HRESULT create_nselem_parse(HTMLDocumentNode *doc, const WCHAR *tag, nsID
         nsAString_InitDepend(&str, p);
         nsres = nsIDOMDocument_CreateElement(doc->dom_document, &str, ret);
         nsAString_Finish(&str);
-        heap_free(p);
+        free(p);
 
         if(NS_FAILED(nsres))
             hres = map_nsresult(nsres);
@@ -583,7 +583,7 @@ static ULONG WINAPI HTMLRect_Release(IHTMLRect *iface)
         if(This->nsrect)
             nsIDOMClientRect_Release(This->nsrect);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -756,7 +756,7 @@ static HRESULT create_html_rect(nsIDOMClientRect *nsrect, compat_mode_t compat_m
 {
     HTMLRect *rect;
 
-    rect = heap_alloc_zero(sizeof(HTMLRect));
+    rect = calloc(1, sizeof(HTMLRect));
     if(!rect)
         return E_OUTOFMEMORY;
 
@@ -834,7 +834,7 @@ static ULONG WINAPI HTMLRectCollectionEnum_Release(IEnumVARIANT *iface)
 
     if(!ref) {
         IHTMLRectCollection_Release(&This->col->IHTMLRectCollection_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -962,7 +962,7 @@ static ULONG WINAPI HTMLRectCollection_Release(IHTMLRectCollection *iface)
         if(This->rect_list)
             nsIDOMClientRectList_Release(This->rect_list);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1020,7 +1020,7 @@ static HRESULT WINAPI HTMLRectCollection_get__newEnum(IHTMLRectCollection *iface
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -3183,7 +3183,7 @@ static HRESULT WINAPI HTMLElement2_getClientRects(IHTMLElement2 *iface, IHTMLRec
         return map_nsresult(nsres);
     }
 
-    rects = heap_alloc_zero(sizeof(*rects));
+    rects = calloc(1, sizeof(*rects));
     if(!rects) {
         nsIDOMClientRectList_Release(rect_list);
         return E_OUTOFMEMORY;
@@ -6737,7 +6737,7 @@ void HTMLElement_destructor(HTMLDOMNode *iface)
         IHTMLAttributeCollection_Release(&This->attrs->IHTMLAttributeCollection_iface);
     }
 
-    heap_free(This->filter);
+    free(This->filter);
 
     HTMLDOMNode_destructor(&This->node);
 }
@@ -6753,7 +6753,7 @@ HRESULT HTMLElement_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode, HTMLDOMNode **
         return hres;
 
     if(This->filter) {
-        new_elem->filter = heap_strdupW(This->filter);
+        new_elem->filter = wcsdup(This->filter);
         if(!new_elem->filter) {
             IHTMLElement_Release(&This->IHTMLElement_iface);
             return E_OUTOFMEMORY;
@@ -7290,7 +7290,7 @@ static ULONG WINAPI token_list_Release(IWineDOMTokenList *iface)
     if(!ref) {
         IHTMLElement_Release(token_list->element);
         release_dispex(&token_list->dispex);
-        heap_free(token_list);
+        free(token_list);
     }
 
     return ref;
@@ -7519,7 +7519,7 @@ static HRESULT create_token_list(compat_mode_t compat_mode, IHTMLElement *elemen
 {
     struct token_list *obj;
 
-    obj = heap_alloc_zero(sizeof(*obj));
+    obj = calloc(1, sizeof(*obj));
     if(!obj)
     {
         ERR("No memory.\n");
@@ -7708,7 +7708,7 @@ HRESULT HTMLElement_Create(HTMLDocumentNode *doc, nsIDOMNode *nsnode, BOOL use_g
         }else if(use_generic) {
             hres = HTMLGenericElement_Create(doc, nselem, &elem);
         }else {
-            elem = heap_alloc_zero(sizeof(HTMLElement));
+            elem = calloc(1, sizeof(HTMLElement));
             if(elem) {
                 elem->node.vtbl = &HTMLElementImplVtbl;
                 HTMLElement_Init(elem, doc, nselem, &HTMLUnknownElement_dispex);
@@ -7734,7 +7734,7 @@ static HRESULT HTMLElement_Ctor(HTMLDocumentNode *doc, nsIDOMElement *nselem, HT
 {
     HTMLElement *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -7801,7 +7801,7 @@ static ULONG WINAPI HTMLFiltersCollection_Release(IHTMLFiltersCollection *iface)
 
     if(!ref)
     {
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -7939,7 +7939,7 @@ static HRESULT create_filters_collection(compat_mode_t compat_mode, IHTMLFilters
 {
     HTMLFiltersCollection *collection;
 
-    if(!(collection = heap_alloc(sizeof(HTMLFiltersCollection))))
+    if(!(collection = malloc(sizeof(HTMLFiltersCollection))))
         return E_OUTOFMEMORY;
 
     collection->IHTMLFiltersCollection_iface.lpVtbl = &HTMLFiltersCollectionVtbl;
@@ -8099,7 +8099,7 @@ static ULONG WINAPI HTMLAttributeCollectionEnum_Release(IEnumVARIANT *iface)
 
     if(!ref) {
         IHTMLAttributeCollection_Release(&This->col->IHTMLAttributeCollection_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -8257,7 +8257,7 @@ static ULONG WINAPI HTMLAttributeCollection_Release(IHTMLAttributeCollection *if
             IHTMLDOMAttribute_Release(&attr->IHTMLDOMAttribute_iface);
         }
 
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -8312,7 +8312,7 @@ static HRESULT WINAPI HTMLAttributeCollection__newEnum(IHTMLAttributeCollection 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -8704,7 +8704,7 @@ HRESULT HTMLElement_get_attr_col(HTMLDOMNode *iface, HTMLAttributeCollection **a
         return S_OK;
     }
 
-    This->attrs = heap_alloc_zero(sizeof(HTMLAttributeCollection));
+    This->attrs = calloc(1, sizeof(HTMLAttributeCollection));
     if(!This->attrs)
         return E_OUTOFMEMORY;
 

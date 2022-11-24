@@ -1454,7 +1454,7 @@ HRESULT HTMLInputElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HT
     HTMLInputElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLInputElement));
+    ret = calloc(1, sizeof(HTMLInputElement));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1650,7 +1650,7 @@ HRESULT HTMLLabelElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HT
 {
     HTMLLabelElement *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1999,7 +1999,7 @@ HRESULT HTMLButtonElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, H
     HTMLButtonElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 

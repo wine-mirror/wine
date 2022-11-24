@@ -523,9 +523,9 @@ static HRESULT exec_fontname(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *i
 
         TRACE("%s\n", debugstr_w(V_BSTR(in)));
 
-        stra = heap_strdupWtoA(V_BSTR(in));
+        stra = strdupWtoA(V_BSTR(in));
         set_ns_fontname(doc, stra);
-        heap_free(stra);
+        free(stra);
 
         update_doc(doc->browser->doc, UPDATE_UI);
     }
@@ -550,12 +550,12 @@ static HRESULT exec_fontname(HTMLDocumentNode *doc, DWORD cmdexecopt, VARIANT *i
         nsICommandParams_Release(nsparam);
 
         len = MultiByteToWideChar(CP_ACP, 0, stra, -1, NULL, 0);
-        strw = heap_alloc(len*sizeof(WCHAR));
+        strw = malloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, stra, -1, strw, len);
         nsfree(stra);
 
         V_BSTR(out) = SysAllocString(strw);
-        heap_free(strw);
+        free(strw);
     }
 
     return S_OK;
@@ -1015,7 +1015,7 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
                     /* get string of currently selected hyperlink type */
                     item = SendMessageW((HWND)lparam, CB_GETCURSEL, 0, 0);
                     len = SendMessageW((HWND)lparam, CB_GETLBTEXTLEN, item, 0);
-                    type = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR));
+                    type = malloc((len + 1) * sizeof(WCHAR));
                     SendMessageW((HWND)lparam, CB_GETLBTEXT, item, (LPARAM)type);
 
                     if (!wcscmp(type, L"(other)"))
@@ -1023,7 +1023,7 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
                     /* get current URL */
                     len = GetWindowTextLengthW(hwndURL);
-                    url = HeapAlloc(GetProcessHeap(), 0, (len + lstrlenW(type) + 3) * sizeof(WCHAR));
+                    url = malloc((len + lstrlenW(type) + 3) * sizeof(WCHAR));
                     GetWindowTextW(hwndURL, url, len + 1);
 
                     /* strip off old protocol */
@@ -1043,8 +1043,8 @@ static INT_PTR CALLBACK hyperlink_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LP
 
                     SetWindowTextW(hwndURL, url);
 
-                    HeapFree(GetProcessHeap(), 0, url);
-                    HeapFree(GetProcessHeap(), 0, type);
+                    free(url);
+                    free(type);
                     return TRUE;
                 }
             }

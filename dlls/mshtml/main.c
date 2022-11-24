@@ -142,18 +142,18 @@ HRESULT get_mime_type_display_name(const WCHAR *content_type, BSTR *ret)
     if(!GetMIMETypeSubKeyW(content_type, buffer, ARRAY_SIZE(buffer))) {
         len = wcslen(content_type) + 32;
         for(;;) {
-            if(!(str = heap_alloc(len * sizeof(WCHAR))))
+            if(!(str = malloc(len * sizeof(WCHAR))))
                 return E_OUTOFMEMORY;
             if(GetMIMETypeSubKeyW(content_type, str, len))
                 break;
-            heap_free(str);
+            free(str);
             len *= 2;
         }
     }
 
     status = RegOpenKeyExW(HKEY_CLASSES_ROOT, str, 0, KEY_QUERY_VALUE, &key);
     if(str != buffer)
-        heap_free(str);
+        free(str);
     if(status != ERROR_SUCCESS)
         goto fail;
 
@@ -183,7 +183,7 @@ HRESULT get_mime_type_display_name(const WCHAR *content_type, BSTR *ret)
         if(hres == S_OK && len)
             break;
         if(str != buffer)
-            heap_free(str);
+            free(str);
         if(hres != E_POINTER) {
             if(progid != ext) {
                 CoTaskMemFree(progid);
@@ -208,7 +208,7 @@ HRESULT get_mime_type_display_name(const WCHAR *content_type, BSTR *ret)
             str = buffer;
             continue;
         }
-        str = heap_alloc(len * sizeof(WCHAR));
+        str = malloc(len * sizeof(WCHAR));
     }
     if(progid != ext)
         CoTaskMemFree(progid);
@@ -216,7 +216,7 @@ HRESULT get_mime_type_display_name(const WCHAR *content_type, BSTR *ret)
 
     *ret = SysAllocString(str);
     if(str != buffer)
-        heap_free(str);
+        free(str);
     return *ret ? S_OK : E_OUTOFMEMORY;
 
 fail:
@@ -290,7 +290,7 @@ static BOOL WINAPI load_compat_settings(INIT_ONCE *once, void *param, void **con
         }
 
         name_size = lstrlenW(key_name) + 1;
-        new_entry = heap_alloc(FIELD_OFFSET(compat_config_t, host[name_size]));
+        new_entry = malloc(FIELD_OFFSET(compat_config_t, host[name_size]));
         if(!new_entry)
             continue;
 
@@ -360,14 +360,14 @@ static void thread_detach(void)
         DestroyWindow(thread_data->thread_hwnd);
 
     destroy_session_storage(thread_data);
-    heap_free(thread_data);
+    free(thread_data);
 }
 
 static void free_strings(void)
 {
     unsigned int i;
     for(i = 0; i < ARRAY_SIZE(status_strings); i++)
-        heap_free(status_strings[i]);
+        free(status_strings[i]);
 }
 
 static void process_detach(void)
@@ -380,7 +380,7 @@ static void process_detach(void)
     while(!list_empty(&compat_config)) {
         config = LIST_ENTRY(list_head(&compat_config), compat_config_t, entry);
         list_remove(&config->entry);
-        heap_free(config);
+        free(config);
     }
 
     if(shdoclc)
@@ -406,11 +406,11 @@ void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
 
     if(!p) {
         len = 255;
-        p = heap_alloc(len * sizeof(WCHAR));
+        p = malloc(len * sizeof(WCHAR));
         len = LoadStringW(hInst, id, p, len) + 1;
-        p = heap_realloc(p, len * sizeof(WCHAR));
+        p = realloc(p, len * sizeof(WCHAR));
         if(InterlockedCompareExchangePointer((void**)&status_strings[index], p, NULL)) {
-            heap_free(p);
+            free(p);
             p = status_strings[index];
         }
     }
@@ -419,7 +419,7 @@ void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
         WCHAR *buf;
 
         len = lstrlenW(p) + lstrlenW(arg) - 1;
-        buf = heap_alloc(len * sizeof(WCHAR));
+        buf = malloc(len * sizeof(WCHAR));
 
         swprintf(buf, len, p, arg);
 
@@ -429,7 +429,7 @@ void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
     IOleInPlaceFrame_SetStatusText(doc->frame, p);
 
     if(arg)
-        heap_free(p);
+        free(p);
 }
 
 HRESULT do_query_service(IUnknown *unk, REFGUID guid_service, REFIID riid, void **ppv)
@@ -515,7 +515,7 @@ static ULONG WINAPI ClassFactory_Release(IClassFactory *iface)
     TRACE("(%p) ref = %lu\n", This, ref);
 
     if(!ref) {
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -546,7 +546,7 @@ static const IClassFactoryVtbl HTMLClassFactoryVtbl = {
 
 static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc fnCreateInstance)
 {
-    ClassFactory *ret = heap_alloc(sizeof(ClassFactory));
+    ClassFactory *ret = malloc(sizeof(ClassFactory));
     HRESULT hres;
 
     ret->IClassFactory_iface.lpVtbl = &HTMLClassFactoryVtbl;
@@ -555,7 +555,7 @@ static HRESULT ClassFactory_Create(REFIID riid, void **ppv, CreateInstanceFunc f
 
     hres = IClassFactory_QueryInterface(&ret->IClassFactory_iface, riid, ppv);
     if(FAILED(hres)) {
-        heap_free(ret);
+        free(ret);
         *ppv = NULL;
     }
     return hres;
@@ -732,7 +732,7 @@ static HRESULT register_server(BOOL do_register)
     INF_SET_ID(LIBID_MSHTML);
 
     for(i=0; i < ARRAY_SIZE(pse); i++) {
-        pse[i].pszValue = heap_alloc(39);
+        pse[i].pszValue = malloc(39);
         sprintf(pse[i].pszValue, "{%08lX-%04X-%04X-%02X%02X-%02X%02X%02X%02X%02X%02X}",
                 clsids[i]->Data1, clsids[i]->Data2, clsids[i]->Data3, clsids[i]->Data4[0],
                 clsids[i]->Data4[1], clsids[i]->Data4[2], clsids[i]->Data4[3], clsids[i]->Data4[4],
@@ -750,7 +750,7 @@ static HRESULT register_server(BOOL do_register)
     FreeLibrary(hAdvpack);
 
     for(i=0; i < ARRAY_SIZE(pse); i++)
-        heap_free(pse[i].pszValue);
+        free(pse[i].pszValue);
 
     if(FAILED(hres))
         ERR("RegInstall failed: %08lx\n", hres);

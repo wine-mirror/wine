@@ -104,7 +104,7 @@ static ULONG WINAPI HTMLDOMImplementation_Release(IHTMLDOMImplementation *iface)
         if(This->implementation)
             nsIDOMDOMImplementation_Release(This->implementation);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -320,7 +320,7 @@ HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementa
     if(!doc_node->browser)
         return E_UNEXPECTED;
 
-    dom_implementation = heap_alloc_zero(sizeof(*dom_implementation));
+    dom_implementation = calloc(1, sizeof(*dom_implementation));
     if(!dom_implementation)
         return E_OUTOFMEMORY;
 
@@ -402,7 +402,7 @@ static ULONG WINAPI HTMLScreen_Release(IHTMLScreen *iface)
 
     if(!ref) {
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -568,7 +568,7 @@ HRESULT create_html_screen(compat_mode_t compat_mode, IHTMLScreen **ret)
 {
     HTMLScreen *screen;
 
-    screen = heap_alloc_zero(sizeof(HTMLScreen));
+    screen = calloc(1, sizeof(HTMLScreen));
     if(!screen)
         return E_OUTOFMEMORY;
 
@@ -627,7 +627,7 @@ static ULONG WINAPI OmHistory_Release(IOmHistory *iface)
 
     if(!ref) {
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -733,7 +733,7 @@ HRESULT create_history(HTMLInnerWindow *window, OmHistory **ret)
 {
     OmHistory *history;
 
-    history = heap_alloc_zero(sizeof(*history));
+    history = calloc(1, sizeof(*history));
     if(!history)
         return E_OUTOFMEMORY;
 
@@ -805,7 +805,7 @@ static ULONG WINAPI HTMLPluginsCollection_Release(IHTMLPluginsCollection *iface)
         if(This->navigator)
             This->navigator->plugins = NULL;
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -889,7 +889,7 @@ static HRESULT create_plugins_collection(OmNavigator *navigator, HTMLPluginsColl
 {
     HTMLPluginsCollection *col;
 
-    col = heap_alloc_zero(sizeof(*col));
+    col = calloc(1, sizeof(*col));
     if(!col)
         return E_OUTOFMEMORY;
 
@@ -961,7 +961,7 @@ static ULONG WINAPI HTMLMimeTypesCollection_Release(IHTMLMimeTypesCollection *if
         if(This->navigator)
             This->navigator->mime_types = NULL;
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1034,7 +1034,7 @@ static HRESULT create_mime_types_collection(OmNavigator *navigator, HTMLMimeType
 {
     HTMLMimeTypesCollection *col;
 
-    col = heap_alloc_zero(sizeof(*col));
+    col = calloc(1, sizeof(*col));
     if(!col)
         return E_OUTOFMEMORY;
 
@@ -1099,7 +1099,7 @@ static ULONG WINAPI OmNavigator_Release(IOmNavigator *iface)
         if(This->mime_types)
             This->mime_types->navigator = NULL;
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1484,7 +1484,7 @@ HRESULT create_navigator(compat_mode_t compat_mode, IOmNavigator **navigator)
 {
     OmNavigator *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1544,7 +1544,7 @@ static ULONG WINAPI HTMLPerformanceTiming_Release(IHTMLPerformanceTiming *iface)
     if(!ref) {
         if(This->dispex.outer)
             release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1884,7 +1884,7 @@ HRESULT create_performance_timing(HTMLPerformanceTiming **ret)
 {
     HTMLPerformanceTiming *timing;
 
-    timing = heap_alloc_zero(sizeof(*timing));
+    timing = calloc(1, sizeof(*timing));
     if(!timing)
         return E_OUTOFMEMORY;
 
@@ -1949,7 +1949,7 @@ static ULONG WINAPI HTMLPerformanceNavigation_Release(IHTMLPerformanceNavigation
 
     if(!ref) {
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -2107,7 +2107,7 @@ static ULONG WINAPI HTMLPerformance_Release(IHTMLPerformance *iface)
         if(This->navigation)
             IHTMLPerformanceNavigation_Release(This->navigation);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -2158,7 +2158,7 @@ static HRESULT WINAPI HTMLPerformance_get_navigation(IHTMLPerformance *iface,
     if(!This->navigation) {
         HTMLPerformanceNavigation *navigation;
 
-        navigation = heap_alloc_zero(sizeof(*navigation));
+        navigation = calloc(1, sizeof(*navigation));
         if(!navigation)
             return E_OUTOFMEMORY;
 
@@ -2230,7 +2230,7 @@ HRESULT create_performance(HTMLInnerWindow *window, IHTMLPerformance **ret)
     compat_mode_t compat_mode = dispex_compat_mode(&window->event_target.dispex);
     HTMLPerformance *performance;
 
-    performance = heap_alloc_zero(sizeof(*performance));
+    performance = calloc(1, sizeof(*performance));
     if(!performance)
         return E_OUTOFMEMORY;
 
@@ -2303,7 +2303,7 @@ static ULONG WINAPI HTMLNamespaceCollection_Release(IHTMLNamespaceCollection *if
 
     if(!ref) {
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -2395,7 +2395,7 @@ HRESULT create_namespace_collection(compat_mode_t compat_mode, IHTMLNamespaceCol
 {
     HTMLNamespaceCollection *namespaces;
 
-    if (!(namespaces = heap_alloc_zero(sizeof(*namespaces))))
+    if (!(namespaces = calloc(1, sizeof(*namespaces))))
         return E_OUTOFMEMORY;
 
     namespaces->IHTMLNamespaceCollection_iface.lpVtbl = &HTMLNamespaceCollectionVtbl;
@@ -2458,7 +2458,7 @@ static ULONG WINAPI console_Release(IWineMSHTMLConsole *iface)
 
     if(!ref) {
         release_dispex(&console->dispex);
-        heap_free(console);
+        free(console);
     }
 
     return ref;
@@ -2651,7 +2651,7 @@ void create_console(compat_mode_t compat_mode, IWineMSHTMLConsole **ret)
 {
     struct console *obj;
 
-    obj = heap_alloc_zero(sizeof(*obj));
+    obj = calloc(1, sizeof(*obj));
     if(!obj)
     {
         ERR("No memory.\n");
@@ -2716,7 +2716,7 @@ static ULONG WINAPI media_query_list_Release(IWineMSHTMLMediaQueryList *iface)
     if(!ref) {
         nsIDOMMediaQueryList_Release(media_query_list->nsquerylist);
         release_dispex(&media_query_list->dispex);
-        heap_free(media_query_list);
+        free(media_query_list);
     }
 
     return ref;
@@ -2837,14 +2837,14 @@ HRESULT create_media_query_list(HTMLWindow *window, BSTR media_query, IDispatch 
     if(!media_query || !media_query[0])
         return E_INVALIDARG;
 
-    if(!(media_query_list = heap_alloc(sizeof(*media_query_list))))
+    if(!(media_query_list = malloc(sizeof(*media_query_list))))
         return E_OUTOFMEMORY;
 
     nsAString_InitDepend(&nsstr, media_query);
     nsres = nsIDOMWindow_MatchMedia(window->outer_window->nswindow, &nsstr, &nsunk);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
-        heap_free(media_query_list);
+        free(media_query_list);
         return map_nsresult(nsres);
     }
     nsres = nsISupports_QueryInterface(nsunk, &IID_nsIDOMMediaQueryList, (void**)&media_query_list->nsquerylist);

@@ -101,11 +101,11 @@ static ULONG WINAPI HtmlLoadOptions_Release(IHtmlLoadOptions *iface)
             last = iter;
             iter = iter->next;
 
-            heap_free(last->buffer);
-            heap_free(last);
+            free(last->buffer);
+            free(last);
         }
 
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -154,13 +154,13 @@ static HRESULT WINAPI HtmlLoadOptions_SetOption(IHtmlLoadOptions *iface, DWORD d
     }
 
     if(!iter) {
-        iter = heap_alloc(sizeof(load_opt));
+        iter = malloc(sizeof(load_opt));
         iter->next = This->opts;
         This->opts = iter;
 
         iter->option = dwOption;
     }else {
-        heap_free(iter->buffer);
+        free(iter->buffer);
     }
 
     if(!cbBuf) {
@@ -171,7 +171,7 @@ static HRESULT WINAPI HtmlLoadOptions_SetOption(IHtmlLoadOptions *iface, DWORD d
     }
 
     iter->size = cbBuf;
-    iter->buffer = heap_alloc(cbBuf);
+    iter->buffer = malloc(cbBuf);
     memcpy(iter->buffer, pBuffer, iter->size);
 
     return S_OK;
@@ -192,7 +192,7 @@ HRESULT HTMLLoadOptions_Create(IUnknown *pUnkOuter, REFIID riid, void** ppv)
 
     TRACE("(%p %s %p)\n", pUnkOuter, debugstr_mshtml_guid(riid), ppv);
 
-    ret = heap_alloc(sizeof(HTMLLoadOptions));
+    ret = malloc(sizeof(HTMLLoadOptions));
     if(!ret)
         return E_OUTOFMEMORY;
 

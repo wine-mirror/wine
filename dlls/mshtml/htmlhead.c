@@ -194,7 +194,7 @@ HRESULT HTMLTitleElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HT
 {
     HTMLTitleElement *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -379,7 +379,7 @@ HRESULT HTMLHtmlElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTM
 {
     HTMLHtmlElement *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -616,7 +616,7 @@ HRESULT HTMLMetaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTM
 {
     HTMLMetaElement *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -780,7 +780,7 @@ HRESULT HTMLHeadElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTM
 {
     HTMLHeadElement *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 

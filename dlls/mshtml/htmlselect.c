@@ -429,7 +429,7 @@ HRESULT HTMLOptionElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, H
     HTMLOptionElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLOptionElement));
+    ret = calloc(1, sizeof(HTMLOptionElement));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -494,7 +494,7 @@ static ULONG WINAPI HTMLOptionElementFactory_Release(IHTMLOptionElementFactory *
 
     if(!ref) {
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -652,7 +652,7 @@ HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, HTMLOptionEleme
 {
     HTMLOptionElementFactory *ret;
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -768,7 +768,7 @@ static ULONG WINAPI HTMLSelectElementEnum_Release(IEnumVARIANT *iface)
 
     if(!ref) {
         IHTMLSelectElement_Release(&This->elem->IHTMLSelectElement_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1260,7 +1260,7 @@ static HRESULT WINAPI HTMLSelectElement_get__newEnum(IHTMLSelectElement *iface, 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1507,7 +1507,7 @@ HRESULT HTMLSelectElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, H
     HTMLSelectElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLSelectElement));
+    ret = calloc(1, sizeof(HTMLSelectElement));
     if(!ret)
         return E_OUTOFMEMORY;
 

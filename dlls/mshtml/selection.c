@@ -99,7 +99,7 @@ static ULONG WINAPI HTMLSelectionObject_Release(IHTMLSelectionObject *iface)
         if(This->doc)
             list_remove(&This->entry);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -345,7 +345,7 @@ HRESULT HTMLSelectionObject_Create(HTMLDocumentNode *doc, nsISelection *nsselect
 {
     HTMLSelectionObject *selection;
 
-    selection = heap_alloc(sizeof(HTMLSelectionObject));
+    selection = malloc(sizeof(HTMLSelectionObject));
     if(!selection)
         return E_OUTOFMEMORY;
 

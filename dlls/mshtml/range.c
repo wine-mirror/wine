@@ -351,7 +351,7 @@ static inline BOOL wstrbuf_init(wstrbuf_t *buf)
 {
     buf->len = 0;
     buf->size = 16;
-    buf->buf = heap_alloc(buf->size * sizeof(WCHAR));
+    buf->buf = malloc(buf->size * sizeof(WCHAR));
     if (!buf->buf) return FALSE;
     *buf->buf = 0;
     return TRUE;
@@ -359,14 +359,14 @@ static inline BOOL wstrbuf_init(wstrbuf_t *buf)
 
 static inline void wstrbuf_finish(wstrbuf_t *buf)
 {
-    heap_free(buf->buf);
+    free(buf->buf);
 }
 
 static void wstrbuf_append_len(wstrbuf_t *buf, LPCWSTR str, int len)
 {
     if(buf->len+len >= buf->size) {
         buf->size = 2*buf->size+len;
-        buf->buf = heap_realloc(buf->buf, buf->size * sizeof(WCHAR));
+        buf->buf = realloc(buf->buf, buf->size * sizeof(WCHAR));
     }
 
     memcpy(buf->buf+buf->len, str, len*sizeof(WCHAR));
@@ -383,7 +383,7 @@ static void wstrbuf_append_nodetxt(wstrbuf_t *buf, LPCWSTR str, int len)
 
     if(buf->len+len >= buf->size) {
         buf->size = 2*buf->size+len;
-        buf->buf = heap_realloc(buf->buf, buf->size * sizeof(WCHAR));
+        buf->buf = realloc(buf->buf, buf->size * sizeof(WCHAR));
     }
 
     if(buf->len && iswspace(buf->buf[buf->len-1])) {
@@ -859,7 +859,7 @@ static ULONG WINAPI HTMLTxtRange_Release(IHTMLTxtRange *iface)
         if(This->doc)
             list_remove(&This->entry);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1730,7 +1730,7 @@ HRESULT HTMLTxtRange_Create(HTMLDocumentNode *doc, nsIDOMRange *nsrange, IHTMLTx
 {
     HTMLTxtRange *ret;
 
-    ret = heap_alloc(sizeof(HTMLTxtRange));
+    ret = malloc(sizeof(HTMLTxtRange));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1800,7 +1800,7 @@ static ULONG WINAPI HTMLDOMRange_Release(IHTMLDOMRange *iface)
         if(This->nsrange)
             nsIDOMRange_Release(This->nsrange);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -2076,7 +2076,7 @@ HRESULT create_dom_range(nsIDOMRange *nsrange, compat_mode_t compat_mode, IHTMLD
 {
     HTMLDOMRange *ret;
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -2153,7 +2153,7 @@ static ULONG WINAPI MarkupPointer2_Release(IMarkupPointer2 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -2387,7 +2387,7 @@ HRESULT create_markup_pointer(IMarkupPointer **ret)
 {
     MarkupPointer *markup_pointer;
 
-    if(!(markup_pointer = heap_alloc(sizeof(*markup_pointer))))
+    if(!(markup_pointer = malloc(sizeof(*markup_pointer))))
         return E_OUTOFMEMORY;
 
     markup_pointer->IMarkupPointer2_iface.lpVtbl = &MarkupPointer2Vtbl;

@@ -756,7 +756,7 @@ HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTML
     HTMLImg *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLImg));
+    ret = calloc(1, sizeof(HTMLImg));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -818,7 +818,7 @@ static ULONG WINAPI HTMLImageElementFactory_Release(IHTMLImageElementFactory *if
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -999,7 +999,7 @@ HRESULT HTMLImageElementFactory_Create(HTMLInnerWindow *window, HTMLImageElement
 {
     HTMLImageElementFactory *ret;
 
-    ret = heap_alloc(sizeof(HTMLImageElementFactory));
+    ret = malloc(sizeof(HTMLImageElementFactory));
     if(!ret)
         return E_OUTOFMEMORY;
 

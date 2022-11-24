@@ -78,7 +78,7 @@ static ULONG WINAPI wrapper_Release(IUnknown *iface)
     if(!ref) {
         IUnknown_Release(This->iface);
         IUnknown_Release(This->ref_unk);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -327,7 +327,7 @@ HRESULT wrap_iface(IUnknown *iface, IUnknown *ref_unk, IUnknown **ret)
 {
     iface_wrapper_t *wrapper;
 
-    wrapper = heap_alloc(sizeof(*wrapper));
+    wrapper = malloc(sizeof(*wrapper));
     if(!wrapper)
         return E_OUTOFMEMORY;
 

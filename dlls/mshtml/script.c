@@ -324,7 +324,7 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
         release_script_engine(This);
         if(This->window)
             list_remove(&This->entry);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -693,7 +693,7 @@ static ScriptHost *create_script_host(HTMLInnerWindow *window, const GUID *guid)
     ScriptHost *ret;
     HRESULT hres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return NULL;
 
@@ -782,7 +782,7 @@ static void set_script_elem_readystate(HTMLScriptElement *script_elem, READYSTAT
             if(script_elem->pending_readystatechange_event)
                 return;
 
-            task = heap_alloc(sizeof(*task));
+            task = malloc(sizeof(*task));
             if(!task)
                 return;
 
@@ -838,7 +838,7 @@ static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
     WCHAR *text;
 
     if(!bsc->bsc.read) {
-        text = heap_alloc(sizeof(WCHAR));
+        text = malloc(sizeof(WCHAR));
         if(!text)
             return E_OUTOFMEMORY;
         *text = 0;
@@ -853,7 +853,7 @@ static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
             return E_FAIL;
         }
 
-        text = heap_alloc(bsc->bsc.read+sizeof(WCHAR));
+        text = malloc(bsc->bsc.read + sizeof(WCHAR));
         if(!text)
             return E_OUTOFMEMORY;
 
@@ -869,7 +869,7 @@ static HRESULT get_binding_text(ScriptBSC *bsc, WCHAR **ret)
         DWORD len;
 
         len = MultiByteToWideChar(cp, 0, bsc->buf, bsc->bsc.read, NULL, 0);
-        text = heap_alloc((len+1)*sizeof(WCHAR));
+        text = malloc((len + 1) * sizeof(WCHAR));
         if(!text)
             return E_OUTOFMEMORY;
 
@@ -906,7 +906,7 @@ static void script_file_available(ScriptBSC *bsc)
 
         TRACE("Adding to queue\n");
 
-        queue = heap_alloc(sizeof(*queue));
+        queue = malloc(sizeof(*queue));
         if(!queue)
             return;
 
@@ -956,8 +956,8 @@ static void ScriptBSC_destroy(BSCallback *bsc)
     if(This->load_group)
         nsILoadGroup_Release(This->load_group);
 
-    heap_free(This->buf);
-    heap_free(This);
+    free(This->buf);
+    free(This);
 }
 
 static HRESULT ScriptBSC_init_bindinfo(BSCallback *bsc)
@@ -1006,7 +1006,7 @@ static HRESULT ScriptBSC_stop_binding(BSCallback *bsc, HRESULT result)
         script_file_available(This);
     }else {
         FIXME("binding failed %08lx\n", result);
-        heap_free(This->buf);
+        free(This->buf);
         This->buf = NULL;
         This->size = 0;
     }
@@ -1031,7 +1031,7 @@ static HRESULT ScriptBSC_read_data(BSCallback *bsc, IStream *stream)
     HRESULT hres;
 
     if(!This->buf) {
-        This->buf = heap_alloc(128);
+        This->buf = malloc(128);
         if(!This->buf)
             return E_OUTOFMEMORY;
         This->size = 128;
@@ -1040,7 +1040,7 @@ static HRESULT ScriptBSC_read_data(BSCallback *bsc, IStream *stream)
     do {
         if(This->bsc.read >= This->size) {
             void *new_buf;
-            new_buf = heap_realloc(This->buf, This->size << 1);
+            new_buf = realloc(This->buf, This->size << 1);
             if(!new_buf)
                 return E_OUTOFMEMORY;
             This->size <<= 1;
@@ -1111,7 +1111,7 @@ HRESULT load_script(HTMLScriptElement *script_elem, const WCHAR *src, BOOL async
         return hres;
     }
 
-    bsc = heap_alloc_zero(sizeof(*bsc));
+    bsc = calloc(1, sizeof(*bsc));
     if(!bsc) {
         IMoniker_Release(mon);
         IUri_Release(uri);
@@ -1359,7 +1359,7 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
         LPWSTR language;
         BOOL b;
 
-        language = heap_alloc((ptr-text+1)*sizeof(WCHAR));
+        language = malloc((ptr - text + 1) * sizeof(WCHAR));
         if(!language)
             return NULL;
 
@@ -1368,7 +1368,7 @@ IDispatch *script_parse_event(HTMLInnerWindow *window, LPCWSTR text)
 
         b = get_guid_from_language(language, &guid);
 
-        heap_free(language);
+        free(language);
 
         if(!b) {
             WARN("Could not find language\n");
@@ -1542,7 +1542,7 @@ static IDispatch *parse_event_elem(HTMLDocumentNode *doc, HTMLScriptElement *scr
         const PRUnichar *event_val;
 
         nsAString_GetData(&nsstr, &event_val);
-        event = heap_strdupW(event_val);
+        event = wcsdup(event_val);
     }
     nsAString_Finish(&nsstr);
     if(!event)
@@ -1550,7 +1550,7 @@ static IDispatch *parse_event_elem(HTMLDocumentNode *doc, HTMLScriptElement *scr
 
     if(!parse_event_str(event, &args)) {
         WARN("parsing %s failed\n", debugstr_w(event));
-        heap_free(event);
+        free(event);
         return NULL;
     }
 
@@ -1571,7 +1571,7 @@ static IDispatch *parse_event_elem(HTMLDocumentNode *doc, HTMLScriptElement *scr
     }
     nsAString_Finish(&nsstr);
     if(!disp) {
-        heap_free(event);
+        free(event);
         return NULL;
     }
 
@@ -1644,7 +1644,7 @@ void bind_event_scripts(HTMLDocumentNode *doc)
                     node_release(&plugin_container->element.node);
             }
 
-            heap_free(event);
+            free(event);
             IDispatch_Release(event_disp);
         }
 
@@ -1765,7 +1765,7 @@ void release_script_hosts(HTMLInnerWindow *window)
 
         list_remove(&queue_iter->entry);
         IHTMLScriptElement_Release(&queue_iter->script->IHTMLScriptElement_iface);
-        heap_free(queue_iter);
+        free(queue_iter);
     }
 
     while(!list_empty(&window->script_hosts)) {

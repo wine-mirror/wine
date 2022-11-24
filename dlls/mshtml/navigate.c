@@ -102,7 +102,7 @@ static nsrefcnt NSAPI nsInputStream_Release(nsIInputStream *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -193,7 +193,7 @@ static nsProtocolStream *create_nsprotocol_stream(void)
 {
     nsProtocolStream *ret;
 
-    ret = heap_alloc(sizeof(nsProtocolStream));
+    ret = malloc(sizeof(nsProtocolStream));
     if(!ret)
         return NULL;
 
@@ -208,7 +208,7 @@ static void release_request_data(request_data_t *request_data)
 {
     if(request_data->post_stream)
         nsIInputStream_Release(request_data->post_stream);
-    heap_free(request_data->headers);
+    free(request_data->headers);
     if(request_data->post_data)
         GlobalFree(request_data->post_data);
 }
@@ -724,8 +724,8 @@ static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
             if(!iswspace(*beg))
                 break;
 
-        if((content_type = heap_strndupWtoU(beg, end - beg))) {
-            heap_free(This->nschannel->content_type);
+        if((content_type = strndupWtoU(beg, end - beg))) {
+            free(This->nschannel->content_type);
             This->nschannel->content_type = content_type;
             strlwr(content_type);
         }
@@ -757,7 +757,7 @@ static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
         }
 
         lena = WideCharToMultiByte(CP_ACP, 0, charset, charset_len, NULL, 0, NULL, NULL);
-        charseta = heap_alloc(lena+1);
+        charseta = malloc(lena + 1);
         if(!charseta)
             return;
 
@@ -767,7 +767,7 @@ static void parse_content_type(nsChannelBSC *This, const WCHAR *value)
         nsACString_InitDepend(&charset_str, charseta);
         nsIHttpChannel_SetContentCharset(&This->nschannel->nsIHttpChannel_iface, &charset_str);
         nsACString_Finish(&charset_str);
-        heap_free(charseta);
+        free(charseta);
     }else {
         FIXME("unhandled: %s\n", debugstr_wn(ptr, len - (ptr-value)));
     }
@@ -833,13 +833,13 @@ static void query_http_info(nsChannelBSC *This, IWinInetHttpInfo *wininet_info)
     if(!len)
         return;
 
-    buf = heap_alloc(len);
+    buf = malloc(len);
     if(!buf)
         return;
 
     IWinInetHttpInfo_QueryInfo(wininet_info, HTTP_QUERY_RAW_HEADERS_CRLF, buf, &len, NULL, NULL);
     if(!len) {
-        heap_free(buf);
+        free(buf);
         return;
     }
 
@@ -849,7 +849,7 @@ static void query_http_info(nsChannelBSC *This, IWinInetHttpInfo *wininet_info)
         process_response_headers(This, ptr);
     }
 
-    heap_free(buf);
+    free(buf);
 }
 
 HRESULT start_binding(HTMLInnerWindow *inner_window, BSCallback *bscallback, IBindCtx *bctx)
@@ -938,7 +938,7 @@ static HRESULT read_post_data_stream(nsIInputStream *stream, BOOL contains_heade
             data_len -= post_data-data;
 
             size = MultiByteToWideChar(CP_ACP, 0, data, ptr-data, NULL, 0);
-            headers = heap_alloc((size+1)*sizeof(WCHAR));
+            headers = malloc((size + 1) * sizeof(WCHAR));
             if(headers) {
                 MultiByteToWideChar(CP_ACP, 0, data, ptr-data, headers, size);
                 headers[size] = 0;
@@ -947,7 +947,7 @@ static HRESULT read_post_data_stream(nsIInputStream *stream, BOOL contains_heade
                 if(SUCCEEDED(hres))
                     request_data->headers = headers;
                 else
-                    heap_free(headers);
+                    free(headers);
             }else {
                 hres = E_OUTOFMEMORY;
             }
@@ -1152,10 +1152,10 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
         if(first_read) {
             switch(This->bsc.bom) {
             case BOM_UTF8:
-                This->nschannel->charset = heap_strdupA(UTF8_STR);
+                This->nschannel->charset = strdup(UTF8_STR);
                 break;
             case BOM_UTF16:
-                This->nschannel->charset = heap_strdupA(UTF16_STR);
+                This->nschannel->charset = strdup(UTF16_STR);
             case BOM_NONE:
                 /* FIXME: Get charset from HTTP headers */;
             }
@@ -1170,7 +1170,7 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
 
                 TRACE("Found MIME %s\n", debugstr_w(mime));
 
-                This->nschannel->content_type = heap_strdupWtoA(mime);
+                This->nschannel->content_type = strdupWtoA(mime);
                 CoTaskMemFree(mime);
                 if(!This->nschannel->content_type)
                     return E_OUTOFMEMORY;
@@ -1256,7 +1256,7 @@ static nsrefcnt NSAPI nsAsyncVerifyRedirectCallback_Release(nsIAsyncVerifyRedire
     if(!ref) {
         IBindStatusCallback_Release(&This->bsc->bsc.IBindStatusCallback_iface);
         nsIHttpChannel_Release(&This->nschannel->nsIHttpChannel_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1316,7 +1316,7 @@ static HRESULT create_redirect_callback(nsChannel *nschannel, nsChannelBSC *bsc,
 {
     nsRedirectCallback *callback;
 
-    callback = heap_alloc(sizeof(*callback));
+    callback = malloc(sizeof(*callback));
     if(!callback)
         return E_OUTOFMEMORY;
 
@@ -1353,7 +1353,7 @@ static void nsChannelBSC_destroy(BSCallback *bsc)
         nsISupports_Release(This->nscontext);
     if(This->nsstream)
         nsIInputStream_Release(&This->nsstream->nsIInputStream_iface);
-    heap_free(This);
+    free(This);
 }
 
 static HRESULT nsChannelBSC_start_binding(BSCallback *bsc)
@@ -1412,7 +1412,7 @@ static void stop_request_task_destr(task_t *_task)
     stop_request_task_t *task = (stop_request_task_t*)_task;
 
     IBindStatusCallback_Release(&task->bsc->bsc.IBindStatusCallback_iface);
-    heap_free(task);
+    free(task);
 }
 
 static HRESULT async_stop_request(nsChannelBSC *This)
@@ -1424,7 +1424,7 @@ static HRESULT async_stop_request(nsChannelBSC *This)
         on_start_nsrequest(This);
     }
 
-    task = heap_alloc(sizeof(*task));
+    task = malloc(sizeof(*task));
     if(!task)
         return E_OUTOFMEMORY;
 
@@ -1603,7 +1603,7 @@ static BOOL is_supported_doc_mime(const WCHAR *mime)
     char *nscat, *mimea;
     BOOL ret;
 
-    mimea = heap_strdupWtoA(mime);
+    mimea = strdupWtoA(mime);
     if(!mimea)
         return FALSE;
 
@@ -1611,7 +1611,7 @@ static BOOL is_supported_doc_mime(const WCHAR *mime)
 
     ret = nscat != NULL && !strcmp(nscat, "@mozilla.org/content/document-loader-factory;1");
 
-    heap_free(mimea);
+    free(mimea);
     nsfree(nscat);
     return ret;
 }
@@ -1719,8 +1719,8 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG progress, ULONG t
            (This->nschannel->content_type && !(This->nschannel->load_flags & LOAD_CALL_CONTENT_SNIFFERS)))
             return S_OK;
 
-        heap_free(This->nschannel->content_type);
-        This->nschannel->content_type = heap_strdupWtoA(status_text);
+        free(This->nschannel->content_type);
+        This->nschannel->content_type = strdupWtoA(status_text);
         break;
     case BINDSTATUS_REDIRECTING:
         if(This->is_doc_channel && !This->bsc.window->performance_timing->redirect_time)
@@ -1777,7 +1777,7 @@ static HRESULT process_response_status_text(const WCHAR *header, const WCHAR *he
     else
         ++header;
 
-    *status_text = heap_strndupWtoU(header, header_end - header);
+    *status_text = strndupWtoU(header, header_end - header);
 
     if(!*status_text)
         return E_OUTOFMEMORY;
@@ -1808,7 +1808,7 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
             return hres;
         }
 
-        heap_free(This->nschannel->response_status_text);
+        free(This->nschannel->response_status_text);
         This->nschannel->response_status_text = str;
 
         if(headers && headers[1] == '\n') {
@@ -1887,7 +1887,7 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
     nsChannelBSC *ret;
     DWORD bindf;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1899,7 +1899,7 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
     ret->is_doc_channel = is_doc_binding;
 
     if(headers) {
-        ret->bsc.request_data.headers = heap_strdupW(headers);
+        ret->bsc.request_data.headers = wcsdup(headers);
         if(!ret->bsc.request_data.headers) {
             IBindStatusCallback_Release(&ret->bsc.IBindStatusCallback_iface);
             return E_OUTOFMEMORY;
@@ -1943,7 +1943,7 @@ static void start_doc_binding_task_destr(task_t *_task)
     start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
 
     IHTMLWindow2_Release(&task->pending_window->base.IHTMLWindow2_iface);
-    heap_free(task);
+    free(task);
 }
 
 HRESULT async_start_doc_binding(HTMLOuterWindow *window, HTMLInnerWindow *pending_window)
@@ -1952,7 +1952,7 @@ HRESULT async_start_doc_binding(HTMLOuterWindow *window, HTMLInnerWindow *pendin
 
     TRACE("%p\n", pending_window);
 
-    task = heap_alloc(sizeof(start_doc_binding_task_t));
+    task = malloc(sizeof(start_doc_binding_task_t));
     if(!task)
         return E_OUTOFMEMORY;
 
@@ -2009,7 +2009,7 @@ HRESULT channelbsc_load_stream(HTMLInnerWindow *pending_window, IMoniker *mon, I
         return E_FAIL;
     }
 
-    bscallback->nschannel->content_type = heap_strdupA("text/html");
+    bscallback->nschannel->content_type = strdup("text/html");
     if(!bscallback->nschannel->content_type)
         return E_OUTOFMEMORY;
 
@@ -2043,7 +2043,7 @@ void channelbsc_set_channel(nsChannelBSC *This, nsChannel *channel, nsIStreamLis
         HRESULT hres;
 
         hres = parse_headers(This->bsc.request_data.headers, &channel->request_headers);
-        heap_free(This->bsc.request_data.headers);
+        free(This->bsc.request_data.headers);
         This->bsc.request_data.headers = NULL;
         if(FAILED(hres))
             WARN("parse_headers failed: %08lx\n", hres);
@@ -2099,7 +2099,7 @@ static void navigate_javascript_task_destr(task_t *_task)
     navigate_javascript_task_t *task = (navigate_javascript_task_t*)_task;
 
     IUri_Release(task->uri);
-    heap_free(task);
+    free(task);
 }
 
 typedef struct {
@@ -2131,7 +2131,7 @@ static void navigate_task_destr(task_t *_task)
     IBindStatusCallback_Release(&task->bscallback->bsc.IBindStatusCallback_iface);
     IMoniker_Release(task->mon);
     IUri_Release(task->uri);
-    heap_free(task);
+    free(task);
 }
 
 static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
@@ -2169,7 +2169,7 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
      * while Gecko scrolls only to elements with "hash" ids. We scroll the page ourselves if
      * a[id="#hash"] element can be found.
      */
-    selector = heap_alloc(sizeof(selector_formatW)+SysStringLen(frag)*sizeof(WCHAR));
+    selector = malloc(sizeof(selector_formatW) + SysStringLen(frag) * sizeof(WCHAR));
     if(selector) {
         nsIDOMElement *nselem = NULL;
         nsAString selector_str;
@@ -2179,7 +2179,7 @@ static HRESULT navigate_fragment(HTMLOuterWindow *window, IUri *uri)
         /* NOTE: Gecko doesn't set result to NULL if there is no match, so nselem must be initialized */
         nsres = nsIDOMDocument_QuerySelector(window->base.inner_window->doc->dom_document, &selector_str, &nselem);
         nsAString_Finish(&selector_str);
-        heap_free(selector);
+        free(selector);
         if(NS_SUCCEEDED(nsres) && nselem) {
             nsIDOMHTMLElement *html_elem;
 
@@ -2272,7 +2272,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
         IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
         IMoniker_Release(mon);
 
-        task = heap_alloc(sizeof(*task));
+        task = malloc(sizeof(*task));
         if(!task)
             return E_OUTOFMEMORY;
 
@@ -2294,7 +2294,7 @@ HRESULT super_navigate(HTMLOuterWindow *window, IUri *uri, DWORD flags, const WC
     }else {
         navigate_task_t *task;
 
-        task = heap_alloc(sizeof(*task));
+        task = malloc(sizeof(*task));
         if(!task) {
             IBindStatusCallback_Release(&bsc->bsc.IBindStatusCallback_iface);
             IMoniker_Release(mon);

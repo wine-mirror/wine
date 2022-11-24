@@ -246,7 +246,7 @@ static void release_outer_window(HTMLOuterWindow *This)
         mozIDOMWindowProxy_Release(This->window_proxy);
 
     wine_rb_remove(&window_map, &This->entry);
-    heap_free(This);
+    free(This);
 }
 
 static void release_inner_window(HTMLInnerWindow *This)
@@ -266,8 +266,8 @@ static void release_inner_window(HTMLInnerWindow *This)
     release_dispex(&This->event_target.dispex);
 
     for(i=0; i < This->global_prop_cnt; i++)
-        heap_free(This->global_props[i].name);
-    heap_free(This->global_props);
+        free(This->global_props[i].name);
+    free(This->global_props);
 
     if(This->location) {
         This->location->window = NULL;
@@ -314,7 +314,7 @@ static void release_inner_window(HTMLInnerWindow *This)
     if(This->mon)
         IMoniker_Release(This->mon);
 
-    heap_free(This);
+    free(This);
 }
 
 static ULONG WINAPI HTMLWindow2_Release(IHTMLWindow2 *iface)
@@ -649,7 +649,7 @@ static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
 
     len = SysStringLen(message);
     if(len > MAX_MESSAGE_LEN) {
-        msg = heap_alloc((MAX_MESSAGE_LEN+1)*sizeof(WCHAR));
+        msg = malloc((MAX_MESSAGE_LEN + 1) * sizeof(WCHAR));
         if(!msg)
             return E_OUTOFMEMORY;
         memcpy(msg, message, MAX_MESSAGE_LEN*sizeof(WCHAR));
@@ -658,7 +658,7 @@ static HRESULT WINAPI HTMLWindow2_alert(IHTMLWindow2 *iface, BSTR message)
 
     MessageBoxW(This->outer_window->browser->doc->hwnd, msg, title, MB_ICONWARNING);
     if(msg != message)
-        heap_free(msg);
+        free(msg);
     return S_OK;
 }
 
@@ -3295,7 +3295,7 @@ static HRESULT WINAPI window_private_postMessage(IWineHTMLWindowPrivate *iface, 
 
     if(dispex_compat_mode(&window->event_target.dispex) >= COMPAT_MODE_IE9) {
         struct post_message_task *task;
-        if(!(task = heap_alloc(sizeof(*task)))) {
+        if(!(task = malloc(sizeof(*task)))) {
             IDOMEvent_Release(&event->IDOMEvent_iface);
             return E_OUTOFMEMORY;
         }
@@ -3515,10 +3515,10 @@ static global_prop_t *alloc_global_prop(HTMLInnerWindow *This, global_prop_type_
 
         if(This->global_props) {
             new_size = This->global_prop_size*2;
-            new_props = heap_realloc(This->global_props, new_size*sizeof(global_prop_t));
+            new_props = realloc(This->global_props, new_size * sizeof(global_prop_t));
         }else {
             new_size = 16;
-            new_props = heap_alloc(new_size*sizeof(global_prop_t));
+            new_props = malloc(new_size * sizeof(global_prop_t));
         }
         if(!new_props)
             return NULL;
@@ -3526,7 +3526,7 @@ static global_prop_t *alloc_global_prop(HTMLInnerWindow *This, global_prop_type_
         This->global_prop_size = new_size;
     }
 
-    This->global_props[This->global_prop_cnt].name = heap_strdupW(name);
+    This->global_props[This->global_prop_cnt].name = wcsdup(name);
     if(!This->global_props[This->global_prop_cnt].name)
         return NULL;
 
@@ -4031,7 +4031,7 @@ static void *alloc_window(size_t size)
 {
     HTMLWindow *window;
 
-    window = heap_alloc_zero(size);
+    window = calloc(1, size);
     if(!window)
         return NULL;
 
@@ -4065,7 +4065,7 @@ static HRESULT create_inner_window(HTMLOuterWindow *outer_window, IMoniker *mon,
 
     hres = create_performance_timing(&window->performance_timing);
     if(FAILED(hres)) {
-        heap_free(window);
+        free(window);
         return hres;
     }
 

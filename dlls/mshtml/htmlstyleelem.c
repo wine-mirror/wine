@@ -475,7 +475,7 @@ HRESULT HTMLStyleElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HT
     HTMLStyleElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 

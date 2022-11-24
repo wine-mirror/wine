@@ -492,7 +492,7 @@ HRESULT HTMLTextAreaElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem,
     HTMLTextAreaElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLTextAreaElement));
+    ret = calloc(1, sizeof(HTMLTextAreaElement));
     if(!ret)
         return E_OUTOFMEMORY;
 

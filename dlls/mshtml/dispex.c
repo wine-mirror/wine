@@ -202,14 +202,14 @@ void release_typelib(void)
                 for(j = 0; j < iter->funcs[i].argc; j++)
                     VariantClear(&iter->funcs[i].arg_info[j].default_value);
             }
-            heap_free(iter->funcs[i].arg_types);
-            heap_free(iter->funcs[i].arg_info);
+            free(iter->funcs[i].arg_types);
+            free(iter->funcs[i].arg_info);
             SysFreeString(iter->funcs[i].name);
         }
 
-        heap_free(iter->funcs);
-        heap_free(iter->name_table);
-        heap_free(iter);
+        free(iter->funcs);
+        free(iter->name_table);
+        free(iter);
     }
 
     if(!typelib)
@@ -301,10 +301,12 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
 
     if(info == data->funcs+data->func_cnt) {
         if(data->func_cnt == data->func_size) {
-            info = heap_realloc_zero(data->funcs, (data->func_size <<= 1) * sizeof(func_info_t));
+            info = realloc(data->funcs, data->func_size * 2 * sizeof(func_info_t));
             if(!info)
                 return;
+            memset(info + data->func_size, 0, data->func_size * sizeof(func_info_t));
             data->funcs = info;
+            data->func_size *= 2;
         }
         info = data->funcs+data->func_cnt;
 
@@ -329,7 +331,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
         assert(info->argc < MAX_ARGS);
         assert(desc->funckind == FUNC_DISPATCH);
 
-        info->arg_info = heap_alloc_zero(sizeof(*info->arg_info) * info->argc);
+        info->arg_info = calloc(info->argc, sizeof(*info->arg_info));
         if(!info->arg_info)
             return;
 
@@ -339,7 +341,7 @@ static void add_func_info(dispex_data_t *data, tid_t tid, const FUNCDESC *desc, 
             return; /* Fallback to ITypeInfo::Invoke */
         }
 
-        info->arg_types = heap_alloc(sizeof(*info->arg_types) * (info->argc + (info->prop_vt == VT_VOID ? 0 : 1)));
+        info->arg_types = malloc(sizeof(*info->arg_types) * (info->argc + (info->prop_vt == VT_VOID ? 0 : 1)));
         if(!info->arg_types)
             return;
 
@@ -496,7 +498,7 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
         }
     }
 
-    data = heap_alloc(sizeof(dispex_data_t));
+    data = malloc(sizeof(dispex_data_t));
     if (!data) {
         ERR("Out of memory\n");
         return NULL;
@@ -506,9 +508,9 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     data->func_cnt = 0;
     data->func_disp_cnt = 0;
     data->func_size = 16;
-    data->funcs = heap_alloc_zero(data->func_size*sizeof(func_info_t));
+    data->funcs = calloc(data->func_size, sizeof(func_info_t));
     if (!data->funcs) {
-        heap_free (data);
+        free(data);
         ERR("Out of memory\n");
         return NULL;
     }
@@ -524,7 +526,7 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     }
 
     if(!data->func_cnt) {
-        heap_free(data->funcs);
+        free(data->funcs);
         data->name_table = NULL;
         data->funcs = NULL;
         data->func_size = 0;
@@ -532,10 +534,10 @@ static dispex_data_t *preprocess_dispex_data(dispex_static_data_t *desc, compat_
     }
 
 
-    data->funcs = heap_realloc(data->funcs, data->func_cnt * sizeof(func_info_t));
+    data->funcs = realloc(data->funcs, data->func_cnt * sizeof(func_info_t));
     qsort(data->funcs, data->func_cnt, sizeof(func_info_t), dispid_cmp);
 
-    data->name_table = heap_alloc(data->func_cnt * sizeof(func_info_t*));
+    data->name_table = malloc(data->func_cnt * sizeof(func_info_t*));
     for(i=0; i < data->func_cnt; i++)
         data->name_table[i] = data->funcs+i;
     qsort(data->name_table, data->func_cnt, sizeof(func_info_t*), func_name_cmp);
@@ -569,7 +571,7 @@ HRESULT get_dispids(tid_t tid, DWORD *ret_size, DISPID **ret)
     func_cnt = attr->cFuncs;
     ITypeInfo_ReleaseTypeAttr(ti, attr);
 
-    ids = heap_alloc(func_cnt*sizeof(DISPID));
+    ids = malloc(func_cnt * sizeof(DISPID));
     if(!ids) {
         ITypeInfo_Release(ti);
         return E_OUTOFMEMORY;
@@ -586,7 +588,7 @@ HRESULT get_dispids(tid_t tid, DWORD *ret_size, DISPID **ret)
 
     ITypeInfo_Release(ti);
     if(FAILED(hres)) {
-        heap_free(ids);
+        free(ids);
         return hres;
     }
 
@@ -632,7 +634,7 @@ static inline dispex_dynamic_data_t *get_dynamic_data(DispatchEx *This)
     if(This->dynamic_data)
         return This->dynamic_data;
 
-    This->dynamic_data = heap_alloc_zero(sizeof(dispex_dynamic_data_t));
+    This->dynamic_data = calloc(1, sizeof(dispex_dynamic_data_t));
     if(!This->dynamic_data)
         return NULL;
 
@@ -670,14 +672,14 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
     TRACE("creating dynamic prop %s\n", debugstr_w(name));
 
     if(!data->buf_size) {
-        data->props = heap_alloc(sizeof(dynamic_prop_t)*4);
+        data->props = malloc(sizeof(dynamic_prop_t) * 4);
         if(!data->props)
             return E_OUTOFMEMORY;
         data->buf_size = 4;
     }else if(data->buf_size == data->prop_cnt) {
         dynamic_prop_t *new_props;
 
-        new_props = heap_realloc(data->props, sizeof(dynamic_prop_t)*(data->buf_size<<1));
+        new_props = realloc(data->props, sizeof(dynamic_prop_t) * (data->buf_size << 1));
         if(!new_props)
             return E_OUTOFMEMORY;
 
@@ -687,7 +689,7 @@ static HRESULT get_dynamic_prop(DispatchEx *This, const WCHAR *name, DWORD flags
 
     prop = data->props + data->prop_cnt;
 
-    prop->name = heap_strdupW(name);
+    prop->name = wcsdup(name);
     if(!prop->name)
         return E_OUTOFMEMORY;
 
@@ -827,7 +829,7 @@ static ULONG WINAPI Function_Release(IUnknown *iface)
     if(!ref) {
         assert(!This->obj);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -919,7 +921,7 @@ static func_disp_t *create_func_disp(DispatchEx *obj, func_info_t *info)
 {
     func_disp_t *ret;
 
-    ret = heap_alloc_zero(sizeof(func_disp_t));
+    ret = calloc(1, sizeof(func_disp_t));
     if(!ret)
         return NULL;
 
@@ -945,7 +947,7 @@ static HRESULT invoke_disp_value(DispatchEx *This, IDispatch *func_disp, LCID lc
         return E_NOTIMPL;
     }
 
-    new_dp.rgvarg = heap_alloc((dp->cArgs+1)*sizeof(VARIANTARG));
+    new_dp.rgvarg = malloc((dp->cArgs + 1) * sizeof(VARIANTARG));
     if(!new_dp.rgvarg)
         return E_OUTOFMEMORY;
 
@@ -969,7 +971,7 @@ static HRESULT invoke_disp_value(DispatchEx *This, IDispatch *func_disp, LCID lc
     else
         WARN("<<< %08lx\n", hres);
 
-    heap_free(new_dp.rgvarg);
+    free(new_dp.rgvarg);
     return hres;
 }
 
@@ -983,7 +985,7 @@ static HRESULT get_func_obj_entry(DispatchEx *This, func_info_t *func, func_obj_
         return E_OUTOFMEMORY;
 
     if(!dynamic_data->func_disps) {
-        dynamic_data->func_disps = heap_alloc_zero(This->info->func_disp_cnt * sizeof(*dynamic_data->func_disps));
+        dynamic_data->func_disps = calloc(This->info->func_disp_cnt, sizeof(*dynamic_data->func_disps));
         if(!dynamic_data->func_disps)
             return E_OUTOFMEMORY;
     }
@@ -2035,10 +2037,10 @@ void release_dispex(DispatchEx *This)
 
     for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
         VariantClear(&prop->var);
-        heap_free(prop->name);
+        free(prop->name);
     }
 
-    heap_free(This->dynamic_data->props);
+    free(This->dynamic_data->props);
 
     if(This->dynamic_data->func_disps) {
         func_obj_entry_t *iter;
@@ -2051,10 +2053,10 @@ void release_dispex(DispatchEx *This)
             VariantClear(&iter->val);
         }
 
-        heap_free(This->dynamic_data->func_disps);
+        free(This->dynamic_data->func_disps);
     }
 
-    heap_free(This->dynamic_data);
+    free(This->dynamic_data);
 }
 
 void init_dispatch(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *data, compat_mode_t compat_mode)
@@ -2070,7 +2072,7 @@ void init_dispatch(DispatchEx *dispex, IUnknown *outer, dispex_static_data_t *da
         if(!data->delayed_init_info) {
             EnterCriticalSection(&cs_dispex_static_data);
             if(!data->delayed_init_info) {
-                dispex_data_t *info = heap_alloc_zero(sizeof(*data->delayed_init_info));
+                dispex_data_t *info = calloc(1, sizeof(*data->delayed_init_info));
                 if(info) {
                     info->desc = data;
                     data->delayed_init_info = info;

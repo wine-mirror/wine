@@ -533,7 +533,7 @@ HRESULT HTMLTableCell_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLE
     HTMLTableCell *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -979,7 +979,7 @@ HRESULT HTMLTableRow_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLEl
     HTMLTableRow *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLTableRow));
+    ret = calloc(1, sizeof(HTMLTableRow));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -2013,7 +2013,7 @@ HRESULT HTMLTable_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLEleme
     HTMLTable *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLTable));
+    ret = calloc(1, sizeof(HTMLTable));
     if(!ret)
         return E_OUTOFMEMORY;
 

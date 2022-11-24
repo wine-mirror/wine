@@ -175,7 +175,7 @@ static PRUnichar *handle_insert_comment(HTMLDocumentNode *doc, const PRUnichar *
         return NULL;
     }
 
-    buf = heap_alloc((end-ptr+1)*sizeof(WCHAR));
+    buf = malloc((end - ptr + 1) * sizeof(WCHAR));
     if(!buf)
         return NULL;
 
@@ -212,7 +212,7 @@ static nsresult run_insert_comment(HTMLDocumentNode *doc, nsISupports *comment_i
         HRESULT hres;
 
         hres = replace_node_by_html(doc->dom_document, (nsIDOMNode*)nscomment, replace_html);
-        heap_free(replace_html);
+        free(replace_html);
         if(FAILED(hres))
             nsres = NS_ERROR_FAILURE;
     }
@@ -361,7 +361,7 @@ static nsresult run_insert_script(HTMLDocumentNode *doc, nsISupports *script_ifa
         if(!iter->script->parsed)
             doc_insert_script(window, iter->script, TRUE);
         IHTMLScriptElement_Release(&iter->script->IHTMLScriptElement_iface);
-        heap_free(iter);
+        free(iter);
     }
 
     IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
@@ -504,12 +504,12 @@ void process_document_response_headers(HTMLDocumentNode *doc, IBinding *binding)
 
         TRACE("size %lu\n", size);
 
-        header = heap_strdupAtoW(buf);
+        header = strdupAtoW(buf);
         if(header && parse_ua_compatible(header, &document_mode)) {
             TRACE("setting document mode %d\n", document_mode);
             set_document_mode(doc, document_mode, FALSE);
         }
-        heap_free(header);
+        free(header);
     }
 
     IWinInetHttpInfo_Release(http_info);
@@ -612,7 +612,7 @@ static nsrefcnt NSAPI nsRunnable_Release(nsIRunnable *iface)
             nsISupports_Release(This->arg1);
         if(This->arg2)
             nsISupports_Release(This->arg2);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -636,7 +636,7 @@ static void add_script_runner(HTMLDocumentNode *This, runnable_proc_t proc, nsIS
 {
     nsRunnable *runnable;
 
-    runnable = heap_alloc_zero(sizeof(*runnable));
+    runnable = calloc(1, sizeof(*runnable));
     if(!runnable)
         return;
 

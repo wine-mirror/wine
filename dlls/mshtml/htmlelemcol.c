@@ -68,7 +68,7 @@ static void elem_vector_add(elem_vector_t *buf, HTMLElement *elem)
 {
     if(buf->len == buf->size) {
         buf->size <<= 1;
-        buf->buf = heap_realloc(buf->buf, buf->size*sizeof(HTMLElement*));
+        buf->buf = realloc(buf->buf, buf->size * sizeof(HTMLElement*));
     }
 
     buf->buf[buf->len++] = elem;
@@ -77,10 +77,10 @@ static void elem_vector_add(elem_vector_t *buf, HTMLElement *elem)
 static void elem_vector_normalize(elem_vector_t *buf)
 {
     if(!buf->len) {
-        heap_free(buf->buf);
+        free(buf->buf);
         buf->buf = NULL;
     }else if(buf->size > buf->len) {
-        buf->buf = heap_realloc(buf->buf, buf->len*sizeof(HTMLElement*));
+        buf->buf = realloc(buf->buf, buf->len*sizeof(HTMLElement*));
     }
 
     buf->size = buf->len;
@@ -139,7 +139,7 @@ static ULONG WINAPI HTMLElementCollectionEnum_Release(IEnumVARIANT *iface)
 
     if(!ref) {
         IHTMLElementCollection_Release(&This->col->IHTMLElementCollection_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -257,10 +257,10 @@ static ULONG WINAPI HTMLElementCollection_Release(IHTMLElementCollection *iface)
 
         for(i=0; i < This->len; i++)
             node_release(&This->elems[i]->node);
-        heap_free(This->elems);
+        free(This->elems);
 
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -334,7 +334,7 @@ static HRESULT WINAPI HTMLElementCollection_get__newEnum(IHTMLElementCollection 
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -450,7 +450,7 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
         }else {
             elem_vector_t buf = {NULL, 0, 8};
 
-            buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
+            buf.buf = malloc(buf.size * sizeof(HTMLElement*));
 
             for(i=0; i<This->len; i++) {
                 if(is_elem_name(This->elems[i], V_BSTR(&name))) {
@@ -469,7 +469,7 @@ static HRESULT WINAPI HTMLElementCollection_item(IHTMLElementCollection *iface,
                     *pdisp = (IDispatch*)&buf.buf[0]->IHTMLElement_iface;
                 }
 
-                heap_free(buf.buf);
+                free(buf.buf);
             }
         }
         break;
@@ -501,7 +501,7 @@ static HRESULT WINAPI HTMLElementCollection_tags(IHTMLElementCollection *iface,
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(V_BSTR(&tagName)), pdisp);
 
-    buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
+    buf.buf = malloc(buf.size * sizeof(HTMLElement*));
 
     nsAString_Init(&tag_str, NULL);
 
@@ -685,7 +685,7 @@ IHTMLElementCollection *create_all_collection(HTMLDOMNode *node, BOOL include_ro
 {
     elem_vector_t buf = {NULL, 0, 8};
 
-    buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
+    buf.buf = malloc(buf.size * sizeof(HTMLElement*));
 
     if(include_root) {
         node_addref(node);
@@ -712,7 +712,7 @@ IHTMLElementCollection *create_collection_from_nodelist(nsIDOMNodeList *nslist, 
     if(length) {
         nsIDOMNode *nsnode;
 
-        buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
+        buf.buf = malloc(buf.size * sizeof(HTMLElement*));
 
         for(i=0; i<length; i++) {
             nsIDOMNodeList_Item(nslist, i, &nsnode);
@@ -747,7 +747,7 @@ IHTMLElementCollection *create_collection_from_htmlcol(nsIDOMHTMLCollection *nsc
     if(buf.len) {
         nsIDOMNode *nsnode;
 
-        buf.buf = heap_alloc(buf.size*sizeof(HTMLElement*));
+        buf.buf = malloc(buf.size * sizeof(HTMLElement*));
 
         for(i=0; i<length; i++) {
             nsIDOMHTMLCollection_Item(nscol, i, &nsnode);
@@ -762,7 +762,7 @@ IHTMLElementCollection *create_collection_from_htmlcol(nsIDOMHTMLCollection *nsc
     }
 
     if(FAILED(hres)) {
-        heap_free(buf.buf);
+        free(buf.buf);
         return NULL;
     }
 
@@ -814,7 +814,7 @@ HRESULT get_elem_source_index(HTMLElement *elem, LONG *ret)
 
     /* Create all children collection and find the element in it.
      * This could be optimized if we ever find the reason. */
-    buf.buf = heap_alloc(buf.size*sizeof(*buf.buf));
+    buf.buf = malloc(buf.size * sizeof(*buf.buf));
     if(!buf.buf) {
         IHTMLDOMNode_Release(&node->IHTMLDOMNode_iface);
         return E_OUTOFMEMORY;
@@ -827,7 +827,7 @@ HRESULT get_elem_source_index(HTMLElement *elem, LONG *ret)
             break;
     }
     IHTMLDOMNode_Release(&node->IHTMLDOMNode_iface);
-    heap_free(buf.buf);
+    free(buf.buf);
     if(i == buf.len) {
         FIXME("The element is not in parent's child list?\n");
         return E_UNEXPECTED;
@@ -840,7 +840,7 @@ HRESULT get_elem_source_index(HTMLElement *elem, LONG *ret)
 static IHTMLElementCollection *HTMLElementCollection_Create(HTMLElement **elems, DWORD len,
                                                             compat_mode_t compat_mode)
 {
-    HTMLElementCollection *ret = heap_alloc_zero(sizeof(HTMLElementCollection));
+    HTMLElementCollection *ret = calloc(1, sizeof(HTMLElementCollection));
 
     if (!ret)
         return NULL;

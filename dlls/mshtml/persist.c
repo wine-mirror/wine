@@ -275,7 +275,7 @@ static void set_downloading_task_destr(task_t *_task)
     download_proc_task_t *task = (download_proc_task_t*)_task;
 
     CoTaskMemFree(task->url);
-    heap_free(task);
+    free(task);
 }
 
 void prepare_for_binding(HTMLDocumentObj *This, IMoniker *mon, DWORD flags)
@@ -404,7 +404,7 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
         if(doc_obj->frame) {
             docobj_task_t *task;
 
-            task = heap_alloc(sizeof(docobj_task_t));
+            task = malloc(sizeof(docobj_task_t));
             task->doc = doc_obj;
             hres = push_task(&task->header, set_progress_proc, NULL, doc_obj->task_magic);
             if(FAILED(hres)) {
@@ -413,7 +413,7 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
             }
         }
 
-        download_task = heap_alloc(sizeof(download_proc_task_t));
+        download_task = malloc(sizeof(download_proc_task_t));
         download_task->doc = doc_obj;
         download_task->set_download = set_download;
         download_task->url = url;
@@ -479,7 +479,7 @@ void set_ready_state(HTMLOuterWindow *window, READYSTATE readystate)
         if(window->readystate_pending || prev_state == readystate)
             return;
 
-        task = heap_alloc(sizeof(*task));
+        task = malloc(sizeof(*task));
         if(!task)
             return;
 
@@ -525,7 +525,7 @@ static HRESULT get_doc_string(HTMLDocumentNode *This, char **str)
     nsAString_GetData(&nsstr, &strw);
     TRACE("%s\n", debugstr_w(strw));
 
-    *str = heap_strdupWtoA(strw);
+    *str = strdupWtoA(strw);
 
     nsAString_Finish(&nsstr);
 
@@ -827,8 +827,8 @@ static HRESULT WINAPI DocObjMonikerProp_PutProperty(IMonikerProp *iface, MONIKER
 
     switch(mkp) {
     case MIMETYPEPROP:
-        heap_free(This->mime);
-        This->mime = heap_strdupW(val);
+        free(This->mime);
+        This->mime = wcsdup(val);
         break;
 
     case CLASSIDPROP:
@@ -1098,7 +1098,7 @@ static HRESULT WINAPI DocNodePersistStreamInit_Save(IPersistStreamInit *iface, I
     if(FAILED(hres))
         FIXME("Write failed: %08lx\n", hres);
 
-    heap_free(str);
+    free(str);
 
     if(fClearDirty)
         set_dirty(This->doc_obj->nscontainer, VARIANT_FALSE);
@@ -1382,7 +1382,7 @@ static HRESULT WINAPI DocObjPersistHistory_LoadHistory(IPersistHistory *iface, I
     if(read != sizeof(str_len))
         return E_FAIL;
 
-    uri_str = heap_alloc((str_len+1)*sizeof(WCHAR));
+    uri_str = malloc((str_len + 1) * sizeof(WCHAR));
     if(!uri_str)
         return E_OUTOFMEMORY;
 
@@ -1393,7 +1393,7 @@ static HRESULT WINAPI DocObjPersistHistory_LoadHistory(IPersistHistory *iface, I
         uri_str[str_len] = 0;
         hres = create_uri(uri_str, 0, &uri);
     }
-    heap_free(uri_str);
+    free(uri_str);
     if(FAILED(hres))
         return hres;
 

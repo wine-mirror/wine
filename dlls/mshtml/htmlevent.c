@@ -280,7 +280,7 @@ static listener_container_t *get_listener_container(EventTarget *event_target, c
         FIXME("unimplemented event %s\n", debugstr_w(event_info[eid].name));
 
     type_len = lstrlenW(type);
-    container = heap_alloc(FIELD_OFFSET(listener_container_t, type[type_len+1]));
+    container = malloc(FIELD_OFFSET(listener_container_t, type[type_len+1]));
     if(!container)
         return NULL;
     memcpy(container->type, type, (type_len + 1) * sizeof(WCHAR));
@@ -308,7 +308,7 @@ static void remove_event_listener(EventTarget *event_target, const WCHAR *type_n
         if(listener->function == function && listener->type == type) {
             IDispatch_Release(listener->function);
             list_remove(&listener->entry);
-            heap_free(listener);
+            free(listener);
             break;
         }
     }
@@ -385,7 +385,7 @@ static ULONG WINAPI HTMLEventObj_Release(IHTMLEventObj *iface)
         if(This->event)
             IDOMEvent_Release(&This->event->IDOMEvent_iface);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -884,7 +884,7 @@ static HTMLEventObj *alloc_event_obj(DOMEvent *event, compat_mode_t compat_mode)
 {
     HTMLEventObj *event_obj;
 
-    event_obj = heap_alloc_zero(sizeof(*event_obj));
+    event_obj = calloc(1, sizeof(*event_obj));
     if(!event_obj)
         return NULL;
 
@@ -968,8 +968,8 @@ static ULONG WINAPI DOMEvent_Release(IDOMEvent *iface)
             IEventTarget_Release(&This->target->IEventTarget_iface);
         nsIDOMEvent_Release(This->nsevent);
         release_dispex(&This->dispex);
-        heap_free(This->type);
-        heap_free(This);
+        free(This->type);
+        free(This);
     }
 
     return ref;
@@ -1116,8 +1116,8 @@ static HRESULT WINAPI DOMEvent_initEvent(IDOMEvent *iface, BSTR type, VARIANT_BO
         return S_OK;
     }
 
-    heap_free(This->type);
-    This->type = heap_strdupW(type);
+    free(This->type);
+    This->type = wcsdup(type);
     if(!This->type)
         return E_OUTOFMEMORY;
     This->event_id = str_to_eid(type);
@@ -3004,7 +3004,7 @@ dispex_static_data_t DOMStorageEvent_dispex = {
 static void *event_ctor(unsigned size, dispex_static_data_t *dispex_data, void *(*query_interface)(DOMEvent*,REFIID),
         void (*destroy)(DOMEvent*), nsIDOMEvent *nsevent, eventid_t event_id, compat_mode_t compat_mode)
 {
-    DOMEvent *event = heap_alloc_zero(size);
+    DOMEvent *event = calloc(1, size);
 
     if(!event)
         return NULL;
@@ -3014,9 +3014,9 @@ static void *event_ctor(unsigned size, dispex_static_data_t *dispex_data, void *
     event->ref = 1;
     event->event_id = event_id;
     if(event_id != EVENTID_LAST) {
-        event->type = heap_strdupW(event_info[event_id].name);
+        event->type = wcsdup(event_info[event_id].name);
         if(!event->type) {
-            heap_free(event);
+            free(event);
             return NULL;
         }
         event->bubbles = (event_info[event_id].flags & EVENT_BUBBLES) != 0;
@@ -3463,12 +3463,12 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
             if(listeners_cnt == listeners_size) {
                 event_listener_t *new_listeners;
                 if(listeners == listeners_buf) {
-                    new_listeners = heap_alloc(listeners_size * 2 * sizeof(*new_listeners));
+                    new_listeners = malloc(listeners_size * 2 * sizeof(*new_listeners));
                     if(!new_listeners)
                         break;
                     memcpy(new_listeners, listeners, listeners_cnt * sizeof(*listeners));
                 }else {
-                    new_listeners = heap_realloc(listeners, listeners_size * 2 * sizeof(*new_listeners));
+                    new_listeners = realloc(listeners, listeners_size * 2 * sizeof(*new_listeners));
                 }
                 listeners = new_listeners;
                 listeners_size *= 2;
@@ -3543,7 +3543,7 @@ static void call_event_handlers(EventTarget *event_target, DOMEvent *event, disp
     for(listener = listeners; listener < listeners + listeners_cnt; listener++)
         IDispatch_Release(listener->function);
     if(listeners != listeners_buf)
-        heap_free(listeners);
+        free(listeners);
 
     if(event->phase != DEP_CAPTURING_PHASE && event_info[event->event_id].dispid
        && (vtbl = dispex_get_vtbl(&event_target->dispex)) && vtbl->get_cp_container)
@@ -3624,12 +3624,12 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
         if(chain_cnt == chain_buf_size) {
             EventTarget **new_chain;
             if(target_chain == target_chain_buf) {
-                new_chain = heap_alloc(chain_buf_size * 2 * sizeof(*new_chain));
+                new_chain = malloc(chain_buf_size * 2 * sizeof(*new_chain));
                 if(!new_chain)
                     break;
                 memcpy(new_chain, target_chain, chain_buf_size * sizeof(*new_chain));
             }else {
-                new_chain = heap_realloc(target_chain, chain_buf_size * 2 * sizeof(*new_chain));
+                new_chain = realloc(target_chain, chain_buf_size * 2 * sizeof(*new_chain));
                 if(!new_chain)
                     break;
             }
@@ -3708,7 +3708,7 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
     for(i = 0; i < chain_cnt; i++)
         IEventTarget_Release(&target_chain[i]->IEventTarget_iface);
     if(target_chain != target_chain_buf)
-        heap_free(target_chain);
+        free(target_chain);
 
     return S_OK;
 }
@@ -3863,7 +3863,7 @@ static event_listener_t *get_onevent_listener(EventTarget *event_target, eventid
     if(!alloc)
         return NULL;
 
-    listener = heap_alloc(sizeof(*listener));
+    listener = malloc(sizeof(*listener));
     if(!listener)
         return NULL;
 
@@ -4008,7 +4008,7 @@ HRESULT attach_event(EventTarget *event_target, BSTR name, IDispatch *disp, VARI
     if(!container)
         return E_OUTOFMEMORY;
 
-    listener = heap_alloc(sizeof(*listener));
+    listener = malloc(sizeof(*listener));
     if(!listener)
         return E_OUTOFMEMORY;
 
@@ -4147,7 +4147,7 @@ HRESULT doc_init_events(HTMLDocumentNode *doc)
     unsigned i;
     HRESULT hres;
 
-    doc->event_vector = heap_alloc_zero(EVENTID_LAST*sizeof(BOOL));
+    doc->event_vector = calloc(EVENTID_LAST, sizeof(BOOL));
     if(!doc->event_vector)
         return E_OUTOFMEMORY;
 
@@ -4240,7 +4240,7 @@ static HRESULT WINAPI EventTarget_addEventListener(IEventTarget *iface, BSTR typ
             return S_OK;
     }
 
-    listener = heap_alloc(sizeof(*listener));
+    listener = malloc(sizeof(*listener));
     if(!listener)
         return E_OUTOFMEMORY;
 
@@ -4408,8 +4408,8 @@ void release_event_target(EventTarget *event_target)
             if(listener->function)
                 IDispatch_Release(listener->function);
             list_remove(&listener->entry);
-            heap_free(listener);
+            free(listener);
         }
-        heap_free(iter);
+        free(iter);
     }
 }

@@ -100,7 +100,7 @@ static struct session_map_entry *grab_session_map_entry(BSTR origin)
     }
 
     origin_len = SysStringLen(origin);
-    entry = heap_alloc(FIELD_OFFSET(struct session_map_entry, origin[origin_len]));
+    entry = malloc(FIELD_OFFSET(struct session_map_entry, origin[origin_len]));
     if(!entry)
         return NULL;
     wine_rb_init(&entry->data_map, session_entry_cmp);
@@ -121,7 +121,7 @@ static void release_session_map_entry(struct session_map_entry *entry)
         return;
 
     wine_rb_remove(&get_thread_data(FALSE)->session_storage_map, &entry->entry);
-    heap_free(entry);
+    free(entry);
 }
 
 static HRESULT get_session_entry(struct session_map_entry *entry, const WCHAR *name, BOOL create, struct session_entry **ret)
@@ -145,7 +145,7 @@ static HRESULT get_session_entry(struct session_map_entry *entry, const WCHAR *n
     key_len = wcslen(key);
     if(entry->quota < key_len)
         return E_OUTOFMEMORY;  /* native returns this when quota is exceeded */
-    if(!(data = heap_alloc(FIELD_OFFSET(struct session_entry, key[key_len + 1]))))
+    if(!(data = malloc(FIELD_OFFSET(struct session_entry, key[key_len + 1]))))
         return E_OUTOFMEMORY;
     data->value = NULL;
     memcpy(data->key, key, (key_len + 1) * sizeof(WCHAR));
@@ -164,7 +164,7 @@ static void clear_session_storage(struct session_map_entry *entry)
 
     LIST_FOR_EACH_ENTRY_SAFE(iter, iter2, &entry->data_list, struct session_entry, list_entry) {
         SysFreeString(iter->value);
-        heap_free(iter);
+        free(iter);
     }
     wine_rb_destroy(&entry->data_map, NULL, NULL);
     list_init(&entry->data_list);
@@ -178,7 +178,7 @@ void destroy_session_storage(thread_data_t *thread_data)
 
     WINE_RB_FOR_EACH_ENTRY_DESTRUCTOR(iter, iter2, &thread_data->session_storage_map, struct session_map_entry, entry) {
         clear_session_storage(iter);
-        heap_free(iter);
+        free(iter);
     }
 }
 
@@ -189,7 +189,7 @@ static void release_props(HTMLStorage *This)
         SysFreeString(*prop);
         prop++;
     }
-    heap_free(This->props);
+    free(This->props);
 }
 
 static inline HTMLStorage *impl_from_IHTMLStorage(IHTMLStorage *iface)
@@ -248,7 +248,7 @@ static HRESULT push_storage_event_task(struct send_storage_event_ctx *ctx, HTMLI
     if(FAILED(hres))
         return hres;
 
-    if(!(task = heap_alloc(sizeof(*task)))) {
+    if(!(task = malloc(sizeof(*task)))) {
         IDOMEvent_Release(&event->IDOMEvent_iface);
         return E_OUTOFMEMORY;
     }
@@ -404,10 +404,10 @@ static ULONG WINAPI HTMLStorage_Release(IHTMLStorage *iface)
     if(!ref) {
         release_session_map_entry(This->session_storage);
         release_dispex(&This->dispex);
-        heap_free(This->filename);
+        free(This->filename);
         CloseHandle(This->mutex);
         release_props(This);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -451,7 +451,7 @@ static BOOL create_path(const WCHAR *path)
     WCHAR *new_path;
     int len;
 
-    new_path = heap_alloc((wcslen(path) + 1) * sizeof(WCHAR));
+    new_path = malloc((wcslen(path) + 1) * sizeof(WCHAR));
     if(!new_path)
         return FALSE;
     wcscpy(new_path, path);
@@ -480,7 +480,7 @@ static BOOL create_path(const WCHAR *path)
         }
         new_path[len] = '\\';
     }
-    heap_free(new_path);
+    free(new_path);
     return ret;
 }
 
@@ -492,7 +492,7 @@ static HRESULT open_document(const WCHAR *filename, IXMLDOMDocument **ret)
     VARIANT var;
     VARIANT_BOOL success;
 
-    path = heap_strdupW(filename);
+    path = wcsdup(filename);
     if(!path)
         return E_OUTOFMEMORY;
 
@@ -533,7 +533,7 @@ static HRESULT open_document(const WCHAR *filename, IXMLDOMDocument **ret)
     SysFreeString(V_BSTR(&var));
 
 done:
-    heap_free(path);
+    free(path);
     if(hres == S_OK)
         *ret = doc;
     else if(doc)
@@ -1006,7 +1006,7 @@ static HRESULT WINAPI HTMLStorage_removeItem(IHTMLStorage *iface, BSTR bstrKey)
             list_remove(&session_entry->list_entry);
             wine_rb_remove(&This->session_storage->data_map, &session_entry->entry);
             old_value = session_entry->value;
-            heap_free(session_entry);
+            free(session_entry);
 
             hres = send_storage_event(This, bstrKey, old_value, NULL);
         }
@@ -1119,7 +1119,7 @@ static HRESULT get_prop(HTMLStorage *This, const WCHAR *name, DISPID *dispid)
     }
 
     if(is_power_of_2(This->num_props)) {
-        BSTR *new_props = heap_realloc(This->props, max(This->num_props * 2 * sizeof(BSTR*), 1));
+        BSTR *new_props = realloc(This->props, max(This->num_props * 2 * sizeof(BSTR*), 1));
         if(!new_props)
             return E_OUTOFMEMORY;
         This->props = new_props;
@@ -1397,7 +1397,7 @@ static WCHAR *build_filename(BSTR hostname)
     memcpy(path + len, store, sizeof(store));
 
     len += ARRAY_SIZE(store);
-    ret = heap_alloc((len + wcslen(hostname) + ARRAY_SIZE(L".xml")) * sizeof(WCHAR));
+    ret = malloc((len + wcslen(hostname) + ARRAY_SIZE(L".xml")) * sizeof(WCHAR));
     if(!ret) {
         return NULL;
     }
@@ -1412,7 +1412,7 @@ static WCHAR *build_filename(BSTR hostname)
 static WCHAR *build_mutexname(const WCHAR *filename)
 {
     WCHAR *ret, *ptr;
-    ret = heap_strdupW(filename);
+    ret = wcsdup(filename);
     if(!ret)
         return NULL;
     for(ptr = ret; *ptr; ptr++)
@@ -1436,7 +1436,7 @@ HRESULT create_html_storage(HTMLInnerWindow *window, BOOL local, IHTMLStorage **
         return hres;
     }
 
-    storage = heap_alloc_zero(sizeof(*storage));
+    storage = calloc(1, sizeof(*storage));
     if(!storage) {
         SysFreeString(hostname);
         return E_OUTOFMEMORY;
@@ -1447,33 +1447,33 @@ HRESULT create_html_storage(HTMLInnerWindow *window, BOOL local, IHTMLStorage **
         storage->filename = build_filename(hostname);
         SysFreeString(hostname);
         if(!storage->filename) {
-            heap_free(storage);
+            free(storage);
             return E_OUTOFMEMORY;
         }
         mutexname = build_mutexname(storage->filename);
         if(!mutexname) {
-            heap_free(storage->filename);
-            heap_free(storage);
+            free(storage->filename);
+            free(storage);
             return E_OUTOFMEMORY;
         }
         storage->mutex = CreateMutexW(NULL, FALSE, mutexname);
-        heap_free(mutexname);
+        free(mutexname);
         if(!storage->mutex) {
-            heap_free(storage->filename);
-            heap_free(storage);
+            free(storage->filename);
+            free(storage);
             return HRESULT_FROM_WIN32(GetLastError());
         }
     }else {
         hres = build_session_origin(uri, hostname, &origin);
         SysFreeString(hostname);
         if(hres != S_OK) {
-            heap_free(storage);
+            free(storage);
             return hres;
         }
         storage->session_storage = grab_session_map_entry(origin);
         SysFreeString(origin);
         if(!storage->session_storage) {
-            heap_free(storage);
+            free(storage);
             return E_OUTOFMEMORY;
         }
     }

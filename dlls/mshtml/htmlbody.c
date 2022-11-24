@@ -1021,7 +1021,7 @@ HRESULT HTMLBodyElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTM
     HTMLBodyElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLBodyElement));
+    ret = calloc(1, sizeof(HTMLBodyElement));
     if(!ret)
         return E_OUTOFMEMORY;
 

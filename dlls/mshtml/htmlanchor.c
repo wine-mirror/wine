@@ -913,7 +913,7 @@ HRESULT HTMLAnchorElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, H
     HTMLAnchorElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLAnchorElement));
+    ret = calloc(1, sizeof(HTMLAnchorElement));
     if(!ret)
         return E_OUTOFMEMORY;
 

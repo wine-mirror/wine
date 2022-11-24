@@ -398,7 +398,7 @@ HRESULT create_doctype_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNo
     DocumentType *doctype;
     nsresult nsres;
 
-    if(!(doctype = heap_alloc_zero(sizeof(*doctype))))
+    if(!(doctype = calloc(1, sizeof(*doctype))))
         return E_OUTOFMEMORY;
 
     nsres = nsIDOMNode_QueryInterface(nsnode, &IID_nsIDOMDocumentType, (void**)&nsdoctype);
@@ -2721,7 +2721,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByName(IHTMLDocument3 *iface, BST
         return E_NOTIMPL;
     }
 
-    selector = heap_alloc(2*SysStringLen(v)*sizeof(WCHAR) + sizeof(formatW));
+    selector = malloc(2 * SysStringLen(v) * sizeof(WCHAR) + sizeof(formatW));
     if(!selector)
         return E_OUTOFMEMORY;
     swprintf(selector, 2*SysStringLen(v) + ARRAY_SIZE(formatW), formatW, v, v);
@@ -2734,7 +2734,7 @@ static HRESULT WINAPI HTMLDocument3_getElementsByName(IHTMLDocument3 *iface, BST
     nsAString_InitDepend(&selector_str, selector);
     nsres = nsIDOMDocument_QuerySelectorAll(This->dom_document, &selector_str, &node_list);
     nsAString_Finish(&selector_str);
-    heap_free(selector);
+    free(selector);
     if(NS_FAILED(nsres)) {
         ERR("QuerySelectorAll failed: %08lx\n", nsres);
         return E_FAIL;
@@ -4925,7 +4925,7 @@ static HRESULT has_elem_name(nsIDOMHTMLDocument *html_document, const WCHAR *nam
     size_t len;
 
     len = wcslen(name) + ARRAY_SIZE(fmt) - 2 /* %s */;
-    if(len > ARRAY_SIZE(buf) && !(selector = heap_alloc(len * sizeof(WCHAR))))
+    if(len > ARRAY_SIZE(buf) && !(selector = malloc(len * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
     swprintf(selector, len, fmt, name);
 
@@ -4933,7 +4933,7 @@ static HRESULT has_elem_name(nsIDOMHTMLDocument *html_document, const WCHAR *nam
     nsres = nsIDOMHTMLDocument_QuerySelector(html_document, &selector_str, &nselem);
     nsAString_Finish(&selector_str);
     if(selector != buf)
-        heap_free(selector);
+        free(selector);
     if(NS_FAILED(nsres))
         return map_nsresult(nsres);
 
@@ -4954,7 +4954,7 @@ static HRESULT get_elem_by_name_or_id(nsIDOMHTMLDocument *html_document, const W
     size_t len;
 
     len = wcslen(name) * 4 + ARRAY_SIZE(fmt) - 8 /* %s */;
-    if(len > ARRAY_SIZE(buf) && !(selector = heap_alloc(len * sizeof(WCHAR))))
+    if(len > ARRAY_SIZE(buf) && !(selector = malloc(len * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
     swprintf(selector, len, fmt, name, name, name, name);
 
@@ -4962,7 +4962,7 @@ static HRESULT get_elem_by_name_or_id(nsIDOMHTMLDocument *html_document, const W
     nsres = nsIDOMHTMLDocument_QuerySelector(html_document, &selector_str, &nselem);
     nsAString_Finish(&selector_str);
     if(selector != buf)
-        heap_free(selector);
+        free(selector);
     if(NS_FAILED(nsres))
         return map_nsresult(nsres);
 
@@ -4993,12 +4993,12 @@ static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, const WCHAR *name, 
         WCHAR **new_vars;
 
         if(This->elem_vars_size) {
-            new_vars = heap_realloc(This->elem_vars, This->elem_vars_size*2*sizeof(WCHAR*));
+            new_vars = realloc(This->elem_vars, This->elem_vars_size * 2 * sizeof(WCHAR*));
             if(!new_vars)
                 return E_OUTOFMEMORY;
             This->elem_vars_size *= 2;
         }else {
-            new_vars = heap_alloc(16*sizeof(WCHAR*));
+            new_vars = malloc(16 * sizeof(WCHAR*));
             if(!new_vars)
                 return E_OUTOFMEMORY;
             This->elem_vars_size = 16;
@@ -5007,7 +5007,7 @@ static HRESULT dispid_from_elem_name(HTMLDocumentNode *This, const WCHAR *name, 
         This->elem_vars = new_vars;
     }
 
-    This->elem_vars[This->elem_vars_cnt] = heap_strdupW(name);
+    This->elem_vars[This->elem_vars_cnt] = wcsdup(name);
     if(!This->elem_vars[This->elem_vars_cnt])
         return E_OUTOFMEMORY;
 
@@ -5834,8 +5834,8 @@ void detach_document_node(HTMLDocumentNode *doc)
     detach_ranges(doc);
 
     for(i=0; i < doc->elem_vars_cnt; i++)
-        heap_free(doc->elem_vars[i]);
-    heap_free(doc->elem_vars);
+        free(doc->elem_vars[i]);
+    free(doc->elem_vars);
     doc->elem_vars_cnt = doc->elem_vars_size = 0;
     doc->elem_vars = NULL;
 
@@ -5862,7 +5862,7 @@ static void HTMLDocumentNode_destructor(HTMLDOMNode *iface)
 
     TRACE("(%p)\n", This);
 
-    heap_free(This->event_vector);
+    free(This->event_vector);
     ConnectionPointContainer_Destroy(&This->cp_container);
 }
 
@@ -6198,7 +6198,7 @@ static HTMLDocumentNode *alloc_doc_node(HTMLDocumentObj *doc_obj, HTMLInnerWindo
 {
     HTMLDocumentNode *doc;
 
-    doc = heap_alloc_zero(sizeof(HTMLDocumentNode));
+    doc = calloc(1, sizeof(HTMLDocumentNode));
     if(!doc)
         return NULL;
 

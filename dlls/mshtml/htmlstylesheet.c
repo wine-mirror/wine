@@ -127,7 +127,7 @@ static ULONG WINAPI HTMLStyleSheetRule_Release(IHTMLStyleSheetRule *iface)
         release_dispex(&This->dispex);
         if(This->nsstylesheetrule)
             nsIDOMCSSRule_Release(This->nsstylesheetrule);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -223,7 +223,7 @@ static HRESULT create_style_sheet_rule(nsIDOMCSSRule *nsstylesheetrule, compat_m
     HTMLStyleSheetRule *rule;
     nsresult nsres;
 
-    if(!(rule = heap_alloc(sizeof(*rule))))
+    if(!(rule = malloc(sizeof(*rule))))
         return E_OUTOFMEMORY;
 
     rule->IHTMLStyleSheetRule_iface.lpVtbl = &HTMLStyleSheetRuleVtbl;
@@ -294,7 +294,7 @@ static ULONG WINAPI HTMLStyleSheetRulesCollection_Release(IHTMLStyleSheetRulesCo
         release_dispex(&This->dispex);
         if(This->nslist)
             nsIDOMCSSRuleList_Release(This->nslist);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -487,7 +487,7 @@ static HRESULT create_style_sheet_rules_collection(nsIDOMCSSRuleList *nslist, co
 {
     HTMLStyleSheetRulesCollection *collection;
 
-    if(!(collection = heap_alloc(sizeof(*collection))))
+    if(!(collection = malloc(sizeof(*collection))))
         return E_OUTOFMEMORY;
 
     collection->IHTMLStyleSheetRulesCollection_iface.lpVtbl = &HTMLStyleSheetRulesCollectionVtbl;
@@ -548,7 +548,7 @@ static ULONG WINAPI HTMLStyleSheetsCollectionEnum_Release(IEnumVARIANT *iface)
 
     if(!ref) {
         IHTMLStyleSheetsCollection_Release(&This->col->IHTMLStyleSheetsCollection_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -679,7 +679,7 @@ static ULONG WINAPI HTMLStyleSheetsCollection_Release(IHTMLStyleSheetsCollection
         release_dispex(&This->dispex);
         if(This->nslist)
             nsIDOMStyleSheetList_Release(This->nslist);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -739,7 +739,7 @@ static HRESULT WINAPI HTMLStyleSheetsCollection_get__newEnum(IHTMLStyleSheetsCol
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -914,7 +914,7 @@ HRESULT create_style_sheet_collection(nsIDOMStyleSheetList *nslist, compat_mode_
 {
     HTMLStyleSheetsCollection *collection;
 
-    if(!(collection = heap_alloc(sizeof(HTMLStyleSheetsCollection))))
+    if(!(collection = malloc(sizeof(HTMLStyleSheetsCollection))))
         return E_OUTOFMEMORY;
 
     collection->IHTMLStyleSheetsCollection_iface.lpVtbl = &HTMLStyleSheetsCollectionVtbl;
@@ -983,7 +983,7 @@ static ULONG WINAPI HTMLStyleSheet_Release(IHTMLStyleSheet *iface)
         release_dispex(&This->dispex);
         if(This->nsstylesheet)
             nsIDOMCSSStyleSheet_Release(This->nsstylesheet);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -1147,7 +1147,7 @@ static HRESULT WINAPI HTMLStyleSheet_addRule(IHTMLStyleSheet *iface, BSTR bstrSe
         lIndex = length;
 
     len = ARRAY_SIZE(format) - 4 /* %s twice */ + wcslen(bstrSelector) + wcslen(bstrStyle);
-    if(!(rule = heap_alloc(len * sizeof(WCHAR))))
+    if(!(rule = malloc(len * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
     swprintf(rule, len, format, bstrSelector, bstrStyle);
 
@@ -1155,7 +1155,7 @@ static HRESULT WINAPI HTMLStyleSheet_addRule(IHTMLStyleSheet *iface, BSTR bstrSe
     nsres = nsIDOMCSSStyleSheet_InsertRule(This->nsstylesheet, &nsstr, lIndex, &new_index);
     if(NS_FAILED(nsres)) WARN("failed: %08lx\n", nsres);
     nsAString_Finish(&nsstr);
-    heap_free(rule);
+    free(rule);
 
     *plIndex = new_index;
     return map_nsresult(nsres);
@@ -1485,7 +1485,7 @@ HRESULT create_style_sheet(nsIDOMStyleSheet *nsstylesheet, compat_mode_t compat_
     HTMLStyleSheet *style_sheet;
     nsresult nsres;
 
-    if(!(style_sheet = heap_alloc(sizeof(HTMLStyleSheet))))
+    if(!(style_sheet = malloc(sizeof(HTMLStyleSheet))))
         return E_OUTOFMEMORY;
 
     style_sheet->IHTMLStyleSheet_iface.lpVtbl = &HTMLStyleSheetVtbl;

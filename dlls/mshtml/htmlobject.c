@@ -788,7 +788,7 @@ HRESULT HTMLObjectElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, H
     HTMLObjectElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1050,7 +1050,7 @@ HRESULT HTMLEmbedElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HT
 {
     HTMLEmbed *ret;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 

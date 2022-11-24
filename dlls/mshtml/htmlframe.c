@@ -1048,7 +1048,7 @@ HRESULT HTMLFrameElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HT
 {
     HTMLFrameElement *ret;
 
-    ret = heap_alloc_zero(sizeof(HTMLFrameElement));
+    ret = calloc(1, sizeof(HTMLFrameElement));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1643,7 +1643,7 @@ HRESULT HTMLIFrame_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTMLElem
 {
     HTMLIFrame *ret;
 
-    ret = heap_alloc_zero(sizeof(HTMLIFrame));
+    ret = calloc(1, sizeof(HTMLIFrame));
     if(!ret)
         return E_OUTOFMEMORY;
 

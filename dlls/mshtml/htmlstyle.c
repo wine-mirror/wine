@@ -745,7 +745,7 @@ static void fix_px_value(nsAString *nsstr)
             LPWSTR ret, p;
             int len = lstrlenW(val)+1;
 
-            ret = heap_alloc((len+2)*sizeof(WCHAR));
+            ret = malloc((len + 2) * sizeof(WCHAR));
             memcpy(ret, val, (ptr-val)*sizeof(WCHAR));
             p = ret + (ptr-val);
             *p++ = 'p';
@@ -755,7 +755,7 @@ static void fix_px_value(nsAString *nsstr)
             TRACE("fixed %s -> %s\n", debugstr_w(val), debugstr_w(ret));
 
             nsAString_SetData(nsstr, ret);
-            heap_free(ret);
+            free(ret);
             break;
         }
 
@@ -773,7 +773,7 @@ static LPWSTR fix_url_value(LPCWSTR val)
     if(wcsncmp(val, urlW, ARRAY_SIZE(urlW)) || !wcschr(val, '\\'))
         return NULL;
 
-    ret = heap_strdupW(val);
+    ret = wcsdup(val);
 
     for(ptr = ret; *ptr; ptr++) {
         if(*ptr == '\\')
@@ -844,7 +844,7 @@ static inline HRESULT set_style_property(CSSStyle *style, styleid_t sid, const W
         fix_px_value(&value_str);
     hres = set_nsstyle_property(style->nsstyle, sid, &value_str);
     nsAString_Finish(&value_str);
-    heap_free(val);
+    free(val);
     return hres;
 }
 
@@ -2857,12 +2857,12 @@ static HRESULT WINAPI HTMLStyle_put_filter(IHTMLStyle *iface, BSTR v)
     }
 
     if(v) {
-        new_filter = heap_strdupW(v);
+        new_filter = wcsdup(v);
         if(!new_filter)
             return E_OUTOFMEMORY;
     }
 
-    heap_free(This->elem->filter);
+    free(This->elem->filter);
     This->elem->filter = new_filter;
 
     update_filter(This);
@@ -3006,7 +3006,7 @@ static HRESULT WINAPI HTMLStyle_removeAttribute(IHTMLStyle *iface, BSTR strAttri
         if(!This->elem)
             return E_UNEXPECTED;
         *pfSuccess = variant_bool(This->elem->filter && *This->elem->filter);
-        heap_free(This->elem->filter);
+        free(This->elem->filter);
         This->elem->filter = NULL;
         update_filter(This);
         return S_OK;
@@ -4776,7 +4776,7 @@ static ULONG WINAPI HTMLCSSStyleDeclaration_Release(IHTMLCSSStyleDeclaration *if
         if(This->nsstyle)
             nsIDOMCSSStyleDeclaration_Release(This->nsstyle);
         release_dispex(&This->dispex);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -5130,7 +5130,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSSt
         }
 
         posy_len = lstrlenW(posy);
-        pos_val = heap_alloc((val_len+posy_len+1)*sizeof(WCHAR));
+        pos_val = malloc((val_len + posy_len + 1) * sizeof(WCHAR));
         if(pos_val) {
             if(val_len)
                 memcpy(pos_val, val, val_len*sizeof(WCHAR));
@@ -5148,7 +5148,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionX(IHTMLCSSSt
 
     TRACE("setting position to %s\n", debugstr_w(pos_val));
     hres = set_style_property(This, STYLEID_BACKGROUND_POSITION, pos_val);
-    heap_free(pos_val);
+    free(pos_val);
     return hres;
 }
 
@@ -5227,7 +5227,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionY(IHTMLCSSSt
 
         posx_len = space-pos;
 
-        pos_val = heap_alloc((posx_len+val_len+1)*sizeof(WCHAR));
+        pos_val = malloc((posx_len + val_len + 1) * sizeof(WCHAR));
         if(pos_val) {
             memcpy(pos_val, pos, posx_len*sizeof(WCHAR));
             if(val_len)
@@ -5244,7 +5244,7 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundPositionY(IHTMLCSSSt
 
     TRACE("setting position to %s\n", debugstr_w(pos_val));
     hres = set_style_property(This, STYLEID_BACKGROUND_POSITION, pos_val);
-    heap_free(pos_val);
+    free(pos_val);
     return hres;
 }
 
@@ -10082,7 +10082,7 @@ HRESULT HTMLStyle_Create(HTMLElement *elem, HTMLStyle **ret)
     if(FAILED(hres))
         return hres;
 
-    style = heap_alloc_zero(sizeof(HTMLStyle));
+    style = calloc(1, sizeof(HTMLStyle));
     if(!style) {
         nsIDOMCSSStyleDeclaration_Release(nsstyle);
         return E_OUTOFMEMORY;
@@ -10119,7 +10119,7 @@ HRESULT create_computed_style(nsIDOMCSSStyleDeclaration *nsstyle, compat_mode_t 
 {
     CSSStyle *style;
 
-    if(!(style = heap_alloc_zero(sizeof(*style))))
+    if(!(style = calloc(1, sizeof(*style))))
         return E_OUTOFMEMORY;
 
     init_css_style(style, nsstyle, NULL, &HTMLW3CComputedStyle_dispex, compat_mode);

@@ -179,7 +179,7 @@ HRESULT HTMLGenericElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, 
 {
     HTMLGenericElement *ret;
 
-    ret = heap_alloc_zero(sizeof(HTMLGenericElement));
+    ret = calloc(1, sizeof(HTMLGenericElement));
     if(!ret)
         return E_OUTOFMEMORY;
 

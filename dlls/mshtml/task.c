@@ -48,7 +48,7 @@ typedef struct {
 
 static void default_task_destr(task_t *task)
 {
-    heap_free(task);
+    free(task);
 }
 
 HRESULT push_task(task_t *task, task_proc_t proc, task_proc_t destr, LONG magic)
@@ -60,7 +60,7 @@ HRESULT push_task(task_t *task, task_proc_t proc, task_proc_t destr, LONG magic)
         if(destr)
             destr(task);
         else
-            heap_free(task);
+            free(task);
         return E_OUTOFMEMORY;
     }
 
@@ -97,7 +97,7 @@ static void release_task_timer(HWND thread_hwnd, task_timer_t *timer)
 
     IDispatch_Release(timer->disp);
 
-    heap_free(timer);
+    free(timer);
 }
 
 void remove_target_tasks(LONG target)
@@ -174,7 +174,7 @@ HRESULT set_task_timer(HTMLInnerWindow *window, LONG msec, enum timer_type timer
     if(!thread_data)
         return E_OUTOFMEMORY;
 
-    timer = heap_alloc(sizeof(task_timer_t));
+    timer = malloc(sizeof(task_timer_t));
     if(!timer)
         return E_OUTOFMEMORY;
 
@@ -409,7 +409,7 @@ thread_data_t *get_thread_data(BOOL create)
 
     thread_data = TlsGetValue(mshtml_tls);
     if(!thread_data && create) {
-        thread_data = heap_alloc_zero(sizeof(thread_data_t));
+        thread_data = calloc(1, sizeof(thread_data_t));
         if(!thread_data)
             return NULL;
 

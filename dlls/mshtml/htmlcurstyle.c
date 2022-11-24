@@ -1345,7 +1345,7 @@ HRESULT HTMLCurrentStyle_Create(HTMLElement *elem, IHTMLCurrentStyle **p)
         return E_FAIL;
     }
 
-    ret = heap_alloc_zero(sizeof(HTMLCurrentStyle));
+    ret = calloc(1, sizeof(HTMLCurrentStyle));
     if(!ret) {
         nsIDOMCSSStyleDeclaration_Release(nsstyle);
         return E_OUTOFMEMORY;

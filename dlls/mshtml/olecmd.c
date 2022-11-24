@@ -446,7 +446,7 @@ static void refresh_destr(task_t *_task)
     refresh_task_t *task = (refresh_task_t*)_task;
 
     IHTMLWindow2_Release(&task->window->base.IHTMLWindow2_iface);
-    heap_free(task);
+    free(task);
 }
 
 static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
@@ -478,7 +478,7 @@ static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *p
     if(!doc->outer_window)
         return E_UNEXPECTED;
 
-    task = heap_alloc(sizeof(*task));
+    task = malloc(sizeof(*task));
     if(!task)
         return E_OUTOFMEMORY;
 

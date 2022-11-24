@@ -100,7 +100,7 @@ static LONG release_listener(nsDocumentEventListener *This)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -604,7 +604,7 @@ void init_nsevents(HTMLDocumentNode *doc)
     nsIDOMEventTarget *target;
     unsigned i;
 
-    listener = heap_alloc(sizeof(nsDocumentEventListener));
+    listener = malloc(sizeof(nsDocumentEventListener));
     if(!listener)
         return;
 

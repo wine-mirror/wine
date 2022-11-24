@@ -192,8 +192,8 @@ static ULONG WINAPI Protocol_Release(IUnknown *iface)
     TRACE("(%p) ref=%lx\n", iface, ref);
 
     if(!ref) {
-        heap_free(This->data);
-        heap_free(This);
+        free(This->data);
+        free(This);
     }
 
     return ref;
@@ -316,7 +316,7 @@ static HRESULT create_protocol_instance(const IInternetProtocolVtbl *protocol_vt
         return E_INVALIDARG;
     }
 
-    protocol = heap_alloc_zero(sizeof(InternetProtocol));
+    protocol = calloc(1, sizeof(InternetProtocol));
     protocol->IUnknown_inner.lpVtbl = &ProtocolUnkVtbl;
     protocol->IInternetProtocol_iface.lpVtbl = protocol_vtbl;
     protocol->outer = outer ? outer : &protocol->IUnknown_inner;
@@ -371,11 +371,11 @@ static HRESULT WINAPI AboutProtocol_Start(IInternetProtocol *iface, LPCWSTR szUr
 
     data_len = sizeof(L"\xfeff<HTML>")+sizeof(L"</HTML>")-sizeof(WCHAR)
         + (text ? lstrlenW(text)*sizeof(WCHAR) : 0);
-    data = heap_alloc(data_len);
+    data = malloc(data_len);
     if(!data)
         return E_OUTOFMEMORY;
 
-    heap_free(This->data);
+    free(This->data);
     This->data = data;
     This->data_len = data_len;
 
@@ -554,11 +554,11 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     ReleaseBindInfo(&bindinfo);
 
     len = lstrlenW(szUrl)+16;
-    url = heap_alloc(len*sizeof(WCHAR));
+    url = malloc(len * sizeof(WCHAR));
     hres = CoInternetParseUrl(szUrl, PARSE_ENCODE, 0, url, len, &len, 0);
     if(FAILED(hres)) {
         WARN("CoInternetParseUrl failed: %08lx\n", hres);
-        heap_free(url);
+        free(url);
         IInternetProtocolSink_ReportResult(pOIProtSink, hres, 0, NULL);
         return hres;
     }
@@ -566,7 +566,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     if(len < ARRAY_SIZE(wszRes) || memcmp(url, wszRes, sizeof(wszRes))) {
         WARN("Wrong protocol of url: %s\n", debugstr_w(url));
         IInternetProtocolSink_ReportResult(pOIProtSink, E_INVALIDARG, 0, NULL);
-        heap_free(url);
+        free(url);
         return E_INVALIDARG;
     }
 
@@ -574,7 +574,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     if(!(res_type = wcschr(url_dll, '/'))) {
         WARN("wrong url: %s\n", debugstr_w(url));
         IInternetProtocolSink_ReportResult(pOIProtSink, MK_E_SYNTAX, 0, NULL);
-        heap_free(url);
+        free(url);
         return MK_E_SYNTAX;
     }
 
@@ -602,7 +602,7 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     if(!hdll) {
         WARN("Could not open dll: %s\n", debugstr_w(url_dll));
         IInternetProtocolSink_ReportResult(pOIProtSink, HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
-        heap_free(url);
+        free(url);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -623,25 +623,25 @@ static HRESULT WINAPI ResProtocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
             WARN("Could not find resource\n");
             IInternetProtocolSink_ReportResult(pOIProtSink,
                     HRESULT_FROM_WIN32(GetLastError()), 0, NULL);
-            heap_free(url);
+            free(url);
             return HRESULT_FROM_WIN32(GetLastError());
         }
     }
 
     if(This->data) {
         WARN("data already loaded\n");
-        heap_free(This->data);
+        free(This->data);
     }
 
     This->data_len = SizeofResource(hdll, src);
-    This->data = heap_alloc(This->data_len);
+    This->data = malloc(This->data_len);
     memcpy(This->data, LoadResource(hdll, src), This->data_len);
     This->cur = 0;
 
     FreeLibrary(hdll);
 
     hres = FindMimeFromData(NULL, url_file, This->data, This->data_len, NULL, 0, &mime, 0);
-    heap_free(url);
+    free(url);
     if(SUCCEEDED(hres)) {
         IInternetProtocolSink_ReportProgress(pOIProtSink, BINDSTATUS_MIMETYPEAVAILABLE, mime);
         CoTaskMemFree(mime);

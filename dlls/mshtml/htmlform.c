@@ -161,7 +161,7 @@ static ULONG WINAPI HTMLFormElementEnum_Release(IEnumVARIANT *iface)
 
     if(!ref) {
         IHTMLFormElement_Release(&This->elem->IHTMLFormElement_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -687,7 +687,7 @@ static HRESULT WINAPI HTMLFormElement__newEnum(IHTMLFormElement *iface, IUnknown
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -1018,7 +1018,7 @@ HRESULT HTMLFormElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTM
     HTMLFormElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(HTMLFormElement));
+    ret = calloc(1, sizeof(HTMLFormElement));
     if(!ret)
         return E_OUTOFMEMORY;
 

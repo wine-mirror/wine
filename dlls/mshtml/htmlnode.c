@@ -99,7 +99,7 @@ static ULONG WINAPI HTMLDOMChildrenCollectionEnum_Release(IEnumVARIANT *iface)
 
     if(!ref) {
         IHTMLDOMChildrenCollection_Release(&This->col->IHTMLDOMChildrenCollection_iface);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -241,7 +241,7 @@ static ULONG WINAPI HTMLDOMChildrenCollection_Release(IHTMLDOMChildrenCollection
 
     if(!ref) {
         nsIDOMNodeList_Release(This->nslist);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -296,7 +296,7 @@ static HRESULT WINAPI HTMLDOMChildrenCollection_get__newEnum(IHTMLDOMChildrenCol
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    ret = heap_alloc(sizeof(*ret));
+    ret = malloc(sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
@@ -456,7 +456,7 @@ HRESULT create_child_collection(nsIDOMNodeList *nslist, compat_mode_t compat_mod
 {
     HTMLDOMChildrenCollection *collection;
 
-    if(!(collection = heap_alloc_zero(sizeof(*collection))))
+    if(!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
     collection->IHTMLDOMChildrenCollection_iface.lpVtbl = &HTMLDOMChildrenCollectionVtbl;
@@ -1552,7 +1552,7 @@ static HRESULT create_node(HTMLDocumentNode *doc, nsIDOMNode *nsnode, HTMLDOMNod
 
         FIXME("unimplemented node type %u\n", node_type);
 
-        node = heap_alloc_zero(sizeof(HTMLDOMNode));
+        node = calloc(1, sizeof(HTMLDOMNode));
         if(!node)
             return E_OUTOFMEMORY;
 
@@ -1624,7 +1624,7 @@ static void NSAPI HTMLDOMNode_delete_cycle_collectable(void *p)
         This->vtbl->unlink(This);
     This->vtbl->destructor(This);
     release_dispex(&This->event_target.dispex);
-    heap_free(This);
+    free(This);
 }
 
 void init_node_cc(void)

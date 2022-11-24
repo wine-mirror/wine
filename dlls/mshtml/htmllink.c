@@ -459,7 +459,7 @@ HRESULT HTMLLinkElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTM
     HTMLLinkElement *ret;
     nsresult nsres;
 
-    ret = heap_alloc_zero(sizeof(*ret));
+    ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
 
