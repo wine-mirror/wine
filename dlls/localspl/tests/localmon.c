@@ -242,6 +242,13 @@ static BOOL call_EnumPorts(WCHAR *name, DWORD level, BYTE *buf, DWORD size,
     return pEnumPorts2(hmon, name, level, buf, size, needed, count);
 }
 
+static BOOL call_OpenPort(WCHAR *name, HANDLE *h)
+{
+    if (pOpenPort)
+        return pOpenPort(name, h);
+    return pOpenPort2(hmon, name, h);
+}
+
 static BOOL call_AddPortEx(WCHAR *name, DWORD level, BYTE *buf, WCHAR *mon)
 {
     if (pAddPortEx)
@@ -456,15 +463,15 @@ static void test_ClosePort(void)
     DWORD   res2;
 
 
-    if (!pOpenPort || !pClosePort) return;
+    if ((!pOpenPort && !pOpenPort2) || !pClosePort) return;
 
     if (have_com[0]) {
         nameW = have_com;
 
         hPort = (HANDLE) 0xdeadbeef;
-        res = pOpenPort(nameW, &hPort);
+        res = call_OpenPort(nameW, &hPort);
         hPort2 = (HANDLE) 0xdeadbeef;
-        res2 = pOpenPort(nameW, &hPort2);
+        res2 = call_OpenPort(nameW, &hPort2);
 
         if (res2 && (hPort2 != hPort)) {
             SetLastError(0xdeadbeef);
@@ -484,9 +491,9 @@ static void test_ClosePort(void)
         nameW = have_lpt;
 
         hPort = (HANDLE) 0xdeadbeef;
-        res = pOpenPort(nameW, &hPort);
+        res = call_OpenPort(nameW, &hPort);
         hPort2 = (HANDLE) 0xdeadbeef;
-        res2 = pOpenPort(nameW, &hPort2);
+        res2 = call_OpenPort(nameW, &hPort2);
 
         if (res2 && (hPort2 != hPort)) {
             SetLastError(0xdeadbeef);
@@ -506,9 +513,9 @@ static void test_ClosePort(void)
         nameW = have_file;
 
         hPort = (HANDLE) 0xdeadbeef;
-        res = pOpenPort(nameW, &hPort);
+        res = call_OpenPort(nameW, &hPort);
         hPort2 = (HANDLE) 0xdeadbeef;
-        res2 = pOpenPort(nameW, &hPort2);
+        res2 = call_OpenPort(nameW, &hPort2);
 
         if (res2 && (hPort2 != hPort)) {
             SetLastError(0xdeadbeef);
@@ -764,21 +771,21 @@ static void test_OpenPort(void)
     DWORD   res;
     DWORD   res2;
 
-    if (!pOpenPort || !pClosePort) return;
+    if ((!pOpenPort && !pOpenPort2) || !pClosePort) return;
 
     if (have_com[0]) {
         nameW = have_com;
 
         hPort = (HANDLE) 0xdeadbeef;
         SetLastError(0xdeadbeef);
-        res = pOpenPort(nameW, &hPort);
+        res = call_OpenPort(nameW, &hPort);
         ok( res, "got %lu with %lu and %p (expected '!= 0')\n",
             res, GetLastError(), hPort);
 
         /* the same HANDLE is returned for a second OpenPort in native localspl */
         hPort2 = (HANDLE) 0xdeadbeef;
         SetLastError(0xdeadbeef);
-        res2 = pOpenPort(nameW, &hPort2);
+        res2 = call_OpenPort(nameW, &hPort2);
         ok( res2, "got %lu with %lu and %p (expected '!= 0')\n",
             res2, GetLastError(), hPort2);
 
@@ -791,7 +798,7 @@ static void test_OpenPort(void)
 
         hPort = (HANDLE) 0xdeadbeef;
         SetLastError(0xdeadbeef);
-        res = pOpenPort(nameW, &hPort);
+        res = call_OpenPort(nameW, &hPort);
         ok( res || (GetLastError() == ERROR_ACCESS_DENIED),
             "got %lu with %lu and %p (expected '!= 0' or '0' with ERROR_ACCESS_DENIED)\n",
             res, GetLastError(), hPort);
@@ -799,7 +806,7 @@ static void test_OpenPort(void)
         /* the same HANDLE is returned for a second OpenPort in native localspl */
         hPort2 = (HANDLE) 0xdeadbeef;
         SetLastError(0xdeadbeef);
-        res2 = pOpenPort(nameW, &hPort2);
+        res2 = call_OpenPort(nameW, &hPort2);
         ok( res2 || (GetLastError() == ERROR_ACCESS_DENIED),
             "got %lu with %lu and %p (expected '!= 0' or '0' with ERROR_ACCESS_DENIED)\n",
             res2, GetLastError(), hPort2);
@@ -813,14 +820,14 @@ static void test_OpenPort(void)
 
         hPort = (HANDLE) 0xdeadbeef;
         SetLastError(0xdeadbeef);
-        res = pOpenPort(nameW, &hPort);
+        res = call_OpenPort(nameW, &hPort);
         ok( res, "got %lu with %lu and %p (expected '!= 0')\n",
             res, GetLastError(), hPort);
 
         /* a different HANDLE is returned for a second OpenPort */
         hPort2 = (HANDLE) 0xdeadbeef;
         SetLastError(0xdeadbeef);
-        res2 = pOpenPort(nameW, &hPort2);
+        res2 = call_OpenPort(nameW, &hPort2);
         ok( res2 && (hPort2 != hPort),
             "got %lu with %lu and %p (expected '!= 0' and '!= %p')\n",
             res2, GetLastError(), hPort2, hPort);
@@ -834,23 +841,21 @@ static void test_OpenPort(void)
         if (nameW) {
             hPort = (HANDLE) 0xdeadbeef;
             SetLastError(0xdeadbeef);
-            res = pOpenPort(nameW, NULL);
+            res = call_OpenPort(nameW, NULL);
             trace("got %lu with %lu and %p\n", res, GetLastError(), hPort);
         }
     }
 
-    hPort = (HANDLE) 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    res = pOpenPort(does_not_existW, &hPort);
-    ok (!res && (hPort == (HANDLE) 0xdeadbeef),
-        "got %lu with 0x%lx and %p (expected '0' and 0xdeadbeef)\n", res, GetLastError(), hPort);
+    res = call_OpenPort(does_not_existW, &hPort);
+    ok (!res, "got %lu with 0x%lx and %p (expected '0' and 0xdeadbeef)\n",
+            res, GetLastError(), hPort);
     if (res) pClosePort(hPort);
 
-    hPort = (HANDLE) 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    res = pOpenPort(emptyW, &hPort);
-    ok (!res && (hPort == (HANDLE) 0xdeadbeef),
-        "got %lu with 0x%lx and %p (expected '0' and 0xdeadbeef)\n", res, GetLastError(), hPort);
+    res = call_OpenPort(emptyW, &hPort);
+    ok (!res, "got %lu with 0x%lx and %p (expected '0' and 0xdeadbeef)\n",
+            res, GetLastError(), hPort);
     if (res) pClosePort(hPort);
 
 
@@ -858,7 +863,7 @@ static void test_OpenPort(void)
     if (0) {
         hPort = (HANDLE) 0xdeadbeef;
         SetLastError(0xdeadbeef);
-        res = pOpenPort(NULL, &hPort);
+        res = call_OpenPort(NULL, &hPort);
         trace("got %lu with %lu and %p\n", res, GetLastError(), hPort);
     }
 
