@@ -359,6 +359,50 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_buf = {0x02,0x01,0x01,0x01},
         },
     };
+    struct hid_expect expect_download_0[] =
+    {
+        /* set periodic */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {0x05,0x00},
+            .todo = TRUE,
+        },
+        /* set envelope */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 7,
+            .report_buf = {0x06,0x00,0x00,0x00,0x00,0x00,0x00},
+            .todo = TRUE,
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0x01,0x00,0x00,0x00,0x01,0x3f,0x00},
+        },
+    };
+    struct hid_expect expect_download_1[] =
+    {
+        /* set periodic */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {0x05,0x00},
+            .todo = TRUE,
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0x01,0x00,0x00,0x00,0x01,0x3f,0x00},
+        },
+    };
     struct hid_expect expect_download_2[] =
     {
         /* set periodic */
@@ -528,6 +572,22 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         .cbTypeSpecificParams = sizeof(DIPERIODIC),
         .lpvTypeSpecificParams = (void *)&expect_periodic,
         .dwStartDelay = 6000,
+    };
+    static const LONG expect_directions_0[3] = {0};
+    static const DIENVELOPE expect_envelope_0 = {.dwSize = sizeof(DIENVELOPE)};
+    static const DIPERIODIC expect_periodic_0 = {0};
+    const DIEFFECT expect_desc_0 =
+    {
+        .dwSize = version >= 0x700 ? sizeof(DIEFFECT_DX6) : sizeof(DIEFFECT_DX5),
+        .dwFlags = DIEFF_SPHERICAL | DIEFF_OBJECTIDS,
+        .dwDuration = 1000,
+        .dwTriggerButton = DIDFT_PSHBUTTON | DIDFT_MAKEINSTANCE( 0 ) | DIDFT_FFEFFECTTRIGGER,
+        .cAxes = 3,
+        .rgdwAxes = (void *)expect_axes,
+        .rglDirection = (void *)expect_directions_0,
+        .lpEnvelope = (void *)&expect_envelope_0,
+        .cbTypeSpecificParams = sizeof(DIPERIODIC),
+        .lpvTypeSpecificParams = (void *)&expect_periodic_0,
     };
     struct check_created_effect_params check_params = {0};
     IDirectInputEffect *effect;
@@ -1315,8 +1375,39 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
         winetest_pop_context();
     }
 
+    /* zero-ed effect parameters are sent */
+
     hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
     ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
+
+    set_hid_expect( file, expect_download_0, sizeof(expect_download_0) );
+    flags = version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc_0, flags );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 0, "Release returned %ld\n", ref );
+    set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
+
+    set_hid_expect( file, expect_download_1, sizeof(expect_download_1) );
+    flags = version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc_0, (flags & ~DIEP_ENVELOPE) );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
+    ref = IDirectInputEffect_Release( effect );
+    ok( ref == 0, "Release returned %ld\n", ref );
+    set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Sine, NULL, &effect, NULL );
+    ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
+
 
     set_hid_expect( file, expect_download_2, sizeof(expect_download_2) );
     flags = version >= 0x700 ? DIEP_ALLPARAMS : DIEP_ALLPARAMS_DX5;
