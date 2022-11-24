@@ -66,8 +66,6 @@ __ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
 
 DECLARE_CRITICAL_SECTION(wineusb_cs);
 
-static unixlib_handle_t unix_handle;
-
 static struct list device_list = LIST_INIT(device_list);
 
 struct usb_device
@@ -99,7 +97,7 @@ static void destroy_unix_device(struct unix_device *unix_device)
         .device = unix_device,
     };
 
-    __wine_unix_call(unix_handle, unix_usb_destroy_device, &params);
+    WINE_UNIX_CALL(unix_usb_destroy_device, &params);
 }
 
 static void add_unix_device(const struct usb_add_device_event *event)
@@ -171,7 +169,7 @@ static HANDLE libusb_event_thread, event_thread;
 
 static DWORD CALLBACK libusb_event_thread_proc(void *arg)
 {
-    __wine_unix_call(unix_handle, unix_usb_main_loop, NULL);
+    WINE_UNIX_CALL(unix_usb_main_loop, NULL);
 
     return 0;
 }
@@ -199,7 +197,7 @@ static DWORD CALLBACK event_thread_proc(void *arg)
             .event = &event,
         };
 
-        __wine_unix_call(unix_handle, unix_usb_get_event, &params);
+        WINE_UNIX_CALL(unix_usb_get_event, &params);
 
         switch (event.type)
         {
@@ -282,7 +280,7 @@ static NTSTATUS fdo_pnp(IRP *irp)
         {
             struct usb_device *device, *cursor;
 
-            __wine_unix_call(unix_handle, unix_usb_exit, NULL);
+            WINE_UNIX_CALL(unix_usb_exit, NULL);
             WaitForSingleObject(libusb_event_thread, INFINITE);
             CloseHandle(libusb_event_thread);
             WaitForSingleObject(event_thread, INFINITE);
@@ -536,7 +534,7 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
                     .transfer = queued_irp->Tail.Overlay.DriverContext[0],
                 };
 
-                __wine_unix_call(unix_handle, unix_usb_cancel_transfer, &params);
+                WINE_UNIX_CALL(unix_usb_cancel_transfer, &params);
             }
             LeaveCriticalSection(&wineusb_cs);
 
@@ -560,7 +558,7 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
              * completion between submitting and queuing, we won't try to
              * dequeue the IRP until it's actually been queued. */
             EnterCriticalSection(&wineusb_cs);
-            status = __wine_unix_call(unix_handle, unix_usb_submit_urb, &params);
+            status = WINE_UNIX_CALL(unix_usb_submit_urb, &params);
             if (status == STATUS_PENDING)
             {
                 IoMarkIrpPending(irp);
@@ -644,13 +642,10 @@ static void WINAPI driver_unload(DRIVER_OBJECT *driver)
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 {
     NTSTATUS status;
-    void *instance;
 
     TRACE("driver %p, path %s.\n", driver, debugstr_w(path->Buffer));
 
-    RtlPcToFileHeader(DriverEntry, &instance);
-    if ((status = NtQueryVirtualMemory(GetCurrentProcess(), instance,
-            MemoryWineUnixFuncs, &unix_handle, sizeof(unix_handle), NULL)))
+    if ((status = __wine_init_unix_call()))
     {
         ERR("Failed to initialize Unix library, status %#lx.\n", status);
         return status;
