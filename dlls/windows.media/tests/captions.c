@@ -117,8 +117,8 @@ static void test_CaptionStatics(void)
 
     color = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_BackgroundColor( caption_statics, &color );
-    todo_wine ok( hr == S_OK, "get_BackgroundColor returned %#lx\n", hr );
-    todo_wine ok( color == ClosedCaptionColor_Default, "expected default background color, got %d\n", color );
+    ok( hr == S_OK, "get_BackgroundColor returned %#lx\n", hr );
+    ok( color == ClosedCaptionColor_Default, "expected default background color, got %d\n", color );
 
     hr = IClosedCaptionPropertiesStatics_get_ComputedBackgroundColor( caption_statics, &computed_color );
     todo_wine ok( hr == E_INVALIDARG, "get_ComputedBackgroundColor returned %#lx\n", hr );

@@ -174,8 +174,10 @@ static HRESULT WINAPI captions_get_FontEffect( IClosedCaptionPropertiesStatics *
 
 static HRESULT WINAPI captions_get_BackgroundColor( IClosedCaptionPropertiesStatics *iface, ClosedCaptionColor *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    FIXME( "iface %p, value %p semi-stub.\n", iface, value );
+
+    *value = ClosedCaptionColor_Default;
+    return S_OK;
 }
 
 static HRESULT WINAPI captions_get_ComputedBackgroundColor( IClosedCaptionPropertiesStatics *iface, Color *value )
