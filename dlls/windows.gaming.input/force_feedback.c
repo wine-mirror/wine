@@ -567,17 +567,15 @@ static HRESULT WINAPI motor_load_effect_async( IUnknown *invoker, IUnknown *para
     IDirectInputEffect *dinput_effect;
     HRESULT hr;
 
-    if (SUCCEEDED(hr = IDirectInputDevice8_CreateEffect( impl->device, &effect->type, &effect->params, &dinput_effect, NULL )))
+    EnterCriticalSection( &effect->cs );
+    if (SUCCEEDED(hr = IDirectInputDevice8_CreateEffect( impl->device, &effect->type, &effect->params,
+                                                         &dinput_effect, NULL )))
     {
-        EnterCriticalSection( &effect->cs );
-        if (!effect->effect)
-        {
-            effect->effect = dinput_effect;
-            IDirectInputEffect_AddRef( effect->effect );
-        }
-        LeaveCriticalSection( &effect->cs );
-        IDirectInputEffect_Release( dinput_effect );
+        if (effect->effect) IDirectInputEffect_Release( effect->effect );
+        effect->effect = dinput_effect;
+        IDirectInputEffect_AddRef( effect->effect );
     }
+    LeaveCriticalSection( &effect->cs );
 
     result->vt = VT_UI4;
     if (SUCCEEDED(hr)) result->ulVal = ForceFeedbackLoadEffectResult_Succeeded;
