@@ -50,8 +50,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
-static unixlib_handle_t pulse_handle;
-
 #define MAX_PULSE_NAME_LEN 256
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
@@ -87,17 +85,16 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(dll);
-        if (NtQueryVirtualMemory( GetCurrentProcess(), dll, MemoryWineUnixFuncs,
-                                  &pulse_handle, sizeof(pulse_handle), NULL ))
+        if (__wine_init_unix_call())
             return FALSE;
-        if (__wine_unix_call(pulse_handle, process_attach, NULL))
+        if (WINE_UNIX_CALL(process_attach, NULL))
             return FALSE;
     } else if (reason == DLL_PROCESS_DETACH) {
         struct device_cache *device, *device_next;
 
         LIST_FOR_EACH_ENTRY_SAFE(device, device_next, &g_devices_cache, struct device_cache, entry)
             free(device);
-        __wine_unix_call(pulse_handle, process_detach, NULL);
+        WINE_UNIX_CALL(process_detach, NULL);
         if (pulse_thread) {
             WaitForSingleObject(pulse_thread, INFINITE);
             CloseHandle(pulse_thread);
@@ -218,7 +215,7 @@ static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
 static void pulse_call(enum unix_funcs code, void *params)
 {
     NTSTATUS status;
-    status = __wine_unix_call(pulse_handle, code, params);
+    status = WINE_UNIX_CALL(code, params);
     assert(!status);
 }
 
