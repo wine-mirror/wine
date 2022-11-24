@@ -174,9 +174,7 @@ enum mountmgr_funcs
     unix_enumerate_credentials,
 };
 
-extern unixlib_handle_t mountmgr_handle;
-
-#define MOUNTMGR_CALL( func, params ) __wine_unix_call( mountmgr_handle, unix_ ## func, params )
+#define MOUNTMGR_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
 extern void queue_device_op( enum device_op op, const char *udi, const char *device,
                              const char *mount_point, enum device_type type, const GUID *guid,

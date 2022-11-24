@@ -46,8 +46,6 @@ struct mount_point
 static struct list mount_points_list = LIST_INIT(mount_points_list);
 static HKEY mount_key;
 
-unixlib_handle_t mountmgr_handle = 0;
-
 void set_mount_point_id( struct mount_point *mount, const void *id, unsigned int id_len )
 {
     RtlFreeHeap( GetProcessHeap(), 0, mount->id );
@@ -620,7 +618,6 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 #ifdef _WIN64
     HKEY wow64_ports_key = NULL;
 #endif
-    void *instance;
     UNICODE_STRING nameW, linkW;
     DEVICE_OBJECT *device;
     HKEY devicemap_key;
@@ -629,9 +626,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     TRACE( "%s\n", debugstr_w(path->Buffer) );
 
-    RtlPcToFileHeader( DriverEntry, &instance );
-    status = NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
-                                   &mountmgr_handle, sizeof(mountmgr_handle), NULL );
+    status = __wine_init_unix_call();
     if (status) return status;
 
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = mountmgr_ioctl;
