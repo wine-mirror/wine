@@ -48,8 +48,6 @@ static BOOL  (WINAPI *pEnumPorts)(LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD, LPDWORD
 static BOOL  (WINAPI *pEnumPorts2)(HANDLE, LPWSTR, DWORD, LPBYTE, DWORD, LPDWORD, LPDWORD);
 static BOOL  (WINAPI *pOpenPort)(LPWSTR, PHANDLE);
 static BOOL  (WINAPI *pOpenPort2)(HANDLE, LPWSTR, PHANDLE);
-static BOOL  (WINAPI *pOpenPortEx)(LPWSTR, LPWSTR, PHANDLE, struct _MONITOR *);
-static BOOL  (WINAPI *pOpenPortEx2)(HANDLE, HANDLE, LPWSTR, LPWSTR, PHANDLE, struct _MONITOR2 *);
 static BOOL  (WINAPI *pStartDocPort)(HANDLE, LPWSTR, DWORD, DWORD, LPBYTE);
 static BOOL  (WINAPI *pWritePort)(HANDLE hPort, LPBYTE, DWORD, LPDWORD);
 static BOOL  (WINAPI *pReadPort)(HANDLE hPort, LPBYTE, DWORD, LPDWORD);
@@ -1559,7 +1557,6 @@ START_TEST(localmon)
 
         GET_MONITOR_FUNC2(EnumPorts);
         GET_MONITOR_FUNC2(OpenPort);
-        GET_MONITOR_FUNC2(OpenPortEx);
         GET_MONITOR_FUNC(StartDocPort);
         GET_MONITOR_FUNC(WritePort);
         GET_MONITOR_FUNC(ReadPort);
