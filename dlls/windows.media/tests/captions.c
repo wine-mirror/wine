@@ -112,8 +112,8 @@ static void test_CaptionStatics(void)
 
     effect = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_FontEffect( caption_statics, &effect );
-    todo_wine ok( hr == S_OK, "get_FontEffect returned %#lx\n", hr );
-    todo_wine ok( effect == ClosedCaptionEdgeEffect_Default, "expected default font effect, got %d\n", effect );
+    ok( hr == S_OK, "get_FontEffect returned %#lx\n", hr );
+    ok( effect == ClosedCaptionEdgeEffect_Default, "expected default font effect, got %d\n", effect );
 
     color = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_BackgroundColor( caption_statics, &color );
