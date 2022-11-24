@@ -158,8 +158,10 @@ static HRESULT WINAPI captions_get_FontSize( IClosedCaptionPropertiesStatics *if
 
 static HRESULT WINAPI captions_get_FontStyle( IClosedCaptionPropertiesStatics *iface, ClosedCaptionStyle *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    FIXME( "iface %p, value %p semi-stub.\n", iface, value );
+
+    *value = ClosedCaptionStyle_Default;
+    return S_OK;
 }
 
 static HRESULT WINAPI captions_get_FontEffect( IClosedCaptionPropertiesStatics *iface, ClosedCaptionEdgeEffect *value )

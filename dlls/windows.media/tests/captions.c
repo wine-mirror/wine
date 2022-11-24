@@ -107,8 +107,8 @@ static void test_CaptionStatics(void)
 
     style = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_FontStyle( caption_statics, &style );
-    todo_wine ok( hr == S_OK, "get_FontStyle returned %#lx\n", hr );
-    todo_wine ok( style == ClosedCaptionStyle_Default, "expected default font style, got %d\n", style );
+    ok( hr == S_OK, "get_FontStyle returned %#lx\n", hr );
+    ok( style == ClosedCaptionStyle_Default, "expected default font style, got %d\n", style );
 
     effect = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_FontEffect( caption_statics, &effect );
