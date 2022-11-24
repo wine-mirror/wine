@@ -29,6 +29,4 @@ NTSTATUS alsa_wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS alsa_wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 #endif
 
-extern unixlib_handle_t alsa_handle;
-
-#define ALSA_CALL(func, params) __wine_unix_call(alsa_handle, func, params)
+#define ALSA_CALL(func, params) WINE_UNIX_CALL(func, params)

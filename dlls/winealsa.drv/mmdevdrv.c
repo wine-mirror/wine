@@ -48,8 +48,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(alsa);
 
-unixlib_handle_t alsa_handle = 0;
-
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
 static const REFERENCE_TIME DefaultPeriod = 100000;
@@ -203,9 +201,7 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        if(NtQueryVirtualMemory(GetCurrentProcess(), dll, MemoryWineUnixFuncs,
-                                &alsa_handle, sizeof(alsa_handle), NULL))
-            return FALSE;
+        if(__wine_init_unix_call()) return FALSE;
         break;
 
     case DLL_PROCESS_DETACH:
