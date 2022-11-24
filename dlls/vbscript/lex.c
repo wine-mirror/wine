@@ -500,9 +500,13 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
         }
         return '<';
     case '>':
-        if(*++ctx->ptr == '=') {
+        switch(*++ctx->ptr) {
+        case '=':
             ctx->ptr++;
             return tGTEQ;
+        case '<':
+            ctx->ptr++;
+            return tNEQ;
         }
         return '>';
     default:
