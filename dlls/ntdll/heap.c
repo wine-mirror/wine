@@ -878,19 +878,6 @@ static struct block *realloc_large_block( struct heap *heap, DWORD flags, struct
     SIZE_T old_size = arena->data_size;
     char *data = (char *)(block + 1);
 
-    if (arena->block_size - sizeof(*block) >= size)
-    {
-        /* FIXME: we could remap zero-pages instead */
-        valgrind_notify_resize( data, old_size, size );
-        initialize_block( block, old_size, size, flags );
-
-        arena->data_size = size;
-        valgrind_make_noaccess( (char *)block + sizeof(*block) + arena->data_size,
-                                arena->block_size - sizeof(*block) - arena->data_size );
-
-        return block;
-    }
-
     if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return NULL;
     if (!(block = allocate_large_block( heap, flags, size )))
     {
@@ -1647,7 +1634,24 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
 
     if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
     {
-        if (!(block = realloc_large_block( heap, flags, block, size ))) return STATUS_NO_MEMORY;
+        ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
+        old_block_size = large->block_size;
+        old_size = large->data_size;
+
+        if (old_block_size - sizeof(*block) < size)
+        {
+            if (!(block = realloc_large_block( heap, flags, block, size ))) return STATUS_NO_MEMORY;
+            *ret = block + 1;
+            return STATUS_SUCCESS;
+        }
+
+        /* FIXME: we could remap zero-pages instead */
+        valgrind_notify_resize( block + 1, old_size, size );
+        initialize_block( block, old_size, size, flags );
+
+        large->data_size = size;
+        valgrind_make_noaccess( (char *)block + sizeof(*block) + large->data_size,
+                                old_block_size - sizeof(*block) - large->data_size );
 
         *ret = block + 1;
         return STATUS_SUCCESS;
