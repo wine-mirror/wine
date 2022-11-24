@@ -422,7 +422,6 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
     case ':':
     case ')':
     case ',':
-    case '=':
     case '+':
     case '*':
     case '/':
@@ -477,6 +476,16 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
         if(*++ctx->ptr == 'h' || *ctx->ptr == 'H')
             return parse_hex_literal(ctx, lval);
         return '&';
+    case '=':
+        switch(*++ctx->ptr) {
+        case '<':
+            ctx->ptr++;
+            return tLTEQ;
+        case '>':
+            ctx->ptr++;
+            return tGTEQ;
+        }
+        return '=';
     case '<':
         switch(*++ctx->ptr) {
         case '>':
