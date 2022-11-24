@@ -210,8 +210,10 @@ static HRESULT WINAPI captions_get_ComputedRegionColor( IClosedCaptionProperties
 
 static HRESULT WINAPI captions_get_RegionOpacity( IClosedCaptionPropertiesStatics *iface, ClosedCaptionOpacity *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    FIXME( "iface %p, value %p semi-stub.\n", iface, value );
+
+    *value = ClosedCaptionOpacity_Default;
+    return S_OK;
 }
 
 static const struct IClosedCaptionPropertiesStaticsVtbl captions_statics_vtbl =

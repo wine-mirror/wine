@@ -142,8 +142,8 @@ static void test_CaptionStatics(void)
 
     opacity = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_RegionOpacity( caption_statics, &opacity );
-    todo_wine ok( hr == S_OK, "get_RegionOpacity returned %#lx\n", hr );
-    todo_wine ok( opacity == ClosedCaptionOpacity_Default, "expected default region opacity, got %d\n", opacity );
+    ok( hr == S_OK, "get_RegionOpacity returned %#lx\n", hr );
+    ok( opacity == ClosedCaptionOpacity_Default, "expected default region opacity, got %d\n", opacity );
 
     ref = IClosedCaptionPropertiesStatics_Release( caption_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
