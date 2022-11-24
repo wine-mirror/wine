@@ -2128,12 +2128,12 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
             TRACE("GpCustomLineCap fill: %d basecap: %d inset: %f join: %d scale: %f pen_width:%f\n",
                 custom->fill, custom->basecap, custom->inset, custom->join, custom->scale, pen_width);
 
-        /* Coordination where cap needs to be drawn */
-        posx = endpoint->X - pen_width * segment_dx / segment_length;
-        posy = endpoint->Y - pen_width * segment_dy / segment_length;
-
         sina = -pen_width * custom->scale * segment_dx / segment_length;
         cosa = pen_width * custom->scale * segment_dy / segment_length;
+
+        /* Coordination where cap needs to be drawn */
+        posx = endpoint->X + sina;
+        posy = endpoint->Y - cosa;
 
         if (!custom->fill)
         {
