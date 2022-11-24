@@ -451,6 +451,8 @@ struct teststream
     IStream IStream_iface;
     LONG refcount;
     HANDLE file;
+    DWORD input_tid;
+    DWORD main_tid;
 };
 
 static struct teststream *impl_from_IStream(IStream *iface)
@@ -490,6 +492,14 @@ static HRESULT WINAPI stream_Read(IStream *iface, void *data, ULONG size, ULONG 
     if (winetest_debug > 2)
         trace("%04lx: IStream::Read(size %lu)\n", GetCurrentThreadId(), size);
 
+    if (!stream->input_tid)
+        stream->input_tid = GetCurrentThreadId();
+    else
+    {
+        todo_wine_if(stream->input_tid == stream->main_tid)
+        ok(stream->input_tid == GetCurrentThreadId(), "got wrong thread\n");
+    }
+
     ok(size > 0, "Got zero size.\n");
     ok(!!ret_size, "Got NULL ret_size pointer.\n");
     if (!ReadFile(stream->file, data, size, ret_size, NULL))
@@ -510,6 +520,14 @@ static HRESULT WINAPI stream_Seek(IStream *iface, LARGE_INTEGER offset, DWORD me
 
     if (winetest_debug > 2)
         trace("%04lx: IStream::Seek(offset %I64u, method %#lx)\n", GetCurrentThreadId(), offset.QuadPart, method);
+
+    if (!stream->input_tid)
+        stream->input_tid = GetCurrentThreadId();
+    else
+    {
+        todo_wine_if(stream->input_tid == stream->main_tid)
+        ok(stream->input_tid == GetCurrentThreadId(), "got wrong thread\n");
+    }
 
     GetFileSizeEx(stream->file, &size);
     ok(offset.QuadPart < size.QuadPart, "Expected offset less than size %I64u, got %I64u.\n",
@@ -568,6 +586,14 @@ static HRESULT WINAPI stream_Stat(IStream *iface, STATSTG *stat, DWORD flags)
     if (winetest_debug > 1)
         trace("%04lx: IStream::Stat(flags %#lx)\n", GetCurrentThreadId(), flags);
 
+    if (!stream->input_tid)
+        stream->input_tid = GetCurrentThreadId();
+    else
+    {
+        todo_wine_if(stream->input_tid == stream->main_tid)
+        ok(stream->input_tid == GetCurrentThreadId(), "got wrong thread\n");
+    }
+
     ok(flags == STATFLAG_NONAME, "Got flags %#lx.\n", flags);
 
     stat->type = 0xdeadbeef;
@@ -609,6 +635,7 @@ static void teststream_init(struct teststream *stream, HANDLE file)
     stream->IStream_iface.lpVtbl = &stream_vtbl;
     stream->refcount = 1;
     stream->file = file;
+    stream->main_tid = GetCurrentThreadId();
 }
 
 static void test_reader_attributes(IWMProfile *profile)
@@ -1375,6 +1402,7 @@ static void test_sync_reader_streaming(void)
 
     ok(stream.refcount == 1, "Got outstanding refcount %ld.\n", stream.refcount);
 
+    stream.input_tid = 0; /* FIXME: currently required as Wine calls IStream_Stat synchronously in OpenStream */
     SetFilePointer(stream.file, 0, NULL, FILE_BEGIN);
     hr = IWMSyncReader_OpenStream(reader, &stream.IStream_iface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1803,6 +1831,7 @@ struct callback
     bool dedicated_threads;
     DWORD callback_tid;
     DWORD output_tid[2];
+    struct teststream *stream;
 
     QWORD last_pts;
 
@@ -1995,6 +2024,7 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
         QWORD time, QWORD duration, DWORD flags, INSSBuffer *sample, void *context)
 {
     struct callback *callback = impl_from_IWMReaderCallback(iface);
+    struct teststream *stream = callback->stream;
 
     if (winetest_debug > 1)
         trace("%lu: %04lx: IWMReaderCallback::OnSample(output %lu, time %I64u, duration %I64u, flags %#lx)\n",
@@ -2018,6 +2048,9 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
         todo_wine
         ok(callback->output_tid[1 - output] != GetCurrentThreadId(), "got wrong thread\n");
     }
+
+    if (stream)
+        ok(stream->input_tid != GetCurrentThreadId(), "got wrong thread\n");
 
     ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
 
@@ -2067,6 +2100,7 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
         WORD stream_number, QWORD pts, QWORD duration, DWORD flags, INSSBuffer *sample, void *context)
 {
     struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+    struct teststream *stream = callback->stream;
 
     if (winetest_debug > 1)
         trace("%lu: %04lx: IWMReaderCallbackAdvanced::OnStreamSample(stream %u, pts %I64u, duration %I64u, flags %#lx)\n",
@@ -2094,6 +2128,9 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
         todo_wine
         ok(callback->output_tid[2 - stream_number] != GetCurrentThreadId(), "got wrong thread\n");
     }
+
+    if (stream)
+        ok(stream->input_tid != GetCurrentThreadId(), "got wrong thread\n");
 
     ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
 
@@ -2142,6 +2179,7 @@ static HRESULT WINAPI callback_advanced_AllocateForStream(IWMReaderCallbackAdvan
 {
     struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
     DWORD max_size = callback->max_stream_sample_size[stream_number - 1];
+    struct teststream *stream = callback->stream;
     struct buffer *object;
 
     if (winetest_debug > 1)
@@ -2152,6 +2190,11 @@ static HRESULT WINAPI callback_advanced_AllocateForStream(IWMReaderCallbackAdvan
     ok(callback->callback_tid != GetCurrentThreadId(), "got wrong thread\n");
     todo_wine_if(callback->output_tid[stream_number - 1])
     ok(callback->output_tid[stream_number - 1] != GetCurrentThreadId(), "got wrong thread\n");
+    if (stream)
+    {
+        todo_wine
+        ok(stream->input_tid == GetCurrentThreadId(), "got wrong thread\n");
+    }
 
     ok(callback->read_compressed, "AllocateForStream() should only be called when reading compressed samples.\n");
     ok(callback->allocated_samples, "AllocateForStream() should only be called when using a custom allocator.\n");
@@ -2180,6 +2223,7 @@ static HRESULT WINAPI callback_advanced_AllocateForOutput(IWMReaderCallbackAdvan
         DWORD output, DWORD size, INSSBuffer **sample, void *context)
 {
     struct callback *callback = impl_from_IWMReaderCallbackAdvanced(iface);
+    struct teststream *stream = callback->stream;
     struct buffer *object;
 
     if (winetest_debug > 1)
@@ -2190,6 +2234,11 @@ static HRESULT WINAPI callback_advanced_AllocateForOutput(IWMReaderCallbackAdvan
     ok(callback->callback_tid != GetCurrentThreadId(), "got wrong thread\n");
     todo_wine_if(callback->output_tid[output])
     ok(callback->output_tid[output] != GetCurrentThreadId(), "got wrong thread\n");
+    if (stream)
+    {
+        todo_wine
+        ok(stream->input_tid == GetCurrentThreadId(), "got wrong thread\n");
+    }
 
     if (!callback->read_compressed)
     {
@@ -2314,7 +2363,7 @@ static const IWMReaderAllocatorExVtbl callback_allocator_vtbl =
     callback_allocator_AllocateForOutputEx,
 };
 
-static void callback_init(struct callback *callback)
+static void callback_init(struct callback *callback, struct teststream *stream)
 {
     memset(callback, 0, sizeof(*callback));
     callback->IWMReaderCallback_iface.lpVtbl = &callback_vtbl;
@@ -2330,6 +2379,7 @@ static void callback_init(struct callback *callback)
     callback->expect_eof = CreateEventW(NULL, FALSE, FALSE, NULL);
     callback->got_eof = CreateEventW(NULL, FALSE, FALSE, NULL);
     callback->ontime_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    callback->stream = stream;
 }
 
 static void callback_cleanup(struct callback *callback)
@@ -2466,6 +2516,8 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
     callback->callback_tid = 0;
     callback->last_pts = 0;
     memset(callback->output_tid, 0, sizeof(callback->output_tid));
+    if (callback->stream)
+        callback->stream->input_tid = 0;
 
     check_async_set_output_setting(advanced, 0, L"DedicatedDeliveryThread",
             WMT_TYPE_BOOL, callback->dedicated_threads, S_OK);
@@ -2764,7 +2816,7 @@ static void test_async_reader_settings(void)
     WORD size;
     BOOL ret;
 
-    callback_init(&callback);
+    callback_init(&callback, NULL);
 
     hr = WMCreateReader(NULL, 0, &reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2949,7 +3001,7 @@ static void test_async_reader_streaming(void)
     ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
 
     teststream_init(&stream, file);
-    callback_init(&callback);
+    callback_init(&callback, &stream);
 
     hr = WMCreateReader(NULL, 0, &reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -2967,6 +3019,7 @@ static void test_async_reader_streaming(void)
     ok(callback.refcount > 1, "Got refcount %ld.\n", callback.refcount);
     wait_opened_callback(&callback);
 
+    stream.input_tid = 0; /* FIXME: currently required as Wine calls IStream_Stat synchronously in OpenStream */
     hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbee0);
     ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
 
@@ -3110,7 +3163,7 @@ static void test_async_reader_types(void)
     ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
 
     teststream_init(&stream, file);
-    callback_init(&callback);
+    callback_init(&callback, &stream);
 
     hr = WMCreateReader(NULL, 0, &reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3402,7 +3455,7 @@ static void test_async_reader_file(void)
     ULONG ref;
     BOOL ret;
 
-    callback_init(&callback);
+    callback_init(&callback, NULL);
 
     hr = WMCreateReader(NULL, 0, &reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3461,8 +3514,6 @@ static void test_sync_reader_allocator(void)
     HRESULT hr;
     BOOL ret;
 
-    callback_init(&callback);
-
     hr = WMCreateSyncReader(NULL, 0, (IWMSyncReader **)&reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
@@ -3470,6 +3521,7 @@ static void test_sync_reader_allocator(void)
     ok(file != INVALID_HANDLE_VALUE, "Failed to open %s, error %lu.\n", debugstr_w(file), GetLastError());
 
     teststream_init(&stream, file);
+    callback_init(&callback, &stream);
 
     hr = IWMSyncReader2_OpenStream(reader, &stream.IStream_iface);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
