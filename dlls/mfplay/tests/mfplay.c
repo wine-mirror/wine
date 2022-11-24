@@ -356,7 +356,19 @@ static void test_media_item(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFPMediaItem_GetStreamAttribute(item, 0, &MF_SD_LANGUAGE, &propvar);
-    ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == VT_LPWSTR, "Unexpected vt %u.\n", propvar.vt);
+    ok(!wcscmp(propvar.pwszVal, L"en"), "Unexpected value %s.\n", debugstr_w(propvar.pwszVal));
+    PropVariantClear(&propvar);
+
+    hr = IMFPMediaItem_GetStreamAttribute(item, 0, &MF_SD_STREAM_NAME, &propvar);
+    ok(hr == S_OK || broken(hr == MF_E_ATTRIBUTENOTFOUND) /* Before Win10 1607. */, "Unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        ok(propvar.vt == VT_LPWSTR, "Unexpected vt %u.\n", propvar.vt);
+        ok(!wcscmp(propvar.pwszVal, L"test"), "Unexpected value %s.\n", debugstr_w(propvar.pwszVal));
+        PropVariantClear(&propvar);
+    }
 
     hr = IMFPMediaItem_GetPresentationAttribute(item, &MF_PD_DURATION, &propvar);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
