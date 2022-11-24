@@ -254,6 +254,13 @@ static BOOL call_AddPortEx(WCHAR *name, DWORD level, BYTE *buf, WCHAR *mon)
     return pAddPortEx2(hmon, name, level, buf, mon);
 }
 
+static BOOL call_XcvOpenPort(const WCHAR *name, ACCESS_MASK access, HANDLE *h)
+{
+    if (pXcvOpenPort)
+        return pXcvOpenPort(name, access, h);
+    return pXcvOpenPort2(hmon, name, access, h);
+}
+
 /* ########################### */
 
 static void find_installed_ports(void)
@@ -885,7 +892,7 @@ static void test_XcvClosePort(void)
 
     SetLastError(0xdeadbeef);
     hXcv2 = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv2);
+    res = call_XcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv2);
     ok(res, "returned %ld with %lu and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
 
     if (res) {
@@ -983,6 +990,10 @@ static void test_XcvDataPort_ConfigureLPTPortCommandOK(void)
     res = pXcvDataPort(hXcv, cmd_ConfigureLPTPortCommandOKW, (PBYTE) num_0W, sizeof(num_0W), NULL, 0, &needed);
     if (res == ERROR_INVALID_PARAMETER) {
         skip("'ConfigureLPTPortCommandOK' not supported\n");
+        return;
+    }
+    if (res == ERROR_ACCESS_DENIED) {
+        skip("'ConfigureLPTPortCommandOK' failed with ERROR_ACCESS_DENIED\n");
         return;
     }
     ok( res == ERROR_SUCCESS, "returned %ld with %lu (expected ERROR_SUCCESS)\n", res, GetLastError());
@@ -1120,7 +1131,13 @@ static void test_XcvDataPort_GetTransmissionRetryTimeout(void)
         "ERROR_FILE_NOT_FOUND)\n", res, needed, org_value);
 
     /* Get default value (documented as 90 in the w2k reskit, but that is wrong) */
-    RegDeleteValueA(hroot, TransmissionRetryTimeoutA);
+    res = RegDeleteValueA(hroot, TransmissionRetryTimeoutA);
+    if (res == ERROR_ACCESS_DENIED) {
+        RegCloseKey(hroot);
+        skip("ACCESS_DENIED\n");
+        return;
+    }
+    ok( res == ERROR_SUCCESS, "RegDeleteValue(TransmissionRetryTimeout) returned %lu\n", res);
     needed = (DWORD) 0xdeadbeef;
     buffer[0] = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -1131,7 +1148,7 @@ static void test_XcvDataPort_GetTransmissionRetryTimeout(void)
 
     /* the default timeout is returned, when the value is empty */
     res = RegSetValueExA(hroot, TransmissionRetryTimeoutA, 0, REG_SZ, (PBYTE)emptyA, 1);
-    ok(res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu\n", GetLastError());
+    ok(res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %lu (%lu)\n", res, GetLastError());
     needed = (DWORD) 0xdeadbeef;
     buffer[0] = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -1313,17 +1330,17 @@ static void test_XcvDataPort_PortIsValid(void)
     }
 
 
-    /* hXcv is ignored for the command "PortIsValid" */
     needed = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
-    res = pXcvDataPort(NULL, cmd_PortIsValidW, (PBYTE) portname_lpt1W, sizeof(portname_lpt1W), NULL, 0, NULL);
-    ok( res == ERROR_SUCCESS, "returned %ld with %lu (expected ERROR_SUCCESS)\n", res, GetLastError());
+    res = pXcvDataPort(NULL, cmd_PortIsValidW, (PBYTE) portname_lpt1W, sizeof(portname_lpt1W), NULL, 0, &needed);
+    todo_wine ok( res == ERROR_INVALID_PARAMETER || broken(res == ERROR_SUCCESS),
+            "returned %ld with %lu\n", res, GetLastError());
 
-    /* needed is ignored */
     needed = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pXcvDataPort(hXcv, cmd_PortIsValidW, (PBYTE) portname_lpt1W, sizeof(portname_lpt1W), NULL, 0, NULL);
-    ok( res == ERROR_SUCCESS, "returned %ld with %lu (expected ERROR_SUCCESS)\n", res, GetLastError());
+    todo_wine ok( res == ERROR_INVALID_PARAMETER || broken(res == ERROR_SUCCESS),
+            "returned %ld with %lu\n", res, GetLastError());
 
 
     /* cbInputData is ignored */
@@ -1360,9 +1377,8 @@ static void test_XcvDataPort_PortIsValid(void)
     needed = (DWORD) 0xdeadbeef;
     SetLastError(0xdeadbeef);
     res = pXcvDataPort(hXcv, cmd_PortIsValidW, (PBYTE) emptyW, sizeof(emptyW), NULL, 0, &needed);
-    ok( res == ERROR_PATH_NOT_FOUND,
-        "returned %ld with %lu and 0x%lx (expected ERROR_PATH_NOT_FOUND)\n",
-        res, GetLastError(), needed);
+    todo_wine ok( res == ERROR_FILE_NOT_FOUND || broken(res == ERROR_PATH_NOT_FOUND),
+        "returned %ld with %lu and 0x%lx\n", res, GetLastError(), needed);
 
 
     /* a directory is not allowed */
@@ -1440,15 +1456,15 @@ static void test_XcvOpenPort(void)
     if (0)
     {
         /* crash with native localspl.dll (w2k+xp) */
-        pXcvOpenPort(NULL, SERVER_ACCESS_ADMINISTER, &hXcv2);
-        pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, NULL);
+        call_XcvOpenPort(NULL, SERVER_ACCESS_ADMINISTER, &hXcv2);
+        call_XcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, NULL);
     }
 
 
     /* The returned handle is the result from a previous "spoolss.dll,DllAllocSplMem" */
     SetLastError(0xdeadbeef);
     hXcv2 = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv2);
+    res = call_XcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv2);
     ok(res, "returned %ld with %lu and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
     if (res) pXcvClosePort(hXcv2);
 
@@ -1456,7 +1472,7 @@ static void test_XcvOpenPort(void)
     /* The ACCESS_MASK is not checked in XcvOpenPort */
     SetLastError(0xdeadbeef);
     hXcv2 = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(emptyW, 0, &hXcv2);
+    res = call_XcvOpenPort(emptyW, 0, &hXcv2);
     ok(res, "returned %ld with %lu and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
     if (res) pXcvClosePort(hXcv2);
 
@@ -1464,13 +1480,13 @@ static void test_XcvOpenPort(void)
     /* A copy of pszObject is saved in the Memory-Block */
     SetLastError(0xdeadbeef);
     hXcv2 = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(portname_lpt1W, SERVER_ALL_ACCESS, &hXcv2);
+    res = call_XcvOpenPort(portname_lpt1W, SERVER_ALL_ACCESS, &hXcv2);
     ok(res, "returned %ld with %lu and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
     if (res) pXcvClosePort(hXcv2);
 
     SetLastError(0xdeadbeef);
     hXcv2 = (HANDLE) 0xdeadbeef;
-    res = pXcvOpenPort(portname_fileW, SERVER_ALL_ACCESS, &hXcv2);
+    res = call_XcvOpenPort(portname_fileW, SERVER_ALL_ACCESS, &hXcv2);
     ok(res, "returned %ld with %lu and %p (expected '!= 0')\n", res, GetLastError(), hXcv2);
     if (res) pXcvClosePort(hXcv2);
 
@@ -1572,13 +1588,13 @@ START_TEST(localmon)
         GET_MONITOR_FUNC(XcvDataPort);
         GET_MONITOR_FUNC(XcvClosePort);
 
-        if ((pXcvOpenPort) && (pXcvDataPort) && (pXcvClosePort)) {
+        if ((pXcvOpenPort || pXcvOpenPort2) && pXcvDataPort && pXcvClosePort) {
             SetLastError(0xdeadbeef);
-            res = pXcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
+            res = call_XcvOpenPort(emptyW, SERVER_ACCESS_ADMINISTER, &hXcv);
             ok(res, "hXcv: %ld with %lu and %p (expected '!= 0')\n", res, GetLastError(), hXcv);
 
             SetLastError(0xdeadbeef);
-            res = pXcvOpenPort(emptyW, 0, &hXcv_noaccess);
+            res = call_XcvOpenPort(emptyW, 0, &hXcv_noaccess);
             ok(res, "hXcv_noaccess: %ld with %lu and %p (expected '!= 0')\n", res, GetLastError(), hXcv_noaccess);
         }
     }
