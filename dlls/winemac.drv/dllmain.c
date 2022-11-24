@@ -27,7 +27,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 
 HMODULE macdrv_module = 0;
-unixlib_handle_t macdrv_handle;
 
 struct quit_info {
     HWND               *wins;
@@ -406,9 +405,7 @@ static BOOL process_attach(void)
         { .id = 0 }
     };
 
-    if (NtQueryVirtualMemory(GetCurrentProcess(), macdrv_module, MemoryWineUnixFuncs,
-                             &macdrv_handle, sizeof(macdrv_handle), NULL))
-        return FALSE;
+    if (__wine_init_unix_call()) return FALSE;
 
     for (str = strings; str->id; str++)
         str->len = LoadStringW(macdrv_module, str->id, (WCHAR *)&str->str, 0);

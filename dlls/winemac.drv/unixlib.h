@@ -35,8 +35,7 @@ enum macdrv_funcs
     unix_funcs_count
 };
 
-extern unixlib_handle_t macdrv_handle DECLSPEC_HIDDEN;
-#define MACDRV_CALL(func, params) __wine_unix_call(macdrv_handle, unix_ ## func, params)
+#define MACDRV_CALL(func, params) WINE_UNIX_CALL(unix_ ## func, params)
 
 /* macdrv_dnd_get_data params */
 struct dnd_get_data_params
