@@ -18,8 +18,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifdef __WINE_PE_BUILD
-
 #include <stdarg.h>
 
 #include "ntstatus.h"
@@ -28,6 +26,8 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wine/unixlib.h"
+
+#ifdef __WINE_PE_BUILD
 
 static NTSTATUS (WINAPI *p__wine_unix_call)( unixlib_handle_t, unsigned int, void * );
 
@@ -54,3 +54,22 @@ NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, vo
 }
 
 #endif  /* __WINE_PE_BUILD */
+
+static inline void *image_base(void)
+{
+#ifdef __WINE_PE_BUILD
+    extern IMAGE_DOS_HEADER __ImageBase;
+    return (void *)&__ImageBase;
+#else
+    extern IMAGE_NT_HEADERS __wine_spec_nt_header;
+    return (void *)((__wine_spec_nt_header.OptionalHeader.ImageBase + 0xffff) & ~0xffff);
+#endif
+}
+
+unixlib_handle_t __wine_unixlib_handle = 0;
+
+NTSTATUS WINAPI __wine_init_unix_call(void)
+{
+    return NtQueryVirtualMemory( GetCurrentProcess(), image_base(), MemoryWineUnixFuncs,
+                                 &__wine_unixlib_handle, sizeof(__wine_unixlib_handle), NULL );
+}

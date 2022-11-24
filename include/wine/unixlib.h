@@ -21,12 +21,13 @@
 #ifndef __WINE_WINE_UNIXLIB_H
 #define __WINE_WINE_UNIXLIB_H
 
-typedef NTSTATUS (*unixlib_entry_t)( void *args );
 typedef UINT64 unixlib_handle_t;
 
 extern NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args );
 
 #ifdef WINE_UNIX_LIB
+
+typedef NTSTATUS (*unixlib_entry_t)( void *args );
 
 /* some useful helpers from ntdll */
 extern const char *ntdll_get_build_dir(void);
@@ -263,6 +264,13 @@ static inline ULONG ntdll_wcstoul( const WCHAR *s, WCHAR **end, int base )
 #define wcsnicmp(s1, s2,n) ntdll_wcsnicmp(s1,s2,n)
 #define wcstol(str,e,b)    ntdll_wcstol(str,e,b)
 #define wcstoul(str,e,b)   ntdll_wcstoul(str,e,b)
+
+#else /* WINE_UNIX_LIB */
+
+extern unixlib_handle_t __wine_unixlib_handle DECLSPEC_HIDDEN;
+extern NTSTATUS WINAPI __wine_init_unix_call(void) DECLSPEC_HIDDEN;
+
+#define WINE_UNIX_CALL(code,args) __wine_unix_call( __wine_unixlib_handle, (code), (args) )
 
 #endif /* WINE_UNIX_LIB */
 
