@@ -1623,11 +1623,11 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
 }
 
 
-static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *block,
-                                 SIZE_T block_size, SIZE_T size, void **ret )
+static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *block, SIZE_T block_size,
+                                 SIZE_T size, SIZE_T *old_size, void **ret )
 {
     SUBHEAP *subheap = block_get_subheap( heap, block );
-    SIZE_T old_block_size, old_size;
+    SIZE_T old_block_size;
     struct entry *entry;
     struct block *next;
     NTSTATUS status;
@@ -1636,7 +1636,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
     {
         ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
         old_block_size = large->block_size;
-        old_size = large->data_size;
+        *old_size = large->data_size;
 
         if (old_block_size - sizeof(*block) < size)
         {
@@ -1646,8 +1646,8 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
         }
 
         /* FIXME: we could remap zero-pages instead */
-        valgrind_notify_resize( block + 1, old_size, size );
-        initialize_block( block, old_size, size, flags );
+        valgrind_notify_resize( block + 1, *old_size, size );
+        initialize_block( block, *old_size, size, flags );
 
         large->data_size = size;
         valgrind_make_noaccess( (char *)block + sizeof(*block) + large->data_size,
@@ -1660,7 +1660,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
     /* Check if we need to grow the block */
 
     old_block_size = block_get_size( block );
-    old_size = old_block_size - block_get_overhead( block );
+    *old_size = old_block_size - block_get_overhead( block );
 
     if (block_size > old_block_size)
     {
@@ -1671,8 +1671,8 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
             if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
             if ((status = heap_allocate( heap, flags & ~HEAP_ZERO_MEMORY, block_size, size, ret ))) return status;
             valgrind_notify_alloc( *ret, size, 0 );
-            memcpy( *ret, block + 1, old_size );
-            if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + old_size, 0, size - old_size );
+            memcpy( *ret, block + 1, *old_size );
+            if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + *old_size, 0, size - *old_size );
             valgrind_notify_free( block + 1 );
             free_used_block( heap, flags, block );
             return STATUS_SUCCESS;
@@ -1687,11 +1687,11 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
         old_block_size += block_get_size( next );
     }
 
-    valgrind_notify_resize( block + 1, old_size, size );
+    valgrind_notify_resize( block + 1, *old_size, size );
     block_set_flags( block, BLOCK_FLAG_USER_MASK & ~BLOCK_FLAG_USER_INFO, BLOCK_USER_FLAGS( flags ) );
     shrink_used_block( heap, flags, block, old_block_size, block_size, size );
 
-    initialize_block( block, old_size, size, flags );
+    initialize_block( block, *old_size, size, flags );
     mark_block_tail( block, flags );
 
     *ret = block + 1;
@@ -1703,9 +1703,9 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
  */
 void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T size )
 {
+    SIZE_T block_size, old_size;
     struct block *block;
     struct heap *heap;
-    SIZE_T block_size;
     ULONG heap_flags;
     void *ret = NULL;
     NTSTATUS status;
@@ -1721,7 +1721,7 @@ void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T si
     else
     {
         heap_lock( heap, heap_flags );
-        status = heap_reallocate( heap, heap_flags, block, block_size, size, &ret );
+        status = heap_reallocate( heap, heap_flags, block, block_size, size, &old_size, &ret );
         heap_unlock( heap, heap_flags );
     }
 
