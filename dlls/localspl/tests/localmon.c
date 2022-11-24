@@ -224,18 +224,21 @@ static MONITORREG monreg =
     QueryValue
 };
 
-static DWORD delete_port(LPWSTR portname)
+static BOOL delete_port(LPWSTR portname)
 {
-    DWORD   res;
+    if (pDeletePort)
+        return pDeletePort(NULL, 0, portname);
+    if (pDeletePort2)
+        return pDeletePort2(hmon, NULL, 0, portname);
+    return pXcvDataPort(hXcv, cmd_DeletePortW, (PBYTE) portname,
+            (lstrlenW(portname) + 1) * sizeof(WCHAR), NULL, 0, NULL) == ERROR_SUCCESS;
+}
 
-    if (pDeletePort) {
-        res = pDeletePort(NULL, 0, portname);
-    }
-    else
-    {
-        res = pXcvDataPort(hXcv, cmd_DeletePortW, (PBYTE) portname, (lstrlenW(portname) + 1) * sizeof(WCHAR), NULL, 0, NULL);
-    }
-    return res;
+static BOOL call_AddPortEx(WCHAR *name, DWORD level, BYTE *buf, WCHAR *mon)
+{
+    if (pAddPortEx)
+        return pAddPortEx(name, level, buf, mon);
+    return pAddPortEx2(hmon, name, level, buf, mon);
 }
 
 /* ########################### */
@@ -331,11 +334,11 @@ static void test_AddPortEx(void)
     PORT_INFO_2W pi;
     DWORD   res;
 
-    if (!pAddPortEx) {
+    if (!pAddPortEx && !pAddPortEx2) {
         skip("AddPortEx\n");
         return;
     }
-    if ((!pDeletePort) &&  (!hXcv)) {
+    if (!pDeletePort && !pDeletePort2 && !pXcvDataPort) {
         skip("No API to delete a Port\n");
         return;
     }
@@ -348,13 +351,13 @@ static void test_AddPortEx(void)
         /* tests crash with native localspl.dll in w2k,
            but works with native localspl.dll in wine */
         SetLastError(0xdeadbeef);
-        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, LocalPortW);
+        res = call_AddPortEx(NULL, 1, (LPBYTE) &pi, LocalPortW);
         trace("returned %lu with %lu\n", res, GetLastError() );
         ok( res, "got %lu with %lu (expected '!= 0')\n", res, GetLastError());
 
         /* port already exists: */
         SetLastError(0xdeadbeef);
-        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, LocalPortW);
+        res = call_AddPortEx(NULL, 1, (LPBYTE) &pi, LocalPortW);
         trace("returned %lu with %lu\n", res, GetLastError() );
         ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
             "got %lu with %lu (expected '0' with ERROR_INVALID_PARAMETER)\n",
@@ -365,7 +368,7 @@ static void test_AddPortEx(void)
         /*  NULL for pMonitorName is documented for Printmonitors, but
             localspl.dll fails always with ERROR_INVALID_PARAMETER  */
         SetLastError(0xdeadbeef);
-        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, NULL);
+        res = call_AddPortEx(NULL, 1, (LPBYTE) &pi, NULL);
         trace("returned %lu with %lu\n", res, GetLastError() );
         ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
             "got %lu with %lu (expected '0' with ERROR_INVALID_PARAMETER)\n",
@@ -374,7 +377,7 @@ static void test_AddPortEx(void)
 
 
         SetLastError(0xdeadbeef);
-        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, emptyW);
+        res = call_AddPortEx(NULL, 1, (LPBYTE) &pi, emptyW);
         trace("returned %lu with %lu\n", res, GetLastError() );
         ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
             "got %lu with %lu (expected '0' with ERROR_INVALID_PARAMETER)\n",
@@ -383,7 +386,7 @@ static void test_AddPortEx(void)
 
 
         SetLastError(0xdeadbeef);
-        res = pAddPortEx(NULL, 1, (LPBYTE) &pi, does_not_existW);
+        res = call_AddPortEx(NULL, 1, (LPBYTE) &pi, does_not_existW);
         trace("returned %lu with %lu\n", res, GetLastError() );
         ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
             "got %lu with %lu (expected '0' with ERROR_INVALID_PARAMETER)\n",
@@ -393,7 +396,7 @@ static void test_AddPortEx(void)
 
     pi.pPortName = NULL;
     SetLastError(0xdeadbeef);
-    res = pAddPortEx(NULL, 1, (LPBYTE) &pi, LocalPortW);
+    res = call_AddPortEx(NULL, 1, (LPBYTE) &pi, LocalPortW);
     ok( !res && (GetLastError() == ERROR_INVALID_PARAMETER),
         "got %lu with %lu (expected '0' with ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
@@ -407,7 +410,7 @@ static void test_AddPortEx(void)
     pi.fPortType = PORT_TYPE_WRITE;
 
     SetLastError(0xdeadbeef);
-    res = pAddPortEx(NULL, 2, (LPBYTE) &pi, LocalPortW);
+    res = call_AddPortEx(NULL, 2, (LPBYTE) &pi, LocalPortW);
     ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
         "got %lu with %lu (expected '0' with ERROR_INVALID_LEVEL)\n",
         res, GetLastError());
@@ -416,7 +419,7 @@ static void test_AddPortEx(void)
 
     /* invalid levels */
     SetLastError(0xdeadbeef);
-    res = pAddPortEx(NULL, 0, (LPBYTE) &pi, LocalPortW);
+    res = call_AddPortEx(NULL, 0, (LPBYTE) &pi, LocalPortW);
     ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
         "got %lu with %lu (expected '0' with ERROR_INVALID_LEVEL)\n",
         res, GetLastError());
@@ -424,7 +427,7 @@ static void test_AddPortEx(void)
 
 
     SetLastError(0xdeadbeef);
-    res = pAddPortEx(NULL, 3, (LPBYTE) &pi, LocalPortW);
+    res = call_AddPortEx(NULL, 3, (LPBYTE) &pi, LocalPortW);
     ok( !res && (GetLastError() == ERROR_INVALID_LEVEL),
         "got %lu with %lu (expected '0' with ERROR_INVALID_LEVEL)\n",
         res, GetLastError());
