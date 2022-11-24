@@ -21,6 +21,9 @@
 #define WINE_NO_NAMELESS_EXTENSION
 
 #define EXTERN_GUID DEFINE_GUID
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "initguid.h"
 #include "gst_private.h"
 #include "winternl.h"
@@ -271,6 +274,34 @@ uint64_t wg_parser_stream_get_duration(struct wg_parser_stream *stream)
 
     TRACE("Returning duration %I64u.\n", params.duration);
     return params.duration;
+}
+
+char *wg_parser_stream_get_tag(struct wg_parser_stream *stream, enum wg_parser_tag tag)
+{
+    uint32_t size = 0;
+    struct wg_parser_stream_get_tag_params params =
+    {
+        .stream = stream,
+        .tag = tag,
+        .size = &size,
+    };
+    char *buffer;
+
+    if (WINE_UNIX_CALL(unix_wg_parser_stream_get_tag, &params) != STATUS_BUFFER_TOO_SMALL)
+        return NULL;
+    if (!(buffer = malloc(size)))
+    {
+        ERR("No memory.\n");
+        return NULL;
+    }
+    params.buffer = buffer;
+    if (WINE_UNIX_CALL(unix_wg_parser_stream_get_tag, &params))
+    {
+        ERR("wg_parser_stream_get_tag failed unexpectedly.\n");
+        free(buffer);
+        return NULL;
+    }
+    return buffer;
 }
 
 void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,

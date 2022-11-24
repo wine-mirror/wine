@@ -17,6 +17,8 @@
  */
 
 #include "gst_private.h"
+#include "initguid.h"
+#include "wmsdk.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmvcore);
 

@@ -252,6 +252,20 @@ struct wg_parser_stream_get_duration_params
     UINT64 duration;
 };
 
+enum wg_parser_tag
+{
+    WG_PARSER_TAG_LANGUAGE,
+    WG_PARSER_TAG_COUNT
+};
+
+struct wg_parser_stream_get_tag_params
+{
+    struct wg_parser_stream *stream;
+    enum wg_parser_tag tag;
+    char *buffer;
+    UINT32 *size;
+};
+
 struct wg_parser_stream_seek_params
 {
     struct wg_parser_stream *stream;
@@ -312,6 +326,7 @@ enum unix_funcs
     unix_wg_parser_stream_notify_qos,
 
     unix_wg_parser_stream_get_duration,
+    unix_wg_parser_stream_get_tag,
     unix_wg_parser_stream_seek,
 
     unix_wg_transform_create,

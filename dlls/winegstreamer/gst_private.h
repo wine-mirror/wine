@@ -33,7 +33,6 @@
 #define NONAMELESSUNION
 #include "dshow.h"
 #include "mfidl.h"
-#include "wmsdk.h"
 #include "wine/debug.h"
 #include "wine/strmbase.h"
 
@@ -96,6 +95,7 @@ void wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
 
 /* Returns the duration in 100-nanosecond units. */
 uint64_t wg_parser_stream_get_duration(struct wg_parser_stream *stream);
+char *wg_parser_stream_get_tag(struct wg_parser_stream *stream, enum wg_parser_tag tag);
 /* start_pos and stop_pos are in 100-nanosecond units. */
 void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
         uint64_t start_pos, uint64_t stop_pos, DWORD start_flags, DWORD stop_flags);

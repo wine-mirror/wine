@@ -1481,7 +1481,37 @@ static HRESULT media_source_constructor(IMFByteStream *bytestream, struct media_
     descriptors = malloc(object->stream_count * sizeof(IMFStreamDescriptor *));
     for (i = 0; i < object->stream_count; i++)
     {
+        static const struct
+        {
+            enum wg_parser_tag tag;
+            const GUID *mf_attr;
+        }
+        tags[] =
+        {
+            {WG_PARSER_TAG_LANGUAGE, &MF_SD_LANGUAGE},
+        };
+        unsigned int j;
+        WCHAR *strW;
+        DWORD len;
+        char *str;
+
         IMFMediaStream_GetStreamDescriptor(&object->streams[i]->IMFMediaStream_iface, &descriptors[i]);
+
+        for (j = 0; j < ARRAY_SIZE(tags); ++j)
+        {
+            if (!(str = wg_parser_stream_get_tag(object->streams[i]->wg_stream, tags[j].tag)))
+                continue;
+            if (!(len = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0)))
+            {
+                free(str);
+                continue;
+            }
+            strW = malloc(len * sizeof(*strW));
+            if (MultiByteToWideChar(CP_UTF8, 0, str, -1, strW, len))
+                IMFStreamDescriptor_SetString(descriptors[i], tags[j].mf_attr, strW);
+            free(strW);
+            free(str);
+        }
     }
 
     if (FAILED(hr = MFCreatePresentationDescriptor(object->stream_count, descriptors, &object->pres_desc)))
