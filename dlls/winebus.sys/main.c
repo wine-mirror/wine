@@ -100,12 +100,9 @@ static CRITICAL_SECTION device_list_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 static struct list device_list = LIST_INIT(device_list);
 
-static HMODULE instance;
-static unixlib_handle_t winebus_handle;
-
 static NTSTATUS winebus_call(unsigned int code, void *args)
 {
-    return __wine_unix_call(winebus_handle, code, args);
+    return WINE_UNIX_CALL(code, args);
 }
 
 static void unix_device_remove(DEVICE_OBJECT *device)
@@ -1181,10 +1178,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     TRACE( "(%p, %s)\n", driver, debugstr_w(path->Buffer) );
 
-    RtlPcToFileHeader(&DriverEntry, (void *)&instance);
-    if ((ret = NtQueryVirtualMemory(GetCurrentProcess(), instance, MemoryWineUnixFuncs,
-                                    &winebus_handle, sizeof(winebus_handle), NULL)))
-        return ret;
+    if ((ret = __wine_init_unix_call())) return ret;
 
     attr.Length = sizeof(attr);
     attr.ObjectName = path;
