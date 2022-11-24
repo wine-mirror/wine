@@ -20,6 +20,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <math.h>
 
 #define NONAMELESSUNION
@@ -32,7 +33,6 @@
 #include "winperf.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pdh);
@@ -47,15 +47,6 @@ static CRITICAL_SECTION_DEBUG pdh_handle_cs_debug =
 };
 static CRITICAL_SECTION pdh_handle_cs = { &pdh_handle_cs_debug, -1, 0, 0, 0, 0 };
 
-static inline WCHAR *pdh_strdup( const WCHAR *src )
-{
-    WCHAR *dst;
-
-    if (!src) return NULL;
-    if ((dst = heap_alloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
-    return dst;
-}
-
 static inline WCHAR *pdh_strdup_aw( const char *src )
 {
     int len;
@@ -63,7 +54,7 @@ static inline WCHAR *pdh_strdup_aw( const char *src )
 
     if (!src) return NULL;
     len = MultiByteToWideChar( CP_ACP, 0, src, -1, NULL, 0 );
-    if ((dst = heap_alloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
+    if ((dst = malloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, src, -1, dst, len );
     return dst;
 }
 
@@ -98,7 +89,7 @@ static struct counter *create_counter( void )
 {
     struct counter *counter;
 
-    if ((counter = heap_alloc_zero( sizeof(struct counter) )))
+    if ((counter = calloc( 1, sizeof(struct counter) )))
     {
         counter->magic = PDH_MAGIC_COUNTER;
         return counter;
@@ -109,8 +100,8 @@ static struct counter *create_counter( void )
 static void destroy_counter( struct counter *counter )
 {
     counter->magic = 0;
-    heap_free( counter->path );
-    heap_free( counter );
+    free( counter->path );
+    free( counter );
 }
 
 #define PDH_MAGIC_QUERY     0x50444830 /* 'PDH0' */
@@ -130,7 +121,7 @@ static struct query *create_query( void )
 {
     struct query *query;
 
-    if ((query = heap_alloc_zero( sizeof(struct query) )))
+    if ((query = calloc( 1, sizeof(struct query) )))
     {
         query->magic = PDH_MAGIC_QUERY;
         list_init( &query->counters );
@@ -142,7 +133,7 @@ static struct query *create_query( void )
 static void destroy_query( struct query *query )
 {
     query->magic = 0;
-    heap_free( query );
+    free( query );
 }
 
 struct source
@@ -222,7 +213,7 @@ PDH_STATUS WINAPI PdhAddCounterA( PDH_HQUERY query, LPCSTR path,
 
     ret = PdhAddCounterW( query, pathW, userdata, counter );
 
-    heap_free( pathW );
+    free( pathW );
     return ret;
 }
 
@@ -254,7 +245,7 @@ PDH_STATUS WINAPI PdhAddCounterW( PDH_HQUERY hquery, LPCWSTR path,
         {
             if ((counter = create_counter()))
             {
-                counter->path         = pdh_strdup( counter_sources[i].path );
+                counter->path         = wcsdup( counter_sources[i].path );
                 counter->collect      = counter_sources[i].collect;
                 counter->type         = counter_sources[i].type;
                 counter->defaultscale = counter_sources[i].scale;
@@ -822,8 +813,8 @@ PDH_STATUS WINAPI PdhLookupPerfIndexByNameA( LPCSTR machine, LPCSTR name, LPDWOR
 
     ret = PdhLookupPerfIndexByNameW( machineW, nameW, index );
 
-    heap_free( nameW );
-    heap_free( machineW );
+    free( nameW );
+    free( machineW );
     return ret;
 }
 
@@ -878,7 +869,7 @@ PDH_STATUS WINAPI PdhLookupPerfNameByIndexA( LPCSTR machine, DWORD index, LPSTR 
         else WideCharToMultiByte( CP_ACP, 0, bufferW, -1, buffer, required, NULL, NULL );
         *size = required;
     }
-    heap_free( machineW );
+    free( machineW );
     return ret;
 }
 
@@ -934,7 +925,7 @@ PDH_STATUS WINAPI PdhOpenQueryA( LPCSTR source, DWORD_PTR userdata, PDH_HQUERY *
     if (source && !(sourceW = pdh_strdup_aw( source ))) return PDH_MEMORY_ALLOCATION_FAILURE;
 
     ret = PdhOpenQueryW( sourceW, userdata, query );
-    heap_free( sourceW );
+    free( sourceW );
 
     return ret;
 }
@@ -1030,7 +1021,7 @@ PDH_STATUS WINAPI PdhValidatePathA( LPCSTR path )
 
     ret = PdhValidatePathW( pathW );
 
-    heap_free( pathW );
+    free( pathW );
     return ret;
 }
 
@@ -1128,7 +1119,7 @@ PDH_STATUS WINAPI PdhMakeCounterPathA( PDH_COUNTER_PATH_ELEMENTS_A *e, LPSTR buf
     ret = PdhMakeCounterPathW( &eW, NULL, &buflenW, flags );
     if (ret == PDH_MORE_DATA)
     {
-        if ((bufferW = heap_alloc( buflenW * sizeof(WCHAR) )))
+        if ((bufferW = malloc( buflenW * sizeof(WCHAR) )))
         {
             if (!(ret = PdhMakeCounterPathW( &eW, bufferW, &buflenW, flags )))
             {
@@ -1137,18 +1128,18 @@ PDH_STATUS WINAPI PdhMakeCounterPathA( PDH_COUNTER_PATH_ELEMENTS_A *e, LPSTR buf
                 else ret = PDH_MORE_DATA;
                 *buflen = len;
             }
-            heap_free( bufferW );
+            free( bufferW );
         }
         else
             ret = PDH_MEMORY_ALLOCATION_FAILURE;
     }
 
 done:
-    heap_free( eW.szMachineName );
-    heap_free( eW.szObjectName );
-    heap_free( eW.szInstanceName );
-    heap_free( eW.szParentInstance );
-    heap_free( eW.szCounterName );
+    free( eW.szMachineName );
+    free( eW.szObjectName );
+    free( eW.szInstanceName );
+    free( eW.szParentInstance );
+    free( eW.szCounterName );
     return ret;
 }
 
