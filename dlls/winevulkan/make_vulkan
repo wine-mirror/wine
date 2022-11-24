@@ -1452,10 +1452,13 @@ class VkMember(VkVariable):
                     # Nothing needed this yet.
                     LOGGER.warn("TODO: implement copying of static array for {0}.{1}".format(self.type, self.name))
             elif self.is_handle() and self.needs_unwrapping():
+                handle = self.type_info["data"]
                 if direction == Direction.OUTPUT:
                     LOGGER.err("OUTPUT parameter {0}.{1} cannot be unwrapped".format(self.type, self.name))
+                elif self.optional:
+                    return "{0}{1} = {2} ? {3} : 0;\n".format(output, self.name,
+                        self.value(input, conv), handle.driver_handle(self.value(input, conv)))
                 else:
-                    handle = self.type_info["data"]
                     return "{0}{1} = {2};\n".format(output, self.name, handle.driver_handle(self.value(input, conv)))
             elif self.is_generic_handle():
                 if direction == Direction.OUTPUT:
@@ -1849,14 +1852,19 @@ class VkParam(VkVariable):
         p = self.value(params_prefix, conv)
 
         if unwrap:
+            unwrap_handle = None
             if self.object_type != None and self.type == "uint64_t":
-                return "wine_vk_unwrap_handle({0}{1}, {0}{2})".format(params_prefix, self.object_type, self.name)
+                unwrap_handle = "wine_vk_unwrap_handle({0}{1}, {0}{2})".format(
+                    params_prefix, self.object_type, self.name)
 
-            # We need to pass the native handle to the native Vulkan calls and
-            # the wine driver's handle to calls which are wrapped by the driver.
-            driver_handle = self.handle.driver_handle(p) if self.is_handle() else None
-            if driver_handle:
-                return driver_handle
+            elif self.is_handle():
+                # We need to pass the native handle to the native Vulkan calls and
+                # the wine driver's handle to calls which are wrapped by the driver.
+                unwrap_handle = self.handle.driver_handle(p)
+            if unwrap_handle:
+                if self.optional:
+                    unwrap_handle = "{0}{1} ? {2} : 0".format(params_prefix, self.name, unwrap_handle)
+                return unwrap_handle
 
         return p
 
