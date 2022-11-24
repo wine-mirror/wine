@@ -97,8 +97,8 @@ static void test_CaptionStatics(void)
 
     opacity = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_FontOpacity( caption_statics, &opacity );
-    todo_wine ok( hr == S_OK, "get_FontOpacity returned %#lx\n", hr );
-    todo_wine ok( opacity == ClosedCaptionOpacity_Default, "expected default font opacity, got %d\n", opacity );
+    ok( hr == S_OK, "get_FontOpacity returned %#lx\n", hr );
+    ok( opacity == ClosedCaptionOpacity_Default, "expected default font opacity, got %d\n", opacity );
 
     size = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_FontSize( caption_statics, &size );

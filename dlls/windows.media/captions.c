@@ -142,8 +142,10 @@ static HRESULT WINAPI captions_get_ComputedFontColor( IClosedCaptionPropertiesSt
 
 static HRESULT WINAPI captions_get_FontOpacity( IClosedCaptionPropertiesStatics *iface, ClosedCaptionOpacity *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    FIXME( "iface %p, value %p semi-stub.\n", iface, value );
+
+    *value = ClosedCaptionOpacity_Default;
+    return S_OK;
 }
 
 static HRESULT WINAPI captions_get_FontSize( IClosedCaptionPropertiesStatics *iface, ClosedCaptionSize *value )
