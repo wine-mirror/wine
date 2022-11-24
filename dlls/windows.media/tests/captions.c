@@ -26,7 +26,10 @@
 #include "roapi.h"
 
 #define WIDL_using_Windows_Foundation
+#define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_UI
+#include "windows.ui.h"
 #define WIDL_using_Windows_Media_ClosedCaptioning
 #include "windows.media.closedcaptioning.h"
 
@@ -55,6 +58,13 @@ static void test_CaptionStatics(void)
     HSTRING str;
     HRESULT hr;
     LONG ref;
+    /* Properties */
+    ClosedCaptionColor color;
+    ClosedCaptionOpacity opacity;
+    ClosedCaptionSize size;
+    ClosedCaptionStyle style;
+    ClosedCaptionEdgeEffect effect;
+    Color computed_color;
 
     hr = WindowsCreateString( caption_properties_name, wcslen( caption_properties_name ), &str );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
@@ -74,6 +84,66 @@ static void test_CaptionStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IClosedCaptionPropertiesStatics, (void **)&caption_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    color = 0xdeadbeef;
+    hr = IClosedCaptionPropertiesStatics_get_FontColor( caption_statics, &color );
+    todo_wine ok( hr == S_OK, "get_FontColor returned %#lx\n", hr );
+    todo_wine ok( color == ClosedCaptionColor_Default, "expected default font color, got %d\n", color );
+
+    hr = IClosedCaptionPropertiesStatics_get_ComputedFontColor( caption_statics, &computed_color );
+    todo_wine ok( hr == E_INVALIDARG, "get_ComputedFontColor returned %#lx\n", hr );
+    hr = IClosedCaptionPropertiesStatics_get_ComputedFontColor( caption_statics, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "get_ComputedFontColor returned %#lx\n", hr );
+
+    opacity = 0xdeadbeef;
+    hr = IClosedCaptionPropertiesStatics_get_FontOpacity( caption_statics, &opacity );
+    todo_wine ok( hr == S_OK, "get_FontOpacity returned %#lx\n", hr );
+    todo_wine ok( opacity == ClosedCaptionOpacity_Default, "expected default font opacity, got %d\n", opacity );
+
+    size = 0xdeadbeef;
+    hr = IClosedCaptionPropertiesStatics_get_FontSize( caption_statics, &size );
+    todo_wine ok( hr == S_OK, "get_FontSize returned %#lx\n", hr );
+    todo_wine ok( size == ClosedCaptionSize_Default, "expected default font size, got %d\n", size );
+
+    style = 0xdeadbeef;
+    hr = IClosedCaptionPropertiesStatics_get_FontStyle( caption_statics, &style );
+    todo_wine ok( hr == S_OK, "get_FontStyle returned %#lx\n", hr );
+    todo_wine ok( style == ClosedCaptionStyle_Default, "expected default font style, got %d\n", style );
+
+    effect = 0xdeadbeef;
+    hr = IClosedCaptionPropertiesStatics_get_FontEffect( caption_statics, &effect );
+    todo_wine ok( hr == S_OK, "get_FontEffect returned %#lx\n", hr );
+    todo_wine ok( effect == ClosedCaptionEdgeEffect_Default, "expected default font effect, got %d\n", effect );
+
+    color = 0xdeadbeef;
+    hr = IClosedCaptionPropertiesStatics_get_BackgroundColor( caption_statics, &color );
+    todo_wine ok( hr == S_OK, "get_BackgroundColor returned %#lx\n", hr );
+    todo_wine ok( color == ClosedCaptionColor_Default, "expected default background color, got %d\n", color );
+
+    hr = IClosedCaptionPropertiesStatics_get_ComputedBackgroundColor( caption_statics, &computed_color );
+    todo_wine ok( hr == E_INVALIDARG, "get_ComputedBackgroundColor returned %#lx\n", hr );
+    hr = IClosedCaptionPropertiesStatics_get_ComputedBackgroundColor( caption_statics, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "get_ComputedBackgroundColor returned %#lx\n", hr );
+
+    opacity = 0xdeadbeef;
+    hr = IClosedCaptionPropertiesStatics_get_BackgroundOpacity( caption_statics, &opacity );
+    todo_wine ok( hr == S_OK, "get_BackgroundOpacity returned %#lx\n", hr );
+    todo_wine ok( opacity == ClosedCaptionOpacity_Default, "expected default background opacity, got %d\n", opacity );
+
+    color = 0xdeadbeef;
+    hr = IClosedCaptionPropertiesStatics_get_RegionColor( caption_statics, &color );
+    todo_wine ok( hr == S_OK, "get_RegionColor returned %#lx\n", hr );
+    todo_wine ok( color == ClosedCaptionColor_Default, "expected default region color, got %d\n", color );
+
+    hr = IClosedCaptionPropertiesStatics_get_ComputedRegionColor( caption_statics, &computed_color );
+    todo_wine ok( hr == E_INVALIDARG, "get_ComputedRegionColor returned %#lx\n", hr );
+    hr = IClosedCaptionPropertiesStatics_get_ComputedRegionColor( caption_statics, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "get_ComputedRegionColor returned %#lx\n", hr );
+
+    opacity = 0xdeadbeef;
+    hr = IClosedCaptionPropertiesStatics_get_RegionOpacity( caption_statics, &opacity );
+    todo_wine ok( hr == S_OK, "get_RegionOpacity returned %#lx\n", hr );
+    todo_wine ok( opacity == ClosedCaptionOpacity_Default, "expected default region opacity, got %d\n", opacity );
 
     ref = IClosedCaptionPropertiesStatics_Release( caption_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
