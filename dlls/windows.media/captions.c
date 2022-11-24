@@ -128,8 +128,10 @@ DEFINE_IINSPECTABLE( captions, IClosedCaptionPropertiesStatics, struct captions_
 
 static HRESULT WINAPI captions_get_FontColor( IClosedCaptionPropertiesStatics *iface, ClosedCaptionColor *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    FIXME( "iface %p, value %p semi-stub.\n", iface, value );
+
+    *value = ClosedCaptionColor_Default;
+    return S_OK;
 }
 
 static HRESULT WINAPI captions_get_ComputedFontColor( IClosedCaptionPropertiesStatics *iface, Color *value )

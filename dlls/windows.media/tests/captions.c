@@ -87,8 +87,8 @@ static void test_CaptionStatics(void)
 
     color = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_FontColor( caption_statics, &color );
-    todo_wine ok( hr == S_OK, "get_FontColor returned %#lx\n", hr );
-    todo_wine ok( color == ClosedCaptionColor_Default, "expected default font color, got %d\n", color );
+    ok( hr == S_OK, "get_FontColor returned %#lx\n", hr );
+    ok( color == ClosedCaptionColor_Default, "expected default font color, got %d\n", color );
 
     hr = IClosedCaptionPropertiesStatics_get_ComputedFontColor( caption_statics, &computed_color );
     todo_wine ok( hr == E_INVALIDARG, "get_ComputedFontColor returned %#lx\n", hr );
