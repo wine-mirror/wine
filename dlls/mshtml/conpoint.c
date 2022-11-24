@@ -216,6 +216,7 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
 {
     ConnectionPoint *This = impl_from_IConnectionPoint(iface);
     IUnknown *sink;
+    void *new_sinks;
     DWORD i;
     HRESULT hres;
 
@@ -227,18 +228,19 @@ static HRESULT WINAPI ConnectionPoint_Advise(IConnectionPoint *iface, IUnknown *
     if(FAILED(hres))
         return CONNECT_E_CANNOTCONNECT;
 
-    if(This->sinks) {
-        for(i=0; i<This->sinks_size; i++) {
-            if(!This->sinks[i].unk)
-                break;
-        }
+    for(i = 0; i < This->sinks_size; i++) {
+        if(!This->sinks[i].unk)
+            break;
+    }
 
-        if(i == This->sinks_size)
-            This->sinks = realloc(This->sinks, (++This->sinks_size) * sizeof(*This->sinks));
-    }else {
-        This->sinks = malloc(sizeof(*This->sinks));
-        This->sinks_size = 1;
-        i = 0;
+    if(i == This->sinks_size) {
+        new_sinks = realloc(This->sinks, (This->sinks_size + 1) * sizeof(*This->sinks));
+        if(!new_sinks) {
+            IUnknown_Release(sink);
+            return E_OUTOFMEMORY;
+        }
+        This->sinks = new_sinks;
+        This->sinks_size++;
     }
 
     This->sinks[i].unk = sink;
