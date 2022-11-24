@@ -102,8 +102,8 @@ static void test_CaptionStatics(void)
 
     size = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_FontSize( caption_statics, &size );
-    todo_wine ok( hr == S_OK, "get_FontSize returned %#lx\n", hr );
-    todo_wine ok( size == ClosedCaptionSize_Default, "expected default font size, got %d\n", size );
+    ok( hr == S_OK, "get_FontSize returned %#lx\n", hr );
+    ok( size == ClosedCaptionSize_Default, "expected default font size, got %d\n", size );
 
     style = 0xdeadbeef;
     hr = IClosedCaptionPropertiesStatics_get_FontStyle( caption_statics, &style );
