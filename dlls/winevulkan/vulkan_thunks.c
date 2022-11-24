@@ -308,17 +308,11 @@ typedef struct VkBindImageMemoryInfo32
 } VkBindImageMemoryInfo32;
 typedef VkBindImageMemoryInfo32 VkBindImageMemoryInfoKHR32;
 
-typedef union VkDeviceOrHostAddressConstKHR32
-{
-    VkDeviceAddress DECLSPEC_ALIGN(8) deviceAddress;
-    PTR32 hostAddress;
-} VkDeviceOrHostAddressConstKHR32;
-
 typedef struct VkAccelerationStructureGeometryMotionTrianglesDataNV32
 {
     VkStructureType sType;
     PTR32 pNext;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) vertexData;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) vertexData;
 } VkAccelerationStructureGeometryMotionTrianglesDataNV32;
 
 typedef struct VkAccelerationStructureTrianglesOpacityMicromapEXT32
@@ -326,7 +320,7 @@ typedef struct VkAccelerationStructureTrianglesOpacityMicromapEXT32
     VkStructureType sType;
     PTR32 pNext;
     VkIndexType indexType;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) indexBuffer;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) indexBuffer;
     VkDeviceSize DECLSPEC_ALIGN(8) indexStride;
     uint32_t baseTriangle;
     uint32_t usageCountsCount;
@@ -340,19 +334,19 @@ typedef struct VkAccelerationStructureGeometryTrianglesDataKHR32
     VkStructureType sType;
     PTR32 pNext;
     VkFormat vertexFormat;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) vertexData;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) vertexData;
     VkDeviceSize DECLSPEC_ALIGN(8) vertexStride;
     uint32_t maxVertex;
     VkIndexType indexType;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) indexData;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) transformData;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) indexData;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) transformData;
 } VkAccelerationStructureGeometryTrianglesDataKHR32;
 
 typedef struct VkAccelerationStructureGeometryAabbsDataKHR32
 {
     VkStructureType sType;
     PTR32 pNext;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) data;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) data;
     VkDeviceSize DECLSPEC_ALIGN(8) stride;
 } VkAccelerationStructureGeometryAabbsDataKHR32;
 
@@ -361,7 +355,7 @@ typedef struct VkAccelerationStructureGeometryInstancesDataKHR32
     VkStructureType sType;
     PTR32 pNext;
     VkBool32 arrayOfPointers;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) data;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) data;
 } VkAccelerationStructureGeometryInstancesDataKHR32;
 
 typedef union VkAccelerationStructureGeometryDataKHR32
@@ -380,12 +374,6 @@ typedef struct VkAccelerationStructureGeometryKHR32
     VkGeometryFlagsKHR flags;
 } VkAccelerationStructureGeometryKHR32;
 
-typedef union VkDeviceOrHostAddressKHR32
-{
-    VkDeviceAddress DECLSPEC_ALIGN(8) deviceAddress;
-    PTR32 hostAddress;
-} VkDeviceOrHostAddressKHR32;
-
 typedef struct VkAccelerationStructureBuildGeometryInfoKHR32
 {
     VkStructureType sType;
@@ -398,7 +386,7 @@ typedef struct VkAccelerationStructureBuildGeometryInfoKHR32
     uint32_t geometryCount;
     PTR32 pGeometries;
     PTR32 ppGeometries;
-    VkDeviceOrHostAddressKHR32 DECLSPEC_ALIGN(8) scratchData;
+    VkDeviceOrHostAddressKHR DECLSPEC_ALIGN(8) scratchData;
 } VkAccelerationStructureBuildGeometryInfoKHR32;
 
 typedef struct VkMicromapBuildInfoEXT32
@@ -412,9 +400,9 @@ typedef struct VkMicromapBuildInfoEXT32
     uint32_t usageCountsCount;
     PTR32 pUsageCounts;
     PTR32 ppUsageCounts;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) data;
-    VkDeviceOrHostAddressKHR32 DECLSPEC_ALIGN(8) scratchData;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) triangleArray;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) data;
+    VkDeviceOrHostAddressKHR DECLSPEC_ALIGN(8) scratchData;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) triangleArray;
     VkDeviceSize DECLSPEC_ALIGN(8) triangleArrayStride;
 } VkMicromapBuildInfoEXT32;
 
@@ -681,7 +669,7 @@ typedef struct VkCopyAccelerationStructureToMemoryInfoKHR32
     VkStructureType sType;
     PTR32 pNext;
     VkAccelerationStructureKHR DECLSPEC_ALIGN(8) src;
-    VkDeviceOrHostAddressKHR32 DECLSPEC_ALIGN(8) dst;
+    VkDeviceOrHostAddressKHR DECLSPEC_ALIGN(8) dst;
     VkCopyAccelerationStructureModeKHR mode;
 } VkCopyAccelerationStructureToMemoryInfoKHR32;
 
@@ -789,7 +777,7 @@ typedef struct VkCopyMemoryToAccelerationStructureInfoKHR32
 {
     VkStructureType sType;
     PTR32 pNext;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) src;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) src;
     VkAccelerationStructureKHR DECLSPEC_ALIGN(8) dst;
     VkCopyAccelerationStructureModeKHR mode;
 } VkCopyMemoryToAccelerationStructureInfoKHR32;
@@ -798,7 +786,7 @@ typedef struct VkCopyMemoryToMicromapInfoEXT32
 {
     VkStructureType sType;
     PTR32 pNext;
-    VkDeviceOrHostAddressConstKHR32 DECLSPEC_ALIGN(8) src;
+    VkDeviceOrHostAddressConstKHR DECLSPEC_ALIGN(8) src;
     VkMicromapEXT DECLSPEC_ALIGN(8) dst;
     VkCopyMicromapModeEXT mode;
 } VkCopyMemoryToMicromapInfoEXT32;
@@ -817,7 +805,7 @@ typedef struct VkCopyMicromapToMemoryInfoEXT32
     VkStructureType sType;
     PTR32 pNext;
     VkMicromapEXT DECLSPEC_ALIGN(8) src;
-    VkDeviceOrHostAddressKHR32 DECLSPEC_ALIGN(8) dst;
+    VkDeviceOrHostAddressKHR DECLSPEC_ALIGN(8) dst;
     VkCopyMicromapModeEXT mode;
 } VkCopyMicromapToMemoryInfoEXT32;
 
@@ -6597,14 +6585,6 @@ static inline const VkBindImageMemoryInfo *convert_VkBindImageMemoryInfo_array_w
     return out;
 }
 
-static inline void convert_VkDeviceOrHostAddressConstKHR_win32_to_host(const VkDeviceOrHostAddressConstKHR32 *in, VkDeviceOrHostAddressConstKHR *out)
-{
-    if (!in) return;
-
-    out->deviceAddress = in->deviceAddress;
-    out->hostAddress = (const void *)UlongToPtr(in->hostAddress);
-}
-
 static inline const VkMicromapUsageEXT * const*convert_VkMicromapUsageEXT_pointer_array_win32_to_host(struct conversion_context *ctx, const PTR32 *in, uint32_t count)
 {
     VkMicromapUsageEXT **out;
@@ -6631,12 +6611,12 @@ static inline void convert_VkAccelerationStructureGeometryTrianglesDataKHR_win32
     out->sType = in->sType;
     out->pNext = NULL;
     out->vertexFormat = in->vertexFormat;
-    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->vertexData, &out->vertexData);
+    out->vertexData = in->vertexData;
     out->vertexStride = in->vertexStride;
     out->maxVertex = in->maxVertex;
     out->indexType = in->indexType;
-    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->indexData, &out->indexData);
-    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->transformData, &out->transformData);
+    out->indexData = in->indexData;
+    out->transformData = in->transformData;
 
     for (in_header = UlongToPtr(in->pNext); in_header; in_header = UlongToPtr(in_header->pNext))
     {
@@ -6648,7 +6628,7 @@ static inline void convert_VkAccelerationStructureGeometryTrianglesDataKHR_win32
             const VkAccelerationStructureGeometryMotionTrianglesDataNV32 *in_ext = (const VkAccelerationStructureGeometryMotionTrianglesDataNV32 *)in_header;
             out_ext->sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_MOTION_TRIANGLES_DATA_NV;
             out_ext->pNext = NULL;
-            convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in_ext->vertexData, &out_ext->vertexData);
+            out_ext->vertexData = in_ext->vertexData;
             out_header->pNext = (void *)out_ext;
             out_header = (void *)out_ext;
             break;
@@ -6660,7 +6640,7 @@ static inline void convert_VkAccelerationStructureGeometryTrianglesDataKHR_win32
             out_ext->sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_TRIANGLES_OPACITY_MICROMAP_EXT;
             out_ext->pNext = NULL;
             out_ext->indexType = in_ext->indexType;
-            convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in_ext->indexBuffer, &out_ext->indexBuffer);
+            out_ext->indexBuffer = in_ext->indexBuffer;
             out_ext->indexStride = in_ext->indexStride;
             out_ext->baseTriangle = in_ext->baseTriangle;
             out_ext->usageCountsCount = in_ext->usageCountsCount;
@@ -6684,7 +6664,7 @@ static inline void convert_VkAccelerationStructureGeometryAabbsDataKHR_win32_to_
 
     out->sType = in->sType;
     out->pNext = NULL;
-    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->data, &out->data);
+    out->data = in->data;
     out->stride = in->stride;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -6697,7 +6677,7 @@ static inline void convert_VkAccelerationStructureGeometryInstancesDataKHR_win32
     out->sType = in->sType;
     out->pNext = NULL;
     out->arrayOfPointers = in->arrayOfPointers;
-    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->data, &out->data);
+    out->data = in->data;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -6765,14 +6745,6 @@ static inline const VkAccelerationStructureGeometryKHR * const*convert_VkAcceler
     return (void *)out;
 }
 
-static inline void convert_VkDeviceOrHostAddressKHR_win32_to_host(const VkDeviceOrHostAddressKHR32 *in, VkDeviceOrHostAddressKHR *out)
-{
-    if (!in) return;
-
-    out->deviceAddress = in->deviceAddress;
-    out->hostAddress = (void *)UlongToPtr(in->hostAddress);
-}
-
 static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_host(struct conversion_context *ctx, const VkAccelerationStructureBuildGeometryInfoKHR32 *in, VkAccelerationStructureBuildGeometryInfoKHR *out)
 {
     if (!in) return;
@@ -6787,7 +6759,7 @@ static inline void convert_VkAccelerationStructureBuildGeometryInfoKHR_win32_to_
     out->geometryCount = in->geometryCount;
     out->pGeometries = convert_VkAccelerationStructureGeometryKHR_array_win32_to_host(ctx, (const VkAccelerationStructureGeometryKHR32 *)UlongToPtr(in->pGeometries), in->geometryCount);
     out->ppGeometries = convert_VkAccelerationStructureGeometryKHR_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppGeometries), in->geometryCount);
-    convert_VkDeviceOrHostAddressKHR_win32_to_host(&in->scratchData, &out->scratchData);
+    out->scratchData = in->scratchData;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
 }
@@ -6821,9 +6793,9 @@ static inline void convert_VkMicromapBuildInfoEXT_win32_to_host(struct conversio
     out->usageCountsCount = in->usageCountsCount;
     out->pUsageCounts = (const VkMicromapUsageEXT *)UlongToPtr(in->pUsageCounts);
     out->ppUsageCounts = convert_VkMicromapUsageEXT_pointer_array_win32_to_host(ctx, (const PTR32 *)UlongToPtr(in->ppUsageCounts), in->usageCountsCount);
-    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->data, &out->data);
-    convert_VkDeviceOrHostAddressKHR_win32_to_host(&in->scratchData, &out->scratchData);
-    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->triangleArray, &out->triangleArray);
+    out->data = in->data;
+    out->scratchData = in->scratchData;
+    out->triangleArray = in->triangleArray;
     out->triangleArrayStride = in->triangleArrayStride;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -7370,7 +7342,7 @@ static inline void convert_VkCopyAccelerationStructureToMemoryInfoKHR_win32_to_h
     out->sType = in->sType;
     out->pNext = NULL;
     out->src = in->src;
-    convert_VkDeviceOrHostAddressKHR_win32_to_host(&in->dst, &out->dst);
+    out->dst = in->dst;
     out->mode = in->mode;
     if (in->pNext)
         FIXME("Unexpected pNext\n");
@@ -7609,7 +7581,7 @@ static inline void convert_VkCopyMemoryToAccelerationStructureInfoKHR_win32_to_h
 
     out->sType = in->sType;
     out->pNext = NULL;
-    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->src, &out->src);
+    out->src = in->src;
     out->dst = in->dst;
     out->mode = in->mode;
     if (in->pNext)
@@ -7622,7 +7594,7 @@ static inline void convert_VkCopyMemoryToMicromapInfoEXT_win32_to_host(const VkC
 
     out->sType = in->sType;
     out->pNext = NULL;
-    convert_VkDeviceOrHostAddressConstKHR_win32_to_host(&in->src, &out->src);
+    out->src = in->src;
     out->dst = in->dst;
     out->mode = in->mode;
     if (in->pNext)
@@ -7649,7 +7621,7 @@ static inline void convert_VkCopyMicromapToMemoryInfoEXT_win32_to_host(const VkC
     out->sType = in->sType;
     out->pNext = NULL;
     out->src = in->src;
-    convert_VkDeviceOrHostAddressKHR_win32_to_host(&in->dst, &out->dst);
+    out->dst = in->dst;
     out->mode = in->mode;
     if (in->pNext)
         FIXME("Unexpected pNext\n");

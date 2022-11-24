@@ -1267,10 +1267,10 @@ class VkVariable(object):
             return self.needs_conversion(conv, unwrap, Direction.INPUT, False) \
                 or self.needs_conversion(conv, unwrap, Direction.OUTPUT, False)
 
-        return (self.is_struct() or self.is_union()) and self.struct.needs_alloc(conv, unwrap)
+        return (self.is_struct() or (self.is_union() and self.selector)) and self.struct.needs_alloc(conv, unwrap)
 
     def needs_host_type(self):
-        return (self.is_struct() or self.is_union()) and self.struct.needs_host_type()
+        return (self.is_struct() or (self.is_union() and self.selector)) and self.struct.needs_host_type()
 
     def get_conversions(self, unwrap, parent_const=False):
         """ Get a list of conversions required for this parameter if any.
@@ -1284,7 +1284,7 @@ class VkVariable(object):
         # Collect any member conversions first, so we can guarantee
         # those functions will be defined prior to usage by the
         # 'parent' param requiring conversion.
-        if self.is_struct() or self.is_union():
+        if self.is_struct() or (self.is_union() and self.selector):
             struct = self.struct
             is_const = self.is_const() if self.is_pointer() else parent_const
 
@@ -1532,6 +1532,10 @@ class VkMember(VkVariable):
 
     def needs_conversion(self, conv, unwrap, direction, struct_const):
         """ Check if member needs conversion. """
+
+        # we can't convert unions if we don't have a selector
+        if self.is_union() and not self.selector:
+            return False
 
         is_const = self.is_const() if self.is_pointer() else struct_const
 
@@ -2239,7 +2243,7 @@ class StructConversionFunction(object):
             else:
                 params = ["const {0} *in".format(win_type), "{0} *out".format(self.type)]
 
-            if self.operand[0].selection:
+            if self.operand.union:
                 params.append("VkFlags selector")
 
             # Generate parameter list
