@@ -47,8 +47,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(oss);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
-unixlib_handle_t oss_handle = 0;
-
 static const REFERENCE_TIME DefaultPeriod = 100000;
 static const REFERENCE_TIME MinimumPeriod = 50000;
 
@@ -209,9 +207,7 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        if(NtQueryVirtualMemory(GetCurrentProcess(), dll, MemoryWineUnixFuncs,
-                                &oss_handle, sizeof(oss_handle), NULL))
-            return FALSE;
+        if(__wine_init_unix_call()) return FALSE;
         break;
 
     case DLL_PROCESS_DETACH:

@@ -29,6 +29,4 @@ NTSTATUS oss_wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS oss_wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 #endif
 
-extern unixlib_handle_t oss_handle;
-
-#define OSS_CALL(func, params) __wine_unix_call(oss_handle, func, params)
+#define OSS_CALL(func, params) WINE_UNIX_CALL(func, params)
