@@ -30,7 +30,7 @@ enum android_funcs
     unix_funcs_count
 };
 
-#define ANDROID_CALL(func, params) __wine_unix_call( unix_handle, unix_ ## func, params )
+#define ANDROID_CALL(func, params) WINE_UNIX_CALL( unix_ ## func, params )
 
 /* android_init params */
 struct init_params
