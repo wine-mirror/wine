@@ -23,7 +23,6 @@
 
 
 HMODULE x11drv_module = 0;
-unixlib_handle_t x11drv_handle;
 
 
 typedef NTSTATUS (*callback_func)( UINT arg );
@@ -74,10 +73,7 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 
     DisableThreadLibraryCalls( instance );
     x11drv_module = instance;
-    if (NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
-                              &x11drv_handle, sizeof(x11drv_handle), NULL ))
-        return FALSE;
-
+    if (__wine_init_unix_call()) return FALSE;
     if (X11DRV_CALL( init, &params )) return FALSE;
 
     callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;

@@ -36,8 +36,7 @@ enum x11drv_funcs
     unix_funcs_count,
 };
 
-extern unixlib_handle_t x11drv_handle DECLSPEC_HIDDEN;
-#define X11DRV_CALL(func, params) __wine_unix_call( x11drv_handle, unix_ ## func, params )
+#define X11DRV_CALL(func, params) WINE_UNIX_CALL( unix_ ## func, params )
 
 /* x11drv_create_desktop params */
 struct create_desktop_params
