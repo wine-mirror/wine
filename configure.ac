@@ -931,7 +931,6 @@ do
 
         dnl Check if cross compiler supports -target argument
         llvm_target=$target
-        llvm_cflags="-fuse-ld=lld"
         if test -z "$llvm_target"
         then
             case $wine_arch in
@@ -940,14 +939,15 @@ do
             *)    llvm_target=$wine_arch-windows ;;
             esac
         fi
+        llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
         case $llvm_target in
-          *windows) llvm_cflags="$llvm_cflags -Wl,-subsystem:console" ;;
+          *windows) llvm_cflags="-Wl,-subsystem:console" ;;
         esac
-        WINE_TRY_PE_CFLAGS([-target $llvm_target $llvm_cflags],
+        WINE_TRY_PE_CFLAGS([$llvm_extra_cflags $llvm_cflags],
                            [target=$llvm_target
                             AS_VAR_SET([${wine_arch}_DELAYLOADFLAG],["-Wl,-delayload,"])
-                            AS_VAR_APPEND([${wine_arch}_EXTRACFLAGS],[" -target $target"])
-                            CFLAGS="$CFLAGS -target $target $llvm_cflags"])
+                            AS_VAR_APPEND([${wine_arch}_EXTRACFLAGS],[" $llvm_extra_cflags"])
+                            CFLAGS="$llvm_extra_cflags $llvm_cflags"])
         AS_VAR_SET([${wine_arch}_TARGET],[$target])])
     AS_VAR_POPDEF([wine_cv_crosscc])
 

@@ -10835,7 +10835,6 @@ then :
         done
 
                 llvm_target=$target
-        llvm_cflags="-fuse-ld=lld"
         if test -z "$llvm_target"
         then
             case $wine_arch in
@@ -10844,19 +10843,20 @@ then :
             *)    llvm_target=$wine_arch-windows ;;
             esac
         fi
+        llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
         case $llvm_target in
-          *windows) llvm_cflags="$llvm_cflags -Wl,-subsystem:console" ;;
+          *windows) llvm_cflags="-Wl,-subsystem:console" ;;
         esac
-        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_-target $llvm_target $llvm_cflags" | $as_tr_sh`
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports -target $llvm_target $llvm_cflags" >&5
-printf %s "checking whether $CC supports -target $llvm_target $llvm_cflags... " >&6; }
+        { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags" | $as_tr_sh`
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $llvm_extra_cflags $llvm_cflags" >&5
+printf %s "checking whether $CC supports $llvm_extra_cflags $llvm_cflags... " >&6; }
 if eval test \${$as_ac_var+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -target $llvm_target $llvm_cflags"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs $llvm_extra_cflags $llvm_cflags"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10880,8 +10880,8 @@ if eval test \"x\$"$as_ac_var"\" = x"yes"
 then :
   target=$llvm_target
                             eval "${wine_arch}_DELAYLOADFLAG=\"-Wl,-delayload,\""
-                            as_fn_append ${wine_arch}_EXTRACFLAGS " -target $target"
-                            CFLAGS="$CFLAGS -target $target $llvm_cflags"
+                            as_fn_append ${wine_arch}_EXTRACFLAGS " $llvm_extra_cflags"
+                            CFLAGS="$llvm_extra_cflags $llvm_cflags"
 fi }
         eval "${wine_arch}_TARGET=\$target"
 fi
