@@ -508,6 +508,8 @@ typedef struct {
 
     LONG ref;
 
+    ULONG redirect_count;
+
     ULONGLONG navigation_start_time;
     ULONGLONG unload_event_start_time;
     ULONGLONG unload_event_end_time;

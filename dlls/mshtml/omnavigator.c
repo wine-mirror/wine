@@ -1901,6 +1901,7 @@ typedef struct {
     IHTMLPerformanceNavigation IHTMLPerformanceNavigation_iface;
 
     LONG ref;
+    HTMLPerformanceTiming *timing;
 } HTMLPerformanceNavigation;
 
 static inline HTMLPerformanceNavigation *impl_from_IHTMLPerformanceNavigation(IHTMLPerformanceNavigation *iface)
@@ -1948,6 +1949,7 @@ static ULONG WINAPI HTMLPerformanceNavigation_Release(IHTMLPerformanceNavigation
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
+        IHTMLPerformanceTiming_Release(&This->timing->IHTMLPerformanceTiming_iface);
         release_dispex(&This->dispex);
         free(This);
     }
@@ -2003,8 +2005,11 @@ static HRESULT WINAPI HTMLPerformanceNavigation_get_type(IHTMLPerformanceNavigat
 static HRESULT WINAPI HTMLPerformanceNavigation_get_redirectCount(IHTMLPerformanceNavigation *iface, ULONG *p)
 {
     HTMLPerformanceNavigation *This = impl_from_IHTMLPerformanceNavigation(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    *p = This->timing->redirect_count;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLPerformanceNavigation_toString(IHTMLPerformanceNavigation *iface, BSTR *string)
@@ -2055,7 +2060,7 @@ typedef struct {
     LONG ref;
 
     IHTMLPerformanceNavigation *navigation;
-    IHTMLPerformanceTiming *timing;
+    HTMLPerformanceTiming *timing;
 } HTMLPerformance;
 
 static inline HTMLPerformance *impl_from_IHTMLPerformance(IHTMLPerformance *iface)
@@ -2103,7 +2108,7 @@ static ULONG WINAPI HTMLPerformance_Release(IHTMLPerformance *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        IHTMLPerformanceTiming_Release(This->timing);
+        IHTMLPerformanceTiming_Release(&This->timing->IHTMLPerformanceTiming_iface);
         if(This->navigation)
             IHTMLPerformanceNavigation_Release(This->navigation);
         release_dispex(&This->dispex);
@@ -2164,6 +2169,9 @@ static HRESULT WINAPI HTMLPerformance_get_navigation(IHTMLPerformance *iface,
 
         navigation->IHTMLPerformanceNavigation_iface.lpVtbl = &HTMLPerformanceNavigationVtbl;
         navigation->ref = 1;
+        navigation->timing = This->timing;
+        IHTMLPerformanceTiming_AddRef(&This->timing->IHTMLPerformanceTiming_iface);
+
         init_dispatch(&navigation->dispex, (IUnknown*)&navigation->IHTMLPerformanceNavigation_iface,
                       &HTMLPerformanceNavigation_dispex, dispex_compat_mode(&This->dispex));
 
@@ -2180,7 +2188,7 @@ static HRESULT WINAPI HTMLPerformance_get_timing(IHTMLPerformance *iface, IHTMLP
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    IHTMLPerformanceTiming_AddRef(*p = This->timing);
+    IHTMLPerformanceTiming_AddRef(*p = &This->timing->IHTMLPerformanceTiming_iface);
     return S_OK;
 }
 
@@ -2240,10 +2248,10 @@ HRESULT create_performance(HTMLInnerWindow *window, IHTMLPerformance **ret)
     init_dispatch(&performance->dispex, (IUnknown*)&performance->IHTMLPerformance_iface,
                   &HTMLPerformance_dispex, compat_mode);
 
-    performance->timing = &window->performance_timing->IHTMLPerformanceTiming_iface;
-    IHTMLPerformanceTiming_AddRef(performance->timing);
+    performance->timing = window->performance_timing;
+    IHTMLPerformanceTiming_AddRef(&performance->timing->IHTMLPerformanceTiming_iface);
 
-    init_dispatch(&window->performance_timing->dispex, (IUnknown*)&window->performance_timing->IHTMLPerformanceTiming_iface,
+    init_dispatch(&performance->timing->dispex, (IUnknown*)&performance->timing->IHTMLPerformanceTiming_iface,
                   &HTMLPerformanceTiming_dispex, compat_mode);
 
     *ret = &performance->IHTMLPerformance_iface;

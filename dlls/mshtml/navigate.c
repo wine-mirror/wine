@@ -1723,8 +1723,11 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG progress, ULONG t
         This->nschannel->content_type = strdupWtoA(status_text);
         break;
     case BINDSTATUS_REDIRECTING:
-        if(This->is_doc_channel && !This->bsc.window->performance_timing->redirect_time)
-            This->bsc.window->performance_timing->redirect_time = get_time_stamp();
+        if(This->is_doc_channel) {
+            This->bsc.window->performance_timing->redirect_count++;
+            if(!This->bsc.window->performance_timing->redirect_time)
+                This->bsc.window->performance_timing->redirect_time = get_time_stamp();
+        }
         return handle_redirect(This, status_text);
     case BINDSTATUS_FINDINGRESOURCE:
         if(This->is_doc_channel && !This->bsc.window->performance_timing->dns_lookup_time)
