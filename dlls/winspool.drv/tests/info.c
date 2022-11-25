@@ -3046,6 +3046,26 @@ static void test_IsValidDevmodeW(void)
         { DM_NUP, FIELD_OFFSET(DEVMODEW, u2.dmNup) + 4, TRUE },
 
     };
+    static const struct
+    {
+        DWORD dmSize;
+        DWORD dmDriverExtra;
+        DWORD bufSize;
+        BOOL ret;
+    } size_test[] =
+    {
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 3, 1, FIELD_OFFSET(DEVMODEW, dmFields) + 4, FALSE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 4, 1, FIELD_OFFSET(DEVMODEW, dmFields) + 8, TRUE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 4, 2, FIELD_OFFSET(DEVMODEW, dmFields) + 8, TRUE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 4, 3, FIELD_OFFSET(DEVMODEW, dmFields) + 8, TRUE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 4, 4, FIELD_OFFSET(DEVMODEW, dmFields) + 8, TRUE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 4, 5, FIELD_OFFSET(DEVMODEW, dmFields) + 8, FALSE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 12, 1, FIELD_OFFSET(DEVMODEW, dmFields) + 16, TRUE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 12, 2, FIELD_OFFSET(DEVMODEW, dmFields) + 16, TRUE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 12, 3, FIELD_OFFSET(DEVMODEW, dmFields) + 16, TRUE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 12, 4, FIELD_OFFSET(DEVMODEW, dmFields) + 16, TRUE },
+        { FIELD_OFFSET(DEVMODEW, dmFields) + 12, 5, FIELD_OFFSET(DEVMODEW, dmFields) + 16, FALSE },
+    };
     DEVMODEW dm;
     int i;
     BOOL ret;
@@ -3064,6 +3084,17 @@ static void test_IsValidDevmodeW(void)
         dm.dmFields = test[i].dmFields;
         ret = IsValidDevmodeW(&dm, dm.dmSize);
         ok(ret == test[i].ret, "%d: got %d\n", i, ret);
+        ret = IsValidDevmodeW(&dm, dm.dmSize + 4);
+        ok(ret == test[i].ret, "%d: got %d\n", i, ret);
+    }
+
+    dm.dmFields = 0;
+    for (i = 0; i < ARRAY_SIZE(size_test); i++)
+    {
+        dm.dmSize = size_test[i].dmSize;
+        dm.dmDriverExtra = size_test[i].dmDriverExtra;
+        ret = IsValidDevmodeW(&dm, size_test[i].bufSize);
+        ok(ret == size_test[i].ret, "%d: got %d\n", i, ret);
     }
 }
 

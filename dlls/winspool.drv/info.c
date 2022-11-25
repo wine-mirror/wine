@@ -1927,12 +1927,14 @@ BOOL WINAPI IsValidDevmodeW(PDEVMODEW dm, SIZE_T size)
 #undef F_SIZE
     };
     int i;
+    const DWORD fields_off = FIELD_OFFSET(DEVMODEW, dmFields) + sizeof(dm->dmFields);
 
     if (!dm) return FALSE;
-    if (size < FIELD_OFFSET(DEVMODEW, dmFields) + sizeof(dm->dmFields)) return FALSE;
+    if (size < fields_off) return FALSE;
+    if (dm->dmSize < fields_off || size < dm->dmSize + dm->dmDriverExtra) return FALSE;
 
     for (i = 0; i < ARRAY_SIZE(map); i++)
-        if ((dm->dmFields & map[i].flag) && size < map[i].size)
+        if ((dm->dmFields & map[i].flag) && dm->dmSize < map[i].size)
             return FALSE;
 
     return TRUE;
