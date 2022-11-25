@@ -2169,37 +2169,37 @@ static HRESULT WINAPI DocObj##iface##_Invoke(I##iface *_0, DISPID dispIdMember, 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_0(iface, method) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface) : E_UNEXPECTED; \
+    return This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface); \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_1(iface, method, a) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1) : E_UNEXPECTED; \
+    return This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1); \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_2(iface, method, a,b) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1, b _2) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2) : E_UNEXPECTED; \
+    return This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2); \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_3(iface, method, a,b,c) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1, b _2, c _3) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2, _3) : E_UNEXPECTED; \
+    return This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2, _3); \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_4(iface, method, a,b,c,d) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1, b _2, c _3, d _4) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2, _3, _4) : E_UNEXPECTED; \
+    return This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2, _3, _4); \
 }
 
 #define HTMLDOCUMENTOBJ_FWD_TO_NODE_5(iface, method, a,b,c,d,e) static HRESULT WINAPI DocObj##iface##_##method(I##iface *_0, a _1, b _2, c _3, d _4, e _5) \
 { \
     HTMLDocumentObj *This = CONTAINING_RECORD(_0, HTMLDocumentObj, I##iface##_iface); \
-    return This->doc_node ? This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2, _3, _4, _5) : E_UNEXPECTED; \
+    return This->doc_node->I##iface##_iface.lpVtbl->method(&This->doc_node->I##iface##_iface, _1, _2, _3, _4, _5); \
 }
 
 /**********************************************************
@@ -3618,7 +3618,7 @@ static void HTMLDocumentObj_on_advise(IUnknown *iface, cp_static_data_t *cp)
 {
     HTMLDocumentObj *This = impl_from_IUnknown(iface);
 
-    if(This->window && This->doc_node)
+    if(This->window)
         update_doc_cp_events(This->doc_node, cp);
 }
 
@@ -3704,7 +3704,7 @@ static HRESULT create_document_object(BOOL is_mhtml, IUnknown *outer, REFIID rii
     doc->window = doc->nscontainer->content_window;
     IHTMLWindow2_AddRef(&doc->window->base.IHTMLWindow2_iface);
 
-    if(!doc->doc_node && doc->window->base.inner_window->doc) {
+    if(!doc->doc_node) {
         doc->doc_node = doc->window->base.inner_window->doc;
         IHTMLDOMNode_AddRef(&doc->doc_node->node.IHTMLDOMNode_iface);
     }

@@ -991,8 +991,6 @@ static HRESULT WINAPI DocObjOleCommandTarget_QueryStatus(IOleCommandTarget *ifac
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleCommandTarget(iface);
 
-    if(!This->doc_node)
-        return E_UNEXPECTED;
     return IOleCommandTarget_QueryStatus(&This->doc_node->IOleCommandTarget_iface,
                                          pguidCmdGroup, cCmds, prgCmds, pCmdText);
 }
@@ -1002,8 +1000,6 @@ static HRESULT WINAPI DocObjOleCommandTarget_Exec(IOleCommandTarget *iface, cons
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IOleCommandTarget(iface);
 
-    if(!This->doc_node)
-        return E_UNEXPECTED;
     return IOleCommandTarget_Exec(&This->doc_node->IOleCommandTarget_iface,
                                   pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 }

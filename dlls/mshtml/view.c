@@ -446,7 +446,7 @@ static void send_unload_events_impl(HTMLInnerWindow *window)
 
 static void send_unload_events(HTMLDocumentObj *doc)
 {
-    if(!doc->doc_node || !doc->window || !doc->doc_node->content_ready)
+    if(!doc->window || !doc->doc_node->content_ready)
         return;
 
     send_unload_events_impl(doc->window->base.inner_window);

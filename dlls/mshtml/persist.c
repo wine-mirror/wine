@@ -1008,10 +1008,6 @@ static HRESULT WINAPI DocObjPersistFile_Save(IPersistFile *iface, LPCOLESTR pszF
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IPersistFile(iface);
 
-    if(!This->doc_node) {
-        FIXME("No doc_node\n");
-        return E_UNEXPECTED;
-    }
     return IPersistFile_Save(&This->doc_node->IPersistFile_iface, pszFileName, fRemember);
 }
 
@@ -1202,10 +1198,6 @@ static HRESULT WINAPI DocObjPersistStreamInit_Save(IPersistStreamInit *iface, IS
 {
     HTMLDocumentObj *This = HTMLDocumentObj_from_IPersistStreamInit(iface);
 
-    if(!This->doc_node) {
-        FIXME("No doc_node\n");
-        return E_UNEXPECTED;
-    }
     return IPersistStreamInit_Save(&This->doc_node->IPersistStreamInit_iface, pStm, fClearDirty);
 }
 
