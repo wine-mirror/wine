@@ -1142,6 +1142,7 @@ static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, D
     case 3000030:
     case 3000031:
     case 3000032:
+    case 3000033:
         /* TODO */
         return S_OK;
     }
@@ -6399,6 +6400,24 @@ static void test_refresh(IHTMLDocument2 *doc)
     test_download(DWL_VERBDONE|DWL_HTTP|DWL_ONREADY_LOADING|DWL_REFRESH|DWL_EX_GETHOSTINFO);
 }
 
+static void test_reload(IHTMLDocument2 *doc)
+{
+    IHTMLLocation *location;
+    HRESULT hres;
+
+    trace("Reload...\n");
+
+    location = NULL;
+    hres = IHTMLDocument2_get_location(doc, &location);
+    ok(hres == S_OK, "get_location failed: %08lx\n", hres);
+    ok(location != NULL, "location == NULL\n");
+
+    hres = IHTMLLocation_reload(location, VARIANT_FALSE);
+    IHTMLLocation_Release(location);
+
+    test_download(DWL_VERBDONE|DWL_HTTP|DWL_ONREADY_LOADING|DWL_REFRESH|DWL_EX_GETHOSTINFO);
+}
+
 static void test_open_window(IHTMLDocument2 *doc, BOOL do_block)
 {
     IHTMLWindow2 *window, *new_window;
@@ -8216,6 +8235,7 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
         test_put_href(doc, FALSE, L"#test", L"http://test.winehq.org/tests/winehq_snapshot/#test", FALSE, TRUE, 0);
         test_travellog(doc);
         test_refresh(doc);
+        test_reload(doc);
     }
     test_put_href(doc, FALSE, NULL, L"javascript:external%20&&undefined", TRUE, FALSE, 0);
     test_put_href(doc, FALSE, NULL, L"about:blank", FALSE, FALSE, support_wbapp ? DWL_EXPECT_HISTUPDATE : 0);

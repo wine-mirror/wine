@@ -582,8 +582,21 @@ static HRESULT WINAPI HTMLLocation_get_hash(IHTMLLocation *iface, BSTR *p)
 static HRESULT WINAPI HTMLLocation_reload(IHTMLLocation *iface, VARIANT_BOOL flag)
 {
     HTMLLocation *This = impl_from_IHTMLLocation(iface);
-    FIXME("(%p)->(%x)\n", This, flag);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%x)\n", This, flag);
+
+    if(!This->window) {
+        FIXME("No window available\n");
+        return E_FAIL;
+    }
+
+    /* reload is supposed to fail if called from a script with different origin, but IE doesn't care */
+    if(!is_main_content_window(This->window->base.outer_window)) {
+        FIXME("Unsupported on iframe\n");
+        return E_NOTIMPL;
+    }
+
+    return reload_page(This->window->base.outer_window);
 }
 
 static HRESULT WINAPI HTMLLocation_replace(IHTMLLocation *iface, BSTR bstr)

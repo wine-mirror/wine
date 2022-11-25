@@ -4088,6 +4088,7 @@ static void run_js_tests(void)
     run_script_as_http_with_mode("documentmode.js", "11", "edge;123");
 
     run_script_as_http_with_mode("asyncscriptload.js", NULL, "9");
+    run_script_as_http_with_mode("reload.js", NULL, "11");
 }
 
 static BOOL init_registry(BOOL init)

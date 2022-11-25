@@ -449,10 +449,23 @@ static void refresh_destr(task_t *_task)
     free(task);
 }
 
+HRESULT reload_page(HTMLOuterWindow *window)
+{
+    refresh_task_t *task;
+
+    task = malloc(sizeof(*task));
+    if(!task)
+        return E_OUTOFMEMORY;
+
+    IHTMLWindow2_AddRef(&window->base.IHTMLWindow2_iface);
+    task->window = window;
+
+    return push_task(&task->header, refresh_proc, refresh_destr, window->task_magic);
+}
+
 static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)
 {
     HTMLDocumentObj *doc_obj;
-    refresh_task_t *task;
     HRESULT hres;
 
     TRACE("(%p)->(%ld %s %p)\n", doc, nCmdexecopt, debugstr_variant(pvaIn), pvaOut);
@@ -478,14 +491,7 @@ static HRESULT exec_refresh(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *p
     if(!doc->outer_window)
         return E_UNEXPECTED;
 
-    task = malloc(sizeof(*task));
-    if(!task)
-        return E_OUTOFMEMORY;
-
-    IHTMLWindow2_AddRef(&doc->outer_window->base.IHTMLWindow2_iface);
-    task->window = doc->outer_window;
-
-    return push_task(&task->header, refresh_proc, refresh_destr, doc->outer_window->task_magic);
+    return reload_page(doc->outer_window);
 }
 
 static HRESULT exec_stop(HTMLDocumentNode *doc, DWORD nCmdexecopt, VARIANT *pvaIn, VARIANT *pvaOut)

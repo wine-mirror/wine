@@ -1094,6 +1094,7 @@ HRESULT async_start_doc_binding(HTMLOuterWindow*,HTMLInnerWindow*) DECLSPEC_HIDD
 void abort_window_bindings(HTMLInnerWindow*) DECLSPEC_HIDDEN;
 void set_download_state(HTMLDocumentObj*,int) DECLSPEC_HIDDEN;
 void call_docview_84(HTMLDocumentObj*) DECLSPEC_HIDDEN;
+HRESULT reload_page(HTMLOuterWindow*) DECLSPEC_HIDDEN;
 
 void set_ready_state(HTMLOuterWindow*,READYSTATE) DECLSPEC_HIDDEN;
 HRESULT get_readystate_string(READYSTATE,BSTR*) DECLSPEC_HIDDEN;

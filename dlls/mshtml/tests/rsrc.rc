@@ -64,6 +64,9 @@ events.js HTML "events.js"
 /* @makedep: documentmode.js */
 documentmode.js HTML "documentmode.js"
 
+/* @makedep: reload.js */
+reload.js HTML "reload.js"
+
 /* @makedep: blank.html */
 blank.html HTML "blank.html"
 
