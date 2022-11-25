@@ -307,7 +307,9 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
           hr==S_OK ? (UINT)pos : -1, pad, flags, frames);
 
     if(hr == S_OK){
+        flaky_wine
         ok(pos == sum, "Position %u expected %u\n", (UINT)pos, sum);
+        flaky_wine
         ok(!flags, "flags %lu\n", flags);
 
         hr = IAudioCaptureClient_ReleaseBuffer(acc, frames);
@@ -334,6 +336,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     ok(pad > sum, "restarted GCP %u\n", pad); /* GCP is still near buffer size */
 
     if(frames){
+        flaky_wine
         ok(pos == sum, "Position %u expected %u\n", (UINT)pos, sum);
         ok(!flags, "flags %lu\n", flags);
 
