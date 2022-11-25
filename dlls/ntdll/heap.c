@@ -824,10 +824,8 @@ static inline void shrink_used_block( struct heap *heap, ULONG flags, struct blo
     }
     else
     {
-        struct block *next;
         block_set_size( block, old_block_size );
         block->tail_size = old_block_size - sizeof(*block) - size;
-        if ((next = next_block( subheap, block ))) block_set_flags( next, BLOCK_FLAG_PREV_FREE, 0 );
     }
 }
 
@@ -1501,20 +1499,24 @@ static SIZE_T heap_get_block_size( const struct heap *heap, ULONG flags, SIZE_T 
 
 static NTSTATUS heap_allocate_block( struct heap *heap, ULONG flags, SIZE_T block_size, SIZE_T size, void **ret )
 {
+    struct block *block, *next;
     SIZE_T old_block_size;
-    struct block *block;
+    SUBHEAP *subheap;
 
     /* Locate a suitable free block */
 
     if (!(block = find_free_block( heap, flags, block_size ))) return STATUS_NO_MEMORY;
     /* read the free block size, changing block type or flags may alter it */
     old_block_size = block_get_size( block );
+    subheap = block_get_subheap( heap, block );
 
     block_set_type( block, BLOCK_TYPE_USED );
     block_set_flags( block, ~0, BLOCK_USER_FLAGS( flags ) );
     shrink_used_block( heap, flags, block, old_block_size, block_size, size );
     initialize_block( block, 0, size, flags );
     mark_block_tail( block, flags );
+
+    if ((next = next_block( subheap, block ))) block_set_flags( next, BLOCK_FLAG_PREV_FREE, 0 );
 
     *ret = block + 1;
     return STATUS_SUCCESS;
@@ -1643,9 +1645,10 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block 
     valgrind_notify_resize( block + 1, *old_size, size );
     block_set_flags( block, BLOCK_FLAG_USER_MASK & ~BLOCK_FLAG_USER_INFO, BLOCK_USER_FLAGS( flags ) );
     shrink_used_block( heap, flags, block, old_block_size, block_size, size );
-
     initialize_block( block, *old_size, size, flags );
     mark_block_tail( block, flags );
+
+    if ((next = next_block( subheap, block ))) block_set_flags( next, BLOCK_FLAG_PREV_FREE, 0 );
 
     heap_unlock( heap, flags );
 
