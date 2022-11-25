@@ -98,14 +98,6 @@ void wined3d_swapchain_gl_cleanup(struct wined3d_swapchain_gl *swapchain_gl)
 
     wined3d_cs_destroy_object(cs, wined3d_swapchain_gl_destroy_object, swapchain_gl);
     wined3d_cs_finish(cs, WINED3D_CS_QUEUE_DEFAULT);
-
-    if (swapchain_gl->backup_dc)
-    {
-        TRACE("Destroying backup wined3d window %p, dc %p.\n", swapchain_gl->backup_wnd, swapchain_gl->backup_dc);
-
-        wined3d_release_dc(swapchain_gl->backup_wnd, swapchain_gl->backup_dc);
-        DestroyWindow(swapchain_gl->backup_wnd);
-    }
 }
 
 static void wined3d_swapchain_vk_destroy_vulkan_swapchain(struct wined3d_swapchain_vk *swapchain_vk)
@@ -610,7 +602,8 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
     TRACE("Presenting DC %p.\n", context_gl->dc);
 
     pixel_format = &wined3d_adapter_gl(swapchain->device->adapter)->pixel_formats[context_gl->pixel_format];
-    if (context_gl->dc == swapchain_gl->backup_dc || (pixel_format->swap_method != WGL_SWAP_COPY_ARB
+    if (context_gl->dc == wined3d_device_gl(swapchain->device)->backup_dc
+            || (pixel_format->swap_method != WGL_SWAP_COPY_ARB
             && swapchain_present_is_partial_copy(swapchain, dst_rect)))
     {
         swapchain_blit_gdi(swapchain, context, src_rect, dst_rect);
@@ -1840,31 +1833,6 @@ struct wined3d_context_gl *wined3d_swapchain_gl_get_context(struct wined3d_swapc
 
     /* Create a new context for the thread. */
     return wined3d_swapchain_gl_create_context(swapchain_gl);
-}
-
-HDC wined3d_swapchain_gl_get_backup_dc(struct wined3d_swapchain_gl *swapchain_gl)
-{
-    if (!swapchain_gl->backup_dc)
-    {
-        TRACE("Creating the backup window for swapchain %p.\n", swapchain_gl);
-
-        if (!(swapchain_gl->backup_wnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
-                WS_OVERLAPPEDWINDOW, 10, 10, 10, 10, NULL, NULL, NULL, NULL)))
-        {
-            ERR("Failed to create a window.\n");
-            return NULL;
-        }
-
-        if (!(swapchain_gl->backup_dc = GetDC(swapchain_gl->backup_wnd)))
-        {
-            ERR("Failed to get a DC.\n");
-            DestroyWindow(swapchain_gl->backup_wnd);
-            swapchain_gl->backup_wnd = NULL;
-            return NULL;
-        }
-    }
-
-    return swapchain_gl->backup_dc;
 }
 
 void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain)

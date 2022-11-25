@@ -1225,6 +1225,14 @@ void wined3d_device_gl_delete_opengl_contexts_cs(void *object)
         else
             wined3d_context_gl_destroy(wined3d_context_gl(device->contexts[0]));
     }
+
+    if (device_gl->backup_dc)
+    {
+        TRACE("Destroying backup wined3d window %p, dc %p.\n", device_gl->backup_wnd, device_gl->backup_dc);
+
+        wined3d_release_dc(device_gl->backup_wnd, device_gl->backup_dc);
+        DestroyWindow(device_gl->backup_wnd);
+    }
 }
 
 void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
@@ -5911,6 +5919,33 @@ void CDECL wined3d_device_get_gamma_ramp(const struct wined3d_device *device,
 
     if ((swapchain = wined3d_device_get_swapchain(device, swapchain_idx)))
         wined3d_swapchain_get_gamma_ramp(swapchain, ramp);
+}
+
+HDC wined3d_device_gl_get_backup_dc(struct wined3d_device_gl *device_gl)
+{
+    TRACE("device_gl %p.\n", device_gl);
+
+    if (!device_gl->backup_dc)
+    {
+        TRACE("Creating the backup window for device %p.\n", device_gl);
+
+        if (!(device_gl->backup_wnd = CreateWindowA(WINED3D_OPENGL_WINDOW_CLASS_NAME, "WineD3D fake window",
+                WS_OVERLAPPEDWINDOW, 10, 10, 10, 10, NULL, NULL, NULL, NULL)))
+        {
+            ERR("Failed to create a window.\n");
+            return NULL;
+        }
+
+        if (!(device_gl->backup_dc = GetDC(device_gl->backup_wnd)))
+        {
+            ERR("Failed to get a DC.\n");
+            DestroyWindow(device_gl->backup_wnd);
+            device_gl->backup_wnd = NULL;
+            return NULL;
+        }
+    }
+
+    return device_gl->backup_dc;
 }
 
 void device_resource_add(struct wined3d_device *device, struct wined3d_resource *resource)
