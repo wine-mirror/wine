@@ -27,34 +27,6 @@
 #include "winternl.h"
 #include "wine/unixlib.h"
 
-#ifdef __WINE_PE_BUILD
-
-static NTSTATUS (WINAPI *p__wine_unix_call)( unixlib_handle_t, unsigned int, void * );
-
-static void load_func( void **func, const char *name, void *def )
-{
-    if (!*func)
-    {
-        HMODULE module = GetModuleHandleW( L"ntdll.dll" );
-        void *proc = GetProcAddress( module, name );
-        InterlockedExchangePointer( func, proc ? proc : def );
-    }
-}
-#define LOAD_FUNC(name) load_func( (void **)&p ## name, #name, fallback ## name )
-
-static NTSTATUS __cdecl fallback__wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
-{
-    return STATUS_DLL_NOT_FOUND;
-}
-
-NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
-{
-    LOAD_FUNC( __wine_unix_call );
-    return p__wine_unix_call( handle, code, args );
-}
-
-#endif  /* __WINE_PE_BUILD */
-
 static inline void *image_base(void)
 {
 #ifdef __WINE_PE_BUILD
@@ -66,10 +38,23 @@ static inline void *image_base(void)
 #endif
 }
 
+static NTSTATUS WINAPI unix_call_fallback( unixlib_handle_t handle, unsigned int code, void *args )
+{
+    return STATUS_DLL_NOT_FOUND;
+}
+
 unixlib_handle_t __wine_unixlib_handle = 0;
+NTSTATUS (WINAPI *__wine_unix_call_ptr)( unixlib_handle_t, unsigned int, void * ) = unix_call_fallback;
 
 NTSTATUS WINAPI __wine_init_unix_call(void)
 {
-    return NtQueryVirtualMemory( GetCurrentProcess(), image_base(), MemoryWineUnixFuncs,
-                                 &__wine_unixlib_handle, sizeof(__wine_unixlib_handle), NULL );
+    NTSTATUS status;
+    HMODULE module = GetModuleHandleW( L"ntdll.dll" );
+    void *proc = GetProcAddress( module, "__wine_unix_call" );
+
+    if (!proc) return STATUS_DLL_NOT_FOUND;
+    status = NtQueryVirtualMemory( GetCurrentProcess(), image_base(), MemoryWineUnixFuncs,
+                                   &__wine_unixlib_handle, sizeof(__wine_unixlib_handle), NULL );
+    if (!status) __wine_unix_call_ptr = proc;
+    return status;
 }

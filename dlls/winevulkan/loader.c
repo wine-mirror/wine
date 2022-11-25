@@ -35,7 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 DEFINE_DEVPROPKEY(DEVPROPKEY_GPU_LUID, 0x60b193cb, 0x5276, 0x4d0f, 0x96, 0xfc, 0xf1, 0x73, 0xab, 0xad, 0x3e, 0xc6, 2);
 DEFINE_DEVPROPKEY(WINE_DEVPROPKEY_GPU_VULKAN_UUID, 0x233a9ef3, 0xafc4, 0x4abd, 0xb5, 0x64, 0xc3, 0x2f, 0x21, 0xf1, 0x53, 0x5c, 2);
 
-NTSTATUS (WINAPI *p_vk_direct_unix_call)(unixlib_handle_t handle, unsigned int code, void *args) = __wine_unix_call;
+NTSTATUS (WINAPI *p_vk_direct_unix_call)(unixlib_handle_t handle, unsigned int code, void *args) = NULL;
 
 static HINSTANCE hinstance;
 
@@ -234,9 +234,10 @@ VkResult WINAPI vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t *supported_ver
 
 static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
-    if (__wine_init_unix_call())
-        return FALSE;
+    NTSTATUS status = __wine_init_unix_call();
 
+    p_vk_direct_unix_call = __wine_unix_call_ptr;
+    if (status) return FALSE;
     return !vk_unix_call(unix_init, &p_vk_direct_unix_call);
 }
 
