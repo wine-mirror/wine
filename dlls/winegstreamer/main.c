@@ -29,8 +29,6 @@
 #include "gst_guids.h"
 #include "wmcodecdsp.h"
 
-static unixlib_handle_t unix_handle;
-
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -75,7 +73,7 @@ struct wg_parser *wg_parser_create(enum wg_parser_type type, bool unlimited_buff
 
     TRACE("type %#x, unlimited_buffering %d.\n", type, unlimited_buffering);
 
-    if (__wine_unix_call(unix_handle, unix_wg_parser_create, &params))
+    if (WINE_UNIX_CALL(unix_wg_parser_create, &params))
         return NULL;
 
     TRACE("Returning parser %p.\n", params.parser);
@@ -87,7 +85,7 @@ void wg_parser_destroy(struct wg_parser *parser)
 {
     TRACE("parser %p.\n", parser);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_destroy, parser);
+    WINE_UNIX_CALL(unix_wg_parser_destroy, parser);
 }
 
 HRESULT wg_parser_connect(struct wg_parser *parser, uint64_t file_size)
@@ -100,14 +98,14 @@ HRESULT wg_parser_connect(struct wg_parser *parser, uint64_t file_size)
 
     TRACE("parser %p, file_size %I64u.\n", parser, file_size);
 
-    return __wine_unix_call(unix_handle, unix_wg_parser_connect, &params);
+    return WINE_UNIX_CALL(unix_wg_parser_connect, &params);
 }
 
 void wg_parser_disconnect(struct wg_parser *parser)
 {
     TRACE("parser %p.\n", parser);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_disconnect, parser);
+    WINE_UNIX_CALL(unix_wg_parser_disconnect, parser);
 }
 
 bool wg_parser_get_next_read_offset(struct wg_parser *parser, uint64_t *offset, uint32_t *size)
@@ -119,7 +117,7 @@ bool wg_parser_get_next_read_offset(struct wg_parser *parser, uint64_t *offset, 
 
     TRACE("parser %p, offset %p, size %p.\n", parser, offset, size);
 
-    if (__wine_unix_call(unix_handle, unix_wg_parser_get_next_read_offset, &params))
+    if (WINE_UNIX_CALL(unix_wg_parser_get_next_read_offset, &params))
         return false;
     *offset = params.offset;
     *size = params.size;
@@ -137,7 +135,7 @@ void wg_parser_push_data(struct wg_parser *parser, const void *data, uint32_t si
 
     TRACE("parser %p, data %p, size %u.\n", parser, data, size);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_push_data, &params);
+    WINE_UNIX_CALL(unix_wg_parser_push_data, &params);
 }
 
 uint32_t wg_parser_get_stream_count(struct wg_parser *parser)
@@ -149,7 +147,7 @@ uint32_t wg_parser_get_stream_count(struct wg_parser *parser)
 
     TRACE("parser %p.\n", parser);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_get_stream_count, &params);
+    WINE_UNIX_CALL(unix_wg_parser_get_stream_count, &params);
     return params.count;
 }
 
@@ -163,7 +161,7 @@ struct wg_parser_stream *wg_parser_get_stream(struct wg_parser *parser, uint32_t
 
     TRACE("parser %p, index %u.\n", parser, index);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_get_stream, &params);
+    WINE_UNIX_CALL(unix_wg_parser_get_stream, &params);
 
     TRACE("Returning stream %p.\n", params.stream);
     return params.stream;
@@ -179,7 +177,7 @@ void wg_parser_stream_get_preferred_format(struct wg_parser_stream *stream, stru
 
     TRACE("stream %p, format %p.\n", stream, format);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_stream_get_preferred_format, &params);
+    WINE_UNIX_CALL(unix_wg_parser_stream_get_preferred_format, &params);
 }
 
 void wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_format *format)
@@ -192,14 +190,14 @@ void wg_parser_stream_enable(struct wg_parser_stream *stream, const struct wg_fo
 
     TRACE("stream %p, format %p.\n", stream, format);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_stream_enable, &params);
+    WINE_UNIX_CALL(unix_wg_parser_stream_enable, &params);
 }
 
 void wg_parser_stream_disable(struct wg_parser_stream *stream)
 {
     TRACE("stream %p.\n", stream);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_stream_disable, stream);
+    WINE_UNIX_CALL(unix_wg_parser_stream_disable, stream);
 }
 
 bool wg_parser_stream_get_buffer(struct wg_parser *parser, struct wg_parser_stream *stream,
@@ -214,7 +212,7 @@ bool wg_parser_stream_get_buffer(struct wg_parser *parser, struct wg_parser_stre
 
     TRACE("parser %p, stream %p, buffer %p.\n", parser, stream, buffer);
 
-    return !__wine_unix_call(unix_handle, unix_wg_parser_stream_get_buffer, &params);
+    return !WINE_UNIX_CALL(unix_wg_parser_stream_get_buffer, &params);
 }
 
 bool wg_parser_stream_copy_buffer(struct wg_parser_stream *stream,
@@ -230,14 +228,14 @@ bool wg_parser_stream_copy_buffer(struct wg_parser_stream *stream,
 
     TRACE("stream %p, data %p, offset %u, size %u.\n", stream, data, offset, size);
 
-    return !__wine_unix_call(unix_handle, unix_wg_parser_stream_copy_buffer, &params);
+    return !WINE_UNIX_CALL(unix_wg_parser_stream_copy_buffer, &params);
 }
 
 void wg_parser_stream_release_buffer(struct wg_parser_stream *stream)
 {
     TRACE("stream %p.\n", stream);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_stream_release_buffer, stream);
+    WINE_UNIX_CALL(unix_wg_parser_stream_release_buffer, stream);
 }
 
 void wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
@@ -255,7 +253,7 @@ void wg_parser_stream_notify_qos(struct wg_parser_stream *stream,
     TRACE("stream %p, underflow %d, proportion %.16e, diff %I64d, timestamp %I64u.\n",
             stream, underflow, proportion, diff, timestamp);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_stream_notify_qos, &params);
+    WINE_UNIX_CALL(unix_wg_parser_stream_notify_qos, &params);
 }
 
 uint64_t wg_parser_stream_get_duration(struct wg_parser_stream *stream)
@@ -267,7 +265,7 @@ uint64_t wg_parser_stream_get_duration(struct wg_parser_stream *stream)
 
     TRACE("stream %p.\n", stream);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_stream_get_duration, &params);
+    WINE_UNIX_CALL(unix_wg_parser_stream_get_duration, &params);
 
     TRACE("Returning duration %I64u.\n", params.duration);
     return params.duration;
@@ -289,7 +287,7 @@ void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
     TRACE("stream %p, rate %.16e, start_pos %I64u, stop_pos %I64u, start_flags %#lx, stop_flags %#lx.\n",
             stream, rate, start_pos, stop_pos, start_flags, stop_flags);
 
-    __wine_unix_call(unix_handle, unix_wg_parser_stream_seek, &params);
+    WINE_UNIX_CALL(unix_wg_parser_stream_seek, &params);
 }
 
 struct wg_transform *wg_transform_create(const struct wg_format *input_format,
@@ -303,7 +301,7 @@ struct wg_transform *wg_transform_create(const struct wg_format *input_format,
 
     TRACE("input_format %p, output_format %p.\n", input_format, output_format);
 
-    if (__wine_unix_call(unix_handle, unix_wg_transform_create, &params))
+    if (WINE_UNIX_CALL(unix_wg_transform_create, &params))
         return NULL;
 
     TRACE("Returning transform %p.\n", params.transform);
@@ -314,7 +312,7 @@ void wg_transform_destroy(struct wg_transform *transform)
 {
     TRACE("transform %p.\n", transform);
 
-    __wine_unix_call(unix_handle, unix_wg_transform_destroy, transform);
+    WINE_UNIX_CALL(unix_wg_transform_destroy, transform);
 }
 
 HRESULT wg_transform_push_data(struct wg_transform *transform, struct wg_sample *sample)
@@ -328,7 +326,7 @@ HRESULT wg_transform_push_data(struct wg_transform *transform, struct wg_sample 
 
     TRACE("transform %p, sample %p.\n", transform, sample);
 
-    if ((status = __wine_unix_call(unix_handle, unix_wg_transform_push_data, &params)))
+    if ((status = WINE_UNIX_CALL(unix_wg_transform_push_data, &params)))
         return HRESULT_FROM_NT(status);
 
     return params.result;
@@ -347,7 +345,7 @@ HRESULT wg_transform_read_data(struct wg_transform *transform, struct wg_sample 
 
     TRACE("transform %p, sample %p, format %p.\n", transform, sample, format);
 
-    if ((status = __wine_unix_call(unix_handle, unix_wg_transform_read_data, &params)))
+    if ((status = WINE_UNIX_CALL(unix_wg_transform_read_data, &params)))
         return HRESULT_FROM_NT(status);
 
     return params.result;
@@ -363,7 +361,7 @@ bool wg_transform_set_output_format(struct wg_transform *transform, struct wg_fo
 
     TRACE("transform %p, format %p.\n", transform, format);
 
-    return !__wine_unix_call(unix_handle, unix_wg_transform_set_output_format, &params);
+    return !WINE_UNIX_CALL(unix_wg_transform_set_output_format, &params);
 }
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
@@ -371,8 +369,7 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     if (reason == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls(instance);
-        NtQueryVirtualMemory(GetCurrentProcess(), instance, MemoryWineUnixFuncs,
-                &unix_handle, sizeof(unix_handle), NULL);
+        __wine_init_unix_call();
     }
     return TRUE;
 }
