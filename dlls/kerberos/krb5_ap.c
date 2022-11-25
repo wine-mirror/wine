@@ -39,10 +39,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(kerberos);
 
-static HINSTANCE instance;
-
-unixlib_handle_t krb5_handle = 0;
-
 #define KERBEROS_CAPS \
     ( SECPKG_FLAG_INTEGRITY \
     | SECPKG_FLAG_PRIVACY \
@@ -134,11 +130,9 @@ static NTSTATUS NTAPI kerberos_LsaApInitializePackage(ULONG package_id, PLSA_DIS
 {
     char *kerberos_name;
 
-    if (!krb5_handle)
+    if (!__wine_unixlib_handle)
     {
-        if (NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
-                                  &krb5_handle, sizeof(krb5_handle), NULL ) ||
-            KRB5_CALL( process_attach, NULL ))
+        if (__wine_init_unix_call() || KRB5_CALL( process_attach, NULL ))
             ERR( "no Kerberos support, expect problems\n" );
     }
 
@@ -569,11 +563,9 @@ static NTSTATUS NTAPI kerberos_SpInitialize(ULONG_PTR package_id, SECPKG_PARAMET
 {
     TRACE("%Iu, %p, %p\n", package_id, params, lsa_function_table);
 
-    if (!krb5_handle)
+    if (!__wine_unixlib_handle)
     {
-        if (NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
-                                  &krb5_handle, sizeof(krb5_handle), NULL ) ||
-            KRB5_CALL( process_attach, NULL ))
+        if (__wine_init_unix_call() || KRB5_CALL( process_attach, NULL ))
             WARN( "no Kerberos support\n" );
         return STATUS_UNSUCCESSFUL;
     }
@@ -780,18 +772,4 @@ NTSTATUS NTAPI SpUserModeInitialize(ULONG lsa_version, PULONG package_version,
     *table = &kerberos_user_table;
     *table_count = 1;
     return STATUS_SUCCESS;
-}
-
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
-{
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        instance = hinst;
-        DisableThreadLibraryCalls( hinst );
-        break;
-    case DLL_PROCESS_DETACH:
-        break;
-    }
-    return TRUE;
 }

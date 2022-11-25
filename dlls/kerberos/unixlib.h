@@ -139,6 +139,4 @@ enum unix_funcs
     unix_verify_signature,
 };
 
-extern unixlib_handle_t krb5_handle DECLSPEC_HIDDEN;
-
-#define KRB5_CALL( func, params ) __wine_unix_call( krb5_handle, unix_ ## func, params )
+#define KRB5_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
