@@ -358,8 +358,7 @@ static nsresult NSAPI handle_load(nsIDOMEventListener *iface, nsIDOMEvent *event
         update_title(doc_obj);
     }
 
-    if(doc_obj && doc_obj->nscontainer->usermode != EDITMODE && doc_obj->doc_object_service
-       && !(doc->outer_window->load_flags & BINDING_REFRESH))
+    if(doc_obj && doc_obj->doc_object_service && !(doc->outer_window->load_flags & BINDING_REFRESH))
         IDocObjectService_FireDocumentComplete(doc_obj->doc_object_service,
                 &doc->outer_window->base.IHTMLWindow2_iface, 0);
 

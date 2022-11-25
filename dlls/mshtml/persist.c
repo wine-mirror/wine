@@ -413,6 +413,9 @@ HRESULT set_moniker(HTMLOuterWindow *window, IMoniker *mon, IUri *nav_uri, IBind
             }
         }
 
+        if(doc_obj->nscontainer->usermode == EDITMODE)
+            window->load_flags = BINDING_REFRESH;
+
         download_task = malloc(sizeof(download_proc_task_t));
         download_task->doc = doc_obj;
         download_task->set_download = set_download;

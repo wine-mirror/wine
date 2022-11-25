@@ -582,7 +582,6 @@ static void _test_navigation_type(unsigned line, IUnknown *unk)
     IHTMLPerformanceNavigation_Release(nav);
 
     expected = is_refresh || editmode ? 1 : is_from_hist ? 2 : 0;
-    todo_wine_if(editmode)
     ok_(__FILE__,line)(type == expected, "type = %lu, expected %lu\n", type, expected);
 }
 
