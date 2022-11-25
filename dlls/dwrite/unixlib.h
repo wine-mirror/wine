@@ -108,6 +108,4 @@ enum font_backend_funcs
     unix_get_design_glyph_metrics,
 };
 
-extern unixlib_handle_t unixlib_handle DECLSPEC_HIDDEN;
-
-#define UNIX_CALL( func, params ) __wine_unix_call( unixlib_handle, unix_ ## func, params )
+#define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )

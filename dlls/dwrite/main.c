@@ -36,7 +36,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
 HMODULE dwrite_module = 0;
-unixlib_handle_t unixlib_handle = 0;
 static IDWriteFactory7 *shared_factory;
 static void release_shared_factory(IDWriteFactory7 *factory);
 
@@ -47,8 +46,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
     case DLL_PROCESS_ATTACH:
         dwrite_module = hinstDLL;
         DisableThreadLibraryCalls( hinstDLL );
-        if (!NtQueryVirtualMemory(GetCurrentProcess(), hinstDLL, MemoryWineUnixFuncs,
-                &unixlib_handle, sizeof(unixlib_handle), NULL))
+        if (!__wine_init_unix_call())
             UNIX_CALL(process_attach, NULL);
         init_local_fontfile_loader();
         break;
@@ -56,7 +54,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, LPVOID reserved)
         if (reserved) break;
         release_shared_factory(shared_factory);
         release_system_fallback_data();
-        if (unixlib_handle) UNIX_CALL(process_detach, NULL);
+        UNIX_CALL(process_detach, NULL);
     }
     return TRUE;
 }
