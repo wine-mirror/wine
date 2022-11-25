@@ -763,7 +763,7 @@ static WCHAR *find_wine_gecko_unix(const char *unix_path)
 
     ret = check_version(dos_dir);
 
-    free(dos_dir);
+    HeapFree(GetProcessHeap(), 0, dos_dir);
     return ret;
 }
 
