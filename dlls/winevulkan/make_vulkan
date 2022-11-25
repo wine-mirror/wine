@@ -746,7 +746,7 @@ class VkFunction(object):
 
         # Call the Unix function.
         if self.needs_direct_call():
-            body += "status = p_vk_direct_unix_call(unix_handle, unix_{0}, &params);\n".format(self.name)
+            body += "status = p_vk_direct_unix_call(__wine_unixlib_handle, unix_{0}, &params);\n".format(self.name)
         else:
             body += "status = vk_unix_call(unix_{0}, &params);\n".format(self.name)
         body += "    assert(!status);\n"

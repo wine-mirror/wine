@@ -145,13 +145,16 @@ struct is_available_device_function_params
     const char *name;
 };
 
+#ifndef WINE_UNIX_LIB
+
 extern NTSTATUS (WINAPI *p_vk_direct_unix_call)(unixlib_handle_t handle, unsigned int code,
                                                 void *args) DECLSPEC_HIDDEN;
-extern unixlib_handle_t unix_handle DECLSPEC_HIDDEN;
 
 static inline NTSTATUS vk_unix_call(enum unix_call code, void *params)
 {
-    return __wine_unix_call(unix_handle, code, params);
+    return WINE_UNIX_CALL(code, params);
 }
+
+#endif /* WINE_UNIX_LIB */
 
 #endif /* __WINE_VULKAN_LOADER_H */
