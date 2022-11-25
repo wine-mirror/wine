@@ -25351,7 +25351,6 @@ struct wine_gl_debug_message_params
     const GLchar *message;
 };
 
-extern unixlib_handle_t unixlib_handle DECLSPEC_HIDDEN;
-#define UNIX_CALL( func, params ) __wine_unix_call( unixlib_handle, unix_ ## func, params )
+#define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
 #endif /* __WINE_OPENGL32_UNIXLIB_H */

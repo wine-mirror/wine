@@ -1054,8 +1054,7 @@ print OUT "    GLsizei length;\n";
 print OUT "    const GLchar *message;\n";
 print OUT "};\n\n";
 
-print OUT "extern unixlib_handle_t unixlib_handle DECLSPEC_HIDDEN;\n";
-print OUT "#define UNIX_CALL( func, params ) __wine_unix_call( unixlib_handle, unix_ ## func, params )\n\n";
+print OUT "#define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )\n\n";
 
 print OUT "#endif /* __WINE_OPENGL32_UNIXLIB_H */\n";
 close OUT;

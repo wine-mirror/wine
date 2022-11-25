@@ -39,8 +39,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(opengl);
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-unixlib_handle_t unixlib_handle = 0;
-
 static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
 
 #ifndef _WIN64
@@ -1257,8 +1255,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     switch(reason)
     {
     case DLL_PROCESS_ATTACH:
-        if ((status = NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
-                                            &unixlib_handle, sizeof(unixlib_handle), NULL )))
+        if ((status = __wine_init_unix_call()))
         {
             ERR( "Failed to load unixlib, status %#lx\n", status );
             return FALSE;
@@ -1276,12 +1273,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         break;
 
     case DLL_PROCESS_DETACH:
-        if (!unixlib_handle) return TRUE;
-        if ((status = UNIX_CALL( process_detach, NULL )))
-        {
-            WARN( "Failed to detach opengl32 unixlib, status %#lx\n", status );
-            return FALSE;
-        }
+        UNIX_CALL( process_detach, NULL );
 #ifndef _WIN64
         cleanup_wow64_strings();
 #endif
