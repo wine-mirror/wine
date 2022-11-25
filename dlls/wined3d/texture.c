@@ -137,7 +137,7 @@ GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
     return GL_BACK;
 }
 
-static DWORD wined3d_resource_access_from_location(DWORD location)
+static DWORD wined3d_resource_access_from_location(uint32_t location)
 {
     switch (location)
     {
@@ -685,7 +685,7 @@ static void wined3d_texture_evict_sysmem(struct wined3d_texture *texture)
 }
 
 void wined3d_texture_validate_location(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, DWORD location)
+        unsigned int sub_resource_idx, uint32_t location)
 {
     struct wined3d_texture_sub_resource *sub_resource;
     DWORD previous_locations;
@@ -709,7 +709,7 @@ static void wined3d_texture_set_dirty(struct wined3d_texture *texture)
 }
 
 void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, DWORD location)
+        unsigned int sub_resource_idx, uint32_t location)
 {
     struct wined3d_texture_sub_resource *sub_resource;
     DWORD previous_locations;
@@ -734,7 +734,7 @@ void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
 }
 
 void wined3d_texture_get_bo_address(const struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, struct wined3d_bo_address *data, DWORD location)
+        unsigned int sub_resource_idx, struct wined3d_bo_address *data, uint32_t location)
 {
     struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
 
@@ -777,7 +777,7 @@ void wined3d_texture_clear_dirty_regions(struct wined3d_texture *texture)
 /* Context activation is done by the caller. Context may be NULL in
  * WINED3D_NO3D mode. */
 BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
+        unsigned int sub_resource_idx, struct wined3d_context *context, uint32_t location)
 {
     DWORD current = texture->sub_resources[sub_resource_idx].locations;
     BOOL ret;
@@ -3460,7 +3460,7 @@ static bool wined3d_texture_gl_clear(struct wined3d_texture *texture,
 
 /* Context activation is done by the caller. */
 static BOOL wined3d_texture_gl_load_location(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
+        unsigned int sub_resource_idx, struct wined3d_context *context, uint32_t location)
 {
     struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
     struct wined3d_texture_gl *texture_gl = wined3d_texture_gl(texture);
@@ -4763,7 +4763,7 @@ static BOOL wined3d_texture_no3d_prepare_location(struct wined3d_texture *textur
 }
 
 static BOOL wined3d_texture_no3d_load_location(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
+        unsigned int sub_resource_idx, struct wined3d_context *context, uint32_t location)
 {
     TRACE("texture %p, sub_resource_idx %u, context %p, location %s.\n",
             texture, sub_resource_idx, context, wined3d_debug_location(location));
@@ -5584,7 +5584,7 @@ static BOOL wined3d_texture_vk_prepare_location(struct wined3d_texture *texture,
 }
 
 static BOOL wined3d_texture_vk_load_location(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
+        unsigned int sub_resource_idx, struct wined3d_context *context, uint32_t location)
 {
     if (!wined3d_texture_vk_prepare_location(texture, sub_resource_idx, context, location))
         return FALSE;

@@ -131,7 +131,7 @@ static void wined3d_buffer_invalidate_range(struct wined3d_buffer *buffer, DWORD
         ERR("Buffer %p does not have any up to date location.\n", buffer);
 }
 
-void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD location)
+void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, uint32_t location)
 {
     wined3d_buffer_invalidate_range(buffer, location, 0, 0);
 }
@@ -575,7 +575,7 @@ static void wined3d_buffer_unload_location(struct wined3d_buffer *buffer,
 }
 
 BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
-        struct wined3d_context *context, DWORD location)
+        struct wined3d_context *context, uint32_t location)
 {
     struct wined3d_bo_address src, dst;
     struct wined3d_range range;

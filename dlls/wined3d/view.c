@@ -471,7 +471,7 @@ void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarg
 }
 
 void wined3d_rendertarget_view_prepare_location(struct wined3d_rendertarget_view *view,
-        struct wined3d_context *context, DWORD location)
+        struct wined3d_context *context, uint32_t location)
 {
     struct wined3d_resource *resource = view->resource;
     unsigned int i, sub_resource_idx, layer_count;
@@ -491,12 +491,12 @@ void wined3d_rendertarget_view_prepare_location(struct wined3d_rendertarget_view
 }
 
 void wined3d_rendertarget_view_load_location(struct wined3d_rendertarget_view *view,
-        struct wined3d_context *context, DWORD location)
+        struct wined3d_context *context, uint32_t location)
 {
     wined3d_view_load_location(view->resource, &view->desc, context, location);
 }
 
-void wined3d_rendertarget_view_validate_location(struct wined3d_rendertarget_view *view, DWORD location)
+void wined3d_rendertarget_view_validate_location(struct wined3d_rendertarget_view *view, uint32_t location)
 {
     struct wined3d_resource *resource = view->resource;
     unsigned int i, sub_resource_idx, layer_count;
@@ -515,7 +515,7 @@ void wined3d_rendertarget_view_validate_location(struct wined3d_rendertarget_vie
         wined3d_texture_validate_location(texture, sub_resource_idx, location);
 }
 
-void wined3d_rendertarget_view_invalidate_location(struct wined3d_rendertarget_view *view, DWORD location)
+void wined3d_rendertarget_view_invalidate_location(struct wined3d_rendertarget_view *view, uint32_t location)
 {
     wined3d_view_invalidate_location(view->resource, &view->desc, location);
 }
@@ -1517,7 +1517,7 @@ void * CDECL wined3d_unordered_access_view_get_parent(const struct wined3d_unord
 }
 
 void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_access_view *view,
-        DWORD location)
+        uint32_t location)
 {
     wined3d_view_invalidate_location(view->resource, &view->desc, location);
 }

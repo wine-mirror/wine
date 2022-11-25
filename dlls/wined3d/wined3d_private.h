@@ -2445,7 +2445,7 @@ BOOL wined3d_context_gl_apply_clear_state(struct wined3d_context_gl *context_gl,
         unsigned int rt_count, const struct wined3d_fb_state *fb) DECLSPEC_HIDDEN;
 void wined3d_context_gl_apply_fbo_state_blit(struct wined3d_context_gl *context_gl, GLenum target,
         struct wined3d_resource *rt, unsigned int rt_sub_resource_idx,
-        struct wined3d_resource *ds, unsigned int ds_sub_resource_idx, DWORD location) DECLSPEC_HIDDEN;
+        struct wined3d_resource *ds, unsigned int ds_sub_resource_idx, uint32_t location) DECLSPEC_HIDDEN;
 void wined3d_context_gl_apply_ffp_blit_state(struct wined3d_context_gl *context_gl,
         const struct wined3d_device *device) DECLSPEC_HIDDEN;
 void wined3d_context_gl_bind_bo(struct wined3d_context_gl *context_gl, GLenum binding, GLuint name) DECLSPEC_HIDDEN;
@@ -4499,7 +4499,7 @@ void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
 #define WINED3D_LOCATION_RB_MULTISAMPLE 0x00000080
 #define WINED3D_LOCATION_RB_RESOLVED    0x00000100
 
-const char *wined3d_debug_location(DWORD location) DECLSPEC_HIDDEN;
+const char *wined3d_debug_location(uint32_t location) DECLSPEC_HIDDEN;
 
 struct wined3d_blt_info
 {
@@ -4711,16 +4711,16 @@ void wined3d_texture_cleanup(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_texture_download_from_texture(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx) DECLSPEC_HIDDEN;
 void wined3d_texture_get_bo_address(const struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, struct wined3d_bo_address *data, DWORD location) DECLSPEC_HIDDEN;
+        unsigned int sub_resource_idx, struct wined3d_bo_address *data, uint32_t location) DECLSPEC_HIDDEN;
 GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture) DECLSPEC_HIDDEN;
 void wined3d_texture_invalidate_location(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, DWORD location) DECLSPEC_HIDDEN;
+        unsigned int sub_resource_idx, uint32_t location) DECLSPEC_HIDDEN;
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+        unsigned int sub_resource_idx, struct wined3d_context *context, uint32_t location) DECLSPEC_HIDDEN;
 BOOL wined3d_texture_prepare_location(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+        struct wined3d_context *context, uint32_t location) DECLSPEC_HIDDEN;
 void wined3d_texture_set_swapchain(struct wined3d_texture *texture,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 BOOL wined3d_texture_can_use_pbo(const struct wined3d_texture *texture, const struct wined3d_d3d_info *d3d_info)
@@ -4735,7 +4735,7 @@ void wined3d_texture_upload_from_texture(struct wined3d_texture *dst_texture, un
         unsigned int dst_x, unsigned int dst_y, unsigned int dst_z, struct wined3d_texture *src_texture,
         unsigned int src_sub_resource_idx, const struct wined3d_box *src_box) DECLSPEC_HIDDEN;
 void wined3d_texture_validate_location(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, DWORD location) DECLSPEC_HIDDEN;
+        unsigned int sub_resource_idx, uint32_t location) DECLSPEC_HIDDEN;
 bool wined3d_texture_validate_sub_resource_idx(const struct wined3d_texture *texture,
         unsigned int sub_resource_idx) DECLSPEC_HIDDEN;
 void wined3d_texture_clear_dirty_regions(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
@@ -4798,7 +4798,7 @@ static inline GLenum wined3d_texture_gl_get_sub_resource_target(const struct win
 }
 
 static inline BOOL wined3d_texture_gl_is_multisample_location(const struct wined3d_texture_gl *texture_gl,
-        DWORD location)
+        uint32_t location)
 {
     if (location == WINED3D_LOCATION_RB_MULTISAMPLE)
         return TRUE;
@@ -5331,11 +5331,11 @@ void wined3d_buffer_copy_bo_address(struct wined3d_buffer *dst_buffer, struct wi
         unsigned int dst_offset, const struct wined3d_const_bo_address *src_addr, unsigned int size) DECLSPEC_HIDDEN;
 DWORD wined3d_buffer_get_memory(struct wined3d_buffer *buffer, struct wined3d_context *context,
         struct wined3d_bo_address *data) DECLSPEC_HIDDEN;
-void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, DWORD location) DECLSPEC_HIDDEN;
+void wined3d_buffer_invalidate_location(struct wined3d_buffer *buffer, uint32_t location) DECLSPEC_HIDDEN;
 void wined3d_buffer_load(struct wined3d_buffer *buffer, struct wined3d_context *context,
         const struct wined3d_state *state) DECLSPEC_HIDDEN;
 BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
-        struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+        struct wined3d_context *context, uint32_t location) DECLSPEC_HIDDEN;
 BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context) DECLSPEC_HIDDEN;
 BOOL wined3d_buffer_prepare_location(struct wined3d_buffer *buffer,
         struct wined3d_context *context, unsigned int location) DECLSPEC_HIDDEN;
@@ -5422,13 +5422,13 @@ void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarg
 void wined3d_rendertarget_view_get_box(struct wined3d_rendertarget_view *view,
         struct wined3d_box *box) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_invalidate_location(struct wined3d_rendertarget_view *view,
-        DWORD location) DECLSPEC_HIDDEN;
+        uint32_t location) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_load_location(struct wined3d_rendertarget_view *view,
-        struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+        struct wined3d_context *context, uint32_t location) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_prepare_location(struct wined3d_rendertarget_view *view,
-        struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
+        struct wined3d_context *context, uint32_t location) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_validate_location(struct wined3d_rendertarget_view *view,
-        DWORD location) DECLSPEC_HIDDEN;
+        uint32_t location) DECLSPEC_HIDDEN;
 DWORD wined3d_rendertarget_view_get_locations(const struct wined3d_rendertarget_view *view)
         DECLSPEC_HIDDEN;
 
@@ -5581,7 +5581,7 @@ void wined3d_unordered_access_view_cleanup(struct wined3d_unordered_access_view 
 void wined3d_unordered_access_view_copy_counter(struct wined3d_unordered_access_view *view,
         struct wined3d_buffer *buffer, unsigned int offset, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_access_view *view,
-        DWORD location) DECLSPEC_HIDDEN;
+        uint32_t location) DECLSPEC_HIDDEN;
 void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_view *view,
         unsigned int value) DECLSPEC_HIDDEN;
 

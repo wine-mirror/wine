@@ -851,7 +851,7 @@ static void wined3d_context_gl_apply_fbo_state(struct wined3d_context_gl *contex
 /* Context activation is done by the caller. */
 void wined3d_context_gl_apply_fbo_state_blit(struct wined3d_context_gl *context_gl, GLenum target,
         struct wined3d_resource *rt, unsigned int rt_sub_resource_idx,
-        struct wined3d_resource *ds, unsigned int ds_sub_resource_idx, DWORD location)
+        struct wined3d_resource *ds, unsigned int ds_sub_resource_idx, uint32_t location)
 {
     struct wined3d_rendertarget_info ds_info = {{0}};
 
