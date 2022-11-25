@@ -811,22 +811,19 @@ static NTSTATUS heap_free_block( struct heap *heap, ULONG flags, struct block *b
 }
 
 
-static inline void shrink_used_block( struct heap *heap, ULONG flags, struct block *block,
-                                      SIZE_T old_block_size, SIZE_T block_size, SIZE_T size )
+static struct block *split_block( struct heap *heap, ULONG flags, struct block *block,
+                                  SIZE_T old_block_size, SIZE_T block_size )
 {
     SUBHEAP *subheap = block_get_subheap( heap, block );
 
     if (old_block_size >= block_size + HEAP_MIN_BLOCK_SIZE)
     {
         block_set_size( block, block_size );
-        block->tail_size = block_size - sizeof(*block) - size;
-        create_free_block( heap, flags, subheap, next_block( subheap, block ), old_block_size - block_size );
+        return next_block( subheap, block );
     }
-    else
-    {
-        block_set_size( block, old_block_size );
-        block->tail_size = old_block_size - sizeof(*block) - size;
-    }
+
+    block_set_size( block, old_block_size );
+    return NULL;
 }
 
 
@@ -1510,9 +1507,12 @@ static NTSTATUS heap_allocate_block( struct heap *heap, ULONG flags, SIZE_T bloc
     old_block_size = block_get_size( block );
     subheap = block_get_subheap( heap, block );
 
+    if ((next = split_block( heap, flags, block, old_block_size, block_size )))
+        create_free_block( heap, flags, subheap, next, old_block_size - block_size );
+
     block_set_type( block, BLOCK_TYPE_USED );
     block_set_flags( block, ~0, BLOCK_USER_FLAGS( flags ) );
-    shrink_used_block( heap, flags, block, old_block_size, block_size, size );
+    block->tail_size = block_get_size( block ) - sizeof(*block) - size;
     initialize_block( block, 0, size, flags );
     mark_block_tail( block, flags );
 
@@ -1642,9 +1642,12 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block 
         old_block_size += block_get_size( next );
     }
 
+    if ((next = split_block( heap, flags, block, old_block_size, block_size )))
+        create_free_block( heap, flags, subheap, next, old_block_size - block_size );
+
     valgrind_notify_resize( block + 1, *old_size, size );
     block_set_flags( block, BLOCK_FLAG_USER_MASK & ~BLOCK_FLAG_USER_INFO, BLOCK_USER_FLAGS( flags ) );
-    shrink_used_block( heap, flags, block, old_block_size, block_size, size );
+    block->tail_size = block_get_size( block ) - sizeof(*block) - size;
     initialize_block( block, *old_size, size, flags );
     mark_block_tail( block, flags );
 
