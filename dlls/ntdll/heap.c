@@ -1662,7 +1662,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
 
         if (!(next = next_block( subheap, block )) || !(block_get_flags( next ) & BLOCK_FLAG_FREE) ||
             block_size >= HEAP_MIN_LARGE_BLOCK_SIZE ||
-            block_size > old_block_size + block_get_size( next ))
+            block_size > old_block_size + block_get_size( next ) || !subheap_commit( heap, subheap, block, block_size ))
         {
             if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
             if ((status = heap_allocate( heap, flags & ~HEAP_ZERO_MEMORY, block_size, size, ret ))) return status;
@@ -1678,7 +1678,6 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
         entry = (struct entry *)next;
         list_remove( &entry->entry );
         old_block_size += block_get_size( next );
-        if (!subheap_commit( heap, subheap, block, block_size )) return STATUS_NO_MEMORY;
     }
 
     valgrind_notify_resize( block + 1, old_size, size );
