@@ -1926,6 +1926,7 @@ HRESULT create_channelbsc(IMoniker *mon, const WCHAR *headers, BYTE *post_data, 
 
 typedef struct {
     task_t header;
+    DWORD flags;
     HTMLOuterWindow *window;
     HTMLInnerWindow *pending_window;
 } start_doc_binding_task_t;
@@ -1934,7 +1935,7 @@ static void start_doc_binding_proc(task_t *_task)
 {
     start_doc_binding_task_t *task = (start_doc_binding_task_t*)_task;
 
-    set_current_mon(task->window, task->pending_window->bscallback->bsc.mon, BINDING_NAVIGATED);
+    set_current_mon(task->window, task->pending_window->bscallback->bsc.mon, task->flags);
     start_binding(task->pending_window, &task->pending_window->bscallback->bsc, NULL);
 }
 
@@ -1946,7 +1947,7 @@ static void start_doc_binding_task_destr(task_t *_task)
     free(task);
 }
 
-HRESULT async_start_doc_binding(HTMLOuterWindow *window, HTMLInnerWindow *pending_window)
+HRESULT async_start_doc_binding(HTMLOuterWindow *window, HTMLInnerWindow *pending_window, DWORD flags)
 {
     start_doc_binding_task_t *task;
 
@@ -1956,6 +1957,7 @@ HRESULT async_start_doc_binding(HTMLOuterWindow *window, HTMLInnerWindow *pendin
     if(!task)
         return E_OUTOFMEMORY;
 
+    task->flags = flags;
     task->window = window;
     task->pending_window = pending_window;
     IHTMLWindow2_AddRef(&pending_window->base.IHTMLWindow2_iface);
@@ -2531,7 +2533,8 @@ static HRESULT navigate_uri(HTMLOuterWindow *window, IUri *uri, const WCHAR *dis
     if(FAILED(hres))
         return hres;
 
-    hres = load_nsuri(window, nsuri, request_data ? request_data->post_stream : NULL, NULL, LOAD_FLAGS_NONE);
+    hres = load_nsuri(window, nsuri, request_data ? request_data->post_stream : NULL, NULL,
+                      (flags & BINDING_REFRESH) ? LOAD_FLAGS_IS_REFRESH : LOAD_FLAGS_NONE);
     nsISupports_Release((nsISupports*)nsuri);
     return hres;
 }

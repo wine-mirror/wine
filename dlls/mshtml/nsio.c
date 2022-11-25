@@ -284,6 +284,7 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post
         nsChannelBSC *channelbsc, DWORD flags)
 {
     nsIWebNavigation *web_navigation;
+    nsDocShellInfoLoadType load_type;
     nsIDocShellLoadInfo *load_info;
     nsIDocShell *doc_shell;
     HTMLDocumentNode *doc;
@@ -308,7 +309,11 @@ HRESULT load_nsuri(HTMLOuterWindow *window, nsWineURI *uri, nsIInputStream *post
         return E_FAIL;
     }
 
-    nsres = nsIDocShellLoadInfo_SetLoadType(load_info, (flags & LOAD_FLAGS_BYPASS_CACHE) ? loadNormalBypassCache : loadNormal);
+    if(flags & LOAD_FLAGS_IS_REFRESH)
+        load_type = (flags & LOAD_FLAGS_BYPASS_CACHE) ? loadReloadBypassCache : loadReloadNormal;
+    else
+        load_type = (flags & LOAD_FLAGS_BYPASS_CACHE) ? loadNormalBypassCache : loadNormal;
+    nsres = nsIDocShellLoadInfo_SetLoadType(load_info, load_type);
     assert(nsres == NS_OK);
 
     if(post_stream) {
@@ -905,7 +910,7 @@ static nsresult NSAPI nsChannel_Open2(nsIHttpChannel *iface, nsIInputStream **_r
     return NS_ERROR_NOT_IMPLEMENTED;
 }
 
-static HTMLOuterWindow *get_channel_window(nsChannel *This)
+static HTMLOuterWindow *get_channel_window(nsChannel *This, UINT32 *load_type)
 {
     nsIWebProgress *web_progress = NULL;
     mozIDOMWindowProxy *mozwindow;
@@ -943,6 +948,8 @@ static HTMLOuterWindow *get_channel_window(nsChannel *This)
         ERR("Could not find nsIWebProgress\n");
         return NULL;
     }
+
+    nsIWebProgress_GetLoadType(web_progress, load_type);
 
     nsres = nsIWebProgress_GetDOMWindow(web_progress, &mozwindow);
     nsIWebProgress_Release(web_progress);
@@ -982,8 +989,8 @@ static void start_binding_task_destr(task_t *_task)
     free(task);
 }
 
-static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc_channel, nsIStreamListener *listener,
-        nsISupports *context)
+static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc_channel, UINT32 load_type,
+        nsIStreamListener *listener, nsISupports *context)
 {
     nsChannelBSC *bscallback;
     IMoniker *mon = NULL;
@@ -1008,7 +1015,7 @@ static nsresult async_open(nsChannel *This, HTMLOuterWindow *window, BOOL is_doc
     if(is_doc_channel) {
         hres = create_pending_window(window, bscallback);
         if(SUCCEEDED(hres))
-            async_start_doc_binding(window, window->pending_window);
+            async_start_doc_binding(window, window->pending_window, (load_type & LOAD_CMD_RELOAD) ? BINDING_REFRESH : BINDING_NAVIGATED);
         IBindStatusCallback_Release(&bscallback->bsc.IBindStatusCallback_iface);
         if(FAILED(hres))
             return NS_ERROR_UNEXPECTED;
@@ -1035,6 +1042,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
                                           nsISupports *aContext)
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
+    UINT32 load_type = LOAD_CMD_NORMAL;
     HTMLOuterWindow *window = NULL;
     BOOL is_document_channel;
     BOOL cancel = FALSE;
@@ -1058,7 +1066,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
         }
     }
 
-    window = get_channel_window(This);
+    window = get_channel_window(This, &load_type);
     if(!window) {
         ERR("window = NULL\n");
         return NS_ERROR_UNEXPECTED;
@@ -1088,7 +1096,7 @@ static nsresult NSAPI nsChannel_AsyncOpen(nsIHttpChannel *iface, nsIStreamListen
     }
 
     if(!cancel)
-        nsres = async_open(This, window, is_document_channel, aListener, aContext);
+        nsres = async_open(This, window, is_document_channel, load_type, aListener, aContext);
 
     if(NS_SUCCEEDED(nsres) && This->load_group) {
         nsres = nsILoadGroup_AddRequest(This->load_group, (nsIRequest*)&This->nsIHttpChannel_iface,

@@ -496,6 +496,16 @@ interface nsIStandardURL : nsIMutable
 ]
 interface nsIRequest : nsISupports
 {
+    const UINT LOAD_NORMAL                  = 0;
+    const UINT LOAD_BACKGROUND              = 1 << 1;
+    const UINT INHIBIT_CACHING              = 1 << 7;
+    const UINT INHIBIT_PERSISTENT_CACHING   = 1 << 8;
+    const UINT LOAD_BYPASS_CACHE            = 1 << 9;
+    const UINT LOAD_FROM_CACHE              = 1 << 10;
+    const UINT VALIDATE_ALWAYS              = 1 << 11;
+    const UINT VALIDATE_NEVER               = 1 << 12;
+    const UINT VALIDATE_ONCE_PER_SESSION    = 1 << 13;
+
     nsresult GetName(nsACString *aName);
     nsresult IsPending(bool *_retval);
     nsresult GetStatus(nsresult *aStatus);
@@ -3936,6 +3946,11 @@ interface nsIDocShellLoadInfo : nsISupports
 ]
 interface nsIDocShell : nsIDocShellTreeItem
 {
+    const UINT LOAD_CMD_NORMAL    = 1;
+    const UINT LOAD_CMD_RELOAD    = 2;
+    const UINT LOAD_CMD_HISTORY   = 4;
+    const UINT LOAD_CMD_PUSHSTATE = 8;
+
     nsresult LoadURI(nsIURI *uri, nsIDocShellLoadInfo *loadInfo, uint32_t aLoadFlags, bool firstParty);
     nsresult LoadStream(nsIInputStream *aStream, nsIURI *aURI, const nsACString *aContentType,
             const nsACString *aContentCharset, nsIDocShellLoadInfo *aLoadInfo);

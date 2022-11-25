@@ -1090,7 +1090,7 @@ char *get_nscategory_entry(const char*,const char*) DECLSPEC_HIDDEN;
 
 HRESULT create_pending_window(HTMLOuterWindow*,nsChannelBSC*) DECLSPEC_HIDDEN;
 HRESULT start_binding(HTMLInnerWindow*,BSCallback*,IBindCtx*) DECLSPEC_HIDDEN;
-HRESULT async_start_doc_binding(HTMLOuterWindow*,HTMLInnerWindow*) DECLSPEC_HIDDEN;
+HRESULT async_start_doc_binding(HTMLOuterWindow*,HTMLInnerWindow*,DWORD) DECLSPEC_HIDDEN;
 void abort_window_bindings(HTMLInnerWindow*) DECLSPEC_HIDDEN;
 void set_download_state(HTMLDocumentObj*,int) DECLSPEC_HIDDEN;
 void call_docview_84(HTMLDocumentObj*) DECLSPEC_HIDDEN;
