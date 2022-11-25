@@ -1786,7 +1786,7 @@ DWORD CDECL wined3d_texture_get_level_count(const struct wined3d_texture *textur
 }
 
 HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
-        DWORD flags, const struct wined3d_color_key *color_key)
+        uint32_t flags, const struct wined3d_color_key *color_key)
 {
     struct wined3d_device *device = texture->resource.device;
     static const DWORD all_flags = WINED3D_CKEY_DST_BLT | WINED3D_CKEY_DST_OVERLAY
@@ -4226,7 +4226,7 @@ HRESULT CDECL wined3d_texture_set_overlay_position(struct wined3d_texture *textu
 
 HRESULT CDECL wined3d_texture_update_overlay(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const RECT *src_rect, struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
-        const RECT *dst_rect, DWORD flags)
+        const RECT *dst_rect, uint32_t flags)
 {
     struct wined3d_overlay_info *overlay;
     unsigned int level, dst_level;
@@ -4417,7 +4417,7 @@ HRESULT wined3d_texture_gl_init(struct wined3d_texture_gl *texture_gl, struct wi
 }
 
 HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
-        UINT layer_count, UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data,
+        UINT layer_count, UINT level_count, uint32_t flags, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
     unsigned int sub_count = level_count * layer_count;

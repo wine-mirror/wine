@@ -129,7 +129,7 @@ struct wined3d_settings wined3d_settings =
     .shader_backend = WINED3D_SHADER_BACKEND_AUTO,
 };
 
-struct wined3d * CDECL wined3d_create(DWORD flags)
+struct wined3d * CDECL wined3d_create(uint32_t flags)
 {
     struct wined3d *object;
     HRESULT hr;

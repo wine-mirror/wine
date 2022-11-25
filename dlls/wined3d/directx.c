@@ -1745,7 +1745,7 @@ HRESULT wined3d_output_get_gamma_ramp(struct wined3d_output *output, struct wine
 }
 
 HRESULT CDECL wined3d_adapter_get_identifier(const struct wined3d_adapter *adapter,
-        DWORD flags, struct wined3d_adapter_identifier *identifier)
+        uint32_t flags, struct wined3d_adapter_identifier *identifier)
 {
     TRACE("adapter %p, flags %#x, identifier %p.\n", adapter, flags, identifier);
 
@@ -2707,7 +2707,7 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d_adapter *adapter,
 }
 
 HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, struct wined3d_adapter *adapter,
-        enum wined3d_device_type device_type, HWND focus_window, DWORD flags, BYTE surface_alignment,
+        enum wined3d_device_type device_type, HWND focus_window, uint32_t flags, BYTE surface_alignment,
         const enum wined3d_feature_level *feature_levels, unsigned int feature_level_count,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device)
 {

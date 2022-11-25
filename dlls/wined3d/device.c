@@ -3748,7 +3748,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 
 HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
-        const struct wined3d_vertex_declaration *declaration, DWORD flags, DWORD dst_fvf)
+        const struct wined3d_vertex_declaration *declaration, uint32_t flags, DWORD dst_fvf)
 {
     struct wined3d_state *state = device->cs->c.state;
     struct wined3d_stream_info stream_info;
@@ -4337,7 +4337,7 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
 }
 
 HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_count,
-        const RECT *rects, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
+        const RECT *rects, uint32_t flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
     struct wined3d_fb_state *fb = &device->cs->c.state->fb;
 
@@ -5454,7 +5454,7 @@ HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device
 }
 
 void CDECL wined3d_device_set_cursor_position(struct wined3d_device *device,
-        int x_screen_space, int y_screen_space, DWORD flags)
+        int x_screen_space, int y_screen_space, uint32_t flags)
 {
     TRACE("device %p, x %d, y %d, flags %#x.\n",
             device, x_screen_space, y_screen_space, flags);
@@ -5892,7 +5892,7 @@ struct wined3d * CDECL wined3d_device_get_wined3d(const struct wined3d_device *d
 }
 
 void CDECL wined3d_device_set_gamma_ramp(const struct wined3d_device *device,
-        UINT swapchain_idx, DWORD flags, const struct wined3d_gamma_ramp *ramp)
+        UINT swapchain_idx, uint32_t flags, const struct wined3d_gamma_ramp *ramp)
 {
     struct wined3d_swapchain *swapchain;
 

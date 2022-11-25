@@ -206,7 +206,7 @@ void CDECL wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, HWN
 
 HRESULT CDECL wined3d_swapchain_present(struct wined3d_swapchain *swapchain,
         const RECT *src_rect, const RECT *dst_rect, HWND dst_window_override,
-        unsigned int swap_interval, DWORD flags)
+        unsigned int swap_interval, uint32_t flags)
 {
     RECT s, d;
 
@@ -359,7 +359,7 @@ void CDECL wined3d_swapchain_get_desc(const struct wined3d_swapchain *swapchain,
 }
 
 HRESULT CDECL wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *swapchain,
-        DWORD flags, const struct wined3d_gamma_ramp *ramp)
+        uint32_t flags, const struct wined3d_gamma_ramp *ramp)
 {
     struct wined3d_output *output;
 

@@ -448,7 +448,7 @@ ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
 }
 
 HRESULT CDECL wined3d_query_get_data(struct wined3d_query *query,
-        void *data, UINT data_size, DWORD flags)
+        void *data, UINT data_size, uint32_t flags)
 {
     TRACE("query %p, data %p, data_size %u, flags %#x.\n",
             query, data, data_size, flags);
@@ -493,7 +493,7 @@ UINT CDECL wined3d_query_get_data_size(const struct wined3d_query *query)
     return query->data_size;
 }
 
-HRESULT CDECL wined3d_query_issue(struct wined3d_query *query, DWORD flags)
+HRESULT CDECL wined3d_query_issue(struct wined3d_query *query, uint32_t flags)
 {
     TRACE("query %p, flags %#x.\n", query, flags);
 
