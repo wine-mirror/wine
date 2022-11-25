@@ -14093,6 +14093,117 @@ coclass HTMLXMLHttpRequest
 }
 
 /*****************************************************************************
+ *    IHTMLXDomainRequest interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510454-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLXDomainRequest : IDispatch
+{
+    [propget, id(DISPID_IHTMLXDOMAINREQUEST_RESPONSETEXT)]
+    HRESULT responseText([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLXDOMAINREQUEST_TIMEOUT)]
+    HRESULT timeout([in] LONG v);
+
+    [propget, id(DISPID_IHTMLXDOMAINREQUEST_TIMEOUT)]
+    HRESULT timeout([out, retval] LONG *p);
+
+    [propget, id(DISPID_IHTMLXDOMAINREQUEST_CONTENTTYPE)]
+    HRESULT contentType([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLXDOMAINREQUEST_ONPROGRESS)]
+    HRESULT onprogress([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLXDOMAINREQUEST_ONPROGRESS)]
+    HRESULT onprogress([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLXDOMAINREQUEST_ONERROR)]
+    HRESULT onerror([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLXDOMAINREQUEST_ONERROR)]
+    HRESULT onerror([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLXDOMAINREQUEST_ONTIMEOUT)]
+    HRESULT ontimeout([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLXDOMAINREQUEST_ONTIMEOUT)]
+    HRESULT ontimeout([out, retval] VARIANT *p);
+
+    [propput, id(DISPID_IHTMLXDOMAINREQUEST_ONLOAD)]
+    HRESULT onload([in] VARIANT v);
+
+    [propget, id(DISPID_IHTMLXDOMAINREQUEST_ONLOAD)]
+    HRESULT onload([out, retval] VARIANT *p);
+
+    [id(DISPID_IHTMLXDOMAINREQUEST_ABORT)]
+    HRESULT abort();
+
+    [id(DISPID_IHTMLXDOMAINREQUEST_OPEN)]
+    HRESULT open([in] BSTR bstrMethod, [in] BSTR bstrUrl);
+
+    [id(DISPID_IHTMLXDOMAINREQUEST_SEND)]
+    HRESULT send([in, optional] VARIANT varBody);
+};
+
+/*****************************************************************************
+ *    IHTMLXDomainRequestFactory interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510456-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLXDomainRequestFactory : IDispatch
+{
+    [id(DISPID_IHTMLXDOMAINREQUESTFACTORY_CREATE)]
+    HRESULT create([out, retval] IHTMLXDomainRequest **p);
+};
+
+/*****************************************************************************
+ *    DispXDomainRequest dispinterface
+ */
+[
+    hidden,
+    uuid(3050f599-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispXDomainRequest
+{
+properties:
+methods:
+    WINE_IHTMLDOMCONSTRUCTOR_DISPINTERFACE_DECL;
+};
+
+/*****************************************************************************
+ *    XDomainRequest
+ */
+[
+    noncreatable,
+    uuid(30510455-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass XDomainRequest
+{
+    [default]         dispinterface DispXDomainRequest;
+    interface IHTMLDOMConstructor;
+};
+
+/*****************************************************************************
+ *    XDomainRequestFactory
+ */
+[
+    noncreatable,
+    uuid(30510457-98b5-11cf-bb82-00aa00bdce0b)
+]
+coclass XDomainRequestFactory
+{
+    [default]         interface IHTMLXDomainRequestFactory;
+};
+
+/*****************************************************************************
  *    IHTMLControlElement interface
  */
 [
