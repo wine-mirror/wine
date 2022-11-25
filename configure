@@ -10856,7 +10856,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -target $llvm_target $llvm_cflags"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -target $llvm_target $llvm_cflags"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10949,7 +10949,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -fno-strict-aliasing"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fno-strict-aliasing"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -10982,7 +10982,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Werror=unknown-warning-option"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror=unknown-warning-option"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11015,7 +11015,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Werror=ignored-optimization-argument"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror=ignored-optimization-argument"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11048,7 +11048,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wdeclaration-after-statement"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wdeclaration-after-statement"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11081,7 +11081,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wempty-body"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wempty-body"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11114,7 +11114,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wignored-qualifiers"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wignored-qualifiers"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11147,7 +11147,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Winit-self"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Winit-self"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11180,7 +11180,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wpacked-not-aligned"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpacked-not-aligned"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11213,7 +11213,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wpragma-pack"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpragma-pack"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11246,7 +11246,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wshift-overflow=2"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wshift-overflow=2"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11279,7 +11279,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wstrict-prototypes"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wstrict-prototypes"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11312,7 +11312,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wtype-limits"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wtype-limits"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11345,7 +11345,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wunused-but-set-parameter"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wunused-but-set-parameter"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11378,7 +11378,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wvla"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wvla"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11411,7 +11411,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wwrite-strings"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wwrite-strings"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11444,7 +11444,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wpointer-arith"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wpointer-arith"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11477,7 +11477,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wlogical-op"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wlogical-op"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11510,7 +11510,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wabsolute-value"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wabsolute-value"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11545,7 +11545,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -fno-omit-frame-pointer"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -fno-omit-frame-pointer"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11578,7 +11578,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wl,--disable-stdcall-fixup"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wl,--disable-stdcall-fixup"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11611,7 +11611,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wno-format"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wno-format"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11644,7 +11644,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wformat-overflow"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wformat-overflow"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11677,7 +11677,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wnonnull"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wnonnull"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11710,7 +11710,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -mcx16"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -mcx16"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11743,7 +11743,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wno-format"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wno-format"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11799,7 +11799,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -gdwarf-4"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -gdwarf-4"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11832,7 +11832,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -gcodeview"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -gcodeview"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11869,7 +11869,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Werror"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Werror"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -11902,7 +11902,7 @@ then :
 else $as_nop
   ac_wine_try_cflags_saved=$CFLAGS
 ac_wine_try_cflags_saved_exeext=$ac_exeext
-CFLAGS="$CFLAGS -nostartfiles -nodefaultlibs -Wl,--build-id"
+CFLAGS="$CFLAGS -nostdlib -nodefaultlibs -Wl,--build-id"
 ac_exeext=".exe"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
