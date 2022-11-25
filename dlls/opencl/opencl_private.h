@@ -33,8 +33,6 @@
 
 BOOL extension_is_supported( const char *name, size_t len ) DECLSPEC_HIDDEN;
 
-extern unixlib_handle_t opencl_handle DECLSPEC_HIDDEN;
-
-#define OPENCL_CALL( func, params ) __wine_unix_call( opencl_handle, unix_ ## func, params )
+#define OPENCL_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
 #endif

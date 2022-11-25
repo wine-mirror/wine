@@ -25,8 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(opencl);
 
-unixlib_handle_t opencl_handle = 0;
-
 static cl_int filter_extensions( const char *unix_exts, SIZE_T size, char *win_exts, size_t *ret_size )
 {
     char *p = win_exts;
@@ -284,8 +282,7 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     if (reason == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls( instance );
-        return !NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
-                                      &opencl_handle, sizeof(opencl_handle), NULL );
+        return !__wine_init_unix_call();
     }
     return TRUE;
 }
