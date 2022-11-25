@@ -911,6 +911,8 @@ HRESULT map_nsresult(nsresult nsres)
         return E_UNEXPECTED;
     case NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR:
         return 0x80700007; /* according to tests */
+    case NS_ERROR_DOM_SYNTAX_ERR:
+        return E_INVALIDARG; /* FIXME: Throw SyntaxError for IE9+ modes */
     case NS_BINDING_ABORTED:
         return E_ABORT;
     }

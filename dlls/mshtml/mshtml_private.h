@@ -59,6 +59,7 @@
 #define NS_ERROR_INVALID_ARG      ((nsresult)0x80070057L) 
 #define NS_ERROR_UNEXPECTED       ((nsresult)0x8000ffffL)
 #define NS_ERROR_DOM_NO_MODIFICATION_ALLOWED_ERR ((nsresult)0x80530007)
+#define NS_ERROR_DOM_SYNTAX_ERR   ((nsresult)0x8053000c)
 
 #define NS_ERROR_MODULE_NETWORK    6
 

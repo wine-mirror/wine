@@ -2200,6 +2200,64 @@ sync_test("nullDisp", function() {
     }
 });
 
+sync_test("invalid selectors", function() {
+    var v = document.documentMode, body = document.body, i;
+    if(v < 8)
+        return;
+
+    var selectors = [
+        "[s!='']",
+        "*,:x",
+        "*,##",
+        ":x",
+        "##",
+        "*,",
+        ","
+    ];
+
+    for(i = 0; i < selectors.length; i++) {
+        try {
+            body.querySelector(selectors[i]);
+            ok(false, "body.querySelector(\"" + selectors[i] + "\" did not throw exception");
+        }catch(e) {
+            if(v < 9)
+                ok(e.number === 0x70057 - 0x80000000, "body.querySelector(\"" + selectors[i] + "\" threw " + e.number);
+            else {
+                todo_wine.
+                ok(e.name === (v < 10 ? undefined : "SyntaxError"), "body.querySelector(\"" + selectors[i] + "\" threw " + e.name);
+            }
+        }
+        try {
+            body.querySelectorAll(selectors[i]);
+            ok(false, "body.querySelectorAll(\"" + selectors[i] + "\" did not throw exception");
+        }catch(e) {
+            if(v < 9)
+                ok(e.number === 0x70057 - 0x80000000, "body.querySelectorAll(\"" + selectors[i] + "\" threw " + e.number);
+            else {
+                todo_wine.
+                ok(e.name === (v < 10 ? undefined : "SyntaxError"), "body.querySelectorAll(\"" + selectors[i] + "\" threw " + e.name);
+            }
+        }
+    }
+
+    if(!body.msMatchesSelector)
+        return;
+
+    for(i = 0; i < selectors.length; i++) {
+        try {
+            body.msMatchesSelector(selectors[i]);
+            ok(false, "body.msMatchesSelector(\"" + selectors[i] + "\" did not throw exception");
+        }catch(e) {
+            if(v < 9)
+                ok(e.number === 0x70057 - 0x80000000, "body.msMatchesSelector(\"" + selectors[i] + "\" threw " + e.number);
+            else {
+                todo_wine.
+                ok(e.name === (v < 10 ? undefined : "SyntaxError"), "body.msMatchesSelector(\"" + selectors[i] + "\" threw " + e.name);
+            }
+        }
+    }
+});
+
 sync_test("__proto__", function() {
     var v = document.documentMode;
     var r, x = 42;

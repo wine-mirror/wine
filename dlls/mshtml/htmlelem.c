@@ -6344,8 +6344,8 @@ static HRESULT WINAPI ElementSelector_querySelector(IElementSelector *iface, BST
     nsres = nsIDOMElement_QuerySelector(This->dom_element, &nsstr, &nselem);
     nsAString_Finish(&nsstr);
     if(NS_FAILED(nsres)) {
-        ERR("QuerySelector failed: %08lx\n", nsres);
-        return E_FAIL;
+        WARN("QuerySelector failed: %08lx\n", nsres);
+        return map_nsresult(nsres);
     }
 
     if(!nselem) {
@@ -6367,6 +6367,7 @@ static HRESULT WINAPI ElementSelector_querySelectorAll(IElementSelector *iface, 
     HTMLElement *This = impl_from_IElementSelector(iface);
     nsIDOMNodeList *node_list;
     nsAString nsstr;
+    nsresult nsres;
     HRESULT hres;
 
     TRACE("(%p)->(%s %p)\n", This, debugstr_w(v), pel);
@@ -6377,11 +6378,11 @@ static HRESULT WINAPI ElementSelector_querySelectorAll(IElementSelector *iface, 
     }
 
     nsAString_InitDepend(&nsstr, v);
-    hres = map_nsresult(nsIDOMElement_QuerySelectorAll(This->dom_element, &nsstr, &node_list));
+    nsres = nsIDOMElement_QuerySelectorAll(This->dom_element, &nsstr, &node_list);
     nsAString_Finish(&nsstr);
-    if(FAILED(hres)) {
-        ERR("QuerySelectorAll failed: %08lx\n", hres);
-        return hres;
+    if(NS_FAILED(nsres)) {
+        WARN("QuerySelectorAll failed: %08lx\n", nsres);
+        return map_nsresult(nsres);
     }
 
     hres = create_child_collection(node_list, dispex_compat_mode(&This->node.event_target.dispex), pel);
