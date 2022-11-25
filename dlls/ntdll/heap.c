@@ -1639,7 +1639,10 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
 static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *block,
                                  SIZE_T block_size, SIZE_T size, void **ret )
 {
+    SUBHEAP *subheap = block_get_subheap( heap, block );
     SIZE_T old_block_size, old_size;
+    struct entry *entry;
+    struct block *next;
     NTSTATUS status;
 
     if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
@@ -1654,12 +1657,9 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
 
     old_block_size = block_get_size( block );
     old_size = old_block_size - block_get_overhead( block );
+
     if (block_size > old_block_size)
     {
-        SUBHEAP *subheap = block_get_subheap( heap, block );
-        struct entry *entry;
-        struct block *next;
-
         if (!(next = next_block( subheap, block )) || !(block_get_flags( next ) & BLOCK_FLAG_FREE) ||
             block_size >= HEAP_MIN_LARGE_BLOCK_SIZE ||
             block_size > old_block_size + block_get_size( next ) || !subheap_commit( heap, subheap, block, block_size ))
@@ -1673,8 +1673,11 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, struct block *b
             free_used_block( heap, flags, block );
             return STATUS_SUCCESS;
         }
+    }
 
-        /* The next block is free and large enough */
+    if ((next = next_block( subheap, block )) && (block_get_flags( next ) & BLOCK_FLAG_FREE))
+    {
+        /* merge with next block if it is free */
         entry = (struct entry *)next;
         list_remove( &entry->entry );
         old_block_size += block_get_size( next );
