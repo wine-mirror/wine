@@ -233,7 +233,7 @@ static enum install_res install_from_unix_file(const char *dir, const WCHAR *sub
     if (p_wine_get_dos_file_name && (dos_dir = p_wine_get_dos_file_name( dir )))
     {
         ret = install_from_dos_file( dos_dir, subdir, file_name );
-        free( dos_dir );
+        HeapFree( GetProcessHeap(), 0, dos_dir );
     }
     return ret;
 }
@@ -329,7 +329,7 @@ static WCHAR *get_cache_file_name(BOOL ensure_exists)
     }
     else if ((home_dir = _wgetenv( L"WINEHOMEDIR" )))
     {
-        if (!(cache_dir = malloc( wcslen(home_dir) * sizeof(WCHAR) + sizeof(L"\\.cache") ))) return NULL;
+        if (!(cache_dir = HeapAlloc( GetProcessHeap(), 0, wcslen(home_dir) * sizeof(WCHAR) + sizeof(L"\\.cache") ))) return NULL;
         lstrcpyW( cache_dir, home_dir );
         lstrcatW( cache_dir, L"\\.cache" );
         cache_dir[1] = '\\';  /* change \??\ into \\?\ */
@@ -339,19 +339,19 @@ static WCHAR *get_cache_file_name(BOOL ensure_exists)
     if (ensure_exists && !CreateDirectoryW( cache_dir, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
     {
         WARN( "%s does not exist and could not be created (%lu)\n", debugstr_w(cache_dir), GetLastError() );
-        free( cache_dir );
+        HeapFree( GetProcessHeap(), 0, cache_dir );
         return NULL;
     }
 
     size = lstrlenW( cache_dir ) + ARRAY_SIZE(L"\\wine") + lstrlenW( addon->file_name ) + 1;
     if (!(ret = malloc( size * sizeof(WCHAR) )))
     {
-        free( cache_dir );
+        HeapFree( GetProcessHeap(), 0, cache_dir );
         return NULL;
     }
     lstrcpyW( ret, cache_dir );
     lstrcatW( ret, L"\\wine" );
-    free( cache_dir );
+    HeapFree( GetProcessHeap(), 0, cache_dir );
 
     if (ensure_exists && !CreateDirectoryW( ret, NULL ) && GetLastError() != ERROR_ALREADY_EXISTS)
     {
