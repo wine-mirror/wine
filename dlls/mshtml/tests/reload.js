@@ -20,6 +20,7 @@ var tests = [];
 
 async_test("reload", function() {
     if(sessionStorage.getItem("skip reload test")) {
+        ok(performance.navigation.type === 1, "navigation type = " + performance.navigation.type);
         next_test();
         return;
     }

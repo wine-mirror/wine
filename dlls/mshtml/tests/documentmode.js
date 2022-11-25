@@ -90,6 +90,7 @@ sync_test("performance timing", function() {
     ok(performance.timing.domComplete >= performance.timing.domContentLoadedEventEnd, "domComplete < domContentLoadedEventEnd");
     ok(performance.timing.loadEventStart >= performance.timing.domComplete, "loadEventStart < domComplete");
     ok(performance.timing.loadEventEnd >= performance.timing.loadEventStart, "loadEventEnd < loadEventStart");
+    ok(performance.navigation.type === 0, "navigation type = " + performance.navigation.type);
     ok(performance.navigation.redirectCount === 0, "redirectCount = " + performance.navigation.redirectCount);
 });
 

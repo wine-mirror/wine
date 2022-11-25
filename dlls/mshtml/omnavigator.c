@@ -1996,9 +1996,9 @@ static HRESULT WINAPI HTMLPerformanceNavigation_get_type(IHTMLPerformanceNavigat
 {
     HTMLPerformanceNavigation *This = impl_from_IHTMLPerformanceNavigation(iface);
 
-    FIXME("(%p)->(%p) returning TYPE_NAVIGATE\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    *p = 0; /* TYPE_NAVIGATE */
+    *p = This->timing->navigation_type;
     return S_OK;
 }
 
