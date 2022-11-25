@@ -508,8 +508,6 @@ enum unix_funcs
     unix_enum_root_certs,
 };
 
-extern unixlib_handle_t crypt32_handle;
-
-#define CRYPT32_CALL( func, params ) __wine_unix_call( crypt32_handle, unix_ ## func, params )
+#define CRYPT32_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
 #endif
