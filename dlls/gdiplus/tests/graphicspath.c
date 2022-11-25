@@ -114,7 +114,7 @@ static void _ok_path_fudge(GpPath* path, const path_test_t *expected, INT expect
         stringify_point_type(types[idx], name);
 
         todo_wine_if (expected[eidx].todo || numskip)
-            ok_(__FILE__,line)(match, "Expected #%d: %s (%.1f,%.1f) but got %s (%.1f,%.1f)\n", eidx,
+            ok_(__FILE__,line)(match, "Expected #%d: %s (%.6f,%.6f) but got %s (%.6f,%.6f)\n", eidx,
                ename, expected[eidx].X, expected[eidx].Y,
                name, points[idx].X, points[idx].Y);
 
@@ -1655,7 +1655,6 @@ static void test_widen_cap(void)
         const path_test_t *expected;
         INT expected_size;
         BOOL dashed;
-        BOOL todo_size;
     }
     caps[] =
     {
@@ -1676,7 +1675,7 @@ static void test_widen_cap(void)
         { LineCapDiamondAnchor, 10.0, widenline_capdiamondanchor_path,
                 ARRAY_SIZE(widenline_capdiamondanchor_path) },
         { LineCapArrowAnchor, 10.0, widenline_caparrowanchor_path,
-                ARRAY_SIZE(widenline_caparrowanchor_path), FALSE, TRUE },
+                ARRAY_SIZE(widenline_caparrowanchor_path) },
         { LineCapSquareAnchor, 0.0, widenline_capsquareanchor_thin_path,
                 ARRAY_SIZE(widenline_capsquareanchor_thin_path) },
         { LineCapSquareAnchor, 10.0, widenline_capsquareanchor_dashed_path,
@@ -1729,7 +1728,7 @@ static void test_widen_cap(void)
             }
         }
 
-        ok_path_fudge(path, caps[i].expected, caps[i].expected_size, caps[i].todo_size, 0.000005);
+        ok_path_fudge(path, caps[i].expected, caps[i].expected_size, FALSE, 0.000005);
 
         GdipDeletePen(pen);
     }

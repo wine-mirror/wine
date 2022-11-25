@@ -33,6 +33,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
 
+#define SQRT3     1.73205080757
+
 typedef struct path_list_node_t path_list_node_t;
 struct path_list_node_t {
     GpPointF pt;
@@ -1890,6 +1892,7 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
         break;
     case LineCapSquare:
     case LineCapCustom:
+    case LineCapArrowAnchor:
     {
         REAL segment_dy = nextpoint->Y-endpoint->Y;
         REAL segment_dx = nextpoint->X-endpoint->X;
@@ -1908,6 +1911,11 @@ static void widen_cap(const GpPointF *endpoint, const GpPointF *nextpoint,
         {
             extend_dx = -2.0 * custom_cap->inset * extend_dx;
             extend_dy = -2.0 * custom_cap->inset * extend_dy;
+        }
+        else if (cap == LineCapArrowAnchor)
+        {
+            extend_dx = -3.0 * extend_dx;
+            extend_dy = -3.0 * extend_dy;
         }
 
         if (add_first_points)
@@ -2103,6 +2111,24 @@ static void add_anchor(const GpPointF *endpoint, const GpPointF *nextpoint,
             endpoint->Y - par_dy, PathPointTypeLine);
         *last_point = add_path_list_node(*last_point, endpoint->X + perp_dx,
             endpoint->Y + perp_dy, PathPointTypeLine);
+        break;
+    }
+    case LineCapArrowAnchor:
+    {
+        REAL segment_dy = nextpoint->Y - endpoint->Y;
+        REAL segment_dx = nextpoint->X - endpoint->X;
+        REAL segment_length = sqrtf(segment_dy * segment_dy + segment_dx * segment_dx);
+        REAL par_dx = pen_width * segment_dx / segment_length;
+        REAL par_dy = pen_width * segment_dy / segment_length;
+        REAL perp_dx = -par_dy;
+        REAL perp_dy = par_dx;
+
+        *last_point = add_path_list_node(*last_point, endpoint->X,
+            endpoint->Y, PathPointTypeStart);
+        *last_point = add_path_list_node(*last_point, endpoint->X + SQRT3 * par_dx - perp_dx,
+            endpoint->Y + SQRT3 * par_dy - perp_dy, PathPointTypeLine);
+        *last_point = add_path_list_node(*last_point, endpoint->X + SQRT3 * par_dx + perp_dx,
+            endpoint->Y + SQRT3 * par_dy + perp_dy, PathPointTypeLine);
         break;
     }
     case LineCapCustom:
@@ -2415,12 +2441,6 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
         BYTE *types = flat_path->pathdata.Types;
 
         last_point = points;
-
-        if (pen->endcap > LineCapDiamondAnchor && pen->endcap != LineCapCustom)
-            FIXME("unimplemented end cap %x\n", pen->endcap);
-
-        if (pen->startcap > LineCapDiamondAnchor && pen->startcap != LineCapCustom)
-            FIXME("unimplemented start cap %x\n", pen->startcap);
 
         if (pen->dashcap != DashCapFlat)
             FIXME("unimplemented dash cap %d\n", pen->dashcap);
