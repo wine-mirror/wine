@@ -541,7 +541,7 @@ static void cpu_blitter_destroy(struct wined3d_blitter *blitter, struct wined3d_
 
 static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
         UINT src_pitch, UINT dst_pitch, UINT update_w, UINT update_h,
-        const struct wined3d_format *format, DWORD flags, const struct wined3d_blt_fx *fx)
+        const struct wined3d_format *format, uint32_t flags, const struct wined3d_blt_fx *fx)
 {
     UINT row_block_count;
     const BYTE *src_row;
@@ -644,7 +644,7 @@ static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
 
 static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const struct wined3d_box *dst_box, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
-        const struct wined3d_box *src_box, DWORD flags, const struct wined3d_blt_fx *fx,
+        const struct wined3d_box *src_box, uint32_t flags, const struct wined3d_blt_fx *fx,
         enum wined3d_texture_filter_type filter)
 {
     unsigned int bpp, src_height, src_width, dst_height, dst_width, row_byte_count;
@@ -1241,7 +1241,7 @@ static bool wined3d_box_intersect(struct wined3d_box *ret, const struct wined3d_
 
 static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
         unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
-        const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
+        const RECT *draw_rect, uint32_t flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_color c = {depth, 0.0f, 0.0f, 0.0f};
     struct wined3d_box box, box_clip, box_view;
@@ -1385,7 +1385,7 @@ static bool sub_resource_is_on_cpu(const struct wined3d_texture *texture, unsign
 
 HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const struct wined3d_box *dst_box, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
-        const struct wined3d_box *src_box, DWORD flags, const struct wined3d_blt_fx *fx,
+        const struct wined3d_box *src_box, uint32_t flags, const struct wined3d_blt_fx *fx,
         enum wined3d_texture_filter_type filter)
 {
     struct wined3d_texture_sub_resource *src_sub_resource, *dst_sub_resource;

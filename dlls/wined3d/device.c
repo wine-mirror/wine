@@ -3427,7 +3427,7 @@ static void update_fog_factor(float *fog_factor, struct lights_settings *ls)
 /* Context activation is done by the caller. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(const struct wined3d_device *device, DWORD dwDestIndex, DWORD dwCount,
-        const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, DWORD flags, DWORD dst_fvf)
+        const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, uint32_t flags, DWORD dst_fvf)
 {
     enum wined3d_material_color_source diffuse_source, specular_source, ambient_source, emissive_source;
     const struct wined3d_color *material_specular_state_colour;

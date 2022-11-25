@@ -3401,7 +3401,7 @@ static void shader_glsl_get_coord_size(enum wined3d_shader_resource_type resourc
 }
 
 static void shader_glsl_get_sample_function(const struct wined3d_shader_context *ctx,
-        DWORD resource_idx, DWORD sampler_idx, DWORD flags, struct glsl_sample_function *sample_function)
+        DWORD resource_idx, DWORD sampler_idx, uint32_t flags, struct glsl_sample_function *sample_function)
 {
     enum wined3d_shader_resource_type resource_type;
     struct shader_glsl_ctx_priv *priv = ctx->backend_data;
@@ -13271,7 +13271,7 @@ static DWORD glsl_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
 
 static void glsl_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
         unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
-        const RECT *draw_rect, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
+        const RECT *draw_rect, uint32_t flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {
     struct wined3d_blitter *next;
 

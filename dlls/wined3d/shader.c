@@ -1933,7 +1933,7 @@ static void shader_dump_sync_flags(struct wined3d_string_buffer *buffer, DWORD s
         shader_addline(buffer, "_unknown_flags(%#x)", sync_flags);
 }
 
-static void shader_dump_precise_flags(struct wined3d_string_buffer *buffer, DWORD flags)
+static void shader_dump_precise_flags(struct wined3d_string_buffer *buffer, uint32_t flags)
 {
     if (!(flags & WINED3DSI_PRECISE_XYZW))
         return;

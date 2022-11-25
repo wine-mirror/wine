@@ -152,7 +152,7 @@ static void wined3d_context_gl_destroy_fbo(struct wined3d_context_gl *context_gl
 }
 
 static void context_attach_depth_stencil_rb(const struct wined3d_gl_info *gl_info,
-        GLenum fbo_target, DWORD flags, GLuint rb)
+        GLenum fbo_target, uint32_t flags, GLuint rb)
 {
     if (flags & WINED3D_FBO_ENTRY_FLAG_DEPTH)
     {

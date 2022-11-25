@@ -1979,7 +1979,7 @@ static void stateblock_state_init_default(struct wined3d_stateblock_state *state
 }
 
 void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state,
-        const struct wined3d_device *device, DWORD flags)
+        const struct wined3d_device *device, uint32_t flags)
 {
     unsigned int i;
 

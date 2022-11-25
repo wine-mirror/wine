@@ -7939,7 +7939,7 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
 
 static void arbfp_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
         unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
-        const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
+        const RECT *draw_rect, uint32_t flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_blitter *next;
 

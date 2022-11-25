@@ -140,7 +140,7 @@ HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
 }
 
 static HRESULT wined3d_palette_init(struct wined3d_palette *palette, struct wined3d_device *device,
-        DWORD flags, unsigned int entry_count, const PALETTEENTRY *entries)
+        uint32_t flags, unsigned int entry_count, const PALETTEENTRY *entries)
 {
     HRESULT hr;
 

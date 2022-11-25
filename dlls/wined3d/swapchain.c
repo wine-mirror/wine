@@ -589,7 +589,7 @@ static bool swapchain_present_is_partial_copy(struct wined3d_swapchain *swapchai
 }
 
 static void swapchain_gl_present(struct wined3d_swapchain *swapchain,
-        const RECT *src_rect, const RECT *dst_rect, unsigned int swap_interval, DWORD flags)
+        const RECT *src_rect, const RECT *dst_rect, unsigned int swap_interval, uint32_t flags)
 {
     struct wined3d_swapchain_gl *swapchain_gl = wined3d_swapchain_gl(swapchain);
     struct wined3d_texture *back_buffer = swapchain->back_buffers[0];
@@ -1316,7 +1316,7 @@ static void swapchain_gdi_frontbuffer_updated(struct wined3d_swapchain *swapchai
 }
 
 static void swapchain_gdi_present(struct wined3d_swapchain *swapchain,
-        const RECT *src_rect, const RECT *dst_rect, unsigned int swap_interval, DWORD flags)
+        const RECT *src_rect, const RECT *dst_rect, unsigned int swap_interval, uint32_t flags)
 {
     struct wined3d_dc_info *front, *back;
     HBITMAP bitmap;

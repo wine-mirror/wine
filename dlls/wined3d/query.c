@@ -174,7 +174,7 @@ static struct wined3d_pipeline_statistics_query *wined3d_pipeline_statistics_que
 }
 
 enum wined3d_fence_result wined3d_fence_test(const struct wined3d_fence *fence,
-        struct wined3d_device *device, DWORD flags)
+        struct wined3d_device *device, uint32_t flags)
 {
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context_gl *context_gl;
@@ -502,7 +502,7 @@ HRESULT CDECL wined3d_query_issue(struct wined3d_query *query, uint32_t flags)
     return WINED3D_OK;
 }
 
-static BOOL wined3d_occlusion_query_ops_poll(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_occlusion_query_ops_poll(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_occlusion_query *oq = wined3d_occlusion_query_from_query(query);
     const struct wined3d_gl_info *gl_info;
@@ -534,7 +534,7 @@ static BOOL wined3d_occlusion_query_ops_poll(struct wined3d_query *query, DWORD 
     return available;
 }
 
-static BOOL wined3d_event_query_ops_poll(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_event_query_ops_poll(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_event_query *event_query = wined3d_event_query_from_query(query);
     enum wined3d_fence_result ret;
@@ -579,7 +579,7 @@ enum wined3d_query_type CDECL wined3d_query_get_type(const struct wined3d_query 
     return query->type;
 }
 
-static BOOL wined3d_event_query_ops_issue(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_event_query_ops_issue(struct wined3d_query *query, uint32_t flags)
 {
     TRACE("query %p, flags %#x.\n", query, flags);
 
@@ -599,7 +599,7 @@ static BOOL wined3d_event_query_ops_issue(struct wined3d_query *query, DWORD fla
     return FALSE;
 }
 
-static BOOL wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_occlusion_query_ops_issue(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_occlusion_query *oq = wined3d_occlusion_query_from_query(query);
     struct wined3d_device *device = query->device;
@@ -672,7 +672,7 @@ static BOOL wined3d_occlusion_query_ops_issue(struct wined3d_query *query, DWORD
     return poll;
 }
 
-static BOOL wined3d_timestamp_query_ops_poll(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_timestamp_query_ops_poll(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_timestamp_query *tq = wined3d_timestamp_query_from_query(query);
     const struct wined3d_gl_info *gl_info;
@@ -707,7 +707,7 @@ static BOOL wined3d_timestamp_query_ops_poll(struct wined3d_query *query, DWORD 
     return available;
 }
 
-static BOOL wined3d_timestamp_query_ops_issue(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_timestamp_query_ops_issue(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_timestamp_query *tq = wined3d_timestamp_query_from_query(query);
     const struct wined3d_gl_info *gl_info;
@@ -736,21 +736,21 @@ static BOOL wined3d_timestamp_query_ops_issue(struct wined3d_query *query, DWORD
     return FALSE;
 }
 
-static BOOL wined3d_timestamp_disjoint_query_ops_poll(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_timestamp_disjoint_query_ops_poll(struct wined3d_query *query, uint32_t flags)
 {
     TRACE("query %p, flags %#x.\n", query, flags);
 
     return TRUE;
 }
 
-static BOOL wined3d_timestamp_disjoint_query_ops_issue(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_timestamp_disjoint_query_ops_issue(struct wined3d_query *query, uint32_t flags)
 {
     TRACE("query %p, flags %#x.\n", query, flags);
 
     return FALSE;
 }
 
-static BOOL wined3d_so_statistics_query_ops_poll(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_so_statistics_query_ops_poll(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_so_statistics_query *pq = wined3d_so_statistics_query_from_query(query);
     GLuint written_available, generated_available;
@@ -806,7 +806,7 @@ static void wined3d_so_statistics_query_end(struct wined3d_so_statistics_query *
     checkGLcall("end query");
 }
 
-static BOOL wined3d_so_statistics_query_ops_issue(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_so_statistics_query_ops_issue(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_so_statistics_query *pq = wined3d_so_statistics_query_from_query(query);
     struct wined3d_device *device = query->device;
@@ -882,7 +882,7 @@ static BOOL wined3d_so_statistics_query_ops_issue(struct wined3d_query *query, D
     return poll;
 }
 
-static BOOL wined3d_pipeline_query_ops_poll(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_pipeline_query_ops_poll(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_pipeline_statistics_query *pq = wined3d_pipeline_statistics_query_from_query(query);
     const struct wined3d_gl_info *gl_info;
@@ -946,7 +946,7 @@ static void wined3d_pipeline_statistics_query_end(struct wined3d_pipeline_statis
     checkGLcall("end query");
 }
 
-static BOOL wined3d_pipeline_query_ops_issue(struct wined3d_query *query, DWORD flags)
+static BOOL wined3d_pipeline_query_ops_issue(struct wined3d_query *query, uint32_t flags)
 {
     struct wined3d_pipeline_statistics_query *pq = wined3d_pipeline_statistics_query_from_query(query);
     struct wined3d_device *device = query->device;
