@@ -5720,6 +5720,8 @@ static inline struct wined3d_swapchain_gl *wined3d_swapchain_gl(struct wined3d_s
 }
 
 void wined3d_swapchain_gl_cleanup(struct wined3d_swapchain_gl *swapchain_gl) DECLSPEC_HIDDEN;
+void wined3d_swapchain_gl_context_destroy(struct wined3d_swapchain_gl *swapchain_gl,
+        struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
 void wined3d_swapchain_gl_destroy_contexts(struct wined3d_swapchain_gl *swapchain_gl) DECLSPEC_HIDDEN;
 struct wined3d_context_gl *wined3d_swapchain_gl_get_context(struct wined3d_swapchain_gl *swapchain_gl) DECLSPEC_HIDDEN;
 HRESULT wined3d_swapchain_gl_init(struct wined3d_swapchain_gl *swapchain_gl,

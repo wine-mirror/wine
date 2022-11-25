@@ -1256,10 +1256,13 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
         return;
     }
 
+    context_gl = wined3d_context_gl(context);
+
     if (!wined3d_allocator_init(&device_gl->allocator, ARRAY_SIZE(gl_memory_types), &wined3d_allocator_gl_ops))
     {
         WARN("Failed to initialise allocator.\n");
         context_release(context);
+        wined3d_swapchain_gl_context_destroy(wined3d_swapchain_gl(swapchain), context_gl);
         return;
     }
 
@@ -1269,6 +1272,7 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
         ERR("Failed to allocate shader private data, hr %#x.\n", hr);
         wined3d_allocator_cleanup(&device_gl->allocator);
         context_release(context);
+        wined3d_swapchain_gl_context_destroy(wined3d_swapchain_gl(swapchain), context_gl);
         return;
     }
 
@@ -1278,10 +1282,9 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
         device->shader_backend->shader_free_private(device, NULL);
         wined3d_allocator_cleanup(&device_gl->allocator);
         context_release(context);
+        wined3d_swapchain_gl_context_destroy(wined3d_swapchain_gl(swapchain), context_gl);
         return;
     }
-
-    context_gl = wined3d_context_gl(context);
 
     wined3d_ffp_blitter_create(&device->blitter, context_gl->gl_info);
     if (!wined3d_glsl_blitter_create(&device->blitter, device))

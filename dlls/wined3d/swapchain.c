@@ -1804,6 +1804,25 @@ static struct wined3d_context_gl *wined3d_swapchain_gl_create_context(struct win
     return context_gl;
 }
 
+void wined3d_swapchain_gl_context_destroy(struct wined3d_swapchain_gl *swapchain_gl, struct wined3d_context_gl *context_gl)
+{
+    unsigned int i, j;
+
+    TRACE("swapchain_gl %p, context_gl %p.\n", swapchain_gl, context_gl);
+
+    for (i = 0; i < swapchain_gl->context_count; ++i)
+    {
+        if (swapchain_gl->contexts[i] == context_gl)
+        {
+            wined3d_context_gl_destroy(swapchain_gl->contexts[i]);
+            for (j = i; j < --swapchain_gl->context_count; ++j)
+                swapchain_gl->contexts[j] = swapchain_gl->contexts[j + 1];
+            return;
+        }
+    }
+    ERR("context_gl %p not found in the swapchain list.\n", context_gl);
+}
+
 void wined3d_swapchain_gl_destroy_contexts(struct wined3d_swapchain_gl *swapchain_gl)
 {
     unsigned int i;
