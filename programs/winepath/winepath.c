@@ -215,7 +215,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
                     {
                         printf("%s%c", unix_name, separator);
                     }
-                    free( unix_name );
+                    HeapFree( GetProcessHeap(), 0, unix_name );
                     break;
                 }
 
@@ -262,7 +262,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
             {
                 WideCharToMultiByte(CP_UNIXCP, 0, windows_name, -1, path, MAX_PATH, NULL, NULL);
                 printf("%s%c", path, separator);
-                free( windows_name );
+                HeapFree( GetProcessHeap(), 0, windows_name );
             }
             else printf("%c", separator);
             free( unix_name );
