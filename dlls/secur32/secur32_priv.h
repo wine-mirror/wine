@@ -26,8 +26,6 @@
 #include "schannel.h"
 #include "wine/list.h"
 
-extern HINSTANCE hsecur32 DECLSPEC_HIDDEN;
-
 typedef struct _SecureProvider
 {
     struct list             entry;

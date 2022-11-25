@@ -40,9 +40,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
-static unixlib_handle_t gnutls_handle;
-
-#define GNUTLS_CALL( func, params ) __wine_unix_call( gnutls_handle, unix_ ## func, params )
+#define GNUTLS_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
 #define SCHAN_INVALID_HANDLE ~0UL
 
@@ -1685,15 +1683,10 @@ void SECUR32_initSchannelSP(void)
     };
     SecureProvider *provider;
 
-    if (!gnutls_handle)
+    if (__wine_init_unix_call() || GNUTLS_CALL( process_attach, NULL ))
     {
-        if (NtQueryVirtualMemory( GetCurrentProcess(), hsecur32, MemoryWineUnixFuncs,
-                                  &gnutls_handle, sizeof(gnutls_handle), NULL ) ||
-            GNUTLS_CALL( process_attach, NULL ))
-        {
-            ERR( "no schannel support, expect problems\n" );
-            return;
-        }
+        ERR( "no schannel support, expect problems\n" );
+        return;
     }
 
     schan_handle_table = malloc(64 * sizeof(*schan_handle_table));
@@ -1751,5 +1744,4 @@ void SECUR32_deinitSchannelSP(void)
     }
     free(schan_handle_table);
     GNUTLS_CALL( process_detach, NULL );
-    gnutls_handle = 0;
 }
