@@ -707,12 +707,10 @@ static inline BOOL subheap_decommit( const struct heap *heap, SUBHEAP *subheap, 
     return TRUE;
 }
 
-
-static void create_free_block( struct heap *heap, ULONG flags, SUBHEAP *subheap, struct block *block, SIZE_T block_size )
+static void block_init_free( struct block *block, ULONG flags, SUBHEAP *subheap, SIZE_T block_size )
 {
     const char *end = (char *)block + block_size, *commit_end = subheap_commit_end( subheap );
-    struct entry *entry = (struct entry *)block, *list;
-    struct block *next;
+    struct entry *entry = (struct entry *)block;
 
     valgrind_make_writable( block, sizeof(*entry) );
     block_set_type( block, BLOCK_TYPE_FREE );
@@ -724,6 +722,12 @@ static void create_free_block( struct heap *heap, ULONG flags, SUBHEAP *subheap,
 
     if (end > commit_end) end = commit_end;
     if (end > (char *)(entry + 1)) mark_block_free( entry + 1, end - (char *)(entry + 1), flags );
+}
+
+static void insert_free_block( struct heap *heap, ULONG flags, SUBHEAP *subheap, struct block *block )
+{
+    struct entry *entry = (struct entry *)block, *list;
+    struct block *next;
 
     if ((next = next_block( subheap, block )))
     {
@@ -796,7 +800,8 @@ static NTSTATUS heap_free_block( struct heap *heap, ULONG flags, struct block *b
         return STATUS_SUCCESS;
     }
 
-    create_free_block( heap, flags, subheap, block, block_size );
+    block_init_free( block, flags, subheap, block_size );
+    insert_free_block( heap, flags, subheap, block );
 
     /* keep room for a full committed block as hysteresis */
     if (!next) subheap_decommit( heap, subheap, (char *)((struct entry *)block + 1) + REGION_ALIGN );
@@ -946,8 +951,10 @@ static SUBHEAP *create_subheap( struct heap *heap, DWORD flags, SIZE_T total_siz
 
     subheap_set_bounds( subheap, (char *)subheap + commit_size, (char *)subheap + total_size );
     block_size = (SIZE_T)ROUND_ADDR( subheap_size( subheap ) - subheap_overhead( subheap ), BLOCK_ALIGN - 1 );
-    create_free_block( heap, flags, subheap, first_block( subheap ), block_size );
+    block_init_free( first_block( subheap ), flags, subheap, block_size );
+
     list_add_head( &heap->subheap_list, &subheap->entry );
+    insert_free_block( heap, flags, subheap, first_block( subheap ) );
 
     return subheap;
 }
@@ -1372,7 +1379,9 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
     subheap = &heap->subheap;
     subheap_set_bounds( subheap, (char *)heap + commit_size, (char *)heap + total_size );
     block_size = (SIZE_T)ROUND_ADDR( subheap_size( subheap ) - subheap_overhead( subheap ), BLOCK_ALIGN - 1 );
-    create_free_block( heap, flags, subheap, first_block( subheap ), block_size );
+    block_init_free( first_block( subheap ), flags, subheap, block_size );
+
+    insert_free_block( heap, flags, subheap, first_block( subheap ) );
     list_add_head( &heap->subheap_list, &subheap->entry );
 
     heap_set_debug_flags( heap );
@@ -1502,7 +1511,10 @@ static NTSTATUS heap_allocate_block( struct heap *heap, ULONG flags, SIZE_T bloc
     subheap = block_get_subheap( heap, block );
 
     if ((next = split_block( heap, flags, block, old_block_size, block_size )))
-        create_free_block( heap, flags, subheap, next, old_block_size - block_size );
+    {
+        block_init_free( next, flags, subheap, old_block_size - block_size );
+        insert_free_block( heap, flags, subheap, next );
+    }
 
     block_set_type( block, BLOCK_TYPE_USED );
     block_set_flags( block, ~0, BLOCK_USER_FLAGS( flags ) );
@@ -1637,7 +1649,10 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block 
     }
 
     if ((next = split_block( heap, flags, block, old_block_size, block_size )))
-        create_free_block( heap, flags, subheap, next, old_block_size - block_size );
+    {
+        block_init_free( next, flags, subheap, old_block_size - block_size );
+        insert_free_block( heap, flags, subheap, next );
+    }
 
     valgrind_notify_resize( block + 1, *old_size, size );
     block_set_flags( block, BLOCK_FLAG_USER_MASK & ~BLOCK_FLAG_USER_INFO, BLOCK_USER_FLAGS( flags ) );
