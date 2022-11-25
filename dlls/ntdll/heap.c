@@ -1682,7 +1682,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr,
     }
 
     valgrind_notify_resize( block + 1, old_size, size );
-    block_set_flags( block, BLOCK_FLAG_USER_MASK, BLOCK_USER_FLAGS( flags ) );
+    block_set_flags( block, BLOCK_FLAG_USER_MASK & ~BLOCK_FLAG_USER_INFO, BLOCK_USER_FLAGS( flags ) );
     shrink_used_block( heap, flags, block, old_block_size, block_size, size );
 
     initialize_block( block, old_size, size, flags );
