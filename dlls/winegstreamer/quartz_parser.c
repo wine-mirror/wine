@@ -36,7 +36,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 static const GUID MEDIASUBTYPE_CVID = {mmioFOURCC('c','v','i','d'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+static const GUID MEDIASUBTYPE_VC1S = {mmioFOURCC('V','C','1','S'), 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
 static const GUID MEDIASUBTYPE_MP3  = {WAVE_FORMAT_MPEGLAYER3, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}};
+static const GUID MEDIASUBTYPE_WMV_Unknown = {0x7ce12ca9, 0xbfbf, 0x43d9, {0x9d, 0x00, 0x82, 0xb8, 0xed, 0x54, 0x31, 0x6b}};
 
 struct parser
 {
@@ -362,6 +364,7 @@ unsigned int wg_format_get_max_size(const struct wg_format *format)
         case WG_MAJOR_TYPE_AUDIO_MPEG4:
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_H264:
+        case WG_MAJOR_TYPE_VIDEO_WMV:
             FIXME("Format %u not implemented!\n", format->major_type);
             return 0;
 
@@ -532,6 +535,7 @@ bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool 
     case WG_MAJOR_TYPE_AUDIO_MPEG4:
     case WG_MAJOR_TYPE_AUDIO_WMA:
     case WG_MAJOR_TYPE_VIDEO_H264:
+    case WG_MAJOR_TYPE_VIDEO_WMV:
         FIXME("Format %u not implemented!\n", format->major_type);
         /* fallthrough */
     case WG_MAJOR_TYPE_UNKNOWN:
@@ -723,12 +727,55 @@ static bool amt_to_wg_format_video(const AM_MEDIA_TYPE *mt, struct wg_format *fo
     return false;
 }
 
+static bool amt_to_wg_format_video_wmv(const AM_MEDIA_TYPE *mt, struct wg_format *format)
+{
+    const VIDEOINFOHEADER *video_format = (const VIDEOINFOHEADER *)mt->pbFormat;
+
+    if (!IsEqualGUID(&mt->formattype, &FORMAT_VideoInfo))
+    {
+        FIXME("Unknown format type %s.\n", debugstr_guid(&mt->formattype));
+        return false;
+    }
+    if (mt->cbFormat < sizeof(VIDEOINFOHEADER) || !mt->pbFormat)
+    {
+        ERR("Unexpected format size %lu.\n", mt->cbFormat);
+        return false;
+    }
+
+    format->major_type = WG_MAJOR_TYPE_VIDEO_WMV;
+    format->u.video_wmv.width = video_format->bmiHeader.biWidth;
+    format->u.video_wmv.height = video_format->bmiHeader.biHeight;
+    format->u.video_wmv.fps_n = 10000000;
+    format->u.video_wmv.fps_d = video_format->AvgTimePerFrame;
+
+    if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV1))
+        format->u.video_wmv.version = 1;
+    else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV2))
+        format->u.video_wmv.version = 2;
+    else
+        format->u.video_wmv.version = 3;
+
+    return true;
+}
+
 bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format)
 {
     memset(format, 0, sizeof(*format));
 
     if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Video))
+    {
+        if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV1)
+                || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV2)
+                || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMVA)
+                || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMVP)
+                || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WVP2)
+                || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV_Unknown)
+                || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WVC1)
+                || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV3)
+                || IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_VC1S))
+            return amt_to_wg_format_video_wmv(mt, format);
         return amt_to_wg_format_video(mt, format);
+    }
     if (IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio))
     {
         if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_MPEG1AudioPayload))

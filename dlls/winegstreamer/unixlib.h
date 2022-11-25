@@ -42,6 +42,7 @@ struct wg_format
         WG_MAJOR_TYPE_VIDEO,
         WG_MAJOR_TYPE_VIDEO_CINEPAK,
         WG_MAJOR_TYPE_VIDEO_H264,
+        WG_MAJOR_TYPE_VIDEO_WMV,
     } major_type;
 
     union
@@ -126,6 +127,12 @@ struct wg_format
             uint32_t profile;
             uint32_t level;
         } video_h264;
+        struct
+        {
+            int32_t width, height;
+            uint32_t fps_n, fps_d;
+            uint32_t version;
+        } video_wmv;
     } u;
 };
 

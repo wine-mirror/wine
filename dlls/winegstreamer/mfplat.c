@@ -554,6 +554,7 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_VIDEO_H264:
+        case WG_MAJOR_TYPE_VIDEO_WMV:
             FIXME("Format %u not implemented!\n", format->major_type);
             /* fallthrough */
         case WG_MAJOR_TYPE_UNKNOWN:
