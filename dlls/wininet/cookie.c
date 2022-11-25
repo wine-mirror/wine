@@ -118,13 +118,13 @@ static cookie_domain_t *get_cookie_domain(substr_t domain, BOOL create)
             if(!create)
                 return prev_domain;
 
-            current_domain = heap_alloc(sizeof(*current_domain));
+            current_domain = malloc(sizeof(*current_domain));
             if(!current_domain)
                 return NULL;
 
-            current_domain->domain = heap_strndupW(subdomain_ptr, domain.str + domain.len - subdomain_ptr);
+            current_domain->domain = strndupW(subdomain_ptr, domain.str + domain.len - subdomain_ptr);
             if(!current_domain->domain) {
-                heap_free(current_domain);
+                free(current_domain);
                 return NULL;
             }
 
@@ -158,7 +158,7 @@ static WCHAR *create_cookie_url(substr_t domain, substr_t path, substr_t *ret_pa
 
     /* user_len already accounts for terminating NULL */
     len = ARRAY_SIZE(cookie_prefix) + user_len + 1 /* @ */ + domain.len + path.len;
-    url = heap_alloc(len * sizeof(WCHAR));
+    url = malloc(len * sizeof(WCHAR));
     if(!url)
         return NULL;
 
@@ -166,7 +166,7 @@ static WCHAR *create_cookie_url(substr_t domain, substr_t path, substr_t *ret_pa
     p = url + ARRAY_SIZE(cookie_prefix);
 
     if(!GetUserNameW(p, &user_len)) {
-        heap_free(url);
+        free(url);
         return NULL;
     }
     p += user_len;
@@ -205,13 +205,13 @@ static cookie_container_t *get_cookie_container(substr_t domain, substr_t path, 
     if(!create)
         return NULL;
 
-    cookie_container = heap_alloc(sizeof(*cookie_container));
+    cookie_container = malloc(sizeof(*cookie_container));
     if(!cookie_container)
         return NULL;
 
     cookie_container->cookie_url = create_cookie_url(substrz(cookie_domain->domain), path, &cookie_container->path);
     if(!cookie_container->cookie_url) {
-        heap_free(cookie_container);
+        free(cookie_container);
         return NULL;
     }
 
@@ -233,16 +233,16 @@ static void delete_cookie(cookie_t *cookie)
 {
     list_remove(&cookie->entry);
 
-    heap_free(cookie->name);
-    heap_free(cookie->data);
-    heap_free(cookie);
+    free(cookie->name);
+    free(cookie->data);
+    free(cookie);
 }
 
 static cookie_t *alloc_cookie(substr_t name, substr_t data, FILETIME expiry, FILETIME create_time, DWORD flags)
 {
     cookie_t *new_cookie;
 
-    new_cookie = heap_alloc_zero(sizeof(*new_cookie));
+    new_cookie = calloc(1, sizeof(*new_cookie));
     if(!new_cookie)
         return NULL;
 
@@ -251,12 +251,12 @@ static cookie_t *alloc_cookie(substr_t name, substr_t data, FILETIME expiry, FIL
     new_cookie->flags = flags;
     list_init(&new_cookie->entry);
 
-    if(name.str && !(new_cookie->name = heap_strndupW(name.str, name.len))) {
+    if(name.str && !(new_cookie->name = strndupW(name.str, name.len))) {
         delete_cookie(new_cookie);
         return NULL;
     }
 
-    if(data.str && !(new_cookie->data = heap_strndupW(data.str, data.len))) {
+    if(data.str && !(new_cookie->data = strndupW(data.str, data.len))) {
         delete_cookie(new_cookie);
         return NULL;
     }
@@ -320,18 +320,18 @@ static BOOL load_persistent_cookie(substr_t domain, substr_t path)
     RetrieveUrlCacheEntryStreamW(cookie_container->cookie_url, NULL, &size, FALSE, 0);
     if(GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         return TRUE;
-    info = heap_alloc(size);
+    info = malloc(size);
     if(!info)
         return FALSE;
     cookie = RetrieveUrlCacheEntryStreamW(cookie_container->cookie_url, info, &size, FALSE, 0);
     size = info->dwSizeLow;
-    heap_free(info);
+    free(info);
     if(!cookie)
         return FALSE;
 
-    if(!(str = heap_alloc(size+1)) || !ReadUrlCacheEntryStream(cookie, 0, str, &size, 0)) {
+    if(!(str = malloc(size + 1)) || !ReadUrlCacheEntryStream(cookie, 0, str, &size, 0)) {
         UnlockUrlCacheEntryStream(cookie, 0);
-        heap_free(str);
+        free(str);
         return FALSE;
     }
     str[size] = 0;
@@ -343,14 +343,14 @@ static BOOL load_persistent_cookie(substr_t domain, substr_t path)
         if(!pend)
             break;
         *pend = 0;
-        name = heap_strdupAtoW(pbeg);
+        name = strdupAtoW(pbeg);
 
         pbeg = pend+1;
         pend = strchr(pbeg, '\n');
         if(!pend)
             break;
         *pend = 0;
-        data = heap_strdupAtoW(pbeg);
+        data = strdupAtoW(pbeg);
 
         pbeg = strchr(pend+1, '\n');
         if(!pbeg)
@@ -379,13 +379,13 @@ static BOOL load_persistent_cookie(substr_t domain, substr_t path)
 
             replace_cookie(cookie_container, new_cookie);
         }else {
-            heap_free(name);
-            heap_free(data);
+            free(name);
+            free(data);
         }
     }
-    heap_free(str);
-    heap_free(name);
-    heap_free(data);
+    free(str);
+    free(name);
+    free(data);
 
     return TRUE;
 }
@@ -436,50 +436,50 @@ static BOOL save_persistent_cookie(cookie_container_t *container)
         if(cookie_container->flags & INTERNET_COOKIE_IS_SESSION)
             continue;
 
-        dyn_buf = heap_strdupWtoA(cookie_container->name);
+        dyn_buf = strdupWtoA(cookie_container->name);
         if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), &bytes_written, NULL)) {
-            heap_free(dyn_buf);
+            free(dyn_buf);
             do_save = FALSE;
             break;
         }
-        heap_free(dyn_buf);
+        free(dyn_buf);
         if(!WriteFile(cookie_handle, "\n", 1, &bytes_written, NULL)) {
             do_save = FALSE;
             break;
         }
 
-        dyn_buf = heap_strdupWtoA(cookie_container->data);
+        dyn_buf = strdupWtoA(cookie_container->data);
         if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), &bytes_written, NULL)) {
-            heap_free(dyn_buf);
+            free(dyn_buf);
             do_save = FALSE;
             break;
         }
-        heap_free(dyn_buf);
+        free(dyn_buf);
         if(!WriteFile(cookie_handle, "\n", 1, &bytes_written, NULL)) {
             do_save = FALSE;
             break;
         }
 
-        dyn_buf = heap_strdupWtoA(container->domain->domain);
+        dyn_buf = strdupWtoA(container->domain->domain);
         if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), &bytes_written, NULL)) {
-            heap_free(dyn_buf);
+            free(dyn_buf);
             do_save = FALSE;
             break;
         }
-        heap_free(dyn_buf);
+        free(dyn_buf);
 
         len = WideCharToMultiByte(CP_ACP, 0, container->path.str, container->path.len, NULL, 0, NULL, NULL);
-        dyn_buf = heap_alloc(len+1);
+        dyn_buf = malloc(len + 1);
         if(dyn_buf) {
             WideCharToMultiByte(CP_ACP, 0, container->path.str, container->path.len, dyn_buf, len, NULL, NULL);
             dyn_buf[len] = 0;
         }
         if(!dyn_buf || !WriteFile(cookie_handle, dyn_buf, strlen(dyn_buf), &bytes_written, NULL)) {
-            heap_free(dyn_buf);
+            free(dyn_buf);
             do_save = FALSE;
             break;
         }
-        heap_free(dyn_buf);
+        free(dyn_buf);
 
         sprintf(buf, "\n%lu\n%lu\n%lu\n%lu\n%lu\n*\n", cookie_container->flags,
                 cookie_container->expiry.dwLowDateTime, cookie_container->expiry.dwHighDateTime,
@@ -583,12 +583,12 @@ static DWORD get_cookie(substr_t host, substr_t path, DWORD flags, cookie_set_t 
                     continue;
 
                 if(!res->size) {
-                    res->cookies = heap_alloc(4*sizeof(*res->cookies));
+                    res->cookies = malloc(4 * sizeof(*res->cookies));
                     if(!res->cookies)
                         continue;
                     res->size = 4;
                 }else if(res->cnt == res->size) {
-                    cookie_t **new_cookies = heap_realloc(res->cookies, res->size*2*sizeof(*res->cookies));
+                    cookie_t **new_cookies = realloc(res->cookies, res->size * 2 * sizeof(*res->cookies));
                     if(!new_cookies)
                         continue;
                     res->cookies = new_cookies;
@@ -657,13 +657,13 @@ DWORD get_cookie_header(const WCHAR *host, const WCHAR *path, WCHAR **ret)
     if(cookie_set.cnt) {
         WCHAR *header, *ptr;
 
-        ptr = header = heap_alloc(sizeof(cookieW) + (cookie_set.string_len + 3 /* crlf0 */) * sizeof(WCHAR));
+        ptr = header = malloc(sizeof(cookieW) + (cookie_set.string_len + 3 /* crlf0 */) * sizeof(WCHAR));
         if(header) {
             memcpy(ptr, cookieW, sizeof(cookieW));
             ptr += ARRAY_SIZE(cookieW);
 
             cookie_set_to_string(&cookie_set, ptr);
-            heap_free(cookie_set.cookies);
+            free(cookie_set.cookies);
             ptr += cookie_set.string_len;
 
             *ptr++ = '\r';
@@ -698,14 +698,14 @@ static void free_cookie_domain_list(struct list *list)
             while(!list_empty(&container->cookie_list))
                 delete_cookie(LIST_ENTRY(list_head(&container->cookie_list), cookie_t, entry));
 
-            heap_free(container->cookie_url);
+            free(container->cookie_url);
             list_remove(&container->entry);
-            heap_free(container);
+            free(container);
         }
 
-        heap_free(domain->domain);
+        free(domain->domain);
         list_remove(&domain->entry);
-        heap_free(domain);
+        free(domain);
     }
 }
 
@@ -775,7 +775,7 @@ BOOL WINAPI InternetGetCookieExW(LPCWSTR lpszUrl, LPCWSTR lpszCookieName,
         ret = FALSE;
     }
 
-    heap_free(cookie_set.cookies);
+    free(cookie_set.cookies);
     LeaveCriticalSection(&cookie_cs);
     return ret;
 }
@@ -812,15 +812,15 @@ BOOL WINAPI InternetGetCookieExA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     TRACE("(%s %s %p %p(%lu) %lx %p)\n", debugstr_a(lpszUrl), debugstr_a(lpszCookieName),
           lpCookieData, lpdwSize, lpdwSize ? *lpdwSize : 0, flags, reserved);
 
-    url = heap_strdupAtoW(lpszUrl);
-    name = heap_strdupAtoW(lpszCookieName);
+    url = strdupAtoW(lpszUrl);
+    name = strdupAtoW(lpszCookieName);
 
     r = InternetGetCookieExW( url, name, NULL, &len, flags, reserved );
     if( r )
     {
         WCHAR *szCookieData;
 
-        szCookieData = heap_alloc(len * sizeof(WCHAR));
+        szCookieData = malloc(len * sizeof(WCHAR));
         if( !szCookieData )
         {
             r = FALSE;
@@ -841,12 +841,12 @@ BOOL WINAPI InternetGetCookieExA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
                 }
             }
 
-            heap_free( szCookieData );
+            free( szCookieData );
         }
     }
     *lpdwSize = size;
-    heap_free( name );
-    heap_free( url );
+    free(name);
+    free(url);
     return r;
 }
 
@@ -1141,15 +1141,15 @@ BOOL WINAPI InternetSetCookieA(LPCSTR lpszUrl, LPCSTR lpszCookieName,
     TRACE("(%s,%s,%s)\n", debugstr_a(lpszUrl),
         debugstr_a(lpszCookieName), debugstr_a(lpCookieData));
 
-    url = heap_strdupAtoW(lpszUrl);
-    name = heap_strdupAtoW(lpszCookieName);
-    data = heap_strdupAtoW(lpCookieData);
+    url = strdupAtoW(lpszUrl);
+    name = strdupAtoW(lpszCookieName);
+    data = strdupAtoW(lpCookieData);
 
     r = InternetSetCookieW( url, name, data );
 
-    heap_free( data );
-    heap_free( name );
-    heap_free( url );
+    free(data);
+    free(name);
+    free(url);
     return r;
 }
 
@@ -1167,15 +1167,15 @@ DWORD WINAPI InternetSetCookieExA( LPCSTR lpszURL, LPCSTR lpszCookieName, LPCSTR
     TRACE("(%s, %s, %s, %lx, %Ix)\n", debugstr_a(lpszURL), debugstr_a(lpszCookieName),
           debugstr_a(lpszCookieData), dwFlags, dwReserved);
 
-    url = heap_strdupAtoW(lpszURL);
-    name = heap_strdupAtoW(lpszCookieName);
-    data = heap_strdupAtoW(lpszCookieData);
+    url = strdupAtoW(lpszURL);
+    name = strdupAtoW(lpszCookieName);
+    data = strdupAtoW(lpszCookieData);
 
     r = InternetSetCookieExW(url, name, data, dwFlags, dwReserved);
 
-    heap_free( data );
-    heap_free( name );
-    heap_free( url );
+    free(data);
+    free(name);
+    free(url);
     return r;
 }
 

@@ -185,14 +185,14 @@ static BOOL WININET_SetAuthorization( http_request_t *request, LPWSTR username,
     http_session_t *session = request->session;
     LPWSTR p, q;
 
-    p = heap_strdupW(username);
+    p = wcsdup(username);
     if( !p )
         return FALSE;
 
-    q = heap_strdupW(password);
+    q = wcsdup(password);
     if( !q )
     {
-        heap_free(p);
+        free(p);
         return FALSE;
     }
 
@@ -200,18 +200,18 @@ static BOOL WININET_SetAuthorization( http_request_t *request, LPWSTR username,
     {
         appinfo_t *hIC = session->appInfo;
 
-        heap_free(hIC->proxyUsername);
+        free(hIC->proxyUsername);
         hIC->proxyUsername = p;
 
-        heap_free(hIC->proxyPassword);
+        free(hIC->proxyPassword);
         hIC->proxyPassword = q;
     }
     else
     {
-        heap_free(session->userName);
+        free(session->userName);
         session->userName = p;
 
-        heap_free(session->password);
+        free(session->password);
         session->password = q;
     }
 

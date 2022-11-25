@@ -248,17 +248,17 @@ void INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR context, DWORD status
     case INTERNET_STATUS_NAME_RESOLVED:
     case INTERNET_STATUS_CONNECTING_TO_SERVER:
     case INTERNET_STATUS_CONNECTED_TO_SERVER:
-        new_info = heap_alloc(info_len);
+        new_info = malloc(info_len);
         if(new_info)
             memcpy(new_info, info, info_len);
         break;
     case INTERNET_STATUS_RESOLVING_NAME:
     case INTERNET_STATUS_REDIRECT:
         if(hdr->dwInternalFlags & INET_CALLBACKW) {
-            new_info = heap_strdupW(info);
+            new_info = wcsdup(info);
             break;
         }else {
-            new_info = heap_strdupWtoA(info);
+            new_info = strdupWtoA(info);
             info_len = strlen(new_info)+1;
             break;
         }
@@ -273,5 +273,5 @@ void INTERNET_SendCallback(object_header_t *hdr, DWORD_PTR context, DWORD status
     TRACE(" end callback().\n");
 
     if(new_info != info)
-        heap_free(new_info);
+        free(new_info);
 }

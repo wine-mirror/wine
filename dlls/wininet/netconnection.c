@@ -344,7 +344,7 @@ DWORD create_netconn(server_t *server, DWORD security_flags, BOOL mask_errors, D
     netconn_t *netconn;
     int result;
 
-    netconn = heap_alloc_zero(sizeof(*netconn));
+    netconn = calloc(1, sizeof(*netconn));
     if(!netconn)
         return ERROR_OUTOFMEMORY;
 
@@ -356,7 +356,7 @@ DWORD create_netconn(server_t *server, DWORD security_flags, BOOL mask_errors, D
 
     result = create_netconn_socket(server, netconn, timeout);
     if (result != ERROR_SUCCESS) {
-        heap_free(netconn);
+        free(netconn);
         return result;
     }
 
@@ -382,13 +382,13 @@ void free_netconn(netconn_t *netconn)
     server_release(netconn->server);
 
     if (netconn->secure) {
-        heap_free(netconn->peek_msg_mem);
+        free(netconn->peek_msg_mem);
         netconn->peek_msg_mem = NULL;
         netconn->peek_msg = NULL;
         netconn->peek_len = 0;
-        heap_free(netconn->ssl_buf);
+        free(netconn->ssl_buf);
         netconn->ssl_buf = NULL;
-        heap_free(netconn->extra_buf);
+        free(netconn->extra_buf);
         netconn->extra_buf = NULL;
         netconn->extra_len = 0;
     }
@@ -396,7 +396,7 @@ void free_netconn(netconn_t *netconn)
         DeleteSecurityContext(&netconn->ssl_ctx);
 
     close_netconn(netconn);
-    heap_free(netconn);
+    free(netconn);
 }
 
 void NETCON_unload(void)
@@ -459,7 +459,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
         cred = &compat_cred_handle;
     }
 
-    read_buf = heap_alloc(read_buf_size);
+    read_buf = malloc(read_buf_size);
     if(!read_buf)
         return ERROR_OUTOFMEMORY;
 
@@ -503,7 +503,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
         if(in_bufs[0].cbBuffer + 1024 > read_buf_size) {
             BYTE *new_read_buf;
 
-            new_read_buf = heap_realloc(read_buf, read_buf_size + 1024);
+            new_read_buf = realloc(read_buf, read_buf_size + 1024);
             if(!new_read_buf) {
                 status = E_OUTOFMEMORY;
                 break;
@@ -555,7 +555,7 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
                 break;
             }
 
-            connection->ssl_buf = heap_alloc(connection->ssl_sizes.cbHeader + connection->ssl_sizes.cbMaximumMessage
+            connection->ssl_buf = malloc(connection->ssl_sizes.cbHeader + connection->ssl_sizes.cbMaximumMessage
                     + connection->ssl_sizes.cbTrailer);
             if(!connection->ssl_buf) {
                 res = GetLastError();
@@ -564,11 +564,11 @@ static DWORD netcon_secure_connect_setup(netconn_t *connection, BOOL compat_mode
         }
     }
 
-    heap_free(read_buf);
+    free(read_buf);
 
     if(status != SEC_E_OK || res != ERROR_SUCCESS) {
         WARN("Failed to establish SSL connection: %08lx (%lu)\n", status, res);
-        heap_free(connection->ssl_buf);
+        free(connection->ssl_buf);
         connection->ssl_buf = NULL;
         return res ? res : ERROR_INTERNET_SECURITY_CHANNEL_ERROR;
     }
@@ -706,7 +706,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, BOOL blo
         memcpy(conn->ssl_buf, conn->extra_buf, conn->extra_len);
         buf_len = conn->extra_len;
         conn->extra_len = 0;
-        heap_free(conn->extra_buf);
+        free(conn->extra_buf);
         conn->extra_buf = NULL;
     }
 
@@ -758,7 +758,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, BOOL blo
                     TRACE("would block\n");
 
                     /* FIXME: Optimize extra_buf usage. */
-                    conn->extra_buf = heap_alloc(buf_len);
+                    conn->extra_buf = malloc(buf_len);
                     if(!conn->extra_buf)
                         return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -784,7 +784,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, BOOL blo
             memcpy(buf, bufs[i].pvBuffer, size);
             if(size < bufs[i].cbBuffer) {
                 assert(!conn->peek_len);
-                conn->peek_msg_mem = conn->peek_msg = heap_alloc(bufs[i].cbBuffer - size);
+                conn->peek_msg_mem = conn->peek_msg = malloc(bufs[i].cbBuffer - size);
                 if(!conn->peek_msg)
                     return ERROR_NOT_ENOUGH_MEMORY;
                 conn->peek_len = bufs[i].cbBuffer-size;
@@ -797,7 +797,7 @@ static BOOL read_ssl_chunk(netconn_t *conn, void *buf, SIZE_T buf_size, BOOL blo
 
     for(i = 0; i < ARRAY_SIZE(bufs); i++) {
         if(bufs[i].BufferType == SECBUFFER_EXTRA) {
-            conn->extra_buf = heap_alloc(bufs[i].cbBuffer);
+            conn->extra_buf = malloc(bufs[i].cbBuffer);
             if(!conn->extra_buf)
                 return ERROR_NOT_ENOUGH_MEMORY;
 
@@ -839,7 +839,7 @@ DWORD NETCON_recv(netconn_t *connection, void *buf, size_t len, BOOL blocking, i
             connection->peek_msg += size;
 
             if(!connection->peek_len) {
-                heap_free(connection->peek_msg_mem);
+                free(connection->peek_msg_mem);
                 connection->peek_msg_mem = connection->peek_msg = NULL;
             }
 
