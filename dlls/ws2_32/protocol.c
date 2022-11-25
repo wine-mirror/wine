@@ -27,9 +27,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-unixlib_handle_t ws_unix_handle = 0;
-
-#define WS_CALL(func, params) __wine_unix_call( ws_unix_handle, ws_unix_ ## func, params )
+#define WS_CALL(func, params) WINE_UNIX_CALL( ws_unix_ ## func, params )
 
 static char *get_fqdn(void)
 {

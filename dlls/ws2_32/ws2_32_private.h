@@ -145,6 +145,4 @@ enum ws_unix_funcs
     ws_unix_getnameinfo,
 };
 
-extern unixlib_handle_t ws_unix_handle DECLSPEC_HIDDEN;
-
 #endif

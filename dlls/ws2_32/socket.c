@@ -582,8 +582,7 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
-        return !NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
-                                      &ws_unix_handle, sizeof(ws_unix_handle), NULL );
+        return !__wine_init_unix_call();
 
     case DLL_THREAD_DETACH:
         free_per_thread_data();
