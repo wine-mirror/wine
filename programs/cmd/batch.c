@@ -255,7 +255,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
       UINT cp;
       const char *p;
 
-      cp = GetConsoleCP();
+      cp = GetOEMCP();
       bufA = heap_xalloc(noChars);
 
       /* Save current file position */
