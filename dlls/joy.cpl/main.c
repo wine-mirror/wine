@@ -71,7 +71,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 struct Effect
 {
     IDirectInputEffect *effect;
-    DIEFFECTINFOW info;
 };
 
 struct Joystick
@@ -216,7 +215,6 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     }
 
     joystick->effects[joystick->cur_effect].effect = effect;
-    joystick->effects[joystick->cur_effect].info = *info;
     joystick->cur_effect += 1;
 
     return DIENUM_CONTINUE;
@@ -866,9 +864,12 @@ static void initialize_effects_list(HWND hwnd, struct Joystick* joy)
 
     for (i=0; i < joy->num_effects; i++)
     {
-        /* Effect names start with GUID_, so we'll skip this part */
-        WCHAR *name = joy->effects[i].info.tszName + 5;
-        SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_ADDSTRING, 0, (LPARAM) name);
+        DIEFFECTINFOW info = {.dwSize = sizeof(DIEFFECTINFOW)};
+        GUID guid;
+
+        if (FAILED(IDirectInputEffect_GetEffectGuid( joy->effects[i].effect, &guid ))) continue;
+        if (FAILED(IDirectInputDevice8_GetEffectInfo( joy->device, &info, &guid ))) continue;
+        SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_ADDSTRING, 0, (LPARAM)(info.tszName + 5));
     }
 }
 
