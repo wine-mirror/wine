@@ -75,8 +75,9 @@ struct effect
     IDirectInputEffect *effect;
 };
 
-struct Joystick
+struct device
 {
+    struct list entry;
     IDirectInputDevice8W *device;
 };
 
@@ -91,11 +92,7 @@ struct Graphics
 struct JoystickData
 {
     IDirectInput8W *di;
-    struct Joystick *joysticks;
-    int num_joysticks;
     int num_ff;
-    int cur_joystick;
-    int chosen_joystick;
     struct Graphics graphics;
     BOOL stop;
 };
@@ -113,6 +110,9 @@ static CRITICAL_SECTION joy_cs = { &joy_cs_debug, -1, 0, 0, 0, 0 };
 
 static struct list effects = LIST_INIT( effects );
 static IDirectInputEffect *effect_selected;
+
+static struct list devices = LIST_INIT( devices );
+static IDirectInputDevice8W *device_selected;
 
 /*********************************************************************
  *  DllMain
@@ -132,7 +132,7 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 
 static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
 {
-    struct Joystick *joystick = context;
+    IDirectInputDevice8W *device = context;
     DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
     LONG direction[2] = {0};
     DIEFFECT params =
@@ -169,7 +169,7 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     struct effect *entry;
     HRESULT hr;
 
-    hr = IDirectInputDevice8_Acquire( joystick->device );
+    hr = IDirectInputDevice8_Acquire( device );
     if (FAILED(hr)) return DIENUM_CONTINUE;
 
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
@@ -206,7 +206,7 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
         params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
 
-    do hr = IDirectInputDevice2_CreateEffect( joystick->device, &info->guid, &params, &effect, NULL );
+    do hr = IDirectInputDevice2_CreateEffect( device, &info->guid, &params, &effect, NULL );
     while (FAILED(hr) && --params.cAxes);
 
     if (FAILED(hr))
@@ -257,26 +257,19 @@ static void clear_effects(void)
     }
 }
 
-static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *context)
+static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *context )
 {
     DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     struct JoystickData *data = context;
-    struct Joystick *joystick;
     DIPROPRANGE proprange;
+    struct device *entry;
 
-    if (data->joysticks == NULL)
-    {
-        data->num_joysticks += 1;
-        return DIENUM_CONTINUE;
-    }
+    if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
-    joystick = &data->joysticks[data->cur_joystick];
-    data->cur_joystick += 1;
+    IDirectInput8_CreateDevice( data->di, &instance->guidInstance, &entry->device, NULL );
+    IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick );
 
-    IDirectInput8_CreateDevice(data->di, &instance->guidInstance, &joystick->device, NULL);
-    IDirectInputDevice8_SetDataFormat(joystick->device, &c_dfDIJoystick);
-
-    IDirectInputDevice8_GetCapabilities(joystick->device, &caps);
+    IDirectInputDevice8_GetCapabilities( entry->device, &caps );
     if (caps.dwFlags & DIDC_FORCEFEEDBACK) data->num_ff++;
 
     /* Set axis range to ease the GUI visualization */
@@ -287,40 +280,53 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     proprange.lMin = TEST_AXIS_MIN;
     proprange.lMax = TEST_AXIS_MAX;
 
-    IDirectInputDevice_SetProperty(joystick->device, DIPROP_RANGE, &proprange.diph);
+    IDirectInputDevice_SetProperty( entry->device, DIPROP_RANGE, &proprange.diph );
+    list_add_tail( &devices, &entry->entry );
 
     return DIENUM_CONTINUE;
 }
 
-/***********************************************************************
- *  initialize_joysticks [internal]
- */
-static void initialize_joysticks(struct JoystickData *data)
+static void set_selected_device( IDirectInputDevice8W *device )
 {
-    data->num_joysticks = 0;
-    data->cur_joystick = 0;
-    IDirectInput8_EnumDevices(data->di, DI8DEVCLASS_GAMECTRL, enum_callback, data, DIEDFL_ATTACHEDONLY);
-    data->joysticks = malloc(sizeof(struct Joystick) * data->num_joysticks);
+    IDirectInputDevice8W *previous;
 
-    /* Get all the joysticks */
-    IDirectInput8_EnumDevices(data->di, DI8DEVCLASS_GAMECTRL, enum_callback, data, DIEDFL_ATTACHEDONLY);
+    EnterCriticalSection( &joy_cs );
+
+    set_selected_effect( NULL );
+
+    if (device) IDirectInputDevice8_AddRef( device );
+    previous = device_selected;
+    device_selected = device;
+    if (previous) IDirectInputEffect_Release( previous );
+
+    LeaveCriticalSection( &joy_cs );
 }
 
-/***********************************************************************
- *  destroy_joysticks [internal]
- */
-static void destroy_joysticks(struct JoystickData *data)
+static IDirectInputDevice8W *get_selected_device(void)
 {
-    int i;
+    IDirectInputDevice8W *device;
 
-    for (i = 0; i < data->num_joysticks; i++)
+    EnterCriticalSection( &joy_cs );
+    device = device_selected;
+    if (device) IDirectInputDevice8_AddRef( device );
+    LeaveCriticalSection( &joy_cs );
+
+    return device;
+}
+
+static void clear_devices(void)
+{
+    struct device *entry, *next;
+
+    set_selected_device( NULL );
+
+    LIST_FOR_EACH_ENTRY_SAFE( entry, next, &devices, struct device, entry )
     {
-        IDirectInputDevice8_Unacquire(data->joysticks[i].device);
-        IDirectInputDevice8_Release(data->joysticks[i].device);
+        list_remove( &entry->entry );
+        IDirectInputDevice8_Unacquire( entry->device );
+        IDirectInputDevice8_Release( entry->device );
+        free( entry );
     }
-
-    free(data->joysticks);
-    data->joysticks = NULL;
 }
 
 /******************************************************************************
@@ -387,21 +393,22 @@ static void enable_joystick(WCHAR *joy_name, BOOL enable)
 
 static void refresh_joystick_list(HWND hwnd, struct JoystickData *data)
 {
-    struct Joystick *joy, *joy_end;
+    struct device *entry;
     HKEY hkey, appkey;
     DWORD values = 0;
     LSTATUS status;
     DWORD i;
 
     clear_effects();
-    destroy_joysticks(data);
-    initialize_joysticks(data);
+    clear_devices();
+
+    IDirectInput8_EnumDevices( data->di, DI8DEVCLASS_GAMECTRL, enum_devices, data, DIEDFL_ATTACHEDONLY );
 
     SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_RESETCONTENT, 0, 0);
     SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_RESETCONTENT, 0, 0);
     SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_RESETCONTENT, 0, 0);
 
-    for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
+    LIST_FOR_EACH_ENTRY( entry, &devices, struct device, entry )
     {
         DIDEVICEINSTANCEW info = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
         DIPROPGUIDANDPATH prop =
@@ -414,8 +421,8 @@ static void refresh_joystick_list(HWND hwnd, struct JoystickData *data)
             },
         };
 
-        if (FAILED(IDirectInputDevice8_GetDeviceInfo( joy->device, &info ))) continue;
-        if (FAILED(IDirectInputDevice8_GetProperty( joy->device, DIPROP_GUIDANDPATH, &prop.diph ))) continue;
+        if (FAILED(IDirectInputDevice8_GetDeviceInfo( entry->device, &info ))) continue;
+        if (FAILED(IDirectInputDevice8_GetProperty( entry->device, DIPROP_GUIDANDPATH, &prop.diph ))) continue;
 
         if (wcsstr( prop.wszPath, L"&ig_" )) SendDlgItemMessageW( hwnd, IDC_XINPUTLIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
         else SendDlgItemMessageW( hwnd, IDC_JOYSTICKLIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
@@ -596,22 +603,22 @@ static void dump_joy_state(DIJOYSTATE* st)
     TRACE("\n");
 }
 
-static void poll_input(const struct Joystick *joy, DIJOYSTATE *state)
+static void poll_input( IDirectInputDevice8W *device, DIJOYSTATE *state )
 {
     HRESULT  hr;
 
-    hr = IDirectInputDevice8_Poll(joy->device);
+    hr = IDirectInputDevice8_Poll( device );
 
     /* If it failed, try to acquire the joystick */
     if (FAILED(hr))
     {
-        hr = IDirectInputDevice8_Acquire(joy->device);
-        while (hr == DIERR_INPUTLOST) hr = IDirectInputDevice8_Acquire(joy->device);
+        hr = IDirectInputDevice8_Acquire( device );
+        while (hr == DIERR_INPUTLOST) hr = IDirectInputDevice8_Acquire( device );
     }
 
     if (hr == DIERR_OTHERAPPHASPRIO) return;
 
-    IDirectInputDevice8_GetDeviceState(joy->device, sizeof(DIJOYSTATE), state);
+    IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE), state );
 }
 
 static DWORD WINAPI input_thread(void *param)
@@ -637,10 +644,16 @@ static DWORD WINAPI input_thread(void *param)
 
     while (!data->stop)
     {
-        int i;
-        unsigned int j;
+        IDirectInputDevice8W *device;
+        unsigned int i, j;
 
-        poll_input(&data->joysticks[data->chosen_joystick], &state);
+        memset( &state, 0, sizeof(state) );
+
+        if ((device = get_selected_device()))
+        {
+            poll_input( device, &state );
+            IDirectInputDevice8_Release( device );
+        }
 
         dump_joy_state(&state);
 
@@ -687,13 +700,23 @@ static DWORD WINAPI input_thread(void *param)
 static void test_handle_joychange(HWND hwnd, struct JoystickData *data)
 {
     DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    IDirectInputDevice8W *device;
+    struct list *entry;
     int i;
 
-    if (data->num_joysticks == 0) return;
+    set_selected_device( NULL );
 
-    data->chosen_joystick = SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_GETCURSEL, 0, 0);
-    if (FAILED(IDirectInputDevice8_GetCapabilities( data->joysticks[data->chosen_joystick].device, &caps ))) return;
+    i = SendDlgItemMessageW( hwnd, IDC_TESTSELECTCOMBO, CB_GETCURSEL, 0, 0 );
+    if (i < 0) return;
 
+    entry = list_head( &devices );
+    while (i-- && entry) entry = list_next( &devices, entry );
+    if (!entry) return;
+
+    device = LIST_ENTRY( entry, struct device, entry )->device;
+    if (FAILED(IDirectInputDevice8_GetCapabilities( device, &caps ))) return;
+
+    set_selected_device( device );
     for (i = 0; i < TEST_MAX_BUTTONS; i++) ShowWindow( data->graphics.buttons[i], i < caps.dwButtons );
 }
 
@@ -774,12 +797,14 @@ static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
  */
 static void refresh_test_joystick_list(HWND hwnd, struct JoystickData *data)
 {
-    struct Joystick *joy, *joy_end;
+    struct device *entry;
+
     SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_RESETCONTENT, 0, 0);
-    for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
+
+    LIST_FOR_EACH_ENTRY( entry, &devices, struct device, entry )
     {
         DIDEVICEINSTANCEW info = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
-        if (FAILED(IDirectInputDevice8_GetDeviceInfo( joy->device, &info ))) continue;
+        if (FAILED(IDirectInputDevice8_GetDeviceInfo( entry->device, &info ))) continue;
         SendDlgItemMessageW( hwnd, IDC_TESTSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
     }
 }
@@ -822,7 +847,7 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     refresh_test_joystick_list(hwnd, data);
 
                     /* Initialize input thread */
-                    if (data->num_joysticks > 0)
+                    if (!list_empty( &devices ))
                     {
                         data->stop = FALSE;
 
@@ -869,13 +894,13 @@ static void draw_ff_axis(HWND hwnd, struct JoystickData *data)
         hwnd, NULL, NULL, hinst);
 }
 
-static void initialize_effects_list(HWND hwnd, struct Joystick* joy)
+static void initialize_effects_list( HWND hwnd, IDirectInputDevice8W *device )
 {
     struct effect *effect;
 
     clear_effects();
 
-    IDirectInputDevice8_EnumEffects( joy->device, enum_effects, (void *)joy, 0 );
+    IDirectInputDevice8_EnumEffects( device, enum_effects, device, 0 );
 
     SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_RESETCONTENT, 0, 0);
 
@@ -885,21 +910,35 @@ static void initialize_effects_list(HWND hwnd, struct Joystick* joy)
         GUID guid;
 
         if (FAILED(IDirectInputEffect_GetEffectGuid( effect->effect, &guid ))) continue;
-        if (FAILED(IDirectInputDevice8_GetEffectInfo( joy->device, &info, &guid ))) continue;
+        if (FAILED(IDirectInputDevice8_GetEffectInfo( device, &info, &guid ))) continue;
         SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_ADDSTRING, 0, (LPARAM)(info.tszName + 5));
     }
 }
 
-static void ff_handle_joychange(HWND hwnd, struct JoystickData *data)
+static void ff_handle_joychange( HWND hwnd )
 {
-    if (data->num_ff == 0) return;
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    IDirectInputDevice8W *device;
+    struct list *entry;
+    int i;
 
-    data->chosen_joystick = SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_GETCURSEL, 0, 0);
-    initialize_effects_list(hwnd, &data->joysticks[data->chosen_joystick]);
+    i = SendDlgItemMessageW( hwnd, IDC_FFSELECTCOMBO, CB_GETCURSEL, 0, 0 );
+    if (i < 0) return;
+
+    entry = list_head( &devices );
+    while (i-- && entry) entry = list_next( &devices, entry );
+    if (!entry) return;
+
+    device = LIST_ENTRY( entry, struct device, entry )->device;
+    if (FAILED(IDirectInputDevice8_GetCapabilities( device, &caps ))) return;
+
+    set_selected_device( device );
+    initialize_effects_list( hwnd, device );
 }
 
-static void ff_handle_effectchange(HWND hwnd, struct Joystick *joy)
+static void ff_handle_effectchange( HWND hwnd )
 {
+    IDirectInputDevice8W *device;
     struct list *entry;
     int sel;
 
@@ -914,9 +953,13 @@ static void ff_handle_effectchange(HWND hwnd, struct Joystick *joy)
 
     set_selected_effect( LIST_ENTRY( entry, struct effect, entry )->effect );
 
-    IDirectInputDevice8_Unacquire(joy->device);
-    IDirectInputDevice8_SetCooperativeLevel(joy->device, GetAncestor(hwnd, GA_ROOT), DISCL_BACKGROUND|DISCL_EXCLUSIVE);
-    IDirectInputDevice8_Acquire(joy->device);
+    if ((device = get_selected_device()))
+    {
+        IDirectInputDevice8_Unacquire( device );
+        IDirectInputDevice8_SetCooperativeLevel( device, GetAncestor( hwnd, GA_ROOT ), DISCL_BACKGROUND | DISCL_EXCLUSIVE );
+        IDirectInputDevice8_Acquire( device );
+        IDirectInputDevice8_Release( device );
+    }
 }
 
 static DWORD WINAPI ff_input_thread(void *param)
@@ -929,8 +972,8 @@ static DWORD WINAPI ff_input_thread(void *param)
     while (!data->stop)
     {
         int i;
-        struct Joystick *joy = &data->joysticks[data->chosen_joystick];
         DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
+        IDirectInputDevice8W *device;
         IDirectInputEffect *effect;
         LONG direction[3] = {0};
         DWORD axes[3] = {0};
@@ -946,9 +989,11 @@ static DWORD WINAPI ff_input_thread(void *param)
 
         Sleep(TEST_POLL_TIME);
 
-        if (!(effect = get_selected_effect())) continue;
+        if (!(device = get_selected_device())) continue;
+        poll_input( device, &state );
+        IDirectInputDevice8_Release( device );
 
-        poll_input(joy, &state);
+        if (!(effect = get_selected_effect())) continue;
 
         IDirectInputEffect_GetParameters( effect, &params, flags );
         params.rgdwAxes[0] = state.lX;
@@ -982,12 +1027,14 @@ static DWORD WINAPI ff_input_thread(void *param)
  */
 static void refresh_ff_joystick_list(HWND hwnd, struct JoystickData *data)
 {
-    struct Joystick *joy, *joy_end;
+    struct device *entry;
+
     SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_RESETCONTENT, 0, 0);
-    for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
+
+    LIST_FOR_EACH_ENTRY( entry, &devices, struct device, entry )
     {
         DIDEVICEINSTANCEW info = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
-        if (FAILED(IDirectInputDevice8_GetDeviceInfo( joy->device, &info ))) continue;
+        if (FAILED(IDirectInputDevice8_GetDeviceInfo( entry->device, &info ))) continue;
         SendDlgItemMessageW( hwnd, IDC_FFSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
     }
 }
@@ -1014,15 +1061,15 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
             switch(wparam)
             {
                 case MAKEWPARAM(IDC_FFSELECTCOMBO, CBN_SELCHANGE):
-                    ff_handle_joychange(hwnd, data);
+                    ff_handle_joychange( hwnd );
 
                     SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_SETCURSEL, 0, 0);
-                    ff_handle_effectchange(hwnd, &data->joysticks[data->chosen_joystick]);
-                break;
+                    ff_handle_effectchange( hwnd );
+                    break;
 
                 case MAKEWPARAM(IDC_FFEFFECTLIST, LBN_SELCHANGE):
-                    ff_handle_effectchange(hwnd, &data->joysticks[data->chosen_joystick]);
-                break;
+                    ff_handle_effectchange( hwnd );
+                    break;
             }
             return TRUE;
 
@@ -1039,10 +1086,10 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
                         data->stop = FALSE;
                         /* Set the first joystick as default */
                         SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_SETCURSEL, 0, 0);
-                        ff_handle_joychange(hwnd, data);
+                        ff_handle_joychange( hwnd );
 
                         SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_SETCURSEL, 0, 0);
-                        ff_handle_effectchange(hwnd, &data->joysticks[data->chosen_joystick]);
+                        ff_handle_effectchange( hwnd );
 
                         thread = CreateThread(NULL, 0, ff_input_thread, (void*) data, 0, &tid);
                     }
@@ -1187,8 +1234,7 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
                 return FALSE;
             }
 
-            /* Then get all the connected joysticks */
-            initialize_joysticks(&data);
+            IDirectInput8_EnumDevices( data.di, DI8DEVCLASS_GAMECTRL, enum_devices, &data, DIEDFL_ATTACHEDONLY );
 
             return TRUE;
         }
@@ -1212,7 +1258,7 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
 
         case CPL_STOP:
             clear_effects();
-            destroy_joysticks(&data);
+            clear_devices();
 
             /* And destroy dinput too */
             IDirectInput8_Release(data.di);
