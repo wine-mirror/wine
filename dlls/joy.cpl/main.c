@@ -78,7 +78,6 @@ struct effect
 struct Joystick
 {
     IDirectInputDevice8W *device;
-    DIDEVICEINSTANCEW instance;
     int num_buttons;
     int num_axes;
     BOOL forcefeedback;
@@ -247,8 +246,6 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     IDirectInput8_CreateDevice(data->di, &instance->guidInstance, &joystick->device, NULL);
     IDirectInputDevice8_SetDataFormat(joystick->device, &c_dfDIJoystick);
 
-    joystick->instance = *instance;
-
     caps.dwSize = sizeof(caps);
     IDirectInputDevice8_GetCapabilities(joystick->device, &caps);
 
@@ -400,8 +397,10 @@ static void refresh_joystick_list(HWND hwnd, struct JoystickData *data)
 
     for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
     {
-        if (joy->is_xinput) SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_ADDSTRING, 0, (LPARAM) joy->instance.tszInstanceName);
-        else SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_ADDSTRING, 0, (LPARAM) joy->instance.tszInstanceName);
+        DIDEVICEINSTANCEW info = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+        if (FAILED(IDirectInputDevice8_GetDeviceInfo( joy->device, &info ))) continue;
+        if (joy->is_xinput) SendDlgItemMessageW( hwnd, IDC_XINPUTLIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
+        else SendDlgItemMessageW( hwnd, IDC_JOYSTICKLIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
     }
 
     /* Search for disabled joysticks */
@@ -760,7 +759,11 @@ static void refresh_test_joystick_list(HWND hwnd, struct JoystickData *data)
     struct Joystick *joy, *joy_end;
     SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_RESETCONTENT, 0, 0);
     for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
-        SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM)joy->instance.tszInstanceName);
+    {
+        DIDEVICEINSTANCEW info = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+        if (FAILED(IDirectInputDevice8_GetDeviceInfo( joy->device, &info ))) continue;
+        SendDlgItemMessageW( hwnd, IDC_TESTSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
+    }
 }
 
 static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -956,7 +959,11 @@ static void refresh_ff_joystick_list(HWND hwnd, struct JoystickData *data)
     struct Joystick *joy, *joy_end;
     SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_RESETCONTENT, 0, 0);
     for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
-        SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM)joy->instance.tszInstanceName);
+    {
+        DIDEVICEINSTANCEW info = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+        if (FAILED(IDirectInputDevice8_GetDeviceInfo( joy->device, &info ))) continue;
+        SendDlgItemMessageW( hwnd, IDC_FFSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
+    }
 }
 
 static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
