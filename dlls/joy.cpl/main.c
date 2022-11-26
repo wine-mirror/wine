@@ -79,8 +79,6 @@ struct Joystick
 {
     IDirectInputDevice8W *device;
     BOOL forcefeedback;
-    BOOL is_xinput;
-    BOOL has_override;
 
     struct list effects;
     IDirectInputEffect *effect_selected;
@@ -218,15 +216,6 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
 
 static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *context)
 {
-    DIPROPGUIDANDPATH prop_guid_path =
-    {
-        .diph =
-        {
-            .dwSize = sizeof(DIPROPGUIDANDPATH),
-            .dwHeaderSize = sizeof(DIPROPHEADER),
-            .dwHow = DIPH_DEVICE,
-        },
-    };
     struct JoystickData *data = context;
     struct Joystick *joystick;
     DIPROPRANGE proprange;
@@ -248,9 +237,6 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     IDirectInputDevice8_GetCapabilities(joystick->device, &caps);
 
     joystick->forcefeedback = caps.dwFlags & DIDC_FORCEFEEDBACK;
-
-    IDirectInputDevice8_GetProperty(joystick->device, DIPROP_GUIDANDPATH, &prop_guid_path.diph);
-    joystick->is_xinput = wcsstr(prop_guid_path.wszPath, L"&ig_") != NULL;
 
     list_init( &joystick->effects );
     joystick->effect_selected = NULL;
@@ -394,8 +380,20 @@ static void refresh_joystick_list(HWND hwnd, struct JoystickData *data)
     for (joy = data->joysticks, joy_end = joy + data->num_joysticks; joy != joy_end; ++joy)
     {
         DIDEVICEINSTANCEW info = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+        DIPROPGUIDANDPATH prop =
+        {
+            .diph =
+            {
+                .dwSize = sizeof(DIPROPGUIDANDPATH),
+                .dwHeaderSize = sizeof(DIPROPHEADER),
+                .dwHow = DIPH_DEVICE,
+            },
+        };
+
         if (FAILED(IDirectInputDevice8_GetDeviceInfo( joy->device, &info ))) continue;
-        if (joy->is_xinput) SendDlgItemMessageW( hwnd, IDC_XINPUTLIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
+        if (FAILED(IDirectInputDevice8_GetProperty( joy->device, DIPROP_GUIDANDPATH, &prop.diph ))) continue;
+
+        if (wcsstr( prop.wszPath, L"&ig_" )) SendDlgItemMessageW( hwnd, IDC_XINPUTLIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
         else SendDlgItemMessageW( hwnd, IDC_JOYSTICKLIST, LB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
     }
 
