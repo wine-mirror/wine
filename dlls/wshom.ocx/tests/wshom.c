@@ -673,6 +673,21 @@ static void test_popup(void)
     SysFreeString(text);
     IWshShell_Release(sh);
 }
+static void test_wshnetwork(void)
+{
+    IDispatch *disp;
+    IUnknown *network;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_WshNetwork, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
+            &IID_IDispatch, (void**)&disp);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDispatch_QueryInterface(disp, &IID_IWshNetwork2, (void**)&network);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IUnknown_Release(network);
+}
 
 START_TEST(wshom)
 {
@@ -693,6 +708,7 @@ START_TEST(wshom)
     test_wshshell();
     test_registry();
     test_popup();
+    test_wshnetwork();
 
     CoUninitialize();
 }
