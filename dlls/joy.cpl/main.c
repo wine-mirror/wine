@@ -78,7 +78,6 @@ struct effect
 struct Joystick
 {
     IDirectInputDevice8W *device;
-    BOOL forcefeedback;
 
     struct list effects;
     IDirectInputEffect *effect_selected;
@@ -216,10 +215,10 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
 
 static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *context)
 {
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     struct JoystickData *data = context;
     struct Joystick *joystick;
     DIPROPRANGE proprange;
-    DIDEVCAPS caps;
 
     if (data->joysticks == NULL)
     {
@@ -233,15 +232,11 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     IDirectInput8_CreateDevice(data->di, &instance->guidInstance, &joystick->device, NULL);
     IDirectInputDevice8_SetDataFormat(joystick->device, &c_dfDIJoystick);
 
-    caps.dwSize = sizeof(caps);
-    IDirectInputDevice8_GetCapabilities(joystick->device, &caps);
-
-    joystick->forcefeedback = caps.dwFlags & DIDC_FORCEFEEDBACK;
-
     list_init( &joystick->effects );
     joystick->effect_selected = NULL;
 
-    if (joystick->forcefeedback) data->num_ff++;
+    IDirectInputDevice8_GetCapabilities(joystick->device, &caps);
+    if (caps.dwFlags & DIDC_FORCEFEEDBACK) data->num_ff++;
 
     /* Set axis range to ease the GUI visualization */
     proprange.diph.dwSize = sizeof(DIPROPRANGE);
@@ -252,9 +247,6 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     proprange.lMax = TEST_AXIS_MAX;
 
     IDirectInputDevice_SetProperty(joystick->device, DIPROP_RANGE, &proprange.diph);
-
-    if (!joystick->forcefeedback) return DIENUM_CONTINUE;
-
     IDirectInputDevice8_EnumEffects( joystick->device, enum_effects, (void *)joystick, 0 );
 
     return DIENUM_CONTINUE;
