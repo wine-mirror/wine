@@ -19,7 +19,7 @@
  *
  */
 
-#include "joy.h"
+#include "resource.h"
 
 #pragma makedep po
 

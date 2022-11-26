@@ -22,55 +22,10 @@
 #ifndef __WINE_JOYSTICKCPL__
 #define __WINE_JOYSTICKCPL__
 
-#include <winuser.h>
 #include <windef.h>
+#include <winbase.h>
+#include <winuser.h>
 #include <commctrl.h>
-#include <dinput.h>
-
-extern HMODULE hcpl;
-
-struct Effect {
-    IDirectInputEffect *effect;
-    DIEFFECT params;
-    DIEFFECTINFOW info;
-};
-
-struct Joystick {
-    IDirectInputDevice8W *device;
-    DIDEVICEINSTANCEW instance;
-    int num_buttons;
-    int num_axes;
-    BOOL forcefeedback;
-    BOOL is_xinput;
-    BOOL has_override;
-    int num_effects;
-    int cur_effect;
-    int chosen_effect;
-    struct Effect *effects;
-};
-
-#define TEST_MAX_BUTTONS    32
-#define TEST_MAX_AXES       4
-
-struct Graphics {
-    HWND hwnd;
-    HWND buttons[TEST_MAX_BUTTONS];
-    HWND axes[TEST_MAX_AXES];
-    HWND ff_axis;
-};
-
-struct JoystickData {
-    IDirectInput8W *di;
-    struct Joystick *joysticks;
-    int num_joysticks;
-    int num_ff;
-    int cur_joystick;
-    int chosen_joystick;
-    struct Graphics graphics;
-    BOOL stop;
-};
-
-#define NUM_PROPERTY_PAGES 3
 
 /* strings */
 #define IDS_CPL_NAME        1
@@ -101,32 +56,5 @@ struct JoystickData {
 #define IDC_FFEFFECTLIST    2201
 
 #define ICO_MAIN            100
-
-/* constants */
-#define TEST_POLL_TIME      100
-
-#define TEST_BUTTON_COL_MAX 8
-#define TEST_BUTTON_X       8
-#define TEST_BUTTON_Y       122
-#define TEST_NEXT_BUTTON_X  30
-#define TEST_NEXT_BUTTON_Y  25
-#define TEST_BUTTON_SIZE_X  20
-#define TEST_BUTTON_SIZE_Y  18
-
-#define TEST_AXIS_X         43
-#define TEST_AXIS_Y         60
-#define TEST_NEXT_AXIS_X    77
-#define TEST_AXIS_SIZE_X    3
-#define TEST_AXIS_SIZE_Y    3
-#define TEST_AXIS_MIN       -25
-#define TEST_AXIS_MAX       25
-
-#define FF_AXIS_X           248
-#define FF_AXIS_Y           60
-#define FF_AXIS_SIZE_X      3
-#define FF_AXIS_SIZE_Y      3
-
-#define FF_PLAY_TIME        2*DI_SECONDS
-#define FF_PERIOD_TIME      FF_PLAY_TIME/4
 
 #endif
