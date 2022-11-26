@@ -33,6 +33,7 @@
 #include "ole2.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 #include "resource.h"
 
@@ -68,8 +69,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 
 #define NUM_PROPERTY_PAGES 3
 
-struct Effect
+struct effect
 {
+    struct list entry;
     IDirectInputEffect *effect;
 };
 
@@ -82,10 +84,9 @@ struct Joystick
     BOOL forcefeedback;
     BOOL is_xinput;
     BOOL has_override;
-    int num_effects;
-    int cur_effect;
-    int chosen_effect;
-    struct Effect *effects;
+
+    struct list effects;
+    IDirectInputEffect *effect_selected;
 };
 
 struct Graphics
@@ -162,16 +163,13 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
         .lEnd = DI_FFNOMINALMAX,
     };
     IDirectInputEffect *effect;
+    struct effect *entry;
     HRESULT hr;
-
-    if (joystick->effects == NULL)
-    {
-        joystick->num_effects += 1;
-        return DIENUM_CONTINUE;
-    }
 
     hr = IDirectInputDevice8_Acquire( joystick->device );
     if (FAILED(hr)) return DIENUM_CONTINUE;
+
+    if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
     if (IsEqualGUID( &info->guid, &GUID_RampForce ))
     {
@@ -211,11 +209,12 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     if (FAILED(hr))
     {
         FIXME( "Failed to create effect with type %s, hr %#lx\n", debugstr_guid( &info->guid ), hr );
+        free( entry );
         return DIENUM_CONTINUE;
     }
 
-    joystick->effects[joystick->cur_effect].effect = effect;
-    joystick->cur_effect += 1;
+    entry->effect = effect;
+    list_add_tail( &joystick->effects, &entry->entry );
 
     return DIENUM_CONTINUE;
 }
@@ -256,10 +255,12 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     joystick->num_buttons = caps.dwButtons;
     joystick->num_axes = caps.dwAxes;
     joystick->forcefeedback = caps.dwFlags & DIDC_FORCEFEEDBACK;
-    joystick->num_effects = 0;
 
     IDirectInputDevice8_GetProperty(joystick->device, DIPROP_GUIDANDPATH, &prop_guid_path.diph);
     joystick->is_xinput = wcsstr(prop_guid_path.wszPath, L"&ig_") != NULL;
+
+    list_init( &joystick->effects );
+    joystick->effect_selected = NULL;
 
     if (joystick->forcefeedback) data->num_ff++;
 
@@ -275,15 +276,7 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
 
     if (!joystick->forcefeedback) return DIENUM_CONTINUE;
 
-    /* Count device effects and then store them */
-    joystick->num_effects = 0;
-    joystick->effects = NULL;
     IDirectInputDevice8_EnumEffects( joystick->device, enum_effects, (void *)joystick, 0 );
-    joystick->effects = malloc(sizeof(struct Effect) * joystick->num_effects);
-
-    joystick->cur_effect = 0;
-    IDirectInputDevice8_EnumEffects( joystick->device, enum_effects, (void *)joystick, 0 );
-    joystick->num_effects = joystick->cur_effect;
 
     return DIENUM_CONTINUE;
 }
@@ -307,18 +300,17 @@ static void initialize_joysticks(struct JoystickData *data)
  */
 static void destroy_joysticks(struct JoystickData *data)
 {
-    int i, j;
+    int i;
 
     for (i = 0; i < data->num_joysticks; i++)
     {
+        struct effect *effect, *next_effect;
 
-        if (data->joysticks[i].forcefeedback && data->joysticks[i].num_effects > 0)
+        LIST_FOR_EACH_ENTRY_SAFE( effect, next_effect, &data->joysticks[i].effects, struct effect, entry )
         {
-            for (j = 0; j < data->joysticks[i].num_effects; j++)
-                if (data->joysticks[i].effects[j].effect)
-                    IDirectInputEffect_Release(data->joysticks[i].effects[j].effect);
-
-            free(data->joysticks[i].effects);
+            list_remove( &effect->entry );
+            IDirectInputEffect_Release( effect->effect );
+            free( effect );
         }
 
         IDirectInputDevice8_Unacquire(data->joysticks[i].device);
@@ -858,16 +850,16 @@ static void draw_ff_axis(HWND hwnd, struct JoystickData *data)
 
 static void initialize_effects_list(HWND hwnd, struct Joystick* joy)
 {
-    int i;
+    struct effect *effect;
 
     SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_RESETCONTENT, 0, 0);
 
-    for (i=0; i < joy->num_effects; i++)
+    LIST_FOR_EACH_ENTRY( effect, &joy->effects, struct effect, entry )
     {
         DIEFFECTINFOW info = {.dwSize = sizeof(DIEFFECTINFOW)};
         GUID guid;
 
-        if (FAILED(IDirectInputEffect_GetEffectGuid( joy->effects[i].effect, &guid ))) continue;
+        if (FAILED(IDirectInputEffect_GetEffectGuid( effect->effect, &guid ))) continue;
         if (FAILED(IDirectInputDevice8_GetEffectInfo( joy->device, &info, &guid ))) continue;
         SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_ADDSTRING, 0, (LPARAM)(info.tszName + 5));
     }
@@ -883,11 +875,18 @@ static void ff_handle_joychange(HWND hwnd, struct JoystickData *data)
 
 static void ff_handle_effectchange(HWND hwnd, struct Joystick *joy)
 {
-    int sel = SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_GETCURSEL, 0, 0);
+    struct list *entry;
+    int sel;
 
+    sel = SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_GETCURSEL, 0, 0);
     if (sel < 0) return;
 
-    joy->chosen_effect = sel;
+    entry = list_head( &joy->effects );
+    while (sel-- && entry) entry = list_next( &joy->effects, entry );
+    if (!entry) return;
+
+    joy->effect_selected = LIST_ENTRY( entry, struct effect, entry )->effect;
+
     IDirectInputDevice8_Unacquire(joy->device);
     IDirectInputDevice8_SetCooperativeLevel(joy->device, GetAncestor(hwnd, GA_ROOT), DISCL_BACKGROUND|DISCL_EXCLUSIVE);
     IDirectInputDevice8_Acquire(joy->device);
@@ -904,8 +903,8 @@ static DWORD WINAPI ff_input_thread(void *param)
     {
         int i;
         struct Joystick *joy = &data->joysticks[data->chosen_joystick];
-        int chosen_effect = joy->chosen_effect;
         DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
+        IDirectInputEffect *effect;
         LONG direction[3] = {0};
         DWORD axes[3] = {0};
         DIEFFECT params =
@@ -920,12 +919,11 @@ static DWORD WINAPI ff_input_thread(void *param)
 
         Sleep(TEST_POLL_TIME);
 
-        /* Skip this if we have no effects */
-        if (joy->num_effects == 0 || chosen_effect < 0 || !joy->effects[chosen_effect].effect) continue;
+        if (!(effect = joy->effect_selected)) continue;
 
         poll_input(joy, &state);
 
-        IDirectInputEffect_GetParameters( joy->effects[chosen_effect].effect, &params, flags );
+        IDirectInputEffect_GetParameters( effect, &params, flags );
         params.rgdwAxes[0] = state.lX;
         params.rgdwAxes[1] = state.lY;
 
@@ -939,8 +937,8 @@ static DWORD WINAPI ff_input_thread(void *param)
         for (i=0; i < TEST_MAX_BUTTONS; i++)
             if (state.rgbButtons[i])
             {
-                IDirectInputEffect_SetParameters( joy->effects[chosen_effect].effect, &params, flags );
-                IDirectInputEffect_Start(joy->effects[chosen_effect].effect, 1, 0);
+                IDirectInputEffect_SetParameters( effect, &params, flags );
+                IDirectInputEffect_Start( effect, 1, 0 );
                 break;
             }
     }
