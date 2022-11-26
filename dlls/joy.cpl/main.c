@@ -78,8 +78,6 @@ struct effect
 struct Joystick
 {
     IDirectInputDevice8W *device;
-    int num_buttons;
-    int num_axes;
     BOOL forcefeedback;
     BOOL is_xinput;
     BOOL has_override;
@@ -249,8 +247,6 @@ static BOOL CALLBACK enum_callback(const DIDEVICEINSTANCEW *instance, void *cont
     caps.dwSize = sizeof(caps);
     IDirectInputDevice8_GetCapabilities(joystick->device, &caps);
 
-    joystick->num_buttons = caps.dwButtons;
-    joystick->num_axes = caps.dwAxes;
     joystick->forcefeedback = caps.dwFlags & DIDC_FORCEFEEDBACK;
 
     IDirectInputDevice8_GetProperty(joystick->device, DIPROP_GUIDANDPATH, &prop_guid_path.diph);
@@ -668,15 +664,15 @@ static DWORD WINAPI input_thread(void *param)
 
 static void test_handle_joychange(HWND hwnd, struct JoystickData *data)
 {
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     int i;
 
     if (data->num_joysticks == 0) return;
 
     data->chosen_joystick = SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_GETCURSEL, 0, 0);
+    if (FAILED(IDirectInputDevice8_GetCapabilities( data->joysticks[data->chosen_joystick].device, &caps ))) return;
 
-    /* Enable only  buttons present in the device */
-    for (i = 0; i < TEST_MAX_BUTTONS; i++)
-        ShowWindow(data->graphics.buttons[i], i < data->joysticks[data->chosen_joystick].num_buttons);
+    for (i = 0; i < TEST_MAX_BUTTONS; i++) ShowWindow( data->graphics.buttons[i], i < caps.dwButtons );
 }
 
 /*********************************************************************
