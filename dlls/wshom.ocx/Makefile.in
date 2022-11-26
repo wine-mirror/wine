@@ -4,6 +4,7 @@ IMPORTS   = uuid oleaut32 ole32 shell32 user32 advapi32 scrrun
 EXTRADLLFLAGS = -Wb,--prefer-native
 
 C_SRCS = \
+	network.c \
 	shell.c \
 	wshom_main.c
 
