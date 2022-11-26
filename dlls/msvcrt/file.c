@@ -1244,6 +1244,7 @@ int CDECL _dup2(int od, int nd)
 
   if (info_nd == &MSVCRT___badioinfo)
   {
+      *_errno() = EBADF;
       ret = -1;
   }
   else if (info_od->wxflag & WX_OPEN)

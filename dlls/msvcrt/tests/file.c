@@ -267,6 +267,12 @@ static void test_readmode( BOOL ascii_mode )
 
     close (fd);
     
+    fd = open ("fdopen.tst", O_RDONLY, _S_IREAD |_S_IWRITE);
+    errno = 0xdeadbeef;
+    ok(dup2(fd, -1) == -1, "dup2(fd, -1) succeeded\n");
+    ok(errno == EBADF, "errno = %d\n", errno);
+    close (fd);
+
     if (ascii_mode) {
         /* Open file in ascii mode */
         fd = open ("fdopen.tst", O_RDONLY);
