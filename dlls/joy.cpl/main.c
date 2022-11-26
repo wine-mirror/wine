@@ -71,7 +71,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 struct Effect
 {
     IDirectInputEffect *effect;
-    DIEFFECT params;
     DIEFFECTINFOW info;
 };
 
@@ -217,7 +216,6 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     }
 
     joystick->effects[joystick->cur_effect].effect = effect;
-    joystick->effects[joystick->cur_effect].params = params;
     joystick->effects[joystick->cur_effect].info = *info;
     joystick->cur_effect += 1;
 
@@ -906,21 +904,29 @@ static DWORD WINAPI ff_input_thread(void *param)
         int i;
         struct Joystick *joy = &data->joysticks[data->chosen_joystick];
         int chosen_effect = joy->chosen_effect;
-        DIEFFECT *dieffect;
         DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
+        LONG direction[3] = {0};
+        DWORD axes[3] = {0};
+        DIEFFECT params =
+        {
+            .dwSize = sizeof(DIEFFECT),
+            .dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS,
+            .rglDirection = direction,
+            .rgdwAxes = axes,
+            .cAxes = 3,
+        };
         RECT r;
 
         Sleep(TEST_POLL_TIME);
 
         /* Skip this if we have no effects */
-        if (joy->num_effects == 0 || chosen_effect < 0) continue;
+        if (joy->num_effects == 0 || chosen_effect < 0 || !joy->effects[chosen_effect].effect) continue;
 
         poll_input(joy, &state);
 
-        /* Set ff parameters and draw the axis */
-        dieffect = &joy->effects[chosen_effect].params;
-        dieffect->rgdwAxes[0] = state.lX;
-        dieffect->rgdwAxes[1] = state.lY;
+        IDirectInputEffect_GetParameters( joy->effects[chosen_effect].effect, &params, flags );
+        params.rgdwAxes[0] = state.lX;
+        params.rgdwAxes[1] = state.lY;
 
         r.left = FF_AXIS_X + state.lX;
         r.top = FF_AXIS_Y + state.lY;
@@ -932,7 +938,7 @@ static DWORD WINAPI ff_input_thread(void *param)
         for (i=0; i < TEST_MAX_BUTTONS; i++)
             if (state.rgbButtons[i])
             {
-                IDirectInputEffect_SetParameters(joy->effects[chosen_effect].effect, dieffect, flags);
+                IDirectInputEffect_SetParameters( joy->effects[chosen_effect].effect, &params, flags );
                 IDirectInputEffect_Start(joy->effects[chosen_effect].effect, 1, 0);
                 break;
             }
