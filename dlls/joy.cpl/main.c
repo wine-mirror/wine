@@ -130,16 +130,41 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 
 static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
 {
-    HRESULT hr;
-    DIEFFECT dieffect;
-    DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
-    LONG direction[2] = {0, 0};
-    int num_axes = 2;
     struct Joystick *joystick = context;
-    DIRAMPFORCE rforce;
-    DICONSTANTFORCE cforce;
-    DIPERIODIC pforce;
-    DICONDITION cdforce;
+    DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
+    LONG direction[2] = {0};
+    DIEFFECT params =
+    {
+        .dwSize = sizeof(DIEFFECT),
+        .dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS,
+        .dwDuration = FF_PLAY_TIME,
+        .dwGain = DI_FFNOMINALMAX,
+        .rglDirection = direction,
+        .rgdwAxes = axes,
+        .cAxes = 2,
+    };
+    DICONSTANTFORCE constant =
+    {
+        .lMagnitude = DI_FFNOMINALMAX,
+    };
+    DIPERIODIC periodic =
+    {
+        .dwMagnitude = DI_FFNOMINALMAX,
+        .dwPeriod = FF_PERIOD_TIME,
+    };
+    DICONDITION condition =
+    {
+        .dwPositiveSaturation = 10000,
+        .dwNegativeSaturation = 10000,
+        .lPositiveCoefficient = 10000,
+        .lNegativeCoefficient = 10000,
+    };
+    DIRAMPFORCE ramp =
+    {
+        .lEnd = DI_FFNOMINALMAX,
+    };
+    IDirectInputEffect *effect;
+    HRESULT hr;
 
     if (joystick->effects == NULL)
     {
@@ -148,35 +173,19 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
     }
 
     hr = IDirectInputDevice8_Acquire( joystick->device );
-
     if (FAILED(hr)) return DIENUM_CONTINUE;
-
-    ZeroMemory( &dieffect, sizeof(dieffect) );
-
-    dieffect.dwSize = sizeof(dieffect);
-    dieffect.dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS;
-    dieffect.dwDuration = FF_PLAY_TIME;
-    dieffect.dwGain = DI_FFNOMINALMAX;
-
-    dieffect.rgdwAxes = axes;
-    dieffect.rglDirection = direction;
 
     if (IsEqualGUID( &info->guid, &GUID_RampForce ))
     {
-        rforce.lStart = 0;
-        rforce.lEnd = DI_FFNOMINALMAX;
-
-        dieffect.cbTypeSpecificParams = sizeof(rforce);
-        dieffect.lpvTypeSpecificParams = &rforce;
-        dieffect.dwFlags |= DIEP_TYPESPECIFICPARAMS;
+        params.cbTypeSpecificParams = sizeof(ramp);
+        params.lpvTypeSpecificParams = &ramp;
+        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
     else if (IsEqualGUID( &info->guid, &GUID_ConstantForce ))
     {
-        cforce.lMagnitude = DI_FFNOMINALMAX;
-
-        dieffect.cbTypeSpecificParams = sizeof(cforce);
-        dieffect.lpvTypeSpecificParams = &cforce;
-        dieffect.dwFlags |= DIEP_TYPESPECIFICPARAMS;
+        params.cbTypeSpecificParams = sizeof(constant);
+        params.lpvTypeSpecificParams = &constant;
+        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
     else if (IsEqualGUID( &info->guid, &GUID_Sine ) ||
              IsEqualGUID( &info->guid, &GUID_Square ) ||
@@ -184,38 +193,22 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
              IsEqualGUID( &info->guid, &GUID_SawtoothUp ) ||
              IsEqualGUID( &info->guid, &GUID_SawtoothDown ))
     {
-        pforce.dwMagnitude = DI_FFNOMINALMAX;
-        pforce.lOffset = 0;
-        pforce.dwPhase = 0;
-        pforce.dwPeriod = FF_PERIOD_TIME;
-
-        dieffect.cbTypeSpecificParams = sizeof(pforce);
-        dieffect.lpvTypeSpecificParams = &pforce;
-        dieffect.dwFlags |= DIEP_TYPESPECIFICPARAMS;
+        params.cbTypeSpecificParams = sizeof(periodic);
+        params.lpvTypeSpecificParams = &periodic;
+        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
     else if (IsEqualGUID( &info->guid, &GUID_Spring ) ||
              IsEqualGUID( &info->guid, &GUID_Damper ) ||
              IsEqualGUID( &info->guid, &GUID_Inertia ) ||
              IsEqualGUID( &info->guid, &GUID_Friction ))
     {
-        cdforce.dwPositiveSaturation = 10000;
-        cdforce.dwNegativeSaturation = 10000;
-        cdforce.lPositiveCoefficient = 10000;
-        cdforce.lNegativeCoefficient = 10000;
-        cdforce.lDeadBand = 0;
-        cdforce.lOffset = 0;
-
-        dieffect.cbTypeSpecificParams = sizeof(cdforce);
-        dieffect.lpvTypeSpecificParams = &cdforce;
-        dieffect.dwFlags |= DIEP_TYPESPECIFICPARAMS;
+        params.cbTypeSpecificParams = sizeof(condition);
+        params.lpvTypeSpecificParams = &condition;
+        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
     }
 
-    do
-    {
-        dieffect.cAxes = num_axes--;
-        hr = IDirectInputDevice2_CreateEffect( joystick->device, &info->guid, &dieffect,
-                                               &joystick->effects[joystick->cur_effect].effect, NULL );
-    } while (FAILED(hr) && num_axes);
+    do hr = IDirectInputDevice2_CreateEffect( joystick->device, &info->guid, &params, &effect, NULL );
+    while (FAILED(hr) && --params.cAxes);
 
     if (FAILED(hr))
     {
@@ -223,7 +216,8 @@ static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
         return DIENUM_CONTINUE;
     }
 
-    joystick->effects[joystick->cur_effect].params = dieffect;
+    joystick->effects[joystick->cur_effect].effect = effect;
+    joystick->effects[joystick->cur_effect].params = params;
     joystick->effects[joystick->cur_effect].info = *info;
     joystick->cur_effect += 1;
 
