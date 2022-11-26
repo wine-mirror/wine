@@ -113,6 +113,8 @@ static IDirectInputEffect *effect_selected;
 static struct list devices = LIST_INIT( devices );
 static IDirectInputDevice8W *device_selected;
 
+static HANDLE device_state_event;
+
 /*********************************************************************
  *  DllMain
  */
@@ -292,10 +294,17 @@ static void set_selected_device( IDirectInputDevice8W *device )
 
     set_selected_effect( NULL );
 
-    if (device) IDirectInputDevice8_AddRef( device );
-    previous = device_selected;
-    device_selected = device;
-    if (previous) IDirectInputEffect_Release( previous );
+    if ((previous = device_selected))
+    {
+        IDirectInputDevice8_SetEventNotification( previous, NULL );
+        IDirectInputDevice8_Release( previous );
+    }
+    if ((device_selected = device))
+    {
+        IDirectInputDevice8_AddRef( device );
+        IDirectInputDevice8_SetEventNotification( device, device_state_event );
+        IDirectInputDevice8_Acquire( device );
+    }
 
     LeaveCriticalSection( &joy_cs );
 }
@@ -601,24 +610,6 @@ static void dump_joy_state(DIJOYSTATE* st)
     TRACE("\n");
 }
 
-static void poll_input( IDirectInputDevice8W *device, DIJOYSTATE *state )
-{
-    HRESULT  hr;
-
-    hr = IDirectInputDevice8_Poll( device );
-
-    /* If it failed, try to acquire the joystick */
-    if (FAILED(hr))
-    {
-        hr = IDirectInputDevice8_Acquire( device );
-        while (hr == DIERR_INPUTLOST) hr = IDirectInputDevice8_Acquire( device );
-    }
-
-    if (hr == DIERR_OTHERAPPHASPRIO) return;
-
-    IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE), state );
-}
-
 static DWORD WINAPI input_thread(void *param)
 {
     int axes_pos[TEST_MAX_AXES][2];
@@ -647,9 +638,11 @@ static DWORD WINAPI input_thread(void *param)
 
         memset( &state, 0, sizeof(state) );
 
+        if (WaitForSingleObject( device_state_event, TEST_POLL_TIME ) == WAIT_TIMEOUT) continue;
+
         if ((device = get_selected_device()))
         {
-            poll_input( device, &state );
+            IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
             IDirectInputDevice8_Release( device );
         }
 
@@ -688,8 +681,6 @@ static DWORD WINAPI input_thread(void *param)
 
             SetWindowPos(data->graphics.axes[i], 0, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
         }
-
-        Sleep(TEST_POLL_TIME);
     }
 
     return 0;
@@ -981,11 +972,13 @@ static DWORD WINAPI ff_input_thread(void *param)
         };
         RECT r;
 
-        Sleep(TEST_POLL_TIME);
+        if (WaitForSingleObject( device_state_event, TEST_POLL_TIME ) == WAIT_TIMEOUT) continue;
 
-        if (!(device = get_selected_device())) continue;
-        poll_input( device, &state );
-        IDirectInputDevice8_Release( device );
+        if ((device = get_selected_device()))
+        {
+            IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
+            IDirectInputDevice8_Release( device );
+        }
 
         if (!(effect = get_selected_effect())) continue;
 
@@ -1214,6 +1207,8 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
         {
             HRESULT hr;
 
+            device_state_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+
             /* Initialize dinput */
             hr = DirectInput8Create(GetModuleHandleW(NULL), DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void**)&data.di, NULL);
 
@@ -1251,6 +1246,8 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
 
             /* And destroy dinput too */
             IDirectInput8_Release(data.di);
+
+            CloseHandle( device_state_event );
             break;
     }
 
