@@ -92,7 +92,6 @@ struct Graphics
 struct JoystickData
 {
     IDirectInput8W *di;
-    int num_ff;
     struct Graphics graphics;
     BOOL stop;
 };
@@ -270,7 +269,6 @@ static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *cont
     IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick );
 
     IDirectInputDevice8_GetCapabilities( entry->device, &caps );
-    if (caps.dwFlags & DIDC_FORCEFEEDBACK) data->num_ff++;
 
     /* Set axis range to ease the GUI visualization */
     proprange.diph.dwSize = sizeof(DIPROPRANGE);
@@ -846,17 +844,13 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 
                     refresh_test_joystick_list(hwnd, data);
 
-                    /* Initialize input thread */
-                    if (!list_empty( &devices ))
-                    {
-                        data->stop = FALSE;
+                    data->stop = FALSE;
 
-                        /* Set the first joystick as default */
-                        SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_SETCURSEL, 0, 0);
-                        test_handle_joychange(hwnd, data);
+                    /* Set the first joystick as default */
+                    SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_SETCURSEL, 0, 0);
+                    test_handle_joychange(hwnd, data);
 
-                        thread = CreateThread(NULL, 0, input_thread, (void*) data, 0, &tid);
-                    }
+                    thread = CreateThread(NULL, 0, input_thread, (void*) data, 0, &tid);
                 }
                 break;
 
@@ -1079,20 +1073,15 @@ static INT_PTR CALLBACK ff_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
                 case PSN_SETACTIVE:
                     refresh_ff_joystick_list(hwnd, data);
 
-                    if (data->num_ff > 0)
-                    {
-                        DWORD tid;
+                    data->stop = FALSE;
+                    /* Set the first joystick as default */
+                    SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_SETCURSEL, 0, 0);
+                    ff_handle_joychange( hwnd );
 
-                        data->stop = FALSE;
-                        /* Set the first joystick as default */
-                        SendDlgItemMessageW(hwnd, IDC_FFSELECTCOMBO, CB_SETCURSEL, 0, 0);
-                        ff_handle_joychange( hwnd );
+                    SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_SETCURSEL, 0, 0);
+                    ff_handle_effectchange( hwnd );
 
-                        SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_SETCURSEL, 0, 0);
-                        ff_handle_effectchange( hwnd );
-
-                        thread = CreateThread(NULL, 0, ff_input_thread, (void*) data, 0, &tid);
-                    }
+                    thread = CreateThread(NULL, 0, ff_input_thread, (void*) data, 0, NULL);
                 break;
 
                 case PSN_RESET: /* intentional fall-through */
