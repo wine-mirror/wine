@@ -54,25 +54,16 @@ STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
 CAPTION "Test Joystick"
 FONT 8, "Ms Shell Dlg"
 {
-    COMBOBOX        IDC_TESTSELECTCOMBO, 5, 5, 200, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS
+    COMBOBOX        IDC_TESTSELECTCOMBO, 15, 10, 291, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS
     GROUPBOX        "Buttons", IDC_STATIC, 15, 100, 291, 70
     GROUPBOX        "", IDC_TESTGROUPXY,   15, 30, 60, 60
     GROUPBOX        "", IDC_TESTGROUPRXRY, 92, 30, 60, 60
     GROUPBOX        "", IDC_TESTGROUPZRZ, 169, 30, 60, 60
     GROUPBOX        "", IDC_TESTGROUPPOV, 246, 30, 60, 60
-}
-
-IDD_FORCEFEEDBACK DIALOG 0, 0, 320, 300
-STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
-CAPTION "Test Force Feedback"
-FONT 8, "Ms Shell Dlg"
-{
-    COMBOBOX        IDC_FFSELECTCOMBO, 5, 5, 200, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS
-    LTEXT           "Available Effects", IDC_STATIC, 10, 30, 100, 10
-    LISTBOX         IDC_FFEFFECTLIST, 10, 40, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
+    LTEXT           "Force Feedback Effect", IDC_STATIC, 15, 180, 291, 10
+    LISTBOX         IDC_FFEFFECTLIST, 15, 190, 291, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
     LTEXT           "Press any button in the controller to activate the chosen effect. The effect direction can be changed with the controller axis.",
-                    IDC_STATIC, 10, 110, 210, 25
-    GROUPBOX        "Direction", IDC_STATIC, 220, 30, 60, 60
+                    IDC_STATIC, 15, 260, 291, 25
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

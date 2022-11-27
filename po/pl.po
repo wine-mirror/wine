@@ -788,7 +788,7 @@ msgstr "Uwzględniaj tylko całe &wyrazy"
 msgid "Match &Case"
 msgstr "&Rozróżniaj wielkość liter"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
+#: dlls/comdlg32/comdlg32.rc:325
 msgid "Direction"
 msgstr "Kierunek"
 
@@ -3774,15 +3774,13 @@ msgstr "Próbowanie Joysticka"
 msgid "Buttons"
 msgstr "Przyciski"
 
-#: dlls/joy.cpl/joy.rc:68
-msgid "Test Force Feedback"
+#: dlls/joy.cpl/joy.rc:64
+#, fuzzy
+#| msgid "Test Force Feedback"
+msgid "Force Feedback Effect"
 msgstr "Próbowanie odczuć siły zwrotnej"
 
-#: dlls/joy.cpl/joy.rc:72
-msgid "Available Effects"
-msgstr "Dostępne efekty"
-
-#: dlls/joy.cpl/joy.rc:74
+#: dlls/joy.cpl/joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

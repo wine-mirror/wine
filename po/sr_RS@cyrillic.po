@@ -804,7 +804,7 @@ msgstr "Пронађи само &целу реч"
 msgid "Match &Case"
 msgstr "Подударање &малих и великих слова"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
+#: dlls/comdlg32/comdlg32.rc:325
 msgid "Direction"
 msgstr "Правац"
 
@@ -3815,16 +3815,11 @@ msgstr ""
 msgid "Buttons"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:68
-msgid "Test Force Feedback"
+#: dlls/joy.cpl/joy.rc:64
+msgid "Force Feedback Effect"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:72
-#, fuzzy
-msgid "Available Effects"
-msgstr "Н&апред"
-
-#: dlls/joy.cpl/joy.rc:74
+#: dlls/joy.cpl/joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

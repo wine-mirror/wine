@@ -771,7 +771,7 @@ msgstr "全字拼寫須符合(&W)"
 msgid "Match &Case"
 msgstr "大小寫視為相異(&C)"
 
-#: dlls/comdlg32/comdlg32.rc:325 dlls/joy.cpl/joy.rc:76
+#: dlls/comdlg32/comdlg32.rc:325
 msgid "Direction"
 msgstr "方向"
 
@@ -3709,15 +3709,13 @@ msgstr "測試搖桿"
 msgid "Buttons"
 msgstr "按鈕"
 
-#: dlls/joy.cpl/joy.rc:68
-msgid "Test Force Feedback"
+#: dlls/joy.cpl/joy.rc:64
+#, fuzzy
+#| msgid "Test Force Feedback"
+msgid "Force Feedback Effect"
 msgstr "測試應力回饋"
 
-#: dlls/joy.cpl/joy.rc:72
-msgid "Available Effects"
-msgstr "可用效果"
-
-#: dlls/joy.cpl/joy.rc:74
+#: dlls/joy.cpl/joy.rc:66
 msgid ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."

@@ -36,7 +36,6 @@
 
 #define IDD_LIST            1000
 #define IDD_TEST            1001
-#define IDD_FORCEFEEDBACK   1002
 
 #define IDC_JOYSTICKLIST    2000
 #define IDC_DISABLEDLIST    2001
@@ -51,9 +50,7 @@
 #define IDC_TESTGROUPRXRY   2102
 #define IDC_TESTGROUPZRZ    2103
 #define IDC_TESTGROUPPOV    2104
-
-#define IDC_FFSELECTCOMBO   2200
-#define IDC_FFEFFECTLIST    2201
+#define IDC_FFEFFECTLIST    2105
 
 #define ICO_MAIN            100
 
