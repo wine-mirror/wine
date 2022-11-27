@@ -8148,13 +8148,25 @@ technique10 tech
     {
         SetBlendState( NULL, g_var.x + g_var2 + g_var.y, 0 );
     }
+    pass p2
+    {
+        SetBlendState( NULL, min(g_var.x, g_var2.x) + max(g_var.y, g_var2.y) + min(g_var, g_var2) + max(g_var, g_var2), 0 );
+    }
+    pass p3
+    {
+        SetBlendState( NULL, min(g_var.x, g_var2), 0 );
+    }
+    pass p4
+    {
+        SetBlendState( NULL, max(g_var.x, g_var2), 0 );
+    }
 }
 #endif
 static DWORD fx_test_value_expression[] =
 {
-    0x43425844, 0xe517f17c, 0xe44eaede, 0xe4fd1240, 0xc67d5084, 0x00000001, 0x0000047c, 0x00000001,
-    0x00000024, 0x30315846, 0x00000450, 0xfeff1001, 0x00000001, 0x00000002, 0x00000000, 0x00000000,
-    0x00000000, 0x00000000, 0x00000001, 0x00000330, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    0x43425844, 0x20f6c3c9, 0x33c16d9f, 0xa04ed2e5, 0xf3d9ceb1, 0x00000001, 0x00000a01, 0x00000001,
+    0x00000024, 0x30315846, 0x000009d5, 0xfeff1001, 0x00000001, 0x00000002, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000001, 0x00000801, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
     0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x6f6c4724,
     0x736c6162, 0x6f6c6600, 0x00347461, 0x0000000d, 0x00000001, 0x00000000, 0x00000010, 0x00000010,
     0x00000010, 0x0000210a, 0x61765f67, 0x5f670072, 0x32726176, 0x63657400, 0x30700068, 0x00016000,
@@ -8181,19 +8193,71 @@ static DWORD fx_test_value_expression[] =
     0x00000000, 0x00000002, 0x00000004, 0x00000000, 0x00000007, 0x00000000, 0xa0400004, 0x00000002,
     0x00000000, 0x00000002, 0x00000001, 0x00000000, 0x00000007, 0x00000000, 0x00000000, 0x00000004,
     0x00000000, 0xf0f0f0f0, 0x0f0f0f0f, 0x0000ffff, 0x00000001, 0x00000002, 0x00000000, 0x00000001,
-    0x00000002, 0x00000000, 0x00000004, 0x00000020, 0x00000000, 0x00000002, 0xffffffff, 0x00000000,
-    0x00000030, 0x00000014, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000036,
-    0x00000014, 0x00000000, 0x00000010, 0x00000000, 0x00000000, 0x00000000, 0x0000003d, 0x00000002,
-    0x00000000, 0x00000042, 0x00000003, 0x00000000, 0x0000000a, 0x00000000, 0x00000006, 0x00000045,
-    0x0000000b, 0x00000000, 0x00000001, 0x000001a9, 0x00000002, 0x00000000, 0x00000001, 0x000001b5,
-    0x000001c1, 0x00000003, 0x00000000, 0x0000000a, 0x00000000, 0x00000006, 0x000001c4, 0x0000000b,
-    0x00000000, 0x00000001, 0x00000318, 0x00000002, 0x00000000, 0x00000001, 0x00000324,
+    0x00000002, 0x00000000, 0x2c003270, 0x44000002, 0x9e434258, 0xfae994e0, 0xb641b826, 0x0bac8f3a,
+    0x019d4eb7, 0x2c000000, 0x03000002, 0x2c000000, 0xd4000000, 0xe0000000, 0x43000000, 0xa0424154,
+    0x1c000000, 0x77000000, 0x00000000, 0x02465804, 0x1c000000, 0x00000000, 0x74000001, 0x44000000,
+    0x02000000, 0x01000000, 0x4c000000, 0x00000000, 0x5c000000, 0x02000000, 0x01000100, 0x64000000,
+    0x00000000, 0x67000000, 0x7261765f, 0x01abab00, 0x01000300, 0x01000400, 0x00000000, 0x67000000,
+    0x7261765f, 0x01ab0032, 0x01000300, 0x01000400, 0x00000000, 0x74000000, 0x694d0078, 0x736f7263,
+    0x2074666f, 0x20295228, 0x4c534c48, 0x61685320, 0x20726564, 0x706d6f43, 0x72656c69, 0x2e303120,
+    0x43ab0031, 0x0434494c, 0x00000000, 0x46000000, 0x44434c58, 0x07000001, 0x01000000, 0x02200000,
+    0x00000000, 0x02000000, 0x00000000, 0x00000000, 0x02000000, 0x04000000, 0x00000000, 0x07000000,
+    0x00000000, 0x01000000, 0x02201000, 0x00000000, 0x02000000, 0x01000000, 0x00000000, 0x02000000,
+    0x05000000, 0x00000000, 0x07000000, 0x01000000, 0x01000000, 0x02204000, 0x00000000, 0x07000000,
+    0x01000000, 0x00000000, 0x07000000, 0x00000000, 0x00000000, 0x07000000, 0x04000000, 0x04000000,
+    0x02200000, 0x00000000, 0x02000000, 0x00000000, 0x00000000, 0x02000000, 0x04000000, 0x00000000,
+    0x07000000, 0x00000000, 0x04000000, 0x02a04000, 0x00000000, 0x07000000, 0x04000000, 0x00000000,
+    0x07000000, 0x00000000, 0x00000000, 0x07000000, 0x08000000, 0x04000000, 0x02201000, 0x00000000,
+    0x02000000, 0x00000000, 0x00000000, 0x02000000, 0x04000000, 0x00000000, 0x07000000, 0x00000000,
+    0x04000000, 0x02204000, 0x00000000, 0x07000000, 0x00000000, 0x00000000, 0x07000000, 0x08000000,
+    0x00000000, 0x04000000, 0x00000000, 0xf0000000, 0x0ff0f0f0, 0xff0f0f0f, 0x010000ff, 0x02000000,
+    0x00000000, 0x01000000, 0x02000000, 0x00000000, 0x70000000, 0x01240033, 0x58440000, 0xf4c54342,
+    0x070658ce, 0xcabd2023, 0x24d22fca, 0x00010f0c, 0x01240000, 0x00030000, 0x002c0000, 0x00d40000,
+    0x00e00000, 0x54430000, 0x00a04241, 0x001c0000, 0x00770000, 0x04000000, 0x00024658, 0x001c0000,
+    0x01000000, 0x00740000, 0x00440000, 0x00020000, 0x00010000, 0x004c0000, 0x00000000, 0x005c0000,
+    0x00020000, 0x00010001, 0x00640000, 0x00000000, 0x5f670000, 0x00726176, 0x0001abab, 0x00010003,
+    0x00010004, 0x00000000, 0x5f670000, 0x32726176, 0x0001ab00, 0x00010003, 0x00010004, 0x00000000,
+    0x78740000, 0x63694d00, 0x6f736f72, 0x28207466, 0x48202952, 0x204c534c, 0x64616853, 0x43207265,
+    0x69706d6f, 0x2072656c, 0x312e3031, 0x4c43ab00, 0x00043449, 0x00000000, 0x58460000, 0x003c434c,
+    0x00010000, 0x00040000, 0x0002a000, 0x00000000, 0x00020000, 0x00000000, 0x00000000, 0x00020000,
+    0x00040000, 0x00000000, 0x00040000, 0x00000000, 0xf0f00000, 0x0f0ff0f0, 0xffff0f0f, 0x00010000,
+    0x00020000, 0x00000000, 0x00010000, 0x00020000, 0x00000000, 0x34700000, 0x00012400, 0x42584400,
+    0xc902bb43, 0xafcba635, 0xa383ff89, 0xed53a9f6, 0x000001f8, 0x00012400, 0x00000300, 0x00002c00,
+    0x0000d400, 0x0000e000, 0x41544300, 0x0000a042, 0x00001c00, 0x00007700, 0x58040000, 0x00000246,
+    0x00001c00, 0x00010000, 0x00007400, 0x00004400, 0x00000200, 0x00000100, 0x00004c00, 0x00000000,
+    0x00005c00, 0x01000200, 0x00000100, 0x00006400, 0x00000000, 0x765f6700, 0xab007261, 0x030001ab,
+    0x04000100, 0x00000100, 0x00000000, 0x765f6700, 0x00327261, 0x030001ab, 0x04000100, 0x00000100,
+    0x00000000, 0x00787400, 0x7263694d, 0x666f736f, 0x52282074, 0x4c482029, 0x53204c53, 0x65646168,
+    0x6f432072, 0x6c69706d, 0x31207265, 0x00312e30, 0x494c43ab, 0x00000434, 0x00000000, 0x4c584600,
+    0x00003c43, 0x00000100, 0x10000400, 0x000002a0, 0x00000000, 0x00000200, 0x00000000, 0x00000000,
+    0x00000200, 0x00000400, 0x00000000, 0x00000400, 0x00000000, 0xf0f0f000, 0x0f0f0ff0, 0x00ffff0f,
+    0x00000100, 0x00000200, 0x00000000, 0x00000100, 0x00000200, 0x00000000, 0x00000400, 0x00002000,
+    0x00000000, 0x00000200, 0xffffff00, 0x000000ff, 0x00003000, 0x00001400, 0x00000000, 0x00000000,
+    0x00000000, 0x00000000, 0x00000000, 0x00003600, 0x00001400, 0x00000000, 0x00001000, 0x00000000,
+    0x00000000, 0x00000000, 0x00003d00, 0x00000500, 0x00000000, 0x00004200, 0x00000300, 0x00000000,
+    0x00000a00, 0x00000000, 0x00000600, 0x00004500, 0x00000b00, 0x00000000, 0x00000100, 0x0001a900,
+    0x00000200, 0x00000000, 0x00000100, 0x0001b500, 0x0001c100, 0x00000300, 0x00000000, 0x00000a00,
+    0x00000000, 0x00000600, 0x0001c400, 0x00000b00, 0x00000000, 0x00000100, 0x00031800, 0x00000200,
+    0x00000000, 0x00000100, 0x00032400, 0x00033000, 0x00000300, 0x00000000, 0x00000a00, 0x00000000,
+    0x00000600, 0x00033300, 0x00000b00, 0x00000000, 0x00000100, 0x00056300, 0x00000200, 0x00000000,
+    0x00000100, 0x00056f00, 0x00057b00, 0x00000300, 0x00000000, 0x00000a00, 0x00000000, 0x00000600,
+    0x00057e00, 0x00000b00, 0x00000000, 0x00000100, 0x0006a600, 0x00000200, 0x00000000, 0x00000100,
+    0x0006b200, 0x0006be00, 0x00000300, 0x00000000, 0x00000a00, 0x00000000, 0x00000600, 0x0006c100,
+    0x00000b00, 0x00000000, 0x00000100, 0x0007e900, 0x00000200, 0x00000000, 0x00000100, 0x0007f500,
+    0x00000000,
 };
 
 static void test_effect_value_expression(void)
 {
+    ID3D10EffectVectorVariable *g_var, *g_var2;
+    ID3D10BlendState *blend_state;
+    float f[4], blend_factor[4];
+    ID3D10EffectTechnique *t;
+    ID3D10EffectVariable *v;
+    ID3D10EffectPass *pass;
     ID3D10Effect *effect;
     ID3D10Device *device;
+    UINT sample_mask;
     ULONG refcount;
     HRESULT hr;
 
@@ -8205,6 +8269,69 @@ static void test_effect_value_expression(void)
 
     hr = create_effect(fx_test_value_expression, 0, device, NULL, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    t = effect->lpVtbl->GetTechniqueByName(effect, "tech");
+    ok(t->lpVtbl->IsValid(t), "Expected valid technique.\n");
+
+    v = effect->lpVtbl->GetVariableByName(effect, "g_var");
+    g_var = v->lpVtbl->AsVector(v);
+    ok(g_var->lpVtbl->IsValid(g_var), "Expected valid vector variable.\n");
+    v = effect->lpVtbl->GetVariableByName(effect, "g_var2");
+    g_var2 = v->lpVtbl->AsVector(v);
+    ok(g_var2->lpVtbl->IsValid(g_var2), "Expected valid vector variable.\n");
+
+    /* min/max */
+    pass = t->lpVtbl->GetPassByName(t, "p3");
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
+    ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
+    ok(blend_factor[0] == 0.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
+    ok(blend_factor[1] == 0.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
+    ok(blend_factor[2] == 0.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
+    ok(blend_factor[3] == 0.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
+
+    f[0] = 1.0f; f[1] = 2.0f; f[2] = 3.0f; f[3] = 4.0f;
+    hr = g_var->lpVtbl->SetFloatVector(g_var, f);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    f[0] = 2.0f; f[1] = 1.1f; f[2] = 0.1f; f[3] = -3.0f;
+    hr = g_var2->lpVtbl->SetFloatVector(g_var2, f);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
+    ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
+    todo_wine
+    {
+    ok(blend_factor[0] == 1.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
+    ok(blend_factor[1] == 1.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
+    ok(blend_factor[2] == 0.1f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
+    ok(blend_factor[3] == -3.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    }
+    ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
+
+    pass = t->lpVtbl->GetPassByName(t, "p4");
+    ok(pass->lpVtbl->IsValid(pass), "Expected valid pass.\n");
+
+    hr = pass->lpVtbl->Apply(pass, 0);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
+    ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
+    todo_wine
+    {
+    ok(blend_factor[0] == 2.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
+    ok(blend_factor[1] == 1.1f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
+    ok(blend_factor[2] == 1.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
+    ok(blend_factor[3] == 1.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
+    }
+    ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     effect->lpVtbl->Release(effect);
 

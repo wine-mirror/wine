@@ -219,6 +219,24 @@ static void pres_ftou(float **args, unsigned int n, const struct preshader_instr
     }
 }
 
+static void pres_min(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = min(args[0][instr->scalar ? 0 : i], args[1][i]);
+}
+
+static void pres_max(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = max(args[0][instr->scalar ? 0 : i], args[1][i]);
+}
+
 static void pres_add(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     float *retval = args[2];
@@ -238,6 +256,8 @@ struct preshader_op_info
 static const struct preshader_op_info preshader_ops[] =
 {
     { 0x133, "ftou", pres_ftou },
+    { 0x200, "min",  pres_min  },
+    { 0x201, "max",  pres_max  },
     { 0x204, "add",  pres_add  },
 };
 
@@ -2111,7 +2131,8 @@ static HRESULT parse_fx10_preshader_instr(struct d3d10_preshader_parse_context *
         return E_FAIL;
     }
 
-    TRACE("Opcode %#x (%s), input count %u.\n", ins.opcode, op_info->name, input_count);
+    TRACE("Opcode %#x (%s) (%u,%u), input count %u.\n", ins.opcode, op_info->name,
+            ins.comp_count, ins.scalar, input_count);
 
     /* Inputs + one output */
     param_count = input_count + 1;
