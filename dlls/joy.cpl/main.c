@@ -19,7 +19,6 @@
  *
  */
 
-#define NONAMELESSUNION
 #define COBJMACROS
 #define CONST_VTABLE
 
@@ -962,14 +961,14 @@ static void display_cpl_sheets( HWND parent, struct JoystickData *data )
         {
             .dwSize = sizeof(PROPSHEETPAGEW),
             .hInstance = hcpl,
-            .u.pszTemplate = MAKEINTRESOURCEW( IDD_LIST ),
+            .pszTemplate = MAKEINTRESOURCEW( IDD_LIST ),
             .pfnDlgProc = list_dlgproc,
             .lParam = (INT_PTR)data,
         },
         {
             .dwSize = sizeof(PROPSHEETPAGEW),
             .hInstance = hcpl,
-            .u.pszTemplate = MAKEINTRESOURCEW( IDD_TEST_DI ),
+            .pszTemplate = MAKEINTRESOURCEW( IDD_TEST_DI ),
             .pfnDlgProc = test_dlgproc,
             .lParam = (INT_PTR)data,
         },
@@ -982,7 +981,7 @@ static void display_cpl_sheets( HWND parent, struct JoystickData *data )
         .hInstance = hcpl,
         .pszCaption = MAKEINTRESOURCEW( IDS_CPL_NAME ),
         .nPages = ARRAY_SIZE(pages),
-        .u3.ppsp = pages,
+        .ppsp = pages,
         .pfnCallback = propsheet_callback,
     };
     ACTCTXW context_desc =
