@@ -874,6 +874,75 @@ static void test_OpenPort(void)
 
 }
 
+static void test_file_port(void)
+{
+    WCHAR printer_name[256];
+    DOC_INFO_1W doc_info;
+    HANDLE hport, hf;
+    BYTE buf[16];
+    DWORD no;
+    BOOL res;
+
+    if ((!pOpenPort && !pOpenPort2) || !pClosePort || !pStartDocPort ||
+            !pWritePort || !pEndDocPort)
+    {
+        win_skip("FILE: port\n");
+        return;
+    }
+
+    no = ARRAY_SIZE(printer_name);
+    if (!GetDefaultPrinterW(printer_name, &no))
+    {
+        skip("no default printer\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    res = call_OpenPort(tempfileW, &hport);
+    ok(!res, "OpenPort succeeded\n");
+    ok(GetLastError() == 0xdeadbeef, "GetLastError() = %lu\n", GetLastError());
+
+    res = call_OpenPort((WCHAR *)L"FILE", &hport);
+    ok(!res, "OpenPort succeeded\n");
+    ok(GetLastError() == 0xdeadbeef, "GetLastError() = %lu\n", GetLastError());
+
+    res = call_OpenPort((WCHAR *)L"FILE:", &hport);
+    ok(res, "OpenPort failed (%lu)\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    res = pWritePort(hport, (BYTE *)"test", 4, &no);
+    ok(!res, "WritePort succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %lu\n", GetLastError());
+
+    doc_info.pDocName = (WCHAR *)L"not used";
+    doc_info.pOutputFile = tempfileW;
+    doc_info.pDatatype = (WCHAR *)L"not used";
+    res = pStartDocPort(hport, printer_name, 1, 1, (BYTE *)&doc_info);
+    ok(res, "StartDocPort failed (%lu)\n", GetLastError());
+
+    res = pStartDocPort(hport, printer_name, 1, 1, (BYTE *)&doc_info);
+    ok(res, "StartDocPort failed (%lu)\n", GetLastError());
+
+    res = pWritePort(hport, (BYTE *)"test", 4, &no);
+    ok(res, "WritePort failed (%lu)\n", GetLastError());
+    ok(no == 4, "no = %ld\n", no);
+
+    res = pEndDocPort(hport);
+    ok(res, "EndDocPort failed (%lu)\n", GetLastError());
+    res = pEndDocPort(hport);
+    ok(res, "EndDocPort failed (%lu)\n", GetLastError());
+
+    hf = CreateFileW(tempfileW, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, NULL);
+    ok(hf != INVALID_HANDLE_VALUE, "CreateFile failed (%lu)\n", GetLastError());
+    res = ReadFile(hf, buf, sizeof(buf), &no, NULL);
+    ok(res, "ReadFile failed (%lu)\n", GetLastError());
+    ok(no == 4, "no = %ld\n", no);
+    CloseHandle(hf);
+
+    res = pClosePort(hport);
+    ok(res, "ClosePort failed (%lu)\n", GetLastError());
+}
+
 /* ########################### */
 
 static void test_XcvClosePort(void)
@@ -1611,6 +1680,7 @@ START_TEST(localmon)
     test_DeletePort();
     test_EnumPorts();
     test_OpenPort();
+    test_file_port();
 
     if ( !hXcv ) {
         skip("Xcv not supported\n");
