@@ -3783,6 +3783,58 @@ msgstr ""
 "Trykk en knapp på kontrolleren for å aktivere den valgte effekten. Effektens "
 "retning kan endres med kontrollerens akse."
 
+#: dlls/joy.cpl/joy.rc:72
+msgid "XInput"
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:75
+#, fuzzy
+#| msgid "User"
+msgid "User #0"
+msgstr "Bruker"
+
+#: dlls/joy.cpl/joy.rc:76
+#, fuzzy
+#| msgid "User"
+msgid "User #1"
+msgstr "Bruker"
+
+#: dlls/joy.cpl/joy.rc:77
+#, fuzzy
+#| msgid "User"
+msgid "User #2"
+msgstr "Bruker"
+
+#: dlls/joy.cpl/joy.rc:78
+#, fuzzy
+#| msgid "User"
+msgid "User #3"
+msgstr "Bruker"
+
+#: dlls/joy.cpl/joy.rc:80
+msgid ""
+"No user detected on slot #0, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:84
+msgid ""
+"No user detected on slot #1, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:88
+msgid ""
+"No user detected on slot #2, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:92
+msgid ""
+"No user detected on slot #3, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
 msgstr "Spillkontrollere"

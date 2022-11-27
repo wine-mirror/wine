@@ -66,6 +66,34 @@ FONT 8, "Ms Shell Dlg"
                     IDC_STATIC, 15, 260, 291, 25
 }
 
+IDD_TEST_XI DIALOG 0, 0, 320, 300
+STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
+CAPTION "XInput"
+FONT 8, "Ms Shell Dlg"
+{
+    GROUPBOX        "User #0", IDC_XI_USER_0, 15,  10, 291, 60
+    GROUPBOX        "User #1", IDC_XI_USER_1, 15,  80, 291, 60
+    GROUPBOX        "User #2", IDC_XI_USER_2, 15, 150, 291, 60
+    GROUPBOX        "User #3", IDC_XI_USER_3, 15, 220, 291, 60
+
+    LTEXT           "No user detected on slot #0, make sure your " \
+                    "gamepad is plugged in, and not overriden for " \
+                    "DInput in the Joysticks tab.",
+                    IDC_XI_NO_USER_0,         15, 10, 291, 60
+    LTEXT           "No user detected on slot #1, make sure your " \
+                    "gamepad is plugged in, and not overriden for " \
+                    "DInput in the Joysticks tab.",
+                    IDC_XI_NO_USER_1,         15,  80, 291, 60
+    LTEXT           "No user detected on slot #2, make sure your " \
+                    "gamepad is plugged in, and not overriden for " \
+                    "DInput in the Joysticks tab.",
+                    IDC_XI_NO_USER_2,         15, 150, 291, 60
+    LTEXT           "No user detected on slot #3, make sure your " \
+                    "gamepad is plugged in, and not overriden for " \
+                    "DInput in the Joysticks tab.",
+                    IDC_XI_NO_USER_3,         15, 220, 291, 60
+}
+
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 /* @makedep: joy.manifest */

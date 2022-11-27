@@ -3763,6 +3763,58 @@ msgstr ""
 "選択した効果を有効化するにはコントローラーのボタンを押してください。効果の方"
 "向はコントローラーの軸で変更できます。"
 
+#: dlls/joy.cpl/joy.rc:72
+msgid "XInput"
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:75
+#, fuzzy
+#| msgid "User"
+msgid "User #0"
+msgstr "ユーザー名"
+
+#: dlls/joy.cpl/joy.rc:76
+#, fuzzy
+#| msgid "User"
+msgid "User #1"
+msgstr "ユーザー名"
+
+#: dlls/joy.cpl/joy.rc:77
+#, fuzzy
+#| msgid "User"
+msgid "User #2"
+msgstr "ユーザー名"
+
+#: dlls/joy.cpl/joy.rc:78
+#, fuzzy
+#| msgid "User"
+msgid "User #3"
+msgstr "ユーザー名"
+
+#: dlls/joy.cpl/joy.rc:80
+msgid ""
+"No user detected on slot #0, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:84
+msgid ""
+"No user detected on slot #1, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:88
+msgid ""
+"No user detected on slot #2, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:92
+msgid ""
+"No user detected on slot #3, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
 msgstr "ゲーム コントローラー"

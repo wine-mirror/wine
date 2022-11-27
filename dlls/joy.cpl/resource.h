@@ -36,6 +36,7 @@
 
 #define IDD_LIST            1000
 #define IDD_TEST_DI         1001
+#define IDD_TEST_XI         1002
 
 #define IDC_JOYSTICKLIST    2000
 #define IDC_DISABLEDLIST    2001
@@ -51,6 +52,15 @@
 #define IDC_DI_AXIS_Z_RZ    2103
 #define IDC_DI_AXIS_POV_0   2104
 #define IDC_DI_EFFECTS      2105
+
+#define IDC_XI_USER_0       2200
+#define IDC_XI_USER_1       2201
+#define IDC_XI_USER_2       2202
+#define IDC_XI_USER_3       2203
+#define IDC_XI_NO_USER_0    2210
+#define IDC_XI_NO_USER_1    2211
+#define IDC_XI_NO_USER_2    2212
+#define IDC_XI_NO_USER_3    2213
 
 #define ICO_MAIN            100
 

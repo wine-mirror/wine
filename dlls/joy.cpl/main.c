@@ -34,7 +34,7 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 
-#include "resource.h"
+#include "joy_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 
@@ -971,6 +971,12 @@ static void display_cpl_sheets( HWND parent, struct JoystickData *data )
             .pszTemplate = MAKEINTRESOURCEW( IDD_TEST_DI ),
             .pfnDlgProc = test_dlgproc,
             .lParam = (INT_PTR)data,
+        },
+        {
+            .dwSize = sizeof(PROPSHEETPAGEW),
+            .hInstance = hcpl,
+            .pszTemplate = MAKEINTRESOURCEW( IDD_TEST_XI ),
+            .pfnDlgProc = test_xi_dialog_proc,
         },
     };
     PROPSHEETHEADERW header =

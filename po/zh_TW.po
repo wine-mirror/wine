@@ -3723,6 +3723,58 @@ msgstr ""
 "請按下控制器中的任何按鈕以啟用所選的效果。效果的方向可以利用控制器的軸向來變"
 "更。"
 
+#: dlls/joy.cpl/joy.rc:72
+msgid "XInput"
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:75
+#, fuzzy
+#| msgid "User"
+msgid "User #0"
+msgstr "使用者"
+
+#: dlls/joy.cpl/joy.rc:76
+#, fuzzy
+#| msgid "User"
+msgid "User #1"
+msgstr "使用者"
+
+#: dlls/joy.cpl/joy.rc:77
+#, fuzzy
+#| msgid "User"
+msgid "User #2"
+msgstr "使用者"
+
+#: dlls/joy.cpl/joy.rc:78
+#, fuzzy
+#| msgid "User"
+msgid "User #3"
+msgstr "使用者"
+
+#: dlls/joy.cpl/joy.rc:80
+msgid ""
+"No user detected on slot #0, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:84
+msgid ""
+"No user detected on slot #1, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:88
+msgid ""
+"No user detected on slot #2, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
+#: dlls/joy.cpl/joy.rc:92
+msgid ""
+"No user detected on slot #3, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
 msgstr "遊戲控制器"

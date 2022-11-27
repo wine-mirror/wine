@@ -3767,6 +3767,58 @@ msgstr ""
 "Press any button in the controller to activate the chosen effect. The effect "
 "direction can be changed with the controller axis."
 
+#: dlls/joy.cpl/joy.rc:72
+msgid "XInput"
+msgstr "XInput"
+
+#: dlls/joy.cpl/joy.rc:75
+msgid "User #0"
+msgstr "User #0"
+
+#: dlls/joy.cpl/joy.rc:76
+msgid "User #1"
+msgstr "User #1"
+
+#: dlls/joy.cpl/joy.rc:77
+msgid "User #2"
+msgstr "User #2"
+
+#: dlls/joy.cpl/joy.rc:78
+msgid "User #3"
+msgstr "User #3"
+
+#: dlls/joy.cpl/joy.rc:80
+msgid ""
+"No user detected on slot #0, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+"No user detected on slot #0, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+
+#: dlls/joy.cpl/joy.rc:84
+msgid ""
+"No user detected on slot #1, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+"No user detected on slot #1, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+
+#: dlls/joy.cpl/joy.rc:88
+msgid ""
+"No user detected on slot #2, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+"No user detected on slot #2, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+
+#: dlls/joy.cpl/joy.rc:92
+msgid ""
+"No user detected on slot #3, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+msgstr ""
+"No user detected on slot #3, make sure your gamepad is plugged in, and not "
+"overriden for DInput in the Joysticks tab."
+
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
 msgstr "Game Controllers"
