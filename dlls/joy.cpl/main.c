@@ -950,73 +950,63 @@ static int CALLBACK propsheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
     return 0;
 }
 
-/******************************************************************************
- * display_cpl_sheets [internal]
- *
- * Build and display the dialog with all control panel propertysheets
- *
- */
-static void display_cpl_sheets(HWND parent, struct JoystickData *data)
+static void display_cpl_sheets( HWND parent, struct JoystickData *data )
 {
-    INITCOMMONCONTROLSEX icex;
-    BOOL activated = FALSE;
-    PROPSHEETPAGEW psp[2];
-    PROPSHEETHEADERW psh;
+    INITCOMMONCONTROLSEX init =
+    {
+        .dwSize = sizeof(INITCOMMONCONTROLSEX),
+        .dwICC = ICC_LISTVIEW_CLASSES | ICC_BAR_CLASSES,
+    };
+    PROPSHEETPAGEW pages[] =
+    {
+        {
+            .dwSize = sizeof(PROPSHEETPAGEW),
+            .hInstance = hcpl,
+            .u.pszTemplate = MAKEINTRESOURCEW( IDD_LIST ),
+            .pfnDlgProc = list_dlgproc,
+            .lParam = (INT_PTR)data,
+        },
+        {
+            .dwSize = sizeof(PROPSHEETPAGEW),
+            .hInstance = hcpl,
+            .u.pszTemplate = MAKEINTRESOURCEW( IDD_TEST_DI ),
+            .pfnDlgProc = test_dlgproc,
+            .lParam = (INT_PTR)data,
+        },
+    };
+    PROPSHEETHEADERW header =
+    {
+        .dwSize = sizeof(PROPSHEETHEADERW),
+        .dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID | PSH_USECALLBACK,
+        .hwndParent = parent,
+        .hInstance = hcpl,
+        .pszCaption = MAKEINTRESOURCEW( IDS_CPL_NAME ),
+        .nPages = ARRAY_SIZE(pages),
+        .u3.ppsp = pages,
+        .pfnCallback = propsheet_callback,
+    };
+    ACTCTXW context_desc =
+    {
+        .cbSize = sizeof(ACTCTXW),
+        .hModule = hcpl,
+        .lpResourceName = MAKEINTRESOURCEW( 124 ),
+        .dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID,
+    };
     ULONG_PTR cookie;
-    ACTCTXW actctx;
     HANDLE context;
-    DWORD id = 0;
+    BOOL activated;
 
-    OleInitialize(NULL);
-    /* Activate context */
-    memset(&actctx, 0, sizeof(actctx));
-    actctx.cbSize = sizeof(actctx);
-    actctx.hModule = hcpl;
-    actctx.lpResourceName = MAKEINTRESOURCEW(124);
-    actctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
-    context = CreateActCtxW(&actctx);
-    if (context != INVALID_HANDLE_VALUE)
-        activated = ActivateActCtx(context, &cookie);
+    OleInitialize( NULL );
 
-    /* Initialize common controls */
-    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    icex.dwICC = ICC_LISTVIEW_CLASSES | ICC_BAR_CLASSES;
-    InitCommonControlsEx(&icex);
+    context = CreateActCtxW( &context_desc );
+    if (context == INVALID_HANDLE_VALUE) activated = FALSE;
+    else activated = ActivateActCtx( context, &cookie );
 
-    ZeroMemory(&psh, sizeof(psh));
-    ZeroMemory(psp, sizeof(psp));
+    InitCommonControlsEx( &init );
+    PropertySheetW( &header );
 
-    /* Fill out all PROPSHEETPAGE */
-    psp[id].dwSize = sizeof (PROPSHEETPAGEW);
-    psp[id].hInstance = hcpl;
-    psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_LIST);
-    psp[id].pfnDlgProc = list_dlgproc;
-    psp[id].lParam = (INT_PTR) data;
-    id++;
-
-    psp[id].dwSize = sizeof (PROPSHEETPAGEW);
-    psp[id].hInstance = hcpl;
-    psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_TEST_DI);
-    psp[id].pfnDlgProc = test_dlgproc;
-    psp[id].lParam = (INT_PTR) data;
-    id++;
-
-    /* Fill out the PROPSHEETHEADER */
-    psh.dwSize = sizeof (PROPSHEETHEADERW);
-    psh.dwFlags = PSH_PROPSHEETPAGE | PSH_USEICONID | PSH_USECALLBACK;
-    psh.hwndParent = parent;
-    psh.hInstance = hcpl;
-    psh.pszCaption = MAKEINTRESOURCEW(IDS_CPL_NAME);
-    psh.nPages = id;
-    psh.u3.ppsp = psp;
-    psh.pfnCallback = propsheet_callback;
-
-    /* display the dialog */
-    PropertySheetW(&psh);
-
-    if (activated)
-        DeactivateActCtx(0, cookie);
-    ReleaseActCtx(context);
+    if (activated) DeactivateActCtx( 0, cookie );
+    ReleaseActCtx( context );
     OleUninitialize();
 }
 
