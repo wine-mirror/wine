@@ -66,6 +66,7 @@ typedef struct {
     struct list entry;
     DWORD   type;
     HANDLE  hfile;
+    INT64   doc_handle;
     WCHAR   nameW[1];
 } port_t;
 
@@ -95,7 +96,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls( hinstDLL );
             localspl_instance = hinstDLL;
-            break;
+            return !__wine_init_unix_call();
     }
     return TRUE;
 }
@@ -249,7 +250,7 @@ getports_cleanup:
  * 
  */
 
-static DWORD get_type_from_name(LPCWSTR name)
+static DWORD get_type_from_name(LPCWSTR name, BOOL check_filename)
 {
     HANDLE  hfile;
 
@@ -273,6 +274,9 @@ static DWORD get_type_from_name(LPCWSTR name)
 
     if (!wcsncmp(name, L"LPR:", ARRAY_SIZE(L"LPR:") - 1))
         return PORT_IS_LPR;
+
+    if (!check_filename)
+        return PORT_IS_UNKNOWN;
 
     /* Must be a file or a directory. Does the file exist ? */
     hfile = CreateFileW(name, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
@@ -301,9 +305,12 @@ static DWORD get_type_from_local_name(LPCWSTR nameW)
     LPWSTR  myname = NULL;
     DWORD   needed = 0;
     DWORD   numentries = 0;
-    DWORD   id = 0;
+    DWORD   id;
 
-    TRACE("(%s)\n", debugstr_w(myname));
+    TRACE("(%s)\n", debugstr_w(nameW));
+
+    if ((id = get_type_from_name(nameW, FALSE)) >= PORT_IS_WINE)
+        return id;
 
     needed = get_ports_from_reg(1, NULL, 0, &numentries);
     pi = malloc(needed);
@@ -313,17 +320,17 @@ static DWORD get_type_from_local_name(LPCWSTR nameW)
     if (pi && needed && numentries > 0) {
         /* we got a number of valid ports. */
 
-        while ((myname == NULL) && (id < numentries))
+        for (id = 0; id < numentries; id++)
         {
             if (lstrcmpiW(nameW, pi[id].pName) == 0) {
                 TRACE("(%lu) found %s\n", id, debugstr_w(pi[id].pName));
                 myname = pi[id].pName;
+                break;
             }
-            id++;
         }
     }
 
-    id = (myname) ? get_type_from_name(myname) : PORT_IS_UNKNOWN;
+    id = myname ? get_type_from_name(myname, TRUE) : PORT_IS_UNKNOWN;
 
     free(pi);
     return id;
@@ -478,6 +485,7 @@ static BOOL WINAPI localmon_OpenPortW(LPWSTR pName, PHANDLE phPort)
 
     port->type = type;
     port->hfile = INVALID_HANDLE_VALUE;
+    port->doc_handle = 0;
     lstrcpyW(port->nameW, pName);
     *phPort = port;
 
@@ -497,6 +505,19 @@ static BOOL WINAPI localmon_StartDocPort(HANDLE hport, WCHAR *printer_name,
 
     TRACE("(%p %s %ld %ld %p)\n", hport, debugstr_w(printer_name),
             job_id, level, doc_info);
+
+    if (port->type == PORT_IS_PIPE)
+    {
+        struct start_doc_params params;
+
+        if (port->doc_handle)
+            return TRUE;
+
+        params.type = port->type;
+        params.port = port->nameW;
+        params.doc = &port->doc_handle;
+        return UNIX_CALL(start_doc, &params);
+    }
 
     if (port->type != PORT_IS_FILE)
     {
@@ -525,6 +546,19 @@ static BOOL WINAPI localmon_WritePort(HANDLE hport, BYTE *buf, DWORD size,
 
     TRACE("(%p %p %lu %p)\n", hport, buf, size, written);
 
+    if (port->type == PORT_IS_PIPE)
+    {
+        struct write_doc_params params;
+        BOOL ret;
+
+        params.doc = port->doc_handle;
+        params.buf = buf;
+        params.size = size;
+        ret = UNIX_CALL(write_doc, &params);
+        *written = ret ? size : 0;
+        return ret;
+    }
+
     return WriteFile(port->hfile, buf, size, written, NULL);
 }
 
@@ -533,6 +567,15 @@ static BOOL WINAPI localmon_EndDocPort(HANDLE hport)
     port_t *port = hport;
 
     TRACE("(%p)\n", hport);
+
+    if (port->type == PORT_IS_PIPE)
+    {
+        struct end_doc_params params;
+
+        params.doc = port->doc_handle;
+        port->doc_handle = 0;
+        return UNIX_CALL(end_doc, &params);
+    }
 
     CloseHandle(port->hfile);
     port->hfile = INVALID_HANDLE_VALUE;
@@ -712,7 +755,7 @@ static DWORD WINAPI localmon_XcvDataPort(HANDLE hXcv, LPCWSTR pszDataName, PBYTE
 
     if (!lstrcmpW(pszDataName, L"PortIsValid")) {
         TRACE("InputData (%ld): %s\n", cbInputData, debugstr_w( (LPWSTR) pInputData));
-        res = get_type_from_name((LPCWSTR) pInputData);
+        res = get_type_from_name((LPCWSTR) pInputData, TRUE);
         TRACE("detected as %lu\n",  res);
         /* names, that we have recognized, are valid */
         if (res) return ERROR_SUCCESS;

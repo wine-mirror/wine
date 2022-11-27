@@ -22,6 +22,8 @@
 #define __WINE_LOCALSPL_PRIVATE__
 
 #include <windef.h>
+#include "winternl.h"
+#include "wine/unixlib.h"
 
 extern HINSTANCE localspl_instance DECLSPEC_HIDDEN;
 
@@ -165,5 +167,32 @@ extern HINSTANCE localspl_instance DECLSPEC_HIDDEN;
 #define PORT_IS_CUPS     7
 #define PORT_IS_LPR      8
 
+struct start_doc_params
+{
+    unsigned int type;
+    const WCHAR *port;
+    INT64 *doc;
+};
+
+struct write_doc_params
+{
+    INT64 doc;
+    const BYTE *buf;
+    unsigned int size;
+};
+
+struct end_doc_params
+{
+    INT64 doc;
+};
+
+#define UNIX_CALL(func, params) WINE_UNIX_CALL(unix_ ## func, params)
+
+enum cups_funcs
+{
+    unix_start_doc,
+    unix_write_doc,
+    unix_end_doc,
+};
 
 #endif /* __WINE_LOCALSPL_PRIVATE__ */

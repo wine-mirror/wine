@@ -987,6 +987,10 @@ static monitor_t * monitor_load_by_port(LPCWSTR portname)
 
     TRACE("(%s)\n", debugstr_w(portname));
 
+    /* wine specific ports */
+    if (portname[0] == '|')
+        return monitor_load(L"Local Port", NULL);
+
     /* Try the Local Monitor first */
     if (RegOpenKeyW(HKEY_LOCAL_MACHINE, winnt_cv_portsW, &hroot) == ERROR_SUCCESS) {
         if (RegQueryValueExW(hroot, portname, NULL, NULL, NULL, &len) == ERROR_SUCCESS) {
