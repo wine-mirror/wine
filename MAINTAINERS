@@ -191,11 +191,12 @@ F:	dlls/jscript/
 Joystick input
 M:	Rémi Bernon <rbernon@codeweavers.com>
 F:	dlls/dinput*/
+F:	dlls/joy.cpl/
 F:	dlls/windows.gaming.input/
 F:	dlls/winebus.sys/
 F:	dlls/winexinput.sys/
-F:	dlls/xinput*/
 F:	dlls/winmm/joystick.c
+F:	dlls/xinput*/
 
 Media format conversion
 P:	Andrew Eikum <coldpie@fastmail.com>
