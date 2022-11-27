@@ -51,7 +51,8 @@
 #define IDC_DI_AXIS_RX_RY   2102
 #define IDC_DI_AXIS_Z_RZ    2103
 #define IDC_DI_AXIS_POV_0   2104
-#define IDC_DI_EFFECTS      2105
+#define IDC_DI_BUTTONS      2105
+#define IDC_DI_EFFECTS      2106
 
 #define IDC_XI_USER_0       2200
 #define IDC_XI_USER_1       2201

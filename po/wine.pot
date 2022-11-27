@@ -3622,7 +3622,7 @@ msgstr ""
 msgid "DInput"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:59
+#: dlls/joy.cpl/joy.rc:63
 msgid "Buttons"
 msgstr ""
 

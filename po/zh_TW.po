@@ -3705,7 +3705,7 @@ msgstr "停用或啟用裝置之後，已連接的搖桿將無法更新，直到
 msgid "DInput"
 msgstr ""
 
-#: dlls/joy.cpl/joy.rc:59
+#: dlls/joy.cpl/joy.rc:63
 msgid "Buttons"
 msgstr "按鈕"
 

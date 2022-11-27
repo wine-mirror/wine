@@ -42,14 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 #define TEST_MAX_AXES       4
 #define TEST_POLL_TIME      100
 
-#define TEST_BUTTON_COL_MAX 16
-#define TEST_BUTTON_X       24
-#define TEST_BUTTON_Y       112
-#define TEST_NEXT_BUTTON_X  17
-#define TEST_NEXT_BUTTON_Y  15
-#define TEST_BUTTON_SIZE_X  16
-#define TEST_BUTTON_SIZE_Y  14
-
 #define TEST_AXIS_X         43
 #define TEST_AXIS_Y         60
 #define TEST_NEXT_AXIS_X    77
@@ -76,7 +68,6 @@ struct device
 struct Graphics
 {
     HWND hwnd;
-    HWND buttons[TEST_MAX_BUTTONS];
     HWND axes[TEST_MAX_AXES];
 };
 
@@ -84,6 +75,7 @@ struct JoystickData
 {
     IDirectInput8W *di;
     struct Graphics graphics;
+    HWND di_dialog_hwnd;
     BOOL stop;
 };
 
@@ -630,14 +622,14 @@ static DWORD WINAPI input_thread(void *param)
 
         if ((device = get_selected_device()))
         {
+            DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+
             IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
+            IDirectInputDevice8_GetCapabilities( device, &caps );
             IDirectInputDevice8_Release( device );
 
             dump_joy_state(&state);
-
-            /* Indicate pressed buttons */
-            for (i = 0; i < TEST_MAX_BUTTONS; i++)
-                SendMessageW(data->graphics.buttons[i], BM_SETSTATE, !!state.rgbButtons[i], 0);
+            set_di_device_state( data->di_dialog_hwnd, &state, &caps );
 
             /* Indicate axis positions, axes showing are hardcoded for now */
             axes_pos[0][0] = state.lX;
@@ -731,6 +723,7 @@ static void test_handle_joychange(HWND hwnd, struct JoystickData *data)
 {
     DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     IDirectInputDevice8W *device;
+    DIJOYSTATE state = {0};
     struct list *entry;
     int i;
 
@@ -746,9 +739,9 @@ static void test_handle_joychange(HWND hwnd, struct JoystickData *data)
     device = LIST_ENTRY( entry, struct device, entry )->device;
     if (FAILED(IDirectInputDevice8_GetCapabilities( device, &caps ))) return;
 
+    set_di_device_state( data->di_dialog_hwnd, &state, &caps );
     set_selected_device( device );
     initialize_effects_list( hwnd, device );
-    for (i = 0; i < TEST_MAX_BUTTONS; i++) ShowWindow( data->graphics.buttons[i], i < caps.dwButtons );
 }
 
 static void ff_handle_effectchange( HWND hwnd )
@@ -774,51 +767,6 @@ static void ff_handle_effectchange( HWND hwnd )
         IDirectInputDevice8_SetCooperativeLevel( device, GetAncestor( hwnd, GA_ROOT ), DISCL_BACKGROUND | DISCL_EXCLUSIVE );
         IDirectInputDevice8_Acquire( device );
         IDirectInputDevice8_Release( device );
-    }
-}
-
-/*********************************************************************
- * button_number_to_wchar [internal]
- *  Transforms an integer in the interval [0,99] into a 2 character WCHAR string
- */
-static void button_number_to_wchar(int n, WCHAR str[3])
-{
-    str[1] = n % 10 + '0';
-    n /= 10;
-    str[0] = n % 10 + '0';
-    str[2] = '\0';
-}
-
-static void draw_joystick_buttons(HWND hwnd, struct JoystickData* data)
-{
-    int i;
-    int row = 0, col = 0;
-    WCHAR button_label[3];
-    HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
-
-    for (i = 0; i < TEST_MAX_BUTTONS; i++)
-    {
-        RECT r;
-
-        if ((i % TEST_BUTTON_COL_MAX) == 0 && i != 0)
-        {
-            row += 1;
-            col = 0;
-        }
-
-        r.left = (TEST_BUTTON_X + TEST_NEXT_BUTTON_X*col);
-        r.top = (TEST_BUTTON_Y + TEST_NEXT_BUTTON_Y*row);
-        r.right = r.left + TEST_BUTTON_SIZE_X;
-        r.bottom = r.top + TEST_BUTTON_SIZE_Y;
-        MapDialogRect(hwnd, &r);
-
-        button_number_to_wchar(i + 1, button_label);
-
-        data->graphics.buttons[i] = CreateWindowW(L"Button", button_label, WS_CHILD,
-            r.left, r.top, r.right - r.left, r.bottom - r.top,
-            hwnd, NULL, NULL, hinst);
-
-        col += 1;
     }
 }
 
@@ -865,6 +813,33 @@ static void di_update_select_combo( HWND hwnd )
     }
 }
 
+static void update_device_views( HWND hwnd )
+{
+    HWND parent, view;
+
+    parent = GetDlgItem( hwnd, IDC_DI_BUTTONS );
+    view = FindWindowExW( parent, NULL, L"JoyCplDInputButtons", NULL );
+    InvalidateRect( view, NULL, TRUE );
+}
+
+static void create_device_views( HWND hwnd )
+{
+    HINSTANCE instance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+    HWND parent;
+    LONG margin;
+    RECT rect;
+
+    parent = GetDlgItem( hwnd, IDC_DI_BUTTONS );
+    GetClientRect( parent, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 10 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplDInputButtons", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, parent, NULL, NULL, instance );
+}
+
 static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static HANDLE thread;
@@ -878,8 +853,8 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
             data = (struct JoystickData*) ((PROPSHEETPAGEW*)lparam)->lParam;
 
             di_update_select_combo( hwnd );
-            draw_joystick_buttons(hwnd, data);
             draw_joystick_axes(hwnd, data);
+            create_device_views( hwnd );
 
             return TRUE;
         }
@@ -910,6 +885,7 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     di_update_select_combo( hwnd );
 
                     data->stop = FALSE;
+                    data->di_dialog_hwnd = hwnd;
 
                     /* Set the first joystick as default */
                     SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_SETCURSEL, 0, 0 );
@@ -930,6 +906,10 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     CloseHandle(thread);
                 break;
             }
+            return TRUE;
+
+        case WM_USER:
+            update_device_views( hwnd );
             return TRUE;
     }
     return FALSE;
@@ -1023,12 +1003,20 @@ static void register_window_class(void)
         .lpfnWndProc = &test_xi_window_proc,
         .lpszClassName = L"JoyCplXInput",
     };
+    WNDCLASSW di_buttons_class =
+    {
+        .hInstance = hcpl,
+        .lpfnWndProc = &test_di_buttons_window_proc,
+        .lpszClassName = L"JoyCplDInputButtons",
+    };
 
     RegisterClassW( &xi_class );
+    RegisterClassW( &di_buttons_class );
 }
 
 static void unregister_window_class(void)
 {
+    UnregisterClassW( L"JoyCplDInputButtons", hcpl );
     UnregisterClassW( L"JoyCplXInput", hcpl );
 }
 
