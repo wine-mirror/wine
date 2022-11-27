@@ -3815,6 +3815,11 @@ msgid ""
 "overriden for DInput in the Joysticks tab."
 msgstr ""
 
+#: dlls/joy.cpl/joy.rc:97 dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99
+#: dlls/joy.cpl/joy.rc:100
+msgid "Rumble"
+msgstr ""
+
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
 msgstr "Peliohjaimet"

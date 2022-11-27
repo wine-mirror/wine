@@ -19,6 +19,7 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <math.h>
 
 #include "windef.h"
@@ -40,6 +41,7 @@ struct device_state
     XINPUT_CAPABILITIES caps;
     XINPUT_STATE state;
     DWORD status;
+    BOOL rumble;
 };
 
 static CRITICAL_SECTION state_cs;
@@ -65,6 +67,7 @@ static void set_device_state( DWORD index, struct device_state *state )
     BOOL modified;
 
     EnterCriticalSection( &state_cs );
+    state->rumble = devices_state[index].rumble;
     modified = memcmp( devices_state + index, state, sizeof(*state) );
     devices_state[index] = *state;
     LeaveCriticalSection( &state_cs );
@@ -88,10 +91,22 @@ static DWORD WINAPI input_thread_proc( void *param )
     {
         for (i = 0; i < ARRAY_SIZE(devices_state); ++i)
         {
+            XINPUT_VIBRATION vibration = {0};
             struct device_state state = {0};
+
             state.status = XInputGetCapabilities( i, 0, &state.caps );
             if (!state.status) state.status = XInputGetState( i, &state.state );
             set_device_state( i, &state );
+
+            if (state.rumble)
+            {
+                vibration.wLeftMotorSpeed = 2 * max( abs( state.state.Gamepad.sThumbLX ),
+                                                     abs( state.state.Gamepad.sThumbLY ) ) - 1;
+                vibration.wRightMotorSpeed = 2 * max( abs( state.state.Gamepad.sThumbRX ),
+                                                      abs( state.state.Gamepad.sThumbRY ) ) - 1;
+            }
+
+            XInputSetState( i, &vibration );
         }
     }
 
@@ -333,6 +348,9 @@ static void create_user_view( HWND hwnd, DWORD index )
     SetWindowLongW( view, GWLP_USERDATA, index );
 
     ShowWindow( parent, SW_HIDE );
+
+    parent = GetDlgItem( hwnd, IDC_XI_RUMBLE_0 + index );
+    ShowWindow( parent, SW_HIDE );
 }
 
 static void update_user_view( HWND hwnd, DWORD index )
@@ -345,6 +363,9 @@ static void update_user_view( HWND hwnd, DWORD index )
     parent = GetDlgItem( hwnd, IDC_XI_NO_USER_0 + index );
     ShowWindow( parent, state.status ? SW_SHOW : SW_HIDE );
 
+    parent = GetDlgItem( hwnd, IDC_XI_RUMBLE_0 + index );
+    ShowWindow( parent, state.status ? SW_HIDE : SW_SHOW );
+
     parent = GetDlgItem( hwnd, IDC_XI_USER_0 + index );
     ShowWindow( parent, state.status ? SW_HIDE : SW_SHOW );
 
@@ -353,6 +374,19 @@ static void update_user_view( HWND hwnd, DWORD index )
         HWND view = FindWindowExW( parent, NULL, L"JoyCplXInput", NULL );
         InvalidateRect( view, NULL, TRUE );
     }
+}
+
+static void update_rumble_state( HWND hwnd, DWORD index )
+{
+    HWND parent;
+    LRESULT res;
+
+    parent = GetDlgItem( hwnd, IDC_XI_RUMBLE_0 + index );
+    res = SendMessageW( parent, BM_GETCHECK, 0, 0 );
+
+    EnterCriticalSection( &state_cs );
+    devices_state[index].rumble = res == BST_CHECKED;
+    LeaveCriticalSection( &state_cs );
 }
 
 extern INT_PTR CALLBACK test_xi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -371,6 +405,15 @@ extern INT_PTR CALLBACK test_xi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam,
         return TRUE;
 
     case WM_COMMAND:
+        switch (LOWORD(wparam))
+        {
+        case IDC_XI_RUMBLE_0:
+        case IDC_XI_RUMBLE_1:
+        case IDC_XI_RUMBLE_2:
+        case IDC_XI_RUMBLE_3:
+            update_rumble_state( hwnd, LOWORD(wparam) - IDC_XI_RUMBLE_0 );
+            break;
+        }
         return TRUE;
 
     case WM_NOTIFY:

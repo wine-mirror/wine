@@ -61,6 +61,10 @@
 #define IDC_XI_NO_USER_1    2211
 #define IDC_XI_NO_USER_2    2212
 #define IDC_XI_NO_USER_3    2213
+#define IDC_XI_RUMBLE_0     2220
+#define IDC_XI_RUMBLE_1     2221
+#define IDC_XI_RUMBLE_2     2222
+#define IDC_XI_RUMBLE_3     2223
 
 #define ICO_MAIN            100
 

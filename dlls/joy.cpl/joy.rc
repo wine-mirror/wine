@@ -92,6 +92,11 @@ FONT 8, "Ms Shell Dlg"
                     "gamepad is plugged in, and not overriden for " \
                     "DInput in the Joysticks tab.",
                     IDC_XI_NO_USER_3,         15, 220, 291, 60
+
+    AUTOCHECKBOX    "Rumble", IDC_XI_RUMBLE_0, 260,  10, 40, 10
+    AUTOCHECKBOX    "Rumble", IDC_XI_RUMBLE_1, 260,  80, 40, 10
+    AUTOCHECKBOX    "Rumble", IDC_XI_RUMBLE_2, 260, 150, 40, 10
+    AUTOCHECKBOX    "Rumble", IDC_XI_RUMBLE_3, 260, 220, 40, 10
 }
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL

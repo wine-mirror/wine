@@ -3819,6 +3819,11 @@ msgstr ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overriden for DInput in the Joysticks tab."
 
+#: dlls/joy.cpl/joy.rc:97 dlls/joy.cpl/joy.rc:98 dlls/joy.cpl/joy.rc:99
+#: dlls/joy.cpl/joy.rc:100
+msgid "Rumble"
+msgstr "Rumble"
+
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
 msgstr "Game Controllers"
