@@ -1210,10 +1210,16 @@ Call ok(getVT(test) = "VT_DISPATCH", "getVT(test) = " & getVT(test))
 Call ok(Me is Test, "Me is not Test")
 
 Const c1 = 1, c2 = 2, c3 = -3
+Private Const c4 = 4
+Public Const c5 = 5
 Call ok(c1 = 1, "c1 = " & c1)
 Call ok(getVT(c1) = "VT_I2", "getVT(c1) = " & getVT(c1))
 Call ok(c3 = -3, "c3 = " & c3)
 Call ok(getVT(c3) = "VT_I2", "getVT(c3) = " & getVT(c3))
+Call ok(c4 = 4, "c4 = " & c4)
+Call ok(getVT(c4) = "VT_I2", "getVT(c4) = " & getVT(c4))
+Call ok(c5 = 5, "c5 = " & c5)
+Call ok(getVT(c5) = "VT_I2", "getVT(c5) = " & getVT(c5))
 
 Const cb = True, cs = "test", cnull = null
 Call ok(cb, "cb = " & cb)
