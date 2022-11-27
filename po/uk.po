@@ -3754,8 +3754,8 @@ msgstr ""
 "оновлений, поки Ви не перезавантажите цей аплет."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Випробувати Джойстик"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

@@ -3732,8 +3732,8 @@ msgstr ""
 "스틱을 업데이트하지 않습니다."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "조이스틱 테스트"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

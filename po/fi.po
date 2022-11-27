@@ -3742,8 +3742,8 @@ msgstr ""
 "päivity tähän, ellei tätä sovelmaa käynnistetä uudelleen."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Testaa joystickia"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

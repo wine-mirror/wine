@@ -3742,8 +3742,8 @@ msgstr ""
 "ここにある接続済みジョイスティックの一覧は更新されません。"
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "ジョイスティックのテスト"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

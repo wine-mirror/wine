@@ -3762,8 +3762,8 @@ msgstr ""
 "niet vernieuwd worden totdat deze applicatie herstart wordt."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Joystick testen"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

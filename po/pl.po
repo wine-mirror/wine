@@ -3767,8 +3767,8 @@ msgstr ""
 "uaktualnione do momentu ponownego uruchomienia tego apletu."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Próbowanie Joysticka"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

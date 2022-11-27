@@ -3755,8 +3755,8 @@ msgstr ""
 "Controller bis zum Neustart dieses Applets nicht mehr aktualisiert."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Joystick testen"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

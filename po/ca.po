@@ -3767,8 +3767,8 @@ msgstr ""
 "palanques de control connectades fins que reinicieu aquesta miniaplicació."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Prova de palanca de control"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

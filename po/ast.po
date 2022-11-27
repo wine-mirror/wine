@@ -3672,7 +3672,7 @@ msgstr ""
 "hasta que reanicies esti applet."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
+msgid "DInput"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59

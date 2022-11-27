@@ -3779,8 +3779,8 @@ msgstr ""
 "التطبيق."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "اختبار مقبض اللعب"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

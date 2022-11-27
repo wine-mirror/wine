@@ -3700,8 +3700,8 @@ msgstr ""
 "具为止。"
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "测试操纵杆"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

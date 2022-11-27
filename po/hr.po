@@ -3784,8 +3784,8 @@ msgstr ""
 "osvježeni ovdje dok ponovno ne pokrenete ovaj applet."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Isprobaj joystick"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

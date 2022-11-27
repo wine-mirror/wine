@@ -3748,8 +3748,8 @@ msgstr ""
 "updated here until you restart this applet."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Test Joystick"
+msgid "DInput"
+msgstr "DInput"
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

@@ -3751,8 +3751,8 @@ msgstr ""
 "čia atnaujintos, kol nepaleisite šios programėlės iš naujo."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Testuoti vairasvirtę"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

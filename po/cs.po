@@ -3728,8 +3728,8 @@ msgstr ""
 "aktualizován až po restartu tohoto appletu."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Otestovat pákový ovladač"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

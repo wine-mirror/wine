@@ -3763,8 +3763,8 @@ msgstr ""
 "girene kadar bağlı oyun kolları burada güncellenmeyecektir."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Oyun Kolunu Test Et"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

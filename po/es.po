@@ -3768,8 +3768,8 @@ msgstr ""
 "no se actualizarán aquí hasta que reinicie este subprograma."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Probar comando de juegos"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

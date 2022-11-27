@@ -714,8 +714,8 @@ static void initialize_effects_list( HWND hwnd, IDirectInputDevice8W *device )
 
     IDirectInputDevice8_EnumEffects( device, enum_effects, device, 0 );
 
-    SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_RESETCONTENT, 0, 0);
-    SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_ADDSTRING, 0, (LPARAM)L"None");
+    SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_RESETCONTENT, 0, 0 );
+    SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_ADDSTRING, 0, (LPARAM)L"None" );
 
     LIST_FOR_EACH_ENTRY( effect, &effects, struct effect, entry )
     {
@@ -724,7 +724,7 @@ static void initialize_effects_list( HWND hwnd, IDirectInputDevice8W *device )
 
         if (FAILED(IDirectInputEffect_GetEffectGuid( effect->effect, &guid ))) continue;
         if (FAILED(IDirectInputDevice8_GetEffectInfo( device, &info, &guid ))) continue;
-        SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_ADDSTRING, 0, (LPARAM)(info.tszName + 5));
+        SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_ADDSTRING, 0, (LPARAM)( info.tszName + 5 ) );
     }
 }
 
@@ -737,7 +737,7 @@ static void test_handle_joychange(HWND hwnd, struct JoystickData *data)
 
     set_selected_device( NULL );
 
-    i = SendDlgItemMessageW( hwnd, IDC_TESTSELECTCOMBO, CB_GETCURSEL, 0, 0 );
+    i = SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_GETCURSEL, 0, 0 );
     if (i < 0) return;
 
     entry = list_head( &devices );
@@ -760,7 +760,7 @@ static void ff_handle_effectchange( HWND hwnd )
 
     set_selected_effect( NULL );
 
-    sel = SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_GETCURSEL, 0, 0) - 1;
+    sel = SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_GETCURSEL, 0, 0 ) - 1;
     if (sel < 0) return;
 
     entry = list_head( &effects );
@@ -825,11 +825,10 @@ static void draw_joystick_buttons(HWND hwnd, struct JoystickData* data)
 
 static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
 {
+    static const WCHAR *axes_names[TEST_MAX_AXES] = {L"X,Y", L"Rx,Ry", L"Z,Rz", L"POV"};
+    static const DWORD axes_idc[TEST_MAX_AXES] = {IDC_DI_AXIS_X_Y, IDC_DI_AXIS_RX_RY, IDC_DI_AXIS_Z_RZ, IDC_DI_AXIS_POV_0};
     int i;
     HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
-    static const WCHAR axes_names[TEST_MAX_AXES][7] = { L"X,Y", L"Rx,Ry", L"Z,Rz", L"POV"};
-    static const DWORD axes_idc[TEST_MAX_AXES] = { IDC_TESTGROUPXY, IDC_TESTGROUPRXRY,
-                                                   IDC_TESTGROUPZRZ, IDC_TESTGROUPPOV };
 
     for (i = 0; i < TEST_MAX_AXES; i++)
     {
@@ -853,17 +852,17 @@ static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
  * test_dlgproc [internal]
  *
  */
-static void refresh_test_joystick_list(HWND hwnd, struct JoystickData *data)
+static void di_update_select_combo( HWND hwnd )
 {
     struct device *entry;
 
-    SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_RESETCONTENT, 0, 0);
+    SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_RESETCONTENT, 0, 0 );
 
     LIST_FOR_EACH_ENTRY( entry, &devices, struct device, entry )
     {
         DIDEVICEINSTANCEW info = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
         if (FAILED(IDirectInputDevice8_GetDeviceInfo( entry->device, &info ))) continue;
-        SendDlgItemMessageW( hwnd, IDC_TESTSELECTCOMBO, CB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
+        SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
     }
 }
 
@@ -879,7 +878,7 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
         {
             data = (struct JoystickData*) ((PROPSHEETPAGEW*)lparam)->lParam;
 
-            refresh_test_joystick_list(hwnd, data);
+            di_update_select_combo( hwnd );
             draw_joystick_buttons(hwnd, data);
             draw_joystick_axes(hwnd, data);
 
@@ -889,16 +888,16 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
         case WM_COMMAND:
             switch(wparam)
             {
-                case MAKEWPARAM(IDC_TESTSELECTCOMBO, CBN_SELCHANGE):
-                    test_handle_joychange(hwnd, data);
+            case MAKEWPARAM( IDC_DI_DEVICES, CBN_SELCHANGE ):
+                test_handle_joychange( hwnd, data );
 
-                    SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_SETCURSEL, 0, 0);
-                    ff_handle_effectchange( hwnd );
-                    break;
+                SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_SETCURSEL, 0, 0 );
+                ff_handle_effectchange( hwnd );
+                break;
 
-                case MAKEWPARAM(IDC_FFEFFECTLIST, LBN_SELCHANGE):
-                    ff_handle_effectchange( hwnd );
-                    break;
+            case MAKEWPARAM( IDC_DI_EFFECTS, LBN_SELCHANGE ):
+                ff_handle_effectchange( hwnd );
+                break;
             }
             return TRUE;
 
@@ -909,15 +908,15 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                 {
                     DWORD tid;
 
-                    refresh_test_joystick_list(hwnd, data);
+                    di_update_select_combo( hwnd );
 
                     data->stop = FALSE;
 
                     /* Set the first joystick as default */
-                    SendDlgItemMessageW(hwnd, IDC_TESTSELECTCOMBO, CB_SETCURSEL, 0, 0);
+                    SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_SETCURSEL, 0, 0 );
                     test_handle_joychange(hwnd, data);
 
-                    SendDlgItemMessageW(hwnd, IDC_FFEFFECTLIST, LB_SETCURSEL, 0, 0);
+                    SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_SETCURSEL, 0, 0 );
                     ff_handle_effectchange( hwnd );
 
                     thread = CreateThread(NULL, 0, input_thread, (void*) data, 0, &tid);
@@ -997,7 +996,7 @@ static void display_cpl_sheets(HWND parent, struct JoystickData *data)
 
     psp[id].dwSize = sizeof (PROPSHEETPAGEW);
     psp[id].hInstance = hcpl;
-    psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_TEST);
+    psp[id].u.pszTemplate = MAKEINTRESOURCEW(IDD_TEST_DI);
     psp[id].pfnDlgProc = test_dlgproc;
     psp[id].lParam = (INT_PTR) data;
     id++;

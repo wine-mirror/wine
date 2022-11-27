@@ -35,7 +35,7 @@
 #define IDC_STATIC          -1
 
 #define IDD_LIST            1000
-#define IDD_TEST            1001
+#define IDD_TEST_DI         1001
 
 #define IDC_JOYSTICKLIST    2000
 #define IDC_DISABLEDLIST    2001
@@ -45,12 +45,12 @@
 #define IDC_BUTTONRESET     2012
 #define IDC_BUTTONOVERRIDE  2013
 
-#define IDC_TESTSELECTCOMBO 2100
-#define IDC_TESTGROUPXY     2101
-#define IDC_TESTGROUPRXRY   2102
-#define IDC_TESTGROUPZRZ    2103
-#define IDC_TESTGROUPPOV    2104
-#define IDC_FFEFFECTLIST    2105
+#define IDC_DI_DEVICES      2100
+#define IDC_DI_AXIS_X_Y     2101
+#define IDC_DI_AXIS_RX_RY   2102
+#define IDC_DI_AXIS_Z_RZ    2103
+#define IDC_DI_AXIS_POV_0   2104
+#define IDC_DI_EFFECTS      2105
 
 #define ICO_MAIN            100
 

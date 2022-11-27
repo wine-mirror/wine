@@ -3770,8 +3770,8 @@ msgstr ""
 "отключении устройств, требуется перезапуск этой программы."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Проверить джойстик"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

@@ -49,19 +49,19 @@ FONT 8, "Ms Shell Dlg"
     LTEXT           "After disabling or enabling a device, the connected joysticks won't be updated here until you restart this applet.", IDC_STATIC, 10, 270, 200, 25
 }
 
-IDD_TEST DIALOG 0, 0, 320, 300
+IDD_TEST_DI DIALOG 0, 0, 320, 300
 STYLE WS_CAPTION | WS_CHILD | WS_DISABLED
-CAPTION "Test Joystick"
+CAPTION "DInput"
 FONT 8, "Ms Shell Dlg"
 {
-    COMBOBOX        IDC_TESTSELECTCOMBO, 15, 10, 291, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS
+    COMBOBOX        IDC_DI_DEVICES, 15, 10, 291, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS
     GROUPBOX        "Buttons", IDC_STATIC, 15, 100, 291, 70
-    GROUPBOX        "", IDC_TESTGROUPXY,   15, 30, 60, 60
-    GROUPBOX        "", IDC_TESTGROUPRXRY, 92, 30, 60, 60
-    GROUPBOX        "", IDC_TESTGROUPZRZ, 169, 30, 60, 60
-    GROUPBOX        "", IDC_TESTGROUPPOV, 246, 30, 60, 60
+    GROUPBOX        "", IDC_DI_AXIS_X_Y, 15, 30, 60, 60
+    GROUPBOX        "", IDC_DI_AXIS_RX_RY, 92, 30, 60, 60
+    GROUPBOX        "", IDC_DI_AXIS_Z_RZ, 169, 30, 60, 60
+    GROUPBOX        "", IDC_DI_AXIS_POV_0, 246, 30, 60, 60
     LTEXT           "Force Feedback Effect", IDC_STATIC, 15, 180, 291, 10
-    LISTBOX         IDC_FFEFFECTLIST, 15, 190, 291, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
+    LISTBOX         IDC_DI_EFFECTS, 15, 190, 291, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
     LTEXT           "Press any button in the controller to activate the chosen effect. The effect direction can be changed with the controller axis.",
                     IDC_STATIC, 15, 260, 291, 25
 }

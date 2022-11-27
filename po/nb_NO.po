@@ -3762,8 +3762,8 @@ msgstr ""
 "her før programmet startes på nytt."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Test styrespake"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

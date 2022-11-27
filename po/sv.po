@@ -3789,8 +3789,8 @@ msgstr ""
 "styrspakarna inte att uppdateras här innan du startar om detta miniprogram."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Testa joysticken"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"

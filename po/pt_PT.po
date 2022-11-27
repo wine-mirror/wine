@@ -3810,8 +3810,8 @@ msgstr ""
 "serão actualisados aqui até reiniciar esta mini-aplicação."
 
 #: dlls/joy.cpl/joy.rc:55
-msgid "Test Joystick"
-msgstr "Testar Joystick"
+msgid "DInput"
+msgstr ""
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Buttons"
