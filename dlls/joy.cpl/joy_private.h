@@ -38,4 +38,6 @@ extern LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM
 extern INT_PTR CALLBACK test_xi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 extern LRESULT CALLBACK test_xi_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 
+extern INT_PTR CALLBACK test_wgi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
+
 #endif /* __JOY_PRIVATE_H */

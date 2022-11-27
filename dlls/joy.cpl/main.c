@@ -449,6 +449,12 @@ static void display_cpl_sheets( HWND parent )
             .pszTemplate = MAKEINTRESOURCEW( IDD_TEST_XI ),
             .pfnDlgProc = test_xi_dialog_proc,
         },
+        {
+            .dwSize = sizeof(PROPSHEETPAGEW),
+            .hInstance = hcpl,
+            .pszTemplate = MAKEINTRESOURCEW( IDD_TEST_WGI ),
+            .pfnDlgProc = test_wgi_dialog_proc,
+        },
     };
     PROPSHEETHEADERW header =
     {

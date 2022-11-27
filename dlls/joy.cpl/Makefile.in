@@ -1,5 +1,5 @@
 MODULE    = joy.cpl
-IMPORTS   = dxguid dinput dinput8 ole32 comctl32 user32 gdi32 advapi32 xinput
+IMPORTS   = dxguid dinput dinput8 ole32 comctl32 user32 gdi32 advapi32 xinput combase
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
@@ -8,4 +8,5 @@ SOURCES = \
 	joy.rc \
 	joy.svg \
 	main.c \
+	wginput.c \
 	xinput.c

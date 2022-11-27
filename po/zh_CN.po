@@ -3885,6 +3885,10 @@ msgstr ""
 msgid "Rumble"
 msgstr "震动"
 
+#: dlls/joy.cpl/joy.rc:106
+msgid "Windows.Gaming.Input"
+msgstr ""
+
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
 msgstr "游戏控制器"

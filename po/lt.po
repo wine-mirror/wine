@@ -3927,6 +3927,10 @@ msgstr ""
 msgid "Rumble"
 msgstr "Vibravimas"
 
+#: dlls/joy.cpl/joy.rc:106
+msgid "Windows.Gaming.Input"
+msgstr ""
+
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
 msgstr "Žaidimų valdikliai"

@@ -37,6 +37,7 @@
 #define IDD_LIST            1000
 #define IDD_TEST_DI         1001
 #define IDD_TEST_XI         1002
+#define IDD_TEST_WGI        1003
 
 #define IDC_DI_ENABLED_LIST    2000
 #define IDC_XI_ENABLED_LIST    2001
@@ -68,6 +69,9 @@
 #define IDC_XI_RUMBLE_1     2221
 #define IDC_XI_RUMBLE_2     2222
 #define IDC_XI_RUMBLE_3     2223
+
+#define IDC_WGI_DEVICES     2300
+#define IDC_WGI_INTERFACE   2301
 
 #define ICO_MAIN            100
 
