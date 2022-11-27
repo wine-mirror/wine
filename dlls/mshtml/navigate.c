@@ -41,10 +41,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
-#define CONTENT_LENGTH "Content-Length"
-#define UTF8_STR "utf-8"
-#define UTF16_STR "utf-16"
-
 struct nsProtocolStream {
     nsIInputStream nsIInputStream_iface;
 
@@ -1152,10 +1148,10 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
         if(first_read) {
             switch(This->bsc.bom) {
             case BOM_UTF8:
-                This->nschannel->charset = strdup(UTF8_STR);
+                This->nschannel->charset = strdup("utf-8");
                 break;
             case BOM_UTF16:
-                This->nschannel->charset = strdup(UTF16_STR);
+                This->nschannel->charset = strdup("utf-16");
             case BOM_NONE:
                 /* FIXME: Get charset from HTTP headers */;
             }
