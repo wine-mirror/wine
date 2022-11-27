@@ -31,6 +31,8 @@
 #include "resource.h"
 
 extern void set_di_device_state( HWND hwnd, DIJOYSTATE *state, DIDEVCAPS *caps );
+extern LRESULT CALLBACK test_di_axes_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
+extern LRESULT CALLBACK test_di_povs_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 extern LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
 
 extern INT_PTR CALLBACK test_xi_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );

@@ -55,10 +55,8 @@ CAPTION "DInput"
 FONT 8, "Ms Shell Dlg"
 {
     COMBOBOX        IDC_DI_DEVICES, 15, 10, 291, 60, CBS_DROPDOWNLIST | CBS_HASSTRINGS
-    GROUPBOX        "", IDC_DI_AXIS_X_Y, 15, 30, 60, 60
-    GROUPBOX        "", IDC_DI_AXIS_RX_RY, 92, 30, 60, 60
-    GROUPBOX        "", IDC_DI_AXIS_Z_RZ, 169, 30, 60, 60
-    GROUPBOX        "", IDC_DI_AXIS_POV_0, 246, 30, 60, 60
+    GROUPBOX        "Axes", IDC_DI_AXES, 15, 30, 214, 60
+    GROUPBOX        "POVs", IDC_DI_POVS, 246, 30, 60, 60
     GROUPBOX        "Buttons", IDC_DI_BUTTONS, 15, 100, 291, 70
     LTEXT           "Force Feedback Effect", IDC_STATIC, 15, 180, 291, 10
     LISTBOX         IDC_DI_EFFECTS, 15, 190, 291, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY

@@ -39,16 +39,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 
 #define TEST_MAX_BUTTONS    32
-#define TEST_MAX_AXES       4
 #define TEST_POLL_TIME      100
-
-#define TEST_AXIS_X         43
-#define TEST_AXIS_Y         60
-#define TEST_NEXT_AXIS_X    77
-#define TEST_AXIS_SIZE_X    3
-#define TEST_AXIS_SIZE_Y    3
-#define TEST_AXIS_MIN       -25
-#define TEST_AXIS_MAX       25
 
 #define FF_PLAY_TIME        2*DI_SECONDS
 #define FF_PERIOD_TIME      FF_PLAY_TIME/4
@@ -68,7 +59,6 @@ struct device
 struct Graphics
 {
     HWND hwnd;
-    HWND axes[TEST_MAX_AXES];
 };
 
 struct JoystickData
@@ -245,25 +235,14 @@ static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *cont
 {
     DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
     struct JoystickData *data = context;
-    DIPROPRANGE proprange;
     struct device *entry;
 
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
     IDirectInput8_CreateDevice( data->di, &instance->guidInstance, &entry->device, NULL );
     IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick );
-
     IDirectInputDevice8_GetCapabilities( entry->device, &caps );
 
-    /* Set axis range to ease the GUI visualization */
-    proprange.diph.dwSize = sizeof(DIPROPRANGE);
-    proprange.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    proprange.diph.dwHow = DIPH_DEVICE;
-    proprange.diph.dwObj = 0;
-    proprange.lMin = TEST_AXIS_MIN;
-    proprange.lMax = TEST_AXIS_MAX;
-
-    IDirectInputDevice_SetProperty( entry->device, DIPROP_RANGE, &proprange.diph );
     list_add_tail( &devices, &entry->entry );
 
     return DIENUM_CONTINUE;
@@ -595,28 +574,14 @@ static void dump_joy_state(DIJOYSTATE* st)
 
 static DWORD WINAPI input_thread(void *param)
 {
-    int axes_pos[TEST_MAX_AXES][2];
     struct JoystickData *data = param;
-
-    /* Setup POV as clock positions
-     *         0
-     *   31500    4500
-     * 27000  -1    9000
-     *   22500   13500
-     *       18000
-     */
-    int ma = TEST_AXIS_MAX;
-    int pov_val[9] = {0, 4500, 9000, 13500,
-                      18000, 22500, 27000, 31500, -1};
-    int pov_pos[9][2] = { {0, -ma}, {ma/2, -ma/2}, {ma, 0}, {ma/2, ma/2},
-                          {0, ma}, {-ma/2, ma/2}, {-ma, 0}, {-ma/2, -ma/2}, {0, 0} };
 
     while (!data->stop)
     {
         IDirectInputDevice8W *device;
         IDirectInputEffect *effect;
         DIJOYSTATE state = {0};
-        unsigned int i, j;
+        unsigned int i;
 
         if (WaitForSingleObject( device_state_event, TEST_POLL_TIME ) == WAIT_TIMEOUT) continue;
 
@@ -630,36 +595,6 @@ static DWORD WINAPI input_thread(void *param)
 
             dump_joy_state(&state);
             set_di_device_state( data->di_dialog_hwnd, &state, &caps );
-
-            /* Indicate axis positions, axes showing are hardcoded for now */
-            axes_pos[0][0] = state.lX;
-            axes_pos[0][1] = state.lY;
-            axes_pos[1][0] = state.lRx;
-            axes_pos[1][1] = state.lRy;
-            axes_pos[2][0] = state.lZ;
-            axes_pos[2][1] = state.lRz;
-
-            /* Set pov values */
-            for (j = 0; j < ARRAY_SIZE(pov_val); j++)
-            {
-                if (state.rgdwPOV[0] == pov_val[j])
-                {
-                    axes_pos[3][0] = pov_pos[j][0];
-                    axes_pos[3][1] = pov_pos[j][1];
-                }
-            }
-
-            for (i = 0; i < TEST_MAX_AXES; i++)
-            {
-                RECT r;
-
-                r.left = (TEST_AXIS_X + TEST_NEXT_AXIS_X*i + axes_pos[i][0]);
-                r.top = (TEST_AXIS_Y + axes_pos[i][1]);
-                r.bottom = r.right = 0; /* unused */
-                MapDialogRect(data->graphics.hwnd, &r);
-
-                SetWindowPos(data->graphics.axes[i], 0, r.left, r.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE);
-            }
         }
 
         if ((effect = get_selected_effect()))
@@ -770,31 +705,6 @@ static void ff_handle_effectchange( HWND hwnd )
     }
 }
 
-static void draw_joystick_axes(HWND hwnd, struct JoystickData* data)
-{
-    static const WCHAR *axes_names[TEST_MAX_AXES] = {L"X,Y", L"Rx,Ry", L"Z,Rz", L"POV"};
-    static const DWORD axes_idc[TEST_MAX_AXES] = {IDC_DI_AXIS_X_Y, IDC_DI_AXIS_RX_RY, IDC_DI_AXIS_Z_RZ, IDC_DI_AXIS_POV_0};
-    int i;
-    HINSTANCE hinst = (HINSTANCE) GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
-
-    for (i = 0; i < TEST_MAX_AXES; i++)
-    {
-        RECT r;
-        /* Set axis box name */
-        SetWindowTextW(GetDlgItem(hwnd, axes_idc[i]), axes_names[i]);
-
-        r.left = (TEST_AXIS_X + TEST_NEXT_AXIS_X*i);
-        r.top = TEST_AXIS_Y;
-        r.right = r.left + TEST_AXIS_SIZE_X;
-        r.bottom = r.top + TEST_AXIS_SIZE_Y;
-        MapDialogRect(hwnd, &r);
-
-        data->graphics.axes[i] = CreateWindowW(L"Button", NULL, WS_CHILD | WS_VISIBLE,
-            r.left, r.top, r.right - r.left, r.bottom - r.top,
-            hwnd, NULL, NULL, hinst);
-    }
-}
-
 /*********************************************************************
  * test_dlgproc [internal]
  *
@@ -817,6 +727,14 @@ static void update_device_views( HWND hwnd )
 {
     HWND parent, view;
 
+    parent = GetDlgItem( hwnd, IDC_DI_AXES );
+    view = FindWindowExW( parent, NULL, L"JoyCplDInputAxes", NULL );
+    InvalidateRect( view, NULL, TRUE );
+
+    parent = GetDlgItem( hwnd, IDC_DI_POVS );
+    view = FindWindowExW( parent, NULL, L"JoyCplDInputPOVs", NULL );
+    InvalidateRect( view, NULL, TRUE );
+
     parent = GetDlgItem( hwnd, IDC_DI_BUTTONS );
     view = FindWindowExW( parent, NULL, L"JoyCplDInputButtons", NULL );
     InvalidateRect( view, NULL, TRUE );
@@ -828,6 +746,26 @@ static void create_device_views( HWND hwnd )
     HWND parent;
     LONG margin;
     RECT rect;
+
+    parent = GetDlgItem( hwnd, IDC_DI_AXES );
+    GetClientRect( parent, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 10 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplDInputAxes", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, parent, NULL, NULL, instance );
+
+    parent = GetDlgItem( hwnd, IDC_DI_POVS );
+    GetClientRect( parent, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 10 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplDInputPOVs", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, parent, NULL, NULL, instance );
 
     parent = GetDlgItem( hwnd, IDC_DI_BUTTONS );
     GetClientRect( parent, &rect );
@@ -853,7 +791,6 @@ static INT_PTR CALLBACK test_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
             data = (struct JoystickData*) ((PROPSHEETPAGEW*)lparam)->lParam;
 
             di_update_select_combo( hwnd );
-            draw_joystick_axes(hwnd, data);
             create_device_views( hwnd );
 
             return TRUE;
@@ -1003,6 +940,18 @@ static void register_window_class(void)
         .lpfnWndProc = &test_xi_window_proc,
         .lpszClassName = L"JoyCplXInput",
     };
+    WNDCLASSW di_axes_class =
+    {
+        .hInstance = hcpl,
+        .lpfnWndProc = &test_di_axes_window_proc,
+        .lpszClassName = L"JoyCplDInputAxes",
+    };
+    WNDCLASSW di_povs_class =
+    {
+        .hInstance = hcpl,
+        .lpfnWndProc = &test_di_povs_window_proc,
+        .lpszClassName = L"JoyCplDInputPOVs",
+    };
     WNDCLASSW di_buttons_class =
     {
         .hInstance = hcpl,
@@ -1011,11 +960,15 @@ static void register_window_class(void)
     };
 
     RegisterClassW( &xi_class );
+    RegisterClassW( &di_axes_class );
+    RegisterClassW( &di_povs_class );
     RegisterClassW( &di_buttons_class );
 }
 
 static void unregister_window_class(void)
 {
+    UnregisterClassW( L"JoyCplDInputAxes", hcpl );
+    UnregisterClassW( L"JoyCplDInputPOVs", hcpl );
     UnregisterClassW( L"JoyCplDInputButtons", hcpl );
     UnregisterClassW( L"JoyCplXInput", hcpl );
 }
