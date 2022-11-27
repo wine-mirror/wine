@@ -1015,6 +1015,23 @@ static void display_cpl_sheets( HWND parent, struct JoystickData *data )
     OleUninitialize();
 }
 
+static void register_window_class(void)
+{
+    WNDCLASSW xi_class =
+    {
+        .hInstance = hcpl,
+        .lpfnWndProc = &test_xi_window_proc,
+        .lpszClassName = L"JoyCplXInput",
+    };
+
+    RegisterClassW( &xi_class );
+}
+
+static void unregister_window_class(void)
+{
+    UnregisterClassW( L"JoyCplXInput", hcpl );
+}
+
 /*********************************************************************
  * CPlApplet (joy.cpl.@)
  *
@@ -1041,6 +1058,7 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
         {
             HRESULT hr;
 
+            register_window_class();
             device_state_event = CreateEventW( NULL, FALSE, FALSE, NULL );
 
             /* Initialize dinput */
@@ -1082,6 +1100,7 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
             IDirectInput8_Release(data.di);
 
             CloseHandle( device_state_event );
+            unregister_window_class();
             break;
     }
 
