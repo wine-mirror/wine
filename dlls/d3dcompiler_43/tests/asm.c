@@ -1749,7 +1749,6 @@ static void test_disassemble_shader(void)
     HRESULT hr;
 
     hr = D3DDisassemble(vs_2_0, 0, 0, NULL, &blob);
-    todo_wine
 #if D3D_COMPILER_VERSION >= 46
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 #else
@@ -1757,9 +1756,8 @@ static void test_disassemble_shader(void)
 #endif
 
     hr = D3DDisassemble(vs_2_0, sizeof(vs_2_0), 0, NULL, &blob);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-        ID3D10Blob_Release(blob);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID3D10Blob_Release(blob);
 }
 
 START_TEST(asm)
