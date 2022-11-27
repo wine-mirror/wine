@@ -65,6 +65,7 @@ static CRITICAL_SECTION xcv_handles_cs = { &xcv_handles_cs_debug, -1, 0, 0, 0, 0
 typedef struct {
     struct list entry;
     DWORD   type;
+    HANDLE  hfile;
     WCHAR   nameW[1];
 } port_t;
 
@@ -386,31 +387,6 @@ static BOOL WINAPI localmon_AddPortExW(LPWSTR pName, DWORD level, LPBYTE pBuffer
 }
 
 /*****************************************************
- * localmon_ClosePort [exported through MONITOREX]
- *
- * Close a
- *
- * PARAMS
- *  hPort  [i] The Handle to close
- *
- * RETURNS
- *  Success: TRUE
- *  Failure: FALSE
- *
- */
-static BOOL WINAPI localmon_ClosePort(HANDLE hPort)
-{
-    port_t * port = hPort;
-
-    TRACE("(%p)\n", port);
-    EnterCriticalSection(&port_handles_cs);
-    list_remove(&port->entry);
-    LeaveCriticalSection(&port_handles_cs);
-    free(port);
-    return TRUE;
-}
-
-/*****************************************************
  *   localmon_EnumPortsW [exported through MONITOREX]
  *
  * Enumerate all local Ports
@@ -501,6 +477,7 @@ static BOOL WINAPI localmon_OpenPortW(LPWSTR pName, PHANDLE phPort)
     if (!port) return FALSE;
 
     port->type = type;
+    port->hfile = INVALID_HANDLE_VALUE;
     lstrcpyW(port->nameW, pName);
     *phPort = port;
 
@@ -509,6 +486,84 @@ static BOOL WINAPI localmon_OpenPortW(LPWSTR pName, PHANDLE phPort)
     LeaveCriticalSection(&port_handles_cs);
 
     TRACE("=> %p\n", port);
+    return TRUE;
+}
+
+static BOOL WINAPI localmon_StartDocPort(HANDLE hport, WCHAR *printer_name,
+        DWORD job_id, DWORD level, BYTE *info)
+{
+    DOC_INFO_1W *doc_info = (DOC_INFO_1W *)info;
+    port_t *port = hport;
+
+    TRACE("(%p %s %ld %ld %p)\n", hport, debugstr_w(printer_name),
+            job_id, level, doc_info);
+
+    if (port->type != PORT_IS_FILE)
+    {
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
+
+    if (port->hfile != INVALID_HANDLE_VALUE)
+        return TRUE;
+
+    if (!doc_info || !doc_info->pOutputFile)
+    {
+        FIXME("set error\n");
+        return FALSE;
+    }
+
+    port->hfile = CreateFileW(doc_info->pOutputFile, GENERIC_WRITE,
+            FILE_SHARE_READ, NULL, OPEN_ALWAYS, 0, NULL);
+    return port->hfile != INVALID_HANDLE_VALUE;
+}
+
+static BOOL WINAPI localmon_WritePort(HANDLE hport, BYTE *buf, DWORD size,
+        DWORD *written)
+{
+    port_t *port = hport;
+
+    TRACE("(%p %p %lu %p)\n", hport, buf, size, written);
+
+    return WriteFile(port->hfile, buf, size, written, NULL);
+}
+
+static BOOL WINAPI localmon_EndDocPort(HANDLE hport)
+{
+    port_t *port = hport;
+
+    TRACE("(%p)\n", hport);
+
+    CloseHandle(port->hfile);
+    port->hfile = INVALID_HANDLE_VALUE;
+    return TRUE;
+}
+
+/*****************************************************
+ * localmon_ClosePort [exported through MONITOREX]
+ *
+ * Close a Port
+ *
+ * PARAMS
+ *  hport  [i] The Handle to close
+ *
+ * RETURNS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+static BOOL WINAPI localmon_ClosePort(HANDLE hport)
+{
+    port_t *port = hport;
+
+    TRACE("(%p)\n", port);
+
+    localmon_EndDocPort(hport);
+
+    EnterCriticalSection(&port_handles_cs);
+    list_remove(&port->entry);
+    LeaveCriticalSection(&port_handles_cs);
+    free(port);
     return TRUE;
 }
 
@@ -755,10 +810,10 @@ LPMONITOREX WINAPI InitializePrintMonitor(LPWSTR regroot)
             localmon_EnumPortsW,
             localmon_OpenPortW,
             NULL,       /* localmon_OpenPortExW */ 
-            NULL,       /* localmon_StartDocPortW */
-            NULL,       /* localmon_WritePortW */
+            localmon_StartDocPort,
+            localmon_WritePort,
             NULL,       /* localmon_ReadPortW */
-            NULL,       /* localmon_EndDocPortW */
+            localmon_EndDocPort,
             localmon_ClosePort,
             NULL,       /* Use AddPortUI in localui.dll */
             localmon_AddPortExW,
