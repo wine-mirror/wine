@@ -43,13 +43,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 #define TEST_MAX_AXES       4
 #define TEST_POLL_TIME      100
 
-#define TEST_BUTTON_COL_MAX 8
-#define TEST_BUTTON_X       8
-#define TEST_BUTTON_Y       122
-#define TEST_NEXT_BUTTON_X  30
-#define TEST_NEXT_BUTTON_Y  25
-#define TEST_BUTTON_SIZE_X  20
-#define TEST_BUTTON_SIZE_Y  18
+#define TEST_BUTTON_COL_MAX 16
+#define TEST_BUTTON_X       24
+#define TEST_BUTTON_Y       112
+#define TEST_NEXT_BUTTON_X  17
+#define TEST_NEXT_BUTTON_Y  15
+#define TEST_BUTTON_SIZE_X  16
+#define TEST_BUTTON_SIZE_Y  14
 
 #define TEST_AXIS_X         43
 #define TEST_AXIS_Y         60
