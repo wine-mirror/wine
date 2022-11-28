@@ -2158,6 +2158,7 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *ucontext )
 {
     struct xcontext context;
 
+    init_handler( ucontext );
     if (is_inside_syscall( ucontext ))
     {
         DECLSPEC_ALIGN(64) XSTATE xs;
