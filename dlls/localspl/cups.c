@@ -52,6 +52,10 @@ typedef struct _doc_t
             pid_t pid;
             int fd;
         } pipe;
+        struct
+        {
+            int fd;
+        } unixname;
     };
 } doc_t;
 
@@ -131,6 +135,35 @@ static BOOL pipe_start_doc(doc_t *doc, const WCHAR *cmd)
     return TRUE;
 }
 
+static BOOL unixname_write_doc(doc_t *doc, const BYTE *buf, unsigned int size)
+{
+    return write(doc->unixname.fd, buf, size) == size;
+}
+
+static BOOL unixname_end_doc(doc_t *doc)
+{
+    close(doc->unixname.fd);
+    return TRUE;
+}
+
+static BOOL unixname_start_doc(doc_t *doc, const WCHAR *output)
+{
+    char *outputA;
+    DWORD len;
+
+    doc->write_doc = unixname_write_doc;
+    doc->end_doc = unixname_end_doc;
+
+    len = wcslen(output);
+    outputA = malloc(len * 3 + 1);
+    ntdll_wcstoumbs(output, len + 1, outputA, len * 3 + 1, FALSE);
+
+    doc->unixname.fd = open(outputA, O_CREAT | O_TRUNC | O_WRONLY, 0666);
+    free(outputA);
+
+    return doc->unixname.fd != -1;
+}
+
 static NTSTATUS start_doc(void *args)
 {
     const struct start_doc_params *params = args;
@@ -141,6 +174,8 @@ static NTSTATUS start_doc(void *args)
 
     if (params->type == PORT_IS_PIPE)
         ret = pipe_start_doc(doc, params->port + 1 /* strlen("|") */);
+    else if (params->type == PORT_IS_UNIXNAME)
+        ret = unixname_start_doc(doc, params->port);
 
     if (ret)
         *params->doc = (size_t)doc;

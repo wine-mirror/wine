@@ -988,7 +988,7 @@ static monitor_t * monitor_load_by_port(LPCWSTR portname)
     TRACE("(%s)\n", debugstr_w(portname));
 
     /* wine specific ports */
-    if (portname[0] == '|')
+    if (portname[0] == '|' || portname[0] == '/')
         return monitor_load(L"Local Port", NULL);
 
     /* Try the Local Monitor first */
