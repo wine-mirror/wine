@@ -469,7 +469,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 
     if (template.style & DS_SETFONT)
     {
-        HDC dc = GetDC(0);
+        HDC dc = NtUserGetDC(0);
 
         if (template.pointSize == 0x7fff)
         {

@@ -169,6 +169,7 @@ static void * const syscalls[] =
     NtUserGetCursor,
     NtUserGetCursorFrameInfo,
     NtUserGetCursorInfo,
+    NtUserGetDC,
     NtUserGetDCEx,
     NtUserGetDisplayConfigBufferSizes,
     NtUserGetDoubleClickTime,

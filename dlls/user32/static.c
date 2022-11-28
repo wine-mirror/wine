@@ -275,7 +275,7 @@ static VOID STATIC_TryPaintFcn(HWND hwnd, LONG full_style)
         LONG style = full_style & SS_TYPEMASK;
 
         GetClientRect( hwnd, &rc );
-        hdc = GetDC( hwnd );
+        hdc = NtUserGetDC( hwnd );
         hrgn = set_control_clipping( hdc, &rc );
         hbrush = STATIC_SendWmCtlColorStatic( hwnd, hdc );
         if (staticPaintFunc[style])

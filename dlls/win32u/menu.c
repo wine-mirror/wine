@@ -2960,7 +2960,7 @@ static void calc_popup_menu_size( struct menu *menu, UINT max_height )
     SetRectEmpty( &menu->items_rect );
 
     if (menu->nItems == 0) return;
-    hdc = NtUserGetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
+    hdc = NtUserGetDC( 0 );
 
     NtGdiSelectFont( hdc, get_menu_font( FALSE ));
 
@@ -3163,7 +3163,7 @@ static void select_item( HWND owner, HMENU hmenu, UINT index, BOOL send_select, 
     if (!menu || !menu->nItems || !menu->hWnd) return;
 
     if (menu->FocusedItem == index) return;
-    if (menu->wFlags & MF_POPUP) hdc = NtUserGetDCEx( menu->hWnd, 0, DCX_USESTYLE );
+    if (menu->wFlags & MF_POPUP) hdc = NtUserGetDC( menu->hWnd );
     else hdc = NtUserGetDCEx( menu->hWnd, 0, DCX_CACHE | DCX_WINDOW);
     if (!top_popup)
     {
@@ -3369,7 +3369,7 @@ static HMENU show_sub_popup( HWND owner, HMENU hmenu, BOOL select_first, UINT fl
     /* correct item if modified as a reaction to WM_INITMENUPOPUP message */
     if (!(item->fState & MF_HILITE))
     {
-        if (menu->wFlags & MF_POPUP) hdc = NtUserGetDCEx( menu->hWnd, 0, DCX_USESTYLE );
+        if (menu->wFlags & MF_POPUP) hdc = NtUserGetDC( menu->hWnd );
         else hdc = NtUserGetDCEx( menu->hWnd, 0, DCX_CACHE | DCX_WINDOW );
 
         NtGdiSelectFont( hdc, get_menu_font( FALSE ));

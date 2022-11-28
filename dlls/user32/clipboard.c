@@ -349,7 +349,7 @@ static HANDLE render_synthesized_bitmap( HANDLE data, UINT from )
 {
     BITMAPINFO *bmi;
     HANDLE ret = 0;
-    HDC hdc = GetDC( 0 );
+    HDC hdc = NtUserGetDC( 0 );
 
     if ((bmi = GlobalLock( data )))
     {
@@ -369,7 +369,7 @@ static HANDLE render_synthesized_dib( HANDLE data, UINT format, UINT from )
     BITMAPINFO *bmi, *src;
     DWORD src_size, header_size, bits_size;
     HANDLE ret = 0;
-    HDC hdc = GetDC( 0 );
+    HDC hdc = NtUserGetDC( 0 );
 
     if (from == CF_BITMAP)
     {
@@ -428,7 +428,7 @@ static HANDLE render_synthesized_metafile( HANDLE data )
     void *bits;
     METAFILEPICT *pict;
     ENHMETAHEADER header;
-    HDC hdc = GetDC( 0 );
+    HDC hdc = NtUserGetDC( 0 );
 
     size = GetWinMetaFileBits( data, 0, NULL, MM_ISOTROPIC, hdc );
     if ((bits = HeapAlloc( GetProcessHeap(), 0, size )))

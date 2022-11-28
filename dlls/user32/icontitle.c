@@ -47,7 +47,7 @@ static BOOL ICONTITLE_SetTitlePos( HWND hwnd, HWND owner )
         length = lstrlenW( str );
     }
 
-    if (!(hDC = GetDC( hwnd ))) return FALSE;
+    if (!(hDC = NtUserGetDC( hwnd ))) return FALSE;
 
     hPrevFont = SelectObject( hDC, hIconTitleFont );
 

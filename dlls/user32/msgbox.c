@@ -231,7 +231,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     ileft = rect.left;
     iwidth = rect.right - ileft;
 
-    hdc = GetDC(hwnd);
+    hdc = NtUserGetDC(hwnd);
     hPrevFont = SelectObject( hdc, (HFONT)SendMessageW( hwnd, WM_GETFONT, 0, 0 ));
 
     /* Get the number of visible buttons and their size */

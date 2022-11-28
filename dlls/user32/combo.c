@@ -162,7 +162,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
 
 static INT combo_get_text_height(const HEADCOMBO *combo)
 {
-    HDC hdc = GetDC(combo->self);
+    HDC hdc = NtUserGetDC(combo->self);
     HFONT prev_font = 0;
     TEXTMETRICW tm;
 
@@ -659,7 +659,7 @@ static void CBPaintText(
    else if(!(lphc->wState & CBF_NOREDRAW) && IsWindowVisible( lphc->self ))
    {
      /* paint text field ourselves */
-     HDC hdc = hdc_paint ? hdc_paint : GetDC(lphc->self);
+     HDC hdc = hdc_paint ? hdc_paint : NtUserGetDC(lphc->self);
      UINT itemState = ODS_COMBOBOXEDIT;
      HFONT hPrevFont = (lphc->hFont) ? SelectObject(hdc, lphc->hFont) : 0;
      HBRUSH hPrevBrush, hBkgBrush;

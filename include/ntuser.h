@@ -733,6 +733,7 @@ HCURSOR WINAPI NtUserGetCursor(void);
 HCURSOR WINAPI NtUserGetCursorFrameInfo( HCURSOR hCursor, DWORD istep, DWORD *rate_jiffies,
                                          DWORD *num_steps );
 BOOL    WINAPI NtUserGetCursorInfo( CURSORINFO *info );
+HDC     WINAPI NtUserGetDC( HWND hwnd );
 HDC     WINAPI NtUserGetDCEx( HWND hwnd, HRGN clip_rgn, DWORD flags );
 LONG    WINAPI NtUserGetDisplayConfigBufferSizes( UINT32 flags, UINT32 *num_path_info,
                                                   UINT32 *num_mode_info );

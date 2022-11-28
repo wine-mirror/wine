@@ -1029,6 +1029,15 @@ INT WINAPI NtUserReleaseDC( HWND hwnd, HDC hdc )
     return release_dc( hwnd, hdc, FALSE );
 }
 
+/***********************************************************************
+ *           NtUserGetDC (win32u.@)
+ */
+HDC WINAPI NtUserGetDC( HWND hwnd )
+{
+    if (!hwnd) return NtUserGetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
+    return NtUserGetDCEx( hwnd, 0, DCX_USESTYLE );
+}
+
 /**********************************************************************
  *           NtUserWindowFromDC (win32u.@)
  */

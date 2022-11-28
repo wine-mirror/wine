@@ -3496,7 +3496,7 @@ DWORD get_dialog_base_units(void)
     {
         HDC hdc;
 
-        if ((hdc = NtUserGetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW )))
+        if ((hdc = NtUserGetDC( 0 )))
         {
             cx = get_char_dimensions( hdc, NULL, &cy );
             NtUserReleaseDC( 0, hdc );

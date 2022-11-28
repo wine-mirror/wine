@@ -1918,6 +1918,13 @@ NTSTATUS WINAPI wow64_NtUserGetCursorInfo( UINT *args )
     return TRUE;
 }
 
+NTSTATUS WINAPI wow64_NtUserGetDC( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return HandleToUlong( NtUserGetDC( hwnd ));
+}
+
 NTSTATUS WINAPI wow64_NtUserGetDCEx( UINT *args )
 {
     HWND hwnd = get_handle( &args );

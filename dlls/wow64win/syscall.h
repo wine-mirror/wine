@@ -155,6 +155,7 @@
     SYSCALL_ENTRY( NtUserGetCursor ) \
     SYSCALL_ENTRY( NtUserGetCursorFrameInfo ) \
     SYSCALL_ENTRY( NtUserGetCursorInfo ) \
+    SYSCALL_ENTRY( NtUserGetDC ) \
     SYSCALL_ENTRY( NtUserGetDCEx ) \
     SYSCALL_ENTRY( NtUserGetDisplayConfigBufferSizes ) \
     SYSCALL_ENTRY( NtUserGetDoubleClickTime ) \

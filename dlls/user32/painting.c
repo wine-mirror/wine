@@ -23,22 +23,6 @@
 
 
 /***********************************************************************
- *		GetDC (USER32.@)
- *
- * Get a device context.
- *
- * RETURNS
- *	Success: Handle to the device context
- *	Failure: NULL.
- */
-HDC WINAPI GetDC( HWND hwnd )
-{
-    if (!hwnd) return NtUserGetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
-    return NtUserGetDCEx( hwnd, 0, DCX_USESTYLE );
-}
-
-
-/***********************************************************************
  *		GetWindowDC (USER32.@)
  */
 HDC WINAPI GetWindowDC( HWND hwnd )

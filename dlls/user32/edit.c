@@ -380,7 +380,7 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData_linedef(EDITSTATE *es, HD
 		HRESULT hr;
 
 		if (!udc)
-			udc = GetDC(es->hwndSelf);
+			udc = NtUserGetDC(es->hwndSelf);
 		if (es->font)
 			old_font = SelectObject(udc, es->font);
 
@@ -421,7 +421,7 @@ static SCRIPT_STRING_ANALYSIS EDIT_UpdateUniscribeData(EDITSTATE *es, HDC dc, IN
 			HDC udc = dc;
 
 			if (!udc)
-				udc = GetDC(es->hwndSelf);
+				udc = NtUserGetDC(es->hwndSelf);
 			if (es->font)
 				old_font = SelectObject(udc, es->font);
 
@@ -2885,7 +2885,7 @@ static void EDIT_EM_SetMargins(EDITSTATE *es, INT action,
 
         /* Set the default margins depending on the font */
         if (es->font && (left == EC_USEFONTINFO || right == EC_USEFONTINFO)) {
-            HDC dc = GetDC(es->hwndSelf);
+            HDC dc = NtUserGetDC(es->hwndSelf);
             HFONT old_font = SelectObject(dc, es->font);
             LONG width = GdiGetCharDimensions(dc, &tm, NULL), rc_width;
             RECT rc;
@@ -3798,7 +3798,7 @@ static void EDIT_WM_SetFocus(EDITSTATE *es)
         /* single line edit updates itself */
         if (IsWindowVisible(es->hwndSelf) && !(es->style & ES_MULTILINE))
         {
-            HDC hdc = GetDC(es->hwndSelf);
+            HDC hdc = NtUserGetDC(es->hwndSelf);
             EDIT_WM_Paint(es, hdc);
             NtUserReleaseDC( es->hwndSelf, hdc );
         }
@@ -3859,7 +3859,7 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 
 	es->font = font;
 	EDIT_InvalidateUniscribeData(es);
-	dc = GetDC(es->hwndSelf);
+	dc = NtUserGetDC(es->hwndSelf);
 	if (font)
 		old_font = SelectObject(dc, font);
 	GetTextMetricsW(dc, &tm);

@@ -823,7 +823,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     {
       HDC hMemDC;
       HBITMAP hBitmap, hOldBitmap;
-      HDC hdc = GetDC(hChild);
+      HDC hdc = NtUserGetDC(hChild);
 
       if (hdc)
       {

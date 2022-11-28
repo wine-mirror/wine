@@ -287,7 +287,7 @@
 @ stdcall GetCursorFrameInfo(long long long ptr ptr)
 @ stdcall GetCursorInfo(ptr) NtUserGetCursorInfo
 @ stdcall GetCursorPos(ptr)
-@ stdcall GetDC(long)
+@ stdcall GetDC(long) NtUserGetDC
 @ stdcall GetDCEx(long long long) NtUserGetDCEx
 @ stdcall GetDesktopWindow()
 @ stdcall GetDialogBaseUnits()

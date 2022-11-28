@@ -141,7 +141,7 @@ static inline void paint_button( HWND hwnd, LONG style, UINT action )
 {
     if (btnPaintFunc[style] && IsWindowVisible(hwnd))
     {
-        HDC hdc = GetDC( hwnd );
+        HDC hdc = NtUserGetDC( hwnd );
         btnPaintFunc[style]( hwnd, hdc, action );
         NtUserReleaseDC( hwnd, hdc );
     }
@@ -328,7 +328,7 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
         /* Clear an old text here as Windows does */
         if (IsWindowVisible(hWnd))
         {
-            HDC hdc = GetDC(hWnd);
+            HDC hdc = NtUserGetDC(hWnd);
             HBRUSH hbrush;
             RECT client, rc;
             HWND parent = GetParent(hWnd);
