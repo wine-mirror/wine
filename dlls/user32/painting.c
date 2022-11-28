@@ -23,15 +23,6 @@
 
 
 /***********************************************************************
- *		GetWindowDC (USER32.@)
- */
-HDC WINAPI GetWindowDC( HWND hwnd )
-{
-    return NtUserGetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
-}
-
-
-/***********************************************************************
  *		UpdateWindow (USER32.@)
  */
 BOOL WINAPI UpdateWindow( HWND hwnd )

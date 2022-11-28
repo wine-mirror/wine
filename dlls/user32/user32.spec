@@ -405,7 +405,7 @@
 # @ stub GetWinStationInfo
 @ stdcall GetWindow(long long)
 @ stdcall GetWindowContextHelpId(long)
-@ stdcall GetWindowDC(long)
+@ stdcall GetWindowDC(long) NtUserGetWindowDC
 @ stdcall GetWindowDisplayAffinity(long ptr)
 @ stdcall GetWindowDpiAwarenessContext(long)
 @ stdcall GetWindowInfo(long ptr)

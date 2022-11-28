@@ -2570,6 +2570,13 @@ NTSTATUS WINAPI wow64_NtUserGetUpdatedClipboardFormats( UINT *args )
     return NtUserGetUpdatedClipboardFormats( formats, size, out_size );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetWindowDC( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return HandleToUlong( NtUserGetWindowDC( hwnd ));
+}
+
 NTSTATUS WINAPI wow64_NtUserGetWindowPlacement( UINT *args )
 {
     HWND hwnd = get_handle( &args );

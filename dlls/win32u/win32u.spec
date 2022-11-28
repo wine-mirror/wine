@@ -1009,7 +1009,7 @@
 @ stub NtUserGetWindowBand
 @ stub NtUserGetWindowCompositionAttribute
 @ stub NtUserGetWindowCompositionInfo
-@ stub NtUserGetWindowDC
+@ stdcall -syscall NtUserGetWindowDC(long)
 @ stub NtUserGetWindowDisplayAffinity
 @ stub NtUserGetWindowFeedbackSetting
 @ stub NtUserGetWindowGroupId

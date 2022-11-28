@@ -195,6 +195,7 @@
     SYSCALL_ENTRY( NtUserGetUpdateRect ) \
     SYSCALL_ENTRY( NtUserGetUpdateRgn ) \
     SYSCALL_ENTRY( NtUserGetUpdatedClipboardFormats ) \
+    SYSCALL_ENTRY( NtUserGetWindowDC ) \
     SYSCALL_ENTRY( NtUserGetWindowPlacement ) \
     SYSCALL_ENTRY( NtUserGetWindowRgnEx ) \
     SYSCALL_ENTRY( NtUserHideCaret ) \

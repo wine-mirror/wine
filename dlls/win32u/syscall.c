@@ -209,6 +209,7 @@ static void * const syscalls[] =
     NtUserGetUpdateRect,
     NtUserGetUpdateRgn,
     NtUserGetUpdatedClipboardFormats,
+    NtUserGetWindowDC,
     NtUserGetWindowPlacement,
     NtUserGetWindowRgnEx,
     NtUserHideCaret,

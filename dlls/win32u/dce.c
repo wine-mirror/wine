@@ -1038,6 +1038,14 @@ HDC WINAPI NtUserGetDC( HWND hwnd )
     return NtUserGetDCEx( hwnd, 0, DCX_USESTYLE );
 }
 
+/***********************************************************************
+ *           NtUserGetWindowDC (win32u.@)
+ */
+HDC WINAPI NtUserGetWindowDC( HWND hwnd )
+{
+    return NtUserGetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+}
+
 /**********************************************************************
  *           NtUserWindowFromDC (win32u.@)
  */

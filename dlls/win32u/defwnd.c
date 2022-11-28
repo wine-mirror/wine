@@ -2067,7 +2067,7 @@ LRESULT handle_nc_hit_test( HWND hwnd, POINT pt )
 
 static void track_min_max_box( HWND hwnd, WORD wparam )
 {
-    HDC hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+    HDC hdc = NtUserGetWindowDC( hwnd );
     DWORD style = get_window_long( hwnd, GWL_STYLE );
     HMENU sys_menu = NtUserGetSystemMenu(hwnd, FALSE);
     void (*paint_button)( HWND, HDC, BOOL, BOOL );
@@ -2141,7 +2141,7 @@ static void track_close_button( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
     /* If the close item of the sysmenu is disabled or not present do nothing */
     if((state & MF_DISABLED) || (state & MF_GRAYED) || state == 0xFFFFFFFF) return;
-    hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+    hdc = NtUserGetWindowDC( hwnd );
     NtUserSetCapture( hwnd );
     draw_close_button( hwnd, hdc, TRUE, FALSE );
 
@@ -2191,7 +2191,7 @@ static LRESULT handle_nc_lbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
     case HTSYSMENU:
         if (style & WS_SYSMENU)
         {
-            HDC hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+            HDC hdc = NtUserGetWindowDC( hwnd );
             draw_nc_sys_button( hwnd, hdc, TRUE );
             NtUserReleaseDC( hwnd, hdc );
             send_message( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lparam );
