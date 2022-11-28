@@ -1833,7 +1833,8 @@ struct callback
     DWORD output_tid[2];
     struct teststream *stream;
 
-    QWORD last_pts;
+    QWORD last_pts[2];
+    QWORD next_pts[2];
     QWORD expect_time;
     HANDLE expect_ontime, got_ontime;
 };
@@ -2029,6 +2030,11 @@ static HRESULT WINAPI callback_OnSample(IWMReaderCallback *iface, DWORD output,
         trace("%lu: %04lx: IWMReaderCallback::OnSample(output %lu, time %I64u, duration %I64u, flags %#lx)\n",
                 GetTickCount(), GetCurrentThreadId(), output, time, duration, flags);
 
+    /* uncompressed samples are slightly out of order because of decoding delay */
+    ok(callback->last_pts[output] <= time, "got time %I64d\n", time);
+    callback->last_pts[output] = time;
+    callback->next_pts[output] = time + duration;
+
     if (callback->dedicated_threads)
     {
         todo_wine
@@ -2106,6 +2112,10 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
         trace("%lu: %04lx: IWMReaderCallbackAdvanced::OnStreamSample(stream %u, pts %I64u, duration %I64u, flags %#lx)\n",
                 GetTickCount(), GetCurrentThreadId(), stream_number, pts, duration, flags);
 
+    ok(callback->last_pts[output] <= pts, "got pts %I64d\n", pts);
+    callback->last_pts[output] = pts;
+    callback->next_pts[output] = pts + duration;
+
     if (callback->dedicated_threads)
     {
         todo_wine
@@ -2114,8 +2124,7 @@ static HRESULT WINAPI callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced
     else
     {
         ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
-        ok(callback->last_pts <= pts, "got pts %I64d\n", pts);
-        callback->last_pts = pts;
+        ok(callback->last_pts[1 - output] <= pts, "got pts %I64d\n", pts);
     }
 
     if (!callback->output_tid[output])
@@ -2531,7 +2540,10 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
     callback->end_of_streaming_count = 0;
     callback->eof_count = 0;
     callback->callback_tid = 0;
-    callback->last_pts = 0;
+    callback->last_pts[0] = 0;
+    callback->next_pts[0] = 0;
+    callback->last_pts[1] = 0;
+    callback->next_pts[1] = 0;
     memset(callback->output_tid, 0, sizeof(callback->output_tid));
     if (callback->stream)
         callback->stream->input_tid = 0;
@@ -2564,6 +2576,24 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     wait_eof_callback(callback);
     wait_ontime_callback(callback);
+    if (callback->last_pts[0])
+    {
+        todo_wine_if(callback->last_pts[0] == 19500000 || callback->last_pts[0] == 20060000)
+        ok(callback->last_pts[0] == 19960000, "Got pts %I64d.\n", callback->last_pts[0]);
+        todo_wine
+        ok(callback->next_pts[0] == 20420000, "Got pts %I64d.\n", callback->next_pts[0]);
+    }
+    if (callback->last_pts[1])
+    {
+        todo_wine_if(!callback->read_compressed)
+        ok(callback->last_pts[1] == 20060000, "Got pts %I64d.\n", callback->last_pts[1]);
+        todo_wine
+        ok(callback->next_pts[1] == 20070000, "Got pts %I64d.\n", callback->next_pts[1]);
+    }
+    callback->last_pts[0] = 0;
+    callback->next_pts[0] = 0;
+    callback->last_pts[1] = 0;
+    callback->next_pts[1] = 0;
 
     hr = IWMReader_Stop(reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3083,6 +3113,18 @@ static void test_async_reader_streaming(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     wait_eof_callback(&callback);
     wait_ontime_callback(&callback);
+    todo_wine
+    ok(callback.last_pts[0] == 19960000, "Got pts %I64d.\n", callback.last_pts[0]);
+    todo_wine
+    ok(callback.next_pts[0] == 20420000, "Got pts %I64d.\n", callback.next_pts[0]);
+    todo_wine
+    ok(callback.last_pts[1] == 20060000, "Got pts %I64d.\n", callback.last_pts[1]);
+    todo_wine
+    ok(callback.next_pts[1] == 20070000, "Got pts %I64d.\n", callback.next_pts[1]);
+    callback.last_pts[0] = 0;
+    callback.next_pts[0] = 0;
+    callback.last_pts[1] = 0;
+    callback.next_pts[1] = 0;
 
     hr = IWMReader_Start(reader, 0, 0, 1.0f, (void *)NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3092,6 +3134,18 @@ static void test_async_reader_streaming(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     wait_eof_callback(&callback);
     wait_ontime_callback(&callback);
+    todo_wine
+    ok(callback.last_pts[0] == 19960000, "Got pts %I64d.\n", callback.last_pts[0]);
+    todo_wine
+    ok(callback.next_pts[0] == 20420000, "Got pts %I64d.\n", callback.next_pts[0]);
+    todo_wine
+    ok(callback.last_pts[1] == 20060000, "Got pts %I64d.\n", callback.last_pts[1]);
+    todo_wine
+    ok(callback.next_pts[1] == 20070000, "Got pts %I64d.\n", callback.next_pts[1]);
+    callback.last_pts[0] = 0;
+    callback.next_pts[0] = 0;
+    callback.last_pts[1] = 0;
+    callback.next_pts[1] = 0;
 
     hr = IWMReader_Stop(reader);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
