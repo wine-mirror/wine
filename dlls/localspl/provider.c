@@ -3240,6 +3240,7 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     BOOL ret_startdoc = FALSE, ret_open = FALSE, ret = TRUE;
     printer_t *printer = (printer_t *)hprinter;
     const WCHAR *port_name, *port;
+    WCHAR output[1024];
     DOC_INFO_1W info;
     monitor_t *mon;
     BYTE buf[4096];
@@ -3247,6 +3248,7 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     DWORD r, w;
     job_t *job;
     HANDLE hf;
+    HKEY hkey;
 
     TRACE("%p %ld\n", hprinter, job_id);
 
@@ -3280,10 +3282,22 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     }
 
     /* TODO: use print processor */
-    if (isalpha(port[0]) && port[1] == ':')
+    port_name = port;
+    if ((isalpha(port[0]) && port[1] == ':') ||
+            !wcsncmp(port, L"FILE:", ARRAY_SIZE(L"FILE:") - 1))
+    {
         port_name = L"FILE:";
-    else
-        port_name = port;
+    }
+    else if (!RegOpenKeyW(HKEY_CURRENT_USER, L"Software\\Wine\\Printing\\Spooler", &hkey))
+    {
+        DWORD type, count = sizeof(output);
+        if (!RegQueryValueExW(hkey, port, NULL, &type, (BYTE *)output, &count))
+        {
+            TRACE("overriding port %s -> %s\n", debugstr_w(port), debugstr_w(output));
+            port_name = output;
+        }
+        RegCloseKey(hkey);
+    }
 
     if (!(mon = monitor_load_by_port(port_name)) || !mon->monitor.pfnOpenPort ||
             !mon->monitor.pfnStartDocPort || !mon->monitor.pfnWritePort ||
