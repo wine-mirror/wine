@@ -564,7 +564,7 @@ static void *create_dib_from_bitmap( HBITMAP hBmp, size_t *size )
 
     /* Retrieve the DIB bits from the bitmap and fill in the
      * DIB color table if present */
-    hdc = NtUserGetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
+    hdc = NtUserGetDC( 0 );
     nLinesCopied = NtGdiGetDIBitsInternal( hdc, hBmp, 0, bmp.bmHeight,  ret + OffsetBits,
                                            (LPBITMAPINFO) pbmiHeader, 0, 0, 0 );
     NtUserReleaseDC( 0, hdc );
@@ -986,7 +986,7 @@ static void *import_image_bmp( Atom type, const void *data, size_t size, size_t 
         else return NULL;
         if (!width || !height) return NULL;
 
-        hdc = NtUserGetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
+        hdc = NtUserGetDC( 0 );
 
         if ((hbmp = NtGdiCreateDIBitmapInternal( hdc, width, height, CBM_INIT,
                                                  (const BYTE *)data + bfh->bfOffBits, bmi,
