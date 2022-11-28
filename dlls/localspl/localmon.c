@@ -509,7 +509,7 @@ static BOOL WINAPI localmon_StartDocPort(HANDLE hport, WCHAR *printer_name,
 
     if (!doc_info || !doc_info->pOutputFile)
     {
-        FIXME("set error\n");
+        SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }
 

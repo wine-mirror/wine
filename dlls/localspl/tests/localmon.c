@@ -914,9 +914,18 @@ static void test_file_port(void)
     ok(!res, "WritePort succeeded\n");
     ok(GetLastError() == ERROR_INVALID_HANDLE, "GetLastError() = %lu\n", GetLastError());
 
-    doc_info.pDocName = (WCHAR *)L"not used";
+    SetLastError(0xdeadbeef);
+    res = pStartDocPort(hport, printer_name, 1, 1, NULL);
+    ok(!res, "StartDocPort succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError() = %lu\n", GetLastError());
+
+    memset(&doc_info, 0, sizeof(doc_info));
+    SetLastError(0xdeadbeef);
+    res = pStartDocPort(hport, printer_name, 1, 1, (BYTE *)&doc_info);
+    ok(!res, "StartDocPort succeeded\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError() = %lu\n", GetLastError());
+
     doc_info.pOutputFile = tempfileW;
-    doc_info.pDatatype = (WCHAR *)L"not used";
     res = pStartDocPort(hport, printer_name, 1, 1, (BYTE *)&doc_info);
     ok(res, "StartDocPort failed (%lu)\n", GetLastError());
 
