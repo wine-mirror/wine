@@ -440,6 +440,13 @@ static inline struct amd64_thread_data *amd64_thread_data(void)
     return (struct amd64_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
+static inline TEB *get_current_teb(void)
+{
+    unsigned long rsp;
+    __asm__( "movq %%rsp,%0" : "=r" (rsp) );
+    return (TEB *)(rsp & ~signal_stack_mask);
+}
+
 static BOOL is_inside_syscall( const ucontext_t *sigcontext )
 {
     return ((char *)RSP_sig(sigcontext) >= (char *)ntdll_get_thread_data()->kernel_stack &&
@@ -806,7 +813,11 @@ static inline void set_sigcontext( const CONTEXT *context, ucontext_t *sigcontex
 static inline void init_handler( const ucontext_t *sigcontext )
 {
 #ifdef __linux__
-    if (fs32_sel) arch_prctl( ARCH_SET_FS, amd64_thread_data()->pthread_teb );
+    if (fs32_sel)
+    {
+        struct ntdll_thread_data *thread_data = (struct ntdll_thread_data *)&get_current_teb()->GdiTebBatch;
+        arch_prctl( ARCH_SET_FS, ((struct amd64_thread_data *)thread_data->cpu_data)->pthread_teb );
+    }
 #endif
 }
 
