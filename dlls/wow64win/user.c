@@ -3184,6 +3184,15 @@ NTSTATUS WINAPI wow64_NtUserPostThreadMessage( UINT *args )
     return NtUserPostThreadMessage( thread, msg, wparam, lparam );
 }
 
+NTSTATUS WINAPI wow64_NtUserPrintWindow( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HDC hdc = get_handle( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserPrintWindow( hwnd, hdc, flags );
+}
+
 NTSTATUS WINAPI wow64_NtUserQueryInputContext( UINT *args )
 {
     HIMC handle = get_handle( &args );

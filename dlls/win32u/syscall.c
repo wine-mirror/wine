@@ -237,6 +237,7 @@ static void * const syscalls[] =
     NtUserPerMonitorDPIPhysicalToLogicalPoint,
     NtUserPostMessage,
     NtUserPostThreadMessage,
+    NtUserPrintWindow,
     NtUserQueryInputContext,
     NtUserRedrawWindow,
     NtUserRegisterClassExWOW,

@@ -1105,7 +1105,7 @@
 @ stub NtUserPostKeyboardInputMessage
 @ stdcall -syscall NtUserPostMessage(long long long long)
 @ stdcall -syscall NtUserPostThreadMessage(long long long long)
-@ stub NtUserPrintWindow
+@ stdcall -syscall NtUserPrintWindow(long long long)
 @ stub NtUserProcessConnect
 @ stub NtUserProcessInkFeedbackCommand
 @ stub NtUserPromoteMouseInPointer

@@ -62,18 +62,3 @@ BOOL WINAPI ScrollWindow( HWND hwnd, INT dx, INT dy,
     UINT flags = SW_INVALIDATE | SW_ERASE | (rect ? 0 : SW_SCROLLCHILDREN) | SW_NODCCACHE;
     return NtUserScrollWindowEx( hwnd, dx, dy, rect, clipRect, 0, NULL, flags );
 }
-
-/************************************************************************
- *		PrintWindow (USER32.@)
- *
- */
-BOOL WINAPI PrintWindow(HWND hwnd, HDC hdcBlt, UINT nFlags)
-{
-    UINT flags = PRF_CHILDREN | PRF_ERASEBKGND | PRF_OWNED | PRF_CLIENT;
-    if(!(nFlags & PW_CLIENTONLY))
-    {
-        flags |= PRF_NONCLIENT;
-    }
-    SendMessageW(hwnd, WM_PRINT, (WPARAM)hdcBlt, flags);
-    return TRUE;
-}

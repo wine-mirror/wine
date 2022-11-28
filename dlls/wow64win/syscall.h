@@ -223,6 +223,7 @@
     SYSCALL_ENTRY( NtUserPerMonitorDPIPhysicalToLogicalPoint ) \
     SYSCALL_ENTRY( NtUserPostMessage ) \
     SYSCALL_ENTRY( NtUserPostThreadMessage ) \
+    SYSCALL_ENTRY( NtUserPrintWindow ) \
     SYSCALL_ENTRY( NtUserQueryInputContext ) \
     SYSCALL_ENTRY( NtUserRedrawWindow ) \
     SYSCALL_ENTRY( NtUserRegisterClassExWOW ) \

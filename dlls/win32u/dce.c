@@ -1858,3 +1858,14 @@ INT WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
 
     return retval;
 }
+
+/************************************************************************
+ *           NtUserPrintWindow (win32u.@)
+ */
+BOOL WINAPI NtUserPrintWindow( HWND hwnd, HDC hdc, UINT flags )
+{
+    UINT prf_flags = PRF_CHILDREN | PRF_ERASEBKGND | PRF_OWNED | PRF_CLIENT;
+    if (!(flags & PW_CLIENTONLY)) prf_flags |= PRF_NONCLIENT;
+    send_message( hwnd, WM_PRINT, (WPARAM)hdc, prf_flags );
+    return TRUE;
+}
