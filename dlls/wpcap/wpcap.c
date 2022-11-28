@@ -33,9 +33,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
 
-static unixlib_handle_t pcap_handle;
-
-#define PCAP_CALL( func, params ) __wine_unix_call( pcap_handle, unix_ ## func, params )
+#define PCAP_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
 int CDECL pcap_activate( struct pcap *pcap )
 {
@@ -830,8 +828,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
-        if (NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
-                                  &pcap_handle, sizeof(pcap_handle), NULL ))
+        if (__wine_init_unix_call())
             ERR( "No pcap support, expect problems\n" );
         break;
     case DLL_PROCESS_DETACH:
