@@ -27,8 +27,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-HINSTANCE qcap_instance;
-
 struct class_factory
 {
     IClassFactory IClassFactory_iface;
@@ -108,16 +106,6 @@ static struct class_factory capture_graph_cf = {{&class_factory_vtbl}, capture_g
 static struct class_factory file_writer_cf = {{&class_factory_vtbl}, file_writer_create};
 static struct class_factory smart_tee_cf = {{&class_factory_vtbl}, smart_tee_create};
 static struct class_factory vfw_capture_cf = {{&class_factory_vtbl}, vfw_capture_create};
-
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
-{
-    if (reason == DLL_PROCESS_ATTACH)
-    {
-        qcap_instance = instance;
-        DisableThreadLibraryCalls(instance);
-    }
-    return TRUE;
-}
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 {
