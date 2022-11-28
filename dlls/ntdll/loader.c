@@ -1222,7 +1222,7 @@ static BOOL is_dll_native_subsystem( LDR_DATA_TABLE_ENTRY *mod, const IMAGE_NT_H
  * Allocate a TLS slot for a newly-loaded module.
  * The loader_section must be locked while calling this function.
  */
-static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
+static BOOL alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
 {
     const IMAGE_TLS_DIRECTORY *dir;
     ULONG i, size;
@@ -1230,10 +1230,10 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
     LIST_ENTRY *entry;
 
     if (!(dir = RtlImageDirectoryEntryToData( mod->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &size )))
-        return -1;
+        return FALSE;
 
     size = dir->EndAddressOfRawData - dir->StartAddressOfRawData;
-    if (!size && !dir->SizeOfZeroFill && !dir->AddressOfCallBacks) return -1;
+    if (!size && !dir->SizeOfZeroFill && !dir->AddressOfCallBacks) return FALSE;
 
     for (i = 0; i < tls_module_count; i++)
     {
@@ -1255,7 +1255,7 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
         else
             new_ptr = RtlReAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, tls_dirs,
                                          new_count * sizeof(*tls_dirs) );
-        if (!new_ptr) return -1;
+        if (!new_ptr) return FALSE;
 
         /* resize the pointer block in all running threads */
         for (entry = tls_links.Flink; entry != &tls_links; entry = entry->Flink)
@@ -1264,7 +1264,7 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
             void **old = teb->ThreadLocalStoragePointer;
             void **new = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, new_count * sizeof(*new));
 
-            if (!new) return -1;
+            if (!new) return FALSE;
             if (old) memcpy( new, old, tls_module_count * sizeof(*new) );
             teb->ThreadLocalStoragePointer = new;
 #ifdef __x86_64__  /* macOS-specific hack */
@@ -1296,7 +1296,7 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
 
     *(DWORD *)dir->AddressOfIndex = i;
     tls_dirs[i] = *dir;
-    return i;
+    return TRUE;
 }
 
 
@@ -1308,9 +1308,15 @@ static SHORT alloc_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
  */
 static void free_tls_slot( LDR_DATA_TABLE_ENTRY *mod )
 {
-    ULONG i = (USHORT)mod->TlsIndex;
+    const IMAGE_TLS_DIRECTORY *dir;
+    ULONG i, size;
 
-    if (mod->TlsIndex == -1) return;
+    if (mod->TlsIndex != -1)
+        return;
+    if (!(dir = RtlImageDirectoryEntryToData( mod->DllBase, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &size )))
+        return;
+
+    i = *(ULONG*)dir->AddressOfIndex;
     assert( i < tls_module_count );
     memset( &tls_dirs[i], 0, sizeof(tls_dirs[i]) );
 }
@@ -1374,7 +1380,7 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     if (!(wm->ldr.Flags & LDR_DONT_RESOLVE_REFS)) return STATUS_SUCCESS;  /* already done */
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
 
-    wm->ldr.TlsIndex = alloc_tls_slot( &wm->ldr );
+    if (alloc_tls_slot( &wm->ldr )) wm->ldr.TlsIndex = -1;
 
     if (!(imports = RtlImageDirectoryEntryToData( wm->ldr.DllBase, TRUE,
                                                   IMAGE_DIRECTORY_ENTRY_IMPORT, &size )))
@@ -1431,7 +1437,7 @@ static WINE_MODREF *alloc_module( HMODULE hModule, const UNICODE_STRING *nt_name
     wm->ldr.DllBase       = hModule;
     wm->ldr.SizeOfImage   = nt->OptionalHeader.SizeOfImage;
     wm->ldr.Flags         = LDR_DONT_RESOLVE_REFS | (builtin ? LDR_WINE_INTERNAL : 0);
-    wm->ldr.TlsIndex      = -1;
+    wm->ldr.TlsIndex      = 0;
     wm->ldr.LoadCount     = 1;
     wm->CheckSum          = nt->OptionalHeader.CheckSum;
     wm->ldr.TimeDateStamp = nt->FileHeader.TimeDateStamp;
@@ -1783,7 +1789,7 @@ NTSTATUS WINAPI LdrDisableThreadCalloutsForDll(HMODULE hModule)
     RtlEnterCriticalSection( &loader_section );
 
     wm = get_modref( hModule );
-    if (!wm || wm->ldr.TlsIndex != -1)
+    if (!wm || wm->ldr.TlsIndex == -1)
         ret = STATUS_DLL_NOT_FOUND;
     else
         wm->ldr.Flags |= LDR_NO_DLL_CALLS;
@@ -3712,7 +3718,7 @@ void WINAPI LdrShutdownThread(void)
                         DLL_THREAD_DETACH, NULL );
     }
 
-    if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_THREAD_DETACH );
+    if (wm->ldr.TlsIndex == -1) call_tls_callbacks( wm->ldr.DllBase, DLL_THREAD_DETACH );
 
     RtlAcquirePebLock();
     if (NtCurrentTeb()->TlsLinks.Flink) RemoveEntryList( &NtCurrentTeb()->TlsLinks );
@@ -4216,7 +4222,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
             NtTerminateProcess( GetCurrentProcess(), status );
         }
         release_address_space();
-        if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_PROCESS_ATTACH );
+        if (wm->ldr.TlsIndex == -1) call_tls_callbacks( wm->ldr.DllBase, DLL_PROCESS_ATTACH );
         if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
         process_breakpoint();
     }
@@ -4225,7 +4231,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         if ((status = alloc_thread_tls()) != STATUS_SUCCESS)
             NtTerminateThread( GetCurrentThread(), status );
         thread_attach();
-        if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_THREAD_ATTACH );
+        if (wm->ldr.TlsIndex == -1) call_tls_callbacks( wm->ldr.DllBase, DLL_THREAD_ATTACH );
     }
 
     RtlLeaveCriticalSection( &loader_section );
