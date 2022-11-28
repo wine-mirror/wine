@@ -2164,6 +2164,7 @@ static HRESULT WINAPI callback_advanced_OnTime(IWMReaderCallbackAdvanced *iface,
 
     ok(callback->callback_tid == GetCurrentThreadId(), "got wrong thread\n");
 
+    todo_wine_if(time % 10000)
     ok(time == callback->expect_time, "Got time %I64u.\n", time);
     ok(context == (void *)callback->expect_context, "Got unexpected context %p.\n", context);
     ret = WaitForSingleObject(callback->expect_ontime, 100);
@@ -2458,16 +2459,19 @@ static void wait_eof_callback_(int line, struct callback *callback)
     ok_(__FILE__, line)(callback->eof_count == 1, "Got %u WMT_EOF callbacks.\n", callback->eof_count);
 }
 
-#define wait_ontime_callback(a) wait_ontime_callback_(__LINE__, a)
-static void wait_ontime_callback_(int line, struct callback *callback)
+#define wait_ontime_callback(a) wait_ontime_callback_(__LINE__, a, FALSE)
+static void wait_ontime_callback_(int line, struct callback *callback, BOOL todo)
 {
     DWORD ret;
 
     ret = WaitForSingleObject(callback->got_ontime, 0);
     ok_(__FILE__, line)(ret == WAIT_TIMEOUT, "Got unexpected OnTime.\n");
     SetEvent(callback->expect_ontime);
-    ret = WaitForSingleObject(callback->got_ontime, 1000);
+    ret = WaitForSingleObject(callback->got_ontime, (todo && !strcmp(winetest_platform, "wine")) ? 100 : 1000);
+    todo_wine_if(todo)
     ok_(__FILE__, line)(!ret, "Wait timed out.\n");
+    if (todo && ret == WAIT_TIMEOUT)
+        ResetEvent(callback->expect_ontime);
 }
 
 static void check_async_get_output_setting(IWMReaderAdvanced2 *reader, DWORD output, const WCHAR *name,
@@ -2572,6 +2576,68 @@ static void run_async_reader(IWMReader *reader, IWMReaderAdvanced2 *advanced, st
 
     hr = IWMReaderAdvanced2_SetUserProvidedClock(advanced, TRUE);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (!callback->all_streams_off)
+    {
+        callback->expect_time = 2780000;
+        hr = IWMReaderAdvanced2_DeliverTime(advanced, 2770001);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        wait_ontime_callback(callback);
+        if (callback->last_pts[0])
+        {
+            todo_wine
+            ok(callback->last_pts[0] == 2780000, "Got pts %I64d.\n", callback->last_pts[0]);
+            todo_wine
+            ok(callback->next_pts[0] == 3240000, "Got pts %I64d.\n", callback->next_pts[0]);
+        }
+        if (callback->last_pts[1])
+        {
+            todo_wine_if(!callback->read_compressed)
+            ok(callback->last_pts[1] == 2460000, "Got pts %I64d.\n", callback->last_pts[1]);
+            todo_wine
+            ok(callback->next_pts[1] == 2470000, "Got pts %I64d.\n", callback->next_pts[1]);
+        }
+
+        callback->expect_time = 2850000;
+        hr = IWMReaderAdvanced2_DeliverTime(advanced, 2849999);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        wait_ontime_callback(callback);
+        if (callback->last_pts[0])
+        {
+            todo_wine_if(!callback->read_compressed)
+            ok(callback->last_pts[0] == 2780000, "Got pts %I64d.\n", callback->last_pts[0]);
+            todo_wine
+            ok(callback->next_pts[0] == 3240000, "Got pts %I64d.\n", callback->next_pts[0]);
+        }
+        if (callback->last_pts[1])
+        {
+            todo_wine_if(!callback->read_compressed)
+            ok(callback->last_pts[1] == 2460000, "Got pts %I64d.\n", callback->last_pts[1]);
+            todo_wine
+            ok(callback->next_pts[1] == 2470000, "Got pts %I64d.\n", callback->next_pts[1]);
+        }
+
+        callback->expect_time = 2860000;
+        hr = IWMReaderAdvanced2_DeliverTime(advanced, 2850001);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        wait_ontime_callback_(__LINE__, callback, TRUE);
+        if (callback->last_pts[0])
+        {
+            todo_wine_if(!callback->read_compressed)
+            ok(callback->last_pts[0] == 2780000, "Got pts %I64d.\n", callback->last_pts[0]);
+            todo_wine
+            ok(callback->next_pts[0] == 3240000, "Got pts %I64d.\n", callback->next_pts[0]);
+        }
+        if (callback->last_pts[1])
+        {
+            todo_wine
+            ok(callback->last_pts[1] == 2860000, "Got pts %I64d.\n", callback->last_pts[1]);
+            todo_wine
+            ok(callback->next_pts[1] == 2870000, "Got pts %I64d.\n", callback->next_pts[1]);
+        }
+    }
+
+    callback->expect_time = test_wmv_duration * 2;
     hr = IWMReaderAdvanced2_DeliverTime(advanced, test_wmv_duration * 2);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     wait_eof_callback(callback);
