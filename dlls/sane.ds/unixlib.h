@@ -97,6 +97,4 @@ enum sane_funcs
     unix_option_find_descriptor,
 };
 
-extern unixlib_handle_t sane_handle DECLSPEC_HIDDEN;
-
-#define SANE_CALL( func, params ) __wine_unix_call( sane_handle, unix_ ## func, params )
+#define SANE_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )

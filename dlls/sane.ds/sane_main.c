@@ -30,7 +30,6 @@ struct tagActiveDS activeDS;
 
 DSMENTRYPROC SANE_dsmentry;
 HINSTANCE SANE_instance;
-unixlib_handle_t sane_handle = 0;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -41,8 +40,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH: {
 	    SANE_instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
-            if (NtQueryVirtualMemory( GetCurrentProcess(), hinstDLL, MemoryWineUnixFuncs,
-                                      &sane_handle, sizeof(sane_handle), NULL )) return FALSE;
+            if (__wine_init_unix_call()) return FALSE;
             SANE_CALL( process_attach, NULL );
             break;
 	}
