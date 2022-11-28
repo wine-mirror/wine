@@ -29,9 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(capi);
 
-static unixlib_handle_t capi_handle;
-
-#define CAPI_CALL( func, params ) __wine_unix_call( capi_handle, unix_ ## func, params )
+#define CAPI_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
 
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, LPVOID reserved )
@@ -40,8 +38,7 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( instance );
-        return !NtQueryVirtualMemory( GetCurrentProcess(), instance, MemoryWineUnixFuncs,
-                                      &capi_handle, sizeof(capi_handle), NULL );
+        return !__wine_init_unix_call();
     }
     return TRUE;
 }
