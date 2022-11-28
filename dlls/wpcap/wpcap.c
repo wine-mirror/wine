@@ -135,7 +135,7 @@ void * CDECL pcap_dump_open( struct pcap *pcap, const char *filename )
     params.name = unix_path;
     params.ret = &dumper;
     PCAP_CALL( dump_open, &params );
-    RtlFreeHeap( GetProcessHeap(), 0, unix_path );
+    HeapFree( GetProcessHeap(), 0, unix_path );
     return dumper;
 }
 
