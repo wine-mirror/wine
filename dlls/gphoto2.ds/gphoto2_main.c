@@ -477,7 +477,6 @@ static TW_UINT16 GPHOTO2_XferGroupSet (pTW_IDENTITY pOrigin,
 }
 
 HINSTANCE GPHOTO2_instance = 0;
-unixlib_handle_t gphoto2_handle = 0;
 
 BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -488,8 +487,7 @@ BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
 	    GPHOTO2_instance = hinstDLL;
             DisableThreadLibraryCalls(hinstDLL);
-            NtQueryVirtualMemory( GetCurrentProcess(), hinstDLL, MemoryWineUnixFuncs,
-                                  &gphoto2_handle, sizeof(gphoto2_handle), NULL );
+            __wine_init_unix_call();
             break;
     }
 

@@ -71,6 +71,4 @@ enum gphoto2_funcs
     unix_close_file,
 };
 
-extern unixlib_handle_t gphoto2_handle DECLSPEC_HIDDEN;
-
-#define GPHOTO2_CALL( func, params ) __wine_unix_call( gphoto2_handle, unix_ ## func, params )
+#define GPHOTO2_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
