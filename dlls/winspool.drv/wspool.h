@@ -72,9 +72,7 @@ struct schedule_job_params
     const WCHAR *wine_port;
 };
 
-extern unixlib_handle_t winspool_handle DECLSPEC_HIDDEN;
-
-#define UNIX_CALL( func, params ) __wine_unix_call( winspool_handle, unix_ ## func, params )
+#define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
 
 enum cups_funcs
 {
