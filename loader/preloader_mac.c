@@ -101,6 +101,47 @@ void *__stack_chk_guard = 0;
 void __stack_chk_fail_local(void) { return; }
 void __stack_chk_fail(void) { return; }
 
+/*
+ * When 'start' is called, stack frame looks like:
+ *
+ *	       :
+ *	| STRING AREA |
+ *	+-------------+
+ *	|      0      |
+ *	+-------------+
+ *	|  exec_path  | extra "apple" parameters start after NULL terminating env array
+ *	+-------------+
+ *	|      0      |
+ *	+-------------+
+ *	|    env[n]   |
+ *	+-------------+
+ *	       :
+ *	       :
+ *	+-------------+
+ *	|    env[0]   |
+ *	+-------------+
+ *	|      0      |
+ *	+-------------+
+ *	| arg[argc-1] |
+ *	+-------------+
+ *	       :
+ *	       :
+ *	+-------------+
+ *	|    arg[0]   |
+ *	+-------------+
+ *	|     argc    | argc is always 4 bytes long, even in 64-bit architectures
+ *	+-------------+ <- sp
+ *
+ *	Where arg[i] and env[i] point into the STRING AREA
+ *
+ *  See also:
+ *  macOS C runtime 'start':
+ *  <https://github.com/apple-oss-distributions/Csu/blob/Csu-88/start.s>
+ *
+ *  macOS dyld '__dyld_start' (pre-dyld4):
+ *  <https://github.com/apple-oss-distributions/dyld/blob/dyld-852.2/src/dyldStartup.s>
+ */
+
 #ifdef __i386__
 
 static const size_t page_size = 0x1000;
@@ -132,13 +173,14 @@ static const size_t page_mask = 0xfff;
 __ASM_GLOBAL_FUNC( start,
                    __ASM_CFI("\t.cfi_undefined %eip\n")
                    /* The first 16 bytes are used as a function signature on i386 */
-                   "\t.byte 0x6a,0x00\n"            /* pushl $0 */
-                   "\t.byte 0x89,0xe5\n"            /* movl %esp,%ebp */
-                   "\t.byte 0x83,0xe4,0xf0\n"       /* andl $-16,%esp */
-                   "\t.byte 0x83,0xec,0x10\n"       /* subl $16,%esp */
-                   "\t.byte 0x8b,0x5d,0x04\n"       /* movl 4(%ebp),%ebx */
-                   "\t.byte 0x89,0x5c,0x24,0x00\n"  /* movl %ebx,0(%esp) */
+                   "\t.byte 0x6a,0x00\n"            /* pushl $0: push a zero for debugger end of frames marker */
+                   "\t.byte 0x89,0xe5\n"            /* movl %esp,%ebp: pointer to base of kernel frame */
+                   "\t.byte 0x83,0xe4,0xf0\n"       /* andl $-16,%esp: force SSE alignment */
+                   "\t.byte 0x83,0xec,0x10\n"       /* subl $16,%esp: room for new argc, argv, & envp, SSE aligned */
+                   "\t.byte 0x8b,0x5d,0x04\n"       /* movl 4(%ebp),%ebx: pickup argc in %ebx */
+                   "\t.byte 0x89,0x5c,0x24,0x00\n"  /* movl %ebx,0(%esp): argc to reserved stack word */
 
+                   /* call wld_start(stack, &is_unix_thread) */
                    "\tleal 4(%ebp),%eax\n"
                    "\tmovl %eax,0(%esp)\n"          /* stack */
                    "\tleal 8(%esp),%eax\n"
@@ -146,16 +188,21 @@ __ASM_GLOBAL_FUNC( start,
                    "\tmovl $0,(%eax)\n"
                    "\tcall _wld_start\n"
 
+                   /* argc/argv need to be fixed to remove argv[0].
+                    * With LC_MAIN, pointers to argv/env/apple are passed so this is easy.
+                    * With LC_UNIXTHREAD, argv[1] to the end of apple[] need to be moved.
+                    */
                    "\tmovl 4(%ebp),%edi\n"
-                   "\tdecl %edi\n"                  /* argc */
-                   "\tleal 12(%ebp),%esi\n"         /* argv */
-                   "\tleal 4(%esi,%edi,4),%edx\n"   /* env */
-                   "\tmovl %edx,%ecx\n"             /* apple data */
+                   "\tdecl %edi\n"                  /* %edi = argc (decremented) */
+                   "\tleal 12(%ebp),%esi\n"         /* %esi = &argv[1] */
+                   "\tleal 4(%esi,%edi,4),%edx\n"   /* %edx = env */
+                   "\tmovl %edx,%ecx\n"
                    "1:\tmovl (%ecx),%ebx\n"
                    "\tadd $4,%ecx\n"
-                   "\torl %ebx,%ebx\n"
-                   "\tjnz 1b\n"
+                   "\torl %ebx,%ebx\n"              /* look for the NULL ending the env[] array */
+                   "\tjnz 1b\n"                     /* %ecx = apple data */
 
+                   /* jmp based on is_unix_thread */
                    "\tcmpl $0,8(%esp)\n"
                    "\tjne 2f\n"
 
@@ -164,16 +211,16 @@ __ASM_GLOBAL_FUNC( start,
                    "\tmovl %esi,4(%esp)\n"          /* argv */
                    "\tmovl %edx,8(%esp)\n"          /* env */
                    "\tmovl %ecx,12(%esp)\n"         /* apple data */
-                   "\tcall *%eax\n"
-                   "\tmovl %eax,(%esp)\n"
-                   "\tcall _wld_exit\n"
+                   "\tcall *%eax\n"                 /* call main(argc,argv,env,apple) */
+                   "\tmovl %eax,(%esp)\n"           /* pass result from main() to exit() */
+                   "\tcall _wld_exit\n"             /* need to use call to keep stack aligned */
                    "\thlt\n"
 
                    /* LC_UNIXTHREAD */
                    "2:\tmovl (%ecx),%ebx\n"
                    "\tadd $4,%ecx\n"
-                   "\torl %ebx,%ebx\n"
-                   "\tjnz 2b\n"
+                   "\torl %ebx,%ebx\n"              /* look for the NULL ending the apple[] array */
+                   "\tjnz 2b\n"                     /* %ecx = end of apple[] */
 
                    "\tsubl %ebp,%ecx\n"
                    "\tsubl $8,%ecx\n"
@@ -186,8 +233,8 @@ __ASM_GLOBAL_FUNC( start,
                    "\tcld\n"
                    "\trep; movsd\n"                 /* argv, ... */
 
-                   "\tmovl $0,%ebp\n"
-                   "\tjmpl *%eax\n" )
+                   "\tmovl $0,%ebp\n"               /* restore ebp back to zero */
+                   "\tjmpl *%eax\n" )               /* jump to the entry point */
 
 #elif defined(__x86_64__)
 
@@ -221,41 +268,47 @@ static const size_t page_mask = 0xfff;
 
 __ASM_GLOBAL_FUNC( start,
                    __ASM_CFI("\t.cfi_undefined %rip\n")
-                   "\tpushq $0\n"
-                   "\tmovq %rsp,%rbp\n"
-                   "\tandq $-16,%rsp\n"
-                   "\tsubq $16,%rsp\n"
+                   "\tpushq $0\n"                   /* push a zero for debugger end of frames marker */
+                   "\tmovq %rsp,%rbp\n"             /* pointer to base of kernel frame */
+                   "\tandq $-16,%rsp\n"             /* force SSE alignment */
+                   "\tsubq $16,%rsp\n"              /* room for local variables */
 
+                   /* call wld_start(stack, &is_unix_thread) */
                    "\tleaq 8(%rbp),%rdi\n"          /* stack */
                    "\tmovq %rsp,%rsi\n"             /* &is_unix_thread */
                    "\tmovq $0,(%rsi)\n"
                    "\tcall _wld_start\n"
 
+                   /* argc/argv need to be fixed to remove argv[0].
+                    * With LC_MAIN, pointers to argv/env/apple are passed so this is easy.
+                    * With LC_UNIXTHREAD, argv[1] to the end of apple[] need to be moved.
+                    */
                    "\tmovq 8(%rbp),%rdi\n"
-                   "\tdec %rdi\n"                   /* argc */
-                   "\tleaq 24(%rbp),%rsi\n"         /* argv */
-                   "\tleaq 8(%rsi,%rdi,8),%rdx\n"   /* env */
-                   "\tmovq %rdx,%rcx\n"             /* apple data */
+                   "\tdec %rdi\n"                   /* %rdi = argc (decremented) */
+                   "\tleaq 24(%rbp),%rsi\n"         /* %rsi = &argv[1] */
+                   "\tleaq 8(%rsi,%rdi,8),%rdx\n"   /* %rdx = env */
+                   "\tmovq %rdx,%rcx\n"
                    "1:\tmovq (%rcx),%r8\n"
                    "\taddq $8,%rcx\n"
-                   "\torq %r8,%r8\n"
-                   "\tjnz 1b\n"
+                   "\torq %r8,%r8\n"                /* look for the NULL ending the env[] array */
+                   "\tjnz 1b\n"                     /* %rcx = apple data */
 
+                   /* jmp based on is_unix_thread */
                    "\tcmpl $0,0(%rsp)\n"
                    "\tjne 2f\n"
 
                    /* LC_MAIN */
-                   "\taddq $16,%rsp\n"
-                   "\tcall *%rax\n"
-                   "\tmovq %rax,%rdi\n"
-                   "\tcall _wld_exit\n"
+                   "\taddq $16,%rsp\n"              /* remove local variables */
+                   "\tcall *%rax\n"                 /* call main(argc,argv,env,apple) */
+                   "\tmovq %rax,%rdi\n"             /* pass result from main() to exit() */
+                   "\tcall _wld_exit\n"             /* need to use call to keep stack aligned */
                    "\thlt\n"
 
                    /* LC_UNIXTHREAD */
                    "2:\tmovq (%rcx),%r8\n"
                    "\taddq $8,%rcx\n"
-                   "\torq %r8,%r8\n"
-                   "\tjnz 2b\n"
+                   "\torq %r8,%r8\n"                /* look for the NULL ending the apple[] array */
+                   "\tjnz 2b\n"                     /* %rcx = end of apple[] */
 
                    "\tsubq %rbp,%rcx\n"
                    "\tsubq $16,%rcx\n"
@@ -268,8 +321,8 @@ __ASM_GLOBAL_FUNC( start,
                    "\tcld\n"
                    "\trep; movsq\n"                 /* argv, ... */
 
-                   "\tmovq $0,%rbp\n"
-                   "\tjmpq *%rax\n" )
+                   "\tmovq $0,%rbp\n"               /* restore ebp back to zero */
+                   "\tjmpq *%rax\n" )               /* jump to the entry point */
 
 #else
 #error preloader not implemented for this CPU
