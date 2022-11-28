@@ -6280,15 +6280,7 @@ static DWORD HTTP_InsertCustomHeader(http_request_t *request, LPHTTPHEADERW lpHd
 
     TRACE("--> %s: %s\n", debugstr_w(lpHdr->lpszField), debugstr_w(lpHdr->lpszValue));
     count = request->nCustHeaders + 1;
-    if (count > 1)
-    {
-        lph = realloc(request->custHeaders, sizeof(HTTPHEADERW) * count);
-        memset(lph + request->nCustHeaders, 0, sizeof(HTTPHEADERW));
-    }
-    else
-    {
-        lph = calloc(count, sizeof(HTTPHEADERW));
-    }
+    lph = realloc(request->custHeaders, sizeof(HTTPHEADERW) * count);
 
     if (!lph)
         return ERROR_OUTOFMEMORY;
