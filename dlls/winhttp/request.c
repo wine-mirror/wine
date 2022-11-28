@@ -2733,7 +2733,6 @@ static DWORD handle_redirect( struct request *request, DWORD status )
         else free( hostname );
 
         if ((ret = add_host_header( request, WINHTTP_ADDREQ_FLAG_ADD | WINHTTP_ADDREQ_FLAG_REPLACE ))) goto end;
-        if ((ret = open_connection( request ))) goto end;
 
         free( request->path );
         request->path = NULL;
