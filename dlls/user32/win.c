@@ -1428,6 +1428,46 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD layout )
     return NtUserSetProcessDefaultLayout( layout );
 }
 
+
+/***********************************************************************
+ *           UpdateWindow (USER32.@)
+ */
+BOOL WINAPI UpdateWindow( HWND hwnd )
+{
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+
+    return NtUserRedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
+}
+
+
+/***********************************************************************
+ *           ValidateRgn (USER32.@)
+ */
+BOOL WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
+{
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+
+    return NtUserRedrawWindow( hwnd, NULL, hrgn, RDW_VALIDATE );
+}
+
+
+/*************************************************************************
+ *           ScrollWindow (USER32.@)
+ */
+BOOL WINAPI ScrollWindow( HWND hwnd, INT dx, INT dy, const RECT *rect, const RECT *clip_rect )
+{
+    UINT flags = SW_INVALIDATE | SW_ERASE | (rect ? 0 : SW_SCROLLCHILDREN) | SW_NODCCACHE;
+    return NtUserScrollWindowEx( hwnd, dx, dy, rect, clip_rect, 0, NULL, flags );
+}
+
 #ifdef _WIN64
 
 /* 64bit versions */
