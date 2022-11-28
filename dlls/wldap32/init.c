@@ -36,7 +36,7 @@ static char **split_hostnames( const char *hostnames )
     char **res, *str, *p, *q;
     unsigned int i = 0;
 
-    str = strdupU( hostnames );
+    str = strdup( hostnames );
     if (!str) return NULL;
 
     p = str;
@@ -72,7 +72,7 @@ static char **split_hostnames( const char *hostnames )
             if (isspace( *p ))
             {
                 *p = '\0'; p++;
-                res[i] = strdupU( q );
+                res[i] = strdup( q );
                 if (!res[i]) goto oom;
                 i++;
 
@@ -82,7 +82,7 @@ static char **split_hostnames( const char *hostnames )
         }
         else
         {
-            res[i] = strdupU( q );
+            res[i] = strdup( q );
             if (!res[i]) goto oom;
             i++;
         }

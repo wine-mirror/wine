@@ -197,7 +197,7 @@ ULONG CDECL ldap_encode_sort_controlA( LDAP *ld, LDAPSortKeyA **sortkeys, LDAPCo
 
     if ((result = ldap_create_sort_controlA( ld, sortkeys, critical, &control )) == WLDAP32_LDAP_SUCCESS)
     {
-        ret->ldctl_oid = strdupU(control->ldctl_oid);
+        ret->ldctl_oid = strdup( control->ldctl_oid );
         bv_val_dup( &control->ldctl_value, &ret->ldctl_value );
         ret->ldctl_iscritical = control->ldctl_iscritical;
         ldap_control_freeA( control );

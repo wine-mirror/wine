@@ -266,7 +266,7 @@ ULONG WINAPIV WLDAP32_ber_scanf( WLDAP32_BerElement *ber, char *fmt, ... )
         {
             char *str, **ptr = va_arg( list, char ** );
             if ((ret = ber_scanf( BER(ber), new_fmt, &str )) == -1) break;
-            *ptr = strdupU( str );
+            *ptr = strdup( str );
             ldap_memfree( str );
             break;
         }

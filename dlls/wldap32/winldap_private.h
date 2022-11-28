@@ -534,14 +534,6 @@ struct WLDAP32_berval ** CDECL ldap_get_values_lenW( LDAP *, LDAPMessage *, WCHA
 
 ULONG map_error( int ) DECLSPEC_HIDDEN;
 
-static inline char *strdupU( const char *src )
-{
-    char *dst;
-    if (!src) return NULL;
-    if ((dst = malloc( strlen( src ) + 1 ))) strcpy( dst, src );
-    return dst;
-}
-
 static inline char *strWtoU( const WCHAR *str )
 {
     char *ret = NULL;
@@ -1314,7 +1306,7 @@ static inline char **strarrayUtoU( char **strarray )
         {
             char **p = strarray, **q = ret;
 
-            while (*p) *q++ = strdupU( *p++ );
+            while (*p) *q++ = strdup( *p++ );
             *q = NULL;
         }
     }
