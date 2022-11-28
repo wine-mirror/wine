@@ -468,7 +468,7 @@ static void dump_sections(const void *base, const void* addr, unsigned num_sect)
     unsigned			i;
     const char*                 strtable;
 
-    if (PE_nt_headers->FileHeader.PointerToSymbolTable && PE_nt_headers->FileHeader.NumberOfSymbols)
+    if (PE_nt_headers && PE_nt_headers->FileHeader.PointerToSymbolTable && PE_nt_headers->FileHeader.NumberOfSymbols)
     {
         strtable = (const char*)base +
             PE_nt_headers->FileHeader.PointerToSymbolTable +
