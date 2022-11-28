@@ -895,7 +895,7 @@ static BOOL get_volume_device_info( struct volume *volume )
     }
     handle = CreateFileW( name, GENERIC_READ | SYNCHRONIZE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                           NULL, OPEN_EXISTING, 0, 0 );
-    RtlFreeHeap( GetProcessHeap(), 0, name );
+    HeapFree( GetProcessHeap(), 0, name );
     if (handle == INVALID_HANDLE_VALUE)
     {
         WARN("Failed to open %s, err %lu\n", debugstr_a(unix_device), GetLastError());
