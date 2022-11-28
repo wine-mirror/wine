@@ -1300,7 +1300,7 @@
 @ stub NtUserUpdateWindowInputSinkHints
 @ stub NtUserUpdateWindowTrackingInfo
 @ stub NtUserUserHandleGrantAccess
-@ stub NtUserValidateRect
+@ stdcall -syscall NtUserValidateRect(long ptr)
 @ stub NtUserValidateTimerCallback
 @ stdcall -syscall NtUserVkKeyScanEx(long long)
 @ stub NtUserWOWCleanup

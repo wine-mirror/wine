@@ -288,6 +288,7 @@
     SYSCALL_ENTRY( NtUserUnregisterClass ) \
     SYSCALL_ENTRY( NtUserUnregisterHotKey ) \
     SYSCALL_ENTRY( NtUserUpdateInputContext ) \
+    SYSCALL_ENTRY( NtUserValidateRect ) \
     SYSCALL_ENTRY( NtUserVkKeyScanEx ) \
     SYSCALL_ENTRY( NtUserWaitForInputIdle ) \
     SYSCALL_ENTRY( NtUserWindowFromDC ) \

@@ -302,6 +302,7 @@ static void * const syscalls[] =
     NtUserUnregisterClass,
     NtUserUnregisterHotKey,
     NtUserUpdateInputContext,
+    NtUserValidateRect,
     NtUserVkKeyScanEx,
     NtUserWaitForInputIdle,
     NtUserWindowFromDC,

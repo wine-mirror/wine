@@ -1508,6 +1508,22 @@ BOOL WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT fla
 }
 
 /***********************************************************************
+ *           NtUserValidateRect (win32u.@)
+ */
+BOOL WINAPI NtUserValidateRect( HWND hwnd, const RECT *rect )
+{
+    UINT flags = RDW_VALIDATE;
+
+    if (!hwnd)
+    {
+        flags = RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW;
+        rect = NULL;
+    }
+
+    return NtUserRedrawWindow( hwnd, rect, 0, flags );
+}
+
+/***********************************************************************
  *           NtUserGetUpdateRgn (win32u.@)
  */
 INT WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )

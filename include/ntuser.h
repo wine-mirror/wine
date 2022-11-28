@@ -892,6 +892,7 @@ BOOL    WINAPI NtUserUpdateInputContext( HIMC handle, UINT attr, UINT_PTR value 
 BOOL    WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *pts_dst, const SIZE *size,
                                           HDC hdc_src, const POINT *pts_src, COLORREF key,
                                           const BLENDFUNCTION *blend, DWORD flags, const RECT *dirty );
+BOOL    WINAPI NtUserValidateRect( HWND hwnd, const RECT *rect );
 WORD    WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout );
 DWORD   WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow );
 HWND    WINAPI NtUserWindowFromDC( HDC hdc );

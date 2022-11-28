@@ -4102,6 +4102,14 @@ NTSTATUS WINAPI wow64_NtUserUpdateInputContext( UINT *args )
     return NtUserUpdateInputContext( handle, attr, value );
 }
 
+NTSTATUS WINAPI wow64_NtUserValidateRect( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    const RECT *rect = get_ptr( &args );
+
+    return NtUserValidateRect( hwnd, rect );
+}
+
 NTSTATUS WINAPI wow64_NtUserVkKeyScanEx( UINT *args )
 {
     WCHAR chr = get_ulong( &args );

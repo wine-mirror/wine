@@ -807,7 +807,7 @@
 @ stdcall UserSignalProc(long long long long)
 # @ stub VRipOutput
 # @ stub VTagOutput
-@ stdcall ValidateRect(long ptr)
+@ stdcall ValidateRect(long ptr) NtUserValidateRect
 @ stdcall ValidateRgn(long long)
 @ stdcall VkKeyScanA(long)
 @ stdcall VkKeyScanExA(long long)

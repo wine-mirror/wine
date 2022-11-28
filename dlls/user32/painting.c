@@ -52,26 +52,6 @@ BOOL WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )
 }
 
 
-/***********************************************************************
- *		ValidateRect (USER32.@)
- *
- * MSDN: if hwnd parameter is NULL, ValidateRect invalidates and redraws
- * all windows and sends WM_ERASEBKGND and WM_NCPAINT.
- */
-BOOL WINAPI ValidateRect( HWND hwnd, const RECT *rect )
-{
-    UINT flags = RDW_VALIDATE;
-
-    if (!hwnd)
-    {
-        flags = RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW;
-        rect = NULL;
-    }
-
-    return NtUserRedrawWindow( hwnd, rect, 0, flags );
-}
-
-
 /*************************************************************************
  *		ScrollWindow (USER32.@)
  *
