@@ -129,6 +129,4 @@ enum unix_funcs
     unix_query,
 };
 
-extern unixlib_handle_t resolv_handle;
-
-#define RESOLV_CALL( func, params ) __wine_unix_call( resolv_handle, unix_ ## func, params )
+#define RESOLV_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )

@@ -32,8 +32,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dnsapi);
 
-unixlib_handle_t resolv_handle = 0;
-
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 {
     TRACE( "(%p, %lu, %p)\n", hinst, reason, reserved );
@@ -42,8 +40,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     {
     case DLL_PROCESS_ATTACH:
         DisableThreadLibraryCalls( hinst );
-        if (NtQueryVirtualMemory( GetCurrentProcess(), hinst, MemoryWineUnixFuncs,
-                                  &resolv_handle, sizeof(resolv_handle), NULL ))
+        if (__wine_init_unix_call())
             ERR( "No libresolv support, expect problems\n" );
         break;
     case DLL_PROCESS_DETACH:
