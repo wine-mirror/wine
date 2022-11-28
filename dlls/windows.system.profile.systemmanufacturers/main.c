@@ -36,6 +36,7 @@ static const char *debugstr_hstring( HSTRING hstr )
 struct smbios_statics
 {
     IActivationFactory IActivationFactory_iface;
+    ISmbiosInformationStatics ISmbiosInformationStatics_iface;
     LONG ref;
 };
 
@@ -56,6 +57,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_ISmbiosInformationStatics ))
+    {
+        *out = &impl->ISmbiosInformationStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -118,9 +126,31 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( statics, ISmbiosInformationStatics, struct smbios_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI statics_get_SerialNumber( ISmbiosInformationStatics *iface, HSTRING *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct ISmbiosInformationStaticsVtbl statics_vtbl =
+{
+    statics_QueryInterface,
+    statics_AddRef,
+    statics_Release,
+    /* IInspectable methods */
+    statics_GetIids,
+    statics_GetRuntimeClassName,
+    statics_GetTrustLevel,
+    /* ISmbiosInformationStatics methods */
+    statics_get_SerialNumber,
+};
+
 static struct smbios_statics smbios_statics =
 {
     {&factory_vtbl},
+    {&statics_vtbl},
     1,
 };
 
