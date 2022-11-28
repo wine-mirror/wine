@@ -164,6 +164,20 @@ static BOOL unixname_start_doc(doc_t *doc, const WCHAR *output)
     return doc->unixname.fd != -1;
 }
 
+static BOOL lpr_start_doc(doc_t *doc, const WCHAR *printer_name)
+{
+    static const WCHAR lpr[] = { 'l','p','r',' ','-','P','\'' };
+    static const WCHAR quote[] = { '\'',0 };
+    int printer_len = wcslen(printer_name);
+    WCHAR *cmd;
+
+    cmd = malloc(printer_len * sizeof(WCHAR) + sizeof(lpr) + sizeof(quote));
+    memcpy(cmd, lpr, sizeof(lpr));
+    memcpy(cmd + ARRAY_SIZE(lpr), printer_name, printer_len * sizeof(WCHAR));
+    memcpy(cmd + ARRAY_SIZE(lpr) + printer_len, quote, sizeof(quote));
+    return pipe_start_doc(doc, cmd);
+}
+
 static NTSTATUS start_doc(void *args)
 {
     const struct start_doc_params *params = args;
@@ -176,6 +190,8 @@ static NTSTATUS start_doc(void *args)
         ret = pipe_start_doc(doc, params->port + 1 /* strlen("|") */);
     else if (params->type == PORT_IS_UNIXNAME)
         ret = unixname_start_doc(doc, params->port);
+    else if (params->type == PORT_IS_LPR)
+        ret = lpr_start_doc(doc, params->port + 4 /* strlen("lpr:") */);
 
     if (ret)
         *params->doc = (size_t)doc;

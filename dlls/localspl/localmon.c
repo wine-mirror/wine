@@ -506,7 +506,8 @@ static BOOL WINAPI localmon_StartDocPort(HANDLE hport, WCHAR *printer_name,
     TRACE("(%p %s %ld %ld %p)\n", hport, debugstr_w(printer_name),
             job_id, level, doc_info);
 
-    if (port->type == PORT_IS_PIPE || port->type == PORT_IS_UNIXNAME)
+    if (port->type == PORT_IS_PIPE || port->type == PORT_IS_UNIXNAME ||
+            port->type == PORT_IS_LPR)
     {
         struct start_doc_params params;
 
@@ -546,7 +547,8 @@ static BOOL WINAPI localmon_WritePort(HANDLE hport, BYTE *buf, DWORD size,
 
     TRACE("(%p %p %lu %p)\n", hport, buf, size, written);
 
-    if (port->type == PORT_IS_PIPE || port->type == PORT_IS_UNIXNAME)
+    if (port->type == PORT_IS_PIPE || port->type == PORT_IS_UNIXNAME ||
+            port->type == PORT_IS_LPR)
     {
         struct write_doc_params params;
         BOOL ret;
@@ -568,7 +570,8 @@ static BOOL WINAPI localmon_EndDocPort(HANDLE hport)
 
     TRACE("(%p)\n", hport);
 
-    if (port->type == PORT_IS_PIPE || port->type == PORT_IS_UNIXNAME)
+    if (port->type == PORT_IS_PIPE || port->type == PORT_IS_UNIXNAME ||
+            port->type == PORT_IS_LPR)
     {
         struct end_doc_params params;
 
