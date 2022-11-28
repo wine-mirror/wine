@@ -57,7 +57,7 @@ extern HRESULT create_dmstyletrack(REFIID riid, void **ret_iface) DECLSPEC_HIDDE
  */
 typedef struct _DMUS_PRIVATE_STYLE_ITEM {
   struct list entry; /* for listing elements */
-  DWORD dwTimeStamp;
+  DWORD timestamp;
   IDirectMusicStyle8* pObject;
 } DMUS_PRIVATE_STYLE_ITEM, *LPDMUS_PRIVATE_STYLE_ITEM;
 
