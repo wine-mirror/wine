@@ -31,7 +31,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(avicap);
 
 static HINSTANCE avicap_instance;
-static unixlib_handle_t unix_handle;
 
 static const WCHAR class_name[] = L"wine_avicap_class";
 
@@ -125,8 +124,7 @@ BOOL VFWAPI capGetDriverDescriptionW(WORD index, WCHAR *name, int name_len, WCHA
     struct get_device_desc_params params;
 
     params.index = index;
-    if (!unix_handle || __wine_unix_call(unix_handle, unix_get_device_desc, &params))
-        return FALSE;
+    if (WINE_UNIX_CALL(unix_get_device_desc, &params)) return FALSE;
 
     TRACE("Found device name %s, version %s.\n", debugstr_w(params.name), debugstr_w(params.version));
     lstrcpynW(name, params.name, name_len);
@@ -139,9 +137,8 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
     switch (reason)
     {
         case DLL_PROCESS_ATTACH:
-            NtQueryVirtualMemory(GetCurrentProcess(), instance,
-                    MemoryWineUnixFuncs, &unix_handle, sizeof(unix_handle), NULL);
             DisableThreadLibraryCalls(instance);
+            __wine_init_unix_call();
             register_class();
             avicap_instance = instance;
             break;
