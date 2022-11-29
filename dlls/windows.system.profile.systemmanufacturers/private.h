@@ -30,6 +30,8 @@
 #define WIDL_using_Windows_System_Profile_SystemManufacturers
 #include "windows.system.profile.systemmanufacturers.h"
 
+#include "wbemcli.h"
+
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
     {                                                                                              \

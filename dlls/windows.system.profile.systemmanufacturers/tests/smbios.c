@@ -75,11 +75,11 @@ static void test_Smbios_Statics(void)
     if (0) /* Win8 Crash */
     {
         hr = ISmbiosInformationStatics_get_SerialNumber( smbios_statics, &serial );
-        todo_wine ok( hr == S_OK || broken(hr == E_UNEXPECTED), "got hr %#lx.\n", hr );
+        ok( hr == S_OK || broken(hr == E_UNEXPECTED), "got hr %#lx.\n", hr );
         if (hr == S_OK)
         {
             buf = WindowsGetStringRawBuffer( serial, &len );
-            todo_wine ok( buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len );
+            ok( buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len );
             WindowsDeleteString( serial );
         }
     }

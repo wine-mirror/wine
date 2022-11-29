@@ -128,10 +128,68 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 
 DEFINE_IINSPECTABLE( statics, ISmbiosInformationStatics, struct smbios_statics, IActivationFactory_iface )
 
+static HRESULT get_bios_serialnumber( BSTR *value )
+{
+    const WCHAR *class = L"Win32_BIOS";
+    IEnumWbemClassObject *wbem_enum;
+    IWbemClassObject *wbem_class;
+    IWbemServices *wbem_service;
+    IWbemLocator *wbem_locator;
+    VARIANT serial;
+    ULONG count;
+    HRESULT hr;
+    BSTR bstr;
+
+    hr = CoCreateInstance( &CLSID_WbemLocator, NULL, CLSCTX_INPROC_SERVER, &IID_IWbemLocator, (void**)&wbem_locator );
+    if (FAILED(hr)) return hr;
+
+    bstr = SysAllocString( L"ROOT\\CIMV2" );
+    if (!bstr)
+    {
+        IWbemLocator_Release( wbem_locator );
+        return E_OUTOFMEMORY;
+    }
+    hr = IWbemLocator_ConnectServer( wbem_locator, bstr, NULL, NULL, NULL, 0, NULL, NULL, &wbem_service );
+    IWbemLocator_Release( wbem_locator );
+    SysFreeString( bstr );
+    if (FAILED(hr)) return hr;
+
+    bstr = SysAllocString( class );
+    if (!bstr)
+    {
+        IWbemServices_Release( wbem_service );
+        return E_OUTOFMEMORY;
+    }
+    hr = IWbemServices_CreateInstanceEnum( wbem_service, bstr, WBEM_FLAG_SYSTEM_ONLY, NULL, &wbem_enum );
+    IWbemServices_Release( wbem_service );
+    SysFreeString( bstr );
+    if (FAILED(hr)) return hr;
+
+    hr = IEnumWbemClassObject_Next( wbem_enum, 1000, 1, &wbem_class, &count );
+    IEnumWbemClassObject_Release( wbem_enum );
+    if (FAILED(hr)) return hr;
+
+    hr = IWbemClassObject_Get( wbem_class, L"SerialNumber", 0, &serial, NULL, NULL );
+    IWbemClassObject_Release( wbem_class );
+    if (FAILED(hr)) return hr;
+
+    *value = V_BSTR( &serial );
+    VariantClear( &serial );
+    return hr;
+}
+
 static HRESULT WINAPI statics_get_SerialNumber( ISmbiosInformationStatics *iface, HSTRING *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    BSTR serial;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED( hr = get_bios_serialnumber( &serial ) )) return hr;
+    if (FAILED( hr = WindowsCreateString( serial, wcslen(serial), value ) )) return hr;
+
+    TRACE( "Returning serial number: %s.\n", debugstr_w( serial ) );
+    return hr;
 }
 
 static const struct ISmbiosInformationStaticsVtbl statics_vtbl =
