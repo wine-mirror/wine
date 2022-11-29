@@ -704,6 +704,22 @@ void *wld_start( void *stack, int *is_unix_thread )
     /* decrement argc and "remove" argv[0] */
     fixup_stack(stack);
 
+#if defined(__x86_64__)
+    /* For LC_UNIXTHREAD binaries on Monterey and later, 'environ' is not set and is NULL.
+     * Set the correct value here.
+     */
+    if (*is_unix_thread)
+    {
+        char **env, ***wine_environ = pdlsym( mod, "environ" );
+
+        pargc = stack;
+        argv = (char **)pargc + 1;
+        env = &argv[*pargc-1] + 2;
+
+        *wine_environ = env;
+    }
+#endif
+
     return entry;
 }
 
