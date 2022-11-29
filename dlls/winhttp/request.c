@@ -2846,6 +2846,19 @@ static DWORD handle_passport_redirect( struct request *request )
     return ERROR_SUCCESS;
 }
 
+static void task_receive_response( void *ctx, BOOL abort );
+
+static DWORD queue_receive_response( struct request *request )
+{
+    struct receive_response *r;
+    DWORD ret;
+
+    if (!(r = malloc( sizeof(*r) ))) return ERROR_OUTOFMEMORY;
+    if ((ret = queue_task( &request->queue, task_receive_response, &r->task_hdr, &request->hdr )))
+        free( r );
+    return ret;
+}
+
 static DWORD receive_response( struct request *request, BOOL async )
 {
     DWORD ret, size, query, status;
@@ -2954,20 +2967,8 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
         return FALSE;
     }
 
-    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC)
-    {
-        struct receive_response *r;
-
-        if (!(r = malloc( sizeof(*r) )))
-        {
-            release_object( &request->hdr );
-            SetLastError( ERROR_OUTOFMEMORY );
-            return FALSE;
-        }
-        if ((ret = queue_task( &request->queue, task_receive_response, &r->task_hdr, &request->hdr )))
-            free( r );
-    }
-    else ret = receive_response( request, FALSE );
+    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) ret = queue_receive_response( request );
+    else                                                  ret = receive_response( request, FALSE );
 
     release_object( &request->hdr );
     SetLastError( ret );
