@@ -171,6 +171,7 @@ struct start_doc_params
 {
     unsigned int type;
     const WCHAR *port;
+    const WCHAR *document_title;
     INT64 *doc;
 };
 
@@ -190,6 +191,7 @@ struct end_doc_params
 
 enum cups_funcs
 {
+    unix_process_attach,
     unix_start_doc,
     unix_write_doc,
     unix_end_doc,

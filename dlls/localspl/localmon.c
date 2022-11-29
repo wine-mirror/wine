@@ -96,7 +96,10 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         case DLL_PROCESS_ATTACH:
             DisableThreadLibraryCalls( hinstDLL );
             localspl_instance = hinstDLL;
-            return !__wine_init_unix_call();
+            if (__wine_init_unix_call())
+                return FALSE;
+            UNIX_CALL(process_attach, NULL);
+            break;
     }
     return TRUE;
 }
@@ -506,8 +509,7 @@ static BOOL WINAPI localmon_StartDocPort(HANDLE hport, WCHAR *printer_name,
     TRACE("(%p %s %ld %ld %p)\n", hport, debugstr_w(printer_name),
             job_id, level, doc_info);
 
-    if (port->type == PORT_IS_PIPE || port->type == PORT_IS_UNIXNAME ||
-            port->type == PORT_IS_LPR)
+    if (port->type >= PORT_IS_WINE)
     {
         struct start_doc_params params;
 
@@ -516,6 +518,7 @@ static BOOL WINAPI localmon_StartDocPort(HANDLE hport, WCHAR *printer_name,
 
         params.type = port->type;
         params.port = port->nameW;
+        params.document_title = doc_info ? doc_info->pDocName : NULL;
         params.doc = &port->doc_handle;
         return UNIX_CALL(start_doc, &params);
     }
@@ -547,11 +550,16 @@ static BOOL WINAPI localmon_WritePort(HANDLE hport, BYTE *buf, DWORD size,
 
     TRACE("(%p %p %lu %p)\n", hport, buf, size, written);
 
-    if (port->type == PORT_IS_PIPE || port->type == PORT_IS_UNIXNAME ||
-            port->type == PORT_IS_LPR)
+    if (port->type >= PORT_IS_WINE)
     {
         struct write_doc_params params;
         BOOL ret;
+
+        if (!port->doc_handle)
+        {
+            SetLastError(ERROR_INVALID_HANDLE);
+            return FALSE;
+        }
 
         params.doc = port->doc_handle;
         params.buf = buf;
@@ -570,10 +578,12 @@ static BOOL WINAPI localmon_EndDocPort(HANDLE hport)
 
     TRACE("(%p)\n", hport);
 
-    if (port->type == PORT_IS_PIPE || port->type == PORT_IS_UNIXNAME ||
-            port->type == PORT_IS_LPR)
+    if (port->type >= PORT_IS_WINE)
     {
         struct end_doc_params params;
+
+        if (!port->doc_handle)
+            return TRUE;
 
         params.doc = port->doc_handle;
         port->doc_handle = 0;

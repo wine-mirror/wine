@@ -27,10 +27,14 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <dlfcn.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <signal.h>
 #include <sys/wait.h>
+#ifdef HAVE_CUPS_CUPS_H
+#include <cups/cups.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -39,6 +43,32 @@
 #include "localspl_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(localspl);
+
+#ifdef SONAME_LIBCUPS
+
+static void *libcups_handle;
+
+#define CUPS_FUNCS \
+    DO_FUNC(cupsAddOption); \
+    DO_FUNC(cupsCreateJob); \
+    DO_FUNC(cupsFinishDocument); \
+    DO_FUNC(cupsFreeDests); \
+    DO_FUNC(cupsFreeOptions); \
+    DO_FUNC(cupsGetOption); \
+    DO_FUNC(cupsParseOptions); \
+    DO_FUNC(cupsStartDocument); \
+    DO_FUNC(cupsWriteRequestData)
+#define CUPS_OPT_FUNCS \
+    DO_FUNC(cupsGetNamedDest); \
+    DO_FUNC(cupsLastErrorString)
+
+#define DO_FUNC(f) static typeof(f) *p##f
+CUPS_FUNCS;
+#undef DO_FUNC
+static cups_dest_t * (*pcupsGetNamedDest)(http_t *, const char *, const char *);
+static const char *  (*pcupsLastErrorString)(void);
+
+#endif /* SONAME_LIBCUPS */
 
 typedef struct _doc_t
 {
@@ -56,6 +86,25 @@ typedef struct _doc_t
         {
             int fd;
         } unixname;
+#ifdef SONAME_LIBCUPS
+        struct
+        {
+            char *queue;
+            char *doc_title;
+            enum
+            {
+                doc_parse_header = 0,
+                doc_parse_options,
+                doc_create_job,
+                doc_initialized,
+            } state;
+            BOOL restore_ps_header;
+            int num_options;
+            cups_option_t *options;
+            int buf_len;
+            char buf[257]; /* DSC max of 256 + '\0' */
+        } cups;
+#endif
     };
 } doc_t;
 
@@ -178,10 +227,242 @@ static BOOL lpr_start_doc(doc_t *doc, const WCHAR *printer_name)
     return pipe_start_doc(doc, cmd);
 }
 
+#ifdef SONAME_LIBCUPS
+static int get_cups_default_options(const char *printer, int num_options, cups_option_t **options)
+{
+    cups_dest_t *dest;
+    int i;
+
+    if (!pcupsGetNamedDest) return num_options;
+
+    dest = pcupsGetNamedDest(NULL, printer, NULL);
+    if (!dest) return num_options;
+
+    for (i = 0; i < dest->num_options; i++)
+    {
+        if (!pcupsGetOption(dest->options[i].name, num_options, *options))
+            num_options = pcupsAddOption(dest->options[i].name,
+                    dest->options[i].value, num_options, options);
+    }
+
+    pcupsFreeDests(1, dest);
+    return num_options;
+}
+
+static BOOL cups_gets(doc_t *doc, const BYTE **buf, unsigned int *size)
+{
+    BYTE b;
+
+    while(doc->cups.buf_len < sizeof(doc->cups.buf) && *size)
+    {
+        b = (*buf)[0];
+        doc->cups.buf[doc->cups.buf_len++] = b;
+        (*buf)++;
+        (*size)--;
+
+        if (b == '\n')
+            return TRUE;
+    }
+    return FALSE;
+}
+
+static BOOL cups_write(const char *buf, unsigned int size)
+{
+    if (!size)
+        return TRUE;
+
+    if (pcupsWriteRequestData(CUPS_HTTP_DEFAULT, buf, size) != HTTP_STATUS_CONTINUE)
+    {
+        if (pcupsLastErrorString)
+            WARN("cupsWriteRequestData failed: %s\n", debugstr_a(pcupsLastErrorString()));
+        return FALSE;
+    }
+    return TRUE;
+}
+
+static BOOL cups_write_doc(doc_t *doc, const BYTE *buf, unsigned int size)
+{
+    const char ps_adobe[] = "%!PS-Adobe-3.0\n";
+    const char cups_job[] = "%cupsJobTicket:";
+
+    if (doc->cups.state == doc_parse_header)
+    {
+        if (!cups_gets(doc, &buf, &size))
+        {
+            if (doc->cups.buf_len != sizeof(doc->cups.buf))
+                return TRUE;
+            doc->cups.state = doc_create_job;
+        }
+        else if (!strncmp(doc->cups.buf, ps_adobe, sizeof(ps_adobe) - 1))
+        {
+            doc->cups.restore_ps_header = TRUE;
+            doc->cups.state = doc_parse_options;
+            doc->cups.buf_len = 0;
+        }
+        else
+        {
+            doc->cups.state = doc_create_job;
+        }
+    }
+
+     /* Explicitly set CUPS options based on any %cupsJobTicket lines.
+      * The CUPS scheduler only looks for these in Print-File requests, and since
+      * we use Create-Job / Send-Document, the ticket lines don't get parsed.
+      */
+    if (doc->cups.state == doc_parse_options)
+    {
+        while (1)
+        {
+            if (!cups_gets(doc, &buf, &size))
+            {
+                if (doc->cups.buf_len != sizeof(doc->cups.buf))
+                    return TRUE;
+                doc->cups.state =  doc_create_job;
+                break;
+            }
+            else if (!strncmp(doc->cups.buf, cups_job, sizeof(cups_job) - 1))
+            {
+                doc->cups.buf[doc->cups.buf_len - 1] = 0;
+                doc->cups.num_options = pcupsParseOptions(doc->cups.buf + sizeof(cups_job) - 1,
+                        doc->cups.num_options, &doc->cups.options);
+                doc->cups.buf_len = 0;
+            }
+            else
+            {
+                doc->cups.state = doc_create_job;
+                break;
+            }
+        }
+    }
+
+    if (doc->cups.state == doc_create_job)
+    {
+        const char *format;
+        int i, job_id;
+
+        doc->cups.num_options = get_cups_default_options(doc->cups.queue,
+                doc->cups.num_options, &doc->cups.options);
+
+        TRACE("printing via cups with options:\n");
+        for (i = 0; i < doc->cups.num_options; i++)
+            TRACE("\t%d: %s = %s\n", i, doc->cups.options[i].name, doc->cups.options[i].value);
+
+        if (pcupsGetOption("raw", doc->cups.num_options, doc->cups.options))
+            format = CUPS_FORMAT_RAW;
+        else if (!(format = pcupsGetOption("document-format", doc->cups.num_options, doc->cups.options)))
+            format = CUPS_FORMAT_AUTO;
+
+        job_id = pcupsCreateJob(CUPS_HTTP_DEFAULT, doc->cups.queue,
+                doc->cups.doc_title, doc->cups.num_options, doc->cups.options);
+        if (!job_id)
+        {
+            if (pcupsLastErrorString)
+                WARN("cupsCreateJob failed: %s\n", debugstr_a(pcupsLastErrorString()));
+            return FALSE;
+        }
+
+        if (pcupsStartDocument(CUPS_HTTP_DEFAULT, doc->cups.queue, job_id,
+                    doc->cups.doc_title, format, TRUE) != HTTP_STATUS_CONTINUE)
+        {
+            if (pcupsLastErrorString)
+                WARN("cupsStartDocument failed: %s\n", debugstr_a(pcupsLastErrorString()));
+            return FALSE;
+        }
+
+        doc->cups.state = doc_initialized;
+    }
+
+    if (doc->cups.restore_ps_header)
+    {
+        if (!cups_write(ps_adobe, sizeof(ps_adobe) - 1))
+            return FALSE;
+        doc->cups.restore_ps_header = FALSE;
+    }
+
+    if (doc->cups.buf_len)
+    {
+        if (!cups_write(doc->cups.buf, doc->cups.buf_len))
+            return FALSE;
+        doc->cups.buf_len = 0;
+    }
+
+    return cups_write((const char *)buf, size);
+}
+
+static BOOL cups_end_doc(doc_t *doc)
+{
+    if (doc->cups.buf_len)
+    {
+        if (doc->cups.state != doc_initialized)
+            doc->cups.state = doc_create_job;
+        cups_write_doc(doc, NULL, 0);
+    }
+
+    if (doc->cups.state == doc_initialized)
+        pcupsFinishDocument(CUPS_HTTP_DEFAULT, doc->cups.queue);
+
+    free(doc->cups.queue);
+    free(doc->cups.doc_title);
+    pcupsFreeOptions(doc->cups.num_options, doc->cups.options);
+    return TRUE;
+}
+#endif
+
+static BOOL cups_start_doc(doc_t *doc, const WCHAR *printer_name, const WCHAR *document_title)
+{
+#ifdef SONAME_LIBCUPS
+    if (pcupsWriteRequestData)
+    {
+        int len;
+
+        doc->write_doc = cups_write_doc;
+        doc->end_doc = cups_end_doc;
+
+        len = wcslen(printer_name);
+        doc->cups.queue = malloc(len * 3 + 1);
+        ntdll_wcstoumbs(printer_name, len + 1, doc->cups.queue, len * 3 + 1, FALSE);
+
+        len = wcslen(document_title);
+        doc->cups.doc_title = malloc(len * 3 + 1);
+        ntdll_wcstoumbs(document_title, len + 1, doc->cups.doc_title, len + 3 + 1, FALSE);
+
+        return TRUE;
+    }
+#endif
+
+    return lpr_start_doc(doc, printer_name);
+}
+
+static NTSTATUS process_attach(void *args)
+{
+#ifdef SONAME_LIBCUPS
+    libcups_handle = dlopen(SONAME_LIBCUPS, RTLD_NOW);
+    TRACE("%p: %s loaded\n", libcups_handle, SONAME_LIBCUPS);
+    if (!libcups_handle) return STATUS_DLL_NOT_FOUND;
+
+#define DO_FUNC(x) \
+    p##x = dlsym(libcups_handle, #x); \
+    if (!p##x) \
+    { \
+        ERR("failed to load symbol %s\n", #x); \
+        libcups_handle = NULL; \
+        return STATUS_ENTRYPOINT_NOT_FOUND; \
+    }
+    CUPS_FUNCS;
+#undef DO_FUNC
+#define DO_FUNC(x) p##x = dlsym(libcups_handle, #x)
+    CUPS_OPT_FUNCS;
+#undef DO_FUNC
+    return STATUS_SUCCESS;
+#else /* SONAME_LIBCUPS */
+    return STATUS_NOT_SUPPORTED;
+#endif /* SONAME_LIBCUPS */
+}
+
 static NTSTATUS start_doc(void *args)
 {
     const struct start_doc_params *params = args;
-    doc_t *doc = malloc(sizeof(*doc));
+    doc_t *doc = calloc(1, sizeof(*doc));
     BOOL ret = FALSE;
 
     if (!doc) return STATUS_NO_MEMORY;
@@ -192,6 +473,9 @@ static NTSTATUS start_doc(void *args)
         ret = unixname_start_doc(doc, params->port);
     else if (params->type == PORT_IS_LPR)
         ret = lpr_start_doc(doc, params->port + 4 /* strlen("lpr:") */);
+    else if (params->type == PORT_IS_CUPS)
+        ret = cups_start_doc(doc, params->port + 5 /*strlen("cups:") */,
+                params->document_title);
 
     if (ret)
         *params->doc = (size_t)doc;
@@ -221,6 +505,7 @@ static NTSTATUS end_doc(void *args)
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    process_attach,
     start_doc,
     write_doc,
     end_doc,
@@ -236,6 +521,7 @@ static NTSTATUS wow64_start_doc(void *args)
     {
         unsigned int type;
         const PTR32 port;
+        const PTR32 document_title;
         INT64 *doc;
     } const *params32 = args;
 
@@ -243,6 +529,7 @@ static NTSTATUS wow64_start_doc(void *args)
     {
         params32->type,
         ULongToPtr(params32->port),
+        ULongToPtr(params32->document_title),
         params32->doc,
     };
 
@@ -270,6 +557,7 @@ static NTSTATUS wow64_write_doc(void *args)
 
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
+    process_attach,
     wow64_start_doc,
     wow64_write_doc,
     end_doc,
