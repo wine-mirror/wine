@@ -8033,6 +8033,28 @@ failed:
     return ret;
 }
 
+static BOOL is_port(const WCHAR *port_list, const WCHAR *output)
+{
+    size_t len;
+
+    if (!output)
+        return FALSE;
+
+    if (wcschr(output, ':'))
+        return TRUE;
+
+    len = wcslen(output);
+    while (port_list && *port_list)
+    {
+        if (!wcsncmp(output, port_list, len) && (!port_list[len] || port_list[len] == ','))
+            return TRUE;
+
+        port_list = wcschr(port_list, ',');
+        if (port_list) port_list++;
+    }
+    return FALSE;
+}
+
 /*****************************************************************************
  *          StartDocDlgW [WINSPOOL.@]
  *
@@ -8044,24 +8066,24 @@ failed:
  */
 LPWSTR WINAPI StartDocDlgW( HANDLE hPrinter, DOCINFOW *doc )
 {
+    PRINTER_INFO_5W *pi5;
     LPWSTR ret = NULL;
     DWORD len, attr;
+    BOOL b;
 
-    if(doc->lpszOutput == NULL) /* Check whether default port is FILE: */
-    {
-        PRINTER_INFO_5W *pi5;
-        GetPrinterW(hPrinter, 5, NULL, 0, &len);
-        if(GetLastError() != ERROR_INSUFFICIENT_BUFFER)
-            return NULL;
-        pi5 = malloc(len);
-        GetPrinterW(hPrinter, 5, (LPBYTE)pi5, len, &len);
-        if(!pi5->pPortName || wcscmp( pi5->pPortName, L"FILE:" ))
-        {
-            free(pi5);
-            return NULL;
-        }
-        free(pi5);
-    }
+    GetPrinterW(hPrinter, 5, NULL, 0, &len);
+    if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
+        return NULL;
+    pi5 = malloc(len);
+    GetPrinterW(hPrinter, 5, (LPBYTE)pi5, len, &len);
+
+    /* Check whether default port is FILE: */
+    b = !doc->lpszOutput && (!pi5->pPortName || wcscmp( pi5->pPortName, L"FILE:" ));
+    if (!b)
+        b = is_port(pi5->pPortName, doc->lpszOutput);
+    free(pi5);
+    if (b)
+        return NULL;
 
     if(doc->lpszOutput == NULL || !wcscmp( doc->lpszOutput, L"FILE:" ))
     {
