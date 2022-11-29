@@ -821,6 +821,12 @@ int has_imports(void)
     return !list_empty( &dll_imports );
 }
 
+/* check if we need a delayed import directory */
+int has_delay_imports(void)
+{
+    return !list_empty( &dll_delayed );
+}
+
 /* output the import table of a Win32 module */
 static void output_immediate_imports(void)
 {
@@ -928,7 +934,7 @@ static void output_immediate_import_thunks(void)
 /* output the delayed import table of a Win32 module */
 static void output_delayed_imports( const DLLSPEC *spec )
 {
-    int j, mod;
+    int j, iat_pos, int_pos, mod_pos;
     struct import *import;
 
     if (list_empty( &dll_delayed )) return;
@@ -936,36 +942,28 @@ static void output_delayed_imports( const DLLSPEC *spec )
     output( "\n/* delayed imports */\n\n" );
     output( "\t.data\n" );
     output( "\t.align %d\n", get_alignment(get_ptr_size()) );
+    output( ".L__wine_spec_delay_imports:\n" );
     output( "%s\n", asm_globl("__wine_spec_delay_imports") );
 
     /* list of dlls */
 
-    j = mod = 0;
+    iat_pos = int_pos = mod_pos = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
-        output( "\t%s 0\n", get_asm_ptr_keyword() );   /* grAttrs */
-        output( "\t%s .L__wine_delay_name_%s\n",       /* szName */
-                 get_asm_ptr_keyword(), import->c_name );
-        output( "\t%s .L__wine_delay_modules+%d\n",    /* phmod */
-                 get_asm_ptr_keyword(), mod * get_ptr_size() );
-        output( "\t%s .L__wine_delay_IAT+%d\n",        /* pIAT */
-                 get_asm_ptr_keyword(), j * get_ptr_size() );
-        output( "\t%s .L__wine_delay_INT+%d\n",        /* pINT */
-                 get_asm_ptr_keyword(), j * get_ptr_size() );
-        output( "\t%s 0\n", get_asm_ptr_keyword() );   /* pBoundIAT */
-        output( "\t%s 0\n", get_asm_ptr_keyword() );   /* pUnloadIAT */
-        output( "\t%s 0\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
-        j += import->nb_imports;
-        mod++;
+        output( "\t.long 1\n" );                                /* Attributes */
+        output_rva( ".L__wine_delay_name_%s", import->c_name ); /* DllNameRVA */
+        output_rva( ".L__wine_delay_modules+%d", mod_pos );     /* ModuleHandleRVA */
+        output_rva( ".L__wine_delay_IAT+%d", iat_pos );         /* ImportAddressTableRVA */
+        output_rva( ".L__wine_delay_INT+%d", int_pos );         /* ImportNameTableRVA */
+        output( "\t.long 0\n" );                                /* BoundImportAddressTableRVA */
+        output( "\t.long 0\n" );                                /* UnloadInformationTableRVA */
+        output( "\t.long 0\n" );                                /* TimeDateStamp */
+        iat_pos += import->nb_imports * get_ptr_size();
+        int_pos += (import->nb_imports + 1) * get_ptr_size();
+        mod_pos += get_ptr_size();
     }
-    output( "\t%s 0\n", get_asm_ptr_keyword() );   /* grAttrs */
-    output( "\t%s 0\n", get_asm_ptr_keyword() );   /* szName */
-    output( "\t%s 0\n", get_asm_ptr_keyword() );   /* phmod */
-    output( "\t%s 0\n", get_asm_ptr_keyword() );   /* pIAT */
-    output( "\t%s 0\n", get_asm_ptr_keyword() );   /* pINT */
-    output( "\t%s 0\n", get_asm_ptr_keyword() );   /* pBoundIAT */
-    output( "\t%s 0\n", get_asm_ptr_keyword() );   /* pUnloadIAT */
-    output( "\t%s 0\n", get_asm_ptr_keyword() );   /* dwTimeStamp */
+    output( "\t.long 0,0,0,0,0,0,0,0\n" );
+    output( ".L__wine_spec_delay_imports_end:\n" );
 
     output( "\n.L__wine_delay_IAT:\n" );
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
@@ -986,12 +984,10 @@ static void output_delayed_imports( const DLLSPEC *spec )
         for (j = 0; j < import->nb_imports; j++)
         {
             struct import_func *func = &import->imports[j];
-            if (!func->name)
-                output( "\t%s %d\n", get_asm_ptr_keyword(), func->ordinal );
-            else
-                output( "\t%s .L__wine_delay_data_%s_%s\n",
-                        get_asm_ptr_keyword(), import->c_name, func->name );
+            output_thunk_rva( func->name ? -1 : func->ordinal,
+                                ".L__wine_delay_data_%s_%s", import->c_name, func->name );
         }
+        output( "\t%s 0\n", get_asm_ptr_keyword() );
     }
 
     output( "\n.L__wine_delay_modules:\n" );
@@ -1012,7 +1008,9 @@ static void output_delayed_imports( const DLLSPEC *spec )
         {
             struct import_func *func = &import->imports[j];
             if (!func->name) continue;
+            output( "\t.align %d\n", get_alignment(2) );
             output( ".L__wine_delay_data_%s_%s:\n", import->c_name, func->name );
+            output( "\t.short %d\n", func->hint );
             output( "\t%s \"%s\"\n", get_asm_string_keyword(), func->name );
         }
     }

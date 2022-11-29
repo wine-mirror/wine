@@ -303,6 +303,7 @@ extern void read_undef_symbols( DLLSPEC *spec, struct strarray files );
 extern void resolve_imports( DLLSPEC *spec );
 extern int is_undefined( const char *name );
 extern int has_imports(void);
+extern int has_delay_imports(void);
 extern void output_get_pc_thunk(void);
 extern void output_module( DLLSPEC *spec );
 extern void output_stubs( DLLSPEC *spec );
