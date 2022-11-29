@@ -244,7 +244,7 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     {
         return 0;
     }
-    else if (output && !(port = HeapAlloc( GetProcessHeap(), 0, output_str.Length )))
+    else if (output && !(port = HeapAlloc( GetProcessHeap(), 0, output_str.Length + sizeof(WCHAR) )))
     {
         ClosePrinter( hspool );
         return 0;
@@ -271,7 +271,10 @@ HDC WINAPI CreateDCW( LPCWSTR driver, LPCWSTR device, LPCWSTR output,
     if (ret && hspool && (dc_attr = get_dc_attr( ret )))
     {
         if (port)
+        {
             memcpy( port, output, output_str.Length );
+            port[output_str.Length / sizeof(WCHAR)] = 0;
+        }
         dc_attr->hspool = HandleToULong( hspool );
         dc_attr->output = (ULONG_PTR)port;
     }
