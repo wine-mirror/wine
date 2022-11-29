@@ -44,11 +44,6 @@ struct device
     IDirectInputDevice8W *device;
 };
 
-struct JoystickData
-{
-    IDirectInput8W *di;
-};
-
 static HMODULE hcpl;
 
 static CRITICAL_SECTION joy_cs;
@@ -81,12 +76,12 @@ BOOL WINAPI DllMain(HINSTANCE hdll, DWORD reason, LPVOID reserved)
 static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *context )
 {
     DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
-    struct JoystickData *data = context;
+    IDirectInput8W *dinput = context;
     struct device *entry;
 
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
-    IDirectInput8_CreateDevice( data->di, &instance->guidInstance, &entry->device, NULL );
+    IDirectInput8_CreateDevice( dinput, &instance->guidInstance, &entry->device, NULL );
     IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick );
     IDirectInputDevice8_GetCapabilities( entry->device, &caps );
 
@@ -170,8 +165,9 @@ static void enable_joystick(WCHAR *joy_name, BOOL enable)
     if (appkey) RegCloseKey(appkey);
 }
 
-static void refresh_joystick_list(HWND hwnd, struct JoystickData *data)
+static void refresh_joystick_list( HWND hwnd )
 {
+    IDirectInput8W *dinput;
     struct device *entry;
     HKEY hkey, appkey;
     DWORD values = 0;
@@ -180,7 +176,9 @@ static void refresh_joystick_list(HWND hwnd, struct JoystickData *data)
 
     clear_devices();
 
-    IDirectInput8_EnumDevices( data->di, DI8DEVCLASS_GAMECTRL, enum_devices, data, DIEDFL_ATTACHEDONLY );
+    DirectInput8Create( GetModuleHandleW( NULL ), DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&dinput, NULL );
+    IDirectInput8_EnumDevices( dinput, DI8DEVCLASS_GAMECTRL, enum_devices, dinput, DIEDFL_ATTACHEDONLY );
+    IDirectInput8_Release( dinput );
 
     SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_RESETCONTENT, 0, 0);
     SendDlgItemMessageW(hwnd, IDC_DISABLEDLIST, LB_RESETCONTENT, 0, 0);
@@ -247,7 +245,6 @@ static void override_joystick(WCHAR *joy_name, BOOL override)
 static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     WCHAR instance_name[MAX_PATH] = {0};
-    static struct JoystickData *data;
     int sel;
 
     TRACE("(%p, 0x%08x/%d, 0x%Ix)\n", hwnd, msg, msg, lparam);
@@ -255,9 +252,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
     {
         case WM_INITDIALOG:
         {
-            data = (struct JoystickData*) ((PROPSHEETPAGEW*)lparam)->lParam;
-
-            refresh_joystick_list(hwnd, data);
+            refresh_joystick_list( hwnd );
 
             EnableWindow(GetDlgItem(hwnd, IDC_BUTTONENABLE), FALSE);
             EnableWindow(GetDlgItem(hwnd, IDC_BUTTONDISABLE), FALSE);
@@ -281,7 +276,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     if (instance_name[0])
                     {
                         enable_joystick(instance_name, FALSE);
-                        refresh_joystick_list(hwnd, data);
+                        refresh_joystick_list( hwnd );
                     }
                 }
                 break;
@@ -294,7 +289,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     if (instance_name[0])
                     {
                         enable_joystick(instance_name, TRUE);
-                        refresh_joystick_list(hwnd, data);
+                        refresh_joystick_list( hwnd );
                     }
                 }
                 break;
@@ -305,7 +300,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     {
                         SendDlgItemMessageW(hwnd, IDC_JOYSTICKLIST, LB_GETTEXT, sel, (LPARAM)instance_name);
                         override_joystick(instance_name, FALSE);
-                        refresh_joystick_list(hwnd, data);
+                        refresh_joystick_list( hwnd );
                     }
                 }
                 break;
@@ -316,7 +311,7 @@ static INT_PTR CALLBACK list_dlgproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
                     {
                         SendDlgItemMessageW(hwnd, IDC_XINPUTLIST, LB_GETTEXT, sel, (LPARAM)instance_name);
                         override_joystick(instance_name, TRUE);
-                        refresh_joystick_list(hwnd, data);
+                        refresh_joystick_list( hwnd );
                     }
                 }
                 break;
@@ -375,7 +370,7 @@ static int CALLBACK propsheet_callback(HWND hwnd, UINT msg, LPARAM lparam)
     return 0;
 }
 
-static void display_cpl_sheets( HWND parent, struct JoystickData *data )
+static void display_cpl_sheets( HWND parent )
 {
     INITCOMMONCONTROLSEX init =
     {
@@ -389,14 +384,12 @@ static void display_cpl_sheets( HWND parent, struct JoystickData *data )
             .hInstance = hcpl,
             .pszTemplate = MAKEINTRESOURCEW( IDD_LIST ),
             .pfnDlgProc = list_dlgproc,
-            .lParam = (INT_PTR)data,
         },
         {
             .dwSize = sizeof(PROPSHEETPAGEW),
             .hInstance = hcpl,
             .pszTemplate = MAKEINTRESOURCEW( IDD_TEST_DI ),
             .pfnDlgProc = test_di_dialog_proc,
-            .lParam = (INT_PTR)data,
         },
         {
             .dwSize = sizeof(PROPSHEETPAGEW),
@@ -499,30 +492,14 @@ static void unregister_window_class(void)
  */
 LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
 {
-    static struct JoystickData data;
     TRACE("(%p, %u, 0x%Ix, 0x%Ix)\n", hwnd, command, lParam1, lParam2);
 
     switch (command)
     {
         case CPL_INIT:
-        {
-            HRESULT hr;
-
             register_window_class();
-
-            /* Initialize dinput */
-            hr = DirectInput8Create(GetModuleHandleW(NULL), DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void**)&data.di, NULL);
-
-            if (FAILED(hr))
-            {
-                ERR("Failed to initialize DirectInput: 0x%08lx\n", hr);
-                return FALSE;
-            }
-
-            IDirectInput8_EnumDevices( data.di, DI8DEVCLASS_GAMECTRL, enum_devices, &data, DIEDFL_ATTACHEDONLY );
-
             return TRUE;
-        }
+
         case CPL_GETCOUNT:
             return 1;
 
@@ -538,15 +515,11 @@ LONG CALLBACK CPlApplet(HWND hwnd, UINT command, LPARAM lParam1, LPARAM lParam2)
         }
 
         case CPL_DBLCLK:
-            display_cpl_sheets(hwnd, &data);
+            display_cpl_sheets( hwnd );
             break;
 
         case CPL_STOP:
             clear_devices();
-
-            /* And destroy dinput too */
-            IDirectInput8_Release(data.di);
-
             unregister_window_class();
             break;
     }
