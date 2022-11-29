@@ -962,6 +962,27 @@ static NTSTATUS map_so_dll( const IMAGE_NT_HEADERS *nt_descr, HMODULE module )
         fixup_rva_dwords( (DWORD *)(addr + exports->AddressOfNames), delta, exports->NumberOfNames );
         fixup_rva_ptrs( addr + exports->AddressOfFunctions, addr, exports->NumberOfFunctions );
     }
+
+    /* build the delay import directory */
+
+    dir = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DELAY_IMPORT];
+    if (dir->Size)
+    {
+        IMAGE_DELAYLOAD_DESCRIPTOR *imports = (IMAGE_DELAYLOAD_DESCRIPTOR *)(addr + dir->VirtualAddress);
+
+        while (imports->DllNameRVA)
+        {
+            fixup_rva_dwords( &imports->DllNameRVA, delta, 1 );
+            fixup_rva_dwords( &imports->ModuleHandleRVA, delta, 1 );
+            fixup_rva_dwords( &imports->ImportAddressTableRVA, delta, 1 );
+            fixup_rva_dwords( &imports->ImportNameTableRVA, delta, 1 );
+            fixup_rva_dwords( &imports->BoundImportAddressTableRVA, delta, 1 );
+            fixup_rva_dwords( &imports->UnloadInformationTableRVA, delta, 1 );
+            fixup_rva_names( (UINT_PTR *)(addr + imports->ImportNameTableRVA), delta );
+            imports++;
+        }
+    }
+
     return STATUS_SUCCESS;
 }
 
