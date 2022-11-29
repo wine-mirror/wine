@@ -27,6 +27,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmstyle);
 /*****************************************************************************
  * IDirectMusicStyleTrack implementation
  */
+struct style_item {
+    struct list entry;
+    DWORD timestamp;
+    IDirectMusicStyle8 *dmstyle;
+};
+
 typedef struct IDirectMusicStyleTrack {
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
     struct dmobject dmobj;  /* IPersistStream only */
@@ -81,14 +87,11 @@ static ULONG WINAPI style_track_Release(IDirectMusicTrack8 *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if (!ref) {
-        struct list *cursor, *cursor2;
-        DMUS_PRIVATE_STYLE_ITEM *item;
+        struct style_item *item, *item2;
 
-        LIST_FOR_EACH_SAFE(cursor, cursor2, &This->Items) {
-            item = LIST_ENTRY(cursor, DMUS_PRIVATE_STYLE_ITEM, entry);
-            list_remove(cursor);
-
-            IDirectMusicStyle8_Release(item->pObject);
+        LIST_FOR_EACH_ENTRY_SAFE(item, item2, &This->Items, struct style_item, entry) {
+            list_remove(&item->entry);
+            IDirectMusicStyle8_Release(item->dmstyle);
             free(item);
         }
 
@@ -135,7 +138,7 @@ static HRESULT WINAPI style_track_GetParam(IDirectMusicTrack8 *iface, REFGUID ty
         MUSIC_TIME time, MUSIC_TIME *next, void *param)
 {
     IDirectMusicStyleTrack *This = impl_from_IDirectMusicTrack8(iface);
-    struct list *item = NULL;
+    struct style_item *item;
 
     TRACE("(%p, %s, %ld, %p, %p):\n", This, debugstr_dmguid(type), time, next, param);
 
@@ -143,10 +146,9 @@ static HRESULT WINAPI style_track_GetParam(IDirectMusicTrack8 *iface, REFGUID ty
         return E_POINTER;
 
     if (IsEqualGUID(&GUID_IDirectMusicStyle, type)) {
-        LIST_FOR_EACH (item, &This->Items) {
-            DMUS_PRIVATE_STYLE_ITEM *style = LIST_ENTRY(item, DMUS_PRIVATE_STYLE_ITEM, entry);
-            IDirectMusicStyle8_AddRef(style->pObject);
-            *((IDirectMusicStyle8 **)param) = style->pObject;
+        LIST_FOR_EACH_ENTRY(item, &This->Items, struct style_item, entry) {
+            IDirectMusicStyle8_AddRef(item->dmstyle);
+            *((IDirectMusicStyle8 **)param) = item->dmstyle;
 
             return S_OK;
         }
@@ -304,7 +306,7 @@ static HRESULT parse_style_ref(IDirectMusicStyleTrack *This, IStream *stream, co
 {
     struct chunk_entry chunk = {.parent = strf};
     IDirectMusicObject *dmobj;
-    DMUS_PRIVATE_STYLE_ITEM *item;
+    struct style_item *item;
     HRESULT hr;
 
     /* First chunk is a timestamp */
@@ -326,7 +328,7 @@ static HRESULT parse_style_ref(IDirectMusicStyleTrack *This, IStream *stream, co
         WARN("Failed to load reference: %#lx\n", hr);
         goto error;
     }
-    hr = IDirectMusicObject_QueryInterface(dmobj, &IID_IDirectMusicStyle8, (void **)&item->pObject);
+    hr = IDirectMusicObject_QueryInterface(dmobj, &IID_IDirectMusicStyle8, (void **)&item->dmstyle);
     if (FAILED(hr)) {
         WARN("Reference not an IDirectMusicStyle8\n");
         IDirectMusicObject_Release(dmobj);
@@ -334,7 +336,7 @@ static HRESULT parse_style_ref(IDirectMusicStyleTrack *This, IStream *stream, co
     }
 
     list_add_tail(&This->Items, &item->entry);
-    TRACE("Found reference to style %p with timestamp %lu\n", item->pObject, item->timestamp);
+    TRACE("Found reference to style %p with timestamp %lu\n", item->dmstyle, item->timestamp);
 
     return S_OK;
 
