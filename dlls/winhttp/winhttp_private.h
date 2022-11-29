@@ -220,6 +220,7 @@ struct request
     } creds[TARGET_MAX][SCHEME_MAX];
     unsigned int websocket_receive_buffer_size;
     unsigned int websocket_send_buffer_size, websocket_set_send_buffer_size;
+    int read_reply_len;
 };
 
 enum socket_state

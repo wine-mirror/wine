@@ -1772,6 +1772,7 @@ static DWORD read_more_data( struct request *request, int maxlen, BOOL notify )
                         maxlen - request->read_size, 0, &len );
 
     if (notify) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED, &len, sizeof(len) );
+    request->read_reply_len += len;
 
     request->read_size += len;
     return ret;
@@ -2212,6 +2213,8 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     int bytes_sent;
     DWORD ret, len;
 
+    request->read_reply_len = 0;
+
     if (request->flags & REQUEST_FLAG_WEBSOCKET_UPGRADE
         && request->websocket_set_send_buffer_size < MIN_WEBSOCKET_SEND_BUFFER_SIZE)
     {
@@ -2530,7 +2533,7 @@ static DWORD read_line( struct request *request, char *buffer, DWORD *len )
         remove_data( request, bytes_read );
         if (eol) break;
 
-        if ((ret = read_more_data( request, -1, TRUE ))) return ret;
+        if ((ret = read_more_data( request, -1, FALSE ))) return ret;
         if (!request->read_size)
         {
             *len = 0;
@@ -2841,6 +2844,9 @@ static DWORD receive_response( struct request *request, BOOL async )
     netconn_set_timeout( request->netconn, FALSE, request->receive_response_timeout );
     for (;;)
     {
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED,
+                       &request->read_reply_len, sizeof(request->read_reply_len) );
         if ((ret = read_reply( request ))) break;
 
         size = sizeof(DWORD);
