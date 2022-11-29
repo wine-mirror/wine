@@ -984,6 +984,38 @@ void output_rva( const char *format, ... )
     va_end( valist );
 }
 
+/* output an RVA pointer or ordinal for a function thunk */
+void output_thunk_rva( int ordinal, const char *format, ... )
+{
+    if (ordinal == -1)
+    {
+        va_list valist;
+
+        va_start( valist, format );
+        switch (target.platform)
+        {
+        case PLATFORM_MINGW:
+        case PLATFORM_WINDOWS:
+            output( "\t.rva " );
+            vfprintf( output_file, format, valist );
+            fputc( '\n', output_file );
+            if (get_ptr_size() == 8) output( "\t.long 0\n" );
+            break;
+        default:
+            output( "\t%s ", get_asm_ptr_keyword() );
+            vfprintf( output_file, format, valist );
+            output( " - .L__wine_spec_rva_base\n" );
+            break;
+        }
+        va_end( valist );
+    }
+    else
+    {
+        if (get_ptr_size() == 4) output( "\t.long 0x8000%04x\n", ordinal );
+        else output( "\t.quad 0x800000000000%04x\n", ordinal );
+    }
+}
+
 /* output the GNU note for non-exec stack */
 void output_gnu_stack_note(void)
 {

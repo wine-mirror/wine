@@ -869,16 +869,8 @@ static void output_immediate_imports(void)
                     if (func->name) output( "__imp_%s:\n", asm_name( func->name ));
                     else if (func->export_name) output( "__imp_%s:\n", asm_name( func->export_name ));
                 }
-                if (func->name)
-                    output( "\t%s .L__wine_spec_import_data_%s_%s-.L__wine_spec_rva_base\n",
-                            get_asm_ptr_keyword(), import->c_name, func->name );
-                else
-                {
-                    if (get_ptr_size() == 8)
-                        output( "\t.quad 0x800000000000%04x\n", func->ordinal );
-                    else
-                        output( "\t.long 0x8000%04x\n", func->ordinal );
-                }
+                output_thunk_rva( func->name ? -1 : func->ordinal,
+                                  ".L__wine_spec_import_data_%s_%s", import->c_name, func->name );
             }
             output( "\t%s 0\n", get_asm_ptr_keyword() );
         }
@@ -1861,31 +1853,14 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
             }
 
             output( "\n\t.section \".idata$4\"\n" );
-            if (by_name)
-            {
-                output_rva( ".L__wine_import_name" );
-                if (get_ptr_size() == 8) output( "\t.long 0\n" );
-            }
-            else
-            {
-                if (get_ptr_size() == 4) output( "\t.long 0x8000%04x\n", odp->ordinal );
-                else output( "\t.quad 0x800000000000%04x\n", odp->ordinal );
-            }
+            output_thunk_rva( by_name ? -1 : odp->ordinal, ".L__wine_import_name" );
 
             output( "\n\t.section \".idata$5\"\n" );
             output( "%s\n", asm_globl( imp_name ) );
             if (is_delay)
                 output( "\t%s .L__wine_delay_import\n", get_asm_ptr_keyword() );
-            else if (by_name)
-            {
-                output_rva( ".L__wine_import_name" );
-                if (get_ptr_size() == 8) output( "\t.long 0\n" );
-            }
             else
-            {
-                if (get_ptr_size() == 4) output( "\t.long 0x8000%04x\n", odp->ordinal );
-                else output( "\t.quad 0x800000000000%04x\n", odp->ordinal );
-            }
+                output_thunk_rva( by_name ? -1 : odp->ordinal, ".L__wine_import_name" );
 
             if (by_name)
             {

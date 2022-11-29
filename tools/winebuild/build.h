@@ -252,6 +252,8 @@ extern void output_cfi( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
 extern void output_rva( const char *format, ... )
    __attribute__ ((__format__ (__printf__, 1, 2)));
+extern void output_thunk_rva( int ordinal, const char *format, ... )
+   __attribute__ ((__format__ (__printf__, 2, 3)));
 extern void spawn( struct strarray array );
 extern struct strarray find_tool( const char *name, const char * const *names );
 extern struct strarray find_link_tool(void);
