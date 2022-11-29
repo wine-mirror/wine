@@ -35,6 +35,18 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(joycpl);
 
+struct effect
+{
+    struct list entry;
+    IDirectInputEffect *effect;
+};
+
+struct device
+{
+    struct list entry;
+    IDirectInputDevice8W *device;
+};
+
 static CRITICAL_SECTION state_cs;
 static CRITICAL_SECTION_DEBUG state_cs_debug =
 {
@@ -44,29 +56,254 @@ static CRITICAL_SECTION_DEBUG state_cs_debug =
 };
 static CRITICAL_SECTION state_cs = { &state_cs_debug, -1, 0, 0, 0, 0 };
 
-static DIJOYSTATE last_state;
-static DIDEVCAPS last_caps;
+static struct list effects = LIST_INIT( effects );
+static IDirectInputEffect *effect_selected;
 
-void set_di_device_state( HWND hwnd, DIJOYSTATE *state, DIDEVCAPS *caps )
+static struct list devices = LIST_INIT( devices );
+static IDirectInputDevice8W *device_selected;
+
+static HWND dialog_hwnd;
+static HANDLE state_event;
+
+static BOOL CALLBACK enum_effects( const DIEFFECTINFOW *info, void *context )
 {
-    BOOL modified;
+    IDirectInputDevice8W *device = context;
+    DWORD axes[2] = {DIJOFS_X, DIJOFS_Y};
+    LONG direction[2] = {0};
+    DIEFFECT params =
+    {
+        .dwSize = sizeof(DIEFFECT),
+        .dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS,
+        .dwDuration = 2 * DI_SECONDS,
+        .dwGain = DI_FFNOMINALMAX,
+        .rglDirection = direction,
+        .rgdwAxes = axes,
+        .cAxes = 2,
+    };
+    DICONSTANTFORCE constant =
+    {
+        .lMagnitude = DI_FFNOMINALMAX,
+    };
+    DIPERIODIC periodic =
+    {
+        .dwMagnitude = DI_FFNOMINALMAX,
+        .dwPeriod = DI_SECONDS / 2,
+    };
+    DICONDITION condition =
+    {
+        .dwPositiveSaturation = 10000,
+        .dwNegativeSaturation = 10000,
+        .lPositiveCoefficient = 10000,
+        .lNegativeCoefficient = 10000,
+    };
+    DIRAMPFORCE ramp =
+    {
+        .lEnd = DI_FFNOMINALMAX,
+    };
+    IDirectInputEffect *effect;
+    struct effect *entry;
+    HRESULT hr;
 
-    EnterCriticalSection( &state_cs );
-    modified = memcmp( &last_state, state, sizeof(*state) ) ||
-               memcmp( &last_caps, caps, sizeof(*caps) );
-    last_state = *state;
-    last_caps = *caps;
-    LeaveCriticalSection( &state_cs );
+    hr = IDirectInputDevice8_Acquire( device );
+    if (FAILED(hr)) return DIENUM_CONTINUE;
 
-    if (modified) SendMessageW( hwnd, WM_USER, 0, 0 );
+    if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
+
+    if (IsEqualGUID( &info->guid, &GUID_RampForce ))
+    {
+        params.cbTypeSpecificParams = sizeof(ramp);
+        params.lpvTypeSpecificParams = &ramp;
+        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
+    }
+    else if (IsEqualGUID( &info->guid, &GUID_ConstantForce ))
+    {
+        params.cbTypeSpecificParams = sizeof(constant);
+        params.lpvTypeSpecificParams = &constant;
+        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
+    }
+    else if (IsEqualGUID( &info->guid, &GUID_Sine ) ||
+             IsEqualGUID( &info->guid, &GUID_Square ) ||
+             IsEqualGUID( &info->guid, &GUID_Triangle ) ||
+             IsEqualGUID( &info->guid, &GUID_SawtoothUp ) ||
+             IsEqualGUID( &info->guid, &GUID_SawtoothDown ))
+    {
+        params.cbTypeSpecificParams = sizeof(periodic);
+        params.lpvTypeSpecificParams = &periodic;
+        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
+    }
+    else if (IsEqualGUID( &info->guid, &GUID_Spring ) ||
+             IsEqualGUID( &info->guid, &GUID_Damper ) ||
+             IsEqualGUID( &info->guid, &GUID_Inertia ) ||
+             IsEqualGUID( &info->guid, &GUID_Friction ))
+    {
+        params.cbTypeSpecificParams = sizeof(condition);
+        params.lpvTypeSpecificParams = &condition;
+        params.dwFlags |= DIEP_TYPESPECIFICPARAMS;
+    }
+
+    do hr = IDirectInputDevice2_CreateEffect( device, &info->guid, &params, &effect, NULL );
+    while (FAILED(hr) && --params.cAxes);
+
+    if (FAILED(hr))
+    {
+        FIXME( "Failed to create effect with type %s, hr %#lx\n", debugstr_guid( &info->guid ), hr );
+        free( entry );
+        return DIENUM_CONTINUE;
+    }
+
+    entry->effect = effect;
+    list_add_tail( &effects, &entry->entry );
+
+    return DIENUM_CONTINUE;
 }
 
-static void get_device_state( DIJOYSTATE *state, DIDEVCAPS *caps )
+static void set_selected_effect( IDirectInputEffect *effect )
 {
+    IDirectInputEffect *previous;
+
     EnterCriticalSection( &state_cs );
-    *state = last_state;
-    *caps = last_caps;
+    if ((previous = effect_selected)) IDirectInputEffect_Release( previous );
+    if ((effect_selected = effect)) IDirectInput_AddRef( effect );
     LeaveCriticalSection( &state_cs );
+}
+
+static IDirectInputEffect *get_selected_effect(void)
+{
+    IDirectInputEffect *effect;
+
+    EnterCriticalSection( &state_cs );
+    if ((effect = effect_selected)) IDirectInputEffect_AddRef( effect );
+    LeaveCriticalSection( &state_cs );
+
+    return effect;
+}
+
+static void clear_effects(void)
+{
+    struct effect *effect, *next;
+
+    set_selected_effect( NULL );
+
+    LIST_FOR_EACH_ENTRY_SAFE( effect, next, &effects, struct effect, entry )
+    {
+        list_remove( &effect->entry );
+        IDirectInputEffect_Release( effect->effect );
+        free( effect );
+    }
+}
+
+static void set_selected_device( IDirectInputDevice8W *device )
+{
+    IDirectInputDevice8W *previous;
+
+    EnterCriticalSection( &state_cs );
+
+    set_selected_effect( NULL );
+
+    if ((previous = device_selected))
+    {
+        IDirectInputDevice8_SetEventNotification( previous, NULL );
+        IDirectInputDevice8_Release( previous );
+    }
+    if ((device_selected = device))
+    {
+        IDirectInputDevice8_AddRef( device );
+        IDirectInputDevice8_SetEventNotification( device, state_event );
+        IDirectInputDevice8_Acquire( device );
+    }
+
+    LeaveCriticalSection( &state_cs );
+}
+
+static IDirectInputDevice8W *get_selected_device(void)
+{
+    IDirectInputDevice8W *device;
+
+    EnterCriticalSection( &state_cs );
+    device = device_selected;
+    if (device) IDirectInputDevice8_AddRef( device );
+    LeaveCriticalSection( &state_cs );
+
+    return device;
+}
+
+static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *context )
+{
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    IDirectInput8W *dinput = context;
+    struct device *entry;
+
+    if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
+
+    IDirectInput8_CreateDevice( dinput, &instance->guidInstance, &entry->device, NULL );
+    IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick );
+    IDirectInputDevice8_GetCapabilities( entry->device, &caps );
+
+    list_add_tail( &devices, &entry->entry );
+
+    return DIENUM_CONTINUE;
+}
+
+static void clear_devices(void)
+{
+    struct device *entry, *next;
+
+    set_selected_device( NULL );
+
+    LIST_FOR_EACH_ENTRY_SAFE( entry, next, &devices, struct device, entry )
+    {
+        list_remove( &entry->entry );
+        IDirectInputDevice8_Unacquire( entry->device );
+        IDirectInputDevice8_Release( entry->device );
+        free( entry );
+    }
+}
+
+static DWORD WINAPI input_thread( void *param )
+{
+    HANDLE events[2] = {param, state_event};
+
+    while (WaitForMultipleObjects( 2, events, FALSE, INFINITE ) != 0)
+    {
+        IDirectInputEffect *effect;
+        DIJOYSTATE state = {0};
+        unsigned int i;
+
+        SendMessageW( dialog_hwnd, WM_USER, 0, 0 );
+
+        if ((effect = get_selected_effect()))
+        {
+            DWORD flags = DIEP_AXES | DIEP_DIRECTION | DIEP_NORESTART;
+            LONG direction[3] = {0};
+            DWORD axes[3] = {0};
+            DIEFFECT params =
+            {
+                .dwSize = sizeof(DIEFFECT),
+                .dwFlags = DIEFF_CARTESIAN | DIEFF_OBJECTOFFSETS,
+                .rglDirection = direction,
+                .rgdwAxes = axes,
+                .cAxes = 3,
+            };
+
+            IDirectInputEffect_GetParameters( effect, &params, flags );
+            params.rgdwAxes[0] = state.lX;
+            params.rgdwAxes[1] = state.lY;
+
+            for (i = 0; i < ARRAY_SIZE(state.rgbButtons); i++)
+            {
+                if (state.rgbButtons[i])
+                {
+                    IDirectInputEffect_SetParameters( effect, &params, flags );
+                    IDirectInputEffect_Start( effect, 1, 0 );
+                    break;
+                }
+            }
+
+            IDirectInputEffect_Release( effect );
+        }
+    }
+
+    return 0;
 }
 
 static void draw_axis_view( HDC hdc, RECT rect, const WCHAR *name, LONG value )
@@ -167,7 +404,7 @@ static void draw_pov_view( HDC hdc, RECT rect, DWORD value )
     if (value != -1) Polygon( hdc, points + value / 4500 * 2, 3 );
 }
 
-static inline void draw_button_view( HDC hdc, RECT rect, BOOL set, const WCHAR *name )
+static void draw_button_view( HDC hdc, RECT rect, BOOL set, const WCHAR *name )
 {
     COLORREF color;
     HFONT font;
@@ -197,13 +434,19 @@ LRESULT CALLBACK test_di_axes_window_proc( HWND hwnd, UINT msg, WPARAM wparam, L
 
     if (msg == WM_PAINT)
     {
+        DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+        IDirectInputDevice8W *device;
+        DIJOYSTATE state = {0};
         RECT rect, tmp_rect;
         PAINTSTRUCT paint;
-        DIJOYSTATE state;
-        DIDEVCAPS caps;
         HDC hdc;
 
-        get_device_state( &state, &caps );
+        if ((device = get_selected_device()))
+        {
+            IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
+            IDirectInputDevice8_GetCapabilities( device, &caps );
+            IDirectInputDevice8_Release( device );
+        }
 
         hdc = BeginPaint( hwnd, &paint );
 
@@ -257,13 +500,19 @@ LRESULT CALLBACK test_di_povs_window_proc( HWND hwnd, UINT msg, WPARAM wparam, L
 
     if (msg == WM_PAINT)
     {
+        DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+        IDirectInputDevice8W *device;
+        DIJOYSTATE state = {0};
         PAINTSTRUCT paint;
-        DIJOYSTATE state;
-        DIDEVCAPS caps;
         RECT rect;
         HDC hdc;
 
-        get_device_state( &state, &caps );
+        if ((device = get_selected_device()))
+        {
+            IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
+            IDirectInputDevice8_GetCapabilities( device, &caps );
+            IDirectInputDevice8_Release( device );
+        }
 
         hdc = BeginPaint( hwnd, &paint );
 
@@ -294,14 +543,20 @@ LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam
 
     if (msg == WM_PAINT)
     {
+        DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
         UINT i, j, offs, size, step, space = 2;
+        IDirectInputDevice8W *device;
+        DIJOYSTATE state = {0};
         PAINTSTRUCT paint;
-        DIJOYSTATE state;
-        DIDEVCAPS caps;
         RECT rect;
         HDC hdc;
 
-        get_device_state( &state, &caps );
+        if ((device = get_selected_device()))
+        {
+            IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
+            IDirectInputDevice8_GetCapabilities( device, &caps );
+            IDirectInputDevice8_Release( device );
+        }
 
         if (caps.dwButtons <= 48) step = 16;
         else step = 32;
@@ -338,4 +593,219 @@ LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam
     }
 
     return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static void update_di_effects( HWND hwnd, IDirectInputDevice8W *device )
+{
+    struct effect *effect;
+
+    clear_effects();
+
+    IDirectInputDevice8_EnumEffects( device, enum_effects, device, 0 );
+
+    SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_RESETCONTENT, 0, 0 );
+    SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_ADDSTRING, 0, (LPARAM)L"None" );
+
+    LIST_FOR_EACH_ENTRY( effect, &effects, struct effect, entry )
+    {
+        DIEFFECTINFOW info = {.dwSize = sizeof(DIEFFECTINFOW)};
+        GUID guid;
+
+        if (FAILED(IDirectInputEffect_GetEffectGuid( effect->effect, &guid ))) continue;
+        if (FAILED(IDirectInputDevice8_GetEffectInfo( device, &info, &guid ))) continue;
+        SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_ADDSTRING, 0, (LPARAM)( info.tszName + 5 ) );
+    }
+}
+
+static void handle_di_effects_change( HWND hwnd )
+{
+    IDirectInputDevice8W *device;
+    struct list *entry;
+    int sel;
+
+    set_selected_effect( NULL );
+
+    sel = SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_GETCURSEL, 0, 0 ) - 1;
+    if (sel < 0) return;
+
+    entry = list_head( &effects );
+    while (sel-- && entry) entry = list_next( &effects, entry );
+    if (!entry) return;
+
+    set_selected_effect( LIST_ENTRY( entry, struct effect, entry )->effect );
+
+    if ((device = get_selected_device()))
+    {
+        IDirectInputDevice8_Unacquire( device );
+        IDirectInputDevice8_SetCooperativeLevel( device, GetAncestor( hwnd, GA_ROOT ), DISCL_BACKGROUND | DISCL_EXCLUSIVE );
+        IDirectInputDevice8_Acquire( device );
+        IDirectInputDevice8_Release( device );
+    }
+}
+
+static void create_device_views( HWND hwnd )
+{
+    HINSTANCE instance = (HINSTANCE)GetWindowLongPtrW( hwnd, GWLP_HINSTANCE );
+    HWND parent;
+    LONG margin;
+    RECT rect;
+
+    parent = GetDlgItem( hwnd, IDC_DI_AXES );
+    GetClientRect( parent, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 10 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplDInputAxes", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, parent, NULL, NULL, instance );
+
+    parent = GetDlgItem( hwnd, IDC_DI_POVS );
+    GetClientRect( parent, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 10 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplDInputPOVs", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, parent, NULL, NULL, instance );
+
+    parent = GetDlgItem( hwnd, IDC_DI_BUTTONS );
+    GetClientRect( parent, &rect );
+    rect.top += 10;
+
+    margin = (rect.bottom - rect.top) * 10 / 100;
+    InflateRect( &rect, -margin, -margin );
+
+    CreateWindowW( L"JoyCplDInputButtons", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
+                   rect.right - rect.left, rect.bottom - rect.top, parent, NULL, NULL, instance );
+}
+
+static void handle_di_devices_change( HWND hwnd )
+{
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    IDirectInputDevice8W *device;
+    struct list *entry;
+    int i;
+
+    set_selected_device( NULL );
+
+    i = SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_GETCURSEL, 0, 0 );
+    if (i < 0) return;
+
+    entry = list_head( &devices );
+    while (i-- && entry) entry = list_next( &devices, entry );
+    if (!entry) return;
+
+    device = LIST_ENTRY( entry, struct device, entry )->device;
+    if (FAILED(IDirectInputDevice8_GetCapabilities( device, &caps ))) return;
+
+    set_selected_device( device );
+    update_di_effects( hwnd, device );
+}
+
+static void update_di_devices( HWND hwnd )
+{
+    IDirectInput8W *dinput;
+    struct device *entry;
+
+    clear_devices();
+
+    DirectInput8Create( GetModuleHandleW( NULL ), DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&dinput, NULL );
+    IDirectInput8_EnumDevices( dinput, DI8DEVCLASS_GAMECTRL, enum_devices, dinput, DIEDFL_ATTACHEDONLY );
+    IDirectInput8_Release( dinput );
+
+    SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_RESETCONTENT, 0, 0 );
+
+    LIST_FOR_EACH_ENTRY( entry, &devices, struct device, entry )
+    {
+        DIDEVICEINSTANCEW info = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
+        if (FAILED(IDirectInputDevice8_GetDeviceInfo( entry->device, &info ))) continue;
+        SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_ADDSTRING, 0, (LPARAM)info.tszInstanceName );
+    }
+}
+
+static void update_device_views( HWND hwnd )
+{
+    HWND parent, view;
+
+    parent = GetDlgItem( hwnd, IDC_DI_AXES );
+    view = FindWindowExW( parent, NULL, L"JoyCplDInputAxes", NULL );
+    InvalidateRect( view, NULL, TRUE );
+
+    parent = GetDlgItem( hwnd, IDC_DI_POVS );
+    view = FindWindowExW( parent, NULL, L"JoyCplDInputPOVs", NULL );
+    InvalidateRect( view, NULL, TRUE );
+
+    parent = GetDlgItem( hwnd, IDC_DI_BUTTONS );
+    view = FindWindowExW( parent, NULL, L"JoyCplDInputButtons", NULL );
+    InvalidateRect( view, NULL, TRUE );
+}
+
+INT_PTR CALLBACK test_di_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    static HANDLE thread, thread_stop;
+
+    TRACE( "hwnd %p, msg %#x, wparam %#Ix, lparam %#Ix\n", hwnd, msg, wparam, lparam );
+
+    switch (msg)
+    {
+    case WM_INITDIALOG:
+        create_device_views( hwnd );
+        return TRUE;
+
+    case WM_COMMAND:
+        switch (wparam)
+        {
+        case MAKEWPARAM( IDC_DI_DEVICES, CBN_SELCHANGE ):
+            handle_di_devices_change( hwnd );
+
+            SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_SETCURSEL, 0, 0 );
+            handle_di_effects_change( hwnd );
+            break;
+
+        case MAKEWPARAM( IDC_DI_EFFECTS, LBN_SELCHANGE ):
+            handle_di_effects_change( hwnd );
+            break;
+        }
+        return TRUE;
+
+    case WM_NOTIFY:
+        switch (((NMHDR *)lparam)->code)
+        {
+        case PSN_SETACTIVE:
+            dialog_hwnd = hwnd;
+            state_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+            thread_stop = CreateEventW( NULL, FALSE, FALSE, NULL );
+
+            update_di_devices( hwnd );
+
+            SendDlgItemMessageW( hwnd, IDC_DI_DEVICES, CB_SETCURSEL, 0, 0 );
+            handle_di_devices_change( hwnd );
+
+            SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_SETCURSEL, 0, 0 );
+            handle_di_effects_change( hwnd );
+
+            thread = CreateThread( NULL, 0, input_thread, (void *)thread_stop, 0, NULL );
+            break;
+
+        case PSN_RESET:
+        case PSN_KILLACTIVE:
+            SetEvent( thread_stop );
+            MsgWaitForMultipleObjects( 1, &thread, FALSE, INFINITE, 0 );
+            CloseHandle( state_event );
+            CloseHandle( thread_stop );
+            CloseHandle( thread );
+
+            clear_effects();
+            clear_devices();
+            break;
+        }
+        return TRUE;
+
+    case WM_USER:
+        update_device_views( hwnd );
+        return TRUE;
+    }
+    return FALSE;
 }
