@@ -188,23 +188,18 @@ __ASM_GLOBAL_FUNC( start,
                    "\tmovl $0,(%eax)\n"
                    "\tcall _wld_start\n"
 
-                   /* argc/argv need to be fixed to remove argv[0].
-                    * With LC_MAIN, pointers to argv/env/apple are passed so this is easy.
-                    * With LC_UNIXTHREAD, argv[1] to the end of apple[] need to be moved.
-                    */
-                   "\tmovl 4(%ebp),%edi\n"
-                   "\tdecl %edi\n"                  /* %edi = argc (decremented) */
-                   "\tleal 12(%ebp),%esi\n"         /* %esi = &argv[1] */
+                   /* jmp based on is_unix_thread */
+                   "\tcmpl $0,8(%esp)\n"
+                   "\tjne 2f\n"
+
+                   "\tmovl 4(%ebp),%edi\n"          /* %edi = argc */
+                   "\tleal 8(%ebp),%esi\n"          /* %esi = argv */
                    "\tleal 4(%esi,%edi,4),%edx\n"   /* %edx = env */
                    "\tmovl %edx,%ecx\n"
                    "1:\tmovl (%ecx),%ebx\n"
                    "\tadd $4,%ecx\n"
                    "\torl %ebx,%ebx\n"              /* look for the NULL ending the env[] array */
                    "\tjnz 1b\n"                     /* %ecx = apple data */
-
-                   /* jmp based on is_unix_thread */
-                   "\tcmpl $0,8(%esp)\n"
-                   "\tjne 2f\n"
 
                    /* LC_MAIN */
                    "\tmovl %edi,0(%esp)\n"          /* argc */
@@ -217,22 +212,8 @@ __ASM_GLOBAL_FUNC( start,
                    "\thlt\n"
 
                    /* LC_UNIXTHREAD */
-                   "2:\tmovl (%ecx),%ebx\n"
-                   "\tadd $4,%ecx\n"
-                   "\torl %ebx,%ebx\n"              /* look for the NULL ending the apple[] array */
-                   "\tjnz 2b\n"                     /* %ecx = end of apple[] */
-
-                   "\tsubl %ebp,%ecx\n"
-                   "\tsubl $8,%ecx\n"
-                   "\tleal 4(%ebp),%esp\n"
-                   "\tsubl %ecx,%esp\n"
-
-                   "\tmovl %edi,(%esp)\n"           /* argc */
-                   "\tleal 4(%esp),%edi\n"
-                   "\tshrl $2,%ecx\n"
-                   "\tcld\n"
-                   "\trep; movsd\n"                 /* argv, ... */
-
+                   "\t2:movl %ebp,%esp\n"           /* restore the unaligned stack pointer */
+                   "\taddl $4,%esp\n"               /* remove the debugger end frame marker */
                    "\tmovl $0,%ebp\n"               /* restore ebp back to zero */
                    "\tjmpl *%eax\n" )               /* jump to the entry point */
 
@@ -279,13 +260,13 @@ __ASM_GLOBAL_FUNC( start,
                    "\tmovq $0,(%rsi)\n"
                    "\tcall _wld_start\n"
 
-                   /* argc/argv need to be fixed to remove argv[0].
-                    * With LC_MAIN, pointers to argv/env/apple are passed so this is easy.
-                    * With LC_UNIXTHREAD, argv[1] to the end of apple[] need to be moved.
-                    */
-                   "\tmovq 8(%rbp),%rdi\n"
-                   "\tdec %rdi\n"                   /* %rdi = argc (decremented) */
-                   "\tleaq 24(%rbp),%rsi\n"         /* %rsi = &argv[1] */
+                   /* jmp based on is_unix_thread */
+                   "\tcmpl $0,0(%rsp)\n"
+                   "\tjne 2f\n"
+
+                   /* LC_MAIN */
+                   "\tmovq 8(%rbp),%rdi\n"          /* %rdi = argc */
+                   "\tleaq 16(%rbp),%rsi\n"         /* %rsi = argv */
                    "\tleaq 8(%rsi,%rdi,8),%rdx\n"   /* %rdx = env */
                    "\tmovq %rdx,%rcx\n"
                    "1:\tmovq (%rcx),%r8\n"
@@ -293,11 +274,6 @@ __ASM_GLOBAL_FUNC( start,
                    "\torq %r8,%r8\n"                /* look for the NULL ending the env[] array */
                    "\tjnz 1b\n"                     /* %rcx = apple data */
 
-                   /* jmp based on is_unix_thread */
-                   "\tcmpl $0,0(%rsp)\n"
-                   "\tjne 2f\n"
-
-                   /* LC_MAIN */
                    "\taddq $16,%rsp\n"              /* remove local variables */
                    "\tcall *%rax\n"                 /* call main(argc,argv,env,apple) */
                    "\tmovq %rax,%rdi\n"             /* pass result from main() to exit() */
@@ -305,22 +281,8 @@ __ASM_GLOBAL_FUNC( start,
                    "\thlt\n"
 
                    /* LC_UNIXTHREAD */
-                   "2:\tmovq (%rcx),%r8\n"
-                   "\taddq $8,%rcx\n"
-                   "\torq %r8,%r8\n"                /* look for the NULL ending the apple[] array */
-                   "\tjnz 2b\n"                     /* %rcx = end of apple[] */
-
-                   "\tsubq %rbp,%rcx\n"
-                   "\tsubq $16,%rcx\n"
-                   "\tleaq 8(%rbp),%rsp\n"
-                   "\tsubq %rcx,%rsp\n"
-
-                   "\tmovq %rdi,(%rsp)\n"           /* argc */
-                   "\tleaq 8(%rsp),%rdi\n"
-                   "\tshrq $3,%rcx\n"
-                   "\tcld\n"
-                   "\trep; movsq\n"                 /* argv, ... */
-
+                   "\t2:movq %rbp,%rsp\n"           /* restore the unaligned stack pointer */
+                   "\taddq $8,%rsp\n"               /* remove the debugger end frame marker */
                    "\tmovq $0,%rbp\n"               /* restore ebp back to zero */
                    "\tjmpq *%rax\n" )               /* jump to the entry point */
 
@@ -354,6 +316,23 @@ MAKE_FUNCPTR(dladdr);
 extern int _dyld_func_lookup( const char *dyld_func_name, void **address );
 
 /* replacement for libc functions */
+
+void * memmove( void *dst, const void *src, size_t len )
+{
+    char *d = dst;
+    const char *s = src;
+    if (d < s)
+        while (len--)
+            *d++ = *s++;
+    else
+    {
+        const char *lasts = s + (len-1);
+        char *lastd = d + (len-1);
+        while (len--)
+            *lastd-- = *lasts--;
+    }
+    return dst;
+}
 
 static int wld_strncmp( const char *str1, const char *str2, size_t len )
 {
@@ -637,6 +616,30 @@ static inline void get_dyld_func( const char *name, void **func )
 #define LOAD_POSIX_DYLD_FUNC(f) get_dyld_func( "__dyld_" #f, (void **)&p##f )
 #define LOAD_MACHO_DYLD_FUNC(f) get_dyld_func( "_" #f, (void **)&p##f )
 
+static void fixup_stack( void *stack )
+{
+    int *pargc;
+    char **argv, **env, **apple, **apple_end;
+
+    pargc = stack;
+    argv = (char **)pargc + 1;
+    env = &argv[*pargc-1] + 2;
+
+    apple = env;
+    while (*apple)
+        apple++;
+    apple++;
+
+    apple_end = apple;
+    while (*apple_end)
+        apple_end++;
+    apple_end++;
+
+    /* decrement argc, and move all the data between &argv[1] and apple_end down to start at &argv[0] */
+    *pargc = *pargc - 1;
+    memmove(&argv[0], &argv[1], (char *)apple_end - (char *)&argv[1]);
+}
+
 void *wld_start( void *stack, int *is_unix_thread )
 {
     struct wine_preload_info builtin_dlls = { (void *)0x7a000000, 0x02000000 };
@@ -697,6 +700,9 @@ void *wld_start( void *stack, int *is_unix_thread )
         fatal_error( "%s: could not find mach header\n", argv[1] );
     if (!(entry = get_entry_point( mh, p_dyld_get_image_slide(mh), is_unix_thread )))
         fatal_error( "%s: could not find entry point\n", argv[1] );
+
+    /* decrement argc and "remove" argv[0] */
+    fixup_stack(stack);
 
     return entry;
 }
