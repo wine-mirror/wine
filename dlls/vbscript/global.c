@@ -2574,7 +2574,7 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 {
     BSTR str, string, delimiter = NULL;
     int count, max, mode, len, start, end, ret, delimiterlen = 1;
-    int i,*indices = NULL, indices_max = 8;
+    int i, *indices = NULL, *new_indices, indices_max = 8;
     SAFEARRAYBOUND bounds;
     SAFEARRAY *sa = NULL;
     VARIANT *data, var;
@@ -2656,12 +2656,13 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
         }
 
         if (count == indices_max) {
-            indices_max *= 2;
-            indices = realloc( indices, indices_max * sizeof(int));
-            if(!indices) {
+            new_indices = realloc(indices, indices_max * 2 * sizeof(int));
+            if(!new_indices) {
                 hres = E_OUTOFMEMORY;
                 goto error;
             }
+            indices = new_indices;
+            indices_max *= 2;
         }
         indices[count++] = end;
 
