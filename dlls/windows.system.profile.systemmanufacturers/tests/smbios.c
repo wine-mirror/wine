@@ -47,8 +47,10 @@ static void test_Smbios_Statics(void)
     static const WCHAR *smbios_statics_name = L"Windows.System.Profile.SystemManufacturers.SmbiosInformation";
     ISmbiosInformationStatics *smbios_statics;
     IActivationFactory *factory;
-    HSTRING str;
+    HSTRING str, serial;
+    const WCHAR *buf;
     HRESULT hr;
+    UINT32 len;
     LONG ref;
 
     hr = WindowsCreateString( smbios_statics_name, wcslen( smbios_statics_name ), &str );
@@ -69,6 +71,18 @@ static void test_Smbios_Statics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_ISmbiosInformationStatics, (void **)&smbios_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    if (0) /* Win8 Crash */
+    {
+        hr = ISmbiosInformationStatics_get_SerialNumber( smbios_statics, &serial );
+        todo_wine ok( hr == S_OK || broken(hr == E_UNEXPECTED), "got hr %#lx.\n", hr );
+        if (hr == S_OK)
+        {
+            buf = WindowsGetStringRawBuffer( serial, &len );
+            todo_wine ok( buf != NULL && len > 0, "WindowsGetStringRawBuffer returned buf %p, len %u\n", buf, len );
+            WindowsDeleteString( serial );
+        }
+    }
 
     ref = ISmbiosInformationStatics_Release( smbios_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
