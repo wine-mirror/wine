@@ -30,6 +30,13 @@ static int __cdecl uia_property_guid_compare(const void *a, const void *b)
     return memcmp(guid, property->guid, sizeof(*guid));
 }
 
+static int __cdecl uia_event_guid_compare(const void *a, const void *b)
+{
+    const GUID *guid = a;
+    const struct uia_event_info *event = b;
+    return memcmp(guid, event->guid, sizeof(*guid));
+}
+
 /* Sorted by GUID. */
 static const struct uia_prop_info default_uia_properties[] = {
     { &AutomationId_Property_GUID,                       UIA_AutomationIdPropertyId,
@@ -308,6 +315,93 @@ const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id)
     return &default_uia_properties[prop_id_idx[prop_id - PROP_ID_MIN]];
 }
 
+/* Sorted by GUID. */
+static const struct uia_event_info default_uia_events[] = {
+    { &Selection_InvalidatedEvent_Event_GUID,                     UIA_Selection_InvalidatedEventId,
+      EventArgsType_Simple, },
+    { &Window_WindowOpened_Event_GUID,                            UIA_Window_WindowOpenedEventId,
+      EventArgsType_Simple, },
+    { &TextEdit_TextChanged_Event_GUID,                           UIA_TextEdit_TextChangedEventId,
+      EventArgsType_TextEditTextChanged, },
+    { &Drag_DragStart_Event_GUID,                                 UIA_Drag_DragStartEventId,
+      EventArgsType_Simple, },
+    { &Changes_Event_GUID,                                        UIA_ChangesEventId,
+      EventArgsType_Changes, },
+    { &DropTarget_DragLeave_Event_GUID,                           UIA_DropTarget_DragLeaveEventId,
+      EventArgsType_Simple, },
+    { &AutomationFocusChanged_Event_GUID,                         UIA_AutomationFocusChangedEventId,
+      EventArgsType_Simple, },
+    { &AsyncContentLoaded_Event_GUID,                             UIA_AsyncContentLoadedEventId,
+      EventArgsType_AsyncContentLoaded, },
+    { &MenuModeStart_Event_GUID,                                  UIA_MenuModeStartEventId,
+      EventArgsType_Simple, },
+    { &HostedFragmentRootsInvalidated_Event_GUID,                 UIA_HostedFragmentRootsInvalidatedEventId,
+      EventArgsType_Simple, },
+    { &LayoutInvalidated_Event_GUID,                              UIA_LayoutInvalidatedEventId,
+      EventArgsType_Simple, },
+    { &MenuOpened_Event_GUID,                                     UIA_MenuOpenedEventId,
+      EventArgsType_Simple, },
+    { &SystemAlert_Event_GUID,                                    UIA_SystemAlertEventId,
+      EventArgsType_Simple, },
+    { &StructureChanged_Event_GUID,                               UIA_StructureChangedEventId,
+      EventArgsType_StructureChanged, },
+    { &InputDiscarded_Event_GUID,                                 UIA_InputDiscardedEventId,
+      EventArgsType_Simple, },
+    { &MenuClosed_Event_GUID,                                     UIA_MenuClosedEventId,
+      EventArgsType_Simple, },
+    { &Text_TextChangedEvent_Event_GUID,                          UIA_Text_TextChangedEventId,
+      EventArgsType_Simple, },
+    { &TextEdit_ConversionTargetChanged_Event_GUID,               UIA_TextEdit_ConversionTargetChangedEventId,
+      EventArgsType_Simple, },
+    { &Drag_DragComplete_Event_GUID,                              UIA_Drag_DragCompleteEventId,
+      EventArgsType_Simple, },
+    { &InputReachedOtherElement_Event_GUID,                       UIA_InputReachedOtherElementEventId,
+      EventArgsType_Simple, },
+    { &LiveRegionChanged_Event_GUID,                              UIA_LiveRegionChangedEventId,
+      EventArgsType_Simple, },
+    { &InputReachedTarget_Event_GUID,                             UIA_InputReachedTargetEventId,
+      EventArgsType_Simple, },
+    { &DropTarget_DragEnter_Event_GUID,                           UIA_DropTarget_DragEnterEventId,
+      EventArgsType_Simple, },
+    { &MenuModeEnd_Event_GUID,                                    UIA_MenuModeEndEventId,
+      EventArgsType_Simple, },
+    { &Text_TextSelectionChangedEvent_Event_GUID,                 UIA_Text_TextSelectionChangedEventId,
+      EventArgsType_Simple, },
+    { &AutomationPropertyChanged_Event_GUID,                      UIA_AutomationPropertyChangedEventId,
+      EventArgsType_PropertyChanged, },
+    { &SelectionItem_ElementRemovedFromSelectionEvent_Event_GUID, UIA_SelectionItem_ElementRemovedFromSelectionEventId,
+      EventArgsType_Simple, },
+    { &SelectionItem_ElementAddedToSelectionEvent_Event_GUID,     UIA_SelectionItem_ElementAddedToSelectionEventId,
+      EventArgsType_Simple, },
+    { &DropTarget_Dropped_Event_GUID,                             UIA_DropTarget_DroppedEventId,
+      EventArgsType_Simple, },
+    { &ToolTipClosed_Event_GUID,                                  UIA_ToolTipClosedEventId,
+      EventArgsType_Simple, },
+    { &Invoke_Invoked_Event_GUID,                                 UIA_Invoke_InvokedEventId,
+      EventArgsType_Simple, },
+    { &Notification_Event_GUID,                                   UIA_NotificationEventId,
+      EventArgsType_Notification, },
+    { &Window_WindowClosed_Event_GUID,                            UIA_Window_WindowClosedEventId,
+      EventArgsType_WindowClosed, },
+    { &Drag_DragCancel_Event_GUID,                                UIA_Drag_DragCancelEventId,
+      EventArgsType_Simple, },
+    { &SelectionItem_ElementSelectedEvent_Event_GUID,             UIA_SelectionItem_ElementSelectedEventId,
+      EventArgsType_Simple, },
+    { &ToolTipOpened_Event_GUID,                                  UIA_ToolTipOpenedEventId,
+      EventArgsType_Simple, },
+};
+
+static const struct uia_event_info *uia_event_info_from_guid(const GUID *guid)
+{
+    struct uia_event_info *event;
+
+    if ((event = bsearch(guid, default_uia_events, ARRAY_SIZE(default_uia_events), sizeof(*event),
+            uia_event_guid_compare)))
+        return event;
+
+    return NULL;
+}
+
 /***********************************************************************
  *          UiaLookupId (uiautomationcore.@)
  */
@@ -331,8 +425,19 @@ int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid)
         break;
     }
 
-    case AutomationIdentifierType_Pattern:
     case AutomationIdentifierType_Event:
+    {
+        const struct uia_event_info *event = uia_event_info_from_guid(guid);
+
+        if (event)
+            ret_id = event->event_id;
+        else
+            FIXME("Failed to find eventId for GUID %s\n", debugstr_guid(guid));
+
+        break;
+    }
+
+    case AutomationIdentifierType_Pattern:
     case AutomationIdentifierType_ControlType:
     case AutomationIdentifierType_TextAttribute:
     case AutomationIdentifierType_LandmarkType:

@@ -4022,22 +4022,75 @@ static const struct uia_lookup_id uia_property_lookup_ids[] = {
     { &IsDialog_Property_GUID,                            UIA_IsDialogPropertyId },
 };
 
+static const struct uia_lookup_id uia_event_lookup_ids[] = {
+    { &ToolTipOpened_Event_GUID,                                  UIA_ToolTipOpenedEventId },
+    { &ToolTipClosed_Event_GUID,                                  UIA_ToolTipClosedEventId },
+    { &StructureChanged_Event_GUID,                               UIA_StructureChangedEventId },
+    { &MenuOpened_Event_GUID,                                     UIA_MenuOpenedEventId },
+    { &AutomationPropertyChanged_Event_GUID,                      UIA_AutomationPropertyChangedEventId },
+    { &AutomationFocusChanged_Event_GUID,                         UIA_AutomationFocusChangedEventId },
+    { &AsyncContentLoaded_Event_GUID,                             UIA_AsyncContentLoadedEventId },
+    { &MenuClosed_Event_GUID,                                     UIA_MenuClosedEventId },
+    { &LayoutInvalidated_Event_GUID,                              UIA_LayoutInvalidatedEventId },
+    { &Invoke_Invoked_Event_GUID,                                 UIA_Invoke_InvokedEventId },
+    { &SelectionItem_ElementAddedToSelectionEvent_Event_GUID,     UIA_SelectionItem_ElementAddedToSelectionEventId },
+    { &SelectionItem_ElementRemovedFromSelectionEvent_Event_GUID, UIA_SelectionItem_ElementRemovedFromSelectionEventId },
+    { &SelectionItem_ElementSelectedEvent_Event_GUID,             UIA_SelectionItem_ElementSelectedEventId },
+    { &Selection_InvalidatedEvent_Event_GUID,                     UIA_Selection_InvalidatedEventId },
+    { &Text_TextSelectionChangedEvent_Event_GUID,                 UIA_Text_TextSelectionChangedEventId },
+    { &Text_TextChangedEvent_Event_GUID,                          UIA_Text_TextChangedEventId },
+    { &Window_WindowOpened_Event_GUID,                            UIA_Window_WindowOpenedEventId },
+    { &Window_WindowClosed_Event_GUID,                            UIA_Window_WindowClosedEventId },
+    { &MenuModeStart_Event_GUID,                                  UIA_MenuModeStartEventId },
+    { &MenuModeEnd_Event_GUID,                                    UIA_MenuModeEndEventId },
+    { &InputReachedTarget_Event_GUID,                             UIA_InputReachedTargetEventId },
+    { &InputReachedOtherElement_Event_GUID,                       UIA_InputReachedOtherElementEventId },
+    { &InputDiscarded_Event_GUID,                                 UIA_InputDiscardedEventId },
+    /* Implemented on Win8+ */
+    { &SystemAlert_Event_GUID,                                    UIA_SystemAlertEventId },
+    { &LiveRegionChanged_Event_GUID,                              UIA_LiveRegionChangedEventId },
+    { &HostedFragmentRootsInvalidated_Event_GUID,                 UIA_HostedFragmentRootsInvalidatedEventId },
+    { &Drag_DragStart_Event_GUID,                                 UIA_Drag_DragStartEventId },
+    { &Drag_DragCancel_Event_GUID,                                UIA_Drag_DragCancelEventId },
+    { &Drag_DragComplete_Event_GUID,                              UIA_Drag_DragCompleteEventId },
+    { &DropTarget_DragEnter_Event_GUID,                           UIA_DropTarget_DragEnterEventId },
+    { &DropTarget_DragLeave_Event_GUID,                           UIA_DropTarget_DragLeaveEventId },
+    { &DropTarget_Dropped_Event_GUID,                             UIA_DropTarget_DroppedEventId },
+    { &TextEdit_TextChanged_Event_GUID,                           UIA_TextEdit_TextChangedEventId },
+    { &TextEdit_ConversionTargetChanged_Event_GUID,               UIA_TextEdit_ConversionTargetChangedEventId },
+    /* Implemented on Win10v1809+. */
+    { &Changes_Event_GUID,                                        UIA_ChangesEventId },
+    { &Notification_Event_GUID,                                   UIA_NotificationEventId },
+};
+
 static void test_UiaLookupId(void)
 {
-    unsigned int i;
-
-    for (i = 0; i < ARRAY_SIZE(uia_property_lookup_ids); i++)
+    static const struct {
+        const char *id_type_name;
+        int id_type;
+        const struct uia_lookup_id *ids;
+        int ids_count;
+    } tests[] =
     {
-        int prop_id = UiaLookupId(AutomationIdentifierType_Property, uia_property_lookup_ids[i].guid);
+        { "property", AutomationIdentifierType_Property, uia_property_lookup_ids, ARRAY_SIZE(uia_property_lookup_ids) },
+        { "event",    AutomationIdentifierType_Event,    uia_event_lookup_ids,    ARRAY_SIZE(uia_event_lookup_ids) },
+    };
+    unsigned int i, y;
 
-        if (!prop_id)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        for (y = 0; y < tests[i].ids_count; y++)
         {
-            win_skip("No propertyId for GUID %s, skipping further tests.\n", debugstr_guid(uia_property_lookup_ids[i].guid));
-            break;
-        }
+            int id = UiaLookupId(tests[i].id_type, tests[i].ids[y].guid);
 
-        ok(prop_id == uia_property_lookup_ids[i].id, "Unexpected Property id, expected %d, got %d\n",
-                uia_property_lookup_ids[i].id, prop_id);
+            if (!id)
+            {
+                win_skip("No %s id for GUID %s, skipping further tests.\n", tests[i].id_type_name, debugstr_guid(tests[i].ids[y].guid));
+                break;
+            }
+
+            ok(id == tests[i].ids[y].id, "Unexpected %s id, expected %d, got %d\n", tests[i].id_type_name, tests[i].ids[y].id, id);
+        }
     }
 }
 

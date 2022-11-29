@@ -156,6 +156,8 @@ library UIAutomationClient {
         const long UIA_DropTarget_DroppedEventId = 20031;
         const long UIA_TextEdit_TextChangedEventId = 20032;
         const long UIA_TextEdit_ConversionTargetChangedEventId = 20033;
+        const long UIA_ChangesEventId = 20034;
+        const long UIA_NotificationEventId = 20035;
     /*
     };
     */
