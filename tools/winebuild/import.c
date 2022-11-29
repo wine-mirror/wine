@@ -1031,88 +1031,91 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     output( "\t.text\n" );
     output( "\t.align %d\n", get_alignment(8) );
     output( "%s:\n", asm_name(delayed_import_loaders));
-    output( "\t%s\n", func_declaration("__wine_delay_load_asm") );
-    output( "%s:\n", asm_name("__wine_delay_load_asm") );
-    output_cfi( ".cfi_startproc" );
-    switch (target.cpu)
-    {
-    case CPU_i386:
-        output( "\tpushl %%ecx\n" );
-        output_cfi( ".cfi_adjust_cfa_offset 4" );
-        output( "\tpushl %%edx\n" );
-        output_cfi( ".cfi_adjust_cfa_offset 4" );
-        output( "\tpushl %%eax\n" );
-        output_cfi( ".cfi_adjust_cfa_offset 4" );
-        output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
-        output_cfi( ".cfi_adjust_cfa_offset -4" );
-        output( "\tpopl %%edx\n" );
-        output_cfi( ".cfi_adjust_cfa_offset -4" );
-        output( "\tpopl %%ecx\n" );
-        output_cfi( ".cfi_adjust_cfa_offset -4" );
-        output( "\tjmp *%%eax\n" );
-        break;
-    case CPU_x86_64:
-        output( "\tsubq $0x98,%%rsp\n" );
-        output_cfi( ".cfi_adjust_cfa_offset 0x98" );
-        output( "\tmovq %%rdx,0x88(%%rsp)\n" );
-        output( "\tmovq %%rcx,0x80(%%rsp)\n" );
-        output( "\tmovq %%r8,0x78(%%rsp)\n" );
-        output( "\tmovq %%r9,0x70(%%rsp)\n" );
-        output( "\tmovq %%r10,0x68(%%rsp)\n" );
-        output( "\tmovq %%r11,0x60(%%rsp)\n" );
-        output( "\tmovups %%xmm0,0x50(%%rsp)\n" );
-        output( "\tmovups %%xmm1,0x40(%%rsp)\n" );
-        output( "\tmovups %%xmm2,0x30(%%rsp)\n" );
-        output( "\tmovups %%xmm3,0x20(%%rsp)\n" );
-        output( "\tmovq %%rax,%%rcx\n" );
-        output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\tmovups 0x20(%%rsp),%%xmm3\n" );
-        output( "\tmovups 0x30(%%rsp),%%xmm2\n" );
-        output( "\tmovups 0x40(%%rsp),%%xmm1\n" );
-        output( "\tmovups 0x50(%%rsp),%%xmm0\n" );
-        output( "\tmovq 0x60(%%rsp),%%r11\n" );
-        output( "\tmovq 0x68(%%rsp),%%r10\n" );
-        output( "\tmovq 0x70(%%rsp),%%r9\n" );
-        output( "\tmovq 0x78(%%rsp),%%r8\n" );
-        output( "\tmovq 0x80(%%rsp),%%rcx\n" );
-        output( "\tmovq 0x88(%%rsp),%%rdx\n" );
-        output( "\taddq $0x98,%%rsp\n" );
-        output_cfi( ".cfi_adjust_cfa_offset -0x98" );
-        output( "\tjmp *%%rax\n" );
-        break;
-    case CPU_ARM:
-        output( "\tpush {r0-r3,FP,LR}\n" );
-        output( "\tmov r0,IP\n" );
-        output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\tmov IP,r0\n");
-        output( "\tpop {r0-r3,FP,LR}\n" );
-        output( "\tbx IP\n");
-        break;
-    case CPU_ARM64:
-        output( "\tstp x29, x30, [sp,#-80]!\n" );
-        output( "\tmov x29, sp\n" );
-        output( "\tstp x0, x1, [sp,#16]\n" );
-        output( "\tstp x2, x3, [sp,#32]\n" );
-        output( "\tstp x4, x5, [sp,#48]\n" );
-        output( "\tstp x6, x7, [sp,#64]\n" );
-        output( "\tmov x0, x16\n" );
-        output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
-        output( "\tmov x16, x0\n" );
-        output( "\tldp x0, x1, [sp,#16]\n" );
-        output( "\tldp x2, x3, [sp,#32]\n" );
-        output( "\tldp x4, x5, [sp,#48]\n" );
-        output( "\tldp x6, x7, [sp,#64]\n" );
-        output( "\tldp x29, x30, [sp],#80\n" );
-        output( "\tbr x16\n" );
-        break;
-    }
-    output_cfi( ".cfi_endproc" );
-    output_function_size( "__wine_delay_load_asm" );
-    output( "\n" );
 
     idx = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
+        char *module_func = strmake( "__wine_delay_load_asm_%s", import->c_name );
+        output( "\t.align %d\n", get_alignment(4) );
+        output( "\t%s\n", func_declaration(module_func) );
+        output( "%s:\n", asm_name(module_func) );
+        output_cfi( ".cfi_startproc" );
+        switch (target.cpu)
+        {
+        case CPU_i386:
+            output( "\tpushl %%ecx\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 4" );
+            output( "\tpushl %%edx\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 4" );
+            output( "\tpushl %%eax\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 4" );
+            output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
+            output_cfi( ".cfi_adjust_cfa_offset -4" );
+            output( "\tpopl %%edx\n" );
+            output_cfi( ".cfi_adjust_cfa_offset -4" );
+            output( "\tpopl %%ecx\n" );
+            output_cfi( ".cfi_adjust_cfa_offset -4" );
+            output( "\tjmp *%%eax\n" );
+            break;
+        case CPU_x86_64:
+            output( "\tsubq $0x98,%%rsp\n" );
+            output_cfi( ".cfi_adjust_cfa_offset 0x98" );
+            output( "\tmovq %%rdx,0x88(%%rsp)\n" );
+            output( "\tmovq %%rcx,0x80(%%rsp)\n" );
+            output( "\tmovq %%r8,0x78(%%rsp)\n" );
+            output( "\tmovq %%r9,0x70(%%rsp)\n" );
+            output( "\tmovq %%r10,0x68(%%rsp)\n" );
+            output( "\tmovq %%r11,0x60(%%rsp)\n" );
+            output( "\tmovups %%xmm0,0x50(%%rsp)\n" );
+            output( "\tmovups %%xmm1,0x40(%%rsp)\n" );
+            output( "\tmovups %%xmm2,0x30(%%rsp)\n" );
+            output( "\tmovups %%xmm3,0x20(%%rsp)\n" );
+            output( "\tmovq %%rax,%%rcx\n" );
+            output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
+            output( "\tmovups 0x20(%%rsp),%%xmm3\n" );
+            output( "\tmovups 0x30(%%rsp),%%xmm2\n" );
+            output( "\tmovups 0x40(%%rsp),%%xmm1\n" );
+            output( "\tmovups 0x50(%%rsp),%%xmm0\n" );
+            output( "\tmovq 0x60(%%rsp),%%r11\n" );
+            output( "\tmovq 0x68(%%rsp),%%r10\n" );
+            output( "\tmovq 0x70(%%rsp),%%r9\n" );
+            output( "\tmovq 0x78(%%rsp),%%r8\n" );
+            output( "\tmovq 0x80(%%rsp),%%rcx\n" );
+            output( "\tmovq 0x88(%%rsp),%%rdx\n" );
+            output( "\taddq $0x98,%%rsp\n" );
+            output_cfi( ".cfi_adjust_cfa_offset -0x98" );
+            output( "\tjmp *%%rax\n" );
+            break;
+        case CPU_ARM:
+            output( "\tpush {r0-r3,FP,LR}\n" );
+            output( "\tmov r0,IP\n" );
+            output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
+            output( "\tmov IP,r0\n");
+            output( "\tpop {r0-r3,FP,LR}\n" );
+            output( "\tbx IP\n");
+            break;
+        case CPU_ARM64:
+            output( "\tstp x29, x30, [sp,#-80]!\n" );
+            output( "\tmov x29, sp\n" );
+            output( "\tstp x0, x1, [sp,#16]\n" );
+            output( "\tstp x2, x3, [sp,#32]\n" );
+            output( "\tstp x4, x5, [sp,#48]\n" );
+            output( "\tstp x6, x7, [sp,#64]\n" );
+            output( "\tmov x0, x16\n" );
+            output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
+            output( "\tmov x16, x0\n" );
+            output( "\tldp x0, x1, [sp,#16]\n" );
+            output( "\tldp x2, x3, [sp,#32]\n" );
+            output( "\tldp x4, x5, [sp,#48]\n" );
+            output( "\tldp x6, x7, [sp,#64]\n" );
+            output( "\tldp x29, x30, [sp],#80\n" );
+            output( "\tbr x16\n" );
+            break;
+        }
+        output_cfi( ".cfi_endproc" );
+        output_function_size( module_func );
+        output( "\n" );
+
         for (j = 0; j < import->nb_imports; j++)
         {
             struct import_func *func = &import->imports[j];
@@ -1126,12 +1129,12 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             case CPU_i386:
             case CPU_x86_64:
                 output( "\tmovl $%d,%%eax\n", (idx << 16) | j );
-                output( "\tjmp %s\n", asm_name("__wine_delay_load_asm") );
+                output( "\tjmp %s\n", asm_name(module_func) );
                 break;
             case CPU_ARM:
                 output( "\tmov ip, #%u\n", j );
                 if (idx) output( "\tmovt ip, #%u\n", idx );
-                output( "\tb %s\n", asm_name("__wine_delay_load_asm") );
+                output( "\tb %s\n", asm_name(module_func) );
                 break;
             case CPU_ARM64:
                 if (idx)
@@ -1140,7 +1143,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                     if (j) output( "\tmovk x16, #0x%x\n", j );
                 }
                 else output( "\tmov x16, #0x%x\n", j );
-                output( "\tb %s\n", asm_name("__wine_delay_load_asm") );
+                output( "\tb %s\n", asm_name(module_func) );
                 break;
             }
             output_cfi( ".cfi_endproc" );
