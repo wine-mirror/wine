@@ -685,6 +685,7 @@ SOURCES = \
 	shlobj.h \
 	shlwapi.h \
 	shobjidl.idl \
+	shobjidl_core.idl \
 	shtypes.idl \
 	sipbase.h \
 	slerror.h \

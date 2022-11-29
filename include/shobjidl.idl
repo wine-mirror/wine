@@ -33,6 +33,7 @@ import "wtypes.idl";
 import "propsys.idl";
 import "objectarray.idl";
 /* FIXME: import "structuredquery.idl"; */
+import "shobjidl_core.idl";
 
 cpp_quote("/* FIXME: #include <sherrors.h> */")
 
