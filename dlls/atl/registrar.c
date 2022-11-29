@@ -383,7 +383,7 @@ static HRESULT do_process_root_key(LPCOLESTR data, BOOL do_register)
     strbuf_init(&buf);
     hres = get_word(&iter, &buf);
     if(FAILED(hres))
-        return hres;
+        goto done;
 
     while(*iter) {
         if(!buf.len) {
@@ -417,6 +417,8 @@ static HRESULT do_process_root_key(LPCOLESTR data, BOOL do_register)
         if(FAILED(hres))
             break;
     }
+
+done:
     free(buf.str);
     return hres;
 }
