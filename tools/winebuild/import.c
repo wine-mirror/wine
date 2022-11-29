@@ -511,7 +511,7 @@ static void add_extra_undef_symbols( DLLSPEC *spec )
     add_extra_ld_symbol( spec->init_func );
     if (spec->type == SPEC_WIN16) add_extra_ld_symbol( "DllMain" );
     if (has_stubs( spec )) add_extra_ld_symbol( "__wine_spec_unimplemented_stub" );
-    if (delayed_imports.count) add_extra_ld_symbol( "__wine_spec_delay_load" );
+    if (delayed_imports.count) add_extra_ld_symbol( "__delayLoadHelper2" );
 }
 
 /* check if a given imported dll is not needed, taking forwards into account */
@@ -1018,7 +1018,7 @@ static void output_delayed_imports( const DLLSPEC *spec )
 /* output the delayed import thunks of a Win32 module */
 static void output_delayed_import_thunks( const DLLSPEC *spec )
 {
-    int j, pos;
+    int j, pos, iat_pos;
     struct import *import;
     static const char delayed_import_loaders[] = "__wine_spec_delayed_import_loaders";
     static const char delayed_import_thunks[] = "__wine_spec_delayed_import_thunks";
@@ -1030,7 +1030,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     output( "\t.align %d\n", get_alignment(8) );
     output( "%s:\n", asm_name(delayed_import_loaders));
 
-    pos = 0;
+    pos = iat_pos = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
         char *module_func = strmake( "__wine_delay_load_asm_%s", import->c_name );
@@ -1060,7 +1060,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
                 output( "\tpushl $.L__wine_spec_delay_imports+%d\n", pos );
                 output_cfi( ".cfi_adjust_cfa_offset 4" );
             }
-            output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
+            output( "\tcall %s\n", asm_name("__delayLoadHelper2") );
             output_cfi( ".cfi_adjust_cfa_offset -8" );
             output( "\tpopl %%edx\n" );
             output_cfi( ".cfi_adjust_cfa_offset -4" );
@@ -1083,7 +1083,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output( "\tmovups %%xmm3,0x20(%%rsp)\n" );
             output( "\tleaq .L__wine_spec_delay_imports+%d(%%rip),%%rcx\n", pos );
             output( "\tmovq %%rax,%%rdx\n" );
-            output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
+            output( "\tcall %s\n", asm_name("__delayLoadHelper2") );
             output( "\tmovups 0x20(%%rsp),%%xmm3\n" );
             output( "\tmovups 0x30(%%rsp),%%xmm2\n" );
             output( "\tmovups 0x40(%%rsp),%%xmm1\n" );
@@ -1103,7 +1103,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output( "\tmov r1,IP\n" );
             output( "\tldr r0, 1f\n");
             if (UsePIC) output( "2:\tadd r0, pc\n" );
-            output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
+            output( "\tbl %s\n", asm_name("__delayLoadHelper2") );
             output( "\tmov IP,r0\n");
             output( "\tpop {r0-r3,FP,LR}\n" );
             output( "\tbx IP\n");
@@ -1123,7 +1123,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output( "\tadrp x0, %s\n", arm64_page(".L__wine_spec_delay_imports") );
             output( "\tadd x0, x0, #%s\n", arm64_pageoff(".L__wine_spec_delay_imports") );
             if (pos) output( "\tadd x0, x0, #%u\n", pos );
-            output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
+            output( "\tbl %s\n", asm_name("__delayLoadHelper2") );
             output( "\tmov x16, x0\n" );
             output( "\tldp x0, x1, [sp,#16]\n" );
             output( "\tldp x2, x3, [sp,#32]\n" );
@@ -1148,20 +1148,43 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             switch (target.cpu)
             {
             case CPU_i386:
+                if (UsePIC)
+                {
+                    output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+                    output( "1:\tleal .L__wine_delay_IAT+%d-1b(%%eax),%%eax\n", iat_pos );
+                    needs_get_pc_thunk = 1;
+                }
+                else output( "\tmovl $.L__wine_delay_IAT+%d,%%eax\n", iat_pos );
+                output( "\tjmp %s\n", asm_name(module_func) );
+                break;
             case CPU_x86_64:
-                output( "\tmovl $%d,%%eax\n", j );
+                output( "\tleaq .L__wine_delay_IAT+%d(%%rip),%%rax\n", iat_pos );
                 output( "\tjmp %s\n", asm_name(module_func) );
                 break;
             case CPU_ARM:
-                output( "\tmov ip, #%u\n", j );
-                output( "\tb %s\n", asm_name(module_func) );
+                if (UsePIC)
+                {
+                    output( "\tldr ip, 2f\n");
+                    output( "1:\tadd ip, pc\n" );
+                    output( "\tb %s\n", asm_name(module_func) );
+                    output( "2:\t.long .L__wine_delay_IAT+%u-1b-%u\n", iat_pos, thumb_mode ? 4 : 8 );
+                }
+                else
+                {
+                    output( "\tldr ip, 1f\n");
+                    output( "\tb %s\n", asm_name(module_func) );
+                    output( "1:\t.long .L__wine_delay_IAT+%u\n", iat_pos );
+                }
                 break;
             case CPU_ARM64:
-                output( "\tmov x16, #0x%x\n", j );
+                output( "\tadrp x16, %s\n", arm64_page(".L__wine_delay_IAT") );
+                output( "\tadd x16, x16, #%s\n", arm64_pageoff(".L__wine_delay_IAT") );
+                if (iat_pos) output( "\tadd x16, x16, #%u\n", iat_pos );
                 output( "\tb %s\n", asm_name(module_func) );
                 break;
             }
             output_cfi( ".cfi_endproc" );
+            iat_pos += get_ptr_size();
         }
         pos += 8 * 4;  /* IMAGE_DELAYLOAD_DESCRIPTOR is 8 DWORDs */
     }
