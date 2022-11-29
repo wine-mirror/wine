@@ -2352,7 +2352,7 @@ static union tid_alert_entry *get_tid_alert_entry( HANDLE tid )
 
         if (semaphore_create( mach_task_self(), &sem, SYNC_POLICY_FIFO, 0 ))
             return NULL;
-        if (InterlockedCompareExchange( (int *)&entry->sem, sem, 0 ))
+        if (InterlockedCompareExchange( (LONG *)&entry->sem, sem, 0 ))
             semaphore_destroy( mach_task_self(), sem );
     }
 #else

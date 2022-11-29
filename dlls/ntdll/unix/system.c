@@ -1023,13 +1023,13 @@ static NTSTATUS create_logical_proc_info(void)
 /* for 'data', max_len is the array count. for 'dataex', max_len is in bytes */
 static NTSTATUS create_logical_proc_info(void)
 {
-    DWORD pkgs_no, cores_no, lcpu_no, lcpu_per_core, cores_per_package, assoc;
-    DWORD cache_ctrs[10] = {0};
+    unsigned int pkgs_no, cores_no, lcpu_no, lcpu_per_core, cores_per_package, assoc;
+    unsigned int cache_ctrs[10] = {0};
     ULONG_PTR all_cpus_mask = 0;
     CACHE_DESCRIPTOR cache[10];
     LONGLONG cache_size, cache_line_size, cache_sharing[10];
     size_t size;
-    DWORD p,i,j,k;
+    unsigned int p, i, j, k;
 
     lcpu_no = peb->NumberOfProcessors;
 
@@ -1806,7 +1806,7 @@ static NTSTATUS get_firmware_info( SYSTEM_FIRMWARE_TABLE_INFORMATION *sfti, ULON
         return ret;
     }
     default:
-        FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION provider %08x\n", sfti->ProviderSignature);
+        FIXME("info_class SYSTEM_FIRMWARE_TABLE_INFORMATION provider %08x\n", (unsigned int)sfti->ProviderSignature);
         return STATUS_NOT_IMPLEMENTED;
     }
 }

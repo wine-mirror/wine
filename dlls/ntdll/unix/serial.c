@@ -555,7 +555,7 @@ static NTSTATUS set_baud_rate(int fd, const SERIAL_BAUD_RATE* sbr)
         }
         break;
 #else     /* Don't have linux/serial.h or lack TIOCSSERIAL */
-        ERR("baudrate %d\n", sbr->BaudRate);
+        ERR("baudrate %d\n", (int)sbr->BaudRate);
         return STATUS_NOT_SUPPORTED;
 #endif    /* Don't have linux/serial.h or lack TIOCSSERIAL */
     }

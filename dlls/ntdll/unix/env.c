@@ -1563,7 +1563,7 @@ static WCHAR *build_command_line( WCHAR **wargv )
     *p = 0;
     if (p - ret >= 32767)
     {
-        ERR( "command line too long (%zu)\n", p - ret );
+        ERR( "command line too long (%u)\n", (int)(p - ret) );
         NtTerminateProcess( GetCurrentProcess(), 1 );
     }
     return ret;
