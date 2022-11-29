@@ -47,11 +47,8 @@ FARPROC WINAPI __delayLoadHelper2( const IMAGE_DELAYLOAD_DESCRIPTOR *descr, IMAG
 
 #ifndef __WINE_PE_BUILD
 
-extern IMAGE_DELAYLOAD_DESCRIPTOR __wine_spec_delay_imports[];
-
-FARPROC WINAPI DECLSPEC_HIDDEN __wine_spec_delay_load( unsigned int id )
+FARPROC WINAPI DECLSPEC_HIDDEN __wine_spec_delay_load( const IMAGE_DELAYLOAD_DESCRIPTOR *descr, unsigned int id )
 {
-    const IMAGE_DELAYLOAD_DESCRIPTOR *descr = __wine_spec_delay_imports + HIWORD(id);
     IMAGE_THUNK_DATA *thunk = (IMAGE_THUNK_DATA *)((char *)image_base() + descr->ImportAddressTableRVA);
 
     return __delayLoadHelper2( descr, thunk + LOWORD(id) );

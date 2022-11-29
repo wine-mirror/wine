@@ -943,7 +943,6 @@ static void output_delayed_imports( const DLLSPEC *spec )
     output( "\t.data\n" );
     output( "\t.align %d\n", get_alignment(get_ptr_size()) );
     output( ".L__wine_spec_delay_imports:\n" );
-    output( "%s\n", asm_globl("__wine_spec_delay_imports") );
 
     /* list of dlls */
 
@@ -1014,13 +1013,12 @@ static void output_delayed_imports( const DLLSPEC *spec )
             output( "\t%s \"%s\"\n", get_asm_string_keyword(), func->name );
         }
     }
-    output_function_size( "__wine_spec_delay_imports" );
 }
 
 /* output the delayed import thunks of a Win32 module */
 static void output_delayed_import_thunks( const DLLSPEC *spec )
 {
-    int idx, j, pos;
+    int j, pos;
     struct import *import;
     static const char delayed_import_loaders[] = "__wine_spec_delayed_import_loaders";
     static const char delayed_import_thunks[] = "__wine_spec_delayed_import_thunks";
@@ -1032,7 +1030,7 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
     output( "\t.align %d\n", get_alignment(8) );
     output( "%s:\n", asm_name(delayed_import_loaders));
 
-    idx = 0;
+    pos = 0;
     LIST_FOR_EACH_ENTRY( import, &dll_delayed, struct import, entry )
     {
         char *module_func = strmake( "__wine_delay_load_asm_%s", import->c_name );
@@ -1049,8 +1047,21 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output_cfi( ".cfi_adjust_cfa_offset 4" );
             output( "\tpushl %%eax\n" );
             output_cfi( ".cfi_adjust_cfa_offset 4" );
+            if (UsePIC)
+            {
+                output( "\tcall %s\n", asm_name("__wine_spec_get_pc_thunk_eax") );
+                output( "1:\tleal .L__wine_spec_delay_imports+%d-1b(%%eax),%%eax\n", pos );
+                output( "\tpushl %%eax\n" );
+                output_cfi( ".cfi_adjust_cfa_offset 4" );
+                needs_get_pc_thunk = 1;
+            }
+            else
+            {
+                output( "\tpushl $.L__wine_spec_delay_imports+%d\n", pos );
+                output_cfi( ".cfi_adjust_cfa_offset 4" );
+            }
             output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
-            output_cfi( ".cfi_adjust_cfa_offset -4" );
+            output_cfi( ".cfi_adjust_cfa_offset -8" );
             output( "\tpopl %%edx\n" );
             output_cfi( ".cfi_adjust_cfa_offset -4" );
             output( "\tpopl %%ecx\n" );
@@ -1070,7 +1081,8 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output( "\tmovups %%xmm1,0x40(%%rsp)\n" );
             output( "\tmovups %%xmm2,0x30(%%rsp)\n" );
             output( "\tmovups %%xmm3,0x20(%%rsp)\n" );
-            output( "\tmovq %%rax,%%rcx\n" );
+            output( "\tleaq .L__wine_spec_delay_imports+%d(%%rip),%%rcx\n", pos );
+            output( "\tmovq %%rax,%%rdx\n" );
             output( "\tcall %s\n", asm_name("__wine_spec_delay_load") );
             output( "\tmovups 0x20(%%rsp),%%xmm3\n" );
             output( "\tmovups 0x30(%%rsp),%%xmm2\n" );
@@ -1088,11 +1100,17 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             break;
         case CPU_ARM:
             output( "\tpush {r0-r3,FP,LR}\n" );
-            output( "\tmov r0,IP\n" );
+            output( "\tmov r1,IP\n" );
+            output( "\tldr r0, 1f\n");
+            if (UsePIC) output( "2:\tadd r0, pc\n" );
             output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
             output( "\tmov IP,r0\n");
             output( "\tpop {r0-r3,FP,LR}\n" );
             output( "\tbx IP\n");
+            if (UsePIC)
+                output( "1:\t.long .L__wine_spec_delay_imports+%u-2b-%u\n", pos, thumb_mode ? 4 : 8 );
+            else
+                output( "1:\t.long .L__wine_spec_delay_imports+%u\n", pos );
             break;
         case CPU_ARM64:
             output( "\tstp x29, x30, [sp,#-80]!\n" );
@@ -1101,7 +1119,10 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             output( "\tstp x2, x3, [sp,#32]\n" );
             output( "\tstp x4, x5, [sp,#48]\n" );
             output( "\tstp x6, x7, [sp,#64]\n" );
-            output( "\tmov x0, x16\n" );
+            output( "\tmov x1, x16\n" );
+            output( "\tadrp x0, %s\n", arm64_page(".L__wine_spec_delay_imports") );
+            output( "\tadd x0, x0, #%s\n", arm64_pageoff(".L__wine_spec_delay_imports") );
+            if (pos) output( "\tadd x0, x0, #%u\n", pos );
             output( "\tbl %s\n", asm_name("__wine_spec_delay_load") );
             output( "\tmov x16, x0\n" );
             output( "\tldp x0, x1, [sp,#16]\n" );
@@ -1128,27 +1149,21 @@ static void output_delayed_import_thunks( const DLLSPEC *spec )
             {
             case CPU_i386:
             case CPU_x86_64:
-                output( "\tmovl $%d,%%eax\n", (idx << 16) | j );
+                output( "\tmovl $%d,%%eax\n", j );
                 output( "\tjmp %s\n", asm_name(module_func) );
                 break;
             case CPU_ARM:
                 output( "\tmov ip, #%u\n", j );
-                if (idx) output( "\tmovt ip, #%u\n", idx );
                 output( "\tb %s\n", asm_name(module_func) );
                 break;
             case CPU_ARM64:
-                if (idx)
-                {
-                    output( "\tmov x16, #0x%x\n", idx << 16 );
-                    if (j) output( "\tmovk x16, #0x%x\n", j );
-                }
-                else output( "\tmov x16, #0x%x\n", j );
+                output( "\tmov x16, #0x%x\n", j );
                 output( "\tb %s\n", asm_name(module_func) );
                 break;
             }
             output_cfi( ".cfi_endproc" );
         }
-        idx++;
+        pos += 8 * 4;  /* IMAGE_DELAYLOAD_DESCRIPTOR is 8 DWORDs */
     }
     output_function_size( delayed_import_loaders );
 
