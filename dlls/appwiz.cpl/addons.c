@@ -255,7 +255,7 @@ static HKEY open_config_key(void)
 
 static enum install_res install_from_registered_dir(void)
 {
-    char *package_dir;
+    char *package_dir, *new_package_dir;
     HKEY hkey;
     DWORD res, type, size = MAX_PATH;
     enum install_res ret;
@@ -267,8 +267,11 @@ static enum install_res install_from_registered_dir(void)
     package_dir = malloc(size);
     res = RegGetValueA(hkey, NULL, addon->dir_config_key, RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
     if(res == ERROR_MORE_DATA) {
-        package_dir = realloc(package_dir, size);
-        res = RegGetValueA(hkey, NULL, addon->dir_config_key, RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
+        new_package_dir = realloc(package_dir, size);
+        if(new_package_dir) {
+            package_dir = new_package_dir;
+            res = RegGetValueA(hkey, NULL, addon->dir_config_key, RRF_RT_ANY, &type, (PBYTE)package_dir, &size);
+        }
     }
     RegCloseKey(hkey);
     if(res == ERROR_FILE_NOT_FOUND) {
