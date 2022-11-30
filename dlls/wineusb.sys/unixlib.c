@@ -45,8 +45,8 @@ struct unix_device
     struct list entry;
 
     libusb_device_handle *handle;
-
-    bool interface;
+    struct unix_device *parent;
+    unsigned int refcount;
 };
 
 static libusb_hotplug_callback_handle hotplug_cb_handle;
@@ -128,7 +128,7 @@ static void add_usb_device(libusb_device *libusb_device)
         free(unix_device);
         return;
     }
-    unix_device->interface = false;
+    unix_device->refcount = 1;
 
     pthread_mutex_lock(&device_mutex);
     list_add_tail(&device_list, &unix_device->entry);
@@ -175,8 +175,10 @@ static void add_usb_device(libusb_device *libusb_device)
                 if (!(unix_iface = calloc(1, sizeof(*unix_iface))))
                     return;
 
+                ++unix_device->refcount;
+                unix_iface->refcount = 1;
                 unix_iface->handle = unix_device->handle;
-                unix_iface->interface = true;
+                unix_iface->parent = unix_device;
                 pthread_mutex_lock(&device_mutex);
                 list_add_tail(&device_list, &unix_iface->entry);
                 pthread_mutex_unlock(&device_mutex);
@@ -547,16 +549,33 @@ static NTSTATUS usb_cancel_transfer(void *args)
     return STATUS_SUCCESS;
 }
 
+static void decref_device(struct unix_device *device)
+{
+    pthread_mutex_lock(&device_mutex);
+
+    if (--device->refcount)
+    {
+        pthread_mutex_unlock(&device_mutex);
+        return;
+    }
+
+    list_remove(&device->entry);
+
+    pthread_mutex_unlock(&device_mutex);
+
+    if (device->parent)
+        decref_device(device->parent);
+    else
+        libusb_close(device->handle);
+    free(device);
+}
+
 static NTSTATUS usb_destroy_device(void *args)
 {
     const struct usb_destroy_device_params *params = args;
     struct unix_device *device = params->device;
 
-    pthread_mutex_lock(&device_mutex);
-    libusb_close(device->handle);
-    list_remove(&device->entry);
-    pthread_mutex_unlock(&device_mutex);
-    free(device);
+    decref_device(device);
 
     return STATUS_SUCCESS;
 }
