@@ -428,7 +428,7 @@ static unsigned int shader_get_param(const struct wined3d_sm1_data *priv, const 
 
 static const struct wined3d_sm1_opcode_info *shader_get_opcode(const struct wined3d_sm1_data *priv, DWORD token)
 {
-    DWORD shader_version = WINED3D_SHADER_VERSION(priv->shader_version.major, priv->shader_version.minor);
+    unsigned int shader_version = WINED3D_SHADER_VERSION(priv->shader_version.major, priv->shader_version.minor);
     const struct wined3d_sm1_opcode_info *opcode_table = priv->opcode_table;
     unsigned int i = 0;
 

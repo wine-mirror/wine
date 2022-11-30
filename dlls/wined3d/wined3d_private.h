@@ -510,7 +510,7 @@ enum wined3d_shader_backend
 struct wined3d_settings
 {
     unsigned int cs_multithreaded;
-    DWORD max_gl_version;
+    unsigned int max_gl_version;
     int offscreen_rendering_mode;
     unsigned short pci_vendor_id;
     unsigned short pci_device_id;
@@ -3374,8 +3374,8 @@ void wined3d_gl_limits_get_uniform_block_range(const struct wined3d_gl_limits *g
 
 struct wined3d_gl_info
 {
-    DWORD selected_gl_version;
-    DWORD glsl_version;
+    unsigned int selected_gl_version;
+    unsigned int glsl_version;
     struct wined3d_gl_limits limits;
     DWORD reserved_glsl_constants, reserved_arb_constants;
     DWORD quirks;
@@ -3451,8 +3451,8 @@ struct wined3d_driver_info
     char description[WINED3D_MAX_DEVICE_IDENTIFIER_LENGTH];
     UINT64 vram_bytes;
     UINT64 sysmem_bytes;
-    DWORD version_high;
-    DWORD version_low;
+    unsigned int version_high;
+    unsigned int version_low;
 };
 
 bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
