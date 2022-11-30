@@ -28,6 +28,21 @@
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 
+#define check_interface(a, b, c) check_interface_(__LINE__, a, b, c)
+static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOOL supported)
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected_hr;
+    IUnknown *unk;
+
+    expected_hr = supported ? S_OK : E_NOINTERFACE;
+
+    hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
+    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
+    if (SUCCEEDED(hr))
+        IUnknown_Release(unk);
+}
+
 #define test_provideclassinfo(a, b) _test_provideclassinfo((IDispatch*)a, b, __LINE__)
 static void _test_provideclassinfo(IDispatch *disp, const GUID *guid, int line)
 {
@@ -673,20 +688,20 @@ static void test_popup(void)
     SysFreeString(text);
     IWshShell_Release(sh);
 }
+
 static void test_wshnetwork(void)
 {
     IDispatch *disp;
-    IUnknown *network;
     HRESULT hr;
 
     hr = CoCreateInstance(&CLSID_WshNetwork, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IDispatch, (void**)&disp);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IDispatch_QueryInterface(disp, &IID_IWshNetwork2, (void**)&network);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_interface(disp, &IID_IWshNetwork, TRUE);
+    check_interface(disp, &IID_IWshNetwork2, TRUE);
 
-    IUnknown_Release(network);
+    IDispatch_Release(disp);
 }
 
 START_TEST(wshom)
