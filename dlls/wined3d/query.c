@@ -410,7 +410,7 @@ HRESULT wined3d_fence_create(struct wined3d_device *device, struct wined3d_fence
 
 ULONG CDECL wined3d_query_incref(struct wined3d_query *query)
 {
-    ULONG refcount = InterlockedIncrement(&query->ref);
+    unsigned int refcount = InterlockedIncrement(&query->ref);
 
     TRACE("%p increasing refcount to %u.\n", query, refcount);
 
@@ -429,7 +429,7 @@ static void wined3d_query_destroy_object(void *object)
 
 ULONG CDECL wined3d_query_decref(struct wined3d_query *query)
 {
-    ULONG refcount = InterlockedDecrement(&query->ref);
+    unsigned int refcount = InterlockedDecrement(&query->ref);
 
     TRACE("%p decreasing refcount to %u.\n", query, refcount);
 

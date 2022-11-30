@@ -33,7 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 ULONG CDECL wined3d_blend_state_incref(struct wined3d_blend_state *state)
 {
-    ULONG refcount = InterlockedIncrement(&state->refcount);
+    unsigned int refcount = InterlockedIncrement(&state->refcount);
 
     TRACE("%p increasing refcount to %u.\n", state, refcount);
 
@@ -49,7 +49,7 @@ static void wined3d_blend_state_destroy_object(void *object)
 
 ULONG CDECL wined3d_blend_state_decref(struct wined3d_blend_state *state)
 {
-    ULONG refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
+    unsigned int refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
     struct wined3d_device *device = state->device;
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
@@ -108,7 +108,7 @@ HRESULT CDECL wined3d_blend_state_create(struct wined3d_device *device,
 
 ULONG CDECL wined3d_depth_stencil_state_incref(struct wined3d_depth_stencil_state *state)
 {
-    ULONG refcount = InterlockedIncrement(&state->refcount);
+    unsigned int refcount = InterlockedIncrement(&state->refcount);
 
     TRACE("%p increasing refcount to %u.\n", state, refcount);
 
@@ -124,7 +124,7 @@ static void wined3d_depth_stencil_state_destroy_object(void *object)
 
 ULONG CDECL wined3d_depth_stencil_state_decref(struct wined3d_depth_stencil_state *state)
 {
-    ULONG refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
+    unsigned int refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
     struct wined3d_device *device = state->device;
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
@@ -195,7 +195,7 @@ HRESULT CDECL wined3d_depth_stencil_state_create(struct wined3d_device *device,
 
 ULONG CDECL wined3d_rasterizer_state_incref(struct wined3d_rasterizer_state *state)
 {
-    ULONG refcount = InterlockedIncrement(&state->refcount);
+    unsigned int refcount = InterlockedIncrement(&state->refcount);
 
     TRACE("%p increasing refcount to %u.\n", state, refcount);
 
@@ -211,7 +211,7 @@ static void wined3d_rasterizer_state_destroy_object(void *object)
 
 ULONG CDECL wined3d_rasterizer_state_decref(struct wined3d_rasterizer_state *state)
 {
-    ULONG refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
+    unsigned int refcount = wined3d_atomic_decrement_mutex_lock(&state->refcount);
     struct wined3d_device *device = state->device;
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);

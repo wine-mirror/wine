@@ -25,7 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 ULONG CDECL wined3d_palette_incref(struct wined3d_palette *palette)
 {
-    ULONG refcount = InterlockedIncrement(&palette->ref);
+    unsigned int refcount = InterlockedIncrement(&palette->ref);
 
     TRACE("%p increasing refcount to %u.\n", palette, refcount);
 
@@ -41,7 +41,7 @@ static void wined3d_palette_destroy_object(void *object)
 
 ULONG CDECL wined3d_palette_decref(struct wined3d_palette *palette)
 {
-    ULONG refcount = InterlockedDecrement(&palette->ref);
+    unsigned int refcount = InterlockedDecrement(&palette->ref);
 
     TRACE("%p decreasing refcount to %u.\n", palette, refcount);
 

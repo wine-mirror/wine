@@ -41,7 +41,7 @@ static void dump_wined3d_vertex_element(const struct wined3d_vertex_element *ele
 
 ULONG CDECL wined3d_vertex_declaration_incref(struct wined3d_vertex_declaration *declaration)
 {
-    ULONG refcount = InterlockedIncrement(&declaration->ref);
+    unsigned int refcount = InterlockedIncrement(&declaration->ref);
 
     TRACE("%p increasing refcount to %u.\n", declaration, refcount);
 
@@ -60,7 +60,7 @@ static void wined3d_vertex_declaration_destroy_object(void *object)
 
 ULONG CDECL wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration)
 {
-    ULONG refcount = InterlockedDecrement(&declaration->ref);
+    unsigned int refcount = InterlockedDecrement(&declaration->ref);
 
     TRACE("%p decreasing refcount to %u.\n", declaration, refcount);
 

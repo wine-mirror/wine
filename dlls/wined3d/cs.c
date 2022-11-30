@@ -4406,7 +4406,7 @@ static void wined3d_command_list_destroy_object(void *object)
 
 ULONG CDECL wined3d_command_list_incref(struct wined3d_command_list *list)
 {
-    ULONG refcount = InterlockedIncrement(&list->refcount);
+    unsigned int refcount = InterlockedIncrement(&list->refcount);
 
     TRACE("%p increasing refcount to %u.\n", list, refcount);
 
@@ -4415,7 +4415,7 @@ ULONG CDECL wined3d_command_list_incref(struct wined3d_command_list *list)
 
 ULONG CDECL wined3d_command_list_decref(struct wined3d_command_list *list)
 {
-    ULONG refcount = InterlockedDecrement(&list->refcount);
+    unsigned int refcount = InterlockedDecrement(&list->refcount);
     struct wined3d_device *device = list->device;
     const struct wined3d_cs_packet *packet;
     SIZE_T i, offset;

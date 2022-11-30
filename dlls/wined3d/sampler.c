@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
 ULONG CDECL wined3d_sampler_incref(struct wined3d_sampler *sampler)
 {
-    ULONG refcount = InterlockedIncrement(&sampler->refcount);
+    unsigned int refcount = InterlockedIncrement(&sampler->refcount);
 
     TRACE("%p increasing refcount to %u.\n", sampler, refcount);
 
@@ -32,7 +32,7 @@ ULONG CDECL wined3d_sampler_incref(struct wined3d_sampler *sampler)
 
 ULONG CDECL wined3d_sampler_decref(struct wined3d_sampler *sampler)
 {
-    ULONG refcount = wined3d_atomic_decrement_mutex_lock(&sampler->refcount);
+    unsigned int refcount = wined3d_atomic_decrement_mutex_lock(&sampler->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", sampler, refcount);
 

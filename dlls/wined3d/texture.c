@@ -1509,7 +1509,7 @@ void wined3d_texture_gl_apply_sampler_desc(struct wined3d_texture_gl *texture_gl
 
 ULONG CDECL wined3d_texture_incref(struct wined3d_texture *texture)
 {
-    ULONG refcount;
+    unsigned int refcount;
 
     TRACE("texture %p, swapchain %p.\n", texture, texture->swapchain);
 
@@ -1602,8 +1602,7 @@ static void wined3d_texture_cleanup_sync(struct wined3d_texture *texture)
 
 ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
 {
-    unsigned int i, sub_resource_count;
-    ULONG refcount;
+    unsigned int i, sub_resource_count, refcount;
 
     TRACE("texture %p, swapchain %p.\n", texture, texture->swapchain);
 

@@ -132,7 +132,7 @@ void wined3d_swapchain_vk_cleanup(struct wined3d_swapchain_vk *swapchain_vk)
 
 ULONG CDECL wined3d_swapchain_incref(struct wined3d_swapchain *swapchain)
 {
-    ULONG refcount = InterlockedIncrement(&swapchain->ref);
+    unsigned int refcount = InterlockedIncrement(&swapchain->ref);
 
     TRACE("%p increasing refcount to %u.\n", swapchain, refcount);
 
@@ -141,7 +141,7 @@ ULONG CDECL wined3d_swapchain_incref(struct wined3d_swapchain *swapchain)
 
 ULONG CDECL wined3d_swapchain_decref(struct wined3d_swapchain *swapchain)
 {
-    ULONG refcount = InterlockedDecrement(&swapchain->ref);
+    unsigned int refcount = InterlockedDecrement(&swapchain->ref);
 
     TRACE("%p decreasing refcount to %u.\n", swapchain, refcount);
 

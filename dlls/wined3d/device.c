@@ -163,7 +163,7 @@ void device_context_remove(struct wined3d_device *device, struct wined3d_context
 
 ULONG CDECL wined3d_device_incref(struct wined3d_device *device)
 {
-    ULONG refcount = InterlockedIncrement(&device->ref);
+    unsigned int refcount = InterlockedIncrement(&device->ref);
 
     TRACE("%p increasing refcount to %u.\n", device, refcount);
 
@@ -253,7 +253,7 @@ void wined3d_device_cleanup(struct wined3d_device *device)
 
 ULONG CDECL wined3d_device_decref(struct wined3d_device *device)
 {
-    ULONG refcount = InterlockedDecrement(&device->ref);
+    unsigned int refcount = InterlockedDecrement(&device->ref);
 
     TRACE("%p decreasing refcount to %u.\n", device, refcount);
 

@@ -187,7 +187,7 @@ void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
 
 ULONG CDECL wined3d_incref(struct wined3d *wined3d)
 {
-    ULONG refcount = InterlockedIncrement(&wined3d->ref);
+    unsigned int refcount = InterlockedIncrement(&wined3d->ref);
 
     TRACE("%p increasing refcount to %u.\n", wined3d, refcount);
 
@@ -196,7 +196,7 @@ ULONG CDECL wined3d_incref(struct wined3d *wined3d)
 
 ULONG CDECL wined3d_decref(struct wined3d *wined3d)
 {
-    ULONG refcount = InterlockedDecrement(&wined3d->ref);
+    unsigned int refcount = InterlockedDecrement(&wined3d->ref);
 
     TRACE("%p decreasing refcount to %u.\n", wined3d, refcount);
 

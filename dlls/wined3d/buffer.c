@@ -494,7 +494,7 @@ static inline unsigned int fixup_transformed_pos(struct wined3d_vec4 *p)
 
 ULONG CDECL wined3d_buffer_incref(struct wined3d_buffer *buffer)
 {
-    ULONG refcount = InterlockedIncrement(&buffer->resource.ref);
+    unsigned int refcount = InterlockedIncrement(&buffer->resource.ref);
 
     TRACE("%p increasing refcount to %u.\n", buffer, refcount);
 
@@ -766,7 +766,7 @@ void wined3d_buffer_cleanup(struct wined3d_buffer *buffer)
 
 ULONG CDECL wined3d_buffer_decref(struct wined3d_buffer *buffer)
 {
-    ULONG refcount = InterlockedDecrement(&buffer->resource.ref);
+    unsigned int refcount = InterlockedDecrement(&buffer->resource.ref);
 
     TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
 

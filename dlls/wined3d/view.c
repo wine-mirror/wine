@@ -362,7 +362,7 @@ static void wined3d_view_load_location(struct wined3d_resource *resource,
 
 ULONG CDECL wined3d_rendertarget_view_incref(struct wined3d_rendertarget_view *view)
 {
-    ULONG refcount = InterlockedIncrement(&view->refcount);
+    unsigned int refcount = InterlockedIncrement(&view->refcount);
 
     TRACE("%p increasing refcount to %u.\n", view, refcount);
 
@@ -379,7 +379,7 @@ void wined3d_rendertarget_view_cleanup(struct wined3d_rendertarget_view *view)
 
 ULONG CDECL wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *view)
 {
-    ULONG refcount = InterlockedDecrement(&view->refcount);
+    unsigned int refcount = InterlockedDecrement(&view->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", view, refcount);
 
@@ -953,7 +953,7 @@ HRESULT CDECL wined3d_rendertarget_view_create_from_sub_resource(struct wined3d_
 
 ULONG CDECL wined3d_shader_resource_view_incref(struct wined3d_shader_resource_view *view)
 {
-    ULONG refcount = InterlockedIncrement(&view->refcount);
+    unsigned int refcount = InterlockedIncrement(&view->refcount);
 
     TRACE("%p increasing refcount to %u.\n", view, refcount);
 
@@ -970,7 +970,7 @@ void wined3d_shader_resource_view_cleanup(struct wined3d_shader_resource_view *v
 
 ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_view *view)
 {
-    ULONG refcount = InterlockedDecrement(&view->refcount);
+    unsigned int refcount = InterlockedDecrement(&view->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", view, refcount);
 
@@ -1478,7 +1478,7 @@ void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resou
 
 ULONG CDECL wined3d_unordered_access_view_incref(struct wined3d_unordered_access_view *view)
 {
-    ULONG refcount = InterlockedIncrement(&view->refcount);
+    unsigned int refcount = InterlockedIncrement(&view->refcount);
 
     TRACE("%p increasing refcount to %u.\n", view, refcount);
 
@@ -1495,7 +1495,7 @@ void wined3d_unordered_access_view_cleanup(struct wined3d_unordered_access_view 
 
 ULONG CDECL wined3d_unordered_access_view_decref(struct wined3d_unordered_access_view *view)
 {
-    ULONG refcount = InterlockedDecrement(&view->refcount);
+    unsigned int refcount = InterlockedDecrement(&view->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", view, refcount);
 
