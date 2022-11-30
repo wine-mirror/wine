@@ -268,10 +268,10 @@ static inline ULONG ntdll_wcstoul( const WCHAR *s, WCHAR **end, int base )
 #else /* WINE_UNIX_LIB */
 
 extern unixlib_handle_t __wine_unixlib_handle DECLSPEC_HIDDEN;
-extern NTSTATUS (WINAPI *__wine_unix_call_ptr)( unixlib_handle_t, unsigned int, void * ) DECLSPEC_HIDDEN;
+extern NTSTATUS (WINAPI *__wine_unix_call_dispatcher)( unixlib_handle_t, unsigned int, void * ) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI __wine_init_unix_call(void) DECLSPEC_HIDDEN;
 
-#define WINE_UNIX_CALL(code,args) __wine_unix_call_ptr( __wine_unixlib_handle, (code), (args) )
+#define WINE_UNIX_CALL(code,args) __wine_unix_call_dispatcher( __wine_unixlib_handle, (code), (args) )
 
 #endif /* WINE_UNIX_LIB */
 

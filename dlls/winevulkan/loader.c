@@ -236,7 +236,7 @@ static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
     NTSTATUS status = __wine_init_unix_call();
 
-    p_vk_direct_unix_call = __wine_unix_call_ptr;
+    p_vk_direct_unix_call = __wine_unix_call_dispatcher;
     if (status) return FALSE;
     return !vk_unix_call(unix_init, &p_vk_direct_unix_call);
 }
