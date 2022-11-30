@@ -1817,12 +1817,23 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, void *stack_ptr,
  */
 static BOOL handle_syscall_trap( ucontext_t *sigcontext )
 {
-    extern void __wine_syscall_dispatcher_prolog_end(void) DECLSPEC_HIDDEN;
     struct syscall_frame *frame = x86_thread_data()->syscall_frame;
 
     /* disallow single-stepping through a syscall */
 
-    if ((void *)EIP_sig( sigcontext ) != __wine_syscall_dispatcher) return FALSE;
+    if ((void *)EIP_sig( sigcontext ) == __wine_syscall_dispatcher)
+    {
+        extern void __wine_syscall_dispatcher_prolog_end(void) DECLSPEC_HIDDEN;
+
+        EIP_sig( sigcontext ) = (ULONG)__wine_syscall_dispatcher_prolog_end;
+    }
+    else if ((void *)EIP_sig( sigcontext ) == __wine_unix_call_dispatcher)
+    {
+        extern void __wine_unix_call_dispatcher_prolog_end(void) DECLSPEC_HIDDEN;
+
+        EIP_sig( sigcontext ) = (ULONG)__wine_unix_call_dispatcher_prolog_end;
+    }
+    else return FALSE;
 
     TRACE( "ignoring trap in syscall eip=%08x eflags=%08x\n", EIP_sig(sigcontext), EFL_sig(sigcontext) );
 
@@ -1830,7 +1841,6 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext )
     frame->eflags = EFL_sig(sigcontext);
     frame->restore_flags = LOWORD(CONTEXT_CONTROL);
 
-    EIP_sig( sigcontext ) = (ULONG)__wine_syscall_dispatcher_prolog_end;
     ECX_sig( sigcontext ) = (ULONG)frame;
     ESP_sig( sigcontext ) += sizeof(ULONG);
     EFL_sig( sigcontext ) &= ~0x100;  /* clear single-step flag */
@@ -2617,7 +2627,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "rep; movsl\n\t"
                    "call *(%eax,%edx,4)\n\t"
                    "leal -0x34(%ebp),%esp\n"
-                   "5:\t"
+
+                   ".L__wine_syscall_dispatcher_return:\t"
                    __ASM_CFI_CFA_IS_AT1(esp, 0x0c)
                    __ASM_CFI_REG_IS_AT1(esp, esp, 0x0c)
                    __ASM_CFI_REG_IS_AT1(eip, esp, 0x08)
@@ -2692,7 +2703,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "iret\n"
                    __ASM_CFI("\t.cfi_restore_state\n")
                    "6:\tmovl $0xc000000d,%eax\n\t" /* STATUS_INVALID_PARAMETER */
-                   "jmp 5b\n\t"
+                   "jmp .L__wine_syscall_dispatcher_return\n\t"
+
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    __ASM_CFI(".cfi_remember_state\n\t")
@@ -2706,7 +2718,59 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl 8(%esp),%eax\n\t"
                    "movl 4(%esp),%esp\n\t"
                    __ASM_CFI(".cfi_restore_state\n\t")
-                   "jmp 5b" )
+                   "jmp .L__wine_syscall_dispatcher_return" )
+
+
+/***********************************************************************
+ *           __wine_unix_call_dispatcher
+ */
+__ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
+                   "movl %fs:0x1f8,%ecx\n\t"   /* x86_thread_data()->syscall_frame */
+                   "movw $0,0x02(%ecx)\n\t"    /* frame->restore_flags */
+                   "popl 0x08(%ecx)\n\t"       /* frame->eip */
+                   __ASM_CFI(".cfi_adjust_cfa_offset -4\n\t")
+                   __ASM_CFI_REG_IS_AT1(eip, ecx, 0x08)
+                   ".globl " __ASM_NAME("__wine_unix_call_dispatcher_prolog_end") "\n"
+                   __ASM_NAME("__wine_unix_call_dispatcher_prolog_end") ":\n\t"
+                   "leal 0x10(%esp),%edx\n\t"
+                   "movl %edx,0x0c(%ecx)\n\t"  /* frame->esp */
+                   __ASM_CFI_CFA_IS_AT1(ecx, 0x0c)
+                   __ASM_CFI_REG_IS_AT1(esp, ecx, 0x0c)
+                   "movw %cs,0x10(%ecx)\n\t"
+                   "movw %ss,0x12(%ecx)\n\t"
+                   "movw %ds,0x14(%ecx)\n\t"
+                   "movw %es,0x16(%ecx)\n\t"
+                   "movw %fs,0x18(%ecx)\n\t"
+                   "movw %gs,0x1a(%ecx)\n\t"
+                   "movl %ebx,0x20(%ecx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(ebx, ecx, 0x20)
+                   "movl %edi,0x2c(%ecx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(edi, ecx, 0x2c)
+                   "movl %esi,0x30(%ecx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(esi, ecx, 0x30)
+                   "movl %ebp,0x34(%ecx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(ebp, ecx, 0x34)
+                   "movl 12(%esp),%edx\n\t"    /* args */
+                   "movl %edx,-16(%ecx)\n\t"
+                   "movl (%esp),%eax\n\t"      /* handle */
+                   "movl 8(%esp),%edx\n\t"     /* code */
+                   "leal -16(%ecx),%esp\n\t"
+                   "call *(%eax,%edx,4)\n\t"
+                   "leal 16(%esp),%esp\n\t"
+                   __ASM_CFI_CFA_IS_AT1(esp, 0x0c)
+                   __ASM_CFI_REG_IS_AT1(esp, esp, 0x0c)
+                   __ASM_CFI_REG_IS_AT1(eip, esp, 0x08)
+                   __ASM_CFI_REG_IS_AT1(ebx, esp, 0x20)
+                   __ASM_CFI_REG_IS_AT1(edi, esp, 0x2c)
+                   __ASM_CFI_REG_IS_AT1(esi, esp, 0x30)
+                   __ASM_CFI_REG_IS_AT1(ebp, esp, 0x34)
+                   "testw $0xffff,2(%esp)\n\t" /* frame->restore_flags */
+                   "jnz .L__wine_syscall_dispatcher_return\n\t"
+                   "movl 0x08(%esp),%ecx\n\t"  /* frame->eip */
+                   __ASM_CFI(".cfi_register %eip, %ecx\n\t")
+                   "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */
+                   __ASM_CFI(".cfi_same_value %esp\n\t")
+                   "jmpl *%ecx" )
 
 
 /***********************************************************************

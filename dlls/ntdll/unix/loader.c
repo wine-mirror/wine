@@ -117,6 +117,7 @@ void     (WINAPI *p__wine_ctrl_routine)(void*);
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 static void *p__wine_syscall_dispatcher;
+static void **p__wine_unix_call_dispatcher;
 
 static void * const syscalls[] =
 {
@@ -1053,6 +1054,7 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( RtlUserThreadStart );
     GET_FUNC( __wine_ctrl_routine );
     GET_FUNC( __wine_syscall_dispatcher );
+    GET_FUNC( __wine_unix_call_dispatcher );
 #ifdef __aarch64__
     {
         void **p__wine_current_teb;
@@ -2188,6 +2190,9 @@ static void start_main_thread(void)
     if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
     load_apiset_dll();
     ntdll_init_syscalls( 0, &syscall_table, p__wine_syscall_dispatcher );
+#if defined(__i386__)
+    *p__wine_unix_call_dispatcher = __wine_unix_call_dispatcher;
+#endif
     server_init_process_done();
 }
 
