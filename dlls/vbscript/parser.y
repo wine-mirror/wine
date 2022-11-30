@@ -323,10 +323,9 @@ Else_opt
     | tELSE StatementsNl_opt                { $$ = $2; }
 
 CaseClausules
-    : /* empty */                          { $$ = NULL; }
-    | tCASE tELSE StSep StatementsNl_opt   { $$ = new_case_clausule(ctx, NULL, $4, NULL); }
-    | tCASE ExpressionList StSep StatementsNl_opt CaseClausules
-                                           { $$ = new_case_clausule(ctx, $2, $4, $5); }
+    : /* empty */                                                      { $$ = NULL; }
+    | tCASE tELSE StSep_opt StatementsNl_opt                           { $$ = new_case_clausule(ctx, NULL, $4, NULL); }
+    | tCASE ExpressionList StSep_opt StatementsNl_opt CaseClausules    { $$ = new_case_clausule(ctx, $2, $4, $5); }
 
 Arguments
     : tEMPTYBRACKETS                { $$ = NULL; }
@@ -512,6 +511,10 @@ Identifier
     | tEXPLICIT      { ctx->last_token = tIdentifier; $$ = $1; }
     | tPROPERTY      { ctx->last_token = tIdentifier; $$ = $1; }
     | tSTEP          { ctx->last_token = tIdentifier; $$ = $1; }
+
+StSep_opt
+    : /* empty */
+    | StSep
 
 /* Most statements accept both new line and ':' as separators */
 StSep

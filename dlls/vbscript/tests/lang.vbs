@@ -766,6 +766,26 @@ end select
 
 select case 0 : case 1 : case else : end select
 
+' Case without separator
+function SelectCaseTest(x)
+    select case x
+        case 0: SelectCaseTest = 100
+        case 1  SelectCaseTest = 200
+        case 2
+                SelectCaseTest = 300
+        case 3
+        case 4  SelectCaseTest = 400
+        case else SelectCaseTest = 500
+    end select
+end function
+
+call ok(SelectCaseTest(0) = 100, "Unexpected case " & SelectCaseTest(0))
+call ok(SelectCaseTest(1) = 200, "Unexpected case " & SelectCaseTest(1))
+call ok(SelectCaseTest(2) = 300, "Unexpected case " & SelectCaseTest(2))
+call ok(SelectCaseTest(3) = vbEmpty, "Unexpected case " & SelectCaseTest(3))
+call ok(SelectCaseTest(4) = 400, "Unexpected case " & SelectCaseTest(4))
+call ok(SelectCaseTest(5) = 500, "Unexpected case " & SelectCaseTest(5))
+
 if false then
 Sub testsub
     x = true
