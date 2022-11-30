@@ -100,7 +100,8 @@ static inline BOOL is_version_nt(void)
 
 static BOOL is_wow6432node( const UNICODE_STRING *name )
 {
-    return (name->Length == 11 * sizeof(WCHAR) && !wcsnicmp( name->Buffer, L"Wow6432Node", 11 ));
+    DWORD len = name->Length / sizeof(WCHAR);
+    return (len >= 11 && !wcsnicmp( name->Buffer, L"Wow6432Node\\", min( len, 12 ) ));
 }
 
 /* open the Wow6432Node subkey of the specified key */
@@ -228,7 +229,7 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
     BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
     HANDLE subkey;
     WCHAR *buffer = name.Buffer;
-    DWORD pos = 0, i = 0, len = name.Length / sizeof(WCHAR);
+    DWORD i, len = name.Length / sizeof(WCHAR);
 
     *retkey = NULL;
 
@@ -251,23 +252,15 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
         return status;
     }
 
-    if (len && buffer[0] == '\\') return STATUS_OBJECT_PATH_INVALID;
-    while (i < len && buffer[i] != '\\') i++;
-
-    for (;;)
+    while (len)
     {
-        name.Buffer = buffer + pos;
-        name.Length = (i - pos) * sizeof(WCHAR);
-        if (force_wow32 && pos)
-        {
-            if (is_wow6432node( &name )) force_wow32 = FALSE;
-            else if ((subkey = open_wow6432node( attr.RootDirectory )))
-            {
-                if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
-                attr.RootDirectory = subkey;
-                force_wow32 = FALSE;
-            }
-        }
+        i = 0;
+        if (buffer[0] == '\\') return STATUS_OBJECT_PATH_INVALID;
+        while (i < len && buffer[i] != '\\') i++;
+
+        name.Buffer = buffer;
+        name.Length = i * sizeof(WCHAR);
+
         if (i == len)
         {
             if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
@@ -281,15 +274,22 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
         if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
         if (status) return status;
         attr.RootDirectory = subkey;
-        if (i == len) break;
         while (i < len && buffer[i] == '\\') i++;
-        pos = i;
-        while (i < len && buffer[i] != '\\') i++;
-    }
-    if (force_wow32 && (subkey = open_wow6432node( attr.RootDirectory )))
-    {
-        if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
-        attr.RootDirectory = subkey;
+        buffer += i;
+        len -= i;
+
+        if (force_wow32)
+        {
+            name.Buffer = buffer;
+            name.Length = len * sizeof(WCHAR);
+            if (is_wow6432node( &name )) force_wow32 = FALSE;
+            else if ((subkey = open_wow6432node( attr.RootDirectory )))
+            {
+                NtClose( attr.RootDirectory );
+                attr.RootDirectory = subkey;
+                force_wow32 = FALSE;
+            }
+        }
     }
     if (status == STATUS_PREDEFINED_HANDLE)
     {
