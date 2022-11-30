@@ -379,6 +379,7 @@ SOURCES = \
 	iptypes.h \
 	isguids.h \
 	ivectorchangedeventargs.idl \
+	kbd.h \
 	knownfolders.h \
 	ks.h \
 	ksguid.h \
