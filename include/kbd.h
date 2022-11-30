@@ -21,6 +21,25 @@
 
 #include "windef.h"
 
+#define KBDBASE          0
+#define KBDSHIFT         1
+#define KBDCTRL          2
+#define KBDALT           4
+#define KBDKANA          8
+#define KBDROYA          0x10
+#define KBDLOYA          0x20
+#define KBDGRPSELTAP     0x80
+
+#define WCH_NONE         0xf000
+#define WCH_DEAD         0xf001
+#define WCH_LGTR         0xf002
+
+#define CAPLOK           0x01
+#define SGCAPS           0x02
+#define CAPLOKALTGR      0x04
+#define KANALOK          0x08
+#define GRPSELTAP        0x80
+
 typedef struct
 {
     BYTE Vk;
