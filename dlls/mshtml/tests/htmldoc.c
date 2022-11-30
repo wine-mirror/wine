@@ -6018,10 +6018,12 @@ static void test_download(DWORD flags)
             SET_EXPECT(CountEntries);
         SET_EXPECT(Exec_HTTPEQUIV_DONE);
     }
-    if(nav_url || support_wbapp) {
+    if(nav_url || support_wbapp || editmode) {
         SET_EXPECT(UpdateUI);
         SET_EXPECT(Exec_UPDATECOMMANDS);
         SET_EXPECT(Exec_SETTITLE);
+    }
+    if(nav_url || support_wbapp) {
         if(flags & DWL_EXPECT_HISTUPDATE)
             SET_EXPECT(Exec_Explorer_38);
         SET_EXPECT(UpdateBackForwardState);
@@ -6126,10 +6128,12 @@ static void test_download(DWORD flags)
         CHECK_CALLED(Exec_HTTPEQUIV_DONE);
     }
     SET_CALLED(SetStatusText);
-    if(nav_url || support_wbapp) { /* avoiding race, FIXME: find better way */
+    if(nav_url || support_wbapp || editmode) { /* avoiding race, FIXME: find better way */
         CLEAR_CALLED(UpdateUI);
         CLEAR_CALLED(Exec_UPDATECOMMANDS);
         CLEAR_CALLED(Exec_SETTITLE);
+    }
+    if(nav_url || support_wbapp) {
         if(flags & DWL_EXPECT_HISTUPDATE) {
             if(flags & DWL_FROM_HISTORY)
                 CHECK_CALLED_BROKEN(Exec_Explorer_38); /* Some old IEs don't call it. */
