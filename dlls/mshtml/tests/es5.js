@@ -1668,6 +1668,20 @@ sync_test("builtin_context", function() {
     ok(obj.valueOf() === 42, "obj = " + obj);
 });
 
+sync_test("host this", function() {
+    var tests = [ undefined, null, external.nullDisp, function() {}, [0], "foobar", true, 42, new Number(42), external.testHostContext(true), window, document ];
+    var i, obj = Object.create(Function.prototype);
+
+    // only pure js objects are passed as 'this' (regardless of prototype)
+    [137].forEach(external.testHostContext(true), obj);
+    Function.prototype.apply.call(external.testHostContext(true), obj, [137, 0, {}]);
+
+    for(i = 0; i < tests.length; i++) {
+        [137].forEach(external.testHostContext(false), tests[i]);
+        Function.prototype.apply.call(external.testHostContext(false), tests[i], [137, 0, {}]);
+    }
+});
+
 sync_test("head_setter", function() {
     document.head = "";
     ok(typeof(document.head) === "object", "typeof(document.head) = " + typeof(document.head));

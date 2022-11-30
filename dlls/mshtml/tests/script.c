@@ -158,7 +158,8 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_IS_ENGLISH     0x300009
 #define DISPID_EXTERNAL_LIST_SEP       0x30000A
 #define DISPID_EXTERNAL_TEST_VARS      0x30000B
-#define DISPID_EXTERNAL_GETMIMETYPE    0x30000C
+#define DISPID_EXTERNAL_TESTHOSTCTX    0x30000C
+#define DISPID_EXTERNAL_GETMIMETYPE    0x30000D
 
 static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
@@ -745,6 +746,87 @@ static IDispatchExVtbl scriptDispVtbl = {
 
 static IDispatchEx scriptDisp = { &scriptDispVtbl };
 
+static HRESULT WINAPI testHostContextDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    ok(id == DISPID_VALUE, "id = %ld\n", id);
+    ok(wFlags == (DISPATCH_PROPERTYGET | DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+    ok(pdp != NULL, "pdp == NULL\n");
+    ok(pdp->cArgs == 4, "pdp->cArgs = %d\n", pdp->cArgs);
+    ok(pdp->cNamedArgs == 1, "pdp->cNamedArgs = %d\n", pdp->cNamedArgs);
+    ok(pdp->rgdispidNamedArgs[0] == DISPID_THIS, "pdp->rgdispidNamedArgs[0] = %ld\n", pdp->rgdispidNamedArgs[0]);
+    ok(V_VT(&pdp->rgvarg[0]) == VT_DISPATCH, "V_VT(rgvarg[0]) = %d\n", V_VT(&pdp->rgvarg[0]));
+    ok(V_DISPATCH(&pdp->rgvarg[0]) != NULL, "V_DISPATCH(rgvarg[0]) = NULL\n");
+    ok(V_VT(&pdp->rgvarg[1]) == VT_DISPATCH, "V_VT(rgvarg[1]) = %d\n", V_VT(&pdp->rgvarg[1]));
+    ok(V_DISPATCH(&pdp->rgvarg[1]) != NULL, "V_DISPATCH(rgvarg[1]) = NULL\n");
+    ok(V_VT(&pdp->rgvarg[2]) == VT_I4, "V_VT(rgvarg[2]) = %d\n", V_VT(&pdp->rgvarg[2]));
+    ok(V_I4(&pdp->rgvarg[2]) == 0, "V_I4(rgvarg[2]) = %ld\n", V_I4(&pdp->rgvarg[2]));
+    ok(V_VT(&pdp->rgvarg[3]) == VT_I4, "V_VT(rgvarg[3]) = %d\n", V_VT(&pdp->rgvarg[3]));
+    ok(V_I4(&pdp->rgvarg[3]) == 137, "V_I4(rgvarg[3]) = %ld\n", V_I4(&pdp->rgvarg[3]));
+    V_VT(pvarRes) = VT_EMPTY;
+    return S_OK;
+}
+
+static IDispatchExVtbl testHostContextDispVtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    testHostContextDisp_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx testHostContextDisp = { &testHostContextDispVtbl };
+
+static HRESULT WINAPI testHostContextDisp_no_this_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    ok(id == DISPID_VALUE, "id = %ld\n", id);
+    ok(wFlags == (DISPATCH_PROPERTYGET | DISPATCH_METHOD), "wFlags = %x\n", wFlags);
+    ok(pdp != NULL, "pdp == NULL\n");
+    ok(pdp->cArgs == 3, "pdp->cArgs = %d\n", pdp->cArgs);
+    ok(V_VT(&pdp->rgvarg[0]) == VT_DISPATCH, "V_VT(rgvarg[1]) = %d\n", V_VT(&pdp->rgvarg[1]));
+    ok(V_DISPATCH(&pdp->rgvarg[0]) != NULL, "V_DISPATCH(rgvarg[1]) = NULL\n");
+    ok(V_VT(&pdp->rgvarg[1]) == VT_I4, "V_VT(rgvarg[2]) = %d\n", V_VT(&pdp->rgvarg[2]));
+    ok(V_I4(&pdp->rgvarg[1]) == 0, "V_I4(rgvarg[2]) = %ld\n", V_I4(&pdp->rgvarg[2]));
+    ok(V_VT(&pdp->rgvarg[2]) == VT_I4, "V_VT(rgvarg[3]) = %d\n", V_VT(&pdp->rgvarg[3]));
+    ok(V_I4(&pdp->rgvarg[2]) == 137, "V_I4(rgvarg[3]) = %ld\n", V_I4(&pdp->rgvarg[3]));
+    ok(pvarRes != NULL, "pvarRes == NULL\n");
+    ok(pei != NULL, "pei == NULL\n");
+    ok(pspCaller != NULL, "pspCaller == NULL\n");
+    V_VT(pvarRes) = VT_EMPTY;
+    return S_OK;
+}
+
+static IDispatchExVtbl testHostContextDisp_no_this_vtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    testHostContextDisp_no_this_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx testHostContextDisp_no_this = { &testHostContextDisp_no_this_vtbl };
+
 static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD grfdex, DISPID *pid)
 {
     if(!lstrcmpW(bstrName, L"ok")) {
@@ -793,6 +875,10 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
     }
     if(!lstrcmpW(bstrName, L"testVars")) {
         *pid = DISPID_EXTERNAL_TEST_VARS;
+        return S_OK;
+    }
+    if(!lstrcmpW(bstrName, L"testHostContext")) {
+        *pid = DISPID_EXTERNAL_TESTHOSTCTX;
         return S_OK;
     }
     if(!lstrcmpW(bstrName, L"getExpectedMimeType")) {
@@ -1030,6 +1116,20 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
         ok(pei != NULL, "pei == NULL\n");
         test_script_vars(pdp->cArgs, pdp->rgvarg);
+        return S_OK;
+
+    case DISPID_EXTERNAL_TESTHOSTCTX:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(V_VT(pdp->rgvarg) == VT_BOOL, "V_VT(rgvarg) = %d\n", V_VT(pdp->rgvarg));
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)(V_BOOL(pdp->rgvarg) ? &testHostContextDisp : &testHostContextDisp_no_this);
         return S_OK;
 
     case DISPID_EXTERNAL_GETMIMETYPE:

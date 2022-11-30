@@ -2212,14 +2212,11 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, jsval_t vthis, WORD 
     if(jsdisp)
         jsdisp_release(jsdisp);
 
-    if(is_undefined(vthis))
-        jsthis = NULL;
-    else if(is_object_instance(vthis))
+    if(is_object_instance(vthis) && (ctx->version < SCRIPTLANGUAGEVERSION_ES5 ||
+       ((jsdisp = to_jsdisp(get_object(vthis))) && is_class(jsdisp, JSCLASS_OBJECT))))
         jsthis = get_object(vthis);
-    else {
-        FIXME("Unimplemented 'this' passed to host object: %s\n", debugstr_jsval(vthis));
-        return E_NOTIMPL;
-    }
+    else
+        jsthis = NULL;
 
     flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
     if(r && argc && flags == DISPATCH_METHOD)
