@@ -808,8 +808,8 @@ static HRESULT WINAPI Protocol_Start(IInternetProtocol *iface, LPCWSTR szUrl,
     if(is_mhtml)
         ok(!bindinfo.dwOptions, "bindinfo.dwOptions=%lx\n", bindinfo.dwOptions);
     else
-        ok(bindinfo.dwOptions == 0x80000 || bindinfo.dwOptions == 0x4080000, /* win2k3 */
-           "bindinfo.dwOptions=%lx\n", bindinfo.dwOptions);
+        ok(bindinfo.dwOptions == 0x80000 || bindinfo.dwOptions == 0x4080000 /* win2k3 */ ||
+           bindinfo.dwOptions == 0x20000, "bindinfo.dwOptions=%lx\n", bindinfo.dwOptions);
     ok(bindinfo.dwOptionsFlags == 0, "bindinfo.dwOptionsFlags=%ld\n", bindinfo.dwOptionsFlags);
     /* TODO: test dwCodePage */
     /* TODO: test securityAttributes */
@@ -1691,8 +1691,8 @@ static HRESULT WINAPI Moniker_BindToStorage(IMoniker *iface, IBindCtx *pbc, IMon
     ok(bindinfo.dwBindVerb == 0, "bindinfo.dwBindVerb=%ld\n", bindinfo.dwBindVerb);
     ok(bindinfo.szCustomVerb == 0, "bindinfo.szCustomVerb=%p\n", bindinfo.szCustomVerb);
     ok(bindinfo.cbstgmedData == 0, "bindinfo.cbstgmedData=%ld\n", bindinfo.cbstgmedData);
-    ok(bindinfo.dwOptions == 0x80000 || bindinfo.dwOptions == 0x4080000,
-       "bindinfo.dwOptions=%lx\n", bindinfo.dwOptions);
+    ok(bindinfo.dwOptions == 0x80000 || bindinfo.dwOptions == 0x4080000 ||
+       bindinfo.dwOptions == 0x20000, "bindinfo.dwOptions=%lx\n", bindinfo.dwOptions);
     ok(bindinfo.dwOptionsFlags == 0, "bindinfo.dwOptionsFlags=%ld\n", bindinfo.dwOptionsFlags);
     /* TODO: test dwCodePage */
     /* TODO: test securityAttributes */
