@@ -66,6 +66,7 @@ typedef struct {
     struct list entry;
     DWORD   type;
     HANDLE  hfile;
+    DWORD   thread_id;
     INT64   doc_handle;
     WCHAR   nameW[1];
 } port_t;
@@ -516,6 +517,8 @@ static BOOL WINAPI localmon_StartDocPort(HANDLE hport, WCHAR *printer_name,
         if (port->doc_handle)
             return TRUE;
 
+        port->thread_id = GetCurrentThreadId();
+
         params.type = port->type;
         params.port = port->nameW;
         params.document_title = doc_info ? doc_info->pDocName : NULL;
@@ -561,6 +564,13 @@ static BOOL WINAPI localmon_WritePort(HANDLE hport, BYTE *buf, DWORD size,
             return FALSE;
         }
 
+        if (port->type == PORT_IS_CUPS && port->thread_id != GetCurrentThreadId())
+        {
+            FIXME("used from other thread\n");
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return FALSE;
+        }
+
         params.doc = port->doc_handle;
         params.buf = buf;
         params.size = size;
@@ -584,6 +594,13 @@ static BOOL WINAPI localmon_EndDocPort(HANDLE hport)
 
         if (!port->doc_handle)
             return TRUE;
+
+        if (port->type == PORT_IS_CUPS && port->thread_id != GetCurrentThreadId())
+        {
+            FIXME("used from other thread\n");
+            SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+            return FALSE;
+        }
 
         params.doc = port->doc_handle;
         port->doc_handle = 0;
