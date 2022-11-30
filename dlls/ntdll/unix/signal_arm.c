@@ -1701,7 +1701,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldr r5, [r4]\n\t"               /* table->ServiceTable */
                    "ldr ip, [r5, ip, lsl #2]\n\t"
                    "blx ip\n"
-                   "4:\tldr ip, [r8, #0x44]\n\t"    /* frame->restore_flags */
+                   ".L__wine_syscall_dispatcher_return:\n\t"
+                   "ldr ip, [r8, #0x44]\n\t"    /* frame->restore_flags */
 #ifndef __SOFTFP__
                    "tst ip, #4\n\t"                 /* CONTEXT_FLOATING_POINT */
                    "beq 3f\n\t"
@@ -1721,12 +1722,47 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "5:\tmovw r0, #0x000d\n\t" /* STATUS_INVALID_PARAMETER */
                    "movt r0, #0xc000\n\t"
                    "add sp, sp, #0x10\n\t"
-                   "b 4b\n\t"
+                   "b .L__wine_syscall_dispatcher_return\n\t"
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "mov r8, r0\n\t"
                    "mov r0, r1\n\t"
-                   "b 4b" )
+                   "b .L__wine_syscall_dispatcher_return" )
+
+
+/***********************************************************************
+ *           __wine_unix_call_dispatcher
+ */
+__ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
+                   __ASM_EHABI(".cantunwind\n\t")
+                   "mrc p15, 0, r1, c13, c0, 2\n\t" /* NtCurrentTeb() */
+                   "ldr r1, [r1, #0x1d8]\n\t"       /* arm_thread_data()->syscall_frame */
+                   "add ip, r1, #0x10\n\t"
+                   "stm ip, {r4-r12,lr}\n\t"
+                   "str sp, [r1, #0x38]\n\t"
+                   "str lr, [r1, #0x3c]\n\t"
+                   "mrs r4, CPSR\n\t"
+                   "bfi r4, lr, #5, #1\n\t"         /* set thumb bit */
+                   "str r4, [r1, #0x40]\n\t"
+                   "mov r4, #0\n\t"
+                   "str r4, [r1, #0x44]\n\t"        /* frame->restore_flags */
+#ifndef __SOFTFP__
+                   "vmrs r4, fpscr\n\t"
+                   "str r4, [r1, #0x48]\n\t"
+                   "add r4, r1, #0x60\n\t"
+                   "vstm r4, {d0-d15}\n\t"
+#endif
+                   "ldr ip, [r0, r2, lsl #2]\n\t"
+                   "mov sp, r1\n\t"
+                   "mov r0, r3\n\t"                 /* args */
+                   "blx ip\n"
+                   "mov r8, sp\n\t"
+                   "ldr r1, [r8, #0x44]\n\t"        /* frame->restore_flags */
+                   "cbnz r1, 1f\n\t"
+                   "ldr sp, [r8, #0x38]\n\t"
+                   "add r8, r8, #0x10\n\t"
+                   "ldm r8, {r4-r12,pc}\n\t"
+                   "1:\tb .L__wine_syscall_dispatcher_return" )
 
 
 /***********************************************************************
