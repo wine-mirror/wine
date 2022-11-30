@@ -7590,7 +7590,7 @@ static void shader_glsl_generate_color_output(struct wined3d_string_buffer *buff
     }
     else
     {
-        DWORD mask = shader->reg_maps.rt_mask;
+        uint32_t mask = shader->reg_maps.rt_mask;
 
         while (mask)
         {
@@ -7841,7 +7841,7 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
         }
         else
         {
-            DWORD mask = reg_maps->rt_mask;
+            uint32_t mask = reg_maps->rt_mask;
 
             while (mask)
             {

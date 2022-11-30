@@ -4875,7 +4875,7 @@ struct fbo_entry
 {
     struct list entry;
     uint32_t flags;
-    DWORD rt_mask;
+    uint32_t rt_mask;
     GLuint id;
     struct wined3d_fbo_entry_key
     {

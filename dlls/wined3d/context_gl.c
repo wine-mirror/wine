@@ -3666,7 +3666,7 @@ void context_state_fb(struct wined3d_context *context, const struct wined3d_stat
     uint32_t rt_mask = find_draw_buffers_mask(context_gl, state);
     const struct wined3d_fb_state *fb = &state->fb;
     DWORD color_location = 0;
-    DWORD *cur_mask;
+    uint32_t *cur_mask;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
