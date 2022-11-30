@@ -152,10 +152,11 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
 RPCRTAPI RPC_STATUS RPC_ENTRY
   I_RpcReceive( RPC_MESSAGE* Message );
 
-RPCRTAPI void* RPC_ENTRY
-  I_RpcAllocate( unsigned int Size );
 RPCRTAPI void RPC_ENTRY
   I_RpcFree( void* Object );
+RPCRTAPI void* RPC_ENTRY
+  I_RpcAllocate( unsigned int Size )
+    __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(I_RpcFree) __WINE_MALLOC;
 
 RPCRTAPI RPC_BINDING_HANDLE RPC_ENTRY
   I_RpcGetCurrentCallHandle( void );
