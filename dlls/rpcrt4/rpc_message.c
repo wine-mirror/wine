@@ -22,6 +22,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "windef.h"
@@ -131,8 +132,7 @@ static RpcPktHdr *RPCRT4_BuildRequestHeader(ULONG DataRepresentation,
   RPC_STATUS status;
 
   has_object = (ObjectUuid != NULL && !UuidIsNil(ObjectUuid, &status));
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                     sizeof(header->request) + (has_object ? sizeof(UUID) : 0));
+  header = calloc(1, sizeof(header->request) + (has_object ? sizeof(UUID) : 0));
   if (header == NULL) {
     return NULL;
   }
@@ -155,7 +155,7 @@ RpcPktHdr *RPCRT4_BuildResponseHeader(ULONG DataRepresentation, ULONG BufferLeng
 {
   RpcPktHdr *header;
 
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(header->response));
+  header = calloc(1, sizeof(header->response));
   if (header == NULL) {
     return NULL;
   }
@@ -171,7 +171,7 @@ RpcPktHdr *RPCRT4_BuildFaultHeader(ULONG DataRepresentation, RPC_STATUS Status)
 {
   RpcPktHdr *header;
 
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(header->fault));
+  header = calloc(1, sizeof(header->fault));
   if (header == NULL) {
     return NULL;
   }
@@ -193,8 +193,7 @@ RpcPktHdr *RPCRT4_BuildBindHeader(ULONG DataRepresentation,
   RpcPktHdr *header;
   RpcContextElement *ctxt_elem;
 
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                     sizeof(header->bind) + FIELD_OFFSET(RpcContextElement, transfer_syntaxes[1]));
+  header = calloc(1, sizeof(header->bind) + FIELD_OFFSET(RpcContextElement, transfer_syntaxes[1]));
   if (header == NULL) {
     return NULL;
   }
@@ -217,8 +216,7 @@ static RpcPktHdr *RPCRT4_BuildAuthHeader(ULONG DataRepresentation)
 {
   RpcPktHdr *header;
 
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                     sizeof(header->auth3));
+  header = calloc(1, sizeof(header->auth3));
   if (header == NULL)
     return NULL;
 
@@ -235,7 +233,7 @@ RpcPktHdr *RPCRT4_BuildBindNackHeader(ULONG DataRepresentation,
 {
   RpcPktHdr *header;
 
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(RpcPktHdr, bind_nack.protocols[1]));
+  header = calloc(1, FIELD_OFFSET(RpcPktHdr, bind_nack.protocols[1]));
   if (header == NULL) {
     return NULL;
   }
@@ -267,7 +265,7 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(ULONG DataRepresentation,
                 ROUND_UP(FIELD_OFFSET(RpcAddressString, string[strlen(ServerAddress) + 1]), 4) +
                 FIELD_OFFSET(RpcResultList, results[ResultCount]);
 
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, header_size);
+  header = calloc(1, header_size);
   if (header == NULL) {
     return NULL;
   }
@@ -295,7 +293,7 @@ RpcPktHdr *RPCRT4_BuildHttpHeader(ULONG DataRepresentation,
 {
   RpcPktHdr *header;
 
-  header = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(header->http) + payload_size);
+  header = calloc(1, sizeof(header->http) + payload_size);
   if (header == NULL) {
       ERR("failed to allocate memory\n");
     return NULL;
@@ -398,11 +396,6 @@ RpcPktHdr *RPCRT4_BuildHttpFlowControlHeader(BOOL server, ULONG bytes_transmitte
   WRITE_HTTP_PAYLOAD_FIELD_FLOW_CONTROL(payload, bytes_transmitted,
                                         flow_control_increment, *pipe_uuid);
   return header;
-}
-
-VOID RPCRT4_FreeHeader(RpcPktHdr *Header)
-{
-  HeapFree(GetProcessHeap(), 0, Header);
 }
 
 NCA_STATUS RPC2NCA_STATUS(RPC_STATUS status)
@@ -806,7 +799,7 @@ RPC_STATUS RPCRT4_SendWithAuth(RpcConnection *Connection, RpcPktHdr *Header,
         hdr_size + alen;
     }
 
-    pkt = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, Header->common.frag_len);
+    pkt = calloc(1, Header->common.frag_len);
 
     memcpy(pkt, Header, hdr_size);
 
@@ -839,7 +832,7 @@ RPC_STATUS RPCRT4_SendWithAuth(RpcConnection *Connection, RpcPktHdr *Header,
             (unsigned char *)(auth_hdr + 1), Header->common.auth_len);
         if (status != RPC_S_OK)
         {
-          HeapFree(GetProcessHeap(), 0, pkt);
+          free(pkt);
           RPCRT4_SetThreadCurrentConnection(NULL);
           return status;
         }
@@ -848,7 +841,7 @@ RPC_STATUS RPCRT4_SendWithAuth(RpcConnection *Connection, RpcPktHdr *Header,
 
 write:
     count = rpcrt4_conn_write(Connection, pkt, Header->common.frag_len);
-    HeapFree(GetProcessHeap(), 0, pkt);
+    free(pkt);
     if (count<0) {
       WARN("rpcrt4_conn_write failed (auth)\n");
       RPCRT4_SetThreadCurrentConnection(NULL);
@@ -1001,7 +994,7 @@ RPC_STATUS RPCRT4_ClientConnectionAuth(RpcConnection* conn, BYTE *challenge,
 
   status = rpcrt4_conn_authorize(conn, FALSE, challenge, count, NULL, &out_len);
   if (status) return status;
-  out_buffer = HeapAlloc(GetProcessHeap(), 0, out_len);
+  out_buffer = malloc(out_len);
   if (!out_buffer) return RPC_S_OUT_OF_RESOURCES;
   status = rpcrt4_conn_authorize(conn, FALSE, challenge, count, out_buffer, &out_len);
   if (status) return status;
@@ -1013,8 +1006,8 @@ RPC_STATUS RPCRT4_ClientConnectionAuth(RpcConnection* conn, BYTE *challenge,
   else
     status = RPC_S_OUT_OF_RESOURCES;
 
-  HeapFree(GetProcessHeap(), 0, out_buffer);
-  RPCRT4_FreeHeader(resp_hdr);
+  free(out_buffer);
+  free(resp_hdr);
 
   return status;
 }
@@ -1086,7 +1079,7 @@ RPC_STATUS RPCRT4_ServerConnectionAuth(RpcConnection* conn,
         auth_length_in - sizeof(RpcAuthVerifier), NULL, &out_size);
     if (status) return status;
 
-    out_buffer = HeapAlloc(GetProcessHeap(), 0, out_size);
+    out_buffer = malloc(out_size);
     if (!out_buffer) return RPC_S_OUT_OF_RESOURCES;
 
     status = rpcrt4_conn_authorize(
@@ -1094,7 +1087,7 @@ RPC_STATUS RPCRT4_ServerConnectionAuth(RpcConnection* conn,
         auth_length_in - sizeof(RpcAuthVerifier), out_buffer, &out_size);
     if (status != RPC_S_OK)
     {
-        HeapFree(GetProcessHeap(), 0, out_buffer);
+        free(out_buffer);
         return status;
     }
 
@@ -1102,7 +1095,7 @@ RPC_STATUS RPCRT4_ServerConnectionAuth(RpcConnection* conn,
     {
         ERR("expected authentication to be complete but SSP returned data of "
             "%u bytes to be sent back to client\n", out_size);
-        HeapFree(GetProcessHeap(), 0, out_buffer);
+        free(out_buffer);
         return RPC_S_SEC_PKG_ERROR;
     }
     else
@@ -1199,7 +1192,7 @@ RPC_STATUS RPCRT4_default_inquire_auth_client(
     }
     if (server_princ_name)
     {
-        *server_princ_name = RPCRT4_strdupW(conn->AuthInfo->server_principal_name);
+        *server_princ_name = wcsdup(conn->AuthInfo->server_principal_name);
         if (!*server_princ_name) return ERROR_OUTOFMEMORY;
     }
     if (authn_level) *authn_level = conn->AuthInfo->AuthnLevel;
@@ -1235,7 +1228,7 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
       r = rpcrt4_conn_authorize(Connection, TRUE, NULL, 0, NULL, &out_size);
       if (r != RPC_S_OK) return r;
 
-      out_buffer = HeapAlloc(GetProcessHeap(), 0, out_size);
+      out_buffer = malloc(out_size);
       if (!out_buffer) return RPC_S_OUT_OF_RESOURCES;
 
       /* tack on a negotiate packet */
@@ -1243,7 +1236,7 @@ RPC_STATUS RPCRT4_Send(RpcConnection *Connection, RpcPktHdr *Header,
       if (r == RPC_S_OK)
           r = RPCRT4_SendWithAuth(Connection, Header, Buffer, BufferLength, out_buffer, out_size);
 
-      HeapFree(GetProcessHeap(), 0, out_buffer);
+      free(out_buffer);
   }
   else
     r = RPCRT4_SendWithAuth(Connection, Header, Buffer, BufferLength, NULL, 0);
@@ -1315,7 +1308,7 @@ static RPC_STATUS RPCRT4_default_receive_fragment(RpcConnection *Connection, Rpc
     goto fail;
   }
 
-  *Header = HeapAlloc(GetProcessHeap(), 0, hdr_length);
+  *Header = malloc(hdr_length);
   memcpy(*Header, &common_hdr, sizeof(common_hdr));
 
   /* read the rest of packet header */
@@ -1328,7 +1321,7 @@ static RPC_STATUS RPCRT4_default_receive_fragment(RpcConnection *Connection, Rpc
 
   if (common_hdr.frag_len - hdr_length)
   {
-    *Payload = HeapAlloc(GetProcessHeap(), 0, common_hdr.frag_len - hdr_length);
+    *Payload = malloc(common_hdr.frag_len - hdr_length);
     if (!*Payload)
     {
       status = RPC_S_OUT_OF_RESOURCES;
@@ -1351,9 +1344,9 @@ static RPC_STATUS RPCRT4_default_receive_fragment(RpcConnection *Connection, Rpc
 
 fail:
   if (status != RPC_S_OK) {
-    RPCRT4_FreeHeader(*Header);
+    free(*Header);
     *Header = NULL;
-    HeapFree(GetProcessHeap(), 0, *Payload);
+    free(*Payload);
     *Payload = NULL;
   }
   return status;
@@ -1426,7 +1419,7 @@ RPC_STATUS RPCRT4_ReceiveWithAuth(RpcConnection *Connection, RpcPktHdr **Header,
   first_flag = RPC_FLG_FIRST;
   auth_length = (*Header)->common.auth_len;
   if (auth_length) {
-    auth_data = HeapAlloc(GetProcessHeap(), 0, RPC_AUTH_VERIFIER_LEN(&(*Header)->common));
+    auth_data = malloc(RPC_AUTH_VERIFIER_LEN(&(*Header)->common));
     if (!auth_data) {
       status = RPC_S_OUT_OF_RESOURCES;
       goto fail;
@@ -1507,10 +1500,10 @@ RPC_STATUS RPCRT4_ReceiveWithAuth(RpcConnection *Connection, RpcPktHdr **Header,
 
       if (*Header != CurrentHeader)
       {
-          RPCRT4_FreeHeader(CurrentHeader);
+          free(CurrentHeader);
           CurrentHeader = NULL;
       }
-      HeapFree(GetProcessHeap(), 0, payload);
+      free(payload);
       payload = NULL;
 
       status = RPCRT4_receive_fragment(Connection, &CurrentHeader, &payload);
@@ -1529,11 +1522,11 @@ RPC_STATUS RPCRT4_ReceiveWithAuth(RpcConnection *Connection, RpcPktHdr **Header,
 fail:
   RPCRT4_SetThreadCurrentConnection(NULL);
   if (CurrentHeader != *Header)
-    RPCRT4_FreeHeader(CurrentHeader);
+    free(CurrentHeader);
   if (status != RPC_S_OK) {
     I_RpcFree(pMsg->Buffer);
     pMsg->Buffer = NULL;
-    RPCRT4_FreeHeader(*Header);
+    free(*Header);
     *Header = NULL;
   }
   if (auth_data_out && status == RPC_S_OK) {
@@ -1541,8 +1534,8 @@ fail:
     *auth_data_out = auth_data;
   }
   else
-    HeapFree(GetProcessHeap(), 0, auth_data);
-  HeapFree(GetProcessHeap(), 0, payload);
+    free(auth_data);
+  free(payload);
   return status;
 }
 
@@ -1672,7 +1665,7 @@ RPC_STATUS WINAPI I_RpcGetBuffer(PRPC_MESSAGE pMsg)
 static RPC_STATUS I_RpcReAllocateBuffer(PRPC_MESSAGE pMsg)
 {
   TRACE("(%p): BufferLength=%d\n", pMsg, pMsg->BufferLength);
-  pMsg->Buffer = HeapReAlloc(GetProcessHeap(), 0, pMsg->Buffer, pMsg->BufferLength);
+  pMsg->Buffer = realloc(pMsg->Buffer, pMsg->BufferLength);
 
   TRACE("Buffer=%p\n", pMsg->Buffer);
   return pMsg->Buffer ? RPC_S_OK : ERROR_OUTOFMEMORY;
@@ -1811,7 +1804,7 @@ RPC_STATUS WINAPI I_RpcSend(PRPC_MESSAGE pMsg)
 
       hdr->common.call_id = conn->NextCallId++;
       status = RPCRT4_Send(conn, hdr, pMsg->Buffer, pMsg->BufferLength);
-      RPCRT4_FreeHeader(hdr);
+      free(hdr);
       if (status == RPC_S_OK || conn->server || !from_cache)
           break;
 
@@ -1887,11 +1880,11 @@ RPC_STATUS WINAPI I_RpcReceive(PRPC_MESSAGE pMsg)
   }
 
   /* success */
-  RPCRT4_FreeHeader(hdr);
+  free(hdr);
   return status;
 
 fail:
-  RPCRT4_FreeHeader(hdr);
+  free(hdr);
   RPCRT4_ReleaseConnection(conn);
   pMsg->ReservedForRuntime = NULL;
   return status;

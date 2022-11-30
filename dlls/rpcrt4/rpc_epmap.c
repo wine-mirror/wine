@@ -216,14 +216,14 @@ static RPC_STATUS epm_register( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bindin
 
   if (!BindingVector->Count) return RPC_S_OK;
 
-  entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*entries) * BindingVector->Count * (UuidVector ? UuidVector->Count : 1));
+  entries = calloc(BindingVector->Count * (UuidVector ? UuidVector->Count : 1), sizeof(*entries));
   if (!entries)
       return RPC_S_OUT_OF_MEMORY;
 
   status = get_epm_handle_server(&handle);
   if (status != RPC_S_OK)
   {
-    HeapFree(GetProcessHeap(), 0, entries);
+    free(entries);
     return status;
   }
 
@@ -284,7 +284,7 @@ static RPC_STATUS epm_register( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bindin
           I_RpcFree(entries[i*(UuidVector ? UuidVector->Count : 1) + j].tower);
   }
 
-  HeapFree(GetProcessHeap(), 0, entries);
+  free(entries);
 
   return status;
 }
@@ -318,7 +318,7 @@ RPC_STATUS WINAPI RpcEpRegisterW( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bind
 
   status = epm_register(IfSpec, BindingVector, UuidVector, (RPC_CSTR)annA, TRUE);
 
-  HeapFree(GetProcessHeap(), 0, annA);
+  free(annA);
   return status;
 }
 
@@ -333,7 +333,7 @@ RPC_STATUS WINAPI RpcEpRegisterNoReplaceW( RPC_IF_HANDLE IfSpec, RPC_BINDING_VEC
 
   status = epm_register(IfSpec, BindingVector, UuidVector, (RPC_CSTR)annA, FALSE);
 
-  HeapFree(GetProcessHeap(), 0, annA);
+  free(annA);
   return status;
 }
 
@@ -362,14 +362,14 @@ RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bin
       TRACE(" obj[%ld]=%s\n", i, debugstr_guid(UuidVector->Uuid[i]));
   }
 
-  entries = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*entries) * BindingVector->Count * (UuidVector ? UuidVector->Count : 1));
+  entries = calloc(BindingVector->Count * (UuidVector ? UuidVector->Count : 1), sizeof(*entries));
   if (!entries)
       return RPC_S_OUT_OF_MEMORY;
 
   status = get_epm_handle_server(&handle);
   if (status != RPC_S_OK)
   {
-    HeapFree(GetProcessHeap(), 0, entries);
+    free(entries);
     return status;
   }
 
@@ -419,7 +419,7 @@ RPC_STATUS WINAPI RpcEpUnregister( RPC_IF_HANDLE IfSpec, RPC_BINDING_VECTOR *Bin
           I_RpcFree(entries[i*(UuidVector ? UuidVector->Count : 1) + j].tower);
   }
 
-  HeapFree(GetProcessHeap(), 0, entries);
+  free(entries);
 
   return status;
 }
@@ -655,10 +655,10 @@ RPC_STATUS WINAPI TowerConstruct(
 
 void __RPC_FAR * __RPC_USER MIDL_user_allocate(SIZE_T len)
 {
-    return HeapAlloc(GetProcessHeap(), 0, len);
+    return malloc(len);
 }
 
 void __RPC_USER MIDL_user_free(void __RPC_FAR * ptr)
 {
-    HeapFree(GetProcessHeap(), 0, ptr);
+    free(ptr);
 }

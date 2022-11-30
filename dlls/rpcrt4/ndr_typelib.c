@@ -26,7 +26,6 @@
 #include "rpcproxy.h"
 #include "ndrtypes.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "cpsf.h"
 #include "initguid.h"
@@ -1187,9 +1186,9 @@ static HRESULT build_format_strings(ITypeInfo *typeinfo, WORD funcs,
     hr = write_iface_fs(typeinfo, funcs, parentfuncs, NULL, &typelen, NULL, &proclen, NULL);
     if (FAILED(hr)) return hr;
 
-    type = heap_alloc(typelen);
-    proc = heap_alloc(proclen);
-    offset = heap_alloc((parentfuncs + funcs - 3) * sizeof(*offset));
+    type = malloc(typelen);
+    proc = malloc(proclen);
+    offset = malloc((parentfuncs + funcs - 3) * sizeof(*offset));
     if (!type || !proc || !offset)
     {
         ERR("Failed to allocate format strings.\n");
@@ -1211,9 +1210,9 @@ static HRESULT build_format_strings(ITypeInfo *typeinfo, WORD funcs,
     }
 
 err:
-    heap_free(type);
-    heap_free(proc);
-    heap_free(offset);
+    free(type);
+    free(proc);
+    free(offset);
     return hr;
 }
 
@@ -1328,11 +1327,11 @@ static ULONG WINAPI typelib_proxy_Release(IRpcProxyBuffer *iface)
             IUnknown_Release(proxy->proxy.base_object);
         if (proxy->proxy.base_proxy)
             IRpcProxyBuffer_Release(proxy->proxy.base_proxy);
-        heap_free((void *)proxy->stub_desc.pFormatTypes);
-        heap_free((void *)proxy->proxy_info.ProcFormatString);
-        heap_free(proxy->offset_table);
-        heap_free(proxy->proxy_vtbl);
-        heap_free(proxy);
+        free((void *)proxy->stub_desc.pFormatTypes);
+        free((void *)proxy->proxy_info.ProcFormatString);
+        free(proxy->offset_table);
+        free(proxy->proxy_vtbl);
+        free(proxy);
     }
     return refcount;
 }
@@ -1390,7 +1389,7 @@ HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo, IUnknown *outer,
     if (FAILED(hr))
         return hr;
 
-    if (!(proxy = heap_alloc_zero(sizeof(*proxy))))
+    if (!(proxy = calloc(1, sizeof(*proxy))))
     {
         ERR("Failed to allocate proxy object.\n");
         ITypeInfo_Release(real_typeinfo);
@@ -1400,11 +1399,11 @@ HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo, IUnknown *outer,
     init_stub_desc(&proxy->stub_desc);
     proxy->proxy_info.pStubDesc = &proxy->stub_desc;
 
-    proxy->proxy_vtbl = heap_alloc_zero(sizeof(proxy->proxy_vtbl->header) + (funcs + parentfuncs) * sizeof(void *));
+    proxy->proxy_vtbl = calloc(1, sizeof(proxy->proxy_vtbl->header) + (funcs + parentfuncs) * sizeof(void *));
     if (!proxy->proxy_vtbl)
     {
         ERR("Failed to allocate proxy vtbl.\n");
-        heap_free(proxy);
+        free(proxy);
         ITypeInfo_Release(real_typeinfo);
         return E_OUTOFMEMORY;
     }
@@ -1420,8 +1419,8 @@ HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo, IUnknown *outer,
     ITypeInfo_Release(real_typeinfo);
     if (FAILED(hr))
     {
-        heap_free(proxy->proxy_vtbl);
-        heap_free(proxy);
+        free(proxy->proxy_vtbl);
+        free(proxy);
         return hr;
     }
     proxy->proxy_info.FormatStringOffset = &proxy->offset_table[-3];
@@ -1429,11 +1428,11 @@ HRESULT WINAPI CreateProxyFromTypeInfo(ITypeInfo *typeinfo, IUnknown *outer,
     hr = typelib_proxy_init(proxy, outer, funcs + parentfuncs, &parentiid, proxy_buffer, out);
     if (FAILED(hr))
     {
-        heap_free((void *)proxy->stub_desc.pFormatTypes);
-        heap_free((void *)proxy->proxy_info.ProcFormatString);
-        heap_free((void *)proxy->offset_table);
-        heap_free(proxy->proxy_vtbl);
-        heap_free(proxy);
+        free((void *)proxy->stub_desc.pFormatTypes);
+        free((void *)proxy->proxy_info.ProcFormatString);
+        free((void *)proxy->offset_table);
+        free(proxy->proxy_vtbl);
+        free(proxy);
     }
 
     return hr;
@@ -1467,13 +1466,13 @@ static ULONG WINAPI typelib_stub_Release(IRpcStubBuffer *iface)
         {
             IRpcStubBuffer_Release(stub->stub.base_stub);
             release_delegating_vtbl(stub->stub.base_obj);
-            heap_free(stub->dispatch_table);
+            free(stub->dispatch_table);
         }
 
-        heap_free((void *)stub->stub_desc.pFormatTypes);
-        heap_free((void *)stub->server_info.ProcString);
-        heap_free(stub->offset_table);
-        heap_free(stub);
+        free((void *)stub->stub_desc.pFormatTypes);
+        free((void *)stub->server_info.ProcString);
+        free(stub->offset_table);
+        free(stub);
     }
 
     return refcount;
@@ -1529,7 +1528,7 @@ HRESULT WINAPI CreateStubFromTypeInfo(ITypeInfo *typeinfo, REFIID iid,
     if (FAILED(hr))
         return hr;
 
-    if (!(stub = heap_alloc_zero(sizeof(*stub))))
+    if (!(stub = calloc(1, sizeof(*stub))))
     {
         ERR("Failed to allocate stub object.\n");
         ITypeInfo_Release(real_typeinfo);
@@ -1544,7 +1543,7 @@ HRESULT WINAPI CreateStubFromTypeInfo(ITypeInfo *typeinfo, REFIID iid,
     ITypeInfo_Release(real_typeinfo);
     if (FAILED(hr))
     {
-        heap_free(stub);
+        free(stub);
         return hr;
     }
     stub->server_info.FmtStringOffset = &stub->offset_table[-3];
@@ -1556,7 +1555,7 @@ HRESULT WINAPI CreateStubFromTypeInfo(ITypeInfo *typeinfo, REFIID iid,
 
     if (!IsEqualGUID(&parentiid, &IID_IUnknown))
     {
-        stub->dispatch_table = heap_alloc((funcs + parentfuncs) * sizeof(void *));
+        stub->dispatch_table = malloc((funcs + parentfuncs) * sizeof(void *));
         for (i = 3; i < parentfuncs; i++)
             stub->dispatch_table[i - 3] = NdrStubForwardingFunction;
         for (; i < funcs + parentfuncs; i++)
@@ -1571,10 +1570,10 @@ HRESULT WINAPI CreateStubFromTypeInfo(ITypeInfo *typeinfo, REFIID iid,
     hr = typelib_stub_init(stub, server, &parentiid, stub_buffer);
     if (FAILED(hr))
     {
-        heap_free((void *)stub->stub_desc.pFormatTypes);
-        heap_free((void *)stub->server_info.ProcString);
-        heap_free(stub->offset_table);
-        heap_free(stub);
+        free((void *)stub->stub_desc.pFormatTypes);
+        free((void *)stub->server_info.ProcString);
+        free(stub->offset_table);
+        free(stub);
     }
 
     return hr;

@@ -22,6 +22,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
@@ -164,7 +165,7 @@ static void RPCRT4_release_server_interface(RpcServerInterface *sif)
      * CallsCompletedEvent is set */
     if (sif->CallsCompletedEvent)
       SetEvent(sif->CallsCompletedEvent);
-    HeapFree(GetProcessHeap(), 0, sif);
+    free(sif);
   }
 }
 
@@ -234,8 +235,7 @@ static RPC_STATUS process_bind_packet_no_send(
     return RPC_S_INVALID_BOUND;
   }
 
-  results = HeapAlloc(GetProcessHeap(), 0,
-                      hdr->num_elements * sizeof(*results));
+  results = malloc(hdr->num_elements * sizeof(*results));
   if (!results)
     return RPC_S_OUT_OF_RESOURCES;
 
@@ -290,7 +290,7 @@ static RPC_STATUS process_bind_packet_no_send(
   status = RPCRT4_MakeBinding(&conn->server_binding, conn);
   if (status != RPC_S_OK)
   {
-      HeapFree(GetProcessHeap(), 0, results);
+      free(results);
       return status;
   }
 
@@ -301,7 +301,7 @@ static RPC_STATUS process_bind_packet_no_send(
                                          &conn->server_binding->Assoc);
   if (status != RPC_S_OK)
   {
-      HeapFree(GetProcessHeap(), 0, results);
+      free(results);
       return status;
   }
 
@@ -313,7 +313,7 @@ static RPC_STATUS process_bind_packet_no_send(
                                            auth_length_out);
       if (status != RPC_S_OK)
       {
-          HeapFree(GetProcessHeap(), 0, results);
+          free(results);
           return status;
       }
   }
@@ -324,7 +324,7 @@ static RPC_STATUS process_bind_packet_no_send(
                                             conn->server_binding->Assoc->assoc_group_id,
                                             conn->Endpoint, hdr->num_elements,
                                             results);
-  HeapFree(GetProcessHeap(), 0, results);
+  free(results);
 
   if (*ack_response)
       conn->MaxTransmissionSize = hdr->max_tsize;
@@ -353,7 +353,7 @@ static RPC_STATUS process_bind_packet(RpcConnection *conn, RpcPktBindHdr *hdr,
         status = RPCRT4_SendWithAuth(conn, response, NULL, 0, auth_data_out, auth_length_out);
     else
         status = ERROR_OUTOFMEMORY;
-    RPCRT4_FreeHeader(response);
+    free(response);
 
     return status;
 }
@@ -377,7 +377,7 @@ static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *
                                        status);
 
     RPCRT4_Send(conn, response, NULL, 0);
-    RPCRT4_FreeHeader(response);
+    free(response);
     return RPC_S_OK;
   }
 
@@ -394,7 +394,7 @@ static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *
                                        NCA_S_UNK_IF);
 
     RPCRT4_Send(conn, response, NULL, 0);
-    RPCRT4_FreeHeader(response);
+    free(response);
     return RPC_S_OK;
   }
   msg->RpcInterfaceInformation = sif->If;
@@ -417,7 +417,7 @@ static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *
                                          NCA_S_OP_RNG_ERROR);
 
       RPCRT4_Send(conn, response, NULL, 0);
-      RPCRT4_FreeHeader(response);
+      free(response);
     }
     func = sif->If->DispatchTable->DispatchTable[msg->ProcNum];
   }
@@ -458,7 +458,7 @@ static RPC_STATUS process_request_packet(RpcConnection *conn, RpcPktRequestHdr *
   if (response) {
     status = RPCRT4_Send(conn, response, exception ? NULL : msg->Buffer,
                          exception ? 0 : msg->BufferLength);
-    RPCRT4_FreeHeader(response);
+    free(response);
   } else
     ERR("out of memory\n");
 
@@ -525,9 +525,9 @@ static void RPCRT4_process_packet(RpcConnection* conn, RpcPktHdr* hdr,
 
   /* clean up */
   I_RpcFree(msg->Buffer);
-  RPCRT4_FreeHeader(hdr);
-  HeapFree(GetProcessHeap(), 0, msg);
-  HeapFree(GetProcessHeap(), 0, auth_data);
+  free(hdr);
+  free(msg);
+  free(auth_data);
 }
 
 static DWORD CALLBACK RPCRT4_worker_thread(LPVOID the_arg)
@@ -536,7 +536,7 @@ static DWORD CALLBACK RPCRT4_worker_thread(LPVOID the_arg)
   RPCRT4_process_packet(pkt->conn, pkt->hdr, pkt->msg, pkt->auth_data,
                         pkt->auth_length);
   RPCRT4_ReleaseConnection(pkt->conn);
-  HeapFree(GetProcessHeap(), 0, pkt);
+  free(pkt);
   return 0;
 }
 
@@ -554,13 +554,13 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
   SetThreadDescription(GetCurrentThread(), L"wine_rpcrt4_io");
 
   for (;;) {
-    msg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RPC_MESSAGE));
+    msg = calloc(1, sizeof(RPC_MESSAGE));
     if (!msg) break;
 
     status = RPCRT4_ReceiveWithAuth(conn, &hdr, msg, &auth_data, &auth_length);
     if (status != RPC_S_OK) {
       WARN("receive failed with error %lx\n", status);
-      HeapFree(GetProcessHeap(), 0, msg);
+      free(msg);
       break;
     }
 
@@ -575,12 +575,12 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     case PKT_REQUEST:
       TRACE("got request packet\n");
 
-      packet = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcPacket));
+      packet = malloc(sizeof(RpcPacket));
       if (!packet) {
         I_RpcFree(msg->Buffer);
-        RPCRT4_FreeHeader(hdr);
-        HeapFree(GetProcessHeap(), 0, msg);
-        HeapFree(GetProcessHeap(), 0, auth_data);
+        free(hdr);
+        free(msg);
+        free(auth_data);
         goto exit;
       }
       packet->conn = RPCRT4_GrabConnection( conn );
@@ -590,7 +590,7 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
       packet->auth_length = auth_length;
       if (!QueueUserWorkItem(RPCRT4_worker_thread, packet, WT_EXECUTELONGFUNCTION)) {
         ERR("couldn't queue work item for worker thread, error was %ld\n", GetLastError());
-        HeapFree(GetProcessHeap(), 0, packet);
+        free(packet);
         status = RPC_S_OUT_OF_RESOURCES;
       } else {
         continue;
@@ -609,9 +609,9 @@ static DWORD CALLBACK RPCRT4_io_thread(LPVOID the_arg)
     }
 
     I_RpcFree(msg->Buffer);
-    RPCRT4_FreeHeader(hdr);
-    HeapFree(GetProcessHeap(), 0, msg);
-    HeapFree(GetProcessHeap(), 0, auth_data);
+    free(hdr);
+    free(msg);
+    free(auth_data);
 
     if (status != RPC_S_OK) {
       WARN("processing packet failed with error %lu\n", status);
@@ -887,9 +887,7 @@ RPC_STATUS WINAPI RpcServerInqBindings( RPC_BINDING_VECTOR** BindingVector )
   }
   if (count) {
     /* export bindings */
-    *BindingVector = HeapAlloc(GetProcessHeap(), 0,
-                              sizeof(RPC_BINDING_VECTOR) +
-                              sizeof(RPC_BINDING_HANDLE)*(count-1));
+    *BindingVector = malloc(sizeof(RPC_BINDING_VECTOR) + sizeof(RPC_BINDING_HANDLE) * (count - 1));
     (*BindingVector)->Count = count;
     count = 0;
     LIST_FOR_EACH_ENTRY(ps, &protseqs, RpcServerProtseq, entry) {
@@ -963,7 +961,7 @@ static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, const char *Protseq, RpcSe
   if (!*ps)
     return RPC_S_OUT_OF_RESOURCES;
   (*ps)->MaxCalls = MaxCalls;
-  (*ps)->Protseq = RPCRT4_strdupA(Protseq);
+  (*ps)->Protseq = strdup(Protseq);
   (*ps)->ops = ops;
   list_init(&(*ps)->listeners);
   list_init(&(*ps)->connections);
@@ -980,13 +978,13 @@ static RPC_STATUS alloc_serverprotoseq(UINT MaxCalls, const char *Protseq, RpcSe
 /* must be called with server_cs held */
 static void destroy_serverprotoseq(RpcServerProtseq *ps)
 {
-    RPCRT4_strfree(ps->Protseq);
+    free(ps->Protseq);
     ps->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&ps->cs);
     CloseHandle(ps->mgr_mutex);
     CloseHandle(ps->server_ready_event);
     list_remove(&ps->entry);
-    HeapFree(GetProcessHeap(), 0, ps);
+    free(ps);
 }
 
 /* Finds a given protseq or creates a new one if one doesn't already exist */
@@ -1050,13 +1048,13 @@ RPC_STATUS WINAPI RpcServerUseProtseqEpExW( RPC_WSTR Protseq, UINT MaxCalls, RPC
 
   ProtseqA = RPCRT4_strdupWtoA(Protseq);
   status = RPCRT4_get_or_create_serverprotseq(MaxCalls, ProtseqA, &ps);
-  RPCRT4_strfree(ProtseqA);
+  free(ProtseqA);
   if (status != RPC_S_OK)
     return status;
 
   EndpointA = RPCRT4_strdupWtoA(Endpoint);
   status = RPCRT4_use_protseq(ps, EndpointA);
-  RPCRT4_strfree(EndpointA);
+  free(EndpointA);
   return status;
 }
 
@@ -1090,7 +1088,7 @@ RPC_STATUS WINAPI RpcServerUseProtseqW(RPC_WSTR Protseq, unsigned int MaxCalls, 
 
   ProtseqA = RPCRT4_strdupWtoA(Protseq);
   status = RPCRT4_get_or_create_serverprotseq(MaxCalls, ProtseqA, &ps);
-  RPCRT4_strfree(ProtseqA);
+  free(ProtseqA);
   if (status != RPC_S_OK)
     return status;
 
@@ -1178,7 +1176,7 @@ RPC_STATUS WINAPI RpcServerRegisterIf3( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid,
   TRACE(" default manager epv: %p\n", If->DefaultManagerEpv);
   TRACE(" interpreter info: %p\n", If->InterpreterInfo);
 
-  sif = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcServerInterface));
+  sif = calloc(1, sizeof(RpcServerInterface));
   sif->If           = If;
   if (MgrTypeUuid) {
     sif->MgrTypeUuid = *MgrTypeUuid;
@@ -1242,7 +1240,7 @@ RPC_STATUS WINAPI RpcServerUnregisterIf( RPC_IF_HANDLE IfSpec, UUID* MgrTypeUuid
   }
 
   if (completed)
-    HeapFree(GetProcessHeap(), 0, cif);
+    free(cif);
   else if (event) {
     /* sif will be freed when the last call is completed, so be careful not to
      * touch that memory here as that could happen before we get here */
@@ -1308,14 +1306,14 @@ RPC_STATUS WINAPI RpcObjectSetType( UUID* ObjUuid, UUID* TypeUuid )
         prev->next = map->next;
       else
         RpcObjTypeMaps = map->next;
-      HeapFree(GetProcessHeap(), 0, map);
+      free(map);
     }
   } else {
     /* ... , fail if we found it ... */
     if (map)
       return RPC_S_ALREADY_REGISTERED;
     /* ... otherwise create a new one and add it in. */
-    map = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcObjTypeMap));
+    map = malloc(sizeof(RpcObjTypeMap));
     map->Object = *ObjUuid;
     map->Type = *TypeUuid;
     map->next = NULL;
@@ -1406,9 +1404,9 @@ void RPCRT4_ServerFreeAllRegisteredAuthInfo(void)
     EnterCriticalSection(&server_auth_info_cs);
     LIST_FOR_EACH_ENTRY_SAFE(auth_info, cursor2, &server_registered_auth_info, struct rpc_server_registered_auth_info, entry)
     {
-        HeapFree(GetProcessHeap(), 0, auth_info->package_name);
-        HeapFree(GetProcessHeap(), 0, auth_info->principal);
-        HeapFree(GetProcessHeap(), 0, auth_info);
+        free(auth_info->package_name);
+        free(auth_info->principal);
+        free(auth_info);
     }
     LeaveCriticalSection(&server_auth_info_cs);
     DeleteCriticalSection(&server_auth_info_cs);
@@ -1430,7 +1428,7 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoA( RPC_CSTR ServerPrincName, ULONG Au
 
     status = RpcServerRegisterAuthInfoW(principal_name, AuthnSvc, GetKeyFn, Arg);
 
-    HeapFree(GetProcessHeap(), 0, principal_name);
+    free(principal_name);
     return status;
 }
 
@@ -1452,21 +1450,21 @@ RPC_STATUS WINAPI RpcServerRegisterAuthInfoW( RPC_WSTR ServerPrincName, ULONG Au
     if (status != RPC_S_OK)
         return status;
 
-    package_name = RPCRT4_strdupW(package->Name);
+    package_name = wcsdup(package->Name);
     max_token = package->cbMaxToken;
     FreeContextBuffer(packages);
     if (!package_name)
         return RPC_S_OUT_OF_RESOURCES;
 
-    auth_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*auth_info));
+    auth_info = calloc(1, sizeof(*auth_info));
     if (!auth_info) {
-        HeapFree(GetProcessHeap(), 0, package_name);
+        free(package_name);
         return RPC_S_OUT_OF_RESOURCES;
     }
 
-    if (ServerPrincName && !(auth_info->principal = RPCRT4_strdupW(ServerPrincName))) {
-        HeapFree(GetProcessHeap(), 0, package_name);
-        HeapFree(GetProcessHeap(), 0, auth_info);
+    if (ServerPrincName && !(auth_info->principal = wcsdup(ServerPrincName))) {
+        free(package_name);
+        free(auth_info);
         return RPC_S_OUT_OF_RESOURCES;
     }
 
@@ -1513,7 +1511,7 @@ RPC_STATUS RPC_ENTRY RpcServerInqDefaultPrincNameW(ULONG AuthnSvc, RPC_WSTR *Pri
     GetUserNameExW( NameSamCompatible, NULL, &len );
     if (GetLastError() != ERROR_MORE_DATA) return RPC_S_INTERNAL_ERROR;
 
-    if (!(*PrincName = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    if (!(*PrincName = malloc(len * sizeof(WCHAR))))
         return RPC_S_OUT_OF_MEMORY;
 
     GetUserNameExW( NameSamCompatible, *PrincName, &len );
@@ -1664,7 +1662,7 @@ RPC_STATUS WINAPI RpcMgmtInqStats(RPC_BINDING_HANDLE Binding, RPC_STATS_VECTOR *
 
   FIXME("(%p,%p)\n", Binding, Statistics);
 
-  if ((stats = HeapAlloc(GetProcessHeap(), 0, sizeof(RPC_STATS_VECTOR))))
+  if ((stats = malloc(sizeof(RPC_STATS_VECTOR))))
   {
     stats->Count = 1;
     stats->Stats[0] = 0;
@@ -1683,7 +1681,7 @@ RPC_STATUS WINAPI RpcMgmtStatsVectorFree(RPC_STATS_VECTOR **StatsVector)
 
   if (StatsVector)
   {
-    HeapFree(GetProcessHeap(), 0, *StatsVector);
+    free(*StatsVector);
     *StatsVector = NULL;
   }
   return RPC_S_OK;

@@ -118,7 +118,7 @@ static ULONG WINAPI RpcStream_Release(LPSTREAM iface)
   if (!ref) {
     TRACE("size=%ld\n", *This->size);
     This->pMsg->Buffer = This->data + *This->size;
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
   }
   return ref;
 }
@@ -267,7 +267,7 @@ static HRESULT RpcStream_Create(PMIDL_STUB_MESSAGE pStubMsg, BOOL init, ULONG *s
   RpcStreamImpl *This;
 
   *stream = NULL;
-  This = HeapAlloc(GetProcessHeap(), 0, sizeof(RpcStreamImpl));
+  This = malloc(sizeof(RpcStreamImpl));
   if (!This) return E_OUTOFMEMORY;
   This->IStream_iface.lpVtbl = &RpcStream_Vtbl;
   This->RefCount = 1;

@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdlib.h>
+
 #include "ndr_misc.h"
 #include "rpc_assoc.h"
 #include "rpcndr.h"
@@ -140,7 +142,7 @@ RPC_STATUS WINAPI RpcSmDestroyClientContext(void **ContextHandle)
     if (che)
     {
         RpcBindingFree(&che->handle);
-        HeapFree(GetProcessHeap(), 0, che);
+        free(che);
     }
 
     return status;
@@ -180,14 +182,14 @@ static RPC_STATUS ndr_update_context_handle(NDR_CCONTEXT *CContext,
                 return RPC_X_SS_CONTEXT_MISMATCH;
             list_remove(&che->entry);
             RpcBindingFree(&che->handle);
-            HeapFree(GetProcessHeap(), 0, che);
+            free(che);
             che = NULL;
         }
     }
     /* if there's no existing entry matching the GUID, allocate one */
     else if (!(che = context_entry_from_guid(&chi->uuid)))
     {
-        che = HeapAlloc(GetProcessHeap(), 0, sizeof *che);
+        che = malloc(sizeof *che);
         if (!che)
             return RPC_X_NO_MEMORY;
         che->magic = NDR_CONTEXT_HANDLE_MAGIC;

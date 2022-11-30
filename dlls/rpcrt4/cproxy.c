@@ -329,7 +329,7 @@ HRESULT StdProxy_Construct(REFIID riid,
     return RPC_E_UNEXPECTED;
   }
 
-  This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,sizeof(StdProxyImpl));
+  This = calloc(1, sizeof(StdProxyImpl));
   if (!This) return E_OUTOFMEMORY;
 
   if (!pUnkOuter) pUnkOuter = (IUnknown *)This;
@@ -351,7 +351,7 @@ HRESULT StdProxy_Construct(REFIID riid,
                                 &This->base_proxy, (void **)&This->base_object );
       if (FAILED(r))
       {
-          HeapFree( GetProcessHeap(), 0, This );
+          free( This );
           return r;
       }
   }
@@ -411,7 +411,7 @@ static ULONG WINAPI StdProxy_Release(LPRPCPROXYBUFFER iface)
     if (This->base_proxy) IRpcProxyBuffer_Release( This->base_proxy );
 
     IPSFactoryBuffer_Release(This->pPSFactory);
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
   }
 
   return refs;

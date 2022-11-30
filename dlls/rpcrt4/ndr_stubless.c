@@ -1248,7 +1248,7 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
         case STUBLESS_FREE:
             if (params[i].attr.ServerAllocSize)
             {
-                HeapFree(GetProcessHeap(), 0, *(void **)pArg);
+                free(*(void **)pArg);
             }
             else if (param_needs_alloc(params[i].attr) &&
                      (!params[i].attr.MustFree || params[i].attr.IsSimpleRef))
@@ -1279,8 +1279,7 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
             break;
         case STUBLESS_UNMARSHAL:
             if (params[i].attr.ServerAllocSize)
-                *(void **)pArg = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                           params[i].attr.ServerAllocSize * 8);
+                *(void **)pArg = calloc(params[i].attr.ServerAllocSize, 8);
 
             if (params[i].attr.IsIn)
                 call_unmarshaller(pStubMsg, &pArg, &params[i], 0);
@@ -1417,7 +1416,7 @@ LONG WINAPI NdrStubCall2(
 
     TRACE("allocating memory for stack of size %x\n", stack_size);
 
-    args = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, stack_size);
+    args = calloc(1, stack_size);
     stubMsg.StackTop = args; /* used by conformance of top-level objects */
 
     /* add the implicit This pointer as the first arg to the function if we
@@ -1556,7 +1555,7 @@ LONG WINAPI NdrStubCall2(
         NdrFullPointerXlatFree(stubMsg.FullPtrXlatTables);
 
     /* free server function stack */
-    HeapFree(GetProcessHeap(), 0, args);
+    free(args);
 
     return S_OK;
 }
@@ -2042,7 +2041,7 @@ void RPC_ENTRY NdrAsyncServerCall(PRPC_MESSAGE pRpcMsg)
 
     TRACE("allocating memory for stack of size %x\n", async_call_data->stack_size);
 
-    args = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, async_call_data->stack_size);
+    args = calloc(1, async_call_data->stack_size);
     async_call_data->pStubMsg->StackTop = args; /* used by conformance of top-level objects */
 
     pAsync = I_RpcAllocate(sizeof(*pAsync));
@@ -2160,7 +2159,7 @@ RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply)
             if (async_call_data->pProcHeader->Oi_flags & Oi_OBJECT_PROC)
             {
                 ERR("objects not supported\n");
-                HeapFree(GetProcessHeap(), 0, async_call_data->pStubMsg->StackTop);
+                free(async_call_data->pStubMsg->StackTop);
                 I_RpcFree(async_call_data);
                 I_RpcFree(pAsync);
                 RpcRaiseException(RPC_X_BAD_STUB_DATA);
@@ -2206,7 +2205,7 @@ RPC_STATUS NdrpCompleteAsyncServerCall(RPC_ASYNC_STATE *pAsync, void *Reply)
 #endif
 
     /* free server function stack */
-    HeapFree(GetProcessHeap(), 0, async_call_data->pStubMsg->StackTop);
+    free(async_call_data->pStubMsg->StackTop);
     I_RpcFree(async_call_data);
     I_RpcFree(pAsync);
 

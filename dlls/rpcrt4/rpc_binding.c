@@ -23,6 +23,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
@@ -49,7 +50,7 @@ LPSTR RPCRT4_strndupA(LPCSTR src, INT slen)
   if (!src) return NULL;
   if (slen == -1) slen = strlen(src);
   len = slen;
-  s = HeapAlloc(GetProcessHeap(), 0, len+1);
+  s = malloc(len + 1);
   memcpy(s, src, len);
   s[len] = 0;
   return s;
@@ -61,7 +62,7 @@ LPSTR RPCRT4_strdupWtoA(LPCWSTR src)
   LPSTR s;
   if (!src) return NULL;
   len = WideCharToMultiByte(CP_ACP, 0, src, -1, NULL, 0, NULL, NULL);
-  s = HeapAlloc(GetProcessHeap(), 0, len);
+  s = malloc(len);
   WideCharToMultiByte(CP_ACP, 0, src, -1, s, len, NULL, NULL);
   return s;
 }
@@ -72,7 +73,7 @@ LPWSTR RPCRT4_strdupAtoW(LPCSTR src)
   LPWSTR s;
   if (!src) return NULL;
   len = MultiByteToWideChar(CP_ACP, 0, src, -1, NULL, 0);
-  s = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+  s = malloc(len * sizeof(WCHAR));
   MultiByteToWideChar(CP_ACP, 0, src, -1, s, len);
   return s;
 }
@@ -83,7 +84,7 @@ static LPWSTR RPCRT4_strndupAtoW(LPCSTR src, INT slen)
   LPWSTR s;
   if (!src) return NULL;
   len = MultiByteToWideChar(CP_ACP, 0, src, slen, NULL, 0);
-  s = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+  s = malloc(len * sizeof(WCHAR));
   MultiByteToWideChar(CP_ACP, 0, src, slen, s, len);
   return s;
 }
@@ -95,22 +96,17 @@ LPWSTR RPCRT4_strndupW(LPCWSTR src, INT slen)
   if (!src) return NULL;
   if (slen == -1) slen = lstrlenW(src);
   len = slen;
-  s = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR));
+  s = malloc((len + 1) * sizeof(WCHAR));
   memcpy(s, src, len*sizeof(WCHAR));
   s[len] = 0;
   return s;
-}
-
-void RPCRT4_strfree(LPSTR src)
-{
-  HeapFree(GetProcessHeap(), 0, src);
 }
 
 static RPC_STATUS RPCRT4_AllocBinding(RpcBinding** Binding, BOOL server)
 {
   RpcBinding* NewBinding;
 
-  NewBinding = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(RpcBinding));
+  NewBinding = calloc(1, sizeof(RpcBinding));
   NewBinding->refs = 1;
   NewBinding->server = server;
 
@@ -124,7 +120,7 @@ static RPC_STATUS RPCRT4_CreateBindingA(RpcBinding** Binding, BOOL server, LPCST
   RpcBinding* NewBinding;
 
   RPCRT4_AllocBinding(&NewBinding, server);
-  NewBinding->Protseq = RPCRT4_strdupA(Protseq);
+  NewBinding->Protseq = strdup(Protseq);
 
   TRACE("binding: %p\n", NewBinding);
   *Binding = NewBinding;
@@ -153,11 +149,11 @@ static RPC_STATUS RPCRT4_CompleteBindingA(RpcBinding* Binding, LPCSTR NetworkAdd
   TRACE("(RpcBinding == ^%p, NetworkAddr == %s, EndPoint == %s, NetworkOptions == %s)\n", Binding,
    debugstr_a(NetworkAddr), debugstr_a(Endpoint), debugstr_a(NetworkOptions));
 
-  RPCRT4_strfree(Binding->NetworkAddr);
-  Binding->NetworkAddr = RPCRT4_strdupA(NetworkAddr);
-  RPCRT4_strfree(Binding->Endpoint);
-  Binding->Endpoint = RPCRT4_strdupA(Endpoint);
-  HeapFree(GetProcessHeap(), 0, Binding->NetworkOptions);
+  free(Binding->NetworkAddr);
+  Binding->NetworkAddr = strdup(NetworkAddr);
+  free(Binding->Endpoint);
+  Binding->Endpoint = strdup(Endpoint);
+  free(Binding->NetworkOptions);
   Binding->NetworkOptions = RPCRT4_strdupAtoW(NetworkOptions);
 
   /* only attempt to get an association if the binding is complete */
@@ -181,12 +177,12 @@ static RPC_STATUS RPCRT4_CompleteBindingW(RpcBinding* Binding, LPCWSTR NetworkAd
   TRACE("(RpcBinding == ^%p, NetworkAddr == %s, EndPoint == %s, NetworkOptions == %s)\n", Binding, 
    debugstr_w(NetworkAddr), debugstr_w(Endpoint), debugstr_w(NetworkOptions));
 
-  RPCRT4_strfree(Binding->NetworkAddr);
+  free(Binding->NetworkAddr);
   Binding->NetworkAddr = RPCRT4_strdupWtoA(NetworkAddr);
-  RPCRT4_strfree(Binding->Endpoint);
+  free(Binding->Endpoint);
   Binding->Endpoint = RPCRT4_strdupWtoA(Endpoint);
-  HeapFree(GetProcessHeap(), 0, Binding->NetworkOptions);
-  Binding->NetworkOptions = RPCRT4_strdupW(NetworkOptions);
+  free(Binding->NetworkOptions);
+  Binding->NetworkOptions = wcsdup(NetworkOptions);
 
   /* only attempt to get an association if the binding is complete */
   if (Endpoint && Endpoint[0] != '\0')
@@ -207,8 +203,8 @@ RPC_STATUS RPCRT4_ResolveBinding(RpcBinding* Binding, LPCSTR Endpoint)
 
   TRACE("(RpcBinding == ^%p, EndPoint == \"%s\"\n", Binding, Endpoint);
 
-  RPCRT4_strfree(Binding->Endpoint);
-  Binding->Endpoint = RPCRT4_strdupA(Endpoint);
+  free(Binding->Endpoint);
+  Binding->Endpoint = strdup(Endpoint);
 
   if (Binding->Assoc) RpcAssoc_Release(Binding->Assoc);
   Binding->Assoc = NULL;
@@ -235,9 +231,9 @@ RPC_STATUS RPCRT4_MakeBinding(RpcBinding** Binding, RpcConnection* Connection)
   TRACE("(RpcBinding == ^%p, Connection == ^%p)\n", Binding, Connection);
 
   RPCRT4_AllocBinding(&NewBinding, Connection->server);
-  NewBinding->Protseq = RPCRT4_strdupA(rpcrt4_conn_get_name(Connection));
-  NewBinding->NetworkAddr = RPCRT4_strdupA(Connection->NetworkAddr);
-  NewBinding->Endpoint = RPCRT4_strdupA(Connection->Endpoint);
+  NewBinding->Protseq = strdup(rpcrt4_conn_get_name(Connection));
+  NewBinding->NetworkAddr = strdup(Connection->NetworkAddr);
+  NewBinding->Endpoint = strdup(Connection->Endpoint);
   NewBinding->FromConn = Connection;
 
   TRACE("binding: %p\n", NewBinding);
@@ -258,14 +254,14 @@ RPC_STATUS RPCRT4_ReleaseBinding(RpcBinding* Binding)
 
   TRACE("binding: %p\n", Binding);
   if (Binding->Assoc) RpcAssoc_Release(Binding->Assoc);
-  RPCRT4_strfree(Binding->Endpoint);
-  RPCRT4_strfree(Binding->NetworkAddr);
-  RPCRT4_strfree(Binding->Protseq);
-  HeapFree(GetProcessHeap(), 0, Binding->NetworkOptions);
-  HeapFree(GetProcessHeap(), 0, Binding->CookieAuth);
+  free(Binding->Endpoint);
+  free(Binding->NetworkAddr);
+  free(Binding->Protseq);
+  free(Binding->NetworkOptions);
+  free(Binding->CookieAuth);
   if (Binding->AuthInfo) RpcAuthInfo_Release(Binding->AuthInfo);
   if (Binding->QOS) RpcQualityOfService_Release(Binding->QOS);
-  HeapFree(GetProcessHeap(), 0, Binding);
+  free(Binding);
   return RPC_S_OK;
 }
 
@@ -308,10 +304,10 @@ RPC_STATUS RPCRT4_CloseBinding(RpcBinding* Binding, RpcConnection* Connection)
 static LPSTR RPCRT4_strconcatA(LPSTR dst, LPCSTR src)
 {
   DWORD len = strlen(dst), slen = strlen(src);
-  LPSTR ndst = HeapReAlloc(GetProcessHeap(), 0, dst, (len+slen+2)*sizeof(CHAR));
+  char *ndst = realloc(dst, len + slen + 2);
   if (!ndst)
   {
-    HeapFree(GetProcessHeap(), 0, dst);
+    free(dst);
     return NULL;
   }
   ndst[len] = ',';
@@ -322,10 +318,10 @@ static LPSTR RPCRT4_strconcatA(LPSTR dst, LPCSTR src)
 static LPWSTR RPCRT4_strconcatW(LPWSTR dst, LPCWSTR src)
 {
   DWORD len = lstrlenW(dst), slen = lstrlenW(src);
-  LPWSTR ndst = HeapReAlloc(GetProcessHeap(), 0, dst, (len+slen+2)*sizeof(WCHAR));
-  if (!ndst) 
+  WCHAR *ndst = realloc(dst, (len + slen + 2) * sizeof(WCHAR));
+  if (!ndst)
   {
-    HeapFree(GetProcessHeap(), 0, dst);
+    free(dst);
     return NULL;
   }
   ndst[len] = ',';
@@ -414,7 +410,7 @@ static RPC_CSTR unescape_string_binding_component(
 
   if (len == -1) len = strlen((const char *)string_binding);
 
-  component = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(*component));
+  component = malloc((len + 1) * sizeof(*component));
   if (!component) return NULL;
   for (p = component; len > 0; string_binding++, len--) {
     if (*string_binding == '\\') {
@@ -436,7 +432,7 @@ static RPC_WSTR unescape_string_binding_componentW(
 
   if (len == -1) len = lstrlenW(string_binding);
 
-  component = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(*component));
+  component = malloc((len + 1) * sizeof(*component));
   if (!component) return NULL;
   for (p = component; len > 0; string_binding++, len--) {
     if (*string_binding == '\\') {
@@ -473,7 +469,7 @@ RPC_STATUS WINAPI RpcStringBindingComposeA(RPC_CSTR ObjUuid, RPC_CSTR Protseq,
   if (Endpoint && *Endpoint) len += strlen((char*)Endpoint) * 2 + 2;
   if (Options && *Options) len += strlen((char*)Options) * 2 + 2;
 
-  data = HeapAlloc(GetProcessHeap(), 0, len);
+  data = malloc(len);
   *StringBinding = data;
 
   if (ObjUuid && *ObjUuid) {
@@ -526,7 +522,7 @@ RPC_STATUS WINAPI RpcStringBindingComposeW( RPC_WSTR ObjUuid, RPC_WSTR Protseq,
   if (Endpoint && *Endpoint) len += lstrlenW(Endpoint) * 2 + 2;
   if (Options && *Options) len += lstrlenW(Options) * 2 + 2;
 
-  data = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
+  data = malloc(len * sizeof(WCHAR));
   *StringBinding = data;
 
   if (ObjUuid && *ObjUuid) {
@@ -587,13 +583,13 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
     RPC_CSTR str_uuid = unescape_string_binding_component(data, next - data);
     status = UuidFromStringA(str_uuid, &uuid);
     if (status != RPC_S_OK) {
-      HeapFree(GetProcessHeap(), 0, str_uuid);
+      free(str_uuid);
       return status;
     }
     if (ObjUuid)
       *ObjUuid = str_uuid;
     else
-      HeapFree(GetProcessHeap(), 0, str_uuid);
+      free(str_uuid);
     data = next+1;
   }
 
@@ -627,14 +623,14 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
         /* not an option, must be an endpoint */
         if (endpoint_already_found) goto fail;
         if (Endpoint) *Endpoint = opt;
-        else HeapFree(GetProcessHeap(), 0, opt);
+        else free(opt);
         endpoint_already_found = TRUE;
       } else {
         if (strncmp((const char *)opt, ep_opt, strlen(ep_opt)) == 0) {
           /* endpoint option */
           if (endpoint_already_found) goto fail;
           if (Endpoint) *Endpoint = unescape_string_binding_component(next+1, -1);
-          HeapFree(GetProcessHeap(), 0, opt);
+          free(opt);
           endpoint_already_found = TRUE;
         } else {
           /* network option */
@@ -642,11 +638,11 @@ RPC_STATUS WINAPI RpcStringBindingParseA( RPC_CSTR StringBinding, RPC_CSTR *ObjU
             if (*Options) {
               /* FIXME: this is kind of inefficient */
               *Options = (unsigned char*) RPCRT4_strconcatA( (char*)*Options, (char *)opt);
-              HeapFree(GetProcessHeap(), 0, opt);
+              free(opt);
             } else
               *Options = opt;
           } else
-            HeapFree(GetProcessHeap(), 0, opt);
+            free(opt);
         }
       }
     }
@@ -696,13 +692,13 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
     RPC_WSTR str_uuid = unescape_string_binding_componentW(data, next - data);
     status = UuidFromStringW(str_uuid, &uuid);
     if (status != RPC_S_OK) {
-      HeapFree(GetProcessHeap(), 0, str_uuid);
+      free(str_uuid);
       return status;
     }
     if (ObjUuid)
       *ObjUuid = str_uuid;
     else
-      HeapFree(GetProcessHeap(), 0, str_uuid);
+      free(str_uuid);
     data = next+1;
   }
 
@@ -736,14 +732,14 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
         /* not an option, must be an endpoint */
         if (endpoint_already_found) goto fail;
         if (Endpoint) *Endpoint = opt;
-        else HeapFree(GetProcessHeap(), 0, opt);
+        else free(opt);
         endpoint_already_found = TRUE;
       } else {
         if (wcsncmp(opt, L"endpoint=", lstrlenW(L"endpoint=")) == 0) {
           /* endpoint option */
           if (endpoint_already_found) goto fail;
           if (Endpoint) *Endpoint = unescape_string_binding_componentW(next+1, -1);
-          HeapFree(GetProcessHeap(), 0, opt);
+          free(opt);
           endpoint_already_found = TRUE;
         } else {
           /* network option */
@@ -751,11 +747,11 @@ RPC_STATUS WINAPI RpcStringBindingParseW( RPC_WSTR StringBinding, RPC_WSTR *ObjU
             if (*Options) {
               /* FIXME: this is kind of inefficient */
               *Options = RPCRT4_strconcatW(*Options, opt);
-              HeapFree(GetProcessHeap(), 0, opt);
+              free(opt);
             } else
               *Options = opt;
           } else
-            HeapFree(GetProcessHeap(), 0, opt);
+            free(opt);
         }
       }
     }
@@ -800,7 +796,7 @@ RPC_STATUS WINAPI RpcBindingVectorFree( RPC_BINDING_VECTOR** BindingVector )
 
   TRACE("(%p)\n", BindingVector);
   for (c=0; c<(*BindingVector)->Count; c++) RpcBindingFree(&(*BindingVector)->BindingH[c]);
-  HeapFree(GetProcessHeap(), 0, *BindingVector);
+  free(*BindingVector);
   *BindingVector = NULL;
   return RPC_S_OK;
 }
@@ -999,8 +995,8 @@ RPC_STATUS RPC_ENTRY RpcBindingCopy(
   DestBinding->Protseq = RPCRT4_strndupA(SrcBinding->Protseq, -1);
   DestBinding->NetworkAddr = RPCRT4_strndupA(SrcBinding->NetworkAddr, -1);
   DestBinding->Endpoint = RPCRT4_strndupA(SrcBinding->Endpoint, -1);
-  DestBinding->NetworkOptions = RPCRT4_strdupW(SrcBinding->NetworkOptions);
-  DestBinding->CookieAuth = RPCRT4_strdupW(SrcBinding->CookieAuth);
+  DestBinding->NetworkOptions = wcsdup(SrcBinding->NetworkOptions);
+  DestBinding->CookieAuth = wcsdup(SrcBinding->CookieAuth);
   if (SrcBinding->Assoc) SrcBinding->Assoc->refs++;
   DestBinding->Assoc = SrcBinding->Assoc;
 
@@ -1022,7 +1018,7 @@ RPC_STATUS RPC_ENTRY RpcBindingReset(RPC_BINDING_HANDLE Binding)
 
     TRACE("(%p)\n", Binding);
 
-    RPCRT4_strfree(bind->Endpoint);
+    free(bind->Endpoint);
     bind->Endpoint = NULL;
     if (bind->Assoc) RpcAssoc_Release(bind->Assoc);
     bind->Assoc = NULL;
@@ -1115,7 +1111,7 @@ RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
                               RPC_AUTH_IDENTITY_HANDLE identity,
                               RpcAuthInfo **ret)
 {
-    RpcAuthInfo *AuthInfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*AuthInfo));
+    RpcAuthInfo *AuthInfo = malloc(sizeof(*AuthInfo));
     if (!AuthInfo)
         return RPC_S_OUT_OF_MEMORY;
 
@@ -1133,10 +1129,10 @@ RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
     if (identity && has_nt_auth_identity(AuthnSvc))
     {
         const SEC_WINNT_AUTH_IDENTITY_W *nt_identity = identity;
-        AuthInfo->nt_identity = HeapAlloc(GetProcessHeap(), 0, sizeof(*AuthInfo->nt_identity));
+        AuthInfo->nt_identity = malloc(sizeof(*AuthInfo->nt_identity));
         if (!AuthInfo->nt_identity)
         {
-            HeapFree(GetProcessHeap(), 0, AuthInfo);
+            free(AuthInfo);
             return RPC_S_OUT_OF_MEMORY;
         }
 
@@ -1161,11 +1157,11 @@ RPC_STATUS RpcAuthInfo_Create(ULONG AuthnLevel, ULONG AuthnSvc,
             (nt_identity->Domain && !AuthInfo->nt_identity->Domain) ||
             (nt_identity->Password && !AuthInfo->nt_identity->Password))
         {
-            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->User);
-            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->Domain);
-            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->Password);
-            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity);
-            HeapFree(GetProcessHeap(), 0, AuthInfo);
+            free(AuthInfo->nt_identity->User);
+            free(AuthInfo->nt_identity->Domain);
+            free(AuthInfo->nt_identity->Password);
+            free(AuthInfo->nt_identity);
+            free(AuthInfo);
             return RPC_S_OUT_OF_MEMORY;
         }
     }
@@ -1189,13 +1185,13 @@ ULONG RpcAuthInfo_Release(RpcAuthInfo *AuthInfo)
         FreeCredentialsHandle(&AuthInfo->cred);
         if (AuthInfo->nt_identity)
         {
-            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->User);
-            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->Domain);
-            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity->Password);
-            HeapFree(GetProcessHeap(), 0, AuthInfo->nt_identity);
+            free(AuthInfo->nt_identity->User);
+            free(AuthInfo->nt_identity->Domain);
+            free(AuthInfo->nt_identity->Password);
+            free(AuthInfo->nt_identity);
         }
-        HeapFree(GetProcessHeap(), 0, AuthInfo->server_principal_name);
-        HeapFree(GetProcessHeap(), 0, AuthInfo);
+        free(AuthInfo->server_principal_name);
+        free(AuthInfo);
     }
 
     return refs;
@@ -1244,13 +1240,13 @@ BOOL RpcAuthInfo_IsEqual(const RpcAuthInfo *AuthInfo1, const RpcAuthInfo *AuthIn
 
 static RPC_STATUS RpcQualityOfService_Create(const RPC_SECURITY_QOS *qos_src, BOOL unicode, RpcQualityOfService **qos_dst)
 {
-    RpcQualityOfService *qos = HeapAlloc(GetProcessHeap(), 0, sizeof(*qos));
+    RpcQualityOfService *qos = malloc(sizeof(*qos));
 
     if (!qos)
         return RPC_S_OUT_OF_RESOURCES;
 
     qos->refs = 1;
-    qos->qos = HeapAlloc(GetProcessHeap(), 0, sizeof(*qos->qos));
+    qos->qos = malloc(sizeof(*qos->qos));
     if (!qos->qos) goto error;
     qos->qos->Version = qos_src->Version;
     qos->qos->Capabilities = qos_src->Capabilities;
@@ -1267,7 +1263,7 @@ static RPC_STATUS RpcQualityOfService_Create(const RPC_SECURITY_QOS *qos_src, BO
             const RPC_HTTP_TRANSPORT_CREDENTIALS_W *http_credentials_src = qos_src2->u.HttpCredentials;
             RPC_HTTP_TRANSPORT_CREDENTIALS_W *http_credentials_dst;
 
-            http_credentials_dst = HeapAlloc(GetProcessHeap(), 0, sizeof(*http_credentials_dst));
+            http_credentials_dst = malloc(sizeof(*http_credentials_dst));
             qos->qos->u.HttpCredentials = http_credentials_dst;
             if (!http_credentials_dst) goto error;
             http_credentials_dst->TransportCredentials = NULL;
@@ -1279,7 +1275,7 @@ static RPC_STATUS RpcQualityOfService_Create(const RPC_SECURITY_QOS *qos_src, BO
             if (http_credentials_src->TransportCredentials)
             {
                 SEC_WINNT_AUTH_IDENTITY_W *cred_dst;
-                cred_dst = http_credentials_dst->TransportCredentials = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*cred_dst));
+                cred_dst = http_credentials_dst->TransportCredentials = calloc(1, sizeof(*cred_dst));
                 if (!cred_dst) goto error;
                 cred_dst->Flags = SEC_WINNT_AUTH_IDENTITY_UNICODE;
                 if (unicode)
@@ -1298,9 +1294,9 @@ static RPC_STATUS RpcQualityOfService_Create(const RPC_SECURITY_QOS *qos_src, BO
                     cred_dst->UserLength = MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->User, cred_src->UserLength, NULL, 0);
                     cred_dst->DomainLength = MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->Domain, cred_src->DomainLength, NULL, 0);
                     cred_dst->PasswordLength = MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->Password, cred_src->PasswordLength, NULL, 0);
-                    cred_dst->User = HeapAlloc(GetProcessHeap(), 0, cred_dst->UserLength * sizeof(WCHAR));
-                    cred_dst->Password = HeapAlloc(GetProcessHeap(), 0, cred_dst->PasswordLength * sizeof(WCHAR));
-                    cred_dst->Domain = HeapAlloc(GetProcessHeap(), 0, cred_dst->DomainLength * sizeof(WCHAR));
+                    cred_dst->User = malloc(cred_dst->UserLength * sizeof(WCHAR));
+                    cred_dst->Password = malloc(cred_dst->PasswordLength * sizeof(WCHAR));
+                    cred_dst->Domain = malloc(cred_dst->DomainLength * sizeof(WCHAR));
                     if (!cred_dst->Password || !cred_dst->Domain) goto error;
                     MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->User, cred_src->UserLength, cred_dst->User, cred_dst->UserLength);
                     MultiByteToWideChar(CP_ACP, 0, (char *)cred_src->Domain, cred_src->DomainLength, cred_dst->Domain, cred_dst->DomainLength);
@@ -1309,7 +1305,7 @@ static RPC_STATUS RpcQualityOfService_Create(const RPC_SECURITY_QOS *qos_src, BO
             }
             if (http_credentials_src->NumberOfAuthnSchemes)
             {
-                http_credentials_dst->AuthnSchemes = HeapAlloc(GetProcessHeap(), 0, http_credentials_src->NumberOfAuthnSchemes * sizeof(*http_credentials_dst->AuthnSchemes));
+                http_credentials_dst->AuthnSchemes = malloc(http_credentials_src->NumberOfAuthnSchemes * sizeof(*http_credentials_dst->AuthnSchemes));
                 if (!http_credentials_dst->AuthnSchemes) goto error;
                 memcpy(http_credentials_dst->AuthnSchemes, http_credentials_src->AuthnSchemes, http_credentials_src->NumberOfAuthnSchemes * sizeof(*http_credentials_dst->AuthnSchemes));
             }
@@ -1337,18 +1333,18 @@ error:
         {
             if (qos->qos->u.HttpCredentials->TransportCredentials)
             {
-                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->User);
-                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->Domain);
-                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->Password);
-                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials);
+                free(qos->qos->u.HttpCredentials->TransportCredentials->User);
+                free(qos->qos->u.HttpCredentials->TransportCredentials->Domain);
+                free(qos->qos->u.HttpCredentials->TransportCredentials->Password);
+                free(qos->qos->u.HttpCredentials->TransportCredentials);
             }
-            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->AuthnSchemes);
-            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->ServerCertificateSubject);
-            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials);
+            free(qos->qos->u.HttpCredentials->AuthnSchemes);
+            free(qos->qos->u.HttpCredentials->ServerCertificateSubject);
+            free(qos->qos->u.HttpCredentials);
         }
-        HeapFree(GetProcessHeap(), 0, qos->qos);
+        free(qos->qos);
     }
-    HeapFree(GetProcessHeap(), 0, qos);
+    free(qos);
     return RPC_S_OUT_OF_RESOURCES;
 }
 
@@ -1367,17 +1363,17 @@ ULONG RpcQualityOfService_Release(RpcQualityOfService *qos)
         {
             if (qos->qos->u.HttpCredentials->TransportCredentials)
             {
-                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->User);
-                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->Domain);
-                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials->Password);
-                HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->TransportCredentials);
+                free(qos->qos->u.HttpCredentials->TransportCredentials->User);
+                free(qos->qos->u.HttpCredentials->TransportCredentials->Domain);
+                free(qos->qos->u.HttpCredentials->TransportCredentials->Password);
+                free(qos->qos->u.HttpCredentials->TransportCredentials);
             }
-            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->AuthnSchemes);
-            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials->ServerCertificateSubject);
-            HeapFree(GetProcessHeap(), 0, qos->qos->u.HttpCredentials);
+            free(qos->qos->u.HttpCredentials->AuthnSchemes);
+            free(qos->qos->u.HttpCredentials->ServerCertificateSubject);
+            free(qos->qos->u.HttpCredentials);
         }
-        HeapFree(GetProcessHeap(), 0, qos->qos);
-        HeapFree(GetProcessHeap(), 0, qos);
+        free(qos->qos);
+        free(qos);
     }
     return refs;
 }
@@ -1521,7 +1517,7 @@ RpcBindingInqAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR *ServerPrincName,
     {
         if (bind->AuthInfo->server_principal_name)
         {
-            *ServerPrincName = RPCRT4_strdupW(bind->AuthInfo->server_principal_name);
+            *ServerPrincName = wcsdup(bind->AuthInfo->server_principal_name);
             if (!*ServerPrincName) return RPC_S_OUT_OF_MEMORY;
         }
         else *ServerPrincName = NULL;
@@ -1650,8 +1646,8 @@ RpcBindingServerFromClient(RPC_BINDING_HANDLE ClientBinding, RPC_BINDING_HANDLE*
         return RPC_S_INVALID_BINDING;
 
     RPCRT4_AllocBinding(&NewBinding, TRUE);
-    NewBinding->Protseq = RPCRT4_strdupA(bind->Protseq);
-    NewBinding->NetworkAddr = RPCRT4_strdupA(bind->NetworkAddr);
+    NewBinding->Protseq = strdup(bind->Protseq);
+    NewBinding->NetworkAddr = strdup(bind->NetworkAddr);
 
     *ServerBinding = NewBinding;
 
@@ -1898,7 +1894,7 @@ RpcBindingSetAuthInfoExW( RPC_BINDING_HANDLE Binding, RPC_WSTR ServerPrincName, 
                            AuthIdentity, &new_auth_info);
     if (r == RPC_S_OK)
     {
-      new_auth_info->server_principal_name = RPCRT4_strdupW(ServerPrincName);
+      new_auth_info->server_principal_name = wcsdup(ServerPrincName);
       if (!ServerPrincName || new_auth_info->server_principal_name)
       {
         if (bind->AuthInfo) RpcAuthInfo_Release(bind->AuthInfo);
@@ -1961,10 +1957,10 @@ RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Op
         int len = MultiByteToWideChar(CP_ACP, 0, cookie->Buffer, cookie->BufferSize, NULL, 0);
         WCHAR *str;
 
-        if (!(str = HeapAlloc(GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR)))) return RPC_S_OUT_OF_MEMORY;
+        if (!(str = malloc((len + 1) * sizeof(WCHAR)))) return RPC_S_OUT_OF_MEMORY;
         MultiByteToWideChar(CP_ACP, 0, cookie->Buffer, cookie->BufferSize, str, len);
         str[len] = 0;
-        HeapFree(GetProcessHeap(), 0, binding->CookieAuth);
+        free(binding->CookieAuth);
         binding->CookieAuth = str;
         break;
     }
