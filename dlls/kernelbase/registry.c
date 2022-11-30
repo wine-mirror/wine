@@ -274,30 +274,21 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
         WCHAR *buffer = name.Buffer;
-        DWORD attrs, pos = 0, i = 0, len = name.Length / sizeof(WCHAR);
-
-        /* don't try to create registry root */
-        if (!attr.RootDirectory && len > 10 && !wcsnicmp( buffer, L"\\Registry\\", 10 )) i += 10;
-
-        while (i < len && buffer[i] != '\\') i++;
-        if (i == len && !force_wow32) return status;
+        DWORD attrs, i, len = name.Length / sizeof(WCHAR);
 
         attrs = attr.Attributes;
 
-        for (;;)
+        while (len)
         {
-            name.Buffer = buffer + pos;
-            name.Length = (i - pos) * sizeof(WCHAR);
-            if (force_wow32 && pos)
-            {
-                if (is_wow6432node( &name )) force_wow32 = FALSE;
-                else if ((subkey = open_wow6432node( attr.RootDirectory )))
-                {
-                    if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
-                    attr.RootDirectory = subkey;
-                    force_wow32 = FALSE;
-                }
-            }
+            i = 0;
+
+            /* don't try to create registry root */
+            if (!attr.RootDirectory && len > 10 && !wcsnicmp( buffer, L"\\Registry\\", 10 )) i += 10;
+            while (i < len && buffer[i] != '\\') i++;
+
+            name.Buffer = buffer;
+            name.Length = i * sizeof(WCHAR);
+
             if (i == len)
             {
                 attr.Attributes = attrs;
@@ -311,18 +302,24 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
             }
             if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
             if (!NT_SUCCESS(status)) return status;
-            if (i == len) break;
             attr.RootDirectory = subkey;
             while (i < len && buffer[i] == '\\') i++;
-            pos = i;
-            while (i < len && buffer[i] != '\\') i++;
+            buffer += i;
+            len -= i;
+
+            if (force_wow32)
+            {
+                name.Buffer = buffer;
+                name.Length = len * sizeof(WCHAR);
+                if (is_wow6432node( &name )) force_wow32 = FALSE;
+                else if ((subkey = open_wow6432node( attr.RootDirectory )))
+                {
+                    NtClose( attr.RootDirectory );
+                    attr.RootDirectory = subkey;
+                    force_wow32 = FALSE;
+                }
+            }
         }
-    }
-    attr.RootDirectory = subkey;
-    if (force_wow32 && (subkey = open_wow6432node( attr.RootDirectory )))
-    {
-        if (attr.RootDirectory != root) NtClose( attr.RootDirectory );
-        attr.RootDirectory = subkey;
     }
     if (status == STATUS_PREDEFINED_HANDLE)
     {
