@@ -3397,7 +3397,7 @@ static void arbfp_add_sRGB_correction(struct wined3d_string_buffer *buffer, cons
     /* [0.0;1.0] clamping. Not needed, this is done implicitly */
 }
 
-static const DWORD *find_loop_control_values(const struct wined3d_shader *shader, DWORD idx)
+static const unsigned int *find_loop_control_values(const struct wined3d_shader *shader, DWORD idx)
 {
     const struct wined3d_shader_lconst *constant;
 
@@ -3719,7 +3719,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
         if (reg_maps->integer_constants & (1u << i) && priv_ctx.target_version >= NV2)
         {
-            const DWORD *control_values = find_loop_control_values(shader, i);
+            const unsigned int *control_values = find_loop_control_values(shader, i);
 
             if(control_values)
             {
@@ -4167,7 +4167,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
         compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
         if (reg_maps->integer_constants & (1u << i) && priv_ctx.target_version >= NV2)
         {
-            const DWORD *control_values = find_loop_control_values(shader, i);
+            const unsigned int *control_values = find_loop_control_values(shader, i);
 
             if(control_values)
             {

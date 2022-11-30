@@ -4847,7 +4847,7 @@ static void shader_glsl_loop(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_lconst *constant;
     struct wined3d_string_buffer *reg_name;
-    const DWORD *control_values = NULL;
+    const unsigned int *control_values = NULL;
 
     if (ins->ctx->reg_maps->shader_version.major < 4)
     {
@@ -4945,7 +4945,7 @@ static void shader_glsl_rep(const struct wined3d_shader_instruction *ins)
     const struct wined3d_shader *shader = ins->ctx->shader;
     const struct wined3d_shader_lconst *constant;
     struct glsl_src_param src0_param;
-    const DWORD *control_values = NULL;
+    const unsigned int *control_values = NULL;
 
     /* Try to hardcode local values to help the GLSL compiler to unroll and optimize the loop */
     if (ins->src[0].reg.type == WINED3DSPR_CONSTINT)

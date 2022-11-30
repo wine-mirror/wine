@@ -5834,7 +5834,7 @@ struct wined3d_shader_lconst
 {
     struct list entry;
     unsigned int idx;
-    DWORD value[4];
+    unsigned int value[4];
 };
 
 struct wined3d_shader_limits
