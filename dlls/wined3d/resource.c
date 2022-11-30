@@ -26,9 +26,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-static void resource_check_usage(DWORD usage, unsigned int access)
+static void resource_check_usage(uint32_t usage, unsigned int access)
 {
-    static const DWORD handled = WINED3DUSAGE_DYNAMIC
+    static const uint32_t handled = WINED3DUSAGE_DYNAMIC
             | WINED3DUSAGE_STATICDECL
             | WINED3DUSAGE_OVERLAY
             | WINED3DUSAGE_SCRATCH
@@ -51,7 +51,7 @@ static void resource_check_usage(DWORD usage, unsigned int access)
 
 HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *device,
         enum wined3d_resource_type type, const struct wined3d_format *format,
-        enum wined3d_multisample_type multisample_type, unsigned int multisample_quality, unsigned int usage,
+        enum wined3d_multisample_type multisample_type, unsigned int multisample_quality, uint32_t usage,
         unsigned int bind_flags, unsigned int access, unsigned int width, unsigned int height, unsigned int depth,
         unsigned int size, void *parent, const struct wined3d_parent_ops *parent_ops,
         const struct wined3d_resource_ops *resource_ops)

@@ -1933,7 +1933,7 @@ static BOOL wined3d_check_surface_format(const struct wined3d_format *format)
  * restrict it to some should applications need that. */
 HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
         const struct wined3d_adapter *adapter, enum wined3d_device_type device_type,
-        enum wined3d_format_id adapter_format_id, DWORD usage, unsigned int bind_flags,
+        enum wined3d_format_id adapter_format_id, uint32_t usage, unsigned int bind_flags,
         enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id)
 {
     const struct wined3d_format *adapter_format, *format;
@@ -1941,7 +1941,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
     unsigned int format_caps = 0, format_attrs = 0;
     BOOL mipmap_gen_supported = TRUE;
     unsigned int allowed_bind_flags;
-    DWORD allowed_usage;
+    uint32_t allowed_usage;
 
     TRACE("wined3d %p, adapter %p, device_type %s, adapter_format %s, usage %s, "
             "bind_flags %s, resource_type %s, check_format %s.\n",

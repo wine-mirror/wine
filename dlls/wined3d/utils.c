@@ -4929,7 +4929,7 @@ const char *wined3d_debug_view_desc(const struct wined3d_view_desc *d, const str
                 d->u.texture.layer_idx, d->u.texture.layer_count);
 }
 
-const char *debug_d3dusage(DWORD usage)
+const char *debug_d3dusage(uint32_t usage)
 {
     struct debug_buffer buffer;
 

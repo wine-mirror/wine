@@ -2294,7 +2294,7 @@ HRESULT __cdecl wined3d_check_depth_stencil_match(const struct wined3d_adapter *
         enum wined3d_format_id render_target_format_id, enum wined3d_format_id depth_stencil_format_id);
 HRESULT __cdecl wined3d_check_device_format(const struct wined3d *wined3d,
         const struct wined3d_adapter *adapter, enum wined3d_device_type device_type,
-        enum wined3d_format_id adapter_format_id, DWORD usage, unsigned int bind_flags,
+        enum wined3d_format_id adapter_format_id, uint32_t usage, unsigned int bind_flags,
         enum wined3d_resource_type resource_type, enum wined3d_format_id check_format_id);
 HRESULT __cdecl wined3d_check_device_format_conversion(const struct wined3d_output *output,
         enum wined3d_device_type device_type, enum wined3d_format_id source_format_id,
