@@ -202,6 +202,7 @@ table_info[] =
 {
     {sizeof(double), PRES_VT_DOUBLE}, /* PRES_REGTAB_IMMED */
     {sizeof(float),  PRES_VT_FLOAT }, /* PRES_REGTAB_CONST */
+    {sizeof(float),  PRES_VT_FLOAT }, /* PRES_REGTAB_INPUT */
     {sizeof(float),  PRES_VT_FLOAT }, /* PRES_REGTAB_OCONST */
     {sizeof(BOOL),   PRES_VT_BOOL  }, /* PRES_REGTAB_OBCONST */
     {sizeof(int),    PRES_VT_INT,  }, /* PRES_REGTAB_OICONST */
@@ -211,7 +212,7 @@ table_info[] =
 
 static const char *table_symbol[] =
 {
-    "imm", "c", "oc", "ob", "oi", "r", "(null)",
+    "imm", "c", "v", "oc", "ob", "oi", "r", "(null)",
 };
 
 static const enum pres_reg_tables pres_regset2table[] =
@@ -414,7 +415,7 @@ static unsigned int *parse_pres_reg(unsigned int *ptr, struct d3dx_pres_reg *reg
 {
     static const enum pres_reg_tables reg_table[8] =
     {
-        PRES_REGTAB_COUNT, PRES_REGTAB_IMMED, PRES_REGTAB_CONST, PRES_REGTAB_COUNT,
+        PRES_REGTAB_COUNT, PRES_REGTAB_IMMED, PRES_REGTAB_CONST, PRES_REGTAB_INPUT,
         PRES_REGTAB_OCONST, PRES_REGTAB_OBCONST, PRES_REGTAB_OICONST, PRES_REGTAB_TEMP
     };
 
@@ -1019,7 +1020,7 @@ static void update_table_sizes_consts(unsigned int *table_sizes, struct d3dx_con
 static void dump_arg(struct d3dx_regstore *rs, const struct d3dx_pres_operand *arg, int component_count)
 {
     static const char *xyzw_str = "xyzw";
-    unsigned int i, table;
+    unsigned int i, table, reg_offset;
 
     table = arg->reg.table;
     if (table == PRES_REGTAB_IMMED && arg->index_reg.table == PRES_REGTAB_COUNT)
@@ -1032,16 +1033,21 @@ static void dump_arg(struct d3dx_regstore *rs, const struct d3dx_pres_operand *a
     }
     else
     {
+        reg_offset = get_reg_offset(table, arg->reg.offset);
+
         if (arg->index_reg.table == PRES_REGTAB_COUNT)
         {
-            TRACE("%s%u.", table_symbol[table], get_reg_offset(table, arg->reg.offset));
+            if (table == PRES_REGTAB_INPUT && reg_offset < 2)
+                TRACE("%s%s.", table_symbol[table], reg_offset ? "PSize" : "Pos");
+            else
+                TRACE("%s%u.", table_symbol[table], reg_offset);
         }
         else
         {
             unsigned int index_reg;
 
             index_reg = get_reg_offset(arg->index_reg.table, arg->index_reg.offset);
-            TRACE("%s[%u + %s%u.%c].", table_symbol[table], get_reg_offset(table, arg->reg.offset),
+            TRACE("%s[%u + %s%u.%c].", table_symbol[table], reg_offset,
                     table_symbol[arg->index_reg.table], index_reg,
                     xyzw_str[arg->index_reg.offset - get_offset_reg(arg->index_reg.table, index_reg)]);
         }
