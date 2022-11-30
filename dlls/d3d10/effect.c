@@ -255,6 +255,15 @@ static void pres_add(float **args, unsigned int n, const struct preshader_instr 
         retval[i] = args[0][instr->scalar ? 0 : i] + args[1][i];
 }
 
+static void pres_mul(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[2];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = args[0][instr->scalar ? 0 : i] * args[1][i];
+}
+
 struct preshader_op_info
 {
     int opcode;
@@ -269,6 +278,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x200, "min",  pres_min  },
     { 0x201, "max",  pres_max  },
     { 0x204, "add",  pres_add  },
+    { 0x205, "mul",  pres_mul  },
 };
 
 static int __cdecl preshader_op_compare(const void *a, const void *b)
