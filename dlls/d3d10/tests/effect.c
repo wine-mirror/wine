@@ -8314,13 +8314,10 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    todo_wine
-    {
     ok(blend_factor[0] == 1.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
     ok(blend_factor[1] == 1.0f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
     ok(blend_factor[2] == 0.1f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
     ok(blend_factor[3] == -3.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
-    }
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     pass = t->lpVtbl->GetPassByName(t, "p4");
@@ -8331,13 +8328,10 @@ static void test_effect_value_expression(void)
 
     ID3D10Device_OMGetBlendState(device, &blend_state, blend_factor, &sample_mask);
     ok(!blend_state, "Unexpected blend state %p.\n", blend_state);
-    todo_wine
-    {
     ok(blend_factor[0] == 2.0f, "Got unexpected blend_factor[0] %.8e.\n", blend_factor[0]);
     ok(blend_factor[1] == 1.1f, "Got unexpected blend_factor[1] %.8e.\n", blend_factor[1]);
     ok(blend_factor[2] == 1.0f, "Got unexpected blend_factor[2] %.8e.\n", blend_factor[2]);
     ok(blend_factor[3] == 1.0f, "Got unexpected blend_factor[3] %.8e.\n", blend_factor[3]);
-    }
     ok(!sample_mask, "Got unexpected sample_mask %#x.\n", sample_mask);
 
     effect->lpVtbl->Release(effect);

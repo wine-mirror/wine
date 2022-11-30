@@ -800,6 +800,7 @@ static void d3d10_effect_update_dependent_props(struct d3d10_effect_prop_depende
     struct d3d10_effect_prop_dependency *d;
     unsigned int i, j, count, variable_idx;
     struct d3d10_effect_variable *v;
+    struct d3d10_reg_table *table;
     unsigned int *dst_index;
     uint32_t value;
     HRESULT hr;
@@ -862,6 +863,34 @@ static void d3d10_effect_update_dependent_props(struct d3d10_effect_prop_depende
                     default:
                         *(void **)dst = &v->elements[variable_idx];
                 }
+                break;
+
+            case D3D10_EOO_VALUE_EXPRESSION:
+
+                if ((property_info->container_type != D3D10_C_PASS)
+                        || ((property_info->type != D3D10_SVT_UINT) && (property_info->type != D3D10_SVT_FLOAT)))
+                {
+                    FIXME("Unimplemented for property %s.\n", property_info->name);
+                    return;
+                }
+
+                if (FAILED(hr = d3d10_effect_preshader_eval(&d->value_expr.value)))
+                {
+                    WARN("Failed to evaluate value expression, hr %#lx.\n", hr);
+                    return;
+                }
+
+                table = &d->value_expr.value.reg_tables[D3D10_REG_TABLE_RESULT];
+
+                if (property_info->size != table->count)
+                {
+                    WARN("Unexpected value expression output size %u, property size %u.\n",
+                            table->count, property_info->size);
+                    return;
+                }
+
+                memcpy(dst, table->f, property_info->size * sizeof(float));
+
                 break;
 
             default:
