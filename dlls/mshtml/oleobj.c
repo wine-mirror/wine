@@ -3380,7 +3380,7 @@ static HRESULT WINAPI HTMLDocumentObj_QueryInterface(IUnknown *iface, REFIID rii
     }else if(IsEqualGUID(&IID_IEventTarget, riid)) {
         /* IEventTarget is conditionally exposed. This breaks COM rules when
            it changes its compat mode, but it is how native works (see tests). */
-        if(!This->doc_node || dispex_compat_mode(&This->doc_node->node.event_target.dispex) < COMPAT_MODE_IE9) {
+        if(!This->doc_node || This->doc_node->document_mode < COMPAT_MODE_IE9) {
             *ppv = NULL;
             return E_NOINTERFACE;
         }

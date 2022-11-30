@@ -11731,6 +11731,56 @@ static void test_quirks_mode(void)
                 "</html>", test_document_mode);
 }
 
+static void test_document_mode_lock(void)
+{
+    IEventTarget *event_target;
+    IPersistStreamInit *init;
+    IHTMLDocument2 *doc;
+    IStream *stream;
+    HRESULT hres;
+    HGLOBAL mem;
+    SIZE_T len;
+    MSG msg;
+
+    notif_doc = doc = create_document();
+    if(!doc)
+        return;
+    doc_complete = FALSE;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IEventTarget, (void**)&event_target);
+    ok(hres == E_NOINTERFACE, "QueryInterface(IID_IEventTarget) returned %08lx.\n", hres);
+    ok(event_target == NULL, "event_target != NULL\n");
+
+    len = strlen(doc_blank_ie9);
+    mem = GlobalAlloc(0, len);
+    memcpy(mem, doc_blank_ie9, len);
+    hres = CreateStreamOnHGlobal(mem, TRUE, &stream);
+    ok(hres == S_OK, "Failed to create stream: %08lx.\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistStreamInit, (void**)&init);
+    ok(hres == S_OK, "QueryInterface(IID_IPersistStreamInit) failed: %08lx.\n", hres);
+
+    IPersistStreamInit_Load(init, stream);
+    IPersistStreamInit_Release(init);
+    IStream_Release(stream);
+
+    set_client_site(doc, TRUE);
+    do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
+
+    while(!doc_complete && GetMessageW(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessageW(&msg);
+    }
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IEventTarget, (void**)&event_target);
+    ok(hres == S_OK, "QueryInterface(IID_IEventTarget) returned %08lx.\n", hres);
+    ok(event_target != NULL, "event_target == NULL\n");
+    IEventTarget_Release(event_target);
+
+    set_client_site(doc, FALSE);
+    IHTMLDocument2_Release(doc);
+}
+
 static void test_custom_user_agent(IHTMLDocument2 *doc)
 {
     static const WCHAR ua[] = L"1234567890xxxABC";
@@ -11830,6 +11880,7 @@ START_TEST(dom)
     run_domtest(doctype_str, test_doctype);
 
     test_quirks_mode();
+    test_document_mode_lock();
 
     /* Run this last since it messes with the process-wide user agent */
     if (winetest_interactive || ! is_ie_hardened()) {
