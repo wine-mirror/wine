@@ -1320,7 +1320,7 @@ class VkVariable(object):
         if self.const:
             cast_type += "const "
 
-        if self.pointer_array or ((self.is_dynamic_array() or self.is_static_array()) and self.is_pointer_size()):
+        if self.pointer_array or ((self.is_pointer() or self.is_static_array()) and self.is_pointer_size()):
             cast_type += "PTR32 *"
         else:
             cast_type += self.type
@@ -1693,6 +1693,8 @@ class VkParam(VkVariable):
             elif self.is_struct():
                 return "    convert_{0}_{3}_to_{5}host({4}{1}, &{2}_host);\n".format(
                     self.type, self.value(prefix, conv), self.name, win_type, ctx_param, wrap_part)
+            elif self.is_pointer_size() and self.type != "size_t":
+                return "    {0}_host = UlongToPtr(*{1});\n".format(self.name, self.value(prefix, conv))
             else:
                 return "    {0}_host = *{1};\n".format(self.name, self.value(prefix, conv))
         else:
@@ -1704,6 +1706,8 @@ class VkParam(VkVariable):
                 ref_part = "" if self.optional else "&"
                 return "    convert_{0}_host_to_{3}({4}{2}_host, {1});\n".format(
                     self.type, self.value(prefix, conv), self.name, win_type, ref_part)
+            elif self.is_pointer_size() and self.type != "size_t":
+                return "    *{0} = PtrToUlong({1}_host);\n".format(self.value(prefix, conv), self.name)
             else:
                 return "    *{0} = {1}_host;\n".format(self.value(prefix, conv), self.name)
 

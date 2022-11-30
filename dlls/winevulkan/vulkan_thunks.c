@@ -32518,9 +32518,9 @@ static NTSTATUS thunk32_vkCreateDevice(void *args)
 
     init_conversion_context(&ctx);
     convert_VkDeviceCreateInfo_win32_to_host(&ctx, (const VkDeviceCreateInfo32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
-    pDevice_host = *(VkDevice *)UlongToPtr(params->pDevice);
+    pDevice_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->pDevice));
     params->result = wine_vkCreateDevice((VkPhysicalDevice)UlongToPtr(params->physicalDevice), &pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), &pDevice_host, UlongToPtr(params->client_ptr));
-    *(VkDevice *)UlongToPtr(params->pDevice) = pDevice_host;
+    *(PTR32 *)UlongToPtr(params->pDevice) = PtrToUlong(pDevice_host);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -32803,9 +32803,9 @@ static NTSTATUS thunk32_vkCreateInstance(void *args)
 
     init_conversion_context(&ctx);
     convert_VkInstanceCreateInfo_win32_to_host(&ctx, (const VkInstanceCreateInfo32 *)UlongToPtr(params->pCreateInfo), &pCreateInfo_host);
-    pInstance_host = *(VkInstance *)UlongToPtr(params->pInstance);
+    pInstance_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->pInstance));
     params->result = wine_vkCreateInstance(&pCreateInfo_host, (const VkAllocationCallbacks *)UlongToPtr(params->pAllocator), &pInstance_host, UlongToPtr(params->client_ptr));
-    *(VkInstance *)UlongToPtr(params->pInstance) = pInstance_host;
+    *(PTR32 *)UlongToPtr(params->pInstance) = PtrToUlong(pInstance_host);
     free_conversion_context(&ctx);
     return STATUS_SUCCESS;
 }
@@ -36366,9 +36366,9 @@ static NTSTATUS thunk32_vkGetDeviceQueue(void *args)
 
     TRACE("%#x, %u, %u, %#x\n", params->device, params->queueFamilyIndex, params->queueIndex, params->pQueue);
 
-    pQueue_host = *(VkQueue *)UlongToPtr(params->pQueue);
+    pQueue_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->pQueue));
     wine_vkGetDeviceQueue((VkDevice)UlongToPtr(params->device), params->queueFamilyIndex, params->queueIndex, &pQueue_host);
-    *(VkQueue *)UlongToPtr(params->pQueue) = pQueue_host;
+    *(PTR32 *)UlongToPtr(params->pQueue) = PtrToUlong(pQueue_host);
     return STATUS_SUCCESS;
 }
 
@@ -36398,9 +36398,9 @@ static NTSTATUS thunk32_vkGetDeviceQueue2(void *args)
     TRACE("%#x, %#x, %#x\n", params->device, params->pQueueInfo, params->pQueue);
 
     convert_VkDeviceQueueInfo2_win32_to_host((const VkDeviceQueueInfo232 *)UlongToPtr(params->pQueueInfo), &pQueueInfo_host);
-    pQueue_host = *(VkQueue *)UlongToPtr(params->pQueue);
+    pQueue_host = UlongToPtr(*(PTR32 *)UlongToPtr(params->pQueue));
     wine_vkGetDeviceQueue2((VkDevice)UlongToPtr(params->device), &pQueueInfo_host, &pQueue_host);
-    *(VkQueue *)UlongToPtr(params->pQueue) = pQueue_host;
+    *(PTR32 *)UlongToPtr(params->pQueue) = PtrToUlong(pQueue_host);
     return STATUS_SUCCESS;
 }
 
@@ -38515,9 +38515,9 @@ static NTSTATUS thunk32_vkGetPipelineCacheData(void *args)
 
     TRACE("%#x, 0x%s, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->pipelineCache), params->pDataSize, params->pData);
 
-    pDataSize_host = *(size_t *)UlongToPtr(params->pDataSize);
+    pDataSize_host = *(PTR32 *)UlongToPtr(params->pDataSize);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetPipelineCacheData(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->pipelineCache, &pDataSize_host, (void *)UlongToPtr(params->pData));
-    *(size_t *)UlongToPtr(params->pDataSize) = pDataSize_host;
+    *(PTR32 *)UlongToPtr(params->pDataSize) = pDataSize_host;
     return STATUS_SUCCESS;
 }
 
@@ -39082,9 +39082,9 @@ static NTSTATUS thunk32_vkGetShaderInfoAMD(void *args)
 
     TRACE("%#x, 0x%s, %#x, %#x, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->pipeline), params->shaderStage, params->infoType, params->pInfoSize, params->pInfo);
 
-    pInfoSize_host = *(size_t *)UlongToPtr(params->pInfoSize);
+    pInfoSize_host = *(PTR32 *)UlongToPtr(params->pInfoSize);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetShaderInfoAMD(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->pipeline, params->shaderStage, params->infoType, &pInfoSize_host, (void *)UlongToPtr(params->pInfo));
-    *(size_t *)UlongToPtr(params->pInfoSize) = pInfoSize_host;
+    *(PTR32 *)UlongToPtr(params->pInfoSize) = pInfoSize_host;
     return STATUS_SUCCESS;
 }
 
@@ -39208,9 +39208,9 @@ static NTSTATUS thunk32_vkGetValidationCacheDataEXT(void *args)
 
     TRACE("%#x, 0x%s, %#x, %#x\n", params->device, wine_dbgstr_longlong(params->validationCache), params->pDataSize, params->pData);
 
-    pDataSize_host = *(size_t *)UlongToPtr(params->pDataSize);
+    pDataSize_host = *(PTR32 *)UlongToPtr(params->pDataSize);
     params->result = wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkGetValidationCacheDataEXT(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->validationCache, &pDataSize_host, (void *)UlongToPtr(params->pData));
-    *(size_t *)UlongToPtr(params->pDataSize) = pDataSize_host;
+    *(PTR32 *)UlongToPtr(params->pDataSize) = pDataSize_host;
     return STATUS_SUCCESS;
 }
 
