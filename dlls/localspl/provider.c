@@ -225,6 +225,7 @@ typedef struct {
     WCHAR *port;
     WCHAR *document_title;
     DEVMODEW *devmode;
+    HANDLE hf;
 } job_t;
 
 typedef struct {
@@ -531,6 +532,7 @@ static void free_job(job_t *job)
     free(job->port);
     free(job->document_title);
     free(job->devmode);
+    CloseHandle(job->hf);
     free(job);
 }
 
@@ -2087,32 +2089,6 @@ static BOOL WINAPI fpAddPrinterDriverEx(LPWSTR pName, DWORD level, LPBYTE pDrive
 }
 
 /******************************************************************************
- * fpClosePrinter [exported through PRINTPROVIDOR]
- *
- * Close a printer handle and free associated resources
- *
- * PARAMS
- *  hPrinter [I] Printerhandle to close
- *
- * RESULTS
- *  Success: TRUE
- *  Failure: FALSE
- *
- */
-static BOOL WINAPI fpClosePrinter(HANDLE hPrinter)
-{
-    printer_t *printer = (printer_t *) hPrinter;
-
-    TRACE("(%p)\n", hPrinter);
-
-    if (printer) {
-        printer_free(printer);
-        return TRUE;
-    }
-    return FALSE;
-}
-
-/******************************************************************************
  * fpConfigurePort [exported through PRINTPROVIDOR]
  *
  * Display the Configuration-Dialog for a specific Port
@@ -2907,7 +2883,7 @@ static size_t get_spool_filename(DWORD job_id, WCHAR *buf, size_t len)
     return ret;
 }
 
-static job_t* add_job(printer_t *printer, DOC_INFO_1W *info)
+static job_t* add_job(printer_t *printer, DOC_INFO_1W *info, BOOL create)
 {
     DWORD job_id, last_id;
     size_t len;
@@ -2941,6 +2917,21 @@ static job_t* add_job(printer_t *printer, DOC_INFO_1W *info)
 
     job->id = job_id;
     get_spool_filename(job_id, job->filename, len);
+    if (create)
+    {
+        job->hf = CreateFileW(job->filename, GENERIC_WRITE, FILE_SHARE_READ,
+                NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        if (job->hf == INVALID_HANDLE_VALUE)
+        {
+            free(job->filename);
+            free(job);
+            return NULL;
+        }
+    }
+    else
+    {
+        job->hf = NULL;
+    }
     job->document_title = wcsdup(info->pDocName);
     job->devmode = dup_devmode(printer->devmode);
 
@@ -2988,7 +2979,7 @@ static BOOL WINAPI fpAddJob(HANDLE hprinter, DWORD level, BYTE *data, DWORD size
 
     memset(&doc_info, 0, sizeof(doc_info));
     doc_info.pDocName = (WCHAR *)L"Local Downlevel Document";
-    job = add_job(printer, &doc_info);
+    job = add_job(printer, &doc_info, FALSE);
     if (!job)
         return FALSE;
 
@@ -3025,8 +3016,29 @@ static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_in
         return 0;
     }
 
-    printer->doc = add_job(printer, info);
+    printer->doc = add_job(printer, info, TRUE);
     return printer->doc ? printer->doc->id : 0;
+}
+
+static BOOL WINAPI fpWritePrinter(HANDLE hprinter, void *buf, DWORD size, DWORD *written)
+{
+    printer_t *printer = (printer_t *)hprinter;
+
+    TRACE("(%p, %p, %ld, %p)\n", hprinter, buf, size, written);
+
+    if(!printer || !printer->info)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if(!printer->doc)
+    {
+        SetLastError(ERROR_SPL_NO_STARTDOC);
+        return FALSE;
+    }
+
+    return WriteFile(printer->doc->hf, buf, size, written, NULL);
 }
 
 static job_t * get_job(printer_info_t *info, DWORD job_id)
@@ -3362,9 +3374,39 @@ static BOOL WINAPI fpEndDocPrinter(HANDLE hprinter)
         return FALSE;
     }
 
+    CloseHandle(printer->doc->hf);
+    printer->doc->hf = NULL;
     ret = fpScheduleJob(hprinter, printer->doc->id);
     printer->doc = NULL;
     return ret;
+}
+
+/******************************************************************************
+ * fpClosePrinter [exported through PRINTPROVIDOR]
+ *
+ * Close a printer handle and free associated resources
+ *
+ * PARAMS
+ *  hPrinter [I] Printerhandle to close
+ *
+ * RESULTS
+ *  Success: TRUE
+ *  Failure: FALSE
+ *
+ */
+static BOOL WINAPI fpClosePrinter(HANDLE hprinter)
+{
+    printer_t *printer = (printer_t *)hprinter;
+
+    TRACE("(%p)\n", hprinter);
+
+    if (!printer)
+        return FALSE;
+
+    if(printer->doc)
+        fpEndDocPrinter(hprinter);
+    printer_free(printer);
+    return TRUE;
 }
 
 static const PRINTPROVIDOR backend = {
@@ -3389,7 +3431,7 @@ static const PRINTPROVIDOR backend = {
         NULL,   /* fpEnumPrintProcessorDatatypes */
         fpStartDocPrinter,
         NULL,   /* fpStartPagePrinter */
-        NULL,   /* fpWritePrinter */
+        fpWritePrinter,
         NULL,   /* fpEndPagePrinter */
         NULL,   /* fpAbortPrinter */
         NULL,   /* fpReadPrinter */

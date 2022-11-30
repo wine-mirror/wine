@@ -71,14 +71,8 @@ static CRITICAL_SECTION printer_handles_cs = { &printer_handles_cs_debug, -1, 0,
 /* ############################### */
 
 typedef struct {
-    DWORD job_id;
-    HANDLE hf;
-} started_doc_t;
-
-typedef struct {
     LPWSTR name;
     HANDLE backend_printer;
-    started_doc_t *doc;
 } opened_printer_t;
 
 typedef struct {
@@ -2336,31 +2330,19 @@ BOOL WINAPI DeletePortW (LPWSTR pName, HWND hWnd, LPWSTR pPortName)
 /******************************************************************************
  *    WritePrinter  [WINSPOOL.@]
  */
-BOOL WINAPI WritePrinter(HANDLE hPrinter, LPVOID pBuf, DWORD cbBuf, LPDWORD pcWritten)
+BOOL WINAPI WritePrinter(HANDLE printer, void *buf, DWORD size, DWORD *written)
 {
-    opened_printer_t *printer;
-    BOOL ret = FALSE;
+    HANDLE handle = get_backend_handle(printer);
 
-    TRACE("(%p, %p, %ld, %p)\n", hPrinter, pBuf, cbBuf, pcWritten);
+    TRACE("(%p, %p, %ld, %p)\n", printer, buf, size, written);
 
-    EnterCriticalSection(&printer_handles_cs);
-    printer = get_opened_printer(hPrinter);
-    if(!printer)
+    if (!handle)
     {
         SetLastError(ERROR_INVALID_HANDLE);
-        goto end;
+        return FALSE;
     }
 
-    if(!printer->doc)
-    {
-        SetLastError(ERROR_SPL_NO_STARTDOC);
-        goto end;
-    }
-
-    ret = WriteFile(printer->doc->hf, pBuf, cbBuf, pcWritten, NULL);
-end:
-    LeaveCriticalSection(&printer_handles_cs);
-    return ret;
+    return backend->fpWritePrinter(handle, buf, size, written);
 }
 
 /*****************************************************************************
@@ -2768,11 +2750,7 @@ BOOL WINAPI ClosePrinter(HANDLE hPrinter)
 
     if(printer)
     {
-        TRACE("closing %s (doc: %p)\n", debugstr_w(printer->name), printer->doc);
-
-        if(printer->doc)
-            EndDocPrinter(hPrinter);
-
+        TRACE("closing %s\n", debugstr_w(printer->name));
         if (printer->backend_printer) {
             backend->fpClosePrinter(printer->backend_printer);
         }
@@ -3088,29 +3066,19 @@ BOOL WINAPI SetJobW(HANDLE printer, DWORD job_id, DWORD level,
 /*****************************************************************************
  *          EndDocPrinter  [WINSPOOL.@]
  */
-BOOL WINAPI EndDocPrinter(HANDLE hprinter)
+BOOL WINAPI EndDocPrinter(HANDLE printer)
 {
-    opened_printer_t *printer = get_opened_printer(hprinter);
+    HANDLE handle = get_backend_handle(printer);
 
     TRACE("(%p)\n", printer);
 
-    if (!printer || !printer->backend_printer)
+    if (!handle)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    if (!printer->doc)
-    {
-        SetLastError(ERROR_SPL_NO_STARTDOC);
-        return FALSE;
-    }
-
-    CloseHandle(printer->doc->hf);
-    free(printer->doc);
-    printer->doc = NULL;
-
-    return backend->fpEndDocPrinter(printer->backend_printer);
+    return backend->fpEndDocPrinter(handle);
 }
 
 /*****************************************************************************
@@ -3162,71 +3130,25 @@ DWORD WINAPI StartDocPrinterA(HANDLE hPrinter, DWORD Level, LPBYTE pDocInfo)
     return ret;
 }
 
-static size_t get_spool_filename(DWORD job_id, WCHAR *buf, size_t len)
-{
-    static const WCHAR spool_path[] = L"spool\\PRINTERS\\";
-    size_t ret;
-
-    ret = GetSystemDirectoryW(NULL, 0) + ARRAY_SIZE(spool_path) + 10;
-    if (len < ret)
-        return ret;
-
-    ret = GetSystemDirectoryW(buf, ret);
-    if (buf[ret - 1] != '\\')
-        buf[ret++] = '\\';
-    memcpy(buf + ret, spool_path, sizeof(spool_path));
-    ret += ARRAY_SIZE(spool_path) - 1;
-    swprintf(buf + ret, 10, L"%05d.SPL", job_id);
-    ret += 10;
-    return ret;
-}
-
 /*****************************************************************************
  *          StartDocPrinterW  [WINSPOOL.@]
  */
-DWORD WINAPI StartDocPrinterW(HANDLE hprinter, DWORD level, BYTE *doc_info)
+DWORD WINAPI StartDocPrinterW(HANDLE printer, DWORD level, BYTE *doc_info)
 {
-    opened_printer_t *printer = get_opened_printer(hprinter);
+    HANDLE handle = get_backend_handle(printer);
     DOC_INFO_1W *info = (DOC_INFO_1W *)doc_info;
-    WCHAR filename[MAX_PATH];
-    HANDLE handle;
-    DWORD job_id;
-    HANDLE hf;
 
     TRACE("(%p, %ld, %p {%s, %s, %s})\n", printer, level, doc_info,
             debugstr_w(info->pDocName), debugstr_w(info->pOutputFile),
             debugstr_w(info->pDatatype));
 
-    if (!printer || !printer->backend_printer)
+    if (!handle)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return 0;
     }
-    handle = printer->backend_printer;
 
-    job_id = backend->fpStartDocPrinter(handle, level, doc_info);
-    if (!job_id)
-        return 0;
-
-    /* TODO: remove when WritePrinter is implemented in providor */
-    if (get_spool_filename(job_id, filename, ARRAY_SIZE(filename)) > ARRAY_SIZE(filename))
-    {
-        backend->fpEndDocPrinter(handle);
-        SetLastError(ERROR_INTERNAL_ERROR);
-        return 0;
-    }
-    hf = CreateFileW(filename, GENERIC_WRITE, FILE_SHARE_READ, NULL,
-            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-    if (hf == INVALID_HANDLE_VALUE)
-    {
-        backend->fpEndDocPrinter(handle);
-        return 0;
-    }
-
-    printer->doc = malloc(sizeof(*printer->doc));
-    printer->doc->job_id = job_id;
-    printer->doc->hf = hf;
-    return job_id;
+    return backend->fpStartDocPrinter(handle, level, doc_info);
 }
 
 /*****************************************************************************
