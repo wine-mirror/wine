@@ -1522,7 +1522,8 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldr x16, [x16, x20, lsl 3]\n\t"
                    "blr x16\n\t"
                    "mov sp, x22\n"
-                   "3:\tldp x18, x19, [sp, #0x90]\n\t"
+                   ".L__wine_syscall_dispatcher_return:\n\t"
+                   "ldp x18, x19, [sp, #0x90]\n\t"
                    "ldp x20, x21, [sp, #0xa0]\n\t"
                    "ldp x22, x23, [sp, #0xb0]\n\t"
                    "ldp x24, x25, [sp, #0xc0]\n\t"
@@ -1566,12 +1567,51 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ret x16\n"
                    "4:\tmov x0, #0xc0000000\n\t" /* STATUS_INVALID_PARAMETER */
                    "movk x0, #0x000d\n\t"
-                   "b 3b\n\t"
+                   "b .L__wine_syscall_dispatcher_return\n\t"
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "mov sp, x0\n\t"
                    "mov x0, x1\n\t"
-                   "b 3b" )
+                   "b .L__wine_syscall_dispatcher_return" )
+
+
+/***********************************************************************
+ *           __wine_unix_call_dispatcher
+ */
+__ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
+                   /* FIXME: use x18 directly instead */
+                   "stp x0, x1, [sp, #-32]!\n\t"
+                   "stp x2, x30,[sp, #16]\n\t"
+                   "bl " __ASM_NAME("NtCurrentTeb") "\n\t"
+                   "mov x18, x0\n\t"
+                   "ldp x2, x30,[sp, #16]\n\t"
+                   "ldp x0, x1, [sp], #32\n\t"
+
+                   "ldr x10, [x18, #0x2f8]\n\t" /* arm64_thread_data()->syscall_frame */
+                   "stp x18, x19, [x10, #0x90]\n\t"
+                   "stp x20, x21, [x10, #0xa0]\n\t"
+                   "stp x22, x23, [x10, #0xb0]\n\t"
+                   "stp x24, x25, [x10, #0xc0]\n\t"
+                   "stp x26, x27, [x10, #0xd0]\n\t"
+                   "stp x28, x29, [x10, #0xe0]\n\t"
+                   "stp q8,  q9,  [x10, #0x1b0]\n\t"
+                   "stp q10, q11, [x10, #0x1d0]\n\t"
+                   "stp q12, q13, [x10, #0x1f0]\n\t"
+                   "stp q14, q15, [x10, #0x210]\n\t"
+                   "mov x9, sp\n\t"
+                   "stp x30, x9, [x10, #0xf0]\n\t"
+                   "mrs x9, NZCV\n\t"
+                   "stp x30, x9, [x10, #0x100]\n\t"
+                   "mov sp, x10\n\t"
+                   "ldr x16, [x0, x1, lsl 3]\n\t"
+                   "mov x0, x2\n\t"             /* args */
+                   "blr x16\n\t"
+                   "ldr w16, [sp, #0x10c]\n\t"  /* frame->restore_flags */
+                   "cbnz w16, .L__wine_syscall_dispatcher_return\n\t"
+                   "ldr x18, [sp, #0x90]\n\t"
+                   "ldp x16, x17, [sp, #0xf8]\n\t"
+                   "mov sp, x16\n\t"
+                   "ret x17" )
 
 
 /***********************************************************************

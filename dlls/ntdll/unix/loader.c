@@ -2190,7 +2190,7 @@ static void start_main_thread(void)
     if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
     load_apiset_dll();
     ntdll_init_syscalls( 0, &syscall_table, p__wine_syscall_dispatcher );
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)  || defined(__aarch64__)
     *p__wine_unix_call_dispatcher = __wine_unix_call_dispatcher;
 #endif
     server_init_process_done();
