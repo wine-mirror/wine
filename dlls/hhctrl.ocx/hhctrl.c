@@ -116,7 +116,7 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
     if (!env_len)
         return 0;
 
-    filename = heap_alloc(env_len * sizeof(WCHAR));
+    filename = malloc(env_len * sizeof(WCHAR));
     if (filename == NULL)
         return 0;
 
@@ -127,7 +127,7 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
     {
         *extra = 0;
         if (window)
-            *window = strdupW(extra+1);
+            *window = wcsdup(extra + 1);
     }
 
     extra = wcsstr(filename, delimW);
@@ -135,7 +135,7 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
     {
         *extra = 0;
         if (index)
-            *index = strdupW(extra+2);
+            *index = wcsdup(extra + 2);
     }
 
     GetFullPathNameW(filename, buflen, fullname, NULL);
@@ -146,7 +146,7 @@ static BOOL resolve_filename(const WCHAR *env_filename, WCHAR *fullname, DWORD b
         lstrcatW(fullname, filename);
     }
 
-    heap_free(filename);
+    free(filename);
 
     return (GetFileAttributesW(fullname) != INVALID_FILE_ATTRIBUTES);
 }
@@ -192,8 +192,8 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         info = CreateHelpViewer(info, fullname, caller);
         if(!info)
         {
-            heap_free(default_index);
-            heap_free(window);
+            free(default_index);
+            free(window);
             return NULL;
         }
 
@@ -202,7 +202,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         if(!info->WinType.pszType)
             info->WinType.pszType = info->stringsW.pszType = window;
         else
-            heap_free(window);
+            free(window);
 
         /* called to load a specified topic */
         switch(command)
@@ -228,7 +228,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         }
 
         res = NavigateToChm(info, info->pCHMInfo->szFile, index);
-        heap_free(default_index);
+        free(default_index);
 
         if(!res)
         {
@@ -281,14 +281,14 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         info = CreateHelpViewer(info, fullname, caller);
         if(!info)
         {
-            heap_free(window);
+            free(window);
             return NULL;
         }
 
         if(!info->WinType.pszType)
             info->WinType.pszType = info->stringsW.pszType = window;
         else
-            heap_free(window);
+            free(window);
 
         url = FindContextAlias(info->pCHMInfo, data);
         if(!url)
@@ -300,7 +300,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         }
 
         NavigateToUrl(info, url);
-        heap_free(url);
+        free(url);
         return info->WinType.hwndHelp;
     }
     case HH_PRETRANSLATEMESSAGE: {
@@ -329,7 +329,7 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         HHInfo *info = NULL;
 
         if (!filename && wintype->pszType)
-            window = strdupW(wintype->pszType);
+            window = wcsdup(wintype->pszType);
         else if (!filename || !resolve_filename(filename, fullname, MAX_PATH, NULL, &window) || !window)
         {
             WARN("can't find window name: %s\n", debugstr_w(filename));
@@ -338,12 +338,12 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         info = find_window(window);
         if (!info)
         {
-            info = heap_alloc_zero(sizeof(HHInfo));
+            info = calloc(1, sizeof(HHInfo));
             info->WinType.pszType = info->stringsW.pszType = window;
             list_add_tail(&window_list, &info->entry);
         }
         else
-            heap_free(window);
+            free(window);
 
         TRACE("Changing WINTYPE, fsValidMembers=0x%lx\n", wintype->fsValidMembers);
 
@@ -365,13 +365,13 @@ HWND WINAPI HtmlHelpW(HWND caller, LPCWSTR filename, UINT command, DWORD_PTR dat
         if (!info)
         {
             WARN("Could not find window named %s.\n", debugstr_w(window));
-            heap_free(window);
+            free(window);
             return (HWND)~0;
         }
 
         TRACE("Retrieving WINTYPE for %s.\n", debugstr_w(window));
         *wintype = info->WinType;
-        heap_free(window);
+        free(window);
         return 0;
     }
     default:
@@ -468,7 +468,7 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data
         {
             WCHAR *wdata = strdupAtoW( (const char *)data );
             result = HtmlHelpW( caller, wfile, command, (DWORD_PTR)wdata );
-            heap_free(wdata);
+            free(wdata);
             goto done;
         }
 
@@ -490,7 +490,7 @@ HWND WINAPI HtmlHelpA(HWND caller, LPCSTR filename, UINT command, DWORD_PTR data
 
     result = HtmlHelpW( caller, wfile, command, data );
 done:
-    heap_free(wfile);
+    free(wfile);
     return result;
 }
 
@@ -553,7 +553,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
         return 0;
 
     buflen = MultiByteToWideChar(CP_ACP, 0, szCmdLine, len, NULL, 0) + 1;
-    filename = heap_alloc(buflen * sizeof(WCHAR));
+    filename = malloc(buflen * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, szCmdLine, len, filename, buflen);
     filename[buflen-1] = 0;
 
@@ -563,7 +563,7 @@ int WINAPI doWinMain(HINSTANCE hInstance, LPSTR szCmdLine)
     else
         hwnd = HtmlHelpW(GetDesktopWindow(), filename, HH_DISPLAY_TOPIC, 0);
 
-    heap_free(filename);
+    free(filename);
 
     if (!hwnd)
     {

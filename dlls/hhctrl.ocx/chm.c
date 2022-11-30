@@ -33,25 +33,20 @@ static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
 {
     LPCSTR str;
     char **new_strings;
+    DWORD new_strings_size;
 
     if(!chm->strings_stream)
         return NULL;
 
     if(chm->strings_size <= (offset >> BLOCK_BITS)) {
-        chm->strings_size = (offset >> BLOCK_BITS)+1;
-        if(chm->strings) {
-            new_strings = heap_realloc_zero(chm->strings,
-                    chm->strings_size*sizeof(char*));
-            if(!new_strings)
-                return NULL;
-            chm->strings = new_strings;
-        }else {
-            chm->strings = heap_alloc_zero(
-                    chm->strings_size*sizeof(char*));
-            if(!chm->strings)
-                return NULL;
-        }
-
+        new_strings_size = (offset >> BLOCK_BITS) + 1;
+        new_strings = realloc(chm->strings, new_strings_size * sizeof(char*));
+        if(!new_strings)
+            return NULL;
+        memset(new_strings + chm->strings_size, 0,
+                (new_strings_size - chm->strings_size) * sizeof(char*));
+        chm->strings = new_strings;
+        chm->strings_size = new_strings_size;
     }
 
     if(!chm->strings[offset >> BLOCK_BITS]) {
@@ -66,13 +61,13 @@ static LPCSTR GetChmString(CHMInfo *chm, DWORD offset)
             return NULL;
         }
 
-        chm->strings[offset >> BLOCK_BITS] = heap_alloc(BLOCK_SIZE);
+        chm->strings[offset >> BLOCK_BITS] = malloc(BLOCK_SIZE);
 
         hres = IStream_Read(chm->strings_stream, chm->strings[offset >> BLOCK_BITS],
                             BLOCK_SIZE, &read);
         if(FAILED(hres)) {
             WARN("Read failed: %08lx\n", hres);
-            heap_free(chm->strings[offset >> BLOCK_BITS]);
+            free(chm->strings[offset >> BLOCK_BITS]);
             chm->strings[offset >> BLOCK_BITS] = NULL;
             return NULL;
         }
@@ -106,7 +101,7 @@ static BOOL ReadChmSystem(CHMInfo *chm)
     IStream_Read(stream, &ver, sizeof(ver), &read);
     TRACE("version is %lx\n", ver);
 
-    buf = heap_alloc(8*sizeof(DWORD));
+    buf = malloc(8 * sizeof(DWORD));
     buf_size = 8*sizeof(DWORD);
 
     while(1) {
@@ -115,7 +110,7 @@ static BOOL ReadChmSystem(CHMInfo *chm)
             break;
 
         if(entry.len > buf_size)
-            buf = heap_realloc(buf, buf_size=entry.len);
+            buf = realloc(buf, buf_size=entry.len);
 
         hres = IStream_Read(stream, buf, entry.len, &read);
         if(hres != S_OK)
@@ -124,17 +119,17 @@ static BOOL ReadChmSystem(CHMInfo *chm)
         switch(entry.code) {
         case 0x0:
             TRACE("TOC is %s\n", debugstr_an(buf, entry.len));
-            heap_free(chm->defToc);
+            free(chm->defToc);
             chm->defToc = strdupnAtoW(buf, entry.len);
             break;
         case 0x2:
             TRACE("Default topic is %s\n", debugstr_an(buf, entry.len));
-            heap_free(chm->defTopic);
+            free(chm->defTopic);
             chm->defTopic = strdupnAtoW(buf, entry.len);
             break;
         case 0x3:
             TRACE("Title is %s\n", debugstr_an(buf, entry.len));
-            heap_free(chm->defTitle);
+            free(chm->defTitle);
             chm->defTitle = strdupnAtoW(buf, entry.len);
             break;
         case 0x4:
@@ -150,7 +145,7 @@ static BOOL ReadChmSystem(CHMInfo *chm)
             break;
         case 0x6:
             TRACE("Compiled file is %s\n", debugstr_an(buf, entry.len));
-            heap_free(chm->compiledFile);
+            free(chm->compiledFile);
             chm->compiledFile = strdupnAtoW(buf, entry.len);
             break;
         case 0x9:
@@ -170,7 +165,7 @@ static BOOL ReadChmSystem(CHMInfo *chm)
         }
     }
 
-    heap_free(buf);
+    free(buf);
     IStream_Release(stream);
 
     return SUCCEEDED(hres);
@@ -199,12 +194,12 @@ LPWSTR FindContextAlias(CHMInfo *chm, DWORD index)
         return NULL;
     }
 
-    buf = heap_alloc(size);
+    buf = malloc(size);
     hres = IStream_Read(ivb_stream, buf, size, &read);
     IStream_Release(ivb_stream);
     if(FAILED(hres)) {
         WARN("Read failed: %08lx\n", hres);
-        heap_free(buf);
+        free(buf);
         return NULL;
     }
 
@@ -217,7 +212,7 @@ LPWSTR FindContextAlias(CHMInfo *chm, DWORD index)
         }
     }
 
-    heap_free(buf);
+    free(buf);
 
     TRACE("returning %s\n", debugstr_a(ret));
     return strdupAtoW(ret);
@@ -235,15 +230,15 @@ static WCHAR *FindHTMLHelpSetting(HHInfo *info, const WCHAR *extW)
     WCHAR *filename;
     HRESULT hr;
 
-    filename = heap_alloc( (lstrlenW(info->pCHMInfo->compiledFile)
-                            + lstrlenW(periodW) + lstrlenW(extW) + 1) * sizeof(WCHAR) );
+    filename = malloc( (wcslen(info->pCHMInfo->compiledFile)
+                        + wcslen(periodW) + wcslen(extW) + 1) * sizeof(WCHAR) );
     lstrcpyW(filename, info->pCHMInfo->compiledFile);
     lstrcatW(filename, periodW);
     lstrcatW(filename, extW);
     hr = IStorage_OpenStream(pStorage, filename, NULL, STGM_READ, 0, &pStream);
     if (FAILED(hr))
     {
-        heap_free(filename);
+        free(filename);
         return strdupAtoW("");
     }
     IStream_Release(pStream);
@@ -253,7 +248,7 @@ static WCHAR *FindHTMLHelpSetting(HHInfo *info, const WCHAR *extW)
 static inline WCHAR *MergeChmString(LPCWSTR src, WCHAR **dst)
 {
     if(*dst == NULL)
-        *dst = strdupW(src);
+        *dst = wcsdup(src);
     return *dst;
 }
 
@@ -326,18 +321,18 @@ static inline WCHAR *ConvertChmString(HHInfo *info, DWORD id)
 
 static inline void wintype_free(HH_WINTYPEW *wintype)
 {
-    heap_free((void *)wintype->pszType);
-    heap_free((void *)wintype->pszCaption);
-    heap_free(wintype->paInfoTypes);
-    heap_free((void *)wintype->pszToc);
-    heap_free((void *)wintype->pszIndex);
-    heap_free((void *)wintype->pszFile);
-    heap_free((void *)wintype->pszHome);
-    heap_free((void *)wintype->pszJump1);
-    heap_free((void *)wintype->pszJump2);
-    heap_free((void *)wintype->pszUrlJump1);
-    heap_free((void *)wintype->pszUrlJump2);
-    heap_free((void *)wintype->pszCustomTabs);
+    free((void *)wintype->pszType);
+    free((void *)wintype->pszCaption);
+    free(wintype->paInfoTypes);
+    free((void *)wintype->pszToc);
+    free((void *)wintype->pszIndex);
+    free((void *)wintype->pszFile);
+    free((void *)wintype->pszHome);
+    free((void *)wintype->pszJump1);
+    free((void *)wintype->pszJump2);
+    free((void *)wintype->pszUrlJump1);
+    free((void *)wintype->pszUrlJump2);
+    free((void *)wintype->pszCustomTabs);
 }
 
 /* Loads the HH_WINTYPE data from the CHM file
@@ -452,9 +447,9 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     {
         /* no defined window types so use (hopefully) sane defaults */
         static const WCHAR defaultwinW[] = {'d','e','f','a','u','l','t','w','i','n','\0'};
-        wintype.pszType    = strdupW(info->pCHMInfo->defWindow ? info->pCHMInfo->defWindow : defaultwinW);
-        wintype.pszToc     = strdupW(info->pCHMInfo->defToc ? info->pCHMInfo->defToc : empty);
-        wintype.pszIndex   = strdupW(empty);
+        wintype.pszType    = wcsdup(info->pCHMInfo->defWindow ? info->pCHMInfo->defWindow : defaultwinW);
+        wintype.pszToc     = wcsdup(info->pCHMInfo->defToc ? info->pCHMInfo->defToc : empty);
+        wintype.pszIndex   = wcsdup(empty);
         wintype.fsValidMembers = 0;
         wintype.fsWinProperties = HHWIN_PROP_TRI_PANE;
         wintype.dwStyles = WS_POPUP;
@@ -466,9 +461,9 @@ BOOL LoadWinTypeFromCHM(HHInfo *info)
     /* merge the new data with any pre-existing HH_WINTYPE structure */
     MergeChmProperties(&wintype, info, FALSE);
     if (!info->WinType.pszCaption)
-        info->WinType.pszCaption = info->stringsW.pszCaption = strdupW(info->pCHMInfo->defTitle ? info->pCHMInfo->defTitle : empty);
+        info->WinType.pszCaption = info->stringsW.pszCaption = wcsdup(info->pCHMInfo->defTitle ? info->pCHMInfo->defTitle : empty);
     if (!info->WinType.pszFile)
-        info->WinType.pszFile    = info->stringsW.pszFile    = strdupW(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : empty);
+        info->WinType.pszFile    = info->stringsW.pszFile    = wcsdup(info->pCHMInfo->defTopic ? info->pCHMInfo->defTopic : empty);
     if (!info->WinType.pszToc)
         info->WinType.pszToc     = info->stringsW.pszToc     = FindHTMLHelpSetting(info, toc_extW);
     if (!info->WinType.pszIndex)
@@ -524,14 +519,14 @@ void SetChmPath(ChmPath *file, LPCWSTR base_file, LPCWSTR path)
 
         PathCombineW(chm_file, base_path, rel_path);
 
-        file->chm_file = strdupW(chm_file);
+        file->chm_file = wcsdup(chm_file);
         ptr += 2;
     }else {
-        file->chm_file = strdupW(base_file);
+        file->chm_file = wcsdup(base_file);
         ptr = path;
     }
 
-    file->chm_index = strdupW(ptr);
+    file->chm_index = wcsdup(ptr);
 
     TRACE("ChmFile = {%s %s}\n", debugstr_w(file->chm_file), debugstr_w(file->chm_index));
 }
@@ -630,12 +625,12 @@ CHMInfo *OpenCHM(LPCWSTR szFile)
 
     static const WCHAR wszSTRINGS[] = {'#','S','T','R','I','N','G','S',0};
 
-    if (!(ret = heap_alloc_zero(sizeof(CHMInfo))))
+    if (!(ret = calloc(1, sizeof(CHMInfo))))
         return NULL;
     ret->codePage = CP_ACP;
 
-    if (!(ret->szFile = strdupW(szFile))) {
-        heap_free(ret);
+    if (!(ret->szFile = wcsdup(szFile))) {
+        free(ret);
         return NULL;
     }
 
@@ -682,17 +677,17 @@ CHMInfo *CloseCHM(CHMInfo *chm)
         DWORD i;
 
         for(i=0; i<chm->strings_size; i++)
-            heap_free(chm->strings[i]);
+            free(chm->strings[i]);
     }
 
-    heap_free(chm->strings);
-    heap_free(chm->defWindow);
-    heap_free(chm->defTitle);
-    heap_free(chm->defTopic);
-    heap_free(chm->defToc);
-    heap_free(chm->szFile);
-    heap_free(chm->compiledFile);
-    heap_free(chm);
+    free(chm->strings);
+    free(chm->defWindow);
+    free(chm->defTitle);
+    free(chm->defTopic);
+    free(chm->defToc);
+    free(chm->szFile);
+    free(chm->compiledFile);
+    free(chm);
 
     return NULL;
 }

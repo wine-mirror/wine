@@ -179,7 +179,7 @@ static LPWSTR HH_LoadString(DWORD dwID)
 
     iSize = LoadStringW(hhctrl_hinstance, dwID, (LPWSTR)&stringresource, 0);
 
-    string = heap_alloc((iSize + 2) * sizeof(WCHAR)); /* some strings (tab text) needs double-null termination */
+    string = malloc((iSize + 2) * sizeof(WCHAR)); /* some strings (tab text) needs double-null termination */
     memcpy(string, stringresource, iSize*sizeof(WCHAR));
     string[iSize] = 0;
 
@@ -225,8 +225,8 @@ BOOL NavigateToUrl(HHInfo *info, LPCWSTR surl)
     SetChmPath(&chm_path, info->pCHMInfo->szFile, surl);
     ret = NavigateToChm(info, chm_path.chm_file, chm_path.chm_index);
 
-    heap_free(chm_path.chm_file);
-    heap_free(chm_path.chm_index);
+    free(chm_path.chm_file);
+    free(chm_path.chm_index);
 
     return ret;
 }
@@ -844,7 +844,7 @@ static void DisplayPopupMenu(HHInfo *info)
         item.dwTypeData = HH_LoadString(IDS_HIDETABS);
 
     SetMenuItemInfoW(submenu, IDTB_EXPAND, FALSE, &item);
-    heap_free(item.dwTypeData);
+    free(item.dwTypeData);
 
     /* Find the index toolbar button */
     button.cbSize = sizeof(TBBUTTONINFOW);
@@ -1029,7 +1029,7 @@ static BOOL HH_AddToolbar(HHInfo *pHHInfo)
         szBuf[dwLen + 1] = 0; /* Double-null terminate */
 
         buttons[dwIndex].iString = (DWORD)SendMessageW(hToolbar, TB_ADDSTRINGW, 0, (LPARAM)szBuf);
-        heap_free(szBuf);
+        free(szBuf);
     }
 
     SendMessageW(hToolbar, TB_ADDBUTTONSW, dwNumButtons, (LPARAM)buttons);
@@ -1075,7 +1075,7 @@ static DWORD NP_CreateTab(HINSTANCE hInstance, HWND hwndTabCtrl, DWORD index)
 
     ret = SendMessageW( hwndTabCtrl, TCM_INSERTITEMW, index, (LPARAM)&tie );
 
-    heap_free(tabText);
+    free(tabText);
     return ret;
 }
 
@@ -1760,31 +1760,31 @@ static BOOL CreateViewer(HHInfo *pHHInfo)
 
 void wintype_stringsW_free(struct wintype_stringsW *stringsW)
 {
-    heap_free(stringsW->pszType);
-    heap_free(stringsW->pszCaption);
-    heap_free(stringsW->pszToc);
-    heap_free(stringsW->pszIndex);
-    heap_free(stringsW->pszFile);
-    heap_free(stringsW->pszHome);
-    heap_free(stringsW->pszJump1);
-    heap_free(stringsW->pszJump2);
-    heap_free(stringsW->pszUrlJump1);
-    heap_free(stringsW->pszUrlJump2);
+    free(stringsW->pszType);
+    free(stringsW->pszCaption);
+    free(stringsW->pszToc);
+    free(stringsW->pszIndex);
+    free(stringsW->pszFile);
+    free(stringsW->pszHome);
+    free(stringsW->pszJump1);
+    free(stringsW->pszJump2);
+    free(stringsW->pszUrlJump1);
+    free(stringsW->pszUrlJump2);
 }
 
 void wintype_stringsA_free(struct wintype_stringsA *stringsA)
 {
-    heap_free(stringsA->pszType);
-    heap_free(stringsA->pszCaption);
-    heap_free(stringsA->pszToc);
-    heap_free(stringsA->pszIndex);
-    heap_free(stringsA->pszFile);
-    heap_free(stringsA->pszHome);
-    heap_free(stringsA->pszJump1);
-    heap_free(stringsA->pszJump2);
-    heap_free(stringsA->pszUrlJump1);
-    heap_free(stringsA->pszUrlJump2);
-    heap_free(stringsA->pszCustomTabs);
+    free(stringsA->pszType);
+    free(stringsA->pszCaption);
+    free(stringsA->pszToc);
+    free(stringsA->pszIndex);
+    free(stringsA->pszFile);
+    free(stringsA->pszHome);
+    free(stringsA->pszJump1);
+    free(stringsA->pszJump2);
+    free(stringsA->pszUrlJump1);
+    free(stringsA->pszUrlJump2);
+    free(stringsA->pszCustomTabs);
 }
 
 void ReleaseHelpViewer(HHInfo *info)
@@ -1812,7 +1812,7 @@ void ReleaseHelpViewer(HHInfo *info)
     if(info->WinType.hwndHelp)
         DestroyWindow(info->WinType.hwndHelp);
 
-    heap_free(info);
+    free(info);
     OleUninitialize();
 }
 
@@ -1823,7 +1823,7 @@ HHInfo *CreateHelpViewer(HHInfo *info, LPCWSTR filename, HWND caller)
 
     if(!info)
     {
-        info = heap_alloc_zero(sizeof(HHInfo));
+        info = calloc(1, sizeof(HHInfo));
         list_add_tail(&window_list, &info->entry);
     }
 
@@ -1894,7 +1894,7 @@ WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_p
     int len, tmp_len = 0;
     WCHAR *unicode_text;
 
-    tmp = heap_alloc(html_fragment_len+1);
+    tmp = malloc(html_fragment_len + 1);
     while(1)
     {
         symbol = 0;
@@ -1945,9 +1945,9 @@ WCHAR *decode_html(const char *html_fragment, int html_fragment_len, UINT code_p
     tmp[tmp_len++] = 0; /* NULL-terminate the string */
 
     len = MultiByteToWideChar(code_page, 0, tmp, tmp_len, NULL, 0);
-    unicode_text = heap_alloc(len*sizeof(WCHAR));
+    unicode_text = malloc(len * sizeof(WCHAR));
     MultiByteToWideChar(code_page, 0, tmp, tmp_len, unicode_text, len);
-    heap_free(tmp);
+    free(tmp);
     return unicode_text;
 }
 

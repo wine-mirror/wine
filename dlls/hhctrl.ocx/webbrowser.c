@@ -81,7 +81,7 @@ static ULONG STDMETHODCALLTYPE Site_Release(IOleClientSite *iface)
             IOleObject_Release(This->ole_obj);
         if(This->web_browser)
             IWebBrowser2_Release(This->web_browser);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -674,7 +674,7 @@ BOOL InitWebBrowser(HHInfo *info, HWND hwndParent)
     HRESULT hr;
     RECT rc;
 
-    container = heap_alloc_zero(sizeof(*container));
+    container = calloc(1, sizeof(*container));
     if (!container)
         return FALSE;
 

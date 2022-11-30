@@ -41,10 +41,10 @@ static void free_content_item(ContentItem *item)
 
         free_content_item(item->child);
 
-        heap_free(item->name);
-        heap_free(item->local);
-        heap_free(item->merge.chm_file);
-        heap_free(item->merge.chm_index);
+        free(item->name);
+        free(item->local);
+        free(item->merge.chm_file);
+        free(item->merge.chm_index);
 
         item = next;
     }
@@ -97,7 +97,7 @@ static void parse_obj_node_param(ContentItem *item, ContentItem *hhc_root, const
 
     if(param == &merge) {
         SetChmPath(&item->merge, hhc_root->merge.chm_file, merge);
-        heap_free(merge);
+        free(merge);
     }
 }
 
@@ -141,7 +141,7 @@ static ContentItem *parse_sitemap_object(HHInfo *info, stream_t *stream, Content
     strbuf_init(&node);
     strbuf_init(&node_name);
 
-    item = heap_alloc_zero(sizeof(ContentItem));
+    item = calloc(1, sizeof(ContentItem));
 
     while(next_node(stream, &node)) {
         get_node_name(&node, &node_name);
@@ -306,7 +306,7 @@ void InitContent(HHInfo *info)
     IStream *stream;
     insert_type_t insert_type;
 
-    info->content = heap_alloc_zero(sizeof(ContentItem));
+    info->content = calloc(1, sizeof(ContentItem));
     SetChmPath(&info->content->merge, info->pCHMInfo->szFile, info->WinType.pszToc);
 
     stream = GetChmStream(info->pCHMInfo, info->pCHMInfo->szFile, &info->content->merge);

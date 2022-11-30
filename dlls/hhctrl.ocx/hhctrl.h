@@ -40,7 +40,6 @@
 #endif
 
 #include "wine/itss.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 #define WB_GOBACK     0
@@ -245,26 +244,6 @@ HHInfo *find_window(const WCHAR *window) DECLSPEC_HIDDEN;
 
 /* memory allocation functions */
 
-static inline void * __WINE_ALLOC_SIZE(2) heap_realloc_zero(void *mem, size_t len)
-{
-    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, len);
-}
-
-static inline LPWSTR strdupW(LPCWSTR str)
-{
-    LPWSTR ret;
-    int size;
-
-    if(!str)
-        return NULL;
-
-    size = (lstrlenW(str)+1)*sizeof(WCHAR);
-    ret = heap_alloc(size);
-    memcpy(ret, str, size);
-
-    return ret;
-}
-
 static inline LPWSTR strdupnAtoW(LPCSTR str, LONG lenA)
 {
     LPWSTR ret;
@@ -281,7 +260,7 @@ static inline LPWSTR strdupnAtoW(LPCSTR str, LONG lenA)
     }
 
     len = MultiByteToWideChar(CP_ACP, 0, str, lenA, NULL, 0)+1; /* +1 for null pad */
-    ret = heap_alloc(len*sizeof(WCHAR));
+    ret = malloc(len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, str, lenA, ret, len);
     ret[len-1] = 0;
 
@@ -302,7 +281,7 @@ static inline LPSTR strdupWtoA(LPCWSTR str)
         return NULL;
 
     len = WideCharToMultiByte(CP_ACP, 0, str, -1, NULL, 0, NULL, NULL);
-    ret = heap_alloc(len);
+    ret = malloc(len);
     WideCharToMultiByte(CP_ACP, 0, str, -1, ret, len, NULL, NULL);
     return ret;
 }
