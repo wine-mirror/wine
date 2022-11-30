@@ -1339,7 +1339,7 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
             if (!keys[vkey & 0xff].vkey)
             {
                 keys[vkey & 0xff].vkey = vkey;
-                keys[vkey & 0xff].scan = keyc2scan[keycode] & 0xff;
+                keys[vkey & 0xff].scan = keyc2scan[keycode];
             }
 
             if (event->xkeymap.key_vector[i] & (1<<j)) keys[vkey & 0xff].pressed = TRUE;
@@ -1374,8 +1374,8 @@ BOOL X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
             {
                 TRACE( "Sending KEYUP for a modifier %#.2x\n", vkey);
                 flags = KEYEVENTF_KEYUP;
-                if (keys[vkey].vkey & 0x1000) flags |= KEYEVENTF_EXTENDEDKEY;
-                X11DRV_send_keyboard_input( keymapnotify_hwnd, vkey, keys[vkey].scan, flags, NtGetTickCount() );
+                if (keys[vkey].scan & 0x100) flags |= KEYEVENTF_EXTENDEDKEY;
+                X11DRV_send_keyboard_input( keymapnotify_hwnd, vkey, keys[vkey].scan & 0xff, flags, NtGetTickCount() );
             }
 
             update_key_state( keystate, vkey, keys[vkey].pressed );
@@ -1461,7 +1461,7 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     char buf[24];
     char *Str = buf;
     KeySym keysym = 0;
-    WORD vkey = 0, bScan;
+    WORD vkey = 0, scan;
     DWORD dwFlags;
     int ascii_chars;
     XIC xic = X11DRV_get_ic( hwnd );
@@ -1528,10 +1528,10 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
     vkey = EVENT_event_to_vkey(xic,event);
     /* X returns keycode 0 for composed characters */
     if (!vkey && ascii_chars) vkey = VK_NONAME;
-    bScan = keyc2scan[event->keycode] & 0xFF;
+    scan = keyc2scan[event->keycode];
 
-    TRACE_(key)("keycode %u converted to vkey 0x%X scan %02x\n",
-                event->keycode, vkey, bScan);
+    TRACE_(key)("keycode %u converted to vkey 0x%X scan %04x\n",
+                event->keycode, vkey, scan);
 
     pthread_mutex_unlock( &kbd_mutex );
 
@@ -1539,11 +1539,11 @@ BOOL X11DRV_KeyEvent( HWND hwnd, XEvent *xev )
 
     dwFlags = 0;
     if ( event->type == KeyRelease ) dwFlags |= KEYEVENTF_KEYUP;
-    if ( vkey & 0x100 )              dwFlags |= KEYEVENTF_EXTENDEDKEY;
+    if ( scan & 0x100 ) dwFlags |= KEYEVENTF_EXTENDEDKEY;
 
     update_lock_state( hwnd, vkey, event->state, event_time );
 
-    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, bScan, dwFlags, event_time );
+    X11DRV_send_keyboard_input( hwnd, vkey & 0xff, scan & 0xff, dwFlags, event_time );
     return TRUE;
 }
 
