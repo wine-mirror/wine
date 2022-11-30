@@ -226,7 +226,6 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
 {
     OBJECT_ATTRIBUTES attr;
     NTSTATUS status;
-    BOOL force_wow32 = is_win64 && (access & KEY_WOW64_32KEY);
     HANDLE subkey;
     WCHAR *buffer = name.Buffer;
     DWORD i, len = name.Length / sizeof(WCHAR);
@@ -240,7 +239,7 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    if (!force_wow32)
+    if (!(is_win64 && (access & KEY_WOW64_32KEY)))
     {
         if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
         status = NtOpenKeyEx( (HANDLE *)retkey, access, &attr, options );
@@ -278,16 +277,14 @@ static NTSTATUS open_key( HKEY *retkey, HKEY root, UNICODE_STRING name, DWORD op
         buffer += i;
         len -= i;
 
-        if (force_wow32)
+        name.Buffer = buffer;
+        name.Length = len * sizeof(WCHAR);
+        if (!is_wow6432node( &name ))
         {
-            name.Buffer = buffer;
-            name.Length = len * sizeof(WCHAR);
-            if (is_wow6432node( &name )) force_wow32 = FALSE;
-            else if ((subkey = open_wow6432node( attr.RootDirectory )))
+            if ((subkey = open_wow6432node( attr.RootDirectory )))
             {
                 NtClose( attr.RootDirectory );
                 attr.RootDirectory = subkey;
-                force_wow32 = FALSE;
             }
         }
     }
