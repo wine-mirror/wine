@@ -4424,7 +4424,7 @@ struct wined3d_resource
     UINT height;
     UINT depth;
     UINT size;
-    DWORD priority;
+    unsigned int priority;
     void *heap_memory;
 
     uint32_t pin_sysmem : 1;

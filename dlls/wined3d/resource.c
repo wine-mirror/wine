@@ -265,9 +265,9 @@ void resource_unload(struct wined3d_resource *resource)
         ERR("Resource %p is being unloaded while mapped.\n", resource);
 }
 
-DWORD CDECL wined3d_resource_set_priority(struct wined3d_resource *resource, DWORD priority)
+unsigned int CDECL wined3d_resource_set_priority(struct wined3d_resource *resource, unsigned int priority)
 {
-    DWORD prev;
+    unsigned int prev;
 
     if (!(resource->usage & WINED3DUSAGE_MANAGED))
     {
@@ -281,7 +281,7 @@ DWORD CDECL wined3d_resource_set_priority(struct wined3d_resource *resource, DWO
     return prev;
 }
 
-DWORD CDECL wined3d_resource_get_priority(const struct wined3d_resource *resource)
+unsigned int CDECL wined3d_resource_get_priority(const struct wined3d_resource *resource)
 {
     TRACE("resource %p, returning %u.\n", resource, resource->priority);
     return resource->priority;
