@@ -145,7 +145,12 @@ static const char readystate_doc_ie9_str[] =
     "<body><iframe id=\"iframe\"></iframe></body></html>";
 
 static const char img_doc_str[] =
-    "<html><body><img id=\"imgid\"></img></body></html>";
+    "<html><head><meta http-equiv=\"x-ua-compatible\" content=\"IE=8\" /></head>"
+    "<body><img id=\"imgid\"></img></body></html>";
+
+static const char img_doc_ie9_str[] =
+    "<html><head><meta http-equiv=\"x-ua-compatible\" content=\"IE=9\" /></head>"
+    "<body><img id=\"imgid\"></img></body></html>";
 
 static const char input_image_doc_str[] =
     "<html><body><input type=\"image\" id=\"inputid\"></input></body></html>";
@@ -1083,7 +1088,7 @@ static HRESULT WINAPI img_onload(IDispatchEx *iface, DISPID id, LCID lcid, WORD 
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     CHECK_EXPECT(img_onload);
-    test_event_args(&DIID_DispHTMLImg, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_args(document_mode < 9 ? &DIID_DispHTMLImg : NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     test_event_src(L"IMG");
     return S_OK;
 }
@@ -1119,7 +1124,7 @@ static HRESULT WINAPI unattached_img_onload(IDispatchEx *iface, DISPID id, LCID 
 
     CHECK_EXPECT(img_onload);
 
-    test_event_args(&DIID_DispHTMLImg, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_args(document_mode < 9 ? &DIID_DispHTMLImg : NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     event_src = get_event_src();
     todo_wine
         ok(!event_src, "event_src != NULL\n");
@@ -1134,7 +1139,7 @@ static HRESULT WINAPI img_onerror(IDispatchEx *iface, DISPID id, LCID lcid, WORD
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     CHECK_EXPECT(img_onerror);
-    test_event_args(&DIID_DispHTMLImg, id, wFlags, pdp, pvarRes, pei, pspCaller);
+    test_event_args(document_mode < 9 ? &DIID_DispHTMLImg : NULL, id, wFlags, pdp, pvarRes, pei, pspCaller);
     test_event_src(L"IMG");
     return S_OK;
 }
@@ -2266,13 +2271,13 @@ static void test_imgload(IHTMLDocument2 *doc)
 {
     IHTMLImgElement *img;
     IHTMLElement *elem;
+    VARIANT_BOOL b;
     VARIANT v;
     BSTR str;
     HRESULT hres;
 
     elem = get_elem_id(doc, L"imgid");
     hres = IHTMLElement_QueryInterface(elem, &IID_IHTMLImgElement, (void**)&img);
-    IHTMLElement_Release(elem);
     ok(hres == S_OK, "Could not get IHTMLImgElement iface: %08lx\n", hres);
 
     V_VT(&v) = VT_EMPTY;
@@ -2307,11 +2312,46 @@ static void test_imgload(IHTMLDocument2 *doc)
     str = SysAllocString(L"http://test.winehq.org/tests/winehq_snapshot/index_files/winehq_logo_text.png");
     hres = IHTMLImgElement_put_src(img, str);
     ok(hres == S_OK, "put_src failed: %08lx\n", hres);
-    SysFreeString(str);
 
     SET_EXPECT(img_onload);
     pump_msgs(&called_img_onload);
     CHECK_CALLED(img_onload);
+
+    hres = IHTMLImgElement_get_complete(img, &b);
+    ok(hres == S_OK, "get_complete failed: %08lx\n", hres);
+    ok(b == VARIANT_TRUE, "complete = %x\n", b);
+
+    /* cached images send synchronous load event in legacy modes */
+    if(document_mode < 9)
+        SET_EXPECT(img_onload);
+    hres = IHTMLImgElement_put_src(img, str);
+    ok(hres == S_OK, "put_src failed: %08lx\n", hres);
+    if(document_mode < 9) {
+        CHECK_CALLED(img_onload);
+        pump_msgs(NULL);
+    }else {
+        SET_EXPECT(img_onload);
+        pump_msgs(&called_img_onload);
+        CHECK_CALLED(img_onload);
+    }
+
+    if(document_mode < 9)
+        SET_EXPECT(img_onload);
+    V_VT(&v) = VT_BSTR;
+    V_BSTR(&v) = str;
+    str = SysAllocString(L"src");
+    hres = IHTMLElement_setAttribute(elem, str, v, 0);
+    ok(hres == S_OK, "setAttribute failed: %08lx\n", hres);
+    SysFreeString(str);
+    VariantClear(&v);
+    if(document_mode < 9) {
+        CHECK_CALLED(img_onload);
+        pump_msgs(NULL);
+    }else {
+        SET_EXPECT(img_onload);
+        pump_msgs(&called_img_onload);
+        CHECK_CALLED(img_onload);
+    }
 
     SET_EXPECT(img_onerror);
 
@@ -2325,6 +2365,7 @@ static void test_imgload(IHTMLDocument2 *doc)
     CHECK_CALLED(img_onerror);
 
     IHTMLImgElement_Release(img);
+    IHTMLElement_Release(elem);
 
     /* test onload on unattached image */
     hres = IHTMLDocument2_createElement(doc, (str = SysAllocString(L"img")), &elem);
@@ -5846,6 +5887,7 @@ START_TEST(events)
             run_test_from_res(L"blank_ie10.html", test_visibilitychange);
             run_test_from_res(L"iframe.html", test_unload_event);
             run_test(empty_doc_ie9_str, test_create_event);
+            run_test(img_doc_ie9_str, test_imgload);
         }
 
         test_empty_document();

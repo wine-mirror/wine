@@ -879,6 +879,7 @@ static const NodeImplVtbl HTMLAnchorElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
+    HTMLElement_dispatch_nsevent_hook,
     HTMLAnchorElement_handle_event,
     HTMLElement_get_attr_col,
     NULL,

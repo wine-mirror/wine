@@ -157,6 +157,7 @@ static const NodeImplVtbl HTMLGenericElementImplVtbl = {
     HTMLGenericElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
+    HTMLElement_dispatch_nsevent_hook,
     HTMLElement_handle_event,
     HTMLElement_get_attr_col
 };

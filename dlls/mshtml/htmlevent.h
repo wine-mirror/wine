@@ -17,6 +17,7 @@
  */
 
 typedef enum {
+    EVENTID_INVALID = -1,
     EVENTID_DOMCONTENTLOADED,
     EVENTID_ABORT,
     EVENTID_AFTERPRINT,
@@ -131,6 +132,7 @@ typedef struct {
     dispex_static_data_vtbl_t dispex_vtbl;
     nsISupports *(*get_gecko_target)(DispatchEx*);
     void (*bind_event)(DispatchEx*,eventid_t);
+    HRESULT (*dispatch_nsevent_hook)(DispatchEx*,DOMEvent*);
     EventTarget *(*get_parent_event_target)(DispatchEx*);
     HRESULT (*handle_event_default)(DispatchEx*,eventid_t,nsIDOMEvent*,BOOL*);
     ConnectionPointContainer *(*get_cp_container)(DispatchEx*);

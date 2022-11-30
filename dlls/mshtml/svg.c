@@ -198,6 +198,7 @@ static const NodeImplVtbl SVGElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
+    HTMLElement_dispatch_nsevent_hook,
     NULL,
     HTMLElement_get_attr_col,
 };
@@ -739,6 +740,7 @@ static const NodeImplVtbl SVGSVGElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
+    HTMLElement_dispatch_nsevent_hook,
     NULL,
     HTMLElement_get_attr_col,
 };
@@ -908,6 +910,7 @@ static const NodeImplVtbl SVGCircleElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
+    HTMLElement_dispatch_nsevent_hook,
     NULL,
     HTMLElement_get_attr_col,
 };
@@ -1152,6 +1155,7 @@ static const NodeImplVtbl SVGTSpanElementImplVtbl = {
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
+    HTMLElement_dispatch_nsevent_hook,
     NULL,
     HTMLElement_get_attr_col,
 };
