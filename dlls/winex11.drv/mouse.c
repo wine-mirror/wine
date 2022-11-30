@@ -644,6 +644,7 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
 static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPUT *input )
 {
     struct x11drv_win_data *data;
+    Window win = 0;
 
     input->type = INPUT_MOUSE;
 
@@ -665,13 +666,14 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
     }
 
     if (!(data = get_win_data( hwnd ))) return;
+    win = data->whole_window;
+    release_win_data( data );
     if (InterlockedExchangePointer( (void **)&cursor_window, hwnd ) != hwnd ||
         input->u.mi.time - last_cursor_change > 100)
     {
-        sync_window_cursor( data->whole_window );
+        sync_window_cursor( win );
         last_cursor_change = input->u.mi.time;
     }
-    release_win_data( data );
 
     if (hwnd != NtUserGetDesktopWindow())
     {
