@@ -1921,12 +1921,24 @@ static BOOL handle_syscall_fault( ucontext_t *sigcontext, EXCEPTION_RECORD *rec,
  */
 static BOOL handle_syscall_trap( ucontext_t *sigcontext )
 {
-    extern void __wine_syscall_dispatcher_prolog_end(void);
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
 
     /* disallow single-stepping through a syscall */
 
-    if ((void *)RIP_sig( sigcontext ) != __wine_syscall_dispatcher) return FALSE;
+    if ((void *)RIP_sig( sigcontext ) == __wine_syscall_dispatcher)
+    {
+        extern void __wine_syscall_dispatcher_prolog_end(void);
+
+        RIP_sig( sigcontext ) = (ULONG64)__wine_syscall_dispatcher_prolog_end;
+    }
+    else if ((void *)RIP_sig( sigcontext ) == __wine_unix_call_dispatcher)
+    {
+        extern void __wine_unix_call_dispatcher_prolog_end(void);
+
+        RIP_sig( sigcontext ) = (ULONG64)__wine_unix_call_dispatcher_prolog_end;
+        R10_sig( sigcontext ) = RCX_sig( sigcontext );
+    }
+    else return FALSE;
 
     TRACE_(seh)( "ignoring trap in syscall rip=%p eflags=%08x\n",
                  (void *)RIP_sig(sigcontext), (ULONG)EFL_sig(sigcontext) );
@@ -1935,7 +1947,6 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext )
     frame->eflags = EFL_sig(sigcontext);
     frame->restore_flags = CONTEXT_CONTROL;
 
-    RIP_sig( sigcontext ) = (ULONG64)__wine_syscall_dispatcher_prolog_end;
     RCX_sig( sigcontext ) = (ULONG64)frame;
     RSP_sig( sigcontext ) += sizeof(ULONG64);
     EFL_sig( sigcontext ) &= ~0x100;  /* clear single-step flag */
@@ -2617,8 +2628,12 @@ __ASM_GLOBAL_FUNC( signal_exit_thread,
  *           __wine_syscall_dispatcher
  */
 __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
+#ifdef __APPLE__
                    "movq %gs:0x30,%rcx\n\t"
-                   "movq 0x328(%rcx),%rcx\n\t"     /* amd64_thread_data()->syscall_frame */
+                   "movq 0x328(%rcx),%rcx\n\t"
+#else
+                   "movq %gs:0x328,%rcx\n\t"       /* amd64_thread_data()->syscall_frame */
+#endif
                    "popq 0x70(%rcx)\n\t"           /* frame->rip */
                    __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
                    __ASM_CFI_REG_IS_AT2(rip, rcx, 0xf0,0x00)
@@ -2733,10 +2748,11 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "subq $0x20,%rsp\n\t"
                    "movq (%rbx),%r10\n\t"          /* table->ServiceTable */
                    "callq *(%r10,%rax,8)\n\t"
-                   "leaq -0x98(%rbp),%rcx\n"
+                   "leaq -0x98(%rbp),%rcx\n\t"
                    /* $rcx is now pointing to "frame" again */
-                   __ASM_CFI(".cfi_restore_state\n\t")
-                   "2:\tmovl 0x94(%rcx),%edx\n\t"  /* frame->restore_flags */
+                   __ASM_CFI(".cfi_restore_state\n")
+                   ".L__wine_syscall_dispatcher_return:\n\t"
+                   "movl 0x94(%rcx),%edx\n\t"  /* frame->restore_flags */
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"
@@ -2825,7 +2841,104 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
                    "movq %rdx,%rax\n\t"
-                   "jmp 2b" )
+                   "jmp .L__wine_syscall_dispatcher_return" )
+
+
+/***********************************************************************
+ *           __wine_unix_call_dispatcher
+ */
+__ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
+                   "movq %rcx,%r10\n\t"
+#ifdef __APPLE__
+                   "movq %gs:0x30,%rcx\n\t"
+                   "movq 0x328(%rcx),%rcx\n\t"
+#else
+                   "movq %gs:0x328,%rcx\n\t"       /* amd64_thread_data()->syscall_frame */
+#endif
+                   "popq 0x70(%rcx)\n\t"           /* frame->rip */
+                   __ASM_CFI(".cfi_adjust_cfa_offset -8\n\t")
+                   __ASM_CFI_REG_IS_AT2(rip, rcx, 0xf0,0x00)
+                   "movl $0,0x94(%rcx)\n\t"        /* frame->restore_flags */
+                   ".globl " __ASM_NAME("__wine_unix_call_dispatcher_prolog_end") "\n"
+                   __ASM_NAME("__wine_unix_call_dispatcher_prolog_end") ":\n\t"
+                   "movq %rbx,0x08(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(rbx, rcx, 0x08)
+                   "movq %rsi,0x20(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(rsi, rcx, 0x20)
+                   "movq %rdi,0x28(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT1(rdi, rcx, 0x28)
+                   "movq %r12,0x50(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(r12, rcx, 0xd0, 0x00)
+                   "movq %r13,0x58(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(r13, rcx, 0xd8, 0x00)
+                   "movq %r14,0x60(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(r14, rcx, 0xe0, 0x00)
+                   "movq %r15,0x68(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(r15, rcx, 0xe8, 0x00)
+                   "movq %rsp,0x88(%rcx)\n\t"
+                   __ASM_CFI_CFA_IS_AT2(rcx, 0x88, 0x01)
+                   __ASM_CFI_REG_IS_AT2(rsp, rcx, 0x88, 0x01)
+                   "movq %rbp,0x98(%rcx)\n\t"
+                   __ASM_CFI_REG_IS_AT2(rbp, rcx, 0x98, 0x01)
+                   "movdqa %xmm6,0x1c0(%rcx)\n\t"
+                   "movdqa %xmm7,0x1d0(%rcx)\n\t"
+                   "movdqa %xmm8,0x1e0(%rcx)\n\t"
+                   "movdqa %xmm9,0x1f0(%rcx)\n\t"
+                   "movdqa %xmm10,0x200(%rcx)\n\t"
+                   "movdqa %xmm11,0x210(%rcx)\n\t"
+                   "movdqa %xmm12,0x220(%rcx)\n\t"
+                   "movdqa %xmm13,0x230(%rcx)\n\t"
+                   "movdqa %xmm14,0x240(%rcx)\n\t"
+                   "movdqa %xmm15,0x250(%rcx)\n\t"
+                   "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
+#ifdef __linux__
+                   "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+                   "jz 2f\n\t"
+                   "movw %fs,0x7e(%rcx)\n\t"
+                   "movq %gs:0x330,%rsi\n\t"       /* amd64_thread_data()->pthread_teb */
+                   "testl $8,%r14d\n\t"            /* SYSCALL_HAVE_WRFSGSBASE */
+                   "jz 1f\n\t"
+                   "wrfsbase %rsi\n\t"
+                   "jmp 2f\n"
+                   "1:\tmov $0x1002,%edi\n\t"      /* ARCH_SET_FS */
+                   "mov $158,%eax\n\t"             /* SYS_arch_prctl */
+                   "mov %rcx,%r9\n\t"
+                   "syscall\n\t"
+                   "mov %r9,%rcx\n\t"
+                   "2:\n\t"
+#endif
+                   "movq %rcx,%rsp\n"
+                   "movq %r8,%rdi\n\t"             /* args */
+                   "callq *(%r10,%rdx,8)\n\t"
+                   "movq %rsp,%rcx\n"
+                   "testl $0xffff,0x94(%rcx)\n\t"  /* frame->restore_flags */
+                   "jnz .L__wine_syscall_dispatcher_return\n\t"
+#ifdef __linux__
+                   "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+                   "jz 1f\n\t"
+                   "movw 0x7e(%rcx),%fs\n"
+                   "1:\n\t"
+#endif
+                   "movdqa 0x1c0(%rcx),%xmm6\n\t"
+                   "movdqa 0x1d0(%rcx),%xmm7\n\t"
+                   "movdqa 0x1e0(%rcx),%xmm8\n\t"
+                   "movdqa 0x1f0(%rcx),%xmm9\n\t"
+                   "movdqa 0x200(%rcx),%xmm10\n\t"
+                   "movdqa 0x210(%rcx),%xmm11\n\t"
+                   "movdqa 0x220(%rcx),%xmm12\n\t"
+                   "movdqa 0x230(%rcx),%xmm13\n\t"
+                   "movdqa 0x240(%rcx),%xmm14\n\t"
+                   "movdqa 0x250(%rcx),%xmm15\n\t"
+                   "movq 0x60(%rcx),%r14\n\t"
+                   __ASM_CFI(".cfi_same_value r14\n\t")
+                   "movq 0x28(%rcx),%rdi\n\t"
+                   __ASM_CFI(".cfi_same_value rdi\n\t")
+                   "movq 0x20(%rcx),%rsi\n\t"
+                   __ASM_CFI(".cfi_same_value rsi\n\t")
+                   "movq 0x88(%rcx),%rsp\n\t"
+                   __ASM_CFI(".cfi_def_cfa rsp, 0\n\t")
+                   __ASM_CFI(".cfi_same_value rsp\n\t")
+                   "jmpq *0x70(%rcx)" )      /* frame->rip */
 
 
 /***********************************************************************
