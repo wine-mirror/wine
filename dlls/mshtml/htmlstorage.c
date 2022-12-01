@@ -1119,7 +1119,7 @@ static HRESULT get_prop(HTMLStorage *This, const WCHAR *name, DISPID *dispid)
     }
 
     if(is_power_of_2(This->num_props)) {
-        BSTR *new_props = realloc(This->props, max(This->num_props * 2 * sizeof(BSTR*), 1));
+        BSTR *new_props = realloc(This->props, max(This->num_props * 2, 1) * sizeof(*This->props));
         if(!new_props)
             return E_OUTOFMEMORY;
         This->props = new_props;
