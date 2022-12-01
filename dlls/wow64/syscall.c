@@ -94,6 +94,7 @@ static void *   (WINAPI *pBTCpuGetBopCode)(void);
 static void     (WINAPI *pBTCpuProcessInit)(void);
 static void     (WINAPI *pBTCpuSimulate)(void);
 static NTSTATUS (WINAPI *pBTCpuResetToConsistentState)( EXCEPTION_POINTERS * );
+static void *   (WINAPI *p__wine_get_unix_opcode)(void);
 
 
 void *dummy = RtlUnwind;
@@ -588,6 +589,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     GET_PTR( BTCpuProcessInit );
     GET_PTR( BTCpuResetToConsistentState );
     GET_PTR( BTCpuSimulate );
+    GET_PTR( __wine_get_unix_opcode );
 
     module = load_64bit_module( L"wow64win.dll" );
     GET_PTR( sdwhwin32 );
@@ -598,6 +600,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     init_image_mapping( module );
     init_syscall_table( module, 0, &ntdll_syscall_table );
     *(void **)RtlFindExportedRoutineByName( module, "__wine_syscall_dispatcher" ) = pBTCpuGetBopCode();
+    *(void **)RtlFindExportedRoutineByName( module, "__wine_unix_call_dispatcher" ) = p__wine_get_unix_opcode();
 
     module = load_32bit_module( L"win32u.dll" );
     init_syscall_table( module, 1, psdwhwin32 );

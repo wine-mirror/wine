@@ -7,3 +7,4 @@
 @ stdcall BTCpuTurboThunkControl(long)
 #@ stub TurboDispatchJumpAddressEnd
 #@ stub TurboDispatchJumpAddressStart
+@ stdcall __wine_get_unix_opcode()
