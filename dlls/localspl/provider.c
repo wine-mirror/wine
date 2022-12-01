@@ -245,6 +245,7 @@ typedef struct {
         HANDLE_SERVER,
         HANDLE_PRINTER,
         HANDLE_XCV,
+        HANDLE_JOB,
     } type;
 } handle_header_t;
 
@@ -255,6 +256,11 @@ typedef struct {
     monitor_t *pm;
     HANDLE hxcv;
 } xcv_t;
+
+typedef struct {
+    handle_header_t header;
+    HANDLE hf;
+} job_t;
 
 typedef struct {
     handle_header_t header;
@@ -490,6 +496,24 @@ static void monitor_unloadall(void)
     LeaveCriticalSection(&monitor_handles_cs);
 }
 
+static printer_info_t *find_printer_info(const WCHAR *name, unsigned int len)
+{
+    printer_info_t *info;
+
+    EnterCriticalSection(&printers_cs);
+    LIST_FOR_EACH_ENTRY(info, &printers, printer_info_t, entry)
+    {
+        if (!wcsncmp(info->name, name, len) && (len == -1 || !info->name[len]))
+        {
+            InterlockedIncrement(&info->ref);
+            LeaveCriticalSection(&printers_cs);
+            return info;
+        }
+    }
+    LeaveCriticalSection(&printers_cs);
+    return NULL;
+}
+
 static printer_info_t* get_printer_info(const WCHAR *name)
 {
     HKEY hkey, hprinter = NULL;
@@ -499,14 +523,11 @@ static printer_info_t* get_printer_info(const WCHAR *name)
     DWORD size;
 
     EnterCriticalSection(&printers_cs);
-    LIST_FOR_EACH_ENTRY(info, &printers, printer_info_t, entry)
+    info = find_printer_info(name, -1);
+    if (info)
     {
-        if (!wcscmp(info->name, name))
-        {
-            InterlockedIncrement(&info->ref);
-            LeaveCriticalSection(&printers_cs);
-            return info;
-        }
+        LeaveCriticalSection(&printers_cs);
+        return info;
     }
 
     ret = RegCreateKeyW(HKEY_LOCAL_MACHINE, printersW, &hkey);
@@ -1538,6 +1559,18 @@ static HMODULE driver_load(const printenv_t * env, LPWSTR dllname)
     return hui;
 }
 
+static job_info_t * get_job(printer_info_t *info, DWORD job_id)
+{
+    job_info_t *job;
+
+    LIST_FOR_EACH_ENTRY(job, &info->jobs, job_info_t, entry)
+    {
+        if(job->id == job_id)
+            return job;
+    }
+    return NULL;
+}
+
 static HANDLE server_alloc_handle(const WCHAR *name, BOOL *stop_search)
 {
     server_t *server;
@@ -1613,6 +1646,75 @@ static HANDLE xcv_alloc_handle(const WCHAR *name, PRINTER_DEFAULTSW *def, BOOL *
         return NULL;
     }
     return (HANDLE)xcv;
+}
+
+static HANDLE job_alloc_handle(const WCHAR *name, BOOL *stop_search)
+{
+    static const WCHAR jobW[] = L"Job ";
+
+    unsigned int name_len, job_id;
+    printer_info_t *printer_info;
+    job_info_t *job_info;
+    job_t *job;
+
+    *stop_search = FALSE;
+    name_len = 0;
+    for (name_len = 0; name[name_len] != ','; name_len++)
+    {
+        if (!name[name_len])
+            return NULL;
+    }
+
+    for (job_id = name_len + 1; name[job_id] == ' '; job_id++);
+    if (!name[job_id])
+        return NULL;
+
+    if (wcsncmp(name + job_id, jobW, ARRAY_SIZE(jobW) - 1))
+        return NULL;
+
+    *stop_search = TRUE;
+    job_id += ARRAY_SIZE(jobW) - 1;
+    job_id = wcstoul(name + job_id, NULL, 10);
+
+    printer_info = find_printer_info(name, name_len);
+    if (!printer_info)
+    {
+        SetLastError(ERROR_INVALID_PRINTER_NAME);
+        return NULL;
+    }
+
+    EnterCriticalSection(&printer_info->jobs_cs);
+
+    job_info = get_job(printer_info, job_id);
+    if (!job_info)
+    {
+        LeaveCriticalSection(&printer_info->jobs_cs);
+        release_printer_info(printer_info);
+        SetLastError(ERROR_INVALID_PRINTER_NAME);
+        return NULL;
+    }
+
+    job = malloc(sizeof(*job));
+    if (!job)
+    {
+        LeaveCriticalSection(&printer_info->jobs_cs);
+        release_printer_info(printer_info);
+        return NULL;
+    }
+    job->header.type = HANDLE_JOB;
+    job->hf = CreateFileW(job_info->filename, GENERIC_READ,
+            FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
+            NULL, OPEN_EXISTING, 0, NULL);
+
+    LeaveCriticalSection(&printer_info->jobs_cs);
+    release_printer_info(printer_info);
+
+    if (job->hf == INVALID_HANDLE_VALUE)
+    {
+        free(job);
+        return NULL;
+    }
+    return (HANDLE)job;
 }
 
 static HANDLE printer_alloc_handle(const WCHAR *name, const WCHAR *basename,
@@ -2663,6 +2765,8 @@ static BOOL WINAPI fpOpenPrinter(WCHAR *name, HANDLE *hprinter,
     if (!*hprinter && !stop_search)
         *hprinter = xcv_alloc_handle(basename, def, &stop_search);
     if (!*hprinter && !stop_search)
+        *hprinter = job_alloc_handle(basename, &stop_search);
+    if (!*hprinter && !stop_search)
         *hprinter = printer_alloc_handle(name, basename, def);
 
     TRACE("==> %p\n", *hprinter);
@@ -3070,18 +3174,6 @@ static BOOL WINAPI fpWritePrinter(HANDLE hprinter, void *buf, DWORD size, DWORD 
     return WriteFile(printer->doc->hf, buf, size, written, NULL);
 }
 
-static job_info_t * get_job(printer_info_t *info, DWORD job_id)
-{
-    job_info_t *job;
-
-    LIST_FOR_EACH_ENTRY(job, &info->jobs, job_info_t, entry)
-    {
-        if(job->id == job_id)
-            return job;
-    }
-    return NULL;
-}
-
 static BOOL WINAPI fpSetJob(HANDLE hprinter, DWORD job_id,
         DWORD level, BYTE *data, DWORD command)
 {
@@ -3445,6 +3537,13 @@ static BOOL WINAPI fpClosePrinter(HANDLE hprinter)
 
         monitor_unload(xcv->pm);
         free(xcv);
+    }
+    else if (header->type == HANDLE_JOB)
+    {
+        job_t *job = (job_t *)hprinter;
+
+        CloseHandle(job->hf);
+        free(job);
     }
     else if (header->type == HANDLE_PRINTER)
     {
