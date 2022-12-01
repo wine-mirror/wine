@@ -2327,49 +2327,43 @@ static void test_conf_complex_struct(void)
     unsigned int i;
     struct conf_complex
     {
-      unsigned int size;
-      unsigned int *array[1];
+        enum {dummy} enum16;
+        unsigned int size;
+        unsigned int array[1];
     };
     struct conf_complex *memsrc;
     struct conf_complex *mem;
 
+    /*
+        struct conf_complex
+        {
+            enum {dummy} enum16;
+            int size;
+            [size_is(size), unique] int array[];
+        };
+    */
     static const unsigned char fmtstr_complex_struct[] =
     {
-/* 0 */
-			0x1b,		/* FC_CARRAY */
-			0x3,		/* 3 */
-/* 2 */	NdrFcShort( 0x4 ),	/* 4 */
-/* 4 */	0x8,		/* Corr desc: FC_LONG */
-			0x0,		/*  */
-/* 6 */	NdrFcShort( 0xfffc ),	/* -4 */
-/* 8 */
-			0x4b,		/* FC_PP */
-			0x5c,		/* FC_PAD */
-/* 10 */
-			0x48,		/* FC_VARIABLE_REPEAT */
-			0x49,		/* FC_FIXED_OFFSET */
-/* 12 */	NdrFcShort( 0x4 ),	/* 4 */
-/* 14 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 16 */	NdrFcShort( 0x1 ),	/* 1 */
-/* 18 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 20 */	NdrFcShort( 0x0 ),	/* 0 */
-/* 22 */	0x12, 0x8,	/* FC_UP [simple_pointer] */
-/* 24 */	0x8,		/* FC_LONG */
-			0x5c,		/* FC_PAD */
-/* 26 */
-			0x5b,		/* FC_END */
-
-			0x8,		/* FC_LONG */
-/* 28 */	0x5c,		/* FC_PAD */
-			0x5b,		/* FC_END */
-/* 30 */
-			0x1a,		/* FC_BOGUS_STRUCT */
-			0x3,		/* 3 */
-/* 32 */	NdrFcShort( 0x4 ),	/* 4 */
-/* 34 */	NdrFcShort( 0xffffffde ),	/* Offset= -34 (0) */
-/* 36 */	NdrFcShort( 0x0 ),	/* Offset= 0 (36) */
-/* 38 */	0x8,		/* FC_LONG */
-			0x5b,		/* FC_END */
+        NdrFcShort(0x0),
+/* 2 (int[]) */
+        0x1b,	/* FC_CARRAY */
+        0x3,	/* 3 */
+        NdrFcShort(0x4),	/* 4 */
+        0x8,	/* Corr desc: field size, FC_LONG */
+        0x0,	/* no operators */
+        NdrFcShort(0xfffc),	/* offset = -4 */
+        0x08,	/* FC_LONG */
+        0x5b,	/* FC_END */
+/* 12 (struct conf_complex) */
+        0x1a,	/* FC_BOGUS_STRUCT */
+        0x3,	/* 3 */
+        NdrFcShort(0x8),	/* 8 */
+        NdrFcShort(0xfff2),	/* Offset= -14 (2) */
+        NdrFcShort(0x0),	/* Offset= 0 (18) */
+        0x0d,	/* FC_ENUM16 */
+        0x08,	/* FC_LONG */
+        0x5c,	/* FC_PAD */
+        0x5b,	/* FC_END */
     };
 
     memsrc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -2386,32 +2380,34 @@ static void test_conf_complex_struct(void)
                            0);
 
     StubMsg.BufferLength = 0;
-    NdrComplexStructBufferSize( &StubMsg,
-                                (unsigned char *)memsrc,
-                                &fmtstr_complex_struct[30] );
-    ok(StubMsg.BufferLength >= 28, "length %ld\n", StubMsg.BufferLength);
+    NdrComplexStructBufferSize(&StubMsg, (unsigned char *)memsrc, &fmtstr_complex_struct[12]);
+    ok(StubMsg.BufferLength >= 92, "length %ld\n", StubMsg.BufferLength);
 
     /*NdrGetBuffer(&_StubMsg, _StubMsg.BufferLength, NULL);*/
     StubMsg.RpcMsg->Buffer = StubMsg.BufferStart = StubMsg.Buffer = HeapAlloc(GetProcessHeap(), 0, StubMsg.BufferLength);
     StubMsg.BufferEnd = StubMsg.BufferStart + StubMsg.BufferLength;
 
-    ptr = NdrComplexStructMarshall( &StubMsg, (unsigned char *)memsrc,
-                                    &fmtstr_complex_struct[30] );
+    ptr = NdrComplexStructMarshall(&StubMsg, (unsigned char *)memsrc, &fmtstr_complex_struct[12]);
     ok(ptr == NULL, "ret %p\n", ptr);
-    ok(*(unsigned int *)StubMsg.BufferStart == 20, "Conformance should have been 20 instead of %d\n", *(unsigned int *)StubMsg.BufferStart);
-    ok(*(unsigned int *)(StubMsg.BufferStart + 4) == 20, "conf_complex.size should have been 20 instead of %d\n", *(unsigned int *)(StubMsg.BufferStart + 4));
+    ok(*(unsigned int *)StubMsg.BufferStart == 20, "Conformance should have been 20 instead of %u\n",
+       *(unsigned int *)StubMsg.BufferStart);
+    todo_wine
+    ok(*(unsigned int *)(StubMsg.BufferStart + 8) == 20, "conf_complex.size should have been 20 instead of %u\n",
+       *(unsigned int *)(StubMsg.BufferStart + 8));
     for (i = 0; i < 20; i++)
-      ok(*(unsigned int *)(StubMsg.BufferStart + 8 + i * 4) == 0, "pointer id for conf_complex.array[%d] should have been 0 instead of 0x%x\n", i, *(unsigned int *)(StubMsg.BufferStart + 8 + i * 4));
+      ok(*(unsigned int *)(StubMsg.BufferStart + 12 + i * 4) == 0,
+         "pointer id for conf_complex.array[%u] should have been 0 instead of 0x%x\n", i,
+         *(unsigned int *)(StubMsg.BufferStart + 12 + i * 4));
 
     /* Server */
     my_alloc_called = 0;
     StubMsg.IsClient = 0;
     mem = NULL;
     StubMsg.Buffer = StubMsg.BufferStart;
-    ptr = NdrComplexStructUnmarshall( &StubMsg, (unsigned char **)&mem, &fmtstr_complex_struct[30], 0);
+    ptr = NdrComplexStructUnmarshall(&StubMsg, (unsigned char **)&mem, &fmtstr_complex_struct[12], 0);
     ok(ptr == NULL, "ret %p\n", ptr);
     ok(mem->size == 20, "mem->size wasn't unmarshalled correctly (%d)\n", mem->size);
-    ok(mem->array[0] == NULL, "mem->array[0] wasn't unmarshalled correctly (%p)\n", mem->array[0]);
+    ok(mem->array[0] == 0, "mem->array[0] wasn't unmarshalled correctly (%u)\n", mem->array[0]);
     StubMsg.pfnFree(mem);
 
     HeapFree(GetProcessHeap(), 0, StubMsg.RpcMsg->Buffer);
