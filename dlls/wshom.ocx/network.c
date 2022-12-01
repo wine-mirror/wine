@@ -26,6 +26,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wshom);
 
+static IWshNetwork2 WshNetwork2;
+
 static HRESULT WINAPI WshNetwork2_QueryInterface(IWshNetwork2 *iface, REFIID riid, void **ppv)
 {
     TRACE("%p, %s, %p.\n", iface, debugstr_guid(riid), ppv);
@@ -92,9 +94,21 @@ static HRESULT WINAPI WshNetwork2_GetIDsOfNames(IWshNetwork2 *iface, REFIID riid
 static HRESULT WINAPI WshNetwork2_Invoke(IWshNetwork2 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,
         WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
-    FIXME("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%p, %ld, %s, %lx, %d, %p, %p, %p, %p.\n", iface, dispIdMember, debugstr_guid(riid),
           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-    return E_NOTIMPL;
+
+    hr = get_typeinfo(IWshNetwork2_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &WshNetwork2, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI WshNetwork2_get_UserDomain(IWshNetwork2 *iface, BSTR *user_domain)
