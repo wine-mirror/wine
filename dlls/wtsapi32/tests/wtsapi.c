@@ -192,6 +192,7 @@ static void test_WTSQuerySessionInformation(void)
     WCHAR *buf1, usernameW[UNLEN + 1], computernameW[MAX_COMPUTERNAME_LENGTH + 1];
     char *buf2, username[UNLEN + 1], computername[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD count, tempsize;
+    USHORT *protocol;
     BOOL ret;
 
     SetLastError(0xdeadbeef);
@@ -283,6 +284,15 @@ static void test_WTSQuerySessionInformation(void)
     ok(!stricmp(buf2, computername), "expected %s, got %s\n", computername, buf2);
     ok(count == tempsize + 1, "expected %lu, got %lu\n", tempsize + 1, count);
     WTSFreeMemory(buf2);
+
+    count = 0;
+    protocol = NULL;
+    ret = WTSQuerySessionInformationA(WTS_CURRENT_SERVER_HANDLE, WTS_CURRENT_SESSION, WTSClientProtocolType,
+                                      (char **)&protocol, &count);
+    ok(ret, "got %lu\n", GetLastError());
+    ok(protocol != NULL, "protocol not set\n");
+    ok(count == sizeof(*protocol), "got %lu\n", count);
+    WTSFreeMemory(protocol);
 }
 
 static void test_WTSQueryUserToken(void)
