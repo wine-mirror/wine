@@ -944,88 +944,22 @@ static BOOL validate_large_block( const struct heap *heap, const struct block *b
     return !err;
 }
 
-/***********************************************************************
- *           HEAP_CreateSubHeap
- */
-static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWORD flags,
-                                    SIZE_T commitSize, SIZE_T totalSize )
+
+static SUBHEAP *create_subheap( struct heap *heap, DWORD flags, SIZE_T total_size, SIZE_T commit_size )
 {
-    struct heap *heap = *heap_ptr;
-    struct entry *pEntry;
     SIZE_T block_size;
     SUBHEAP *subheap;
-    unsigned int i;
 
-    if (!address)
-    {
-        if (!commitSize) commitSize = REGION_ALIGN;
-        totalSize = min( max( totalSize, commitSize ), 0xffff0000 );  /* don't allow a heap larger than 4GB */
-        commitSize = min( totalSize, ROUND_SIZE( commitSize, REGION_ALIGN - 1 ) );
-        if (!(address = allocate_region( heap, flags, &totalSize, &commitSize ))) return NULL;
-    }
+    commit_size = ROUND_SIZE( max( commit_size, REGION_ALIGN ), REGION_ALIGN - 1 );
+    total_size = min( max( commit_size, total_size ), 0xffff0000 );  /* don't allow a heap larger than 4GB */
 
-    if (heap)
-    {
-        /* If this is a secondary subheap, insert it into list */
+    if (!(subheap = allocate_region( heap, flags, &total_size, &commit_size ))) return NULL;
 
-        subheap = address;
-        subheap_set_bounds( subheap, (char *)address + commitSize, (char *)address + totalSize );
-        list_add_head( &heap->subheap_list, &subheap->entry );
-    }
-    else
-    {
-        /* If this is a primary subheap, initialize main heap */
-
-        heap = address;
-        heap->ffeeffee      = 0xffeeffee;
-        heap->auto_flags    = (flags & HEAP_GROWABLE);
-        heap->flags         = (flags & ~HEAP_SHARED);
-        heap->magic         = HEAP_MAGIC;
-        heap->grow_size     = max( HEAP_DEF_SIZE, totalSize );
-        heap->min_size      = commitSize;
-        list_init( &heap->subheap_list );
-        list_init( &heap->large_list );
-
-        subheap = &heap->subheap;
-        subheap_set_bounds( subheap, (char *)address + commitSize, (char *)address + totalSize );
-        list_add_head( &heap->subheap_list, &subheap->entry );
-
-        /* Build the free lists */
-
-        list_init( &heap->free_lists[0].entry );
-        for (i = 0, pEntry = heap->free_lists; i < HEAP_NB_FREE_LISTS; i++, pEntry++)
-        {
-            block_set_flags( &pEntry->block, ~0, BLOCK_FLAG_FREE_LINK );
-            block_set_size( &pEntry->block, 0 );
-            block_set_type( &pEntry->block, BLOCK_TYPE_FREE );
-            block_set_base( &pEntry->block, heap );
-            if (i) list_add_after( &pEntry[-1].entry, &pEntry->entry );
-        }
-
-        /* Initialize critical section */
-
-        if (!process_heap)  /* do it by hand to avoid memory allocations */
-        {
-            heap->cs.DebugInfo      = &process_heap_cs_debug;
-            heap->cs.LockCount      = -1;
-            heap->cs.RecursionCount = 0;
-            heap->cs.OwningThread   = 0;
-            heap->cs.LockSemaphore  = 0;
-            heap->cs.SpinCount      = 0;
-            process_heap_cs_debug.CriticalSection = &heap->cs;
-        }
-        else
-        {
-            RtlInitializeCriticalSection( &heap->cs );
-            heap->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": heap.cs");
-        }
-    }
-
-    block_size = subheap_size( subheap ) - subheap_overhead( subheap );
-    block_size &= ~(BLOCK_ALIGN - 1);
+    subheap_set_bounds( subheap, (char *)subheap + commit_size, (char *)subheap + total_size );
+    block_size = (SIZE_T)ROUND_ADDR( subheap_size( subheap ) - subheap_overhead( subheap ), BLOCK_ALIGN - 1 );
     create_free_block( heap, flags, subheap, first_block( subheap ), block_size );
+    list_add_head( &heap->subheap_list, &subheap->entry );
 
-    *heap_ptr = heap;
     return subheap;
 }
 
@@ -1057,8 +991,7 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
     total_size = sizeof(SUBHEAP) + block_size + sizeof(struct entry);
     if (total_size < block_size) return NULL;  /* overflow */
 
-    if ((subheap = HEAP_CreateSubHeap( &heap, NULL, flags, total_size,
-                                        max( heap->grow_size, total_size ) )))
+    if ((subheap = create_subheap( heap, flags, max( heap->grow_size, total_size ), total_size )))
     {
         if (heap->grow_size <= HEAP_MAX_FREE_BLOCK_SIZE / 2) heap->grow_size *= 2;
     }
@@ -1066,8 +999,7 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
     {
         if (heap->grow_size <= total_size || heap->grow_size <= 4 * 1024 * 1024) return NULL;
         heap->grow_size /= 2;
-        subheap = HEAP_CreateSubHeap( &heap, NULL, flags, total_size,
-                                       max( heap->grow_size, total_size ) );
+        subheap = create_subheap( heap, flags, max( heap->grow_size, total_size ), total_size );
     }
 
     TRACE( "created new sub-heap %p of %#Ix bytes for heap %p\n", subheap, subheap_size( subheap ), heap );
@@ -1388,20 +1320,71 @@ static void heap_set_debug_flags( HANDLE handle )
  *  Success: A HANDLE to the newly created heap.
  *  Failure: a NULL HANDLE.
  */
-HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T commitSize,
-                             PVOID unknown, PRTL_HEAP_DEFINITION definition )
+HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T commit_size,
+                             void *unknown, RTL_HEAP_DEFINITION *definition )
 {
-    struct heap *heap = NULL;
+    struct entry *entry;
+    struct heap *heap;
+    SIZE_T block_size;
     SUBHEAP *subheap;
+    unsigned int i;
 
-    /* Allocate the heap block */
+    TRACE( "flags %#lx, addr %p, total_size %#Ix, commit_size %#Ix, unknown %p, definition %p\n",
+           flags, addr, total_size, commit_size, unknown, definition );
 
     flags &= ~(HEAP_TAIL_CHECKING_ENABLED|HEAP_FREE_CHECKING_ENABLED);
     if (process_heap) flags |= HEAP_PRIVATE;
-    if (!process_heap || !totalSize || (flags & HEAP_SHARED)) flags |= HEAP_GROWABLE;
-    if (!totalSize) totalSize = HEAP_DEF_SIZE;
+    if (!process_heap || !total_size || (flags & HEAP_SHARED)) flags |= HEAP_GROWABLE;
+    if (!total_size) total_size = HEAP_DEF_SIZE;
 
-    if (!(subheap = HEAP_CreateSubHeap( &heap, addr, flags, commitSize, totalSize ))) return 0;
+    if (!(heap = addr))
+    {
+        if (!commit_size) commit_size = REGION_ALIGN;
+        total_size = min( max( total_size, commit_size ), 0xffff0000 );  /* don't allow a heap larger than 4GB */
+        commit_size = min( total_size, ROUND_SIZE( commit_size, REGION_ALIGN - 1 ) );
+        if (!(heap = allocate_region( NULL, flags, &total_size, &commit_size ))) return 0;
+    }
+
+    heap->ffeeffee      = 0xffeeffee;
+    heap->auto_flags    = (flags & HEAP_GROWABLE);
+    heap->flags         = (flags & ~HEAP_SHARED);
+    heap->magic         = HEAP_MAGIC;
+    heap->grow_size     = max( HEAP_DEF_SIZE, total_size );
+    heap->min_size      = commit_size;
+    list_init( &heap->subheap_list );
+    list_init( &heap->large_list );
+
+    list_init( &heap->free_lists[0].entry );
+    for (i = 0, entry = heap->free_lists; i < HEAP_NB_FREE_LISTS; i++, entry++)
+    {
+        block_set_flags( &entry->block, ~0, BLOCK_FLAG_FREE_LINK );
+        block_set_size( &entry->block, 0 );
+        block_set_type( &entry->block, BLOCK_TYPE_FREE );
+        block_set_base( &entry->block, heap );
+        if (i) list_add_after( &entry[-1].entry, &entry->entry );
+    }
+
+    if (!process_heap)  /* do it by hand to avoid memory allocations */
+    {
+        heap->cs.DebugInfo      = &process_heap_cs_debug;
+        heap->cs.LockCount      = -1;
+        heap->cs.RecursionCount = 0;
+        heap->cs.OwningThread   = 0;
+        heap->cs.LockSemaphore  = 0;
+        heap->cs.SpinCount      = 0;
+        process_heap_cs_debug.CriticalSection = &heap->cs;
+    }
+    else
+    {
+        RtlInitializeCriticalSection( &heap->cs );
+        heap->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": heap.cs");
+    }
+
+    subheap = &heap->subheap;
+    subheap_set_bounds( subheap, (char *)heap + commit_size, (char *)heap + total_size );
+    block_size = (SIZE_T)ROUND_ADDR( subheap_size( subheap ) - subheap_overhead( subheap ), BLOCK_ALIGN - 1 );
+    create_free_block( heap, flags, subheap, first_block( subheap ), block_size );
+    list_add_head( &heap->subheap_list, &subheap->entry );
 
     heap_set_debug_flags( heap );
 
