@@ -714,7 +714,7 @@ static void read_value(header_t *header, char **cur)
     } while(*end == ' ' || *end == '\t');
 
     len = end - *cur;
-    value = malloc(len + 1);
+    value = CoTaskMemAlloc(len + 1);
     memcpy(value, *cur, len);
     value[len] = '\0';
 
