@@ -832,27 +832,48 @@ static inline void shrink_used_block( struct heap *heap, ULONG flags, struct blo
 }
 
 
+static void *allocate_region( struct heap *heap, ULONG flags, SIZE_T *region_size, SIZE_T *commit_size )
+{
+    void *addr = NULL;
+    NTSTATUS status;
+
+    if (heap && !(flags & HEAP_GROWABLE))
+    {
+        WARN( "Heap %p isn't growable, cannot allocate %#Ix bytes\n", heap, *region_size );
+        return NULL;
+    }
+
+    /* allocate the memory block */
+    if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, region_size, MEM_RESERVE,
+                                           get_protection_type( flags ) )))
+    {
+        WARN( "Could not allocate %#Ix bytes, status %#lx\n", *region_size, status );
+        return NULL;
+    }
+    if ((status = NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, commit_size, MEM_COMMIT,
+                                           get_protection_type( flags ) )))
+    {
+        WARN( "Could not commit %#Ix bytes, status %#lx\n", *commit_size, status );
+        return NULL;
+    }
+
+    return addr;
+}
+
+
 static NTSTATUS heap_allocate_large( struct heap *heap, ULONG flags, SIZE_T block_size,
                                      SIZE_T size, void **ret )
 {
     ARENA_LARGE *arena;
     SIZE_T total_size = ROUND_SIZE( sizeof(*arena) + size, REGION_ALIGN - 1 );
-    LPVOID address = NULL;
     struct block *block;
 
-    if (!(flags & HEAP_GROWABLE)) return STATUS_NO_MEMORY;
     if (total_size < size) return STATUS_NO_MEMORY;  /* overflow */
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &total_size, MEM_COMMIT,
-                                 get_protection_type( heap->flags ) ))
-    {
-        WARN( "Could not allocate block for %#Ix bytes\n", size );
-        return STATUS_NO_MEMORY;
-    }
+    if (!(arena = allocate_region( heap, flags, &total_size, &total_size ))) return STATUS_NO_MEMORY;
 
-    arena = address;
     block = &arena->block;
     arena->data_size = size;
-    arena->block_size = (char *)address + total_size - (char *)block;
+    arena->block_size = (char *)arena + total_size - (char *)block;
 
     block_set_type( block, BLOCK_TYPE_LARGE );
     block_set_base( block, arena );
@@ -938,23 +959,9 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap **heap_ptr, LPVOID address, DWOR
     if (!address)
     {
         if (!commitSize) commitSize = REGION_ALIGN;
-        totalSize = min( totalSize, 0xffff0000 );  /* don't allow a heap larger than 4GB */
-        if (totalSize < commitSize) totalSize = commitSize;
-        commitSize = min( totalSize, (SIZE_T)ROUND_ADDR( commitSize + REGION_ALIGN - 1, REGION_ALIGN - 1 ) );
-
-        /* allocate the memory block */
-        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &totalSize, MEM_RESERVE,
-                                     get_protection_type( flags ) ))
-        {
-            WARN( "Could not allocate %#Ix bytes\n", totalSize );
-            return NULL;
-        }
-        if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &commitSize, MEM_COMMIT,
-                                     get_protection_type( flags ) ))
-        {
-            WARN( "Could not commit %#Ix bytes for sub-heap %p\n", commitSize, address );
-            return NULL;
-        }
+        totalSize = min( max( totalSize, commitSize ), 0xffff0000 );  /* don't allow a heap larger than 4GB */
+        commitSize = min( totalSize, ROUND_SIZE( commitSize, REGION_ALIGN - 1 ) );
+        if (!(address = allocate_region( heap, flags, &totalSize, &commitSize ))) return NULL;
     }
 
     if (heap)
@@ -1044,14 +1051,6 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
             list_remove( &entry->entry );
             return block;
         }
-    }
-
-    /* If no block was found, attempt to grow the heap */
-
-    if (!(flags & HEAP_GROWABLE))
-    {
-        WARN( "Not enough space in heap %p for %#Ix bytes\n", heap, block_size );
-        return NULL;
     }
 
     /* make sure we can fit the block and a free entry at the end */
