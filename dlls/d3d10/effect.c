@@ -225,6 +225,15 @@ static void pres_rcp(float **args, unsigned int n, const struct preshader_instr 
         retval[i] = 1.0f / args[0][i];
 }
 
+static void pres_frc(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+        retval[i] = args[0][i] - floor(args[0][i]);
+}
+
 static void pres_sin(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     float *retval = args[1];
@@ -323,6 +332,7 @@ static const struct preshader_op_info preshader_ops[] =
 {
     { 0x101, "neg",  pres_neg  },
     { 0x103, "rcp",  pres_rcp  },
+    { 0x104, "frc",  pres_frc  },
     { 0x108, "sin",  pres_sin  },
     { 0x109, "cos",  pres_cos  },
     { 0x133, "ftou", pres_ftou },
