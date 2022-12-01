@@ -21110,6 +21110,7 @@ wine_fn_config_makefile dlls/cryptext enable_cryptext
 wine_fn_config_makefile dlls/cryptnet enable_cryptnet
 wine_fn_config_makefile dlls/cryptnet/tests enable_tests
 wine_fn_config_makefile dlls/cryptowinrt enable_cryptowinrt
+wine_fn_config_makefile dlls/cryptowinrt/tests enable_tests
 wine_fn_config_makefile dlls/cryptsp enable_cryptsp
 wine_fn_config_makefile dlls/cryptui enable_cryptui
 wine_fn_config_makefile dlls/cryptui/tests enable_tests
