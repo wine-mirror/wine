@@ -301,7 +301,7 @@ static HRESULT WINAPI HTMLImgElement_put_src(IHTMLImgElement *iface, BSTR v)
         DOMEvent *event;
 
         /* Synchronously send load event if the image was completed immediately (such as from cache) */
-        This->skip_event = EVENTID_INVALID;
+        This->skip_event = EVENTID_INVALID_ID;
 
         nsres = nsIDOMHTMLImageElement_GetComplete(This->nsimg, &complete);
         if(NS_SUCCEEDED(nsres) && complete) {
@@ -707,7 +707,7 @@ static HRESULT HTMLImgElement_dispatch_nsevent_hook(HTMLDOMNode *iface, DOMEvent
     HTMLImg *This = impl_from_HTMLDOMNode(iface);
 
     if(event->event_id == This->skip_event) {
-        This->skip_event = EVENTID_INVALID;
+        This->skip_event = EVENTID_INVALID_ID;
         return S_OK;
     }
 
@@ -799,7 +799,7 @@ HRESULT HTMLImgElement_Create(HTMLDocumentNode *doc, nsIDOMElement *nselem, HTML
 
     ret->IHTMLImgElement_iface.lpVtbl = &HTMLImgElementVtbl;
     ret->element.node.vtbl = &HTMLImgElementImplVtbl;
-    ret->skip_event = EVENTID_INVALID;
+    ret->skip_event = EVENTID_INVALID_ID;
 
     HTMLElement_Init(&ret->element, doc, nselem, &HTMLImgElement_dispex);
 
