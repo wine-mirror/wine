@@ -359,6 +359,7 @@
 @ stdcall GetParent(long)
 @ stdcall GetPhysicalCursorPos(ptr)
 @ stdcall GetPointerDevices(ptr ptr)
+@ stdcall GetPointerInfo(long ptr)
 @ stdcall GetPointerType(long ptr)
 @ stdcall GetPointerTouchInfo(long ptr)
 @ stdcall GetPointerTouchInfoHistory(long ptr ptr)
