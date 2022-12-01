@@ -240,6 +240,16 @@ typedef struct {
 } printer_info_t;
 
 typedef struct {
+    enum
+    {
+        HANDLE_SERVER,
+        HANDLE_PRINTER,
+        HANDLE_XCV,
+    } type;
+} handle_header_t;
+
+typedef struct {
+    handle_header_t header;
     printer_info_t *info;
     LPWSTR name;
     monitor_t * pm;
@@ -1618,6 +1628,7 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
                 printer = NULL;
                 goto end;
             }
+            printer->header.type = HANDLE_XCV;
         }
         else
         {
@@ -1629,11 +1640,13 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
                 printer = NULL;
                 goto end;
             }
+            printer->header.type = HANDLE_PRINTER;
         }
     }
     else
     {
         TRACE("using the local printserver\n");
+        printer->header.type = HANDLE_SERVER;
     }
 
     if (pDefault && pDefault->pDevMode)
@@ -2679,13 +2692,13 @@ static BOOL WINAPI fpXcvData(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
                     DWORD cbInputData, PBYTE pOutputData, DWORD cbOutputData,
                     PDWORD pcbOutputNeeded, PDWORD pdwStatus)
 {
-    printer_t *printer = (printer_t * ) hXcv;
+    printer_t *printer = (printer_t *)hXcv;
 
     TRACE("(%p, %s, %p, %ld, %p, %ld, %p, %p)\n", hXcv, debugstr_w(pszDataName),
           pInputData, cbInputData, pOutputData,
           cbOutputData, pcbOutputNeeded, pdwStatus);
 
-    if (!printer || (!printer->hXcv)) {
+    if (!printer || printer->header.type != HANDLE_XCV) {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
@@ -2952,7 +2965,7 @@ static BOOL WINAPI fpAddJob(HANDLE hprinter, DWORD level, BYTE *data, DWORD size
 
     TRACE("(%p %ld %p %ld %p)\n", hprinter, level, data, size, needed);
 
-    if (!printer || !printer->info)
+    if (!printer || printer->header.type != HANDLE_PRINTER)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -2999,7 +3012,7 @@ static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_in
             hprinter, level, doc_info, debugstr_w(info->pDocName),
             debugstr_w(info->pOutputFile), debugstr_w(info->pDatatype));
 
-    if (!printer || !printer->info)
+    if (!printer || printer->header.type != HANDLE_PRINTER)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return 0;
@@ -3027,7 +3040,7 @@ static BOOL WINAPI fpWritePrinter(HANDLE hprinter, void *buf, DWORD size, DWORD 
 
     TRACE("(%p, %p, %ld, %p)\n", hprinter, buf, size, written);
 
-    if(!printer || !printer->info)
+    if(!printer || printer->header.type != HANDLE_PRINTER)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -3064,7 +3077,7 @@ static BOOL WINAPI fpSetJob(HANDLE hprinter, DWORD job_id,
     TRACE("(%p, %ld, %ld, %p, %ld)\n", hprinter, job_id, level, data, command);
     FIXME("Ignoring everything other than document title\n");
 
-    if (!printer || !printer->info)
+    if (!printer || printer->header.type != HANDLE_PRINTER)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return 0;
@@ -3141,7 +3154,7 @@ static BOOL WINAPI fpGetJob(HANDLE hprinter, DWORD job_id, DWORD level,
 
     TRACE("%p %ld %ld %p %ld %p\n", hprinter, job_id, level, data, size, needed);
 
-    if (!printer || !printer->info)
+    if (!printer || printer->header.type != HANDLE_PRINTER)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -3270,7 +3283,7 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
 
     TRACE("%p %ld\n", hprinter, job_id);
 
-    if (!printer || !printer->info)
+    if (!printer || printer->header.type != HANDLE_PRINTER)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
@@ -3363,7 +3376,7 @@ static BOOL WINAPI fpEndDocPrinter(HANDLE hprinter)
 
     TRACE("%p\n", hprinter);
 
-    if (!printer || !printer->info)
+    if (!printer || printer->header.type != HANDLE_PRINTER)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
