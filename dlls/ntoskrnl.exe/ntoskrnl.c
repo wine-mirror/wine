@@ -3437,7 +3437,7 @@ ULONG WINAPI KeQueryMaximumProcessorCountEx(USHORT group_number)
  */
 ULONG WINAPI KeQueryMaximumProcessorCount(void)
 {
-    return KeQueryActiveProcessorCountEx(ALL_PROCESSOR_GROUPS);
+    return KeQueryMaximumProcessorCountEx(0);
 }
 
 /***********************************************************************
