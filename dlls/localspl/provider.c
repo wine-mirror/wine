@@ -250,10 +250,14 @@ typedef struct {
 
 typedef struct {
     handle_header_t header;
+    monitor_t *pm;
+    HANDLE hxcv;
+} xcv_t;
+
+typedef struct {
+    handle_header_t header;
     printer_info_t *info;
     LPWSTR name;
-    monitor_t * pm;
-    HANDLE hXcv;
     DEVMODEW *devmode;
     job_t *doc;
 } printer_t;
@@ -314,6 +318,7 @@ static const DWORD di_sizeof[] = {0, sizeof(DRIVER_INFO_1W), sizeof(DRIVER_INFO_
                                      sizeof(DRIVER_INFO_5W), sizeof(DRIVER_INFO_6W),
                                   0, sizeof(DRIVER_INFO_8W)};
 
+static BOOL WINAPI fpClosePrinter(HANDLE);
 
 /******************************************************************
  *  apd_copyfile [internal]
@@ -1531,130 +1536,101 @@ static HMODULE driver_load(const printenv_t * env, LPWSTR dllname)
     return hui;
 }
 
-/******************************************************************
- *  printer_free
- *  free the data pointer of an opened printer
- */
-static VOID printer_free(printer_t * printer)
+static HANDLE xcv_alloc_handle(const WCHAR *name, PRINTER_DEFAULTSW *def, BOOL *stop_search)
 {
-    if (printer->hXcv)
+    static const WCHAR xcv_monitor[] = L"XcvMonitor ";
+    static const WCHAR xcv_port[] = L"XcvPort ";
+    BOOL mon, port;
+    xcv_t *xcv;
+
+    *stop_search = FALSE;
+    if (!name || name[0] != ',')
+        return NULL;
+
+    name++;
+    while (*name == ' ')
+        name++;
+
+    mon = !wcsncmp(name, xcv_monitor, ARRAY_SIZE(xcv_monitor) - 1);
+    if (mon)
     {
-        if (printer->pm->monitor.pfnXcvClosePort)
-            printer->pm->monitor.pfnXcvClosePort(printer->hXcv);
+        name += ARRAY_SIZE(xcv_monitor) - 1;
+    }
+    else
+    {
+        port = !wcsncmp(name, xcv_port, ARRAY_SIZE(xcv_port) - 1);
+        name += ARRAY_SIZE(xcv_port) - 1;
+    }
+    if (!port && !mon)
+        return NULL;
+
+    *stop_search = TRUE;
+    xcv = calloc(1, sizeof(*xcv));
+    if (!xcv)
+        return NULL;
+    xcv->header.type = HANDLE_XCV;
+
+    if (mon)
+        xcv->pm = monitor_load(name, NULL);
+    else
+        xcv->pm = monitor_load_by_port(name);
+    if (!xcv->pm)
+    {
+        free(xcv);
+        SetLastError(ERROR_UNKNOWN_PORT);
+        return NULL;
     }
 
-    monitor_unload(printer->pm);
-
-    release_printer_info(printer->info);
-    free(printer->name);
-    free(printer->devmode);
-    free(printer);
+    if (xcv->pm->monitor.pfnXcvOpenPort)
+    {
+        xcv->pm->monitor.pfnXcvOpenPort(xcv->pm->hmon, name,
+                def ? def->DesiredAccess : 0, &xcv->hxcv);
+    }
+    if (!xcv->hxcv)
+    {
+        fpClosePrinter((HANDLE)xcv);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    return (HANDLE)xcv;
 }
 
-/******************************************************************
- *  printer_alloc_handle
- *  alloc a printer handle and remember the data pointer in the printer handle table
- *
- */
-static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
+static HANDLE printer_alloc_handle(const WCHAR *name, const WCHAR *basename,
+                                   PRINTER_DEFAULTSW *def)
 {
-    WCHAR servername[MAX_COMPUTERNAME_LENGTH + 1];
-    printer_t *printer = NULL;
-    LPCWSTR printername;
-    DWORD   len;
+    printer_t *printer;
 
-    if (copy_servername_from_name(name, servername)) {
-        FIXME("server %s not supported\n", debugstr_w(servername));
+    printer = calloc(1, sizeof(*printer));
+    if (!printer)
+        return NULL;
+    printer->header.type = HANDLE_PRINTER;
+
+    /* clone the full name */
+    printer->name = wcsdup(name);
+    if (name && !printer->name)
+    {
+        fpClosePrinter((HANDLE)printer);
+        return NULL;
+    }
+
+    if (!basename)
+    {
+        TRACE("using the local printserver\n");
+        printer->header.type = HANDLE_SERVER;
+        return (HANDLE)printer;
+    }
+
+    printer->info = get_printer_info(basename);
+    if (!printer->info)
+    {
+        fpClosePrinter((HANDLE)printer);
         SetLastError(ERROR_INVALID_PRINTER_NAME);
         return NULL;
     }
 
-    printername = get_basename_from_name(name);
-    if (name != printername) TRACE("converted %s to %s\n", debugstr_w(name), debugstr_w(printername));
+    if (def && def->pDevMode)
+        printer->devmode = dup_devmode(def->pDevMode);
 
-    /* an empty printername is invalid */
-    if (printername && (!printername[0])) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return NULL;
-    }
-
-    printer = calloc(1, sizeof(printer_t));
-    if (!printer) goto end;
-
-    /* clone the full name */
-    printer->name = wcsdup(name);
-    if (name && !printer->name) {
-        printer_free(printer);
-        printer = NULL;
-        goto end;
-    }
-    if (printername) {
-        len = ARRAY_SIZE(L",XcvMonitor ") - 1;
-        if (wcsncmp(printername, L",XcvMonitor ", len) == 0) {
-            /* OpenPrinter(",XcvMonitor ", ...) detected */
-            TRACE(",XcvMonitor: %s\n", debugstr_w(&printername[len]));
-            printer->pm = monitor_load(&printername[len], NULL);
-            if (printer->pm == NULL) {
-                printer_free(printer);
-                SetLastError(ERROR_UNKNOWN_PORT);
-                printer = NULL;
-                goto end;
-            }
-        }
-        else
-        {
-            len = ARRAY_SIZE(L",XcvPort ") - 1;
-            if (wcsncmp( printername, L",XcvPort ", len) == 0) {
-                /* OpenPrinter(",XcvPort ", ...) detected */
-                TRACE(",XcvPort: %s\n", debugstr_w(&printername[len]));
-                printer->pm = monitor_load_by_port(&printername[len]);
-                if (printer->pm == NULL) {
-                    printer_free(printer);
-                    SetLastError(ERROR_UNKNOWN_PORT);
-                    printer = NULL;
-                    goto end;
-                }
-            }
-        }
-
-        if (printer->pm) {
-            if (printer->pm->monitor.pfnXcvOpenPort)
-                printer->pm->monitor.pfnXcvOpenPort(printer->pm->hmon, &printername[len],
-                                                   pDefault ? pDefault->DesiredAccess : 0,
-                                                   &printer->hXcv);
-            if (printer->hXcv == NULL) {
-                printer_free(printer);
-                SetLastError(ERROR_INVALID_PARAMETER);
-                printer = NULL;
-                goto end;
-            }
-            printer->header.type = HANDLE_XCV;
-        }
-        else
-        {
-            printer->info = get_printer_info(printername);
-            if (!printer->info)
-            {
-                printer_free(printer);
-                SetLastError(ERROR_INVALID_PRINTER_NAME);
-                printer = NULL;
-                goto end;
-            }
-            printer->header.type = HANDLE_PRINTER;
-        }
-    }
-    else
-    {
-        TRACE("using the local printserver\n");
-        printer->header.type = HANDLE_SERVER;
-    }
-
-    if (pDefault && pDefault->pDevMode)
-        printer->devmode = dup_devmode(pDefault->pDevMode);
-
-end:
-
-    TRACE("==> %p\n", printer);
     return (HANDLE)printer;
 }
 
@@ -2643,15 +2619,39 @@ static BOOL WINAPI fpGetPrintProcessorDirectory(LPWSTR pName, LPWSTR pEnvironmen
  *
  *
  */
-static BOOL WINAPI fpOpenPrinter(LPWSTR lpPrinterName, HANDLE *pPrinter,
-                                 LPPRINTER_DEFAULTSW pDefaults)
+static BOOL WINAPI fpOpenPrinter(WCHAR *name, HANDLE *hprinter,
+                                 PRINTER_DEFAULTSW *def)
 {
+    WCHAR servername[MAX_COMPUTERNAME_LENGTH + 1];
+    const WCHAR *basename;
+    BOOL stop_search;
 
-    TRACE("(%s, %p, %p)\n", debugstr_w(lpPrinterName), pPrinter, pDefaults);
+    TRACE("(%s, %p, %p)\n", debugstr_w(name), hprinter, def);
 
-    *pPrinter = printer_alloc_handle(lpPrinterName, pDefaults);
+    if (copy_servername_from_name(name, servername))
+    {
+        FIXME("server %s not supported\n", debugstr_w(servername));
+        SetLastError(ERROR_INVALID_PRINTER_NAME);
+        return FALSE;
+    }
 
-    return (*pPrinter != 0);
+    basename = get_basename_from_name(name);
+    if (name != basename) TRACE("converted %s to %s\n",
+            debugstr_w(name), debugstr_w(basename));
+
+    /* an empty basename is invalid */
+    if (basename && (!basename[0]))
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    *hprinter = xcv_alloc_handle(basename, def, &stop_search);
+    if (!*hprinter && !stop_search)
+        *hprinter = printer_alloc_handle(name, basename, def);
+
+    TRACE("==> %p\n", *hprinter);
+    return *hprinter != 0;
 }
 
 /******************************************************************************
@@ -2692,13 +2692,13 @@ static BOOL WINAPI fpXcvData(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
                     DWORD cbInputData, PBYTE pOutputData, DWORD cbOutputData,
                     PDWORD pcbOutputNeeded, PDWORD pdwStatus)
 {
-    printer_t *printer = (printer_t *)hXcv;
+    xcv_t *xcv = (xcv_t *)hXcv;
 
     TRACE("(%p, %s, %p, %ld, %p, %ld, %p, %p)\n", hXcv, debugstr_w(pszDataName),
           pInputData, cbInputData, pOutputData,
           cbOutputData, pcbOutputNeeded, pdwStatus);
 
-    if (!printer || printer->header.type != HANDLE_XCV) {
+    if (!xcv || xcv->header.type != HANDLE_XCV) {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
@@ -2715,8 +2715,8 @@ static BOOL WINAPI fpXcvData(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
 
     *pcbOutputNeeded = 0;
 
-    if (printer->pm->monitor.pfnXcvDataPort)
-        *pdwStatus = printer->pm->monitor.pfnXcvDataPort(printer->hXcv, pszDataName,
+    if (xcv->pm->monitor.pfnXcvDataPort)
+        *pdwStatus = xcv->pm->monitor.pfnXcvDataPort(xcv->hxcv, pszDataName,
             pInputData, cbInputData, pOutputData, cbOutputData, pcbOutputNeeded);
 
     return TRUE;
@@ -3410,16 +3410,40 @@ static BOOL WINAPI fpEndDocPrinter(HANDLE hprinter)
  */
 static BOOL WINAPI fpClosePrinter(HANDLE hprinter)
 {
-    printer_t *printer = (printer_t *)hprinter;
+    handle_header_t *header = (handle_header_t *)hprinter;
 
     TRACE("(%p)\n", hprinter);
 
-    if (!printer)
+    if (!header)
         return FALSE;
 
-    if(printer->doc)
-        fpEndDocPrinter(hprinter);
-    printer_free(printer);
+    if (header->type == HANDLE_XCV)
+    {
+        xcv_t *xcv = (xcv_t *)hprinter;
+
+        if (xcv->hxcv && xcv->pm->monitor.pfnXcvClosePort)
+            xcv->pm->monitor.pfnXcvClosePort(xcv->hxcv);
+
+        monitor_unload(xcv->pm);
+        free(xcv);
+    }
+    else if (header->type == HANDLE_SERVER || header->type == HANDLE_PRINTER)
+    {
+        printer_t *printer = (printer_t *)hprinter;
+
+        if(printer->doc)
+            fpEndDocPrinter(hprinter);
+
+        release_printer_info(printer->info);
+        free(printer->name);
+        free(printer->devmode);
+        free(printer);
+    }
+    else
+    {
+        ERR("invalid handle type\n");
+        return FALSE;
+    }
     return TRUE;
 }
 
