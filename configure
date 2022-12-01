@@ -741,7 +741,9 @@ PRELINK
 WINELOADER_DEPENDS
 LIBWINE_LDFLAGS
 LIBWINE_SHAREDLIB
-METAL_LIBS
+ac_ct_OBJC
+OBJCFLAGS
+OBJC
 OPENCL_LIBS
 COREAUDIO_LIBS
 SECURITY_LIBS
@@ -749,13 +751,11 @@ SYSTEMCONFIGURATION_LIBS
 APPKIT_LIBS
 CORESERVICES_LIBS
 APPLICATIONSERVICES_LIBS
+METAL_LIBS
 IOKIT_LIBS
 DISKARBITRATION_LIBS
 COREFOUNDATION_LIBS
 CARBON_LIBS
-ac_ct_OBJC
-OBJCFLAGS
-OBJC
 CONFIGURE_TARGETS
 DISABLED_SUBDIRS
 SUBDIRS
@@ -2869,39 +2869,6 @@ fi
   as_fn_set_status $ac_retval
 
 } # ac_fn_objc_try_compile
-
-# ac_fn_objc_check_header_compile LINENO HEADER VAR INCLUDES
-# ----------------------------------------------------------
-# Tests whether HEADER exists and can be compiled using the include files in
-# INCLUDES, setting the cache variable VAR accordingly.
-ac_fn_objc_check_header_compile ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-printf %s "checking for $2... " >&6; }
-if eval test \${$3+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-#include <$2>
-_ACEOF
-if ac_fn_objc_try_compile "$LINENO"
-then :
-  eval "$3=yes"
-else $as_nop
-  eval "$3=no"
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-eval ac_res=\$$3
-	       { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-printf "%s\n" "$ac_res" >&6; }
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_objc_check_header_compile
 
 # ac_fn_c_check_func LINENO FUNC VAR
 # ----------------------------------
@@ -9479,13 +9446,184 @@ fi ;;
     ;;
 
   darwin*|macosx*)
+    LIBEXT="dylib"
+    DLLFLAGS="$DLLFLAGS -fPIC"
+    LDDLLFLAGS="-fPIC"
+    enable_winemac_drv=${enable_winemac_drv:-yes}
+        CARBON_LIBS="-framework Carbon"
+
+    COREFOUNDATION_LIBS="-framework CoreFoundation"
+
+    DISKARBITRATION_LIBS="-framework DiskArbitration -framework CoreFoundation"
+
+    IOKIT_LIBS="-framework IOKit -framework CoreFoundation"
+
+    METAL_LIBS="-framework Metal"
+
+    APPLICATIONSERVICES_LIBS="-framework ApplicationServices"
+
+    CORESERVICES_LIBS="-framework CoreServices"
+
+    APPKIT_LIBS="-framework AppKit"
+
+    SYSTEMCONFIGURATION_LIBS="-framework SystemConfiguration"
+
+
+    WINELOADER_LDFLAGS="-Wl,-pie,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
+
+    wine_can_build_preloader=yes
+    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist,-segaddr,WINE_4GB_RESERVE,0x100000000"
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main" >&5
+printf %s "checking whether the compiler supports -Wl,-no_new_main -e _main... " >&6; }
+if test ${ac_cv_cflags__Wl__no_new_main__e__main+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-no_new_main -e _main"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__Wl__no_new_main__e__main=yes
+else $as_nop
+  ac_cv_cflags__Wl__no_new_main__e__main=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_new_main__e__main" >&5
+printf "%s\n" "$ac_cv_cflags__Wl__no_new_main__e__main" >&6; }
+if test "x$ac_cv_cflags__Wl__no_new_main__e__main" = xyes
+then :
+  WINEPRELOADER_LDFLAGS="-Wl,-no_new_main $WINEPRELOADER_LDFLAGS"
+                     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs" >&5
+printf %s "checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs... " >&6; }
+if test ${ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs=yes
+else $as_nop
+  ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" >&5
+printf "%s\n" "$ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" >&6; }
+if test "x$ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" = xyes
+then :
+  WINEPRELOADER_LDFLAGS="-mmacosx-version-min=10.7 $WINEPRELOADER_LDFLAGS"
+else $as_nop
+  wine_can_build_preloader=no
+fi
+else $as_nop
+  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs" >&5
+printf %s "checking whether the compiler supports -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs... " >&6; }
+if test ${ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs=yes
+else $as_nop
+  ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" >&5
+printf "%s\n" "$ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" >&6; }
+if test "x$ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" = xyes
+then :
+  WINEPRELOADER_LDFLAGS="-mmacosx-version-min=10.7 $WINEPRELOADER_LDFLAGS"
+else $as_nop
+  wine_can_build_preloader=no
+fi
+fi
+    if test "$wine_can_build_preloader" = "yes"
+    then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_pie" >&5
+printf %s "checking whether the compiler supports -Wl,-no_pie... " >&6; }
+if test ${ac_cv_cflags__Wl__no_pie+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-no_pie"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_cflags__Wl__no_pie=yes
+else $as_nop
+  ac_cv_cflags__Wl__no_pie=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_pie" >&5
+printf "%s\n" "$ac_cv_cflags__Wl__no_pie" >&6; }
+if test "x$ac_cv_cflags__Wl__no_pie" = xyes
+then :
+  WINEPRELOADER_LDFLAGS="-Wl,-no_pie $WINEPRELOADER_LDFLAGS"
+fi
+                WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -mmacosx-version-min=10.7"
+    else
+        as_fn_append wine_warnings "|can't build Wine preloader; many programs won't work"
+    fi
+
+    if test "$ac_cv_header_Security_Security_h" = "yes"
+    then
+        SECURITY_LIBS="-framework Security -framework CoreFoundation"
+
+    fi
+    if test "x$with_coreaudio" != "xno";
+    then
+        COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
+
+        enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-yes}
+    fi
+    if test "$ac_cv_header_OpenCL_opencl_h" = "yes"
+    then
+        OPENCL_LIBS="-framework OpenCL"
+
+        ac_cv_lib_OpenCL_clGetPlatformInfo=yes
+    fi
+
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether MTLDevice protocol supports registryID property" >&5
+printf %s "checking whether MTLDevice protocol supports registryID property... " >&6; }
     ac_ext=m
 ac_cpp='$OBJCPP $CPPFLAGS'
 ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_objc_compiler_gnu
 
-        ac_ext=m
+    ac_ext=m
 ac_cpp='$OBJCPP $CPPFLAGS'
 ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
@@ -9755,203 +9893,7 @@ ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_
 ac_compiler_gnu=$ac_cv_objc_compiler_gnu
 
 
-ac_fn_objc_check_header_compile "$LINENO" "Metal/Metal.h" "ac_cv_header_Metal_Metal_h" "$ac_includes_default"
-if test "x$ac_cv_header_Metal_Metal_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_METAL_METAL_H 1" >>confdefs.h
-
-fi
-
-    ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-    LIBEXT="dylib"
-    DLLFLAGS="$DLLFLAGS -fPIC"
-    LDDLLFLAGS="-fPIC"
-    enable_winemac_drv=${enable_winemac_drv:-yes}
-        CARBON_LIBS="-framework Carbon"
-
-    COREFOUNDATION_LIBS="-framework CoreFoundation"
-
-    DISKARBITRATION_LIBS="-framework DiskArbitration -framework CoreFoundation"
-
-    IOKIT_LIBS="-framework IOKit -framework CoreFoundation"
-
-    APPLICATIONSERVICES_LIBS="-framework ApplicationServices"
-
-    CORESERVICES_LIBS="-framework CoreServices"
-
-    APPKIT_LIBS="-framework AppKit"
-
-    SYSTEMCONFIGURATION_LIBS="-framework SystemConfiguration"
-
-
-    WINELOADER_LDFLAGS="-Wl,-pie,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist"
-
-    wine_can_build_preloader=yes
-    WINEPRELOADER_LDFLAGS="-nostartfiles -nodefaultlibs -e _start -ldylib1.o -Wl,-image_base,0x7d400000,-segalign,0x1000,-pagezero_size,0x1000,-sectcreate,__TEXT,__info_plist,loader/wine_info.plist,-segaddr,WINE_4GB_RESERVE,0x100000000"
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main" >&5
-printf %s "checking whether the compiler supports -Wl,-no_new_main -e _main... " >&6; }
-if test ${ac_cv_cflags__Wl__no_new_main__e__main+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-no_new_main -e _main"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__Wl__no_new_main__e__main=yes
-else $as_nop
-  ac_cv_cflags__Wl__no_new_main__e__main=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_new_main__e__main" >&5
-printf "%s\n" "$ac_cv_cflags__Wl__no_new_main__e__main" >&6; }
-if test "x$ac_cv_cflags__Wl__no_new_main__e__main" = xyes
-then :
-  WINEPRELOADER_LDFLAGS="-Wl,-no_new_main $WINEPRELOADER_LDFLAGS"
-                     { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs" >&5
-printf %s "checking whether the compiler supports -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs... " >&6; }
-if test ${ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-no_new_main -e _main -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs=yes
-else $as_nop
-  ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" >&5
-printf "%s\n" "$ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" >&6; }
-if test "x$ac_cv_cflags__Wl__no_new_main__e__main__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" = xyes
-then :
-  WINEPRELOADER_LDFLAGS="-mmacosx-version-min=10.7 $WINEPRELOADER_LDFLAGS"
-else $as_nop
-  wine_can_build_preloader=no
-fi
-else $as_nop
-  { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs" >&5
-printf %s "checking whether the compiler supports -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs... " >&6; }
-if test ${ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -mmacosx-version-min=10.7 -nostartfiles -nodefaultlibs"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs=yes
-else $as_nop
-  ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" >&5
-printf "%s\n" "$ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" >&6; }
-if test "x$ac_cv_cflags__mmacosx_version_min_10_7__nostartfiles__nodefaultlibs" = xyes
-then :
-  WINEPRELOADER_LDFLAGS="-mmacosx-version-min=10.7 $WINEPRELOADER_LDFLAGS"
-else $as_nop
-  wine_can_build_preloader=no
-fi
-fi
-    if test "$wine_can_build_preloader" = "yes"
-    then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-no_pie" >&5
-printf %s "checking whether the compiler supports -Wl,-no_pie... " >&6; }
-if test ${ac_cv_cflags__Wl__no_pie+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,-no_pie"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-int main(int argc, char **argv) { return 0; }
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  ac_cv_cflags__Wl__no_pie=yes
-else $as_nop
-  ac_cv_cflags__Wl__no_pie=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-CFLAGS=$ac_wine_try_cflags_saved
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__no_pie" >&5
-printf "%s\n" "$ac_cv_cflags__Wl__no_pie" >&6; }
-if test "x$ac_cv_cflags__Wl__no_pie" = xyes
-then :
-  WINEPRELOADER_LDFLAGS="-Wl,-no_pie $WINEPRELOADER_LDFLAGS"
-fi
-                WINELOADER_LDFLAGS="$WINELOADER_LDFLAGS -mmacosx-version-min=10.7"
-    else
-        as_fn_append wine_warnings "|can't build Wine preloader; many programs won't work"
-    fi
-
-    if test "$ac_cv_header_Security_Security_h" = "yes"
-    then
-        SECURITY_LIBS="-framework Security -framework CoreFoundation"
-
-    fi
-    if test "x$with_coreaudio" != "xno";
-    then
-        COREAUDIO_LIBS="-framework CoreFoundation -framework CoreAudio -framework AudioUnit -framework AudioToolbox -framework CoreMIDI"
-
-        enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-yes}
-    fi
-    if test "$ac_cv_header_OpenCL_opencl_h" = "yes"
-    then
-        OPENCL_LIBS="-framework OpenCL"
-
-        ac_cv_lib_OpenCL_clGetPlatformInfo=yes
-    fi
-
-    if test "$ac_cv_header_Metal_Metal_h" = "yes"
-    then
-        METAL_LIBS="-framework Metal"
-
-    fi
-
-        if test "$ac_cv_header_Metal_Metal_h" = "yes"
-    then
-        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether MTLDevice protocol supports registryID property" >&5
-printf %s "checking whether MTLDevice protocol supports registryID property... " >&6; }
-        ac_ext=m
-ac_cpp='$OBJCPP $CPPFLAGS'
-ac_compile='$OBJC -c $OBJCFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$OBJC -o conftest$ac_exeext $OBJCFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_objc_compiler_gnu
-
-        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <Metal/Metal.h>
 int
@@ -9974,13 +9916,12 @@ else $as_nop
 printf "%s\n" "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
-        ac_ext=c
+    ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-    fi
 
     UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"
     LIBWINE_SHAREDLIB="libwine.$libwine_version.dylib"
@@ -23211,13 +23152,11 @@ READELF = $READELF
 SUBDIRS = $SUBDIRS
 DISABLED_SUBDIRS = $DISABLED_SUBDIRS
 CONFIGURE_TARGETS = $CONFIGURE_TARGETS
-OBJC = $OBJC
-OBJCFLAGS = $OBJCFLAGS
-ac_ct_OBJC = $ac_ct_OBJC
 CARBON_LIBS = $CARBON_LIBS
 COREFOUNDATION_LIBS = $COREFOUNDATION_LIBS
 DISKARBITRATION_LIBS = $DISKARBITRATION_LIBS
 IOKIT_LIBS = $IOKIT_LIBS
+METAL_LIBS = $METAL_LIBS
 APPLICATIONSERVICES_LIBS = $APPLICATIONSERVICES_LIBS
 CORESERVICES_LIBS = $CORESERVICES_LIBS
 APPKIT_LIBS = $APPKIT_LIBS
@@ -23225,7 +23164,9 @@ SYSTEMCONFIGURATION_LIBS = $SYSTEMCONFIGURATION_LIBS
 SECURITY_LIBS = $SECURITY_LIBS
 COREAUDIO_LIBS = $COREAUDIO_LIBS
 OPENCL_LIBS = $OPENCL_LIBS
-METAL_LIBS = $METAL_LIBS
+OBJC = $OBJC
+OBJCFLAGS = $OBJCFLAGS
+ac_ct_OBJC = $ac_ct_OBJC
 LIBWINE_SHAREDLIB = $LIBWINE_SHAREDLIB
 LIBWINE_LDFLAGS = $LIBWINE_LDFLAGS
 WINELOADER_DEPENDS = $WINELOADER_DEPENDS

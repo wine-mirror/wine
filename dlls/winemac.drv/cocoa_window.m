@@ -23,9 +23,7 @@
 #define GL_SILENCE_DEPRECATION
 #import <Carbon/Carbon.h>
 #import <CoreVideo/CoreVideo.h>
-#ifdef HAVE_METAL_METAL_H
 #import <Metal/Metal.h>
-#endif
 #import <QuartzCore/QuartzCore.h>
 
 #import "cocoa_window.h"
@@ -339,7 +337,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @end
 
 
-#ifdef HAVE_METAL_METAL_H
 @interface WineMetalView : WineBaseView
 {
     id<MTLDevice> _device;
@@ -348,7 +345,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (id) initWithFrame:(NSRect)frame device:(id<MTLDevice>)device;
 
 @end
-#endif
 
 
 @interface WineContentView : WineBaseView <NSTextInputClient, NSViewLayerContentScaleDelegate>
@@ -366,9 +362,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     BOOL _retinaMode;
     int backingSize[2];
 
-#ifdef HAVE_METAL_METAL_H
     WineMetalView *_metalView;
-#endif
 }
 
 @property (readonly, nonatomic) BOOL everHadGLContext;
@@ -380,9 +374,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (void) wine_getBackingSize:(int*)outBackingSize;
     - (void) wine_setBackingSize:(const int*)newBackingSize;
 
-#ifdef HAVE_METAL_METAL_H
     - (WineMetalView*) newMetalViewWithDevice:(id<MTLDevice>)device;
-#endif
 
 @end
 
@@ -657,7 +649,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         }
     }
 
-#ifdef HAVE_METAL_METAL_H
     - (WineMetalView*) newMetalViewWithDevice:(id<MTLDevice>)device
     {
         if (_metalView) return _metalView;
@@ -672,7 +663,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
         return _metalView;
     }
-#endif
 
     - (void) setRetinaMode:(int)mode
     {
@@ -754,10 +744,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             if (!view->_cachedHasGLDescendantValid || view->_cachedHasGLDescendant)
                 [self invalidateHasGLDescendant];
         }
-#ifdef HAVE_METAL_METAL_H
         if (subview == _metalView)
             _metalView = nil;
-#endif
         [super willRemoveSubview:subview];
     }
 
@@ -904,7 +892,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @end
 
 
-#ifdef HAVE_METAL_METAL_H
 @implementation WineMetalView
 
     - (id) initWithFrame:(NSRect)frame device:(id<MTLDevice>)device
@@ -948,7 +935,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     }
 
 @end
-#endif
 
 
 @implementation WineWindow
@@ -3797,7 +3783,6 @@ void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c)
     [pool release];
 }
 
-#ifdef HAVE_METAL_METAL_H
 macdrv_metal_device macdrv_create_metal_device(void)
 {
     macdrv_metal_device ret;
@@ -3853,7 +3838,6 @@ void macdrv_view_release_metal_view(macdrv_metal_view v)
         [view release];
     });
 }
-#endif
 
 int macdrv_get_view_backing_size(macdrv_view v, int backing_size[2])
 {

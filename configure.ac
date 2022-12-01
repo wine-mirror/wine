@@ -669,9 +669,6 @@ case $host_os in
     ;;
 
   darwin*|macosx*)
-    AC_LANG_PUSH([Objective C])
-        AC_CHECK_HEADERS(Metal/Metal.h)
-    AC_LANG_POP([Objective C])
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
@@ -681,6 +678,7 @@ case $host_os in
     AC_SUBST(COREFOUNDATION_LIBS,"-framework CoreFoundation")
     AC_SUBST(DISKARBITRATION_LIBS,"-framework DiskArbitration -framework CoreFoundation")
     AC_SUBST(IOKIT_LIBS,"-framework IOKit -framework CoreFoundation")
+    AC_SUBST(METAL_LIBS,"-framework Metal")
     AC_SUBST(APPLICATIONSERVICES_LIBS,"-framework ApplicationServices")
     AC_SUBST(CORESERVICES_LIBS,"-framework CoreServices")
     AC_SUBST(APPKIT_LIBS,"-framework AppKit")
@@ -723,22 +721,14 @@ case $host_os in
         ac_cv_lib_OpenCL_clGetPlatformInfo=yes
     fi
 
-    if test "$ac_cv_header_Metal_Metal_h" = "yes"
-    then
-        AC_SUBST(METAL_LIBS,"-framework Metal")
-    fi
-
     dnl Check for MTLDevice registryID property
-    if test "$ac_cv_header_Metal_Metal_h" = "yes"
-    then
-        AC_MSG_CHECKING([whether MTLDevice protocol supports registryID property])
-        AC_LANG_PUSH([Objective C])
-        AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Metal/Metal.h>]], [[id<MTLDevice> device; device.registryID;]])],
-                              [AC_MSG_RESULT(yes)
-                               AC_DEFINE(HAVE_MTLDEVICE_REGISTRYID, 1, [Define if MTLDevice protocol has registryID property.])],
-                              [AC_MSG_RESULT(no)])
-        AC_LANG_POP([Objective C])
-    fi
+    AC_MSG_CHECKING([whether MTLDevice protocol supports registryID property])
+    AC_LANG_PUSH([Objective C])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <Metal/Metal.h>]], [[id<MTLDevice> device; device.registryID;]])],
+                          [AC_MSG_RESULT(yes)
+                           AC_DEFINE(HAVE_MTLDEVICE_REGISTRYID, 1, [Define if MTLDevice protocol has registryID property.])],
+                          [AC_MSG_RESULT(no)])
+    AC_LANG_POP([Objective C])
 
     UNIXLDFLAGS="-dynamiclib -install_name @rpath/\$(UNIXLIB) -Wl,-rpath,@loader_path\/"
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.$libwine_version.dylib")

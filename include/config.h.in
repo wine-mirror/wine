@@ -213,9 +213,6 @@
 /* Define to 1 if you have the <mach-o/loader.h> header file. */
 #undef HAVE_MACH_O_LOADER_H
 
-/* Define to 1 if you have the <Metal/Metal.h> header file. */
-#undef HAVE_METAL_METAL_H
-
 /* Define to 1 if you have the <mntent.h> header file. */
 #undef HAVE_MNTENT_H
 
