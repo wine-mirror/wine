@@ -3476,6 +3476,21 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     return ret;
 }
 
+static BOOL WINAPI fpReadPrinter(HANDLE hprinter, void *buf, DWORD size, DWORD *bytes_read)
+{
+    job_t *job = (job_t *)hprinter;
+
+    TRACE("%p %p %lu %p\n", hprinter, buf, size, bytes_read);
+
+    if (!job || (job->header.type != HANDLE_JOB))
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    return ReadFile(job->hf, buf, size, bytes_read, NULL);
+}
+
 static BOOL WINAPI fpEndDocPrinter(HANDLE hprinter)
 {
     printer_t *printer = (printer_t *)hprinter;
@@ -3590,7 +3605,7 @@ static const PRINTPROVIDOR backend = {
         fpWritePrinter,
         NULL,   /* fpEndPagePrinter */
         NULL,   /* fpAbortPrinter */
-        NULL,   /* fpReadPrinter */
+        fpReadPrinter,
         fpEndDocPrinter,
         fpAddJob,
         fpScheduleJob,
