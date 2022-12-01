@@ -21,6 +21,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <windows.h>
 #include <winsvc.h>
 
@@ -28,21 +29,6 @@
 #include "services.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(service);
-
-LPWSTR strdupW(LPCWSTR str)
-{
-    int len;
-    WCHAR *buf;
-
-    if (str == NULL)
-        return NULL;
-    len = lstrlenW(str);
-    buf = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*(len+1));
-    if (buf == NULL)
-        return NULL;
-    lstrcpyW(buf, str);
-    return buf;
-}
 
 BOOL check_multisz(LPCWSTR lpMultiSz, DWORD cbSize)
 {
@@ -73,7 +59,7 @@ DWORD load_reg_string(HKEY hKey, LPCWSTR szValue, BOOL bExpand, LPWSTR *output)
         err = ERROR_INVALID_DATATYPE;
         goto failed;
     }
-    buf = HeapAlloc(GetProcessHeap(), 0, size + sizeof(WCHAR));
+    buf = malloc(size + sizeof(WCHAR));
     if ((err = RegQueryValueExW(hKey, szValue, 0, &type, (LPBYTE)buf, &size)) != 0)
         goto failed;
     buf[size/sizeof(WCHAR)] = 0;
@@ -86,9 +72,9 @@ DWORD load_reg_string(HKEY hKey, LPCWSTR szValue, BOOL bExpand, LPWSTR *output)
             err = GetLastError();
             goto failed;
         }
-        str = HeapAlloc(GetProcessHeap(), 0, size * sizeof(WCHAR));
+        str = malloc(size * sizeof(WCHAR));
         ExpandEnvironmentStringsW(buf, str, size);
-        HeapFree(GetProcessHeap(), 0, buf);
+        free(buf);
         *output = str;
     }
     else
@@ -97,7 +83,7 @@ DWORD load_reg_string(HKEY hKey, LPCWSTR szValue, BOOL bExpand, LPWSTR *output)
 
 failed:
     WINE_ERR("Error %ld while reading value %s\n", err, wine_dbgstr_w(szValue));
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
     return err;
 }
 
@@ -112,7 +98,7 @@ DWORD load_reg_multisz(HKEY hKey, LPCWSTR szValue, BOOL bAllowSingle, LPWSTR *ou
     {
         if (err == ERROR_FILE_NOT_FOUND)
         {
-            *output = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR));
+            *output = calloc(1, sizeof(WCHAR));
             return ERROR_SUCCESS;
         }
         goto failed;
@@ -122,7 +108,7 @@ DWORD load_reg_multisz(HKEY hKey, LPCWSTR szValue, BOOL bAllowSingle, LPWSTR *ou
         err = ERROR_INVALID_DATATYPE;
         goto failed;
     }
-    buf = HeapAlloc(GetProcessHeap(), 0, size + 2*sizeof(WCHAR));
+    buf = malloc(size + 2 * sizeof(WCHAR));
     if ((err = RegQueryValueExW(hKey, szValue, 0, &type, (LPBYTE)buf, &size)) != 0)
         goto failed;
     buf[size/sizeof(WCHAR)] = 0;
@@ -132,7 +118,7 @@ DWORD load_reg_multisz(HKEY hKey, LPCWSTR szValue, BOOL bAllowSingle, LPWSTR *ou
 
 failed:
     WINE_ERR("Error %ld while reading value %s\n", err, wine_dbgstr_w(szValue));
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
     return err;
 }
 

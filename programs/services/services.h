@@ -110,7 +110,6 @@ DWORD RPC_Init(void);
 void RPC_Stop(void);
 
 /* from utils.c */
-LPWSTR strdupW(LPCWSTR str);
 
 BOOL check_multisz(LPCWSTR lpMultiSz, DWORD cbSize);
 
