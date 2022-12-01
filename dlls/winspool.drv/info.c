@@ -3229,11 +3229,19 @@ BOOL WINAPI SetFormW( HANDLE printer, WCHAR *name, DWORD level, BYTE *form )
 /*****************************************************************************
  *          ReadPrinter  [WINSPOOL.@]
  */
-BOOL WINAPI ReadPrinter(HANDLE hPrinter, LPVOID pBuf, DWORD cbBuf,
-                           LPDWORD pNoBytesRead)
+BOOL WINAPI ReadPrinter(HANDLE printer, void *buf, DWORD size, DWORD *bytes_read)
 {
-    FIXME("(%p,%p,%ld,%p): stub\n",hPrinter,pBuf,cbBuf,pNoBytesRead);
-    return FALSE;
+    HANDLE handle = get_backend_handle(printer);
+
+    TRACE("(%p,%p,%ld,%p)\n", printer, buf, size, bytes_read);
+
+    if (!handle)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+
+    return backend->fpReadPrinter(handle, buf, size, bytes_read);
 }
 
 /*****************************************************************************
