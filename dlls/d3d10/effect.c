@@ -246,6 +246,18 @@ static void pres_ftou(float **args, unsigned int n, const struct preshader_instr
     }
 }
 
+static void pres_ftob(float **args, unsigned int n, const struct preshader_instr *instr)
+{
+    float *retval = args[1];
+    unsigned int i;
+
+    for (i = 0; i < instr->comp_count; ++i)
+    {
+        unsigned int u = args[0][i] == 0.0f ? 0 : ~0u;
+        retval[i] = *(float *)&u;
+    }
+}
+
 static void pres_min(float **args, unsigned int n, const struct preshader_instr *instr)
 {
     float *retval = args[2];
@@ -295,6 +307,7 @@ static const struct preshader_op_info preshader_ops[] =
     { 0x108, "sin",  pres_sin  },
     { 0x109, "cos",  pres_cos  },
     { 0x133, "ftou", pres_ftou },
+    { 0x137, "ftob", pres_ftob },
     { 0x200, "min",  pres_min  },
     { 0x201, "max",  pres_max  },
     { 0x204, "add",  pres_add  },
@@ -867,8 +880,9 @@ static void d3d10_effect_update_dependent_props(struct d3d10_effect_prop_depende
 
             case D3D10_EOO_VALUE_EXPRESSION:
 
-                if ((property_info->container_type != D3D10_C_PASS)
-                        || ((property_info->type != D3D10_SVT_UINT) && (property_info->type != D3D10_SVT_FLOAT)))
+                if ((property_info->type != D3D10_SVT_UINT)
+                        && (property_info->type != D3D10_SVT_FLOAT)
+                        && (property_info->type != D3D10_SVT_BOOL))
                 {
                     FIXME("Unimplemented for property %s.\n", property_info->name);
                     return;
@@ -8863,6 +8877,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_effect_depth_stencil_variable_GetBackingS
 
     if (!(v = d3d10_get_state_variable(v, index, &v->effect->ds_states)))
         return E_FAIL;
+
+    d3d10_effect_update_dependent_props(&v->u.state.dependencies, &v->u.state.desc);
 
     *desc = v->u.state.desc.depth_stencil;
 
