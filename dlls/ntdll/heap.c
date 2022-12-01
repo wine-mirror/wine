@@ -954,7 +954,6 @@ static SUBHEAP *create_subheap( struct heap *heap, DWORD flags, SIZE_T total_siz
     block_init_free( first_block( subheap ), flags, subheap, block_size );
 
     list_add_head( &heap->subheap_list, &subheap->entry );
-    insert_free_block( heap, flags, subheap, first_block( subheap ) );
 
     return subheap;
 }
@@ -1000,9 +999,7 @@ static struct block *find_free_block( struct heap *heap, ULONG flags, SIZE_T blo
 
     TRACE( "created new sub-heap %p of %#Ix bytes for heap %p\n", subheap, subheap_size( subheap ), heap );
 
-    entry = first_block( subheap );
-    list_remove( &entry->entry );
-    return &entry->block;
+    return first_block( subheap );
 }
 
 
