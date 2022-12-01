@@ -39,17 +39,15 @@ WINE_DEFAULT_DEBUG_CHANNEL(gdiplus);
  *
  * and puts the output in out.
  * */
-static void matrix_multiply(GDIPCONST REAL * left, GDIPCONST REAL * right, REAL * out)
+static inline void matrix_multiply(GDIPCONST REAL * left, GDIPCONST REAL * right, REAL * out)
 {
     REAL temp[6];
-    int i, odd;
-
-    for(i = 0; i < 6; i++){
-        odd = i % 2;
-        temp[i] = left[i - odd] * right[odd] + left[i - odd + 1] * right[odd + 2] +
-                  (i >= 4 ? right[odd + 4] : 0.0);
-    }
-
+    temp[0] = left[0] * right[0] + left[1] * right[2];
+    temp[1] = left[0] * right[1] + left[1] * right[3];
+    temp[2] = left[2] * right[0] + left[3] * right[2];
+    temp[3] = left[2] * right[1] + left[3] * right[3];
+    temp[4] = left[4] * right[0] + left[5] * right[2] + right[4];
+    temp[5] = left[4] * right[1] + left[5] * right[3] + right[5];
     memcpy(out, temp, 6 * sizeof(REAL));
 }
 
