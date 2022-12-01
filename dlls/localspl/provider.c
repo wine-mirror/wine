@@ -248,6 +248,8 @@ typedef struct {
     } type;
 } handle_header_t;
 
+typedef handle_header_t server_t;
+
 typedef struct {
     handle_header_t header;
     monitor_t *pm;
@@ -1536,6 +1538,24 @@ static HMODULE driver_load(const printenv_t * env, LPWSTR dllname)
     return hui;
 }
 
+static HANDLE server_alloc_handle(const WCHAR *name, BOOL *stop_search)
+{
+    server_t *server;
+
+    *stop_search = FALSE;
+    if (name)
+        return NULL;
+
+    server = malloc(sizeof(*server));
+    if (!server)
+    {
+        *stop_search = TRUE;
+        return NULL;
+    }
+    server->type = HANDLE_SERVER;
+    return (HANDLE)server;
+}
+
 static HANDLE xcv_alloc_handle(const WCHAR *name, PRINTER_DEFAULTSW *def, BOOL *stop_search)
 {
     static const WCHAR xcv_monitor[] = L"XcvMonitor ";
@@ -1544,7 +1564,7 @@ static HANDLE xcv_alloc_handle(const WCHAR *name, PRINTER_DEFAULTSW *def, BOOL *
     xcv_t *xcv;
 
     *stop_search = FALSE;
-    if (!name || name[0] != ',')
+    if (name[0] != ',')
         return NULL;
 
     name++;
@@ -1611,13 +1631,6 @@ static HANDLE printer_alloc_handle(const WCHAR *name, const WCHAR *basename,
     {
         fpClosePrinter((HANDLE)printer);
         return NULL;
-    }
-
-    if (!basename)
-    {
-        TRACE("using the local printserver\n");
-        printer->header.type = HANDLE_SERVER;
-        return (HANDLE)printer;
     }
 
     printer->info = get_printer_info(basename);
@@ -2646,7 +2659,9 @@ static BOOL WINAPI fpOpenPrinter(WCHAR *name, HANDLE *hprinter,
         return FALSE;
     }
 
-    *hprinter = xcv_alloc_handle(basename, def, &stop_search);
+    *hprinter = server_alloc_handle(basename, &stop_search);
+    if (!*hprinter && !stop_search)
+        *hprinter = xcv_alloc_handle(basename, def, &stop_search);
     if (!*hprinter && !stop_search)
         *hprinter = printer_alloc_handle(name, basename, def);
 
@@ -3417,7 +3432,11 @@ static BOOL WINAPI fpClosePrinter(HANDLE hprinter)
     if (!header)
         return FALSE;
 
-    if (header->type == HANDLE_XCV)
+    if (header->type == HANDLE_SERVER)
+    {
+        free(header);
+    }
+    else if (header->type == HANDLE_XCV)
     {
         xcv_t *xcv = (xcv_t *)hprinter;
 
@@ -3427,7 +3446,7 @@ static BOOL WINAPI fpClosePrinter(HANDLE hprinter)
         monitor_unload(xcv->pm);
         free(xcv);
     }
-    else if (header->type == HANDLE_SERVER || header->type == HANDLE_PRINTER)
+    else if (header->type == HANDLE_PRINTER)
     {
         printer_t *printer = (printer_t *)hprinter;
 
