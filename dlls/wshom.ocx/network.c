@@ -74,8 +74,19 @@ static HRESULT WINAPI WshNetwork2_GetTypeInfo(IWshNetwork2 *iface, UINT iTInfo, 
 static HRESULT WINAPI WshNetwork2_GetIDsOfNames(IWshNetwork2 *iface, REFIID riid, LPOLESTR *rgszNames,
         UINT cNames, LCID lcid, DISPID *rgDispId)
 {
-    FIXME("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
-    return E_NOTIMPL;
+    ITypeInfo *typeinfo;
+    HRESULT hr;
+
+    TRACE("%p, %s, %p, %u, %lx, %p.\n", iface, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hr = get_typeinfo(IWshNetwork2_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI WshNetwork2_Invoke(IWshNetwork2 *iface, DISPID dispIdMember, REFIID riid, LCID lcid,

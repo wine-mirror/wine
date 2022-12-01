@@ -40,7 +40,8 @@ static REFIID tid_ids[] = {
     &IID_IWshEnvironment,
     &IID_IWshExec,
     &IID_IWshShell3,
-    &IID_IWshShortcut
+    &IID_IWshShortcut,
+    &IID_IWshNetwork2
 };
 
 static HRESULT load_typelib(void)

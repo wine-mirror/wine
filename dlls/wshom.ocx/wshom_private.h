@@ -33,6 +33,7 @@ typedef enum tid_t {
     IWshExec_tid,
     IWshShell3_tid,
     IWshShortcut_tid,
+    IWshNetwork2_tid,
     LAST_tid
 } tid_t;
 
