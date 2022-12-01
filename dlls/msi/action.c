@@ -1051,7 +1051,7 @@ static UINT load_file(MSIRECORD *row, LPVOID param)
     msi_reduce_to_long_filename( file->FileName );
 
     file->ShortName = msi_dup_record_field( row, 3 );
-    file->LongName = strdupW( folder_split_path(file->ShortName, '|'));
+    file->LongName = wcsdup( folder_split_path(file->ShortName, '|') );
 
     file->FileSize = MSI_RecordGetInteger( row, 4 );
     file->Version = msi_dup_record_field( row, 5 );
@@ -1307,9 +1307,9 @@ static UINT load_folder( MSIRECORD *row, LPVOID param )
         src_long = src_short;
 
     /* FIXME: use the target short path too */
-    folder->TargetDefault = strdupW(tgt_long);
-    folder->SourceShortPath = strdupW(src_short);
-    folder->SourceLongPath = strdupW(src_long);
+    folder->TargetDefault = wcsdup(tgt_long);
+    folder->SourceShortPath = wcsdup(src_short);
+    folder->SourceLongPath = wcsdup(src_long);
     msi_free(p);
 
     TRACE("TargetDefault = %s\n",debugstr_w( folder->TargetDefault ));
@@ -1960,7 +1960,7 @@ static WCHAR *create_temp_dir( MSIDATABASE *db )
         {
             GetTempPathW( MAX_PATH, tmp );
         }
-        if (!(db->tempfolder = strdupW( tmp ))) return NULL;
+        if (!(db->tempfolder = wcsdup( tmp ))) return NULL;
     }
 
     if ((ret = msi_alloc( (lstrlenW( db->tempfolder ) + 20) * sizeof(WCHAR) )))
@@ -2480,7 +2480,7 @@ static HKEY open_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path, BO
 
     access |= get_registry_view( comp );
 
-    if (!(subkey = strdupW( path ))) return NULL;
+    if (!(subkey = wcsdup( path ))) return NULL;
     p = subkey;
     if ((q = wcschr( p, '\\' ))) *q = 0;
     if (create)
@@ -2525,7 +2525,7 @@ static WCHAR **split_multi_string_values( const WCHAR *str, DWORD len, DWORD *co
     p = str;
     while ((p - str) < len)
     {
-        if (!(ret[i] = strdupW( p )))
+        if (!(ret[i] = wcsdup( p )))
         {
             for (; i >= 0; i--) msi_free( ret[i] );
             msi_free( ret );
@@ -2823,7 +2823,7 @@ static void delete_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path )
     WCHAR *subkey, *p;
     HKEY hkey;
 
-    if (!(subkey = strdupW( path ))) return;
+    if (!(subkey = wcsdup( path ))) return;
     do
     {
         if ((p = wcsrchr( subkey, '\\' )))
@@ -3128,7 +3128,7 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, MSICOMPONENT *cmp )
 {
 
     if (!cmp->KeyPath)
-        return strdupW( msi_get_target_folder( package, cmp->Directory ) );
+        return wcsdup( msi_get_target_folder( package, cmp->Directory ) );
 
     if (cmp->Attributes & msidbComponentAttributesRegistryKeyPath)
     {
@@ -3174,7 +3174,7 @@ static LPWSTR resolve_keypath( MSIPACKAGE* package, MSICOMPONENT *cmp )
         MSIFILE *file = msi_get_loaded_file( package, cmp->KeyPath );
 
         if (file)
-            return strdupW( file->TargetPath );
+            return wcsdup( file->TargetPath );
     }
     return NULL;
 }
@@ -3445,7 +3445,7 @@ static BOOL CALLBACK Typelib_EnumResNameProc( HMODULE hModule, LPCWSTR lpszType,
     sz = lstrlenW(tl_struct->source)+4;
 
     if ((INT_PTR)lpszName == 1)
-        tl_struct->path = strdupW(tl_struct->source);
+        tl_struct->path = wcsdup(tl_struct->source);
     else
     {
         tl_struct->path = msi_alloc(sz * sizeof(WCHAR));
@@ -3532,7 +3532,7 @@ static UINT ITERATE_RegisterTypeLibraries(MSIRECORD *row, LPVOID param)
         LPCWSTR guid;
         guid = MSI_RecordGetString(row,1);
         CLSIDFromString( guid, &tl_struct.clsid);
-        tl_struct.source = strdupW( file->TargetPath );
+        tl_struct.source = wcsdup( file->TargetPath );
         tl_struct.path = NULL;
 
         EnumResourceNamesW(module, L"TYPELIB", Typelib_EnumResNameProc,
@@ -4316,7 +4316,7 @@ static WCHAR *get_ini_file_name( MSIPACKAGE *package, MSIRECORD *row )
     dirprop = MSI_RecordGetString( row, 3 );
     if (dirprop)
     {
-        folder = strdupW( msi_get_target_folder( package, dirprop ) );
+        folder = wcsdup( msi_get_target_folder( package, dirprop ) );
         if (!folder) folder = msi_dup_property( package->db, dirprop );
     }
     else
@@ -5211,7 +5211,7 @@ static UINT ACTION_ResolveSource(MSIPACKAGE* package)
                     INSTALLPROPERTY_DISKPROMPTW,prompt,&size);
         }
         else
-            prompt = strdupW(package->db->path);
+            prompt = wcsdup(package->db->path);
 
         record = MSI_CreateRecord(2);
         MSI_RecordSetInteger(record, 1, MSIERR_INSERTDISK);
@@ -6272,7 +6272,7 @@ static UINT ITERATE_InstallODBCDriver( MSIRECORD *rec, LPVOID param )
         const WCHAR *dir = msi_get_target_folder( package, driver_file->Component->Directory );
         driver_file->TargetPath = msi_build_directory_name( 2, dir, driver_file->FileName );
     }
-    driver_path = strdupW(driver_file->TargetPath);
+    driver_path = wcsdup(driver_file->TargetPath);
     ptr = wcsrchr(driver_path, '\\');
     if (ptr) *ptr = '\0';
 
@@ -6355,7 +6355,7 @@ static UINT ITERATE_InstallODBCTranslator( MSIRECORD *rec, LPVOID param )
     }
     *ptr = '\0';
 
-    translator_path = strdupW(translator_file->TargetPath);
+    translator_path = wcsdup(translator_file->TargetPath);
     ptr = wcsrchr(translator_path, '\\');
     if (ptr) *ptr = '\0';
 
@@ -6841,7 +6841,7 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             goto done;
         }
         size = (lstrlenW(value) + 1) * sizeof(WCHAR);
-        newval = strdupW(value);
+        newval = wcsdup(value);
         if (!newval)
         {
             res = ERROR_OUTOFMEMORY;
@@ -7651,7 +7651,7 @@ UINT MSI_InstallPackage( MSIPACKAGE *package, LPCWSTR szPackagePath,
         LPWSTR p, dir;
         LPCWSTR file;
 
-        dir = strdupW(szPackagePath);
+        dir = wcsdup(szPackagePath);
         p = wcsrchr(dir, '\\');
         if (p)
         {
