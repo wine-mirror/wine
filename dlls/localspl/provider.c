@@ -226,7 +226,7 @@ typedef struct {
     WCHAR *document_title;
     DEVMODEW *devmode;
     HANDLE hf;
-} job_t;
+} job_info_t;
 
 typedef struct {
     WCHAR *name;
@@ -261,7 +261,7 @@ typedef struct {
     printer_info_t *info;
     LPWSTR name;
     DEVMODEW *devmode;
-    job_t *doc;
+    job_info_t *doc;
 } printer_t;
 
 /* ############################### */
@@ -542,7 +542,7 @@ static printer_info_t* get_printer_info(const WCHAR *name)
     return info;
 }
 
-static void free_job(job_t *job)
+static void free_job(job_info_t *job)
 {
     list_remove(&job->entry);
     free(job->filename);
@@ -569,7 +569,7 @@ static void release_printer_info(printer_info_t *info)
         DeleteCriticalSection(&info->jobs_cs);
         while (!list_empty(&info->jobs))
         {
-            job_t *job = LIST_ENTRY(list_head(&info->jobs), job_t, entry);
+            job_info_t *job = LIST_ENTRY(list_head(&info->jobs), job_info_t, entry);
             free_job(job);
         }
         free(info);
@@ -2912,11 +2912,11 @@ static size_t get_spool_filename(DWORD job_id, WCHAR *buf, size_t len)
     return ret;
 }
 
-static job_t* add_job(printer_t *printer, DOC_INFO_1W *info, BOOL create)
+static job_info_t* add_job(printer_t *printer, DOC_INFO_1W *info, BOOL create)
 {
     DWORD job_id, last_id;
     size_t len;
-    job_t *job;
+    job_info_t *job;
 
     job = calloc(1, sizeof(*job));
     if (!job)
@@ -2975,7 +2975,7 @@ static BOOL WINAPI fpAddJob(HANDLE hprinter, DWORD level, BYTE *data, DWORD size
     ADDJOB_INFO_1W *addjob = (ADDJOB_INFO_1W *)data;
     printer_t *printer = (printer_t *)hprinter;
     DOC_INFO_1W doc_info;
-    job_t *job;
+    job_info_t *job;
     size_t len;
 
     TRACE("(%p %ld %p %ld %p)\n", hprinter, level, data, size, needed);
@@ -3070,11 +3070,11 @@ static BOOL WINAPI fpWritePrinter(HANDLE hprinter, void *buf, DWORD size, DWORD 
     return WriteFile(printer->doc->hf, buf, size, written, NULL);
 }
 
-static job_t * get_job(printer_info_t *info, DWORD job_id)
+static job_info_t * get_job(printer_info_t *info, DWORD job_id)
 {
-    job_t *job;
+    job_info_t *job;
 
-    LIST_FOR_EACH_ENTRY(job, &info->jobs, job_t, entry)
+    LIST_FOR_EACH_ENTRY(job, &info->jobs, job_info_t, entry)
     {
         if(job->id == job_id)
             return job;
@@ -3087,7 +3087,7 @@ static BOOL WINAPI fpSetJob(HANDLE hprinter, DWORD job_id,
 {
     printer_t *printer = (printer_t *)hprinter;
     BOOL ret = FALSE;
-    job_t *job;
+    job_info_t *job;
 
     TRACE("(%p, %ld, %ld, %p, %ld)\n", hprinter, job_id, level, data, command);
     FIXME("Ignoring everything other than document title\n");
@@ -3164,7 +3164,7 @@ static BOOL WINAPI fpGetJob(HANDLE hprinter, DWORD job_id, DWORD level,
     printer_t *printer = (printer_t *)hprinter;
     BOOL ret = TRUE;
     DWORD s = 0;
-    job_t *job;
+    job_info_t *job;
     WCHAR *p;
 
     TRACE("%p %ld %ld %p %ld %p\n", hprinter, job_id, level, data, size, needed);
@@ -3288,11 +3288,11 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
     const WCHAR *port_name, *port;
     WCHAR output[1024];
     DOC_INFO_1W info;
+    job_info_t *job;
     monitor_t *mon;
     BYTE buf[4096];
     HANDLE hport;
     DWORD r, w;
-    job_t *job;
     HANDLE hf;
     HKEY hkey;
 
