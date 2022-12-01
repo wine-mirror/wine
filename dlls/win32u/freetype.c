@@ -40,7 +40,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-#ifdef HAVE_CARBON_CARBON_H
+#ifdef __APPLE__
 #define LoadResource __carbon_LoadResource
 #define CheckMenuItem __carbon_CheckMenuItem
 #define CompareString __carbon_CompareString
@@ -93,7 +93,7 @@
 #undef ResizePalette
 #undef SetRectRgn
 #undef ShowWindow
-#endif /* HAVE_CARBON_CARBON_H */
+#endif /* __APPLE__ */
 
 #ifdef HAVE_FT2BUILD_H
 #include <ft2build.h>
@@ -325,7 +325,7 @@ static BOOL freetype_set_bitmap_text_metrics( struct gdi_font *font );
  * cga40woa.fon=cga40850.fon
  */
 
-#ifdef HAVE_CARBON_CARBON_H
+#ifdef __APPLE__
 static char *find_cache_dir(void)
 {
     FSRef ref;
@@ -525,7 +525,7 @@ static char **expand_mac_font(const char *path)
     return ret.array;
 }
 
-#endif /* HAVE_CARBON_CARBON_H */
+#endif /* __APPLE__ */
 
 /* 
    This function builds an FT_Fixed from a double. It fails if the absolute
@@ -1377,7 +1377,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
     /* we always load external fonts from files - otherwise we would get a crash in update_reg_entries */
     assert(unix_name || !(flags & ADDFONT_EXTERNAL_FONT));
 
-#ifdef HAVE_CARBON_CARBON_H
+#ifdef __APPLE__
     if(unix_name)
     {
         char **mac_list = expand_mac_font(unix_name);
@@ -1396,7 +1396,7 @@ static INT AddFontToList(const WCHAR *dos_name, const char *unix_name, void *fon
                 return 1;
         }
     }
-#endif /* HAVE_CARBON_CARBON_H */
+#endif /* __APPLE__ */
 
     if (!dos_name && unix_name) dos_name = filename = get_dos_file_name( unix_name );
 
@@ -1691,7 +1691,7 @@ done:
     if (done_set) pFcStrSetDestroy( done_set );
 }
 
-#elif defined(HAVE_CARBON_CARBON_H)
+#elif defined(__APPLE__)
 
 static void load_mac_font_callback(const void *value, void *context)
 {
@@ -1885,7 +1885,7 @@ static void freetype_load_fonts(void)
 {
 #ifdef SONAME_LIBFONTCONFIG
     load_fontconfig_fonts();
-#elif defined(HAVE_CARBON_CARBON_H)
+#elif defined(__APPLE__)
     load_mac_fonts();
 #elif defined(__ANDROID__)
     ReadFontDir("/system/fonts", TRUE);

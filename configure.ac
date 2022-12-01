@@ -408,7 +408,6 @@ AC_SYS_LARGEFILE()
 AC_CHECK_HEADERS(\
 	AL/al.h \
 	CL/cl.h \
-	Carbon/Carbon.h \
 	CoreAudio/CoreAudio.h \
 	DiskArbitration/DiskArbitration.h \
 	EGL/egl.h \
@@ -683,6 +682,7 @@ case $host_os in
     LDDLLFLAGS="-fPIC"
     enable_winemac_drv=${enable_winemac_drv:-yes}
     dnl declare needed frameworks
+    AC_SUBST(CARBON_LIBS,"-framework Carbon")
     AC_SUBST(COREFOUNDATION_LIBS,"-framework CoreFoundation")
     AC_SUBST(IOKIT_LIBS,"-framework IOKit -framework CoreFoundation")
     AC_SUBST(APPLICATIONSERVICES_LIBS,"-framework ApplicationServices")
@@ -739,10 +739,6 @@ case $host_os in
         LIBS="$ac_save_LIBS"
     fi
 
-    if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
-    then
-        AC_SUBST(CARBON_LIBS,"-framework Carbon")
-    fi
     if test "$ac_cv_header_Metal_Metal_h" = "yes"
     then
         AC_SUBST(METAL_LIBS,"-framework Metal")

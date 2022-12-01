@@ -24,9 +24,6 @@
 /* Define to 1 if you have the <capi20.h> header file. */
 #undef HAVE_CAPI20_H
 
-/* Define to 1 if you have the <Carbon/Carbon.h> header file. */
-#undef HAVE_CARBON_CARBON_H
-
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 

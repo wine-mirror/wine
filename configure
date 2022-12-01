@@ -742,7 +742,6 @@ WINELOADER_DEPENDS
 LIBWINE_LDFLAGS
 LIBWINE_SHAREDLIB
 METAL_LIBS
-CARBON_LIBS
 OPENCL_LIBS
 COREAUDIO_LIBS
 SECURITY_LIBS
@@ -753,6 +752,7 @@ CORESERVICES_LIBS
 APPLICATIONSERVICES_LIBS
 IOKIT_LIBS
 COREFOUNDATION_LIBS
+CARBON_LIBS
 ac_ct_OBJC
 OBJCFLAGS
 OBJC
@@ -7850,12 +7850,6 @@ then :
   printf "%s\n" "#define HAVE_CL_CL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "Carbon/Carbon.h" "ac_cv_header_Carbon_Carbon_h" "$ac_includes_default"
-if test "x$ac_cv_header_Carbon_Carbon_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_CARBON_CARBON_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "CoreAudio/CoreAudio.h" "ac_cv_header_CoreAudio_CoreAudio_h" "$ac_includes_default"
 if test "x$ac_cv_header_CoreAudio_CoreAudio_h" = xyes
 then :
@@ -9802,7 +9796,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     DLLFLAGS="$DLLFLAGS -fPIC"
     LDDLLFLAGS="-fPIC"
     enable_winemac_drv=${enable_winemac_drv:-yes}
-        COREFOUNDATION_LIBS="-framework CoreFoundation"
+        CARBON_LIBS="-framework Carbon"
+
+    COREFOUNDATION_LIBS="-framework CoreFoundation"
 
     IOKIT_LIBS="-framework IOKit -framework CoreFoundation"
 
@@ -9979,11 +9975,6 @@ fi
         LIBS="$ac_save_LIBS"
     fi
 
-    if test "$ac_cv_header_Carbon_Carbon_h" = "yes"
-    then
-        CARBON_LIBS="-framework Carbon"
-
-    fi
     if test "$ac_cv_header_Metal_Metal_h" = "yes"
     then
         METAL_LIBS="-framework Metal"
@@ -23261,6 +23252,7 @@ CONFIGURE_TARGETS = $CONFIGURE_TARGETS
 OBJC = $OBJC
 OBJCFLAGS = $OBJCFLAGS
 ac_ct_OBJC = $ac_ct_OBJC
+CARBON_LIBS = $CARBON_LIBS
 COREFOUNDATION_LIBS = $COREFOUNDATION_LIBS
 IOKIT_LIBS = $IOKIT_LIBS
 APPLICATIONSERVICES_LIBS = $APPLICATIONSERVICES_LIBS
@@ -23271,7 +23263,6 @@ DISKARBITRATION_LIBS = $DISKARBITRATION_LIBS
 SECURITY_LIBS = $SECURITY_LIBS
 COREAUDIO_LIBS = $COREAUDIO_LIBS
 OPENCL_LIBS = $OPENCL_LIBS
-CARBON_LIBS = $CARBON_LIBS
 METAL_LIBS = $METAL_LIBS
 LIBWINE_SHAREDLIB = $LIBWINE_SHAREDLIB
 LIBWINE_LDFLAGS = $LIBWINE_LDFLAGS
