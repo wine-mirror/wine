@@ -3281,9 +3281,11 @@ static BOOL WINAPI fpScheduleJob(HANDLE hprinter, DWORD job_id)
             NULL, OPEN_EXISTING, 0, NULL);
     if (hf == INVALID_HANDLE_VALUE)
     {
+        WARN("can't open spool file: %s\n", debugstr_w(job->filename));
         DeleteFileW(job->filename);
         free_job(job);
         LeaveCriticalSection(&printer->info->jobs_cs);
+        return FALSE;
     }
 
     /* TODO: use print processor */
