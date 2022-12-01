@@ -631,7 +631,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
     }
 
     name.MaximumLength = (lstrlenW(format) + 10) * sizeof(WCHAR);
-    name.Buffer = malloc( name.MaximumLength );
+    name.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, name.MaximumLength );
     for (i = first; i < 32; i++)
     {
         swprintf( name.Buffer, name.MaximumLength / sizeof(WCHAR), format, i );
@@ -655,7 +655,7 @@ static NTSTATUS create_disk_device( enum device_type type, struct disk_device **
             UNICODE_STRING symlink;
 
             symlink.MaximumLength = (lstrlenW(link_format) + 10) * sizeof(WCHAR);
-            if ((symlink.Buffer = malloc( symlink.MaximumLength )))
+            if ((symlink.Buffer = RtlAllocateHeap( GetProcessHeap(), 0, symlink.MaximumLength )))
             {
                 swprintf( symlink.Buffer, symlink.MaximumLength / sizeof(WCHAR), link_format, i );
                 symlink.Length = lstrlenW(symlink.Buffer) * sizeof(WCHAR);
