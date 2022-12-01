@@ -196,6 +196,8 @@ extern "C" {
 # endif
 #endif
 
+#define __stat64 _stat64
+
 _ACRTIMP int __cdecl _fstat32(int, struct _stat32*);
 _ACRTIMP int __cdecl _fstat32i64(int, struct _stat32i64*);
 _ACRTIMP int __cdecl _fstat64(int,struct _stat64*);
