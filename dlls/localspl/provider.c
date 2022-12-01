@@ -1573,9 +1573,10 @@ static HANDLE printer_alloc_handle(LPCWSTR name, LPPRINTER_DEFAULTSW pDefault)
 
     /* clone the full name */
     printer->name = wcsdup(name);
-    if (name && (!printer->name)) {
+    if (name && !printer->name) {
         printer_free(printer);
         printer = NULL;
+        goto end;
     }
     if (printername) {
         len = ARRAY_SIZE(L",XcvMonitor ") - 1;
