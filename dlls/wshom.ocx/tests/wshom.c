@@ -700,6 +700,8 @@ static void test_wshnetwork(void)
 
     check_interface(disp, &IID_IWshNetwork, TRUE);
     check_interface(disp, &IID_IWshNetwork2, TRUE);
+    check_interface(disp, &IID_IDispatchEx, FALSE);
+    check_interface(disp, &IID_IObjectWithSite, FALSE);
 
     IDispatch_Release(disp);
 }

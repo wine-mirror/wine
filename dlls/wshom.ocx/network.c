@@ -16,6 +16,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define  COBJMACROS
+
+#include "dispex.h"
 #include "wshom_private.h"
 #include "wshom.h"
 
@@ -30,17 +33,16 @@ static HRESULT WINAPI WshNetwork2_QueryInterface(IWshNetwork2 *iface, REFIID rii
     if(IsEqualGUID(riid, &IID_IUnknown) ||
            IsEqualGUID(riid, &IID_IDispatch) ||
            IsEqualGUID(riid, &IID_IWshNetwork) ||
-           IsEqualGUID(riid, &IID_IWshNetwork2))
-    {
+           IsEqualGUID(riid, &IID_IWshNetwork2)) {
         *ppv = iface;
-    }else {
-        FIXME("Unknown iface %s\n", debugstr_guid(riid));
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+    else {
+        WARN("interface not supported %s\n", debugstr_guid(riid));
         *ppv = NULL;
         return E_NOINTERFACE;
     }
-
-    IUnknown_AddRef((IUnknown*)*ppv);
-    return S_OK;
 }
 
 static ULONG WINAPI WshNetwork2_AddRef(IWshNetwork2 *iface)
