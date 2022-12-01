@@ -1049,13 +1049,13 @@ NTSTATUS ext_wglSetPbufferAttribARB( void *args )
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI thread_attach( void *args )
+NTSTATUS thread_attach( void *args )
 {
     NtCurrentTeb()->glTable = &null_opengl_funcs;
     return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI process_detach( void *args )
+NTSTATUS process_detach( void *args )
 {
     return STATUS_SUCCESS;
 }
@@ -1986,7 +1986,7 @@ NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args )
     return wow64_ext_glUnmapNamedBuffer( args );
 }
 
-NTSTATUS WINAPI wow64_process_detach( void *args )
+NTSTATUS wow64_process_detach( void *args )
 {
     NTSTATUS status;
 
