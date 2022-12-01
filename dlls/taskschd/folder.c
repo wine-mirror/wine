@@ -58,8 +58,8 @@ static ULONG WINAPI TaskFolder_Release(ITaskFolder *iface)
     if (!ref)
     {
         TRACE("destroying %p\n", iface);
-        heap_free(folder->path);
-        heap_free(folder);
+        free(folder->path);
+        free(folder);
     }
 
     return ref;
@@ -211,7 +211,7 @@ WCHAR *get_full_path(const WCHAR *parent, const WCHAR *path)
     if (parent) len += lstrlenW(parent);
 
     /* +1 if parent is not '\' terminated */
-    folder_path = heap_alloc((len + 2) * sizeof(WCHAR));
+    folder_path = malloc((len + 2) * sizeof(WCHAR));
     if (!folder_path) return NULL;
 
     folder_path[0] = 0;
@@ -253,7 +253,7 @@ static HRESULT WINAPI TaskFolder_DeleteFolder(ITaskFolder *iface, BSTR name, LON
     if (!folder_path) return E_OUTOFMEMORY;
 
     hr = SchRpcDelete(folder_path, 0);
-    heap_free(folder_path);
+    free(folder_path);
     return hr;
 }
 
@@ -304,7 +304,7 @@ static HRESULT WINAPI TaskFolder_DeleteTask(ITaskFolder *iface, BSTR name, LONG 
     if (!folder_path) return E_OUTOFMEMORY;
 
     hr = SchRpcDelete(folder_path, 0);
-    heap_free(folder_path);
+    free(folder_path);
     return hr;
 }
 
@@ -448,14 +448,14 @@ HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **
 
     if (FAILED(hr))
     {
-        heap_free(folder_path);
+        free(folder_path);
         return hr;
     }
 
-    folder = heap_alloc(sizeof(*folder));
+    folder = malloc(sizeof(*folder));
     if (!folder)
     {
-        heap_free(folder_path);
+        free(folder_path);
         return E_OUTOFMEMORY;
     }
 

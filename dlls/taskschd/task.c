@@ -310,7 +310,7 @@ static HRESULT DailyTrigger_create(ITrigger **trigger)
 {
     DailyTrigger *daily_trigger;
 
-    daily_trigger = heap_alloc(sizeof(*daily_trigger));
+    daily_trigger = malloc(sizeof(*daily_trigger));
     if (!daily_trigger)
         return E_OUTOFMEMORY;
 
@@ -809,7 +809,7 @@ static HRESULT RegistrationInfo_create(IRegistrationInfo **obj)
 {
     registration_info *reginfo;
 
-    reginfo = heap_alloc_zero(sizeof(*reginfo));
+    reginfo = calloc(1, sizeof(*reginfo));
     if (!reginfo) return E_OUTOFMEMORY;
 
     reginfo->IRegistrationInfo_iface.lpVtbl = &RegistrationInfo_vtbl;
@@ -1442,7 +1442,7 @@ static HRESULT TaskSettings_create(ITaskSettings **obj)
 {
     TaskSettings *taskset;
 
-    taskset = heap_alloc(sizeof(*taskset));
+    taskset = malloc(sizeof(*taskset));
     if (!taskset) return E_OUTOFMEMORY;
 
     taskset->ITaskSettings_iface.lpVtbl = &TaskSettings_vtbl;
@@ -1650,7 +1650,7 @@ static HRESULT Principal_create(IPrincipal **obj)
 {
     Principal *principal;
 
-    principal = heap_alloc(sizeof(*principal));
+    principal = malloc(sizeof(*principal));
     if (!principal) return E_OUTOFMEMORY;
 
     principal->IPrincipal_iface.lpVtbl = &Principal_vtbl;
@@ -1897,7 +1897,7 @@ static HRESULT ExecAction_create(IExecAction **obj)
 {
     ExecAction *action;
 
-    action = heap_alloc(sizeof(*action));
+    action = malloc(sizeof(*action));
     if (!action) return E_OUTOFMEMORY;
 
     action->IExecAction_iface.lpVtbl = &Action_vtbl;
@@ -2086,7 +2086,7 @@ static HRESULT Actions_create(IActionCollection **obj)
 {
     Actions *actions;
 
-    actions = heap_alloc(sizeof(*actions));
+    actions = malloc(sizeof(*actions));
     if (!actions) return E_OUTOFMEMORY;
 
     actions->IActionCollection_iface.lpVtbl = &Actions_vtbl;
@@ -2242,7 +2242,7 @@ static HRESULT WINAPI TaskDefinition_get_Triggers(ITaskDefinition *iface, ITrigg
     {
         trigger_collection *collection;
 
-        collection = heap_alloc(sizeof(*collection));
+        collection = malloc(sizeof(*collection));
         if (!collection) return E_OUTOFMEMORY;
 
         collection->ITriggerCollection_iface.lpVtbl = &TriggerCollection_vtbl;
@@ -3668,7 +3668,7 @@ HRESULT TaskDefinition_create(ITaskDefinition **obj)
 {
     TaskDefinition *taskdef;
 
-    taskdef = heap_alloc_zero(sizeof(*taskdef));
+    taskdef = calloc(1, sizeof(*taskdef));
     if (!taskdef) return E_OUTOFMEMORY;
 
     taskdef->ITaskDefinition_iface.lpVtbl = &TaskDefinition_vtbl;
@@ -3998,7 +3998,7 @@ HRESULT TaskService_create(void **obj)
 {
     TaskService *task_svc;
 
-    task_svc = heap_alloc(sizeof(*task_svc));
+    task_svc = malloc(sizeof(*task_svc));
     if (!task_svc) return E_OUTOFMEMORY;
 
     task_svc->ITaskService_iface.lpVtbl = &TaskService_vtbl;
@@ -4013,10 +4013,10 @@ HRESULT TaskService_create(void **obj)
 
 void __RPC_FAR *__RPC_USER MIDL_user_allocate(SIZE_T n)
 {
-    return HeapAlloc(GetProcessHeap(), 0, n);
+    return malloc(n);
 }
 
 void __RPC_USER MIDL_user_free(void __RPC_FAR *p)
 {
-    HeapFree(GetProcessHeap(), 0, p);
+    free(p);
 }

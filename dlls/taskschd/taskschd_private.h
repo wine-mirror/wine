@@ -19,8 +19,6 @@
 #ifndef __WINE_TASKSCHD_PRIVATE_H__
 #define __WINE_TASKSCHD_PRIVATE_H__
 
-#include "wine/heap.h"
-
 HRESULT TaskService_create(void **obj) DECLSPEC_HIDDEN;
 HRESULT TaskDefinition_create(ITaskDefinition **obj) DECLSPEC_HIDDEN;
 HRESULT TaskFolder_create(const WCHAR *parent, const WCHAR *path, ITaskFolder **obj, BOOL create) DECLSPEC_HIDDEN;
