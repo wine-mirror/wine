@@ -118,10 +118,17 @@ static const struct IActivationFactoryVtbl factory_vtbl =
 
 DEFINE_IINSPECTABLE( credentials_statics, IKeyCredentialManagerStatics, struct credentials_statics, IActivationFactory_iface );
 
+static HRESULT WINAPI is_supported_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+{
+    result->vt = VT_BOOL;
+    result->boolVal = FALSE;
+    return S_OK;
+}
+
 static HRESULT WINAPI credentials_statics_IsSupportedAsync( IKeyCredentialManagerStatics *iface, IAsyncOperation_boolean **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, value %p.\n", iface, value );
+    return async_operation_boolean_create( (IUnknown *)iface, NULL, is_supported_async, value );
 }
 
 static HRESULT WINAPI credentials_statics_RenewAttestationAsync( IKeyCredentialManagerStatics *iface, IAsyncAction **operation )
