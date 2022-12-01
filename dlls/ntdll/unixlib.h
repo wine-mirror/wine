@@ -48,6 +48,6 @@ enum ntdll_unix_funcs
 
 extern unixlib_handle_t ntdll_unix_handle;
 
-#define NTDLL_UNIX_CALL( func, params ) __wine_unix_call( ntdll_unix_handle, unix_ ## func, params )
+#define NTDLL_UNIX_CALL( func, params ) __wine_unix_call_dispatcher( ntdll_unix_handle, unix_ ## func, params )
 
 #endif /* __NTDLL_UNIXLIB_H */

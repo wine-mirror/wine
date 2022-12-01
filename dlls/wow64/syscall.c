@@ -321,19 +321,6 @@ NTSTATUS WINAPI wow64___wine_dbg_write( UINT *args )
 
 
 /**********************************************************************
- *           wow64___wine_unix_call
- */
-NTSTATUS WINAPI wow64___wine_unix_call( UINT *args )
-{
-    unixlib_handle_t handle = get_ulong64( &args );
-    unsigned int code = get_ulong( &args );
-    void *args_ptr = get_ptr( &args );
-
-    return __wine_unix_call( handle, code, args_ptr );
-}
-
-
-/**********************************************************************
  *           wow64___wine_unix_spawnvp
  */
 NTSTATUS WINAPI wow64___wine_unix_spawnvp( UINT *args )

@@ -3192,6 +3192,16 @@ NTSTATUS WINAPI __wine_ctrl_routine( void *arg )
     RtlExitUserThread( ret );
 }
 
+
+/***********************************************************************
+ *              __wine_unix_call
+ */
+NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
+{
+    return __wine_unix_call_dispatcher( handle, code, args );
+}
+
+
 /******************************************************************
  *		LdrLoadDll (NTDLL.@)
  */

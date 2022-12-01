@@ -356,7 +356,6 @@ static void * const syscalls[] =
     NtWriteVirtualMemory,
     NtYieldExecution,
     __wine_dbg_write,
-    __wine_unix_call,
     __wine_unix_spawnvp,
     wine_nt_to_unix_file_name,
     wine_server_call,
@@ -1344,15 +1343,6 @@ NTSTATUS ntdll_init_syscalls( ULONG id, SYSTEM_SERVICE_TABLE *table, void **disp
     memcpy( table->ArgumentTable, info->args, table->ServiceLimit );
     KeServiceDescriptorTable[id] = *table;
     return STATUS_SUCCESS;
-}
-
-
-/***********************************************************************
- *           __wine_unix_call
- */
-NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, void *args )
-{
-    return ((unixlib_entry_t*)(UINT_PTR)handle)[code]( args );
 }
 
 
