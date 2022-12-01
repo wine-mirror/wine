@@ -3707,7 +3707,7 @@ HRESULT WINAPI MimeOleObjectFromMoniker(BINDF bindf, IMoniker *moniker, IBindCtx
 
     lstrcpyW(mhtml_url, L"mhtml:");
     lstrcatW(mhtml_url, display_name);
-    free(display_name);
+    CoTaskMemFree(display_name);
 
     hres = CreateURLMoniker(NULL, mhtml_url, moniker_new);
     free(mhtml_url);
