@@ -110,6 +110,46 @@ static void test_transform(void)
     GdipDeleteMatrix(matrix);
 }
 
+static void test_scale(void)
+{
+    GpStatus status;
+    GpMatrix *matrix = NULL;
+    REAL elems[6];
+    int i;
+
+    static const REAL expected_elem[] = {3.0, -4.0, 90.0, 80.0, -1500.0, 1200.0};
+    static const REAL expected_elem2[] = {3.0, -6.0, 60.0, 80.0, -500.0, 600.0};
+
+    GdipCreateMatrix2(1.0, -2.0, 30.0, 40.0, -500.0, 600.0, &matrix);
+
+    status = GdipScaleMatrix(NULL, 3, 2, MatrixOrderAppend);
+    expect(InvalidParameter, status);
+    status = GdipScaleMatrix(matrix, 3, 2, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipGetMatrixElements(matrix, elems);
+    expect(Ok, status);
+    GdipDeleteMatrix(matrix);
+
+    for(i = 0; i < 6; i++)
+        ok(expected_elem[i] == elems[i], "Expected #%d to be (%.1f) but got (%.1f)\n", i,
+           expected_elem[i], elems[i]);
+
+    GdipCreateMatrix2(1.0, -2.0, 30.0, 40.0, -500.0, 600.0, &matrix);
+
+    status = GdipScaleMatrix(matrix, 3, 2, MatrixOrderPrepend);
+    expect(Ok, status);
+
+    status = GdipGetMatrixElements(matrix, elems);
+    expect(Ok, status);
+    GdipDeleteMatrix(matrix);
+
+    for(i = 0; i < 6; i++)
+        ok(expected_elem2[i] == elems[i], "Expected #%d to be (%.1f) but got (%.1f)\n", i,
+           expected_elem2[i], elems[i]);
+
+}
+
 static void test_isinvertible(void)
 {
     GpStatus status;
@@ -390,6 +430,7 @@ START_TEST(matrix)
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
     test_constructor_destructor();
+    test_scale();
     test_transform();
     test_isinvertible();
     test_invert();

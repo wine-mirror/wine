@@ -287,24 +287,27 @@ GpStatus WINGDIPAPI GdipRotateMatrix(GpMatrix *matrix, REAL angle,
 GpStatus WINGDIPAPI GdipScaleMatrix(GpMatrix *matrix, REAL scaleX, REAL scaleY,
     GpMatrixOrder order)
 {
-    REAL scale[6];
-
     TRACE("(%p, %.2f, %.2f, %d)\n", matrix, scaleX, scaleY, order);
 
     if(!matrix)
         return InvalidParameter;
 
-    scale[0] = scaleX;
-    scale[1] = 0.0;
-    scale[2] = 0.0;
-    scale[3] = scaleY;
-    scale[4] = 0.0;
-    scale[5] = 0.0;
-
     if(order == MatrixOrderAppend)
-        matrix_multiply(matrix->matrix, scale, matrix->matrix);
+    {
+        matrix->matrix[0] *= scaleX;
+        matrix->matrix[1] *= scaleY;
+        matrix->matrix[2] *= scaleX;
+        matrix->matrix[3] *= scaleY;
+        matrix->matrix[4] *= scaleX;
+        matrix->matrix[5] *= scaleY;
+    }
     else if (order == MatrixOrderPrepend)
-        matrix_multiply(scale, matrix->matrix, matrix->matrix);
+    {
+        matrix->matrix[0] *= scaleX;
+        matrix->matrix[1] *= scaleX;
+        matrix->matrix[2] *= scaleY;
+        matrix->matrix[3] *= scaleY;
+    }
     else
         return InvalidParameter;
 
