@@ -409,8 +409,6 @@ AC_CHECK_HEADERS(\
 	CL/cl.h \
 	EGL/egl.h \
 	OpenCL/opencl.h \
-	SystemConfiguration/SCDynamicStoreCopyDHCPInfo.h \
-	SystemConfiguration/SCNetworkConfiguration.h \
 	arpa/inet.h \
 	arpa/nameser.h \
 	asm/types.h \

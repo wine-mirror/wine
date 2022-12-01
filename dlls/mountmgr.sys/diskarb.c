@@ -33,8 +33,6 @@
 #include <sys/ioctl.h>
 #ifdef __APPLE__
 #include <DiskArbitration/DiskArbitration.h>
-#endif
-#if defined(HAVE_SYSTEMCONFIGURATION_SCDYNAMICSTORECOPYDHCPINFO_H) && defined(HAVE_SYSTEMCONFIGURATION_SCNETWORKCONFIGURATION_H)
 #include <SystemConfiguration/SCDynamicStoreCopyDHCPInfo.h>
 #include <SystemConfiguration/SCNetworkConfiguration.h>
 #endif
@@ -227,7 +225,7 @@ void run_diskarbitration_loop(void)
 
 #endif  /* __APPLE__ */
 
-#if defined(HAVE_SYSTEMCONFIGURATION_SCDYNAMICSTORECOPYDHCPINFO_H) && defined(HAVE_SYSTEMCONFIGURATION_SCNETWORKCONFIGURATION_H)
+#if defined(__APPLE__)
 
 static UInt8 map_option( unsigned int option )
 {

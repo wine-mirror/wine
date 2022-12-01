@@ -573,7 +573,7 @@ found:
     while (p_dbus_connection_read_write_dispatch( connection, -1 )) /* nothing */ ;
 }
 
-#if !defined(HAVE_SYSTEMCONFIGURATION_SCDYNAMICSTORECOPYDHCPINFO_H) || !defined(HAVE_SYSTEMCONFIGURATION_SCNETWORKCONFIGURATION_H)
+#if !defined(__APPLE__)
 
 /* The udisks dispatch loop will block all threads using the same connection, so we'll
    use a private connection. Multiple threads can make methods calls at the same time

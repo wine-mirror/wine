@@ -7829,18 +7829,6 @@ then :
   printf "%s\n" "#define HAVE_OPENCL_OPENCL_H 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "SystemConfiguration/SCDynamicStoreCopyDHCPInfo.h" "ac_cv_header_SystemConfiguration_SCDynamicStoreCopyDHCPInfo_h" "$ac_includes_default"
-if test "x$ac_cv_header_SystemConfiguration_SCDynamicStoreCopyDHCPInfo_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYSTEMCONFIGURATION_SCDYNAMICSTORECOPYDHCPINFO_H 1" >>confdefs.h
-
-fi
-ac_fn_c_check_header_compile "$LINENO" "SystemConfiguration/SCNetworkConfiguration.h" "ac_cv_header_SystemConfiguration_SCNetworkConfiguration_h" "$ac_includes_default"
-if test "x$ac_cv_header_SystemConfiguration_SCNetworkConfiguration_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYSTEMCONFIGURATION_SCNETWORKCONFIGURATION_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "arpa/inet.h" "ac_cv_header_arpa_inet_h" "$ac_includes_default"
 if test "x$ac_cv_header_arpa_inet_h" = xyes
 then :
