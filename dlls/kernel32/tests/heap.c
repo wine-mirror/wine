@@ -827,11 +827,8 @@ static void test_HeapCreate(void)
     size = 0;
     SetLastError( 0xdeadbeef );
     ret = pHeapQueryInformation( 0, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
-    todo_wine
     ok( !ret, "HeapQueryInformation succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
-    todo_wine
     ok( size == 0, "got size %Iu\n", size );
 
     size = 0;
@@ -871,7 +868,6 @@ static void test_HeapCreate(void)
     ok( ret, "HeapSetInformation failed, error %lu\n", GetLastError() );
     ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
     ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
-    todo_wine
     ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
 
     /* cannot be undone */
@@ -879,24 +875,43 @@ static void test_HeapCreate(void)
     compat_info = 0;
     SetLastError( 0xdeadbeef );
     ret = pHeapSetInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info) );
-    todo_wine
     ok( !ret, "HeapSetInformation succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_GEN_FAILURE, "got error %lu\n", GetLastError() );
     compat_info = 1;
     SetLastError( 0xdeadbeef );
     ret = pHeapSetInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info) );
-    todo_wine
     ok( !ret, "HeapSetInformation succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_GEN_FAILURE, "got error %lu\n", GetLastError() );
     ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
     ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
-    todo_wine
     ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
 
     ret = HeapDestroy( heap );
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+
+    /* cannot set LFH with HEAP_NO_SERIALIZE */
+
+    heap = HeapCreate( HEAP_NO_SERIALIZE, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    ok( compat_info == 0, "got HeapCompatibilityInformation %lu\n", compat_info );
+
+    compat_info = 2;
+    SetLastError( 0xdeadbeef );
+    ret = pHeapSetInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info) );
+    ok( !ret, "HeapSetInformation succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    ok( compat_info == 0, "got HeapCompatibilityInformation %lu\n", compat_info );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
 
     /* some allocation pattern automatically enables LFH */
 
@@ -931,7 +946,6 @@ static void test_HeapCreate(void)
     ok( ret, "HeapSetInformation failed, error %lu\n", GetLastError() );
     ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
     ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
-    todo_wine
     ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
 
     for (i = 0; i < 0x11; i++) ptrs[i] = pHeapAlloc( heap, 0, 24 + 2 * sizeof(void *) );

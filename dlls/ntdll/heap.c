@@ -39,6 +39,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(heap);
 
+/* HeapCompatibilityInformation values */
+
+#define HEAP_STD 0
+#define HEAP_LAL 1
+#define HEAP_LFH 2
+
+
 /* undocumented RtlWalkHeap structure */
 
 struct rtl_heap_entry
@@ -194,6 +201,7 @@ struct heap
     DWORD            force_flags;   /* 0044/0074 */
     /* end of the Windows 10 compatible struct layout */
 
+    LONG             compat_info;   /* HeapCompatibilityInformation / heap frontend type */
     struct list      entry;         /* Entry in process heap list */
     struct list      subheap_list;  /* Sub-heap list */
     struct list      large_list;    /* Large blocks list */
@@ -1378,6 +1386,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
     heap->ffeeffee      = 0xffeeffee;
     heap->auto_flags    = (flags & HEAP_GROWABLE);
     heap->flags         = (flags & ~HEAP_SHARED);
+    heap->compat_info   = HEAP_STD;
     heap->magic         = HEAP_MAGIC;
     heap->grow_size     = max( HEAP_DEF_SIZE, total_size );
     heap->min_size      = commit_size;
@@ -2039,21 +2048,24 @@ ULONG WINAPI RtlGetProcessHeaps( ULONG count, HANDLE *heaps )
  *           RtlQueryHeapInformation    (NTDLL.@)
  */
 NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS info_class,
-                                         void *info, SIZE_T size_in, PSIZE_T size_out )
+                                         void *info, SIZE_T size_in, SIZE_T *size_out )
 {
+    struct heap *heap;
+    ULONG flags;
+
+    TRACE( "handle %p, info_class %u, info %p, size_in %Iu, size_out %p.\n", handle, info_class, info, size_in, size_out );
+
     switch (info_class)
     {
     case HeapCompatibilityInformation:
+        if (!(heap = unsafe_heap_from_handle( handle, 0, &flags ))) return STATUS_ACCESS_VIOLATION;
         if (size_out) *size_out = sizeof(ULONG);
-
-        if (size_in < sizeof(ULONG))
-            return STATUS_BUFFER_TOO_SMALL;
-
-        *(ULONG *)info = 0; /* standard heap */
+        if (size_in < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
+        *(ULONG *)info = ReadNoFence( &heap->compat_info );
         return STATUS_SUCCESS;
 
     default:
-        FIXME("Unknown heap information class %u\n", info_class);
+        FIXME( "HEAP_INFORMATION_CLASS %u not implemented!\n", info_class );
         return STATUS_INVALID_INFO_CLASS;
     }
 }
@@ -2063,8 +2075,36 @@ NTSTATUS WINAPI RtlQueryHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS i
  */
 NTSTATUS WINAPI RtlSetHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS info_class, void *info, SIZE_T size )
 {
-    FIXME( "handle %p, info_class %d, info %p, size %Id stub!\n", handle, info_class, info, size );
-    return STATUS_SUCCESS;
+    struct heap *heap;
+    ULONG flags;
+
+    TRACE( "handle %p, info_class %u, info %p, size %Iu.\n", handle, info_class, info, size );
+
+    switch (info_class)
+    {
+    case HeapCompatibilityInformation:
+    {
+        ULONG compat_info;
+
+        if (size < sizeof(ULONG)) return STATUS_BUFFER_TOO_SMALL;
+        if (!(heap = unsafe_heap_from_handle( handle, 0, &flags ))) return STATUS_INVALID_HANDLE;
+        if (heap->flags & HEAP_NO_SERIALIZE) return STATUS_INVALID_PARAMETER;
+
+        compat_info = *(ULONG *)info;
+        if (compat_info != HEAP_STD && compat_info != HEAP_LFH)
+        {
+            FIXME( "HeapCompatibilityInformation %lu not implemented!\n", compat_info );
+            return STATUS_UNSUCCESSFUL;
+        }
+        if (InterlockedCompareExchange( &heap->compat_info, compat_info, HEAP_STD ) != HEAP_STD)
+            return STATUS_UNSUCCESSFUL;
+        return STATUS_SUCCESS;
+    }
+
+    default:
+        FIXME( "HEAP_INFORMATION_CLASS %u not implemented!\n", info_class );
+        return STATUS_SUCCESS;
+    }
 }
 
 /***********************************************************************
