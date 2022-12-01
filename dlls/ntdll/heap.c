@@ -949,6 +949,7 @@ static SUBHEAP *create_subheap( struct heap *heap, DWORD flags, SIZE_T total_siz
 
     if (!(subheap = allocate_region( heap, flags, &total_size, &commit_size ))) return NULL;
 
+    subheap->user_value = heap;
     subheap_set_bounds( subheap, (char *)subheap + commit_size, (char *)subheap + total_size );
     block_size = (SIZE_T)ROUND_ADDR( subheap_size( subheap ) - subheap_overhead( subheap ), BLOCK_ALIGN - 1 );
     block_init_free( first_block( subheap ), flags, subheap, block_size );
@@ -1195,7 +1196,8 @@ static inline struct block *unsafe_block_from_ptr( struct heap *heap, ULONG flag
     else if (block_get_type( block ) == BLOCK_TYPE_USED)
     {
         const char *base = subheap_base( subheap ), *commit_end = subheap_commit_end( subheap );
-        if (!contains( base, commit_end - base, block, block_get_size( block ) )) err = "invalid block size";
+        if (subheap->user_value != heap) err = "mismatching heap";
+        else if (!contains( base, commit_end - base, block, block_get_size( block ) )) err = "invalid block size";
     }
     else if (block_get_type( block ) == BLOCK_TYPE_LARGE)
     {
@@ -1374,6 +1376,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
     }
 
     subheap = &heap->subheap;
+    subheap->user_value = heap;
     subheap_set_bounds( subheap, (char *)heap + commit_size, (char *)heap + total_size );
     block_size = (SIZE_T)ROUND_ADDR( subheap_size( subheap ) - subheap_overhead( subheap ), BLOCK_ALIGN - 1 );
     block_init_free( first_block( subheap ), flags, subheap, block_size );
