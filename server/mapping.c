@@ -1212,7 +1212,7 @@ DECL_HANDLER(map_view)
     if (!req->mapping)  /* image mapping for a .so dll */
     {
         if (get_req_data_size() > sizeof(view->image)) namelen = get_req_data_size() - sizeof(view->image);
-        if (!(view = mem_alloc( offsetof( struct memory_view, name[namelen] )))) return;
+        if (!(view = mem_alloc( sizeof(struct memory_view) + namelen * sizeof(WCHAR) ))) return;
         memset( view, 0, sizeof(*view) );
         view->base    = req->base;
         view->size    = req->size;
