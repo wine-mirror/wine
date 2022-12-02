@@ -2669,7 +2669,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_register %eip, %ecx\n\t")
                    "movl 0x0c(%esp),%esp\n\t"      /* frame->esp */
                    __ASM_CFI(".cfi_same_value %esp\n\t")
-                   "jmpl *%ecx\n"
+                   "pushl %ecx\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   "ret\n"
                    __ASM_CFI("\t.cfi_restore_state\n")
                    "1:\ttestl $0x2 << 16,%ecx\n\t" /* CONTEXT_INTEGER */
                    "jz 1f\n\t"
@@ -2770,7 +2772,9 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI(".cfi_register %eip, %ecx\n\t")
                    "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */
                    __ASM_CFI(".cfi_same_value %esp\n\t")
-                   "jmpl *%ecx" )
+                   "pushl %ecx\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+                   "ret" )
 
 
 /***********************************************************************

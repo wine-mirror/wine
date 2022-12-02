@@ -2798,7 +2798,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_CFI(".cfi_same_value rsp\n\t")
                    "movq 0x70(%rcx),%rcx\n\t"      /* frame->rip */
                    __ASM_CFI(".cfi_register rip, rcx\n\t")
-                   "jmpq *%rcx\n\t"
+                   "pushq %rcx\n\t"
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   "ret\n\t"
                    /* $rcx is now pointing to "frame" again */
                    __ASM_CFI(".cfi_restore_state\n\t")
                    /* remember state when $rcx is pointing to "frame" */
@@ -2938,7 +2940,9 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq 0x88(%rcx),%rsp\n\t"
                    __ASM_CFI(".cfi_def_cfa rsp, 0\n\t")
                    __ASM_CFI(".cfi_same_value rsp\n\t")
-                   "jmpq *0x70(%rcx)" )      /* frame->rip */
+                   "pushq 0x70(%rcx)\n\t"          /* frame->rip */
+                   __ASM_CFI(".cfi_adjust_cfa_offset 8\n\t")
+                   "ret" )
 
 
 /***********************************************************************
