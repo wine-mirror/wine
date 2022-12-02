@@ -734,7 +734,7 @@ GLuint wined3d_context_gl_allocate_vram_chunk_buffer(struct wined3d_context_gl *
 void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, const struct wined3d_device *device);
 BOOL wined3d_context_gl_apply_clear_state(struct wined3d_context_gl *context_gl, const struct wined3d_state *state,
         unsigned int rt_count, const struct wined3d_fb_state *fb);
-void wined3d_context_gl_apply_fbo_state_blit(struct wined3d_context_gl *context_gl, GLenum target,
+void wined3d_context_gl_apply_fbo_state_explicit(struct wined3d_context_gl *context_gl, GLenum target,
         struct wined3d_resource *rt, unsigned int rt_sub_resource_idx,
         struct wined3d_resource *ds, unsigned int ds_sub_resource_idx, uint32_t location);
 void wined3d_context_gl_apply_ffp_blit_state(struct wined3d_context_gl *context_gl,

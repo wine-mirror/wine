@@ -850,7 +850,7 @@ static void wined3d_context_gl_apply_fbo_state(struct wined3d_context_gl *contex
 }
 
 /* Context activation is done by the caller. */
-void wined3d_context_gl_apply_fbo_state_blit(struct wined3d_context_gl *context_gl, GLenum target,
+void wined3d_context_gl_apply_fbo_state_explicit(struct wined3d_context_gl *context_gl, GLenum target,
         struct wined3d_resource *rt, unsigned int rt_sub_resource_idx,
         struct wined3d_resource *ds, unsigned int ds_sub_resource_idx, uint32_t location)
 {
@@ -3611,10 +3611,10 @@ void context_gl_apply_texture_draw_state(struct wined3d_context_gl *context_gl,
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
         if (format->depth_size || format->stencil_size)
-            wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER, NULL,
+            wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_DRAW_FRAMEBUFFER, NULL,
                     0, &texture->resource, sub_resource_idx, location);
         else
-            wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER, &texture->resource,
+            wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_DRAW_FRAMEBUFFER, &texture->resource,
                     sub_resource_idx, NULL, 0, location);
     }
 

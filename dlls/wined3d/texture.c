@@ -531,7 +531,7 @@ static void texture2d_blt_fbo(struct wined3d_device *device, struct wined3d_cont
         buffer = GL_COLOR_ATTACHMENT0;
     }
 
-    wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_READ_FRAMEBUFFER,
+    wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_READ_FRAMEBUFFER,
             &src_texture->resource, src_sub_resource_idx, NULL, 0, src_location);
     gl_info->gl_ops.gl.p_glReadBuffer(buffer);
     checkGLcall("glReadBuffer()");
@@ -632,7 +632,7 @@ static void texture2d_depth_blt_fbo(const struct wined3d_device *device, struct 
     else
         wined3d_texture_prepare_location(dst_texture, dst_sub_resource_idx, context, dst_location);
 
-    wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_READ_FRAMEBUFFER, NULL, 0,
+    wined3d_context_gl_apply_fbo_state_explicit(context_gl, GL_READ_FRAMEBUFFER, NULL, 0,
             &src_texture->resource, src_sub_resource_idx, src_location);
     wined3d_context_gl_check_fbo_status(context_gl, GL_READ_FRAMEBUFFER);
 
