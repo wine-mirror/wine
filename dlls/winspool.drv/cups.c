@@ -161,29 +161,6 @@ static NTSTATUS process_attach( void *args )
 #endif /* SONAME_LIBCUPS */
 }
 
-static BOOL copy_file( const char *src, const char *dst )
-{
-    int fds[2] = { -1, -1 }, num;
-    char buf[1024];
-    BOOL ret = FALSE;
-
-    fds[0] = open( src, O_RDONLY );
-    fds[1] = open( dst, O_CREAT | O_TRUNC | O_WRONLY, 0666 );
-    if (fds[0] == -1 || fds[1] == -1) goto fail;
-
-    while ((num = read( fds[0], buf, sizeof(buf) )) != 0)
-    {
-        if (num == -1) goto fail;
-        if (write( fds[1], buf, num ) != num) goto fail;
-    }
-    ret = TRUE;
-
-fail:
-    if (fds[1] != -1) close( fds[1] );
-    if (fds[0] != -1) close( fds[0] );
-    return ret;
-}
-
 static char *get_unix_file_name( LPCWSTR path )
 {
     UNICODE_STRING nt_name;
@@ -244,6 +221,29 @@ static cups_ptype_t cups_get_printer_type( const cups_dest_t *dest )
 static BOOL cups_is_scanner( cups_dest_t *dest )
 {
     return cups_get_printer_type( dest ) & 0x2000000 /* CUPS_PRINTER_SCANNER */;
+}
+
+static BOOL copy_file( const char *src, const char *dst )
+{
+    int fds[2] = { -1, -1 }, num;
+    char buf[1024];
+    BOOL ret = FALSE;
+
+    fds[0] = open( src, O_RDONLY );
+    fds[1] = open( dst, O_CREAT | O_TRUNC | O_WRONLY, 0666 );
+    if (fds[0] == -1 || fds[1] == -1) goto fail;
+
+    while ((num = read( fds[0], buf, sizeof(buf) )) != 0)
+    {
+        if (num == -1) goto fail;
+        if (write( fds[1], buf, num ) != num) goto fail;
+    }
+    ret = TRUE;
+
+fail:
+    if (fds[1] != -1) close( fds[1] );
+    if (fds[0] != -1) close( fds[0] );
+    return ret;
 }
 
 static http_status_t cupsGetPPD3_wrapper( http_t *http, const char *name, time_t *modtime,
