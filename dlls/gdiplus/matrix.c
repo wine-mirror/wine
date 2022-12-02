@@ -417,24 +417,23 @@ GpStatus WINGDIPAPI GdipTransformMatrixPointsI(GpMatrix *matrix, GpPoint *pts, I
 GpStatus WINGDIPAPI GdipTranslateMatrix(GpMatrix *matrix, REAL offsetX,
     REAL offsetY, GpMatrixOrder order)
 {
-    REAL translate[6];
-
     TRACE("(%p, %.2f, %.2f, %d)\n", matrix, offsetX, offsetY, order);
 
     if(!matrix)
         return InvalidParameter;
 
-    translate[0] = 1.0;
-    translate[1] = 0.0;
-    translate[2] = 0.0;
-    translate[3] = 1.0;
-    translate[4] = offsetX;
-    translate[5] = offsetY;
-
     if(order == MatrixOrderAppend)
-        matrix_multiply(matrix->matrix, translate, matrix->matrix);
+    {
+        matrix->matrix[4] += offsetX;
+        matrix->matrix[5] += offsetY;
+    }
     else if (order == MatrixOrderPrepend)
-        matrix_multiply(translate, matrix->matrix, matrix->matrix);
+    {
+        matrix->matrix[4] = offsetX * matrix->matrix[0] + offsetY * matrix->matrix[2]
+            + matrix->matrix[4];
+        matrix->matrix[5] = offsetX * matrix->matrix[1] + offsetY * matrix->matrix[3]
+            + matrix->matrix[5];
+    }
     else
         return InvalidParameter;
 
