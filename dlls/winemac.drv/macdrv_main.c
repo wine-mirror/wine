@@ -37,13 +37,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
-#ifndef kIOPMAssertionTypePreventUserIdleDisplaySleep
-#define kIOPMAssertionTypePreventUserIdleDisplaySleep CFSTR("PreventUserIdleDisplaySleep")
-#endif
-#ifndef kCFCoreFoundationVersionNumber10_7
-#define kCFCoreFoundationVersionNumber10_7      635.00
-#endif
-
 #define IS_OPTION_TRUE(ch) \
     ((ch) == 'y' || (ch) == 'Y' || (ch) == 't' || (ch) == 'T' || (ch) == '1')
 
@@ -593,13 +586,7 @@ BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
             }
             else if (powerAssertion == kIOPMNullAssertionID)
             {
-                CFStringRef assertName;
-                /*Are we running Lion or later?*/
-                if (kCFCoreFoundationVersionNumber >= kCFCoreFoundationVersionNumber10_7)
-                    assertName = kIOPMAssertionTypePreventUserIdleDisplaySleep;
-                else
-                    assertName = kIOPMAssertionTypeNoDisplaySleep;
-                IOPMAssertionCreateWithName( assertName, kIOPMAssertionLevelOn,
+                IOPMAssertionCreateWithName( kIOPMAssertionTypePreventUserIdleDisplaySleep, kIOPMAssertionLevelOn,
                                              CFSTR("Wine Process requesting no screen saver"),
                                              &powerAssertion);
             }
