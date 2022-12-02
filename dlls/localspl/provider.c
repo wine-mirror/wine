@@ -245,6 +245,7 @@ typedef struct {
         HANDLE_SERVER,
         HANDLE_PRINTER,
         HANDLE_XCV,
+        HANDLE_PORT,
         HANDLE_JOB,
     } type;
 } handle_header_t;
@@ -256,6 +257,12 @@ typedef struct {
     monitor_t *pm;
     HANDLE hxcv;
 } xcv_t;
+
+typedef struct {
+    handle_header_t header;
+    monitor_t *mon;
+    HANDLE hport;
+} port_t;
 
 typedef struct {
     handle_header_t header;
@@ -1648,6 +1655,66 @@ static HANDLE xcv_alloc_handle(const WCHAR *name, PRINTER_DEFAULTSW *def, BOOL *
     return (HANDLE)xcv;
 }
 
+static HANDLE port_alloc_handle(const WCHAR *name, BOOL *stop_search)
+{
+    static const WCHAR portW[] = L"Port";
+
+    unsigned int i, name_len;
+    WCHAR *port_name;
+    port_t *port;
+
+    *stop_search = FALSE;
+    for (name_len = 0; name[name_len] != ','; name_len++)
+    {
+        if (!name[name_len])
+            return NULL;
+    }
+
+    for (i = name_len + 1; name[i] == ' '; i++);
+    if (wcscmp(name + i, portW))
+        return NULL;
+
+    *stop_search = TRUE;
+    port_name = malloc((name_len + 1) * sizeof(WCHAR));
+    if (!port_name)
+        return NULL;
+    memcpy(port_name, name, name_len * sizeof(WCHAR));
+    port_name[name_len] = 0;
+
+    port = calloc(1, sizeof(*port));
+    if (!port)
+    {
+        free(port_name);
+        return NULL;
+    }
+    port->header.type = HANDLE_PORT;
+
+    port->mon = monitor_load_by_port(port_name);
+    if (!port->mon)
+    {
+        free(port_name);
+        free(port);
+        return NULL;
+    }
+    if (!port->mon->monitor.pfnOpenPort || !port->mon->monitor.pfnWritePort
+            || !port->mon->monitor.pfnClosePort)
+    {
+        FIXME("port not supported: %s\n", debugstr_w(name));
+        free(port_name);
+        fpClosePrinter((HANDLE)port);
+        return NULL;
+    }
+
+    port->mon->monitor.pfnOpenPort(port->mon->hmon, port_name, &port->hport);
+    free(port_name);
+    if (!port->hport)
+    {
+        fpClosePrinter((HANDLE)port);
+        return NULL;
+    }
+    return (HANDLE)port;
+}
+
 static HANDLE job_alloc_handle(const WCHAR *name, BOOL *stop_search)
 {
     static const WCHAR jobW[] = L"Job ";
@@ -1658,7 +1725,6 @@ static HANDLE job_alloc_handle(const WCHAR *name, BOOL *stop_search)
     job_t *job;
 
     *stop_search = FALSE;
-    name_len = 0;
     for (name_len = 0; name[name_len] != ','; name_len++)
     {
         if (!name[name_len])
@@ -2765,6 +2831,8 @@ static BOOL WINAPI fpOpenPrinter(WCHAR *name, HANDLE *hprinter,
     if (!*hprinter && !stop_search)
         *hprinter = xcv_alloc_handle(basename, def, &stop_search);
     if (!*hprinter && !stop_search)
+        *hprinter = port_alloc_handle(basename, &stop_search);
+    if (!*hprinter && !stop_search)
         *hprinter = job_alloc_handle(basename, &stop_search);
     if (!*hprinter && !stop_search)
         *hprinter = printer_alloc_handle(name, basename, def);
@@ -3552,6 +3620,16 @@ static BOOL WINAPI fpClosePrinter(HANDLE hprinter)
 
         monitor_unload(xcv->pm);
         free(xcv);
+    }
+    else if (header->type == HANDLE_PORT)
+    {
+        port_t *port = (port_t *)hprinter;
+
+        if (port->hport)
+            port->mon->monitor.pfnClosePort(port->hport);
+        if (port->mon)
+            monitor_unload(port->mon);
+        free(port);
     }
     else if (header->type == HANDLE_JOB)
     {
