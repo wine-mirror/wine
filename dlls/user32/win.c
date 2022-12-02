@@ -278,7 +278,7 @@ static BOOL is_default_coord( int x )
  */
 HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode )
 {
-    UNICODE_STRING class, window_name;
+    UNICODE_STRING class, window_name = {0};
     HWND hwnd, top_child = 0;
     MDICREATESTRUCTW mdi_cs;
     WNDCLASSEXW info;
@@ -401,7 +401,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
                                  cs->x, cs->y, cs->cx, cs->cy, cs->hwndParent, menu, module,
                                  cs->lpCreateParams, 0, NULL, 0, !unicode );
     if (!hwnd && menu && menu != cs->hMenu) NtUserDestroyMenu( menu );
-    if (!unicode) RtlFreeUnicodeString( &window_name );
+    if (!unicode && window_name.Buffer != name_buf) RtlFreeUnicodeString( &window_name );
     return hwnd;
 }
 
