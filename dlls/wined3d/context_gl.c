@@ -3238,50 +3238,12 @@ void wined3d_context_gl_apply_blit_state(struct wined3d_context_gl *context_gl, 
 {
     struct wined3d_context *context = &context_gl->c;
     const struct wined3d_gl_info *gl_info;
-    uint32_t rt_mask, *cur_mask;
-    struct wined3d_texture *rt;
     unsigned int sampler;
     SIZE rt_size;
 
     TRACE("Setting up context %p for blitting.\n", context);
 
     gl_info = context_gl->gl_info;
-    rt = context->current_rt.texture;
-
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-    {
-        if (context->render_offscreen)
-        {
-            wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER, &rt->resource,
-                    context->current_rt.sub_resource_idx, NULL, 0, rt->resource.draw_binding);
-            if (rt->resource.format->id != WINED3DFMT_NULL)
-                rt_mask = 1;
-            else
-                rt_mask = 0;
-        }
-        else
-        {
-            context_gl->current_fbo = NULL;
-            wined3d_context_gl_bind_fbo(context_gl, GL_DRAW_FRAMEBUFFER, 0);
-            rt_mask = context_generate_rt_mask_from_resource(&rt->resource);
-        }
-    }
-    else
-    {
-        rt_mask = wined3d_context_gl_generate_rt_mask_no_fbo(context_gl, &rt->resource);
-    }
-
-    cur_mask = context_gl->current_fbo ? &context_gl->current_fbo->rt_mask : &context_gl->draw_buffers_mask;
-
-    if (rt_mask != *cur_mask)
-    {
-        wined3d_context_gl_apply_draw_buffers(context_gl, rt_mask);
-        *cur_mask = rt_mask;
-    }
-
-    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
-        wined3d_context_gl_check_fbo_status(context_gl, GL_DRAW_FRAMEBUFFER);
-    context_invalidate_state(context, STATE_FRAMEBUFFER);
 
     wined3d_context_gl_get_rt_size(context_gl, &rt_size);
 
@@ -3640,38 +3602,52 @@ void context_gl_apply_texture_draw_state(struct wined3d_context_gl *context_gl,
         struct wined3d_texture *texture, unsigned int sub_resource_idx, unsigned int location)
 {
     const struct wined3d_format *format = texture->resource.format;
-    GLenum buffer;
+    struct wined3d_context *context = &context_gl->c;
+    uint32_t rt_mask, *cur_mask;
 
-    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-        return;
+    TRACE("context_gl %p, texture %p, sub_resource_idx %u, location %s.\n",
+            context_gl, texture, sub_resource_idx, wined3d_debug_location(location));
 
-    if (format->depth_size || format->stencil_size)
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
     {
-        wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER,
-                NULL, 0, &texture->resource, sub_resource_idx, location);
-
-        buffer = GL_NONE;
+        if (format->depth_size || format->stencil_size)
+            wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER, NULL,
+                    0, &texture->resource, sub_resource_idx, location);
+        else
+            wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER, &texture->resource,
+                    sub_resource_idx, NULL, 0, location);
     }
-    else
-    {
-        wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER,
-                &texture->resource, sub_resource_idx, NULL, 0, location);
 
-        if (location == WINED3D_LOCATION_DRAWABLE)
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+    {
+        if (location != WINED3D_LOCATION_DRAWABLE)
         {
-            TRACE("Texture %p is onscreen.\n", texture);
-            buffer = wined3d_texture_get_gl_buffer(texture);
+            if (texture->resource.format->id == WINED3DFMT_NULL || format->depth_size || format->stencil_size)
+                rt_mask = 0;
+            else
+                rt_mask = 1;
         }
         else
         {
-            TRACE("Texture %p is offscreen.\n", texture);
-            buffer = GL_COLOR_ATTACHMENT0;
+            rt_mask = context_generate_rt_mask_from_resource(&texture->resource);
         }
     }
+    else
+    {
+        rt_mask = wined3d_context_gl_generate_rt_mask_no_fbo(context_gl, &texture->resource);
+    }
 
-    wined3d_context_gl_set_draw_buffer(context_gl, buffer);
-    wined3d_context_gl_check_fbo_status(context_gl, GL_DRAW_FRAMEBUFFER);
-    context_invalidate_state(&context_gl->c, STATE_FRAMEBUFFER);
+    cur_mask = context_gl->current_fbo ? &context_gl->current_fbo->rt_mask : &context_gl->draw_buffers_mask;
+    if (rt_mask != *cur_mask)
+    {
+        wined3d_context_gl_apply_draw_buffers(context_gl, rt_mask);
+        *cur_mask = rt_mask;
+    }
+
+    if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
+        wined3d_context_gl_check_fbo_status(context_gl, GL_DRAW_FRAMEBUFFER);
+
+    context_invalidate_state(context, STATE_FRAMEBUFFER);
 }
 
 /* Context activation is done by the caller. */
