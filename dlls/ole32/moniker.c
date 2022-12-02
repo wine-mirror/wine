@@ -161,6 +161,7 @@ static HRESULT get_moniker_comparison_data(IMoniker *pMoniker, MonikerComparison
         {
             ERR("Failed to copy comparison data into buffer, hr = %#lx\n", hr);
             HeapFree(GetProcessHeap(), 0, *moniker_data);
+            *moniker_data = NULL;
             return hr;
         }
         (*moniker_data)->ulCntData = size;
