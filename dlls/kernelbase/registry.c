@@ -258,7 +258,18 @@ static NTSTATUS create_key( HKEY *retkey, HKEY root, UNICODE_STRING name, ULONG 
     attr.SecurityQualityOfService = NULL;
     if (options & REG_OPTION_OPEN_LINK) attr.Attributes |= OBJ_OPENLINK;
 
-    if (!force_wow32) status = NtCreateKey( &subkey, access, &attr, 0, class, options, dispos );
+    if (!force_wow32)
+    {
+        status = NtCreateKey( (HANDLE *)retkey, access, &attr, 0, class, options, dispos );
+        if (status == STATUS_PREDEFINED_HANDLE)
+        {
+            *retkey = get_perflib_key( *retkey );
+            status = STATUS_SUCCESS;
+        }
+
+        if (!status || status != STATUS_OBJECT_NAME_NOT_FOUND)
+            return status;
+    }
 
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
