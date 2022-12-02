@@ -2136,6 +2136,8 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 };
 
 
+#ifdef _WIN64
+
 static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
 static NTSTATUS wow64_init_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
 static NTSTATUS wow64_unwind_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
@@ -2151,6 +2153,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     system_time_precise,
 };
 
+#endif  /* _WIN64 */
 
 /***********************************************************************
  *           start_main_thread

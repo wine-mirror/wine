@@ -647,7 +647,11 @@ static NTSTATUS get_builtin_unix_funcs( void *module, BOOL wow, const void **fun
 
     if (module == ntdll_module)
     {
+#ifdef _WIN64
         *funcs = wow ? __wine_unix_call_wow64_funcs : __wine_unix_call_funcs;
+#else
+        *funcs = __wine_unix_call_funcs;
+#endif
         return STATUS_SUCCESS;
     }
 
@@ -657,7 +661,11 @@ static NTSTATUS get_builtin_unix_funcs( void *module, BOOL wow, const void **fun
         if (builtin->module != module) continue;
         if (builtin->unix_path && (p = strrchr( builtin->unix_path, '/' )) && !strcmp( p, "/ntdll.so" ))
         {
+#ifdef _WIN64
             *funcs = wow ? __wine_unix_call_wow64_funcs : __wine_unix_call_funcs;
+#else
+            *funcs = __wine_unix_call_funcs;
+#endif
             status = STATUS_SUCCESS;
             break;
         }
