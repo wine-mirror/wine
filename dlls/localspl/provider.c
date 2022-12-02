@@ -3223,23 +3223,38 @@ static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_in
 
 static BOOL WINAPI fpWritePrinter(HANDLE hprinter, void *buf, DWORD size, DWORD *written)
 {
-    printer_t *printer = (printer_t *)hprinter;
+    handle_header_t *header = (handle_header_t *)hprinter;
 
     TRACE("(%p, %p, %ld, %p)\n", hprinter, buf, size, written);
 
-    if(!printer || printer->header.type != HANDLE_PRINTER)
+    if (!header)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
     }
 
-    if(!printer->doc)
+    if (header->type == HANDLE_PORT)
     {
-        SetLastError(ERROR_SPL_NO_STARTDOC);
-        return FALSE;
+        port_t *port = (port_t *)hprinter;
+
+        return port->mon->monitor.pfnWritePort(port->hport, buf, size, written);
     }
 
-    return WriteFile(printer->doc->hf, buf, size, written, NULL);
+    if (header->type == HANDLE_PRINTER)
+    {
+        printer_t *printer = (printer_t *)hprinter;
+
+        if (!printer->doc)
+        {
+            SetLastError(ERROR_SPL_NO_STARTDOC);
+            return FALSE;
+        }
+
+        return WriteFile(printer->doc->hf, buf, size, written, NULL);
+    }
+
+    SetLastError(ERROR_INVALID_HANDLE);
+    return FALSE;
 }
 
 static BOOL WINAPI fpSetJob(HANDLE hprinter, DWORD job_id,
