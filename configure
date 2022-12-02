@@ -7805,12 +7805,6 @@ then :
 printf "%s\n" "#define STDC_HEADERS 1" >>confdefs.h
 
 fi
-ac_fn_c_check_header_compile "$LINENO" "AL/al.h" "ac_cv_header_AL_al_h" "$ac_includes_default"
-if test "x$ac_cv_header_AL_al_h" = xyes
-then :
-  printf "%s\n" "#define HAVE_AL_AL_H 1" >>confdefs.h
-
-fi
 ac_fn_c_check_header_compile "$LINENO" "CL/cl.h" "ac_cv_header_CL_cl_h" "$ac_includes_default"
 if test "x$ac_cv_header_CL_cl_h" = xyes
 then :

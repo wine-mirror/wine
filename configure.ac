@@ -405,7 +405,6 @@ dnl **** Check for header files ****
 AC_SYS_LARGEFILE()
 
 AC_CHECK_HEADERS(\
-	AL/al.h \
 	CL/cl.h \
 	EGL/egl.h \
 	OpenCL/opencl.h \

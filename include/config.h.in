@@ -6,9 +6,6 @@
 /* Define to the file extension for executables. */
 #undef EXEEXT
 
-/* Define to 1 if you have the <AL/al.h> header file. */
-#undef HAVE_AL_AL_H
-
 /* Define to 1 if you have the <arpa/inet.h> header file. */
 #undef HAVE_ARPA_INET_H
 
