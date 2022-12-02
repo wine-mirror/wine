@@ -835,14 +835,8 @@ static monitor_t * monitor_load(LPCWSTR name, LPWSTR dllname)
             lstrcatW(regroot, name);
             if (RegOpenKeyW(HKEY_LOCAL_MACHINE, regroot, &hroot) == ERROR_SUCCESS) {
                 /* Get the Driver from the Registry */
-                if (driver == NULL) {
-                    DWORD   namesize;
-                    if (RegQueryValueExW(hroot, L"Driver", NULL, NULL, NULL,
-                                        &namesize) == ERROR_SUCCESS) {
-                        driver = malloc(namesize);
-                        RegQueryValueExW(hroot, L"Driver", NULL, NULL, (BYTE*)driver, &namesize);
-                    }
-                }
+                if (!driver)
+                    driver = reg_query_value(hroot, L"Driver");
             }
             else
                 WARN("%s not found\n", debugstr_w(regroot));
