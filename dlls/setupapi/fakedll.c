@@ -989,6 +989,8 @@ static void install_lib_dir( WCHAR *dest, WCHAR *file, const WCHAR *wildcard,
             lstrcatW( name, data.name );
             if (wcschr( data.name, '.' ) && install_fake_dll( dest, file, delete, &delay_copy ))
                 continue;
+            if (wcschr( wildcard, '.' ))  /* don't append default if wildcard has an explicit extension */
+                continue;
             lstrcatW( name, default_ext );
         }
         install_fake_dll( dest, file, delete, &delay_copy );
