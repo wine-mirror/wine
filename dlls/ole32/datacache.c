@@ -2527,7 +2527,7 @@ static HRESULT WINAPI DataCache_EnumCache(IOleCache2 *iface,
             count++;
     }
 
-    data = CoTaskMemAlloc( count * sizeof(*data) );
+    data = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*data) );
     if (!data) return E_OUTOFMEMORY;
 
     LIST_FOR_EACH_ENTRY( cache_entry, &This->cache_list, DataCacheEntry, entry )
@@ -2559,7 +2559,7 @@ static HRESULT WINAPI DataCache_EnumCache(IOleCache2 *iface,
 
 fail:
     while (i--) CoTaskMemFree( data[i].formatetc.ptd );
-    CoTaskMemFree( data );
+    HeapFree( GetProcessHeap(), 0, data );
     return hr;
 }
 
