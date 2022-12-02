@@ -516,6 +516,9 @@ static HRESULT WINAPI MSTASK_ITask_GetNextRunTime(ITask *iface, SYSTEMTIME *rt)
 
             case TASK_TIME_TRIGGER_ONCE:
                 st = current_st;
+                st.wYear = This->trigger[i].wBeginYear;
+                st.wMonth = This->trigger[i].wBeginMonth;
+                st.wDay = This->trigger[i].wBeginDay;
                 st.wHour = This->trigger[i].wStartHour;
                 st.wMinute = This->trigger[i].wStartMinute;
                 st.wSecond = 0;

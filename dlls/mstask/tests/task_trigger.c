@@ -532,6 +532,22 @@ static void test_GetNextRunTime(void)
        st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
        st.wHour, st.wMinute, st.wSecond);
 
+    hr = ITaskTrigger_GetTrigger(trigger, &data);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    data.rgFlags &= ~TASK_TRIGGER_FLAG_DISABLED;
+    data.TriggerType = TASK_TIME_TRIGGER_ONCE;
+    /* add 1 day to test triggers in the far future */
+    trigger_add_ms(&data, 24 * 60 * 60 * 1000, &cmp);
+    hr = ITaskTrigger_SetTrigger(trigger, &data);
+    ok(hr == S_OK, "got %#lx\n", hr);
+
+    memset(&st, 0xff, sizeof(st));
+    hr = ITask_GetNextRunTime(task, &st);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(!memcmp(&st, &cmp, sizeof(st)), "got %u/%u/%u wday %u %u:%02u:%02u\n",
+       st.wDay, st.wMonth, st.wYear, st.wDayOfWeek,
+       st.wHour, st.wMinute, st.wSecond);
+
     /* TASK_TIME_TRIGGER_DAILY */
 
     hr = ITaskTrigger_GetTrigger(trigger, &data);
