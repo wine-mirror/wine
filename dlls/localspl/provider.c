@@ -275,7 +275,8 @@ typedef struct {
 typedef struct {
     handle_header_t header;
     printer_info_t *info;
-    LPWSTR name;
+    WCHAR *name;
+    WCHAR *datatype;
     DEVMODEW *devmode;
     job_info_t *doc;
 } printer_t;
@@ -1841,6 +1842,8 @@ static HANDLE printer_alloc_handle(const WCHAR *name, const WCHAR *basename,
         return NULL;
     }
 
+    if (def && def->pDatatype)
+        printer->datatype = wcsdup(def->pDatatype);
     if (def && def->pDevMode)
         printer->devmode = dup_devmode(def->pDevMode);
 
@@ -3772,6 +3775,7 @@ static BOOL WINAPI fpClosePrinter(HANDLE hprinter)
 
         release_printer_info(printer->info);
         free(printer->name);
+        free(printer->datatype);
         free(printer->devmode);
         free(printer);
     }
