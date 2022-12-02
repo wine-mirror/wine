@@ -1089,7 +1089,8 @@ static HRESULT WINAPI MimeBody_GetProp(
     {
         PropVariantClear(pValue);
         pValue->vt = VT_LPSTR;
-        pValue->pszVal = strdup(This->content_pri_type);
+        pValue->pszVal = CoTaskMemAlloc(strlen(This->content_pri_type) + 1);
+        strcpy(pValue->pszVal, This->content_pri_type);
         return S_OK;
     }
 
