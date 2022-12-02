@@ -234,6 +234,8 @@ typedef struct {
     LONG ref;
 
     WCHAR *port;
+    WCHAR *print_proc;
+    WCHAR *datatype;
 
     CRITICAL_SECTION jobs_cs;
     struct list jobs;
@@ -521,13 +523,32 @@ static printer_info_t *find_printer_info(const WCHAR *name, unsigned int len)
     return NULL;
 }
 
+static WCHAR * reg_query_value(HKEY key, const WCHAR *name)
+{
+    DWORD size, type;
+    WCHAR *ret;
+
+    if (RegQueryValueExW(key, name, 0, &type, NULL, &size) != ERROR_SUCCESS
+            || type != REG_SZ)
+        return NULL;
+
+    ret = malloc(size);
+    if (!ret)
+        return NULL;
+
+    if (RegQueryValueExW(key, name, 0, NULL, (BYTE *)ret, &size) != ERROR_SUCCESS)
+    {
+        free(ret);
+        return NULL;
+    }
+    return ret;
+}
+
 static printer_info_t* get_printer_info(const WCHAR *name)
 {
     HKEY hkey, hprinter = NULL;
     printer_info_t *info;
-    WCHAR port[MAX_PATH];
     LSTATUS ret;
-    DWORD size;
 
     EnterCriticalSection(&printers_cs);
     info = find_printer_info(name, -1);
@@ -541,32 +562,44 @@ static printer_info_t* get_printer_info(const WCHAR *name)
     if (ret == ERROR_SUCCESS)
         ret = RegOpenKeyW(hkey, name, &hprinter);
     RegCloseKey(hkey);
-    size = sizeof(port);
-    if (ret == ERROR_SUCCESS)
-        ret = RegQueryValueExW(hprinter, L"Port", 0, NULL, (BYTE*)port, &size);
-    RegCloseKey(hprinter);
     if (ret != ERROR_SUCCESS)
     {
         LeaveCriticalSection(&printers_cs);
         return NULL;
     }
 
-    if ((info = calloc(1, sizeof(*info))) && (info->name = wcsdup(name)) &&
-            (info->port = wcsdup(port)))
+    info = calloc(1, sizeof(*info));
+    if (!info)
     {
-        info->ref = 1;
-        list_add_head(&printers, &info->entry);
-        InitializeCriticalSection(&info->jobs_cs);
-        list_init(&info->jobs);
+        LeaveCriticalSection(&printers_cs);
+        RegCloseKey(hprinter);
+        return NULL;
     }
-    else if (info)
+
+    info->name = wcsdup(name);
+    info->port = reg_query_value(hprinter, L"Port");
+    info->print_proc = reg_query_value(hprinter, L"Print Processor");
+    info->datatype = reg_query_value(hprinter, L"Datatype");
+    RegCloseKey(hprinter);
+
+    if (!info->name || !info->port || !info->print_proc || !info->datatype)
     {
         free(info->name);
+        free(info->port);
+        free(info->print_proc);
+        free(info->datatype);
         free(info);
-        info = NULL;
-    }
-    LeaveCriticalSection(&printers_cs);
 
+        LeaveCriticalSection(&printers_cs);
+        return NULL;
+    }
+
+    info->ref = 1;
+    list_add_head(&printers, &info->entry);
+    InitializeCriticalSection(&info->jobs_cs);
+    list_init(&info->jobs);
+
+    LeaveCriticalSection(&printers_cs);
     return info;
 }
 
@@ -594,6 +627,8 @@ static void release_printer_info(printer_info_t *info)
 
         free(info->name);
         free(info->port);
+        free(info->print_proc);
+        free(info->datatype);
         DeleteCriticalSection(&info->jobs_cs);
         while (!list_empty(&info->jobs))
         {
