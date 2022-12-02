@@ -223,6 +223,7 @@ typedef struct {
     DWORD id;
     WCHAR *filename;
     WCHAR *port;
+    WCHAR *datatype;
     WCHAR *document_title;
     DEVMODEW *devmode;
     HANDLE hf;
@@ -608,6 +609,7 @@ static void free_job(job_info_t *job)
     list_remove(&job->entry);
     free(job->filename);
     free(job->port);
+    free(job->datatype);
     free(job->document_title);
     free(job->devmode);
     CloseHandle(job->hf);
@@ -3215,6 +3217,7 @@ static job_info_t* add_job(printer_t *printer, DOC_INFO_1W *info, BOOL create)
         job->hf = NULL;
     }
     job->document_title = wcsdup(info->pDocName);
+    job->datatype = wcsdup(info->pDatatype);
     job->devmode = dup_devmode(printer->devmode);
 
     EnterCriticalSection(&printer->info->jobs_cs);
