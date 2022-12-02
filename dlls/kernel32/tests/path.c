@@ -2653,7 +2653,6 @@ static void test_LdrGetDllPath(void)
     ret = pLdrGetDllPath( buffer, LOAD_WITH_ALTERED_SEARCH_PATH | LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR, &path, &unknown_ptr );
     ok( ret == STATUS_INVALID_PARAMETER, "got %lx expected %lx\n", ret, STATUS_INVALID_PARAMETER );
     ok( !unknown_ptr, "unknown ptr %p\n", unknown_ptr );
-    pRtlReleasePath( path );
 
     lstrcpyW( buffer, dlldir );
     p = buffer + lstrlenW(buffer);
