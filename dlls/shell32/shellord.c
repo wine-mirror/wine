@@ -188,23 +188,12 @@ static BOOL GetFileNameFromBrowseA(
 	LPCSTR lpstrFilter,
 	LPCSTR lpstrTitle)
 {
-    HMODULE hmodule;
-    BOOL (WINAPI *pGetOpenFileNameA)(LPOPENFILENAMEA);
     OPENFILENAMEA ofn;
     BOOL ret;
 
     TRACE("%p, %s, %ld, %s, %s, %s, %s)\n",
 	  hwndOwner, lpstrFile, nMaxFile, lpstrInitialDir, lpstrDefExt,
 	  lpstrFilter, lpstrTitle);
-
-    hmodule = LoadLibraryA("comdlg32.dll");
-    if(!hmodule) return FALSE;
-    pGetOpenFileNameA = (void *)GetProcAddress(hmodule, "GetOpenFileNameA");
-    if(!pGetOpenFileNameA)
-    {
-	FreeLibrary(hmodule);
-	return FALSE;
-    }
 
     memset(&ofn, 0, sizeof(ofn));
 
@@ -217,9 +206,8 @@ static BOOL GetFileNameFromBrowseA(
     ofn.lpstrTitle = lpstrTitle;
     ofn.lpstrDefExt = lpstrDefExt;
     ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
-    ret = pGetOpenFileNameA(&ofn);
+    ret = GetOpenFileNameA(&ofn);
 
-    FreeLibrary(hmodule);
     return ret;
 }
 
@@ -235,23 +223,12 @@ static BOOL GetFileNameFromBrowseW(
 	LPCWSTR lpstrFilter,
 	LPCWSTR lpstrTitle)
 {
-    HMODULE hmodule;
-    BOOL (WINAPI *pGetOpenFileNameW)(LPOPENFILENAMEW);
     OPENFILENAMEW ofn;
     BOOL ret;
 
     TRACE("%p, %s, %ld, %s, %s, %s, %s)\n",
 	  hwndOwner, debugstr_w(lpstrFile), nMaxFile, debugstr_w(lpstrInitialDir), debugstr_w(lpstrDefExt),
 	  debugstr_w(lpstrFilter), debugstr_w(lpstrTitle));
-
-    hmodule = LoadLibraryA("comdlg32.dll");
-    if(!hmodule) return FALSE;
-    pGetOpenFileNameW = (void *)GetProcAddress(hmodule, "GetOpenFileNameW");
-    if(!pGetOpenFileNameW)
-    {
-	FreeLibrary(hmodule);
-	return FALSE;
-    }
 
     memset(&ofn, 0, sizeof(ofn));
 
@@ -264,9 +241,8 @@ static BOOL GetFileNameFromBrowseW(
     ofn.lpstrTitle = lpstrTitle;
     ofn.lpstrDefExt = lpstrDefExt;
     ofn.Flags = OFN_EXPLORER | OFN_HIDEREADONLY | OFN_FILEMUSTEXIST;
-    ret = pGetOpenFileNameW(&ofn);
+    ret = GetOpenFileNameW(&ofn);
 
-    FreeLibrary(hmodule);
     return ret;
 }
 

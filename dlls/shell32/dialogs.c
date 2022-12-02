@@ -271,8 +271,6 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
 
                 case IDC_RUNDLG_BROWSE :
                     {
-                    HMODULE hComdlg = NULL ;
-                    LPFNOFN ofnProc = NULL ;
                     WCHAR szFName[1024] = {0};
                     WCHAR filter_exe[256], filter_all[256], filter[MAX_PATH], szCaption[MAX_PATH];
                     OPENFILENAMEW ofn;
@@ -292,23 +290,13 @@ static INT_PTR CALLBACK RunDlgProc (HWND hwnd, UINT message, WPARAM wParam, LPAR
                     ofn.Flags = OFN_ENABLESIZING | OFN_FILEMUSTEXIST | OFN_HIDEREADONLY | OFN_PATHMUSTEXIST;
                     ofn.lpstrInitialDir = prfdp->lpstrDirectory;
 
-                    if (NULL == (hComdlg = LoadLibraryExW (L"comdlg32.dll", NULL, 0)) ||
-                        NULL == (ofnProc = (LPFNOFN)GetProcAddress (hComdlg, "GetOpenFileNameW")))
-                    {
-                        ERR("Couldn't get GetOpenFileName function entry (lib=%p, proc=%p)\n", hComdlg, ofnProc);
-                        ShellMessageBoxW(shell32_hInstance, hwnd, MAKEINTRESOURCEW(IDS_RUNDLG_BROWSE_ERROR), NULL, MB_OK | MB_ICONERROR);
-                        return TRUE ;
-                    }
-
-                    if (ofnProc(&ofn))
+                    if (GetOpenFileNameW(&ofn))
                     {
                         SetFocus (GetDlgItem (hwnd, IDOK)) ;
                         SetWindowTextW (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH), szFName) ;
                         SendMessageW (GetDlgItem (hwnd, IDC_RUNDLG_EDITPATH), CB_SETEDITSEL, 0, MAKELPARAM (0, -1)) ;
                         SetFocus (GetDlgItem (hwnd, IDOK)) ;
                     }
-
-                    FreeLibrary (hComdlg) ;
 
                     return TRUE ;
                     }
