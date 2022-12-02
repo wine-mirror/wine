@@ -1061,8 +1061,8 @@ HRESULT nsuri_to_url(LPCWSTR,BOOL,BSTR*) DECLSPEC_HIDDEN;
 void call_property_onchanged(ConnectionPointContainer*,DISPID) DECLSPEC_HIDDEN;
 HRESULT call_set_active_object(IOleInPlaceUIWindow*,IOleInPlaceActiveObject*) DECLSPEC_HIDDEN;
 
-void *nsalloc(size_t) __WINE_ALLOC_SIZE(1) DECLSPEC_HIDDEN;
 void nsfree(void*) DECLSPEC_HIDDEN;
+void *nsalloc(size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(nsfree) __WINE_MALLOC DECLSPEC_HIDDEN;
 
 BOOL nsACString_Init(nsACString *str, const char *data) DECLSPEC_HIDDEN;
 void nsACString_InitDepend(nsACString*,const char*) DECLSPEC_HIDDEN;
