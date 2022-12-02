@@ -2656,7 +2656,7 @@ void __thiscall _Condition_variable_dtor(_Condition_variable *this)
         cv_queue *next = this->queue->next;
         if(!this->queue->expired)
             ERR("there's an active wait\n");
-        HeapFree(GetProcessHeap(), 0, this->queue);
+        operator_delete(this->queue);
         this->queue = next;
     }
     critical_section_dtor(&this->lock);
@@ -2753,7 +2753,7 @@ void __thiscall _Condition_variable_notify_one(_Condition_variable *this)
             RtlWakeAddressSingle(&node->next);
             return;
         } else {
-            HeapFree(GetProcessHeap(), 0, node);
+            operator_delete(node);
         }
     }
 }
@@ -2782,7 +2782,7 @@ void __thiscall _Condition_variable_notify_all(_Condition_variable *this)
         if(!InterlockedExchange(&ptr->expired, TRUE))
             RtlWakeAddressSingle(&ptr->next);
         else
-            HeapFree(GetProcessHeap(), 0, ptr);
+            operator_delete(ptr);
         ptr = next;
     }
 }
