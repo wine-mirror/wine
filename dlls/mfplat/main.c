@@ -1350,6 +1350,7 @@ HRESULT WINAPI MFTEnum(GUID category, UINT32 flags, MFT_REGISTER_TYPE_INFO *inpu
         return E_INVALIDARG;
 
     *count = 0;
+    *clsids = NULL;
 
     list_init(&mfts);
 
