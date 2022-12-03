@@ -396,6 +396,8 @@ struct d3dx_parameters_store
     unsigned int full_name_tmp_size;
 };
 
+HRESULT d3dx_init_parameters_store(struct d3dx_parameters_store *store, unsigned int count) DECLSPEC_HIDDEN;
+void d3dx_parameters_store_cleanup(struct d3dx_parameters_store *store) DECLSPEC_HIDDEN;
 struct d3dx_parameter *get_parameter_by_name(struct d3dx_parameters_store *store,
         struct d3dx_parameter *parameter, const char *name) DECLSPEC_HIDDEN;
 

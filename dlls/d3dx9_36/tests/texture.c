@@ -2471,21 +2471,20 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     hr = tx->lpVtbl->GetConstantBuffer(tx, &buffer);
     todo_wine
     ok(SUCCEEDED(hr), "Failed to get texture shader constant buffer.\n");
-    if (FAILED(hr))
+
+    if (SUCCEEDED(hr))
     {
-        skip("Texture shaders not supported, skipping further tests.\n");
-        IUnknown_Release(tx);
-        return;
+        size = ID3DXBuffer_GetBufferSize(buffer);
+        ok(!size, "Unexpected buffer size %lu.\n", size);
+
+        ID3DXBuffer_Release(buffer);
     }
 
-    size = ID3DXBuffer_GetBufferSize(buffer);
-    ok(!size, "Unexpected buffer size %lu.\n", size);
-
-    ID3DXBuffer_Release(buffer);
-
     hr = tx->lpVtbl->GetDesc(tx, &ctab_desc);
+    todo_wine
     ok(hr == S_OK, "Failed to get constant description, hr %#lx.\n", hr);
-    ok(!ctab_desc.Constants, "Unexpected number of constants %u.\n", ctab_desc.Constants);
+    if (SUCCEEDED(hr))
+        ok(!ctab_desc.Constants, "Unexpected number of constants %u.\n", ctab_desc.Constants);
 
     /* Constant table access calls, without constant table. */
     h = tx->lpVtbl->GetConstant(tx, NULL, 0);
@@ -2528,6 +2527,7 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXFillTextureTX(texture, tx);
+    todo_wine
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, D3DLOCK_READONLY);
@@ -2541,6 +2541,7 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
             /* The third position coordinate is apparently undefined for 2D textures. */
             unsigned int color = data[y * lr.Pitch / sizeof(*data) + x] & 0xffffff00;
 
+            todo_wine
             ok(compare_color(color, expected, 1), "Unexpected color %08x at (%u, %u).\n", color, x, y);
         }
     }
@@ -2560,6 +2561,7 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXFillCubeTextureTX(cube_texture, tx);
+    todo_wine
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
 
     for (z = 0; z < 6; ++z)
@@ -2599,6 +2601,7 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
                         component = -component;
                     expected |= max(component, 0) << i * 8;
                 }
+                todo_wine
                 ok(compare_color(color, expected, 1), "Unexpected color %08x at (%u, %u, %u).\n",
                         color, x, y, z);
             }
@@ -2619,6 +2622,7 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXFillVolumeTextureTX(volume_texture, tx);
+    todo_wine
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DVolumeTexture9_LockBox(volume_texture, 0, &lb, NULL, D3DLOCK_READONLY);
@@ -2633,6 +2637,7 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
                 unsigned int expected = 0xff000000 | ((x * 4 + 2) << 16) | ((y * 4 + 2) << 8) | (z * 4 + 2);
                 unsigned int color = data[z * lb.SlicePitch / sizeof(*data) + y * lb.RowPitch / sizeof(*data) + x];
 
+                todo_wine
                 ok(compare_color(color, expected, 1), "Unexpected color %08x at (%u, %u, %u).\n",
                         color, x, y, z);
             }
@@ -2646,8 +2651,12 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     IUnknown_Release(tx);
 
     /* With constant table */
+    tx = NULL;
     hr = D3DXCreateTextureShader(shader_code2, &tx);
+    todo_wine
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
+    if (FAILED(hr))
+        goto cleanup;
 
     hr = tx->lpVtbl->GetConstantBuffer(tx, &buffer);
     todo_wine
@@ -2768,7 +2777,8 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     IDirect3DDevice9_Release(device);
     IDirect3D9_Release(d3d);
     DestroyWindow(wnd);
-    IUnknown_Release(tx);
+    if (tx)
+        IUnknown_Release(tx);
 }
 
 START_TEST(texture)

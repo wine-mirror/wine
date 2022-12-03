@@ -2361,6 +2361,9 @@ struct d3dx9_texture_shader
     LONG ref;
 
     ID3DXBuffer *byte_code;
+    ULONG64 version_counter;
+    struct d3dx_parameters_store parameters;
+    struct d3dx_param_eval *eval;
 };
 
 static inline struct d3dx9_texture_shader *impl_from_ID3DXTextureShader(ID3DXTextureShader *iface)
@@ -2406,6 +2409,8 @@ static ULONG WINAPI d3dx9_texture_shader_Release(ID3DXTextureShader *iface)
     {
         if (texture_shader->byte_code)
             ID3DXBuffer_Release(texture_shader->byte_code);
+        d3dx_free_param_eval(texture_shader->eval);
+        d3dx_parameters_store_cleanup(&texture_shader->parameters);
         HeapFree(GetProcessHeap(), 0, texture_shader);
     }
 
@@ -2636,6 +2641,19 @@ HRESULT WINAPI D3DXCreateTextureShader(const DWORD *function, ID3DXTextureShader
         return hr;
     }
     memcpy(ID3DXBuffer_GetBufferPointer(object->byte_code), function, size);
+
+    if (FAILED(hr = d3dx_init_parameters_store(&object->parameters, 0)))
+    {
+        IUnknown_Release(&object->ID3DXTextureShader_iface);
+        return hr;
+    }
+
+    if (FAILED(hr = d3dx_create_param_eval(&object->parameters, ID3DXBuffer_GetBufferPointer(object->byte_code),
+            size, D3DXPT_FLOAT, &object->eval, &object->version_counter, NULL, 0)))
+    {
+        IUnknown_Release(&object->ID3DXTextureShader_iface);
+        return hr;
+    }
 
     *texture_shader = &object->ID3DXTextureShader_iface;
 
