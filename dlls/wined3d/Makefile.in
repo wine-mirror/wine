@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wined3d.dll
 IMPORTLIB = wined3d
 IMPORTS   = $(VKD3D_PE_LIBS) dxguid opengl32 user32 gdi32 advapi32
