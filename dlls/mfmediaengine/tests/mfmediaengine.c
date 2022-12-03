@@ -1844,12 +1844,12 @@ static void test_effect(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngineEx_InsertAudioEffect(media_engine_ex, (IUnknown *)&audio_effect->IMFTransform_iface, FALSE);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine EXPECT_REF(&audio_effect->IMFTransform_iface, 2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(&audio_effect->IMFTransform_iface, 2);
 
     hr = IMFMediaEngineEx_InsertAudioEffect(media_engine_ex, (IUnknown *)&audio_effect2->IMFTransform_iface, FALSE);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine EXPECT_REF(&audio_effect2->IMFTransform_iface, 2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(&audio_effect2->IMFTransform_iface, 2);
 
     url = SysAllocString(L"i420-64x64.avi");
     hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine_ex, stream, url);
@@ -1875,9 +1875,7 @@ static void test_effect(void)
 
     if (SUCCEEDED(hr = MFCreateAudioRenderer(NULL, &sink)))
     {
-        todo_wine
         ok(audio_effect->processing_count > 0, "Unexpected processing count %lu.\n", audio_effect->processing_count);
-        todo_wine
         ok(audio_effect2->processing_count > 0, "Unexpected processing count %lu.\n", audio_effect2->processing_count);
 
         IMFMediaSink_Release(sink);
@@ -1905,12 +1903,12 @@ done:
     if (audio_effect2)
     {
         ref = IMFTransform_Release(&audio_effect2->IMFTransform_iface);
-        ok(!ref, "Unexpected ref %lu.\n", ref);
+        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
     }
     if (audio_effect)
     {
         ref = IMFTransform_Release(&audio_effect->IMFTransform_iface);
-        ok(!ref, "Unexpected ref %lu.\n", ref);
+        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
     }
 
     if (video_effect2)

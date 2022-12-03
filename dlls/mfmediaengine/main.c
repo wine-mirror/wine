@@ -159,6 +159,7 @@ struct media_engine
         IMFPresentationDescriptor *pd;
     } presentation;
     struct effects video_effects;
+    struct effects audio_effects;
     struct
     {
         LONGLONG pts;
@@ -1274,7 +1275,10 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
             {
                 IMFTopology_AddNode(topology, audio_src);
                 IMFTopology_AddNode(topology, sar_node);
-                IMFTopologyNode_ConnectOutput(audio_src, 0, sar_node, 0);
+
+                if (FAILED(hr = media_engine_create_effects(engine->audio_effects.effects, engine->audio_effects.count,
+                        audio_src, sar_node, topology)))
+                    WARN("Failed to create audio effect nodes, hr %#lx.\n", hr);
             }
 
             if (sar_node)
@@ -1453,6 +1457,7 @@ static void free_media_engine(struct media_engine *engine)
         IMFAttributes_Release(engine->attributes);
     if (engine->resolver)
         IMFSourceResolver_Release(engine->resolver);
+    media_engine_clear_effects(&engine->audio_effects);
     media_engine_clear_effects(&engine->video_effects);
     media_engine_release_video_frame_resources(engine);
     media_engine_clear_presentation(engine);
@@ -2700,9 +2705,16 @@ static HRESULT WINAPI media_engine_InsertVideoEffect(IMFMediaEngineEx *iface, IU
 
 static HRESULT WINAPI media_engine_InsertAudioEffect(IMFMediaEngineEx *iface, IUnknown *effect, BOOL is_optional)
 {
-    FIXME("%p, %p, %d stub.\n", iface, effect, is_optional);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %d.\n", iface, effect, is_optional);
+
+    EnterCriticalSection(&engine->cs);
+    hr = media_engine_insert_effect(engine, &engine->audio_effects, effect, is_optional);
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_RemoveAllEffects(IMFMediaEngineEx *iface)
