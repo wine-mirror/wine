@@ -79,7 +79,7 @@ static const struct column col_bios[] =
     { L"Manufacturer",                   CIM_STRING|COL_FLAG_DYNAMIC },
     { L"Name",                           CIM_STRING },
     { L"ReleaseDate",                    CIM_DATETIME|COL_FLAG_DYNAMIC },
-    { L"SerialNumber",                   CIM_STRING },
+    { L"SerialNumber",                   CIM_STRING|COL_FLAG_DYNAMIC },
     { L"SMBIOSBIOSVersion",              CIM_STRING|COL_FLAG_DYNAMIC },
     { L"SMBIOSMajorVersion",             CIM_UINT16 },
     { L"SMBIOSMinorVersion",             CIM_UINT16 },
@@ -1378,6 +1378,13 @@ static WCHAR *get_bios_releasedate( const char *buf, UINT len )
     return ret;
 }
 
+static WCHAR *get_bios_serialnumber( const char *buf, UINT len )
+{
+    WCHAR *ret = get_bios_string( 4, buf, len );
+    if (!ret) return wcsdup( L"0" );
+    return ret;
+}
+
 static WCHAR *get_bios_smbiosbiosversion( const char *buf, UINT len )
 {
     WCHAR *ret = get_bios_string( 2, buf, len );
@@ -1455,7 +1462,7 @@ static enum fill_status fill_bios( struct table *table, const struct expr *cond 
     rec->manufacturer           = get_bios_manufacturer( buf, len );
     rec->name                   = L"Default System BIOS";
     rec->releasedate            = get_bios_releasedate( buf, len );
-    rec->serialnumber           = L"0";
+    rec->serialnumber           = get_bios_serialnumber( buf, len );
     rec->smbiosbiosversion      = get_bios_smbiosbiosversion( buf, len );
     rec->smbiosmajorversion     = get_bios_smbiosmajorversion( buf, len );
     rec->smbiosminorversion     = get_bios_smbiosminorversion( buf, len );
