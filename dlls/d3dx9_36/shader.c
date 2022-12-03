@@ -2694,6 +2694,30 @@ void WINAPI texture_shader_fill_2d(D3DXVECTOR4 *out, const D3DXVECTOR2 *texcoord
     d3dx_evaluate_parameter(shader->eval, &param, out);
 }
 
+void WINAPI texture_shader_fill_3d(D3DXVECTOR4 *out, const D3DXVECTOR3 *texcoord,
+        const D3DXVECTOR3 *texelsize, void *data)
+{
+    struct d3dx9_texture_shader *shader = data;
+    struct d3dx_parameter param = { 0 };
+    float *inputs;
+
+    inputs = (float *)shader->eval->pres.regs.tables[PRES_REGTAB_INPUT];
+
+    *(inputs++) = texcoord->x;
+    *(inputs++) = texcoord->y;
+    *(inputs++) = texcoord->z;
+    *(inputs++) = 0.0f;
+
+    *(inputs++) = texelsize->x;
+    *(inputs++) = texelsize->y;
+    *(inputs++) = texelsize->z;
+    *(inputs++) = 0.0f;
+
+    param.type = D3DXPT_FLOAT;
+    param.bytes = 4 * sizeof(float);
+    d3dx_evaluate_parameter(shader->eval, &param, out);
+}
+
 HRESULT WINAPI D3DXFillTextureTX(struct IDirect3DTexture9 *texture, ID3DXTextureShader *texture_shader)
 {
     struct d3dx9_texture_shader *shader = unsafe_impl_from_ID3DXTextureShader(texture_shader);
@@ -2701,6 +2725,15 @@ HRESULT WINAPI D3DXFillTextureTX(struct IDirect3DTexture9 *texture, ID3DXTexture
     TRACE("texture %p, texture_shader %p.\n", texture, texture_shader);
 
     return D3DXFillTexture(texture, texture_shader_fill_2d, shader);
+}
+
+HRESULT WINAPI D3DXFillCubeTextureTX(struct IDirect3DCubeTexture9 *cube, ID3DXTextureShader *texture_shader)
+{
+    struct d3dx9_texture_shader *shader = unsafe_impl_from_ID3DXTextureShader(texture_shader);
+
+    TRACE("cube %p, texture_shader %p.\n", cube, texture_shader);
+
+    return D3DXFillCubeTexture(cube, texture_shader_fill_3d, shader);
 }
 
 static unsigned int get_instr_length(const DWORD *byte_code, unsigned int major, unsigned int minor)

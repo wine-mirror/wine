@@ -2595,55 +2595,8 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXFillCubeTextureTX(cube_texture, tx);
-    todo_wine
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
-
-    for (z = 0; z < 6; ++z)
-    {
-        static const char * const mapping[6][3] =
-        {
-            {"-x", "-y", "1"},
-            {"+x", "-y", "0"},
-            {"+y", "1", "+x"},
-            {"-y", "0", "+x"},
-            {"1", "-y", "+x"},
-            {"0", "-y", "-x"},
-        };
-
-        hr = IDirect3DCubeTexture9_LockRect(cube_texture, z, 0, &lr, NULL, D3DLOCK_READONLY);
-        ok(SUCCEEDED(hr), "Locking texture failed, hr %#lx.\n", hr);
-        data = lr.pBits;
-        for (y = 0; y < 256; ++y)
-        {
-            for (x = 0; x < 256; ++x)
-            {
-                unsigned int color = data[y * lr.Pitch / sizeof(*data) + x];
-                unsigned int expected = 0xff000000;
-                unsigned int i;
-
-                for (i = 0; i < 3; ++i)
-                {
-                    int component;
-
-                    if (mapping[z][i][0] == '0')
-                        component = 0;
-                    else if (mapping[z][i][0] == '1')
-                        component = 255;
-                    else
-                        component = mapping[z][i][1] == 'x' ? x * 2 - 255 : y * 2 - 255;
-                    if (mapping[z][i][0] == '-')
-                        component = -component;
-                    expected |= max(component, 0) << i * 8;
-                }
-                todo_wine
-                ok(compare_color(color, expected, 1), "Unexpected color %08x at (%u, %u, %u).\n",
-                        color, x, y, z);
-            }
-        }
-        hr = IDirect3DCubeTexture9_UnlockRect(cube_texture, z, 0);
-        ok(SUCCEEDED(hr), "Unlocking texture failed, hr %#lx.\n", hr);
-    }
-
+    compare_cube_texture(cube_texture, fillfunc_cube_coord, 1);
     IDirect3DCubeTexture9_Release(cube_texture);
 
     if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP) || caps.MaxVolumeExtent < 64)

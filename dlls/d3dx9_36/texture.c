@@ -1723,12 +1723,6 @@ HRESULT WINAPI D3DXFillCubeTexture(struct IDirect3DCubeTexture9 *texture, LPD3DX
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXFillCubeTextureTX(struct IDirect3DCubeTexture9 *texture, ID3DXTextureShader *texture_shader)
-{
-    FIXME("texture %p, texture_shader %p stub.\n", texture, texture_shader);
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI D3DXFillVolumeTexture(struct IDirect3DVolumeTexture9 *texture, LPD3DXFILL3D function, void *funcdata)
 {
     DWORD miplevels;
