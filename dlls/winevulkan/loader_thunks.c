@@ -20,7 +20,7 @@ VkResult WINAPI vkAcquireNextImage2KHR(VkDevice device, const VkAcquireNextImage
     params.device = device;
     params.pAcquireInfo = pAcquireInfo;
     params.pImageIndex = pImageIndex;
-    status = vk_unix_call(unix_vkAcquireNextImage2KHR, &params);
+    status = UNIX_CALL(vkAcquireNextImage2KHR, &params);
     assert(!status);
     return params.result;
 }
@@ -35,7 +35,7 @@ VkResult WINAPI vkAcquireNextImageKHR(VkDevice device, VkSwapchainKHR swapchain,
     params.semaphore = semaphore;
     params.fence = fence;
     params.pImageIndex = pImageIndex;
-    status = vk_unix_call(unix_vkAcquireNextImageKHR, &params);
+    status = UNIX_CALL(vkAcquireNextImageKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -47,7 +47,7 @@ VkResult WINAPI vkAcquirePerformanceConfigurationINTEL(VkDevice device, const Vk
     params.device = device;
     params.pAcquireInfo = pAcquireInfo;
     params.pConfiguration = pConfiguration;
-    status = vk_unix_call(unix_vkAcquirePerformanceConfigurationINTEL, &params);
+    status = UNIX_CALL(vkAcquirePerformanceConfigurationINTEL, &params);
     assert(!status);
     return params.result;
 }
@@ -58,7 +58,7 @@ VkResult WINAPI vkAcquireProfilingLockKHR(VkDevice device, const VkAcquireProfil
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkAcquireProfilingLockKHR, &params);
+    status = UNIX_CALL(vkAcquireProfilingLockKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -70,7 +70,7 @@ VkResult WINAPI vkAllocateDescriptorSets(VkDevice device, const VkDescriptorSetA
     params.device = device;
     params.pAllocateInfo = pAllocateInfo;
     params.pDescriptorSets = pDescriptorSets;
-    status = vk_unix_call(unix_vkAllocateDescriptorSets, &params);
+    status = UNIX_CALL(vkAllocateDescriptorSets, &params);
     assert(!status);
     return params.result;
 }
@@ -83,7 +83,7 @@ VkResult WINAPI vkAllocateMemory(VkDevice device, const VkMemoryAllocateInfo *pA
     params.pAllocateInfo = pAllocateInfo;
     params.pAllocator = pAllocator;
     params.pMemory = pMemory;
-    status = vk_unix_call(unix_vkAllocateMemory, &params);
+    status = UNIX_CALL(vkAllocateMemory, &params);
     assert(!status);
     return params.result;
 }
@@ -94,7 +94,7 @@ VkResult WINAPI vkBeginCommandBuffer(VkCommandBuffer commandBuffer, const VkComm
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pBeginInfo = pBeginInfo;
-    status = vk_unix_call(unix_vkBeginCommandBuffer, &params);
+    status = UNIX_CALL(vkBeginCommandBuffer, &params);
     assert(!status);
     return params.result;
 }
@@ -106,7 +106,7 @@ VkResult WINAPI vkBindAccelerationStructureMemoryNV(VkDevice device, uint32_t bi
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    status = vk_unix_call(unix_vkBindAccelerationStructureMemoryNV, &params);
+    status = UNIX_CALL(vkBindAccelerationStructureMemoryNV, &params);
     assert(!status);
     return params.result;
 }
@@ -119,7 +119,7 @@ VkResult WINAPI vkBindBufferMemory(VkDevice device, VkBuffer buffer, VkDeviceMem
     params.buffer = buffer;
     params.memory = memory;
     params.memoryOffset = memoryOffset;
-    status = vk_unix_call(unix_vkBindBufferMemory, &params);
+    status = UNIX_CALL(vkBindBufferMemory, &params);
     assert(!status);
     return params.result;
 }
@@ -131,7 +131,7 @@ VkResult WINAPI vkBindBufferMemory2(VkDevice device, uint32_t bindInfoCount, con
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    status = vk_unix_call(unix_vkBindBufferMemory2, &params);
+    status = UNIX_CALL(vkBindBufferMemory2, &params);
     assert(!status);
     return params.result;
 }
@@ -143,7 +143,7 @@ VkResult WINAPI vkBindBufferMemory2KHR(VkDevice device, uint32_t bindInfoCount, 
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    status = vk_unix_call(unix_vkBindBufferMemory2KHR, &params);
+    status = UNIX_CALL(vkBindBufferMemory2KHR, &params);
     assert(!status);
     return params.result;
 }
@@ -156,7 +156,7 @@ VkResult WINAPI vkBindImageMemory(VkDevice device, VkImage image, VkDeviceMemory
     params.image = image;
     params.memory = memory;
     params.memoryOffset = memoryOffset;
-    status = vk_unix_call(unix_vkBindImageMemory, &params);
+    status = UNIX_CALL(vkBindImageMemory, &params);
     assert(!status);
     return params.result;
 }
@@ -168,7 +168,7 @@ VkResult WINAPI vkBindImageMemory2(VkDevice device, uint32_t bindInfoCount, cons
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    status = vk_unix_call(unix_vkBindImageMemory2, &params);
+    status = UNIX_CALL(vkBindImageMemory2, &params);
     assert(!status);
     return params.result;
 }
@@ -180,7 +180,7 @@ VkResult WINAPI vkBindImageMemory2KHR(VkDevice device, uint32_t bindInfoCount, c
     params.device = device;
     params.bindInfoCount = bindInfoCount;
     params.pBindInfos = pBindInfos;
-    status = vk_unix_call(unix_vkBindImageMemory2KHR, &params);
+    status = UNIX_CALL(vkBindImageMemory2KHR, &params);
     assert(!status);
     return params.result;
 }
@@ -194,7 +194,7 @@ VkResult WINAPI vkBindOpticalFlowSessionImageNV(VkDevice device, VkOpticalFlowSe
     params.bindingPoint = bindingPoint;
     params.view = view;
     params.layout = layout;
-    status = vk_unix_call(unix_vkBindOpticalFlowSessionImageNV, &params);
+    status = UNIX_CALL(vkBindOpticalFlowSessionImageNV, &params);
     assert(!status);
     return params.result;
 }
@@ -208,7 +208,7 @@ VkResult WINAPI vkBuildAccelerationStructuresKHR(VkDevice device, VkDeferredOper
     params.infoCount = infoCount;
     params.pInfos = pInfos;
     params.ppBuildRangeInfos = ppBuildRangeInfos;
-    status = vk_unix_call(unix_vkBuildAccelerationStructuresKHR, &params);
+    status = UNIX_CALL(vkBuildAccelerationStructuresKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -221,7 +221,7 @@ VkResult WINAPI vkBuildMicromapsEXT(VkDevice device, VkDeferredOperationKHR defe
     params.deferredOperation = deferredOperation;
     params.infoCount = infoCount;
     params.pInfos = pInfos;
-    status = vk_unix_call(unix_vkBuildMicromapsEXT, &params);
+    status = UNIX_CALL(vkBuildMicromapsEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -232,7 +232,7 @@ void WINAPI vkCmdBeginConditionalRenderingEXT(VkCommandBuffer commandBuffer, con
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pConditionalRenderingBegin = pConditionalRenderingBegin;
-    status = vk_unix_call(unix_vkCmdBeginConditionalRenderingEXT, &params);
+    status = UNIX_CALL(vkCmdBeginConditionalRenderingEXT, &params);
     assert(!status);
 }
 
@@ -242,7 +242,7 @@ void WINAPI vkCmdBeginDebugUtilsLabelEXT(VkCommandBuffer commandBuffer, const Vk
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pLabelInfo = pLabelInfo;
-    status = vk_unix_call(unix_vkCmdBeginDebugUtilsLabelEXT, &params);
+    status = UNIX_CALL(vkCmdBeginDebugUtilsLabelEXT, &params);
     assert(!status);
 }
 
@@ -254,7 +254,7 @@ void WINAPI vkCmdBeginQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool
     params.queryPool = queryPool;
     params.query = query;
     params.flags = flags;
-    status = vk_unix_call(unix_vkCmdBeginQuery, &params);
+    status = UNIX_CALL(vkCmdBeginQuery, &params);
     assert(!status);
 }
 
@@ -267,7 +267,7 @@ void WINAPI vkCmdBeginQueryIndexedEXT(VkCommandBuffer commandBuffer, VkQueryPool
     params.query = query;
     params.flags = flags;
     params.index = index;
-    status = vk_unix_call(unix_vkCmdBeginQueryIndexedEXT, &params);
+    status = UNIX_CALL(vkCmdBeginQueryIndexedEXT, &params);
     assert(!status);
 }
 
@@ -278,7 +278,7 @@ void WINAPI vkCmdBeginRenderPass(VkCommandBuffer commandBuffer, const VkRenderPa
     params.commandBuffer = commandBuffer;
     params.pRenderPassBegin = pRenderPassBegin;
     params.contents = contents;
-    status = vk_unix_call(unix_vkCmdBeginRenderPass, &params);
+    status = UNIX_CALL(vkCmdBeginRenderPass, &params);
     assert(!status);
 }
 
@@ -289,7 +289,7 @@ void WINAPI vkCmdBeginRenderPass2(VkCommandBuffer commandBuffer, const VkRenderP
     params.commandBuffer = commandBuffer;
     params.pRenderPassBegin = pRenderPassBegin;
     params.pSubpassBeginInfo = pSubpassBeginInfo;
-    status = vk_unix_call(unix_vkCmdBeginRenderPass2, &params);
+    status = UNIX_CALL(vkCmdBeginRenderPass2, &params);
     assert(!status);
 }
 
@@ -300,7 +300,7 @@ void WINAPI vkCmdBeginRenderPass2KHR(VkCommandBuffer commandBuffer, const VkRend
     params.commandBuffer = commandBuffer;
     params.pRenderPassBegin = pRenderPassBegin;
     params.pSubpassBeginInfo = pSubpassBeginInfo;
-    status = vk_unix_call(unix_vkCmdBeginRenderPass2KHR, &params);
+    status = UNIX_CALL(vkCmdBeginRenderPass2KHR, &params);
     assert(!status);
 }
 
@@ -310,7 +310,7 @@ void WINAPI vkCmdBeginRendering(VkCommandBuffer commandBuffer, const VkRendering
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pRenderingInfo = pRenderingInfo;
-    status = vk_unix_call(unix_vkCmdBeginRendering, &params);
+    status = UNIX_CALL(vkCmdBeginRendering, &params);
     assert(!status);
 }
 
@@ -320,7 +320,7 @@ void WINAPI vkCmdBeginRenderingKHR(VkCommandBuffer commandBuffer, const VkRender
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pRenderingInfo = pRenderingInfo;
-    status = vk_unix_call(unix_vkCmdBeginRenderingKHR, &params);
+    status = UNIX_CALL(vkCmdBeginRenderingKHR, &params);
     assert(!status);
 }
 
@@ -333,7 +333,7 @@ void WINAPI vkCmdBeginTransformFeedbackEXT(VkCommandBuffer commandBuffer, uint32
     params.counterBufferCount = counterBufferCount;
     params.pCounterBuffers = pCounterBuffers;
     params.pCounterBufferOffsets = pCounterBufferOffsets;
-    status = vk_unix_call(unix_vkCmdBeginTransformFeedbackEXT, &params);
+    status = UNIX_CALL(vkCmdBeginTransformFeedbackEXT, &params);
     assert(!status);
 }
 
@@ -345,7 +345,7 @@ void WINAPI vkCmdBindDescriptorBufferEmbeddedSamplersEXT(VkCommandBuffer command
     params.pipelineBindPoint = pipelineBindPoint;
     params.layout = layout;
     params.set = set;
-    status = vk_unix_call(unix_vkCmdBindDescriptorBufferEmbeddedSamplersEXT, &params);
+    status = UNIX_CALL(vkCmdBindDescriptorBufferEmbeddedSamplersEXT, &params);
     assert(!status);
 }
 
@@ -356,7 +356,7 @@ void WINAPI vkCmdBindDescriptorBuffersEXT(VkCommandBuffer commandBuffer, uint32_
     params.commandBuffer = commandBuffer;
     params.bufferCount = bufferCount;
     params.pBindingInfos = pBindingInfos;
-    status = vk_unix_call(unix_vkCmdBindDescriptorBuffersEXT, &params);
+    status = UNIX_CALL(vkCmdBindDescriptorBuffersEXT, &params);
     assert(!status);
 }
 
@@ -372,7 +372,7 @@ void WINAPI vkCmdBindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineBin
     params.pDescriptorSets = pDescriptorSets;
     params.dynamicOffsetCount = dynamicOffsetCount;
     params.pDynamicOffsets = pDynamicOffsets;
-    status = vk_unix_call(unix_vkCmdBindDescriptorSets, &params);
+    status = UNIX_CALL(vkCmdBindDescriptorSets, &params);
     assert(!status);
 }
 
@@ -384,7 +384,7 @@ void WINAPI vkCmdBindIndexBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer,
     params.buffer = buffer;
     params.offset = offset;
     params.indexType = indexType;
-    status = vk_unix_call(unix_vkCmdBindIndexBuffer, &params);
+    status = UNIX_CALL(vkCmdBindIndexBuffer, &params);
     assert(!status);
 }
 
@@ -395,7 +395,7 @@ void WINAPI vkCmdBindInvocationMaskHUAWEI(VkCommandBuffer commandBuffer, VkImage
     params.commandBuffer = commandBuffer;
     params.imageView = imageView;
     params.imageLayout = imageLayout;
-    status = vk_unix_call(unix_vkCmdBindInvocationMaskHUAWEI, &params);
+    status = UNIX_CALL(vkCmdBindInvocationMaskHUAWEI, &params);
     assert(!status);
 }
 
@@ -406,7 +406,7 @@ void WINAPI vkCmdBindPipeline(VkCommandBuffer commandBuffer, VkPipelineBindPoint
     params.commandBuffer = commandBuffer;
     params.pipelineBindPoint = pipelineBindPoint;
     params.pipeline = pipeline;
-    status = vk_unix_call(unix_vkCmdBindPipeline, &params);
+    status = UNIX_CALL(vkCmdBindPipeline, &params);
     assert(!status);
 }
 
@@ -418,7 +418,7 @@ void WINAPI vkCmdBindPipelineShaderGroupNV(VkCommandBuffer commandBuffer, VkPipe
     params.pipelineBindPoint = pipelineBindPoint;
     params.pipeline = pipeline;
     params.groupIndex = groupIndex;
-    status = vk_unix_call(unix_vkCmdBindPipelineShaderGroupNV, &params);
+    status = UNIX_CALL(vkCmdBindPipelineShaderGroupNV, &params);
     assert(!status);
 }
 
@@ -429,7 +429,7 @@ void WINAPI vkCmdBindShadingRateImageNV(VkCommandBuffer commandBuffer, VkImageVi
     params.commandBuffer = commandBuffer;
     params.imageView = imageView;
     params.imageLayout = imageLayout;
-    status = vk_unix_call(unix_vkCmdBindShadingRateImageNV, &params);
+    status = UNIX_CALL(vkCmdBindShadingRateImageNV, &params);
     assert(!status);
 }
 
@@ -443,7 +443,7 @@ void WINAPI vkCmdBindTransformFeedbackBuffersEXT(VkCommandBuffer commandBuffer, 
     params.pBuffers = pBuffers;
     params.pOffsets = pOffsets;
     params.pSizes = pSizes;
-    status = vk_unix_call(unix_vkCmdBindTransformFeedbackBuffersEXT, &params);
+    status = UNIX_CALL(vkCmdBindTransformFeedbackBuffersEXT, &params);
     assert(!status);
 }
 
@@ -456,7 +456,7 @@ void WINAPI vkCmdBindVertexBuffers(VkCommandBuffer commandBuffer, uint32_t first
     params.bindingCount = bindingCount;
     params.pBuffers = pBuffers;
     params.pOffsets = pOffsets;
-    status = vk_unix_call(unix_vkCmdBindVertexBuffers, &params);
+    status = UNIX_CALL(vkCmdBindVertexBuffers, &params);
     assert(!status);
 }
 
@@ -471,7 +471,7 @@ void WINAPI vkCmdBindVertexBuffers2(VkCommandBuffer commandBuffer, uint32_t firs
     params.pOffsets = pOffsets;
     params.pSizes = pSizes;
     params.pStrides = pStrides;
-    status = vk_unix_call(unix_vkCmdBindVertexBuffers2, &params);
+    status = UNIX_CALL(vkCmdBindVertexBuffers2, &params);
     assert(!status);
 }
 
@@ -486,7 +486,7 @@ void WINAPI vkCmdBindVertexBuffers2EXT(VkCommandBuffer commandBuffer, uint32_t f
     params.pOffsets = pOffsets;
     params.pSizes = pSizes;
     params.pStrides = pStrides;
-    status = vk_unix_call(unix_vkCmdBindVertexBuffers2EXT, &params);
+    status = UNIX_CALL(vkCmdBindVertexBuffers2EXT, &params);
     assert(!status);
 }
 
@@ -502,7 +502,7 @@ void WINAPI vkCmdBlitImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkIm
     params.regionCount = regionCount;
     params.pRegions = pRegions;
     params.filter = filter;
-    status = vk_unix_call(unix_vkCmdBlitImage, &params);
+    status = UNIX_CALL(vkCmdBlitImage, &params);
     assert(!status);
 }
 
@@ -512,7 +512,7 @@ void WINAPI vkCmdBlitImage2(VkCommandBuffer commandBuffer, const VkBlitImageInfo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pBlitImageInfo = pBlitImageInfo;
-    status = vk_unix_call(unix_vkCmdBlitImage2, &params);
+    status = UNIX_CALL(vkCmdBlitImage2, &params);
     assert(!status);
 }
 
@@ -522,7 +522,7 @@ void WINAPI vkCmdBlitImage2KHR(VkCommandBuffer commandBuffer, const VkBlitImageI
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pBlitImageInfo = pBlitImageInfo;
-    status = vk_unix_call(unix_vkCmdBlitImage2KHR, &params);
+    status = UNIX_CALL(vkCmdBlitImage2KHR, &params);
     assert(!status);
 }
 
@@ -539,7 +539,7 @@ void WINAPI vkCmdBuildAccelerationStructureNV(VkCommandBuffer commandBuffer, con
     params.src = src;
     params.scratch = scratch;
     params.scratchOffset = scratchOffset;
-    status = vk_unix_call(unix_vkCmdBuildAccelerationStructureNV, &params);
+    status = UNIX_CALL(vkCmdBuildAccelerationStructureNV, &params);
     assert(!status);
 }
 
@@ -553,7 +553,7 @@ void WINAPI vkCmdBuildAccelerationStructuresIndirectKHR(VkCommandBuffer commandB
     params.pIndirectDeviceAddresses = pIndirectDeviceAddresses;
     params.pIndirectStrides = pIndirectStrides;
     params.ppMaxPrimitiveCounts = ppMaxPrimitiveCounts;
-    status = vk_unix_call(unix_vkCmdBuildAccelerationStructuresIndirectKHR, &params);
+    status = UNIX_CALL(vkCmdBuildAccelerationStructuresIndirectKHR, &params);
     assert(!status);
 }
 
@@ -565,7 +565,7 @@ void WINAPI vkCmdBuildAccelerationStructuresKHR(VkCommandBuffer commandBuffer, u
     params.infoCount = infoCount;
     params.pInfos = pInfos;
     params.ppBuildRangeInfos = ppBuildRangeInfos;
-    status = vk_unix_call(unix_vkCmdBuildAccelerationStructuresKHR, &params);
+    status = UNIX_CALL(vkCmdBuildAccelerationStructuresKHR, &params);
     assert(!status);
 }
 
@@ -576,7 +576,7 @@ void WINAPI vkCmdBuildMicromapsEXT(VkCommandBuffer commandBuffer, uint32_t infoC
     params.commandBuffer = commandBuffer;
     params.infoCount = infoCount;
     params.pInfos = pInfos;
-    status = vk_unix_call(unix_vkCmdBuildMicromapsEXT, &params);
+    status = UNIX_CALL(vkCmdBuildMicromapsEXT, &params);
     assert(!status);
 }
 
@@ -589,7 +589,7 @@ void WINAPI vkCmdClearAttachments(VkCommandBuffer commandBuffer, uint32_t attach
     params.pAttachments = pAttachments;
     params.rectCount = rectCount;
     params.pRects = pRects;
-    status = vk_unix_call(unix_vkCmdClearAttachments, &params);
+    status = UNIX_CALL(vkCmdClearAttachments, &params);
     assert(!status);
 }
 
@@ -603,7 +603,7 @@ void WINAPI vkCmdClearColorImage(VkCommandBuffer commandBuffer, VkImage image, V
     params.pColor = pColor;
     params.rangeCount = rangeCount;
     params.pRanges = pRanges;
-    status = vk_unix_call(unix_vkCmdClearColorImage, &params);
+    status = UNIX_CALL(vkCmdClearColorImage, &params);
     assert(!status);
 }
 
@@ -617,7 +617,7 @@ void WINAPI vkCmdClearDepthStencilImage(VkCommandBuffer commandBuffer, VkImage i
     params.pDepthStencil = pDepthStencil;
     params.rangeCount = rangeCount;
     params.pRanges = pRanges;
-    status = vk_unix_call(unix_vkCmdClearDepthStencilImage, &params);
+    status = UNIX_CALL(vkCmdClearDepthStencilImage, &params);
     assert(!status);
 }
 
@@ -627,7 +627,7 @@ void WINAPI vkCmdCopyAccelerationStructureKHR(VkCommandBuffer commandBuffer, con
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCmdCopyAccelerationStructureKHR, &params);
+    status = UNIX_CALL(vkCmdCopyAccelerationStructureKHR, &params);
     assert(!status);
 }
 
@@ -639,7 +639,7 @@ void WINAPI vkCmdCopyAccelerationStructureNV(VkCommandBuffer commandBuffer, VkAc
     params.dst = dst;
     params.src = src;
     params.mode = mode;
-    status = vk_unix_call(unix_vkCmdCopyAccelerationStructureNV, &params);
+    status = UNIX_CALL(vkCmdCopyAccelerationStructureNV, &params);
     assert(!status);
 }
 
@@ -649,7 +649,7 @@ void WINAPI vkCmdCopyAccelerationStructureToMemoryKHR(VkCommandBuffer commandBuf
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCmdCopyAccelerationStructureToMemoryKHR, &params);
+    status = UNIX_CALL(vkCmdCopyAccelerationStructureToMemoryKHR, &params);
     assert(!status);
 }
 
@@ -662,7 +662,7 @@ void WINAPI vkCmdCopyBuffer(VkCommandBuffer commandBuffer, VkBuffer srcBuffer, V
     params.dstBuffer = dstBuffer;
     params.regionCount = regionCount;
     params.pRegions = pRegions;
-    status = vk_unix_call(unix_vkCmdCopyBuffer, &params);
+    status = UNIX_CALL(vkCmdCopyBuffer, &params);
     assert(!status);
 }
 
@@ -672,7 +672,7 @@ void WINAPI vkCmdCopyBuffer2(VkCommandBuffer commandBuffer, const VkCopyBufferIn
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pCopyBufferInfo = pCopyBufferInfo;
-    status = vk_unix_call(unix_vkCmdCopyBuffer2, &params);
+    status = UNIX_CALL(vkCmdCopyBuffer2, &params);
     assert(!status);
 }
 
@@ -682,7 +682,7 @@ void WINAPI vkCmdCopyBuffer2KHR(VkCommandBuffer commandBuffer, const VkCopyBuffe
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pCopyBufferInfo = pCopyBufferInfo;
-    status = vk_unix_call(unix_vkCmdCopyBuffer2KHR, &params);
+    status = UNIX_CALL(vkCmdCopyBuffer2KHR, &params);
     assert(!status);
 }
 
@@ -696,7 +696,7 @@ void WINAPI vkCmdCopyBufferToImage(VkCommandBuffer commandBuffer, VkBuffer srcBu
     params.dstImageLayout = dstImageLayout;
     params.regionCount = regionCount;
     params.pRegions = pRegions;
-    status = vk_unix_call(unix_vkCmdCopyBufferToImage, &params);
+    status = UNIX_CALL(vkCmdCopyBufferToImage, &params);
     assert(!status);
 }
 
@@ -706,7 +706,7 @@ void WINAPI vkCmdCopyBufferToImage2(VkCommandBuffer commandBuffer, const VkCopyB
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pCopyBufferToImageInfo = pCopyBufferToImageInfo;
-    status = vk_unix_call(unix_vkCmdCopyBufferToImage2, &params);
+    status = UNIX_CALL(vkCmdCopyBufferToImage2, &params);
     assert(!status);
 }
 
@@ -716,7 +716,7 @@ void WINAPI vkCmdCopyBufferToImage2KHR(VkCommandBuffer commandBuffer, const VkCo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pCopyBufferToImageInfo = pCopyBufferToImageInfo;
-    status = vk_unix_call(unix_vkCmdCopyBufferToImage2KHR, &params);
+    status = UNIX_CALL(vkCmdCopyBufferToImage2KHR, &params);
     assert(!status);
 }
 
@@ -731,7 +731,7 @@ void WINAPI vkCmdCopyImage(VkCommandBuffer commandBuffer, VkImage srcImage, VkIm
     params.dstImageLayout = dstImageLayout;
     params.regionCount = regionCount;
     params.pRegions = pRegions;
-    status = vk_unix_call(unix_vkCmdCopyImage, &params);
+    status = UNIX_CALL(vkCmdCopyImage, &params);
     assert(!status);
 }
 
@@ -741,7 +741,7 @@ void WINAPI vkCmdCopyImage2(VkCommandBuffer commandBuffer, const VkCopyImageInfo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pCopyImageInfo = pCopyImageInfo;
-    status = vk_unix_call(unix_vkCmdCopyImage2, &params);
+    status = UNIX_CALL(vkCmdCopyImage2, &params);
     assert(!status);
 }
 
@@ -751,7 +751,7 @@ void WINAPI vkCmdCopyImage2KHR(VkCommandBuffer commandBuffer, const VkCopyImageI
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pCopyImageInfo = pCopyImageInfo;
-    status = vk_unix_call(unix_vkCmdCopyImage2KHR, &params);
+    status = UNIX_CALL(vkCmdCopyImage2KHR, &params);
     assert(!status);
 }
 
@@ -765,7 +765,7 @@ void WINAPI vkCmdCopyImageToBuffer(VkCommandBuffer commandBuffer, VkImage srcIma
     params.dstBuffer = dstBuffer;
     params.regionCount = regionCount;
     params.pRegions = pRegions;
-    status = vk_unix_call(unix_vkCmdCopyImageToBuffer, &params);
+    status = UNIX_CALL(vkCmdCopyImageToBuffer, &params);
     assert(!status);
 }
 
@@ -775,7 +775,7 @@ void WINAPI vkCmdCopyImageToBuffer2(VkCommandBuffer commandBuffer, const VkCopyI
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pCopyImageToBufferInfo = pCopyImageToBufferInfo;
-    status = vk_unix_call(unix_vkCmdCopyImageToBuffer2, &params);
+    status = UNIX_CALL(vkCmdCopyImageToBuffer2, &params);
     assert(!status);
 }
 
@@ -785,7 +785,7 @@ void WINAPI vkCmdCopyImageToBuffer2KHR(VkCommandBuffer commandBuffer, const VkCo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pCopyImageToBufferInfo = pCopyImageToBufferInfo;
-    status = vk_unix_call(unix_vkCmdCopyImageToBuffer2KHR, &params);
+    status = UNIX_CALL(vkCmdCopyImageToBuffer2KHR, &params);
     assert(!status);
 }
 
@@ -797,7 +797,7 @@ void WINAPI vkCmdCopyMemoryIndirectNV(VkCommandBuffer commandBuffer, VkDeviceAdd
     params.copyBufferAddress = copyBufferAddress;
     params.copyCount = copyCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdCopyMemoryIndirectNV, &params);
+    status = UNIX_CALL(vkCmdCopyMemoryIndirectNV, &params);
     assert(!status);
 }
 
@@ -807,7 +807,7 @@ void WINAPI vkCmdCopyMemoryToAccelerationStructureKHR(VkCommandBuffer commandBuf
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCmdCopyMemoryToAccelerationStructureKHR, &params);
+    status = UNIX_CALL(vkCmdCopyMemoryToAccelerationStructureKHR, &params);
     assert(!status);
 }
 
@@ -822,7 +822,7 @@ void WINAPI vkCmdCopyMemoryToImageIndirectNV(VkCommandBuffer commandBuffer, VkDe
     params.dstImage = dstImage;
     params.dstImageLayout = dstImageLayout;
     params.pImageSubresources = pImageSubresources;
-    status = vk_unix_call(unix_vkCmdCopyMemoryToImageIndirectNV, &params);
+    status = UNIX_CALL(vkCmdCopyMemoryToImageIndirectNV, &params);
     assert(!status);
 }
 
@@ -832,7 +832,7 @@ void WINAPI vkCmdCopyMemoryToMicromapEXT(VkCommandBuffer commandBuffer, const Vk
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCmdCopyMemoryToMicromapEXT, &params);
+    status = UNIX_CALL(vkCmdCopyMemoryToMicromapEXT, &params);
     assert(!status);
 }
 
@@ -842,7 +842,7 @@ void WINAPI vkCmdCopyMicromapEXT(VkCommandBuffer commandBuffer, const VkCopyMicr
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCmdCopyMicromapEXT, &params);
+    status = UNIX_CALL(vkCmdCopyMicromapEXT, &params);
     assert(!status);
 }
 
@@ -852,7 +852,7 @@ void WINAPI vkCmdCopyMicromapToMemoryEXT(VkCommandBuffer commandBuffer, const Vk
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCmdCopyMicromapToMemoryEXT, &params);
+    status = UNIX_CALL(vkCmdCopyMicromapToMemoryEXT, &params);
     assert(!status);
 }
 
@@ -868,7 +868,7 @@ void WINAPI vkCmdCopyQueryPoolResults(VkCommandBuffer commandBuffer, VkQueryPool
     params.dstOffset = dstOffset;
     params.stride = stride;
     params.flags = flags;
-    status = vk_unix_call(unix_vkCmdCopyQueryPoolResults, &params);
+    status = UNIX_CALL(vkCmdCopyQueryPoolResults, &params);
     assert(!status);
 }
 
@@ -878,7 +878,7 @@ void WINAPI vkCmdCuLaunchKernelNVX(VkCommandBuffer commandBuffer, const VkCuLaun
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pLaunchInfo = pLaunchInfo;
-    status = vk_unix_call(unix_vkCmdCuLaunchKernelNVX, &params);
+    status = UNIX_CALL(vkCmdCuLaunchKernelNVX, &params);
     assert(!status);
 }
 
@@ -888,7 +888,7 @@ void WINAPI vkCmdDebugMarkerBeginEXT(VkCommandBuffer commandBuffer, const VkDebu
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pMarkerInfo = pMarkerInfo;
-    status = vk_unix_call(unix_vkCmdDebugMarkerBeginEXT, &params);
+    status = UNIX_CALL(vkCmdDebugMarkerBeginEXT, &params);
     assert(!status);
 }
 
@@ -897,7 +897,7 @@ void WINAPI vkCmdDebugMarkerEndEXT(VkCommandBuffer commandBuffer)
     struct vkCmdDebugMarkerEndEXT_params params;
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
-    status = vk_unix_call(unix_vkCmdDebugMarkerEndEXT, &params);
+    status = UNIX_CALL(vkCmdDebugMarkerEndEXT, &params);
     assert(!status);
 }
 
@@ -907,7 +907,7 @@ void WINAPI vkCmdDebugMarkerInsertEXT(VkCommandBuffer commandBuffer, const VkDeb
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pMarkerInfo = pMarkerInfo;
-    status = vk_unix_call(unix_vkCmdDebugMarkerInsertEXT, &params);
+    status = UNIX_CALL(vkCmdDebugMarkerInsertEXT, &params);
     assert(!status);
 }
 
@@ -919,7 +919,7 @@ void WINAPI vkCmdDecompressMemoryIndirectCountNV(VkCommandBuffer commandBuffer, 
     params.indirectCommandsAddress = indirectCommandsAddress;
     params.indirectCommandsCountAddress = indirectCommandsCountAddress;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDecompressMemoryIndirectCountNV, &params);
+    status = UNIX_CALL(vkCmdDecompressMemoryIndirectCountNV, &params);
     assert(!status);
 }
 
@@ -930,7 +930,7 @@ void WINAPI vkCmdDecompressMemoryNV(VkCommandBuffer commandBuffer, uint32_t deco
     params.commandBuffer = commandBuffer;
     params.decompressRegionCount = decompressRegionCount;
     params.pDecompressMemoryRegions = pDecompressMemoryRegions;
-    status = vk_unix_call(unix_vkCmdDecompressMemoryNV, &params);
+    status = UNIX_CALL(vkCmdDecompressMemoryNV, &params);
     assert(!status);
 }
 
@@ -942,7 +942,7 @@ void WINAPI vkCmdDispatch(VkCommandBuffer commandBuffer, uint32_t groupCountX, u
     params.groupCountX = groupCountX;
     params.groupCountY = groupCountY;
     params.groupCountZ = groupCountZ;
-    status = vk_unix_call(unix_vkCmdDispatch, &params);
+    status = UNIX_CALL(vkCmdDispatch, &params);
     assert(!status);
 }
 
@@ -957,7 +957,7 @@ void WINAPI vkCmdDispatchBase(VkCommandBuffer commandBuffer, uint32_t baseGroupX
     params.groupCountX = groupCountX;
     params.groupCountY = groupCountY;
     params.groupCountZ = groupCountZ;
-    status = vk_unix_call(unix_vkCmdDispatchBase, &params);
+    status = UNIX_CALL(vkCmdDispatchBase, &params);
     assert(!status);
 }
 
@@ -972,7 +972,7 @@ void WINAPI vkCmdDispatchBaseKHR(VkCommandBuffer commandBuffer, uint32_t baseGro
     params.groupCountX = groupCountX;
     params.groupCountY = groupCountY;
     params.groupCountZ = groupCountZ;
-    status = vk_unix_call(unix_vkCmdDispatchBaseKHR, &params);
+    status = UNIX_CALL(vkCmdDispatchBaseKHR, &params);
     assert(!status);
 }
 
@@ -983,7 +983,7 @@ void WINAPI vkCmdDispatchIndirect(VkCommandBuffer commandBuffer, VkBuffer buffer
     params.commandBuffer = commandBuffer;
     params.buffer = buffer;
     params.offset = offset;
-    status = vk_unix_call(unix_vkCmdDispatchIndirect, &params);
+    status = UNIX_CALL(vkCmdDispatchIndirect, &params);
     assert(!status);
 }
 
@@ -996,7 +996,7 @@ void WINAPI vkCmdDraw(VkCommandBuffer commandBuffer, uint32_t vertexCount, uint3
     params.instanceCount = instanceCount;
     params.firstVertex = firstVertex;
     params.firstInstance = firstInstance;
-    status = vk_unix_call(unix_vkCmdDraw, &params);
+    status = UNIX_CALL(vkCmdDraw, &params);
     assert(!status);
 }
 
@@ -1010,7 +1010,7 @@ void WINAPI vkCmdDrawIndexed(VkCommandBuffer commandBuffer, uint32_t indexCount,
     params.firstIndex = firstIndex;
     params.vertexOffset = vertexOffset;
     params.firstInstance = firstInstance;
-    status = vk_unix_call(unix_vkCmdDrawIndexed, &params);
+    status = UNIX_CALL(vkCmdDrawIndexed, &params);
     assert(!status);
 }
 
@@ -1023,7 +1023,7 @@ void WINAPI vkCmdDrawIndexedIndirect(VkCommandBuffer commandBuffer, VkBuffer buf
     params.offset = offset;
     params.drawCount = drawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawIndexedIndirect, &params);
+    status = UNIX_CALL(vkCmdDrawIndexedIndirect, &params);
     assert(!status);
 }
 
@@ -1038,7 +1038,7 @@ void WINAPI vkCmdDrawIndexedIndirectCount(VkCommandBuffer commandBuffer, VkBuffe
     params.countBufferOffset = countBufferOffset;
     params.maxDrawCount = maxDrawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawIndexedIndirectCount, &params);
+    status = UNIX_CALL(vkCmdDrawIndexedIndirectCount, &params);
     assert(!status);
 }
 
@@ -1053,7 +1053,7 @@ void WINAPI vkCmdDrawIndexedIndirectCountAMD(VkCommandBuffer commandBuffer, VkBu
     params.countBufferOffset = countBufferOffset;
     params.maxDrawCount = maxDrawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawIndexedIndirectCountAMD, &params);
+    status = UNIX_CALL(vkCmdDrawIndexedIndirectCountAMD, &params);
     assert(!status);
 }
 
@@ -1068,7 +1068,7 @@ void WINAPI vkCmdDrawIndexedIndirectCountKHR(VkCommandBuffer commandBuffer, VkBu
     params.countBufferOffset = countBufferOffset;
     params.maxDrawCount = maxDrawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawIndexedIndirectCountKHR, &params);
+    status = UNIX_CALL(vkCmdDrawIndexedIndirectCountKHR, &params);
     assert(!status);
 }
 
@@ -1081,7 +1081,7 @@ void WINAPI vkCmdDrawIndirect(VkCommandBuffer commandBuffer, VkBuffer buffer, Vk
     params.offset = offset;
     params.drawCount = drawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawIndirect, &params);
+    status = UNIX_CALL(vkCmdDrawIndirect, &params);
     assert(!status);
 }
 
@@ -1096,7 +1096,7 @@ void WINAPI vkCmdDrawIndirectByteCountEXT(VkCommandBuffer commandBuffer, uint32_
     params.counterBufferOffset = counterBufferOffset;
     params.counterOffset = counterOffset;
     params.vertexStride = vertexStride;
-    status = vk_unix_call(unix_vkCmdDrawIndirectByteCountEXT, &params);
+    status = UNIX_CALL(vkCmdDrawIndirectByteCountEXT, &params);
     assert(!status);
 }
 
@@ -1111,7 +1111,7 @@ void WINAPI vkCmdDrawIndirectCount(VkCommandBuffer commandBuffer, VkBuffer buffe
     params.countBufferOffset = countBufferOffset;
     params.maxDrawCount = maxDrawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawIndirectCount, &params);
+    status = UNIX_CALL(vkCmdDrawIndirectCount, &params);
     assert(!status);
 }
 
@@ -1126,7 +1126,7 @@ void WINAPI vkCmdDrawIndirectCountAMD(VkCommandBuffer commandBuffer, VkBuffer bu
     params.countBufferOffset = countBufferOffset;
     params.maxDrawCount = maxDrawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawIndirectCountAMD, &params);
+    status = UNIX_CALL(vkCmdDrawIndirectCountAMD, &params);
     assert(!status);
 }
 
@@ -1141,7 +1141,7 @@ void WINAPI vkCmdDrawIndirectCountKHR(VkCommandBuffer commandBuffer, VkBuffer bu
     params.countBufferOffset = countBufferOffset;
     params.maxDrawCount = maxDrawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawIndirectCountKHR, &params);
+    status = UNIX_CALL(vkCmdDrawIndirectCountKHR, &params);
     assert(!status);
 }
 
@@ -1153,7 +1153,7 @@ void WINAPI vkCmdDrawMeshTasksEXT(VkCommandBuffer commandBuffer, uint32_t groupC
     params.groupCountX = groupCountX;
     params.groupCountY = groupCountY;
     params.groupCountZ = groupCountZ;
-    status = vk_unix_call(unix_vkCmdDrawMeshTasksEXT, &params);
+    status = UNIX_CALL(vkCmdDrawMeshTasksEXT, &params);
     assert(!status);
 }
 
@@ -1168,7 +1168,7 @@ void WINAPI vkCmdDrawMeshTasksIndirectCountEXT(VkCommandBuffer commandBuffer, Vk
     params.countBufferOffset = countBufferOffset;
     params.maxDrawCount = maxDrawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawMeshTasksIndirectCountEXT, &params);
+    status = UNIX_CALL(vkCmdDrawMeshTasksIndirectCountEXT, &params);
     assert(!status);
 }
 
@@ -1183,7 +1183,7 @@ void WINAPI vkCmdDrawMeshTasksIndirectCountNV(VkCommandBuffer commandBuffer, VkB
     params.countBufferOffset = countBufferOffset;
     params.maxDrawCount = maxDrawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawMeshTasksIndirectCountNV, &params);
+    status = UNIX_CALL(vkCmdDrawMeshTasksIndirectCountNV, &params);
     assert(!status);
 }
 
@@ -1196,7 +1196,7 @@ void WINAPI vkCmdDrawMeshTasksIndirectEXT(VkCommandBuffer commandBuffer, VkBuffe
     params.offset = offset;
     params.drawCount = drawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawMeshTasksIndirectEXT, &params);
+    status = UNIX_CALL(vkCmdDrawMeshTasksIndirectEXT, &params);
     assert(!status);
 }
 
@@ -1209,7 +1209,7 @@ void WINAPI vkCmdDrawMeshTasksIndirectNV(VkCommandBuffer commandBuffer, VkBuffer
     params.offset = offset;
     params.drawCount = drawCount;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawMeshTasksIndirectNV, &params);
+    status = UNIX_CALL(vkCmdDrawMeshTasksIndirectNV, &params);
     assert(!status);
 }
 
@@ -1220,7 +1220,7 @@ void WINAPI vkCmdDrawMeshTasksNV(VkCommandBuffer commandBuffer, uint32_t taskCou
     params.commandBuffer = commandBuffer;
     params.taskCount = taskCount;
     params.firstTask = firstTask;
-    status = vk_unix_call(unix_vkCmdDrawMeshTasksNV, &params);
+    status = UNIX_CALL(vkCmdDrawMeshTasksNV, &params);
     assert(!status);
 }
 
@@ -1234,7 +1234,7 @@ void WINAPI vkCmdDrawMultiEXT(VkCommandBuffer commandBuffer, uint32_t drawCount,
     params.instanceCount = instanceCount;
     params.firstInstance = firstInstance;
     params.stride = stride;
-    status = vk_unix_call(unix_vkCmdDrawMultiEXT, &params);
+    status = UNIX_CALL(vkCmdDrawMultiEXT, &params);
     assert(!status);
 }
 
@@ -1249,7 +1249,7 @@ void WINAPI vkCmdDrawMultiIndexedEXT(VkCommandBuffer commandBuffer, uint32_t dra
     params.firstInstance = firstInstance;
     params.stride = stride;
     params.pVertexOffset = pVertexOffset;
-    status = vk_unix_call(unix_vkCmdDrawMultiIndexedEXT, &params);
+    status = UNIX_CALL(vkCmdDrawMultiIndexedEXT, &params);
     assert(!status);
 }
 
@@ -1258,7 +1258,7 @@ void WINAPI vkCmdEndConditionalRenderingEXT(VkCommandBuffer commandBuffer)
     struct vkCmdEndConditionalRenderingEXT_params params;
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
-    status = vk_unix_call(unix_vkCmdEndConditionalRenderingEXT, &params);
+    status = UNIX_CALL(vkCmdEndConditionalRenderingEXT, &params);
     assert(!status);
 }
 
@@ -1267,7 +1267,7 @@ void WINAPI vkCmdEndDebugUtilsLabelEXT(VkCommandBuffer commandBuffer)
     struct vkCmdEndDebugUtilsLabelEXT_params params;
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
-    status = vk_unix_call(unix_vkCmdEndDebugUtilsLabelEXT, &params);
+    status = UNIX_CALL(vkCmdEndDebugUtilsLabelEXT, &params);
     assert(!status);
 }
 
@@ -1278,7 +1278,7 @@ void WINAPI vkCmdEndQuery(VkCommandBuffer commandBuffer, VkQueryPool queryPool, 
     params.commandBuffer = commandBuffer;
     params.queryPool = queryPool;
     params.query = query;
-    status = vk_unix_call(unix_vkCmdEndQuery, &params);
+    status = UNIX_CALL(vkCmdEndQuery, &params);
     assert(!status);
 }
 
@@ -1290,7 +1290,7 @@ void WINAPI vkCmdEndQueryIndexedEXT(VkCommandBuffer commandBuffer, VkQueryPool q
     params.queryPool = queryPool;
     params.query = query;
     params.index = index;
-    status = vk_unix_call(unix_vkCmdEndQueryIndexedEXT, &params);
+    status = UNIX_CALL(vkCmdEndQueryIndexedEXT, &params);
     assert(!status);
 }
 
@@ -1299,7 +1299,7 @@ void WINAPI vkCmdEndRenderPass(VkCommandBuffer commandBuffer)
     struct vkCmdEndRenderPass_params params;
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
-    status = vk_unix_call(unix_vkCmdEndRenderPass, &params);
+    status = UNIX_CALL(vkCmdEndRenderPass, &params);
     assert(!status);
 }
 
@@ -1309,7 +1309,7 @@ void WINAPI vkCmdEndRenderPass2(VkCommandBuffer commandBuffer, const VkSubpassEn
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pSubpassEndInfo = pSubpassEndInfo;
-    status = vk_unix_call(unix_vkCmdEndRenderPass2, &params);
+    status = UNIX_CALL(vkCmdEndRenderPass2, &params);
     assert(!status);
 }
 
@@ -1319,7 +1319,7 @@ void WINAPI vkCmdEndRenderPass2KHR(VkCommandBuffer commandBuffer, const VkSubpas
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pSubpassEndInfo = pSubpassEndInfo;
-    status = vk_unix_call(unix_vkCmdEndRenderPass2KHR, &params);
+    status = UNIX_CALL(vkCmdEndRenderPass2KHR, &params);
     assert(!status);
 }
 
@@ -1328,7 +1328,7 @@ void WINAPI vkCmdEndRendering(VkCommandBuffer commandBuffer)
     struct vkCmdEndRendering_params params;
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
-    status = vk_unix_call(unix_vkCmdEndRendering, &params);
+    status = UNIX_CALL(vkCmdEndRendering, &params);
     assert(!status);
 }
 
@@ -1337,7 +1337,7 @@ void WINAPI vkCmdEndRenderingKHR(VkCommandBuffer commandBuffer)
     struct vkCmdEndRenderingKHR_params params;
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
-    status = vk_unix_call(unix_vkCmdEndRenderingKHR, &params);
+    status = UNIX_CALL(vkCmdEndRenderingKHR, &params);
     assert(!status);
 }
 
@@ -1350,7 +1350,7 @@ void WINAPI vkCmdEndTransformFeedbackEXT(VkCommandBuffer commandBuffer, uint32_t
     params.counterBufferCount = counterBufferCount;
     params.pCounterBuffers = pCounterBuffers;
     params.pCounterBufferOffsets = pCounterBufferOffsets;
-    status = vk_unix_call(unix_vkCmdEndTransformFeedbackEXT, &params);
+    status = UNIX_CALL(vkCmdEndTransformFeedbackEXT, &params);
     assert(!status);
 }
 
@@ -1361,7 +1361,7 @@ void WINAPI vkCmdExecuteCommands(VkCommandBuffer commandBuffer, uint32_t command
     params.commandBuffer = commandBuffer;
     params.commandBufferCount = commandBufferCount;
     params.pCommandBuffers = pCommandBuffers;
-    status = vk_unix_call(unix_vkCmdExecuteCommands, &params);
+    status = UNIX_CALL(vkCmdExecuteCommands, &params);
     assert(!status);
 }
 
@@ -1372,7 +1372,7 @@ void WINAPI vkCmdExecuteGeneratedCommandsNV(VkCommandBuffer commandBuffer, VkBoo
     params.commandBuffer = commandBuffer;
     params.isPreprocessed = isPreprocessed;
     params.pGeneratedCommandsInfo = pGeneratedCommandsInfo;
-    status = vk_unix_call(unix_vkCmdExecuteGeneratedCommandsNV, &params);
+    status = UNIX_CALL(vkCmdExecuteGeneratedCommandsNV, &params);
     assert(!status);
 }
 
@@ -1385,7 +1385,7 @@ void WINAPI vkCmdFillBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer, V
     params.dstOffset = dstOffset;
     params.size = size;
     params.data = data;
-    status = vk_unix_call(unix_vkCmdFillBuffer, &params);
+    status = UNIX_CALL(vkCmdFillBuffer, &params);
     assert(!status);
 }
 
@@ -1395,7 +1395,7 @@ void WINAPI vkCmdInsertDebugUtilsLabelEXT(VkCommandBuffer commandBuffer, const V
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pLabelInfo = pLabelInfo;
-    status = vk_unix_call(unix_vkCmdInsertDebugUtilsLabelEXT, &params);
+    status = UNIX_CALL(vkCmdInsertDebugUtilsLabelEXT, &params);
     assert(!status);
 }
 
@@ -1405,7 +1405,7 @@ void WINAPI vkCmdNextSubpass(VkCommandBuffer commandBuffer, VkSubpassContents co
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.contents = contents;
-    status = vk_unix_call(unix_vkCmdNextSubpass, &params);
+    status = UNIX_CALL(vkCmdNextSubpass, &params);
     assert(!status);
 }
 
@@ -1416,7 +1416,7 @@ void WINAPI vkCmdNextSubpass2(VkCommandBuffer commandBuffer, const VkSubpassBegi
     params.commandBuffer = commandBuffer;
     params.pSubpassBeginInfo = pSubpassBeginInfo;
     params.pSubpassEndInfo = pSubpassEndInfo;
-    status = vk_unix_call(unix_vkCmdNextSubpass2, &params);
+    status = UNIX_CALL(vkCmdNextSubpass2, &params);
     assert(!status);
 }
 
@@ -1427,7 +1427,7 @@ void WINAPI vkCmdNextSubpass2KHR(VkCommandBuffer commandBuffer, const VkSubpassB
     params.commandBuffer = commandBuffer;
     params.pSubpassBeginInfo = pSubpassBeginInfo;
     params.pSubpassEndInfo = pSubpassEndInfo;
-    status = vk_unix_call(unix_vkCmdNextSubpass2KHR, &params);
+    status = UNIX_CALL(vkCmdNextSubpass2KHR, &params);
     assert(!status);
 }
 
@@ -1438,7 +1438,7 @@ void WINAPI vkCmdOpticalFlowExecuteNV(VkCommandBuffer commandBuffer, VkOpticalFl
     params.commandBuffer = commandBuffer;
     params.session = session;
     params.pExecuteInfo = pExecuteInfo;
-    status = vk_unix_call(unix_vkCmdOpticalFlowExecuteNV, &params);
+    status = UNIX_CALL(vkCmdOpticalFlowExecuteNV, &params);
     assert(!status);
 }
 
@@ -1456,7 +1456,7 @@ void WINAPI vkCmdPipelineBarrier(VkCommandBuffer commandBuffer, VkPipelineStageF
     params.pBufferMemoryBarriers = pBufferMemoryBarriers;
     params.imageMemoryBarrierCount = imageMemoryBarrierCount;
     params.pImageMemoryBarriers = pImageMemoryBarriers;
-    status = vk_unix_call(unix_vkCmdPipelineBarrier, &params);
+    status = UNIX_CALL(vkCmdPipelineBarrier, &params);
     assert(!status);
 }
 
@@ -1466,7 +1466,7 @@ void WINAPI vkCmdPipelineBarrier2(VkCommandBuffer commandBuffer, const VkDepende
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pDependencyInfo = pDependencyInfo;
-    status = vk_unix_call(unix_vkCmdPipelineBarrier2, &params);
+    status = UNIX_CALL(vkCmdPipelineBarrier2, &params);
     assert(!status);
 }
 
@@ -1476,7 +1476,7 @@ void WINAPI vkCmdPipelineBarrier2KHR(VkCommandBuffer commandBuffer, const VkDepe
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pDependencyInfo = pDependencyInfo;
-    status = vk_unix_call(unix_vkCmdPipelineBarrier2KHR, &params);
+    status = UNIX_CALL(vkCmdPipelineBarrier2KHR, &params);
     assert(!status);
 }
 
@@ -1486,7 +1486,7 @@ void WINAPI vkCmdPreprocessGeneratedCommandsNV(VkCommandBuffer commandBuffer, co
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pGeneratedCommandsInfo = pGeneratedCommandsInfo;
-    status = vk_unix_call(unix_vkCmdPreprocessGeneratedCommandsNV, &params);
+    status = UNIX_CALL(vkCmdPreprocessGeneratedCommandsNV, &params);
     assert(!status);
 }
 
@@ -1500,7 +1500,7 @@ void WINAPI vkCmdPushConstants(VkCommandBuffer commandBuffer, VkPipelineLayout l
     params.offset = offset;
     params.size = size;
     params.pValues = pValues;
-    status = vk_unix_call(unix_vkCmdPushConstants, &params);
+    status = UNIX_CALL(vkCmdPushConstants, &params);
     assert(!status);
 }
 
@@ -1514,7 +1514,7 @@ void WINAPI vkCmdPushDescriptorSetKHR(VkCommandBuffer commandBuffer, VkPipelineB
     params.set = set;
     params.descriptorWriteCount = descriptorWriteCount;
     params.pDescriptorWrites = pDescriptorWrites;
-    status = vk_unix_call(unix_vkCmdPushDescriptorSetKHR, &params);
+    status = UNIX_CALL(vkCmdPushDescriptorSetKHR, &params);
     assert(!status);
 }
 
@@ -1527,7 +1527,7 @@ void WINAPI vkCmdPushDescriptorSetWithTemplateKHR(VkCommandBuffer commandBuffer,
     params.layout = layout;
     params.set = set;
     params.pData = pData;
-    status = vk_unix_call(unix_vkCmdPushDescriptorSetWithTemplateKHR, &params);
+    status = UNIX_CALL(vkCmdPushDescriptorSetWithTemplateKHR, &params);
     assert(!status);
 }
 
@@ -1538,7 +1538,7 @@ void WINAPI vkCmdResetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipe
     params.commandBuffer = commandBuffer;
     params.event = event;
     params.stageMask = stageMask;
-    status = vk_unix_call(unix_vkCmdResetEvent, &params);
+    status = UNIX_CALL(vkCmdResetEvent, &params);
     assert(!status);
 }
 
@@ -1549,7 +1549,7 @@ void WINAPI vkCmdResetEvent2(VkCommandBuffer commandBuffer, VkEvent event, VkPip
     params.commandBuffer = commandBuffer;
     params.event = event;
     params.stageMask = stageMask;
-    status = vk_unix_call(unix_vkCmdResetEvent2, &params);
+    status = UNIX_CALL(vkCmdResetEvent2, &params);
     assert(!status);
 }
 
@@ -1560,7 +1560,7 @@ void WINAPI vkCmdResetEvent2KHR(VkCommandBuffer commandBuffer, VkEvent event, Vk
     params.commandBuffer = commandBuffer;
     params.event = event;
     params.stageMask = stageMask;
-    status = vk_unix_call(unix_vkCmdResetEvent2KHR, &params);
+    status = UNIX_CALL(vkCmdResetEvent2KHR, &params);
     assert(!status);
 }
 
@@ -1572,7 +1572,7 @@ void WINAPI vkCmdResetQueryPool(VkCommandBuffer commandBuffer, VkQueryPool query
     params.queryPool = queryPool;
     params.firstQuery = firstQuery;
     params.queryCount = queryCount;
-    status = vk_unix_call(unix_vkCmdResetQueryPool, &params);
+    status = UNIX_CALL(vkCmdResetQueryPool, &params);
     assert(!status);
 }
 
@@ -1587,7 +1587,7 @@ void WINAPI vkCmdResolveImage(VkCommandBuffer commandBuffer, VkImage srcImage, V
     params.dstImageLayout = dstImageLayout;
     params.regionCount = regionCount;
     params.pRegions = pRegions;
-    status = vk_unix_call(unix_vkCmdResolveImage, &params);
+    status = UNIX_CALL(vkCmdResolveImage, &params);
     assert(!status);
 }
 
@@ -1597,7 +1597,7 @@ void WINAPI vkCmdResolveImage2(VkCommandBuffer commandBuffer, const VkResolveIma
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pResolveImageInfo = pResolveImageInfo;
-    status = vk_unix_call(unix_vkCmdResolveImage2, &params);
+    status = UNIX_CALL(vkCmdResolveImage2, &params);
     assert(!status);
 }
 
@@ -1607,7 +1607,7 @@ void WINAPI vkCmdResolveImage2KHR(VkCommandBuffer commandBuffer, const VkResolve
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pResolveImageInfo = pResolveImageInfo;
-    status = vk_unix_call(unix_vkCmdResolveImage2KHR, &params);
+    status = UNIX_CALL(vkCmdResolveImage2KHR, &params);
     assert(!status);
 }
 
@@ -1617,7 +1617,7 @@ void WINAPI vkCmdSetAlphaToCoverageEnableEXT(VkCommandBuffer commandBuffer, VkBo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.alphaToCoverageEnable = alphaToCoverageEnable;
-    status = vk_unix_call(unix_vkCmdSetAlphaToCoverageEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetAlphaToCoverageEnableEXT, &params);
     assert(!status);
 }
 
@@ -1627,7 +1627,7 @@ void WINAPI vkCmdSetAlphaToOneEnableEXT(VkCommandBuffer commandBuffer, VkBool32 
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.alphaToOneEnable = alphaToOneEnable;
-    status = vk_unix_call(unix_vkCmdSetAlphaToOneEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetAlphaToOneEnableEXT, &params);
     assert(!status);
 }
 
@@ -1637,7 +1637,7 @@ void WINAPI vkCmdSetBlendConstants(VkCommandBuffer commandBuffer, const float bl
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.blendConstants = blendConstants;
-    status = vk_unix_call(unix_vkCmdSetBlendConstants, &params);
+    status = UNIX_CALL(vkCmdSetBlendConstants, &params);
     assert(!status);
 }
 
@@ -1647,7 +1647,7 @@ void WINAPI vkCmdSetCheckpointNV(VkCommandBuffer commandBuffer, const void *pChe
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pCheckpointMarker = pCheckpointMarker;
-    status = vk_unix_call(unix_vkCmdSetCheckpointNV, &params);
+    status = UNIX_CALL(vkCmdSetCheckpointNV, &params);
     assert(!status);
 }
 
@@ -1659,7 +1659,7 @@ void WINAPI vkCmdSetCoarseSampleOrderNV(VkCommandBuffer commandBuffer, VkCoarseS
     params.sampleOrderType = sampleOrderType;
     params.customSampleOrderCount = customSampleOrderCount;
     params.pCustomSampleOrders = pCustomSampleOrders;
-    status = vk_unix_call(unix_vkCmdSetCoarseSampleOrderNV, &params);
+    status = UNIX_CALL(vkCmdSetCoarseSampleOrderNV, &params);
     assert(!status);
 }
 
@@ -1671,7 +1671,7 @@ void WINAPI vkCmdSetColorBlendAdvancedEXT(VkCommandBuffer commandBuffer, uint32_
     params.firstAttachment = firstAttachment;
     params.attachmentCount = attachmentCount;
     params.pColorBlendAdvanced = pColorBlendAdvanced;
-    status = vk_unix_call(unix_vkCmdSetColorBlendAdvancedEXT, &params);
+    status = UNIX_CALL(vkCmdSetColorBlendAdvancedEXT, &params);
     assert(!status);
 }
 
@@ -1683,7 +1683,7 @@ void WINAPI vkCmdSetColorBlendEnableEXT(VkCommandBuffer commandBuffer, uint32_t 
     params.firstAttachment = firstAttachment;
     params.attachmentCount = attachmentCount;
     params.pColorBlendEnables = pColorBlendEnables;
-    status = vk_unix_call(unix_vkCmdSetColorBlendEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetColorBlendEnableEXT, &params);
     assert(!status);
 }
 
@@ -1695,7 +1695,7 @@ void WINAPI vkCmdSetColorBlendEquationEXT(VkCommandBuffer commandBuffer, uint32_
     params.firstAttachment = firstAttachment;
     params.attachmentCount = attachmentCount;
     params.pColorBlendEquations = pColorBlendEquations;
-    status = vk_unix_call(unix_vkCmdSetColorBlendEquationEXT, &params);
+    status = UNIX_CALL(vkCmdSetColorBlendEquationEXT, &params);
     assert(!status);
 }
 
@@ -1706,7 +1706,7 @@ void WINAPI vkCmdSetColorWriteEnableEXT(VkCommandBuffer commandBuffer, uint32_t 
     params.commandBuffer = commandBuffer;
     params.attachmentCount = attachmentCount;
     params.pColorWriteEnables = pColorWriteEnables;
-    status = vk_unix_call(unix_vkCmdSetColorWriteEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetColorWriteEnableEXT, &params);
     assert(!status);
 }
 
@@ -1718,7 +1718,7 @@ void WINAPI vkCmdSetColorWriteMaskEXT(VkCommandBuffer commandBuffer, uint32_t fi
     params.firstAttachment = firstAttachment;
     params.attachmentCount = attachmentCount;
     params.pColorWriteMasks = pColorWriteMasks;
-    status = vk_unix_call(unix_vkCmdSetColorWriteMaskEXT, &params);
+    status = UNIX_CALL(vkCmdSetColorWriteMaskEXT, &params);
     assert(!status);
 }
 
@@ -1728,7 +1728,7 @@ void WINAPI vkCmdSetConservativeRasterizationModeEXT(VkCommandBuffer commandBuff
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.conservativeRasterizationMode = conservativeRasterizationMode;
-    status = vk_unix_call(unix_vkCmdSetConservativeRasterizationModeEXT, &params);
+    status = UNIX_CALL(vkCmdSetConservativeRasterizationModeEXT, &params);
     assert(!status);
 }
 
@@ -1738,7 +1738,7 @@ void WINAPI vkCmdSetCoverageModulationModeNV(VkCommandBuffer commandBuffer, VkCo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.coverageModulationMode = coverageModulationMode;
-    status = vk_unix_call(unix_vkCmdSetCoverageModulationModeNV, &params);
+    status = UNIX_CALL(vkCmdSetCoverageModulationModeNV, &params);
     assert(!status);
 }
 
@@ -1748,7 +1748,7 @@ void WINAPI vkCmdSetCoverageModulationTableEnableNV(VkCommandBuffer commandBuffe
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.coverageModulationTableEnable = coverageModulationTableEnable;
-    status = vk_unix_call(unix_vkCmdSetCoverageModulationTableEnableNV, &params);
+    status = UNIX_CALL(vkCmdSetCoverageModulationTableEnableNV, &params);
     assert(!status);
 }
 
@@ -1759,7 +1759,7 @@ void WINAPI vkCmdSetCoverageModulationTableNV(VkCommandBuffer commandBuffer, uin
     params.commandBuffer = commandBuffer;
     params.coverageModulationTableCount = coverageModulationTableCount;
     params.pCoverageModulationTable = pCoverageModulationTable;
-    status = vk_unix_call(unix_vkCmdSetCoverageModulationTableNV, &params);
+    status = UNIX_CALL(vkCmdSetCoverageModulationTableNV, &params);
     assert(!status);
 }
 
@@ -1769,7 +1769,7 @@ void WINAPI vkCmdSetCoverageReductionModeNV(VkCommandBuffer commandBuffer, VkCov
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.coverageReductionMode = coverageReductionMode;
-    status = vk_unix_call(unix_vkCmdSetCoverageReductionModeNV, &params);
+    status = UNIX_CALL(vkCmdSetCoverageReductionModeNV, &params);
     assert(!status);
 }
 
@@ -1779,7 +1779,7 @@ void WINAPI vkCmdSetCoverageToColorEnableNV(VkCommandBuffer commandBuffer, VkBoo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.coverageToColorEnable = coverageToColorEnable;
-    status = vk_unix_call(unix_vkCmdSetCoverageToColorEnableNV, &params);
+    status = UNIX_CALL(vkCmdSetCoverageToColorEnableNV, &params);
     assert(!status);
 }
 
@@ -1789,7 +1789,7 @@ void WINAPI vkCmdSetCoverageToColorLocationNV(VkCommandBuffer commandBuffer, uin
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.coverageToColorLocation = coverageToColorLocation;
-    status = vk_unix_call(unix_vkCmdSetCoverageToColorLocationNV, &params);
+    status = UNIX_CALL(vkCmdSetCoverageToColorLocationNV, &params);
     assert(!status);
 }
 
@@ -1799,7 +1799,7 @@ void WINAPI vkCmdSetCullMode(VkCommandBuffer commandBuffer, VkCullModeFlags cull
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.cullMode = cullMode;
-    status = vk_unix_call(unix_vkCmdSetCullMode, &params);
+    status = UNIX_CALL(vkCmdSetCullMode, &params);
     assert(!status);
 }
 
@@ -1809,7 +1809,7 @@ void WINAPI vkCmdSetCullModeEXT(VkCommandBuffer commandBuffer, VkCullModeFlags c
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.cullMode = cullMode;
-    status = vk_unix_call(unix_vkCmdSetCullModeEXT, &params);
+    status = UNIX_CALL(vkCmdSetCullModeEXT, &params);
     assert(!status);
 }
 
@@ -1821,7 +1821,7 @@ void WINAPI vkCmdSetDepthBias(VkCommandBuffer commandBuffer, float depthBiasCons
     params.depthBiasConstantFactor = depthBiasConstantFactor;
     params.depthBiasClamp = depthBiasClamp;
     params.depthBiasSlopeFactor = depthBiasSlopeFactor;
-    status = vk_unix_call(unix_vkCmdSetDepthBias, &params);
+    status = UNIX_CALL(vkCmdSetDepthBias, &params);
     assert(!status);
 }
 
@@ -1831,7 +1831,7 @@ void WINAPI vkCmdSetDepthBiasEnable(VkCommandBuffer commandBuffer, VkBool32 dept
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthBiasEnable = depthBiasEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthBiasEnable, &params);
+    status = UNIX_CALL(vkCmdSetDepthBiasEnable, &params);
     assert(!status);
 }
 
@@ -1841,7 +1841,7 @@ void WINAPI vkCmdSetDepthBiasEnableEXT(VkCommandBuffer commandBuffer, VkBool32 d
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthBiasEnable = depthBiasEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthBiasEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetDepthBiasEnableEXT, &params);
     assert(!status);
 }
 
@@ -1852,7 +1852,7 @@ void WINAPI vkCmdSetDepthBounds(VkCommandBuffer commandBuffer, float minDepthBou
     params.commandBuffer = commandBuffer;
     params.minDepthBounds = minDepthBounds;
     params.maxDepthBounds = maxDepthBounds;
-    status = vk_unix_call(unix_vkCmdSetDepthBounds, &params);
+    status = UNIX_CALL(vkCmdSetDepthBounds, &params);
     assert(!status);
 }
 
@@ -1862,7 +1862,7 @@ void WINAPI vkCmdSetDepthBoundsTestEnable(VkCommandBuffer commandBuffer, VkBool3
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthBoundsTestEnable = depthBoundsTestEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthBoundsTestEnable, &params);
+    status = UNIX_CALL(vkCmdSetDepthBoundsTestEnable, &params);
     assert(!status);
 }
 
@@ -1872,7 +1872,7 @@ void WINAPI vkCmdSetDepthBoundsTestEnableEXT(VkCommandBuffer commandBuffer, VkBo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthBoundsTestEnable = depthBoundsTestEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthBoundsTestEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetDepthBoundsTestEnableEXT, &params);
     assert(!status);
 }
 
@@ -1882,7 +1882,7 @@ void WINAPI vkCmdSetDepthClampEnableEXT(VkCommandBuffer commandBuffer, VkBool32 
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthClampEnable = depthClampEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthClampEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetDepthClampEnableEXT, &params);
     assert(!status);
 }
 
@@ -1892,7 +1892,7 @@ void WINAPI vkCmdSetDepthClipEnableEXT(VkCommandBuffer commandBuffer, VkBool32 d
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthClipEnable = depthClipEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthClipEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetDepthClipEnableEXT, &params);
     assert(!status);
 }
 
@@ -1902,7 +1902,7 @@ void WINAPI vkCmdSetDepthClipNegativeOneToOneEXT(VkCommandBuffer commandBuffer, 
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.negativeOneToOne = negativeOneToOne;
-    status = vk_unix_call(unix_vkCmdSetDepthClipNegativeOneToOneEXT, &params);
+    status = UNIX_CALL(vkCmdSetDepthClipNegativeOneToOneEXT, &params);
     assert(!status);
 }
 
@@ -1912,7 +1912,7 @@ void WINAPI vkCmdSetDepthCompareOp(VkCommandBuffer commandBuffer, VkCompareOp de
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthCompareOp = depthCompareOp;
-    status = vk_unix_call(unix_vkCmdSetDepthCompareOp, &params);
+    status = UNIX_CALL(vkCmdSetDepthCompareOp, &params);
     assert(!status);
 }
 
@@ -1922,7 +1922,7 @@ void WINAPI vkCmdSetDepthCompareOpEXT(VkCommandBuffer commandBuffer, VkCompareOp
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthCompareOp = depthCompareOp;
-    status = vk_unix_call(unix_vkCmdSetDepthCompareOpEXT, &params);
+    status = UNIX_CALL(vkCmdSetDepthCompareOpEXT, &params);
     assert(!status);
 }
 
@@ -1932,7 +1932,7 @@ void WINAPI vkCmdSetDepthTestEnable(VkCommandBuffer commandBuffer, VkBool32 dept
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthTestEnable = depthTestEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthTestEnable, &params);
+    status = UNIX_CALL(vkCmdSetDepthTestEnable, &params);
     assert(!status);
 }
 
@@ -1942,7 +1942,7 @@ void WINAPI vkCmdSetDepthTestEnableEXT(VkCommandBuffer commandBuffer, VkBool32 d
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthTestEnable = depthTestEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthTestEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetDepthTestEnableEXT, &params);
     assert(!status);
 }
 
@@ -1952,7 +1952,7 @@ void WINAPI vkCmdSetDepthWriteEnable(VkCommandBuffer commandBuffer, VkBool32 dep
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthWriteEnable = depthWriteEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthWriteEnable, &params);
+    status = UNIX_CALL(vkCmdSetDepthWriteEnable, &params);
     assert(!status);
 }
 
@@ -1962,7 +1962,7 @@ void WINAPI vkCmdSetDepthWriteEnableEXT(VkCommandBuffer commandBuffer, VkBool32 
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.depthWriteEnable = depthWriteEnable;
-    status = vk_unix_call(unix_vkCmdSetDepthWriteEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetDepthWriteEnableEXT, &params);
     assert(!status);
 }
 
@@ -1977,7 +1977,7 @@ void WINAPI vkCmdSetDescriptorBufferOffsetsEXT(VkCommandBuffer commandBuffer, Vk
     params.setCount = setCount;
     params.pBufferIndices = pBufferIndices;
     params.pOffsets = pOffsets;
-    status = vk_unix_call(unix_vkCmdSetDescriptorBufferOffsetsEXT, &params);
+    status = UNIX_CALL(vkCmdSetDescriptorBufferOffsetsEXT, &params);
     assert(!status);
 }
 
@@ -1987,7 +1987,7 @@ void WINAPI vkCmdSetDeviceMask(VkCommandBuffer commandBuffer, uint32_t deviceMas
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.deviceMask = deviceMask;
-    status = vk_unix_call(unix_vkCmdSetDeviceMask, &params);
+    status = UNIX_CALL(vkCmdSetDeviceMask, &params);
     assert(!status);
 }
 
@@ -1997,7 +1997,7 @@ void WINAPI vkCmdSetDeviceMaskKHR(VkCommandBuffer commandBuffer, uint32_t device
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.deviceMask = deviceMask;
-    status = vk_unix_call(unix_vkCmdSetDeviceMaskKHR, &params);
+    status = UNIX_CALL(vkCmdSetDeviceMaskKHR, &params);
     assert(!status);
 }
 
@@ -2009,7 +2009,7 @@ void WINAPI vkCmdSetDiscardRectangleEXT(VkCommandBuffer commandBuffer, uint32_t 
     params.firstDiscardRectangle = firstDiscardRectangle;
     params.discardRectangleCount = discardRectangleCount;
     params.pDiscardRectangles = pDiscardRectangles;
-    status = vk_unix_call(unix_vkCmdSetDiscardRectangleEXT, &params);
+    status = UNIX_CALL(vkCmdSetDiscardRectangleEXT, &params);
     assert(!status);
 }
 
@@ -2020,7 +2020,7 @@ void WINAPI vkCmdSetEvent(VkCommandBuffer commandBuffer, VkEvent event, VkPipeli
     params.commandBuffer = commandBuffer;
     params.event = event;
     params.stageMask = stageMask;
-    status = vk_unix_call(unix_vkCmdSetEvent, &params);
+    status = UNIX_CALL(vkCmdSetEvent, &params);
     assert(!status);
 }
 
@@ -2031,7 +2031,7 @@ void WINAPI vkCmdSetEvent2(VkCommandBuffer commandBuffer, VkEvent event, const V
     params.commandBuffer = commandBuffer;
     params.event = event;
     params.pDependencyInfo = pDependencyInfo;
-    status = vk_unix_call(unix_vkCmdSetEvent2, &params);
+    status = UNIX_CALL(vkCmdSetEvent2, &params);
     assert(!status);
 }
 
@@ -2042,7 +2042,7 @@ void WINAPI vkCmdSetEvent2KHR(VkCommandBuffer commandBuffer, VkEvent event, cons
     params.commandBuffer = commandBuffer;
     params.event = event;
     params.pDependencyInfo = pDependencyInfo;
-    status = vk_unix_call(unix_vkCmdSetEvent2KHR, &params);
+    status = UNIX_CALL(vkCmdSetEvent2KHR, &params);
     assert(!status);
 }
 
@@ -2054,7 +2054,7 @@ void WINAPI vkCmdSetExclusiveScissorNV(VkCommandBuffer commandBuffer, uint32_t f
     params.firstExclusiveScissor = firstExclusiveScissor;
     params.exclusiveScissorCount = exclusiveScissorCount;
     params.pExclusiveScissors = pExclusiveScissors;
-    status = vk_unix_call(unix_vkCmdSetExclusiveScissorNV, &params);
+    status = UNIX_CALL(vkCmdSetExclusiveScissorNV, &params);
     assert(!status);
 }
 
@@ -2064,7 +2064,7 @@ void WINAPI vkCmdSetExtraPrimitiveOverestimationSizeEXT(VkCommandBuffer commandB
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.extraPrimitiveOverestimationSize = extraPrimitiveOverestimationSize;
-    status = vk_unix_call(unix_vkCmdSetExtraPrimitiveOverestimationSizeEXT, &params);
+    status = UNIX_CALL(vkCmdSetExtraPrimitiveOverestimationSizeEXT, &params);
     assert(!status);
 }
 
@@ -2075,7 +2075,7 @@ void WINAPI vkCmdSetFragmentShadingRateEnumNV(VkCommandBuffer commandBuffer, VkF
     params.commandBuffer = commandBuffer;
     params.shadingRate = shadingRate;
     params.combinerOps = combinerOps;
-    status = vk_unix_call(unix_vkCmdSetFragmentShadingRateEnumNV, &params);
+    status = UNIX_CALL(vkCmdSetFragmentShadingRateEnumNV, &params);
     assert(!status);
 }
 
@@ -2086,7 +2086,7 @@ void WINAPI vkCmdSetFragmentShadingRateKHR(VkCommandBuffer commandBuffer, const 
     params.commandBuffer = commandBuffer;
     params.pFragmentSize = pFragmentSize;
     params.combinerOps = combinerOps;
-    status = vk_unix_call(unix_vkCmdSetFragmentShadingRateKHR, &params);
+    status = UNIX_CALL(vkCmdSetFragmentShadingRateKHR, &params);
     assert(!status);
 }
 
@@ -2096,7 +2096,7 @@ void WINAPI vkCmdSetFrontFace(VkCommandBuffer commandBuffer, VkFrontFace frontFa
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.frontFace = frontFace;
-    status = vk_unix_call(unix_vkCmdSetFrontFace, &params);
+    status = UNIX_CALL(vkCmdSetFrontFace, &params);
     assert(!status);
 }
 
@@ -2106,7 +2106,7 @@ void WINAPI vkCmdSetFrontFaceEXT(VkCommandBuffer commandBuffer, VkFrontFace fron
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.frontFace = frontFace;
-    status = vk_unix_call(unix_vkCmdSetFrontFaceEXT, &params);
+    status = UNIX_CALL(vkCmdSetFrontFaceEXT, &params);
     assert(!status);
 }
 
@@ -2116,7 +2116,7 @@ void WINAPI vkCmdSetLineRasterizationModeEXT(VkCommandBuffer commandBuffer, VkLi
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.lineRasterizationMode = lineRasterizationMode;
-    status = vk_unix_call(unix_vkCmdSetLineRasterizationModeEXT, &params);
+    status = UNIX_CALL(vkCmdSetLineRasterizationModeEXT, &params);
     assert(!status);
 }
 
@@ -2127,7 +2127,7 @@ void WINAPI vkCmdSetLineStippleEXT(VkCommandBuffer commandBuffer, uint32_t lineS
     params.commandBuffer = commandBuffer;
     params.lineStippleFactor = lineStippleFactor;
     params.lineStipplePattern = lineStipplePattern;
-    status = vk_unix_call(unix_vkCmdSetLineStippleEXT, &params);
+    status = UNIX_CALL(vkCmdSetLineStippleEXT, &params);
     assert(!status);
 }
 
@@ -2137,7 +2137,7 @@ void WINAPI vkCmdSetLineStippleEnableEXT(VkCommandBuffer commandBuffer, VkBool32
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.stippledLineEnable = stippledLineEnable;
-    status = vk_unix_call(unix_vkCmdSetLineStippleEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetLineStippleEnableEXT, &params);
     assert(!status);
 }
 
@@ -2147,7 +2147,7 @@ void WINAPI vkCmdSetLineWidth(VkCommandBuffer commandBuffer, float lineWidth)
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.lineWidth = lineWidth;
-    status = vk_unix_call(unix_vkCmdSetLineWidth, &params);
+    status = UNIX_CALL(vkCmdSetLineWidth, &params);
     assert(!status);
 }
 
@@ -2157,7 +2157,7 @@ void WINAPI vkCmdSetLogicOpEXT(VkCommandBuffer commandBuffer, VkLogicOp logicOp)
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.logicOp = logicOp;
-    status = vk_unix_call(unix_vkCmdSetLogicOpEXT, &params);
+    status = UNIX_CALL(vkCmdSetLogicOpEXT, &params);
     assert(!status);
 }
 
@@ -2167,7 +2167,7 @@ void WINAPI vkCmdSetLogicOpEnableEXT(VkCommandBuffer commandBuffer, VkBool32 log
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.logicOpEnable = logicOpEnable;
-    status = vk_unix_call(unix_vkCmdSetLogicOpEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetLogicOpEnableEXT, &params);
     assert(!status);
 }
 
@@ -2177,7 +2177,7 @@ void WINAPI vkCmdSetPatchControlPointsEXT(VkCommandBuffer commandBuffer, uint32_
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.patchControlPoints = patchControlPoints;
-    status = vk_unix_call(unix_vkCmdSetPatchControlPointsEXT, &params);
+    status = UNIX_CALL(vkCmdSetPatchControlPointsEXT, &params);
     assert(!status);
 }
 
@@ -2187,7 +2187,7 @@ VkResult WINAPI vkCmdSetPerformanceMarkerINTEL(VkCommandBuffer commandBuffer, co
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pMarkerInfo = pMarkerInfo;
-    status = vk_unix_call(unix_vkCmdSetPerformanceMarkerINTEL, &params);
+    status = UNIX_CALL(vkCmdSetPerformanceMarkerINTEL, &params);
     assert(!status);
     return params.result;
 }
@@ -2198,7 +2198,7 @@ VkResult WINAPI vkCmdSetPerformanceOverrideINTEL(VkCommandBuffer commandBuffer, 
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pOverrideInfo = pOverrideInfo;
-    status = vk_unix_call(unix_vkCmdSetPerformanceOverrideINTEL, &params);
+    status = UNIX_CALL(vkCmdSetPerformanceOverrideINTEL, &params);
     assert(!status);
     return params.result;
 }
@@ -2209,7 +2209,7 @@ VkResult WINAPI vkCmdSetPerformanceStreamMarkerINTEL(VkCommandBuffer commandBuff
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pMarkerInfo = pMarkerInfo;
-    status = vk_unix_call(unix_vkCmdSetPerformanceStreamMarkerINTEL, &params);
+    status = UNIX_CALL(vkCmdSetPerformanceStreamMarkerINTEL, &params);
     assert(!status);
     return params.result;
 }
@@ -2220,7 +2220,7 @@ void WINAPI vkCmdSetPolygonModeEXT(VkCommandBuffer commandBuffer, VkPolygonMode 
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.polygonMode = polygonMode;
-    status = vk_unix_call(unix_vkCmdSetPolygonModeEXT, &params);
+    status = UNIX_CALL(vkCmdSetPolygonModeEXT, &params);
     assert(!status);
 }
 
@@ -2230,7 +2230,7 @@ void WINAPI vkCmdSetPrimitiveRestartEnable(VkCommandBuffer commandBuffer, VkBool
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.primitiveRestartEnable = primitiveRestartEnable;
-    status = vk_unix_call(unix_vkCmdSetPrimitiveRestartEnable, &params);
+    status = UNIX_CALL(vkCmdSetPrimitiveRestartEnable, &params);
     assert(!status);
 }
 
@@ -2240,7 +2240,7 @@ void WINAPI vkCmdSetPrimitiveRestartEnableEXT(VkCommandBuffer commandBuffer, VkB
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.primitiveRestartEnable = primitiveRestartEnable;
-    status = vk_unix_call(unix_vkCmdSetPrimitiveRestartEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetPrimitiveRestartEnableEXT, &params);
     assert(!status);
 }
 
@@ -2250,7 +2250,7 @@ void WINAPI vkCmdSetPrimitiveTopology(VkCommandBuffer commandBuffer, VkPrimitive
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.primitiveTopology = primitiveTopology;
-    status = vk_unix_call(unix_vkCmdSetPrimitiveTopology, &params);
+    status = UNIX_CALL(vkCmdSetPrimitiveTopology, &params);
     assert(!status);
 }
 
@@ -2260,7 +2260,7 @@ void WINAPI vkCmdSetPrimitiveTopologyEXT(VkCommandBuffer commandBuffer, VkPrimit
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.primitiveTopology = primitiveTopology;
-    status = vk_unix_call(unix_vkCmdSetPrimitiveTopologyEXT, &params);
+    status = UNIX_CALL(vkCmdSetPrimitiveTopologyEXT, &params);
     assert(!status);
 }
 
@@ -2270,7 +2270,7 @@ void WINAPI vkCmdSetProvokingVertexModeEXT(VkCommandBuffer commandBuffer, VkProv
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.provokingVertexMode = provokingVertexMode;
-    status = vk_unix_call(unix_vkCmdSetProvokingVertexModeEXT, &params);
+    status = UNIX_CALL(vkCmdSetProvokingVertexModeEXT, &params);
     assert(!status);
 }
 
@@ -2280,7 +2280,7 @@ void WINAPI vkCmdSetRasterizationSamplesEXT(VkCommandBuffer commandBuffer, VkSam
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.rasterizationSamples = rasterizationSamples;
-    status = vk_unix_call(unix_vkCmdSetRasterizationSamplesEXT, &params);
+    status = UNIX_CALL(vkCmdSetRasterizationSamplesEXT, &params);
     assert(!status);
 }
 
@@ -2290,7 +2290,7 @@ void WINAPI vkCmdSetRasterizationStreamEXT(VkCommandBuffer commandBuffer, uint32
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.rasterizationStream = rasterizationStream;
-    status = vk_unix_call(unix_vkCmdSetRasterizationStreamEXT, &params);
+    status = UNIX_CALL(vkCmdSetRasterizationStreamEXT, &params);
     assert(!status);
 }
 
@@ -2300,7 +2300,7 @@ void WINAPI vkCmdSetRasterizerDiscardEnable(VkCommandBuffer commandBuffer, VkBoo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.rasterizerDiscardEnable = rasterizerDiscardEnable;
-    status = vk_unix_call(unix_vkCmdSetRasterizerDiscardEnable, &params);
+    status = UNIX_CALL(vkCmdSetRasterizerDiscardEnable, &params);
     assert(!status);
 }
 
@@ -2310,7 +2310,7 @@ void WINAPI vkCmdSetRasterizerDiscardEnableEXT(VkCommandBuffer commandBuffer, Vk
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.rasterizerDiscardEnable = rasterizerDiscardEnable;
-    status = vk_unix_call(unix_vkCmdSetRasterizerDiscardEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetRasterizerDiscardEnableEXT, &params);
     assert(!status);
 }
 
@@ -2320,7 +2320,7 @@ void WINAPI vkCmdSetRayTracingPipelineStackSizeKHR(VkCommandBuffer commandBuffer
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pipelineStackSize = pipelineStackSize;
-    status = vk_unix_call(unix_vkCmdSetRayTracingPipelineStackSizeKHR, &params);
+    status = UNIX_CALL(vkCmdSetRayTracingPipelineStackSizeKHR, &params);
     assert(!status);
 }
 
@@ -2330,7 +2330,7 @@ void WINAPI vkCmdSetRepresentativeFragmentTestEnableNV(VkCommandBuffer commandBu
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.representativeFragmentTestEnable = representativeFragmentTestEnable;
-    status = vk_unix_call(unix_vkCmdSetRepresentativeFragmentTestEnableNV, &params);
+    status = UNIX_CALL(vkCmdSetRepresentativeFragmentTestEnableNV, &params);
     assert(!status);
 }
 
@@ -2340,7 +2340,7 @@ void WINAPI vkCmdSetSampleLocationsEXT(VkCommandBuffer commandBuffer, const VkSa
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.pSampleLocationsInfo = pSampleLocationsInfo;
-    status = vk_unix_call(unix_vkCmdSetSampleLocationsEXT, &params);
+    status = UNIX_CALL(vkCmdSetSampleLocationsEXT, &params);
     assert(!status);
 }
 
@@ -2350,7 +2350,7 @@ void WINAPI vkCmdSetSampleLocationsEnableEXT(VkCommandBuffer commandBuffer, VkBo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.sampleLocationsEnable = sampleLocationsEnable;
-    status = vk_unix_call(unix_vkCmdSetSampleLocationsEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetSampleLocationsEnableEXT, &params);
     assert(!status);
 }
 
@@ -2361,7 +2361,7 @@ void WINAPI vkCmdSetSampleMaskEXT(VkCommandBuffer commandBuffer, VkSampleCountFl
     params.commandBuffer = commandBuffer;
     params.samples = samples;
     params.pSampleMask = pSampleMask;
-    status = vk_unix_call(unix_vkCmdSetSampleMaskEXT, &params);
+    status = UNIX_CALL(vkCmdSetSampleMaskEXT, &params);
     assert(!status);
 }
 
@@ -2373,7 +2373,7 @@ void WINAPI vkCmdSetScissor(VkCommandBuffer commandBuffer, uint32_t firstScissor
     params.firstScissor = firstScissor;
     params.scissorCount = scissorCount;
     params.pScissors = pScissors;
-    status = vk_unix_call(unix_vkCmdSetScissor, &params);
+    status = UNIX_CALL(vkCmdSetScissor, &params);
     assert(!status);
 }
 
@@ -2384,7 +2384,7 @@ void WINAPI vkCmdSetScissorWithCount(VkCommandBuffer commandBuffer, uint32_t sci
     params.commandBuffer = commandBuffer;
     params.scissorCount = scissorCount;
     params.pScissors = pScissors;
-    status = vk_unix_call(unix_vkCmdSetScissorWithCount, &params);
+    status = UNIX_CALL(vkCmdSetScissorWithCount, &params);
     assert(!status);
 }
 
@@ -2395,7 +2395,7 @@ void WINAPI vkCmdSetScissorWithCountEXT(VkCommandBuffer commandBuffer, uint32_t 
     params.commandBuffer = commandBuffer;
     params.scissorCount = scissorCount;
     params.pScissors = pScissors;
-    status = vk_unix_call(unix_vkCmdSetScissorWithCountEXT, &params);
+    status = UNIX_CALL(vkCmdSetScissorWithCountEXT, &params);
     assert(!status);
 }
 
@@ -2405,7 +2405,7 @@ void WINAPI vkCmdSetShadingRateImageEnableNV(VkCommandBuffer commandBuffer, VkBo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.shadingRateImageEnable = shadingRateImageEnable;
-    status = vk_unix_call(unix_vkCmdSetShadingRateImageEnableNV, &params);
+    status = UNIX_CALL(vkCmdSetShadingRateImageEnableNV, &params);
     assert(!status);
 }
 
@@ -2416,7 +2416,7 @@ void WINAPI vkCmdSetStencilCompareMask(VkCommandBuffer commandBuffer, VkStencilF
     params.commandBuffer = commandBuffer;
     params.faceMask = faceMask;
     params.compareMask = compareMask;
-    status = vk_unix_call(unix_vkCmdSetStencilCompareMask, &params);
+    status = UNIX_CALL(vkCmdSetStencilCompareMask, &params);
     assert(!status);
 }
 
@@ -2430,7 +2430,7 @@ void WINAPI vkCmdSetStencilOp(VkCommandBuffer commandBuffer, VkStencilFaceFlags 
     params.passOp = passOp;
     params.depthFailOp = depthFailOp;
     params.compareOp = compareOp;
-    status = vk_unix_call(unix_vkCmdSetStencilOp, &params);
+    status = UNIX_CALL(vkCmdSetStencilOp, &params);
     assert(!status);
 }
 
@@ -2444,7 +2444,7 @@ void WINAPI vkCmdSetStencilOpEXT(VkCommandBuffer commandBuffer, VkStencilFaceFla
     params.passOp = passOp;
     params.depthFailOp = depthFailOp;
     params.compareOp = compareOp;
-    status = vk_unix_call(unix_vkCmdSetStencilOpEXT, &params);
+    status = UNIX_CALL(vkCmdSetStencilOpEXT, &params);
     assert(!status);
 }
 
@@ -2455,7 +2455,7 @@ void WINAPI vkCmdSetStencilReference(VkCommandBuffer commandBuffer, VkStencilFac
     params.commandBuffer = commandBuffer;
     params.faceMask = faceMask;
     params.reference = reference;
-    status = vk_unix_call(unix_vkCmdSetStencilReference, &params);
+    status = UNIX_CALL(vkCmdSetStencilReference, &params);
     assert(!status);
 }
 
@@ -2465,7 +2465,7 @@ void WINAPI vkCmdSetStencilTestEnable(VkCommandBuffer commandBuffer, VkBool32 st
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.stencilTestEnable = stencilTestEnable;
-    status = vk_unix_call(unix_vkCmdSetStencilTestEnable, &params);
+    status = UNIX_CALL(vkCmdSetStencilTestEnable, &params);
     assert(!status);
 }
 
@@ -2475,7 +2475,7 @@ void WINAPI vkCmdSetStencilTestEnableEXT(VkCommandBuffer commandBuffer, VkBool32
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.stencilTestEnable = stencilTestEnable;
-    status = vk_unix_call(unix_vkCmdSetStencilTestEnableEXT, &params);
+    status = UNIX_CALL(vkCmdSetStencilTestEnableEXT, &params);
     assert(!status);
 }
 
@@ -2486,7 +2486,7 @@ void WINAPI vkCmdSetStencilWriteMask(VkCommandBuffer commandBuffer, VkStencilFac
     params.commandBuffer = commandBuffer;
     params.faceMask = faceMask;
     params.writeMask = writeMask;
-    status = vk_unix_call(unix_vkCmdSetStencilWriteMask, &params);
+    status = UNIX_CALL(vkCmdSetStencilWriteMask, &params);
     assert(!status);
 }
 
@@ -2496,7 +2496,7 @@ void WINAPI vkCmdSetTessellationDomainOriginEXT(VkCommandBuffer commandBuffer, V
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.domainOrigin = domainOrigin;
-    status = vk_unix_call(unix_vkCmdSetTessellationDomainOriginEXT, &params);
+    status = UNIX_CALL(vkCmdSetTessellationDomainOriginEXT, &params);
     assert(!status);
 }
 
@@ -2509,7 +2509,7 @@ void WINAPI vkCmdSetVertexInputEXT(VkCommandBuffer commandBuffer, uint32_t verte
     params.pVertexBindingDescriptions = pVertexBindingDescriptions;
     params.vertexAttributeDescriptionCount = vertexAttributeDescriptionCount;
     params.pVertexAttributeDescriptions = pVertexAttributeDescriptions;
-    status = vk_unix_call(unix_vkCmdSetVertexInputEXT, &params);
+    status = UNIX_CALL(vkCmdSetVertexInputEXT, &params);
     assert(!status);
 }
 
@@ -2521,7 +2521,7 @@ void WINAPI vkCmdSetViewport(VkCommandBuffer commandBuffer, uint32_t firstViewpo
     params.firstViewport = firstViewport;
     params.viewportCount = viewportCount;
     params.pViewports = pViewports;
-    status = vk_unix_call(unix_vkCmdSetViewport, &params);
+    status = UNIX_CALL(vkCmdSetViewport, &params);
     assert(!status);
 }
 
@@ -2533,7 +2533,7 @@ void WINAPI vkCmdSetViewportShadingRatePaletteNV(VkCommandBuffer commandBuffer, 
     params.firstViewport = firstViewport;
     params.viewportCount = viewportCount;
     params.pShadingRatePalettes = pShadingRatePalettes;
-    status = vk_unix_call(unix_vkCmdSetViewportShadingRatePaletteNV, &params);
+    status = UNIX_CALL(vkCmdSetViewportShadingRatePaletteNV, &params);
     assert(!status);
 }
 
@@ -2545,7 +2545,7 @@ void WINAPI vkCmdSetViewportSwizzleNV(VkCommandBuffer commandBuffer, uint32_t fi
     params.firstViewport = firstViewport;
     params.viewportCount = viewportCount;
     params.pViewportSwizzles = pViewportSwizzles;
-    status = vk_unix_call(unix_vkCmdSetViewportSwizzleNV, &params);
+    status = UNIX_CALL(vkCmdSetViewportSwizzleNV, &params);
     assert(!status);
 }
 
@@ -2555,7 +2555,7 @@ void WINAPI vkCmdSetViewportWScalingEnableNV(VkCommandBuffer commandBuffer, VkBo
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.viewportWScalingEnable = viewportWScalingEnable;
-    status = vk_unix_call(unix_vkCmdSetViewportWScalingEnableNV, &params);
+    status = UNIX_CALL(vkCmdSetViewportWScalingEnableNV, &params);
     assert(!status);
 }
 
@@ -2567,7 +2567,7 @@ void WINAPI vkCmdSetViewportWScalingNV(VkCommandBuffer commandBuffer, uint32_t f
     params.firstViewport = firstViewport;
     params.viewportCount = viewportCount;
     params.pViewportWScalings = pViewportWScalings;
-    status = vk_unix_call(unix_vkCmdSetViewportWScalingNV, &params);
+    status = UNIX_CALL(vkCmdSetViewportWScalingNV, &params);
     assert(!status);
 }
 
@@ -2578,7 +2578,7 @@ void WINAPI vkCmdSetViewportWithCount(VkCommandBuffer commandBuffer, uint32_t vi
     params.commandBuffer = commandBuffer;
     params.viewportCount = viewportCount;
     params.pViewports = pViewports;
-    status = vk_unix_call(unix_vkCmdSetViewportWithCount, &params);
+    status = UNIX_CALL(vkCmdSetViewportWithCount, &params);
     assert(!status);
 }
 
@@ -2589,7 +2589,7 @@ void WINAPI vkCmdSetViewportWithCountEXT(VkCommandBuffer commandBuffer, uint32_t
     params.commandBuffer = commandBuffer;
     params.viewportCount = viewportCount;
     params.pViewports = pViewports;
-    status = vk_unix_call(unix_vkCmdSetViewportWithCountEXT, &params);
+    status = UNIX_CALL(vkCmdSetViewportWithCountEXT, &params);
     assert(!status);
 }
 
@@ -2598,7 +2598,7 @@ void WINAPI vkCmdSubpassShadingHUAWEI(VkCommandBuffer commandBuffer)
     struct vkCmdSubpassShadingHUAWEI_params params;
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
-    status = vk_unix_call(unix_vkCmdSubpassShadingHUAWEI, &params);
+    status = UNIX_CALL(vkCmdSubpassShadingHUAWEI, &params);
     assert(!status);
 }
 
@@ -2608,7 +2608,7 @@ void WINAPI vkCmdTraceRaysIndirect2KHR(VkCommandBuffer commandBuffer, VkDeviceAd
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.indirectDeviceAddress = indirectDeviceAddress;
-    status = vk_unix_call(unix_vkCmdTraceRaysIndirect2KHR, &params);
+    status = UNIX_CALL(vkCmdTraceRaysIndirect2KHR, &params);
     assert(!status);
 }
 
@@ -2622,7 +2622,7 @@ void WINAPI vkCmdTraceRaysIndirectKHR(VkCommandBuffer commandBuffer, const VkStr
     params.pHitShaderBindingTable = pHitShaderBindingTable;
     params.pCallableShaderBindingTable = pCallableShaderBindingTable;
     params.indirectDeviceAddress = indirectDeviceAddress;
-    status = vk_unix_call(unix_vkCmdTraceRaysIndirectKHR, &params);
+    status = UNIX_CALL(vkCmdTraceRaysIndirectKHR, &params);
     assert(!status);
 }
 
@@ -2638,7 +2638,7 @@ void WINAPI vkCmdTraceRaysKHR(VkCommandBuffer commandBuffer, const VkStridedDevi
     params.width = width;
     params.height = height;
     params.depth = depth;
-    status = vk_unix_call(unix_vkCmdTraceRaysKHR, &params);
+    status = UNIX_CALL(vkCmdTraceRaysKHR, &params);
     assert(!status);
 }
 
@@ -2661,7 +2661,7 @@ void WINAPI vkCmdTraceRaysNV(VkCommandBuffer commandBuffer, VkBuffer raygenShade
     params.width = width;
     params.height = height;
     params.depth = depth;
-    status = vk_unix_call(unix_vkCmdTraceRaysNV, &params);
+    status = UNIX_CALL(vkCmdTraceRaysNV, &params);
     assert(!status);
 }
 
@@ -2674,7 +2674,7 @@ void WINAPI vkCmdUpdateBuffer(VkCommandBuffer commandBuffer, VkBuffer dstBuffer,
     params.dstOffset = dstOffset;
     params.dataSize = dataSize;
     params.pData = pData;
-    status = vk_unix_call(unix_vkCmdUpdateBuffer, &params);
+    status = UNIX_CALL(vkCmdUpdateBuffer, &params);
     assert(!status);
 }
 
@@ -2693,7 +2693,7 @@ void WINAPI vkCmdWaitEvents(VkCommandBuffer commandBuffer, uint32_t eventCount, 
     params.pBufferMemoryBarriers = pBufferMemoryBarriers;
     params.imageMemoryBarrierCount = imageMemoryBarrierCount;
     params.pImageMemoryBarriers = pImageMemoryBarriers;
-    status = vk_unix_call(unix_vkCmdWaitEvents, &params);
+    status = UNIX_CALL(vkCmdWaitEvents, &params);
     assert(!status);
 }
 
@@ -2705,7 +2705,7 @@ void WINAPI vkCmdWaitEvents2(VkCommandBuffer commandBuffer, uint32_t eventCount,
     params.eventCount = eventCount;
     params.pEvents = pEvents;
     params.pDependencyInfos = pDependencyInfos;
-    status = vk_unix_call(unix_vkCmdWaitEvents2, &params);
+    status = UNIX_CALL(vkCmdWaitEvents2, &params);
     assert(!status);
 }
 
@@ -2717,7 +2717,7 @@ void WINAPI vkCmdWaitEvents2KHR(VkCommandBuffer commandBuffer, uint32_t eventCou
     params.eventCount = eventCount;
     params.pEvents = pEvents;
     params.pDependencyInfos = pDependencyInfos;
-    status = vk_unix_call(unix_vkCmdWaitEvents2KHR, &params);
+    status = UNIX_CALL(vkCmdWaitEvents2KHR, &params);
     assert(!status);
 }
 
@@ -2731,7 +2731,7 @@ void WINAPI vkCmdWriteAccelerationStructuresPropertiesKHR(VkCommandBuffer comman
     params.queryType = queryType;
     params.queryPool = queryPool;
     params.firstQuery = firstQuery;
-    status = vk_unix_call(unix_vkCmdWriteAccelerationStructuresPropertiesKHR, &params);
+    status = UNIX_CALL(vkCmdWriteAccelerationStructuresPropertiesKHR, &params);
     assert(!status);
 }
 
@@ -2745,7 +2745,7 @@ void WINAPI vkCmdWriteAccelerationStructuresPropertiesNV(VkCommandBuffer command
     params.queryType = queryType;
     params.queryPool = queryPool;
     params.firstQuery = firstQuery;
-    status = vk_unix_call(unix_vkCmdWriteAccelerationStructuresPropertiesNV, &params);
+    status = UNIX_CALL(vkCmdWriteAccelerationStructuresPropertiesNV, &params);
     assert(!status);
 }
 
@@ -2758,7 +2758,7 @@ void WINAPI vkCmdWriteBufferMarker2AMD(VkCommandBuffer commandBuffer, VkPipeline
     params.dstBuffer = dstBuffer;
     params.dstOffset = dstOffset;
     params.marker = marker;
-    status = vk_unix_call(unix_vkCmdWriteBufferMarker2AMD, &params);
+    status = UNIX_CALL(vkCmdWriteBufferMarker2AMD, &params);
     assert(!status);
 }
 
@@ -2771,7 +2771,7 @@ void WINAPI vkCmdWriteBufferMarkerAMD(VkCommandBuffer commandBuffer, VkPipelineS
     params.dstBuffer = dstBuffer;
     params.dstOffset = dstOffset;
     params.marker = marker;
-    status = vk_unix_call(unix_vkCmdWriteBufferMarkerAMD, &params);
+    status = UNIX_CALL(vkCmdWriteBufferMarkerAMD, &params);
     assert(!status);
 }
 
@@ -2785,7 +2785,7 @@ void WINAPI vkCmdWriteMicromapsPropertiesEXT(VkCommandBuffer commandBuffer, uint
     params.queryType = queryType;
     params.queryPool = queryPool;
     params.firstQuery = firstQuery;
-    status = vk_unix_call(unix_vkCmdWriteMicromapsPropertiesEXT, &params);
+    status = UNIX_CALL(vkCmdWriteMicromapsPropertiesEXT, &params);
     assert(!status);
 }
 
@@ -2797,7 +2797,7 @@ void WINAPI vkCmdWriteTimestamp(VkCommandBuffer commandBuffer, VkPipelineStageFl
     params.pipelineStage = pipelineStage;
     params.queryPool = queryPool;
     params.query = query;
-    status = vk_unix_call(unix_vkCmdWriteTimestamp, &params);
+    status = UNIX_CALL(vkCmdWriteTimestamp, &params);
     assert(!status);
 }
 
@@ -2809,7 +2809,7 @@ void WINAPI vkCmdWriteTimestamp2(VkCommandBuffer commandBuffer, VkPipelineStageF
     params.stage = stage;
     params.queryPool = queryPool;
     params.query = query;
-    status = vk_unix_call(unix_vkCmdWriteTimestamp2, &params);
+    status = UNIX_CALL(vkCmdWriteTimestamp2, &params);
     assert(!status);
 }
 
@@ -2821,7 +2821,7 @@ void WINAPI vkCmdWriteTimestamp2KHR(VkCommandBuffer commandBuffer, VkPipelineSta
     params.stage = stage;
     params.queryPool = queryPool;
     params.query = query;
-    status = vk_unix_call(unix_vkCmdWriteTimestamp2KHR, &params);
+    status = UNIX_CALL(vkCmdWriteTimestamp2KHR, &params);
     assert(!status);
 }
 
@@ -2832,7 +2832,7 @@ VkResult WINAPI vkCompileDeferredNV(VkDevice device, VkPipeline pipeline, uint32
     params.device = device;
     params.pipeline = pipeline;
     params.shader = shader;
-    status = vk_unix_call(unix_vkCompileDeferredNV, &params);
+    status = UNIX_CALL(vkCompileDeferredNV, &params);
     assert(!status);
     return params.result;
 }
@@ -2844,7 +2844,7 @@ VkResult WINAPI vkCopyAccelerationStructureKHR(VkDevice device, VkDeferredOperat
     params.device = device;
     params.deferredOperation = deferredOperation;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCopyAccelerationStructureKHR, &params);
+    status = UNIX_CALL(vkCopyAccelerationStructureKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -2856,7 +2856,7 @@ VkResult WINAPI vkCopyAccelerationStructureToMemoryKHR(VkDevice device, VkDeferr
     params.device = device;
     params.deferredOperation = deferredOperation;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCopyAccelerationStructureToMemoryKHR, &params);
+    status = UNIX_CALL(vkCopyAccelerationStructureToMemoryKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -2868,7 +2868,7 @@ VkResult WINAPI vkCopyMemoryToAccelerationStructureKHR(VkDevice device, VkDeferr
     params.device = device;
     params.deferredOperation = deferredOperation;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCopyMemoryToAccelerationStructureKHR, &params);
+    status = UNIX_CALL(vkCopyMemoryToAccelerationStructureKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -2880,7 +2880,7 @@ VkResult WINAPI vkCopyMemoryToMicromapEXT(VkDevice device, VkDeferredOperationKH
     params.device = device;
     params.deferredOperation = deferredOperation;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCopyMemoryToMicromapEXT, &params);
+    status = UNIX_CALL(vkCopyMemoryToMicromapEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -2892,7 +2892,7 @@ VkResult WINAPI vkCopyMicromapEXT(VkDevice device, VkDeferredOperationKHR deferr
     params.device = device;
     params.deferredOperation = deferredOperation;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCopyMicromapEXT, &params);
+    status = UNIX_CALL(vkCopyMicromapEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -2904,7 +2904,7 @@ VkResult WINAPI vkCopyMicromapToMemoryEXT(VkDevice device, VkDeferredOperationKH
     params.device = device;
     params.deferredOperation = deferredOperation;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkCopyMicromapToMemoryEXT, &params);
+    status = UNIX_CALL(vkCopyMicromapToMemoryEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -2917,7 +2917,7 @@ VkResult WINAPI vkCreateAccelerationStructureKHR(VkDevice device, const VkAccele
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pAccelerationStructure = pAccelerationStructure;
-    status = vk_unix_call(unix_vkCreateAccelerationStructureKHR, &params);
+    status = UNIX_CALL(vkCreateAccelerationStructureKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -2930,7 +2930,7 @@ VkResult WINAPI vkCreateAccelerationStructureNV(VkDevice device, const VkAcceler
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pAccelerationStructure = pAccelerationStructure;
-    status = vk_unix_call(unix_vkCreateAccelerationStructureNV, &params);
+    status = UNIX_CALL(vkCreateAccelerationStructureNV, &params);
     assert(!status);
     return params.result;
 }
@@ -2943,7 +2943,7 @@ VkResult WINAPI vkCreateBuffer(VkDevice device, const VkBufferCreateInfo *pCreat
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pBuffer = pBuffer;
-    status = vk_unix_call(unix_vkCreateBuffer, &params);
+    status = UNIX_CALL(vkCreateBuffer, &params);
     assert(!status);
     return params.result;
 }
@@ -2956,7 +2956,7 @@ VkResult WINAPI vkCreateBufferView(VkDevice device, const VkBufferViewCreateInfo
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pView = pView;
-    status = vk_unix_call(unix_vkCreateBufferView, &params);
+    status = UNIX_CALL(vkCreateBufferView, &params);
     assert(!status);
     return params.result;
 }
@@ -2971,7 +2971,7 @@ VkResult WINAPI vkCreateComputePipelines(VkDevice device, VkPipelineCache pipeli
     params.pCreateInfos = pCreateInfos;
     params.pAllocator = pAllocator;
     params.pPipelines = pPipelines;
-    status = vk_unix_call(unix_vkCreateComputePipelines, &params);
+    status = UNIX_CALL(vkCreateComputePipelines, &params);
     assert(!status);
     return params.result;
 }
@@ -2984,7 +2984,7 @@ VkResult WINAPI vkCreateCuFunctionNVX(VkDevice device, const VkCuFunctionCreateI
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pFunction = pFunction;
-    status = vk_unix_call(unix_vkCreateCuFunctionNVX, &params);
+    status = UNIX_CALL(vkCreateCuFunctionNVX, &params);
     assert(!status);
     return params.result;
 }
@@ -2997,7 +2997,7 @@ VkResult WINAPI vkCreateCuModuleNVX(VkDevice device, const VkCuModuleCreateInfoN
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pModule = pModule;
-    status = vk_unix_call(unix_vkCreateCuModuleNVX, &params);
+    status = UNIX_CALL(vkCreateCuModuleNVX, &params);
     assert(!status);
     return params.result;
 }
@@ -3010,7 +3010,7 @@ VkResult WINAPI vkCreateDebugReportCallbackEXT(VkInstance instance, const VkDebu
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pCallback = pCallback;
-    status = vk_unix_call(unix_vkCreateDebugReportCallbackEXT, &params);
+    status = UNIX_CALL(vkCreateDebugReportCallbackEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -3023,7 +3023,7 @@ VkResult WINAPI vkCreateDebugUtilsMessengerEXT(VkInstance instance, const VkDebu
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pMessenger = pMessenger;
-    status = vk_unix_call(unix_vkCreateDebugUtilsMessengerEXT, &params);
+    status = UNIX_CALL(vkCreateDebugUtilsMessengerEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -3035,7 +3035,7 @@ VkResult WINAPI vkCreateDeferredOperationKHR(VkDevice device, const VkAllocation
     params.device = device;
     params.pAllocator = pAllocator;
     params.pDeferredOperation = pDeferredOperation;
-    status = vk_unix_call(unix_vkCreateDeferredOperationKHR, &params);
+    status = UNIX_CALL(vkCreateDeferredOperationKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3048,7 +3048,7 @@ VkResult WINAPI vkCreateDescriptorPool(VkDevice device, const VkDescriptorPoolCr
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pDescriptorPool = pDescriptorPool;
-    status = vk_unix_call(unix_vkCreateDescriptorPool, &params);
+    status = UNIX_CALL(vkCreateDescriptorPool, &params);
     assert(!status);
     return params.result;
 }
@@ -3061,7 +3061,7 @@ VkResult WINAPI vkCreateDescriptorSetLayout(VkDevice device, const VkDescriptorS
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSetLayout = pSetLayout;
-    status = vk_unix_call(unix_vkCreateDescriptorSetLayout, &params);
+    status = UNIX_CALL(vkCreateDescriptorSetLayout, &params);
     assert(!status);
     return params.result;
 }
@@ -3074,7 +3074,7 @@ VkResult WINAPI vkCreateDescriptorUpdateTemplate(VkDevice device, const VkDescri
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pDescriptorUpdateTemplate = pDescriptorUpdateTemplate;
-    status = vk_unix_call(unix_vkCreateDescriptorUpdateTemplate, &params);
+    status = UNIX_CALL(vkCreateDescriptorUpdateTemplate, &params);
     assert(!status);
     return params.result;
 }
@@ -3087,7 +3087,7 @@ VkResult WINAPI vkCreateDescriptorUpdateTemplateKHR(VkDevice device, const VkDes
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pDescriptorUpdateTemplate = pDescriptorUpdateTemplate;
-    status = vk_unix_call(unix_vkCreateDescriptorUpdateTemplateKHR, &params);
+    status = UNIX_CALL(vkCreateDescriptorUpdateTemplateKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3100,7 +3100,7 @@ VkResult WINAPI vkCreateEvent(VkDevice device, const VkEventCreateInfo *pCreateI
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pEvent = pEvent;
-    status = vk_unix_call(unix_vkCreateEvent, &params);
+    status = UNIX_CALL(vkCreateEvent, &params);
     assert(!status);
     return params.result;
 }
@@ -3113,7 +3113,7 @@ VkResult WINAPI vkCreateFence(VkDevice device, const VkFenceCreateInfo *pCreateI
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pFence = pFence;
-    status = vk_unix_call(unix_vkCreateFence, &params);
+    status = UNIX_CALL(vkCreateFence, &params);
     assert(!status);
     return params.result;
 }
@@ -3126,7 +3126,7 @@ VkResult WINAPI vkCreateFramebuffer(VkDevice device, const VkFramebufferCreateIn
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pFramebuffer = pFramebuffer;
-    status = vk_unix_call(unix_vkCreateFramebuffer, &params);
+    status = UNIX_CALL(vkCreateFramebuffer, &params);
     assert(!status);
     return params.result;
 }
@@ -3141,7 +3141,7 @@ VkResult WINAPI vkCreateGraphicsPipelines(VkDevice device, VkPipelineCache pipel
     params.pCreateInfos = pCreateInfos;
     params.pAllocator = pAllocator;
     params.pPipelines = pPipelines;
-    status = vk_unix_call(unix_vkCreateGraphicsPipelines, &params);
+    status = UNIX_CALL(vkCreateGraphicsPipelines, &params);
     assert(!status);
     return params.result;
 }
@@ -3154,7 +3154,7 @@ VkResult WINAPI vkCreateImage(VkDevice device, const VkImageCreateInfo *pCreateI
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pImage = pImage;
-    status = vk_unix_call(unix_vkCreateImage, &params);
+    status = UNIX_CALL(vkCreateImage, &params);
     assert(!status);
     return params.result;
 }
@@ -3167,7 +3167,7 @@ VkResult WINAPI vkCreateImageView(VkDevice device, const VkImageViewCreateInfo *
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pView = pView;
-    status = vk_unix_call(unix_vkCreateImageView, &params);
+    status = UNIX_CALL(vkCreateImageView, &params);
     assert(!status);
     return params.result;
 }
@@ -3180,7 +3180,7 @@ VkResult WINAPI vkCreateIndirectCommandsLayoutNV(VkDevice device, const VkIndire
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pIndirectCommandsLayout = pIndirectCommandsLayout;
-    status = vk_unix_call(unix_vkCreateIndirectCommandsLayoutNV, &params);
+    status = UNIX_CALL(vkCreateIndirectCommandsLayoutNV, &params);
     assert(!status);
     return params.result;
 }
@@ -3193,7 +3193,7 @@ VkResult WINAPI vkCreateMicromapEXT(VkDevice device, const VkMicromapCreateInfoE
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pMicromap = pMicromap;
-    status = vk_unix_call(unix_vkCreateMicromapEXT, &params);
+    status = UNIX_CALL(vkCreateMicromapEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -3206,7 +3206,7 @@ VkResult WINAPI vkCreateOpticalFlowSessionNV(VkDevice device, const VkOpticalFlo
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSession = pSession;
-    status = vk_unix_call(unix_vkCreateOpticalFlowSessionNV, &params);
+    status = UNIX_CALL(vkCreateOpticalFlowSessionNV, &params);
     assert(!status);
     return params.result;
 }
@@ -3219,7 +3219,7 @@ VkResult WINAPI vkCreatePipelineCache(VkDevice device, const VkPipelineCacheCrea
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pPipelineCache = pPipelineCache;
-    status = vk_unix_call(unix_vkCreatePipelineCache, &params);
+    status = UNIX_CALL(vkCreatePipelineCache, &params);
     assert(!status);
     return params.result;
 }
@@ -3232,7 +3232,7 @@ VkResult WINAPI vkCreatePipelineLayout(VkDevice device, const VkPipelineLayoutCr
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pPipelineLayout = pPipelineLayout;
-    status = vk_unix_call(unix_vkCreatePipelineLayout, &params);
+    status = UNIX_CALL(vkCreatePipelineLayout, &params);
     assert(!status);
     return params.result;
 }
@@ -3245,7 +3245,7 @@ VkResult WINAPI vkCreatePrivateDataSlot(VkDevice device, const VkPrivateDataSlot
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pPrivateDataSlot = pPrivateDataSlot;
-    status = vk_unix_call(unix_vkCreatePrivateDataSlot, &params);
+    status = UNIX_CALL(vkCreatePrivateDataSlot, &params);
     assert(!status);
     return params.result;
 }
@@ -3258,7 +3258,7 @@ VkResult WINAPI vkCreatePrivateDataSlotEXT(VkDevice device, const VkPrivateDataS
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pPrivateDataSlot = pPrivateDataSlot;
-    status = vk_unix_call(unix_vkCreatePrivateDataSlotEXT, &params);
+    status = UNIX_CALL(vkCreatePrivateDataSlotEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -3271,7 +3271,7 @@ VkResult WINAPI vkCreateQueryPool(VkDevice device, const VkQueryPoolCreateInfo *
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pQueryPool = pQueryPool;
-    status = vk_unix_call(unix_vkCreateQueryPool, &params);
+    status = UNIX_CALL(vkCreateQueryPool, &params);
     assert(!status);
     return params.result;
 }
@@ -3287,7 +3287,7 @@ VkResult WINAPI vkCreateRayTracingPipelinesKHR(VkDevice device, VkDeferredOperat
     params.pCreateInfos = pCreateInfos;
     params.pAllocator = pAllocator;
     params.pPipelines = pPipelines;
-    status = vk_unix_call(unix_vkCreateRayTracingPipelinesKHR, &params);
+    status = UNIX_CALL(vkCreateRayTracingPipelinesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3302,7 +3302,7 @@ VkResult WINAPI vkCreateRayTracingPipelinesNV(VkDevice device, VkPipelineCache p
     params.pCreateInfos = pCreateInfos;
     params.pAllocator = pAllocator;
     params.pPipelines = pPipelines;
-    status = vk_unix_call(unix_vkCreateRayTracingPipelinesNV, &params);
+    status = UNIX_CALL(vkCreateRayTracingPipelinesNV, &params);
     assert(!status);
     return params.result;
 }
@@ -3315,7 +3315,7 @@ VkResult WINAPI vkCreateRenderPass(VkDevice device, const VkRenderPassCreateInfo
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pRenderPass = pRenderPass;
-    status = vk_unix_call(unix_vkCreateRenderPass, &params);
+    status = UNIX_CALL(vkCreateRenderPass, &params);
     assert(!status);
     return params.result;
 }
@@ -3328,7 +3328,7 @@ VkResult WINAPI vkCreateRenderPass2(VkDevice device, const VkRenderPassCreateInf
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pRenderPass = pRenderPass;
-    status = vk_unix_call(unix_vkCreateRenderPass2, &params);
+    status = UNIX_CALL(vkCreateRenderPass2, &params);
     assert(!status);
     return params.result;
 }
@@ -3341,7 +3341,7 @@ VkResult WINAPI vkCreateRenderPass2KHR(VkDevice device, const VkRenderPassCreate
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pRenderPass = pRenderPass;
-    status = vk_unix_call(unix_vkCreateRenderPass2KHR, &params);
+    status = UNIX_CALL(vkCreateRenderPass2KHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3354,7 +3354,7 @@ VkResult WINAPI vkCreateSampler(VkDevice device, const VkSamplerCreateInfo *pCre
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSampler = pSampler;
-    status = vk_unix_call(unix_vkCreateSampler, &params);
+    status = UNIX_CALL(vkCreateSampler, &params);
     assert(!status);
     return params.result;
 }
@@ -3367,7 +3367,7 @@ VkResult WINAPI vkCreateSamplerYcbcrConversion(VkDevice device, const VkSamplerY
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pYcbcrConversion = pYcbcrConversion;
-    status = vk_unix_call(unix_vkCreateSamplerYcbcrConversion, &params);
+    status = UNIX_CALL(vkCreateSamplerYcbcrConversion, &params);
     assert(!status);
     return params.result;
 }
@@ -3380,7 +3380,7 @@ VkResult WINAPI vkCreateSamplerYcbcrConversionKHR(VkDevice device, const VkSampl
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pYcbcrConversion = pYcbcrConversion;
-    status = vk_unix_call(unix_vkCreateSamplerYcbcrConversionKHR, &params);
+    status = UNIX_CALL(vkCreateSamplerYcbcrConversionKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3393,7 +3393,7 @@ VkResult WINAPI vkCreateSemaphore(VkDevice device, const VkSemaphoreCreateInfo *
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSemaphore = pSemaphore;
-    status = vk_unix_call(unix_vkCreateSemaphore, &params);
+    status = UNIX_CALL(vkCreateSemaphore, &params);
     assert(!status);
     return params.result;
 }
@@ -3406,7 +3406,7 @@ VkResult WINAPI vkCreateShaderModule(VkDevice device, const VkShaderModuleCreate
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pShaderModule = pShaderModule;
-    status = vk_unix_call(unix_vkCreateShaderModule, &params);
+    status = UNIX_CALL(vkCreateShaderModule, &params);
     assert(!status);
     return params.result;
 }
@@ -3419,7 +3419,7 @@ VkResult WINAPI vkCreateSwapchainKHR(VkDevice device, const VkSwapchainCreateInf
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSwapchain = pSwapchain;
-    status = vk_unix_call(unix_vkCreateSwapchainKHR, &params);
+    status = UNIX_CALL(vkCreateSwapchainKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3432,7 +3432,7 @@ VkResult WINAPI vkCreateValidationCacheEXT(VkDevice device, const VkValidationCa
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pValidationCache = pValidationCache;
-    status = vk_unix_call(unix_vkCreateValidationCacheEXT, &params);
+    status = UNIX_CALL(vkCreateValidationCacheEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -3445,7 +3445,7 @@ VkResult WINAPI vkCreateWin32SurfaceKHR(VkInstance instance, const VkWin32Surfac
     params.pCreateInfo = pCreateInfo;
     params.pAllocator = pAllocator;
     params.pSurface = pSurface;
-    status = vk_unix_call(unix_vkCreateWin32SurfaceKHR, &params);
+    status = UNIX_CALL(vkCreateWin32SurfaceKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3456,7 +3456,7 @@ VkResult WINAPI vkDebugMarkerSetObjectNameEXT(VkDevice device, const VkDebugMark
     NTSTATUS status;
     params.device = device;
     params.pNameInfo = pNameInfo;
-    status = vk_unix_call(unix_vkDebugMarkerSetObjectNameEXT, &params);
+    status = UNIX_CALL(vkDebugMarkerSetObjectNameEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -3467,7 +3467,7 @@ VkResult WINAPI vkDebugMarkerSetObjectTagEXT(VkDevice device, const VkDebugMarke
     NTSTATUS status;
     params.device = device;
     params.pTagInfo = pTagInfo;
-    status = vk_unix_call(unix_vkDebugMarkerSetObjectTagEXT, &params);
+    status = UNIX_CALL(vkDebugMarkerSetObjectTagEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -3484,7 +3484,7 @@ void WINAPI vkDebugReportMessageEXT(VkInstance instance, VkDebugReportFlagsEXT f
     params.messageCode = messageCode;
     params.pLayerPrefix = pLayerPrefix;
     params.pMessage = pMessage;
-    status = vk_unix_call(unix_vkDebugReportMessageEXT, &params);
+    status = UNIX_CALL(vkDebugReportMessageEXT, &params);
     assert(!status);
 }
 
@@ -3494,7 +3494,7 @@ VkResult WINAPI vkDeferredOperationJoinKHR(VkDevice device, VkDeferredOperationK
     NTSTATUS status;
     params.device = device;
     params.operation = operation;
-    status = vk_unix_call(unix_vkDeferredOperationJoinKHR, &params);
+    status = UNIX_CALL(vkDeferredOperationJoinKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3506,7 +3506,7 @@ void WINAPI vkDestroyAccelerationStructureKHR(VkDevice device, VkAccelerationStr
     params.device = device;
     params.accelerationStructure = accelerationStructure;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyAccelerationStructureKHR, &params);
+    status = UNIX_CALL(vkDestroyAccelerationStructureKHR, &params);
     assert(!status);
 }
 
@@ -3517,7 +3517,7 @@ void WINAPI vkDestroyAccelerationStructureNV(VkDevice device, VkAccelerationStru
     params.device = device;
     params.accelerationStructure = accelerationStructure;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyAccelerationStructureNV, &params);
+    status = UNIX_CALL(vkDestroyAccelerationStructureNV, &params);
     assert(!status);
 }
 
@@ -3528,7 +3528,7 @@ void WINAPI vkDestroyBuffer(VkDevice device, VkBuffer buffer, const VkAllocation
     params.device = device;
     params.buffer = buffer;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyBuffer, &params);
+    status = UNIX_CALL(vkDestroyBuffer, &params);
     assert(!status);
 }
 
@@ -3539,7 +3539,7 @@ void WINAPI vkDestroyBufferView(VkDevice device, VkBufferView bufferView, const 
     params.device = device;
     params.bufferView = bufferView;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyBufferView, &params);
+    status = UNIX_CALL(vkDestroyBufferView, &params);
     assert(!status);
 }
 
@@ -3550,7 +3550,7 @@ void WINAPI vkDestroyCuFunctionNVX(VkDevice device, VkCuFunctionNVX function, co
     params.device = device;
     params.function = function;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyCuFunctionNVX, &params);
+    status = UNIX_CALL(vkDestroyCuFunctionNVX, &params);
     assert(!status);
 }
 
@@ -3561,7 +3561,7 @@ void WINAPI vkDestroyCuModuleNVX(VkDevice device, VkCuModuleNVX module, const Vk
     params.device = device;
     params.module = module;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyCuModuleNVX, &params);
+    status = UNIX_CALL(vkDestroyCuModuleNVX, &params);
     assert(!status);
 }
 
@@ -3572,7 +3572,7 @@ void WINAPI vkDestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCa
     params.instance = instance;
     params.callback = callback;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyDebugReportCallbackEXT, &params);
+    status = UNIX_CALL(vkDestroyDebugReportCallbackEXT, &params);
     assert(!status);
 }
 
@@ -3583,7 +3583,7 @@ void WINAPI vkDestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMes
     params.instance = instance;
     params.messenger = messenger;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyDebugUtilsMessengerEXT, &params);
+    status = UNIX_CALL(vkDestroyDebugUtilsMessengerEXT, &params);
     assert(!status);
 }
 
@@ -3594,7 +3594,7 @@ void WINAPI vkDestroyDeferredOperationKHR(VkDevice device, VkDeferredOperationKH
     params.device = device;
     params.operation = operation;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyDeferredOperationKHR, &params);
+    status = UNIX_CALL(vkDestroyDeferredOperationKHR, &params);
     assert(!status);
 }
 
@@ -3605,7 +3605,7 @@ void WINAPI vkDestroyDescriptorPool(VkDevice device, VkDescriptorPool descriptor
     params.device = device;
     params.descriptorPool = descriptorPool;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyDescriptorPool, &params);
+    status = UNIX_CALL(vkDestroyDescriptorPool, &params);
     assert(!status);
 }
 
@@ -3616,7 +3616,7 @@ void WINAPI vkDestroyDescriptorSetLayout(VkDevice device, VkDescriptorSetLayout 
     params.device = device;
     params.descriptorSetLayout = descriptorSetLayout;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyDescriptorSetLayout, &params);
+    status = UNIX_CALL(vkDestroyDescriptorSetLayout, &params);
     assert(!status);
 }
 
@@ -3627,7 +3627,7 @@ void WINAPI vkDestroyDescriptorUpdateTemplate(VkDevice device, VkDescriptorUpdat
     params.device = device;
     params.descriptorUpdateTemplate = descriptorUpdateTemplate;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyDescriptorUpdateTemplate, &params);
+    status = UNIX_CALL(vkDestroyDescriptorUpdateTemplate, &params);
     assert(!status);
 }
 
@@ -3638,7 +3638,7 @@ void WINAPI vkDestroyDescriptorUpdateTemplateKHR(VkDevice device, VkDescriptorUp
     params.device = device;
     params.descriptorUpdateTemplate = descriptorUpdateTemplate;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyDescriptorUpdateTemplateKHR, &params);
+    status = UNIX_CALL(vkDestroyDescriptorUpdateTemplateKHR, &params);
     assert(!status);
 }
 
@@ -3649,7 +3649,7 @@ void WINAPI vkDestroyEvent(VkDevice device, VkEvent event, const VkAllocationCal
     params.device = device;
     params.event = event;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyEvent, &params);
+    status = UNIX_CALL(vkDestroyEvent, &params);
     assert(!status);
 }
 
@@ -3660,7 +3660,7 @@ void WINAPI vkDestroyFence(VkDevice device, VkFence fence, const VkAllocationCal
     params.device = device;
     params.fence = fence;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyFence, &params);
+    status = UNIX_CALL(vkDestroyFence, &params);
     assert(!status);
 }
 
@@ -3671,7 +3671,7 @@ void WINAPI vkDestroyFramebuffer(VkDevice device, VkFramebuffer framebuffer, con
     params.device = device;
     params.framebuffer = framebuffer;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyFramebuffer, &params);
+    status = UNIX_CALL(vkDestroyFramebuffer, &params);
     assert(!status);
 }
 
@@ -3682,7 +3682,7 @@ void WINAPI vkDestroyImage(VkDevice device, VkImage image, const VkAllocationCal
     params.device = device;
     params.image = image;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyImage, &params);
+    status = UNIX_CALL(vkDestroyImage, &params);
     assert(!status);
 }
 
@@ -3693,7 +3693,7 @@ void WINAPI vkDestroyImageView(VkDevice device, VkImageView imageView, const VkA
     params.device = device;
     params.imageView = imageView;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyImageView, &params);
+    status = UNIX_CALL(vkDestroyImageView, &params);
     assert(!status);
 }
 
@@ -3704,7 +3704,7 @@ void WINAPI vkDestroyIndirectCommandsLayoutNV(VkDevice device, VkIndirectCommand
     params.device = device;
     params.indirectCommandsLayout = indirectCommandsLayout;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyIndirectCommandsLayoutNV, &params);
+    status = UNIX_CALL(vkDestroyIndirectCommandsLayoutNV, &params);
     assert(!status);
 }
 
@@ -3715,7 +3715,7 @@ void WINAPI vkDestroyMicromapEXT(VkDevice device, VkMicromapEXT micromap, const 
     params.device = device;
     params.micromap = micromap;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyMicromapEXT, &params);
+    status = UNIX_CALL(vkDestroyMicromapEXT, &params);
     assert(!status);
 }
 
@@ -3726,7 +3726,7 @@ void WINAPI vkDestroyOpticalFlowSessionNV(VkDevice device, VkOpticalFlowSessionN
     params.device = device;
     params.session = session;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyOpticalFlowSessionNV, &params);
+    status = UNIX_CALL(vkDestroyOpticalFlowSessionNV, &params);
     assert(!status);
 }
 
@@ -3737,7 +3737,7 @@ void WINAPI vkDestroyPipeline(VkDevice device, VkPipeline pipeline, const VkAllo
     params.device = device;
     params.pipeline = pipeline;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyPipeline, &params);
+    status = UNIX_CALL(vkDestroyPipeline, &params);
     assert(!status);
 }
 
@@ -3748,7 +3748,7 @@ void WINAPI vkDestroyPipelineCache(VkDevice device, VkPipelineCache pipelineCach
     params.device = device;
     params.pipelineCache = pipelineCache;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyPipelineCache, &params);
+    status = UNIX_CALL(vkDestroyPipelineCache, &params);
     assert(!status);
 }
 
@@ -3759,7 +3759,7 @@ void WINAPI vkDestroyPipelineLayout(VkDevice device, VkPipelineLayout pipelineLa
     params.device = device;
     params.pipelineLayout = pipelineLayout;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyPipelineLayout, &params);
+    status = UNIX_CALL(vkDestroyPipelineLayout, &params);
     assert(!status);
 }
 
@@ -3770,7 +3770,7 @@ void WINAPI vkDestroyPrivateDataSlot(VkDevice device, VkPrivateDataSlot privateD
     params.device = device;
     params.privateDataSlot = privateDataSlot;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyPrivateDataSlot, &params);
+    status = UNIX_CALL(vkDestroyPrivateDataSlot, &params);
     assert(!status);
 }
 
@@ -3781,7 +3781,7 @@ void WINAPI vkDestroyPrivateDataSlotEXT(VkDevice device, VkPrivateDataSlot priva
     params.device = device;
     params.privateDataSlot = privateDataSlot;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyPrivateDataSlotEXT, &params);
+    status = UNIX_CALL(vkDestroyPrivateDataSlotEXT, &params);
     assert(!status);
 }
 
@@ -3792,7 +3792,7 @@ void WINAPI vkDestroyQueryPool(VkDevice device, VkQueryPool queryPool, const VkA
     params.device = device;
     params.queryPool = queryPool;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyQueryPool, &params);
+    status = UNIX_CALL(vkDestroyQueryPool, &params);
     assert(!status);
 }
 
@@ -3803,7 +3803,7 @@ void WINAPI vkDestroyRenderPass(VkDevice device, VkRenderPass renderPass, const 
     params.device = device;
     params.renderPass = renderPass;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyRenderPass, &params);
+    status = UNIX_CALL(vkDestroyRenderPass, &params);
     assert(!status);
 }
 
@@ -3814,7 +3814,7 @@ void WINAPI vkDestroySampler(VkDevice device, VkSampler sampler, const VkAllocat
     params.device = device;
     params.sampler = sampler;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroySampler, &params);
+    status = UNIX_CALL(vkDestroySampler, &params);
     assert(!status);
 }
 
@@ -3825,7 +3825,7 @@ void WINAPI vkDestroySamplerYcbcrConversion(VkDevice device, VkSamplerYcbcrConve
     params.device = device;
     params.ycbcrConversion = ycbcrConversion;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroySamplerYcbcrConversion, &params);
+    status = UNIX_CALL(vkDestroySamplerYcbcrConversion, &params);
     assert(!status);
 }
 
@@ -3836,7 +3836,7 @@ void WINAPI vkDestroySamplerYcbcrConversionKHR(VkDevice device, VkSamplerYcbcrCo
     params.device = device;
     params.ycbcrConversion = ycbcrConversion;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroySamplerYcbcrConversionKHR, &params);
+    status = UNIX_CALL(vkDestroySamplerYcbcrConversionKHR, &params);
     assert(!status);
 }
 
@@ -3847,7 +3847,7 @@ void WINAPI vkDestroySemaphore(VkDevice device, VkSemaphore semaphore, const VkA
     params.device = device;
     params.semaphore = semaphore;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroySemaphore, &params);
+    status = UNIX_CALL(vkDestroySemaphore, &params);
     assert(!status);
 }
 
@@ -3858,7 +3858,7 @@ void WINAPI vkDestroyShaderModule(VkDevice device, VkShaderModule shaderModule, 
     params.device = device;
     params.shaderModule = shaderModule;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyShaderModule, &params);
+    status = UNIX_CALL(vkDestroyShaderModule, &params);
     assert(!status);
 }
 
@@ -3869,7 +3869,7 @@ void WINAPI vkDestroySurfaceKHR(VkInstance instance, VkSurfaceKHR surface, const
     params.instance = instance;
     params.surface = surface;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroySurfaceKHR, &params);
+    status = UNIX_CALL(vkDestroySurfaceKHR, &params);
     assert(!status);
 }
 
@@ -3880,7 +3880,7 @@ void WINAPI vkDestroySwapchainKHR(VkDevice device, VkSwapchainKHR swapchain, con
     params.device = device;
     params.swapchain = swapchain;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroySwapchainKHR, &params);
+    status = UNIX_CALL(vkDestroySwapchainKHR, &params);
     assert(!status);
 }
 
@@ -3891,7 +3891,7 @@ void WINAPI vkDestroyValidationCacheEXT(VkDevice device, VkValidationCacheEXT va
     params.device = device;
     params.validationCache = validationCache;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkDestroyValidationCacheEXT, &params);
+    status = UNIX_CALL(vkDestroyValidationCacheEXT, &params);
     assert(!status);
 }
 
@@ -3900,7 +3900,7 @@ VkResult WINAPI vkDeviceWaitIdle(VkDevice device)
     struct vkDeviceWaitIdle_params params;
     NTSTATUS status;
     params.device = device;
-    status = vk_unix_call(unix_vkDeviceWaitIdle, &params);
+    status = UNIX_CALL(vkDeviceWaitIdle, &params);
     assert(!status);
     return params.result;
 }
@@ -3910,7 +3910,7 @@ VkResult WINAPI vkEndCommandBuffer(VkCommandBuffer commandBuffer)
     struct vkEndCommandBuffer_params params;
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
-    status = vk_unix_call(unix_vkEndCommandBuffer, &params);
+    status = UNIX_CALL(vkEndCommandBuffer, &params);
     assert(!status);
     return params.result;
 }
@@ -3923,7 +3923,7 @@ VkResult WINAPI vkEnumerateDeviceExtensionProperties(VkPhysicalDevice physicalDe
     params.pLayerName = pLayerName;
     params.pPropertyCount = pPropertyCount;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkEnumerateDeviceExtensionProperties, &params);
+    status = UNIX_CALL(vkEnumerateDeviceExtensionProperties, &params);
     assert(!status);
     return params.result;
 }
@@ -3935,7 +3935,7 @@ VkResult WINAPI vkEnumerateDeviceLayerProperties(VkPhysicalDevice physicalDevice
     params.physicalDevice = physicalDevice;
     params.pPropertyCount = pPropertyCount;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkEnumerateDeviceLayerProperties, &params);
+    status = UNIX_CALL(vkEnumerateDeviceLayerProperties, &params);
     assert(!status);
     return params.result;
 }
@@ -3947,7 +3947,7 @@ VkResult WINAPI vkEnumeratePhysicalDeviceGroups(VkInstance instance, uint32_t *p
     params.instance = instance;
     params.pPhysicalDeviceGroupCount = pPhysicalDeviceGroupCount;
     params.pPhysicalDeviceGroupProperties = pPhysicalDeviceGroupProperties;
-    status = vk_unix_call(unix_vkEnumeratePhysicalDeviceGroups, &params);
+    status = UNIX_CALL(vkEnumeratePhysicalDeviceGroups, &params);
     assert(!status);
     return params.result;
 }
@@ -3959,7 +3959,7 @@ VkResult WINAPI vkEnumeratePhysicalDeviceGroupsKHR(VkInstance instance, uint32_t
     params.instance = instance;
     params.pPhysicalDeviceGroupCount = pPhysicalDeviceGroupCount;
     params.pPhysicalDeviceGroupProperties = pPhysicalDeviceGroupProperties;
-    status = vk_unix_call(unix_vkEnumeratePhysicalDeviceGroupsKHR, &params);
+    status = UNIX_CALL(vkEnumeratePhysicalDeviceGroupsKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3973,7 +3973,7 @@ VkResult WINAPI vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(
     params.pCounterCount = pCounterCount;
     params.pCounters = pCounters;
     params.pCounterDescriptions = pCounterDescriptions;
-    status = vk_unix_call(unix_vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR, &params);
+    status = UNIX_CALL(vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -3985,7 +3985,7 @@ VkResult WINAPI vkEnumeratePhysicalDevices(VkInstance instance, uint32_t *pPhysi
     params.instance = instance;
     params.pPhysicalDeviceCount = pPhysicalDeviceCount;
     params.pPhysicalDevices = pPhysicalDevices;
-    status = vk_unix_call(unix_vkEnumeratePhysicalDevices, &params);
+    status = UNIX_CALL(vkEnumeratePhysicalDevices, &params);
     assert(!status);
     return params.result;
 }
@@ -3997,7 +3997,7 @@ VkResult WINAPI vkFlushMappedMemoryRanges(VkDevice device, uint32_t memoryRangeC
     params.device = device;
     params.memoryRangeCount = memoryRangeCount;
     params.pMemoryRanges = pMemoryRanges;
-    status = vk_unix_call(unix_vkFlushMappedMemoryRanges, &params);
+    status = UNIX_CALL(vkFlushMappedMemoryRanges, &params);
     assert(!status);
     return params.result;
 }
@@ -4010,7 +4010,7 @@ VkResult WINAPI vkFreeDescriptorSets(VkDevice device, VkDescriptorPool descripto
     params.descriptorPool = descriptorPool;
     params.descriptorSetCount = descriptorSetCount;
     params.pDescriptorSets = pDescriptorSets;
-    status = vk_unix_call(unix_vkFreeDescriptorSets, &params);
+    status = UNIX_CALL(vkFreeDescriptorSets, &params);
     assert(!status);
     return params.result;
 }
@@ -4022,7 +4022,7 @@ void WINAPI vkFreeMemory(VkDevice device, VkDeviceMemory memory, const VkAllocat
     params.device = device;
     params.memory = memory;
     params.pAllocator = pAllocator;
-    status = vk_unix_call(unix_vkFreeMemory, &params);
+    status = UNIX_CALL(vkFreeMemory, &params);
     assert(!status);
 }
 
@@ -4035,7 +4035,7 @@ void WINAPI vkGetAccelerationStructureBuildSizesKHR(VkDevice device, VkAccelerat
     params.pBuildInfo = pBuildInfo;
     params.pMaxPrimitiveCounts = pMaxPrimitiveCounts;
     params.pSizeInfo = pSizeInfo;
-    status = vk_unix_call(unix_vkGetAccelerationStructureBuildSizesKHR, &params);
+    status = UNIX_CALL(vkGetAccelerationStructureBuildSizesKHR, &params);
     assert(!status);
 }
 
@@ -4045,7 +4045,7 @@ VkDeviceAddress WINAPI vkGetAccelerationStructureDeviceAddressKHR(VkDevice devic
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetAccelerationStructureDeviceAddressKHR, &params);
+    status = UNIX_CALL(vkGetAccelerationStructureDeviceAddressKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4058,7 +4058,7 @@ VkResult WINAPI vkGetAccelerationStructureHandleNV(VkDevice device, VkAccelerati
     params.accelerationStructure = accelerationStructure;
     params.dataSize = dataSize;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetAccelerationStructureHandleNV, &params);
+    status = UNIX_CALL(vkGetAccelerationStructureHandleNV, &params);
     assert(!status);
     return params.result;
 }
@@ -4070,7 +4070,7 @@ void WINAPI vkGetAccelerationStructureMemoryRequirementsNV(VkDevice device, cons
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetAccelerationStructureMemoryRequirementsNV, &params);
+    status = UNIX_CALL(vkGetAccelerationStructureMemoryRequirementsNV, &params);
     assert(!status);
 }
 
@@ -4081,7 +4081,7 @@ VkResult WINAPI vkGetAccelerationStructureOpaqueCaptureDescriptorDataEXT(VkDevic
     params.device = device;
     params.pInfo = pInfo;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetAccelerationStructureOpaqueCaptureDescriptorDataEXT, &params);
+    status = UNIX_CALL(vkGetAccelerationStructureOpaqueCaptureDescriptorDataEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -4092,7 +4092,7 @@ VkDeviceAddress WINAPI vkGetBufferDeviceAddress(VkDevice device, const VkBufferD
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetBufferDeviceAddress, &params);
+    status = UNIX_CALL(vkGetBufferDeviceAddress, &params);
     assert(!status);
     return params.result;
 }
@@ -4103,7 +4103,7 @@ VkDeviceAddress WINAPI vkGetBufferDeviceAddressEXT(VkDevice device, const VkBuff
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetBufferDeviceAddressEXT, &params);
+    status = UNIX_CALL(vkGetBufferDeviceAddressEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -4114,7 +4114,7 @@ VkDeviceAddress WINAPI vkGetBufferDeviceAddressKHR(VkDevice device, const VkBuff
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetBufferDeviceAddressKHR, &params);
+    status = UNIX_CALL(vkGetBufferDeviceAddressKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4126,7 +4126,7 @@ void WINAPI vkGetBufferMemoryRequirements(VkDevice device, VkBuffer buffer, VkMe
     params.device = device;
     params.buffer = buffer;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetBufferMemoryRequirements, &params);
+    status = UNIX_CALL(vkGetBufferMemoryRequirements, &params);
     assert(!status);
 }
 
@@ -4137,7 +4137,7 @@ void WINAPI vkGetBufferMemoryRequirements2(VkDevice device, const VkBufferMemory
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetBufferMemoryRequirements2, &params);
+    status = UNIX_CALL(vkGetBufferMemoryRequirements2, &params);
     assert(!status);
 }
 
@@ -4148,7 +4148,7 @@ void WINAPI vkGetBufferMemoryRequirements2KHR(VkDevice device, const VkBufferMem
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetBufferMemoryRequirements2KHR, &params);
+    status = UNIX_CALL(vkGetBufferMemoryRequirements2KHR, &params);
     assert(!status);
 }
 
@@ -4158,7 +4158,7 @@ uint64_t WINAPI vkGetBufferOpaqueCaptureAddress(VkDevice device, const VkBufferD
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetBufferOpaqueCaptureAddress, &params);
+    status = UNIX_CALL(vkGetBufferOpaqueCaptureAddress, &params);
     assert(!status);
     return params.result;
 }
@@ -4169,7 +4169,7 @@ uint64_t WINAPI vkGetBufferOpaqueCaptureAddressKHR(VkDevice device, const VkBuff
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetBufferOpaqueCaptureAddressKHR, &params);
+    status = UNIX_CALL(vkGetBufferOpaqueCaptureAddressKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4181,7 +4181,7 @@ VkResult WINAPI vkGetBufferOpaqueCaptureDescriptorDataEXT(VkDevice device, const
     params.device = device;
     params.pInfo = pInfo;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetBufferOpaqueCaptureDescriptorDataEXT, &params);
+    status = UNIX_CALL(vkGetBufferOpaqueCaptureDescriptorDataEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -4195,7 +4195,7 @@ VkResult WINAPI vkGetCalibratedTimestampsEXT(VkDevice device, uint32_t timestamp
     params.pTimestampInfos = pTimestampInfos;
     params.pTimestamps = pTimestamps;
     params.pMaxDeviation = pMaxDeviation;
-    status = vk_unix_call(unix_vkGetCalibratedTimestampsEXT, &params);
+    status = UNIX_CALL(vkGetCalibratedTimestampsEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -4206,7 +4206,7 @@ uint32_t WINAPI vkGetDeferredOperationMaxConcurrencyKHR(VkDevice device, VkDefer
     NTSTATUS status;
     params.device = device;
     params.operation = operation;
-    status = vk_unix_call(unix_vkGetDeferredOperationMaxConcurrencyKHR, &params);
+    status = UNIX_CALL(vkGetDeferredOperationMaxConcurrencyKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4217,7 +4217,7 @@ VkResult WINAPI vkGetDeferredOperationResultKHR(VkDevice device, VkDeferredOpera
     NTSTATUS status;
     params.device = device;
     params.operation = operation;
-    status = vk_unix_call(unix_vkGetDeferredOperationResultKHR, &params);
+    status = UNIX_CALL(vkGetDeferredOperationResultKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4230,7 +4230,7 @@ void WINAPI vkGetDescriptorEXT(VkDevice device, const VkDescriptorGetInfoEXT *pD
     params.pDescriptorInfo = pDescriptorInfo;
     params.dataSize = dataSize;
     params.pDescriptor = pDescriptor;
-    status = vk_unix_call(unix_vkGetDescriptorEXT, &params);
+    status = UNIX_CALL(vkGetDescriptorEXT, &params);
     assert(!status);
 }
 
@@ -4241,7 +4241,7 @@ void WINAPI vkGetDescriptorSetHostMappingVALVE(VkDevice device, VkDescriptorSet 
     params.device = device;
     params.descriptorSet = descriptorSet;
     params.ppData = ppData;
-    status = vk_unix_call(unix_vkGetDescriptorSetHostMappingVALVE, &params);
+    status = UNIX_CALL(vkGetDescriptorSetHostMappingVALVE, &params);
     assert(!status);
 }
 
@@ -4253,7 +4253,7 @@ void WINAPI vkGetDescriptorSetLayoutBindingOffsetEXT(VkDevice device, VkDescript
     params.layout = layout;
     params.binding = binding;
     params.pOffset = pOffset;
-    status = vk_unix_call(unix_vkGetDescriptorSetLayoutBindingOffsetEXT, &params);
+    status = UNIX_CALL(vkGetDescriptorSetLayoutBindingOffsetEXT, &params);
     assert(!status);
 }
 
@@ -4264,7 +4264,7 @@ void WINAPI vkGetDescriptorSetLayoutHostMappingInfoVALVE(VkDevice device, const 
     params.device = device;
     params.pBindingReference = pBindingReference;
     params.pHostMapping = pHostMapping;
-    status = vk_unix_call(unix_vkGetDescriptorSetLayoutHostMappingInfoVALVE, &params);
+    status = UNIX_CALL(vkGetDescriptorSetLayoutHostMappingInfoVALVE, &params);
     assert(!status);
 }
 
@@ -4275,7 +4275,7 @@ void WINAPI vkGetDescriptorSetLayoutSizeEXT(VkDevice device, VkDescriptorSetLayo
     params.device = device;
     params.layout = layout;
     params.pLayoutSizeInBytes = pLayoutSizeInBytes;
-    status = vk_unix_call(unix_vkGetDescriptorSetLayoutSizeEXT, &params);
+    status = UNIX_CALL(vkGetDescriptorSetLayoutSizeEXT, &params);
     assert(!status);
 }
 
@@ -4286,7 +4286,7 @@ void WINAPI vkGetDescriptorSetLayoutSupport(VkDevice device, const VkDescriptorS
     params.device = device;
     params.pCreateInfo = pCreateInfo;
     params.pSupport = pSupport;
-    status = vk_unix_call(unix_vkGetDescriptorSetLayoutSupport, &params);
+    status = UNIX_CALL(vkGetDescriptorSetLayoutSupport, &params);
     assert(!status);
 }
 
@@ -4297,7 +4297,7 @@ void WINAPI vkGetDescriptorSetLayoutSupportKHR(VkDevice device, const VkDescript
     params.device = device;
     params.pCreateInfo = pCreateInfo;
     params.pSupport = pSupport;
-    status = vk_unix_call(unix_vkGetDescriptorSetLayoutSupportKHR, &params);
+    status = UNIX_CALL(vkGetDescriptorSetLayoutSupportKHR, &params);
     assert(!status);
 }
 
@@ -4308,7 +4308,7 @@ void WINAPI vkGetDeviceAccelerationStructureCompatibilityKHR(VkDevice device, co
     params.device = device;
     params.pVersionInfo = pVersionInfo;
     params.pCompatibility = pCompatibility;
-    status = vk_unix_call(unix_vkGetDeviceAccelerationStructureCompatibilityKHR, &params);
+    status = UNIX_CALL(vkGetDeviceAccelerationStructureCompatibilityKHR, &params);
     assert(!status);
 }
 
@@ -4319,7 +4319,7 @@ void WINAPI vkGetDeviceBufferMemoryRequirements(VkDevice device, const VkDeviceB
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetDeviceBufferMemoryRequirements, &params);
+    status = UNIX_CALL(vkGetDeviceBufferMemoryRequirements, &params);
     assert(!status);
 }
 
@@ -4330,7 +4330,7 @@ void WINAPI vkGetDeviceBufferMemoryRequirementsKHR(VkDevice device, const VkDevi
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetDeviceBufferMemoryRequirementsKHR, &params);
+    status = UNIX_CALL(vkGetDeviceBufferMemoryRequirementsKHR, &params);
     assert(!status);
 }
 
@@ -4341,7 +4341,7 @@ VkResult WINAPI vkGetDeviceFaultInfoEXT(VkDevice device, VkDeviceFaultCountsEXT 
     params.device = device;
     params.pFaultCounts = pFaultCounts;
     params.pFaultInfo = pFaultInfo;
-    status = vk_unix_call(unix_vkGetDeviceFaultInfoEXT, &params);
+    status = UNIX_CALL(vkGetDeviceFaultInfoEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -4355,7 +4355,7 @@ void WINAPI vkGetDeviceGroupPeerMemoryFeatures(VkDevice device, uint32_t heapInd
     params.localDeviceIndex = localDeviceIndex;
     params.remoteDeviceIndex = remoteDeviceIndex;
     params.pPeerMemoryFeatures = pPeerMemoryFeatures;
-    status = vk_unix_call(unix_vkGetDeviceGroupPeerMemoryFeatures, &params);
+    status = UNIX_CALL(vkGetDeviceGroupPeerMemoryFeatures, &params);
     assert(!status);
 }
 
@@ -4368,7 +4368,7 @@ void WINAPI vkGetDeviceGroupPeerMemoryFeaturesKHR(VkDevice device, uint32_t heap
     params.localDeviceIndex = localDeviceIndex;
     params.remoteDeviceIndex = remoteDeviceIndex;
     params.pPeerMemoryFeatures = pPeerMemoryFeatures;
-    status = vk_unix_call(unix_vkGetDeviceGroupPeerMemoryFeaturesKHR, &params);
+    status = UNIX_CALL(vkGetDeviceGroupPeerMemoryFeaturesKHR, &params);
     assert(!status);
 }
 
@@ -4378,7 +4378,7 @@ VkResult WINAPI vkGetDeviceGroupPresentCapabilitiesKHR(VkDevice device, VkDevice
     NTSTATUS status;
     params.device = device;
     params.pDeviceGroupPresentCapabilities = pDeviceGroupPresentCapabilities;
-    status = vk_unix_call(unix_vkGetDeviceGroupPresentCapabilitiesKHR, &params);
+    status = UNIX_CALL(vkGetDeviceGroupPresentCapabilitiesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4390,7 +4390,7 @@ VkResult WINAPI vkGetDeviceGroupSurfacePresentModesKHR(VkDevice device, VkSurfac
     params.device = device;
     params.surface = surface;
     params.pModes = pModes;
-    status = vk_unix_call(unix_vkGetDeviceGroupSurfacePresentModesKHR, &params);
+    status = UNIX_CALL(vkGetDeviceGroupSurfacePresentModesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4402,7 +4402,7 @@ void WINAPI vkGetDeviceImageMemoryRequirements(VkDevice device, const VkDeviceIm
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetDeviceImageMemoryRequirements, &params);
+    status = UNIX_CALL(vkGetDeviceImageMemoryRequirements, &params);
     assert(!status);
 }
 
@@ -4413,7 +4413,7 @@ void WINAPI vkGetDeviceImageMemoryRequirementsKHR(VkDevice device, const VkDevic
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetDeviceImageMemoryRequirementsKHR, &params);
+    status = UNIX_CALL(vkGetDeviceImageMemoryRequirementsKHR, &params);
     assert(!status);
 }
 
@@ -4425,7 +4425,7 @@ void WINAPI vkGetDeviceImageSparseMemoryRequirements(VkDevice device, const VkDe
     params.pInfo = pInfo;
     params.pSparseMemoryRequirementCount = pSparseMemoryRequirementCount;
     params.pSparseMemoryRequirements = pSparseMemoryRequirements;
-    status = vk_unix_call(unix_vkGetDeviceImageSparseMemoryRequirements, &params);
+    status = UNIX_CALL(vkGetDeviceImageSparseMemoryRequirements, &params);
     assert(!status);
 }
 
@@ -4437,7 +4437,7 @@ void WINAPI vkGetDeviceImageSparseMemoryRequirementsKHR(VkDevice device, const V
     params.pInfo = pInfo;
     params.pSparseMemoryRequirementCount = pSparseMemoryRequirementCount;
     params.pSparseMemoryRequirements = pSparseMemoryRequirements;
-    status = vk_unix_call(unix_vkGetDeviceImageSparseMemoryRequirementsKHR, &params);
+    status = UNIX_CALL(vkGetDeviceImageSparseMemoryRequirementsKHR, &params);
     assert(!status);
 }
 
@@ -4448,7 +4448,7 @@ void WINAPI vkGetDeviceMemoryCommitment(VkDevice device, VkDeviceMemory memory, 
     params.device = device;
     params.memory = memory;
     params.pCommittedMemoryInBytes = pCommittedMemoryInBytes;
-    status = vk_unix_call(unix_vkGetDeviceMemoryCommitment, &params);
+    status = UNIX_CALL(vkGetDeviceMemoryCommitment, &params);
     assert(!status);
 }
 
@@ -4458,7 +4458,7 @@ uint64_t WINAPI vkGetDeviceMemoryOpaqueCaptureAddress(VkDevice device, const VkD
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetDeviceMemoryOpaqueCaptureAddress, &params);
+    status = UNIX_CALL(vkGetDeviceMemoryOpaqueCaptureAddress, &params);
     assert(!status);
     return params.result;
 }
@@ -4469,7 +4469,7 @@ uint64_t WINAPI vkGetDeviceMemoryOpaqueCaptureAddressKHR(VkDevice device, const 
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetDeviceMemoryOpaqueCaptureAddressKHR, &params);
+    status = UNIX_CALL(vkGetDeviceMemoryOpaqueCaptureAddressKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4481,7 +4481,7 @@ void WINAPI vkGetDeviceMicromapCompatibilityEXT(VkDevice device, const VkMicroma
     params.device = device;
     params.pVersionInfo = pVersionInfo;
     params.pCompatibility = pCompatibility;
-    status = vk_unix_call(unix_vkGetDeviceMicromapCompatibilityEXT, &params);
+    status = UNIX_CALL(vkGetDeviceMicromapCompatibilityEXT, &params);
     assert(!status);
 }
 
@@ -4493,7 +4493,7 @@ void WINAPI vkGetDeviceQueue(VkDevice device, uint32_t queueFamilyIndex, uint32_
     params.queueFamilyIndex = queueFamilyIndex;
     params.queueIndex = queueIndex;
     params.pQueue = pQueue;
-    status = vk_unix_call(unix_vkGetDeviceQueue, &params);
+    status = UNIX_CALL(vkGetDeviceQueue, &params);
     assert(!status);
 }
 
@@ -4504,7 +4504,7 @@ void WINAPI vkGetDeviceQueue2(VkDevice device, const VkDeviceQueueInfo2 *pQueueI
     params.device = device;
     params.pQueueInfo = pQueueInfo;
     params.pQueue = pQueue;
-    status = vk_unix_call(unix_vkGetDeviceQueue2, &params);
+    status = UNIX_CALL(vkGetDeviceQueue2, &params);
     assert(!status);
 }
 
@@ -4515,7 +4515,7 @@ VkResult WINAPI vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI(VkDevice device,
     params.device = device;
     params.renderpass = renderpass;
     params.pMaxWorkgroupSize = pMaxWorkgroupSize;
-    status = vk_unix_call(unix_vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI, &params);
+    status = UNIX_CALL(vkGetDeviceSubpassShadingMaxWorkgroupSizeHUAWEI, &params);
     assert(!status);
     return params.result;
 }
@@ -4527,7 +4527,7 @@ VkResult WINAPI vkGetDynamicRenderingTilePropertiesQCOM(VkDevice device, const V
     params.device = device;
     params.pRenderingInfo = pRenderingInfo;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkGetDynamicRenderingTilePropertiesQCOM, &params);
+    status = UNIX_CALL(vkGetDynamicRenderingTilePropertiesQCOM, &params);
     assert(!status);
     return params.result;
 }
@@ -4538,7 +4538,7 @@ VkResult WINAPI vkGetEventStatus(VkDevice device, VkEvent event)
     NTSTATUS status;
     params.device = device;
     params.event = event;
-    status = vk_unix_call(unix_vkGetEventStatus, &params);
+    status = UNIX_CALL(vkGetEventStatus, &params);
     assert(!status);
     return params.result;
 }
@@ -4549,7 +4549,7 @@ VkResult WINAPI vkGetFenceStatus(VkDevice device, VkFence fence)
     NTSTATUS status;
     params.device = device;
     params.fence = fence;
-    status = vk_unix_call(unix_vkGetFenceStatus, &params);
+    status = UNIX_CALL(vkGetFenceStatus, &params);
     assert(!status);
     return params.result;
 }
@@ -4562,7 +4562,7 @@ VkResult WINAPI vkGetFramebufferTilePropertiesQCOM(VkDevice device, VkFramebuffe
     params.framebuffer = framebuffer;
     params.pPropertiesCount = pPropertiesCount;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkGetFramebufferTilePropertiesQCOM, &params);
+    status = UNIX_CALL(vkGetFramebufferTilePropertiesQCOM, &params);
     assert(!status);
     return params.result;
 }
@@ -4574,7 +4574,7 @@ void WINAPI vkGetGeneratedCommandsMemoryRequirementsNV(VkDevice device, const Vk
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetGeneratedCommandsMemoryRequirementsNV, &params);
+    status = UNIX_CALL(vkGetGeneratedCommandsMemoryRequirementsNV, &params);
     assert(!status);
 }
 
@@ -4585,7 +4585,7 @@ void WINAPI vkGetImageMemoryRequirements(VkDevice device, VkImage image, VkMemor
     params.device = device;
     params.image = image;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetImageMemoryRequirements, &params);
+    status = UNIX_CALL(vkGetImageMemoryRequirements, &params);
     assert(!status);
 }
 
@@ -4596,7 +4596,7 @@ void WINAPI vkGetImageMemoryRequirements2(VkDevice device, const VkImageMemoryRe
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetImageMemoryRequirements2, &params);
+    status = UNIX_CALL(vkGetImageMemoryRequirements2, &params);
     assert(!status);
 }
 
@@ -4607,7 +4607,7 @@ void WINAPI vkGetImageMemoryRequirements2KHR(VkDevice device, const VkImageMemor
     params.device = device;
     params.pInfo = pInfo;
     params.pMemoryRequirements = pMemoryRequirements;
-    status = vk_unix_call(unix_vkGetImageMemoryRequirements2KHR, &params);
+    status = UNIX_CALL(vkGetImageMemoryRequirements2KHR, &params);
     assert(!status);
 }
 
@@ -4618,7 +4618,7 @@ VkResult WINAPI vkGetImageOpaqueCaptureDescriptorDataEXT(VkDevice device, const 
     params.device = device;
     params.pInfo = pInfo;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetImageOpaqueCaptureDescriptorDataEXT, &params);
+    status = UNIX_CALL(vkGetImageOpaqueCaptureDescriptorDataEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -4631,7 +4631,7 @@ void WINAPI vkGetImageSparseMemoryRequirements(VkDevice device, VkImage image, u
     params.image = image;
     params.pSparseMemoryRequirementCount = pSparseMemoryRequirementCount;
     params.pSparseMemoryRequirements = pSparseMemoryRequirements;
-    status = vk_unix_call(unix_vkGetImageSparseMemoryRequirements, &params);
+    status = UNIX_CALL(vkGetImageSparseMemoryRequirements, &params);
     assert(!status);
 }
 
@@ -4643,7 +4643,7 @@ void WINAPI vkGetImageSparseMemoryRequirements2(VkDevice device, const VkImageSp
     params.pInfo = pInfo;
     params.pSparseMemoryRequirementCount = pSparseMemoryRequirementCount;
     params.pSparseMemoryRequirements = pSparseMemoryRequirements;
-    status = vk_unix_call(unix_vkGetImageSparseMemoryRequirements2, &params);
+    status = UNIX_CALL(vkGetImageSparseMemoryRequirements2, &params);
     assert(!status);
 }
 
@@ -4655,7 +4655,7 @@ void WINAPI vkGetImageSparseMemoryRequirements2KHR(VkDevice device, const VkImag
     params.pInfo = pInfo;
     params.pSparseMemoryRequirementCount = pSparseMemoryRequirementCount;
     params.pSparseMemoryRequirements = pSparseMemoryRequirements;
-    status = vk_unix_call(unix_vkGetImageSparseMemoryRequirements2KHR, &params);
+    status = UNIX_CALL(vkGetImageSparseMemoryRequirements2KHR, &params);
     assert(!status);
 }
 
@@ -4667,7 +4667,7 @@ void WINAPI vkGetImageSubresourceLayout(VkDevice device, VkImage image, const Vk
     params.image = image;
     params.pSubresource = pSubresource;
     params.pLayout = pLayout;
-    status = vk_unix_call(unix_vkGetImageSubresourceLayout, &params);
+    status = UNIX_CALL(vkGetImageSubresourceLayout, &params);
     assert(!status);
 }
 
@@ -4679,7 +4679,7 @@ void WINAPI vkGetImageSubresourceLayout2EXT(VkDevice device, VkImage image, cons
     params.image = image;
     params.pSubresource = pSubresource;
     params.pLayout = pLayout;
-    status = vk_unix_call(unix_vkGetImageSubresourceLayout2EXT, &params);
+    status = UNIX_CALL(vkGetImageSubresourceLayout2EXT, &params);
     assert(!status);
 }
 
@@ -4690,7 +4690,7 @@ VkResult WINAPI vkGetImageViewAddressNVX(VkDevice device, VkImageView imageView,
     params.device = device;
     params.imageView = imageView;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkGetImageViewAddressNVX, &params);
+    status = UNIX_CALL(vkGetImageViewAddressNVX, &params);
     assert(!status);
     return params.result;
 }
@@ -4701,7 +4701,7 @@ uint32_t WINAPI vkGetImageViewHandleNVX(VkDevice device, const VkImageViewHandle
     NTSTATUS status;
     params.device = device;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetImageViewHandleNVX, &params);
+    status = UNIX_CALL(vkGetImageViewHandleNVX, &params);
     assert(!status);
     return params.result;
 }
@@ -4713,7 +4713,7 @@ VkResult WINAPI vkGetImageViewOpaqueCaptureDescriptorDataEXT(VkDevice device, co
     params.device = device;
     params.pInfo = pInfo;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetImageViewOpaqueCaptureDescriptorDataEXT, &params);
+    status = UNIX_CALL(vkGetImageViewOpaqueCaptureDescriptorDataEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -4726,7 +4726,7 @@ VkResult WINAPI vkGetMemoryHostPointerPropertiesEXT(VkDevice device, VkExternalM
     params.handleType = handleType;
     params.pHostPointer = pHostPointer;
     params.pMemoryHostPointerProperties = pMemoryHostPointerProperties;
-    status = vk_unix_call(unix_vkGetMemoryHostPointerPropertiesEXT, &params);
+    status = UNIX_CALL(vkGetMemoryHostPointerPropertiesEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -4739,7 +4739,7 @@ void WINAPI vkGetMicromapBuildSizesEXT(VkDevice device, VkAccelerationStructureB
     params.buildType = buildType;
     params.pBuildInfo = pBuildInfo;
     params.pSizeInfo = pSizeInfo;
-    status = vk_unix_call(unix_vkGetMicromapBuildSizesEXT, &params);
+    status = UNIX_CALL(vkGetMicromapBuildSizesEXT, &params);
     assert(!status);
 }
 
@@ -4750,7 +4750,7 @@ VkResult WINAPI vkGetPerformanceParameterINTEL(VkDevice device, VkPerformancePar
     params.device = device;
     params.parameter = parameter;
     params.pValue = pValue;
-    status = vk_unix_call(unix_vkGetPerformanceParameterINTEL, &params);
+    status = UNIX_CALL(vkGetPerformanceParameterINTEL, &params);
     assert(!status);
     return params.result;
 }
@@ -4762,7 +4762,7 @@ VkResult WINAPI vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(VkPhysicalDevice 
     params.physicalDevice = physicalDevice;
     params.pTimeDomainCount = pTimeDomainCount;
     params.pTimeDomains = pTimeDomains;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceCalibrateableTimeDomainsEXT, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceCalibrateableTimeDomainsEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -4774,7 +4774,7 @@ VkResult WINAPI vkGetPhysicalDeviceCooperativeMatrixPropertiesNV(VkPhysicalDevic
     params.physicalDevice = physicalDevice;
     params.pPropertyCount = pPropertyCount;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceCooperativeMatrixPropertiesNV, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceCooperativeMatrixPropertiesNV, &params);
     assert(!status);
     return params.result;
 }
@@ -4786,7 +4786,7 @@ void WINAPI vkGetPhysicalDeviceExternalBufferProperties(VkPhysicalDevice physica
     params.physicalDevice = physicalDevice;
     params.pExternalBufferInfo = pExternalBufferInfo;
     params.pExternalBufferProperties = pExternalBufferProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceExternalBufferProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceExternalBufferProperties, &params);
     assert(!status);
 }
 
@@ -4797,7 +4797,7 @@ void WINAPI vkGetPhysicalDeviceExternalBufferPropertiesKHR(VkPhysicalDevice phys
     params.physicalDevice = physicalDevice;
     params.pExternalBufferInfo = pExternalBufferInfo;
     params.pExternalBufferProperties = pExternalBufferProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceExternalBufferPropertiesKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceExternalBufferPropertiesKHR, &params);
     assert(!status);
 }
 
@@ -4808,7 +4808,7 @@ void WINAPI vkGetPhysicalDeviceExternalFenceProperties(VkPhysicalDevice physical
     params.physicalDevice = physicalDevice;
     params.pExternalFenceInfo = pExternalFenceInfo;
     params.pExternalFenceProperties = pExternalFenceProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceExternalFenceProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceExternalFenceProperties, &params);
     assert(!status);
 }
 
@@ -4819,7 +4819,7 @@ void WINAPI vkGetPhysicalDeviceExternalFencePropertiesKHR(VkPhysicalDevice physi
     params.physicalDevice = physicalDevice;
     params.pExternalFenceInfo = pExternalFenceInfo;
     params.pExternalFenceProperties = pExternalFenceProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceExternalFencePropertiesKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceExternalFencePropertiesKHR, &params);
     assert(!status);
 }
 
@@ -4830,7 +4830,7 @@ void WINAPI vkGetPhysicalDeviceExternalSemaphoreProperties(VkPhysicalDevice phys
     params.physicalDevice = physicalDevice;
     params.pExternalSemaphoreInfo = pExternalSemaphoreInfo;
     params.pExternalSemaphoreProperties = pExternalSemaphoreProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceExternalSemaphoreProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceExternalSemaphoreProperties, &params);
     assert(!status);
 }
 
@@ -4841,7 +4841,7 @@ void WINAPI vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(VkPhysicalDevice p
     params.physicalDevice = physicalDevice;
     params.pExternalSemaphoreInfo = pExternalSemaphoreInfo;
     params.pExternalSemaphoreProperties = pExternalSemaphoreProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceExternalSemaphorePropertiesKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceExternalSemaphorePropertiesKHR, &params);
     assert(!status);
 }
 
@@ -4851,7 +4851,7 @@ void WINAPI vkGetPhysicalDeviceFeatures(VkPhysicalDevice physicalDevice, VkPhysi
     NTSTATUS status;
     params.physicalDevice = physicalDevice;
     params.pFeatures = pFeatures;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceFeatures, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceFeatures, &params);
     assert(!status);
 }
 
@@ -4861,7 +4861,7 @@ void WINAPI vkGetPhysicalDeviceFeatures2(VkPhysicalDevice physicalDevice, VkPhys
     NTSTATUS status;
     params.physicalDevice = physicalDevice;
     params.pFeatures = pFeatures;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceFeatures2, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceFeatures2, &params);
     assert(!status);
 }
 
@@ -4871,7 +4871,7 @@ void WINAPI vkGetPhysicalDeviceFeatures2KHR(VkPhysicalDevice physicalDevice, VkP
     NTSTATUS status;
     params.physicalDevice = physicalDevice;
     params.pFeatures = pFeatures;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceFeatures2KHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceFeatures2KHR, &params);
     assert(!status);
 }
 
@@ -4882,7 +4882,7 @@ void WINAPI vkGetPhysicalDeviceFormatProperties(VkPhysicalDevice physicalDevice,
     params.physicalDevice = physicalDevice;
     params.format = format;
     params.pFormatProperties = pFormatProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceFormatProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceFormatProperties, &params);
     assert(!status);
 }
 
@@ -4893,7 +4893,7 @@ void WINAPI vkGetPhysicalDeviceFormatProperties2(VkPhysicalDevice physicalDevice
     params.physicalDevice = physicalDevice;
     params.format = format;
     params.pFormatProperties = pFormatProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceFormatProperties2, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceFormatProperties2, &params);
     assert(!status);
 }
 
@@ -4904,7 +4904,7 @@ void WINAPI vkGetPhysicalDeviceFormatProperties2KHR(VkPhysicalDevice physicalDev
     params.physicalDevice = physicalDevice;
     params.format = format;
     params.pFormatProperties = pFormatProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceFormatProperties2KHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceFormatProperties2KHR, &params);
     assert(!status);
 }
 
@@ -4915,7 +4915,7 @@ VkResult WINAPI vkGetPhysicalDeviceFragmentShadingRatesKHR(VkPhysicalDevice phys
     params.physicalDevice = physicalDevice;
     params.pFragmentShadingRateCount = pFragmentShadingRateCount;
     params.pFragmentShadingRates = pFragmentShadingRates;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceFragmentShadingRatesKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceFragmentShadingRatesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4931,7 +4931,7 @@ VkResult WINAPI vkGetPhysicalDeviceImageFormatProperties(VkPhysicalDevice physic
     params.usage = usage;
     params.flags = flags;
     params.pImageFormatProperties = pImageFormatProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceImageFormatProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceImageFormatProperties, &params);
     assert(!status);
     return params.result;
 }
@@ -4943,7 +4943,7 @@ VkResult WINAPI vkGetPhysicalDeviceImageFormatProperties2(VkPhysicalDevice physi
     params.physicalDevice = physicalDevice;
     params.pImageFormatInfo = pImageFormatInfo;
     params.pImageFormatProperties = pImageFormatProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceImageFormatProperties2, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceImageFormatProperties2, &params);
     assert(!status);
     return params.result;
 }
@@ -4955,7 +4955,7 @@ VkResult WINAPI vkGetPhysicalDeviceImageFormatProperties2KHR(VkPhysicalDevice ph
     params.physicalDevice = physicalDevice;
     params.pImageFormatInfo = pImageFormatInfo;
     params.pImageFormatProperties = pImageFormatProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceImageFormatProperties2KHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceImageFormatProperties2KHR, &params);
     assert(!status);
     return params.result;
 }
@@ -4966,7 +4966,7 @@ void WINAPI vkGetPhysicalDeviceMemoryProperties(VkPhysicalDevice physicalDevice,
     NTSTATUS status;
     params.physicalDevice = physicalDevice;
     params.pMemoryProperties = pMemoryProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceMemoryProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceMemoryProperties, &params);
     assert(!status);
 }
 
@@ -4976,7 +4976,7 @@ void WINAPI vkGetPhysicalDeviceMemoryProperties2(VkPhysicalDevice physicalDevice
     NTSTATUS status;
     params.physicalDevice = physicalDevice;
     params.pMemoryProperties = pMemoryProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceMemoryProperties2, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceMemoryProperties2, &params);
     assert(!status);
 }
 
@@ -4986,7 +4986,7 @@ void WINAPI vkGetPhysicalDeviceMemoryProperties2KHR(VkPhysicalDevice physicalDev
     NTSTATUS status;
     params.physicalDevice = physicalDevice;
     params.pMemoryProperties = pMemoryProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceMemoryProperties2KHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceMemoryProperties2KHR, &params);
     assert(!status);
 }
 
@@ -4997,7 +4997,7 @@ void WINAPI vkGetPhysicalDeviceMultisamplePropertiesEXT(VkPhysicalDevice physica
     params.physicalDevice = physicalDevice;
     params.samples = samples;
     params.pMultisampleProperties = pMultisampleProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceMultisamplePropertiesEXT, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceMultisamplePropertiesEXT, &params);
     assert(!status);
 }
 
@@ -5009,7 +5009,7 @@ VkResult WINAPI vkGetPhysicalDeviceOpticalFlowImageFormatsNV(VkPhysicalDevice ph
     params.pOpticalFlowImageFormatInfo = pOpticalFlowImageFormatInfo;
     params.pFormatCount = pFormatCount;
     params.pImageFormatProperties = pImageFormatProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceOpticalFlowImageFormatsNV, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceOpticalFlowImageFormatsNV, &params);
     assert(!status);
     return params.result;
 }
@@ -5022,7 +5022,7 @@ VkResult WINAPI vkGetPhysicalDevicePresentRectanglesKHR(VkPhysicalDevice physica
     params.surface = surface;
     params.pRectCount = pRectCount;
     params.pRects = pRects;
-    status = vk_unix_call(unix_vkGetPhysicalDevicePresentRectanglesKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDevicePresentRectanglesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5033,7 +5033,7 @@ void WINAPI vkGetPhysicalDeviceProperties(VkPhysicalDevice physicalDevice, VkPhy
     NTSTATUS status;
     params.physicalDevice = physicalDevice;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceProperties, &params);
     assert(!status);
 }
 
@@ -5044,7 +5044,7 @@ void WINAPI vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(VkPhysicalDe
     params.physicalDevice = physicalDevice;
     params.pPerformanceQueryCreateInfo = pPerformanceQueryCreateInfo;
     params.pNumPasses = pNumPasses;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR, &params);
     assert(!status);
 }
 
@@ -5055,7 +5055,7 @@ void WINAPI vkGetPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDe
     params.physicalDevice = physicalDevice;
     params.pQueueFamilyPropertyCount = pQueueFamilyPropertyCount;
     params.pQueueFamilyProperties = pQueueFamilyProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceQueueFamilyProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceQueueFamilyProperties, &params);
     assert(!status);
 }
 
@@ -5066,7 +5066,7 @@ void WINAPI vkGetPhysicalDeviceQueueFamilyProperties2(VkPhysicalDevice physicalD
     params.physicalDevice = physicalDevice;
     params.pQueueFamilyPropertyCount = pQueueFamilyPropertyCount;
     params.pQueueFamilyProperties = pQueueFamilyProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceQueueFamilyProperties2, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceQueueFamilyProperties2, &params);
     assert(!status);
 }
 
@@ -5077,7 +5077,7 @@ void WINAPI vkGetPhysicalDeviceQueueFamilyProperties2KHR(VkPhysicalDevice physic
     params.physicalDevice = physicalDevice;
     params.pQueueFamilyPropertyCount = pQueueFamilyPropertyCount;
     params.pQueueFamilyProperties = pQueueFamilyProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceQueueFamilyProperties2KHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceQueueFamilyProperties2KHR, &params);
     assert(!status);
 }
 
@@ -5093,7 +5093,7 @@ void WINAPI vkGetPhysicalDeviceSparseImageFormatProperties(VkPhysicalDevice phys
     params.tiling = tiling;
     params.pPropertyCount = pPropertyCount;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSparseImageFormatProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSparseImageFormatProperties, &params);
     assert(!status);
 }
 
@@ -5105,7 +5105,7 @@ void WINAPI vkGetPhysicalDeviceSparseImageFormatProperties2(VkPhysicalDevice phy
     params.pFormatInfo = pFormatInfo;
     params.pPropertyCount = pPropertyCount;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSparseImageFormatProperties2, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSparseImageFormatProperties2, &params);
     assert(!status);
 }
 
@@ -5117,7 +5117,7 @@ void WINAPI vkGetPhysicalDeviceSparseImageFormatProperties2KHR(VkPhysicalDevice 
     params.pFormatInfo = pFormatInfo;
     params.pPropertyCount = pPropertyCount;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSparseImageFormatProperties2KHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSparseImageFormatProperties2KHR, &params);
     assert(!status);
 }
 
@@ -5128,7 +5128,7 @@ VkResult WINAPI vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsN
     params.physicalDevice = physicalDevice;
     params.pCombinationCount = pCombinationCount;
     params.pCombinations = pCombinations;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV, &params);
     assert(!status);
     return params.result;
 }
@@ -5140,7 +5140,7 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceCapabilities2KHR(VkPhysicalDevice phys
     params.physicalDevice = physicalDevice;
     params.pSurfaceInfo = pSurfaceInfo;
     params.pSurfaceCapabilities = pSurfaceCapabilities;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSurfaceCapabilities2KHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSurfaceCapabilities2KHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5152,7 +5152,7 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VkPhysicalDevice physi
     params.physicalDevice = physicalDevice;
     params.surface = surface;
     params.pSurfaceCapabilities = pSurfaceCapabilities;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSurfaceCapabilitiesKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSurfaceCapabilitiesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5165,7 +5165,7 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice physicalD
     params.pSurfaceInfo = pSurfaceInfo;
     params.pSurfaceFormatCount = pSurfaceFormatCount;
     params.pSurfaceFormats = pSurfaceFormats;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSurfaceFormats2KHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSurfaceFormats2KHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5178,7 +5178,7 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice physicalDe
     params.surface = surface;
     params.pSurfaceFormatCount = pSurfaceFormatCount;
     params.pSurfaceFormats = pSurfaceFormats;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSurfaceFormatsKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSurfaceFormatsKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5191,7 +5191,7 @@ VkResult WINAPI vkGetPhysicalDeviceSurfacePresentModesKHR(VkPhysicalDevice physi
     params.surface = surface;
     params.pPresentModeCount = pPresentModeCount;
     params.pPresentModes = pPresentModes;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSurfacePresentModesKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSurfacePresentModesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5204,7 +5204,7 @@ VkResult WINAPI vkGetPhysicalDeviceSurfaceSupportKHR(VkPhysicalDevice physicalDe
     params.queueFamilyIndex = queueFamilyIndex;
     params.surface = surface;
     params.pSupported = pSupported;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceSurfaceSupportKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceSurfaceSupportKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5216,7 +5216,7 @@ VkResult WINAPI vkGetPhysicalDeviceToolProperties(VkPhysicalDevice physicalDevic
     params.physicalDevice = physicalDevice;
     params.pToolCount = pToolCount;
     params.pToolProperties = pToolProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceToolProperties, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceToolProperties, &params);
     assert(!status);
     return params.result;
 }
@@ -5228,7 +5228,7 @@ VkResult WINAPI vkGetPhysicalDeviceToolPropertiesEXT(VkPhysicalDevice physicalDe
     params.physicalDevice = physicalDevice;
     params.pToolCount = pToolCount;
     params.pToolProperties = pToolProperties;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceToolPropertiesEXT, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceToolPropertiesEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -5239,7 +5239,7 @@ VkBool32 WINAPI vkGetPhysicalDeviceWin32PresentationSupportKHR(VkPhysicalDevice 
     NTSTATUS status;
     params.physicalDevice = physicalDevice;
     params.queueFamilyIndex = queueFamilyIndex;
-    status = vk_unix_call(unix_vkGetPhysicalDeviceWin32PresentationSupportKHR, &params);
+    status = UNIX_CALL(vkGetPhysicalDeviceWin32PresentationSupportKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5252,7 +5252,7 @@ VkResult WINAPI vkGetPipelineCacheData(VkDevice device, VkPipelineCache pipeline
     params.pipelineCache = pipelineCache;
     params.pDataSize = pDataSize;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetPipelineCacheData, &params);
+    status = UNIX_CALL(vkGetPipelineCacheData, &params);
     assert(!status);
     return params.result;
 }
@@ -5265,7 +5265,7 @@ VkResult WINAPI vkGetPipelineExecutableInternalRepresentationsKHR(VkDevice devic
     params.pExecutableInfo = pExecutableInfo;
     params.pInternalRepresentationCount = pInternalRepresentationCount;
     params.pInternalRepresentations = pInternalRepresentations;
-    status = vk_unix_call(unix_vkGetPipelineExecutableInternalRepresentationsKHR, &params);
+    status = UNIX_CALL(vkGetPipelineExecutableInternalRepresentationsKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5278,7 +5278,7 @@ VkResult WINAPI vkGetPipelineExecutablePropertiesKHR(VkDevice device, const VkPi
     params.pPipelineInfo = pPipelineInfo;
     params.pExecutableCount = pExecutableCount;
     params.pProperties = pProperties;
-    status = vk_unix_call(unix_vkGetPipelineExecutablePropertiesKHR, &params);
+    status = UNIX_CALL(vkGetPipelineExecutablePropertiesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5291,7 +5291,7 @@ VkResult WINAPI vkGetPipelineExecutableStatisticsKHR(VkDevice device, const VkPi
     params.pExecutableInfo = pExecutableInfo;
     params.pStatisticCount = pStatisticCount;
     params.pStatistics = pStatistics;
-    status = vk_unix_call(unix_vkGetPipelineExecutableStatisticsKHR, &params);
+    status = UNIX_CALL(vkGetPipelineExecutableStatisticsKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5303,7 +5303,7 @@ VkResult WINAPI vkGetPipelinePropertiesEXT(VkDevice device, const VkPipelineInfo
     params.device = device;
     params.pPipelineInfo = pPipelineInfo;
     params.pPipelineProperties = pPipelineProperties;
-    status = vk_unix_call(unix_vkGetPipelinePropertiesEXT, &params);
+    status = UNIX_CALL(vkGetPipelinePropertiesEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -5317,7 +5317,7 @@ void WINAPI vkGetPrivateData(VkDevice device, VkObjectType objectType, uint64_t 
     params.objectHandle = objectHandle;
     params.privateDataSlot = privateDataSlot;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetPrivateData, &params);
+    status = UNIX_CALL(vkGetPrivateData, &params);
     assert(!status);
 }
 
@@ -5330,7 +5330,7 @@ void WINAPI vkGetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64
     params.objectHandle = objectHandle;
     params.privateDataSlot = privateDataSlot;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetPrivateDataEXT, &params);
+    status = UNIX_CALL(vkGetPrivateDataEXT, &params);
     assert(!status);
 }
 
@@ -5346,7 +5346,7 @@ VkResult WINAPI vkGetQueryPoolResults(VkDevice device, VkQueryPool queryPool, ui
     params.pData = pData;
     params.stride = stride;
     params.flags = flags;
-    status = vk_unix_call(unix_vkGetQueryPoolResults, &params);
+    status = UNIX_CALL(vkGetQueryPoolResults, &params);
     assert(!status);
     return params.result;
 }
@@ -5358,7 +5358,7 @@ void WINAPI vkGetQueueCheckpointData2NV(VkQueue queue, uint32_t *pCheckpointData
     params.queue = queue;
     params.pCheckpointDataCount = pCheckpointDataCount;
     params.pCheckpointData = pCheckpointData;
-    status = vk_unix_call(unix_vkGetQueueCheckpointData2NV, &params);
+    status = UNIX_CALL(vkGetQueueCheckpointData2NV, &params);
     assert(!status);
 }
 
@@ -5369,7 +5369,7 @@ void WINAPI vkGetQueueCheckpointDataNV(VkQueue queue, uint32_t *pCheckpointDataC
     params.queue = queue;
     params.pCheckpointDataCount = pCheckpointDataCount;
     params.pCheckpointData = pCheckpointData;
-    status = vk_unix_call(unix_vkGetQueueCheckpointDataNV, &params);
+    status = UNIX_CALL(vkGetQueueCheckpointDataNV, &params);
     assert(!status);
 }
 
@@ -5383,7 +5383,7 @@ VkResult WINAPI vkGetRayTracingCaptureReplayShaderGroupHandlesKHR(VkDevice devic
     params.groupCount = groupCount;
     params.dataSize = dataSize;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetRayTracingCaptureReplayShaderGroupHandlesKHR, &params);
+    status = UNIX_CALL(vkGetRayTracingCaptureReplayShaderGroupHandlesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5398,7 +5398,7 @@ VkResult WINAPI vkGetRayTracingShaderGroupHandlesKHR(VkDevice device, VkPipeline
     params.groupCount = groupCount;
     params.dataSize = dataSize;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetRayTracingShaderGroupHandlesKHR, &params);
+    status = UNIX_CALL(vkGetRayTracingShaderGroupHandlesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5413,7 +5413,7 @@ VkResult WINAPI vkGetRayTracingShaderGroupHandlesNV(VkDevice device, VkPipeline 
     params.groupCount = groupCount;
     params.dataSize = dataSize;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetRayTracingShaderGroupHandlesNV, &params);
+    status = UNIX_CALL(vkGetRayTracingShaderGroupHandlesNV, &params);
     assert(!status);
     return params.result;
 }
@@ -5426,7 +5426,7 @@ VkDeviceSize WINAPI vkGetRayTracingShaderGroupStackSizeKHR(VkDevice device, VkPi
     params.pipeline = pipeline;
     params.group = group;
     params.groupShader = groupShader;
-    status = vk_unix_call(unix_vkGetRayTracingShaderGroupStackSizeKHR, &params);
+    status = UNIX_CALL(vkGetRayTracingShaderGroupStackSizeKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5438,7 +5438,7 @@ void WINAPI vkGetRenderAreaGranularity(VkDevice device, VkRenderPass renderPass,
     params.device = device;
     params.renderPass = renderPass;
     params.pGranularity = pGranularity;
-    status = vk_unix_call(unix_vkGetRenderAreaGranularity, &params);
+    status = UNIX_CALL(vkGetRenderAreaGranularity, &params);
     assert(!status);
 }
 
@@ -5449,7 +5449,7 @@ VkResult WINAPI vkGetSamplerOpaqueCaptureDescriptorDataEXT(VkDevice device, cons
     params.device = device;
     params.pInfo = pInfo;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetSamplerOpaqueCaptureDescriptorDataEXT, &params);
+    status = UNIX_CALL(vkGetSamplerOpaqueCaptureDescriptorDataEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -5461,7 +5461,7 @@ VkResult WINAPI vkGetSemaphoreCounterValue(VkDevice device, VkSemaphore semaphor
     params.device = device;
     params.semaphore = semaphore;
     params.pValue = pValue;
-    status = vk_unix_call(unix_vkGetSemaphoreCounterValue, &params);
+    status = UNIX_CALL(vkGetSemaphoreCounterValue, &params);
     assert(!status);
     return params.result;
 }
@@ -5473,7 +5473,7 @@ VkResult WINAPI vkGetSemaphoreCounterValueKHR(VkDevice device, VkSemaphore semap
     params.device = device;
     params.semaphore = semaphore;
     params.pValue = pValue;
-    status = vk_unix_call(unix_vkGetSemaphoreCounterValueKHR, &params);
+    status = UNIX_CALL(vkGetSemaphoreCounterValueKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5488,7 +5488,7 @@ VkResult WINAPI vkGetShaderInfoAMD(VkDevice device, VkPipeline pipeline, VkShade
     params.infoType = infoType;
     params.pInfoSize = pInfoSize;
     params.pInfo = pInfo;
-    status = vk_unix_call(unix_vkGetShaderInfoAMD, &params);
+    status = UNIX_CALL(vkGetShaderInfoAMD, &params);
     assert(!status);
     return params.result;
 }
@@ -5500,7 +5500,7 @@ void WINAPI vkGetShaderModuleCreateInfoIdentifierEXT(VkDevice device, const VkSh
     params.device = device;
     params.pCreateInfo = pCreateInfo;
     params.pIdentifier = pIdentifier;
-    status = vk_unix_call(unix_vkGetShaderModuleCreateInfoIdentifierEXT, &params);
+    status = UNIX_CALL(vkGetShaderModuleCreateInfoIdentifierEXT, &params);
     assert(!status);
 }
 
@@ -5511,7 +5511,7 @@ void WINAPI vkGetShaderModuleIdentifierEXT(VkDevice device, VkShaderModule shade
     params.device = device;
     params.shaderModule = shaderModule;
     params.pIdentifier = pIdentifier;
-    status = vk_unix_call(unix_vkGetShaderModuleIdentifierEXT, &params);
+    status = UNIX_CALL(vkGetShaderModuleIdentifierEXT, &params);
     assert(!status);
 }
 
@@ -5523,7 +5523,7 @@ VkResult WINAPI vkGetSwapchainImagesKHR(VkDevice device, VkSwapchainKHR swapchai
     params.swapchain = swapchain;
     params.pSwapchainImageCount = pSwapchainImageCount;
     params.pSwapchainImages = pSwapchainImages;
-    status = vk_unix_call(unix_vkGetSwapchainImagesKHR, &params);
+    status = UNIX_CALL(vkGetSwapchainImagesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5536,7 +5536,7 @@ VkResult WINAPI vkGetValidationCacheDataEXT(VkDevice device, VkValidationCacheEX
     params.validationCache = validationCache;
     params.pDataSize = pDataSize;
     params.pData = pData;
-    status = vk_unix_call(unix_vkGetValidationCacheDataEXT, &params);
+    status = UNIX_CALL(vkGetValidationCacheDataEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -5547,7 +5547,7 @@ VkResult WINAPI vkInitializePerformanceApiINTEL(VkDevice device, const VkInitial
     NTSTATUS status;
     params.device = device;
     params.pInitializeInfo = pInitializeInfo;
-    status = vk_unix_call(unix_vkInitializePerformanceApiINTEL, &params);
+    status = UNIX_CALL(vkInitializePerformanceApiINTEL, &params);
     assert(!status);
     return params.result;
 }
@@ -5559,7 +5559,7 @@ VkResult WINAPI vkInvalidateMappedMemoryRanges(VkDevice device, uint32_t memoryR
     params.device = device;
     params.memoryRangeCount = memoryRangeCount;
     params.pMemoryRanges = pMemoryRanges;
-    status = vk_unix_call(unix_vkInvalidateMappedMemoryRanges, &params);
+    status = UNIX_CALL(vkInvalidateMappedMemoryRanges, &params);
     assert(!status);
     return params.result;
 }
@@ -5574,7 +5574,7 @@ VkResult WINAPI vkMapMemory(VkDevice device, VkDeviceMemory memory, VkDeviceSize
     params.size = size;
     params.flags = flags;
     params.ppData = ppData;
-    status = vk_unix_call(unix_vkMapMemory, &params);
+    status = UNIX_CALL(vkMapMemory, &params);
     assert(!status);
     return params.result;
 }
@@ -5587,7 +5587,7 @@ VkResult WINAPI vkMergePipelineCaches(VkDevice device, VkPipelineCache dstCache,
     params.dstCache = dstCache;
     params.srcCacheCount = srcCacheCount;
     params.pSrcCaches = pSrcCaches;
-    status = vk_unix_call(unix_vkMergePipelineCaches, &params);
+    status = UNIX_CALL(vkMergePipelineCaches, &params);
     assert(!status);
     return params.result;
 }
@@ -5600,7 +5600,7 @@ VkResult WINAPI vkMergeValidationCachesEXT(VkDevice device, VkValidationCacheEXT
     params.dstCache = dstCache;
     params.srcCacheCount = srcCacheCount;
     params.pSrcCaches = pSrcCaches;
-    status = vk_unix_call(unix_vkMergeValidationCachesEXT, &params);
+    status = UNIX_CALL(vkMergeValidationCachesEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -5611,7 +5611,7 @@ void WINAPI vkQueueBeginDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLabe
     NTSTATUS status;
     params.queue = queue;
     params.pLabelInfo = pLabelInfo;
-    status = vk_unix_call(unix_vkQueueBeginDebugUtilsLabelEXT, &params);
+    status = UNIX_CALL(vkQueueBeginDebugUtilsLabelEXT, &params);
     assert(!status);
 }
 
@@ -5623,7 +5623,7 @@ VkResult WINAPI vkQueueBindSparse(VkQueue queue, uint32_t bindInfoCount, const V
     params.bindInfoCount = bindInfoCount;
     params.pBindInfo = pBindInfo;
     params.fence = fence;
-    status = vk_unix_call(unix_vkQueueBindSparse, &params);
+    status = UNIX_CALL(vkQueueBindSparse, &params);
     assert(!status);
     return params.result;
 }
@@ -5633,7 +5633,7 @@ void WINAPI vkQueueEndDebugUtilsLabelEXT(VkQueue queue)
     struct vkQueueEndDebugUtilsLabelEXT_params params;
     NTSTATUS status;
     params.queue = queue;
-    status = vk_unix_call(unix_vkQueueEndDebugUtilsLabelEXT, &params);
+    status = UNIX_CALL(vkQueueEndDebugUtilsLabelEXT, &params);
     assert(!status);
 }
 
@@ -5643,7 +5643,7 @@ void WINAPI vkQueueInsertDebugUtilsLabelEXT(VkQueue queue, const VkDebugUtilsLab
     NTSTATUS status;
     params.queue = queue;
     params.pLabelInfo = pLabelInfo;
-    status = vk_unix_call(unix_vkQueueInsertDebugUtilsLabelEXT, &params);
+    status = UNIX_CALL(vkQueueInsertDebugUtilsLabelEXT, &params);
     assert(!status);
 }
 
@@ -5653,7 +5653,7 @@ VkResult WINAPI vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *pPresen
     NTSTATUS status;
     params.queue = queue;
     params.pPresentInfo = pPresentInfo;
-    status = vk_unix_call(unix_vkQueuePresentKHR, &params);
+    status = UNIX_CALL(vkQueuePresentKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5664,7 +5664,7 @@ VkResult WINAPI vkQueueSetPerformanceConfigurationINTEL(VkQueue queue, VkPerform
     NTSTATUS status;
     params.queue = queue;
     params.configuration = configuration;
-    status = vk_unix_call(unix_vkQueueSetPerformanceConfigurationINTEL, &params);
+    status = UNIX_CALL(vkQueueSetPerformanceConfigurationINTEL, &params);
     assert(!status);
     return params.result;
 }
@@ -5677,7 +5677,7 @@ VkResult WINAPI vkQueueSubmit(VkQueue queue, uint32_t submitCount, const VkSubmi
     params.submitCount = submitCount;
     params.pSubmits = pSubmits;
     params.fence = fence;
-    status = vk_unix_call(unix_vkQueueSubmit, &params);
+    status = UNIX_CALL(vkQueueSubmit, &params);
     assert(!status);
     return params.result;
 }
@@ -5690,7 +5690,7 @@ VkResult WINAPI vkQueueSubmit2(VkQueue queue, uint32_t submitCount, const VkSubm
     params.submitCount = submitCount;
     params.pSubmits = pSubmits;
     params.fence = fence;
-    status = vk_unix_call(unix_vkQueueSubmit2, &params);
+    status = UNIX_CALL(vkQueueSubmit2, &params);
     assert(!status);
     return params.result;
 }
@@ -5703,7 +5703,7 @@ VkResult WINAPI vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const VkS
     params.submitCount = submitCount;
     params.pSubmits = pSubmits;
     params.fence = fence;
-    status = vk_unix_call(unix_vkQueueSubmit2KHR, &params);
+    status = UNIX_CALL(vkQueueSubmit2KHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5713,7 +5713,7 @@ VkResult WINAPI vkQueueWaitIdle(VkQueue queue)
     struct vkQueueWaitIdle_params params;
     NTSTATUS status;
     params.queue = queue;
-    status = vk_unix_call(unix_vkQueueWaitIdle, &params);
+    status = UNIX_CALL(vkQueueWaitIdle, &params);
     assert(!status);
     return params.result;
 }
@@ -5724,7 +5724,7 @@ VkResult WINAPI vkReleasePerformanceConfigurationINTEL(VkDevice device, VkPerfor
     NTSTATUS status;
     params.device = device;
     params.configuration = configuration;
-    status = vk_unix_call(unix_vkReleasePerformanceConfigurationINTEL, &params);
+    status = UNIX_CALL(vkReleasePerformanceConfigurationINTEL, &params);
     assert(!status);
     return params.result;
 }
@@ -5734,7 +5734,7 @@ void WINAPI vkReleaseProfilingLockKHR(VkDevice device)
     struct vkReleaseProfilingLockKHR_params params;
     NTSTATUS status;
     params.device = device;
-    status = vk_unix_call(unix_vkReleaseProfilingLockKHR, &params);
+    status = UNIX_CALL(vkReleaseProfilingLockKHR, &params);
     assert(!status);
 }
 
@@ -5744,7 +5744,7 @@ VkResult WINAPI vkResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBuf
     NTSTATUS status;
     params.commandBuffer = commandBuffer;
     params.flags = flags;
-    status = vk_unix_call(unix_vkResetCommandBuffer, &params);
+    status = UNIX_CALL(vkResetCommandBuffer, &params);
     assert(!status);
     return params.result;
 }
@@ -5756,7 +5756,7 @@ VkResult WINAPI vkResetCommandPool(VkDevice device, VkCommandPool commandPool, V
     params.device = device;
     params.commandPool = commandPool;
     params.flags = flags;
-    status = vk_unix_call(unix_vkResetCommandPool, &params);
+    status = UNIX_CALL(vkResetCommandPool, &params);
     assert(!status);
     return params.result;
 }
@@ -5768,7 +5768,7 @@ VkResult WINAPI vkResetDescriptorPool(VkDevice device, VkDescriptorPool descript
     params.device = device;
     params.descriptorPool = descriptorPool;
     params.flags = flags;
-    status = vk_unix_call(unix_vkResetDescriptorPool, &params);
+    status = UNIX_CALL(vkResetDescriptorPool, &params);
     assert(!status);
     return params.result;
 }
@@ -5779,7 +5779,7 @@ VkResult WINAPI vkResetEvent(VkDevice device, VkEvent event)
     NTSTATUS status;
     params.device = device;
     params.event = event;
-    status = vk_unix_call(unix_vkResetEvent, &params);
+    status = UNIX_CALL(vkResetEvent, &params);
     assert(!status);
     return params.result;
 }
@@ -5791,7 +5791,7 @@ VkResult WINAPI vkResetFences(VkDevice device, uint32_t fenceCount, const VkFenc
     params.device = device;
     params.fenceCount = fenceCount;
     params.pFences = pFences;
-    status = vk_unix_call(unix_vkResetFences, &params);
+    status = UNIX_CALL(vkResetFences, &params);
     assert(!status);
     return params.result;
 }
@@ -5804,7 +5804,7 @@ void WINAPI vkResetQueryPool(VkDevice device, VkQueryPool queryPool, uint32_t fi
     params.queryPool = queryPool;
     params.firstQuery = firstQuery;
     params.queryCount = queryCount;
-    status = vk_unix_call(unix_vkResetQueryPool, &params);
+    status = UNIX_CALL(vkResetQueryPool, &params);
     assert(!status);
 }
 
@@ -5816,7 +5816,7 @@ void WINAPI vkResetQueryPoolEXT(VkDevice device, VkQueryPool queryPool, uint32_t
     params.queryPool = queryPool;
     params.firstQuery = firstQuery;
     params.queryCount = queryCount;
-    status = vk_unix_call(unix_vkResetQueryPoolEXT, &params);
+    status = UNIX_CALL(vkResetQueryPoolEXT, &params);
     assert(!status);
 }
 
@@ -5826,7 +5826,7 @@ VkResult WINAPI vkSetDebugUtilsObjectNameEXT(VkDevice device, const VkDebugUtils
     NTSTATUS status;
     params.device = device;
     params.pNameInfo = pNameInfo;
-    status = vk_unix_call(unix_vkSetDebugUtilsObjectNameEXT, &params);
+    status = UNIX_CALL(vkSetDebugUtilsObjectNameEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -5837,7 +5837,7 @@ VkResult WINAPI vkSetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsO
     NTSTATUS status;
     params.device = device;
     params.pTagInfo = pTagInfo;
-    status = vk_unix_call(unix_vkSetDebugUtilsObjectTagEXT, &params);
+    status = UNIX_CALL(vkSetDebugUtilsObjectTagEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -5849,7 +5849,7 @@ void WINAPI vkSetDeviceMemoryPriorityEXT(VkDevice device, VkDeviceMemory memory,
     params.device = device;
     params.memory = memory;
     params.priority = priority;
-    status = vk_unix_call(unix_vkSetDeviceMemoryPriorityEXT, &params);
+    status = UNIX_CALL(vkSetDeviceMemoryPriorityEXT, &params);
     assert(!status);
 }
 
@@ -5859,7 +5859,7 @@ VkResult WINAPI vkSetEvent(VkDevice device, VkEvent event)
     NTSTATUS status;
     params.device = device;
     params.event = event;
-    status = vk_unix_call(unix_vkSetEvent, &params);
+    status = UNIX_CALL(vkSetEvent, &params);
     assert(!status);
     return params.result;
 }
@@ -5873,7 +5873,7 @@ VkResult WINAPI vkSetPrivateData(VkDevice device, VkObjectType objectType, uint6
     params.objectHandle = objectHandle;
     params.privateDataSlot = privateDataSlot;
     params.data = data;
-    status = vk_unix_call(unix_vkSetPrivateData, &params);
+    status = UNIX_CALL(vkSetPrivateData, &params);
     assert(!status);
     return params.result;
 }
@@ -5887,7 +5887,7 @@ VkResult WINAPI vkSetPrivateDataEXT(VkDevice device, VkObjectType objectType, ui
     params.objectHandle = objectHandle;
     params.privateDataSlot = privateDataSlot;
     params.data = data;
-    status = vk_unix_call(unix_vkSetPrivateDataEXT, &params);
+    status = UNIX_CALL(vkSetPrivateDataEXT, &params);
     assert(!status);
     return params.result;
 }
@@ -5898,7 +5898,7 @@ VkResult WINAPI vkSignalSemaphore(VkDevice device, const VkSemaphoreSignalInfo *
     NTSTATUS status;
     params.device = device;
     params.pSignalInfo = pSignalInfo;
-    status = vk_unix_call(unix_vkSignalSemaphore, &params);
+    status = UNIX_CALL(vkSignalSemaphore, &params);
     assert(!status);
     return params.result;
 }
@@ -5909,7 +5909,7 @@ VkResult WINAPI vkSignalSemaphoreKHR(VkDevice device, const VkSemaphoreSignalInf
     NTSTATUS status;
     params.device = device;
     params.pSignalInfo = pSignalInfo;
-    status = vk_unix_call(unix_vkSignalSemaphoreKHR, &params);
+    status = UNIX_CALL(vkSignalSemaphoreKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -5922,7 +5922,7 @@ void WINAPI vkSubmitDebugUtilsMessageEXT(VkInstance instance, VkDebugUtilsMessag
     params.messageSeverity = messageSeverity;
     params.messageTypes = messageTypes;
     params.pCallbackData = pCallbackData;
-    status = vk_unix_call(unix_vkSubmitDebugUtilsMessageEXT, &params);
+    status = UNIX_CALL(vkSubmitDebugUtilsMessageEXT, &params);
     assert(!status);
 }
 
@@ -5933,7 +5933,7 @@ void WINAPI vkTrimCommandPool(VkDevice device, VkCommandPool commandPool, VkComm
     params.device = device;
     params.commandPool = commandPool;
     params.flags = flags;
-    status = vk_unix_call(unix_vkTrimCommandPool, &params);
+    status = UNIX_CALL(vkTrimCommandPool, &params);
     assert(!status);
 }
 
@@ -5944,7 +5944,7 @@ void WINAPI vkTrimCommandPoolKHR(VkDevice device, VkCommandPool commandPool, VkC
     params.device = device;
     params.commandPool = commandPool;
     params.flags = flags;
-    status = vk_unix_call(unix_vkTrimCommandPoolKHR, &params);
+    status = UNIX_CALL(vkTrimCommandPoolKHR, &params);
     assert(!status);
 }
 
@@ -5953,7 +5953,7 @@ void WINAPI vkUninitializePerformanceApiINTEL(VkDevice device)
     struct vkUninitializePerformanceApiINTEL_params params;
     NTSTATUS status;
     params.device = device;
-    status = vk_unix_call(unix_vkUninitializePerformanceApiINTEL, &params);
+    status = UNIX_CALL(vkUninitializePerformanceApiINTEL, &params);
     assert(!status);
 }
 
@@ -5963,7 +5963,7 @@ void WINAPI vkUnmapMemory(VkDevice device, VkDeviceMemory memory)
     NTSTATUS status;
     params.device = device;
     params.memory = memory;
-    status = vk_unix_call(unix_vkUnmapMemory, &params);
+    status = UNIX_CALL(vkUnmapMemory, &params);
     assert(!status);
 }
 
@@ -5975,7 +5975,7 @@ void WINAPI vkUpdateDescriptorSetWithTemplate(VkDevice device, VkDescriptorSet d
     params.descriptorSet = descriptorSet;
     params.descriptorUpdateTemplate = descriptorUpdateTemplate;
     params.pData = pData;
-    status = vk_unix_call(unix_vkUpdateDescriptorSetWithTemplate, &params);
+    status = UNIX_CALL(vkUpdateDescriptorSetWithTemplate, &params);
     assert(!status);
 }
 
@@ -5987,7 +5987,7 @@ void WINAPI vkUpdateDescriptorSetWithTemplateKHR(VkDevice device, VkDescriptorSe
     params.descriptorSet = descriptorSet;
     params.descriptorUpdateTemplate = descriptorUpdateTemplate;
     params.pData = pData;
-    status = vk_unix_call(unix_vkUpdateDescriptorSetWithTemplateKHR, &params);
+    status = UNIX_CALL(vkUpdateDescriptorSetWithTemplateKHR, &params);
     assert(!status);
 }
 
@@ -6000,7 +6000,7 @@ void WINAPI vkUpdateDescriptorSets(VkDevice device, uint32_t descriptorWriteCoun
     params.pDescriptorWrites = pDescriptorWrites;
     params.descriptorCopyCount = descriptorCopyCount;
     params.pDescriptorCopies = pDescriptorCopies;
-    status = vk_unix_call(unix_vkUpdateDescriptorSets, &params);
+    status = UNIX_CALL(vkUpdateDescriptorSets, &params);
     assert(!status);
 }
 
@@ -6013,7 +6013,7 @@ VkResult WINAPI vkWaitForFences(VkDevice device, uint32_t fenceCount, const VkFe
     params.pFences = pFences;
     params.waitAll = waitAll;
     params.timeout = timeout;
-    status = vk_unix_call(unix_vkWaitForFences, &params);
+    status = UNIX_CALL(vkWaitForFences, &params);
     assert(!status);
     return params.result;
 }
@@ -6026,7 +6026,7 @@ VkResult WINAPI vkWaitForPresentKHR(VkDevice device, VkSwapchainKHR swapchain, u
     params.swapchain = swapchain;
     params.presentId = presentId;
     params.timeout = timeout;
-    status = vk_unix_call(unix_vkWaitForPresentKHR, &params);
+    status = UNIX_CALL(vkWaitForPresentKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -6038,7 +6038,7 @@ VkResult WINAPI vkWaitSemaphores(VkDevice device, const VkSemaphoreWaitInfo *pWa
     params.device = device;
     params.pWaitInfo = pWaitInfo;
     params.timeout = timeout;
-    status = vk_unix_call(unix_vkWaitSemaphores, &params);
+    status = UNIX_CALL(vkWaitSemaphores, &params);
     assert(!status);
     return params.result;
 }
@@ -6050,7 +6050,7 @@ VkResult WINAPI vkWaitSemaphoresKHR(VkDevice device, const VkSemaphoreWaitInfo *
     params.device = device;
     params.pWaitInfo = pWaitInfo;
     params.timeout = timeout;
-    status = vk_unix_call(unix_vkWaitSemaphoresKHR, &params);
+    status = UNIX_CALL(vkWaitSemaphoresKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -6066,7 +6066,7 @@ VkResult WINAPI vkWriteAccelerationStructuresPropertiesKHR(VkDevice device, uint
     params.dataSize = dataSize;
     params.pData = pData;
     params.stride = stride;
-    status = vk_unix_call(unix_vkWriteAccelerationStructuresPropertiesKHR, &params);
+    status = UNIX_CALL(vkWriteAccelerationStructuresPropertiesKHR, &params);
     assert(!status);
     return params.result;
 }
@@ -6082,7 +6082,7 @@ VkResult WINAPI vkWriteMicromapsPropertiesEXT(VkDevice device, uint32_t micromap
     params.dataSize = dataSize;
     params.pData = pData;
     params.stride = stride;
-    status = vk_unix_call(unix_vkWriteMicromapsPropertiesEXT, &params);
+    status = UNIX_CALL(vkWriteMicromapsPropertiesEXT, &params);
     assert(!status);
     return params.result;
 }

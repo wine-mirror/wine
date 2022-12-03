@@ -145,13 +145,6 @@ struct is_available_device_function_params
     const char *name;
 };
 
-#ifndef WINE_UNIX_LIB
-
-static inline NTSTATUS vk_unix_call(enum unix_call code, void *params)
-{
-    return WINE_UNIX_CALL(code, params);
-}
-
-#endif /* WINE_UNIX_LIB */
+#define UNIX_CALL(code, params) WINE_UNIX_CALL(unix_ ## code, params)
 
 #endif /* __WINE_VULKAN_LOADER_H */

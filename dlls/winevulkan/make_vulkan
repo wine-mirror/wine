@@ -737,7 +737,7 @@ class VkFunction(object):
             body += "    params.{0} = {0};\n".format(p.name)
 
         # Call the Unix function.
-        body += "    status = vk_unix_call(unix_{0}, &params);\n".format(self.name)
+        body += "    status = UNIX_CALL({0}, &params);\n".format(self.name)
         body += "    assert(!status);\n"
         if self.type != "void":
             body += "    return params.result;\n"
