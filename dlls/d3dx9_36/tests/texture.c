@@ -2527,7 +2527,6 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
 
     hr = D3DXFillTextureTX(texture, tx);
-    todo_wine
     ok(SUCCEEDED(hr), "Got unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DTexture9_LockRect(texture, 0, &lr, NULL, D3DLOCK_READONLY);
@@ -2541,7 +2540,6 @@ float4 main(float3 pos : POSITION, float3 size : PSIZE) : COLOR
             /* The third position coordinate is apparently undefined for 2D textures. */
             unsigned int color = data[y * lr.Pitch / sizeof(*data) + x] & 0xffffff00;
 
-            todo_wine
             ok(compare_color(color, expected, 1), "Unexpected color %08x at (%u, %u).\n", color, x, y);
         }
     }

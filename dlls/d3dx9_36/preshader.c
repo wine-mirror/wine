@@ -1728,16 +1728,20 @@ HRESULT d3dx_evaluate_parameter(struct d3dx_param_eval *peval, const struct d3dx
     HRESULT hr;
     unsigned int i;
     unsigned int elements, elements_param, elements_table;
+    BOOL is_dirty;
     float *oc;
 
     TRACE("peval %p, param %p, param_value %p.\n", peval, param, param_value);
 
-    if (is_const_tab_input_dirty(&peval->pres.inputs, ULONG64_MAX))
+    if ((is_dirty = is_const_tab_input_dirty(&peval->pres.inputs, ULONG64_MAX)))
     {
         set_constants(&peval->pres.regs, &peval->pres.inputs,
-                next_update_version(peval->version_counter),
-                NULL, NULL, peval->param_type, FALSE, FALSE);
+                next_update_version(peval->version_counter), NULL, NULL,
+                peval->param_type, FALSE, FALSE);
+    }
 
+    if (is_dirty || peval->pres.regs.table_sizes[PRES_REGTAB_INPUT])
+    {
         if (FAILED(hr = execute_preshader(&peval->pres)))
             return hr;
     }

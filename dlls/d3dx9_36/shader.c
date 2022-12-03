@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 
 #include "d3dx9_private.h"
 #include "d3dcommon.h"
@@ -2615,6 +2616,15 @@ static const struct ID3DXTextureShaderVtbl d3dx9_texture_shader_vtbl =
     d3dx9_texture_shader_SetMatrixTransposePointerArray
 };
 
+static inline struct d3dx9_texture_shader *unsafe_impl_from_ID3DXTextureShader(ID3DXTextureShader *iface)
+{
+    if (!iface)
+        return NULL;
+
+    assert(iface->lpVtbl == &d3dx9_texture_shader_vtbl);
+    return impl_from_ID3DXTextureShader(iface);
+}
+
 HRESULT WINAPI D3DXCreateTextureShader(const DWORD *function, ID3DXTextureShader **texture_shader)
 {
     struct d3dx9_texture_shader *object;
@@ -2658,6 +2668,39 @@ HRESULT WINAPI D3DXCreateTextureShader(const DWORD *function, ID3DXTextureShader
     *texture_shader = &object->ID3DXTextureShader_iface;
 
     return D3D_OK;
+}
+
+void WINAPI texture_shader_fill_2d(D3DXVECTOR4 *out, const D3DXVECTOR2 *texcoord,
+        const D3DXVECTOR2 *texelsize, void *data)
+{
+    struct d3dx9_texture_shader *shader = data;
+    struct d3dx_parameter param = { 0 };
+    float *inputs;
+
+    inputs = (float *)shader->eval->pres.regs.tables[PRES_REGTAB_INPUT];
+
+    *(inputs++) = texcoord->x;
+    *(inputs++) = texcoord->y;
+    *(inputs++) = 0.0f;
+    *(inputs++) = 0.0f;
+
+    *(inputs++) = texelsize->x;
+    *(inputs++) = texelsize->y;
+    *(inputs++) = 0.0f;
+    *(inputs++) = 0.0f;
+
+    param.type = D3DXPT_FLOAT;
+    param.bytes = 4 * sizeof(float);
+    d3dx_evaluate_parameter(shader->eval, &param, out);
+}
+
+HRESULT WINAPI D3DXFillTextureTX(struct IDirect3DTexture9 *texture, ID3DXTextureShader *texture_shader)
+{
+    struct d3dx9_texture_shader *shader = unsafe_impl_from_ID3DXTextureShader(texture_shader);
+
+    TRACE("texture %p, texture_shader %p.\n", texture, texture_shader);
+
+    return D3DXFillTexture(texture, texture_shader_fill_2d, shader);
 }
 
 static unsigned int get_instr_length(const DWORD *byte_code, unsigned int major, unsigned int minor)

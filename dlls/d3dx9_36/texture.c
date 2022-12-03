@@ -1382,12 +1382,6 @@ HRESULT WINAPI D3DXFillTexture(struct IDirect3DTexture9 *texture, LPD3DXFILL2D f
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXFillTextureTX(struct IDirect3DTexture9 *texture, ID3DXTextureShader *texture_shader)
-{
-    FIXME("texture %p, texture_shader %p stub.\n", texture, texture_shader);
-    return E_NOTIMPL;
-}
-
 HRESULT WINAPI D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *device, const void *src_data,
         UINT src_data_size, UINT size, UINT mip_levels, DWORD usage, D3DFORMAT format, D3DPOOL pool,
         DWORD filter, DWORD mip_filter, D3DCOLOR color_key, D3DXIMAGE_INFO *src_info,
