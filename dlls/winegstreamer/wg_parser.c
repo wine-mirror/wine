@@ -33,6 +33,7 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <gst/audio/audio.h>
+#include <gst/tag/tag.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -93,6 +94,8 @@ struct wg_parser
     bool sink_connected;
 
     bool unlimited_buffering;
+
+    gchar *sink_caps;
 };
 
 struct wg_parser_stream
@@ -476,7 +479,9 @@ static NTSTATUS wg_parser_stream_notify_qos(void *args)
 static GstAutoplugSelectResult autoplug_select_cb(GstElement *bin, GstPad *pad,
         GstCaps *caps, GstElementFactory *fact, gpointer user)
 {
+    struct wg_parser *parser = user;
     const char *name = gst_element_factory_get_longname(fact);
+    const char *klass = gst_element_factory_get_klass(fact);
 
     GST_INFO("Using \"%s\".", name);
 
@@ -490,6 +495,10 @@ static GstAutoplugSelectResult autoplug_select_cb(GstElement *bin, GstPad *pad,
         GST_WARNING("Disabled video acceleration since it breaks in wine.");
         return GST_AUTOPLUG_SELECT_SKIP;
     }
+
+    if (!parser->sink_caps && strstr(klass, GST_ELEMENT_FACTORY_KLASS_DEMUXER))
+        parser->sink_caps = g_strdup(gst_structure_get_name(gst_caps_get_structure(caps, 0)));
+
     return GST_AUTOPLUG_SELECT_TRY;
 }
 
@@ -1326,7 +1335,18 @@ static void query_tags(struct wg_parser_stream *stream)
 
         if (!stream->tags[WG_PARSER_TAG_LANGUAGE])
         {
-            gst_tag_list_get_string(tag_list, GST_TAG_LANGUAGE_CODE, &stream->tags[WG_PARSER_TAG_LANGUAGE]);
+            gchar *lang_code = NULL;
+
+            gst_tag_list_get_string(tag_list, GST_TAG_LANGUAGE_CODE, &lang_code);
+            if (stream->parser->sink_caps && !strcmp(stream->parser->sink_caps, "video/quicktime"))
+            {
+                /* For QuickTime media, we convert the language tags to ISO 639-1. */
+                const gchar *lang_code_iso_639_1 = lang_code ? gst_tag_get_language_code_iso_639_1(lang_code) : NULL;
+                stream->tags[WG_PARSER_TAG_LANGUAGE] = lang_code_iso_639_1 ? g_strdup(lang_code_iso_639_1) : NULL;
+                g_free(lang_code);
+            }
+            else
+                stream->tags[WG_PARSER_TAG_LANGUAGE] = lang_code;
         }
 
         gst_event_unref(tag_event);
@@ -1493,6 +1513,9 @@ out:
         parser->container = NULL;
     }
 
+    g_free(parser->sink_caps);
+    parser->sink_caps = NULL;
+
     pthread_mutex_lock(&parser->mutex);
     parser->sink_connected = false;
     pthread_mutex_unlock(&parser->mutex);
@@ -1535,6 +1558,9 @@ static NTSTATUS wg_parser_disconnect(void *args)
     gst_element_set_bus(parser->container, NULL);
     gst_object_unref(parser->container);
     parser->container = NULL;
+
+    g_free(parser->sink_caps);
+    parser->sink_caps = NULL;
 
     return S_OK;
 }
