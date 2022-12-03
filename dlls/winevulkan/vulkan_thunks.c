@@ -41789,7 +41789,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 const unixlib_entry_t __wine_unix_call_funcs[] =
 #endif
 {
-    init_vulkan32,
+    init_vulkan,
     vk_is_available_instance_function32,
     vk_is_available_device_function32,
     thunk32_vkAcquireNextImage2KHR,
@@ -42320,8 +42320,3 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkWriteMicromapsPropertiesEXT,
 };
 C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);
-
-NTSTATUS WINAPI vk_direct_unix_call(unixlib_handle_t handle, unsigned int code, void *params)
-{
-    return __wine_unix_call_funcs[code](params);
-}

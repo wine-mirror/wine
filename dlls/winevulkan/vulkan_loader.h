@@ -147,9 +147,6 @@ struct is_available_device_function_params
 
 #ifndef WINE_UNIX_LIB
 
-extern NTSTATUS (WINAPI *p_vk_direct_unix_call)(unixlib_handle_t handle, unsigned int code,
-                                                void *args) DECLSPEC_HIDDEN;
-
 static inline NTSTATUS vk_unix_call(enum unix_call code, void *params)
 {
     return WINE_UNIX_CALL(code, params);

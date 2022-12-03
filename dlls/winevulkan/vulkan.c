@@ -462,8 +462,6 @@ static void wine_vk_device_free(struct wine_device *device)
     free(device);
 }
 
-#ifdef _WIN64
-
 NTSTATUS init_vulkan(void *args)
 {
     vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
@@ -473,25 +471,6 @@ NTSTATUS init_vulkan(void *args)
         return STATUS_UNSUCCESSFUL;
     }
 
-
-    *(void **)args = vk_direct_unix_call;
-    return STATUS_SUCCESS;
-}
-
-#endif /* _WIN64 */
-
-NTSTATUS init_vulkan32(void *args)
-{
-    vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
-    if (!vk_funcs)
-    {
-        ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
-        return STATUS_UNSUCCESSFUL;
-    }
-
-#ifndef _WIN64
-    *(void **)args = vk_direct_unix_call;
-#endif
     return STATUS_SUCCESS;
 }
 

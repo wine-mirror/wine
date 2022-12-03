@@ -243,9 +243,6 @@ BOOL wine_vk_instance_extension_supported(const char *name) DECLSPEC_HIDDEN;
 BOOL wine_vk_is_type_wrapped(VkObjectType type) DECLSPEC_HIDDEN;
 
 NTSTATUS init_vulkan(void *args) DECLSPEC_HIDDEN;
-NTSTATUS init_vulkan32(void *args) DECLSPEC_HIDDEN;
-
-NTSTATUS WINAPI vk_direct_unix_call(unixlib_handle_t handle, unsigned int code, void *arg) DECLSPEC_HIDDEN;
 
 NTSTATUS vk_is_available_instance_function(void *arg) DECLSPEC_HIDDEN;
 NTSTATUS vk_is_available_device_function(void *arg) DECLSPEC_HIDDEN;

@@ -149,12 +149,6 @@ ALLOWED_X_EXTENSIONS = [
     "VK_NVX_image_view_handle",
 ]
 
-# Some frequently called functions use direct calls for performance reasons.
-DIRECT_CALL_FUNCTIONS = [
-    "vkUpdateDescriptorSets",
-    "vkUpdateDescriptorSetWithTemplate",
-]
-
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
@@ -679,12 +673,6 @@ class VkFunction(object):
         # The function needs exposed if at-least one extension isn't both UNSUPPORTED and UNEXPOSED
         return self.is_required() and (not self.extensions or not self.extensions.issubset(UNEXPOSED_EXTENSIONS))
 
-    def needs_direct_call(self):
-        # vkCmd* functions are frequently called, use direct calls for performance
-        if self.name.startswith("vkCmd"):
-            return True
-        return self.name in DIRECT_CALL_FUNCTIONS
-
     def pfn(self, prefix="p", call_conv=None):
         """ Create function pointer. """
 
@@ -747,13 +735,9 @@ class VkFunction(object):
         body += "    NTSTATUS status;\n"
         for p in self.params:
             body += "    params.{0} = {0};\n".format(p.name)
-        body += "    ";
 
         # Call the Unix function.
-        if self.needs_direct_call():
-            body += "status = p_vk_direct_unix_call(__wine_unixlib_handle, unix_{0}, &params);\n".format(self.name)
-        else:
-            body += "status = vk_unix_call(unix_{0}, &params);\n".format(self.name)
+        body += "    status = vk_unix_call(unix_{0}, &params);\n".format(self.name)
         body += "    assert(!status);\n"
         if self.type != "void":
             body += "    return params.result;\n"
@@ -2733,7 +2717,7 @@ class VkGenerator(object):
         f.write("const unixlib_entry_t __wine_unix_call_funcs[] =\n")
         f.write("#endif\n")
         f.write("{\n")
-        f.write("    init_vulkan32,\n")
+        f.write("    init_vulkan,\n")
         f.write("    vk_is_available_instance_function32,\n")
         f.write("    vk_is_available_device_function32,\n")
         for vk_func in self.registry.funcs.values():
@@ -2744,12 +2728,7 @@ class VkGenerator(object):
 
             f.write("    {1}{0},\n".format(vk_func.name, "thunk32_"))
         f.write("};\n")
-        f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
-
-        f.write("NTSTATUS WINAPI vk_direct_unix_call(unixlib_handle_t handle, unsigned int code, void *params)\n")
-        f.write("{\n")
-        f.write("    return __wine_unix_call_funcs[code](params);\n")
-        f.write("}\n")
+        f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n")
 
     def generate_thunks_h(self, f, prefix):
         self._generate_copyright(f)
