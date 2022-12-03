@@ -1573,8 +1573,6 @@ static NTSTATUS MODULE_InitDLL( WINE_MODREF *wm, UINT reason, LPVOID lpReserved 
 
     if (wm->ldr.Flags & LDR_DONT_RESOLVE_REFS) return STATUS_SUCCESS;
     if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, reason );
-    if (wm->ldr.Flags & LDR_WINE_INTERNAL && reason == DLL_PROCESS_ATTACH)
-        NTDLL_UNIX_CALL( init_builtin_dll, wm->ldr.DllBase );
     if (!entry) return STATUS_SUCCESS;
 
     if (TRACE_ON(relay))
@@ -4218,7 +4216,6 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         }
         release_address_space();
         if (wm->ldr.TlsIndex != -1) call_tls_callbacks( wm->ldr.DllBase, DLL_PROCESS_ATTACH );
-        if (wm->ldr.Flags & LDR_WINE_INTERNAL) NTDLL_UNIX_CALL( init_builtin_dll, wm->ldr.DllBase );
         if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
         process_breakpoint();
     }

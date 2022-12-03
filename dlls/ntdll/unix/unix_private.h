@@ -225,7 +225,6 @@ extern void virtual_set_force_exec( BOOL enable ) DECLSPEC_HIDDEN;
 extern void virtual_set_large_address_space(void) DECLSPEC_HIDDEN;
 extern void virtual_fill_image_information( const pe_image_info_t *pe_info,
                                             SECTION_IMAGE_INFORMATION *info ) DECLSPEC_HIDDEN;
-extern void release_builtin_module( void *module ) DECLSPEC_HIDDEN;
 extern void *get_builtin_so_handle( void *module ) DECLSPEC_HIDDEN;
 extern NTSTATUS load_builtin_unixlib( void *module, const char *name ) DECLSPEC_HIDDEN;
 extern NTSTATUS unwind_builtin_dll( void *args ) DECLSPEC_HIDDEN;

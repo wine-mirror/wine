@@ -31,6 +31,7 @@
 #include "winternl.h"
 
 extern int main( int argc, char *argv[] );
+extern void __wine_init_so_dll(void) DECLSPEC_HIDDEN;
 
 static char **build_argv( const char *src, int *ret_argc )
 {
@@ -100,5 +101,6 @@ DWORD WINAPI DECLSPEC_HIDDEN __wine_spec_exe_entry( PEB *peb )
     int argc;
     char **argv = build_argv( GetCommandLineA(), &argc );
 
+    __wine_init_so_dll();
     ExitProcess( main( argc, argv ));
 }

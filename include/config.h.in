@@ -33,6 +33,9 @@
 /* Define to 1 if you have the <cups/ppd.h> header file. */
 #undef HAVE_CUPS_PPD_H
 
+/* Define to 1 if you have the `dladdr1' function. */
+#undef HAVE_DLADDR1
+
 /* Define to 1 if you have the `dlinfo' function. */
 #undef HAVE_DLINFO
 

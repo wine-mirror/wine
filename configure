@@ -19795,6 +19795,12 @@ fi
 
 ac_wine_check_funcs_save_LIBS="$LIBS"
 LIBS="$LIBS $DL_LIBS"
+ac_fn_c_check_func "$LINENO" "dladdr1" "ac_cv_func_dladdr1"
+if test "x$ac_cv_func_dladdr1" = xyes
+then :
+  printf "%s\n" "#define HAVE_DLADDR1 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "dlinfo" "ac_cv_func_dlinfo"
 if test "x$ac_cv_func_dlinfo" = xyes
 then :

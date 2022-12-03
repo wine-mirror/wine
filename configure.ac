@@ -2025,7 +2025,7 @@ CFLAGS="$ac_save_CFLAGS"
 
 dnl Check for -ldl
 AC_SEARCH_LIBS(dlopen, dl)
-WINE_CHECK_LIB_FUNCS(dlinfo,[$DL_LIBS])
+WINE_CHECK_LIB_FUNCS(dladdr1 dlinfo,[$DL_LIBS])
 
 dnl Check for -lnsl for Solaris
 AC_SEARCH_LIBS(gethostbyname, nsl)

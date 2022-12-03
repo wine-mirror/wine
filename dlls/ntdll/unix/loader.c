@@ -1872,88 +1872,6 @@ NTSTATUS load_start_exe( WCHAR **image, void **module )
 }
 
 
-#ifdef __FreeBSD__
-/* The PT_LOAD segments are sorted in increasing order, and the first
- * starts at the beginning of the ELF file. By parsing the file, we can
- * find that first PT_LOAD segment, from which we can find the base
- * address it wanted, and knowing mapbase where the binary was actually
- * loaded, use them to work out the relocbase offset. */
-static BOOL get_relocbase(caddr_t mapbase, caddr_t *relocbase)
-{
-    Elf_Half i;
-#ifdef _WIN64
-    const Elf64_Ehdr *elf_header = (Elf64_Ehdr*) mapbase;
-#else
-    const Elf32_Ehdr *elf_header = (Elf32_Ehdr*) mapbase;
-#endif
-    const Elf_Phdr *prog_header = (const Elf_Phdr *)(mapbase + elf_header->e_phoff);
-
-    for (i = 0; i < elf_header->e_phnum; i++)
-    {
-         if (prog_header->p_type == PT_LOAD)
-         {
-             caddr_t desired_base = (caddr_t)((prog_header->p_vaddr / prog_header->p_align) * prog_header->p_align);
-             *relocbase = (caddr_t) (mapbase - desired_base);
-             return TRUE;
-         }
-         prog_header++;
-    }
-    return FALSE;
-}
-#endif
-
-/*************************************************************************
- *              init_builtin_dll
- */
-static NTSTATUS init_builtin_dll( void *module )
-{
-#ifdef HAVE_DLINFO
-    void *handle = NULL;
-    struct link_map *map;
-    void (*init_func)(int, char **, char **) = NULL;
-    void (**init_array)(int, char **, char **) = NULL;
-    ULONG_PTR i, init_arraysz = 0;
-#ifdef _WIN64
-    const Elf64_Dyn *dyn;
-#else
-    const Elf32_Dyn *dyn;
-#endif
-
-    if (!(handle = get_builtin_so_handle( module ))) return STATUS_SUCCESS;
-    if (dlinfo( handle, RTLD_DI_LINKMAP, &map )) map = NULL;
-    release_builtin_module( module );
-    if (!map) return STATUS_SUCCESS;
-
-    for (dyn = map->l_ld; dyn->d_tag; dyn++)
-    {
-        caddr_t relocbase = (caddr_t)map->l_addr;
-
-#ifdef __FreeBSD__
-        /* On older FreeBSD versions, l_addr was the absolute load address, now it's the relocation offset. */
-        if (offsetof(struct link_map, l_addr) == 0)
-            if (!get_relocbase(map->l_addr, &relocbase))
-                return STATUS_UNSUCCESSFUL;
-#endif
-        switch (dyn->d_tag)
-        {
-        case 0x60009990: init_array = (void *)(relocbase + dyn->d_un.d_val); break;
-        case 0x60009991: init_arraysz = dyn->d_un.d_val; break;
-        case 0x60009992: init_func = (void *)(relocbase + dyn->d_un.d_val); break;
-        }
-    }
-
-    TRACE( "%p: got init_func %p init_array %p %lu\n", module, init_func, init_array, init_arraysz );
-
-    if (init_func) init_func( main_argc, main_argv, main_envp );
-
-    if (init_array)
-        for (i = 0; i < init_arraysz / sizeof(*init_array); i++)
-            init_array[i]( main_argc, main_argv, main_envp );
-#endif
-    return STATUS_SUCCESS;
-}
-
-
 /***********************************************************************
  *           load_ntdll
  */
@@ -2130,7 +2048,6 @@ static ULONG_PTR get_image_address(void)
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     load_so_dll,
-    init_builtin_dll,
     unwind_builtin_dll,
     system_time_precise,
 };
@@ -2139,7 +2056,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 #ifdef _WIN64
 
 static NTSTATUS wow64_load_so_dll( void *args ) { return STATUS_INVALID_IMAGE_FORMAT; }
-static NTSTATUS wow64_init_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
 static NTSTATUS wow64_unwind_builtin_dll( void *args ) { return STATUS_UNSUCCESSFUL; }
 
 /***********************************************************************
@@ -2148,7 +2064,6 @@ static NTSTATUS wow64_unwind_builtin_dll( void *args ) { return STATUS_UNSUCCESS
 const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     wow64_load_so_dll,
-    wow64_init_builtin_dll,
     wow64_unwind_builtin_dll,
     system_time_precise,
 };

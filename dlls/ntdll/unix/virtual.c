@@ -593,7 +593,7 @@ static void add_builtin_module( void *module, void *handle )
 /***********************************************************************
  *           release_builtin_module
  */
-void release_builtin_module( void *module )
+static void release_builtin_module( void *module )
 {
     struct builtin_module *builtin;
 

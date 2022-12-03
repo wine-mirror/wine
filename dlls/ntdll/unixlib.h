@@ -41,7 +41,6 @@ struct unwind_builtin_dll_params
 enum ntdll_unix_funcs
 {
     unix_load_so_dll,
-    unix_init_builtin_dll,
     unix_unwind_builtin_dll,
     unix_system_time_precise,
 };
