@@ -1543,7 +1543,7 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
 
     if (!wglDeleteContext(context_gl->gl_ctx))
     {
-        DWORD err = GetLastError();
+        unsigned int err = GetLastError();
         ERR("Failed to delete GL context %p, last error %#x.\n", context_gl->gl_ctx, err);
     }
 
@@ -1615,7 +1615,7 @@ BOOL wined3d_context_gl_set_current(struct wined3d_context_gl *context_gl)
         TRACE("Clearing current D3D context.\n");
         if (!wglMakeCurrent(NULL, NULL))
         {
-            DWORD err = GetLastError();
+            unsigned int err = GetLastError();
             ERR("Failed to clear current GL context, last error %#x.\n", err);
             TlsSetValue(wined3d_context_tls_idx, NULL);
             return FALSE;

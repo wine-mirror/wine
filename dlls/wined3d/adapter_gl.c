@@ -264,7 +264,7 @@ static void wined3d_caps_gl_ctx_destroy(const struct wined3d_caps_gl_ctx *ctx)
 
     if (!wglDeleteContext(ctx->gl_ctx))
     {
-        DWORD err = GetLastError();
+        unsigned int err = GetLastError();
         ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx->gl_ctx, err);
     }
 

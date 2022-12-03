@@ -275,7 +275,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
     wined3d_context_tls_idx = TlsAlloc();
     if (wined3d_context_tls_idx == TLS_OUT_OF_INDEXES)
     {
-        DWORD err = GetLastError();
+        unsigned int err = GetLastError();
         ERR("Failed to allocate context TLS index, err %#x.\n", err);
         return FALSE;
     }
@@ -300,7 +300,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
         ERR("Failed to register window class 'WineD3D_OpenGL'!\n");
         if (!TlsFree(wined3d_context_tls_idx))
         {
-            DWORD err = GetLastError();
+            unsigned int err = GetLastError();
             ERR("Failed to free context TLS index, err %#x.\n", err);
         }
         return FALSE;
@@ -502,7 +502,7 @@ static BOOL wined3d_dll_destroy(HINSTANCE hInstDLL)
 
     if (!TlsFree(wined3d_context_tls_idx))
     {
-        DWORD err = GetLastError();
+        unsigned int err = GetLastError();
         ERR("Failed to free context TLS index, err %#x.\n", err);
     }
 
