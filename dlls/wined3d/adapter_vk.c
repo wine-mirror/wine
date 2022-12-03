@@ -15,7 +15,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -496,7 +495,7 @@ static HRESULT adapter_vk_create_device(struct wined3d *wined3d, const struct wi
     if (FAILED(hr = wined3d_device_init(&device_vk->d, wined3d, adapter->ordinal, device_type, focus_window,
             flags, surface_alignment, levels, level_count, vk_info->supported, device_parent)))
     {
-        WARN("Failed to initialize device, hr %#x.\n", hr);
+        WARN("Failed to initialize device, hr %#lx.\n", hr);
         wined3d_allocator_cleanup(&device_vk->allocator);
         goto fail;
     }
@@ -676,7 +675,7 @@ static HRESULT adapter_vk_init_3d(struct wined3d_device *device)
     if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
             device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
     {
-        ERR("Failed to allocate shader private data, hr %#x.\n", hr);
+        ERR("Failed to allocate shader private data, hr %#lx.\n", hr);
         wined3d_context_vk_cleanup(context_vk);
         return hr;
     }
@@ -1300,7 +1299,7 @@ static HRESULT adapter_vk_create_swapchain(struct wined3d_device *device,
     if (FAILED(hr = wined3d_swapchain_vk_init(swapchain_vk, device, desc, state_parent, parent,
             parent_ops)))
     {
-        WARN("Failed to initialise swapchain, hr %#x.\n", hr);
+        WARN("Failed to initialise swapchain, hr %#lx.\n", hr);
         heap_free(swapchain_vk);
         return hr;
     }
@@ -1351,7 +1350,7 @@ static HRESULT adapter_vk_create_buffer(struct wined3d_device *device,
 
     if (FAILED(hr = wined3d_buffer_vk_init(buffer_vk, device, desc, data, parent, parent_ops)))
     {
-        WARN("Failed to initialise buffer, hr %#x.\n", hr);
+        WARN("Failed to initialise buffer, hr %#lx.\n", hr);
         heap_free(buffer_vk);
         return hr;
     }
@@ -1398,7 +1397,7 @@ static HRESULT adapter_vk_create_texture(struct wined3d_device *device,
     if (FAILED(hr = wined3d_texture_vk_init(texture_vk, device, desc,
             layer_count, level_count, flags, parent, parent_ops)))
     {
-        WARN("Failed to initialise texture, hr %#x.\n", hr);
+        WARN("Failed to initialise texture, hr %#lx.\n", hr);
         heap_free(texture_vk);
         return hr;
     }
@@ -1449,7 +1448,7 @@ static HRESULT adapter_vk_create_rendertarget_view(const struct wined3d_view_des
 
     if (FAILED(hr = wined3d_rendertarget_view_vk_init(view_vk, desc, resource, parent, parent_ops)))
     {
-        WARN("Failed to initialise view, hr %#x.\n", hr);
+        WARN("Failed to initialise view, hr %#lx.\n", hr);
         heap_free(view_vk);
         return hr;
     }
@@ -1591,7 +1590,7 @@ static HRESULT adapter_vk_create_shader_resource_view(const struct wined3d_view_
 
     if (FAILED(hr = wined3d_shader_resource_view_vk_init(view_vk, desc, resource, parent, parent_ops)))
     {
-        WARN("Failed to initialise view, hr %#x.\n", hr);
+        WARN("Failed to initialise view, hr %#lx.\n", hr);
         heap_free(view_vk);
         return hr;
     }
@@ -1644,7 +1643,7 @@ static HRESULT adapter_vk_create_unordered_access_view(const struct wined3d_view
 
     if (FAILED(hr = wined3d_unordered_access_view_vk_init(view_vk, desc, resource, parent, parent_ops)))
     {
-        WARN("Failed to initialise view, hr %#x.\n", hr);
+        WARN("Failed to initialise view, hr %#lx.\n", hr);
         heap_free(view_vk);
         return hr;
     }
