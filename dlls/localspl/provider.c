@@ -1697,7 +1697,8 @@ static HANDLE port_alloc_handle(const WCHAR *name, BOOL *stop_search)
         return NULL;
     }
     if (!port->mon->monitor.pfnOpenPort || !port->mon->monitor.pfnWritePort
-            || !port->mon->monitor.pfnClosePort || !port->mon->monitor.pfnStartDocPort)
+            || !port->mon->monitor.pfnClosePort || !port->mon->monitor.pfnStartDocPort
+            || !port->mon->monitor.pfnEndDocPort)
     {
         FIXME("port not supported: %s\n", debugstr_w(name));
         free(port_name);
@@ -3595,7 +3596,19 @@ static BOOL WINAPI fpEndDocPrinter(HANDLE hprinter)
 
     TRACE("%p\n", hprinter);
 
-    if (!printer || printer->header.type != HANDLE_PRINTER)
+    if (!printer)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return 0;
+    }
+
+    if (printer->header.type == HANDLE_PORT)
+    {
+        port_t *port = (port_t *)hprinter;
+        return port->mon->monitor.pfnEndDocPort(port->hport);
+    }
+
+    if (printer->header.type != HANDLE_PRINTER)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return FALSE;
