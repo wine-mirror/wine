@@ -279,7 +279,6 @@ static void test_handles(void)
 
     status = NtQueryObject( d1, ObjectBasicInformation, &info, sizeof(info), NULL );
     ok( !status, "NtQueryObject failed, status %#lx\n", status );
-    todo_wine
     ok( info.GrantedAccess == (STANDARD_RIGHTS_REQUIRED | DESKTOP_ALL_ACCESS),
         "Got unexpected access %#lx\n", info.GrantedAccess );
 
