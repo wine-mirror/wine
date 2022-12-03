@@ -81,7 +81,7 @@ BOOL WINAPI EnumPrintProcessorDatatypesW(WCHAR *server, WCHAR *name, DWORD level
     *no = 0;
     *needed = sizeof(*info) + sizeof(raw);
 
-    if (level != 1 || !datatypes)
+    if (level != 1 || (size && !datatypes))
     {
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
