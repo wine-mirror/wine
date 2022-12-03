@@ -111,7 +111,7 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
         SetLastError(ERROR_INVALID_PARAMETER);
         return NULL;
     }
-    if (!wcscmp(open_data->pDatatype, L"RAW"))
+    if (wcscmp(open_data->pDatatype, L"RAW"))
     {
         SetLastError(ERROR_INVALID_DATATYPE);
         return NULL;
