@@ -21,7 +21,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #define VKD3D_NO_VULKAN_H
 #define VKD3D_NO_WIN32_TYPES
@@ -146,7 +145,7 @@ struct wined3d * CDECL wined3d_create(uint32_t flags)
 
     if (FAILED(hr = wined3d_init(object, flags)))
     {
-        WARN("Failed to initialize wined3d object, hr %#x.\n", hr);
+        WARN("Failed to initialize wined3d object, hr %#lx.\n", hr);
         heap_free(object);
         return NULL;
     }
@@ -570,7 +569,7 @@ static struct wined3d_output * wined3d_get_output_from_window(const struct wined
     monitor_info.cbSize = sizeof(monitor_info);
     if (!GetMonitorInfoW(monitor, (MONITORINFO *)&monitor_info))
     {
-        ERR("GetMonitorInfoW failed, error %#x.\n", GetLastError());
+        ERR("GetMonitorInfoW failed, error %#lx.\n", GetLastError());
         return NULL;
     }
 
