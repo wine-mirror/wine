@@ -1276,47 +1276,61 @@ static gboolean src_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
 static void query_tags(struct wg_parser_stream *stream)
 {
     const gchar *struct_name;
-    GstTagList *tag_list;
     GstEvent *tag_event;
-    guint i, tag_count;
-    const GValue *val;
-    GstSample *sample;
-    GstBuffer *buf;
-    gsize size;
+    guint i, j;
 
-    if (!(tag_event = gst_pad_get_sticky_event(stream->their_src, GST_EVENT_TAG, 0)))
-        return;
+    stream->tags[WG_PARSER_TAG_NAME]     = NULL;
+    stream->tags[WG_PARSER_TAG_LANGUAGE] = NULL;
 
-    gst_event_parse_tag(tag_event, &tag_list);
-    gst_tag_list_get_string(tag_list, "language-code", &stream->tags[WG_PARSER_TAG_LANGUAGE]);
-
-    /* Extract stream name from Quick Time demuxer private tag where it puts unrecognized chunks. */
-    tag_count = gst_tag_list_get_tag_size(tag_list, "private-qt-tag");
-    for (i = 0; i < tag_count; ++i)
+    i = 0;
+    while ((tag_event = gst_pad_get_sticky_event(stream->their_src, GST_EVENT_TAG, i++)))
     {
-        if (!(val = gst_tag_list_get_value_index(tag_list, "private-qt-tag", i)))
-            continue;
-        if (!GST_VALUE_HOLDS_SAMPLE(val) || !(sample = gst_value_get_sample(val)))
-            continue;
-        struct_name = gst_structure_get_name(gst_sample_get_info(sample));
-        if (!struct_name || strcmp(struct_name, "application/x-gst-qt-name-tag"))
-            continue;
-        if (!(buf = gst_sample_get_buffer(sample)))
-            continue;
-        if ((size = gst_buffer_get_size(buf)) < 8)
-            continue;
-        size -= 8;
-        if (!(stream->tags[WG_PARSER_TAG_NAME] = g_malloc(size + 1)))
-            continue;
-        if (gst_buffer_extract(buf, 8, stream->tags[WG_PARSER_TAG_NAME], size) != size)
+        GstTagList *tag_list;
+
+        gst_event_parse_tag(tag_event, &tag_list);
+
+        if (!stream->tags[WG_PARSER_TAG_NAME])
         {
-            g_free(stream->tags[WG_PARSER_TAG_NAME]);
-            stream->tags[WG_PARSER_TAG_NAME] = NULL;
-            continue;
+            /* Extract stream name from Quick Time demuxer private tag where it puts unrecognized chunks. */
+            const GValue *val;
+            GstSample *sample;
+            GstBuffer *buf;
+            gsize size;
+            guint tag_count = gst_tag_list_get_tag_size(tag_list, "private-qt-tag");
+
+            for (j = 0; j < tag_count; ++j)
+            {
+                if (!(val = gst_tag_list_get_value_index(tag_list, "private-qt-tag", j)))
+                    continue;
+                if (!GST_VALUE_HOLDS_SAMPLE(val) || !(sample = gst_value_get_sample(val)))
+                    continue;
+                struct_name = gst_structure_get_name(gst_sample_get_info(sample));
+                if (!struct_name || strcmp(struct_name, "application/x-gst-qt-name-tag"))
+                    continue;
+                if (!(buf = gst_sample_get_buffer(sample)))
+                    continue;
+                if ((size = gst_buffer_get_size(buf)) < 8)
+                    continue;
+                size -= 8;
+                if (!(stream->tags[WG_PARSER_TAG_NAME] = g_malloc(size + 1)))
+                    continue;
+                if (gst_buffer_extract(buf, 8, stream->tags[WG_PARSER_TAG_NAME], size) != size)
+                {
+                    g_free(stream->tags[WG_PARSER_TAG_NAME]);
+                    stream->tags[WG_PARSER_TAG_NAME] = NULL;
+                    continue;
+                }
+                stream->tags[WG_PARSER_TAG_NAME][size] = 0;
+            }
         }
-        stream->tags[WG_PARSER_TAG_NAME][size] = 0;
+
+        if (!stream->tags[WG_PARSER_TAG_LANGUAGE])
+        {
+            gst_tag_list_get_string(tag_list, GST_TAG_LANGUAGE_CODE, &stream->tags[WG_PARSER_TAG_LANGUAGE]);
+        }
+
+        gst_event_unref(tag_event);
     }
-    gst_event_unref(tag_event);
 }
 
 static NTSTATUS wg_parser_connect(void *args)
