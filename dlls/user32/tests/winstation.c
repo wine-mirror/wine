@@ -137,7 +137,6 @@ static void test_handles(void)
 
     status = NtQueryObject( w1, ObjectBasicInformation, &info, sizeof(info), NULL );
     ok( !status, "NtQueryObject failed, status %#lx\n", status );
-    todo_wine
     ok( info.GrantedAccess == (STANDARD_RIGHTS_REQUIRED | WINSTA_ALL_ACCESS),
         "Got unexpected access %#lx\n", info.GrantedAccess );
 
