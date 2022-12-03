@@ -204,7 +204,7 @@ static DWORD get_config_key(HKEY defkey, HKEY appkey, const char *env, const cha
     return ERROR_FILE_NOT_FOUND;
 }
 
-static DWORD get_config_key_dword(HKEY defkey, HKEY appkey, const char *env, const char *name, DWORD *value)
+static DWORD get_config_key_dword(HKEY defkey, HKEY appkey, const char *env, const char *name, unsigned int *value)
 {
     DWORD type, data, size;
     const char *env_value;
@@ -269,7 +269,7 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
     const char *env;
     HKEY hkey = 0;
     HKEY appkey = 0;
-    DWORD tmpvalue;
+    unsigned int tmpvalue;
     WNDCLASSA wc;
 
     wined3d_context_tls_idx = TlsAlloc();
