@@ -1697,7 +1697,7 @@ static HANDLE port_alloc_handle(const WCHAR *name, BOOL *stop_search)
         return NULL;
     }
     if (!port->mon->monitor.pfnOpenPort || !port->mon->monitor.pfnWritePort
-            || !port->mon->monitor.pfnClosePort)
+            || !port->mon->monitor.pfnClosePort || !port->mon->monitor.pfnStartDocPort)
     {
         FIXME("port not supported: %s\n", debugstr_w(name));
         free(port_name);
@@ -3199,7 +3199,21 @@ static DWORD WINAPI fpStartDocPrinter(HANDLE hprinter, DWORD level, BYTE *doc_in
             hprinter, level, doc_info, debugstr_w(info->pDocName),
             debugstr_w(info->pOutputFile), debugstr_w(info->pDatatype));
 
-    if (!printer || printer->header.type != HANDLE_PRINTER)
+    if (!printer)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return 0;
+    }
+
+    if (printer->header.type == HANDLE_PORT)
+    {
+        port_t *port = (port_t *)hprinter;
+        /* TODO: pass printer name and job_id */
+        return port->mon->monitor.pfnStartDocPort(port->hport,
+                NULL, 0, level, doc_info);
+    }
+
+    if (printer->header.type != HANDLE_PRINTER)
     {
         SetLastError(ERROR_INVALID_HANDLE);
         return 0;
