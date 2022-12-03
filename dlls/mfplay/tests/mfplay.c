@@ -437,6 +437,75 @@ static void test_media_item(void)
     IMFPMediaPlayer_Release(player);
 }
 
+#define check_media_language(player, resource_name, expected_lang) \
+    _check_media_language(__LINE__, FALSE, player, resource_name, expected_lang)
+#define todo_check_media_language(player, resource_name, expected_lang) \
+    _check_media_language(__LINE__, TRUE, player, resource_name, expected_lang)
+static void _check_media_language(unsigned line, BOOL todo, IMFPMediaPlayer *player,
+                                  const WCHAR *resource_name, const WCHAR *expected_lang)
+{
+    WCHAR *filename;
+    IMFPMediaItem *item;
+    PROPVARIANT propvar;
+    const WCHAR *lang = NULL;
+    HRESULT hr;
+
+    filename = load_resource(resource_name);
+
+    hr = IMFPMediaPlayer_CreateMediaItemFromURL(player, filename, TRUE, 123, &item);
+    ok_(__FILE__, line)(hr == S_OK || broken(hr == MF_E_UNSUPPORTED_BYTESTREAM_TYPE) /* win8 - win10 1507 */,
+                        "Unexpected hr %#lx.\n", hr);
+    if (hr != S_OK)
+    {
+        DeleteFileW(filename);
+        return;
+    }
+
+    hr = IMFPMediaItem_GetStreamAttribute(item, 0, &MF_SD_LANGUAGE, &propvar);
+    ok_(__FILE__, line)(hr == S_OK || hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        ok_(__FILE__, line)(propvar.vt == VT_LPWSTR, "Unexpected vt %u.\n", propvar.vt);
+        if (propvar.vt == VT_LPWSTR)
+            lang = propvar.pwszVal;
+    }
+
+    todo_wine_if(todo)
+    {
+        if (expected_lang)
+            ok_(__FILE__, line)(lang && !wcscmp(lang, expected_lang), "Unexpected value %s.\n", debugstr_w(lang));
+        else
+            ok_(__FILE__, line)(!lang, "Unexpected value %s.\n", debugstr_w(lang));
+    }
+
+    PropVariantClear(&propvar);
+    IMFPMediaItem_Release(item);
+    DeleteFileW(filename);
+}
+
+static void test_media_language(void)
+{
+    IMFPMediaPlayer *player;
+    HRESULT hr;
+
+    hr = MFPCreateMediaPlayer(NULL, FALSE, 0, NULL, NULL, &player);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    check_media_language(player, L"test-eng.mp4", L"en");
+    check_media_language(player, L"test-ang.mp4", NULL);
+    check_media_language(player, L"test-und.mp4", NULL);
+    check_media_language(player, L"test-en-US.mp4", L"en");
+
+    check_media_language(player, L"test-en.wma", L"en");
+    check_media_language(player, L"test-eng.wma", L"eng");
+    check_media_language(player, L"test-ang.wma", L"ang");
+    check_media_language(player, L"test-und.wma", L"und");
+    todo_check_media_language(player, L"test-en-US.wma", L"en-US");
+
+    IMFPMediaPlayer_Release(player);
+}
+
 static void test_video_control(void)
 {
     MFVideoNormalizedRect rect;
@@ -599,6 +668,7 @@ START_TEST(mfplay)
     test_create_player();
     test_shutdown();
     test_media_item();
+    test_media_language();
     test_video_control();
     test_duration();
     test_playback_rate();
