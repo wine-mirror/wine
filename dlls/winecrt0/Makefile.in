@@ -6,6 +6,7 @@ C_SRCS = \
 	debug.c \
 	delay_load.c \
 	dll_canunload.c \
+	dll_entry.c \
 	dll_main.c \
 	dll_register.c \
 	exception.c \

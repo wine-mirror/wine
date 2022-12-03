@@ -340,7 +340,11 @@ static void set_exec_mode( enum exec_mode_values mode )
 /* get the default entry point for a given spec file */
 static const char *get_default_entry_point( const DLLSPEC *spec )
 {
-    if (spec->characteristics & IMAGE_FILE_DLL) return "DllMain";
+    if (spec->characteristics & IMAGE_FILE_DLL)
+    {
+        add_spec_extra_ld_symbol("DllMain");
+        return "__wine_spec_dll_entry";
+    }
     if (spec->subsystem == IMAGE_SUBSYSTEM_NATIVE) return "DriverEntry";
     if (spec->type == SPEC_WIN16)
     {
