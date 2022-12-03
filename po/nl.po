@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-09-26 12:00+0200\n"
+"PO-Revision-Date: 2022-12-03 18:45+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -3759,29 +3759,27 @@ msgid ""
 "updated here until you restart this applet."
 msgstr ""
 "Na het uit- of inschakelen van een apparaat zullen de aangesloten joysticks "
-"niet vernieuwd worden totdat deze applicatie herstart wordt."
+"niet vernieuwd worden totdat dit programma herstart wordt."
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "DInput"
-msgstr ""
+msgstr "DInput"
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Axes"
-msgstr ""
+msgstr "Assen"
 
 #: dlls/joy.cpl/joy.rc:60
 msgid "POVs"
-msgstr ""
+msgstr "Gezichtsveld"
 
 #: dlls/joy.cpl/joy.rc:61
 msgid "Buttons"
 msgstr "Knoppen"
 
 #: dlls/joy.cpl/joy.rc:62
-#, fuzzy
-#| msgid "Test Force Feedback"
 msgid "Force Feedback Effect"
-msgstr "Force Feedback Testen"
+msgstr "Force Feedback Effect"
 
 #: dlls/joy.cpl/joy.rc:64
 msgid ""
@@ -3793,60 +3791,60 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:70
 msgid "XInput"
-msgstr ""
+msgstr "XInput"
 
 #: dlls/joy.cpl/joy.rc:73
-#, fuzzy
-#| msgid "User"
 msgid "User #0"
-msgstr "Gebruiker"
+msgstr "Gebruiker 0"
 
 #: dlls/joy.cpl/joy.rc:74
-#, fuzzy
-#| msgid "User"
 msgid "User #1"
-msgstr "Gebruiker"
+msgstr "Gebruiker 1"
 
 #: dlls/joy.cpl/joy.rc:75
-#, fuzzy
-#| msgid "User"
 msgid "User #2"
-msgstr "Gebruiker"
+msgstr "Gebruiker 2"
 
 #: dlls/joy.cpl/joy.rc:76
-#, fuzzy
-#| msgid "User"
 msgid "User #3"
-msgstr "Gebruiker"
+msgstr "Gebruiker 3"
 
 #: dlls/joy.cpl/joy.rc:78
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overriden for DInput in the Joysticks tab."
 msgstr ""
+"Geen gebruiker gevonden op slot nr. 0. Zorg dat de gamepad is aangesloten en "
+"niet voor DInput is overschreven op het Joysticks-tabblad."
 
 #: dlls/joy.cpl/joy.rc:82
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overriden for DInput in the Joysticks tab."
 msgstr ""
+"Geen gebruiker gevonden op slot nr. 1. Zorg dat de gamepad is aangesloten en "
+"niet voor DInput is overschreven op het Joysticks-tabblad."
 
 #: dlls/joy.cpl/joy.rc:86
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overriden for DInput in the Joysticks tab."
 msgstr ""
+"Geen gebruiker gevonden op slot nr. 2. Zorg dat de gamepad is aangesloten en "
+"niet voor DInput is overschreven op het Joysticks-tabblad."
 
 #: dlls/joy.cpl/joy.rc:90
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overriden for DInput in the Joysticks tab."
 msgstr ""
+"Geen gebruiker gevonden op slot nr. 3. Zorg dat de gamepad is aangesloten en "
+"niet voor DInput is overschreven op het Joysticks-tabblad."
 
 #: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
 #: dlls/joy.cpl/joy.rc:98
 msgid "Rumble"
-msgstr ""
+msgstr "Trillen"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
