@@ -17,7 +17,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include <stdio.h>
 
@@ -258,7 +257,7 @@ static void wrap_op3(const struct wined3d_gl_info *gl_info, GLuint op, GLuint ds
     }
 }
 
-static GLuint register_for_arg(DWORD arg, const struct wined3d_gl_info *gl_info,
+static GLuint register_for_arg(unsigned int arg, const struct wined3d_gl_info *gl_info,
         unsigned int stage, GLuint *mod, GLuint *rep, GLuint tmparg)
 {
     GLenum ret;
