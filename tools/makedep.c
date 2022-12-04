@@ -2710,8 +2710,13 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     if (source->file->flags & FLAG_RC_HEADER) return;
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
     if (linguas.count && (source->file->flags & FLAG_RC_PO)) po_dir = "po";
-    for (arch = 0; arch < archs.count; arch++)
-        if (!make->disabled[arch]) strarray_add( &make->res_files[arch], res_file );
+    if (!make->testdll || !find_src_file( make, strmake( "%s.spec", obj ) )) /* RC is for a TESTDLL */
+    {
+        for (arch = 0; arch < archs.count; arch++)
+            if (!make->disabled[arch]) strarray_add( &make->res_files[arch], res_file );
+    }
+    else strarray_add( &make->clean_files, res_file );
+
     if (source->file->flags & FLAG_RC_PO)
     {
         strarray_add( &make->pot_files, strmake( "%s.pot", obj ));
@@ -3040,7 +3045,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     struct strarray dll_flags = empty_strarray;
     struct strarray default_imports = empty_strarray;
     struct strarray all_libs, dep_libs;
-    const char *dll_name, *obj_name, *output_rsrc, *output_file, *debug_file;
+    const char *dll_name, *obj_name, *res_name, *output_rsrc, *output_file, *debug_file;
     unsigned int arch;
 
     if (!imports.count) imports = make->imports;
@@ -3060,6 +3065,9 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
         output_file = obj_dir_path( make, dll_name );
         output_rsrc = strmake( "%s.res", dll_name );
 
+        if (!find_src_file( make, strmake( "%s.rc", obj ) )) res_name = NULL;
+        else res_name = obj_dir_path( make, strmake( "%s.res", obj ) );
+
         strarray_add( &make->clean_files, dll_name );
         strarray_add( &make->res_files[arch], output_rsrc );
         output( "%s:", obj_dir_path( make, output_rsrc ));
@@ -3072,6 +3080,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
         output( "%s:", output_file );
         output_filename( source->filename );
         output_filename( obj_name );
+        if (res_name) output_filename( res_name );
         output_filenames( dep_libs );
         output_filename( tools_path( make, "winebuild" ));
         output_filename( tools_path( make, "winegcc" ));
@@ -3083,6 +3092,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
         output_filename( "-shared" );
         output_filename( source->filename );
         output_filename( obj_name );
+        if (res_name) output_filename( res_name );
         if ((debug_file = get_debug_file( make, dll_name, arch )))
             output_filename( strmake( "-Wl,--debug-file,%s", obj_dir_path( make, debug_file )));
         output_filenames( all_libs );
