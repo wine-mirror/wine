@@ -1367,7 +1367,7 @@ static BOOL WINAPI register_classes( INIT_ONCE *once, void *param, void **contex
     return TRUE;
 }
 
-BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass, LPCWSTR lpszOption)
+BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass, DWORD flags)
 {
     static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 

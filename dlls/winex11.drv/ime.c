@@ -511,8 +511,7 @@ static void IME_AddToSelected(HIMC hIMC)
     hSelectedFrom[hSelectedCount-1] = hIMC;
 }
 
-BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass,
-                       LPCWSTR lpszOption)
+BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass, DWORD flags)
 {
     static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 

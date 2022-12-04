@@ -62,7 +62,7 @@ typedef struct _tagImmHkl{
     HWND        UIWnd;
 
     /* Function Pointers */
-    BOOL (WINAPI *pImeInquire)(IMEINFO *, WCHAR *, const WCHAR *);
+    BOOL (WINAPI *pImeInquire)(IMEINFO *, WCHAR *, DWORD);
     BOOL (WINAPI *pImeConfigure)(HKL, HWND, DWORD, void *);
     BOOL (WINAPI *pImeDestroy)(UINT);
     LRESULT (WINAPI *pImeEscape)(HIMC, UINT, void *);
@@ -508,7 +508,7 @@ static ImmHkl *IMM_GetImmHkl(HKL hkl)
     if (ptr->hIME)
     {
         LOAD_FUNCPTR(ImeInquire);
-        if (!ptr->pImeInquire || !ptr->pImeInquire(&ptr->imeInfo, ptr->imeClassName, NULL))
+        if (!ptr->pImeInquire || !ptr->pImeInquire(&ptr->imeInfo, ptr->imeClassName, 0))
         {
             FreeLibrary(ptr->hIME);
             ptr->hIME = NULL;
