@@ -21,7 +21,7 @@
 #include "user_private.h"
 #include "controls.h"
 #include "imm.h"
-#include "ddk/imm.h"
+#include "immdev.h"
 #include "wine/debug.h"
 
 

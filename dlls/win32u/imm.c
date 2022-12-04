@@ -27,7 +27,7 @@
 #include <pthread.h>
 #include "win32u_private.h"
 #include "ntuser_private.h"
-#include "ddk/imm.h"
+#include "immdev.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);

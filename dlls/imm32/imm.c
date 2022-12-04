@@ -33,7 +33,7 @@
 #include "winerror.h"
 #include "wine/debug.h"
 #include "imm.h"
-#include "ddk/imm.h"
+#include "immdev.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "wine/list.h"

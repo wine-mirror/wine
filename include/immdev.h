@@ -16,14 +16,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef _DDKIMM_H_
-#define _DDKIMM_H_
+#ifndef __WINE_IMMDEV_H
+#define __WINE_IMMDEV_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef struct _tagINPUTCONTEXT {
+typedef struct tagINPUTCONTEXT
+{
     HWND                hWnd;
     BOOL                fOpen;
     POINT               ptStatusWndPos;
@@ -46,7 +47,8 @@ typedef struct _tagINPUTCONTEXT {
     DWORD               dwReserve[3];
 } INPUTCONTEXT, *LPINPUTCONTEXT;
 
-typedef struct _tagIMEINFO {
+typedef struct tagIMEINFO
+{
     DWORD       dwPrivateDataSize;
     DWORD       fdwProperty;
     DWORD       fdwConversionCaps;
@@ -56,7 +58,8 @@ typedef struct _tagIMEINFO {
     DWORD       fdwSelectCaps;
 } IMEINFO, *LPIMEINFO;
 
-typedef struct tagCOMPOSITIONSTRING {
+typedef struct tagCOMPOSITIONSTRING
+{
     DWORD dwSize;
     DWORD dwCompReadAttrLen;
     DWORD dwCompReadAttrOffset;
@@ -84,7 +87,8 @@ typedef struct tagCOMPOSITIONSTRING {
     DWORD dwPrivateOffset;
 } COMPOSITIONSTRING, *LPCOMPOSITIONSTRING;
 
-typedef struct tagGUIDELINE {
+typedef struct tagGUIDELINE
+{
     DWORD dwSize;
     DWORD dwLevel;
     DWORD dwIndex;
@@ -94,7 +98,8 @@ typedef struct tagGUIDELINE {
     DWORD dwPrivateOffset;
 } GUIDELINE, *LPGUIDELINE;
 
-typedef struct tagCANDIDATEINFO {
+typedef struct tagCANDIDATEINFO
+{
     DWORD               dwSize;
     DWORD               dwCount;
     DWORD               dwOffset[32];
@@ -170,4 +175,4 @@ DWORD WINAPI ImeGetImeMenuItems(HIMC, DWORD, DWORD, LPIMEMENUITEMINFOW, LPIMEMEN
 } /* extern "C" */
 #endif
 
-#endif  /* _DDKIMM_H_ */
+#endif  /* __WINE_IMMDEV_H */

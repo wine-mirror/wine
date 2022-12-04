@@ -33,7 +33,7 @@
 #include "hidusage.h"
 #include "dbt.h"
 #include "dde.h"
-#include "ddk/imm.h"
+#include "immdev.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 

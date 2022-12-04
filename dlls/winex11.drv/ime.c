@@ -43,7 +43,7 @@
 #include "x11drv_dll.h"
 #include "wine/debug.h"
 #include "imm.h"
-#include "ddk/imm.h"
+#include "immdev.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 

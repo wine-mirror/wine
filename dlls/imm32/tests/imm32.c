@@ -25,7 +25,7 @@
 #include "winuser.h"
 #include "wingdi.h"
 #include "imm.h"
-#include "ddk/imm.h"
+#include "immdev.h"
 
 BOOL WINAPI ImmSetActiveContext(HWND, HIMC, BOOL);
 
