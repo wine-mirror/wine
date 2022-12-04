@@ -93,12 +93,6 @@ typedef struct
     } u;
 } TEST_INPUT;
 
-typedef struct _tagTRANSMSG {
-    UINT message;
-    WPARAM wParam;
-    LPARAM lParam;
-} TRANSMSG, *LPTRANSMSG;
-
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 
 static LRESULT CALLBACK get_msg_filter(int nCode, WPARAM wParam, LPARAM lParam)

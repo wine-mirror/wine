@@ -52,12 +52,6 @@ typedef struct _IMEPRIVATE {
     UINT repeat;
 } IMEPRIVATE, *LPIMEPRIVATE;
 
-typedef struct _tagTRANSMSG {
-    UINT message;
-    WPARAM wParam;
-    LPARAM lParam;
-} TRANSMSG, *LPTRANSMSG;
-
 static const WCHAR UI_CLASS_NAME[] = {'W','i','n','e',' ','M','a','c',' ','I','M','E',0};
 
 static HIMC *hSelectedFrom = NULL;
@@ -454,15 +448,15 @@ static void GenerateIMEMessage(HIMC hIMC, UINT msg, WPARAM wParam, LPARAM lParam
     UnlockRealIMC(hIMC);
 }
 
-static BOOL GenerateMessageToTransKey(LPDWORD lpTransBuf, UINT *uNumTranMsgs,
+static BOOL GenerateMessageToTransKey(TRANSMSGLIST *lpTransBuf, UINT *uNumTranMsgs,
                                       UINT msg, WPARAM wParam, LPARAM lParam)
 {
     LPTRANSMSG ptr;
 
-    if (*uNumTranMsgs + 1 >= (UINT)*lpTransBuf)
+    if (*uNumTranMsgs + 1 >= lpTransBuf->uMsgCount)
         return FALSE;
 
-    ptr = (LPTRANSMSG)(lpTransBuf + 1 + *uNumTranMsgs * 3);
+    ptr = lpTransBuf->TransMsg + *uNumTranMsgs;
     ptr->message = msg;
     ptr->wParam = wParam;
     ptr->lParam = lParam;
@@ -652,7 +646,7 @@ BOOL WINAPI ImeSetActiveContext(HIMC hIMC, BOOL fFlag)
 }
 
 UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
-                         LPDWORD lpdwTransKey, UINT fuState, HIMC hIMC)
+                         TRANSMSGLIST *lpdwTransKey, UINT fuState, HIMC hIMC)
 {
     struct process_text_input_params params;
     UINT vkey;
