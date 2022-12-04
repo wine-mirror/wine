@@ -2187,22 +2187,17 @@ static NTSTATUS build_module( LPCWSTR load_path, const UNICODE_STRING *nt_name, 
  *
  * Build the module data for the initially-loaded ntdll.
  */
-static void build_ntdll_module(void)
+static void build_ntdll_module( HMODULE module )
 {
-    MEMORY_BASIC_INFORMATION meminfo;
     UNICODE_STRING nt_name;
     WINE_MODREF *wm;
 
     RtlInitUnicodeString( &nt_name, L"\\??\\C:\\windows\\system32\\ntdll.dll" );
-    NtQueryVirtualMemory( GetCurrentProcess(), build_ntdll_module, MemoryBasicInformation,
-                          &meminfo, sizeof(meminfo), NULL );
-    wm = alloc_module( meminfo.AllocationBase, &nt_name, TRUE );
+    wm = alloc_module( module, &nt_name, TRUE );
     assert( wm );
     wm->ldr.Flags &= ~LDR_DONT_RESOLVE_REFS;
     node_ntdll = wm->ldr.DdagNode;
-    if (TRACE_ON(relay)) RELAY_SetupDLL( meminfo.AllocationBase );
-    NtQueryVirtualMemory( GetCurrentProcess(), meminfo.AllocationBase, MemoryWineUnixFuncs,
-                          &ntdll_unix_handle, sizeof(ntdll_unix_handle), NULL );
+    if (TRACE_ON(relay)) RELAY_SetupDLL( module );
 }
 
 
@@ -4112,9 +4107,15 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
 
     if (!imports_fixup_done)
     {
+        MEMORY_BASIC_INFORMATION meminfo;
         ANSI_STRING func_name;
         WINE_MODREF *kernel32;
         PEB *peb = NtCurrentTeb()->Peb;
+
+        NtQueryVirtualMemory( GetCurrentProcess(), LdrInitializeThunk, MemoryBasicInformation,
+                              &meminfo, sizeof(meminfo), NULL );
+        NtQueryVirtualMemory( GetCurrentProcess(), meminfo.AllocationBase, MemoryWineUnixFuncs,
+                              &ntdll_unix_handle, sizeof(ntdll_unix_handle), NULL );
 
         peb->LdrData            = &ldr;
         peb->FastPebLock        = &peb_lock;
@@ -4137,7 +4138,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         wm = build_main_module();
         wm->ldr.LoadCount = -1;
 
-        build_ntdll_module();
+        build_ntdll_module( meminfo.AllocationBase );
 
         if (NtCurrentTeb()->WowTebOffset) init_wow64( context );
 
