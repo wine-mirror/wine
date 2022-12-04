@@ -3040,7 +3040,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
     struct strarray dll_flags = empty_strarray;
     struct strarray default_imports = empty_strarray;
     struct strarray all_libs, dep_libs;
-    const char *dll_name, *obj_name, *res_name, *output_file, *debug_file;
+    const char *dll_name, *obj_name, *output_rsrc, *output_file, *debug_file;
     unsigned int arch;
 
     if (!imports.count) imports = make->imports;
@@ -3057,12 +3057,12 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
         if (!arch) strarray_addall( &all_libs, libs );
         dll_name = arch_module_name( strmake( "%s.dll", obj ), arch );
         obj_name = obj_dir_path( make, strmake( "%s%s.o", arch_dirs[arch], obj ));
-        res_name = strmake( "%s%s.res", arch_dirs[arch], obj );
         output_file = obj_dir_path( make, dll_name );
+        output_rsrc = strmake( "%s.res", dll_name );
 
         strarray_add( &make->clean_files, dll_name );
-        strarray_add( &make->res_files[arch], res_name );
-        output( "%s:", obj_dir_path( make, res_name ));
+        strarray_add( &make->res_files[arch], output_rsrc );
+        output( "%s:", obj_dir_path( make, output_rsrc ));
         output_filename( output_file );
         output_filename( tools_path( make, "wrc" ));
         output( "\n" );
