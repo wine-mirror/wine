@@ -41,36 +41,38 @@ int WINAPI wWinMain( HINSTANCE inst, HINSTANCE prev, WCHAR *cmdline, INT show )
 
     static WCHAR default_cmd[] = L"cmd";
 
-    FreeConsole(); /* make sure we're not connected to inherited console */
-    if (!AllocConsole())
-    {
-        ERR( "failed to allocate console: %lu\n", GetLastError() );
-        return 1;
-    }
-
     if (!*cmd) cmd = default_cmd;
 
-    startup.dwFlags    = STARTF_USESTDHANDLES;
-    startup.hStdInput  = CreateFileW( L"CONIN$",  GENERIC_READ | GENERIC_WRITE, 0, NULL,
-                                      OPEN_EXISTING, 0, 0 );
-    startup.hStdOutput = CreateFileW( L"CONOUT$", GENERIC_READ | GENERIC_WRITE, 0, NULL,
-                                      OPEN_EXISTING, 0, 0 );
-    startup.hStdError  = startup.hStdOutput;
-
-    if (!CreateProcessW( NULL, cmd, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info ))
+    if (!CreateProcessW( NULL, cmd, NULL, NULL, FALSE, CREATE_NEW_CONSOLE, NULL, NULL, &startup, &info ))
     {
+        HANDLE hStdInput, hStdOutput;
         WCHAR format[256], *buf;
         INPUT_RECORD ir;
         DWORD len;
+
         exit_code = GetLastError();
-        WARN( "CreateProcess failed: %lu\n", exit_code );
+        WARN( "CreateProcess '%ls' failed: %lu\n", cmd, exit_code );
+
+        /* create a new console to display error messages in it */
+        FreeConsole(); /* make sure we're not connected to any console */
+        if (!AllocConsole())
+        {
+            ERR( "failed to allocate console: %lu\n", GetLastError() );
+            return 1;
+        }
+
+        hStdInput  = CreateFileW( L"CONIN$",  GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                                  OPEN_EXISTING, 0, 0 );
+        hStdOutput = CreateFileW( L"CONOUT$", GENERIC_READ | GENERIC_WRITE, 0, NULL,
+                                  OPEN_EXISTING, 0, 0 );
+
         LoadStringW( GetModuleHandleW( NULL ), IDS_CMD_LAUNCH_FAILED, format, ARRAY_SIZE(format) );
         len = wcslen( format ) + wcslen( cmd );
         if ((buf = malloc( len * sizeof(WCHAR) )))
         {
             swprintf( buf, len, format, cmd );
-            WriteConsoleW( startup.hStdOutput, buf, wcslen(buf), &len, NULL);
-            while (ReadConsoleInputW( startup.hStdInput, &ir, 1, &len ) && ir.EventType == MOUSE_EVENT);
+            WriteConsoleW( hStdOutput, buf, wcslen(buf), &len, NULL);
+            while (ReadConsoleInputW( hStdInput, &ir, 1, &len ) && ir.EventType == MOUSE_EVENT);
         }
         return exit_code;
     }
