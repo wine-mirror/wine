@@ -18,7 +18,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdio.h>
+#include <stdarg.h>
+#include <stddef.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
 
 #include "wine/test.h"
 #include "objbase.h"
@@ -26,6 +32,8 @@
 #include "wingdi.h"
 #include "imm.h"
 #include "immdev.h"
+
+#include "ime_test.h"
 
 BOOL WINAPI ImmSetActiveContext(HWND, HIMC, BOOL);
 
@@ -205,6 +213,28 @@ static enum { PHASE_UNKNOWN, FIRST_WINDOW, SECOND_WINDOW,
 static HWND hwnd, child;
 
 static HWND get_ime_window(void);
+
+static void load_resource( const WCHAR *name, WCHAR *filename )
+{
+    static WCHAR path[MAX_PATH];
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    GetTempPathW( ARRAY_SIZE(path), path );
+    GetTempFileNameW( path, name, 0, filename );
+
+    file = CreateFileW( filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "failed to create %s, error %lu\n", debugstr_w(filename), GetLastError() );
+
+    res = FindResourceW( NULL, name, L"TESTDLL" );
+    ok( res != 0, "couldn't find resource\n" );
+    ptr = LockResource( LoadResource( GetModuleHandleW( NULL ), res ) );
+    WriteFile( file, ptr, SizeofResource( GetModuleHandleW( NULL ), res ), &written, NULL );
+    ok( written == SizeofResource( GetModuleHandleW( NULL ), res ), "couldn't write resource\n" );
+    CloseHandle( file );
+}
 
 static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -2453,7 +2483,109 @@ static void test_ImmDisableIME(void)
     ok(!def, "ImmGetDefaultIMEWnd(hwnd) returned %p\n", def);
 }
 
-START_TEST(imm32) {
+static UINT ime_count;
+static WCHAR ime_path[MAX_PATH];
+
+static HKL ime_install(void)
+{
+    WCHAR buffer[MAX_PATH];
+    DWORD len, ret;
+    HKEY hkey;
+    HKL hkl;
+
+    /* install the actual IME module, it will lookup the functions from the DLL */
+    load_resource( L"ime_wrapper.dll", buffer );
+
+    SetLastError( 0xdeadbeef );
+    swprintf( ime_path, ARRAY_SIZE(ime_path), L"c:\\windows\\system32\\wine%04x.ime", ime_count++ );
+    ret = MoveFileW( buffer, ime_path );
+    todo_wine_if( GetLastError() == ERROR_ALREADY_EXISTS )
+    ok( ret || broken( !ret ) /* sometimes still in use */,
+        "MoveFileW failed, error %lu\n", GetLastError() );
+
+    hkl = ImmInstallIMEW( ime_path, L"WineTest IME" );
+    todo_wine
+    ok( hkl == (HKL)(int)0xe0200400, "ImmInstallIMEW returned %p, error %lu\n", hkl, GetLastError() );
+
+    swprintf( buffer, ARRAY_SIZE(buffer), L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08x", hkl );
+    ret = RegOpenKeyW( HKEY_LOCAL_MACHINE, buffer, &hkey );
+    ok( !ret, "RegOpenKeyW returned %#lx, error %lu\n", ret, GetLastError() );
+
+    len = sizeof(buffer);
+    memset( buffer, 0xcd, sizeof(buffer) );
+    ret = RegQueryValueExW( hkey, L"Ime File", NULL, NULL, (BYTE *)buffer, &len );
+    ok( !ret, "RegQueryValueExW returned %#lx, error %lu\n", ret, GetLastError() );
+    todo_wine
+    ok( !wcsicmp( buffer, wcsrchr( ime_path, '\\' ) + 1 ), "got Ime File %s\n", debugstr_w(buffer) );
+
+    len = sizeof(buffer);
+    memset( buffer, 0xcd, sizeof(buffer) );
+    ret = RegQueryValueExW( hkey, L"Layout Text", NULL, NULL, (BYTE *)buffer, &len );
+    ok( !ret, "RegQueryValueExW returned %#lx, error %lu\n", ret, GetLastError() );
+    ok( !wcscmp( buffer, L"WineTest IME" ), "got Layout Text %s\n", debugstr_w(buffer) );
+
+    len = sizeof(buffer);
+    memset( buffer, 0xcd, sizeof(buffer) );
+    ret = RegQueryValueExW( hkey, L"Layout File", NULL, NULL, (BYTE *)buffer, &len );
+    todo_wine
+    ok( !ret, "RegQueryValueExW returned %#lx, error %lu\n", ret, GetLastError() );
+    todo_wine
+    ok( !wcscmp( buffer, L"kbdus.dll" ), "got Layout File %s\n", debugstr_w(buffer) );
+
+    ret = RegCloseKey( hkey );
+    ok( !ret, "RegCloseKey returned %#lx, error %lu\n", ret, GetLastError() );
+
+    return hkl;
+}
+
+static void ime_cleanup( HKL hkl )
+{
+    WCHAR buffer[MAX_PATH], value[MAX_PATH];
+    DWORD i, buffer_len, value_len, ret;
+    HKEY hkey;
+
+    ret = UnloadKeyboardLayout( hkl );
+    todo_wine
+    ok( ret, "UnloadKeyboardLayout failed, error %lu\n", GetLastError() );
+
+    swprintf( buffer, ARRAY_SIZE(buffer), L"System\\CurrentControlSet\\Control\\Keyboard Layouts\\%08x", hkl );
+    ret = RegDeleteKeyW( HKEY_LOCAL_MACHINE, buffer );
+    ok( !ret, "RegDeleteKeyW returned %#lx, error %lu\n", ret, GetLastError() );
+
+    ret = RegOpenKeyW( HKEY_CURRENT_USER, L"Keyboard Layout\\Preload", &hkey );
+    ok( !ret, "RegOpenKeyW returned %#lx, error %lu\n", ret, GetLastError() );
+
+    value_len = ARRAY_SIZE(value);
+    buffer_len = sizeof(buffer);
+    for (i = 0; !RegEnumValueW( hkey, i, value, &value_len, NULL, NULL, (void *)buffer, &buffer_len ); i++)
+    {
+        value_len = ARRAY_SIZE(value);
+        buffer_len = sizeof(buffer);
+        if (hkl != UlongToHandle( wcstoul( buffer, NULL, 16 ) )) continue;
+        ret = RegDeleteValueW( hkey, value );
+        ok( !ret, "RegDeleteValueW returned %#lx, error %lu\n", ret, GetLastError() );
+    }
+
+    ret = RegCloseKey( hkey );
+    ok( !ret, "RegCloseKey returned %#lx, error %lu\n", ret, GetLastError() );
+
+    ret = DeleteFileW( ime_path );
+    todo_wine_if( GetLastError() == ERROR_ACCESS_DENIED )
+    ok( ret || broken( !ret ) /* sometimes still in use */,
+        "DeleteFileW failed, error %lu\n", GetLastError() );
+}
+
+static void test_ImmInstallIME(void)
+{
+    HKL hkl;
+
+    if (!(hkl = ime_install())) return;
+
+    ime_cleanup( hkl );
+}
+
+START_TEST(imm32)
+{
     if (!is_ime_enabled())
     {
         win_skip("IME support not implemented\n");
@@ -2461,6 +2593,8 @@ START_TEST(imm32) {
     }
 
     test_com_initialization();
+
+    test_ImmInstallIME();
 
     if (init())
     {
