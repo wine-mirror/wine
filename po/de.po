@@ -4089,11 +4089,11 @@ msgstr "'this' ist kein |-Objekt"
 msgid "Property cannot have both accessors and a value"
 msgstr "Eigenschaft kann nicht sowohl Accessoren als auch einen Wert haben"
 
-#: include/wine/wine_common_ver.rc:133
+#: include/wine/wine_common_ver.rc:138
 msgid "Wine kernel DLL"
 msgstr "Wine-Kernel-DLL"
 
-#: include/wine/wine_common_ver.rc:138 dlls/winemac.drv/winemac.rc:32
+#: include/wine/wine_common_ver.rc:143 dlls/winemac.drv/winemac.rc:32
 #: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:137
 msgid "Wine"
 msgstr "Wine"
