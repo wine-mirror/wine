@@ -150,6 +150,13 @@ ALLOWED_X_EXTENSIONS = [
     "VK_NVX_image_view_handle",
 ]
 
+# Some frequently called functions skip traces and checks for performance reasons.
+PERF_CRITICAL_FUNCTIONS = [
+    "vkUpdateDescriptorSets",
+    "vkUpdateDescriptorSetWithTemplate",
+    "vkGetDescriptorEXT",
+]
+
 # Functions part of our winevulkan graphics driver interface.
 # DRIVER_VERSION should be bumped on any change to driver interface
 # in FUNCTION_OVERRIDES
@@ -674,6 +681,12 @@ class VkFunction(object):
         # The function needs exposed if at-least one extension isn't both UNSUPPORTED and UNEXPOSED
         return self.is_required() and (not self.extensions or not self.extensions.issubset(UNEXPOSED_EXTENSIONS))
 
+    def is_perf_critical(self):
+        # vkCmd* functions are frequently called, do not trace for performance
+        if self.name.startswith("vkCmd") and self.type == "void":
+            return True
+        return self.name in PERF_CRITICAL_FUNCTIONS
+
     def pfn(self, prefix="p", call_conv=None):
         """ Create function pointer. """
 
@@ -733,13 +746,18 @@ class VkFunction(object):
 
     def loader_body(self):
         body = "    struct {0}_params params;\n".format(self.name)
-        body += "    NTSTATUS status;\n"
+        if not self.is_perf_critical():
+            body += "    NTSTATUS status;\n"
         for p in self.params:
             body += "    params.{0} = {0};\n".format(p.name)
 
         # Call the Unix function.
-        body += "    status = UNIX_CALL({0}, &params);\n".format(self.name)
-        body += "    assert(!status);\n"
+        if self.is_perf_critical():
+            body += "    UNIX_CALL({0}, &params);\n".format(self.name)
+        else:
+            body += "    status = UNIX_CALL({0}, &params);\n".format(self.name)
+            body += "    assert(!status);\n"
+
         if self.type != "void":
             body += "    return params.result;\n"
         return body
