@@ -134,6 +134,11 @@ static int (*pgnutls_privkey_import_rsa_raw)(gnutls_privkey_t, const gnutls_datu
 
 /* Not present in gnutls version < 3.6.0 */
 static int (*pgnutls_decode_rs_value)(const gnutls_datum_t *, gnutls_datum_t *, gnutls_datum_t *);
+static int (*pgnutls_x509_spki_init)(gnutls_x509_spki_t *);
+static void (*pgnutls_x509_spki_deinit)(gnutls_x509_spki_t);
+static void (*pgnutls_x509_spki_set_rsa_pss_params)(gnutls_x509_spki_t, gnutls_digest_algorithm_t, unsigned int);
+static int (*pgnutls_pubkey_set_spki)(gnutls_pubkey_t, const gnutls_x509_spki_t, unsigned int);
+static int (*pgnutls_privkey_set_spki)(gnutls_privkey_t, const gnutls_x509_spki_t, unsigned int);
 
 static void *libgnutls_handle;
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f
@@ -269,6 +274,30 @@ static int compat_gnutls_pubkey_encrypt_data(gnutls_pubkey_t key, unsigned int f
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
 
+static int compat_gnutls_x509_spki_init(gnutls_x509_spki_t *spki)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
+static void compat_gnutls_x509_spki_deinit(gnutls_x509_spki_t spki)
+{
+}
+
+static void compat_gnutls_x509_spki_set_rsa_pss_params(gnutls_x509_spki_t spki, gnutls_digest_algorithm_t dig,
+                                                       unsigned int salt_size)
+{
+}
+
+static int compat_gnutls_pubkey_set_spki(gnutls_pubkey_t key, const gnutls_x509_spki_t spki, unsigned int flags)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
+static int compat_gnutls_privkey_set_spki(gnutls_privkey_t key, const gnutls_x509_spki_t spki, unsigned int flags)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
 static void gnutls_log( int level, const char *msg )
 {
     TRACE( "<%d> %s", level, msg );
@@ -329,23 +358,29 @@ static NTSTATUS gnutls_process_attach( void *args )
 
     LOAD_FUNCPTR_OPT(gnutls_cipher_tag)
     LOAD_FUNCPTR_OPT(gnutls_cipher_add_auth)
+    LOAD_FUNCPTR_OPT(gnutls_decode_rs_value)
+    LOAD_FUNCPTR_OPT(gnutls_pk_to_sign)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_decrypt_data)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_export_dsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_export_ecc_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_export_rsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_generate)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_import_ecc_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_import_rsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_privkey_set_spki)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_encrypt_data)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_export_dsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_export_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_export_rsa_raw)
-    LOAD_FUNCPTR_OPT(gnutls_pubkey_import_ecc_raw)
-    LOAD_FUNCPTR_OPT(gnutls_privkey_export_rsa_raw)
-    LOAD_FUNCPTR_OPT(gnutls_privkey_export_ecc_raw)
-    LOAD_FUNCPTR_OPT(gnutls_privkey_import_ecc_raw)
-    LOAD_FUNCPTR_OPT(gnutls_privkey_export_dsa_raw)
-    LOAD_FUNCPTR_OPT(gnutls_pk_to_sign)
-    LOAD_FUNCPTR_OPT(gnutls_pubkey_verify_hash2)
-    LOAD_FUNCPTR_OPT(gnutls_pubkey_import_rsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_import_dsa_raw)
-    LOAD_FUNCPTR_OPT(gnutls_privkey_generate)
-    LOAD_FUNCPTR_OPT(gnutls_decode_rs_value)
-    LOAD_FUNCPTR_OPT(gnutls_privkey_import_rsa_raw)
-    LOAD_FUNCPTR_OPT(gnutls_privkey_decrypt_data)
-    LOAD_FUNCPTR_OPT(gnutls_pubkey_encrypt_data)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_import_ecc_raw)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_import_rsa_raw)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_set_spki)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_verify_hash2)
+    LOAD_FUNCPTR_OPT(gnutls_x509_spki_deinit)
+    LOAD_FUNCPTR_OPT(gnutls_x509_spki_init)
+    LOAD_FUNCPTR_OPT(gnutls_x509_spki_set_rsa_pss_params)
+
 #undef LOAD_FUNCPTR_OPT
 
     if ((ret = pgnutls_global_init()) != GNUTLS_E_SUCCESS)
@@ -1631,6 +1666,27 @@ static gnutls_digest_algorithm_t get_digest_from_id( const WCHAR *alg_id )
     return GNUTLS_DIG_UNKNOWN;
 }
 
+static NTSTATUS pubkey_set_rsa_pss_params( gnutls_pubkey_t key, gnutls_digest_algorithm_t dig, unsigned int salt_size )
+{
+    gnutls_x509_spki_t spki;
+    int ret;
+
+    if (((ret = pgnutls_x509_spki_init( &spki ) < 0)))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+    pgnutls_x509_spki_set_rsa_pss_params( spki, dig, salt_size );
+    ret = pgnutls_pubkey_set_spki( key, spki, 0 );
+    pgnutls_x509_spki_deinit( spki );
+    if (ret < 0)
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_asymmetric_verify( void *args )
 {
     const struct key_asymmetric_verify_params *params = args;
@@ -1667,17 +1723,34 @@ static NTSTATUS key_asymmetric_verify( void *args )
     case ALG_ID_RSA:
     case ALG_ID_RSA_SIGN:
     {
-        BCRYPT_PKCS1_PADDING_INFO *info = params->padding;
-
-        if (!(flags & BCRYPT_PAD_PKCS1) || !info) return STATUS_INVALID_PARAMETER;
-        if (!info->pszAlgId) return STATUS_INVALID_SIGNATURE;
-
-        if ((hash_alg = get_digest_from_id(info->pszAlgId)) == GNUTLS_DIG_UNKNOWN)
+        if (flags & BCRYPT_PAD_PKCS1)
         {
-            FIXME( "hash algorithm %s not supported\n", debugstr_w(info->pszAlgId) );
-            return STATUS_NOT_SUPPORTED;
+            BCRYPT_PKCS1_PADDING_INFO *info = params->padding;
+
+            if (!info) return STATUS_INVALID_PARAMETER;
+            if (!info->pszAlgId) return STATUS_INVALID_SIGNATURE;
+            if ((hash_alg = get_digest_from_id(info->pszAlgId)) == GNUTLS_DIG_UNKNOWN)
+            {
+                FIXME( "hash algorithm %s not supported\n", debugstr_w(info->pszAlgId) );
+                return STATUS_NOT_SUPPORTED;
+            }
+            pk_alg = GNUTLS_PK_RSA;
         }
-        pk_alg = GNUTLS_PK_RSA;
+        else if (flags & BCRYPT_PAD_PSS)
+        {
+            BCRYPT_PSS_PADDING_INFO *info = params->padding;
+
+            if (!info) return STATUS_INVALID_PARAMETER;
+            if (!info->pszAlgId) return STATUS_INVALID_SIGNATURE;
+            if ((hash_alg = get_digest_from_id(info->pszAlgId)) == GNUTLS_DIG_UNKNOWN)
+            {
+                FIXME( "hash algorithm %s not supported\n", debugstr_w(info->pszAlgId) );
+                return STATUS_NOT_SUPPORTED;
+            }
+            if ((status = pubkey_set_rsa_pss_params( key_data(key)->a.pubkey, hash_alg, info->cbSalt ))) return status;
+            pk_alg = GNUTLS_PK_RSA_PSS;
+        }
+        else return STATUS_INVALID_PARAMETER;
         break;
     }
     case ALG_ID_DSA:
@@ -1777,12 +1850,32 @@ static NTSTATUS format_gnutls_signature( enum alg_id type, gnutls_datum_t signat
     }
 }
 
+static NTSTATUS privkey_set_rsa_pss_params( gnutls_privkey_t key, gnutls_digest_algorithm_t dig, unsigned int salt_size )
+{
+    gnutls_x509_spki_t spki;
+    int ret;
+
+    if (((ret = pgnutls_x509_spki_init( &spki ) < 0)))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+    pgnutls_x509_spki_set_rsa_pss_params( spki, dig, salt_size );
+    ret = pgnutls_privkey_set_spki( key, spki, 0 );
+    pgnutls_x509_spki_deinit( spki );
+    if (ret < 0)
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_asymmetric_sign( void *args )
 {
     const struct key_asymmetric_sign_params *params = args;
     struct key *key = params->key;
-    unsigned flags = params->flags;
-    BCRYPT_PKCS1_PADDING_INFO *pad = params->padding;
+    unsigned int flags = params->flags, gnutls_flags = 0;
     gnutls_datum_t hash, signature;
     gnutls_digest_algorithm_t hash_alg;
     NTSTATUS status;
@@ -1803,10 +1896,14 @@ static NTSTATUS key_asymmetric_sign( void *args )
             return STATUS_INVALID_PARAMETER;
         }
 
-        if (flags == BCRYPT_PAD_PKCS1 && pad && pad->pszAlgId && get_digest_from_id( pad->pszAlgId ) != hash_alg)
+        if (flags == BCRYPT_PAD_PKCS1)
         {
-            WARN( "incorrect hashing algorithm %s, expected %u\n", debugstr_w(pad->pszAlgId), hash_alg );
-            return STATUS_INVALID_PARAMETER;
+            BCRYPT_PKCS1_PADDING_INFO *pad = params->padding;
+            if (pad && pad->pszAlgId && get_digest_from_id( pad->pszAlgId ) != hash_alg)
+            {
+                WARN( "incorrect hashing algorithm %s, expected %u\n", debugstr_w(pad->pszAlgId), hash_alg );
+                return STATUS_INVALID_PARAMETER;
+            }
         }
     }
     else if (key->alg_id == ALG_ID_DSA)
@@ -1821,17 +1918,41 @@ static NTSTATUS key_asymmetric_sign( void *args )
     }
     else if (flags == BCRYPT_PAD_PKCS1)
     {
+        BCRYPT_PKCS1_PADDING_INFO *pad = params->padding;
+
         if (!pad || !pad->pszAlgId)
         {
             WARN( "padding info not found\n" );
             return STATUS_INVALID_PARAMETER;
         }
-
         if ((hash_alg = get_digest_from_id( pad->pszAlgId )) == GNUTLS_DIG_UNKNOWN)
         {
             FIXME( "hash algorithm %s not recognized\n", debugstr_w(pad->pszAlgId) );
             return STATUS_NOT_SUPPORTED;
         }
+    }
+    else if (flags == BCRYPT_PAD_PSS)
+    {
+        BCRYPT_PSS_PADDING_INFO *pad = params->padding;
+
+        if (!pad || !pad->pszAlgId)
+        {
+            WARN( "padding info not found\n" );
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (key->alg_id != ALG_ID_RSA && key->alg_id != ALG_ID_RSA_SIGN)
+        {
+            FIXME( "BCRYPT_PAD_PSS not supported for key algorithm %u\n", key->alg_id );
+            return STATUS_NOT_SUPPORTED;
+        }
+        if ((hash_alg = get_digest_from_id( pad->pszAlgId )) == GNUTLS_DIG_UNKNOWN)
+        {
+            FIXME( "hash algorithm %s not recognized\n", debugstr_w(pad->pszAlgId) );
+            return STATUS_NOT_SUPPORTED;
+        }
+
+        if ((status = privkey_set_rsa_pss_params( key_data(key)->a.privkey, hash_alg, pad->cbSalt ))) return status;
+        gnutls_flags = GNUTLS_PRIVKEY_SIGN_FLAG_RSA_PSS;
     }
     else if (!flags)
     {
@@ -1857,7 +1978,7 @@ static NTSTATUS key_asymmetric_sign( void *args )
     signature.data = NULL;
     signature.size = 0;
 
-    if ((ret = pgnutls_privkey_sign_hash( key_data(key)->a.privkey, hash_alg, 0, &hash, &signature )))
+    if ((ret = pgnutls_privkey_sign_hash( key_data(key)->a.privkey, hash_alg, gnutls_flags, &hash, &signature )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;

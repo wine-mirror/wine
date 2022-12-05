@@ -2386,11 +2386,16 @@ static void test_RSA(void)
 {
     static UCHAR hash[] =
         {0x7e,0xe3,0x74,0xe7,0xc5,0x0b,0x6b,0x70,0xdb,0xab,0x32,0x6d,0x1d,0x51,0xd6,0x74,0x79,0x8e,0x5b,0x4b};
+    static UCHAR hash48[] =
+        {0x62,0xb2,0x1e,0x90,0xc9,0x02,0x2b,0x10,0x16,0x71,0xba,0x1f,0x80,0x8f,0x86,0x31,0xa8,0x14,0x9f,0x0f,
+         0x12,0x90,0x40,0x55,0x83,0x9a,0x35,0xc1,0xca,0x78,0xae,0x53,0x1b,0xb3,0x36,0x06,0xba,0x90,0x89,0x12,
+         0xa8,0x42,0x21,0x10,0x9d,0x29,0xcd,0x7e};
     BCRYPT_PKCS1_PADDING_INFO pad;
+    BCRYPT_PSS_PADDING_INFO pad_pss;
     BCRYPT_ALG_HANDLE alg;
     BCRYPT_KEY_HANDLE key;
     BCRYPT_RSAKEY_BLOB *rsablob;
-    UCHAR sig[64];
+    UCHAR sig[256], sig_pss[256];
     ULONG len, size, size2, schemes;
     NTSTATUS ret;
     BYTE *buf;
@@ -2441,7 +2446,7 @@ static void test_RSA(void)
     ret = BCryptGenerateKeyPair(alg, &key, 1024, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
-    keylen = 512;
+    keylen = 2048;
     ret = BCryptSetProperty(key, BCRYPT_KEY_LENGTH, (UCHAR *)&keylen, 2, 0);
     ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
     ret = BCryptSetProperty(key, BCRYPT_KEY_LENGTH, (UCHAR *)&keylen, sizeof(keylen), 0);
@@ -2455,8 +2460,18 @@ static void test_RSA(void)
 
     pad.pszAlgId = BCRYPT_SHA1_ALGORITHM;
     memset(sig, 0, sizeof(sig));
+    len = 0;
     ret = BCryptSignHash(key, &pad, hash, sizeof(hash), sig, sizeof(sig), &len, BCRYPT_PAD_PKCS1);
     ok(!ret, "got %#lx\n", ret);
+    ok(len == 256, "got %lu\n", len);
+
+    pad_pss.pszAlgId = BCRYPT_SHA384_ALGORITHM;
+    pad_pss.cbSalt = 48;
+    memset(sig_pss, 0, sizeof(sig_pss));
+    len = 0;
+    ret = BCryptSignHash(key, &pad_pss, hash48, sizeof(hash48), sig_pss, sizeof(sig_pss), &len, BCRYPT_PAD_PSS);
+    ok(!ret, "got %#lx\n", ret);
+    ok(len == 256, "got %lu\n", len);
 
     /* export private key */
     size = 0;
@@ -2469,11 +2484,11 @@ static void test_RSA(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     rsablob = (BCRYPT_RSAKEY_BLOB *)buf;
     ok(rsablob->Magic == BCRYPT_RSAPRIVATE_MAGIC, "got %#lx\n", rsablob->Magic);
-    ok(rsablob->BitLength == 512, "got %lu\n", rsablob->BitLength);
+    ok(rsablob->BitLength == 2048, "got %lu\n", rsablob->BitLength);
     ok(rsablob->cbPublicExp == 3, "got %lu\n", rsablob->cbPublicExp);
-    ok(rsablob->cbModulus == 64, "got %lu\n", rsablob->cbModulus);
-    ok(rsablob->cbPrime1 == 32, "got %lu\n", rsablob->cbPrime1);
-    ok(rsablob->cbPrime2 == 32, "got %lu\n", rsablob->cbPrime2);
+    ok(rsablob->cbModulus == 256, "got %lu\n", rsablob->cbModulus);
+    ok(rsablob->cbPrime1 == 128, "got %lu\n", rsablob->cbPrime1);
+    ok(rsablob->cbPrime2 == 128, "got %lu\n", rsablob->cbPrime2);
     size2 = sizeof(*rsablob) + rsablob->cbPublicExp + rsablob->cbModulus + rsablob->cbPrime1 + rsablob->cbPrime2;
     ok(size == size2, "got %lu expected %lu\n", size2, size);
     free(buf);
@@ -2488,11 +2503,11 @@ static void test_RSA(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     rsablob = (BCRYPT_RSAKEY_BLOB *)buf;
     ok(rsablob->Magic == BCRYPT_RSAFULLPRIVATE_MAGIC, "got %#lx\n", rsablob->Magic);
-    ok(rsablob->BitLength == 512, "got %lu\n", rsablob->BitLength);
+    ok(rsablob->BitLength == 2048, "got %lu\n", rsablob->BitLength);
     ok(rsablob->cbPublicExp == 3, "got %lu\n", rsablob->cbPublicExp);
-    ok(rsablob->cbModulus == 64, "got %lu\n", rsablob->cbModulus);
-    ok(rsablob->cbPrime1 == 32, "got %lu\n", rsablob->cbPrime1);
-    ok(rsablob->cbPrime2 == 32, "got %lu\n", rsablob->cbPrime2);
+    ok(rsablob->cbModulus == 256, "got %lu\n", rsablob->cbModulus);
+    ok(rsablob->cbPrime1 == 128, "got %lu\n", rsablob->cbPrime1);
+    ok(rsablob->cbPrime2 == 128, "got %lu\n", rsablob->cbPrime2);
     size2 = sizeof(*rsablob) + rsablob->cbPublicExp + rsablob->cbModulus * 2 + rsablob->cbPrime1 * 3 + rsablob->cbPrime2 * 2;
     ok(size == size2, "got %lu expected %lu\n", size2, size);
     free(buf);
@@ -2508,9 +2523,9 @@ static void test_RSA(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     rsablob = (BCRYPT_RSAKEY_BLOB *)buf;
     ok(rsablob->Magic == BCRYPT_RSAPUBLIC_MAGIC, "got %#lx\n", rsablob->Magic);
-    ok(rsablob->BitLength == 512, "got %lu\n", rsablob->BitLength);
+    ok(rsablob->BitLength == 2048, "got %lu\n", rsablob->BitLength);
     ok(rsablob->cbPublicExp == 3, "got %lu\n", rsablob->cbPublicExp);
-    ok(rsablob->cbModulus == 64, "got %lu\n", rsablob->cbModulus);
+    ok(rsablob->cbModulus == 256, "got %lu\n", rsablob->cbModulus);
     ok(!rsablob->cbPrime1, "got %lu\n", rsablob->cbPrime1);
     ok(!rsablob->cbPrime2, "got %lu\n", rsablob->cbPrime2);
     ok(size == sizeof(*rsablob) + rsablob->cbPublicExp + rsablob->cbModulus, "got %lu\n", size);
@@ -2525,7 +2540,9 @@ static void test_RSA(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     free(buf);
 
-    ret = BCryptVerifySignature(key, &pad, hash, sizeof(hash), sig, len, BCRYPT_PAD_PKCS1);
+    ret = BCryptVerifySignature(key, &pad, hash, sizeof(hash), sig, sizeof(sig), BCRYPT_PAD_PKCS1);
+    ok(!ret, "got %#lx\n", ret);
+    ret = BCryptVerifySignature(key, &pad_pss, hash48, sizeof(hash48), sig_pss, sizeof(sig_pss), BCRYPT_PAD_PSS);
     ok(!ret, "got %#lx\n", ret);
     ret = BCryptDestroyKey(key);
     ok(!ret, "got %#lx\n", ret);
@@ -2561,9 +2578,6 @@ static void test_RSA(void)
 
     ret = BCryptCloseAlgorithmProvider(alg, 0);
     ok(!ret, "got %#lx\n", ret);
-
-    /* RSA encryption */
-    test_rsa_encrypt();
 }
 
 static void test_RSA_SIGN(void)
@@ -3457,6 +3471,7 @@ START_TEST(bcrypt)
     test_BcryptDeriveKeyCapi();
     test_DSA();
     test_SecretAgreement();
+    test_rsa_encrypt();
 
     FreeLibrary(module);
 }
