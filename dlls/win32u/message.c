@@ -2995,7 +2995,7 @@ static LRESULT send_window_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     info.lparam  = lparam;
     info.flags   = SMTO_NORMAL;
     info.timeout = 0;
-    info.wm_char = WMCHAR_MAP_SENDMESSAGETIMEOUT;
+    info.wm_char = WMCHAR_MAP_SENDMESSAGE;
     info.params  = client_params;
 
     process_message( &info, &res, ansi );
