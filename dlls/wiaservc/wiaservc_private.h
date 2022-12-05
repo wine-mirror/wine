@@ -36,13 +36,4 @@ typedef struct
 
 HRESULT wiadevmgr_Constructor(IWiaDevMgr **ppObj) DECLSPEC_HIDDEN;
 
-/* Little helper functions */
-static inline char *
-wiaservc_strdup(const char *s)
-{
-    size_t n = strlen(s) + 1;
-    char *d = HeapAlloc(GetProcessHeap(), 0, n);
-    return d ? memcpy(d, s, n) : NULL;
-}
-
 #endif /* __WIASERVC_PRIVATE__ */
