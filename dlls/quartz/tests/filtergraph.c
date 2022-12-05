@@ -1501,7 +1501,7 @@ static HRESULT WINAPI testfilter_JoinFilterGraph(IBaseFilter *iface, IFilterGrap
 
     filter->graph = graph;
     free(filter->name);
-    filter->name = name ? wcsdup(name) : NULL;
+    filter->name = wcsdup(name);
     return S_OK;
 }
 
