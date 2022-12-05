@@ -1,3 +1,4 @@
+@ stdcall -private DllRegisterServer()
 @ stdcall ClosePrintProcessor(ptr)
 @ stdcall ControlPrintProcessor(ptr long)
 @ stdcall EnumPrintProcessorDatatypesW(ptr ptr long ptr long ptr ptr)

@@ -193,3 +193,10 @@ BOOL WINAPI ClosePrintProcessor(HANDLE pp)
     LocalFree(data);
     return TRUE;
 }
+
+HRESULT WINAPI DllRegisterServer(void)
+{
+    AddPrintProcessorW(NULL, (WCHAR *)L"Windows 4.0", (WCHAR *)L"winprint.dll", (WCHAR *)L"winprint");
+    AddPrintProcessorW(NULL, NULL, (WCHAR *)L"winprint.dll", (WCHAR *)L"winprint");
+    return S_OK;
+}
