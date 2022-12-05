@@ -783,7 +783,9 @@ class VkFunction(object):
         if needs_alloc:
             body += "    struct conversion_context ctx;\n"
         body += "\n"
-        body += "    {0}\n".format(self.trace(params_prefix=params_prefix, conv=conv))
+
+        if not self.is_perf_critical():
+            body += "    {0}\n".format(self.trace(params_prefix=params_prefix, conv=conv))
 
         if self.params[0].optional and self.params[0].is_handle():
             if self.type != "void":
