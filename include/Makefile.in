@@ -771,6 +771,7 @@ SOURCES = \
 	wbemdisp.idl \
 	wbemprov.idl \
 	wct.h \
+	wdbgexts.h \
 	weakreference.idl \
 	webservices.h \
 	werapi.h \
