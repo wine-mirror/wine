@@ -54,14 +54,15 @@ extern WCHAR* current_app; /* NULL means editing global settings  */
 
 void set_reg_key(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *value);
 void set_reg_key_dword(HKEY root, const WCHAR *path, const WCHAR *name, DWORD value);
-WCHAR *get_reg_key(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *def);
+WCHAR *get_reg_key(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *def)
+    __WINE_DEALLOC(free) __WINE_MALLOC;
 
 BOOL reg_key_exists(HKEY root, const WCHAR *path, const WCHAR *name);
 void apply(void);
-WCHAR **enumerate_values(HKEY root, const WCHAR *path);
+WCHAR **enumerate_values(HKEY root, const WCHAR *path) __WINE_DEALLOC(free) __WINE_MALLOC;
 
 /* Load a string from the resources. Allocated with malloc */
-WCHAR* load_string (UINT id);
+WCHAR* load_string(UINT id) __WINE_DEALLOC(free) __WINE_MALLOC;
 
 /* returns a string of the form "AppDefaults\\appname.exe\\section", or just "section" if
    the user is editing the global settings.
