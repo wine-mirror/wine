@@ -938,6 +938,7 @@ static void sdl_add_device(unsigned int index)
 
     SDL_Joystick* joystick;
     SDL_JoystickID id;
+    SDL_JoystickType joystick_type;
     SDL_GameController *controller = NULL;
     const char *product, *sdl_serial;
     char guid_str[33], buffer[ARRAY_SIZE(desc.product)];
@@ -949,7 +950,10 @@ static void sdl_add_device(unsigned int index)
         return;
     }
 
-    if (options->map_controllers && pSDL_IsGameController(index))
+    joystick_type = pSDL_JoystickGetType(joystick);
+    if (options->map_controllers && pSDL_IsGameController(index)
+            && joystick_type != SDL_JOYSTICK_TYPE_WHEEL
+            && joystick_type != SDL_JOYSTICK_TYPE_FLIGHT_STICK)
         controller = pSDL_GameControllerOpen(index);
 
     if (controller) product = pSDL_GameControllerName(controller);
