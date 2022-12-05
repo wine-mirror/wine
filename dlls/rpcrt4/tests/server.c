@@ -867,7 +867,9 @@ s123_t * __cdecl s_get_s123(void)
 
 str_t __cdecl s_get_filename(void)
 {
-    return (char *)__FILE__;
+    void *ptr = MIDL_user_allocate(strlen(__FILE__) + 1);
+    strcpy(ptr, __FILE__);
+    return (char *)ptr;
 }
 
 int __cdecl s_echo_ranged_int(int i, int j, int k)
