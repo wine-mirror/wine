@@ -2270,6 +2270,7 @@ static bool feature_level_11_supported(const struct wined3d_physical_device_info
 {
     return shader_model >= 5
             && info->features2.features.multiDrawIndirect
+            && info->features2.features.drawIndirectFirstInstance
             && info->features2.features.tessellationShader;
 }
 
