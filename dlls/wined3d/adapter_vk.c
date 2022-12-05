@@ -2247,6 +2247,11 @@ static bool adapter_vk_init_driver_info(struct wined3d_adapter_vk *adapter_vk,
             adapter_vk->a.d3d_info.feature_level, vram_bytes, sysmem_bytes);
 }
 
+static bool feature_level_9_2_supported(const struct wined3d_physical_device_info *info)
+{
+    return info->features2.features.occlusionQueryPrecise;
+}
+
 static bool feature_level_9_3_supported(const struct wined3d_physical_device_info *info, unsigned int shader_model)
 {
     return shader_model >= 3
@@ -2292,6 +2297,9 @@ static enum wined3d_feature_level feature_level_from_caps(const struct wined3d_p
 
     if (shader_model <= 1)
         return WINED3D_FEATURE_LEVEL_8;
+
+    if (!feature_level_9_2_supported(info))
+        return WINED3D_FEATURE_LEVEL_9_1;
 
     if (!feature_level_9_3_supported(info, shader_model))
         return WINED3D_FEATURE_LEVEL_9_2;
