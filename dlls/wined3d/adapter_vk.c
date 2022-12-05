@@ -2265,6 +2265,7 @@ static bool feature_level_10_supported(const struct wined3d_physical_device_info
             && info->features2.features.geometryShader
             && info->features2.features.depthClamp
             && info->features2.features.depthBiasClamp
+            && info->features2.features.pipelineStatisticsQuery
             && info->vertex_divisor_features.vertexAttributeInstanceRateDivisor
             && info->vertex_divisor_features.vertexAttributeInstanceRateZeroDivisor;
 }
