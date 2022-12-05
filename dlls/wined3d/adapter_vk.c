@@ -299,6 +299,7 @@ static void wined3d_disable_vulkan_features(struct wined3d_physical_device_info 
     VkPhysicalDeviceFeatures *features = &info->features2.features;
 
     features->depthBounds = VK_FALSE;
+    features->wideLines = VK_FALSE;
     features->alphaToOne = VK_FALSE;
     features->textureCompressionETC2 = VK_FALSE;
     features->textureCompressionASTC_LDR = VK_FALSE;
