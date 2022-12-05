@@ -102,9 +102,9 @@ BOOL add_drive(char letter, const char *targetpath, const char *device, const WC
                wine_dbgstr_w(label), serial, type);
 
     drives[driveIndex].letter   = toupper(letter);
-    drives[driveIndex].unixpath = strdupA(targetpath);
-    drives[driveIndex].device   = device ? strdupA(device) : NULL;
-    drives[driveIndex].label    = label ? strdupW(label) : NULL;
+    drives[driveIndex].unixpath = strdup(targetpath);
+    drives[driveIndex].device   = strdup(device);
+    drives[driveIndex].label    = wcsdup(label);
     drives[driveIndex].serial   = serial;
     drives[driveIndex].type     = type;
     drives[driveIndex].in_use   = TRUE;
@@ -116,11 +116,11 @@ BOOL add_drive(char letter, const char *targetpath, const char *device, const WC
 /* deallocates the contents of the drive. does not free the drive itself  */
 void delete_drive(struct drive *d)
 {
-    HeapFree(GetProcessHeap(), 0, d->unixpath);
+    free(d->unixpath);
     d->unixpath = NULL;
-    HeapFree(GetProcessHeap(), 0, d->device);
+    free(d->device);
     d->device = NULL;
-    HeapFree(GetProcessHeap(), 0, d->label);
+    free(d->label);
     d->label = NULL;
     d->serial = 0;
     d->in_use = FALSE;
@@ -222,7 +222,7 @@ BOOL load_drives(void)
         struct mountmgr_unix_drive input;
         struct mountmgr_unix_drive *data;
 
-        if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) break;
+        if (!(data = malloc( size ))) break;
 
         memset( &input, 0, sizeof(input) );
         input.letter = root[0];
@@ -252,7 +252,7 @@ BOOL load_drives(void)
             if (GetLastError() == ERROR_MORE_DATA) size = data->size;
             else root[0]++;  /* skip this drive */
         }
-        HeapFree( GetProcessHeap(), 0, data );
+        free( data );
     }
 
     /* reset modified flags */
@@ -287,7 +287,7 @@ void apply_drive_changes(void)
             len += strlen(drives[i].unixpath) + 1;
             if (drives[i].device) len += strlen(drives[i].device) + 1;
         }
-        if (!(ioctl = HeapAlloc( GetProcessHeap(), 0, len ))) continue;
+        if (!(ioctl = malloc( len ))) continue;
         ioctl->size = len;
         ioctl->letter = 'a' + i;
         ioctl->device_offset = 0;
@@ -320,7 +320,7 @@ void apply_drive_changes(void)
         }
         else WINE_WARN( "failed to set drive %c: to %s type %lu err %lu\n", 'a' + i,
                        wine_dbgstr_a(drives[i].unixpath), drives[i].type, GetLastError() );
-        HeapFree( GetProcessHeap(), 0, ioctl );
+        free( ioctl );
     }
     CloseHandle( mgr );
 }
@@ -361,7 +361,7 @@ void set_shell_folder( const WCHAR *path, const char *dest )
     len = sizeof(*ioctl) + nt_name.Length;
     if (dest) len += strlen(dest) + 1;
 
-    if (!(ioctl = HeapAlloc( GetProcessHeap(), 0, len ))) return;
+    if (!(ioctl = malloc( len ))) return;
     ioctl->create_backup = TRUE;
     ioctl->folder_offset = sizeof(*ioctl);
     ioctl->folder_size = nt_name.Length;
@@ -374,6 +374,6 @@ void set_shell_folder( const WCHAR *path, const char *dest )
     else ioctl->symlink_offset = 0;
 
     DeviceIoControl( mgr, IOCTL_MOUNTMGR_DEFINE_SHELL_FOLDER, ioctl, len, NULL, 0, NULL, NULL );
-    HeapFree( GetProcessHeap(), 0, ioctl );
+    free( ioctl );
     RtlFreeUnicodeString( &nt_name );
 }

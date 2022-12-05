@@ -55,7 +55,7 @@ static void convert_x11_desktop_key(void)
     set_reg_key(config_key, L"Explorer\\Desktops", L"Default", buf);
     set_reg_key(config_key, L"Explorer", L"Desktop", L"Default");
     set_reg_key(config_key, L"X11 Driver", L"Desktop", NULL);
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
 }
 
 static void update_gui_for_desktop_mode(HWND dialog)
@@ -77,7 +77,7 @@ static void update_gui_for_desktop_mode(HWND dialog)
         SetDlgItemTextW(dialog, IDC_DESKTOP_WIDTH, L"800");
         SetDlgItemTextW(dialog, IDC_DESKTOP_HEIGHT, L"600");
     }
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
 
     /* do we have desktop mode enabled? */
     if (reg_key_exists(config_key, keypath(L"Explorer"), L"Desktop"))
@@ -115,7 +115,7 @@ static BOOL can_enable_desktop(void)
     {
         if(wcscmp(value, L"winemac.drv"))
             ret = TRUE;
-        HeapFree(GetProcessHeap(), 0, value);
+        free(value);
     }
     return ret;
 }
@@ -144,21 +144,21 @@ static void init_dialog(HWND dialog)
 	CheckDlgButton(dialog, IDC_FULLSCREEN_GRAB, BST_CHECKED);
     else
 	CheckDlgButton(dialog, IDC_FULLSCREEN_GRAB, BST_UNCHECKED);
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
 
     buf = get_reg_key(config_key, keypath(L"X11 Driver"), L"Managed", L"Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(dialog, IDC_ENABLE_MANAGED, BST_CHECKED);
     else
 	CheckDlgButton(dialog, IDC_ENABLE_MANAGED, BST_UNCHECKED);
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
 
     buf = get_reg_key(config_key, keypath(L"X11 Driver"), L"Decorated", L"Y");
     if (IS_OPTION_TRUE(*buf))
 	CheckDlgButton(dialog, IDC_ENABLE_DECORATED, BST_CHECKED);
     else
 	CheckDlgButton(dialog, IDC_ENABLE_DECORATED, BST_UNCHECKED);
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
 
     updating_ui = FALSE;
 }
@@ -184,8 +184,8 @@ static void set_from_desktop_edits(HWND dialog)
     set_reg_key(config_key, L"Explorer\\Desktops", desktop_name, buffer);
     set_reg_key(config_key, keypath(L"Explorer"), L"Desktop", desktop_name);
 
-    HeapFree(GetProcessHeap(), 0, width);
-    HeapFree(GetProcessHeap(), 0, height);
+    free(width);
+    free(height);
 }
 
 static void on_enable_desktop_clicked(HWND dialog) {
@@ -234,7 +234,7 @@ static INT read_logpixels_reg(void)
     WCHAR *buf = get_reg_key(HKEY_CURRENT_USER, L"Control Panel\\Desktop", L"LogPixels", NULL);
     if (!buf) buf = get_reg_key(HKEY_CURRENT_CONFIG, L"Software\\Fonts", L"LogPixels", NULL);
     dwLogPixels = buf ? *buf : DEFDPI;
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
     return dwLogPixels;
 }
 

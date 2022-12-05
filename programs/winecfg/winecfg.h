@@ -25,6 +25,7 @@
 #define WINE_CFG_H
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -47,7 +48,7 @@ extern WCHAR* current_app; /* NULL means editing global settings  */
    The root HKEY has to be non-ambiguous. So only the registry roots (HKCU, HKLM, ...) or
    the global config_key are allowed here.
    
-   You are expected to HeapFree the result of get_reg_key. The parameters to set_reg_key will
+   You are expected to free the result of get_reg_key. The parameters to set_reg_key will
    be copied, so free them too when necessary.
  */
 
@@ -59,7 +60,7 @@ BOOL reg_key_exists(HKEY root, const WCHAR *path, const WCHAR *name);
 void apply(void);
 WCHAR **enumerate_values(HKEY root, const WCHAR *path);
 
-/* Load a string from the resources. Allocated with HeapAlloc (GetProcessHeap()) */
+/* Load a string from the resources. Allocated with malloc */
 WCHAR* load_string (UINT id);
 
 /* returns a string of the form "AppDefaults\\appname.exe\\section", or just "section" if
@@ -123,19 +124,6 @@ extern struct drive drives[26]; /* one for each drive letter */
 #define enable(id) EnableWindow(GetDlgItem(dialog, id), 1);
 void PRINTERROR(void); /* WINE_TRACE() the plaintext error message from GetLastError() */
 
-/* returns a string in the win32 heap  */
-static inline char *strdupA(const char *s)
-{
-    char *r = HeapAlloc(GetProcessHeap(), 0, strlen(s)+1);
-    return strcpy(r, s);
-}
-
-static inline WCHAR *strdupW(const WCHAR *s)
-{
-    WCHAR *r = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(s)+1)*sizeof(WCHAR));
-    return lstrcpyW(r, s);
-}
-
 /* create a unicode string from a string in Unix locale */
 static inline WCHAR *strdupU2W(const char *unix_str)
 {
@@ -143,7 +131,7 @@ static inline WCHAR *strdupU2W(const char *unix_str)
     int lenW;
 
     lenW = MultiByteToWideChar(CP_UNIXCP, 0, unix_str, -1, NULL, 0);
-    unicode_str = HeapAlloc(GetProcessHeap(), 0, lenW * sizeof(WCHAR));
+    unicode_str = malloc(lenW * sizeof(WCHAR));
     if (unicode_str)
         MultiByteToWideChar(CP_UNIXCP, 0, unix_str, -1, unicode_str, lenW);
     return unicode_str;
@@ -153,10 +141,10 @@ static inline WCHAR *get_text(HWND dialog, WORD id)
 {
     HWND item = GetDlgItem(dialog, id);
     int len = GetWindowTextLengthW(item) + 1;
-    WCHAR *result = len ? HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR)) : NULL;
+    WCHAR *result = len ? malloc(len * sizeof(WCHAR)) : NULL;
     if (!result) return NULL;
     if(GetWindowTextW(item, result, len) == 0) {
-        HeapFree (GetProcessHeap(), 0, result);
+        free(result);
         return NULL;
     }
     return result;

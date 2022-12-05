@@ -94,13 +94,11 @@ static void color_or_size_dsa_add (WrappedDsa* wdsa, const WCHAR* name,
 				   const WCHAR* fancyName)
 {
     ThemeColorOrSize item;
-    
-    item.name = HeapAlloc (GetProcessHeap(), 0, 
-	(lstrlenW (name) + 1) * sizeof(WCHAR));
+
+    item.name = malloc ((wcslen (name) + 1) * sizeof(WCHAR));
     lstrcpyW (item.name, name);
 
-    item.fancyName = HeapAlloc (GetProcessHeap(), 0, 
-	(lstrlenW (fancyName) + 1) * sizeof(WCHAR));
+    item.fancyName = malloc ((wcslen (fancyName) + 1) * sizeof(WCHAR));
     lstrcpyW (item.fancyName, fancyName);
 
     DSA_InsertItem (wdsa->dsa, wdsa->count, &item);
@@ -110,8 +108,8 @@ static void color_or_size_dsa_add (WrappedDsa* wdsa, const WCHAR* name,
 static int CALLBACK dsa_destroy_callback (LPVOID p, LPVOID pData)
 {
     ThemeColorOrSize* item = p;
-    HeapFree (GetProcessHeap(), 0, item->name);
-    HeapFree (GetProcessHeap(), 0, item->fancyName);
+    free (item->name);
+    free (item->fancyName);
     return 1;
 }
 
@@ -157,8 +155,8 @@ static int themeFilesCount = 0;
 static int CALLBACK theme_dsa_destroy_callback (LPVOID p, LPVOID pData)
 {
     ThemeFile* item = p;
-    HeapFree (GetProcessHeap(), 0, item->themeFileName);
-    HeapFree (GetProcessHeap(), 0, item->fancyName);
+    free (item->themeFileName);
+    free (item->fancyName);
     free_color_or_size_dsa (&item->colors);
     free_color_or_size_dsa (&item->sizes);
     return 1;
@@ -209,12 +207,10 @@ static BOOL CALLBACK myEnumThemeProc (LPVOID lpReserved,
     create_color_or_size_dsa (&newEntry.sizes);
     fill_theme_string_array (pszThemeFileName, &newEntry.sizes, EnumThemeSizes);
 
-    newEntry.themeFileName = HeapAlloc (GetProcessHeap(), 0, 
-	(lstrlenW (pszThemeFileName) + 1) * sizeof(WCHAR));
+    newEntry.themeFileName = malloc ((wcslen (pszThemeFileName) + 1) * sizeof(WCHAR));
     lstrcpyW (newEntry.themeFileName, pszThemeFileName);
-  
-    newEntry.fancyName = HeapAlloc (GetProcessHeap(), 0, 
-	(lstrlenW (pszThemeName) + 1) * sizeof(WCHAR));
+
+    newEntry.fancyName = malloc ((wcslen (pszThemeName) + 1) * sizeof(WCHAR));
     lstrcpyW (newEntry.fancyName, pszThemeName);
   
     /*list_add_tail (&themeFiles, &newEntry->entry);*/
@@ -800,7 +796,7 @@ static void update_shell_folder_listview(HWND dialog) {
         item.iSubItem = 1;
         item.pszText = strdupU2W(asfiInfo[i].szLinkTarget);
         SendDlgItemMessageW(dialog, IDC_LIST_SFPATHS, LVM_SETITEMW, 0, (LPARAM)&item);
-        HeapFree(GetProcessHeap(), 0, item.pszText);
+        free(item.pszText);
     }
 
     /* Ensure that the previously selected item is selected again. */
@@ -823,7 +819,7 @@ static void on_shell_folder_selection_changed(HWND hDlg, LPNMLISTVIEW lpnm) {
             EnableWindow(GetDlgItem(hDlg, IDC_BROWSE_SFPATH), 1);
             link = strdupU2W(psfiSelected->szLinkTarget);
             set_textW(hDlg, IDC_EDIT_SFPATH, link);
-            HeapFree(GetProcessHeap(), 0, link);
+            free(link);
         } else {
             CheckDlgButton(hDlg, IDC_LINK_SFPATH, BST_UNCHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_EDIT_SFPATH), 0);
@@ -849,7 +845,7 @@ static void on_shell_folder_edit_changed(HWND hDlg) {
                                     MAKELPARAM(LVNI_SELECTED,0));
 
     if (!text || !psfiSelected || iSel < 0) {
-        HeapFree(GetProcessHeap(), 0, text);
+        free(text);
         return;
     }
 
@@ -862,7 +858,7 @@ static void on_shell_folder_edit_changed(HWND hDlg) {
     item.pszText = text;
     SendDlgItemMessageW(hDlg, IDC_LIST_SFPATHS, LVM_SETITEMW, 0, (LPARAM)&item);
 
-    HeapFree(GetProcessHeap(), 0, text);
+    free(text);
 
     SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
 }
@@ -1094,7 +1090,7 @@ static void init_mime_types(HWND hDlg)
 
     CheckDlgButton(hDlg, IDC_ENABLE_FILE_ASSOCIATIONS, state);
 
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
 }
 
 static void update_mime_types(HWND hDlg)
@@ -1175,7 +1171,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             if (text)
                             {
                                 metrics[index].size = wcstol(text, NULL, 10);
-                                HeapFree(GetProcessHeap(), 0, text);
+                                free(text);
                             }
                             else
                             {

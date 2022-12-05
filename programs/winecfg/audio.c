@@ -153,8 +153,7 @@ static BOOL load_devices(IMMDeviceEnumerator *devenum, EDataFlow dataflow,
     }
 
     if(*ndevs > 0){
-        *out = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(struct DeviceInfo) * (*ndevs));
+        *out = malloc(sizeof(struct DeviceInfo) * (*ndevs));
         if(!*out){
             IMMDeviceCollection_Release(coll);
             return FALSE;
@@ -360,10 +359,10 @@ static void initAudioDlg (HWND hDlg)
                 SendDlgItemMessageW(hDlg, IDC_VOICEIN_DEVICE, CB_SETCURSEL, i + 1, 0);
         }
 
-        HeapFree(GetProcessHeap(), 0, reg_out_dev);
-        HeapFree(GetProcessHeap(), 0, reg_vout_dev);
-        HeapFree(GetProcessHeap(), 0, reg_in_dev);
-        HeapFree(GetProcessHeap(), 0, reg_vin_dev);
+        free(reg_out_dev);
+        free(reg_vout_dev);
+        free(reg_in_dev);
+        free(reg_vin_dev);
     }else
         swprintf(display_str, ARRAY_SIZE(display_str), format_str, disabled_str);
 

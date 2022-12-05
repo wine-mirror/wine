@@ -82,9 +82,9 @@ WCHAR* load_string (UINT id)
 
     LoadStringW(GetModuleHandleW(NULL), id, buf, ARRAY_SIZE(buf));
 
-    len = lstrlenW (buf);
-    newStr = HeapAlloc (GetProcessHeap(), 0, (len + 1) * sizeof (WCHAR));
-    memcpy (newStr, buf, len * sizeof (WCHAR));
+    len = wcslen(buf);
+    newStr = malloc((len + 1) * sizeof(WCHAR));
+    memcpy(newStr, buf, len * sizeof(WCHAR));
     newStr[len] = 0;
     return newStr;
 }
@@ -116,7 +116,7 @@ static WCHAR *get_config_key (HKEY root, const WCHAR *subkey, const WCHAR *name,
         if (res == ERROR_FILE_NOT_FOUND)
         {
             WINE_TRACE("Section key not present - using default\n");
-            return def ? strdupW(def) : NULL;
+            return wcsdup(def);
         }
         else
         {
@@ -129,7 +129,7 @@ static WCHAR *get_config_key (HKEY root, const WCHAR *subkey, const WCHAR *name,
     if (res == ERROR_FILE_NOT_FOUND)
     {
         WINE_TRACE("Value not present - using default\n");
-        buffer = def ? strdupW(def) : NULL;
+        buffer = wcsdup(def);
 	goto end;
     } else if (res != ERROR_SUCCESS)
     {
@@ -137,7 +137,7 @@ static WCHAR *get_config_key (HKEY root, const WCHAR *subkey, const WCHAR *name,
         goto end;
     }
 
-    buffer = HeapAlloc(GetProcessHeap(), 0, len + sizeof(WCHAR));
+    buffer = malloc(len + sizeof(WCHAR));
 
     RegQueryValueExW(hSubKey, name, NULL, NULL, (LPBYTE) buffer, &len);
 
@@ -228,13 +228,13 @@ static void free_setting(struct setting *setting)
     WINE_TRACE("destroying %p: %s\n", setting,
                wine_dbgstr_w(setting->path));
 
-    HeapFree(GetProcessHeap(), 0, setting->path);
-    HeapFree(GetProcessHeap(), 0, setting->name);
-    HeapFree(GetProcessHeap(), 0, setting->value);
+    free(setting->path);
+    free(setting->name);
+    free(setting->value);
 
     list_remove(&setting->entry);
 
-    HeapFree(GetProcessHeap(), 0, setting);
+    free(setting);
 }
 
 /**
@@ -243,7 +243,7 @@ static void free_setting(struct setting *setting)
  * default will be used.
  *
  * If already in the list, the contents as given there will be
- * returned. You are expected to HeapFree the result.
+ * returned. You are expected to free the result.
  */
 WCHAR *get_reg_key(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR *def)
 {
@@ -267,7 +267,7 @@ WCHAR *get_reg_key(HKEY root, const WCHAR *path, const WCHAR *name, const WCHAR 
         WINE_TRACE("found %s:%s in settings list, returning %s\n",
                    wine_dbgstr_w(path), wine_dbgstr_w(name),
                    wine_dbgstr_w(s->value));
-        return s->value ? strdupW(s->value) : NULL;
+        return wcsdup(s->value);
     }
 
     /* no, so get from the registry */
@@ -316,18 +316,18 @@ static void set_reg_key_ex(HKEY root, const WCHAR *path, const WCHAR *name, cons
         if (!s->name && !name) return;
 
         /* do we want to undelete this key? */
-        if (!s->name && name) s->name = strdupW(name);
+        if (!s->name && name) s->name = wcsdup(name);
 
         /* yes, we have already set it, so just replace the content and return  */
-        HeapFree(GetProcessHeap(), 0, s->value);
+        free(s->value);
         s->type = type;
         switch (type)
         {
             case REG_SZ:
-                s->value = value ? strdupW(value) : NULL;
+                s->value = wcsdup(value);
                 break;
             case REG_DWORD:
-                s->value = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD));
+                s->value = malloc(sizeof(DWORD));
                 memcpy( s->value, value, sizeof(DWORD) );
                 break;
         }
@@ -346,18 +346,18 @@ static void set_reg_key_ex(HKEY root, const WCHAR *path, const WCHAR *name, cons
     }
 
     /* otherwise add a new setting for it  */
-    s = HeapAlloc(GetProcessHeap(), 0, sizeof(struct setting));
+    s = malloc(sizeof(struct setting));
     s->root  = root;
-    s->path  = strdupW(path);
-    s->name  = name  ? strdupW(name)  : NULL;
+    s->path  = wcsdup(path);
+    s->name  = wcsdup(name);
     s->type  = type;
     switch (type)
     {
         case REG_SZ:
-            s->value = value ? strdupW(value) : NULL;
+            s->value = wcsdup(value);
             break;
         case REG_DWORD:
-            s->value = HeapAlloc(GetProcessHeap(), 0, sizeof(DWORD));
+            s->value = malloc(sizeof(DWORD));
             memcpy( s->value, value, sizeof(DWORD) );
             break;
     }
@@ -379,7 +379,7 @@ void set_reg_key_dword(HKEY root, const WCHAR *path, const WCHAR *name, DWORD va
  * enumerates the value names at the given path, taking into account
  * the changes in the settings list.
  *
- * you are expected to HeapFree each element of the array, which is null
+ * you are expected to free each element of the array, which is null
  * terminated, as well as the array itself.
  */
 WCHAR **enumerate_values(HKEY root, const WCHAR *path)
@@ -426,10 +426,9 @@ WCHAR **enumerate_values(HKEY root, const WCHAR *path)
             }
 
             /* grow the array if necessary, add buffer to it, iterate  */
-            if (values) values = HeapReAlloc(GetProcessHeap(), 0, values, sizeof(WCHAR*) * (valueslen + 1));
-            else values = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR*));
+            values = realloc(values, sizeof(WCHAR*) * (valueslen + 1));
 
-            values[valueslen++] = strdupW(name);
+            values[valueslen++] = wcsdup(name);
             WINE_TRACE("valueslen is now %ld\n", valueslen);
             i++;
         }
@@ -466,16 +465,15 @@ WCHAR **enumerate_values(HKEY root, const WCHAR *path)
         WINE_TRACE("%s in list but not registry\n", wine_dbgstr_w(setting->name));
 
         /* otherwise it's been set by the user but isn't in the registry */
-        if (values) values = HeapReAlloc(GetProcessHeap(), 0, values, sizeof(WCHAR*) * (valueslen + 1));
-        else values = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR*));
+        values = realloc(values, sizeof(WCHAR*) * (valueslen + 1));
 
-        values[valueslen++] = strdupW(setting->name);
+        values[valueslen++] = wcsdup(setting->name);
     }
 
     WINE_TRACE("adding null terminator\n");
     if (values)
     {
-        values = HeapReAlloc(GetProcessHeap(), 0, values, sizeof(WCHAR*) * (valueslen + 1));
+        values = realloc(values, sizeof(WCHAR*) * (valueslen + 1));
         values[valueslen] = NULL;
     }
 
@@ -492,7 +490,7 @@ BOOL reg_key_exists(HKEY root, const WCHAR *path, const WCHAR *name)
 {
     WCHAR *val = get_reg_key(root, path, name, NULL);
 
-    HeapFree(GetProcessHeap(), 0, val);
+    free(val);
     return val != NULL;
 }
 
@@ -568,12 +566,12 @@ WCHAR *keypath(const WCHAR *section)
 {
     static WCHAR *result = NULL;
 
-    HeapFree(GetProcessHeap(), 0, result);
+    free(result);
 
     if (current_app)
     {
         DWORD len = sizeof(L"AppDefaults\\") + (lstrlenW(current_app) + lstrlenW(section) + 1) * sizeof(WCHAR);
-        result = HeapAlloc(GetProcessHeap(), 0, len );
+        result = malloc(len);
         lstrcpyW( result, L"AppDefaults\\" );
         lstrcatW( result, current_app );
         if (section[0])
@@ -585,7 +583,7 @@ WCHAR *keypath(const WCHAR *section)
     }
     else
     {
-        result = strdupW(section);
+        result = wcsdup(section);
     }
 
     return result;

@@ -64,8 +64,8 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                         L"RegisteredOrganization", org ? org : L"");
             apply();
 
-            HeapFree(GetProcessHeap(), 0, owner);
-            HeapFree(GetProcessHeap(), 0, org);
+            free(owner);
+            free(org);
             break;
 
         case NM_CLICK:
@@ -90,8 +90,8 @@ AboutDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         SendMessageW(GetParent(hDlg), PSM_UNCHANGED, 0, 0);
 
-        HeapFree(GetProcessHeap(), 0, owner);
-        HeapFree(GetProcessHeap(), 0, org);
+        free(owner);
+        free(org);
 
         /* prepare the panel */
         hWnd = GetDlgItem(hDlg, IDC_ABT_PANEL);

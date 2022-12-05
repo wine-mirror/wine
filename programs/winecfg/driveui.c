@@ -54,8 +54,8 @@ static DWORD driveui_msgbox (HWND parent, UINT messageId, DWORD flags)
   WCHAR* caption = load_string (IDS_WINECFG_TITLE);
   WCHAR* text = load_string (messageId);
   DWORD result = MessageBoxW (parent, text, caption, flags);
-  HeapFree (GetProcessHeap(), 0, caption);
-  HeapFree (GetProcessHeap(), 0, text);
+  free (caption);
+  free (text);
   return result;
 }
 
@@ -231,11 +231,11 @@ static int fill_drives_list(HWND dialog)
         item.lParam = (LPARAM) &drives[i];
 
         lv_insert_item(dialog, &item);
-        HeapFree(GetProcessHeap(), 0, item.pszText);
+        free(item.pszText);
 
         path = strdupU2W(drives[i].unixpath);
         lv_set_item_text(dialog, count, 1, path);
-        HeapFree(GetProcessHeap(), 0, path);
+        free(path);
 
         count++;
     }
@@ -433,7 +433,7 @@ static void update_controls(HWND dialog)
     WINE_TRACE("set path control text to '%s'\n", current_drive->unixpath);
     path = strdupU2W(current_drive->unixpath);
     set_textW(dialog, IDC_EDIT_PATH, path);
-    HeapFree(GetProcessHeap(), 0, path);
+    free(path);
 
     /* drive type */
     type = current_drive->type;
@@ -489,7 +489,7 @@ static void on_edit_changed(HWND dialog, WORD id)
         case IDC_EDIT_LABEL:
         {
             WCHAR *label = get_text(dialog, id);
-            HeapFree(GetProcessHeap(), 0, current_drive->label);
+            free(current_drive->label);
             current_drive->label = label;
             current_drive->modified = TRUE;
 
@@ -509,7 +509,7 @@ static void on_edit_changed(HWND dialog, WORD id)
             wpath = get_text(dialog, id);
             if( (lenW = WideCharToMultiByte(CP_UNIXCP, 0, wpath, -1, NULL, 0, NULL, NULL)) )
             {
-                path = HeapAlloc(GetProcessHeap(), 0, lenW);
+                path = malloc(lenW);
                 WideCharToMultiByte(CP_UNIXCP, 0, wpath, -1, path, lenW, NULL, NULL);
             }
             else
@@ -518,15 +518,15 @@ static void on_edit_changed(HWND dialog, WORD id)
                 wpath = strdupU2W("drive_c");
             }
 
-            HeapFree(GetProcessHeap(), 0, current_drive->unixpath);
-            current_drive->unixpath = path ? path : strdupA("drive_c");
+            free(current_drive->unixpath);
+            current_drive->unixpath = path ? path : strdup("drive_c");
             current_drive->modified = TRUE;
 
             WINE_TRACE("set path to %s\n", current_drive->unixpath);
 
             lv_set_item_text(dialog, lv_get_curr_select(dialog), 1,
                              wpath);
-            HeapFree(GetProcessHeap(), 0, wpath);
+            free(wpath);
 
             /* enable the apply button  */
             SendMessageW(GetParent(dialog), PSM_CHANGED, (WPARAM) dialog, 0);
@@ -539,7 +539,7 @@ static void on_edit_changed(HWND dialog, WORD id)
 
             serial = get_text(dialog, id);
             current_drive->serial = serial ? wcstoul( serial, NULL, 16 ) : 0;
-            HeapFree(GetProcessHeap(), 0, serial);
+            free(serial);
             current_drive->modified = TRUE;
 
             WINE_TRACE("set serial to %08lX\n", current_drive->serial);
@@ -553,7 +553,7 @@ static void on_edit_changed(HWND dialog, WORD id)
         {
             WCHAR *device = get_text(dialog, id);
             /* TODO: handle device if/when it makes sense to do so.... */
-            HeapFree(GetProcessHeap(), 0, device);
+            free(device);
             break;
         }
     }

@@ -28,7 +28,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "wine/heap.h"
 #include "winecfg.h"
 #include "resource.h"
 
@@ -139,7 +138,7 @@ static void update_comboboxes(HWND dialog)
 
     if (!winver || !winver[0])
     {
-        HeapFree(GetProcessHeap(), 0, winver);
+        free(winver);
 
         if (current_app) /* no explicit setting */
         {
@@ -147,8 +146,8 @@ static void update_comboboxes(HWND dialog)
             SendDlgItemMessageW(dialog, IDC_WINVER, CB_SETCURSEL, 0, 0);
             return;
         }
-        if (ver != -1) winver = strdupW( win_versions[ver].szVersion );
-        else winver = strdupW(DEFAULT_WIN_VERSION);
+        if (ver != -1) winver = wcsdup(win_versions[ver].szVersion);
+        else winver = wcsdup(DEFAULT_WIN_VERSION);
     }
     WINE_TRACE("winver is %s\n", debugstr_w(winver));
 
@@ -164,7 +163,7 @@ static void update_comboboxes(HWND dialog)
 	}
     }
 
-    HeapFree(GetProcessHeap(), 0, winver);
+    free(winver);
 }
 
 static void
@@ -229,7 +228,7 @@ static void init_appsheet(HWND dialog)
       size = ARRAY_SIZE(appname);
       while (RegEnumKeyExW (key, i, appname, &size, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
       {
-          add_listview_item(listview, appname, strdupW(appname));
+          add_listview_item(listview, appname, wcsdup(appname));
 
           i++;
           size = ARRAY_SIZE(appname);
@@ -355,7 +354,7 @@ static void on_add_app_click(HWND dialog)
       if (list_contains_file(listview, filetitle))
           return;
 
-      new_app = strdupW(filetitle);
+      new_app = wcsdup(filetitle);
 
       WINE_TRACE("adding %s\n", wine_dbgstr_w (new_app));
 
@@ -387,7 +386,7 @@ static void on_remove_app_click(HWND dialog)
 
     set_reg_key(config_key, keypath(L""), NULL, NULL); /* delete the section  */
     SendMessageW(listview, LVM_GETITEMW, 0, (LPARAM) &item);
-    HeapFree (GetProcessHeap(), 0, (void*)item.lParam);
+    free((void*)item.lParam);
     SendMessageW(listview, LVM_DELETEITEM, selection, 0);
     item.mask = LVIF_STATE;
     item.state = LVIS_SELECTED | LVIS_FOCUSED;
@@ -510,7 +509,7 @@ void print_current_winver(void)
     else
         wprintf(L"%s\n", winver);
 
-    heap_free(winver);
+    free(winver);
 }
 
 static void on_winver_change(HWND dialog)
