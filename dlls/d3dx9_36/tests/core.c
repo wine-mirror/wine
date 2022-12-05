@@ -1210,27 +1210,21 @@ static void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
     hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, NULL /* out */);
     ok(hr == D3DERR_INVALIDCALL, "D3DXCreateRenderToSurface returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
 
-    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         hr = D3DXCreateRenderToSurface(device, tests[i].Width, tests[i].Height, tests[i].Format, tests[i].DepthStencil,
                 tests[i].DepthStencilFormat, &render);
-        ok(hr == D3D_OK, "%d: D3DXCreateRenderToSurface returned %#lx, expected %#lx\n", i, hr, D3D_OK);
-        if (SUCCEEDED(hr))
-        {
-            hr = ID3DXRenderToSurface_GetDesc(render, &desc);
-            ok(hr == D3D_OK, "%d: GetDesc failed %#lx\n", i, hr);
-            if (SUCCEEDED(hr))
-            {
-                ok(desc.Width == tests[i].Width, "%d: Got width %u, expected %u\n", i, desc.Width, tests[i].Width);
-                ok(desc.Height == tests[i].Height, "%d: Got height %u, expected %u\n", i, desc.Height, tests[i].Height);
-                ok(desc.Format == tests[i].Format, "%d: Got format %#x, expected %#x\n", i, desc.Format, tests[i].Format);
-                ok(desc.DepthStencil == tests[i].DepthStencil, "%d: Got depth stencil %d, expected %d\n",
-                        i, desc.DepthStencil, tests[i].DepthStencil);
-                ok(desc.DepthStencilFormat == tests[i].DepthStencilFormat, "%d: Got depth stencil format %#x, expected %#x\n",
-                        i, desc.DepthStencilFormat, tests[i].DepthStencilFormat);
-            }
-            ID3DXRenderToSurface_Release(render);
-        }
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        hr = ID3DXRenderToSurface_GetDesc(render, &desc);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(desc.Width == tests[i].Width, "%d: Got width %u, expected %u\n", i, desc.Width, tests[i].Width);
+        ok(desc.Height == tests[i].Height, "%d: Got height %u, expected %u\n", i, desc.Height, tests[i].Height);
+        ok(desc.Format == tests[i].Format, "%d: Got format %#x, expected %#x\n", i, desc.Format, tests[i].Format);
+        ok(desc.DepthStencil == tests[i].DepthStencil, "%d: Got depth stencil %d, expected %d\n",
+                i, desc.DepthStencil, tests[i].DepthStencil);
+        ok(desc.DepthStencilFormat == tests[i].DepthStencilFormat, "%d: Got depth stencil format %#x, expected %#x\n",
+                i, desc.DepthStencilFormat, tests[i].DepthStencilFormat);
+        ID3DXRenderToSurface_Release(render);
     }
 
     /* check device ref count */
