@@ -328,6 +328,7 @@ struct d3d_device
     LONG ref;
     UINT version;
     BOOL hardware_device;
+    BOOL have_draw_textures;
 
     IUnknown *outer_unknown;
     struct wined3d_device *wined3d_device;

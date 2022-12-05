@@ -3409,10 +3409,10 @@ void d3d_device_sync_surfaces(struct d3d_device *device)
     struct ddraw_surface *surface;
     unsigned int i, j;
 
-    if (device->hardware_device)
-        return;
-
     d3d_device_sync_rendertarget(device);
+
+    if (!device->have_draw_textures)
+        return;
 
     for (i = 0; i < ARRAY_SIZE(state->textures); ++i)
     {
@@ -4642,7 +4642,17 @@ static HRESULT d3d_device7_SetTexture(IDirect3DDevice7 *iface,
     TRACE("iface %p, stage %lu, texture %p.\n", iface, stage, texture);
 
     if (surf && (surf->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE))
-        wined3d_texture = surf->draw_texture ? surf->draw_texture : surf->wined3d_texture;
+    {
+        if (surf->draw_texture)
+        {
+            wined3d_texture = surf->draw_texture;
+            device->have_draw_textures = TRUE;
+        }
+        else
+        {
+            wined3d_texture = surf->wined3d_texture;
+        }
+    }
 
     wined3d_mutex_lock();
     wined3d_stateblock_set_texture(device->update_state, stage, wined3d_texture);
@@ -4682,7 +4692,17 @@ static HRESULT WINAPI d3d_device3_SetTexture(IDirect3DDevice3 *iface,
     wined3d_mutex_lock();
 
     if (tex && ((tex->surface_desc.ddsCaps.dwCaps & DDSCAPS_TEXTURE) || !device->hardware_device))
-        wined3d_texture = tex->draw_texture ? tex->draw_texture : tex->wined3d_texture;
+    {
+        if (tex->draw_texture)
+        {
+            wined3d_texture = tex->draw_texture;
+            device->have_draw_textures = TRUE;
+        }
+        else
+        {
+            wined3d_texture = tex->wined3d_texture;
+        }
+    }
 
     wined3d_stateblock_set_texture(device->state, stage, wined3d_texture);
     fixup_texture_alpha_op(device);
