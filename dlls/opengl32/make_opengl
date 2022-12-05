@@ -345,7 +345,7 @@ sub generate_unix_thunk($$$)
 
     $ret .= "NTSTATUS $prefix\_$name( void *args )\n";
     $ret .= "{\n";
-    $ret .= "    struct $name\_params *params = args;\n" unless !$call_args && is_void_func( $func );
+    $ret .= "    struct $name\_params *params = args;\n";
     # special case for functions that take an HDC as first parameter
     if (@{$func->[1]} && get_arg_type( ${$func->[1]}[0] ) eq "HDC")
     {
@@ -355,7 +355,7 @@ sub generate_unix_thunk($$$)
     }
     else
     {
-        $ret .= "    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;\n";
+        $ret .= "    const struct opengl_funcs *funcs = params->teb->glTable;\n";
     }
     $ret .= "    ";
     $ret .= "params->ret = " unless is_void_func( $func );
@@ -378,12 +378,13 @@ sub generate_win_thunk($$)
     $ret .= "$func_ret WINAPI $name($decl_args)\n";
     $ret .= "{\n";
     $ret .= "    struct $name\_params args";
+    $params .= " .teb = NtCurrentTeb()";
     foreach my $arg (@{$func->[1]})
     {
         my $pname = get_arg_name( $arg );
-        $params .= " .$pname = $pname," unless $arg->textContent() =~ /\[/;
+        $params .= ", .$pname = $pname" unless $arg->textContent() =~ /\[/;
     }
-    $ret .= ($params ? " = {$params }" : is_void_func( $func ) ? "" : " = {0}");
+    $ret .= " = {$params }";
     $ret .= ";\n";
     $ret .= "    NTSTATUS status;\n";
     foreach my $arg (@{$func->[1]})
@@ -411,16 +412,6 @@ sub get_wow64_arg_type($)
     return $ptype;
 }
 
-sub needs_wow64_thunk($$)
-{
-    my ($name, $func) = @_;
-    foreach my $arg (@{$func->[1]})
-    {
-        return 1 if get_wow64_arg_type( $arg ) =~ /PTR32/;
-    }
-    return get_wow64_arg_type( $func->[0] ) =~ /PTR32/;
-}
-
 sub generate_wow64_thunk($$$)
 {
     my ($name, $func, $prefix) = @_;
@@ -432,6 +423,7 @@ sub generate_wow64_thunk($$$)
     $ret .= "static NTSTATUS wow64_$prefix\_$name( void *args )\n";
     $ret .= "{\n";
     $ret .= "    struct\n    {\n";
+    $ret .= "        PTR32 teb;\n";
     foreach my $arg (@{$func->[1]})
     {
         my $ptype = get_wow64_arg_type( $arg );
@@ -448,6 +440,7 @@ sub generate_wow64_thunk($$$)
     $ret .= "    } *params32 = args;\n";
     $ret .= "    struct $name\_params params =\n";
     $ret .= "    {\n";
+    $ret .= "        .teb = get_teb64(params32->teb),\n";
     foreach my $arg (@{$func->[1]})
     {
         next if $arg->textContent() =~ /(\*.*\*|\[|(sizei|int)ptr.*\*)/;
@@ -564,6 +557,7 @@ sub generate_func_params($$)
     my ($name, $func) = @_;
     my $ret = "";
     $ret .= sprintf "struct %s_params\n{\n", $name;
+    $ret .= "    TEB *teb;\n";
     foreach my $arg (@{$func->[1]})
     {
         $ret .= sprintf "    %s;\n", $arg->textContent();
@@ -1213,23 +1207,25 @@ print OUT "\n";
 
 print OUT "#ifdef _WIN64\n\n";
 print OUT "typedef ULONG PTR32;\n\n";
-print OUT "extern NTSTATUS wow64_process_detach( void *args ) DECLSPEC_HIDDEN;\n";
+print OUT "extern NTSTATUS wow64_thread_attach( void *args ) DECLSPEC_HIDDEN;\n";
+print OUT "extern NTSTATUS wow64_process_detach( void *args ) DECLSPEC_HIDDEN;\n\n";
+
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if !needs_wow64_thunk($_, $wgl_functions{$_}) || defined $manual_wow64_thunks{$_};
+    next if defined $manual_wow64_thunks{$_};
     print OUT generate_wow64_thunk($_, $wgl_functions{$_}, "wgl");
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if !needs_wow64_thunk($_, $norm_functions{$_}) || defined $manual_wow64_thunks{$_};
+    next if defined $manual_wow64_thunks{$_};
     print OUT generate_wow64_thunk($_, $norm_functions{$_}, "gl");
 }
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
-    next if !needs_wow64_thunk($_, $ext_functions{$_}) || defined $manual_wow64_thunks{$_};
+    next if defined $manual_wow64_thunks{$_};
     print OUT generate_wow64_thunk($_, $ext_functions{$_}, "ext");
 }
 
@@ -1254,43 +1250,22 @@ foreach (sort keys %ext_functions)
 
 print OUT "\nconst unixlib_entry_t __wine_unix_call_wow64_funcs[] =\n";
 print OUT "{\n";
-print OUT "    &thread_attach,\n";
-print OUT "    &wow64_process_detach,\n";
+print OUT "    wow64_thread_attach,\n";
+print OUT "    wow64_process_detach,\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    if (needs_wow64_thunk($_, $wgl_functions{$_}) || defined $manual_wow64_thunks{$_})
-    {
-        printf OUT "    &wow64_wgl_%s,\n", $_;
-    }
-    else
-    {
-        printf OUT "    &wgl_%s,\n", $_;
-    }
+    printf OUT "    wow64_wgl_%s,\n", $_;
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    if (needs_wow64_thunk($_, $norm_functions{$_}) || defined $manual_wow64_thunks{$_})
-    {
-        printf OUT "    &wow64_gl_%s,\n", $_;
-    }
-    else
-    {
-        printf OUT "    &gl_%s,\n", $_;
-    }
+    printf OUT "    wow64_gl_%s,\n", $_;
 }
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
-    if (needs_wow64_thunk($_, $ext_functions{$_}) || defined $manual_wow64_thunks{$_})
-    {
-        printf OUT "    &wow64_ext_%s,\n", $_;
-    }
-    else
-    {
-        printf OUT "    &ext_%s,\n", $_;
-    }
+    printf OUT "    wow64_ext_%s,\n", $_;
 }
 print OUT "};\n\n";
 

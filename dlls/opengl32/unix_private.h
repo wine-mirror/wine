@@ -61,4 +61,10 @@ static inline void *copy_wow64_ptr32s( UINT_PTR address, ULONG count )
     return tmp;
 }
 
+static inline TEB *get_teb64( ULONG teb32 )
+{
+    TEB32 *teb32_ptr = ULongToPtr( teb32 );
+    return (TEB *)((char *)teb32_ptr + teb32_ptr->WowTebOffset);
+}
+
 #endif /* __WINE_OPENGL32_UNIX_PRIVATE_H */

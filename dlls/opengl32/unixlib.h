@@ -18,6 +18,7 @@
 
 struct wglCopyContext_params
 {
+    TEB *teb;
     HGLRC hglrcSrc;
     HGLRC hglrcDst;
     UINT mask;
@@ -26,18 +27,21 @@ struct wglCopyContext_params
 
 struct wglCreateContext_params
 {
+    TEB *teb;
     HDC hDc;
     HGLRC ret;
 };
 
 struct wglDeleteContext_params
 {
+    TEB *teb;
     HGLRC oldContext;
     BOOL ret;
 };
 
 struct wglDescribePixelFormat_params
 {
+    TEB *teb;
     HDC hdc;
     int ipfd;
     UINT cjpfd;
@@ -47,18 +51,21 @@ struct wglDescribePixelFormat_params
 
 struct wglGetPixelFormat_params
 {
+    TEB *teb;
     HDC hdc;
     int ret;
 };
 
 struct wglGetProcAddress_params
 {
+    TEB *teb;
     LPCSTR lpszProc;
     PROC ret;
 };
 
 struct wglMakeCurrent_params
 {
+    TEB *teb;
     HDC hDc;
     HGLRC newContext;
     BOOL ret;
@@ -66,6 +73,7 @@ struct wglMakeCurrent_params
 
 struct wglSetPixelFormat_params
 {
+    TEB *teb;
     HDC hdc;
     int ipfd;
     const PIXELFORMATDESCRIPTOR *ppfd;
@@ -74,6 +82,7 @@ struct wglSetPixelFormat_params
 
 struct wglShareLists_params
 {
+    TEB *teb;
     HGLRC hrcSrvShare;
     HGLRC hrcSrvSource;
     BOOL ret;
@@ -81,24 +90,28 @@ struct wglShareLists_params
 
 struct wglSwapBuffers_params
 {
+    TEB *teb;
     HDC hdc;
     BOOL ret;
 };
 
 struct glAccum_params
 {
+    TEB *teb;
     GLenum op;
     GLfloat value;
 };
 
 struct glAlphaFunc_params
 {
+    TEB *teb;
     GLenum func;
     GLfloat ref;
 };
 
 struct glAreTexturesResident_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *textures;
     GLboolean *residences;
@@ -107,22 +120,26 @@ struct glAreTexturesResident_params
 
 struct glArrayElement_params
 {
+    TEB *teb;
     GLint i;
 };
 
 struct glBegin_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glBindTexture_params
 {
+    TEB *teb;
     GLenum target;
     GLuint texture;
 };
 
 struct glBitmap_params
 {
+    TEB *teb;
     GLsizei width;
     GLsizei height;
     GLfloat xorig;
@@ -134,17 +151,20 @@ struct glBitmap_params
 
 struct glBlendFunc_params
 {
+    TEB *teb;
     GLenum sfactor;
     GLenum dfactor;
 };
 
 struct glCallList_params
 {
+    TEB *teb;
     GLuint list;
 };
 
 struct glCallLists_params
 {
+    TEB *teb;
     GLsizei n;
     GLenum type;
     const void *lists;
@@ -152,11 +172,13 @@ struct glCallLists_params
 
 struct glClear_params
 {
+    TEB *teb;
     GLbitfield mask;
 };
 
 struct glClearAccum_params
 {
+    TEB *teb;
     GLfloat red;
     GLfloat green;
     GLfloat blue;
@@ -165,6 +187,7 @@ struct glClearAccum_params
 
 struct glClearColor_params
 {
+    TEB *teb;
     GLfloat red;
     GLfloat green;
     GLfloat blue;
@@ -173,27 +196,32 @@ struct glClearColor_params
 
 struct glClearDepth_params
 {
+    TEB *teb;
     GLdouble depth;
 };
 
 struct glClearIndex_params
 {
+    TEB *teb;
     GLfloat c;
 };
 
 struct glClearStencil_params
 {
+    TEB *teb;
     GLint s;
 };
 
 struct glClipPlane_params
 {
+    TEB *teb;
     GLenum plane;
     const GLdouble *equation;
 };
 
 struct glColor3b_params
 {
+    TEB *teb;
     GLbyte red;
     GLbyte green;
     GLbyte blue;
@@ -201,11 +229,13 @@ struct glColor3b_params
 
 struct glColor3bv_params
 {
+    TEB *teb;
     const GLbyte *v;
 };
 
 struct glColor3d_params
 {
+    TEB *teb;
     GLdouble red;
     GLdouble green;
     GLdouble blue;
@@ -213,11 +243,13 @@ struct glColor3d_params
 
 struct glColor3dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glColor3f_params
 {
+    TEB *teb;
     GLfloat red;
     GLfloat green;
     GLfloat blue;
@@ -225,11 +257,13 @@ struct glColor3f_params
 
 struct glColor3fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glColor3i_params
 {
+    TEB *teb;
     GLint red;
     GLint green;
     GLint blue;
@@ -237,11 +271,13 @@ struct glColor3i_params
 
 struct glColor3iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glColor3s_params
 {
+    TEB *teb;
     GLshort red;
     GLshort green;
     GLshort blue;
@@ -249,11 +285,13 @@ struct glColor3s_params
 
 struct glColor3sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glColor3ub_params
 {
+    TEB *teb;
     GLubyte red;
     GLubyte green;
     GLubyte blue;
@@ -261,11 +299,13 @@ struct glColor3ub_params
 
 struct glColor3ubv_params
 {
+    TEB *teb;
     const GLubyte *v;
 };
 
 struct glColor3ui_params
 {
+    TEB *teb;
     GLuint red;
     GLuint green;
     GLuint blue;
@@ -273,11 +313,13 @@ struct glColor3ui_params
 
 struct glColor3uiv_params
 {
+    TEB *teb;
     const GLuint *v;
 };
 
 struct glColor3us_params
 {
+    TEB *teb;
     GLushort red;
     GLushort green;
     GLushort blue;
@@ -285,11 +327,13 @@ struct glColor3us_params
 
 struct glColor3usv_params
 {
+    TEB *teb;
     const GLushort *v;
 };
 
 struct glColor4b_params
 {
+    TEB *teb;
     GLbyte red;
     GLbyte green;
     GLbyte blue;
@@ -298,11 +342,13 @@ struct glColor4b_params
 
 struct glColor4bv_params
 {
+    TEB *teb;
     const GLbyte *v;
 };
 
 struct glColor4d_params
 {
+    TEB *teb;
     GLdouble red;
     GLdouble green;
     GLdouble blue;
@@ -311,11 +357,13 @@ struct glColor4d_params
 
 struct glColor4dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glColor4f_params
 {
+    TEB *teb;
     GLfloat red;
     GLfloat green;
     GLfloat blue;
@@ -324,11 +372,13 @@ struct glColor4f_params
 
 struct glColor4fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glColor4i_params
 {
+    TEB *teb;
     GLint red;
     GLint green;
     GLint blue;
@@ -337,11 +387,13 @@ struct glColor4i_params
 
 struct glColor4iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glColor4s_params
 {
+    TEB *teb;
     GLshort red;
     GLshort green;
     GLshort blue;
@@ -350,11 +402,13 @@ struct glColor4s_params
 
 struct glColor4sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glColor4ub_params
 {
+    TEB *teb;
     GLubyte red;
     GLubyte green;
     GLubyte blue;
@@ -363,11 +417,13 @@ struct glColor4ub_params
 
 struct glColor4ubv_params
 {
+    TEB *teb;
     const GLubyte *v;
 };
 
 struct glColor4ui_params
 {
+    TEB *teb;
     GLuint red;
     GLuint green;
     GLuint blue;
@@ -376,11 +432,13 @@ struct glColor4ui_params
 
 struct glColor4uiv_params
 {
+    TEB *teb;
     const GLuint *v;
 };
 
 struct glColor4us_params
 {
+    TEB *teb;
     GLushort red;
     GLushort green;
     GLushort blue;
@@ -389,11 +447,13 @@ struct glColor4us_params
 
 struct glColor4usv_params
 {
+    TEB *teb;
     const GLushort *v;
 };
 
 struct glColorMask_params
 {
+    TEB *teb;
     GLboolean red;
     GLboolean green;
     GLboolean blue;
@@ -402,12 +462,14 @@ struct glColorMask_params
 
 struct glColorMaterial_params
 {
+    TEB *teb;
     GLenum face;
     GLenum mode;
 };
 
 struct glColorPointer_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -416,6 +478,7 @@ struct glColorPointer_params
 
 struct glCopyPixels_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLsizei width;
@@ -425,6 +488,7 @@ struct glCopyPixels_params
 
 struct glCopyTexImage1D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -436,6 +500,7 @@ struct glCopyTexImage1D_params
 
 struct glCopyTexImage2D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -448,6 +513,7 @@ struct glCopyTexImage2D_params
 
 struct glCopyTexSubImage1D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -458,6 +524,7 @@ struct glCopyTexSubImage1D_params
 
 struct glCopyTexSubImage2D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -470,49 +537,58 @@ struct glCopyTexSubImage2D_params
 
 struct glCullFace_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glDeleteLists_params
 {
+    TEB *teb;
     GLuint list;
     GLsizei range;
 };
 
 struct glDeleteTextures_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *textures;
 };
 
 struct glDepthFunc_params
 {
+    TEB *teb;
     GLenum func;
 };
 
 struct glDepthMask_params
 {
+    TEB *teb;
     GLboolean flag;
 };
 
 struct glDepthRange_params
 {
+    TEB *teb;
     GLdouble n;
     GLdouble f;
 };
 
 struct glDisable_params
 {
+    TEB *teb;
     GLenum cap;
 };
 
 struct glDisableClientState_params
 {
+    TEB *teb;
     GLenum array;
 };
 
 struct glDrawArrays_params
 {
+    TEB *teb;
     GLenum mode;
     GLint first;
     GLsizei count;
@@ -520,11 +596,13 @@ struct glDrawArrays_params
 
 struct glDrawBuffer_params
 {
+    TEB *teb;
     GLenum buf;
 };
 
 struct glDrawElements_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
     GLenum type;
@@ -533,6 +611,7 @@ struct glDrawElements_params
 
 struct glDrawPixels_params
 {
+    TEB *teb;
     GLsizei width;
     GLsizei height;
     GLenum format;
@@ -542,82 +621,98 @@ struct glDrawPixels_params
 
 struct glEdgeFlag_params
 {
+    TEB *teb;
     GLboolean flag;
 };
 
 struct glEdgeFlagPointer_params
 {
+    TEB *teb;
     GLsizei stride;
     const void *pointer;
 };
 
 struct glEdgeFlagv_params
 {
+    TEB *teb;
     const GLboolean *flag;
 };
 
 struct glEnable_params
 {
+    TEB *teb;
     GLenum cap;
 };
 
 struct glEnableClientState_params
 {
+    TEB *teb;
     GLenum array;
 };
 
 struct glEnd_params
 {
+    TEB *teb;
 };
 
 struct glEndList_params
 {
+    TEB *teb;
 };
 
 struct glEvalCoord1d_params
 {
+    TEB *teb;
     GLdouble u;
 };
 
 struct glEvalCoord1dv_params
 {
+    TEB *teb;
     const GLdouble *u;
 };
 
 struct glEvalCoord1f_params
 {
+    TEB *teb;
     GLfloat u;
 };
 
 struct glEvalCoord1fv_params
 {
+    TEB *teb;
     const GLfloat *u;
 };
 
 struct glEvalCoord2d_params
 {
+    TEB *teb;
     GLdouble u;
     GLdouble v;
 };
 
 struct glEvalCoord2dv_params
 {
+    TEB *teb;
     const GLdouble *u;
 };
 
 struct glEvalCoord2f_params
 {
+    TEB *teb;
     GLfloat u;
     GLfloat v;
 };
 
 struct glEvalCoord2fv_params
 {
+    TEB *teb;
     const GLfloat *u;
 };
 
 struct glEvalMesh1_params
 {
+    TEB *teb;
     GLenum mode;
     GLint i1;
     GLint i2;
@@ -625,6 +720,7 @@ struct glEvalMesh1_params
 
 struct glEvalMesh2_params
 {
+    TEB *teb;
     GLenum mode;
     GLint i1;
     GLint i2;
@@ -634,17 +730,20 @@ struct glEvalMesh2_params
 
 struct glEvalPoint1_params
 {
+    TEB *teb;
     GLint i;
 };
 
 struct glEvalPoint2_params
 {
+    TEB *teb;
     GLint i;
     GLint j;
 };
 
 struct glFeedbackBuffer_params
 {
+    TEB *teb;
     GLsizei size;
     GLenum type;
     GLfloat *buffer;
@@ -652,43 +751,51 @@ struct glFeedbackBuffer_params
 
 struct glFinish_params
 {
+    TEB *teb;
 };
 
 struct glFlush_params
 {
+    TEB *teb;
 };
 
 struct glFogf_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glFogfv_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glFogi_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glFogiv_params
 {
+    TEB *teb;
     GLenum pname;
     const GLint *params;
 };
 
 struct glFrontFace_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glFrustum_params
 {
+    TEB *teb;
     GLdouble left;
     GLdouble right;
     GLdouble bottom;
@@ -699,53 +806,62 @@ struct glFrustum_params
 
 struct glGenLists_params
 {
+    TEB *teb;
     GLsizei range;
     GLuint ret;
 };
 
 struct glGenTextures_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *textures;
 };
 
 struct glGetBooleanv_params
 {
+    TEB *teb;
     GLenum pname;
     GLboolean *data;
 };
 
 struct glGetClipPlane_params
 {
+    TEB *teb;
     GLenum plane;
     GLdouble *equation;
 };
 
 struct glGetDoublev_params
 {
+    TEB *teb;
     GLenum pname;
     GLdouble *data;
 };
 
 struct glGetError_params
 {
+    TEB *teb;
     GLenum ret;
 };
 
 struct glGetFloatv_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat *data;
 };
 
 struct glGetIntegerv_params
 {
+    TEB *teb;
     GLenum pname;
     GLint *data;
 };
 
 struct glGetLightfv_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLfloat *params;
@@ -753,6 +869,7 @@ struct glGetLightfv_params
 
 struct glGetLightiv_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLint *params;
@@ -760,6 +877,7 @@ struct glGetLightiv_params
 
 struct glGetMapdv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLdouble *v;
@@ -767,6 +885,7 @@ struct glGetMapdv_params
 
 struct glGetMapfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLfloat *v;
@@ -774,6 +893,7 @@ struct glGetMapfv_params
 
 struct glGetMapiv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLint *v;
@@ -781,6 +901,7 @@ struct glGetMapiv_params
 
 struct glGetMaterialfv_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLfloat *params;
@@ -788,6 +909,7 @@ struct glGetMaterialfv_params
 
 struct glGetMaterialiv_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLint *params;
@@ -795,41 +917,48 @@ struct glGetMaterialiv_params
 
 struct glGetPixelMapfv_params
 {
+    TEB *teb;
     GLenum map;
     GLfloat *values;
 };
 
 struct glGetPixelMapuiv_params
 {
+    TEB *teb;
     GLenum map;
     GLuint *values;
 };
 
 struct glGetPixelMapusv_params
 {
+    TEB *teb;
     GLenum map;
     GLushort *values;
 };
 
 struct glGetPointerv_params
 {
+    TEB *teb;
     GLenum pname;
     void **params;
 };
 
 struct glGetPolygonStipple_params
 {
+    TEB *teb;
     GLubyte *mask;
 };
 
 struct glGetString_params
 {
+    TEB *teb;
     GLenum name;
     const GLubyte *ret;
 };
 
 struct glGetTexEnvfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -837,6 +966,7 @@ struct glGetTexEnvfv_params
 
 struct glGetTexEnviv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -844,6 +974,7 @@ struct glGetTexEnviv_params
 
 struct glGetTexGendv_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     GLdouble *params;
@@ -851,6 +982,7 @@ struct glGetTexGendv_params
 
 struct glGetTexGenfv_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     GLfloat *params;
@@ -858,6 +990,7 @@ struct glGetTexGenfv_params
 
 struct glGetTexGeniv_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     GLint *params;
@@ -865,6 +998,7 @@ struct glGetTexGeniv_params
 
 struct glGetTexImage_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum format;
@@ -874,6 +1008,7 @@ struct glGetTexImage_params
 
 struct glGetTexLevelParameterfv_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum pname;
@@ -882,6 +1017,7 @@ struct glGetTexLevelParameterfv_params
 
 struct glGetTexLevelParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum pname;
@@ -890,6 +1026,7 @@ struct glGetTexLevelParameteriv_params
 
 struct glGetTexParameterfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -897,6 +1034,7 @@ struct glGetTexParameterfv_params
 
 struct glGetTexParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -904,17 +1042,20 @@ struct glGetTexParameteriv_params
 
 struct glHint_params
 {
+    TEB *teb;
     GLenum target;
     GLenum mode;
 };
 
 struct glIndexMask_params
 {
+    TEB *teb;
     GLuint mask;
 };
 
 struct glIndexPointer_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
     const void *pointer;
@@ -922,60 +1063,72 @@ struct glIndexPointer_params
 
 struct glIndexd_params
 {
+    TEB *teb;
     GLdouble c;
 };
 
 struct glIndexdv_params
 {
+    TEB *teb;
     const GLdouble *c;
 };
 
 struct glIndexf_params
 {
+    TEB *teb;
     GLfloat c;
 };
 
 struct glIndexfv_params
 {
+    TEB *teb;
     const GLfloat *c;
 };
 
 struct glIndexi_params
 {
+    TEB *teb;
     GLint c;
 };
 
 struct glIndexiv_params
 {
+    TEB *teb;
     const GLint *c;
 };
 
 struct glIndexs_params
 {
+    TEB *teb;
     GLshort c;
 };
 
 struct glIndexsv_params
 {
+    TEB *teb;
     const GLshort *c;
 };
 
 struct glIndexub_params
 {
+    TEB *teb;
     GLubyte c;
 };
 
 struct glIndexubv_params
 {
+    TEB *teb;
     const GLubyte *c;
 };
 
 struct glInitNames_params
 {
+    TEB *teb;
 };
 
 struct glInterleavedArrays_params
 {
+    TEB *teb;
     GLenum format;
     GLsizei stride;
     const void *pointer;
@@ -983,48 +1136,56 @@ struct glInterleavedArrays_params
 
 struct glIsEnabled_params
 {
+    TEB *teb;
     GLenum cap;
     GLboolean ret;
 };
 
 struct glIsList_params
 {
+    TEB *teb;
     GLuint list;
     GLboolean ret;
 };
 
 struct glIsTexture_params
 {
+    TEB *teb;
     GLuint texture;
     GLboolean ret;
 };
 
 struct glLightModelf_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glLightModelfv_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glLightModeli_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glLightModeliv_params
 {
+    TEB *teb;
     GLenum pname;
     const GLint *params;
 };
 
 struct glLightf_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLfloat param;
@@ -1032,6 +1193,7 @@ struct glLightf_params
 
 struct glLightfv_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     const GLfloat *params;
@@ -1039,6 +1201,7 @@ struct glLightfv_params
 
 struct glLighti_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLint param;
@@ -1046,6 +1209,7 @@ struct glLighti_params
 
 struct glLightiv_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     const GLint *params;
@@ -1053,46 +1217,55 @@ struct glLightiv_params
 
 struct glLineStipple_params
 {
+    TEB *teb;
     GLint factor;
     GLushort pattern;
 };
 
 struct glLineWidth_params
 {
+    TEB *teb;
     GLfloat width;
 };
 
 struct glListBase_params
 {
+    TEB *teb;
     GLuint base;
 };
 
 struct glLoadIdentity_params
 {
+    TEB *teb;
 };
 
 struct glLoadMatrixd_params
 {
+    TEB *teb;
     const GLdouble *m;
 };
 
 struct glLoadMatrixf_params
 {
+    TEB *teb;
     const GLfloat *m;
 };
 
 struct glLoadName_params
 {
+    TEB *teb;
     GLuint name;
 };
 
 struct glLogicOp_params
 {
+    TEB *teb;
     GLenum opcode;
 };
 
 struct glMap1d_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble u1;
     GLdouble u2;
@@ -1103,6 +1276,7 @@ struct glMap1d_params
 
 struct glMap1f_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat u1;
     GLfloat u2;
@@ -1113,6 +1287,7 @@ struct glMap1f_params
 
 struct glMap2d_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble u1;
     GLdouble u2;
@@ -1127,6 +1302,7 @@ struct glMap2d_params
 
 struct glMap2f_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat u1;
     GLfloat u2;
@@ -1141,6 +1317,7 @@ struct glMap2f_params
 
 struct glMapGrid1d_params
 {
+    TEB *teb;
     GLint un;
     GLdouble u1;
     GLdouble u2;
@@ -1148,6 +1325,7 @@ struct glMapGrid1d_params
 
 struct glMapGrid1f_params
 {
+    TEB *teb;
     GLint un;
     GLfloat u1;
     GLfloat u2;
@@ -1155,6 +1333,7 @@ struct glMapGrid1f_params
 
 struct glMapGrid2d_params
 {
+    TEB *teb;
     GLint un;
     GLdouble u1;
     GLdouble u2;
@@ -1165,6 +1344,7 @@ struct glMapGrid2d_params
 
 struct glMapGrid2f_params
 {
+    TEB *teb;
     GLint un;
     GLfloat u1;
     GLfloat u2;
@@ -1175,6 +1355,7 @@ struct glMapGrid2f_params
 
 struct glMaterialf_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLfloat param;
@@ -1182,6 +1363,7 @@ struct glMaterialf_params
 
 struct glMaterialfv_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     const GLfloat *params;
@@ -1189,6 +1371,7 @@ struct glMaterialfv_params
 
 struct glMateriali_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLint param;
@@ -1196,6 +1379,7 @@ struct glMateriali_params
 
 struct glMaterialiv_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     const GLint *params;
@@ -1203,27 +1387,32 @@ struct glMaterialiv_params
 
 struct glMatrixMode_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glMultMatrixd_params
 {
+    TEB *teb;
     const GLdouble *m;
 };
 
 struct glMultMatrixf_params
 {
+    TEB *teb;
     const GLfloat *m;
 };
 
 struct glNewList_params
 {
+    TEB *teb;
     GLuint list;
     GLenum mode;
 };
 
 struct glNormal3b_params
 {
+    TEB *teb;
     GLbyte nx;
     GLbyte ny;
     GLbyte nz;
@@ -1231,11 +1420,13 @@ struct glNormal3b_params
 
 struct glNormal3bv_params
 {
+    TEB *teb;
     const GLbyte *v;
 };
 
 struct glNormal3d_params
 {
+    TEB *teb;
     GLdouble nx;
     GLdouble ny;
     GLdouble nz;
@@ -1243,11 +1434,13 @@ struct glNormal3d_params
 
 struct glNormal3dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glNormal3f_params
 {
+    TEB *teb;
     GLfloat nx;
     GLfloat ny;
     GLfloat nz;
@@ -1255,11 +1448,13 @@ struct glNormal3f_params
 
 struct glNormal3fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glNormal3i_params
 {
+    TEB *teb;
     GLint nx;
     GLint ny;
     GLint nz;
@@ -1267,11 +1462,13 @@ struct glNormal3i_params
 
 struct glNormal3iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glNormal3s_params
 {
+    TEB *teb;
     GLshort nx;
     GLshort ny;
     GLshort nz;
@@ -1279,11 +1476,13 @@ struct glNormal3s_params
 
 struct glNormal3sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glNormalPointer_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
     const void *pointer;
@@ -1291,6 +1490,7 @@ struct glNormalPointer_params
 
 struct glOrtho_params
 {
+    TEB *teb;
     GLdouble left;
     GLdouble right;
     GLdouble bottom;
@@ -1301,11 +1501,13 @@ struct glOrtho_params
 
 struct glPassThrough_params
 {
+    TEB *teb;
     GLfloat token;
 };
 
 struct glPixelMapfv_params
 {
+    TEB *teb;
     GLenum map;
     GLsizei mapsize;
     const GLfloat *values;
@@ -1313,6 +1515,7 @@ struct glPixelMapfv_params
 
 struct glPixelMapuiv_params
 {
+    TEB *teb;
     GLenum map;
     GLsizei mapsize;
     const GLuint *values;
@@ -1320,6 +1523,7 @@ struct glPixelMapuiv_params
 
 struct glPixelMapusv_params
 {
+    TEB *teb;
     GLenum map;
     GLsizei mapsize;
     const GLushort *values;
@@ -1327,74 +1531,88 @@ struct glPixelMapusv_params
 
 struct glPixelStoref_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glPixelStorei_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glPixelTransferf_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glPixelTransferi_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glPixelZoom_params
 {
+    TEB *teb;
     GLfloat xfactor;
     GLfloat yfactor;
 };
 
 struct glPointSize_params
 {
+    TEB *teb;
     GLfloat size;
 };
 
 struct glPolygonMode_params
 {
+    TEB *teb;
     GLenum face;
     GLenum mode;
 };
 
 struct glPolygonOffset_params
 {
+    TEB *teb;
     GLfloat factor;
     GLfloat units;
 };
 
 struct glPolygonStipple_params
 {
+    TEB *teb;
     const GLubyte *mask;
 };
 
 struct glPopAttrib_params
 {
+    TEB *teb;
 };
 
 struct glPopClientAttrib_params
 {
+    TEB *teb;
 };
 
 struct glPopMatrix_params
 {
+    TEB *teb;
 };
 
 struct glPopName_params
 {
+    TEB *teb;
 };
 
 struct glPrioritizeTextures_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *textures;
     const GLfloat *priorities;
@@ -1402,69 +1620,82 @@ struct glPrioritizeTextures_params
 
 struct glPushAttrib_params
 {
+    TEB *teb;
     GLbitfield mask;
 };
 
 struct glPushClientAttrib_params
 {
+    TEB *teb;
     GLbitfield mask;
 };
 
 struct glPushMatrix_params
 {
+    TEB *teb;
 };
 
 struct glPushName_params
 {
+    TEB *teb;
     GLuint name;
 };
 
 struct glRasterPos2d_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
 };
 
 struct glRasterPos2dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glRasterPos2f_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
 };
 
 struct glRasterPos2fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glRasterPos2i_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
 };
 
 struct glRasterPos2iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glRasterPos2s_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
 };
 
 struct glRasterPos2sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glRasterPos3d_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -1472,11 +1703,13 @@ struct glRasterPos3d_params
 
 struct glRasterPos3dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glRasterPos3f_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -1484,11 +1717,13 @@ struct glRasterPos3f_params
 
 struct glRasterPos3fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glRasterPos3i_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLint z;
@@ -1496,11 +1731,13 @@ struct glRasterPos3i_params
 
 struct glRasterPos3iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glRasterPos3s_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
     GLshort z;
@@ -1508,11 +1745,13 @@ struct glRasterPos3s_params
 
 struct glRasterPos3sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glRasterPos4d_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -1521,11 +1760,13 @@ struct glRasterPos4d_params
 
 struct glRasterPos4dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glRasterPos4f_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -1534,11 +1775,13 @@ struct glRasterPos4f_params
 
 struct glRasterPos4fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glRasterPos4i_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLint z;
@@ -1547,11 +1790,13 @@ struct glRasterPos4i_params
 
 struct glRasterPos4iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glRasterPos4s_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
     GLshort z;
@@ -1560,16 +1805,19 @@ struct glRasterPos4s_params
 
 struct glRasterPos4sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glReadBuffer_params
 {
+    TEB *teb;
     GLenum src;
 };
 
 struct glReadPixels_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLsizei width;
@@ -1581,6 +1829,7 @@ struct glReadPixels_params
 
 struct glRectd_params
 {
+    TEB *teb;
     GLdouble x1;
     GLdouble y1;
     GLdouble x2;
@@ -1589,12 +1838,14 @@ struct glRectd_params
 
 struct glRectdv_params
 {
+    TEB *teb;
     const GLdouble *v1;
     const GLdouble *v2;
 };
 
 struct glRectf_params
 {
+    TEB *teb;
     GLfloat x1;
     GLfloat y1;
     GLfloat x2;
@@ -1603,12 +1854,14 @@ struct glRectf_params
 
 struct glRectfv_params
 {
+    TEB *teb;
     const GLfloat *v1;
     const GLfloat *v2;
 };
 
 struct glRecti_params
 {
+    TEB *teb;
     GLint x1;
     GLint y1;
     GLint x2;
@@ -1617,12 +1870,14 @@ struct glRecti_params
 
 struct glRectiv_params
 {
+    TEB *teb;
     const GLint *v1;
     const GLint *v2;
 };
 
 struct glRects_params
 {
+    TEB *teb;
     GLshort x1;
     GLshort y1;
     GLshort x2;
@@ -1631,18 +1886,21 @@ struct glRects_params
 
 struct glRectsv_params
 {
+    TEB *teb;
     const GLshort *v1;
     const GLshort *v2;
 };
 
 struct glRenderMode_params
 {
+    TEB *teb;
     GLenum mode;
     GLint ret;
 };
 
 struct glRotated_params
 {
+    TEB *teb;
     GLdouble angle;
     GLdouble x;
     GLdouble y;
@@ -1651,6 +1909,7 @@ struct glRotated_params
 
 struct glRotatef_params
 {
+    TEB *teb;
     GLfloat angle;
     GLfloat x;
     GLfloat y;
@@ -1659,6 +1918,7 @@ struct glRotatef_params
 
 struct glScaled_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -1666,6 +1926,7 @@ struct glScaled_params
 
 struct glScalef_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -1673,6 +1934,7 @@ struct glScalef_params
 
 struct glScissor_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLsizei width;
@@ -1681,17 +1943,20 @@ struct glScissor_params
 
 struct glSelectBuffer_params
 {
+    TEB *teb;
     GLsizei size;
     GLuint *buffer;
 };
 
 struct glShadeModel_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glStencilFunc_params
 {
+    TEB *teb;
     GLenum func;
     GLint ref;
     GLuint mask;
@@ -1699,11 +1964,13 @@ struct glStencilFunc_params
 
 struct glStencilMask_params
 {
+    TEB *teb;
     GLuint mask;
 };
 
 struct glStencilOp_params
 {
+    TEB *teb;
     GLenum fail;
     GLenum zfail;
     GLenum zpass;
@@ -1711,90 +1978,107 @@ struct glStencilOp_params
 
 struct glTexCoord1d_params
 {
+    TEB *teb;
     GLdouble s;
 };
 
 struct glTexCoord1dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glTexCoord1f_params
 {
+    TEB *teb;
     GLfloat s;
 };
 
 struct glTexCoord1fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glTexCoord1i_params
 {
+    TEB *teb;
     GLint s;
 };
 
 struct glTexCoord1iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glTexCoord1s_params
 {
+    TEB *teb;
     GLshort s;
 };
 
 struct glTexCoord1sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glTexCoord2d_params
 {
+    TEB *teb;
     GLdouble s;
     GLdouble t;
 };
 
 struct glTexCoord2dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glTexCoord2f_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
 };
 
 struct glTexCoord2fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glTexCoord2i_params
 {
+    TEB *teb;
     GLint s;
     GLint t;
 };
 
 struct glTexCoord2iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glTexCoord2s_params
 {
+    TEB *teb;
     GLshort s;
     GLshort t;
 };
 
 struct glTexCoord2sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glTexCoord3d_params
 {
+    TEB *teb;
     GLdouble s;
     GLdouble t;
     GLdouble r;
@@ -1802,11 +2086,13 @@ struct glTexCoord3d_params
 
 struct glTexCoord3dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glTexCoord3f_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
     GLfloat r;
@@ -1814,11 +2100,13 @@ struct glTexCoord3f_params
 
 struct glTexCoord3fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glTexCoord3i_params
 {
+    TEB *teb;
     GLint s;
     GLint t;
     GLint r;
@@ -1826,11 +2114,13 @@ struct glTexCoord3i_params
 
 struct glTexCoord3iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glTexCoord3s_params
 {
+    TEB *teb;
     GLshort s;
     GLshort t;
     GLshort r;
@@ -1838,11 +2128,13 @@ struct glTexCoord3s_params
 
 struct glTexCoord3sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glTexCoord4d_params
 {
+    TEB *teb;
     GLdouble s;
     GLdouble t;
     GLdouble r;
@@ -1851,11 +2143,13 @@ struct glTexCoord4d_params
 
 struct glTexCoord4dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glTexCoord4f_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
     GLfloat r;
@@ -1864,11 +2158,13 @@ struct glTexCoord4f_params
 
 struct glTexCoord4fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glTexCoord4i_params
 {
+    TEB *teb;
     GLint s;
     GLint t;
     GLint r;
@@ -1877,11 +2173,13 @@ struct glTexCoord4i_params
 
 struct glTexCoord4iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glTexCoord4s_params
 {
+    TEB *teb;
     GLshort s;
     GLshort t;
     GLshort r;
@@ -1890,11 +2188,13 @@ struct glTexCoord4s_params
 
 struct glTexCoord4sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glTexCoordPointer_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -1903,6 +2203,7 @@ struct glTexCoordPointer_params
 
 struct glTexEnvf_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat param;
@@ -1910,6 +2211,7 @@ struct glTexEnvf_params
 
 struct glTexEnvfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfloat *params;
@@ -1917,6 +2219,7 @@ struct glTexEnvfv_params
 
 struct glTexEnvi_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint param;
@@ -1924,6 +2227,7 @@ struct glTexEnvi_params
 
 struct glTexEnviv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -1931,6 +2235,7 @@ struct glTexEnviv_params
 
 struct glTexGend_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     GLdouble param;
@@ -1938,6 +2243,7 @@ struct glTexGend_params
 
 struct glTexGendv_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     const GLdouble *params;
@@ -1945,6 +2251,7 @@ struct glTexGendv_params
 
 struct glTexGenf_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     GLfloat param;
@@ -1952,6 +2259,7 @@ struct glTexGenf_params
 
 struct glTexGenfv_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     const GLfloat *params;
@@ -1959,6 +2267,7 @@ struct glTexGenfv_params
 
 struct glTexGeni_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     GLint param;
@@ -1966,6 +2275,7 @@ struct glTexGeni_params
 
 struct glTexGeniv_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     const GLint *params;
@@ -1973,6 +2283,7 @@ struct glTexGeniv_params
 
 struct glTexImage1D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint internalformat;
@@ -1985,6 +2296,7 @@ struct glTexImage1D_params
 
 struct glTexImage2D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint internalformat;
@@ -1998,6 +2310,7 @@ struct glTexImage2D_params
 
 struct glTexParameterf_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat param;
@@ -2005,6 +2318,7 @@ struct glTexParameterf_params
 
 struct glTexParameterfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfloat *params;
@@ -2012,6 +2326,7 @@ struct glTexParameterfv_params
 
 struct glTexParameteri_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint param;
@@ -2019,6 +2334,7 @@ struct glTexParameteri_params
 
 struct glTexParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -2026,6 +2342,7 @@ struct glTexParameteriv_params
 
 struct glTexSubImage1D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -2037,6 +2354,7 @@ struct glTexSubImage1D_params
 
 struct glTexSubImage2D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -2050,6 +2368,7 @@ struct glTexSubImage2D_params
 
 struct glTranslated_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -2057,6 +2376,7 @@ struct glTranslated_params
 
 struct glTranslatef_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -2064,50 +2384,59 @@ struct glTranslatef_params
 
 struct glVertex2d_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
 };
 
 struct glVertex2dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glVertex2f_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
 };
 
 struct glVertex2fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glVertex2i_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
 };
 
 struct glVertex2iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glVertex2s_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
 };
 
 struct glVertex2sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glVertex3d_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -2115,11 +2444,13 @@ struct glVertex3d_params
 
 struct glVertex3dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glVertex3f_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -2127,11 +2458,13 @@ struct glVertex3f_params
 
 struct glVertex3fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glVertex3i_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLint z;
@@ -2139,11 +2472,13 @@ struct glVertex3i_params
 
 struct glVertex3iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glVertex3s_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
     GLshort z;
@@ -2151,11 +2486,13 @@ struct glVertex3s_params
 
 struct glVertex3sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glVertex4d_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -2164,11 +2501,13 @@ struct glVertex4d_params
 
 struct glVertex4dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glVertex4f_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -2177,11 +2516,13 @@ struct glVertex4f_params
 
 struct glVertex4fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glVertex4i_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLint z;
@@ -2190,11 +2531,13 @@ struct glVertex4i_params
 
 struct glVertex4iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glVertex4s_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
     GLshort z;
@@ -2203,11 +2546,13 @@ struct glVertex4s_params
 
 struct glVertex4sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glVertexPointer_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -2216,6 +2561,7 @@ struct glVertexPointer_params
 
 struct glViewport_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLsizei width;
@@ -2224,12 +2570,14 @@ struct glViewport_params
 
 struct glAccumxOES_params
 {
+    TEB *teb;
     GLenum op;
     GLfixed value;
 };
 
 struct glAcquireKeyedMutexWin32EXT_params
 {
+    TEB *teb;
     GLuint memory;
     GLuint64 key;
     GLuint timeout;
@@ -2238,38 +2586,45 @@ struct glAcquireKeyedMutexWin32EXT_params
 
 struct glActiveProgramEXT_params
 {
+    TEB *teb;
     GLuint program;
 };
 
 struct glActiveShaderProgram_params
 {
+    TEB *teb;
     GLuint pipeline;
     GLuint program;
 };
 
 struct glActiveStencilFaceEXT_params
 {
+    TEB *teb;
     GLenum face;
 };
 
 struct glActiveTexture_params
 {
+    TEB *teb;
     GLenum texture;
 };
 
 struct glActiveTextureARB_params
 {
+    TEB *teb;
     GLenum texture;
 };
 
 struct glActiveVaryingNV_params
 {
+    TEB *teb;
     GLuint program;
     const GLchar *name;
 };
 
 struct glAlphaFragmentOp1ATI_params
 {
+    TEB *teb;
     GLenum op;
     GLuint dst;
     GLuint dstMod;
@@ -2280,6 +2635,7 @@ struct glAlphaFragmentOp1ATI_params
 
 struct glAlphaFragmentOp2ATI_params
 {
+    TEB *teb;
     GLenum op;
     GLuint dst;
     GLuint dstMod;
@@ -2293,6 +2649,7 @@ struct glAlphaFragmentOp2ATI_params
 
 struct glAlphaFragmentOp3ATI_params
 {
+    TEB *teb;
     GLenum op;
     GLuint dst;
     GLuint dstMod;
@@ -2309,26 +2666,31 @@ struct glAlphaFragmentOp3ATI_params
 
 struct glAlphaFuncxOES_params
 {
+    TEB *teb;
     GLenum func;
     GLfixed ref;
 };
 
 struct glAlphaToCoverageDitherControlNV_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glApplyFramebufferAttachmentCMAAINTEL_params
 {
+    TEB *teb;
 };
 
 struct glApplyTextureEXT_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glAreProgramsResidentNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *programs;
     GLboolean *residences;
@@ -2337,6 +2699,7 @@ struct glAreProgramsResidentNV_params
 
 struct glAreTexturesResidentEXT_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *textures;
     GLboolean *residences;
@@ -2345,11 +2708,13 @@ struct glAreTexturesResidentEXT_params
 
 struct glArrayElementEXT_params
 {
+    TEB *teb;
     GLint i;
 };
 
 struct glArrayObjectATI_params
 {
+    TEB *teb;
     GLenum array;
     GLint size;
     GLenum type;
@@ -2360,6 +2725,7 @@ struct glArrayObjectATI_params
 
 struct glAsyncCopyBufferSubDataNVX_params
 {
+    TEB *teb;
     GLsizei waitSemaphoreCount;
     const GLuint *waitSemaphoreArray;
     const GLuint64 *fenceValueArray;
@@ -2378,6 +2744,7 @@ struct glAsyncCopyBufferSubDataNVX_params
 
 struct glAsyncCopyImageSubDataNVX_params
 {
+    TEB *teb;
     GLsizei waitSemaphoreCount;
     const GLuint *waitSemaphoreArray;
     const GLuint64 *waitValueArray;
@@ -2406,71 +2773,84 @@ struct glAsyncCopyImageSubDataNVX_params
 
 struct glAsyncMarkerSGIX_params
 {
+    TEB *teb;
     GLuint marker;
 };
 
 struct glAttachObjectARB_params
 {
+    TEB *teb;
     GLhandleARB containerObj;
     GLhandleARB obj;
 };
 
 struct glAttachShader_params
 {
+    TEB *teb;
     GLuint program;
     GLuint shader;
 };
 
 struct glBeginConditionalRender_params
 {
+    TEB *teb;
     GLuint id;
     GLenum mode;
 };
 
 struct glBeginConditionalRenderNV_params
 {
+    TEB *teb;
     GLuint id;
     GLenum mode;
 };
 
 struct glBeginConditionalRenderNVX_params
 {
+    TEB *teb;
     GLuint id;
 };
 
 struct glBeginFragmentShaderATI_params
 {
+    TEB *teb;
 };
 
 struct glBeginOcclusionQueryNV_params
 {
+    TEB *teb;
     GLuint id;
 };
 
 struct glBeginPerfMonitorAMD_params
 {
+    TEB *teb;
     GLuint monitor;
 };
 
 struct glBeginPerfQueryINTEL_params
 {
+    TEB *teb;
     GLuint queryHandle;
 };
 
 struct glBeginQuery_params
 {
+    TEB *teb;
     GLenum target;
     GLuint id;
 };
 
 struct glBeginQueryARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint id;
 };
 
 struct glBeginQueryIndexed_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint id;
@@ -2478,30 +2858,36 @@ struct glBeginQueryIndexed_params
 
 struct glBeginTransformFeedback_params
 {
+    TEB *teb;
     GLenum primitiveMode;
 };
 
 struct glBeginTransformFeedbackEXT_params
 {
+    TEB *teb;
     GLenum primitiveMode;
 };
 
 struct glBeginTransformFeedbackNV_params
 {
+    TEB *teb;
     GLenum primitiveMode;
 };
 
 struct glBeginVertexShaderEXT_params
 {
+    TEB *teb;
 };
 
 struct glBeginVideoCaptureNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
 };
 
 struct glBindAttribLocation_params
 {
+    TEB *teb;
     GLuint program;
     GLuint index;
     const GLchar *name;
@@ -2509,6 +2895,7 @@ struct glBindAttribLocation_params
 
 struct glBindAttribLocationARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
     GLuint index;
     const GLcharARB *name;
@@ -2516,18 +2903,21 @@ struct glBindAttribLocationARB_params
 
 struct glBindBuffer_params
 {
+    TEB *teb;
     GLenum target;
     GLuint buffer;
 };
 
 struct glBindBufferARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint buffer;
 };
 
 struct glBindBufferBase_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint buffer;
@@ -2535,6 +2925,7 @@ struct glBindBufferBase_params
 
 struct glBindBufferBaseEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint buffer;
@@ -2542,6 +2933,7 @@ struct glBindBufferBaseEXT_params
 
 struct glBindBufferBaseNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint buffer;
@@ -2549,6 +2941,7 @@ struct glBindBufferBaseNV_params
 
 struct glBindBufferOffsetEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint buffer;
@@ -2557,6 +2950,7 @@ struct glBindBufferOffsetEXT_params
 
 struct glBindBufferOffsetNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint buffer;
@@ -2565,6 +2959,7 @@ struct glBindBufferOffsetNV_params
 
 struct glBindBufferRange_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint buffer;
@@ -2574,6 +2969,7 @@ struct glBindBufferRange_params
 
 struct glBindBufferRangeEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint buffer;
@@ -2583,6 +2979,7 @@ struct glBindBufferRangeEXT_params
 
 struct glBindBufferRangeNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint buffer;
@@ -2592,6 +2989,7 @@ struct glBindBufferRangeNV_params
 
 struct glBindBuffersBase_params
 {
+    TEB *teb;
     GLenum target;
     GLuint first;
     GLsizei count;
@@ -2600,6 +2998,7 @@ struct glBindBuffersBase_params
 
 struct glBindBuffersRange_params
 {
+    TEB *teb;
     GLenum target;
     GLuint first;
     GLsizei count;
@@ -2610,6 +3009,7 @@ struct glBindBuffersRange_params
 
 struct glBindFragDataLocation_params
 {
+    TEB *teb;
     GLuint program;
     GLuint color;
     const GLchar *name;
@@ -2617,6 +3017,7 @@ struct glBindFragDataLocation_params
 
 struct glBindFragDataLocationEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLuint color;
     const GLchar *name;
@@ -2624,6 +3025,7 @@ struct glBindFragDataLocationEXT_params
 
 struct glBindFragDataLocationIndexed_params
 {
+    TEB *teb;
     GLuint program;
     GLuint colorNumber;
     GLuint index;
@@ -2632,23 +3034,27 @@ struct glBindFragDataLocationIndexed_params
 
 struct glBindFragmentShaderATI_params
 {
+    TEB *teb;
     GLuint id;
 };
 
 struct glBindFramebuffer_params
 {
+    TEB *teb;
     GLenum target;
     GLuint framebuffer;
 };
 
 struct glBindFramebufferEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint framebuffer;
 };
 
 struct glBindImageTexture_params
 {
+    TEB *teb;
     GLuint unit;
     GLuint texture;
     GLint level;
@@ -2660,6 +3066,7 @@ struct glBindImageTexture_params
 
 struct glBindImageTextureEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLuint texture;
     GLint level;
@@ -2671,6 +3078,7 @@ struct glBindImageTextureEXT_params
 
 struct glBindImageTextures_params
 {
+    TEB *teb;
     GLuint first;
     GLsizei count;
     const GLuint *textures;
@@ -2678,6 +3086,7 @@ struct glBindImageTextures_params
 
 struct glBindLightParameterEXT_params
 {
+    TEB *teb;
     GLenum light;
     GLenum value;
     GLuint ret;
@@ -2685,6 +3094,7 @@ struct glBindLightParameterEXT_params
 
 struct glBindMaterialParameterEXT_params
 {
+    TEB *teb;
     GLenum face;
     GLenum value;
     GLuint ret;
@@ -2692,6 +3102,7 @@ struct glBindMaterialParameterEXT_params
 
 struct glBindMultiTextureEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLuint texture;
@@ -2699,47 +3110,55 @@ struct glBindMultiTextureEXT_params
 
 struct glBindParameterEXT_params
 {
+    TEB *teb;
     GLenum value;
     GLuint ret;
 };
 
 struct glBindProgramARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint program;
 };
 
 struct glBindProgramNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint id;
 };
 
 struct glBindProgramPipeline_params
 {
+    TEB *teb;
     GLuint pipeline;
 };
 
 struct glBindRenderbuffer_params
 {
+    TEB *teb;
     GLenum target;
     GLuint renderbuffer;
 };
 
 struct glBindRenderbufferEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint renderbuffer;
 };
 
 struct glBindSampler_params
 {
+    TEB *teb;
     GLuint unit;
     GLuint sampler;
 };
 
 struct glBindSamplers_params
 {
+    TEB *teb;
     GLuint first;
     GLsizei count;
     const GLuint *samplers;
@@ -2747,11 +3166,13 @@ struct glBindSamplers_params
 
 struct glBindShadingRateImageNV_params
 {
+    TEB *teb;
     GLuint texture;
 };
 
 struct glBindTexGenParameterEXT_params
 {
+    TEB *teb;
     GLenum unit;
     GLenum coord;
     GLenum value;
@@ -2760,18 +3181,21 @@ struct glBindTexGenParameterEXT_params
 
 struct glBindTextureEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint texture;
 };
 
 struct glBindTextureUnit_params
 {
+    TEB *teb;
     GLuint unit;
     GLuint texture;
 };
 
 struct glBindTextureUnitParameterEXT_params
 {
+    TEB *teb;
     GLenum unit;
     GLenum value;
     GLuint ret;
@@ -2779,6 +3203,7 @@ struct glBindTextureUnitParameterEXT_params
 
 struct glBindTextures_params
 {
+    TEB *teb;
     GLuint first;
     GLsizei count;
     const GLuint *textures;
@@ -2786,28 +3211,33 @@ struct glBindTextures_params
 
 struct glBindTransformFeedback_params
 {
+    TEB *teb;
     GLenum target;
     GLuint id;
 };
 
 struct glBindTransformFeedbackNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint id;
 };
 
 struct glBindVertexArray_params
 {
+    TEB *teb;
     GLuint array;
 };
 
 struct glBindVertexArrayAPPLE_params
 {
+    TEB *teb;
     GLuint array;
 };
 
 struct glBindVertexBuffer_params
 {
+    TEB *teb;
     GLuint bindingindex;
     GLuint buffer;
     GLintptr offset;
@@ -2816,6 +3246,7 @@ struct glBindVertexBuffer_params
 
 struct glBindVertexBuffers_params
 {
+    TEB *teb;
     GLuint first;
     GLsizei count;
     const GLuint *buffers;
@@ -2825,11 +3256,13 @@ struct glBindVertexBuffers_params
 
 struct glBindVertexShaderEXT_params
 {
+    TEB *teb;
     GLuint id;
 };
 
 struct glBindVideoCaptureStreamBufferNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLuint stream;
     GLenum frame_region;
@@ -2838,6 +3271,7 @@ struct glBindVideoCaptureStreamBufferNV_params
 
 struct glBindVideoCaptureStreamTextureNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLuint stream;
     GLenum frame_region;
@@ -2847,6 +3281,7 @@ struct glBindVideoCaptureStreamTextureNV_params
 
 struct glBinormal3bEXT_params
 {
+    TEB *teb;
     GLbyte bx;
     GLbyte by;
     GLbyte bz;
@@ -2854,11 +3289,13 @@ struct glBinormal3bEXT_params
 
 struct glBinormal3bvEXT_params
 {
+    TEB *teb;
     const GLbyte *v;
 };
 
 struct glBinormal3dEXT_params
 {
+    TEB *teb;
     GLdouble bx;
     GLdouble by;
     GLdouble bz;
@@ -2866,11 +3303,13 @@ struct glBinormal3dEXT_params
 
 struct glBinormal3dvEXT_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glBinormal3fEXT_params
 {
+    TEB *teb;
     GLfloat bx;
     GLfloat by;
     GLfloat bz;
@@ -2878,11 +3317,13 @@ struct glBinormal3fEXT_params
 
 struct glBinormal3fvEXT_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glBinormal3iEXT_params
 {
+    TEB *teb;
     GLint bx;
     GLint by;
     GLint bz;
@@ -2890,11 +3331,13 @@ struct glBinormal3iEXT_params
 
 struct glBinormal3ivEXT_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glBinormal3sEXT_params
 {
+    TEB *teb;
     GLshort bx;
     GLshort by;
     GLshort bz;
@@ -2902,11 +3345,13 @@ struct glBinormal3sEXT_params
 
 struct glBinormal3svEXT_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glBinormalPointerEXT_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
     const void *pointer;
@@ -2914,6 +3359,7 @@ struct glBinormalPointerEXT_params
 
 struct glBitmapxOES_params
 {
+    TEB *teb;
     GLsizei width;
     GLsizei height;
     GLfixed xorig;
@@ -2925,14 +3371,17 @@ struct glBitmapxOES_params
 
 struct glBlendBarrierKHR_params
 {
+    TEB *teb;
 };
 
 struct glBlendBarrierNV_params
 {
+    TEB *teb;
 };
 
 struct glBlendColor_params
 {
+    TEB *teb;
     GLfloat red;
     GLfloat green;
     GLfloat blue;
@@ -2941,6 +3390,7 @@ struct glBlendColor_params
 
 struct glBlendColorEXT_params
 {
+    TEB *teb;
     GLfloat red;
     GLfloat green;
     GLfloat blue;
@@ -2949,6 +3399,7 @@ struct glBlendColorEXT_params
 
 struct glBlendColorxOES_params
 {
+    TEB *teb;
     GLfixed red;
     GLfixed green;
     GLfixed blue;
@@ -2957,34 +3408,40 @@ struct glBlendColorxOES_params
 
 struct glBlendEquation_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glBlendEquationEXT_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glBlendEquationIndexedAMD_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum mode;
 };
 
 struct glBlendEquationSeparate_params
 {
+    TEB *teb;
     GLenum modeRGB;
     GLenum modeAlpha;
 };
 
 struct glBlendEquationSeparateEXT_params
 {
+    TEB *teb;
     GLenum modeRGB;
     GLenum modeAlpha;
 };
 
 struct glBlendEquationSeparateIndexedAMD_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum modeRGB;
     GLenum modeAlpha;
@@ -2992,6 +3449,7 @@ struct glBlendEquationSeparateIndexedAMD_params
 
 struct glBlendEquationSeparatei_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum modeRGB;
     GLenum modeAlpha;
@@ -2999,6 +3457,7 @@ struct glBlendEquationSeparatei_params
 
 struct glBlendEquationSeparateiARB_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum modeRGB;
     GLenum modeAlpha;
@@ -3006,18 +3465,21 @@ struct glBlendEquationSeparateiARB_params
 
 struct glBlendEquationi_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum mode;
 };
 
 struct glBlendEquationiARB_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum mode;
 };
 
 struct glBlendFuncIndexedAMD_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum src;
     GLenum dst;
@@ -3025,6 +3487,7 @@ struct glBlendFuncIndexedAMD_params
 
 struct glBlendFuncSeparate_params
 {
+    TEB *teb;
     GLenum sfactorRGB;
     GLenum dfactorRGB;
     GLenum sfactorAlpha;
@@ -3033,6 +3496,7 @@ struct glBlendFuncSeparate_params
 
 struct glBlendFuncSeparateEXT_params
 {
+    TEB *teb;
     GLenum sfactorRGB;
     GLenum dfactorRGB;
     GLenum sfactorAlpha;
@@ -3041,6 +3505,7 @@ struct glBlendFuncSeparateEXT_params
 
 struct glBlendFuncSeparateINGR_params
 {
+    TEB *teb;
     GLenum sfactorRGB;
     GLenum dfactorRGB;
     GLenum sfactorAlpha;
@@ -3049,6 +3514,7 @@ struct glBlendFuncSeparateINGR_params
 
 struct glBlendFuncSeparateIndexedAMD_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum srcRGB;
     GLenum dstRGB;
@@ -3058,6 +3524,7 @@ struct glBlendFuncSeparateIndexedAMD_params
 
 struct glBlendFuncSeparatei_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum srcRGB;
     GLenum dstRGB;
@@ -3067,6 +3534,7 @@ struct glBlendFuncSeparatei_params
 
 struct glBlendFuncSeparateiARB_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum srcRGB;
     GLenum dstRGB;
@@ -3076,6 +3544,7 @@ struct glBlendFuncSeparateiARB_params
 
 struct glBlendFunci_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum src;
     GLenum dst;
@@ -3083,6 +3552,7 @@ struct glBlendFunci_params
 
 struct glBlendFunciARB_params
 {
+    TEB *teb;
     GLuint buf;
     GLenum src;
     GLenum dst;
@@ -3090,12 +3560,14 @@ struct glBlendFunciARB_params
 
 struct glBlendParameteriNV_params
 {
+    TEB *teb;
     GLenum pname;
     GLint value;
 };
 
 struct glBlitFramebuffer_params
 {
+    TEB *teb;
     GLint srcX0;
     GLint srcY0;
     GLint srcX1;
@@ -3110,6 +3582,7 @@ struct glBlitFramebuffer_params
 
 struct glBlitFramebufferEXT_params
 {
+    TEB *teb;
     GLint srcX0;
     GLint srcY0;
     GLint srcX1;
@@ -3124,6 +3597,7 @@ struct glBlitFramebufferEXT_params
 
 struct glBlitNamedFramebuffer_params
 {
+    TEB *teb;
     GLuint readFramebuffer;
     GLuint drawFramebuffer;
     GLint srcX0;
@@ -3140,6 +3614,7 @@ struct glBlitNamedFramebuffer_params
 
 struct glBufferAddressRangeNV_params
 {
+    TEB *teb;
     GLenum pname;
     GLuint index;
     GLuint64EXT address;
@@ -3148,6 +3623,7 @@ struct glBufferAddressRangeNV_params
 
 struct glBufferAttachMemoryNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint memory;
     GLuint64 offset;
@@ -3155,6 +3631,7 @@ struct glBufferAttachMemoryNV_params
 
 struct glBufferData_params
 {
+    TEB *teb;
     GLenum target;
     GLsizeiptr size;
     const void *data;
@@ -3163,6 +3640,7 @@ struct glBufferData_params
 
 struct glBufferDataARB_params
 {
+    TEB *teb;
     GLenum target;
     GLsizeiptrARB size;
     const void *data;
@@ -3171,6 +3649,7 @@ struct glBufferDataARB_params
 
 struct glBufferPageCommitmentARB_params
 {
+    TEB *teb;
     GLenum target;
     GLintptr offset;
     GLsizeiptr size;
@@ -3179,6 +3658,7 @@ struct glBufferPageCommitmentARB_params
 
 struct glBufferParameteriAPPLE_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint param;
@@ -3186,11 +3666,13 @@ struct glBufferParameteriAPPLE_params
 
 struct glBufferRegionEnabled_params
 {
+    TEB *teb;
     GLuint ret;
 };
 
 struct glBufferStorage_params
 {
+    TEB *teb;
     GLenum target;
     GLsizeiptr size;
     const void *data;
@@ -3199,6 +3681,7 @@ struct glBufferStorage_params
 
 struct glBufferStorageExternalEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLintptr offset;
     GLsizeiptr size;
@@ -3208,6 +3691,7 @@ struct glBufferStorageExternalEXT_params
 
 struct glBufferStorageMemEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizeiptr size;
     GLuint memory;
@@ -3216,6 +3700,7 @@ struct glBufferStorageMemEXT_params
 
 struct glBufferSubData_params
 {
+    TEB *teb;
     GLenum target;
     GLintptr offset;
     GLsizeiptr size;
@@ -3224,6 +3709,7 @@ struct glBufferSubData_params
 
 struct glBufferSubDataARB_params
 {
+    TEB *teb;
     GLenum target;
     GLintptrARB offset;
     GLsizeiptrARB size;
@@ -3232,23 +3718,27 @@ struct glBufferSubDataARB_params
 
 struct glCallCommandListNV_params
 {
+    TEB *teb;
     GLuint list;
 };
 
 struct glCheckFramebufferStatus_params
 {
+    TEB *teb;
     GLenum target;
     GLenum ret;
 };
 
 struct glCheckFramebufferStatusEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum ret;
 };
 
 struct glCheckNamedFramebufferStatus_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum target;
     GLenum ret;
@@ -3256,6 +3746,7 @@ struct glCheckNamedFramebufferStatus_params
 
 struct glCheckNamedFramebufferStatusEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum target;
     GLenum ret;
@@ -3263,18 +3754,21 @@ struct glCheckNamedFramebufferStatusEXT_params
 
 struct glClampColor_params
 {
+    TEB *teb;
     GLenum target;
     GLenum clamp;
 };
 
 struct glClampColorARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum clamp;
 };
 
 struct glClearAccumxOES_params
 {
+    TEB *teb;
     GLfixed red;
     GLfixed green;
     GLfixed blue;
@@ -3283,6 +3777,7 @@ struct glClearAccumxOES_params
 
 struct glClearBufferData_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLenum format;
@@ -3292,6 +3787,7 @@ struct glClearBufferData_params
 
 struct glClearBufferSubData_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLintptr offset;
@@ -3303,6 +3799,7 @@ struct glClearBufferSubData_params
 
 struct glClearBufferfi_params
 {
+    TEB *teb;
     GLenum buffer;
     GLint drawbuffer;
     GLfloat depth;
@@ -3311,6 +3808,7 @@ struct glClearBufferfi_params
 
 struct glClearBufferfv_params
 {
+    TEB *teb;
     GLenum buffer;
     GLint drawbuffer;
     const GLfloat *value;
@@ -3318,6 +3816,7 @@ struct glClearBufferfv_params
 
 struct glClearBufferiv_params
 {
+    TEB *teb;
     GLenum buffer;
     GLint drawbuffer;
     const GLint *value;
@@ -3325,6 +3824,7 @@ struct glClearBufferiv_params
 
 struct glClearBufferuiv_params
 {
+    TEB *teb;
     GLenum buffer;
     GLint drawbuffer;
     const GLuint *value;
@@ -3332,6 +3832,7 @@ struct glClearBufferuiv_params
 
 struct glClearColorIiEXT_params
 {
+    TEB *teb;
     GLint red;
     GLint green;
     GLint blue;
@@ -3340,6 +3841,7 @@ struct glClearColorIiEXT_params
 
 struct glClearColorIuiEXT_params
 {
+    TEB *teb;
     GLuint red;
     GLuint green;
     GLuint blue;
@@ -3348,6 +3850,7 @@ struct glClearColorIuiEXT_params
 
 struct glClearColorxOES_params
 {
+    TEB *teb;
     GLfixed red;
     GLfixed green;
     GLfixed blue;
@@ -3356,26 +3859,31 @@ struct glClearColorxOES_params
 
 struct glClearDepthdNV_params
 {
+    TEB *teb;
     GLdouble depth;
 };
 
 struct glClearDepthf_params
 {
+    TEB *teb;
     GLfloat d;
 };
 
 struct glClearDepthfOES_params
 {
+    TEB *teb;
     GLclampf depth;
 };
 
 struct glClearDepthxOES_params
 {
+    TEB *teb;
     GLfixed depth;
 };
 
 struct glClearNamedBufferData_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum internalformat;
     GLenum format;
@@ -3385,6 +3893,7 @@ struct glClearNamedBufferData_params
 
 struct glClearNamedBufferDataEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum internalformat;
     GLenum format;
@@ -3394,6 +3903,7 @@ struct glClearNamedBufferDataEXT_params
 
 struct glClearNamedBufferSubData_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum internalformat;
     GLintptr offset;
@@ -3405,6 +3915,7 @@ struct glClearNamedBufferSubData_params
 
 struct glClearNamedBufferSubDataEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum internalformat;
     GLsizeiptr offset;
@@ -3416,6 +3927,7 @@ struct glClearNamedBufferSubDataEXT_params
 
 struct glClearNamedFramebufferfi_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum buffer;
     GLint drawbuffer;
@@ -3425,6 +3937,7 @@ struct glClearNamedFramebufferfi_params
 
 struct glClearNamedFramebufferfv_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum buffer;
     GLint drawbuffer;
@@ -3433,6 +3946,7 @@ struct glClearNamedFramebufferfv_params
 
 struct glClearNamedFramebufferiv_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum buffer;
     GLint drawbuffer;
@@ -3441,6 +3955,7 @@ struct glClearNamedFramebufferiv_params
 
 struct glClearNamedFramebufferuiv_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum buffer;
     GLint drawbuffer;
@@ -3449,6 +3964,7 @@ struct glClearNamedFramebufferuiv_params
 
 struct glClearTexImage_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLenum format;
@@ -3458,6 +3974,7 @@ struct glClearTexImage_params
 
 struct glClearTexSubImage_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -3473,26 +3990,31 @@ struct glClearTexSubImage_params
 
 struct glClientActiveTexture_params
 {
+    TEB *teb;
     GLenum texture;
 };
 
 struct glClientActiveTextureARB_params
 {
+    TEB *teb;
     GLenum texture;
 };
 
 struct glClientActiveVertexStreamATI_params
 {
+    TEB *teb;
     GLenum stream;
 };
 
 struct glClientAttribDefaultEXT_params
 {
+    TEB *teb;
     GLbitfield mask;
 };
 
 struct glClientWaitSemaphoreui64NVX_params
 {
+    TEB *teb;
     GLsizei fenceObjectCount;
     const GLuint *semaphoreArray;
     const GLuint64 *fenceValueArray;
@@ -3500,6 +4022,7 @@ struct glClientWaitSemaphoreui64NVX_params
 
 struct glClientWaitSync_params
 {
+    TEB *teb;
     GLsync sync;
     GLbitfield flags;
     GLuint64 timeout;
@@ -3508,24 +4031,28 @@ struct glClientWaitSync_params
 
 struct glClipControl_params
 {
+    TEB *teb;
     GLenum origin;
     GLenum depth;
 };
 
 struct glClipPlanefOES_params
 {
+    TEB *teb;
     GLenum plane;
     const GLfloat *equation;
 };
 
 struct glClipPlanexOES_params
 {
+    TEB *teb;
     GLenum plane;
     const GLfixed *equation;
 };
 
 struct glColor3fVertex3fSUN_params
 {
+    TEB *teb;
     GLfloat r;
     GLfloat g;
     GLfloat b;
@@ -3536,12 +4063,14 @@ struct glColor3fVertex3fSUN_params
 
 struct glColor3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLfloat *c;
     const GLfloat *v;
 };
 
 struct glColor3hNV_params
 {
+    TEB *teb;
     GLhalfNV red;
     GLhalfNV green;
     GLhalfNV blue;
@@ -3549,11 +4078,13 @@ struct glColor3hNV_params
 
 struct glColor3hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glColor3xOES_params
 {
+    TEB *teb;
     GLfixed red;
     GLfixed green;
     GLfixed blue;
@@ -3561,11 +4092,13 @@ struct glColor3xOES_params
 
 struct glColor3xvOES_params
 {
+    TEB *teb;
     const GLfixed *components;
 };
 
 struct glColor4fNormal3fVertex3fSUN_params
 {
+    TEB *teb;
     GLfloat r;
     GLfloat g;
     GLfloat b;
@@ -3580,6 +4113,7 @@ struct glColor4fNormal3fVertex3fSUN_params
 
 struct glColor4fNormal3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLfloat *c;
     const GLfloat *n;
     const GLfloat *v;
@@ -3587,6 +4121,7 @@ struct glColor4fNormal3fVertex3fvSUN_params
 
 struct glColor4hNV_params
 {
+    TEB *teb;
     GLhalfNV red;
     GLhalfNV green;
     GLhalfNV blue;
@@ -3595,11 +4130,13 @@ struct glColor4hNV_params
 
 struct glColor4hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glColor4ubVertex2fSUN_params
 {
+    TEB *teb;
     GLubyte r;
     GLubyte g;
     GLubyte b;
@@ -3610,12 +4147,14 @@ struct glColor4ubVertex2fSUN_params
 
 struct glColor4ubVertex2fvSUN_params
 {
+    TEB *teb;
     const GLubyte *c;
     const GLfloat *v;
 };
 
 struct glColor4ubVertex3fSUN_params
 {
+    TEB *teb;
     GLubyte r;
     GLubyte g;
     GLubyte b;
@@ -3627,12 +4166,14 @@ struct glColor4ubVertex3fSUN_params
 
 struct glColor4ubVertex3fvSUN_params
 {
+    TEB *teb;
     const GLubyte *c;
     const GLfloat *v;
 };
 
 struct glColor4xOES_params
 {
+    TEB *teb;
     GLfixed red;
     GLfixed green;
     GLfixed blue;
@@ -3641,11 +4182,13 @@ struct glColor4xOES_params
 
 struct glColor4xvOES_params
 {
+    TEB *teb;
     const GLfixed *components;
 };
 
 struct glColorFormatNV_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -3653,6 +4196,7 @@ struct glColorFormatNV_params
 
 struct glColorFragmentOp1ATI_params
 {
+    TEB *teb;
     GLenum op;
     GLuint dst;
     GLuint dstMask;
@@ -3664,6 +4208,7 @@ struct glColorFragmentOp1ATI_params
 
 struct glColorFragmentOp2ATI_params
 {
+    TEB *teb;
     GLenum op;
     GLuint dst;
     GLuint dstMask;
@@ -3678,6 +4223,7 @@ struct glColorFragmentOp2ATI_params
 
 struct glColorFragmentOp3ATI_params
 {
+    TEB *teb;
     GLenum op;
     GLuint dst;
     GLuint dstMask;
@@ -3695,6 +4241,7 @@ struct glColorFragmentOp3ATI_params
 
 struct glColorMaskIndexedEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLboolean r;
     GLboolean g;
@@ -3704,6 +4251,7 @@ struct glColorMaskIndexedEXT_params
 
 struct glColorMaski_params
 {
+    TEB *teb;
     GLuint index;
     GLboolean r;
     GLboolean g;
@@ -3713,30 +4261,35 @@ struct glColorMaski_params
 
 struct glColorP3ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint color;
 };
 
 struct glColorP3uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *color;
 };
 
 struct glColorP4ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint color;
 };
 
 struct glColorP4uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *color;
 };
 
 struct glColorPointerEXT_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -3746,6 +4299,7 @@ struct glColorPointerEXT_params
 
 struct glColorPointerListIBM_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLint stride;
@@ -3755,6 +4309,7 @@ struct glColorPointerListIBM_params
 
 struct glColorPointervINTEL_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     const void **pointer;
@@ -3762,6 +4317,7 @@ struct glColorPointervINTEL_params
 
 struct glColorSubTable_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei start;
     GLsizei count;
@@ -3772,6 +4328,7 @@ struct glColorSubTable_params
 
 struct glColorSubTableEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei start;
     GLsizei count;
@@ -3782,6 +4339,7 @@ struct glColorSubTableEXT_params
 
 struct glColorTable_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -3792,6 +4350,7 @@ struct glColorTable_params
 
 struct glColorTableEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalFormat;
     GLsizei width;
@@ -3802,6 +4361,7 @@ struct glColorTableEXT_params
 
 struct glColorTableParameterfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfloat *params;
@@ -3809,6 +4369,7 @@ struct glColorTableParameterfv_params
 
 struct glColorTableParameterfvSGI_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfloat *params;
@@ -3816,6 +4377,7 @@ struct glColorTableParameterfvSGI_params
 
 struct glColorTableParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -3823,6 +4385,7 @@ struct glColorTableParameteriv_params
 
 struct glColorTableParameterivSGI_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -3830,6 +4393,7 @@ struct glColorTableParameterivSGI_params
 
 struct glColorTableSGI_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -3840,6 +4404,7 @@ struct glColorTableSGI_params
 
 struct glCombinerInputNV_params
 {
+    TEB *teb;
     GLenum stage;
     GLenum portion;
     GLenum variable;
@@ -3850,6 +4415,7 @@ struct glCombinerInputNV_params
 
 struct glCombinerOutputNV_params
 {
+    TEB *teb;
     GLenum stage;
     GLenum portion;
     GLenum abOutput;
@@ -3864,30 +4430,35 @@ struct glCombinerOutputNV_params
 
 struct glCombinerParameterfNV_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glCombinerParameterfvNV_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glCombinerParameteriNV_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glCombinerParameterivNV_params
 {
+    TEB *teb;
     GLenum pname;
     const GLint *params;
 };
 
 struct glCombinerStageParameterfvNV_params
 {
+    TEB *teb;
     GLenum stage;
     GLenum pname;
     const GLfloat *params;
@@ -3895,27 +4466,32 @@ struct glCombinerStageParameterfvNV_params
 
 struct glCommandListSegmentsNV_params
 {
+    TEB *teb;
     GLuint list;
     GLuint segments;
 };
 
 struct glCompileCommandListNV_params
 {
+    TEB *teb;
     GLuint list;
 };
 
 struct glCompileShader_params
 {
+    TEB *teb;
     GLuint shader;
 };
 
 struct glCompileShaderARB_params
 {
+    TEB *teb;
     GLhandleARB shaderObj;
 };
 
 struct glCompileShaderIncludeARB_params
 {
+    TEB *teb;
     GLuint shader;
     GLsizei count;
     const GLchar *const*path;
@@ -3924,6 +4500,7 @@ struct glCompileShaderIncludeARB_params
 
 struct glCompressedMultiTexImage1DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -3936,6 +4513,7 @@ struct glCompressedMultiTexImage1DEXT_params
 
 struct glCompressedMultiTexImage2DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -3949,6 +4527,7 @@ struct glCompressedMultiTexImage2DEXT_params
 
 struct glCompressedMultiTexImage3DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -3963,6 +4542,7 @@ struct glCompressedMultiTexImage3DEXT_params
 
 struct glCompressedMultiTexSubImage1DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -3975,6 +4555,7 @@ struct glCompressedMultiTexSubImage1DEXT_params
 
 struct glCompressedMultiTexSubImage2DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -3989,6 +4570,7 @@ struct glCompressedMultiTexSubImage2DEXT_params
 
 struct glCompressedMultiTexSubImage3DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -4005,6 +4587,7 @@ struct glCompressedMultiTexSubImage3DEXT_params
 
 struct glCompressedTexImage1D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -4016,6 +4599,7 @@ struct glCompressedTexImage1D_params
 
 struct glCompressedTexImage1DARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -4027,6 +4611,7 @@ struct glCompressedTexImage1DARB_params
 
 struct glCompressedTexImage2D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -4039,6 +4624,7 @@ struct glCompressedTexImage2D_params
 
 struct glCompressedTexImage2DARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -4051,6 +4637,7 @@ struct glCompressedTexImage2DARB_params
 
 struct glCompressedTexImage3D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -4064,6 +4651,7 @@ struct glCompressedTexImage3D_params
 
 struct glCompressedTexImage3DARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -4077,6 +4665,7 @@ struct glCompressedTexImage3DARB_params
 
 struct glCompressedTexSubImage1D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4088,6 +4677,7 @@ struct glCompressedTexSubImage1D_params
 
 struct glCompressedTexSubImage1DARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4099,6 +4689,7 @@ struct glCompressedTexSubImage1DARB_params
 
 struct glCompressedTexSubImage2D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4112,6 +4703,7 @@ struct glCompressedTexSubImage2D_params
 
 struct glCompressedTexSubImage2DARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4125,6 +4717,7 @@ struct glCompressedTexSubImage2DARB_params
 
 struct glCompressedTexSubImage3D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4140,6 +4733,7 @@ struct glCompressedTexSubImage3D_params
 
 struct glCompressedTexSubImage3DARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4155,6 +4749,7 @@ struct glCompressedTexSubImage3DARB_params
 
 struct glCompressedTextureImage1DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4167,6 +4762,7 @@ struct glCompressedTextureImage1DEXT_params
 
 struct glCompressedTextureImage2DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4180,6 +4776,7 @@ struct glCompressedTextureImage2DEXT_params
 
 struct glCompressedTextureImage3DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4194,6 +4791,7 @@ struct glCompressedTextureImage3DEXT_params
 
 struct glCompressedTextureSubImage1D_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -4205,6 +4803,7 @@ struct glCompressedTextureSubImage1D_params
 
 struct glCompressedTextureSubImage1DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4217,6 +4816,7 @@ struct glCompressedTextureSubImage1DEXT_params
 
 struct glCompressedTextureSubImage2D_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -4230,6 +4830,7 @@ struct glCompressedTextureSubImage2D_params
 
 struct glCompressedTextureSubImage2DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4244,6 +4845,7 @@ struct glCompressedTextureSubImage2DEXT_params
 
 struct glCompressedTextureSubImage3D_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -4259,6 +4861,7 @@ struct glCompressedTextureSubImage3D_params
 
 struct glCompressedTextureSubImage3DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4275,18 +4878,21 @@ struct glCompressedTextureSubImage3DEXT_params
 
 struct glConservativeRasterParameterfNV_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat value;
 };
 
 struct glConservativeRasterParameteriNV_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glConvolutionFilter1D_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -4297,6 +4903,7 @@ struct glConvolutionFilter1D_params
 
 struct glConvolutionFilter1DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -4307,6 +4914,7 @@ struct glConvolutionFilter1DEXT_params
 
 struct glConvolutionFilter2D_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -4318,6 +4926,7 @@ struct glConvolutionFilter2D_params
 
 struct glConvolutionFilter2DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -4329,6 +4938,7 @@ struct glConvolutionFilter2DEXT_params
 
 struct glConvolutionParameterf_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat params;
@@ -4336,6 +4946,7 @@ struct glConvolutionParameterf_params
 
 struct glConvolutionParameterfEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat params;
@@ -4343,6 +4954,7 @@ struct glConvolutionParameterfEXT_params
 
 struct glConvolutionParameterfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfloat *params;
@@ -4350,6 +4962,7 @@ struct glConvolutionParameterfv_params
 
 struct glConvolutionParameterfvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfloat *params;
@@ -4357,6 +4970,7 @@ struct glConvolutionParameterfvEXT_params
 
 struct glConvolutionParameteri_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint params;
@@ -4364,6 +4978,7 @@ struct glConvolutionParameteri_params
 
 struct glConvolutionParameteriEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint params;
@@ -4371,6 +4986,7 @@ struct glConvolutionParameteriEXT_params
 
 struct glConvolutionParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -4378,6 +4994,7 @@ struct glConvolutionParameteriv_params
 
 struct glConvolutionParameterivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -4385,6 +5002,7 @@ struct glConvolutionParameterivEXT_params
 
 struct glConvolutionParameterxOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfixed param;
@@ -4392,6 +5010,7 @@ struct glConvolutionParameterxOES_params
 
 struct glConvolutionParameterxvOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfixed *params;
@@ -4399,6 +5018,7 @@ struct glConvolutionParameterxvOES_params
 
 struct glCopyBufferSubData_params
 {
+    TEB *teb;
     GLenum readTarget;
     GLenum writeTarget;
     GLintptr readOffset;
@@ -4408,6 +5028,7 @@ struct glCopyBufferSubData_params
 
 struct glCopyColorSubTable_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei start;
     GLint x;
@@ -4417,6 +5038,7 @@ struct glCopyColorSubTable_params
 
 struct glCopyColorSubTableEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei start;
     GLint x;
@@ -4426,6 +5048,7 @@ struct glCopyColorSubTableEXT_params
 
 struct glCopyColorTable_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLint x;
@@ -4435,6 +5058,7 @@ struct glCopyColorTable_params
 
 struct glCopyColorTableSGI_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLint x;
@@ -4444,6 +5068,7 @@ struct glCopyColorTableSGI_params
 
 struct glCopyConvolutionFilter1D_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLint x;
@@ -4453,6 +5078,7 @@ struct glCopyConvolutionFilter1D_params
 
 struct glCopyConvolutionFilter1DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLint x;
@@ -4462,6 +5088,7 @@ struct glCopyConvolutionFilter1DEXT_params
 
 struct glCopyConvolutionFilter2D_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLint x;
@@ -4472,6 +5099,7 @@ struct glCopyConvolutionFilter2D_params
 
 struct glCopyConvolutionFilter2DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLint x;
@@ -4482,6 +5110,7 @@ struct glCopyConvolutionFilter2DEXT_params
 
 struct glCopyImageSubData_params
 {
+    TEB *teb;
     GLuint srcName;
     GLenum srcTarget;
     GLint srcLevel;
@@ -4501,6 +5130,7 @@ struct glCopyImageSubData_params
 
 struct glCopyImageSubDataNV_params
 {
+    TEB *teb;
     GLuint srcName;
     GLenum srcTarget;
     GLint srcLevel;
@@ -4520,6 +5150,7 @@ struct glCopyImageSubDataNV_params
 
 struct glCopyMultiTexImage1DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -4532,6 +5163,7 @@ struct glCopyMultiTexImage1DEXT_params
 
 struct glCopyMultiTexImage2DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -4545,6 +5177,7 @@ struct glCopyMultiTexImage2DEXT_params
 
 struct glCopyMultiTexSubImage1DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -4556,6 +5189,7 @@ struct glCopyMultiTexSubImage1DEXT_params
 
 struct glCopyMultiTexSubImage2DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -4569,6 +5203,7 @@ struct glCopyMultiTexSubImage2DEXT_params
 
 struct glCopyMultiTexSubImage3DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -4583,6 +5218,7 @@ struct glCopyMultiTexSubImage3DEXT_params
 
 struct glCopyNamedBufferSubData_params
 {
+    TEB *teb;
     GLuint readBuffer;
     GLuint writeBuffer;
     GLintptr readOffset;
@@ -4592,12 +5228,14 @@ struct glCopyNamedBufferSubData_params
 
 struct glCopyPathNV_params
 {
+    TEB *teb;
     GLuint resultPath;
     GLuint srcPath;
 };
 
 struct glCopyTexImage1DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -4609,6 +5247,7 @@ struct glCopyTexImage1DEXT_params
 
 struct glCopyTexImage2DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -4621,6 +5260,7 @@ struct glCopyTexImage2DEXT_params
 
 struct glCopyTexSubImage1DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4631,6 +5271,7 @@ struct glCopyTexSubImage1DEXT_params
 
 struct glCopyTexSubImage2DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4643,6 +5284,7 @@ struct glCopyTexSubImage2DEXT_params
 
 struct glCopyTexSubImage3D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4656,6 +5298,7 @@ struct glCopyTexSubImage3D_params
 
 struct glCopyTexSubImage3DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -4669,6 +5312,7 @@ struct glCopyTexSubImage3DEXT_params
 
 struct glCopyTextureImage1DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4681,6 +5325,7 @@ struct glCopyTextureImage1DEXT_params
 
 struct glCopyTextureImage2DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4694,6 +5339,7 @@ struct glCopyTextureImage2DEXT_params
 
 struct glCopyTextureSubImage1D_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -4704,6 +5350,7 @@ struct glCopyTextureSubImage1D_params
 
 struct glCopyTextureSubImage1DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4715,6 +5362,7 @@ struct glCopyTextureSubImage1DEXT_params
 
 struct glCopyTextureSubImage2D_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -4727,6 +5375,7 @@ struct glCopyTextureSubImage2D_params
 
 struct glCopyTextureSubImage2DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4740,6 +5389,7 @@ struct glCopyTextureSubImage2DEXT_params
 
 struct glCopyTextureSubImage3D_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -4753,6 +5403,7 @@ struct glCopyTextureSubImage3D_params
 
 struct glCopyTextureSubImage3DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -4767,6 +5418,7 @@ struct glCopyTextureSubImage3DEXT_params
 
 struct glCoverFillPathInstancedNV_params
 {
+    TEB *teb;
     GLsizei numPaths;
     GLenum pathNameType;
     const void *paths;
@@ -4778,12 +5430,14 @@ struct glCoverFillPathInstancedNV_params
 
 struct glCoverFillPathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum coverMode;
 };
 
 struct glCoverStrokePathInstancedNV_params
 {
+    TEB *teb;
     GLsizei numPaths;
     GLenum pathNameType;
     const void *paths;
@@ -4795,74 +5449,87 @@ struct glCoverStrokePathInstancedNV_params
 
 struct glCoverStrokePathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum coverMode;
 };
 
 struct glCoverageModulationNV_params
 {
+    TEB *teb;
     GLenum components;
 };
 
 struct glCoverageModulationTableNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLfloat *v;
 };
 
 struct glCreateBuffers_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *buffers;
 };
 
 struct glCreateCommandListsNV_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *lists;
 };
 
 struct glCreateFramebuffers_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *framebuffers;
 };
 
 struct glCreateMemoryObjectsEXT_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *memoryObjects;
 };
 
 struct glCreatePerfQueryINTEL_params
 {
+    TEB *teb;
     GLuint queryId;
     GLuint *queryHandle;
 };
 
 struct glCreateProgram_params
 {
+    TEB *teb;
     GLuint ret;
 };
 
 struct glCreateProgramObjectARB_params
 {
+    TEB *teb;
     GLhandleARB ret;
 };
 
 struct glCreateProgramPipelines_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *pipelines;
 };
 
 struct glCreateProgressFenceNVX_params
 {
+    TEB *teb;
     GLuint ret;
 };
 
 struct glCreateQueries_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei n;
     GLuint *ids;
@@ -4870,30 +5537,35 @@ struct glCreateQueries_params
 
 struct glCreateRenderbuffers_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *renderbuffers;
 };
 
 struct glCreateSamplers_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *samplers;
 };
 
 struct glCreateShader_params
 {
+    TEB *teb;
     GLenum type;
     GLuint ret;
 };
 
 struct glCreateShaderObjectARB_params
 {
+    TEB *teb;
     GLenum shaderType;
     GLhandleARB ret;
 };
 
 struct glCreateShaderProgramEXT_params
 {
+    TEB *teb;
     GLenum type;
     const GLchar *string;
     GLuint ret;
@@ -4901,6 +5573,7 @@ struct glCreateShaderProgramEXT_params
 
 struct glCreateShaderProgramv_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei count;
     const GLchar *const*strings;
@@ -4909,12 +5582,14 @@ struct glCreateShaderProgramv_params
 
 struct glCreateStatesNV_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *states;
 };
 
 struct glCreateSyncFromCLeventARB_params
 {
+    TEB *teb;
     struct _cl_context *context;
     struct _cl_event *event;
     GLbitfield flags;
@@ -4923,6 +5598,7 @@ struct glCreateSyncFromCLeventARB_params
 
 struct glCreateTextures_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei n;
     GLuint *textures;
@@ -4930,53 +5606,62 @@ struct glCreateTextures_params
 
 struct glCreateTransformFeedbacks_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *ids;
 };
 
 struct glCreateVertexArrays_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *arrays;
 };
 
 struct glCullParameterdvEXT_params
 {
+    TEB *teb;
     GLenum pname;
     GLdouble *params;
 };
 
 struct glCullParameterfvEXT_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat *params;
 };
 
 struct glCurrentPaletteMatrixARB_params
 {
+    TEB *teb;
     GLint index;
 };
 
 struct glDebugMessageCallback_params
 {
+    TEB *teb;
     GLDEBUGPROC callback;
     const void *userParam;
 };
 
 struct glDebugMessageCallbackAMD_params
 {
+    TEB *teb;
     GLDEBUGPROCAMD callback;
     void *userParam;
 };
 
 struct glDebugMessageCallbackARB_params
 {
+    TEB *teb;
     GLDEBUGPROCARB callback;
     const void *userParam;
 };
 
 struct glDebugMessageControl_params
 {
+    TEB *teb;
     GLenum source;
     GLenum type;
     GLenum severity;
@@ -4987,6 +5672,7 @@ struct glDebugMessageControl_params
 
 struct glDebugMessageControlARB_params
 {
+    TEB *teb;
     GLenum source;
     GLenum type;
     GLenum severity;
@@ -4997,6 +5683,7 @@ struct glDebugMessageControlARB_params
 
 struct glDebugMessageEnableAMD_params
 {
+    TEB *teb;
     GLenum category;
     GLenum severity;
     GLsizei count;
@@ -5006,6 +5693,7 @@ struct glDebugMessageEnableAMD_params
 
 struct glDebugMessageInsert_params
 {
+    TEB *teb;
     GLenum source;
     GLenum type;
     GLuint id;
@@ -5016,6 +5704,7 @@ struct glDebugMessageInsert_params
 
 struct glDebugMessageInsertAMD_params
 {
+    TEB *teb;
     GLenum category;
     GLenum severity;
     GLuint id;
@@ -5025,6 +5714,7 @@ struct glDebugMessageInsertAMD_params
 
 struct glDebugMessageInsertARB_params
 {
+    TEB *teb;
     GLenum source;
     GLenum type;
     GLuint id;
@@ -5035,11 +5725,13 @@ struct glDebugMessageInsertARB_params
 
 struct glDeformSGIX_params
 {
+    TEB *teb;
     GLbitfield mask;
 };
 
 struct glDeformationMap3dSGIX_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble u1;
     GLdouble u2;
@@ -5058,6 +5750,7 @@ struct glDeformationMap3dSGIX_params
 
 struct glDeformationMap3fSGIX_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat u1;
     GLfloat u2;
@@ -5076,76 +5769,89 @@ struct glDeformationMap3fSGIX_params
 
 struct glDeleteAsyncMarkersSGIX_params
 {
+    TEB *teb;
     GLuint marker;
     GLsizei range;
 };
 
 struct glDeleteBufferRegion_params
 {
+    TEB *teb;
     GLenum region;
 };
 
 struct glDeleteBuffers_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *buffers;
 };
 
 struct glDeleteBuffersARB_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *buffers;
 };
 
 struct glDeleteCommandListsNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *lists;
 };
 
 struct glDeleteFencesAPPLE_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *fences;
 };
 
 struct glDeleteFencesNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *fences;
 };
 
 struct glDeleteFragmentShaderATI_params
 {
+    TEB *teb;
     GLuint id;
 };
 
 struct glDeleteFramebuffers_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *framebuffers;
 };
 
 struct glDeleteFramebuffersEXT_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *framebuffers;
 };
 
 struct glDeleteMemoryObjectsEXT_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *memoryObjects;
 };
 
 struct glDeleteNamedStringARB_params
 {
+    TEB *teb;
     GLint namelen;
     const GLchar *name;
 };
 
 struct glDeleteNamesAMD_params
 {
+    TEB *teb;
     GLenum identifier;
     GLuint num;
     const GLuint *names;
@@ -5153,167 +5859,196 @@ struct glDeleteNamesAMD_params
 
 struct glDeleteObjectARB_params
 {
+    TEB *teb;
     GLhandleARB obj;
 };
 
 struct glDeleteObjectBufferATI_params
 {
+    TEB *teb;
     GLuint buffer;
 };
 
 struct glDeleteOcclusionQueriesNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *ids;
 };
 
 struct glDeletePathsNV_params
 {
+    TEB *teb;
     GLuint path;
     GLsizei range;
 };
 
 struct glDeletePerfMonitorsAMD_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *monitors;
 };
 
 struct glDeletePerfQueryINTEL_params
 {
+    TEB *teb;
     GLuint queryHandle;
 };
 
 struct glDeleteProgram_params
 {
+    TEB *teb;
     GLuint program;
 };
 
 struct glDeleteProgramPipelines_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *pipelines;
 };
 
 struct glDeleteProgramsARB_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *programs;
 };
 
 struct glDeleteProgramsNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *programs;
 };
 
 struct glDeleteQueries_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *ids;
 };
 
 struct glDeleteQueriesARB_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *ids;
 };
 
 struct glDeleteQueryResourceTagNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLint *tagIds;
 };
 
 struct glDeleteRenderbuffers_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *renderbuffers;
 };
 
 struct glDeleteRenderbuffersEXT_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *renderbuffers;
 };
 
 struct glDeleteSamplers_params
 {
+    TEB *teb;
     GLsizei count;
     const GLuint *samplers;
 };
 
 struct glDeleteSemaphoresEXT_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *semaphores;
 };
 
 struct glDeleteShader_params
 {
+    TEB *teb;
     GLuint shader;
 };
 
 struct glDeleteStatesNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *states;
 };
 
 struct glDeleteSync_params
 {
+    TEB *teb;
     GLsync sync;
 };
 
 struct glDeleteTexturesEXT_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *textures;
 };
 
 struct glDeleteTransformFeedbacks_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *ids;
 };
 
 struct glDeleteTransformFeedbacksNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *ids;
 };
 
 struct glDeleteVertexArrays_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *arrays;
 };
 
 struct glDeleteVertexArraysAPPLE_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *arrays;
 };
 
 struct glDeleteVertexShaderEXT_params
 {
+    TEB *teb;
     GLuint id;
 };
 
 struct glDepthBoundsEXT_params
 {
+    TEB *teb;
     GLclampd zmin;
     GLclampd zmax;
 };
 
 struct glDepthBoundsdNV_params
 {
+    TEB *teb;
     GLdouble zmin;
     GLdouble zmax;
 };
 
 struct glDepthRangeArraydvNV_params
 {
+    TEB *teb;
     GLuint first;
     GLsizei count;
     const GLdouble *v;
@@ -5321,6 +6056,7 @@ struct glDepthRangeArraydvNV_params
 
 struct glDepthRangeArrayv_params
 {
+    TEB *teb;
     GLuint first;
     GLsizei count;
     const GLdouble *v;
@@ -5328,6 +6064,7 @@ struct glDepthRangeArrayv_params
 
 struct glDepthRangeIndexed_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble n;
     GLdouble f;
@@ -5335,6 +6072,7 @@ struct glDepthRangeIndexed_params
 
 struct glDepthRangeIndexeddNV_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble n;
     GLdouble f;
@@ -5342,42 +6080,49 @@ struct glDepthRangeIndexeddNV_params
 
 struct glDepthRangedNV_params
 {
+    TEB *teb;
     GLdouble zNear;
     GLdouble zFar;
 };
 
 struct glDepthRangef_params
 {
+    TEB *teb;
     GLfloat n;
     GLfloat f;
 };
 
 struct glDepthRangefOES_params
 {
+    TEB *teb;
     GLclampf n;
     GLclampf f;
 };
 
 struct glDepthRangexOES_params
 {
+    TEB *teb;
     GLfixed n;
     GLfixed f;
 };
 
 struct glDetachObjectARB_params
 {
+    TEB *teb;
     GLhandleARB containerObj;
     GLhandleARB attachedObj;
 };
 
 struct glDetachShader_params
 {
+    TEB *teb;
     GLuint program;
     GLuint shader;
 };
 
 struct glDetailTexFuncSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei n;
     const GLfloat *points;
@@ -5385,69 +6130,81 @@ struct glDetailTexFuncSGIS_params
 
 struct glDisableClientStateIndexedEXT_params
 {
+    TEB *teb;
     GLenum array;
     GLuint index;
 };
 
 struct glDisableClientStateiEXT_params
 {
+    TEB *teb;
     GLenum array;
     GLuint index;
 };
 
 struct glDisableIndexedEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
 };
 
 struct glDisableVariantClientStateEXT_params
 {
+    TEB *teb;
     GLuint id;
 };
 
 struct glDisableVertexArrayAttrib_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint index;
 };
 
 struct glDisableVertexArrayAttribEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint index;
 };
 
 struct glDisableVertexArrayEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLenum array;
 };
 
 struct glDisableVertexAttribAPPLE_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
 };
 
 struct glDisableVertexAttribArray_params
 {
+    TEB *teb;
     GLuint index;
 };
 
 struct glDisableVertexAttribArrayARB_params
 {
+    TEB *teb;
     GLuint index;
 };
 
 struct glDisablei_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
 };
 
 struct glDispatchCompute_params
 {
+    TEB *teb;
     GLuint num_groups_x;
     GLuint num_groups_y;
     GLuint num_groups_z;
@@ -5455,6 +6212,7 @@ struct glDispatchCompute_params
 
 struct glDispatchComputeGroupSizeARB_params
 {
+    TEB *teb;
     GLuint num_groups_x;
     GLuint num_groups_y;
     GLuint num_groups_z;
@@ -5465,11 +6223,13 @@ struct glDispatchComputeGroupSizeARB_params
 
 struct glDispatchComputeIndirect_params
 {
+    TEB *teb;
     GLintptr indirect;
 };
 
 struct glDrawArraysEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLint first;
     GLsizei count;
@@ -5477,12 +6237,14 @@ struct glDrawArraysEXT_params
 
 struct glDrawArraysIndirect_params
 {
+    TEB *teb;
     GLenum mode;
     const void *indirect;
 };
 
 struct glDrawArraysInstanced_params
 {
+    TEB *teb;
     GLenum mode;
     GLint first;
     GLsizei count;
@@ -5491,6 +6253,7 @@ struct glDrawArraysInstanced_params
 
 struct glDrawArraysInstancedARB_params
 {
+    TEB *teb;
     GLenum mode;
     GLint first;
     GLsizei count;
@@ -5499,6 +6262,7 @@ struct glDrawArraysInstancedARB_params
 
 struct glDrawArraysInstancedBaseInstance_params
 {
+    TEB *teb;
     GLenum mode;
     GLint first;
     GLsizei count;
@@ -5508,6 +6272,7 @@ struct glDrawArraysInstancedBaseInstance_params
 
 struct glDrawArraysInstancedEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLint start;
     GLsizei count;
@@ -5516,6 +6281,7 @@ struct glDrawArraysInstancedEXT_params
 
 struct glDrawBufferRegion_params
 {
+    TEB *teb;
     GLenum region;
     GLint x;
     GLint y;
@@ -5527,24 +6293,28 @@ struct glDrawBufferRegion_params
 
 struct glDrawBuffers_params
 {
+    TEB *teb;
     GLsizei n;
     const GLenum *bufs;
 };
 
 struct glDrawBuffersARB_params
 {
+    TEB *teb;
     GLsizei n;
     const GLenum *bufs;
 };
 
 struct glDrawBuffersATI_params
 {
+    TEB *teb;
     GLsizei n;
     const GLenum *bufs;
 };
 
 struct glDrawCommandsAddressNV_params
 {
+    TEB *teb;
     GLenum primitiveMode;
     const GLuint64 *indirects;
     const GLsizei *sizes;
@@ -5553,6 +6323,7 @@ struct glDrawCommandsAddressNV_params
 
 struct glDrawCommandsNV_params
 {
+    TEB *teb;
     GLenum primitiveMode;
     GLuint buffer;
     const GLintptr *indirects;
@@ -5562,6 +6333,7 @@ struct glDrawCommandsNV_params
 
 struct glDrawCommandsStatesAddressNV_params
 {
+    TEB *teb;
     const GLuint64 *indirects;
     const GLsizei *sizes;
     const GLuint *states;
@@ -5571,6 +6343,7 @@ struct glDrawCommandsStatesAddressNV_params
 
 struct glDrawCommandsStatesNV_params
 {
+    TEB *teb;
     GLuint buffer;
     const GLintptr *indirects;
     const GLsizei *sizes;
@@ -5581,6 +6354,7 @@ struct glDrawCommandsStatesNV_params
 
 struct glDrawElementArrayAPPLE_params
 {
+    TEB *teb;
     GLenum mode;
     GLint first;
     GLsizei count;
@@ -5588,12 +6362,14 @@ struct glDrawElementArrayAPPLE_params
 
 struct glDrawElementArrayATI_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
 };
 
 struct glDrawElementsBaseVertex_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
     GLenum type;
@@ -5603,6 +6379,7 @@ struct glDrawElementsBaseVertex_params
 
 struct glDrawElementsIndirect_params
 {
+    TEB *teb;
     GLenum mode;
     GLenum type;
     const void *indirect;
@@ -5610,6 +6387,7 @@ struct glDrawElementsIndirect_params
 
 struct glDrawElementsInstanced_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
     GLenum type;
@@ -5619,6 +6397,7 @@ struct glDrawElementsInstanced_params
 
 struct glDrawElementsInstancedARB_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
     GLenum type;
@@ -5628,6 +6407,7 @@ struct glDrawElementsInstancedARB_params
 
 struct glDrawElementsInstancedBaseInstance_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
     GLenum type;
@@ -5638,6 +6418,7 @@ struct glDrawElementsInstancedBaseInstance_params
 
 struct glDrawElementsInstancedBaseVertex_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
     GLenum type;
@@ -5648,6 +6429,7 @@ struct glDrawElementsInstancedBaseVertex_params
 
 struct glDrawElementsInstancedBaseVertexBaseInstance_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
     GLenum type;
@@ -5659,6 +6441,7 @@ struct glDrawElementsInstancedBaseVertexBaseInstance_params
 
 struct glDrawElementsInstancedEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
     GLenum type;
@@ -5668,6 +6451,7 @@ struct glDrawElementsInstancedEXT_params
 
 struct glDrawMeshArraysSUN_params
 {
+    TEB *teb;
     GLenum mode;
     GLint first;
     GLsizei count;
@@ -5676,17 +6460,20 @@ struct glDrawMeshArraysSUN_params
 
 struct glDrawMeshTasksIndirectNV_params
 {
+    TEB *teb;
     GLintptr indirect;
 };
 
 struct glDrawMeshTasksNV_params
 {
+    TEB *teb;
     GLuint first;
     GLuint count;
 };
 
 struct glDrawRangeElementArrayAPPLE_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint start;
     GLuint end;
@@ -5696,6 +6483,7 @@ struct glDrawRangeElementArrayAPPLE_params
 
 struct glDrawRangeElementArrayATI_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint start;
     GLuint end;
@@ -5704,6 +6492,7 @@ struct glDrawRangeElementArrayATI_params
 
 struct glDrawRangeElements_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint start;
     GLuint end;
@@ -5714,6 +6503,7 @@ struct glDrawRangeElements_params
 
 struct glDrawRangeElementsBaseVertex_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint start;
     GLuint end;
@@ -5725,6 +6515,7 @@ struct glDrawRangeElementsBaseVertex_params
 
 struct glDrawRangeElementsEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint start;
     GLuint end;
@@ -5735,6 +6526,7 @@ struct glDrawRangeElementsEXT_params
 
 struct glDrawTextureNV_params
 {
+    TEB *teb;
     GLuint texture;
     GLuint sampler;
     GLfloat x0;
@@ -5750,12 +6542,14 @@ struct glDrawTextureNV_params
 
 struct glDrawTransformFeedback_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint id;
 };
 
 struct glDrawTransformFeedbackInstanced_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint id;
     GLsizei instancecount;
@@ -5763,12 +6557,14 @@ struct glDrawTransformFeedbackInstanced_params
 
 struct glDrawTransformFeedbackNV_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint id;
 };
 
 struct glDrawTransformFeedbackStream_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint id;
     GLuint stream;
@@ -5776,6 +6572,7 @@ struct glDrawTransformFeedbackStream_params
 
 struct glDrawTransformFeedbackStreamInstanced_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint id;
     GLuint stream;
@@ -5784,6 +6581,7 @@ struct glDrawTransformFeedbackStreamInstanced_params
 
 struct glDrawVkImageNV_params
 {
+    TEB *teb;
     GLuint64 vkImage;
     GLuint sampler;
     GLfloat x0;
@@ -5799,6 +6597,7 @@ struct glDrawVkImageNV_params
 
 struct glEGLImageTargetTexStorageEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLeglImageOES image;
     const GLint* attrib_list;
@@ -5806,6 +6605,7 @@ struct glEGLImageTargetTexStorageEXT_params
 
 struct glEGLImageTargetTextureStorageEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLeglImageOES image;
     const GLint* attrib_list;
@@ -5813,11 +6613,13 @@ struct glEGLImageTargetTextureStorageEXT_params
 
 struct glEdgeFlagFormatNV_params
 {
+    TEB *teb;
     GLsizei stride;
 };
 
 struct glEdgeFlagPointerEXT_params
 {
+    TEB *teb;
     GLsizei stride;
     GLsizei count;
     const GLboolean *pointer;
@@ -5825,6 +6627,7 @@ struct glEdgeFlagPointerEXT_params
 
 struct glEdgeFlagPointerListIBM_params
 {
+    TEB *teb;
     GLint stride;
     const GLboolean **pointer;
     GLint ptrstride;
@@ -5832,179 +6635,214 @@ struct glEdgeFlagPointerListIBM_params
 
 struct glElementPointerAPPLE_params
 {
+    TEB *teb;
     GLenum type;
     const void *pointer;
 };
 
 struct glElementPointerATI_params
 {
+    TEB *teb;
     GLenum type;
     const void *pointer;
 };
 
 struct glEnableClientStateIndexedEXT_params
 {
+    TEB *teb;
     GLenum array;
     GLuint index;
 };
 
 struct glEnableClientStateiEXT_params
 {
+    TEB *teb;
     GLenum array;
     GLuint index;
 };
 
 struct glEnableIndexedEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
 };
 
 struct glEnableVariantClientStateEXT_params
 {
+    TEB *teb;
     GLuint id;
 };
 
 struct glEnableVertexArrayAttrib_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint index;
 };
 
 struct glEnableVertexArrayAttribEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint index;
 };
 
 struct glEnableVertexArrayEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLenum array;
 };
 
 struct glEnableVertexAttribAPPLE_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
 };
 
 struct glEnableVertexAttribArray_params
 {
+    TEB *teb;
     GLuint index;
 };
 
 struct glEnableVertexAttribArrayARB_params
 {
+    TEB *teb;
     GLuint index;
 };
 
 struct glEnablei_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
 };
 
 struct glEndConditionalRender_params
 {
+    TEB *teb;
 };
 
 struct glEndConditionalRenderNV_params
 {
+    TEB *teb;
 };
 
 struct glEndConditionalRenderNVX_params
 {
+    TEB *teb;
 };
 
 struct glEndFragmentShaderATI_params
 {
+    TEB *teb;
 };
 
 struct glEndOcclusionQueryNV_params
 {
+    TEB *teb;
 };
 
 struct glEndPerfMonitorAMD_params
 {
+    TEB *teb;
     GLuint monitor;
 };
 
 struct glEndPerfQueryINTEL_params
 {
+    TEB *teb;
     GLuint queryHandle;
 };
 
 struct glEndQuery_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glEndQueryARB_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glEndQueryIndexed_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
 };
 
 struct glEndTransformFeedback_params
 {
+    TEB *teb;
 };
 
 struct glEndTransformFeedbackEXT_params
 {
+    TEB *teb;
 };
 
 struct glEndTransformFeedbackNV_params
 {
+    TEB *teb;
 };
 
 struct glEndVertexShaderEXT_params
 {
+    TEB *teb;
 };
 
 struct glEndVideoCaptureNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
 };
 
 struct glEvalCoord1xOES_params
 {
+    TEB *teb;
     GLfixed u;
 };
 
 struct glEvalCoord1xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glEvalCoord2xOES_params
 {
+    TEB *teb;
     GLfixed u;
     GLfixed v;
 };
 
 struct glEvalCoord2xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glEvalMapsNV_params
 {
+    TEB *teb;
     GLenum target;
     GLenum mode;
 };
 
 struct glEvaluateDepthValuesARB_params
 {
+    TEB *teb;
 };
 
 struct glExecuteProgramNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint id;
     const GLfloat *params;
@@ -6012,6 +6850,7 @@ struct glExecuteProgramNV_params
 
 struct glExtractComponentEXT_params
 {
+    TEB *teb;
     GLuint res;
     GLuint src;
     GLuint num;
@@ -6019,6 +6858,7 @@ struct glExtractComponentEXT_params
 
 struct glFeedbackBufferxOES_params
 {
+    TEB *teb;
     GLsizei n;
     GLenum type;
     const GLfixed *buffer;
@@ -6026,6 +6866,7 @@ struct glFeedbackBufferxOES_params
 
 struct glFenceSync_params
 {
+    TEB *teb;
     GLenum condition;
     GLbitfield flags;
     GLsync ret;
@@ -6033,6 +6874,7 @@ struct glFenceSync_params
 
 struct glFinalCombinerInputNV_params
 {
+    TEB *teb;
     GLenum variable;
     GLenum input;
     GLenum mapping;
@@ -6041,32 +6883,38 @@ struct glFinalCombinerInputNV_params
 
 struct glFinishAsyncSGIX_params
 {
+    TEB *teb;
     GLuint *markerp;
     GLint ret;
 };
 
 struct glFinishFenceAPPLE_params
 {
+    TEB *teb;
     GLuint fence;
 };
 
 struct glFinishFenceNV_params
 {
+    TEB *teb;
     GLuint fence;
 };
 
 struct glFinishObjectAPPLE_params
 {
+    TEB *teb;
     GLenum object;
     GLint name;
 };
 
 struct glFinishTextureSUNX_params
 {
+    TEB *teb;
 };
 
 struct glFlushMappedBufferRange_params
 {
+    TEB *teb;
     GLenum target;
     GLintptr offset;
     GLsizeiptr length;
@@ -6074,6 +6922,7 @@ struct glFlushMappedBufferRange_params
 
 struct glFlushMappedBufferRangeAPPLE_params
 {
+    TEB *teb;
     GLenum target;
     GLintptr offset;
     GLsizeiptr size;
@@ -6081,6 +6930,7 @@ struct glFlushMappedBufferRangeAPPLE_params
 
 struct glFlushMappedNamedBufferRange_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr length;
@@ -6088,6 +6938,7 @@ struct glFlushMappedNamedBufferRange_params
 
 struct glFlushMappedNamedBufferRangeEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr length;
@@ -6095,36 +6946,43 @@ struct glFlushMappedNamedBufferRangeEXT_params
 
 struct glFlushPixelDataRangeNV_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glFlushRasterSGIX_params
 {
+    TEB *teb;
 };
 
 struct glFlushStaticDataIBM_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glFlushVertexArrayRangeAPPLE_params
 {
+    TEB *teb;
     GLsizei length;
     void *pointer;
 };
 
 struct glFlushVertexArrayRangeNV_params
 {
+    TEB *teb;
 };
 
 struct glFogCoordFormatNV_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
 };
 
 struct glFogCoordPointer_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
     const void *pointer;
@@ -6132,6 +6990,7 @@ struct glFogCoordPointer_params
 
 struct glFogCoordPointerEXT_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
     const void *pointer;
@@ -6139,6 +6998,7 @@ struct glFogCoordPointerEXT_params
 
 struct glFogCoordPointerListIBM_params
 {
+    TEB *teb;
     GLenum type;
     GLint stride;
     const void **pointer;
@@ -6147,109 +7007,129 @@ struct glFogCoordPointerListIBM_params
 
 struct glFogCoordd_params
 {
+    TEB *teb;
     GLdouble coord;
 };
 
 struct glFogCoorddEXT_params
 {
+    TEB *teb;
     GLdouble coord;
 };
 
 struct glFogCoorddv_params
 {
+    TEB *teb;
     const GLdouble *coord;
 };
 
 struct glFogCoorddvEXT_params
 {
+    TEB *teb;
     const GLdouble *coord;
 };
 
 struct glFogCoordf_params
 {
+    TEB *teb;
     GLfloat coord;
 };
 
 struct glFogCoordfEXT_params
 {
+    TEB *teb;
     GLfloat coord;
 };
 
 struct glFogCoordfv_params
 {
+    TEB *teb;
     const GLfloat *coord;
 };
 
 struct glFogCoordfvEXT_params
 {
+    TEB *teb;
     const GLfloat *coord;
 };
 
 struct glFogCoordhNV_params
 {
+    TEB *teb;
     GLhalfNV fog;
 };
 
 struct glFogCoordhvNV_params
 {
+    TEB *teb;
     const GLhalfNV *fog;
 };
 
 struct glFogFuncSGIS_params
 {
+    TEB *teb;
     GLsizei n;
     const GLfloat *points;
 };
 
 struct glFogxOES_params
 {
+    TEB *teb;
     GLenum pname;
     GLfixed param;
 };
 
 struct glFogxvOES_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfixed *param;
 };
 
 struct glFragmentColorMaterialSGIX_params
 {
+    TEB *teb;
     GLenum face;
     GLenum mode;
 };
 
 struct glFragmentCoverageColorNV_params
 {
+    TEB *teb;
     GLuint color;
 };
 
 struct glFragmentLightModelfSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glFragmentLightModelfvSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glFragmentLightModeliSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glFragmentLightModelivSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     const GLint *params;
 };
 
 struct glFragmentLightfSGIX_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLfloat param;
@@ -6257,6 +7137,7 @@ struct glFragmentLightfSGIX_params
 
 struct glFragmentLightfvSGIX_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     const GLfloat *params;
@@ -6264,6 +7145,7 @@ struct glFragmentLightfvSGIX_params
 
 struct glFragmentLightiSGIX_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLint param;
@@ -6271,6 +7153,7 @@ struct glFragmentLightiSGIX_params
 
 struct glFragmentLightivSGIX_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     const GLint *params;
@@ -6278,6 +7161,7 @@ struct glFragmentLightivSGIX_params
 
 struct glFragmentMaterialfSGIX_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLfloat param;
@@ -6285,6 +7169,7 @@ struct glFragmentMaterialfSGIX_params
 
 struct glFragmentMaterialfvSGIX_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     const GLfloat *params;
@@ -6292,6 +7177,7 @@ struct glFragmentMaterialfvSGIX_params
 
 struct glFragmentMaterialiSGIX_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLint param;
@@ -6299,6 +7185,7 @@ struct glFragmentMaterialiSGIX_params
 
 struct glFragmentMaterialivSGIX_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     const GLint *params;
@@ -6306,21 +7193,25 @@ struct glFragmentMaterialivSGIX_params
 
 struct glFrameTerminatorGREMEDY_params
 {
+    TEB *teb;
 };
 
 struct glFrameZoomSGIX_params
 {
+    TEB *teb;
     GLint factor;
 };
 
 struct glFramebufferDrawBufferEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum mode;
 };
 
 struct glFramebufferDrawBuffersEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLsizei n;
     const GLenum *bufs;
@@ -6328,10 +7219,12 @@ struct glFramebufferDrawBuffersEXT_params
 
 struct glFramebufferFetchBarrierEXT_params
 {
+    TEB *teb;
 };
 
 struct glFramebufferParameteri_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint param;
@@ -6339,6 +7232,7 @@ struct glFramebufferParameteri_params
 
 struct glFramebufferParameteriMESA_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint param;
@@ -6346,12 +7240,14 @@ struct glFramebufferParameteriMESA_params
 
 struct glFramebufferReadBufferEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum mode;
 };
 
 struct glFramebufferRenderbuffer_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum renderbuffertarget;
@@ -6360,6 +7256,7 @@ struct glFramebufferRenderbuffer_params
 
 struct glFramebufferRenderbufferEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum renderbuffertarget;
@@ -6368,6 +7265,7 @@ struct glFramebufferRenderbufferEXT_params
 
 struct glFramebufferSampleLocationsfvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint start;
     GLsizei count;
@@ -6376,6 +7274,7 @@ struct glFramebufferSampleLocationsfvARB_params
 
 struct glFramebufferSampleLocationsfvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint start;
     GLsizei count;
@@ -6384,6 +7283,7 @@ struct glFramebufferSampleLocationsfvNV_params
 
 struct glFramebufferSamplePositionsfvAMD_params
 {
+    TEB *teb;
     GLenum target;
     GLuint numsamples;
     GLuint pixelindex;
@@ -6392,6 +7292,7 @@ struct glFramebufferSamplePositionsfvAMD_params
 
 struct glFramebufferTexture_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLuint texture;
@@ -6400,6 +7301,7 @@ struct glFramebufferTexture_params
 
 struct glFramebufferTexture1D_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum textarget;
@@ -6409,6 +7311,7 @@ struct glFramebufferTexture1D_params
 
 struct glFramebufferTexture1DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum textarget;
@@ -6418,6 +7321,7 @@ struct glFramebufferTexture1DEXT_params
 
 struct glFramebufferTexture2D_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum textarget;
@@ -6427,6 +7331,7 @@ struct glFramebufferTexture2D_params
 
 struct glFramebufferTexture2DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum textarget;
@@ -6436,6 +7341,7 @@ struct glFramebufferTexture2DEXT_params
 
 struct glFramebufferTexture3D_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum textarget;
@@ -6446,6 +7352,7 @@ struct glFramebufferTexture3D_params
 
 struct glFramebufferTexture3DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum textarget;
@@ -6456,6 +7363,7 @@ struct glFramebufferTexture3DEXT_params
 
 struct glFramebufferTextureARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLuint texture;
@@ -6464,6 +7372,7 @@ struct glFramebufferTextureARB_params
 
 struct glFramebufferTextureEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLuint texture;
@@ -6472,6 +7381,7 @@ struct glFramebufferTextureEXT_params
 
 struct glFramebufferTextureFaceARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLuint texture;
@@ -6481,6 +7391,7 @@ struct glFramebufferTextureFaceARB_params
 
 struct glFramebufferTextureFaceEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLuint texture;
@@ -6490,6 +7401,7 @@ struct glFramebufferTextureFaceEXT_params
 
 struct glFramebufferTextureLayer_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLuint texture;
@@ -6499,6 +7411,7 @@ struct glFramebufferTextureLayer_params
 
 struct glFramebufferTextureLayerARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLuint texture;
@@ -6508,6 +7421,7 @@ struct glFramebufferTextureLayerARB_params
 
 struct glFramebufferTextureLayerEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLuint texture;
@@ -6517,6 +7431,7 @@ struct glFramebufferTextureLayerEXT_params
 
 struct glFramebufferTextureMultiviewOVR_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLuint texture;
@@ -6527,11 +7442,13 @@ struct glFramebufferTextureMultiviewOVR_params
 
 struct glFreeObjectBufferATI_params
 {
+    TEB *teb;
     GLuint buffer;
 };
 
 struct glFrustumfOES_params
 {
+    TEB *teb;
     GLfloat l;
     GLfloat r;
     GLfloat b;
@@ -6542,6 +7459,7 @@ struct glFrustumfOES_params
 
 struct glFrustumxOES_params
 {
+    TEB *teb;
     GLfixed l;
     GLfixed r;
     GLfixed b;
@@ -6552,54 +7470,63 @@ struct glFrustumxOES_params
 
 struct glGenAsyncMarkersSGIX_params
 {
+    TEB *teb;
     GLsizei range;
     GLuint ret;
 };
 
 struct glGenBuffers_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *buffers;
 };
 
 struct glGenBuffersARB_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *buffers;
 };
 
 struct glGenFencesAPPLE_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *fences;
 };
 
 struct glGenFencesNV_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *fences;
 };
 
 struct glGenFragmentShadersATI_params
 {
+    TEB *teb;
     GLuint range;
     GLuint ret;
 };
 
 struct glGenFramebuffers_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *framebuffers;
 };
 
 struct glGenFramebuffersEXT_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *framebuffers;
 };
 
 struct glGenNamesAMD_params
 {
+    TEB *teb;
     GLenum identifier;
     GLuint num;
     GLuint *names;
@@ -6607,84 +7534,98 @@ struct glGenNamesAMD_params
 
 struct glGenOcclusionQueriesNV_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *ids;
 };
 
 struct glGenPathsNV_params
 {
+    TEB *teb;
     GLsizei range;
     GLuint ret;
 };
 
 struct glGenPerfMonitorsAMD_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *monitors;
 };
 
 struct glGenProgramPipelines_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *pipelines;
 };
 
 struct glGenProgramsARB_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *programs;
 };
 
 struct glGenProgramsNV_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *programs;
 };
 
 struct glGenQueries_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *ids;
 };
 
 struct glGenQueriesARB_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *ids;
 };
 
 struct glGenQueryResourceTagNV_params
 {
+    TEB *teb;
     GLsizei n;
     GLint *tagIds;
 };
 
 struct glGenRenderbuffers_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *renderbuffers;
 };
 
 struct glGenRenderbuffersEXT_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *renderbuffers;
 };
 
 struct glGenSamplers_params
 {
+    TEB *teb;
     GLsizei count;
     GLuint *samplers;
 };
 
 struct glGenSemaphoresEXT_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *semaphores;
 };
 
 struct glGenSymbolsEXT_params
 {
+    TEB *teb;
     GLenum datatype;
     GLenum storagetype;
     GLenum range;
@@ -6694,69 +7635,81 @@ struct glGenSymbolsEXT_params
 
 struct glGenTexturesEXT_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *textures;
 };
 
 struct glGenTransformFeedbacks_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *ids;
 };
 
 struct glGenTransformFeedbacksNV_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *ids;
 };
 
 struct glGenVertexArrays_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *arrays;
 };
 
 struct glGenVertexArraysAPPLE_params
 {
+    TEB *teb;
     GLsizei n;
     GLuint *arrays;
 };
 
 struct glGenVertexShadersEXT_params
 {
+    TEB *teb;
     GLuint range;
     GLuint ret;
 };
 
 struct glGenerateMipmap_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glGenerateMipmapEXT_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glGenerateMultiTexMipmapEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
 };
 
 struct glGenerateTextureMipmap_params
 {
+    TEB *teb;
     GLuint texture;
 };
 
 struct glGenerateTextureMipmapEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
 };
 
 struct glGetActiveAtomicCounterBufferiv_params
 {
+    TEB *teb;
     GLuint program;
     GLuint bufferIndex;
     GLenum pname;
@@ -6765,6 +7718,7 @@ struct glGetActiveAtomicCounterBufferiv_params
 
 struct glGetActiveAttrib_params
 {
+    TEB *teb;
     GLuint program;
     GLuint index;
     GLsizei bufSize;
@@ -6776,6 +7730,7 @@ struct glGetActiveAttrib_params
 
 struct glGetActiveAttribARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
     GLuint index;
     GLsizei maxLength;
@@ -6787,6 +7742,7 @@ struct glGetActiveAttribARB_params
 
 struct glGetActiveSubroutineName_params
 {
+    TEB *teb;
     GLuint program;
     GLenum shadertype;
     GLuint index;
@@ -6797,6 +7753,7 @@ struct glGetActiveSubroutineName_params
 
 struct glGetActiveSubroutineUniformName_params
 {
+    TEB *teb;
     GLuint program;
     GLenum shadertype;
     GLuint index;
@@ -6807,6 +7764,7 @@ struct glGetActiveSubroutineUniformName_params
 
 struct glGetActiveSubroutineUniformiv_params
 {
+    TEB *teb;
     GLuint program;
     GLenum shadertype;
     GLuint index;
@@ -6816,6 +7774,7 @@ struct glGetActiveSubroutineUniformiv_params
 
 struct glGetActiveUniform_params
 {
+    TEB *teb;
     GLuint program;
     GLuint index;
     GLsizei bufSize;
@@ -6827,6 +7786,7 @@ struct glGetActiveUniform_params
 
 struct glGetActiveUniformARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
     GLuint index;
     GLsizei maxLength;
@@ -6838,6 +7798,7 @@ struct glGetActiveUniformARB_params
 
 struct glGetActiveUniformBlockName_params
 {
+    TEB *teb;
     GLuint program;
     GLuint uniformBlockIndex;
     GLsizei bufSize;
@@ -6847,6 +7808,7 @@ struct glGetActiveUniformBlockName_params
 
 struct glGetActiveUniformBlockiv_params
 {
+    TEB *teb;
     GLuint program;
     GLuint uniformBlockIndex;
     GLenum pname;
@@ -6855,6 +7817,7 @@ struct glGetActiveUniformBlockiv_params
 
 struct glGetActiveUniformName_params
 {
+    TEB *teb;
     GLuint program;
     GLuint uniformIndex;
     GLsizei bufSize;
@@ -6864,6 +7827,7 @@ struct glGetActiveUniformName_params
 
 struct glGetActiveUniformsiv_params
 {
+    TEB *teb;
     GLuint program;
     GLsizei uniformCount;
     const GLuint *uniformIndices;
@@ -6873,6 +7837,7 @@ struct glGetActiveUniformsiv_params
 
 struct glGetActiveVaryingNV_params
 {
+    TEB *teb;
     GLuint program;
     GLuint index;
     GLsizei bufSize;
@@ -6884,6 +7849,7 @@ struct glGetActiveVaryingNV_params
 
 struct glGetArrayObjectfvATI_params
 {
+    TEB *teb;
     GLenum array;
     GLenum pname;
     GLfloat *params;
@@ -6891,6 +7857,7 @@ struct glGetArrayObjectfvATI_params
 
 struct glGetArrayObjectivATI_params
 {
+    TEB *teb;
     GLenum array;
     GLenum pname;
     GLint *params;
@@ -6898,6 +7865,7 @@ struct glGetArrayObjectivATI_params
 
 struct glGetAttachedObjectsARB_params
 {
+    TEB *teb;
     GLhandleARB containerObj;
     GLsizei maxCount;
     GLsizei *count;
@@ -6906,6 +7874,7 @@ struct glGetAttachedObjectsARB_params
 
 struct glGetAttachedShaders_params
 {
+    TEB *teb;
     GLuint program;
     GLsizei maxCount;
     GLsizei *count;
@@ -6914,6 +7883,7 @@ struct glGetAttachedShaders_params
 
 struct glGetAttribLocation_params
 {
+    TEB *teb;
     GLuint program;
     const GLchar *name;
     GLint ret;
@@ -6921,6 +7891,7 @@ struct glGetAttribLocation_params
 
 struct glGetAttribLocationARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
     const GLcharARB *name;
     GLint ret;
@@ -6928,6 +7899,7 @@ struct glGetAttribLocationARB_params
 
 struct glGetBooleanIndexedvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLboolean *data;
@@ -6935,6 +7907,7 @@ struct glGetBooleanIndexedvEXT_params
 
 struct glGetBooleani_v_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLboolean *data;
@@ -6942,6 +7915,7 @@ struct glGetBooleani_v_params
 
 struct glGetBufferParameteri64v_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint64 *params;
@@ -6949,6 +7923,7 @@ struct glGetBufferParameteri64v_params
 
 struct glGetBufferParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -6956,6 +7931,7 @@ struct glGetBufferParameteriv_params
 
 struct glGetBufferParameterivARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -6963,6 +7939,7 @@ struct glGetBufferParameterivARB_params
 
 struct glGetBufferParameterui64vNV_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLuint64EXT *params;
@@ -6970,6 +7947,7 @@ struct glGetBufferParameterui64vNV_params
 
 struct glGetBufferPointerv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     void **params;
@@ -6977,6 +7955,7 @@ struct glGetBufferPointerv_params
 
 struct glGetBufferPointervARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     void **params;
@@ -6984,6 +7963,7 @@ struct glGetBufferPointervARB_params
 
 struct glGetBufferSubData_params
 {
+    TEB *teb;
     GLenum target;
     GLintptr offset;
     GLsizeiptr size;
@@ -6992,6 +7972,7 @@ struct glGetBufferSubData_params
 
 struct glGetBufferSubDataARB_params
 {
+    TEB *teb;
     GLenum target;
     GLintptrARB offset;
     GLsizeiptrARB size;
@@ -7000,18 +7981,21 @@ struct glGetBufferSubDataARB_params
 
 struct glGetClipPlanefOES_params
 {
+    TEB *teb;
     GLenum plane;
     GLfloat *equation;
 };
 
 struct glGetClipPlanexOES_params
 {
+    TEB *teb;
     GLenum plane;
     GLfixed *equation;
 };
 
 struct glGetColorTable_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -7020,6 +8004,7 @@ struct glGetColorTable_params
 
 struct glGetColorTableEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -7028,6 +8013,7 @@ struct glGetColorTableEXT_params
 
 struct glGetColorTableParameterfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7035,6 +8021,7 @@ struct glGetColorTableParameterfv_params
 
 struct glGetColorTableParameterfvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7042,6 +8029,7 @@ struct glGetColorTableParameterfvEXT_params
 
 struct glGetColorTableParameterfvSGI_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7049,6 +8037,7 @@ struct glGetColorTableParameterfvSGI_params
 
 struct glGetColorTableParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7056,6 +8045,7 @@ struct glGetColorTableParameteriv_params
 
 struct glGetColorTableParameterivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7063,6 +8053,7 @@ struct glGetColorTableParameterivEXT_params
 
 struct glGetColorTableParameterivSGI_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7070,6 +8061,7 @@ struct glGetColorTableParameterivSGI_params
 
 struct glGetColorTableSGI_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -7078,6 +8070,7 @@ struct glGetColorTableSGI_params
 
 struct glGetCombinerInputParameterfvNV_params
 {
+    TEB *teb;
     GLenum stage;
     GLenum portion;
     GLenum variable;
@@ -7087,6 +8080,7 @@ struct glGetCombinerInputParameterfvNV_params
 
 struct glGetCombinerInputParameterivNV_params
 {
+    TEB *teb;
     GLenum stage;
     GLenum portion;
     GLenum variable;
@@ -7096,6 +8090,7 @@ struct glGetCombinerInputParameterivNV_params
 
 struct glGetCombinerOutputParameterfvNV_params
 {
+    TEB *teb;
     GLenum stage;
     GLenum portion;
     GLenum pname;
@@ -7104,6 +8099,7 @@ struct glGetCombinerOutputParameterfvNV_params
 
 struct glGetCombinerOutputParameterivNV_params
 {
+    TEB *teb;
     GLenum stage;
     GLenum portion;
     GLenum pname;
@@ -7112,6 +8108,7 @@ struct glGetCombinerOutputParameterivNV_params
 
 struct glGetCombinerStageParameterfvNV_params
 {
+    TEB *teb;
     GLenum stage;
     GLenum pname;
     GLfloat *params;
@@ -7119,6 +8116,7 @@ struct glGetCombinerStageParameterfvNV_params
 
 struct glGetCommandHeaderNV_params
 {
+    TEB *teb;
     GLenum tokenID;
     GLuint size;
     GLuint ret;
@@ -7126,6 +8124,7 @@ struct glGetCommandHeaderNV_params
 
 struct glGetCompressedMultiTexImageEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint lod;
@@ -7134,6 +8133,7 @@ struct glGetCompressedMultiTexImageEXT_params
 
 struct glGetCompressedTexImage_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     void *img;
@@ -7141,6 +8141,7 @@ struct glGetCompressedTexImage_params
 
 struct glGetCompressedTexImageARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     void *img;
@@ -7148,6 +8149,7 @@ struct glGetCompressedTexImageARB_params
 
 struct glGetCompressedTextureImage_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLsizei bufSize;
@@ -7156,6 +8158,7 @@ struct glGetCompressedTextureImage_params
 
 struct glGetCompressedTextureImageEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint lod;
@@ -7164,6 +8167,7 @@ struct glGetCompressedTextureImageEXT_params
 
 struct glGetCompressedTextureSubImage_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -7178,6 +8182,7 @@ struct glGetCompressedTextureSubImage_params
 
 struct glGetConvolutionFilter_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -7186,6 +8191,7 @@ struct glGetConvolutionFilter_params
 
 struct glGetConvolutionFilterEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -7194,6 +8200,7 @@ struct glGetConvolutionFilterEXT_params
 
 struct glGetConvolutionParameterfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7201,6 +8208,7 @@ struct glGetConvolutionParameterfv_params
 
 struct glGetConvolutionParameterfvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7208,6 +8216,7 @@ struct glGetConvolutionParameterfvEXT_params
 
 struct glGetConvolutionParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7215,6 +8224,7 @@ struct glGetConvolutionParameteriv_params
 
 struct glGetConvolutionParameterivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7222,6 +8232,7 @@ struct glGetConvolutionParameterivEXT_params
 
 struct glGetConvolutionParameterxvOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfixed *params;
@@ -7229,12 +8240,14 @@ struct glGetConvolutionParameterxvOES_params
 
 struct glGetCoverageModulationTableNV_params
 {
+    TEB *teb;
     GLsizei bufSize;
     GLfloat *v;
 };
 
 struct glGetDebugMessageLog_params
 {
+    TEB *teb;
     GLuint count;
     GLsizei bufSize;
     GLenum *sources;
@@ -7248,6 +8261,7 @@ struct glGetDebugMessageLog_params
 
 struct glGetDebugMessageLogAMD_params
 {
+    TEB *teb;
     GLuint count;
     GLsizei bufSize;
     GLenum *categories;
@@ -7260,6 +8274,7 @@ struct glGetDebugMessageLogAMD_params
 
 struct glGetDebugMessageLogARB_params
 {
+    TEB *teb;
     GLuint count;
     GLsizei bufSize;
     GLenum *sources;
@@ -7273,12 +8288,14 @@ struct glGetDebugMessageLogARB_params
 
 struct glGetDetailTexFuncSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat *points;
 };
 
 struct glGetDoubleIndexedvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLdouble *data;
@@ -7286,6 +8303,7 @@ struct glGetDoubleIndexedvEXT_params
 
 struct glGetDoublei_v_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLdouble *data;
@@ -7293,6 +8311,7 @@ struct glGetDoublei_v_params
 
 struct glGetDoublei_vEXT_params
 {
+    TEB *teb;
     GLenum pname;
     GLuint index;
     GLdouble *params;
@@ -7300,6 +8319,7 @@ struct glGetDoublei_vEXT_params
 
 struct glGetFenceivNV_params
 {
+    TEB *teb;
     GLuint fence;
     GLenum pname;
     GLint *params;
@@ -7307,6 +8327,7 @@ struct glGetFenceivNV_params
 
 struct glGetFinalCombinerInputParameterfvNV_params
 {
+    TEB *teb;
     GLenum variable;
     GLenum pname;
     GLfloat *params;
@@ -7314,6 +8335,7 @@ struct glGetFinalCombinerInputParameterfvNV_params
 
 struct glGetFinalCombinerInputParameterivNV_params
 {
+    TEB *teb;
     GLenum variable;
     GLenum pname;
     GLint *params;
@@ -7321,17 +8343,20 @@ struct glGetFinalCombinerInputParameterivNV_params
 
 struct glGetFirstPerfQueryIdINTEL_params
 {
+    TEB *teb;
     GLuint *queryId;
 };
 
 struct glGetFixedvOES_params
 {
+    TEB *teb;
     GLenum pname;
     GLfixed *params;
 };
 
 struct glGetFloatIndexedvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLfloat *data;
@@ -7339,6 +8364,7 @@ struct glGetFloatIndexedvEXT_params
 
 struct glGetFloati_v_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLfloat *data;
@@ -7346,6 +8372,7 @@ struct glGetFloati_v_params
 
 struct glGetFloati_vEXT_params
 {
+    TEB *teb;
     GLenum pname;
     GLuint index;
     GLfloat *params;
@@ -7353,11 +8380,13 @@ struct glGetFloati_vEXT_params
 
 struct glGetFogFuncSGIS_params
 {
+    TEB *teb;
     GLfloat *points;
 };
 
 struct glGetFragDataIndex_params
 {
+    TEB *teb;
     GLuint program;
     const GLchar *name;
     GLint ret;
@@ -7365,6 +8394,7 @@ struct glGetFragDataIndex_params
 
 struct glGetFragDataLocation_params
 {
+    TEB *teb;
     GLuint program;
     const GLchar *name;
     GLint ret;
@@ -7372,6 +8402,7 @@ struct glGetFragDataLocation_params
 
 struct glGetFragDataLocationEXT_params
 {
+    TEB *teb;
     GLuint program;
     const GLchar *name;
     GLint ret;
@@ -7379,6 +8410,7 @@ struct glGetFragDataLocationEXT_params
 
 struct glGetFragmentLightfvSGIX_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLfloat *params;
@@ -7386,6 +8418,7 @@ struct glGetFragmentLightfvSGIX_params
 
 struct glGetFragmentLightivSGIX_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLint *params;
@@ -7393,6 +8426,7 @@ struct glGetFragmentLightivSGIX_params
 
 struct glGetFragmentMaterialfvSGIX_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLfloat *params;
@@ -7400,6 +8434,7 @@ struct glGetFragmentMaterialfvSGIX_params
 
 struct glGetFragmentMaterialivSGIX_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLint *params;
@@ -7407,6 +8442,7 @@ struct glGetFragmentMaterialivSGIX_params
 
 struct glGetFramebufferAttachmentParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum pname;
@@ -7415,6 +8451,7 @@ struct glGetFramebufferAttachmentParameteriv_params
 
 struct glGetFramebufferAttachmentParameterivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum attachment;
     GLenum pname;
@@ -7423,6 +8460,7 @@ struct glGetFramebufferAttachmentParameterivEXT_params
 
 struct glGetFramebufferParameterfvAMD_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLuint numsamples;
@@ -7433,6 +8471,7 @@ struct glGetFramebufferParameterfvAMD_params
 
 struct glGetFramebufferParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7440,6 +8479,7 @@ struct glGetFramebufferParameteriv_params
 
 struct glGetFramebufferParameterivEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum pname;
     GLint *params;
@@ -7447,6 +8487,7 @@ struct glGetFramebufferParameterivEXT_params
 
 struct glGetFramebufferParameterivMESA_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7454,22 +8495,26 @@ struct glGetFramebufferParameterivMESA_params
 
 struct glGetGraphicsResetStatus_params
 {
+    TEB *teb;
     GLenum ret;
 };
 
 struct glGetGraphicsResetStatusARB_params
 {
+    TEB *teb;
     GLenum ret;
 };
 
 struct glGetHandleARB_params
 {
+    TEB *teb;
     GLenum pname;
     GLhandleARB ret;
 };
 
 struct glGetHistogram_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean reset;
     GLenum format;
@@ -7479,6 +8524,7 @@ struct glGetHistogram_params
 
 struct glGetHistogramEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean reset;
     GLenum format;
@@ -7488,6 +8534,7 @@ struct glGetHistogramEXT_params
 
 struct glGetHistogramParameterfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7495,6 +8542,7 @@ struct glGetHistogramParameterfv_params
 
 struct glGetHistogramParameterfvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7502,6 +8550,7 @@ struct glGetHistogramParameterfvEXT_params
 
 struct glGetHistogramParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7509,6 +8558,7 @@ struct glGetHistogramParameteriv_params
 
 struct glGetHistogramParameterivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7516,6 +8566,7 @@ struct glGetHistogramParameterivEXT_params
 
 struct glGetHistogramParameterxvOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfixed *params;
@@ -7523,6 +8574,7 @@ struct glGetHistogramParameterxvOES_params
 
 struct glGetImageHandleARB_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLboolean layered;
@@ -7533,6 +8585,7 @@ struct glGetImageHandleARB_params
 
 struct glGetImageHandleNV_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLboolean layered;
@@ -7543,6 +8596,7 @@ struct glGetImageHandleNV_params
 
 struct glGetImageTransformParameterfvHP_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7550,6 +8604,7 @@ struct glGetImageTransformParameterfvHP_params
 
 struct glGetImageTransformParameterivHP_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7557,6 +8612,7 @@ struct glGetImageTransformParameterivHP_params
 
 struct glGetInfoLogARB_params
 {
+    TEB *teb;
     GLhandleARB obj;
     GLsizei maxLength;
     GLsizei *length;
@@ -7565,11 +8621,13 @@ struct glGetInfoLogARB_params
 
 struct glGetInstrumentsSGIX_params
 {
+    TEB *teb;
     GLint ret;
 };
 
 struct glGetInteger64i_v_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLint64 *data;
@@ -7577,12 +8635,14 @@ struct glGetInteger64i_v_params
 
 struct glGetInteger64v_params
 {
+    TEB *teb;
     GLenum pname;
     GLint64 *data;
 };
 
 struct glGetIntegerIndexedvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLint *data;
@@ -7590,6 +8650,7 @@ struct glGetIntegerIndexedvEXT_params
 
 struct glGetIntegeri_v_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLint *data;
@@ -7597,6 +8658,7 @@ struct glGetIntegeri_v_params
 
 struct glGetIntegerui64i_vNV_params
 {
+    TEB *teb;
     GLenum value;
     GLuint index;
     GLuint64EXT *result;
@@ -7604,12 +8666,14 @@ struct glGetIntegerui64i_vNV_params
 
 struct glGetIntegerui64vNV_params
 {
+    TEB *teb;
     GLenum value;
     GLuint64EXT *result;
 };
 
 struct glGetInternalformatSampleivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei samples;
@@ -7620,6 +8684,7 @@ struct glGetInternalformatSampleivNV_params
 
 struct glGetInternalformati64v_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLenum pname;
@@ -7629,6 +8694,7 @@ struct glGetInternalformati64v_params
 
 struct glGetInternalformativ_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLenum pname;
@@ -7638,6 +8704,7 @@ struct glGetInternalformativ_params
 
 struct glGetInvariantBooleanvEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     GLboolean *data;
@@ -7645,6 +8712,7 @@ struct glGetInvariantBooleanvEXT_params
 
 struct glGetInvariantFloatvEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     GLfloat *data;
@@ -7652,6 +8720,7 @@ struct glGetInvariantFloatvEXT_params
 
 struct glGetInvariantIntegervEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     GLint *data;
@@ -7659,6 +8728,7 @@ struct glGetInvariantIntegervEXT_params
 
 struct glGetLightxOES_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLfixed *params;
@@ -7666,6 +8736,7 @@ struct glGetLightxOES_params
 
 struct glGetListParameterfvSGIX_params
 {
+    TEB *teb;
     GLuint list;
     GLenum pname;
     GLfloat *params;
@@ -7673,6 +8744,7 @@ struct glGetListParameterfvSGIX_params
 
 struct glGetListParameterivSGIX_params
 {
+    TEB *teb;
     GLuint list;
     GLenum pname;
     GLint *params;
@@ -7680,6 +8752,7 @@ struct glGetListParameterivSGIX_params
 
 struct glGetLocalConstantBooleanvEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     GLboolean *data;
@@ -7687,6 +8760,7 @@ struct glGetLocalConstantBooleanvEXT_params
 
 struct glGetLocalConstantFloatvEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     GLfloat *data;
@@ -7694,6 +8768,7 @@ struct glGetLocalConstantFloatvEXT_params
 
 struct glGetLocalConstantIntegervEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     GLint *data;
@@ -7701,6 +8776,7 @@ struct glGetLocalConstantIntegervEXT_params
 
 struct glGetMapAttribParameterfvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLenum pname;
@@ -7709,6 +8785,7 @@ struct glGetMapAttribParameterfvNV_params
 
 struct glGetMapAttribParameterivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLenum pname;
@@ -7717,6 +8794,7 @@ struct glGetMapAttribParameterivNV_params
 
 struct glGetMapControlPointsNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLenum type;
@@ -7728,6 +8806,7 @@ struct glGetMapControlPointsNV_params
 
 struct glGetMapParameterfvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7735,6 +8814,7 @@ struct glGetMapParameterfvNV_params
 
 struct glGetMapParameterivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7742,6 +8822,7 @@ struct glGetMapParameterivNV_params
 
 struct glGetMapxvOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLfixed *v;
@@ -7749,6 +8830,7 @@ struct glGetMapxvOES_params
 
 struct glGetMaterialxOES_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLfixed param;
@@ -7756,6 +8838,7 @@ struct glGetMaterialxOES_params
 
 struct glGetMemoryObjectDetachedResourcesuivNV_params
 {
+    TEB *teb;
     GLuint memory;
     GLenum pname;
     GLint first;
@@ -7765,6 +8848,7 @@ struct glGetMemoryObjectDetachedResourcesuivNV_params
 
 struct glGetMemoryObjectParameterivEXT_params
 {
+    TEB *teb;
     GLuint memoryObject;
     GLenum pname;
     GLint *params;
@@ -7772,6 +8856,7 @@ struct glGetMemoryObjectParameterivEXT_params
 
 struct glGetMinmax_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean reset;
     GLenum format;
@@ -7781,6 +8866,7 @@ struct glGetMinmax_params
 
 struct glGetMinmaxEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean reset;
     GLenum format;
@@ -7790,6 +8876,7 @@ struct glGetMinmaxEXT_params
 
 struct glGetMinmaxParameterfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7797,6 +8884,7 @@ struct glGetMinmaxParameterfv_params
 
 struct glGetMinmaxParameterfvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -7804,6 +8892,7 @@ struct glGetMinmaxParameterfvEXT_params
 
 struct glGetMinmaxParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7811,6 +8900,7 @@ struct glGetMinmaxParameteriv_params
 
 struct glGetMinmaxParameterivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -7818,6 +8908,7 @@ struct glGetMinmaxParameterivEXT_params
 
 struct glGetMultiTexEnvfvEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -7826,6 +8917,7 @@ struct glGetMultiTexEnvfvEXT_params
 
 struct glGetMultiTexEnvivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -7834,6 +8926,7 @@ struct glGetMultiTexEnvivEXT_params
 
 struct glGetMultiTexGendvEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum coord;
     GLenum pname;
@@ -7842,6 +8935,7 @@ struct glGetMultiTexGendvEXT_params
 
 struct glGetMultiTexGenfvEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum coord;
     GLenum pname;
@@ -7850,6 +8944,7 @@ struct glGetMultiTexGenfvEXT_params
 
 struct glGetMultiTexGenivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum coord;
     GLenum pname;
@@ -7858,6 +8953,7 @@ struct glGetMultiTexGenivEXT_params
 
 struct glGetMultiTexImageEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -7868,6 +8964,7 @@ struct glGetMultiTexImageEXT_params
 
 struct glGetMultiTexLevelParameterfvEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -7877,6 +8974,7 @@ struct glGetMultiTexLevelParameterfvEXT_params
 
 struct glGetMultiTexLevelParameterivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -7886,6 +8984,7 @@ struct glGetMultiTexLevelParameterivEXT_params
 
 struct glGetMultiTexParameterIivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -7894,6 +8993,7 @@ struct glGetMultiTexParameterIivEXT_params
 
 struct glGetMultiTexParameterIuivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -7902,6 +9002,7 @@ struct glGetMultiTexParameterIuivEXT_params
 
 struct glGetMultiTexParameterfvEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -7910,6 +9011,7 @@ struct glGetMultiTexParameterfvEXT_params
 
 struct glGetMultiTexParameterivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -7918,6 +9020,7 @@ struct glGetMultiTexParameterivEXT_params
 
 struct glGetMultisamplefv_params
 {
+    TEB *teb;
     GLenum pname;
     GLuint index;
     GLfloat *val;
@@ -7925,6 +9028,7 @@ struct glGetMultisamplefv_params
 
 struct glGetMultisamplefvNV_params
 {
+    TEB *teb;
     GLenum pname;
     GLuint index;
     GLfloat *val;
@@ -7932,6 +9036,7 @@ struct glGetMultisamplefvNV_params
 
 struct glGetNamedBufferParameteri64v_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum pname;
     GLint64 *params;
@@ -7939,6 +9044,7 @@ struct glGetNamedBufferParameteri64v_params
 
 struct glGetNamedBufferParameteriv_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum pname;
     GLint *params;
@@ -7946,6 +9052,7 @@ struct glGetNamedBufferParameteriv_params
 
 struct glGetNamedBufferParameterivEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum pname;
     GLint *params;
@@ -7953,6 +9060,7 @@ struct glGetNamedBufferParameterivEXT_params
 
 struct glGetNamedBufferParameterui64vNV_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum pname;
     GLuint64EXT *params;
@@ -7960,6 +9068,7 @@ struct glGetNamedBufferParameterui64vNV_params
 
 struct glGetNamedBufferPointerv_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum pname;
     void **params;
@@ -7967,6 +9076,7 @@ struct glGetNamedBufferPointerv_params
 
 struct glGetNamedBufferPointervEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum pname;
     void **params;
@@ -7974,6 +9084,7 @@ struct glGetNamedBufferPointervEXT_params
 
 struct glGetNamedBufferSubData_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr size;
@@ -7982,6 +9093,7 @@ struct glGetNamedBufferSubData_params
 
 struct glGetNamedBufferSubDataEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr size;
@@ -7990,6 +9102,7 @@ struct glGetNamedBufferSubDataEXT_params
 
 struct glGetNamedFramebufferAttachmentParameteriv_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLenum pname;
@@ -7998,6 +9111,7 @@ struct glGetNamedFramebufferAttachmentParameteriv_params
 
 struct glGetNamedFramebufferAttachmentParameterivEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLenum pname;
@@ -8006,6 +9120,7 @@ struct glGetNamedFramebufferAttachmentParameterivEXT_params
 
 struct glGetNamedFramebufferParameterfvAMD_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum pname;
     GLuint numsamples;
@@ -8016,6 +9131,7 @@ struct glGetNamedFramebufferParameterfvAMD_params
 
 struct glGetNamedFramebufferParameteriv_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum pname;
     GLint *param;
@@ -8023,6 +9139,7 @@ struct glGetNamedFramebufferParameteriv_params
 
 struct glGetNamedFramebufferParameterivEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum pname;
     GLint *params;
@@ -8030,6 +9147,7 @@ struct glGetNamedFramebufferParameterivEXT_params
 
 struct glGetNamedProgramLocalParameterIivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -8038,6 +9156,7 @@ struct glGetNamedProgramLocalParameterIivEXT_params
 
 struct glGetNamedProgramLocalParameterIuivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -8046,6 +9165,7 @@ struct glGetNamedProgramLocalParameterIuivEXT_params
 
 struct glGetNamedProgramLocalParameterdvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -8054,6 +9174,7 @@ struct glGetNamedProgramLocalParameterdvEXT_params
 
 struct glGetNamedProgramLocalParameterfvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -8062,6 +9183,7 @@ struct glGetNamedProgramLocalParameterfvEXT_params
 
 struct glGetNamedProgramStringEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLenum pname;
@@ -8070,6 +9192,7 @@ struct glGetNamedProgramStringEXT_params
 
 struct glGetNamedProgramivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLenum pname;
@@ -8078,6 +9201,7 @@ struct glGetNamedProgramivEXT_params
 
 struct glGetNamedRenderbufferParameteriv_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLenum pname;
     GLint *params;
@@ -8085,6 +9209,7 @@ struct glGetNamedRenderbufferParameteriv_params
 
 struct glGetNamedRenderbufferParameterivEXT_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLenum pname;
     GLint *params;
@@ -8092,6 +9217,7 @@ struct glGetNamedRenderbufferParameterivEXT_params
 
 struct glGetNamedStringARB_params
 {
+    TEB *teb;
     GLint namelen;
     const GLchar *name;
     GLsizei bufSize;
@@ -8101,6 +9227,7 @@ struct glGetNamedStringARB_params
 
 struct glGetNamedStringivARB_params
 {
+    TEB *teb;
     GLint namelen;
     const GLchar *name;
     GLenum pname;
@@ -8109,12 +9236,14 @@ struct glGetNamedStringivARB_params
 
 struct glGetNextPerfQueryIdINTEL_params
 {
+    TEB *teb;
     GLuint queryId;
     GLuint *nextQueryId;
 };
 
 struct glGetObjectBufferfvATI_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum pname;
     GLfloat *params;
@@ -8122,6 +9251,7 @@ struct glGetObjectBufferfvATI_params
 
 struct glGetObjectBufferivATI_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum pname;
     GLint *params;
@@ -8129,6 +9259,7 @@ struct glGetObjectBufferivATI_params
 
 struct glGetObjectLabel_params
 {
+    TEB *teb;
     GLenum identifier;
     GLuint name;
     GLsizei bufSize;
@@ -8138,6 +9269,7 @@ struct glGetObjectLabel_params
 
 struct glGetObjectLabelEXT_params
 {
+    TEB *teb;
     GLenum type;
     GLuint object;
     GLsizei bufSize;
@@ -8147,6 +9279,7 @@ struct glGetObjectLabelEXT_params
 
 struct glGetObjectParameterfvARB_params
 {
+    TEB *teb;
     GLhandleARB obj;
     GLenum pname;
     GLfloat *params;
@@ -8154,6 +9287,7 @@ struct glGetObjectParameterfvARB_params
 
 struct glGetObjectParameterivAPPLE_params
 {
+    TEB *teb;
     GLenum objectType;
     GLuint name;
     GLenum pname;
@@ -8162,6 +9296,7 @@ struct glGetObjectParameterivAPPLE_params
 
 struct glGetObjectParameterivARB_params
 {
+    TEB *teb;
     GLhandleARB obj;
     GLenum pname;
     GLint *params;
@@ -8169,6 +9304,7 @@ struct glGetObjectParameterivARB_params
 
 struct glGetObjectPtrLabel_params
 {
+    TEB *teb;
     const void *ptr;
     GLsizei bufSize;
     GLsizei *length;
@@ -8177,6 +9313,7 @@ struct glGetObjectPtrLabel_params
 
 struct glGetOcclusionQueryivNV_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLint *params;
@@ -8184,6 +9321,7 @@ struct glGetOcclusionQueryivNV_params
 
 struct glGetOcclusionQueryuivNV_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLuint *params;
@@ -8191,6 +9329,7 @@ struct glGetOcclusionQueryuivNV_params
 
 struct glGetPathColorGenfvNV_params
 {
+    TEB *teb;
     GLenum color;
     GLenum pname;
     GLfloat *value;
@@ -8198,6 +9337,7 @@ struct glGetPathColorGenfvNV_params
 
 struct glGetPathColorGenivNV_params
 {
+    TEB *teb;
     GLenum color;
     GLenum pname;
     GLint *value;
@@ -8205,24 +9345,28 @@ struct glGetPathColorGenivNV_params
 
 struct glGetPathCommandsNV_params
 {
+    TEB *teb;
     GLuint path;
     GLubyte *commands;
 };
 
 struct glGetPathCoordsNV_params
 {
+    TEB *teb;
     GLuint path;
     GLfloat *coords;
 };
 
 struct glGetPathDashArrayNV_params
 {
+    TEB *teb;
     GLuint path;
     GLfloat *dashArray;
 };
 
 struct glGetPathLengthNV_params
 {
+    TEB *teb;
     GLuint path;
     GLsizei startSegment;
     GLsizei numSegments;
@@ -8231,6 +9375,7 @@ struct glGetPathLengthNV_params
 
 struct glGetPathMetricRangeNV_params
 {
+    TEB *teb;
     GLbitfield metricQueryMask;
     GLuint firstPathName;
     GLsizei numPaths;
@@ -8240,6 +9385,7 @@ struct glGetPathMetricRangeNV_params
 
 struct glGetPathMetricsNV_params
 {
+    TEB *teb;
     GLbitfield metricQueryMask;
     GLsizei numPaths;
     GLenum pathNameType;
@@ -8251,6 +9397,7 @@ struct glGetPathMetricsNV_params
 
 struct glGetPathParameterfvNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum pname;
     GLfloat *value;
@@ -8258,6 +9405,7 @@ struct glGetPathParameterfvNV_params
 
 struct glGetPathParameterivNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum pname;
     GLint *value;
@@ -8265,6 +9413,7 @@ struct glGetPathParameterivNV_params
 
 struct glGetPathSpacingNV_params
 {
+    TEB *teb;
     GLenum pathListMode;
     GLsizei numPaths;
     GLenum pathNameType;
@@ -8278,6 +9427,7 @@ struct glGetPathSpacingNV_params
 
 struct glGetPathTexGenfvNV_params
 {
+    TEB *teb;
     GLenum texCoordSet;
     GLenum pname;
     GLfloat *value;
@@ -8285,6 +9435,7 @@ struct glGetPathTexGenfvNV_params
 
 struct glGetPathTexGenivNV_params
 {
+    TEB *teb;
     GLenum texCoordSet;
     GLenum pname;
     GLint *value;
@@ -8292,6 +9443,7 @@ struct glGetPathTexGenivNV_params
 
 struct glGetPerfCounterInfoINTEL_params
 {
+    TEB *teb;
     GLuint queryId;
     GLuint counterId;
     GLuint counterNameLength;
@@ -8307,6 +9459,7 @@ struct glGetPerfCounterInfoINTEL_params
 
 struct glGetPerfMonitorCounterDataAMD_params
 {
+    TEB *teb;
     GLuint monitor;
     GLenum pname;
     GLsizei dataSize;
@@ -8316,6 +9469,7 @@ struct glGetPerfMonitorCounterDataAMD_params
 
 struct glGetPerfMonitorCounterInfoAMD_params
 {
+    TEB *teb;
     GLuint group;
     GLuint counter;
     GLenum pname;
@@ -8324,6 +9478,7 @@ struct glGetPerfMonitorCounterInfoAMD_params
 
 struct glGetPerfMonitorCounterStringAMD_params
 {
+    TEB *teb;
     GLuint group;
     GLuint counter;
     GLsizei bufSize;
@@ -8333,6 +9488,7 @@ struct glGetPerfMonitorCounterStringAMD_params
 
 struct glGetPerfMonitorCountersAMD_params
 {
+    TEB *teb;
     GLuint group;
     GLint *numCounters;
     GLint *maxActiveCounters;
@@ -8342,6 +9498,7 @@ struct glGetPerfMonitorCountersAMD_params
 
 struct glGetPerfMonitorGroupStringAMD_params
 {
+    TEB *teb;
     GLuint group;
     GLsizei bufSize;
     GLsizei *length;
@@ -8350,6 +9507,7 @@ struct glGetPerfMonitorGroupStringAMD_params
 
 struct glGetPerfMonitorGroupsAMD_params
 {
+    TEB *teb;
     GLint *numGroups;
     GLsizei groupsSize;
     GLuint *groups;
@@ -8357,6 +9515,7 @@ struct glGetPerfMonitorGroupsAMD_params
 
 struct glGetPerfQueryDataINTEL_params
 {
+    TEB *teb;
     GLuint queryHandle;
     GLuint flags;
     GLsizei dataSize;
@@ -8366,12 +9525,14 @@ struct glGetPerfQueryDataINTEL_params
 
 struct glGetPerfQueryIdByNameINTEL_params
 {
+    TEB *teb;
     GLchar *queryName;
     GLuint *queryId;
 };
 
 struct glGetPerfQueryInfoINTEL_params
 {
+    TEB *teb;
     GLuint queryId;
     GLuint queryNameLength;
     GLchar *queryName;
@@ -8383,6 +9544,7 @@ struct glGetPerfQueryInfoINTEL_params
 
 struct glGetPixelMapxv_params
 {
+    TEB *teb;
     GLenum map;
     GLint size;
     GLfixed *values;
@@ -8390,18 +9552,21 @@ struct glGetPixelMapxv_params
 
 struct glGetPixelTexGenParameterfvSGIS_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat *params;
 };
 
 struct glGetPixelTexGenParameterivSGIS_params
 {
+    TEB *teb;
     GLenum pname;
     GLint *params;
 };
 
 struct glGetPixelTransformParameterfvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat *params;
@@ -8409,6 +9574,7 @@ struct glGetPixelTransformParameterfvEXT_params
 
 struct glGetPixelTransformParameterivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -8416,6 +9582,7 @@ struct glGetPixelTransformParameterivEXT_params
 
 struct glGetPointerIndexedvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     void **data;
@@ -8423,6 +9590,7 @@ struct glGetPointerIndexedvEXT_params
 
 struct glGetPointeri_vEXT_params
 {
+    TEB *teb;
     GLenum pname;
     GLuint index;
     void **params;
@@ -8430,12 +9598,14 @@ struct glGetPointeri_vEXT_params
 
 struct glGetPointervEXT_params
 {
+    TEB *teb;
     GLenum pname;
     void **params;
 };
 
 struct glGetProgramBinary_params
 {
+    TEB *teb;
     GLuint program;
     GLsizei bufSize;
     GLsizei *length;
@@ -8445,6 +9615,7 @@ struct glGetProgramBinary_params
 
 struct glGetProgramEnvParameterIivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLint *params;
@@ -8452,6 +9623,7 @@ struct glGetProgramEnvParameterIivNV_params
 
 struct glGetProgramEnvParameterIuivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint *params;
@@ -8459,6 +9631,7 @@ struct glGetProgramEnvParameterIuivNV_params
 
 struct glGetProgramEnvParameterdvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLdouble *params;
@@ -8466,6 +9639,7 @@ struct glGetProgramEnvParameterdvARB_params
 
 struct glGetProgramEnvParameterfvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLfloat *params;
@@ -8473,6 +9647,7 @@ struct glGetProgramEnvParameterfvARB_params
 
 struct glGetProgramInfoLog_params
 {
+    TEB *teb;
     GLuint program;
     GLsizei bufSize;
     GLsizei *length;
@@ -8481,6 +9656,7 @@ struct glGetProgramInfoLog_params
 
 struct glGetProgramInterfaceiv_params
 {
+    TEB *teb;
     GLuint program;
     GLenum programInterface;
     GLenum pname;
@@ -8489,6 +9665,7 @@ struct glGetProgramInterfaceiv_params
 
 struct glGetProgramLocalParameterIivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLint *params;
@@ -8496,6 +9673,7 @@ struct glGetProgramLocalParameterIivNV_params
 
 struct glGetProgramLocalParameterIuivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint *params;
@@ -8503,6 +9681,7 @@ struct glGetProgramLocalParameterIuivNV_params
 
 struct glGetProgramLocalParameterdvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLdouble *params;
@@ -8510,6 +9689,7 @@ struct glGetProgramLocalParameterdvARB_params
 
 struct glGetProgramLocalParameterfvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLfloat *params;
@@ -8517,6 +9697,7 @@ struct glGetProgramLocalParameterfvARB_params
 
 struct glGetProgramNamedParameterdvNV_params
 {
+    TEB *teb;
     GLuint id;
     GLsizei len;
     const GLubyte *name;
@@ -8525,6 +9706,7 @@ struct glGetProgramNamedParameterdvNV_params
 
 struct glGetProgramNamedParameterfvNV_params
 {
+    TEB *teb;
     GLuint id;
     GLsizei len;
     const GLubyte *name;
@@ -8533,6 +9715,7 @@ struct glGetProgramNamedParameterfvNV_params
 
 struct glGetProgramParameterdvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLenum pname;
@@ -8541,6 +9724,7 @@ struct glGetProgramParameterdvNV_params
 
 struct glGetProgramParameterfvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLenum pname;
@@ -8549,6 +9733,7 @@ struct glGetProgramParameterfvNV_params
 
 struct glGetProgramPipelineInfoLog_params
 {
+    TEB *teb;
     GLuint pipeline;
     GLsizei bufSize;
     GLsizei *length;
@@ -8557,6 +9742,7 @@ struct glGetProgramPipelineInfoLog_params
 
 struct glGetProgramPipelineiv_params
 {
+    TEB *teb;
     GLuint pipeline;
     GLenum pname;
     GLint *params;
@@ -8564,6 +9750,7 @@ struct glGetProgramPipelineiv_params
 
 struct glGetProgramResourceIndex_params
 {
+    TEB *teb;
     GLuint program;
     GLenum programInterface;
     const GLchar *name;
@@ -8572,6 +9759,7 @@ struct glGetProgramResourceIndex_params
 
 struct glGetProgramResourceLocation_params
 {
+    TEB *teb;
     GLuint program;
     GLenum programInterface;
     const GLchar *name;
@@ -8580,6 +9768,7 @@ struct glGetProgramResourceLocation_params
 
 struct glGetProgramResourceLocationIndex_params
 {
+    TEB *teb;
     GLuint program;
     GLenum programInterface;
     const GLchar *name;
@@ -8588,6 +9777,7 @@ struct glGetProgramResourceLocationIndex_params
 
 struct glGetProgramResourceName_params
 {
+    TEB *teb;
     GLuint program;
     GLenum programInterface;
     GLuint index;
@@ -8598,6 +9788,7 @@ struct glGetProgramResourceName_params
 
 struct glGetProgramResourcefvNV_params
 {
+    TEB *teb;
     GLuint program;
     GLenum programInterface;
     GLuint index;
@@ -8610,6 +9801,7 @@ struct glGetProgramResourcefvNV_params
 
 struct glGetProgramResourceiv_params
 {
+    TEB *teb;
     GLuint program;
     GLenum programInterface;
     GLuint index;
@@ -8622,6 +9814,7 @@ struct glGetProgramResourceiv_params
 
 struct glGetProgramStageiv_params
 {
+    TEB *teb;
     GLuint program;
     GLenum shadertype;
     GLenum pname;
@@ -8630,6 +9823,7 @@ struct glGetProgramStageiv_params
 
 struct glGetProgramStringARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     void *string;
@@ -8637,6 +9831,7 @@ struct glGetProgramStringARB_params
 
 struct glGetProgramStringNV_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLubyte *program;
@@ -8644,6 +9839,7 @@ struct glGetProgramStringNV_params
 
 struct glGetProgramSubroutineParameteruivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint *param;
@@ -8651,6 +9847,7 @@ struct glGetProgramSubroutineParameteruivNV_params
 
 struct glGetProgramiv_params
 {
+    TEB *teb;
     GLuint program;
     GLenum pname;
     GLint *params;
@@ -8658,6 +9855,7 @@ struct glGetProgramiv_params
 
 struct glGetProgramivARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -8665,6 +9863,7 @@ struct glGetProgramivARB_params
 
 struct glGetProgramivNV_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLint *params;
@@ -8672,6 +9871,7 @@ struct glGetProgramivNV_params
 
 struct glGetQueryBufferObjecti64v_params
 {
+    TEB *teb;
     GLuint id;
     GLuint buffer;
     GLenum pname;
@@ -8680,6 +9880,7 @@ struct glGetQueryBufferObjecti64v_params
 
 struct glGetQueryBufferObjectiv_params
 {
+    TEB *teb;
     GLuint id;
     GLuint buffer;
     GLenum pname;
@@ -8688,6 +9889,7 @@ struct glGetQueryBufferObjectiv_params
 
 struct glGetQueryBufferObjectui64v_params
 {
+    TEB *teb;
     GLuint id;
     GLuint buffer;
     GLenum pname;
@@ -8696,6 +9898,7 @@ struct glGetQueryBufferObjectui64v_params
 
 struct glGetQueryBufferObjectuiv_params
 {
+    TEB *teb;
     GLuint id;
     GLuint buffer;
     GLenum pname;
@@ -8704,6 +9907,7 @@ struct glGetQueryBufferObjectuiv_params
 
 struct glGetQueryIndexediv_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLenum pname;
@@ -8712,6 +9916,7 @@ struct glGetQueryIndexediv_params
 
 struct glGetQueryObjecti64v_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLint64 *params;
@@ -8719,6 +9924,7 @@ struct glGetQueryObjecti64v_params
 
 struct glGetQueryObjecti64vEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLint64 *params;
@@ -8726,6 +9932,7 @@ struct glGetQueryObjecti64vEXT_params
 
 struct glGetQueryObjectiv_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLint *params;
@@ -8733,6 +9940,7 @@ struct glGetQueryObjectiv_params
 
 struct glGetQueryObjectivARB_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLint *params;
@@ -8740,6 +9948,7 @@ struct glGetQueryObjectivARB_params
 
 struct glGetQueryObjectui64v_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLuint64 *params;
@@ -8747,6 +9956,7 @@ struct glGetQueryObjectui64v_params
 
 struct glGetQueryObjectui64vEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLuint64 *params;
@@ -8754,6 +9964,7 @@ struct glGetQueryObjectui64vEXT_params
 
 struct glGetQueryObjectuiv_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLuint *params;
@@ -8761,6 +9972,7 @@ struct glGetQueryObjectuiv_params
 
 struct glGetQueryObjectuivARB_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLuint *params;
@@ -8768,6 +9980,7 @@ struct glGetQueryObjectuivARB_params
 
 struct glGetQueryiv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -8775,6 +9988,7 @@ struct glGetQueryiv_params
 
 struct glGetQueryivARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -8782,6 +9996,7 @@ struct glGetQueryivARB_params
 
 struct glGetRenderbufferParameteriv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -8789,6 +10004,7 @@ struct glGetRenderbufferParameteriv_params
 
 struct glGetRenderbufferParameterivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -8796,6 +10012,7 @@ struct glGetRenderbufferParameterivEXT_params
 
 struct glGetSamplerParameterIiv_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     GLint *params;
@@ -8803,6 +10020,7 @@ struct glGetSamplerParameterIiv_params
 
 struct glGetSamplerParameterIuiv_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     GLuint *params;
@@ -8810,6 +10028,7 @@ struct glGetSamplerParameterIuiv_params
 
 struct glGetSamplerParameterfv_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     GLfloat *params;
@@ -8817,6 +10036,7 @@ struct glGetSamplerParameterfv_params
 
 struct glGetSamplerParameteriv_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     GLint *params;
@@ -8824,6 +10044,7 @@ struct glGetSamplerParameteriv_params
 
 struct glGetSemaphoreParameterui64vEXT_params
 {
+    TEB *teb;
     GLuint semaphore;
     GLenum pname;
     GLuint64 *params;
@@ -8831,6 +10052,7 @@ struct glGetSemaphoreParameterui64vEXT_params
 
 struct glGetSeparableFilter_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -8841,6 +10063,7 @@ struct glGetSeparableFilter_params
 
 struct glGetSeparableFilterEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -8851,6 +10074,7 @@ struct glGetSeparableFilterEXT_params
 
 struct glGetShaderInfoLog_params
 {
+    TEB *teb;
     GLuint shader;
     GLsizei bufSize;
     GLsizei *length;
@@ -8859,6 +10083,7 @@ struct glGetShaderInfoLog_params
 
 struct glGetShaderPrecisionFormat_params
 {
+    TEB *teb;
     GLenum shadertype;
     GLenum precisiontype;
     GLint *range;
@@ -8867,6 +10092,7 @@ struct glGetShaderPrecisionFormat_params
 
 struct glGetShaderSource_params
 {
+    TEB *teb;
     GLuint shader;
     GLsizei bufSize;
     GLsizei *length;
@@ -8875,6 +10101,7 @@ struct glGetShaderSource_params
 
 struct glGetShaderSourceARB_params
 {
+    TEB *teb;
     GLhandleARB obj;
     GLsizei maxLength;
     GLsizei *length;
@@ -8883,6 +10110,7 @@ struct glGetShaderSourceARB_params
 
 struct glGetShaderiv_params
 {
+    TEB *teb;
     GLuint shader;
     GLenum pname;
     GLint *params;
@@ -8890,6 +10118,7 @@ struct glGetShaderiv_params
 
 struct glGetShadingRateImagePaletteNV_params
 {
+    TEB *teb;
     GLuint viewport;
     GLuint entry;
     GLenum *rate;
@@ -8897,6 +10126,7 @@ struct glGetShadingRateImagePaletteNV_params
 
 struct glGetShadingRateSampleLocationivNV_params
 {
+    TEB *teb;
     GLenum rate;
     GLuint samples;
     GLuint index;
@@ -8905,18 +10135,21 @@ struct glGetShadingRateSampleLocationivNV_params
 
 struct glGetSharpenTexFuncSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat *points;
 };
 
 struct glGetStageIndexNV_params
 {
+    TEB *teb;
     GLenum shadertype;
     GLushort ret;
 };
 
 struct glGetStringi_params
 {
+    TEB *teb;
     GLenum name;
     GLuint index;
     const GLubyte *ret;
@@ -8924,6 +10157,7 @@ struct glGetStringi_params
 
 struct glGetSubroutineIndex_params
 {
+    TEB *teb;
     GLuint program;
     GLenum shadertype;
     const GLchar *name;
@@ -8932,6 +10166,7 @@ struct glGetSubroutineIndex_params
 
 struct glGetSubroutineUniformLocation_params
 {
+    TEB *teb;
     GLuint program;
     GLenum shadertype;
     const GLchar *name;
@@ -8940,6 +10175,7 @@ struct glGetSubroutineUniformLocation_params
 
 struct glGetSynciv_params
 {
+    TEB *teb;
     GLsync sync;
     GLenum pname;
     GLsizei count;
@@ -8949,18 +10185,21 @@ struct glGetSynciv_params
 
 struct glGetTexBumpParameterfvATI_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat *param;
 };
 
 struct glGetTexBumpParameterivATI_params
 {
+    TEB *teb;
     GLenum pname;
     GLint *param;
 };
 
 struct glGetTexEnvxvOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfixed *params;
@@ -8968,6 +10207,7 @@ struct glGetTexEnvxvOES_params
 
 struct glGetTexFilterFuncSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLenum filter;
     GLfloat *weights;
@@ -8975,6 +10215,7 @@ struct glGetTexFilterFuncSGIS_params
 
 struct glGetTexGenxvOES_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     GLfixed *params;
@@ -8982,6 +10223,7 @@ struct glGetTexGenxvOES_params
 
 struct glGetTexLevelParameterxvOES_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum pname;
@@ -8990,6 +10232,7 @@ struct glGetTexLevelParameterxvOES_params
 
 struct glGetTexParameterIiv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -8997,6 +10240,7 @@ struct glGetTexParameterIiv_params
 
 struct glGetTexParameterIivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint *params;
@@ -9004,6 +10248,7 @@ struct glGetTexParameterIivEXT_params
 
 struct glGetTexParameterIuiv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLuint *params;
@@ -9011,6 +10256,7 @@ struct glGetTexParameterIuiv_params
 
 struct glGetTexParameterIuivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLuint *params;
@@ -9018,6 +10264,7 @@ struct glGetTexParameterIuivEXT_params
 
 struct glGetTexParameterPointervAPPLE_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     void **params;
@@ -9025,6 +10272,7 @@ struct glGetTexParameterPointervAPPLE_params
 
 struct glGetTexParameterxvOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfixed *params;
@@ -9032,18 +10280,21 @@ struct glGetTexParameterxvOES_params
 
 struct glGetTextureHandleARB_params
 {
+    TEB *teb;
     GLuint texture;
     GLuint64 ret;
 };
 
 struct glGetTextureHandleNV_params
 {
+    TEB *teb;
     GLuint texture;
     GLuint64 ret;
 };
 
 struct glGetTextureImage_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLenum format;
@@ -9054,6 +10305,7 @@ struct glGetTextureImage_params
 
 struct glGetTextureImageEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -9064,6 +10316,7 @@ struct glGetTextureImageEXT_params
 
 struct glGetTextureLevelParameterfv_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLenum pname;
@@ -9072,6 +10325,7 @@ struct glGetTextureLevelParameterfv_params
 
 struct glGetTextureLevelParameterfvEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -9081,6 +10335,7 @@ struct glGetTextureLevelParameterfvEXT_params
 
 struct glGetTextureLevelParameteriv_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLenum pname;
@@ -9089,6 +10344,7 @@ struct glGetTextureLevelParameteriv_params
 
 struct glGetTextureLevelParameterivEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -9098,6 +10354,7 @@ struct glGetTextureLevelParameterivEXT_params
 
 struct glGetTextureParameterIiv_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     GLint *params;
@@ -9105,6 +10362,7 @@ struct glGetTextureParameterIiv_params
 
 struct glGetTextureParameterIivEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -9113,6 +10371,7 @@ struct glGetTextureParameterIivEXT_params
 
 struct glGetTextureParameterIuiv_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     GLuint *params;
@@ -9120,6 +10379,7 @@ struct glGetTextureParameterIuiv_params
 
 struct glGetTextureParameterIuivEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -9128,6 +10388,7 @@ struct glGetTextureParameterIuivEXT_params
 
 struct glGetTextureParameterfv_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     GLfloat *params;
@@ -9135,6 +10396,7 @@ struct glGetTextureParameterfv_params
 
 struct glGetTextureParameterfvEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -9143,6 +10405,7 @@ struct glGetTextureParameterfvEXT_params
 
 struct glGetTextureParameteriv_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     GLint *params;
@@ -9150,6 +10413,7 @@ struct glGetTextureParameteriv_params
 
 struct glGetTextureParameterivEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -9158,6 +10422,7 @@ struct glGetTextureParameterivEXT_params
 
 struct glGetTextureSamplerHandleARB_params
 {
+    TEB *teb;
     GLuint texture;
     GLuint sampler;
     GLuint64 ret;
@@ -9165,6 +10430,7 @@ struct glGetTextureSamplerHandleARB_params
 
 struct glGetTextureSamplerHandleNV_params
 {
+    TEB *teb;
     GLuint texture;
     GLuint sampler;
     GLuint64 ret;
@@ -9172,6 +10438,7 @@ struct glGetTextureSamplerHandleNV_params
 
 struct glGetTextureSubImage_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -9188,6 +10455,7 @@ struct glGetTextureSubImage_params
 
 struct glGetTrackMatrixivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint address;
     GLenum pname;
@@ -9196,6 +10464,7 @@ struct glGetTrackMatrixivNV_params
 
 struct glGetTransformFeedbackVarying_params
 {
+    TEB *teb;
     GLuint program;
     GLuint index;
     GLsizei bufSize;
@@ -9207,6 +10476,7 @@ struct glGetTransformFeedbackVarying_params
 
 struct glGetTransformFeedbackVaryingEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLuint index;
     GLsizei bufSize;
@@ -9218,6 +10488,7 @@ struct glGetTransformFeedbackVaryingEXT_params
 
 struct glGetTransformFeedbackVaryingNV_params
 {
+    TEB *teb;
     GLuint program;
     GLuint index;
     GLint *location;
@@ -9225,6 +10496,7 @@ struct glGetTransformFeedbackVaryingNV_params
 
 struct glGetTransformFeedbacki64_v_params
 {
+    TEB *teb;
     GLuint xfb;
     GLenum pname;
     GLuint index;
@@ -9233,6 +10505,7 @@ struct glGetTransformFeedbacki64_v_params
 
 struct glGetTransformFeedbacki_v_params
 {
+    TEB *teb;
     GLuint xfb;
     GLenum pname;
     GLuint index;
@@ -9241,6 +10514,7 @@ struct glGetTransformFeedbacki_v_params
 
 struct glGetTransformFeedbackiv_params
 {
+    TEB *teb;
     GLuint xfb;
     GLenum pname;
     GLint *param;
@@ -9248,6 +10522,7 @@ struct glGetTransformFeedbackiv_params
 
 struct glGetUniformBlockIndex_params
 {
+    TEB *teb;
     GLuint program;
     const GLchar *uniformBlockName;
     GLuint ret;
@@ -9255,6 +10530,7 @@ struct glGetUniformBlockIndex_params
 
 struct glGetUniformBufferSizeEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint ret;
@@ -9262,6 +10538,7 @@ struct glGetUniformBufferSizeEXT_params
 
 struct glGetUniformIndices_params
 {
+    TEB *teb;
     GLuint program;
     GLsizei uniformCount;
     const GLchar *const*uniformNames;
@@ -9270,6 +10547,7 @@ struct glGetUniformIndices_params
 
 struct glGetUniformLocation_params
 {
+    TEB *teb;
     GLuint program;
     const GLchar *name;
     GLint ret;
@@ -9277,6 +10555,7 @@ struct glGetUniformLocation_params
 
 struct glGetUniformLocationARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
     const GLcharARB *name;
     GLint ret;
@@ -9284,6 +10563,7 @@ struct glGetUniformLocationARB_params
 
 struct glGetUniformOffsetEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLintptr ret;
@@ -9291,6 +10571,7 @@ struct glGetUniformOffsetEXT_params
 
 struct glGetUniformSubroutineuiv_params
 {
+    TEB *teb;
     GLenum shadertype;
     GLint location;
     GLuint *params;
@@ -9298,6 +10579,7 @@ struct glGetUniformSubroutineuiv_params
 
 struct glGetUniformdv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLdouble *params;
@@ -9305,6 +10587,7 @@ struct glGetUniformdv_params
 
 struct glGetUniformfv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLfloat *params;
@@ -9312,6 +10595,7 @@ struct glGetUniformfv_params
 
 struct glGetUniformfvARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
     GLint location;
     GLfloat *params;
@@ -9319,6 +10603,7 @@ struct glGetUniformfvARB_params
 
 struct glGetUniformi64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64 *params;
@@ -9326,6 +10611,7 @@ struct glGetUniformi64vARB_params
 
 struct glGetUniformi64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64EXT *params;
@@ -9333,6 +10619,7 @@ struct glGetUniformi64vNV_params
 
 struct glGetUniformiv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint *params;
@@ -9340,6 +10627,7 @@ struct glGetUniformiv_params
 
 struct glGetUniformivARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
     GLint location;
     GLint *params;
@@ -9347,6 +10635,7 @@ struct glGetUniformivARB_params
 
 struct glGetUniformui64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64 *params;
@@ -9354,6 +10643,7 @@ struct glGetUniformui64vARB_params
 
 struct glGetUniformui64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64EXT *params;
@@ -9361,6 +10651,7 @@ struct glGetUniformui64vNV_params
 
 struct glGetUniformuiv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint *params;
@@ -9368,6 +10659,7 @@ struct glGetUniformuiv_params
 
 struct glGetUniformuivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint *params;
@@ -9375,6 +10667,7 @@ struct glGetUniformuivEXT_params
 
 struct glGetUnsignedBytei_vEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLubyte *data;
@@ -9382,12 +10675,14 @@ struct glGetUnsignedBytei_vEXT_params
 
 struct glGetUnsignedBytevEXT_params
 {
+    TEB *teb;
     GLenum pname;
     GLubyte *data;
 };
 
 struct glGetVariantArrayObjectfvATI_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLfloat *params;
@@ -9395,6 +10690,7 @@ struct glGetVariantArrayObjectfvATI_params
 
 struct glGetVariantArrayObjectivATI_params
 {
+    TEB *teb;
     GLuint id;
     GLenum pname;
     GLint *params;
@@ -9402,6 +10698,7 @@ struct glGetVariantArrayObjectivATI_params
 
 struct glGetVariantBooleanvEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     GLboolean *data;
@@ -9409,6 +10706,7 @@ struct glGetVariantBooleanvEXT_params
 
 struct glGetVariantFloatvEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     GLfloat *data;
@@ -9416,6 +10714,7 @@ struct glGetVariantFloatvEXT_params
 
 struct glGetVariantIntegervEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     GLint *data;
@@ -9423,6 +10722,7 @@ struct glGetVariantIntegervEXT_params
 
 struct glGetVariantPointervEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum value;
     void **data;
@@ -9430,6 +10730,7 @@ struct glGetVariantPointervEXT_params
 
 struct glGetVaryingLocationNV_params
 {
+    TEB *teb;
     GLuint program;
     const GLchar *name;
     GLint ret;
@@ -9437,6 +10738,7 @@ struct glGetVaryingLocationNV_params
 
 struct glGetVertexArrayIndexed64iv_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint index;
     GLenum pname;
@@ -9445,6 +10747,7 @@ struct glGetVertexArrayIndexed64iv_params
 
 struct glGetVertexArrayIndexediv_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint index;
     GLenum pname;
@@ -9453,6 +10756,7 @@ struct glGetVertexArrayIndexediv_params
 
 struct glGetVertexArrayIntegeri_vEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint index;
     GLenum pname;
@@ -9461,6 +10765,7 @@ struct glGetVertexArrayIntegeri_vEXT_params
 
 struct glGetVertexArrayIntegervEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLenum pname;
     GLint *param;
@@ -9468,6 +10773,7 @@ struct glGetVertexArrayIntegervEXT_params
 
 struct glGetVertexArrayPointeri_vEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint index;
     GLenum pname;
@@ -9476,6 +10782,7 @@ struct glGetVertexArrayPointeri_vEXT_params
 
 struct glGetVertexArrayPointervEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLenum pname;
     void **param;
@@ -9483,6 +10790,7 @@ struct glGetVertexArrayPointervEXT_params
 
 struct glGetVertexArrayiv_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLenum pname;
     GLint *param;
@@ -9490,6 +10798,7 @@ struct glGetVertexArrayiv_params
 
 struct glGetVertexAttribArrayObjectfvATI_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLfloat *params;
@@ -9497,6 +10806,7 @@ struct glGetVertexAttribArrayObjectfvATI_params
 
 struct glGetVertexAttribArrayObjectivATI_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLint *params;
@@ -9504,6 +10814,7 @@ struct glGetVertexAttribArrayObjectivATI_params
 
 struct glGetVertexAttribIiv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLint *params;
@@ -9511,6 +10822,7 @@ struct glGetVertexAttribIiv_params
 
 struct glGetVertexAttribIivEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLint *params;
@@ -9518,6 +10830,7 @@ struct glGetVertexAttribIivEXT_params
 
 struct glGetVertexAttribIuiv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLuint *params;
@@ -9525,6 +10838,7 @@ struct glGetVertexAttribIuiv_params
 
 struct glGetVertexAttribIuivEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLuint *params;
@@ -9532,6 +10846,7 @@ struct glGetVertexAttribIuivEXT_params
 
 struct glGetVertexAttribLdv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLdouble *params;
@@ -9539,6 +10854,7 @@ struct glGetVertexAttribLdv_params
 
 struct glGetVertexAttribLdvEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLdouble *params;
@@ -9546,6 +10862,7 @@ struct glGetVertexAttribLdvEXT_params
 
 struct glGetVertexAttribLi64vNV_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLint64EXT *params;
@@ -9553,6 +10870,7 @@ struct glGetVertexAttribLi64vNV_params
 
 struct glGetVertexAttribLui64vARB_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLuint64EXT *params;
@@ -9560,6 +10878,7 @@ struct glGetVertexAttribLui64vARB_params
 
 struct glGetVertexAttribLui64vNV_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLuint64EXT *params;
@@ -9567,6 +10886,7 @@ struct glGetVertexAttribLui64vNV_params
 
 struct glGetVertexAttribPointerv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     void **pointer;
@@ -9574,6 +10894,7 @@ struct glGetVertexAttribPointerv_params
 
 struct glGetVertexAttribPointervARB_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     void **pointer;
@@ -9581,6 +10902,7 @@ struct glGetVertexAttribPointervARB_params
 
 struct glGetVertexAttribPointervNV_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     void **pointer;
@@ -9588,6 +10910,7 @@ struct glGetVertexAttribPointervNV_params
 
 struct glGetVertexAttribdv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLdouble *params;
@@ -9595,6 +10918,7 @@ struct glGetVertexAttribdv_params
 
 struct glGetVertexAttribdvARB_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLdouble *params;
@@ -9602,6 +10926,7 @@ struct glGetVertexAttribdvARB_params
 
 struct glGetVertexAttribdvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLdouble *params;
@@ -9609,6 +10934,7 @@ struct glGetVertexAttribdvNV_params
 
 struct glGetVertexAttribfv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLfloat *params;
@@ -9616,6 +10942,7 @@ struct glGetVertexAttribfv_params
 
 struct glGetVertexAttribfvARB_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLfloat *params;
@@ -9623,6 +10950,7 @@ struct glGetVertexAttribfvARB_params
 
 struct glGetVertexAttribfvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLfloat *params;
@@ -9630,6 +10958,7 @@ struct glGetVertexAttribfvNV_params
 
 struct glGetVertexAttribiv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLint *params;
@@ -9637,6 +10966,7 @@ struct glGetVertexAttribiv_params
 
 struct glGetVertexAttribivARB_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLint *params;
@@ -9644,6 +10974,7 @@ struct glGetVertexAttribivARB_params
 
 struct glGetVertexAttribivNV_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLint *params;
@@ -9651,6 +10982,7 @@ struct glGetVertexAttribivNV_params
 
 struct glGetVideoCaptureStreamdvNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLuint stream;
     GLenum pname;
@@ -9659,6 +10991,7 @@ struct glGetVideoCaptureStreamdvNV_params
 
 struct glGetVideoCaptureStreamfvNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLuint stream;
     GLenum pname;
@@ -9667,6 +11000,7 @@ struct glGetVideoCaptureStreamfvNV_params
 
 struct glGetVideoCaptureStreamivNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLuint stream;
     GLenum pname;
@@ -9675,6 +11009,7 @@ struct glGetVideoCaptureStreamivNV_params
 
 struct glGetVideoCaptureivNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLenum pname;
     GLint *params;
@@ -9682,6 +11017,7 @@ struct glGetVideoCaptureivNV_params
 
 struct glGetVideoi64vNV_params
 {
+    TEB *teb;
     GLuint video_slot;
     GLenum pname;
     GLint64EXT *params;
@@ -9689,6 +11025,7 @@ struct glGetVideoi64vNV_params
 
 struct glGetVideoivNV_params
 {
+    TEB *teb;
     GLuint video_slot;
     GLenum pname;
     GLint *params;
@@ -9696,6 +11033,7 @@ struct glGetVideoivNV_params
 
 struct glGetVideoui64vNV_params
 {
+    TEB *teb;
     GLuint video_slot;
     GLenum pname;
     GLuint64EXT *params;
@@ -9703,6 +11041,7 @@ struct glGetVideoui64vNV_params
 
 struct glGetVideouivNV_params
 {
+    TEB *teb;
     GLuint video_slot;
     GLenum pname;
     GLuint *params;
@@ -9710,12 +11049,14 @@ struct glGetVideouivNV_params
 
 struct glGetVkProcAddrNV_params
 {
+    TEB *teb;
     const GLchar *name;
     GLVULKANPROCNV ret;
 };
 
 struct glGetnColorTable_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -9725,6 +11066,7 @@ struct glGetnColorTable_params
 
 struct glGetnColorTableARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -9734,6 +11076,7 @@ struct glGetnColorTableARB_params
 
 struct glGetnCompressedTexImage_params
 {
+    TEB *teb;
     GLenum target;
     GLint lod;
     GLsizei bufSize;
@@ -9742,6 +11085,7 @@ struct glGetnCompressedTexImage_params
 
 struct glGetnCompressedTexImageARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint lod;
     GLsizei bufSize;
@@ -9750,6 +11094,7 @@ struct glGetnCompressedTexImageARB_params
 
 struct glGetnConvolutionFilter_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -9759,6 +11104,7 @@ struct glGetnConvolutionFilter_params
 
 struct glGetnConvolutionFilterARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -9768,6 +11114,7 @@ struct glGetnConvolutionFilterARB_params
 
 struct glGetnHistogram_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean reset;
     GLenum format;
@@ -9778,6 +11125,7 @@ struct glGetnHistogram_params
 
 struct glGetnHistogramARB_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean reset;
     GLenum format;
@@ -9788,6 +11136,7 @@ struct glGetnHistogramARB_params
 
 struct glGetnMapdv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLsizei bufSize;
@@ -9796,6 +11145,7 @@ struct glGetnMapdv_params
 
 struct glGetnMapdvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLsizei bufSize;
@@ -9804,6 +11154,7 @@ struct glGetnMapdvARB_params
 
 struct glGetnMapfv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLsizei bufSize;
@@ -9812,6 +11163,7 @@ struct glGetnMapfv_params
 
 struct glGetnMapfvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLsizei bufSize;
@@ -9820,6 +11172,7 @@ struct glGetnMapfvARB_params
 
 struct glGetnMapiv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLsizei bufSize;
@@ -9828,6 +11181,7 @@ struct glGetnMapiv_params
 
 struct glGetnMapivARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum query;
     GLsizei bufSize;
@@ -9836,6 +11190,7 @@ struct glGetnMapivARB_params
 
 struct glGetnMinmax_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean reset;
     GLenum format;
@@ -9846,6 +11201,7 @@ struct glGetnMinmax_params
 
 struct glGetnMinmaxARB_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean reset;
     GLenum format;
@@ -9856,6 +11212,7 @@ struct glGetnMinmaxARB_params
 
 struct glGetnPixelMapfv_params
 {
+    TEB *teb;
     GLenum map;
     GLsizei bufSize;
     GLfloat *values;
@@ -9863,6 +11220,7 @@ struct glGetnPixelMapfv_params
 
 struct glGetnPixelMapfvARB_params
 {
+    TEB *teb;
     GLenum map;
     GLsizei bufSize;
     GLfloat *values;
@@ -9870,6 +11228,7 @@ struct glGetnPixelMapfvARB_params
 
 struct glGetnPixelMapuiv_params
 {
+    TEB *teb;
     GLenum map;
     GLsizei bufSize;
     GLuint *values;
@@ -9877,6 +11236,7 @@ struct glGetnPixelMapuiv_params
 
 struct glGetnPixelMapuivARB_params
 {
+    TEB *teb;
     GLenum map;
     GLsizei bufSize;
     GLuint *values;
@@ -9884,6 +11244,7 @@ struct glGetnPixelMapuivARB_params
 
 struct glGetnPixelMapusv_params
 {
+    TEB *teb;
     GLenum map;
     GLsizei bufSize;
     GLushort *values;
@@ -9891,6 +11252,7 @@ struct glGetnPixelMapusv_params
 
 struct glGetnPixelMapusvARB_params
 {
+    TEB *teb;
     GLenum map;
     GLsizei bufSize;
     GLushort *values;
@@ -9898,18 +11260,21 @@ struct glGetnPixelMapusvARB_params
 
 struct glGetnPolygonStipple_params
 {
+    TEB *teb;
     GLsizei bufSize;
     GLubyte *pattern;
 };
 
 struct glGetnPolygonStippleARB_params
 {
+    TEB *teb;
     GLsizei bufSize;
     GLubyte *pattern;
 };
 
 struct glGetnSeparableFilter_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -9922,6 +11287,7 @@ struct glGetnSeparableFilter_params
 
 struct glGetnSeparableFilterARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLenum type;
@@ -9934,6 +11300,7 @@ struct glGetnSeparableFilterARB_params
 
 struct glGetnTexImage_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum format;
@@ -9944,6 +11311,7 @@ struct glGetnTexImage_params
 
 struct glGetnTexImageARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum format;
@@ -9954,6 +11322,7 @@ struct glGetnTexImageARB_params
 
 struct glGetnUniformdv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -9962,6 +11331,7 @@ struct glGetnUniformdv_params
 
 struct glGetnUniformdvARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -9970,6 +11340,7 @@ struct glGetnUniformdvARB_params
 
 struct glGetnUniformfv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -9978,6 +11349,7 @@ struct glGetnUniformfv_params
 
 struct glGetnUniformfvARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -9986,6 +11358,7 @@ struct glGetnUniformfvARB_params
 
 struct glGetnUniformi64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -9994,6 +11367,7 @@ struct glGetnUniformi64vARB_params
 
 struct glGetnUniformiv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -10002,6 +11376,7 @@ struct glGetnUniformiv_params
 
 struct glGetnUniformivARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -10010,6 +11385,7 @@ struct glGetnUniformivARB_params
 
 struct glGetnUniformui64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -10018,6 +11394,7 @@ struct glGetnUniformui64vARB_params
 
 struct glGetnUniformuiv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -10026,6 +11403,7 @@ struct glGetnUniformuiv_params
 
 struct glGetnUniformuivARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei bufSize;
@@ -10034,52 +11412,62 @@ struct glGetnUniformuivARB_params
 
 struct glGlobalAlphaFactorbSUN_params
 {
+    TEB *teb;
     GLbyte factor;
 };
 
 struct glGlobalAlphaFactordSUN_params
 {
+    TEB *teb;
     GLdouble factor;
 };
 
 struct glGlobalAlphaFactorfSUN_params
 {
+    TEB *teb;
     GLfloat factor;
 };
 
 struct glGlobalAlphaFactoriSUN_params
 {
+    TEB *teb;
     GLint factor;
 };
 
 struct glGlobalAlphaFactorsSUN_params
 {
+    TEB *teb;
     GLshort factor;
 };
 
 struct glGlobalAlphaFactorubSUN_params
 {
+    TEB *teb;
     GLubyte factor;
 };
 
 struct glGlobalAlphaFactoruiSUN_params
 {
+    TEB *teb;
     GLuint factor;
 };
 
 struct glGlobalAlphaFactorusSUN_params
 {
+    TEB *teb;
     GLushort factor;
 };
 
 struct glHintPGI_params
 {
+    TEB *teb;
     GLenum target;
     GLint mode;
 };
 
 struct glHistogram_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei width;
     GLenum internalformat;
@@ -10088,6 +11476,7 @@ struct glHistogram_params
 
 struct glHistogramEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei width;
     GLenum internalformat;
@@ -10096,12 +11485,14 @@ struct glHistogramEXT_params
 
 struct glIglooInterfaceSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     const void *params;
 };
 
 struct glImageTransformParameterfHP_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat param;
@@ -10109,6 +11500,7 @@ struct glImageTransformParameterfHP_params
 
 struct glImageTransformParameterfvHP_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfloat *params;
@@ -10116,6 +11508,7 @@ struct glImageTransformParameterfvHP_params
 
 struct glImageTransformParameteriHP_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint param;
@@ -10123,6 +11516,7 @@ struct glImageTransformParameteriHP_params
 
 struct glImageTransformParameterivHP_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -10130,6 +11524,7 @@ struct glImageTransformParameterivHP_params
 
 struct glImportMemoryFdEXT_params
 {
+    TEB *teb;
     GLuint memory;
     GLuint64 size;
     GLenum handleType;
@@ -10138,6 +11533,7 @@ struct glImportMemoryFdEXT_params
 
 struct glImportMemoryWin32HandleEXT_params
 {
+    TEB *teb;
     GLuint memory;
     GLuint64 size;
     GLenum handleType;
@@ -10146,6 +11542,7 @@ struct glImportMemoryWin32HandleEXT_params
 
 struct glImportMemoryWin32NameEXT_params
 {
+    TEB *teb;
     GLuint memory;
     GLuint64 size;
     GLenum handleType;
@@ -10154,6 +11551,7 @@ struct glImportMemoryWin32NameEXT_params
 
 struct glImportSemaphoreFdEXT_params
 {
+    TEB *teb;
     GLuint semaphore;
     GLenum handleType;
     GLint fd;
@@ -10161,6 +11559,7 @@ struct glImportSemaphoreFdEXT_params
 
 struct glImportSemaphoreWin32HandleEXT_params
 {
+    TEB *teb;
     GLuint semaphore;
     GLenum handleType;
     void *handle;
@@ -10168,6 +11567,7 @@ struct glImportSemaphoreWin32HandleEXT_params
 
 struct glImportSemaphoreWin32NameEXT_params
 {
+    TEB *teb;
     GLuint semaphore;
     GLenum handleType;
     const void *name;
@@ -10175,6 +11575,7 @@ struct glImportSemaphoreWin32NameEXT_params
 
 struct glImportSyncEXT_params
 {
+    TEB *teb;
     GLenum external_sync_type;
     GLintptr external_sync;
     GLbitfield flags;
@@ -10183,24 +11584,28 @@ struct glImportSyncEXT_params
 
 struct glIndexFormatNV_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
 };
 
 struct glIndexFuncEXT_params
 {
+    TEB *teb;
     GLenum func;
     GLclampf ref;
 };
 
 struct glIndexMaterialEXT_params
 {
+    TEB *teb;
     GLenum face;
     GLenum mode;
 };
 
 struct glIndexPointerEXT_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
     GLsizei count;
@@ -10209,6 +11614,7 @@ struct glIndexPointerEXT_params
 
 struct glIndexPointerListIBM_params
 {
+    TEB *teb;
     GLenum type;
     GLint stride;
     const void **pointer;
@@ -10217,16 +11623,19 @@ struct glIndexPointerListIBM_params
 
 struct glIndexxOES_params
 {
+    TEB *teb;
     GLfixed component;
 };
 
 struct glIndexxvOES_params
 {
+    TEB *teb;
     const GLfixed *component;
 };
 
 struct glInsertComponentEXT_params
 {
+    TEB *teb;
     GLuint res;
     GLuint src;
     GLuint num;
@@ -10234,18 +11643,21 @@ struct glInsertComponentEXT_params
 
 struct glInsertEventMarkerEXT_params
 {
+    TEB *teb;
     GLsizei length;
     const GLchar *marker;
 };
 
 struct glInstrumentsBufferSGIX_params
 {
+    TEB *teb;
     GLsizei size;
     GLint *buffer;
 };
 
 struct glInterpolatePathsNV_params
 {
+    TEB *teb;
     GLuint resultPath;
     GLuint pathA;
     GLuint pathB;
@@ -10254,11 +11666,13 @@ struct glInterpolatePathsNV_params
 
 struct glInvalidateBufferData_params
 {
+    TEB *teb;
     GLuint buffer;
 };
 
 struct glInvalidateBufferSubData_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr length;
@@ -10266,6 +11680,7 @@ struct glInvalidateBufferSubData_params
 
 struct glInvalidateFramebuffer_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei numAttachments;
     const GLenum *attachments;
@@ -10273,6 +11688,7 @@ struct glInvalidateFramebuffer_params
 
 struct glInvalidateNamedFramebufferData_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLsizei numAttachments;
     const GLenum *attachments;
@@ -10280,6 +11696,7 @@ struct glInvalidateNamedFramebufferData_params
 
 struct glInvalidateNamedFramebufferSubData_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLsizei numAttachments;
     const GLenum *attachments;
@@ -10291,6 +11708,7 @@ struct glInvalidateNamedFramebufferSubData_params
 
 struct glInvalidateSubFramebuffer_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei numAttachments;
     const GLenum *attachments;
@@ -10302,12 +11720,14 @@ struct glInvalidateSubFramebuffer_params
 
 struct glInvalidateTexImage_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
 };
 
 struct glInvalidateTexSubImage_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -10320,36 +11740,42 @@ struct glInvalidateTexSubImage_params
 
 struct glIsAsyncMarkerSGIX_params
 {
+    TEB *teb;
     GLuint marker;
     GLboolean ret;
 };
 
 struct glIsBuffer_params
 {
+    TEB *teb;
     GLuint buffer;
     GLboolean ret;
 };
 
 struct glIsBufferARB_params
 {
+    TEB *teb;
     GLuint buffer;
     GLboolean ret;
 };
 
 struct glIsBufferResidentNV_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean ret;
 };
 
 struct glIsCommandListNV_params
 {
+    TEB *teb;
     GLuint list;
     GLboolean ret;
 };
 
 struct glIsEnabledIndexedEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLboolean ret;
@@ -10357,6 +11783,7 @@ struct glIsEnabledIndexedEXT_params
 
 struct glIsEnabledi_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLboolean ret;
@@ -10364,48 +11791,56 @@ struct glIsEnabledi_params
 
 struct glIsFenceAPPLE_params
 {
+    TEB *teb;
     GLuint fence;
     GLboolean ret;
 };
 
 struct glIsFenceNV_params
 {
+    TEB *teb;
     GLuint fence;
     GLboolean ret;
 };
 
 struct glIsFramebuffer_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLboolean ret;
 };
 
 struct glIsFramebufferEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLboolean ret;
 };
 
 struct glIsImageHandleResidentARB_params
 {
+    TEB *teb;
     GLuint64 handle;
     GLboolean ret;
 };
 
 struct glIsImageHandleResidentNV_params
 {
+    TEB *teb;
     GLuint64 handle;
     GLboolean ret;
 };
 
 struct glIsMemoryObjectEXT_params
 {
+    TEB *teb;
     GLuint memoryObject;
     GLboolean ret;
 };
 
 struct glIsNameAMD_params
 {
+    TEB *teb;
     GLenum identifier;
     GLuint name;
     GLboolean ret;
@@ -10413,12 +11848,14 @@ struct glIsNameAMD_params
 
 struct glIsNamedBufferResidentNV_params
 {
+    TEB *teb;
     GLuint buffer;
     GLboolean ret;
 };
 
 struct glIsNamedStringARB_params
 {
+    TEB *teb;
     GLint namelen;
     const GLchar *name;
     GLboolean ret;
@@ -10426,24 +11863,28 @@ struct glIsNamedStringARB_params
 
 struct glIsObjectBufferATI_params
 {
+    TEB *teb;
     GLuint buffer;
     GLboolean ret;
 };
 
 struct glIsOcclusionQueryNV_params
 {
+    TEB *teb;
     GLuint id;
     GLboolean ret;
 };
 
 struct glIsPathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLboolean ret;
 };
 
 struct glIsPointInFillPathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLuint mask;
     GLfloat x;
@@ -10453,6 +11894,7 @@ struct glIsPointInFillPathNV_params
 
 struct glIsPointInStrokePathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLfloat x;
     GLfloat y;
@@ -10461,114 +11903,133 @@ struct glIsPointInStrokePathNV_params
 
 struct glIsProgram_params
 {
+    TEB *teb;
     GLuint program;
     GLboolean ret;
 };
 
 struct glIsProgramARB_params
 {
+    TEB *teb;
     GLuint program;
     GLboolean ret;
 };
 
 struct glIsProgramNV_params
 {
+    TEB *teb;
     GLuint id;
     GLboolean ret;
 };
 
 struct glIsProgramPipeline_params
 {
+    TEB *teb;
     GLuint pipeline;
     GLboolean ret;
 };
 
 struct glIsQuery_params
 {
+    TEB *teb;
     GLuint id;
     GLboolean ret;
 };
 
 struct glIsQueryARB_params
 {
+    TEB *teb;
     GLuint id;
     GLboolean ret;
 };
 
 struct glIsRenderbuffer_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLboolean ret;
 };
 
 struct glIsRenderbufferEXT_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLboolean ret;
 };
 
 struct glIsSampler_params
 {
+    TEB *teb;
     GLuint sampler;
     GLboolean ret;
 };
 
 struct glIsSemaphoreEXT_params
 {
+    TEB *teb;
     GLuint semaphore;
     GLboolean ret;
 };
 
 struct glIsShader_params
 {
+    TEB *teb;
     GLuint shader;
     GLboolean ret;
 };
 
 struct glIsStateNV_params
 {
+    TEB *teb;
     GLuint state;
     GLboolean ret;
 };
 
 struct glIsSync_params
 {
+    TEB *teb;
     GLsync sync;
     GLboolean ret;
 };
 
 struct glIsTextureEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLboolean ret;
 };
 
 struct glIsTextureHandleResidentARB_params
 {
+    TEB *teb;
     GLuint64 handle;
     GLboolean ret;
 };
 
 struct glIsTextureHandleResidentNV_params
 {
+    TEB *teb;
     GLuint64 handle;
     GLboolean ret;
 };
 
 struct glIsTransformFeedback_params
 {
+    TEB *teb;
     GLuint id;
     GLboolean ret;
 };
 
 struct glIsTransformFeedbackNV_params
 {
+    TEB *teb;
     GLuint id;
     GLboolean ret;
 };
 
 struct glIsVariantEnabledEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum cap;
     GLboolean ret;
@@ -10576,18 +12037,21 @@ struct glIsVariantEnabledEXT_params
 
 struct glIsVertexArray_params
 {
+    TEB *teb;
     GLuint array;
     GLboolean ret;
 };
 
 struct glIsVertexArrayAPPLE_params
 {
+    TEB *teb;
     GLuint array;
     GLboolean ret;
 };
 
 struct glIsVertexAttribEnabledAPPLE_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLboolean ret;
@@ -10595,6 +12059,7 @@ struct glIsVertexAttribEnabledAPPLE_params
 
 struct glLGPUCopyImageSubDataNVX_params
 {
+    TEB *teb;
     GLuint sourceGpu;
     GLbitfield destinationGpuMask;
     GLuint srcName;
@@ -10616,10 +12081,12 @@ struct glLGPUCopyImageSubDataNVX_params
 
 struct glLGPUInterlockNVX_params
 {
+    TEB *teb;
 };
 
 struct glLGPUNamedBufferSubDataNVX_params
 {
+    TEB *teb;
     GLbitfield gpuMask;
     GLuint buffer;
     GLintptr offset;
@@ -10629,6 +12096,7 @@ struct glLGPUNamedBufferSubDataNVX_params
 
 struct glLabelObjectEXT_params
 {
+    TEB *teb;
     GLenum type;
     GLuint object;
     GLsizei length;
@@ -10637,24 +12105,28 @@ struct glLabelObjectEXT_params
 
 struct glLightEnviSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glLightModelxOES_params
 {
+    TEB *teb;
     GLenum pname;
     GLfixed param;
 };
 
 struct glLightModelxvOES_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfixed *param;
 };
 
 struct glLightxOES_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     GLfixed param;
@@ -10662,6 +12134,7 @@ struct glLightxOES_params
 
 struct glLightxvOES_params
 {
+    TEB *teb;
     GLenum light;
     GLenum pname;
     const GLfixed *params;
@@ -10669,21 +12142,25 @@ struct glLightxvOES_params
 
 struct glLineWidthxOES_params
 {
+    TEB *teb;
     GLfixed width;
 };
 
 struct glLinkProgram_params
 {
+    TEB *teb;
     GLuint program;
 };
 
 struct glLinkProgramARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
 };
 
 struct glListDrawCommandsStatesClientNV_params
 {
+    TEB *teb;
     GLuint list;
     GLuint segment;
     const void **indirects;
@@ -10695,6 +12172,7 @@ struct glListDrawCommandsStatesClientNV_params
 
 struct glListParameterfSGIX_params
 {
+    TEB *teb;
     GLuint list;
     GLenum pname;
     GLfloat param;
@@ -10702,6 +12180,7 @@ struct glListParameterfSGIX_params
 
 struct glListParameterfvSGIX_params
 {
+    TEB *teb;
     GLuint list;
     GLenum pname;
     const GLfloat *params;
@@ -10709,6 +12188,7 @@ struct glListParameterfvSGIX_params
 
 struct glListParameteriSGIX_params
 {
+    TEB *teb;
     GLuint list;
     GLenum pname;
     GLint param;
@@ -10716,6 +12196,7 @@ struct glListParameteriSGIX_params
 
 struct glListParameterivSGIX_params
 {
+    TEB *teb;
     GLuint list;
     GLenum pname;
     const GLint *params;
@@ -10723,16 +12204,19 @@ struct glListParameterivSGIX_params
 
 struct glLoadIdentityDeformationMapSGIX_params
 {
+    TEB *teb;
     GLbitfield mask;
 };
 
 struct glLoadMatrixxOES_params
 {
+    TEB *teb;
     const GLfixed *m;
 };
 
 struct glLoadProgramNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint id;
     GLsizei len;
@@ -10741,37 +12225,44 @@ struct glLoadProgramNV_params
 
 struct glLoadTransposeMatrixd_params
 {
+    TEB *teb;
     const GLdouble *m;
 };
 
 struct glLoadTransposeMatrixdARB_params
 {
+    TEB *teb;
     const GLdouble *m;
 };
 
 struct glLoadTransposeMatrixf_params
 {
+    TEB *teb;
     const GLfloat *m;
 };
 
 struct glLoadTransposeMatrixfARB_params
 {
+    TEB *teb;
     const GLfloat *m;
 };
 
 struct glLoadTransposeMatrixxOES_params
 {
+    TEB *teb;
     const GLfixed *m;
 };
 
 struct glLockArraysEXT_params
 {
+    TEB *teb;
     GLint first;
     GLsizei count;
 };
 
 struct glMTexCoord2fSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -10779,76 +12270,90 @@ struct glMTexCoord2fSGIS_params
 
 struct glMTexCoord2fvSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat * v;
 };
 
 struct glMakeBufferNonResidentNV_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glMakeBufferResidentNV_params
 {
+    TEB *teb;
     GLenum target;
     GLenum access;
 };
 
 struct glMakeImageHandleNonResidentARB_params
 {
+    TEB *teb;
     GLuint64 handle;
 };
 
 struct glMakeImageHandleNonResidentNV_params
 {
+    TEB *teb;
     GLuint64 handle;
 };
 
 struct glMakeImageHandleResidentARB_params
 {
+    TEB *teb;
     GLuint64 handle;
     GLenum access;
 };
 
 struct glMakeImageHandleResidentNV_params
 {
+    TEB *teb;
     GLuint64 handle;
     GLenum access;
 };
 
 struct glMakeNamedBufferNonResidentNV_params
 {
+    TEB *teb;
     GLuint buffer;
 };
 
 struct glMakeNamedBufferResidentNV_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum access;
 };
 
 struct glMakeTextureHandleNonResidentARB_params
 {
+    TEB *teb;
     GLuint64 handle;
 };
 
 struct glMakeTextureHandleNonResidentNV_params
 {
+    TEB *teb;
     GLuint64 handle;
 };
 
 struct glMakeTextureHandleResidentARB_params
 {
+    TEB *teb;
     GLuint64 handle;
 };
 
 struct glMakeTextureHandleResidentNV_params
 {
+    TEB *teb;
     GLuint64 handle;
 };
 
 struct glMap1xOES_params
 {
+    TEB *teb;
     GLenum target;
     GLfixed u1;
     GLfixed u2;
@@ -10859,6 +12364,7 @@ struct glMap1xOES_params
 
 struct glMap2xOES_params
 {
+    TEB *teb;
     GLenum target;
     GLfixed u1;
     GLfixed u2;
@@ -10873,6 +12379,7 @@ struct glMap2xOES_params
 
 struct glMapBuffer_params
 {
+    TEB *teb;
     GLenum target;
     GLenum access;
     void *ret;
@@ -10880,6 +12387,7 @@ struct glMapBuffer_params
 
 struct glMapBufferARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum access;
     void *ret;
@@ -10887,6 +12395,7 @@ struct glMapBufferARB_params
 
 struct glMapBufferRange_params
 {
+    TEB *teb;
     GLenum target;
     GLintptr offset;
     GLsizeiptr length;
@@ -10896,6 +12405,7 @@ struct glMapBufferRange_params
 
 struct glMapControlPointsNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLenum type;
@@ -10909,6 +12419,7 @@ struct glMapControlPointsNV_params
 
 struct glMapGrid1xOES_params
 {
+    TEB *teb;
     GLint n;
     GLfixed u1;
     GLfixed u2;
@@ -10916,6 +12427,7 @@ struct glMapGrid1xOES_params
 
 struct glMapGrid2xOES_params
 {
+    TEB *teb;
     GLint n;
     GLfixed u1;
     GLfixed u2;
@@ -10925,6 +12437,7 @@ struct glMapGrid2xOES_params
 
 struct glMapNamedBuffer_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum access;
     void *ret;
@@ -10932,6 +12445,7 @@ struct glMapNamedBuffer_params
 
 struct glMapNamedBufferEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLenum access;
     void *ret;
@@ -10939,6 +12453,7 @@ struct glMapNamedBufferEXT_params
 
 struct glMapNamedBufferRange_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr length;
@@ -10948,6 +12463,7 @@ struct glMapNamedBufferRange_params
 
 struct glMapNamedBufferRangeEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr length;
@@ -10957,12 +12473,14 @@ struct glMapNamedBufferRangeEXT_params
 
 struct glMapObjectBufferATI_params
 {
+    TEB *teb;
     GLuint buffer;
     void *ret;
 };
 
 struct glMapParameterfvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfloat *params;
@@ -10970,6 +12488,7 @@ struct glMapParameterfvNV_params
 
 struct glMapParameterivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -10977,6 +12496,7 @@ struct glMapParameterivNV_params
 
 struct glMapTexture2DINTEL_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLbitfield access;
@@ -10987,6 +12507,7 @@ struct glMapTexture2DINTEL_params
 
 struct glMapVertexAttrib1dAPPLE_params
 {
+    TEB *teb;
     GLuint index;
     GLuint size;
     GLdouble u1;
@@ -10998,6 +12519,7 @@ struct glMapVertexAttrib1dAPPLE_params
 
 struct glMapVertexAttrib1fAPPLE_params
 {
+    TEB *teb;
     GLuint index;
     GLuint size;
     GLfloat u1;
@@ -11009,6 +12531,7 @@ struct glMapVertexAttrib1fAPPLE_params
 
 struct glMapVertexAttrib2dAPPLE_params
 {
+    TEB *teb;
     GLuint index;
     GLuint size;
     GLdouble u1;
@@ -11024,6 +12547,7 @@ struct glMapVertexAttrib2dAPPLE_params
 
 struct glMapVertexAttrib2fAPPLE_params
 {
+    TEB *teb;
     GLuint index;
     GLuint size;
     GLfloat u1;
@@ -11039,6 +12563,7 @@ struct glMapVertexAttrib2fAPPLE_params
 
 struct glMaterialxOES_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     GLfixed param;
@@ -11046,6 +12571,7 @@ struct glMaterialxOES_params
 
 struct glMaterialxvOES_params
 {
+    TEB *teb;
     GLenum face;
     GLenum pname;
     const GLfixed *param;
@@ -11053,6 +12579,7 @@ struct glMaterialxvOES_params
 
 struct glMatrixFrustumEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLdouble left;
     GLdouble right;
@@ -11064,6 +12591,7 @@ struct glMatrixFrustumEXT_params
 
 struct glMatrixIndexPointerARB_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -11072,113 +12600,132 @@ struct glMatrixIndexPointerARB_params
 
 struct glMatrixIndexubvARB_params
 {
+    TEB *teb;
     GLint size;
     const GLubyte *indices;
 };
 
 struct glMatrixIndexuivARB_params
 {
+    TEB *teb;
     GLint size;
     const GLuint *indices;
 };
 
 struct glMatrixIndexusvARB_params
 {
+    TEB *teb;
     GLint size;
     const GLushort *indices;
 };
 
 struct glMatrixLoad3x2fNV_params
 {
+    TEB *teb;
     GLenum matrixMode;
     const GLfloat *m;
 };
 
 struct glMatrixLoad3x3fNV_params
 {
+    TEB *teb;
     GLenum matrixMode;
     const GLfloat *m;
 };
 
 struct glMatrixLoadIdentityEXT_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glMatrixLoadTranspose3x3fNV_params
 {
+    TEB *teb;
     GLenum matrixMode;
     const GLfloat *m;
 };
 
 struct glMatrixLoadTransposedEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLdouble *m;
 };
 
 struct glMatrixLoadTransposefEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLfloat *m;
 };
 
 struct glMatrixLoaddEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLdouble *m;
 };
 
 struct glMatrixLoadfEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLfloat *m;
 };
 
 struct glMatrixMult3x2fNV_params
 {
+    TEB *teb;
     GLenum matrixMode;
     const GLfloat *m;
 };
 
 struct glMatrixMult3x3fNV_params
 {
+    TEB *teb;
     GLenum matrixMode;
     const GLfloat *m;
 };
 
 struct glMatrixMultTranspose3x3fNV_params
 {
+    TEB *teb;
     GLenum matrixMode;
     const GLfloat *m;
 };
 
 struct glMatrixMultTransposedEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLdouble *m;
 };
 
 struct glMatrixMultTransposefEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLfloat *m;
 };
 
 struct glMatrixMultdEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLdouble *m;
 };
 
 struct glMatrixMultfEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLfloat *m;
 };
 
 struct glMatrixOrthoEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLdouble left;
     GLdouble right;
@@ -11190,16 +12737,19 @@ struct glMatrixOrthoEXT_params
 
 struct glMatrixPopEXT_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glMatrixPushEXT_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glMatrixRotatedEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLdouble angle;
     GLdouble x;
@@ -11209,6 +12759,7 @@ struct glMatrixRotatedEXT_params
 
 struct glMatrixRotatefEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLfloat angle;
     GLfloat x;
@@ -11218,6 +12769,7 @@ struct glMatrixRotatefEXT_params
 
 struct glMatrixScaledEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLdouble x;
     GLdouble y;
@@ -11226,6 +12778,7 @@ struct glMatrixScaledEXT_params
 
 struct glMatrixScalefEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLfloat x;
     GLfloat y;
@@ -11234,6 +12787,7 @@ struct glMatrixScalefEXT_params
 
 struct glMatrixTranslatedEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLdouble x;
     GLdouble y;
@@ -11242,6 +12796,7 @@ struct glMatrixTranslatedEXT_params
 
 struct glMatrixTranslatefEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLfloat x;
     GLfloat y;
@@ -11250,31 +12805,37 @@ struct glMatrixTranslatefEXT_params
 
 struct glMaxShaderCompilerThreadsARB_params
 {
+    TEB *teb;
     GLuint count;
 };
 
 struct glMaxShaderCompilerThreadsKHR_params
 {
+    TEB *teb;
     GLuint count;
 };
 
 struct glMemoryBarrier_params
 {
+    TEB *teb;
     GLbitfield barriers;
 };
 
 struct glMemoryBarrierByRegion_params
 {
+    TEB *teb;
     GLbitfield barriers;
 };
 
 struct glMemoryBarrierEXT_params
 {
+    TEB *teb;
     GLbitfield barriers;
 };
 
 struct glMemoryObjectParameterivEXT_params
 {
+    TEB *teb;
     GLuint memoryObject;
     GLenum pname;
     const GLint *params;
@@ -11282,16 +12843,19 @@ struct glMemoryObjectParameterivEXT_params
 
 struct glMinSampleShading_params
 {
+    TEB *teb;
     GLfloat value;
 };
 
 struct glMinSampleShadingARB_params
 {
+    TEB *teb;
     GLfloat value;
 };
 
 struct glMinmax_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLboolean sink;
@@ -11299,6 +12863,7 @@ struct glMinmax_params
 
 struct glMinmaxEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLboolean sink;
@@ -11306,36 +12871,43 @@ struct glMinmaxEXT_params
 
 struct glMultMatrixxOES_params
 {
+    TEB *teb;
     const GLfixed *m;
 };
 
 struct glMultTransposeMatrixd_params
 {
+    TEB *teb;
     const GLdouble *m;
 };
 
 struct glMultTransposeMatrixdARB_params
 {
+    TEB *teb;
     const GLdouble *m;
 };
 
 struct glMultTransposeMatrixf_params
 {
+    TEB *teb;
     const GLfloat *m;
 };
 
 struct glMultTransposeMatrixfARB_params
 {
+    TEB *teb;
     const GLfloat *m;
 };
 
 struct glMultTransposeMatrixxOES_params
 {
+    TEB *teb;
     const GLfixed *m;
 };
 
 struct glMultiDrawArrays_params
 {
+    TEB *teb;
     GLenum mode;
     const GLint *first;
     const GLsizei *count;
@@ -11344,6 +12916,7 @@ struct glMultiDrawArrays_params
 
 struct glMultiDrawArraysEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLint *first;
     const GLsizei *count;
@@ -11352,6 +12925,7 @@ struct glMultiDrawArraysEXT_params
 
 struct glMultiDrawArraysIndirect_params
 {
+    TEB *teb;
     GLenum mode;
     const void *indirect;
     GLsizei drawcount;
@@ -11360,6 +12934,7 @@ struct glMultiDrawArraysIndirect_params
 
 struct glMultiDrawArraysIndirectAMD_params
 {
+    TEB *teb;
     GLenum mode;
     const void *indirect;
     GLsizei primcount;
@@ -11368,6 +12943,7 @@ struct glMultiDrawArraysIndirectAMD_params
 
 struct glMultiDrawArraysIndirectBindlessCountNV_params
 {
+    TEB *teb;
     GLenum mode;
     const void *indirect;
     GLsizei drawCount;
@@ -11378,6 +12954,7 @@ struct glMultiDrawArraysIndirectBindlessCountNV_params
 
 struct glMultiDrawArraysIndirectBindlessNV_params
 {
+    TEB *teb;
     GLenum mode;
     const void *indirect;
     GLsizei drawCount;
@@ -11387,6 +12964,7 @@ struct glMultiDrawArraysIndirectBindlessNV_params
 
 struct glMultiDrawArraysIndirectCount_params
 {
+    TEB *teb;
     GLenum mode;
     const void *indirect;
     GLintptr drawcount;
@@ -11396,6 +12974,7 @@ struct glMultiDrawArraysIndirectCount_params
 
 struct glMultiDrawArraysIndirectCountARB_params
 {
+    TEB *teb;
     GLenum mode;
     const void *indirect;
     GLintptr drawcount;
@@ -11405,6 +12984,7 @@ struct glMultiDrawArraysIndirectCountARB_params
 
 struct glMultiDrawElementArrayAPPLE_params
 {
+    TEB *teb;
     GLenum mode;
     const GLint *first;
     const GLsizei *count;
@@ -11413,6 +12993,7 @@ struct glMultiDrawElementArrayAPPLE_params
 
 struct glMultiDrawElements_params
 {
+    TEB *teb;
     GLenum mode;
     const GLsizei *count;
     GLenum type;
@@ -11422,6 +13003,7 @@ struct glMultiDrawElements_params
 
 struct glMultiDrawElementsBaseVertex_params
 {
+    TEB *teb;
     GLenum mode;
     const GLsizei *count;
     GLenum type;
@@ -11432,6 +13014,7 @@ struct glMultiDrawElementsBaseVertex_params
 
 struct glMultiDrawElementsEXT_params
 {
+    TEB *teb;
     GLenum mode;
     const GLsizei *count;
     GLenum type;
@@ -11441,6 +13024,7 @@ struct glMultiDrawElementsEXT_params
 
 struct glMultiDrawElementsIndirect_params
 {
+    TEB *teb;
     GLenum mode;
     GLenum type;
     const void *indirect;
@@ -11450,6 +13034,7 @@ struct glMultiDrawElementsIndirect_params
 
 struct glMultiDrawElementsIndirectAMD_params
 {
+    TEB *teb;
     GLenum mode;
     GLenum type;
     const void *indirect;
@@ -11459,6 +13044,7 @@ struct glMultiDrawElementsIndirectAMD_params
 
 struct glMultiDrawElementsIndirectBindlessCountNV_params
 {
+    TEB *teb;
     GLenum mode;
     GLenum type;
     const void *indirect;
@@ -11470,6 +13056,7 @@ struct glMultiDrawElementsIndirectBindlessCountNV_params
 
 struct glMultiDrawElementsIndirectBindlessNV_params
 {
+    TEB *teb;
     GLenum mode;
     GLenum type;
     const void *indirect;
@@ -11480,6 +13067,7 @@ struct glMultiDrawElementsIndirectBindlessNV_params
 
 struct glMultiDrawElementsIndirectCount_params
 {
+    TEB *teb;
     GLenum mode;
     GLenum type;
     const void *indirect;
@@ -11490,6 +13078,7 @@ struct glMultiDrawElementsIndirectCount_params
 
 struct glMultiDrawElementsIndirectCountARB_params
 {
+    TEB *teb;
     GLenum mode;
     GLenum type;
     const void *indirect;
@@ -11500,6 +13089,7 @@ struct glMultiDrawElementsIndirectCountARB_params
 
 struct glMultiDrawMeshTasksIndirectCountNV_params
 {
+    TEB *teb;
     GLintptr indirect;
     GLintptr drawcount;
     GLsizei maxdrawcount;
@@ -11508,6 +13098,7 @@ struct glMultiDrawMeshTasksIndirectCountNV_params
 
 struct glMultiDrawMeshTasksIndirectNV_params
 {
+    TEB *teb;
     GLintptr indirect;
     GLsizei drawcount;
     GLsizei stride;
@@ -11515,6 +13106,7 @@ struct glMultiDrawMeshTasksIndirectNV_params
 
 struct glMultiDrawRangeElementArrayAPPLE_params
 {
+    TEB *teb;
     GLenum mode;
     GLuint start;
     GLuint end;
@@ -11525,6 +13117,7 @@ struct glMultiDrawRangeElementArrayAPPLE_params
 
 struct glMultiModeDrawArraysIBM_params
 {
+    TEB *teb;
     const GLenum *mode;
     const GLint *first;
     const GLsizei *count;
@@ -11534,6 +13127,7 @@ struct glMultiModeDrawArraysIBM_params
 
 struct glMultiModeDrawElementsIBM_params
 {
+    TEB *teb;
     const GLenum *mode;
     const GLsizei *count;
     GLenum type;
@@ -11544,6 +13138,7 @@ struct glMultiModeDrawElementsIBM_params
 
 struct glMultiTexBufferEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum internalformat;
@@ -11552,186 +13147,217 @@ struct glMultiTexBufferEXT_params
 
 struct glMultiTexCoord1bOES_params
 {
+    TEB *teb;
     GLenum texture;
     GLbyte s;
 };
 
 struct glMultiTexCoord1bvOES_params
 {
+    TEB *teb;
     GLenum texture;
     const GLbyte *coords;
 };
 
 struct glMultiTexCoord1d_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
 };
 
 struct glMultiTexCoord1dARB_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
 };
 
 struct glMultiTexCoord1dSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
 };
 
 struct glMultiTexCoord1dv_params
 {
+    TEB *teb;
     GLenum target;
     const GLdouble *v;
 };
 
 struct glMultiTexCoord1dvARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLdouble *v;
 };
 
 struct glMultiTexCoord1dvSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble * v;
 };
 
 struct glMultiTexCoord1f_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
 };
 
 struct glMultiTexCoord1fARB_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
 };
 
 struct glMultiTexCoord1fSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
 };
 
 struct glMultiTexCoord1fv_params
 {
+    TEB *teb;
     GLenum target;
     const GLfloat *v;
 };
 
 struct glMultiTexCoord1fvARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLfloat *v;
 };
 
 struct glMultiTexCoord1fvSGIS_params
 {
+    TEB *teb;
     GLenum target;
     const GLfloat * v;
 };
 
 struct glMultiTexCoord1hNV_params
 {
+    TEB *teb;
     GLenum target;
     GLhalfNV s;
 };
 
 struct glMultiTexCoord1hvNV_params
 {
+    TEB *teb;
     GLenum target;
     const GLhalfNV *v;
 };
 
 struct glMultiTexCoord1i_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
 };
 
 struct glMultiTexCoord1iARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
 };
 
 struct glMultiTexCoord1iSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
 };
 
 struct glMultiTexCoord1iv_params
 {
+    TEB *teb;
     GLenum target;
     const GLint *v;
 };
 
 struct glMultiTexCoord1ivARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLint *v;
 };
 
 struct glMultiTexCoord1ivSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint * v;
 };
 
 struct glMultiTexCoord1s_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
 };
 
 struct glMultiTexCoord1sARB_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
 };
 
 struct glMultiTexCoord1sSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
 };
 
 struct glMultiTexCoord1sv_params
 {
+    TEB *teb;
     GLenum target;
     const GLshort *v;
 };
 
 struct glMultiTexCoord1svARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLshort *v;
 };
 
 struct glMultiTexCoord1svSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLshort * v;
 };
 
 struct glMultiTexCoord1xOES_params
 {
+    TEB *teb;
     GLenum texture;
     GLfixed s;
 };
 
 struct glMultiTexCoord1xvOES_params
 {
+    TEB *teb;
     GLenum texture;
     const GLfixed *coords;
 };
 
 struct glMultiTexCoord2bOES_params
 {
+    TEB *teb;
     GLenum texture;
     GLbyte s;
     GLbyte t;
@@ -11739,12 +13365,14 @@ struct glMultiTexCoord2bOES_params
 
 struct glMultiTexCoord2bvOES_params
 {
+    TEB *teb;
     GLenum texture;
     const GLbyte *coords;
 };
 
 struct glMultiTexCoord2d_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
     GLdouble t;
@@ -11752,6 +13380,7 @@ struct glMultiTexCoord2d_params
 
 struct glMultiTexCoord2dARB_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
     GLdouble t;
@@ -11759,6 +13388,7 @@ struct glMultiTexCoord2dARB_params
 
 struct glMultiTexCoord2dSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
     GLdouble t;
@@ -11766,24 +13396,28 @@ struct glMultiTexCoord2dSGIS_params
 
 struct glMultiTexCoord2dv_params
 {
+    TEB *teb;
     GLenum target;
     const GLdouble *v;
 };
 
 struct glMultiTexCoord2dvARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLdouble *v;
 };
 
 struct glMultiTexCoord2dvSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble * v;
 };
 
 struct glMultiTexCoord2f_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -11791,6 +13425,7 @@ struct glMultiTexCoord2f_params
 
 struct glMultiTexCoord2fARB_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -11798,6 +13433,7 @@ struct glMultiTexCoord2fARB_params
 
 struct glMultiTexCoord2fSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -11805,24 +13441,28 @@ struct glMultiTexCoord2fSGIS_params
 
 struct glMultiTexCoord2fv_params
 {
+    TEB *teb;
     GLenum target;
     const GLfloat *v;
 };
 
 struct glMultiTexCoord2fvARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLfloat *v;
 };
 
 struct glMultiTexCoord2fvSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat * v;
 };
 
 struct glMultiTexCoord2hNV_params
 {
+    TEB *teb;
     GLenum target;
     GLhalfNV s;
     GLhalfNV t;
@@ -11830,12 +13470,14 @@ struct glMultiTexCoord2hNV_params
 
 struct glMultiTexCoord2hvNV_params
 {
+    TEB *teb;
     GLenum target;
     const GLhalfNV *v;
 };
 
 struct glMultiTexCoord2i_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
     GLint t;
@@ -11843,6 +13485,7 @@ struct glMultiTexCoord2i_params
 
 struct glMultiTexCoord2iARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
     GLint t;
@@ -11850,6 +13493,7 @@ struct glMultiTexCoord2iARB_params
 
 struct glMultiTexCoord2iSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
     GLint t;
@@ -11857,24 +13501,28 @@ struct glMultiTexCoord2iSGIS_params
 
 struct glMultiTexCoord2iv_params
 {
+    TEB *teb;
     GLenum target;
     const GLint *v;
 };
 
 struct glMultiTexCoord2ivARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLint *v;
 };
 
 struct glMultiTexCoord2ivSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint * v;
 };
 
 struct glMultiTexCoord2s_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
     GLshort t;
@@ -11882,6 +13530,7 @@ struct glMultiTexCoord2s_params
 
 struct glMultiTexCoord2sARB_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
     GLshort t;
@@ -11889,6 +13538,7 @@ struct glMultiTexCoord2sARB_params
 
 struct glMultiTexCoord2sSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
     GLshort t;
@@ -11896,24 +13546,28 @@ struct glMultiTexCoord2sSGIS_params
 
 struct glMultiTexCoord2sv_params
 {
+    TEB *teb;
     GLenum target;
     const GLshort *v;
 };
 
 struct glMultiTexCoord2svARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLshort *v;
 };
 
 struct glMultiTexCoord2svSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLshort * v;
 };
 
 struct glMultiTexCoord2xOES_params
 {
+    TEB *teb;
     GLenum texture;
     GLfixed s;
     GLfixed t;
@@ -11921,12 +13575,14 @@ struct glMultiTexCoord2xOES_params
 
 struct glMultiTexCoord2xvOES_params
 {
+    TEB *teb;
     GLenum texture;
     const GLfixed *coords;
 };
 
 struct glMultiTexCoord3bOES_params
 {
+    TEB *teb;
     GLenum texture;
     GLbyte s;
     GLbyte t;
@@ -11935,12 +13591,14 @@ struct glMultiTexCoord3bOES_params
 
 struct glMultiTexCoord3bvOES_params
 {
+    TEB *teb;
     GLenum texture;
     const GLbyte *coords;
 };
 
 struct glMultiTexCoord3d_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
     GLdouble t;
@@ -11949,6 +13607,7 @@ struct glMultiTexCoord3d_params
 
 struct glMultiTexCoord3dARB_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
     GLdouble t;
@@ -11957,6 +13616,7 @@ struct glMultiTexCoord3dARB_params
 
 struct glMultiTexCoord3dSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
     GLdouble t;
@@ -11965,24 +13625,28 @@ struct glMultiTexCoord3dSGIS_params
 
 struct glMultiTexCoord3dv_params
 {
+    TEB *teb;
     GLenum target;
     const GLdouble *v;
 };
 
 struct glMultiTexCoord3dvARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLdouble *v;
 };
 
 struct glMultiTexCoord3dvSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble * v;
 };
 
 struct glMultiTexCoord3f_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -11991,6 +13655,7 @@ struct glMultiTexCoord3f_params
 
 struct glMultiTexCoord3fARB_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -11999,6 +13664,7 @@ struct glMultiTexCoord3fARB_params
 
 struct glMultiTexCoord3fSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -12007,24 +13673,28 @@ struct glMultiTexCoord3fSGIS_params
 
 struct glMultiTexCoord3fv_params
 {
+    TEB *teb;
     GLenum target;
     const GLfloat *v;
 };
 
 struct glMultiTexCoord3fvARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLfloat *v;
 };
 
 struct glMultiTexCoord3fvSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat * v;
 };
 
 struct glMultiTexCoord3hNV_params
 {
+    TEB *teb;
     GLenum target;
     GLhalfNV s;
     GLhalfNV t;
@@ -12033,12 +13703,14 @@ struct glMultiTexCoord3hNV_params
 
 struct glMultiTexCoord3hvNV_params
 {
+    TEB *teb;
     GLenum target;
     const GLhalfNV *v;
 };
 
 struct glMultiTexCoord3i_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
     GLint t;
@@ -12047,6 +13719,7 @@ struct glMultiTexCoord3i_params
 
 struct glMultiTexCoord3iARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
     GLint t;
@@ -12055,6 +13728,7 @@ struct glMultiTexCoord3iARB_params
 
 struct glMultiTexCoord3iSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
     GLint t;
@@ -12063,24 +13737,28 @@ struct glMultiTexCoord3iSGIS_params
 
 struct glMultiTexCoord3iv_params
 {
+    TEB *teb;
     GLenum target;
     const GLint *v;
 };
 
 struct glMultiTexCoord3ivARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLint *v;
 };
 
 struct glMultiTexCoord3ivSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint * v;
 };
 
 struct glMultiTexCoord3s_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
     GLshort t;
@@ -12089,6 +13767,7 @@ struct glMultiTexCoord3s_params
 
 struct glMultiTexCoord3sARB_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
     GLshort t;
@@ -12097,6 +13776,7 @@ struct glMultiTexCoord3sARB_params
 
 struct glMultiTexCoord3sSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
     GLshort t;
@@ -12105,24 +13785,28 @@ struct glMultiTexCoord3sSGIS_params
 
 struct glMultiTexCoord3sv_params
 {
+    TEB *teb;
     GLenum target;
     const GLshort *v;
 };
 
 struct glMultiTexCoord3svARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLshort *v;
 };
 
 struct glMultiTexCoord3svSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLshort * v;
 };
 
 struct glMultiTexCoord3xOES_params
 {
+    TEB *teb;
     GLenum texture;
     GLfixed s;
     GLfixed t;
@@ -12131,12 +13815,14 @@ struct glMultiTexCoord3xOES_params
 
 struct glMultiTexCoord3xvOES_params
 {
+    TEB *teb;
     GLenum texture;
     const GLfixed *coords;
 };
 
 struct glMultiTexCoord4bOES_params
 {
+    TEB *teb;
     GLenum texture;
     GLbyte s;
     GLbyte t;
@@ -12146,12 +13832,14 @@ struct glMultiTexCoord4bOES_params
 
 struct glMultiTexCoord4bvOES_params
 {
+    TEB *teb;
     GLenum texture;
     const GLbyte *coords;
 };
 
 struct glMultiTexCoord4d_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
     GLdouble t;
@@ -12161,6 +13849,7 @@ struct glMultiTexCoord4d_params
 
 struct glMultiTexCoord4dARB_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
     GLdouble t;
@@ -12170,6 +13859,7 @@ struct glMultiTexCoord4dARB_params
 
 struct glMultiTexCoord4dSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble s;
     GLdouble t;
@@ -12179,24 +13869,28 @@ struct glMultiTexCoord4dSGIS_params
 
 struct glMultiTexCoord4dv_params
 {
+    TEB *teb;
     GLenum target;
     const GLdouble *v;
 };
 
 struct glMultiTexCoord4dvARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLdouble *v;
 };
 
 struct glMultiTexCoord4dvSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLdouble * v;
 };
 
 struct glMultiTexCoord4f_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -12206,6 +13900,7 @@ struct glMultiTexCoord4f_params
 
 struct glMultiTexCoord4fARB_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -12215,6 +13910,7 @@ struct glMultiTexCoord4fARB_params
 
 struct glMultiTexCoord4fSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat s;
     GLfloat t;
@@ -12224,24 +13920,28 @@ struct glMultiTexCoord4fSGIS_params
 
 struct glMultiTexCoord4fv_params
 {
+    TEB *teb;
     GLenum target;
     const GLfloat *v;
 };
 
 struct glMultiTexCoord4fvARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLfloat *v;
 };
 
 struct glMultiTexCoord4fvSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLfloat * v;
 };
 
 struct glMultiTexCoord4hNV_params
 {
+    TEB *teb;
     GLenum target;
     GLhalfNV s;
     GLhalfNV t;
@@ -12251,12 +13951,14 @@ struct glMultiTexCoord4hNV_params
 
 struct glMultiTexCoord4hvNV_params
 {
+    TEB *teb;
     GLenum target;
     const GLhalfNV *v;
 };
 
 struct glMultiTexCoord4i_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
     GLint t;
@@ -12266,6 +13968,7 @@ struct glMultiTexCoord4i_params
 
 struct glMultiTexCoord4iARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
     GLint t;
@@ -12275,6 +13978,7 @@ struct glMultiTexCoord4iARB_params
 
 struct glMultiTexCoord4iSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint s;
     GLint t;
@@ -12284,24 +13988,28 @@ struct glMultiTexCoord4iSGIS_params
 
 struct glMultiTexCoord4iv_params
 {
+    TEB *teb;
     GLenum target;
     const GLint *v;
 };
 
 struct glMultiTexCoord4ivARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLint *v;
 };
 
 struct glMultiTexCoord4ivSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint * v;
 };
 
 struct glMultiTexCoord4s_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
     GLshort t;
@@ -12311,6 +14019,7 @@ struct glMultiTexCoord4s_params
 
 struct glMultiTexCoord4sARB_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
     GLshort t;
@@ -12320,6 +14029,7 @@ struct glMultiTexCoord4sARB_params
 
 struct glMultiTexCoord4sSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLshort s;
     GLshort t;
@@ -12329,24 +14039,28 @@ struct glMultiTexCoord4sSGIS_params
 
 struct glMultiTexCoord4sv_params
 {
+    TEB *teb;
     GLenum target;
     const GLshort *v;
 };
 
 struct glMultiTexCoord4svARB_params
 {
+    TEB *teb;
     GLenum target;
     const GLshort *v;
 };
 
 struct glMultiTexCoord4svSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLshort * v;
 };
 
 struct glMultiTexCoord4xOES_params
 {
+    TEB *teb;
     GLenum texture;
     GLfixed s;
     GLfixed t;
@@ -12356,12 +14070,14 @@ struct glMultiTexCoord4xOES_params
 
 struct glMultiTexCoord4xvOES_params
 {
+    TEB *teb;
     GLenum texture;
     const GLfixed *coords;
 };
 
 struct glMultiTexCoordP1ui_params
 {
+    TEB *teb;
     GLenum texture;
     GLenum type;
     GLuint coords;
@@ -12369,6 +14085,7 @@ struct glMultiTexCoordP1ui_params
 
 struct glMultiTexCoordP1uiv_params
 {
+    TEB *teb;
     GLenum texture;
     GLenum type;
     const GLuint *coords;
@@ -12376,6 +14093,7 @@ struct glMultiTexCoordP1uiv_params
 
 struct glMultiTexCoordP2ui_params
 {
+    TEB *teb;
     GLenum texture;
     GLenum type;
     GLuint coords;
@@ -12383,6 +14101,7 @@ struct glMultiTexCoordP2ui_params
 
 struct glMultiTexCoordP2uiv_params
 {
+    TEB *teb;
     GLenum texture;
     GLenum type;
     const GLuint *coords;
@@ -12390,6 +14109,7 @@ struct glMultiTexCoordP2uiv_params
 
 struct glMultiTexCoordP3ui_params
 {
+    TEB *teb;
     GLenum texture;
     GLenum type;
     GLuint coords;
@@ -12397,6 +14117,7 @@ struct glMultiTexCoordP3ui_params
 
 struct glMultiTexCoordP3uiv_params
 {
+    TEB *teb;
     GLenum texture;
     GLenum type;
     const GLuint *coords;
@@ -12404,6 +14125,7 @@ struct glMultiTexCoordP3uiv_params
 
 struct glMultiTexCoordP4ui_params
 {
+    TEB *teb;
     GLenum texture;
     GLenum type;
     GLuint coords;
@@ -12411,6 +14133,7 @@ struct glMultiTexCoordP4ui_params
 
 struct glMultiTexCoordP4uiv_params
 {
+    TEB *teb;
     GLenum texture;
     GLenum type;
     const GLuint *coords;
@@ -12418,6 +14141,7 @@ struct glMultiTexCoordP4uiv_params
 
 struct glMultiTexCoordPointerEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLint size;
     GLenum type;
@@ -12427,6 +14151,7 @@ struct glMultiTexCoordPointerEXT_params
 
 struct glMultiTexCoordPointerSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint size;
     GLenum type;
@@ -12436,6 +14161,7 @@ struct glMultiTexCoordPointerSGIS_params
 
 struct glMultiTexEnvfEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12444,6 +14170,7 @@ struct glMultiTexEnvfEXT_params
 
 struct glMultiTexEnvfvEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12452,6 +14179,7 @@ struct glMultiTexEnvfvEXT_params
 
 struct glMultiTexEnviEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12460,6 +14188,7 @@ struct glMultiTexEnviEXT_params
 
 struct glMultiTexEnvivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12468,6 +14197,7 @@ struct glMultiTexEnvivEXT_params
 
 struct glMultiTexGendEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum coord;
     GLenum pname;
@@ -12476,6 +14206,7 @@ struct glMultiTexGendEXT_params
 
 struct glMultiTexGendvEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum coord;
     GLenum pname;
@@ -12484,6 +14215,7 @@ struct glMultiTexGendvEXT_params
 
 struct glMultiTexGenfEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum coord;
     GLenum pname;
@@ -12492,6 +14224,7 @@ struct glMultiTexGenfEXT_params
 
 struct glMultiTexGenfvEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum coord;
     GLenum pname;
@@ -12500,6 +14233,7 @@ struct glMultiTexGenfvEXT_params
 
 struct glMultiTexGeniEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum coord;
     GLenum pname;
@@ -12508,6 +14242,7 @@ struct glMultiTexGeniEXT_params
 
 struct glMultiTexGenivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum coord;
     GLenum pname;
@@ -12516,6 +14251,7 @@ struct glMultiTexGenivEXT_params
 
 struct glMultiTexImage1DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -12529,6 +14265,7 @@ struct glMultiTexImage1DEXT_params
 
 struct glMultiTexImage2DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -12543,6 +14280,7 @@ struct glMultiTexImage2DEXT_params
 
 struct glMultiTexImage3DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -12558,6 +14296,7 @@ struct glMultiTexImage3DEXT_params
 
 struct glMultiTexParameterIivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12566,6 +14305,7 @@ struct glMultiTexParameterIivEXT_params
 
 struct glMultiTexParameterIuivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12574,6 +14314,7 @@ struct glMultiTexParameterIuivEXT_params
 
 struct glMultiTexParameterfEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12582,6 +14323,7 @@ struct glMultiTexParameterfEXT_params
 
 struct glMultiTexParameterfvEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12590,6 +14332,7 @@ struct glMultiTexParameterfvEXT_params
 
 struct glMultiTexParameteriEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12598,6 +14341,7 @@ struct glMultiTexParameteriEXT_params
 
 struct glMultiTexParameterivEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLenum pname;
@@ -12606,6 +14350,7 @@ struct glMultiTexParameterivEXT_params
 
 struct glMultiTexRenderbufferEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLuint renderbuffer;
@@ -12613,6 +14358,7 @@ struct glMultiTexRenderbufferEXT_params
 
 struct glMultiTexSubImage1DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -12625,6 +14371,7 @@ struct glMultiTexSubImage1DEXT_params
 
 struct glMultiTexSubImage2DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -12639,6 +14386,7 @@ struct glMultiTexSubImage2DEXT_params
 
 struct glMultiTexSubImage3DEXT_params
 {
+    TEB *teb;
     GLenum texunit;
     GLenum target;
     GLint level;
@@ -12655,10 +14403,12 @@ struct glMultiTexSubImage3DEXT_params
 
 struct glMulticastBarrierNV_params
 {
+    TEB *teb;
 };
 
 struct glMulticastBlitFramebufferNV_params
 {
+    TEB *teb;
     GLuint srcGpu;
     GLuint dstGpu;
     GLint srcX0;
@@ -12675,6 +14425,7 @@ struct glMulticastBlitFramebufferNV_params
 
 struct glMulticastBufferSubDataNV_params
 {
+    TEB *teb;
     GLbitfield gpuMask;
     GLuint buffer;
     GLintptr offset;
@@ -12684,6 +14435,7 @@ struct glMulticastBufferSubDataNV_params
 
 struct glMulticastCopyBufferSubDataNV_params
 {
+    TEB *teb;
     GLuint readGpu;
     GLbitfield writeGpuMask;
     GLuint readBuffer;
@@ -12695,6 +14447,7 @@ struct glMulticastCopyBufferSubDataNV_params
 
 struct glMulticastCopyImageSubDataNV_params
 {
+    TEB *teb;
     GLuint srcGpu;
     GLbitfield dstGpuMask;
     GLuint srcName;
@@ -12716,6 +14469,7 @@ struct glMulticastCopyImageSubDataNV_params
 
 struct glMulticastFramebufferSampleLocationsfvNV_params
 {
+    TEB *teb;
     GLuint gpu;
     GLuint framebuffer;
     GLuint start;
@@ -12725,6 +14479,7 @@ struct glMulticastFramebufferSampleLocationsfvNV_params
 
 struct glMulticastGetQueryObjecti64vNV_params
 {
+    TEB *teb;
     GLuint gpu;
     GLuint id;
     GLenum pname;
@@ -12733,6 +14488,7 @@ struct glMulticastGetQueryObjecti64vNV_params
 
 struct glMulticastGetQueryObjectivNV_params
 {
+    TEB *teb;
     GLuint gpu;
     GLuint id;
     GLenum pname;
@@ -12741,6 +14497,7 @@ struct glMulticastGetQueryObjectivNV_params
 
 struct glMulticastGetQueryObjectui64vNV_params
 {
+    TEB *teb;
     GLuint gpu;
     GLuint id;
     GLenum pname;
@@ -12749,6 +14506,7 @@ struct glMulticastGetQueryObjectui64vNV_params
 
 struct glMulticastGetQueryObjectuivNV_params
 {
+    TEB *teb;
     GLuint gpu;
     GLuint id;
     GLenum pname;
@@ -12757,6 +14515,7 @@ struct glMulticastGetQueryObjectuivNV_params
 
 struct glMulticastScissorArrayvNVX_params
 {
+    TEB *teb;
     GLuint gpu;
     GLuint first;
     GLsizei count;
@@ -12765,6 +14524,7 @@ struct glMulticastScissorArrayvNVX_params
 
 struct glMulticastViewportArrayvNVX_params
 {
+    TEB *teb;
     GLuint gpu;
     GLuint first;
     GLsizei count;
@@ -12773,6 +14533,7 @@ struct glMulticastViewportArrayvNVX_params
 
 struct glMulticastViewportPositionWScaleNVX_params
 {
+    TEB *teb;
     GLuint gpu;
     GLuint index;
     GLfloat xcoeff;
@@ -12781,12 +14542,14 @@ struct glMulticastViewportPositionWScaleNVX_params
 
 struct glMulticastWaitSyncNV_params
 {
+    TEB *teb;
     GLuint signalGpu;
     GLbitfield waitGpuMask;
 };
 
 struct glNamedBufferAttachMemoryNV_params
 {
+    TEB *teb;
     GLuint buffer;
     GLuint memory;
     GLuint64 offset;
@@ -12794,6 +14557,7 @@ struct glNamedBufferAttachMemoryNV_params
 
 struct glNamedBufferData_params
 {
+    TEB *teb;
     GLuint buffer;
     GLsizeiptr size;
     const void *data;
@@ -12802,6 +14566,7 @@ struct glNamedBufferData_params
 
 struct glNamedBufferDataEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLsizeiptr size;
     const void *data;
@@ -12810,6 +14575,7 @@ struct glNamedBufferDataEXT_params
 
 struct glNamedBufferPageCommitmentARB_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr size;
@@ -12818,6 +14584,7 @@ struct glNamedBufferPageCommitmentARB_params
 
 struct glNamedBufferPageCommitmentEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr size;
@@ -12826,6 +14593,7 @@ struct glNamedBufferPageCommitmentEXT_params
 
 struct glNamedBufferStorage_params
 {
+    TEB *teb;
     GLuint buffer;
     GLsizeiptr size;
     const void *data;
@@ -12834,6 +14602,7 @@ struct glNamedBufferStorage_params
 
 struct glNamedBufferStorageEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLsizeiptr size;
     const void *data;
@@ -12842,6 +14611,7 @@ struct glNamedBufferStorageEXT_params
 
 struct glNamedBufferStorageExternalEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr size;
@@ -12851,6 +14621,7 @@ struct glNamedBufferStorageExternalEXT_params
 
 struct glNamedBufferStorageMemEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLsizeiptr size;
     GLuint memory;
@@ -12859,6 +14630,7 @@ struct glNamedBufferStorageMemEXT_params
 
 struct glNamedBufferSubData_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr size;
@@ -12867,6 +14639,7 @@ struct glNamedBufferSubData_params
 
 struct glNamedBufferSubDataEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLintptr offset;
     GLsizeiptr size;
@@ -12875,6 +14648,7 @@ struct glNamedBufferSubDataEXT_params
 
 struct glNamedCopyBufferSubDataEXT_params
 {
+    TEB *teb;
     GLuint readBuffer;
     GLuint writeBuffer;
     GLintptr readOffset;
@@ -12884,12 +14658,14 @@ struct glNamedCopyBufferSubDataEXT_params
 
 struct glNamedFramebufferDrawBuffer_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum buf;
 };
 
 struct glNamedFramebufferDrawBuffers_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLsizei n;
     const GLenum *bufs;
@@ -12897,6 +14673,7 @@ struct glNamedFramebufferDrawBuffers_params
 
 struct glNamedFramebufferParameteri_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum pname;
     GLint param;
@@ -12904,6 +14681,7 @@ struct glNamedFramebufferParameteri_params
 
 struct glNamedFramebufferParameteriEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum pname;
     GLint param;
@@ -12911,12 +14689,14 @@ struct glNamedFramebufferParameteriEXT_params
 
 struct glNamedFramebufferReadBuffer_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum src;
 };
 
 struct glNamedFramebufferRenderbuffer_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLenum renderbuffertarget;
@@ -12925,6 +14705,7 @@ struct glNamedFramebufferRenderbuffer_params
 
 struct glNamedFramebufferRenderbufferEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLenum renderbuffertarget;
@@ -12933,6 +14714,7 @@ struct glNamedFramebufferRenderbufferEXT_params
 
 struct glNamedFramebufferSampleLocationsfvARB_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLuint start;
     GLsizei count;
@@ -12941,6 +14723,7 @@ struct glNamedFramebufferSampleLocationsfvARB_params
 
 struct glNamedFramebufferSampleLocationsfvNV_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLuint start;
     GLsizei count;
@@ -12949,6 +14732,7 @@ struct glNamedFramebufferSampleLocationsfvNV_params
 
 struct glNamedFramebufferSamplePositionsfvAMD_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLuint numsamples;
     GLuint pixelindex;
@@ -12957,6 +14741,7 @@ struct glNamedFramebufferSamplePositionsfvAMD_params
 
 struct glNamedFramebufferTexture_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLuint texture;
@@ -12965,6 +14750,7 @@ struct glNamedFramebufferTexture_params
 
 struct glNamedFramebufferTexture1DEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLenum textarget;
@@ -12974,6 +14760,7 @@ struct glNamedFramebufferTexture1DEXT_params
 
 struct glNamedFramebufferTexture2DEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLenum textarget;
@@ -12983,6 +14770,7 @@ struct glNamedFramebufferTexture2DEXT_params
 
 struct glNamedFramebufferTexture3DEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLenum textarget;
@@ -12993,6 +14781,7 @@ struct glNamedFramebufferTexture3DEXT_params
 
 struct glNamedFramebufferTextureEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLuint texture;
@@ -13001,6 +14790,7 @@ struct glNamedFramebufferTextureEXT_params
 
 struct glNamedFramebufferTextureFaceEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLuint texture;
@@ -13010,6 +14800,7 @@ struct glNamedFramebufferTextureFaceEXT_params
 
 struct glNamedFramebufferTextureLayer_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLuint texture;
@@ -13019,6 +14810,7 @@ struct glNamedFramebufferTextureLayer_params
 
 struct glNamedFramebufferTextureLayerEXT_params
 {
+    TEB *teb;
     GLuint framebuffer;
     GLenum attachment;
     GLuint texture;
@@ -13028,6 +14820,7 @@ struct glNamedFramebufferTextureLayerEXT_params
 
 struct glNamedProgramLocalParameter4dEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13039,6 +14832,7 @@ struct glNamedProgramLocalParameter4dEXT_params
 
 struct glNamedProgramLocalParameter4dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13047,6 +14841,7 @@ struct glNamedProgramLocalParameter4dvEXT_params
 
 struct glNamedProgramLocalParameter4fEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13058,6 +14853,7 @@ struct glNamedProgramLocalParameter4fEXT_params
 
 struct glNamedProgramLocalParameter4fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13066,6 +14862,7 @@ struct glNamedProgramLocalParameter4fvEXT_params
 
 struct glNamedProgramLocalParameterI4iEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13077,6 +14874,7 @@ struct glNamedProgramLocalParameterI4iEXT_params
 
 struct glNamedProgramLocalParameterI4ivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13085,6 +14883,7 @@ struct glNamedProgramLocalParameterI4ivEXT_params
 
 struct glNamedProgramLocalParameterI4uiEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13096,6 +14895,7 @@ struct glNamedProgramLocalParameterI4uiEXT_params
 
 struct glNamedProgramLocalParameterI4uivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13104,6 +14904,7 @@ struct glNamedProgramLocalParameterI4uivEXT_params
 
 struct glNamedProgramLocalParameters4fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13113,6 +14914,7 @@ struct glNamedProgramLocalParameters4fvEXT_params
 
 struct glNamedProgramLocalParametersI4ivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13122,6 +14924,7 @@ struct glNamedProgramLocalParametersI4ivEXT_params
 
 struct glNamedProgramLocalParametersI4uivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLuint index;
@@ -13131,6 +14934,7 @@ struct glNamedProgramLocalParametersI4uivEXT_params
 
 struct glNamedProgramStringEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum target;
     GLenum format;
@@ -13140,6 +14944,7 @@ struct glNamedProgramStringEXT_params
 
 struct glNamedRenderbufferStorage_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLenum internalformat;
     GLsizei width;
@@ -13148,6 +14953,7 @@ struct glNamedRenderbufferStorage_params
 
 struct glNamedRenderbufferStorageEXT_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLenum internalformat;
     GLsizei width;
@@ -13156,6 +14962,7 @@ struct glNamedRenderbufferStorageEXT_params
 
 struct glNamedRenderbufferStorageMultisample_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLsizei samples;
     GLenum internalformat;
@@ -13165,6 +14972,7 @@ struct glNamedRenderbufferStorageMultisample_params
 
 struct glNamedRenderbufferStorageMultisampleAdvancedAMD_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLsizei samples;
     GLsizei storageSamples;
@@ -13175,6 +14983,7 @@ struct glNamedRenderbufferStorageMultisampleAdvancedAMD_params
 
 struct glNamedRenderbufferStorageMultisampleCoverageEXT_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLsizei coverageSamples;
     GLsizei colorSamples;
@@ -13185,6 +14994,7 @@ struct glNamedRenderbufferStorageMultisampleCoverageEXT_params
 
 struct glNamedRenderbufferStorageMultisampleEXT_params
 {
+    TEB *teb;
     GLuint renderbuffer;
     GLsizei samples;
     GLenum internalformat;
@@ -13194,6 +15004,7 @@ struct glNamedRenderbufferStorageMultisampleEXT_params
 
 struct glNamedStringARB_params
 {
+    TEB *teb;
     GLenum type;
     GLint namelen;
     const GLchar *name;
@@ -13203,12 +15014,14 @@ struct glNamedStringARB_params
 
 struct glNewBufferRegion_params
 {
+    TEB *teb;
     GLenum type;
     GLuint ret;
 };
 
 struct glNewObjectBufferATI_params
 {
+    TEB *teb;
     GLsizei size;
     const void *pointer;
     GLenum usage;
@@ -13217,6 +15030,7 @@ struct glNewObjectBufferATI_params
 
 struct glNormal3fVertex3fSUN_params
 {
+    TEB *teb;
     GLfloat nx;
     GLfloat ny;
     GLfloat nz;
@@ -13227,12 +15041,14 @@ struct glNormal3fVertex3fSUN_params
 
 struct glNormal3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLfloat *n;
     const GLfloat *v;
 };
 
 struct glNormal3hNV_params
 {
+    TEB *teb;
     GLhalfNV nx;
     GLhalfNV ny;
     GLhalfNV nz;
@@ -13240,11 +15056,13 @@ struct glNormal3hNV_params
 
 struct glNormal3hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glNormal3xOES_params
 {
+    TEB *teb;
     GLfixed nx;
     GLfixed ny;
     GLfixed nz;
@@ -13252,29 +15070,34 @@ struct glNormal3xOES_params
 
 struct glNormal3xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glNormalFormatNV_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
 };
 
 struct glNormalP3ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint coords;
 };
 
 struct glNormalP3uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *coords;
 };
 
 struct glNormalPointerEXT_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
     GLsizei count;
@@ -13283,6 +15106,7 @@ struct glNormalPointerEXT_params
 
 struct glNormalPointerListIBM_params
 {
+    TEB *teb;
     GLenum type;
     GLint stride;
     const void **pointer;
@@ -13291,12 +15115,14 @@ struct glNormalPointerListIBM_params
 
 struct glNormalPointervINTEL_params
 {
+    TEB *teb;
     GLenum type;
     const void **pointer;
 };
 
 struct glNormalStream3bATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLbyte nx;
     GLbyte ny;
@@ -13305,12 +15131,14 @@ struct glNormalStream3bATI_params
 
 struct glNormalStream3bvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLbyte *coords;
 };
 
 struct glNormalStream3dATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLdouble nx;
     GLdouble ny;
@@ -13319,12 +15147,14 @@ struct glNormalStream3dATI_params
 
 struct glNormalStream3dvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLdouble *coords;
 };
 
 struct glNormalStream3fATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLfloat nx;
     GLfloat ny;
@@ -13333,12 +15163,14 @@ struct glNormalStream3fATI_params
 
 struct glNormalStream3fvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLfloat *coords;
 };
 
 struct glNormalStream3iATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLint nx;
     GLint ny;
@@ -13347,12 +15179,14 @@ struct glNormalStream3iATI_params
 
 struct glNormalStream3ivATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLint *coords;
 };
 
 struct glNormalStream3sATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLshort nx;
     GLshort ny;
@@ -13361,12 +15195,14 @@ struct glNormalStream3sATI_params
 
 struct glNormalStream3svATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLshort *coords;
 };
 
 struct glObjectLabel_params
 {
+    TEB *teb;
     GLenum identifier;
     GLuint name;
     GLsizei length;
@@ -13375,6 +15211,7 @@ struct glObjectLabel_params
 
 struct glObjectPtrLabel_params
 {
+    TEB *teb;
     const void *ptr;
     GLsizei length;
     const GLchar *label;
@@ -13382,6 +15219,7 @@ struct glObjectPtrLabel_params
 
 struct glObjectPurgeableAPPLE_params
 {
+    TEB *teb;
     GLenum objectType;
     GLuint name;
     GLenum option;
@@ -13390,6 +15228,7 @@ struct glObjectPurgeableAPPLE_params
 
 struct glObjectUnpurgeableAPPLE_params
 {
+    TEB *teb;
     GLenum objectType;
     GLuint name;
     GLenum option;
@@ -13398,6 +15237,7 @@ struct glObjectUnpurgeableAPPLE_params
 
 struct glOrthofOES_params
 {
+    TEB *teb;
     GLfloat l;
     GLfloat r;
     GLfloat b;
@@ -13408,6 +15248,7 @@ struct glOrthofOES_params
 
 struct glOrthoxOES_params
 {
+    TEB *teb;
     GLfixed l;
     GLfixed r;
     GLfixed b;
@@ -13418,18 +15259,21 @@ struct glOrthoxOES_params
 
 struct glPNTrianglesfATI_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glPNTrianglesiATI_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glPassTexCoordATI_params
 {
+    TEB *teb;
     GLuint dst;
     GLuint coord;
     GLenum swizzle;
@@ -13437,23 +15281,27 @@ struct glPassTexCoordATI_params
 
 struct glPassThroughxOES_params
 {
+    TEB *teb;
     GLfixed token;
 };
 
 struct glPatchParameterfv_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *values;
 };
 
 struct glPatchParameteri_params
 {
+    TEB *teb;
     GLenum pname;
     GLint value;
 };
 
 struct glPathColorGenNV_params
 {
+    TEB *teb;
     GLenum color;
     GLenum genMode;
     GLenum colorFormat;
@@ -13462,6 +15310,7 @@ struct glPathColorGenNV_params
 
 struct glPathCommandsNV_params
 {
+    TEB *teb;
     GLuint path;
     GLsizei numCommands;
     const GLubyte *commands;
@@ -13472,6 +15321,7 @@ struct glPathCommandsNV_params
 
 struct glPathCoordsNV_params
 {
+    TEB *teb;
     GLuint path;
     GLsizei numCoords;
     GLenum coordType;
@@ -13480,11 +15330,13 @@ struct glPathCoordsNV_params
 
 struct glPathCoverDepthFuncNV_params
 {
+    TEB *teb;
     GLenum func;
 };
 
 struct glPathDashArrayNV_params
 {
+    TEB *teb;
     GLuint path;
     GLsizei dashCount;
     const GLfloat *dashArray;
@@ -13492,11 +15344,13 @@ struct glPathDashArrayNV_params
 
 struct glPathFogGenNV_params
 {
+    TEB *teb;
     GLenum genMode;
 };
 
 struct glPathGlyphIndexArrayNV_params
 {
+    TEB *teb;
     GLuint firstPathName;
     GLenum fontTarget;
     const void *fontName;
@@ -13510,6 +15364,7 @@ struct glPathGlyphIndexArrayNV_params
 
 struct glPathGlyphIndexRangeNV_params
 {
+    TEB *teb;
     GLenum fontTarget;
     const void *fontName;
     GLbitfield fontStyle;
@@ -13521,6 +15376,7 @@ struct glPathGlyphIndexRangeNV_params
 
 struct glPathGlyphRangeNV_params
 {
+    TEB *teb;
     GLuint firstPathName;
     GLenum fontTarget;
     const void *fontName;
@@ -13534,6 +15390,7 @@ struct glPathGlyphRangeNV_params
 
 struct glPathGlyphsNV_params
 {
+    TEB *teb;
     GLuint firstPathName;
     GLenum fontTarget;
     const void *fontName;
@@ -13548,6 +15405,7 @@ struct glPathGlyphsNV_params
 
 struct glPathMemoryGlyphIndexArrayNV_params
 {
+    TEB *teb;
     GLuint firstPathName;
     GLenum fontTarget;
     GLsizeiptr fontSize;
@@ -13562,6 +15420,7 @@ struct glPathMemoryGlyphIndexArrayNV_params
 
 struct glPathParameterfNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum pname;
     GLfloat value;
@@ -13569,6 +15428,7 @@ struct glPathParameterfNV_params
 
 struct glPathParameterfvNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum pname;
     const GLfloat *value;
@@ -13576,6 +15436,7 @@ struct glPathParameterfvNV_params
 
 struct glPathParameteriNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum pname;
     GLint value;
@@ -13583,6 +15444,7 @@ struct glPathParameteriNV_params
 
 struct glPathParameterivNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum pname;
     const GLint *value;
@@ -13590,12 +15452,14 @@ struct glPathParameterivNV_params
 
 struct glPathStencilDepthOffsetNV_params
 {
+    TEB *teb;
     GLfloat factor;
     GLfloat units;
 };
 
 struct glPathStencilFuncNV_params
 {
+    TEB *teb;
     GLenum func;
     GLint ref;
     GLuint mask;
@@ -13603,6 +15467,7 @@ struct glPathStencilFuncNV_params
 
 struct glPathStringNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum format;
     GLsizei length;
@@ -13611,6 +15476,7 @@ struct glPathStringNV_params
 
 struct glPathSubCommandsNV_params
 {
+    TEB *teb;
     GLuint path;
     GLsizei commandStart;
     GLsizei commandsToDelete;
@@ -13623,6 +15489,7 @@ struct glPathSubCommandsNV_params
 
 struct glPathSubCoordsNV_params
 {
+    TEB *teb;
     GLuint path;
     GLsizei coordStart;
     GLsizei numCoords;
@@ -13632,6 +15499,7 @@ struct glPathSubCoordsNV_params
 
 struct glPathTexGenNV_params
 {
+    TEB *teb;
     GLenum texCoordSet;
     GLenum genMode;
     GLint components;
@@ -13640,14 +15508,17 @@ struct glPathTexGenNV_params
 
 struct glPauseTransformFeedback_params
 {
+    TEB *teb;
 };
 
 struct glPauseTransformFeedbackNV_params
 {
+    TEB *teb;
 };
 
 struct glPixelDataRangeNV_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei length;
     const void *pointer;
@@ -13655,6 +15526,7 @@ struct glPixelDataRangeNV_params
 
 struct glPixelMapx_params
 {
+    TEB *teb;
     GLenum map;
     GLint size;
     const GLfixed *values;
@@ -13662,47 +15534,55 @@ struct glPixelMapx_params
 
 struct glPixelStorex_params
 {
+    TEB *teb;
     GLenum pname;
     GLfixed param;
 };
 
 struct glPixelTexGenParameterfSGIS_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glPixelTexGenParameterfvSGIS_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glPixelTexGenParameteriSGIS_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glPixelTexGenParameterivSGIS_params
 {
+    TEB *teb;
     GLenum pname;
     const GLint *params;
 };
 
 struct glPixelTexGenSGIX_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glPixelTransferxOES_params
 {
+    TEB *teb;
     GLenum pname;
     GLfixed param;
 };
 
 struct glPixelTransformParameterfEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfloat param;
@@ -13710,6 +15590,7 @@ struct glPixelTransformParameterfEXT_params
 
 struct glPixelTransformParameterfvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfloat *params;
@@ -13717,6 +15598,7 @@ struct glPixelTransformParameterfvEXT_params
 
 struct glPixelTransformParameteriEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLint param;
@@ -13724,6 +15606,7 @@ struct glPixelTransformParameteriEXT_params
 
 struct glPixelTransformParameterivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -13731,12 +15614,14 @@ struct glPixelTransformParameterivEXT_params
 
 struct glPixelZoomxOES_params
 {
+    TEB *teb;
     GLfixed xfactor;
     GLfixed yfactor;
 };
 
 struct glPointAlongPathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLsizei startSegment;
     GLsizei numSegments;
@@ -13750,101 +15635,118 @@ struct glPointAlongPathNV_params
 
 struct glPointParameterf_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glPointParameterfARB_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glPointParameterfEXT_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glPointParameterfSGIS_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glPointParameterfv_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glPointParameterfvARB_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glPointParameterfvEXT_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glPointParameterfvSGIS_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glPointParameteri_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glPointParameteriNV_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glPointParameteriv_params
 {
+    TEB *teb;
     GLenum pname;
     const GLint *params;
 };
 
 struct glPointParameterivNV_params
 {
+    TEB *teb;
     GLenum pname;
     const GLint *params;
 };
 
 struct glPointParameterxvOES_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfixed *params;
 };
 
 struct glPointSizexOES_params
 {
+    TEB *teb;
     GLfixed size;
 };
 
 struct glPollAsyncSGIX_params
 {
+    TEB *teb;
     GLuint *markerp;
     GLint ret;
 };
 
 struct glPollInstrumentsSGIX_params
 {
+    TEB *teb;
     GLint *marker_p;
     GLint ret;
 };
 
 struct glPolygonOffsetClamp_params
 {
+    TEB *teb;
     GLfloat factor;
     GLfloat units;
     GLfloat clamp;
@@ -13852,6 +15754,7 @@ struct glPolygonOffsetClamp_params
 
 struct glPolygonOffsetClampEXT_params
 {
+    TEB *teb;
     GLfloat factor;
     GLfloat units;
     GLfloat clamp;
@@ -13859,26 +15762,31 @@ struct glPolygonOffsetClampEXT_params
 
 struct glPolygonOffsetEXT_params
 {
+    TEB *teb;
     GLfloat factor;
     GLfloat bias;
 };
 
 struct glPolygonOffsetxOES_params
 {
+    TEB *teb;
     GLfixed factor;
     GLfixed units;
 };
 
 struct glPopDebugGroup_params
 {
+    TEB *teb;
 };
 
 struct glPopGroupMarkerEXT_params
 {
+    TEB *teb;
 };
 
 struct glPresentFrameDualFillNV_params
 {
+    TEB *teb;
     GLuint video_slot;
     GLuint64EXT minPresentTime;
     GLuint beginPresentTimeId;
@@ -13896,6 +15804,7 @@ struct glPresentFrameDualFillNV_params
 
 struct glPresentFrameKeyedNV_params
 {
+    TEB *teb;
     GLuint video_slot;
     GLuint64EXT minPresentTime;
     GLuint beginPresentTimeId;
@@ -13911,6 +15820,7 @@ struct glPresentFrameKeyedNV_params
 
 struct glPrimitiveBoundingBoxARB_params
 {
+    TEB *teb;
     GLfloat minX;
     GLfloat minY;
     GLfloat minZ;
@@ -13923,20 +15833,24 @@ struct glPrimitiveBoundingBoxARB_params
 
 struct glPrimitiveRestartIndex_params
 {
+    TEB *teb;
     GLuint index;
 };
 
 struct glPrimitiveRestartIndexNV_params
 {
+    TEB *teb;
     GLuint index;
 };
 
 struct glPrimitiveRestartNV_params
 {
+    TEB *teb;
 };
 
 struct glPrioritizeTexturesEXT_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *textures;
     const GLclampf *priorities;
@@ -13944,6 +15858,7 @@ struct glPrioritizeTexturesEXT_params
 
 struct glPrioritizeTexturesxOES_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *textures;
     const GLfixed *priorities;
@@ -13951,6 +15866,7 @@ struct glPrioritizeTexturesxOES_params
 
 struct glProgramBinary_params
 {
+    TEB *teb;
     GLuint program;
     GLenum binaryFormat;
     const void *binary;
@@ -13959,6 +15875,7 @@ struct glProgramBinary_params
 
 struct glProgramBufferParametersIivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint bindingIndex;
     GLuint wordIndex;
@@ -13968,6 +15885,7 @@ struct glProgramBufferParametersIivNV_params
 
 struct glProgramBufferParametersIuivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint bindingIndex;
     GLuint wordIndex;
@@ -13977,6 +15895,7 @@ struct glProgramBufferParametersIuivNV_params
 
 struct glProgramBufferParametersfvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint bindingIndex;
     GLuint wordIndex;
@@ -13986,6 +15905,7 @@ struct glProgramBufferParametersfvNV_params
 
 struct glProgramEnvParameter4dARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLdouble x;
@@ -13996,6 +15916,7 @@ struct glProgramEnvParameter4dARB_params
 
 struct glProgramEnvParameter4dvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLdouble *params;
@@ -14003,6 +15924,7 @@ struct glProgramEnvParameter4dvARB_params
 
 struct glProgramEnvParameter4fARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLfloat x;
@@ -14013,6 +15935,7 @@ struct glProgramEnvParameter4fARB_params
 
 struct glProgramEnvParameter4fvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLfloat *params;
@@ -14020,6 +15943,7 @@ struct glProgramEnvParameter4fvARB_params
 
 struct glProgramEnvParameterI4iNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLint x;
@@ -14030,6 +15954,7 @@ struct glProgramEnvParameterI4iNV_params
 
 struct glProgramEnvParameterI4ivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLint *params;
@@ -14037,6 +15962,7 @@ struct glProgramEnvParameterI4ivNV_params
 
 struct glProgramEnvParameterI4uiNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint x;
@@ -14047,6 +15973,7 @@ struct glProgramEnvParameterI4uiNV_params
 
 struct glProgramEnvParameterI4uivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLuint *params;
@@ -14054,6 +15981,7 @@ struct glProgramEnvParameterI4uivNV_params
 
 struct glProgramEnvParameters4fvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLsizei count;
@@ -14062,6 +15990,7 @@ struct glProgramEnvParameters4fvEXT_params
 
 struct glProgramEnvParametersI4ivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLsizei count;
@@ -14070,6 +15999,7 @@ struct glProgramEnvParametersI4ivNV_params
 
 struct glProgramEnvParametersI4uivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLsizei count;
@@ -14078,6 +16008,7 @@ struct glProgramEnvParametersI4uivNV_params
 
 struct glProgramLocalParameter4dARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLdouble x;
@@ -14088,6 +16019,7 @@ struct glProgramLocalParameter4dARB_params
 
 struct glProgramLocalParameter4dvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLdouble *params;
@@ -14095,6 +16027,7 @@ struct glProgramLocalParameter4dvARB_params
 
 struct glProgramLocalParameter4fARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLfloat x;
@@ -14105,6 +16038,7 @@ struct glProgramLocalParameter4fARB_params
 
 struct glProgramLocalParameter4fvARB_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLfloat *params;
@@ -14112,6 +16046,7 @@ struct glProgramLocalParameter4fvARB_params
 
 struct glProgramLocalParameterI4iNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLint x;
@@ -14122,6 +16057,7 @@ struct glProgramLocalParameterI4iNV_params
 
 struct glProgramLocalParameterI4ivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLint *params;
@@ -14129,6 +16065,7 @@ struct glProgramLocalParameterI4ivNV_params
 
 struct glProgramLocalParameterI4uiNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLuint x;
@@ -14139,6 +16076,7 @@ struct glProgramLocalParameterI4uiNV_params
 
 struct glProgramLocalParameterI4uivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLuint *params;
@@ -14146,6 +16084,7 @@ struct glProgramLocalParameterI4uivNV_params
 
 struct glProgramLocalParameters4fvEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLsizei count;
@@ -14154,6 +16093,7 @@ struct glProgramLocalParameters4fvEXT_params
 
 struct glProgramLocalParametersI4ivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLsizei count;
@@ -14162,6 +16102,7 @@ struct glProgramLocalParametersI4ivNV_params
 
 struct glProgramLocalParametersI4uivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLsizei count;
@@ -14170,6 +16111,7 @@ struct glProgramLocalParametersI4uivNV_params
 
 struct glProgramNamedParameter4dNV_params
 {
+    TEB *teb;
     GLuint id;
     GLsizei len;
     const GLubyte *name;
@@ -14181,6 +16123,7 @@ struct glProgramNamedParameter4dNV_params
 
 struct glProgramNamedParameter4dvNV_params
 {
+    TEB *teb;
     GLuint id;
     GLsizei len;
     const GLubyte *name;
@@ -14189,6 +16132,7 @@ struct glProgramNamedParameter4dvNV_params
 
 struct glProgramNamedParameter4fNV_params
 {
+    TEB *teb;
     GLuint id;
     GLsizei len;
     const GLubyte *name;
@@ -14200,6 +16144,7 @@ struct glProgramNamedParameter4fNV_params
 
 struct glProgramNamedParameter4fvNV_params
 {
+    TEB *teb;
     GLuint id;
     GLsizei len;
     const GLubyte *name;
@@ -14208,6 +16153,7 @@ struct glProgramNamedParameter4fvNV_params
 
 struct glProgramParameter4dNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLdouble x;
@@ -14218,6 +16164,7 @@ struct glProgramParameter4dNV_params
 
 struct glProgramParameter4dvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLdouble *v;
@@ -14225,6 +16172,7 @@ struct glProgramParameter4dvNV_params
 
 struct glProgramParameter4fNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLfloat x;
@@ -14235,6 +16183,7 @@ struct glProgramParameter4fNV_params
 
 struct glProgramParameter4fvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     const GLfloat *v;
@@ -14242,6 +16191,7 @@ struct glProgramParameter4fvNV_params
 
 struct glProgramParameteri_params
 {
+    TEB *teb;
     GLuint program;
     GLenum pname;
     GLint value;
@@ -14249,6 +16199,7 @@ struct glProgramParameteri_params
 
 struct glProgramParameteriARB_params
 {
+    TEB *teb;
     GLuint program;
     GLenum pname;
     GLint value;
@@ -14256,6 +16207,7 @@ struct glProgramParameteriARB_params
 
 struct glProgramParameteriEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLenum pname;
     GLint value;
@@ -14263,6 +16215,7 @@ struct glProgramParameteriEXT_params
 
 struct glProgramParameters4dvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLsizei count;
@@ -14271,6 +16224,7 @@ struct glProgramParameters4dvNV_params
 
 struct glProgramParameters4fvNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint index;
     GLsizei count;
@@ -14279,6 +16233,7 @@ struct glProgramParameters4fvNV_params
 
 struct glProgramPathFragmentInputGenNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLenum genMode;
@@ -14288,6 +16243,7 @@ struct glProgramPathFragmentInputGenNV_params
 
 struct glProgramStringARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum format;
     GLsizei len;
@@ -14296,6 +16252,7 @@ struct glProgramStringARB_params
 
 struct glProgramSubroutineParametersuivNV_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei count;
     const GLuint *params;
@@ -14303,6 +16260,7 @@ struct glProgramSubroutineParametersuivNV_params
 
 struct glProgramUniform1d_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLdouble v0;
@@ -14310,6 +16268,7 @@ struct glProgramUniform1d_params
 
 struct glProgramUniform1dEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLdouble x;
@@ -14317,6 +16276,7 @@ struct glProgramUniform1dEXT_params
 
 struct glProgramUniform1dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14325,6 +16285,7 @@ struct glProgramUniform1dv_params
 
 struct glProgramUniform1dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14333,6 +16294,7 @@ struct glProgramUniform1dvEXT_params
 
 struct glProgramUniform1f_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLfloat v0;
@@ -14340,6 +16302,7 @@ struct glProgramUniform1f_params
 
 struct glProgramUniform1fEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLfloat v0;
@@ -14347,6 +16310,7 @@ struct glProgramUniform1fEXT_params
 
 struct glProgramUniform1fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14355,6 +16319,7 @@ struct glProgramUniform1fv_params
 
 struct glProgramUniform1fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14363,6 +16328,7 @@ struct glProgramUniform1fvEXT_params
 
 struct glProgramUniform1i_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint v0;
@@ -14370,6 +16336,7 @@ struct glProgramUniform1i_params
 
 struct glProgramUniform1i64ARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64 x;
@@ -14377,6 +16344,7 @@ struct glProgramUniform1i64ARB_params
 
 struct glProgramUniform1i64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64EXT x;
@@ -14384,6 +16352,7 @@ struct glProgramUniform1i64NV_params
 
 struct glProgramUniform1i64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14392,6 +16361,7 @@ struct glProgramUniform1i64vARB_params
 
 struct glProgramUniform1i64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14400,6 +16370,7 @@ struct glProgramUniform1i64vNV_params
 
 struct glProgramUniform1iEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint v0;
@@ -14407,6 +16378,7 @@ struct glProgramUniform1iEXT_params
 
 struct glProgramUniform1iv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14415,6 +16387,7 @@ struct glProgramUniform1iv_params
 
 struct glProgramUniform1ivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14423,6 +16396,7 @@ struct glProgramUniform1ivEXT_params
 
 struct glProgramUniform1ui_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint v0;
@@ -14430,6 +16404,7 @@ struct glProgramUniform1ui_params
 
 struct glProgramUniform1ui64ARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64 x;
@@ -14437,6 +16412,7 @@ struct glProgramUniform1ui64ARB_params
 
 struct glProgramUniform1ui64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64EXT x;
@@ -14444,6 +16420,7 @@ struct glProgramUniform1ui64NV_params
 
 struct glProgramUniform1ui64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14452,6 +16429,7 @@ struct glProgramUniform1ui64vARB_params
 
 struct glProgramUniform1ui64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14460,6 +16438,7 @@ struct glProgramUniform1ui64vNV_params
 
 struct glProgramUniform1uiEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint v0;
@@ -14467,6 +16446,7 @@ struct glProgramUniform1uiEXT_params
 
 struct glProgramUniform1uiv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14475,6 +16455,7 @@ struct glProgramUniform1uiv_params
 
 struct glProgramUniform1uivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14483,6 +16464,7 @@ struct glProgramUniform1uivEXT_params
 
 struct glProgramUniform2d_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLdouble v0;
@@ -14491,6 +16473,7 @@ struct glProgramUniform2d_params
 
 struct glProgramUniform2dEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLdouble x;
@@ -14499,6 +16482,7 @@ struct glProgramUniform2dEXT_params
 
 struct glProgramUniform2dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14507,6 +16491,7 @@ struct glProgramUniform2dv_params
 
 struct glProgramUniform2dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14515,6 +16500,7 @@ struct glProgramUniform2dvEXT_params
 
 struct glProgramUniform2f_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLfloat v0;
@@ -14523,6 +16509,7 @@ struct glProgramUniform2f_params
 
 struct glProgramUniform2fEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLfloat v0;
@@ -14531,6 +16518,7 @@ struct glProgramUniform2fEXT_params
 
 struct glProgramUniform2fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14539,6 +16527,7 @@ struct glProgramUniform2fv_params
 
 struct glProgramUniform2fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14547,6 +16536,7 @@ struct glProgramUniform2fvEXT_params
 
 struct glProgramUniform2i_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint v0;
@@ -14555,6 +16545,7 @@ struct glProgramUniform2i_params
 
 struct glProgramUniform2i64ARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64 x;
@@ -14563,6 +16554,7 @@ struct glProgramUniform2i64ARB_params
 
 struct glProgramUniform2i64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64EXT x;
@@ -14571,6 +16563,7 @@ struct glProgramUniform2i64NV_params
 
 struct glProgramUniform2i64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14579,6 +16572,7 @@ struct glProgramUniform2i64vARB_params
 
 struct glProgramUniform2i64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14587,6 +16581,7 @@ struct glProgramUniform2i64vNV_params
 
 struct glProgramUniform2iEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint v0;
@@ -14595,6 +16590,7 @@ struct glProgramUniform2iEXT_params
 
 struct glProgramUniform2iv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14603,6 +16599,7 @@ struct glProgramUniform2iv_params
 
 struct glProgramUniform2ivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14611,6 +16608,7 @@ struct glProgramUniform2ivEXT_params
 
 struct glProgramUniform2ui_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint v0;
@@ -14619,6 +16617,7 @@ struct glProgramUniform2ui_params
 
 struct glProgramUniform2ui64ARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64 x;
@@ -14627,6 +16626,7 @@ struct glProgramUniform2ui64ARB_params
 
 struct glProgramUniform2ui64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64EXT x;
@@ -14635,6 +16635,7 @@ struct glProgramUniform2ui64NV_params
 
 struct glProgramUniform2ui64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14643,6 +16644,7 @@ struct glProgramUniform2ui64vARB_params
 
 struct glProgramUniform2ui64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14651,6 +16653,7 @@ struct glProgramUniform2ui64vNV_params
 
 struct glProgramUniform2uiEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint v0;
@@ -14659,6 +16662,7 @@ struct glProgramUniform2uiEXT_params
 
 struct glProgramUniform2uiv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14667,6 +16671,7 @@ struct glProgramUniform2uiv_params
 
 struct glProgramUniform2uivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14675,6 +16680,7 @@ struct glProgramUniform2uivEXT_params
 
 struct glProgramUniform3d_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLdouble v0;
@@ -14684,6 +16690,7 @@ struct glProgramUniform3d_params
 
 struct glProgramUniform3dEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLdouble x;
@@ -14693,6 +16700,7 @@ struct glProgramUniform3dEXT_params
 
 struct glProgramUniform3dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14701,6 +16709,7 @@ struct glProgramUniform3dv_params
 
 struct glProgramUniform3dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14709,6 +16718,7 @@ struct glProgramUniform3dvEXT_params
 
 struct glProgramUniform3f_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLfloat v0;
@@ -14718,6 +16728,7 @@ struct glProgramUniform3f_params
 
 struct glProgramUniform3fEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLfloat v0;
@@ -14727,6 +16738,7 @@ struct glProgramUniform3fEXT_params
 
 struct glProgramUniform3fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14735,6 +16747,7 @@ struct glProgramUniform3fv_params
 
 struct glProgramUniform3fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14743,6 +16756,7 @@ struct glProgramUniform3fvEXT_params
 
 struct glProgramUniform3i_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint v0;
@@ -14752,6 +16766,7 @@ struct glProgramUniform3i_params
 
 struct glProgramUniform3i64ARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64 x;
@@ -14761,6 +16776,7 @@ struct glProgramUniform3i64ARB_params
 
 struct glProgramUniform3i64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64EXT x;
@@ -14770,6 +16786,7 @@ struct glProgramUniform3i64NV_params
 
 struct glProgramUniform3i64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14778,6 +16795,7 @@ struct glProgramUniform3i64vARB_params
 
 struct glProgramUniform3i64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14786,6 +16804,7 @@ struct glProgramUniform3i64vNV_params
 
 struct glProgramUniform3iEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint v0;
@@ -14795,6 +16814,7 @@ struct glProgramUniform3iEXT_params
 
 struct glProgramUniform3iv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14803,6 +16823,7 @@ struct glProgramUniform3iv_params
 
 struct glProgramUniform3ivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14811,6 +16832,7 @@ struct glProgramUniform3ivEXT_params
 
 struct glProgramUniform3ui_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint v0;
@@ -14820,6 +16842,7 @@ struct glProgramUniform3ui_params
 
 struct glProgramUniform3ui64ARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64 x;
@@ -14829,6 +16852,7 @@ struct glProgramUniform3ui64ARB_params
 
 struct glProgramUniform3ui64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64EXT x;
@@ -14838,6 +16862,7 @@ struct glProgramUniform3ui64NV_params
 
 struct glProgramUniform3ui64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14846,6 +16871,7 @@ struct glProgramUniform3ui64vARB_params
 
 struct glProgramUniform3ui64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14854,6 +16880,7 @@ struct glProgramUniform3ui64vNV_params
 
 struct glProgramUniform3uiEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint v0;
@@ -14863,6 +16890,7 @@ struct glProgramUniform3uiEXT_params
 
 struct glProgramUniform3uiv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14871,6 +16899,7 @@ struct glProgramUniform3uiv_params
 
 struct glProgramUniform3uivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14879,6 +16908,7 @@ struct glProgramUniform3uivEXT_params
 
 struct glProgramUniform4d_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLdouble v0;
@@ -14889,6 +16919,7 @@ struct glProgramUniform4d_params
 
 struct glProgramUniform4dEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLdouble x;
@@ -14899,6 +16930,7 @@ struct glProgramUniform4dEXT_params
 
 struct glProgramUniform4dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14907,6 +16939,7 @@ struct glProgramUniform4dv_params
 
 struct glProgramUniform4dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14915,6 +16948,7 @@ struct glProgramUniform4dvEXT_params
 
 struct glProgramUniform4f_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLfloat v0;
@@ -14925,6 +16959,7 @@ struct glProgramUniform4f_params
 
 struct glProgramUniform4fEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLfloat v0;
@@ -14935,6 +16970,7 @@ struct glProgramUniform4fEXT_params
 
 struct glProgramUniform4fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14943,6 +16979,7 @@ struct glProgramUniform4fv_params
 
 struct glProgramUniform4fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14951,6 +16988,7 @@ struct glProgramUniform4fvEXT_params
 
 struct glProgramUniform4i_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint v0;
@@ -14961,6 +16999,7 @@ struct glProgramUniform4i_params
 
 struct glProgramUniform4i64ARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64 x;
@@ -14971,6 +17010,7 @@ struct glProgramUniform4i64ARB_params
 
 struct glProgramUniform4i64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint64EXT x;
@@ -14981,6 +17021,7 @@ struct glProgramUniform4i64NV_params
 
 struct glProgramUniform4i64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14989,6 +17030,7 @@ struct glProgramUniform4i64vARB_params
 
 struct glProgramUniform4i64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -14997,6 +17039,7 @@ struct glProgramUniform4i64vNV_params
 
 struct glProgramUniform4iEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLint v0;
@@ -15007,6 +17050,7 @@ struct glProgramUniform4iEXT_params
 
 struct glProgramUniform4iv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15015,6 +17059,7 @@ struct glProgramUniform4iv_params
 
 struct glProgramUniform4ivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15023,6 +17068,7 @@ struct glProgramUniform4ivEXT_params
 
 struct glProgramUniform4ui_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint v0;
@@ -15033,6 +17079,7 @@ struct glProgramUniform4ui_params
 
 struct glProgramUniform4ui64ARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64 x;
@@ -15043,6 +17090,7 @@ struct glProgramUniform4ui64ARB_params
 
 struct glProgramUniform4ui64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64EXT x;
@@ -15053,6 +17101,7 @@ struct glProgramUniform4ui64NV_params
 
 struct glProgramUniform4ui64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15061,6 +17110,7 @@ struct glProgramUniform4ui64vARB_params
 
 struct glProgramUniform4ui64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15069,6 +17119,7 @@ struct glProgramUniform4ui64vNV_params
 
 struct glProgramUniform4uiEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint v0;
@@ -15079,6 +17130,7 @@ struct glProgramUniform4uiEXT_params
 
 struct glProgramUniform4uiv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15087,6 +17139,7 @@ struct glProgramUniform4uiv_params
 
 struct glProgramUniform4uivEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15095,6 +17148,7 @@ struct glProgramUniform4uivEXT_params
 
 struct glProgramUniformHandleui64ARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64 value;
@@ -15102,6 +17156,7 @@ struct glProgramUniformHandleui64ARB_params
 
 struct glProgramUniformHandleui64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64 value;
@@ -15109,6 +17164,7 @@ struct glProgramUniformHandleui64NV_params
 
 struct glProgramUniformHandleui64vARB_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15117,6 +17173,7 @@ struct glProgramUniformHandleui64vARB_params
 
 struct glProgramUniformHandleui64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15125,6 +17182,7 @@ struct glProgramUniformHandleui64vNV_params
 
 struct glProgramUniformMatrix2dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15134,6 +17192,7 @@ struct glProgramUniformMatrix2dv_params
 
 struct glProgramUniformMatrix2dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15143,6 +17202,7 @@ struct glProgramUniformMatrix2dvEXT_params
 
 struct glProgramUniformMatrix2fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15152,6 +17212,7 @@ struct glProgramUniformMatrix2fv_params
 
 struct glProgramUniformMatrix2fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15161,6 +17222,7 @@ struct glProgramUniformMatrix2fvEXT_params
 
 struct glProgramUniformMatrix2x3dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15170,6 +17232,7 @@ struct glProgramUniformMatrix2x3dv_params
 
 struct glProgramUniformMatrix2x3dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15179,6 +17242,7 @@ struct glProgramUniformMatrix2x3dvEXT_params
 
 struct glProgramUniformMatrix2x3fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15188,6 +17252,7 @@ struct glProgramUniformMatrix2x3fv_params
 
 struct glProgramUniformMatrix2x3fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15197,6 +17262,7 @@ struct glProgramUniformMatrix2x3fvEXT_params
 
 struct glProgramUniformMatrix2x4dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15206,6 +17272,7 @@ struct glProgramUniformMatrix2x4dv_params
 
 struct glProgramUniformMatrix2x4dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15215,6 +17282,7 @@ struct glProgramUniformMatrix2x4dvEXT_params
 
 struct glProgramUniformMatrix2x4fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15224,6 +17292,7 @@ struct glProgramUniformMatrix2x4fv_params
 
 struct glProgramUniformMatrix2x4fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15233,6 +17302,7 @@ struct glProgramUniformMatrix2x4fvEXT_params
 
 struct glProgramUniformMatrix3dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15242,6 +17312,7 @@ struct glProgramUniformMatrix3dv_params
 
 struct glProgramUniformMatrix3dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15251,6 +17322,7 @@ struct glProgramUniformMatrix3dvEXT_params
 
 struct glProgramUniformMatrix3fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15260,6 +17332,7 @@ struct glProgramUniformMatrix3fv_params
 
 struct glProgramUniformMatrix3fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15269,6 +17342,7 @@ struct glProgramUniformMatrix3fvEXT_params
 
 struct glProgramUniformMatrix3x2dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15278,6 +17352,7 @@ struct glProgramUniformMatrix3x2dv_params
 
 struct glProgramUniformMatrix3x2dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15287,6 +17362,7 @@ struct glProgramUniformMatrix3x2dvEXT_params
 
 struct glProgramUniformMatrix3x2fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15296,6 +17372,7 @@ struct glProgramUniformMatrix3x2fv_params
 
 struct glProgramUniformMatrix3x2fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15305,6 +17382,7 @@ struct glProgramUniformMatrix3x2fvEXT_params
 
 struct glProgramUniformMatrix3x4dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15314,6 +17392,7 @@ struct glProgramUniformMatrix3x4dv_params
 
 struct glProgramUniformMatrix3x4dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15323,6 +17402,7 @@ struct glProgramUniformMatrix3x4dvEXT_params
 
 struct glProgramUniformMatrix3x4fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15332,6 +17412,7 @@ struct glProgramUniformMatrix3x4fv_params
 
 struct glProgramUniformMatrix3x4fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15341,6 +17422,7 @@ struct glProgramUniformMatrix3x4fvEXT_params
 
 struct glProgramUniformMatrix4dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15350,6 +17432,7 @@ struct glProgramUniformMatrix4dv_params
 
 struct glProgramUniformMatrix4dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15359,6 +17442,7 @@ struct glProgramUniformMatrix4dvEXT_params
 
 struct glProgramUniformMatrix4fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15368,6 +17452,7 @@ struct glProgramUniformMatrix4fv_params
 
 struct glProgramUniformMatrix4fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15377,6 +17462,7 @@ struct glProgramUniformMatrix4fvEXT_params
 
 struct glProgramUniformMatrix4x2dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15386,6 +17472,7 @@ struct glProgramUniformMatrix4x2dv_params
 
 struct glProgramUniformMatrix4x2dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15395,6 +17482,7 @@ struct glProgramUniformMatrix4x2dvEXT_params
 
 struct glProgramUniformMatrix4x2fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15404,6 +17492,7 @@ struct glProgramUniformMatrix4x2fv_params
 
 struct glProgramUniformMatrix4x2fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15413,6 +17502,7 @@ struct glProgramUniformMatrix4x2fvEXT_params
 
 struct glProgramUniformMatrix4x3dv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15422,6 +17512,7 @@ struct glProgramUniformMatrix4x3dv_params
 
 struct glProgramUniformMatrix4x3dvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15431,6 +17522,7 @@ struct glProgramUniformMatrix4x3dvEXT_params
 
 struct glProgramUniformMatrix4x3fv_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15440,6 +17532,7 @@ struct glProgramUniformMatrix4x3fv_params
 
 struct glProgramUniformMatrix4x3fvEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15449,6 +17542,7 @@ struct glProgramUniformMatrix4x3fvEXT_params
 
 struct glProgramUniformui64NV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint64EXT value;
@@ -15456,6 +17550,7 @@ struct glProgramUniformui64NV_params
 
 struct glProgramUniformui64vNV_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLsizei count;
@@ -15464,27 +17559,32 @@ struct glProgramUniformui64vNV_params
 
 struct glProgramVertexLimitNV_params
 {
+    TEB *teb;
     GLenum target;
     GLint limit;
 };
 
 struct glProvokingVertex_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glProvokingVertexEXT_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glPushClientAttribDefaultEXT_params
 {
+    TEB *teb;
     GLbitfield mask;
 };
 
 struct glPushDebugGroup_params
 {
+    TEB *teb;
     GLenum source;
     GLuint id;
     GLsizei length;
@@ -15493,18 +17593,21 @@ struct glPushDebugGroup_params
 
 struct glPushGroupMarkerEXT_params
 {
+    TEB *teb;
     GLsizei length;
     const GLchar *marker;
 };
 
 struct glQueryCounter_params
 {
+    TEB *teb;
     GLuint id;
     GLenum target;
 };
 
 struct glQueryMatrixxOES_params
 {
+    TEB *teb;
     GLfixed *mantissa;
     GLint *exponent;
     GLbitfield ret;
@@ -15512,6 +17615,7 @@ struct glQueryMatrixxOES_params
 
 struct glQueryObjectParameteruiAMD_params
 {
+    TEB *teb;
     GLenum target;
     GLuint id;
     GLenum pname;
@@ -15520,6 +17624,7 @@ struct glQueryObjectParameteruiAMD_params
 
 struct glQueryResourceNV_params
 {
+    TEB *teb;
     GLenum queryType;
     GLint tagId;
     GLuint count;
@@ -15529,23 +17634,27 @@ struct glQueryResourceNV_params
 
 struct glQueryResourceTagNV_params
 {
+    TEB *teb;
     GLint tagId;
     const GLchar *tagString;
 };
 
 struct glRasterPos2xOES_params
 {
+    TEB *teb;
     GLfixed x;
     GLfixed y;
 };
 
 struct glRasterPos2xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glRasterPos3xOES_params
 {
+    TEB *teb;
     GLfixed x;
     GLfixed y;
     GLfixed z;
@@ -15553,11 +17662,13 @@ struct glRasterPos3xOES_params
 
 struct glRasterPos3xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glRasterPos4xOES_params
 {
+    TEB *teb;
     GLfixed x;
     GLfixed y;
     GLfixed z;
@@ -15566,17 +17677,20 @@ struct glRasterPos4xOES_params
 
 struct glRasterPos4xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glRasterSamplesEXT_params
 {
+    TEB *teb;
     GLuint samples;
     GLboolean fixedsamplelocations;
 };
 
 struct glReadBufferRegion_params
 {
+    TEB *teb;
     GLenum region;
     GLint x;
     GLint y;
@@ -15586,11 +17700,13 @@ struct glReadBufferRegion_params
 
 struct glReadInstrumentsSGIX_params
 {
+    TEB *teb;
     GLint marker;
 };
 
 struct glReadnPixels_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLsizei width;
@@ -15603,6 +17719,7 @@ struct glReadnPixels_params
 
 struct glReadnPixelsARB_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLsizei width;
@@ -15615,6 +17732,7 @@ struct glReadnPixelsARB_params
 
 struct glRectxOES_params
 {
+    TEB *teb;
     GLfixed x1;
     GLfixed y1;
     GLfixed x2;
@@ -15623,17 +17741,20 @@ struct glRectxOES_params
 
 struct glRectxvOES_params
 {
+    TEB *teb;
     const GLfixed *v1;
     const GLfixed *v2;
 };
 
 struct glReferencePlaneSGIX_params
 {
+    TEB *teb;
     const GLdouble *equation;
 };
 
 struct glReleaseKeyedMutexWin32EXT_params
 {
+    TEB *teb;
     GLuint memory;
     GLuint64 key;
     GLboolean ret;
@@ -15641,15 +17762,18 @@ struct glReleaseKeyedMutexWin32EXT_params
 
 struct glReleaseShaderCompiler_params
 {
+    TEB *teb;
 };
 
 struct glRenderGpuMaskNV_params
 {
+    TEB *teb;
     GLbitfield mask;
 };
 
 struct glRenderbufferStorage_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -15658,6 +17782,7 @@ struct glRenderbufferStorage_params
 
 struct glRenderbufferStorageEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -15666,6 +17791,7 @@ struct glRenderbufferStorageEXT_params
 
 struct glRenderbufferStorageMultisample_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei samples;
     GLenum internalformat;
@@ -15675,6 +17801,7 @@ struct glRenderbufferStorageMultisample_params
 
 struct glRenderbufferStorageMultisampleAdvancedAMD_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei samples;
     GLsizei storageSamples;
@@ -15685,6 +17812,7 @@ struct glRenderbufferStorageMultisampleAdvancedAMD_params
 
 struct glRenderbufferStorageMultisampleCoverageNV_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei coverageSamples;
     GLsizei colorSamples;
@@ -15695,6 +17823,7 @@ struct glRenderbufferStorageMultisampleCoverageNV_params
 
 struct glRenderbufferStorageMultisampleEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei samples;
     GLenum internalformat;
@@ -15704,6 +17833,7 @@ struct glRenderbufferStorageMultisampleEXT_params
 
 struct glReplacementCodePointerSUN_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
     const void **pointer;
@@ -15711,16 +17841,19 @@ struct glReplacementCodePointerSUN_params
 
 struct glReplacementCodeubSUN_params
 {
+    TEB *teb;
     GLubyte code;
 };
 
 struct glReplacementCodeubvSUN_params
 {
+    TEB *teb;
     const GLubyte *code;
 };
 
 struct glReplacementCodeuiColor3fVertex3fSUN_params
 {
+    TEB *teb;
     GLuint rc;
     GLfloat r;
     GLfloat g;
@@ -15732,6 +17865,7 @@ struct glReplacementCodeuiColor3fVertex3fSUN_params
 
 struct glReplacementCodeuiColor3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLuint *rc;
     const GLfloat *c;
     const GLfloat *v;
@@ -15739,6 +17873,7 @@ struct glReplacementCodeuiColor3fVertex3fvSUN_params
 
 struct glReplacementCodeuiColor4fNormal3fVertex3fSUN_params
 {
+    TEB *teb;
     GLuint rc;
     GLfloat r;
     GLfloat g;
@@ -15754,6 +17889,7 @@ struct glReplacementCodeuiColor4fNormal3fVertex3fSUN_params
 
 struct glReplacementCodeuiColor4fNormal3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLuint *rc;
     const GLfloat *c;
     const GLfloat *n;
@@ -15762,6 +17898,7 @@ struct glReplacementCodeuiColor4fNormal3fVertex3fvSUN_params
 
 struct glReplacementCodeuiColor4ubVertex3fSUN_params
 {
+    TEB *teb;
     GLuint rc;
     GLubyte r;
     GLubyte g;
@@ -15774,6 +17911,7 @@ struct glReplacementCodeuiColor4ubVertex3fSUN_params
 
 struct glReplacementCodeuiColor4ubVertex3fvSUN_params
 {
+    TEB *teb;
     const GLuint *rc;
     const GLubyte *c;
     const GLfloat *v;
@@ -15781,6 +17919,7 @@ struct glReplacementCodeuiColor4ubVertex3fvSUN_params
 
 struct glReplacementCodeuiNormal3fVertex3fSUN_params
 {
+    TEB *teb;
     GLuint rc;
     GLfloat nx;
     GLfloat ny;
@@ -15792,6 +17931,7 @@ struct glReplacementCodeuiNormal3fVertex3fSUN_params
 
 struct glReplacementCodeuiNormal3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLuint *rc;
     const GLfloat *n;
     const GLfloat *v;
@@ -15799,11 +17939,13 @@ struct glReplacementCodeuiNormal3fVertex3fvSUN_params
 
 struct glReplacementCodeuiSUN_params
 {
+    TEB *teb;
     GLuint code;
 };
 
 struct glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN_params
 {
+    TEB *teb;
     GLuint rc;
     GLfloat s;
     GLfloat t;
@@ -15821,6 +17963,7 @@ struct glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fSUN_params
 
 struct glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLuint *rc;
     const GLfloat *tc;
     const GLfloat *c;
@@ -15830,6 +17973,7 @@ struct glReplacementCodeuiTexCoord2fColor4fNormal3fVertex3fvSUN_params
 
 struct glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN_params
 {
+    TEB *teb;
     GLuint rc;
     GLfloat s;
     GLfloat t;
@@ -15843,6 +17987,7 @@ struct glReplacementCodeuiTexCoord2fNormal3fVertex3fSUN_params
 
 struct glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLuint *rc;
     const GLfloat *tc;
     const GLfloat *n;
@@ -15851,6 +17996,7 @@ struct glReplacementCodeuiTexCoord2fNormal3fVertex3fvSUN_params
 
 struct glReplacementCodeuiTexCoord2fVertex3fSUN_params
 {
+    TEB *teb;
     GLuint rc;
     GLfloat s;
     GLfloat t;
@@ -15861,6 +18007,7 @@ struct glReplacementCodeuiTexCoord2fVertex3fSUN_params
 
 struct glReplacementCodeuiTexCoord2fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLuint *rc;
     const GLfloat *tc;
     const GLfloat *v;
@@ -15868,6 +18015,7 @@ struct glReplacementCodeuiTexCoord2fVertex3fvSUN_params
 
 struct glReplacementCodeuiVertex3fSUN_params
 {
+    TEB *teb;
     GLuint rc;
     GLfloat x;
     GLfloat y;
@@ -15876,75 +18024,90 @@ struct glReplacementCodeuiVertex3fSUN_params
 
 struct glReplacementCodeuiVertex3fvSUN_params
 {
+    TEB *teb;
     const GLuint *rc;
     const GLfloat *v;
 };
 
 struct glReplacementCodeuivSUN_params
 {
+    TEB *teb;
     const GLuint *code;
 };
 
 struct glReplacementCodeusSUN_params
 {
+    TEB *teb;
     GLushort code;
 };
 
 struct glReplacementCodeusvSUN_params
 {
+    TEB *teb;
     const GLushort *code;
 };
 
 struct glRequestResidentProgramsNV_params
 {
+    TEB *teb;
     GLsizei n;
     const GLuint *programs;
 };
 
 struct glResetHistogram_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glResetHistogramEXT_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glResetMemoryObjectParameterNV_params
 {
+    TEB *teb;
     GLuint memory;
     GLenum pname;
 };
 
 struct glResetMinmax_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glResetMinmaxEXT_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glResizeBuffersMESA_params
 {
+    TEB *teb;
 };
 
 struct glResolveDepthValuesNV_params
 {
+    TEB *teb;
 };
 
 struct glResumeTransformFeedback_params
 {
+    TEB *teb;
 };
 
 struct glResumeTransformFeedbackNV_params
 {
+    TEB *teb;
 };
 
 struct glRotatexOES_params
 {
+    TEB *teb;
     GLfixed angle;
     GLfixed x;
     GLfixed y;
@@ -15953,18 +18116,21 @@ struct glRotatexOES_params
 
 struct glSampleCoverage_params
 {
+    TEB *teb;
     GLfloat value;
     GLboolean invert;
 };
 
 struct glSampleCoverageARB_params
 {
+    TEB *teb;
     GLfloat value;
     GLboolean invert;
 };
 
 struct glSampleMapATI_params
 {
+    TEB *teb;
     GLuint dst;
     GLuint interp;
     GLenum swizzle;
@@ -15972,40 +18138,47 @@ struct glSampleMapATI_params
 
 struct glSampleMaskEXT_params
 {
+    TEB *teb;
     GLclampf value;
     GLboolean invert;
 };
 
 struct glSampleMaskIndexedNV_params
 {
+    TEB *teb;
     GLuint index;
     GLbitfield mask;
 };
 
 struct glSampleMaskSGIS_params
 {
+    TEB *teb;
     GLclampf value;
     GLboolean invert;
 };
 
 struct glSampleMaski_params
 {
+    TEB *teb;
     GLuint maskNumber;
     GLbitfield mask;
 };
 
 struct glSamplePatternEXT_params
 {
+    TEB *teb;
     GLenum pattern;
 };
 
 struct glSamplePatternSGIS_params
 {
+    TEB *teb;
     GLenum pattern;
 };
 
 struct glSamplerParameterIiv_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     const GLint *param;
@@ -16013,6 +18186,7 @@ struct glSamplerParameterIiv_params
 
 struct glSamplerParameterIuiv_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     const GLuint *param;
@@ -16020,6 +18194,7 @@ struct glSamplerParameterIuiv_params
 
 struct glSamplerParameterf_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     GLfloat param;
@@ -16027,6 +18202,7 @@ struct glSamplerParameterf_params
 
 struct glSamplerParameterfv_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     const GLfloat *param;
@@ -16034,6 +18210,7 @@ struct glSamplerParameterfv_params
 
 struct glSamplerParameteri_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     GLint param;
@@ -16041,6 +18218,7 @@ struct glSamplerParameteri_params
 
 struct glSamplerParameteriv_params
 {
+    TEB *teb;
     GLuint sampler;
     GLenum pname;
     const GLint *param;
@@ -16048,6 +18226,7 @@ struct glSamplerParameteriv_params
 
 struct glScalexOES_params
 {
+    TEB *teb;
     GLfixed x;
     GLfixed y;
     GLfixed z;
@@ -16055,6 +18234,7 @@ struct glScalexOES_params
 
 struct glScissorArrayv_params
 {
+    TEB *teb;
     GLuint first;
     GLsizei count;
     const GLint *v;
@@ -16062,6 +18242,7 @@ struct glScissorArrayv_params
 
 struct glScissorExclusiveArrayvNV_params
 {
+    TEB *teb;
     GLuint first;
     GLsizei count;
     const GLint *v;
@@ -16069,6 +18250,7 @@ struct glScissorExclusiveArrayvNV_params
 
 struct glScissorExclusiveNV_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLsizei width;
@@ -16077,6 +18259,7 @@ struct glScissorExclusiveNV_params
 
 struct glScissorIndexed_params
 {
+    TEB *teb;
     GLuint index;
     GLint left;
     GLint bottom;
@@ -16086,12 +18269,14 @@ struct glScissorIndexed_params
 
 struct glScissorIndexedv_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glSecondaryColor3b_params
 {
+    TEB *teb;
     GLbyte red;
     GLbyte green;
     GLbyte blue;
@@ -16099,6 +18284,7 @@ struct glSecondaryColor3b_params
 
 struct glSecondaryColor3bEXT_params
 {
+    TEB *teb;
     GLbyte red;
     GLbyte green;
     GLbyte blue;
@@ -16106,16 +18292,19 @@ struct glSecondaryColor3bEXT_params
 
 struct glSecondaryColor3bv_params
 {
+    TEB *teb;
     const GLbyte *v;
 };
 
 struct glSecondaryColor3bvEXT_params
 {
+    TEB *teb;
     const GLbyte *v;
 };
 
 struct glSecondaryColor3d_params
 {
+    TEB *teb;
     GLdouble red;
     GLdouble green;
     GLdouble blue;
@@ -16123,6 +18312,7 @@ struct glSecondaryColor3d_params
 
 struct glSecondaryColor3dEXT_params
 {
+    TEB *teb;
     GLdouble red;
     GLdouble green;
     GLdouble blue;
@@ -16130,16 +18320,19 @@ struct glSecondaryColor3dEXT_params
 
 struct glSecondaryColor3dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glSecondaryColor3dvEXT_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glSecondaryColor3f_params
 {
+    TEB *teb;
     GLfloat red;
     GLfloat green;
     GLfloat blue;
@@ -16147,6 +18340,7 @@ struct glSecondaryColor3f_params
 
 struct glSecondaryColor3fEXT_params
 {
+    TEB *teb;
     GLfloat red;
     GLfloat green;
     GLfloat blue;
@@ -16154,16 +18348,19 @@ struct glSecondaryColor3fEXT_params
 
 struct glSecondaryColor3fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glSecondaryColor3fvEXT_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glSecondaryColor3hNV_params
 {
+    TEB *teb;
     GLhalfNV red;
     GLhalfNV green;
     GLhalfNV blue;
@@ -16171,11 +18368,13 @@ struct glSecondaryColor3hNV_params
 
 struct glSecondaryColor3hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glSecondaryColor3i_params
 {
+    TEB *teb;
     GLint red;
     GLint green;
     GLint blue;
@@ -16183,6 +18382,7 @@ struct glSecondaryColor3i_params
 
 struct glSecondaryColor3iEXT_params
 {
+    TEB *teb;
     GLint red;
     GLint green;
     GLint blue;
@@ -16190,16 +18390,19 @@ struct glSecondaryColor3iEXT_params
 
 struct glSecondaryColor3iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glSecondaryColor3ivEXT_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glSecondaryColor3s_params
 {
+    TEB *teb;
     GLshort red;
     GLshort green;
     GLshort blue;
@@ -16207,6 +18410,7 @@ struct glSecondaryColor3s_params
 
 struct glSecondaryColor3sEXT_params
 {
+    TEB *teb;
     GLshort red;
     GLshort green;
     GLshort blue;
@@ -16214,16 +18418,19 @@ struct glSecondaryColor3sEXT_params
 
 struct glSecondaryColor3sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glSecondaryColor3svEXT_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glSecondaryColor3ub_params
 {
+    TEB *teb;
     GLubyte red;
     GLubyte green;
     GLubyte blue;
@@ -16231,6 +18438,7 @@ struct glSecondaryColor3ub_params
 
 struct glSecondaryColor3ubEXT_params
 {
+    TEB *teb;
     GLubyte red;
     GLubyte green;
     GLubyte blue;
@@ -16238,16 +18446,19 @@ struct glSecondaryColor3ubEXT_params
 
 struct glSecondaryColor3ubv_params
 {
+    TEB *teb;
     const GLubyte *v;
 };
 
 struct glSecondaryColor3ubvEXT_params
 {
+    TEB *teb;
     const GLubyte *v;
 };
 
 struct glSecondaryColor3ui_params
 {
+    TEB *teb;
     GLuint red;
     GLuint green;
     GLuint blue;
@@ -16255,6 +18466,7 @@ struct glSecondaryColor3ui_params
 
 struct glSecondaryColor3uiEXT_params
 {
+    TEB *teb;
     GLuint red;
     GLuint green;
     GLuint blue;
@@ -16262,16 +18474,19 @@ struct glSecondaryColor3uiEXT_params
 
 struct glSecondaryColor3uiv_params
 {
+    TEB *teb;
     const GLuint *v;
 };
 
 struct glSecondaryColor3uivEXT_params
 {
+    TEB *teb;
     const GLuint *v;
 };
 
 struct glSecondaryColor3us_params
 {
+    TEB *teb;
     GLushort red;
     GLushort green;
     GLushort blue;
@@ -16279,6 +18494,7 @@ struct glSecondaryColor3us_params
 
 struct glSecondaryColor3usEXT_params
 {
+    TEB *teb;
     GLushort red;
     GLushort green;
     GLushort blue;
@@ -16286,16 +18502,19 @@ struct glSecondaryColor3usEXT_params
 
 struct glSecondaryColor3usv_params
 {
+    TEB *teb;
     const GLushort *v;
 };
 
 struct glSecondaryColor3usvEXT_params
 {
+    TEB *teb;
     const GLushort *v;
 };
 
 struct glSecondaryColorFormatNV_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -16303,18 +18522,21 @@ struct glSecondaryColorFormatNV_params
 
 struct glSecondaryColorP3ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint color;
 };
 
 struct glSecondaryColorP3uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *color;
 };
 
 struct glSecondaryColorPointer_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -16323,6 +18545,7 @@ struct glSecondaryColorPointer_params
 
 struct glSecondaryColorPointerEXT_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -16331,6 +18554,7 @@ struct glSecondaryColorPointerEXT_params
 
 struct glSecondaryColorPointerListIBM_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLint stride;
@@ -16340,6 +18564,7 @@ struct glSecondaryColorPointerListIBM_params
 
 struct glSelectPerfMonitorCountersAMD_params
 {
+    TEB *teb;
     GLuint monitor;
     GLboolean enable;
     GLuint group;
@@ -16349,16 +18574,19 @@ struct glSelectPerfMonitorCountersAMD_params
 
 struct glSelectTextureCoordSetSGIS_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glSelectTextureSGIS_params
 {
+    TEB *teb;
     GLenum target;
 };
 
 struct glSemaphoreParameterui64vEXT_params
 {
+    TEB *teb;
     GLuint semaphore;
     GLenum pname;
     const GLuint64 *params;
@@ -16366,6 +18594,7 @@ struct glSemaphoreParameterui64vEXT_params
 
 struct glSeparableFilter2D_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -16378,6 +18607,7 @@ struct glSeparableFilter2D_params
 
 struct glSeparableFilter2DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLsizei width;
@@ -16390,23 +18620,27 @@ struct glSeparableFilter2DEXT_params
 
 struct glSetFenceAPPLE_params
 {
+    TEB *teb;
     GLuint fence;
 };
 
 struct glSetFenceNV_params
 {
+    TEB *teb;
     GLuint fence;
     GLenum condition;
 };
 
 struct glSetFragmentShaderConstantATI_params
 {
+    TEB *teb;
     GLuint dst;
     const GLfloat *value;
 };
 
 struct glSetInvariantEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum type;
     const void *addr;
@@ -16414,6 +18648,7 @@ struct glSetInvariantEXT_params
 
 struct glSetLocalConstantEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum type;
     const void *addr;
@@ -16421,6 +18656,7 @@ struct glSetLocalConstantEXT_params
 
 struct glSetMultisamplefvAMD_params
 {
+    TEB *teb;
     GLenum pname;
     GLuint index;
     const GLfloat *val;
@@ -16428,6 +18664,7 @@ struct glSetMultisamplefvAMD_params
 
 struct glShaderBinary_params
 {
+    TEB *teb;
     GLsizei count;
     const GLuint *shaders;
     GLenum binaryformat;
@@ -16437,6 +18674,7 @@ struct glShaderBinary_params
 
 struct glShaderOp1EXT_params
 {
+    TEB *teb;
     GLenum op;
     GLuint res;
     GLuint arg1;
@@ -16444,6 +18682,7 @@ struct glShaderOp1EXT_params
 
 struct glShaderOp2EXT_params
 {
+    TEB *teb;
     GLenum op;
     GLuint res;
     GLuint arg1;
@@ -16452,6 +18691,7 @@ struct glShaderOp2EXT_params
 
 struct glShaderOp3EXT_params
 {
+    TEB *teb;
     GLenum op;
     GLuint res;
     GLuint arg1;
@@ -16461,6 +18701,7 @@ struct glShaderOp3EXT_params
 
 struct glShaderSource_params
 {
+    TEB *teb;
     GLuint shader;
     GLsizei count;
     const GLchar *const*string;
@@ -16469,6 +18710,7 @@ struct glShaderSource_params
 
 struct glShaderSourceARB_params
 {
+    TEB *teb;
     GLhandleARB shaderObj;
     GLsizei count;
     const GLcharARB **string;
@@ -16477,6 +18719,7 @@ struct glShaderSourceARB_params
 
 struct glShaderStorageBlockBinding_params
 {
+    TEB *teb;
     GLuint program;
     GLuint storageBlockIndex;
     GLuint storageBlockBinding;
@@ -16484,11 +18727,13 @@ struct glShaderStorageBlockBinding_params
 
 struct glShadingRateImageBarrierNV_params
 {
+    TEB *teb;
     GLboolean synchronize;
 };
 
 struct glShadingRateImagePaletteNV_params
 {
+    TEB *teb;
     GLuint viewport;
     GLuint first;
     GLsizei count;
@@ -16497,6 +18742,7 @@ struct glShadingRateImagePaletteNV_params
 
 struct glShadingRateSampleOrderCustomNV_params
 {
+    TEB *teb;
     GLenum rate;
     GLuint samples;
     const GLint *locations;
@@ -16504,11 +18750,13 @@ struct glShadingRateSampleOrderCustomNV_params
 
 struct glShadingRateSampleOrderNV_params
 {
+    TEB *teb;
     GLenum order;
 };
 
 struct glSharpenTexFuncSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei n;
     const GLfloat *points;
@@ -16516,6 +18764,7 @@ struct glSharpenTexFuncSGIS_params
 
 struct glSignalSemaphoreEXT_params
 {
+    TEB *teb;
     GLuint semaphore;
     GLuint numBufferBarriers;
     const GLuint *buffers;
@@ -16526,6 +18775,7 @@ struct glSignalSemaphoreEXT_params
 
 struct glSignalSemaphoreui64NVX_params
 {
+    TEB *teb;
     GLuint signalGpu;
     GLsizei fenceObjectCount;
     const GLuint *semaphoreArray;
@@ -16534,16 +18784,19 @@ struct glSignalSemaphoreui64NVX_params
 
 struct glSignalVkFenceNV_params
 {
+    TEB *teb;
     GLuint64 vkFence;
 };
 
 struct glSignalVkSemaphoreNV_params
 {
+    TEB *teb;
     GLuint64 vkSemaphore;
 };
 
 struct glSpecializeShader_params
 {
+    TEB *teb;
     GLuint shader;
     const GLchar *pEntryPoint;
     GLuint numSpecializationConstants;
@@ -16553,6 +18806,7 @@ struct glSpecializeShader_params
 
 struct glSpecializeShaderARB_params
 {
+    TEB *teb;
     GLuint shader;
     const GLchar *pEntryPoint;
     GLuint numSpecializationConstants;
@@ -16562,46 +18816,54 @@ struct glSpecializeShaderARB_params
 
 struct glSpriteParameterfSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glSpriteParameterfvSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *params;
 };
 
 struct glSpriteParameteriSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glSpriteParameterivSGIX_params
 {
+    TEB *teb;
     GLenum pname;
     const GLint *params;
 };
 
 struct glStartInstrumentsSGIX_params
 {
+    TEB *teb;
 };
 
 struct glStateCaptureNV_params
 {
+    TEB *teb;
     GLuint state;
     GLenum mode;
 };
 
 struct glStencilClearTagEXT_params
 {
+    TEB *teb;
     GLsizei stencilTagBits;
     GLuint stencilClearTag;
 };
 
 struct glStencilFillPathInstancedNV_params
 {
+    TEB *teb;
     GLsizei numPaths;
     GLenum pathNameType;
     const void *paths;
@@ -16614,6 +18876,7 @@ struct glStencilFillPathInstancedNV_params
 
 struct glStencilFillPathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum fillMode;
     GLuint mask;
@@ -16621,6 +18884,7 @@ struct glStencilFillPathNV_params
 
 struct glStencilFuncSeparate_params
 {
+    TEB *teb;
     GLenum face;
     GLenum func;
     GLint ref;
@@ -16629,6 +18893,7 @@ struct glStencilFuncSeparate_params
 
 struct glStencilFuncSeparateATI_params
 {
+    TEB *teb;
     GLenum frontfunc;
     GLenum backfunc;
     GLint ref;
@@ -16637,12 +18902,14 @@ struct glStencilFuncSeparateATI_params
 
 struct glStencilMaskSeparate_params
 {
+    TEB *teb;
     GLenum face;
     GLuint mask;
 };
 
 struct glStencilOpSeparate_params
 {
+    TEB *teb;
     GLenum face;
     GLenum sfail;
     GLenum dpfail;
@@ -16651,6 +18918,7 @@ struct glStencilOpSeparate_params
 
 struct glStencilOpSeparateATI_params
 {
+    TEB *teb;
     GLenum face;
     GLenum sfail;
     GLenum dpfail;
@@ -16659,12 +18927,14 @@ struct glStencilOpSeparateATI_params
 
 struct glStencilOpValueAMD_params
 {
+    TEB *teb;
     GLenum face;
     GLuint value;
 };
 
 struct glStencilStrokePathInstancedNV_params
 {
+    TEB *teb;
     GLsizei numPaths;
     GLenum pathNameType;
     const void *paths;
@@ -16677,6 +18947,7 @@ struct glStencilStrokePathInstancedNV_params
 
 struct glStencilStrokePathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLint reference;
     GLuint mask;
@@ -16684,6 +18955,7 @@ struct glStencilStrokePathNV_params
 
 struct glStencilThenCoverFillPathInstancedNV_params
 {
+    TEB *teb;
     GLsizei numPaths;
     GLenum pathNameType;
     const void *paths;
@@ -16697,6 +18969,7 @@ struct glStencilThenCoverFillPathInstancedNV_params
 
 struct glStencilThenCoverFillPathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLenum fillMode;
     GLuint mask;
@@ -16705,6 +18978,7 @@ struct glStencilThenCoverFillPathNV_params
 
 struct glStencilThenCoverStrokePathInstancedNV_params
 {
+    TEB *teb;
     GLsizei numPaths;
     GLenum pathNameType;
     const void *paths;
@@ -16718,6 +18992,7 @@ struct glStencilThenCoverStrokePathInstancedNV_params
 
 struct glStencilThenCoverStrokePathNV_params
 {
+    TEB *teb;
     GLuint path;
     GLint reference;
     GLuint mask;
@@ -16726,23 +19001,27 @@ struct glStencilThenCoverStrokePathNV_params
 
 struct glStopInstrumentsSGIX_params
 {
+    TEB *teb;
     GLint marker;
 };
 
 struct glStringMarkerGREMEDY_params
 {
+    TEB *teb;
     GLsizei len;
     const void *string;
 };
 
 struct glSubpixelPrecisionBiasNV_params
 {
+    TEB *teb;
     GLuint xbits;
     GLuint ybits;
 };
 
 struct glSwizzleEXT_params
 {
+    TEB *teb;
     GLuint res;
     GLuint in;
     GLenum outX;
@@ -16753,15 +19032,18 @@ struct glSwizzleEXT_params
 
 struct glSyncTextureINTEL_params
 {
+    TEB *teb;
     GLuint texture;
 };
 
 struct glTagSampleBufferSGIX_params
 {
+    TEB *teb;
 };
 
 struct glTangent3bEXT_params
 {
+    TEB *teb;
     GLbyte tx;
     GLbyte ty;
     GLbyte tz;
@@ -16769,11 +19051,13 @@ struct glTangent3bEXT_params
 
 struct glTangent3bvEXT_params
 {
+    TEB *teb;
     const GLbyte *v;
 };
 
 struct glTangent3dEXT_params
 {
+    TEB *teb;
     GLdouble tx;
     GLdouble ty;
     GLdouble tz;
@@ -16781,11 +19065,13 @@ struct glTangent3dEXT_params
 
 struct glTangent3dvEXT_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glTangent3fEXT_params
 {
+    TEB *teb;
     GLfloat tx;
     GLfloat ty;
     GLfloat tz;
@@ -16793,11 +19079,13 @@ struct glTangent3fEXT_params
 
 struct glTangent3fvEXT_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glTangent3iEXT_params
 {
+    TEB *teb;
     GLint tx;
     GLint ty;
     GLint tz;
@@ -16805,11 +19093,13 @@ struct glTangent3iEXT_params
 
 struct glTangent3ivEXT_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glTangent3sEXT_params
 {
+    TEB *teb;
     GLshort tx;
     GLshort ty;
     GLshort tz;
@@ -16817,11 +19107,13 @@ struct glTangent3sEXT_params
 
 struct glTangent3svEXT_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glTangentPointerEXT_params
 {
+    TEB *teb;
     GLenum type;
     GLsizei stride;
     const void *pointer;
@@ -16829,33 +19121,39 @@ struct glTangentPointerEXT_params
 
 struct glTbufferMask3DFX_params
 {
+    TEB *teb;
     GLuint mask;
 };
 
 struct glTessellationFactorAMD_params
 {
+    TEB *teb;
     GLfloat factor;
 };
 
 struct glTessellationModeAMD_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glTestFenceAPPLE_params
 {
+    TEB *teb;
     GLuint fence;
     GLboolean ret;
 };
 
 struct glTestFenceNV_params
 {
+    TEB *teb;
     GLuint fence;
     GLboolean ret;
 };
 
 struct glTestObjectAPPLE_params
 {
+    TEB *teb;
     GLenum object;
     GLuint name;
     GLboolean ret;
@@ -16863,6 +19161,7 @@ struct glTestObjectAPPLE_params
 
 struct glTexAttachMemoryNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint memory;
     GLuint64 offset;
@@ -16870,6 +19169,7 @@ struct glTexAttachMemoryNV_params
 
 struct glTexBuffer_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLuint buffer;
@@ -16877,6 +19177,7 @@ struct glTexBuffer_params
 
 struct glTexBufferARB_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLuint buffer;
@@ -16884,6 +19185,7 @@ struct glTexBufferARB_params
 
 struct glTexBufferEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLuint buffer;
@@ -16891,6 +19193,7 @@ struct glTexBufferEXT_params
 
 struct glTexBufferRange_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalformat;
     GLuint buffer;
@@ -16900,59 +19203,70 @@ struct glTexBufferRange_params
 
 struct glTexBumpParameterfvATI_params
 {
+    TEB *teb;
     GLenum pname;
     const GLfloat *param;
 };
 
 struct glTexBumpParameterivATI_params
 {
+    TEB *teb;
     GLenum pname;
     const GLint *param;
 };
 
 struct glTexCoord1bOES_params
 {
+    TEB *teb;
     GLbyte s;
 };
 
 struct glTexCoord1bvOES_params
 {
+    TEB *teb;
     const GLbyte *coords;
 };
 
 struct glTexCoord1hNV_params
 {
+    TEB *teb;
     GLhalfNV s;
 };
 
 struct glTexCoord1hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glTexCoord1xOES_params
 {
+    TEB *teb;
     GLfixed s;
 };
 
 struct glTexCoord1xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glTexCoord2bOES_params
 {
+    TEB *teb;
     GLbyte s;
     GLbyte t;
 };
 
 struct glTexCoord2bvOES_params
 {
+    TEB *teb;
     const GLbyte *coords;
 };
 
 struct glTexCoord2fColor3fVertex3fSUN_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
     GLfloat r;
@@ -16965,6 +19279,7 @@ struct glTexCoord2fColor3fVertex3fSUN_params
 
 struct glTexCoord2fColor3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLfloat *tc;
     const GLfloat *c;
     const GLfloat *v;
@@ -16972,6 +19287,7 @@ struct glTexCoord2fColor3fVertex3fvSUN_params
 
 struct glTexCoord2fColor4fNormal3fVertex3fSUN_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
     GLfloat r;
@@ -16988,6 +19304,7 @@ struct glTexCoord2fColor4fNormal3fVertex3fSUN_params
 
 struct glTexCoord2fColor4fNormal3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLfloat *tc;
     const GLfloat *c;
     const GLfloat *n;
@@ -16996,6 +19313,7 @@ struct glTexCoord2fColor4fNormal3fVertex3fvSUN_params
 
 struct glTexCoord2fColor4ubVertex3fSUN_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
     GLubyte r;
@@ -17009,6 +19327,7 @@ struct glTexCoord2fColor4ubVertex3fSUN_params
 
 struct glTexCoord2fColor4ubVertex3fvSUN_params
 {
+    TEB *teb;
     const GLfloat *tc;
     const GLubyte *c;
     const GLfloat *v;
@@ -17016,6 +19335,7 @@ struct glTexCoord2fColor4ubVertex3fvSUN_params
 
 struct glTexCoord2fNormal3fVertex3fSUN_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
     GLfloat nx;
@@ -17028,6 +19348,7 @@ struct glTexCoord2fNormal3fVertex3fSUN_params
 
 struct glTexCoord2fNormal3fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLfloat *tc;
     const GLfloat *n;
     const GLfloat *v;
@@ -17035,6 +19356,7 @@ struct glTexCoord2fNormal3fVertex3fvSUN_params
 
 struct glTexCoord2fVertex3fSUN_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
     GLfloat x;
@@ -17044,34 +19366,40 @@ struct glTexCoord2fVertex3fSUN_params
 
 struct glTexCoord2fVertex3fvSUN_params
 {
+    TEB *teb;
     const GLfloat *tc;
     const GLfloat *v;
 };
 
 struct glTexCoord2hNV_params
 {
+    TEB *teb;
     GLhalfNV s;
     GLhalfNV t;
 };
 
 struct glTexCoord2hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glTexCoord2xOES_params
 {
+    TEB *teb;
     GLfixed s;
     GLfixed t;
 };
 
 struct glTexCoord2xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glTexCoord3bOES_params
 {
+    TEB *teb;
     GLbyte s;
     GLbyte t;
     GLbyte r;
@@ -17079,11 +19407,13 @@ struct glTexCoord3bOES_params
 
 struct glTexCoord3bvOES_params
 {
+    TEB *teb;
     const GLbyte *coords;
 };
 
 struct glTexCoord3hNV_params
 {
+    TEB *teb;
     GLhalfNV s;
     GLhalfNV t;
     GLhalfNV r;
@@ -17091,11 +19421,13 @@ struct glTexCoord3hNV_params
 
 struct glTexCoord3hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glTexCoord3xOES_params
 {
+    TEB *teb;
     GLfixed s;
     GLfixed t;
     GLfixed r;
@@ -17103,11 +19435,13 @@ struct glTexCoord3xOES_params
 
 struct glTexCoord3xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glTexCoord4bOES_params
 {
+    TEB *teb;
     GLbyte s;
     GLbyte t;
     GLbyte r;
@@ -17116,11 +19450,13 @@ struct glTexCoord4bOES_params
 
 struct glTexCoord4bvOES_params
 {
+    TEB *teb;
     const GLbyte *coords;
 };
 
 struct glTexCoord4fColor4fNormal3fVertex4fSUN_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
     GLfloat p;
@@ -17140,6 +19476,7 @@ struct glTexCoord4fColor4fNormal3fVertex4fSUN_params
 
 struct glTexCoord4fColor4fNormal3fVertex4fvSUN_params
 {
+    TEB *teb;
     const GLfloat *tc;
     const GLfloat *c;
     const GLfloat *n;
@@ -17148,6 +19485,7 @@ struct glTexCoord4fColor4fNormal3fVertex4fvSUN_params
 
 struct glTexCoord4fVertex4fSUN_params
 {
+    TEB *teb;
     GLfloat s;
     GLfloat t;
     GLfloat p;
@@ -17160,12 +19498,14 @@ struct glTexCoord4fVertex4fSUN_params
 
 struct glTexCoord4fVertex4fvSUN_params
 {
+    TEB *teb;
     const GLfloat *tc;
     const GLfloat *v;
 };
 
 struct glTexCoord4hNV_params
 {
+    TEB *teb;
     GLhalfNV s;
     GLhalfNV t;
     GLhalfNV r;
@@ -17174,11 +19514,13 @@ struct glTexCoord4hNV_params
 
 struct glTexCoord4hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glTexCoord4xOES_params
 {
+    TEB *teb;
     GLfixed s;
     GLfixed t;
     GLfixed r;
@@ -17187,11 +19529,13 @@ struct glTexCoord4xOES_params
 
 struct glTexCoord4xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glTexCoordFormatNV_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -17199,54 +19543,63 @@ struct glTexCoordFormatNV_params
 
 struct glTexCoordP1ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint coords;
 };
 
 struct glTexCoordP1uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *coords;
 };
 
 struct glTexCoordP2ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint coords;
 };
 
 struct glTexCoordP2uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *coords;
 };
 
 struct glTexCoordP3ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint coords;
 };
 
 struct glTexCoordP3uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *coords;
 };
 
 struct glTexCoordP4ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint coords;
 };
 
 struct glTexCoordP4uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *coords;
 };
 
 struct glTexCoordPointerEXT_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -17256,6 +19609,7 @@ struct glTexCoordPointerEXT_params
 
 struct glTexCoordPointerListIBM_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLint stride;
@@ -17265,6 +19619,7 @@ struct glTexCoordPointerListIBM_params
 
 struct glTexCoordPointervINTEL_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     const void **pointer;
@@ -17272,6 +19627,7 @@ struct glTexCoordPointervINTEL_params
 
 struct glTexEnvxOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfixed param;
@@ -17279,6 +19635,7 @@ struct glTexEnvxOES_params
 
 struct glTexEnvxvOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfixed *params;
@@ -17286,6 +19643,7 @@ struct glTexEnvxvOES_params
 
 struct glTexFilterFuncSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLenum filter;
     GLsizei n;
@@ -17294,6 +19652,7 @@ struct glTexFilterFuncSGIS_params
 
 struct glTexGenxOES_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     GLfixed param;
@@ -17301,6 +19660,7 @@ struct glTexGenxOES_params
 
 struct glTexGenxvOES_params
 {
+    TEB *teb;
     GLenum coord;
     GLenum pname;
     const GLfixed *params;
@@ -17308,6 +19668,7 @@ struct glTexGenxvOES_params
 
 struct glTexImage2DMultisample_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei samples;
     GLenum internalformat;
@@ -17318,6 +19679,7 @@ struct glTexImage2DMultisample_params
 
 struct glTexImage2DMultisampleCoverageNV_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei coverageSamples;
     GLsizei colorSamples;
@@ -17329,6 +19691,7 @@ struct glTexImage2DMultisampleCoverageNV_params
 
 struct glTexImage3D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint internalformat;
@@ -17343,6 +19706,7 @@ struct glTexImage3D_params
 
 struct glTexImage3DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -17357,6 +19721,7 @@ struct glTexImage3DEXT_params
 
 struct glTexImage3DMultisample_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei samples;
     GLenum internalformat;
@@ -17368,6 +19733,7 @@ struct glTexImage3DMultisample_params
 
 struct glTexImage3DMultisampleCoverageNV_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei coverageSamples;
     GLsizei colorSamples;
@@ -17380,6 +19746,7 @@ struct glTexImage3DMultisampleCoverageNV_params
 
 struct glTexImage4DSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLenum internalformat;
@@ -17395,6 +19762,7 @@ struct glTexImage4DSGIS_params
 
 struct glTexPageCommitmentARB_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -17408,6 +19776,7 @@ struct glTexPageCommitmentARB_params
 
 struct glTexParameterIiv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -17415,6 +19784,7 @@ struct glTexParameterIiv_params
 
 struct glTexParameterIivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLint *params;
@@ -17422,6 +19792,7 @@ struct glTexParameterIivEXT_params
 
 struct glTexParameterIuiv_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLuint *params;
@@ -17429,6 +19800,7 @@ struct glTexParameterIuiv_params
 
 struct glTexParameterIuivEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLuint *params;
@@ -17436,6 +19808,7 @@ struct glTexParameterIuivEXT_params
 
 struct glTexParameterxOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     GLfixed param;
@@ -17443,6 +19816,7 @@ struct glTexParameterxOES_params
 
 struct glTexParameterxvOES_params
 {
+    TEB *teb;
     GLenum target;
     GLenum pname;
     const GLfixed *params;
@@ -17450,12 +19824,14 @@ struct glTexParameterxvOES_params
 
 struct glTexRenderbufferNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint renderbuffer;
 };
 
 struct glTexStorage1D_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei levels;
     GLenum internalformat;
@@ -17464,6 +19840,7 @@ struct glTexStorage1D_params
 
 struct glTexStorage2D_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei levels;
     GLenum internalformat;
@@ -17473,6 +19850,7 @@ struct glTexStorage2D_params
 
 struct glTexStorage2DMultisample_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei samples;
     GLenum internalformat;
@@ -17483,6 +19861,7 @@ struct glTexStorage2DMultisample_params
 
 struct glTexStorage3D_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei levels;
     GLenum internalformat;
@@ -17493,6 +19872,7 @@ struct glTexStorage3D_params
 
 struct glTexStorage3DMultisample_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei samples;
     GLenum internalformat;
@@ -17504,6 +19884,7 @@ struct glTexStorage3DMultisample_params
 
 struct glTexStorageMem1DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei levels;
     GLenum internalFormat;
@@ -17514,6 +19895,7 @@ struct glTexStorageMem1DEXT_params
 
 struct glTexStorageMem2DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei levels;
     GLenum internalFormat;
@@ -17525,6 +19907,7 @@ struct glTexStorageMem2DEXT_params
 
 struct glTexStorageMem2DMultisampleEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei samples;
     GLenum internalFormat;
@@ -17537,6 +19920,7 @@ struct glTexStorageMem2DMultisampleEXT_params
 
 struct glTexStorageMem3DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei levels;
     GLenum internalFormat;
@@ -17549,6 +19933,7 @@ struct glTexStorageMem3DEXT_params
 
 struct glTexStorageMem3DMultisampleEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei samples;
     GLenum internalFormat;
@@ -17562,6 +19947,7 @@ struct glTexStorageMem3DMultisampleEXT_params
 
 struct glTexStorageSparseAMD_params
 {
+    TEB *teb;
     GLenum target;
     GLenum internalFormat;
     GLsizei width;
@@ -17573,6 +19959,7 @@ struct glTexStorageSparseAMD_params
 
 struct glTexSubImage1DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -17584,6 +19971,7 @@ struct glTexSubImage1DEXT_params
 
 struct glTexSubImage2DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -17597,6 +19985,7 @@ struct glTexSubImage2DEXT_params
 
 struct glTexSubImage3D_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -17612,6 +20001,7 @@ struct glTexSubImage3D_params
 
 struct glTexSubImage3DEXT_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -17627,6 +20017,7 @@ struct glTexSubImage3DEXT_params
 
 struct glTexSubImage4DSGIS_params
 {
+    TEB *teb;
     GLenum target;
     GLint level;
     GLint xoffset;
@@ -17644,6 +20035,7 @@ struct glTexSubImage4DSGIS_params
 
 struct glTextureAttachMemoryNV_params
 {
+    TEB *teb;
     GLuint texture;
     GLuint memory;
     GLuint64 offset;
@@ -17651,14 +20043,17 @@ struct glTextureAttachMemoryNV_params
 
 struct glTextureBarrier_params
 {
+    TEB *teb;
 };
 
 struct glTextureBarrierNV_params
 {
+    TEB *teb;
 };
 
 struct glTextureBuffer_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum internalformat;
     GLuint buffer;
@@ -17666,6 +20061,7 @@ struct glTextureBuffer_params
 
 struct glTextureBufferEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum internalformat;
@@ -17674,6 +20070,7 @@ struct glTextureBufferEXT_params
 
 struct glTextureBufferRange_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum internalformat;
     GLuint buffer;
@@ -17683,6 +20080,7 @@ struct glTextureBufferRange_params
 
 struct glTextureBufferRangeEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum internalformat;
@@ -17693,6 +20091,7 @@ struct glTextureBufferRangeEXT_params
 
 struct glTextureColorMaskSGIS_params
 {
+    TEB *teb;
     GLboolean red;
     GLboolean green;
     GLboolean blue;
@@ -17701,6 +20100,7 @@ struct glTextureColorMaskSGIS_params
 
 struct glTextureImage1DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -17714,6 +20114,7 @@ struct glTextureImage1DEXT_params
 
 struct glTextureImage2DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -17728,6 +20129,7 @@ struct glTextureImage2DEXT_params
 
 struct glTextureImage2DMultisampleCoverageNV_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLsizei coverageSamples;
@@ -17740,6 +20142,7 @@ struct glTextureImage2DMultisampleCoverageNV_params
 
 struct glTextureImage2DMultisampleNV_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLsizei samples;
@@ -17751,6 +20154,7 @@ struct glTextureImage2DMultisampleNV_params
 
 struct glTextureImage3DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -17766,6 +20170,7 @@ struct glTextureImage3DEXT_params
 
 struct glTextureImage3DMultisampleCoverageNV_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLsizei coverageSamples;
@@ -17779,6 +20184,7 @@ struct glTextureImage3DMultisampleCoverageNV_params
 
 struct glTextureImage3DMultisampleNV_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLsizei samples;
@@ -17791,22 +20197,26 @@ struct glTextureImage3DMultisampleNV_params
 
 struct glTextureLightEXT_params
 {
+    TEB *teb;
     GLenum pname;
 };
 
 struct glTextureMaterialEXT_params
 {
+    TEB *teb;
     GLenum face;
     GLenum mode;
 };
 
 struct glTextureNormalEXT_params
 {
+    TEB *teb;
     GLenum mode;
 };
 
 struct glTexturePageCommitmentEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -17820,6 +20230,7 @@ struct glTexturePageCommitmentEXT_params
 
 struct glTextureParameterIiv_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     const GLint *params;
@@ -17827,6 +20238,7 @@ struct glTextureParameterIiv_params
 
 struct glTextureParameterIivEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -17835,6 +20247,7 @@ struct glTextureParameterIivEXT_params
 
 struct glTextureParameterIuiv_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     const GLuint *params;
@@ -17842,6 +20255,7 @@ struct glTextureParameterIuiv_params
 
 struct glTextureParameterIuivEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -17850,6 +20264,7 @@ struct glTextureParameterIuivEXT_params
 
 struct glTextureParameterf_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     GLfloat param;
@@ -17857,6 +20272,7 @@ struct glTextureParameterf_params
 
 struct glTextureParameterfEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -17865,6 +20281,7 @@ struct glTextureParameterfEXT_params
 
 struct glTextureParameterfv_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     const GLfloat *param;
@@ -17872,6 +20289,7 @@ struct glTextureParameterfv_params
 
 struct glTextureParameterfvEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -17880,6 +20298,7 @@ struct glTextureParameterfvEXT_params
 
 struct glTextureParameteri_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     GLint param;
@@ -17887,6 +20306,7 @@ struct glTextureParameteri_params
 
 struct glTextureParameteriEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -17895,6 +20315,7 @@ struct glTextureParameteriEXT_params
 
 struct glTextureParameteriv_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum pname;
     const GLint *param;
@@ -17902,6 +20323,7 @@ struct glTextureParameteriv_params
 
 struct glTextureParameterivEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum pname;
@@ -17910,6 +20332,7 @@ struct glTextureParameterivEXT_params
 
 struct glTextureRangeAPPLE_params
 {
+    TEB *teb;
     GLenum target;
     GLsizei length;
     const void *pointer;
@@ -17917,6 +20340,7 @@ struct glTextureRangeAPPLE_params
 
 struct glTextureRenderbufferEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLuint renderbuffer;
@@ -17924,6 +20348,7 @@ struct glTextureRenderbufferEXT_params
 
 struct glTextureStorage1D_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei levels;
     GLenum internalformat;
@@ -17932,6 +20357,7 @@ struct glTextureStorage1D_params
 
 struct glTextureStorage1DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLsizei levels;
@@ -17941,6 +20367,7 @@ struct glTextureStorage1DEXT_params
 
 struct glTextureStorage2D_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei levels;
     GLenum internalformat;
@@ -17950,6 +20377,7 @@ struct glTextureStorage2D_params
 
 struct glTextureStorage2DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLsizei levels;
@@ -17960,6 +20388,7 @@ struct glTextureStorage2DEXT_params
 
 struct glTextureStorage2DMultisample_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei samples;
     GLenum internalformat;
@@ -17970,6 +20399,7 @@ struct glTextureStorage2DMultisample_params
 
 struct glTextureStorage2DMultisampleEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLsizei samples;
@@ -17981,6 +20411,7 @@ struct glTextureStorage2DMultisampleEXT_params
 
 struct glTextureStorage3D_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei levels;
     GLenum internalformat;
@@ -17991,6 +20422,7 @@ struct glTextureStorage3D_params
 
 struct glTextureStorage3DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLsizei levels;
@@ -18002,6 +20434,7 @@ struct glTextureStorage3DEXT_params
 
 struct glTextureStorage3DMultisample_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei samples;
     GLenum internalformat;
@@ -18013,6 +20446,7 @@ struct glTextureStorage3DMultisample_params
 
 struct glTextureStorage3DMultisampleEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLsizei samples;
@@ -18025,6 +20459,7 @@ struct glTextureStorage3DMultisampleEXT_params
 
 struct glTextureStorageMem1DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei levels;
     GLenum internalFormat;
@@ -18035,6 +20470,7 @@ struct glTextureStorageMem1DEXT_params
 
 struct glTextureStorageMem2DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei levels;
     GLenum internalFormat;
@@ -18046,6 +20482,7 @@ struct glTextureStorageMem2DEXT_params
 
 struct glTextureStorageMem2DMultisampleEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei samples;
     GLenum internalFormat;
@@ -18058,6 +20495,7 @@ struct glTextureStorageMem2DMultisampleEXT_params
 
 struct glTextureStorageMem3DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei levels;
     GLenum internalFormat;
@@ -18070,6 +20508,7 @@ struct glTextureStorageMem3DEXT_params
 
 struct glTextureStorageMem3DMultisampleEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLsizei samples;
     GLenum internalFormat;
@@ -18083,6 +20522,7 @@ struct glTextureStorageMem3DMultisampleEXT_params
 
 struct glTextureStorageSparseAMD_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLenum internalFormat;
@@ -18095,6 +20535,7 @@ struct glTextureStorageSparseAMD_params
 
 struct glTextureSubImage1D_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -18106,6 +20547,7 @@ struct glTextureSubImage1D_params
 
 struct glTextureSubImage1DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -18118,6 +20560,7 @@ struct glTextureSubImage1DEXT_params
 
 struct glTextureSubImage2D_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -18131,6 +20574,7 @@ struct glTextureSubImage2D_params
 
 struct glTextureSubImage2DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -18145,6 +20589,7 @@ struct glTextureSubImage2DEXT_params
 
 struct glTextureSubImage3D_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
     GLint xoffset;
@@ -18160,6 +20605,7 @@ struct glTextureSubImage3D_params
 
 struct glTextureSubImage3DEXT_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLint level;
@@ -18176,6 +20622,7 @@ struct glTextureSubImage3DEXT_params
 
 struct glTextureView_params
 {
+    TEB *teb;
     GLuint texture;
     GLenum target;
     GLuint origtexture;
@@ -18188,6 +20635,7 @@ struct glTextureView_params
 
 struct glTrackMatrixNV_params
 {
+    TEB *teb;
     GLenum target;
     GLuint address;
     GLenum matrix;
@@ -18196,6 +20644,7 @@ struct glTrackMatrixNV_params
 
 struct glTransformFeedbackAttribsNV_params
 {
+    TEB *teb;
     GLsizei count;
     const GLint *attribs;
     GLenum bufferMode;
@@ -18203,6 +20652,7 @@ struct glTransformFeedbackAttribsNV_params
 
 struct glTransformFeedbackBufferBase_params
 {
+    TEB *teb;
     GLuint xfb;
     GLuint index;
     GLuint buffer;
@@ -18210,6 +20660,7 @@ struct glTransformFeedbackBufferBase_params
 
 struct glTransformFeedbackBufferRange_params
 {
+    TEB *teb;
     GLuint xfb;
     GLuint index;
     GLuint buffer;
@@ -18219,6 +20670,7 @@ struct glTransformFeedbackBufferRange_params
 
 struct glTransformFeedbackStreamAttribsNV_params
 {
+    TEB *teb;
     GLsizei count;
     const GLint *attribs;
     GLsizei nbuffers;
@@ -18228,6 +20680,7 @@ struct glTransformFeedbackStreamAttribsNV_params
 
 struct glTransformFeedbackVaryings_params
 {
+    TEB *teb;
     GLuint program;
     GLsizei count;
     const GLchar *const*varyings;
@@ -18236,6 +20689,7 @@ struct glTransformFeedbackVaryings_params
 
 struct glTransformFeedbackVaryingsEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLsizei count;
     const GLchar *const*varyings;
@@ -18244,6 +20698,7 @@ struct glTransformFeedbackVaryingsEXT_params
 
 struct glTransformFeedbackVaryingsNV_params
 {
+    TEB *teb;
     GLuint program;
     GLsizei count;
     const GLint *locations;
@@ -18252,6 +20707,7 @@ struct glTransformFeedbackVaryingsNV_params
 
 struct glTransformPathNV_params
 {
+    TEB *teb;
     GLuint resultPath;
     GLuint srcPath;
     GLenum transformType;
@@ -18260,6 +20716,7 @@ struct glTransformPathNV_params
 
 struct glTranslatexOES_params
 {
+    TEB *teb;
     GLfixed x;
     GLfixed y;
     GLfixed z;
@@ -18267,12 +20724,14 @@ struct glTranslatexOES_params
 
 struct glUniform1d_params
 {
+    TEB *teb;
     GLint location;
     GLdouble x;
 };
 
 struct glUniform1dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLdouble *value;
@@ -18280,18 +20739,21 @@ struct glUniform1dv_params
 
 struct glUniform1f_params
 {
+    TEB *teb;
     GLint location;
     GLfloat v0;
 };
 
 struct glUniform1fARB_params
 {
+    TEB *teb;
     GLint location;
     GLfloat v0;
 };
 
 struct glUniform1fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLfloat *value;
@@ -18299,6 +20761,7 @@ struct glUniform1fv_params
 
 struct glUniform1fvARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLfloat *value;
@@ -18306,24 +20769,28 @@ struct glUniform1fvARB_params
 
 struct glUniform1i_params
 {
+    TEB *teb;
     GLint location;
     GLint v0;
 };
 
 struct glUniform1i64ARB_params
 {
+    TEB *teb;
     GLint location;
     GLint64 x;
 };
 
 struct glUniform1i64NV_params
 {
+    TEB *teb;
     GLint location;
     GLint64EXT x;
 };
 
 struct glUniform1i64vARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint64 *value;
@@ -18331,6 +20798,7 @@ struct glUniform1i64vARB_params
 
 struct glUniform1i64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint64EXT *value;
@@ -18338,12 +20806,14 @@ struct glUniform1i64vNV_params
 
 struct glUniform1iARB_params
 {
+    TEB *teb;
     GLint location;
     GLint v0;
 };
 
 struct glUniform1iv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint *value;
@@ -18351,6 +20821,7 @@ struct glUniform1iv_params
 
 struct glUniform1ivARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint *value;
@@ -18358,24 +20829,28 @@ struct glUniform1ivARB_params
 
 struct glUniform1ui_params
 {
+    TEB *teb;
     GLint location;
     GLuint v0;
 };
 
 struct glUniform1ui64ARB_params
 {
+    TEB *teb;
     GLint location;
     GLuint64 x;
 };
 
 struct glUniform1ui64NV_params
 {
+    TEB *teb;
     GLint location;
     GLuint64EXT x;
 };
 
 struct glUniform1ui64vARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64 *value;
@@ -18383,6 +20858,7 @@ struct glUniform1ui64vARB_params
 
 struct glUniform1ui64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64EXT *value;
@@ -18390,12 +20866,14 @@ struct glUniform1ui64vNV_params
 
 struct glUniform1uiEXT_params
 {
+    TEB *teb;
     GLint location;
     GLuint v0;
 };
 
 struct glUniform1uiv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint *value;
@@ -18403,6 +20881,7 @@ struct glUniform1uiv_params
 
 struct glUniform1uivEXT_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint *value;
@@ -18410,6 +20889,7 @@ struct glUniform1uivEXT_params
 
 struct glUniform2d_params
 {
+    TEB *teb;
     GLint location;
     GLdouble x;
     GLdouble y;
@@ -18417,6 +20897,7 @@ struct glUniform2d_params
 
 struct glUniform2dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLdouble *value;
@@ -18424,6 +20905,7 @@ struct glUniform2dv_params
 
 struct glUniform2f_params
 {
+    TEB *teb;
     GLint location;
     GLfloat v0;
     GLfloat v1;
@@ -18431,6 +20913,7 @@ struct glUniform2f_params
 
 struct glUniform2fARB_params
 {
+    TEB *teb;
     GLint location;
     GLfloat v0;
     GLfloat v1;
@@ -18438,6 +20921,7 @@ struct glUniform2fARB_params
 
 struct glUniform2fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLfloat *value;
@@ -18445,6 +20929,7 @@ struct glUniform2fv_params
 
 struct glUniform2fvARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLfloat *value;
@@ -18452,6 +20937,7 @@ struct glUniform2fvARB_params
 
 struct glUniform2i_params
 {
+    TEB *teb;
     GLint location;
     GLint v0;
     GLint v1;
@@ -18459,6 +20945,7 @@ struct glUniform2i_params
 
 struct glUniform2i64ARB_params
 {
+    TEB *teb;
     GLint location;
     GLint64 x;
     GLint64 y;
@@ -18466,6 +20953,7 @@ struct glUniform2i64ARB_params
 
 struct glUniform2i64NV_params
 {
+    TEB *teb;
     GLint location;
     GLint64EXT x;
     GLint64EXT y;
@@ -18473,6 +20961,7 @@ struct glUniform2i64NV_params
 
 struct glUniform2i64vARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint64 *value;
@@ -18480,6 +20969,7 @@ struct glUniform2i64vARB_params
 
 struct glUniform2i64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint64EXT *value;
@@ -18487,6 +20977,7 @@ struct glUniform2i64vNV_params
 
 struct glUniform2iARB_params
 {
+    TEB *teb;
     GLint location;
     GLint v0;
     GLint v1;
@@ -18494,6 +20985,7 @@ struct glUniform2iARB_params
 
 struct glUniform2iv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint *value;
@@ -18501,6 +20993,7 @@ struct glUniform2iv_params
 
 struct glUniform2ivARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint *value;
@@ -18508,6 +21001,7 @@ struct glUniform2ivARB_params
 
 struct glUniform2ui_params
 {
+    TEB *teb;
     GLint location;
     GLuint v0;
     GLuint v1;
@@ -18515,6 +21009,7 @@ struct glUniform2ui_params
 
 struct glUniform2ui64ARB_params
 {
+    TEB *teb;
     GLint location;
     GLuint64 x;
     GLuint64 y;
@@ -18522,6 +21017,7 @@ struct glUniform2ui64ARB_params
 
 struct glUniform2ui64NV_params
 {
+    TEB *teb;
     GLint location;
     GLuint64EXT x;
     GLuint64EXT y;
@@ -18529,6 +21025,7 @@ struct glUniform2ui64NV_params
 
 struct glUniform2ui64vARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64 *value;
@@ -18536,6 +21033,7 @@ struct glUniform2ui64vARB_params
 
 struct glUniform2ui64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64EXT *value;
@@ -18543,6 +21041,7 @@ struct glUniform2ui64vNV_params
 
 struct glUniform2uiEXT_params
 {
+    TEB *teb;
     GLint location;
     GLuint v0;
     GLuint v1;
@@ -18550,6 +21049,7 @@ struct glUniform2uiEXT_params
 
 struct glUniform2uiv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint *value;
@@ -18557,6 +21057,7 @@ struct glUniform2uiv_params
 
 struct glUniform2uivEXT_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint *value;
@@ -18564,6 +21065,7 @@ struct glUniform2uivEXT_params
 
 struct glUniform3d_params
 {
+    TEB *teb;
     GLint location;
     GLdouble x;
     GLdouble y;
@@ -18572,6 +21074,7 @@ struct glUniform3d_params
 
 struct glUniform3dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLdouble *value;
@@ -18579,6 +21082,7 @@ struct glUniform3dv_params
 
 struct glUniform3f_params
 {
+    TEB *teb;
     GLint location;
     GLfloat v0;
     GLfloat v1;
@@ -18587,6 +21091,7 @@ struct glUniform3f_params
 
 struct glUniform3fARB_params
 {
+    TEB *teb;
     GLint location;
     GLfloat v0;
     GLfloat v1;
@@ -18595,6 +21100,7 @@ struct glUniform3fARB_params
 
 struct glUniform3fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLfloat *value;
@@ -18602,6 +21108,7 @@ struct glUniform3fv_params
 
 struct glUniform3fvARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLfloat *value;
@@ -18609,6 +21116,7 @@ struct glUniform3fvARB_params
 
 struct glUniform3i_params
 {
+    TEB *teb;
     GLint location;
     GLint v0;
     GLint v1;
@@ -18617,6 +21125,7 @@ struct glUniform3i_params
 
 struct glUniform3i64ARB_params
 {
+    TEB *teb;
     GLint location;
     GLint64 x;
     GLint64 y;
@@ -18625,6 +21134,7 @@ struct glUniform3i64ARB_params
 
 struct glUniform3i64NV_params
 {
+    TEB *teb;
     GLint location;
     GLint64EXT x;
     GLint64EXT y;
@@ -18633,6 +21143,7 @@ struct glUniform3i64NV_params
 
 struct glUniform3i64vARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint64 *value;
@@ -18640,6 +21151,7 @@ struct glUniform3i64vARB_params
 
 struct glUniform3i64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint64EXT *value;
@@ -18647,6 +21159,7 @@ struct glUniform3i64vNV_params
 
 struct glUniform3iARB_params
 {
+    TEB *teb;
     GLint location;
     GLint v0;
     GLint v1;
@@ -18655,6 +21168,7 @@ struct glUniform3iARB_params
 
 struct glUniform3iv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint *value;
@@ -18662,6 +21176,7 @@ struct glUniform3iv_params
 
 struct glUniform3ivARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint *value;
@@ -18669,6 +21184,7 @@ struct glUniform3ivARB_params
 
 struct glUniform3ui_params
 {
+    TEB *teb;
     GLint location;
     GLuint v0;
     GLuint v1;
@@ -18677,6 +21193,7 @@ struct glUniform3ui_params
 
 struct glUniform3ui64ARB_params
 {
+    TEB *teb;
     GLint location;
     GLuint64 x;
     GLuint64 y;
@@ -18685,6 +21202,7 @@ struct glUniform3ui64ARB_params
 
 struct glUniform3ui64NV_params
 {
+    TEB *teb;
     GLint location;
     GLuint64EXT x;
     GLuint64EXT y;
@@ -18693,6 +21211,7 @@ struct glUniform3ui64NV_params
 
 struct glUniform3ui64vARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64 *value;
@@ -18700,6 +21219,7 @@ struct glUniform3ui64vARB_params
 
 struct glUniform3ui64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64EXT *value;
@@ -18707,6 +21227,7 @@ struct glUniform3ui64vNV_params
 
 struct glUniform3uiEXT_params
 {
+    TEB *teb;
     GLint location;
     GLuint v0;
     GLuint v1;
@@ -18715,6 +21236,7 @@ struct glUniform3uiEXT_params
 
 struct glUniform3uiv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint *value;
@@ -18722,6 +21244,7 @@ struct glUniform3uiv_params
 
 struct glUniform3uivEXT_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint *value;
@@ -18729,6 +21252,7 @@ struct glUniform3uivEXT_params
 
 struct glUniform4d_params
 {
+    TEB *teb;
     GLint location;
     GLdouble x;
     GLdouble y;
@@ -18738,6 +21262,7 @@ struct glUniform4d_params
 
 struct glUniform4dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLdouble *value;
@@ -18745,6 +21270,7 @@ struct glUniform4dv_params
 
 struct glUniform4f_params
 {
+    TEB *teb;
     GLint location;
     GLfloat v0;
     GLfloat v1;
@@ -18754,6 +21280,7 @@ struct glUniform4f_params
 
 struct glUniform4fARB_params
 {
+    TEB *teb;
     GLint location;
     GLfloat v0;
     GLfloat v1;
@@ -18763,6 +21290,7 @@ struct glUniform4fARB_params
 
 struct glUniform4fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLfloat *value;
@@ -18770,6 +21298,7 @@ struct glUniform4fv_params
 
 struct glUniform4fvARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLfloat *value;
@@ -18777,6 +21306,7 @@ struct glUniform4fvARB_params
 
 struct glUniform4i_params
 {
+    TEB *teb;
     GLint location;
     GLint v0;
     GLint v1;
@@ -18786,6 +21316,7 @@ struct glUniform4i_params
 
 struct glUniform4i64ARB_params
 {
+    TEB *teb;
     GLint location;
     GLint64 x;
     GLint64 y;
@@ -18795,6 +21326,7 @@ struct glUniform4i64ARB_params
 
 struct glUniform4i64NV_params
 {
+    TEB *teb;
     GLint location;
     GLint64EXT x;
     GLint64EXT y;
@@ -18804,6 +21336,7 @@ struct glUniform4i64NV_params
 
 struct glUniform4i64vARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint64 *value;
@@ -18811,6 +21344,7 @@ struct glUniform4i64vARB_params
 
 struct glUniform4i64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint64EXT *value;
@@ -18818,6 +21352,7 @@ struct glUniform4i64vNV_params
 
 struct glUniform4iARB_params
 {
+    TEB *teb;
     GLint location;
     GLint v0;
     GLint v1;
@@ -18827,6 +21362,7 @@ struct glUniform4iARB_params
 
 struct glUniform4iv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint *value;
@@ -18834,6 +21370,7 @@ struct glUniform4iv_params
 
 struct glUniform4ivARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLint *value;
@@ -18841,6 +21378,7 @@ struct glUniform4ivARB_params
 
 struct glUniform4ui_params
 {
+    TEB *teb;
     GLint location;
     GLuint v0;
     GLuint v1;
@@ -18850,6 +21388,7 @@ struct glUniform4ui_params
 
 struct glUniform4ui64ARB_params
 {
+    TEB *teb;
     GLint location;
     GLuint64 x;
     GLuint64 y;
@@ -18859,6 +21398,7 @@ struct glUniform4ui64ARB_params
 
 struct glUniform4ui64NV_params
 {
+    TEB *teb;
     GLint location;
     GLuint64EXT x;
     GLuint64EXT y;
@@ -18868,6 +21408,7 @@ struct glUniform4ui64NV_params
 
 struct glUniform4ui64vARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64 *value;
@@ -18875,6 +21416,7 @@ struct glUniform4ui64vARB_params
 
 struct glUniform4ui64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64EXT *value;
@@ -18882,6 +21424,7 @@ struct glUniform4ui64vNV_params
 
 struct glUniform4uiEXT_params
 {
+    TEB *teb;
     GLint location;
     GLuint v0;
     GLuint v1;
@@ -18891,6 +21434,7 @@ struct glUniform4uiEXT_params
 
 struct glUniform4uiv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint *value;
@@ -18898,6 +21442,7 @@ struct glUniform4uiv_params
 
 struct glUniform4uivEXT_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint *value;
@@ -18905,6 +21450,7 @@ struct glUniform4uivEXT_params
 
 struct glUniformBlockBinding_params
 {
+    TEB *teb;
     GLuint program;
     GLuint uniformBlockIndex;
     GLuint uniformBlockBinding;
@@ -18912,6 +21458,7 @@ struct glUniformBlockBinding_params
 
 struct glUniformBufferEXT_params
 {
+    TEB *teb;
     GLuint program;
     GLint location;
     GLuint buffer;
@@ -18919,18 +21466,21 @@ struct glUniformBufferEXT_params
 
 struct glUniformHandleui64ARB_params
 {
+    TEB *teb;
     GLint location;
     GLuint64 value;
 };
 
 struct glUniformHandleui64NV_params
 {
+    TEB *teb;
     GLint location;
     GLuint64 value;
 };
 
 struct glUniformHandleui64vARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64 *value;
@@ -18938,6 +21488,7 @@ struct glUniformHandleui64vARB_params
 
 struct glUniformHandleui64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64 *value;
@@ -18945,6 +21496,7 @@ struct glUniformHandleui64vNV_params
 
 struct glUniformMatrix2dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -18953,6 +21505,7 @@ struct glUniformMatrix2dv_params
 
 struct glUniformMatrix2fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -18961,6 +21514,7 @@ struct glUniformMatrix2fv_params
 
 struct glUniformMatrix2fvARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -18969,6 +21523,7 @@ struct glUniformMatrix2fvARB_params
 
 struct glUniformMatrix2x3dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -18977,6 +21532,7 @@ struct glUniformMatrix2x3dv_params
 
 struct glUniformMatrix2x3fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -18985,6 +21541,7 @@ struct glUniformMatrix2x3fv_params
 
 struct glUniformMatrix2x4dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -18993,6 +21550,7 @@ struct glUniformMatrix2x4dv_params
 
 struct glUniformMatrix2x4fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19001,6 +21559,7 @@ struct glUniformMatrix2x4fv_params
 
 struct glUniformMatrix3dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19009,6 +21568,7 @@ struct glUniformMatrix3dv_params
 
 struct glUniformMatrix3fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19017,6 +21577,7 @@ struct glUniformMatrix3fv_params
 
 struct glUniformMatrix3fvARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19025,6 +21586,7 @@ struct glUniformMatrix3fvARB_params
 
 struct glUniformMatrix3x2dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19033,6 +21595,7 @@ struct glUniformMatrix3x2dv_params
 
 struct glUniformMatrix3x2fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19041,6 +21604,7 @@ struct glUniformMatrix3x2fv_params
 
 struct glUniformMatrix3x4dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19049,6 +21613,7 @@ struct glUniformMatrix3x4dv_params
 
 struct glUniformMatrix3x4fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19057,6 +21622,7 @@ struct glUniformMatrix3x4fv_params
 
 struct glUniformMatrix4dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19065,6 +21631,7 @@ struct glUniformMatrix4dv_params
 
 struct glUniformMatrix4fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19073,6 +21640,7 @@ struct glUniformMatrix4fv_params
 
 struct glUniformMatrix4fvARB_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19081,6 +21649,7 @@ struct glUniformMatrix4fvARB_params
 
 struct glUniformMatrix4x2dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19089,6 +21658,7 @@ struct glUniformMatrix4x2dv_params
 
 struct glUniformMatrix4x2fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19097,6 +21667,7 @@ struct glUniformMatrix4x2fv_params
 
 struct glUniformMatrix4x3dv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19105,6 +21676,7 @@ struct glUniformMatrix4x3dv_params
 
 struct glUniformMatrix4x3fv_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     GLboolean transpose;
@@ -19113,6 +21685,7 @@ struct glUniformMatrix4x3fv_params
 
 struct glUniformSubroutinesuiv_params
 {
+    TEB *teb;
     GLenum shadertype;
     GLsizei count;
     const GLuint *indices;
@@ -19120,12 +21693,14 @@ struct glUniformSubroutinesuiv_params
 
 struct glUniformui64NV_params
 {
+    TEB *teb;
     GLint location;
     GLuint64EXT value;
 };
 
 struct glUniformui64vNV_params
 {
+    TEB *teb;
     GLint location;
     GLsizei count;
     const GLuint64EXT *value;
@@ -19133,45 +21708,53 @@ struct glUniformui64vNV_params
 
 struct glUnlockArraysEXT_params
 {
+    TEB *teb;
 };
 
 struct glUnmapBuffer_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean ret;
 };
 
 struct glUnmapBufferARB_params
 {
+    TEB *teb;
     GLenum target;
     GLboolean ret;
 };
 
 struct glUnmapNamedBuffer_params
 {
+    TEB *teb;
     GLuint buffer;
     GLboolean ret;
 };
 
 struct glUnmapNamedBufferEXT_params
 {
+    TEB *teb;
     GLuint buffer;
     GLboolean ret;
 };
 
 struct glUnmapObjectBufferATI_params
 {
+    TEB *teb;
     GLuint buffer;
 };
 
 struct glUnmapTexture2DINTEL_params
 {
+    TEB *teb;
     GLuint texture;
     GLint level;
 };
 
 struct glUpdateObjectBufferATI_params
 {
+    TEB *teb;
     GLuint buffer;
     GLuint offset;
     GLsizei size;
@@ -19181,21 +21764,25 @@ struct glUpdateObjectBufferATI_params
 
 struct glUploadGpuMaskNVX_params
 {
+    TEB *teb;
     GLbitfield mask;
 };
 
 struct glUseProgram_params
 {
+    TEB *teb;
     GLuint program;
 };
 
 struct glUseProgramObjectARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
 };
 
 struct glUseProgramStages_params
 {
+    TEB *teb;
     GLuint pipeline;
     GLbitfield stages;
     GLuint program;
@@ -19203,16 +21790,19 @@ struct glUseProgramStages_params
 
 struct glUseShaderProgramEXT_params
 {
+    TEB *teb;
     GLenum type;
     GLuint program;
 };
 
 struct glVDPAUFiniNV_params
 {
+    TEB *teb;
 };
 
 struct glVDPAUGetSurfaceivNV_params
 {
+    TEB *teb;
     GLvdpauSurfaceNV surface;
     GLenum pname;
     GLsizei count;
@@ -19222,24 +21812,28 @@ struct glVDPAUGetSurfaceivNV_params
 
 struct glVDPAUInitNV_params
 {
+    TEB *teb;
     const void *vdpDevice;
     const void *getProcAddress;
 };
 
 struct glVDPAUIsSurfaceNV_params
 {
+    TEB *teb;
     GLvdpauSurfaceNV surface;
     GLboolean ret;
 };
 
 struct glVDPAUMapSurfacesNV_params
 {
+    TEB *teb;
     GLsizei numSurfaces;
     const GLvdpauSurfaceNV *surfaces;
 };
 
 struct glVDPAURegisterOutputSurfaceNV_params
 {
+    TEB *teb;
     const void *vdpSurface;
     GLenum target;
     GLsizei numTextureNames;
@@ -19249,6 +21843,7 @@ struct glVDPAURegisterOutputSurfaceNV_params
 
 struct glVDPAURegisterVideoSurfaceNV_params
 {
+    TEB *teb;
     const void *vdpSurface;
     GLenum target;
     GLsizei numTextureNames;
@@ -19258,6 +21853,7 @@ struct glVDPAURegisterVideoSurfaceNV_params
 
 struct glVDPAURegisterVideoSurfaceWithPictureStructureNV_params
 {
+    TEB *teb;
     const void *vdpSurface;
     GLenum target;
     GLsizei numTextureNames;
@@ -19268,38 +21864,45 @@ struct glVDPAURegisterVideoSurfaceWithPictureStructureNV_params
 
 struct glVDPAUSurfaceAccessNV_params
 {
+    TEB *teb;
     GLvdpauSurfaceNV surface;
     GLenum access;
 };
 
 struct glVDPAUUnmapSurfacesNV_params
 {
+    TEB *teb;
     GLsizei numSurface;
     const GLvdpauSurfaceNV *surfaces;
 };
 
 struct glVDPAUUnregisterSurfaceNV_params
 {
+    TEB *teb;
     GLvdpauSurfaceNV surface;
 };
 
 struct glValidateProgram_params
 {
+    TEB *teb;
     GLuint program;
 };
 
 struct glValidateProgramARB_params
 {
+    TEB *teb;
     GLhandleARB programObj;
 };
 
 struct glValidateProgramPipeline_params
 {
+    TEB *teb;
     GLuint pipeline;
 };
 
 struct glVariantArrayObjectATI_params
 {
+    TEB *teb;
     GLuint id;
     GLenum type;
     GLsizei stride;
@@ -19309,6 +21912,7 @@ struct glVariantArrayObjectATI_params
 
 struct glVariantPointerEXT_params
 {
+    TEB *teb;
     GLuint id;
     GLenum type;
     GLuint stride;
@@ -19317,86 +21921,101 @@ struct glVariantPointerEXT_params
 
 struct glVariantbvEXT_params
 {
+    TEB *teb;
     GLuint id;
     const GLbyte *addr;
 };
 
 struct glVariantdvEXT_params
 {
+    TEB *teb;
     GLuint id;
     const GLdouble *addr;
 };
 
 struct glVariantfvEXT_params
 {
+    TEB *teb;
     GLuint id;
     const GLfloat *addr;
 };
 
 struct glVariantivEXT_params
 {
+    TEB *teb;
     GLuint id;
     const GLint *addr;
 };
 
 struct glVariantsvEXT_params
 {
+    TEB *teb;
     GLuint id;
     const GLshort *addr;
 };
 
 struct glVariantubvEXT_params
 {
+    TEB *teb;
     GLuint id;
     const GLubyte *addr;
 };
 
 struct glVariantuivEXT_params
 {
+    TEB *teb;
     GLuint id;
     const GLuint *addr;
 };
 
 struct glVariantusvEXT_params
 {
+    TEB *teb;
     GLuint id;
     const GLushort *addr;
 };
 
 struct glVertex2bOES_params
 {
+    TEB *teb;
     GLbyte x;
     GLbyte y;
 };
 
 struct glVertex2bvOES_params
 {
+    TEB *teb;
     const GLbyte *coords;
 };
 
 struct glVertex2hNV_params
 {
+    TEB *teb;
     GLhalfNV x;
     GLhalfNV y;
 };
 
 struct glVertex2hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glVertex2xOES_params
 {
+    TEB *teb;
     GLfixed x;
 };
 
 struct glVertex2xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glVertex3bOES_params
 {
+    TEB *teb;
     GLbyte x;
     GLbyte y;
     GLbyte z;
@@ -19404,11 +22023,13 @@ struct glVertex3bOES_params
 
 struct glVertex3bvOES_params
 {
+    TEB *teb;
     const GLbyte *coords;
 };
 
 struct glVertex3hNV_params
 {
+    TEB *teb;
     GLhalfNV x;
     GLhalfNV y;
     GLhalfNV z;
@@ -19416,22 +22037,26 @@ struct glVertex3hNV_params
 
 struct glVertex3hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glVertex3xOES_params
 {
+    TEB *teb;
     GLfixed x;
     GLfixed y;
 };
 
 struct glVertex3xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glVertex4bOES_params
 {
+    TEB *teb;
     GLbyte x;
     GLbyte y;
     GLbyte z;
@@ -19440,11 +22065,13 @@ struct glVertex4bOES_params
 
 struct glVertex4bvOES_params
 {
+    TEB *teb;
     const GLbyte *coords;
 };
 
 struct glVertex4hNV_params
 {
+    TEB *teb;
     GLhalfNV x;
     GLhalfNV y;
     GLhalfNV z;
@@ -19453,11 +22080,13 @@ struct glVertex4hNV_params
 
 struct glVertex4hvNV_params
 {
+    TEB *teb;
     const GLhalfNV *v;
 };
 
 struct glVertex4xOES_params
 {
+    TEB *teb;
     GLfixed x;
     GLfixed y;
     GLfixed z;
@@ -19465,11 +22094,13 @@ struct glVertex4xOES_params
 
 struct glVertex4xvOES_params
 {
+    TEB *teb;
     const GLfixed *coords;
 };
 
 struct glVertexArrayAttribBinding_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint attribindex;
     GLuint bindingindex;
@@ -19477,6 +22108,7 @@ struct glVertexArrayAttribBinding_params
 
 struct glVertexArrayAttribFormat_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint attribindex;
     GLint size;
@@ -19487,6 +22119,7 @@ struct glVertexArrayAttribFormat_params
 
 struct glVertexArrayAttribIFormat_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint attribindex;
     GLint size;
@@ -19496,6 +22129,7 @@ struct glVertexArrayAttribIFormat_params
 
 struct glVertexArrayAttribLFormat_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint attribindex;
     GLint size;
@@ -19505,6 +22139,7 @@ struct glVertexArrayAttribLFormat_params
 
 struct glVertexArrayBindVertexBufferEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint bindingindex;
     GLuint buffer;
@@ -19514,6 +22149,7 @@ struct glVertexArrayBindVertexBufferEXT_params
 
 struct glVertexArrayBindingDivisor_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint bindingindex;
     GLuint divisor;
@@ -19521,6 +22157,7 @@ struct glVertexArrayBindingDivisor_params
 
 struct glVertexArrayColorOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLint size;
@@ -19531,6 +22168,7 @@ struct glVertexArrayColorOffsetEXT_params
 
 struct glVertexArrayEdgeFlagOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLsizei stride;
@@ -19539,12 +22177,14 @@ struct glVertexArrayEdgeFlagOffsetEXT_params
 
 struct glVertexArrayElementBuffer_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
 };
 
 struct glVertexArrayFogCoordOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLenum type;
@@ -19554,6 +22194,7 @@ struct glVertexArrayFogCoordOffsetEXT_params
 
 struct glVertexArrayIndexOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLenum type;
@@ -19563,6 +22204,7 @@ struct glVertexArrayIndexOffsetEXT_params
 
 struct glVertexArrayMultiTexCoordOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLenum texunit;
@@ -19574,6 +22216,7 @@ struct glVertexArrayMultiTexCoordOffsetEXT_params
 
 struct glVertexArrayNormalOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLenum type;
@@ -19583,24 +22226,28 @@ struct glVertexArrayNormalOffsetEXT_params
 
 struct glVertexArrayParameteriAPPLE_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glVertexArrayRangeAPPLE_params
 {
+    TEB *teb;
     GLsizei length;
     void *pointer;
 };
 
 struct glVertexArrayRangeNV_params
 {
+    TEB *teb;
     GLsizei length;
     const void *pointer;
 };
 
 struct glVertexArraySecondaryColorOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLint size;
@@ -19611,6 +22258,7 @@ struct glVertexArraySecondaryColorOffsetEXT_params
 
 struct glVertexArrayTexCoordOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLint size;
@@ -19621,6 +22269,7 @@ struct glVertexArrayTexCoordOffsetEXT_params
 
 struct glVertexArrayVertexAttribBindingEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint attribindex;
     GLuint bindingindex;
@@ -19628,6 +22277,7 @@ struct glVertexArrayVertexAttribBindingEXT_params
 
 struct glVertexArrayVertexAttribDivisorEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint index;
     GLuint divisor;
@@ -19635,6 +22285,7 @@ struct glVertexArrayVertexAttribDivisorEXT_params
 
 struct glVertexArrayVertexAttribFormatEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint attribindex;
     GLint size;
@@ -19645,6 +22296,7 @@ struct glVertexArrayVertexAttribFormatEXT_params
 
 struct glVertexArrayVertexAttribIFormatEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint attribindex;
     GLint size;
@@ -19654,6 +22306,7 @@ struct glVertexArrayVertexAttribIFormatEXT_params
 
 struct glVertexArrayVertexAttribIOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLuint index;
@@ -19665,6 +22318,7 @@ struct glVertexArrayVertexAttribIOffsetEXT_params
 
 struct glVertexArrayVertexAttribLFormatEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint attribindex;
     GLint size;
@@ -19674,6 +22328,7 @@ struct glVertexArrayVertexAttribLFormatEXT_params
 
 struct glVertexArrayVertexAttribLOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLuint index;
@@ -19685,6 +22340,7 @@ struct glVertexArrayVertexAttribLOffsetEXT_params
 
 struct glVertexArrayVertexAttribOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLuint index;
@@ -19697,6 +22353,7 @@ struct glVertexArrayVertexAttribOffsetEXT_params
 
 struct glVertexArrayVertexBindingDivisorEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint bindingindex;
     GLuint divisor;
@@ -19704,6 +22361,7 @@ struct glVertexArrayVertexBindingDivisorEXT_params
 
 struct glVertexArrayVertexBuffer_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint bindingindex;
     GLuint buffer;
@@ -19713,6 +22371,7 @@ struct glVertexArrayVertexBuffer_params
 
 struct glVertexArrayVertexBuffers_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint first;
     GLsizei count;
@@ -19723,6 +22382,7 @@ struct glVertexArrayVertexBuffers_params
 
 struct glVertexArrayVertexOffsetEXT_params
 {
+    TEB *teb;
     GLuint vaobj;
     GLuint buffer;
     GLint size;
@@ -19733,126 +22393,147 @@ struct glVertexArrayVertexOffsetEXT_params
 
 struct glVertexAttrib1d_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
 };
 
 struct glVertexAttrib1dARB_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
 };
 
 struct glVertexAttrib1dNV_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
 };
 
 struct glVertexAttrib1dv_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib1dvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib1dvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib1f_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
 };
 
 struct glVertexAttrib1fARB_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
 };
 
 struct glVertexAttrib1fNV_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
 };
 
 struct glVertexAttrib1fv_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib1fvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib1fvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib1hNV_params
 {
+    TEB *teb;
     GLuint index;
     GLhalfNV x;
 };
 
 struct glVertexAttrib1hvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLhalfNV *v;
 };
 
 struct glVertexAttrib1s_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
 };
 
 struct glVertexAttrib1sARB_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
 };
 
 struct glVertexAttrib1sNV_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
 };
 
 struct glVertexAttrib1sv_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib1svARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib1svNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib2d_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -19860,6 +22541,7 @@ struct glVertexAttrib2d_params
 
 struct glVertexAttrib2dARB_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -19867,6 +22549,7 @@ struct glVertexAttrib2dARB_params
 
 struct glVertexAttrib2dNV_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -19874,24 +22557,28 @@ struct glVertexAttrib2dNV_params
 
 struct glVertexAttrib2dv_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib2dvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib2dvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib2f_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -19899,6 +22586,7 @@ struct glVertexAttrib2f_params
 
 struct glVertexAttrib2fARB_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -19906,6 +22594,7 @@ struct glVertexAttrib2fARB_params
 
 struct glVertexAttrib2fNV_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -19913,24 +22602,28 @@ struct glVertexAttrib2fNV_params
 
 struct glVertexAttrib2fv_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib2fvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib2fvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib2hNV_params
 {
+    TEB *teb;
     GLuint index;
     GLhalfNV x;
     GLhalfNV y;
@@ -19938,12 +22631,14 @@ struct glVertexAttrib2hNV_params
 
 struct glVertexAttrib2hvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLhalfNV *v;
 };
 
 struct glVertexAttrib2s_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
     GLshort y;
@@ -19951,6 +22646,7 @@ struct glVertexAttrib2s_params
 
 struct glVertexAttrib2sARB_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
     GLshort y;
@@ -19958,6 +22654,7 @@ struct glVertexAttrib2sARB_params
 
 struct glVertexAttrib2sNV_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
     GLshort y;
@@ -19965,24 +22662,28 @@ struct glVertexAttrib2sNV_params
 
 struct glVertexAttrib2sv_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib2svARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib2svNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib3d_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -19991,6 +22692,7 @@ struct glVertexAttrib3d_params
 
 struct glVertexAttrib3dARB_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -19999,6 +22701,7 @@ struct glVertexAttrib3dARB_params
 
 struct glVertexAttrib3dNV_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20007,24 +22710,28 @@ struct glVertexAttrib3dNV_params
 
 struct glVertexAttrib3dv_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib3dvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib3dvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib3f_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -20033,6 +22740,7 @@ struct glVertexAttrib3f_params
 
 struct glVertexAttrib3fARB_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -20041,6 +22749,7 @@ struct glVertexAttrib3fARB_params
 
 struct glVertexAttrib3fNV_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -20049,24 +22758,28 @@ struct glVertexAttrib3fNV_params
 
 struct glVertexAttrib3fv_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib3fvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib3fvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib3hNV_params
 {
+    TEB *teb;
     GLuint index;
     GLhalfNV x;
     GLhalfNV y;
@@ -20075,12 +22788,14 @@ struct glVertexAttrib3hNV_params
 
 struct glVertexAttrib3hvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLhalfNV *v;
 };
 
 struct glVertexAttrib3s_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
     GLshort y;
@@ -20089,6 +22804,7 @@ struct glVertexAttrib3s_params
 
 struct glVertexAttrib3sARB_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
     GLshort y;
@@ -20097,6 +22813,7 @@ struct glVertexAttrib3sARB_params
 
 struct glVertexAttrib3sNV_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
     GLshort y;
@@ -20105,60 +22822,70 @@ struct glVertexAttrib3sNV_params
 
 struct glVertexAttrib3sv_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib3svARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib3svNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib4Nbv_params
 {
+    TEB *teb;
     GLuint index;
     const GLbyte *v;
 };
 
 struct glVertexAttrib4NbvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLbyte *v;
 };
 
 struct glVertexAttrib4Niv_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttrib4NivARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttrib4Nsv_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib4NsvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib4Nub_params
 {
+    TEB *teb;
     GLuint index;
     GLubyte x;
     GLubyte y;
@@ -20168,6 +22895,7 @@ struct glVertexAttrib4Nub_params
 
 struct glVertexAttrib4NubARB_params
 {
+    TEB *teb;
     GLuint index;
     GLubyte x;
     GLubyte y;
@@ -20177,54 +22905,63 @@ struct glVertexAttrib4NubARB_params
 
 struct glVertexAttrib4Nubv_params
 {
+    TEB *teb;
     GLuint index;
     const GLubyte *v;
 };
 
 struct glVertexAttrib4NubvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLubyte *v;
 };
 
 struct glVertexAttrib4Nuiv_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttrib4NuivARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttrib4Nusv_params
 {
+    TEB *teb;
     GLuint index;
     const GLushort *v;
 };
 
 struct glVertexAttrib4NusvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLushort *v;
 };
 
 struct glVertexAttrib4bv_params
 {
+    TEB *teb;
     GLuint index;
     const GLbyte *v;
 };
 
 struct glVertexAttrib4bvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLbyte *v;
 };
 
 struct glVertexAttrib4d_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20234,6 +22971,7 @@ struct glVertexAttrib4d_params
 
 struct glVertexAttrib4dARB_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20243,6 +22981,7 @@ struct glVertexAttrib4dARB_params
 
 struct glVertexAttrib4dNV_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20252,24 +22991,28 @@ struct glVertexAttrib4dNV_params
 
 struct glVertexAttrib4dv_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib4dvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib4dvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttrib4f_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -20279,6 +23022,7 @@ struct glVertexAttrib4f_params
 
 struct glVertexAttrib4fARB_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -20288,6 +23032,7 @@ struct glVertexAttrib4fARB_params
 
 struct glVertexAttrib4fNV_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -20297,24 +23042,28 @@ struct glVertexAttrib4fNV_params
 
 struct glVertexAttrib4fv_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib4fvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib4fvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glVertexAttrib4hNV_params
 {
+    TEB *teb;
     GLuint index;
     GLhalfNV x;
     GLhalfNV y;
@@ -20324,24 +23073,28 @@ struct glVertexAttrib4hNV_params
 
 struct glVertexAttrib4hvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLhalfNV *v;
 };
 
 struct glVertexAttrib4iv_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttrib4ivARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttrib4s_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
     GLshort y;
@@ -20351,6 +23104,7 @@ struct glVertexAttrib4s_params
 
 struct glVertexAttrib4sARB_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
     GLshort y;
@@ -20360,6 +23114,7 @@ struct glVertexAttrib4sARB_params
 
 struct glVertexAttrib4sNV_params
 {
+    TEB *teb;
     GLuint index;
     GLshort x;
     GLshort y;
@@ -20369,24 +23124,28 @@ struct glVertexAttrib4sNV_params
 
 struct glVertexAttrib4sv_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib4svARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib4svNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttrib4ubNV_params
 {
+    TEB *teb;
     GLuint index;
     GLubyte x;
     GLubyte y;
@@ -20396,48 +23155,56 @@ struct glVertexAttrib4ubNV_params
 
 struct glVertexAttrib4ubv_params
 {
+    TEB *teb;
     GLuint index;
     const GLubyte *v;
 };
 
 struct glVertexAttrib4ubvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLubyte *v;
 };
 
 struct glVertexAttrib4ubvNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLubyte *v;
 };
 
 struct glVertexAttrib4uiv_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttrib4uivARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttrib4usv_params
 {
+    TEB *teb;
     GLuint index;
     const GLushort *v;
 };
 
 struct glVertexAttrib4usvARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLushort *v;
 };
 
 struct glVertexAttribArrayObjectATI_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -20449,24 +23216,28 @@ struct glVertexAttribArrayObjectATI_params
 
 struct glVertexAttribBinding_params
 {
+    TEB *teb;
     GLuint attribindex;
     GLuint bindingindex;
 };
 
 struct glVertexAttribDivisor_params
 {
+    TEB *teb;
     GLuint index;
     GLuint divisor;
 };
 
 struct glVertexAttribDivisorARB_params
 {
+    TEB *teb;
     GLuint index;
     GLuint divisor;
 };
 
 struct glVertexAttribFormat_params
 {
+    TEB *teb;
     GLuint attribindex;
     GLint size;
     GLenum type;
@@ -20476,6 +23247,7 @@ struct glVertexAttribFormat_params
 
 struct glVertexAttribFormatNV_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -20485,54 +23257,63 @@ struct glVertexAttribFormatNV_params
 
 struct glVertexAttribI1i_params
 {
+    TEB *teb;
     GLuint index;
     GLint x;
 };
 
 struct glVertexAttribI1iEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLint x;
 };
 
 struct glVertexAttribI1iv_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttribI1ivEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttribI1ui_params
 {
+    TEB *teb;
     GLuint index;
     GLuint x;
 };
 
 struct glVertexAttribI1uiEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLuint x;
 };
 
 struct glVertexAttribI1uiv_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttribI1uivEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttribI2i_params
 {
+    TEB *teb;
     GLuint index;
     GLint x;
     GLint y;
@@ -20540,6 +23321,7 @@ struct glVertexAttribI2i_params
 
 struct glVertexAttribI2iEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLint x;
     GLint y;
@@ -20547,18 +23329,21 @@ struct glVertexAttribI2iEXT_params
 
 struct glVertexAttribI2iv_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttribI2ivEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttribI2ui_params
 {
+    TEB *teb;
     GLuint index;
     GLuint x;
     GLuint y;
@@ -20566,6 +23351,7 @@ struct glVertexAttribI2ui_params
 
 struct glVertexAttribI2uiEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLuint x;
     GLuint y;
@@ -20573,18 +23359,21 @@ struct glVertexAttribI2uiEXT_params
 
 struct glVertexAttribI2uiv_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttribI2uivEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttribI3i_params
 {
+    TEB *teb;
     GLuint index;
     GLint x;
     GLint y;
@@ -20593,6 +23382,7 @@ struct glVertexAttribI3i_params
 
 struct glVertexAttribI3iEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLint x;
     GLint y;
@@ -20601,18 +23391,21 @@ struct glVertexAttribI3iEXT_params
 
 struct glVertexAttribI3iv_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttribI3ivEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttribI3ui_params
 {
+    TEB *teb;
     GLuint index;
     GLuint x;
     GLuint y;
@@ -20621,6 +23414,7 @@ struct glVertexAttribI3ui_params
 
 struct glVertexAttribI3uiEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLuint x;
     GLuint y;
@@ -20629,30 +23423,35 @@ struct glVertexAttribI3uiEXT_params
 
 struct glVertexAttribI3uiv_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttribI3uivEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttribI4bv_params
 {
+    TEB *teb;
     GLuint index;
     const GLbyte *v;
 };
 
 struct glVertexAttribI4bvEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLbyte *v;
 };
 
 struct glVertexAttribI4i_params
 {
+    TEB *teb;
     GLuint index;
     GLint x;
     GLint y;
@@ -20662,6 +23461,7 @@ struct glVertexAttribI4i_params
 
 struct glVertexAttribI4iEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLint x;
     GLint y;
@@ -20671,42 +23471,49 @@ struct glVertexAttribI4iEXT_params
 
 struct glVertexAttribI4iv_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttribI4ivEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLint *v;
 };
 
 struct glVertexAttribI4sv_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttribI4svEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLshort *v;
 };
 
 struct glVertexAttribI4ubv_params
 {
+    TEB *teb;
     GLuint index;
     const GLubyte *v;
 };
 
 struct glVertexAttribI4ubvEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLubyte *v;
 };
 
 struct glVertexAttribI4ui_params
 {
+    TEB *teb;
     GLuint index;
     GLuint x;
     GLuint y;
@@ -20716,6 +23523,7 @@ struct glVertexAttribI4ui_params
 
 struct glVertexAttribI4uiEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLuint x;
     GLuint y;
@@ -20725,30 +23533,35 @@ struct glVertexAttribI4uiEXT_params
 
 struct glVertexAttribI4uiv_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttribI4uivEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint *v;
 };
 
 struct glVertexAttribI4usv_params
 {
+    TEB *teb;
     GLuint index;
     const GLushort *v;
 };
 
 struct glVertexAttribI4usvEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLushort *v;
 };
 
 struct glVertexAttribIFormat_params
 {
+    TEB *teb;
     GLuint attribindex;
     GLint size;
     GLenum type;
@@ -20757,6 +23570,7 @@ struct glVertexAttribIFormat_params
 
 struct glVertexAttribIFormatNV_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -20765,6 +23579,7 @@ struct glVertexAttribIFormatNV_params
 
 struct glVertexAttribIPointer_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -20774,6 +23589,7 @@ struct glVertexAttribIPointer_params
 
 struct glVertexAttribIPointerEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -20783,66 +23599,77 @@ struct glVertexAttribIPointerEXT_params
 
 struct glVertexAttribL1d_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
 };
 
 struct glVertexAttribL1dEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
 };
 
 struct glVertexAttribL1dv_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttribL1dvEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttribL1i64NV_params
 {
+    TEB *teb;
     GLuint index;
     GLint64EXT x;
 };
 
 struct glVertexAttribL1i64vNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLint64EXT *v;
 };
 
 struct glVertexAttribL1ui64ARB_params
 {
+    TEB *teb;
     GLuint index;
     GLuint64EXT x;
 };
 
 struct glVertexAttribL1ui64NV_params
 {
+    TEB *teb;
     GLuint index;
     GLuint64EXT x;
 };
 
 struct glVertexAttribL1ui64vARB_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint64EXT *v;
 };
 
 struct glVertexAttribL1ui64vNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint64EXT *v;
 };
 
 struct glVertexAttribL2d_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20850,6 +23677,7 @@ struct glVertexAttribL2d_params
 
 struct glVertexAttribL2dEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20857,18 +23685,21 @@ struct glVertexAttribL2dEXT_params
 
 struct glVertexAttribL2dv_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttribL2dvEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttribL2i64NV_params
 {
+    TEB *teb;
     GLuint index;
     GLint64EXT x;
     GLint64EXT y;
@@ -20876,12 +23707,14 @@ struct glVertexAttribL2i64NV_params
 
 struct glVertexAttribL2i64vNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLint64EXT *v;
 };
 
 struct glVertexAttribL2ui64NV_params
 {
+    TEB *teb;
     GLuint index;
     GLuint64EXT x;
     GLuint64EXT y;
@@ -20889,12 +23722,14 @@ struct glVertexAttribL2ui64NV_params
 
 struct glVertexAttribL2ui64vNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint64EXT *v;
 };
 
 struct glVertexAttribL3d_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20903,6 +23738,7 @@ struct glVertexAttribL3d_params
 
 struct glVertexAttribL3dEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20911,18 +23747,21 @@ struct glVertexAttribL3dEXT_params
 
 struct glVertexAttribL3dv_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttribL3dvEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttribL3i64NV_params
 {
+    TEB *teb;
     GLuint index;
     GLint64EXT x;
     GLint64EXT y;
@@ -20931,12 +23770,14 @@ struct glVertexAttribL3i64NV_params
 
 struct glVertexAttribL3i64vNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLint64EXT *v;
 };
 
 struct glVertexAttribL3ui64NV_params
 {
+    TEB *teb;
     GLuint index;
     GLuint64EXT x;
     GLuint64EXT y;
@@ -20945,12 +23786,14 @@ struct glVertexAttribL3ui64NV_params
 
 struct glVertexAttribL3ui64vNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint64EXT *v;
 };
 
 struct glVertexAttribL4d_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20960,6 +23803,7 @@ struct glVertexAttribL4d_params
 
 struct glVertexAttribL4dEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLdouble x;
     GLdouble y;
@@ -20969,18 +23813,21 @@ struct glVertexAttribL4dEXT_params
 
 struct glVertexAttribL4dv_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttribL4dvEXT_params
 {
+    TEB *teb;
     GLuint index;
     const GLdouble *v;
 };
 
 struct glVertexAttribL4i64NV_params
 {
+    TEB *teb;
     GLuint index;
     GLint64EXT x;
     GLint64EXT y;
@@ -20990,12 +23837,14 @@ struct glVertexAttribL4i64NV_params
 
 struct glVertexAttribL4i64vNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLint64EXT *v;
 };
 
 struct glVertexAttribL4ui64NV_params
 {
+    TEB *teb;
     GLuint index;
     GLuint64EXT x;
     GLuint64EXT y;
@@ -21005,12 +23854,14 @@ struct glVertexAttribL4ui64NV_params
 
 struct glVertexAttribL4ui64vNV_params
 {
+    TEB *teb;
     GLuint index;
     const GLuint64EXT *v;
 };
 
 struct glVertexAttribLFormat_params
 {
+    TEB *teb;
     GLuint attribindex;
     GLint size;
     GLenum type;
@@ -21019,6 +23870,7 @@ struct glVertexAttribLFormat_params
 
 struct glVertexAttribLFormatNV_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -21027,6 +23879,7 @@ struct glVertexAttribLFormatNV_params
 
 struct glVertexAttribLPointer_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -21036,6 +23889,7 @@ struct glVertexAttribLPointer_params
 
 struct glVertexAttribLPointerEXT_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -21045,6 +23899,7 @@ struct glVertexAttribLPointerEXT_params
 
 struct glVertexAttribP1ui_params
 {
+    TEB *teb;
     GLuint index;
     GLenum type;
     GLboolean normalized;
@@ -21053,6 +23908,7 @@ struct glVertexAttribP1ui_params
 
 struct glVertexAttribP1uiv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum type;
     GLboolean normalized;
@@ -21061,6 +23917,7 @@ struct glVertexAttribP1uiv_params
 
 struct glVertexAttribP2ui_params
 {
+    TEB *teb;
     GLuint index;
     GLenum type;
     GLboolean normalized;
@@ -21069,6 +23926,7 @@ struct glVertexAttribP2ui_params
 
 struct glVertexAttribP2uiv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum type;
     GLboolean normalized;
@@ -21077,6 +23935,7 @@ struct glVertexAttribP2uiv_params
 
 struct glVertexAttribP3ui_params
 {
+    TEB *teb;
     GLuint index;
     GLenum type;
     GLboolean normalized;
@@ -21085,6 +23944,7 @@ struct glVertexAttribP3ui_params
 
 struct glVertexAttribP3uiv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum type;
     GLboolean normalized;
@@ -21093,6 +23953,7 @@ struct glVertexAttribP3uiv_params
 
 struct glVertexAttribP4ui_params
 {
+    TEB *teb;
     GLuint index;
     GLenum type;
     GLboolean normalized;
@@ -21101,6 +23962,7 @@ struct glVertexAttribP4ui_params
 
 struct glVertexAttribP4uiv_params
 {
+    TEB *teb;
     GLuint index;
     GLenum type;
     GLboolean normalized;
@@ -21109,6 +23971,7 @@ struct glVertexAttribP4uiv_params
 
 struct glVertexAttribParameteriAMD_params
 {
+    TEB *teb;
     GLuint index;
     GLenum pname;
     GLint param;
@@ -21116,6 +23979,7 @@ struct glVertexAttribParameteriAMD_params
 
 struct glVertexAttribPointer_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -21126,6 +23990,7 @@ struct glVertexAttribPointer_params
 
 struct glVertexAttribPointerARB_params
 {
+    TEB *teb;
     GLuint index;
     GLint size;
     GLenum type;
@@ -21136,6 +24001,7 @@ struct glVertexAttribPointerARB_params
 
 struct glVertexAttribPointerNV_params
 {
+    TEB *teb;
     GLuint index;
     GLint fsize;
     GLenum type;
@@ -21145,6 +24011,7 @@ struct glVertexAttribPointerNV_params
 
 struct glVertexAttribs1dvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLdouble *v;
@@ -21152,6 +24019,7 @@ struct glVertexAttribs1dvNV_params
 
 struct glVertexAttribs1fvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLfloat *v;
@@ -21159,6 +24027,7 @@ struct glVertexAttribs1fvNV_params
 
 struct glVertexAttribs1hvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei n;
     const GLhalfNV *v;
@@ -21166,6 +24035,7 @@ struct glVertexAttribs1hvNV_params
 
 struct glVertexAttribs1svNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLshort *v;
@@ -21173,6 +24043,7 @@ struct glVertexAttribs1svNV_params
 
 struct glVertexAttribs2dvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLdouble *v;
@@ -21180,6 +24051,7 @@ struct glVertexAttribs2dvNV_params
 
 struct glVertexAttribs2fvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLfloat *v;
@@ -21187,6 +24059,7 @@ struct glVertexAttribs2fvNV_params
 
 struct glVertexAttribs2hvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei n;
     const GLhalfNV *v;
@@ -21194,6 +24067,7 @@ struct glVertexAttribs2hvNV_params
 
 struct glVertexAttribs2svNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLshort *v;
@@ -21201,6 +24075,7 @@ struct glVertexAttribs2svNV_params
 
 struct glVertexAttribs3dvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLdouble *v;
@@ -21208,6 +24083,7 @@ struct glVertexAttribs3dvNV_params
 
 struct glVertexAttribs3fvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLfloat *v;
@@ -21215,6 +24091,7 @@ struct glVertexAttribs3fvNV_params
 
 struct glVertexAttribs3hvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei n;
     const GLhalfNV *v;
@@ -21222,6 +24099,7 @@ struct glVertexAttribs3hvNV_params
 
 struct glVertexAttribs3svNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLshort *v;
@@ -21229,6 +24107,7 @@ struct glVertexAttribs3svNV_params
 
 struct glVertexAttribs4dvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLdouble *v;
@@ -21236,6 +24115,7 @@ struct glVertexAttribs4dvNV_params
 
 struct glVertexAttribs4fvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLfloat *v;
@@ -21243,6 +24123,7 @@ struct glVertexAttribs4fvNV_params
 
 struct glVertexAttribs4hvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei n;
     const GLhalfNV *v;
@@ -21250,6 +24131,7 @@ struct glVertexAttribs4hvNV_params
 
 struct glVertexAttribs4svNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLshort *v;
@@ -21257,6 +24139,7 @@ struct glVertexAttribs4svNV_params
 
 struct glVertexAttribs4ubvNV_params
 {
+    TEB *teb;
     GLuint index;
     GLsizei count;
     const GLubyte *v;
@@ -21264,29 +24147,34 @@ struct glVertexAttribs4ubvNV_params
 
 struct glVertexBindingDivisor_params
 {
+    TEB *teb;
     GLuint bindingindex;
     GLuint divisor;
 };
 
 struct glVertexBlendARB_params
 {
+    TEB *teb;
     GLint count;
 };
 
 struct glVertexBlendEnvfATI_params
 {
+    TEB *teb;
     GLenum pname;
     GLfloat param;
 };
 
 struct glVertexBlendEnviATI_params
 {
+    TEB *teb;
     GLenum pname;
     GLint param;
 };
 
 struct glVertexFormatNV_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -21294,42 +24182,49 @@ struct glVertexFormatNV_params
 
 struct glVertexP2ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint value;
 };
 
 struct glVertexP2uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *value;
 };
 
 struct glVertexP3ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint value;
 };
 
 struct glVertexP3uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *value;
 };
 
 struct glVertexP4ui_params
 {
+    TEB *teb;
     GLenum type;
     GLuint value;
 };
 
 struct glVertexP4uiv_params
 {
+    TEB *teb;
     GLenum type;
     const GLuint *value;
 };
 
 struct glVertexPointerEXT_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -21339,6 +24234,7 @@ struct glVertexPointerEXT_params
 
 struct glVertexPointerListIBM_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLint stride;
@@ -21348,6 +24244,7 @@ struct glVertexPointerListIBM_params
 
 struct glVertexPointervINTEL_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     const void **pointer;
@@ -21355,54 +24252,63 @@ struct glVertexPointervINTEL_params
 
 struct glVertexStream1dATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLdouble x;
 };
 
 struct glVertexStream1dvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLdouble *coords;
 };
 
 struct glVertexStream1fATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLfloat x;
 };
 
 struct glVertexStream1fvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLfloat *coords;
 };
 
 struct glVertexStream1iATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLint x;
 };
 
 struct glVertexStream1ivATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLint *coords;
 };
 
 struct glVertexStream1sATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLshort x;
 };
 
 struct glVertexStream1svATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLshort *coords;
 };
 
 struct glVertexStream2dATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLdouble x;
     GLdouble y;
@@ -21410,12 +24316,14 @@ struct glVertexStream2dATI_params
 
 struct glVertexStream2dvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLdouble *coords;
 };
 
 struct glVertexStream2fATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLfloat x;
     GLfloat y;
@@ -21423,12 +24331,14 @@ struct glVertexStream2fATI_params
 
 struct glVertexStream2fvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLfloat *coords;
 };
 
 struct glVertexStream2iATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLint x;
     GLint y;
@@ -21436,12 +24346,14 @@ struct glVertexStream2iATI_params
 
 struct glVertexStream2ivATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLint *coords;
 };
 
 struct glVertexStream2sATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLshort x;
     GLshort y;
@@ -21449,12 +24361,14 @@ struct glVertexStream2sATI_params
 
 struct glVertexStream2svATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLshort *coords;
 };
 
 struct glVertexStream3dATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLdouble x;
     GLdouble y;
@@ -21463,12 +24377,14 @@ struct glVertexStream3dATI_params
 
 struct glVertexStream3dvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLdouble *coords;
 };
 
 struct glVertexStream3fATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLfloat x;
     GLfloat y;
@@ -21477,12 +24393,14 @@ struct glVertexStream3fATI_params
 
 struct glVertexStream3fvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLfloat *coords;
 };
 
 struct glVertexStream3iATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLint x;
     GLint y;
@@ -21491,12 +24409,14 @@ struct glVertexStream3iATI_params
 
 struct glVertexStream3ivATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLint *coords;
 };
 
 struct glVertexStream3sATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLshort x;
     GLshort y;
@@ -21505,12 +24425,14 @@ struct glVertexStream3sATI_params
 
 struct glVertexStream3svATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLshort *coords;
 };
 
 struct glVertexStream4dATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLdouble x;
     GLdouble y;
@@ -21520,12 +24442,14 @@ struct glVertexStream4dATI_params
 
 struct glVertexStream4dvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLdouble *coords;
 };
 
 struct glVertexStream4fATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLfloat x;
     GLfloat y;
@@ -21535,12 +24459,14 @@ struct glVertexStream4fATI_params
 
 struct glVertexStream4fvATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLfloat *coords;
 };
 
 struct glVertexStream4iATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLint x;
     GLint y;
@@ -21550,12 +24476,14 @@ struct glVertexStream4iATI_params
 
 struct glVertexStream4ivATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLint *coords;
 };
 
 struct glVertexStream4sATI_params
 {
+    TEB *teb;
     GLenum stream;
     GLshort x;
     GLshort y;
@@ -21565,12 +24493,14 @@ struct glVertexStream4sATI_params
 
 struct glVertexStream4svATI_params
 {
+    TEB *teb;
     GLenum stream;
     const GLshort *coords;
 };
 
 struct glVertexWeightPointerEXT_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -21579,26 +24509,31 @@ struct glVertexWeightPointerEXT_params
 
 struct glVertexWeightfEXT_params
 {
+    TEB *teb;
     GLfloat weight;
 };
 
 struct glVertexWeightfvEXT_params
 {
+    TEB *teb;
     const GLfloat *weight;
 };
 
 struct glVertexWeighthNV_params
 {
+    TEB *teb;
     GLhalfNV weight;
 };
 
 struct glVertexWeighthvNV_params
 {
+    TEB *teb;
     const GLhalfNV *weight;
 };
 
 struct glVideoCaptureNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLuint *sequence_num;
     GLuint64EXT *capture_time;
@@ -21607,6 +24542,7 @@ struct glVideoCaptureNV_params
 
 struct glVideoCaptureStreamParameterdvNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLuint stream;
     GLenum pname;
@@ -21615,6 +24551,7 @@ struct glVideoCaptureStreamParameterdvNV_params
 
 struct glVideoCaptureStreamParameterfvNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLuint stream;
     GLenum pname;
@@ -21623,6 +24560,7 @@ struct glVideoCaptureStreamParameterfvNV_params
 
 struct glVideoCaptureStreamParameterivNV_params
 {
+    TEB *teb;
     GLuint video_capture_slot;
     GLuint stream;
     GLenum pname;
@@ -21631,6 +24569,7 @@ struct glVideoCaptureStreamParameterivNV_params
 
 struct glViewportArrayv_params
 {
+    TEB *teb;
     GLuint first;
     GLsizei count;
     const GLfloat *v;
@@ -21638,6 +24577,7 @@ struct glViewportArrayv_params
 
 struct glViewportIndexedf_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat x;
     GLfloat y;
@@ -21647,12 +24587,14 @@ struct glViewportIndexedf_params
 
 struct glViewportIndexedfv_params
 {
+    TEB *teb;
     GLuint index;
     const GLfloat *v;
 };
 
 struct glViewportPositionWScaleNV_params
 {
+    TEB *teb;
     GLuint index;
     GLfloat xcoeff;
     GLfloat ycoeff;
@@ -21660,6 +24602,7 @@ struct glViewportPositionWScaleNV_params
 
 struct glViewportSwizzleNV_params
 {
+    TEB *teb;
     GLuint index;
     GLenum swizzlex;
     GLenum swizzley;
@@ -21669,6 +24612,7 @@ struct glViewportSwizzleNV_params
 
 struct glWaitSemaphoreEXT_params
 {
+    TEB *teb;
     GLuint semaphore;
     GLuint numBufferBarriers;
     const GLuint *buffers;
@@ -21679,6 +24623,7 @@ struct glWaitSemaphoreEXT_params
 
 struct glWaitSemaphoreui64NVX_params
 {
+    TEB *teb;
     GLuint waitGpu;
     GLsizei fenceObjectCount;
     const GLuint *semaphoreArray;
@@ -21687,6 +24632,7 @@ struct glWaitSemaphoreui64NVX_params
 
 struct glWaitSync_params
 {
+    TEB *teb;
     GLsync sync;
     GLbitfield flags;
     GLuint64 timeout;
@@ -21694,11 +24640,13 @@ struct glWaitSync_params
 
 struct glWaitVkSemaphoreNV_params
 {
+    TEB *teb;
     GLuint64 vkSemaphore;
 };
 
 struct glWeightPathsNV_params
 {
+    TEB *teb;
     GLuint resultPath;
     GLsizei numPaths;
     const GLuint *paths;
@@ -21707,6 +24655,7 @@ struct glWeightPathsNV_params
 
 struct glWeightPointerARB_params
 {
+    TEB *teb;
     GLint size;
     GLenum type;
     GLsizei stride;
@@ -21715,186 +24664,219 @@ struct glWeightPointerARB_params
 
 struct glWeightbvARB_params
 {
+    TEB *teb;
     GLint size;
     const GLbyte *weights;
 };
 
 struct glWeightdvARB_params
 {
+    TEB *teb;
     GLint size;
     const GLdouble *weights;
 };
 
 struct glWeightfvARB_params
 {
+    TEB *teb;
     GLint size;
     const GLfloat *weights;
 };
 
 struct glWeightivARB_params
 {
+    TEB *teb;
     GLint size;
     const GLint *weights;
 };
 
 struct glWeightsvARB_params
 {
+    TEB *teb;
     GLint size;
     const GLshort *weights;
 };
 
 struct glWeightubvARB_params
 {
+    TEB *teb;
     GLint size;
     const GLubyte *weights;
 };
 
 struct glWeightuivARB_params
 {
+    TEB *teb;
     GLint size;
     const GLuint *weights;
 };
 
 struct glWeightusvARB_params
 {
+    TEB *teb;
     GLint size;
     const GLushort *weights;
 };
 
 struct glWindowPos2d_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
 };
 
 struct glWindowPos2dARB_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
 };
 
 struct glWindowPos2dMESA_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
 };
 
 struct glWindowPos2dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glWindowPos2dvARB_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glWindowPos2dvMESA_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glWindowPos2f_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
 };
 
 struct glWindowPos2fARB_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
 };
 
 struct glWindowPos2fMESA_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
 };
 
 struct glWindowPos2fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glWindowPos2fvARB_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glWindowPos2fvMESA_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glWindowPos2i_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
 };
 
 struct glWindowPos2iARB_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
 };
 
 struct glWindowPos2iMESA_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
 };
 
 struct glWindowPos2iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glWindowPos2ivARB_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glWindowPos2ivMESA_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glWindowPos2s_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
 };
 
 struct glWindowPos2sARB_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
 };
 
 struct glWindowPos2sMESA_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
 };
 
 struct glWindowPos2sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glWindowPos2svARB_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glWindowPos2svMESA_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glWindowPos3d_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -21902,6 +24884,7 @@ struct glWindowPos3d_params
 
 struct glWindowPos3dARB_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -21909,6 +24892,7 @@ struct glWindowPos3dARB_params
 
 struct glWindowPos3dMESA_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -21916,21 +24900,25 @@ struct glWindowPos3dMESA_params
 
 struct glWindowPos3dv_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glWindowPos3dvARB_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glWindowPos3dvMESA_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glWindowPos3f_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -21938,6 +24926,7 @@ struct glWindowPos3f_params
 
 struct glWindowPos3fARB_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -21945,6 +24934,7 @@ struct glWindowPos3fARB_params
 
 struct glWindowPos3fMESA_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -21952,21 +24942,25 @@ struct glWindowPos3fMESA_params
 
 struct glWindowPos3fv_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glWindowPos3fvARB_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glWindowPos3fvMESA_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glWindowPos3i_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLint z;
@@ -21974,6 +24968,7 @@ struct glWindowPos3i_params
 
 struct glWindowPos3iARB_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLint z;
@@ -21981,6 +24976,7 @@ struct glWindowPos3iARB_params
 
 struct glWindowPos3iMESA_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLint z;
@@ -21988,21 +24984,25 @@ struct glWindowPos3iMESA_params
 
 struct glWindowPos3iv_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glWindowPos3ivARB_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glWindowPos3ivMESA_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glWindowPos3s_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
     GLshort z;
@@ -22010,6 +25010,7 @@ struct glWindowPos3s_params
 
 struct glWindowPos3sARB_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
     GLshort z;
@@ -22017,6 +25018,7 @@ struct glWindowPos3sARB_params
 
 struct glWindowPos3sMESA_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
     GLshort z;
@@ -22024,21 +25026,25 @@ struct glWindowPos3sMESA_params
 
 struct glWindowPos3sv_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glWindowPos3svARB_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glWindowPos3svMESA_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glWindowPos4dMESA_params
 {
+    TEB *teb;
     GLdouble x;
     GLdouble y;
     GLdouble z;
@@ -22047,11 +25053,13 @@ struct glWindowPos4dMESA_params
 
 struct glWindowPos4dvMESA_params
 {
+    TEB *teb;
     const GLdouble *v;
 };
 
 struct glWindowPos4fMESA_params
 {
+    TEB *teb;
     GLfloat x;
     GLfloat y;
     GLfloat z;
@@ -22060,11 +25068,13 @@ struct glWindowPos4fMESA_params
 
 struct glWindowPos4fvMESA_params
 {
+    TEB *teb;
     const GLfloat *v;
 };
 
 struct glWindowPos4iMESA_params
 {
+    TEB *teb;
     GLint x;
     GLint y;
     GLint z;
@@ -22073,11 +25083,13 @@ struct glWindowPos4iMESA_params
 
 struct glWindowPos4ivMESA_params
 {
+    TEB *teb;
     const GLint *v;
 };
 
 struct glWindowPos4sMESA_params
 {
+    TEB *teb;
     GLshort x;
     GLshort y;
     GLshort z;
@@ -22086,11 +25098,13 @@ struct glWindowPos4sMESA_params
 
 struct glWindowPos4svMESA_params
 {
+    TEB *teb;
     const GLshort *v;
 };
 
 struct glWindowRectanglesEXT_params
 {
+    TEB *teb;
     GLenum mode;
     GLsizei count;
     const GLint *box;
@@ -22098,6 +25112,7 @@ struct glWindowRectanglesEXT_params
 
 struct glWriteMaskEXT_params
 {
+    TEB *teb;
     GLuint res;
     GLuint in;
     GLenum outX;
@@ -22108,6 +25123,7 @@ struct glWriteMaskEXT_params
 
 struct wglAllocateMemoryNV_params
 {
+    TEB *teb;
     GLsizei size;
     GLfloat readfreq;
     GLfloat writefreq;
@@ -22117,6 +25133,7 @@ struct wglAllocateMemoryNV_params
 
 struct wglBindTexImageARB_params
 {
+    TEB *teb;
     HPBUFFERARB hPbuffer;
     int iBuffer;
     BOOL ret;
@@ -22124,6 +25141,7 @@ struct wglBindTexImageARB_params
 
 struct wglChoosePixelFormatARB_params
 {
+    TEB *teb;
     HDC hdc;
     const int *piAttribIList;
     const FLOAT *pfAttribFList;
@@ -22135,6 +25153,7 @@ struct wglChoosePixelFormatARB_params
 
 struct wglCreateContextAttribsARB_params
 {
+    TEB *teb;
     HDC hDC;
     HGLRC hShareContext;
     const int *attribList;
@@ -22143,6 +25162,7 @@ struct wglCreateContextAttribsARB_params
 
 struct wglCreatePbufferARB_params
 {
+    TEB *teb;
     HDC hDC;
     int iPixelFormat;
     int iWidth;
@@ -22153,39 +25173,46 @@ struct wglCreatePbufferARB_params
 
 struct wglDestroyPbufferARB_params
 {
+    TEB *teb;
     HPBUFFERARB hPbuffer;
     BOOL ret;
 };
 
 struct wglFreeMemoryNV_params
 {
+    TEB *teb;
     void *pointer;
 };
 
 struct wglGetCurrentReadDCARB_params
 {
+    TEB *teb;
     HDC ret;
 };
 
 struct wglGetExtensionsStringARB_params
 {
+    TEB *teb;
     HDC hdc;
     const char *ret;
 };
 
 struct wglGetExtensionsStringEXT_params
 {
+    TEB *teb;
     const char *ret;
 };
 
 struct wglGetPbufferDCARB_params
 {
+    TEB *teb;
     HPBUFFERARB hPbuffer;
     HDC ret;
 };
 
 struct wglGetPixelFormatAttribfvARB_params
 {
+    TEB *teb;
     HDC hdc;
     int iPixelFormat;
     int iLayerPlane;
@@ -22197,6 +25224,7 @@ struct wglGetPixelFormatAttribfvARB_params
 
 struct wglGetPixelFormatAttribivARB_params
 {
+    TEB *teb;
     HDC hdc;
     int iPixelFormat;
     int iLayerPlane;
@@ -22208,11 +25236,13 @@ struct wglGetPixelFormatAttribivARB_params
 
 struct wglGetSwapIntervalEXT_params
 {
+    TEB *teb;
     int ret;
 };
 
 struct wglMakeContextCurrentARB_params
 {
+    TEB *teb;
     HDC hDrawDC;
     HDC hReadDC;
     HGLRC hglrc;
@@ -22221,6 +25251,7 @@ struct wglMakeContextCurrentARB_params
 
 struct wglQueryCurrentRendererIntegerWINE_params
 {
+    TEB *teb;
     GLenum attribute;
     GLuint *value;
     BOOL ret;
@@ -22228,12 +25259,14 @@ struct wglQueryCurrentRendererIntegerWINE_params
 
 struct wglQueryCurrentRendererStringWINE_params
 {
+    TEB *teb;
     GLenum attribute;
     const GLchar *ret;
 };
 
 struct wglQueryPbufferARB_params
 {
+    TEB *teb;
     HPBUFFERARB hPbuffer;
     int iAttribute;
     int *piValue;
@@ -22242,6 +25275,7 @@ struct wglQueryPbufferARB_params
 
 struct wglQueryRendererIntegerWINE_params
 {
+    TEB *teb;
     HDC dc;
     GLint renderer;
     GLenum attribute;
@@ -22251,6 +25285,7 @@ struct wglQueryRendererIntegerWINE_params
 
 struct wglQueryRendererStringWINE_params
 {
+    TEB *teb;
     HDC dc;
     GLint renderer;
     GLenum attribute;
@@ -22259,6 +25294,7 @@ struct wglQueryRendererStringWINE_params
 
 struct wglReleasePbufferDCARB_params
 {
+    TEB *teb;
     HPBUFFERARB hPbuffer;
     HDC hDC;
     int ret;
@@ -22266,6 +25302,7 @@ struct wglReleasePbufferDCARB_params
 
 struct wglReleaseTexImageARB_params
 {
+    TEB *teb;
     HPBUFFERARB hPbuffer;
     int iBuffer;
     BOOL ret;
@@ -22273,6 +25310,7 @@ struct wglReleaseTexImageARB_params
 
 struct wglSetPbufferAttribARB_params
 {
+    TEB *teb;
     HPBUFFERARB hPbuffer;
     const int *piAttribList;
     BOOL ret;
@@ -22280,6 +25318,7 @@ struct wglSetPbufferAttribARB_params
 
 struct wglSetPixelFormatWINE_params
 {
+    TEB *teb;
     HDC hdc;
     int format;
     BOOL ret;
@@ -22287,6 +25326,7 @@ struct wglSetPixelFormatWINE_params
 
 struct wglSwapIntervalEXT_params
 {
+    TEB *teb;
     int interval;
     BOOL ret;
 };

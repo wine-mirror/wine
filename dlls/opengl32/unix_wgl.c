@@ -84,10 +84,10 @@ static struct wgl_handle *next_free;
 static unsigned int handle_count;
 
 /* the current context is assumed valid and doesn't need locking */
-static inline struct wgl_handle *get_current_context_ptr(void)
+static inline struct wgl_handle *get_current_context_ptr( TEB *teb )
 {
-    if (!NtCurrentTeb()->glCurrentRC) return NULL;
-    return &wgl_handles[LOWORD(NtCurrentTeb()->glCurrentRC) & ~HANDLE_TYPE_MASK];
+    if (!teb->glCurrentRC) return NULL;
+    return &wgl_handles[LOWORD(teb->glCurrentRC) & ~HANDLE_TYPE_MASK];
 }
 
 static inline HANDLE next_handle( struct wgl_handle *ptr, enum wgl_handle_type type )
@@ -184,9 +184,9 @@ static GLubyte *filter_extensions_list( const char *extensions, const char *disa
     return (GLubyte *)str;
 }
 
-static GLuint *filter_extensions_index( const char *disabled )
+static GLuint *filter_extensions_index( TEB *teb, const char *disabled )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     GLuint *disabled_index;
     GLint extensions_count;
     unsigned int i = 0, j;
@@ -296,7 +296,7 @@ static NTSTATUS query_reg_value( HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL
 }
 
 /* build the extension string by filtering out the disabled extensions */
-static BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLuint **disabled_exts )
+static BOOL filter_extensions( TEB * teb, const char *extensions, GLubyte **exts_list, GLuint **disabled_exts )
 {
     static const char *disabled;
 
@@ -331,22 +331,22 @@ static BOOL filter_extensions( const char *extensions, GLubyte **exts_list, GLui
 
     if (!disabled[0]) return FALSE;
     if (extensions && !*exts_list) *exts_list = filter_extensions_list( extensions, disabled );
-    if (!*disabled_exts) *disabled_exts = filter_extensions_index( disabled );
+    if (!*disabled_exts) *disabled_exts = filter_extensions_index( teb, disabled );
     return (exts_list && *exts_list) || *disabled_exts;
 }
 
-static const GLuint *disabled_extensions_index(void)
+static const GLuint *disabled_extensions_index( TEB *teb )
 {
-    struct wgl_handle *ptr = get_current_context_ptr();
+    struct wgl_handle *ptr = get_current_context_ptr( teb );
     GLuint **disabled = &ptr->u.context->disabled_exts;
-    if (*disabled || filter_extensions( NULL, NULL, disabled )) return *disabled;
+    if (*disabled || filter_extensions( teb, NULL, NULL, disabled )) return *disabled;
     return NULL;
 }
 
 /* Check if a GL extension is supported */
-static BOOL check_extension_support( const char *extension, const char *available_extensions )
+static BOOL check_extension_support( TEB *teb, const char *extension, const char *available_extensions )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     size_t len;
 
     TRACE( "Checking for extension '%s'\n", extension );
@@ -392,36 +392,36 @@ static BOOL check_extension_support( const char *extension, const char *availabl
     return FALSE;
 }
 
-static void WINAPI wrap_glGetIntegerv( GLenum pname, GLint *data )
+static void wrap_glGetIntegerv( TEB *teb, GLenum pname, GLint *data )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     const GLuint *disabled;
 
     funcs->gl.p_glGetIntegerv( pname, data );
 
-    if (pname == GL_NUM_EXTENSIONS && (disabled = disabled_extensions_index()))
+    if (pname == GL_NUM_EXTENSIONS && (disabled = disabled_extensions_index( teb )))
         while (*disabled++ != ~0u) (*data)--;
 }
 
-static const GLubyte * WINAPI wrap_glGetString( GLenum name )
+static const GLubyte *wrap_glGetString( TEB *teb, GLenum name )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     const GLubyte *ret;
 
     if ((ret = funcs->gl.p_glGetString( name )) && name == GL_EXTENSIONS)
     {
-        struct wgl_handle *ptr = get_current_context_ptr();
+        struct wgl_handle *ptr = get_current_context_ptr( teb );
         GLubyte **extensions = &ptr->u.context->extensions;
         GLuint **disabled = &ptr->u.context->disabled_exts;
-        if (*extensions || filter_extensions( (const char *)ret, extensions, disabled )) return *extensions;
+        if (*extensions || filter_extensions( teb, (const char *)ret, extensions, disabled )) return *extensions;
     }
 
     return ret;
 }
 
-static const GLubyte * WINAPI wrap_glGetStringi( GLenum name, GLuint index )
+static const GLubyte *wrap_glGetStringi( TEB *teb, GLenum name, GLuint index )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     const GLuint *disabled;
 
     if (!funcs->ext.p_glGetStringi)
@@ -430,24 +430,24 @@ static const GLubyte * WINAPI wrap_glGetStringi( GLenum name, GLuint index )
         *func_ptr = funcs->wgl.p_wglGetProcAddress( "glGetStringi" );
     }
 
-    if (name == GL_EXTENSIONS && (disabled = disabled_extensions_index()))
+    if (name == GL_EXTENSIONS && (disabled = disabled_extensions_index( teb )))
         while (index >= *disabled++) index++;
 
     return funcs->ext.p_glGetStringi( name, index );
 }
 
-static char *build_extension_list(void)
+static char *build_extension_list( TEB *teb )
 {
     GLint len = 0, capacity, i, extensions_count;
     char *extension, *tmp, *available_extensions;
 
-    wrap_glGetIntegerv( GL_NUM_EXTENSIONS, &extensions_count );
+    wrap_glGetIntegerv( teb, GL_NUM_EXTENSIONS, &extensions_count );
     capacity = 128 * extensions_count;
 
     if (!(available_extensions = malloc( capacity ))) return NULL;
     for (i = 0; i < extensions_count; ++i)
     {
-        extension = (char *)wrap_glGetStringi( GL_EXTENSIONS, i );
+        extension = (char *)wrap_glGetStringi( teb, GL_EXTENSIONS, i );
         capacity = max( capacity, len + strlen( extension ) + 2 );
         if (!(tmp = realloc( available_extensions, capacity ))) break;
         available_extensions = tmp;
@@ -458,24 +458,24 @@ static char *build_extension_list(void)
     return available_extensions;
 }
 
-static inline enum wgl_handle_type get_current_context_type(void)
+static inline enum wgl_handle_type get_current_context_type( TEB *teb )
 {
-    if (!NtCurrentTeb()->glCurrentRC) return HANDLE_CONTEXT;
-    return LOWORD(NtCurrentTeb()->glCurrentRC) & HANDLE_TYPE_MASK;
+    if (!teb->glCurrentRC) return HANDLE_CONTEXT;
+    return LOWORD(teb->glCurrentRC) & HANDLE_TYPE_MASK;
 }
 
 /* Check if a GL extension is supported */
-static BOOL is_extension_supported( const char *extension )
+static BOOL is_extension_supported( TEB *teb, const char *extension )
 {
-    enum wgl_handle_type type = get_current_context_type();
+    enum wgl_handle_type type = get_current_context_type( teb );
     char *available_extensions = NULL;
     BOOL ret = FALSE;
 
-    if (type == HANDLE_CONTEXT) available_extensions = strdup( (const char *)wrap_glGetString( GL_EXTENSIONS ) );
-    if (!available_extensions) available_extensions = build_extension_list();
+    if (type == HANDLE_CONTEXT) available_extensions = strdup( (const char *)wrap_glGetString( teb, GL_EXTENSIONS ) );
+    if (!available_extensions) available_extensions = build_extension_list( teb );
 
     if (!available_extensions) ERR( "No OpenGL extensions found, check if your OpenGL setup is correct!\n" );
-    else ret = check_extension_support( extension, available_extensions );
+    else ret = check_extension_support( teb, extension, available_extensions );
 
     free( available_extensions );
     return ret;
@@ -487,16 +487,16 @@ static int registry_entry_cmp( const void *a, const void *b )
     return strcmp( entry_a->name, entry_b->name );
 }
 
-static PROC WINAPI wrap_wglGetProcAddress( LPCSTR name )
+static PROC wrap_wglGetProcAddress( TEB *teb, LPCSTR name )
 {
     const struct registry_entry entry = {.name = name}, *found;
-    struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct opengl_funcs *funcs = teb->glTable;
     const void **func_ptr;
 
     /* Without an active context opengl32 doesn't know to what
      * driver it has to dispatch wglGetProcAddress.
      */
-    if (!get_current_context_ptr())
+    if (!get_current_context_ptr( teb ))
     {
         WARN( "No active WGL context found\n" );
         return (void *)-1;
@@ -513,7 +513,7 @@ static PROC WINAPI wrap_wglGetProcAddress( LPCSTR name )
     {
         void *driver_func = funcs->wgl.p_wglGetProcAddress( name );
 
-        if (!is_extension_supported( found->extension ))
+        if (!is_extension_supported( teb, found->extension ))
         {
             unsigned int i;
             static const struct { const char *name, *alt; } alternatives[] =
@@ -527,7 +527,7 @@ static PROC WINAPI wrap_wglGetProcAddress( LPCSTR name )
                 if (strcmp( name, alternatives[i].name )) continue;
                 WARN( "Extension %s required for %s not supported, trying %s\n", found->extension,
                       name, alternatives[i].alt );
-                return wrap_wglGetProcAddress( alternatives[i].alt );
+                return wrap_wglGetProcAddress( teb, alternatives[i].alt );
             }
 
             WARN( "Extension %s required for %s not supported\n", found->extension, name );
@@ -581,25 +581,26 @@ static HGLRC wrap_wglCreateContext( HDC hdc )
     return ret;
 }
 
-static BOOL wrap_wglMakeCurrent( HDC hdc, HGLRC hglrc )
+static BOOL wrap_wglMakeCurrent( TEB *teb, HDC hdc, HGLRC hglrc )
 {
     BOOL ret = TRUE;
-    struct wgl_handle *ptr, *prev = get_current_context_ptr();
+    DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
+    struct wgl_handle *ptr, *prev = get_current_context_ptr( teb );
 
     if (hglrc)
     {
         if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
-        if (!ptr->u.context->tid || ptr->u.context->tid == GetCurrentThreadId())
+        if (!ptr->u.context->tid || ptr->u.context->tid == tid)
         {
             ret = ptr->funcs->wgl.p_wglMakeCurrent( hdc, ptr->u.context->drv_ctx );
             if (ret)
             {
                 if (prev) prev->u.context->tid = 0;
-                ptr->u.context->tid = GetCurrentThreadId();
-                NtCurrentTeb()->glReserved1[0] = hdc;
-                NtCurrentTeb()->glReserved1[1] = hdc;
-                NtCurrentTeb()->glCurrentRC = hglrc;
-                NtCurrentTeb()->glTable = ptr->funcs;
+                ptr->u.context->tid = tid;
+                teb->glReserved1[0] = hdc;
+                teb->glReserved1[1] = hdc;
+                teb->glCurrentRC = hglrc;
+                teb->glTable = ptr->funcs;
             }
         }
         else
@@ -612,8 +613,8 @@ static BOOL wrap_wglMakeCurrent( HDC hdc, HGLRC hglrc )
     {
         if (!prev->funcs->wgl.p_wglMakeCurrent( 0, NULL )) return FALSE;
         prev->u.context->tid = 0;
-        NtCurrentTeb()->glCurrentRC = 0;
-        NtCurrentTeb()->glTable = &null_opengl_funcs;
+        teb->glCurrentRC = 0;
+        teb->glTable = &null_opengl_funcs;
     }
     else if (!hdc)
     {
@@ -623,17 +624,18 @@ static BOOL wrap_wglMakeCurrent( HDC hdc, HGLRC hglrc )
     return ret;
 }
 
-static BOOL wrap_wglDeleteContext( HGLRC hglrc )
+static BOOL wrap_wglDeleteContext( TEB *teb, HGLRC hglrc )
 {
     struct wgl_handle *ptr;
+    DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
 
     if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
-    if (ptr->u.context->tid && ptr->u.context->tid != GetCurrentThreadId())
+    if (ptr->u.context->tid && ptr->u.context->tid != tid)
     {
         RtlSetLastWin32Error( ERROR_BUSY );
         return FALSE;
     }
-    if (hglrc == NtCurrentTeb()->glCurrentRC) wrap_wglMakeCurrent( 0, 0 );
+    if (hglrc == teb->glCurrentRC) wrap_wglMakeCurrent( teb, 0, 0 );
     ptr->funcs->wgl.p_wglDeleteContext( ptr->u.context->drv_ctx );
     free( ptr->u.context->disabled_exts );
     free( ptr->u.context->extensions );
@@ -740,26 +742,27 @@ static HDC wrap_wglGetPbufferDCARB( HPBUFFERARB handle )
     return ptr->funcs->ext.p_wglGetPbufferDCARB( ptr->u.pbuffer );
 }
 
-static BOOL wrap_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
+static BOOL wrap_wglMakeContextCurrentARB( TEB *teb, HDC draw_hdc, HDC read_hdc, HGLRC hglrc )
 {
     BOOL ret = TRUE;
-    struct wgl_handle *ptr, *prev = get_current_context_ptr();
+    DWORD tid = HandleToULong(teb->ClientId.UniqueThread);
+    struct wgl_handle *ptr, *prev = get_current_context_ptr( teb );
 
     if (hglrc)
     {
         if (!(ptr = get_handle_ptr( hglrc, HANDLE_CONTEXT ))) return FALSE;
-        if (!ptr->u.context->tid || ptr->u.context->tid == GetCurrentThreadId())
+        if (!ptr->u.context->tid || ptr->u.context->tid == tid)
         {
             ret = (ptr->funcs->ext.p_wglMakeContextCurrentARB &&
                    ptr->funcs->ext.p_wglMakeContextCurrentARB( draw_hdc, read_hdc, ptr->u.context->drv_ctx ));
             if (ret)
             {
                 if (prev) prev->u.context->tid = 0;
-                ptr->u.context->tid = GetCurrentThreadId();
-                NtCurrentTeb()->glReserved1[0] = draw_hdc;
-                NtCurrentTeb()->glReserved1[1] = read_hdc;
-                NtCurrentTeb()->glCurrentRC = hglrc;
-                NtCurrentTeb()->glTable = ptr->funcs;
+                ptr->u.context->tid = tid;
+                teb->glReserved1[0] = draw_hdc;
+                teb->glReserved1[1] = read_hdc;
+                teb->glCurrentRC = hglrc;
+                teb->glTable = ptr->funcs;
             }
         }
         else
@@ -772,8 +775,8 @@ static BOOL wrap_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, HGLRC hgl
     {
         if (!prev->funcs->wgl.p_wglMakeCurrent( 0, NULL )) return FALSE;
         prev->u.context->tid = 0;
-        NtCurrentTeb()->glCurrentRC = 0;
-        NtCurrentTeb()->glTable = &null_opengl_funcs;
+        teb->glCurrentRC = 0;
+        teb->glTable = &null_opengl_funcs;
     }
     return ret;
 }
@@ -829,10 +832,10 @@ static void gl_debug_message_callback( GLenum source, GLenum type, GLuint id, GL
                         &ret_ptr, &ret_len );
 }
 
-static void WINAPI wrap_glDebugMessageCallback( GLDEBUGPROC callback, const void *userParam )
+static void wrap_glDebugMessageCallback( TEB *teb, GLDEBUGPROC callback, const void *userParam )
 {
-    struct wgl_handle *ptr = get_current_context_ptr();
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_current_context_ptr( teb );
+    const struct opengl_funcs *funcs = teb->glTable;
 
     if (!funcs->ext.p_glDebugMessageCallback) return;
 
@@ -841,10 +844,10 @@ static void WINAPI wrap_glDebugMessageCallback( GLDEBUGPROC callback, const void
     funcs->ext.p_glDebugMessageCallback( gl_debug_message_callback, ptr );
 }
 
-static void WINAPI wrap_glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void *userParam )
+static void wrap_glDebugMessageCallbackAMD( TEB *teb, GLDEBUGPROCAMD callback, void *userParam )
 {
-    struct wgl_handle *ptr = get_current_context_ptr();
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_current_context_ptr( teb );
+    const struct opengl_funcs *funcs = teb->glTable;
 
     if (!funcs->ext.p_glDebugMessageCallbackAMD) return;
 
@@ -853,10 +856,10 @@ static void WINAPI wrap_glDebugMessageCallbackAMD( GLDEBUGPROCAMD callback, void
     funcs->ext.p_glDebugMessageCallbackAMD( gl_debug_message_callback, ptr );
 }
 
-static void WINAPI wrap_glDebugMessageCallbackARB( GLDEBUGPROCARB callback, const void *userParam )
+static void wrap_glDebugMessageCallbackARB( TEB *teb, GLDEBUGPROCARB callback, const void *userParam )
 {
-    struct wgl_handle *ptr = get_current_context_ptr();
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    struct wgl_handle *ptr = get_current_context_ptr( teb );
+    const struct opengl_funcs *funcs = teb->glTable;
 
     if (!funcs->ext.p_glDebugMessageCallbackARB) return;
 
@@ -887,7 +890,7 @@ NTSTATUS wgl_wglDeleteContext( void *args )
 {
     struct wglDeleteContext_params *params = args;
     pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglDeleteContext( params->oldContext );
+    params->ret = wrap_wglDeleteContext( params->teb, params->oldContext );
     pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
@@ -895,7 +898,7 @@ NTSTATUS wgl_wglDeleteContext( void *args )
 NTSTATUS wgl_wglGetProcAddress( void *args )
 {
     struct wglGetProcAddress_params *params = args;
-    params->ret = wrap_wglGetProcAddress( params->lpszProc );
+    params->ret = wrap_wglGetProcAddress( params->teb, params->lpszProc );
     return STATUS_SUCCESS;
 }
 
@@ -903,7 +906,7 @@ NTSTATUS wgl_wglMakeCurrent( void *args )
 {
     struct wglMakeCurrent_params *params = args;
     if (params->newContext) pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglMakeCurrent( params->hDc, params->newContext );
+    params->ret = wrap_wglMakeCurrent( params->teb, params->hDc, params->newContext );
     if (params->newContext) pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
@@ -920,42 +923,42 @@ NTSTATUS wgl_wglShareLists( void *args )
 NTSTATUS gl_glGetIntegerv( void *args )
 {
     struct glGetIntegerv_params *params = args;
-    wrap_glGetIntegerv( params->pname, params->data );
+    wrap_glGetIntegerv( params->teb, params->pname, params->data );
     return STATUS_SUCCESS;
 }
 
 NTSTATUS gl_glGetString( void *args )
 {
     struct glGetString_params *params = args;
-    params->ret = wrap_glGetString( params->name );
+    params->ret = wrap_glGetString( params->teb, params->name );
     return STATUS_SUCCESS;
 }
 
 NTSTATUS ext_glDebugMessageCallback( void *args )
 {
     struct glDebugMessageCallback_params *params = args;
-    wrap_glDebugMessageCallback( params->callback, params->userParam );
+    wrap_glDebugMessageCallback( params->teb, params->callback, params->userParam );
     return STATUS_SUCCESS;
 }
 
 NTSTATUS ext_glDebugMessageCallbackAMD( void *args )
 {
     struct glDebugMessageCallbackAMD_params *params = args;
-    wrap_glDebugMessageCallbackAMD( params->callback, params->userParam );
+    wrap_glDebugMessageCallbackAMD( params->teb, params->callback, params->userParam );
     return STATUS_SUCCESS;
 }
 
 NTSTATUS ext_glDebugMessageCallbackARB( void *args )
 {
     struct glDebugMessageCallbackARB_params *params = args;
-    wrap_glDebugMessageCallbackARB( params->callback, params->userParam );
+    wrap_glDebugMessageCallbackARB( params->teb, params->callback, params->userParam );
     return STATUS_SUCCESS;
 }
 
 NTSTATUS ext_glGetStringi( void *args )
 {
     struct glGetStringi_params *params = args;
-    params->ret = wrap_glGetStringi( params->name, params->index );
+    params->ret = wrap_glGetStringi( params->teb, params->name, params->index );
     return STATUS_SUCCESS;
 }
 
@@ -1008,7 +1011,7 @@ NTSTATUS ext_wglMakeContextCurrentARB( void *args )
 {
     struct wglMakeContextCurrentARB_params *params = args;
     if (params->hglrc) pthread_mutex_lock( &wgl_lock );
-    params->ret = wrap_wglMakeContextCurrentARB( params->hDrawDC, params->hReadDC, params->hglrc );
+    params->ret = wrap_wglMakeContextCurrentARB( params->teb, params->hDrawDC, params->hReadDC, params->hglrc );
     if (params->hglrc) pthread_mutex_unlock( &wgl_lock );
     return STATUS_SUCCESS;
 }
@@ -1051,7 +1054,8 @@ NTSTATUS ext_wglSetPbufferAttribARB( void *args )
 
 NTSTATUS thread_attach( void *args )
 {
-    NtCurrentTeb()->glTable = &null_opengl_funcs;
+    TEB *teb = args;
+    teb->glTable = &null_opengl_funcs;
     return STATUS_SUCCESS;
 }
 
@@ -1130,9 +1134,8 @@ static PTR32 find_wow64_string( const char *str, PTR32 wow64_str )
     return wow64_str;
 }
 
-static inline void update_teb32_context(void)
+static inline void update_teb32_context( TEB *teb )
 {
-    TEB *teb = NtCurrentTeb();
     void *teb32;
 
     if (!teb->WowTebOffset) return;
@@ -1147,11 +1150,13 @@ NTSTATUS wow64_wgl_wglCreateContext( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 hDc;
         PTR32 ret;
     } *params32 = args;
     struct wglCreateContext_params params =
     {
+        .teb = get_teb64(params32->teb),
         .hDc = ULongToPtr(params32->hDc),
     };
     NTSTATUS status;
@@ -1164,6 +1169,7 @@ NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 hDC;
         PTR32 hShareContext;
         PTR32 attribList;
@@ -1171,6 +1177,7 @@ NTSTATUS wow64_ext_wglCreateContextAttribsARB( void *args )
     } *params32 = args;
     struct wglCreateContextAttribsARB_params params =
     {
+        .teb = get_teb64(params32->teb),
         .hDC = ULongToPtr(params32->hDC),
         .hShareContext = ULongToPtr(params32->hShareContext),
         .attribList = ULongToPtr(params32->attribList),
@@ -1185,6 +1192,7 @@ NTSTATUS wow64_ext_wglCreatePbufferARB( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 hDC;
         GLint iPixelFormat;
         GLint iWidth;
@@ -1194,6 +1202,7 @@ NTSTATUS wow64_ext_wglCreatePbufferARB( void *args )
     } *params32 = args;
     struct wglCreatePbufferARB_params params =
     {
+        .teb = get_teb64(params32->teb),
         .hDC = ULongToPtr(params32->hDC),
         .iPixelFormat = params32->iPixelFormat,
         .iWidth = params32->iWidth,
@@ -1210,15 +1219,17 @@ NTSTATUS wow64_wgl_wglDeleteContext( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 oldContext;
         BOOL ret;
     } *params32 = args;
     struct wglDeleteContext_params params =
     {
+        .teb = get_teb64(params32->teb),
         .oldContext = ULongToPtr(params32->oldContext),
     };
     NTSTATUS status;
-    if (!(status = wgl_wglDeleteContext( &params ))) update_teb32_context();
+    if (!(status = wgl_wglDeleteContext( &params ))) update_teb32_context( params.teb );
     params32->ret = params.ret;
     return status;
 }
@@ -1227,17 +1238,19 @@ NTSTATUS wow64_wgl_wglMakeCurrent( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 hDc;
         PTR32 newContext;
         BOOL ret;
     } *params32 = args;
     struct wglMakeCurrent_params params =
     {
+        .teb = get_teb64(params32->teb),
         .hDc = ULongToPtr(params32->hDc),
         .newContext = ULongToPtr(params32->newContext),
     };
     NTSTATUS status;
-    if (!(status = wgl_wglMakeCurrent( &params ))) update_teb32_context();
+    if (!(status = wgl_wglMakeCurrent( &params ))) update_teb32_context( params.teb );
     params32->ret = params.ret;
     return status;
 }
@@ -1246,6 +1259,7 @@ NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 hDrawDC;
         PTR32 hReadDC;
         PTR32 hglrc;
@@ -1253,12 +1267,13 @@ NTSTATUS wow64_ext_wglMakeContextCurrentARB( void *args )
     } *params32 = args;
     struct wglMakeContextCurrentARB_params params =
     {
+        .teb = get_teb64(params32->teb),
         .hDrawDC = ULongToPtr(params32->hDrawDC),
         .hReadDC = ULongToPtr(params32->hReadDC),
         .hglrc = ULongToPtr(params32->hglrc),
     };
     NTSTATUS status;
-    if (!(status = ext_wglMakeContextCurrentARB( &params ))) update_teb32_context();
+    if (!(status = ext_wglMakeContextCurrentARB( &params ))) update_teb32_context( params.teb );
     params32->ret = params.ret;
     return status;
 }
@@ -1267,11 +1282,13 @@ NTSTATUS wow64_ext_wglGetPbufferDCARB( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 hPbuffer;
         PTR32 ret;
     } *params32 = args;
     struct wglGetPbufferDCARB_params params =
     {
+        .teb = get_teb64(params32->teb),
         .hPbuffer = (HPBUFFERARB)ULongToPtr(params32->hPbuffer),
     };
     NTSTATUS status;
@@ -1284,11 +1301,13 @@ NTSTATUS wow64_wgl_wglGetProcAddress( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 lpszProc;
         PTR32 ret;
     } *params32 = args;
     struct wglGetProcAddress_params params =
     {
+        .teb = get_teb64(params32->teb),
         .lpszProc = ULongToPtr(params32->lpszProc),
     };
     NTSTATUS status;
@@ -1301,11 +1320,13 @@ NTSTATUS wow64_gl_glGetString( void *args )
 {
     struct
     {
+        PTR32 teb;
         GLenum name;
         PTR32 ret;
     } *params32 = args;
     struct glGetString_params params =
     {
+        .teb = get_teb64(params32->teb),
         .name = params32->name,
     };
     NTSTATUS status;
@@ -1325,12 +1346,14 @@ NTSTATUS wow64_ext_glGetStringi( void *args )
 {
     struct
     {
+        PTR32 teb;
         GLenum name;
         GLuint index;
         PTR32 ret;
     } *params32 = args;
     struct glGetStringi_params params =
     {
+        .teb = get_teb64(params32->teb),
         .name = params32->name,
         .index = params32->index,
     };
@@ -1351,6 +1374,7 @@ NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
 {
     struct
     {
+        PTR32 teb;
         GLenum fontTarget;
         PTR32 fontName;
         GLbitfield fontStyle;
@@ -1361,6 +1385,7 @@ NTSTATUS wow64_ext_glPathGlyphIndexRangeNV( void *args )
     } *params32 = args;
     struct glPathGlyphIndexRangeNV_params params =
     {
+        .teb = get_teb64(params32->teb),
         .fontTarget = params32->fontTarget,
         .fontName = ULongToPtr(params32->fontName),
         .fontStyle = params32->fontStyle,
@@ -1378,11 +1403,13 @@ NTSTATUS wow64_ext_wglGetExtensionsStringARB( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 hdc;
         PTR32 ret;
     } *params32 = args;
     struct wglGetExtensionsStringARB_params params =
     {
+        .teb = get_teb64(params32->teb),
         .hdc = ULongToPtr(params32->hdc),
     };
     NTSTATUS status;
@@ -1402,10 +1429,12 @@ NTSTATUS wow64_ext_wglGetExtensionsStringEXT( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 ret;
     } *params32 = args;
     struct wglGetExtensionsStringEXT_params params =
     {
+        .teb = get_teb64(params32->teb),
     };
     NTSTATUS status;
 
@@ -1424,11 +1453,13 @@ NTSTATUS wow64_ext_wglQueryCurrentRendererStringWINE( void *args )
 {
     struct
     {
+        PTR32 teb;
         GLenum attribute;
         PTR32 ret;
     } *params32 = args;
     struct wglQueryCurrentRendererStringWINE_params params =
     {
+        .teb = get_teb64(params32->teb),
         .attribute = params32->attribute,
     };
     NTSTATUS status;
@@ -1448,6 +1479,7 @@ NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args )
 {
     struct
     {
+        PTR32 teb;
         PTR32 dc;
         GLint renderer;
         GLenum attribute;
@@ -1455,6 +1487,7 @@ NTSTATUS wow64_ext_wglQueryRendererStringWINE( void *args )
     } *params32 = args;
     struct wglQueryRendererStringWINE_params params =
     {
+        .teb = get_teb64(params32->teb),
         .dc = ULongToPtr(params32->dc),
         .renderer = params32->renderer,
         .attribute = params32->attribute,
@@ -1477,6 +1510,7 @@ NTSTATUS wow64_ext_glClientWaitSync( void *args )
     struct wgl_handle *handle;
     struct
     {
+        PTR32 teb;
         PTR32 sync;
         GLbitfield flags;
         GLuint64 timeout;
@@ -1492,6 +1526,7 @@ NTSTATUS wow64_ext_glClientWaitSync( void *args )
     {
         struct glClientWaitSync_params params =
         {
+            .teb = get_teb64(params32->teb),
             .sync = (GLsync)handle->u.context,
             .flags = params32->flags,
             .timeout = params32->timeout,
@@ -1509,6 +1544,7 @@ NTSTATUS wow64_ext_glDeleteSync( void *args )
     struct wgl_handle *handle;
     struct
     {
+        PTR32 teb;
         PTR32 sync;
     } *params32 = args;
     NTSTATUS status;
@@ -1521,6 +1557,7 @@ NTSTATUS wow64_ext_glDeleteSync( void *args )
     {
         struct glDeleteSync_params params =
         {
+            .teb = get_teb64(params32->teb),
             .sync = (GLsync)handle->u.context,
         };
         status = ext_glDeleteSync( &params );
@@ -1535,12 +1572,14 @@ NTSTATUS wow64_ext_glFenceSync( void *args )
 {
     struct
     {
+        PTR32 teb;
         GLenum condition;
         GLbitfield flags;
         PTR32 ret;
     } *params32 = args;
     struct glFenceSync_params params =
     {
+        .teb = get_teb64(params32->teb),
         .condition = params32->condition,
         .flags = params32->flags,
     };
@@ -1554,6 +1593,7 @@ NTSTATUS wow64_ext_glFenceSync( void *args )
     {
         struct glDeleteSync_params delete_params =
         {
+            .teb = params.teb,
             .sync = params.ret,
         };
 
@@ -1570,6 +1610,7 @@ NTSTATUS wow64_ext_glGetSynciv( void *args )
     struct wgl_handle *handle;
     struct
     {
+        PTR32 teb;
         PTR32 sync;
         GLenum pname;
         GLsizei count;
@@ -1586,6 +1627,7 @@ NTSTATUS wow64_ext_glGetSynciv( void *args )
     {
         struct glGetSynciv_params params =
         {
+            .teb = get_teb64(params32->teb),
             .sync = (GLsync)handle->u.context,
             .pname = params32->pname,
             .count = params32->count,
@@ -1604,6 +1646,7 @@ NTSTATUS wow64_ext_glIsSync( void *args )
     struct wgl_handle *handle;
     struct
     {
+        PTR32 teb;
         PTR32 sync;
         GLboolean ret;
     } *params32 = args;
@@ -1617,6 +1660,7 @@ NTSTATUS wow64_ext_glIsSync( void *args )
     {
         struct glIsSync_params params =
         {
+            .teb = get_teb64(params32->teb),
             .sync = (GLsync)handle->u.context,
         };
         status = ext_glIsSync( &params );
@@ -1632,6 +1676,7 @@ NTSTATUS wow64_ext_glWaitSync( void *args )
     struct wgl_handle *handle;
     struct
     {
+        PTR32 teb;
         PTR32 sync;
         GLbitfield flags;
         GLuint64 timeout;
@@ -1646,6 +1691,7 @@ NTSTATUS wow64_ext_glWaitSync( void *args )
     {
         struct glWaitSync_params params =
         {
+            .teb = get_teb64(params32->teb),
             .sync = (GLsync)handle->u.context,
             .flags = params32->flags,
             .timeout = params32->timeout,
@@ -1657,9 +1703,9 @@ NTSTATUS wow64_ext_glWaitSync( void *args )
     return status;
 }
 
-static GLint get_buffer_param( GLenum target, GLenum param )
+static GLint get_buffer_param( TEB *teb, GLenum target, GLenum param )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     typeof(*funcs->ext.p_glGetBufferParameteriv) *func;
     GLint size = 0;
     if (!(func = funcs->ext.p_glGetBufferParameteriv)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glGetBufferParameteriv" );
@@ -1667,9 +1713,9 @@ static GLint get_buffer_param( GLenum target, GLenum param )
     return size;
 }
 
-static void *get_buffer_pointer( GLenum target )
+static void *get_buffer_pointer( TEB *teb, GLenum target )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     typeof(*funcs->ext.p_glGetBufferPointerv) *func;
     void *ptr = NULL;
     if (!(func = funcs->ext.p_glGetBufferPointerv)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glGetBufferPointerv" );
@@ -1677,9 +1723,9 @@ static void *get_buffer_pointer( GLenum target )
     return ptr;
 }
 
-static GLint get_named_buffer_param( GLint buffer, GLenum param )
+static GLint get_named_buffer_param( TEB *teb, GLint buffer, GLenum param )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     typeof(*funcs->ext.p_glGetNamedBufferParameteriv) *func;
     GLint size = 0;
     if (!(func = funcs->ext.p_glGetNamedBufferParameteriv)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glGetNamedBufferParameteriv" );
@@ -1687,9 +1733,9 @@ static GLint get_named_buffer_param( GLint buffer, GLenum param )
     return size;
 }
 
-static void *get_named_buffer_pointer( GLint buffer )
+static void *get_named_buffer_pointer( TEB *teb, GLint buffer )
 {
-    const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
+    const struct opengl_funcs *funcs = teb->glTable;
     typeof(*funcs->ext.p_glGetNamedBufferPointerv) *func;
     void *ptr = NULL;
     if (!(func = funcs->ext.p_glGetNamedBufferPointerv)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glGetNamedBufferPointerv" );
@@ -1697,7 +1743,8 @@ static void *get_named_buffer_pointer( GLint buffer )
     return ptr;
 }
 
-static NTSTATUS wow64_map_buffer( GLint buffer, GLenum target, void *ptr, SIZE_T size, GLbitfield access, PTR32 *ret )
+static NTSTATUS wow64_map_buffer( TEB *teb, GLint buffer, GLenum target, void *ptr, SIZE_T size,
+                                  GLbitfield access, PTR32 *ret )
 {
     if (*ret)  /* wow64 pointer provided, map buffer to it */
     {
@@ -1719,7 +1766,7 @@ static NTSTATUS wow64_map_buffer( GLint buffer, GLenum target, void *ptr, SIZE_T
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (!size) size = buffer ? get_named_buffer_param( buffer, GL_BUFFER_SIZE ) : get_buffer_param( target, GL_BUFFER_SIZE );
+    if (!size) size = buffer ? get_named_buffer_param( teb, buffer, GL_BUFFER_SIZE ) : get_buffer_param( teb, target, GL_BUFFER_SIZE );
     if ((PTR32)size != size) return STATUS_NO_MEMORY;  /* overflow */
     if (size < sizeof(PTR32))
     {
@@ -1752,12 +1799,14 @@ NTSTATUS wow64_ext_glGetBufferPointerv( void *args )
     PTR32 *ptr; /* pointer to the buffer data, where we saved the wow64 pointer */
     struct
     {
+        PTR32 teb;
         GLenum target;
         GLenum pname;
         PTR32 params;
     } *params32 = args;
     struct glGetBufferPointerv_params params =
     {
+        .teb = get_teb64(params32->teb),
         .target = params32->target,
         .pname = params32->pname,
         .params = (void **)&ptr,
@@ -1782,12 +1831,14 @@ NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args )
     PTR32 *ptr; /* pointer to the buffer data, where we saved the wow64 pointer */
     struct
     {
+        PTR32 teb;
         GLuint buffer;
         GLenum pname;
         PTR32 params;
     } *params32 = args;
     struct glGetNamedBufferPointerv_params params =
     {
+        .teb = get_teb64(params32->teb),
         .buffer = params32->buffer,
         .pname = params32->pname,
         .params = (void **)&ptr,
@@ -1811,23 +1862,25 @@ NTSTATUS wow64_ext_glMapBuffer( void *args )
 {
     struct
     {
+        PTR32 teb;
         GLenum target;
         GLenum access;
         PTR32 ret;
     } *params32 = args;
     struct glMapBuffer_params params =
     {
+        .teb = get_teb64(params32->teb),
         .target = params32->target,
         .access = params32->access,
     };
-    struct glUnmapBuffer_params unmap_params = { .target = params.target };
+    struct glUnmapBuffer_params unmap_params = { .teb = params.teb, .target = params.target };
     NTSTATUS status;
 
     /* already mapped, we're being called again with a wow64 pointer */
-    if (params32->ret) params.ret = get_buffer_pointer( params.target );
+    if (params32->ret) params.ret = get_buffer_pointer( params.teb, params.target );
     else if ((status = ext_glMapBuffer( &params ))) return status;
 
-    status = wow64_map_buffer( 0, params.target, params.ret, 0, params.access, &params32->ret );
+    status = wow64_map_buffer( params.teb, 0, params.target, params.ret, 0, params.access, &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
     ext_glUnmapBuffer( &unmap_params );
@@ -1843,6 +1896,7 @@ NTSTATUS wow64_ext_glMapBufferRange( void *args )
 {
     struct
     {
+        PTR32 teb;
         GLenum target;
         PTR32 offset;
         PTR32 length;
@@ -1851,19 +1905,20 @@ NTSTATUS wow64_ext_glMapBufferRange( void *args )
     } *params32 = args;
     struct glMapBufferRange_params params =
     {
+        .teb = get_teb64(params32->teb),
         .target = params32->target,
         .offset = (GLintptr)ULongToPtr(params32->offset),
         .length = (GLsizeiptr)ULongToPtr(params32->length),
         .access = params32->access,
     };
-    struct glUnmapBuffer_params unmap_params = { .target = params.target };
+    struct glUnmapBuffer_params unmap_params = { .teb = params.teb, .target = params.target };
     NTSTATUS status;
 
     /* already mapped, we're being called again with a wow64 pointer */
-    if (params32->ret) params.ret = (char *)get_buffer_pointer( params.target );
+    if (params32->ret) params.ret = (char *)get_buffer_pointer( params.teb, params.target );
     else if ((status = ext_glMapBufferRange( &params ))) return status;
 
-    status = wow64_map_buffer( 0, params.target, params.ret, params.length, params.access, &params32->ret );
+    status = wow64_map_buffer( params.teb, 0, params.target, params.ret, params.length, params.access, &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
     ext_glUnmapBuffer( &unmap_params );
@@ -1874,23 +1929,25 @@ NTSTATUS wow64_ext_glMapNamedBuffer( void *args )
 {
     struct
     {
+        PTR32 teb;
         GLuint buffer;
         GLenum access;
         PTR32 ret;
     } *params32 = args;
     struct glMapNamedBuffer_params params =
     {
+        .teb = get_teb64(params32->teb),
         .buffer = params32->buffer,
         .access = params32->access,
     };
-    struct glUnmapNamedBuffer_params unmap_params = { .buffer = params.buffer };
+    struct glUnmapNamedBuffer_params unmap_params = { .teb = params.teb, .buffer = params.buffer };
     NTSTATUS status;
 
     /* already mapped, we're being called again with a wow64 pointer */
-    if (params32->ret) params.ret = get_named_buffer_pointer( params.buffer );
+    if (params32->ret) params.ret = get_named_buffer_pointer( params.teb, params.buffer );
     else if ((status = ext_glMapNamedBuffer( &params ))) return status;
 
-    status = wow64_map_buffer( params.buffer, 0, params.ret, 0, params.access, &params32->ret );
+    status = wow64_map_buffer( params.teb, params.buffer, 0, params.ret, 0, params.access, &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
     ext_glUnmapNamedBuffer( &unmap_params );
@@ -1906,6 +1963,7 @@ NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
 {
     struct
     {
+        PTR32 teb;
         GLuint buffer;
         PTR32 offset;
         PTR32 length;
@@ -1914,19 +1972,20 @@ NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
     } *params32 = args;
     struct glMapNamedBufferRange_params params =
     {
+        .teb = get_teb64(params32->teb),
         .buffer = params32->buffer,
         .offset = (GLintptr)ULongToPtr(params32->offset),
         .length = (GLsizeiptr)ULongToPtr(params32->length),
         .access = params32->access,
     };
-    struct glUnmapNamedBuffer_params unmap_params = { .buffer = params.buffer };
+    struct glUnmapNamedBuffer_params unmap_params = { .teb = params.teb, .buffer = params.buffer };
     NTSTATUS status;
 
     /* already mapped, we're being called again with a wow64 pointer */
-    if (params32->ret) params.ret = get_named_buffer_pointer( params.buffer );
+    if (params32->ret) params.ret = get_named_buffer_pointer( params.teb, params.buffer );
     else if ((status = ext_glMapNamedBufferRange( &params ))) return status;
 
-    status = wow64_map_buffer( params.buffer, 0, params.ret, params.length, params.access, &params32->ret );
+    status = wow64_map_buffer( params.teb, params.buffer, 0, params.ret, params.length, params.access, &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
     ext_glUnmapNamedBuffer( &unmap_params );
@@ -1943,15 +2002,17 @@ NTSTATUS wow64_ext_glUnmapBuffer( void *args )
     PTR32 *ptr;
     struct
     {
+        PTR32 teb;
         GLenum target;
         GLboolean ret;
     } *params32 = args;
     NTSTATUS status;
+    TEB *teb = get_teb64( params32->teb );
 
-    if (!(ptr = get_buffer_pointer( params32->target ))) return STATUS_SUCCESS;
+    if (!(ptr = get_buffer_pointer( teb, params32->target ))) return STATUS_SUCCESS;
 
-    status = wow64_unmap_buffer( ptr, get_buffer_param( params32->target, GL_BUFFER_MAP_LENGTH ),
-                                 get_buffer_param( params32->target, GL_BUFFER_ACCESS_FLAGS ) );
+    status = wow64_unmap_buffer( ptr, get_buffer_param( teb, params32->target, GL_BUFFER_MAP_LENGTH ),
+                                 get_buffer_param( teb, params32->target, GL_BUFFER_ACCESS_FLAGS ) );
     ext_glUnmapBuffer( args );
 
     return status;
@@ -1967,15 +2028,17 @@ NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args )
     PTR32 *ptr;
     struct
     {
+        PTR32 teb;
         GLint buffer;
         GLboolean ret;
     } *params32 = args;
     NTSTATUS status;
+    TEB *teb = get_teb64( params32->teb );
 
-    if (!(ptr = get_named_buffer_pointer( params32->buffer ))) return STATUS_SUCCESS;
+    if (!(ptr = get_named_buffer_pointer( teb, params32->buffer ))) return STATUS_SUCCESS;
 
-    status = wow64_unmap_buffer( ptr, get_named_buffer_param( params32->buffer, GL_BUFFER_MAP_LENGTH ),
-                                 get_named_buffer_param( params32->buffer, GL_BUFFER_ACCESS_FLAGS ) );
+    status = wow64_unmap_buffer( ptr, get_named_buffer_param( teb, params32->buffer, GL_BUFFER_MAP_LENGTH ),
+                                 get_named_buffer_param( teb, params32->buffer, GL_BUFFER_ACCESS_FLAGS ) );
     ext_glUnmapNamedBuffer( args );
 
     return status;
@@ -1984,6 +2047,11 @@ NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args )
 NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args )
 {
     return wow64_ext_glUnmapNamedBuffer( args );
+}
+
+NTSTATUS wow64_thread_attach( void *args )
+{
+    return thread_attach( get_teb64( (ULONG_PTR)args ));
 }
 
 NTSTATUS wow64_process_detach( void *args )
