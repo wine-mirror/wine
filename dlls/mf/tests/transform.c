@@ -1071,6 +1071,67 @@ DWORD check_mf_sample_collection_(const char *file, int line, IMFCollection *sam
     return ctx.diff / count;
 }
 
+#define check_video_info_header(a, b) check_video_info_header_(__LINE__, a, b)
+static void check_video_info_header_(int line, VIDEOINFOHEADER *info, const VIDEOINFOHEADER *expected)
+{
+    ok_(__FILE__, line)(info->rcSource.left == expected->rcSource.left
+            && info->rcSource.top == expected->rcSource.top
+            && info->rcSource.right == expected->rcSource.right
+            && info->rcSource.bottom == expected->rcSource.bottom,
+            "Got unexpected rcSource {%ld, %ld, %ld, %ld}, expected {%ld, %ld, %ld, %ld}.\n",
+            info->rcSource.left, info->rcSource.top, info->rcSource.right, info->rcSource.bottom,
+            expected->rcSource.left, expected->rcSource.top, expected->rcSource.right, expected->rcSource.bottom);
+    ok_(__FILE__, line)(info->rcTarget.left == expected->rcTarget.left
+            && info->rcTarget.top == expected->rcTarget.top
+            && info->rcTarget.right == expected->rcTarget.right
+            && info->rcTarget.bottom == expected->rcTarget.bottom,
+            "Got unexpected rcTarget {%ld, %ld, %ld, %ld}, expected {%ld, %ld, %ld, %ld}.\n",
+            info->rcTarget.left, info->rcTarget.top, info->rcTarget.right, info->rcTarget.bottom,
+            expected->rcTarget.left, expected->rcTarget.top, expected->rcTarget.right, expected->rcTarget.bottom);
+    ok_(__FILE__, line)(info->dwBitRate == expected->dwBitRate,
+            "Got unexpected dwBitRate %lu, expected %lu.\n",
+            info->dwBitRate, expected->dwBitRate);
+    ok_(__FILE__, line)(info->dwBitErrorRate == expected->dwBitErrorRate,
+            "Got unexpected dwBitErrorRate %lu, expected %lu.\n",
+            info->dwBitErrorRate, expected->dwBitErrorRate);
+    ok_(__FILE__, line)(info->AvgTimePerFrame == expected->AvgTimePerFrame,
+            "Got unexpected AvgTimePerFrame %I64d, expected %I64d.\n",
+            info->AvgTimePerFrame, expected->AvgTimePerFrame);
+    ok_(__FILE__, line)(info->bmiHeader.biSize == expected->bmiHeader.biSize,
+            "Got unexpected bmiHeader.biSize %lu, expected %lu.\n",
+            info->bmiHeader.biSize, expected->bmiHeader.biSize);
+    ok_(__FILE__, line)(info->bmiHeader.biWidth == expected->bmiHeader.biWidth,
+            "Got unexpected bmiHeader.biWidth %ld, expected %ld.\n",
+            info->bmiHeader.biWidth, expected->bmiHeader.biWidth);
+    ok_(__FILE__, line)(info->bmiHeader.biHeight == expected->bmiHeader.biHeight,
+            "Got unexpected bmiHeader.biHeight %ld, expected %ld.\n",
+            info->bmiHeader.biHeight, expected->bmiHeader.biHeight);
+    ok_(__FILE__, line)(info->bmiHeader.biPlanes == expected->bmiHeader.biPlanes,
+            "Got unexpected bmiHeader.biPlanes %u, expected %u.\n",
+            info->bmiHeader.biPlanes, expected->bmiHeader.biPlanes);
+    ok_(__FILE__, line)(info->bmiHeader.biBitCount == expected->bmiHeader.biBitCount,
+            "Got unexpected bmiHeader.biBitCount %u, expected %u.\n",
+            info->bmiHeader.biBitCount, expected->bmiHeader.biBitCount);
+    ok_(__FILE__, line)(info->bmiHeader.biCompression == expected->bmiHeader.biCompression,
+            "Got unexpected bmiHeader.biCompression %#lx, expected %#lx.\n",
+            info->bmiHeader.biCompression, expected->bmiHeader.biCompression);
+    ok_(__FILE__, line)(info->bmiHeader.biSizeImage == expected->bmiHeader.biSizeImage,
+            "Got unexpected bmiHeader.biSizeImage %lu, expected %lu.\n",
+            info->bmiHeader.biSizeImage, expected->bmiHeader.biSizeImage);
+    ok_(__FILE__, line)(info->bmiHeader.biXPelsPerMeter == expected->bmiHeader.biXPelsPerMeter,
+            "Got unexpected bmiHeader.biXPelsPerMeter %ld, expected %ld.\n",
+            info->bmiHeader.biXPelsPerMeter, expected->bmiHeader.biXPelsPerMeter);
+    ok_(__FILE__, line)(info->bmiHeader.biYPelsPerMeter == expected->bmiHeader.biYPelsPerMeter,
+            "Got unexpected bmiHeader.xxxxxx %ld, expected %ld.\n",
+            info->bmiHeader.biYPelsPerMeter, expected->bmiHeader.biYPelsPerMeter);
+    ok_(__FILE__, line)(info->bmiHeader.biClrUsed == expected->bmiHeader.biClrUsed,
+            "Got unexpected bmiHeader.biClrUsed %lu, expected %lu.\n",
+            info->bmiHeader.biClrUsed, expected->bmiHeader.biClrUsed);
+    ok_(__FILE__, line)(info->bmiHeader.biClrImportant == expected->bmiHeader.biClrImportant,
+            "Got unexpected bmiHeader.biClrImportant %lu, expected %lu.\n",
+            info->bmiHeader.biClrImportant, expected->bmiHeader.biClrImportant);
+}
+
 #define check_dmo_media_type(a, b) check_dmo_media_type_(__LINE__, a, b)
 static void check_dmo_media_type_(int line, DMO_MEDIA_TYPE *media_type, const DMO_MEDIA_TYPE *expected)
 {
@@ -1096,6 +1157,17 @@ static void check_dmo_media_type_(int line, DMO_MEDIA_TYPE *media_type, const DM
     ok_(__FILE__, line)(media_type->cbFormat == expected->cbFormat,
             "Got unexpected cbFormat %lu, expected %lu.\n",
             media_type->cbFormat, expected->cbFormat);
+
+    if (expected->pbFormat)
+    {
+        ok_(__FILE__, line)(!!media_type->pbFormat, "Got NULL pbFormat.\n");
+        if (!media_type->pbFormat)
+            return;
+
+        if (IsEqualGUID(&media_type->formattype, &FORMAT_VideoInfo)
+                && IsEqualGUID(&expected->formattype, &FORMAT_VideoInfo))
+            check_video_info_header((VIDEOINFOHEADER *)media_type->pbFormat, (VIDEOINFOHEADER *)expected->pbFormat);
+    }
 }
 
 static void check_dmo_get_input_type(IMediaObject *media_object, const DMO_MEDIA_TYPE *expected_type, ULONG count)
@@ -4617,21 +4689,37 @@ static void test_wmv_decoder_media_object(void)
         {MFMediaType_Video, MEDIASUBTYPE_WMV3,         FALSE, TRUE, 0, GUID_NULL, NULL, 0},
         {MFMediaType_Video, MFVideoFormat_VC1S,        FALSE, TRUE, 0, GUID_NULL, NULL, 0},
     };
+    const VIDEOINFOHEADER expected_output_info[] =
+    {
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 12, MAKEFOURCC('N', 'V', '1', '2'), 384,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 12, MAKEFOURCC('Y', 'V', '1', '2'), 384,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 12, MAKEFOURCC('I', 'Y', 'U', 'V'), 384,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 12, MAKEFOURCC('I', '4', '2', '0'), 384,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 16, MAKEFOURCC('Y', 'U', 'Y', '2'), 512,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 16, MAKEFOURCC('U', 'Y', 'V', 'Y'), 512,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 16, MAKEFOURCC('Y', 'V', 'Y', 'U'), 512,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 12, MAKEFOURCC('N', 'V', '1', '1'), 384,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 32, BI_RGB,                         1024, 0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 24, BI_RGB,                         768,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 16, BI_BITFIELDS,                   512,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 16, BI_RGB,                         512,  0, 0, 0,   0}},
+        {{0, 0, 16, 16}, {0, 0, 16, 16}, 0, 0, 0, {40, 16, 16, 1, 8,  BI_RGB,                         256,  0, 0, 226, 226}},
+    };
     const DMO_MEDIA_TYPE expected_output_types[] =
     {
-        {MFMediaType_Video, MEDIASUBTYPE_NV12,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_YV12,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_IYUV,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_I420,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_YUY2,   TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_UYVY,   TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_YVYU,   TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_NV11,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_RGB32,  TRUE, FALSE, 1024, FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_RGB24,  TRUE, FALSE, 768,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_RGB565, TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 100},
-        {MFMediaType_Video, MEDIASUBTYPE_RGB555, TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88},
-        {MFMediaType_Video, MEDIASUBTYPE_RGB8,   TRUE, FALSE, 256,  FORMAT_VideoInfo, NULL, 1112},
+        {MFMediaType_Video, MEDIASUBTYPE_NV12,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[0]},
+        {MFMediaType_Video, MEDIASUBTYPE_YV12,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[1]},
+        {MFMediaType_Video, MEDIASUBTYPE_IYUV,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[2]},
+        {MFMediaType_Video, MEDIASUBTYPE_I420,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[3]},
+        {MFMediaType_Video, MEDIASUBTYPE_YUY2,   TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[4]},
+        {MFMediaType_Video, MEDIASUBTYPE_UYVY,   TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[5]},
+        {MFMediaType_Video, MEDIASUBTYPE_YVYU,   TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[6]},
+        {MFMediaType_Video, MEDIASUBTYPE_NV11,   TRUE, FALSE, 384,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[7]},
+        {MFMediaType_Video, MEDIASUBTYPE_RGB32,  TRUE, FALSE, 1024, FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[8]},
+        {MFMediaType_Video, MEDIASUBTYPE_RGB24,  TRUE, FALSE, 768,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[9]},
+        {MFMediaType_Video, MEDIASUBTYPE_RGB565, TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 100,  (BYTE *)&expected_output_info[10]},
+        {MFMediaType_Video, MEDIASUBTYPE_RGB555, TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[11]},
+        {MFMediaType_Video, MEDIASUBTYPE_RGB8,   TRUE, FALSE, 256,  FORMAT_VideoInfo, NULL, 1112, (BYTE *)&expected_output_info[12]},
     };
     const struct set_type_arg
     {
