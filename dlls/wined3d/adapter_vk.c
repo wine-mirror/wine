@@ -299,6 +299,7 @@ static void wined3d_disable_vulkan_features(struct wined3d_physical_device_info 
     features->shaderSampledImageArrayDynamicIndexing = VK_FALSE;
     features->shaderStorageBufferArrayDynamicIndexing = VK_FALSE;
     features->shaderStorageImageArrayDynamicIndexing = VK_FALSE;
+    features->shaderInt64 = VK_FALSE;
     features->shaderInt16 = VK_FALSE;
     features->shaderResourceResidency = VK_FALSE;
     features->shaderResourceMinLod = VK_FALSE;
