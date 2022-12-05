@@ -833,8 +833,9 @@ class VkFunction(object):
         if needs_alloc:
             body += "    free_conversion_context(&ctx);\n"
 
-        # Finally return the result.
-        body += "    return STATUS_SUCCESS;\n"
+        # Finally return the result. Performance critical functions return void to allow tail calls.
+        if not self.is_perf_critical():
+            body += "    return STATUS_SUCCESS;\n"
 
         return body
 
@@ -878,7 +879,10 @@ class VkFunction(object):
         thunk = ""
         if not conv:
             thunk += "#ifdef _WIN64\n"
-        thunk += "static NTSTATUS {0}{1}(void *args)\n".format(prefix, self.name)
+        if self.is_perf_critical():
+            thunk += "static void {0}{1}(void *args)\n".format(prefix, self.name)
+        else:
+            thunk += "static NTSTATUS {0}{1}(void *args)\n".format(prefix, self.name)
         thunk += "{\n"
         if conv:
             thunk += "    struct\n"
@@ -2726,7 +2730,10 @@ class VkGenerator(object):
             if vk_func.loader_thunk_type == ThunkType.NONE:
                 continue
 
-            f.write("    {1}{0},\n".format(vk_func.name, "thunk64_"))
+            if vk_func.is_perf_critical():
+                f.write("    (void *){1}{0},\n".format(vk_func.name, "thunk64_"))
+            else:
+                f.write("    {1}{0},\n".format(vk_func.name, "thunk64_"))
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n\n")
 
@@ -2747,7 +2754,10 @@ class VkGenerator(object):
             if vk_func.loader_thunk_type == ThunkType.NONE:
                 continue
 
-            f.write("    {1}{0},\n".format(vk_func.name, "thunk32_"))
+            if vk_func.is_perf_critical():
+                f.write("    (void *){1}{0},\n".format(vk_func.name, "thunk32_"))
+            else:
+                f.write("    {1}{0},\n".format(vk_func.name, "thunk32_"))
         f.write("};\n")
         f.write("C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == unix_count);\n")
 
