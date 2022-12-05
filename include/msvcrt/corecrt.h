@@ -342,4 +342,16 @@ typedef struct threadlocaleinfostruct {
 #define __WINE_CRT_SCANF_ATTR(fmt,args)
 #endif
 
+#if defined(__GNUC__) && (__GNUC__ > 10)
+#define __WINE_DEALLOC(...) __attribute__((malloc (__VA_ARGS__)))
+#else
+#define __WINE_DEALLOC(...)
+#endif
+
+#if defined(__GNUC__) && (__GNUC__ > 2)
+#define __WINE_MALLOC __attribute__((malloc))
+#else
+#define __WINE_MALLOC
+#endif
+
 #endif /* __WINE_CORECRT_H */
