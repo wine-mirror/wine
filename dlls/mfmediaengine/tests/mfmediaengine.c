@@ -1829,17 +1829,12 @@ static void test_video_effect(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IMFMediaEngineEx_InsertVideoEffect(media_engine_ex, (IUnknown *)&video_effect->IMFTransform_iface, FALSE);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine EXPECT_REF(&video_effect->IMFTransform_iface, 2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(&video_effect->IMFTransform_iface, 2);
 
     hr = IMFMediaEngineEx_InsertVideoEffect(media_engine_ex, (IUnknown *)&video_effect2->IMFTransform_iface, FALSE);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine EXPECT_REF(&video_effect2->IMFTransform_iface, 2);
-
-    if (FAILED(hr))
-    {
-        goto done;
-    }
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    EXPECT_REF(&video_effect2->IMFTransform_iface, 2);
 
     url = SysAllocString(L"i420-64x64.avi");
     hr = IMFMediaEngineEx_SetSourceFromByteStream(media_engine_ex, stream, url);
@@ -1869,7 +1864,7 @@ done:
         IMFMediaEngineEx_Shutdown(media_engine_ex);
 
         ref = IMFMediaEngineEx_Release(media_engine_ex);
-        ok(!ref, "Unexpected ref %lu.\n", ref);
+        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
     }
 
     if (texture)
@@ -1880,12 +1875,12 @@ done:
     if (video_effect2)
     {
         ref = IMFTransform_Release(&video_effect2->IMFTransform_iface);
-        ok(!ref, "Unexpected ref %lu.\n", ref);
+        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
     }
     if (video_effect)
     {
         ref = IMFTransform_Release(&video_effect->IMFTransform_iface);
-        ok(!ref, "Unexpected ref %lu.\n", ref);
+        todo_wine ok(!ref, "Unexpected ref %lu.\n", ref);
     }
 
     IMFMediaEngineNotify_Release(&notify->IMFMediaEngineNotify_iface);

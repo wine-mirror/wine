@@ -113,6 +113,19 @@ struct rect
     float left, top, right, bottom;
 };
 
+struct effect
+{
+    IUnknown *object;
+    BOOL optional;
+};
+
+struct effects
+{
+    struct effect *effects;
+    size_t count;
+    size_t capacity;
+};
+
 struct media_engine
 {
     IMFMediaEngineEx IMFMediaEngineEx_iface;
@@ -145,6 +158,7 @@ struct media_engine
         IMFMediaSource *source;
         IMFPresentationDescriptor *pd;
     } presentation;
+    struct effects video_effects;
     struct
     {
         LONGLONG pts;
@@ -1018,6 +1032,46 @@ static HRESULT media_engine_create_source_node(IMFMediaSource *source, IMFPresen
     return S_OK;
 }
 
+static HRESULT media_engine_create_effects(struct effect *effects, size_t count,
+    IMFTopologyNode *src, IMFTopologyNode *sink, IMFTopology *topology)
+{
+    IMFTopologyNode *last = src;
+    HRESULT hr = S_OK;
+    size_t i;
+
+    IMFTopologyNode_AddRef(last);
+
+    for (i = 0; i < count; ++i)
+    {
+        IMFTopologyNode *node = NULL;
+
+        if (FAILED(hr = MFCreateTopologyNode(MF_TOPOLOGY_TRANSFORM_NODE, &node)))
+        {
+            WARN("Failed to create transform node, hr %#lx", hr);
+            break;
+        }
+
+        IMFTopologyNode_SetObject(node, (IUnknown *)effects[i].object);
+        IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_NOSHUTDOWN_ON_REMOVE, FALSE);
+
+        if (effects[i].optional)
+            IMFTopologyNode_SetUINT32(node, &MF_TOPONODE_CONNECT_METHOD, MF_CONNECT_AS_OPTIONAL);
+
+        IMFTopology_AddNode(topology, node);
+        IMFTopologyNode_ConnectOutput(last, 0, node, 0);
+
+        IMFTopologyNode_Release(last);
+        last = node;
+    }
+
+    IMFTopologyNode_Release(last);
+
+    if (SUCCEEDED(hr))
+        hr = IMFTopologyNode_ConnectOutput(last, 0, sink, 0);
+
+    return hr;
+}
+
 static HRESULT media_engine_create_audio_renderer(struct media_engine *engine, IMFTopologyNode **node)
 {
     unsigned int category, role;
@@ -1103,6 +1157,20 @@ static void media_engine_clear_presentation(struct media_engine *engine)
     if (engine->presentation.pd)
         IMFPresentationDescriptor_Release(engine->presentation.pd);
     memset(&engine->presentation, 0, sizeof(engine->presentation));
+}
+
+static void media_engine_clear_effects(struct effects *effects)
+{
+    size_t i;
+
+    for (i = 0; i < effects->count; ++i)
+    {
+        if (effects->effects[i].object)
+            IUnknown_Release(effects->effects[i].object);
+    }
+
+    free(effects->effects);
+    memset(effects, 0, sizeof(*effects));
 }
 
 static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMediaSource *source)
@@ -1227,7 +1295,10 @@ static HRESULT media_engine_create_topology(struct media_engine *engine, IMFMedi
             {
                 IMFTopology_AddNode(topology, video_src);
                 IMFTopology_AddNode(topology, grabber_node);
-                IMFTopologyNode_ConnectOutput(video_src, 0, grabber_node, 0);
+
+                if (FAILED(hr = media_engine_create_effects(engine->video_effects.effects, engine->video_effects.count,
+                        video_src, grabber_node, topology)))
+                    WARN("Failed to create video effect nodes, hr %#lx.\n", hr);
             }
 
             if (SUCCEEDED(hr))
@@ -1382,6 +1453,7 @@ static void free_media_engine(struct media_engine *engine)
         IMFAttributes_Release(engine->attributes);
     if (engine->resolver)
         IMFSourceResolver_Release(engine->resolver);
+    media_engine_clear_effects(&engine->video_effects);
     media_engine_release_video_frame_resources(engine);
     media_engine_clear_presentation(engine);
     if (engine->device_manager)
@@ -2587,11 +2659,43 @@ static HRESULT WINAPI media_engine_IsProtected(IMFMediaEngineEx *iface, BOOL *pr
     return E_NOTIMPL;
 }
 
+static HRESULT media_engine_insert_effect(struct media_engine *engine, struct effects *effects, IUnknown *object, BOOL is_optional)
+{
+    HRESULT hr = S_OK;
+
+    if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
+        hr = MF_E_SHUTDOWN;
+    else if (!mf_array_reserve((void **)&effects->effects, &effects->capacity, effects->count + 1, sizeof(*effects->effects)))
+    {
+        hr = E_OUTOFMEMORY;
+    }
+    else
+    {
+        effects->effects[effects->count].object = object;
+        if (object)
+        {
+            IUnknown_AddRef(effects->effects[effects->count].object);
+        }
+        effects->effects[effects->count].optional = is_optional;
+
+        effects->count++;
+    }
+
+    return hr;
+}
+
 static HRESULT WINAPI media_engine_InsertVideoEffect(IMFMediaEngineEx *iface, IUnknown *effect, BOOL is_optional)
 {
-    FIXME("%p, %p, %d stub.\n", iface, effect, is_optional);
+    struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %d.\n", iface, effect, is_optional);
+
+    EnterCriticalSection(&engine->cs);
+    hr = media_engine_insert_effect(engine, &engine->video_effects, effect, is_optional);
+    LeaveCriticalSection(&engine->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_engine_InsertAudioEffect(IMFMediaEngineEx *iface, IUnknown *effect, BOOL is_optional)
