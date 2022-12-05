@@ -2272,6 +2272,7 @@ static bool feature_level_11_supported(const struct wined3d_physical_device_info
             && info->features2.features.multiDrawIndirect
             && info->features2.features.drawIndirectFirstInstance
             && info->features2.features.fragmentStoresAndAtomics
+            && info->features2.features.shaderImageGatherExtended
             && info->features2.features.tessellationShader;
 }
 
