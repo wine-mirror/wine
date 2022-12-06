@@ -18,7 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdio.h>
+#include <stdlib.h>
 
 #include <windows.h>
 #include <winspool.h>
@@ -28,11 +28,33 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+#define PP_MAGIC 0x952173fe
+
+struct pp_data
+{
+    DWORD magic;
+    HANDLE hport;
+    WCHAR *doc_name;
+    WCHAR *out_file;
+};
+
+static const WCHAR emf_1003[] = L"NT EMF 1.003";
+
+static struct pp_data* get_handle_data(HANDLE pp)
+{
+    struct pp_data *ret = (struct pp_data *)pp;
+
+    if (!ret || ret->magic != PP_MAGIC)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return NULL;
+    }
+    return ret;
+}
+
 BOOL WINAPI EnumPrintProcessorDatatypesW(WCHAR *server, WCHAR *name, DWORD level,
         BYTE *datatypes, DWORD size, DWORD *needed, DWORD *no)
 {
-    static const WCHAR emf_1003[] = L"NT EMF 1.003";
-
     DATATYPES_INFO_1W *info = (DATATYPES_INFO_1W *)datatypes;
 
     TRACE("%s, %s, %ld, %p, %ld, %p, %p\n", debugstr_w(server), debugstr_w(name),
@@ -67,9 +89,33 @@ BOOL WINAPI EnumPrintProcessorDatatypesW(WCHAR *server, WCHAR *name, DWORD level
 
 HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
 {
-    FIXME("%s, %p\n", debugstr_w(port), open_data);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return NULL;
+    struct pp_data *data;
+    HANDLE hport;
+
+    TRACE("%s, %p\n", debugstr_w(port), open_data);
+
+    if (!port || !open_data || !open_data->pDatatype)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return NULL;
+    }
+    if (wcscmp(open_data->pDatatype, emf_1003))
+    {
+        SetLastError(ERROR_INVALID_DATATYPE);
+        return NULL;
+    }
+
+    if (!OpenPrinterW(port, &hport, NULL))
+        return NULL;
+
+    data = LocalAlloc(LMEM_FIXED | LMEM_ZEROINIT, sizeof(*data));
+    if (!data)
+        return NULL;
+    data->magic = PP_MAGIC;
+    data->hport = hport;
+    data->doc_name = wcsdup(open_data->pDocumentName);
+    data->out_file = wcsdup(open_data->pOutputFile);
+    return (HANDLE)data;
 }
 
 BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
@@ -88,7 +134,18 @@ BOOL WINAPI ControlPrintProcessor(HANDLE pp, DWORD cmd)
 
 BOOL WINAPI ClosePrintProcessor(HANDLE pp)
 {
-    FIXME("%p\n", pp);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    struct pp_data *data = get_handle_data(pp);
+
+    TRACE("%p\n", pp);
+
+    if (!data)
+        return FALSE;
+
+    ClosePrinter(data->hport);
+    free(data->doc_name);
+    free(data->out_file);
+
+    memset(data, 0, sizeof(*data));
+    LocalFree(data);
+    return TRUE;
 }
