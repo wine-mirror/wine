@@ -895,7 +895,7 @@ do
         fi
         llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
         case $llvm_target in
-          *windows) llvm_cflags="-Wl,-subsystem:console" ;;
+          *windows) llvm_cflags="-Wl,-subsystem:console -Wl,-WX" ;;
         esac
         WINE_TRY_PE_CFLAGS([$llvm_extra_cflags $llvm_cflags],
                            [target=$llvm_target

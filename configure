@@ -10692,7 +10692,7 @@ then :
         fi
         llvm_extra_cflags="-target $llvm_target -fuse-ld=lld"
         case $llvm_target in
-          *windows) llvm_cflags="-Wl,-subsystem:console" ;;
+          *windows) llvm_cflags="-Wl,-subsystem:console -Wl,-WX" ;;
         esac
         { as_ac_var=`printf "%s\n" "ac_cv_${wine_arch}_cflags_$llvm_extra_cflags $llvm_cflags" | $as_tr_sh`
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether $CC supports $llvm_extra_cflags $llvm_cflags" >&5
