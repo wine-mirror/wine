@@ -149,3 +149,10 @@ BOOL WINAPI ClosePrintProcessor(HANDLE pp)
     LocalFree(data);
     return TRUE;
 }
+
+HRESULT WINAPI DllRegisterServer(void)
+{
+    AddPrintProcessorW(NULL, (WCHAR *)L"Windows 4.0", (WCHAR *)L"wineps.drv", (WCHAR *)L"wineps");
+    AddPrintProcessorW(NULL, NULL, (WCHAR *)L"wineps.drv", (WCHAR *)L"wineps");
+    return S_OK;
+}
