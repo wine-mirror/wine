@@ -23,7 +23,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -1240,7 +1239,7 @@ static BOOL wined3d_context_gl_set_pixel_format(struct wined3d_context_gl *conte
     else if (!SetPixelFormat(dc, format, NULL))
     {
         /* This may also happen if the dc belongs to a destroyed window. */
-        WARN("Failed to set pixel format %d on device context %p, last error %#x.\n",
+        WARN("Failed to set pixel format %d on device context %p, last error %#lx.\n",
                 format, dc, GetLastError());
         return FALSE;
     }
@@ -1273,7 +1272,7 @@ static BOOL wined3d_context_gl_set_gl_context(struct wined3d_context_gl *context
 
     if (backup || !wglMakeCurrent(context_gl->dc, context_gl->gl_ctx))
     {
-        WARN("Failed to make GL context %p current on device context %p, last error %#x.\n",
+        WARN("Failed to make GL context %p current on device context %p, last error %#lx.\n",
                 context_gl->gl_ctx, context_gl->dc, GetLastError());
         context_gl->valid = 0;
         WARN("Trying fallback to the backup window.\n");
@@ -1305,7 +1304,7 @@ static BOOL wined3d_context_gl_set_gl_context(struct wined3d_context_gl *context
 
         if (!wglMakeCurrent(context_gl->dc, context_gl->gl_ctx))
         {
-            ERR("Fallback to backup window (dc %p) failed too, last error %#x.\n",
+            ERR("Fallback to backup window (dc %p) failed too, last error %#lx.\n",
                     context_gl->dc, GetLastError());
             wined3d_context_gl_set_current(NULL);
             return FALSE;
@@ -1322,7 +1321,7 @@ static void context_restore_gl_context(const struct wined3d_gl_info *gl_info, HD
 {
     if (!wglMakeCurrent(dc, gl_ctx))
     {
-        ERR("Failed to restore GL context %p on device context %p, last error %#x.\n",
+        ERR("Failed to restore GL context %p on device context %p, last error %#lx.\n",
                 gl_ctx, dc, GetLastError());
         wined3d_context_gl_set_current(NULL);
     }
@@ -1910,7 +1909,7 @@ HGLRC context_create_wgl_attribs(const struct wined3d_gl_info *gl_info, HDC hdc,
                 ctx_attribs[ctx_attrib_idx] = 0;
             }
             if (!(ctx = gl_info->p_wglCreateContextAttribsARB(hdc, share_ctx, ctx_attribs)))
-                WARN("Failed to create a WGL context with wglCreateContextAttribsARB, last error %#x.\n",
+                WARN("Failed to create a WGL context with wglCreateContextAttribsARB, last error %#lx.\n",
                         GetLastError());
         }
     }
@@ -2065,10 +2064,10 @@ static BOOL wined3d_context_gl_create_wgl_ctx(struct wined3d_context_gl *context
 
         if (share_ctx && !wglShareLists(share_ctx, ctx))
         {
-            ERR("wglShareLists(%p, %p) failed, last error %#x.\n", share_ctx, ctx, GetLastError());
+            ERR("wglShareLists(%p, %p) failed, last error %#lx.\n", share_ctx, ctx, GetLastError());
             context_release(context);
             if (!wglDeleteContext(ctx))
-                ERR("wglDeleteContext(%p) failed, last error %#x.\n", ctx, GetLastError());
+                ERR("wglDeleteContext(%p) failed, last error %#lx.\n", ctx, GetLastError());
             return FALSE;
         }
     }
@@ -2179,7 +2178,7 @@ HRESULT wined3d_context_gl_init(struct wined3d_context_gl *context_gl, struct wi
         ERR("Cannot activate context to set up defaults.\n");
         context_release(context);
         if (!wglDeleteContext(context_gl->gl_ctx))
-            ERR("wglDeleteContext(%p) failed, last error %#x.\n", context_gl->gl_ctx, GetLastError());
+            ERR("wglDeleteContext(%p) failed, last error %#lx.\n", context_gl->gl_ctx, GetLastError());
         goto fail;
     }
 
@@ -2707,7 +2706,7 @@ void wined3d_context_gl_submit_command_fence(struct wined3d_context_gl *context_
     f = &context_gl->submitted.fences[context_gl->submitted.fence_count++];
     f->id = device_gl->current_fence_id;
     if (FAILED(hr = wined3d_fence_create(&device_gl->d, &f->fence)))
-        ERR("Failed to create fence, hr %#x.\n", hr);
+        ERR("Failed to create fence, hr %#lx.\n", hr);
     wined3d_fence_issue(f->fence, &device_gl->d);
 
     /* We don't expect this to ever happen, but handle it anyway. */
