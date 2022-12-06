@@ -2859,8 +2859,9 @@ static DWORD queue_receive_response( struct request *request )
     return ret;
 }
 
-static DWORD receive_response( struct request *request, BOOL async )
+static DWORD receive_response( struct request *request )
 {
+    BOOL async_mode = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC;
     DWORD ret, size, query, status;
 
     TRACE( "request state %d.\n", request->state );
@@ -2871,48 +2872,53 @@ static DWORD receive_response( struct request *request, BOOL async )
         goto done;
     }
 
-    for (;;)
+    if (request->state == REQUEST_RESPONSE_RECURSIVE_REQUEST)
     {
-        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
-        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED,
-                       &request->read_reply_len, sizeof(request->read_reply_len) );
-        if ((ret = request->read_reply_status)) break;
-
-        size = sizeof(DWORD);
-        query = WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER;
-        if ((ret = query_headers( request, query, NULL, &status, &size, NULL ))) break;
-
-        set_content_length( request, status );
-
-        if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) record_cookies( request );
-
-        if (status == HTTP_STATUS_REDIRECT && is_passport_request( request ))
-        {
-            ret = handle_passport_redirect( request );
-        }
-        else if (status == HTTP_STATUS_MOVED || status == HTTP_STATUS_REDIRECT || status == HTTP_STATUS_REDIRECT_KEEP_VERB)
-        {
-            if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS ||
-                request->hdr.redirect_policy == WINHTTP_OPTION_REDIRECT_POLICY_NEVER) break;
-
-            if (++request->redirect_count > request->max_redirects) return ERROR_WINHTTP_REDIRECT_FAILED;
-
-            if ((ret = handle_redirect( request, status ))) break;
-
-            /* recurse synchronously */
-            if (!(ret = send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE ))) continue;
-        }
-        else if (status == HTTP_STATUS_DENIED || status == HTTP_STATUS_PROXY_AUTH_REQ)
-        {
-            if (request->hdr.disable_flags & WINHTTP_DISABLE_AUTHENTICATION) break;
-
-            if (handle_authorization( request, status )) break;
-
-            /* recurse synchronously */
-            if (!(ret = send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE ))) continue;
-        }
-        break;
+        TRACE( "Sending request.\n" );
+        if ((ret = send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE ))) goto done;
     }
+
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
+    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED,
+                   &request->read_reply_len, sizeof(request->read_reply_len) );
+    if ((ret = request->read_reply_status)) goto done;
+
+    size = sizeof(DWORD);
+    query = WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER;
+    if ((ret = query_headers( request, query, NULL, &status, &size, NULL ))) goto done;
+
+    set_content_length( request, status );
+
+    if (!(request->hdr.disable_flags & WINHTTP_DISABLE_COOKIES)) record_cookies( request );
+
+    if (status == HTTP_STATUS_REDIRECT && is_passport_request( request ))
+    {
+        ret = handle_passport_redirect( request );
+        goto done;
+    }
+    if (status == HTTP_STATUS_MOVED || status == HTTP_STATUS_REDIRECT || status == HTTP_STATUS_REDIRECT_KEEP_VERB)
+    {
+        if (request->hdr.disable_flags & WINHTTP_DISABLE_REDIRECTS ||
+            request->hdr.redirect_policy == WINHTTP_OPTION_REDIRECT_POLICY_NEVER) goto done;
+
+        if (++request->redirect_count > request->max_redirects)
+        {
+            ret = ERROR_WINHTTP_REDIRECT_FAILED;
+            goto done;
+        }
+
+        if ((ret = handle_redirect( request, status ))) goto done;
+    }
+    else if (status == HTTP_STATUS_DENIED || status == HTTP_STATUS_PROXY_AUTH_REQ)
+    {
+        if (request->hdr.disable_flags & WINHTTP_DISABLE_AUTHENTICATION) goto done;
+
+        if (handle_authorization( request, status )) goto done;
+    }
+    else goto done;
+
+    request->state = REQUEST_RESPONSE_RECURSIVE_REQUEST;
+    return receive_response( request );
 
 done:
     if (!ret)
@@ -2920,7 +2926,7 @@ done:
         request->state = REQUEST_RESPONSE_STATE_RESPONSE_RECEIVED;
         if (request->netconn) netconn_set_timeout( request->netconn, FALSE, request->receive_timeout );
     }
-    if (async)
+    if (async_mode)
     {
         if (!ret) send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE, NULL, 0 );
         else
@@ -2942,7 +2948,7 @@ static void task_receive_response( void *ctx, BOOL abort )
     if (abort) return;
 
     TRACE("running %p\n", ctx);
-    receive_response( request, TRUE );
+    receive_response( request );
 }
 
 /***********************************************************************
@@ -2968,7 +2974,7 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
     }
 
     if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) ret = queue_receive_response( request );
-    else                                                  ret = receive_response( request, FALSE );
+    else                                                  ret = receive_response( request );
 
     release_object( &request->hdr );
     SetLastError( ret );

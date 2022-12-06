@@ -177,6 +177,7 @@ enum request_flags
 enum request_response_state
 {
     REQUEST_RESPONSE_STATE_NONE,
+    REQUEST_RESPONSE_RECURSIVE_REQUEST,
     REQUEST_RESPONSE_STATE_RESPONSE_RECEIVED,
 };
 
