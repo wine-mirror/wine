@@ -33,12 +33,17 @@ WINBASEAPI void        WINAPI CloseThreadpoolIo(TP_IO*);
 WINBASEAPI void        WINAPI CloseThreadpoolTimer(PTP_TIMER);
 WINBASEAPI void        WINAPI CloseThreadpoolWait(PTP_WAIT);
 WINBASEAPI void        WINAPI CloseThreadpoolWork(PTP_WORK);
-WINBASEAPI PTP_POOL    WINAPI CreateThreadpool(PVOID);
-WINBASEAPI PTP_CLEANUP_GROUP WINAPI CreateThreadpoolCleanupGroup(void);
-WINBASEAPI PTP_IO      WINAPI CreateThreadpoolIo(HANDLE,PTP_WIN32_IO_CALLBACK,PVOID,PTP_CALLBACK_ENVIRON);
-WINBASEAPI PTP_TIMER   WINAPI CreateThreadpoolTimer(PTP_TIMER_CALLBACK,PVOID,PTP_CALLBACK_ENVIRON);
-WINBASEAPI PTP_WAIT    WINAPI CreateThreadpoolWait(PTP_WAIT_CALLBACK,PVOID,PTP_CALLBACK_ENVIRON);
-WINBASEAPI PTP_WORK    WINAPI CreateThreadpoolWork(PTP_WORK_CALLBACK,PVOID,PTP_CALLBACK_ENVIRON);
+WINBASEAPI TP_POOL*    WINAPI CreateThreadpool(void*) __WINE_DEALLOC(CloseThreadpool) __WINE_MALLOC;
+WINBASEAPI TP_CLEANUP_GROUP* WINAPI CreateThreadpoolCleanupGroup(void)
+                                    __WINE_DEALLOC(CloseThreadpoolCleanupGroup) __WINE_MALLOC;
+WINBASEAPI TP_IO*      WINAPI CreateThreadpoolIo(HANDLE,PTP_WIN32_IO_CALLBACK,void*,TP_CALLBACK_ENVIRON*)
+                              __WINE_DEALLOC(CloseThreadpoolIo) __WINE_MALLOC;
+WINBASEAPI TP_TIMER*   WINAPI CreateThreadpoolTimer(PTP_TIMER_CALLBACK,void*,TP_CALLBACK_ENVIRON*)
+                              __WINE_DEALLOC(CloseThreadpoolTimer) __WINE_MALLOC;
+WINBASEAPI TP_WAIT*    WINAPI CreateThreadpoolWait(PTP_WAIT_CALLBACK,void*,TP_CALLBACK_ENVIRON*)
+                              __WINE_DEALLOC(CloseThreadpoolWait) __WINE_MALLOC;
+WINBASEAPI TP_WORK*    WINAPI CreateThreadpoolWork(PTP_WORK_CALLBACK,void*,TP_CALLBACK_ENVIRON*)
+                              __WINE_DEALLOC(CloseThreadpoolWork) __WINE_MALLOC;
 WINBASEAPI void        WINAPI DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE);
 WINBASEAPI void        WINAPI FreeLibraryWhenCallbackReturns(PTP_CALLBACK_INSTANCE,HMODULE);
 WINBASEAPI BOOL        WINAPI IsThreadpoolTimerSet(PTP_TIMER);
