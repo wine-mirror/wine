@@ -585,38 +585,40 @@ static void test_ID3DXFont(IDirect3DDevice9 *device)
 
     for (c = 'b'; c <= 'z'; ++c)
     {
+        winetest_push_context("Character %c", c);
         count = GetGlyphIndicesA(hdc, &c, 1, &glyph, 0);
-        ok(count != GDI_ERROR, "Got unexpected count %lu.\n", count);
+        ok(count != GDI_ERROR, "Unexpected count %lu.\n", count);
 
         hr = ID3DXFont_GetGlyphData(font, glyph, &texture, &blackbox, &cellinc);
-        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         levels = IDirect3DTexture9_GetLevelCount(texture);
-        todo_wine ok(levels == 5, "Character %c: got unexpected levels %lu.\n", c, levels);
+        todo_wine ok(levels == 5, "Unexpected levels %lu.\n", levels);
         hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &surf_desc);
-        ok(hr == D3D_OK, "Character %c: got unexpected hr %#lx.\n", c, hr);
-        ok(surf_desc.Format == D3DFMT_A8R8G8B8, "Character %c: got unexpected format %#x.\n", c, surf_desc.Format);
-        ok(surf_desc.Usage == 0, "Character %c: got unexpected usage %#lx.\n", c, surf_desc.Usage);
-        ok(surf_desc.Width == 256, "Character %c: got unexpected width %u.\n", c, surf_desc.Width);
-        ok(surf_desc.Height == 256, "Character %c: got unexpected height %u.\n", c, surf_desc.Height);
-        ok(surf_desc.Pool == D3DPOOL_MANAGED, "Character %c: got unexpected pool %u.\n", c, surf_desc.Pool);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(surf_desc.Format == D3DFMT_A8R8G8B8, "Unexpected format %#x.\n", surf_desc.Format);
+        ok(surf_desc.Usage == 0, "Unexpected usage %#lx.\n", surf_desc.Usage);
+        ok(surf_desc.Width == 256, "Unexpected width %u.\n", surf_desc.Width);
+        ok(surf_desc.Height == 256, "Unexpected height %u.\n", surf_desc.Height);
+        ok(surf_desc.Pool == D3DPOOL_MANAGED, "Unexpected pool %u.\n", surf_desc.Pool);
 
         count = GetGlyphOutlineW(hdc, glyph, GGO_GLYPH_INDEX | GGO_METRICS, &glyph_metrics, 0, NULL, &mat);
-        ok(count != GDI_ERROR, "Got unexpected count %#lx.\n", count);
+        ok(count != GDI_ERROR, "Unexpected count %#lx.\n", count);
 
         ret = ID3DXFont_GetTextMetricsW(font, &tm);
-        ok(ret, "Got unexpected ret %#x.\n", ret);
+        ok(ret, "Unexpected ret %#x.\n", ret);
 
-        todo_wine ok(blackbox.right - blackbox.left == glyph_metrics.gmBlackBoxX + 2, "Character %c: got %ld, expected %d.\n",
-                c, blackbox.right - blackbox.left, glyph_metrics.gmBlackBoxX + 2);
-        todo_wine ok(blackbox.bottom - blackbox.top == glyph_metrics.gmBlackBoxY + 2, "Character %c: got %ld, expected %d.\n",
-                c, blackbox.bottom - blackbox.top, glyph_metrics.gmBlackBoxY + 2);
-        ok(cellinc.x == glyph_metrics.gmptGlyphOrigin.x - 1, "Character %c: got %ld, expected %ld.\n",
-                c, cellinc.x, glyph_metrics.gmptGlyphOrigin.x - 1);
-        ok(cellinc.y == tm.tmAscent - glyph_metrics.gmptGlyphOrigin.y - 1, "Character %c: got %ld, expected %ld.\n",
-                c, cellinc.y, tm.tmAscent - glyph_metrics.gmptGlyphOrigin.y - 1);
+        todo_wine ok(blackbox.right - blackbox.left == glyph_metrics.gmBlackBoxX + 2, "Got %ld, expected %d.\n",
+                blackbox.right - blackbox.left, glyph_metrics.gmBlackBoxX + 2);
+        todo_wine ok(blackbox.bottom - blackbox.top == glyph_metrics.gmBlackBoxY + 2, "Got %ld, expected %d.\n",
+                blackbox.bottom - blackbox.top, glyph_metrics.gmBlackBoxY + 2);
+        ok(cellinc.x == glyph_metrics.gmptGlyphOrigin.x - 1, "Got %ld, expected %ld.\n",
+                cellinc.x, glyph_metrics.gmptGlyphOrigin.x - 1);
+        ok(cellinc.y == tm.tmAscent - glyph_metrics.gmptGlyphOrigin.y - 1, "Got %ld, expected %ld.\n",
+                cellinc.y, tm.tmAscent - glyph_metrics.gmptGlyphOrigin.y - 1);
 
         check_release((IUnknown *)texture, 1);
+        winetest_pop_context();
     }
 
     hr = ID3DXFont_PreloadCharacters(font, 'a', 'z');
@@ -640,30 +642,31 @@ static void test_ID3DXFont(IDirect3DDevice9 *device)
     c = 'a';
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        winetest_push_context("Test %u", i);
         hr = D3DXCreateFontA(device, tests[i].font_height, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET,
                 OUT_DEFAULT_PRECIS, DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
-        ok(hr == D3D_OK, "Test %u: got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         hdc = ID3DXFont_GetDC(font);
-        ok(!!hdc, "Test %u: got unexpected hdc %p.\n", i, hdc);
+        ok(!!hdc, "Unexpected hdc %p.\n", hdc);
 
         count = GetGlyphIndicesA(hdc, &c, 1, &glyph, 0);
-        ok(count != GDI_ERROR, "Test %u: got unexpected count %lu.\n", i, count);
+        ok(count != GDI_ERROR, "Unexpected count %lu.\n", count);
 
         hr = ID3DXFont_GetGlyphData(font, glyph, &texture, NULL, NULL);
-        ok(hr == D3D_OK, "Test %u: got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         levels = IDirect3DTexture9_GetLevelCount(texture);
         todo_wine_if(tests[i].expected_levels < 9)
-        ok(levels == tests[i].expected_levels, "Test %u: got unexpected levels %lu.\n", i, levels);
+        ok(levels == tests[i].expected_levels, "Unexpected levels %lu.\n", levels);
 
         hr = IDirect3DTexture9_GetLevelDesc(texture, 0, &surf_desc);
-        ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
-        ok(surf_desc.Format == D3DFMT_A8R8G8B8, "Test %u: got unexpected format %#x.\n", i, surf_desc.Format);
-        ok(surf_desc.Usage == 0, "Test %u: got unexpected usage %#lx.\n", i, surf_desc.Usage);
-        ok(surf_desc.Width == tests[i].expected_size, "Test %u: got unexpected width %u.\n", i, surf_desc.Width);
-        ok(surf_desc.Height == tests[i].expected_size, "Test %u: got unexpected height %u.\n", i, surf_desc.Height);
-        ok(surf_desc.Pool == D3DPOOL_MANAGED, "Test %u: got unexpected pool %u.\n", i, surf_desc.Pool);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(surf_desc.Format == D3DFMT_A8R8G8B8, "Unexpected format %#x.\n", surf_desc.Format);
+        ok(surf_desc.Usage == 0, "Unexpected usage %#lx.\n", surf_desc.Usage);
+        ok(surf_desc.Width == tests[i].expected_size, "Unexpected width %u.\n", surf_desc.Width);
+        ok(surf_desc.Height == tests[i].expected_size, "Unexpected height %u.\n", surf_desc.Height);
+        ok(surf_desc.Pool == D3DPOOL_MANAGED, "Unexpected pool %u.\n", surf_desc.Pool);
 
         IDirect3DTexture9_Release(texture);
 
@@ -675,39 +678,40 @@ static void test_ID3DXFont(IDirect3DDevice9 *device)
 
         IDirect3DDevice9_BeginScene(device);
         hr = ID3DXSprite_Begin(sprite, D3DXSPRITE_ALPHABLEND);
-        ok (hr == D3D_OK, "Test %d: got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         height = ID3DXFont_DrawTextW(font, sprite, testW, -1, &rect, DT_TOP, 0xffffffff);
-        ok(height == tests[i].font_height, "Test %d: got unexpected height %u.\n", i, height);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
         height = ID3DXFont_DrawTextW(font, sprite, testW, size, &rect, DT_TOP, 0xffffffff);
-        ok(height == tests[i].font_height, "Test %d: got unexpected height %u.\n", i, height);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
         height = ID3DXFont_DrawTextW(font, sprite, testW, size, &rect, DT_RIGHT, 0xffffffff);
-        ok(height == tests[i].font_height, "Test %d: got unexpected height %u.\n", i, height);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
         height = ID3DXFont_DrawTextW(font, sprite, testW, size, &rect, DT_LEFT | DT_NOCLIP, 0xffffffff);
-        ok(height == tests[i].font_height, "Test %d: got unexpected height %u.\n", i, height);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
 
         SetRectEmpty(&rect);
         height = ID3DXFont_DrawTextW(font, sprite, testW, size, &rect,
                 DT_LEFT | DT_CALCRECT, 0xffffffff);
-        ok(height == tests[i].font_height, "Test %d: got unexpected height %u.\n", i, height);
-        ok(!rect.left, "Test %d: got unexpected rect left %ld.\n", i, rect.left);
-        ok(!rect.top, "Test %d: got unexpected rect top %ld.\n", i, rect.top);
-        ok(rect.right, "Test %d: got unexpected rect right %ld.\n", i, rect.right);
-        ok(rect.bottom == tests[i].font_height, "Test %d: got unexpected rect bottom %ld.\n", i, rect.bottom);
+        ok(height == tests[i].font_height, "Unexpected height %u.\n", height);
+        ok(!rect.left, "Unexpected rect left %ld.\n", rect.left);
+        ok(!rect.top, "Unexpected rect top %ld.\n", rect.top);
+        ok(rect.right, "Unexpected rect right %ld.\n", rect.right);
+        ok(rect.bottom == tests[i].font_height, "Unexpected rect bottom %ld.\n", rect.bottom);
 
         hr = ID3DXSprite_End(sprite);
-        ok (hr == D3D_OK, "Test %d: got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         IDirect3DDevice9_EndScene(device);
         ID3DXSprite_Release(sprite);
 
         ID3DXFont_Release(font);
+        winetest_pop_context();
     }
 
 
     /* ID3DXFont_DrawTextA, ID3DXFont_DrawTextW */
     hr = D3DXCreateFontA(device, 12, 0, FW_DONTCARE, 0, FALSE, DEFAULT_CHARSET, OUT_DEFAULT_PRECIS,
             DEFAULT_QUALITY, DEFAULT_PITCH, "Tahoma", &font);
-    ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     SetRect(&rect, 10, 10, 200, 200);
 
@@ -1204,27 +1208,29 @@ static void test_D3DXCreateRenderToSurface(IDirect3DDevice9 *device)
     };
 
     hr = D3DXCreateRenderToSurface(NULL /* device */, 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, &render);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateRenderToSurface returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
     ok(render == (void *)0xdeadbeef, "Got %p, expected %p\n", render, (void *)0xdeadbeef);
 
     hr = D3DXCreateRenderToSurface(device, 256, 256, D3DFMT_A8R8G8B8, FALSE, D3DFMT_UNKNOWN, NULL /* out */);
-    ok(hr == D3DERR_INVALIDCALL, "D3DXCreateRenderToSurface returned %#lx, expected %#lx\n", hr, D3DERR_INVALIDCALL);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        winetest_push_context("Test %u", i);
         hr = D3DXCreateRenderToSurface(device, tests[i].Width, tests[i].Height, tests[i].Format, tests[i].DepthStencil,
                 tests[i].DepthStencilFormat, &render);
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         hr = ID3DXRenderToSurface_GetDesc(render, &desc);
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
-        ok(desc.Width == tests[i].Width, "%d: Got width %u, expected %u\n", i, desc.Width, tests[i].Width);
-        ok(desc.Height == tests[i].Height, "%d: Got height %u, expected %u\n", i, desc.Height, tests[i].Height);
-        ok(desc.Format == tests[i].Format, "%d: Got format %#x, expected %#x\n", i, desc.Format, tests[i].Format);
-        ok(desc.DepthStencil == tests[i].DepthStencil, "%d: Got depth stencil %d, expected %d\n",
-                i, desc.DepthStencil, tests[i].DepthStencil);
-        ok(desc.DepthStencilFormat == tests[i].DepthStencilFormat, "%d: Got depth stencil format %#x, expected %#x\n",
-                i, desc.DepthStencilFormat, tests[i].DepthStencilFormat);
+        ok(desc.Width == tests[i].Width, "Width %u, expected %u.\n", desc.Width, tests[i].Width);
+        ok(desc.Height == tests[i].Height, "Height %u, expected %u.\n", desc.Height, tests[i].Height);
+        ok(desc.Format == tests[i].Format, "Format %#x, expected %#x.\n", desc.Format, tests[i].Format);
+        ok(desc.DepthStencil == tests[i].DepthStencil, "Depth stencil %d, expected %d.\n",
+                desc.DepthStencil, tests[i].DepthStencil);
+        ok(desc.DepthStencilFormat == tests[i].DepthStencilFormat, "Depth stencil format %#x, expected %#x.\n",
+                desc.DepthStencilFormat, tests[i].DepthStencilFormat);
         ID3DXRenderToSurface_Release(render);
+        winetest_pop_context();
     }
 
     /* check device ref count */
