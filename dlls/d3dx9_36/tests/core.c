@@ -1645,24 +1645,26 @@ static void test_D3DXCreateRenderToEnvMap(IDirect3DDevice9 *device)
         { { 256,   1, D3DFMT_X8R8G8B8, TRUE,  D3DFMT_UNKNOWN }, { 256, 1, D3DFMT_X8R8G8B8, TRUE,  D3DFMT_UNKNOWN } }
     };
 
-    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         const D3DXRTE_DESC *parameters = &tests[i].parameters;
         const D3DXRTE_DESC *expected  = &tests[i].expected_values;
 
+        winetest_push_context("Test %u", i);
         hr = D3DXCreateRenderToEnvMap(device, parameters->Size, parameters->MipLevels, parameters->Format,
                 parameters->DepthStencil, parameters->DepthStencilFormat, &render);
         ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         hr = ID3DXRenderToEnvMap_GetDesc(render, &desc);
-        ok(hr == D3D_OK, "%d: GetDesc failed %#lx\n", i, hr);
-        ok(desc.Size == expected->Size, "%d: Got size %u, expected %u\n", i, desc.Size, expected->Size);
-        ok(desc.MipLevels == expected->MipLevels, "%d: Got miplevels %u, expected %u\n", i, desc.MipLevels, expected->MipLevels);
-        ok(desc.Format == expected->Format, "%d: Got format %#x, expected %#x\n", i, desc.Format, expected->Format);
-        ok(desc.DepthStencil == expected->DepthStencil, "%d: Got depth stencil %d, expected %d\n",
-                i, expected->DepthStencil, expected->DepthStencil);
-        ok(desc.DepthStencilFormat == expected->DepthStencilFormat, "%d: Got depth stencil format %#x, expected %#x\n",
-                i, expected->DepthStencilFormat, expected->DepthStencilFormat);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(desc.Size == expected->Size, "Got size %u, expected %u.\n", desc.Size, expected->Size);
+        ok(desc.MipLevels == expected->MipLevels, "Got miplevels %u, expected %u.\n", desc.MipLevels, expected->MipLevels);
+        ok(desc.Format == expected->Format, "Got format %#x, expected %#x.\n", desc.Format, expected->Format);
+        ok(desc.DepthStencil == expected->DepthStencil, "Got depth stencil %d, expected %d.\n",
+                expected->DepthStencil, expected->DepthStencil);
+        ok(desc.DepthStencilFormat == expected->DepthStencilFormat, "Got depth stencil format %#x, expected %#x\n",
+                expected->DepthStencilFormat, expected->DepthStencilFormat);
         check_release((IUnknown *)render, 0);
+        winetest_pop_context();
     }
 
     /* check device ref count */
