@@ -139,7 +139,7 @@ static void test_DeviceInformation( void )
 {
     static const WCHAR *device_info_name = L"Windows.Devices.Enumeration.DeviceInformation";
 
-    struct device_watcher_handler stopped_handler, added_handler;
+    static struct device_watcher_handler stopped_handler, added_handler;
     EventRegistrationToken stopped_token, added_token;
     IInspectable *inspectable, *inspectable2;
     IActivationFactory *factory;
