@@ -5022,7 +5022,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   UNICODE_STRING *version, UNICODE_STRING *window_name,
                                   DWORD style, INT x, INT y, INT cx, INT cy,
                                   HWND parent, HMENU menu, HINSTANCE instance, void *params,
-                                  DWORD flags, CBT_CREATEWNDW *client_cbtc, DWORD unk, BOOL ansi )
+                                  DWORD flags, HINSTANCE client_instance, DWORD unk, BOOL ansi )
 {
     UINT win_dpi, thread_dpi = get_thread_dpi();
     DPI_AWARENESS_CONTEXT context;
@@ -5036,7 +5036,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e'};
 
     cs.lpCreateParams = params;
-    cs.hInstance  = instance;
+    cs.hInstance  = client_instance ? client_instance : instance;
     cs.hMenu      = menu;
     cs.hwndParent = parent;
     cs.style      = style;

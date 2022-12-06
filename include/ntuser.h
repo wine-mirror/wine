@@ -678,7 +678,7 @@ HWND    WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                      UNICODE_STRING *version, UNICODE_STRING *window_name,
                                      DWORD style, INT x, INT y, INT cx, INT cy,
                                      HWND parent, HMENU menu, HINSTANCE instance, void *params,
-                                     DWORD flags, CBT_CREATEWNDW *cbtc, DWORD unk, BOOL ansi );
+                                     DWORD flags, HINSTANCE client_instance, DWORD unk, BOOL ansi );
 HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK mask, ULONG arg3,
                                           ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 );
 HDWP    WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after, INT x, INT y,
