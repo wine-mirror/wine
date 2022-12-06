@@ -41,9 +41,9 @@ struct pool /* poor's man */
 
 void     pool_init(struct pool* a, size_t arena_size) DECLSPEC_HIDDEN;
 void     pool_destroy(struct pool* a) DECLSPEC_HIDDEN;
-void*    pool_alloc(struct pool* a, size_t len) DECLSPEC_HIDDEN;
-void*    pool_realloc(struct pool* a, void* ptr, size_t len) DECLSPEC_HIDDEN;
-char*    pool_strdup(struct pool* a, const char* str) DECLSPEC_HIDDEN;
+void*    pool_alloc(struct pool* a, size_t len) __WINE_ALLOC_SIZE(2) __WINE_MALLOC DECLSPEC_HIDDEN;
+void*    pool_realloc(struct pool* a, void* ptr, size_t len) __WINE_ALLOC_SIZE(3) DECLSPEC_HIDDEN;
+char*    pool_strdup(struct pool* a, const char* str) __WINE_MALLOC DECLSPEC_HIDDEN;
 
 struct vector
 {
@@ -742,7 +742,7 @@ extern void         module_reset_debug_info(struct module* module) DECLSPEC_HIDD
 extern BOOL         module_remove(struct process* pcs,
                                   struct module* module) DECLSPEC_HIDDEN;
 extern void         module_set_module(struct module* module, const WCHAR* name) DECLSPEC_HIDDEN;
-extern WCHAR*       get_wine_loader_name(struct process *pcs) DECLSPEC_HIDDEN;
+extern WCHAR*       get_wine_loader_name(struct process *pcs) __WINE_DEALLOC(HeapFree, 3) __WINE_MALLOC DECLSPEC_HIDDEN;
 
 /* msc.c */
 extern BOOL         pe_load_debug_directory(const struct process* pcs,
@@ -762,7 +762,7 @@ extern BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
 extern BOOL         path_find_symbol_file(const struct process* pcs, const struct module* module,
                                           PCSTR full_path, enum module_type type, const GUID* guid, DWORD dw1, DWORD dw2,
                                           WCHAR *buffer, BOOL* is_unmatched) DECLSPEC_HIDDEN;
-extern WCHAR *get_dos_file_name(const WCHAR *filename) DECLSPEC_HIDDEN;
+extern WCHAR *get_dos_file_name(const WCHAR *filename) __WINE_DEALLOC(HeapFree, 3) __WINE_MALLOC DECLSPEC_HIDDEN;
 extern BOOL search_dll_path(const struct process* process, const WCHAR *name,
                             BOOL (*match)(void*, HANDLE, const WCHAR*), void *param) DECLSPEC_HIDDEN;
 extern BOOL search_unix_path(const WCHAR *name, const WCHAR *path, BOOL (*match)(void*, HANDLE, const WCHAR*), void *param) DECLSPEC_HIDDEN;
