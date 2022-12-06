@@ -20,7 +20,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 #include "winternl.h"
@@ -110,7 +109,7 @@ HRESULT CDECL wined3d_output_take_ownership(const struct wined3d_output *output,
         case STATUS_SUCCESS:
             return S_OK;
         default:
-            FIXME("Unhandled error %#x.\n", status);
+            FIXME("Unhandled error %#lx.\n", status);
             return E_FAIL;
     }
 }
@@ -725,7 +724,7 @@ bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
     }
     else
     {
-        TRACE("OS version %u.%u.\n", os_version.dwMajorVersion, os_version.dwMinorVersion);
+        TRACE("OS version %lu.%lu.\n", os_version.dwMajorVersion, os_version.dwMinorVersion);
         switch (os_version.dwMajorVersion)
         {
             case 2:
@@ -763,7 +762,7 @@ bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
                 {
                     if (os_version.dwMinorVersion > 3)
                     {
-                        FIXME("Unhandled OS version %u.%u, reporting Windows 8.1.\n",
+                        FIXME("Unhandled OS version %lu.%lu, reporting Windows 8.1.\n",
                                 os_version.dwMajorVersion, os_version.dwMinorVersion);
                     }
                     driver_os_version = 10;
@@ -777,7 +776,7 @@ bool wined3d_driver_info_init(struct wined3d_driver_info *driver_info,
                 break;
 
             default:
-                FIXME("Unhandled OS version %u.%u, reporting Windows 7.\n",
+                FIXME("Unhandled OS version %lu.%lu, reporting Windows 7.\n",
                         os_version.dwMajorVersion, os_version.dwMinorVersion);
                 driver_os_version = 8;
                 driver_model = DRIVER_MODEL_NT6X;
@@ -1532,7 +1531,7 @@ HRESULT CDECL wined3d_output_get_display_mode(const struct wined3d_output *outpu
                 *rotation = WINED3D_DISPLAY_ROTATION_270;
                 break;
             default:
-                FIXME("Unhandled display rotation %#x.\n", m.u1.s2.dmDisplayOrientation);
+                FIXME("Unhandled display rotation %#lx.\n", m.u1.s2.dmDisplayOrientation);
                 *rotation = WINED3D_DISPLAY_ROTATION_UNSPECIFIED;
                 break;
         }
@@ -1623,7 +1622,7 @@ HRESULT CDECL wined3d_restore_display_modes(struct wined3d *wined3d)
         ret = ChangeDisplaySettingsExW(NULL, NULL, NULL, 0, NULL);
         if (ret != DISP_CHANGE_SUCCESSFUL)
         {
-            ERR("Failed to restore all outputs to their registry display settings, error %d.\n", ret);
+            ERR("Failed to restore all outputs to their registry display settings, error %ld.\n", ret);
             return WINED3DERR_NOTAVAILABLE;
         }
     }
@@ -2911,7 +2910,7 @@ static HRESULT adapter_no3d_create_device(struct wined3d *wined3d, const struct 
     if (FAILED(hr = wined3d_device_init(&device_no3d->d, wined3d, adapter->ordinal, device_type, focus_window,
             flags, surface_alignment, levels, level_count, adapter->gl_info.supported, device_parent)))
     {
-        WARN("Failed to initialize device, hr %#x.\n", hr);
+        WARN("Failed to initialize device, hr %#lx.\n", hr);
         heap_free(device_no3d);
         return hr;
     }
@@ -3071,7 +3070,7 @@ static HRESULT adapter_no3d_create_swapchain(struct wined3d_device *device,
     if (FAILED(hr = wined3d_swapchain_no3d_init(swapchain_no3d, device, desc, state_parent, parent,
             parent_ops)))
     {
-        WARN("Failed to initialise swapchain, hr %#x.\n", hr);
+        WARN("Failed to initialise swapchain, hr %#lx.\n", hr);
         heap_free(swapchain_no3d);
         return hr;
     }
@@ -3103,7 +3102,7 @@ static HRESULT adapter_no3d_create_buffer(struct wined3d_device *device,
 
     if (FAILED(hr = wined3d_buffer_no3d_init(buffer_no3d, device, desc, data, parent, parent_ops)))
     {
-        WARN("Failed to initialise buffer, hr %#x.\n", hr);
+        WARN("Failed to initialise buffer, hr %#lx.\n", hr);
         heap_free(buffer_no3d);
         return hr;
     }
@@ -3149,7 +3148,7 @@ static HRESULT adapter_no3d_create_texture(struct wined3d_device *device,
     if (FAILED(hr = wined3d_texture_no3d_init(texture_no3d, device, desc,
             layer_count, level_count, flags, parent, parent_ops)))
     {
-        WARN("Failed to initialise texture, hr %#x.\n", hr);
+        WARN("Failed to initialise texture, hr %#lx.\n", hr);
         heap_free(texture_no3d);
         return hr;
     }
@@ -3199,7 +3198,7 @@ static HRESULT adapter_no3d_create_rendertarget_view(const struct wined3d_view_d
 
     if (FAILED(hr = wined3d_rendertarget_view_no3d_init(view_no3d, desc, resource, parent, parent_ops)))
     {
-        WARN("Failed to initialise view, hr %#x.\n", hr);
+        WARN("Failed to initialise view, hr %#lx.\n", hr);
         heap_free(view_no3d);
         return hr;
     }
@@ -3421,7 +3420,7 @@ static BOOL wined3d_adapter_create_output(struct wined3d_adapter *adapter, const
     if (FAILED(hr = wined3d_output_init(&adapter->outputs[adapter->output_count],
             adapter->output_count, adapter, output_name)))
     {
-        ERR("Failed to initialise output %s, hr %#x.\n", wine_dbgstr_w(output_name), hr);
+        ERR("Failed to initialise output %s, hr %#lx.\n", wine_dbgstr_w(output_name), hr);
         return FALSE;
     }
 
@@ -3452,11 +3451,11 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         WARN("Allocating a random LUID.\n");
         if (!AllocateLocallyUniqueId(&adapter->luid))
         {
-            ERR("Failed to allocate a LUID, error %#x.\n", GetLastError());
+            ERR("Failed to allocate a LUID, error %#lx.\n", GetLastError());
             return FALSE;
         }
     }
-    TRACE("adapter %p LUID %08x:%08x.\n", adapter, adapter->luid.HighPart, adapter->luid.LowPart);
+    TRACE("adapter %p LUID %08lx:%08lx.\n", adapter, adapter->luid.HighPart, adapter->luid.LowPart);
 
     open_adapter_desc.AdapterLuid = adapter->luid;
     if (D3DKMTOpenAdapterFromLuid(&open_adapter_desc))
