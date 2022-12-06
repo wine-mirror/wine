@@ -323,7 +323,7 @@ static void append_decl_element(struct wined3d_fvf_convert_state *state,
 }
 
 static unsigned int convert_fvf_to_declaration(const struct wined3d_adapter *adapter,
-        DWORD fvf, struct wined3d_vertex_element **elements)
+        uint32_t fvf, struct wined3d_vertex_element **elements)
 {
     BOOL has_pos = !!(fvf & WINED3DFVF_POSITION_MASK);
     BOOL has_blend = (fvf & WINED3DFVF_XYZB5) > WINED3DFVF_XYZRHW;
@@ -336,12 +336,12 @@ static unsigned int convert_fvf_to_declaration(const struct wined3d_adapter *ada
     BOOL has_diffuse = !!(fvf & WINED3DFVF_DIFFUSE);
     BOOL has_specular = !!(fvf & WINED3DFVF_SPECULAR);
 
-    DWORD num_textures = (fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
-    DWORD texcoords = (fvf & 0xffff0000) >> 16;
+    unsigned int num_textures = (fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
+    unsigned int texcoords = (fvf & 0xffff0000) >> 16;
     struct wined3d_fvf_convert_state state;
     unsigned int size;
     unsigned int idx;
-    DWORD num_blends = 1 + (((fvf & WINED3DFVF_XYZB5) - WINED3DFVF_XYZB1) >> 1);
+    unsigned int num_blends = 1 + (((fvf & WINED3DFVF_XYZB5) - WINED3DFVF_XYZB1) >> 1);
     if (has_blend_idx) num_blends--;
 
     /* Compute declaration size */
@@ -434,7 +434,7 @@ static unsigned int convert_fvf_to_declaration(const struct wined3d_adapter *ada
 }
 
 HRESULT CDECL wined3d_vertex_declaration_create_from_fvf(struct wined3d_device *device,
-        DWORD fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
+        uint32_t fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_vertex_declaration **declaration)
 {
     struct wined3d_vertex_element *elements;

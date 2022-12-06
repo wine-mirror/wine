@@ -2885,7 +2885,7 @@ HRESULT __cdecl wined3d_vertex_declaration_create(struct wined3d_device *device,
         const struct wined3d_vertex_element *elements, UINT element_count, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_vertex_declaration **declaration);
 HRESULT __cdecl wined3d_vertex_declaration_create_from_fvf(struct wined3d_device *device,
-        DWORD fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
+        uint32_t fvf, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_vertex_declaration **declaration);
 ULONG __cdecl wined3d_vertex_declaration_decref(struct wined3d_vertex_declaration *declaration);
 void * __cdecl wined3d_vertex_declaration_get_parent(const struct wined3d_vertex_declaration *declaration);
