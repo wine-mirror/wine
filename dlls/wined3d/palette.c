@@ -18,7 +18,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -152,7 +151,7 @@ static HRESULT wined3d_palette_init(struct wined3d_palette *palette, struct wine
 
     if (FAILED(hr = wined3d_palette_set_entries(palette, 0, 0, entry_count, entries)))
     {
-        WARN("Failed to set palette entries, hr %#x.\n", hr);
+        WARN("Failed to set palette entries, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -173,7 +172,7 @@ HRESULT CDECL wined3d_palette_create(struct wined3d_device *device, uint32_t fla
 
     if (FAILED(hr = wined3d_palette_init(object, device, flags, entry_count, entries)))
     {
-        WARN("Failed to initialize palette, hr %#x.\n", hr);
+        WARN("Failed to initialize palette, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
