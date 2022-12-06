@@ -1795,6 +1795,38 @@ static DWORD discard_eol( struct request *request, BOOL notify )
     return ERROR_SUCCESS;
 }
 
+static void update_value_from_digit( DWORD *value, char ch )
+{
+    if (ch >= '0' && ch <= '9') *value = *value * 16 + ch - '0';
+    else if (ch >= 'a' && ch <= 'f') *value = *value * 16 + ch - 'a' + 10;
+    else if (ch >= 'A' && ch <= 'F') *value = *value * 16 + ch - 'A' + 10;
+}
+
+/* read chunk size if already in the read buffer */
+static BOOL get_chunk_size( struct request *request )
+{
+    DWORD chunk_size;
+    char *p, *eol;
+
+    if (request->read_chunked_size != ~0ul) return TRUE;
+
+    eol = memchr( request->read_buf + request->read_pos, '\n', request->read_size );
+    if (!eol) return FALSE;
+
+    chunk_size = 0;
+    for (p = request->read_buf + request->read_pos; p != eol; ++p)
+    {
+        if (*p == ';' || *p == '\r') break;
+        update_value_from_digit( &chunk_size, *p );
+    }
+
+    request->read_chunked_size = chunk_size;
+    if (!chunk_size) request->read_chunked_eof = TRUE;
+
+    remove_data( request, (eol + 1) - (request->read_buf + request->read_pos) );
+    return TRUE;
+}
+
 /* read the size of the next chunk */
 static DWORD start_next_chunk( struct request *request, BOOL notify )
 {
@@ -1812,10 +1844,8 @@ static DWORD start_next_chunk( struct request *request, BOOL notify )
         while (request->read_size)
         {
             char ch = request->read_buf[request->read_pos];
-            if (ch >= '0' && ch <= '9') chunk_size = chunk_size * 16 + ch - '0';
-            else if (ch >= 'a' && ch <= 'f') chunk_size = chunk_size * 16 + ch - 'a' + 10;
-            else if (ch >= 'A' && ch <= 'F') chunk_size = chunk_size * 16 + ch - 'A' + 10;
-            else if (ch == ';' || ch == '\r' || ch == '\n')
+
+            if (ch == ';' || ch == '\r' || ch == '\n')
             {
                 TRACE( "reading %lu byte chunk\n", chunk_size );
 
@@ -1827,6 +1857,7 @@ static DWORD start_next_chunk( struct request *request, BOOL notify )
 
                 return discard_eol( request, notify );
             }
+            update_value_from_digit( &chunk_size, ch );
             remove_data( request, 1 );
         }
         if ((ret = read_more_data( request, -1, notify ))) return ret;
@@ -1902,7 +1933,11 @@ static void finished_reading( struct request *request )
 /* return the size of data available to be read immediately */
 static DWORD get_available_data( struct request *request )
 {
-    if (request->read_chunked) return min( request->read_chunked_size, request->read_size );
+    if (request->read_chunked)
+    {
+        if (!get_chunk_size( request )) return 0;
+        return min( request->read_chunked_size, request->read_size );
+    }
     return request->read_size;
 }
 
@@ -1919,6 +1954,9 @@ static DWORD read_data( struct request *request, void *buffer, DWORD size, DWORD
 {
     int count, bytes_read = 0;
     DWORD ret = ERROR_SUCCESS;
+
+    if (request->read_chunked && request->read_chunked_size == ~0u
+        && (ret = start_next_chunk( request, async ))) goto done;
 
     if (end_of_read_data( request )) goto done;
 
@@ -2842,7 +2880,6 @@ static DWORD receive_response( struct request *request, BOOL async )
     }
 
     if (request->netconn) netconn_set_timeout( request->netconn, FALSE, request->receive_timeout );
-    if (request->content_length) ret = refill_buffer( request, FALSE );
 
     if (async)
     {
