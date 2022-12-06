@@ -28,6 +28,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
 
+#define EMFSPOOL_VERSION 0x10000
 #define PP_MAGIC 0x952173fe
 
 struct pp_data
@@ -38,7 +39,81 @@ struct pp_data
     WCHAR *out_file;
 };
 
+typedef enum
+{
+    EMRI_METAFILE = 1,
+    EMRI_ENGINE_FONT,
+    EMRI_DEVMODE,
+    EMRI_TYPE1_FONT,
+    EMRI_PRESTARTPAGE,
+    EMRI_DESIGNVECTOR,
+    EMRI_SUBSET_FONT,
+    EMRI_DELTA_FONT,
+    EMRI_FORM_METAFILE,
+    EMRI_BW_METAFILE,
+    EMRI_BW_FORM_METAFILE,
+    EMRI_METAFILE_DATA,
+    EMRI_METAFILE_EXT,
+    EMRI_BW_METAFILE_EXT,
+    EMRI_ENGINE_FONT_EXT,
+    EMRI_TYPE1_FONT_EXT,
+    EMRI_DESIGNVECTOR_EXT,
+    EMRI_SUBSET_FONT_EXT,
+    EMRI_DELTA_FONT_EXT,
+    EMRI_PS_JOB_DATA,
+    EMRI_EMBED_FONT_EXT,
+} record_type;
+
+typedef struct
+{
+    unsigned int dwVersion;
+    unsigned int cjSize;
+    unsigned int dpszDocName;
+    unsigned int dpszOutput;
+} emfspool_header;
+
+typedef struct
+{
+    unsigned int ulID;
+    unsigned int cjSize;
+} record_hdr;
+
+BOOL WINAPI SeekPrinter(HANDLE, LARGE_INTEGER, LARGE_INTEGER*, DWORD, BOOL);
+
 static const WCHAR emf_1003[] = L"NT EMF 1.003";
+
+#define EMRICASE(x) case x: return #x
+static const char * debugstr_rec_type(int id)
+{
+    switch (id)
+    {
+    EMRICASE(EMRI_METAFILE);
+    EMRICASE(EMRI_ENGINE_FONT);
+    EMRICASE(EMRI_DEVMODE);
+    EMRICASE(EMRI_TYPE1_FONT);
+    EMRICASE(EMRI_PRESTARTPAGE);
+    EMRICASE(EMRI_DESIGNVECTOR);
+    EMRICASE(EMRI_SUBSET_FONT);
+    EMRICASE(EMRI_DELTA_FONT);
+    EMRICASE(EMRI_FORM_METAFILE);
+    EMRICASE(EMRI_BW_METAFILE);
+    EMRICASE(EMRI_BW_FORM_METAFILE);
+    EMRICASE(EMRI_METAFILE_DATA);
+    EMRICASE(EMRI_METAFILE_EXT);
+    EMRICASE(EMRI_BW_METAFILE_EXT);
+    EMRICASE(EMRI_ENGINE_FONT_EXT);
+    EMRICASE(EMRI_TYPE1_FONT_EXT);
+    EMRICASE(EMRI_DESIGNVECTOR_EXT);
+    EMRICASE(EMRI_SUBSET_FONT_EXT);
+    EMRICASE(EMRI_DELTA_FONT_EXT);
+    EMRICASE(EMRI_PS_JOB_DATA);
+    EMRICASE(EMRI_EMBED_FONT_EXT);
+    default:
+        FIXME("unknown record type: %d\n", id);
+        return NULL;
+    }
+}
+#undef EMRICASE
 
 static struct pp_data* get_handle_data(HANDLE pp)
 {
@@ -120,9 +195,79 @@ HANDLE WINAPI OpenPrintProcessor(WCHAR *port, PRINTPROCESSOROPENDATA *open_data)
 
 BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
 {
-    FIXME("%p, %s\n", pp, debugstr_w(doc_name));
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    struct pp_data *data = get_handle_data(pp);
+    emfspool_header header;
+    record_hdr record;
+    HANDLE spool_data;
+    LARGE_INTEGER pos;
+    DOC_INFO_1W info;
+    BOOL ret;
+    DWORD r;
+
+    TRACE("%p, %s\n", pp, debugstr_w(doc_name));
+
+    if (!data)
+        return FALSE;
+
+    if (!OpenPrinterW(doc_name, &spool_data, NULL))
+        return FALSE;
+
+    info.pDocName = data->doc_name;
+    info.pOutputFile = data->out_file;
+    info.pDatatype = (WCHAR *)L"RAW";
+    if (!StartDocPrinterW(data->hport, 1, (BYTE *)&info))
+    {
+        ClosePrinter(spool_data);
+        return FALSE;
+    }
+
+    if (!(ret = ReadPrinter(spool_data, &header, sizeof(header), &r)))
+        goto cleanup;
+    if (r != sizeof(header))
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        ret = FALSE;
+        goto cleanup;
+    }
+
+    if (header.dwVersion != EMFSPOOL_VERSION)
+    {
+        FIXME("unrecognized spool file format\n");
+        SetLastError(ERROR_INTERNAL_ERROR);
+        goto cleanup;
+    }
+    pos.QuadPart = header.cjSize;
+    if (!(ret = SeekPrinter(spool_data, pos, NULL, FILE_BEGIN, FALSE)))
+        goto cleanup;
+
+    while (1)
+    {
+        if (!(ret = ReadPrinter(spool_data, &record, sizeof(record), &r)))
+            goto cleanup;
+        if (!r)
+            break;
+        if (r != sizeof(record))
+        {
+            SetLastError(ERROR_INVALID_DATA);
+            ret = FALSE;
+            goto cleanup;
+        }
+
+        switch (record.ulID)
+        {
+        default:
+            FIXME("%s not supported, skipping\n", debugstr_rec_type(record.ulID));
+            pos.QuadPart = record.cjSize;
+            ret = SeekPrinter(spool_data, pos, NULL, FILE_CURRENT, FALSE);
+            if (!ret)
+                goto cleanup;
+            break;
+        }
+    }
+
+cleanup:
+    ClosePrinter(spool_data);
+    return EndDocPrinter(data->hport) && ret;
 }
 
 BOOL WINAPI ControlPrintProcessor(HANDLE pp, DWORD cmd)
