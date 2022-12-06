@@ -21,7 +21,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -280,7 +279,7 @@ HRESULT CDECL wined3d_vertex_declaration_create(struct wined3d_device *device,
     hr = vertexdeclaration_init(object, device, elements, element_count, parent, parent_ops);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize vertex declaration, hr %#x.\n", hr);
+        WARN("Failed to initialize vertex declaration, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
