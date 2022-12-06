@@ -640,6 +640,34 @@ static void fixup_stack( void *stack )
     memmove(&argv[0], &argv[1], (char *)apple_end - (char *)&argv[1]);
 }
 
+static void set_program_vars( void *stack, void *mod )
+{
+    int *pargc;
+    char **argv, **env;
+    int *wine_NXArgc = pdlsym( mod, "NXArgc" );
+    char ***wine_NXArgv = pdlsym( mod, "NXArgv" );
+    char ***wine_environ = pdlsym( mod, "environ" );
+
+    pargc = stack;
+    argv = (char **)pargc + 1;
+    env = &argv[*pargc-1] + 2;
+
+    if (wine_NXArgc)
+        *wine_NXArgc = *pargc;
+    else
+        wld_printf( "preloader: Warning: failed to set NXArgc\n" );
+
+    if (wine_NXArgv)
+        *wine_NXArgv = argv;
+    else
+        wld_printf( "preloader: Warning: failed to set NXArgv\n" );
+
+    if (wine_environ)
+        *wine_environ = env;
+    else
+        wld_printf( "preloader: Warning: failed to set environ\n" );
+}
+
 void *wld_start( void *stack, int *is_unix_thread )
 {
     struct wine_preload_info builtin_dlls = { (void *)0x7a000000, 0x02000000 };
@@ -704,21 +732,14 @@ void *wld_start( void *stack, int *is_unix_thread )
     /* decrement argc and "remove" argv[0] */
     fixup_stack(stack);
 
-#if defined(__x86_64__)
-    /* For LC_UNIXTHREAD binaries on Monterey and later, 'environ' is not set and is NULL.
-     * Set the correct value here.
+    /* Set NXArgc, NXArgv, and environ in the new binary.
+     * On different configurations these were either NULL/0 or still had their
+     * values from this preloader's launch.
+     *
+     * In particular, environ was not being updated, resulting in environ[0] being lost.
+     * And for LC_UNIXTHREAD binaries on Monterey and later, environ was just NULL.
      */
-    if (*is_unix_thread)
-    {
-        char **env, ***wine_environ = pdlsym( mod, "environ" );
-
-        pargc = stack;
-        argv = (char **)pargc + 1;
-        env = &argv[*pargc-1] + 2;
-
-        *wine_environ = env;
-    }
-#endif
+    set_program_vars( stack, mod );
 
     return entry;
 }
