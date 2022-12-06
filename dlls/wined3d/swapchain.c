@@ -19,7 +19,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -71,7 +70,7 @@ void wined3d_swapchain_cleanup(struct wined3d_swapchain *swapchain)
         if (swapchain->state.desc.auto_restore_display_mode)
         {
             if (FAILED(hr = wined3d_restore_display_modes(swapchain->device->wined3d)))
-                ERR("Failed to restore display mode, hr %#x.\n", hr);
+                ERR("Failed to restore display mode, hr %#lx.\n", hr);
 
             if (swapchain->state.desc.flags & WINED3D_SWAPCHAIN_RESTORE_WINDOW_RECT)
             {
@@ -430,7 +429,7 @@ static void swapchain_blit_gdi(struct wined3d_swapchain *swapchain,
     DeleteDC(create_desc.hDeviceDc);
     if (status)
     {
-        WARN("Failed to create DC, status %#x.\n", status);
+        WARN("Failed to create DC, status %#lx.\n", status);
         return;
     }
 
@@ -451,7 +450,7 @@ static void swapchain_blit_gdi(struct wined3d_swapchain *swapchain,
     destroy_desc.hDc = src_dc;
     destroy_desc.hBitmap = bitmap;
     if ((status = D3DKMTDestroyDCFromMemory(&destroy_desc)))
-        ERR("Failed to destroy src dc, status %#x.\n", status);
+        ERR("Failed to destroy src dc, status %#lx.\n", status);
 }
 
 /* A GL context is provided by the caller */
@@ -499,7 +498,7 @@ static void swapchain_gl_set_swap_interval(struct wined3d_swapchain *swapchain,
 
     if (!GL_EXTCALL(wglSwapIntervalEXT(swap_interval)))
     {
-        ERR("Failed to set swap interval %u for context %p, last error %#x.\n",
+        ERR("Failed to set swap interval %u for context %p, last error %#lx.\n",
                 swap_interval, context_gl, GetLastError());
     }
 }
@@ -935,7 +934,7 @@ static HRESULT wined3d_swapchain_vk_create_vulkan_swapchain(struct wined3d_swapc
         height = surface_caps.maxImageExtent.height;
 
     if (width != client_rect.right - client_rect.left || height != client_rect.bottom - client_rect.top)
-        WARN("Swapchain dimensions %ux%u are not supported (%u-%u x %u-%u).\n",
+        WARN("Swapchain dimensions %lux%lu are not supported (%u-%u x %u-%u).\n",
                 client_rect.right - client_rect.left, client_rect.bottom - client_rect.top,
                 surface_caps.minImageExtent.width, surface_caps.maxImageExtent.width,
                 surface_caps.minImageExtent.height, surface_caps.maxImageExtent.height);
@@ -1232,7 +1231,7 @@ static void swapchain_vk_present(struct wined3d_swapchain *swapchain, const RECT
             if (vr == VK_ERROR_OUT_OF_DATE_KHR || vr == VK_SUBOPTIMAL_KHR)
             {
                 if (FAILED(hr = wined3d_swapchain_vk_recreate(swapchain_vk)))
-                    ERR("Failed to recreate swapchain, hr %#x.\n", hr);
+                    ERR("Failed to recreate swapchain, hr %#lx.\n", hr);
                 else if (vr == VK_ERROR_OUT_OF_DATE_KHR && (vr = wined3d_swapchain_vk_blit(
                         swapchain_vk, context_vk, src_rect, dst_rect, swap_interval)))
                     ERR("Failed to blit image, vr %s.\n", wined3d_debug_vkresult(vr));
@@ -1387,7 +1386,7 @@ static HRESULT wined3d_swapchain_state_init(struct wined3d_swapchain_state *stat
 
     if (FAILED(hr = wined3d_output_get_display_mode(desc->output, &state->original_mode, NULL)))
     {
-        ERR("Failed to get current display mode, hr %#x.\n", hr);
+        ERR("Failed to get current display mode, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -1455,7 +1454,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
 
     if (FAILED(hr = wined3d_swapchain_state_init(&swapchain->state, desc, window, device->wined3d, state_parent)))
     {
-        ERR("Failed to initialise swapchain state, hr %#x.\n", hr);
+        ERR("Failed to initialise swapchain state, hr %#lx.\n", hr);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -1495,7 +1494,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     {
         if (FAILED(hr = wined3d_output_get_desc(desc->output, &output_desc)))
         {
-            ERR("Failed to get output description, hr %#x.\n", hr);
+            ERR("Failed to get output description, hr %#lx.\n", hr);
             goto err;
         }
 
@@ -1534,7 +1533,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
     if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
             parent, &texture_desc, texture_flags, &swapchain->front_buffer)))
     {
-        WARN("Failed to create front buffer, hr %#x.\n", hr);
+        WARN("Failed to create front buffer, hr %#lx.\n", hr);
         goto err;
     }
 
@@ -1554,7 +1553,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
         if (FAILED(hr = wined3d_output_set_display_mode(desc->output,
                 &swapchain->state.d3d_mode)))
         {
-            WARN("Failed to set display mode, hr %#x.\n", hr);
+            WARN("Failed to set display mode, hr %#lx.\n", hr);
             goto err;
         }
         displaymode_set = TRUE;
@@ -1580,7 +1579,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
             if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
                     parent, &texture_desc, texture_flags, &swapchain->back_buffers[i])))
             {
-                WARN("Failed to create back buffer %u, hr %#x.\n", i, hr);
+                WARN("Failed to create back buffer %u, hr %#lx.\n", i, hr);
                 swapchain->state.desc.backbuffer_count = i;
                 goto err;
             }
@@ -1608,7 +1607,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
             if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
                     device->device_parent, &texture_desc, 0, &ds)))
             {
-                WARN("Failed to create the auto depth/stencil surface, hr %#x.\n", hr);
+                WARN("Failed to create the auto depth/stencil surface, hr %#lx.\n", hr);
                 goto err;
             }
 
@@ -1623,7 +1622,7 @@ static HRESULT wined3d_swapchain_init(struct wined3d_swapchain *swapchain, struc
             wined3d_texture_decref(ds);
             if (FAILED(hr))
             {
-                ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+                ERR("Failed to create rendertarget view, hr %#lx.\n", hr);
                 goto err;
             }
         }
@@ -1709,7 +1708,7 @@ HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain_vk *swapchain_vk, str
     }
 
     if (FAILED(hr = wined3d_swapchain_vk_create_vulkan_swapchain(swapchain_vk)))
-        WARN("Failed to create a Vulkan swapchain, hr %#x.\n", hr);
+        WARN("Failed to create a Vulkan swapchain, hr %#lx.\n", hr);
 
     return WINED3D_OK;
 }
@@ -1749,7 +1748,7 @@ static struct wined3d_context_gl *wined3d_swapchain_gl_create_context(struct win
     struct wined3d_device *device = swapchain_gl->s.device;
     struct wined3d_context_gl *context_gl;
 
-    TRACE("Creating a new context for swapchain %p, thread %u.\n", swapchain_gl, GetCurrentThreadId());
+    TRACE("Creating a new context for swapchain %p, thread %lu.\n", swapchain_gl, GetCurrentThreadId());
 
     wined3d_from_cs(device->cs);
 
@@ -1853,7 +1852,7 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
                         output_desc.desktop_rect.top, swapchain->state.desc.backbuffer_width,
                         swapchain->state.desc.backbuffer_height, SWP_NOACTIVATE | SWP_NOZORDER);
             else
-                ERR("Failed to get output description, hr %#x.\n", hr);
+                ERR("Failed to get output description, hr %#lx.\n", hr);
         }
 
         if (device->wined3d->flags & WINED3D_RESTORE_MODE_ON_ACTIVATE)
@@ -1867,7 +1866,7 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
 
             if (FAILED(hr = wined3d_output_set_display_mode(output,
                     &swapchain->state.d3d_mode)))
-                ERR("Failed to set display mode, hr %#x.\n", hr);
+                ERR("Failed to set display mode, hr %#lx.\n", hr);
         }
 
         if (swapchain == device->swapchains[0])
@@ -1882,7 +1881,7 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
         }
 
         if (FAILED(hr = wined3d_restore_display_modes(device->wined3d)))
-            ERR("Failed to restore display modes, hr %#x.\n", hr);
+            ERR("Failed to restore display modes, hr %#lx.\n", hr);
 
         swapchain->reapply_mode = TRUE;
 
@@ -1934,7 +1933,7 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
 
         if (!GetClientRect(swapchain->state.device_window, &client_rect))
         {
-            ERR("Failed to get client rect, last error %#x.\n", GetLastError());
+            ERR("Failed to get client rect, last error %#lx.\n", GetLastError());
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -2006,7 +2005,7 @@ static HRESULT wined3d_swapchain_state_set_display_mode(struct wined3d_swapchain
     {
         if (FAILED(hr = wined3d_output_find_closest_matching_mode(output, mode)))
         {
-            WARN("Failed to find closest matching mode, hr %#x.\n", hr);
+            WARN("Failed to find closest matching mode, hr %#lx.\n", hr);
         }
     }
 
@@ -2014,20 +2013,20 @@ static HRESULT wined3d_swapchain_state_set_display_mode(struct wined3d_swapchain
     {
         if (FAILED(hr = wined3d_restore_display_modes(state->wined3d)))
         {
-            WARN("Failed to restore display modes, hr %#x.\n", hr);
+            WARN("Failed to restore display modes, hr %#lx.\n", hr);
             return hr;
         }
 
         if (FAILED(hr = wined3d_output_get_display_mode(output, &state->original_mode, NULL)))
         {
-            WARN("Failed to get current display mode, hr %#x.\n", hr);
+            WARN("Failed to get current display mode, hr %#lx.\n", hr);
             return hr;
         }
     }
 
     if (FAILED(hr = wined3d_output_set_display_mode(output, mode)))
     {
-        WARN("Failed to set display mode, hr %#x.\n", hr);
+        WARN("Failed to set display mode, hr %#lx.\n", hr);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -2071,7 +2070,7 @@ HRESULT CDECL wined3d_swapchain_state_resize_target(struct wined3d_swapchain_sta
             if (FAILED(hr = wined3d_swapchain_state_set_display_mode(state, state->desc.output,
                     &actual_mode)))
             {
-                ERR("Failed to set display mode, hr %#x.\n", hr);
+                ERR("Failed to set display mode, hr %#lx.\n", hr);
                 wined3d_mutex_unlock();
                 return hr;
             }
@@ -2079,7 +2078,7 @@ HRESULT CDECL wined3d_swapchain_state_resize_target(struct wined3d_swapchain_sta
 
         if (FAILED(hr = wined3d_output_get_desc(state->desc.output, &output_desc)))
         {
-            ERR("Failed to get output description, hr %#x.\n", hr);
+            ERR("Failed to get output description, hr %#lx.\n", hr);
             wined3d_mutex_unlock();
             return hr;
         }
@@ -2151,7 +2150,7 @@ static void set_window_state(struct wined3d_window_state *s)
     DWORD tid = GetCurrentThreadId();
     HANDLE thread;
 
-    TRACE("Window %p belongs to thread %#x.\n", s->window, window_tid);
+    TRACE("Window %p belongs to thread %#lx.\n", s->window, window_tid);
     /* If the window belongs to a different thread, modifying the style and/or
      * position can potentially deadlock if that thread isn't processing
      * messages. */
@@ -2194,7 +2193,7 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
 
     if (state->style || state->exstyle)
     {
-        ERR("Changing the window style for window %p, but another style (%08x, %08x) is already stored.\n",
+        ERR("Changing the window style for window %p, but another style (%08lx, %08lx) is already stored.\n",
                 window, state->style, state->exstyle);
     }
 
@@ -2211,7 +2210,7 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
     s->exstyle = fullscreen_exstyle(state->exstyle);
     s->set_style = true;
 
-    TRACE("Old style was %08x, %08x, setting to %08x, %08x.\n",
+    TRACE("Old style was %08lx, %08lx, setting to %08lx, %08lx.\n",
             state->style, state->exstyle, s->style, s->exstyle);
 
     set_window_state(s);
@@ -2254,7 +2253,7 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
     state->style ^= (state->style ^ style) & WS_VISIBLE;
     state->exstyle ^= (state->exstyle ^ exstyle) & WS_EX_TOPMOST;
 
-    TRACE("Restoring window style of window %p to %08x, %08x.\n",
+    TRACE("Restoring window style of window %p to %08lx, %08lx.\n",
             window, state->style, state->exstyle);
 
     s->style = state->style;
@@ -2323,7 +2322,7 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
             {
                 if (FAILED(hr = wined3d_restore_display_modes(state->wined3d)))
                 {
-                    WARN("Failed to restore display modes for all outputs, hr %#x.\n", hr);
+                    WARN("Failed to restore display modes for all outputs, hr %#lx.\n", hr);
                     return hr;
                 }
             }
@@ -2337,7 +2336,7 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
         if (FAILED(hr = wined3d_output_get_display_mode(swapchain_desc->output, &actual_mode,
                 NULL)))
         {
-            ERR("Failed to get display mode, hr %#x.\n", hr);
+            ERR("Failed to get display mode, hr %#lx.\n", hr);
             return WINED3DERR_INVALIDCALL;
         }
     }
@@ -2349,7 +2348,7 @@ HRESULT CDECL wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_st
 
         if (FAILED(hr = wined3d_output_get_desc(swapchain_desc->output, &output_desc)))
         {
-            ERR("Failed to get output description, hr %#x.\n", hr);
+            ERR("Failed to get output description, hr %#lx.\n", hr);
             return hr;
         }
 
