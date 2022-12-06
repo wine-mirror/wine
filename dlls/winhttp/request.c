@@ -2220,6 +2220,8 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     int bytes_sent;
     DWORD ret, len;
 
+    TRACE( "request state %d.\n", request->state );
+
     request->read_reply_status = ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
     request->read_reply_len = 0;
     request->state = REQUEST_RESPONSE_STATE_NONE;
@@ -2289,6 +2291,7 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     }
     TRACE("full request: %s\n", debugstr_a(wire_req));
 
+    request->state = REQUEST_RESPONSE_STATE_SENDING_REQUEST;
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_SENDING_REQUEST, NULL, 0 );
 
     ret = netconn_send( request->netconn, wire_req, len, &bytes_sent, NULL );
@@ -2305,6 +2308,11 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
     netconn_set_timeout( request->netconn, FALSE, request->receive_response_timeout );
     request->read_reply_status = read_reply( request );
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_SENT, &len, sizeof(len) );
+
+    if (request->state == REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED)
+        request->state = REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REQUEST_SENT;
+    else
+        request->state = REQUEST_RESPONSE_STATE_REQUEST_SENT;
 
 end:
     if (async)
@@ -2863,6 +2871,7 @@ static DWORD receive_response( struct request *request )
 {
     BOOL async_mode = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC;
     DWORD ret, size, query, status;
+    BOOL return_to_send;
 
     TRACE( "request state %d.\n", request->state );
 
@@ -2878,7 +2887,24 @@ static DWORD receive_response( struct request *request )
         if ((ret = send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE ))) goto done;
     }
 
-    send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
+    return_to_send = async_mode && request->state == REQUEST_RESPONSE_STATE_SENDING_REQUEST;
+    if (request->state < REQUEST_RESPONSE_STATE_REQUEST_SENT && !return_to_send)
+    {
+        ret = ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+        goto done;
+    }
+
+    if (request->state == REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REQUEST_SENT)
+        request->state = REQUEST_RESPONSE_STATE_REQUEST_SENT;
+    else
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
+
+    if (return_to_send)
+    {
+        request->state = REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED;
+        return queue_receive_response( request );
+    }
+
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED,
                    &request->read_reply_len, sizeof(request->read_reply_len) );
     if ((ret = request->read_reply_status)) goto done;
@@ -2918,7 +2944,7 @@ static DWORD receive_response( struct request *request )
     else goto done;
 
     request->state = REQUEST_RESPONSE_RECURSIVE_REQUEST;
-    return receive_response( request );
+    return async_mode ? queue_receive_response( request ) : receive_response( request );
 
 done:
     if (!ret)
@@ -2936,6 +2962,7 @@ done:
             result.dwError  = ret;
             send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_ERROR, &result, sizeof(result) );
         }
+        return ERROR_SUCCESS;
     }
     return ret;
 }
@@ -2973,8 +3000,7 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
         return FALSE;
     }
 
-    if (request->connect->hdr.flags & WINHTTP_FLAG_ASYNC) ret = queue_receive_response( request );
-    else                                                  ret = receive_response( request );
+    ret = receive_response( request );
 
     release_object( &request->hdr );
     SetLastError( ret );
