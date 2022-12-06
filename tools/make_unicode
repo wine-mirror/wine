@@ -28,7 +28,7 @@ use Time::Local qw(timegm_modern);
 my $UNIVERSION = "15.0.0";
 my $CLDRVERSION = "42";
 my $ISO639VERSION = "20220120";
-my $TZVERSION = "2022f";
+my $TZVERSION = "2022g";
 
 my %data_files =
 (
@@ -55,7 +55,7 @@ my %data_files =
  jis0212   => { url  => "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS/JIS0212.TXT",
                 sha  => "477820bb3055bbcc90880d788cd95607d221dc94457bae249231adecf13c12e6" },
  tzdata    => { url  => "https://data.iana.org/time-zones/releases/tzdata$TZVERSION.tar.gz",
-                sha  => "9990d71f675d212567b931fe8aae1cab7027f89fefb8a79d808a6933a67af000" },
+                sha  => "4491db8281ae94a84d939e427bdd83dc389f26764d27d9a5c52d782c16764478" },
 );
 
 
