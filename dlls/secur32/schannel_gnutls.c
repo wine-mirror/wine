@@ -354,10 +354,12 @@ static ssize_t push_adapter(gnutls_transport_ptr_t transport, const void *buff, 
     return len;
 }
 
-static const struct {
+struct protocol_priority_flag {
     DWORD enable_flag;
     const char *gnutls_flag;
-} protocol_priority_flags[] = {
+};
+
+static const struct protocol_priority_flag client_protocol_priority_flags[] = {
     {SP_PROT_DTLS1_2_CLIENT, "VERS-DTLS1.2"},
     {SP_PROT_DTLS1_0_CLIENT, "VERS-DTLS1.0"},
     {SP_PROT_TLS1_3_CLIENT, "VERS-TLS1.3"},
@@ -368,33 +370,46 @@ static const struct {
     /* {SP_PROT_SSL2_CLIENT} is not supported by GnuTLS */
 };
 
+static const struct protocol_priority_flag server_protocol_priority_flags[] = {
+    {SP_PROT_DTLS1_2_SERVER, "VERS-DTLS1.2"},
+    {SP_PROT_DTLS1_0_SERVER, "VERS-DTLS1.0"},
+    {SP_PROT_TLS1_3_SERVER, "VERS-TLS1.3"},
+    {SP_PROT_TLS1_2_SERVER, "VERS-TLS1.2"},
+    {SP_PROT_TLS1_1_SERVER, "VERS-TLS1.1"},
+    {SP_PROT_TLS1_0_SERVER, "VERS-TLS1.0"},
+    {SP_PROT_SSL3_SERVER,   "VERS-SSL3.0"}
+    /* {SP_PROT_SSL2_SERVER} is not supported by GnuTLS */
+};
+
 static DWORD supported_protocols;
 
-static void check_supported_protocols(void)
+static void check_supported_protocols(
+ const struct protocol_priority_flag *flags, int num_flags, BOOLEAN server)
 {
+    const char *type_desc = server ? "server" : "client";
     gnutls_session_t session;
     char priority[64];
     unsigned i;
     int err;
 
-    err = pgnutls_init(&session, GNUTLS_CLIENT);
+    err = pgnutls_init(&session, server ? GNUTLS_SERVER : GNUTLS_CLIENT);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
         return;
     }
 
-    for(i = 0; i < ARRAY_SIZE(protocol_priority_flags); i++)
+    for(i = 0; i < num_flags; i++)
     {
-        sprintf(priority, "NORMAL:-%s", protocol_priority_flags[i].gnutls_flag);
+        sprintf(priority, "NORMAL:-%s", flags[i].gnutls_flag);
         err = pgnutls_priority_set_direct(session, priority, NULL);
         if (err == GNUTLS_E_SUCCESS)
         {
-            TRACE("%s is supported\n", protocol_priority_flags[i].gnutls_flag);
-            supported_protocols |= protocol_priority_flags[i].enable_flag;
+            TRACE("%s %s is supported\n", type_desc, flags[i].gnutls_flag);
+            supported_protocols |= flags[i].enable_flag;
         }
         else
-            TRACE("%s is not supported\n", protocol_priority_flags[i].gnutls_flag);
+            TRACE("%s %s is not supported\n", type_desc, flags[i].gnutls_flag);
     }
 
     pgnutls_deinit(session);
@@ -420,6 +435,11 @@ static int pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
 static NTSTATUS set_priority(schan_credentials *cred, gnutls_session_t session)
 {
     char priority[128] = "NORMAL:%LATEST_RECORD_VERSION", *p;
+    BOOL server = !!(cred->credential_use & SECPKG_CRED_INBOUND);
+    const struct protocol_priority_flag *protocols =
+        server ? server_protocol_priority_flags : client_protocol_priority_flags;
+    int num_protocols = server ? ARRAYSIZE(server_protocol_priority_flags)
+                               : ARRAYSIZE(client_protocol_priority_flags);
     BOOL using_vers_all = FALSE, disabled;
     int i, err;
 
@@ -447,16 +467,16 @@ static NTSTATUS set_priority(schan_credentials *cred, gnutls_session_t session)
         using_vers_all = TRUE;
     }
 
-    for (i = 0; i < ARRAY_SIZE(protocol_priority_flags); i++)
+    for (i = 0; i < num_protocols; i++)
     {
-        if (!(supported_protocols & protocol_priority_flags[i].enable_flag)) continue;
+        if (!(supported_protocols & protocols[i].enable_flag)) continue;
 
-        disabled = !(cred->enabled_protocols & protocol_priority_flags[i].enable_flag);
+        disabled = !(cred->enabled_protocols & protocols[i].enable_flag);
         if (using_vers_all && disabled) continue;
 
         *p++ = ':';
         *p++ = disabled ? '-' : '+';
-        strcpy(p, protocol_priority_flags[i].gnutls_flag);
+        strcpy(p, protocols[i].gnutls_flag);
         p += strlen(p);
     }
 
@@ -483,7 +503,7 @@ static NTSTATUS schan_create_session( void *args )
 
     *params->session = 0;
 
-    if (cred->enabled_protocols & (SP_PROT_DTLS1_0_CLIENT | SP_PROT_DTLS1_2_CLIENT))
+    if (cred->enabled_protocols & SP_PROT_DTLS1_X)
     {
         flags |= GNUTLS_DATAGRAM | GNUTLS_NONBLOCK;
     }
@@ -1505,7 +1525,8 @@ static NTSTATUS process_attach( void *args )
         pgnutls_global_set_log_function(gnutls_log);
     }
 
-    check_supported_protocols();
+    check_supported_protocols(client_protocol_priority_flags, ARRAYSIZE(client_protocol_priority_flags), FALSE);
+    check_supported_protocols(server_protocol_priority_flags, ARRAYSIZE(server_protocol_priority_flags), TRUE);
     return STATUS_SUCCESS;
 
 fail:
