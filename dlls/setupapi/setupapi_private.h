@@ -104,10 +104,6 @@ struct callback_WtoA_context
 
 UINT CALLBACK QUEUE_callback_WtoA( void *context, UINT notification, UINT_PTR, UINT_PTR ) DECLSPEC_HIDDEN;
 
-/* from msvcrt/sys/stat.h */
-#define _S_IWRITE 0x0080
-#define _S_IREAD  0x0100
-
 extern OSVERSIONINFOW OsVersionInfo DECLSPEC_HIDDEN;
 
 extern BOOL create_fake_dll( const WCHAR *name, const WCHAR *source ) DECLSPEC_HIDDEN;

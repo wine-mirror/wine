@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <share.h>
+#include <sys/stat.h>
 
 #include "windef.h"
 #include "winbase.h"
