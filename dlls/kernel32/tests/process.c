@@ -547,31 +547,12 @@ static WCHAR* getChildStringW(const char* sect, const char* key)
     return ret;
 }
 
-/* FIXME: this may be moved to the wtmain.c file, because it may be needed by
- * others... (windows uses stricmp while Un*x uses strcasecmp...)
- */
-static int wtstrcasecmp(const char* p1, const char* p2)
-{
-    char c1, c2;
-
-    c1 = c2 = '@';
-    while (c1 == c2 && c1)
-    {
-        c1 = *p1++; c2 = *p2++;
-        if (c1 != c2)
-        {
-            c1 = toupper(c1); c2 = toupper(c2);
-        }
-    }
-    return c1 - c2;
-}
-
 static int strCmp(const char* s1, const char* s2, BOOL sensitive)
 {
     if (!s1 && !s2) return 0;
     if (!s2) return -1;
     if (!s1) return 1;
-    return (sensitive) ? strcmp(s1, s2) : wtstrcasecmp(s1, s2);
+    return (sensitive) ? strcmp(s1, s2) : strcasecmp(s1, s2);
 }
 
 static void ok_child_string( int line, const char *sect, const char *key,
