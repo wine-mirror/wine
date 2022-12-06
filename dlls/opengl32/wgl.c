@@ -1281,6 +1281,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
         break;
 
     case DLL_PROCESS_DETACH:
+        if (reserved) break;
         UNIX_CALL( process_detach, NULL );
 #ifndef _WIN64
         cleanup_wow64_strings();
