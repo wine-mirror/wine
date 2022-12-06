@@ -57,7 +57,7 @@ ULONG CDECL wined3d_palette_decref(struct wined3d_palette *palette)
 }
 
 HRESULT CDECL wined3d_palette_get_entries(const struct wined3d_palette *palette,
-        uint32_t flags, DWORD start, DWORD count, PALETTEENTRY *entries)
+        uint32_t flags, unsigned int start, unsigned int count, PALETTEENTRY *entries)
 {
     unsigned int i;
     TRACE("palette %p, flags %#x, start %u, count %u, entries %p.\n",
@@ -96,7 +96,7 @@ void CDECL wined3d_palette_apply_to_dc(const struct wined3d_palette *palette, HD
 }
 
 HRESULT CDECL wined3d_palette_set_entries(struct wined3d_palette *palette,
-        uint32_t flags, DWORD start, DWORD count, const PALETTEENTRY *entries)
+        uint32_t flags, unsigned int start, unsigned int count, const PALETTEENTRY *entries)
 {
     unsigned int i;
 
