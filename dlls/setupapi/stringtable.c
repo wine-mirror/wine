@@ -27,6 +27,7 @@
 #include "winreg.h"
 #include "winnls.h"
 #include "setupapi.h"
+#include "setupapi_private.h"
 
 #include "wine/debug.h"
 
