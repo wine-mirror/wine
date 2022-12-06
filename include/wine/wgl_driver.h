@@ -7,7 +7,7 @@
 #define WINE_GLAPI
 #endif
 
-#define WINE_WGL_DRIVER_VERSION 22
+#define WINE_WGL_DRIVER_VERSION 23
 
 struct wgl_context;
 struct wgl_pbuffer;
@@ -16,16 +16,16 @@ struct opengl_funcs
 {
     struct
     {
-        BOOL       (WINAPI *p_wglCopyContext)( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask );
-        struct wgl_context * (WINAPI *p_wglCreateContext)( HDC hDc );
-        BOOL       (WINAPI *p_wglDeleteContext)( struct wgl_context * oldContext );
-        int        (WINAPI *p_wglDescribePixelFormat)( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
-        int        (WINAPI *p_wglGetPixelFormat)( HDC hdc );
-        PROC       (WINAPI *p_wglGetProcAddress)( LPCSTR lpszProc );
-        BOOL       (WINAPI *p_wglMakeCurrent)( HDC hDc, struct wgl_context * newContext );
-        BOOL       (WINAPI *p_wglSetPixelFormat)( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd );
-        BOOL       (WINAPI *p_wglShareLists)( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource );
-        BOOL       (WINAPI *p_wglSwapBuffers)( HDC hdc );
+        BOOL       (WINE_GLAPI *p_wglCopyContext)( struct wgl_context * hglrcSrc, struct wgl_context * hglrcDst, UINT mask );
+        struct wgl_context * (WINE_GLAPI *p_wglCreateContext)( HDC hDc );
+        BOOL       (WINE_GLAPI *p_wglDeleteContext)( struct wgl_context * oldContext );
+        int        (WINE_GLAPI *p_wglDescribePixelFormat)( HDC hdc, int ipfd, UINT cjpfd, PIXELFORMATDESCRIPTOR *ppfd );
+        int        (WINE_GLAPI *p_wglGetPixelFormat)( HDC hdc );
+        PROC       (WINE_GLAPI *p_wglGetProcAddress)( LPCSTR lpszProc );
+        BOOL       (WINE_GLAPI *p_wglMakeCurrent)( HDC hDc, struct wgl_context * newContext );
+        BOOL       (WINE_GLAPI *p_wglSetPixelFormat)( HDC hdc, int ipfd, const PIXELFORMATDESCRIPTOR *ppfd );
+        BOOL       (WINE_GLAPI *p_wglShareLists)( struct wgl_context * hrcSrvShare, struct wgl_context * hrcSrvSource );
+        BOOL       (WINE_GLAPI *p_wglSwapBuffers)( HDC hdc );
     } wgl;
 
     struct

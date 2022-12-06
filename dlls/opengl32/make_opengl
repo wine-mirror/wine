@@ -509,16 +509,16 @@ sub generate_wow64_thunk($$$)
     return $ret;
 }
 
-sub generate_null_func($$$)
+sub generate_null_func($$)
 {
-    my ($name, $func, $callconv) = @_;
+    my ($name, $func) = @_;
     my $decl_args = get_func_args( $func, 1, 1, "" );
     my $func_ret = get_func_ret( $func, 1 );
     my $ret = "";
 
     return "" if $name eq "glDebugEntry";
 
-    $ret .= "static $func_ret$callconv null_$name($decl_args)";
+    $ret .= "static $func_ret null_$name($decl_args)";
     $ret .= " {";
     if ($name eq "glGetError")
     {
@@ -887,7 +887,7 @@ foreach (sort keys %wgl_functions)
     next if defined $manual_win_functions{$_};
     my $decl_args = get_func_args( $wgl_functions{$_}, 1, 1, "" );
     my $func_ret = get_func_ret( $wgl_functions{$_}, 1 );
-    printf HEADER "        %-10s (WINAPI *p_$_)($decl_args);\n", $func_ret;
+    printf HEADER "        %-10s (WINE_GLAPI *p_$_)($decl_args);\n", $func_ret;
 }
 print HEADER "    } wgl;\n\n";
 
@@ -1274,17 +1274,17 @@ print OUT "#endif\n\n";
 foreach (sort keys %wgl_functions)
 {
     next if defined $manual_win_functions{$_};
-    print OUT generate_null_func($_, $wgl_functions{$_}, " WINAPI");
+    print OUT generate_null_func($_, $wgl_functions{$_});
 }
 foreach (sort keys %norm_functions)
 {
     next if defined $manual_win_functions{$_};
-    print OUT generate_null_func($_, $norm_functions{$_}, "");
+    print OUT generate_null_func($_, $norm_functions{$_});
 }
 foreach (sort keys %ext_functions)
 {
     next if defined $manual_win_functions{$_};
-    print OUT generate_null_func($_, $ext_functions{$_}, "");
+    print OUT generate_null_func($_, $ext_functions{$_});
 }
 print OUT "\n";
 
