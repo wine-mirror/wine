@@ -242,6 +242,12 @@ static void test_ldap_paged_search(void)
     count = 0xdeadbeef;
     res = NULL;
     ret = ldap_get_next_page_s( ld, search, NULL, 1, &count, &res );
+    if (ret == LDAP_SERVER_DOWN || ret == LDAP_UNAVAILABLE)
+    {
+        skip( "test server can't be reached\n" );
+        ldap_unbind( ld );
+        return;
+    }
     ok( !ret, "ldap_get_next_page_s failed %#lx\n", ret );
     ok( res != NULL, "expected res != NULL\n" );
     ok( count == 0, "got %lu\n", count );
