@@ -255,6 +255,12 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
 
         switch (record.ulID)
         {
+        case EMRI_METAFILE_DATA:
+            pos.QuadPart = record.cjSize;
+            ret = SeekPrinter(spool_data, pos, NULL, FILE_CURRENT, FALSE);
+            if (!ret)
+                goto cleanup;
+            break;
         default:
             FIXME("%s not supported, skipping\n", debugstr_rec_type(record.ulID));
             pos.QuadPart = record.cjSize;
