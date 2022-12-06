@@ -16,6 +16,7 @@
 #define compat_fdopen INT123_compat_fdopen
 #define compat_close INT123_compat_close
 #define compat_fclose INT123_compat_fclose
+#define compat_binmode INT123_compat_binmode
 #define win32_wide_utf8 INT123_win32_wide_utf8
 #define win32_wide_utf7 INT123_win32_wide_utf7
 #define win32_utf8_wide INT123_win32_utf8_wide
@@ -277,9 +278,6 @@
 #define buffer_drop INT123_buffer_drop
 #define buffer_write INT123_buffer_write
 #define buffer_fill INT123_buffer_fill
-#define read_buf INT123_read_buf
-#define xfer_write_string INT123_xfer_write_string
-#define xfer_read_string INT123_xfer_read_string
 #define xfermem_init INT123_xfermem_init
 #define xfermem_init_writer INT123_xfermem_init_writer
 #define xfermem_init_reader INT123_xfermem_init_reader
@@ -304,8 +302,6 @@
 #define raw_formats INT123_raw_formats
 #define wav_formats INT123_wav_formats
 #define wav_drain INT123_wav_drain
-#define write_parameters INT123_write_parameters
-#define read_parameters INT123_read_parameters
 #define stringlists_add INT123_stringlists_add
 #define check_neon INT123_check_neon
 #define dct64_3dnow INT123_dct64_3dnow
