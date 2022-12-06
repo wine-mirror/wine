@@ -133,6 +133,7 @@ my %remap_types =
 
 my %khronos_types =
     (
+     "double" => "double DECLSPEC_ALIGN(8)",
      "khronos_int8_t" => "signed char",
      "khronos_uint8_t" => "unsigned char",
      "khronos_int16_t" => "short",

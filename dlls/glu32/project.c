@@ -241,8 +241,8 @@ GLint WINAPI gluProject( GLdouble objx, GLdouble objy, GLdouble objz, const GLdo
                          const GLdouble projMatrix[16], const GLint viewport[4],
                          GLdouble *winx, GLdouble *winy, GLdouble *winz )
 {
-    double in[4];
-    double out[4];
+    GLdouble in[4];
+    GLdouble out[4];
 
     in[0]=objx;
     in[1]=objy;
@@ -276,9 +276,9 @@ GLint WINAPI gluUnProject( GLdouble winx, GLdouble winy, GLdouble winz, const GL
                            const GLdouble projMatrix[16], const GLint viewport[4],
                            GLdouble *objx, GLdouble *objy, GLdouble *objz )
 {
-    double finalMatrix[16];
-    double in[4];
-    double out[4];
+    GLdouble finalMatrix[16];
+    GLdouble in[4];
+    GLdouble out[4];
 
     __gluMultMatricesd(modelMatrix, projMatrix, finalMatrix);
     if (!__gluInvertMatrixd(finalMatrix, finalMatrix)) return(GL_FALSE);
