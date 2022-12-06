@@ -7640,3 +7640,21 @@ HANDLE WINAPI GetSpoolFileHandle( HANDLE printer )
     FIXME( "%p: stub\n", printer );
     return INVALID_HANDLE_VALUE;
 }
+
+/*****************************************************************************
+ *          SeekPrinter [WINSPOOL.@]
+ */
+BOOL WINAPI SeekPrinter(HANDLE printer, LARGE_INTEGER distance,
+        LARGE_INTEGER *pos, DWORD method, BOOL bwrite)
+{
+    HANDLE handle = get_backend_handle(printer);
+
+    TRACE("(%p %I64d %p %lx %x)\n", printer, distance.QuadPart, pos, method, bwrite);
+
+    if (!handle)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+    return backend->fpSeekPrinter(handle, distance, pos, method, bwrite);
+}

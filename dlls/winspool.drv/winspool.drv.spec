@@ -162,6 +162,7 @@
 @ stdcall ResetPrinterA(long ptr)
 @ stdcall ResetPrinterW(long ptr)
 @ stdcall ScheduleJob(long long)
+@ stdcall SeekPrinter(long int64 ptr long long)
 @ stub SetAllocFailCount
 @ stdcall SetFormA(long str long ptr)
 @ stdcall SetFormW(long wstr long ptr)
