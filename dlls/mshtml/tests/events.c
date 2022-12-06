@@ -5051,7 +5051,7 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocolEx *iface, PROTOCOLDATA
     ok(hres == S_OK, "ReportData failed: %08lx\n", hres);
 
     hres = IInternetProtocolSink_ReportResult(This->sink, S_OK, 0, NULL);
-    ok(hres == S_OK, "ReportResult failed: %08lx\n", hres);
+    ok(hres == S_OK || broken(hres == 0x80ef0001), "ReportResult failed: %08lx\n", hres);
 
     IInternetProtocolEx_Release(&This->IInternetProtocolEx_iface);
     return S_OK;
