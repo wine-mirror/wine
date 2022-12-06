@@ -1178,9 +1178,11 @@ static void check_video_info_header_(int line, VIDEOINFOHEADER *info, const VIDE
     ok_(__FILE__, line)(info->bmiHeader.biYPelsPerMeter == expected->bmiHeader.biYPelsPerMeter,
             "Got unexpected bmiHeader.xxxxxx %ld, expected %ld.\n",
             info->bmiHeader.biYPelsPerMeter, expected->bmiHeader.biYPelsPerMeter);
+    todo_wine_if(expected->bmiHeader.biClrUsed != 0)
     ok_(__FILE__, line)(info->bmiHeader.biClrUsed == expected->bmiHeader.biClrUsed,
             "Got unexpected bmiHeader.biClrUsed %lu, expected %lu.\n",
             info->bmiHeader.biClrUsed, expected->bmiHeader.biClrUsed);
+    todo_wine_if(expected->bmiHeader.biClrImportant != 0)
     ok_(__FILE__, line)(info->bmiHeader.biClrImportant == expected->bmiHeader.biClrImportant,
             "Got unexpected bmiHeader.biClrImportant %lu, expected %lu.\n",
             info->bmiHeader.biClrImportant, expected->bmiHeader.biClrImportant);
@@ -1208,6 +1210,7 @@ static void check_dmo_media_type_(int line, DMO_MEDIA_TYPE *media_type, const DM
             "Got unexpected formattype %s.\n",
             debugstr_guid(&media_type->formattype));
     ok_(__FILE__, line)(media_type->pUnk == NULL, "Got unexpected pUnk %p.\n", media_type->pUnk);
+    todo_wine_if(expected->cbFormat && expected->cbFormat != sizeof(VIDEOINFOHEADER))
     ok_(__FILE__, line)(media_type->cbFormat == expected->cbFormat,
             "Got unexpected cbFormat %lu, expected %lu.\n",
             media_type->cbFormat, expected->cbFormat);
@@ -5062,14 +5065,12 @@ static void test_wmv_decoder_media_object(void)
     hr = IMediaObject_SetInputType(media_object, 0, NULL, DMO_SET_TYPEF_CLEAR);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(media_object, 0, 0, &media_type);
-    todo_wine
     ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputType returned %#lx.\n", hr);
 
     /* Test GetOutputType after setting input type. */
     init_dmo_media_type_video(input_type, &expected_input_types[0].subtype, 16, 16);
     hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    todo_wine
     check_dmo_get_output_type(media_object, expected_output_types, ARRAY_SIZE(expected_output_types));
 
     /* Test SetOutputType without setting input type. */
