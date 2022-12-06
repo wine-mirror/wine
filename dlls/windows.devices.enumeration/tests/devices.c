@@ -110,8 +110,9 @@ static HRESULT WINAPI device_watcher_handler_Invoke( ITypedEventHandler_DeviceWa
     impl->invoked = TRUE;
     impl->args = args;
 
+    IDeviceWatcher_AddRef( sender );
     ref = IDeviceWatcher_Release( sender );
-    ok( ref == 2, "got ref %lu\n", ref );
+    ok( ref == 3, "got ref %lu\n", ref );
 
     SetEvent( impl->event );
 
