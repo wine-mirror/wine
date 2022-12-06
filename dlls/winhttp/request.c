@@ -5259,7 +5259,7 @@ static HRESULT request_send( struct winhttp_request *request )
             size++;
         }
     }
-    wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_REQUEST_SENT );
+    wait_set_status_callback( request, WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE );
     if (!WinHttpSendRequest( request->hrequest, NULL, 0, ptr, size, size, 0 ))
     {
         err = GetLastError();
