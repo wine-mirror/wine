@@ -127,6 +127,55 @@ static struct pp_data* get_handle_data(HANDLE pp)
     return ret;
 }
 
+static int WINAPI hmf_proc(HDC hdc, HANDLETABLE *htable,
+        const ENHMETARECORD *rec, int n, LPARAM arg)
+{
+    FIXME("unsupported record: %ld\n", rec->iType);
+    return 1;
+}
+
+static BOOL print_metafile(struct pp_data *data, HANDLE hdata)
+{
+    record_hdr header;
+    HENHMETAFILE hmf;
+    BYTE *buf;
+    BOOL ret;
+    DWORD r;
+
+    if (!ReadPrinter(hdata, &header, sizeof(header), &r))
+        return FALSE;
+    if (r != sizeof(header))
+    {
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
+    buf = malloc(header.cjSize);
+    if (!buf)
+        return FALSE;
+
+    if (!ReadPrinter(hdata, buf, header.cjSize, &r))
+    {
+        free(buf);
+        return FALSE;
+    }
+    if (r != header.cjSize)
+    {
+        free(buf);
+        SetLastError(ERROR_INVALID_DATA);
+        return FALSE;
+    }
+
+    hmf = SetEnhMetaFileBits(header.cjSize, buf);
+    free(buf);
+    if (!hmf)
+        return FALSE;
+
+    ret = EnumEnhMetaFile(NULL, hmf, hmf_proc, NULL, NULL);
+    DeleteEnhMetaFile(hmf);
+    return ret;
+}
+
 BOOL WINAPI EnumPrintProcessorDatatypesW(WCHAR *server, WCHAR *name, DWORD level,
         BYTE *datatypes, DWORD size, DWORD *needed, DWORD *no)
 {
@@ -197,9 +246,9 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
 {
     struct pp_data *data = get_handle_data(pp);
     emfspool_header header;
+    LARGE_INTEGER pos, cur;
     record_hdr record;
     HANDLE spool_data;
-    LARGE_INTEGER pos;
     DOC_INFO_1W info;
     BOOL ret;
     DWORD r;
@@ -258,6 +307,30 @@ BOOL WINAPI PrintDocumentOnPrintProcessor(HANDLE pp, WCHAR *doc_name)
         case EMRI_METAFILE_DATA:
             pos.QuadPart = record.cjSize;
             ret = SeekPrinter(spool_data, pos, NULL, FILE_CURRENT, FALSE);
+            if (!ret)
+                goto cleanup;
+            break;
+        case EMRI_METAFILE_EXT:
+        case EMRI_BW_METAFILE_EXT:
+            pos.QuadPart = 0;
+            ret = SeekPrinter(spool_data, pos, &cur, FILE_CURRENT, FALSE);
+            if (ret)
+            {
+                cur.QuadPart += record.cjSize;
+                ret = ReadPrinter(spool_data, &pos, sizeof(pos), &r);
+                if (r != sizeof(pos))
+                {
+                    SetLastError(ERROR_INVALID_DATA);
+                    ret = FALSE;
+                }
+            }
+            pos.QuadPart = -pos.QuadPart - 2 * sizeof(record);
+            if (ret)
+                ret = SeekPrinter(spool_data, pos, NULL, FILE_CURRENT, FALSE);
+            if (ret)
+                ret = print_metafile(data, spool_data);
+            if (ret)
+                ret = SeekPrinter(spool_data, cur, NULL, FILE_BEGIN, FALSE);
             if (!ret)
                 goto cleanup;
             break;
