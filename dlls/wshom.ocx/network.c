@@ -120,9 +120,25 @@ static HRESULT WINAPI WshNetwork2_get_UserDomain(IWshNetwork2 *iface, BSTR *user
 
 static HRESULT WINAPI WshNetwork2_get_UserName(IWshNetwork2 *iface, BSTR *user_name)
 {
-    FIXME("%p stub\n", user_name);
+    BOOL ret;
+    DWORD len = 0;
 
-    return E_NOTIMPL;
+    TRACE("%p\n", user_name);
+
+    GetUserNameW(NULL, &len);
+    *user_name = SysAllocStringLen(NULL, len-1);
+    if (!*user_name)
+        return E_OUTOFMEMORY;
+
+    ret = GetUserNameW(*user_name, &len);
+    if (!ret) {
+        HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+        SysFreeString(*user_name);
+        *user_name = NULL;
+        return hr;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI WshNetwork2_get_UserProfile(IWshNetwork2 *iface, BSTR *user_profile)

@@ -692,7 +692,11 @@ static void test_popup(void)
 static void test_wshnetwork(void)
 {
     IDispatch *disp;
+    IWshNetwork2 *nw2;
+    BSTR str,username;
     HRESULT hr;
+    DWORD len = 0;
+    BOOL ret;
 
     hr = CoCreateInstance(&CLSID_WshNetwork, NULL, CLSCTX_INPROC_SERVER|CLSCTX_INPROC_HANDLER,
             &IID_IDispatch, (void**)&disp);
@@ -702,6 +706,23 @@ static void test_wshnetwork(void)
     check_interface(disp, &IID_IWshNetwork2, TRUE);
     check_interface(disp, &IID_IDispatchEx, FALSE);
     check_interface(disp, &IID_IObjectWithSite, FALSE);
+
+    hr = IDispatch_QueryInterface(disp, &IID_IWshNetwork2, (void**)&nw2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    str = NULL;
+    hr = IWshNetwork2_get_UserName(nw2, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(str && str[0] != 0, "got empty string\n");
+    CHECK_BSTR_LENGTH(str);
+    GetUserNameW(NULL, &len);
+    ok(len > 0, "Unexpected len %ld.\n", len);
+    username = SysAllocStringLen(NULL, len-1);
+    ret = GetUserNameW(username, &len);
+    ok(ret == TRUE, "GetUserNameW returned %d.\n", ret);
+    ok(!wcscmp(str,username), "user names do not match %s %s.\n", debugstr_w(str), debugstr_w(username));
+    SysFreeString(username);
+    SysFreeString(str);
 
     IDispatch_Release(disp);
 }
