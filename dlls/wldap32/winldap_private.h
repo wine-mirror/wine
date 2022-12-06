@@ -23,6 +23,7 @@
 #include "winternl.h"
 #include "winnls.h"
 
+#define LDAP_NEEDS_PROTOTYPES
 #include <lber.h>
 #include <ldap.h>
 
