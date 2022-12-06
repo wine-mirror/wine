@@ -3899,6 +3899,35 @@ static BOOL WINAPI fpClosePrinter(HANDLE hprinter)
     return TRUE;
 }
 
+static BOOL WINAPI fpSeekPrinter(HANDLE hprinter, LARGE_INTEGER distance,
+        LARGE_INTEGER *pos, DWORD method, BOOL bwrite)
+{
+    job_t *job = (job_t *)hprinter;
+
+    TRACE("(%p %I64d %p %lx %x)\n", hprinter, distance.QuadPart, pos, method, bwrite);
+
+    if (!job)
+    {
+        SetLastError(ERROR_INVALID_HANDLE);
+        return FALSE;
+    }
+
+    if (job->header.type != HANDLE_JOB)
+    {
+        FIXME("handle %x not supported\n", job->header.type);
+        return FALSE;
+    }
+
+    if (bwrite)
+    {
+        if (pos)
+            pos->QuadPart = 0;
+        return TRUE;
+    }
+
+    return SetFilePointerEx(job->hf, distance, pos, method);
+}
+
 static const PRINTPROVIDOR backend = {
         fpOpenPrinter,
         fpSetJob,
@@ -3971,7 +4000,7 @@ static const PRINTPROVIDOR backend = {
         NULL,   /* fpEnumPrinterKey */
         NULL,   /* fpDeletePrinterDataEx */
         NULL,   /* fpDeletePrinterKey */
-        NULL,   /* fpSeekPrinter */
+        fpSeekPrinter,
         NULL,   /* fpDeletePrinterDriverEx */
         NULL,   /* fpAddPerMachineConnection */
         NULL,   /* fpDeletePerMachineConnection */
