@@ -1339,7 +1339,7 @@ static const struct wined3d_swapchain_ops swapchain_no3d_ops =
 };
 
 static void wined3d_swapchain_apply_sample_count_override(const struct wined3d_swapchain *swapchain,
-        enum wined3d_format_id format_id, enum wined3d_multisample_type *type, DWORD *quality)
+        enum wined3d_format_id format_id, enum wined3d_multisample_type *type, unsigned int *quality)
 {
     const struct wined3d_adapter *adapter;
     const struct wined3d_gl_info *gl_info;
