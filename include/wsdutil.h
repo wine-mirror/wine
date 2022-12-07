@@ -19,7 +19,7 @@
 #ifndef WSDUTIL_H
 #define WSDUTIL_H
 
-void * WINAPI WSDAllocateLinkedMemory(void *pParent, SIZE_T cbSize);
+void * WINAPI WSDAllocateLinkedMemory(void *parent, SIZE_T size) __WINE_ALLOC_SIZE(2) __WINE_MALLOC;
 void WINAPI WSDAttachLinkedMemory(void *pParent, void *pChild);
 void WINAPI WSDDetachLinkedMemory(void *pVoid);
 void WINAPI WSDFreeLinkedMemory(void *pVoid);
