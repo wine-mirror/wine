@@ -33,20 +33,20 @@ extern "C" {
 #define LZERROR_BADVALUE	-7	/* -7 */
 #define LZERROR_UNKNOWNALG	-8	/* -8 */
 
-VOID        WINAPI LZDone(void);
-LONG        WINAPI CopyLZFile(HFILE,HFILE);
-HFILE       WINAPI LZOpenFileA(LPSTR,LPOFSTRUCT,WORD);
-HFILE       WINAPI LZOpenFileW(LPWSTR,LPOFSTRUCT,WORD);
-#define     LZOpenFile WINELIB_NAME_AW(LZOpenFile)
-INT         WINAPI LZRead(INT,LPSTR,INT);
-INT         WINAPI LZStart(void);
-void        WINAPI LZClose(HFILE);
-LONG        WINAPI LZCopy(HFILE,HFILE);
-HFILE       WINAPI LZInit(HFILE);
-LONG        WINAPI LZSeek(HFILE,LONG,INT);
-INT         WINAPI GetExpandedNameA(LPSTR,LPSTR);
-INT         WINAPI GetExpandedNameW(LPWSTR,LPWSTR);
-#define     GetExpandedName WINELIB_NAME_AW(GetExpandedName)
+WINBASEAPI VOID        WINAPI LZDone(void);
+WINBASEAPI LONG        WINAPI CopyLZFile(HFILE,HFILE);
+WINBASEAPI HFILE       WINAPI LZOpenFileA(LPSTR,LPOFSTRUCT,WORD);
+WINBASEAPI HFILE       WINAPI LZOpenFileW(LPWSTR,LPOFSTRUCT,WORD);
+#define                       LZOpenFile WINELIB_NAME_AW(LZOpenFile)
+WINBASEAPI INT         WINAPI LZRead(INT,LPSTR,INT);
+WINBASEAPI INT         WINAPI LZStart(void);
+WINBASEAPI void        WINAPI LZClose(HFILE);
+WINBASEAPI LONG        WINAPI LZCopy(HFILE,HFILE);
+WINBASEAPI HFILE       WINAPI LZInit(HFILE);
+WINBASEAPI LONG        WINAPI LZSeek(HFILE,LONG,INT);
+WINBASEAPI INT         WINAPI GetExpandedNameA(LPSTR,LPSTR);
+WINBASEAPI INT         WINAPI GetExpandedNameW(LPWSTR,LPWSTR);
+#define                       GetExpandedName WINELIB_NAME_AW(GetExpandedName)
 
 #ifdef __cplusplus
 } /* extern "C" */
