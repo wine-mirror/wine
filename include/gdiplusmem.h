@@ -25,8 +25,8 @@
 extern "C" {
 #endif
 
-void* WINGDIPAPI GdipAlloc(SIZE_T) __WINE_ALLOC_SIZE(1);
 void WINGDIPAPI GdipFree(void*);
+void* WINGDIPAPI GdipAlloc(SIZE_T) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(GdipFree) __WINE_MALLOC;
 
 #ifdef __cplusplus
 }
