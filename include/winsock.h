@@ -112,6 +112,14 @@
 
 #include <inaddr.h>
 
+#ifndef WINSOCK_API_LINKAGE
+#ifdef _WS2_32_
+# define WINSOCK_API_LINKAGE
+#else
+# define WINSOCK_API_LINKAGE DECLSPEC_IMPORT
+#endif
+#endif
+
 #ifdef USE_WS_PREFIX
 typedef unsigned char  WS_u_char;
 typedef unsigned short WS_u_short;
@@ -468,7 +476,7 @@ typedef struct WS(timeval)
 #define WS_FD_ISSET(fd, set) __WSAFDIsSet((SOCKET)(fd), (WS_fd_set*)(set))
 #endif
 
-int WINAPI __WSAFDIsSet(SOCKET,WS(fd_set)*);
+WINSOCK_API_LINKAGE int WINAPI __WSAFDIsSet(SOCKET,WS(fd_set)*);
 
 #endif /* WS_DEFINE_SELECT */
 
@@ -925,54 +933,54 @@ typedef struct WS(WSAData)
  * Remember to keep this section in sync with the
  * "Winsock Function Typedefs" section in winsock2.h.
  */
-HANDLE WINAPI WSAAsyncGetHostByAddr(HWND,WS(u_int),const char*,int,int,char*,int);
-HANDLE WINAPI WSAAsyncGetHostByName(HWND,WS(u_int),const char*,char*,int);
-HANDLE WINAPI WSAAsyncGetProtoByName(HWND,WS(u_int),const char*,char*,int);
-HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND,WS(u_int),int,char*,int);
-HANDLE WINAPI WSAAsyncGetServByName(HWND,WS(u_int),const char*,const char*,char*,int);
-HANDLE WINAPI WSAAsyncGetServByPort(HWND,WS(u_int),int,const char*,char*,int);
-int WINAPI WSAAsyncSelect(SOCKET,HWND,WS(u_int),LONG);
-int WINAPI WSACancelAsyncRequest(HANDLE);
-int WINAPI WSACancelBlockingCall(void);
-int WINAPI WSACleanup(void);
-int WINAPI WSAGetLastError(void);
-BOOL WINAPI WSAIsBlocking(void);
-FARPROC WINAPI WSASetBlockingHook(FARPROC);
-void WINAPI WSASetLastError(int);
-int WINAPI WSAStartup(WORD,LPWSADATA);
-int WINAPI WSAUnhookBlockingHook(void);
+WINSOCK_API_LINKAGE HANDLE WINAPI WSAAsyncGetHostByAddr(HWND,WS(u_int),const char*,int,int,char*,int);
+WINSOCK_API_LINKAGE HANDLE WINAPI WSAAsyncGetHostByName(HWND,WS(u_int),const char*,char*,int);
+WINSOCK_API_LINKAGE HANDLE WINAPI WSAAsyncGetProtoByName(HWND,WS(u_int),const char*,char*,int);
+WINSOCK_API_LINKAGE HANDLE WINAPI WSAAsyncGetProtoByNumber(HWND,WS(u_int),int,char*,int);
+WINSOCK_API_LINKAGE HANDLE WINAPI WSAAsyncGetServByName(HWND,WS(u_int),const char*,const char*,char*,int);
+WINSOCK_API_LINKAGE HANDLE WINAPI WSAAsyncGetServByPort(HWND,WS(u_int),int,const char*,char*,int);
+WINSOCK_API_LINKAGE int WINAPI WSAAsyncSelect(SOCKET,HWND,WS(u_int),LONG);
+WINSOCK_API_LINKAGE int WINAPI WSACancelAsyncRequest(HANDLE);
+WINSOCK_API_LINKAGE int WINAPI WSACancelBlockingCall(void);
+WINSOCK_API_LINKAGE int WINAPI WSACleanup(void);
+WINSOCK_API_LINKAGE int WINAPI WSAGetLastError(void);
+WINSOCK_API_LINKAGE BOOL WINAPI WSAIsBlocking(void);
+WINSOCK_API_LINKAGE FARPROC WINAPI WSASetBlockingHook(FARPROC);
+WINSOCK_API_LINKAGE void WINAPI WSASetLastError(int);
+WINSOCK_API_LINKAGE int WINAPI WSAStartup(WORD,LPWSADATA);
+WINSOCK_API_LINKAGE int WINAPI WSAUnhookBlockingHook(void);
 
-SOCKET WINAPI WS(accept)(SOCKET,struct WS(sockaddr)*,int*);
-int WINAPI WS(bind)(SOCKET,const struct WS(sockaddr)*,int);
-int WINAPI WS(closesocket)(SOCKET);
-int WINAPI WS(connect)(SOCKET,const struct WS(sockaddr)*,int);
-struct WS(hostent)* WINAPI WS(gethostbyaddr)(const char*,int,int);
-struct WS(hostent)* WINAPI WS(gethostbyname)(const char*);
-int WINAPI WS(getpeername)(SOCKET,struct WS(sockaddr)*,int*);
-struct WS(protoent)* WINAPI WS(getprotobyname)(const char*);
-struct WS(protoent)* WINAPI WS(getprotobynumber)(int);
+WINSOCK_API_LINKAGE SOCKET WINAPI WS(accept)(SOCKET,struct WS(sockaddr)*,int*);
+WINSOCK_API_LINKAGE int WINAPI WS(bind)(SOCKET,const struct WS(sockaddr)*,int);
+WINSOCK_API_LINKAGE int WINAPI WS(closesocket)(SOCKET);
+WINSOCK_API_LINKAGE int WINAPI WS(connect)(SOCKET,const struct WS(sockaddr)*,int);
+WINSOCK_API_LINKAGE struct WS(hostent)* WINAPI WS(gethostbyaddr)(const char*,int,int);
+WINSOCK_API_LINKAGE struct WS(hostent)* WINAPI WS(gethostbyname)(const char*);
+WINSOCK_API_LINKAGE int WINAPI WS(getpeername)(SOCKET,struct WS(sockaddr)*,int*);
+WINSOCK_API_LINKAGE struct WS(protoent)* WINAPI WS(getprotobyname)(const char*);
+WINSOCK_API_LINKAGE struct WS(protoent)* WINAPI WS(getprotobynumber)(int);
 #ifdef WS_DEFINE_SELECT
-int WINAPI WS(select)(int,WS(fd_set)*,WS(fd_set)*,WS(fd_set)*,const struct WS(timeval)*);
+WINSOCK_API_LINKAGE int WINAPI WS(select)(int,WS(fd_set)*,WS(fd_set)*,WS(fd_set)*,const struct WS(timeval)*);
 #endif
-struct WS(servent)* WINAPI WS(getservbyname)(const char*,const char*);
-struct WS(servent)* WINAPI WS(getservbyport)(int,const char*);
-int WINAPI WS(getsockname)(SOCKET,struct WS(sockaddr)*,int*);
-int WINAPI WS(getsockopt)(SOCKET,int,int,char*,int*);
-ULONG WINAPI WS(inet_addr)(const char*);
-char* WINAPI WS(inet_ntoa)(struct WS(in_addr));
-int WINAPI WS(ioctlsocket)(SOCKET,LONG,ULONG*);
-int WINAPI WS(listen)(SOCKET,int);
-int WINAPI WS(recv)(SOCKET,char*,int,int);
-int WINAPI WS(recvfrom)(SOCKET,char*,int,int,struct WS(sockaddr)*,int*);
-int WINAPI WS(send)(SOCKET,const char*,int,int);
-int WINAPI WS(sendto)(SOCKET,const char*,int,int,const struct WS(sockaddr)*,int);
-int WINAPI WS(setsockopt)(SOCKET,int,int,const char*,int);
-int WINAPI WS(shutdown)(SOCKET,int);
-SOCKET WINAPI WS(socket)(int,int,int);
+WINSOCK_API_LINKAGE struct WS(servent)* WINAPI WS(getservbyname)(const char*,const char*);
+WINSOCK_API_LINKAGE struct WS(servent)* WINAPI WS(getservbyport)(int,const char*);
+WINSOCK_API_LINKAGE int WINAPI WS(getsockname)(SOCKET,struct WS(sockaddr)*,int*);
+WINSOCK_API_LINKAGE int WINAPI WS(getsockopt)(SOCKET,int,int,char*,int*);
+WINSOCK_API_LINKAGE ULONG WINAPI WS(inet_addr)(const char*);
+WINSOCK_API_LINKAGE char* WINAPI WS(inet_ntoa)(struct WS(in_addr));
+WINSOCK_API_LINKAGE int WINAPI WS(ioctlsocket)(SOCKET,LONG,ULONG*);
+WINSOCK_API_LINKAGE int WINAPI WS(listen)(SOCKET,int);
+WINSOCK_API_LINKAGE int WINAPI WS(recv)(SOCKET,char*,int,int);
+WINSOCK_API_LINKAGE int WINAPI WS(recvfrom)(SOCKET,char*,int,int,struct WS(sockaddr)*,int*);
+WINSOCK_API_LINKAGE int WINAPI WS(send)(SOCKET,const char*,int,int);
+WINSOCK_API_LINKAGE int WINAPI WS(sendto)(SOCKET,const char*,int,int,const struct WS(sockaddr)*,int);
+WINSOCK_API_LINKAGE int WINAPI WS(setsockopt)(SOCKET,int,int,const char*,int);
+WINSOCK_API_LINKAGE int WINAPI WS(shutdown)(SOCKET,int);
+WINSOCK_API_LINKAGE SOCKET WINAPI WS(socket)(int,int,int);
 
 #if defined(__MINGW32__) || defined (_MSC_VER) || defined(__WINE_USE_MSVCRT)
 /* gethostname is not defined on Unix because of conflicts with unistd.h */
-int WINAPI WS(gethostname)(char*,int);
+WINSOCK_API_LINKAGE int WINAPI WS(gethostname)(char*,int);
 #endif
 
 #ifdef __cplusplus

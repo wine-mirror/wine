@@ -86,8 +86,6 @@ static void *pe_buffer;
 static SEGPTR pe_buffer_seg;
 static SEGPTR dbuffer_seg;
 
-extern int WINAPI WS_gethostname(char *name, int namelen);
-
 static fd_set *ws_fdset_16_to_32( const ws_fd_set16 *set16, fd_set *set32 )
 {
     UINT i;
@@ -744,7 +742,6 @@ SEGPTR WINAPI getservbyport16(INT16 port, const char *proto)
  */
 INT16 WINAPI gethostname16(char *name, INT16 namelen)
 {
-    extern int WINAPI gethostname(char *name, INT namelen);
     return gethostname(name, namelen);
 }
 
