@@ -556,6 +556,10 @@ HRESULT WINAPI MFCreateVideoMediaTypeFromVideoInfoHeader(const KS_VIDEOINFOHEADE
         IMFVideoMediaType **media_type);
 #endif
 
+void    WINAPI MFHeapFree(void *ptr);
+void *  WINAPI MFHeapAlloc(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type)
+        __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(MFHeapFree) __WINE_MALLOC;
+
 HRESULT WINAPI MFCreateVideoSampleAllocatorEx(REFIID riid, void **allocator);
 HRESULT WINAPI MFCreateMemoryBuffer(DWORD max_length, IMFMediaBuffer **buffer);
 HRESULT WINAPI MFCreateWaveFormatExFromMFMediaType(IMFMediaType *type, WAVEFORMATEX **format, UINT32 *size, UINT32 flags);
@@ -563,8 +567,6 @@ HRESULT WINAPI MFEndCreateFile(IMFAsyncResult *result, IMFByteStream **stream);
 HRESULT WINAPI MFEndRegisterWorkQueueWithMMCSS(IMFAsyncResult *result, DWORD *taskid);
 HRESULT WINAPI MFEndUnregisterWorkQueueWithMMCSS(IMFAsyncResult *result);
 HRESULT WINAPI MFFrameRateToAverageTimePerFrame(UINT32 numerator, UINT32 denominator, UINT64 *avgtime);
-void *  WINAPI MFHeapAlloc(SIZE_T size, ULONG flags, char *file, int line, EAllocationType type);
-void    WINAPI MFHeapFree(void *ptr);
 HRESULT WINAPI MFGetAttributesAsBlob(IMFAttributes *attributes, UINT8 *buffer, UINT size);
 HRESULT WINAPI MFGetAttributesAsBlobSize(IMFAttributes *attributes, UINT32 *size);
 HRESULT WINAPI MFGetStrideForBitmapInfoHeader(DWORD format, DWORD width, LONG *stride);
