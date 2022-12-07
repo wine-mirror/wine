@@ -19,6 +19,7 @@
  */
 
 #define COBJMACROS
+#define WINOLEAUTAPI
 
 #include "oleauto.h"
 

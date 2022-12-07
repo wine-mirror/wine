@@ -178,6 +178,14 @@
 #undef DECLARE_INTERFACE
 #undef DECLARE_INTERFACE_
 
+#ifndef WINOLE32API
+#ifdef _OLE32_
+#define WINOLE32API
+#else
+#define WINOLE32API DECLSPEC_IMPORT
+#endif
+#endif
+
 #if defined(__cplusplus) && !defined(CINTERFACE)
 
 #ifdef COM_STDMETHOD_CAN_THROW
@@ -276,7 +284,7 @@ extern "C" {
 /*****************************************************************************
  *	Standard API
  */
-DWORD WINAPI CoBuildVersion(void);
+WINOLE32API DWORD WINAPI CoBuildVersion(void);
 
 typedef enum tagCOINIT
 {
@@ -288,43 +296,36 @@ typedef enum tagCOINIT
 
 DECLARE_HANDLE(CO_MTA_USAGE_COOKIE);
 
-HRESULT WINAPI CoInitialize(LPVOID lpReserved);
-HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit);
-void WINAPI CoUninitialize(void);
-DWORD WINAPI CoGetCurrentProcess(void);
-HRESULT WINAPI CoGetCurrentLogicalThreadId(GUID *id);
-HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier);
-HRESULT WINAPI CoIncrementMTAUsage(CO_MTA_USAGE_COOKIE *cookie);
-HRESULT WINAPI CoDecrementMTAUsage(CO_MTA_USAGE_COOKIE cookie);
+WINOLE32API HRESULT WINAPI CoInitialize(LPVOID lpReserved);
+WINOLE32API HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit);
+WINOLE32API void WINAPI CoUninitialize(void);
+WINOLE32API DWORD WINAPI CoGetCurrentProcess(void);
+WINOLE32API HRESULT WINAPI CoGetCurrentLogicalThreadId(GUID *id);
+WINOLE32API HRESULT WINAPI CoGetApartmentType(APTTYPE *type, APTTYPEQUALIFIER *qualifier);
+WINOLE32API HRESULT WINAPI CoIncrementMTAUsage(CO_MTA_USAGE_COOKIE *cookie);
+WINOLE32API HRESULT WINAPI CoDecrementMTAUsage(CO_MTA_USAGE_COOKIE cookie);
 
-HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree);
-void WINAPI CoFreeAllLibraries(void);
-void WINAPI CoFreeLibrary(HINSTANCE hLibrary);
-void WINAPI CoFreeUnusedLibraries(void);
-void WINAPI CoFreeUnusedLibrariesEx(DWORD dwUnloadDelay, DWORD dwReserved);
+WINOLE32API HINSTANCE WINAPI CoLoadLibrary(LPOLESTR lpszLibName, BOOL bAutoFree);
+WINOLE32API void WINAPI CoFreeAllLibraries(void);
+WINOLE32API void WINAPI CoFreeLibrary(HINSTANCE hLibrary);
+WINOLE32API void WINAPI CoFreeUnusedLibraries(void);
+WINOLE32API void WINAPI CoFreeUnusedLibrariesEx(DWORD dwUnloadDelay, DWORD dwReserved);
 
-HRESULT WINAPI CoCreateInstance(REFCLSID rclsid, LPUNKNOWN pUnkOuter, DWORD dwClsContext, REFIID iid, LPVOID *ppv);
-HRESULT WINAPI CoCreateInstanceEx(REFCLSID      rclsid,
-				  LPUNKNOWN     pUnkOuter,
-				  DWORD         dwClsContext,
-				  COSERVERINFO* pServerInfo,
-				  ULONG         cmq,
-				  MULTI_QI*     pResults);
-HRESULT WINAPI CoCreateInstanceFromApp(REFCLSID clsid, IUnknown *outer, DWORD clscontext, void *reserved,
-        DWORD count, MULTI_QI *results);
+WINOLE32API HRESULT WINAPI CoCreateInstance(REFCLSID,LPUNKNOWN,DWORD,REFIID,LPVOID*);
+WINOLE32API HRESULT WINAPI CoCreateInstanceEx(REFCLSID,LPUNKNOWN,DWORD,COSERVERINFO*,ULONG,MULTI_QI*);
+WINOLE32API HRESULT WINAPI CoCreateInstanceFromApp(REFCLSID,IUnknown*,DWORD,void*,DWORD,MULTI_QI*);
+WINOLE32API HRESULT WINAPI CoGetInstanceFromFile(COSERVERINFO*, CLSID*,IUnknown*,DWORD,DWORD,OLECHAR*,DWORD,MULTI_QI*);
+WINOLE32API HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO*,CLSID*,IUnknown*,DWORD,IStorage*,DWORD,MULTI_QI*);
 
-HRESULT WINAPI CoGetInstanceFromFile(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, DWORD grfMode, OLECHAR* pwszName, DWORD dwCount, MULTI_QI* pResults);
-HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, IStorage* pstg, DWORD dwCount, MULTI_QI* pResults);
+WINOLE32API HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, LPMALLOC* lpMalloc);
+WINOLE32API void WINAPI CoTaskMemFree(LPVOID ptr);
+WINOLE32API LPVOID WINAPI CoTaskMemAlloc(SIZE_T size) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(CoTaskMemFree) __WINE_MALLOC;
+WINOLE32API LPVOID WINAPI CoTaskMemRealloc(LPVOID ptr, SIZE_T size) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(CoTaskMemFree);
 
-HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, LPMALLOC* lpMalloc);
-void WINAPI CoTaskMemFree(LPVOID ptr);
-LPVOID WINAPI CoTaskMemAlloc(SIZE_T size) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(CoTaskMemFree) __WINE_MALLOC;
-LPVOID WINAPI CoTaskMemRealloc(LPVOID ptr, SIZE_T size) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(CoTaskMemFree);
+WINOLE32API HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy);
+WINOLE32API HRESULT WINAPI CoRevokeMallocSpy(void);
 
-HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy);
-HRESULT WINAPI CoRevokeMallocSpy(void);
-
-HRESULT WINAPI CoGetContextToken( ULONG_PTR *token );
+WINOLE32API HRESULT WINAPI CoGetContextToken( ULONG_PTR *token );
 
 /* class registration flags; passed to CoRegisterClassObject */
 typedef enum tagREGCLS
@@ -336,64 +337,64 @@ typedef enum tagREGCLS
     REGCLS_SURROGATE = 8
 } REGCLS;
 
-HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo, REFIID iid, LPVOID *ppv);
-HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,LPDWORD lpdwRegister);
-HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
-HRESULT WINAPI CoGetPSClsid(REFIID riid,CLSID *pclsid);
-HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid);
-HRESULT WINAPI CoRegisterSurrogate(LPSURROGATE pSurrogate);
-HRESULT WINAPI CoSuspendClassObjects(void);
-HRESULT WINAPI CoResumeClassObjects(void);
-ULONG WINAPI CoAddRefServerProcess(void);
-ULONG WINAPI CoReleaseServerProcess(void);
+WINOLE32API HRESULT WINAPI CoGetClassObject(REFCLSID rclsid, DWORD dwClsContext, COSERVERINFO *pServerInfo, REFIID iid, LPVOID *ppv);
+WINOLE32API HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid,LPUNKNOWN pUnk,DWORD dwClsContext,DWORD flags,LPDWORD lpdwRegister);
+WINOLE32API HRESULT WINAPI CoRevokeClassObject(DWORD dwRegister);
+WINOLE32API HRESULT WINAPI CoGetPSClsid(REFIID riid,CLSID *pclsid);
+WINOLE32API HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid);
+WINOLE32API HRESULT WINAPI CoRegisterSurrogate(LPSURROGATE pSurrogate);
+WINOLE32API HRESULT WINAPI CoSuspendClassObjects(void);
+WINOLE32API HRESULT WINAPI CoResumeClassObjects(void);
+WINOLE32API ULONG WINAPI CoAddRefServerProcess(void);
+WINOLE32API ULONG WINAPI CoReleaseServerProcess(void);
 
 /* marshalling */
-HRESULT WINAPI CoCreateFreeThreadedMarshaler(LPUNKNOWN punkOuter, LPUNKNOWN* ppunkMarshal);
-HRESULT WINAPI CoGetInterfaceAndReleaseStream(LPSTREAM pStm, REFIID iid, LPVOID* ppv);
-HRESULT WINAPI CoGetMarshalSizeMax(ULONG* pulSize, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
-HRESULT WINAPI CoGetStandardMarshal(REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags, LPMARSHAL* ppMarshal);
-HRESULT WINAPI CoMarshalHresult(LPSTREAM pstm, HRESULT hresult);
-HRESULT WINAPI CoMarshalInterface(LPSTREAM pStm, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
-HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(REFIID riid, LPUNKNOWN pUnk, LPSTREAM* ppStm);
-HRESULT WINAPI CoReleaseMarshalData(LPSTREAM pStm);
-HRESULT WINAPI CoDisconnectObject(LPUNKNOWN lpUnk, DWORD reserved);
-HRESULT WINAPI CoUnmarshalHresult(LPSTREAM pstm, HRESULT* phresult);
-HRESULT WINAPI CoUnmarshalInterface(LPSTREAM pStm, REFIID riid, LPVOID* ppv);
-HRESULT WINAPI CoLockObjectExternal(LPUNKNOWN pUnk, BOOL fLock, BOOL fLastUnlockReleases);
-BOOL WINAPI CoIsHandlerConnected(LPUNKNOWN pUnk);
-HRESULT WINAPI CoDisableCallCancellation(void *reserved);
-HRESULT WINAPI CoEnableCallCancellation(void *reserved);
+WINOLE32API HRESULT WINAPI CoCreateFreeThreadedMarshaler(LPUNKNOWN punkOuter, LPUNKNOWN* ppunkMarshal);
+WINOLE32API HRESULT WINAPI CoGetInterfaceAndReleaseStream(LPSTREAM pStm, REFIID iid, LPVOID* ppv);
+WINOLE32API HRESULT WINAPI CoGetMarshalSizeMax(ULONG* pulSize, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
+WINOLE32API HRESULT WINAPI CoGetStandardMarshal(REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags, LPMARSHAL* ppMarshal);
+WINOLE32API HRESULT WINAPI CoMarshalHresult(LPSTREAM pstm, HRESULT hresult);
+WINOLE32API HRESULT WINAPI CoMarshalInterface(LPSTREAM pStm, REFIID riid, LPUNKNOWN pUnk, DWORD dwDestContext, LPVOID pvDestContext, DWORD mshlflags);
+WINOLE32API HRESULT WINAPI CoMarshalInterThreadInterfaceInStream(REFIID riid, LPUNKNOWN pUnk, LPSTREAM* ppStm);
+WINOLE32API HRESULT WINAPI CoReleaseMarshalData(LPSTREAM pStm);
+WINOLE32API HRESULT WINAPI CoDisconnectObject(LPUNKNOWN lpUnk, DWORD reserved);
+WINOLE32API HRESULT WINAPI CoUnmarshalHresult(LPSTREAM pstm, HRESULT* phresult);
+WINOLE32API HRESULT WINAPI CoUnmarshalInterface(LPSTREAM pStm, REFIID riid, LPVOID* ppv);
+WINOLE32API HRESULT WINAPI CoLockObjectExternal(LPUNKNOWN pUnk, BOOL fLock, BOOL fLastUnlockReleases);
+WINOLE32API BOOL WINAPI CoIsHandlerConnected(LPUNKNOWN pUnk);
+WINOLE32API HRESULT WINAPI CoDisableCallCancellation(void *reserved);
+WINOLE32API HRESULT WINAPI CoEnableCallCancellation(void *reserved);
 
 /* security */
-HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc, SOLE_AUTHENTICATION_SERVICE* asAuthSvc, void* pReserved1, DWORD dwAuthnLevel, DWORD dwImpLevel, void* pReserved2, DWORD dwCapabilities, void* pReserved3);
-HRESULT WINAPI CoGetCallContext(REFIID riid, void** ppInterface);
-HRESULT WINAPI CoSwitchCallContext(IUnknown *pContext, IUnknown **ppOldContext);
-HRESULT WINAPI CoQueryAuthenticationServices(DWORD* pcAuthSvc, SOLE_AUTHENTICATION_SERVICE** asAuthSvc);
+WINOLE32API HRESULT WINAPI CoInitializeSecurity(PSECURITY_DESCRIPTOR pSecDesc, LONG cAuthSvc, SOLE_AUTHENTICATION_SERVICE* asAuthSvc, void* pReserved1, DWORD dwAuthnLevel, DWORD dwImpLevel, void* pReserved2, DWORD dwCapabilities, void* pReserved3);
+WINOLE32API HRESULT WINAPI CoGetCallContext(REFIID riid, void** ppInterface);
+WINOLE32API HRESULT WINAPI CoSwitchCallContext(IUnknown *pContext, IUnknown **ppOldContext);
+WINOLE32API HRESULT WINAPI CoQueryAuthenticationServices(DWORD* pcAuthSvc, SOLE_AUTHENTICATION_SERVICE** asAuthSvc);
 
-HRESULT WINAPI CoQueryProxyBlanket(IUnknown* pProxy, DWORD* pwAuthnSvc, DWORD* pAuthzSvc, OLECHAR** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTH_IDENTITY_HANDLE* pAuthInfo, DWORD* pCapabilities);
-HRESULT WINAPI CoSetProxyBlanket(IUnknown* pProxy, DWORD dwAuthnSvc, DWORD dwAuthzSvc, OLECHAR* pServerPrincName, DWORD dwAuthnLevel, DWORD dwImpLevel, RPC_AUTH_IDENTITY_HANDLE pAuthInfo, DWORD dwCapabilities);
-HRESULT WINAPI CoCopyProxy(IUnknown* pProxy, IUnknown** ppCopy);
+WINOLE32API HRESULT WINAPI CoQueryProxyBlanket(IUnknown* pProxy, DWORD* pwAuthnSvc, DWORD* pAuthzSvc, OLECHAR** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTH_IDENTITY_HANDLE* pAuthInfo, DWORD* pCapabilities);
+WINOLE32API HRESULT WINAPI CoSetProxyBlanket(IUnknown* pProxy, DWORD dwAuthnSvc, DWORD dwAuthzSvc, OLECHAR* pServerPrincName, DWORD dwAuthnLevel, DWORD dwImpLevel, RPC_AUTH_IDENTITY_HANDLE pAuthInfo, DWORD dwCapabilities);
+WINOLE32API HRESULT WINAPI CoCopyProxy(IUnknown* pProxy, IUnknown** ppCopy);
 
-HRESULT WINAPI CoImpersonateClient(void);
-HRESULT WINAPI CoQueryClientBlanket(DWORD* pAuthnSvc, DWORD* pAuthzSvc, OLECHAR** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTHZ_HANDLE* pPrivs, DWORD* pCapabilities);
-HRESULT WINAPI CoRevertToSelf(void);
+WINOLE32API HRESULT WINAPI CoImpersonateClient(void);
+WINOLE32API HRESULT WINAPI CoQueryClientBlanket(DWORD* pAuthnSvc, DWORD* pAuthzSvc, OLECHAR** pServerPrincName, DWORD* pAuthnLevel, DWORD* pImpLevel, RPC_AUTHZ_HANDLE* pPrivs, DWORD* pCapabilities);
+WINOLE32API HRESULT WINAPI CoRevertToSelf(void);
 
 /* misc */
-HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID pClsidNew);
-HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew);
-HRESULT WINAPI CoAllowSetForegroundWindow(IUnknown *pUnk, LPVOID lpvReserved);
-HRESULT WINAPI CoGetObjectContext(REFIID riid, LPVOID *ppv);
-HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cookie);
-HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie);
+WINOLE32API HRESULT WINAPI CoGetTreatAsClass(REFCLSID clsidOld, LPCLSID pClsidNew);
+WINOLE32API HRESULT WINAPI CoTreatAsClass(REFCLSID clsidOld, REFCLSID clsidNew);
+WINOLE32API HRESULT WINAPI CoAllowSetForegroundWindow(IUnknown *pUnk, LPVOID lpvReserved);
+WINOLE32API HRESULT WINAPI CoGetObjectContext(REFIID riid, LPVOID *ppv);
+WINOLE32API HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cookie);
+WINOLE32API HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie);
 
-HRESULT WINAPI CoCreateGuid(GUID* pguid);
-BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
+WINOLE32API HRESULT WINAPI CoCreateGuid(GUID* pguid);
+WINOLE32API BOOL WINAPI CoIsOle1Class(REFCLSID rclsid);
 
-BOOL WINAPI CoDosDateTimeToFileTime(WORD nDosDate, WORD nDosTime, FILETIME* lpFileTime);
-BOOL WINAPI CoFileTimeToDosDateTime(FILETIME* lpFileTime, WORD* lpDosDate, WORD* lpDosTime);
-HRESULT WINAPI CoFileTimeNow(FILETIME* lpFileTime);
-HRESULT WINAPI CoRegisterMessageFilter(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
-HRESULT WINAPI CoRegisterChannelHook(REFGUID ExtensionGuid, IChannelHook *pChannelHook);
+WINOLE32API BOOL WINAPI CoDosDateTimeToFileTime(WORD nDosDate, WORD nDosTime, FILETIME* lpFileTime);
+WINOLE32API BOOL WINAPI CoFileTimeToDosDateTime(FILETIME* lpFileTime, WORD* lpDosDate, WORD* lpDosTime);
+WINOLE32API HRESULT WINAPI CoFileTimeNow(FILETIME* lpFileTime);
+WINOLE32API HRESULT WINAPI CoRegisterMessageFilter(LPMESSAGEFILTER lpMessageFilter,LPMESSAGEFILTER *lplpMessageFilter);
+WINOLE32API HRESULT WINAPI CoRegisterChannelHook(REFGUID ExtensionGuid, IChannelHook *pChannelHook);
 
 typedef enum tagCOWAIT_FLAGS
 {
@@ -403,18 +404,18 @@ typedef enum tagCOWAIT_FLAGS
     COWAIT_INPUTAVAILABLE = 0x00000004
 } COWAIT_FLAGS;
 
-HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags,DWORD dwTimeout,ULONG cHandles,LPHANDLE pHandles,LPDWORD lpdwindex);
+WINOLE32API HRESULT WINAPI CoWaitForMultipleHandles(DWORD dwFlags,DWORD dwTimeout,ULONG cHandles,LPHANDLE pHandles,LPDWORD lpdwindex);
 
 /*****************************************************************************
  *	GUID API
  */
-HRESULT WINAPI StringFromCLSID(REFCLSID id, LPOLESTR*);
-HRESULT WINAPI CLSIDFromString(LPCOLESTR, LPCLSID);
-HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid);
-HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID);
-INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
-HRESULT WINAPI IIDFromString(LPCOLESTR str, IID *iid);
-HRESULT WINAPI StringFromIID(REFIID riid, LPOLESTR*);
+WINOLE32API HRESULT WINAPI StringFromCLSID(REFCLSID id, LPOLESTR*);
+WINOLE32API HRESULT WINAPI CLSIDFromString(LPCOLESTR, LPCLSID);
+WINOLE32API HRESULT WINAPI CLSIDFromProgID(LPCOLESTR progid, LPCLSID riid);
+WINOLE32API HRESULT WINAPI ProgIDFromCLSID(REFCLSID clsid, LPOLESTR *lplpszProgID);
+WINOLE32API INT WINAPI StringFromGUID2(REFGUID id, LPOLESTR str, INT cmax);
+WINOLE32API HRESULT WINAPI IIDFromString(LPCOLESTR str, IID *iid);
+WINOLE32API HRESULT WINAPI StringFromIID(REFIID riid, LPOLESTR*);
 
 /*****************************************************************************
  *	COM Server dll - exports
@@ -425,27 +426,27 @@ HRESULT WINAPI DllCanUnloadNow(void) DECLSPEC_HIDDEN;
 /*****************************************************************************
  *	Data Object
  */
-HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder);
-HRESULT WINAPI CreateDataCache(LPUNKNOWN pUnkOuter, REFCLSID rclsid, REFIID iid, LPVOID* ppv);
+WINOLE32API HRESULT WINAPI CreateDataAdviseHolder(LPDATAADVISEHOLDER* ppDAHolder);
+WINOLE32API HRESULT WINAPI CreateDataCache(LPUNKNOWN pUnkOuter, REFCLSID rclsid, REFIID iid, LPVOID* ppv);
 
 /*****************************************************************************
  *	Moniker API
  */
-HRESULT WINAPI BindMoniker(LPMONIKER pmk, DWORD grfOpt, REFIID iidResult, LPVOID* ppvResult);
-HRESULT WINAPI CoGetObject(LPCWSTR pszName, BIND_OPTS *pBindOptions, REFIID riid, void **ppv);
-HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk);
-HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
-HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, LPMONIKER* ppmk);
-HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
-HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPMONIKER* ppmkComposite);
-HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
-HRESULT WINAPI CreateObjrefMoniker(LPUNKNOWN punk, LPMONIKER * ppmk);
-HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER * ppmk);
-HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
-HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
-HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName, ULONG * pchEaten, LPMONIKER * ppmk);
-HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMoniker** ppmkCommon);
-HRESULT WINAPI MonikerRelativePathTo(LPMONIKER pmkSrc, LPMONIKER pmkDest, LPMONIKER * ppmkRelPath, BOOL dwReserved);
+WINOLE32API HRESULT WINAPI BindMoniker(LPMONIKER pmk, DWORD grfOpt, REFIID iidResult, LPVOID* ppvResult);
+WINOLE32API HRESULT WINAPI CoGetObject(LPCWSTR pszName, BIND_OPTS *pBindOptions, REFIID riid, void **ppv);
+WINOLE32API HRESULT WINAPI CreateAntiMoniker(LPMONIKER * ppmk);
+WINOLE32API HRESULT WINAPI CreateBindCtx(DWORD reserved, LPBC* ppbc);
+WINOLE32API HRESULT WINAPI CreateClassMoniker(REFCLSID rclsid, LPMONIKER* ppmk);
+WINOLE32API HRESULT WINAPI CreateFileMoniker(LPCOLESTR lpszPathName, LPMONIKER* ppmk);
+WINOLE32API HRESULT WINAPI CreateGenericComposite(LPMONIKER pmkFirst, LPMONIKER pmkRest, LPMONIKER* ppmkComposite);
+WINOLE32API HRESULT WINAPI CreateItemMoniker(LPCOLESTR lpszDelim, LPCOLESTR  lpszItem, LPMONIKER* ppmk);
+WINOLE32API HRESULT WINAPI CreateObjrefMoniker(LPUNKNOWN punk, LPMONIKER * ppmk);
+WINOLE32API HRESULT WINAPI CreatePointerMoniker(LPUNKNOWN punk, LPMONIKER * ppmk);
+WINOLE32API HRESULT WINAPI GetClassFile(LPCOLESTR filePathName,CLSID *pclsid);
+WINOLE32API HRESULT WINAPI GetRunningObjectTable(DWORD reserved, LPRUNNINGOBJECTTABLE *pprot);
+WINOLE32API HRESULT WINAPI MkParseDisplayName(LPBC pbc, LPCOLESTR szUserName, ULONG * pchEaten, LPMONIKER * ppmk);
+WINOLE32API HRESULT WINAPI MonikerCommonPrefixWith(IMoniker* pmkThis,IMoniker* pmkOther,IMoniker** ppmkCommon);
+WINOLE32API HRESULT WINAPI MonikerRelativePathTo(LPMONIKER pmkSrc, LPMONIKER pmkDest, LPMONIKER * ppmkRelPath, BOOL dwReserved);
 
 /*****************************************************************************
  *	Storage API
@@ -482,16 +483,16 @@ typedef struct tagSTGOPTIONS
     const WCHAR* pwcsTemplateFile;
 } STGOPTIONS;
 
-HRESULT WINAPI StgCreateDocfile(LPCOLESTR pwcsName,DWORD grfMode,DWORD reserved,IStorage **ppstgOpen);
-HRESULT WINAPI StgCreateStorageEx(const WCHAR*,DWORD,DWORD,DWORD,STGOPTIONS*,void*,REFIID,void**);
-HRESULT WINAPI StgIsStorageFile(LPCOLESTR fn);
-HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt);
-HRESULT WINAPI StgOpenStorage(const OLECHAR* pwcsName,IStorage* pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage**ppstgOpen);
-HRESULT WINAPI StgOpenStorageEx(const WCHAR* pwcwName,DWORD grfMode,DWORD stgfmt,DWORD grfAttrs,STGOPTIONS *pStgOptions, void *reserved, REFIID riid, void **ppObjectOpen);
+WINOLE32API HRESULT WINAPI StgCreateDocfile(LPCOLESTR pwcsName,DWORD grfMode,DWORD reserved,IStorage **ppstgOpen);
+WINOLE32API HRESULT WINAPI StgCreateStorageEx(const WCHAR*,DWORD,DWORD,DWORD,STGOPTIONS*,void*,REFIID,void**);
+WINOLE32API HRESULT WINAPI StgIsStorageFile(LPCOLESTR fn);
+WINOLE32API HRESULT WINAPI StgIsStorageILockBytes(ILockBytes *plkbyt);
+WINOLE32API HRESULT WINAPI StgOpenStorage(const OLECHAR* pwcsName,IStorage* pstgPriority,DWORD grfMode,SNB snbExclude,DWORD reserved,IStorage**ppstgOpen);
+WINOLE32API HRESULT WINAPI StgOpenStorageEx(const WCHAR* pwcwName,DWORD grfMode,DWORD stgfmt,DWORD grfAttrs,STGOPTIONS *pStgOptions, void *reserved, REFIID riid, void **ppObjectOpen);
 
-HRESULT WINAPI StgCreateDocfileOnILockBytes(ILockBytes *plkbyt,DWORD grfMode, DWORD reserved, IStorage** ppstgOpen);
-HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPriority, DWORD grfMode, SNB snbExclude, DWORD reserved, IStorage **ppstgOpen);
-HRESULT WINAPI StgSetTimes( OLECHAR const *lpszName, FILETIME const *pctime, FILETIME const *patime, FILETIME const *pmtime);
+WINOLE32API HRESULT WINAPI StgCreateDocfileOnILockBytes(ILockBytes *plkbyt,DWORD grfMode, DWORD reserved, IStorage** ppstgOpen);
+WINOLE32API HRESULT WINAPI StgOpenStorageOnILockBytes(ILockBytes *plkbyt, IStorage *pstgPriority, DWORD grfMode, SNB snbExclude, DWORD reserved, IStorage **ppstgOpen);
+WINOLE32API HRESULT WINAPI StgSetTimes( OLECHAR const *lpszName, FILETIME const *pctime, FILETIME const *patime, FILETIME const *pmtime);
 
 #ifdef __cplusplus
 }
