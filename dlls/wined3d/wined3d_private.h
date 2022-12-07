@@ -1224,7 +1224,7 @@ struct wined3d_shader_reg_maps
 struct wined3d_shader_tex_mx
 {
     unsigned int current_row;
-    DWORD texcoord_w[2];
+    unsigned int texcoord_w[2];
 };
 
 struct wined3d_shader_parser_state
@@ -1258,7 +1258,7 @@ struct wined3d_shader_register
     enum wined3d_immconst_type immconst_type;
     union
     {
-        DWORD immconst_data[4];
+        unsigned int immconst_data[4];
         unsigned fp_body_idx;
     } u;
 };
@@ -3775,7 +3775,7 @@ struct wined3d_ffp_vs_settings
 
     DWORD swizzle_map; /* MAX_ATTRIBS, 32 */
 
-    DWORD texgen[WINED3D_MAX_TEXTURES];
+    unsigned int texgen[WINED3D_MAX_TEXTURES];
 };
 
 struct wined3d_ffp_vs_desc
@@ -5931,7 +5931,7 @@ struct wined3d_geometry_shader
 struct wined3d_pixel_shader
 {
     /* Pixel shader input semantics */
-    DWORD input_reg_map[MAX_REG_INPUT];
+    unsigned int input_reg_map[MAX_REG_INPUT];
     DWORD input_reg_used; /* MAX_REG_INPUT, 32 */
     unsigned int declared_in_count;
 
