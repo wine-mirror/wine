@@ -20,7 +20,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include <stdio.h>
 
@@ -291,15 +290,15 @@ static BOOL wined3d_caps_gl_ctx_create_attribs(struct wined3d_caps_gl_ctx *caps_
 
     if (!wglMakeCurrent(caps_gl_ctx->dc, new_ctx))
     {
-        ERR("Failed to make new context current, last error %#x.\n", GetLastError());
+        ERR("Failed to make new context current, last error %#lx.\n", GetLastError());
         if (!wglDeleteContext(new_ctx))
-            ERR("Failed to delete new context, last error %#x.\n", GetLastError());
+            ERR("Failed to delete new context, last error %#lx.\n", GetLastError());
         gl_info->p_wglCreateContextAttribsARB = NULL;
         return TRUE;
     }
 
     if (!wglDeleteContext(caps_gl_ctx->gl_ctx))
-        ERR("Failed to delete old context, last error %#x.\n", GetLastError());
+        ERR("Failed to delete old context, last error %#lx.\n", GetLastError());
     caps_gl_ctx->gl_ctx = new_ctx;
 
     return TRUE;
@@ -4265,7 +4264,7 @@ static HRESULT adapter_gl_create_device(struct wined3d *wined3d, const struct wi
     if (FAILED(hr = wined3d_device_init(&device_gl->d, wined3d, adapter->ordinal, device_type, focus_window,
             flags, surface_alignment, levels, level_count, adapter->gl_info.supported, device_parent)))
     {
-        WARN("Failed to initialize device, hr %#x.\n", hr);
+        WARN("Failed to initialize device, hr %#lx.\n", hr);
         heap_free(device_gl);
         return hr;
     }
@@ -4700,7 +4699,7 @@ static HRESULT adapter_gl_create_swapchain(struct wined3d_device *device,
 
     if (FAILED(hr = wined3d_swapchain_gl_init(swapchain_gl, device, desc, state_parent, parent, parent_ops)))
     {
-        WARN("Failed to initialise swapchain, hr %#x.\n", hr);
+        WARN("Failed to initialise swapchain, hr %#lx.\n", hr);
         heap_free(swapchain_gl);
         return hr;
     }
@@ -4734,7 +4733,7 @@ static HRESULT adapter_gl_create_buffer(struct wined3d_device *device,
 
     if (FAILED(hr = wined3d_buffer_gl_init(buffer_gl, device, desc, data, parent, parent_ops)))
     {
-        WARN("Failed to initialise buffer, hr %#x.\n", hr);
+        WARN("Failed to initialise buffer, hr %#lx.\n", hr);
         heap_free(buffer_gl);
         return hr;
     }
@@ -4781,7 +4780,7 @@ static HRESULT adapter_gl_create_texture(struct wined3d_device *device,
     if (FAILED(hr = wined3d_texture_gl_init(texture_gl, device, desc,
             layer_count, level_count, flags, parent, parent_ops)))
     {
-        WARN("Failed to initialise texture, hr %#x.\n", hr);
+        WARN("Failed to initialise texture, hr %#lx.\n", hr);
         heap_free(texture_gl);
         return hr;
     }
@@ -4832,7 +4831,7 @@ static HRESULT adapter_gl_create_rendertarget_view(const struct wined3d_view_des
 
     if (FAILED(hr = wined3d_rendertarget_view_gl_init(view_gl, desc, resource, parent, parent_ops)))
     {
-        WARN("Failed to initialise view, hr %#x.\n", hr);
+        WARN("Failed to initialise view, hr %#lx.\n", hr);
         heap_free(view_gl);
         return hr;
     }
@@ -4936,7 +4935,7 @@ static HRESULT adapter_gl_create_shader_resource_view(const struct wined3d_view_
 
     if (FAILED(hr = wined3d_shader_resource_view_gl_init(view_gl, desc, resource, parent, parent_ops)))
     {
-        WARN("Failed to initialise view, hr %#x.\n", hr);
+        WARN("Failed to initialise view, hr %#lx.\n", hr);
         heap_free(view_gl);
         return hr;
     }
@@ -4981,7 +4980,7 @@ static HRESULT adapter_gl_create_unordered_access_view(const struct wined3d_view
 
     if (FAILED(hr = wined3d_unordered_access_view_gl_init(view_gl, desc, resource, parent, parent_ops)))
     {
-        WARN("Failed to initialise view, hr %#x.\n", hr);
+        WARN("Failed to initialise view, hr %#lx.\n", hr);
         heap_free(view_gl);
         return hr;
     }
