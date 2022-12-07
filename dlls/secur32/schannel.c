@@ -555,16 +555,15 @@ static SECURITY_STATUS acquire_credentials_handle(ULONG fCredentialUse,
 
     if (schanCred)
     {
-        const unsigned dtls_protocols = SP_PROT_DTLS_CLIENT | SP_PROT_DTLS1_2_CLIENT;
-        const unsigned tls_protocols = SP_PROT_TLS1_CLIENT | SP_PROT_TLS1_0_CLIENT | SP_PROT_TLS1_1_CLIENT |
-                                       SP_PROT_TLS1_2_CLIENT | SP_PROT_TLS1_3_CLIENT;
+        const unsigned dtls_protocols = SP_PROT_DTLS1_X;
+        const unsigned non_dtls_protocols = (SP_PROT_X_CLIENTS | SP_PROT_X_SERVERS) & ~SP_PROT_DTLS1_X;
 
         status = get_cert(schanCred, &cert);
         if (status != SEC_E_OK && status != SEC_E_NO_CREDENTIALS)
             return status;
 
         cred_enabled_protocols = get_enabled_protocols(schanCred);
-        if ((cred_enabled_protocols & tls_protocols) &&
+        if ((cred_enabled_protocols & non_dtls_protocols) &&
             (cred_enabled_protocols & dtls_protocols)) return SEC_E_ALGORITHM_MISMATCH;
 
         status = SEC_E_OK;
@@ -579,9 +578,13 @@ static SECURITY_STATUS acquire_credentials_handle(ULONG fCredentialUse,
         enabled_protocols = cred_enabled_protocols & config_enabled_protocols;
     else
         enabled_protocols = config_enabled_protocols & ~config_default_disabled_protocols;
+    if (!(fCredentialUse & SECPKG_CRED_OUTBOUND))
+        enabled_protocols &= ~SP_PROT_X_CLIENTS;
+    if (!(fCredentialUse & SECPKG_CRED_INBOUND))
+        enabled_protocols &= ~SP_PROT_X_SERVERS;
     if(!enabled_protocols) {
         ERR("Could not find matching protocol\n");
-        return SEC_E_NO_AUTHENTICATING_AUTHORITY;
+        return SEC_E_ALGORITHM_MISMATCH;
     }
 
     if (!(creds = malloc(sizeof(*creds)))) return SEC_E_INSUFFICIENT_MEMORY;

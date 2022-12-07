@@ -351,6 +351,8 @@ static void testAcquireSecurityContext(void)
     ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08lx\n", st);
     if(st == SEC_E_OK)
         FreeCredentialsHandle(&cred);
+    st = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND, NULL, NULL, NULL, NULL, &cred, NULL);
+    ok(st == SEC_E_NO_CREDENTIALS, "st = %08lx\n", st);
     memset(&cred, 0, sizeof(cred));
     st = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND,
      NULL, NULL, NULL, NULL, &cred, &exp);
@@ -362,6 +364,22 @@ static void testAcquireSecurityContext(void)
     ok(st == SEC_E_NO_CREDENTIALS || st == SEC_E_UNSUPPORTED_FUNCTION /* before Vista */, "expected SEC_E_NO_CREDENTIALS, got %08lx\n", st);
 
     FreeCredentialsHandle(&cred);
+
+    /* Should fail if no enabled protocols are available */
+    init_cred(&schanCred);
+    schanCred.grbitEnabledProtocols = SP_PROT_TLS1_X_SERVER;
+    st = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND, NULL, &schanCred, NULL, NULL, &cred, &exp);
+    ok(st == SEC_E_ALGORITHM_MISMATCH, "st = %08lx\n", st);
+    st = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND, NULL, &schanCred, NULL, NULL, &cred, &exp);
+    ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08lx\n", st);
+    FreeCredentialsHandle(&cred);
+
+    schanCred.grbitEnabledProtocols = SP_PROT_TLS1_X_CLIENT;
+    st = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND, NULL, &schanCred, NULL, NULL, &cred, &exp);
+    ok(st == SEC_E_OK, "AcquireCredentialsHandleA failed: %08lx\n", st);
+    FreeCredentialsHandle(&cred);
+    st = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_INBOUND, NULL, &schanCred, NULL, NULL, &cred, &exp);
+    ok(st == SEC_E_ALGORITHM_MISMATCH, "st = %08lx\n", st);
 
     /* Bad version in SCHANNEL_CRED */
     memset(&schanCred, 0, sizeof(schanCred));
@@ -1668,7 +1686,7 @@ static void test_dtls(void)
     SECURITY_STATUS status;
     TimeStamp exp;
     SCHANNEL_CRED cred;
-    CredHandle cred_handle;
+    CredHandle cred_handle, cred_handle2;
     CtxtHandle ctx_handle, ctx_handle2;
     SecBufferDesc buffers[3];
     ULONG flags_req, flags_ret, attr, prev_buf_len;
@@ -1686,6 +1704,19 @@ static void test_dtls(void)
         return;
     }
     ok( status == SEC_E_OK, "got %08lx\n", status );
+
+    /* Should fail if both DTLS and TLS protocols are requested */
+    cred.grbitEnabledProtocols |= SP_PROT_TLS1_CLIENT;
+    status = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND, NULL, &cred, NULL, NULL, &cred_handle2, &exp);
+    ok(status == SEC_E_ALGORITHM_MISMATCH, "status = %08lx\n", status);
+
+    cred.grbitEnabledProtocols = SP_PROT_DTLS1_X_CLIENT | SP_PROT_TLS1_SERVER;
+    status = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND, NULL, &cred, NULL, NULL, &cred_handle2, &exp);
+    ok(status == SEC_E_ALGORITHM_MISMATCH, "status = got %08lx\n", status);
+
+    cred.grbitEnabledProtocols = SP_PROT_DTLS1_X_CLIENT | SP_PROT_SSL3_SERVER;
+    status = AcquireCredentialsHandleA(NULL, unisp_name_a, SECPKG_CRED_OUTBOUND, NULL, &cred, NULL, NULL, &cred_handle2, &exp);
+    ok(status == SEC_E_ALGORITHM_MISMATCH, "status = got %08lx\n", status);
 
     flags_req = ISC_REQ_MANUAL_CRED_VALIDATION | ISC_REQ_EXTENDED_ERROR | ISC_REQ_DATAGRAM | ISC_REQ_USE_SUPPLIED_CREDS |
                 ISC_REQ_CONFIDENTIALITY | ISC_REQ_SEQUENCE_DETECT | ISC_REQ_REPLAY_DETECT;
