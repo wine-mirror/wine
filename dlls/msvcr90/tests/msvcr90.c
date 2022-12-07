@@ -1542,28 +1542,28 @@ static void test__AdjustPointer(void)
     void *obj1 = &obj.off;
     void *obj2 = &obj;
     struct test_data {
-        void *ptr;
-        void *ret;
+        uintptr_t ptr;
+        uintptr_t ret;
         struct {
             int this_offset;
             int vbase_descr;
             int vbase_offset;
         } this_ptr_offsets;
     } data[] = {
-        {NULL, NULL, {0, -1, 0}},
-        {(void*)0xbeef, (void*)0xbef0, {1, -1, 1}},
-        {(void*)0xbeef, (void*)0xbeee, {-1, -1, 0}},
-        {&obj1, (char*)&obj1 + obj.off, {0, 0, 0}},
-        {(char*)&obj1 - 5, (char*)&obj1 + obj.off, {0, 5, 0}},
-        {(char*)&obj1 - 3, (char*)&obj1 + obj.off + 24, {24, 3, 0}},
-        {(char*)&obj2 - 17, (char*)&obj2 + obj.off + 4, {4, 17, sizeof(int)}}
+        {0, 0, {0, -1, 0}},
+        {0xbeef, 0xbef0, {1, -1, 1}},
+        {0xbeef, 0xbeee, {-1, -1, 0}},
+        {(uintptr_t)&obj1, (uintptr_t)&obj1 + obj.off, {0, 0, 0}},
+        {(uintptr_t)&obj1 - 5, (uintptr_t)&obj1 + obj.off, {0, 5, 0}},
+        {(uintptr_t)&obj1 - 3, (uintptr_t)&obj1 + obj.off + 24, {24, 3, 0}},
+        {(uintptr_t)&obj2 - 17, (uintptr_t)&obj2 + obj.off + 4, {4, 17, sizeof(int)}}
     };
     void *ret;
     int i;
 
     for(i=0; i<ARRAY_SIZE(data); i++) {
-        ret = p__AdjustPointer(data[i].ptr, &data[i].this_ptr_offsets);
-        ok(ret == data[i].ret, "%d) __AdjustPointer returned %p, expected %p\n", i, ret, data[i].ret);
+        ret = p__AdjustPointer((void*)data[i].ptr, &data[i].this_ptr_offsets);
+        ok(ret == (void*)data[i].ret, "%d) __AdjustPointer returned %p, expected %p\n", i, ret, (void*)data[i].ret);
     }
 }
 
