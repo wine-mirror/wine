@@ -775,11 +775,22 @@ static void test_GetTask(void)
     hr = ITaskFolder_CreateFolder(root, Wine, v_null, &folder);
     ok(hr == S_OK, "CreateFolder error %#lx\n", hr);
 
+    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
+
+    hr = ITaskFolder_RegisterTask(root, Wine, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || broken(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS)) /* Vista */, "expected ERROR_ACCESS_DENIED, got %#lx\n", hr);
+
+    /* Delete the folder and recreate it to prevent a crash on w1064v1507 */
+    hr = ITaskFolder_DeleteFolder(root, Wine, 0);
+    ok(hr == S_OK, "DeleteTask error %#lx\n", hr);
+
+    hr = ITaskFolder_CreateFolder(root, Wine, v_null, &folder);
+    ok(hr == S_OK, "CreateFolder error %#lx\n", hr);
+
     hr = ITaskFolder_GetTask(root, Wine, &task1);
     ok(hr == HRESULT_FROM_WIN32(ERROR_PATH_NOT_FOUND) || hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) /* win7 */,
        "expected ERROR_PATH_NOT_FOUND, got %#lx\n", hr);
-
-    MultiByteToWideChar(CP_ACP, 0, xml1, -1, xmlW, ARRAY_SIZE(xmlW));
 
     for (i = 0; i < ARRAY_SIZE(create_new_task); i++)
     {
@@ -798,10 +809,6 @@ static void test_GetTask(void)
 
     hr = ITaskFolder_RegisterTask(root, Wine, xmlW, TASK_VALIDATE_ONLY, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     ok(hr == S_OK, "RegisterTask error %#lx\n", hr);
-
-    hr = ITaskFolder_RegisterTask(root, Wine, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
-    todo_wine
-    ok(hr == HRESULT_FROM_WIN32(ERROR_ACCESS_DENIED) || broken(hr == HRESULT_FROM_WIN32(ERROR_ALREADY_EXISTS)) /* Vista */, "expected ERROR_ACCESS_DENIED, got %#lx\n", hr);
 
     hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, TASK_CREATE, v_null, v_null, TASK_LOGON_NONE, v_null, NULL);
     ok(hr == S_OK, "RegisterTask error %#lx\n", hr);
