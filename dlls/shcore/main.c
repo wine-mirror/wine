@@ -29,6 +29,7 @@
 #include "ocidl.h"
 #include "featurestagingapi.h"
 #include "shellscalingapi.h"
+#define WINSHLWAPI
 #include "shlwapi.h"
 
 #include "wine/debug.h"

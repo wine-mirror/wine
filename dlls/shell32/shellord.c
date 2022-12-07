@@ -84,24 +84,6 @@ extern INT    WINAPI FindMRUData(HANDLE hList, LPCVOID lpData, DWORD cbData, LPI
 extern INT    WINAPI EnumMRUListA(HANDLE hList, INT nItemPos, LPVOID lpBuffer, DWORD nBufferSize);
 
 
-/* Get a function pointer from a DLL handle */
-#define GET_FUNC(func, module, name, fail) \
-  do { \
-    if (!func) { \
-      if (!SHELL32_h##module && !(SHELL32_h##module = LoadLibraryA(#module ".dll"))) return fail; \
-      func = (void*)GetProcAddress(SHELL32_h##module, name); \
-      if (!func) return fail; \
-    } \
-  } while (0)
-
-/* Function pointers for GET_FUNC macro */
-static HMODULE SHELL32_hshlwapi=NULL;
-static HANDLE (WINAPI *pSHAllocShared)(LPCVOID,DWORD,DWORD);
-static LPVOID (WINAPI *pSHLockShared)(HANDLE,DWORD);
-static BOOL   (WINAPI *pSHUnlockShared)(LPVOID);
-static BOOL   (WINAPI *pSHFreeShared)(HANDLE,DWORD);
-
-
 /*************************************************************************
  * ParseFieldA					[internal]
  *
@@ -1321,50 +1303,6 @@ BOOL WINAPI IsUserAnAdmin(VOID)
     FreeSid(lpSid);
     heap_free(lpGroups);
     return bResult;
-}
-
-/*************************************************************************
- * SHAllocShared				[SHELL32.520]
- *
- * See shlwapi.SHAllocShared
- */
-HANDLE WINAPI SHAllocShared(const void *lpvData, DWORD dwSize, DWORD dwProcId)
-{
-    GET_FUNC(pSHAllocShared, shlwapi, (char*)7, NULL);
-    return pSHAllocShared(lpvData, dwSize, dwProcId);
-}
-
-/*************************************************************************
- * SHLockShared					[SHELL32.521]
- *
- * See shlwapi.SHLockShared
- */
-LPVOID WINAPI SHLockShared(HANDLE hShared, DWORD dwProcId)
-{
-    GET_FUNC(pSHLockShared, shlwapi, (char*)8, NULL);
-    return pSHLockShared(hShared, dwProcId);
-}
-
-/*************************************************************************
- * SHUnlockShared				[SHELL32.522]
- *
- * See shlwapi.SHUnlockShared
- */
-BOOL WINAPI SHUnlockShared(LPVOID lpView)
-{
-    GET_FUNC(pSHUnlockShared, shlwapi, (char*)9, FALSE);
-    return pSHUnlockShared(lpView);
-}
-
-/*************************************************************************
- * SHFreeShared					[SHELL32.523]
- *
- * See shlwapi.SHFreeShared
- */
-BOOL WINAPI SHFreeShared(HANDLE hShared, DWORD dwProcId)
-{
-    GET_FUNC(pSHFreeShared, shlwapi, (char*)10, FALSE);
-    return pSHFreeShared(hShared, dwProcId);
 }
 
 /*************************************************************************
