@@ -1994,15 +1994,15 @@ struct wined3d_caps
 
 struct wined3d_color_key
 {
-    DWORD color_space_low_value;    /* low boundary of color space that is to
-                                     * be treated as Color Key, inclusive */
-    DWORD color_space_high_value;   /* high boundary of color space that is
-                                     * to be treated as Color Key, inclusive */
+    unsigned int color_space_low_value;    /* low boundary of color space that is to
+                                            * be treated as Color Key, inclusive */
+    unsigned int color_space_high_value;   /* high boundary of color space that is
+                                            * to be treated as Color Key, inclusive */
 };
 
 struct wined3d_blt_fx
 {
-    DWORD fx;
+    uint32_t fx;
     struct wined3d_color_key dst_color_key;
     struct wined3d_color_key src_color_key;
     enum wined3d_format_id resolve_format_id;

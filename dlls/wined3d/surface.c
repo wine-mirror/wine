@@ -41,7 +41,7 @@ static void get_color_masks(const struct wined3d_format *format, uint32_t *masks
 }
 
 static void convert_r32_float_r16_float(const BYTE *src, BYTE *dst,
-        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+        unsigned int pitch_in, unsigned int pitch_out, unsigned int w, unsigned int h)
 {
     unsigned short *dst_s;
     const float *src_f;
@@ -61,7 +61,7 @@ static void convert_r32_float_r16_float(const BYTE *src, BYTE *dst,
 }
 
 static void convert_r5g6b5_x8r8g8b8(const BYTE *src, BYTE *dst,
-        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+        unsigned int pitch_in, unsigned int pitch_out, unsigned int w, unsigned int h)
 {
     static const unsigned char convert_5to8[] =
     {
@@ -103,7 +103,7 @@ static void convert_r5g6b5_x8r8g8b8(const BYTE *src, BYTE *dst,
 /* We use this for both B8G8R8A8 -> B8G8R8X8 and B8G8R8X8 -> B8G8R8A8, since
  * in both cases we're just setting the X / Alpha channel to 0xff. */
 static void convert_a8r8g8b8_x8r8g8b8(const BYTE *src, BYTE *dst,
-        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+        unsigned int pitch_in, unsigned int pitch_out, unsigned int w, unsigned int h)
 {
     unsigned int x, y;
 
@@ -127,7 +127,7 @@ static inline BYTE cliptobyte(int x)
 }
 
 static void convert_yuy2_x8r8g8b8(const BYTE *src, BYTE *dst,
-        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+        unsigned int pitch_in, unsigned int pitch_out, unsigned int w, unsigned int h)
 {
     int c2, d, e, r2 = 0, g2 = 0, b2 = 0;
     unsigned int x, y;
@@ -169,7 +169,7 @@ static void convert_yuy2_x8r8g8b8(const BYTE *src, BYTE *dst,
 }
 
 static void convert_yuy2_r5g6b5(const BYTE *src, BYTE *dst,
-        DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h)
+        unsigned int pitch_in, unsigned int pitch_out, unsigned int w, unsigned int h)
 {
     unsigned int x, y;
     int c2, d, e, r2 = 0, g2 = 0, b2 = 0;
@@ -212,7 +212,9 @@ static void convert_yuy2_r5g6b5(const BYTE *src, BYTE *dst,
 struct d3dfmt_converter_desc
 {
     enum wined3d_format_id from, to;
-    void (*convert)(const BYTE *src, BYTE *dst, DWORD pitch_in, DWORD pitch_out, unsigned int w, unsigned int h);
+    void (*convert)(const BYTE *src, BYTE *dst,
+                    unsigned int pitch_in, unsigned int pitch_out,
+                    unsigned int w, unsigned int h);
 };
 
 static const struct d3dfmt_converter_desc converters[] =
@@ -968,7 +970,7 @@ do { \
             }
             else
             {
-                DWORD masks[3];
+                uint32_t masks[3];
                 get_color_masks(src_format, masks);
                 keymask = masks[0] | masks[1] | masks[2];
             }
