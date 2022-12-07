@@ -19,10 +19,12 @@
 #ifndef _WINUSER_
 #define _WINUSER_
 
+#ifndef WINUSERAPI
 #if !defined(_USER32_) && !defined(WINE_UNIX_LIB)
-#define WINUSERAPI DECLSPEC_HIDDEN
+#define WINUSERAPI DECLSPEC_IMPORT
 #else
 #define WINUSERAPI
+#endif
 #endif
 
 #ifndef RC_INVOKED
