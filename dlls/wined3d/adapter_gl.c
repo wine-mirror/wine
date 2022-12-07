@@ -719,7 +719,7 @@ static BOOL match_broken_arb_fog(const struct wined3d_gl_info *gl_info, struct w
         const char *gl_renderer, enum wined3d_gl_vendor gl_vendor,
         enum wined3d_pci_vendor card_vendor, enum wined3d_pci_device device)
 {
-    DWORD data[4];
+    unsigned int data[4];
     GLuint tex, fbo;
     GLenum status;
     float color[4] = {0.0f, 1.0f, 0.0f, 0.0f};
