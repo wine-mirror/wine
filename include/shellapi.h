@@ -23,6 +23,14 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
+#ifndef WINSHELLAPI
+#ifdef _SHELL32_
+# define WINSHELLAPI
+#else
+# define WINSHELLAPI DECLSPEC_IMPORT
+#endif
+#endif
+
 #ifndef _WIN64
 #include <pshpack1.h>
 #endif
@@ -52,12 +60,12 @@ typedef struct _DRAGINFOW
 DECL_WINELIB_TYPE_AW(DRAGINFO)
 DECL_WINELIB_TYPE_AW(LPDRAGINFO)
 
-void	WINAPI DragAcceptFiles(HWND hWnd, BOOL b);
-UINT	WINAPI DragQueryFileA(HDROP hDrop, UINT lFile, LPSTR lpszFile, UINT lLength);
-UINT	WINAPI DragQueryFileW(HDROP hDrop, UINT lFile, LPWSTR lpszFile, UINT lLength);
-#define        DragQueryFile WINELIB_NAME_AW(DragQueryFile)
-void	WINAPI DragFinish(HDROP h);
-BOOL	WINAPI DragQueryPoint(HDROP hDrop, POINT *p);
+WINSHELLAPI void	WINAPI DragAcceptFiles(HWND hWnd, BOOL b);
+WINSHELLAPI UINT	WINAPI DragQueryFileA(HDROP hDrop, UINT lFile, LPSTR lpszFile, UINT lLength);
+WINSHELLAPI UINT	WINAPI DragQueryFileW(HDROP hDrop, UINT lFile, LPWSTR lpszFile, UINT lLength);
+#define                        DragQueryFile WINELIB_NAME_AW(DragQueryFile)
+WINSHELLAPI void	WINAPI DragFinish(HDROP h);
+WINSHELLAPI BOOL	WINAPI DragQueryPoint(HDROP hDrop, POINT *p);
 
 
 
@@ -97,7 +105,7 @@ typedef struct _AppBarData
 	LPARAM	lParam;
 } APPBARDATA, *PAPPBARDATA;
 
-UINT_PTR WINAPI SHAppBarMessage(DWORD,PAPPBARDATA);
+WINSHELLAPI UINT_PTR WINAPI SHAppBarMessage(DWORD,PAPPBARDATA);
 
 /******************************************
  * SHGetFileInfo
@@ -140,15 +148,15 @@ typedef struct tagSHFILEINFOW
 
 DECL_WINELIB_TYPE_AW(SHFILEINFO)
 
-DWORD_PTR	WINAPI SHGetFileInfoA(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
-DWORD_PTR	WINAPI SHGetFileInfoW(LPCWSTR,DWORD,SHFILEINFOW*,UINT,UINT);
+WINSHELLAPI DWORD_PTR	WINAPI SHGetFileInfoA(LPCSTR,DWORD,SHFILEINFOA*,UINT,UINT);
+WINSHELLAPI DWORD_PTR	WINAPI SHGetFileInfoW(LPCWSTR,DWORD,SHFILEINFOW*,UINT,UINT);
 #define  SHGetFileInfo WINELIB_NAME_AW(SHGetFileInfo)
 
 /******************************************
  * SHGetImageList
  */
 
-HRESULT WINAPI SHGetImageList(INT, REFIID, void **);
+WINSHELLAPI HRESULT WINAPI SHGetImageList(INT, REFIID, void **);
 
 #define SHIL_LARGE        0x0
 #define SHIL_SMALL        0x1
@@ -222,8 +230,8 @@ typedef struct _SHFILEOPSTRUCTW
 #define  SHFILEOPSTRUCT WINELIB_NAME_AW(SHFILEOPSTRUCT)
 #define  LPSHFILEOPSTRUCT WINELIB_NAME_AW(LPSHFILEOPSTRUCT)
 
-int	WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp);
-int	WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp);
+WINSHELLAPI int	WINAPI SHFileOperationA (LPSHFILEOPSTRUCTA lpFileOp);
+WINSHELLAPI int	WINAPI SHFileOperationW (LPSHFILEOPSTRUCTW lpFileOp);
 #define  SHFileOperation WINELIB_NAME_AW(SHFileOperation)
 
 typedef struct _SHNAMEMAPPINGA
@@ -245,15 +253,15 @@ typedef struct _SHNAMEMAPPINGW
 DECL_WINELIB_TYPE_AW(SHNAMEMAPPING)
 DECL_WINELIB_TYPE_AW(LPSHNAMEMAPPING)
 
-void WINAPI SHFreeNameMappings(HANDLE hNameMappings);
+WINSHELLAPI void WINAPI SHFreeNameMappings(HANDLE hNameMappings);
 
 /******************************************
  * ShellExecute
  */
 
-HINSTANCE	WINAPI ShellExecuteA(HWND,LPCSTR,LPCSTR,LPCSTR,LPCSTR,INT);
-HINSTANCE	WINAPI ShellExecuteW(HWND,LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR,INT);
-#define     ShellExecute WINELIB_NAME_AW(ShellExecute)
+WINSHELLAPI HINSTANCE WINAPI ShellExecuteA(HWND,LPCSTR,LPCSTR,LPCSTR,LPCSTR,INT);
+WINSHELLAPI HINSTANCE WINAPI ShellExecuteW(HWND,LPCWSTR,LPCWSTR,LPCWSTR,LPCWSTR,INT);
+#define                      ShellExecute WINELIB_NAME_AW(ShellExecute)
 
 #define SE_ERR_FNF              2       /* file not found */
 #define SE_ERR_PNF              3       /* path not found */
@@ -336,12 +344,12 @@ typedef struct _SHELLEXECUTEINFOW
 #define SHELLEXECUTEINFO   WINELIB_NAME_AW(SHELLEXECUTEINFO)
 #define LPSHELLEXECUTEINFO WINELIB_NAME_AW(LPSHELLEXECUTEINFO)
 
-BOOL WINAPI ShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo);
-BOOL WINAPI ShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo);
+WINSHELLAPI BOOL WINAPI ShellExecuteExA(LPSHELLEXECUTEINFOA lpExecInfo);
+WINSHELLAPI BOOL WINAPI ShellExecuteExW(LPSHELLEXECUTEINFOW lpExecInfo);
 #define ShellExecuteEx  WINELIB_NAME_AW(ShellExecuteEx)
 
-void WINAPI WinExecErrorA(HWND hwnd,INT error, LPCSTR lpstrFileName, LPCSTR lpstrTitle);
-void WINAPI WinExecErrorW(HWND hwnd,INT error, LPCWSTR lpstrFileName, LPCWSTR lpstrTitle);
+WINSHELLAPI void WINAPI WinExecErrorA(HWND hwnd,INT error, LPCSTR lpstrFileName, LPCSTR lpstrTitle);
+WINSHELLAPI void WINAPI WinExecErrorW(HWND hwnd,INT error, LPCWSTR lpstrFileName, LPCWSTR lpstrTitle);
 #define WinExecError  WINELIB_NAME_AW(WinExecError)
 
 /******************************************
@@ -445,12 +453,11 @@ typedef struct _NOTIFYICONIDENTIFIER
 DECL_WINELIB_TYPE_AW(NOTIFYICONDATA)
 DECL_WINELIB_TYPE_AW(PNOTIFYICONDATA)
 
-BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA lpData);
-BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW lpData);
-
+WINSHELLAPI BOOL WINAPI Shell_NotifyIconA(DWORD dwMessage, PNOTIFYICONDATAA lpData);
+WINSHELLAPI BOOL WINAPI Shell_NotifyIconW(DWORD dwMessage, PNOTIFYICONDATAW lpData);
 #define Shell_NotifyIcon WINELIB_NAME_AW(Shell_NotifyIcon)
 
-HRESULT WINAPI Shell_NotifyIconGetRect(const NOTIFYICONIDENTIFIER* identifier, RECT* iconLocation);
+WINSHELLAPI HRESULT WINAPI Shell_NotifyIconGetRect(const NOTIFYICONIDENTIFIER* identifier, RECT* iconLocation);
 
 /* pre IE 5.0 */
 #define NOTIFYICONDATAA_V1_SIZE FIELD_OFFSET(NOTIFYICONDATAA, szTip[64])
@@ -474,9 +481,9 @@ HRESULT WINAPI Shell_NotifyIconGetRect(const NOTIFYICONIDENTIFIER* identifier, R
 #define SHGNLI_NOUNIQUE    0x04
 #define SHGNLI_NOLNK       0x08
 
-BOOL WINAPI SHGetNewLinkInfoA(LPCSTR,LPCSTR,LPSTR,BOOL*,UINT);
-BOOL WINAPI SHGetNewLinkInfoW(LPCWSTR,LPCWSTR,LPWSTR,BOOL*,UINT);
-#define     SHGetNewLinkInfo WINELIB_NAME_AW(SHGetNewLinkInfo)
+WINSHELLAPI BOOL WINAPI SHGetNewLinkInfoA(LPCSTR,LPCSTR,LPSTR,BOOL*,UINT);
+WINSHELLAPI BOOL WINAPI SHGetNewLinkInfoW(LPCWSTR,LPCWSTR,LPWSTR,BOOL*,UINT);
+#define                 SHGetNewLinkInfo WINELIB_NAME_AW(SHGetNewLinkInfo)
 
 /******************************************
  * Recycle bin
@@ -489,11 +496,11 @@ typedef struct _SHQUERYRBINFO
     DWORDLONG i64NumItems;
 } SHQUERYRBINFO, *LPSHQUERYRBINFO;
 
-HRESULT     WINAPI SHEmptyRecycleBinA(HWND,LPCSTR,DWORD);
-HRESULT     WINAPI SHEmptyRecycleBinW(HWND,LPCWSTR,DWORD);
+WINSHELLAPI HRESULT     WINAPI SHEmptyRecycleBinA(HWND,LPCSTR,DWORD);
+WINSHELLAPI HRESULT     WINAPI SHEmptyRecycleBinW(HWND,LPCWSTR,DWORD);
 #define     SHEmptyRecycleBin WINELIB_NAME_AW(SHEmptyRecycleBin)
-HRESULT     WINAPI SHQueryRecycleBinA(LPCSTR,LPSHQUERYRBINFO);
-HRESULT     WINAPI SHQueryRecycleBinW(LPCWSTR,LPSHQUERYRBINFO);
+WINSHELLAPI HRESULT     WINAPI SHQueryRecycleBinA(LPCSTR,LPSHQUERYRBINFO);
+WINSHELLAPI HRESULT     WINAPI SHQueryRecycleBinW(LPCWSTR,LPSHQUERYRBINFO);
 #define     SHQueryRecycleBin WINELIB_NAME_AW(SHQueryRecycleBin)
 
 /******************************************
@@ -535,7 +542,7 @@ typedef enum
     QUNS_APP                     = 7
 } QUERY_USER_NOTIFICATION_STATE;
 
-HRESULT     WINAPI SHQueryUserNotificationState(QUERY_USER_NOTIFICATION_STATE*);
+WINSHELLAPI HRESULT WINAPI SHQueryUserNotificationState(QUERY_USER_NOTIFICATION_STATE*);
 
 typedef enum SHSTOCKICONID
 {
@@ -663,38 +670,36 @@ typedef struct _SHSTOCKICONINFO
 #define SHGSI_SMALLICON     SHGFI_SMALLICON
 #define SHGSI_SHELLICONSIZE SHGFI_SHELLICONSIZE
 
-HRESULT     WINAPI SHGetStockIconInfo(SHSTOCKICONID, UINT, SHSTOCKICONINFO*);
-LPWSTR*     WINAPI CommandLineToArgvW(LPCWSTR,int*);
-HICON       WINAPI ExtractIconA(HINSTANCE,LPCSTR,UINT);
-HICON       WINAPI ExtractIconW(HINSTANCE,LPCWSTR,UINT);
-#define     ExtractIcon WINELIB_NAME_AW(ExtractIcon)
-HICON       WINAPI ExtractAssociatedIconA(HINSTANCE,LPSTR,LPWORD);
-HICON       WINAPI ExtractAssociatedIconW(HINSTANCE,LPWSTR,LPWORD);
-#define     ExtractAssociatedIcon WINELIB_NAME_AW(ExtractAssociatedIcon)
-HICON       WINAPI ExtractAssociatedIconExA(HINSTANCE,LPSTR,LPWORD,LPWORD);
-HICON       WINAPI ExtractAssociatedIconExW(HINSTANCE,LPWSTR,LPWORD,LPWORD);
-#define     ExtractAssociatedIconEx WINELIB_NAME_AW(ExtractAssociatedIconEx)
-UINT        WINAPI ExtractIconExA(LPCSTR,INT,HICON*,HICON*,UINT);
-UINT        WINAPI ExtractIconExW(LPCWSTR,INT,HICON*,HICON*,UINT);
-#define     ExtractIconEx WINELIB_NAME_AW(ExtractIconEx)
-HINSTANCE   WINAPI FindExecutableA(LPCSTR,LPCSTR,LPSTR);
-HINSTANCE   WINAPI FindExecutableW(LPCWSTR,LPCWSTR,LPWSTR);
-#define     FindExecutable WINELIB_NAME_AW(FindExecutable)
-BOOL        WINAPI ShellAboutA(HWND,LPCSTR,LPCSTR,HICON);
-BOOL        WINAPI ShellAboutW(HWND,LPCWSTR,LPCWSTR,HICON);
-#define     ShellAbout WINELIB_NAME_AW(ShellAbout)
-int         WINAPIV ShellMessageBoxA(HINSTANCE,HWND,LPCSTR,LPCSTR,UINT,...);
-int         WINAPIV ShellMessageBoxW(HINSTANCE,HWND,LPCWSTR,LPCWSTR,UINT,...);
-#define     ShellMessageBox WINELIB_NAME_AW(ShellMessageBox)
-DWORD       WINAPI DoEnvironmentSubstA(LPSTR, UINT);
-DWORD       WINAPI DoEnvironmentSubstW(LPWSTR, UINT);
-#define     DoEnvironmentSubst WINELIB_NAME_AW(DoEnvironmentSubst)
-
-HRESULT     WINAPI SHEnumerateUnreadMailAccountsA(HKEY,DWORD,LPSTR,INT);
-HRESULT     WINAPI SHEnumerateUnreadMailAccountsW(HKEY,DWORD,LPWSTR,INT);
-#define     SHEnumerateUnreadMailAccounts WINELIB_NAME_AW(SHEnumerateUnreadMailAccounts)
-
-HRESULT     WINAPI SHGetPropertyStoreForWindow(HWND,REFIID,void **);
+WINSHELLAPI HRESULT     WINAPI SHGetStockIconInfo(SHSTOCKICONID, UINT, SHSTOCKICONINFO*);
+WINSHELLAPI LPWSTR*     WINAPI CommandLineToArgvW(LPCWSTR,int*);
+WINSHELLAPI HICON       WINAPI ExtractIconA(HINSTANCE,LPCSTR,UINT);
+WINSHELLAPI HICON       WINAPI ExtractIconW(HINSTANCE,LPCWSTR,UINT);
+#define                        ExtractIcon WINELIB_NAME_AW(ExtractIcon)
+WINSHELLAPI HICON       WINAPI ExtractAssociatedIconA(HINSTANCE,LPSTR,LPWORD);
+WINSHELLAPI HICON       WINAPI ExtractAssociatedIconW(HINSTANCE,LPWSTR,LPWORD);
+#define                        ExtractAssociatedIcon WINELIB_NAME_AW(ExtractAssociatedIcon)
+WINSHELLAPI HICON       WINAPI ExtractAssociatedIconExA(HINSTANCE,LPSTR,LPWORD,LPWORD);
+WINSHELLAPI HICON       WINAPI ExtractAssociatedIconExW(HINSTANCE,LPWSTR,LPWORD,LPWORD);
+#define                        ExtractAssociatedIconEx WINELIB_NAME_AW(ExtractAssociatedIconEx)
+WINSHELLAPI UINT        WINAPI ExtractIconExA(LPCSTR,INT,HICON*,HICON*,UINT);
+WINSHELLAPI UINT        WINAPI ExtractIconExW(LPCWSTR,INT,HICON*,HICON*,UINT);
+#define                        ExtractIconEx WINELIB_NAME_AW(ExtractIconEx)
+WINSHELLAPI HINSTANCE   WINAPI FindExecutableA(LPCSTR,LPCSTR,LPSTR);
+WINSHELLAPI HINSTANCE   WINAPI FindExecutableW(LPCWSTR,LPCWSTR,LPWSTR);
+#define                        FindExecutable WINELIB_NAME_AW(FindExecutable)
+WINSHELLAPI BOOL        WINAPI ShellAboutA(HWND,LPCSTR,LPCSTR,HICON);
+WINSHELLAPI BOOL        WINAPI ShellAboutW(HWND,LPCWSTR,LPCWSTR,HICON);
+#define                        ShellAbout WINELIB_NAME_AW(ShellAbout)
+WINSHELLAPI int         WINAPIV ShellMessageBoxA(HINSTANCE,HWND,LPCSTR,LPCSTR,UINT,...);
+WINSHELLAPI int         WINAPIV ShellMessageBoxW(HINSTANCE,HWND,LPCWSTR,LPCWSTR,UINT,...);
+#define                         ShellMessageBox WINELIB_NAME_AW(ShellMessageBox)
+WINSHELLAPI DWORD       WINAPI DoEnvironmentSubstA(LPSTR, UINT);
+WINSHELLAPI DWORD       WINAPI DoEnvironmentSubstW(LPWSTR, UINT);
+#define                        DoEnvironmentSubst WINELIB_NAME_AW(DoEnvironmentSubst)
+WINSHELLAPI HRESULT     WINAPI SHEnumerateUnreadMailAccountsA(HKEY,DWORD,LPSTR,INT);
+WINSHELLAPI HRESULT     WINAPI SHEnumerateUnreadMailAccountsW(HKEY,DWORD,LPWSTR,INT);
+#define                        SHEnumerateUnreadMailAccounts WINELIB_NAME_AW(SHEnumerateUnreadMailAccounts)
+WINSHELLAPI HRESULT     WINAPI SHGetPropertyStoreForWindow(HWND,REFIID,void **);
 
 #ifdef __cplusplus
 } /* extern "C" */
