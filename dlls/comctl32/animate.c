@@ -187,20 +187,20 @@ static void ANIMATE_Free(ANIMATE_INFO *infoPtr)
             FreeResource(infoPtr->hRes);
             infoPtr->hRes = 0;
         }
-        free (infoPtr->lpIndex);
+        Free (infoPtr->lpIndex);
         infoPtr->lpIndex = NULL;
         if (infoPtr->hic)
         {
             fnIC.fnICClose(infoPtr->hic);
             infoPtr->hic = 0;
         }
-        free (infoPtr->inbih);
+        Free (infoPtr->inbih);
         infoPtr->inbih = NULL;
-        free (infoPtr->outbih);
+        Free (infoPtr->outbih);
         infoPtr->outbih = NULL;
-        free (infoPtr->indata);
+        Free (infoPtr->indata);
         infoPtr->indata = NULL;
-        free (infoPtr->outdata);
+        Free (infoPtr->outdata);
         infoPtr->outdata = NULL;
         if (infoPtr->hbmPrevFrame)
         {
@@ -564,7 +564,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 	return FALSE;
     }
 
-    infoPtr->inbih = calloc(1, mmckInfo.cksize);
+    infoPtr->inbih = Alloc(mmckInfo.cksize);
     if (!infoPtr->inbih) {
 	WARN("Can't alloc input BIH\n");
 	return FALSE;
@@ -611,7 +611,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
 
     /* FIXME: should handle the 'rec ' LIST when present */
 
-    infoPtr->lpIndex = calloc(infoPtr->mah.dwTotalFrames, sizeof(DWORD));
+    infoPtr->lpIndex = Alloc(infoPtr->mah.dwTotalFrames * sizeof(DWORD));
     if (!infoPtr->lpIndex) 
 	return FALSE;
 
@@ -635,7 +635,7 @@ static BOOL ANIMATE_GetAviInfo(ANIMATE_INFO *infoPtr)
         infoPtr->ash.dwSuggestedBufferSize = insize;
     }
 
-    infoPtr->indata = calloc(1, infoPtr->ash.dwSuggestedBufferSize);
+    infoPtr->indata = Alloc(infoPtr->ash.dwSuggestedBufferSize);
     if (!infoPtr->indata) 
 	return FALSE;
 
@@ -666,7 +666,7 @@ static BOOL ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
     outSize = fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT,
 			    (DWORD_PTR)infoPtr->inbih, 0L);
 
-    if (!(infoPtr->outbih = calloc(1, outSize)))
+    if (!(infoPtr->outbih = Alloc(outSize)))
         return FALSE;
 
     if (fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_GET_FORMAT,
@@ -676,7 +676,7 @@ static BOOL ANIMATE_GetAviCodec(ANIMATE_INFO *infoPtr)
 	return FALSE;
     }
 
-    if (!(infoPtr->outdata = calloc(1, infoPtr->outbih->biSizeImage)))
+    if (!(infoPtr->outdata = Alloc(infoPtr->outbih->biSizeImage)))
         return FALSE;
 
     if (fnIC.fnICSendMessage(infoPtr->hic, ICM_DECOMPRESS_BEGIN,
@@ -769,12 +769,12 @@ static BOOL ANIMATE_OpenA(ANIMATE_INFO *infoPtr, HINSTANCE hInstance, LPSTR lpsz
         return ANIMATE_OpenW(infoPtr, hInstance, (LPWSTR)lpszName);
 
     len = MultiByteToWideChar(CP_ACP, 0, lpszName, -1, NULL, 0);
-    lpwszName = malloc(len * sizeof(WCHAR));
+    lpwszName = Alloc(len * sizeof(WCHAR));
     if (!lpwszName) return FALSE;
     MultiByteToWideChar(CP_ACP, 0, lpszName, -1, lpwszName, len);
 
     result = ANIMATE_OpenW(infoPtr, hInstance, lpwszName);
-    free (lpwszName);
+    Free (lpwszName);
     return result;
 }
 
@@ -806,7 +806,7 @@ static BOOL ANIMATE_Create(HWND hWnd, const CREATESTRUCTW *lpcs)
     }
 
     /* allocate memory for info structure */
-    infoPtr = calloc(1, sizeof(*infoPtr));
+    infoPtr = Alloc(sizeof(*infoPtr));
     if (!infoPtr) return FALSE;
 
     /* store crossref hWnd <-> info structure */
@@ -836,7 +836,7 @@ static LRESULT ANIMATE_Destroy(ANIMATE_INFO *infoPtr)
 
     infoPtr->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&infoPtr->cs);
-    free(infoPtr);
+    Free(infoPtr);
 
     return 0;
 }

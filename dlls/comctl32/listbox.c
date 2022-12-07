@@ -33,7 +33,6 @@
 #include "vssym32.h"
 #include "wine/exception.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "comctl32.h"
 
@@ -153,7 +152,7 @@ static BOOL resize_storage(LB_DESCR *descr, UINT items_size)
         items_size = (items_size + LB_ARRAY_GRANULARITY - 1) & ~(LB_ARRAY_GRANULARITY - 1);
         if ((descr->style & (LBS_NODATA | LBS_MULTIPLESEL | LBS_EXTENDEDSEL)) != LBS_NODATA)
         {
-            items = heap_realloc(descr->u.items, items_size * get_sizeof_item(descr));
+            items = ReAlloc(descr->u.items, items_size * get_sizeof_item(descr));
             if (!items)
             {
                 SEND_NOTIFICATION(descr, LBN_ERRSPACE);

@@ -901,7 +901,7 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    {
 	    CREATESTRUCTW *pcs = (CREATESTRUCTW*)lParam;
 
-            infoPtr = calloc(1, sizeof(*infoPtr));
+            infoPtr = Alloc(sizeof(*infoPtr));
 	    SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
 	    /* initialize the info struct */
@@ -934,9 +934,9 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    break;
 
 	case WM_DESTROY:
-	    free (infoPtr->AccelVect);
+	    Free (infoPtr->AccelVect);
             UPDOWN_ResetSubclass (infoPtr);
-	    free (infoPtr);
+	    Free (infoPtr);
 	    SetWindowLongPtrW (hwnd, 0, 0);
             theme = GetWindowTheme (hwnd);
             CloseThemeData (theme);
@@ -1059,12 +1059,12 @@ static LRESULT WINAPI UpDownWindowProc(HWND hwnd, UINT message, WPARAM wParam, L
 	    TRACE("UDM_SETACCEL\n");
 
 	    if(infoPtr->AccelVect) {
-		free (infoPtr->AccelVect);
+		Free (infoPtr->AccelVect);
 		infoPtr->AccelCount = 0;
 		infoPtr->AccelVect  = 0;
       	    }
 	    if(wParam==0) return TRUE;
-	    infoPtr->AccelVect = malloc(wParam*sizeof(UDACCEL));
+	    infoPtr->AccelVect = Alloc(wParam*sizeof(UDACCEL));
 	    if(!infoPtr->AccelVect) return FALSE;
 	    memcpy(infoPtr->AccelVect, (void*)lParam, wParam*sizeof(UDACCEL));
             infoPtr->AccelCount = wParam;

@@ -94,7 +94,7 @@ static struct static_extra_info *get_extra_ptr( HWND hwnd, BOOL force )
     struct static_extra_info *extra = (struct static_extra_info *)GetWindowLongPtrW( hwnd, 0 );
     if (!extra && force)
     {
-        extra = calloc( 1, sizeof(*extra) );
+        extra = Alloc( sizeof(*extra) );
         if (extra)
             SetWindowLongPtrW( hwnd, 0, (ULONG_PTR)extra );
     }
@@ -470,7 +470,7 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
             {
                 if (extra->image_has_alpha)
                     DeleteObject( extra->image.hbitmap );
-                free( extra );
+                Free( extra );
             }
 /*
  * FIXME
@@ -751,13 +751,13 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style )
     }
 
     buf_size = 256;
-    if (!(text = malloc( buf_size * sizeof(WCHAR) )))
+    if (!(text = Alloc( buf_size * sizeof(WCHAR) )))
         goto no_TextOut;
 
     while ((len = InternalGetWindowText( hwnd, text, buf_size )) == buf_size - 1)
     {
         buf_size *= 2;
-        if (!(text = realloc( text, buf_size * sizeof(WCHAR) )))
+        if (!(text = ReAlloc( text, buf_size * sizeof(WCHAR) )))
             goto no_TextOut;
     }
 
@@ -777,7 +777,7 @@ static void STATIC_PaintTextfn( HWND hwnd, HDC hdc, HBRUSH hbrush, DWORD style )
     }
 
 no_TextOut:
-    free( text );
+    Free( text );
 
     if (hFont)
         SelectObject( hdc, hOldFont );

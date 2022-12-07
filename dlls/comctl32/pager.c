@@ -576,7 +576,7 @@ PAGER_Create (HWND hwnd, const CREATESTRUCTW *lpcs)
     INT ret;
 
     /* allocate memory for info structure */
-    infoPtr = calloc(1, sizeof(*infoPtr));
+    infoPtr = Alloc(sizeof(*infoPtr));
     if (!infoPtr) return -1;
     SetWindowLongPtrW (hwnd, 0, (DWORD_PTR)infoPtr);
 
@@ -611,8 +611,8 @@ static LRESULT
 PAGER_Destroy (PAGER_INFO *infoPtr)
 {
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
-    free (infoPtr->pwszBuffer);
-    free (infoPtr);
+    Free (infoPtr->pwszBuffer);
+    Free (infoPtr);
     return 0;
 }
 
@@ -1099,9 +1099,9 @@ static UINT PAGER_GetAnsiNtfCode(UINT code)
 static BOOL PAGER_AdjustBuffer(PAGER_INFO *infoPtr, INT size)
 {
     if (!infoPtr->pwszBuffer)
-        infoPtr->pwszBuffer = malloc(size);
+        infoPtr->pwszBuffer = Alloc(size);
     else if (infoPtr->nBufferSize < size)
-        infoPtr->pwszBuffer = realloc(infoPtr->pwszBuffer, size);
+        infoPtr->pwszBuffer = ReAlloc(infoPtr->pwszBuffer, size);
 
     if (!infoPtr->pwszBuffer) return FALSE;
     if (infoPtr->nBufferSize < size) infoPtr->nBufferSize = size;
@@ -1153,7 +1153,7 @@ static LRESULT PAGER_SendConvertedNotify(PAGER_INFO *infoPtr, NMHDR *hdr, UINT *
     if ((*text && flags & (CONVERT_SEND | ZERO_SEND)) || (!*text && flags & SEND_EMPTY_IF_NULL))
     {
         bufferSize = textMax ? *textMax : lstrlenW(*text) + 1;
-        sendBuffer = calloc(1, bufferSize);
+        sendBuffer = Alloc(bufferSize);
         if (!sendBuffer) goto done;
         if (!(flags & ZERO_SEND)) WideCharToMultiByte(CP_ACP, 0, *text, -1, sendBuffer, bufferSize, NULL, FALSE);
         *text = (WCHAR *)sendBuffer;
@@ -1167,18 +1167,18 @@ static LRESULT PAGER_SendConvertedNotify(PAGER_INFO *infoPtr, NMHDR *hdr, UINT *
         if (*text == oldText)
         {
             bufferSize = lstrlenA((CHAR *)*text)  + 1;
-            receiveBuffer = malloc(bufferSize);
+            receiveBuffer = Alloc(bufferSize);
             if (!receiveBuffer) goto done;
             memcpy(receiveBuffer, *text, bufferSize);
             MultiByteToWideChar(CP_ACP, 0, receiveBuffer, bufferSize, oldText, oldTextMax);
-            free(receiveBuffer);
+            Free(receiveBuffer);
         }
         else
             MultiByteToWideChar(CP_ACP, 0, (CHAR *)*text, -1, oldText, oldTextMax);
     }
 
 done:
-    free(sendBuffer);
+    Free(sendBuffer);
     *text = oldText;
     return ret;
 }

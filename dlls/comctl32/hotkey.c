@@ -241,9 +241,9 @@ HOTKEY_Create (HOTKEY_INFO *infoPtr, const CREATESTRUCTW *lpcs)
 static LRESULT
 HOTKEY_Destroy (HOTKEY_INFO *infoPtr)
 {
-    /* free hotkey info data */
+    /* Free hotkey info data */
     SetWindowLongPtrW (infoPtr->hwndSelf, 0, 0);
-    free (infoPtr);
+    Free (infoPtr);
     return 0;
 }
 
@@ -412,7 +412,7 @@ HOTKEY_NCCreate (HWND hwnd, const CREATESTRUCTW *lpcs)
                     dwExStyle | WS_EX_CLIENTEDGE);
 
     /* allocate memory for info structure */
-    infoPtr = calloc(1, sizeof(*infoPtr));
+    infoPtr = Alloc(sizeof(*infoPtr));
     SetWindowLongPtrW(hwnd, 0, (DWORD_PTR)infoPtr);
 
     /* initialize info structure */

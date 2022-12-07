@@ -45,7 +45,6 @@
 #include "commoncontrols.h"
 #include "wine/debug.h"
 #include "wine/exception.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imagelist);
 
@@ -269,7 +268,7 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
     SelectObject( hdc, hbmImage );
     mask_width = (bm.bmWidth + 31) / 32 * 4;
 
-    if (!(info = heap_alloc( FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) goto done;
+    if (!(info = Alloc( FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) goto done;
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biWidth = bm.bmWidth;
     info->bmiHeader.biHeight = -height;
@@ -281,17 +280,17 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrUsed = 0;
     info->bmiHeader.biClrImportant = 0;
-    if (!(bits = heap_alloc( info->bmiHeader.biSizeImage ))) goto done;
+    if (!(bits = Alloc( info->bmiHeader.biSizeImage ))) goto done;
     if (!GetDIBits( hdc, hbmImage, 0, height, bits, info, DIB_RGB_COLORS )) goto done;
 
     if (hbmMask)
     {
-        if (!(mask_info = heap_alloc( FIELD_OFFSET( BITMAPINFO, bmiColors[2] ))))
+        if (!(mask_info = Alloc( FIELD_OFFSET( BITMAPINFO, bmiColors[2] ))))
             goto done;
         mask_info->bmiHeader = info->bmiHeader;
         mask_info->bmiHeader.biBitCount = 1;
         mask_info->bmiHeader.biSizeImage = mask_width * height;
-        if (!(mask_bits = heap_alloc_zero( mask_info->bmiHeader.biSizeImage )))
+        if (!(mask_bits = Alloc( mask_info->bmiHeader.biSizeImage )))
             goto done;
         if (!GetDIBits( hdc, hbmMask, 0, height, mask_bits, mask_info, DIB_RGB_COLORS )) goto done;
     }
@@ -300,10 +299,10 @@ static BOOL add_with_alpha( HIMAGELIST himl, HDC hdc, int pos, int count,
     ret = TRUE;
 
 done:
-    heap_free( info );
-    heap_free( mask_info );
-    heap_free( bits );
-    heap_free( mask_bits );
+    Free( info );
+    Free( mask_info );
+    Free( bits );
+    Free( mask_bits );
     return ret;
 }
 
@@ -848,7 +847,7 @@ ImageList_Create (INT cx, INT cy, UINT flags,
     else
         himl->hbmMask = 0;
 
-    himl->item_flags = heap_alloc_zero( himl->cMaxImage * sizeof(*himl->item_flags) );
+    himl->item_flags = Alloc( himl->cMaxImage * sizeof(*himl->item_flags) );
 
     /* create blending brushes */
     hbmTemp = CreateBitmap (8, 8, 1, 1, aBitBlend25);
@@ -1260,7 +1259,7 @@ static BOOL alpha_blend_image( HIMAGELIST himl, HDC dest_dc, int dest_x, int des
     func.AlphaFormat = AC_SRC_ALPHA;
 
     if (!(hdc = CreateCompatibleDC( 0 ))) return FALSE;
-    if (!(info = heap_alloc( FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) goto done;
+    if (!(info = Alloc( FIELD_OFFSET( BITMAPINFO, bmiColors[256] )))) goto done;
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biWidth = cx;
     info->bmiHeader.biHeight = cy;
@@ -1371,7 +1370,7 @@ done:
     DeleteDC( hdc );
     if (bmp) DeleteObject( bmp );
     if (mask) DeleteObject( mask );
-    heap_free( info );
+    Free( info );
     return ret;
 }
 
@@ -1981,11 +1980,11 @@ ImageList_LoadImageA (HINSTANCE hi, LPCSTR lpbmp, INT cx, INT cGrow,
                                     uType, uFlags);
 
     len = MultiByteToWideChar(CP_ACP, 0, lpbmp, -1, NULL, 0);
-    lpbmpW = heap_alloc(len * sizeof(WCHAR));
+    lpbmpW = Alloc(len * sizeof(WCHAR));
     MultiByteToWideChar(CP_ACP, 0, lpbmp, -1, lpbmpW, len);
 
     himl = ImageList_LoadImageW(hi, lpbmpW, cx, cGrow, clrMask, uType, uFlags);
-    heap_free (lpbmpW);
+    Free (lpbmpW);
     return himl;
 }
 
@@ -2226,12 +2225,12 @@ static void *read_bitmap(IStream *pstm, BITMAPINFO *bmi)
     if (palspace && FAILED(IStream_Read(pstm, bmi->bmiColors, palspace, NULL)))
         return NULL;
 
-    bits = heap_alloc_zero(bmi->bmiHeader.biSizeImage);
+    bits = Alloc(bmi->bmiHeader.biSizeImage);
     if (!bits) return NULL;
 
     if (FAILED(IStream_Read(pstm, bits, bmi->bmiHeader.biSizeImage, NULL)))
     {
-        heap_free(bits);
+        Free(bits);
         return NULL;
     }
     return bits;
@@ -2343,8 +2342,8 @@ HIMAGELIST WINAPI ImageList_Read(IStream *pstm)
                            0, 0, mask_info->bmiHeader.biWidth, mask_info->bmiHeader.biHeight,
                            mask_bits, mask_info, DIB_RGB_COLORS, SRCCOPY);
     }
-    heap_free( image_bits );
-    heap_free( mask_bits );
+    Free( image_bits );
+    Free( mask_bits );
 
     himl->cCurImage = ilHead.cCurImage;
     himl->cMaxImage = ilHead.cMaxImage;
@@ -2406,8 +2405,8 @@ ImageList_Remove (HIMAGELIST himl, INT i)
         for (nCount = 0; nCount < MAX_OVERLAYIMAGE; nCount++)
              himl->nOvlIdx[nCount] = -1;
 
-        heap_free( himl->item_flags );
-        himl->item_flags = heap_alloc_zero( himl->cMaxImage * sizeof(*himl->item_flags) );
+        Free( himl->item_flags );
+        himl->item_flags = Alloc( himl->cMaxImage * sizeof(*himl->item_flags) );
 
         hbmNewImage = ImageList_CreateImage(himl->hdcImage, himl, himl->cMaxImage);
         SelectObject (himl->hdcImage, hbmNewImage);
@@ -3013,7 +3012,7 @@ static BOOL _write_bitmap(HBITMAP hBitmap, IStream *pstm)
     offBits = totalSize;
     totalSize += sizeImage;
 
-    data = heap_alloc_zero(totalSize);
+    data = Alloc(totalSize);
     bmfh = (LPBITMAPFILEHEADER)data;
     bmih = (LPBITMAPINFOHEADER)(data + sizeof(BITMAPFILEHEADER));
     lpBits = data + offBits;
@@ -3054,7 +3053,7 @@ static BOOL _write_bitmap(HBITMAP hBitmap, IStream *pstm)
     result = TRUE;
 
 failed:
-    heap_free(data);
+    Free(data);
 
     return result;
 }
@@ -3299,8 +3298,8 @@ static ULONG WINAPI ImageListImpl_Release(IImageList2 *iface)
         if (This->hbrBlend50) DeleteObject (This->hbrBlend50);
 
         This->IImageList2_iface.lpVtbl = NULL;
-        heap_free(This->item_flags);
-        heap_free(This);
+        Free(This->item_flags);
+        Free(This);
     }
 
     return ref;
@@ -3834,7 +3833,7 @@ static HRESULT ImageListImpl_CreateInstance(const IUnknown *pUnkOuter, REFIID ii
 
     if (pUnkOuter) return CLASS_E_NOAGGREGATION;
 
-    This = heap_alloc_zero(sizeof(struct _IMAGELIST));
+    This = Alloc(sizeof(struct _IMAGELIST));
     if (!This) return E_OUTOFMEMORY;
 
     This->IImageList2_iface.lpVtbl = &ImageListImpl_Vtbl;
