@@ -23,10 +23,12 @@
 extern "C" {
 #endif
 
+#ifndef WINADVAPI
 #ifdef _ADVAPI32_
 #define WINADVAPI
 #else
-#define WINADVAPI DECLSPEC_HIDDEN
+#define WINADVAPI DECLSPEC_IMPORT
+#endif
 #endif
 
 #ifndef __SECHANDLE_DEFINED__

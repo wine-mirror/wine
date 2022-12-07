@@ -28,10 +28,12 @@ extern "C" {
 #include <bcrypt.h>
 /* FIXME: #include <ncrypt.h> */
 
+#ifndef WINADVAPI
 #ifdef _ADVAPI32_
 # define WINADVAPI
 #else
-# define WINADVAPI DECLSPEC_HIDDEN
+# define WINADVAPI DECLSPEC_IMPORT
+#endif
 #endif
 
 /* some typedefs for function parameters */

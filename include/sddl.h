@@ -83,24 +83,20 @@ extern "C" {
 #endif /* UNICODE */
 #endif /* WINE_NO_UNICODE_MACROS */
 
-BOOL WINAPI ConvertSidToStringSidA( PSID, LPSTR* );
-BOOL WINAPI ConvertSidToStringSidW( PSID, LPWSTR* );
+WINADVAPI BOOL WINAPI ConvertSidToStringSidA( PSID, LPSTR* );
+WINADVAPI BOOL WINAPI ConvertSidToStringSidW( PSID, LPWSTR* );
 #define ConvertSidToStringSid WINELIB_NAME_AW(ConvertSidToStringSid)
 
-BOOL WINAPI ConvertStringSidToSidA( LPCSTR, PSID* );
-BOOL WINAPI ConvertStringSidToSidW( LPCWSTR, PSID* );
+WINADVAPI BOOL WINAPI ConvertStringSidToSidA( LPCSTR, PSID* );
+WINADVAPI BOOL WINAPI ConvertStringSidToSidW( LPCWSTR, PSID* );
 #define ConvertStringSidToSid WINELIB_NAME_AW(ConvertStringSidToSid)
 
-BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(
-    LPCSTR, DWORD, PSECURITY_DESCRIPTOR*, PULONG );
-BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(
-    LPCWSTR, DWORD, PSECURITY_DESCRIPTOR*, PULONG );
+WINADVAPI BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorA(LPCSTR, DWORD, PSECURITY_DESCRIPTOR*, PULONG );
+WINADVAPI BOOL WINAPI ConvertStringSecurityDescriptorToSecurityDescriptorW(LPCWSTR, DWORD, PSECURITY_DESCRIPTOR*, PULONG );
 #define ConvertStringSecurityDescriptorToSecurityDescriptor WINELIB_NAME_AW(ConvertStringSecurityDescriptorToSecurityDescriptor)
 
-BOOL WINAPI ConvertSecurityDescriptorToStringSecurityDescriptorA(
-    PSECURITY_DESCRIPTOR, DWORD, SECURITY_INFORMATION, LPSTR*, PULONG );
-BOOL WINAPI ConvertSecurityDescriptorToStringSecurityDescriptorW(
-    PSECURITY_DESCRIPTOR, DWORD, SECURITY_INFORMATION, LPWSTR*, PULONG );
+WINADVAPI BOOL WINAPI ConvertSecurityDescriptorToStringSecurityDescriptorA(PSECURITY_DESCRIPTOR, DWORD, SECURITY_INFORMATION, LPSTR*, PULONG );
+WINADVAPI BOOL WINAPI ConvertSecurityDescriptorToStringSecurityDescriptorW(PSECURITY_DESCRIPTOR, DWORD, SECURITY_INFORMATION, LPWSTR*, PULONG );
 #define ConvertSecurityDescriptorToStringSecurityDescriptor WINELIB_NAME_AW(ConvertSecurityDescriptorToStringSecurityDescriptor)
 
 #ifdef __cplusplus

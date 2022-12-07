@@ -22,6 +22,7 @@
 
 #define NONAMELESSUNION
 #include <stdarg.h>
+#define WINADVAPI
 #include "windef.h"
 #include "winbase.h"
 #include "winsvc.h"

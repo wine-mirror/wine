@@ -1,4 +1,4 @@
-EXTRADEFS = -DWINBASEAPI=
+EXTRADEFS = -DWINBASEAPI= -DWINADVAPI=
 MODULE    = kernelbase.dll
 IMPORTLIB = kernelbase
 IMPORTS   = uuid ntdll winecrt0

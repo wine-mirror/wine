@@ -20,6 +20,8 @@
 
 #include <assert.h>
 #include <stdarg.h>
+
+#define WINADVAPI
 #include "windef.h"
 #include "winbase.h"
 #include "sddl.h"
