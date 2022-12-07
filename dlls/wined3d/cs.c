@@ -15,7 +15,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -3153,8 +3152,7 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
     size = packet_size - header_size;
     if (packet_size >= WINED3D_CS_QUEUE_SIZE)
     {
-        ERR("Packet size %lu >= queue size %u.\n",
-                (unsigned long)packet_size, WINED3D_CS_QUEUE_SIZE);
+        ERR("Packet size %Iu >= queue size %u.\n", packet_size, WINED3D_CS_QUEUE_SIZE);
         return NULL;
     }
 
@@ -3164,8 +3162,7 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
         size_t nop_size = remaining - header_size;
         struct wined3d_cs_nop *nop;
 
-        TRACE("Inserting a nop for %lu + %lu bytes.\n",
-                (unsigned long)header_size, (unsigned long)nop_size);
+        TRACE("Inserting a nop for %Iu + %Iu bytes.\n", header_size, nop_size);
 
         nop = wined3d_cs_queue_require_space(queue, nop_size, cs);
         if (nop_size)
@@ -3194,8 +3191,8 @@ static void *wined3d_cs_queue_require_space(struct wined3d_cs_queue *queue, size
         if (new_pos < tail && new_pos)
             break;
 
-        TRACE("Waiting for free space. Head %u, tail %u, packet size %lu.\n",
-                head, tail, (unsigned long)packet_size);
+        TRACE("Waiting for free space. Head %lu, tail %lu, packet size %Iu.\n",
+                head, tail, packet_size);
     }
 
     packet = (struct wined3d_cs_packet *)&queue->data[head];
