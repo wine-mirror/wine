@@ -24,16 +24,20 @@
 extern "C" {
 #endif
 
+#ifndef WINGDIAPI
 #if defined(_GDI32_) || defined(WINE_UNIX_LIB)
 #define WINGDIAPI
 #else
-#define WINGDIAPI DECLSPEC_HIDDEN
+#define WINGDIAPI DECLSPEC_IMPORT
+#endif
 #endif
 
+#ifndef WGLAPI
 #ifdef _OPENGL32_
 #define WGLAPI
 #else
-#define WGLAPI DECLSPEC_HIDDEN
+#define WGLAPI DECLSPEC_IMPORT
+#endif
 #endif
 
 typedef struct _ABCFLOAT {

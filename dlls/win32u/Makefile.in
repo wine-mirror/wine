@@ -1,3 +1,4 @@
+EXTRADEFS = -DWINGDIAPI=
 MODULE    = win32u.dll
 UNIXLIB   = win32u.so
 IMPORTLIB = win32u
