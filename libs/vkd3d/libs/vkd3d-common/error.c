@@ -26,7 +26,7 @@ HRESULT hresult_from_vkd3d_result(int vkd3d_result)
         case VKD3D_OK:
             return S_OK;
         case VKD3D_ERROR_INVALID_SHADER:
-            WARN("Invalid shader bytecode.\n");
+            WARN("Invalid shader.\n");
             /* fall-through */
         case VKD3D_ERROR:
             return E_FAIL;

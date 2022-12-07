@@ -54,13 +54,31 @@ static inline size_t align(size_t addr, size_t alignment)
 
 #ifdef __GNUC__
 # define VKD3D_NORETURN __attribute__((noreturn))
-# define VKD3D_PRINTF_FUNC(fmt, args) __attribute__((format(printf, fmt, args)))
+# ifdef __MINGW_PRINTF_FORMAT
+#  define VKD3D_PRINTF_FUNC(fmt, args) __attribute__((format(__MINGW_PRINTF_FORMAT, fmt, args)))
+# else
+#  define VKD3D_PRINTF_FUNC(fmt, args) __attribute__((format(printf, fmt, args)))
+# endif
 # define VKD3D_UNUSED __attribute__((unused))
+# define VKD3D_UNREACHABLE __builtin_unreachable()
 #else
 # define VKD3D_NORETURN
 # define VKD3D_PRINTF_FUNC(fmt, args)
 # define VKD3D_UNUSED
+# define VKD3D_UNREACHABLE (void)0
 #endif  /* __GNUC__ */
+
+VKD3D_NORETURN static inline void vkd3d_unreachable_(const char *filename, unsigned int line)
+{
+    fprintf(stderr, "%s:%u: Aborting, reached unreachable code.\n", filename, line);
+    abort();
+}
+
+#ifdef NDEBUG
+#define vkd3d_unreachable() VKD3D_UNREACHABLE
+#else
+#define vkd3d_unreachable() vkd3d_unreachable_(__FILE__, __LINE__)
+#endif
 
 static inline unsigned int vkd3d_popcount(unsigned int v)
 {

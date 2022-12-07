@@ -115,5 +115,6 @@ struct vkd3d_debug_option
 bool vkd3d_debug_list_has_member(const char *string, const char *member);
 uint64_t vkd3d_parse_debug_options(const char *string,
         const struct vkd3d_debug_option *options, unsigned int option_count);
+void vkd3d_set_thread_name(const char *name);
 
 #endif  /* __VKD3D_DEBUG_H */

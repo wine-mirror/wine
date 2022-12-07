@@ -119,9 +119,12 @@ enum vkd3d_shader_error
     VKD3D_SHADER_ERROR_HLSL_INCOMPATIBLE_PROFILE        = 5020,
     VKD3D_SHADER_ERROR_HLSL_DIVISION_BY_ZERO            = 5021,
     VKD3D_SHADER_ERROR_HLSL_NON_STATIC_OBJECT_REF       = 5022,
+    VKD3D_SHADER_ERROR_HLSL_INVALID_THREAD_COUNT        = 5023,
+    VKD3D_SHADER_ERROR_HLSL_MISSING_ATTRIBUTE           = 5024,
 
     VKD3D_SHADER_WARNING_HLSL_IMPLICIT_TRUNCATION       = 5300,
     VKD3D_SHADER_WARNING_HLSL_DIVISION_BY_ZERO          = 5301,
+    VKD3D_SHADER_WARNING_HLSL_UNKNOWN_ATTRIBUTE         = 5302,
 
     VKD3D_SHADER_ERROR_GLSL_INTERNAL                    = 6000,
 
@@ -1085,17 +1088,19 @@ int vkd3d_glsl_generator_generate(struct vkd3d_glsl_generator *generator,
         struct vkd3d_shader_parser *parser, struct vkd3d_shader_code *out);
 void vkd3d_glsl_generator_destroy(struct vkd3d_glsl_generator *generator);
 
-struct vkd3d_dxbc_compiler;
+#define SPIRV_MAX_SRC_COUNT 6
 
-struct vkd3d_dxbc_compiler *vkd3d_dxbc_compiler_create(const struct vkd3d_shader_version *shader_version,
+struct spirv_compiler;
+
+struct spirv_compiler *spirv_compiler_create(const struct vkd3d_shader_version *shader_version,
         const struct vkd3d_shader_desc *shader_desc, const struct vkd3d_shader_compile_info *compile_info,
         const struct vkd3d_shader_scan_descriptor_info *scan_descriptor_info,
         struct vkd3d_shader_message_context *message_context, const struct vkd3d_shader_location *location);
-int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
+int spirv_compiler_handle_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction);
-int vkd3d_dxbc_compiler_generate_spirv(struct vkd3d_dxbc_compiler *compiler,
+int spirv_compiler_generate_spirv(struct spirv_compiler *compiler,
         const struct vkd3d_shader_compile_info *compile_info, struct vkd3d_shader_code *spirv);
-void vkd3d_dxbc_compiler_destroy(struct vkd3d_dxbc_compiler *compiler);
+void spirv_compiler_destroy(struct spirv_compiler *compiler);
 
 void vkd3d_compute_dxbc_checksum(const void *dxbc, size_t size, uint32_t checksum[4]);
 
@@ -1237,7 +1242,6 @@ static inline void *vkd3d_find_struct_(const struct vkd3d_struct *chain,
     return NULL;
 }
 
-#define VKD3D_DXBC_MAX_SOURCE_COUNT 6
 #define VKD3D_DXBC_HEADER_SIZE (8 * sizeof(uint32_t))
 
 #define TAG_AON9 VKD3D_MAKE_TAG('A', 'o', 'n', '9')

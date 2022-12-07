@@ -4410,7 +4410,6 @@ HRESULT vkd3d_create_thread(struct vkd3d_instance *instance,
         PFN_vkd3d_thread thread_main, void *data, union vkd3d_thread_handle *thread)
 {
     HRESULT hr = S_OK;
-    int rc;
 
     if (instance->create_thread)
     {
@@ -4437,6 +4436,8 @@ HRESULT vkd3d_create_thread(struct vkd3d_instance *instance,
             hr = E_FAIL;
         }
 #else
+        int rc;
+
         if ((rc = pthread_create(&thread->pthread, NULL, thread_main, data)))
         {
             ERR("Failed to create thread, error %d.\n", rc);

@@ -206,7 +206,7 @@ static enum vkd3d_shader_input_sysval_semantic vkd3d_siv_from_sysval(enum vkd3d_
 
 #define VKD3D_SPIRV_VERSION 0x00010000
 #define VKD3D_SPIRV_GENERATOR_ID 18
-#define VKD3D_SPIRV_GENERATOR_VERSION 5
+#define VKD3D_SPIRV_GENERATOR_VERSION 6
 #define VKD3D_SPIRV_GENERATOR_MAGIC vkd3d_make_u32(VKD3D_SPIRV_GENERATOR_VERSION, VKD3D_SPIRV_GENERATOR_ID)
 
 struct vkd3d_spirv_stream
@@ -2218,7 +2218,7 @@ struct vkd3d_hull_shader_variables
     uint32_t patch_constants_id;
 };
 
-struct vkd3d_dxbc_compiler
+struct spirv_compiler
 {
     struct vkd3d_spirv_builder spirv_builder;
 
@@ -2294,16 +2294,16 @@ static bool is_control_point_phase(const struct vkd3d_shader_phase *phase)
     return phase && phase->type == VKD3DSIH_HS_CONTROL_POINT_PHASE;
 }
 
-static void vkd3d_dxbc_compiler_emit_initial_declarations(struct vkd3d_dxbc_compiler *compiler);
+static void spirv_compiler_emit_initial_declarations(struct spirv_compiler *compiler);
 
-static const char *vkd3d_dxbc_compiler_get_entry_point_name(const struct vkd3d_dxbc_compiler *compiler)
+static const char *spirv_compiler_get_entry_point_name(const struct spirv_compiler *compiler)
 {
     const struct vkd3d_shader_spirv_target_info *info = compiler->spirv_target_info;
 
     return info && info->entry_point ? info->entry_point : "main";
 }
 
-struct vkd3d_dxbc_compiler *vkd3d_dxbc_compiler_create(const struct vkd3d_shader_version *shader_version,
+struct spirv_compiler *spirv_compiler_create(const struct vkd3d_shader_version *shader_version,
         const struct vkd3d_shader_desc *shader_desc, const struct vkd3d_shader_compile_info *compile_info,
         const struct vkd3d_shader_scan_descriptor_info *scan_descriptor_info,
         struct vkd3d_shader_message_context *message_context, const struct vkd3d_shader_location *location)
@@ -2313,7 +2313,7 @@ struct vkd3d_dxbc_compiler *vkd3d_dxbc_compiler_create(const struct vkd3d_shader
     const struct vkd3d_shader_interface_info *shader_interface;
     const struct vkd3d_shader_descriptor_offset_info *offset_info;
     const struct vkd3d_shader_spirv_target_info *target_info;
-    struct vkd3d_dxbc_compiler *compiler;
+    struct spirv_compiler *compiler;
     unsigned int max_element_count;
     unsigned int i;
 
@@ -2347,7 +2347,7 @@ struct vkd3d_dxbc_compiler *vkd3d_dxbc_compiler_create(const struct vkd3d_shader
         return NULL;
     }
 
-    vkd3d_spirv_builder_init(&compiler->spirv_builder, vkd3d_dxbc_compiler_get_entry_point_name(compiler));
+    vkd3d_spirv_builder_init(&compiler->spirv_builder, spirv_compiler_get_entry_point_name(compiler));
 
     compiler->formatting = VKD3D_SHADER_COMPILE_OPTION_FORMATTING_INDENT
             | VKD3D_SHADER_COMPILE_OPTION_FORMATTING_HEADER;
@@ -2410,7 +2410,7 @@ struct vkd3d_dxbc_compiler *vkd3d_dxbc_compiler_create(const struct vkd3d_shader
             if (!(compiler->push_constants = vkd3d_calloc(shader_interface->push_constant_buffer_count,
                     sizeof(*compiler->push_constants))))
             {
-                vkd3d_dxbc_compiler_destroy(compiler);
+                spirv_compiler_destroy(compiler);
                 return NULL;
             }
             for (i = 0; i < shader_interface->push_constant_buffer_count; ++i)
@@ -2423,7 +2423,7 @@ struct vkd3d_dxbc_compiler *vkd3d_dxbc_compiler_create(const struct vkd3d_shader
             if (compiler->offset_info.descriptor_table_count && !(compiler->descriptor_offset_ids = vkd3d_calloc(
                     compiler->offset_info.descriptor_table_count, sizeof(*compiler->descriptor_offset_ids))))
             {
-                vkd3d_dxbc_compiler_destroy(compiler);
+                spirv_compiler_destroy(compiler);
                 return NULL;
             }
         }
@@ -2433,31 +2433,31 @@ struct vkd3d_dxbc_compiler *vkd3d_dxbc_compiler_create(const struct vkd3d_shader
 
     vkd3d_string_buffer_cache_init(&compiler->string_buffers);
 
-    vkd3d_dxbc_compiler_emit_initial_declarations(compiler);
+    spirv_compiler_emit_initial_declarations(compiler);
 
     return compiler;
 }
 
-static bool vkd3d_dxbc_compiler_use_storage_buffer(const struct vkd3d_dxbc_compiler *compiler,
+static bool spirv_compiler_use_storage_buffer(const struct spirv_compiler *compiler,
         const struct vkd3d_symbol_resource_data *resource)
 {
     return compiler->ssbo_uavs && resource->resource_type_info->resource_type == VKD3D_SHADER_RESOURCE_BUFFER;
 }
 
-static enum vkd3d_shader_spirv_environment vkd3d_dxbc_compiler_get_target_environment(
-        const struct vkd3d_dxbc_compiler *compiler)
+static enum vkd3d_shader_spirv_environment spirv_compiler_get_target_environment(
+        const struct spirv_compiler *compiler)
 {
     const struct vkd3d_shader_spirv_target_info *info = compiler->spirv_target_info;
 
     return info ? info->environment : VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_0;
 }
 
-static bool vkd3d_dxbc_compiler_is_opengl_target(const struct vkd3d_dxbc_compiler *compiler)
+static bool spirv_compiler_is_opengl_target(const struct spirv_compiler *compiler)
 {
-    return vkd3d_dxbc_compiler_get_target_environment(compiler) == VKD3D_SHADER_SPIRV_ENVIRONMENT_OPENGL_4_5;
+    return spirv_compiler_get_target_environment(compiler) == VKD3D_SHADER_SPIRV_ENVIRONMENT_OPENGL_4_5;
 }
 
-static bool vkd3d_dxbc_compiler_is_target_extension_supported(const struct vkd3d_dxbc_compiler *compiler,
+static bool spirv_compiler_is_target_extension_supported(const struct spirv_compiler *compiler,
         enum vkd3d_shader_spirv_extension extension)
 {
     const struct vkd3d_shader_spirv_target_info *info = compiler->spirv_target_info;
@@ -2472,7 +2472,7 @@ static bool vkd3d_dxbc_compiler_is_target_extension_supported(const struct vkd3d
     return false;
 }
 
-static bool vkd3d_dxbc_compiler_check_shader_visibility(const struct vkd3d_dxbc_compiler *compiler,
+static bool spirv_compiler_check_shader_visibility(const struct spirv_compiler *compiler,
         enum vkd3d_shader_visibility visibility)
 {
     switch (visibility)
@@ -2497,8 +2497,8 @@ static bool vkd3d_dxbc_compiler_check_shader_visibility(const struct vkd3d_dxbc_
     }
 }
 
-static struct vkd3d_push_constant_buffer_binding *vkd3d_dxbc_compiler_find_push_constant_buffer(
-        const struct vkd3d_dxbc_compiler *compiler, const struct vkd3d_shader_constant_buffer *cb)
+static struct vkd3d_push_constant_buffer_binding *spirv_compiler_find_push_constant_buffer(
+        const struct spirv_compiler *compiler, const struct vkd3d_shader_constant_buffer *cb)
 {
     unsigned int register_space = cb->range.space;
     unsigned int reg_idx = cb->range.first;
@@ -2511,7 +2511,7 @@ static struct vkd3d_push_constant_buffer_binding *vkd3d_dxbc_compiler_find_push_
     {
         struct vkd3d_push_constant_buffer_binding *current = &compiler->push_constants[i];
 
-        if (!vkd3d_dxbc_compiler_check_shader_visibility(compiler, current->pc.shader_visibility))
+        if (!spirv_compiler_check_shader_visibility(compiler, current->pc.shader_visibility))
             continue;
 
         if (current->pc.register_space == register_space && current->pc.register_index == reg_idx)
@@ -2521,7 +2521,7 @@ static struct vkd3d_push_constant_buffer_binding *vkd3d_dxbc_compiler_find_push_
     return NULL;
 }
 
-static bool vkd3d_dxbc_compiler_has_combined_sampler(const struct vkd3d_dxbc_compiler *compiler,
+static bool spirv_compiler_has_combined_sampler(const struct spirv_compiler *compiler,
         const struct vkd3d_shader_resource *resource, const struct vkd3d_shader_sampler *sampler)
 {
     const struct vkd3d_shader_interface_info *shader_interface = &compiler->shader_interface;
@@ -2541,7 +2541,7 @@ static bool vkd3d_dxbc_compiler_has_combined_sampler(const struct vkd3d_dxbc_com
     {
         combined_sampler = &shader_interface->combined_samplers[i];
 
-        if (!vkd3d_dxbc_compiler_check_shader_visibility(compiler, combined_sampler->shader_visibility))
+        if (!spirv_compiler_check_shader_visibility(compiler, combined_sampler->shader_visibility))
             continue;
 
         if ((!resource || (combined_sampler->resource_space == resource->range.space
@@ -2554,7 +2554,7 @@ static bool vkd3d_dxbc_compiler_has_combined_sampler(const struct vkd3d_dxbc_com
     return false;
 }
 
-static void VKD3D_PRINTF_FUNC(3, 4) vkd3d_dxbc_compiler_error(struct vkd3d_dxbc_compiler *compiler,
+static void VKD3D_PRINTF_FUNC(3, 4) spirv_compiler_error(struct spirv_compiler *compiler,
         enum vkd3d_shader_error error, const char *format, ...)
 {
     va_list args;
@@ -2565,7 +2565,7 @@ static void VKD3D_PRINTF_FUNC(3, 4) vkd3d_dxbc_compiler_error(struct vkd3d_dxbc_
     compiler->failed = true;
 }
 
-static struct vkd3d_string_buffer *vkd3d_shader_register_range_string(struct vkd3d_dxbc_compiler *compiler,
+static struct vkd3d_string_buffer *vkd3d_shader_register_range_string(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register_range *range)
 {
     struct vkd3d_string_buffer *buffer = vkd3d_string_buffer_get(&compiler->string_buffers);
@@ -2581,8 +2581,8 @@ static struct vkd3d_string_buffer *vkd3d_shader_register_range_string(struct vkd
     return buffer;
 }
 
-static struct vkd3d_shader_descriptor_binding vkd3d_dxbc_compiler_get_descriptor_binding(
-        struct vkd3d_dxbc_compiler *compiler, const struct vkd3d_shader_register *reg,
+static struct vkd3d_shader_descriptor_binding spirv_compiler_get_descriptor_binding(
+        struct spirv_compiler *compiler, const struct vkd3d_shader_register *reg,
         const struct vkd3d_shader_register_range *range, enum vkd3d_shader_resource_type resource_type,
         bool is_uav_counter, struct vkd3d_descriptor_binding_address *binding_address)
 {
@@ -2605,7 +2605,7 @@ static struct vkd3d_shader_descriptor_binding vkd3d_dxbc_compiler_get_descriptor
     else
     {
         FIXME("Unhandled register type %#x.\n", reg->type);
-        vkd3d_dxbc_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_INVALID_REGISTER_TYPE,
+        spirv_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_INVALID_REGISTER_TYPE,
                 "Encountered invalid/unhandled register type %#x.", reg->type);
         goto done;
     }
@@ -2621,7 +2621,7 @@ static struct vkd3d_shader_descriptor_binding vkd3d_dxbc_compiler_get_descriptor
         {
             const struct vkd3d_shader_uav_counter_binding *current = &shader_interface->uav_counters[i];
 
-            if (!vkd3d_dxbc_compiler_check_shader_visibility(compiler, current->shader_visibility))
+            if (!spirv_compiler_check_shader_visibility(compiler, current->shader_visibility))
                 continue;
 
             if (current->register_space != range->space || current->register_index > range->first
@@ -2631,7 +2631,7 @@ static struct vkd3d_shader_descriptor_binding vkd3d_dxbc_compiler_get_descriptor
             if (current->offset)
             {
                 FIXME("Atomic counter offsets are not supported yet.\n");
-                vkd3d_dxbc_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_INVALID_DESCRIPTOR_BINDING,
+                spirv_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_INVALID_DESCRIPTOR_BINDING,
                         "Descriptor binding for UAV counter %u, space %u has unsupported ‘offset’ %u.",
                         range->first, range->space, current->offset);
             }
@@ -2644,7 +2644,7 @@ static struct vkd3d_shader_descriptor_binding vkd3d_dxbc_compiler_get_descriptor
         if (shader_interface->uav_counter_count)
         {
             FIXME("Could not find descriptor binding for UAV counter %u, space %u.\n", range->first, range->space);
-            vkd3d_dxbc_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_DESCRIPTOR_BINDING_NOT_FOUND,
+            spirv_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_DESCRIPTOR_BINDING_NOT_FOUND,
                     "Could not find descriptor binding for UAV counter %u, space %u.", range->first, range->space);
         }
     }
@@ -2658,7 +2658,7 @@ static struct vkd3d_shader_descriptor_binding vkd3d_dxbc_compiler_get_descriptor
             if (!(current->flags & resource_type_flag))
                 continue;
 
-            if (!vkd3d_dxbc_compiler_check_shader_visibility(compiler, current->shader_visibility))
+            if (!spirv_compiler_check_shader_visibility(compiler, current->shader_visibility))
                 continue;
 
             if (current->type != descriptor_type || current->register_space != range->space
@@ -2677,7 +2677,7 @@ static struct vkd3d_shader_descriptor_binding vkd3d_dxbc_compiler_get_descriptor
             const char *range_str = buffer ? buffer->buffer : "";
             FIXME("Could not find descriptor binding for type %#x, space %u, registers %s, shader type %#x.\n",
                     descriptor_type, range->space, range_str, compiler->shader_type);
-            vkd3d_dxbc_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_DESCRIPTOR_BINDING_NOT_FOUND,
+            spirv_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_DESCRIPTOR_BINDING_NOT_FOUND,
                     "Could not find descriptor binding for type %#x, space %u, registers %s, shader type %#x.",
                     descriptor_type, range->space, range_str, compiler->shader_type);
             vkd3d_string_buffer_release(&compiler->string_buffers, buffer);
@@ -2693,7 +2693,7 @@ done:
     return binding;
 }
 
-static void vkd3d_dxbc_compiler_emit_descriptor_binding(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_descriptor_binding(struct spirv_compiler *compiler,
         uint32_t variable_id, const struct vkd3d_shader_descriptor_binding *binding)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -2702,7 +2702,7 @@ static void vkd3d_dxbc_compiler_emit_descriptor_binding(struct vkd3d_dxbc_compil
     vkd3d_spirv_build_op_decorate1(builder, variable_id, SpvDecorationBinding, binding->binding);
 }
 
-static void vkd3d_dxbc_compiler_decorate_nonuniform(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_decorate_nonuniform(struct spirv_compiler *compiler,
         uint32_t expression_id)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -2711,7 +2711,7 @@ static void vkd3d_dxbc_compiler_decorate_nonuniform(struct vkd3d_dxbc_compiler *
     vkd3d_spirv_build_op_decorate(builder, expression_id, SpvDecorationNonUniformEXT, NULL, 0);
 }
 
-static const struct vkd3d_symbol *vkd3d_dxbc_compiler_put_symbol(struct vkd3d_dxbc_compiler *compiler,
+static const struct vkd3d_symbol *spirv_compiler_put_symbol(struct spirv_compiler *compiler,
         const struct vkd3d_symbol *symbol)
 {
     struct vkd3d_symbol *s;
@@ -2726,7 +2726,7 @@ static const struct vkd3d_symbol *vkd3d_dxbc_compiler_put_symbol(struct vkd3d_dx
     return s;
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_constant(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_constant(struct spirv_compiler *compiler,
         enum vkd3d_shader_component_type component_type, unsigned int component_count, const uint32_t *values)
 {
     uint32_t type_id, scalar_type_id, component_ids[VKD3D_VEC4_SIZE];
@@ -2760,7 +2760,7 @@ static uint32_t vkd3d_dxbc_compiler_get_constant(struct vkd3d_dxbc_compiler *com
     }
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_constant64(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_constant64(struct spirv_compiler *compiler,
         enum vkd3d_shader_component_type component_type, unsigned int component_count, const uint64_t *values)
 {
     uint32_t type_id, scalar_type_id, component_ids[VKD3D_DVEC2_SIZE];
@@ -2789,48 +2789,48 @@ static uint32_t vkd3d_dxbc_compiler_get_constant64(struct vkd3d_dxbc_compiler *c
     }
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_constant_uint(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_constant_uint(struct spirv_compiler *compiler,
         uint32_t value)
 {
-    return vkd3d_dxbc_compiler_get_constant(compiler, VKD3D_SHADER_COMPONENT_UINT, 1, &value);
+    return spirv_compiler_get_constant(compiler, VKD3D_SHADER_COMPONENT_UINT, 1, &value);
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_constant_float(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_constant_float(struct spirv_compiler *compiler,
         float value)
 {
-    return vkd3d_dxbc_compiler_get_constant(compiler, VKD3D_SHADER_COMPONENT_FLOAT, 1, (uint32_t *)&value);
+    return spirv_compiler_get_constant(compiler, VKD3D_SHADER_COMPONENT_FLOAT, 1, (uint32_t *)&value);
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_constant_vector(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_constant_vector(struct spirv_compiler *compiler,
         enum vkd3d_shader_component_type component_type, unsigned int component_count, uint32_t value)
 {
     const uint32_t values[] = {value, value, value, value};
-    return vkd3d_dxbc_compiler_get_constant(compiler, component_type, component_count, values);
+    return spirv_compiler_get_constant(compiler, component_type, component_count, values);
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_constant_uint_vector(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_constant_uint_vector(struct spirv_compiler *compiler,
         uint32_t value, unsigned int component_count)
 {
-    return vkd3d_dxbc_compiler_get_constant_vector(compiler, VKD3D_SHADER_COMPONENT_UINT, component_count, value);
+    return spirv_compiler_get_constant_vector(compiler, VKD3D_SHADER_COMPONENT_UINT, component_count, value);
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_constant_float_vector(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_constant_float_vector(struct spirv_compiler *compiler,
         float value, unsigned int component_count)
 {
     const float values[] = {value, value, value, value};
-    return vkd3d_dxbc_compiler_get_constant(compiler, VKD3D_SHADER_COMPONENT_FLOAT,
+    return spirv_compiler_get_constant(compiler, VKD3D_SHADER_COMPONENT_FLOAT,
             component_count, (const uint32_t *)values);
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_constant_double_vector(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_constant_double_vector(struct spirv_compiler *compiler,
         double value, unsigned int component_count)
 {
     const double values[] = {value, value};
-    return vkd3d_dxbc_compiler_get_constant64(compiler, VKD3D_SHADER_COMPONENT_DOUBLE,
+    return spirv_compiler_get_constant64(compiler, VKD3D_SHADER_COMPONENT_DOUBLE,
             component_count, (const uint64_t *)values);
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_type_id_for_reg(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_type_id_for_reg(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, DWORD write_mask)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -2840,13 +2840,13 @@ static uint32_t vkd3d_dxbc_compiler_get_type_id_for_reg(struct vkd3d_dxbc_compil
             vkd3d_write_mask_component_count(write_mask));
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_type_id_for_dst(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_type_id_for_dst(struct spirv_compiler *compiler,
         const struct vkd3d_shader_dst_param *dst)
 {
-    return vkd3d_dxbc_compiler_get_type_id_for_reg(compiler, &dst->reg, dst->write_mask);
+    return spirv_compiler_get_type_id_for_reg(compiler, &dst->reg, dst->write_mask);
 }
 
-static bool vkd3d_dxbc_compiler_get_register_name(char *buffer, unsigned int buffer_size,
+static bool spirv_compiler_get_register_name(char *buffer, unsigned int buffer_size,
         const struct vkd3d_shader_register *reg)
 {
     unsigned int idx;
@@ -2937,15 +2937,15 @@ static bool vkd3d_dxbc_compiler_get_register_name(char *buffer, unsigned int buf
 }
 
 /* TODO: UAV counters: vkd3d_spirv_build_op_name(builder, counter_var_id, "u%u_counter", reg->idx[0].offset); */
-static void vkd3d_dxbc_compiler_emit_register_debug_name(struct vkd3d_spirv_builder *builder,
+static void spirv_compiler_emit_register_debug_name(struct vkd3d_spirv_builder *builder,
         uint32_t id, const struct vkd3d_shader_register *reg)
 {
     char debug_name[256];
-    if (vkd3d_dxbc_compiler_get_register_name(debug_name, ARRAY_SIZE(debug_name), reg))
+    if (spirv_compiler_get_register_name(debug_name, ARRAY_SIZE(debug_name), reg))
         vkd3d_spirv_build_op_name(builder, id, "%s", debug_name);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_variable(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_variable(struct spirv_compiler *compiler,
         struct vkd3d_spirv_stream *stream, SpvStorageClass storage_class,
         enum vkd3d_shader_component_type component_type, unsigned int component_count)
 {
@@ -2957,7 +2957,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_variable(struct vkd3d_dxbc_compiler *co
     return vkd3d_spirv_build_op_variable(builder, stream, ptr_type_id, storage_class, 0);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_array_variable(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_array_variable(struct spirv_compiler *compiler,
         struct vkd3d_spirv_stream *stream, SpvStorageClass storage_class,
         enum vkd3d_shader_component_type component_type, unsigned int component_count, unsigned int array_length)
 {
@@ -2965,18 +2965,18 @@ static uint32_t vkd3d_dxbc_compiler_emit_array_variable(struct vkd3d_dxbc_compil
     uint32_t type_id, length_id, ptr_type_id;
 
     if (!array_length)
-        return vkd3d_dxbc_compiler_emit_variable(compiler,
+        return spirv_compiler_emit_variable(compiler,
                 stream, storage_class, component_type, component_count);
 
     type_id = vkd3d_spirv_get_type_id(builder, component_type, component_count);
-    length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, array_length);
+    length_id = spirv_compiler_get_constant_uint(compiler, array_length);
     type_id = vkd3d_spirv_get_op_type_array(builder, type_id, length_id);
     ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, storage_class, type_id);
     return vkd3d_spirv_build_op_variable(builder, stream, ptr_type_id, storage_class, 0);
 }
 
-static const struct vkd3d_shader_parameter *vkd3d_dxbc_compiler_get_shader_parameter(
-        struct vkd3d_dxbc_compiler *compiler, enum vkd3d_shader_parameter_name name)
+static const struct vkd3d_shader_parameter *spirv_compiler_get_shader_parameter(
+        struct spirv_compiler *compiler, enum vkd3d_shader_parameter_name name)
 {
     const struct vkd3d_shader_spirv_target_info *info = compiler->spirv_target_info;
     unsigned int i;
@@ -3015,7 +3015,7 @@ static const struct vkd3d_spec_constant_info *get_spec_constant_info(enum vkd3d_
     return NULL;
 }
 
-static uint32_t vkd3d_dxbc_compiler_alloc_spec_constant_id(struct vkd3d_dxbc_compiler *compiler)
+static uint32_t spirv_compiler_alloc_spec_constant_id(struct spirv_compiler *compiler)
 {
     if (!compiler->current_spec_constant_id)
     {
@@ -3036,7 +3036,7 @@ static uint32_t vkd3d_dxbc_compiler_alloc_spec_constant_id(struct vkd3d_dxbc_com
     return compiler->current_spec_constant_id++;
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_spec_constant(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_spec_constant(struct spirv_compiler *compiler,
         enum vkd3d_shader_parameter_name name, uint32_t spec_id)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -3064,7 +3064,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_spec_constant(struct vkd3d_dxbc_compile
     return id;
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_spec_constant(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_spec_constant(struct spirv_compiler *compiler,
         enum vkd3d_shader_parameter_name name, uint32_t spec_id)
 {
     unsigned int i;
@@ -3075,33 +3075,33 @@ static uint32_t vkd3d_dxbc_compiler_get_spec_constant(struct vkd3d_dxbc_compiler
             return compiler->spec_constants[i].id;
     }
 
-    return vkd3d_dxbc_compiler_emit_spec_constant(compiler, name, spec_id);
+    return spirv_compiler_emit_spec_constant(compiler, name, spec_id);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_uint_shader_parameter(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_uint_shader_parameter(struct spirv_compiler *compiler,
         enum vkd3d_shader_parameter_name name)
 {
     const struct vkd3d_shader_parameter *parameter;
 
-    if (!(parameter = vkd3d_dxbc_compiler_get_shader_parameter(compiler, name)))
+    if (!(parameter = spirv_compiler_get_shader_parameter(compiler, name)))
     {
         WARN("Unresolved shader parameter %#x.\n", name);
         goto default_parameter;
     }
 
     if (parameter->type == VKD3D_SHADER_PARAMETER_TYPE_IMMEDIATE_CONSTANT)
-        return vkd3d_dxbc_compiler_get_constant_uint(compiler, parameter->u.immediate_constant.u.u32);
+        return spirv_compiler_get_constant_uint(compiler, parameter->u.immediate_constant.u.u32);
     if (parameter->type == VKD3D_SHADER_PARAMETER_TYPE_SPECIALIZATION_CONSTANT)
-        return vkd3d_dxbc_compiler_get_spec_constant(compiler, name, parameter->u.specialization_constant.id);
+        return spirv_compiler_get_spec_constant(compiler, name, parameter->u.specialization_constant.id);
 
     FIXME("Unhandled parameter type %#x.\n", parameter->type);
 
 default_parameter:
-    return vkd3d_dxbc_compiler_get_spec_constant(compiler,
-            name, vkd3d_dxbc_compiler_alloc_spec_constant_id(compiler));
+    return spirv_compiler_get_spec_constant(compiler,
+            name, spirv_compiler_alloc_spec_constant_id(compiler));
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_construct_vector(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_construct_vector(struct spirv_compiler *compiler,
         enum vkd3d_shader_component_type component_type, unsigned int component_count,
         uint32_t val_id, unsigned int val_component_idx, unsigned int val_component_count)
 {
@@ -3130,24 +3130,24 @@ static uint32_t vkd3d_dxbc_compiler_emit_construct_vector(struct vkd3d_dxbc_comp
     return result_id;
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_load_src(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_load_src(struct spirv_compiler *compiler,
         const struct vkd3d_shader_src_param *src, DWORD write_mask);
 
-static uint32_t vkd3d_dxbc_compiler_emit_register_addressing(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_register_addressing(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register_index *reg_index)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     uint32_t type_id, addr_id;
 
     if (!reg_index->rel_addr)
-        return vkd3d_dxbc_compiler_get_constant_uint(compiler, reg_index->offset);
+        return spirv_compiler_get_constant_uint(compiler, reg_index->offset);
 
-    addr_id = vkd3d_dxbc_compiler_emit_load_src(compiler, reg_index->rel_addr, VKD3DSP_WRITEMASK_0);
+    addr_id = spirv_compiler_emit_load_src(compiler, reg_index->rel_addr, VKD3DSP_WRITEMASK_0);
     if (reg_index->offset)
     {
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
         addr_id = vkd3d_spirv_build_op_iadd(builder, type_id,
-                addr_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, reg_index->offset));
+                addr_id, spirv_compiler_get_constant_uint(compiler, reg_index->offset));
     }
     return addr_id;
 }
@@ -3166,7 +3166,7 @@ struct vkd3d_shader_register_info
     bool is_dynamically_indexed;
 };
 
-static bool vkd3d_dxbc_compiler_get_register_info(const struct vkd3d_dxbc_compiler *compiler,
+static bool spirv_compiler_get_register_info(const struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, struct vkd3d_shader_register_info *register_info)
 {
     struct vkd3d_symbol reg_symbol, *symbol;
@@ -3228,12 +3228,12 @@ static bool register_is_descriptor(const struct vkd3d_shader_register *reg)
     }
 }
 
-static bool vkd3d_dxbc_compiler_enable_descriptor_indexing(struct vkd3d_dxbc_compiler *compiler,
+static bool spirv_compiler_enable_descriptor_indexing(struct spirv_compiler *compiler,
         enum vkd3d_shader_register_type reg_type, enum vkd3d_shader_resource_type resource_type)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
 
-    if (!vkd3d_dxbc_compiler_is_target_extension_supported(compiler,
+    if (!spirv_compiler_is_target_extension_supported(compiler,
             VKD3D_SHADER_SPIRV_EXTENSION_EXT_DESCRIPTOR_INDEXING))
         return false;
 
@@ -3265,7 +3265,7 @@ static bool vkd3d_dxbc_compiler_enable_descriptor_indexing(struct vkd3d_dxbc_com
     return true;
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_descriptor_index(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_descriptor_index(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, const struct vkd3d_symbol *array_symbol,
         unsigned int binding_base_idx, enum vkd3d_shader_resource_type resource_type)
 {
@@ -3276,17 +3276,17 @@ static uint32_t vkd3d_dxbc_compiler_get_descriptor_index(struct vkd3d_dxbc_compi
 
     if ((push_constant_index = array_key->push_constant_index) != ~0u || index.rel_addr)
     {
-        if (!vkd3d_dxbc_compiler_enable_descriptor_indexing(compiler, reg->type, resource_type))
+        if (!spirv_compiler_enable_descriptor_indexing(compiler, reg->type, resource_type))
         {
             FIXME("The target environment does not support descriptor indexing.\n");
-            vkd3d_dxbc_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_DESCRIPTOR_IDX_UNSUPPORTED,
+            spirv_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_DESCRIPTOR_IDX_UNSUPPORTED,
                     "Cannot dynamically index a descriptor array of type %#x, id %u. "
                     "The target environment does not support descriptor indexing.", reg->type, reg->idx[0].offset);
         }
     }
 
     index.offset -= binding_base_idx;
-    index_id = vkd3d_dxbc_compiler_emit_register_addressing(compiler, &index);
+    index_id = spirv_compiler_emit_register_addressing(compiler, &index);
 
     if (push_constant_index != ~0u)
     {
@@ -3297,7 +3297,7 @@ static uint32_t vkd3d_dxbc_compiler_get_descriptor_index(struct vkd3d_dxbc_compi
         if (!(offset_id = compiler->descriptor_offset_ids[push_constant_index]))
         {
             index_ids[0] = compiler->descriptor_offsets_member_id;
-            index_ids[1] = vkd3d_dxbc_compiler_get_constant_uint(compiler, push_constant_index);
+            index_ids[1] = spirv_compiler_get_constant_uint(compiler, push_constant_index);
             ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassPushConstant, type_id);
             ptr_id = vkd3d_spirv_build_op_in_bounds_access_chain(builder, ptr_type_id,
                     compiler->push_constants_var_id, index_ids, 2);
@@ -3311,7 +3311,7 @@ static uint32_t vkd3d_dxbc_compiler_get_descriptor_index(struct vkd3d_dxbc_compi
    return index_id;
 }
 
-static void vkd3d_dxbc_compiler_emit_dereference_register(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dereference_register(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, struct vkd3d_shader_register_info *register_info)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -3323,18 +3323,18 @@ static void vkd3d_dxbc_compiler_emit_dereference_register(struct vkd3d_dxbc_comp
     {
         assert(!reg->idx[0].rel_addr);
         if (register_info->descriptor_array)
-            indexes[index_count++] = vkd3d_dxbc_compiler_get_descriptor_index(compiler, reg,
+            indexes[index_count++] = spirv_compiler_get_descriptor_index(compiler, reg,
                     register_info->descriptor_array, register_info->binding_base_idx, VKD3D_SHADER_RESOURCE_BUFFER);
-        indexes[index_count++] = vkd3d_dxbc_compiler_get_constant_uint(compiler, register_info->member_idx);
-        indexes[index_count++] = vkd3d_dxbc_compiler_emit_register_addressing(compiler, &reg->idx[2]);
+        indexes[index_count++] = spirv_compiler_get_constant_uint(compiler, register_info->member_idx);
+        indexes[index_count++] = spirv_compiler_emit_register_addressing(compiler, &reg->idx[2]);
     }
     else if (reg->type == VKD3DSPR_IMMCONSTBUFFER)
     {
-        indexes[index_count++] = vkd3d_dxbc_compiler_emit_register_addressing(compiler, &reg->idx[0]);
+        indexes[index_count++] = spirv_compiler_emit_register_addressing(compiler, &reg->idx[0]);
     }
     else if (reg->type == VKD3DSPR_IDXTEMP)
     {
-        indexes[index_count++] = vkd3d_dxbc_compiler_emit_register_addressing(compiler, &reg->idx[1]);
+        indexes[index_count++] = spirv_compiler_emit_register_addressing(compiler, &reg->idx[1]);
     }
     else if (register_info->is_aggregate)
     {
@@ -3342,9 +3342,9 @@ static void vkd3d_dxbc_compiler_emit_dereference_register(struct vkd3d_dxbc_comp
         {
             /* Indices for these are swapped compared to the generated SPIR-V. */
             if (reg->idx[1].offset != ~0u)
-                indexes[index_count++] = vkd3d_dxbc_compiler_emit_register_addressing(compiler, &reg->idx[1]);
+                indexes[index_count++] = spirv_compiler_emit_register_addressing(compiler, &reg->idx[1]);
             if (reg->idx[0].offset != ~0u)
-                indexes[index_count++] = vkd3d_dxbc_compiler_emit_register_addressing(compiler, &reg->idx[0]);
+                indexes[index_count++] = spirv_compiler_emit_register_addressing(compiler, &reg->idx[0]);
         }
         else
         {
@@ -3362,7 +3362,7 @@ static void vkd3d_dxbc_compiler_emit_dereference_register(struct vkd3d_dxbc_comp
             else
             {
                 reg_idx.offset = register_info->member_idx;
-                indexes[index_count++] = vkd3d_dxbc_compiler_emit_register_addressing(compiler, &reg_idx);
+                indexes[index_count++] = spirv_compiler_emit_register_addressing(compiler, &reg_idx);
             }
         }
     }
@@ -3373,7 +3373,7 @@ static void vkd3d_dxbc_compiler_emit_dereference_register(struct vkd3d_dxbc_comp
 
         /* Handle arrayed registers, e.g. v[3][0]. */
         if (reg->idx[1].offset != ~0u && !register_is_descriptor(reg))
-            indexes[index_count++] = vkd3d_dxbc_compiler_emit_register_addressing(compiler, &reg->idx[0]);
+            indexes[index_count++] = spirv_compiler_emit_register_addressing(compiler, &reg->idx[0]);
     }
 
     if (index_count)
@@ -3384,23 +3384,23 @@ static void vkd3d_dxbc_compiler_emit_dereference_register(struct vkd3d_dxbc_comp
         register_info->id = vkd3d_spirv_build_op_access_chain(builder, ptr_type_id,
                 register_info->id, indexes, index_count);
         if (reg->non_uniform)
-            vkd3d_dxbc_compiler_decorate_nonuniform(compiler, register_info->id);
+            spirv_compiler_decorate_nonuniform(compiler, register_info->id);
     }
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_register_id(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_register_id(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     struct vkd3d_shader_register_info register_info;
 
-    if (vkd3d_dxbc_compiler_get_register_info(compiler, reg, &register_info))
+    if (spirv_compiler_get_register_info(compiler, reg, &register_info))
     {
-        vkd3d_dxbc_compiler_emit_dereference_register(compiler, reg, &register_info);
+        spirv_compiler_emit_dereference_register(compiler, reg, &register_info);
         return register_info.id;
     }
 
-    return vkd3d_dxbc_compiler_emit_variable(compiler, &builder->global_stream,
+    return spirv_compiler_emit_variable(compiler, &builder->global_stream,
             SpvStorageClassPrivate, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE);
 }
 
@@ -3410,7 +3410,7 @@ static bool vkd3d_swizzle_is_equal(unsigned int dst_write_mask,
     return vkd3d_compact_swizzle(VKD3D_SHADER_NO_SWIZZLE, dst_write_mask) == vkd3d_compact_swizzle(swizzle, write_mask);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_swizzle(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_swizzle(struct spirv_compiler *compiler,
         uint32_t val_id, unsigned int val_write_mask, enum vkd3d_shader_component_type component_type,
         unsigned int swizzle, unsigned int write_mask)
 {
@@ -3457,7 +3457,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_swizzle(struct vkd3d_dxbc_compiler *com
             type_id, val_id, val_id, components, component_count);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_vector_shuffle(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_vector_shuffle(struct spirv_compiler *compiler,
         uint32_t vector1_id, uint32_t vector2_id, unsigned int swizzle, unsigned int write_mask,
         enum vkd3d_shader_component_type component_type, unsigned int component_count)
 {
@@ -3481,7 +3481,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_vector_shuffle(struct vkd3d_dxbc_compil
             type_id, vector1_id, vector2_id, components, component_count);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_load_constant(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_load_constant(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, DWORD swizzle, DWORD write_mask)
 {
     unsigned int component_count = vkd3d_write_mask_component_count(write_mask);
@@ -3504,11 +3504,11 @@ static uint32_t vkd3d_dxbc_compiler_emit_load_constant(struct vkd3d_dxbc_compile
         }
     }
 
-    return vkd3d_dxbc_compiler_get_constant(compiler,
+    return spirv_compiler_get_constant(compiler,
             vkd3d_component_type_from_data_type(reg->data_type), component_count, values);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_load_constant64(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_load_constant64(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, DWORD swizzle, DWORD write_mask)
 {
     unsigned int component_count = vkd3d_write_mask_component_count(write_mask);
@@ -3531,11 +3531,11 @@ static uint32_t vkd3d_dxbc_compiler_emit_load_constant64(struct vkd3d_dxbc_compi
         }
     }
 
-    return vkd3d_dxbc_compiler_get_constant64(compiler,
+    return spirv_compiler_get_constant64(compiler,
             vkd3d_component_type_from_data_type(reg->data_type), component_count, values);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_load_scalar(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_load_scalar(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, DWORD swizzle, DWORD write_mask,
         const struct vkd3d_shader_register_info *reg_info)
 {
@@ -3568,7 +3568,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_load_scalar(struct vkd3d_dxbc_compiler 
     if (reg_component_count != 1)
     {
         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, reg_info->storage_class, type_id);
-        index = vkd3d_dxbc_compiler_get_constant_uint(compiler, component_idx);
+        index = spirv_compiler_get_constant_uint(compiler, component_idx);
         reg_id = vkd3d_spirv_build_op_in_bounds_access_chain1(builder, ptr_type_id, reg_id, index);
     }
 
@@ -3583,7 +3583,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_load_scalar(struct vkd3d_dxbc_compiler 
     return val_id;
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_load_reg(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_load_reg(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, DWORD swizzle, DWORD write_mask)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -3594,19 +3594,19 @@ static uint32_t vkd3d_dxbc_compiler_emit_load_reg(struct vkd3d_dxbc_compiler *co
     uint32_t type_id, val_id;
 
     if (reg->type == VKD3DSPR_IMMCONST)
-        return vkd3d_dxbc_compiler_emit_load_constant(compiler, reg, swizzle, write_mask);
+        return spirv_compiler_emit_load_constant(compiler, reg, swizzle, write_mask);
     else if (reg->type == VKD3DSPR_IMMCONST64)
-        return vkd3d_dxbc_compiler_emit_load_constant64(compiler, reg, swizzle, write_mask);
+        return spirv_compiler_emit_load_constant64(compiler, reg, swizzle, write_mask);
 
     component_count = vkd3d_write_mask_component_count(write_mask);
     component_type = vkd3d_component_type_from_data_type(reg->data_type);
-    if (!vkd3d_dxbc_compiler_get_register_info(compiler, reg, &reg_info))
+    if (!spirv_compiler_get_register_info(compiler, reg, &reg_info))
     {
         type_id = vkd3d_spirv_get_type_id(builder, component_type, component_count);
         return vkd3d_spirv_build_op_undef(builder, &builder->global_stream, type_id);
     }
     assert(reg_info.component_type != VKD3D_SHADER_COMPONENT_DOUBLE);
-    vkd3d_dxbc_compiler_emit_dereference_register(compiler, reg, &reg_info);
+    spirv_compiler_emit_dereference_register(compiler, reg, &reg_info);
 
     write_mask32 = (reg->data_type == VKD3D_DATA_DOUBLE) ? vkd3d_write_mask_32_from_64(write_mask) : write_mask;
 
@@ -3617,7 +3617,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_load_reg(struct vkd3d_dxbc_compiler *co
     }
     else if (vkd3d_write_mask_component_count(write_mask32) == 1)
     {
-        return vkd3d_dxbc_compiler_emit_load_scalar(compiler, reg, swizzle, write_mask, &reg_info);
+        return spirv_compiler_emit_load_scalar(compiler, reg, swizzle, write_mask, &reg_info);
     }
     else
     {
@@ -3626,7 +3626,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_load_reg(struct vkd3d_dxbc_compiler *co
         val_id = vkd3d_spirv_build_op_load(builder, type_id, reg_info.id, SpvMemoryAccessMaskNone);
     }
 
-    val_id = vkd3d_dxbc_compiler_emit_swizzle(compiler,
+    val_id = spirv_compiler_emit_swizzle(compiler,
             val_id, reg_info.write_mask, reg_info.component_type, swizzle, write_mask32);
 
     if (component_type != reg_info.component_type)
@@ -3638,7 +3638,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_load_reg(struct vkd3d_dxbc_compiler *co
     return val_id;
 }
 
-static void vkd3d_dxbc_compiler_emit_execution_mode(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_execution_mode(struct spirv_compiler *compiler,
         SpvExecutionMode mode, const uint32_t *literals, unsigned int literal_count)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -3647,19 +3647,19 @@ static void vkd3d_dxbc_compiler_emit_execution_mode(struct vkd3d_dxbc_compiler *
             builder->main_function_id, mode, literals, literal_count);
 }
 
-static void vkd3d_dxbc_compiler_emit_execution_mode1(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_execution_mode1(struct spirv_compiler *compiler,
         SpvExecutionMode mode, const uint32_t literal)
 {
-    vkd3d_dxbc_compiler_emit_execution_mode(compiler, mode, &literal, 1);
+    spirv_compiler_emit_execution_mode(compiler, mode, &literal, 1);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_abs(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_abs(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, DWORD write_mask, uint32_t val_id)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     uint32_t type_id;
 
-    type_id = vkd3d_dxbc_compiler_get_type_id_for_reg(compiler, reg, write_mask);
+    type_id = spirv_compiler_get_type_id_for_reg(compiler, reg, write_mask);
     if (reg->data_type == VKD3D_DATA_FLOAT || reg->data_type == VKD3D_DATA_DOUBLE)
         return vkd3d_spirv_build_op_glsl_std450_fabs(builder, type_id, val_id);
 
@@ -3667,13 +3667,13 @@ static uint32_t vkd3d_dxbc_compiler_emit_abs(struct vkd3d_dxbc_compiler *compile
     return val_id;
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_neg(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_neg(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, DWORD write_mask, uint32_t val_id)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     uint32_t type_id;
 
-    type_id = vkd3d_dxbc_compiler_get_type_id_for_reg(compiler, reg, write_mask);
+    type_id = spirv_compiler_get_type_id_for_reg(compiler, reg, write_mask);
     if (reg->data_type == VKD3D_DATA_FLOAT || reg->data_type == VKD3D_DATA_DOUBLE)
         return vkd3d_spirv_build_op_fnegate(builder, type_id, val_id);
     else if (reg->data_type == VKD3D_DATA_INT)
@@ -3683,7 +3683,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_neg(struct vkd3d_dxbc_compiler *compile
     return val_id;
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_src_modifier(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_src_modifier(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, DWORD write_mask,
         enum vkd3d_shader_src_modifier modifier, uint32_t val_id)
 {
@@ -3692,12 +3692,12 @@ static uint32_t vkd3d_dxbc_compiler_emit_src_modifier(struct vkd3d_dxbc_compiler
         case VKD3DSPSM_NONE:
             break;
         case VKD3DSPSM_NEG:
-            return vkd3d_dxbc_compiler_emit_neg(compiler, reg, write_mask, val_id);
+            return spirv_compiler_emit_neg(compiler, reg, write_mask, val_id);
         case VKD3DSPSM_ABS:
-            return vkd3d_dxbc_compiler_emit_abs(compiler, reg, write_mask, val_id);
+            return spirv_compiler_emit_abs(compiler, reg, write_mask, val_id);
         case VKD3DSPSM_ABSNEG:
-            val_id = vkd3d_dxbc_compiler_emit_abs(compiler, reg, write_mask, val_id);
-            return vkd3d_dxbc_compiler_emit_neg(compiler, reg, write_mask, val_id);
+            val_id = spirv_compiler_emit_abs(compiler, reg, write_mask, val_id);
+            return spirv_compiler_emit_neg(compiler, reg, write_mask, val_id);
         default:
             FIXME("Unhandled src modifier %#x.\n", modifier);
             break;
@@ -3706,25 +3706,25 @@ static uint32_t vkd3d_dxbc_compiler_emit_src_modifier(struct vkd3d_dxbc_compiler
     return val_id;
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_load_src(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_load_src(struct spirv_compiler *compiler,
         const struct vkd3d_shader_src_param *src, DWORD write_mask)
 {
     uint32_t val_id;
 
-    val_id = vkd3d_dxbc_compiler_emit_load_reg(compiler, &src->reg, src->swizzle, write_mask);
-    return vkd3d_dxbc_compiler_emit_src_modifier(compiler, &src->reg, write_mask, src->modifiers, val_id);
+    val_id = spirv_compiler_emit_load_reg(compiler, &src->reg, src->swizzle, write_mask);
+    return spirv_compiler_emit_src_modifier(compiler, &src->reg, write_mask, src->modifiers, val_id);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_load_src_with_type(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_load_src_with_type(struct spirv_compiler *compiler,
         const struct vkd3d_shader_src_param *src, DWORD write_mask, enum vkd3d_shader_component_type component_type)
 {
     struct vkd3d_shader_src_param src_param = *src;
 
     src_param.reg.data_type = vkd3d_data_type_from_component_type(component_type);
-    return vkd3d_dxbc_compiler_emit_load_src(compiler, &src_param, write_mask);
+    return spirv_compiler_emit_load_src(compiler, &src_param, write_mask);
 }
 
-static void vkd3d_dxbc_compiler_emit_store_scalar(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_scalar(struct spirv_compiler *compiler,
         uint32_t dst_id, unsigned int dst_write_mask, enum vkd3d_shader_component_type component_type,
         SpvStorageClass storage_class, unsigned int write_mask, uint32_t val_id)
 {
@@ -3738,14 +3738,14 @@ static void vkd3d_dxbc_compiler_emit_store_scalar(struct vkd3d_dxbc_compiler *co
         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, storage_class, type_id);
         component_idx = vkd3d_write_mask_get_component_idx(write_mask);
         component_idx -= vkd3d_write_mask_get_component_idx(dst_write_mask);
-        index = vkd3d_dxbc_compiler_get_constant_uint(compiler, component_idx);
+        index = spirv_compiler_get_constant_uint(compiler, component_idx);
         dst_id = vkd3d_spirv_build_op_in_bounds_access_chain1(builder, ptr_type_id, dst_id, index);
     }
 
     vkd3d_spirv_build_op_store(builder, dst_id, val_id, SpvMemoryAccessMaskNone);
 }
 
-static void vkd3d_dxbc_compiler_emit_store(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store(struct spirv_compiler *compiler,
         uint32_t dst_id, unsigned int dst_write_mask, enum vkd3d_shader_component_type component_type,
         SpvStorageClass storage_class, unsigned int write_mask, uint32_t val_id)
 {
@@ -3771,7 +3771,7 @@ static void vkd3d_dxbc_compiler_emit_store(struct vkd3d_dxbc_compiler *compiler,
 
     if (component_count == 1)
     {
-        return vkd3d_dxbc_compiler_emit_store_scalar(compiler,
+        return spirv_compiler_emit_store_scalar(compiler,
                 dst_id, dst_write_mask, component_type, storage_class, write_mask, val_id);
     }
 
@@ -3800,7 +3800,7 @@ static void vkd3d_dxbc_compiler_emit_store(struct vkd3d_dxbc_compiler *compiler,
     vkd3d_spirv_build_op_store(builder, dst_id, val_id, SpvMemoryAccessMaskNone);
 }
 
-static void vkd3d_dxbc_compiler_emit_store_reg(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_reg(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, unsigned int write_mask, uint32_t val_id)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -3811,9 +3811,9 @@ static void vkd3d_dxbc_compiler_emit_store_reg(struct vkd3d_dxbc_compiler *compi
 
     assert(reg->type != VKD3DSPR_IMMCONST && reg->type != VKD3DSPR_IMMCONST64);
 
-    if (!vkd3d_dxbc_compiler_get_register_info(compiler, reg, &reg_info))
+    if (!spirv_compiler_get_register_info(compiler, reg, &reg_info))
         return;
-    vkd3d_dxbc_compiler_emit_dereference_register(compiler, reg, &reg_info);
+    spirv_compiler_emit_dereference_register(compiler, reg, &reg_info);
 
     component_type = vkd3d_component_type_from_data_type(reg->data_type);
     if (component_type != reg_info.component_type)
@@ -3826,11 +3826,11 @@ static void vkd3d_dxbc_compiler_emit_store_reg(struct vkd3d_dxbc_compiler *compi
         component_type = reg_info.component_type;
     }
 
-    vkd3d_dxbc_compiler_emit_store(compiler,
+    spirv_compiler_emit_store(compiler,
             reg_info.id, reg_info.write_mask, component_type, reg_info.storage_class, src_write_mask, val_id);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_sat(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_sat(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, DWORD write_mask, uint32_t val_id)
 {
     unsigned int component_count = vkd3d_write_mask_component_count(write_mask);
@@ -3839,16 +3839,16 @@ static uint32_t vkd3d_dxbc_compiler_emit_sat(struct vkd3d_dxbc_compiler *compile
 
     if (reg->data_type == VKD3D_DATA_DOUBLE)
     {
-        zero_id = vkd3d_dxbc_compiler_get_constant_double_vector(compiler, 0.0, component_count);
-        one_id = vkd3d_dxbc_compiler_get_constant_double_vector(compiler, 1.0, component_count);
+        zero_id = spirv_compiler_get_constant_double_vector(compiler, 0.0, component_count);
+        one_id = spirv_compiler_get_constant_double_vector(compiler, 1.0, component_count);
     }
     else
     {
-        zero_id = vkd3d_dxbc_compiler_get_constant_float_vector(compiler, 0.0f, component_count);
-        one_id = vkd3d_dxbc_compiler_get_constant_float_vector(compiler, 1.0f, component_count);
+        zero_id = spirv_compiler_get_constant_float_vector(compiler, 0.0f, component_count);
+        one_id = spirv_compiler_get_constant_float_vector(compiler, 1.0f, component_count);
     }
 
-    type_id = vkd3d_dxbc_compiler_get_type_id_for_reg(compiler, reg, write_mask);
+    type_id = spirv_compiler_get_type_id_for_reg(compiler, reg, write_mask);
     if (reg->data_type == VKD3D_DATA_FLOAT || reg->data_type == VKD3D_DATA_DOUBLE)
         return vkd3d_spirv_build_op_glsl_std450_nclamp(builder, type_id, val_id, zero_id, one_id);
 
@@ -3856,31 +3856,31 @@ static uint32_t vkd3d_dxbc_compiler_emit_sat(struct vkd3d_dxbc_compiler *compile
     return val_id;
 }
 
-static void vkd3d_dxbc_compiler_emit_store_dst(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_dst(struct spirv_compiler *compiler,
         const struct vkd3d_shader_dst_param *dst, uint32_t val_id)
 {
     assert(!(dst->modifiers & ~VKD3DSPDM_SATURATE));
     if (dst->modifiers & VKD3DSPDM_SATURATE)
-        val_id = vkd3d_dxbc_compiler_emit_sat(compiler, &dst->reg, dst->write_mask, val_id);
+        val_id = spirv_compiler_emit_sat(compiler, &dst->reg, dst->write_mask, val_id);
 
-    vkd3d_dxbc_compiler_emit_store_reg(compiler, &dst->reg, dst->write_mask, val_id);
+    spirv_compiler_emit_store_reg(compiler, &dst->reg, dst->write_mask, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_store_dst_swizzled(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_dst_swizzled(struct spirv_compiler *compiler,
         const struct vkd3d_shader_dst_param *dst, uint32_t val_id,
         enum vkd3d_shader_component_type component_type, DWORD swizzle)
 {
     struct vkd3d_shader_dst_param typed_dst = *dst;
-    val_id = vkd3d_dxbc_compiler_emit_swizzle(compiler,
+    val_id = spirv_compiler_emit_swizzle(compiler,
             val_id, VKD3DSP_WRITEMASK_ALL, component_type, swizzle, dst->write_mask);
     /* XXX: The register data type could be fixed by the shader parser. For SM5
      * shaders the data types are stored in instructions modifiers.
      */
     typed_dst.reg.data_type = vkd3d_data_type_from_component_type(component_type);
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, &typed_dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, &typed_dst, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_store_dst_components(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_dst_components(struct spirv_compiler *compiler,
         const struct vkd3d_shader_dst_param *dst, enum vkd3d_shader_component_type component_type,
         uint32_t *component_ids)
 {
@@ -3898,10 +3898,10 @@ static void vkd3d_dxbc_compiler_emit_store_dst_components(struct vkd3d_dxbc_comp
     {
         val_id = *component_ids;
     }
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_store_dst_scalar(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_dst_scalar(struct spirv_compiler *compiler,
         const struct vkd3d_shader_dst_param *dst, uint32_t val_id,
         enum vkd3d_shader_component_type component_type, DWORD swizzle)
 {
@@ -3917,10 +3917,10 @@ static void vkd3d_dxbc_compiler_emit_store_dst_scalar(struct vkd3d_dxbc_compiler
 
         component_ids[i] = val_id;
     }
-    vkd3d_dxbc_compiler_emit_store_dst_components(compiler, dst, component_type, component_ids);
+    spirv_compiler_emit_store_dst_components(compiler, dst, component_type, component_ids);
 }
 
-static void vkd3d_dxbc_compiler_decorate_builtin(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_decorate_builtin(struct spirv_compiler *compiler,
         uint32_t target_id, SpvBuiltIn builtin)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -3932,7 +3932,7 @@ static void vkd3d_dxbc_compiler_decorate_builtin(struct vkd3d_dxbc_compiler *com
                 vkd3d_spirv_enable_capability(builder, SpvCapabilityGeometry);
             break;
         case SpvBuiltInFragDepth:
-            vkd3d_dxbc_compiler_emit_execution_mode(compiler, SpvExecutionModeDepthReplacing, NULL, 0);
+            spirv_compiler_emit_execution_mode(compiler, SpvExecutionModeDepthReplacing, NULL, 0);
             break;
         case SpvBuiltInLayer:
             vkd3d_spirv_enable_capability(builder, SpvCapabilityGeometry);
@@ -3956,7 +3956,7 @@ static void vkd3d_dxbc_compiler_decorate_builtin(struct vkd3d_dxbc_compiler *com
     vkd3d_spirv_build_op_decorate1(builder, target_id, SpvDecorationBuiltIn, builtin);
 }
 
-static void vkd3d_dxbc_compiler_emit_interpolation_decorations(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_interpolation_decorations(struct spirv_compiler *compiler,
         uint32_t id, enum vkd3d_shader_interpolation_mode mode)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -3986,7 +3986,7 @@ static void vkd3d_dxbc_compiler_emit_interpolation_decorations(struct vkd3d_dxbc
     }
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_int_to_bool(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_int_to_bool(struct spirv_compiler *compiler,
         enum vkd3d_shader_conditional_op condition, unsigned int component_count, uint32_t val_id)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -3998,25 +3998,25 @@ static uint32_t vkd3d_dxbc_compiler_emit_int_to_bool(struct vkd3d_dxbc_compiler 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_BOOL, component_count);
     op = condition & VKD3D_SHADER_CONDITIONAL_OP_Z ? SpvOpIEqual : SpvOpINotEqual;
     return vkd3d_spirv_build_op_tr2(builder, &builder->function_stream, op, type_id, val_id,
-            vkd3d_dxbc_compiler_get_constant_uint_vector(compiler, 0, component_count));
+            spirv_compiler_get_constant_uint_vector(compiler, 0, component_count));
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_bool_to_int(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_bool_to_int(struct spirv_compiler *compiler,
         unsigned int component_count, uint32_t val_id)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     uint32_t type_id, true_id, false_id;
 
-    true_id = vkd3d_dxbc_compiler_get_constant_uint_vector(compiler, 0xffffffff, component_count);
-    false_id = vkd3d_dxbc_compiler_get_constant_uint_vector(compiler, 0, component_count);
+    true_id = spirv_compiler_get_constant_uint_vector(compiler, 0xffffffff, component_count);
+    false_id = spirv_compiler_get_constant_uint_vector(compiler, 0, component_count);
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, component_count);
     return vkd3d_spirv_build_op_select(builder, type_id, val_id, true_id, false_id);
 }
 
-typedef uint32_t (*vkd3d_spirv_builtin_fixup_pfn)(struct vkd3d_dxbc_compiler *compiler,
+typedef uint32_t (*vkd3d_spirv_builtin_fixup_pfn)(struct spirv_compiler *compiler,
         uint32_t val_id);
 
-static uint32_t vkd3d_dxbc_compiler_emit_draw_parameter_fixup(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_draw_parameter_fixup(struct spirv_compiler *compiler,
         uint32_t index_id, SpvBuiltIn base)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -4024,10 +4024,10 @@ static uint32_t vkd3d_dxbc_compiler_emit_draw_parameter_fixup(struct vkd3d_dxbc_
 
     vkd3d_spirv_enable_capability(builder, SpvCapabilityDrawParameters);
 
-    base_var_id = vkd3d_dxbc_compiler_emit_variable(compiler, &builder->global_stream,
+    base_var_id = spirv_compiler_emit_variable(compiler, &builder->global_stream,
             SpvStorageClassInput, VKD3D_SHADER_COMPONENT_INT, 1);
     vkd3d_spirv_add_iface_variable(builder, base_var_id);
-    vkd3d_dxbc_compiler_decorate_builtin(compiler, base_var_id, base);
+    spirv_compiler_decorate_builtin(compiler, base_var_id, base);
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_INT, 1);
     base_id = vkd3d_spirv_build_op_load(builder,
@@ -4037,29 +4037,29 @@ static uint32_t vkd3d_dxbc_compiler_emit_draw_parameter_fixup(struct vkd3d_dxbc_
 }
 
 /* Substitute "VertexIndex - BaseVertex" for SV_VertexID. */
-static uint32_t sv_vertex_id_fixup(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t sv_vertex_id_fixup(struct spirv_compiler *compiler,
         uint32_t vertex_index_id)
 {
-    return vkd3d_dxbc_compiler_emit_draw_parameter_fixup(compiler,
+    return spirv_compiler_emit_draw_parameter_fixup(compiler,
             vertex_index_id, SpvBuiltInBaseVertex);
 }
 
 /* Substitute "InstanceIndex - BaseInstance" for SV_InstanceID. */
-static uint32_t sv_instance_id_fixup(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t sv_instance_id_fixup(struct spirv_compiler *compiler,
         uint32_t instance_index_id)
 {
-    return vkd3d_dxbc_compiler_emit_draw_parameter_fixup(compiler,
+    return spirv_compiler_emit_draw_parameter_fixup(compiler,
             instance_index_id, SpvBuiltInBaseInstance);
 }
 
-static uint32_t sv_front_face_fixup(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t sv_front_face_fixup(struct spirv_compiler *compiler,
         uint32_t front_facing_id)
 {
-    return vkd3d_dxbc_compiler_emit_bool_to_int(compiler, 1, front_facing_id);
+    return spirv_compiler_emit_bool_to_int(compiler, 1, front_facing_id);
 }
 
 /* frag_coord.w = 1.0f / frag_coord.w */
-static uint32_t frag_coord_fixup(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t frag_coord_fixup(struct spirv_compiler *compiler,
         uint32_t frag_coord_id)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -4068,7 +4068,7 @@ static uint32_t frag_coord_fixup(struct vkd3d_dxbc_compiler *compiler,
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, 1);
     w_id = vkd3d_spirv_build_op_composite_extract1(builder, type_id, frag_coord_id, 3);
     w_id = vkd3d_spirv_build_op_fdiv(builder, type_id,
-            vkd3d_dxbc_compiler_get_constant_float(compiler, 1.0f), w_id);
+            spirv_compiler_get_constant_float(compiler, 1.0f), w_id);
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE);
     return vkd3d_spirv_build_op_composite_insert1(builder, type_id, w_id, frag_coord_id, 3);
 }
@@ -4164,28 +4164,28 @@ vkd3d_register_builtins[] =
     {VKD3DSPR_OUTSTENCILREF,    {VKD3D_SHADER_COMPONENT_UINT, 1, SpvBuiltInFragStencilRefEXT}},
 };
 
-static void vkd3d_dxbc_compiler_emit_register_execution_mode(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_register_execution_mode(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg)
 {
     switch (reg->type)
     {
         case VKD3DSPR_DEPTHOUTGE:
-            vkd3d_dxbc_compiler_emit_execution_mode(compiler, SpvExecutionModeDepthGreater, NULL, 0);
+            spirv_compiler_emit_execution_mode(compiler, SpvExecutionModeDepthGreater, NULL, 0);
             break;
         case VKD3DSPR_DEPTHOUTLE:
-            vkd3d_dxbc_compiler_emit_execution_mode(compiler, SpvExecutionModeDepthLess, NULL, 0);
+            spirv_compiler_emit_execution_mode(compiler, SpvExecutionModeDepthLess, NULL, 0);
             break;
         case VKD3DSPR_OUTSTENCILREF:
-            if (!vkd3d_dxbc_compiler_is_target_extension_supported(compiler,
+            if (!spirv_compiler_is_target_extension_supported(compiler,
                     VKD3D_SHADER_SPIRV_EXTENSION_EXT_STENCIL_EXPORT))
             {
                 FIXME("The target environment does not support stencil export.\n");
-                vkd3d_dxbc_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_STENCIL_EXPORT_UNSUPPORTED,
+                spirv_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_STENCIL_EXPORT_UNSUPPORTED,
                         "Cannot export stencil reference value for register id %u. "
                         "The target environment does not support stencil export.", reg->idx[0].offset);
             }
             vkd3d_spirv_enable_capability(&compiler->spirv_builder, SpvCapabilityStencilExportEXT);
-            vkd3d_dxbc_compiler_emit_execution_mode(compiler, SpvExecutionModeStencilRefReplacingEXT, NULL, 0);
+            spirv_compiler_emit_execution_mode(compiler, SpvExecutionModeStencilRefReplacingEXT, NULL, 0);
             break;
         default:
             return;
@@ -4193,7 +4193,7 @@ static void vkd3d_dxbc_compiler_emit_register_execution_mode(struct vkd3d_dxbc_c
 }
 
 static const struct vkd3d_spirv_builtin *get_spirv_builtin_for_sysval(
-        const struct vkd3d_dxbc_compiler *compiler, enum vkd3d_shader_input_sysval_semantic sysval)
+        const struct spirv_compiler *compiler, enum vkd3d_shader_input_sysval_semantic sysval)
 {
     enum vkd3d_shader_spirv_environment environment;
     unsigned int i;
@@ -4205,7 +4205,7 @@ static const struct vkd3d_spirv_builtin *get_spirv_builtin_for_sysval(
     if (sysval == VKD3D_SIV_POSITION && compiler->shader_type == VKD3D_SHADER_TYPE_PIXEL)
         return &vkd3d_pixel_shader_position_builtin;
 
-    environment = vkd3d_dxbc_compiler_get_target_environment(compiler);
+    environment = spirv_compiler_get_target_environment(compiler);
     for (i = 0; i < ARRAY_SIZE(vkd3d_system_value_builtins); ++i)
     {
         if (vkd3d_system_value_builtins[i].sysval == sysval
@@ -4233,7 +4233,7 @@ static const struct vkd3d_spirv_builtin *get_spirv_builtin_for_register(
     return NULL;
 }
 
-static const struct vkd3d_spirv_builtin *vkd3d_get_spirv_builtin(const struct vkd3d_dxbc_compiler *compiler,
+static const struct vkd3d_spirv_builtin *vkd3d_get_spirv_builtin(const struct spirv_compiler *compiler,
         enum vkd3d_shader_register_type reg_type, enum vkd3d_shader_input_sysval_semantic sysval)
 {
     const struct vkd3d_spirv_builtin *builtin;
@@ -4272,7 +4272,7 @@ static const struct vkd3d_shader_signature_element *vkd3d_find_signature_element
     return NULL;
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_invocation_id(struct vkd3d_dxbc_compiler *compiler)
+static uint32_t spirv_compiler_get_invocation_id(struct spirv_compiler *compiler)
 {
     struct vkd3d_shader_register r;
 
@@ -4282,20 +4282,20 @@ static uint32_t vkd3d_dxbc_compiler_get_invocation_id(struct vkd3d_dxbc_compiler
     r.type = VKD3DSPR_OUTPOINTID;
     r.idx[0].offset = ~0u;
     r.idx[1].offset = ~0u;
-    return vkd3d_dxbc_compiler_get_register_id(compiler, &r);
+    return spirv_compiler_get_register_id(compiler, &r);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_load_invocation_id(struct vkd3d_dxbc_compiler *compiler)
+static uint32_t spirv_compiler_emit_load_invocation_id(struct spirv_compiler *compiler)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     uint32_t type_id, id;
 
-    id = vkd3d_dxbc_compiler_get_invocation_id(compiler);
+    id = spirv_compiler_get_invocation_id(compiler);
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_INT, 1);
     return vkd3d_spirv_build_op_load(builder, type_id, id, SpvMemoryAccessMaskNone);
 }
 
-static void vkd3d_dxbc_compiler_emit_shader_phase_name(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_shader_phase_name(struct spirv_compiler *compiler,
         uint32_t id, const struct vkd3d_shader_phase *phase, const char *suffix)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -4322,7 +4322,7 @@ static void vkd3d_dxbc_compiler_emit_shader_phase_name(struct vkd3d_dxbc_compile
     vkd3d_spirv_build_op_name(builder, id, "%s%u%s", name, phase->idx, suffix);
 }
 
-static void vkd3d_dxbc_compiler_begin_shader_phase(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_begin_shader_phase(struct spirv_compiler *compiler,
         struct vkd3d_shader_phase *phase)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -4353,11 +4353,11 @@ static void vkd3d_dxbc_compiler_begin_shader_phase(struct vkd3d_dxbc_compiler *c
     vkd3d_spirv_build_op_label(builder, vkd3d_spirv_alloc_id(builder));
     phase->function_location = vkd3d_spirv_stream_current_location(&builder->function_stream);
 
-    vkd3d_dxbc_compiler_emit_shader_phase_name(compiler, phase->function_id, phase, NULL);
+    spirv_compiler_emit_shader_phase_name(compiler, phase->function_id, phase, NULL);
 }
 
-static const struct vkd3d_shader_phase *vkd3d_dxbc_compiler_get_current_shader_phase(
-        struct vkd3d_dxbc_compiler *compiler)
+static const struct vkd3d_shader_phase *spirv_compiler_get_current_shader_phase(
+        struct spirv_compiler *compiler)
 {
     struct vkd3d_shader_phase *phase;
 
@@ -4366,11 +4366,11 @@ static const struct vkd3d_shader_phase *vkd3d_dxbc_compiler_get_current_shader_p
 
     phase = &compiler->shader_phases[compiler->shader_phase_count - 1];
     if (!phase->function_id)
-        vkd3d_dxbc_compiler_begin_shader_phase(compiler, phase);
+        spirv_compiler_begin_shader_phase(compiler, phase);
     return phase;
 }
 
-static void vkd3d_dxbc_compiler_decorate_xfb_output(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_decorate_xfb_output(struct spirv_compiler *compiler,
         uint32_t id, unsigned int component_count, const struct vkd3d_shader_signature_element *signature_element)
 {
     const struct vkd3d_shader_transform_feedback_info *xfb_info = compiler->xfb_info;
@@ -4430,7 +4430,7 @@ static void vkd3d_dxbc_compiler_decorate_xfb_output(struct vkd3d_dxbc_compiler *
     vkd3d_spirv_build_op_decorate1(builder, id, SpvDecorationOffset, offset);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_builtin_variable(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_builtin_variable(struct spirv_compiler *compiler,
         const struct vkd3d_spirv_builtin *builtin, SpvStorageClass storage_class, unsigned int array_size)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -4438,11 +4438,11 @@ static uint32_t vkd3d_dxbc_compiler_emit_builtin_variable(struct vkd3d_dxbc_comp
 
     array_size = max(array_size, builtin->spirv_array_size);
 
-    id = vkd3d_dxbc_compiler_emit_array_variable(compiler,
+    id = spirv_compiler_emit_array_variable(compiler,
             &builder->global_stream, storage_class,
             builtin->component_type, builtin->component_count, array_size);
     vkd3d_spirv_add_iface_variable(builder, id);
-    vkd3d_dxbc_compiler_decorate_builtin(compiler, id, builtin->spirv_builtin);
+    spirv_compiler_decorate_builtin(compiler, id, builtin->spirv_builtin);
 
     if (compiler->shader_type == VKD3D_SHADER_TYPE_PIXEL && storage_class == SpvStorageClassInput
             && builtin->component_type != VKD3D_SHADER_COMPONENT_FLOAT
@@ -4502,7 +4502,7 @@ static bool needs_private_io_variable(const struct vkd3d_shader_signature *signa
     return false;
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_input(struct spirv_compiler *compiler,
         const struct vkd3d_shader_dst_param *dst, enum vkd3d_shader_input_sysval_semantic sysval,
         enum vkd3d_shader_interpolation_mode interpolation_mode)
 {
@@ -4601,7 +4601,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
          *
          * We handle "vicp" and "vpc" here by creating aliases to the shader's
          * global inputs and outputs. We handle "vocp" in
-         * vkd3d_dxbc_compiler_leave_shader_phase(). */
+         * spirv_compiler_leave_shader_phase(). */
 
         tmp_symbol = reg_symbol;
         if (reg->type == VKD3DSPR_PATCHCONST)
@@ -4614,7 +4614,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
             symbol = RB_ENTRY_VALUE(entry, struct vkd3d_symbol, entry);
             tmp_symbol = *symbol;
             tmp_symbol.key.reg.type = reg->type;
-            vkd3d_dxbc_compiler_put_symbol(compiler, &tmp_symbol);
+            spirv_compiler_put_symbol(compiler, &tmp_symbol);
 
             input_id = symbol->id;
         }
@@ -4631,7 +4631,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
     {
         if (builtin)
         {
-            input_id = vkd3d_dxbc_compiler_emit_builtin_variable(compiler, builtin, storage_class, array_size);
+            input_id = spirv_compiler_emit_builtin_variable(compiler, builtin, storage_class, array_size);
             if (reg->type == VKD3DSPR_PATCHCONST)
                 vkd3d_spirv_build_op_decorate(builder, input_id, SpvDecorationPatch, NULL, 0);
         }
@@ -4639,7 +4639,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
         {
             unsigned int location = reg_idx;
 
-            input_id = vkd3d_dxbc_compiler_emit_array_variable(compiler, &builder->global_stream,
+            input_id = spirv_compiler_emit_array_variable(compiler, &builder->global_stream,
                     storage_class, component_type, input_component_count, array_size);
             vkd3d_spirv_add_iface_variable(builder, input_id);
             if (reg->type == VKD3DSPR_PATCHCONST)
@@ -4651,7 +4651,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
             if (component_idx)
                 vkd3d_spirv_build_op_decorate1(builder, input_id, SpvDecorationComponent, component_idx);
 
-            vkd3d_dxbc_compiler_emit_interpolation_decorations(compiler, input_id, interpolation_mode);
+            spirv_compiler_emit_interpolation_decorations(compiler, input_id, interpolation_mode);
         }
     }
 
@@ -4661,7 +4661,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
         if (use_private_var)
         {
             storage_class = SpvStorageClassPrivate;
-            var_id = vkd3d_dxbc_compiler_emit_array_variable(compiler, &builder->global_stream,
+            var_id = spirv_compiler_emit_array_variable(compiler, &builder->global_stream,
                     storage_class, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE, array_size);
         }
 
@@ -4669,9 +4669,9 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
                 use_private_var ? VKD3D_SHADER_COMPONENT_FLOAT : component_type,
                 use_private_var ? VKD3DSP_WRITEMASK_ALL : write_mask);
         reg_symbol.info.reg.dcl_mask |= write_mask;
-        vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
+        spirv_compiler_put_symbol(compiler, &reg_symbol);
 
-        vkd3d_dxbc_compiler_emit_register_debug_name(builder, var_id, reg);
+        spirv_compiler_emit_register_debug_name(builder, var_id, reg);
     }
     else
     {
@@ -4690,7 +4690,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
             if (array_size)
             {
                 ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassInput, type_id);
-                index = vkd3d_dxbc_compiler_get_constant_uint(compiler, i);
+                index = spirv_compiler_get_constant_uint(compiler, i);
                 val_id = vkd3d_spirv_build_op_in_bounds_access_chain1(builder, ptr_type_id, input_id, index);
                 dst_reg.idx[0].offset = i;
             }
@@ -4700,7 +4700,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
                  * so we'll need to index into the SPIR-V builtin when loading
                  * it. This happens when reading TessLevel in domain shaders. */
                 ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassInput, type_id);
-                index = vkd3d_dxbc_compiler_get_constant_uint(compiler, builtin->member_idx);
+                index = spirv_compiler_get_constant_uint(compiler, builtin->member_idx);
                 val_id = vkd3d_spirv_build_op_in_bounds_access_chain1(builder, ptr_type_id, input_id, index);
                 dst_reg.idx[0].offset = reg_idx + i;
             }
@@ -4715,18 +4715,18 @@ static uint32_t vkd3d_dxbc_compiler_emit_input(struct vkd3d_dxbc_compiler *compi
                 val_id = vkd3d_spirv_build_op_bitcast(builder, float_type_id, val_id);
             }
 
-            val_id = vkd3d_dxbc_compiler_emit_swizzle(compiler, val_id,
+            val_id = spirv_compiler_emit_swizzle(compiler, val_id,
                     vkd3d_write_mask_from_component_count(input_component_count),
                     VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_SHADER_NO_SWIZZLE, dst->write_mask >> component_idx);
 
-            vkd3d_dxbc_compiler_emit_store_reg(compiler, &dst_reg, dst->write_mask, val_id);
+            spirv_compiler_emit_store_reg(compiler, &dst_reg, dst->write_mask, val_id);
         }
     }
 
     return input_id;
 }
 
-static void vkd3d_dxbc_compiler_emit_input_register(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_input_register(struct spirv_compiler *compiler,
         const struct vkd3d_shader_dst_param *dst)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -4752,18 +4752,18 @@ static void vkd3d_dxbc_compiler_emit_input_register(struct vkd3d_dxbc_compiler *
     if ((entry = rb_get(&compiler->symbol_table, &reg_symbol)))
         return;
 
-    input_id = vkd3d_dxbc_compiler_emit_builtin_variable(compiler, builtin, SpvStorageClassInput, 0);
+    input_id = spirv_compiler_emit_builtin_variable(compiler, builtin, SpvStorageClassInput, 0);
 
     write_mask = vkd3d_write_mask_from_component_count(builtin->component_count);
     vkd3d_symbol_set_register_info(&reg_symbol, input_id,
             SpvStorageClassInput, builtin->component_type, write_mask);
     reg_symbol.info.reg.dcl_mask = write_mask;
     reg_symbol.info.reg.is_aggregate = builtin->spirv_array_size;
-    vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
-    vkd3d_dxbc_compiler_emit_register_debug_name(builder, input_id, reg);
+    spirv_compiler_put_symbol(compiler, &reg_symbol);
+    spirv_compiler_emit_register_debug_name(builder, input_id, reg);
 }
 
-static void vkd3d_dxbc_compiler_emit_shader_phase_input(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_shader_phase_input(struct spirv_compiler *compiler,
         const struct vkd3d_shader_phase *phase, const struct vkd3d_shader_dst_param *dst)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -4776,17 +4776,17 @@ static void vkd3d_dxbc_compiler_emit_shader_phase_input(struct vkd3d_dxbc_compil
         case VKD3DSPR_INPUT:
         case VKD3DSPR_INCONTROLPOINT:
         case VKD3DSPR_PATCHCONST:
-            vkd3d_dxbc_compiler_emit_input(compiler, dst, VKD3D_SIV_NONE, VKD3DSIM_NONE);
+            spirv_compiler_emit_input(compiler, dst, VKD3D_SIV_NONE, VKD3DSIM_NONE);
             return;
         case VKD3DSPR_PRIMID:
-            vkd3d_dxbc_compiler_emit_input_register(compiler, dst);
+            spirv_compiler_emit_input_register(compiler, dst);
             return;
         case VKD3DSPR_FORKINSTID:
         case VKD3DSPR_JOININSTID:
             val_id = phase->instance_id;
             break;
-        case VKD3DSPR_OUTPOINTID: /* Emitted in vkd3d_dxbc_compiler_emit_initial_declarations(). */
-        case VKD3DSPR_OUTCONTROLPOINT: /* See vkd3d_dxbc_compiler_leave_shader_phase(). */
+        case VKD3DSPR_OUTPOINTID: /* Emitted in spirv_compiler_emit_initial_declarations(). */
+        case VKD3DSPR_OUTCONTROLPOINT: /* See spirv_compiler_leave_shader_phase(). */
             return;
         default:
             FIXME("Unhandled shader phase input register %#x.\n", reg->type);
@@ -4797,12 +4797,12 @@ static void vkd3d_dxbc_compiler_emit_shader_phase_input(struct vkd3d_dxbc_compil
     vkd3d_symbol_set_register_info(&reg_symbol, val_id,
             SpvStorageClassMax /* Intermediate value */,
             VKD3D_SHADER_COMPONENT_UINT, VKD3DSP_WRITEMASK_0);
-    vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
-    vkd3d_dxbc_compiler_emit_register_debug_name(builder, val_id, reg);
+    spirv_compiler_put_symbol(compiler, &reg_symbol);
+    spirv_compiler_emit_register_debug_name(builder, val_id, reg);
 }
 
-static unsigned int vkd3d_dxbc_compiler_get_output_variable_index(
-        struct vkd3d_dxbc_compiler *compiler, unsigned int register_idx)
+static unsigned int spirv_compiler_get_output_variable_index(
+        struct spirv_compiler *compiler, unsigned int register_idx)
 {
     if (register_idx == ~0u) /* oDepth */
         return ARRAY_SIZE(compiler->private_output_variable) - 1;
@@ -4810,7 +4810,7 @@ static unsigned int vkd3d_dxbc_compiler_get_output_variable_index(
     return register_idx;
 }
 
-static unsigned int get_shader_output_swizzle(const struct vkd3d_dxbc_compiler *compiler,
+static unsigned int get_shader_output_swizzle(const struct spirv_compiler *compiler,
         unsigned int register_idx)
 {
     const struct vkd3d_shader_spirv_target_info *info;
@@ -4822,7 +4822,7 @@ static unsigned int get_shader_output_swizzle(const struct vkd3d_dxbc_compiler *
     return info->output_swizzles[register_idx];
 }
 
-static bool is_dual_source_blending(const struct vkd3d_dxbc_compiler *compiler)
+static bool is_dual_source_blending(const struct spirv_compiler *compiler)
 {
     const struct vkd3d_shader_spirv_target_info *info = compiler->spirv_target_info;
 
@@ -4841,7 +4841,7 @@ static void calculate_clip_or_cull_distance_mask(const struct vkd3d_shader_signa
     *mask |= (e->mask & VKD3DSP_WRITEMASK_ALL) << (VKD3D_VEC4_SIZE * e->semantic_index);
 }
 
-static uint32_t calculate_sysval_array_mask(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t calculate_sysval_array_mask(struct spirv_compiler *compiler,
         const struct vkd3d_shader_signature *signature, enum vkd3d_shader_input_sysval_semantic sysval)
 {
     const struct vkd3d_shader_signature_element *e;
@@ -4870,7 +4870,7 @@ static uint32_t calculate_sysval_array_mask(struct vkd3d_dxbc_compiler *compiler
 }
 
 /* Emits arrayed SPIR-V built-in variables. */
-static void vkd3d_dxbc_compiler_emit_shader_signature_outputs(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_shader_signature_outputs(struct spirv_compiler *compiler)
 {
     const struct vkd3d_shader_signature *output_signature = compiler->output_signature;
     uint32_t clip_distance_mask = 0, clip_distance_id = 0;
@@ -4901,7 +4901,7 @@ static void vkd3d_dxbc_compiler_emit_shader_signature_outputs(struct vkd3d_dxbc_
     {
         count = vkd3d_popcount(clip_distance_mask);
         builtin = get_spirv_builtin_for_sysval(compiler, VKD3D_SIV_CLIP_DISTANCE);
-        clip_distance_id = vkd3d_dxbc_compiler_emit_builtin_variable(compiler,
+        clip_distance_id = spirv_compiler_emit_builtin_variable(compiler,
                 builtin, SpvStorageClassOutput, count);
     }
 
@@ -4909,7 +4909,7 @@ static void vkd3d_dxbc_compiler_emit_shader_signature_outputs(struct vkd3d_dxbc_
     {
         count = vkd3d_popcount(cull_distance_mask);
         builtin = get_spirv_builtin_for_sysval(compiler, VKD3D_SIV_CULL_DISTANCE);
-        cull_distance_id = vkd3d_dxbc_compiler_emit_builtin_variable(compiler,
+        cull_distance_id = spirv_compiler_emit_builtin_variable(compiler,
                 builtin, SpvStorageClassOutput, count);
     }
 
@@ -4937,7 +4937,7 @@ static void vkd3d_dxbc_compiler_emit_shader_signature_outputs(struct vkd3d_dxbc_
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_output_register(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_output_register(struct spirv_compiler *compiler,
         const struct vkd3d_shader_dst_param *dst)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -4957,7 +4957,7 @@ static void vkd3d_dxbc_compiler_emit_output_register(struct vkd3d_dxbc_compiler 
         return;
     }
 
-    output_id = vkd3d_dxbc_compiler_emit_builtin_variable(compiler, builtin, SpvStorageClassOutput, 0);
+    output_id = spirv_compiler_emit_builtin_variable(compiler, builtin, SpvStorageClassOutput, 0);
 
     vkd3d_symbol_make_register(&reg_symbol, reg);
     write_mask = vkd3d_write_mask_from_component_count(builtin->component_count);
@@ -4965,12 +4965,12 @@ static void vkd3d_dxbc_compiler_emit_output_register(struct vkd3d_dxbc_compiler 
             SpvStorageClassOutput, builtin->component_type, write_mask);
     reg_symbol.info.reg.dcl_mask = write_mask;
     reg_symbol.info.reg.is_aggregate = builtin->spirv_array_size;
-    vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
-    vkd3d_dxbc_compiler_emit_register_execution_mode(compiler, reg);
-    vkd3d_dxbc_compiler_emit_register_debug_name(builder, output_id, reg);
+    spirv_compiler_put_symbol(compiler, &reg_symbol);
+    spirv_compiler_emit_register_execution_mode(compiler, reg);
+    spirv_compiler_emit_register_debug_name(builder, output_id, reg);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_shader_phase_builtin_variable(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_shader_phase_builtin_variable(struct spirv_compiler *compiler,
         const struct vkd3d_shader_phase *phase, const struct vkd3d_spirv_builtin *builtin)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -4986,7 +4986,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_shader_phase_builtin_variable(struct vk
     if (variable_id && *variable_id)
         return *variable_id;
 
-    id = vkd3d_dxbc_compiler_emit_builtin_variable(compiler, builtin, SpvStorageClassOutput, 0);
+    id = spirv_compiler_emit_builtin_variable(compiler, builtin, SpvStorageClassOutput, 0);
     if (phase->type == VKD3DSIH_HS_FORK_PHASE || phase->type == VKD3DSIH_HS_JOIN_PHASE)
         vkd3d_spirv_build_op_decorate(builder, id, SpvDecorationPatch, NULL, 0);
 
@@ -4995,7 +4995,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_shader_phase_builtin_variable(struct vk
     return id;
 }
 
-static void vkd3d_dxbc_compiler_emit_output(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_output(struct spirv_compiler *compiler,
         const struct vkd3d_shader_dst_param *dst, enum vkd3d_shader_input_sysval_semantic sysval)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -5017,7 +5017,7 @@ static void vkd3d_dxbc_compiler_emit_output(struct vkd3d_dxbc_compiler *compiler
     bool is_patch_constant;
     uint32_t id, var_id;
 
-    phase = vkd3d_dxbc_compiler_get_current_shader_phase(compiler);
+    phase = spirv_compiler_get_current_shader_phase(compiler);
     is_patch_constant = phase && (phase->type == VKD3DSIH_HS_FORK_PHASE || phase->type == VKD3DSIH_HS_JOIN_PHASE);
 
     shader_signature = is_patch_constant ? compiler->patch_constant_signature : compiler->output_signature;
@@ -5078,15 +5078,15 @@ static void vkd3d_dxbc_compiler_emit_output(struct vkd3d_dxbc_compiler *compiler
         else if (builtin)
         {
             if (phase)
-                id = vkd3d_dxbc_compiler_emit_shader_phase_builtin_variable(compiler, phase, builtin);
+                id = spirv_compiler_emit_shader_phase_builtin_variable(compiler, phase, builtin);
             else
-                id = vkd3d_dxbc_compiler_emit_builtin_variable(compiler, builtin, storage_class, array_size);
+                id = spirv_compiler_emit_builtin_variable(compiler, builtin, storage_class, array_size);
 
             if (builtin->spirv_array_size)
                 compiler->output_info[signature_idx].array_element_mask =
                         calculate_sysval_array_mask(compiler, shader_signature, sysval);
 
-            vkd3d_dxbc_compiler_emit_register_execution_mode(compiler, &dst->reg);
+            spirv_compiler_emit_register_execution_mode(compiler, &dst->reg);
         }
         else
         {
@@ -5095,7 +5095,7 @@ static void vkd3d_dxbc_compiler_emit_output(struct vkd3d_dxbc_compiler *compiler
             if (is_patch_constant)
                 location += compiler->output_signature->element_count;
 
-            id = vkd3d_dxbc_compiler_emit_array_variable(compiler, &builder->global_stream,
+            id = spirv_compiler_emit_array_variable(compiler, &builder->global_stream,
                     storage_class, component_type, output_component_count, array_size);
             vkd3d_spirv_add_iface_variable(builder, id);
 
@@ -5116,7 +5116,7 @@ static void vkd3d_dxbc_compiler_emit_output(struct vkd3d_dxbc_compiler *compiler
         if (is_patch_constant)
             vkd3d_spirv_build_op_decorate(builder, id, SpvDecorationPatch, NULL, 0);
 
-        vkd3d_dxbc_compiler_decorate_xfb_output(compiler, id, output_component_count, signature_element);
+        spirv_compiler_decorate_xfb_output(compiler, id, output_component_count, signature_element);
 
         compiler->output_info[signature_idx].id = id;
         compiler->output_info[signature_idx].component_type = component_type;
@@ -5130,7 +5130,7 @@ static void vkd3d_dxbc_compiler_emit_output(struct vkd3d_dxbc_compiler *compiler
         if (is_patch_constant)
             var_id = compiler->hs.patch_constants_id;
         else if (use_private_variable)
-            var_id = vkd3d_dxbc_compiler_emit_variable(compiler, &builder->global_stream,
+            var_id = spirv_compiler_emit_variable(compiler, &builder->global_stream,
                     storage_class, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE);
 
         vkd3d_symbol_set_register_info(&reg_symbol, var_id, storage_class,
@@ -5139,7 +5139,7 @@ static void vkd3d_dxbc_compiler_emit_output(struct vkd3d_dxbc_compiler *compiler
         reg_symbol.info.reg.is_aggregate = use_private_variable ? is_patch_constant : array_size;
         if (!use_private_variable && is_control_point_phase(phase))
         {
-            reg_symbol.info.reg.member_idx = vkd3d_dxbc_compiler_get_invocation_id(compiler);
+            reg_symbol.info.reg.member_idx = spirv_compiler_get_invocation_id(compiler);
             reg_symbol.info.reg.is_dynamically_indexed = true;
         }
         else if (is_patch_constant)
@@ -5148,10 +5148,10 @@ static void vkd3d_dxbc_compiler_emit_output(struct vkd3d_dxbc_compiler *compiler
         }
         reg_symbol.info.reg.dcl_mask = write_mask;
 
-        vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
+        spirv_compiler_put_symbol(compiler, &reg_symbol);
 
         if (!is_patch_constant)
-            vkd3d_dxbc_compiler_emit_register_debug_name(builder, var_id, reg);
+            spirv_compiler_emit_register_debug_name(builder, var_id, reg);
     }
     else
     {
@@ -5161,18 +5161,18 @@ static void vkd3d_dxbc_compiler_emit_output(struct vkd3d_dxbc_compiler *compiler
 
     if (use_private_variable)
     {
-        unsigned int idx = vkd3d_dxbc_compiler_get_output_variable_index(compiler, reg->idx[0].offset);
+        unsigned int idx = spirv_compiler_get_output_variable_index(compiler, reg->idx[0].offset);
         compiler->private_output_variable[idx] = var_id;
         compiler->private_output_variable_write_mask[idx] |= dst->write_mask;
         if (is_patch_constant)
-            compiler->private_output_variable_array_idx[idx] = vkd3d_dxbc_compiler_get_constant_uint(
+            compiler->private_output_variable_array_idx[idx] = spirv_compiler_get_constant_uint(
                     compiler, reg->idx[0].offset);
         if (!compiler->epilogue_function_id)
             compiler->epilogue_function_id = vkd3d_spirv_alloc_id(builder);
     }
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_output_array_index(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_output_array_index(struct spirv_compiler *compiler,
         const struct vkd3d_shader_signature_element *e)
 {
     enum vkd3d_shader_input_sysval_semantic sysval;
@@ -5191,7 +5191,7 @@ static uint32_t vkd3d_dxbc_compiler_get_output_array_index(struct vkd3d_dxbc_com
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_store_shader_output(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_shader_output(struct spirv_compiler *compiler,
         const struct vkd3d_shader_signature *signature, const struct vkd3d_shader_signature_element *output,
         const struct vkd3d_shader_output_info *output_info,
         uint32_t output_index_id, uint32_t val_id, unsigned int write_mask)
@@ -5235,15 +5235,15 @@ static void vkd3d_dxbc_compiler_emit_store_shader_output(struct vkd3d_dxbc_compi
     {
         /* Set values to 0 for not initialized shader output components. */
         write_mask |= uninit_mask;
-        zero_id = vkd3d_dxbc_compiler_get_constant_vector(compiler,
+        zero_id = spirv_compiler_get_constant_vector(compiler,
                 output_info->component_type, VKD3D_VEC4_SIZE, 0);
-        val_id = vkd3d_dxbc_compiler_emit_vector_shuffle(compiler,
+        val_id = spirv_compiler_emit_vector_shuffle(compiler,
                 zero_id, val_id, swizzle, uninit_mask, output_info->component_type,
                 vkd3d_write_mask_component_count(write_mask));
     }
     else
     {
-        val_id = vkd3d_dxbc_compiler_emit_swizzle(compiler,
+        val_id = spirv_compiler_emit_swizzle(compiler,
                 val_id, VKD3DSP_WRITEMASK_ALL, output_info->component_type, swizzle, write_mask);
     }
 
@@ -5258,7 +5258,7 @@ static void vkd3d_dxbc_compiler_emit_store_shader_output(struct vkd3d_dxbc_compi
 
     if (!output_info->array_element_mask)
     {
-        vkd3d_dxbc_compiler_emit_store(compiler,
+        spirv_compiler_emit_store(compiler,
                 output_id, dst_write_mask, output_info->component_type, SpvStorageClassOutput, write_mask, val_id);
         return;
     }
@@ -5266,7 +5266,7 @@ static void vkd3d_dxbc_compiler_emit_store_shader_output(struct vkd3d_dxbc_compi
     type_id = vkd3d_spirv_get_type_id(builder, output_info->component_type, 1);
     ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassOutput, type_id);
     mask = output_info->array_element_mask;
-    array_idx = vkd3d_dxbc_compiler_get_output_array_index(compiler, output);
+    array_idx = spirv_compiler_get_output_array_index(compiler, output);
     mask &= (1u << (array_idx * VKD3D_VEC4_SIZE)) - 1;
     for (i = 0, index = vkd3d_popcount(mask); i < VKD3D_VEC4_SIZE; ++i)
     {
@@ -5274,16 +5274,16 @@ static void vkd3d_dxbc_compiler_emit_store_shader_output(struct vkd3d_dxbc_compi
             continue;
 
         chain_id = vkd3d_spirv_build_op_access_chain1(builder,
-                ptr_type_id, output_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, index));
-        object_id = vkd3d_dxbc_compiler_emit_swizzle(compiler, val_id, write_mask,
+                ptr_type_id, output_id, spirv_compiler_get_constant_uint(compiler, index));
+        object_id = spirv_compiler_emit_swizzle(compiler, val_id, write_mask,
                 output_info->component_type, VKD3D_SHADER_NO_SWIZZLE, VKD3DSP_WRITEMASK_0 << i);
-        vkd3d_dxbc_compiler_emit_store(compiler, chain_id, VKD3DSP_WRITEMASK_0,
+        spirv_compiler_emit_store(compiler, chain_id, VKD3DSP_WRITEMASK_0,
                 output_info->component_type, SpvStorageClassOutput, VKD3DSP_WRITEMASK_0 << i, object_id);
         ++index;
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_shader_epilogue_function(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_shader_epilogue_function(struct spirv_compiler *compiler)
 {
     uint32_t param_type_id[MAX_REG_OUTPUT + 1], param_id[MAX_REG_OUTPUT + 1] = {0};
     uint32_t void_id, type_id, ptr_type_id, function_type_id, function_id;
@@ -5300,7 +5300,7 @@ static void vkd3d_dxbc_compiler_emit_shader_epilogue_function(struct vkd3d_dxbc_
     STATIC_ASSERT(ARRAY_SIZE(compiler->private_output_variable) == ARRAY_SIZE(compiler->private_output_variable_array_idx));
     STATIC_ASSERT(ARRAY_SIZE(compiler->private_output_variable) == ARRAY_SIZE(compiler->private_output_variable_write_mask));
 
-    phase = vkd3d_dxbc_compiler_get_current_shader_phase(compiler);
+    phase = spirv_compiler_get_current_shader_phase(compiler);
     is_patch_constant = phase && (phase->type == VKD3DSIH_HS_FORK_PHASE || phase->type == VKD3DSIH_HS_JOIN_PHASE);
 
     signature = is_patch_constant ? compiler->patch_constant_signature : compiler->output_signature;
@@ -5335,19 +5335,19 @@ static void vkd3d_dxbc_compiler_emit_shader_epilogue_function(struct vkd3d_dxbc_
     }
 
     if (is_control_point_phase(phase))
-        output_index_id = vkd3d_dxbc_compiler_emit_load_invocation_id(compiler);
+        output_index_id = spirv_compiler_emit_load_invocation_id(compiler);
 
     for (i = 0; i < signature->element_count; ++i)
     {
         if (!compiler->output_info[i].id)
             continue;
 
-        variable_idx = vkd3d_dxbc_compiler_get_output_variable_index(compiler,
+        variable_idx = spirv_compiler_get_output_variable_index(compiler,
                 signature->elements[i].register_index);
         if (!param_id[variable_idx])
             continue;
 
-        vkd3d_dxbc_compiler_emit_store_shader_output(compiler, signature,
+        spirv_compiler_emit_store_shader_output(compiler, signature,
                 &signature->elements[i], &compiler->output_info[i], output_index_id,
                 param_id[variable_idx], compiler->private_output_variable_write_mask[variable_idx]);
     }
@@ -5361,7 +5361,7 @@ static void vkd3d_dxbc_compiler_emit_shader_epilogue_function(struct vkd3d_dxbc_
     compiler->epilogue_function_id = 0;
 }
 
-static void vkd3d_dxbc_compiler_emit_hull_shader_builtins(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_hull_shader_builtins(struct spirv_compiler *compiler)
 {
     struct vkd3d_shader_dst_param dst;
 
@@ -5370,10 +5370,10 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_builtins(struct vkd3d_dxbc_comp
     dst.reg.idx[0].offset = ~0u;
     dst.reg.idx[1].offset = ~0u;
     dst.write_mask = VKD3DSP_WRITEMASK_0;
-    vkd3d_dxbc_compiler_emit_input_register(compiler, &dst);
+    spirv_compiler_emit_input_register(compiler, &dst);
 }
 
-static void vkd3d_dxbc_compiler_emit_hull_shader_patch_constants(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_hull_shader_patch_constants(struct spirv_compiler *compiler)
 {
     const struct vkd3d_shader_signature *signature = compiler->patch_constant_signature;
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -5386,12 +5386,12 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_patch_constants(struct vkd3d_dx
     if (!register_count)
         return;
 
-    compiler->hs.patch_constants_id = vkd3d_dxbc_compiler_emit_array_variable(compiler, &builder->global_stream,
+    compiler->hs.patch_constants_id = spirv_compiler_emit_array_variable(compiler, &builder->global_stream,
             SpvStorageClassPrivate, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE, register_count);
     vkd3d_spirv_build_op_name(builder, compiler->hs.patch_constants_id, "opc");
 }
 
-static void vkd3d_dxbc_compiler_emit_initial_declarations(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_initial_declarations(struct spirv_compiler *compiler)
 {
     const struct vkd3d_shader_transform_feedback_info *xfb_info = compiler->xfb_info;
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -5403,8 +5403,8 @@ static void vkd3d_dxbc_compiler_emit_initial_declarations(struct vkd3d_dxbc_comp
             break;
         case VKD3D_SHADER_TYPE_HULL:
             vkd3d_spirv_set_execution_model(builder, SpvExecutionModelTessellationControl);
-            vkd3d_dxbc_compiler_emit_hull_shader_builtins(compiler);
-            vkd3d_dxbc_compiler_emit_hull_shader_patch_constants(compiler);
+            spirv_compiler_emit_hull_shader_builtins(compiler);
+            spirv_compiler_emit_hull_shader_patch_constants(compiler);
             break;
         case VKD3D_SHADER_TYPE_DOMAIN:
             vkd3d_spirv_set_execution_model(builder, SpvExecutionModelTessellationEvaluation);
@@ -5415,7 +5415,7 @@ static void vkd3d_dxbc_compiler_emit_initial_declarations(struct vkd3d_dxbc_comp
             break;
         case VKD3D_SHADER_TYPE_PIXEL:
             vkd3d_spirv_set_execution_model(builder, SpvExecutionModelFragment);
-            vkd3d_dxbc_compiler_emit_execution_mode(compiler, SpvExecutionModeOriginUpperLeft, NULL, 0);
+            spirv_compiler_emit_execution_mode(compiler, SpvExecutionModeOriginUpperLeft, NULL, 0);
             break;
         case VKD3D_SHADER_TYPE_COMPUTE:
             vkd3d_spirv_set_execution_model(builder, SpvExecutionModelGLCompute);
@@ -5427,36 +5427,36 @@ static void vkd3d_dxbc_compiler_emit_initial_declarations(struct vkd3d_dxbc_comp
     if (xfb_info && xfb_info->element_count)
     {
         vkd3d_spirv_enable_capability(builder, SpvCapabilityTransformFeedback);
-        vkd3d_dxbc_compiler_emit_execution_mode(compiler, SpvExecutionModeXfb, NULL, 0);
+        spirv_compiler_emit_execution_mode(compiler, SpvExecutionModeXfb, NULL, 0);
     }
 
     if (compiler->shader_type != VKD3D_SHADER_TYPE_HULL)
     {
         vkd3d_spirv_builder_begin_main_function(builder);
 
-        vkd3d_dxbc_compiler_emit_shader_signature_outputs(compiler);
+        spirv_compiler_emit_shader_signature_outputs(compiler);
     }
 }
 
-static size_t vkd3d_dxbc_compiler_get_current_function_location(struct vkd3d_dxbc_compiler *compiler)
+static size_t spirv_compiler_get_current_function_location(struct spirv_compiler *compiler)
 {
     const struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_shader_phase *phase;
 
-    if ((phase = vkd3d_dxbc_compiler_get_current_shader_phase(compiler)))
+    if ((phase = spirv_compiler_get_current_shader_phase(compiler)))
         return phase->function_location;
 
     return builder->main_function_location;
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_global_flags(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_global_flags(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     unsigned int flags = instruction->flags;
 
     if (flags & VKD3DSGF_FORCE_EARLY_DEPTH_STENCIL)
     {
-        vkd3d_dxbc_compiler_emit_execution_mode(compiler, SpvExecutionModeEarlyFragmentTests, NULL, 0);
+        spirv_compiler_emit_execution_mode(compiler, SpvExecutionModeEarlyFragmentTests, NULL, 0);
         flags &= ~VKD3DSGF_FORCE_EARLY_DEPTH_STENCIL;
     }
 
@@ -5472,7 +5472,7 @@ static void vkd3d_dxbc_compiler_emit_dcl_global_flags(struct vkd3d_dxbc_compiler
         WARN("Unhandled global flags %#x.\n", flags);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_temps(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_temps(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -5480,14 +5480,14 @@ static void vkd3d_dxbc_compiler_emit_dcl_temps(struct vkd3d_dxbc_compiler *compi
     unsigned int i;
     uint32_t id;
 
-    function_location = vkd3d_dxbc_compiler_get_current_function_location(compiler);
+    function_location = spirv_compiler_get_current_function_location(compiler);
     vkd3d_spirv_begin_function_stream_insertion(builder, function_location);
 
     assert(!compiler->temp_count);
     compiler->temp_count = instruction->declaration.count;
     for (i = 0; i < compiler->temp_count; ++i)
     {
-        id = vkd3d_dxbc_compiler_emit_variable(compiler, &builder->function_stream,
+        id = spirv_compiler_emit_variable(compiler, &builder->function_stream,
                 SpvStorageClassFunction, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE);
         if (!i)
             compiler->temp_id = id;
@@ -5499,7 +5499,7 @@ static void vkd3d_dxbc_compiler_emit_dcl_temps(struct vkd3d_dxbc_compiler *compi
     vkd3d_spirv_end_function_stream_insertion(builder);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_indexable_temp(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_indexable_temp(struct spirv_compiler *compiler,
           const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_indexable_temp *temp = &instruction->declaration.indexable_temp;
@@ -5517,23 +5517,23 @@ static void vkd3d_dxbc_compiler_emit_dcl_indexable_temp(struct vkd3d_dxbc_compil
     reg.idx[0].offset = temp->register_idx;
     reg.idx[1].offset = ~0u;
 
-    function_location = vkd3d_dxbc_compiler_get_current_function_location(compiler);
+    function_location = spirv_compiler_get_current_function_location(compiler);
     vkd3d_spirv_begin_function_stream_insertion(builder, function_location);
 
-    id = vkd3d_dxbc_compiler_emit_array_variable(compiler, &builder->function_stream,
+    id = spirv_compiler_emit_array_variable(compiler, &builder->function_stream,
             SpvStorageClassFunction, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE, temp->register_size);
 
-    vkd3d_dxbc_compiler_emit_register_debug_name(builder, id, &reg);
+    spirv_compiler_emit_register_debug_name(builder, id, &reg);
 
     vkd3d_spirv_end_function_stream_insertion(builder);
 
     vkd3d_symbol_make_register(&reg_symbol, &reg);
     vkd3d_symbol_set_register_info(&reg_symbol, id,
             SpvStorageClassFunction, VKD3D_SHADER_COMPONENT_FLOAT, VKD3DSP_WRITEMASK_ALL);
-    vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
+    spirv_compiler_put_symbol(compiler, &reg_symbol);
 }
 
-static void vkd3d_dxbc_compiler_emit_push_constant_buffers(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_push_constant_buffers(struct spirv_compiler *compiler)
 {
     unsigned int i, j, count, reg_idx, descriptor_offsets_member_idx = 0;
     const SpvStorageClass storage_class = SpvStorageClassPushConstant;
@@ -5564,7 +5564,7 @@ static void vkd3d_dxbc_compiler_emit_push_constant_buffers(struct vkd3d_dxbc_com
         if (!cb->reg.type)
             continue;
 
-        length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, cb->size);
+        length_id = spirv_compiler_get_constant_uint(compiler, cb->size);
         member_ids[j]  = vkd3d_spirv_build_op_type_array(builder, vec4_id, length_id);
         vkd3d_spirv_build_op_decorate1(builder, member_ids[j], SpvDecorationArrayStride, 16);
 
@@ -5574,11 +5574,11 @@ static void vkd3d_dxbc_compiler_emit_push_constant_buffers(struct vkd3d_dxbc_com
     if (compiler->offset_info.descriptor_table_count)
     {
         uint32_t type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
-        length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, compiler->offset_info.descriptor_table_count);
+        length_id = spirv_compiler_get_constant_uint(compiler, compiler->offset_info.descriptor_table_count);
         member_ids[j] = vkd3d_spirv_build_op_type_array(builder, type_id, length_id);
         vkd3d_spirv_build_op_decorate1(builder, member_ids[j], SpvDecorationArrayStride, 4);
         descriptor_offsets_member_idx = j;
-        compiler->descriptor_offsets_member_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, j);
+        compiler->descriptor_offsets_member_id = spirv_compiler_get_constant_uint(compiler, j);
         assert(j == count - 1);
     }
 
@@ -5607,7 +5607,7 @@ static void vkd3d_dxbc_compiler_emit_push_constant_buffers(struct vkd3d_dxbc_com
         vkd3d_symbol_set_register_info(&reg_symbol, var_id, storage_class,
                 VKD3D_SHADER_COMPONENT_FLOAT, VKD3DSP_WRITEMASK_ALL);
         reg_symbol.info.reg.member_idx = j;
-        vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
+        spirv_compiler_put_symbol(compiler, &reg_symbol);
 
         ++j;
     }
@@ -5624,7 +5624,7 @@ struct vkd3d_descriptor_variable_info
     unsigned int binding_base_idx;
 };
 
-static uint32_t vkd3d_dxbc_compiler_build_descriptor_variable(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_build_descriptor_variable(struct spirv_compiler *compiler,
         SpvStorageClass storage_class, uint32_t type_id, const struct vkd3d_shader_register *reg,
         const struct vkd3d_shader_register_range *range, enum vkd3d_shader_resource_type resource_type,
         bool is_uav_counter, struct vkd3d_descriptor_variable_info *var_info)
@@ -5636,7 +5636,7 @@ static uint32_t vkd3d_dxbc_compiler_build_descriptor_variable(struct vkd3d_dxbc_
     struct vkd3d_symbol symbol;
     struct rb_entry *entry;
 
-    binding = vkd3d_dxbc_compiler_get_descriptor_binding(compiler, reg, range,
+    binding = spirv_compiler_get_descriptor_binding(compiler, reg, range,
             resource_type, is_uav_counter, &binding_address);
     var_info->binding_base_idx = binding_address.binding_base_idx;
 
@@ -5647,8 +5647,8 @@ static uint32_t vkd3d_dxbc_compiler_build_descriptor_variable(struct vkd3d_dxbc_
         var_id = vkd3d_spirv_build_op_variable(builder, &builder->global_stream,
                 ptr_type_id, storage_class, 0);
 
-        vkd3d_dxbc_compiler_emit_descriptor_binding(compiler, var_id, &binding);
-        vkd3d_dxbc_compiler_emit_register_debug_name(builder, var_id, reg);
+        spirv_compiler_emit_descriptor_binding(compiler, var_id, &binding);
+        spirv_compiler_emit_register_debug_name(builder, var_id, reg);
 
         var_info->array_symbol = NULL;
         return var_id;
@@ -5674,19 +5674,19 @@ static uint32_t vkd3d_dxbc_compiler_build_descriptor_variable(struct vkd3d_dxbc_
 
     var_id = vkd3d_spirv_build_op_variable(builder, &builder->global_stream,
         ptr_type_id, storage_class, 0);
-    vkd3d_dxbc_compiler_emit_descriptor_binding(compiler, var_id, &binding);
-    vkd3d_dxbc_compiler_emit_register_debug_name(builder, var_id, reg);
+    spirv_compiler_emit_descriptor_binding(compiler, var_id, &binding);
+    spirv_compiler_emit_register_debug_name(builder, var_id, reg);
 
     symbol.id = var_id;
     symbol.descriptor_array = NULL;
     symbol.info.descriptor_array.storage_class = storage_class;
     symbol.info.descriptor_array.contained_type_id = type_id;
-    var_info->array_symbol = vkd3d_dxbc_compiler_put_symbol(compiler, &symbol);
+    var_info->array_symbol = spirv_compiler_put_symbol(compiler, &symbol);
 
     return var_id;
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_constant_buffer(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_constant_buffer(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_constant_buffer *cb = &instruction->declaration.cb;
@@ -5700,10 +5700,10 @@ static void vkd3d_dxbc_compiler_emit_dcl_constant_buffer(struct vkd3d_dxbc_compi
 
     assert(!(instruction->flags & ~VKD3DSI_INDEXED_DYNAMIC));
 
-    if ((push_cb = vkd3d_dxbc_compiler_find_push_constant_buffer(compiler, cb)))
+    if ((push_cb = spirv_compiler_find_push_constant_buffer(compiler, cb)))
     {
         /* Push constant buffers are handled in
-         * vkd3d_dxbc_compiler_emit_push_constant_buffers().
+         * spirv_compiler_emit_push_constant_buffers().
          */
         unsigned int cb_size_in_bytes = cb->size * VKD3D_VEC4_SIZE * sizeof(uint32_t);
         push_cb->reg = *reg;
@@ -5717,7 +5717,7 @@ static void vkd3d_dxbc_compiler_emit_dcl_constant_buffer(struct vkd3d_dxbc_compi
     }
 
     vec4_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE);
-    length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, cb->size);
+    length_id = spirv_compiler_get_constant_uint(compiler, cb->size);
     array_type_id = vkd3d_spirv_build_op_type_array(builder, vec4_id, length_id);
     vkd3d_spirv_build_op_decorate1(builder, array_type_id, SpvDecorationArrayStride, 16);
 
@@ -5726,7 +5726,7 @@ static void vkd3d_dxbc_compiler_emit_dcl_constant_buffer(struct vkd3d_dxbc_compi
     vkd3d_spirv_build_op_member_decorate1(builder, struct_id, 0, SpvDecorationOffset, 0);
     vkd3d_spirv_build_op_name(builder, struct_id, "cb%u_struct", cb->size);
 
-    var_id = vkd3d_dxbc_compiler_build_descriptor_variable(compiler, storage_class, struct_id,
+    var_id = spirv_compiler_build_descriptor_variable(compiler, storage_class, struct_id,
             reg, &cb->range, VKD3D_SHADER_RESOURCE_BUFFER, false, &var_info);
 
     vkd3d_symbol_make_register(&reg_symbol, reg);
@@ -5734,10 +5734,10 @@ static void vkd3d_dxbc_compiler_emit_dcl_constant_buffer(struct vkd3d_dxbc_compi
             VKD3D_SHADER_COMPONENT_FLOAT, VKD3DSP_WRITEMASK_ALL);
     reg_symbol.descriptor_array = var_info.array_symbol;
     reg_symbol.info.reg.binding_base_idx = var_info.binding_base_idx;
-    vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
+    spirv_compiler_put_symbol(compiler, &reg_symbol);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_immediate_constant_buffer(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_immediate_constant_buffer(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_immediate_constant_buffer *icb = instruction->declaration.icb;
@@ -5750,10 +5750,10 @@ static void vkd3d_dxbc_compiler_emit_dcl_immediate_constant_buffer(struct vkd3d_
     if (!(elements = vkd3d_calloc(icb->vec4_count, sizeof(*elements))))
         return;
     for (i = 0; i < icb->vec4_count; ++i)
-        elements[i] = vkd3d_dxbc_compiler_get_constant(compiler,
+        elements[i] = spirv_compiler_get_constant(compiler,
                 VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE, &icb->data[4 * i]);
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, VKD3D_VEC4_SIZE);
-    length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, icb->vec4_count);
+    length_id = spirv_compiler_get_constant_uint(compiler, icb->vec4_count);
     type_id = vkd3d_spirv_get_op_type_array(builder, type_id, length_id);
     const_id = vkd3d_spirv_build_op_constant_composite(builder, type_id, elements, icb->vec4_count);
     ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassPrivate, type_id);
@@ -5767,10 +5767,10 @@ static void vkd3d_dxbc_compiler_emit_dcl_immediate_constant_buffer(struct vkd3d_
     vkd3d_symbol_make_register(&reg_symbol, &reg);
     vkd3d_symbol_set_register_info(&reg_symbol, icb_id, SpvStorageClassPrivate,
             VKD3D_SHADER_COMPONENT_FLOAT, VKD3DSP_WRITEMASK_ALL);
-    vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
+    spirv_compiler_put_symbol(compiler, &reg_symbol);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_sampler(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_sampler(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_sampler *sampler = &instruction->declaration.sampler;
@@ -5783,13 +5783,13 @@ static void vkd3d_dxbc_compiler_emit_dcl_sampler(struct vkd3d_dxbc_compiler *com
 
     vkd3d_symbol_make_sampler(&reg_symbol, reg);
     reg_symbol.info.sampler.range = sampler->range;
-    vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
+    spirv_compiler_put_symbol(compiler, &reg_symbol);
 
-    if (vkd3d_dxbc_compiler_has_combined_sampler(compiler, NULL, sampler))
+    if (spirv_compiler_has_combined_sampler(compiler, NULL, sampler))
         return;
 
     type_id = vkd3d_spirv_get_op_type_sampler(builder);
-    var_id = vkd3d_dxbc_compiler_build_descriptor_variable(compiler, storage_class, type_id, reg,
+    var_id = spirv_compiler_build_descriptor_variable(compiler, storage_class, type_id, reg,
             &sampler->range, VKD3D_SHADER_RESOURCE_NONE, false, &var_info);
 
     vkd3d_symbol_make_register(&reg_symbol, reg);
@@ -5797,11 +5797,11 @@ static void vkd3d_dxbc_compiler_emit_dcl_sampler(struct vkd3d_dxbc_compiler *com
             VKD3D_SHADER_COMPONENT_FLOAT, VKD3DSP_WRITEMASK_ALL);
     reg_symbol.descriptor_array = var_info.array_symbol;
     reg_symbol.info.reg.binding_base_idx = var_info.binding_base_idx;
-    vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
+    spirv_compiler_put_symbol(compiler, &reg_symbol);
 }
 
-static const struct vkd3d_spirv_resource_type *vkd3d_dxbc_compiler_enable_resource_type(
-        struct vkd3d_dxbc_compiler *compiler, enum vkd3d_shader_resource_type resource_type, bool is_uav)
+static const struct vkd3d_spirv_resource_type *spirv_compiler_enable_resource_type(
+        struct spirv_compiler *compiler, enum vkd3d_shader_resource_type resource_type, bool is_uav)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_spirv_resource_type *resource_type_info;
@@ -5837,8 +5837,8 @@ static SpvImageFormat image_format_for_image_read(enum vkd3d_shader_component_ty
     }
 }
 
-static const struct vkd3d_shader_descriptor_info *vkd3d_dxbc_compiler_get_descriptor_info(
-        struct vkd3d_dxbc_compiler *compiler, enum vkd3d_shader_descriptor_type type,
+static const struct vkd3d_shader_descriptor_info *spirv_compiler_get_descriptor_info(
+        struct spirv_compiler *compiler, enum vkd3d_shader_descriptor_type type,
         const struct vkd3d_shader_register_range *range)
 {
     const struct vkd3d_shader_scan_descriptor_info *descriptor_info = compiler->scan_descriptor_info;
@@ -5857,24 +5857,25 @@ static const struct vkd3d_shader_descriptor_info *vkd3d_dxbc_compiler_get_descri
     return NULL;
 }
 
-static uint32_t vkd3d_dxbc_compiler_get_image_type_id(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_get_image_type_id(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, const struct vkd3d_shader_register_range *range,
         const struct vkd3d_spirv_resource_type *resource_type_info, enum vkd3d_shader_component_type data_type,
         bool raw_structured, uint32_t depth)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_shader_descriptor_info *d;
+    bool uav_read, uav_atomics;
     uint32_t sampled_type_id;
     SpvImageFormat format;
-    bool uav_read;
 
     format = SpvImageFormatUnknown;
     if (reg->type == VKD3DSPR_UAV)
     {
-        d = vkd3d_dxbc_compiler_get_descriptor_info(compiler,
+        d = spirv_compiler_get_descriptor_info(compiler,
                 VKD3D_SHADER_DESCRIPTOR_TYPE_UAV, range);
         uav_read = !!(d->flags & VKD3D_SHADER_DESCRIPTOR_INFO_FLAG_UAV_READ);
-        if (raw_structured || (uav_read && !compiler->uav_read_without_format))
+        uav_atomics = !!(d->flags & VKD3D_SHADER_DESCRIPTOR_INFO_FLAG_UAV_ATOMICS);
+        if (raw_structured || uav_atomics || (uav_read && !compiler->uav_read_without_format))
             format = image_format_for_image_read(data_type);
         else if (uav_read)
             vkd3d_spirv_enable_capability(builder, SpvCapabilityStorageImageReadWithoutFormat);
@@ -5886,7 +5887,7 @@ static uint32_t vkd3d_dxbc_compiler_get_image_type_id(struct vkd3d_dxbc_compiler
             reg->type == VKD3DSPR_UAV ? 2 : 1, format);
 }
 
-static void vkd3d_dxbc_compiler_emit_combined_sampler_declarations(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_combined_sampler_declarations(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *resource, const struct vkd3d_shader_register_range *resource_range,
         enum vkd3d_shader_resource_type resource_type, enum vkd3d_shader_component_type sampled_type,
         unsigned int structure_stride, bool raw, const struct vkd3d_spirv_resource_type *resource_type_info)
@@ -5917,13 +5918,13 @@ static void vkd3d_dxbc_compiler_emit_combined_sampler_declarations(struct vkd3d_
         if (!(current->flags & resource_type_flag))
             continue;
 
-        if (!vkd3d_dxbc_compiler_check_shader_visibility(compiler, current->shader_visibility))
+        if (!spirv_compiler_check_shader_visibility(compiler, current->shader_visibility))
             continue;
 
         if (current->binding.count != 1)
         {
             FIXME("Descriptor arrays are not supported.\n");
-            vkd3d_dxbc_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_INVALID_DESCRIPTOR_BINDING,
+            spirv_compiler_error(compiler, VKD3D_SHADER_ERROR_SPV_INVALID_DESCRIPTOR_BINDING,
                     "Combined descriptor binding for resource %u, space %u, "
                     "and sampler %u, space %u has unsupported ‘count’ %u.",
                     resource_range->first, resource_range->space, current->sampler_index,
@@ -5933,12 +5934,12 @@ static void vkd3d_dxbc_compiler_emit_combined_sampler_declarations(struct vkd3d_
         sampler_range.space = current->sampler_space;
         sampler_range.first = current->sampler_index;
         sampler_range.last = current->sampler_index;
-        d = vkd3d_dxbc_compiler_get_descriptor_info(compiler,
+        d = spirv_compiler_get_descriptor_info(compiler,
                 VKD3D_SHADER_DESCRIPTOR_TYPE_SAMPLER, &sampler_range);
         depth = current->sampler_index != VKD3D_SHADER_DUMMY_SAMPLER_INDEX
                 && (d->flags & VKD3D_SHADER_DESCRIPTOR_INFO_FLAG_SAMPLER_COMPARISON_MODE);
 
-        image_type_id = vkd3d_dxbc_compiler_get_image_type_id(compiler, resource, resource_range,
+        image_type_id = spirv_compiler_get_image_type_id(compiler, resource, resource_range,
                 resource_type_info, sampled_type, structure_stride || raw, depth);
         type_id = vkd3d_spirv_get_op_type_sampled_image(builder, image_type_id);
 
@@ -5946,7 +5947,7 @@ static void vkd3d_dxbc_compiler_emit_combined_sampler_declarations(struct vkd3d_
         var_id = vkd3d_spirv_build_op_variable(builder, &builder->global_stream,
                 ptr_type_id, storage_class, 0);
 
-        vkd3d_dxbc_compiler_emit_descriptor_binding(compiler, var_id, &current->binding);
+        spirv_compiler_emit_descriptor_binding(compiler, var_id, &current->binding);
 
         if (current->sampler_index == VKD3D_SHADER_DUMMY_SAMPLER_INDEX)
             vkd3d_spirv_build_op_name(builder, var_id, "t%u_%u_dummy_sampler", resource_range->space,
@@ -5968,11 +5969,11 @@ static void vkd3d_dxbc_compiler_emit_combined_sampler_declarations(struct vkd3d_
         symbol.info.resource.uav_counter_id = 0;
         symbol.info.resource.uav_counter_array = NULL;
         symbol.info.resource.uav_counter_base_idx = 0;
-        vkd3d_dxbc_compiler_put_symbol(compiler, &symbol);
+        spirv_compiler_put_symbol(compiler, &symbol);
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_resource_declaration(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_resource_declaration(struct spirv_compiler *compiler,
         const struct vkd3d_shader_resource *resource, enum vkd3d_shader_resource_type resource_type,
         enum vkd3d_data_type resource_data_type, unsigned int structure_stride, bool raw)
 {
@@ -5987,7 +5988,7 @@ static void vkd3d_dxbc_compiler_emit_resource_declaration(struct vkd3d_dxbc_comp
     bool is_uav;
 
     is_uav = reg->type == VKD3DSPR_UAV;
-    if (!(resource_type_info = vkd3d_dxbc_compiler_enable_resource_type(compiler,
+    if (!(resource_type_info = spirv_compiler_enable_resource_type(compiler,
             resource_type, is_uav)))
     {
         FIXME("Unrecognized resource type.\n");
@@ -5996,9 +5997,9 @@ static void vkd3d_dxbc_compiler_emit_resource_declaration(struct vkd3d_dxbc_comp
 
     sampled_type = vkd3d_component_type_from_data_type(resource_data_type);
 
-    if (vkd3d_dxbc_compiler_has_combined_sampler(compiler, resource, NULL))
+    if (spirv_compiler_has_combined_sampler(compiler, resource, NULL))
     {
-        vkd3d_dxbc_compiler_emit_combined_sampler_declarations(compiler, reg, &resource->range,
+        spirv_compiler_emit_combined_sampler_declarations(compiler, reg, &resource->range,
                 resource_type, sampled_type, structure_stride, raw, resource_type_info);
         return;
     }
@@ -6021,18 +6022,18 @@ static void vkd3d_dxbc_compiler_emit_resource_declaration(struct vkd3d_dxbc_comp
     }
     else
     {
-        type_id = vkd3d_dxbc_compiler_get_image_type_id(compiler, reg, &resource->range,
+        type_id = spirv_compiler_get_image_type_id(compiler, reg, &resource->range,
                 resource_type_info, sampled_type, structure_stride || raw, 0);
     }
 
-    var_id = vkd3d_dxbc_compiler_build_descriptor_variable(compiler, storage_class, type_id, reg,
+    var_id = spirv_compiler_build_descriptor_variable(compiler, storage_class, type_id, reg,
             &resource->range, resource_type, false, &var_info);
 
     if (is_uav)
     {
         const struct vkd3d_shader_descriptor_info *d;
 
-        d = vkd3d_dxbc_compiler_get_descriptor_info(compiler,
+        d = spirv_compiler_get_descriptor_info(compiler,
                 VKD3D_SHADER_DESCRIPTOR_TYPE_UAV, &resource->range);
 
         if (!(d->flags & VKD3D_SHADER_DESCRIPTOR_INFO_FLAG_UAV_READ))
@@ -6043,7 +6044,7 @@ static void vkd3d_dxbc_compiler_emit_resource_declaration(struct vkd3d_dxbc_comp
             assert(structure_stride); /* counters are valid only for structured buffers */
 
             counter_type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
-            if (vkd3d_dxbc_compiler_is_opengl_target(compiler))
+            if (spirv_compiler_is_opengl_target(compiler))
             {
                 vkd3d_spirv_enable_capability(builder, SpvCapabilityAtomicStorage);
                 storage_class = SpvStorageClassAtomicCounter;
@@ -6053,7 +6054,7 @@ static void vkd3d_dxbc_compiler_emit_resource_declaration(struct vkd3d_dxbc_comp
             {
                 uint32_t length_id, array_type_id, struct_id;
 
-                length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, 1);
+                length_id = spirv_compiler_get_constant_uint(compiler, 1);
                 array_type_id = vkd3d_spirv_build_op_type_array(builder, counter_type_id, length_id);
                 vkd3d_spirv_build_op_decorate1(builder, array_type_id, SpvDecorationArrayStride, 4);
 
@@ -6065,7 +6066,7 @@ static void vkd3d_dxbc_compiler_emit_resource_declaration(struct vkd3d_dxbc_comp
                 type_id = struct_id;
             }
 
-            counter_var_id = vkd3d_dxbc_compiler_build_descriptor_variable(compiler, storage_class, type_id, reg,
+            counter_var_id = spirv_compiler_build_descriptor_variable(compiler, storage_class, type_id, reg,
                     &resource->range, resource_type, true, &counter_var_info);
         }
     }
@@ -6083,10 +6084,10 @@ static void vkd3d_dxbc_compiler_emit_resource_declaration(struct vkd3d_dxbc_comp
     resource_symbol.info.resource.uav_counter_id = counter_var_id;
     resource_symbol.info.resource.uav_counter_array = counter_var_info.array_symbol;
     resource_symbol.info.resource.uav_counter_base_idx = counter_var_info.binding_base_idx;
-    vkd3d_dxbc_compiler_put_symbol(compiler, &resource_symbol);
+    spirv_compiler_put_symbol(compiler, &resource_symbol);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_resource(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_resource(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_semantic *semantic = &instruction->declaration.semantic;
@@ -6097,11 +6098,11 @@ static void vkd3d_dxbc_compiler_emit_dcl_resource(struct vkd3d_dxbc_compiler *co
     if (flags)
         FIXME("Unhandled UAV flags %#x.\n", flags);
 
-    vkd3d_dxbc_compiler_emit_resource_declaration(compiler, &semantic->resource,
+    spirv_compiler_emit_resource_declaration(compiler, &semantic->resource,
             semantic->resource_type, semantic->resource_data_type[0], 0, false);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_resource_raw(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_resource_raw(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_raw_resource *resource = &instruction->declaration.raw_resource;
@@ -6112,11 +6113,11 @@ static void vkd3d_dxbc_compiler_emit_dcl_resource_raw(struct vkd3d_dxbc_compiler
     if (flags)
         FIXME("Unhandled UAV flags %#x.\n", flags);
 
-    vkd3d_dxbc_compiler_emit_resource_declaration(compiler, &resource->resource,
+    spirv_compiler_emit_resource_declaration(compiler, &resource->resource,
             VKD3D_SHADER_RESOURCE_BUFFER, VKD3D_DATA_UINT, 0, true);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_resource_structured(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_resource_structured(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_structured_resource *resource = &instruction->declaration.structured_resource;
@@ -6128,11 +6129,11 @@ static void vkd3d_dxbc_compiler_emit_dcl_resource_structured(struct vkd3d_dxbc_c
     if (flags)
         FIXME("Unhandled UAV flags %#x.\n", flags);
 
-    vkd3d_dxbc_compiler_emit_resource_declaration(compiler, &resource->resource,
+    spirv_compiler_emit_resource_declaration(compiler, &resource->resource,
             VKD3D_SHADER_RESOURCE_BUFFER, VKD3D_DATA_UINT, stride / 4, false);
 }
 
-static void vkd3d_dxbc_compiler_emit_workgroup_memory(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_workgroup_memory(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *reg, unsigned int size, unsigned int structure_stride)
 {
     uint32_t type_id, array_type_id, length_id, pointer_type_id, var_id;
@@ -6141,89 +6142,89 @@ static void vkd3d_dxbc_compiler_emit_workgroup_memory(struct vkd3d_dxbc_compiler
     struct vkd3d_symbol reg_symbol;
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
-    length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, size);
+    length_id = spirv_compiler_get_constant_uint(compiler, size);
     array_type_id = vkd3d_spirv_get_op_type_array(builder, type_id, length_id);
 
     pointer_type_id = vkd3d_spirv_get_op_type_pointer(builder, storage_class, array_type_id);
     var_id = vkd3d_spirv_build_op_variable(builder, &builder->global_stream,
             pointer_type_id, storage_class, 0);
 
-    vkd3d_dxbc_compiler_emit_register_debug_name(builder, var_id, reg);
+    spirv_compiler_emit_register_debug_name(builder, var_id, reg);
 
     vkd3d_symbol_make_register(&reg_symbol, reg);
     vkd3d_symbol_set_register_info(&reg_symbol, var_id, storage_class,
             VKD3D_SHADER_COMPONENT_UINT, VKD3DSP_WRITEMASK_0);
     reg_symbol.info.reg.structure_stride = structure_stride;
-    vkd3d_dxbc_compiler_put_symbol(compiler, &reg_symbol);
+    spirv_compiler_put_symbol(compiler, &reg_symbol);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_tgsm_raw(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_tgsm_raw(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_tgsm_raw *tgsm_raw = &instruction->declaration.tgsm_raw;
-    vkd3d_dxbc_compiler_emit_workgroup_memory(compiler, &tgsm_raw->reg.reg,
+    spirv_compiler_emit_workgroup_memory(compiler, &tgsm_raw->reg.reg,
             tgsm_raw->byte_count / 4, 0);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_tgsm_structured(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_tgsm_structured(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_tgsm_structured *tgsm_structured = &instruction->declaration.tgsm_structured;
     unsigned int stride = tgsm_structured->byte_stride / 4;
-    vkd3d_dxbc_compiler_emit_workgroup_memory(compiler, &tgsm_structured->reg.reg,
+    spirv_compiler_emit_workgroup_memory(compiler, &tgsm_structured->reg.reg,
             tgsm_structured->structure_count * stride, stride);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_input(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_input(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_dst_param *dst = &instruction->declaration.dst;
     const struct vkd3d_shader_phase *phase;
 
-    if ((phase = vkd3d_dxbc_compiler_get_current_shader_phase(compiler)))
-        vkd3d_dxbc_compiler_emit_shader_phase_input(compiler, phase, dst);
+    if ((phase = spirv_compiler_get_current_shader_phase(compiler)))
+        spirv_compiler_emit_shader_phase_input(compiler, phase, dst);
     else if (vkd3d_shader_register_is_input(&dst->reg) || dst->reg.type == VKD3DSPR_PATCHCONST)
-        vkd3d_dxbc_compiler_emit_input(compiler, dst, VKD3D_SIV_NONE, VKD3DSIM_NONE);
+        spirv_compiler_emit_input(compiler, dst, VKD3D_SIV_NONE, VKD3DSIM_NONE);
     else
-        vkd3d_dxbc_compiler_emit_input_register(compiler, dst);
+        spirv_compiler_emit_input_register(compiler, dst);
 
     if (dst->reg.type == VKD3DSPR_OUTCONTROLPOINT)
         compiler->use_vocp = true;
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_input_ps(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_input_ps(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
-    vkd3d_dxbc_compiler_emit_input(compiler, &instruction->declaration.dst, VKD3D_SIV_NONE, instruction->flags);
+    spirv_compiler_emit_input(compiler, &instruction->declaration.dst, VKD3D_SIV_NONE, instruction->flags);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_input_ps_sysval(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_input_ps_sysval(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_register_semantic *semantic = &instruction->declaration.register_semantic;
 
-    vkd3d_dxbc_compiler_emit_input(compiler, &semantic->reg, semantic->sysval_semantic, instruction->flags);
+    spirv_compiler_emit_input(compiler, &semantic->reg, semantic->sysval_semantic, instruction->flags);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_input_sysval(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_input_sysval(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
-    vkd3d_dxbc_compiler_emit_input(compiler, &instruction->declaration.register_semantic.reg,
+    spirv_compiler_emit_input(compiler, &instruction->declaration.register_semantic.reg,
             instruction->declaration.register_semantic.sysval_semantic, VKD3DSIM_NONE);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_output(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_output(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_dst_param *dst = &instruction->declaration.dst;
 
     if (vkd3d_shader_register_is_output(&dst->reg))
-        vkd3d_dxbc_compiler_emit_output(compiler, dst, VKD3D_SIV_NONE);
+        spirv_compiler_emit_output(compiler, dst, VKD3D_SIV_NONE);
     else
-        vkd3d_dxbc_compiler_emit_output_register(compiler, dst);
+        spirv_compiler_emit_output_register(compiler, dst);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_output_siv(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_output_siv(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     enum vkd3d_shader_input_sysval_semantic sysval;
@@ -6232,10 +6233,10 @@ static void vkd3d_dxbc_compiler_emit_dcl_output_siv(struct vkd3d_dxbc_compiler *
     dst = &instruction->declaration.register_semantic.reg;
     sysval = instruction->declaration.register_semantic.sysval_semantic;
 
-    vkd3d_dxbc_compiler_emit_output(compiler, dst, sysval);
+    spirv_compiler_emit_output(compiler, dst, sysval);
 }
 
-static bool vkd3d_dxbc_compiler_check_index_range(struct vkd3d_dxbc_compiler *compiler,
+static bool spirv_compiler_check_index_range(struct spirv_compiler *compiler,
         const struct vkd3d_shader_index_range *range)
 {
     const struct vkd3d_shader_register *reg = &range->dst.reg;
@@ -6247,7 +6248,7 @@ static bool vkd3d_dxbc_compiler_check_index_range(struct vkd3d_dxbc_compiler *co
 
     current_reg = *reg;
     vkd3d_symbol_make_register(&reg_symbol, &current_reg);
-    if (!vkd3d_dxbc_compiler_get_register_info(compiler, &current_reg, &reg_info))
+    if (!spirv_compiler_get_register_info(compiler, &current_reg, &reg_info))
     {
         ERR("Failed to get register info.\n");
         return false;
@@ -6284,16 +6285,16 @@ static bool vkd3d_dxbc_compiler_check_index_range(struct vkd3d_dxbc_compiler *co
     return true;
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_index_range(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_index_range(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_index_range *range = &instruction->declaration.index_range;
 
-    if (!vkd3d_dxbc_compiler_check_index_range(compiler, range))
+    if (!spirv_compiler_check_index_range(compiler, range))
         FIXME("Ignoring dcl_index_range %#x %u.\n", range->dst.reg.type, range->register_count);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_stream(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_stream(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     unsigned int stream_idx = instruction->src[0].reg.idx[0].offset;
@@ -6302,14 +6303,14 @@ static void vkd3d_dxbc_compiler_emit_dcl_stream(struct vkd3d_dxbc_compiler *comp
         FIXME("Multiple streams are not supported yet.\n");
 }
 
-static void vkd3d_dxbc_compiler_emit_output_vertex_count(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_output_vertex_count(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
-    vkd3d_dxbc_compiler_emit_execution_mode1(compiler,
+    spirv_compiler_emit_execution_mode1(compiler,
             SpvExecutionModeOutputVertices, instruction->declaration.count);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_input_primitive(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_input_primitive(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     enum vkd3d_primitive_type primitive_type = instruction->declaration.primitive_type.type;
@@ -6337,10 +6338,10 @@ static void vkd3d_dxbc_compiler_emit_dcl_input_primitive(struct vkd3d_dxbc_compi
             return;
     }
 
-    vkd3d_dxbc_compiler_emit_execution_mode(compiler, mode, NULL, 0);
+    spirv_compiler_emit_execution_mode(compiler, mode, NULL, 0);
 }
 
-static void vkd3d_dxbc_compiler_emit_point_size(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_point_size(struct spirv_compiler *compiler)
 {
     static const struct vkd3d_spirv_builtin point_size = {VKD3D_SHADER_COMPONENT_FLOAT, 1, SpvBuiltInPointSize};
 
@@ -6349,11 +6350,11 @@ static void vkd3d_dxbc_compiler_emit_point_size(struct vkd3d_dxbc_compiler *comp
      * requires the point size to always be explicitly defined when outputting
      * points. */
     vkd3d_spirv_build_op_store(&compiler->spirv_builder,
-            vkd3d_dxbc_compiler_emit_builtin_variable(compiler, &point_size, SpvStorageClassOutput, 0),
-            vkd3d_dxbc_compiler_get_constant_float(compiler, 1.0f), SpvMemoryAccessMaskNone);
+            spirv_compiler_emit_builtin_variable(compiler, &point_size, SpvStorageClassOutput, 0),
+            spirv_compiler_get_constant_float(compiler, 1.0f), SpvMemoryAccessMaskNone);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_output_topology(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_output_topology(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     enum vkd3d_primitive_type primitive_type = instruction->declaration.primitive_type.type;
@@ -6363,7 +6364,7 @@ static void vkd3d_dxbc_compiler_emit_dcl_output_topology(struct vkd3d_dxbc_compi
     {
         case VKD3D_PT_POINTLIST:
             mode = SpvExecutionModeOutputPoints;
-            vkd3d_dxbc_compiler_emit_point_size(compiler);
+            spirv_compiler_emit_point_size(compiler);
             break;
         case VKD3D_PT_LINESTRIP:
             mode = SpvExecutionModeOutputLineStrip;
@@ -6376,22 +6377,22 @@ static void vkd3d_dxbc_compiler_emit_dcl_output_topology(struct vkd3d_dxbc_compi
             return;
     }
 
-    vkd3d_dxbc_compiler_emit_execution_mode(compiler, mode, NULL, 0);
+    spirv_compiler_emit_execution_mode(compiler, mode, NULL, 0);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_gs_instances(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_gs_instances(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     compiler->spirv_builder.invocation_count = instruction->declaration.count;
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_tessellator_domain(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_tessellator_domain(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     enum vkd3d_tessellator_domain domain = instruction->declaration.tessellator_domain;
     SpvExecutionMode mode;
 
-    if (compiler->shader_type == VKD3D_SHADER_TYPE_HULL && vkd3d_dxbc_compiler_is_opengl_target(compiler))
+    if (compiler->shader_type == VKD3D_SHADER_TYPE_HULL && spirv_compiler_is_opengl_target(compiler))
         return;
 
     switch (domain)
@@ -6410,15 +6411,15 @@ static void vkd3d_dxbc_compiler_emit_dcl_tessellator_domain(struct vkd3d_dxbc_co
             return;
     }
 
-    vkd3d_dxbc_compiler_emit_execution_mode(compiler, mode, NULL, 0);
+    spirv_compiler_emit_execution_mode(compiler, mode, NULL, 0);
 }
 
-static void vkd3d_dxbc_compiler_emit_tessellator_output_primitive(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_tessellator_output_primitive(struct spirv_compiler *compiler,
         enum vkd3d_shader_tessellator_output_primitive primitive)
 {
     SpvExecutionMode mode;
 
-    if (compiler->shader_type == VKD3D_SHADER_TYPE_HULL && vkd3d_dxbc_compiler_is_opengl_target(compiler))
+    if (compiler->shader_type == VKD3D_SHADER_TYPE_HULL && spirv_compiler_is_opengl_target(compiler))
         return;
 
     switch (primitive)
@@ -6439,15 +6440,15 @@ static void vkd3d_dxbc_compiler_emit_tessellator_output_primitive(struct vkd3d_d
             return;
     }
 
-    vkd3d_dxbc_compiler_emit_execution_mode(compiler, mode, NULL, 0);
+    spirv_compiler_emit_execution_mode(compiler, mode, NULL, 0);
 }
 
-static void vkd3d_dxbc_compiler_emit_tessellator_partitioning(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_tessellator_partitioning(struct spirv_compiler *compiler,
         enum vkd3d_shader_tessellator_partitioning partitioning)
 {
     SpvExecutionMode mode;
 
-    if (compiler->shader_type == VKD3D_SHADER_TYPE_HULL && vkd3d_dxbc_compiler_is_opengl_target(compiler))
+    if (compiler->shader_type == VKD3D_SHADER_TYPE_HULL && spirv_compiler_is_opengl_target(compiler))
         return;
 
     switch (partitioning)
@@ -6467,20 +6468,20 @@ static void vkd3d_dxbc_compiler_emit_tessellator_partitioning(struct vkd3d_dxbc_
             return;
     }
 
-    vkd3d_dxbc_compiler_emit_execution_mode(compiler, mode, NULL, 0);
+    spirv_compiler_emit_execution_mode(compiler, mode, NULL, 0);
 }
 
-static void vkd3d_dxbc_compiler_emit_dcl_thread_group(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dcl_thread_group(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_thread_group_size *group_size = &instruction->declaration.thread_group_size;
     const uint32_t local_size[] = {group_size->x, group_size->y, group_size->z};
 
-    vkd3d_dxbc_compiler_emit_execution_mode(compiler,
+    spirv_compiler_emit_execution_mode(compiler,
             SpvExecutionModeLocalSize, local_size, ARRAY_SIZE(local_size));
 }
 
-static void vkd3d_dxbc_compiler_leave_shader_phase(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_leave_shader_phase(struct spirv_compiler *compiler,
         const struct vkd3d_shader_phase *phase)
 {
     const struct vkd3d_shader_signature *signature = compiler->output_signature;
@@ -6504,8 +6505,8 @@ static void vkd3d_dxbc_compiler_leave_shader_phase(struct vkd3d_dxbc_compiler *c
     {
         if (compiler->epilogue_function_id)
         {
-            vkd3d_dxbc_compiler_emit_shader_phase_name(compiler, compiler->epilogue_function_id, phase, "_epilogue");
-            vkd3d_dxbc_compiler_emit_shader_epilogue_function(compiler);
+            spirv_compiler_emit_shader_phase_name(compiler, compiler->epilogue_function_id, phase, "_epilogue");
+            spirv_compiler_emit_shader_epilogue_function(compiler);
         }
 
         memset(&reg, 0, sizeof(reg));
@@ -6561,14 +6562,14 @@ static void vkd3d_dxbc_compiler_leave_shader_phase(struct vkd3d_dxbc_compiler *c
     }
 }
 
-static void vkd3d_dxbc_compiler_enter_shader_phase(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_enter_shader_phase(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_phase *previous_phase;
     struct vkd3d_shader_phase *phase;
 
-    if ((previous_phase = vkd3d_dxbc_compiler_get_current_shader_phase(compiler)))
-        vkd3d_dxbc_compiler_leave_shader_phase(compiler, previous_phase);
+    if ((previous_phase = spirv_compiler_get_current_shader_phase(compiler)))
+        spirv_compiler_leave_shader_phase(compiler, previous_phase);
 
     if (!vkd3d_array_reserve((void **)&compiler->shader_phases, &compiler->shader_phases_size,
             compiler->shader_phase_count + 1, sizeof(*compiler->shader_phases)))
@@ -6585,7 +6586,7 @@ static void vkd3d_dxbc_compiler_enter_shader_phase(struct vkd3d_dxbc_compiler *c
     ++compiler->shader_phase_count;
 }
 
-static int vkd3d_dxbc_compiler_emit_shader_phase_instance_count(struct vkd3d_dxbc_compiler *compiler,
+static int spirv_compiler_emit_shader_phase_instance_count(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_shader_phase *phase = &compiler->shader_phases[compiler->shader_phase_count - 1];
@@ -6600,13 +6601,13 @@ static int vkd3d_dxbc_compiler_emit_shader_phase_instance_count(struct vkd3d_dxb
 
     phase->instance_count = instruction->declaration.count;
 
-    vkd3d_dxbc_compiler_begin_shader_phase(compiler, phase);
+    spirv_compiler_begin_shader_phase(compiler, phase);
 
     return VKD3D_OK;
 }
 
-static const struct vkd3d_shader_phase *vkd3d_dxbc_compiler_get_control_point_phase(
-        struct vkd3d_dxbc_compiler *compiler)
+static const struct vkd3d_shader_phase *spirv_compiler_get_control_point_phase(
+        struct spirv_compiler *compiler)
 {
     const struct vkd3d_shader_phase *phase;
 
@@ -6620,7 +6621,7 @@ static const struct vkd3d_shader_phase *vkd3d_dxbc_compiler_get_control_point_ph
     return NULL;
 }
 
-static void vkd3d_dxbc_compiler_emit_default_control_point_phase(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_default_control_point_phase(struct spirv_compiler *compiler)
 {
     const struct vkd3d_shader_signature *output_signature = compiler->output_signature;
     const struct vkd3d_shader_signature *input_signature = compiler->input_signature;
@@ -6634,7 +6635,7 @@ static void vkd3d_dxbc_compiler_emit_default_control_point_phase(struct vkd3d_dx
     uint32_t invocation_id;
     unsigned int i;
 
-    invocation_id = vkd3d_dxbc_compiler_emit_load_invocation_id(compiler);
+    invocation_id = spirv_compiler_emit_load_invocation_id(compiler);
 
     memset(&invocation, 0, sizeof(invocation));
     invocation.reg.type = VKD3DSPR_OUTPOINTID;
@@ -6649,7 +6650,7 @@ static void vkd3d_dxbc_compiler_emit_default_control_point_phase(struct vkd3d_dx
     input_reg.data_type = VKD3D_DATA_FLOAT;
     input_reg.idx[0].rel_addr = &invocation;
     input_reg.idx[2].offset = ~0u;
-    input_id = vkd3d_dxbc_compiler_get_register_id(compiler, &input_reg);
+    input_id = spirv_compiler_get_register_id(compiler, &input_reg);
 
     assert(input_signature->element_count == output_signature->element_count);
     for (i = 0; i < output_signature->element_count; ++i)
@@ -6661,13 +6662,13 @@ static void vkd3d_dxbc_compiler_emit_default_control_point_phase(struct vkd3d_dx
         assert(input->component_type == output->component_type);
 
         input_reg.idx[1].offset = input->register_index;
-        input_id = vkd3d_dxbc_compiler_get_register_id(compiler, &input_reg);
+        input_id = spirv_compiler_get_register_id(compiler, &input_reg);
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, 4);
         src_id = vkd3d_spirv_build_op_load(builder, type_id, input_id, SpvMemoryAccessMaskNone);
 
         component_type = output->component_type;
         component_count = vkd3d_write_mask_component_count(output->mask);
-        output_id = vkd3d_dxbc_compiler_emit_array_variable(compiler, &builder->global_stream,
+        output_id = spirv_compiler_emit_array_variable(compiler, &builder->global_stream,
                 SpvStorageClassOutput, component_type, component_count, compiler->output_control_point_count);
         vkd3d_spirv_add_iface_variable(builder, output_id);
         vkd3d_spirv_build_op_decorate1(builder, output_id, SpvDecorationLocation, output->register_index);
@@ -6677,23 +6678,23 @@ static void vkd3d_dxbc_compiler_emit_default_control_point_phase(struct vkd3d_dx
         output_ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassOutput, type_id);
         dst_id = vkd3d_spirv_build_op_access_chain1(builder, output_ptr_type_id, output_id, invocation_id);
 
-        vkd3d_dxbc_compiler_emit_store(compiler, dst_id, output->mask,
+        spirv_compiler_emit_store(compiler, dst_id, output->mask,
                 component_type, SpvStorageClassOutput, VKD3DSP_WRITEMASK_ALL, src_id);
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_barrier(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_barrier(struct spirv_compiler *compiler,
         SpvScope execution_scope, SpvScope memory_scope, SpvMemorySemanticsMask semantics)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     uint32_t execution_id, memory_id, semantics_id;
 
-    memory_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, memory_scope);
-    semantics_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, semantics);
+    memory_id = spirv_compiler_get_constant_uint(compiler, memory_scope);
+    semantics_id = spirv_compiler_get_constant_uint(compiler, semantics);
 
     if (execution_scope != SpvScopeMax)
     {
-        execution_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, execution_scope);
+        execution_id = spirv_compiler_get_constant_uint(compiler, execution_scope);
         vkd3d_spirv_build_op_control_barrier(builder, execution_id, memory_id, semantics_id);
     }
     else
@@ -6702,13 +6703,13 @@ static void vkd3d_dxbc_compiler_emit_barrier(struct vkd3d_dxbc_compiler *compile
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_hull_shader_barrier(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_hull_shader_barrier(struct spirv_compiler *compiler)
 {
-    vkd3d_dxbc_compiler_emit_barrier(compiler,
+    spirv_compiler_emit_barrier(compiler,
             SpvScopeWorkgroup, SpvScopeInvocation, SpvMemorySemanticsMaskNone);
 }
 
-static void vkd3d_dxbc_compiler_emit_hull_shader_input_initialisation(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_hull_shader_input_initialisation(struct spirv_compiler *compiler)
 {
     uint32_t type_id, length_id, register_index_id, src_array_id, dst_array_id, vicp_id, tmp_id;
     const struct vkd3d_shader_signature *signature = compiler->input_signature;
@@ -6729,7 +6730,7 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_input_initialisation(struct vkd
     }
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, 4);
-    length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, compiler->input_control_point_count);
+    length_id = spirv_compiler_get_constant_uint(compiler, compiler->input_control_point_count);
     type_id = vkd3d_spirv_get_op_type_array(builder, type_id, length_id);
     type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassPrivate, type_id);
 
@@ -6748,14 +6749,14 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_input_initialisation(struct vkd
         symbol = RB_ENTRY_VALUE(entry, struct vkd3d_symbol, entry);
 
         vicp_id = symbol->id;
-        register_index_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, element->register_index);
+        register_index_id = spirv_compiler_get_constant_uint(compiler, element->register_index);
         dst_array_id = vkd3d_spirv_build_op_in_bounds_access_chain1(builder, type_id, vicp_id, register_index_id);
 
         if (element->sysval_semantic)
         {
             sysval = vkd3d_siv_from_sysval(element->sysval_semantic);
             builtin = get_spirv_builtin_for_sysval(compiler, sysval);
-            src_array_id = vkd3d_dxbc_compiler_emit_builtin_variable(compiler, builtin,
+            src_array_id = spirv_compiler_emit_builtin_variable(compiler, builtin,
                     SpvStorageClassInput, compiler->input_control_point_count);
 
             if (builtin->component_count == 4)
@@ -6770,12 +6771,12 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_input_initialisation(struct vkd
 
                 for (j = 0; j < compiler->input_control_point_count; ++j)
                 {
-                    point_index_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, j);
+                    point_index_id = spirv_compiler_get_constant_uint(compiler, j);
                     src_id = vkd3d_spirv_build_op_in_bounds_access_chain1(builder,
                             src_type_id, src_array_id, point_index_id);
 
                     indices[0] = point_index_id;
-                    indices[1] = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+                    indices[1] = spirv_compiler_get_constant_uint(compiler, 0);
                     dst_id = vkd3d_spirv_build_op_in_bounds_access_chain(builder,
                             dst_type_id, dst_array_id, indices, 2);
 
@@ -6785,7 +6786,7 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_input_initialisation(struct vkd
         }
         else
         {
-            src_array_id = vkd3d_dxbc_compiler_emit_array_variable(compiler, &builder->global_stream,
+            src_array_id = spirv_compiler_emit_array_variable(compiler, &builder->global_stream,
                     SpvStorageClassInput, VKD3D_SHADER_COMPONENT_FLOAT, 4, compiler->input_control_point_count);
             vkd3d_spirv_add_iface_variable(builder, src_array_id);
             vkd3d_spirv_build_op_decorate1(builder, src_array_id, SpvDecorationLocation, element->register_index);
@@ -6797,7 +6798,7 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_input_initialisation(struct vkd
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_shader_epilogue_invocation(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_shader_epilogue_invocation(struct spirv_compiler *compiler)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     uint32_t void_id, type_id, ptr_type_id, function_id;
@@ -6836,7 +6837,7 @@ static void vkd3d_dxbc_compiler_emit_shader_epilogue_invocation(struct vkd3d_dxb
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_hull_shader_main(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_hull_shader_main(struct spirv_compiler *compiler)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_shader_phase *control_point_phase, *phase;
@@ -6846,17 +6847,17 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_main(struct vkd3d_dxbc_compiler
 
     vkd3d_spirv_builder_begin_main_function(builder);
 
-    vkd3d_dxbc_compiler_emit_hull_shader_input_initialisation(compiler);
+    spirv_compiler_emit_hull_shader_input_initialisation(compiler);
 
     void_id = vkd3d_spirv_get_op_type_void(builder);
 
-    if ((control_point_phase = vkd3d_dxbc_compiler_get_control_point_phase(compiler)))
+    if ((control_point_phase = spirv_compiler_get_control_point_phase(compiler)))
         vkd3d_spirv_build_op_function_call(builder, void_id, control_point_phase->function_id, NULL, 0);
     else
-        vkd3d_dxbc_compiler_emit_default_control_point_phase(compiler);
+        spirv_compiler_emit_default_control_point_phase(compiler);
 
     if (compiler->use_vocp)
-        vkd3d_dxbc_compiler_emit_hull_shader_barrier(compiler);
+        spirv_compiler_emit_hull_shader_barrier(compiler);
 
     for (i = 0; i < compiler->shader_phase_count; ++i)
     {
@@ -6868,7 +6869,7 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_main(struct vkd3d_dxbc_compiler
         {
             for (j = 0; j < phase->instance_count; ++j)
             {
-                phase_instance_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, j);
+                phase_instance_id = spirv_compiler_get_constant_uint(compiler, j);
                 vkd3d_spirv_build_op_function_call(builder,
                         void_id, phase->function_id, &phase_instance_id, 1);
             }
@@ -6879,12 +6880,12 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_main(struct vkd3d_dxbc_compiler
         }
     }
 
-    vkd3d_dxbc_compiler_emit_shader_epilogue_invocation(compiler);
+    spirv_compiler_emit_shader_epilogue_invocation(compiler);
     vkd3d_spirv_build_op_return(builder);
     vkd3d_spirv_build_op_function_end(builder);
 }
 
-static SpvOp vkd3d_dxbc_compiler_map_alu_instruction(const struct vkd3d_shader_instruction *instruction)
+static SpvOp spirv_compiler_map_alu_instruction(const struct vkd3d_shader_instruction *instruction)
 {
     static const struct
     {
@@ -6932,18 +6933,18 @@ static SpvOp vkd3d_dxbc_compiler_map_alu_instruction(const struct vkd3d_shader_i
     return SpvOpMax;
 }
 
-static void vkd3d_dxbc_compiler_emit_alu_instruction(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_alu_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_shader_dst_param *dst = instruction->dst;
     const struct vkd3d_shader_src_param *src = instruction->src;
-    uint32_t src_ids[VKD3D_DXBC_MAX_SOURCE_COUNT];
+    uint32_t src_ids[SPIRV_MAX_SRC_COUNT];
     uint32_t type_id, val_id;
     unsigned int i;
     SpvOp op;
 
-    op = vkd3d_dxbc_compiler_map_alu_instruction(instruction);
+    op = spirv_compiler_map_alu_instruction(instruction);
     if (op == SpvOpMax)
     {
         ERR("Unexpected instruction %#x.\n", instruction->handler_idx);
@@ -6951,12 +6952,12 @@ static void vkd3d_dxbc_compiler_emit_alu_instruction(struct vkd3d_dxbc_compiler 
     }
 
     assert(instruction->dst_count == 1);
-    assert(instruction->src_count <= VKD3D_DXBC_MAX_SOURCE_COUNT);
+    assert(instruction->src_count <= SPIRV_MAX_SRC_COUNT);
 
-    type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, dst);
+    type_id = spirv_compiler_get_type_id_for_dst(compiler, dst);
 
     for (i = 0; i < instruction->src_count; ++i)
-        src_ids[i] = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[i], dst->write_mask);
+        src_ids[i] = spirv_compiler_emit_load_src(compiler, &src[i], dst->write_mask);
 
     /* The SPIR-V specification states, "The resulting value is undefined if
      * Shift is greater than or equal to the bit width of the components of
@@ -6968,7 +6969,7 @@ static void vkd3d_dxbc_compiler_emit_alu_instruction(struct vkd3d_dxbc_compiler 
     if (instruction->handler_idx == VKD3DSIH_ISHL || instruction->handler_idx == VKD3DSIH_ISHR
             || instruction->handler_idx == VKD3DSIH_USHR)
     {
-        uint32_t mask_id = vkd3d_dxbc_compiler_get_constant_vector(compiler,
+        uint32_t mask_id = spirv_compiler_get_constant_vector(compiler,
                 VKD3D_SHADER_COMPONENT_UINT, vkd3d_write_mask_component_count(dst->write_mask), 0x1f);
         src_ids[1] = vkd3d_spirv_build_op_and(builder, type_id, src_ids[1], mask_id);
     }
@@ -6978,10 +6979,10 @@ static void vkd3d_dxbc_compiler_emit_alu_instruction(struct vkd3d_dxbc_compiler 
     if (instruction->flags & VKD3DSI_PRECISE_XYZW)
         vkd3d_spirv_build_op_decorate(builder, val_id, SpvDecorationNoContraction, NULL, 0);
 
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static enum GLSLstd450 vkd3d_dxbc_compiler_map_ext_glsl_instruction(
+static enum GLSLstd450 spirv_compiler_map_ext_glsl_instruction(
         const struct vkd3d_shader_instruction *instruction)
 {
     static const struct
@@ -7025,18 +7026,18 @@ static enum GLSLstd450 vkd3d_dxbc_compiler_map_ext_glsl_instruction(
     return GLSLstd450Bad;
 }
 
-static void vkd3d_dxbc_compiler_emit_ext_glsl_instruction(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_ext_glsl_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_shader_dst_param *dst = instruction->dst;
     const struct vkd3d_shader_src_param *src = instruction->src;
-    uint32_t src_id[VKD3D_DXBC_MAX_SOURCE_COUNT];
+    uint32_t src_id[SPIRV_MAX_SRC_COUNT];
     uint32_t instr_set_id, type_id, val_id;
     enum GLSLstd450 glsl_inst;
     unsigned int i;
 
-    glsl_inst = vkd3d_dxbc_compiler_map_ext_glsl_instruction(instruction);
+    glsl_inst = spirv_compiler_map_ext_glsl_instruction(instruction);
     if (glsl_inst == GLSLstd450Bad)
     {
         ERR("Unexpected instruction %#x.\n", instruction->handler_idx);
@@ -7046,12 +7047,12 @@ static void vkd3d_dxbc_compiler_emit_ext_glsl_instruction(struct vkd3d_dxbc_comp
     instr_set_id = vkd3d_spirv_get_glsl_std450_instr_set(builder);
 
     assert(instruction->dst_count == 1);
-    assert(instruction->src_count <= VKD3D_DXBC_MAX_SOURCE_COUNT);
+    assert(instruction->src_count <= SPIRV_MAX_SRC_COUNT);
 
-    type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, dst);
+    type_id = spirv_compiler_get_type_id_for_dst(compiler, dst);
 
     for (i = 0; i < instruction->src_count; ++i)
-        src_id[i] = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[i], dst->write_mask);
+        src_id[i] = spirv_compiler_emit_load_src(compiler, &src[i], dst->write_mask);
 
     val_id = vkd3d_spirv_build_op_ext_inst(builder, type_id,
             instr_set_id, glsl_inst, src_id, instruction->src_count);
@@ -7061,13 +7062,13 @@ static void vkd3d_dxbc_compiler_emit_ext_glsl_instruction(struct vkd3d_dxbc_comp
     {
         /* In D3D bits are numbered from the most significant bit. */
         val_id = vkd3d_spirv_build_op_isub(builder, type_id,
-                vkd3d_dxbc_compiler_get_constant_uint(compiler, 31), val_id);
+                spirv_compiler_get_constant_uint(compiler, 31), val_id);
     }
 
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_mov(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_mov(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -7081,8 +7082,8 @@ static void vkd3d_dxbc_compiler_emit_mov(struct vkd3d_dxbc_compiler *compiler,
     if (src->reg.type == VKD3DSPR_IMMCONST || src->reg.type == VKD3DSPR_IMMCONST64 || dst->modifiers || src->modifiers)
         goto general_implementation;
 
-    vkd3d_dxbc_compiler_get_register_info(compiler, &dst->reg, &dst_reg_info);
-    vkd3d_dxbc_compiler_get_register_info(compiler, &src->reg, &src_reg_info);
+    spirv_compiler_get_register_info(compiler, &dst->reg, &dst_reg_info);
+    spirv_compiler_get_register_info(compiler, &src->reg, &src_reg_info);
 
     if (dst_reg_info.component_type != src_reg_info.component_type
             || dst_reg_info.write_mask != src_reg_info.write_mask)
@@ -7090,8 +7091,8 @@ static void vkd3d_dxbc_compiler_emit_mov(struct vkd3d_dxbc_compiler *compiler,
 
     if (vkd3d_swizzle_is_equal(dst_reg_info.write_mask, src->swizzle, src_reg_info.write_mask))
     {
-        dst_id = vkd3d_dxbc_compiler_get_register_id(compiler, &dst->reg);
-        src_id = vkd3d_dxbc_compiler_get_register_id(compiler, &src->reg);
+        dst_id = spirv_compiler_get_register_id(compiler, &dst->reg);
+        src_id = spirv_compiler_get_register_id(compiler, &src->reg);
 
         vkd3d_spirv_build_op_copy_memory(builder, dst_id, src_id, SpvMemoryAccessMaskNone);
         return;
@@ -7101,8 +7102,8 @@ static void vkd3d_dxbc_compiler_emit_mov(struct vkd3d_dxbc_compiler *compiler,
     if (component_count != 1 && component_count != VKD3D_VEC4_SIZE
             && dst_reg_info.write_mask == VKD3DSP_WRITEMASK_ALL)
     {
-        dst_id = vkd3d_dxbc_compiler_get_register_id(compiler, &dst->reg);
-        src_id = vkd3d_dxbc_compiler_get_register_id(compiler, &src->reg);
+        dst_id = spirv_compiler_get_register_id(compiler, &dst->reg);
+        src_id = spirv_compiler_get_register_id(compiler, &src->reg);
 
         type_id = vkd3d_spirv_get_type_id(builder, dst_reg_info.component_type, VKD3D_VEC4_SIZE);
         val_id = vkd3d_spirv_build_op_load(builder, type_id, src_id, SpvMemoryAccessMaskNone);
@@ -7124,11 +7125,11 @@ static void vkd3d_dxbc_compiler_emit_mov(struct vkd3d_dxbc_compiler *compiler,
     }
 
 general_implementation:
-    val_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, dst->write_mask);
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    val_id = spirv_compiler_emit_load_src(compiler, src, dst->write_mask);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_movc(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_movc(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -7137,21 +7138,21 @@ static void vkd3d_dxbc_compiler_emit_movc(struct vkd3d_dxbc_compiler *compiler,
     uint32_t condition_id, src1_id, src2_id, type_id, val_id;
     unsigned int component_count;
 
-    condition_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], dst->write_mask);
-    src1_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[1], dst->write_mask);
-    src2_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[2], dst->write_mask);
+    condition_id = spirv_compiler_emit_load_src(compiler, &src[0], dst->write_mask);
+    src1_id = spirv_compiler_emit_load_src(compiler, &src[1], dst->write_mask);
+    src2_id = spirv_compiler_emit_load_src(compiler, &src[2], dst->write_mask);
 
     component_count = vkd3d_write_mask_component_count(dst->write_mask);
-    type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, dst);
+    type_id = spirv_compiler_get_type_id_for_dst(compiler, dst);
 
-    condition_id = vkd3d_dxbc_compiler_emit_int_to_bool(compiler,
+    condition_id = spirv_compiler_emit_int_to_bool(compiler,
             VKD3D_SHADER_CONDITIONAL_OP_NZ, component_count, condition_id);
     val_id = vkd3d_spirv_build_op_select(builder, type_id, condition_id, src1_id, src2_id);
 
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_swapc(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_swapc(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -7162,23 +7163,23 @@ static void vkd3d_dxbc_compiler_emit_swapc(struct vkd3d_dxbc_compiler *compiler,
 
     assert(dst[0].write_mask == dst[1].write_mask);
 
-    condition_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], dst->write_mask);
-    src1_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[1], dst->write_mask);
-    src2_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[2], dst->write_mask);
+    condition_id = spirv_compiler_emit_load_src(compiler, &src[0], dst->write_mask);
+    src1_id = spirv_compiler_emit_load_src(compiler, &src[1], dst->write_mask);
+    src2_id = spirv_compiler_emit_load_src(compiler, &src[2], dst->write_mask);
 
     component_count = vkd3d_write_mask_component_count(dst->write_mask);
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, component_count);
 
-    condition_id = vkd3d_dxbc_compiler_emit_int_to_bool(compiler,
+    condition_id = spirv_compiler_emit_int_to_bool(compiler,
             VKD3D_SHADER_CONDITIONAL_OP_NZ, component_count, condition_id);
 
     val_id = vkd3d_spirv_build_op_select(builder, type_id, condition_id, src2_id, src1_id);
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, &dst[0], val_id);
+    spirv_compiler_emit_store_dst(compiler, &dst[0], val_id);
     val_id = vkd3d_spirv_build_op_select(builder, type_id, condition_id, src1_id, src2_id);
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, &dst[1], val_id);
+    spirv_compiler_emit_store_dst(compiler, &dst[1], val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_dot(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_dot(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -7201,7 +7202,7 @@ static void vkd3d_dxbc_compiler_emit_dot(struct vkd3d_dxbc_compiler *compiler,
 
     assert(instruction->src_count == ARRAY_SIZE(src_ids));
     for (i = 0; i < ARRAY_SIZE(src_ids); ++i)
-        src_ids[i] = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[i], write_mask);
+        src_ids[i] = spirv_compiler_emit_load_src(compiler, &src[i], write_mask);
 
     type_id = vkd3d_spirv_get_type_id(builder, component_type, 1);
 
@@ -7209,16 +7210,16 @@ static void vkd3d_dxbc_compiler_emit_dot(struct vkd3d_dxbc_compiler *compiler,
             SpvOpDot, type_id, src_ids[0], src_ids[1]);
     if (component_count > 1)
     {
-        val_id = vkd3d_dxbc_compiler_emit_construct_vector(compiler,
+        val_id = spirv_compiler_emit_construct_vector(compiler,
                 component_type, component_count, val_id, 0, 1);
     }
     if (instruction->flags & VKD3DSI_PRECISE_XYZW)
         vkd3d_spirv_build_op_decorate(builder, val_id, SpvDecorationNoContraction, NULL, 0);
 
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_rcp(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_rcp(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -7228,18 +7229,18 @@ static void vkd3d_dxbc_compiler_emit_rcp(struct vkd3d_dxbc_compiler *compiler,
     unsigned int component_count;
 
     component_count = vkd3d_write_mask_component_count(dst->write_mask);
-    type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, dst);
+    type_id = spirv_compiler_get_type_id_for_dst(compiler, dst);
 
-    src_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, dst->write_mask);
+    src_id = spirv_compiler_emit_load_src(compiler, src, dst->write_mask);
     if (src->reg.data_type == VKD3D_DATA_DOUBLE)
-        div_id = vkd3d_dxbc_compiler_get_constant_double_vector(compiler, 1.0, component_count);
+        div_id = spirv_compiler_get_constant_double_vector(compiler, 1.0, component_count);
     else
-        div_id = vkd3d_dxbc_compiler_get_constant_float_vector(compiler, 1.0f, component_count);
+        div_id = spirv_compiler_get_constant_float_vector(compiler, 1.0f, component_count);
     val_id = vkd3d_spirv_build_op_fdiv(builder, type_id, div_id, src_id);
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_sincos(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_sincos(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_dst_param *dst_sin = &instruction->dst[0];
@@ -7250,8 +7251,8 @@ static void vkd3d_dxbc_compiler_emit_sincos(struct vkd3d_dxbc_compiler *compiler
 
     if (dst_sin->reg.type != VKD3DSPR_NULL)
     {
-        type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, dst_sin);
-        src_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, dst_sin->write_mask);
+        type_id = spirv_compiler_get_type_id_for_dst(compiler, dst_sin);
+        src_id = spirv_compiler_emit_load_src(compiler, src, dst_sin->write_mask);
 
         sin_id = vkd3d_spirv_build_op_glsl_std450_sin(builder, type_id, src_id);
     }
@@ -7260,21 +7261,21 @@ static void vkd3d_dxbc_compiler_emit_sincos(struct vkd3d_dxbc_compiler *compiler
     {
         if (dst_sin->reg.type == VKD3DSPR_NULL || dst_cos->write_mask != dst_sin->write_mask)
         {
-            type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, dst_cos);
-            src_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, dst_cos->write_mask);
+            type_id = spirv_compiler_get_type_id_for_dst(compiler, dst_cos);
+            src_id = spirv_compiler_emit_load_src(compiler, src, dst_cos->write_mask);
         }
 
         cos_id = vkd3d_spirv_build_op_glsl_std450_cos(builder, type_id, src_id);
     }
 
     if (sin_id)
-        vkd3d_dxbc_compiler_emit_store_dst(compiler, dst_sin, sin_id);
+        spirv_compiler_emit_store_dst(compiler, dst_sin, sin_id);
 
     if (cos_id)
-        vkd3d_dxbc_compiler_emit_store_dst(compiler, dst_cos, cos_id);
+        spirv_compiler_emit_store_dst(compiler, dst_cos, cos_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_imul(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_imul(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -7288,17 +7289,17 @@ static void vkd3d_dxbc_compiler_emit_imul(struct vkd3d_dxbc_compiler *compiler,
     if (dst[1].reg.type == VKD3DSPR_NULL)
         return;
 
-    type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, &dst[1]);
+    type_id = spirv_compiler_get_type_id_for_dst(compiler, &dst[1]);
 
-    src0_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], dst[1].write_mask);
-    src1_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[1], dst[1].write_mask);
+    src0_id = spirv_compiler_emit_load_src(compiler, &src[0], dst[1].write_mask);
+    src1_id = spirv_compiler_emit_load_src(compiler, &src[1], dst[1].write_mask);
 
     val_id = vkd3d_spirv_build_op_imul(builder, type_id, src0_id, src1_id);
 
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, &dst[1], val_id);
+    spirv_compiler_emit_store_dst(compiler, &dst[1], val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_imad(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_imad(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -7311,15 +7312,15 @@ static void vkd3d_dxbc_compiler_emit_imad(struct vkd3d_dxbc_compiler *compiler,
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_INT, component_count);
 
     for (i = 0; i < ARRAY_SIZE(src_ids); ++i)
-        src_ids[i] = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[i], dst->write_mask);
+        src_ids[i] = spirv_compiler_emit_load_src(compiler, &src[i], dst->write_mask);
 
     val_id = vkd3d_spirv_build_op_imul(builder, type_id, src_ids[0], src_ids[1]);
     val_id = vkd3d_spirv_build_op_iadd(builder, type_id, val_id, src_ids[2]);
 
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_udiv(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_udiv(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     uint32_t type_id, val_id, src0_id, src1_id, condition_id, uint_max_id;
@@ -7331,21 +7332,21 @@ static void vkd3d_dxbc_compiler_emit_udiv(struct vkd3d_dxbc_compiler *compiler,
     if (dst[0].reg.type != VKD3DSPR_NULL)
     {
         component_count = vkd3d_write_mask_component_count(dst[0].write_mask);
-        type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, &dst[0]);
+        type_id = spirv_compiler_get_type_id_for_dst(compiler, &dst[0]);
 
-        src0_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], dst[0].write_mask);
-        src1_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[1], dst[0].write_mask);
+        src0_id = spirv_compiler_emit_load_src(compiler, &src[0], dst[0].write_mask);
+        src1_id = spirv_compiler_emit_load_src(compiler, &src[1], dst[0].write_mask);
 
-        condition_id = vkd3d_dxbc_compiler_emit_int_to_bool(compiler,
+        condition_id = spirv_compiler_emit_int_to_bool(compiler,
                 VKD3D_SHADER_CONDITIONAL_OP_NZ, component_count, src1_id);
-        uint_max_id = vkd3d_dxbc_compiler_get_constant_uint_vector(compiler,
+        uint_max_id = spirv_compiler_get_constant_uint_vector(compiler,
                 0xffffffff, component_count);
 
         val_id = vkd3d_spirv_build_op_udiv(builder, type_id, src0_id, src1_id);
         /* The SPIR-V spec says: "The resulting value is undefined if Operand 2 is 0." */
         val_id = vkd3d_spirv_build_op_select(builder, type_id, condition_id, val_id, uint_max_id);
 
-        vkd3d_dxbc_compiler_emit_store_dst(compiler, &dst[0], val_id);
+        spirv_compiler_emit_store_dst(compiler, &dst[0], val_id);
     }
 
     if (dst[1].reg.type != VKD3DSPR_NULL)
@@ -7353,14 +7354,14 @@ static void vkd3d_dxbc_compiler_emit_udiv(struct vkd3d_dxbc_compiler *compiler,
         if (!component_count || dst[0].write_mask != dst[1].write_mask)
         {
             component_count = vkd3d_write_mask_component_count(dst[1].write_mask);
-            type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, &dst[1]);
+            type_id = spirv_compiler_get_type_id_for_dst(compiler, &dst[1]);
 
-            src0_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], dst[1].write_mask);
-            src1_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[1], dst[1].write_mask);
+            src0_id = spirv_compiler_emit_load_src(compiler, &src[0], dst[1].write_mask);
+            src1_id = spirv_compiler_emit_load_src(compiler, &src[1], dst[1].write_mask);
 
-            condition_id = vkd3d_dxbc_compiler_emit_int_to_bool(compiler,
+            condition_id = spirv_compiler_emit_int_to_bool(compiler,
                     VKD3D_SHADER_CONDITIONAL_OP_NZ, component_count, src1_id);
-            uint_max_id = vkd3d_dxbc_compiler_get_constant_uint_vector(compiler,
+            uint_max_id = spirv_compiler_get_constant_uint_vector(compiler,
                     0xffffffff, component_count);
         }
 
@@ -7368,11 +7369,11 @@ static void vkd3d_dxbc_compiler_emit_udiv(struct vkd3d_dxbc_compiler *compiler,
         /* The SPIR-V spec says: "The resulting value is undefined if Operand 2 is 0." */
         val_id = vkd3d_spirv_build_op_select(builder, type_id, condition_id, val_id, uint_max_id);
 
-        vkd3d_dxbc_compiler_emit_store_dst(compiler, &dst[1], val_id);
+        spirv_compiler_emit_store_dst(compiler, &dst[1], val_id);
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_bitfield_instruction(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_bitfield_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     uint32_t src_ids[4], constituents[VKD3D_VEC4_SIZE], type_id, mask_id;
@@ -7389,7 +7390,7 @@ static void vkd3d_dxbc_compiler_emit_bitfield_instruction(struct vkd3d_dxbc_comp
 
     component_type = vkd3d_component_type_from_data_type(dst->reg.data_type);
     type_id = vkd3d_spirv_get_type_id(builder, component_type, 1);
-    mask_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0x1f);
+    mask_id = spirv_compiler_get_constant_uint(compiler, 0x1f);
 
     switch (instruction->handler_idx)
     {
@@ -7409,7 +7410,7 @@ static void vkd3d_dxbc_compiler_emit_bitfield_instruction(struct vkd3d_dxbc_comp
 
         for (j = 0; j < src_count; ++j)
         {
-            src_ids[src_count - j - 1] = vkd3d_dxbc_compiler_emit_load_src_with_type(compiler,
+            src_ids[src_count - j - 1] = spirv_compiler_emit_load_src_with_type(compiler,
                     &src[j], write_mask, component_type);
         }
 
@@ -7423,10 +7424,10 @@ static void vkd3d_dxbc_compiler_emit_bitfield_instruction(struct vkd3d_dxbc_comp
                 op, type_id, src_ids, src_count);
     }
 
-    vkd3d_dxbc_compiler_emit_store_dst_components(compiler, dst, component_type, constituents);
+    spirv_compiler_emit_store_dst_components(compiler, dst, component_type, constituents);
 }
 
-static void vkd3d_dxbc_compiler_emit_f16tof32(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_f16tof32(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     uint32_t instr_set_id, type_id, scalar_type_id, src_id, result_id;
@@ -7448,18 +7449,18 @@ static void vkd3d_dxbc_compiler_emit_f16tof32(struct vkd3d_dxbc_compiler *compil
         if (!(write_mask = dst->write_mask & (VKD3DSP_WRITEMASK_0 << i)))
             continue;
 
-        src_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, write_mask);
+        src_id = spirv_compiler_emit_load_src(compiler, src, write_mask);
         result_id = vkd3d_spirv_build_op_ext_inst(builder, type_id,
                 instr_set_id, GLSLstd450UnpackHalf2x16, &src_id, 1);
         components[j++] = vkd3d_spirv_build_op_composite_extract1(builder,
                 scalar_type_id, result_id, 0);
     }
 
-    vkd3d_dxbc_compiler_emit_store_dst_components(compiler,
+    spirv_compiler_emit_store_dst_components(compiler,
             dst, vkd3d_component_type_from_data_type(dst->reg.data_type), components);
 }
 
-static void vkd3d_dxbc_compiler_emit_f32tof16(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_f32tof16(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     uint32_t instr_set_id, type_id, scalar_type_id, src_id, zero_id, constituents[2];
@@ -7473,7 +7474,7 @@ static void vkd3d_dxbc_compiler_emit_f32tof16(struct vkd3d_dxbc_compiler *compil
     instr_set_id = vkd3d_spirv_get_glsl_std450_instr_set(builder);
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, 2);
     scalar_type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
-    zero_id = vkd3d_dxbc_compiler_get_constant_float(compiler, 0.0f);
+    zero_id = spirv_compiler_get_constant_float(compiler, 0.0f);
 
     /* FIXME: Consider a single PackHalf2x16 instruction per 2 components. */
     assert(dst->write_mask & VKD3DSP_WRITEMASK_ALL);
@@ -7482,7 +7483,7 @@ static void vkd3d_dxbc_compiler_emit_f32tof16(struct vkd3d_dxbc_compiler *compil
         if (!(write_mask = dst->write_mask & (VKD3DSP_WRITEMASK_0 << i)))
             continue;
 
-        src_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, write_mask);
+        src_id = spirv_compiler_emit_load_src(compiler, src, write_mask);
         constituents[0] = src_id;
         constituents[1] = zero_id;
         src_id = vkd3d_spirv_build_op_composite_construct(builder,
@@ -7491,11 +7492,11 @@ static void vkd3d_dxbc_compiler_emit_f32tof16(struct vkd3d_dxbc_compiler *compil
                 instr_set_id, GLSLstd450PackHalf2x16, &src_id, 1);
     }
 
-    vkd3d_dxbc_compiler_emit_store_dst_components(compiler,
+    spirv_compiler_emit_store_dst_components(compiler,
             dst, vkd3d_component_type_from_data_type(dst->reg.data_type), components);
 }
 
-static void vkd3d_dxbc_compiler_emit_comparison_instruction(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_comparison_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -7528,26 +7529,26 @@ static void vkd3d_dxbc_compiler_emit_comparison_instruction(struct vkd3d_dxbc_co
 
     component_count = vkd3d_write_mask_component_count(dst->write_mask);
 
-    src0_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], dst->write_mask);
-    src1_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[1], dst->write_mask);
+    src0_id = spirv_compiler_emit_load_src(compiler, &src[0], dst->write_mask);
+    src1_id = spirv_compiler_emit_load_src(compiler, &src[1], dst->write_mask);
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_BOOL, component_count);
     result_id = vkd3d_spirv_build_op_tr2(builder, &builder->function_stream,
             op, type_id, src0_id, src1_id);
 
-    result_id = vkd3d_dxbc_compiler_emit_bool_to_int(compiler, component_count, result_id);
-    vkd3d_dxbc_compiler_emit_store_reg(compiler, &dst->reg, dst->write_mask, result_id);
+    result_id = spirv_compiler_emit_bool_to_int(compiler, component_count, result_id);
+    spirv_compiler_emit_store_reg(compiler, &dst->reg, dst->write_mask, result_id);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_conditional_branch(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_conditional_branch(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction, uint32_t target_block_id)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_shader_src_param *src = instruction->src;
     uint32_t condition_id, merge_block_id;
 
-    condition_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, VKD3DSP_WRITEMASK_0);
-    condition_id = vkd3d_dxbc_compiler_emit_int_to_bool(compiler, instruction->flags, 1, condition_id);
+    condition_id = spirv_compiler_emit_load_src(compiler, src, VKD3DSP_WRITEMASK_0);
+    condition_id = spirv_compiler_emit_int_to_bool(compiler, instruction->flags, 1, condition_id);
 
     merge_block_id = vkd3d_spirv_alloc_id(builder);
 
@@ -7557,44 +7558,44 @@ static uint32_t vkd3d_dxbc_compiler_emit_conditional_branch(struct vkd3d_dxbc_co
     return merge_block_id;
 }
 
-static void vkd3d_dxbc_compiler_emit_return(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_return(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
-    const struct vkd3d_shader_phase *phase = vkd3d_dxbc_compiler_get_current_shader_phase(compiler);
+    const struct vkd3d_shader_phase *phase = spirv_compiler_get_current_shader_phase(compiler);
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
 
     if (compiler->shader_type != VKD3D_SHADER_TYPE_GEOMETRY && (!phase || is_control_point_phase(phase)))
-        vkd3d_dxbc_compiler_emit_shader_epilogue_invocation(compiler);
+        spirv_compiler_emit_shader_epilogue_invocation(compiler);
 
     vkd3d_spirv_build_op_return(builder);
 }
 
-static void vkd3d_dxbc_compiler_emit_retc(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_retc(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     uint32_t target_id, merge_block_id;
 
     target_id = vkd3d_spirv_alloc_id(builder);
-    merge_block_id = vkd3d_dxbc_compiler_emit_conditional_branch(compiler, instruction, target_id);
+    merge_block_id = spirv_compiler_emit_conditional_branch(compiler, instruction, target_id);
 
     vkd3d_spirv_build_op_label(builder, target_id);
-    vkd3d_dxbc_compiler_emit_return(compiler, instruction);
+    spirv_compiler_emit_return(compiler, instruction);
     vkd3d_spirv_build_op_label(builder, merge_block_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_kill(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_kill(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     uint32_t target_id, merge_block_id;
 
     target_id = vkd3d_spirv_alloc_id(builder);
-    merge_block_id = vkd3d_dxbc_compiler_emit_conditional_branch(compiler, instruction, target_id);
+    merge_block_id = spirv_compiler_emit_conditional_branch(compiler, instruction, target_id);
 
     vkd3d_spirv_build_op_label(builder, target_id);
 
-    if (vkd3d_dxbc_compiler_is_target_extension_supported(compiler,
+    if (spirv_compiler_is_target_extension_supported(compiler,
             VKD3D_SHADER_SPIRV_EXTENSION_EXT_DEMOTE_TO_HELPER_INVOCATION))
     {
         vkd3d_spirv_enable_capability(builder, SpvCapabilityDemoteToHelperInvocationEXT);
@@ -7609,8 +7610,8 @@ static void vkd3d_dxbc_compiler_emit_kill(struct vkd3d_dxbc_compiler *compiler,
     vkd3d_spirv_build_op_label(builder, merge_block_id);
 }
 
-static struct vkd3d_control_flow_info *vkd3d_dxbc_compiler_push_control_flow_level(
-        struct vkd3d_dxbc_compiler *compiler)
+static struct vkd3d_control_flow_info *spirv_compiler_push_control_flow_level(
+        struct spirv_compiler *compiler)
 {
     if (!vkd3d_array_reserve((void **)&compiler->control_flow_info, &compiler->control_flow_info_size,
             compiler->control_flow_depth + 1, sizeof(*compiler->control_flow_info)))
@@ -7622,7 +7623,7 @@ static struct vkd3d_control_flow_info *vkd3d_dxbc_compiler_push_control_flow_lev
     return &compiler->control_flow_info[compiler->control_flow_depth++];
 }
 
-static void vkd3d_dxbc_compiler_pop_control_flow_level(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_pop_control_flow_level(struct spirv_compiler *compiler)
 {
     struct vkd3d_control_flow_info *cf_info;
 
@@ -7632,8 +7633,8 @@ static void vkd3d_dxbc_compiler_pop_control_flow_level(struct vkd3d_dxbc_compile
     memset(cf_info, 0, sizeof(*cf_info));
 }
 
-static struct vkd3d_control_flow_info *vkd3d_dxbc_compiler_find_innermost_loop(
-        struct vkd3d_dxbc_compiler *compiler)
+static struct vkd3d_control_flow_info *spirv_compiler_find_innermost_loop(
+        struct spirv_compiler *compiler)
 {
     int depth;
 
@@ -7646,8 +7647,8 @@ static struct vkd3d_control_flow_info *vkd3d_dxbc_compiler_find_innermost_loop(
     return NULL;
 }
 
-static struct vkd3d_control_flow_info *vkd3d_dxbc_compiler_find_innermost_breakable_cf_construct(
-        struct vkd3d_dxbc_compiler *compiler)
+static struct vkd3d_control_flow_info *spirv_compiler_find_innermost_breakable_cf_construct(
+        struct spirv_compiler *compiler)
 {
     int depth;
 
@@ -7661,7 +7662,7 @@ static struct vkd3d_control_flow_info *vkd3d_dxbc_compiler_find_innermost_breaka
     return NULL;
 }
 
-static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_compiler *compiler,
+static int spirv_compiler_emit_control_flow_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     uint32_t loop_header_block_id, loop_body_block_id, continue_block_id;
@@ -7676,11 +7677,11 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
     switch (instruction->handler_idx)
     {
         case VKD3DSIH_IF:
-            if (!(cf_info = vkd3d_dxbc_compiler_push_control_flow_level(compiler)))
+            if (!(cf_info = spirv_compiler_push_control_flow_level(compiler)))
                 return VKD3D_ERROR_OUT_OF_MEMORY;
 
-            val_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, VKD3DSP_WRITEMASK_0);
-            condition_id = vkd3d_dxbc_compiler_emit_int_to_bool(compiler, instruction->flags, 1, val_id);
+            val_id = spirv_compiler_emit_load_src(compiler, src, VKD3DSP_WRITEMASK_0);
+            condition_id = spirv_compiler_emit_int_to_bool(compiler, instruction->flags, 1, val_id);
 
             true_label = vkd3d_spirv_alloc_id(builder);
             merge_block_id = vkd3d_spirv_alloc_id(builder);
@@ -7726,11 +7727,11 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
 
             vkd3d_spirv_build_op_label(builder, cf_info->u.if_.merge_block_id);
 
-            vkd3d_dxbc_compiler_pop_control_flow_level(compiler);
+            spirv_compiler_pop_control_flow_level(compiler);
             break;
 
         case VKD3DSIH_LOOP:
-            if (!(cf_info = vkd3d_dxbc_compiler_push_control_flow_level(compiler)))
+            if (!(cf_info = spirv_compiler_push_control_flow_level(compiler)))
                 return VKD3D_ERROR_OUT_OF_MEMORY;
 
             loop_header_block_id = vkd3d_spirv_alloc_id(builder);
@@ -7771,17 +7772,17 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
             vkd3d_spirv_build_op_branch(builder, cf_info->u.loop.header_block_id);
             vkd3d_spirv_build_op_label(builder, cf_info->u.loop.merge_block_id);
 
-            vkd3d_dxbc_compiler_pop_control_flow_level(compiler);
+            spirv_compiler_pop_control_flow_level(compiler);
             break;
 
         case VKD3DSIH_SWITCH:
-            if (!(cf_info = vkd3d_dxbc_compiler_push_control_flow_level(compiler)))
+            if (!(cf_info = spirv_compiler_push_control_flow_level(compiler)))
                 return VKD3D_ERROR_OUT_OF_MEMORY;
 
             merge_block_id = vkd3d_spirv_alloc_id(builder);
 
             assert(src->reg.data_type == VKD3D_DATA_INT);
-            val_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, VKD3DSP_WRITEMASK_0);
+            val_id = spirv_compiler_emit_load_src(compiler, src, VKD3DSP_WRITEMASK_0);
 
             vkd3d_spirv_build_op_selection_merge(builder, merge_block_id, SpvSelectionControlMaskNone);
 
@@ -7826,7 +7827,7 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
             vkd3d_spirv_end_function_stream_insertion(builder);
 
             vkd3d_free(cf_info->u.switch_.case_blocks);
-            vkd3d_dxbc_compiler_pop_control_flow_level(compiler);
+            spirv_compiler_pop_control_flow_level(compiler);
             break;
 
         case VKD3DSIH_CASE:
@@ -7878,7 +7879,7 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
 
             assert(compiler->control_flow_depth);
 
-            if (!(breakable_cf_info = vkd3d_dxbc_compiler_find_innermost_breakable_cf_construct(compiler)))
+            if (!(breakable_cf_info = spirv_compiler_find_innermost_breakable_cf_construct(compiler)))
             {
                 FIXME("Unhandled break instruction.\n");
                 return VKD3D_ERROR_INVALID_SHADER;
@@ -7906,13 +7907,13 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
 
             assert(compiler->control_flow_depth);
 
-            if (!(loop_cf_info = vkd3d_dxbc_compiler_find_innermost_loop(compiler)))
+            if (!(loop_cf_info = spirv_compiler_find_innermost_loop(compiler)))
             {
                 ERR("Invalid 'breakc' instruction outside loop.\n");
                 return VKD3D_ERROR_INVALID_SHADER;
             }
 
-            merge_block_id = vkd3d_dxbc_compiler_emit_conditional_branch(compiler,
+            merge_block_id = spirv_compiler_emit_conditional_branch(compiler,
                     instruction, loop_cf_info->u.loop.merge_block_id);
             vkd3d_spirv_build_op_label(builder, merge_block_id);
             break;
@@ -7924,7 +7925,7 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
 
             assert(compiler->control_flow_depth);
 
-            if (!(loop_cf_info = vkd3d_dxbc_compiler_find_innermost_loop(compiler)))
+            if (!(loop_cf_info = spirv_compiler_find_innermost_loop(compiler)))
             {
                 ERR("Invalid 'continue' instruction outside loop.\n");
                 return VKD3D_ERROR_INVALID_SHADER;
@@ -7940,31 +7941,31 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
         {
             struct vkd3d_control_flow_info *loop_cf_info;
 
-            if (!(loop_cf_info = vkd3d_dxbc_compiler_find_innermost_loop(compiler)))
+            if (!(loop_cf_info = spirv_compiler_find_innermost_loop(compiler)))
             {
                 ERR("Invalid 'continuec' instruction outside loop.\n");
                 return VKD3D_ERROR_INVALID_SHADER;
             }
 
-            merge_block_id = vkd3d_dxbc_compiler_emit_conditional_branch(compiler,
+            merge_block_id = spirv_compiler_emit_conditional_branch(compiler,
                     instruction, loop_cf_info->u.loop.continue_block_id);
             vkd3d_spirv_build_op_label(builder, merge_block_id);
             break;
         }
 
         case VKD3DSIH_RET:
-            vkd3d_dxbc_compiler_emit_return(compiler, instruction);
+            spirv_compiler_emit_return(compiler, instruction);
 
             if (cf_info)
                 cf_info->inside_block = false;
             break;
 
         case VKD3DSIH_RETP:
-            vkd3d_dxbc_compiler_emit_retc(compiler, instruction);
+            spirv_compiler_emit_retc(compiler, instruction);
             break;
 
         case VKD3DSIH_TEXKILL:
-            vkd3d_dxbc_compiler_emit_kill(compiler, instruction);
+            spirv_compiler_emit_kill(compiler, instruction);
             break;
 
         default:
@@ -7975,7 +7976,7 @@ static int vkd3d_dxbc_compiler_emit_control_flow_instruction(struct vkd3d_dxbc_c
     return VKD3D_OK;
 }
 
-static void vkd3d_dxbc_compiler_emit_deriv_instruction(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_deriv_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -8022,10 +8023,10 @@ static void vkd3d_dxbc_compiler_emit_deriv_instruction(struct vkd3d_dxbc_compile
     assert(instruction->dst_count == 1);
     assert(instruction->src_count == 1);
 
-    type_id = vkd3d_dxbc_compiler_get_type_id_for_dst(compiler, dst);
-    src_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src, dst->write_mask);
+    type_id = spirv_compiler_get_type_id_for_dst(compiler, dst);
+    src_id = spirv_compiler_emit_load_src(compiler, src, dst->write_mask);
     val_id = vkd3d_spirv_build_op_tr1(builder, &builder->function_stream, info->op, type_id, src_id);
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
 struct vkd3d_shader_image
@@ -8046,7 +8047,7 @@ struct vkd3d_shader_image
 #define VKD3D_IMAGE_FLAG_NO_LOAD 0x2
 #define VKD3D_IMAGE_FLAG_SAMPLED 0x4
 
-static const struct vkd3d_symbol *vkd3d_dxbc_compiler_find_resource(struct vkd3d_dxbc_compiler *compiler,
+static const struct vkd3d_symbol *spirv_compiler_find_resource(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *resource_reg)
 {
     struct vkd3d_symbol resource_key;
@@ -8058,7 +8059,7 @@ static const struct vkd3d_symbol *vkd3d_dxbc_compiler_find_resource(struct vkd3d
     return RB_ENTRY_VALUE(entry, struct vkd3d_symbol, entry);
 }
 
-static const struct vkd3d_symbol *vkd3d_dxbc_compiler_find_combined_sampler(struct vkd3d_dxbc_compiler *compiler,
+static const struct vkd3d_symbol *spirv_compiler_find_combined_sampler(struct spirv_compiler *compiler,
         const struct vkd3d_shader_register *resource_reg, const struct vkd3d_shader_register *sampler_reg)
 {
     const struct vkd3d_shader_interface_info *shader_interface = &compiler->shader_interface;
@@ -8092,7 +8093,7 @@ static const struct vkd3d_symbol *vkd3d_dxbc_compiler_find_combined_sampler(stru
     return NULL;
 }
 
-static void vkd3d_dxbc_compiler_prepare_image(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_prepare_image(struct spirv_compiler *compiler,
         struct vkd3d_shader_image *image, const struct vkd3d_shader_register *resource_reg,
         const struct vkd3d_shader_register *sampler_reg, unsigned int flags)
 {
@@ -8106,16 +8107,16 @@ static void vkd3d_dxbc_compiler_prepare_image(struct vkd3d_dxbc_compiler *compil
     depth_comparison = flags & VKD3D_IMAGE_FLAG_DEPTH;
 
     if (resource_reg->type == VKD3DSPR_RESOURCE)
-        symbol = vkd3d_dxbc_compiler_find_combined_sampler(compiler, resource_reg, sampler_reg);
+        symbol = spirv_compiler_find_combined_sampler(compiler, resource_reg, sampler_reg);
     if (!symbol)
-        symbol = vkd3d_dxbc_compiler_find_resource(compiler, resource_reg);
+        symbol = spirv_compiler_find_resource(compiler, resource_reg);
 
     if (symbol->descriptor_array)
     {
         const struct vkd3d_symbol_descriptor_array_data *array_data = &symbol->descriptor_array->info.descriptor_array;
         uint32_t ptr_type_id, index_id;
 
-        index_id = vkd3d_dxbc_compiler_get_descriptor_index(compiler, resource_reg, symbol->descriptor_array,
+        index_id = spirv_compiler_get_descriptor_index(compiler, resource_reg, symbol->descriptor_array,
                 symbol->info.resource.binding_base_idx, symbol->info.resource.resource_type_info->resource_type);
 
         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, array_data->storage_class,
@@ -8148,14 +8149,14 @@ static void vkd3d_dxbc_compiler_prepare_image(struct vkd3d_dxbc_compiler *compil
     {
         image->image_id = vkd3d_spirv_build_op_load(builder, image->image_type_id, image->id, SpvMemoryAccessMaskNone);
         if (resource_reg->non_uniform)
-            vkd3d_dxbc_compiler_decorate_nonuniform(compiler, image->image_id);
+            spirv_compiler_decorate_nonuniform(compiler, image->image_id);
     }
     else
     {
         image->image_id = 0;
     }
 
-    image->image_type_id = vkd3d_dxbc_compiler_get_image_type_id(compiler, resource_reg,
+    image->image_type_id = spirv_compiler_get_image_type_id(compiler, resource_reg,
             &symbol->info.resource.range, image->resource_type_info,
             image->sampled_type, image->structure_stride || image->raw, depth_comparison);
 
@@ -8166,7 +8167,7 @@ static void vkd3d_dxbc_compiler_prepare_image(struct vkd3d_dxbc_compiler *compil
         assert(image->image_id);
         assert(sampler_reg);
 
-        if (!vkd3d_dxbc_compiler_get_register_info(compiler, sampler_reg, &register_info))
+        if (!spirv_compiler_get_register_info(compiler, sampler_reg, &register_info))
             ERR("Failed to get sampler register info.\n");
         sampler_var_id = register_info.id;
         if (register_info.descriptor_array)
@@ -8175,7 +8176,7 @@ static void vkd3d_dxbc_compiler_prepare_image(struct vkd3d_dxbc_compiler *compil
                     = &register_info.descriptor_array->info.descriptor_array;
             uint32_t ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder,
                     register_info.storage_class, array_data->contained_type_id);
-            uint32_t array_idx = vkd3d_dxbc_compiler_get_descriptor_index(compiler, sampler_reg,
+            uint32_t array_idx = spirv_compiler_get_descriptor_index(compiler, sampler_reg,
                     register_info.descriptor_array, register_info.binding_base_idx, VKD3D_SHADER_RESOURCE_NONE);
             sampler_var_id = vkd3d_spirv_build_op_access_chain(builder, ptr_type_id, register_info.id, &array_idx, 1);
         }
@@ -8183,13 +8184,13 @@ static void vkd3d_dxbc_compiler_prepare_image(struct vkd3d_dxbc_compiler *compil
         sampler_id = vkd3d_spirv_build_op_load(builder,
                 vkd3d_spirv_get_op_type_sampler(builder), sampler_var_id, SpvMemoryAccessMaskNone);
         if (sampler_reg->non_uniform)
-            vkd3d_dxbc_compiler_decorate_nonuniform(compiler, sampler_id);
+            spirv_compiler_decorate_nonuniform(compiler, sampler_id);
 
         sampled_image_type_id = vkd3d_spirv_get_op_type_sampled_image(builder, image->image_type_id);
         image->sampled_image_id = vkd3d_spirv_build_op_sampled_image(builder,
                 sampled_image_type_id, image->image_id, sampler_id);
         if (resource_reg->non_uniform)
-            vkd3d_dxbc_compiler_decorate_nonuniform(compiler, image->sampled_image_id);
+            spirv_compiler_decorate_nonuniform(compiler, image->sampled_image_id);
     }
     else
     {
@@ -8197,18 +8198,18 @@ static void vkd3d_dxbc_compiler_prepare_image(struct vkd3d_dxbc_compiler *compil
     }
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_texel_offset(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_texel_offset(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction,
         const struct vkd3d_spirv_resource_type *resource_type_info)
 {
     const struct vkd3d_shader_texel_offset *offset = &instruction->texel_offset;
     unsigned int component_count = resource_type_info->offset_component_count;
     int32_t data[4] = {offset->u, offset->v, offset->w, 0};
-    return vkd3d_dxbc_compiler_get_constant(compiler,
+    return spirv_compiler_get_constant(compiler,
             VKD3D_SHADER_COMPONENT_INT, component_count, (const uint32_t *)data);
 }
 
-static void vkd3d_dxbc_compiler_emit_ld(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_ld(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -8224,38 +8225,38 @@ static void vkd3d_dxbc_compiler_emit_ld(struct vkd3d_dxbc_compiler *compiler,
 
     multisample = instruction->handler_idx == VKD3DSIH_LD2DMS;
 
-    vkd3d_dxbc_compiler_prepare_image(compiler, &image, &src[1].reg, NULL, VKD3D_IMAGE_FLAG_NONE);
+    spirv_compiler_prepare_image(compiler, &image, &src[1].reg, NULL, VKD3D_IMAGE_FLAG_NONE);
 
     type_id = vkd3d_spirv_get_type_id(builder, image.sampled_type, VKD3D_VEC4_SIZE);
     coordinate_mask = (1u << image.resource_type_info->coordinate_component_count) - 1;
-    coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], coordinate_mask);
+    coordinate_id = spirv_compiler_emit_load_src(compiler, &src[0], coordinate_mask);
     if (image.resource_type_info->resource_type != VKD3D_SHADER_RESOURCE_BUFFER && !multisample)
     {
         operands_mask |= SpvImageOperandsLodMask;
-        image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_load_src(compiler,
+        image_operands[image_operand_count++] = spirv_compiler_emit_load_src(compiler,
                 &src[0], VKD3DSP_WRITEMASK_3);
     }
     if (vkd3d_shader_instruction_has_texel_offset(instruction))
     {
         operands_mask |= SpvImageOperandsConstOffsetMask;
-        image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_texel_offset(compiler,
+        image_operands[image_operand_count++] = spirv_compiler_emit_texel_offset(compiler,
                 instruction, image.resource_type_info);
     }
     if (multisample)
     {
         operands_mask |= SpvImageOperandsSampleMask;
-        image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_load_src(compiler,
+        image_operands[image_operand_count++] = spirv_compiler_emit_load_src(compiler,
                 &src[2], VKD3DSP_WRITEMASK_0);
     }
     assert(image_operand_count <= ARRAY_SIZE(image_operands));
     val_id = vkd3d_spirv_build_op_image_fetch(builder, type_id,
             image.image_id, coordinate_id, operands_mask, image_operands, image_operand_count);
 
-    vkd3d_dxbc_compiler_emit_store_dst_swizzled(compiler,
+    spirv_compiler_emit_store_dst_swizzled(compiler,
             dst, val_id, image.sampled_type, src[1].swizzle);
 }
 
-static void vkd3d_dxbc_compiler_emit_lod(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_lod(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -8269,19 +8270,19 @@ static void vkd3d_dxbc_compiler_emit_lod(struct vkd3d_dxbc_compiler *compiler,
 
     resource = &src[1];
     sampler = &src[2];
-    vkd3d_dxbc_compiler_prepare_image(compiler, &image,
+    spirv_compiler_prepare_image(compiler, &image,
             &resource->reg, &sampler->reg, VKD3D_IMAGE_FLAG_SAMPLED);
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, 2);
-    coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_ALL);
+    coordinate_id = spirv_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_ALL);
     val_id = vkd3d_spirv_build_op_image_query_lod(builder,
             type_id, image.sampled_image_id, coordinate_id);
 
-    vkd3d_dxbc_compiler_emit_store_dst_swizzled(compiler,
+    spirv_compiler_emit_store_dst_swizzled(compiler,
             dst, val_id, image.sampled_type, resource->swizzle);
 }
 
-static void vkd3d_dxbc_compiler_emit_sample(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_sample(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -8298,7 +8299,7 @@ static void vkd3d_dxbc_compiler_emit_sample(struct vkd3d_dxbc_compiler *compiler
 
     resource = &src[1];
     sampler = &src[2];
-    vkd3d_dxbc_compiler_prepare_image(compiler, &image,
+    spirv_compiler_prepare_image(compiler, &image,
             &resource->reg, &sampler->reg, VKD3D_IMAGE_FLAG_SAMPLED);
 
     switch (instruction->handler_idx)
@@ -8309,22 +8310,22 @@ static void vkd3d_dxbc_compiler_emit_sample(struct vkd3d_dxbc_compiler *compiler
         case VKD3DSIH_SAMPLE_B:
             op = SpvOpImageSampleImplicitLod;
             operands_mask |= SpvImageOperandsBiasMask;
-            image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_load_src(compiler,
+            image_operands[image_operand_count++] = spirv_compiler_emit_load_src(compiler,
                     &src[3], VKD3DSP_WRITEMASK_0);
             break;
         case VKD3DSIH_SAMPLE_GRAD:
             op = SpvOpImageSampleExplicitLod;
             operands_mask |= SpvImageOperandsGradMask;
             coordinate_mask = (1u << image.resource_type_info->offset_component_count) - 1;
-            image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_load_src(compiler,
+            image_operands[image_operand_count++] = spirv_compiler_emit_load_src(compiler,
                     &src[3], coordinate_mask);
-            image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_load_src(compiler,
+            image_operands[image_operand_count++] = spirv_compiler_emit_load_src(compiler,
                     &src[4], coordinate_mask);
             break;
         case VKD3DSIH_SAMPLE_LOD:
             op = SpvOpImageSampleExplicitLod;
             operands_mask |= SpvImageOperandsLodMask;
-            image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_load_src(compiler,
+            image_operands[image_operand_count++] = spirv_compiler_emit_load_src(compiler,
                     &src[3], VKD3DSP_WRITEMASK_0);
             break;
         default:
@@ -8335,21 +8336,21 @@ static void vkd3d_dxbc_compiler_emit_sample(struct vkd3d_dxbc_compiler *compiler
     if (vkd3d_shader_instruction_has_texel_offset(instruction))
     {
         operands_mask |= SpvImageOperandsConstOffsetMask;
-        image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_texel_offset(compiler,
+        image_operands[image_operand_count++] = spirv_compiler_emit_texel_offset(compiler,
                 instruction, image.resource_type_info);
     }
 
     sampled_type_id = vkd3d_spirv_get_type_id(builder, image.sampled_type, VKD3D_VEC4_SIZE);
-    coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_ALL);
+    coordinate_id = spirv_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_ALL);
     assert(image_operand_count <= ARRAY_SIZE(image_operands));
     val_id = vkd3d_spirv_build_op_image_sample(builder, op, sampled_type_id,
             image.sampled_image_id, coordinate_id, operands_mask, image_operands, image_operand_count);
 
-    vkd3d_dxbc_compiler_emit_store_dst_swizzled(compiler,
+    spirv_compiler_emit_store_dst_swizzled(compiler,
             dst, val_id, image.sampled_type, resource->swizzle);
 }
 
-static void vkd3d_dxbc_compiler_emit_sample_c(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_sample_c(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -8367,35 +8368,35 @@ static void vkd3d_dxbc_compiler_emit_sample_c(struct vkd3d_dxbc_compiler *compil
         op = SpvOpImageSampleDrefExplicitLod;
         operands_mask |= SpvImageOperandsLodMask;
         image_operands[image_operand_count++]
-                = vkd3d_dxbc_compiler_get_constant_float(compiler, 0.0f);
+                = spirv_compiler_get_constant_float(compiler, 0.0f);
     }
     else
     {
         op = SpvOpImageSampleDrefImplicitLod;
     }
 
-    vkd3d_dxbc_compiler_prepare_image(compiler,
+    spirv_compiler_prepare_image(compiler,
             &image, &src[1].reg, &src[2].reg, VKD3D_IMAGE_FLAG_SAMPLED | VKD3D_IMAGE_FLAG_DEPTH);
 
     if (vkd3d_shader_instruction_has_texel_offset(instruction))
     {
         operands_mask |= SpvImageOperandsConstOffsetMask;
-        image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_texel_offset(compiler,
+        image_operands[image_operand_count++] = spirv_compiler_emit_texel_offset(compiler,
                 instruction, image.resource_type_info);
     }
 
     sampled_type_id = vkd3d_spirv_get_type_id(builder, image.sampled_type, 1);
-    coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_ALL);
-    dref_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[3], VKD3DSP_WRITEMASK_0);
+    coordinate_id = spirv_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_ALL);
+    dref_id = spirv_compiler_emit_load_src(compiler, &src[3], VKD3DSP_WRITEMASK_0);
     val_id = vkd3d_spirv_build_op_image_sample_dref(builder, op, sampled_type_id,
             image.sampled_image_id, coordinate_id, dref_id, operands_mask,
             image_operands, image_operand_count);
 
-    vkd3d_dxbc_compiler_emit_store_dst_scalar(compiler,
+    spirv_compiler_emit_store_dst_scalar(compiler,
             dst, val_id, image.sampled_type, src[1].swizzle);
 }
 
-static void vkd3d_dxbc_compiler_emit_gather4(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_gather4(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     const struct vkd3d_shader_src_param *addr, *offset, *resource, *sampler;
@@ -8424,29 +8425,29 @@ static void vkd3d_dxbc_compiler_emit_gather4(struct vkd3d_dxbc_compiler *compile
     resource = &src[1 + extended_offset];
     sampler = &src[2 + extended_offset];
 
-    vkd3d_dxbc_compiler_prepare_image(compiler, &image,
+    spirv_compiler_prepare_image(compiler, &image,
             &resource->reg, &sampler->reg, image_flags);
 
     if (offset)
     {
         vkd3d_spirv_enable_capability(builder, SpvCapabilityImageGatherExtended);
         operands_mask |= SpvImageOperandsOffsetMask;
-        image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_load_src(compiler,
+        image_operands[image_operand_count++] = spirv_compiler_emit_load_src(compiler,
                 offset, (1u << image.resource_type_info->offset_component_count) - 1);
     }
     else if (vkd3d_shader_instruction_has_texel_offset(instruction))
     {
         operands_mask |= SpvImageOperandsConstOffsetMask;
-        image_operands[image_operand_count++] = vkd3d_dxbc_compiler_emit_texel_offset(compiler,
+        image_operands[image_operand_count++] = spirv_compiler_emit_texel_offset(compiler,
                 instruction, image.resource_type_info);
     }
 
     sampled_type_id = vkd3d_spirv_get_type_id(builder, image.sampled_type, VKD3D_VEC4_SIZE);
     coordinate_mask = (1u << image.resource_type_info->coordinate_component_count) - 1;
-    coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, addr, coordinate_mask);
+    coordinate_id = spirv_compiler_emit_load_src(compiler, addr, coordinate_mask);
     if (image_flags & VKD3D_IMAGE_FLAG_DEPTH)
     {
-        dref_id = vkd3d_dxbc_compiler_emit_load_src(compiler,
+        dref_id = spirv_compiler_emit_load_src(compiler,
                 &src[3 + extended_offset], VKD3DSP_WRITEMASK_0);
         val_id = vkd3d_spirv_build_op_image_dref_gather(builder, sampled_type_id,
                 image.sampled_image_id, coordinate_id, dref_id,
@@ -8456,19 +8457,19 @@ static void vkd3d_dxbc_compiler_emit_gather4(struct vkd3d_dxbc_compiler *compile
     {
         component_idx = vkd3d_swizzle_get_component(sampler->swizzle, 0);
         /* Nvidia driver requires signed integer type. */
-        component_id = vkd3d_dxbc_compiler_get_constant(compiler,
+        component_id = spirv_compiler_get_constant(compiler,
                 VKD3D_SHADER_COMPONENT_INT, 1, &component_idx);
         val_id = vkd3d_spirv_build_op_image_gather(builder, sampled_type_id,
                 image.sampled_image_id, coordinate_id, component_id,
                 operands_mask, image_operands, image_operand_count);
     }
 
-    vkd3d_dxbc_compiler_emit_store_dst_swizzled(compiler,
+    spirv_compiler_emit_store_dst_swizzled(compiler,
             dst, val_id, image.sampled_type, resource->swizzle);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_raw_structured_addressing(
-        struct vkd3d_dxbc_compiler *compiler, uint32_t type_id, unsigned int stride,
+static uint32_t spirv_compiler_emit_raw_structured_addressing(
+        struct spirv_compiler *compiler, uint32_t type_id, unsigned int stride,
         const struct vkd3d_shader_src_param *src0, DWORD src0_mask,
         const struct vkd3d_shader_src_param *src1, DWORD src1_mask)
 {
@@ -8479,16 +8480,16 @@ static uint32_t vkd3d_dxbc_compiler_emit_raw_structured_addressing(
 
     if (stride)
     {
-        structure_id = vkd3d_dxbc_compiler_emit_load_src(compiler, src0, src0_mask);
+        structure_id = spirv_compiler_emit_load_src(compiler, src0, src0_mask);
         structure_id = vkd3d_spirv_build_op_imul(builder, type_id,
-                structure_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, stride));
+                structure_id, spirv_compiler_get_constant_uint(compiler, stride));
     }
     offset = stride ? src1 : src0;
     offset_write_mask = stride ? src1_mask : src0_mask;
 
-    offset_id = vkd3d_dxbc_compiler_emit_load_src(compiler, offset, offset_write_mask);
+    offset_id = spirv_compiler_emit_load_src(compiler, offset, offset_write_mask);
     offset_id = vkd3d_spirv_build_op_shift_right_logical(builder, type_id,
-            offset_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, 2));
+            offset_id, spirv_compiler_get_constant_uint(compiler, 2));
 
     if (structure_id)
         return vkd3d_spirv_build_op_iadd(builder, type_id, structure_id, offset_id);
@@ -8496,7 +8497,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_raw_structured_addressing(
         return offset_id;
 }
 
-static void vkd3d_dxbc_compiler_emit_ld_raw_structured_srv_uav(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_ld_raw_structured_srv_uav(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     uint32_t coordinate_id, type_id, val_id, texel_type_id, ptr_type_id, ptr_id;
@@ -8513,16 +8514,16 @@ static void vkd3d_dxbc_compiler_emit_ld_raw_structured_srv_uav(struct vkd3d_dxbc
     SpvOp op;
 
     resource = &src[instruction->src_count - 1];
-    resource_symbol = vkd3d_dxbc_compiler_find_resource(compiler, &resource->reg);
+    resource_symbol = spirv_compiler_find_resource(compiler, &resource->reg);
 
     if (resource->reg.type == VKD3DSPR_UAV
-            && vkd3d_dxbc_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
+            && spirv_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
     {
         texel_type_id = vkd3d_spirv_get_type_id(builder, resource_symbol->info.resource.sampled_type, 1);
         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassUniform, texel_type_id);
 
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
-        base_coordinate_id = vkd3d_dxbc_compiler_emit_raw_structured_addressing(compiler,
+        base_coordinate_id = spirv_compiler_emit_raw_structured_addressing(compiler,
                 type_id, resource_symbol->info.resource.structure_stride,
                 &src[0], VKD3DSP_WRITEMASK_0, &src[1], VKD3DSP_WRITEMASK_0);
 
@@ -8536,8 +8537,8 @@ static void vkd3d_dxbc_compiler_emit_ld_raw_structured_srv_uav(struct vkd3d_dxbc
             coordinate_id = base_coordinate_id;
             if (component_idx)
                 coordinate_id = vkd3d_spirv_build_op_iadd(builder, type_id,
-                        coordinate_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, component_idx));
-            indices[0] = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+                        coordinate_id, spirv_compiler_get_constant_uint(compiler, component_idx));
+            indices[0] = spirv_compiler_get_constant_uint(compiler, 0);
             indices[1] = coordinate_id;
 
             ptr_id = vkd3d_spirv_build_op_access_chain(builder, ptr_type_id, resource_symbol->id, indices, 2);
@@ -8551,10 +8552,10 @@ static void vkd3d_dxbc_compiler_emit_ld_raw_structured_srv_uav(struct vkd3d_dxbc
         else
             op = SpvOpImageRead;
 
-        vkd3d_dxbc_compiler_prepare_image(compiler, &image, &resource->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
+        spirv_compiler_prepare_image(compiler, &image, &resource->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
 
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
-        base_coordinate_id = vkd3d_dxbc_compiler_emit_raw_structured_addressing(compiler,
+        base_coordinate_id = spirv_compiler_emit_raw_structured_addressing(compiler,
                 type_id, image.structure_stride, &src[0], VKD3DSP_WRITEMASK_0, &src[1], VKD3DSP_WRITEMASK_0);
 
         texel_type_id = vkd3d_spirv_get_type_id(builder, image.sampled_type, VKD3D_VEC4_SIZE);
@@ -8568,7 +8569,7 @@ static void vkd3d_dxbc_compiler_emit_ld_raw_structured_srv_uav(struct vkd3d_dxbc
             coordinate_id = base_coordinate_id;
             if (component_idx)
                 coordinate_id = vkd3d_spirv_build_op_iadd(builder, type_id,
-                        coordinate_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, component_idx));
+                        coordinate_id, spirv_compiler_get_constant_uint(compiler, component_idx));
 
             val_id = vkd3d_spirv_build_op_tr2(builder, &builder->function_stream,
                     op, texel_type_id, image.image_id, coordinate_id);
@@ -8577,10 +8578,10 @@ static void vkd3d_dxbc_compiler_emit_ld_raw_structured_srv_uav(struct vkd3d_dxbc
         }
     }
     assert(dst->reg.data_type == VKD3D_DATA_UINT);
-    vkd3d_dxbc_compiler_emit_store_dst_components(compiler, dst, VKD3D_SHADER_COMPONENT_UINT, constituents);
+    spirv_compiler_emit_store_dst_components(compiler, dst, VKD3D_SHADER_COMPONENT_UINT, constituents);
 }
 
-static void vkd3d_dxbc_compiler_emit_ld_tgsm(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_ld_tgsm(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -8594,12 +8595,12 @@ static void vkd3d_dxbc_compiler_emit_ld_tgsm(struct vkd3d_dxbc_compiler *compile
     unsigned int i, j;
 
     resource = &src[instruction->src_count - 1];
-    if (!vkd3d_dxbc_compiler_get_register_info(compiler, &resource->reg, &reg_info))
+    if (!spirv_compiler_get_register_info(compiler, &resource->reg, &reg_info))
         return;
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
     ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, reg_info.storage_class, type_id);
-    base_coordinate_id = vkd3d_dxbc_compiler_emit_raw_structured_addressing(compiler,
+    base_coordinate_id = spirv_compiler_emit_raw_structured_addressing(compiler,
             type_id, reg_info.structure_stride, &src[0], VKD3DSP_WRITEMASK_0, &src[1], VKD3DSP_WRITEMASK_0);
 
     assert(dst->write_mask & VKD3DSP_WRITEMASK_ALL);
@@ -8612,16 +8613,16 @@ static void vkd3d_dxbc_compiler_emit_ld_tgsm(struct vkd3d_dxbc_compiler *compile
         coordinate_id = base_coordinate_id;
         if (component_idx)
             coordinate_id = vkd3d_spirv_build_op_iadd(builder, type_id,
-                    coordinate_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, component_idx));
+                    coordinate_id, spirv_compiler_get_constant_uint(compiler, component_idx));
 
         ptr_id = vkd3d_spirv_build_op_access_chain1(builder, ptr_type_id, reg_info.id, coordinate_id);
         constituents[j++] = vkd3d_spirv_build_op_load(builder, type_id, ptr_id, SpvMemoryAccessMaskNone);
     }
     assert(dst->reg.data_type == VKD3D_DATA_UINT);
-    vkd3d_dxbc_compiler_emit_store_dst_components(compiler, dst, VKD3D_SHADER_COMPONENT_UINT, constituents);
+    spirv_compiler_emit_store_dst_components(compiler, dst, VKD3D_SHADER_COMPONENT_UINT, constituents);
 }
 
-static void vkd3d_dxbc_compiler_emit_ld_raw_structured(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_ld_raw_structured(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     enum vkd3d_shader_register_type reg_type = instruction->src[instruction->src_count - 1].reg.type;
@@ -8629,17 +8630,17 @@ static void vkd3d_dxbc_compiler_emit_ld_raw_structured(struct vkd3d_dxbc_compile
     {
         case VKD3DSPR_RESOURCE:
         case VKD3DSPR_UAV:
-            vkd3d_dxbc_compiler_emit_ld_raw_structured_srv_uav(compiler, instruction);
+            spirv_compiler_emit_ld_raw_structured_srv_uav(compiler, instruction);
             break;
         case VKD3DSPR_GROUPSHAREDMEM:
-            vkd3d_dxbc_compiler_emit_ld_tgsm(compiler, instruction);
+            spirv_compiler_emit_ld_tgsm(compiler, instruction);
             break;
         default:
             ERR("Unexpected register type %#x.\n", reg_type);
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_store_uav_raw_structured(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_uav_raw_structured(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     uint32_t coordinate_id, type_id, val_id, data_id, ptr_type_id, ptr_id;
@@ -8653,21 +8654,21 @@ static void vkd3d_dxbc_compiler_emit_store_uav_raw_structured(struct vkd3d_dxbc_
     unsigned int component_count;
     uint32_t indices[2];
 
-    resource_symbol = vkd3d_dxbc_compiler_find_resource(compiler, &dst->reg);
+    resource_symbol = spirv_compiler_find_resource(compiler, &dst->reg);
 
-    if (vkd3d_dxbc_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
+    if (spirv_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
     {
         type_id = vkd3d_spirv_get_type_id(builder, resource_symbol->info.resource.sampled_type, 1);
         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassUniform, type_id);
 
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
-        base_coordinate_id = vkd3d_dxbc_compiler_emit_raw_structured_addressing(compiler,
+        base_coordinate_id = spirv_compiler_emit_raw_structured_addressing(compiler,
                 type_id, resource_symbol->info.resource.structure_stride,
                 &src[0], VKD3DSP_WRITEMASK_0, &src[1], VKD3DSP_WRITEMASK_0);
 
         data = &src[instruction->src_count - 1];
         assert(data->reg.data_type == VKD3D_DATA_UINT);
-        val_id = vkd3d_dxbc_compiler_emit_load_src(compiler, data, dst->write_mask);
+        val_id = spirv_compiler_emit_load_src(compiler, data, dst->write_mask);
 
         component_count = vkd3d_write_mask_component_count(dst->write_mask);
         for (component_idx = 0; component_idx < component_count; ++component_idx)
@@ -8678,8 +8679,8 @@ static void vkd3d_dxbc_compiler_emit_store_uav_raw_structured(struct vkd3d_dxbc_
             coordinate_id = base_coordinate_id;
             if (component_idx)
                 coordinate_id = vkd3d_spirv_build_op_iadd(builder, type_id,
-                        coordinate_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, component_idx));
-            indices[0] = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+                        coordinate_id, spirv_compiler_get_constant_uint(compiler, component_idx));
+            indices[0] = spirv_compiler_get_constant_uint(compiler, 0);
             indices[1] = coordinate_id;
 
             ptr_id = vkd3d_spirv_build_op_access_chain(builder, ptr_type_id, resource_symbol->id, indices, 2);
@@ -8689,26 +8690,26 @@ static void vkd3d_dxbc_compiler_emit_store_uav_raw_structured(struct vkd3d_dxbc_
     else
     {
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
-        vkd3d_dxbc_compiler_prepare_image(compiler, &image, &dst->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
+        spirv_compiler_prepare_image(compiler, &image, &dst->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
         assert((instruction->handler_idx == VKD3DSIH_STORE_STRUCTURED) != !image.structure_stride);
-        base_coordinate_id = vkd3d_dxbc_compiler_emit_raw_structured_addressing(compiler,
+        base_coordinate_id = spirv_compiler_emit_raw_structured_addressing(compiler,
                 type_id, image.structure_stride, &src[0], VKD3DSP_WRITEMASK_0, &src[1], VKD3DSP_WRITEMASK_0);
 
         data = &src[instruction->src_count - 1];
         assert(data->reg.data_type == VKD3D_DATA_UINT);
-        val_id = vkd3d_dxbc_compiler_emit_load_src(compiler, data, dst->write_mask);
+        val_id = spirv_compiler_emit_load_src(compiler, data, dst->write_mask);
 
         component_count = vkd3d_write_mask_component_count(dst->write_mask);
         for (component_idx = 0; component_idx < component_count; ++component_idx)
         {
             /* Mesa Vulkan drivers require the texel parameter to be a vector. */
-            data_id = vkd3d_dxbc_compiler_emit_construct_vector(compiler, VKD3D_SHADER_COMPONENT_UINT,
+            data_id = spirv_compiler_emit_construct_vector(compiler, VKD3D_SHADER_COMPONENT_UINT,
                     VKD3D_VEC4_SIZE, val_id, component_idx, component_count);
 
             coordinate_id = base_coordinate_id;
             if (component_idx)
                 coordinate_id = vkd3d_spirv_build_op_iadd(builder, type_id,
-                        coordinate_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, component_idx));
+                        coordinate_id, spirv_compiler_get_constant_uint(compiler, component_idx));
 
             vkd3d_spirv_build_op_image_write(builder, image.image_id, coordinate_id,
                     data_id, SpvImageOperandsMaskNone, NULL, 0);
@@ -8717,7 +8718,7 @@ static void vkd3d_dxbc_compiler_emit_store_uav_raw_structured(struct vkd3d_dxbc_
 
 }
 
-static void vkd3d_dxbc_compiler_emit_store_tgsm(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_tgsm(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     uint32_t coordinate_id, type_id, val_id, ptr_type_id, ptr_id, data_id;
@@ -8729,18 +8730,18 @@ static void vkd3d_dxbc_compiler_emit_store_tgsm(struct vkd3d_dxbc_compiler *comp
     struct vkd3d_shader_register_info reg_info;
     unsigned int component_count;
 
-    if (!vkd3d_dxbc_compiler_get_register_info(compiler, &dst->reg, &reg_info))
+    if (!spirv_compiler_get_register_info(compiler, &dst->reg, &reg_info))
         return;
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
     ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, reg_info.storage_class, type_id);
     assert((instruction->handler_idx == VKD3DSIH_STORE_STRUCTURED) != !reg_info.structure_stride);
-    base_coordinate_id = vkd3d_dxbc_compiler_emit_raw_structured_addressing(compiler,
+    base_coordinate_id = spirv_compiler_emit_raw_structured_addressing(compiler,
             type_id, reg_info.structure_stride, &src[0], VKD3DSP_WRITEMASK_0, &src[1], VKD3DSP_WRITEMASK_0);
 
     data = &src[instruction->src_count - 1];
     assert(data->reg.data_type == VKD3D_DATA_UINT);
-    val_id = vkd3d_dxbc_compiler_emit_load_src(compiler, data, dst->write_mask);
+    val_id = spirv_compiler_emit_load_src(compiler, data, dst->write_mask);
 
     component_count = vkd3d_write_mask_component_count(dst->write_mask);
     for (component_idx = 0; component_idx < component_count; ++component_idx)
@@ -8751,31 +8752,31 @@ static void vkd3d_dxbc_compiler_emit_store_tgsm(struct vkd3d_dxbc_compiler *comp
         coordinate_id = base_coordinate_id;
         if (component_idx)
             coordinate_id = vkd3d_spirv_build_op_iadd(builder, type_id,
-                    coordinate_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, component_idx));
+                    coordinate_id, spirv_compiler_get_constant_uint(compiler, component_idx));
 
         ptr_id = vkd3d_spirv_build_op_access_chain1(builder, ptr_type_id, reg_info.id, coordinate_id);
         vkd3d_spirv_build_op_store(builder, ptr_id, data_id, SpvMemoryAccessMaskNone);
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_store_raw_structured(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_raw_structured(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     enum vkd3d_shader_register_type reg_type = instruction->dst[0].reg.type;
     switch (reg_type)
     {
         case VKD3DSPR_UAV:
-            vkd3d_dxbc_compiler_emit_store_uav_raw_structured(compiler, instruction);
+            spirv_compiler_emit_store_uav_raw_structured(compiler, instruction);
             break;
         case VKD3DSPR_GROUPSHAREDMEM:
-            vkd3d_dxbc_compiler_emit_store_tgsm(compiler, instruction);
+            spirv_compiler_emit_store_tgsm(compiler, instruction);
             break;
         default:
             ERR("Unexpected register type %#x.\n", reg_type);
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_ld_uav_typed(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_ld_uav_typed(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -8787,38 +8788,38 @@ static void vkd3d_dxbc_compiler_emit_ld_uav_typed(struct vkd3d_dxbc_compiler *co
     DWORD coordinate_mask;
     uint32_t indices[2];
 
-    resource_symbol = vkd3d_dxbc_compiler_find_resource(compiler, &src[1].reg);
+    resource_symbol = spirv_compiler_find_resource(compiler, &src[1].reg);
 
-    if (vkd3d_dxbc_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
+    if (spirv_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
     {
         type_id = vkd3d_spirv_get_type_id(builder, resource_symbol->info.resource.sampled_type, 1);
         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassUniform, type_id);
-        coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_0);
-        indices[0] = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+        coordinate_id = spirv_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_0);
+        indices[0] = spirv_compiler_get_constant_uint(compiler, 0);
         indices[1] = coordinate_id;
 
         ptr_id = vkd3d_spirv_build_op_access_chain(builder, ptr_type_id, resource_symbol->id, indices, 2);
         val_id = vkd3d_spirv_build_op_load(builder, type_id, ptr_id, SpvMemoryAccessMaskNone);
 
-        vkd3d_dxbc_compiler_emit_store_dst_swizzled(compiler, dst, val_id,
+        spirv_compiler_emit_store_dst_swizzled(compiler, dst, val_id,
                 resource_symbol->info.resource.sampled_type, src[1].swizzle);
     }
     else
     {
-        vkd3d_dxbc_compiler_prepare_image(compiler, &image, &src[1].reg, NULL, VKD3D_IMAGE_FLAG_NONE);
+        spirv_compiler_prepare_image(compiler, &image, &src[1].reg, NULL, VKD3D_IMAGE_FLAG_NONE);
         type_id = vkd3d_spirv_get_type_id(builder, image.sampled_type, VKD3D_VEC4_SIZE);
         coordinate_mask = (1u << image.resource_type_info->coordinate_component_count) - 1;
-        coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], coordinate_mask);
+        coordinate_id = spirv_compiler_emit_load_src(compiler, &src[0], coordinate_mask);
 
         val_id = vkd3d_spirv_build_op_image_read(builder, type_id,
                 image.image_id, coordinate_id, SpvImageOperandsMaskNone, NULL, 0);
 
-        vkd3d_dxbc_compiler_emit_store_dst_swizzled(compiler,
+        spirv_compiler_emit_store_dst_swizzled(compiler,
                 dst, val_id, image.sampled_type, src[1].swizzle);
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_store_uav_typed(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_store_uav_typed(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     uint32_t coordinate_id, texel_id, type_id, val_id, ptr_type_id, ptr_id;
@@ -8830,17 +8831,17 @@ static void vkd3d_dxbc_compiler_emit_store_uav_typed(struct vkd3d_dxbc_compiler 
     DWORD coordinate_mask;
     uint32_t indices[2];
 
-    resource_symbol = vkd3d_dxbc_compiler_find_resource(compiler, &dst->reg);
+    resource_symbol = spirv_compiler_find_resource(compiler, &dst->reg);
 
-    if (vkd3d_dxbc_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
+    if (spirv_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
     {
         type_id = vkd3d_spirv_get_type_id(builder, resource_symbol->info.resource.sampled_type, 1);
         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassUniform, type_id);
-        coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_0);
-        indices[0] = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+        coordinate_id = spirv_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_0);
+        indices[0] = spirv_compiler_get_constant_uint(compiler, 0);
         indices[1] = coordinate_id;
 
-        val_id = vkd3d_dxbc_compiler_emit_load_src_with_type(compiler, &src[1],
+        val_id = spirv_compiler_emit_load_src_with_type(compiler, &src[1],
                 VKD3DSP_WRITEMASK_0, resource_symbol->info.resource.sampled_type);
         ptr_id = vkd3d_spirv_build_op_access_chain(builder, ptr_type_id, resource_symbol->id, indices, 2);
         vkd3d_spirv_build_op_store(builder, ptr_id, val_id, SpvMemoryAccessMaskNone);
@@ -8849,17 +8850,17 @@ static void vkd3d_dxbc_compiler_emit_store_uav_typed(struct vkd3d_dxbc_compiler 
     {
         vkd3d_spirv_enable_capability(builder, SpvCapabilityStorageImageWriteWithoutFormat);
 
-        vkd3d_dxbc_compiler_prepare_image(compiler, &image, &dst->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
+        spirv_compiler_prepare_image(compiler, &image, &dst->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
         coordinate_mask = (1u << image.resource_type_info->coordinate_component_count) - 1;
-        coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], coordinate_mask);
-        texel_id = vkd3d_dxbc_compiler_emit_load_src_with_type(compiler, &src[1], dst->write_mask, image.sampled_type);
+        coordinate_id = spirv_compiler_emit_load_src(compiler, &src[0], coordinate_mask);
+        texel_id = spirv_compiler_emit_load_src_with_type(compiler, &src[1], dst->write_mask, image.sampled_type);
 
         vkd3d_spirv_build_op_image_write(builder, image.image_id, coordinate_id, texel_id,
                 SpvImageOperandsMaskNone, NULL, 0);
     }
 }
 
-static void vkd3d_dxbc_compiler_emit_uav_counter_instruction(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_uav_counter_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -8875,7 +8876,7 @@ static void vkd3d_dxbc_compiler_emit_uav_counter_instruction(struct vkd3d_dxbc_c
     op = instruction->handler_idx == VKD3DSIH_IMM_ATOMIC_ALLOC
             ? SpvOpAtomicIIncrement : SpvOpAtomicIDecrement;
 
-    resource_symbol = vkd3d_dxbc_compiler_find_resource(compiler, &src->reg);
+    resource_symbol = spirv_compiler_find_resource(compiler, &src->reg);
     counter_id = resource_symbol->info.resource.uav_counter_id;
     assert(counter_id);
 
@@ -8886,7 +8887,7 @@ static void vkd3d_dxbc_compiler_emit_uav_counter_instruction(struct vkd3d_dxbc_c
         const struct vkd3d_symbol_descriptor_array_data *array_data;
         uint32_t index_id;
 
-        index_id = vkd3d_dxbc_compiler_get_descriptor_index(compiler, &src->reg,
+        index_id = spirv_compiler_get_descriptor_index(compiler, &src->reg,
                 resource_symbol->info.resource.uav_counter_array,
                 resource_symbol->info.resource.uav_counter_base_idx,
                 resource_symbol->info.resource.resource_type_info->resource_type);
@@ -8898,7 +8899,7 @@ static void vkd3d_dxbc_compiler_emit_uav_counter_instruction(struct vkd3d_dxbc_c
         counter_id = vkd3d_spirv_build_op_access_chain(builder, ptr_type_id, counter_id, &index_id, 1);
     }
 
-    if (vkd3d_dxbc_compiler_is_opengl_target(compiler))
+    if (spirv_compiler_is_opengl_target(compiler))
     {
         pointer_id = counter_id;
         memory_semantics |= SpvMemorySemanticsAtomicCounterMemoryMask;
@@ -8906,8 +8907,8 @@ static void vkd3d_dxbc_compiler_emit_uav_counter_instruction(struct vkd3d_dxbc_c
     else if (compiler->ssbo_uavs)
     {
         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassUniform, type_id);
-        coordinate_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
-        operands[0] = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+        coordinate_id = spirv_compiler_get_constant_uint(compiler, 0);
+        operands[0] = spirv_compiler_get_constant_uint(compiler, 0);
         operands[1] = coordinate_id;
         pointer_id = vkd3d_spirv_build_op_access_chain(builder,
                 ptr_type_id, counter_id, operands, 2);
@@ -8915,26 +8916,26 @@ static void vkd3d_dxbc_compiler_emit_uav_counter_instruction(struct vkd3d_dxbc_c
     else
     {
         ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassImage, type_id);
-        coordinate_id = sample_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+        coordinate_id = sample_id = spirv_compiler_get_constant_uint(compiler, 0);
         pointer_id = vkd3d_spirv_build_op_image_texel_pointer(builder,
                 ptr_type_id, counter_id, coordinate_id, sample_id);
     }
 
     operands[0] = pointer_id;
-    operands[1] = vkd3d_dxbc_compiler_get_constant_uint(compiler, SpvScopeDevice);
-    operands[2] = vkd3d_dxbc_compiler_get_constant_uint(compiler, memory_semantics);
+    operands[1] = spirv_compiler_get_constant_uint(compiler, SpvScopeDevice);
+    operands[2] = spirv_compiler_get_constant_uint(compiler, memory_semantics);
     result_id = vkd3d_spirv_build_op_trv(builder, &builder->function_stream,
             op, type_id, operands, ARRAY_SIZE(operands));
     if (op == SpvOpAtomicIDecrement)
     {
         /* SpvOpAtomicIDecrement returns the original value. */
         result_id = vkd3d_spirv_build_op_isub(builder, type_id, result_id,
-                vkd3d_dxbc_compiler_get_constant_uint(compiler, 1));
+                spirv_compiler_get_constant_uint(compiler, 1));
     }
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, result_id);
+    spirv_compiler_emit_store_dst(compiler, dst, result_id);
 }
 
-static SpvOp vkd3d_dxbc_compiler_map_atomic_instruction(const struct vkd3d_shader_instruction *instruction)
+static SpvOp spirv_compiler_map_atomic_instruction(const struct vkd3d_shader_instruction *instruction)
 {
     static const struct
     {
@@ -8979,7 +8980,7 @@ static bool is_imm_atomic_instruction(enum vkd3d_shader_opcode handler_idx)
     return VKD3DSIH_IMM_ATOMIC_ALLOC <= handler_idx && handler_idx <= VKD3DSIH_IMM_ATOMIC_XOR;
 }
 
-static void vkd3d_dxbc_compiler_emit_atomic_instruction(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_atomic_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -9002,7 +9003,7 @@ static void vkd3d_dxbc_compiler_emit_atomic_instruction(struct vkd3d_dxbc_compil
 
     resource = is_imm_atomic_instruction(instruction->handler_idx) ? &dst[1] : &dst[0];
 
-    op = vkd3d_dxbc_compiler_map_atomic_instruction(instruction);
+    op = spirv_compiler_map_atomic_instruction(instruction);
     if (op == SpvOpMax)
     {
         ERR("Unexpected instruction %#x.\n", instruction->handler_idx);
@@ -9013,7 +9014,7 @@ static void vkd3d_dxbc_compiler_emit_atomic_instruction(struct vkd3d_dxbc_compil
     {
         scope = SpvScopeWorkgroup;
         coordinate_mask = 1u;
-        if (!vkd3d_dxbc_compiler_get_register_info(compiler, &resource->reg, &reg_info))
+        if (!spirv_compiler_get_register_info(compiler, &resource->reg, &reg_info))
             return;
         structure_stride = reg_info.structure_stride;
         raw = !structure_stride;
@@ -9021,9 +9022,9 @@ static void vkd3d_dxbc_compiler_emit_atomic_instruction(struct vkd3d_dxbc_compil
     else
     {
         scope = SpvScopeDevice;
-        resource_symbol = vkd3d_dxbc_compiler_find_resource(compiler, &resource->reg);
+        resource_symbol = spirv_compiler_find_resource(compiler, &resource->reg);
 
-        if (vkd3d_dxbc_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
+        if (spirv_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
         {
             coordinate_mask = VKD3DSP_WRITEMASK_0;
             structure_stride = resource_symbol->info.resource.structure_stride;
@@ -9031,7 +9032,7 @@ static void vkd3d_dxbc_compiler_emit_atomic_instruction(struct vkd3d_dxbc_compil
         }
         else
         {
-            vkd3d_dxbc_compiler_prepare_image(compiler, &image, &resource->reg, NULL, VKD3D_IMAGE_FLAG_NO_LOAD);
+            spirv_compiler_prepare_image(compiler, &image, &resource->reg, NULL, VKD3D_IMAGE_FLAG_NO_LOAD);
             coordinate_mask = (1u << image.resource_type_info->coordinate_component_count) - 1;
             structure_stride = image.structure_stride;
             raw = image.raw;
@@ -9042,14 +9043,14 @@ static void vkd3d_dxbc_compiler_emit_atomic_instruction(struct vkd3d_dxbc_compil
     if (structure_stride || raw)
     {
         assert(!raw != !structure_stride);
-        coordinate_id = vkd3d_dxbc_compiler_emit_raw_structured_addressing(compiler,
+        coordinate_id = spirv_compiler_emit_raw_structured_addressing(compiler,
                 type_id, structure_stride, &src[0], VKD3DSP_WRITEMASK_0,
                 &src[0], VKD3DSP_WRITEMASK_1);
     }
     else
     {
         assert(resource->reg.type != VKD3DSPR_GROUPSHAREDMEM);
-        coordinate_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], coordinate_mask);
+        coordinate_id = spirv_compiler_emit_load_src(compiler, &src[0], coordinate_mask);
     }
 
     if (resource->reg.type == VKD3DSPR_GROUPSHAREDMEM)
@@ -9060,12 +9061,12 @@ static void vkd3d_dxbc_compiler_emit_atomic_instruction(struct vkd3d_dxbc_compil
     }
     else
     {
-        if (vkd3d_dxbc_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
+        if (spirv_compiler_use_storage_buffer(compiler, &resource_symbol->info.resource))
         {
             component_type = resource_symbol->info.resource.sampled_type;
             type_id = vkd3d_spirv_get_type_id(builder, component_type, 1);
             ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassUniform, type_id);
-            operands[0] = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+            operands[0] = spirv_compiler_get_constant_uint(compiler, 0);
             operands[1] = coordinate_id;
             pointer_id = vkd3d_spirv_build_op_access_chain(builder, ptr_type_id, resource_symbol->id, operands, 2);
         }
@@ -9074,31 +9075,31 @@ static void vkd3d_dxbc_compiler_emit_atomic_instruction(struct vkd3d_dxbc_compil
             component_type = image.sampled_type;
             type_id = vkd3d_spirv_get_type_id(builder, image.sampled_type, 1);
             ptr_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassImage, type_id);
-            sample_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+            sample_id = spirv_compiler_get_constant_uint(compiler, 0);
             pointer_id = vkd3d_spirv_build_op_image_texel_pointer(builder,
                     ptr_type_id, image.id, coordinate_id, sample_id);
         }
     }
 
-    val_id = vkd3d_dxbc_compiler_emit_load_src_with_type(compiler, &src[1], VKD3DSP_WRITEMASK_0, component_type);
+    val_id = spirv_compiler_emit_load_src_with_type(compiler, &src[1], VKD3DSP_WRITEMASK_0, component_type);
 
     operands[i++] = pointer_id;
-    operands[i++] = vkd3d_dxbc_compiler_get_constant_uint(compiler, scope);
-    operands[i++] = vkd3d_dxbc_compiler_get_constant_uint(compiler, SpvMemorySemanticsMaskNone);
+    operands[i++] = spirv_compiler_get_constant_uint(compiler, scope);
+    operands[i++] = spirv_compiler_get_constant_uint(compiler, SpvMemorySemanticsMaskNone);
     if (instruction->src_count >= 3)
     {
-        operands[i++] = vkd3d_dxbc_compiler_get_constant_uint(compiler, SpvMemorySemanticsMaskNone);
-        operands[i++] = vkd3d_dxbc_compiler_emit_load_src_with_type(compiler, &src[2], VKD3DSP_WRITEMASK_0, component_type);
+        operands[i++] = spirv_compiler_get_constant_uint(compiler, SpvMemorySemanticsMaskNone);
+        operands[i++] = spirv_compiler_emit_load_src_with_type(compiler, &src[2], VKD3DSP_WRITEMASK_0, component_type);
     }
     operands[i++] = val_id;
     result_id = vkd3d_spirv_build_op_trv(builder, &builder->function_stream,
             op, type_id, operands, i);
 
     if (is_imm_atomic_instruction(instruction->handler_idx))
-        vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, result_id);
+        spirv_compiler_emit_store_dst(compiler, dst, result_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_bufinfo(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_bufinfo(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -9112,7 +9113,7 @@ static void vkd3d_dxbc_compiler_emit_bufinfo(struct vkd3d_dxbc_compiler *compile
 
     if (compiler->ssbo_uavs && src->reg.type == VKD3DSPR_UAV)
     {
-        resource_symbol = vkd3d_dxbc_compiler_find_resource(compiler, &src->reg);
+        resource_symbol = spirv_compiler_find_resource(compiler, &src->reg);
 
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
         val_id = vkd3d_spirv_build_op_array_length(builder, type_id, resource_symbol->id, 0);
@@ -9122,7 +9123,7 @@ static void vkd3d_dxbc_compiler_emit_bufinfo(struct vkd3d_dxbc_compiler *compile
     {
         vkd3d_spirv_enable_capability(builder, SpvCapabilityImageQuery);
 
-        vkd3d_dxbc_compiler_prepare_image(compiler, &image, &src->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
+        spirv_compiler_prepare_image(compiler, &image, &src->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
 
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
         val_id = vkd3d_spirv_build_op_image_query_size(builder, type_id, image.image_id);
@@ -9131,7 +9132,7 @@ static void vkd3d_dxbc_compiler_emit_bufinfo(struct vkd3d_dxbc_compiler *compile
 
     if (image.structure_stride)
     {
-        stride_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, image.structure_stride);
+        stride_id = spirv_compiler_get_constant_uint(compiler, image.structure_stride);
         constituents[0] = vkd3d_spirv_build_op_udiv(builder, type_id, val_id, stride_id);
         constituents[1] = stride_id;
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, ARRAY_SIZE(constituents));
@@ -9142,15 +9143,15 @@ static void vkd3d_dxbc_compiler_emit_bufinfo(struct vkd3d_dxbc_compiler *compile
     else if (image.raw)
     {
         val_id = vkd3d_spirv_build_op_shift_left_logical(builder, type_id,
-                val_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, 2));
+                val_id, spirv_compiler_get_constant_uint(compiler, 2));
     }
 
-    val_id = vkd3d_dxbc_compiler_emit_swizzle(compiler, val_id, write_mask,
+    val_id = spirv_compiler_emit_swizzle(compiler, val_id, write_mask,
             VKD3D_SHADER_COMPONENT_UINT, src->swizzle, dst->write_mask);
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static void vkd3d_dxbc_compiler_emit_resinfo(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_resinfo(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -9164,7 +9165,7 @@ static void vkd3d_dxbc_compiler_emit_resinfo(struct vkd3d_dxbc_compiler *compile
 
     vkd3d_spirv_enable_capability(builder, SpvCapabilityImageQuery);
 
-    vkd3d_dxbc_compiler_prepare_image(compiler, &image, &src[1].reg, NULL, VKD3D_IMAGE_FLAG_NONE);
+    spirv_compiler_prepare_image(compiler, &image, &src[1].reg, NULL, VKD3D_IMAGE_FLAG_NONE);
     size_component_count = image.resource_type_info->coordinate_component_count;
     if (image.resource_type_info->dim == SpvDimCube)
         --size_component_count;
@@ -9173,7 +9174,7 @@ static void vkd3d_dxbc_compiler_emit_resinfo(struct vkd3d_dxbc_compiler *compile
     supports_mipmaps = src[1].reg.type != VKD3DSPR_UAV && !image.resource_type_info->ms;
     if (supports_mipmaps)
     {
-        lod_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_0);
+        lod_id = spirv_compiler_emit_load_src(compiler, &src[0], VKD3DSP_WRITEMASK_0);
         val_id = vkd3d_spirv_build_op_image_query_size_lod(builder, type_id, image.image_id, lod_id);
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
         miplevel_count_id = vkd3d_spirv_build_op_image_query_levels(builder, type_id, image.image_id);
@@ -9182,12 +9183,12 @@ static void vkd3d_dxbc_compiler_emit_resinfo(struct vkd3d_dxbc_compiler *compile
     {
         val_id = vkd3d_spirv_build_op_image_query_size(builder, type_id, image.image_id);
         /* For UAVs the returned miplevel count is always 1. */
-        miplevel_count_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, 1);
+        miplevel_count_id = spirv_compiler_get_constant_uint(compiler, 1);
     }
 
     constituents[0] = val_id;
     for (i = 0; i < 3 - size_component_count; ++i)
-        constituents[i + 1] = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+        constituents[i + 1] = spirv_compiler_get_constant_uint(compiler, 0);
     constituents[i + 1] = miplevel_count_id;
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, VKD3D_VEC4_SIZE);
     val_id = vkd3d_spirv_build_op_composite_construct(builder,
@@ -9204,13 +9205,13 @@ static void vkd3d_dxbc_compiler_emit_resinfo(struct vkd3d_dxbc_compiler *compile
             FIXME("Unhandled flags %#x.\n", instruction->flags);
         val_id = vkd3d_spirv_build_op_convert_utof(builder, type_id, val_id);
     }
-    val_id = vkd3d_dxbc_compiler_emit_swizzle(compiler, val_id, VKD3DSP_WRITEMASK_ALL,
+    val_id = spirv_compiler_emit_swizzle(compiler, val_id, VKD3DSP_WRITEMASK_ALL,
             VKD3D_SHADER_COMPONENT_FLOAT, src[1].swizzle, dst->write_mask);
 
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
-static uint32_t vkd3d_dxbc_compiler_emit_query_sample_count(struct vkd3d_dxbc_compiler *compiler,
+static uint32_t spirv_compiler_emit_query_sample_count(struct spirv_compiler *compiler,
         const struct vkd3d_shader_src_param *src)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -9219,14 +9220,14 @@ static uint32_t vkd3d_dxbc_compiler_emit_query_sample_count(struct vkd3d_dxbc_co
 
     if (src->reg.type == VKD3DSPR_RASTERIZER)
     {
-        val_id = vkd3d_dxbc_compiler_emit_uint_shader_parameter(compiler,
+        val_id = spirv_compiler_emit_uint_shader_parameter(compiler,
                 VKD3D_SHADER_PARAMETER_NAME_RASTERIZER_SAMPLE_COUNT);
     }
     else
     {
         vkd3d_spirv_enable_capability(builder, SpvCapabilityImageQuery);
 
-        vkd3d_dxbc_compiler_prepare_image(compiler, &image, &src->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
+        spirv_compiler_prepare_image(compiler, &image, &src->reg, NULL, VKD3D_IMAGE_FLAG_NONE);
         type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
         val_id = vkd3d_spirv_build_op_image_query_samples(builder, type_id, image.image_id);
     }
@@ -9234,7 +9235,7 @@ static uint32_t vkd3d_dxbc_compiler_emit_query_sample_count(struct vkd3d_dxbc_co
     return val_id;
 }
 
-static void vkd3d_dxbc_compiler_emit_sample_info(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_sample_info(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -9244,11 +9245,11 @@ static void vkd3d_dxbc_compiler_emit_sample_info(struct vkd3d_dxbc_compiler *com
     uint32_t type_id, val_id;
     unsigned int i;
 
-    val_id = vkd3d_dxbc_compiler_emit_query_sample_count(compiler, src);
+    val_id = spirv_compiler_emit_query_sample_count(compiler, src);
 
     constituents[0] = val_id;
     for (i = 1; i < VKD3D_VEC4_SIZE; ++i)
-        constituents[i] = vkd3d_dxbc_compiler_get_constant_uint(compiler, 0);
+        constituents[i] = spirv_compiler_get_constant_uint(compiler, 0);
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, VKD3D_VEC4_SIZE);
     val_id = vkd3d_spirv_build_op_composite_construct(builder, type_id, constituents, VKD3D_VEC4_SIZE);
 
@@ -9264,14 +9265,14 @@ static void vkd3d_dxbc_compiler_emit_sample_info(struct vkd3d_dxbc_compiler *com
         val_id = vkd3d_spirv_build_op_convert_utof(builder, type_id, val_id);
     }
 
-    val_id = vkd3d_dxbc_compiler_emit_swizzle(compiler, val_id, VKD3DSP_WRITEMASK_ALL,
+    val_id = spirv_compiler_emit_swizzle(compiler, val_id, VKD3DSP_WRITEMASK_ALL,
             VKD3D_SHADER_COMPONENT_FLOAT, src->swizzle, dst->write_mask);
 
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
 /* XXX: This is correct only when standard sample positions are used. */
-static void vkd3d_dxbc_compiler_emit_sample_position(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_sample_position(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     /* Standard sample locations from the Vulkan spec. */
@@ -9322,32 +9323,32 @@ static void vkd3d_dxbc_compiler_emit_sample_position(struct vkd3d_dxbc_compiler 
     uint32_t type_id, bool_id, ptr_type_id;
     unsigned int i;
 
-    sample_count_id = vkd3d_dxbc_compiler_emit_query_sample_count(compiler, &instruction->src[0]);
-    sample_index_id = vkd3d_dxbc_compiler_emit_load_src(compiler, &instruction->src[1], VKD3DSP_WRITEMASK_0);
+    sample_count_id = spirv_compiler_emit_query_sample_count(compiler, &instruction->src[0]);
+    sample_index_id = spirv_compiler_emit_load_src(compiler, &instruction->src[1], VKD3DSP_WRITEMASK_0);
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_UINT, 1);
     index_id = vkd3d_spirv_build_op_iadd(builder, type_id, sample_count_id, sample_index_id);
     index_id = vkd3d_spirv_build_op_isub(builder,
-            type_id, index_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, 1));
+            type_id, index_id, spirv_compiler_get_constant_uint(compiler, 1));
 
     /* Validate sample index. */
     bool_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_BOOL, 1);
     id = vkd3d_spirv_build_op_logical_and(builder, bool_id,
             vkd3d_spirv_build_op_uless_than(builder, bool_id, sample_index_id, sample_count_id),
             vkd3d_spirv_build_op_uless_than_equal(builder,
-                    bool_id, sample_index_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, 16)));
+                    bool_id, sample_index_id, spirv_compiler_get_constant_uint(compiler, 16)));
     index_id = vkd3d_spirv_build_op_select(builder, type_id,
-            id, index_id, vkd3d_dxbc_compiler_get_constant_uint(compiler, 0));
+            id, index_id, spirv_compiler_get_constant_uint(compiler, 0));
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, 2);
     if (!(id = compiler->sample_positions_id))
     {
-        length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, ARRAY_SIZE(standard_sample_positions));
+        length_id = spirv_compiler_get_constant_uint(compiler, ARRAY_SIZE(standard_sample_positions));
         array_type_id = vkd3d_spirv_get_op_type_array(builder, type_id, length_id);
 
         for (i = 0; i < ARRAY_SIZE(standard_sample_positions); ++ i)
         {
-            constituents[i] = vkd3d_dxbc_compiler_get_constant(compiler,
+            constituents[i] = spirv_compiler_get_constant(compiler,
                     VKD3D_SHADER_COMPONENT_FLOAT, 2, (const uint32_t *)standard_sample_positions[i]);
         }
 
@@ -9362,12 +9363,12 @@ static void vkd3d_dxbc_compiler_emit_sample_position(struct vkd3d_dxbc_compiler 
     id = vkd3d_spirv_build_op_in_bounds_access_chain1(builder, ptr_type_id, id, index_id);
     id = vkd3d_spirv_build_op_load(builder, type_id, id, SpvMemoryAccessMaskNone);
 
-    id = vkd3d_dxbc_compiler_emit_swizzle(compiler, id, VKD3DSP_WRITEMASK_0 | VKD3DSP_WRITEMASK_1,
+    id = spirv_compiler_emit_swizzle(compiler, id, VKD3DSP_WRITEMASK_0 | VKD3DSP_WRITEMASK_1,
             VKD3D_SHADER_COMPONENT_FLOAT, instruction->src[0].swizzle, dst->write_mask);
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, id);
+    spirv_compiler_emit_store_dst(compiler, dst, id);
 }
 
-static void vkd3d_dxbc_compiler_emit_eval_attrib(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_eval_attrib(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -9379,7 +9380,7 @@ static void vkd3d_dxbc_compiler_emit_eval_attrib(struct vkd3d_dxbc_compiler *com
     unsigned int src_count = 0;
     enum GLSLstd450 op;
 
-    if (!vkd3d_dxbc_compiler_get_register_info(compiler, input, &register_info))
+    if (!spirv_compiler_get_register_info(compiler, input, &register_info))
         return;
 
     if (register_info.storage_class != SpvStorageClassInput)
@@ -9400,7 +9401,7 @@ static void vkd3d_dxbc_compiler_emit_eval_attrib(struct vkd3d_dxbc_compiler *com
     {
         assert(instruction->handler_idx == VKD3DSIH_EVAL_SAMPLE_INDEX);
         op = GLSLstd450InterpolateAtSample;
-        src_ids[src_count++] = vkd3d_dxbc_compiler_emit_load_src(compiler, &src[1], VKD3DSP_WRITEMASK_0);
+        src_ids[src_count++] = spirv_compiler_emit_load_src(compiler, &src[1], VKD3DSP_WRITEMASK_0);
     }
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT,
@@ -9409,10 +9410,10 @@ static void vkd3d_dxbc_compiler_emit_eval_attrib(struct vkd3d_dxbc_compiler *com
     instr_set_id = vkd3d_spirv_get_glsl_std450_instr_set(builder);
     val_id = vkd3d_spirv_build_op_ext_inst(builder, type_id, instr_set_id, op, src_ids, src_count);
 
-    val_id = vkd3d_dxbc_compiler_emit_swizzle(compiler, val_id, register_info.write_mask,
+    val_id = spirv_compiler_emit_swizzle(compiler, val_id, register_info.write_mask,
             VKD3D_SHADER_COMPONENT_FLOAT, src[0].swizzle, dst->write_mask);
 
-    vkd3d_dxbc_compiler_emit_store_dst(compiler, dst, val_id);
+    spirv_compiler_emit_store_dst(compiler, dst, val_id);
 }
 
 /* From the Vulkan spec:
@@ -9421,7 +9422,7 @@ static void vkd3d_dxbc_compiler_emit_eval_attrib(struct vkd3d_dxbc_compiler *com
  *
  *   "Scope for memory must be limited to: * Device * Workgroup * Invocation"
  */
-static void vkd3d_dxbc_compiler_emit_sync(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_sync(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     unsigned int memory_semantics = SpvMemorySemanticsAcquireReleaseMask;
@@ -9462,10 +9463,10 @@ static void vkd3d_dxbc_compiler_emit_sync(struct vkd3d_dxbc_compiler *compiler,
                 | SpvMemorySemanticsImageMemoryMask;
     }
 
-    vkd3d_dxbc_compiler_emit_barrier(compiler, execution_scope, memory_scope, memory_semantics);
+    spirv_compiler_emit_barrier(compiler, execution_scope, memory_scope, memory_semantics);
 }
 
-static void vkd3d_dxbc_compiler_emit_emit_stream(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_emit_stream(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -9482,11 +9483,11 @@ static void vkd3d_dxbc_compiler_emit_emit_stream(struct vkd3d_dxbc_compiler *com
         return;
     }
 
-    vkd3d_dxbc_compiler_emit_shader_epilogue_invocation(compiler);
+    spirv_compiler_emit_shader_epilogue_invocation(compiler);
     vkd3d_spirv_build_op_emit_vertex(builder);
 }
 
-static void vkd3d_dxbc_compiler_emit_cut_stream(struct vkd3d_dxbc_compiler *compiler,
+static void spirv_compiler_emit_cut_stream(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -9506,7 +9507,7 @@ static void vkd3d_dxbc_compiler_emit_cut_stream(struct vkd3d_dxbc_compiler *comp
     vkd3d_spirv_build_op_end_primitive(builder);
 }
 
-static void vkd3d_dxbc_compiler_emit_hull_shader_inputs(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_hull_shader_inputs(struct spirv_compiler *compiler)
 {
     const struct vkd3d_shader_signature *signature = compiler->input_signature;
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
@@ -9522,9 +9523,9 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_inputs(struct vkd3d_dxbc_compil
     }
 
     type_id = vkd3d_spirv_get_type_id(builder, VKD3D_SHADER_COMPONENT_FLOAT, 4);
-    length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, compiler->input_control_point_count);
+    length_id = spirv_compiler_get_constant_uint(compiler, compiler->input_control_point_count);
     type_id = vkd3d_spirv_get_op_type_array(builder, type_id, length_id);
-    length_id = vkd3d_dxbc_compiler_get_constant_uint(compiler, register_count);
+    length_id = spirv_compiler_get_constant_uint(compiler, register_count);
     type_id = vkd3d_spirv_get_op_type_array(builder, type_id, length_id);
     vicp_type_id = vkd3d_spirv_get_op_type_pointer(builder, SpvStorageClassPrivate, type_id);
 
@@ -9554,20 +9555,20 @@ static void vkd3d_dxbc_compiler_emit_hull_shader_inputs(struct vkd3d_dxbc_compil
                 VKD3D_SHADER_COMPONENT_FLOAT, VKD3DSP_WRITEMASK_ALL);
         symbol.info.reg.dcl_mask = signature->elements[i].mask;
         symbol.info.reg.is_aggregate = true;
-        vkd3d_dxbc_compiler_put_symbol(compiler, &symbol);
+        spirv_compiler_put_symbol(compiler, &symbol);
     }
 }
 
 /* This function is called after declarations are processed. */
-static void vkd3d_dxbc_compiler_emit_main_prolog(struct vkd3d_dxbc_compiler *compiler)
+static void spirv_compiler_emit_main_prolog(struct spirv_compiler *compiler)
 {
-    vkd3d_dxbc_compiler_emit_push_constant_buffers(compiler);
+    spirv_compiler_emit_push_constant_buffers(compiler);
 
     if (compiler->xfb_info && compiler->xfb_info->element_count
             && compiler->shader_type != VKD3D_SHADER_TYPE_GEOMETRY)
-        vkd3d_dxbc_compiler_emit_point_size(compiler);
+        spirv_compiler_emit_point_size(compiler);
     if (compiler->shader_type == VKD3D_SHADER_TYPE_HULL)
-        vkd3d_dxbc_compiler_emit_hull_shader_inputs(compiler);
+        spirv_compiler_emit_hull_shader_inputs(compiler);
 }
 
 static bool is_dcl_instruction(enum vkd3d_shader_opcode handler_idx)
@@ -9576,7 +9577,7 @@ static bool is_dcl_instruction(enum vkd3d_shader_opcode handler_idx)
             || handler_idx == VKD3DSIH_HS_DECLS;
 }
 
-int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
+int spirv_compiler_handle_instruction(struct spirv_compiler *compiler,
         const struct vkd3d_shader_instruction *instruction)
 {
     int ret = VKD3D_OK;
@@ -9584,125 +9585,125 @@ int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
     if (!is_dcl_instruction(instruction->handler_idx) && !compiler->after_declarations_section)
     {
         compiler->after_declarations_section = true;
-        vkd3d_dxbc_compiler_emit_main_prolog(compiler);
+        spirv_compiler_emit_main_prolog(compiler);
     }
 
     switch (instruction->handler_idx)
     {
         case VKD3DSIH_DCL_GLOBAL_FLAGS:
-            vkd3d_dxbc_compiler_emit_dcl_global_flags(compiler, instruction);
+            spirv_compiler_emit_dcl_global_flags(compiler, instruction);
             break;
         case VKD3DSIH_DCL_TEMPS:
-            vkd3d_dxbc_compiler_emit_dcl_temps(compiler, instruction);
+            spirv_compiler_emit_dcl_temps(compiler, instruction);
             break;
         case VKD3DSIH_DCL_INDEXABLE_TEMP:
-            vkd3d_dxbc_compiler_emit_dcl_indexable_temp(compiler, instruction);
+            spirv_compiler_emit_dcl_indexable_temp(compiler, instruction);
             break;
         case VKD3DSIH_DCL_CONSTANT_BUFFER:
-            vkd3d_dxbc_compiler_emit_dcl_constant_buffer(compiler, instruction);
+            spirv_compiler_emit_dcl_constant_buffer(compiler, instruction);
             break;
         case VKD3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER:
-            vkd3d_dxbc_compiler_emit_dcl_immediate_constant_buffer(compiler, instruction);
+            spirv_compiler_emit_dcl_immediate_constant_buffer(compiler, instruction);
             break;
         case VKD3DSIH_DCL_SAMPLER:
-            vkd3d_dxbc_compiler_emit_dcl_sampler(compiler, instruction);
+            spirv_compiler_emit_dcl_sampler(compiler, instruction);
             break;
         case VKD3DSIH_DCL:
         case VKD3DSIH_DCL_UAV_TYPED:
-            vkd3d_dxbc_compiler_emit_dcl_resource(compiler, instruction);
+            spirv_compiler_emit_dcl_resource(compiler, instruction);
             break;
         case VKD3DSIH_DCL_RESOURCE_RAW:
         case VKD3DSIH_DCL_UAV_RAW:
-            vkd3d_dxbc_compiler_emit_dcl_resource_raw(compiler, instruction);
+            spirv_compiler_emit_dcl_resource_raw(compiler, instruction);
             break;
         case VKD3DSIH_DCL_RESOURCE_STRUCTURED:
         case VKD3DSIH_DCL_UAV_STRUCTURED:
-            vkd3d_dxbc_compiler_emit_dcl_resource_structured(compiler, instruction);
+            spirv_compiler_emit_dcl_resource_structured(compiler, instruction);
             break;
         case VKD3DSIH_DCL_TGSM_RAW:
-            vkd3d_dxbc_compiler_emit_dcl_tgsm_raw(compiler, instruction);
+            spirv_compiler_emit_dcl_tgsm_raw(compiler, instruction);
             break;
         case VKD3DSIH_DCL_TGSM_STRUCTURED:
-            vkd3d_dxbc_compiler_emit_dcl_tgsm_structured(compiler, instruction);
+            spirv_compiler_emit_dcl_tgsm_structured(compiler, instruction);
             break;
         case VKD3DSIH_DCL_INPUT:
-            vkd3d_dxbc_compiler_emit_dcl_input(compiler, instruction);
+            spirv_compiler_emit_dcl_input(compiler, instruction);
             break;
         case VKD3DSIH_DCL_INPUT_PS:
-            vkd3d_dxbc_compiler_emit_dcl_input_ps(compiler, instruction);
+            spirv_compiler_emit_dcl_input_ps(compiler, instruction);
             break;
         case VKD3DSIH_DCL_INPUT_PS_SGV:
         case VKD3DSIH_DCL_INPUT_PS_SIV:
-            vkd3d_dxbc_compiler_emit_dcl_input_ps_sysval(compiler, instruction);
+            spirv_compiler_emit_dcl_input_ps_sysval(compiler, instruction);
             break;
         case VKD3DSIH_DCL_INPUT_SGV:
         case VKD3DSIH_DCL_INPUT_SIV:
-            vkd3d_dxbc_compiler_emit_dcl_input_sysval(compiler, instruction);
+            spirv_compiler_emit_dcl_input_sysval(compiler, instruction);
             break;
         case VKD3DSIH_DCL_OUTPUT:
-            vkd3d_dxbc_compiler_emit_dcl_output(compiler, instruction);
+            spirv_compiler_emit_dcl_output(compiler, instruction);
             break;
         case VKD3DSIH_DCL_OUTPUT_SIV:
-            vkd3d_dxbc_compiler_emit_dcl_output_siv(compiler, instruction);
+            spirv_compiler_emit_dcl_output_siv(compiler, instruction);
             break;
         case VKD3DSIH_DCL_INDEX_RANGE:
-            vkd3d_dxbc_compiler_emit_dcl_index_range(compiler, instruction);
+            spirv_compiler_emit_dcl_index_range(compiler, instruction);
             break;
         case VKD3DSIH_DCL_STREAM:
-            vkd3d_dxbc_compiler_emit_dcl_stream(compiler, instruction);
+            spirv_compiler_emit_dcl_stream(compiler, instruction);
             break;
         case VKD3DSIH_DCL_VERTICES_OUT:
-            vkd3d_dxbc_compiler_emit_output_vertex_count(compiler, instruction);
+            spirv_compiler_emit_output_vertex_count(compiler, instruction);
             break;
         case VKD3DSIH_DCL_INPUT_PRIMITIVE:
-            vkd3d_dxbc_compiler_emit_dcl_input_primitive(compiler, instruction);
+            spirv_compiler_emit_dcl_input_primitive(compiler, instruction);
             break;
         case VKD3DSIH_DCL_OUTPUT_TOPOLOGY:
-            vkd3d_dxbc_compiler_emit_dcl_output_topology(compiler, instruction);
+            spirv_compiler_emit_dcl_output_topology(compiler, instruction);
             break;
         case VKD3DSIH_DCL_GS_INSTANCES:
-            vkd3d_dxbc_compiler_emit_dcl_gs_instances(compiler, instruction);
+            spirv_compiler_emit_dcl_gs_instances(compiler, instruction);
             break;
         case VKD3DSIH_DCL_INPUT_CONTROL_POINT_COUNT:
             compiler->input_control_point_count = instruction->declaration.count;
             break;
         case VKD3DSIH_DCL_OUTPUT_CONTROL_POINT_COUNT:
             compiler->output_control_point_count = instruction->declaration.count;
-            vkd3d_dxbc_compiler_emit_output_vertex_count(compiler, instruction);
+            spirv_compiler_emit_output_vertex_count(compiler, instruction);
             break;
         case VKD3DSIH_DCL_TESSELLATOR_DOMAIN:
-            vkd3d_dxbc_compiler_emit_dcl_tessellator_domain(compiler, instruction);
+            spirv_compiler_emit_dcl_tessellator_domain(compiler, instruction);
             break;
         case VKD3DSIH_DCL_TESSELLATOR_OUTPUT_PRIMITIVE:
-            vkd3d_dxbc_compiler_emit_tessellator_output_primitive(compiler,
+            spirv_compiler_emit_tessellator_output_primitive(compiler,
                     instruction->declaration.tessellator_output_primitive);
             break;
         case VKD3DSIH_DCL_TESSELLATOR_PARTITIONING:
-            vkd3d_dxbc_compiler_emit_tessellator_partitioning(compiler,
+            spirv_compiler_emit_tessellator_partitioning(compiler,
                     instruction->declaration.tessellator_partitioning);
             break;
         case VKD3DSIH_DCL_THREAD_GROUP:
-            vkd3d_dxbc_compiler_emit_dcl_thread_group(compiler, instruction);
+            spirv_compiler_emit_dcl_thread_group(compiler, instruction);
             break;
         case VKD3DSIH_DCL_HS_FORK_PHASE_INSTANCE_COUNT:
         case VKD3DSIH_DCL_HS_JOIN_PHASE_INSTANCE_COUNT:
-            ret = vkd3d_dxbc_compiler_emit_shader_phase_instance_count(compiler, instruction);
+            ret = spirv_compiler_emit_shader_phase_instance_count(compiler, instruction);
             break;
         case VKD3DSIH_HS_CONTROL_POINT_PHASE:
         case VKD3DSIH_HS_FORK_PHASE:
         case VKD3DSIH_HS_JOIN_PHASE:
-            vkd3d_dxbc_compiler_enter_shader_phase(compiler, instruction);
+            spirv_compiler_enter_shader_phase(compiler, instruction);
             break;
         case VKD3DSIH_DMOV:
         case VKD3DSIH_MOV:
-            vkd3d_dxbc_compiler_emit_mov(compiler, instruction);
+            spirv_compiler_emit_mov(compiler, instruction);
             break;
         case VKD3DSIH_DMOVC:
         case VKD3DSIH_MOVC:
-            vkd3d_dxbc_compiler_emit_movc(compiler, instruction);
+            spirv_compiler_emit_movc(compiler, instruction);
             break;
         case VKD3DSIH_SWAPC:
-            vkd3d_dxbc_compiler_emit_swapc(compiler, instruction);
+            spirv_compiler_emit_swapc(compiler, instruction);
             break;
         case VKD3DSIH_ADD:
         case VKD3DSIH_AND:
@@ -9731,7 +9732,7 @@ int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
         case VKD3DSIH_UTOD:
         case VKD3DSIH_UTOF:
         case VKD3DSIH_XOR:
-            vkd3d_dxbc_compiler_emit_alu_instruction(compiler, instruction);
+            spirv_compiler_emit_alu_instruction(compiler, instruction);
             break;
         case VKD3DSIH_DFMA:
         case VKD3DSIH_DMAX:
@@ -9755,28 +9756,28 @@ int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
         case VKD3DSIH_SQRT:
         case VKD3DSIH_UMAX:
         case VKD3DSIH_UMIN:
-            vkd3d_dxbc_compiler_emit_ext_glsl_instruction(compiler, instruction);
+            spirv_compiler_emit_ext_glsl_instruction(compiler, instruction);
             break;
         case VKD3DSIH_DP4:
         case VKD3DSIH_DP3:
         case VKD3DSIH_DP2:
-            vkd3d_dxbc_compiler_emit_dot(compiler, instruction);
+            spirv_compiler_emit_dot(compiler, instruction);
             break;
         case VKD3DSIH_DRCP:
         case VKD3DSIH_RCP:
-            vkd3d_dxbc_compiler_emit_rcp(compiler, instruction);
+            spirv_compiler_emit_rcp(compiler, instruction);
             break;
         case VKD3DSIH_SINCOS:
-            vkd3d_dxbc_compiler_emit_sincos(compiler, instruction);
+            spirv_compiler_emit_sincos(compiler, instruction);
             break;
         case VKD3DSIH_IMUL:
-            vkd3d_dxbc_compiler_emit_imul(compiler, instruction);
+            spirv_compiler_emit_imul(compiler, instruction);
             break;
         case VKD3DSIH_IMAD:
-            vkd3d_dxbc_compiler_emit_imad(compiler, instruction);
+            spirv_compiler_emit_imad(compiler, instruction);
             break;
         case VKD3DSIH_UDIV:
-            vkd3d_dxbc_compiler_emit_udiv(compiler, instruction);
+            spirv_compiler_emit_udiv(compiler, instruction);
             break;
         case VKD3DSIH_DEQ:
         case VKD3DSIH_DGE:
@@ -9792,18 +9793,18 @@ int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
         case VKD3DSIH_NE:
         case VKD3DSIH_UGE:
         case VKD3DSIH_ULT:
-            vkd3d_dxbc_compiler_emit_comparison_instruction(compiler, instruction);
+            spirv_compiler_emit_comparison_instruction(compiler, instruction);
             break;
         case VKD3DSIH_BFI:
         case VKD3DSIH_IBFE:
         case VKD3DSIH_UBFE:
-            vkd3d_dxbc_compiler_emit_bitfield_instruction(compiler, instruction);
+            spirv_compiler_emit_bitfield_instruction(compiler, instruction);
             break;
         case VKD3DSIH_F16TOF32:
-            vkd3d_dxbc_compiler_emit_f16tof32(compiler, instruction);
+            spirv_compiler_emit_f16tof32(compiler, instruction);
             break;
         case VKD3DSIH_F32TOF16:
-            vkd3d_dxbc_compiler_emit_f32tof16(compiler, instruction);
+            spirv_compiler_emit_f32tof16(compiler, instruction);
             break;
         case VKD3DSIH_BREAK:
         case VKD3DSIH_BREAKP:
@@ -9821,7 +9822,7 @@ int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
         case VKD3DSIH_RETP:
         case VKD3DSIH_SWITCH:
         case VKD3DSIH_TEXKILL:
-            ret = vkd3d_dxbc_compiler_emit_control_flow_instruction(compiler, instruction);
+            ret = spirv_compiler_emit_control_flow_instruction(compiler, instruction);
             break;
         case VKD3DSIH_DSX:
         case VKD3DSIH_DSX_COARSE:
@@ -9829,48 +9830,48 @@ int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
         case VKD3DSIH_DSY:
         case VKD3DSIH_DSY_COARSE:
         case VKD3DSIH_DSY_FINE:
-            vkd3d_dxbc_compiler_emit_deriv_instruction(compiler, instruction);
+            spirv_compiler_emit_deriv_instruction(compiler, instruction);
             break;
         case VKD3DSIH_LD2DMS:
         case VKD3DSIH_LD:
-            vkd3d_dxbc_compiler_emit_ld(compiler, instruction);
+            spirv_compiler_emit_ld(compiler, instruction);
             break;
         case VKD3DSIH_LOD:
-            vkd3d_dxbc_compiler_emit_lod(compiler, instruction);
+            spirv_compiler_emit_lod(compiler, instruction);
             break;
         case VKD3DSIH_SAMPLE:
         case VKD3DSIH_SAMPLE_B:
         case VKD3DSIH_SAMPLE_GRAD:
         case VKD3DSIH_SAMPLE_LOD:
-            vkd3d_dxbc_compiler_emit_sample(compiler, instruction);
+            spirv_compiler_emit_sample(compiler, instruction);
             break;
         case VKD3DSIH_SAMPLE_C:
         case VKD3DSIH_SAMPLE_C_LZ:
-            vkd3d_dxbc_compiler_emit_sample_c(compiler, instruction);
+            spirv_compiler_emit_sample_c(compiler, instruction);
             break;
         case VKD3DSIH_GATHER4:
         case VKD3DSIH_GATHER4_C:
         case VKD3DSIH_GATHER4_PO:
         case VKD3DSIH_GATHER4_PO_C:
-            vkd3d_dxbc_compiler_emit_gather4(compiler, instruction);
+            spirv_compiler_emit_gather4(compiler, instruction);
             break;
         case VKD3DSIH_LD_RAW:
         case VKD3DSIH_LD_STRUCTURED:
-            vkd3d_dxbc_compiler_emit_ld_raw_structured(compiler, instruction);
+            spirv_compiler_emit_ld_raw_structured(compiler, instruction);
             break;
         case VKD3DSIH_STORE_RAW:
         case VKD3DSIH_STORE_STRUCTURED:
-            vkd3d_dxbc_compiler_emit_store_raw_structured(compiler, instruction);
+            spirv_compiler_emit_store_raw_structured(compiler, instruction);
             break;
         case VKD3DSIH_LD_UAV_TYPED:
-            vkd3d_dxbc_compiler_emit_ld_uav_typed(compiler, instruction);
+            spirv_compiler_emit_ld_uav_typed(compiler, instruction);
             break;
         case VKD3DSIH_STORE_UAV_TYPED:
-            vkd3d_dxbc_compiler_emit_store_uav_typed(compiler, instruction);
+            spirv_compiler_emit_store_uav_typed(compiler, instruction);
             break;
         case VKD3DSIH_IMM_ATOMIC_ALLOC:
         case VKD3DSIH_IMM_ATOMIC_CONSUME:
-            vkd3d_dxbc_compiler_emit_uav_counter_instruction(compiler, instruction);
+            spirv_compiler_emit_uav_counter_instruction(compiler, instruction);
             break;
         case VKD3DSIH_ATOMIC_AND:
         case VKD3DSIH_ATOMIC_CMP_STORE:
@@ -9891,34 +9892,34 @@ int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
         case VKD3DSIH_IMM_ATOMIC_UMAX:
         case VKD3DSIH_IMM_ATOMIC_UMIN:
         case VKD3DSIH_IMM_ATOMIC_XOR:
-            vkd3d_dxbc_compiler_emit_atomic_instruction(compiler, instruction);
+            spirv_compiler_emit_atomic_instruction(compiler, instruction);
             break;
         case VKD3DSIH_BUFINFO:
-            vkd3d_dxbc_compiler_emit_bufinfo(compiler, instruction);
+            spirv_compiler_emit_bufinfo(compiler, instruction);
             break;
         case VKD3DSIH_RESINFO:
-            vkd3d_dxbc_compiler_emit_resinfo(compiler, instruction);
+            spirv_compiler_emit_resinfo(compiler, instruction);
             break;
         case VKD3DSIH_SAMPLE_INFO:
-            vkd3d_dxbc_compiler_emit_sample_info(compiler, instruction);
+            spirv_compiler_emit_sample_info(compiler, instruction);
             break;
         case VKD3DSIH_SAMPLE_POS:
-            vkd3d_dxbc_compiler_emit_sample_position(compiler, instruction);
+            spirv_compiler_emit_sample_position(compiler, instruction);
             break;
         case VKD3DSIH_EVAL_CENTROID:
         case VKD3DSIH_EVAL_SAMPLE_INDEX:
-            vkd3d_dxbc_compiler_emit_eval_attrib(compiler, instruction);
+            spirv_compiler_emit_eval_attrib(compiler, instruction);
             break;
         case VKD3DSIH_SYNC:
-            vkd3d_dxbc_compiler_emit_sync(compiler, instruction);
+            spirv_compiler_emit_sync(compiler, instruction);
             break;
         case VKD3DSIH_EMIT:
         case VKD3DSIH_EMIT_STREAM:
-            vkd3d_dxbc_compiler_emit_emit_stream(compiler, instruction);
+            spirv_compiler_emit_emit_stream(compiler, instruction);
             break;
         case VKD3DSIH_CUT:
         case VKD3DSIH_CUT_STREAM:
-            vkd3d_dxbc_compiler_emit_cut_stream(compiler, instruction);
+            spirv_compiler_emit_cut_stream(compiler, instruction);
             break;
         case VKD3DSIH_DCL_HS_MAX_TESSFACTOR:
         case VKD3DSIH_HS_DECLS:
@@ -9932,7 +9933,7 @@ int vkd3d_dxbc_compiler_handle_instruction(struct vkd3d_dxbc_compiler *compiler,
     return ret;
 }
 
-int vkd3d_dxbc_compiler_generate_spirv(struct vkd3d_dxbc_compiler *compiler,
+int spirv_compiler_generate_spirv(struct spirv_compiler *compiler,
         const struct vkd3d_shader_compile_info *compile_info, struct vkd3d_shader_code *spirv)
 {
     const struct vkd3d_shader_spirv_target_info *info = compiler->spirv_target_info;
@@ -9940,22 +9941,22 @@ int vkd3d_dxbc_compiler_generate_spirv(struct vkd3d_dxbc_compiler *compiler,
     struct vkd3d_spirv_builder *builder = &compiler->spirv_builder;
     const struct vkd3d_shader_phase *phase;
 
-    if ((phase = vkd3d_dxbc_compiler_get_current_shader_phase(compiler)))
-        vkd3d_dxbc_compiler_leave_shader_phase(compiler, phase);
+    if ((phase = spirv_compiler_get_current_shader_phase(compiler)))
+        spirv_compiler_leave_shader_phase(compiler, phase);
     else
         vkd3d_spirv_build_op_function_end(builder);
 
     if (compiler->shader_type == VKD3D_SHADER_TYPE_HULL)
-        vkd3d_dxbc_compiler_emit_hull_shader_main(compiler);
+        spirv_compiler_emit_hull_shader_main(compiler);
 
     if (compiler->shader_type == VKD3D_SHADER_TYPE_DOMAIN)
     {
         if (info && (ds_info = vkd3d_find_struct(compile_info->next, SPIRV_DOMAIN_SHADER_TARGET_INFO)))
         {
-            vkd3d_dxbc_compiler_emit_tessellator_output_primitive(compiler, ds_info->output_primitive);
-            vkd3d_dxbc_compiler_emit_tessellator_partitioning(compiler, ds_info->partitioning);
+            spirv_compiler_emit_tessellator_output_primitive(compiler, ds_info->output_primitive);
+            spirv_compiler_emit_tessellator_partitioning(compiler, ds_info->partitioning);
         }
-        else if (vkd3d_dxbc_compiler_is_opengl_target(compiler))
+        else if (spirv_compiler_is_opengl_target(compiler))
         {
             ERR("vkd3d_shader_spirv_domain_shader_target_info is required for "
                     "OpenGL tessellation evaluation shader.\n");
@@ -9965,18 +9966,18 @@ int vkd3d_dxbc_compiler_generate_spirv(struct vkd3d_dxbc_compiler *compiler,
     if (compiler->epilogue_function_id)
     {
         vkd3d_spirv_build_op_name(builder, compiler->epilogue_function_id, "epilogue");
-        vkd3d_dxbc_compiler_emit_shader_epilogue_function(compiler);
+        spirv_compiler_emit_shader_epilogue_function(compiler);
     }
 
     if (compiler->strip_debug)
         vkd3d_spirv_stream_clear(&builder->debug_stream);
 
-    if (!vkd3d_spirv_compile_module(builder, spirv, vkd3d_dxbc_compiler_get_entry_point_name(compiler)))
+    if (!vkd3d_spirv_compile_module(builder, spirv, spirv_compiler_get_entry_point_name(compiler)))
         return VKD3D_ERROR;
 
     if (TRACE_ON())
     {
-        enum vkd3d_shader_spirv_environment environment = vkd3d_dxbc_compiler_get_target_environment(compiler);
+        enum vkd3d_shader_spirv_environment environment = spirv_compiler_get_target_environment(compiler);
         vkd3d_spirv_dump(spirv, environment);
         vkd3d_spirv_validate(spirv, environment);
     }
@@ -9987,7 +9988,7 @@ int vkd3d_dxbc_compiler_generate_spirv(struct vkd3d_dxbc_compiler *compiler,
     if (compile_info->target_type == VKD3D_SHADER_TARGET_SPIRV_TEXT)
     {
         struct vkd3d_shader_code text;
-        enum vkd3d_shader_spirv_environment environment = vkd3d_dxbc_compiler_get_target_environment(compiler);
+        enum vkd3d_shader_spirv_environment environment = spirv_compiler_get_target_environment(compiler);
         if (vkd3d_spirv_binary_to_text(spirv, environment, compiler->formatting, &text) != VKD3D_OK)
             return VKD3D_ERROR;
         *spirv = text;
@@ -9996,7 +9997,7 @@ int vkd3d_dxbc_compiler_generate_spirv(struct vkd3d_dxbc_compiler *compiler,
     return VKD3D_OK;
 }
 
-void vkd3d_dxbc_compiler_destroy(struct vkd3d_dxbc_compiler *compiler)
+void spirv_compiler_destroy(struct spirv_compiler *compiler)
 {
     vkd3d_free(compiler->control_flow_info);
 

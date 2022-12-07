@@ -16,6 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#ifdef _WIN32
+# define _WIN32_WINNT 0x0600    /* For InitOnceExecuteOnce(). */
+#endif
+
 #include "vkd3d_debug.h"
 
 #include <assert.h>
@@ -27,6 +31,11 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+
+#include "vkd3d_memory.h"
 
 #define VKD3D_DEBUG_BUFFER_COUNT 64
 #define VKD3D_DEBUG_BUFFER_SIZE 512
@@ -96,7 +105,7 @@ void vkd3d_dbg_printf(enum vkd3d_dbg_level level, const char *function, const ch
 
     assert(level < ARRAY_SIZE(debug_level_names));
 
-    vkd3d_dbg_output("%s:%s ", debug_level_names[level], function);
+    vkd3d_dbg_output("vkd3d:%s:%s ", debug_level_names[level], function);
     va_start(args, fmt);
     vkd3d_dbg_voutput(fmt, args);
     va_end(args);
@@ -368,4 +377,50 @@ uint64_t vkd3d_parse_debug_options(const char *string,
     }
 
     return flags;
+}
+
+#ifdef _WIN32
+
+static HRESULT (WINAPI *pfn_SetThreadDescription)(HANDLE, const WCHAR *);
+static BOOL WINAPI resolve_SetThreadDescription(INIT_ONCE *once, void *param, void **context)
+{
+    HMODULE kernelbase;
+
+    if (!(kernelbase = LoadLibraryA("kernelbase.dll")))
+        return TRUE;
+
+    if (!(pfn_SetThreadDescription = (void *)GetProcAddress(kernelbase, "SetThreadDescription")))
+        FreeLibrary(kernelbase);
+
+    return TRUE;
+}
+
+#endif
+
+void vkd3d_set_thread_name(const char *name)
+{
+#ifdef _WIN32
+    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    WCHAR *wname;
+    int ret;
+
+    InitOnceExecuteOnce(&init_once, resolve_SetThreadDescription, NULL, NULL);
+    if (!pfn_SetThreadDescription)
+        return;
+
+    if ((ret = MultiByteToWideChar(CP_UTF8, 0, name, -1, NULL, 0)) <= 0)
+        return;
+
+    if (!(wname = vkd3d_malloc(ret * sizeof(*wname))))
+        return;
+
+    if ((ret = MultiByteToWideChar(CP_UTF8, 0, name, -1, wname, ret)) > 0)
+        pfn_SetThreadDescription(GetCurrentThread(), wname);
+
+    vkd3d_free(wname);
+#elif defined(HAVE_PTHREAD_SETNAME_NP_2)
+    pthread_setname_np(pthread_self(), name);
+#elif defined(HAVE_PTHREAD_SETNAME_NP_1)
+    pthread_setname_np(name);
+#endif
 }

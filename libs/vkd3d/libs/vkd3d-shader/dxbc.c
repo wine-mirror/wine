@@ -21,6 +21,11 @@
 #include "vkd3d_shader_private.h"
 #include "sm4.h"
 
+#define SM4_MAX_SRC_COUNT 6
+#define SM4_MAX_DST_COUNT 2
+
+STATIC_ASSERT(SM4_MAX_SRC_COUNT <= SPIRV_MAX_SRC_COUNT);
+
 void dxbc_writer_init(struct dxbc_writer *dxbc)
 {
     memset(dxbc, 0, sizeof(*dxbc));
@@ -91,8 +96,8 @@ struct vkd3d_shader_sm4_parser
 
     unsigned int output_map[MAX_REG_OUTPUT];
 
-    struct vkd3d_shader_src_param src_param[6];
-    struct vkd3d_shader_dst_param dst_param[2];
+    struct vkd3d_shader_src_param src_param[SM4_MAX_SRC_COUNT];
+    struct vkd3d_shader_dst_param dst_param[SM4_MAX_DST_COUNT];
     struct list src_free;
     struct list src;
     struct vkd3d_shader_immediate_constant_buffer icb;
@@ -104,8 +109,8 @@ struct vkd3d_sm4_opcode_info
 {
     enum vkd3d_sm4_opcode opcode;
     enum vkd3d_shader_opcode handler_idx;
-    const char *dst_info;
-    const char *src_info;
+    char dst_info[SM4_MAX_DST_COUNT];
+    char src_info[SM4_MAX_SRC_COUNT];
     void (*read_opcode_func)(struct vkd3d_shader_instruction *ins, uint32_t opcode, uint32_t opcode_token,
             const uint32_t *tokens, unsigned int token_count, struct vkd3d_shader_sm4_parser *priv);
 };
@@ -1514,9 +1519,9 @@ static void shader_sm4_read_instruction(struct vkd3d_shader_parser *parser, stru
     ins->raw = false;
     ins->structured = false;
     ins->predicate = NULL;
-    ins->dst_count = strlen(opcode_info->dst_info);
+    ins->dst_count = strnlen(opcode_info->dst_info, SM4_MAX_DST_COUNT);
     ins->dst = sm4->dst_param;
-    ins->src_count = strlen(opcode_info->src_info);
+    ins->src_count = strnlen(opcode_info->src_info, SM4_MAX_SRC_COUNT);
     ins->src = sm4->src_param;
     assert(ins->dst_count <= ARRAY_SIZE(sm4->dst_param));
     assert(ins->src_count <= ARRAY_SIZE(sm4->src_param));

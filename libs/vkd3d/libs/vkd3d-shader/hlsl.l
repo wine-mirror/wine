@@ -102,6 +102,9 @@ RasterizerState         {return KW_RASTERIZERSTATE;     }
 RenderTargetView        {return KW_RENDERTARGETVIEW;    }
 return                  {return KW_RETURN;              }
 register                {return KW_REGISTER;            }
+RWTexture1D             {return KW_RWTEXTURE1D;         }
+RWTexture2D             {return KW_RWTEXTURE2D;         }
+RWTexture3D             {return KW_RWTEXTURE3D;         }
 sampler                 {return KW_SAMPLER;             }
 sampler1D               {return KW_SAMPLER1D;           }
 sampler2D               {return KW_SAMPLER2D;           }
