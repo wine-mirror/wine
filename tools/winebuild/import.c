@@ -1764,20 +1764,20 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
         output( "\t.long 0\n" );                         /* UnloadInformationTableRVA */
         output( "\t.long 0\n" );                         /* TimeDateStamp */
 
-        output( "\n\t.section \".idata$5\"\n" );
+        output( "\n\t.section .idata$5\n" );
         output( "\t%s 0\n", get_asm_ptr_keyword() );     /* FirstThunk tail */
         output( ".L__wine_import_addrs:\n" );
 
-        output( "\n\t.section \".idata$4\"\n" );
+        output( "\n\t.section .idata$4\n" );
         output( "\t%s 0\n", get_asm_ptr_keyword() );     /* OriginalFirstThunk tail */
         output( ".L__wine_import_names:\n" );
 
         /* required to avoid internal linker errors with some binutils versions */
-        output( "\n\t.section \".idata$2\"\n" );
+        output( "\n\t.section .idata$2\n" );
     }
     else
     {
-        output( "\n\t.section \".idata$2\"\n" );
+        output( "\n\t.section .idata$2\n" );
         output( "%s\n", asm_globl( import_desc ) );
         output_rva( ".L__wine_import_names" );           /* OriginalFirstThunk */
         output( "\t.long 0\n" );                         /* TimeDateStamp */
@@ -1785,10 +1785,10 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
         output_rva( "%s", asm_name( import_name ) );     /* Name */
         output_rva( ".L__wine_import_addrs" );           /* FirstThunk */
 
-        output( "\n\t.section \".idata$4\"\n" );
+        output( "\n\t.section .idata$4\n" );
         output( ".L__wine_import_names:\n" );            /* OriginalFirstThunk head */
 
-        output( "\n\t.section \".idata$5\"\n" );
+        output( "\n\t.section .idata$5\n" );
         output( ".L__wine_import_addrs:\n" );            /* FirstThunk head */
     }
 
@@ -1799,11 +1799,11 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
 
     new_output_as_file();
 
-    output( "\n\t.section \".idata$4\"\n" );
+    output( "\n\t.section .idata$4\n" );
     output( "\t%s 0\n", get_asm_ptr_keyword() );         /* OriginalFirstThunk tail */
-    output( "\n\t.section \".idata$5\"\n" );
+    output( "\n\t.section .idata$5\n" );
     output( "\t%s 0\n", get_asm_ptr_keyword() );         /* FirstThunk tail */
-    output( "\n\t.section \".idata$7\"\n" );
+    output( "\n\t.section .idata$7\n" );
     output( "%s\n", asm_globl( import_name ) );
     output( "\t%s \"%s\"\n", get_asm_string_keyword(), spec->file_name );
 
@@ -1891,10 +1891,10 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                 break;
             }
 
-            output( "\n\t.section \".idata$4\"\n" );
+            output( "\n\t.section .idata$4\n" );
             output_thunk_rva( by_name ? -1 : odp->ordinal, ".L__wine_import_name" );
 
-            output( "\n\t.section \".idata$5\"\n" );
+            output( "\n\t.section .idata$5\n" );
             output( "%s\n", asm_globl( imp_name ) );
             if (is_delay)
                 output( "\t%s .L__wine_delay_import\n", get_asm_ptr_keyword() );
@@ -1903,14 +1903,14 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
 
             if (by_name)
             {
-                output( "\n\t.section \".idata$6\"\n" );
+                output( "\n\t.section .idata$6\n" );
                 output( ".L__wine_import_name:\n" );
                 output( "\t.short %d\n", odp->hint );
                 output( "\t%s \"%s\"\n", get_asm_string_keyword(), name );
             }
 
             /* reference head object to always pull its sections */
-            output( "\n\t.section \".idata$7\"\n" );
+            output( "\n\t.section .idata$7\n" );
             output_rva( "%s", asm_name( import_desc ) );
 
             free( imp_name );
