@@ -38,9 +38,16 @@
 #define __RPC_USER __stdcall
 #define __RPC_STUB __stdcall
 #define RPC_ENTRY  __stdcall
-#define RPCRTAPI
-typedef LONG RPC_STATUS;
 
+#ifndef RPCRTAPI
+#if !defined(_RPCRT4_) && !defined(_KRPCENV_)
+#define RPCRTAPI DECLSPEC_IMPORT
+#else
+#define RPCRTAPI
+#endif
+#endif
+
+typedef LONG RPC_STATUS;
 typedef void* I_RPC_HANDLE;
 
 #include <rpcdce.h>

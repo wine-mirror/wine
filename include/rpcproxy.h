@@ -125,34 +125,22 @@ typedef struct tagCStdPSFactoryBuffer
 
 #define STUB_FORWARDING_FUNCTION NdrStubForwardingFunction
 
-ULONG STDMETHODCALLTYPE CStdStubBuffer2_Release(IRpcStubBuffer *This) DECLSPEC_HIDDEN;
-ULONG STDMETHODCALLTYPE NdrCStdStubBuffer2_Release(IRpcStubBuffer *This, IPSFactoryBuffer *pPSF);
-
 #define CStdStubBuffer_DELEGATING_METHODS 0, 0, CStdStubBuffer2_Release, 0, 0, 0, 0, 0, 0, 0
 
+RPCRTAPI HRESULT   WINAPI CStdStubBuffer_QueryInterface( IRpcStubBuffer *This, REFIID riid, void **ppvObject );
+RPCRTAPI ULONG     WINAPI CStdStubBuffer_AddRef( IRpcStubBuffer *This );
+RPCRTAPI HRESULT   WINAPI CStdStubBuffer_Connect( IRpcStubBuffer *This, IUnknown *pUnkServer );
+RPCRTAPI void      WINAPI CStdStubBuffer_Disconnect( IRpcStubBuffer *This );
+RPCRTAPI HRESULT   WINAPI CStdStubBuffer_Invoke( IRpcStubBuffer *This, RPCOLEMESSAGE *pRpcMsg, IRpcChannelBuffer *pRpcChannelBuffer );
+RPCRTAPI IRpcStubBuffer * WINAPI CStdStubBuffer_IsIIDSupported( IRpcStubBuffer *This, REFIID riid );
+RPCRTAPI ULONG     WINAPI CStdStubBuffer_CountRefs( IRpcStubBuffer *This );
+RPCRTAPI HRESULT   WINAPI CStdStubBuffer_DebugServerQueryInterface( IRpcStubBuffer *This, void **ppv );
+RPCRTAPI void      WINAPI CStdStubBuffer_DebugServerRelease( IRpcStubBuffer *This, void *pv );
+RPCRTAPI ULONG     WINAPI NdrCStdStubBuffer_Release( IRpcStubBuffer *This, IPSFactoryBuffer *pPSF );
+RPCRTAPI ULONG     WINAPI NdrCStdStubBuffer2_Release(IRpcStubBuffer *This, IPSFactoryBuffer *pPSF);
 
-HRESULT WINAPI
-  CStdStubBuffer_QueryInterface( IRpcStubBuffer *This, REFIID riid, void **ppvObject );
-ULONG WINAPI
-  CStdStubBuffer_AddRef( IRpcStubBuffer *This );
-ULONG WINAPI
-  CStdStubBuffer_Release( IRpcStubBuffer *This ) DECLSPEC_HIDDEN;
-ULONG WINAPI
-  NdrCStdStubBuffer_Release( IRpcStubBuffer *This, IPSFactoryBuffer *pPSF );
-HRESULT WINAPI
-  CStdStubBuffer_Connect( IRpcStubBuffer *This, IUnknown *pUnkServer );
-void WINAPI
-  CStdStubBuffer_Disconnect( IRpcStubBuffer *This );
-HRESULT WINAPI
-  CStdStubBuffer_Invoke( IRpcStubBuffer *This, RPCOLEMESSAGE *pRpcMsg, IRpcChannelBuffer *pRpcChannelBuffer );
-IRpcStubBuffer * WINAPI
-  CStdStubBuffer_IsIIDSupported( IRpcStubBuffer *This, REFIID riid );
-ULONG WINAPI
-  CStdStubBuffer_CountRefs( IRpcStubBuffer *This );
-HRESULT WINAPI
-  CStdStubBuffer_DebugServerQueryInterface( IRpcStubBuffer *This, void **ppv );
-void WINAPI
-  CStdStubBuffer_DebugServerRelease( IRpcStubBuffer *This, void *pv );
+ULONG STDMETHODCALLTYPE CStdStubBuffer_Release( IRpcStubBuffer *This ) DECLSPEC_HIDDEN;
+ULONG STDMETHODCALLTYPE CStdStubBuffer2_Release(IRpcStubBuffer *This) DECLSPEC_HIDDEN;
 
 #define CStdStubBuffer_METHODS \
   CStdStubBuffer_QueryInterface, \
