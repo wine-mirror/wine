@@ -23,7 +23,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -324,7 +323,7 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
     if (FAILED(hr = wined3d_texture_create(device, &desc, 1, 1, WINED3D_TEXTURE_CREATE_GET_DC,
             NULL, NULL, &wined3d_null_parent_ops, &device->logo_texture)))
     {
-        ERR("Wine logo requested, but failed to create texture, hr %#x.\n", hr);
+        ERR("Wine logo requested, but failed to create texture, hr %#lx.\n", hr);
         goto out;
     }
 
@@ -553,7 +552,7 @@ void wined3d_device_create_default_samplers(struct wined3d_device *device, struc
      */
     if (FAILED(hr = wined3d_sampler_create(device, &desc, NULL, &wined3d_null_parent_ops, &device->default_sampler)))
     {
-        ERR("Failed to create default sampler, hr %#x.\n", hr);
+        ERR("Failed to create default sampler, hr %#lx.\n", hr);
         device->default_sampler = NULL;
     }
 
@@ -566,7 +565,7 @@ void wined3d_device_create_default_samplers(struct wined3d_device *device, struc
     desc.mip_filter = WINED3D_TEXF_LINEAR;
     if (FAILED(hr = wined3d_sampler_create(device, &desc, NULL, &wined3d_null_parent_ops, &device->null_sampler)))
     {
-        ERR("Failed to create null sampler, hr %#x.\n", hr);
+        ERR("Failed to create null sampler, hr %#lx.\n", hr);
         device->null_sampler = NULL;
     }
 }
@@ -1264,7 +1263,7 @@ void wined3d_device_gl_create_primary_opengl_context_cs(void *object)
     if (FAILED(hr = device->shader_backend->shader_alloc_private(device,
             device->adapter->vertex_pipe, device->adapter->fragment_pipe)))
     {
-        ERR("Failed to allocate shader private data, hr %#x.\n", hr);
+        ERR("Failed to allocate shader private data, hr %#lx.\n", hr);
         wined3d_allocator_cleanup(&device_gl->allocator);
         context_release(context);
         wined3d_context_gl_destroy(wined3d_context_gl(device->contexts[0]));
@@ -1341,7 +1340,7 @@ HRESULT wined3d_device_set_implicit_swapchain(struct wined3d_device *device, str
         if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, back_buffer,
                 NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
         {
-            ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+            ERR("Failed to create rendertarget view, hr %#lx.\n", hr);
             device->adapter->adapter_ops->adapter_uninit_3d(device);
             device->d3d_initialized = FALSE;
             goto err_out;
@@ -1868,7 +1867,7 @@ static void wined3d_device_set_render_state(struct wined3d_device *device,
 static void wined3d_device_set_sampler_state(struct wined3d_device *device,
         UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
 {
-    TRACE("device %p, sampler_idx %u, state %s, value %#x.\n",
+    TRACE("device %p, sampler_idx %u, state %s, value %#lx.\n",
             device, sampler_idx, debug_d3dsamplerstate(state), value);
 
     if (value == device->cs->c.state->sampler_states[sampler_idx][state])
@@ -3485,7 +3484,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     box.right = box.left + dwCount * vertex_size;
     if (FAILED(hr = wined3d_resource_map(&dest->resource, 0, &map_desc, &box, WINED3D_MAP_WRITE)))
     {
-        WARN("Failed to map buffer, hr %#x.\n", hr);
+        WARN("Failed to map buffer, hr %#lx.\n", hr);
         return hr;
     }
     dest_ptr = map_desc.data;
@@ -3835,7 +3834,7 @@ static void wined3d_device_set_texture_stage_state(struct wined3d_device *device
 {
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
 
-    TRACE("device %p, stage %u, state %s, value %#x.\n",
+    TRACE("device %p, stage %u, state %s, value %lx.\n",
             device, stage, debug_d3dtexturestate(state), value);
 
     if (stage >= d3d_info->limits.ffp_blend_stages)
@@ -5703,7 +5702,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
                 focus_window = swapchain->state.device_window;
             if (FAILED(hr = wined3d_device_acquire_focus_window(device, focus_window)))
             {
-                ERR("Failed to acquire focus window, hr %#x.\n", hr);
+                ERR("Failed to acquire focus window, hr %#lx.\n", hr);
                 return hr;
             }
         }
@@ -5728,7 +5727,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
          * up their mess. Guild Wars also loses the device during that. */
         if (FAILED(hr = wined3d_output_get_desc(swapchain_desc->output, &output_desc)))
         {
-            ERR("Failed to get output description, hr %#x.\n", hr);
+            ERR("Failed to get output description, hr %#lx.\n", hr);
             return hr;
         }
 
@@ -5784,7 +5783,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
                 device->device_parent, &texture_desc, 0, &texture)))
         {
-            ERR("Failed to create the auto depth/stencil surface, hr %#x.\n", hr);
+            ERR("Failed to create the auto depth/stencil surface, hr %#lx.\n", hr);
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -5799,7 +5798,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         wined3d_texture_decref(texture);
         if (FAILED(hr))
         {
-            ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+            ERR("Failed to create rendertarget view, hr %#lx.\n", hr);
             return hr;
         }
     }
@@ -5822,7 +5821,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, back_buffer,
                 NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
         {
-            ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+            ERR("Failed to create rendertarget view, hr %#lx.\n", hr);
             return hr;
         }
     }
@@ -6141,7 +6140,7 @@ HRESULT wined3d_device_init(struct wined3d_device *device, struct wined3d *wined
             &adapter->d3d_info, supported_extensions, vertex_pipeline,
             fragment_pipeline, adapter->misc_state_template)))
     {
-        ERR("Failed to compile state table, hr %#x.\n", hr);
+        ERR("Failed to compile state table, hr %#lx.\n", hr);
         wine_rb_destroy(&device->samplers, NULL, NULL);
         wine_rb_destroy(&device->rasterizer_states, NULL, NULL);
         wine_rb_destroy(&device->blend_states, NULL, NULL);
