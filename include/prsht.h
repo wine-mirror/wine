@@ -23,6 +23,14 @@
 extern "C" {
 #endif
 
+#ifndef WINCOMMCTRLAPI
+#ifdef _COMCTL32_
+# define WINCOMMCTRLAPI
+#else
+# define WINCOMMCTRLAPI DECLSPEC_IMPORT
+#endif
+#endif
+
 
 /*
  * Property sheet support (callback procs)
@@ -276,13 +284,13 @@ typedef const PROPSHEETHEADERW *LPCPROPSHEETHEADERW;
 /*
  * Property sheet support (methods)
  */
-INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA);
-INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW);
+WINCOMMCTRLAPI INT_PTR WINAPI PropertySheetA(LPCPROPSHEETHEADERA);
+WINCOMMCTRLAPI INT_PTR WINAPI PropertySheetW(LPCPROPSHEETHEADERW);
 #define PropertySheet WINELIB_NAME_AW(PropertySheet)
-HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(LPCPROPSHEETPAGEA);
-HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW);
+WINCOMMCTRLAPI HPROPSHEETPAGE WINAPI CreatePropertySheetPageA(LPCPROPSHEETPAGEA);
+WINCOMMCTRLAPI HPROPSHEETPAGE WINAPI CreatePropertySheetPageW(LPCPROPSHEETPAGEW);
 #define CreatePropertySheetPage WINELIB_NAME_AW(CreatePropertySheetPage)
-BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage);
+WINCOMMCTRLAPI BOOL WINAPI DestroyPropertySheetPage(HPROPSHEETPAGE hPropPage);
 
 /*
  * Property sheet support (UNICODE-Winelib)
