@@ -2889,7 +2889,7 @@ unsigned int CDECL wined3d_device_get_max_frame_latency(const struct wined3d_dev
     return device->max_frame_latency;
 }
 
-static unsigned int wined3d_get_flexible_vertex_size(DWORD fvf)
+static unsigned int wined3d_get_flexible_vertex_size(uint32_t fvf)
 {
     unsigned int texcoord_count = (fvf & WINED3DFVF_TEXCOUNT_MASK) >> WINED3DFVF_TEXCOUNT_SHIFT;
     unsigned int i, size = 0;
@@ -3433,7 +3433,7 @@ static void update_fog_factor(float *fog_factor, struct lights_settings *ls)
 /* Context activation is done by the caller. */
 #define copy_and_next(dest, src, size) memcpy(dest, src, size); dest += (size)
 static HRESULT process_vertices_strided(const struct wined3d_device *device, DWORD dwDestIndex, DWORD dwCount,
-        const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, uint32_t flags, DWORD dst_fvf)
+        const struct wined3d_stream_info *stream_info, struct wined3d_buffer *dest, uint32_t flags, uint32_t dst_fvf)
 {
     enum wined3d_material_color_source diffuse_source, specular_source, ambient_source, emissive_source;
     const struct wined3d_color *material_specular_state_colour;
@@ -4580,7 +4580,7 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
 {
     const struct wined3d_state *state = device->cs->c.state;
     struct wined3d_texture *texture;
-    DWORD i;
+    unsigned i;
 
     TRACE("device %p, num_passes %p.\n", device, num_passes);
 
