@@ -20,7 +20,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 /*
  * D3D shader asm has swizzles on source parameters, and write masks for
@@ -13158,7 +13157,7 @@ static DWORD glsl_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bli
         if (FAILED(hr = wined3d_texture_create(device, &desc, 1, 1, 0,
                 NULL, NULL, &wined3d_null_parent_ops, &staging_texture)))
         {
-            ERR("Failed to create staging texture, hr %#x.\n", hr);
+            ERR("Failed to create staging texture, hr %#lx.\n", hr);
             return dst_location;
         }
 
