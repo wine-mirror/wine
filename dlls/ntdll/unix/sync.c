@@ -1494,7 +1494,7 @@ NTSTATUS WINAPI NtDelayExecution( BOOLEAN alertable, const LARGE_INTEGER *timeou
         }
 
         /* Note that we yield after establishing the desired timeout */
-        usleep(0);
+        NtYieldExecution();
         if (!when) return STATUS_SUCCESS;
 
         for (;;)
