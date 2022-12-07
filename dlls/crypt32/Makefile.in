@@ -1,3 +1,4 @@
+EXTRADEFS = -D_CRYPT32_
 MODULE    = crypt32.dll
 UNIXLIB   = crypt32.so
 IMPORTLIB = crypt32
