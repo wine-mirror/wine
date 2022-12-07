@@ -22,6 +22,7 @@
 #define WIN32_LEAN_AND_MEAN
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "windows.h"
 #include "commdlg.h"
@@ -48,14 +49,6 @@ static unsigned         MACRO_NumLoaded /* = 0 */;
 
 /*******      helper functions     *******/
 
-static char* StrDup(const char* str)
-{
-    char* dst;
-    dst=HeapAlloc(GetProcessHeap(),0,strlen(str)+1);
-    strcpy(dst, str);
-    return dst;
-}
-
 static WINHELP_BUTTON**        MACRO_LookupButton(WINHELP_WINDOW* win, LPCSTR name)
 {
     WINHELP_BUTTON**    b;
@@ -81,7 +74,7 @@ void CALLBACK MACRO_CreateButton(LPCSTR id, LPCSTR name, LPCSTR macro)
 
     size = sizeof(WINHELP_BUTTON) + strlen(id) + strlen(name) + strlen(macro) + 3;
 
-    button = HeapAlloc(GetProcessHeap(), 0, size);
+    button = malloc(size);
     if (!button) return;
 
     button->next  = 0;
@@ -239,7 +232,7 @@ static void CALLBACK MACRO_ChangeButtonBinding(LPCSTR id, LPCSTR macro)
     size = sizeof(WINHELP_BUTTON) + strlen(id) +
         strlen((*b)->lpszName) + strlen(macro) + 3;
 
-    button = HeapAlloc(GetProcessHeap(), 0, size);
+    button = malloc(size);
     if (!button) return;
 
     button->next  = (*b)->next;
@@ -612,17 +605,16 @@ static void CALLBACK MACRO_JumpID(LPCSTR lpszPathWindow, LPCSTR topic_id)
         LPSTR   tmp;
         size_t  sz;
 
-        tmp = HeapAlloc(GetProcessHeap(), 0, strlen(lpszPathWindow) + 1);
+        tmp = strdup(lpszPathWindow);
         if (tmp)
         {
-            strcpy(tmp, lpszPathWindow);
             tmp[ptr - lpszPathWindow] = '\0';
             ptr += tmp - lpszPathWindow; /* ptr now points to '>' in tmp buffer */
             /* in some cases, we have a trailing space that we need to get rid of */
             /* FIXME: check if it has to be done in lexer rather than here */
             for (sz = strlen(ptr + 1); sz >= 1 && ptr[sz] == ' '; sz--) ptr[sz] = '\0';
             MACRO_JumpHash(tmp, ptr + 1, HLPFILE_Hash(topic_id));
-            HeapFree(GetProcessHeap(), 0, tmp);
+            free(tmp);
         }
     }
     else
@@ -779,10 +771,10 @@ static void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR 
             /* FIXME: internationalisation for error messages */
             WINE_FIXME("Cannot find dll %s\n", debugstr_a(dll_name));
         }
-        else if ((dll = HeapAlloc(GetProcessHeap(), 0, sizeof(*dll))))
+        else if ((dll = malloc(sizeof(*dll))))
         {
             dll->hLib = hLib;
-            dll->name = StrDup(dll_name); /* FIXME: never freed */
+            dll->name = strdup(dll_name); /* FIXME: never freed */
             dll->next = Globals.dlls;
             Globals.dlls = dll;
             dll->handler = (WINHELP_LDLLHandler)GetProcAddress(dll->hLib, "LDLLHandler");
@@ -800,12 +792,11 @@ static void CALLBACK MACRO_RegisterRoutine(LPCSTR dll_name, LPCSTR proc, LPCSTR 
     }
 
     size = ++MACRO_NumLoaded * sizeof(struct MacroDesc);
-    if (!MACRO_Loaded) MACRO_Loaded = HeapAlloc(GetProcessHeap(), 0, size);
-    else MACRO_Loaded = HeapReAlloc(GetProcessHeap(), 0, MACRO_Loaded, size);
-    MACRO_Loaded[MACRO_NumLoaded - 1].name      = StrDup(proc); /* FIXME: never freed */
+    MACRO_Loaded = realloc(MACRO_Loaded, size);
+    MACRO_Loaded[MACRO_NumLoaded - 1].name      = strdup(proc); /* FIXME: never freed */
     MACRO_Loaded[MACRO_NumLoaded - 1].alias     = NULL;
     MACRO_Loaded[MACRO_NumLoaded - 1].isBool    = FALSE;
-    MACRO_Loaded[MACRO_NumLoaded - 1].arguments = StrDup(args); /* FIXME: never freed */
+    MACRO_Loaded[MACRO_NumLoaded - 1].arguments = strdup(args); /* FIXME: never freed */
     MACRO_Loaded[MACRO_NumLoaded - 1].fn        = fn;
     WINE_TRACE("Added %s(%s) at %p\n", debugstr_a(proc), debugstr_a(args), fn);
 }
@@ -841,10 +832,8 @@ static void CALLBACK MACRO_SetHelpOnFile(LPCSTR str)
 
     WINE_TRACE("(%s)\n", debugstr_a(str));
 
-    HeapFree(GetProcessHeap(), 0, page->file->help_on_file);
-    page->file->help_on_file = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
-    if (page->file->help_on_file)
-        strcpy(page->file->help_on_file, str);
+    free(page->file->help_on_file);
+    page->file->help_on_file = strdup(str);
 }
 
 static void CALLBACK MACRO_SetPopupColor(LONG r, LONG g, LONG b)

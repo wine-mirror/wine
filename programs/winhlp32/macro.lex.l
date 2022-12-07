@@ -75,7 +75,7 @@ struct lexret  yylval;
         if (lex_data->quote_stk_idx == 0)
         {
             assert(lex_data->cache_used < ARRAY_SIZE(lex_data->cache_string));
-            lex_data->strptr = lex_data->cache_string[lex_data->cache_used] = HeapAlloc(GetProcessHeap(), 0, strlen(lex_data->macroptr) + 1);
+            lex_data->strptr = lex_data->cache_string[lex_data->cache_used] = malloc(strlen(lex_data->macroptr) + 1);
             yylval.string = lex_data->strptr;
             lex_data->cache_used++;
             BEGIN(quote);
@@ -355,7 +355,7 @@ BOOL MACRO_ExecuteMacro(WINHELP_WINDOW* window, LPCSTR macro)
 
 done:
     for (t = 0; t < lex_data->cache_used; t++)
-        HeapFree(GetProcessHeap(), 0, lex_data->cache_string[t]);
+        free(lex_data->cache_string[t]);
     lex_data = prev_lex_data;
     WINHELP_ReleaseWindow(window);
 

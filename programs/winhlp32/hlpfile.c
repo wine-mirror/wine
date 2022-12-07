@@ -22,6 +22,7 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "windef.h"
@@ -655,13 +656,13 @@ static const BYTE*      HLPFILE_DecompressGfx(const BYTE* src, unsigned csz, uns
         *alloc = NULL;
         break;
     case 1: /* RunLen */
-        dst = *alloc = HeapAlloc(GetProcessHeap(), 0, sz);
+        dst = *alloc = malloc(sz);
         if (!dst) return NULL;
         HLPFILE_UncompressRLE(src, src + csz, *alloc, sz);
         break;
     case 2: /* LZ77 */
         sz77 = HLPFILE_UncompressedLZ77_Size(src, src + csz);
-        dst = *alloc = HeapAlloc(GetProcessHeap(), 0, sz77);
+        dst = *alloc = malloc(sz77);
         if (!dst) return NULL;
         HLPFILE_UncompressLZ77(src, src + csz, *alloc);
         if (sz77 != sz)
@@ -669,17 +670,17 @@ static const BYTE*      HLPFILE_DecompressGfx(const BYTE* src, unsigned csz, uns
         break;
     case 3: /* LZ77 then RLE */
         sz77 = HLPFILE_UncompressedLZ77_Size(src, src + csz);
-        tmp = HeapAlloc(GetProcessHeap(), 0, sz77);
+        tmp = malloc(sz77);
         if (!tmp) return FALSE;
         HLPFILE_UncompressLZ77(src, src + csz, tmp);
-        dst = *alloc = HeapAlloc(GetProcessHeap(), 0, sz);
+        dst = *alloc = malloc(sz);
         if (!dst)
         {
-            HeapFree(GetProcessHeap(), 0, tmp);
+            free(tmp);
             return FALSE;
         }
         HLPFILE_UncompressRLE(tmp, tmp + sz77, *alloc, sz);
-        HeapFree(GetProcessHeap(), 0, tmp);
+        free(tmp);
         break;
     default:
         WINE_FIXME("Unsupported packing %u\n", packing);
@@ -692,10 +693,11 @@ static BOOL HLPFILE_RtfAddRawString(struct RtfData* rd, const char* str, size_t 
 {
     if (rd->ptr + sz >= rd->data + rd->allocated)
     {
-        char*   new = HeapReAlloc(GetProcessHeap(), 0, rd->data, rd->allocated *= 2);
+        char* new = realloc(rd->data, rd->allocated * 2);
         if (!new) return FALSE;
         rd->ptr = new + (rd->ptr - rd->data);
         rd->data = new;
+        rd->allocated *= 2;
     }
     memcpy(rd->ptr, str, sz);
     rd->ptr += sz;
@@ -844,7 +846,7 @@ static void HLPFILE_AddHotSpotLinks(struct RtfData* rd, HLPFILE* file,
                     }
                     if (wnd == -1)
                         WINE_WARN("Couldn't find window info for %s\n", debugstr_a(win));
-                    if ((tgt = HeapAlloc(GetProcessHeap(), 0, win - str + 1)))
+                    if ((tgt = malloc(win - str + 1)))
                     {
                         memcpy(tgt, str, win - str);
                         tgt[win - str] = '\0';
@@ -853,7 +855,7 @@ static void HLPFILE_AddHotSpotLinks(struct RtfData* rd, HLPFILE* file,
                 hslink = (HLPFILE_HOTSPOTLINK*)
                     HLPFILE_AllocLink(rd, (start[7 + 15 * i + 0] & 1) ? hlp_link_link : hlp_link_popup,
                                       file->lpszPath, -1, HLPFILE_Hash(tgt ? tgt : str), FALSE, TRUE, wnd);
-                HeapFree(GetProcessHeap(), 0, tgt);
+                free(tgt);
                 break;
             }
         default:
@@ -939,7 +941,7 @@ static BOOL HLPFILE_RtfAddTransparentBitmap(struct RtfData* rd, const BITMAPINFO
 
     /* generate rtf stream */
     sz = GetEnhMetaFileBits(hEMF, 0, NULL);
-    if (sz && (data = HeapAlloc(GetProcessHeap(), 0, sz)))
+    if (sz && (data = malloc(sz)))
     {
         if (sz == GetEnhMetaFileBits(hEMF, sz, data))
         {
@@ -947,7 +949,7 @@ static BOOL HLPFILE_RtfAddTransparentBitmap(struct RtfData* rd, const BITMAPINFO
                 HLPFILE_RtfAddHexBytes(rd, data, sz) &&
                 HLPFILE_RtfAddControl(rd, "}");
         }
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
     }
     DeleteEnhMetaFile(hEMF);
 
@@ -971,7 +973,7 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, HLPFILE* file, const BYTE* 
     char                tmp[256];
     unsigned            hs_size, hs_offset;
 
-    bi = HeapAlloc(GetProcessHeap(), 0, sizeof(*bi));
+    bi = malloc(sizeof(*bi));
     if (!bi) return FALSE;
 
     ptr = beg + 2; /* for type and pack */
@@ -1011,7 +1013,7 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, HLPFILE* file, const BYTE* 
         if (!nc && bi->bmiHeader.biBitCount <= 8)
             nc = 1 << bi->bmiHeader.biBitCount;
 
-        bi = HeapReAlloc(GetProcessHeap(), 0, bi, sizeof(*bi) + nc * sizeof(RGBQUAD));
+        bi = realloc(bi, sizeof(*bi) + nc * sizeof(RGBQUAD));
         if (!bi) return FALSE;
         for (i = 0; i < nc; i++)
         {
@@ -1049,8 +1051,8 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, HLPFILE* file, const BYTE* 
 
     ret = TRUE;
 done:
-    HeapFree(GetProcessHeap(), 0, bi);
-    HeapFree(GetProcessHeap(), 0, alloc);
+    free(bi);
+    free(alloc);
 
     return ret;
 }
@@ -1097,7 +1099,7 @@ static BOOL     HLPFILE_RtfAddMetaFile(struct RtfData* rd, HLPFILE* file, const 
     ret = HLPFILE_RtfAddHexBytes(rd, bits, size) &&
         HLPFILE_RtfAddControl(rd, "}");
 
-    HeapFree(GetProcessHeap(), 0, alloc);
+    free(alloc);
 
     return ret;
 }
@@ -1185,7 +1187,7 @@ static HLPFILE_LINK*       HLPFILE_AllocLink(struct RtfData* rd, int cookie,
      * they are reallocated for each link
      */
     if (len == -1) len = strlen(str);
-    link = HeapAlloc(GetProcessHeap(), 0, asz + len + 1);
+    link = malloc(asz + len + 1);
     if (!link) return NULL;
 
     link->cookie     = cookie;
@@ -1239,7 +1241,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
     blocksize = GET_UINT(buf, 0);
     size = GET_UINT(buf, 0x4);
     datalen = GET_UINT(buf, 0x10);
-    text = text_base = HeapAlloc(GetProcessHeap(), 0, size);
+    text = text_base = malloc(size);
     if (!text) return FALSE;
     if (size > blocksize - datalen)
     {
@@ -1692,7 +1694,7 @@ static BOOL HLPFILE_BrowseParagraph(HLPFILE_PAGE* page, struct RtfData* rd,
     ret = TRUE;
 done:
 
-    HeapFree(GetProcessHeap(), 0, text_base);
+    free(text_base);
     return ret;
 }
 
@@ -1712,7 +1714,7 @@ BOOL    HLPFILE_BrowsePage(HLPFILE_PAGE* page, struct RtfData* rd,
     const char* ck = NULL;
 
     rd->in_text = TRUE;
-    rd->data = rd->ptr = HeapAlloc(GetProcessHeap(), 0, rd->allocated = 32768);
+    rd->data = rd->ptr = malloc(rd->allocated = 32768);
     rd->char_pos = 0;
     rd->first_link = rd->current_link = NULL;
     rd->force_color = FALSE;
@@ -1875,7 +1877,7 @@ static BOOL HLPFILE_ReadFont(HLPFILE* hlpfile)
                face_num, face_offset, dscr_num, dscr_offset);
 
     hlpfile->numFonts = dscr_num;
-    hlpfile->fonts = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_FONT) * dscr_num);
+    hlpfile->fonts = malloc(sizeof(HLPFILE_FONT) * dscr_num);
 
     len = (dscr_offset - face_offset) / face_num;
 
@@ -1976,7 +1978,7 @@ static BOOL HLPFILE_ReadFileToBuffer(HLPFILE* hlpfile, HFILE hFile)
     {WINE_WARN("wrong header\n"); return FALSE;};
 
     hlpfile->file_buffer_size = GET_UINT(header, 12);
-    hlpfile->file_buffer = HeapAlloc(GetProcessHeap(), 0, hlpfile->file_buffer_size + 1);
+    hlpfile->file_buffer = malloc(hlpfile->file_buffer_size + 1);
     if (!hlpfile->file_buffer) return FALSE;
 
     memcpy(hlpfile->file_buffer, header, 16);
@@ -2048,9 +2050,8 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
     {
         char *str = (char*)buf + 0x15;
 
-        hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
+        hlpfile->lpszTitle = strdup(str);
         if (!hlpfile->lpszTitle) return FALSE;
-        strcpy(hlpfile->lpszTitle, str);
         WINE_TRACE("Title: %s\n", debugstr_a(hlpfile->lpszTitle));
         /* Nothing more to parse */
         return TRUE;
@@ -2062,17 +2063,15 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 	{
 	case 1:
             if (hlpfile->lpszTitle) {WINE_WARN("title\n"); break;}
-            hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
+            hlpfile->lpszTitle = strdup(str);
             if (!hlpfile->lpszTitle) return FALSE;
-            strcpy(hlpfile->lpszTitle, str);
             WINE_TRACE("Title: %s\n", debugstr_a(hlpfile->lpszTitle));
             break;
 
 	case 2:
             if (hlpfile->lpszCopyright) {WINE_WARN("copyright\n"); break;}
-            hlpfile->lpszCopyright = HeapAlloc(GetProcessHeap(), 0, strlen(str) + 1);
+            hlpfile->lpszCopyright = strdup(str);
             if (!hlpfile->lpszCopyright) return FALSE;
-            strcpy(hlpfile->lpszCopyright, str);
             WINE_TRACE("Copyright: %s\n", debugstr_a(hlpfile->lpszCopyright));
             break;
 
@@ -2083,7 +2082,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
             break;
 
 	case 4:
-            macro = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_MACRO) + strlen(str) + 1);
+            macro = malloc(sizeof(HLPFILE_MACRO) + strlen(str) + 1);
             if (!macro) break;
             p = (char*)macro + sizeof(HLPFILE_MACRO);
             strcpy(p, str);
@@ -2105,13 +2104,9 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
         case 6:
             if (GET_USHORT(ptr, 2) != 90) {WINE_WARN("system6\n");break;}
 
-	    if (hlpfile->windows) 
-        	hlpfile->windows = HeapReAlloc(GetProcessHeap(), 0, hlpfile->windows, 
+            hlpfile->windows = realloc(hlpfile->windows,
                                            sizeof(HLPFILE_WINDOWINFO) * ++hlpfile->numWindows);
-	    else 
-        	hlpfile->windows = HeapAlloc(GetProcessHeap(), 0, 
-                                           sizeof(HLPFILE_WINDOWINFO) * ++hlpfile->numWindows);
-	    
+
             if (hlpfile->windows)
             {
                 HLPFILE_WINDOWINFO* wi = &hlpfile->windows[hlpfile->numWindows - 1];
@@ -2156,7 +2151,7 @@ static BOOL HLPFILE_SystemCommands(HLPFILE* hlpfile)
 	}
     }
     if (!hlpfile->lpszTitle)
-        hlpfile->lpszTitle = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 1);
+        hlpfile->lpszTitle = strdup("");
     return TRUE;
 }
 
@@ -2173,7 +2168,7 @@ static BOOL HLPFILE_GetContext(HLPFILE *hlpfile)
     {WINE_WARN("context0\n"); return FALSE;}
 
     clen = cend - cbuf;
-    hlpfile->Context = HeapAlloc(GetProcessHeap(), 0, clen);
+    hlpfile->Context = malloc(clen);
     if (!hlpfile->Context) return FALSE;
     memcpy(hlpfile->Context, cbuf, clen);
 
@@ -2191,21 +2186,21 @@ static BOOL HLPFILE_GetKeywords(HLPFILE *hlpfile)
 
     if (!HLPFILE_FindSubFile(hlpfile, "|KWBTREE", &cbuf, &cend)) return FALSE;
     clen = cend - cbuf;
-    hlpfile->kwbtree = HeapAlloc(GetProcessHeap(), 0, clen);
+    hlpfile->kwbtree = malloc(clen);
     if (!hlpfile->kwbtree) return FALSE;
     memcpy(hlpfile->kwbtree, cbuf, clen);
 
     if (!HLPFILE_FindSubFile(hlpfile, "|KWDATA", &cbuf, &cend))
     {
         WINE_ERR("corrupted help file: kwbtree present but kwdata absent\n");
-        HeapFree(GetProcessHeap(), 0, hlpfile->kwbtree);
+        free(hlpfile->kwbtree);
         return FALSE;
     }
     clen = cend - cbuf;
-    hlpfile->kwdata = HeapAlloc(GetProcessHeap(), 0, clen);
+    hlpfile->kwdata = malloc(clen);
     if (!hlpfile->kwdata)
     {
-        HeapFree(GetProcessHeap(), 0, hlpfile->kwdata);
+        free(hlpfile->kwdata);
         return FALSE;
     }
     memcpy(hlpfile->kwdata, cbuf, clen);
@@ -2226,7 +2221,7 @@ static BOOL HLPFILE_GetMap(HLPFILE *hlpfile)
     {WINE_WARN("no map section\n"); return FALSE;}
 
     entries = GET_USHORT(cbuf, 9);
-    hlpfile->Map = HeapAlloc(GetProcessHeap(), 0, entries * sizeof(HLPFILE_MAP));
+    hlpfile->Map = malloc(entries * sizeof(HLPFILE_MAP));
     if (!hlpfile->Map) return FALSE;
     hlpfile->wMapLen = entries;
     for (i = 0; i < entries; i++)
@@ -2250,7 +2245,7 @@ static BOOL HLPFILE_GetTOMap(HLPFILE *hlpfile)
     {WINE_WARN("no tomap section\n"); return FALSE;}
 
     clen = cend - cbuf - 9;
-    hlpfile->TOMap = HeapAlloc(GetProcessHeap(), 0, clen);
+    hlpfile->TOMap = malloc(clen);
     if (!hlpfile->TOMap) return FALSE;
     memcpy(hlpfile->TOMap, cbuf+9, clen);
     hlpfile->wTOMapLen = clen/4;
@@ -2268,7 +2263,7 @@ static void HLPFILE_DeleteMacro(HLPFILE_MACRO* macro)
     while (macro)
     {
         next = macro->next;
-        HeapFree(GetProcessHeap(), 0, macro);
+        free(macro);
         macro = next;
     }
 }
@@ -2285,7 +2280,7 @@ static void HLPFILE_DeletePage(HLPFILE_PAGE* page)
     {
         next = page->next;
         HLPFILE_DeleteMacro(page->first_macro);
-        HeapFree(GetProcessHeap(), 0, page);
+        free(page);
         page = next;
     }
 }
@@ -2310,7 +2305,7 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
         {
             DeleteObject(hlpfile->fonts[i].hFont);
         }
-        HeapFree(GetProcessHeap(), 0, hlpfile->fonts);
+        free(hlpfile->fonts);
     }
 
     if (hlpfile->numBmps)
@@ -2319,24 +2314,24 @@ void HLPFILE_FreeHlpFile(HLPFILE* hlpfile)
         {
             DeleteObject(hlpfile->bmps[i]);
         }
-        HeapFree(GetProcessHeap(), 0, hlpfile->bmps);
+        free(hlpfile->bmps);
     }
 
     HLPFILE_DeletePage(hlpfile->first_page);
     HLPFILE_DeleteMacro(hlpfile->first_macro);
 
     DestroyIcon(hlpfile->hIcon);
-    if (hlpfile->numWindows)    HeapFree(GetProcessHeap(), 0, hlpfile->windows);
-    HeapFree(GetProcessHeap(), 0, hlpfile->Context);
-    HeapFree(GetProcessHeap(), 0, hlpfile->Map);
-    HeapFree(GetProcessHeap(), 0, hlpfile->lpszTitle);
-    HeapFree(GetProcessHeap(), 0, hlpfile->lpszCopyright);
-    HeapFree(GetProcessHeap(), 0, hlpfile->file_buffer);
-    HeapFree(GetProcessHeap(), 0, hlpfile->phrases_offsets);
-    HeapFree(GetProcessHeap(), 0, hlpfile->phrases_buffer);
-    HeapFree(GetProcessHeap(), 0, hlpfile->topic_map);
-    HeapFree(GetProcessHeap(), 0, hlpfile->help_on_file);
-    HeapFree(GetProcessHeap(), 0, hlpfile);
+    if (hlpfile->numWindows) free(hlpfile->windows);
+    free(hlpfile->Context);
+    free(hlpfile->Map);
+    free(hlpfile->lpszTitle);
+    free(hlpfile->lpszCopyright);
+    free(hlpfile->file_buffer);
+    free(hlpfile->phrases_offsets);
+    free(hlpfile->phrases_buffer);
+    free(hlpfile->topic_map);
+    free(hlpfile->help_on_file);
+    free(hlpfile);
 }
 
 /***********************************************************************
@@ -2363,12 +2358,12 @@ static BOOL HLPFILE_UncompressLZ77_Phrases(HLPFILE* hlpfile)
     else
         dec_size = HLPFILE_UncompressedLZ77_Size(buf + 0x13 + 2 * num, end);
 
-    hlpfile->phrases_offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
-    hlpfile->phrases_buffer  = HeapAlloc(GetProcessHeap(), 0, dec_size);
+    hlpfile->phrases_offsets = malloc(sizeof(unsigned) * (num + 1));
+    hlpfile->phrases_buffer  = malloc(dec_size);
     if (!hlpfile->phrases_offsets || !hlpfile->phrases_buffer)
     {
-        HeapFree(GetProcessHeap(), 0, hlpfile->phrases_offsets);
-        HeapFree(GetProcessHeap(), 0, hlpfile->phrases_buffer);
+        free(hlpfile->phrases_offsets);
+        free(hlpfile->phrases_buffer);
         return FALSE;
     }
 
@@ -2427,12 +2422,12 @@ static BOOL HLPFILE_Uncompress_Phrases40(HLPFILE* hlpfile)
         dec_size = max(dec_size, HLPFILE_UncompressedLZ77_Size(buf_phs + 9, end_phs));
     }
 
-    hlpfile->phrases_offsets = HeapAlloc(GetProcessHeap(), 0, sizeof(unsigned) * (num + 1));
-    hlpfile->phrases_buffer  = HeapAlloc(GetProcessHeap(), 0, dec_size);
+    hlpfile->phrases_offsets = malloc(sizeof(unsigned) * (num + 1));
+    hlpfile->phrases_buffer  = malloc(dec_size);
     if (!hlpfile->phrases_offsets || !hlpfile->phrases_buffer)
     {
-        HeapFree(GetProcessHeap(), 0, hlpfile->phrases_offsets);
-        HeapFree(GetProcessHeap(), 0, hlpfile->phrases_buffer);
+        free(hlpfile->phrases_offsets);
+        free(hlpfile->phrases_buffer);
         return FALSE;
     }
 
@@ -2490,8 +2485,7 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
             newsize += HLPFILE_UncompressedLZ77_Size(ptr + 0xc, min(end, ptr + hlpfile->tbsize));
         }
 
-        hlpfile->topic_map = HeapAlloc(GetProcessHeap(), 0,
-                                       hlpfile->topic_maplen * sizeof(hlpfile->topic_map[0]) + newsize);
+        hlpfile->topic_map = malloc(hlpfile->topic_maplen * sizeof(hlpfile->topic_map[0]) + newsize);
         if (!hlpfile->topic_map) return FALSE;
         newptr = (BYTE*)(hlpfile->topic_map + hlpfile->topic_maplen);
         hlpfile->topic_end = newptr + newsize;
@@ -2511,8 +2505,7 @@ static BOOL HLPFILE_Uncompress_Topic(HLPFILE* hlpfile)
          * (removing the first 0x0C) in one single area in memory
          */
         hlpfile->topic_maplen = (topic_size - 1) / hlpfile->tbsize + 1;
-        hlpfile->topic_map = HeapAlloc(GetProcessHeap(), 0,
-                                       hlpfile->topic_maplen * (sizeof(hlpfile->topic_map[0]) + hlpfile->dsize));
+        hlpfile->topic_map = malloc(hlpfile->topic_maplen * (sizeof(hlpfile->topic_map[0]) + hlpfile->dsize));
         if (!hlpfile->topic_map) return FALSE;
         newptr = (BYTE*)(hlpfile->topic_map + hlpfile->topic_maplen);
         hlpfile->topic_end = newptr + topic_size;
@@ -2544,7 +2537,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, const BYTE *buf, const BYTE *end, 
     if (title > end) {WINE_WARN("page2\n"); return FALSE;};
 
     titlesize = GET_UINT(buf, 4);
-    page = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_PAGE) + titlesize + 1);
+    page = malloc(sizeof(HLPFILE_PAGE) + titlesize + 1);
     if (!page) return FALSE;
     page->lpszTitle = (char*)page + sizeof(HLPFILE_PAGE);
 
@@ -2616,7 +2609,7 @@ static BOOL HLPFILE_AddPage(HLPFILE *hlpfile, const BYTE *buf, const BYTE *end, 
         char*    macro_str;
 
         WINE_TRACE("macro: %s\n", debugstr_a(ptr));
-        macro = HeapAlloc(GetProcessHeap(), 0, sizeof(HLPFILE_MACRO) + len + 1);
+        macro = malloc(sizeof(HLPFILE_MACRO) + len + 1);
         macro->lpszMacro = macro_str = (char*)(macro + 1);
         memcpy(macro_str, ptr, len + 1);
         /* FIXME: shall we really link macro in reverse order ??
@@ -2769,8 +2762,7 @@ HLPFILE *HLPFILE_ReadHlpFile(LPCSTR lpszPath)
         }
     }
 
-    hlpfile = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                        sizeof(HLPFILE) + strlen(lpszPath) + 1);
+    hlpfile = calloc(1, sizeof(HLPFILE) + strlen(lpszPath) + 1);
     if (!hlpfile) return 0;
 
     hlpfile->lpszPath           = (char*)hlpfile + sizeof(HLPFILE);
