@@ -2169,7 +2169,7 @@ struct wined3d_stateblock_state
     struct wined3d_ivec4 ps_consts_i[WINED3D_MAX_CONSTS_I];
     BOOL ps_consts_b[WINED3D_MAX_CONSTS_B];
 
-    DWORD rs[WINEHIGHEST_RENDER_STATE + 1];
+    unsigned int rs[WINEHIGHEST_RENDER_STATE + 1];
     BOOL alpha_to_coverage;
 
     struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
@@ -2358,8 +2358,8 @@ ULONG __cdecl wined3d_depth_stencil_state_incref(struct wined3d_depth_stencil_st
 HRESULT __cdecl wined3d_device_acquire_focus_window(struct wined3d_device *device, HWND window);
 void __cdecl wined3d_device_apply_stateblock(struct wined3d_device *device, struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_device_begin_scene(struct wined3d_device *device);
-HRESULT __cdecl wined3d_device_clear(struct wined3d_device *device, DWORD rect_count, const RECT *rects,
-        uint32_t flags, const struct wined3d_color *color, float z, DWORD stencil);
+HRESULT __cdecl wined3d_device_clear(struct wined3d_device *device, unsigned int rect_count, const RECT *rects,
+        uint32_t flags, const struct wined3d_color *color, float z, unsigned int stencil);
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, struct wined3d_adapter *adapter,
         enum wined3d_device_type device_type, HWND focus_window, unsigned int behaviour_flags, BYTE surface_alignment,
         const enum wined3d_feature_level *feature_levels, unsigned int feature_level_count,
@@ -2391,7 +2391,7 @@ struct wined3d * __cdecl wined3d_device_get_wined3d(const struct wined3d_device 
 ULONG __cdecl wined3d_device_incref(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_process_vertices(struct wined3d_device *device,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
-        const struct wined3d_vertex_declaration *declaration, uint32_t flags, DWORD dst_fvf);
+        const struct wined3d_vertex_declaration *declaration, uint32_t flags, uint32_t dst_fvf);
 void __cdecl wined3d_device_release_focus_window(struct wined3d_device *device);
 HRESULT __cdecl wined3d_device_reset(struct wined3d_device *device,
         const struct wined3d_swapchain_desc *swapchain_desc, const struct wined3d_display_mode *mode,

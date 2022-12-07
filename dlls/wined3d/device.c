@@ -3754,7 +3754,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
 
 HRESULT CDECL wined3d_device_process_vertices(struct wined3d_device *device,
         UINT src_start_idx, UINT dst_idx, UINT vertex_count, struct wined3d_buffer *dst_buffer,
-        const struct wined3d_vertex_declaration *declaration, uint32_t flags, DWORD dst_fvf)
+        const struct wined3d_vertex_declaration *declaration, uint32_t flags, uint32_t dst_fvf)
 {
     struct wined3d_state *state = device->cs->c.state;
     struct wined3d_stream_info stream_info;
@@ -4342,8 +4342,8 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_count,
-        const RECT *rects, uint32_t flags, const struct wined3d_color *color, float depth, DWORD stencil)
+HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, unsigned int rect_count,
+        const RECT *rects, uint32_t flags, const struct wined3d_color *color, float depth, unsigned int stencil)
 {
     struct wined3d_fb_state *fb = &device->cs->c.state->fb;
 
