@@ -23,7 +23,14 @@
 extern "C" {
 #endif
 
-#define INTERNETAPI
+#ifndef INTERNETAPI
+#ifdef _WININET_INTERNAL_
+# define INTERNETAPI
+#else
+# define INTERNETAPI DECLSPEC_IMPORT
+#endif
+#endif
+
 #define BOOLAPI INTERNETAPI BOOL WINAPI
 
 typedef LPVOID HINTERNET;

@@ -1,3 +1,4 @@
+EXTRADEFS = -D_WININET_INTERNAL_
 MODULE    = wininet.dll
 IMPORTLIB = wininet
 IMPORTS   = $(ZLIB_PE_LIBS) mpr shlwapi shell32 user32 ws2_32 advapi32
