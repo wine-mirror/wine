@@ -161,23 +161,24 @@ static void read_config(void)
     DWORD enabled = 0, default_disabled = 0;
     HKEY protocols_key, key;
     WCHAR subkey_name[64];
-    unsigned i;
+    unsigned i, server;
     DWORD res;
 
     static BOOL config_read = FALSE;
     static const struct {
         WCHAR key_name[20];
         DWORD prot_client_flag;
+        DWORD prot_server_flag;
         BOOL enabled; /* If no config is present, enable the protocol */
         BOOL disabled_by_default; /* Disable if caller asks for default protocol set */
     } protocol_config_keys[] = {
-        { L"SSL 2.0", SP_PROT_SSL2_CLIENT, FALSE, TRUE }, /* NOTE: TRUE, TRUE on Windows */
-        { L"SSL 3.0", SP_PROT_SSL3_CLIENT, TRUE, FALSE },
-        { L"TLS 1.0", SP_PROT_TLS1_0_CLIENT, TRUE, FALSE },
-        { L"TLS 1.1", SP_PROT_TLS1_1_CLIENT, TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
-        { L"TLS 1.2", SP_PROT_TLS1_2_CLIENT, TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
-        { L"DTLS 1.0", SP_PROT_DTLS1_0_CLIENT, TRUE, TRUE },
-        { L"DTLS 1.2", SP_PROT_DTLS1_2_CLIENT, TRUE, TRUE },
+        { L"SSL 2.0",  SP_PROT_SSL2_CLIENT,    SP_PROT_SSL2_SERVER,    FALSE, TRUE }, /* NOTE: TRUE, TRUE on Windows */
+        { L"SSL 3.0",  SP_PROT_SSL3_CLIENT,    SP_PROT_SSL3_SERVER,    TRUE, FALSE },
+        { L"TLS 1.0",  SP_PROT_TLS1_0_CLIENT,  SP_PROT_TLS1_0_SERVER,  TRUE, FALSE },
+        { L"TLS 1.1",  SP_PROT_TLS1_1_CLIENT,  SP_PROT_TLS1_1_SERVER,  TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
+        { L"TLS 1.2",  SP_PROT_TLS1_2_CLIENT,  SP_PROT_TLS1_2_SERVER,  TRUE, FALSE /* NOTE: not enabled by default on Windows */ },
+        { L"DTLS 1.0", SP_PROT_DTLS1_0_CLIENT, SP_PROT_DTLS1_0_SERVER, TRUE, TRUE },
+        { L"DTLS 1.2", SP_PROT_DTLS1_2_CLIENT, SP_PROT_DTLS1_2_SERVER, TRUE, TRUE },
     };
 
     /* No need for thread safety */
@@ -191,44 +192,49 @@ static void read_config(void)
         DWORD type, size, value;
 
         for(i = 0; i < ARRAY_SIZE(protocol_config_keys); i++) {
-            wcscpy(subkey_name, protocol_config_keys[i].key_name);
-            wcscat(subkey_name, L"\\Client");
-            res = RegOpenKeyExW(protocols_key, subkey_name, 0, KEY_READ, &key);
-            if(res != ERROR_SUCCESS) {
-                if(protocol_config_keys[i].enabled)
-                    enabled |= protocol_config_keys[i].prot_client_flag;
-                if(protocol_config_keys[i].disabled_by_default)
-                    default_disabled |= protocol_config_keys[i].prot_client_flag;
-                continue;
-            }
+            for (server = 0; server < 2; server++) {
+                DWORD flag = server ? protocol_config_keys[i].prot_server_flag
+                                    : protocol_config_keys[i].prot_client_flag;
+                wcscpy(subkey_name, protocol_config_keys[i].key_name);
+                wcscat(subkey_name, server ? L"\\Server" : L"\\Client");
+                res = RegOpenKeyExW(protocols_key, subkey_name, 0, KEY_READ, &key);
+                if(res != ERROR_SUCCESS) {
+                    if(protocol_config_keys[i].enabled)
+                        enabled |= flag;
+                    if(protocol_config_keys[i].disabled_by_default)
+                        default_disabled |= flag;
+                    continue;
+                }
 
-            size = sizeof(value);
-            res = RegQueryValueExW(key, L"enabled", NULL, &type, (BYTE *)&value, &size);
-            if(res == ERROR_SUCCESS) {
-                if(type == REG_DWORD && value)
-                    enabled |= protocol_config_keys[i].prot_client_flag;
-            }else if(protocol_config_keys[i].enabled) {
-                enabled |= protocol_config_keys[i].prot_client_flag;
-            }
+                size = sizeof(value);
+                res = RegQueryValueExW(key, L"enabled", NULL, &type, (BYTE *)&value, &size);
+                if(res == ERROR_SUCCESS) {
+                    if(type == REG_DWORD && value)
+                        enabled |= flag;
+                }else if(protocol_config_keys[i].enabled) {
+                    enabled |= flag;
+                }
 
-            size = sizeof(value);
-            res = RegQueryValueExW(key, L"DisabledByDefault", NULL, &type, (BYTE *)&value, &size);
-            if(res == ERROR_SUCCESS) {
-                if(type != REG_DWORD || value)
-                    default_disabled |= protocol_config_keys[i].prot_client_flag;
-            }else if(protocol_config_keys[i].disabled_by_default) {
-                default_disabled |= protocol_config_keys[i].prot_client_flag;
-            }
+                size = sizeof(value);
+                res = RegQueryValueExW(key, L"DisabledByDefault", NULL, &type, (BYTE *)&value, &size);
+                if(res == ERROR_SUCCESS) {
+                    if(type != REG_DWORD || value)
+                        default_disabled |= flag;
+                }else if(protocol_config_keys[i].disabled_by_default) {
+                    default_disabled |= flag;
+                }
 
-            RegCloseKey(key);
+                RegCloseKey(key);
+            }
         }
     }else {
         /* No config, enable all known protocols. */
         for(i = 0; i < ARRAY_SIZE(protocol_config_keys); i++) {
+            DWORD flag = protocol_config_keys[i].prot_client_flag | protocol_config_keys[i].prot_server_flag;
             if(protocol_config_keys[i].enabled)
-                enabled |= protocol_config_keys[i].prot_client_flag;
+                enabled |= flag;
             if(protocol_config_keys[i].disabled_by_default)
-                default_disabled |= protocol_config_keys[i].prot_client_flag;
+                default_disabled |= flag;
         }
     }
 
@@ -533,8 +539,8 @@ static BYTE *get_key_blob(const CERT_CONTEXT *ctx, DWORD *size)
     return ret;
 }
 
-static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
- PCredHandle phCredential, PTimeStamp ptsExpiry)
+static SECURITY_STATUS acquire_credentials_handle(ULONG fCredentialUse,
+ const SCHANNEL_CRED *schanCred, PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
     struct schan_credentials *creds;
     DWORD enabled_protocols, cred_enabled_protocols;
@@ -545,7 +551,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
     BYTE *key_blob = NULL;
     ULONG key_size = 0;
 
-    TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
+    TRACE("fCredentialUse %#lx, schanCred %p, phCredential %p, ptsExpiry %p\n", fCredentialUse, schanCred, phCredential, ptsExpiry);
 
     if (schanCred)
     {
@@ -563,6 +569,10 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
 
         status = SEC_E_OK;
     }
+    else if (fCredentialUse & SECPKG_CRED_INBOUND)
+    {
+        return SEC_E_NO_CREDENTIALS;
+    }
 
     read_config();
     if(schanCred && cred_enabled_protocols)
@@ -575,7 +585,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
     }
 
     if (!(creds = malloc(sizeof(*creds)))) return SEC_E_INSUFFICIENT_MEMORY;
-    creds->credential_use = SECPKG_CRED_OUTBOUND;
+    creds->credential_use = fCredentialUse;
     creds->enabled_protocols = enabled_protocols;
 
     if (cert && !(key_blob = get_key_blob(cert, &key_size))) goto fail;
@@ -598,11 +608,18 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
     phCredential->dwLower = handle;
     phCredential->dwUpper = 0;
 
-    /* Outbound credentials have no expiry */
     if (ptsExpiry)
     {
-        ptsExpiry->LowPart = 0;
-        ptsExpiry->HighPart = 0;
+        if (fCredentialUse & SECPKG_CRED_INBOUND)
+        {
+            /* FIXME: get expiry from cert */
+        }
+        else
+        {
+            /* Outbound credentials have no expiry */
+            ptsExpiry->LowPart = 0;
+            ptsExpiry->HighPart = 0;
+        }
     }
 
     return status;
@@ -610,54 +627,6 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
 fail:
     free(creds);
     return SEC_E_INTERNAL_ERROR;
-}
-
-static SECURITY_STATUS schan_AcquireServerCredentials(const SCHANNEL_CRED *schanCred,
- PCredHandle phCredential, PTimeStamp ptsExpiry)
-{
-    SECURITY_STATUS status;
-    const CERT_CONTEXT *cert = NULL;
-
-    TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
-
-    if (!schanCred) return SEC_E_NO_CREDENTIALS;
-
-    status = get_cert(schanCred, &cert);
-    if (status == SEC_E_OK)
-    {
-        ULONG_PTR handle;
-        struct schan_credentials *creds;
-
-        if (!(creds = calloc(1, sizeof(*creds)))) return SEC_E_INSUFFICIENT_MEMORY;
-        creds->credential_use = SECPKG_CRED_INBOUND;
-
-        handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
-        if (handle == SCHAN_INVALID_HANDLE)
-        {
-            free(creds);
-            return SEC_E_INTERNAL_ERROR;
-        }
-
-        phCredential->dwLower = handle;
-        phCredential->dwUpper = 0;
-
-        /* FIXME: get expiry from cert */
-    }
-    return status;
-}
-
-static SECURITY_STATUS schan_AcquireCredentialsHandle(ULONG fCredentialUse,
- const SCHANNEL_CRED *schanCred, PCredHandle phCredential, PTimeStamp ptsExpiry)
-{
-    SECURITY_STATUS ret;
-
-    if (fCredentialUse == SECPKG_CRED_OUTBOUND)
-        ret = schan_AcquireClientCredentials(schanCred, phCredential,
-         ptsExpiry);
-    else
-        ret = schan_AcquireServerCredentials(schanCred, phCredential,
-         ptsExpiry);
-    return ret;
 }
 
 static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleA(
@@ -668,7 +637,7 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleA(
     TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
      debugstr_a(pszPrincipal), debugstr_a(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-    return schan_AcquireCredentialsHandle(fCredentialUse,
+    return acquire_credentials_handle(fCredentialUse,
      pAuthData, phCredential, ptsExpiry);
 }
 
@@ -680,7 +649,7 @@ static SECURITY_STATUS SEC_ENTRY schan_AcquireCredentialsHandleW(
     TRACE("(%s, %s, 0x%08lx, %p, %p, %p, %p, %p, %p)\n",
      debugstr_w(pszPrincipal), debugstr_w(pszPackage), fCredentialUse,
      pLogonID, pAuthData, pGetKeyFn, pGetKeyArgument, phCredential, ptsExpiry);
-    return schan_AcquireCredentialsHandle(fCredentialUse,
+    return acquire_credentials_handle(fCredentialUse,
      pAuthData, phCredential, ptsExpiry);
 }
 
