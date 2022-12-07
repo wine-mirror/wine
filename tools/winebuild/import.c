@@ -1851,6 +1851,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                 output( "\tjmp *%s\n", asm_name( imp_name ) );
                 if (is_delay)
                 {
+                    output( "\n\t.section .text$1\n" );
                     output( ".L__wine_delay_import:\n" );
                     output( "\tmov $%s,%%eax\n", asm_name( imp_name ) );
                     output( "\tjmp %s\n", asm_name( delay_load ) );
@@ -1860,6 +1861,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                 output( "\tjmp *%s(%%rip)\n", asm_name( imp_name ) );
                 if (is_delay)
                 {
+                    output( "\n\t.section .text$1\n" );
                     output( ".L__wine_delay_import:\n" );
                     output( "\tlea %s(%%rip),%%rax\n", asm_name( imp_name ) );
                     output( "\tjmp %s\n", asm_name( delay_load ) );
@@ -1870,6 +1872,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                 output( "\tldr PC, [IP]\n" );
                 if (is_delay)
                 {
+                    output( "\n\t.section .text$1\n" );
                     output( ".L__wine_delay_import:\n" );
                     output( "\tldr IP, 1f\n" );
                     output( "\tldr IP, [IP]\n" );
@@ -1883,6 +1886,7 @@ static void build_windows_import_lib( const char *lib_name, DLLSPEC *spec, struc
                 output( "\tbr x16\n" );
                 if (is_delay)
                 {
+                    output( "\n\t.section .text$1\n" );
                     output( ".L__wine_delay_import:\n" );
                     output( "\tadrp x16, %s\n", arm64_page( asm_name( imp_name ) ) );
                     output( "\tadd x16, x16, #%s\n", arm64_pageoff( asm_name( imp_name ) ) );
