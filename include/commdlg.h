@@ -30,6 +30,14 @@ extern "C" {
 #include <pshpack1.h>
 #endif
 
+#ifndef WINCOMMDLGAPI
+#ifdef _COMDLG32_
+# define WINCOMMDLGAPI
+#else
+# define WINCOMMDLGAPI DECLSPEC_IMPORT
+#endif
+#endif
+
 #ifndef SNDMSG
 #ifdef __cplusplus
 #define SNDMSG ::SendMessage
@@ -777,40 +785,37 @@ DECLARE_INTERFACE_(IPrintDialogServices,IUnknown)
 
 #endif /* STDMETHOD */
 
-BOOL  WINAPI ChooseColorA(LPCHOOSECOLORA lpChCol);
-BOOL  WINAPI ChooseColorW(LPCHOOSECOLORW lpChCol);
-#define ChooseColor WINELIB_NAME_AW(ChooseColor)
-DWORD   WINAPI CommDlgExtendedError(void);
-HWND  WINAPI FindTextA(LPFINDREPLACEA lpFind);
-HWND  WINAPI FindTextW(LPFINDREPLACEW lpFind);
-#define FindText WINELIB_NAME_AW(FindText)
-short   WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, WORD cbBuf);
-short   WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, WORD cbBuf);
-#define GetFileTitle WINELIB_NAME_AW(GetFileTitle)
-BOOL  WINAPI GetOpenFileNameA(LPOPENFILENAMEA ofn);
-BOOL  WINAPI GetOpenFileNameW(LPOPENFILENAMEW ofn);
+WINCOMMDLGAPI BOOL    WINAPI ChooseColorA(LPCHOOSECOLORA lpChCol);
+WINCOMMDLGAPI BOOL    WINAPI ChooseColorW(LPCHOOSECOLORW lpChCol);
+#define ChooseColor   WINELIB_NAME_AW(ChooseColor)
+WINCOMMDLGAPI DWORD   WINAPI CommDlgExtendedError(void);
+WINCOMMDLGAPI HWND    WINAPI FindTextA(LPFINDREPLACEA lpFind);
+WINCOMMDLGAPI HWND    WINAPI FindTextW(LPFINDREPLACEW lpFind);
+#define FindText      WINELIB_NAME_AW(FindText)
+WINCOMMDLGAPI short   WINAPI GetFileTitleA(LPCSTR lpFile, LPSTR lpTitle, WORD cbBuf);
+WINCOMMDLGAPI short   WINAPI GetFileTitleW(LPCWSTR lpFile, LPWSTR lpTitle, WORD cbBuf);
+#define GetFileTitle  WINELIB_NAME_AW(GetFileTitle)
+WINCOMMDLGAPI BOOL    WINAPI GetOpenFileNameA(LPOPENFILENAMEA ofn);
+WINCOMMDLGAPI BOOL    WINAPI GetOpenFileNameW(LPOPENFILENAMEW ofn);
 #define GetOpenFileName WINELIB_NAME_AW(GetOpenFileName)
-BOOL  WINAPI GetSaveFileNameA(LPOPENFILENAMEA ofn);
-BOOL  WINAPI GetSaveFileNameW(LPOPENFILENAMEW ofn);
+WINCOMMDLGAPI BOOL    WINAPI GetSaveFileNameA(LPOPENFILENAMEA ofn);
+WINCOMMDLGAPI BOOL    WINAPI GetSaveFileNameW(LPOPENFILENAMEW ofn);
 #define GetSaveFileName WINELIB_NAME_AW(GetSaveFileName)
-BOOL WINAPI PageSetupDlgA( LPPAGESETUPDLGA );
-BOOL WINAPI PageSetupDlgW( LPPAGESETUPDLGW );
-#define PageSetupDlg WINELIB_NAME_AW(PageSetupDlg)
-BOOL  WINAPI PrintDlgA( LPPRINTDLGA printdlg);
-BOOL  WINAPI PrintDlgW( LPPRINTDLGW printdlg);
-#define PrintDlg WINELIB_NAME_AW(PrintDlg)
-HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA);
-HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW);
-#define PrintDlgEx WINELIB_NAME_AW(PrintDlgEx)
-HWND  WINAPI ReplaceTextA( LPFINDREPLACEA lpFind);
-HWND  WINAPI ReplaceTextW( LPFINDREPLACEW lpFind);
-#define ReplaceText WINELIB_NAME_AW(ReplaceText)
-BOOL  WINAPI ChooseFontA(LPCHOOSEFONTA);
-BOOL  WINAPI ChooseFontW(LPCHOOSEFONTW);
-#define ChooseFont WINELIB_NAME_AW(ChooseFont)
-
-void COMDLG32_SetCommDlgExtendedError(DWORD err);
-
+WINCOMMDLGAPI BOOL    WINAPI PageSetupDlgA( LPPAGESETUPDLGA );
+WINCOMMDLGAPI BOOL    WINAPI PageSetupDlgW( LPPAGESETUPDLGW );
+#define PageSetupDlg  WINELIB_NAME_AW(PageSetupDlg)
+WINCOMMDLGAPI BOOL    WINAPI PrintDlgA( LPPRINTDLGA printdlg);
+WINCOMMDLGAPI BOOL    WINAPI PrintDlgW( LPPRINTDLGW printdlg);
+#define PrintDlg      WINELIB_NAME_AW(PrintDlg)
+WINCOMMDLGAPI HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA);
+WINCOMMDLGAPI HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW);
+#define PrintDlgEx    WINELIB_NAME_AW(PrintDlgEx)
+WINCOMMDLGAPI HWND    WINAPI ReplaceTextA( LPFINDREPLACEA lpFind);
+WINCOMMDLGAPI HWND    WINAPI ReplaceTextW( LPFINDREPLACEW lpFind);
+#define ReplaceText   WINELIB_NAME_AW(ReplaceText)
+WINCOMMDLGAPI BOOL    WINAPI ChooseFontA(LPCHOOSEFONTA);
+WINCOMMDLGAPI BOOL    WINAPI ChooseFontW(LPCHOOSEFONTW);
+#define ChooseFont    WINELIB_NAME_AW(ChooseFont)
 
 #ifndef _WIN64
 #include <poppack.h>
