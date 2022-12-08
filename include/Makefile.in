@@ -917,6 +917,7 @@ SOURCES = \
 	wmsdkidl.idl \
 	wmsecure.idl \
 	wnaspi32.h \
+	wofapi.h \
 	wownt16.h \
 	wownt32.h \
 	wpcapi.idl \
