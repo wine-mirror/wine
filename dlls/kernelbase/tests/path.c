@@ -1212,14 +1212,15 @@ static void test_PathCchCanonicalizeEx(void)
         ok(hr == E_INVALIDARG, "expect hr %#lx, got %#lx\n", E_INVALIDARG, hr);
     }
 
+    for (i = 0; i < ARRAY_SIZE(path_inW) - 1; i++) path_inW[i] = 'a';
+    path_inW[PATHCCH_MAX_CCH] = '\0';
+
     path_outW[0] = 0xff;
     hr = pPathCchCanonicalizeEx(path_outW, 0, path_inW, 0);
     ok(hr == E_INVALIDARG, "expect hr %#lx, got %#lx\n", E_INVALIDARG, hr);
     ok(path_outW[0] = 0xff, "expect path_outW unchanged\n");
 
     /* Test path length */
-    for (i = 0; i < ARRAY_SIZE(path_inW) - 1; i++) path_inW[i] = 'a';
-    path_inW[PATHCCH_MAX_CCH] = '\0';
     hr = pPathCchCanonicalizeEx(path_outW, ARRAY_SIZE(path_outW), path_inW, PATHCCH_ALLOW_LONG_PATHS);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), "expect hr %#lx, got %#lx\n",
        HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE), hr);
