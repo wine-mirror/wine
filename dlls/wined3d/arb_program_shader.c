@@ -1647,7 +1647,7 @@ static void pshader_hw_bem(const struct wined3d_shader_instruction *ins)
     shader_addline(buffer, "ADD %s, %s, TC;\n", dst_name, src_name[0]);
 }
 
-static DWORD negate_modifiers(DWORD mod, char *extra_char)
+static enum wined3d_shader_src_modifier negate_modifiers(enum wined3d_shader_src_modifier mod, char *extra_char)
 {
     *extra_char = ' ';
     switch(mod)
@@ -1665,8 +1665,8 @@ static DWORD negate_modifiers(DWORD mod, char *extra_char)
         case WINED3DSPSM_DW:        *extra_char = '-'; return WINED3DSPSM_DW;
         case WINED3DSPSM_ABS:       return WINED3DSPSM_ABSNEG;
         case WINED3DSPSM_ABSNEG:    return WINED3DSPSM_ABS;
+        case WINED3DSPSM_NOT:       FIXME("Unknown modifier %u\n", mod);
     }
-    FIXME("Unknown modifier %u\n", mod);
     return mod;
 }
 
@@ -2511,7 +2511,7 @@ static void shader_hw_mnxn(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static DWORD abs_modifier(DWORD mod, BOOL *need_abs)
+static enum wined3d_shader_src_modifier abs_modifier(enum wined3d_shader_src_modifier mod, BOOL *need_abs)
 {
     *need_abs = FALSE;
 
@@ -2530,8 +2530,8 @@ static DWORD abs_modifier(DWORD mod, BOOL *need_abs)
         case WINED3DSPSM_DW:        *need_abs = TRUE; return WINED3DSPSM_DW;
         case WINED3DSPSM_ABS:       return WINED3DSPSM_ABS;
         case WINED3DSPSM_ABSNEG:    return WINED3DSPSM_ABS;
+        case WINED3DSPSM_NOT:       FIXME("Unknown modifier %u\n", mod);
     }
-    FIXME("Unknown modifier %u\n", mod);
     return mod;
 }
 
