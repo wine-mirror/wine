@@ -3288,7 +3288,7 @@ static void test_query_data_alignment(void)
     ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08lx\n", status);
     ok(sizeof(value) == ReturnLength, "Inconsistent length %lu\n", ReturnLength);
 #ifdef __arm__
-    ok(value == 32, "Expected 32, got %u\n", value);
+    ok(value == 32, "Expected 32, got %lu\n", value);
 #else
     ok(value == 64, "Expected 64, got %lu\n", value);
 #endif

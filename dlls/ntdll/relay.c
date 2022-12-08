@@ -468,11 +468,11 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
         {
         case 'j': /* int64 */
             pos = (pos + 1) & ~1;
-            TRACE( "%x%08x", stack[pos+1], stack[pos] );
+            TRACE( "%lx%08lx", stack[pos+1], stack[pos] );
             pos += 2;
             break;
         case 'k': /* int128 */
-            TRACE( "{%08x,%08x,%08x,%08x}", stack[pos], stack[pos+1], stack[pos+2], stack[pos+3] );
+            TRACE( "{%08lx,%08lx,%08lx,%08lx}", stack[pos], stack[pos+1], stack[pos+2], stack[pos+3] );
             pos += 4;
             break;
         case 's': /* str */
@@ -507,7 +507,7 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
             break;
         case 'i': /* long */
         default:
-            TRACE( "%08x", stack[pos++] );
+            TRACE( "%08lx", stack[pos++] );
             break;
         }
         if (!is_ret_val( arg_types[i+1] )) TRACE( "," );
@@ -521,7 +521,7 @@ DECLSPEC_HIDDEN void * WINAPI relay_trace_entry( struct relay_descr *descr, unsi
     }
 #endif
     *nb_args = pos;
-    TRACE( ") ret=%08x\n", stack[-1] );
+    TRACE( ") ret=%08lx\n", stack[-1] );
     return entry_point->orig_func;
 }
 
@@ -537,10 +537,10 @@ DECLSPEC_HIDDEN void WINAPI relay_trace_exit( struct relay_descr *descr, unsigne
 
     while (!is_ret_val( *arg_types )) arg_types++;
     if (*arg_types == 'J')  /* int64 return value */
-        TRACE( " retval=%08x%08x ret=%08x\n",
+        TRACE( " retval=%08x%08x ret=%08lx\n",
                (UINT)(retval >> 32), (UINT)retval, retaddr );
     else
-        TRACE( " retval=%08x ret=%08x\n", (UINT)retval, retaddr );
+        TRACE( " retval=%08x ret=%08lx\n", (UINT)retval, retaddr );
 }
 
 extern LONGLONG WINAPI relay_call( struct relay_descr *descr, unsigned int idx, const DWORD *stack );

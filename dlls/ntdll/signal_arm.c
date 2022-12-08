@@ -463,7 +463,7 @@ NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *conte
     TRACE( "code=%lx flags=%lx addr=%p pc=%08lx\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress, context->Pc );
     for (c = 0; c < rec->NumberParameters; c++)
-        TRACE( " info[%ld]=%08lx\n", c, rec->ExceptionInformation[c] );
+        TRACE( " info[%ld]=%08Ix\n", c, rec->ExceptionInformation[c] );
 
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
     {
@@ -472,7 +472,7 @@ NTSTATUS WINAPI KiUserExceptionDispatcher( EXCEPTION_RECORD *rec, CONTEXT *conte
                      rec->ExceptionAddress,
                      (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
         else
-            MESSAGE( "wine: Call from %p to unimplemented function %s.%ld, aborting\n",
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%Id, aborting\n",
                      rec->ExceptionAddress,
                      (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
     }
@@ -1061,7 +1061,7 @@ PVOID WINAPI RtlVirtualUnwind( ULONG type, ULONG_PTR base, ULONG_PTR pc,
 {
     void *handler;
 
-    TRACE( "type %lx pc %lx sp %lx func %lx\n", type, pc, context->Sp, base + func->BeginAddress );
+    TRACE( "type %lx pc %Ix sp %lx func %lx\n", type, pc, context->Sp, base + func->BeginAddress );
 
     *handler_data = NULL;
 
@@ -1226,7 +1226,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
     TRACE( "code=%lx flags=%lx end_frame=%p target_ip=%p pc=%08lx\n",
            rec->ExceptionCode, rec->ExceptionFlags, end_frame, target_ip, context->Pc );
     for (i = 0; i < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); i++)
-        TRACE( " info[%ld]=%016lx\n", i, rec->ExceptionInformation[i] );
+        TRACE( " info[%ld]=%08Ix\n", i, rec->ExceptionInformation[i] );
     TRACE("  r0=%08lx  r1=%08lx  r2=%08lx  r3=%08lx\n",
           context->R0, context->R1, context->R2, context->R3 );
     TRACE("  r4=%08lx  r5=%08lx  r6=%08lx  r7=%08lx\n",

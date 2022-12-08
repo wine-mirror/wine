@@ -3380,7 +3380,7 @@ IMAGE_BASE_RELOCATION * WINAPI LdrProcessRelocationBlock( void *page, UINT count
 #elif defined(__arm__)
         case IMAGE_REL_BASED_THUMB_MOV32:
         {
-            DWORD *inst = (DWORD *)((char *)page + offset);
+            UINT *inst = (UINT *)((char *)page + offset);
             WORD lo = ((inst[0] << 1) & 0x0800) + ((inst[0] << 12) & 0xf000) +
                       ((inst[0] >> 20) & 0x0700) + ((inst[0] >> 16) & 0x00ff);
             WORD hi = ((inst[1] << 1) & 0x0800) + ((inst[1] << 12) & 0xf000) +
