@@ -54,10 +54,10 @@ int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
 /*********************************************************************
  *		__CxxFrameHandler (MSVCRT.@)
  */
-EXCEPTION_DISPOSITION CDECL __CxxFrameHandler(EXCEPTION_RECORD *rec, DWORD frame, CONTEXT *context,
+EXCEPTION_DISPOSITION CDECL __CxxFrameHandler(EXCEPTION_RECORD *rec, ULONG64 frame, CONTEXT *context,
                                               DISPATCHER_CONTEXT *dispatch)
 {
-    FIXME("%p %x %p %p: not implemented\n", rec, frame, context, dispatch);
+    FIXME("%p %I64x %p %p: not implemented\n", rec, frame, context, dispatch);
     return ExceptionContinueSearch;
 }
 
