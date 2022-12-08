@@ -1243,7 +1243,7 @@ static bool wined3d_box_intersect(struct wined3d_box *ret, const struct wined3d_
 
 static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
         unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
-        const RECT *draw_rect, uint32_t flags, const struct wined3d_color *colour, float depth, DWORD stencil)
+        const RECT *draw_rect, uint32_t flags, const struct wined3d_color *colour, float depth, unsigned int stencil)
 {
     struct wined3d_color c = {depth, 0.0f, 0.0f, 0.0f};
     struct wined3d_box box, box_clip, box_view;
