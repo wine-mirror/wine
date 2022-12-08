@@ -4557,11 +4557,11 @@ struct wined3d_texture
     unsigned int pow2_width;
     unsigned int pow2_height;
     UINT layer_count;
-    UINT level_count;
+    unsigned int level_count;
     unsigned int download_count;
     unsigned int sysmem_count;
     float pow2_matrix[16];
-    UINT lod;
+    unsigned int lod;
     DWORD sampler;
     uint32_t flags;
     DWORD update_map_binding;

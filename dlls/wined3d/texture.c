@@ -1734,10 +1734,10 @@ void CDECL wined3d_texture_get_pitch(const struct wined3d_texture *texture,
             width, height, row_pitch, slice_pitch);
 }
 
-DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
+unsigned int CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, unsigned int lod)
 {
     struct wined3d_resource *resource;
-    DWORD old = texture->lod;
+    unsigned int old = texture->lod;
 
     TRACE("texture %p, lod %u.\n", texture, lod);
 
@@ -1771,14 +1771,14 @@ DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
     return old;
 }
 
-DWORD CDECL wined3d_texture_get_lod(const struct wined3d_texture *texture)
+unsigned int CDECL wined3d_texture_get_lod(const struct wined3d_texture *texture)
 {
     TRACE("texture %p, returning %u.\n", texture, texture->lod);
 
     return texture->lod;
 }
 
-DWORD CDECL wined3d_texture_get_level_count(const struct wined3d_texture *texture)
+UINT CDECL wined3d_texture_get_level_count(const struct wined3d_texture *texture)
 {
     TRACE("texture %p, returning %u.\n", texture, texture->level_count);
 
