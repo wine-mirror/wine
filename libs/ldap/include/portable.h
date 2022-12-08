@@ -813,13 +813,13 @@
 #define LBER_INT_T int
 
 /* define to large integer type */
-#define LBER_LEN_T long
+/* #undef LBER_LEN_T */
 
 /* define to socket descriptor type */
 #define LBER_SOCKET_T int
 
 /* define to large integer type */
-#define LBER_TAG_T long
+/* #undef LBER_TAG_T */
 
 /* define to 1 if library is reentrant */
 #define LDAP_API_FEATURE_X_OPENLDAP_REENTRANT 1
