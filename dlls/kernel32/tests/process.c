@@ -4949,16 +4949,25 @@ static void test_job_list_attribute(HANDLE parent_job)
 static void test_services_exe(void)
 {
     NTSTATUS status;
-    ULONG size, offset;
+    ULONG size, offset, try;
     char *buf;
     SYSTEM_PROCESS_INFORMATION *spi;
     ULONG services_pid = 0, services_session_id = ~0;
 
-    status = NtQuerySystemInformation(SystemProcessInformation, NULL, 0, &size);
-    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", status);
+    /* Check that passing a zero size returns a size suitable for the next call,
+     * taking into account that in rare cases processes may start between the
+     * two NtQuerySystemInformation() calls. So this may require a few tries.
+     */
+    for (try = 0; try < 3; try++)
+    {
+        status = NtQuerySystemInformation(SystemProcessInformation, NULL, 0, &size);
+        ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", status);
 
-    buf = malloc(size);
-    status = NtQuerySystemInformation(SystemProcessInformation, buf, size, &size);
+        buf = malloc(size);
+        status = NtQuerySystemInformation(SystemProcessInformation, buf, size, &size);
+        if (status != STATUS_INFO_LENGTH_MISMATCH) break;
+        free(buf);
+    }
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 
     spi = (SYSTEM_PROCESS_INFORMATION *)buf;
