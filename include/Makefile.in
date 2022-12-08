@@ -527,6 +527,7 @@ SOURCES = \
 	msvcrt/time.h \
 	msvcrt/uchar.h \
 	msvcrt/unistd.h \
+	msvcrt/vadefs.h \
 	msvcrt/wchar.h \
 	msvcrt/wctype.h \
 	mswsock.h \
