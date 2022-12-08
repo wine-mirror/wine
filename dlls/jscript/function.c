@@ -756,6 +756,55 @@ HRESULT create_builtin_constructor(script_ctx_t *ctx, builtin_invoke_t value_pro
     return S_OK;
 }
 
+/*
+ * Create the actual prototype on demand, since it is a circular ref, which prevents the vast
+ * majority of functions from being released quickly, leading to unnecessary scope detach.
+ */
+static HRESULT InterpretedFunction_get_prototype(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+{
+    jsdisp_t *prototype;
+    HRESULT hres;
+
+    hres = create_object(ctx, NULL, &prototype);
+    if(FAILED(hres))
+        return hres;
+
+    hres = jsdisp_define_data_property(jsthis, L"prototype", PROPF_WRITABLE, jsval_obj(prototype));
+    if(SUCCEEDED(hres))
+        hres = set_constructor_prop(ctx, jsthis, prototype);
+    if(FAILED(hres)) {
+        jsdisp_release(prototype);
+        return hres;
+    }
+
+    *r = jsval_obj(prototype);
+    return S_OK;
+}
+
+static HRESULT InterpretedFunction_set_prototype(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
+{
+    return jsdisp_define_data_property(jsthis, L"prototype", PROPF_WRITABLE, value);
+}
+
+static const builtin_prop_t InterpretedFunction_props[] = {
+    {L"arguments",           NULL, 0,                        Function_get_arguments},
+    {L"length",              NULL, 0,                        Function_get_length},
+    {L"prototype",           NULL, 0,                        InterpretedFunction_get_prototype, InterpretedFunction_set_prototype}
+};
+
+static const builtin_info_t InterpretedFunction_info = {
+    JSCLASS_FUNCTION,
+    Function_value,
+    ARRAY_SIZE(InterpretedFunction_props),
+    InterpretedFunction_props,
+    Function_destructor,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    Function_gc_traverse
+};
+
 static HRESULT InterpretedFunction_call(script_ctx_t *ctx, FunctionInstance *func, jsval_t vthis, unsigned flags,
          unsigned argc, jsval_t *argv, jsval_t *r)
 {
@@ -838,24 +887,10 @@ HRESULT create_source_function(script_ctx_t *ctx, bytecode_t *code, function_cod
         scope_chain_t *scope_chain, jsdisp_t **ret)
 {
     InterpretedFunction *function;
-    jsdisp_t *prototype;
     HRESULT hres;
 
-    hres = create_object(ctx, NULL, &prototype);
-    if(FAILED(hres))
-        return hres;
-
-    hres = create_function(ctx, NULL, &InterpretedFunctionVtbl, sizeof(InterpretedFunction), PROPF_CONSTR,
-                           FALSE, NULL, (void**)&function);
-    if(SUCCEEDED(hres)) {
-        hres = jsdisp_define_data_property(&function->function.dispex, L"prototype", PROPF_WRITABLE,
-                                           jsval_obj(prototype));
-        if(SUCCEEDED(hres))
-            hres = set_constructor_prop(ctx, &function->function.dispex, prototype);
-        if(FAILED(hres))
-            jsdisp_release(&function->function.dispex);
-    }
-    jsdisp_release(prototype);
+    hres = create_function(ctx, &InterpretedFunction_info, &InterpretedFunctionVtbl, sizeof(InterpretedFunction),
+                           PROPF_CONSTR, FALSE, NULL, (void**)&function);
     if(FAILED(hres))
         return hres;
 
