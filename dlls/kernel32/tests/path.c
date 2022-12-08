@@ -1878,13 +1878,13 @@ static void test_SearchPathW(void)
     HANDLE handle;
     DWORD ret;
 
+    GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
+
     /* NULL filename */
     ret = SearchPathW(pathW, NULL, NULL, ARRAY_SIZE(buffW), buffW, &ptrW);
     ok(ret == 0, "Expected failure, got %ld\n", ret);
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
       "Expected ERROR_INVALID_PARAMETER, got %#lx\n", GetLastError());
-
-    GetWindowsDirectoryW(pathW, ARRAY_SIZE(pathW));
 
     /* empty filename */
     SetLastError(0xdeadbeef);
