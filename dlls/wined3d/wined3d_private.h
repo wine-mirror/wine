@@ -1138,7 +1138,7 @@ struct wined3d_shader_sampler_map
 struct wined3d_shader_immediate_constant_buffer
 {
     unsigned int vec4_count;
-    DWORD data[MAX_IMMEDIATE_CONSTANT_BUFFER_SIZE];
+    uint32_t data[MAX_IMMEDIATE_CONSTANT_BUFFER_SIZE];
 };
 
 struct wined3d_shader_indexable_temp
@@ -1266,9 +1266,9 @@ struct wined3d_shader_register
 struct wined3d_shader_dst_param
 {
     struct wined3d_shader_register reg;
-    DWORD write_mask;
-    DWORD modifiers;
-    DWORD shift;
+    uint32_t write_mask;
+    uint32_t modifiers;
+    unsigned int shift;
 };
 
 struct wined3d_shader_src_param

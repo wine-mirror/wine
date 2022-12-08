@@ -1884,7 +1884,7 @@ unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_map
     return wined3d_log2i(map);
 }
 
-static void shader_dump_global_flags(struct wined3d_string_buffer *buffer, DWORD global_flags)
+static void shader_dump_global_flags(struct wined3d_string_buffer *buffer, uint32_t global_flags)
 {
     if (global_flags & WINED3DSGF_REFACTORING_ALLOWED)
     {
@@ -1912,7 +1912,7 @@ static void shader_dump_global_flags(struct wined3d_string_buffer *buffer, DWORD
         shader_addline(buffer, "unknown_flags(%#x)", global_flags);
 }
 
-static void shader_dump_sync_flags(struct wined3d_string_buffer *buffer, DWORD sync_flags)
+static void shader_dump_sync_flags(struct wined3d_string_buffer *buffer, uint32_t sync_flags)
 {
     if (sync_flags & WINED3DSSF_GLOBAL_UAV)
     {
@@ -1951,7 +1951,7 @@ static void shader_dump_precise_flags(struct wined3d_string_buffer *buffer, uint
     shader_addline(buffer, "]");
 }
 
-static void shader_dump_uav_flags(struct wined3d_string_buffer *buffer, DWORD uav_flags)
+static void shader_dump_uav_flags(struct wined3d_string_buffer *buffer, uint32_t uav_flags)
 {
     if (uav_flags & WINED3DSUF_GLOBALLY_COHERENT)
     {
@@ -2652,7 +2652,7 @@ HRESULT shader_generate_code(const struct wined3d_shader *shader, struct wined3d
 static void shader_dump_ins_modifiers(struct wined3d_string_buffer *buffer,
         const struct wined3d_shader_dst_param *dst)
 {
-    DWORD mmask = dst->modifiers;
+    uint32_t mmask = dst->modifiers;
 
     switch (dst->shift)
     {
@@ -3981,18 +3981,18 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     {
         for (i = 0; i < shader->limits->sampler; ++i)
         {
-            DWORD flags = state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS];
+            uint32_t flags = state->texture_states[i][WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS];
 
             if (flags & WINED3D_TTFF_PROJECTED)
             {
-                DWORD tex_transform = flags & ~WINED3D_TTFF_PROJECTED;
+                uint32_t tex_transform = flags & ~WINED3D_TTFF_PROJECTED;
 
                 if (!state->shader[WINED3D_SHADER_TYPE_VERTEX])
                 {
                     enum wined3d_shader_resource_type resource_type = shader->reg_maps.resource_info[i].type;
                     unsigned int j;
                     unsigned int index = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
-                    DWORD max_valid = WINED3D_TTFF_COUNT4;
+                    uint32_t max_valid = WINED3D_TTFF_COUNT4;
 
                     for (j = 0; j < state->vertex_declaration->element_count; ++j)
                     {
