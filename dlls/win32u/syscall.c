@@ -178,6 +178,7 @@ static void * const syscalls[] =
     NtUserGetGUIThreadInfo,
     NtUserGetIconInfo,
     NtUserGetIconSize,
+    NtUserGetInternalWindowPos,
     NtUserGetKeyNameText,
     NtUserGetKeyState,
     NtUserGetKeyboardLayout,

@@ -2050,6 +2050,15 @@ NTSTATUS WINAPI wow64_NtUserGetIconSize( UINT *args )
     return NtUserGetIconSize( handle, step, width, height );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetInternalWindowPos( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    RECT *rect = get_ptr( &args );
+    POINT *pt = get_ptr( &args );
+
+    return NtUserGetInternalWindowPos( hwnd, rect, pt );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetKeyNameText( UINT *args )
 {
     LONG lparam = get_ulong( &args );

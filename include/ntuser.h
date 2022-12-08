@@ -744,6 +744,7 @@ BOOL    WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info );
 BOOL    WINAPI NtUserGetIconInfo( HICON icon, ICONINFO *info, UNICODE_STRING *module,
                                   UNICODE_STRING *res_name, DWORD *bpp, LONG unk );
 BOOL    WINAPI NtUserGetIconSize( HICON handle, UINT step, LONG *width, LONG *height );
+UINT    WINAPI NtUserGetInternalWindowPos( HWND hwnd, RECT *rect, POINT *pt );
 INT     WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size );
 SHORT   WINAPI NtUserGetKeyState( INT vkey );
 HKL     WINAPI NtUserGetKeyboardLayout( DWORD thread_id );

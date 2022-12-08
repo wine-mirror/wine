@@ -314,7 +314,7 @@
 @ stdcall GetIconInfoExW(long ptr)
 @ stub GetInputDesktop
 @ stdcall GetInputState()
-@ stdcall GetInternalWindowPos(long ptr ptr)
+@ stdcall GetInternalWindowPos(long ptr ptr) NtUserGetInternalWindowPos
 @ stdcall GetKBCodePage()
 @ stdcall GetKeyNameTextA(long ptr long)
 @ stdcall GetKeyNameTextW(long ptr long) NtUserGetKeyNameText

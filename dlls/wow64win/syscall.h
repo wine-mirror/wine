@@ -164,6 +164,7 @@
     SYSCALL_ENTRY( NtUserGetGUIThreadInfo ) \
     SYSCALL_ENTRY( NtUserGetIconInfo ) \
     SYSCALL_ENTRY( NtUserGetIconSize ) \
+    SYSCALL_ENTRY( NtUserGetInternalWindowPos ) \
     SYSCALL_ENTRY( NtUserGetKeyNameText ) \
     SYSCALL_ENTRY( NtUserGetKeyState ) \
     SYSCALL_ENTRY( NtUserGetKeyboardLayout ) \

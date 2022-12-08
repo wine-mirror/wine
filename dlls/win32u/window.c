@@ -2495,6 +2495,20 @@ static void make_rect_onscreen( RECT *rect )
     }
 }
 
+/***********************************************************************
+ *           NtUserGetInternalWindowPos (win32u.@)
+ */
+UINT WINAPI NtUserGetInternalWindowPos( HWND hwnd, RECT *rect, POINT *pt )
+{
+    WINDOWPLACEMENT placement;
+
+    placement.length = sizeof(placement);
+    if (!NtUserGetWindowPlacement( hwnd, &placement )) return 0;
+    if (rect) *rect = placement.rcNormalPosition;
+    if (pt) *pt = placement.ptMinPosition;
+    return placement.showCmd;
+}
+
 /* make sure the specified point is visible on screen */
 static void make_point_onscreen( POINT *pt )
 {

@@ -943,7 +943,7 @@
 @ stub NtUserGetInteractiveControlDeviceInfo
 @ stub NtUserGetInteractiveControlInfo
 @ stub NtUserGetInteractiveCtrlSupportedWaveforms
-@ stub NtUserGetInternalWindowPos
+@ stdcall -syscall NtUserGetInternalWindowPos(long ptr ptr)
 @ stdcall -syscall NtUserGetKeyNameText(long ptr long)
 @ stdcall -syscall NtUserGetKeyState(long)
 @ stdcall -syscall NtUserGetKeyboardLayout(long)

@@ -196,25 +196,6 @@ BOOL WINAPI BringWindowToTop( HWND hwnd )
 
 
 /***********************************************************************
- *		GetInternalWindowPos (USER32.@)
- */
-UINT WINAPI GetInternalWindowPos( HWND hwnd, LPRECT rectWnd,
-                                      LPPOINT ptIcon )
-{
-    WINDOWPLACEMENT wndpl;
-
-    wndpl.length = sizeof(wndpl);
-    if (NtUserGetWindowPlacement( hwnd, &wndpl ))
-    {
-	if (rectWnd) *rectWnd = wndpl.rcNormalPosition;
-	if (ptIcon)  *ptIcon = wndpl.ptMinPosition;
-	return wndpl.showCmd;
-    }
-    return 0;
-}
-
-
-/***********************************************************************
  *		AnimateWindow (USER32.@)
  *		Shows/Hides a window with an animation
  *		NO ANIMATION YET
