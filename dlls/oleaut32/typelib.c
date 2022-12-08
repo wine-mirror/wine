@@ -6374,7 +6374,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
     UINT i;
     DWORD *args;
 
-    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+    TRACE("(%p, %Id, %d, %d, %d, %p, %p, %p (vt=%d))\n",
         pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg,
         pvargResult, V_VT(pvargResult));
 
@@ -6673,7 +6673,7 @@ HRESULT WINAPI DispCallFunc( void* pvInstance, ULONG_PTR oVft, CALLCONV cc, VART
     int dcount = 0; /* double-precision float register index count */
 #endif
 
-    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+    TRACE("(%p, %Id, %d, %d, %d, %p, %p, %p (vt=%d))\n",
         pvInstance, oVft, cc, vtReturn, cActuals, prgvt, prgpvarg, pvargResult, V_VT(pvargResult));
 
     if (cc != CC_STDCALL && cc != CC_CDECL)
@@ -6883,7 +6883,7 @@ HRESULT WINAPI DispCallFunc( void *instance, ULONG_PTR offset, CALLCONV cc, VART
     int rcount;      /* 64-bit register index count */
     int fpcount = 0; /* float register index count */
 
-    TRACE("(%p, %ld, %d, %d, %d, %p, %p, %p (vt=%d))\n",
+    TRACE("(%p, %Id, %d, %d, %d, %p, %p, %p (vt=%d))\n",
           instance, offset, cc, ret_type, count, types, vargs, result, V_VT(result));
 
     if (cc != CC_STDCALL && cc != CC_CDECL)

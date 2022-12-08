@@ -1282,7 +1282,7 @@ static VARIANT WINAPI inst_func2(void *inst, VARIANT v1, VARIANT v2)
     ok( (*(void ***)inst)[3] == inst_func2, "wrong ptr %p\n", inst );
 
     ok(V_VT(&v1) == VT_I4, "unexpected %d\n", V_VT(&v1));
-    ok(V_I4(&v1) == 2, "unexpected %d\n", V_I4(&v1));
+    ok(V_I4(&v1) == 2, "unexpected %ld\n", V_I4(&v1));
     ok(V_VT(&v2) == VT_BSTR, "unexpected %d\n", V_VT(&v2));
     ok(lstrcmpW(V_BSTR(&v2), testW) == 0, "unexpected %s\n", wine_dbgstr_w(V_BSTR(&v2)));
 
