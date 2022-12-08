@@ -1260,8 +1260,8 @@ class VkVariable(object):
 
         return (self.is_struct() or (self.is_union() and self.selector)) and self.struct.needs_alloc(conv, unwrap)
 
-    def needs_host_type(self):
-        return (self.is_struct() or (self.is_union() and self.selector)) and self.struct.needs_host_type()
+    def needs_win32_type(self):
+        return (self.is_struct() or (self.is_union() and self.selector)) and self.struct.needs_win32_type()
 
     def get_conversions(self, unwrap, parent_const=False):
         """ Get a list of conversions required for this parameter if any.
@@ -1315,7 +1315,7 @@ class VkVariable(object):
             cast_type += "PTR32 *"
         else:
             cast_type += self.type
-            if self.needs_host_type():
+            if self.needs_win32_type():
                 cast_type += "32"
 
             if self.is_pointer():
@@ -1496,7 +1496,7 @@ class VkMember(VkVariable):
             text += "struct "
 
         text += self.type
-        if conv and self.needs_host_type():
+        if conv and self.needs_win32_type():
             text += "32"
 
         if self.is_pointer():
@@ -1717,7 +1717,7 @@ class VkParam(VkVariable):
 
         proto += self.type
         name = self.name
-        if conv and self.needs_host_type():
+        if conv and self.needs_win32_type():
             proto += "32"
 
         if is_member and self.needs_alignment():
@@ -2139,7 +2139,7 @@ class VkStruct(Sequence):
 
         return False
 
-    def needs_host_type(self):
+    def needs_win32_type(self):
         # VkAllocationCallbacks never needs conversion
         if self.name == "VkAllocationCallbacks":
             return False
@@ -2151,7 +2151,7 @@ class VkStruct(Sequence):
                 return True
             if m.needs_alignment():
                 return True
-            if (m.is_struct() or m.is_union()) and m.struct.needs_host_type():
+            if (m.is_struct() or m.is_union()) and m.struct.needs_win32_type():
                 return True
 
     def set_type_info(self, types):
@@ -2233,7 +2233,7 @@ class StructConversionFunction(object):
 
         needs_alloc = self.direction != Direction.OUTPUT and self.operand.needs_alloc(self.conv, self.unwrap)
         win_type = self.type
-        if self.conv and self.operand.needs_host_type():
+        if self.conv and self.operand.needs_win32_type():
             win_type += "32"
         if self.direction == Direction.OUTPUT and self.const:
             win_type = "const " + win_type
@@ -2323,7 +2323,7 @@ class StructConversionFunction(object):
                     continue
 
                 stype = next(x for x in ext.members if x.name == "sType").values
-                win_type = ext.name + "32" if self.conv and ext.needs_host_type() else ext.name
+                win_type = ext.name + "32" if self.conv and ext.needs_win32_type() else ext.name
                 if self.direction == Direction.INPUT:
                     in_type = "const " + win_type
                     out_type = ext.name
@@ -2421,7 +2421,7 @@ class ArrayConversionFunction(object):
 
         win_type = self.type
         if self.conv:
-            if self.array.needs_host_type():
+            if self.array.needs_win32_type():
                 win_type += "32"
             elif self.array.is_handle() and self.array.handle.is_dispatchable():
                 win_type = "PTR32"
@@ -2545,7 +2545,7 @@ class VkGenerator(object):
 
         # Build a list conversion functions for struct conversion.
         self.conversions = []
-        self.host_structs = []
+        self.win32_structs = []
         for func in self.registry.funcs.values():
             if not func.needs_exposing():
                 continue
@@ -2560,18 +2560,18 @@ class VkGenerator(object):
                     continue
 
                 for e in conv.operand.struct_extensions:
-                    if not e.required or not e.needs_host_type():
+                    if not e.required or not e.needs_win32_type():
                         continue
-                    if not any(s.name == e.name for s in self.host_structs):
-                        self.host_structs.append(e)
+                    if not any(s.name == e.name for s in self.win32_structs):
+                        self.win32_structs.append(e)
 
-                if not conv.operand.needs_host_type():
+                if not conv.operand.needs_win32_type():
                     continue
 
                 # Structs can be used in different ways by different conversions
                 # e.g. array vs non-array. Just make sure we pull in each struct once.
-                if not any(s.name == conv.operand.name for s in self.host_structs):
-                    self.host_structs.append(conv.operand)
+                if not any(s.name == conv.operand.name for s in self.win32_structs):
+                    self.win32_structs.append(conv.operand)
 
     def _generate_copyright(self, f, spec_file=False):
         f.write("# " if spec_file else "/* ")
@@ -2598,7 +2598,7 @@ class VkGenerator(object):
 
         f.write("WINE_DEFAULT_DEBUG_CHANNEL(vulkan);\n\n")
 
-        for struct in self.host_structs:
+        for struct in self.win32_structs:
             f.write(struct.definition(conv=True, align=True))
             f.write("\n")
 
