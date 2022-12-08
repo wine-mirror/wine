@@ -107,8 +107,7 @@ HWND WINAPI ChildWindowFromPoint( HWND parent, POINT pt )
  */
 HWND WINAPI RealChildWindowFromPoint( HWND parent, POINT pt )
 {
-    return NtUserChildWindowFromPointEx( parent, pt.x, pt.y,
-                                         CWP_SKIPTRANSPARENT | CWP_SKIPINVISIBLE );
+    return NtUserRealChildWindowFromPoint( parent, pt.x, pt.y );
 }
 
 /*******************************************************************

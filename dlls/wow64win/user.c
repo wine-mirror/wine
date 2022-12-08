@@ -2423,6 +2423,15 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputDeviceList( UINT *args )
     }
 }
 
+NTSTATUS WINAPI wow64_NtUserRealChildWindowFromPoint( UINT *args )
+{
+    HWND parent = get_handle( &args );
+    LONG x = get_ulong( &args );
+    LONG y = get_ulong( &args );
+
+    return HandleToUlong( NtUserRealChildWindowFromPoint( parent, x, y ));
+}
+
 NTSTATUS WINAPI wow64_NtUserRegisterClassExWOW( UINT *args )
 {
     const WNDCLASSEXW32 *wc32 = get_ptr( &args );

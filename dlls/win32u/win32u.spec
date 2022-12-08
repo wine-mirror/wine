@@ -1117,7 +1117,7 @@
 @ stdcall -syscall NtUserQueryInputContext(long long)
 @ stub NtUserQuerySendMessage
 @ stub NtUserQueryWindow
-@ stub NtUserRealChildWindowFromPoint
+@ stdcall -syscall NtUserRealChildWindowFromPoint(long long long)
 @ stub NtUserRealInternalGetMessage
 @ stub NtUserRealWaitMessageEx
 @ stdcall -syscall NtUserRedrawWindow(long ptr long long)

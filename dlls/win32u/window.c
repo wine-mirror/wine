@@ -2297,6 +2297,14 @@ HWND WINAPI NtUserChildWindowFromPointEx( HWND parent, LONG x, LONG y, UINT flag
 }
 
 /*******************************************************************
+ *           NtUserRealChildWindowFromPoint (win32u.@)
+ */
+HWND WINAPI NtUserRealChildWindowFromPoint( HWND parent, LONG x, LONG y )
+{
+    return NtUserChildWindowFromPointEx( parent, x, y, CWP_SKIPTRANSPARENT | CWP_SKIPINVISIBLE );
+}
+
+/*******************************************************************
  *           get_work_rect
  *
  * Get the work area that a maximized window can cover, depending on style.
