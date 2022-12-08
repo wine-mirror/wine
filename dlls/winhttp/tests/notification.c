@@ -776,7 +776,7 @@ static const struct notification websocket_test5[] =
     { winhttp_close_handle,               WINHTTP_CALLBACK_STATUS_HANDLE_CLOSING, NF_SIGNAL }
 };
 
-#define BIG_BUFFER_SIZE (32 * 1024)
+#define BIG_BUFFER_SIZE (16 * 1024)
 
 static void test_websocket(BOOL secure)
 {
