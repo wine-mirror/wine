@@ -783,7 +783,10 @@ static void test_GetTask(void)
 
     /* Delete the folder and recreate it to prevent a crash on w1064v1507 */
     hr = ITaskFolder_DeleteFolder(root, Wine, 0);
-    ok(hr == S_OK, "DeleteTask error %#lx\n", hr);
+    todo_wine
+    ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND) || broken(hr == S_OK) /* w1064v1507 */,
+       "expected ERROR_FILE_NOT_FOUND, got %#lx\n", hr);
+    ITaskFolder_Release(folder);
 
     hr = ITaskFolder_CreateFolder(root, Wine, v_null, &folder);
     ok(hr == S_OK, "CreateFolder error %#lx\n", hr);
