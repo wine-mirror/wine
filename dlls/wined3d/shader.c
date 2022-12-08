@@ -21,7 +21,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include <stdio.h>
 #include <string.h>
@@ -3893,7 +3892,7 @@ static HRESULT geometry_shader_init_stream_output(struct wined3d_shader *shader,
 
     if (FAILED(hr = geometry_shader_init_so_desc(&shader->u.gs, shader->device, so_desc)))
     {
-        WARN("Failed to initialise stream output description, hr %#x.\n", hr);
+        WARN("Failed to initialise stream output description, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -4332,7 +4331,7 @@ HRESULT CDECL wined3d_shader_create_cs(struct wined3d_device *device, const stru
 
     if (FAILED(hr = shader_init(object, device, desc, parent, parent_ops)))
     {
-        WARN("Failed to initialize compute shader, hr %#x.\n", hr);
+        WARN("Failed to initialize compute shader, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -4366,7 +4365,7 @@ HRESULT CDECL wined3d_shader_create_ds(struct wined3d_device *device, const stru
 
     if (FAILED(hr = shader_init(object, device, desc, parent, parent_ops)))
     {
-        WARN("Failed to initialize domain shader, hr %#x.\n", hr);
+        WARN("Failed to initialize domain shader, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -4401,7 +4400,7 @@ HRESULT CDECL wined3d_shader_create_gs(struct wined3d_device *device, const stru
 
     if (FAILED(hr = geometry_shader_init(object, device, desc, so_desc, parent, parent_ops)))
     {
-        WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
+        WARN("Failed to initialize geometry shader, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -4428,7 +4427,7 @@ HRESULT CDECL wined3d_shader_create_hs(struct wined3d_device *device, const stru
 
     if (FAILED(hr = shader_init(object, device, desc, parent, parent_ops)))
     {
-        WARN("Failed to initialize hull shader, hr %#x.\n", hr);
+        WARN("Failed to initialize hull shader, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -4462,7 +4461,7 @@ HRESULT CDECL wined3d_shader_create_ps(struct wined3d_device *device, const stru
 
     if (FAILED(hr = pixel_shader_init(object, device, desc, parent, parent_ops)))
     {
-        WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
+        WARN("Failed to initialize pixel shader, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -4489,7 +4488,7 @@ HRESULT CDECL wined3d_shader_create_vs(struct wined3d_device *device, const stru
 
     if (FAILED(hr = vertex_shader_init(object, device, desc, parent, parent_ops)))
     {
-        WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
+        WARN("Failed to initialize vertex shader, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
