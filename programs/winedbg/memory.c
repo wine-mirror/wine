@@ -726,7 +726,7 @@ void print_address(const ADDRESS64* addr, BOOLEAN with_line)
         if (!SymGetModuleInfo(dbg_curr_process->handle, lin, &im)) return;
         dbg_printf(" %s", im.ModuleName);
         if (lin > im.BaseOfImage)
-            dbg_printf("+0x%Ix", lin - im.BaseOfImage);
+            dbg_printf("+0x%Ix", lin - (DWORD_PTR)im.BaseOfImage);
     }
     if (with_line)
     {

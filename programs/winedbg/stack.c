@@ -296,7 +296,7 @@ static void stack_print_addr_and_args(void)
             dbg_printf(" [%s:%lu]", il.FileName, il.LineNumber);
         dbg_printf(" in %s", im.ModuleName);
     }
-    else dbg_printf(" in %s (+0x%Ix)", im.ModuleName, frm->linear_pc - im.BaseOfImage);
+    else dbg_printf(" in %s (+0x%Ix)", im.ModuleName, frm->linear_pc - (DWORD_PTR)im.BaseOfImage);
 }
 
 /******************************************************************

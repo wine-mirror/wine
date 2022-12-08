@@ -80,7 +80,7 @@ static void be_arm64_print_context(HANDLE hThread, const dbg_ctx_t *ctx, int all
         if (!((ctx->ctx.Cpsr >> 26) & (1 << (sizeof(condflags) - i))))
             buf[i] = '-';
 
-    dbg_printf(" Pc:%016I64x Sp:%016I64x Lr:%016I64x Cpsr:%08x(%s)\n",
+    dbg_printf(" Pc:%016I64x Sp:%016I64x Lr:%016I64x Cpsr:%08lx(%s)\n",
                ctx->ctx.Pc, ctx->ctx.Sp, ctx->ctx.u.s.Lr, ctx->ctx.Cpsr, buf);
     dbg_printf(" x0: %016I64x x1: %016I64x x2: %016I64x x3: %016I64x x4: %016I64x\n",
                ctx->ctx.u.s.X0, ctx->ctx.u.s.X1, ctx->ctx.u.s.X2, ctx->ctx.u.s.X3, ctx->ctx.u.s.X4);
