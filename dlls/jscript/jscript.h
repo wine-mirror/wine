@@ -137,9 +137,20 @@ typedef struct named_item_t {
     struct list entry;
 } named_item_t;
 
+struct gc_ctx;
+
+enum gc_traverse_op {
+    GC_TRAVERSE_UNLINK,
+    GC_TRAVERSE_SPECULATIVELY,
+    GC_TRAVERSE
+};
+
 HRESULT create_named_item_script_obj(script_ctx_t*,named_item_t*) DECLSPEC_HIDDEN;
 named_item_t *lookup_named_item(script_ctx_t*,const WCHAR*,unsigned) DECLSPEC_HIDDEN;
 void release_named_item(named_item_t*) DECLSPEC_HIDDEN;
+HRESULT gc_run(script_ctx_t*) DECLSPEC_HIDDEN;
+HRESULT gc_process_linked_obj(struct gc_ctx*,enum gc_traverse_op,jsdisp_t*,jsdisp_t*,void**) DECLSPEC_HIDDEN;
+HRESULT gc_process_linked_val(struct gc_ctx*,enum gc_traverse_op,jsdisp_t*,jsval_t*) DECLSPEC_HIDDEN;
 
 typedef struct {
     const WCHAR *name;
@@ -159,6 +170,7 @@ typedef struct {
     unsigned (*idx_length)(jsdisp_t*);
     HRESULT (*idx_get)(jsdisp_t*,unsigned,jsval_t*);
     HRESULT (*idx_put)(jsdisp_t*,unsigned,jsval_t);
+    HRESULT (*gc_traverse)(struct gc_ctx*,enum gc_traverse_op,jsdisp_t*);
 } builtin_info_t;
 
 struct jsdisp_t {
@@ -166,15 +178,18 @@ struct jsdisp_t {
 
     LONG ref;
 
+    BOOLEAN extensible;
+    BOOLEAN gc_marked;
+
     DWORD buf_size;
     DWORD prop_cnt;
     dispex_prop_t *props;
     script_ctx_t *ctx;
-    BOOL extensible;
 
     jsdisp_t *prototype;
 
     const builtin_info_t *builtin_info;
+    struct list entry;
 };
 
 static inline IDispatch *to_disp(jsdisp_t *jsdisp)
@@ -350,6 +365,7 @@ struct _script_ctx_t {
 
     struct _call_frame_t *call_ctx;
     struct list named_items;
+    struct list objects;
     IActiveScriptSite *site;
     IInternetHostSecurityManager *secmgr;
     DWORD safeopt;
@@ -361,6 +377,8 @@ struct _script_ctx_t {
     jsexcept_t *ei;
 
     heap_pool_t tmp_heap;
+
+    BOOL gc_is_unlinking;
 
     jsval_t *stack;
     unsigned stack_top;

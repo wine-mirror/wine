@@ -3446,12 +3446,30 @@ static void test_invokeex(void)
 
 static void test_destructors(void)
 {
+    static const WCHAR cyclic_refs[] = L"(function() {\n"
+        "var a = function() {}, c = { 'a': a, 'ref': Math }, b = { 'a': a, 'c': c };\n"
+        "Math.ref = { 'obj': testDestrObj, 'ref': Math, 'a': a, 'b': b };\n"
+        "a.ref = { 'ref': Math, 'a': a }; b.ref = Math.ref;\n"
+        "a.self = a; b.self = b; c.self = c;\n"
+    "})(), true";
     IActiveScript *script;
     VARIANT v;
     HRESULT hres;
 
     V_VT(&v) = VT_EMPTY;
     hres = parse_script_expr(L"Math.ref = testDestrObj, isNaN.ref = testDestrObj, true", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+
+    SET_EXPECT(testdestrobj);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08lx\n", hres);
+    CHECK_CALLED(testdestrobj);
+
+    IActiveScript_Release(script);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = parse_script_expr(cyclic_refs, &v, &script);
     ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
 

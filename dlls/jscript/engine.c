@@ -434,12 +434,40 @@ static void scope_destructor(jsdisp_t *dispex)
     free(scope);
 }
 
+static HRESULT scope_gc_traverse(struct gc_ctx *gc_ctx, enum gc_traverse_op op, jsdisp_t *dispex)
+{
+    scope_chain_t *scope = CONTAINING_RECORD(dispex, scope_chain_t, dispex);
+    HRESULT hres;
+
+    if(scope->next) {
+        hres = gc_process_linked_obj(gc_ctx, op, dispex, &scope->next->dispex, (void**)&scope->next);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(op == GC_TRAVERSE_UNLINK) {
+        IDispatch *obj = scope->obj;
+        if(obj) {
+            scope->obj = NULL;
+            IDispatch_Release(obj);
+        }
+        return S_OK;
+    }
+
+    return scope->jsobj ? gc_process_linked_obj(gc_ctx, op, dispex, scope->jsobj, (void**)&scope->obj) : S_OK;
+}
+
 static const builtin_info_t scope_info = {
     JSCLASS_NONE,
     NULL,
     0,
     NULL,
     scope_destructor,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    scope_gc_traverse
 };
 
 static HRESULT scope_push(script_ctx_t *ctx, scope_chain_t *scope, jsdisp_t *jsobj, IDispatch *obj, scope_chain_t **ret)
