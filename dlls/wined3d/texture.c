@@ -138,7 +138,7 @@ GLenum wined3d_texture_get_gl_buffer(const struct wined3d_texture *texture)
     return GL_BACK;
 }
 
-static DWORD wined3d_resource_access_from_location(uint32_t location)
+static uint32_t wined3d_resource_access_from_location(uint32_t location)
 {
     switch (location)
     {
@@ -796,7 +796,7 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
 
     if (WARN_ON(d3d))
     {
-        DWORD required_access = wined3d_resource_access_from_location(location);
+        uint32_t required_access = wined3d_resource_access_from_location(location);
         if ((texture->resource.access & required_access) != required_access)
             WARN("Operation requires %#x access, but texture only has %#x.\n",
                     required_access, texture->resource.access);
