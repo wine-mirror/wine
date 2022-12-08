@@ -3079,6 +3079,7 @@ static void output_source_spec( struct makefile *make, struct incl_file *source,
         all_libs = dep_libs = empty_strarray;
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, IMPORT_TYPE_DIRECT, arch ) );
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, default_imports, IMPORT_TYPE_DEFAULT, arch ) );
+        if (!arch) strarray_addall( &all_libs, libs );
         dll_name = arch_module_name( strmake( "%s.dll", obj ), arch );
         obj_name = obj_dir_path( make, strmake( "%s%s.o", arch_dirs[arch], obj ));
         res_name = strmake( "%s%s.res", arch_dirs[arch], obj );
@@ -3319,6 +3320,7 @@ static void output_module( struct makefile *make, unsigned int arch )
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, imports, IMPORT_TYPE_DIRECT, arch ));
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, IMPORT_TYPE_DELAYED, arch ));
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, default_imports, IMPORT_TYPE_DEFAULT, arch ) );
+        if (!arch) strarray_addall( &all_libs, libs );
 
         if (delay_load_flags[arch])
         {
