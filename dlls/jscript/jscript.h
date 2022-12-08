@@ -379,6 +379,7 @@ struct _script_ctx_t {
     heap_pool_t tmp_heap;
 
     BOOL gc_is_unlinking;
+    DWORD gc_last_tick;
 
     jsval_t *stack;
     unsigned stack_top;

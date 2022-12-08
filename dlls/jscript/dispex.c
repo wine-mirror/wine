@@ -945,6 +945,7 @@ HRESULT gc_run(script_ctx_t *ctx)
     }
 
     ctx->gc_is_unlinking = FALSE;
+    ctx->gc_last_tick = GetTickCount();
     return S_OK;
 }
 
@@ -2144,6 +2145,10 @@ jsdisp_t *to_jsdisp(IDispatch *disp)
 HRESULT init_dispex(jsdisp_t *dispex, script_ctx_t *ctx, const builtin_info_t *builtin_info, jsdisp_t *prototype)
 {
     unsigned i;
+
+    /* FIXME: Use better heuristics to decide when to run the GC */
+    if(GetTickCount() - ctx->gc_last_tick > 30000)
+        gc_run(ctx);
 
     TRACE("%p (%p)\n", dispex, prototype);
 
