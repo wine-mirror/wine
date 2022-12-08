@@ -495,6 +495,7 @@ struct vulkan_device_funcs
     VkResult (*p_vkQueueWaitIdle)(VkQueue);
     VkResult (*p_vkReleasePerformanceConfigurationINTEL)(VkDevice, VkPerformanceConfigurationINTEL);
     void (*p_vkReleaseProfilingLockKHR)(VkDevice);
+    VkResult (*p_vkReleaseSwapchainImagesEXT)(VkDevice, const VkReleaseSwapchainImagesInfoEXT *);
     VkResult (*p_vkResetCommandBuffer)(VkCommandBuffer, VkCommandBufferResetFlags);
     VkResult (*p_vkResetCommandPool)(VkDevice, VkCommandPool, VkCommandPoolResetFlags);
     VkResult (*p_vkResetDescriptorPool)(VkDevice, VkDescriptorPool, VkDescriptorPoolResetFlags);
@@ -1019,6 +1020,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkQueueWaitIdle) \
     USE_VK_FUNC(vkReleasePerformanceConfigurationINTEL) \
     USE_VK_FUNC(vkReleaseProfilingLockKHR) \
+    USE_VK_FUNC(vkReleaseSwapchainImagesEXT) \
     USE_VK_FUNC(vkResetCommandBuffer) \
     USE_VK_FUNC(vkResetCommandPool) \
     USE_VK_FUNC(vkResetDescriptorPool) \

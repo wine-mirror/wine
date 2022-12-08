@@ -514,6 +514,7 @@ enum unix_call
     unix_vkQueueWaitIdle,
     unix_vkReleasePerformanceConfigurationINTEL,
     unix_vkReleaseProfilingLockKHR,
+    unix_vkReleaseSwapchainImagesEXT,
     unix_vkResetCommandBuffer,
     unix_vkResetCommandPool,
     unix_vkResetDescriptorPool,
@@ -4419,6 +4420,13 @@ struct vkReleasePerformanceConfigurationINTEL_params
 struct vkReleaseProfilingLockKHR_params
 {
     VkDevice device;
+};
+
+struct vkReleaseSwapchainImagesEXT_params
+{
+    VkDevice device;
+    const VkReleaseSwapchainImagesInfoEXT *pReleaseInfo;
+    VkResult result;
 };
 
 struct vkResetCommandBuffer_params

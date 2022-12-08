@@ -402,6 +402,10 @@
 #define VK_KHR_PIPELINE_EXECUTABLE_PROPERTIES_EXTENSION_NAME "VK_KHR_pipeline_executable_properties"
 #define VK_EXT_SHADER_ATOMIC_FLOAT_2_SPEC_VERSION 1
 #define VK_EXT_SHADER_ATOMIC_FLOAT_2_EXTENSION_NAME "VK_EXT_shader_atomic_float2"
+#define VK_EXT_SURFACE_MAINTENANCE_1_SPEC_VERSION 1
+#define VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME "VK_EXT_surface_maintenance1"
+#define VK_EXT_SWAPCHAIN_MAINTENANCE_1_SPEC_VERSION 1
+#define VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME "VK_EXT_swapchain_maintenance1"
 #define VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_SPEC_VERSION 1
 #define VK_EXT_SHADER_DEMOTE_TO_HELPER_INVOCATION_EXTENSION_NAME "VK_EXT_shader_demote_to_helper_invocation"
 #define VK_NV_DEVICE_GENERATED_COMMANDS_SPEC_VERSION 3
@@ -560,6 +564,8 @@
 #define VK_EXT_PIPELINE_PROTECTED_ACCESS_EXTENSION_NAME "VK_EXT_pipeline_protected_access"
 #define VK_QCOM_TILE_PROPERTIES_SPEC_VERSION 1
 #define VK_QCOM_TILE_PROPERTIES_EXTENSION_NAME "VK_QCOM_tile_properties"
+#define VK_QCOM_MULTIVIEW_PER_VIEW_VIEWPORTS_SPEC_VERSION 1
+#define VK_QCOM_MULTIVIEW_PER_VIEW_VIEWPORTS_EXTENSION_NAME "VK_QCOM_multiview_per_view_viewports"
 #define VK_NV_RAY_TRACING_INVOCATION_REORDER_SPEC_VERSION 1
 #define VK_NV_RAY_TRACING_INVOCATION_REORDER_EXTENSION_NAME "VK_NV_ray_tracing_invocation_reorder"
 #define VK_EXT_MUTABLE_DESCRIPTOR_TYPE_SPEC_VERSION 1
@@ -590,7 +596,7 @@
 #define VK_API_VERSION_1_1 VK_MAKE_API_VERSION(0, 1, 1, 0)
 #define VK_API_VERSION_1_2 VK_MAKE_API_VERSION(0, 1, 2, 0)
 #define VK_API_VERSION_1_3 VK_MAKE_API_VERSION(0, 1, 3, 0)
-#define VK_HEADER_VERSION 235
+#define VK_HEADER_VERSION 237
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 #define VK_USE_64_BIT_PTR_DEFINES 0
@@ -724,6 +730,7 @@ typedef VkFlags VkDeviceDiagnosticsConfigFlagsNV;
 typedef VkFlags VkDeviceGroupPresentModeFlagsKHR;
 typedef VkFlags VkDeviceMemoryReportFlagsEXT;
 typedef VkFlags VkDeviceQueueCreateFlags;
+typedef VkFlags VkDirectDriverLoadingFlagsLUNARG;
 typedef VkFlags VkDirectFBSurfaceCreateFlagsEXT;
 typedef VkFlags VkDisplayModeCreateFlagsKHR;
 typedef VkFlags VkDisplayPlaneAlphaFlagsKHR;
@@ -813,6 +820,8 @@ typedef VkFlags VkPipelineTessellationStateCreateFlags;
 typedef VkFlags VkPipelineVertexInputStateCreateFlags;
 typedef VkFlags VkPipelineViewportStateCreateFlags;
 typedef VkFlags VkPipelineViewportSwizzleStateCreateFlagsNV;
+typedef VkFlags VkPresentGravityFlagsEXT;
+typedef VkFlags VkPresentScalingFlagsEXT;
 typedef VkFlags VkPrivateDataSlotCreateFlags;
 typedef VkPrivateDataSlotCreateFlags VkPrivateDataSlotCreateFlagsEXT;
 typedef VkFlags VkQueryControlFlags;
@@ -1691,6 +1700,7 @@ typedef enum VkDriverId
     VK_DRIVER_ID_SAMSUNG_PROPRIETARY = 21,
     VK_DRIVER_ID_MESA_VENUS = 22,
     VK_DRIVER_ID_MESA_DOZEN = 23,
+    VK_DRIVER_ID_MESA_NVK = 24,
     VK_DRIVER_ID_AMD_PROPRIETARY_KHR = VK_DRIVER_ID_AMD_PROPRIETARY,
     VK_DRIVER_ID_AMD_OPEN_SOURCE_KHR = VK_DRIVER_ID_AMD_OPEN_SOURCE,
     VK_DRIVER_ID_MESA_RADV_KHR = VK_DRIVER_ID_MESA_RADV,
@@ -3237,6 +3247,14 @@ typedef enum VkPolygonMode
     VK_POLYGON_MODE_MAX_ENUM = 0x7fffffff,
 } VkPolygonMode;
 
+typedef enum VkPresentGravityFlagBitsEXT
+{
+    VK_PRESENT_GRAVITY_MIN_BIT_EXT = 0x00000001,
+    VK_PRESENT_GRAVITY_MAX_BIT_EXT = 0x00000002,
+    VK_PRESENT_GRAVITY_CENTERED_BIT_EXT = 0x00000004,
+    VK_PRESENT_GRAVITY_FLAG_BITS_EXT_MAX_ENUM = 0x7fffffff,
+} VkPresentGravityFlagBitsEXT;
+
 typedef enum VkPresentModeKHR
 {
     VK_PRESENT_MODE_IMMEDIATE_KHR = 0,
@@ -3245,6 +3263,14 @@ typedef enum VkPresentModeKHR
     VK_PRESENT_MODE_FIFO_RELAXED_KHR = 3,
     VK_PRESENT_MODE_KHR_MAX_ENUM = 0x7fffffff,
 } VkPresentModeKHR;
+
+typedef enum VkPresentScalingFlagBitsEXT
+{
+    VK_PRESENT_SCALING_ONE_TO_ONE_BIT_EXT = 0x00000001,
+    VK_PRESENT_SCALING_ASPECT_RATIO_STRETCH_BIT_EXT = 0x00000002,
+    VK_PRESENT_SCALING_STRETCH_BIT_EXT = 0x00000004,
+    VK_PRESENT_SCALING_FLAG_BITS_EXT_MAX_ENUM = 0x7fffffff,
+} VkPresentScalingFlagBitsEXT;
 
 typedef enum VkPrimitiveTopology
 {
@@ -4075,6 +4101,15 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_STATISTIC_KHR = 1000269004,
     VK_STRUCTURE_TYPE_PIPELINE_EXECUTABLE_INTERNAL_REPRESENTATION_KHR = 1000269005,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_ATOMIC_FLOAT_2_FEATURES_EXT = 1000273000,
+    VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_EXT = 1000274000,
+    VK_STRUCTURE_TYPE_SURFACE_PRESENT_SCALING_CAPABILITIES_EXT = 1000274001,
+    VK_STRUCTURE_TYPE_SURFACE_PRESENT_MODE_COMPATIBILITY_EXT = 1000274002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT = 1000275000,
+    VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT = 1000275001,
+    VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODES_CREATE_INFO_EXT = 1000275002,
+    VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_MODE_INFO_EXT = 1000275003,
+    VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_SCALING_CREATE_INFO_EXT = 1000275004,
+    VK_STRUCTURE_TYPE_RELEASE_SWAPCHAIN_IMAGES_INFO_EXT = 1000275005,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DEMOTE_TO_HELPER_INVOCATION_FEATURES = 1000276000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEVICE_GENERATED_COMMANDS_PROPERTIES_NV = 1000277000,
     VK_STRUCTURE_TYPE_GRAPHICS_SHADER_GROUP_CREATE_INFO_NV = 1000277001,
@@ -4266,6 +4301,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROTECTED_ACCESS_FEATURES_EXT = 1000466000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TILE_PROPERTIES_FEATURES_QCOM = 1000484000,
     VK_STRUCTURE_TYPE_TILE_PROPERTIES_QCOM = 1000484001,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MULTIVIEW_PER_VIEW_VIEWPORTS_FEATURES_QCOM = 1000488000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_FEATURES_NV = 1000490000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_INVOCATION_REORDER_PROPERTIES_NV = 1000490001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_CORE_BUILTINS_FEATURES_ARM = 1000497000,
@@ -4526,6 +4562,7 @@ typedef enum VkSwapchainCreateFlagBitsKHR
     VK_SWAPCHAIN_CREATE_SPLIT_INSTANCE_BIND_REGIONS_BIT_KHR = 0x00000001,
     VK_SWAPCHAIN_CREATE_PROTECTED_BIT_KHR = 0x00000002,
     VK_SWAPCHAIN_CREATE_MUTABLE_FORMAT_BIT_KHR = 0x00000004,
+    VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT = 0x00000008,
     VK_SWAPCHAIN_CREATE_FLAG_BITS_KHR_MAX_ENUM = 0x7fffffff,
 } VkSwapchainCreateFlagBitsKHR;
 
@@ -7943,6 +7980,13 @@ typedef struct VkPhysicalDeviceMultiviewFeatures
 } VkPhysicalDeviceMultiviewFeatures;
 typedef VkPhysicalDeviceMultiviewFeatures VkPhysicalDeviceMultiviewFeaturesKHR;
 
+typedef struct VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 multiviewPerViewViewports;
+} VkPhysicalDeviceMultiviewPerViewViewportsFeaturesQCOM;
+
 typedef struct VkPhysicalDeviceMultiviewProperties
 {
     VkStructureType sType;
@@ -8683,6 +8727,13 @@ typedef struct VkPhysicalDeviceSurfaceInfo2KHR
     const void *pNext;
     VkSurfaceKHR WINE_VK_ALIGN(8) surface;
 } VkPhysicalDeviceSurfaceInfo2KHR;
+
+typedef struct VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 swapchainMaintenance1;
+} VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT;
 
 typedef struct VkPhysicalDeviceSynchronization2Features
 {
@@ -9598,6 +9649,15 @@ typedef struct VkRectLayerKHR
     uint32_t layer;
 } VkRectLayerKHR;
 
+typedef struct VkReleaseSwapchainImagesInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkSwapchainKHR WINE_VK_ALIGN(8) swapchain;
+    uint32_t imageIndexCount;
+    const uint32_t *pImageIndices;
+} VkReleaseSwapchainImagesInfoEXT;
+
 typedef struct VkRenderPassAttachmentBeginInfo
 {
     VkStructureType sType;
@@ -10207,6 +10267,32 @@ typedef struct VkSurfaceFormatKHR
     VkColorSpaceKHR colorSpace;
 } VkSurfaceFormatKHR;
 
+typedef struct VkSurfacePresentModeCompatibilityEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t presentModeCount;
+    VkPresentModeKHR *pPresentModes;
+} VkSurfacePresentModeCompatibilityEXT;
+
+typedef struct VkSurfacePresentModeEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkPresentModeKHR presentMode;
+} VkSurfacePresentModeEXT;
+
+typedef struct VkSurfacePresentScalingCapabilitiesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkPresentScalingFlagsEXT supportedPresentScaling;
+    VkPresentGravityFlagsEXT supportedPresentGravityX;
+    VkPresentGravityFlagsEXT supportedPresentGravityY;
+    VkExtent2D minScaledImageExtent;
+    VkExtent2D maxScaledImageExtent;
+} VkSurfacePresentScalingCapabilitiesEXT;
+
 typedef struct VkSwapchainCreateInfoKHR
 {
     VkStructureType sType;
@@ -10235,6 +10321,39 @@ typedef struct VkSwapchainPresentBarrierCreateInfoNV
     void *pNext;
     VkBool32 presentBarrierEnable;
 } VkSwapchainPresentBarrierCreateInfoNV;
+
+typedef struct VkSwapchainPresentFenceInfoEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t swapchainCount;
+    const VkFence *pFences;
+} VkSwapchainPresentFenceInfoEXT;
+
+typedef struct VkSwapchainPresentModeInfoEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t swapchainCount;
+    const VkPresentModeKHR *pPresentModes;
+} VkSwapchainPresentModeInfoEXT;
+
+typedef struct VkSwapchainPresentModesCreateInfoEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    uint32_t presentModeCount;
+    const VkPresentModeKHR *pPresentModes;
+} VkSwapchainPresentModesCreateInfoEXT;
+
+typedef struct VkSwapchainPresentScalingCreateInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkPresentScalingFlagsEXT scalingBehavior;
+    VkPresentGravityFlagsEXT presentGravityX;
+    VkPresentGravityFlagsEXT presentGravityY;
+} VkSwapchainPresentScalingCreateInfoEXT;
 
 typedef struct VkTextureLODGatherFormatPropertiesAMD
 {
@@ -11948,6 +12067,7 @@ typedef VkResult (VKAPI_PTR *PFN_vkQueueSubmit2KHR)(VkQueue, uint32_t, const VkS
 typedef VkResult (VKAPI_PTR *PFN_vkQueueWaitIdle)(VkQueue);
 typedef VkResult (VKAPI_PTR *PFN_vkReleasePerformanceConfigurationINTEL)(VkDevice, VkPerformanceConfigurationINTEL);
 typedef void (VKAPI_PTR *PFN_vkReleaseProfilingLockKHR)(VkDevice);
+typedef VkResult (VKAPI_PTR *PFN_vkReleaseSwapchainImagesEXT)(VkDevice, const VkReleaseSwapchainImagesInfoEXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkResetCommandBuffer)(VkCommandBuffer, VkCommandBufferResetFlags);
 typedef VkResult (VKAPI_PTR *PFN_vkResetCommandPool)(VkDevice, VkCommandPool, VkCommandPoolResetFlags);
 typedef VkResult (VKAPI_PTR *PFN_vkResetDescriptorPool)(VkDevice, VkDescriptorPool, VkDescriptorPoolResetFlags);
@@ -12481,6 +12601,7 @@ VkResult VKAPI_CALL vkQueueSubmit2KHR(VkQueue queue, uint32_t submitCount, const
 VkResult VKAPI_CALL vkQueueWaitIdle(VkQueue queue);
 VkResult VKAPI_CALL vkReleasePerformanceConfigurationINTEL(VkDevice device, VkPerformanceConfigurationINTEL configuration);
 void VKAPI_CALL vkReleaseProfilingLockKHR(VkDevice device);
+VkResult VKAPI_CALL vkReleaseSwapchainImagesEXT(VkDevice device, const VkReleaseSwapchainImagesInfoEXT *pReleaseInfo);
 VkResult VKAPI_CALL vkResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags);
 VkResult VKAPI_CALL vkResetCommandPool(VkDevice device, VkCommandPool commandPool, VkCommandPoolResetFlags flags);
 VkResult VKAPI_CALL vkResetDescriptorPool(VkDevice device, VkDescriptorPool descriptorPool, VkDescriptorPoolResetFlags flags);

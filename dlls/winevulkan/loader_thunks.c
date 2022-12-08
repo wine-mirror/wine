@@ -5738,6 +5738,17 @@ void WINAPI vkReleaseProfilingLockKHR(VkDevice device)
     assert(!status);
 }
 
+VkResult WINAPI vkReleaseSwapchainImagesEXT(VkDevice device, const VkReleaseSwapchainImagesInfoEXT *pReleaseInfo)
+{
+    struct vkReleaseSwapchainImagesEXT_params params;
+    NTSTATUS status;
+    params.device = device;
+    params.pReleaseInfo = pReleaseInfo;
+    status = UNIX_CALL(vkReleaseSwapchainImagesEXT, &params);
+    assert(!status);
+    return params.result;
+}
+
 VkResult WINAPI vkResetCommandBuffer(VkCommandBuffer commandBuffer, VkCommandBufferResetFlags flags)
 {
     struct vkResetCommandBuffer_params params;
@@ -6525,6 +6536,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkQueueWaitIdle", vkQueueWaitIdle},
     {"vkReleasePerformanceConfigurationINTEL", vkReleasePerformanceConfigurationINTEL},
     {"vkReleaseProfilingLockKHR", vkReleaseProfilingLockKHR},
+    {"vkReleaseSwapchainImagesEXT", vkReleaseSwapchainImagesEXT},
     {"vkResetCommandBuffer", vkResetCommandBuffer},
     {"vkResetCommandPool", vkResetCommandPool},
     {"vkResetDescriptorPool", vkResetDescriptorPool},
