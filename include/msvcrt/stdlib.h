@@ -8,6 +8,7 @@
 #ifndef __WINE_STDLIB_H
 #define __WINE_STDLIB_H
 
+#include <corecrt_malloc.h>
 #include <corecrt_wstdlib.h>
 #include <limits.h>
 
@@ -208,23 +209,19 @@ _ACRTIMP int           __cdecl atoi(const char*);
 _ACRTIMP int           __cdecl _atoi_l(const char*,_locale_t);
 _ACRTIMP __msvcrt_long __cdecl atol(const char*);
 _ACRTIMP __int64       __cdecl atoll(const char*);
-_ACRTIMP void*         __cdecl calloc(size_t,size_t);
 #ifndef __i386__
 _ACRTIMP div_t  __cdecl div(int,int);
 _ACRTIMP ldiv_t __cdecl ldiv(__msvcrt_long,__msvcrt_long);
 #endif
 _ACRTIMP lldiv_t       __cdecl lldiv(__int64,__int64);
 _ACRTIMP DECLSPEC_NORETURN void __cdecl exit(int);
-_ACRTIMP void          __cdecl free(void*);
 _ACRTIMP char*         __cdecl getenv(const char*);
 _ACRTIMP __msvcrt_long __cdecl labs(__msvcrt_long);
 _ACRTIMP __int64       __cdecl llabs(__int64);
-_ACRTIMP void*         __cdecl malloc(size_t);
 _ACRTIMP int           __cdecl mblen(const char*,size_t);
 _ACRTIMP void          __cdecl perror(const char*);
 _ACRTIMP int           __cdecl rand(void);
 _ACRTIMP errno_t       __cdecl rand_s(unsigned int*);
-_ACRTIMP void*         __cdecl realloc(void*,size_t);
 _ACRTIMP void          __cdecl srand(unsigned int);
 _ACRTIMP float         __cdecl strtof(const char*,char**);
 _ACRTIMP double        __cdecl strtod(const char*,char**);

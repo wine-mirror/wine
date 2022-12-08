@@ -21,6 +21,7 @@
 #define __WINE_MALLOC_H
 
 #include <corecrt.h>
+#include <corecrt_malloc.h>
 
 /* heap function constants */
 #define _HEAPEMPTY    -1
@@ -54,25 +55,12 @@ extern unsigned int _amblksiz;
 extern "C" {
 #endif
 
-_ACRTIMP void*  __cdecl _expand(void*,size_t);
 _ACRTIMP int    __cdecl _heapadd(void*,size_t);
 _ACRTIMP int    __cdecl _heapchk(void);
 _ACRTIMP int    __cdecl _heapmin(void);
 _ACRTIMP int    __cdecl _heapset(unsigned int);
 _ACRTIMP size_t __cdecl _heapused(size_t*,size_t*);
 _ACRTIMP int    __cdecl _heapwalk(_HEAPINFO*);
-_ACRTIMP size_t __cdecl _msize(void*);
-
-_ACRTIMP void*  __cdecl calloc(size_t,size_t);
-_ACRTIMP void   __cdecl free(void*);
-_ACRTIMP void*  __cdecl malloc(size_t);
-_ACRTIMP void*  __cdecl realloc(void*,size_t);
-
-_ACRTIMP void   __cdecl _aligned_free(void*);
-_ACRTIMP void*  __cdecl _aligned_malloc(size_t,size_t);
-_ACRTIMP void*  __cdecl _aligned_offset_malloc(size_t,size_t,size_t);
-_ACRTIMP void*  __cdecl _aligned_realloc(void*,size_t,size_t);
-_ACRTIMP void*  __cdecl _aligned_offset_realloc(void*,size_t,size_t,size_t);
 
 _ACRTIMP size_t __cdecl _get_sbh_threshold(void);
 _ACRTIMP int    __cdecl _set_sbh_threshold(size_t size);
