@@ -68,7 +68,7 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
   prev_context = context;
   context = LocalAlloc (LMEM_FIXED, sizeof (BATCH_CONTEXT));
   context -> h = h;
-  context->batchfileW = heap_strdupW(file);
+  context->batchfileW = xstrdupW(file);
   context -> command = command;
   memset(context -> shift_count, 0x00, sizeof(context -> shift_count));
   context -> prev_context = prev_context;
@@ -110,8 +110,8 @@ void WCMD_batch (WCHAR *file, WCHAR *command, BOOL called, WCHAR *startLabel, HA
  *	to the caller's caller.
  */
 
-  heap_free(context->batchfileW);
-  LocalFree (context);
+  free(context->batchfileW);
+  LocalFree(context);
   if ((prev_context != NULL) && (!called)) {
     WINE_TRACE("Batch completed, but was not 'called' so skipping outer batch too\n");
     prev_context -> skip_rest = TRUE;
@@ -256,7 +256,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
       const char *p;
 
       cp = GetOEMCP();
-      bufA = heap_xalloc(noChars);
+      bufA = xalloc(noChars);
 
       /* Save current file position */
       filepos.QuadPart = 0;
@@ -264,7 +264,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
 
       status = ReadFile(h, bufA, noChars, &charsRead, NULL);
       if (!status || charsRead == 0) {
-          heap_free(bufA);
+          free(bufA);
           return NULL;
       }
 
@@ -279,7 +279,7 @@ WCHAR *WCMD_fgets(WCHAR *buf, DWORD noChars, HANDLE h)
       SetFilePointerEx(h, filepos, NULL, FILE_BEGIN);
 
       i = MultiByteToWideChar(cp, 0, bufA, p - bufA, buf, noChars);
-      heap_free(bufA);
+      free(bufA);
   }
   else {
       if (!charsRead) return NULL;
@@ -454,11 +454,11 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
 
     size = GetEnvironmentVariableW(env, NULL, 0);
     if (size > 0) {
-      WCHAR *fullpath = heap_xalloc(size * sizeof(WCHAR));
+      WCHAR *fullpath = malloc(size * sizeof(WCHAR));
       if (!fullpath || (GetEnvironmentVariableW(env, fullpath, size) == 0) ||
           (SearchPathW(fullpath, outputparam, NULL, MAX_PATH, outputparam, NULL) == 0))
           size = 0;
-      heap_free(fullpath);
+      free(fullpath);
     }
 
     if (!size) {

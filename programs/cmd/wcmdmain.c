@@ -67,7 +67,7 @@ static char *get_file_buffer(void)
 {
     static char *output_bufA = NULL;
     if (!output_bufA)
-        output_bufA = heap_xalloc(MAX_WRITECONSOLE_SIZE);
+        output_bufA = xalloc(MAX_WRITECONSOLE_SIZE);
     return output_bufA;
 }
 
@@ -423,11 +423,11 @@ static void WCMD_show_prompt (BOOL newLine) {
   WCMD_output_asis (out_string);
 }
 
-void *heap_xalloc(size_t size)
+void *xalloc(size_t size)
 {
     void *ret;
 
-    ret = heap_alloc(size);
+    ret = malloc(size);
     if(!ret) {
         ERR("Out of memory\n");
         ExitProcess(1);
@@ -732,16 +732,16 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
       WCHAR *searchFor;
 
       if (equalspos == NULL) return start+1;
-      s = heap_strdupW(endOfVar + 1);
+      s = xstrdupW(endOfVar + 1);
 
       /* Null terminate both strings */
       thisVar[lstrlenW(thisVar)-1] = 0x00;
       *equalspos = 0x00;
 
       /* Since we need to be case insensitive, copy the 2 buffers */
-      searchIn  = heap_strdupW(thisVarContents);
+      searchIn  = xstrdupW(thisVarContents);
       CharUpperBuffW(searchIn, lstrlenW(thisVarContents));
-      searchFor = heap_strdupW(colonpos+1);
+      searchFor = xstrdupW(colonpos + 1);
       CharUpperBuffW(searchFor, lstrlenW(colonpos+1));
 
       /* Handle wildcard case */
@@ -779,9 +779,9 @@ static WCHAR *WCMD_expand_envvar(WCHAR *start, WCHAR startchar)
                 thisVarContents + (lastFound-searchIn));
         lstrcatW(outputposn, s);
       }
-      heap_free(s);
-      heap_free(searchIn);
-      heap_free(searchFor);
+      free(s);
+      free(searchIn);
+      free(searchFor);
     }
     return start;
 }
@@ -971,7 +971,7 @@ static void init_msvcrt_io_block(STARTUPINFOW* st)
          * its new input & output handles)
          */
         sz = max(sizeof(unsigned) + (sizeof(char) + sizeof(HANDLE)) * 3, st_p.cbReserved2);
-        ptr = heap_xalloc(sz);
+        ptr = xalloc(sz);
         flags = (char*)(ptr + sizeof(unsigned));
         handles = (HANDLE*)(flags + num * sizeof(char));
 
@@ -1221,7 +1221,7 @@ void WCMD_run_program (WCHAR *command, BOOL called)
            Note: Launching internal wine processes cannot specify a full path to exe */
         status = CreateProcessW(thisDir,
                                 command, NULL, NULL, TRUE, 0, NULL, NULL, &st, &pe);
-        heap_free(st.lpReserved2);
+        free(st.lpReserved2);
         if ((opt_c || opt_k) && !opt_s && !status
             && GetLastError()==ERROR_FILE_NOT_FOUND && command[0]=='\"') {
           /* strip first and last quote WCHARacters and try again */
@@ -1301,12 +1301,12 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                wine_dbgstr_w(command), cmdList);
 
     /* Move copy of the command onto the heap so it can be expanded */
-    new_cmd = heap_xalloc(MAXSTRING * sizeof(WCHAR));
+    new_cmd = xalloc(MAXSTRING * sizeof(WCHAR));
     lstrcpyW(new_cmd, command);
     cmd = new_cmd;
 
     /* Move copy of the redirects onto the heap so it can be expanded */
-    new_redir = heap_xalloc(MAXSTRING * sizeof(WCHAR));
+    new_redir = xalloc(MAXSTRING * sizeof(WCHAR));
     redir = new_redir;
 
     /* Strip leading whitespaces, and a '@' if supplied */
@@ -1389,8 +1389,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
       WINE_TRACE("Got directory %s as %s\n", wine_dbgstr_w(envvar), wine_dbgstr_w(cmd));
       status = SetCurrentDirectoryW(cmd);
       if (!status) WCMD_print_error ();
-      heap_free(cmd );
-      heap_free(new_redir);
+      free(cmd);
+      free(new_redir);
       return;
     }
 
@@ -1412,8 +1412,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                     FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, NULL);
           if (h == INVALID_HANDLE_VALUE) {
             WCMD_print_error ();
-            heap_free(cmd);
-            heap_free(new_redir);
+            free(cmd);
+            free(new_redir);
             return;
           }
           SetStdHandle (STD_INPUT_HANDLE, h);
@@ -1427,8 +1427,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                         &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         if (h == INVALID_HANDLE_VALUE) {
           WCMD_print_error ();
-          heap_free(cmd);
-          heap_free(new_redir);
+          free(cmd);
+          free(new_redir);
           return;
         }
         SetStdHandle (STD_INPUT_HANDLE, h);
@@ -1472,8 +1472,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
                           &sa, creationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
           if (h == INVALID_HANDLE_VALUE) {
             WCMD_print_error ();
-            heap_free(cmd);
-            heap_free(new_redir);
+            free(cmd);
+            free(new_redir);
             return;
           }
           if (SetFilePointer (h, 0, NULL, FILE_END) ==
@@ -1643,8 +1643,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
         WCMD_run_program (whichcmd, FALSE);
         echo_mode = prev_echo_mode;
     }
-    heap_free(cmd);
-    heap_free(new_redir);
+    free(cmd);
+    free(new_redir);
 
     /* Restore old handles */
     for (i=0; i<3; i++) {
@@ -1705,16 +1705,16 @@ static void WCMD_addCommand(WCHAR *command, int *commandLen,
     CMD_LIST *thisEntry = NULL;
 
     /* Allocate storage for command */
-    thisEntry = heap_xalloc(sizeof(CMD_LIST));
+    thisEntry = xalloc(sizeof(CMD_LIST));
 
     /* Copy in the command */
     if (command) {
-        thisEntry->command = heap_xalloc((*commandLen+1) * sizeof(WCHAR));
+        thisEntry->command = xalloc((*commandLen + 1) * sizeof(WCHAR));
         memcpy(thisEntry->command, command, *commandLen * sizeof(WCHAR));
         thisEntry->command[*commandLen] = 0x00;
 
         /* Copy in the redirects */
-        thisEntry->redirects = heap_xalloc((*redirLen+1) * sizeof(WCHAR));
+        thisEntry->redirects = xalloc((*redirLen + 1) * sizeof(WCHAR));
         memcpy(thisEntry->redirects, redirs, *redirLen * sizeof(WCHAR));
         thisEntry->redirects[*redirLen] = 0x00;
         thisEntry->pipeFile[0] = 0x00;
@@ -1845,7 +1845,7 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
 
     /* Allocate working space for a command read from keyboard, file etc */
     if (!extraSpace)
-        extraSpace = heap_xalloc((MAXSTRING+1) * sizeof(WCHAR));
+        extraSpace = xalloc((MAXSTRING + 1) * sizeof(WCHAR));
     if (!extraSpace)
     {
         WINE_ERR("Could not allocate memory for extraSpace\n");
@@ -2399,9 +2399,9 @@ void WCMD_free_commands(CMD_LIST *cmds) {
     while (cmds) {
       CMD_LIST *thisCmd = cmds;
       cmds = cmds->nextcommand;
-      heap_free(thisCmd->command);
-      heap_free(thisCmd->redirects);
-      heap_free(thisCmd);
+      free(thisCmd->command);
+      free(thisCmd->redirects);
+      free(thisCmd);
     }
 }
 
@@ -2516,7 +2516,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
       WCHAR   *q1 = NULL,*q2 = NULL,*p;
 
       /* Take a copy */
-      cmd = heap_strdupW(arg);
+      cmd = xstrdupW(arg);
 
       /* opt_s left unflagged if the command starts with and contains exactly
        * one quoted string (exactly two quote characters). The quoted string
@@ -2674,7 +2674,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
       WCMD_free_commands(toExecute);
       toExecute = NULL;
 
-      heap_free(cmd);
+      free(cmd);
       return errorlevel;
   }
 
@@ -2754,7 +2754,7 @@ int __cdecl wmain (int argc, WCHAR *argvW[])
       WCMD_process_commands(toExecute, FALSE, FALSE);
       WCMD_free_commands(toExecute);
       toExecute = NULL;
-      heap_free(cmd);
+      free(cmd);
   }
 
 /*

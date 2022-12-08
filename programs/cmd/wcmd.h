@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <wchar.h>
-#include <wine/heap.h>
 
 /* msdn specified max for Win XP */
 #define MAXSTRING 8192
@@ -125,9 +124,9 @@ void      WCMD_free_commands(CMD_LIST *cmds);
 void      WCMD_execute (const WCHAR *orig_command, const WCHAR *redirects,
                         CMD_LIST **cmdList, BOOL retrycall);
 
-void *heap_xalloc(size_t);
+void *xalloc(size_t) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(free) __WINE_MALLOC;
 
-static inline WCHAR *heap_strdupW(const WCHAR *str)
+static inline WCHAR *xstrdupW(const WCHAR *str)
 {
     WCHAR *ret = NULL;
 
@@ -135,7 +134,7 @@ static inline WCHAR *heap_strdupW(const WCHAR *str)
         size_t size;
 
         size = (lstrlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_xalloc(size);
+        ret = xalloc(size);
         memcpy(ret, str, size);
     }
 

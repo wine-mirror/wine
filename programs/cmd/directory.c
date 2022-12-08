@@ -182,18 +182,18 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
         ULONG domainLen = MAXSTRING;
         SID_NAME_USE nameuse;
 
-        secBuffer = heap_xalloc(sizeNeeded * sizeof(BYTE));
+        secBuffer = xalloc(sizeNeeded * sizeof(BYTE));
 
         /* Get the owners security descriptor */
         if(!GetFileSecurityW(filename, OWNER_SECURITY_INFORMATION, secBuffer,
                             sizeNeeded, &sizeNeeded)) {
-            heap_free(secBuffer);
+            free(secBuffer);
             return;
         }
 
         /* Get the SID from the SD */
         if(!GetSecurityDescriptorOwner(secBuffer, &pSID, &defaulted)) {
-            heap_free(secBuffer);
+            free(secBuffer);
             return;
         }
 
@@ -201,7 +201,7 @@ static void WCMD_getfileowner(WCHAR *filename, WCHAR *owner, int ownerlen) {
         if (LookupAccountSidW(NULL, pSID, name, &nameLen, domain, &domainLen, &nameuse)) {
             swprintf(owner, ownerlen, L"%s%c%s", domain, '\\', name);
         }
-        heap_free(secBuffer);
+        free(secBuffer);
     }
     return;
 }
@@ -242,7 +242,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
      same directory. Note issuing a directory header with no contents
      mirrors what windows does                                            */
   parms = inputparms;
-  fd = heap_xalloc(sizeof(WIN32_FIND_DATAW));
+  fd = xalloc(sizeof(WIN32_FIND_DATAW));
   while (parms && lstrcmpW(inputparms->dirName, parms->dirName) == 0) {
     concurrentDirs++;
 
@@ -267,7 +267,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
            if (tmpLen > widest) widest = tmpLen;
         }
 
-        fd = HeapReAlloc(GetProcessHeap(),0,fd,(entry_count+1)*sizeof(WIN32_FIND_DATAW));
+        fd = realloc(fd, (entry_count + 1) * sizeof(WIN32_FIND_DATAW));
         if (fd == NULL) {
           FindClose (hff);
           WINE_ERR("Out of memory\n");
@@ -431,7 +431,7 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
        }
     }
   }
-  heap_free(fd);
+  free(fd);
 
   /* When recursing, look in all subdirectories for matches */
   if (recurse) {
@@ -466,13 +466,13 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
             WINE_TRACE("Recursive, Adding to search list '%s'\n", wine_dbgstr_w(string));
 
             /* Allocate memory, add to list */
-            thisDir = heap_xalloc(sizeof(DIRECTORY_STACK));
+            thisDir = xalloc(sizeof(DIRECTORY_STACK));
             if (dirStack == NULL) dirStack = thisDir;
             if (lastEntry != NULL) lastEntry->next = thisDir;
             lastEntry = thisDir;
             thisDir->next = NULL;
-            thisDir->dirName = heap_strdupW(string);
-            thisDir->fileName = heap_strdupW(parms->fileName);
+            thisDir->dirName = xstrdupW(string);
+            thisDir->fileName = xstrdupW(parms->fileName);
             parms = parms->next;
           }
         }
@@ -484,9 +484,9 @@ static DIRECTORY_STACK *WCMD_list_directory (DIRECTORY_STACK *inputparms, int le
         dirStack = WCMD_list_directory (thisDir, 1);
         while (thisDir != dirStack) {
           DIRECTORY_STACK *tempDir = thisDir->next;
-          heap_free(thisDir->dirName);
-          heap_free(thisDir->fileName);
-          heap_free(thisDir);
+          free(thisDir->dirName);
+          free(thisDir->fileName);
+          free(thisDir);
           thisDir = tempDir;
         }
       }
@@ -786,7 +786,7 @@ void WCMD_directory (WCHAR *args)
       }
 
       WINE_TRACE("Using path '%s'\n", wine_dbgstr_w(path));
-      thisEntry = heap_xalloc(sizeof(DIRECTORY_STACK));
+      thisEntry = xalloc(sizeof(DIRECTORY_STACK));
       if (fullParms == NULL) fullParms = thisEntry;
       if (prevEntry != NULL) prevEntry->next = thisEntry;
       prevEntry = thisEntry;
@@ -798,11 +798,11 @@ void WCMD_directory (WCHAR *args)
                  wine_dbgstr_w(drive), wine_dbgstr_w(dir),
                  wine_dbgstr_w(fname), wine_dbgstr_w(ext));
 
-      thisEntry->dirName = heap_xalloc(sizeof(WCHAR) * (lstrlenW(drive)+lstrlenW(dir)+1));
+      thisEntry->dirName = xalloc(sizeof(WCHAR) * (wcslen(drive) + wcslen(dir) + 1));
       lstrcpyW(thisEntry->dirName, drive);
       lstrcatW(thisEntry->dirName, dir);
 
-      thisEntry->fileName = heap_xalloc(sizeof(WCHAR) * (lstrlenW(fname)+lstrlenW(ext)+1));
+      thisEntry->fileName = xalloc(sizeof(WCHAR) * (wcslen(fname) + wcslen(ext) + 1));
       lstrcpyW(thisEntry->fileName, fname);
       lstrcatW(thisEntry->fileName, ext);
 
@@ -812,10 +812,10 @@ void WCMD_directory (WCHAR *args)
   /* If just 'dir' entered, a '*' parameter is assumed */
   if (fullParms == NULL) {
     WINE_TRACE("Inserting default '*'\n");
-    fullParms = heap_xalloc(sizeof(DIRECTORY_STACK));
+    fullParms = xalloc(sizeof(DIRECTORY_STACK));
     fullParms->next = NULL;
-    fullParms->dirName = heap_strdupW(cwd);
-    fullParms->fileName = heap_strdupW(L"*");
+    fullParms->dirName = xstrdupW(cwd);
+    fullParms->fileName = xstrdupW(L"*");
   }
 
   lastDrive = '?';
@@ -872,8 +872,8 @@ exit:
   while (fullParms != NULL) {
     prevEntry = fullParms;
     fullParms = prevEntry->next;
-    heap_free(prevEntry->dirName);
-    heap_free(prevEntry->fileName);
-    heap_free(prevEntry);
+    free(prevEntry->dirName);
+    free(prevEntry->fileName);
+    free(prevEntry);
   }
 }
