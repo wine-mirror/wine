@@ -3452,6 +3452,7 @@ static void test_destructors(void)
         "a.ref = { 'ref': Math, 'a': a }; b.ref = Math.ref;\n"
         "a.self = a; b.self = b; c.self = c;\n"
     "})(), true";
+    IActiveScriptParse *parser;
     IActiveScript *script;
     VARIANT v;
     HRESULT hres;
@@ -3476,6 +3477,25 @@ static void test_destructors(void)
     SET_EXPECT(testdestrobj);
     hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
     ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08lx\n", hres);
+    CHECK_CALLED(testdestrobj);
+
+    IActiveScript_Release(script);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = parse_script_expr(cyclic_refs, &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IActiveScript_QueryInterface(script, &IID_IActiveScriptParse, (void**)&parser);
+    ok(hres == S_OK, "Could not get IActiveScriptParse: %08lx\n", hres);
+
+    SET_EXPECT(testdestrobj);
+    V_VT(&v) = VT_EMPTY;
+    hres = IActiveScriptParse_ParseScriptText(parser, L"Math.ref = undefined, CollectGarbage(), true",
+                                              NULL, NULL, NULL, 0, 0, SCRIPTTEXT_ISEXPRESSION, &v, NULL);
+    ok(hres == S_OK, "ParseScriptText failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+    IActiveScriptParse_Release(parser);
     CHECK_CALLED(testdestrobj);
 
     IActiveScript_Release(script);

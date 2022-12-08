@@ -549,10 +549,7 @@ static HRESULT JSGlobal_ScriptEngineBuildVersion(script_ctx_t *ctx, jsval_t vthi
 static HRESULT JSGlobal_CollectGarbage(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    static int once = 0;
-    if (!once++)
-        FIXME(": stub\n");
-    return S_OK;
+    return gc_run(ctx);
 }
 
 static HRESULT JSGlobal_encodeURI(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
