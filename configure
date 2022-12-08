@@ -1490,6 +1490,7 @@ enable_wmp
 enable_wmphoto
 enable_wmvcore
 enable_wnaspi32
+enable_wofutil
 enable_wow64
 enable_wow64cpu
 enable_wow64win
@@ -21927,6 +21928,7 @@ wine_fn_config_makefile dlls/wmphoto enable_wmphoto
 wine_fn_config_makefile dlls/wmvcore enable_wmvcore
 wine_fn_config_makefile dlls/wmvcore/tests enable_tests
 wine_fn_config_makefile dlls/wnaspi32 enable_wnaspi32
+wine_fn_config_makefile dlls/wofutil enable_wofutil
 wine_fn_config_makefile dlls/wow32 enable_win16
 wine_fn_config_makefile dlls/wow64 enable_wow64
 wine_fn_config_makefile dlls/wow64cpu enable_wow64cpu
