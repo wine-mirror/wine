@@ -3910,7 +3910,7 @@ struct wined3d_state
 
     struct wined3d_light_state light_state;
 
-    DWORD render_states[WINEHIGHEST_RENDER_STATE + 1];
+    unsigned int render_states[WINEHIGHEST_RENDER_STATE + 1];
     struct wined3d_blend_state *blend_state;
     struct wined3d_color blend_factor;
     unsigned int sample_mask;
@@ -4342,8 +4342,8 @@ static inline float wined3d_alpha_ref(const struct wined3d_state *state)
     return (state->render_states[WINED3D_RS_ALPHAREF] & 0xff) / 255.0f;
 }
 
-const char *wined3d_debug_resource_access(DWORD access) DECLSPEC_HIDDEN;
-const char *wined3d_debug_bind_flags(DWORD bind_flags) DECLSPEC_HIDDEN;
+const char *wined3d_debug_resource_access(uint32_t access) DECLSPEC_HIDDEN;
+const char *wined3d_debug_bind_flags(uint32_t bind_flags) DECLSPEC_HIDDEN;
 const char *wined3d_debug_view_desc(const struct wined3d_view_desc *d,
         const struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 const char *wined3d_debug_vkresult(VkResult vr) DECLSPEC_HIDDEN;
@@ -5770,7 +5770,7 @@ const char *debug_d3dinput_classification(enum wined3d_input_classification clas
 const char *debug_d3dprimitivetype(enum wined3d_primitive_type primitive_type) DECLSPEC_HIDDEN;
 const char *debug_d3drenderstate(enum wined3d_render_state state) DECLSPEC_HIDDEN;
 const char *debug_d3dsamplerstate(enum wined3d_sampler_state state) DECLSPEC_HIDDEN;
-const char *debug_d3dstate(DWORD state) DECLSPEC_HIDDEN;
+const char *debug_d3dstate(uint32_t state) DECLSPEC_HIDDEN;
 const char *debug_d3dtexturefiltertype(enum wined3d_texture_filter_type filter_type) DECLSPEC_HIDDEN;
 const char *debug_d3dtexturestate(enum wined3d_texture_stage_state state) DECLSPEC_HIDDEN;
 const char *debug_d3dtop(enum wined3d_texture_op d3dtop) DECLSPEC_HIDDEN;

@@ -1642,7 +1642,7 @@ HRESULT CDECL wined3d_stateblock_get_light(const struct wined3d_stateblock *stat
     return WINED3D_OK;
 }
 
-static void init_default_render_states(DWORD rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
+static void init_default_render_states(unsigned int rs[WINEHIGHEST_RENDER_STATE + 1], const struct wined3d_d3d_info *d3d_info)
 {
     union
     {
