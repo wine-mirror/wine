@@ -484,15 +484,6 @@ ret:
     return ret;
 }
 
-/******************************************************************
- * verify, that the filename is a local file
- *
- */
-static inline BOOL is_local_file(LPWSTR name)
-{
-    return (name[0] && (name[1] == ':') && (name[2] == '\\'));
-}
-
 /* ################################ */
 
 static int multi_sz_lenA(const char *str)
