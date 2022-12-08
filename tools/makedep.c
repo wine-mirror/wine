@@ -878,13 +878,22 @@ static struct incl_file *add_generated_source( struct makefile *make, const char
 
 
 /*******************************************************************
+ *         skip_spaces
+ */
+static char *skip_spaces( const char *p )
+{
+    while (*p == ' ' || *p == '\t') p++;
+    return (char *)p;
+}
+
+
+/*******************************************************************
  *         parse_include_directive
  */
 static void parse_include_directive( struct file *source, char *str )
 {
-    char quote, *include, *p = str;
+    char quote, *include, *p = skip_spaces( str );
 
-    while (*p && isspace(*p)) p++;
     if (*p != '\"' && *p != '<' ) return;
     quote = *p++;
     if (quote == '<') quote = '>';
@@ -903,9 +912,8 @@ static void parse_pragma_directive( struct file *source, char *str )
 {
     char *flag, *p = str;
 
-    if (!isspace( *p )) return;
-    while (*p && isspace(*p)) p++;
-    p = strtok( p, " \t" );
+    if (*p != ' ' && *p != '\t') return;
+    p = strtok( skip_spaces( p ), " \t" );
     if (strcmp( p, "makedep" )) return;
 
     while ((flag = strtok( NULL, " \t" )))
@@ -963,9 +971,9 @@ static void parse_pragma_directive( struct file *source, char *str )
  */
 static void parse_cpp_directive( struct file *source, char *str )
 {
-    while (*str && isspace(*str)) str++;
+    str = skip_spaces( str );
     if (*str++ != '#') return;
-    while (*str && isspace(*str)) str++;
+    str = skip_spaces( str );
 
     if (!strncmp( str, "include", 7 ))
         parse_include_directive( source, str + 7 );
@@ -988,15 +996,13 @@ static void parse_idl_file( struct file *source, FILE *file )
     while ((buffer = get_line( file )))
     {
         char quote;
-        char *p = buffer;
-        while (*p && isspace(*p)) p++;
+        char *p = skip_spaces( buffer );
 
         if (!strncmp( p, "importlib", 9 ))
         {
-            p += 9;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p + 9 );
             if (*p++ != '(') continue;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p );
             if (*p++ != '"') continue;
             include = p;
             while (*p && (*p != '"')) p++;
@@ -1008,8 +1014,7 @@ static void parse_idl_file( struct file *source, FILE *file )
 
         if (!strncmp( p, "import", 6 ))
         {
-            p += 6;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p + 6 );
             if (*p != '"') continue;
             include = ++p;
             while (*p && (*p != '"')) p++;
@@ -1022,16 +1027,14 @@ static void parse_idl_file( struct file *source, FILE *file )
         /* check for #include inside cpp_quote */
         if (!strncmp( p, "cpp_quote", 9 ))
         {
-            p += 9;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p + 9 );
             if (*p++ != '(') continue;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p );
             if (*p++ != '"') continue;
             if (*p++ != '#') continue;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p );
             if (strncmp( p, "include", 7 )) continue;
-            p += 7;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p + 7 );
             if (*p == '\\' && p[1] == '"')
             {
                 p += 2;
@@ -1082,16 +1085,13 @@ static void parse_rc_file( struct file *source, FILE *file )
     while ((buffer = get_line( file )))
     {
         char quote;
-        char *p = buffer;
-        while (*p && isspace(*p)) p++;
+        char *p = skip_spaces( buffer );
 
         if (p[0] == '/' && p[1] == '*')  /* check for magic makedep comment */
         {
-            p += 2;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p + 2 );
             if (strncmp( p, "@makedep:", 9 )) continue;
-            p += 9;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p + 9 );
             quote = '"';
             if (*p == quote)
             {
@@ -1101,7 +1101,7 @@ static void parse_rc_file( struct file *source, FILE *file )
             else
             {
                 include = p;
-                while (*p && !isspace(*p) && *p != '*') p++;
+                while (*p && *p != ' ' && *p != '\t' && *p != '*') p++;
             }
             if (!*p)
                 fatal_error( "malformed makedep comment\n" );
@@ -1131,10 +1131,10 @@ static void parse_in_file( struct file *source, FILE *file )
     while ((buffer = get_line( file )))
     {
         if (strncmp( buffer, ".TH", 3 )) continue;
-        if (!(p = strtok( buffer, " \t" ))) continue;  /* .TH */
-        if (!(p = strtok( NULL, " \t" ))) continue;  /* program name */
-        if (!(p = strtok( NULL, " \t" ))) continue;  /* man section */
-        source->args = xstrdup( p );
+        p = skip_spaces( buffer + 3 );
+        while (*p && *p != ' ' && *p != '\t') p++;  /* program name */
+        p = skip_spaces( p );
+        if (*p) source->args = xstrdup( p );  /* man section */
         return;
     }
 }
@@ -1161,17 +1161,17 @@ static void parse_sfd_file( struct file *source, FILE *file )
         while ((eol = strstr( p, "+AAoA" )))
         {
             *eol = 0;
-            while (*p && isspace(*p)) p++;
+            p = skip_spaces( p );
             if (*p++ == '#')
             {
-                while (*p && isspace(*p)) p++;
+                p = skip_spaces( p );
                 if (!strncmp( p, "pragma", 6 )) parse_pragma_directive( source, p + 6 );
             }
             p = eol + 5;
         }
-        while (*p && isspace(*p)) p++;
+        p = skip_spaces( p );
         if (*p++ != '#') return;
-        while (*p && isspace(*p)) p++;
+        p = skip_spaces( p );
         if (!strncmp( p, "pragma", 6 )) parse_pragma_directive( source, p + 6 );
         return;
     }
@@ -1699,8 +1699,7 @@ static char *get_expanded_make_variable( const struct makefile *make, const char
     }
 
     /* consider empty variables undefined */
-    p = expand;
-    while (*p && isspace(*p)) p++;
+    p = skip_spaces( expand );
     if (*p) return expand;
     free( expand );
     return NULL;
@@ -1766,11 +1765,11 @@ static int set_make_variable( struct strarray *array, const char *assignment )
     if (isspace(*p))
     {
         *p++ = 0;
-        while (isspace(*p)) p++;
+        p = skip_spaces( p );
     }
     if (*p != '=') return 0;  /* not an assignment */
     *p++ = 0;
-    while (isspace(*p)) p++;
+    p = skip_spaces( p );
 
     strarray_set_value( array, name, p );
     return 1;
@@ -1796,7 +1795,7 @@ static struct makefile *parse_makefile( const char *path )
     {
         if (!strncmp( buffer, separator, strlen(separator) )) break;
         if (*buffer == '\t') continue;  /* command */
-        while (isspace( *buffer )) buffer++;
+        buffer = skip_spaces( buffer );
         if (*buffer == '#') continue;  /* comment */
         set_make_variable( &make->vars, buffer );
     }
@@ -4321,7 +4320,7 @@ static void parse_makeflags( const char *flags )
 
     while (*p)
     {
-        while (isspace(*p)) p++;
+        p = skip_spaces( p );
         var = buffer;
         while (*p && !isspace(*p))
         {
