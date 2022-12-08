@@ -42,7 +42,6 @@ C_SRCS = \
 	user_main.c \
 	win.c \
 	winhelp.c \
-	winpos.c \
 	winproc.c \
 	winstation.c \
 	wsprintf.c
