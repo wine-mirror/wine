@@ -26,7 +26,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include <stdio.h>
 
@@ -5955,7 +5954,7 @@ static void alpha_test_arbfp(struct wined3d_context *context, const struct wined
     int glParm;
     float ref;
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     if (state->render_states[WINED3D_RS_ALPHATESTENABLE])
     {
@@ -6566,7 +6565,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
     const struct arbfp_ffp_desc *desc;
     unsigned int i;
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     if (isStateDirty(context, STATE_RENDER(WINED3D_RS_FOGENABLE)))
     {
@@ -6659,7 +6658,7 @@ static void state_arbfp_fog(struct wined3d_context *context, const struct wined3
     DWORD fogstart = state->render_states[WINED3D_RS_FOGSTART];
     DWORD fogend = state->render_states[WINED3D_RS_FOGEND];
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     if (!isStateDirty(context, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL)))
         fragment_prog_arbfp(context, state, state_id);
@@ -7865,7 +7864,7 @@ static DWORD arbfp_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_bl
         if (FAILED(hr = wined3d_texture_create(device, &desc, 1, 1, 0,
                 NULL, NULL, &wined3d_null_parent_ops, &staging_texture)))
         {
-            ERR("Failed to create staging texture, hr %#x.\n", hr);
+            ERR("Failed to create staging texture, hr %#lx.\n", hr);
             return dst_location;
         }
 
