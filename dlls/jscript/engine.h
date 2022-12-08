@@ -222,7 +222,7 @@ static inline bytecode_t *bytecode_addref(bytecode_t *code)
 }
 
 typedef struct _scope_chain_t {
-    LONG ref;
+    jsdisp_t dispex;  /* FIXME: don't wrap it in a jsdisp (it holds ref and traverse for the garbage collector) */
     jsdisp_t *jsobj;
     IDispatch *obj;
     unsigned int scope_index;
@@ -230,12 +230,15 @@ typedef struct _scope_chain_t {
     struct _scope_chain_t *next;
 } scope_chain_t;
 
-void scope_release(scope_chain_t*) DECLSPEC_HIDDEN;
-
 static inline scope_chain_t *scope_addref(scope_chain_t *scope)
 {
-    scope->ref++;
+    jsdisp_addref(&scope->dispex);
     return scope;
+}
+
+static inline void scope_release(scope_chain_t *scope)
+{
+    jsdisp_release(&scope->dispex);
 }
 
 struct _jsexcept_t {

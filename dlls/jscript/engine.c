@@ -422,15 +422,40 @@ static inline void clear_acc(script_ctx_t *ctx)
     ctx->acc = jsval_undefined();
 }
 
-static HRESULT scope_push(scope_chain_t *scope, jsdisp_t *jsobj, IDispatch *obj, scope_chain_t **ret)
+static void scope_destructor(jsdisp_t *dispex)
+{
+    scope_chain_t *scope = CONTAINING_RECORD(dispex, scope_chain_t, dispex);
+
+    if(scope->next)
+        scope_release(scope->next);
+
+    if(scope->obj)
+        IDispatch_Release(scope->obj);
+    free(scope);
+}
+
+static const builtin_info_t scope_info = {
+    JSCLASS_NONE,
+    NULL,
+    0,
+    NULL,
+    scope_destructor,
+};
+
+static HRESULT scope_push(script_ctx_t *ctx, scope_chain_t *scope, jsdisp_t *jsobj, IDispatch *obj, scope_chain_t **ret)
 {
     scope_chain_t *new_scope;
+    HRESULT hres;
 
-    new_scope = malloc(sizeof(scope_chain_t));
+    new_scope = calloc(1, sizeof(scope_chain_t));
     if(!new_scope)
         return E_OUTOFMEMORY;
 
-    new_scope->ref = 1;
+    hres = init_dispex(&new_scope->dispex, ctx, &scope_info, NULL);
+    if(FAILED(hres)) {
+        free(new_scope);
+        return hres;
+    }
 
     if (obj)
         IDispatch_AddRef(obj);
@@ -451,19 +476,6 @@ static void scope_pop(scope_chain_t **scope)
     tmp = *scope;
     *scope = tmp->next;
     scope_release(tmp);
-}
-
-void scope_release(scope_chain_t *scope)
-{
-    if(--scope->ref)
-        return;
-
-    if(scope->next)
-        scope_release(scope->next);
-
-    if (scope->obj)
-        IDispatch_Release(scope->obj);
-    free(scope);
 }
 
 static HRESULT disp_get_id(script_ctx_t *ctx, IDispatch *disp, const WCHAR *name, BSTR name_bstr, DWORD flags, DISPID *id)
@@ -975,7 +987,7 @@ static HRESULT interp_push_with_scope(script_ctx_t *ctx)
     if(FAILED(hres))
         return hres;
 
-    hres = scope_push(ctx->call_ctx->scope, to_jsdisp(disp), disp, &ctx->call_ctx->scope);
+    hres = scope_push(ctx, ctx->call_ctx->scope, to_jsdisp(disp), disp, &ctx->call_ctx->scope);
     IDispatch_Release(disp);
     return hres;
 }
@@ -989,7 +1001,7 @@ static HRESULT interp_push_block_scope(script_ctx_t *ctx)
 
     TRACE("scope_index %u.\n", scope_index);
 
-    hres = scope_push(ctx->call_ctx->scope, NULL, NULL, &frame->scope);
+    hres = scope_push(ctx, ctx->call_ctx->scope, NULL, NULL, &frame->scope);
 
     if (FAILED(hres) || !scope_index)
         return hres;
@@ -1004,7 +1016,7 @@ static HRESULT interp_pop_scope(script_ctx_t *ctx)
 {
     TRACE("\n");
 
-    if(ctx->call_ctx->scope->ref > 1) {
+    if(ctx->call_ctx->scope->dispex.ref > 1) {
         HRESULT hres = detach_variable_object(ctx, ctx->call_ctx, FALSE);
         if(FAILED(hres))
             ERR("Failed to detach variable object: %08lx\n", hres);
@@ -1201,7 +1213,7 @@ static HRESULT interp_enter_catch(script_ctx_t *ctx)
     hres = jsdisp_propput_name(scope_obj, ident, v);
     jsval_release(v);
     if(SUCCEEDED(hres))
-        hres = scope_push(ctx->call_ctx->scope, scope_obj, to_disp(scope_obj), &ctx->call_ctx->scope);
+        hres = scope_push(ctx, ctx->call_ctx->scope, scope_obj, to_disp(scope_obj), &ctx->call_ctx->scope);
     jsdisp_release(scope_obj);
     return hres;
 }
@@ -2919,7 +2931,7 @@ static void pop_call_frame(script_ctx_t *ctx)
     assert(frame->scope == frame->base_scope);
 
     /* If current scope will be kept alive, we need to transfer local variables to its variable object. */
-    if(frame->scope && frame->scope->ref > 1) {
+    if(frame->scope && frame->scope->dispex.ref > 1) {
         HRESULT hres = detach_variable_object(ctx, frame, TRUE);
         if(FAILED(hres))
             ERR("Failed to detach variable object: %08lx\n", hres);
@@ -3191,7 +3203,7 @@ static HRESULT setup_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_t
 
     frame->pop_variables = i;
 
-    hres = scope_push(scope_chain, variable_object, to_disp(variable_object), &scope);
+    hres = scope_push(ctx, scope_chain, variable_object, to_disp(variable_object), &scope);
     if(FAILED(hres)) {
         stack_popn(ctx, ctx->stack_top - orig_stack);
         return hres;
