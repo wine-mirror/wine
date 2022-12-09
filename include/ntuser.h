@@ -913,6 +913,7 @@ enum
     NtUserCallNoParam_GetProcessDefaultLayout,
     NtUserCallNoParam_GetProgmanWindow,
     NtUserCallNoParam_GetShellWindow,
+    NtUserCallNoParam_GetTaskmanWindow,
     NtUserCallNoParam_ReleaseCapture,
     /* temporary exports */
     NtUserExitingThread,
@@ -952,6 +953,11 @@ static inline HWND NtUserGetProgmanWindow(void)
 static inline HWND NtUserGetShellWindow(void)
 {
     return UlongToHandle( NtUserCallNoParam( NtUserCallNoParam_GetShellWindow ));
+}
+
+static inline HWND NtUserGetTaskmanWindow(void)
+{
+    return UlongToHandle( NtUserCallNoParam( NtUserCallNoParam_GetTaskmanWindow ));
 }
 
 static inline BOOL NtUserReleaseCapture(void)

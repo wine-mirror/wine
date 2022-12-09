@@ -273,6 +273,7 @@ extern HWND get_focus(void) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
 extern HWND get_progman_window(void) DECLSPEC_HIDDEN;
 extern HWND get_shell_window(void) DECLSPEC_HIDDEN;
+extern HWND get_taskman_window(void) DECLSPEC_HIDDEN;
 extern BOOL WINAPI release_capture(void) DECLSPEC_HIDDEN;
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECLSPEC_HIDDEN;
 extern BOOL set_caret_blink_time( unsigned int time ) DECLSPEC_HIDDEN;

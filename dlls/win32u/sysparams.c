@@ -5443,6 +5443,9 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     case NtUserCallNoParam_GetShellWindow:
         return HandleToUlong( get_shell_window() );
 
+    case NtUserCallNoParam_GetTaskmanWindow:
+        return HandleToUlong( get_taskman_window() );
+
     case NtUserCallNoParam_ReleaseCapture:
         return release_capture();
 
