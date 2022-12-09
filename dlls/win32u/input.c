@@ -2233,3 +2233,18 @@ HWND set_progman_window( HWND hwnd )
     SERVER_END_REQ;
     return hwnd;
 }
+
+HWND set_taskman_window( HWND hwnd )
+{
+    /* hwnd = MSTaskSwWClass
+     *        |-> SysTabControl32
+     */
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags          = SET_GLOBAL_TASKMAN_WINDOW;
+        req->taskman_window = wine_server_user_handle( hwnd );
+        if (wine_server_call_err( req )) hwnd = 0;
+    }
+    SERVER_END_REQ;
+    return hwnd;
+}

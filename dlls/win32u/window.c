@@ -5432,6 +5432,9 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_SetProgmanWindow:
         return HandleToUlong( set_progman_window( hwnd ));
 
+    case NtUserCallHwnd_SetTaskmanWindow:
+        return HandleToUlong( set_taskman_window( hwnd ));
+
     /* temporary exports */
     case NtUserGetFullWindowHandle:
         return HandleToUlong( get_full_window_handle( hwnd ));
