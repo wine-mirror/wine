@@ -267,7 +267,7 @@ static RETERR16 VCP_VirtnodeCreate(const VCPFILESPEC *vfsSrc, const VCPFILESPEC 
  */
 RETERR16 WINAPI VcpOpen16(VIFPROC vifproc, LPARAM lparamMsgRef)
 {
-    TRACE("(%p, %08lx)\n", vifproc, lparamMsgRef);
+    TRACE("(%p, %08Ix)\n", vifproc, lparamMsgRef);
     if (VCP_opened)
 	return ERR_VCP_BUSY;
 
@@ -517,7 +517,7 @@ RETERR16 WINAPI vcpDefCallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
 {
     static int count = 0;
     if (count < 10)
-        FIXME("(%p, %04x, %04x, %08lx, %08lx) - what to do here ?\n",
+        FIXME("(%p, %04x, %04x, %08Ix, %08Ix) - what to do here ?\n",
 		lpvObj, uMsg, wParam, lParam, lParamRef);
     count++;
     return OK;
@@ -669,7 +669,7 @@ RETERR16 WINAPI vcpUICallbackProc16(LPVOID lpvObj, UINT16 uMsg, WPARAM wParam,
     RETERR16 res = VCPN_OK;
 
     if (count < 5)
-        FIXME("(%p, %04x, %04x, %08lx, %08lx) - semi-stub\n",
+        FIXME("(%p, %04x, %04x, %08Ix, %08Ix) - semi-stub\n",
 		lpvObj, uMsg, wParam, lParam, lParamRef);
     count++;
     switch (uMsg)
