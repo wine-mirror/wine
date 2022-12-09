@@ -1132,9 +1132,9 @@ static void parse_in_file( struct file *source, FILE *file )
     {
         if (strncmp( buffer, ".TH", 3 )) continue;
         p = skip_spaces( buffer + 3 );
-        while (*p && *p != ' ' && *p != '\t') p++;  /* program name */
-        p = skip_spaces( p );
-        if (*p) source->args = xstrdup( p );  /* man section */
+        if (!(p = strtok( p, " \t" ))) continue;  /* program name */
+        if (!(p = strtok( NULL, " \t" ))) continue;  /* man section */
+        source->args = xstrdup( p );
         return;
     }
 }
