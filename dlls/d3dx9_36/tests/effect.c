@@ -3007,187 +3007,181 @@ static void test_effect_states(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_states_effect_blob, sizeof(test_effect_states_effect_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3DERR_INVALIDCALL, "Got result %#lx.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
     /* State affected in passes saved/restored even if no pass
        was performed. States not present in passes are not saved &
        restored */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAFUNC, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->Begin(effect, &npasses, 0);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    ok(npasses == 1, "Expected 1 pass, got %u\n", npasses);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(npasses == 1, "Unexpected npasses %u.\n", npasses);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 3);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ALPHAFUNC, 2);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    ok(value == 1, "Got result %lu, expected %u.\n", value, 1);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value == 1, "Unexpected value %lu.\n", value);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_ALPHAFUNC, &value);
-    ok(value == 2, "Got result %lu, expected %u.\n", value, 2);
+    ok(value == 2, "Unexpected value %lu.\n", value);
 
     /* Test states application in BeginPass. No states are restored
        on EndPass. */
     hr = IDirect3DDevice9_SetSamplerState(device, 1, D3DSAMP_MIPFILTER, 0);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, 0);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == D3D_OK)
-        ok(!bval, "Got result %u, expected 0.\n", bval);
+        ok(!bval, "Unexpected bval %#x.\n", bval);
 
     hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLDMATRIX(1), &test_mat);
     hr = effect->lpVtbl->Begin(effect, NULL, 0);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix does not match.\n");
 
     test_effect_clear_vconsts(device);
 
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(!memcmp(mat.m, test_mat_world1.m, sizeof(mat)), "World matrix does not match.\n");
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_VIEW, &mat);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(!memcmp(mat.m, test_mat_camera.m, sizeof(mat)), "View matrix does not match.\n");
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    ok(value == 2, "Got result %lu, expected %u\n", value, 2);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value == 2, "Unexpected value %lu.\n", value);
 
     hr = IDirect3DDevice9_GetVertexShader(device, &vshader);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    ok(vshader != NULL, "Got NULL vshader.\n");
-    if (vshader)
-    {
-        hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
-        ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-        byte_code = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, byte_code_size);
-        hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
-        ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-        ok(byte_code_size > 1, "Got unexpected byte code size %u.\n", byte_code_size);
-        ok(!memcmp(byte_code, &test_effect_states_effect_blob[TEST_EFFECT_STATES_VSHADER_POS], byte_code_size),
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(vshader != NULL, "Unexpected vshader %p.\n", vshader);
+    hr = IDirect3DVertexShader9_GetFunction(vshader, NULL, &byte_code_size);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    byte_code = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, byte_code_size);
+    hr = IDirect3DVertexShader9_GetFunction(vshader, byte_code, &byte_code_size);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(byte_code_size > 1, "Got unexpected byte code size %u.\n", byte_code_size);
+    ok(!memcmp(byte_code, &test_effect_states_effect_blob[TEST_EFFECT_STATES_VSHADER_POS], byte_code_size),
             "Incorrect shader selected.\n");
-        HeapFree(GetProcessHeap(), 0, byte_code);
-        IDirect3DVertexShader9_Release(vshader);
-    }
+    HeapFree(GetProcessHeap(), 0, byte_code);
+    IDirect3DVertexShader9_Release(vshader);
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    if (hr == D3D_OK)
-        ok(bval, "Got result %u, expected TRUE.\n", bval);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(bval, "Unexpected bval %#x.\n", bval);
     hr = IDirect3DDevice9_GetLight(device, 2, &light);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    if (hr == D3D_OK)
-        ok(light.Position.x == 4.0f && light.Position.y == 5.0f && light.Position.z == 6.0f,
-                "Got unexpected light position (%f, %f, %f).\n", light.Position.x, light.Position.y, light.Position.z);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(light.Position.x == 4.0f && light.Position.y == 5.0f && light.Position.z == 6.0f,
+            "Unexpected light position (%.8e, %.8e, %.8e).\n", light.Position.x, light.Position.y, light.Position.z);
 
     /* Testing first value only for constants 1, 2 as the rest of the vector seem to
      * contain garbage data on native. */
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 1, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(fvect.x == 3.0f, "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 2, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(fvect.x == 1.0f, "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 3, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(fvect.x == 2.0f && fvect.y == 2.0f && fvect.z == 2.0f && fvect.w == 2.0f,
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
 
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 4, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(fvect.x == 4.0f && fvect.y == 4.0f && fvect.z == 4.0f && fvect.w == 4.0f,
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 5, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(fvect.x == 0.0f && fvect.y == 0.0f && fvect.z == 0.0f && fvect.w == 0.0f,
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 6, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(fvect.x == 0.0f && fvect.y == 0.0f && fvect.z == 0.0f && fvect.w == 0.0f,
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
     hr = IDirect3DDevice9_GetVertexShaderConstantF(device, 7, &fvect.x, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(!memcmp(&fvect, &fvect_filler, sizeof(fvect_filler)),
             "Got unexpected vertex shader constant (%.8e, %.8e, %.8e, %.8e).\n",
             fvect.x, fvect.y, fvect.z, fvect.w);
 
     hr = effect->lpVtbl->EndPass(effect);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    ok(value == 2, "Got result %lu, expected %u\n", value, 2);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value == 2, "Unexpected value %lu.\n", value);
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_ZENABLE, &value);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    ok(value, "Got result %lu, expected TRUE.\n", value);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value, "Unexpected value %lu.\n", value);
 
     hr = IDirect3DDevice9_GetSamplerState(device, 1, D3DSAMP_MIPFILTER, &value);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(value == D3DTEXF_LINEAR, "Unexpected sampler 1 mipfilter %lu.\n", value);
 
     hr = IDirect3DDevice9_GetTextureStageState(device, 3, D3DTSS_ALPHAOP, &value);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(value == 4, "Unexpected texture stage 3 AlphaOp %lu.\n", value);
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice9_GetTransform(device, D3DTS_WORLDMATRIX(1), &mat);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     ok(!memcmp(mat.m, test_mat.m, sizeof(mat)), "World matrix not restored.\n");
 
     hr = IDirect3DDevice9_GetLightEnable(device, 2, &bval);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    if (hr == D3D_OK)
-        ok(!bval, "Got result %u, expected 0.\n", bval);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!bval, "Unexpected bval %u.\n", bval);
 
     /* State is not restored if effect is released without End call */
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 1);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = effect->lpVtbl->Begin(effect, &npasses, 0);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_BLENDOP, 3);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     effect->lpVtbl->Release(effect);
 
     hr = IDirect3DDevice9_GetRenderState(device, D3DRS_BLENDOP, &value);
-    ok(hr == D3D_OK, "Got result %lx, expected 0 (D3D_OK).\n", hr);
-    ok(value == 3, "Got result %lu, expected %u.\n", value, 1);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    ok(value == 3, "Unexpected value %lu.\n", value);
 }
 
 /*
