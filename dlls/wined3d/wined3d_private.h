@@ -2955,7 +2955,7 @@ void context_state_fb(struct wined3d_context *context,
 struct wined3d_light_info
 {
     struct wined3d_light OriginalParms; /* Note D3D8LIGHT == D3D9LIGHT */
-    DWORD        OriginalIndex;
+    unsigned int OriginalIndex;
     LONG         glIndex;
     BOOL         enabled;
 

@@ -189,7 +189,7 @@ static const DWORD vertex_states_sampler[] =
     WINED3D_SAMP_DMAP_OFFSET,
 };
 
-static inline void stateblock_set_all_bits(DWORD *map, UINT map_size)
+static inline void stateblock_set_all_bits(uint32_t *map, UINT map_size)
 {
     DWORD mask = (1u << (map_size & 0x1f)) - 1;
     memset(map, 0xff, (map_size >> 5) * sizeof(*map));
@@ -734,7 +734,7 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
     const struct wined3d_stateblock_state *state = &device_state->stateblock_state;
     struct wined3d_range range;
     unsigned int i, start;
-    DWORD map;
+    uint32_t map;
 
     TRACE("stateblock %p, device_state %p.\n", stateblock, device_state);
 
@@ -935,8 +935,8 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
     /* Texture states */
     for (i = 0; i < stateblock->num_contained_tss_states; ++i)
     {
-        DWORD stage = stateblock->contained_tss_states[i].stage;
-        DWORD texture_state = stateblock->contained_tss_states[i].state;
+        unsigned int stage = stateblock->contained_tss_states[i].stage;
+        unsigned int texture_state = stateblock->contained_tss_states[i].state;
 
         TRACE("Updating texturestage state %u, %u to %#x (was %#x).\n", stage, texture_state,
                 state->texture_states[stage][texture_state],
@@ -963,8 +963,8 @@ void CDECL wined3d_stateblock_capture(struct wined3d_stateblock *stateblock,
 
     for (i = 0; i < stateblock->num_contained_sampler_states; ++i)
     {
-        DWORD stage = stateblock->contained_sampler_states[i].stage;
-        DWORD sampler_state = stateblock->contained_sampler_states[i].state;
+        unsigned int stage = stateblock->contained_sampler_states[i].stage;
+        unsigned int sampler_state = stateblock->contained_sampler_states[i].state;
 
         TRACE("Updating sampler state %u, %u to %#x (was %#x).\n", stage, sampler_state,
                 state->sampler_states[stage][sampler_state],
@@ -997,7 +997,7 @@ void CDECL wined3d_stateblock_apply(const struct wined3d_stateblock *stateblock,
     const struct wined3d_stateblock_state *state = &stateblock->stateblock_state;
     struct wined3d_range range;
     unsigned int i, start;
-    DWORD map;
+    uint32_t map;
 
     TRACE("stateblock %p, device_state %p.\n", stateblock, device_state);
 
@@ -1335,7 +1335,7 @@ void CDECL wined3d_stateblock_set_vertex_declaration(struct wined3d_stateblock *
 }
 
 void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateblock,
-        enum wined3d_render_state state, DWORD value)
+        enum wined3d_render_state state, unsigned int value)
 {
     TRACE("stateblock %p, state %s (%#x), value %#x.\n", stateblock, debug_d3drenderstate(state), state, value);
 
@@ -1357,7 +1357,7 @@ void CDECL wined3d_stateblock_set_render_state(struct wined3d_stateblock *stateb
 }
 
 void CDECL wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *stateblock,
-        UINT sampler_idx, enum wined3d_sampler_state state, DWORD value)
+        UINT sampler_idx, enum wined3d_sampler_state state, unsigned int value)
 {
     TRACE("stateblock %p, sampler_idx %u, state %s, value %#x.\n",
             stateblock, sampler_idx, debug_d3dsamplerstate(state), value);
@@ -1373,7 +1373,7 @@ void CDECL wined3d_stateblock_set_sampler_state(struct wined3d_stateblock *state
 }
 
 void CDECL wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock *stateblock,
-        UINT stage, enum wined3d_texture_stage_state state, DWORD value)
+        UINT stage, enum wined3d_texture_stage_state state, unsigned int value)
 {
     TRACE("stateblock %p, stage %u, state %s, value %#x.\n",
             stateblock, stage, debug_d3dtexturestate(state), value);
