@@ -24,7 +24,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include <stdio.h>
 
@@ -262,7 +261,7 @@ HRESULT CDECL wined3d_rasterizer_state_create(struct wined3d_device *device,
 
 static void state_undefined(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    ERR("Undefined state %s (%#x).\n", debug_d3dstate(state_id), state_id);
+    ERR("Undefined state %s (%#lx).\n", debug_d3dstate(state_id), state_id);
 }
 
 void state_nop(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
@@ -813,7 +812,7 @@ void state_alpha_test(struct wined3d_context *context, const struct wined3d_stat
     float ref;
     BOOL enable_ckey = FALSE;
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     /* Find out if the texture on the first stage has a ckey set. The alpha
      * state func reads the texture settings, even though alpha and texture
@@ -1256,7 +1255,7 @@ static void state_fog_vertexpart(struct wined3d_context *context, const struct w
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     if (!state->render_states[WINED3D_RS_FOGENABLE])
         return;
@@ -1347,7 +1346,7 @@ void state_fog_fragpart(struct wined3d_context *context, const struct wined3d_st
     DWORD fogstart = state->render_states[WINED3D_RS_FOGSTART];
     DWORD fogend = state->render_states[WINED3D_RS_FOGEND];
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     if (!state->render_states[WINED3D_RS_FOGENABLE])
     {
@@ -3653,7 +3652,7 @@ static void sampler_texmatrix(struct wined3d_context *context, const struct wine
     const DWORD sampler = state_id - STATE_SAMPLER(0);
     const struct wined3d_texture *texture = state->textures[sampler];
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     if (!texture)
         return;
@@ -4578,7 +4577,7 @@ void state_srgbwrite(struct wined3d_context *context, const struct wined3d_state
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl(context)->gl_info;
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     if (needs_srgb_write(context->d3d_info, state, &state->fb))
         gl_info->gl_ops.gl.p_glEnable(GL_FRAMEBUFFER_SRGB);
@@ -4594,7 +4593,7 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
     unsigned int i, base, count;
     struct wined3d_bo_gl *bo_gl;
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     if (STATE_IS_GRAPHICS_CONSTANT_BUFFER(state_id))
         shader_type = state_id - STATE_GRAPHICS_CONSTANT_BUFFER(0);
@@ -4627,7 +4626,7 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
 
 static void state_cb_warn(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     WARN("Constant buffers (%s) no supported.\n", debug_d3dstate(state_id));
 }
@@ -4635,7 +4634,7 @@ static void state_cb_warn(struct wined3d_context *context, const struct wined3d_
 static void state_shader_resource_binding(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     context->update_shader_resource_bindings = 1;
 }
@@ -4643,21 +4642,21 @@ static void state_shader_resource_binding(struct wined3d_context *context,
 static void state_cs_resource_binding(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
     context->update_compute_shader_resource_bindings = 1;
 }
 
 static void state_uav_binding(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
     context->update_unordered_access_view_bindings = 1;
 }
 
 static void state_cs_uav_binding(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
     context->update_compute_unordered_access_view_bindings = 1;
 }
 
@@ -4674,7 +4673,7 @@ static void state_so(struct wined3d_context *context, const struct wined3d_state
     unsigned int offset, size, i;
     struct wined3d_bo_gl *bo_gl;
 
-    TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
+    TRACE("context %p, state %p, state_id %#lx.\n", context, state, state_id);
 
     wined3d_context_gl_end_transform_feedback(context_gl);
 
