@@ -38,6 +38,7 @@
 #ifdef HAVE_LINK_H
 # include <link.h>
 #endif
+#include "basetsd.h"
 
 
 #ifdef __FreeBSD__
