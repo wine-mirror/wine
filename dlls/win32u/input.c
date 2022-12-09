@@ -2208,6 +2208,20 @@ BOOL WINAPI NtUserSetShellWindowEx( HWND shell, HWND list_view )
     return ret;
 }
 
+HWND get_progman_window(void)
+{
+    HWND ret = 0;
+
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags = 0;
+        if (!wine_server_call_err(req))
+            ret = wine_server_ptr_handle( reply->old_progman_window );
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
 HWND set_progman_window( HWND hwnd )
 {
     SERVER_START_REQ(set_global_windows)

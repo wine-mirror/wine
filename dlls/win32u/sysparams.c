@@ -5437,6 +5437,9 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     case NtUserCallNoParam_GetProcessDefaultLayout:
         return process_layout;
 
+    case NtUserCallNoParam_GetProgmanWindow:
+        return HandleToUlong( get_progman_window() );
+
     case NtUserCallNoParam_GetShellWindow:
         return HandleToUlong( get_shell_window() );
 
