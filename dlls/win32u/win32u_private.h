@@ -277,6 +277,7 @@ extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECL
 extern BOOL set_caret_blink_time( unsigned int time ) DECLSPEC_HIDDEN;
 extern BOOL set_caret_pos( int x, int y ) DECLSPEC_HIDDEN;
 extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
+extern HWND set_progman_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void toggle_caret( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void update_mouse_tracking_info( HWND hwnd ) DECLSPEC_HIDDEN;
 

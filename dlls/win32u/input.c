@@ -2207,3 +2207,15 @@ BOOL WINAPI NtUserSetShellWindowEx( HWND shell, HWND list_view )
     SERVER_END_REQ;
     return ret;
 }
+
+HWND set_progman_window( HWND hwnd )
+{
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags          = SET_GLOBAL_PROGMAN_WINDOW;
+        req->progman_window = wine_server_user_handle( hwnd );
+        if (wine_server_call_err( req )) hwnd = 0;
+    }
+    SERVER_END_REQ;
+    return hwnd;
+}

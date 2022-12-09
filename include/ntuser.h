@@ -1175,6 +1175,7 @@ enum
     NtUserCallHwnd_IsWindowUnicode,
     NtUserCallHwnd_IsWindowVisible,
     NtUserCallHwnd_SetForegroundWindow,
+    NtUserCallHwnd_SetProgmanWindow,
     /* temporary exports */
     NtUserGetFullWindowHandle,
     NtUserIsCurrehtProcessWindow,
@@ -1270,6 +1271,11 @@ static inline BOOL NtUserIsWindowVisible( HWND hwnd )
 static inline BOOL NtUserSetForegroundWindow( HWND hwnd )
 {
     return NtUserCallHwnd( hwnd, NtUserCallHwnd_SetForegroundWindow );
+}
+
+static inline HWND NtUserSetProgmanWindow( HWND hwnd )
+{
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_SetProgmanWindow ));
 }
 
 /* NtUserCallHwndParam codes, not compatible with Windows */

@@ -76,16 +76,9 @@ HWND WINAPI GetShellWindow(void)
 /***********************************************************************
  *		SetProgmanWindow (USER32.@)
  */
-HWND WINAPI SetProgmanWindow ( HWND hwnd )
+HWND WINAPI SetProgmanWindow( HWND hwnd )
 {
-    SERVER_START_REQ(set_global_windows)
-    {
-        req->flags          = SET_GLOBAL_PROGMAN_WINDOW;
-        req->progman_window = wine_server_user_handle( hwnd );
-        if (wine_server_call_err( req )) hwnd = 0;
-    }
-    SERVER_END_REQ;
-    return hwnd;
+    return NtUserSetProgmanWindow( hwnd );
 }
 
 

@@ -5429,6 +5429,9 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_SetForegroundWindow:
         return set_foreground_window( hwnd, FALSE );
 
+    case NtUserCallHwnd_SetProgmanWindow:
+        return HandleToUlong( set_progman_window( hwnd ));
+
     /* temporary exports */
     case NtUserGetFullWindowHandle:
         return HandleToUlong( get_full_window_handle( hwnd ));
