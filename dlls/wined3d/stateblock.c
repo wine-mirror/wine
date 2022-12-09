@@ -21,7 +21,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -2065,7 +2064,7 @@ HRESULT CDECL wined3d_stateblock_create(struct wined3d_device *device, const str
     hr = stateblock_init(object, device_state, device, type);
     if (FAILED(hr))
     {
-        WARN("Failed to initialize stateblock, hr %#x.\n", hr);
+        WARN("Failed to initialize stateblock, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
