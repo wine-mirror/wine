@@ -340,6 +340,7 @@ SOURCES = \
 	highlevelmonitorconfigurationapi.h \
 	hlguids.h \
 	hlink.idl \
+	hrtfapoapi.idl \
 	hstring.idl \
 	htiface.idl \
 	htiframe.idl \
