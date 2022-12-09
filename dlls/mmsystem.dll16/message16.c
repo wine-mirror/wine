@@ -217,7 +217,7 @@ static MMSYSTEM_MapType	MMSYSTDRV_MidiOut_Map16To32W  (DWORD wMsg, DWORD_PTR* lp
     case MODM_CACHEPATCHES:
     case MODM_CACHEDRUMPATCHES:
     default:
-	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%Ix,%Ix]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -284,7 +284,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_MidiOut_UnMap16To32W(DWORD wMsg, DWORD_PTR* l
     case MODM_CACHEPATCHES:
     case MODM_CACHEDRUMPATCHES:
     default:
-	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%Ix,%Ix]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -427,7 +427,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveIn_Map16To32W  (DWORD wMsg, DWORD_PTR* lp
 	ret = MMSYSTEM_MAP_OK;
 	break;
     default:
-	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%Ix,%Ix]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -497,7 +497,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveIn_UnMap16To32W(DWORD wMsg, DWORD_PTR* lp
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%Ix,%Ix]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -646,7 +646,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveOut_Map16To32W  (DWORD wMsg, DWORD_PTR* l
 	ret = MMSYSTEM_MAP_OK;
 	break;
     default:
-	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%Ix,%Ix]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -726,7 +726,7 @@ static  MMSYSTEM_MapType	MMSYSTDRV_WaveOut_UnMap16To32W(DWORD wMsg, DWORD_PTR* l
 	}
 	break;
     default:
-	FIXME("NIY: no conversion yet for %lu [%lx,%lx]\n", wMsg, *lpParam1, *lpParam2);
+	FIXME("NIY: no conversion yet for %lu [%Ix,%Ix]\n", wMsg, *lpParam1, *lpParam2);
 	break;
     }
     return ret;
@@ -980,7 +980,7 @@ DWORD   MMSYSTDRV_Message(void* h, UINT msg, DWORD_PTR param1, DWORD_PTR param2)
         break;
     case MMSYSTEM_MAP_OK:
     case MMSYSTEM_MAP_OKMEM:
-        TRACE("Calling message(msg=%u p1=0x%08lx p2=0x%08lx)\n",
+        TRACE("Calling message(msg=%u p1=0x%08Ix p2=0x%08Ix)\n",
               msg, param1, param2);
         switch (thunk->kind)
         {

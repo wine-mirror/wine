@@ -97,7 +97,7 @@ static inline LRESULT DRIVER_SendMessage(LPWINE_DRIVER lpDrv, UINT16 msg,
     WORD args[8];
     DWORD ret;
 
-    TRACE("Before CallDriverProc proc=%p driverID=%08lx wMsg=%04x p1=%08lx p2=%08lx\n",
+    TRACE("Before CallDriverProc proc=%p driverID=%08lx wMsg=%04x p1=%08Ix p2=%08Ix\n",
 	  lpDrv->lpDrvProc, lpDrv->dwDriverID, msg, lParam1, lParam2);
 
     args[7] = HIWORD(lpDrv->dwDriverID);
@@ -120,7 +120,7 @@ LRESULT WINAPI DrvSendMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1, LPA
     LPWINE_DRIVER 	lpDrv;
     LRESULT 		retval = 0;
 
-    TRACE("(%04x, %04X, %08lX, %08lX)\n", hDriver, msg, lParam1, lParam2);
+    TRACE("(%04x, %04X, %08Ix, %08Ix)\n", hDriver, msg, lParam1, lParam2);
 
     if ((lpDrv = DRIVER_FindFromHDrvr16(hDriver)) != NULL) {
 	retval = DRIVER_SendMessage(lpDrv, msg, lParam1, lParam2);
@@ -128,7 +128,7 @@ LRESULT WINAPI DrvSendMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1, LPA
 	WARN("Bad driver handle %u\n", hDriver);
     }
 
-    TRACE("retval = %ld\n", retval);
+    TRACE("retval = %Id\n", retval);
     return retval;
 }
 
@@ -211,7 +211,7 @@ static	LPWINE_DRIVER	DRIVER_TryOpenDriver16(LPSTR lpFileName, LPARAM lParam2)
     DRIVERPROC16	lpProc;
     LPSTR		ptr;
 
-    TRACE("('%s', %08lX);\n", lpFileName, lParam2);
+    TRACE("('%s', %08Ix);\n", lpFileName, lParam2);
 
     if (strlen(lpFileName) < 1) return lpDrv;
 
@@ -252,7 +252,7 @@ HDRVR16 WINAPI DrvOpen16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lPara
     LPWINE_DRIVER	lpDrv = NULL;
     char		drvName[128];
 
-    TRACE("(%s, %s, %08lX);\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName), lParam2);
+    TRACE("(%s, %s, %08Ix);\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName), lParam2);
 
     if (!lpDriverName || !*lpDriverName) return 0;
 
@@ -284,7 +284,7 @@ LRESULT WINAPI DrvClose16(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
     LPWINE_DRIVER	lpDrv;
 
-    TRACE("(%04x, %08lX, %08lX);\n", hDrvr, lParam1, lParam2);
+    TRACE("(%04x, %08Ix, %08Ix);\n", hDrvr, lParam1, lParam2);
 
     if ((lpDrv = DRIVER_FindFromHDrvr16(hDrvr)) != NULL) {
 	DRIVER_SendMessage(lpDrv, DRV_CLOSE, lParam1, lParam2);
@@ -321,7 +321,7 @@ HMODULE16 WINAPI DrvGetModuleHandle16(HDRVR16 hDrvr)
 LRESULT WINAPI DrvDefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
                                   LPARAM lParam1, LPARAM lParam2)
 {
-    TRACE("devID=0x%08lx hDrv=0x%04x wMsg=%04x lP1=0x%08lx lP2=0x%08lx\n",
+    TRACE("devID=0x%08lx hDrv=0x%04x wMsg=%04x lP1=0x%08Ix lP2=0x%08Ix\n",
 	  dwDevID, hDriv, wMsg, lParam1, lParam2);
 
     switch(wMsg) {

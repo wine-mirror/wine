@@ -2026,7 +2026,7 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE16 lpHndl, DWORD
     if (lpHndl)
 	*lpHndl = hndl;
 
-    TRACE("ok => %ld\n", ret);
+    TRACE("ok => %Id\n", ret);
     return ret;
 }
 

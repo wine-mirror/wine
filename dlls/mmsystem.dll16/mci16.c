@@ -680,7 +680,7 @@ DWORD WINAPI mciSendCommand16(UINT16 wDevID, UINT16 wMsg, DWORD dwParam1, DWORD 
     BOOL                to32;
     DWORD_PTR           dwParam2 = p2;
 
-    TRACE("(%04X, %s, %08lX, %08lX)\n", wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
+    TRACE("(%04X, %s, %08lx, %08Ix)\n", wDevID, MCI_MessageToString(wMsg), dwParam1, dwParam2);
 
     switch (wMsg) {
     case MCI_CLOSE:
