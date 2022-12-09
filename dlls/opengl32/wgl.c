@@ -1058,7 +1058,7 @@ static void *get_named_buffer_pointer( GLint buffer )
 }
 #endif
 
-void * WINAPI glMapBuffer( GLenum target, GLenum access )
+static void *gl_map_buffer( enum unix_funcs code, GLenum target, GLenum access )
 {
     struct glMapBuffer_params args =
     {
@@ -1070,13 +1070,13 @@ void * WINAPI glMapBuffer( GLenum target, GLenum access )
 
     TRACE( "target %d, access %d\n", target, access );
 
-    if (!(status = UNIX_CALL( glMapBuffer, &args ))) return args.ret;
+    if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
 #ifndef _WIN64
     if (status == STATUS_INVALID_ADDRESS)
     {
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
         if (!(args.ret = _aligned_malloc( (size_t)args.ret, 16 ))) status = STATUS_NO_MEMORY;
-        else if (!(status = UNIX_CALL( glMapBuffer, &args ))) return args.ret;
+        else if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
         _aligned_free( args.ret );
     }
 #endif
@@ -1084,9 +1084,14 @@ void * WINAPI glMapBuffer( GLenum target, GLenum access )
     return args.ret;
 }
 
+void * WINAPI glMapBuffer( GLenum target, GLenum access )
+{
+    return gl_map_buffer( unix_glMapBuffer, target, access );
+}
+
 void * WINAPI glMapBufferARB( GLenum target, GLenum access )
 {
-    return glMapBuffer( target, access );
+    return gl_map_buffer( unix_glMapBufferARB, target, access );
 }
 
 void * WINAPI glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr length, GLbitfield access )
@@ -1117,7 +1122,7 @@ void * WINAPI glMapBufferRange( GLenum target, GLintptr offset, GLsizeiptr lengt
     return args.ret;
 }
 
-void * WINAPI glMapNamedBuffer( GLuint buffer, GLenum access )
+static void *gl_map_named_buffer( enum unix_funcs code, GLuint buffer, GLenum access )
 {
     struct glMapNamedBuffer_params args =
     {
@@ -1129,13 +1134,13 @@ void * WINAPI glMapNamedBuffer( GLuint buffer, GLenum access )
 
     TRACE( "(%d, %d)\n", buffer, access );
 
-    if (!(status = UNIX_CALL( glMapNamedBuffer, &args ))) return args.ret;
+    if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
 #ifndef _WIN64
     if (status == STATUS_INVALID_ADDRESS)
     {
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
         if (!(args.ret = _aligned_malloc( (size_t)args.ret, 16 ))) status = STATUS_NO_MEMORY;
-        else if (!(status = UNIX_CALL( glMapNamedBuffer, &args ))) return args.ret;
+        else if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
         _aligned_free( args.ret );
     }
 #endif
@@ -1143,12 +1148,17 @@ void * WINAPI glMapNamedBuffer( GLuint buffer, GLenum access )
     return args.ret;
 }
 
-void * WINAPI glMapNamedBufferEXT( GLuint buffer, GLenum access )
+void * WINAPI glMapNamedBuffer( GLuint buffer, GLenum access )
 {
-    return glMapNamedBuffer( buffer, access );
+    return gl_map_named_buffer( unix_glMapNamedBuffer, buffer, access );
 }
 
-void * WINAPI glMapNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
+void * WINAPI glMapNamedBufferEXT( GLuint buffer, GLenum access )
+{
+    return gl_map_named_buffer( unix_glMapNamedBufferEXT, buffer, access );
+}
+
+static void *gl_map_named_buffer_range( enum unix_funcs code, GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
 {
     struct glMapNamedBufferRange_params args =
     {
@@ -1162,13 +1172,13 @@ void * WINAPI glMapNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr 
 
     TRACE( "buffer %d, offset %Id, length %Id, access %d\n", buffer, offset, length, access );
 
-    if (!(status = UNIX_CALL( glMapNamedBufferRange, &args ))) return args.ret;
+    if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
 #ifndef _WIN64
     if (status == STATUS_INVALID_ADDRESS)
     {
         TRACE( "Unable to map wow64 buffer directly, using copy buffer!\n" );
         if (!(args.ret = _aligned_malloc( length, 16 ))) status = STATUS_NO_MEMORY;
-        else if (!(status = UNIX_CALL( glMapNamedBufferRange, &args ))) return args.ret;
+        else if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
         _aligned_free( args.ret );
     }
 #endif
@@ -1176,12 +1186,17 @@ void * WINAPI glMapNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr 
     return args.ret;
 }
 
-void * WINAPI glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
+void * WINAPI glMapNamedBufferRange( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
 {
-    return glMapNamedBufferRange( buffer, offset, length, access );
+    return gl_map_named_buffer_range( unix_glMapNamedBufferRange, buffer, offset, length, access );
 }
 
-GLboolean WINAPI glUnmapBuffer( GLenum target )
+void * WINAPI glMapNamedBufferRangeEXT( GLuint buffer, GLintptr offset, GLsizeiptr length, GLbitfield access )
+{
+    return gl_map_named_buffer_range( unix_glMapNamedBufferRangeEXT, buffer, offset, length, access );
+}
+
+static GLboolean gl_unmap_buffer( enum unix_funcs code, GLenum target )
 {
     struct glUnmapBuffer_params args =
     {
@@ -1195,7 +1210,7 @@ GLboolean WINAPI glUnmapBuffer( GLenum target )
 
     TRACE( "target %d\n", target );
 
-    if (!(status = UNIX_CALL( glUnmapBuffer, &args ))) return args.ret;
+    if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
 #ifndef _WIN64
     if (status == STATUS_INVALID_ADDRESS)
     {
@@ -1208,12 +1223,17 @@ GLboolean WINAPI glUnmapBuffer( GLenum target )
     return args.ret;
 }
 
-GLboolean WINAPI glUnmapBufferARB( GLenum target )
+GLboolean WINAPI glUnmapBuffer( GLenum target )
 {
-    return glUnmapBuffer( target );
+    return gl_unmap_buffer( unix_glUnmapBuffer, target );
 }
 
-GLboolean WINAPI glUnmapNamedBuffer( GLuint buffer )
+GLboolean WINAPI glUnmapBufferARB( GLenum target )
+{
+    return gl_unmap_buffer( unix_glUnmapBufferARB, target );
+}
+
+static GLboolean gl_unmap_named_buffer( enum unix_funcs code, GLuint buffer )
 {
     struct glUnmapNamedBuffer_params args =
     {
@@ -1227,7 +1247,7 @@ GLboolean WINAPI glUnmapNamedBuffer( GLuint buffer )
 
     TRACE( "buffer %d\n", buffer );
 
-    if (!(status = UNIX_CALL( glUnmapNamedBuffer, &args ))) return args.ret;
+    if (!(status = WINE_UNIX_CALL( code, &args ))) return args.ret;
 #ifndef _WIN64
     if (status == STATUS_INVALID_ADDRESS)
     {
@@ -1240,9 +1260,14 @@ GLboolean WINAPI glUnmapNamedBuffer( GLuint buffer )
     return args.ret;
 }
 
+GLboolean WINAPI glUnmapNamedBuffer( GLuint buffer )
+{
+    return gl_unmap_named_buffer( unix_glUnmapNamedBuffer, buffer );
+}
+
 GLboolean WINAPI glUnmapNamedBufferEXT( GLuint buffer )
 {
-    return glUnmapNamedBuffer( buffer );
+    return gl_unmap_named_buffer( unix_glUnmapNamedBufferEXT, buffer );
 }
 
 static BOOL WINAPI call_opengl_debug_message_callback( struct wine_gl_debug_message_params *params, ULONG size )

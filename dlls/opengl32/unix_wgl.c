@@ -1743,6 +1743,22 @@ static void *get_named_buffer_pointer( TEB *teb, GLint buffer )
     return ptr;
 }
 
+static void unmap_buffer( TEB *teb, GLenum target )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    typeof(*funcs->ext.p_glUnmapBuffer) *func;
+    if (!(func = funcs->ext.p_glUnmapBuffer)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glUnmapBuffer" );
+    if (func) func( target );
+}
+
+static void unmap_named_buffer( TEB *teb, GLint buffer )
+{
+    const struct opengl_funcs *funcs = teb->glTable;
+    typeof(*funcs->ext.p_glUnmapNamedBuffer) *func;
+    if (!(func = funcs->ext.p_glUnmapNamedBuffer)) func = (void *)funcs->wgl.p_wglGetProcAddress( "glUnmapNamedBuffer" );
+    if (func) func( buffer );
+}
+
 static NTSTATUS wow64_map_buffer( TEB *teb, GLint buffer, GLenum target, void *ptr, SIZE_T size,
                                   GLbitfield access, PTR32 *ret )
 {
@@ -1794,7 +1810,7 @@ static NTSTATUS wow64_unmap_buffer( void *ptr, SIZE_T size, GLbitfield access )
     return STATUS_INVALID_ADDRESS;
 }
 
-NTSTATUS wow64_ext_glGetBufferPointerv( void *args )
+static NTSTATUS wow64_gl_get_buffer_pointer_v( void *args, NTSTATUS (*get_buffer_pointer_v64)(void *) )
 {
     PTR32 *ptr; /* pointer to the buffer data, where we saved the wow64 pointer */
     struct
@@ -1814,19 +1830,24 @@ NTSTATUS wow64_ext_glGetBufferPointerv( void *args )
     PTR32 *wow_ptr = UlongToPtr(params32->params);
     NTSTATUS status;
 
-    if ((status = ext_glGetBufferPointerv( &params ))) return status;
+    if ((status = get_buffer_pointer_v64( &params ))) return status;
     if (params.pname != GL_BUFFER_MAP_POINTER) return STATUS_NOT_IMPLEMENTED;
     if (ULongToPtr(*wow_ptr = PtrToUlong(ptr)) == ptr) return STATUS_SUCCESS;  /* we're lucky */
     *wow_ptr = ptr[0];
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wow64_ext_glGetBufferPointervARB( void *args )
+NTSTATUS wow64_ext_glGetBufferPointerv( void *args )
 {
-    return wow64_ext_glGetBufferPointerv( args );
+    return wow64_gl_get_buffer_pointer_v( args, ext_glGetBufferPointerv );
 }
 
-NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args )
+NTSTATUS wow64_ext_glGetBufferPointervARB( void *args )
+{
+    return wow64_gl_get_buffer_pointer_v( args, ext_glGetBufferPointervARB );
+}
+
+static NTSTATUS wow64_gl_get_named_buffer_pointer_v( void *args, NTSTATUS (*gl_get_named_buffer_pointer_v64)(void *) )
 {
     PTR32 *ptr; /* pointer to the buffer data, where we saved the wow64 pointer */
     struct
@@ -1846,19 +1867,24 @@ NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args )
     PTR32 *wow_ptr = UlongToPtr(params32->params);
     NTSTATUS status;
 
-    if ((status = ext_glGetNamedBufferPointerv( &params ))) return status;
+    if ((status = gl_get_named_buffer_pointer_v64( &params ))) return status;
     if (params.pname != GL_BUFFER_MAP_POINTER) return STATUS_NOT_IMPLEMENTED;
     if (ULongToPtr(*wow_ptr = PtrToUlong(ptr)) == ptr) return STATUS_SUCCESS;  /* we're lucky */
     *wow_ptr = ptr[0];
     return STATUS_SUCCESS;
 }
 
-NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args )
+NTSTATUS wow64_ext_glGetNamedBufferPointerv( void *args )
 {
-    return wow64_ext_glGetNamedBufferPointerv( args );
+    return wow64_gl_get_named_buffer_pointer_v( args, ext_glGetNamedBufferPointerv );
 }
 
-NTSTATUS wow64_ext_glMapBuffer( void *args )
+NTSTATUS wow64_ext_glGetNamedBufferPointervEXT( void *args )
+{
+    return wow64_gl_get_named_buffer_pointer_v( args, ext_glGetNamedBufferPointervEXT );
+}
+
+static NTSTATUS wow64_gl_map_buffer( void *args, NTSTATUS (*gl_map_buffer64)(void *) )
 {
     struct
     {
@@ -1873,23 +1899,27 @@ NTSTATUS wow64_ext_glMapBuffer( void *args )
         .target = params32->target,
         .access = params32->access,
     };
-    struct glUnmapBuffer_params unmap_params = { .teb = params.teb, .target = params.target };
     NTSTATUS status;
 
     /* already mapped, we're being called again with a wow64 pointer */
     if (params32->ret) params.ret = get_buffer_pointer( params.teb, params.target );
-    else if ((status = ext_glMapBuffer( &params ))) return status;
+    else if ((status = gl_map_buffer64( &params ))) return status;
 
     status = wow64_map_buffer( params.teb, 0, params.target, params.ret, 0, params.access, &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
-    ext_glUnmapBuffer( &unmap_params );
+    unmap_buffer( params.teb, params.target );
     return status;
+}
+
+NTSTATUS wow64_ext_glMapBuffer( void *args )
+{
+    return wow64_gl_map_buffer( args, ext_glMapBuffer );
 }
 
 NTSTATUS wow64_ext_glMapBufferARB( void *args )
 {
-    return wow64_ext_glMapBuffer( args );
+    return wow64_gl_map_buffer( args, ext_glMapBufferARB );
 }
 
 NTSTATUS wow64_ext_glMapBufferRange( void *args )
@@ -1911,7 +1941,6 @@ NTSTATUS wow64_ext_glMapBufferRange( void *args )
         .length = (GLsizeiptr)ULongToPtr(params32->length),
         .access = params32->access,
     };
-    struct glUnmapBuffer_params unmap_params = { .teb = params.teb, .target = params.target };
     NTSTATUS status;
 
     /* already mapped, we're being called again with a wow64 pointer */
@@ -1921,11 +1950,11 @@ NTSTATUS wow64_ext_glMapBufferRange( void *args )
     status = wow64_map_buffer( params.teb, 0, params.target, params.ret, params.length, params.access, &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
-    ext_glUnmapBuffer( &unmap_params );
+    unmap_buffer( params.teb, params.target );
     return status;
 }
 
-NTSTATUS wow64_ext_glMapNamedBuffer( void *args )
+static NTSTATUS wow64_gl_map_named_buffer( void *args, NTSTATUS (*gl_map_named_buffer64)(void *) )
 {
     struct
     {
@@ -1940,26 +1969,30 @@ NTSTATUS wow64_ext_glMapNamedBuffer( void *args )
         .buffer = params32->buffer,
         .access = params32->access,
     };
-    struct glUnmapNamedBuffer_params unmap_params = { .teb = params.teb, .buffer = params.buffer };
     NTSTATUS status;
 
     /* already mapped, we're being called again with a wow64 pointer */
     if (params32->ret) params.ret = get_named_buffer_pointer( params.teb, params.buffer );
-    else if ((status = ext_glMapNamedBuffer( &params ))) return status;
+    else if ((status = gl_map_named_buffer64( &params ))) return status;
 
     status = wow64_map_buffer( params.teb, params.buffer, 0, params.ret, 0, params.access, &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
-    ext_glUnmapNamedBuffer( &unmap_params );
+    unmap_named_buffer( params.teb, params.buffer );
     return status;
+}
+
+NTSTATUS wow64_ext_glMapNamedBuffer( void *args )
+{
+    return wow64_gl_map_named_buffer( args, ext_glMapNamedBuffer );
 }
 
 NTSTATUS wow64_ext_glMapNamedBufferEXT( void *args )
 {
-    return wow64_ext_glMapNamedBuffer( args );
+    return wow64_gl_map_named_buffer( args, ext_glMapNamedBufferEXT );
 }
 
-NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
+static NTSTATUS wow64_gl_map_named_buffer_range( void *args, NTSTATUS (*gl_map_named_buffer_range64)(void *) )
 {
     struct
     {
@@ -1978,26 +2011,30 @@ NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
         .length = (GLsizeiptr)ULongToPtr(params32->length),
         .access = params32->access,
     };
-    struct glUnmapNamedBuffer_params unmap_params = { .teb = params.teb, .buffer = params.buffer };
     NTSTATUS status;
 
     /* already mapped, we're being called again with a wow64 pointer */
     if (params32->ret) params.ret = get_named_buffer_pointer( params.teb, params.buffer );
-    else if ((status = ext_glMapNamedBufferRange( &params ))) return status;
+    else if ((status = gl_map_named_buffer_range64( &params ))) return status;
 
     status = wow64_map_buffer( params.teb, params.buffer, 0, params.ret, params.length, params.access, &params32->ret );
     if (!status || status == STATUS_INVALID_ADDRESS) return status;
 
-    ext_glUnmapNamedBuffer( &unmap_params );
+    unmap_named_buffer( params.teb, params.buffer );
     return status;
+}
+
+NTSTATUS wow64_ext_glMapNamedBufferRange( void *args )
+{
+    return wow64_gl_map_named_buffer_range( args, ext_glMapNamedBufferRange );
 }
 
 NTSTATUS wow64_ext_glMapNamedBufferRangeEXT( void *args )
 {
-    return wow64_ext_glMapNamedBufferRange( args );
+    return wow64_gl_map_named_buffer_range( args, ext_glMapNamedBufferRangeEXT );
 }
 
-NTSTATUS wow64_ext_glUnmapBuffer( void *args )
+static NTSTATUS wow64_gl_unmap_buffer( void *args, NTSTATUS (*gl_unmap_buffer64)(void *) )
 {
     PTR32 *ptr;
     struct
@@ -2013,17 +2050,22 @@ NTSTATUS wow64_ext_glUnmapBuffer( void *args )
 
     status = wow64_unmap_buffer( ptr, get_buffer_param( teb, params32->target, GL_BUFFER_MAP_LENGTH ),
                                  get_buffer_param( teb, params32->target, GL_BUFFER_ACCESS_FLAGS ) );
-    ext_glUnmapBuffer( args );
+    gl_unmap_buffer64( args );
 
     return status;
 }
 
-NTSTATUS wow64_ext_glUnmapBufferARB( void *args )
+NTSTATUS wow64_ext_glUnmapBuffer( void *args )
 {
-    return wow64_ext_glUnmapBuffer( args );
+    return wow64_gl_unmap_buffer( args, ext_glUnmapBuffer );
 }
 
-NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args )
+NTSTATUS wow64_ext_glUnmapBufferARB( void *args )
+{
+    return wow64_gl_unmap_buffer( args, ext_glUnmapBufferARB );
+}
+
+static NTSTATUS wow64_gl_unmap_named_buffer( void *args, NTSTATUS (*gl_unmap_named_buffer64)(void *) )
 {
     PTR32 *ptr;
     struct
@@ -2039,14 +2081,19 @@ NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args )
 
     status = wow64_unmap_buffer( ptr, get_named_buffer_param( teb, params32->buffer, GL_BUFFER_MAP_LENGTH ),
                                  get_named_buffer_param( teb, params32->buffer, GL_BUFFER_ACCESS_FLAGS ) );
-    ext_glUnmapNamedBuffer( args );
+    gl_unmap_named_buffer64( args );
 
     return status;
 }
 
+NTSTATUS wow64_ext_glUnmapNamedBuffer( void *args )
+{
+    return wow64_gl_unmap_named_buffer( args, ext_glUnmapNamedBuffer );
+}
+
 NTSTATUS wow64_ext_glUnmapNamedBufferEXT( void *args )
 {
-    return wow64_ext_glUnmapNamedBuffer( args );
+    return wow64_gl_unmap_named_buffer( args, ext_glUnmapNamedBufferEXT );
 }
 
 NTSTATUS wow64_thread_attach( void *args )
