@@ -99,7 +99,7 @@ MMRESULT16 WINAPI acmDriverAdd16(
   LPHACMDRIVERID16 phadid, HINSTANCE16 hinstModule,
   LPARAM lParam, DWORD dwPriority, DWORD fdwAdd)
 {
-  FIXME("(%p, 0x%04x, %ld, %ld, %ld): stub\n",
+  FIXME("(%p, 0x%04x, %Id, %ld, %ld): stub\n",
     phadid, hinstModule, lParam, dwPriority, fdwAdd
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
@@ -145,7 +145,7 @@ MMRESULT16 WINAPI acmDriverClose16(
 LRESULT WINAPI acmDriverMessage16(
   HACMDRIVER16 had, UINT16 uMsg, LPARAM lParam1, LPARAM lParam2)
 {
-  FIXME("(0x%04x, %d, %ld, %ld): stub\n",
+  FIXME("(0x%04x, %d, %Id, %Id): stub\n",
     had, uMsg, lParam1, lParam2
   );
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
