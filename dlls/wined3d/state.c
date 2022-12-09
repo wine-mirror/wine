@@ -3696,7 +3696,7 @@ static enum wined3d_texture_address wined3d_texture_gl_address_mode(const struct
 }
 
 static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
-        const struct wined3d_context_gl *context_gl, const DWORD *sampler_states,
+        const struct wined3d_context_gl *context_gl, const uint32_t *sampler_states,
         const struct wined3d_texture_gl *texture_gl)
 {
     union
@@ -3777,7 +3777,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
     if (state->textures[sampler_idx])
     {
         struct wined3d_texture_gl *texture_gl = wined3d_texture_gl(state->textures[sampler_idx]);
-        const DWORD *sampler_states = state->sampler_states[sampler_idx];
+        const uint32_t *sampler_states = state->sampler_states[sampler_idx];
         struct wined3d_device *device = context->device;
         BOOL srgb = is_srgb_enabled(sampler_states);
         struct wined3d_sampler_desc desc;

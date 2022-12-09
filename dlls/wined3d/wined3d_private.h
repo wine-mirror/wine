@@ -3897,8 +3897,8 @@ struct wined3d_state
     BOOL ps_consts_b[WINED3D_MAX_CONSTS_B];
 
     struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
-    DWORD sampler_states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
-    DWORD texture_states[WINED3D_MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
+    uint32_t sampler_states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
+    uint32_t texture_states[WINED3D_MAX_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
     struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
     struct wined3d_vec4 clip_planes[WINED3D_MAX_CLIP_DISTANCES];
@@ -6365,7 +6365,7 @@ static inline void context_apply_state(struct wined3d_context *context,
     state_table[rep].apply(context, state, rep);
 }
 
-static inline BOOL is_srgb_enabled(const DWORD *sampler_states)
+static inline BOOL is_srgb_enabled(const uint32_t *sampler_states)
 {
     /* Only use the LSB of the WINED3D_SAMP_SRGB_TEXTURE value. This matches
      * the behaviour of the AMD Windows driver.

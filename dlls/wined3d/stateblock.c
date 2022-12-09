@@ -1782,7 +1782,7 @@ static void init_default_render_states(unsigned int rs[WINEHIGHEST_RENDER_STATE 
     rs[WINED3D_RS_BLENDOPALPHA] = WINED3D_BLEND_OP_ADD;
 }
 
-static void init_default_texture_state(unsigned int i, DWORD stage[WINED3D_HIGHEST_TEXTURE_STATE + 1])
+static void init_default_texture_state(unsigned int i, uint32_t stage[WINED3D_HIGHEST_TEXTURE_STATE + 1])
 {
     stage[WINED3D_TSS_COLOR_OP] = i ? WINED3D_TOP_DISABLE : WINED3D_TOP_MODULATE;
     stage[WINED3D_TSS_COLOR_ARG1] = WINED3DTA_TEXTURE;
@@ -1803,7 +1803,7 @@ static void init_default_texture_state(unsigned int i, DWORD stage[WINED3D_HIGHE
     stage[WINED3D_TSS_RESULT_ARG] = WINED3DTA_CURRENT;
 }
 
-static void init_default_sampler_states(DWORD states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1])
+static void init_default_sampler_states(uint32_t states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1])
 {
     unsigned int i;
 
