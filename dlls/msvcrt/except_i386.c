@@ -355,7 +355,7 @@ static DWORD catch_function_nested_handler( EXCEPTION_RECORD *rec, EXCEPTION_REG
             if(TRACE_ON(seh)) {
                 TRACE("detect rethrow: exception code: %lx\n", rec->ExceptionCode);
                 if(rec->ExceptionCode == CXX_EXCEPTION)
-                    TRACE("re-propagate: obj: %lx, type: %lx\n",
+                    TRACE("re-propagate: obj: %Ix, type: %Ix\n",
                             rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
             }
         }
@@ -588,7 +588,7 @@ DWORD CDECL cxx_frame_handler( PEXCEPTION_RECORD rec, cxx_exception_frame* frame
         if(TRACE_ON(seh)) {
             TRACE("detect rethrow: exception code: %lx\n", rec->ExceptionCode);
             if(rec->ExceptionCode == CXX_EXCEPTION)
-                TRACE("re-propagate: obj: %lx, type: %lx\n",
+                TRACE("re-propagate: obj: %Ix, type: %Ix\n",
                         rec->ExceptionInformation[1], rec->ExceptionInformation[2]);
         }
     }
