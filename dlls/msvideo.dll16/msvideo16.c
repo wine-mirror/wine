@@ -189,7 +189,7 @@ LRESULT VFWAPI ICGetInfo16(HIC16 hic, ICINFO16 * picinfo, DWORD cb)
 
     TRACE("(0x%08lx,%p,%ld)\n", (DWORD) hic, picinfo, cb);
     ret = ICSendMessage16(hic, ICM_GETINFO, (DWORD) picinfo, cb);
-    TRACE("	-> 0x%08lx\n", ret);
+    TRACE("	-> 0x%08Ix\n", ret);
     return ret;
 }
 
