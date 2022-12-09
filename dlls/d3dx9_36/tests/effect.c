@@ -5030,40 +5030,44 @@ static void test_effect_preshader_ops(IDirect3DDevice9 *device)
 
     hr = D3DXCreateEffect(device, test_effect_preshader_ops_blob, sizeof(test_effect_preshader_ops_blob),
             NULL, NULL, 0, NULL, &effect, NULL);
-    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->Begin(effect, &passes_count, 0);
-    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     hr = effect->lpVtbl->BeginPass(effect, 0);
-    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(op_tests); ++i)
     {
         const float *result = op_tests[i].result;
         const float *expected_float = (float *)op_tests[i].expected_result;
 
+        winetest_push_context("Test %u", i);
         hr = effect->lpVtbl->SetVector(effect, "opvect1", &op_tests[i].opvect1);
-        ok(hr == D3D_OK, "SetVector failed, hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         hr = effect->lpVtbl->SetVector(effect, "opvect2", &op_tests[i].opvect2);
-        ok(hr == D3D_OK, "SetVector failed, hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         hr = effect->lpVtbl->SetVector(effect, "opvect3", &op_tests[i].opvect3);
-        ok(hr == D3D_OK, "SetVector failed, hr %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         hr = effect->lpVtbl->CommitChanges(effect);
-        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = IDirect3DDevice9_GetLight(device, op_tests[i].result_index, &light);
-        ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
         for (j = 0; j < 4; ++j)
         {
+            winetest_push_context("Light %u", j);
             todo_wine_if(op_tests[i].todo[j])
             ok(compare_float(result[j], expected_float[j], op_tests[i].ulps),
                     "Operation %s, component %u, expected %#x (%.8e), got %#x (%.8e).\n", op_tests[i].mnem,
                     j, op_tests[i].expected_result[j], expected_float[j],
                     ((unsigned int *)result)[j], result[j]);
+            winetest_pop_context();
         }
+        winetest_pop_context();
     }
 
     hr = effect->lpVtbl->End(effect);
-    ok(hr == D3D_OK, "Got result %#lx.\n", hr);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     effect->lpVtbl->Release(effect);
 }
 
