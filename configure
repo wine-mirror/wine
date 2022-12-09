@@ -19586,155 +19586,6 @@ case $host_os in
 esac
 
 
-ac_save_CFLAGS="$CFLAGS"
-CFLAGS="$CFLAGS $BUILTINFLAG"
-ac_fn_c_check_func "$LINENO" "epoll_create" "ac_cv_func_epoll_create"
-if test "x$ac_cv_func_epoll_create" = xyes
-then :
-  printf "%s\n" "#define HAVE_EPOLL_CREATE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "fstatfs" "ac_cv_func_fstatfs"
-if test "x$ac_cv_func_fstatfs" = xyes
-then :
-  printf "%s\n" "#define HAVE_FSTATFS 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "futimens" "ac_cv_func_futimens"
-if test "x$ac_cv_func_futimens" = xyes
-then :
-  printf "%s\n" "#define HAVE_FUTIMENS 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "futimes" "ac_cv_func_futimes"
-if test "x$ac_cv_func_futimes" = xyes
-then :
-  printf "%s\n" "#define HAVE_FUTIMES 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "futimesat" "ac_cv_func_futimesat"
-if test "x$ac_cv_func_futimesat" = xyes
-then :
-  printf "%s\n" "#define HAVE_FUTIMESAT 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "getattrlist" "ac_cv_func_getattrlist"
-if test "x$ac_cv_func_getattrlist" = xyes
-then :
-  printf "%s\n" "#define HAVE_GETATTRLIST 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "getauxval" "ac_cv_func_getauxval"
-if test "x$ac_cv_func_getauxval" = xyes
-then :
-  printf "%s\n" "#define HAVE_GETAUXVAL 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "getifaddrs" "ac_cv_func_getifaddrs"
-if test "x$ac_cv_func_getifaddrs" = xyes
-then :
-  printf "%s\n" "#define HAVE_GETIFADDRS 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "getrandom" "ac_cv_func_getrandom"
-if test "x$ac_cv_func_getrandom" = xyes
-then :
-  printf "%s\n" "#define HAVE_GETRANDOM 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "kqueue" "ac_cv_func_kqueue"
-if test "x$ac_cv_func_kqueue" = xyes
-then :
-  printf "%s\n" "#define HAVE_KQUEUE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "mach_continuous_time" "ac_cv_func_mach_continuous_time"
-if test "x$ac_cv_func_mach_continuous_time" = xyes
-then :
-  printf "%s\n" "#define HAVE_MACH_CONTINUOUS_TIME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "pipe2" "ac_cv_func_pipe2"
-if test "x$ac_cv_func_pipe2" = xyes
-then :
-  printf "%s\n" "#define HAVE_PIPE2 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "port_create" "ac_cv_func_port_create"
-if test "x$ac_cv_func_port_create" = xyes
-then :
-  printf "%s\n" "#define HAVE_PORT_CREATE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "posix_fadvise" "ac_cv_func_posix_fadvise"
-if test "x$ac_cv_func_posix_fadvise" = xyes
-then :
-  printf "%s\n" "#define HAVE_POSIX_FADVISE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "posix_fallocate" "ac_cv_func_posix_fallocate"
-if test "x$ac_cv_func_posix_fallocate" = xyes
-then :
-  printf "%s\n" "#define HAVE_POSIX_FALLOCATE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "prctl" "ac_cv_func_prctl"
-if test "x$ac_cv_func_prctl" = xyes
-then :
-  printf "%s\n" "#define HAVE_PRCTL 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "proc_pidinfo" "ac_cv_func_proc_pidinfo"
-if test "x$ac_cv_func_proc_pidinfo" = xyes
-then :
-  printf "%s\n" "#define HAVE_PROC_PIDINFO 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "sched_yield" "ac_cv_func_sched_yield"
-if test "x$ac_cv_func_sched_yield" = xyes
-then :
-  printf "%s\n" "#define HAVE_SCHED_YIELD 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "setproctitle" "ac_cv_func_setproctitle"
-if test "x$ac_cv_func_setproctitle" = xyes
-then :
-  printf "%s\n" "#define HAVE_SETPROCTITLE 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "setprogname" "ac_cv_func_setprogname"
-if test "x$ac_cv_func_setprogname" = xyes
-then :
-  printf "%s\n" "#define HAVE_SETPROGNAME 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "sigprocmask" "ac_cv_func_sigprocmask"
-if test "x$ac_cv_func_sigprocmask" = xyes
-then :
-  printf "%s\n" "#define HAVE_SIGPROCMASK 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "sysinfo" "ac_cv_func_sysinfo"
-if test "x$ac_cv_func_sysinfo" = xyes
-then :
-  printf "%s\n" "#define HAVE_SYSINFO 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "tcdrain" "ac_cv_func_tcdrain"
-if test "x$ac_cv_func_tcdrain" = xyes
-then :
-  printf "%s\n" "#define HAVE_TCDRAIN 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "thr_kill2" "ac_cv_func_thr_kill2"
-if test "x$ac_cv_func_thr_kill2" = xyes
-then :
-  printf "%s\n" "#define HAVE_THR_KILL2 1" >>confdefs.h
-
-fi
-
-CFLAGS="$ac_save_CFLAGS"
-
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing dlopen" >&5
 printf %s "checking for library containing dlopen... " >&6; }
 if test ${ac_cv_search_dlopen+y}
@@ -19794,22 +19645,6 @@ then :
 
 fi
 
-ac_wine_check_funcs_save_LIBS="$LIBS"
-LIBS="$LIBS $DL_LIBS"
-ac_fn_c_check_func "$LINENO" "dladdr1" "ac_cv_func_dladdr1"
-if test "x$ac_cv_func_dladdr1" = xyes
-then :
-  printf "%s\n" "#define HAVE_DLADDR1 1" >>confdefs.h
-
-fi
-ac_fn_c_check_func "$LINENO" "dlinfo" "ac_cv_func_dlinfo"
-if test "x$ac_cv_func_dlinfo" = xyes
-then :
-  printf "%s\n" "#define HAVE_DLINFO 1" >>confdefs.h
-
-fi
-
-LIBS="$ac_wine_check_funcs_save_LIBS"
 
 { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for library containing gethostbyname" >&5
 printf %s "checking for library containing gethostbyname... " >&6; }
@@ -19991,13 +19826,172 @@ then :
 fi
 
 
+ac_save_CFLAGS="$CFLAGS"
+CFLAGS="$CFLAGS $BUILTINFLAG"
+ac_fn_c_check_func "$LINENO" "dladdr1" "ac_cv_func_dladdr1"
+if test "x$ac_cv_func_dladdr1" = xyes
+then :
+  printf "%s\n" "#define HAVE_DLADDR1 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "dlinfo" "ac_cv_func_dlinfo"
+if test "x$ac_cv_func_dlinfo" = xyes
+then :
+  printf "%s\n" "#define HAVE_DLINFO 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "epoll_create" "ac_cv_func_epoll_create"
+if test "x$ac_cv_func_epoll_create" = xyes
+then :
+  printf "%s\n" "#define HAVE_EPOLL_CREATE 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "fstatfs" "ac_cv_func_fstatfs"
+if test "x$ac_cv_func_fstatfs" = xyes
+then :
+  printf "%s\n" "#define HAVE_FSTATFS 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "futimens" "ac_cv_func_futimens"
+if test "x$ac_cv_func_futimens" = xyes
+then :
+  printf "%s\n" "#define HAVE_FUTIMENS 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "futimes" "ac_cv_func_futimes"
+if test "x$ac_cv_func_futimes" = xyes
+then :
+  printf "%s\n" "#define HAVE_FUTIMES 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "futimesat" "ac_cv_func_futimesat"
+if test "x$ac_cv_func_futimesat" = xyes
+then :
+  printf "%s\n" "#define HAVE_FUTIMESAT 1" >>confdefs.h
+
+fi
 ac_fn_c_check_func "$LINENO" "getaddrinfo" "ac_cv_func_getaddrinfo"
 if test "x$ac_cv_func_getaddrinfo" = xyes
 then :
   printf "%s\n" "#define HAVE_GETADDRINFO 1" >>confdefs.h
 
 fi
+ac_fn_c_check_func "$LINENO" "getattrlist" "ac_cv_func_getattrlist"
+if test "x$ac_cv_func_getattrlist" = xyes
+then :
+  printf "%s\n" "#define HAVE_GETATTRLIST 1" >>confdefs.h
 
+fi
+ac_fn_c_check_func "$LINENO" "getauxval" "ac_cv_func_getauxval"
+if test "x$ac_cv_func_getauxval" = xyes
+then :
+  printf "%s\n" "#define HAVE_GETAUXVAL 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "getifaddrs" "ac_cv_func_getifaddrs"
+if test "x$ac_cv_func_getifaddrs" = xyes
+then :
+  printf "%s\n" "#define HAVE_GETIFADDRS 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "getrandom" "ac_cv_func_getrandom"
+if test "x$ac_cv_func_getrandom" = xyes
+then :
+  printf "%s\n" "#define HAVE_GETRANDOM 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "kqueue" "ac_cv_func_kqueue"
+if test "x$ac_cv_func_kqueue" = xyes
+then :
+  printf "%s\n" "#define HAVE_KQUEUE 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "mach_continuous_time" "ac_cv_func_mach_continuous_time"
+if test "x$ac_cv_func_mach_continuous_time" = xyes
+then :
+  printf "%s\n" "#define HAVE_MACH_CONTINUOUS_TIME 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "pipe2" "ac_cv_func_pipe2"
+if test "x$ac_cv_func_pipe2" = xyes
+then :
+  printf "%s\n" "#define HAVE_PIPE2 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "port_create" "ac_cv_func_port_create"
+if test "x$ac_cv_func_port_create" = xyes
+then :
+  printf "%s\n" "#define HAVE_PORT_CREATE 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "posix_fadvise" "ac_cv_func_posix_fadvise"
+if test "x$ac_cv_func_posix_fadvise" = xyes
+then :
+  printf "%s\n" "#define HAVE_POSIX_FADVISE 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "posix_fallocate" "ac_cv_func_posix_fallocate"
+if test "x$ac_cv_func_posix_fallocate" = xyes
+then :
+  printf "%s\n" "#define HAVE_POSIX_FALLOCATE 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "prctl" "ac_cv_func_prctl"
+if test "x$ac_cv_func_prctl" = xyes
+then :
+  printf "%s\n" "#define HAVE_PRCTL 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "proc_pidinfo" "ac_cv_func_proc_pidinfo"
+if test "x$ac_cv_func_proc_pidinfo" = xyes
+then :
+  printf "%s\n" "#define HAVE_PROC_PIDINFO 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "sched_yield" "ac_cv_func_sched_yield"
+if test "x$ac_cv_func_sched_yield" = xyes
+then :
+  printf "%s\n" "#define HAVE_SCHED_YIELD 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "setproctitle" "ac_cv_func_setproctitle"
+if test "x$ac_cv_func_setproctitle" = xyes
+then :
+  printf "%s\n" "#define HAVE_SETPROCTITLE 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "setprogname" "ac_cv_func_setprogname"
+if test "x$ac_cv_func_setprogname" = xyes
+then :
+  printf "%s\n" "#define HAVE_SETPROGNAME 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "sigprocmask" "ac_cv_func_sigprocmask"
+if test "x$ac_cv_func_sigprocmask" = xyes
+then :
+  printf "%s\n" "#define HAVE_SIGPROCMASK 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "sysinfo" "ac_cv_func_sysinfo"
+if test "x$ac_cv_func_sysinfo" = xyes
+then :
+  printf "%s\n" "#define HAVE_SYSINFO 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "tcdrain" "ac_cv_func_tcdrain"
+if test "x$ac_cv_func_tcdrain" = xyes
+then :
+  printf "%s\n" "#define HAVE_TCDRAIN 1" >>confdefs.h
+
+fi
+ac_fn_c_check_func "$LINENO" "thr_kill2" "ac_cv_func_thr_kill2"
+if test "x$ac_cv_func_thr_kill2" = xyes
+then :
+  printf "%s\n" "#define HAVE_THR_KILL2 1" >>confdefs.h
+
+fi
+
+CFLAGS="$ac_save_CFLAGS"
 
 case $host_os in
     darwin*|macosx*) ;;

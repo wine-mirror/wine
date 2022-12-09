@@ -1993,14 +1993,29 @@ esac
 
 dnl **** Check for functions ****
 
+dnl Check for -ldl
+AC_SEARCH_LIBS(dlopen, dl)
+
+dnl Check for -lnsl for Solaris
+AC_SEARCH_LIBS(gethostbyname, nsl)
+
+dnl Check for -lsocket for Solaris
+AC_SEARCH_LIBS(connect, socket)
+
+dnl Check for -lresolv for Solaris
+AC_SEARCH_LIBS(inet_aton, resolv)
+
 ac_save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS $BUILTINFLAG"
 AC_CHECK_FUNCS(\
+        dladdr1 \
+	dlinfo \
 	epoll_create \
 	fstatfs \
 	futimens \
 	futimes \
 	futimesat \
+	getaddrinfo \
 	getattrlist \
 	getauxval \
 	getifaddrs \
@@ -2022,22 +2037,6 @@ AC_CHECK_FUNCS(\
 	thr_kill2
 )
 CFLAGS="$ac_save_CFLAGS"
-
-dnl Check for -ldl
-AC_SEARCH_LIBS(dlopen, dl)
-WINE_CHECK_LIB_FUNCS(dladdr1 dlinfo,[$DL_LIBS])
-
-dnl Check for -lnsl for Solaris
-AC_SEARCH_LIBS(gethostbyname, nsl)
-
-dnl Check for -lsocket for Solaris
-AC_SEARCH_LIBS(connect, socket)
-
-dnl Check for -lresolv for Solaris
-AC_SEARCH_LIBS(inet_aton, resolv)
-
-dnl **** Check for functions which may rely on -lsocket on Solaris.
-AC_CHECK_FUNCS(getaddrinfo)
 
 dnl Check for clock_gettime which may be in -lrt
 case $host_os in
