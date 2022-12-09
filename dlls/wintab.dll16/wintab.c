@@ -329,7 +329,7 @@ BOOL16 WINAPI WTMgrClose16(HMGR16 hMgr)
  */
 BOOL16 WINAPI WTMgrContextEnum16(HMGR16 hMgr, WTENUMPROC16 lpEnumFunc, LPARAM lParam)
 {
-    FIXME("(0x%04hx, %p, %ld): stub\n", hMgr, lpEnumFunc, lParam);
+    FIXME("(0x%04hx, %p, %Ix): stub\n", hMgr, lpEnumFunc, lParam);
 
     return FALSE;
 }
@@ -444,7 +444,7 @@ BOOL16 WINAPI WTMgrPacketUnhook16(HWTHOOK16 hHook)
 LRESULT WINAPI WTMgrPacketHookDefProc16(INT16 nCode, WPARAM16 wParam,
 					LPARAM lParam, LPWTHOOKPROC16 lplpFunc)
 {
-    FIXME("(%hd, %hu, %lu, %p): stub\n", nCode, wParam, lParam, lplpFunc);
+    FIXME("(%hd, %hu, %Iu, %p): stub\n", nCode, wParam, lParam, lplpFunc);
 
     return 0;
 }
@@ -455,7 +455,7 @@ LRESULT WINAPI WTMgrPacketHookDefProc16(INT16 nCode, WPARAM16 wParam,
 LRESULT WINAPI WTMgrPacketHookNext16(HWTHOOK16 hHook, INT16 nCode,
 				     WPARAM16 wParam, LPARAM lParam)
 {
-    FIXME("(0x%04hx, %hd, %hu, %lu): stub\n", hHook, nCode, wParam, lParam);
+    FIXME("(0x%04hx, %hd, %hu, %Iu): stub\n", hHook, nCode, wParam, lParam);
 
     return 0;
 }
