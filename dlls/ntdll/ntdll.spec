@@ -158,6 +158,7 @@
 @ stdcall -syscall NtClearEvent(long)
 @ stdcall -syscall NtClose(long)
 # @ stub NtCloseObjectAuditAlarm
+@ stdcall -syscall NtCommitTransaction(long long)
 # @ stub NtCompactKeys
 @ stdcall -syscall NtCompareObjects(ptr ptr)
 # @ stub NtCompareTokens
@@ -192,6 +193,7 @@
 @ stdcall -syscall NtCreateThreadEx(ptr long ptr long ptr ptr long long long long ptr)
 @ stdcall -syscall NtCreateTimer(ptr long ptr long)
 # @ stub NtCreateToken
+@ stdcall -syscall NtCreateTransaction(ptr long ptr ptr long long long long ptr ptr)
 @ stdcall -syscall NtCreateUserProcess(ptr ptr long long ptr ptr long long ptr ptr ptr)
 # @ stub NtCreateWaitablePort
 @ stdcall -arch=i386,arm64 NtCurrentTeb()
@@ -365,6 +367,7 @@
 @ stdcall -syscall NtRestoreKey(long long long)
 @ stdcall -syscall NtResumeProcess(long)
 @ stdcall -syscall NtResumeThread(long ptr)
+@ stdcall -syscall NtRollbackTransaction(long long)
 @ stdcall -syscall NtSaveKey(long long)
 # @ stub NtSaveKeyEx
 # @ stub NtSaveMergedKeys

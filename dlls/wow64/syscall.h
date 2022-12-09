@@ -44,6 +44,7 @@
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClose ) \
+    SYSCALL_ENTRY( NtCommitTransaction ) \
     SYSCALL_ENTRY( NtCompareObjects ) \
     SYSCALL_ENTRY( NtCompleteConnectPort ) \
     SYSCALL_ENTRY( NtConnectPort ) \
@@ -69,6 +70,7 @@
     SYSCALL_ENTRY( NtCreateThread ) \
     SYSCALL_ENTRY( NtCreateThreadEx ) \
     SYSCALL_ENTRY( NtCreateTimer ) \
+    SYSCALL_ENTRY( NtCreateTransaction ) \
     SYSCALL_ENTRY( NtCreateUserProcess ) \
     SYSCALL_ENTRY( NtDebugActiveProcess ) \
     SYSCALL_ENTRY( NtDebugContinue ) \
@@ -197,6 +199,7 @@
     SYSCALL_ENTRY( NtRestoreKey ) \
     SYSCALL_ENTRY( NtResumeProcess ) \
     SYSCALL_ENTRY( NtResumeThread ) \
+    SYSCALL_ENTRY( NtRollbackTransaction ) \
     SYSCALL_ENTRY( NtSaveKey ) \
     SYSCALL_ENTRY( NtSecureConnectPort ) \
     SYSCALL_ENTRY( NtSetContextThread ) \

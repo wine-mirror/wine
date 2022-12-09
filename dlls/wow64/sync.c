@@ -1617,3 +1617,57 @@ NTSTATUS WINAPI wow64_NtYieldExecution( UINT *args )
 {
     return NtYieldExecution();
 }
+
+
+/**********************************************************************
+ *           wow64_NtCreateTransaction
+ */
+NTSTATUS WINAPI wow64_NtCreateTransaction( UINT *args )
+{
+    ULONG *handle_ptr = get_ptr( &args );
+    ACCESS_MASK access = get_ulong( &args );
+    OBJECT_ATTRIBUTES32 *attr32 = get_ptr( &args );
+    GUID *guid = get_ptr( &args );
+    HANDLE tm = get_handle( &args );
+    ULONG options = get_ulong( &args );
+    ULONG isol_level = get_ulong( &args );
+    ULONG isol_flags = get_ulong( &args );
+    LARGE_INTEGER *timeout = get_ptr( &args );
+    UNICODE_STRING32 *desc32 = get_ptr( &args );
+
+    struct object_attr64 attr;
+    UNICODE_STRING desc;
+    HANDLE handle = 0;
+    NTSTATUS status;
+
+    *handle_ptr = 0;
+    status = NtCreateTransaction( &handle, access, objattr_32to64( &attr, attr32 ), guid, tm, options,
+            isol_level, isol_flags, timeout, unicode_str_32to64( &desc, desc32 ));
+    put_handle( handle_ptr, handle );
+
+    return status;
+}
+
+
+/**********************************************************************
+ *           wow64_NtCommitTransaction
+ */
+NTSTATUS WINAPI wow64_NtCommitTransaction( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    BOOLEAN wait = get_ulong( &args );
+
+    return NtCommitTransaction( handle, wait );
+}
+
+
+/**********************************************************************
+ *           wow64_NtRollbackTransaction
+ */
+NTSTATUS WINAPI wow64_NtRollbackTransaction( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    BOOLEAN wait = get_ulong( &args );
+
+    return NtRollbackTransaction( handle, wait );
+}

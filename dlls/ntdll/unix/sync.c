@@ -2561,3 +2561,37 @@ void set_async_direct_result( HANDLE *async_handle, NTSTATUS status, ULONG_PTR i
 
     return;
 }
+
+/***********************************************************************
+ *           NtCreateTransaction (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCreateTransaction( HANDLE *handle, ACCESS_MASK mask, OBJECT_ATTRIBUTES *obj_attr, GUID *guid, HANDLE tm,
+        ULONG options, ULONG isol_level, ULONG isol_flags, PLARGE_INTEGER timeout, UNICODE_STRING *description )
+{
+    FIXME( "%p, %#x, %p, %s, %p, 0x%08x, 0x%08x, 0x%08x, %p, %p stub.\n", handle, (int)mask, obj_attr, debugstr_guid(guid), tm,
+            (int)options, (int)isol_level, (int)isol_flags, timeout, description );
+
+    *handle = ULongToHandle(1);
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           NtCommitTransaction (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCommitTransaction( HANDLE transaction, BOOLEAN wait )
+{
+    FIXME( "%p, %d stub.\n", transaction, wait );
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           NtRollbackTransaction (NTDLL.@)
+ */
+NTSTATUS WINAPI NtRollbackTransaction( HANDLE transaction, BOOLEAN wait )
+{
+    FIXME( "%p, %d stub.\n", transaction, wait );
+
+    return STATUS_ACCESS_VIOLATION;
+}
