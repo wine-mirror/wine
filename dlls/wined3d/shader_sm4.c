@@ -15,7 +15,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -759,7 +758,7 @@ static void shader_sm5_read_dcl_function_table(struct wined3d_shader_instruction
         struct wined3d_sm4_data *priv)
 {
     ins->declaration.index = *tokens++;
-    FIXME("Ignoring set of function bodies (count %u).\n", *tokens);
+    FIXME("Ignoring set of function bodies (count %lu).\n", *tokens);
 }
 
 static void shader_sm5_read_dcl_interface(struct wined3d_shader_instruction *ins,
@@ -1729,7 +1728,7 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
         TRACE_(d3d_bytecode)("[ %08x ", opcode_token);
         for (i = 0; i < len; ++i)
         {
-            TRACE_(d3d_bytecode)("%08x ", (*ptr)[i]);
+            TRACE_(d3d_bytecode)("%08lx ", (*ptr)[i]);
         }
         TRACE_(d3d_bytecode)("]\n");
     }
@@ -2125,7 +2124,7 @@ static HRESULT shader_dxbc_chunk_handler(const char *data, unsigned int data_siz
                 shader->function = (const DWORD *)byte_code;
                 shader->functionLength = data_size - header->byte_code_offset;
                 *ctx->format = WINED3D_SHADER_BYTE_CODE_FORMAT_SM1;
-                TRACE("Feature level 9 shader version 0%08x, 0%08x.\n",
+                TRACE("Feature level 9 shader version 0%08x, 0%08lx.\n",
                         header->shader_version, *shader->function);
             }
             else
@@ -2157,7 +2156,7 @@ HRESULT shader_extract_from_dxbc(struct wined3d_shader *shader,
         hr = E_INVALIDARG;
 
     if (FAILED(hr))
-        WARN("Failed to parse DXBC, hr %#x.\n", hr);
+        WARN("Failed to parse DXBC, hr %#lx.\n", hr);
 
     return hr;
 }
