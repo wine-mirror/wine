@@ -4154,6 +4154,11 @@ NTSTATUS WINAPI wow64_NtUserWaitForInputIdle( UINT *args )
     return NtUserWaitForInputIdle( process, timeout, wow );
 }
 
+NTSTATUS WINAPI wow64_NtUserWaitMessage( UINT *args )
+{
+    return NtUserWaitMessage();
+}
+
 NTSTATUS WINAPI wow64_NtUserWindowFromDC( UINT *args )
 {
     HDC hdc = get_handle( &args );

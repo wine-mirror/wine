@@ -1308,7 +1308,7 @@
 @ stdcall -syscall NtUserWaitForInputIdle(long long long)
 @ stub NtUserWaitForMsgAndEvent
 @ stub NtUserWaitForRedirectionStartComplete
-@ stub NtUserWaitMessage
+@ stdcall -syscall NtUserWaitMessage()
 @ stdcall -syscall NtUserWindowFromDC(long)
 @ stub NtUserWindowFromPhysicalPoint
 @ stdcall -syscall NtUserWindowFromPoint(long long)

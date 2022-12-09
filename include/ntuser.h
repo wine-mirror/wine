@@ -898,6 +898,7 @@ BOOL    WINAPI NtUserUpdateLayeredWindow( HWND hwnd, HDC hdc_dst, const POINT *p
 BOOL    WINAPI NtUserValidateRect( HWND hwnd, const RECT *rect );
 WORD    WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout );
 DWORD   WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow );
+BOOL    WINAPI NtUserWaitMessage(void);
 HWND    WINAPI NtUserWindowFromDC( HDC hdc );
 HWND    WINAPI NtUserWindowFromPoint( LONG x, LONG y );
 

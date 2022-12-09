@@ -294,6 +294,7 @@
     SYSCALL_ENTRY( NtUserValidateRect ) \
     SYSCALL_ENTRY( NtUserVkKeyScanEx ) \
     SYSCALL_ENTRY( NtUserWaitForInputIdle ) \
+    SYSCALL_ENTRY( NtUserWaitMessage ) \
     SYSCALL_ENTRY( NtUserWindowFromDC ) \
     SYSCALL_ENTRY( NtUserWindowFromPoint )
 

@@ -308,6 +308,7 @@ static void * const syscalls[] =
     NtUserValidateRect,
     NtUserVkKeyScanEx,
     NtUserWaitForInputIdle,
+    NtUserWaitMessage,
     NtUserWindowFromDC,
     NtUserWindowFromPoint,
 };
