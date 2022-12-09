@@ -770,3 +770,87 @@ BOOL WINAPI GetPointerTouchInfoHistory( UINT32 id, UINT32 *count, POINTER_TOUCH_
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
+
+
+/*******************************************************************
+ *           SetForegroundWindow  (USER32.@)
+ */
+BOOL WINAPI SetForegroundWindow( HWND hwnd )
+{
+    return NtUserSetForegroundWindow( hwnd );
+}
+
+
+/*******************************************************************
+ *           GetActiveWindow  (USER32.@)
+ */
+HWND WINAPI GetActiveWindow(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndActive : 0;
+}
+
+
+/*****************************************************************
+ *           GetFocus  (USER32.@)
+ */
+HWND WINAPI GetFocus(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndFocus : 0;
+}
+
+
+/*******************************************************************
+ *           SetShellWindow (USER32.@)
+ */
+BOOL WINAPI SetShellWindow( HWND hwnd )
+{
+    return NtUserSetShellWindowEx( hwnd, hwnd );
+}
+
+
+/*******************************************************************
+ *           GetShellWindow (USER32.@)
+ */
+HWND WINAPI GetShellWindow(void)
+{
+    return NtUserGetShellWindow();
+}
+
+
+/***********************************************************************
+ *           SetProgmanWindow (USER32.@)
+ */
+HWND WINAPI SetProgmanWindow( HWND hwnd )
+{
+    return NtUserSetProgmanWindow( hwnd );
+}
+
+
+/***********************************************************************
+ *           GetProgmanWindow (USER32.@)
+ */
+HWND WINAPI GetProgmanWindow(void)
+{
+    return NtUserGetProgmanWindow();
+}
+
+
+/***********************************************************************
+ *           SetTaskmanWindow (USER32.@)
+ */
+HWND WINAPI SetTaskmanWindow( HWND hwnd )
+{
+    return NtUserSetTaskmanWindow( hwnd );
+}
+
+/***********************************************************************
+ *           GetTaskmanWindow (USER32.@)
+ */
+HWND WINAPI GetTaskmanWindow(void)
+{
+    return NtUserGetTaskmanWindow();
+}
