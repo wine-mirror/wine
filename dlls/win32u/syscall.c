@@ -273,6 +273,7 @@ static void * const syscalls[] =
     NtUserSetProcessWindowStation,
     NtUserSetProp,
     NtUserSetScrollInfo,
+    NtUserSetShellWindowEx,
     NtUserSetSysColors,
     NtUserSetSystemMenu,
     NtUserSetSystemTimer,

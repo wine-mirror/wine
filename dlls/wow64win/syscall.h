@@ -259,6 +259,7 @@
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserSetProp ) \
     SYSCALL_ENTRY( NtUserSetScrollInfo ) \
+    SYSCALL_ENTRY( NtUserSetShellWindowEx ) \
     SYSCALL_ENTRY( NtUserSetSysColors ) \
     SYSCALL_ENTRY( NtUserSetSystemMenu ) \
     SYSCALL_ENTRY( NtUserSetSystemTimer ) \

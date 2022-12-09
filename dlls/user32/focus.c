@@ -55,55 +55,12 @@ HWND WINAPI GetFocus(void)
 }
 
 
-/***********************************************************************
-*		SetShellWindowEx (USER32.@)
-* hwndShell =    Progman[Program Manager]
-*                |-> SHELLDLL_DefView
-* hwndListView = |   |-> SysListView32
-*                |   |   |-> tooltips_class32
-*                |   |
-*                |   |-> SysHeader32
-*                |
-*                |-> ProxyTarget
-*/
-BOOL WINAPI SetShellWindowEx(HWND hwndShell, HWND hwndListView)
-{
-    BOOL ret;
-
-    if (GetShellWindow())
-        return FALSE;
-
-    if (GetWindowLongW(hwndShell, GWL_EXSTYLE) & WS_EX_TOPMOST)
-        return FALSE;
-
-    if (hwndListView != hwndShell)
-        if (GetWindowLongW(hwndListView, GWL_EXSTYLE) & WS_EX_TOPMOST)
-            return FALSE;
-
-    if (hwndListView && hwndListView!=hwndShell)
-        NtUserSetWindowPos( hwndListView, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE );
-
-    NtUserSetWindowPos( hwndShell, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOACTIVATE );
-
-    SERVER_START_REQ(set_global_windows)
-    {
-        req->flags          = SET_GLOBAL_SHELL_WINDOWS;
-        req->shell_window   = wine_server_user_handle( hwndShell );
-        req->shell_listview = wine_server_user_handle( hwndListView );
-        ret = !wine_server_call_err(req);
-    }
-    SERVER_END_REQ;
-
-    return ret;
-}
-
-
 /*******************************************************************
 *		SetShellWindow (USER32.@)
 */
-BOOL WINAPI SetShellWindow(HWND hwndShell)
+BOOL WINAPI SetShellWindow( HWND hwnd )
 {
-    return SetShellWindowEx(hwndShell, hwndShell);
+    return NtUserSetShellWindowEx( hwnd, hwnd );
 }
 
 

@@ -2165,3 +2165,45 @@ HWND get_shell_window(void)
 
     return hwnd;
 }
+
+/***********************************************************************
+*            NtUserSetShellWindowEx (win32u.@)
+*/
+BOOL WINAPI NtUserSetShellWindowEx( HWND shell, HWND list_view )
+{
+    BOOL ret;
+
+    /* shell =     Progman[Program Manager]
+     *             |-> SHELLDLL_DefView
+     * list_view = |   |-> SysListView32
+     *             |   |   |-> tooltips_class32
+     *             |   |
+     *             |   |-> SysHeader32
+     *             |
+     *             |-> ProxyTarget
+     */
+
+    if (get_shell_window())
+        return FALSE;
+
+    if (get_window_long( shell, GWL_EXSTYLE ) & WS_EX_TOPMOST)
+        return FALSE;
+
+    if (list_view != shell && (get_window_long( list_view, GWL_EXSTYLE ) & WS_EX_TOPMOST))
+        return FALSE;
+
+    if (list_view && list_view != shell)
+        NtUserSetWindowPos( list_view, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE );
+
+    NtUserSetWindowPos( shell, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE );
+
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags          = SET_GLOBAL_SHELL_WINDOWS;
+        req->shell_window   = wine_server_user_handle( shell );
+        req->shell_listview = wine_server_user_handle( list_view );
+        ret = !wine_server_call_err(req);
+    }
+    SERVER_END_REQ;
+    return ret;
+}

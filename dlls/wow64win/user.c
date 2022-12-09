@@ -3624,6 +3624,14 @@ NTSTATUS WINAPI wow64_NtUserSetScrollInfo( UINT *args )
     return NtUserSetScrollInfo( hwnd, bar, info, redraw );
 }
 
+NTSTATUS WINAPI wow64_NtUserSetShellWindowEx( UINT *args )
+{
+    HWND shell = get_handle( &args );
+    HWND list_view = get_handle( &args );
+
+    return NtUserSetShellWindowEx( shell, list_view );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetSysColors( UINT *args )
 {
     INT count = get_ulong( &args );
