@@ -153,7 +153,7 @@ BOOL16 WINAPI PrintDlg16( LPPRINTDLG16 lppd )
  */
 BOOL16 CALLBACK PrintDlgProc16(HWND16 hDlg16, UINT16 uMsg, WPARAM16 wParam, LPARAM lParam)
 {
-    FIXME( "%04x %04x %04x %08lx: stub\n", hDlg16, uMsg, wParam, lParam );
+    FIXME( "%04x %04x %04x %08Ix: stub\n", hDlg16, uMsg, wParam, lParam );
     return FALSE;
 }
 
@@ -167,7 +167,7 @@ BOOL16 CALLBACK PrintSetupDlgProc16(HWND16 hWnd16, UINT16 wMsg, WPARAM16 wParam,
   switch (wMsg)
     {
     case WM_INITDIALOG:
-      TRACE("WM_INITDIALOG lParam=%08lX\n", lParam);
+      TRACE("WM_INITDIALOG lParam=%08IX\n", lParam);
       ShowWindow(hWnd, SW_SHOWNORMAL);
       return (TRUE);
     case WM_COMMAND:

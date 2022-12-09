@@ -44,7 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
  */
 BOOL16 CALLBACK ColorDlgProc16( HWND16 hDlg16, UINT16 message, WPARAM16 wParam, LPARAM lParam )
 {
-    FIXME( "%04x %04x %04x %08lx: stub\n", hDlg16, message, wParam, lParam );
+    FIXME( "%04x %04x %04x %08Ix: stub\n", hDlg16, message, wParam, lParam );
     return FALSE;
 }
 
