@@ -2150,3 +2150,18 @@ void toggle_caret( HWND hwnd )
 
     if (ret && !hidden) display_caret( hwnd, &r );
 }
+
+HWND get_shell_window(void)
+{
+    HWND hwnd = 0;
+
+    SERVER_START_REQ(set_global_windows)
+    {
+        req->flags = 0;
+        if (!wine_server_call_err(req))
+            hwnd = wine_server_ptr_handle( reply->old_shell_window );
+    }
+    SERVER_END_REQ;
+
+    return hwnd;
+}

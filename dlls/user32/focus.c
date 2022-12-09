@@ -112,17 +112,7 @@ BOOL WINAPI SetShellWindow(HWND hwndShell)
 */
 HWND WINAPI GetShellWindow(void)
 {
-    HWND hwndShell = 0;
-
-    SERVER_START_REQ(set_global_windows)
-    {
-        req->flags = 0;
-        if (!wine_server_call_err(req))
-            hwndShell = wine_server_ptr_handle( reply->old_shell_window );
-    }
-    SERVER_END_REQ;
-
-    return hwndShell;
+    return NtUserGetShellWindow();
 }
 
 

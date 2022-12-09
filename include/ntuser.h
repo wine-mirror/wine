@@ -910,6 +910,7 @@ enum
     NtUserCallNoParam_GetDialogBaseUnits,
     NtUserCallNoParam_GetInputState,
     NtUserCallNoParam_GetProcessDefaultLayout,
+    NtUserCallNoParam_GetShellWindow,
     NtUserCallNoParam_ReleaseCapture,
     /* temporary exports */
     NtUserExitingThread,
@@ -939,6 +940,11 @@ static inline BOOL NtUserGetInputState(void)
 static inline DWORD NtUserGetProcessDefaultLayout(void)
 {
     return NtUserCallNoParam( NtUserCallNoParam_GetProcessDefaultLayout );
+}
+
+static inline HWND NtUserGetShellWindow(void)
+{
+    return UlongToHandle( NtUserCallNoParam( NtUserCallNoParam_GetShellWindow ));
 }
 
 static inline BOOL NtUserReleaseCapture(void)
