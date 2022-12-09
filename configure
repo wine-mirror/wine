@@ -19319,7 +19319,7 @@ fi
 printf "%s\n" "$ac_cv_cflags__fno_omit_frame_pointer" >&6; }
 if test "x$ac_cv_cflags__fno_omit_frame_pointer" = xyes
 then :
-  EXTRACFLAGS="$EXTRACFLAGS -fno-omit-frame-pointer"
+  MSVCRTFLAGS="$MSVCRTFLAGS -fno-omit-frame-pointer"
 fi ;;
     *x86_64*)
       case $host_os in
