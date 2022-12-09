@@ -2269,7 +2269,7 @@ static void test_guard_page(void)
     ok( ret, "VirtualQuery failed %lu\n", GetLastError());
     ok( info.BaseAddress == base, "BaseAddress %p instead of %p\n", info.BaseAddress, base );
     ok( info.AllocationProtect == (PAGE_READWRITE | PAGE_GUARD), "wrong AllocationProtect %lx\n", info.AllocationProtect );
-    ok( info.RegionSize == size, "wrong RegionSize 0x%lx\n", info.RegionSize );
+    ok( info.RegionSize == size, "wrong RegionSize 0x%Ix\n", info.RegionSize );
     ok( info.State == MEM_COMMIT, "wrong State 0x%lx\n", info.State );
     ok( info.Protect == (PAGE_READWRITE | PAGE_GUARD), "wrong Protect 0x%lx\n", info.Protect );
     ok( info.Type == MEM_PRIVATE, "wrong Type 0x%lx\n", info.Type );
@@ -2308,7 +2308,7 @@ static void test_guard_page(void)
     ok( ret, "VirtualQuery failed %lu\n", GetLastError());
     ok( info.BaseAddress == base, "BaseAddress %p instead of %p\n", info.BaseAddress, base );
     ok( info.AllocationProtect == (PAGE_READWRITE | PAGE_GUARD), "wrong AllocationProtect %lx\n", info.AllocationProtect );
-    ok( info.RegionSize == size, "wrong RegionSize 0x%lx\n", info.RegionSize );
+    ok( info.RegionSize == size, "wrong RegionSize 0x%Ix\n", info.RegionSize );
     ok( info.State == MEM_COMMIT, "wrong State 0x%lx\n", info.State );
     todo_wine
     ok( info.Protect == PAGE_READWRITE, "wrong Protect 0x%lx\n", info.Protect );
@@ -2385,7 +2385,7 @@ static void test_guard_page(void)
     ok( ret, "VirtualQuery failed %lu\n", GetLastError() );
     ok( info.BaseAddress == base, "BaseAddress %p instead of %p\n", info.BaseAddress, base );
     ok( info.AllocationProtect == (PAGE_READWRITE | PAGE_GUARD), "wrong AllocationProtect %lx\n", info.AllocationProtect );
-    ok( info.RegionSize == size, "wrong RegionSize 0x%lx\n", info.RegionSize );
+    ok( info.RegionSize == size, "wrong RegionSize 0x%Ix\n", info.RegionSize );
     ok( info.State == MEM_COMMIT, "wrong State 0x%lx\n", info.State );
     ok( info.Protect == (PAGE_READWRITE | PAGE_GUARD), "wrong Protect 0x%lx\n", info.Protect );
     ok( info.Type == MEM_PRIVATE, "wrong Type 0x%lx\n", info.Type );
@@ -2393,7 +2393,7 @@ static void test_guard_page(void)
     count = 64;
     ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0, "wrong count %lu\n", count );
+    ok( count == 0, "wrong count %Iu\n", count );
 
     /* writing to a page should trigger should trigger guard page, even if write watch is set */
     frame.Handler = guard_page_handler;
@@ -2410,7 +2410,7 @@ static void test_guard_page(void)
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 1, "wrong count %lu\n", count );
+    ok( count == 1, "wrong count %Iu\n", count );
     ok( results[0] == base, "wrong result %p\n", results[0] );
 
     success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
@@ -2432,7 +2432,7 @@ static void test_guard_page(void)
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 1, "wrong count %lu\n", count );
+    ok( count == 1, "wrong count %Iu\n", count );
     ok( results[0] == base, "wrong result %p\n", results[0] );
 
     success = VirtualProtect( base, size, PAGE_READWRITE | PAGE_GUARD, &old_prot );
@@ -2448,7 +2448,7 @@ static void test_guard_page(void)
     count = 64;
     ret = pGetWriteWatch( 0, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0, "wrong count %lu\n", count );
+    ok( count == 0, "wrong count %Iu\n", count );
 
     success = VirtualLock( base, size );
     todo_wine
@@ -2465,7 +2465,7 @@ static void test_guard_page(void)
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
     todo_wine
-    ok( count == 1 || broken(count == 0) /* Windows 8 */, "wrong count %lu\n", count );
+    ok( count == 1 || broken(count == 0) /* Windows 8 */, "wrong count %Iu\n", count );
     todo_wine
     ok( results[0] == base || broken(results[0] == (void *)0xdeadbeef) /* Windows 8 */, "wrong result %p\n", results[0] );
 
@@ -2480,7 +2480,7 @@ static DWORD execute_fault_seh_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTR
     ULONG flags = MEM_EXECUTE_OPTION_ENABLE;
     DWORD err;
 
-    trace( "exception: %08lx flags:%lx addr:%p info[0]:%ld info[1]:%p\n",
+    trace( "exception: %08lx flags:%lx addr:%p info[0]:%Id info[1]:%p\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
            rec->ExceptionInformation[0], (void *)rec->ExceptionInformation[1] );
 
@@ -2524,7 +2524,7 @@ static LONG CALLBACK execute_fault_vec_handler( EXCEPTION_POINTERS *ExceptionInf
     DWORD old_prot;
     BOOL success;
 
-    trace( "exception: %08lx flags:%lx addr:%p info[0]:%ld info[1]:%p\n",
+    trace( "exception: %08lx flags:%lx addr:%p info[0]:%Id info[1]:%p\n",
            rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
            rec->ExceptionInformation[0], (void *)rec->ExceptionInformation[1] );
 
@@ -2916,7 +2916,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0, "wrong count %lu\n", count );
+    ok( count == 0, "wrong count %Iu\n", count );
 
     memcpy( base, code_jmp, sizeof(code_jmp) );
     *(DWORD *)(base + 1) = (DWORD_PTR)jmp_test_func - (DWORD_PTR)(base + 5);
@@ -2924,7 +2924,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 1, "wrong count %lu\n", count );
+    ok( count == 1, "wrong count %Iu\n", count );
     ok( results[0] == base, "wrong result %p\n", results[0] );
 
     /* Create a new window class and associated Window (see above) */
@@ -2952,7 +2952,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0, "wrong count %lu\n", count );
+    ok( count == 0, "wrong count %Iu\n", count );
 
     /* At first try with an instruction which is not recognized as proper ATL thunk
      * by the Windows ATL Thunk Emulator. Removing execute permissions will lead to
@@ -2972,7 +2972,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0, "wrong count %lu\n", count );
+    ok( count == 0, "wrong count %Iu\n", count );
 
     ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
     ok( ret == 42, "call returned wrong result, expected 42, got %ld\n", ret );
@@ -3001,7 +3001,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0 || broken(count == 1) /* Windows 8 */, "wrong count %lu\n", count );
+    ok( count == 0 || broken(count == 1) /* Windows 8 */, "wrong count %Iu\n", count );
 
     /* Now test with a proper ATL thunk instruction. */
 
@@ -3011,7 +3011,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 1, "wrong count %lu\n", count );
+    ok( count == 1, "wrong count %Iu\n", count );
     ok( results[0] == base, "wrong result %p\n", results[0] );
 
     success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
@@ -3036,7 +3036,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0, "wrong count %lu\n", count );
+    ok( count == 0, "wrong count %Iu\n", count );
 
     ret = send_message_excpt( hWnd, WM_USER, 0, 0 );
     ok( ret == 43, "call returned wrong result, expected 43, got %ld\n", ret );
@@ -3066,7 +3066,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 0 || broken(count == 1) /* Windows 8 */, "wrong count %lu\n", count );
+    ok( count == 0 || broken(count == 1) /* Windows 8 */, "wrong count %Iu\n", count );
 
     /* Restore the JMP instruction, set to executable, and then destroy the Window */
 
@@ -3076,7 +3076,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     count = 64;
     ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
     ok( !ret, "GetWriteWatch failed %lu\n", GetLastError() );
-    ok( count == 1, "wrong count %lu\n", count );
+    ok( count == 1, "wrong count %Iu\n", count );
     ok( results[0] == base, "wrong result %p\n", results[0] );
 
     success = VirtualProtect( base, size, PAGE_EXECUTE_READWRITE, &old_prot );
