@@ -470,7 +470,7 @@ DWORD WINAPI DoEnvironmentSubst16(LPSTR str,WORD length)
  */
 static LRESULT WINAPI SHELL_HookProc(INT code, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("%i, %x, %08lx\n", code, wParam, lParam );
+    TRACE("%i, %x, %08Ix\n", code, wParam, lParam );
 
     if (SHELL_hWnd)
     {
