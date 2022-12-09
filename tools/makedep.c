@@ -3174,12 +3174,6 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
         if (make->module && is_crt_module( make->module )) output_filename( "-fno-builtin" );
     }
 
-    /* force -Wformat when using 'long' types, until all modules have been converted
-     * and we can remove -Wno-format */
-    if (!make->extlib && strarray_exists( &extra_cflags[arch], "-Wno-format" ) &&
-        !strarray_exists( &defines, "-DWINE_NO_LONG_TYPES" ))
-        output_filename( "-Wformat" );
-
     output_filenames( cpp_flags );
     output_filename( arch_make_variable( "CFLAGS", arch ));
     output( "\n" );

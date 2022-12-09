@@ -959,11 +959,9 @@ do
       i386) WINE_TRY_PE_CFLAGS([-fno-omit-frame-pointer])
             WINE_TRY_PE_CFLAGS([-Wl,--disable-stdcall-fixup],
                                [AS_VAR_APPEND([${wine_arch}_LDFLAGS],[" -Wl,--disable-stdcall-fixup"])]) ;;
-      x86_64) WINE_TRY_PE_CFLAGS([-Wno-format])
-              WINE_TRY_PE_CFLAGS([-Wformat-overflow])
+      x86_64) WINE_TRY_PE_CFLAGS([-Wformat-overflow])
               WINE_TRY_PE_CFLAGS([-Wnonnull])
               WINE_TRY_PE_CFLAGS([-mcx16]) ;;
-      aarch64) WINE_TRY_PE_CFLAGS([-Wno-format]) ;;
     esac
 
     dnl Determine debug info format
