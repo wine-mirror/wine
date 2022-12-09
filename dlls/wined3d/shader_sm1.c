@@ -21,7 +21,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#define WINE_NO_LONG_TYPES /* temporary */
 
 #include "wined3d_private.h"
 
@@ -537,13 +536,13 @@ static void *shader_sm1_init(const DWORD *byte_code, size_t byte_code_size,
     struct wined3d_sm1_data *priv;
     BYTE major, minor;
 
-    TRACE("Version: 0x%08x.\n", *byte_code);
+    TRACE("Version: 0x%08lx.\n", *byte_code);
 
     major = WINED3D_SM1_VERSION_MAJOR(*byte_code);
     minor = WINED3D_SM1_VERSION_MINOR(*byte_code);
     if (WINED3D_SHADER_VERSION(major, minor) > WINED3D_SHADER_VERSION(3, 0))
     {
-        WARN("Invalid shader version %u.%u (%#x).\n", major, minor, *byte_code);
+        WARN("Invalid shader version %u.%u (%#lx).\n", major, minor, *byte_code);
         return NULL;
     }
 
@@ -566,7 +565,7 @@ static void *shader_sm1_init(const DWORD *byte_code, size_t byte_code_size,
             break;
 
         default:
-            FIXME("Unrecognized shader type %#x.\n", *byte_code >> 16);
+            FIXME("Unrecognized shader type %#lx.\n", *byte_code >> 16);
             heap_free(priv);
             return NULL;
     }
