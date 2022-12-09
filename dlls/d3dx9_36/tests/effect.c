@@ -999,13 +999,12 @@ test_effect_parameter_value_data[] =
 #define INT_FLOAT_MULTI_INVERSE (1/INT_FLOAT_MULTI)
 
 static void test_effect_parameter_value_GetValue(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
     DWORD value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    unsigned int l;
     HRESULT hr;
-    UINT l;
 
     memset(value, 0xab, sizeof(value));
     hr = effect->lpVtbl->GetValue(effect, parameter, value, res_desc->Bytes);
@@ -1013,18 +1012,17 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
             || res_desc->Class == D3DXPC_VECTOR
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < res_desc->Bytes / sizeof(*value); ++l)
         {
-            ok(value[l] == res_value[l], "%u - %s: GetValue value[%u] failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, l, value[l], res_value[l]);
+            ok(value[l] == res_value[l], "Unexpected value[%u] %#lx, expected %#lx.\n",
+                    l, value[l], res_value[l]);
         }
 
         for (l = res_desc->Bytes / sizeof(*value); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
-            ok(value[l] == 0xabababab, "%u - %s: GetValue value[%u] failed, got %#lx, expected %#x\n",
-                    i, res_full_name, l, value[l], 0xabababab);
+            ok(value[l] == 0xabababab, "Unexpected value[%u] %#lx.\n", l, value[l]);
         }
     }
     else if (res_desc->Class == D3DXPC_OBJECT)
@@ -1034,7 +1032,7 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
             case D3DXPT_PIXELSHADER:
             case D3DXPT_VERTEXSHADER:
             case D3DXPT_TEXTURE2D:
-                ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
                 for (l = 0; l < (res_desc->Elements ? res_desc->Elements : 1); ++l)
                 {
@@ -1044,7 +1042,7 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
                 break;
 
             case D3DXPT_STRING:
-                ok(hr == D3D_OK, "%u - %s: GetValue failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
                 break;
 
             default:
@@ -1054,49 +1052,43 @@ static void test_effect_parameter_value_GetValue(const struct test_effect_parame
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#lx, expected %#lx\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
-            ok(value[l] == 0xabababab, "%u - %s: GetValue value[%u] failed, got %#lx, expected %#x\n",
-                    i, res_full_name, l, value[l], 0xabababab);
+            ok(value[l] == 0xabababab, "Unexpected value[%u] %#lx.\n", l, value[l]);
         }
     }
 }
 
 static void test_effect_parameter_value_GetBool(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
     BOOL bvalue = 0xabababab;
     HRESULT hr;
 
     hr = effect->lpVtbl->GetBool(effect, parameter, &bvalue);
     if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
     {
-        ok(hr == D3D_OK, "%u - %s: GetBool failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
-        ok(bvalue == get_bool(res_value), "%u - %s: GetBool bvalue failed, got %#x, expected %#x\n",
-                i, res_full_name, bvalue, get_bool(res_value));
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(bvalue == get_bool(res_value), "Unexpected value %#x, expected %#x.\n",
+                bvalue, get_bool(res_value));
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#lx, expected %#lx\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
-        ok(bvalue == 0xabababab, "%u - %s: GetBool bvalue failed, got %#x, expected %#x\n",
-                i, res_full_name, bvalue, 0xabababab);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+        ok(bvalue == 0xabababab, "Unexpected value %#x.\n", bvalue);
     }
 }
 
 static void test_effect_parameter_value_GetBoolArray(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
     BOOL bavalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    unsigned int l, err = 0;
     HRESULT hr;
-    UINT l, err = 0;
 
     memset(bavalue, 0xab, sizeof(bavalue));
     hr = effect->lpVtbl->GetBoolArray(effect, parameter, bavalue, res_desc->Bytes / sizeof(*bavalue));
@@ -1104,79 +1096,77 @@ static void test_effect_parameter_value_GetBoolArray(const struct test_effect_pa
             || res_desc->Class == D3DXPC_VECTOR
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetBoolArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < res_desc->Bytes / sizeof(*bavalue); ++l)
         {
-            if (bavalue[l] != get_bool(&res_value[l])) ++err;
+            if (bavalue[l] != get_bool(&res_value[l]))
+                ++err;
         }
 
         for (l = res_desc->Bytes / sizeof(*bavalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
-            if (bavalue[l] != 0xabababab) ++err;
+            if (bavalue[l] != 0xabababab)
+                ++err;
         }
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#lx, expected %#lx\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (bavalue[l] != 0xabababab) ++err;
+        for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+            if (bavalue[l] != 0xabababab)
+                ++err;
     }
-    ok(!err, "%u - %s: GetBoolArray failed with %u errors\n", i, res_full_name, err);
+    ok(!err, "Unexpected value in %u elements.\n", err);
 }
 
 static void test_effect_parameter_value_GetInt(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    INT ivalue = 0xabababab;
+    int ivalue = 0xabababab;
     HRESULT hr;
 
     hr = effect->lpVtbl->GetInt(effect, parameter, &ivalue);
     if (!res_desc->Elements && res_desc->Columns == 1 && res_desc->Rows == 1)
     {
-        ok(hr == D3D_OK, "%u - %s: GetInt failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
-        ok(ivalue == get_int(res_desc->Type, res_value), "%u - %s: GetInt ivalue failed, got %i, expected %i\n",
-                i, res_full_name, ivalue, get_int(res_desc->Type, res_value));
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(ivalue == get_int(res_desc->Type, res_value), "Unexpected value %d, expected %d.\n",
+                ivalue, get_int(res_desc->Type, res_value));
     }
     else if(!res_desc->Elements && res_desc->Type == D3DXPT_FLOAT &&
             ((res_desc->Class == D3DXPC_VECTOR && res_desc->Columns != 2) ||
             (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Rows != 2 && res_desc->Columns == 1)))
     {
-        INT tmp;
+        int tmp;
 
-        ok(hr == D3D_OK, "%u - %s: GetInt failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-        tmp = (INT)(min(max(0.0f, *((FLOAT *)res_value + 2)), 1.0f) * INT_FLOAT_MULTI);
-        tmp += ((INT)(min(max(0.0f, *((FLOAT *)res_value + 1)), 1.0f) * INT_FLOAT_MULTI)) << 8;
-        tmp += ((INT)(min(max(0.0f, *((FLOAT *)res_value + 0)), 1.0f) * INT_FLOAT_MULTI)) << 16;
+        tmp = (int)(min(max(0.0f, *((float *)res_value + 2)), 1.0f) * INT_FLOAT_MULTI);
+        tmp |= ((int)(min(max(0.0f, *((float *)res_value + 1)), 1.0f) * INT_FLOAT_MULTI)) << 8;
+        tmp |= ((int)(min(max(0.0f, *((float *)res_value + 0)), 1.0f) * INT_FLOAT_MULTI)) << 16;
         if (res_desc->Columns * res_desc->Rows > 3)
         {
-            tmp += ((INT)(min(max(0.0f, *((FLOAT *)res_value + 3)), 1.0f) * INT_FLOAT_MULTI)) << 24;
+            tmp |= ((int)(min(max(0.0f, *((float *)res_value + 3)), 1.0f) * INT_FLOAT_MULTI)) << 24;
         }
 
-        ok(ivalue == tmp, "%u - %s: GetInt ivalue failed, got %x, expected %x\n",
-                i, res_full_name, ivalue, tmp);
+        ok(ivalue == tmp, "Unexpected value %x, expected %x.\n", ivalue, tmp);
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#lx, expected %#lx\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
-        ok(ivalue == 0xabababab, "%u - %s: GetInt ivalue failed, got %i, expected %i\n",
-                i, res_full_name, ivalue, 0xabababab);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+        ok(ivalue == 0xabababab, "Unexpected value %d.\n", ivalue);
     }
 }
 
 static void test_effect_parameter_value_GetIntArray(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    INT iavalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    int iavalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    unsigned int l, err = 0;
     HRESULT hr;
-    UINT l, err = 0;
 
     memset(iavalue, 0xab, sizeof(iavalue));
     hr = effect->lpVtbl->GetIntArray(effect, parameter, iavalue, res_desc->Bytes / sizeof(*iavalue));
@@ -1184,7 +1174,7 @@ static void test_effect_parameter_value_GetIntArray(const struct test_effect_par
             || res_desc->Class == D3DXPC_VECTOR
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetIntArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < res_desc->Bytes / sizeof(*iavalue); ++l)
         {
@@ -1198,48 +1188,44 @@ static void test_effect_parameter_value_GetIntArray(const struct test_effect_par
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#lx, expected %#lx\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (iavalue[l] != 0xabababab) ++err;
     }
-    ok(!err, "%u - %s: GetIntArray failed with %u errors\n", i, res_full_name, err);
+    ok(!err, "Unexpected value in %u elements.\n", err);
 }
 
 static void test_effect_parameter_value_GetFloat(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    HRESULT hr;
     DWORD cmp = 0xabababab;
-    FLOAT fvalue = *(FLOAT *)&cmp;
+    float fvalue;
+    HRESULT hr;
 
+    fvalue = *(float *)&cmp;
     hr = effect->lpVtbl->GetFloat(effect, parameter, &fvalue);
     if (!res_desc->Elements && res_desc->Columns == 1 && res_desc->Rows == 1)
     {
-        ok(hr == D3D_OK, "%u - %s: GetFloat failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
-        ok(compare_float(fvalue, get_float(res_desc->Type, res_value), 512), "%u - %s: GetFloat fvalue failed, got %f, expected %f\n",
-                i, res_full_name, fvalue, get_float(res_desc->Type, res_value));
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(compare_float(fvalue, get_float(res_desc->Type, res_value), 512), "Unexpected value %.8e, expected %.8e.\n",
+                fvalue, get_float(res_desc->Type, res_value));
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#lx, expected %#lx\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
-        ok(fvalue == *(FLOAT *)&cmp, "%u - %s: GetFloat fvalue failed, got %f, expected %f\n",
-                i, res_full_name, fvalue, *(FLOAT *)&cmp);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+        ok(fvalue == *(float *)&cmp, "Unexpected value %.8e, expected %.8e.\n", fvalue, *(float *)&cmp);
     }
 }
 
 static void test_effect_parameter_value_GetFloatArray(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    FLOAT favalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
-    HRESULT hr;
-    UINT l, err = 0;
+    float favalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    unsigned int l, err = 0;
     DWORD cmp = 0xabababab;
+    HRESULT hr;
 
     memset(favalue, 0xab, sizeof(favalue));
     hr = effect->lpVtbl->GetFloatArray(effect, parameter, favalue, res_desc->Bytes / sizeof(*favalue));
@@ -1247,37 +1233,37 @@ static void test_effect_parameter_value_GetFloatArray(const struct test_effect_p
             || res_desc->Class == D3DXPC_VECTOR
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetFloatArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < res_desc->Bytes / sizeof(*favalue); ++l)
         {
-            if (!compare_float(favalue[l], get_float(res_desc->Type, &res_value[l]), 512)) ++err;
+            if (!compare_float(favalue[l], get_float(res_desc->Type, &res_value[l]), 512))
+                ++err;
         }
 
         for (l = res_desc->Bytes / sizeof(*favalue); l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
         {
-            if (favalue[l] != *(FLOAT *)&cmp) ++err;
+            if (favalue[l] != *(float *)&cmp)
+                ++err;
         }
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#lx, expected %#lx\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (favalue[l] != *(FLOAT *)&cmp) ++err;
     }
-    ok(!err, "%u - %s: GetFloatArray failed with %u errors\n", i, res_full_name, err);
+    ok(!err, "Unexpected value in %u elements.\n", err);
 }
 
 static void test_effect_parameter_value_GetVector(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    HRESULT hr;
+    unsigned int l, err = 0;
     DWORD cmp = 0xabababab;
-    FLOAT fvalue[4];
-    UINT l, err = 0;
+    float fvalue[4];
+    HRESULT hr;
 
     memset(fvalue, 0xab, sizeof(fvalue));
     hr = effect->lpVtbl->GetVector(effect, parameter, (D3DXVECTOR4 *)&fvalue);
@@ -1287,59 +1273,64 @@ static void test_effect_parameter_value_GetVector(const struct test_effect_param
     {
         DWORD tmp;
 
-        ok(hr == D3D_OK, "%u - %s: GetVector failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         tmp = (DWORD)(*(fvalue + 2) * INT_FLOAT_MULTI);
         tmp += ((DWORD)(*(fvalue + 1) * INT_FLOAT_MULTI)) << 8;
         tmp += ((DWORD)(*fvalue * INT_FLOAT_MULTI)) << 16;
         tmp += ((DWORD)(*(fvalue + 3) * INT_FLOAT_MULTI)) << 24;
 
-        if (*res_value != tmp) ++err;
+        if (*res_value != tmp)
+            ++err;
     }
     else if (!res_desc->Elements && (res_desc->Class == D3DXPC_SCALAR || res_desc->Class == D3DXPC_VECTOR))
     {
-        ok(hr == D3D_OK, "%u - %s: GetVector failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < res_desc->Columns; ++l)
-        {
-            if (!compare_float(fvalue[l], get_float(res_desc->Type, &res_value[l]), 512)) ++err;
-        }
+            if (!compare_float(fvalue[l], get_float(res_desc->Type, &res_value[l]), 512))
+                ++err;
 
-        for (l = res_desc->Columns; l < 4; ++l) if (fvalue[l] != 0.0f) ++err;
+        for (l = res_desc->Columns; l < 4; ++l)
+            if (fvalue[l] != 0.0f)
+                ++err;
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#lx, expected %#lx\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-        for (l = 0; l < 4; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+        for (l = 0; l < 4; ++l)
+            if (fvalue[l] != *(float *)&cmp)
+                ++err;
     }
-    ok(!err, "%u - %s: GetVector failed with %u errors\n", i, res_full_name, err);
+    ok(!err, "Unexpected value in %u elements.\n", err);
 }
 
 static void test_effect_parameter_value_GetVectorArray(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    HRESULT hr;
+    float fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    unsigned int l, k, element, err = 0;
     DWORD cmp = 0xabababab;
-    FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
-    UINT l, k, element, err = 0;
+    HRESULT hr;
 
     for (element = 0; element <= res_desc->Elements + 1; ++element)
     {
+        winetest_push_context("Element %u", element);
         memset(fvalue, 0xab, sizeof(fvalue));
         hr = effect->lpVtbl->GetVectorArray(effect, parameter, (D3DXVECTOR4 *)&fvalue, element);
         if (!element)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetVectorArray failed, got %#lx, expected %#lx\n", i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+                if (fvalue[l] != *(float *)&cmp)
+                    ++err;
         }
         else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_VECTOR)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetVectorArray failed, got %#lx, expected %#lx\n", i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             for (k = 0; k < element; ++k)
             {
@@ -1350,42 +1341,47 @@ static void test_effect_parameter_value_GetVectorArray(const struct test_effect_
                         ++err;
                 }
 
-                for (l = res_desc->Columns; l < 4; ++l) if (fvalue[l + k * 4] != 0.0f) ++err;
+                for (l = res_desc->Columns; l < 4; ++l)
+                    if (fvalue[l + k * 4] != 0.0f)
+                        ++err;
             }
 
-            for (l = element * 4; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = element * 4; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+                if (fvalue[l] != *(float *)&cmp)
+                    ++err;
         }
         else
         {
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetVectorArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+                if (fvalue[l] != *(float *)&cmp)
+                    ++err;
         }
-        ok(!err, "%u - %s[%u]: GetVectorArray failed with %u errors\n", i, res_full_name, element, err);
+        ok(!err, "Unexpected value in %u elements.\n", err);
+        winetest_pop_context();
     }
 }
 
 static void test_effect_parameter_value_GetMatrix(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    HRESULT hr;
+    unsigned int l, k, err = 0;
+    float fvalue[16];
     union
     {
         DWORD d;
         float f;
     } cmp;
-    float fvalue[16];
-    UINT l, k, err = 0;
+    HRESULT hr;
 
     cmp.d = 0xabababab;
     memset(fvalue, 0xab, sizeof(fvalue));
     hr = effect->lpVtbl->GetMatrix(effect, parameter, (D3DXMATRIX *)&fvalue);
     if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrix failed, got %#lx, expected %#lx.\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         for (k = 0; k < 4; ++k)
         {
@@ -1403,41 +1399,42 @@ static void test_effect_parameter_value_GetMatrix(const struct test_effect_param
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrix failed, got %#lx, expected %#lx.\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < ARRAY_SIZE(fvalue); ++l)
             if (fvalue[l] != cmp.f)
                 ++err;
     }
-    ok(!err, "%u - %s: GetMatrix failed with %u errors.\n", i, res_full_name, err);
+    ok(!err, "Unexpected value in %u elements.\n", err);
 }
 
 static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    HRESULT hr;
+    float fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    unsigned int l, k, m, count, err = 0;
     DWORD cmp = 0xabababab;
-    FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
-    UINT l, k, m, element, err = 0;
+    HRESULT hr;
 
-    for (element = 0; element <= res_desc->Elements + 1; ++element)
+    for (count = 0; count <= res_desc->Elements + 1; ++count)
     {
+        winetest_push_context("Count %u", count);
         memset(fvalue, 0xab, sizeof(fvalue));
-        hr = effect->lpVtbl->GetMatrixArray(effect, parameter, (D3DXMATRIX *)&fvalue, element);
-        if (!element)
+        hr = effect->lpVtbl->GetMatrixArray(effect, parameter, (D3DXMATRIX *)&fvalue, count);
+        if (!count)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixArray failed, got %#lx, expected %#lx\n", i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+                if (fvalue[l] != *(float *)&cmp)
+                    ++err;
         }
-        else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        else if (count <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixArray failed, got %#lx, expected %#lx\n", i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-            for (m = 0; m < element; ++m)
+            for (m = 0; m < count; ++m)
             {
                 for (k = 0; k < 4; ++k)
                 {
@@ -1446,29 +1443,35 @@ static void test_effect_parameter_value_GetMatrixArray(const struct test_effect_
                         if (k < res_desc->Columns && l < res_desc->Rows)
                         {
                             if (!compare_float(fvalue[m * 16 + l * 4 + k], get_float(res_desc->Type,
-                                    &res_value[m * res_desc->Columns * res_desc->Rows + l * res_desc->Columns + k]), 512))
+                                                    &res_value[m * res_desc->Columns * res_desc->Rows
+                                                            + l * res_desc->Columns + k]), 512))
                                 ++err;
                         }
-                        else if (fvalue[m * 16 + l * 4 + k] != 0.0f) ++err;
+                        else if (fvalue[m * 16 + l * 4 + k] != 0.0f)
+                            ++err;
                     }
                 }
             }
 
-            for (l = element * 16; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = count * 16; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+                if (fvalue[l] != *(float *)&cmp)
+                    ++err;
         }
         else
         {
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
+                if (fvalue[l] != *(float *)&cmp)
+                    ++err;
         }
-        ok(!err, "%u - %s[%u]: GetMatrixArray failed with %u errors\n", i, res_full_name, element, err);
+        ok(!err, "Unexpected value in %u elements.\n", err);
+        winetest_pop_context();
     }
 }
 
 static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     union
     {
@@ -1477,8 +1480,7 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
     } fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE * sizeof(float) / sizeof(D3DXMATRIX)];
     D3DXMATRIX *matrix_pointer_array[ARRAY_SIZE(fvalue)];
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    UINT l, k, m, element, err = 0;
+    unsigned int l, k, m, count, err = 0;
     union
     {
         DWORD d;
@@ -1486,30 +1488,29 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
     } cmp = {0xabababab};
     HRESULT hr;
 
-    for (element = 0; element <= res_desc->Elements + 1; ++element)
+    for (count = 0; count <= res_desc->Elements + 1; ++count)
     {
+        winetest_push_context("Count %u", count);
         memset(fvalue, 0xab, sizeof(fvalue));
-        for (l = 0; l < element; ++l)
+        for (l = 0; l < count; ++l)
         {
             matrix_pointer_array[l] = &fvalue[l].m;
         }
-        hr = effect->lpVtbl->GetMatrixPointerArray(effect, parameter, matrix_pointer_array, element);
-        if (!element)
+        hr = effect->lpVtbl->GetMatrixPointerArray(effect, parameter, matrix_pointer_array, count);
+        if (!count)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             for (m = 0; m < ARRAY_SIZE(fvalue); ++m)
                 for (l = 0; l < ARRAY_SIZE(fvalue[l].f); ++l)
                     if (fvalue[m].f[l] != cmp.f)
                         ++err;
         }
-        else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        else if (count <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-            for (m = 0; m < element; ++m)
+            for (m = 0; m < count; ++m)
             {
                 for (k = 0; k < 4; ++k)
                 {
@@ -1527,7 +1528,7 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
                 }
             }
 
-            for (m = element; m < ARRAY_SIZE(fvalue); ++m)
+            for (m = count; m < ARRAY_SIZE(fvalue); ++m)
                 for (l = 0; l < ARRAY_SIZE(fvalue[m].f); ++l)
                     if (fvalue[m].f[l] != cmp.f)
                         ++err;
@@ -1539,18 +1540,18 @@ static void test_effect_parameter_value_GetMatrixPointerArray(const struct test_
                     if (fvalue[m].f[l] != cmp.f)
                         ++err;
 
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
         }
-        ok(!err, "%u - %s[%u]: GetMatrixPointerArray failed with %u errors\n", i, res_full_name, element, err);
+        ok(!err, "Unexpected value in %u elements.\n", err);
+        winetest_pop_context();
     }
 }
 
 static void test_effect_parameter_value_GetMatrixTranspose(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
+    unsigned int l, k, err = 0;
     HRESULT hr;
     union
     {
@@ -1558,14 +1559,13 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
         float f;
     } cmp;
     float fvalue[16];
-    UINT l, k, err = 0;
 
     cmp.d = 0xabababab;
     memset(fvalue, 0xab, sizeof(fvalue));
     hr = effect->lpVtbl->GetMatrixTranspose(effect, parameter, (D3DXMATRIX *)&fvalue);
     if (!res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx.\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         for (k = 0; k < 4; ++k)
         {
@@ -1583,7 +1583,7 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
     }
     else if (!res_desc->Elements && (res_desc->Class == D3DXPC_VECTOR || res_desc->Class == D3DXPC_SCALAR))
     {
-        ok(hr == D3D_OK, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx.\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         for (k = 0; k < 4; ++k)
         {
@@ -1601,43 +1601,40 @@ static void test_effect_parameter_value_GetMatrixTranspose(const struct test_eff
     }
     else
     {
-        ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx.\n",
-                i, res_full_name, hr, D3DERR_INVALIDCALL);
+        ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
         for (l = 0; l < ARRAY_SIZE(fvalue); ++l)
             if (fvalue[l] != cmp.f)
                 ++err;
     }
-    ok(!err, "%u - %s: GetMatrixTranspose failed with %u errors.\n", i, res_full_name, err);
+    ok(!err, "Unexpected value in %u elements.\n", err);
 }
 
 static void test_effect_parameter_value_GetMatrixTransposeArray(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    HRESULT hr;
+    float fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
+    unsigned int l, k, m, count, err = 0;
     DWORD cmp = 0xabababab;
-    FLOAT fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
-    UINT l, k, m, element, err = 0;
+    HRESULT hr;
 
-    for (element = 0; element <= res_desc->Elements + 1; ++element)
+    for (count = 0; count <= res_desc->Elements + 1; ++count)
     {
+        winetest_push_context("Count %u", count);
         memset(fvalue, 0xab, sizeof(fvalue));
-        hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, (D3DXMATRIX *)&fvalue, element);
-        if (!element)
+        hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, (D3DXMATRIX *)&fvalue, count);
+        if (!count)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
-        else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        else if (count <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-            for (m = 0; m < element; ++m)
+            for (m = 0; m < count; ++m)
             {
                 for (k = 0; k < 4; ++k)
                 {
@@ -1654,21 +1651,22 @@ static void test_effect_parameter_value_GetMatrixTransposeArray(const struct tes
                 }
             }
 
-            for (l = element * 16; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
+            for (l = count * 16; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
         else
         {
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l) if (fvalue[l] != *(FLOAT *)&cmp) ++err;
         }
-        ok(!err, "%u - %s[%u]: GetMatrixTransposeArray failed with %u errors\n", i, res_full_name, element, err);
+        ok(!err, "Unexpected value in %u elements.\n", err);
+        winetest_pop_context();
     }
 }
 
-static void test_effect_parameter_value_GetMatrixTransposePointerArray(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+static void test_effect_parameter_value_GetMatrixTransposePointerArray(
+        const struct test_effect_parameter_value_result *res, ID3DXEffect *effect,
+        const DWORD *res_value, D3DXHANDLE parameter)
 {
     union
     {
@@ -1677,8 +1675,7 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(const str
     } fvalue[EFFECT_PARAMETER_VALUE_ARRAY_SIZE * sizeof(float) / sizeof(D3DXMATRIX)];
     D3DXMATRIX *matrix_pointer_array[sizeof(fvalue)];
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
-    UINT l, k, m, element, err = 0;
+    unsigned int l, k, m, count, err = 0;
     union
     {
         DWORD d;
@@ -1686,30 +1683,29 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(const str
     } cmp = {0xabababab};
     HRESULT hr;
 
-    for (element = 0; element <= res_desc->Elements + 1; ++element)
+    for (count = 0; count <= res_desc->Elements + 1; ++count)
     {
+        winetest_push_context("Count %u", count);
         memset(fvalue, 0xab, sizeof(fvalue));
-        for (l = 0; l < element; ++l)
+        for (l = 0; l < count; ++l)
         {
             matrix_pointer_array[l] = &fvalue[l].m;
         }
-        hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, parameter, matrix_pointer_array, element);
-        if (!element)
+        hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, parameter, matrix_pointer_array, count);
+        if (!count)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             for (m = 0; m < ARRAY_SIZE(fvalue); ++m)
                 for (l = 0; l < ARRAY_SIZE(fvalue[m].f); ++l)
                     if (fvalue[m].f[l] != cmp.f)
                         ++err;
         }
-        else if (element <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
+        else if (count <= res_desc->Elements && res_desc->Class == D3DXPC_MATRIX_ROWS)
         {
-            ok(hr == D3D_OK, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
-            for (m = 0; m < element; ++m)
+            for (m = 0; m < count; ++m)
             {
                 for (k = 0; k < 4; ++k)
                 {
@@ -1727,50 +1723,49 @@ static void test_effect_parameter_value_GetMatrixTransposePointerArray(const str
                 }
             }
 
-            for (m = element; m < ARRAY_SIZE(fvalue); ++m)
+            for (m = count; m < ARRAY_SIZE(fvalue); ++m)
                 for (l = 0; l < ARRAY_SIZE(fvalue[m].f); ++l)
                     if (fvalue[m].f[l] != cmp.f)
                         ++err;
         }
         else
         {
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s[%u]: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, element, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             for (m = 0; m < ARRAY_SIZE(fvalue); ++m)
                 for (l = 0; l < ARRAY_SIZE(fvalue[m].f); ++l)
                     if (fvalue[m].f[l] != cmp.f)
                         ++err;
         }
-        ok(!err, "%u - %s[%u]: GetMatrixTransposePointerArray failed with %u errors\n", i, res_full_name, element, err);
+        ok(!err, "Unexpected value in %u elements.\n", err);
+        winetest_pop_context();
     }
 }
 
-static void test_effect_parameter_value_GetTestGroup(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+static void test_effect_parameter_values(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
-    test_effect_parameter_value_GetValue(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetBool(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetBoolArray(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetInt(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetIntArray(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetFloat(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetFloatArray(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetVector(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetVectorArray(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetMatrix(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetMatrixArray(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetMatrixPointerArray(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetMatrixTranspose(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetMatrixTransposeArray(res, effect, res_value, parameter, i);
-    test_effect_parameter_value_GetMatrixTransposePointerArray(res, effect, res_value, parameter, i);
+    test_effect_parameter_value_GetValue(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetBool(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetBoolArray(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetInt(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetIntArray(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetFloat(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetFloatArray(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetVector(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetVectorArray(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetMatrix(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetMatrixArray(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetMatrixPointerArray(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetMatrixTranspose(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetMatrixTransposeArray(res, effect, res_value, parameter);
+    test_effect_parameter_value_GetMatrixTransposePointerArray(res, effect, res_value, parameter);
 }
 
-static void test_effect_parameter_value_ResetValue(const struct test_effect_parameter_value_result *res,
-        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter, UINT i)
+static void test_effect_parameter_value_reset(const struct test_effect_parameter_value_result *res,
+        ID3DXEffect *effect, const DWORD *res_value, D3DXHANDLE parameter)
 {
     const D3DXPARAMETER_DESC *res_desc = &res->desc;
-    const char *res_full_name = res->full_name;
     HRESULT hr;
 
     if (res_desc->Class == D3DXPC_SCALAR
@@ -1778,7 +1773,7 @@ static void test_effect_parameter_value_ResetValue(const struct test_effect_para
             || res_desc->Class == D3DXPC_MATRIX_ROWS)
     {
         hr = effect->lpVtbl->SetValue(effect, parameter, res_value, res_desc->Bytes);
-        ok(hr == D3D_OK, "%u - %s: SetValue failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     }
     else
     {
@@ -1806,21 +1801,22 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
     {
         const struct test_effect_parameter_value_result *res = test_effect_parameter_value_data[i].res;
         UINT res_count = test_effect_parameter_value_data[i].res_count;
-        const DWORD *blob = test_effect_parameter_value_data[i].blob;
         UINT blob_size = test_effect_parameter_value_data[i].blob_size;
-        HRESULT hr;
-        ID3DXEffect *effect;
+        const DWORD *blob = test_effect_parameter_value_data[i].blob;
         D3DXEFFECT_DESC edesc;
-        ULONG count;
-        UINT k;
+        ID3DXEffect *effect;
+        unsigned int k;
+        ULONG refcount;
+        HRESULT hr;
 
+        winetest_push_context("Test %u", i);
         hr = D3DXCreateEffect(device, blob, blob_size, NULL, NULL, 0, NULL, &effect, NULL);
-        ok(hr == D3D_OK, "%u: D3DXCreateEffect failed, got %#lx, expected %#lx\n", i, hr, D3D_OK);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
         hr = effect->lpVtbl->GetDesc(effect, &edesc);
-        ok(hr == D3D_OK, "%u: GetDesc failed, got %#lx, expected %#lx\n", i, hr, D3D_OK);
-        ok(edesc.Parameters == res_count, "%u: Parameters failed, got %u, expected %u\n",
-                i, edesc.Parameters, res_count);
+        ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+        ok(edesc.Parameters == res_count, "Unexpected Parameters %u, expected %u.\n",
+                edesc.Parameters, res_count);
 
         for (k = 0; k < res_count; ++k)
         {
@@ -1834,48 +1830,44 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             FLOAT fvalue = 2.71828f;
             DWORD input_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
             DWORD expected_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
-            UINT l, n, m, element;
+            UINT l, n, m, count;
             const D3DXMATRIX *matrix_pointer_array[sizeof(input_value)/(sizeof(D3DXMATRIX))];
 
+            winetest_push_context("Parameter %s", res_full_name);
             parameter = effect->lpVtbl->GetParameterByName(effect, NULL, res_full_name);
-            ok(parameter != NULL, "%u - %s: GetParameterByName failed\n", i, res_full_name);
+            ok(!!parameter, "Unexpected parameter %p.\n", parameter);
 
             hr = effect->lpVtbl->GetParameterDesc(effect, parameter, &pdesc);
-            ok(hr == D3D_OK, "%u - %s: GetParameterDesc failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             ok(res_desc->Name ? !strcmp(pdesc.Name, res_desc->Name) : !pdesc.Name,
-                    "%u - %s: GetParameterDesc Name failed, got \"%s\", expected \"%s\"\n",
-                    i, res_full_name, pdesc.Name, res_desc->Name);
+                    "Unexpected Name %s, expected %s.\n",
+                    debugstr_a(pdesc.Name), debugstr_a(res_desc->Name));
             ok(res_desc->Semantic ? !strcmp(pdesc.Semantic, res_desc->Semantic) : !pdesc.Semantic,
-                    "%u - %s: GetParameterDesc Semantic failed, got \"%s\", expected \"%s\"\n",
-                    i, res_full_name, pdesc.Semantic, res_desc->Semantic);
-            ok(res_desc->Class == pdesc.Class, "%u - %s: GetParameterDesc Class failed, got %#x, expected %#x\n",
-                    i, res_full_name, pdesc.Class, res_desc->Class);
-            ok(res_desc->Type == pdesc.Type, "%u - %s: GetParameterDesc Type failed, got %#x, expected %#x\n",
-                    i, res_full_name, pdesc.Type, res_desc->Type);
-            ok(res_desc->Rows == pdesc.Rows, "%u - %s: GetParameterDesc Rows failed, got %u, expected %u\n",
-                    i, res_full_name, pdesc.Rows, res_desc->Rows);
-            ok(res_desc->Columns == pdesc.Columns, "%u - %s: GetParameterDesc Columns failed, got %u, expected %u\n",
-                    i, res_full_name, pdesc.Columns, res_desc->Columns);
-            ok(res_desc->Elements == pdesc.Elements, "%u - %s: GetParameterDesc Elements failed, got %u, expected %u\n",
-                    i, res_full_name, pdesc.Elements, res_desc->Elements);
-            ok(res_desc->Annotations == pdesc.Annotations, "%u - %s: GetParameterDesc Annotations failed, got %u, expected %u\n",
-                    i, res_full_name, pdesc.Annotations, res_desc->Annotations);
-            ok(res_desc->StructMembers == pdesc.StructMembers, "%u - %s: GetParameterDesc StructMembers failed, got %u, expected %u\n",
-                    i, res_full_name, pdesc.StructMembers, res_desc->StructMembers);
-            ok(res_desc->Flags == pdesc.Flags, "%u - %s: GetParameterDesc Flags failed, got %lu, expected %lu\n",
-                    i, res_full_name, pdesc.Flags, res_desc->Flags);
-            ok(res_desc->Bytes == pdesc.Bytes, "%u - %s: GetParameterDesc Bytes, got %u, expected %u\n",
-                    i, res_full_name, pdesc.Bytes, res_desc->Bytes);
+                    "Unexpected Semantic %s, expected %s.\n",
+                    debugstr_a(pdesc.Semantic), debugstr_a(res_desc->Semantic));
+            ok(res_desc->Class == pdesc.Class, "Unexpected Class %#x, expected %#x.\n",
+                    pdesc.Class, res_desc->Class);
+            ok(res_desc->Type == pdesc.Type, "Unexpected Type %#x, expected %#x.\n",
+                    pdesc.Type, res_desc->Type);
+            ok(res_desc->Rows == pdesc.Rows, "Unexpected Rows %u, expected %u.\n",
+                    pdesc.Rows, res_desc->Rows);
+            ok(res_desc->Columns == pdesc.Columns, "Unexpected Columns %u, expected %u.\n",
+                    pdesc.Columns, res_desc->Columns);
+            ok(res_desc->Elements == pdesc.Elements, "Unexpected Elements %u, expected %u.\n",
+                    pdesc.Elements, res_desc->Elements);
+            ok(res_desc->Annotations == pdesc.Annotations, "Unexpected Annotations %u, expected %u.\n",
+                    pdesc.Annotations, res_desc->Annotations);
+            ok(res_desc->StructMembers == pdesc.StructMembers, "Unexpected StructMembers %u, expected %u.\n",
+                    pdesc.StructMembers, res_desc->StructMembers);
+            ok(res_desc->Flags == pdesc.Flags, "Unexpected Flags %lu, expected %lu.\n",
+                    pdesc.Flags, res_desc->Flags);
+            ok(res_desc->Bytes == pdesc.Bytes, "Unexpected Bytes %u, expected %u.\n",
+                    pdesc.Bytes, res_desc->Bytes);
 
-            /* check size */
-            ok(EFFECT_PARAMETER_VALUE_ARRAY_SIZE >= res_desc->Bytes / 4 +
-                    (res_desc->Elements ? res_desc->Bytes / 4 / res_desc->Elements : 0),
-                    "%u - %s: Warning: Array size too small\n", i, res_full_name);
-
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
+            test_effect_parameter_values(&res[k], effect, &blob[res_value_offset], parameter);
 
             /*
              * check invalid calls
@@ -1896,202 +1888,153 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
              * effect->lpVtbl->SetValue(effect, parameter, NULL, res_desc->Bytes);
              */
             hr = effect->lpVtbl->SetBool(effect, NULL, bvalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetBool(effect, NULL, &bvalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetBool(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBool failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetBoolArray(effect, NULL, (BOOL *)input_value, res_desc->Bytes / sizeof(BOOL));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBoolArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetBoolArray(effect, NULL, (BOOL *)input_value, res_desc->Bytes / sizeof(BOOL));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetBoolArray(effect, parameter, NULL, res_desc->Bytes / sizeof(BOOL));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetBoolArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetInt(effect, NULL, ivalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetInt failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetInt(effect, NULL, &ivalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetInt(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetInt failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetIntArray(effect, NULL, (INT *)input_value, res_desc->Bytes / sizeof(INT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetIntArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetIntArray(effect, NULL, (INT *)input_value, res_desc->Bytes / sizeof(INT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetIntArray(effect, parameter, NULL, res_desc->Bytes / sizeof(INT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetIntArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetFloat(effect, NULL, fvalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloat failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetFloat(effect, NULL, &fvalue);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetFloat(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloat failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetFloatArray(effect, NULL, (FLOAT *)input_value, res_desc->Bytes / sizeof(FLOAT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloatArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetFloatArray(effect, NULL, (FLOAT *)input_value, res_desc->Bytes / sizeof(FLOAT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetFloatArray(effect, parameter, NULL, res_desc->Bytes / sizeof(FLOAT));
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetFloatArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetVector(effect, NULL, (D3DXVECTOR4 *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVector failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetVector(effect, NULL, (D3DXVECTOR4 *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetVector(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVector failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVectorArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetVectorArray(effect, NULL, (D3DXVECTOR4 *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetVectorArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetVectorArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrix(effect, NULL, (D3DXMATRIX *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrix failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrix(effect, NULL, (D3DXMATRIX *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrix failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixPointerArray(effect, NULL, matrix_pointer_array, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixPointerArray(effect, NULL, matrix_pointer_array, 0);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixPointerArray(effect, NULL, NULL, 0);
-            ok(hr == D3D_OK, "%u - %s: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixPointerArray(effect, NULL, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixPointerArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixTranspose(effect, NULL, (D3DXMATRIX *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTranspose failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixTranspose(effect, NULL, (D3DXMATRIX *)input_value);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixTranspose(effect, parameter, NULL);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTranspose failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixTransposeArray(effect, NULL, (D3DXMATRIX *)input_value, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixTransposeArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, NULL, matrix_pointer_array, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, NULL, matrix_pointer_array, 0);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, NULL, NULL, 0);
-            ok(hr == D3D_OK, "%u - %s: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3D_OK);
+            ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, NULL, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetMatrixTransposePointerArray(effect, parameter, NULL, res_desc->Elements ? res_desc->Elements : 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetValue(effect, NULL, input_value, res_desc->Bytes);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetValue failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->SetValue(effect, parameter, input_value, res_desc->Bytes - 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetValue failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetValue(effect, NULL, input_value, res_desc->Bytes);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
             hr = effect->lpVtbl->GetValue(effect, parameter, input_value, res_desc->Bytes - 1);
-            ok(hr == D3DERR_INVALIDCALL, "%u - %s: GetValue failed, got %#lx, expected %#lx\n",
-                    i, res_full_name, hr, D3DERR_INVALIDCALL);
+            ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetBool */
             bvalue = 5;
@@ -2101,15 +2044,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             {
                 bvalue = TRUE;
                 set_number(expected_value, res_desc->Type, &bvalue, D3DXPT_BOOL);
-                ok(hr == D3D_OK, "%u - %s: SetBool failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBool failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+                ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetBoolArray */
             *input_value = 1;
@@ -2127,15 +2069,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 {
                     set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_BOOL);
                 }
-                ok(hr == D3D_OK, "%u - %s: SetBoolArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetBoolArray failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+                ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetInt */
             ivalue = 0x1fbf02ff;
@@ -2144,7 +2085,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
             {
                 set_number(expected_value, res_desc->Type, &ivalue, D3DXPT_INT);
-                ok(hr == D3D_OK, "%u - %s: SetInt failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else if(!res_desc->Elements && res_desc->Type == D3DXPT_FLOAT &&
                     ((res_desc->Class == D3DXPC_VECTOR && res_desc->Columns != 2) ||
@@ -2159,16 +2100,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 tmp = ((ivalue & 0xff000000) >> 24) * INT_FLOAT_MULTI_INVERSE;
                 set_number(expected_value + 3, res_desc->Type, &tmp, D3DXPT_FLOAT);
 
-                ok(hr == D3D_OK, "%u - %s: SetInt failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetInt failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+                ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetIntArray */
             *input_value = 123456;
@@ -2186,15 +2125,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 {
                     set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_INT);
                 }
-                ok(hr == D3D_OK, "%u - %s: SetIntArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetIntArray failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+                ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetFloat */
             fvalue = 1.33;
@@ -2203,15 +2141,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             if (!res_desc->Elements && res_desc->Rows == 1 && res_desc->Columns == 1)
             {
                 set_number(expected_value, res_desc->Type, &fvalue, D3DXPT_FLOAT);
-                ok(hr == D3D_OK, "%u - %s: SetFloat failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloat failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+                ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetFloatArray */
             fvalue = 1.33;
@@ -2230,15 +2167,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                 {
                     set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_FLOAT);
                 }
-                ok(hr == D3D_OK, "%u - %s: SetFloatArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetFloatArray failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+                ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetVector */
             fvalue = -1.33;
@@ -2268,45 +2204,43 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                         set_number(expected_value + l, res_desc->Type, input_value + l, D3DXPT_FLOAT);
                     }
                 }
-                ok(hr == D3D_OK, "%u - %s: SetVector failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVector failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+                ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetVectorArray */
-            for (element = 0; element < res_desc->Elements + 1; ++element)
+            for (count = 0; count < res_desc->Elements + 1; ++count)
             {
                 fvalue = 1.33;
-                for (l = 0; l < element * 4; ++l)
+                for (l = 0; l < count * 4; ++l)
                 {
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
                 memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
-                hr = effect->lpVtbl->SetVectorArray(effect, parameter, (D3DXVECTOR4 *)input_value, element);
-                if (res_desc->Elements && res_desc->Class == D3DXPC_VECTOR && element <= res_desc->Elements)
+                hr = effect->lpVtbl->SetVectorArray(effect, parameter, (D3DXVECTOR4 *)input_value, count);
+                if (res_desc->Elements && res_desc->Class == D3DXPC_VECTOR && count <= res_desc->Elements)
                 {
-                    for (m = 0; m < element; ++m)
+                    for (m = 0; m < count; ++m)
                     {
                         for (l = 0; l < res_desc->Columns; ++l)
                         {
                             set_number(expected_value + m * res_desc->Columns + l, res_desc->Type, input_value + m * 4 + l, D3DXPT_FLOAT);
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetVectorArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetVectorArray failed, got %#lx, expected %#lx\n",
-                            i, res_full_name, hr, D3DERR_INVALIDCALL);
+                    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
-                test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-                test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+                test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
             }
 
             /* SetMatrix */
@@ -2330,30 +2264,29 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     }
 
                 }
-                ok(hr == D3D_OK, "%u - %s: SetMatrix failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrix failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+                ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetMatrixArray */
-            for (element = 0; element < res_desc->Elements + 1; ++element)
+            for (count = 0; count < res_desc->Elements + 1; ++count)
             {
                 fvalue = 1.33;
-                for (l = 0; l < element * 16; ++l)
+                for (l = 0; l < count * 16; ++l)
                 {
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
                 memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
-                hr = effect->lpVtbl->SetMatrixArray(effect, parameter, (D3DXMATRIX *)input_value, element);
-                if (res_desc->Class == D3DXPC_MATRIX_ROWS && element <= res_desc->Elements)
+                hr = effect->lpVtbl->SetMatrixArray(effect, parameter, (D3DXMATRIX *)input_value, count);
+                if (res_desc->Class == D3DXPC_MATRIX_ROWS && count <= res_desc->Elements)
                 {
-                    for (n = 0; n < element; ++n)
+                    for (n = 0; n < count; ++n)
                     {
                         for (l = 0; l < 4; ++l)
                         {
@@ -2366,19 +2299,18 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetMatrixArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixArray failed, got %#lx, expected %#lx\n",
-                            i, res_full_name, hr, D3DERR_INVALIDCALL);
+                    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
-                test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-                test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+                test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
             }
 
             /* SetMatrixPointerArray */
-            for (element = 0; element < res_desc->Elements + 1; ++element)
+            for (count = 0; count < res_desc->Elements + 1; ++count)
             {
                 fvalue = 1.33;
                 for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
@@ -2387,14 +2319,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     fvalue += 1.12;
                 }
                 memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
-                for (l = 0; l < element; ++l)
+                for (l = 0; l < count; ++l)
                 {
                     matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(FLOAT)];
                 }
-                hr = effect->lpVtbl->SetMatrixPointerArray(effect, parameter, matrix_pointer_array, element);
-                if (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Elements >= element)
+                hr = effect->lpVtbl->SetMatrixPointerArray(effect, parameter, matrix_pointer_array, count);
+                if (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Elements >= count)
                 {
-                    for (n = 0; n < element; ++n)
+                    for (n = 0; n < count; ++n)
                     {
                         for (l = 0; l < 4; ++l)
                         {
@@ -2407,16 +2339,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                            i, res_full_name, hr, D3D_OK);
+                    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixPointerArray failed, got %#lx, expected %#lx\n",
-                            i, res_full_name, hr, D3DERR_INVALIDCALL);
+                    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
-                test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-                test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+                test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
             }
 
             /* SetMatrixTranspose */
@@ -2440,30 +2370,29 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     }
 
                 }
-                ok(hr == D3D_OK, "%u - %s: SetMatrixTranspose failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
             }
             else
             {
-                ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTranspose failed, got %#lx, expected %#lx\n",
-                        i, res_full_name, hr, D3DERR_INVALIDCALL);
+                ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
             }
-            test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-            test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+            test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+            test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
 
             /* SetMatrixTransposeArray */
-            for (element = 0; element < res_desc->Elements + 1; ++element)
+            for (count = 0; count < res_desc->Elements + 1; ++count)
             {
                 fvalue = 1.33;
-                for (l = 0; l < element * 16; ++l)
+                for (l = 0; l < count * 16; ++l)
                 {
                     *(input_value + l) = *(DWORD *)&fvalue;
                     fvalue += 1.12;
                 }
                 memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
-                hr = effect->lpVtbl->SetMatrixTransposeArray(effect, parameter, (D3DXMATRIX *)input_value, element);
-                if (res_desc->Class == D3DXPC_MATRIX_ROWS && element <= res_desc->Elements)
+                hr = effect->lpVtbl->SetMatrixTransposeArray(effect, parameter, (D3DXMATRIX *)input_value, count);
+                if (res_desc->Class == D3DXPC_MATRIX_ROWS && count <= res_desc->Elements)
                 {
-                    for (n = 0; n < element; ++n)
+                    for (n = 0; n < count; ++n)
                     {
                         for (l = 0; l < 4; ++l)
                         {
@@ -2476,19 +2405,18 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetMatrixTransposeArray failed, got %#lx, expected %#lx\n", i, res_full_name, hr, D3D_OK);
+                    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposeArray failed, got %#lx, expected %#lx\n",
-                            i, res_full_name, hr, D3DERR_INVALIDCALL);
+                    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
-                test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-                test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+                test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
             }
 
             /* SetMatrixTransposePointerArray */
-            for (element = 0; element < res_desc->Elements + 1; ++element)
+            for (count = 0; count < res_desc->Elements + 1; ++count)
             {
                 fvalue = 1.33;
                 for (l = 0; l < EFFECT_PARAMETER_VALUE_ARRAY_SIZE; ++l)
@@ -2497,14 +2425,14 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
                     fvalue += 1.12;
                 }
                 memcpy(expected_value, &blob[res_value_offset], res_desc->Bytes);
-                for (l = 0; l < element; ++l)
+                for (l = 0; l < count; ++l)
                 {
                     matrix_pointer_array[l] = (D3DXMATRIX *)&input_value[l * sizeof(**matrix_pointer_array) / sizeof(FLOAT)];
                 }
-                hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, parameter, matrix_pointer_array, element);
-                if (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Elements >= element)
+                hr = effect->lpVtbl->SetMatrixTransposePointerArray(effect, parameter, matrix_pointer_array, count);
+                if (res_desc->Class == D3DXPC_MATRIX_ROWS && res_desc->Elements >= count)
                 {
-                    for (n = 0; n < element; ++n)
+                    for (n = 0; n < count; ++n)
                     {
                         for (l = 0; l < 4; ++l)
                         {
@@ -2517,21 +2445,21 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
 
                         }
                     }
-                    ok(hr == D3D_OK, "%u - %s: SetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                            i, res_full_name, hr, D3D_OK);
+                    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
                 }
                 else
                 {
-                    ok(hr == D3DERR_INVALIDCALL, "%u - %s: SetMatrixTransposePointerArray failed, got %#lx, expected %#lx\n",
-                            i, res_full_name, hr, D3DERR_INVALIDCALL);
+                    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
                 }
-                test_effect_parameter_value_GetTestGroup(&res[k], effect, expected_value, parameter, i);
-                test_effect_parameter_value_ResetValue(&res[k], effect, &blob[res_value_offset], parameter, i);
+                test_effect_parameter_values(&res[k], effect, expected_value, parameter);
+                test_effect_parameter_value_reset(&res[k], effect, &blob[res_value_offset], parameter);
             }
+            winetest_pop_context();
         }
 
-        count = effect->lpVtbl->Release(effect);
-        ok(!count, "Release failed %lu\n", count);
+        refcount = effect->lpVtbl->Release(effect);
+        ok(!refcount, "Unexpected refcount %lu.\n", refcount);
+        winetest_pop_context();
     }
 }
 
