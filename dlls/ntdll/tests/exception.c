@@ -689,9 +689,9 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
     ok( rec->ExceptionCode == except->status ||
         (except->alt_status != 0 && rec->ExceptionCode == except->alt_status),
         "%u: Wrong exception code %lx/%lx\n", entry, rec->ExceptionCode, except->status );
-    ok( context->Eip == (DWORD_PTR)code_mem + except->offset,
+    ok( context->Eip == (DWORD)code_mem + except->offset,
         "%u: Unexpected eip %#lx/%#lx\n", entry,
-        context->Eip, (DWORD_PTR)code_mem + except->offset );
+        context->Eip, (DWORD)code_mem + except->offset );
     ok( rec->ExceptionAddress == (char*)context->Eip ||
         (rec->ExceptionCode == STATUS_BREAKPOINT && rec->ExceptionAddress == (char*)context->Eip + 1),
         "%u: Unexpected exception address %p/%p\n", entry,
@@ -727,14 +727,14 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
     {
         for (i = 0; i < rec->NumberParameters; i++)
             ok( rec->ExceptionInformation[i] == except->params[i],
-                "%u: Wrong parameter %d: %lx/%lx\n",
+                "%u: Wrong parameter %d: %Ix/%lx\n",
                 entry, i, rec->ExceptionInformation[i], except->params[i] );
     }
     else
     {
         for (i = 0; i < rec->NumberParameters; i++)
             ok( rec->ExceptionInformation[i] == except->alt_params[i],
-                "%u: Wrong parameter %d: %lx/%lx\n",
+                "%u: Wrong parameter %d: %Ix/%lx\n",
                 entry, i, rec->ExceptionInformation[i], except->alt_params[i] );
     }
 
@@ -1336,10 +1336,10 @@ static DWORD simd_fault_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_R
                 "exception code: %#lx, should be %#lx\n",
                 rec->ExceptionCode,  STATUS_FLOAT_MULTIPLE_TRAPS);
             ok( rec->NumberParameters == is_wow64 ? 2 : 1, "# of params: %li\n", rec->NumberParameters);
-            ok( rec->ExceptionInformation[0] == 0, "param #1: %lx, should be 0\n", rec->ExceptionInformation[0]);
+            ok( rec->ExceptionInformation[0] == 0, "param #1: %Ix, should be 0\n", rec->ExceptionInformation[0]);
             if (rec->NumberParameters == 2)
                 ok( rec->ExceptionInformation[1] == ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr,
-                    "param #1: %lx / %lx\n", rec->ExceptionInformation[1],
+                    "param #1: %Ix / %lx\n", rec->ExceptionInformation[1],
                     ((XSAVE_FORMAT *)context->ExtendedRegisters)->MxCsr);
         }
         context->Eip += 3; /* skip divps */
@@ -8187,14 +8187,14 @@ static LONG CALLBACK debug_service_handler(EXCEPTION_POINTERS *ExceptionInfo)
     ok(rec->NumberParameters == (is_wow64 ? 1 : 3),
        "ExceptionParameters is %ld instead of %d\n", rec->NumberParameters, is_wow64 ? 1 : 3);
     ok(rec->ExceptionInformation[0] == ExceptionInfo->ContextRecord->Eax,
-       "expected ExceptionInformation[0] = %lx, got %lx\n",
+       "expected ExceptionInformation[0] = %lx, got %Ix\n",
        ExceptionInfo->ContextRecord->Eax, rec->ExceptionInformation[0]);
     if (!is_wow64)
     {
         ok(rec->ExceptionInformation[1] == 0x11111111,
-           "got ExceptionInformation[1] = %lx\n", rec->ExceptionInformation[1]);
+           "got ExceptionInformation[1] = %Ix\n", rec->ExceptionInformation[1]);
         ok(rec->ExceptionInformation[2] == 0x22222222,
-           "got ExceptionInformation[2] = %lx\n", rec->ExceptionInformation[2]);
+           "got ExceptionInformation[2] = %Ix\n", rec->ExceptionInformation[2]);
     }
 #else
     ok(ExceptionInfo->ContextRecord->Rip == (DWORD_PTR)code_mem + 0x2f,
@@ -8537,7 +8537,7 @@ static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
     ok(rec->NumberParameters == (is_wow64 ? 1 : 3),
        "ExceptionParameters is %ld instead of %d\n", rec->NumberParameters, is_wow64 ? 1 : 3);
     ok(rec->ExceptionInformation[0] == 0,
-       "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
+       "got ExceptionInformation[0] = %Ix\n", rec->ExceptionInformation[0]);
     ExceptionInfo->ContextRecord->Eip = (DWORD)code_mem + 2;
 #elif defined(__x86_64__)
     ok(ExceptionInfo->ContextRecord->Rip == (DWORD_PTR)code_mem + 1,

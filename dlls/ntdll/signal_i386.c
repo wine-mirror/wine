@@ -186,7 +186,7 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
                      rec->ExceptionAddress,
                      (char*)rec->ExceptionInformation[0], (char*)rec->ExceptionInformation[1] );
         else
-            MESSAGE( "wine: Call from %p to unimplemented function %s.%ld, aborting\n",
+            MESSAGE( "wine: Call from %p to unimplemented function %s.%Id, aborting\n",
                      rec->ExceptionAddress,
                      (char*)rec->ExceptionInformation[0], rec->ExceptionInformation[1] );
     }
