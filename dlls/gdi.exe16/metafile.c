@@ -199,7 +199,7 @@ BOOL16 WINAPI EnumMetaFile16( HDC16 hdc16, HMETAFILE16 hmf,
     WORD args[8];
     BOOL16 result = TRUE;
 
-    TRACE("(%p, %04x, %p, %08lx)\n", hdc, hmf, lpEnumFunc, lpData);
+    TRACE("(%p, %04x, %p, %08Ix)\n", hdc, hmf, lpEnumFunc, lpData);
 
     if(!mh) return FALSE;
 
