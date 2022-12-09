@@ -81,7 +81,7 @@ HWND16 WINAPI CreateDialogIndirectParamML16( HINSTANCE16 hinstWnd,
                                              LPCSTR lpDlgName,
                                              HINSTANCE16 hinstLoad )
 {
-    FIXME( "( %04hx, %p, %04hx, %p, %08lx, %hu, %hu, %p, %04hx ): stub\n",
+    FIXME( "( %04hx, %p, %04hx, %p, %08Ix, %hu, %hu, %p, %04hx ): stub\n",
            hinstWnd, lpvDlgTmp, hwndOwner, dlgProc, lParamInit,
            iCodePage, iLang, lpDlgName, hinstLoad );
     return 0;
@@ -100,7 +100,7 @@ HWND16 WINAPI DialogBoxIndirectParamML16( HINSTANCE16 hinstWnd,
                                           LPCSTR lpDlgName,
                                           HINSTANCE16 hinstLoad )
 {
-    FIXME( "( %04hx, %04hx, %04hx, %p, %08lx, %hu, %hu, %p, %04hx ): stub\n",
+    FIXME( "( %04hx, %04hx, %04hx, %p, %08Ix, %hu, %hu, %p, %04hx ): stub\n",
            hinstWnd, hglbDlgTemp, hwndOwner, dlgprc, lParamInit,
            iCodePage, iLang, lpDlgName, hinstLoad );
     return 0;
@@ -267,7 +267,7 @@ INT16 WINAPI MessageBoxEx16( HWND16 hwndParent, LPCSTR lpszText,
 LRESULT WINAPI QueryCodePage16( UINT16 idxLang, UINT16 msg,
                                 WPARAM16 wParam, LPARAM lParam )
 {
-    FIXME( "( %hu, %hu, %04hx, %08lx ): stub\n", idxLang, msg, wParam, lParam );
+    FIXME( "( %hu, %hu, %04hx, %08Ix ): stub\n", idxLang, msg, wParam, lParam );
     return 0;
 }
 

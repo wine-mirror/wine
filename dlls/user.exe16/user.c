@@ -1619,7 +1619,7 @@ UINT16 WINAPI GetMenuState16( HMENU16 hMenu, UINT16 wItemID, UINT16 wFlags )
 LRESULT WINAPI SendDriverMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
                                    LPARAM lParam2)
 {
-    FIXME("(%04x, %04x, %08lx, %08lx): stub\n", hDriver, msg, lParam1, lParam2);
+    FIXME("(%04x, %04x, %08Ix, %08Ix): stub\n", hDriver, msg, lParam1, lParam2);
     return 0;
 }
 
@@ -1629,7 +1629,7 @@ LRESULT WINAPI SendDriverMessage16(HDRVR16 hDriver, UINT16 msg, LPARAM lParam1,
  */
 HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lParam2)
 {
-    FIXME( "(%s, %s, %08lx): stub\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName), lParam2);
+    FIXME( "(%s, %s, %08Ix): stub\n", debugstr_a(lpDriverName), debugstr_a(lpSectionName), lParam2);
     return 0;
 }
 
@@ -1639,7 +1639,7 @@ HDRVR16 WINAPI OpenDriver16(LPCSTR lpDriverName, LPCSTR lpSectionName, LPARAM lP
  */
 LRESULT WINAPI CloseDriver16(HDRVR16 hDrvr, LPARAM lParam1, LPARAM lParam2)
 {
-    FIXME( "(%04x, %08lx, %08lx): stub\n", hDrvr, lParam1, lParam2);
+    FIXME( "(%04x, %08Ix, %08Ix): stub\n", hDrvr, lParam1, lParam2);
     return FALSE;
 }
 
@@ -1660,7 +1660,7 @@ HMODULE16 WINAPI GetDriverModuleHandle16(HDRVR16 hDrvr)
 LRESULT WINAPI DefDriverProc16(DWORD dwDevID, HDRVR16 hDriv, UINT16 wMsg,
                                LPARAM lParam1, LPARAM lParam2)
 {
-    FIXME( "devID=0x%08lx hDrv=0x%04x wMsg=%04x lP1=0x%08lx lP2=0x%08lx: stub\n",
+    FIXME( "devID=0x%08lx hDrv=0x%04x wMsg=%04x lP1=0x%08Ix lP2=0x%08Ix: stub\n",
 	  dwDevID, hDriv, wMsg, lParam1, lParam2);
     return 0;
 }
