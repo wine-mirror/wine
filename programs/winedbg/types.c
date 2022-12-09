@@ -820,7 +820,8 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details, const WCHAR* va
     }
     if (varname && !printed) dbg_printf(" %ls", varname);
 
-    HeapFree(GetProcessHeap(), 0, ptr);
+    if (name == ptr)
+        HeapFree(GetProcessHeap(), 0, ptr);
     return TRUE;
 }
 
