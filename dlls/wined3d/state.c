@@ -2193,7 +2193,7 @@ static void state_swvp(struct wined3d_context *context, const struct wined3d_sta
     }
 }
 
-static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* operand) {
+static void get_src_and_opr(uint32_t arg, BOOL is_alpha, GLenum* source, GLenum* operand) {
     /* The WINED3DTA_ALPHAREPLICATE flag specifies the alpha component of the
     * input should be used for all input components. The WINED3DTA_COMPLEMENT
     * flag specifies the complement of the input should be used. */
@@ -2233,7 +2233,7 @@ static void get_src_and_opr(DWORD arg, BOOL is_alpha, GLenum* source, GLenum* op
 
 /* Setup the texture operations texture stage states */
 static void set_tex_op(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
-        BOOL isAlpha, int Stage, enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3)
+        BOOL isAlpha, int Stage, enum wined3d_texture_op op, uint32_t arg1, uint32_t arg2, uint32_t arg3)
 {
     GLenum src1, src2, src3;
     GLenum opr1, opr2, opr3;
@@ -5633,7 +5633,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {206, 209},
         {  0,   0},
     };
-    static const DWORD simple_states[] =
+    static const unsigned int simple_states[] =
     {
         STATE_MATERIAL,
         STATE_VDECL,
@@ -5693,7 +5693,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
 
     for (i = 0; i < STATE_HIGHEST + 1; ++i)
     {
-        DWORD rep = state_table[i].representative;
+        unsigned int rep = state_table[i].representative;
         if (rep)
         {
             if (state_table[rep].representative != rep)

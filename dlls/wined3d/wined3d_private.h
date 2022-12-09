@@ -2808,7 +2808,7 @@ struct wined3d_state_entry
 
 struct wined3d_state_entry_template
 {
-    DWORD state;
+    unsigned int state;
     struct wined3d_state_entry content;
     unsigned int extension;
 };
