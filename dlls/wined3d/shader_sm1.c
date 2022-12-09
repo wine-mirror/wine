@@ -398,7 +398,7 @@ static const enum wined3d_shader_resource_type resource_type_table[] =
  * and possibly a relative addressing token.
  * Return the number of tokens read */
 static unsigned int shader_get_param(const struct wined3d_sm1_data *priv, const DWORD *ptr,
-        DWORD *token, DWORD *addr_token)
+        unsigned int *token, unsigned int *addr_token)
 {
     unsigned int count = 1;
 
@@ -427,7 +427,7 @@ static unsigned int shader_get_param(const struct wined3d_sm1_data *priv, const 
     return count;
 }
 
-static const struct wined3d_sm1_opcode_info *shader_get_opcode(const struct wined3d_sm1_data *priv, DWORD token)
+static const struct wined3d_sm1_opcode_info *shader_get_opcode(const struct wined3d_sm1_data *priv, unsigned int token)
 {
     unsigned int shader_version = WINED3D_SHADER_VERSION(priv->shader_version.major, priv->shader_version.minor);
     const struct wined3d_sm1_opcode_info *opcode_table = priv->opcode_table;
@@ -503,7 +503,7 @@ static unsigned int shader_skip_unrecognized(const struct wined3d_sm1_data *priv
     /* TODO: Think of a good name for 0x80000000 and replace it with a constant */
     while (*ptr & 0x80000000)
     {
-        DWORD token, addr_token = 0;
+        unsigned int token, addr_token = 0;
         struct wined3d_shader_src_param rel_addr;
 
         tokens_read += shader_get_param(priv, ptr, &token, &addr_token);
@@ -594,7 +594,7 @@ static void shader_sm1_read_header(void *data, const DWORD **ptr, struct wined3d
 static void shader_sm1_read_src_param(struct wined3d_sm1_data *priv, const DWORD **ptr,
         struct wined3d_shader_src_param *src_param, struct wined3d_shader_src_param *src_rel_addr)
 {
-    DWORD token, addr_token;
+    unsigned int token, addr_token;
 
     *ptr += shader_get_param(priv, *ptr, &token, &addr_token);
     if (token & WINED3D_SM1_ADDRESS_MODE_RELATIVE)
@@ -611,7 +611,7 @@ static void shader_sm1_read_src_param(struct wined3d_sm1_data *priv, const DWORD
 static void shader_sm1_read_dst_param(struct wined3d_sm1_data *priv, const DWORD **ptr,
         struct wined3d_shader_dst_param *dst_param, struct wined3d_shader_src_param *dst_rel_addr)
 {
-    DWORD token, addr_token;
+    unsigned int token, addr_token;
 
     *ptr += shader_get_param(priv, *ptr, &token, &addr_token);
     if (token & WINED3D_SM1_ADDRESS_MODE_RELATIVE)
@@ -724,7 +724,7 @@ static void shader_sm1_read_instruction(void *data, const DWORD **ptr, struct wi
 {
     const struct wined3d_sm1_opcode_info *opcode_info;
     struct wined3d_sm1_data *priv = data;
-    DWORD opcode_token;
+    unsigned int opcode_token;
     unsigned int i;
     const DWORD *p;
 
