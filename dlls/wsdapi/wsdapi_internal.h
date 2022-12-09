@@ -95,8 +95,8 @@ HRESULT read_message(IWSDiscoveryPublisherImpl *impl, const char *xml, int xml_l
 
 /* xml.c */
 
-LPWSTR duplicate_string(void *parentMemoryBlock, LPCWSTR value);
-WSDXML_NAME *duplicate_name(void *parentMemoryBlock, WSDXML_NAME *name);
+WCHAR *duplicate_string(void *parent_memory_block, const WCHAR *value) __WINE_MALLOC;
+WSDXML_NAME *duplicate_name(void *parent_memory_block, WSDXML_NAME *name) __WINE_MALLOC;
 WSDXML_NAMESPACE *xml_context_find_namespace_by_prefix(IWSDXMLContext *context, LPCWSTR prefix);
 
 #endif
