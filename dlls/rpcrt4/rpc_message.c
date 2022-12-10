@@ -106,21 +106,21 @@ static BOOL packet_does_auth_negotiation(const RpcPktHdr *Header)
     }
 }
 
-static VOID RPCRT4_BuildCommonHeader(RpcPktHdr *Header, unsigned char PacketType,
+static VOID RPCRT4_BuildCommonHeader(RpcPktCommonHdr *Header, unsigned char PacketType,
                                      ULONG DataRepresentation)
 {
-  Header->common.rpc_ver = RPC_VER_MAJOR;
-  Header->common.rpc_ver_minor = RPC_VER_MINOR;
-  Header->common.ptype = PacketType;
-  Header->common.drep[0] = LOBYTE(LOWORD(DataRepresentation));
-  Header->common.drep[1] = HIBYTE(LOWORD(DataRepresentation));
-  Header->common.drep[2] = LOBYTE(HIWORD(DataRepresentation));
-  Header->common.drep[3] = HIBYTE(HIWORD(DataRepresentation));
-  Header->common.auth_len = 0;
-  Header->common.call_id = 1;
-  Header->common.flags = 0;
+  Header->rpc_ver = RPC_VER_MAJOR;
+  Header->rpc_ver_minor = RPC_VER_MINOR;
+  Header->ptype = PacketType;
+  Header->drep[0] = LOBYTE(LOWORD(DataRepresentation));
+  Header->drep[1] = HIBYTE(LOWORD(DataRepresentation));
+  Header->drep[2] = LOBYTE(HIWORD(DataRepresentation));
+  Header->drep[3] = HIBYTE(HIWORD(DataRepresentation));
+  Header->auth_len = 0;
+  Header->call_id = 1;
+  Header->flags = 0;
   /* Flags and fragment length are computed in RPCRT4_Send. */
-}                              
+}
 
 static RpcPktHdr *RPCRT4_BuildRequestHeader(ULONG DataRepresentation,
                                      ULONG BufferLength,
@@ -137,7 +137,7 @@ static RpcPktHdr *RPCRT4_BuildRequestHeader(ULONG DataRepresentation,
     return NULL;
   }
 
-  RPCRT4_BuildCommonHeader(header, PKT_REQUEST, DataRepresentation);
+  RPCRT4_BuildCommonHeader(&header->common, PKT_REQUEST, DataRepresentation);
   header->common.frag_len = sizeof(header->request);
   header->request.alloc_hint = BufferLength;
   header->request.context_id = 0;
@@ -160,7 +160,7 @@ RpcPktHdr *RPCRT4_BuildResponseHeader(ULONG DataRepresentation, ULONG BufferLeng
     return NULL;
   }
 
-  RPCRT4_BuildCommonHeader(header, PKT_RESPONSE, DataRepresentation);
+  RPCRT4_BuildCommonHeader(&header->common, PKT_RESPONSE, DataRepresentation);
   header->common.frag_len = sizeof(header->response);
   header->response.alloc_hint = BufferLength;
 
@@ -176,7 +176,7 @@ RpcPktHdr *RPCRT4_BuildFaultHeader(ULONG DataRepresentation, RPC_STATUS Status)
     return NULL;
   }
 
-  RPCRT4_BuildCommonHeader(header, PKT_FAULT, DataRepresentation);
+  RPCRT4_BuildCommonHeader(&header->common, PKT_FAULT, DataRepresentation);
   header->common.frag_len = sizeof(header->fault);
   header->fault.status = Status;
 
@@ -199,7 +199,7 @@ RpcPktHdr *RPCRT4_BuildBindHeader(ULONG DataRepresentation,
   }
   ctxt_elem = (RpcContextElement *)(&header->bind + 1);
 
-  RPCRT4_BuildCommonHeader(header, PKT_BIND, DataRepresentation);
+  RPCRT4_BuildCommonHeader(&header->common, PKT_BIND, DataRepresentation);
   header->common.frag_len = sizeof(header->bind) + FIELD_OFFSET(RpcContextElement, transfer_syntaxes[1]);
   header->bind.max_tsize = MaxTransmissionSize;
   header->bind.max_rsize = MaxReceiveSize;
@@ -220,7 +220,7 @@ static RpcPktHdr *RPCRT4_BuildAuthHeader(ULONG DataRepresentation)
   if (header == NULL)
     return NULL;
 
-  RPCRT4_BuildCommonHeader(header, PKT_AUTH3, DataRepresentation);
+  RPCRT4_BuildCommonHeader(&header->common, PKT_AUTH3, DataRepresentation);
   header->common.frag_len = sizeof(header->auth3);
 
   return header;
@@ -238,7 +238,7 @@ RpcPktHdr *RPCRT4_BuildBindNackHeader(ULONG DataRepresentation,
     return NULL;
   }
 
-  RPCRT4_BuildCommonHeader(header, PKT_BIND_NACK, DataRepresentation);
+  RPCRT4_BuildCommonHeader(&header->common, PKT_BIND_NACK, DataRepresentation);
   header->common.frag_len = FIELD_OFFSET(RpcPktHdr, bind_nack.protocols[1]);
   header->bind_nack.reject_reason = RejectReason;
   header->bind_nack.protocols_count = 1;
@@ -270,7 +270,7 @@ RpcPktHdr *RPCRT4_BuildBindAckHeader(ULONG DataRepresentation,
     return NULL;
   }
 
-  RPCRT4_BuildCommonHeader(header, PKT_BIND_ACK, DataRepresentation);
+  RPCRT4_BuildCommonHeader(&header->common, PKT_BIND_ACK, DataRepresentation);
   header->common.frag_len = header_size;
   header->bind_ack.max_tsize = MaxTransmissionSize;
   header->bind_ack.max_rsize = MaxReceiveSize;
@@ -299,7 +299,7 @@ RpcPktHdr *RPCRT4_BuildHttpHeader(ULONG DataRepresentation,
     return NULL;
   }
 
-  RPCRT4_BuildCommonHeader(header, PKT_HTTP, DataRepresentation);
+  RPCRT4_BuildCommonHeader(&header->common, PKT_HTTP, DataRepresentation);
   /* since the packet isn't current sent using RPCRT4_Send, set the flags
    * manually here */
   header->common.flags = RPC_FLG_FIRST|RPC_FLG_LAST;
