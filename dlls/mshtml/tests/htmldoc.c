@@ -8358,6 +8358,121 @@ static void test_MHTMLDocument(void)
     release_document(doc);
 }
 
+static LONG get_document_elements_count(IHTMLDocument2 *doc)
+{
+    LONG elements_count;
+    IHTMLElementCollection *elements = NULL;
+
+    IHTMLDocument2_get_all(doc, &elements);
+    IHTMLElementCollection_get_length(elements, &elements_count);
+
+    IHTMLElementCollection_Release(elements);
+    return elements_count;
+}
+
+static void test_MarkupContainer(IMarkupServices *markup_services)
+{
+    IHTMLDOMNode *doc_node;
+    IHTMLDocument2 *markup_container_doc;
+    ITargetContainer *target_container_doc;
+    IInternetSecurityManager *sec_manager;
+    IMarkupContainer *container = NULL;
+    ICustomDoc *custom_doc;
+    IHTMLLocation *location = NULL;
+    IHTMLElement *body = NULL;
+    LONG elements_count;
+    HRESULT hres;
+
+    hres = IMarkupServices_CreateMarkupContainer(markup_services, &container);
+    todo_wine ok(hres == S_OK, "got 0x%08lx\n", hres);
+    todo_wine ok(container != NULL, "MarkupContainer is null.\n");
+    if (!container) return;
+
+    hres = IMarkupContainer_QueryInterface(container, &IID_IHTMLDocument2, (void**)&markup_container_doc);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
+
+    hres = IHTMLDocument2_get_location(markup_container_doc, &location);
+    ok(hres == E_UNEXPECTED, "expected E_UNEXPECTED, got 0x%08lx\n", hres);
+    ok(location == NULL, "expected null location\n");
+
+    hres = IHTMLDocument2_get_body(markup_container_doc, &body);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
+    ok(body == NULL, "expected null body\n");
+
+    elements_count = get_document_elements_count(markup_container_doc);
+    ok(elements_count == 0, "expected document to not have elements\n");
+
+    hres = IMarkupContainer_QueryInterface(container, &IID_IHTMLDOMNode, (void**)&doc_node);
+    todo_wine ok(hres == E_NOINTERFACE, "expected to fail with E_NOINTERFACE got 0x%08lx\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(markup_container_doc, &IID_IInternetSecurityManager, (void**)&sec_manager);
+    ok(hres == E_NOINTERFACE, "expected to fail with E_NOINTERFACE got 0x%08lx\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(markup_container_doc, &IID_ITargetContainer, (void**)&target_container_doc);
+    ok(hres == E_NOINTERFACE, "expected to fail with E_NOINTERFACE got 0x%08lx\n", hres);
+
+    hres = IHTMLDocument2_QueryInterface(markup_container_doc, &IID_ICustomDoc, (void**)&custom_doc);
+    ok(hres == E_NOINTERFACE, "expected to fail with E_NOINTERFACE got 0x%08lx\n", hres);
+
+    IHTMLDocument2_Release(markup_container_doc);
+    IMarkupContainer_Release(container);
+}
+
+static void test_MarkupServices_ParseString(IMarkupServices *markup_services, IHTMLDocument2 *doc)
+{
+    HRESULT hres;
+    LONG document_elements_count, markup_container_elements_count;
+    IHTMLElement *body;
+    BSTR inner_text;
+    IHTMLDocument2 *markup_container_doc = NULL;
+    IMarkupContainer *markup_container = NULL;
+
+    hres = IMarkupServices_ParseString(markup_services, (OLECHAR*)L"<div>Hello World</div>", 0, &markup_container, NULL, NULL);
+    todo_wine ok(hres == S_OK, "got 0x%08lx\n", hres);
+    todo_wine ok(markup_container != NULL, "MarkupContainer is null.\n");
+    if (!markup_container) return;
+
+    hres = IMarkupContainer_QueryInterface(markup_container, &IID_IHTMLDocument2, (void**)&markup_container_doc);
+    ok(hres == S_OK, "failed to query interface of MarkupContainer 0x%08lx\n", hres);
+
+    markup_container_elements_count = get_document_elements_count(markup_container_doc);
+    ok(markup_container_elements_count == 5, "expected markup container to have 5 elements but got %ld\n",
+                 markup_container_elements_count);
+
+    document_elements_count = get_document_elements_count(doc);
+    ok(document_elements_count != markup_container_elements_count,
+                 "expected document to not have the same elements count of the markup container %ld == %ld\n",
+                 document_elements_count, markup_container_elements_count);
+
+    hres = IHTMLDocument2_get_body(markup_container_doc, &body);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
+    ok(body != NULL, "got null body\n");
+
+    hres = IHTMLElement_get_innerText(body, &inner_text);
+    ok(hres == S_OK, "failed to get inner text error 0x%08lx\n", hres);
+    ok(inner_text != NULL, "got a null pointer for inner text\n");
+    ok(!wcscmp(inner_text, L"Hello World"), "strings don't match, got %ls\n", inner_text);
+
+    SysFreeString(inner_text);
+    IHTMLElement_Release(body);
+    IHTMLDocument2_Release(markup_container_doc);
+    IMarkupContainer_Release(markup_container);
+}
+
+static void test_MarkupServices(IHTMLDocument2 *doc)
+{
+    HRESULT hres;
+    IMarkupServices *markup_services = NULL;
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IMarkupServices, (void**)&markup_services);
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
+
+    test_MarkupContainer(markup_services);
+    test_MarkupServices_ParseString(markup_services, doc);
+
+    IMarkupServices_Release(markup_services);
+}
+
 static void test_HTMLDocument_hlink(DWORD status)
 {
     IHTMLDocument2 *doc;
@@ -8524,6 +8639,7 @@ static void test_HTMLDocument_http(BOOL with_wbapp)
     test_travellog(doc);
     test_binding_ui((IUnknown*)doc);
     test_doc_domain(doc);
+    test_MarkupServices(doc);
 
     nav_url = nav_serv_url = L"http://test.winehq.org/tests/winehq_snapshot/"; /* for valid prev nav_url */
     if(support_wbapp) {
