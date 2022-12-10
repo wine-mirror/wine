@@ -1419,6 +1419,35 @@ static void test_InitPropVariantFromCLSID(void)
     PropVariantClear(&propvar);
 }
 
+static void test_InitPropVariantFromStringVector(void)
+{
+    static const WCHAR *strs[2] = { L"abc", L"def" };
+    PROPVARIANT propvar;
+    HRESULT hr;
+
+    memset(&propvar, 0, sizeof(propvar));
+    propvar.vt = VT_I4;
+    propvar.lVal = 15;
+
+    hr = InitPropVariantFromStringVector(NULL, 0, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == (VT_LPWSTR|VT_VECTOR), "Unexpected type %#x.\n", propvar.vt);
+    ok(!propvar.calpwstr.cElems, "Unexpected number of elements.\n");
+    ok(!!propvar.calpwstr.pElems, "Unexpected vector pointer.\n");
+    PropVariantClear(&propvar);
+
+    hr = InitPropVariantFromStringVector(strs, 2, &propvar);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(propvar.vt == (VT_LPWSTR|VT_VECTOR), "Unexpected type %#x.\n", propvar.vt);
+    ok(propvar.calpwstr.cElems == 2, "Unexpected number of elements.\n");
+    ok(!!propvar.calpwstr.pElems, "Unexpected vector pointer.\n");
+    ok(propvar.calpwstr.pElems[0] != strs[0], "Unexpected string pointer.\n");
+    ok(!wcscmp(propvar.calpwstr.pElems[0], strs[0]), "Unexpected string %s.\n", debugstr_w(propvar.calpwstr.pElems[0]));
+    ok(propvar.calpwstr.pElems[1] != strs[1], "Unexpected string pointer.\n");
+    ok(!wcscmp(propvar.calpwstr.pElems[1], strs[1]), "Unexpected string %s.\n", debugstr_w(propvar.calpwstr.pElems[1]));
+    PropVariantClear(&propvar);
+}
+
 static void test_PropVariantToDouble(void)
 {
     PROPVARIANT propvar;
@@ -2252,11 +2281,15 @@ static void test_VariantToStringWithDefault(void)
 
 START_TEST(propsys)
 {
+    test_InitPropVariantFromGUIDAsString();
+    test_InitPropVariantFromBuffer();
+    test_InitPropVariantFromCLSID();
+    test_InitPropVariantFromStringVector();
+    test_InitVariantFromFileTime();
+
     test_PSStringFromPropertyKey();
     test_PSPropertyKeyFromString();
     test_PSRefreshPropertySchema();
-    test_InitPropVariantFromGUIDAsString();
-    test_InitPropVariantFromBuffer();
     test_PropVariantToGUID();
     test_PropVariantToStringAlloc();
     test_PropVariantCompareEx();
@@ -2264,7 +2297,6 @@ START_TEST(propsys)
     test_PropVariantChangeType_LPWSTR();
     test_PropVariantToBoolean();
     test_PropVariantToStringWithDefault();
-    test_InitPropVariantFromCLSID();
     test_PropVariantToDouble();
     test_PropVariantToString();
     test_PropVariantToBuffer();
@@ -2273,6 +2305,5 @@ START_TEST(propsys)
     test_PSCreateMemoryPropertyStore();
     test_propertystore();
     test_PSCreatePropertyStoreFromObject();
-    test_InitVariantFromFileTime();
     test_VariantToStringWithDefault();
 }

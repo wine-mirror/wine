@@ -657,6 +657,38 @@ HRESULT WINAPI InitPropVariantFromCLSID(REFCLSID clsid, PROPVARIANT *ppropvar)
     return S_OK;
 }
 
+HRESULT WINAPI InitPropVariantFromStringVector(PCWSTR *strs, ULONG count, PROPVARIANT *ppropvar)
+{
+    unsigned int i;
+
+    TRACE("(%p %lu %p)\n", strs, count, ppropvar);
+
+    ppropvar->calpwstr.pElems = CoTaskMemAlloc(count * sizeof(*ppropvar->calpwstr.pElems));
+    if(!ppropvar->calpwstr.pElems)
+        return E_OUTOFMEMORY;
+
+    ppropvar->vt = VT_LPWSTR | VT_VECTOR;
+    ppropvar->calpwstr.cElems = 0;
+    if (count)
+        memset(ppropvar->calpwstr.pElems, 0, count * sizeof(*ppropvar->calpwstr.pElems));
+
+    for (i = 0; i < count; ++i)
+    {
+        if (strs[i])
+        {
+            if (!(ppropvar->calpwstr.pElems[i] = CoTaskMemAlloc((wcslen(strs[i]) + 1)*sizeof(**strs))))
+            {
+                PropVariantClear(ppropvar);
+                return E_OUTOFMEMORY;
+            }
+        }
+        wcscpy(ppropvar->calpwstr.pElems[i], strs[i]);
+        ppropvar->calpwstr.cElems++;
+    }
+
+    return S_OK;
+}
+
 HRESULT WINAPI InitVariantFromBuffer(const VOID *pv, UINT cb, VARIANT *pvar)
 {
     SAFEARRAY *arr;

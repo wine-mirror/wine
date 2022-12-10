@@ -81,6 +81,7 @@ HRESULT WINAPI VariantToGUID(const VARIANT *pvar, GUID *guid);
 INT WINAPI PropVariantCompareEx(REFPROPVARIANT propvar1, REFPROPVARIANT propvar2,
                                 PROPVAR_COMPARE_UNIT uint, PROPVAR_COMPARE_FLAGS flags);
 HRESULT WINAPI InitPropVariantFromFileTime(const FILETIME *pftIn, PROPVARIANT *ppropvar);
+HRESULT WINAPI InitPropVariantFromStringVector(PCWSTR *strs, ULONG count, PROPVARIANT *ppropvar);
 
 HRESULT WINAPI PropVariantToDouble(REFPROPVARIANT propvarIn, double *ret);
 HRESULT WINAPI PropVariantToInt16(REFPROPVARIANT propvarIn, SHORT *ret);
