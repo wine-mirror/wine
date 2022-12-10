@@ -929,13 +929,15 @@ static void test_EnumForms(LPSTR pName)
 
         SetLastError(0xdeadbeef);
         res = EnumFormsA(hprinter, level, buffer, cbBuf, NULL, &pcReturned);
-        ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER) ,
+        ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER ||
+                    GetLastError() == ERROR_INVALID_PARAMETER),
             "(%ld) returned %ld with %ld (expected '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
         SetLastError(0xdeadbeef);
         res = EnumFormsA(hprinter, level, buffer, cbBuf, &pcbNeeded, NULL);
-        ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER) ,
+        ok( !res && (GetLastError() == RPC_X_NULL_REF_POINTER ||
+                    GetLastError() == ERROR_INVALID_PARAMETER),
             "(%ld) returned %ld with %ld (expected '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
@@ -1043,7 +1045,8 @@ static void test_EnumMonitors(void)
         pcbNeeded = MAGIC_DEAD;
         pcReturned = MAGIC_DEAD;
         res = EnumMonitorsA(NULL, level, buffer, cbBuf, NULL, &pcReturned);
-        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER,
+        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER ||
+                GetLastError() == ERROR_INVALID_PARAMETER,
             "(%ld) returned %ld with %ld (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
@@ -1051,7 +1054,8 @@ static void test_EnumMonitors(void)
         pcReturned = MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = EnumMonitorsA(NULL, level, buffer, cbBuf, &pcbNeeded, NULL);
-        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER,
+        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER ||
+                GetLastError() == ERROR_INVALID_PARAMETER,
             "(%ld) returned %ld with %ld (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
@@ -1137,7 +1141,8 @@ static void test_EnumPorts(void)
         SetLastError(0xdeadbeef);
         res = EnumPortsA(NULL, level, buffer, cbBuf, NULL, &pcReturned);
         /* NT: RPC_X_NULL_REF_POINTER (1780),  9x: success */
-        ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER) ) ||
+        ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER ||
+                        GetLastError() == ERROR_INVALID_PARAMETER)) ||
             ( res && (GetLastError() == ERROR_SUCCESS) ),
             "(%ld) returned %ld with %ld (expected '0' with "
             "RPC_X_NULL_REF_POINTER or '!=0' with NO_ERROR)\n",
@@ -1147,7 +1152,8 @@ static void test_EnumPorts(void)
         SetLastError(0xdeadbeef);
         res = EnumPortsA(NULL, level, buffer, cbBuf, &pcbNeeded, NULL);
         /* NT: RPC_X_NULL_REF_POINTER (1780),  9x: success */
-        ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER) ) ||
+        ok( (!res && (GetLastError() == RPC_X_NULL_REF_POINTER ||
+                        GetLastError() == ERROR_INVALID_PARAMETER)) ||
             ( res && (GetLastError() == ERROR_SUCCESS) ),
             "(%ld) returned %ld with %ld (expected '0' with "
             "RPC_X_NULL_REF_POINTER or '!=0' with NO_ERROR)\n",
@@ -1261,7 +1267,8 @@ static void test_EnumPrinterDrivers(void)
         pcbNeeded = 0xdeadbeef;
         pcReturned = 0xdeadbeef;
         res = EnumPrinterDriversA(NULL, NULL, level, buffer, cbBuf, NULL, &pcReturned);
-        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER,
+        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER ||
+                GetLastError() == ERROR_INVALID_PARAMETER,
             "(%lu) got %lu with %lu (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
@@ -1269,7 +1276,8 @@ static void test_EnumPrinterDrivers(void)
         pcReturned = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = EnumPrinterDriversA(NULL, NULL, level, buffer, cbBuf, &pcbNeeded, NULL);
-        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER,
+        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER ||
+                GetLastError() == ERROR_INVALID_PARAMETER,
             "(%lu) got %lu with %lu (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
@@ -1410,7 +1418,8 @@ static void test_EnumPrintProcessors(void)
     pcReturned = 0xdeadbeef;
     res = EnumPrintProcessorsA(NULL, NULL, 1, buffer, cbBuf, NULL, &pcReturned);
     /* the NULL is ignored on win9x */
-    ok( broken(res) || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)),
+    ok( broken(res) || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER ||
+                    GetLastError() == ERROR_INVALID_PARAMETER)),
         "got %lu with %lu (expected '0' with RPC_X_NULL_REF_POINTER)\n",
         res, GetLastError());
 
@@ -1419,7 +1428,8 @@ static void test_EnumPrintProcessors(void)
     SetLastError(0xdeadbeef);
     res = EnumPrintProcessorsA(NULL, NULL, 1, buffer, cbBuf, &pcbNeeded, NULL);
     /* the NULL is ignored on win9x */
-    ok( broken(res) || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)),
+    ok( broken(res) || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER ||
+                    GetLastError() == ERROR_INVALID_PARAMETER)),
         "got %lu with %lu (expected '0' with RPC_X_NULL_REF_POINTER)\n",
         res, GetLastError());
 
