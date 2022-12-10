@@ -153,34 +153,34 @@ static RpcPktHdr *RPCRT4_BuildRequestHeader(ULONG DataRepresentation,
 
 RpcPktHdr *RPCRT4_BuildResponseHeader(ULONG DataRepresentation, ULONG BufferLength)
 {
-  RpcPktHdr *header;
+  RpcPktResponseHdr *header;
 
-  header = calloc(1, sizeof(header->response));
+  header = calloc(1, sizeof(*header));
   if (header == NULL) {
     return NULL;
   }
 
   RPCRT4_BuildCommonHeader(&header->common, PKT_RESPONSE, DataRepresentation);
-  header->common.frag_len = sizeof(header->response);
-  header->response.alloc_hint = BufferLength;
+  header->common.frag_len = sizeof(*header);
+  header->alloc_hint = BufferLength;
 
-  return header;
+  return (RpcPktHdr *)header;
 }
 
 RpcPktHdr *RPCRT4_BuildFaultHeader(ULONG DataRepresentation, RPC_STATUS Status)
 {
-  RpcPktHdr *header;
+  RpcPktFaultHdr *header;
 
-  header = calloc(1, sizeof(header->fault));
+  header = calloc(1, sizeof(*header));
   if (header == NULL) {
     return NULL;
   }
 
   RPCRT4_BuildCommonHeader(&header->common, PKT_FAULT, DataRepresentation);
-  header->common.frag_len = sizeof(header->fault);
-  header->fault.status = Status;
+  header->common.frag_len = sizeof(*header);
+  header->status = Status;
 
-  return header;
+  return (RpcPktHdr *)header;
 }
 
 RpcPktHdr *RPCRT4_BuildBindHeader(ULONG DataRepresentation,
@@ -214,16 +214,16 @@ RpcPktHdr *RPCRT4_BuildBindHeader(ULONG DataRepresentation,
 
 static RpcPktHdr *RPCRT4_BuildAuthHeader(ULONG DataRepresentation)
 {
-  RpcPktHdr *header;
+  RpcPktAuth3Hdr *header;
 
-  header = calloc(1, sizeof(header->auth3));
+  header = calloc(1, sizeof(*header));
   if (header == NULL)
     return NULL;
 
   RPCRT4_BuildCommonHeader(&header->common, PKT_AUTH3, DataRepresentation);
-  header->common.frag_len = sizeof(header->auth3);
+  header->common.frag_len = sizeof(*header);
 
-  return header;
+  return (RpcPktHdr*)header;
 }
 
 RpcPktHdr *RPCRT4_BuildBindNackHeader(ULONG DataRepresentation,
@@ -231,21 +231,22 @@ RpcPktHdr *RPCRT4_BuildBindNackHeader(ULONG DataRepresentation,
                                       unsigned char RpcVersionMinor,
                                       unsigned short RejectReason)
 {
-  RpcPktHdr *header;
+  RpcPktBindNAckHdr *header;
+  C_ASSERT(sizeof(*header) >= FIELD_OFFSET(RpcPktBindNAckHdr, protocols[1]));
 
-  header = calloc(1, FIELD_OFFSET(RpcPktHdr, bind_nack.protocols[1]));
+  header = calloc(1, sizeof(*header));
   if (header == NULL) {
     return NULL;
   }
 
   RPCRT4_BuildCommonHeader(&header->common, PKT_BIND_NACK, DataRepresentation);
-  header->common.frag_len = FIELD_OFFSET(RpcPktHdr, bind_nack.protocols[1]);
-  header->bind_nack.reject_reason = RejectReason;
-  header->bind_nack.protocols_count = 1;
-  header->bind_nack.protocols[0].rpc_ver = RpcVersion;
-  header->bind_nack.protocols[0].rpc_ver_minor = RpcVersionMinor;
+  header->common.frag_len = FIELD_OFFSET(RpcPktBindNAckHdr, protocols[1]);
+  header->reject_reason = RejectReason;
+  header->protocols_count = 1;
+  header->protocols[0].rpc_ver = RpcVersion;
+  header->protocols[0].rpc_ver_minor = RpcVersionMinor;
 
-  return header;
+  return (RpcPktHdr *)header;
 }
 
 RpcPktHdr *RPCRT4_BuildBindAckHeader(ULONG DataRepresentation,
