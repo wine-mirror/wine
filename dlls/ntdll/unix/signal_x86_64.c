@@ -2913,14 +2913,6 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movq %r8,%rdi\n\t"             /* args */
                    "callq *(%r10,%rdx,8)\n\t"
                    "movq %rsp,%rcx\n"
-                   "testl $0xffff,0x94(%rcx)\n\t"  /* frame->restore_flags */
-                   "jnz .L__wine_syscall_dispatcher_return\n\t"
-#ifdef __linux__
-                   "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
-                   "jz 1f\n\t"
-                   "movw 0x7e(%rcx),%fs\n"
-                   "1:\n\t"
-#endif
                    "movdqa 0x1c0(%rcx),%xmm6\n\t"
                    "movdqa 0x1d0(%rcx),%xmm7\n\t"
                    "movdqa 0x1e0(%rcx),%xmm8\n\t"
@@ -2931,6 +2923,14 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movdqa 0x230(%rcx),%xmm13\n\t"
                    "movdqa 0x240(%rcx),%xmm14\n\t"
                    "movdqa 0x250(%rcx),%xmm15\n\t"
+                   "testl $0xffff,0x94(%rcx)\n\t"  /* frame->restore_flags */
+                   "jnz .L__wine_syscall_dispatcher_return\n\t"
+#ifdef __linux__
+                   "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
+                   "jz 1f\n\t"
+                   "movw 0x7e(%rcx),%fs\n"
+                   "1:\n\t"
+#endif
                    "movq 0x60(%rcx),%r14\n\t"
                    __ASM_CFI(".cfi_same_value r14\n\t")
                    "movq 0x28(%rcx),%rdi\n\t"
