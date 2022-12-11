@@ -109,6 +109,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_BLEND_STATE,
     WINED3D_CS_OP_SET_DEPTH_STENCIL_STATE,
     WINED3D_CS_OP_SET_RASTERIZER_STATE,
+    WINED3D_CS_OP_SET_DEPTH_BOUNDS,
     WINED3D_CS_OP_SET_RENDER_STATE,
     WINED3D_CS_OP_SET_TEXTURE_STATE,
     WINED3D_CS_OP_SET_SAMPLER_STATE,
@@ -338,6 +339,13 @@ struct wined3d_cs_set_rasterizer_state
 {
     enum wined3d_cs_op opcode;
     struct wined3d_rasterizer_state *state;
+};
+
+struct wined3d_cs_set_depth_bounds
+{
+    enum wined3d_cs_op opcode;
+    bool enable;
+    float min_depth, max_depth;
 };
 
 struct wined3d_cs_set_render_state
@@ -592,6 +600,7 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_BLEND_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_DEPTH_STENCIL_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_RASTERIZER_STATE);
+        WINED3D_TO_STR(WINED3D_CS_OP_SET_DEPTH_BOUNDS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_RENDER_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TEXTURE_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_SAMPLER_STATE);
@@ -1750,6 +1759,30 @@ void wined3d_device_context_emit_set_rasterizer_state(struct wined3d_device_cont
     wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
 }
 
+static void wined3d_cs_exec_set_depth_bounds(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_set_depth_bounds *op = data;
+
+    cs->state.depth_bounds_enable = op->enable;
+    cs->state.depth_bounds_min = op->min_depth;
+    cs->state.depth_bounds_max = op->max_depth;
+    device_invalidate_state(cs->c.device, STATE_DEPTH_BOUNDS);
+}
+
+void wined3d_device_context_set_depth_bounds(struct wined3d_device_context *context,
+        bool enable, float min_depth, float max_depth)
+{
+    struct wined3d_cs_set_depth_bounds *op;
+
+    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
+    op->opcode = WINED3D_CS_OP_SET_DEPTH_BOUNDS;
+    op->enable = enable;
+    op->min_depth = min_depth;
+    op->max_depth = max_depth;
+
+    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
+}
+
 static void wined3d_cs_exec_set_render_state(struct wined3d_cs *cs, const void *data)
 {
     const struct wined3d_cs_set_render_state *op = data;
@@ -2846,6 +2879,7 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_BLEND_STATE             */ wined3d_cs_exec_set_blend_state,
     /* WINED3D_CS_OP_SET_DEPTH_STENCIL_STATE     */ wined3d_cs_exec_set_depth_stencil_state,
     /* WINED3D_CS_OP_SET_RASTERIZER_STATE        */ wined3d_cs_exec_set_rasterizer_state,
+    /* WINED3D_CS_OP_SET_DEPTH_BOUNDS            */ wined3d_cs_exec_set_depth_bounds,
     /* WINED3D_CS_OP_SET_RENDER_STATE            */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE           */ wined3d_cs_exec_set_texture_state,
     /* WINED3D_CS_OP_SET_SAMPLER_STATE           */ wined3d_cs_exec_set_sampler_state,

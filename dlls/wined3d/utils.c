@@ -5416,6 +5416,8 @@ const char *debug_d3dstate(uint32_t state)
         return "STATE_MATERIAL";
     if (STATE_IS_RASTERIZER(state))
         return "STATE_RASTERIZER";
+    if (STATE_IS_DEPTH_BOUNDS(state))
+        return "STATE_DEPTH_BOUNDS";
     if (STATE_IS_POINTSPRITECOORDORIGIN(state))
         return "STATE_POINTSPRITECOORDORIGIN";
     if (STATE_IS_BASEVERTEXINDEX(state))

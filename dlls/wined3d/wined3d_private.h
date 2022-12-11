@@ -62,6 +62,18 @@ static inline size_t align(size_t addr, size_t alignment)
     return (addr + (alignment - 1)) & ~(alignment - 1);
 }
 
+static inline float int_to_float(uint32_t i)
+{
+    union
+    {
+        uint32_t u;
+        float f;
+    } u;
+
+    u.u = i;
+    return u.f;
+}
+
 #define MAKEDWORD_VERSION(maj, min) (((maj & 0xffffu) << 16) | (min & 0xffffu))
 
 /* Driver quirks */
@@ -1927,7 +1939,10 @@ void dispatch_compute(struct wined3d_device *device, const struct wined3d_state 
 #define STATE_RASTERIZER (STATE_MATERIAL + 1)
 #define STATE_IS_RASTERIZER(a) ((a) == STATE_RASTERIZER)
 
-#define STATE_POINTSPRITECOORDORIGIN (STATE_RASTERIZER + 1)
+#define STATE_DEPTH_BOUNDS (STATE_RASTERIZER + 1)
+#define STATE_IS_DEPTH_BOUNDS(a) ((a) == STATE_DEPTH_BOUNDS)
+
+#define STATE_POINTSPRITECOORDORIGIN (STATE_DEPTH_BOUNDS + 1)
 #define STATE_IS_POINTSPRITECOORDORIGIN(a) ((a) == STATE_POINTSPRITECOORDORIGIN)
 
 #define STATE_BASEVERTEXINDEX  (STATE_POINTSPRITECOORDORIGIN + 1)
@@ -3916,6 +3931,8 @@ struct wined3d_state
     unsigned int sample_mask;
     struct wined3d_depth_stencil_state *depth_stencil_state;
     unsigned int stencil_ref;
+    bool depth_bounds_enable;
+    float depth_bounds_min, depth_bounds_max;
     struct wined3d_rasterizer_state *rasterizer_state;
 };
 
@@ -5135,6 +5152,8 @@ void wined3d_cs_init_object(struct wined3d_cs *cs,
         void (*callback)(void *object), void *object) DECLSPEC_HIDDEN;
 void wined3d_cs_map_bo_address(struct wined3d_cs *cs,
         struct wined3d_bo_address *addr, size_t size, unsigned int flags) DECLSPEC_HIDDEN;
+void wined3d_device_context_set_depth_bounds(struct wined3d_device_context *context,
+        bool enable, float min_depth, float max_depth);
 
 static inline void wined3d_cs_finish(struct wined3d_cs *cs, enum wined3d_cs_queue_id queue_id)
 {
