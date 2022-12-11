@@ -1276,13 +1276,12 @@ static LPDWORD build_zonemap_from_reg(void)
             if (used == allocated) {
                 LPDWORD new_data;
 
+                allocated *= 2;
                 new_data = realloc(data, allocated * sizeof(DWORD));
                 if (!new_data)
                     goto cleanup;
-                memset(new_data + allocated, 0, allocated * sizeof(DWORD));
 
                 data = new_data;
-                allocated *= 2;
             }
             data[used] = wcstol(name, NULL, 10);
         }
