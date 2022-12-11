@@ -461,7 +461,7 @@ static const char* get_callconv(unsigned cc)
     case CV_CALL_RESERVED:      callconv = "reserved"; break;
     default:
         {
-            static char tmp[16];
+            static char tmp[20];
             sprintf(tmp, "callconv=%x", cc);
             callconv = tmp;
         }
