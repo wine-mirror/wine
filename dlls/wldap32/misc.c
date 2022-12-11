@@ -413,12 +413,18 @@ ULONG CDECL WLDAP32_ldap_result( LDAP *ld, ULONG msgid, ULONG all, struct l_time
 
         ret = ldap_result( CTX(ld), msgid, all, timeout ? &timeval : NULL, &msgU );
     }
-    if (msgU && (msg = calloc( 1, sizeof(*msg) )))
+
+    if (!msgU)
+        return ret;
+
+    if (!(msg = calloc( 1, sizeof(*msg) )))
     {
-        MSG(msg) = msgU;
-        *res = msg;
+        free( msgU );
+        return WLDAP32_LDAP_NO_MEMORY;
     }
 
+    MSG(msg) = msgU;
+    *res = msg;
     return ret;
 }
 
