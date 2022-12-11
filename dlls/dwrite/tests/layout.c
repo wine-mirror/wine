@@ -5309,12 +5309,12 @@ static void test_system_fallback(void)
         if (!font) continue;
 
         get_font_name(font, name, ARRAY_SIZE(name));
-    todo_wine
+        todo_wine
         ok(!wcscmp(name, tests[i].name), "%u: unexpected name %s.\n", i, wine_dbgstr_w(name));
 
         hr = IDWriteFont_HasCharacter(font, g_source[0], &exists);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine
+        todo_wine
         ok(exists, "%s missing character %#x\n", wine_dbgstr_w(name), g_source[0]);
 
         IDWriteFont_Release(font);
