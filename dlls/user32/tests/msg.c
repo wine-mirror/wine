@@ -19417,6 +19417,38 @@ static void test_create_name(void)
     UnregisterClassW( L"TestCreateNameClassW", NULL );
 }
 
+static LRESULT WINAPI changed_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == WM_USER) return 3;
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static LRESULT WINAPI call_window_proc_hook( INT code, WPARAM wparam, LPARAM lparam )
+{
+    CWPSTRUCT *cwp = (CWPSTRUCT *)lparam;
+
+    ok( cwp->message == WM_USER, "message = %u\n", cwp->message );
+    SetWindowLongPtrW( cwp->hwnd, GWLP_WNDPROC, (LONG_PTR)changed_window_proc );
+    return CallNextHookEx( NULL, code, wparam, lparam );
+}
+
+static void test_hook_changing_window_proc(void)
+{
+    HWND hwnd;
+    HHOOK hook;
+    LRESULT res;
+
+    hwnd = CreateWindowExW( 0, L"static", NULL, WS_POPUP, 0,0,0,0,GetDesktopWindow(),0,0, NULL );
+    hook = SetWindowsHookExW( WH_CALLWNDPROC, call_window_proc_hook, NULL, GetCurrentThreadId() );
+    ok( hook != NULL, "SetWindowsHookExW failed: %lu\n", GetLastError() );
+
+    res = SendMessageW( hwnd, WM_USER, 1, 2 );
+    ok( res == 3, "SendMessageW(WM_USER) returned %Iu\n", res );
+
+    UnhookWindowsHookEx( hook );
+    DestroyWindow( hwnd );
+}
+
 START_TEST(msg)
 {
     char **test_argv;
@@ -19534,6 +19566,7 @@ START_TEST(msg)
     test_TrackPopupMenuEmpty();
     test_DoubleSetCapture();
     test_create_name();
+    test_hook_changing_window_proc();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
      */

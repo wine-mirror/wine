@@ -1346,6 +1346,14 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 
     if (!needs_unpack) size = 0;
     if (!is_current_thread_window( hwnd )) return 0;
+
+    /* first the WH_CALLWNDPROC hook */
+    cwp.lParam  = lparam;
+    cwp.wParam  = wparam;
+    cwp.message = msg;
+    cwp.hwnd    = hwnd = get_full_window_handle( hwnd );
+    call_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, sizeof(cwp) );
+
     if (size && !(params = malloc( sizeof(*params) + size ))) return 0;
     if (!init_window_call_params( params, hwnd, msg, wparam, lparam, &result, !unicode, mapping ))
     {
@@ -1359,25 +1367,15 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
         params->ansi = FALSE;
         if (size) memcpy( params + 1, buffer, size );
     }
-
-    /* first the WH_CALLWNDPROC hook */
-    cwp.lParam  = lparam;
-    cwp.wParam  = wparam;
-    cwp.message = msg;
-    cwp.hwnd    = params->hwnd;
-    call_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, sizeof(cwp) );
-
     dispatch_win_proc_params( params, sizeof(*params) + size );
+    if (params != &p) free( params );
 
     /* and finally the WH_CALLWNDPROCRET hook */
     cwpret.lResult = result;
     cwpret.lParam  = lparam;
     cwpret.wParam  = wparam;
     cwpret.message = msg;
-    cwpret.hwnd    = params->hwnd;
-
-    if (params != &p) free( params );
-
+    cwpret.hwnd    = hwnd;
     call_hooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, sizeof(cwpret) );
     return result;
 }
