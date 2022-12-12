@@ -2072,12 +2072,6 @@ static void state_tessellation(struct wined3d_context *context, const struct win
                 state->render_states[WINED3D_RS_ENABLEADAPTIVETESSELLATION]);
 }
 
-static void state_monoenable(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    if (state->render_states[WINED3D_RS_MONOENABLE])
-        FIXME("Render state WINED3D_RS_MONOENABLE not implemented yet.\n");
-}
-
 static void state_rop2(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (state->render_states[WINED3D_RS_ROP2])
@@ -4770,7 +4764,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_INDEXBUFFER,                                  { STATE_INDEXBUFFER,                                  state_nop           }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_LEGACY_CONTEXT       },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern_w }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_MONOENABLE),                { STATE_RENDER(WINED3D_RS_MONOENABLE),                state_monoenable    }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ROP2),                      { STATE_RENDER(WINED3D_RS_ROP2),                      state_rop2          }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_PLANEMASK),                 { STATE_RENDER(WINED3D_RS_PLANEMASK),                 state_planemask     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_LASTPIXEL),                 { STATE_RENDER(WINED3D_RS_LASTPIXEL),                 state_lastpixel     }, WINED3D_GL_EXT_NONE             },
@@ -5572,6 +5565,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
     rs_holes[] =
     {
         {  1,   8},
+        { 11,  11},
         { 14,  14},
         { 17,  23},
         { 27,  27},
