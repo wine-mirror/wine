@@ -87,7 +87,7 @@ struct init_params
 /* macdrv_notify_icon params */
 struct notify_icon_params
 {
-    DWORD msg;
+    unsigned int msg;
     struct _NOTIFYICONDATAW *data;
 };
 

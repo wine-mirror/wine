@@ -76,7 +76,7 @@ struct wgl_context
     BOOL                    sharing;
     LONG                    update_swap_interval;
     LONG                    view_moved;
-    DWORD                   last_flush_time;
+    unsigned int            last_flush_time;
     UINT                    major;
 };
 
@@ -2222,7 +2222,7 @@ static void macdrv_glFlush(void)
     if (skip_single_buffer_flushes)
     {
         const pixel_format *pf = &pixel_formats[context->format - 1];
-        DWORD now = NtGetTickCount();
+        unsigned int now = NtGetTickCount();
 
         TRACE("double buffer %d last flush time %d now %d\n", (int)pf->double_buffer,
               context->last_flush_time, now);
