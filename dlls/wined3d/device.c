@@ -4047,6 +4047,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_TEXTUREPERSPECTIVE:
                     break;
 
+                case WINED3D_RS_WRAPU:
+                    if (state->rs[WINED3D_RS_WRAPU])
+                        FIXME("Render state WINED3D_RS_WRAPU not implemented yet.\n");
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
