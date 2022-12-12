@@ -2811,7 +2811,6 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
     {STATE_RENDER(WINED3D_RS_LINEPATTERN),                {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_ZFUNC),                      {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_DITHERENABLE),               {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_SUBPIXELX),                  {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_STIPPLEDALPHA),              {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_STIPPLEENABLE),              {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_MIPMAPLODBIAS),              {STATE_VDECL}},
