@@ -4084,6 +4084,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     }
                     break;
 
+                case WINED3D_RS_ZVISIBLE:
+                    if (state->rs[WINED3D_RS_ZVISIBLE])
+                        FIXME("WINED3D_RS_ZVISIBLE not implemented.\n");
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;

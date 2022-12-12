@@ -138,7 +138,6 @@ static const struct wined3d_state_entry_template misc_state_template_vk[] =
     {STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION), {STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION), state_nop}},
     {STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),       {STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),       state_nop}},
     {STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),          {STATE_RENDER(WINED3D_RS_DEBUGMONITORTOKEN),          state_nop}},
-    {STATE_RENDER(WINED3D_RS_ZVISIBLE),                   {STATE_RENDER(WINED3D_RS_ZVISIBLE),                   state_nop}},
     /* Samplers */
     {STATE_SAMPLER(0),                                    {STATE_SAMPLER(0),                                    state_nop}},
     {STATE_SAMPLER(1),                                    {STATE_SAMPLER(1),                                    state_nop}},
