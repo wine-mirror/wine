@@ -3123,7 +3123,8 @@ static void test_EnumDisplaySettings(void)
 {
     static const DWORD mode_fields = DM_DISPLAYORIENTATION | DM_BITSPERPEL |
             DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
-    static const DWORD setting_fields = mode_fields | DM_POSITION;
+    static const DWORD setting_fields = DM_DISPLAYORIENTATION | DM_BITSPERPEL |
+            DM_PELSWIDTH | DM_PELSHEIGHT | DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
     CHAR primary_adapter[CCHDEVICENAME];
     DPI_AWARENESS_CONTEXT ctx = NULL;
     DWORD err, val, device, mode;
