@@ -660,6 +660,7 @@ static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE
 
     p = malloc(sizeof(L"/usr/lib/debug/.build-id/") +
                (idlen * 2 + 1) * sizeof(WCHAR) + sizeof(L".debug"));
+    if (!p) goto fail;
     wcscpy(p, L"/usr/lib/debug/.build-id/");
     z = p + wcslen(p);
     if (idlen)
@@ -684,9 +685,11 @@ static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE
     sz = GetEnvironmentVariableW(L"WINEHOMEDIR", NULL, 0);
     if (sz)
     {
-        p = realloc(p, sz * sizeof(WCHAR) +
+        z = realloc(p, sz * sizeof(WCHAR) +
                     sizeof(L"\\.cache\\debuginfod_client\\") +
                     idlen * 2 * sizeof(WCHAR) + sizeof(L"\\debuginfo") + 500);
+        if (!z) goto fail;
+        p = z;
         GetEnvironmentVariableW(L"WINEHOMEDIR", p, sz);
         z = p + sz - 1;
         wcscpy(z, L"\\.cache\\debuginfod_client\\");
@@ -703,6 +706,7 @@ static BOOL image_locate_build_id_target(struct image_file_map* fmap, const BYTE
     }
 
     TRACE("not found\n");
+fail:
     free(p);
     HeapFree(GetProcessHeap(), 0, fmap_link);
     return FALSE;
