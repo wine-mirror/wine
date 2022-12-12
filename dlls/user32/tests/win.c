@@ -160,6 +160,7 @@ static BOOL ignore_message( UINT message, HWND hwnd )
 
     /* these are always ignored */
     return (message >= 0xc000 ||
+            message == 0x0060 || /* Internal undocumented message introduced by Win11 */
             message == WM_GETICON ||
             message == WM_GETOBJECT ||
             message == WM_TIMER ||
