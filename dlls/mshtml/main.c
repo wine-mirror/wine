@@ -407,6 +407,7 @@ void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
     if(!p) {
         len = 255;
         p = malloc(len * sizeof(WCHAR));
+        if (!p) return;
         len = LoadStringW(hInst, id, p, len) + 1;
         p = realloc(p, len * sizeof(WCHAR));
         if(InterlockedCompareExchangePointer((void**)&status_strings[index], p, NULL)) {
@@ -420,6 +421,7 @@ void set_statustext(HTMLDocumentObj* doc, INT id, LPCWSTR arg)
 
         len = lstrlenW(p) + lstrlenW(arg) - 1;
         buf = malloc(len * sizeof(WCHAR));
+        if (!buf) return;
 
         swprintf(buf, len, p, arg);
 
