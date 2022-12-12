@@ -27,6 +27,7 @@
 #include "in6addr.h"
 #include "inaddr.h"
 #include "ip2string.h"
+#include "wine/asm.h"
 
 #ifndef __WINE_WINTERNL_H
 
@@ -61,6 +62,18 @@ static inline USHORT __my_ushort_swap(USHORT s)
 #endif  /* WORDS_BIGENDIAN */
 
 
+#ifdef __ASM_USE_FASTCALL_WRAPPER
+extern ULONG WINAPI wrap_fastcall_func1( void *func, ULONG a );
+__ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
+                   "popl %ecx\n\t"
+                   "popl %eax\n\t"
+                   "xchgl (%esp),%ecx\n\t"
+                   "jmp *%eax" )
+#define call_fastcall_func1(func,a) wrap_fastcall_func1(func,a)
+#else
+#define call_fastcall_func1(func,a) func(a)
+#endif
+
 
 /* Function ptrs for ntdll calls */
 static HMODULE hntdll = 0;
@@ -68,6 +81,8 @@ static VOID      (WINAPI  *pRtlMoveMemory)(LPVOID,LPCVOID,SIZE_T);
 static VOID      (WINAPI  *pRtlFillMemory)(LPVOID,SIZE_T,BYTE);
 static VOID      (WINAPI  *pRtlFillMemoryUlong)(LPVOID,SIZE_T,ULONG);
 static VOID      (WINAPI  *pRtlZeroMemory)(LPVOID,SIZE_T);
+static USHORT    (FASTCALL *pRtlUshortByteSwap)(USHORT source);
+static ULONG     (FASTCALL *pRtlUlongByteSwap)(ULONG source);
 static ULONGLONG (FASTCALL *pRtlUlonglongByteSwap)(ULONGLONG source);
 static DWORD     (WINAPI *pRtlGetThreadErrorMode)(void);
 static NTSTATUS  (WINAPI *pRtlSetThreadErrorMode)(DWORD, LPDWORD);
@@ -108,7 +123,9 @@ static void InitFunctionPtrs(void)
 	pRtlFillMemory = (void *)GetProcAddress(hntdll, "RtlFillMemory");
 	pRtlFillMemoryUlong = (void *)GetProcAddress(hntdll, "RtlFillMemoryUlong");
 	pRtlZeroMemory = (void *)GetProcAddress(hntdll, "RtlZeroMemory");
-	pRtlUlonglongByteSwap = (void *)GetProcAddress(hntdll, "RtlUlonglongByteSwap");
+        pRtlUshortByteSwap = (void *)GetProcAddress(hntdll, "RtlUshortByteSwap");
+        pRtlUlongByteSwap = (void *)GetProcAddress(hntdll, "RtlUlongByteSwap");
+        pRtlUlonglongByteSwap = (void *)GetProcAddress(hntdll, "RtlUlonglongByteSwap");
         pRtlGetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlGetThreadErrorMode");
         pRtlSetThreadErrorMode = (void *)GetProcAddress(hntdll, "RtlSetThreadErrorMode");
         pRtlIpv4AddressToStringExA = (void *)GetProcAddress(hntdll, "RtlIpv4AddressToStringExA");
@@ -317,16 +334,40 @@ static void test_RtlZeroMemory(void)
   ZERO(9); MCMP("\0\0\0\0\0\0\0\0\0 test!");
 }
 
-static void test_RtlUlonglongByteSwap(void)
+static void test_RtlByteSwap(void)
 {
     ULONGLONG llresult;
+    ULONG     lresult;
+    USHORT    sresult;
 
 #ifdef _WIN64
     /* the Rtl*ByteSwap() are always inlined and not exported from ntdll on 64bit */
+    sresult = RtlUshortByteSwap( 0x1234 );
+    ok( 0x3412 == sresult,
+        "inlined RtlUshortByteSwap() returns 0x%x\n", sresult );
+    lresult = RtlUlongByteSwap( 0x87654321 );
+    ok( 0x21436587 == lresult,
+        "inlined RtlUlongByteSwap() returns 0x%lx\n", lresult );
     llresult = RtlUlonglongByteSwap( 0x7654321087654321ull );
     ok( 0x2143658710325476 == llresult,
         "inlined RtlUlonglongByteSwap() returns %#I64x\n", llresult );
 #else
+    ok( pRtlUshortByteSwap != NULL, "RtlUshortByteSwap is not available\n" );
+    if ( pRtlUshortByteSwap )
+    {
+        sresult = call_fastcall_func1( pRtlUshortByteSwap, 0x1234u );
+        ok( 0x3412u == sresult,
+            "ntdll.RtlUshortByteSwap() returns %#x\n", sresult );
+    }
+
+    ok( pRtlUlongByteSwap != NULL, "RtlUlongByteSwap is not available\n" );
+    if ( pRtlUlongByteSwap )
+    {
+        lresult = call_fastcall_func1( pRtlUlongByteSwap, 0x87654321ul );
+        ok( 0x21436587ul == lresult,
+            "ntdll.RtlUlongByteSwap() returns %#lx\n", lresult );
+    }
+
     ok( pRtlUlonglongByteSwap != NULL, "RtlUlonglongByteSwap is not available\n");
     if ( pRtlUlonglongByteSwap )
     {
@@ -3745,7 +3786,7 @@ START_TEST(rtl)
     test_RtlFillMemory();
     test_RtlFillMemoryUlong();
     test_RtlZeroMemory();
-    test_RtlUlonglongByteSwap();
+    test_RtlByteSwap();
     test_RtlUniform();
     test_RtlRandom();
     test_RtlAreAllAccessesGranted();
