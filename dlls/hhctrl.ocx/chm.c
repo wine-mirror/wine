@@ -82,7 +82,7 @@ static BOOL ReadChmSystem(CHMInfo *chm)
 {
     IStream *stream;
     DWORD ver=0xdeadbeef, read, buf_size;
-    char *buf;
+    char *buf, *new_buf;
     HRESULT hres;
 
     struct {
@@ -101,16 +101,27 @@ static BOOL ReadChmSystem(CHMInfo *chm)
     IStream_Read(stream, &ver, sizeof(ver), &read);
     TRACE("version is %lx\n", ver);
 
-    buf = malloc(8 * sizeof(DWORD));
-    buf_size = 8*sizeof(DWORD);
+    buf_size = 8 * sizeof(DWORD);
+    buf = malloc(buf_size);
+    if(!buf) {
+        IStream_Release(stream);
+        return FALSE;
+    }
 
     while(1) {
         hres = IStream_Read(stream, &entry, sizeof(entry), &read);
         if(hres != S_OK)
             break;
 
-        if(entry.len > buf_size)
-            buf = realloc(buf, buf_size=entry.len);
+        if(entry.len > buf_size) {
+            new_buf = realloc(buf, entry.len);
+            if(!new_buf) {
+                hres = E_OUTOFMEMORY;
+                break;
+            }
+            buf = new_buf;
+            buf_size = entry.len;
+        }
 
         hres = IStream_Read(stream, buf, entry.len, &read);
         if(hres != S_OK)
