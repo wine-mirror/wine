@@ -334,7 +334,7 @@ IUnknownVtbl *get_delegating_vtbl(DWORD num_methods)
 
 void release_delegating_vtbl(IUnknownVtbl *vtbl)
 {
-    struct delegating_vtbl *table = (struct delegating_vtbl *)((DWORD *)vtbl - 1);
+    struct delegating_vtbl *table = CONTAINING_RECORD(vtbl, struct delegating_vtbl, vtbl);
 
     EnterCriticalSection(&delegating_vtbl_section);
     table->ref--;
