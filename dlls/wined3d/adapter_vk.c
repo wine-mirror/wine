@@ -98,7 +98,6 @@ static const struct wined3d_state_entry_template misc_state_template_vk[] =
     {STATE_INDEXBUFFER,                                   {STATE_INDEXBUFFER,                                   state_nop}},
     {STATE_RENDER(WINED3D_RS_LINEPATTERN),                {STATE_RENDER(WINED3D_RS_LINEPATTERN),                state_nop}},
     {STATE_RENDER(WINED3D_RS_DITHERENABLE),               {STATE_RENDER(WINED3D_RS_DITHERENABLE),               state_nop}},
-    {STATE_RENDER(WINED3D_RS_STIPPLEDALPHA),              {STATE_RENDER(WINED3D_RS_STIPPLEDALPHA),              state_nop}},
     {STATE_RENDER(WINED3D_RS_STIPPLEENABLE),              {STATE_RENDER(WINED3D_RS_STIPPLEENABLE),              state_nop}},
     {STATE_RENDER(WINED3D_RS_MIPMAPLODBIAS),              {STATE_RENDER(WINED3D_RS_MIPMAPLODBIAS),              state_nop}},
     {STATE_RENDER(WINED3D_RS_ANISOTROPY),                 {STATE_RENDER(WINED3D_RS_ANISOTROPY),                 state_nop}},
