@@ -2042,12 +2042,6 @@ static void state_tessellation(struct wined3d_context *context, const struct win
                 state->render_states[WINED3D_RS_ENABLEADAPTIVETESSELLATION]);
 }
 
-static void state_mipmaplodbias(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    if (state->render_states[WINED3D_RS_MIPMAPLODBIAS])
-        FIXME("Render state WINED3D_RS_MIPMAPLODBIAS not implemented yet.\n");
-}
-
 static void state_anisotropy(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (state->render_states[WINED3D_RS_ANISOTROPY])
@@ -4705,7 +4699,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_LEGACY_CONTEXT       },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern_w }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DITHERENABLE),              { STATE_RENDER(WINED3D_RS_DITHERENABLE),              state_ditherenable  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_MIPMAPLODBIAS),             { STATE_RENDER(WINED3D_RS_MIPMAPLODBIAS),             state_mipmaplodbias }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_ANISOTROPY),                { STATE_RENDER(WINED3D_RS_ANISOTROPY),                state_anisotropy    }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_FLUSHBATCH),                { STATE_RENDER(WINED3D_RS_FLUSHBATCH),                state_flushbatch    }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT),{ STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT),state_translucentsi }, WINED3D_GL_EXT_NONE             },
@@ -5502,8 +5495,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         { 27,  27},
         { 30,  33},
         { 39,  40},
-        { 42,  45},
-        { 47,  47},
+        { 42,  47},
         { 52,  59},
         { 61, 127},
         {149, 150},
