@@ -4828,7 +4828,7 @@ static void test_accept_inheritance(void)
         len = sizeof(value);
         ret = getsockopt(server, int_tests[i].optname, int_tests[i].optval, (char *)&value, &len);
         ok(!ret, "test %u: got error %u\n", i, WSAGetLastError());
-        todo_wine_if (i == 0 || (i >= 3 && i <= 6))
+        todo_wine_if (i >= 3 && i <= 6)
             ok(value == int_tests[i].value, "test %u: got value %#x\n", i, value);
     }
 

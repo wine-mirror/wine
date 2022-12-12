@@ -1988,16 +1988,19 @@ static struct sock *accept_socket( struct sock *sock )
         }
 
         /* newly created socket gets the same properties of the listening socket */
-        acceptsock->state   = SOCK_CONNECTED;
-        acceptsock->bound   = 1;
-        acceptsock->nonblocking = sock->nonblocking;
-        acceptsock->mask    = sock->mask;
-        acceptsock->proto   = sock->proto;
-        acceptsock->type    = sock->type;
-        acceptsock->family  = sock->family;
-        acceptsock->window  = sock->window;
-        acceptsock->message = sock->message;
-        acceptsock->connect_time = current_time;
+        acceptsock->state               = SOCK_CONNECTED;
+        acceptsock->bound               = 1;
+        acceptsock->nonblocking         = sock->nonblocking;
+        acceptsock->mask                = sock->mask;
+        acceptsock->proto               = sock->proto;
+        acceptsock->type                = sock->type;
+        acceptsock->family              = sock->family;
+        acceptsock->window              = sock->window;
+        acceptsock->message             = sock->message;
+        acceptsock->reuseaddr           = sock->reuseaddr;
+        acceptsock->exclusiveaddruse    = sock->exclusiveaddruse;
+        acceptsock->connect_time        = current_time;
+
         if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
         if (!(acceptsock->fd = create_anonymous_fd( &sock_fd_ops, acceptfd, &acceptsock->obj,
                                                     get_fd_options( sock->fd ) )))
