@@ -115,7 +115,7 @@ struct delegating_vtbl
     DWORD ref;
     DWORD size;
     IUnknownVtbl vtbl;
-    /* remaining entries in vtbl */
+    const void *methods[];
 };
 
 static struct delegating_vtbl *current_vtbl;
@@ -251,24 +251,27 @@ static const vtbl_method_t *allocate_block( unsigned int num )
     return block;
 }
 
-static BOOL fill_delegated_stub_table(IUnknownVtbl *vtbl, DWORD num)
+static BOOL init_delegating_vtbl(struct delegating_vtbl *table, DWORD num)
 {
-    const void **entry = (const void **)(vtbl + 1);
     DWORD i, j;
+
+    table->ref = 0;
+    table->size = num;
 
     if (num - 3 > BLOCK_SIZE * MAX_BLOCKS)
     {
         FIXME( "%lu methods not supported\n", num );
         return FALSE;
     }
-    vtbl->QueryInterface = delegating_QueryInterface;
-    vtbl->AddRef = delegating_AddRef;
-    vtbl->Release = delegating_Release;
+    table->vtbl.QueryInterface = delegating_QueryInterface;
+    table->vtbl.AddRef = delegating_AddRef;
+    table->vtbl.Release = delegating_Release;
     for (i = 0; i < (num - 3 + BLOCK_SIZE - 1) / BLOCK_SIZE; i++)
     {
         const vtbl_method_t *block = method_blocks[i];
         if (!block && !(block = allocate_block( i ))) return FALSE;
-        for (j = 0; j < BLOCK_SIZE && j < num - 3 - i * BLOCK_SIZE; j++) *entry++ = &block[j];
+        for (j = 0; j < BLOCK_SIZE && j < num - 3 - i * BLOCK_SIZE; j++)
+            table->methods[j] = &block[j];
     }
     return TRUE;
 }
@@ -306,16 +309,14 @@ IUnknownVtbl *get_delegating_vtbl(DWORD num_methods)
 
     if(!current_vtbl || num_methods > current_vtbl->size)
     {
-        struct delegating_vtbl *table = malloc(FIELD_OFFSET(struct delegating_vtbl, vtbl) + num_methods * sizeof(void *));
+        struct delegating_vtbl *table = malloc(FIELD_OFFSET(struct delegating_vtbl, methods[num_methods]));
         if (!table)
         {
             LeaveCriticalSection(&delegating_vtbl_section);
             return NULL;
         }
 
-        table->ref = 0;
-        table->size = num_methods;
-        fill_delegated_stub_table(&table->vtbl, num_methods);
+        init_delegating_vtbl(table, num_methods);
 
         if (current_vtbl && current_vtbl->ref == 0)
         {
