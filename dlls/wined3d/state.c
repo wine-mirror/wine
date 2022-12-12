@@ -1816,30 +1816,6 @@ void state_pointsprite(struct wined3d_context *context, const struct wined3d_sta
     }
 }
 
-static void state_wrap(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    static unsigned int once;
-
-    if ((state->render_states[WINED3D_RS_WRAP0]
-            || state->render_states[WINED3D_RS_WRAP1]
-            || state->render_states[WINED3D_RS_WRAP2]
-            || state->render_states[WINED3D_RS_WRAP3]
-            || state->render_states[WINED3D_RS_WRAP4]
-            || state->render_states[WINED3D_RS_WRAP5]
-            || state->render_states[WINED3D_RS_WRAP6]
-            || state->render_states[WINED3D_RS_WRAP7]
-            || state->render_states[WINED3D_RS_WRAP8]
-            || state->render_states[WINED3D_RS_WRAP9]
-            || state->render_states[WINED3D_RS_WRAP10]
-            || state->render_states[WINED3D_RS_WRAP11]
-            || state->render_states[WINED3D_RS_WRAP12]
-            || state->render_states[WINED3D_RS_WRAP13]
-            || state->render_states[WINED3D_RS_WRAP14]
-            || state->render_states[WINED3D_RS_WRAP15])
-            && !once++)
-        FIXME("(WINED3D_RS_WRAP0) Texture wrapping not yet supported.\n");
-}
-
 static void state_msaa_w(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (state->render_states[WINED3D_RS_MULTISAMPLEANTIALIAS])
@@ -4681,7 +4657,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_LEGACY_CONTEXT       },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern_w }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DITHERENABLE),              { STATE_RENDER(WINED3D_RS_DITHERENABLE),              state_ditherenable  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_WRAP0),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     state_wrap          }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_EXTENTS),                   { STATE_RENDER(WINED3D_RS_EXTENTS),                   state_extents       }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORKEYBLENDENABLE),       { STATE_RENDER(WINED3D_RS_COLORKEYBLENDENABLE),       state_ckeyblend     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),  { STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),  state_swvp          }, WINED3D_GL_EXT_NONE             },
@@ -5461,8 +5436,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         { 39,  40},
         { 42,  47},
         { 49,  59},
-        { 61, 127},
-        {129, 135},
+        { 61, 135},
         {149, 150},
         {162, 162},
         {168, 169},
