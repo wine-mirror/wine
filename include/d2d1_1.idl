@@ -157,7 +157,7 @@ typedef enum D2D1_LAYER_OPTIONS1
     D2D1_LAYER_OPTIONS1_FORCE_DWORD = 0xffffffff,
 } D2D1_LAYER_OPTIONS1;
 
-typedef struct D2D1_PROPERTY_BINDING D2D1_PROPERTY_BINDING;
+struct D2D1_PROPERTY_BINDING;
 typedef D2D_MATRIX_4X4_F D2D1_MATRIX_4X4_F;
 
 typedef enum D2D1_PROPERTY_TYPE
@@ -936,14 +936,14 @@ interface ID2D1Factory1 : ID2D1Factory
     HRESULT RegisterEffectFromStream(
         [in] REFCLSID effect_id,
         [in] IStream *property_xml,
-        [in, size_is(binding_count)] const D2D1_PROPERTY_BINDING *bindings,
+        [in, size_is(binding_count)] const struct D2D1_PROPERTY_BINDING *bindings,
         [in] UINT32 binding_count,
         [in] PD2D1_EFFECT_FACTORY effect_factory
     );
     HRESULT RegisterEffectFromString(
         [in] REFCLSID effect_id,
         [in] const WCHAR *property_xml,
-        [in, size_is(binding_count)] const D2D1_PROPERTY_BINDING *bindings,
+        [in, size_is(binding_count)] const struct D2D1_PROPERTY_BINDING *bindings,
         [in] UINT32 binding_count,
         [in] PD2D1_EFFECT_FACTORY effect_factory
     );
