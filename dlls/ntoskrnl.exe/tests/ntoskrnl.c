@@ -36,6 +36,7 @@
 #include "setupapi.h"
 #include "cfgmgr32.h"
 #include "newdev.h"
+#include "regstr.h"
 #include "dbt.h"
 #include "initguid.h"
 #include "devguid.h"
@@ -1634,7 +1635,8 @@ static void test_pnp_devices(void)
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CONFIGFLAGS,
             &type, (BYTE *)&dword, sizeof(dword), NULL);
     ok(ret, "got error %#lx\n", GetLastError());
-    ok(!dword, "got flags %#lx\n", dword);
+    /* windows 7 sets CONFIGFLAG_FINISH_INSTALL; it's not clear what this means */
+    ok(!(dword & ~CONFIGFLAG_FINISH_INSTALL), "got flags %#lx\n", dword);
     ok(type == REG_DWORD, "got type %lu\n", type);
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_DEVTYPE,
