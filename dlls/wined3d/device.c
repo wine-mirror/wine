@@ -4129,6 +4129,15 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                         FIXME("Render state WINED3D_RS_TRANSLUCENTSORTINDEPENDENT not implemented yet.\n");
                     break;
 
+                case WINED3D_RS_WRAP15:
+                {
+                    static unsigned int once;
+
+                    if ((state->rs[idx]) && !once++)
+                        FIXME("(WINED3D_RS_WRAP0) Texture wrapping not yet supported.\n");
+                    break;
+                }
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
