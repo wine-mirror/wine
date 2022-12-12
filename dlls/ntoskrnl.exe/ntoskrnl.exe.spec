@@ -68,7 +68,7 @@
 @ stdcall -fastcall ObfReferenceObject(ptr)
 @ stub RtlPrefetchMemoryNonTemporal
 @ cdecl -i386 -norelay RtlUlongByteSwap()
-@ cdecl -ret64 RtlUlonglongByteSwap(int64)
+@ stdcall -fastcall -arch=i386 -norelay RtlUlonglongByteSwap(int64)
 @ cdecl -i386 -norelay RtlUshortByteSwap()
 @ stub WmiGetClock
 @ stub Kei386EoiHelper

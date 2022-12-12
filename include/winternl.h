@@ -4567,7 +4567,6 @@ NTSYSAPI BOOLEAN   WINAPI RtlTryAcquireSRWLockExclusive(RTL_SRWLOCK *);
 NTSYSAPI BOOLEAN   WINAPI RtlTryAcquireSRWLockShared(RTL_SRWLOCK *);
 NTSYSAPI BOOL      WINAPI RtlTryEnterCriticalSection(RTL_CRITICAL_SECTION *);
 NTSYSAPI NTSTATUS  WINAPI RtlUTF8ToUnicodeN(WCHAR*,DWORD,DWORD*,const char*,DWORD);
-NTSYSAPI ULONGLONG __cdecl RtlUlonglongByteSwap(ULONGLONG);
 NTSYSAPI DWORD     WINAPI RtlUnicodeStringToAnsiSize(const UNICODE_STRING*);
 NTSYSAPI NTSTATUS  WINAPI RtlUnicodeStringToAnsiString(PANSI_STRING,PCUNICODE_STRING,BOOLEAN);
 NTSYSAPI NTSTATUS  WINAPI RtlUnicodeStringToInteger(const UNICODE_STRING *,ULONG,ULONG *);
@@ -4733,20 +4732,20 @@ static inline BOOLEAN RtlCheckBit(PCRTL_BITMAP lpBits, ULONG ulBit)
     return FALSE;
 }
 
-/* These are implemented as __fastcall, so we can't let Winelib apps link with them */
+/* These are implemented as __fastcall, so we can't let Winelib apps link with them.
+ * Moreover, they're always inlined and not exported on 64bit systems.
+ */
 static inline USHORT RtlUshortByteSwap(USHORT s)
 {
     return (s >> 8) | (s << 8);
 }
 static inline ULONG RtlUlongByteSwap(ULONG i)
 {
-#if defined(__i386__) && defined(__GNUC__)
-    ULONG ret;
-    __asm__("bswap %0" : "=r" (ret) : "0" (i) );
-    return ret;
-#else
     return ((ULONG)RtlUshortByteSwap((USHORT)i) << 16) | RtlUshortByteSwap((USHORT)(i >> 16));
-#endif
+}
+static inline ULONGLONG RtlUlonglongByteSwap(ULONGLONG i)
+{
+    return ((ULONGLONG)RtlUlongByteSwap((ULONG)i) << 32) | RtlUlongByteSwap((ULONG)(i >> 32));
 }
 
 /* list manipulation macros */

@@ -68,7 +68,7 @@ static VOID      (WINAPI  *pRtlMoveMemory)(LPVOID,LPCVOID,SIZE_T);
 static VOID      (WINAPI  *pRtlFillMemory)(LPVOID,SIZE_T,BYTE);
 static VOID      (WINAPI  *pRtlFillMemoryUlong)(LPVOID,SIZE_T,ULONG);
 static VOID      (WINAPI  *pRtlZeroMemory)(LPVOID,SIZE_T);
-static ULONGLONG (WINAPIV *pRtlUlonglongByteSwap)(ULONGLONG source);
+static ULONGLONG (FASTCALL *pRtlUlonglongByteSwap)(ULONGLONG source);
 static DWORD     (WINAPI *pRtlGetThreadErrorMode)(void);
 static NTSTATUS  (WINAPI *pRtlSetThreadErrorMode)(DWORD, LPDWORD);
 static NTSTATUS  (WINAPI *pRtlIpv4AddressToStringExA)(const IN_ADDR *, USHORT, LPSTR, PULONG);
@@ -319,18 +319,22 @@ static void test_RtlZeroMemory(void)
 
 static void test_RtlUlonglongByteSwap(void)
 {
-    ULONGLONG result;
+    ULONGLONG llresult;
 
-    if ( !pRtlUlonglongByteSwap )
+#ifdef _WIN64
+    /* the Rtl*ByteSwap() are always inlined and not exported from ntdll on 64bit */
+    llresult = RtlUlonglongByteSwap( 0x7654321087654321ull );
+    ok( 0x2143658710325476 == llresult,
+        "inlined RtlUlonglongByteSwap() returns %#I64x\n", llresult );
+#else
+    ok( pRtlUlonglongByteSwap != NULL, "RtlUlonglongByteSwap is not available\n");
+    if ( pRtlUlonglongByteSwap )
     {
-        win_skip("RtlUlonglongByteSwap is not available\n");
-        return;
+        llresult = pRtlUlonglongByteSwap( 0x7654321087654321ull );
+        ok( 0x2143658710325476ull == llresult,
+            "ntdll.RtlUlonglongByteSwap() returns %#I64x\n", llresult );
     }
-
-    result = pRtlUlonglongByteSwap( ((ULONGLONG)0x76543210 << 32) | 0x87654321 );
-    ok( (((ULONGLONG)0x21436587 << 32) | 0x10325476) == result,
-       "RtlUlonglongByteSwap(0x7654321087654321) returns 0x%s, expected 0x2143658710325476\n",
-       wine_dbgstr_longlong(result));
+#endif
 }
 
 
