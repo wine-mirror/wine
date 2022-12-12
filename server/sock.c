@@ -2001,6 +2001,7 @@ static struct sock *accept_socket( struct sock *sock )
         acceptsock->exclusiveaddruse    = sock->exclusiveaddruse;
         acceptsock->sndbuf              = sock->sndbuf;
         acceptsock->rcvbuf              = sock->rcvbuf;
+        acceptsock->sndtimeo            = sock->sndtimeo;
         acceptsock->connect_time        = current_time;
 
         if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
