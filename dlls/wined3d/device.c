@@ -4044,6 +4044,9 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                         FIXME("Antialias not supported yet.\n");
                     break;
 
+                case WINED3D_RS_TEXTUREPERSPECTIVE:
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
