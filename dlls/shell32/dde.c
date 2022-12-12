@@ -347,7 +347,7 @@ static DWORD PROGMAN_OnExecute(WCHAR *command, int argc, WCHAR **argv)
 static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
 {
     WCHAR *original = command;
-    WCHAR *opcode = NULL, **argv = NULL, *p;
+    WCHAR *opcode = NULL, **argv = NULL, **new_argv, *p;
     int argc = 0, i;
     DWORD ret = DDE_FACK;
 
@@ -357,7 +357,7 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
     while (*command == '[')
     {
         argc = 0;
-        argv = malloc(sizeof(*argv));
+        argv = NULL;
 
         command++;
         while (*command == ' ') command++;
@@ -385,9 +385,11 @@ static DWORD parse_dde_command(HSZ hszTopic, WCHAR *command)
                     while (p[-1] == ' ') p--;
                 }
 
+                new_argv = realloc(argv, (argc + 1) * sizeof(*argv));
+                if (!new_argv) goto error;
+                argv = new_argv;
+                argv[argc] = strndupW(command, p - command);
                 argc++;
-                argv = realloc(argv, argc * sizeof(*argv));
-                argv[argc-1] = strndupW(command, p - command);
 
                 command = p;
                 if (*command == '"') command++;
