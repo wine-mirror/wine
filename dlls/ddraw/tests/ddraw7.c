@@ -7718,6 +7718,34 @@ static void test_set_surface_desc(void)
     hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
     ok(hr == DDERR_INVALIDPARAMS, "Got hr %#lx.\n", hr);
 
+    /* Check that other surface properties are retained. */
+
+    ddsd.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00ff00ff;
+    ddsd.ddckCKSrcBlt.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface7_SetColorKey(surface, DDCKEY_SRCBLT, &ddsd.ddckCKSrcBlt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    reset_ddsd(&ddsd);
+    ddsd.dwFlags = DDSD_WIDTH | DDSD_PITCH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_LPSURFACE;
+    ddsd.dwWidth = 8;
+    U1(ddsd).lPitch = 8 * 2;
+    ddsd.dwHeight = 8;
+    ddsd.lpSurface = data;
+    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
+    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB; /* D3DFMT_R5G6B5 */
+    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xf800;
+    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07e0;
+    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001f;
+    hr = IDirectDrawSurface7_SetSurfaceDesc(surface, &ddsd, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    memset(&ddsd.ddckCKSrcBlt, 0xcc, sizeof(ddsd.ddckCKSrcBlt));
+    hr = IDirectDrawSurface7_GetColorKey(surface, DDCKEY_SRCBLT, &ddsd.ddckCKSrcBlt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(ddsd.ddckCKSrcBlt.dwColorSpaceLowValue == 0x00ff00ff,
+            "Got low color key value %#lx.\n", ddsd.ddckCKSrcBlt.dwColorSpaceLowValue);
+
     IDirectDrawSurface7_Release(surface);
 
     /* Test mipmap texture. */
