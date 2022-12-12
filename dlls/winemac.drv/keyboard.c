@@ -898,7 +898,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
        from the default map, if it's still available. */
     for (keyc = 0; keyc < ARRAY_SIZE(default_map); keyc++)
     {
-        DWORD vkey = default_map[keyc].vkey;
+        unsigned int vkey = default_map[keyc].vkey;
 
         if (!thread_data->keyc2scan[keyc]) continue; /* not a known Mac key code */
         if (thread_data->keyc2vkey[keyc]) continue; /* already assigned */
@@ -988,7 +988,7 @@ void macdrv_compute_keyboard_layout(struct macdrv_thread_data *thread_data)
 /***********************************************************************
  *              macdrv_send_keyboard_input
  */
-static void macdrv_send_keyboard_input(HWND hwnd, WORD vkey, WORD scan, DWORD flags, DWORD time)
+static void macdrv_send_keyboard_input(HWND hwnd, WORD vkey, WORD scan, unsigned int flags, unsigned int time)
 {
     INPUT input;
 
@@ -1307,7 +1307,7 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
             UInt32 deadKeyState = 0;
             UniCharCount len;
             OSStatus status;
-            DWORD vkey;
+            unsigned int vkey;
             int i;
 
             uchr = (const UCKeyboardLayout*)CFDataGetBytePtr(thread_data->keyboard_layout_uchr);
@@ -1368,12 +1368,12 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
                 len = wcslen(buffer);
             }
 
-            TRACE("lparam 0x%08x -> %s\n", lparam, debugstr_w(buffer));
+            TRACE("lparam 0x%08x -> %s\n", (unsigned int)lparam, debugstr_w(buffer));
             return len;
         }
     }
 
-    WARN("found no name for lparam 0x%08x\n", lparam);
+    WARN("found no name for lparam 0x%08x\n", (unsigned int)lparam);
     return 0;
 }
 
