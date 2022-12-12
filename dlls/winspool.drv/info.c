@@ -887,7 +887,7 @@ static LPWSTR get_servername_from_name(LPCWSTR name)
     if (name == NULL) return NULL;
     if ((name[0] != '\\') || (name[1] != '\\')) return NULL;
 
-    server = wcsdup(&name[2]);     /* skip over both backslash */
+    server = wcsdup(&name[2]);     /* skip over both backslashes */
     if (server == NULL) return NULL;
 
     /* strip '\' and the printername */
