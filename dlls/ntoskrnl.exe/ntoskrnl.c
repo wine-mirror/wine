@@ -2188,6 +2188,22 @@ LONG FASTCALL NTOSKRNL_InterlockedIncrement( LONG volatile *dest )
 #ifdef __i386__
 
 /*************************************************************************
+ *           RtlUshortByteSwap   (NTOSKRNL.EXE.@)
+ */
+__ASM_FASTCALL_FUNC(RtlUshortByteSwap, 4,
+                    "movb %ch,%al\n\t"
+                    "movb %cl,%ah\n\t"
+                    "ret")
+
+/*************************************************************************
+ *           RtlUlongByteSwap   (NTOSKRNL.EXE.@)
+ */
+__ASM_FASTCALL_FUNC(RtlUlongByteSwap, 4,
+                    "movl %ecx,%eax\n\t"
+                    "bswap %eax\n\t"
+                    "ret")
+
+/*************************************************************************
  *           RtlUlonglongByteSwap   (NTOSKRNL.EXE.@)
  */
 __ASM_FASTCALL_FUNC(RtlUlonglongByteSwap, 8,

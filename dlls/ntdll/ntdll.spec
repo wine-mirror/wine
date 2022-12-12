@@ -1038,7 +1038,7 @@
 @ stdcall RtlTryAcquireSRWLockShared(ptr)
 @ stdcall RtlTryEnterCriticalSection(ptr)
 @ stdcall RtlUTF8ToUnicodeN(ptr long ptr ptr long)
-@ cdecl -i386 -norelay RtlUlongByteSwap() NTDLL_RtlUlongByteSwap
+@ stdcall -fastcall -arch=i386 -norelay RtlUlongByteSwap(long)
 @ stdcall -fastcall -arch=i386 -norelay RtlUlonglongByteSwap(int64)
 # @ stub RtlUnhandledExceptionFilter2
 # @ stub RtlUnhandledExceptionFilter
@@ -1072,7 +1072,7 @@
 @ stdcall RtlUpperString(ptr ptr)
 @ stub RtlUsageHeap
 @ stdcall -norelay RtlUserThreadStart(ptr ptr)
-@ cdecl -i386 -norelay RtlUshortByteSwap() NTDLL_RtlUshortByteSwap
+@ stdcall -fastcall -arch=i386 -norelay RtlUshortByteSwap(long)
 @ stdcall RtlValidAcl(ptr)
 @ stdcall RtlValidRelativeSecurityDescriptor(ptr long long)
 @ stdcall RtlValidSecurityDescriptor(ptr)
