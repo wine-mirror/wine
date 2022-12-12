@@ -1999,6 +1999,7 @@ static struct sock *accept_socket( struct sock *sock )
         acceptsock->message             = sock->message;
         acceptsock->reuseaddr           = sock->reuseaddr;
         acceptsock->exclusiveaddruse    = sock->exclusiveaddruse;
+        acceptsock->sndbuf              = sock->sndbuf;
         acceptsock->connect_time        = current_time;
 
         if (sock->event) acceptsock->event = (struct event *)grab_object( sock->event );
