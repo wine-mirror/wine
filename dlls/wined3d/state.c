@@ -4695,7 +4695,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_RENDER(WINED3D_RS_WRAP11),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAP12),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAP13),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_WRAP14),                    { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_EXTENTS),                   { STATE_RENDER(WINED3D_RS_EXTENTS),                   state_extents       }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_COLORKEYBLENDENABLE),       { STATE_RENDER(WINED3D_RS_COLORKEYBLENDENABLE),       state_ckeyblend     }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),  { STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),  state_swvp          }, WINED3D_GL_EXT_NONE             },
@@ -5483,7 +5482,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {174, 177},
         {185, 193},
         {195, 197},
-        {205, 209},
+        {204, 209},
         {  0,   0},
     };
     static const unsigned int simple_states[] =
