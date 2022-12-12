@@ -72,7 +72,7 @@ static void fill_search_tree(HWND hwndList, SearchItem *item)
  */
 static WCHAR *SearchCHM_File(IStorage *pStorage, const WCHAR *file, const char *needle)
 {
-    char *buffer = malloc(BLOCK_SIZE);
+    char *buffer = NULL, *new_buffer;
     strbuf_t content, node, node_name;
     IStream *temp_stream = NULL;
     DWORD i, buffer_size = 0;
@@ -84,7 +84,7 @@ static WCHAR *SearchCHM_File(IStorage *pStorage, const WCHAR *file, const char *
     hres = IStorage_OpenStream(pStorage, file, NULL, STGM_READ, 0, &temp_stream);
     if(FAILED(hres)) {
         FIXME("Could not open '%s' stream: %08lx\n", debugstr_w(file), hres);
-        goto cleanup;
+        return NULL;
     }
 
     strbuf_init(&node);
@@ -110,7 +110,9 @@ static WCHAR *SearchCHM_File(IStorage *pStorage, const WCHAR *file, const char *
                 title[wlen] = 0;
             }
 
-            buffer = realloc(buffer, buffer_size + textlen + 1);
+            new_buffer = realloc(buffer, buffer_size + textlen + 1);
+            if(!new_buffer) goto cleanup;
+            buffer = new_buffer;
             memcpy(&buffer[buffer_size], text, textlen);
             buffer[buffer_size + textlen] = '\0';
             buffer_size += textlen;
@@ -130,14 +132,14 @@ static WCHAR *SearchCHM_File(IStorage *pStorage, const WCHAR *file, const char *
     if(strstr(buffer, needle))
         found = TRUE;
 
+cleanup:
     strbuf_free(&node);
     strbuf_free(&content);
     strbuf_free(&node_name);
 
-cleanup:
     free(buffer);
-    if(temp_stream)
-        IStream_Release(temp_stream);
+    IStream_Release(temp_stream);
+
     if(!found)
     {
         free(title);
