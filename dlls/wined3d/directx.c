@@ -2808,7 +2808,6 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
 
     {STATE_VIEWPORT,                                      {STATE_VDECL}},
     {STATE_INDEXBUFFER,                                   {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_WRAPV),                      {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_LINEPATTERN),                {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_MONOENABLE),                 {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_ROP2),                       {STATE_VDECL}},
