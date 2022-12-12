@@ -110,15 +110,15 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION delegating_vtbl_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
-typedef struct
+struct delegating_vtbl
 {
     DWORD ref;
     DWORD size;
     IUnknownVtbl vtbl;
     /* remaining entries in vtbl */
-} ref_counted_vtbl;
+};
 
-static ref_counted_vtbl *current_vtbl;
+static struct delegating_vtbl *current_vtbl;
 
 
 static HRESULT WINAPI delegating_QueryInterface(IUnknown *pUnk, REFIID iid, void **ppv)
@@ -306,7 +306,7 @@ IUnknownVtbl *get_delegating_vtbl(DWORD num_methods)
 
     if(!current_vtbl || num_methods > current_vtbl->size)
     {
-        ref_counted_vtbl *table = malloc(FIELD_OFFSET(ref_counted_vtbl, vtbl) + num_methods * sizeof(void *));
+        struct delegating_vtbl *table = malloc(FIELD_OFFSET(struct delegating_vtbl, vtbl) + num_methods * sizeof(void *));
         if (!table)
         {
             LeaveCriticalSection(&delegating_vtbl_section);
@@ -333,7 +333,7 @@ IUnknownVtbl *get_delegating_vtbl(DWORD num_methods)
 
 void release_delegating_vtbl(IUnknownVtbl *vtbl)
 {
-    ref_counted_vtbl *table = (ref_counted_vtbl*)((DWORD *)vtbl - 1);
+    struct delegating_vtbl *table = (struct delegating_vtbl *)((DWORD *)vtbl - 1);
 
     EnterCriticalSection(&delegating_vtbl_section);
     table->ref--;
