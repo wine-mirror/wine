@@ -30,6 +30,7 @@ _ACRTIMP void*  __cdecl calloc(size_t,size_t);
 _ACRTIMP void   __cdecl free(void*);
 _ACRTIMP void*  __cdecl malloc(size_t);
 _ACRTIMP void*  __cdecl realloc(void*,size_t);
+_ACRTIMP void*  __cdecl _recalloc(void*,size_t,size_t);
 
 _ACRTIMP void*  __cdecl _expand(void*,size_t);
 _ACRTIMP size_t __cdecl _msize(void*);
