@@ -1835,7 +1835,7 @@ static void test_effect_parameter_value(IDirect3DDevice9 *device)
             DWORD input_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
             DWORD expected_value[EFFECT_PARAMETER_VALUE_ARRAY_SIZE];
             UINT l, n, m, element;
-            const D3DXMATRIX *matrix_pointer_array[sizeof(input_value)/sizeof(D3DXMATRIX)];
+            const D3DXMATRIX *matrix_pointer_array[sizeof(input_value)/(sizeof(D3DXMATRIX))];
 
             parameter = effect->lpVtbl->GetParameterByName(effect, NULL, res_full_name);
             ok(parameter != NULL, "%u - %s: GetParameterByName failed\n", i, res_full_name);
