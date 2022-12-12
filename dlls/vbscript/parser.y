@@ -1123,7 +1123,7 @@ static class_decl_t *add_class_function(parser_ctx_t *ctx, class_decl_t *class_d
 static class_decl_t *add_dim_prop(parser_ctx_t *ctx, class_decl_t *class_decl, dim_decl_t *dim_decl, unsigned storage_flags)
 {
     if(storage_flags & STORAGE_IS_DEFAULT) {
-        FIXME("variant prop van't be default value\n");
+        FIXME("variant prop can't be default value\n");
         ctx->hres = E_FAIL;
         return NULL;
     }
