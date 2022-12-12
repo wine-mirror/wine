@@ -1372,6 +1372,7 @@ static void build(struct options* opts)
 
     if (!opts->nostdlib && !is_pe)
     {
+	strarray_add(&link_args, "-ldl");
 	strarray_add(&link_args, "-lm");
 	strarray_add(&link_args, "-lc");
     }
