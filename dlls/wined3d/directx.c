@@ -2819,7 +2819,6 @@ static const struct wined3d_state_entry_template misc_state_template_no3d[] =
     {STATE_RENDER(WINED3D_RS_WRAP5),                      {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_WRAP6),                      {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_WRAP7),                      {STATE_VDECL}},
-    {STATE_RENDER(WINED3D_RS_WRAP8),                      {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_EXTENTS),                    {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_COLORKEYBLENDENABLE),        {STATE_VDECL}},
     {STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),   {STATE_VDECL}},
