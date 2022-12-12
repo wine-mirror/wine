@@ -145,9 +145,9 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
         WIN32_FIND_DATAW finddata;
         HANDLE hfind;
         int len = 1;
-        WCHAR *groups_data = malloc(sizeof(WCHAR));
+        WCHAR *groups_data = malloc(sizeof(WCHAR)), *new_groups_data;
         char *groups_dataA;
-        HDDEDATA ret;
+        HDDEDATA ret = NULL;
 
         groups_data[0] = 0;
         programs = get_programs_path(L"*", FALSE);
@@ -160,7 +160,14 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
                     wcscmp(finddata.cFileName, L".") && wcscmp(finddata.cFileName, L".."))
                 {
                     len += lstrlenW(finddata.cFileName) + 2;
-                    groups_data = realloc(groups_data, len * sizeof(WCHAR));
+                    new_groups_data = realloc(groups_data, len * sizeof(WCHAR));
+                    if (!new_groups_data)
+                    {
+                        free(groups_data);
+                        free(programs);
+                        return NULL;
+                    }
+                    groups_data = new_groups_data;
                     lstrcatW(groups_data, finddata.cFileName);
                     lstrcatW(groups_data, L"\r\n");
                 }
@@ -170,8 +177,11 @@ static inline HDDEDATA Dde_OnRequest(UINT uFmt, HCONV hconv, HSZ hszTopic,
 
         len = WideCharToMultiByte(CP_ACP, 0, groups_data, -1, NULL, 0, NULL, NULL);
         groups_dataA = malloc(len * sizeof(WCHAR));
-        WideCharToMultiByte(CP_ACP, 0, groups_data, -1, groups_dataA, len, NULL, NULL);
-        ret = DdeCreateDataHandle(dwDDEInst, (BYTE *)groups_dataA, len, 0, hszGroups, uFmt, 0);
+        if (groups_dataA)
+        {
+            WideCharToMultiByte(CP_ACP, 0, groups_data, -1, groups_dataA, len, NULL, NULL);
+            ret = DdeCreateDataHandle(dwDDEInst, (BYTE *)groups_dataA, len, 0, hszGroups, uFmt, 0);
+        }
 
         free(groups_dataA);
         free(groups_data);
