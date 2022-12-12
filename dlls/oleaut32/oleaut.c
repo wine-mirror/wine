@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -34,6 +35,7 @@
 #include "ole2.h"
 #include "olectl.h"
 #include "oleauto.h"
+#include "rpcproxy.h"
 #include "initguid.h"
 #include "typelib.h"
 #include "oleaut32_oaidl.h"
@@ -999,6 +1001,114 @@ static HRESULT dispatch_create_stub(IUnknown *server, IRpcStubBuffer **stub)
     return hr;
 }
 
+struct dispinterface_stub
+{
+    CInterfaceStubVtbl stub_vtbl;
+    CStdStubBuffer stub_buffer;
+};
+
+static struct dispinterface_stub *impl_from_IRpcStubBuffer(IRpcStubBuffer *iface)
+{
+    return CONTAINING_RECORD(&iface->lpVtbl, struct dispinterface_stub, stub_buffer.lpVtbl);
+}
+
+static ULONG WINAPI dispinterface_stub_Release(IRpcStubBuffer *iface)
+{
+    struct dispinterface_stub *stub = impl_from_IRpcStubBuffer(iface);
+    unsigned int refcount = InterlockedDecrement(&stub->stub_buffer.RefCount);
+
+    TRACE("%p decreasing refcount to %u.\n", stub, refcount);
+
+    if (!refcount)
+    {
+        /* Copied from NdrCStdStubBuffer_Release(), but supposedly incorrect
+         * according to the comment there. */
+        IRpcStubBuffer_Disconnect(iface);
+
+        free(stub);
+    }
+    return refcount;
+}
+
+extern const ExtendedProxyFileInfo oleaut32_oaidl_ProxyFileInfo;
+
+static const CInterfaceStubVtbl *find_idispatch_stub_vtbl(void)
+{
+    CInterfaceStubVtbl *const *vtbl;
+
+    for (vtbl = oleaut32_oaidl_ProxyFileInfo.pStubVtblList; *vtbl; ++vtbl)
+    {
+        if (IsEqualGUID((*vtbl)->header.piid, &IID_IDispatch))
+            return *vtbl;
+    }
+
+    assert(0);
+    return NULL;
+}
+
+/* Normal dispinterfaces have an IID specified by the IDL compiler as DIID_*,
+ * but are otherwise identical to IDispatch. Unfortunately, such interfaces may
+ * not actually support IDispatch in QueryInterface.
+ *
+ * This becomes a problem, since CreateStub() was designed such that, for some
+ * reason, the caller need not actually pass the interface matching "iid". As
+ * such the standard rpcrt4 implementation will query the server for the
+ * relevant IID.
+ *
+ * This means that we cannot just pass IID_IDispatch with the object, even
+ * though it is in theory an IDispatch. However, while the standard stub
+ * constructor is not exported from rpcrt4, all of the vtbl methods are, and
+ * the type is public, so we *can* manually create it ourselves, bypassing the
+ * QueryInterface check.
+ *
+ * This relies on some rpcrt4 implementation details.
+ */
+static HRESULT dispinterface_create_stub(IUnknown *server, const GUID *iid, IRpcStubBuffer **stub)
+{
+    const CInterfaceStubVtbl *stub_vtbl = find_idispatch_stub_vtbl();
+    struct dispinterface_stub *object;
+    void *dispatch;
+    HRESULT hr;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    /* It's possible we can just assume that "server" is already the
+     * dispinterface type—we don't have tests for this—but since rpcrt4 queries
+     * (which we do have tests for) it makes sense for us to match that
+     * behaviour. */
+    if (FAILED(hr = IUnknown_QueryInterface(server, iid, &dispatch)))
+    {
+        ERR("Object does not support interface %s.\n", debugstr_guid(iid));
+        free(object);
+        return hr;
+    }
+
+    object->stub_vtbl.header = stub_vtbl->header;
+    object->stub_vtbl.Vtbl.QueryInterface             = CStdStubBuffer_QueryInterface;
+    object->stub_vtbl.Vtbl.AddRef                     = CStdStubBuffer_AddRef;
+    object->stub_vtbl.Vtbl.Release                    = dispinterface_stub_Release;
+    object->stub_vtbl.Vtbl.Connect                    = CStdStubBuffer_Connect;
+    object->stub_vtbl.Vtbl.Disconnect                 = CStdStubBuffer_Disconnect;
+    object->stub_vtbl.Vtbl.Invoke                     = CStdStubBuffer_Invoke;
+    object->stub_vtbl.Vtbl.IsIIDSupported             = CStdStubBuffer_IsIIDSupported;
+    object->stub_vtbl.Vtbl.CountRefs                  = CStdStubBuffer_CountRefs;
+    object->stub_vtbl.Vtbl.DebugServerQueryInterface  = CStdStubBuffer_DebugServerQueryInterface;
+    object->stub_vtbl.Vtbl.DebugServerRelease         = CStdStubBuffer_DebugServerRelease;
+    object->stub_buffer.lpVtbl = &object->stub_vtbl.Vtbl;
+    object->stub_buffer.RefCount = 1;
+    object->stub_buffer.pvServerObject = dispatch;
+    /* rpcrt4 will also fill pPSFactory, but it never uses it except in the
+     * Release method (which we reimplement). It's only to keep a reference to
+     * the module to implement NdrDllCanUnloadNow(). We use the default
+     * DllCanUnloadNow() from winecrt0, which always returns S_FALSE, so don't
+     * bother filling pPSFactory. */
+
+    TRACE("Created stub %p.\n", object);
+    *stub = (IRpcStubBuffer *)&object->stub_buffer.lpVtbl;
+    return S_OK;
+}
+
 static HRESULT WINAPI dispatch_typelib_ps_CreateStub(IPSFactoryBuffer *iface,
     REFIID iid, IUnknown *server, IRpcStubBuffer **stub)
 {
@@ -1022,10 +1132,10 @@ static HRESULT WINAPI dispatch_typelib_ps_CreateStub(IPSFactoryBuffer *iface,
     if (attr->typekind == TKIND_INTERFACE || (attr->wTypeFlags & TYPEFLAG_FDUAL))
         hr = CreateStubFromTypeInfo(typeinfo, iid, server, stub);
     else
-        hr = dispatch_create_stub(server, stub);
+        hr = dispinterface_create_stub(server, iid, stub);
 
     if (FAILED(hr))
-        ERR("Failed to create proxy, hr %#lx.\n", hr);
+        ERR("Failed to create stub, hr %#lx.\n", hr);
 
     ITypeInfo_ReleaseTypeAttr(typeinfo, attr);
     ITypeInfo_Release(typeinfo);
