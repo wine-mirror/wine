@@ -485,7 +485,7 @@ static inline propschema *impl_from_IMimePropertySchema(IMimePropertySchema *ifa
  */
 static HRESULT copy_headers_to_buf(IStream *stm, char **ptr)
 {
-    char *buf = NULL;
+    char *buf = NULL, *new_buf;
     DWORD size = PARSER_BUF_SIZE, offset = 0, last_end = 0;
     HRESULT hr;
     BOOL done = FALSE;
@@ -497,18 +497,14 @@ static HRESULT copy_headers_to_buf(IStream *stm, char **ptr)
         char *end;
         DWORD read;
 
-        if(!buf)
-            buf = malloc(size + 1);
-        else
-        {
-            size *= 2;
-            buf = realloc(buf, size + 1);
-        }
-        if(!buf)
+        if(buf) size *= 2;
+        new_buf = realloc(buf, size + 1);
+        if(!new_buf)
         {
             hr = E_OUTOFMEMORY;
             goto fail;
         }
+        buf = new_buf;
 
         hr = IStream_Read(stm, buf + offset, size - offset, &read);
         if(FAILED(hr)) goto fail;
