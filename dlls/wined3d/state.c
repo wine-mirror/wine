@@ -2042,12 +2042,6 @@ static void state_tessellation(struct wined3d_context *context, const struct win
                 state->render_states[WINED3D_RS_ENABLEADAPTIVETESSELLATION]);
 }
 
-static void state_flushbatch(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    if (state->render_states[WINED3D_RS_FLUSHBATCH])
-        FIXME("Render state WINED3D_RS_FLUSHBATCH not implemented yet.\n");
-}
-
 static void state_translucentsi(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     if (state->render_states[WINED3D_RS_TRANSLUCENTSORTINDEPENDENT])
@@ -4693,7 +4687,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_LEGACY_CONTEXT       },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern_w }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DITHERENABLE),              { STATE_RENDER(WINED3D_RS_DITHERENABLE),              state_ditherenable  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_FLUSHBATCH),                { STATE_RENDER(WINED3D_RS_FLUSHBATCH),                state_flushbatch    }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT),{ STATE_RENDER(WINED3D_RS_TRANSLUCENTSORTINDEPENDENT),state_translucentsi }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAP0),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     state_wrap          }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_WRAP1),                     { STATE_RENDER(WINED3D_RS_WRAP0),                     NULL                }, WINED3D_GL_EXT_NONE             },
@@ -5489,7 +5482,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         { 30,  33},
         { 39,  40},
         { 42,  47},
-        { 49,  49},
+        { 49,  50},
         { 52,  59},
         { 61, 127},
         {149, 150},
