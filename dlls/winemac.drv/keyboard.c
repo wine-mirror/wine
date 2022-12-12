@@ -594,7 +594,7 @@ static void update_layout_list(void)
     struct layout *layout;
     int i;
 
-    if (!InterlockedExchange(&macdrv_layout_list_needs_update, FALSE)) return;
+    if (!InterlockedExchange((LONG *)&macdrv_layout_list_needs_update, FALSE)) return;
 
     sources = macdrv_create_input_source_list();
 
