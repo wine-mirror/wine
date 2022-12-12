@@ -17,6 +17,7 @@
  *
  */
 
+#include <stdbool.h>
 #include <math.h>
 
 #define COBJMACROS
@@ -394,6 +395,7 @@ struct disp_obj
 {
     ISomethingFromDispatch ISomethingFromDispatch_iface;
     LONG ref;
+    bool support_idispatch;
 };
 
 static inline struct disp_obj *impl_from_ISomethingFromDispatch(ISomethingFromDispatch *iface)
@@ -403,6 +405,11 @@ static inline struct disp_obj *impl_from_ISomethingFromDispatch(ISomethingFromDi
 
 static HRESULT WINAPI disp_obj_QueryInterface(ISomethingFromDispatch *iface, REFIID iid, void **out)
 {
+    struct disp_obj *obj = impl_from_ISomethingFromDispatch(iface);
+
+    if (!obj->support_idispatch)
+        ok(!IsEqualGUID(iid, &IID_IDispatch), "Expected no query for IDispatch.\n");
+
     if (IsEqualGUID(iid, &IID_IUnknown) || IsEqualGUID(iid, &IID_IDispatch)
             || IsEqualGUID(iid, &IID_ISomethingFromDispatch)
             || IsEqualGUID(iid, &DIID_ItestIF4))
@@ -475,12 +482,18 @@ static const ISomethingFromDispatchVtbl disp_obj_vtbl =
     disp_obj_anotherfn,
 };
 
-static ISomethingFromDispatch *create_disp_obj(void)
+static ISomethingFromDispatch *create_disp_obj2(bool support_idispatch)
 {
     struct disp_obj *obj = CoTaskMemAlloc(sizeof(*obj));
     obj->ISomethingFromDispatch_iface.lpVtbl = &disp_obj_vtbl;
     obj->ref = 1;
+    obj->support_idispatch = support_idispatch;
     return &obj->ISomethingFromDispatch_iface;
+}
+
+static ISomethingFromDispatch *create_disp_obj(void)
+{
+    return create_disp_obj2(true);
 }
 
 struct coclass_obj
@@ -3710,7 +3723,7 @@ static void test_marshal_dispinterface(void)
 {
     static const LARGE_INTEGER zero;
 
-    ISomethingFromDispatch *disp_obj = create_disp_obj();
+    ISomethingFromDispatch *disp_obj = create_disp_obj2(false);
     ITypeInfo *typeinfo = NULL;
     IDispatch *proxy_disp;
     IStream *stream;
