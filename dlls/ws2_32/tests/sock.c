@@ -4761,6 +4761,89 @@ done:
         closesocket(server_socket);
 }
 
+/* Test what socket state is inherited from the listening socket by accept(). */
+static void test_accept_inheritance(void)
+{
+    struct sockaddr_in addr, destaddr;
+    SOCKET listener, server, client;
+    struct linger linger;
+    int ret, len, value;
+    unsigned int i;
+
+    static const struct
+    {
+        int optname;
+        int optval;
+        int value;
+    }
+    int_tests[] =
+    {
+        {SOL_SOCKET, SO_REUSEADDR, 1},
+        {SOL_SOCKET, SO_KEEPALIVE, 1},
+        {SOL_SOCKET, SO_OOBINLINE, 1},
+        {SOL_SOCKET, SO_SNDBUF, 0x123},
+        {SOL_SOCKET, SO_RCVBUF, 0x123},
+        {SOL_SOCKET, SO_SNDTIMEO, 0x123},
+        {SOL_SOCKET, SO_RCVTIMEO, 0x123},
+        {IPPROTO_TCP, TCP_NODELAY, 1},
+    };
+
+    listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(listener != -1, "failed to create socket, error %u\n", WSAGetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(int_tests); ++i)
+    {
+        ret = setsockopt(listener, int_tests[i].optname, int_tests[i].optval,
+                (char *)&int_tests[i].value, sizeof(int_tests[i].value));
+        ok(!ret, "test %u: got error %u\n", i, WSAGetLastError());
+    }
+
+    linger.l_onoff = 1;
+    linger.l_linger = 555;
+    ret = setsockopt(listener, SOL_SOCKET, SO_LINGER, (char *)&linger, sizeof(linger));
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    ret = bind(listener, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+    len = sizeof(destaddr);
+    ret = getsockname(listener, (struct sockaddr *)&destaddr, &len);
+    ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
+
+    ret = listen(listener, 1);
+    ok(!ret, "failed to listen, error %u\n", WSAGetLastError());
+
+    client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ok(client != -1, "failed to create socket, error %u\n", WSAGetLastError());
+    ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
+    ok(!ret, "failed to connect, error %u\n", WSAGetLastError());
+    server = accept(listener, NULL, NULL);
+    ok(server != -1, "failed to accept, error %u\n", WSAGetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(int_tests); ++i)
+    {
+        value = 0;
+        len = sizeof(value);
+        ret = getsockopt(server, int_tests[i].optname, int_tests[i].optval, (char *)&value, &len);
+        ok(!ret, "test %u: got error %u\n", i, WSAGetLastError());
+        todo_wine_if (i == 0 || (i >= 3 && i <= 6))
+            ok(value == int_tests[i].value, "test %u: got value %#x\n", i, value);
+    }
+
+    len = sizeof(linger);
+    memset(&linger, 0, sizeof(linger));
+    ret = getsockopt(server, SOL_SOCKET, SO_LINGER, (char *)&linger, &len);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ok(linger.l_onoff == 1, "got on/off %u\n", linger.l_onoff);
+    ok(linger.l_linger == 555, "got linger %u\n", linger.l_onoff);
+
+    close(server);
+    close(client);
+    close(listener);
+}
+
 static void test_extendedSocketOptions(void)
 {
     WSADATA wsa;
@@ -13607,6 +13690,7 @@ START_TEST( sock )
     test_listen();
     test_select();
     test_accept();
+    test_accept_inheritance();
     test_getpeername();
     test_getsockname();
 
