@@ -192,12 +192,12 @@ static const struct
 /* The prefix prepended to a Win32 clipboard format name to make a Mac pasteboard type. */
 static const CFStringRef registered_name_type_prefix = CFSTR("org.winehq.registered.");
 
-static DWORD clipboard_thread_id;
+static unsigned int clipboard_thread_id;
 static HWND clipboard_hwnd;
 static BOOL is_clipboard_owner;
 static macdrv_window clipboard_cocoa_window;
-static ULONG last_clipboard_update;
-static DWORD last_get_seqno;
+static unsigned int last_clipboard_update;
+static unsigned int last_get_seqno;
 static WINE_CLIPFORMAT **current_mac_formats;
 static unsigned int nb_current_mac_formats;
 
@@ -285,7 +285,8 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
 
         if (!NtUserGetClipboardFormatName(format->format_id, buffer, ARRAY_SIZE(buffer)))
         {
-            WARN("failed to get name for format %s; error 0x%08x\n", debugstr_format(format->format_id), RtlGetLastWin32Error());
+            WARN("failed to get name for format %s; error 0x%08x\n", debugstr_format(format->format_id),
+                 (unsigned int)RtlGetLastWin32Error());
             free(format);
             return NULL;
         }
@@ -1142,7 +1143,7 @@ NTSTATUS macdrv_dnd_get_data(void *arg)
     CFIndex i;
     CFStringRef type, best_type;
     WINE_CLIPFORMAT* best_format = NULL;
-    NTSTATUS status = STATUS_SUCCESS;
+    unsigned int status = STATUS_SUCCESS;
 
     TRACE("pasteboard %p, desired_format %s\n", pasteboard, debugstr_format(params->format));
 
@@ -1563,7 +1564,7 @@ static void update_clipboard(void)
     static BOOL updating;
 
     TRACE("is_clipboard_owner %d last_clipboard_update %u now %u\n",
-          is_clipboard_owner, last_clipboard_update, NtGetTickCount());
+          is_clipboard_owner, last_clipboard_update, (unsigned int)NtGetTickCount());
 
     if (updating) return;
     updating = TRUE;
@@ -1599,7 +1600,7 @@ static BOOL init_clipboard(HWND hwnd)
     register_builtin_formats();
     grab_win32_clipboard();
 
-    TRACE("clipboard thread %04x running\n", GetCurrentThreadId());
+    TRACE("clipboard thread %04x running\n", clipboard_thread_id);
     return TRUE;
 }
 
