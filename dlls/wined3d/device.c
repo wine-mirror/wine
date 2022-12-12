@@ -4129,6 +4129,7 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                         FIXME("Render state WINED3D_RS_TRANSLUCENTSORTINDEPENDENT not implemented yet.\n");
                     break;
 
+                case WINED3D_RS_WRAP4:
                 case WINED3D_RS_WRAP5:
                 case WINED3D_RS_WRAP6:
                 case WINED3D_RS_WRAP7:
