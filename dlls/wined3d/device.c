@@ -4114,6 +4114,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                         FIXME("Render state WINED3D_RS_MIPMAPLODBIAS not implemented yet.\n");
                     break;
 
+                case WINED3D_RS_ANISOTROPY:
+                    if (state->rs[WINED3D_RS_ANISOTROPY])
+                        FIXME("Render state WINED3D_RS_ANISOTROPY not implemented yet.\n");
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
