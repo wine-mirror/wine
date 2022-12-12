@@ -4124,6 +4124,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                         FIXME("Render state WINED3D_RS_FLUSHBATCH not implemented yet.\n");
                     break;
 
+                case WINED3D_RS_TRANSLUCENTSORTINDEPENDENT:
+                    if (state->rs[WINED3D_RS_TRANSLUCENTSORTINDEPENDENT])
+                        FIXME("Render state WINED3D_RS_TRANSLUCENTSORTINDEPENDENT not implemented yet.\n");
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
