@@ -53,6 +53,7 @@ twain_add_onedriver(const WCHAR *dsname) {
 	DSENTRYPROC	dsEntry;
 	TW_IDENTITY	fakeOrigin;
 	TW_IDENTITY	sourceId;
+	struct all_devices *new_devices;
 	TW_UINT16	ret;
         WCHAR path[MAX_PATH];
 
@@ -89,7 +90,10 @@ twain_add_onedriver(const WCHAR *dsname) {
 		}
 		if (i < nrdevices)
 			break;
-                devices = realloc( devices, sizeof(devices[0])*(nrdevices+1) );
+		new_devices = realloc( devices, sizeof(devices[0]) * (nrdevices + 1) );
+		if (!new_devices)
+			break;
+		devices = new_devices;
 		devices[nrdevices].modname = wcsdup( path );
 		devices[nrdevices].identity = sourceId;
 		nrdevices++;
