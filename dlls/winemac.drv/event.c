@@ -519,8 +519,8 @@ NTSTATUS macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
     struct macdrv_thread_data *data = macdrv_thread_data();
     macdrv_event_mask event_mask = get_event_mask(mask);
 
-    TRACE("count %d, handles %p, timeout %p, mask %x, flags %x\n", count,
-          handles, timeout, mask, flags);
+    TRACE("count %d, handles %p, timeout %p, mask %x, flags %x\n", (unsigned int)count,
+          handles, timeout, (unsigned int)mask, (unsigned int)flags);
 
     if (!data)
     {
