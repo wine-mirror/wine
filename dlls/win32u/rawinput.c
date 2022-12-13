@@ -249,7 +249,7 @@ static struct device *add_device( HKEY key, DWORD type )
     if ((status = NtOpenFile( &file, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr, &io,
                               FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT )))
     {
-        ERR( "Failed to open device file %s, status %#x.\n", debugstr_w(path), status );
+        WARN( "Failed to open device file %s, status %#x.\n", debugstr_w(path), status );
         return NULL;
     }
 
