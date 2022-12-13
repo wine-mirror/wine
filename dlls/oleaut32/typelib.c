@@ -2252,12 +2252,12 @@ static void MSFT_ReadValue( VARIANT * pVar, int offset, TLBContext *pcx )
             if(size == -1){
                 V_BSTR(pVar) = NULL;
             }else{
+                int len;
                 ptr = heap_alloc_zero(size);
                 MSFT_Read(ptr, size, pcx, DO_NOT_SEEK);
-                V_BSTR(pVar)=SysAllocStringLen(NULL,size);
-                /* FIXME: do we need a AtoW conversion here? */
-                V_UNION(pVar, bstrVal[size])='\0';
-                while(size--) V_UNION(pVar, bstrVal[size])=ptr[size];
+                len = MultiByteToWideChar(CP_ACP, 0, ptr, size, NULL, 0 );
+                V_BSTR(pVar)=SysAllocStringLen(NULL,len);
+                MultiByteToWideChar(CP_ACP, 0, ptr, size, V_BSTR(pVar), len );
                 heap_free(ptr);
             }
 	}
@@ -5734,23 +5734,12 @@ static HRESULT TLB_CopyElemDesc( const ELEMDESC *src, ELEMDESC *dest, char **buf
     return S_OK;
 }
 
-static HRESULT TLB_SanitizeBSTR(BSTR str)
-{
-    UINT len = SysStringLen(str), i;
-    for (i = 0; i < len; ++i)
-        if (str[i] > 0x7f)
-            str[i] = '?';
-    return S_OK;
-}
-
 static HRESULT TLB_SanitizeVariant(VARIANT *var)
 {
     if (V_VT(var) == VT_INT)
         return VariantChangeType(var, var, 0, VT_I4);
     else if (V_VT(var) == VT_UINT)
         return VariantChangeType(var, var, 0, VT_UI4);
-    else if (V_VT(var) == VT_BSTR)
-        return TLB_SanitizeBSTR(V_BSTR(var));
 
     return S_OK;
 }
@@ -9421,7 +9410,8 @@ static DWORD WMSFT_encode_variant(VARIANT *value, WMSFT_TLBFile *file)
     }
 
     case VT_BSTR: {
-        int i, len = (6+SysStringLen(V_BSTR(&v))+3) & ~0x3;
+        int mb_len = WideCharToMultiByte(CP_ACP, 0, V_BSTR(&v), SysStringLen(V_BSTR(&v)), NULL, 0, NULL, NULL );
+        int i, len = (6 + mb_len + 3) & ~0x3;
         char *data;
 
         if(file->custdata_seg.data){
@@ -9434,15 +9424,9 @@ static DWORD WMSFT_encode_variant(VARIANT *value, WMSFT_TLBFile *file)
         }
 
         *((unsigned short *)data) = V_VT(value);
-        *((unsigned int *)(data+2)) = SysStringLen(V_BSTR(&v));
-        for(i=0; i<SysStringLen(V_BSTR(&v)); i++) {
-            if(V_BSTR(&v)[i] <= 0x7f)
-                data[i+6] = V_BSTR(&v)[i];
-            else
-                data[i+6] = '?';
-        }
-        WideCharToMultiByte(CP_ACP, 0, V_BSTR(&v), SysStringLen(V_BSTR(&v)), &data[6], len-6, NULL, NULL);
-        for(i=6+SysStringLen(V_BSTR(&v)); i<len; i++)
+        *((unsigned int *)(data+2)) = mb_len;
+        WideCharToMultiByte(CP_ACP, 0, V_BSTR(&v), SysStringLen(V_BSTR(&v)), &data[6], mb_len, NULL, NULL);
+        for (i = 6 + mb_len; i < len; i++)
             data[i] = 0x57;
 
         /* TODO: Check if the encoded data is already present in custdata_seg */
