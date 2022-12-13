@@ -1816,7 +1816,12 @@ static void test_CompareStringA(void)
   static const char ABC_FF[] = {'A','B','C',0,0xFF};
   int ret, i;
   char a[256];
+  BOOL is_utf8;
+  CPINFOEXA cpinfo;
   LCID lcid = MAKELCID(MAKELANGID(LANG_FRENCH, SUBLANG_DEFAULT), SORT_DEFAULT);
+
+  GetCPInfoExA( CP_ACP, 0, &cpinfo );
+  is_utf8 = cpinfo.CodePage == CP_UTF8;
 
   for (i = 0; i < ARRAY_SIZE(comparestringa_data); i++)
   {
@@ -1945,13 +1950,13 @@ static void test_CompareStringA(void)
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_EE, 3, ABC_FF, 3);
     ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_EE, 5, ABC_FF, 3);
-    ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
+    ok(ret == CSTR_GREATER_THAN || (is_utf8 && ret == CSTR_EQUAL), "expected CSTR_GREATER_THAN, got %d\n", ret);
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_EE, 3, ABC_FF, 5);
-    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN || (is_utf8 && ret == CSTR_EQUAL), "expected CSTR_LESS_THAN, got %d\n", ret);
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_EE, 5, ABC_FF, 5);
-    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+    ok(ret == CSTR_LESS_THAN || (is_utf8 && ret == CSTR_EQUAL), "expected CSTR_LESS_THAN, got %d\n", ret);
     ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_FF, 5, ABC_EE, 5);
-    ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
+    ok(ret == CSTR_GREATER_THAN || (is_utf8 && ret == CSTR_EQUAL), "expected CSTR_GREATER_THAN, got %d\n", ret);
 }
 
 static void test_CompareStringW(void)
