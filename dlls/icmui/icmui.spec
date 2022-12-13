@@ -1,0 +1,2 @@
+@ stub SetupColorMatchingA
+@ stub SetupColorMatchingW

@@ -1176,6 +1176,7 @@ enable_hvsimanagementapi
 enable_ia2comproxy
 enable_iccvid
 enable_icmp
+enable_icmui
 enable_ieframe
 enable_ieproxy
 enable_iertutil
@@ -22305,6 +22306,7 @@ wine_fn_config_makefile dlls/hvsimanagementapi/tests enable_tests
 wine_fn_config_makefile dlls/ia2comproxy enable_ia2comproxy
 wine_fn_config_makefile dlls/iccvid enable_iccvid
 wine_fn_config_makefile dlls/icmp enable_icmp
+wine_fn_config_makefile dlls/icmui enable_icmui
 wine_fn_config_makefile dlls/ieframe enable_ieframe
 wine_fn_config_makefile dlls/ieframe/tests enable_tests
 wine_fn_config_makefile dlls/ieproxy enable_ieproxy
