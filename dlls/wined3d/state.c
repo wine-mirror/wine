@@ -2018,16 +2018,6 @@ static void state_tessellation(struct wined3d_context *context, const struct win
                 state->render_states[WINED3D_RS_ENABLEADAPTIVETESSELLATION]);
 }
 
-static void state_swvp(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    static int once;
-    if (state->render_states[WINED3D_RS_SOFTWAREVERTEXPROCESSING])
-    {
-        if (!once++)
-            FIXME("Software vertex processing not implemented.\n");
-    }
-}
-
 static void get_src_and_opr(uint32_t arg, BOOL is_alpha, GLenum* source, GLenum* operand) {
     /* The WINED3DTA_ALPHAREPLICATE flag specifies the alpha component of the
     * input should be used for all input components. The WINED3DTA_COMPLEMENT
@@ -4645,7 +4635,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_LEGACY_CONTEXT       },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern_w }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DITHERENABLE),              { STATE_RENDER(WINED3D_RS_DITHERENABLE),              state_ditherenable  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),  { STATE_RENDER(WINED3D_RS_SOFTWAREVERTEXPROCESSING),  state_swvp          }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_PATCHEDGESTYLE),            { STATE_RENDER(WINED3D_RS_PATCHEDGESTYLE),            state_patchedgestyle}, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_PATCHSEGMENTS),             { STATE_RENDER(WINED3D_RS_PATCHSEGMENTS),             state_patchsegments }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_POSITIONDEGREE),            { STATE_RENDER(WINED3D_RS_POSITIONDEGREE),            state_positiondegree}, WINED3D_GL_EXT_NONE             },
@@ -5426,6 +5415,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {138, 138},
         {144, 144},
         {149, 150},
+        {153, 153},
         {162, 162},
         {168, 169},
         {171, 171},

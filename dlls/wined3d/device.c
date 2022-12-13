@@ -4163,6 +4163,15 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                         FIXME("Render state WINED3D_RS_COLORKEYBLENDENABLE not implemented yet.\n");
                     break;
 
+                case WINED3D_RS_SOFTWAREVERTEXPROCESSING:
+                {
+                    static unsigned int once;
+
+                    if ((state->rs[WINED3D_RS_SOFTWAREVERTEXPROCESSING]) && !once++)
+                        FIXME("Software vertex processing not implemented.\n");
+                    break;
+                }
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
