@@ -1970,13 +1970,6 @@ static void state_sample_mask_w(struct wined3d_context *context, const struct wi
     WARN("Unsupported in local OpenGL implementation: glSampleMaski.\n");
 }
 
-static void state_patchedgestyle(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    if (state->render_states[WINED3D_RS_PATCHEDGESTYLE] != WINED3D_PATCH_EDGE_DISCRETE)
-        FIXME("WINED3D_RS_PATCHEDGESTYLE %#x not yet implemented.\n",
-                state->render_states[WINED3D_RS_PATCHEDGESTYLE]);
-}
-
 static void state_patchsegments(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     union {
@@ -4635,7 +4628,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_LEGACY_CONTEXT       },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern_w }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DITHERENABLE),              { STATE_RENDER(WINED3D_RS_DITHERENABLE),              state_ditherenable  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_PATCHEDGESTYLE),            { STATE_RENDER(WINED3D_RS_PATCHEDGESTYLE),            state_patchedgestyle}, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_PATCHSEGMENTS),             { STATE_RENDER(WINED3D_RS_PATCHSEGMENTS),             state_patchsegments }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_POSITIONDEGREE),            { STATE_RENDER(WINED3D_RS_POSITIONDEGREE),            state_positiondegree}, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_NORMALDEGREE),              { STATE_RENDER(WINED3D_RS_NORMALDEGREE),              state_normaldegree  }, WINED3D_GL_EXT_NONE             },
@@ -5416,7 +5408,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {144, 144},
         {149, 150},
         {153, 153},
-        {162, 162},
+        {162, 163},
         {168, 169},
         {171, 171},
         {174, 177},
