@@ -4210,6 +4210,12 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_TWEENFACTOR:
                     break;
 
+                case WINED3D_RS_POSITIONDEGREE:
+                    if (state->rs[WINED3D_RS_POSITIONDEGREE] != WINED3D_DEGREE_CUBIC)
+                        FIXME("WINED3D_RS_POSITIONDEGREE %#x not yet implemented.\n",
+                                state->rs[WINED3D_RS_POSITIONDEGREE]);
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
