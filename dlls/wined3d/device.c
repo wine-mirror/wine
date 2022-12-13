@@ -4178,6 +4178,28 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                                 state->rs[WINED3D_RS_PATCHEDGESTYLE]);
                     break;
 
+                case WINED3D_RS_PATCHSEGMENTS:
+                {
+                    union
+                    {
+                        DWORD d;
+                        float f;
+                    } tmpvalue;
+                    tmpvalue.f = 1.0f;
+
+                    if (state->rs[WINED3D_RS_PATCHSEGMENTS] != tmpvalue.d)
+                    {
+                        static bool displayed = false;
+
+                        tmpvalue.d = state->rs[WINED3D_RS_PATCHSEGMENTS];
+                        if(!displayed)
+                            FIXME("(WINED3D_RS_PATCHSEGMENTS,%f) not yet implemented.\n", tmpvalue.f);
+
+                        displayed = true;
+                    }
+                    break;
+                }
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
