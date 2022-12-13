@@ -175,7 +175,7 @@ static const IPersistStreamVtbl persiststream_vtbl = {
 };
 
 /* for ClassFactory */
-HRESULT WINAPI create_dswave(REFIID lpcGUID, void **ppobj)
+HRESULT create_dswave(REFIID lpcGUID, void **ppobj)
 {
     IDirectMusicWaveImpl *obj;
     HRESULT hr;

@@ -42,7 +42,7 @@
 /*****************************************************************************
  * ClassFactory
  */
-extern HRESULT WINAPI create_dswave(REFIID lpcGUID, void **ret_iface) DECLSPEC_HIDDEN;
+extern HRESULT create_dswave(REFIID lpcGUID, void **ret_iface) DECLSPEC_HIDDEN;
 
 /**********************************************************************
  * Dll lifetime tracking declaration for dswave.dll
