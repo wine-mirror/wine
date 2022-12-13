@@ -4204,6 +4204,9 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     WARN("token: %#x.\n", state->rs[WINED3D_RS_DEBUGMONITORTOKEN]);
                     break;
 
+                case WINED3D_RS_INDEXEDVERTEXBLENDENABLE:
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
