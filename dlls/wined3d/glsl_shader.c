@@ -11970,7 +11970,6 @@ static const struct wined3d_state_entry_template glsl_vertex_pipe_vp_states[] =
     {STATE_RENDER(WINED3D_RS_POINTSCALE_B),                      {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSCALE_C),                      {STATE_RENDER(WINED3D_RS_POINTSCALEENABLE),                  NULL                   }, WINED3D_GL_EXT_NONE          },
     {STATE_RENDER(WINED3D_RS_POINTSIZE_MAX),                     {STATE_RENDER(WINED3D_RS_POINTSIZE_MIN),                     NULL                   }, WINED3D_GL_EXT_NONE          },
-    {STATE_RENDER(WINED3D_RS_TWEENFACTOR),                       {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   NULL                   }, WINED3D_GL_EXT_NONE          },
     /* NP2 texture matrix fixups. They are not needed if
      * GL_ARB_texture_non_power_of_two is supported. Otherwise, register
      * glsl_vertex_pipe_texmatrix(), which takes care of updating the texture

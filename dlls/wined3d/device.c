@@ -4207,6 +4207,9 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_INDEXEDVERTEXBLENDENABLE:
                     break;
 
+                case WINED3D_RS_TWEENFACTOR:
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
