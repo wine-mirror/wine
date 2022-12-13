@@ -4222,6 +4222,9 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                                 state->rs[WINED3D_RS_NORMALDEGREE]);
                     break;
 
+                case WINED3D_RS_MINTESSELLATIONLEVEL:
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
