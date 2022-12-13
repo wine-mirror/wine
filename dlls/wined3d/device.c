@@ -4153,6 +4153,11 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                     break;
                 }
 
+                case WINED3D_RS_EXTENTS:
+                    if (state->rs[WINED3D_RS_EXTENTS])
+                        FIXME("Render state WINED3D_RS_EXTENTS not implemented yet.\n");
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
