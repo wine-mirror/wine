@@ -1937,6 +1937,8 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         else
             hres = jsdisp_call_value(This, passed_this ? jsval_disp(passed_this) : jsval_undefined(), wFlags, argc, argv, pvarRes ? &r : NULL);
 
+        while(argc--)
+            jsval_release(argv[argc]);
         if(argv != buf)
             free(argv);
         if(SUCCEEDED(hres) && pvarRes) {
