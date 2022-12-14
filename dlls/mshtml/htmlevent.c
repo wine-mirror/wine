@@ -3683,10 +3683,13 @@ static HRESULT dispatch_event_object(EventTarget *event_target, DOMEvent *event,
         *r = variant_bool(!event->prevent_default);
 
     if(target_vtbl && target_vtbl->set_current_event) {
-        prev_event = target_vtbl->set_current_event(&event_target->dispex, prev_event);
-        if(prev_event)
-            IHTMLEventObj_Release(prev_event);
+        IHTMLEventObj *prev = target_vtbl->set_current_event(&event_target->dispex, prev_event);
+        if(prev)
+            IHTMLEventObj_Release(prev);
     }
+
+    if(prev_event)
+        IHTMLEventObj_Release(prev_event);
 
     if(event_info[event->event_id].flags & EVENT_HASDEFAULTHANDLERS) {
         BOOL prevent_default = event->prevent_default;
