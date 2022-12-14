@@ -141,7 +141,11 @@ GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *g
     if (!bind_flags)
         return GL_PIXEL_UNPACK_BUFFER;
 
-    if (bind_flags == WINED3D_BIND_INDEX_BUFFER)
+    /* We must always return GL_ELEMENT_ARRAY_BUFFER here;
+     * wined3d_device_gl_create_bo() checks the GL binding to see whether we
+     * can suballocate, and we cannot suballocate if this BO might be used for
+     * an index buffer. */
+    if (bind_flags & WINED3D_BIND_INDEX_BUFFER)
         return GL_ELEMENT_ARRAY_BUFFER;
 
     if (bind_flags & (WINED3D_BIND_SHADER_RESOURCE | WINED3D_BIND_UNORDERED_ACCESS)
