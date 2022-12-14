@@ -5846,12 +5846,6 @@ void detach_document_node(HTMLDocumentNode *doc)
         doc->catmgr = NULL;
     }
 
-    if(!doc->dom_document && doc->window) {
-        /* document fragments own reference to inner window */
-        IHTMLWindow2_Release(&doc->window->base.IHTMLWindow2_iface);
-        doc->window = NULL;
-    }
-
     if(doc->browser) {
         list_remove(&doc->browser_entry);
         doc->browser = NULL;
@@ -5933,6 +5927,19 @@ static HRESULT HTMLDocumentFragment_clone(HTMLDOMNode *iface, nsIDOMNode *nsnode
 
     *ret = &new_node->node;
     return S_OK;
+}
+
+static void HTMLDocumentFragment_unlink(HTMLDOMNode *iface)
+{
+    HTMLDocumentNode *This = impl_from_HTMLDOMNode(iface);
+
+    if(This->window) {
+        detach_document_node(This);
+
+        /* document fragments own reference to inner window */
+        IHTMLWindow2_Release(&This->window->base.IHTMLWindow2_iface);
+        This->window = NULL;
+    }
 }
 
 static inline HTMLDocumentNode *impl_from_DispatchEx(DispatchEx *iface)
@@ -6134,7 +6141,21 @@ static const NodeImplVtbl HTMLDocumentFragmentImplVtbl = {
     HTMLDocumentNode_QI,
     HTMLDocumentNode_destructor,
     HTMLDocumentNode_cpc,
-    HTMLDocumentFragment_clone
+    HTMLDocumentFragment_clone,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    NULL,
+    HTMLDocumentFragment_unlink
 };
 
 static const tid_t HTMLDocumentNode_iface_tids[] = {
