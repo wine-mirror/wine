@@ -353,8 +353,9 @@ static void release_class_ptr( CLASS *ptr )
 static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
 {
     ATOM atom = get_int_atom_value( name );
-    ULONG_PTR instance = (UINT_PTR)module & ~0xffff;
+    ULONG_PTR instance = (UINT_PTR)module;
     CLASS *class;
+    int is_win16;
 
     user_lock();
     LIST_FOR_EACH_ENTRY( class, &class_list, CLASS, entry )
@@ -368,7 +369,9 @@ static CLASS *find_class( HINSTANCE module, UNICODE_STRING *name )
             if (wcsnicmp( class->name, name->Buffer, name->Length / sizeof(WCHAR) ) ||
                 class->name[name->Length / sizeof(WCHAR)]) continue;
         }
-        if (!class->local || !module || (class->instance & ~0xffff) == instance)
+        is_win16 = !(class->instance >> 16);
+        if (!instance || !class->local || class->instance == instance ||
+            (!is_win16 && ((class->instance & ~0xffff) == (instance & ~0xffff))))
         {
             TRACE( "%s %lx -> %p\n", debugstr_us(name), instance, class );
             return class;
