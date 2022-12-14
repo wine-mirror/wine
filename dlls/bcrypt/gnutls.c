@@ -1075,7 +1075,7 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (curve != GNUTLS_ECC_CURVE_SECP256R1)
+    if (curve != GNUTLS_ECC_CURVE_SECP256R1 && curve != GNUTLS_ECC_CURVE_SECP384R1)
     {
         FIXME( "curve %u not supported\n", curve );
         free( x.data ); free( y.data ); free( d.data );
