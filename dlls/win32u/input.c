@@ -1843,6 +1843,8 @@ BOOL WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height 
         BITMAP bitmap_data;
 
         if (!NtGdiExtGetObjectW( bitmap, sizeof(bitmap_data), &bitmap_data )) return FALSE;
+        width = bitmap_data.bmWidth;
+        height = bitmap_data.bmHeight;
         caret_bitmap = NtGdiCreateBitmap( bitmap_data.bmWidth, bitmap_data.bmHeight,
                                           bitmap_data.bmPlanes, bitmap_data.bmBitsPixel, NULL );
         if (caret_bitmap)
