@@ -332,7 +332,7 @@ HRESULT StdProxy_Construct(REFIID riid,
   This = calloc(1, sizeof(StdProxyImpl));
   if (!This) return E_OUTOFMEMORY;
 
-  if (!pUnkOuter) pUnkOuter = (IUnknown *)This;
+  if (!pUnkOuter) pUnkOuter = (IUnknown *)&This->IRpcProxyBuffer_iface;
   This->IRpcProxyBuffer_iface.lpVtbl = &StdProxy_Vtbl;
   This->PVtbl = vtbl->Vtbl;
   /* one reference for the proxy */
