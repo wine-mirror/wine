@@ -75,19 +75,19 @@ FONT 8, "Ms Shell Dlg"
     GROUPBOX        "User #3", IDC_XI_USER_3, 15, 220, 291, 60
 
     LTEXT           "No user detected on slot #0, make sure your " \
-                    "gamepad is plugged in, and not overriden for " \
+                    "gamepad is plugged in, and not overridden for " \
                     "DInput in the Joysticks tab.",
                     IDC_XI_NO_USER_0,         15, 10, 291, 60
     LTEXT           "No user detected on slot #1, make sure your " \
-                    "gamepad is plugged in, and not overriden for " \
+                    "gamepad is plugged in, and not overridden for " \
                     "DInput in the Joysticks tab.",
                     IDC_XI_NO_USER_1,         15,  80, 291, 60
     LTEXT           "No user detected on slot #2, make sure your " \
-                    "gamepad is plugged in, and not overriden for " \
+                    "gamepad is plugged in, and not overridden for " \
                     "DInput in the Joysticks tab.",
                     IDC_XI_NO_USER_2,         15, 150, 291, 60
     LTEXT           "No user detected on slot #3, make sure your " \
-                    "gamepad is plugged in, and not overriden for " \
+                    "gamepad is plugged in, and not overridden for " \
                     "DInput in the Joysticks tab.",
                     IDC_XI_NO_USER_3,         15, 220, 291, 60
 

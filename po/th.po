@@ -3770,25 +3770,25 @@ msgstr ""
 #: dlls/joy.cpl/joy.rc:78
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
-"overriden for DInput in the Joysticks tab."
+"overridden for DInput in the Joysticks tab."
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:82
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
-"overriden for DInput in the Joysticks tab."
+"overridden for DInput in the Joysticks tab."
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:86
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
-"overriden for DInput in the Joysticks tab."
+"overridden for DInput in the Joysticks tab."
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:90
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
-"overriden for DInput in the Joysticks tab."
+"overridden for DInput in the Joysticks tab."
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
