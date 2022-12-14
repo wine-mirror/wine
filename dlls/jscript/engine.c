@@ -1684,7 +1684,7 @@ static HRESULT interp_carray_set(script_ctx_t *ctx)
     array = stack_top(ctx);
     assert(is_object_instance(array));
 
-    hres = jsdisp_propput_idx(iface_to_jsdisp(get_object(array)), index, value);
+    hres = jsdisp_propput_idx(to_jsdisp(get_object(array)), index, value);
     jsval_release(value);
     return hres;
 }
