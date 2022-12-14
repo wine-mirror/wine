@@ -2247,7 +2247,7 @@ void jsdisp_free(jsdisp_t *obj)
 jsdisp_t *jsdisp_addref(jsdisp_t *jsdisp)
 {
     ULONG ref = ++jsdisp->ref;
-    TRACE("(%p) ref=%d\n", jsdisp, ref);
+    TRACE("(%p) ref=%ld\n", jsdisp, ref);
     return jsdisp;
 }
 
@@ -2255,7 +2255,7 @@ void jsdisp_release(jsdisp_t *jsdisp)
 {
     ULONG ref = --jsdisp->ref;
 
-    TRACE("(%p) ref=%d\n", jsdisp, ref);
+    TRACE("(%p) ref=%ld\n", jsdisp, ref);
 
     if(!ref)
         jsdisp_free(jsdisp);
