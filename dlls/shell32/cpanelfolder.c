@@ -66,6 +66,8 @@ typedef struct {
     int dwAttributes;		/* attributes returned by GetAttributesOf FIXME: use it */
 } ICPanelImpl;
 
+static const WCHAR name_spaceW[] = L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ControlPanel\\NameSpace";
+
 static const IShellFolder2Vtbl vt_ShellFolder2;
 static const IPersistFolder2Vtbl vt_PersistFolder2;
 static const IShellExecuteHookWVtbl vt_ShellExecuteHookW;
@@ -355,14 +357,14 @@ static int SHELL_RegisterRegistryCPanelApps(IEnumIDListImpl *list, HKEY hkey_roo
     return cnt;
 }
 
-static int SHELL_RegisterCPanelFolders(IEnumIDListImpl *list, HKEY hkey_root, LPCSTR szRepPath)
+static int SHELL_RegisterCPanelFolders(IEnumIDListImpl *list, HKEY hkey_root, const WCHAR *reg_path)
 {
     char name[MAX_PATH];
     HKEY hkey;
 
     int cnt = 0;
 
-    if (RegOpenKeyA(hkey_root, szRepPath, &hkey) == ERROR_SUCCESS)
+    if (RegOpenKeyW(hkey_root, reg_path, &hkey) == ERROR_SUCCESS)
     {
         int idx = 0;
         for(;; ++idx)
@@ -398,8 +400,7 @@ static BOOL CreateCPanelEnumList(IEnumIDListImpl *list, DWORD dwFlags)
 
     /* enumerate control panel folders */
     if (dwFlags & SHCONTF_FOLDERS)
-        SHELL_RegisterCPanelFolders(list, HKEY_LOCAL_MACHINE,
-                "SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\ControlPanel\\NameSpace");
+        SHELL_RegisterCPanelFolders(list, HKEY_LOCAL_MACHINE, name_spaceW);
 
     /* enumerate the control panel applets */
     if (dwFlags & SHCONTF_NONFOLDERS)
