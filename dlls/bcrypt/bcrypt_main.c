@@ -397,7 +397,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, const WC
 
 static void destroy_object( struct object *obj )
 {
-    obj->magic = 0;
+    SecureZeroMemory( &obj->magic, sizeof(obj->magic) );
     free( obj );
 }
 
