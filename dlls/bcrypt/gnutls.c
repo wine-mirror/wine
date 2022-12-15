@@ -2205,6 +2205,8 @@ static NTSTATUS key_asymmetric_encrypt( void *args )
     NTSTATUS status = STATUS_SUCCESS;
     int ret;
 
+    if (!key_data(params->key)->a.pubkey) return STATUS_INVALID_HANDLE;
+
     d.data = params->input;
     d.size = params->input_len;
     if ((ret = pgnutls_pubkey_encrypt_data(key_data(params->key)->a.pubkey, 0, &d, &e)))

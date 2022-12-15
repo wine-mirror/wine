@@ -2284,12 +2284,12 @@ static void test_rsa_encrypt(void)
     ret = BCryptGenerateKeyPair(rsa, &key, 512, 0);
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
 
-    todo_wine {
     /* Not finalized key */
     ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, NULL, 0, &encrypted_size, 0);
     ok(ret == STATUS_INVALID_HANDLE, "got %lx\n", ret);
     BCryptFinalizeKeyPair(key, 0);
 
+    todo_wine {
     /*   No padding    */
     memset(input_no_padding, 0, sizeof(input_no_padding));
     strcpy((char *)input_no_padding, "Hello World");
