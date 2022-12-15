@@ -713,8 +713,6 @@ static NTSTATUS key_export_rsa_public( struct key *key, UCHAR *buf, ULONG len, U
 
     if (key_data(key)->a.pubkey)
         ret = pgnutls_pubkey_export_rsa_raw( key_data(key)->a.pubkey, &m, &e );
-    else if (key_data(key)->a.privkey)
-        ret = pgnutls_privkey_export_rsa_raw( key_data(key)->a.privkey, &m, &e, NULL, NULL, NULL, NULL, NULL, NULL );
     else
         return STATUS_INVALID_PARAMETER;
 
@@ -781,8 +779,6 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
 
     if (key_data(key)->a.pubkey)
         ret = pgnutls_pubkey_export_ecc_raw( key_data(key)->a.pubkey, &curve, &x, &y );
-    else if (key_data(key)->a.privkey)
-        ret = pgnutls_privkey_export_ecc_raw( key_data(key)->a.privkey, &curve, &x, &y, NULL );
     else
         return STATUS_INVALID_PARAMETER;
 
@@ -831,8 +827,6 @@ static NTSTATUS key_export_dsa_public( struct key *key, UCHAR *buf, ULONG len, U
 
     if (key_data(key)->a.pubkey)
         ret = pgnutls_pubkey_export_dsa_raw( key_data(key)->a.pubkey, &p, &q, &g, &y );
-    else if (key_data(key)->a.privkey)
-        ret = pgnutls_privkey_export_dsa_raw( key_data(key)->a.privkey, &p, &q, &g, &y, NULL );
     else
         return STATUS_INVALID_PARAMETER;
 
@@ -1574,6 +1568,8 @@ static NTSTATUS key_asymmetric_import( void *args )
     const struct key_asymmetric_import_params *params = args;
     struct key *key = params->key;
     unsigned flags = params->flags;
+    gnutls_pubkey_t pubkey;
+    NTSTATUS ret;
 
     switch (key->alg_id)
     {
@@ -1583,13 +1579,15 @@ static NTSTATUS key_asymmetric_import( void *args )
     case ALG_ID_ECDSA_P384:
         if (flags & KEY_IMPORT_FLAG_PUBLIC)
             return key_import_ecc_public( key, params->buf, params->len );
-        return key_import_ecc( key, params->buf, params->len );
+        ret = key_import_ecc( key, params->buf, params->len );
+        break;
 
     case ALG_ID_RSA:
     case ALG_ID_RSA_SIGN:
         if (flags & KEY_IMPORT_FLAG_PUBLIC)
             return key_import_rsa_public( key, params->buf, params->len );
-        return key_import_rsa( key, params->buf, params->len );
+        ret = key_import_rsa( key, params->buf, params->len );
+        break;
 
     case ALG_ID_DSA:
         if (flags & KEY_IMPORT_FLAG_PUBLIC)
@@ -1599,7 +1597,10 @@ static NTSTATUS key_asymmetric_import( void *args )
             return key_import_dsa_public( key, params->buf, params->len );
         }
         if (key->u.a.flags & KEY_FLAG_LEGACY_DSA_V2)
-            return key_import_dsa_capi( key, params->buf, params->len );
+        {
+            ret = key_import_dsa_capi( key, params->buf, params->len );
+            break;
+        }
         FIXME( "DSA private key not supported\n" );
         return STATUS_NOT_IMPLEMENTED;
 
@@ -1607,6 +1608,26 @@ static NTSTATUS key_asymmetric_import( void *args )
         FIXME( "algorithm %u not yet supported\n", key->alg_id );
         return STATUS_NOT_IMPLEMENTED;
     }
+
+    if (ret) return ret;
+
+    if ((ret = pgnutls_pubkey_init( &pubkey )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (pgnutls_pubkey_import_privkey( pubkey, key_data(params->key)->a.privkey, 0, 0 ))
+    {
+        /* Imported private key may be legitimately missing public key, so ignore the failure here. */
+        pgnutls_pubkey_deinit( pubkey );
+    }
+    else
+    {
+        if (key_data(key)->a.pubkey) pgnutls_pubkey_deinit( key_data(key)->a.pubkey );
+        key_data(key)->a.pubkey = pubkey;
+    }
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS prepare_gnutls_signature_dsa( struct key *key, UCHAR *signature, ULONG signature_len,
