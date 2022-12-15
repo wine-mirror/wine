@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-03-16 22:20-0600\n"
+"PO-Revision-Date: 2022-12-15 12:32-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
@@ -1337,8 +1337,6 @@ msgid "Options"
 msgstr "Opcions"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
 msgstr "Per defecte"
 
@@ -3744,7 +3742,7 @@ msgstr "&Habilita"
 
 #: dlls/joy.cpl/joy.rc:43
 msgid "&Override"
-msgstr "S&obrescriu"
+msgstr "Fes-ho &directe"
 
 #: dlls/joy.cpl/joy.rc:44
 msgid "Connected"
@@ -3768,25 +3766,23 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "DInput"
-msgstr ""
+msgstr "DInput"
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Axes"
-msgstr ""
+msgstr "Eixos"
 
 #: dlls/joy.cpl/joy.rc:60
 msgid "POVs"
-msgstr ""
+msgstr "POVs"
 
 #: dlls/joy.cpl/joy.rc:61
 msgid "Buttons"
 msgstr "Botons"
 
 #: dlls/joy.cpl/joy.rc:62
-#, fuzzy
-#| msgid "Test Force Feedback"
 msgid "Force Feedback Effect"
-msgstr "Prova de retroacció de força"
+msgstr "Efecte de retroacció de força"
 
 #: dlls/joy.cpl/joy.rc:64
 msgid ""
@@ -3798,60 +3794,64 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:70
 msgid "XInput"
-msgstr ""
+msgstr "XInput"
 
 #: dlls/joy.cpl/joy.rc:73
-#, fuzzy
-#| msgid "User"
 msgid "User #0"
-msgstr "Usuari"
+msgstr "Usuari #0"
 
 #: dlls/joy.cpl/joy.rc:74
-#, fuzzy
-#| msgid "User"
 msgid "User #1"
-msgstr "Usuari"
+msgstr "Usuari #1"
 
 #: dlls/joy.cpl/joy.rc:75
-#, fuzzy
-#| msgid "User"
 msgid "User #2"
-msgstr "Usuari"
+msgstr "Usuari #2"
 
 #: dlls/joy.cpl/joy.rc:76
-#, fuzzy
-#| msgid "User"
 msgid "User #3"
-msgstr "Usuari"
+msgstr "Usuari #3"
 
 #: dlls/joy.cpl/joy.rc:78
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"No s'ha detectat ningú usuari en la ranura #0, assegureu-vos que el "
+"controlador estigui endollat, i no configurat per a DInput directe en la "
+"pestanya de palanques de control."
 
 #: dlls/joy.cpl/joy.rc:82
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"No s'ha detectat ningú usuari en la ranura #1, assegureu-vos que el "
+"controlador estigui endollat, i no configurat per a DInput directe en la "
+"pestanya de palanques de control."
 
 #: dlls/joy.cpl/joy.rc:86
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"No s'ha detectat ningú usuari en la ranura #2, assegureu-vos que el "
+"controlador estigui endollat, i no configurat per a DInput directe en la "
+"pestanya de palanques de control."
 
 #: dlls/joy.cpl/joy.rc:90
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"No s'ha detectat ningú usuari en la ranura #3, assegureu-vos que el "
+"controlador estigui endollat, i no configurat per a DInput directe en la "
+"pestanya de palanques de control."
 
 #: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
 #: dlls/joy.cpl/joy.rc:98
 msgid "Rumble"
-msgstr ""
+msgstr "Vibra"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -4063,13 +4063,11 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cyclic __proto__ value"
-msgstr ""
+msgstr "Valor __proto__ cíclic"
 
 #: dlls/jscript/jscript.rc:75
-#, fuzzy
-#| msgid "Cannot define property '|': object is not extensible"
 msgid "Cannot create property for a non-extensible object"
-msgstr "No es pot definir la propietat '|': l'objecte no és extensible"
+msgstr "No es pot definir una propietat en un objecte no extensible"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
@@ -4084,10 +4082,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "No es pot modificar la propietat no escrivible '|'"
 
 #: dlls/jscript/jscript.rc:79
-#, fuzzy
-#| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
-msgstr "'this' no és un objecte de Map"
+msgstr "'this' no és un objecte de |"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
@@ -4104,45 +4100,39 @@ msgstr "Wine"
 
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
-msgstr ""
+msgstr "Europa Occidental i Estats Units"
 
 #: dlls/kernelbase/kernelbase.rc:30
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe"
-msgstr "Europeu central"
+msgstr "Europa Central"
 
 #: dlls/kernelbase/kernelbase.rc:34
-#, fuzzy
-#| msgid "Turkish"
 msgid "Turkic"
 msgstr "Turc"
 
 #: dlls/kernelbase/kernelbase.rc:36
 msgid "Korean"
-msgstr ""
+msgstr "Koreà"
 
 #: dlls/kernelbase/kernelbase.rc:37
-#, fuzzy
-#| msgid "Operation Ceased"
 msgid "Traditional Chinese"
-msgstr "Operació cessada"
+msgstr "Xinès tradicional"
 
 #: dlls/kernelbase/kernelbase.rc:38
 msgid "Simplified Chinese"
-msgstr ""
+msgstr "Xinès simplificat"
 
 #: dlls/kernelbase/kernelbase.rc:43
 msgid "Indic"
-msgstr ""
+msgstr "Índic"
 
 #: dlls/kernelbase/kernelbase.rc:44
 msgid "Georgian"
-msgstr ""
+msgstr "Georgià"
 
 #: dlls/kernelbase/kernelbase.rc:45
 msgid "Armenian"
-msgstr ""
+msgstr "Armeni"
 
 #: dlls/kernelbase/winerror.mc:28
 msgid "Success.\n"
@@ -15242,10 +15232,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "&Substitueix...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:59
-#, fuzzy
-#| msgid "&New...\tCtrl+N"
 msgid "&Go To...\tCtrl+G"
-msgstr "&Nou...\tCtrl+N"
+msgstr "&Vés a...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -15288,17 +15276,15 @@ msgstr "&Superior:"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "Vés a la línia"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "Número CRL"
+msgstr "Número de &línia:"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
-msgstr ""
+msgstr "Vés a"
 
 #: programs/notepad/notepad.rc:145
 msgid "Encoding:"
@@ -15364,7 +15350,7 @@ msgstr "Z"
 #: programs/notepad/notepad.rc:162
 msgctxt "accelerator GoTo"
 msgid "G"
-msgstr ""
+msgstr "G"
 
 #: programs/notepad/notepad.rc:74
 msgid "Page &p"
@@ -15442,7 +15428,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "Ln %ld, Col %ld"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
@@ -16053,56 +16039,6 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:67
-#, fuzzy
-#| msgid ""
-#| "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
-#| "f]\n"
-#| "\n"
-#| "  Adds a key to the registry or adds a new value to a given registry "
-#| "key.\n"
-#| "\n"
-#| "  <key>\n"
-#| "     The registry key to add or, if either [/v] or [/ve] is specified,\n"
-#| "     the key in which to add the new registry data.\n"
-#| "\n"
-#| "     Format: ROOT\\Subkey\n"
-#| "\n"
-#| "     ROOT: A predefined registry key. This must be one of the following:\n"
-#| "\n"
-#| "         HKEY_LOCAL_MACHINE  | HKLM\n"
-#| "         HKEY_CURRENT_USER   | HKCU\n"
-#| "         HKEY_CLASSES_ROOT   | HKCR\n"
-#| "         HKEY_USERS          | HKU\n"
-#| "         HKEY_CURRENT_CONFIG | HKCC\n"
-#| "\n"
-#| "     Subkey: The full path to a registry key under a given ROOT key.\n"
-#| "\n"
-#| "  /v <value_name>\n"
-#| "     The name of the registry value to add.\n"
-#| "\n"
-#| "  /ve\n"
-#| "     Add an unnamed registry value. This option modifies the (Default)\n"
-#| "     registry value.\n"
-#| "\n"
-#| "  /t <type>\n"
-#| "     The type of data to add to the registry. If [/t] is specified,\n"
-#| "     <type> must be one of the following:\n"
-#| "\n"
-#| "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-#| "         REG_DWORD | REG_BINARY   | REG_NONE\n"
-#| "\n"
-#| "     If [/t] is not specified, the default data type is REG_SZ.\n"
-#| "\n"
-#| "  /s <separator>\n"
-#| "     The character used to separate strings in REG_MULTI_SZ data.\n"
-#| "     If [/s] is not specified, the default separator is \\0.\n"
-#| "\n"
-#| "  /d <data>\n"
-#| "     The data to add to the new registry value.\n"
-#| "\n"
-#| "  /f\n"
-#| "     Modify the registry without prompting for confirmation.\n"
-#| "\n"
 msgid ""
 "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
 "\n"
@@ -16187,7 +16123,7 @@ msgstr ""
 "     <tipus> ha de ser un dels següents:\n"
 "\n"
 "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-"         REG_DWORD | REG_BINARY   | REG_NONE\n"
+"         REG_DWORD | REG_QWORD    | REG_BINARY   | REG_NONE\n"
 "\n"
 "     Si no s'especifica [/t], el tipus de dades per defecte és REG_SZ.\n"
 "\n"
@@ -16640,10 +16576,8 @@ msgstr "Valor &DWORD"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "Valor &DWORD"
+msgstr "Valor &QWORD"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -17206,16 +17140,12 @@ msgid "Collapse"
 msgstr "Col·lapsa"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "Afegeix un valor nou de 32 bits"
+msgstr "Afegeix un valor nou de 64 bits"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "Edita DWORD"
+msgstr "Edita QWORD"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
