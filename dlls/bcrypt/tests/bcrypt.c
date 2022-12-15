@@ -2262,6 +2262,14 @@ static UCHAR rsaPublicBlobWithInvalidPublicExpSize[] =
     0x87, 0x75, 0x33, 0x15, 0xb8, 0xde, 0x32, 0x30, 0xb4, 0x5e, 0xfd
 };
 
+static const UCHAR rsa_encrypted_no_padding[] =
+{
+    0x4a, 0xc1, 0xfa, 0x4f, 0xe0, 0x3f, 0x36, 0x9a, 0x64, 0xbf, 0x2e, 0x00, 0xb4, 0xb5, 0x40, 0xbe,
+    0x2d, 0x9a, 0x14, 0xf6, 0x8f, 0xa5, 0xc2, 0xe2, 0x20, 0xaf, 0x21, 0x79, 0xc6, 0x32, 0x7e, 0xea,
+    0x73, 0x00, 0x01, 0xbb, 0x9a, 0x19, 0x73, 0x41, 0x96, 0xae, 0x88, 0x6e, 0x36, 0x56, 0xe9, 0x9c,
+    0xac, 0x04, 0x82, 0xa8, 0x00, 0xdb, 0x4e, 0x29, 0x61, 0x7e, 0xaf, 0x64, 0xdb, 0xa2, 0x70, 0x0f,
+};
+
 static void test_rsa_encrypt(void)
 {
     static UCHAR input[] = "Hello World!";
@@ -2287,7 +2295,15 @@ static void test_rsa_encrypt(void)
     /* Not finalized key */
     ret = BCryptEncrypt(key, input, sizeof(input), NULL, NULL, 0, NULL, 0, &encrypted_size, 0);
     ok(ret == STATUS_INVALID_HANDLE, "got %lx\n", ret);
-    BCryptFinalizeKeyPair(key, 0);
+    BCryptDestroyKey(key);
+
+    /* Import a different public key first to make sure a public key from private key improted next
+     * overrides it. */
+    ret = BCryptImportKeyPair(rsa, NULL, BCRYPT_RSAPUBLIC_BLOB, &key, rsaPublicBlob, sizeof(rsaPublicBlob), 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
+
+    ret = BCryptImportKeyPair(rsa, NULL, BCRYPT_RSAPRIVATE_BLOB, &key, rsaPrivateBlob, sizeof(rsaPrivateBlob), 0);
+    ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
 
     todo_wine {
     /*   No padding    */
@@ -2313,6 +2329,7 @@ static void test_rsa_encrypt(void)
     ret = BCryptEncrypt(key, input_no_padding, sizeof(input_no_padding), NULL, NULL, 0, encrypted_b, encrypted_size, &encrypted_size, BCRYPT_PAD_NONE);
     ok(ret == STATUS_SUCCESS, "got %lx\n", ret);
     ok(!memcmp(encrypted_a, encrypted_b, encrypted_size), "Both outputs should be the same\n");
+    ok(!memcmp(encrypted_b, rsa_encrypted_no_padding, encrypted_size), "Data mismatch.\n");
 
     BCryptDecrypt(key, encrypted_a, encrypted_size, NULL, NULL, 0, NULL, 0, &decrypted_size, BCRYPT_PAD_NONE);
     decrypted = malloc(decrypted_size);
