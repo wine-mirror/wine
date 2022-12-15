@@ -318,16 +318,6 @@ static void set_thread_context_(unsigned line, struct debugger_context *ctx, str
     ok_(__FILE__,line)(ret, "SetThreadContext failed: %lu\n", GetLastError());
 }
 
-static void fetch_process_context(struct debugger_context *ctx)
-{
-    struct debuggee_thread *thread;
-
-    WINE_RB_FOR_EACH_ENTRY(thread, &ctx->threads, struct debuggee_thread, entry)
-    {
-        fetch_thread_context(thread);
-    }
-}
-
 #define WAIT_EVENT_TIMEOUT 20000
 #define POLL_EVENT_TIMEOUT 200
 
@@ -1706,8 +1696,6 @@ static void test_debugger(const char *argv0)
 
     if (sizeof(loop_code) > 1)
     {
-        struct debuggee_thread *prev_thread;
-
         memset(buf, OP_BP, sizeof(buf));
         memcpy(proc_code, &loop_code, sizeof(loop_code));
         ret = WriteProcessMemory(pi.hProcess, mem, buf, sizeof(buf), NULL);
@@ -1735,9 +1723,6 @@ static void test_debugger(const char *argv0)
         expect_breakpoint_exception(&ctx, thread_proc + 1);
         exception_cnt = 1;
 
-        prev_thread = ctx.current_thread;
-        fetch_process_context(&ctx);
-
         byte = 0xc3; /* ret */
         ret = WriteProcessMemory(pi.hProcess, thread_proc + 1, &byte, 1, NULL);
         ok(ret, "WriteProcessMemory failed: %lu\n", GetLastError());
@@ -1746,6 +1731,10 @@ static void test_debugger(const char *argv0)
         {
             DEBUG_EVENT ev;
 
+            fetch_thread_context(ctx.current_thread);
+            ok(get_ip(&ctx.current_thread->ctx) == thread_proc + 2
+               || broken(get_ip(&ctx.current_thread->ctx) == thread_proc), /* sometimes observed on win10 */
+               "unexpected instruction pointer2 %p (%p)\n", get_ip(&ctx.current_thread->ctx), thread_proc);
             /* even when there are more pending events, they are not reported until current event is continued */
             ret = WaitForDebugEvent(&ev, 10);
             ok(GetLastError() == ERROR_SEM_TIMEOUT, "WaitForDebugEvent returned %x(%lu)\n", ret, GetLastError());
@@ -1757,17 +1746,8 @@ static void test_debugger(const char *argv0)
                ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
             ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == thread_proc + 1,
                "ExceptionAddress = %p\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress);
-            ok(get_ip(&prev_thread->ctx) == thread_proc + 2
-               || broken(get_ip(&prev_thread->ctx) == thread_proc), /* sometimes observed on win10 */
-               "unexpected instruction pointer %p\n", get_ip(&prev_thread->ctx));
-            prev_thread = ctx.current_thread;
             exception_cnt++;
         }
-
-        /* for some reason sometimes on Windows one thread has a different address. this is always the thread
-         * with the last reported exception, so we simply skip the check for the last exception unless it's the only one. */
-        if (exception_cnt == 1)
-            ok(get_ip(&prev_thread->ctx) == thread_proc + 2, "unexpected instruction pointer %p\n", get_ip(&prev_thread->ctx));
 
         trace("received %u exceptions\n", exception_cnt);
 
