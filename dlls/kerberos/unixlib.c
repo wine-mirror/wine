@@ -305,7 +305,7 @@ static NTSTATUS copy_tickets_to_client( struct ticket_list *list, KERB_QUERY_TKT
 
 static NTSTATUS kerberos_fill_ticket_list( struct ticket_list *list )
 {
-    NTSTATUS status;
+    NTSTATUS status = STATUS_SUCCESS;
     krb5_error_code err;
     krb5_context ctx;
     krb5_cccol_cursor cursor = NULL;
