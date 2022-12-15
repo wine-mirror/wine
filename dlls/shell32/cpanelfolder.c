@@ -536,6 +536,34 @@ static HRESULT WINAPI ISF_ControlPanel_fnCreateViewObject(IShellFolder2 *iface, 
     return hr;
 }
 
+static BOOL validate_name_space(const ITEMIDLIST *pidl)
+{
+    HKEY hkey, hitem;
+    WCHAR *guidW;
+    GUID *guid;
+    LSTATUS r;
+
+    if (!_ILIsPidlSimple(pidl))
+        return FALSE;
+
+    guid = _ILGetGUIDPointer(pidl);
+    if (!guid)
+        return FALSE;
+    if (StringFromCLSID(guid, &guidW) != S_OK)
+        return FALSE;
+
+    r = RegOpenKeyW(HKEY_LOCAL_MACHINE, name_spaceW, &hkey);
+    if (r == ERROR_SUCCESS)
+    {
+        r = RegOpenKeyW(hkey, guidW, &hitem);
+        if (r == ERROR_SUCCESS)
+            RegCloseKey(hitem);
+        RegCloseKey(hkey);
+    }
+    CoTaskMemFree(guidW);
+    return r == ERROR_SUCCESS;
+}
+
 /**************************************************************************
 *  ISF_ControlPanel_fnGetAttributesOf
 */
@@ -559,12 +587,17 @@ static HRESULT WINAPI ISF_ControlPanel_fnGetAttributesOf(IShellFolder2 *iface, U
 
     while(cidl > 0 && *apidl) {
 	pdump(*apidl);
-        SHELL32_GetItemAttributes(&This->IShellFolder2_iface, *apidl, rgfInOut);
+
+        /* TODO: panel with GUID can contain sub-items but we don't support it yet */
+        if (!(*rgfInOut & SFGAO_VALIDATE) || _ILGetCPanelPointer(*apidl)
+                || validate_name_space(*apidl))
+            *rgfInOut &= SFGAO_CANLINK;
+        else
+            *rgfInOut &= SFGAO_VALIDATE;
+
 	apidl++;
 	cidl--;
     }
-    /* make sure SFGAO_VALIDATE is cleared, some apps depend on that */
-    *rgfInOut &= ~SFGAO_VALIDATE;
 
     TRACE("-- result=0x%08lx\n", *rgfInOut);
     return hr;

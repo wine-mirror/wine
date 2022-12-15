@@ -956,6 +956,8 @@ static void test_GetAttributesOf(void)
     static WCHAR cTestDirW[] = {'t','e','s','t','d','i','r',0};
     IShellFolder *IDesktopFolder, *testIShellFolder;
     ITEMIDLIST *newPIDL;
+    IEnumIDList *list;
+    ULONG fetch;
     int len;
 
     hr = SHGetDesktopFolder(&psfDesktop);
@@ -1070,6 +1072,57 @@ static void test_GetAttributesOf(void)
 
     Cleanup();
 
+    /* test Control Panel elements */
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL,
+            (WCHAR *)L"::{21EC2020-3AEA-1069-A2DD-08002B30309D}", NULL, &newPIDL, 0);
+    ok(hr == S_OK, "ParseDisplayName failed %08lx\n", hr);
+    hr = IShellFolder_BindToObject(IDesktopFolder, newPIDL, NULL,
+            &IID_IShellFolder, (void**)&testIShellFolder);
+    ok(hr == S_OK, "BindToObject failed %08lx\n", hr);
+    ILFree(newPIDL);
+
+    hr = IShellFolder_EnumObjects(testIShellFolder, NULL, SHCONTF_NONFOLDERS, &list);
+    ok(hr == S_OK, "EnumObjects failed %08lx\n", hr);
+
+    while (IEnumIDList_Next(list, 1, &newPIDL, &fetch) == S_OK)
+    {
+        WCHAR name[256];
+        STRRET strret;
+
+        hr = IShellFolder_GetDisplayNameOf(testIShellFolder, newPIDL, SHGDN_FORPARSING, &strret);
+        ok(hr == S_OK, "GetDisplayNameOf failed %08lx\n", hr);
+        StrRetToBufW(&strret, newPIDL, name, ARRAY_SIZE(name));
+
+        dwFlags = ~0;
+        hr = IShellFolder_GetAttributesOf(testIShellFolder, 1,
+                (LPCITEMIDLIST*)&newPIDL, &dwFlags);
+        ok(hr == S_OK, "ControlPanel->GetAttributesOf failed %08lx\n", hr);
+        ok(dwFlags == SFGAO_CANLINK ||
+                broken(!wcsncmp(L"::{26EE0668-A00A-44D7-9371-BEB064C98683}\\", name, 41)
+                    && dwFlags == SFGAO_VALIDATE),
+                "%s dwFlags = %08lx\n", debugstr_w(name), dwFlags);
+        ILFree(newPIDL);
+    }
+    IEnumIDList_Release(list);
+
+    hr = IShellFolder_ParseDisplayName(IDesktopFolder, NULL, NULL,
+            (WCHAR*)L"c:\\", NULL, &newPIDL, 0);
+    ok(hr == S_OK, "ParseDisplayName failed %08lx\n", hr);
+
+    dwFlags = ~0;
+    hr = IShellFolder_GetAttributesOf(testIShellFolder, 1,
+            (LPCITEMIDLIST*)&newPIDL, &dwFlags);
+    ok(hr == S_OK, "ControlPanel->GetAttributesOf failed %08lx\n", hr);
+    ok(dwFlags == SFGAO_VALIDATE, "dwFlags = %08lx\n", dwFlags);
+
+    dwFlags = ~0 & ~SFGAO_VALIDATE;
+    hr = IShellFolder_GetAttributesOf(testIShellFolder, 1,
+            (LPCITEMIDLIST*)&newPIDL, &dwFlags);
+    ok(hr == S_OK, "ControlPanel->GetAttributesOf failed %08lx\n", hr);
+    ok(dwFlags == SFGAO_CANLINK, "dwFlags = %08lx\n", dwFlags);
+
+    ILFree(newPIDL);
+    IShellFolder_Release(testIShellFolder);
     IShellFolder_Release(IDesktopFolder);
 }
 
