@@ -1330,6 +1330,15 @@ static void WINAPI fillfunc_cube(D3DXVECTOR4 *value, const D3DXVECTOR3 *texcoord
     value->w = texelsize->x;
 }
 
+static void WINAPI fillfunc_cube_coord(D3DXVECTOR4 *value, const D3DXVECTOR3 *texcoord,
+        const D3DXVECTOR3 *texelsize, void *data)
+{
+    value->x = texcoord->x;
+    value->y = texcoord->y;
+    value->z = texcoord->z;
+    value->w = 1.0f;
+}
+
 enum cube_coord
 {
     XCOORD = 0,
@@ -1388,15 +1397,20 @@ static DWORD get_argb_color(D3DFORMAT format, DWORD x, DWORD y, const D3DLOCKED_
     }
 }
 
+static BYTE get_s8_clipped(float v)
+{
+    return (BYTE)(v >= 0.0f ? v * 255 + 0.5f : 0.0f);
+}
+
 static DWORD get_expected_argb_color(D3DFORMAT format, const D3DXVECTOR4 *v)
 {
     switch (format)
     {
     case D3DFMT_A8R8G8B8:
-        return (BYTE)(v->w * 255 + 0.5f) << 24
-                | (BYTE)(v->x * 255 + 0.5f) << 16
-                | (BYTE)(v->y * 255 + 0.5f) << 8
-                | (BYTE)(v->z * 255 + 0.5f);
+        return get_s8_clipped(v->w) << 24
+                | get_s8_clipped(v->x) << 16
+                | get_s8_clipped(v->y) << 8
+                | get_s8_clipped(v->z);
 
     case D3DFMT_A1R5G5B5:
         return (BYTE)(v->w + 0.5f) << 24
@@ -1475,13 +1489,21 @@ static void test_D3DXFillCubeTexture(IDirect3DDevice9 *device)
     IDirect3DCubeTexture9 *tex;
     HRESULT hr;
 
+    /* A8R8G8B8 */
     hr = IDirect3DDevice9_CreateCubeTexture(device, 4, 0, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &tex, NULL);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+
     hr = D3DXFillCubeTexture(tex, fillfunc_cube, NULL);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
     compare_cube_texture(tex, fillfunc_cube, 1);
+
+    hr = D3DXFillCubeTexture(tex, fillfunc_cube_coord, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);
+    compare_cube_texture(tex, fillfunc_cube_coord, 1);
+
     IDirect3DCubeTexture9_Release(tex);
 
+    /* A1R5G5B5 */
     hr = IDirect3DDevice9_CreateCubeTexture(device, 4, 1, 0, D3DFMT_A1R5G5B5,
             D3DPOOL_MANAGED, &tex, NULL);
     ok(hr == D3D_OK, "Unexpected hr %#lx.\n", hr);

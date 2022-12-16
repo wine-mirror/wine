@@ -1288,7 +1288,7 @@ static inline void fill_texture(const struct pixel_format_desc *format, BYTE *po
         else if (format->type == FORMAT_ARGBF)
             v = *(DWORD *)&comp_value;
         else if (format->type == FORMAT_ARGB)
-            v = comp_value * ((1 << format->bits[c]) - 1) + 0.5f;
+            v = max(comp_value * ((1 << format->bits[c]) - 1) + 0.5f, 0);
         else
             FIXME("Unhandled format type %#x\n", format->type);
 
