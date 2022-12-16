@@ -1517,9 +1517,9 @@ static void fixup_elf64( const char *name, int fd, void *header, size_t header_s
     {
         switch (dyn[i].d_tag)
         {
-        case 25: dyn[i].d_tag = 0x60009990; break;  /* DT_INIT_ARRAY */
-        case 27: dyn[i].d_tag = 0x60009991; break;  /* DT_INIT_ARRAYSZ */
-        case 12: dyn[i].d_tag = 0x60009992; break;  /* DT_INIT */
+        case 25: dyn[i].d_tag = 0x60009994; break;  /* DT_INIT_ARRAY */
+        case 27: dyn[i].d_tag = 0x60009995; break;  /* DT_INIT_ARRAYSZ */
+        case 12: dyn[i].d_tag = 0x60009996; break;  /* DT_INIT */
         }
     }
     lseek( fd, phdr->p_offset, SEEK_SET );
