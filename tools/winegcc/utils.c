@@ -138,7 +138,15 @@ static file_type guess_lib_type(struct target target, const char* dir,
         if ((*file = try_lib_path(dir, "", prefix, library, ".def", file_def)))
             return file_dll;
     }
-    else arch_dir = get_arch_dir( target );
+    else
+    {
+        arch_dir = get_arch_dir( target );
+        if (!strcmp( suffix, ".a" ))  /* try Mingw-style .dll.a import lib */
+        {
+            if ((*file = try_lib_path(dir, arch_dir, prefix, library, ".dll.a", file_arh)))
+                return file_arh;
+        }
+    }
 
     /* static archives */
     if ((*file = try_lib_path(dir, arch_dir, prefix, library, suffix, file_arh)))
