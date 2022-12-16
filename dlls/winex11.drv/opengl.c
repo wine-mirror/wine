@@ -2638,6 +2638,8 @@ static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, c
 
         if (i == nb_pixel_formats)
             continue;
+        if ((pixel_formats[i].dwFlags & dwFlags) != dwFlags)
+            continue;
 
         format = &formats[format_count];
         format->format = i + 1;
