@@ -2463,16 +2463,19 @@ static void test_WM_DISPLAYCHANGE(void)
     ok( settings.dmBitsPerPel == 32, "got dmBitsPerPel %lu\n", settings.dmBitsPerPel );
     default_bpp = settings.dmBitsPerPel;
 
-    /* setting the default mode here sends a WM_DISPLAYCHANGE */
+    /* setting default mode most of the time doesn't send WM_DISPLAYCHANGE,
+     * it only does the first time ChangeDisplaySettingsExW is called */
 
     last_bpp = -1;
     change_counter = 0;
     displaychange_ok = TRUE;
     res = ChangeDisplaySettingsExW( NULL, &settings, NULL, 0, NULL );
     ok( !res, "ChangeDisplaySettingsExW returned %ld\n", res );
-    res = WaitForSingleObject( displaychange_sem, 10000 );
-    ok( !res, "WaitForSingleObject returned %#lx\n", res );
-    ok( last_bpp == default_bpp, "got WM_DISPLAYCHANGE bpp %u\n", last_bpp );
+    res = WaitForSingleObject( displaychange_sem, 1000 );
+    todo_wine
+    ok( res == WAIT_TIMEOUT || broken( !res ), "WaitForSingleObject returned %#lx\n", res );
+    todo_wine
+    ok( last_bpp == -1 || broken( last_bpp == default_bpp ), "got WM_DISPLAYCHANGE bpp %u\n", last_bpp );
     displaychange_ok = FALSE;
 
     for (i = 0; i < ARRAY_SIZE(test_bpps); i++)
