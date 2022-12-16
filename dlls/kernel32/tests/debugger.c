@@ -436,24 +436,30 @@ static void process_attach_events(struct debugger_context *ctx, BOOL pass_except
     ok(ctx->dll_cnt > 2, "dll_cnt = %d\n", ctx->dll_cnt);
 
     /* a new thread is created and it executes DbgBreakPoint, which causes the exception */
-    ok(ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %ld\n", ctx->ev.dwDebugEventCode);
+    /* Win11 doesn't generate it at this point (Win <= 10 do) */
     if (ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT)
     {
-        DWORD last_thread = ctx->ev.dwThreadId;
-        next_event(ctx, WAIT_EVENT_TIMEOUT);
+        DWORD last_thread;
+
+        /* sometimes (at least Win10) several thread creations are reported here */
+        do
+        {
+            last_thread = ctx->ev.dwThreadId;
+            next_event(ctx, WAIT_EVENT_TIMEOUT);
+        } while (ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT);
         ok(ctx->ev.dwThreadId == last_thread, "unexpected thread\n");
-    }
 
-    ok(ctx->ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %ld\n", ctx->ev.dwDebugEventCode);
-    ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %lx\n",
-       ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
-    ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddress != DbgBreakPoint\n");
+        ok(ctx->ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %ld\n", ctx->ev.dwDebugEventCode);
+        ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %lx\n",
+           ctx->ev.u.Exception.ExceptionRecord.ExceptionCode);
+        ok(ctx->ev.u.Exception.ExceptionRecord.ExceptionAddress == pDbgBreakPoint, "ExceptionAddress != DbgBreakPoint\n");
 
-    if (pass_exception)
-    {
-        ret = ContinueDebugEvent(ctx->ev.dwProcessId, ctx->ev.dwThreadId, DBG_EXCEPTION_NOT_HANDLED);
-        ok(ret, "ContinueDebugEvent failed, last error %ld.\n", GetLastError());
-        ctx->ev.dwDebugEventCode = -1;
+        if (pass_exception)
+        {
+            ret = ContinueDebugEvent(ctx->ev.dwProcessId, ctx->ev.dwThreadId, DBG_EXCEPTION_NOT_HANDLED);
+            ok(ret, "ContinueDebugEvent failed, last error %ld.\n", GetLastError());
+            ctx->ev.dwDebugEventCode = -1;
+        }
     }
 
     /* flush debug events */
