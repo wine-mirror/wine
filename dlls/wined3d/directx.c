@@ -2109,13 +2109,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
         if (gl_type == WINED3D_GL_RES_TYPE_TEX_2D && !(bind_flags & WINED3D_BIND_SHADER_RESOURCE))
             caps |= format->caps[WINED3D_GL_RES_TYPE_RB];
 
-        if ((caps & format_caps) != format_caps)
-        {
-            TRACE("Requested format caps %#x, but format %s only has %#x.\n",
-                    format_caps, debug_d3dformat(check_format_id), caps);
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
         if ((bind_flags & WINED3D_BIND_RENDER_TARGET)
                 && !adapter->adapter_ops->adapter_check_format(adapter, adapter_format, format, NULL))
         {
@@ -2140,6 +2133,13 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
         {
             TRACE("Requested WINED3D_BIND_UNORDERED_ACCESS, but format %s is typeless.\n",
                     debug_d3dformat(check_format_id));
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
+        if ((caps & format_caps) != format_caps)
+        {
+            TRACE("Requested format caps %#x, but format %s only has %#x.\n",
+                    format_caps, debug_d3dformat(check_format_id), caps);
             return WINED3DERR_NOTAVAILABLE;
         }
 
