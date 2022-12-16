@@ -10987,7 +10987,7 @@ static IHTMLDocument2 *create_docfrag(IHTMLDocument2 *doc)
 static void test_docfrag(IHTMLDocument2 *doc)
 {
     IHTMLDocument2 *frag, *owner_doc, *doc_node;
-    IHTMLElement *div, *body, *br;
+    IHTMLElement *div, *main_body, *frag_body, *br,*html;
     IHTMLElementCollection *col;
     IHTMLLocation *location;
     HRESULT hres;
@@ -11001,19 +11001,37 @@ static void test_docfrag(IHTMLDocument2 *doc)
         ET_BR
     };
 
+    static const elem_type_t empty_types[] = {};
+
+    static const elem_type_t frag_types[] = {
+            ET_HTML,
+            ET_DIV,
+            ET_DIV,
+            ET_BODY
+    };
+
     frag = create_docfrag(doc);
 
     test_disp((IUnknown*)frag, &DIID_DispHTMLDocument, &CLSID_HTMLDocument, L"[object]");
 
-    body = (void*)0xdeadbeef;
-    hres = IHTMLDocument2_get_body(frag, &body);
+    frag_body = (void*)0xdeadbeef;
+    hres = IHTMLDocument2_get_body(frag, &frag_body);
     ok(hres == S_OK, "get_body failed: %08lx\n", hres);
-    ok(!body, "body != NULL\n");
+    ok(!frag_body, "body != NULL\n");
 
     location = (void*)0xdeadbeef;
     hres = IHTMLDocument2_get_location(frag, &location);
     ok(hres == E_UNEXPECTED, "get_location failed: %08lx\n", hres);
     ok(location == (void*)0xdeadbeef, "location changed\n");
+
+    col = NULL;
+    hres = IHTMLDocument2_get_all(frag, &col);
+    todo_wine ok(hres == S_OK, "get_all failed: %08lx\n", hres);
+    todo_wine ok(col != NULL, "got null elements collection\n");
+    if (col) {
+        test_elem_collection((IUnknown *) col, empty_types, ARRAY_SIZE(empty_types));
+        IHTMLElementCollection_Release(col);
+    }
 
     br = test_create_elem(doc, L"BR");
     test_elem_source_index(br, -1);
@@ -11032,6 +11050,52 @@ static void test_docfrag(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_all failed: %08lx\n", hres);
     test_elem_collection((IUnknown*)col, all_types, ARRAY_SIZE(all_types));
     IHTMLElementCollection_Release(col);
+
+    html = test_create_elem(doc, L"HTML");
+    test_elem_source_index(html, -1);
+    test_node_append_child((IUnknown*)frag, (IUnknown*)html);
+    test_elem_source_index(html, 0);
+
+    div = test_create_elem(doc, L"DIV");
+    test_elem_source_index(div, -1);
+    test_node_append_child((IUnknown*)html, (IUnknown*)div);
+    test_elem_source_index(div, 1);
+    IHTMLElement_Release(div);
+
+    div = test_create_elem(doc, L"DIV");
+    test_elem_source_index(div, -1);
+    test_node_append_child((IUnknown*)html, (IUnknown*)div);
+    test_elem_source_index(div, 2);
+
+    frag_body = test_create_elem(doc, L"BODY");
+    test_elem_source_index(frag_body, -1);
+    test_node_append_child((IUnknown*)div, (IUnknown*)frag_body);
+    test_elem_source_index(frag_body, 3);
+    IHTMLElement_Release(frag_body);
+    IHTMLElement_Release(div);
+    IHTMLElement_Release(html);
+
+    hres = IHTMLDocument2_get_body(doc, &main_body);
+    ok(hres == S_OK, "get_body failed: %08lx\n", hres);
+    ok(main_body != NULL, "body == NULL\n");
+
+    hres = IHTMLDocument2_get_body(frag, &frag_body);
+    ok(hres == S_OK, "get_body failed: %08lx\n", hres);
+    todo_wine ok(frag_body != NULL, "body == NULL\n");
+    if (frag_body) {
+        todo_wine ok(!iface_cmp((IUnknown *) frag_body, (IUnknown *) main_body), "frag_body == main_body\n");
+        IHTMLElement_Release(frag_body);
+    }
+    IHTMLElement_Release(main_body);
+
+    col = NULL;
+    hres = IHTMLDocument2_get_all(frag, &col);
+    todo_wine ok(hres == S_OK, "get_all failed: %08lx\n", hres);
+    todo_wine ok(col != NULL, "got null elements collection\n");
+    if (col) {
+        test_elem_collection((IUnknown *) col, frag_types, ARRAY_SIZE(frag_types));
+        IHTMLElementCollection_Release(col);
+    }
 
     div = test_create_elem(frag, L"div");
     owner_doc = get_owner_doc((IUnknown*)div);
