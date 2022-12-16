@@ -132,38 +132,45 @@ static void save_blackbox(const char* logfile, void* blackbox, int size, const c
 {
     HANDLE hFile;
     DWORD written;
+    BOOL ret;
 
-    hFile=CreateFileA(logfile, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    hFile = CreateFileA(logfile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
+    ok(hFile != INVALID_HANDLE_VALUE, "Couldn't create %s: %lu\n", logfile, GetLastError());
     if (hFile == INVALID_HANDLE_VALUE)
         return;
-    WriteFile(hFile, blackbox, size, &written, NULL);
+    ret = WriteFile(hFile, blackbox, size, &written, NULL);
+    ok(ret && written == size, "Error writing\n");
     if (dbgtrace && dbgtrace[0])
-        WriteFile(hFile, dbgtrace, strlen(dbgtrace), &written, NULL);
+    {
+        ret = WriteFile(hFile, dbgtrace, strlen(dbgtrace), &written, NULL);
+        ok(ret && written == strlen(dbgtrace), "Error writing\n");
+    }
     CloseHandle(hFile);
 }
 
-static int load_blackbox(const char* logfile, void* blackbox, int size)
+#define load_blackbox(a, b, c) _load_blackbox(__LINE__, (a), (b), (c))
+static int _load_blackbox(unsigned int line, const char* logfile, void* blackbox, int size)
 {
     HANDLE hFile;
     DWORD read;
     BOOL ret;
     char buf[4096];
 
-    hFile=CreateFileA(logfile, GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+    hFile = CreateFileA(logfile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
     if (hFile == INVALID_HANDLE_VALUE)
     {
-        ok(0, "unable to open '%s'\n", logfile);
+        ok_(__FILE__, line)(0, "unable to open '%s': %#lx\n", logfile, GetLastError());
         return 0;
     }
     SetLastError(0xdeadbeef);
-    ret=ReadFile(hFile, blackbox, size, &read, NULL);
+    ret = ReadFile(hFile, blackbox, size, &read, NULL);
     ok(ret, "ReadFile failed: %ld\n", GetLastError());
     ok(read == size, "wrong size for '%s': read=%ld\n", logfile, read);
     ret = ReadFile(hFile, buf, sizeof(buf) - 1, &read, NULL);
     if (ret && read)
     {
         buf[read] = 0;
-        trace("debugger traces:\n%s", buf);
+        trace("debugger traces:>>>\n%s\n<<< Done.\n", buf);
     }
     CloseHandle(hFile);
     return 1;
