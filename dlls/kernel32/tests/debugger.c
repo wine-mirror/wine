@@ -1014,7 +1014,8 @@ static void test_debug_loop(int argc, char **argv)
         if (!ret) break;
     }
 
-    ok( ole32_mod == (HMODULE)1, "ole32.dll was not reported\n" );
+    /* sometimes not all unload events are sent on win7 */
+    ok( ole32_mod == (HMODULE)1 || broken( ole32_mod != NULL ), "ole32.dll was not reported\n" );
     ok( oleaut32_mod == (HMODULE)1, "oleaut32.dll was not reported\n" );
 #ifdef _WIN64
     ok( oleacc_mod == (HMODULE)1, "oleacc.dll was not reported\n" );
