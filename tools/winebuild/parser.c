@@ -309,16 +309,9 @@ static int parse_spec_arguments( ORDDEF *odp, DLLSPEC *spec, int optional )
             error( "A fastcall function must use the stdcall convention\n" );
             return 0;
         }
-        if (!i || (odp->u.func.args[0] != ARG_PTR && odp->u.func.args[0] != ARG_LONG))
-        {
-            error( "First argument of a fastcall function must be a pointer or integer\n" );
-            return 0;
-        }
-        if (i > 1 && odp->u.func.args[1] != ARG_PTR && odp->u.func.args[1] != ARG_LONG)
-        {
-            error( "Second argument of a fastcall function must be a pointer or integer\n" );
-            return 0;
-        }
+        if ((i && odp->u.func.args[0] != ARG_PTR && odp->u.func.args[0] != ARG_LONG) ||
+            (i > 1 && odp->u.func.args[1] != ARG_PTR && odp->u.func.args[1] != ARG_LONG))
+            odp->flags |= FLAG_NORELAY;  /* no relay debug possible for non-standard fastcall args */
     }
     if (odp->flags & FLAG_SYSCALL)
     {
