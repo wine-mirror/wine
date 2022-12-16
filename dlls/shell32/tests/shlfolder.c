@@ -5133,7 +5133,7 @@ static void test_SHChangeNotify(BOOL test_new_delivery)
     entries[0].fRecursive = TRUE;
 
     notifyID = SHChangeNotifyRegister(wnd, !test_new_delivery ? SHCNRF_ShellLevel : SHCNRF_ShellLevel|SHCNRF_NewDelivery,
-            SHCNE_ALLEVENTS, WM_USER_NOTIFY, 1, entries);
+            SHCNE_MKDIR | SHCNE_CREATE | SHCNE_RMDIR, WM_USER_NOTIFY, 1, entries);
     ok(notifyID != 0, "Failed to register a window for change notifications\n");
 
     for (i = 0; i < ARRAY_SIZE(chnotify_tests); ++i)
