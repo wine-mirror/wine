@@ -1952,11 +1952,14 @@ static HRESULT WINAPI media_engine_Pause(IMFMediaEngineEx *iface)
     {
         if (!(engine->flags & FLAGS_ENGINE_PAUSED))
         {
-            media_engine_set_flag(engine, FLAGS_ENGINE_WAITING | FLAGS_ENGINE_IS_ENDED, FALSE);
-            media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED, TRUE);
+            if (SUCCEEDED(hr = IMFMediaSession_Pause(engine->session)))
+            {
+                media_engine_set_flag(engine, FLAGS_ENGINE_WAITING | FLAGS_ENGINE_IS_ENDED, FALSE);
+                media_engine_set_flag(engine, FLAGS_ENGINE_PAUSED, TRUE);
 
-            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
-            IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PAUSE, 0, 0);
+                IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_TIMEUPDATE, 0, 0);
+                IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PAUSE, 0, 0);
+            }
         }
 
         IMFMediaEngineNotify_EventNotify(engine->callback, MF_MEDIA_ENGINE_EVENT_PURGEQUEUEDEVENTS, 0, 0);
