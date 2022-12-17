@@ -826,28 +826,38 @@ static const IPersistStreamVtbl persiststream_vtbl = {
     unimpl_IPersistStream_GetSizeMax
 };
 
-/* for ClassFactory */
-HRESULT create_dmsegment(REFIID lpcGUID, void **ppobj)
+IDirectMusicSegment8Impl *create_segment(void)
 {
-  IDirectMusicSegment8Impl* obj;
-  HRESULT hr;
+    IDirectMusicSegment8Impl *obj;
 
-  obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSegment8Impl));
-  if (NULL == obj) {
-    *ppobj = NULL;
-    return E_OUTOFMEMORY;
-  }
-  obj->IDirectMusicSegment8_iface.lpVtbl = &dmsegment8_vtbl;
-  obj->ref = 1;
-  dmobject_init(&obj->dmobj, &CLSID_DirectMusicSegment,
-          (IUnknown *)&obj->IDirectMusicSegment8_iface);
-  obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
-  obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
-  list_init (&obj->Tracks);
+    if (!(obj = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*obj))))
+        return NULL;
 
-  DMIME_LockModule();
-  hr = IDirectMusicSegment8_QueryInterface(&obj->IDirectMusicSegment8_iface, lpcGUID, ppobj);
-  IDirectMusicSegment8_Release(&obj->IDirectMusicSegment8_iface);
+    obj->IDirectMusicSegment8_iface.lpVtbl = &dmsegment8_vtbl;
+    obj->ref = 1;
+    dmobject_init(&obj->dmobj, &CLSID_DirectMusicSegment, (IUnknown *)&obj->IDirectMusicSegment8_iface);
+    obj->dmobj.IDirectMusicObject_iface.lpVtbl = &dmobject_vtbl;
+    obj->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
+    list_init (&obj->Tracks);
 
-  return hr;
+    DMIME_LockModule();
+
+    return obj;
+}
+
+/* for ClassFactory */
+HRESULT create_dmsegment(REFIID guid, void **ret_iface)
+{
+    IDirectMusicSegment8Impl *obj;
+    HRESULT hr;
+
+    if (!(obj = create_segment())) {
+        *ret_iface = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    hr = IDirectMusicSegment8_QueryInterface(&obj->IDirectMusicSegment8_iface, guid, ret_iface);
+    IDirectMusicSegment8_Release(&obj->IDirectMusicSegment8_iface);
+
+    return hr;
 }
