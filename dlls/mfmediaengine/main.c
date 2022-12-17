@@ -2123,7 +2123,7 @@ static HRESULT WINAPI media_engine_Shutdown(IMFMediaEngineEx *iface)
     struct media_engine *engine = impl_from_IMFMediaEngineEx(iface);
     HRESULT hr = S_OK;
 
-    FIXME("(%p): stub.\n", iface);
+    TRACE("%p.\n", iface);
 
     EnterCriticalSection(&engine->cs);
     if (engine->flags & FLAGS_ENGINE_SHUT_DOWN)
