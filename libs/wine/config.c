@@ -60,7 +60,7 @@ static void fatal_error( const char *err, ... )  __attribute__((noreturn,format(
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
 static const char exe_link[] = "/proc/self/exe";
-#else
+#elif ! defined (__FreeBSD__) && ! defined(__DragonFly__)
 static const char exe_link[] = "";
 #endif
 
