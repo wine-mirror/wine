@@ -77,12 +77,38 @@ static ULONG WINAPI IDirectMusicComposerImpl_Release(IDirectMusicComposer *iface
 
 /* IDirectMusicComposerImpl IDirectMusicComposer part: */
 static HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromTemplate(IDirectMusicComposer *iface,
-        IDirectMusicStyle *pStyle, IDirectMusicSegment *pTemplate, WORD wActivity,
-        IDirectMusicChordMap *pChordMap, IDirectMusicSegment **ppSegment)
+        IDirectMusicStyle *style, IDirectMusicSegment *template, WORD activity, IDirectMusicChordMap *chordmap,
+        IDirectMusicSegment **segment)
 {
-        IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
-	FIXME("(%p, %p, %p, %d, %p, %p): stub\n", This, pStyle, pTemplate, wActivity, pChordMap, ppSegment);
-	return S_OK;
+    IDirectMusicComposerImpl *This = impl_from_IDirectMusicComposer(iface);
+    IDirectMusicTrack *track;
+    HRESULT hr;
+
+    FIXME("(%p, %p, %p, %d, %p, %p): semi-stub\n", This, style, template, activity, chordmap, segment);
+
+    if (!segment)
+        return E_POINTER;
+    if (!template)
+        return E_INVALIDARG;
+
+    if (!style) {
+        hr = IDirectMusicSegment_GetTrack(template, &CLSID_DirectMusicStyleTrack, 0xFFFFFFFF,
+                DMUS_SEG_ANYTRACK, &track);
+        if (FAILED(hr))
+            return E_INVALIDARG;
+        else
+            IDirectMusicTrack_Release(track);   /* Temp to not leak memory */
+    }
+    if (!chordmap) {
+        hr = IDirectMusicSegment_GetTrack(template, &CLSID_DirectMusicChordMapTrack, 0xFFFFFFFF,
+                DMUS_SEG_ANYTRACK, &track);
+        if (FAILED(hr))
+            return E_INVALIDARG;
+        else
+            IDirectMusicTrack_Release(track);   /* Temp to not leak memory */
+    }
+
+    return IDirectMusicSegment_Clone(template, -1, 0, segment);
 }
 
 static HRESULT WINAPI IDirectMusicComposerImpl_ComposeSegmentFromShape(IDirectMusicComposer *iface,
