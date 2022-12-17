@@ -632,23 +632,27 @@ static BracketPair *bidi_compute_bracket_pairs(IsolatedRun *iso_run)
     WCHAR *open_stack;
     int *stack_index;
     int stack_top = iso_run->length;
-    BracketPair *out = NULL;
+    BracketPair *out;
     int pair_count = 0;
     int i;
 
     open_stack = malloc(sizeof(WCHAR) * iso_run->length);
     stack_index = malloc(sizeof(int) * iso_run->length);
+    out = malloc(sizeof(BracketPair) * iso_run->length);
+
+    if (!open_stack || !stack_index || !out) {
+        free(open_stack);
+        free(stack_index);
+        free(out);
+        return NULL;
+    }
+
+    out[0].start = -1;
 
     for (i = 0; i < iso_run->length; i++) {
         unsigned short ubv = get_table_entry_16(bidi_bracket_table, iso_run->item[i].ch);
         if (ubv)
         {
-            if (!out)
-            {
-                out = malloc(sizeof(BracketPair));
-                out[0].start = -1;
-            }
-
             if ((ubv >> 8) == 0) {
                 stack_top--;
                 open_stack[stack_top] = iso_run->item[i].ch + (signed char)(ubv & 0xff);
@@ -668,7 +672,6 @@ static BracketPair *bidi_compute_bracket_pairs(IsolatedRun *iso_run)
                         out[pair_count].start = stack_index[j];
                         out[pair_count].end = i;
                         pair_count++;
-                        out = realloc(out, sizeof(BracketPair) * (pair_count+1));
                         out[pair_count].start = -1;
                         stack_top = j+1;
                         break;
