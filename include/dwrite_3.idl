@@ -476,6 +476,29 @@ interface IDWriteFontSet3 : IDWriteFontSet2
 [
     local,
     object,
+    uuid(eec175fc-bea9-4c86-8b53-ccbdd7df0c82)
+]
+interface IDWriteFontSet4 : IDWriteFontSet3
+{
+    UINT32 ConvertWeightStretchStyleToFontAxisValues(
+        DWRITE_FONT_AXIS_VALUE const *input_axis_values,
+        UINT32 input_axis_count,
+        DWRITE_FONT_WEIGHT weight,
+        DWRITE_FONT_STRETCH stretch,
+        DWRITE_FONT_STYLE style,
+        float size,
+        DWRITE_FONT_AXIS_VALUE *output_axis_values);
+    HRESULT GetMatchingFonts(
+        WCHAR const *family_name,
+        DWRITE_FONT_AXIS_VALUE const *axis_values,
+        UINT32 axis_value_count,
+        DWRITE_FONT_SIMULATIONS allowed_simulations,
+        IDWriteFontSet4 **fonts);
+}
+
+[
+    local,
+    object,
     uuid(d37d7598-09be-4222-a236-2081341cc1f2)
 ]
 interface IDWriteFontFace3 : IDWriteFontFace2
@@ -793,6 +816,21 @@ interface IDWriteFontFace5 : IDWriteFontFace4
     BOOL HasVariations();
     HRESULT GetFontResource(IDWriteFontResource **resource);
     BOOL Equals(IDWriteFontFace *fontface);
+}
+
+[
+    local,
+    object,
+    uuid(c4b1fe1b-6e84-47d5-b54c-a597981b06ad)
+]
+interface IDWriteFontFace6 : IDWriteFontFace5
+{
+    HRESULT GetFamilyNames(
+        DWRITE_FONT_FAMILY_MODEL font_family_model,
+        IDWriteLocalizedStrings **names);
+    HRESULT GetFaceNames(
+        DWRITE_FONT_FAMILY_MODEL font_family_model,
+        IDWriteLocalizedStrings **names);
 }
 
 typedef struct DWRITE_COLOR_GLYPH_RUN1 DWRITE_COLOR_GLYPH_RUN1;
