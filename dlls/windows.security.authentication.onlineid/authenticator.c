@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(onlineid);
 struct authenticator_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IOnlineIdSystemAuthenticatorStatics IOnlineIdSystemAuthenticatorStatics_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IOnlineIdSystemAuthenticatorStatics ))
+    {
+        *out = &impl->IOnlineIdSystemAuthenticatorStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -107,9 +115,40 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( authenticator_statics, IOnlineIdSystemAuthenticatorStatics, struct authenticator_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI authenticator_statics_get_Default( IOnlineIdSystemAuthenticatorStatics *iface,
+                                                         IOnlineIdSystemAuthenticatorForUser **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI authenticator_statics_GetForUser( IOnlineIdSystemAuthenticatorStatics *iface, __x_ABI_CWindows_CSystem_CIUser *user,
+                                                        IOnlineIdSystemAuthenticatorForUser **value )
+{
+    FIXME( "iface %p, user %p, value %p stub!\n", iface, user, value );
+    return E_NOTIMPL;
+}
+
+static const struct IOnlineIdSystemAuthenticatorStaticsVtbl authenticator_statics_vtbl =
+{
+    authenticator_statics_QueryInterface,
+    authenticator_statics_AddRef,
+    authenticator_statics_Release,
+    /* IInspectable methods */
+    authenticator_statics_GetIids,
+    authenticator_statics_GetRuntimeClassName,
+    authenticator_statics_GetTrustLevel,
+    /* IOnlineIdSystemAuthenticatorStatics methods */
+    authenticator_statics_get_Default,
+    authenticator_statics_GetForUser,
+};
+
 static struct authenticator_statics authenticator_statics =
 {
     {&factory_vtbl},
+    {&authenticator_statics_vtbl},
     1,
 };
 

@@ -28,11 +28,64 @@ import "windows.foundation.idl";
 import "windows.system.idl";
 
 namespace Windows.Security.Authentication.OnlineId {
+    typedef enum OnlineIdSystemTicketStatus OnlineIdSystemTicketStatus;
+
+    interface IOnlineIdServiceTicketRequest;
+    interface IOnlineIdServiceTicketRequestFactory;
     interface IOnlineIdSystemAuthenticatorForUser;
     interface IOnlineIdSystemAuthenticatorStatics;
+    interface IOnlineIdSystemIdentity;
+    interface IOnlineIdSystemTicketResult;
 
+    runtimeclass OnlineIdServiceTicketRequest;
     runtimeclass OnlineIdSystemAuthenticator;
     runtimeclass OnlineIdSystemAuthenticatorForUser;
+    runtimeclass OnlineIdSystemIdentity;
+    runtimeclass OnlineIdSystemTicketResult;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<Windows.Security.Authentication.OnlineId.OnlineIdServiceTicketRequest *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Security.Authentication.OnlineId.OnlineIdServiceTicketRequest *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Security.Authentication.OnlineId.OnlineIdSystemTicketResult *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Security.Authentication.OnlineId.OnlineIdSystemTicketResult *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0)
+    ]
+    enum OnlineIdSystemTicketStatus
+    {
+        Success                = 0,
+        Error                  = 1,
+        ServiceConnectionError = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Security.Authentication.OnlineId.OnlineIdServiceTicketRequest),
+        uuid(297445d3-fb63-4135-8909-4e354c061466)
+    ]
+    interface IOnlineIdServiceTicketRequest : IInspectable
+    {
+        [propget] HRESULT Service([out, retval] HSTRING *value);
+        [propget] HRESULT Policy([out, retval] HSTRING *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Security.Authentication.OnlineId.OnlineIdSystemAuthenticatorForUser),
+        uuid(5798befb-1de4-4186-a2e6-b563f86aaf44)
+    ]
+    interface IOnlineIdSystemAuthenticatorForUser : IInspectable
+    {
+        [overload("GetTicketAsync")] HRESULT GetTicketAsync(
+            [in] Windows.Security.Authentication.OnlineId.OnlineIdServiceTicketRequest *request,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Security.Authentication.OnlineId.OnlineIdSystemTicketResult *> **operation
+        );
+        [propput] HRESULT ApplicationId([in] GUID value);
+        [propget] HRESULT ApplicationId([out, retval] GUID *value);
+        [propget] HRESULT User([out, retval] Windows.System.User **user);
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 4.0),
@@ -43,6 +96,29 @@ namespace Windows.Security.Authentication.OnlineId {
     {
         [propget] HRESULT Default([out, retval] Windows.Security.Authentication.OnlineId.OnlineIdSystemAuthenticatorForUser **value);
         HRESULT GetForUser([in] Windows.System.User *user, [out, retval] Windows.Security.Authentication.OnlineId.OnlineIdSystemAuthenticatorForUser **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Security.Authentication.OnlineId.OnlineIdSystemTicketResult),
+        uuid(db0a5ff8-b098-4acd-9d13-9e640652b5b6)
+    ]
+    interface IOnlineIdSystemTicketResult : IInspectable
+    {
+        [propget] HRESULT Identity([out, retval] Windows.Security.Authentication.OnlineId.OnlineIdSystemIdentity **value);
+        [propget] HRESULT Status([out, retval] Windows.Security.Authentication.OnlineId.OnlineIdSystemTicketStatus *value);
+        [propget] HRESULT ExtendedError([out, retval] HRESULT *value);
+    }
+
+    [
+        activatable(Windows.Security.Authentication.OnlineId.IOnlineIdServiceTicketRequestFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass OnlineIdServiceTicketRequest
+    {
+        [default] interface Windows.Security.Authentication.OnlineId.IOnlineIdServiceTicketRequest;
     }
 
     [
@@ -63,5 +139,25 @@ namespace Windows.Security.Authentication.OnlineId {
     runtimeclass OnlineIdSystemAuthenticatorForUser
     {
         [default] interface Windows.Security.Authentication.OnlineId.IOnlineIdSystemAuthenticatorForUser;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass OnlineIdSystemIdentity
+    {
+        [default] interface Windows.Security.Authentication.OnlineId.IOnlineIdSystemIdentity;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass OnlineIdSystemTicketResult
+    {
+        [default] interface Windows.Security.Authentication.OnlineId.IOnlineIdSystemTicketResult;
     }
 }

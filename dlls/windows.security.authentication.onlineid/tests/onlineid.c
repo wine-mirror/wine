@@ -48,6 +48,7 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid )
 static void test_AuthenticatorStatics(void)
 {
     static const WCHAR *authenticator_statics_name = L"Windows.Security.Authentication.OnlineId.OnlineIdSystemAuthenticator";
+    IOnlineIdSystemAuthenticatorStatics *authenticator_statics = (void *)0xdeadbeef;
     IActivationFactory *factory = (void *)0xdeadbeef;
     HSTRING str;
     HRESULT hr;
@@ -69,6 +70,11 @@ static void test_AuthenticatorStatics(void)
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IOnlineIdSystemAuthenticatorStatics, (void **)&authenticator_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IOnlineIdSystemAuthenticatorStatics_Release( authenticator_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
