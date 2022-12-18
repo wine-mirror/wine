@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-29 19:37+0900\n"
+"PO-Revision-Date: 2022-12-18 19:29+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -613,7 +613,7 @@ msgstr "ページまで(&T):"
 
 #: dlls/comdlg32/comdlg32.rc:216 dlls/wineps.drv/wineps.rc:42
 msgid "Print &Quality:"
-msgstr "印字品質(&Q):"
+msgstr "印刷品質(&Q):"
 
 #: dlls/comdlg32/comdlg32.rc:218
 msgid "Print to Fi&le"
@@ -850,7 +850,7 @@ msgstr "コメント:"
 
 #: dlls/comdlg32/comdlg32.rc:377
 msgid "Pa&ges"
-msgstr "ページ指定(&G)"
+msgstr "指定(&G)"
 
 #: dlls/comdlg32/comdlg32.rc:378
 msgid "&Selection"
@@ -1336,8 +1336,6 @@ msgid "Options"
 msgstr "オプション"
 
 #: dlls/compstui/compstui.rc:31
-#, fuzzy
-#| msgid "Defaults"
 msgid "Default"
 msgstr "デフォルト"
 
@@ -3743,25 +3741,23 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "DInput"
-msgstr ""
+msgstr "DInput"
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Axes"
-msgstr ""
+msgstr "軸"
 
 #: dlls/joy.cpl/joy.rc:60
 msgid "POVs"
-msgstr ""
+msgstr "POV"
 
 #: dlls/joy.cpl/joy.rc:61
 msgid "Buttons"
 msgstr "ボタン"
 
 #: dlls/joy.cpl/joy.rc:62
-#, fuzzy
-#| msgid "Test Force Feedback"
 msgid "Force Feedback Effect"
-msgstr "フォース フィードバックのテスト"
+msgstr "フォース フィードバック効果"
 
 #: dlls/joy.cpl/joy.rc:64
 msgid ""
@@ -3773,60 +3769,60 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:70
 msgid "XInput"
-msgstr ""
+msgstr "XInput"
 
 #: dlls/joy.cpl/joy.rc:73
-#, fuzzy
-#| msgid "User"
 msgid "User #0"
-msgstr "ユーザー名"
+msgstr "ユーザー #0"
 
 #: dlls/joy.cpl/joy.rc:74
-#, fuzzy
-#| msgid "User"
 msgid "User #1"
-msgstr "ユーザー名"
+msgstr "ユーザー #1"
 
 #: dlls/joy.cpl/joy.rc:75
-#, fuzzy
-#| msgid "User"
 msgid "User #2"
-msgstr "ユーザー名"
+msgstr "ユーザー #2"
 
 #: dlls/joy.cpl/joy.rc:76
-#, fuzzy
-#| msgid "User"
 msgid "User #3"
-msgstr "ユーザー名"
+msgstr "ユーザー #3"
 
 #: dlls/joy.cpl/joy.rc:78
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"スロット #0 でユーザーを検出できません。ゲームパッドが差し込まれているか、"
+"[ジョイスティック]タブでDInput用に上書きしていないか確認してください。"
 
 #: dlls/joy.cpl/joy.rc:82
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"スロット #1 でユーザーを検出できません。ゲームパッドが差し込まれているか、"
+"[ジョイスティック]タブでDInput用に上書きしていないか確認してください。"
 
 #: dlls/joy.cpl/joy.rc:86
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"スロット #2 でユーザーを検出できません。ゲームパッドが差し込まれているか、"
+"[ジョイスティック]タブでDInput用に上書きしていないか確認してください。"
 
 #: dlls/joy.cpl/joy.rc:90
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"スロット #3 でユーザーを検出できません。ゲームパッドが差し込まれているか、"
+"[ジョイスティック]タブでDInput用に上書きしていないか確認してください。"
 
 #: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
 #: dlls/joy.cpl/joy.rc:98
 msgid "Rumble"
-msgstr ""
+msgstr "振動"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -3842,7 +3838,7 @@ msgstr "オブジェクトを基本型に変換できません"
 
 #: dlls/jscript/jscript.rc:29 dlls/vbscript/vbscript.rc:29
 msgid "Invalid procedure call or argument"
-msgstr "プロシジャ呼び出しまたは引数が正しくありません。"
+msgstr "プロシージャ呼び出しまたは引数が正しくありません。"
 
 #: dlls/jscript/jscript.rc:30 dlls/vbscript/vbscript.rc:32
 msgid "Subscript out of range"
@@ -4022,7 +4018,7 @@ msgstr "精度指定が範囲外です"
 
 #: dlls/jscript/jscript.rc:71
 msgid "Array length must be a finite positive integer"
-msgstr "配列の長さは有限の正整数でなければなりません"
+msgstr "配列の長さは有限の正整数である必要があります"
 
 #: dlls/jscript/jscript.rc:72
 msgid "Array object expected"
@@ -4038,13 +4034,11 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cyclic __proto__ value"
-msgstr ""
+msgstr "循環した __proto__ 値"
 
 #: dlls/jscript/jscript.rc:75
-#, fuzzy
-#| msgid "Cannot define property '|': object is not extensible"
 msgid "Cannot create property for a non-extensible object"
-msgstr "プロパティ '|' を定義できません: オブジェクトは拡張可能ではありません"
+msgstr "拡張可能ではないオブジェクトにプロパティを作成できません"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
@@ -4059,10 +4053,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "書換不可のプロパティ '|' は変更できません"
 
 #: dlls/jscript/jscript.rc:79
-#, fuzzy
-#| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
-msgstr "'this' は Map オブジェクトではありません"
+msgstr "'this' は | オブジェクトではありません"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
@@ -4079,45 +4071,39 @@ msgstr "Wine"
 
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
-msgstr ""
+msgstr "西ヨーロッパ、米国"
 
 #: dlls/kernelbase/kernelbase.rc:30
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe"
-msgstr "中央ヨーロッパ言語"
+msgstr "中央ヨーロッパ"
 
 #: dlls/kernelbase/kernelbase.rc:34
-#, fuzzy
-#| msgid "Turkish"
 msgid "Turkic"
-msgstr "トルコ語"
+msgstr "チュルク諸語"
 
 #: dlls/kernelbase/kernelbase.rc:36
 msgid "Korean"
-msgstr ""
+msgstr "韓国語"
 
 #: dlls/kernelbase/kernelbase.rc:37
-#, fuzzy
-#| msgid "Operation Ceased"
 msgid "Traditional Chinese"
-msgstr "運用廃止"
+msgstr "繁体字中国語"
 
 #: dlls/kernelbase/kernelbase.rc:38
 msgid "Simplified Chinese"
-msgstr ""
+msgstr "簡体字中国語"
 
 #: dlls/kernelbase/kernelbase.rc:43
 msgid "Indic"
-msgstr ""
+msgstr "インド語派"
 
 #: dlls/kernelbase/kernelbase.rc:44
 msgid "Georgian"
-msgstr ""
+msgstr "ジョージア語"
 
 #: dlls/kernelbase/kernelbase.rc:45
 msgid "Armenian"
-msgstr ""
+msgstr "アルメニア語"
 
 #: dlls/kernelbase/winerror.mc:28
 msgid "Success.\n"
@@ -4497,7 +4483,7 @@ msgstr "モジュールが見つかりません。\n"
 
 #: dlls/kernelbase/winerror.mc:503
 msgid "Procedure not found.\n"
-msgstr "プロシジャが見つかりません。\n"
+msgstr "プロシージャが見つかりません。\n"
 
 #: dlls/kernelbase/winerror.mc:508
 msgid "No children to wait for.\n"
@@ -4725,7 +4711,7 @@ msgstr "自動データ セグメントが 64K を超えています。\n"
 
 #: dlls/kernelbase/winerror.mc:793
 msgid "Ring 2 segment must be movable.\n"
-msgstr "リング 2 セグメントは移動可能でなければなりません。\n"
+msgstr "リング 2 セグメントは移動可能である必要があります。\n"
 
 #: dlls/kernelbase/winerror.mc:798
 msgid "Relocation chain exceeds segment limit in %1.\n"
@@ -4933,7 +4919,7 @@ msgstr "ファイルが正しくありません。\n"
 
 #: dlls/kernelbase/winerror.mc:1053
 msgid "Cannot run full-screen.\n"
-msgstr "全画面表示で実行できません。\n"
+msgstr "フルスクリーン表示で実行できません。\n"
 
 #: dlls/kernelbase/winerror.mc:1058
 msgid "Nonexistent token.\n"
@@ -4989,7 +4975,7 @@ msgstr "レジストリ キーにはサブキーがあります。\n"
 
 #: dlls/kernelbase/winerror.mc:1123
 msgid "Subkey must be volatile.\n"
-msgstr "サブキーは揮発性でなければなりません。\n"
+msgstr "サブキーは揮発性である必要があります。\n"
 
 #: dlls/kernelbase/winerror.mc:1128
 msgid "Notify change request in progress.\n"
@@ -5489,7 +5475,7 @@ msgstr "操作はユーザーによって中断されました。\n"
 
 #: dlls/kernelbase/winerror.mc:1753
 msgid "File has a user-mapped section.\n"
-msgstr "ファイルにはユーザー マップされたセクションがあります。\n"
+msgstr "ファイルにはユーザーマップされたセクションがあります。\n"
 
 #: dlls/kernelbase/winerror.mc:1758 dlls/kernelbase/winerror.mc:3783
 msgid "Connection refused.\n"
@@ -5542,7 +5528,7 @@ msgstr "接続は中断されました。\n"
 
 #: dlls/kernelbase/winerror.mc:1818
 msgid "Please retry operation.\n"
-msgstr "操作を再試行してください。\n"
+msgstr "操作をもう一度お試しください。\n"
 
 #: dlls/kernelbase/winerror.mc:1823
 msgid "Connection count limit reached.\n"
@@ -6110,15 +6096,15 @@ msgstr "フック フィルターが正しくありません。\n"
 
 #: dlls/kernelbase/winerror.mc:2533
 msgid "Invalid filter procedure.\n"
-msgstr "フィルター プロシジャが正しくありません。\n"
+msgstr "フィルター プロシージャが正しくありません。\n"
 
 #: dlls/kernelbase/winerror.mc:2538
 msgid "Hook procedure needs module handle.\n"
-msgstr "フック プロシジャにはモジュールのハンドルが必要です。\n"
+msgstr "フック プロシージャにはモジュールのハンドルが必要です。\n"
 
 #: dlls/kernelbase/winerror.mc:2543
 msgid "Global-only hook procedure.\n"
-msgstr "グローバル専用のフック プロシジャです。\n"
+msgstr "グローバル専用のフック プロシージャです。\n"
 
 #: dlls/kernelbase/winerror.mc:2548
 msgid "Journal hook already set.\n"
@@ -6126,7 +6112,7 @@ msgstr "ジャーナル フックはすでに設定されています。\n"
 
 #: dlls/kernelbase/winerror.mc:2553
 msgid "Hook procedure not installed.\n"
-msgstr "フック プロシジャは設定されていません。\n"
+msgstr "フック プロシージャは設定されていません。\n"
 
 #: dlls/kernelbase/winerror.mc:2558
 msgid "Invalid list box message.\n"
@@ -6594,7 +6580,7 @@ msgstr "プロトコル シーケンスが見つかりませんでした。\n"
 
 #: dlls/kernelbase/winerror.mc:3143
 msgid "Procedure number out of range.\n"
-msgstr "プロシジャ番号が範囲外です。\n"
+msgstr "プロシージャ番号が範囲外です。\n"
 
 #: dlls/kernelbase/winerror.mc:3148
 msgid "Binding has no authentication data.\n"
@@ -7077,54 +7063,40 @@ msgid "This network connection does not exist.\n"
 msgstr "このネットワーク接続は存在しません。\n"
 
 #: dlls/kernelbase/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "割り込み時間においては正しくありません。\n"
+msgstr "呼び出しは割り込まれました。\n"
 
 #: dlls/kernelbase/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "ハンドルが正しくありません。\n"
+msgstr "ファイル ハンドルが正しくありません。\n"
 
 #: dlls/kernelbase/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "ネットワーク アドレスが正しくありません。\n"
+msgstr "ポインター アドレスが正しくありません。\n"
 
 #: dlls/kernelbase/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "名前は正しくありません。\n"
+msgstr "引数は正しくありません。\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "相手側により接続がリセットされました。\n"
 
 #: dlls/kernelbase/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
 msgid "Host not found.\n"
-msgstr "ポイントが見つかりません。\n"
+msgstr "ホストが見つかりません。\n"
 
 #: dlls/kernelbase/winerror.mc:3793
-#, fuzzy
-#| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
-msgstr "属性が見つかりません。\n"
+msgstr "権威のないホストが見つかりません。\n"
 
 #: dlls/kernelbase/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
-msgstr "回復不可能なエラーが発生しました。\n"
+msgstr "回復不能エラーです。\n"
 
 #: dlls/kernelbase/winerror.mc:3803
 msgid "Name valid, no data record.\n"
-msgstr ""
+msgstr "名前は有効ですが、データ レコードがありません。\n"
 
 #: dlls/kernelbase/winerror.mc:3817
 msgid "Not implemented.\n"
@@ -13736,11 +13708,11 @@ msgid ""
 msgstr ""
 "CALL <バッチファイル名> は他のバッチ ファイルからコマンドを実行する場合に\n"
 "バッチ ファイル中で使用します。バッチ ファイル終了時にコントロールは呼び出\n"
-"したファイルに戻ります。 CALL コマンドは呼び出されるプロシジャにパラメー\n"
+"したファイルに戻ります。 CALL コマンドは呼び出されるプロシージャにパラメー\n"
 "ターを渡すことができます。\n"
 "\n"
-"呼び出されたプロシジャが行った既定ディレクトリや環境変数の変更は呼び出し元\n"
-"に引き継がれます。\n"
+"呼び出されたプロシージャが行った既定ディレクトリや環境変数の変更は呼び出し\n"
+"元に引き継がれます。\n"
 
 #: programs/cmd/cmd.rc:44
 msgid ""
@@ -13863,8 +13835,8 @@ msgstr ""
 "        IF [NOT] 文字列1==文字列2 コマンド\n"
 "        IF [NOT] ERRORLEVEL 番号 コマンド\n"
 "\n"
-"2番目の形式において、文字列1と文字列2は二重引用符で囲われていなければ\n"
-"なりません。大文字と小文字は区別されません。\n"
+"2番目の形式において、文字列1と文字列2は二重引用符で囲う必要がありま\n"
+"す。大文字と小文字は区別されません。\n"
 
 #: programs/cmd/cmd.rc:118
 msgid ""
@@ -13923,7 +13895,7 @@ msgstr ""
 "されます)。設定を変更するには、PATH コマンドに続けて新しい設定値を入力して\n"
 "下さい。\n"
 "\n"
-"PATH を変更するときに PATH 環境変数を使用することも可能です、例えば：\n"
+"PATH を変更するときに PATH 環境変数を使用することも可能です、例えば:\n"
 "PATH %PATH%;c:\\temp\n"
 
 #: programs/cmd/cmd.rc:148
@@ -13960,19 +13932,19 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
-"PROMPT はコマンド行のプロンプトを設定します。\n"
+"PROMPT はコマンドラインのプロンプトを設定します。\n"
 "\n"
 "PROMPT コマンド(と直後のスペース)に続く文字列はcmdが入力待ちの時、行の先頭\n"
 "に表示されます。\n"
 "\n"
-"以下のキャラクタ文字列は特別な意味を持ちます：\n"
+"以下のキャラクタ文字列は特別な意味を持ちます:\n"
 "\n"
 "$$    ドル記号            $_    改行                $b    パイプ記号 (|)\n"
 "$d    現在の日付          $e    エスケープ          $g    > 記号\n"
 "$l    < 記号              $n    現在のドライブ      $p    現在のパス\n"
 "$q    等号                $t    現在の時刻          $v    cmdのバージョン\n"
 "\n"
-"注意：PROMPTコマンドをプロンプト文字列なしで実行すると、既定値にリセット\n"
+"注意: PROMPTコマンドをプロンプト文字列なしで実行すると、既定値にリセット\n"
 "されます。 既定値はカレント ディレクトリ (ドライブ名を含みます) に続いて\n"
 "大なり (>) 記号です。\n"
 "(PROMPT $p$g を実行した時と同様です)\n"
@@ -13985,8 +13957,8 @@ msgid ""
 "A command line beginning with REM (followed by a space) performs no action,\n"
 "and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"REM(と直後のスペース)で始まるコマンドは実行されません。したがって、バッチ\n"
-"ファイル中のコメントとして使用できます。\n"
+"REM(と直後のスペース)で始まるコマンド ラインは実行されません。したがって、\n"
+"バッチ ファイル中のコメントとして使用できます。\n"
 
 #: programs/cmd/cmd.rc:176
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
@@ -14026,7 +13998,7 @@ msgstr ""
 "\n"
 "パラメーターなしでSETを実行すると、現在の全ての環境変数を表示します。\n"
 "\n"
-"環境変数の作成または変更を行う場合は次のように記述して下さい：\n"
+"環境変数の作成または変更を行う場合は次のように記述して下さい:\n"
 "\n"
 "SET <環境変数名>=<値>\n"
 "\n"
@@ -14045,7 +14017,7 @@ msgid ""
 "called from the command line.\n"
 msgstr ""
 "SHIFT はバッチ ファイル中でリストの先頭から一つのパラメーターを取り除く時に\n"
-"使用します。つまり、パラメーター2がパラメーター1になります。コマンドライン\n"
+"使用します。つまり、パラメーター2がパラメーター1になります。コマンド ライン\n"
 "から呼ばれたときには何も起こりません。\n"
 
 #: programs/cmd/cmd.rc:212
@@ -14457,7 +14429,7 @@ msgstr "Verify は %1\n"
 
 #: programs/cmd/cmd.rc:390
 msgid "Verify must be ON or OFF\n"
-msgstr "Verify は ON か OFF で指定してください\n"
+msgstr "Verify は ON か OFF で指定する必要があります\n"
 
 #: programs/cmd/cmd.rc:391
 msgid "Parameter error\n"
@@ -14542,7 +14514,7 @@ msgid ""
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
 "数値の形式に誤りがあります - 10 進数 (12)、16 進数 (0x34)、\n"
-"8 進数 (056) のいずれかとしてください。\n"
+"8 進数 (056) のいずれかとする必要があります。\n"
 
 #: programs/conhost/conhost.rc:54
 msgid "Cursor size"
@@ -14686,7 +14658,8 @@ msgstr "構成エラー"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "スクリーン バッファーの大きさはウィンドウの大きさ以上にしてください。"
+msgstr ""
+"スクリーン バッファーの大きさはウィンドウの大きさ以上にする必要があります。"
 
 #: programs/conhost/conhost.rc:41
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
@@ -15149,10 +15122,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "置換(&R)...\tCtrl+H"
 
 #: programs/notepad/notepad.rc:59
-#, fuzzy
-#| msgid "&New...\tCtrl+N"
 msgid "&Go To...\tCtrl+G"
-msgstr "新規作成(&N)...\tCtrl+N"
+msgstr "指定行に移動(&G)...\tCtrl+G"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -15195,17 +15166,15 @@ msgstr "上(&T):"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "指定行に移動"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "CRL ナンバー"
+msgstr "行番号(&L):"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
-msgstr ""
+msgstr "移動"
 
 #: programs/notepad/notepad.rc:145
 msgid "Encoding:"
@@ -15271,7 +15240,7 @@ msgstr "Z"
 #: programs/notepad/notepad.rc:162
 msgctxt "accelerator GoTo"
 msgid "G"
-msgstr ""
+msgstr "G"
 
 #: programs/notepad/notepad.rc:74
 msgid "Page &p"
@@ -15349,7 +15318,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "%ld 行、%ld 列"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
@@ -15589,11 +15558,11 @@ msgstr "プログラム情報、バージョン番号と著作権を表示しま
 
 #: programs/oleview/oleview.rc:115
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr "CoGetClassObject 呼び出し時にイン プロセス サーバーに問い合せます"
+msgstr "CoGetClassObject 呼び出し時にインプロセス サーバーに問い合せます"
 
 #: programs/oleview/oleview.rc:116
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr "CoGetClassObject 呼び出し時にイン プロセス ハンドラーに問い合せます"
+msgstr "CoGetClassObject 呼び出し時にインプロセス ハンドラーに問い合せます"
 
 #: programs/oleview/oleview.rc:117
 msgid "Ask for a local server when calling CoGetClassObject"
@@ -15956,56 +15925,6 @@ msgstr ""
 "\n"
 
 #: programs/reg/reg.rc:67
-#, fuzzy
-#| msgid ""
-#| "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/"
-#| "f]\n"
-#| "\n"
-#| "  Adds a key to the registry or adds a new value to a given registry "
-#| "key.\n"
-#| "\n"
-#| "  <key>\n"
-#| "     The registry key to add or, if either [/v] or [/ve] is specified,\n"
-#| "     the key in which to add the new registry data.\n"
-#| "\n"
-#| "     Format: ROOT\\Subkey\n"
-#| "\n"
-#| "     ROOT: A predefined registry key. This must be one of the following:\n"
-#| "\n"
-#| "         HKEY_LOCAL_MACHINE  | HKLM\n"
-#| "         HKEY_CURRENT_USER   | HKCU\n"
-#| "         HKEY_CLASSES_ROOT   | HKCR\n"
-#| "         HKEY_USERS          | HKU\n"
-#| "         HKEY_CURRENT_CONFIG | HKCC\n"
-#| "\n"
-#| "     Subkey: The full path to a registry key under a given ROOT key.\n"
-#| "\n"
-#| "  /v <value_name>\n"
-#| "     The name of the registry value to add.\n"
-#| "\n"
-#| "  /ve\n"
-#| "     Add an unnamed registry value. This option modifies the (Default)\n"
-#| "     registry value.\n"
-#| "\n"
-#| "  /t <type>\n"
-#| "     The type of data to add to the registry. If [/t] is specified,\n"
-#| "     <type> must be one of the following:\n"
-#| "\n"
-#| "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-#| "         REG_DWORD | REG_BINARY   | REG_NONE\n"
-#| "\n"
-#| "     If [/t] is not specified, the default data type is REG_SZ.\n"
-#| "\n"
-#| "  /s <separator>\n"
-#| "     The character used to separate strings in REG_MULTI_SZ data.\n"
-#| "     If [/s] is not specified, the default separator is \\0.\n"
-#| "\n"
-#| "  /d <data>\n"
-#| "     The data to add to the new registry value.\n"
-#| "\n"
-#| "  /f\n"
-#| "     Modify the registry without prompting for confirmation.\n"
-#| "\n"
 msgid ""
 "REG ADD <key> [/v value_name | /ve] [/t type] [/s separator] [/d data] [/f]\n"
 "\n"
@@ -16087,7 +16006,7 @@ msgstr ""
 "     <種類> は以下のいずれかを指定します:\n"
 "\n"
 "         REG_SZ    | REG_MULTI_SZ | REG_EXPAND_SZ\n"
-"         REG_DWORD | REG_BINARY   | REG_NONE\n"
+"         REG_DWORD | REG_QWORD    | REG_BINARY   | REG_NONE\n"
 "\n"
 "     [/t] が指定されない場合、既定となるデータの種類は REG_SZ です。\n"
 "\n"
@@ -16527,10 +16446,8 @@ msgstr "DWORD値(&D)"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "DWORD値(&D)"
+msgstr "QWORD値(&Q)"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -17091,16 +17008,12 @@ msgid "Collapse"
 msgstr "閉じる"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "新しい 32 ビット値を追加します"
+msgstr "新しい 64 ビット値を追加します"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "DWORD の編集"
+msgstr "QWORD の編集"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
@@ -17289,15 +17202,14 @@ msgstr "エラー: /im と /pid のオプションは同時に指定できませ
 #: programs/taskkill/taskkill.rc:36
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
-"クローズ メッセージがプロセス(PID %1!u!)のトップレベル ウィンドウに送られまし"
-"た。\n"
+"クローズ メッセージがプロセス(PID %1!u!)の最上位ウィンドウに送られました。\n"
 
 #: programs/taskkill/taskkill.rc:37
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"クローズ メッセージがプロセス(%1, PID %2!u!)のトップレベル ウィンドウに送られ"
-"ました。\n"
+"クローズ メッセージがプロセス(%1, PID %2!u!)の最上位ウィンドウに送られまし"
+"た。\n"
 
 #: programs/taskkill/taskkill.rc:38
 msgid "Process with PID %1!u! was forcibly terminated.\n"
