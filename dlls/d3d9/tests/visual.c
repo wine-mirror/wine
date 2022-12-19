@@ -27876,6 +27876,39 @@ static void test_managed_reset(void)
     release_test_context(&context);
 }
 
+static void test_managed_generate_mipmap(void)
+{
+    struct d3d9_test_context context;
+    IDirect3DTexture9 *texture;
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+
+    if (!init_test_context(&context))
+        return;
+    device = context.device;
+
+    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 0, D3DUSAGE_AUTOGENMIPMAP,
+            D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    fill_texture(texture, 0x0000ff00, 0);
+
+    IDirect3DTexture9_GenerateMipSubLevels(texture);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MIPFILTER, D3DTEXF_POINT);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 1);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    draw_textured_quad(&context, texture);
+    check_rt_color_todo(context.backbuffer, 0x0000ff00);
+
+    IDirect3DTexture9_Release(texture);
+    release_test_context(&context);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -28028,4 +28061,5 @@ START_TEST(visual)
     test_dynamic_map_synchronization();
     test_filling_convention();
     test_managed_reset();
+    test_managed_generate_mipmap();
 }
