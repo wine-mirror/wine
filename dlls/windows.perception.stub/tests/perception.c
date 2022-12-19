@@ -77,8 +77,8 @@ static void test_ObserverStatics(void)
 
     value = TRUE;
     hr = ISpatialSurfaceObserverStatics2_IsSupported( observer_statics2, &value );
-    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
-    todo_wine ok( !value, "got %d.\n", value );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+    ok( !value, "got %d.\n", value );
 
     ref = ISpatialSurfaceObserverStatics2_Release( observer_statics2 );
     ok( ref == 2, "got ref %ld.\n", ref );

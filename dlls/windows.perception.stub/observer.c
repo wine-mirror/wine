@@ -149,8 +149,10 @@ DEFINE_IINSPECTABLE( observer_statics2, ISpatialSurfaceObserverStatics2, struct 
 
 static HRESULT WINAPI observer_statics2_IsSupported( ISpatialSurfaceObserverStatics2 *iface, boolean *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    *value = FALSE;
+    return S_OK;
 }
 
 static const struct ISpatialSurfaceObserverStatics2Vtbl observer_statics2_vtbl =
