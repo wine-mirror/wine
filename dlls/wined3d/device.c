@@ -5167,9 +5167,9 @@ static unsigned int sanitise_map_flags(const struct wined3d_resource *resource, 
     }
     else if (flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
     {
-        if (!(resource->usage & WINED3DUSAGE_DYNAMIC))
+        if (!(resource->access & WINED3D_RESOURCE_ACCESS_GPU) || !(resource->usage & WINED3DUSAGE_DYNAMIC))
         {
-            WARN("DISCARD or NOOVERWRITE map on non-dynamic buffer, ignoring.\n");
+            WARN("DISCARD or NOOVERWRITE map not on dynamic GPU-accessible buffer, ignoring.\n");
             return flags & (WINED3D_MAP_READ | WINED3D_MAP_WRITE);
         }
         if ((flags & (WINED3D_MAP_DISCARD | WINED3D_MAP_NOOVERWRITE))
