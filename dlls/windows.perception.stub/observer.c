@@ -26,6 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(perception);
 struct observer
 {
     IActivationFactory IActivationFactory_iface;
+    ISpatialSurfaceObserverStatics ISpatialSurfaceObserverStatics_iface;
     LONG ref;
 };
 
@@ -46,6 +47,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_ISpatialSurfaceObserverStatics ))
+    {
+        *out = &impl->ISpatialSurfaceObserverStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -108,9 +116,31 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( observer_statics, ISpatialSurfaceObserverStatics, struct observer, IActivationFactory_iface )
+
+static HRESULT WINAPI observer_statics_RequestAccessAsync( ISpatialSurfaceObserverStatics *iface, IAsyncOperation_SpatialPerceptionAccessStatus **result )
+{
+    FIXME( "iface %p, result %p stub!\n", iface, result );
+    return E_NOTIMPL;
+}
+
+static const struct ISpatialSurfaceObserverStaticsVtbl observer_statics_vtbl =
+{
+    observer_statics_QueryInterface,
+    observer_statics_AddRef,
+    observer_statics_Release,
+    /* IInspectable methods */
+    observer_statics_GetIids,
+    observer_statics_GetRuntimeClassName,
+    observer_statics_GetTrustLevel,
+    /* ISpatialSurfaceObserverStatics methods */
+    observer_statics_RequestAccessAsync,
+};
+
 static struct observer observer_statics =
 {
     {&factory_vtbl},
+    {&observer_statics_vtbl},
     1,
 };
 

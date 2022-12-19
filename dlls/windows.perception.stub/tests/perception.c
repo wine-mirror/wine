@@ -68,6 +68,7 @@ static void test_ObserverStatics(void)
     check_interface( factory, &IID_IUnknown );
     check_interface( factory, &IID_IInspectable );
     check_interface( factory, &IID_IAgileObject );
+    check_interface( factory, &IID_ISpatialSurfaceObserverStatics );
 
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
