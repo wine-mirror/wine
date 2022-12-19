@@ -599,6 +599,10 @@ NTSTATUS WINAPI HidRegisterMinidriver(HID_MINIDRIVER_REGISTRATION *registration)
 {
     minidriver *driver;
 
+    /* make sure we have a window station and a desktop, we need one to send input */
+    if (!GetProcessWindowStation())
+        return STATUS_INVALID_PARAMETER;
+
     if (!(driver = calloc(1, sizeof(*driver))))
         return STATUS_NO_MEMORY;
 
