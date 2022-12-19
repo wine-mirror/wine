@@ -2039,6 +2039,11 @@ static BOOL match_tz_date( const RTL_SYSTEM_TIME *st, const RTL_SYSTEM_TIME *reg
     if (!reg_st->wYear) /* date in a day-of-week format */
         wDay = weekday_to_mday(st->wYear - 1900, reg_st->wDay, reg_st->wMonth - 1, reg_st->wDayOfWeek);
 
+    /* special case for 23:59:59.999, match with 0:00:00.000 on the following day */
+    if (!reg_st->wYear && reg_st->wHour == 23 && reg_st->wMinute == 59 &&
+        reg_st->wSecond == 59 && reg_st->wMilliseconds == 999)
+        return (st->wDay == wDay + 1 && !st->wHour && !st->wMinute && !st->wSecond && !st->wMilliseconds);
+
     return (st->wDay == wDay &&
             st->wHour == reg_st->wHour &&
             st->wMinute == reg_st->wMinute &&
