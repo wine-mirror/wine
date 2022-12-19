@@ -81,6 +81,7 @@ static struct {
     BOOL sendinput_broken;
 } key_status;
 
+static BOOL (WINAPI *pEnableMouseInPointer)( BOOL );
 static BOOL (WINAPI *pGetCurrentInputMessageSource)( INPUT_MESSAGE_SOURCE *source );
 static BOOL (WINAPI *pGetPointerType)(UINT32, POINTER_INPUT_TYPE*);
 static BOOL (WINAPI *pGetPointerInfo)(UINT32, POINTER_INFO*);
@@ -149,6 +150,7 @@ static void init_function_pointers(void)
     if (!(p ## func = (void*)GetProcAddress(hdll, #func))) \
       trace("GetProcAddress(%s) failed\n", #func)
 
+    GET_PROC(EnableMouseInPointer);
     GET_PROC(GetCurrentInputMessageSource);
     GET_PROC(GetMouseMovePointsEx);
     GET_PROC(GetPointerInfo);
@@ -4590,6 +4592,43 @@ static void test_SendInput(void)
     DestroyWindow( hwnd );
 }
 
+static void test_EnableMouseInPointer_process( const char *arg )
+{
+    DWORD enable = strtoul( arg, 0, 10 );
+    BOOL ret;
+
+    ret = pEnableMouseInPointer( enable );
+    todo_wine
+    ok( ret, "EnableMouseInPointer failed, error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = pEnableMouseInPointer( !enable );
+    ok( !ret, "EnableMouseInPointer succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError() );
+
+    ret = pEnableMouseInPointer( enable );
+    todo_wine
+    ok( ret, "EnableMouseInPointer failed, error %lu\n", GetLastError() );
+}
+
+static void test_EnableMouseInPointer( char **argv, BOOL enable )
+{
+    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info = {0};
+    char cmdline[MAX_PATH * 2];
+    BOOL ret;
+
+    sprintf( cmdline, "%s %s EnableMouseInPointer %u", argv[0], argv[1], enable );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
+    if (!ret) return;
+
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+}
+
 START_TEST(input)
 {
     char **argv;
@@ -4609,6 +4648,14 @@ START_TEST(input)
     if (argc >= 3 && strcmp(argv[2], "get_mouse_move_points_test") == 0)
     {
         test_GetMouseMovePointsEx_process();
+        return;
+    }
+
+    if (argc >= 4 && strcmp( argv[2], "EnableMouseInPointer" ) == 0)
+    {
+        winetest_push_context( "enable %s", argv[3] );
+        test_EnableMouseInPointer_process( argv[3] );
+        winetest_pop_context();
         return;
     }
 
@@ -4657,4 +4704,12 @@ START_TEST(input)
         win_skip("GetPointerType is not available\n");
 
     test_UnregisterDeviceNotification();
+
+    if (!pEnableMouseInPointer)
+        win_skip( "EnableMouseInPointer not found, skipping tests\n" );
+    else
+    {
+        test_EnableMouseInPointer( argv, FALSE );
+        test_EnableMouseInPointer( argv, TRUE );
+    }
 }
