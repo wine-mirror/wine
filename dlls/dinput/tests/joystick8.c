@@ -4102,8 +4102,7 @@ done:
     cleanup_registry_keys();
 }
 
-static BOOL wm_input_device_change_count;
-static BOOL wm_input_count;
+static HANDLE rawinput_device_added, rawinput_device_removed, rawinput_event;
 static char wm_input_buf[1024];
 static UINT wm_input_len;
 
@@ -4111,12 +4110,16 @@ static LRESULT CALLBACK rawinput_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LP
 {
     UINT size = sizeof(wm_input_buf);
 
-    if (msg == WM_INPUT_DEVICE_CHANGE) wm_input_device_change_count++;
+    if (msg == WM_INPUT_DEVICE_CHANGE)
+    {
+        if (wparam == GIDC_ARRIVAL) ReleaseSemaphore( rawinput_device_added, 1, NULL );
+        else ReleaseSemaphore( rawinput_device_removed, 1, NULL );
+    }
     if (msg == WM_INPUT)
     {
-        wm_input_count++;
         wm_input_len = GetRawInputData( (HRAWINPUT)lparam, RID_INPUT, (RAWINPUT *)wm_input_buf,
                                         &size, sizeof(RAWINPUTHEADER) );
+        ReleaseSemaphore( rawinput_event, 1, NULL );
     }
 
     return DefWindowProcW( hwnd, msg, wparam, lparam );
@@ -4223,7 +4226,6 @@ static void test_rawinput(void)
     UINT count;
     HWND hwnd;
     BOOL ret;
-    MSG msg;
 
     RegisterClassExW( &class );
 
@@ -4232,6 +4234,13 @@ static void test_rawinput(void)
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
+
+    rawinput_device_added = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok( !!rawinput_device_added, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
+    rawinput_device_removed = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok( !!rawinput_device_removed, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
+    rawinput_event = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok( !!rawinput_event, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
 
     hwnd = CreateWindowW( class.lpszClassName, L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
                           NULL, NULL, NULL, NULL );
@@ -4257,10 +4266,12 @@ static void test_rawinput(void)
     todo_wine
     ok( count == ARRAY_SIZE(raw_devices), "got count %u\n", count );
 
-
-    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
-    ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
-    ok( !wm_input_count, "got %u WM_INPUT\n", wm_input_count );
+    res = msg_wait_for_events( 1, &rawinput_device_added, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &rawinput_device_removed, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &rawinput_event, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
 
     raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
     raw_devices[0].usUsage = HID_USAGE_GENERIC_GAMEPAD;
@@ -4272,9 +4283,12 @@ static void test_rawinput(void)
 
     hid_device_stop( &desc );
 
-    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
-    ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
-    ok( !wm_input_count, "got %u WM_INPUT\n", wm_input_count );
+    res = msg_wait_for_events( 1, &rawinput_device_added, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &rawinput_device_removed, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &rawinput_event, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
 
     raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
     raw_devices[0].usUsage = HID_USAGE_GENERIC_JOYSTICK;
@@ -4286,10 +4300,15 @@ static void test_rawinput(void)
 
     hid_device_start( &desc );
 
-    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
-    ok( wm_input_device_change_count == 1, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
-    ok( !wm_input_count, "got %u WM_INPUT\n", wm_input_count );
-    wm_input_device_change_count = 0;
+    res = msg_wait_for_events( 1, &rawinput_device_added, 1000 );
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
+
+    res = msg_wait_for_events( 1, &rawinput_device_added, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &rawinput_device_removed, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &rawinput_event, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
 
     raw_devices[0].usUsagePage = HID_USAGE_PAGE_GENERIC;
     raw_devices[0].usUsage = HID_USAGE_GENERIC_JOYSTICK;
@@ -4302,9 +4321,12 @@ static void test_rawinput(void)
     hid_device_stop( &desc );
     hid_device_start( &desc );
 
-    while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
-    ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
-    ok( !wm_input_count, "got %u WM_INPUT\n", wm_input_count );
+    res = msg_wait_for_events( 1, &rawinput_device_added, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &rawinput_device_removed, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+    res = msg_wait_for_events( 1, &rawinput_event, 10 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
 
 
     count = ARRAY_SIZE(raw_device_list);
@@ -4346,21 +4368,27 @@ static void test_rawinput(void)
 
         send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
 
-        res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 5000, QS_ALLINPUT );
-        ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
-        while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
+        res = msg_wait_for_events( 1, &rawinput_event, 1000 );
+        ok( !res, "WaitForSingleObject returned %#lx\n", res );
 
-        ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );
-        ok( wm_input_count == 1, "got %u WM_INPUT\n", wm_input_count );
+        res = msg_wait_for_events( 1, &rawinput_device_added, 10 );
+        ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+        res = msg_wait_for_events( 1, &rawinput_device_removed, 10 );
+        ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+        res = msg_wait_for_events( 1, &rawinput_event, 10 );
+        ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx\n", res );
+
         ok( wm_input_len == offsetof(RAWINPUT, data.hid.bRawData[desc.caps.InputReportByteLength]),
             "got wm_input_len %u\n", wm_input_len );
         ok( !memcmp( rawinput->data.hid.bRawData, injected_input[i].report_buf, desc.caps.InputReportByteLength ),
             "got unexpected report data\n" );
-        wm_input_count = 0;
 
         winetest_pop_context();
     }
 
+    CloseHandle( rawinput_device_added );
+    CloseHandle( rawinput_device_removed );
+    CloseHandle( rawinput_event );
     CloseHandle( file );
 
 done:

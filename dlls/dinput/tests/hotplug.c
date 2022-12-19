@@ -73,7 +73,7 @@ failed:
     return FALSE;
 }
 
-static DWORD wait_for_events( DWORD count, HANDLE *events, DWORD timeout )
+DWORD msg_wait_for_events_( const char *file, int line, DWORD count, HANDLE *events, DWORD timeout )
 {
     DWORD ret, end = GetTickCount() + min( timeout, 5000 );
     MSG msg;
@@ -91,8 +91,8 @@ static DWORD wait_for_events( DWORD count, HANDLE *events, DWORD timeout )
         else timeout = end - GetTickCount();
     }
 
-    if (timeout >= 5000) ok( 0, "MsgWaitForMultipleObjects returned %#lx\n", ret );
-    else ok( ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+    if (timeout >= 5000) ok_(file, line)( 0, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+    else ok_(file, line)( ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %#lx\n", ret );
     return ret;
 }
 
@@ -1047,7 +1047,7 @@ static void test_windows_gaming_input(void)
     thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
     ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
 
-    wait_for_events( 1, &controller_added.event, 5000 );
+    msg_wait_for_events( 1, &controller_added.event, 5000 );
 
     ok( controller_added.invoked, "controller added handler not invoked\n" );
     ok( !controller_removed.invoked, "controller removed handler invoked\n" );
@@ -1084,7 +1084,7 @@ static void test_windows_gaming_input(void)
     IRawGameController_Release( raw_controller );
 
     SetEvent( stop_event );
-    wait_for_events( 1, &controller_removed.event, 5000 );
+    msg_wait_for_events( 1, &controller_removed.event, 5000 );
 
     ok( controller_added.invoked, "controller added handler not invoked\n" );
     ok( controller_removed.invoked, "controller removed handler not invoked\n" );
@@ -1146,10 +1146,10 @@ static void test_windows_gaming_input(void)
 
     thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
     ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
-    wait_for_events( 1, &controller_added.event, 5000 );
-    res = wait_for_events( 1, &custom_factory.added_event, 500 );
+    msg_wait_for_events( 1, &controller_added.event, 5000 );
+    res = msg_wait_for_events( 1, &custom_factory.added_event, 500 );
     todo_wine
-    ok( !res, "wait_for_events returned %#lx\n", res );
+    ok( !res, "msg_wait_for_events returned %#lx\n", res );
     hr = IRawGameControllerStatics_get_RawGameControllers( statics, &controller_view );
     ok( hr == S_OK, "get_RawGameControllers returned %#lx\n", hr );
     hr = IVectorView_RawGameController_GetAt( controller_view, 0, &raw_controller );
@@ -1194,10 +1194,10 @@ next:
     IGameController_Release( game_controller );
     IRawGameController_Release( raw_controller );
     SetEvent( stop_event );
-    res = wait_for_events( 1, &custom_factory.removed_event, 500 );
+    res = msg_wait_for_events( 1, &custom_factory.removed_event, 500 );
     todo_wine
-    ok( !res, "wait_for_events returned %#lx\n", res );
-    wait_for_events( 1, &controller_removed.event, 5000 );
+    ok( !res, "msg_wait_for_events returned %#lx\n", res );
+    msg_wait_for_events( 1, &controller_removed.event, 5000 );
 
     hr = IRawGameControllerStatics_remove_RawGameControllerAdded( statics, controller_added_token );
     ok( hr == S_OK, "remove_RawGameControllerAdded returned %#lx\n", hr );

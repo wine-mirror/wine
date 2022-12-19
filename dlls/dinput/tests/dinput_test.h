@@ -109,4 +109,7 @@ void wait_hid_expect_( const char *file, int line, HANDLE device, struct hid_dev
 void send_hid_input_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
                       struct hid_expect *expect, DWORD expect_size );
 
+#define msg_wait_for_events( a, b, c ) msg_wait_for_events_( __FILE__, __LINE__, a, b, c )
+DWORD msg_wait_for_events_( const char *file, int line, DWORD count, HANDLE *events, DWORD timeout );
+
 #endif /* __WINE_DINPUT_TEST_H */
