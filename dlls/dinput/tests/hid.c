@@ -74,8 +74,7 @@ const WCHAR expect_vidpid_str[] = L"VID_1209&PID_0001";
 const GUID expect_guid_product = {EXPECT_VIDPID, 0x0000, 0x0000, {0x00, 0x00, 'P', 'I', 'D', 'V', 'I', 'D'}};
 const WCHAR expect_path[] = L"\\\\?\\hid#vid_1209&pid_0001#2&";
 const WCHAR expect_path_end[] = L"&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}";
-HANDLE device_added, device_removed;
-static LONG device_added_count;
+static HANDLE device_added, device_removed;
 
 static struct winetest_shared_data *test_data;
 static HANDLE monitor_thread, monitor_stop;
@@ -710,9 +709,7 @@ BOOL bus_device_start(void)
 void hid_device_stop( struct hid_device_desc *desc, UINT count )
 {
     HANDLE control;
-    DWORD ret;
-
-    ResetEvent( device_removed );
+    DWORD ret, i;
 
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
@@ -721,9 +718,15 @@ void hid_device_stop( struct hid_device_desc *desc, UINT count )
     ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
     CloseHandle( control );
 
-    if (ret)
+    if (!ret) return;
+
+    ret = WaitForSingleObject( device_removed, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+
+    for (i = 0; i < count; ++i)
     {
-        ret = WaitForSingleObject( device_removed, 5000 );
+        ret = WaitForSingleObject( device_removed, i > 0 ? 500 : 5000 );
+        todo_wine_if(i > 0)
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     }
 }
@@ -731,9 +734,7 @@ void hid_device_stop( struct hid_device_desc *desc, UINT count )
 BOOL hid_device_start( struct hid_device_desc *desc, UINT count )
 {
     HANDLE control;
-    DWORD ret;
-
-    ResetEvent( device_added );
+    DWORD ret, i;
 
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
@@ -744,6 +745,15 @@ BOOL hid_device_start( struct hid_device_desc *desc, UINT count )
 
     ret = WaitForSingleObject( device_added, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+
+    if (ret) return FALSE;
+
+    for (i = 0; i < count; ++i)
+    {
+        ret = WaitForSingleObject( device_added, 1000 );
+        todo_wine_if(i > 0)
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    }
 
     return TRUE;
 }
@@ -2609,8 +2619,7 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
 
     /* Win7 has a spurious device removal event with polled HID devices */
     if (!polled || !strcmp(winetest_platform, "wine")) ret = WAIT_TIMEOUT;
-    else ret = WaitForSingleObject( device_removed, 2000 );
-    if (!ret && InterlockedOr( &device_added_count, 0 ) == 1)
+    else if (!(ret = WaitForSingleObject( device_removed, 2000 )))
     {
         ret = WaitForSingleObject( device_added, 5000 );
         ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
@@ -3513,13 +3522,14 @@ static LRESULT CALLBACK monitor_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPA
     if (msg == WM_DEVICECHANGE)
     {
         DEV_BROADCAST_DEVICEINTERFACE_W *iface = (DEV_BROADCAST_DEVICEINTERFACE_W *)lparam;
-        if (wparam == DBT_DEVICEREMOVECOMPLETE && IsEqualGUID( &iface->dbcc_classguid, &control_class ))
-            SetEvent( device_removed );
-        if (wparam == DBT_DEVICEARRIVAL && IsEqualGUID( &iface->dbcc_classguid, &GUID_DEVINTERFACE_HID ))
-        {
-            InterlockedIncrement( &device_added_count );
-            SetEvent( device_added );
-        }
+
+        if (!IsEqualGUID( &iface->dbcc_classguid, &control_class ) && !IsEqualGUID( &iface->dbcc_classguid, &GUID_DEVINTERFACE_HID ))
+            return DefWindowProcW( hwnd, msg, wparam, lparam );
+        if (!wcsnicmp( iface->dbcc_name, L"\\\\?\\root#winetest", 17 ))
+            return DefWindowProcW( hwnd, msg, wparam, lparam );
+
+        if (wparam == DBT_DEVICEREMOVECOMPLETE) ReleaseSemaphore( device_removed, 1, NULL );
+        if (wparam == DBT_DEVICEARRIVAL) ReleaseSemaphore( device_added, 1, NULL );
     }
 
     return DefWindowProcW( hwnd, msg, wparam, lparam );
@@ -3572,10 +3582,10 @@ void dinput_test_init_( const char *file, int line )
 
     monitor_stop = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok_(file, line)( !!monitor_stop, "CreateEventW failed, error %lu\n", GetLastError() );
-    device_added = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok_(file, line)( !!device_added, "CreateEventW failed, error %lu\n", GetLastError() );
-    device_removed = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok_(file, line)( !!device_removed, "CreateEventW failed, error %lu\n", GetLastError() );
+    device_added = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok_(file, line)( !!device_added, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
+    device_removed = CreateSemaphoreW( NULL, 0, LONG_MAX, NULL );
+    ok_(file, line)( !!device_removed, "CreateSemaphoreW failed, error %lu\n", GetLastError() );
     monitor_thread = CreateThread( NULL, 0, monitor_thread_proc, monitor_stop, 0, NULL );
     ok_(file, line)( !!monitor_thread, "CreateThread failed, error %lu\n", GetLastError() );
 
@@ -3831,8 +3841,6 @@ static void test_bus_driver(void)
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
 
-    ResetEvent( device_added );
-
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
     ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
@@ -3841,18 +3849,20 @@ static void test_bus_driver(void)
 
     ret = WaitForSingleObject( device_added, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    ret = WaitForSingleObject( device_added, 1000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", LOWORD(EXPECT_VIDPID), HIWORD(EXPECT_VIDPID) );
     ret = find_hid_device_path( device_path );
     ok( ret, "Failed to find HID device matching %s\n", debugstr_w(device_path) );
-
-    ResetEvent( device_removed );
 
     ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, &desc, sizeof(desc), NULL, 0, 5000 );
     ok( ret, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
     CloseHandle( control );
 
     ret = WaitForSingleObject( device_removed, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    ret = WaitForSingleObject( device_removed, 1000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
 
 done:
