@@ -1852,6 +1852,8 @@ struct test_recursion_context
     DWORD main_thread_id;
     DWORD receive_response_thread_id;
     BOOL headers_available;
+    DWORD total_len;
+    BYTE *send_buffer;
 };
 
 /* The limit is 128 before Win7 and 3 on newer Windows. */
@@ -1872,17 +1874,29 @@ static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR contex
         case WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE:
             if (status == context->call_receive_response_status)
             {
-                context->receive_response_thread_id = GetCurrentThreadId();
-                ret = WinHttpReceiveResponse( context->request, NULL );
-                ok( ret, "failed to receive response, GetLastError() %lu\n", GetLastError() );
+                if (context->total_len)
+                {
+                    ret = WinHttpWriteData( context->request, context->send_buffer, context->total_len, NULL );
+                    ok(ret, "failed.\n");
+                }
+                else
+                {
+                    context->receive_response_thread_id = GetCurrentThreadId();
+                    ret = WinHttpReceiveResponse( context->request, NULL );
+                    ok( ret, "failed to receive response, GetLastError() %lu\n", GetLastError() );
+                }
             }
             break;
 
+        case WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE:
+            trace("WINHTTP_CALLBACK_STATUS_WRITE_COMPLETE thread %04lx.\n", GetCurrentThreadId());
+            context->receive_response_thread_id = GetCurrentThreadId();
+            ret = WinHttpReceiveResponse( context->request, NULL );
+            ok( ret, "failed to receive response, GetLastError() %lu\n", GetLastError() );
+            break;
+
         case WINHTTP_CALLBACK_STATUS_HEADERS_AVAILABLE:
-            if (context->call_receive_response_status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE)
-                ok( GetCurrentThreadId() == context->receive_response_thread_id,
-                    "expected callback to be called from the same thread, got %lx.\n", GetCurrentThreadId() );
-            else
+            if (context->call_receive_response_status != WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE)
                 ok( GetCurrentThreadId() != context->main_thread_id,
                     "expected callback to be called from the other thread, got main.\n" );
             context->headers_available = TRUE;
@@ -1933,7 +1947,6 @@ static void CALLBACK test_recursion_callback( HINTERNET handle, DWORD_PTR contex
             InterlockedDecrement( &context->recursion_count );
             break;
         case WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE:
-        case WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED:
             if (!context->headers_available
                 && context->call_receive_response_status == WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE)
                 ok( GetCurrentThreadId() == context->receive_response_thread_id,
@@ -1979,7 +1992,10 @@ static void test_recursion(void)
     ok( ret, "failed to receive response, GetLastError() %lu\n", GetLastError() );
 
     context.call_receive_response_status = WINHTTP_CALLBACK_STATUS_SENDREQUEST_COMPLETE;
-    ret = WinHttpSendRequest( request, NULL, 0, NULL, 0, 0, (DWORD_PTR)&context );
+    context.total_len = 1;
+    context.send_buffer = &b;
+    b = 0;
+    ret = WinHttpSendRequest( request, NULL, 0, NULL, 0, context.total_len, (DWORD_PTR)&context );
     err = GetLastError();
     if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
@@ -1994,6 +2010,8 @@ static void test_recursion(void)
     ok( ret, "failed to send request, GetLastError() %lu\n", GetLastError() );
 
     WaitForSingleObject( context.wait, INFINITE );
+    context.total_len = 0;
+    context.send_buffer = NULL;
 
     size = sizeof(status);
     ret = WinHttpQueryHeaders( request, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL,

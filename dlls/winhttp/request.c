@@ -2216,9 +2216,9 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
 {
     struct connect *connect = request->connect;
     struct session *session = connect->session;
+    DWORD ret, len, buflen, content_length;
     char *wire_req;
     int bytes_sent;
-    DWORD ret, len;
 
     TRACE( "request state %d.\n", request->state );
 
@@ -2305,14 +2305,29 @@ static DWORD send_request( struct request *request, const WCHAR *headers, DWORD 
         request->optional_len = optional_len;
         len += optional_len;
     }
-    netconn_set_timeout( request->netconn, FALSE, request->receive_response_timeout );
-    request->read_reply_status = read_reply( request );
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_REQUEST_SENT, &len, sizeof(len) );
 
-    if (request->state == REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED)
-        request->state = REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REQUEST_SENT;
+    buflen = sizeof(content_length);
+    if (query_headers( request, WINHTTP_QUERY_FLAG_REQUEST_HEADERS | WINHTTP_QUERY_CONTENT_LENGTH
+                       | WINHTTP_QUERY_FLAG_NUMBER, NULL, &content_length, &buflen, NULL ))
+        content_length = total_len;
+
+    if (content_length <= optional_len)
+    {
+        netconn_set_timeout( request->netconn, FALSE, request->receive_response_timeout );
+        request->read_reply_status = read_reply( request );
+        if (request->state == REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED)
+            request->state = REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REPLY_RECEIVED;
+        else
+            request->state = REQUEST_RESPONSE_STATE_REPLY_RECEIVED;
+    }
     else
-        request->state = REQUEST_RESPONSE_STATE_REQUEST_SENT;
+    {
+        if (request->state == REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED)
+            request->state = REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REQUEST_SENT;
+        else
+            request->state = REQUEST_RESPONSE_STATE_REQUEST_SENT;
+    }
 
 end:
     if (async)
@@ -2895,10 +2910,24 @@ static DWORD receive_response( struct request *request )
 
     case REQUEST_RESPONSE_STATE_REQUEST_SENT:
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
+        if (async_mode)
+        {
+            request->state = REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REQUEST_SENT;
+            return queue_receive_response( request );
+        }
+        /* fallthrough */
+    case REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REQUEST_SENT:
+        netconn_set_timeout( request->netconn, FALSE, request->receive_response_timeout );
+        request->read_reply_status = read_reply( request );
+        request->state = REQUEST_RESPONSE_STATE_REPLY_RECEIVED;
         break;
 
-    case REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REQUEST_SENT:
-        request->state = REQUEST_RESPONSE_STATE_REQUEST_SENT;
+    case REQUEST_RESPONSE_STATE_REPLY_RECEIVED:
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
+        break;
+
+    case REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REPLY_RECEIVED:
+        request->state = REQUEST_RESPONSE_STATE_REPLY_RECEIVED;
         break;
 
     default:
