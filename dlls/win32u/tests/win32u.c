@@ -24,7 +24,6 @@
 #include "winbase.h"
 #include "ntuser.h"
 
-
 static void test_NtUserEnumDisplayDevices(void)
 {
     NTSTATUS ret;
@@ -822,6 +821,43 @@ static void test_inter_process_child( HWND hwnd )
     PostMessageA( hwnd, WM_USER, 0, 0 );
 }
 
+static void test_NtUserEnableMouseInPointer_process( const char *arg )
+{
+    DWORD enable = strtoul( arg, 0, 10 );
+    BOOL ret;
+
+    ret = NtUserEnableMouseInPointer( enable );
+    todo_wine
+    ok( ret, "NtUserEnableMouseInPointer failed, error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ret = NtUserEnableMouseInPointer( !enable );
+    ok( !ret, "NtUserEnableMouseInPointer succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError() );
+
+    ret = NtUserEnableMouseInPointer( enable );
+    todo_wine
+    ok( ret, "NtUserEnableMouseInPointer failed, error %lu\n", GetLastError() );
+}
+
+static void test_NtUserEnableMouseInPointer( char **argv, BOOL enable )
+{
+    STARTUPINFOA startup = {.cb = sizeof(STARTUPINFOA)};
+    PROCESS_INFORMATION info = {0};
+    char cmdline[MAX_PATH * 2];
+    BOOL ret;
+
+    sprintf( cmdline, "%s %s NtUserEnableMouseInPointer %u", argv[0], argv[1], enable );
+    ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &startup, &info );
+    ok( ret, "CreateProcessA failed, error %lu\n", GetLastError() );
+    if (!ret) return;
+
+    wait_child_process( info.hProcess );
+    CloseHandle( info.hThread );
+    CloseHandle( info.hProcess );
+}
+
 START_TEST(win32u)
 {
     char **argv;
@@ -834,6 +870,14 @@ START_TEST(win32u)
     if (argc > 3 && !strcmp( argv[2], "ipcmsg" ))
     {
         test_inter_process_child( LongToHandle( strtol( argv[3], NULL, 16 )));
+        return;
+    }
+
+    if (argc > 3 && !strcmp( argv[2], "NtUserEnableMouseInPointer" ))
+    {
+        winetest_push_context( "enable %s", argv[3] );
+        test_NtUserEnableMouseInPointer_process( argv[3] );
+        winetest_pop_context();
         return;
     }
 
@@ -851,4 +895,7 @@ START_TEST(win32u)
 
     test_NtUserCloseWindowStation();
     test_NtUserDisplayConfigGetDeviceInfo();
+
+    test_NtUserEnableMouseInPointer( argv, FALSE );
+    test_NtUserEnableMouseInPointer( argv, TRUE );
 }
