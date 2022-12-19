@@ -497,19 +497,29 @@ static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCo
 static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement **p)
 {
     HTMLDocumentNode *This = impl_from_IHTMLDocument2(iface);
-    nsIDOMHTMLElement *nsbody = NULL;
+    nsIDOMElement *nsbody = NULL;
     HTMLElement *element;
+    nsresult nsres;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
     if(This->html_document) {
-        nsresult nsres;
-
-        nsres = nsIDOMHTMLDocument_GetBody(This->html_document, &nsbody);
+        nsres = nsIDOMHTMLDocument_GetBody(This->html_document, (nsIDOMHTMLElement **)&nsbody);
         if(NS_FAILED(nsres)) {
             TRACE("Could not get body: %08lx\n", nsres);
             return E_UNEXPECTED;
+        }
+    }else {
+        nsAString nsnode_name;
+        nsIDOMDocumentFragment *frag;
+
+        nsres = nsIDOMNode_QueryInterface(This->node.nsnode, &IID_nsIDOMDocumentFragment, (void**)&frag);
+        if(!NS_FAILED(nsres)) {
+            nsAString_InitDepend(&nsnode_name, L"BODY");
+            nsIDOMDocumentFragment_QuerySelector(frag, &nsnode_name, &nsbody);
+            nsAString_Finish(&nsnode_name);
+            nsIDOMDocumentFragment_Release(frag);
         }
     }
 
@@ -518,8 +528,8 @@ static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement 
         return S_OK;
     }
 
-    hres = get_element((nsIDOMElement*)nsbody, &element);
-    nsIDOMHTMLElement_Release(nsbody);
+    hres = get_element(nsbody, &element);
+    nsIDOMElement_Release(nsbody);
     if(FAILED(hres))
         return hres;
 

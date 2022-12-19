@@ -11081,9 +11081,9 @@ static void test_docfrag(IHTMLDocument2 *doc)
 
     hres = IHTMLDocument2_get_body(frag, &frag_body);
     ok(hres == S_OK, "get_body failed: %08lx\n", hres);
-    todo_wine ok(frag_body != NULL, "body == NULL\n");
+    ok(frag_body != NULL, "body == NULL\n");
     if (frag_body) {
-        todo_wine ok(!iface_cmp((IUnknown *) frag_body, (IUnknown *) main_body), "frag_body == main_body\n");
+        ok(!iface_cmp((IUnknown *) frag_body, (IUnknown *) main_body), "frag_body == main_body\n");
         IHTMLElement_Release(frag_body);
     }
     IHTMLElement_Release(main_body);
