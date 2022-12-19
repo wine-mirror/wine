@@ -7833,6 +7833,7 @@ static void test_pointsize(void)
                  * it does the "useful" thing on all the drivers I tried. */
                 /* On WARP it does draw some pixels, most of the time. */
                 color = getPixelColor(device, 64, 64);
+                todo_wine_if(!color_match(color, 0x0000ffff, 0))
                 ok(color_match(color, 0x0000ffff, 0)
                         || broken(color_match(color, 0x00ff0000, 0))
                         || broken(color_match(color, 0x00ffff00, 0))
