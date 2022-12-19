@@ -15657,9 +15657,9 @@ static void test_texture_wrong_caps(const GUID *device_guid)
     IDirectDrawSurface_Release(rt);
     destroy_viewport(device, viewport);
     destroy_material(background);
-    IDirectDraw2_Release(ddraw);
     refcount = IDirect3DDevice2_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
+    IDirectDraw2_Release(ddraw);
     DestroyWindow(window);
 }
 
