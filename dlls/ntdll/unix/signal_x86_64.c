@@ -440,12 +440,14 @@ static inline struct amd64_thread_data *amd64_thread_data(void)
     return (struct amd64_thread_data *)ntdll_get_thread_data()->cpu_data;
 }
 
+#ifdef __linux__
 static inline TEB *get_current_teb(void)
 {
     unsigned long rsp;
     __asm__( "movq %%rsp,%0" : "=r" (rsp) );
     return (TEB *)(rsp & ~signal_stack_mask);
 }
+#endif
 
 static BOOL is_inside_syscall( const ucontext_t *sigcontext )
 {
