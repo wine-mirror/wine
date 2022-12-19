@@ -306,6 +306,7 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     DWORD		len, mode;
     const char*         mytest = "123";
     const int           mylen = strlen(mytest);
+    char                ctrl_buf[32];
     int                 ret;
     int			p;
 
@@ -336,6 +337,17 @@ static void testWriteNotWrappedNotProcessed(HANDLE hCon, COORD sbSize)
     ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3\n");
 
     ok(WriteConsoleA(hCon, mytest, mylen, &len, NULL) != 0 && len == mylen, "WriteConsole\n");
+
+    /* test how control chars are handled. */
+    c.X = c.Y = 0;
+    ok(SetConsoleCursorPosition(hCon, c) != 0, "Cursor in upper-left-3\n");
+    for (p = 0; p < 32; p++) ctrl_buf[p] = (char)p;
+    ok(WriteConsoleA(hCon, ctrl_buf, 32, &len, NULL) != 0 && len == 32, "WriteConsole\n");
+    for (p = 0; p < 32; p++)
+    {
+        c.X = p; c.Y = 0;
+        okCHAR(hCon, c, (char)p, TEST_ATTRIB);
+    }
 }
 
 static void testWriteNotWrappedProcessed(HANDLE hCon, COORD sbSize)
@@ -2378,6 +2390,19 @@ static void test_WriteConsoleOutputCharacterA(HANDLE output_handle)
     ret = WriteConsoleOutputCharacterA(output_handle, output, 0, origin, &count);
     ok(ret == TRUE, "Expected WriteConsoleOutputCharacterA to return TRUE, got %d\n", ret);
     ok(count == 0, "Expected count to be 0, got %lu\n", count);
+
+    for (i = 1; i < 32; i++)
+    {
+        CONSOLE_SCREEN_BUFFER_INFO csbi;
+        char ch = (char)i;
+        COORD c = {1, 2};
+
+        ret = WriteConsoleOutputCharacterA(output_handle, &ch, 1, c, &count);
+        ok(ret == TRUE, "Expected WriteConsoleOutputCharacterA to return TRUE, got %d\n", ret);
+        ok(count == 1, "Expected count to be 1, got %lu\n", count);
+        okCHAR(output_handle, c, (char)i, 7);
+        ret = GetConsoleScreenBufferInfo(output_handle, &csbi);
+    }
 }
 
 static void test_WriteConsoleOutputCharacterW(HANDLE output_handle)
