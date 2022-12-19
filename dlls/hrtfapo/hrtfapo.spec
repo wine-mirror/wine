@@ -1,4 +1,4 @@
-@ stub CreateHrtfApo
+@ stdcall CreateHrtfApo(ptr ptr)
 @ stub CreateHrtfApoWithDatasetType
 @ stub CreateHrtfEngineFactory
 @ stub IsHrtfApoAvailable
