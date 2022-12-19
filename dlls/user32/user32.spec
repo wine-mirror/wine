@@ -205,7 +205,7 @@
 @ stdcall EditWndProc(long long long long) EditWndProcA
 @ stdcall EmptyClipboard() NtUserEmptyClipboard
 @ stdcall EnableMenuItem(long long long) NtUserEnableMenuItem
-@ stdcall EnableMouseInPointer(long)
+@ stdcall EnableMouseInPointer(long) NtUserEnableMouseInPointer
 @ stdcall EnableNonClientDpiScaling(long)
 @ stdcall -import EnableScrollBar(long long long) NtUserEnableScrollBar
 @ stdcall EnableWindow(long long)

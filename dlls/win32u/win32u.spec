@@ -861,7 +861,7 @@
 @ stub NtUserEnableChildWindowDpiMessage
 @ stub NtUserEnableIAMAccess
 @ stdcall -syscall NtUserEnableMenuItem(long long long)
-@ stub NtUserEnableMouseInPointer
+@ stdcall -syscall NtUserEnableMouseInPointer(long)
 @ stub NtUserEnableMouseInPointerForWindow
 @ stub NtUserEnableMouseInputForCursorSuppression
 @ stub NtUserEnableNonClientDpiScaling

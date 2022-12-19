@@ -1629,6 +1629,13 @@ NTSTATUS WINAPI wow64_NtUserEnableMenuItem( UINT *args )
     return NtUserEnableMenuItem( handle, id, flags );
 }
 
+NTSTATUS WINAPI wow64_NtUserEnableMouseInPointer( UINT *args )
+{
+    UINT enable = get_ulong( &args );
+
+    return NtUserEnableMouseInPointer( enable );
+}
+
 NTSTATUS WINAPI wow64_NtUserEnableScrollBar( UINT *args )
 {
     HWND hwnd = get_handle( &args );

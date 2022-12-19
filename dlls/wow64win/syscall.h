@@ -131,6 +131,7 @@
     SYSCALL_ENTRY( NtUserDrawIconEx ) \
     SYSCALL_ENTRY( NtUserEmptyClipboard ) \
     SYSCALL_ENTRY( NtUserEnableMenuItem ) \
+    SYSCALL_ENTRY( NtUserEnableMouseInPointer ) \
     SYSCALL_ENTRY( NtUserEnableScrollBar ) \
     SYSCALL_ENTRY( NtUserEndDeferWindowPosEx ) \
     SYSCALL_ENTRY( NtUserEndMenu ) \

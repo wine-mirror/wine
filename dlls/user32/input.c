@@ -495,17 +495,6 @@ BOOL WINAPI UnloadKeyboardLayout( HKL layout )
 }
 
 
-/***********************************************************************
- *		EnableMouseInPointer (USER32.@)
- */
-BOOL WINAPI EnableMouseInPointer(BOOL enable)
-{
-    FIXME("(%#x) stub\n", enable);
-
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
 static DWORD CALLBACK devnotify_window_callback(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header)
 {
     SendMessageTimeoutW(handle, WM_DEVICECHANGE, flags, (LPARAM)header, SMTO_ABORTIFHUNG, 2000, NULL);

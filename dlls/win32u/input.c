@@ -2153,6 +2153,18 @@ void toggle_caret( HWND hwnd )
     if (ret && !hidden) display_caret( hwnd, &r );
 }
 
+
+/**********************************************************************
+ *       NtUserEnableMouseInPointer    (win32u.@)
+ */
+BOOL WINAPI NtUserEnableMouseInPointer( BOOL enable )
+{
+    FIXME( "enable %u stub!\n", enable );
+    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
+
 HWND get_shell_window(void)
 {
     HWND hwnd = 0;
