@@ -55,6 +55,58 @@ DEFINE_GUID(MFVideoFormat_WMV_Unknown,0x7ce12ca9,0xbfbf,0x43d9,0x9d,0x00,0x82,0x
 
 DEFINE_GUID(mft_output_sample_incomplete,0xffffff,0xffff,0xffff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
 
+static BOOL is_compressed_subtype(const GUID *subtype)
+{
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_WMV1)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_WMV2)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_WMVA)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_WMVP)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_WVP2)
+            || IsEqualGUID(subtype, &MFVideoFormat_WMV_Unknown)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_WVC1)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_WMV3)
+            || IsEqualGUID(subtype, &MFVideoFormat_VC1S))
+        return TRUE;
+    return FALSE;
+}
+
+static DWORD subtype_to_compression(const GUID *subtype)
+{
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB32)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB24)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB555)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB8))
+        return BI_RGB;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB565))
+        return BI_BITFIELDS;
+    else
+        return subtype->Data1;
+}
+
+static DWORD subtype_to_bpp(const GUID *subtype)
+{
+    if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB8))
+        return 8;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_NV12)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_YV12)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_IYUV)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_I420)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_NV11))
+        return 12;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_YUY2)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_UYVY)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_YVYU)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB565)
+            || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB555))
+        return 16;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB24))
+        return 24;
+    else if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB32))
+        return 32;
+    else
+        return 0;
+}
+
 static void load_resource(const WCHAR *filename, const BYTE **data, DWORD *length)
 {
     HRSRC resource = FindResourceW(NULL, filename, (const WCHAR *)RT_RCDATA);
@@ -274,17 +326,19 @@ static void init_dmo_media_type_video(DMO_MEDIA_TYPE *media_type,
         const GUID *subtype, const LONG width, const LONG height)
 {
     VIDEOINFOHEADER *header = (VIDEOINFOHEADER *)(media_type + 1);
+    BOOL compressed = is_compressed_subtype(subtype);
 
     memset(header, 0, sizeof(*header));
     header->bmiHeader.biSize = sizeof(header->bmiHeader);
     header->bmiHeader.biWidth = width;
     header->bmiHeader.biHeight = height;
-    header->bmiHeader.biCompression = subtype->Data1;
+    header->bmiHeader.biBitCount = subtype_to_bpp(subtype);
+    header->bmiHeader.biCompression = subtype_to_compression(subtype);
 
     media_type->majortype = MEDIATYPE_Video;
     media_type->subtype = *subtype;
-    media_type->bFixedSizeSamples = FALSE;
-    media_type->bTemporalCompression = TRUE;
+    media_type->bFixedSizeSamples = !compressed;
+    media_type->bTemporalCompression = compressed;
     media_type->lSampleSize = 0;
     media_type->formattype = FORMAT_VideoInfo;
     media_type->pUnk = NULL;
@@ -1410,6 +1464,62 @@ static void check_dmo_set_input_type(IMediaObject *media_object, const GUID *sub
     hr = IMediaObject_SetInputType(media_object, 0, good_media_type, DMO_SET_TYPEF_TEST_ONLY);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 }
+
+static void check_dmo_set_output_type(IMediaObject *media_object, const GUID *subtype)
+{
+    DMO_MEDIA_TYPE bad_media_type, *good_media_type;
+    char buffer[1024];
+    DWORD i, flag;
+    HRESULT hr;
+
+    const DWORD flags[] = {0, 0x4, DMO_SET_TYPEF_CLEAR, DMO_SET_TYPEF_TEST_ONLY, DMO_SET_TYPEF_TEST_ONLY | 0x4};
+
+    memset(&bad_media_type, 0, sizeof(bad_media_type));
+    good_media_type = (DMO_MEDIA_TYPE *)buffer;
+    init_dmo_media_type_video(good_media_type, subtype, 16, 16);
+
+    /* Test invalid stream index. */
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
+    {
+        flag = flags[i];
+        hr = IMediaObject_SetOutputType(media_object, 1, NULL, flag);
+        ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx for flag %#lx.\n", hr, flag);
+        hr = IMediaObject_SetOutputType(media_object, 1, &bad_media_type, flag);
+        ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx for flag %#lx.\n", hr, flag);
+        hr = IMediaObject_SetOutputType(media_object, 1, good_media_type, flag);
+        ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetOutputType returned %#lx for flag %#lx.\n", hr, flag);
+    }
+
+    /* Test unaccepted type. */
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
+    {
+        flag = flags[i];
+        if (!(flag & DMO_SET_TYPEF_CLEAR))
+        {
+            hr = IMediaObject_SetOutputType(media_object, 0, NULL, flag);
+            ok(hr == E_POINTER, "SetOutputType returned %#lx for flag %#lx.\n", hr, flag);
+        }
+        hr = IMediaObject_SetOutputType(media_object, 0, &bad_media_type, flag);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetOutputType returned %#lx for flag %#lx.\n", hr, flag);
+    }
+
+    /* Test clearing the type. */
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
+    {
+        flag = DMO_SET_TYPEF_CLEAR | flags[i];
+        hr = IMediaObject_SetOutputType(media_object, 0, NULL, flag);
+        ok(hr == S_OK, "SetOutputType returned %#lx for flag %#lx.\n", hr, flag);
+    }
+
+    /* Test accepted type. */
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
+    {
+        flag = flags[i];
+        hr = IMediaObject_SetOutputType(media_object, 0, good_media_type, flag);
+        ok(hr == S_OK, "SetOutputType returned %#lx for flag %#lx.\n", hr, flag);
+    }
+}
+
 
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
@@ -4961,6 +5071,20 @@ static void test_wmv_decoder_media_object(void)
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     todo_wine
     check_dmo_get_output_type(media_object, expected_output_types, ARRAY_SIZE(expected_output_types));
+
+    /* Test SetOutputType without setting input type. */
+    hr = IMediaObject_SetInputType(media_object, 0, NULL, DMO_SET_TYPEF_CLEAR);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    hr = IMediaObject_SetOutputType(media_object, 0, &media_type, 0);
+    todo_wine
+    ok(hr == DMO_E_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
+
+    /* Test SetOutputType after setting input type. */
+    init_dmo_media_type_video(input_type, &expected_input_types[0].subtype, 16, 16);
+    hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    todo_wine
+    check_dmo_set_output_type(media_object, &MEDIASUBTYPE_RGB24);
 
     ret = IMediaObject_Release(media_object);
     ok(ret == 0, "Release returned %lu\n", ret);
