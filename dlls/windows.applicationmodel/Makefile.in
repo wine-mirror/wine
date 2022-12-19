@@ -1,0 +1,9 @@
+MODULE  = windows.applicationmodel.dll
+IMPORTS = combase
+
+C_SRCS = \
+	main.c \
+	package.c
+
+IDL_SRCS = \
+	classes.idl

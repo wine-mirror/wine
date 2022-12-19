@@ -20,10 +20,12 @@
 #pragma winrt ns_prefix
 #endif
 
+#ifndef DO_NO_IMPORTS
 import "windows.foundation.idl";
 import "windows.storage.idl";
 import "windows.system.idl";
 import "windows.applicationmodel.idl";
+#endif
 
 namespace Windows.ApplicationModel {
     runtimeclass AppDisplayInfo;
