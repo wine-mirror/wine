@@ -4446,38 +4446,6 @@ static void test_input_message_source(void)
     UnregisterClassA( cls.lpszClassName, GetModuleHandleA(0) );
 }
 
-static void test_pointer_info(void)
-{
-    BOOL ret;
-    POINTER_INPUT_TYPE type = -1;
-    POINTER_INFO info;
-    UINT id = 0;
-
-    SetLastError(0xdeadbeef);
-    ret = pGetPointerType(id, NULL);
-    ok(!ret, "GetPointerType should have failed.\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected error ERROR_INVALID_PARAMETER, got %lu.\n", GetLastError());
-
-    SetLastError(0xdeadbeef);
-    ret = pGetPointerType(id, &type);
-    ok(GetLastError() == ERROR_INVALID_PARAMETER,
-       "expected error ERROR_INVALID_PARAMETER, got %lu.\n", GetLastError());
-    ok(!ret, "GetPointerType failed, got type %ld for %u.\n", type, id );
-    ok(type == -1, " type %ld\n", type );
-
-    id = 1;
-    ret = pGetPointerType(id, &type);
-    ok(ret, "GetPointerType failed, got type %ld for %u.\n", type, id );
-    ok(type == PT_MOUSE, " type %ld\n", type );
-
-    /* GetPointerInfo always fails unless the app receives WM_POINTER messages. */
-    SetLastError(0xdeadbeef);
-    ret = pGetPointerInfo(id, &info);
-    ok(!ret, "succeeded.\n");
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got %lu.\n", GetLastError());
-}
-
 static void test_UnregisterDeviceNotification(void)
 {
     BOOL ret = UnregisterDeviceNotification(NULL);
@@ -4617,6 +4585,7 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
 {
     void *invalid_ptr = (void *)0xdeadbeef;
     POINTER_INFO pointer_info[4];
+    POINTER_INPUT_TYPE type;
     WNDCLASSW cls =
     {
         .lpfnWndProc   = DefWindowProcW,
@@ -4629,6 +4598,27 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     DWORD res;
     HWND hwnd;
     BOOL ret;
+
+    if (!pGetPointerType)
+    {
+        todo_wine
+        win_skip( "GetPointerType not found, skipping tests\n" );
+        return;
+    }
+
+    SetLastError( 0xdeadbeef );
+    ret = pGetPointerType( 1, NULL );
+    ok( !ret, "GetPointerType succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = pGetPointerType( 0xdead, &type );
+    todo_wine
+    ok( !ret, "GetPointerType succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+    ret = pGetPointerType( 1, &type );
+    ok( ret, "GetPointerType failed, error %lu\n", GetLastError() );
+    ok( type == PT_MOUSE, " type %ld\n", type );
 
     if (!pGetPointerInfo)
     {
@@ -4844,10 +4834,10 @@ START_TEST(input)
 
     SetCursorPos( pos.x, pos.y );
 
-    if(pGetPointerType)
-        test_pointer_info();
+    if (pGetPointerType)
+        test_GetPointerInfo( FALSE );
     else
-        win_skip("GetPointerType is not available\n");
+        win_skip( "GetPointerType is not available\n" );
 
     test_UnregisterDeviceNotification();
 
