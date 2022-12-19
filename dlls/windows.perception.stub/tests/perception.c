@@ -50,6 +50,7 @@ static void test_ObserverStatics(void)
     static const WCHAR *observer_statics_name = L"Windows.Perception.Spatial.Surfaces.SpatialSurfaceObserver";
     ISpatialSurfaceObserverStatics2 *observer_statics2;
     IActivationFactory *factory;
+    BOOLEAN value;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -73,6 +74,11 @@ static void test_ObserverStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_ISpatialSurfaceObserverStatics2, (void **)&observer_statics2 );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    value = TRUE;
+    hr = ISpatialSurfaceObserverStatics2_IsSupported( observer_statics2, &value );
+    todo_wine ok( hr == S_OK, "got hr %#lx.\n", hr );
+    todo_wine ok( !value, "got %d.\n", value );
 
     ref = ISpatialSurfaceObserverStatics2_Release( observer_statics2 );
     ok( ref == 2, "got ref %ld.\n", ref );
