@@ -2164,6 +2164,16 @@ BOOL WINAPI NtUserEnableMouseInPointer( BOOL enable )
     return FALSE;
 }
 
+/**********************************************************************
+ *       NtUserIsMouseInPointerEnabled    (win32u.@)
+ */
+BOOL WINAPI NtUserIsMouseInPointerEnabled(void)
+{
+    FIXME( "stub!\n" );
+    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
+
 
 HWND get_shell_window(void)
 {

@@ -2731,6 +2731,11 @@ NTSTATUS WINAPI wow64_NtUserIsClipboardFormatAvailable( UINT *args )
     return NtUserIsClipboardFormatAvailable( format );
 }
 
+NTSTATUS WINAPI wow64_NtUserIsMouseInPointerEnabled( UINT *args )
+{
+    return NtUserIsMouseInPointerEnabled();
+}
+
 NTSTATUS WINAPI wow64_NtUserKillTimer( UINT *args )
 {
     HWND hwnd = get_handle( &args );

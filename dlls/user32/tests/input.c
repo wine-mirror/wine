@@ -4844,17 +4844,15 @@ static void test_EnableMouseInPointer_process( const char *arg )
     ok( !ret, "EnableMouseInPointer succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError() );
-    if (!pIsMouseInPointerEnabled) ret = !enable;
-    else ret = pIsMouseInPointerEnabled();
-    todo_wine_if(!pIsMouseInPointerEnabled)
+    ret = pIsMouseInPointerEnabled();
+    todo_wine_if(enable)
     ok( ret == enable, "IsMouseInPointerEnabled returned %u, error %lu\n", ret, GetLastError() );
 
     ret = pEnableMouseInPointer( enable );
     todo_wine
     ok( ret, "EnableMouseInPointer failed, error %lu\n", GetLastError() );
-    if (!pIsMouseInPointerEnabled) ret = !enable;
-    else ret = pIsMouseInPointerEnabled();
-    todo_wine_if(!pIsMouseInPointerEnabled)
+    ret = pIsMouseInPointerEnabled();
+    todo_wine_if(enable)
     ok( ret == enable, "IsMouseInPointerEnabled returned %u, error %lu\n", ret, GetLastError() );
 
     test_GetPointerInfo( enable );

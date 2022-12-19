@@ -1051,7 +1051,7 @@
 @ stdcall -syscall NtUserInvalidateRgn(long long long)
 @ stub NtUserIsChildWindowDpiMessageEnabled
 @ stdcall -syscall NtUserIsClipboardFormatAvailable(long)
-@ stub NtUserIsMouseInPointerEnabled
+@ stdcall -syscall NtUserIsMouseInPointerEnabled()
 @ stub NtUserIsMouseInputEnabled
 @ stub NtUserIsNonClientDpiScalingEnabled
 @ stub NtUserIsResizeLayoutSynchronizationEnabled

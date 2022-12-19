@@ -208,6 +208,7 @@
     SYSCALL_ENTRY( NtUserInvalidateRect ) \
     SYSCALL_ENTRY( NtUserInvalidateRgn ) \
     SYSCALL_ENTRY( NtUserIsClipboardFormatAvailable ) \
+    SYSCALL_ENTRY( NtUserIsMouseInPointerEnabled ) \
     SYSCALL_ENTRY( NtUserKillTimer ) \
     SYSCALL_ENTRY( NtUserLockWindowUpdate ) \
     SYSCALL_ENTRY( NtUserLogicalToPerMonitorDPIPhysicalPoint ) \

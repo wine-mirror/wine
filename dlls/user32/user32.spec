@@ -475,6 +475,7 @@
 # @ stub IsHungThread
 @ stdcall IsIconic(long)
 @ stdcall IsMenu(long)
+@ stdcall IsMouseInPointerEnabled() NtUserIsMouseInPointerEnabled
 @ stdcall IsProcessDPIAware()
 @ stdcall IsRectEmpty(ptr)
 # @ stub IsServerSideWindow
