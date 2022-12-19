@@ -11026,8 +11026,8 @@ static void test_docfrag(IHTMLDocument2 *doc)
 
     col = NULL;
     hres = IHTMLDocument2_get_all(frag, &col);
-    todo_wine ok(hres == S_OK, "get_all failed: %08lx\n", hres);
-    todo_wine ok(col != NULL, "got null elements collection\n");
+    ok(hres == S_OK, "get_all failed: %08lx\n", hres);
+    ok(col != NULL, "got null elements collection\n");
     if (col) {
         test_elem_collection((IUnknown *) col, empty_types, ARRAY_SIZE(empty_types));
         IHTMLElementCollection_Release(col);
@@ -11090,8 +11090,8 @@ static void test_docfrag(IHTMLDocument2 *doc)
 
     col = NULL;
     hres = IHTMLDocument2_get_all(frag, &col);
-    todo_wine ok(hres == S_OK, "get_all failed: %08lx\n", hres);
-    todo_wine ok(col != NULL, "got null elements collection\n");
+    ok(hres == S_OK, "get_all failed: %08lx\n", hres);
+    ok(col != NULL, "got null elements collection\n");
     if (col) {
         test_elem_collection((IUnknown *) col, frag_types, ARRAY_SIZE(frag_types));
         IHTMLElementCollection_Release(col);

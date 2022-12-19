@@ -487,37 +487,11 @@ static HRESULT WINAPI HTMLDocument_get_Script(IHTMLDocument2 *iface, IDispatch *
 static HRESULT WINAPI HTMLDocument_get_all(IHTMLDocument2 *iface, IHTMLElementCollection **p)
 {
     HTMLDocumentNode *This = impl_from_IHTMLDocument2(iface);
-    nsIDOMElement *nselem = NULL;
-    HTMLDOMNode *node;
-    nsresult nsres;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
+    *p = create_all_collection(&This->node, FALSE);
 
-    if(!This->dom_document) {
-        WARN("NULL dom_document\n");
-        return E_UNEXPECTED;
-    }
-
-    nsres = nsIDOMDocument_GetDocumentElement(This->dom_document, &nselem);
-    if(NS_FAILED(nsres)) {
-        ERR("GetDocumentElement failed: %08lx\n", nsres);
-        return E_FAIL;
-    }
-
-    if(!nselem) {
-        *p = NULL;
-        return S_OK;
-    }
-
-    hres = get_node((nsIDOMNode*)nselem, TRUE, &node);
-    nsIDOMElement_Release(nselem);
-    if(FAILED(hres))
-        return hres;
-
-    *p = create_all_collection(node, TRUE);
-    node_release(node);
-    return hres;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLDocument_get_body(IHTMLDocument2 *iface, IHTMLElement **p)
