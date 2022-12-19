@@ -823,6 +823,7 @@ SOURCES = \
 	windows.media.speechrecognition.idl \
 	windows.media.speechsynthesis.idl \
 	windows.perception.spatial.idl \
+	windows.perception.spatial.surfaces.idl \
 	windows.security.credentials.idl \
 	windows.security.cryptography.idl \
 	windows.storage.streams.idl \
