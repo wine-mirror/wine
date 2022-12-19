@@ -82,6 +82,7 @@ static struct {
 } key_status;
 
 static BOOL (WINAPI *pEnableMouseInPointer)( BOOL );
+static BOOL (WINAPI *pIsMouseInPointerEnabled)(void);
 static BOOL (WINAPI *pGetCurrentInputMessageSource)( INPUT_MESSAGE_SOURCE *source );
 static BOOL (WINAPI *pGetPointerType)(UINT32, POINTER_INPUT_TYPE*);
 static BOOL (WINAPI *pGetPointerInfo)(UINT32, POINTER_INFO*);
@@ -151,6 +152,7 @@ static void init_function_pointers(void)
       trace("GetProcAddress(%s) failed\n", #func)
 
     GET_PROC(EnableMouseInPointer);
+    GET_PROC(IsMouseInPointerEnabled);
     GET_PROC(GetCurrentInputMessageSource);
     GET_PROC(GetMouseMovePointsEx);
     GET_PROC(GetPointerInfo);
@@ -4606,10 +4608,18 @@ static void test_EnableMouseInPointer_process( const char *arg )
     ok( !ret, "EnableMouseInPointer succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError() );
+    if (!pIsMouseInPointerEnabled) ret = !enable;
+    else ret = pIsMouseInPointerEnabled();
+    todo_wine_if(!pIsMouseInPointerEnabled)
+    ok( ret == enable, "IsMouseInPointerEnabled returned %u, error %lu\n", ret, GetLastError() );
 
     ret = pEnableMouseInPointer( enable );
     todo_wine
     ok( ret, "EnableMouseInPointer failed, error %lu\n", GetLastError() );
+    if (!pIsMouseInPointerEnabled) ret = !enable;
+    else ret = pIsMouseInPointerEnabled();
+    todo_wine_if(!pIsMouseInPointerEnabled)
+    ok( ret == enable, "IsMouseInPointerEnabled returned %u, error %lu\n", ret, GetLastError() );
 }
 
 static void test_EnableMouseInPointer( char **argv, BOOL enable )
