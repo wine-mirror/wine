@@ -20,5 +20,4 @@ SOURCES = \
 	force_feedback.c \
 	hid.c \
 	hotplug.c \
-	joystick.c \
 	joystick8.c
