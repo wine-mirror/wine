@@ -2094,7 +2094,8 @@ BOOL WINAPI WinHttpGetProxyForUrl( HINTERNET hsession, LPCWSTR url, WINHTTP_AUTO
         !(options->dwFlags & (WINHTTP_AUTOPROXY_AUTO_DETECT|WINHTTP_AUTOPROXY_CONFIG_URL)) ||
         ((options->dwFlags & WINHTTP_AUTOPROXY_AUTO_DETECT) && !options->dwAutoDetectFlags) ||
         ((options->dwFlags & WINHTTP_AUTOPROXY_AUTO_DETECT) &&
-         (options->dwFlags & WINHTTP_AUTOPROXY_CONFIG_URL)))
+         (options->dwFlags & WINHTTP_AUTOPROXY_CONFIG_URL)) ||
+        (options->dwFlags & WINHTTP_AUTOPROXY_CONFIG_URL && !options->lpszAutoConfigUrl))
     {
         release_object( &session->hdr );
         SetLastError( ERROR_INVALID_PARAMETER );
