@@ -8384,8 +8384,8 @@ static void test_MarkupContainer(IMarkupServices *markup_services)
     HRESULT hres;
 
     hres = IMarkupServices_CreateMarkupContainer(markup_services, &container);
-    todo_wine ok(hres == S_OK, "got 0x%08lx\n", hres);
-    todo_wine ok(container != NULL, "MarkupContainer is null.\n");
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
+    ok(container != NULL, "MarkupContainer is null.\n");
     if (!container) return;
 
     hres = IMarkupContainer_QueryInterface(container, &IID_IHTMLDocument2, (void**)&markup_container_doc);

@@ -4739,8 +4739,18 @@ static HRESULT WINAPI MarkupServices_CreateMarkupPointer(IMarkupServices *iface,
 static HRESULT WINAPI MarkupServices_CreateMarkupContainer(IMarkupServices *iface, IMarkupContainer **ppMarkupContainer)
 {
     HTMLDocumentNode *This = impl_from_IMarkupServices(iface);
-    FIXME("(%p)->(%p)\n", This, ppMarkupContainer);
-    return E_NOTIMPL;
+    IHTMLDocument2 *frag;
+    HRESULT hres;
+    TRACE("(%p)->(%p)\n", This, ppMarkupContainer);
+
+    hres = IHTMLDocument3_createDocumentFragment(&This->IHTMLDocument3_iface, &frag);
+    if(FAILED(hres))
+        return hres;
+
+    IHTMLDocument2_QueryInterface(frag, &IID_IMarkupContainer, (void**)ppMarkupContainer);
+    IHTMLDocument2_Release(frag);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI MarkupServices_CreateElement(IMarkupServices *iface,
