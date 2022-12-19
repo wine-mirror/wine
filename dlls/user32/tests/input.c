@@ -59,6 +59,11 @@
 
 #include "wine/test.h"
 
+#define check_member_( file, line, val, exp, fmt, member )                                         \
+    ok_(file, line)( (val).member == (exp).member, "got " #member " " fmt "\n", (val).member )
+#define check_member( val, exp, fmt, member )                                                      \
+    check_member_( __FILE__, __LINE__, val, exp, fmt, member )
+
 /* globals */
 static HWND hWndTest;
 static LONG timetag = 0x10000000;
@@ -86,6 +91,9 @@ static BOOL (WINAPI *pIsMouseInPointerEnabled)(void);
 static BOOL (WINAPI *pGetCurrentInputMessageSource)( INPUT_MESSAGE_SOURCE *source );
 static BOOL (WINAPI *pGetPointerType)(UINT32, POINTER_INPUT_TYPE*);
 static BOOL (WINAPI *pGetPointerInfo)(UINT32, POINTER_INFO*);
+static BOOL (WINAPI *pGetPointerInfoHistory)(UINT32, UINT32*, POINTER_INFO*);
+static BOOL (WINAPI *pGetPointerFrameInfo)(UINT32, UINT32*, POINTER_INFO*);
+static BOOL (WINAPI *pGetPointerFrameInfoHistory)(UINT32, UINT32*, UINT32*, POINTER_INFO*);
 static int (WINAPI *pGetMouseMovePointsEx) (UINT, LPMOUSEMOVEPOINT, LPMOUSEMOVEPOINT, int, DWORD);
 static UINT (WINAPI *pGetRawInputDeviceList) (PRAWINPUTDEVICELIST, PUINT, UINT);
 static UINT (WINAPI *pGetRawInputDeviceInfoW) (HANDLE, UINT, void *, UINT *);
@@ -156,6 +164,9 @@ static void init_function_pointers(void)
     GET_PROC(GetCurrentInputMessageSource);
     GET_PROC(GetMouseMovePointsEx);
     GET_PROC(GetPointerInfo);
+    GET_PROC(GetPointerInfoHistory);
+    GET_PROC(GetPointerFrameInfo);
+    GET_PROC(GetPointerFrameInfoHistory);
     GET_PROC(GetPointerType);
     GET_PROC(GetRawInputDeviceList);
     GET_PROC(GetRawInputDeviceInfoW);
@@ -4562,6 +4573,31 @@ static void test_SendInput(void)
     DestroyWindow( hwnd );
 }
 
+#define check_pointer_info( a, b ) check_pointer_info_( __LINE__, a, b )
+static void check_pointer_info_( int line, const POINTER_INFO *actual, const POINTER_INFO *expected )
+{
+    check_member( *actual, *expected, "%#lx", pointerType );
+    check_member( *actual, *expected, "%#x", pointerId );
+    check_member( *actual, *expected, "%#x", frameId );
+    check_member( *actual, *expected, "%#x", pointerFlags );
+    check_member( *actual, *expected, "%p", sourceDevice );
+    check_member( *actual, *expected, "%p", hwndTarget );
+    check_member( *actual, *expected, "%+ld", ptPixelLocation.x );
+    check_member( *actual, *expected, "%+ld", ptPixelLocation.y );
+    check_member( *actual, *expected, "%+ld", ptHimetricLocation.x );
+    check_member( *actual, *expected, "%+ld", ptHimetricLocation.y );
+    check_member( *actual, *expected, "%+ld", ptPixelLocationRaw.x );
+    check_member( *actual, *expected, "%+ld", ptPixelLocationRaw.y );
+    check_member( *actual, *expected, "%+ld", ptHimetricLocationRaw.x );
+    check_member( *actual, *expected, "%+ld", ptHimetricLocationRaw.y );
+    check_member( *actual, *expected, "%lu", dwTime );
+    check_member( *actual, *expected, "%u", historyCount );
+    check_member( *actual, *expected, "%#x", InputData );
+    check_member( *actual, *expected, "%#lx", dwKeyStates );
+    check_member( *actual, *expected, "%I64u", PerformanceCount );
+    check_member( *actual, *expected, "%#x", ButtonChangeType );
+}
+
 static DWORD CALLBACK test_GetPointerInfo_thread( void *arg )
 {
     POINTER_INFO pointer_info;
@@ -4583,8 +4619,9 @@ static DWORD CALLBACK test_GetPointerInfo_thread( void *arg )
 
 static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
 {
+    POINTER_INFO pointer_info[4], expect_pointer;
     void *invalid_ptr = (void *)0xdeadbeef;
-    POINTER_INFO pointer_info[4];
+    UINT32 entry_count, pointer_count;
     POINTER_INPUT_TYPE type;
     WNDCLASSW cls =
     {
@@ -4711,6 +4748,41 @@ static void test_GetPointerInfo( BOOL mouse_in_pointer_enabled )
     thread = CreateThread( NULL, 0, test_GetPointerInfo_thread, NULL, 0, NULL );
     res = WaitForSingleObject( thread, 5000 );
     ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+
+    expect_pointer = pointer_info[0];
+
+    memset( pointer_info, 0xa5, sizeof(pointer_info) );
+    entry_count = pointer_count = 2;
+    if (!pGetPointerFrameInfo) ret = FALSE;
+    else ret = pGetPointerFrameInfo( 1, &pointer_count, pointer_info );
+    todo_wine_if(!pGetPointerFrameInfo)
+    ok( ret, "GetPointerFrameInfo failed, error %lu\n", GetLastError() );
+    todo_wine_if(!pGetPointerFrameInfo)
+    ok( pointer_count == 1, "got pointer_count %u\n", pointer_count );
+    todo_wine_if(!pGetPointerFrameInfo)
+    check_pointer_info( &pointer_info[0], &expect_pointer );
+    memset( pointer_info, 0xa5, sizeof(pointer_info) );
+    entry_count = pointer_count = 2;
+    if (!pGetPointerInfoHistory) ret = FALSE;
+    else ret = pGetPointerInfoHistory( 1, &entry_count, pointer_info );
+    todo_wine_if(!pGetPointerInfoHistory)
+    ok( ret, "GetPointerInfoHistory failed, error %lu\n", GetLastError() );
+    todo_wine_if(!pGetPointerInfoHistory)
+    ok( entry_count == 1, "got entry_count %u\n", entry_count );
+    todo_wine_if(!pGetPointerInfoHistory)
+    check_pointer_info( &pointer_info[0], &expect_pointer );
+    memset( pointer_info, 0xa5, sizeof(pointer_info) );
+    entry_count = pointer_count = 2;
+    if (!pGetPointerFrameInfoHistory) ret = FALSE;
+    else ret = pGetPointerFrameInfoHistory( 1, &entry_count, &pointer_count, pointer_info );
+    todo_wine_if(!pGetPointerFrameInfoHistory)
+    ok( ret, "GetPointerFrameInfoHistory failed, error %lu\n", GetLastError() );
+    todo_wine_if(!pGetPointerFrameInfoHistory)
+    ok( entry_count == 1, "got pointer_count %u\n", pointer_count );
+    todo_wine_if(!pGetPointerFrameInfoHistory)
+    ok( pointer_count == 1, "got pointer_count %u\n", pointer_count );
+    todo_wine_if(!pGetPointerFrameInfoHistory)
+    check_pointer_info( &pointer_info[0], &expect_pointer );
 
     DestroyWindow( hwnd );
 
