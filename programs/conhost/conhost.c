@@ -358,6 +358,8 @@ static void update_output( struct screen_buffer *screen_buffer, RECT *rect )
     int x, y, size, trailing_spaces;
     char_info_t *ch;
     char buf[8];
+    WCHAR wch;
+    const unsigned int mask = (1u << '\0') | (1u << '\b') | (1u << '\t') | (1u << '\n') | (1u << '\a') | (1u << '\r');
 
     if (!is_active( screen_buffer ) || rect->top > rect->bottom || rect->right < rect->left)
         return;
@@ -393,9 +395,11 @@ static void update_output( struct screen_buffer *screen_buffer, RECT *rect )
                 tty_write( screen_buffer->console, "\x1b[K", 3 );
                 break;
             }
-
+            wch = ch->ch;
+            if (screen_buffer->console->is_unix && wch < L' ' && mask & (1u << wch))
+                wch = L'?';
             size = WideCharToMultiByte( get_tty_cp( screen_buffer->console ), 0,
-                                        &ch->ch, 1, buf, sizeof(buf), NULL, NULL );
+                                        &wch, 1, buf, sizeof(buf), NULL, NULL );
             tty_write( screen_buffer->console, buf, size );
             screen_buffer->console->tty_cursor_x++;
         }
