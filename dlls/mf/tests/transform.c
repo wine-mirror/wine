@@ -5077,14 +5077,12 @@ static void test_wmv_decoder_media_object(void)
     hr = IMediaObject_SetInputType(media_object, 0, NULL, DMO_SET_TYPEF_CLEAR);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_SetOutputType(media_object, 0, &media_type, 0);
-    todo_wine
     ok(hr == DMO_E_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
 
     /* Test SetOutputType after setting input type. */
     init_dmo_media_type_video(input_type, &expected_input_types[0].subtype, 16, 16);
     hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-    todo_wine
     check_dmo_set_output_type(media_object, &MEDIASUBTYPE_RGB24);
 
     ret = IMediaObject_Release(media_object);
