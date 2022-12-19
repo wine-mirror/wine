@@ -707,7 +707,7 @@ BOOL bus_device_start(void)
     return ret || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING;
 }
 
-void hid_device_stop( struct hid_device_desc *desc )
+void hid_device_stop( struct hid_device_desc *desc, UINT count )
 {
     HANDLE control;
     DWORD ret;
@@ -728,7 +728,7 @@ void hid_device_stop( struct hid_device_desc *desc )
     }
 }
 
-BOOL hid_device_start( struct hid_device_desc *desc )
+BOOL hid_device_start( struct hid_device_desc *desc, UINT count )
 {
     HANDLE control;
     DWORD ret;
@@ -3044,8 +3044,8 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     memcpy( desc.input, &expect_in, sizeof(expect_in) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (hid_device_start( &desc )) test_hid_device( report_id, polled, &caps, desc.attributes.VendorID, desc.attributes.ProductID );
-    hid_device_stop( &desc );
+    if (hid_device_start( &desc, 1 )) test_hid_device( report_id, polled, &caps, desc.attributes.VendorID, desc.attributes.ProductID );
+    hid_device_stop( &desc, 1 );
 }
 
 /* undocumented HID internal preparsed data structure */
@@ -3455,7 +3455,7 @@ static void test_hidp_kdr(void)
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc )) goto done;
+    if (!hid_device_start( &desc, 1 )) goto done;
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc.attributes.VendorID,
               desc.attributes.ProductID );
@@ -3472,7 +3472,7 @@ static void test_hidp_kdr(void)
     CloseHandle( file );
 
 done:
-    hid_device_stop( &desc );
+    hid_device_stop( &desc, 1 );
 }
 
 void cleanup_registry_keys(void)
@@ -3766,10 +3766,10 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
     memcpy( desc.report_descriptor_buf, gamepad_desc, sizeof(gamepad_desc) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    hid_device_start( &desc );
+    hid_device_start( &desc, 1 );
     ret = WaitForSingleObject( stop_event, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
-    hid_device_stop( &desc );
+    hid_device_stop( &desc, 1 );
 
     return 0;
 }
@@ -4011,7 +4011,7 @@ static void test_hid_multiple_tlc(void)
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc )) goto done;
+    if (!hid_device_start( &desc, 2 )) goto done;
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x&col01", desc.attributes.VendorID,
               desc.attributes.ProductID );
@@ -4045,7 +4045,7 @@ static void test_hid_multiple_tlc(void)
     ok( !ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
 
 done:
-    hid_device_stop( &desc );
+    hid_device_stop( &desc, 2 );
 }
 
 START_TEST( hid )

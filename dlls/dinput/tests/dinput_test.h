@@ -54,8 +54,8 @@ extern HANDLE device_added, device_removed;
 extern HINSTANCE instance;
 extern BOOL localized; /* object names get translated */
 
-BOOL hid_device_start( struct hid_device_desc *desc );
-void hid_device_stop( struct hid_device_desc *desc );
+BOOL hid_device_start( struct hid_device_desc *desc, UINT count );
+void hid_device_stop( struct hid_device_desc *desc, UINT count );
 BOOL bus_device_start(void);
 void bus_device_stop(void);
 

@@ -2926,7 +2926,7 @@ static BOOL test_force_feedback_joystick( DWORD version )
     memcpy( desc.report_descriptor_buf, report_descriptor, sizeof(report_descriptor) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc )) goto done;
+    if (!hid_device_start( &desc, 1 )) goto done;
     if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
 
     check_dinput_devices( version, &devinst );
@@ -3130,7 +3130,7 @@ static BOOL test_force_feedback_joystick( DWORD version )
     CloseHandle( file );
 
 done:
-    hid_device_stop( &desc );
+    hid_device_stop( &desc, 1 );
     cleanup_registry_keys();
     winetest_pop_context();
 
@@ -4047,7 +4047,7 @@ static void test_device_managed_effect(void)
     memcpy( desc.expect, expect_pool, sizeof(expect_pool) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc )) goto done;
+    if (!hid_device_start( &desc, 1 )) goto done;
     if (FAILED(hr = dinput_test_create_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
@@ -4456,7 +4456,7 @@ static void test_device_managed_effect(void)
     CloseHandle( file );
 
 done:
-    hid_device_stop( &desc );
+    hid_device_stop( &desc, 1 );
     cleanup_registry_keys();
     winetest_pop_context();
 }
@@ -5792,7 +5792,7 @@ static void test_windows_gaming_input(void)
     memcpy( desc.expect, expect_init, sizeof(expect_init) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc )) goto done;
+    if (!hid_device_start( &desc, 1 )) goto done;
     ret = WaitForSingleObject( controller_added.event, 5000 );
     ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     CloseHandle( controller_added.event );
@@ -6491,7 +6491,7 @@ static void test_windows_gaming_input(void)
     IRawGameControllerStatics_Release( controller_statics );
 
 done:
-    hid_device_stop( &desc );
+    hid_device_stop( &desc, 1 );
     cleanup_registry_keys();
 }
 

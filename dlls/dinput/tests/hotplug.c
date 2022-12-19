@@ -168,7 +168,7 @@ static BOOL test_input_lost( DWORD version )
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
-    if (!hid_device_start( &desc )) goto done;
+    if (!hid_device_start( &desc, 1 )) goto done;
     if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
@@ -188,7 +188,7 @@ static BOOL test_input_lost( DWORD version )
     ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
     ok( count == 0, "got %lu expected 0\n", count );
 
-    hid_device_stop( &desc );
+    hid_device_stop( &desc, 1 );
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
     ok( hr == DIERR_INPUTLOST, "GetDeviceState returned %#lx\n", hr );
@@ -209,7 +209,7 @@ static BOOL test_input_lost( DWORD version )
     ok( hr == DI_NOEFFECT, "Unacquire returned: %#lx\n", hr );
 
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
-    hid_device_start( &desc );
+    hid_device_start( &desc, 1 );
 
     hr = IDirectInputDevice8_Acquire( device );
     ok( hr == S_OK, "Acquire returned %#lx\n", hr );
@@ -220,7 +220,7 @@ static BOOL test_input_lost( DWORD version )
     ok( ref == 0, "Release returned %ld\n", ref );
 
 done:
-    hid_device_stop( &desc );
+    hid_device_stop( &desc, 1 );
     cleanup_registry_keys();
 
     winetest_pop_context();
