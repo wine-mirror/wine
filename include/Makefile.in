@@ -815,6 +815,7 @@ SOURCES = \
 	windows.gaming.input.idl \
 	windows.gaming.ui.idl \
 	windows.globalization.idl \
+	windows.graphics.directx.idl \
 	windows.h \
 	windows.media.closedcaptioning.idl \
 	windows.media.devices.idl \
