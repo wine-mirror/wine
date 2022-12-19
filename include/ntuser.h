@@ -701,6 +701,7 @@ BOOL    WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
 DWORD   WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font );
 BOOL    WINAPI NtUserEmptyClipboard(void);
 BOOL    WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags );
+BOOL    WINAPI NtUserEnableMouseInPointer( BOOL );
 BOOL    WINAPI NtUserEnableScrollBar( HWND hwnd, UINT bar, UINT flags );
 BOOL    WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async );
 BOOL    WINAPI NtUserEndMenu(void);
@@ -760,6 +761,8 @@ int     WINAPI NtUserGetMouseMovePointsEx( UINT size, MOUSEMOVEPOINT *ptin, MOUS
 BOOL    WINAPI NtUserGetObjectInformation( HANDLE handle, INT index, void *info,
                                            DWORD len, DWORD *needed );
 HWND    WINAPI NtUserGetOpenClipboardWindow(void);
+BOOL    WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_PTR, UINT_PTR, SIZE_T size,
+                                         UINT32 *entry_count, UINT32 *pointer_count, void *pointer_info );
 INT     WINAPI NtUserGetPriorityClipboardFormat( UINT *list, INT count );
 HWINSTA WINAPI NtUserGetProcessWindowStation(void);
 HANDLE  WINAPI NtUserGetProp( HWND hwnd, const WCHAR *str );
@@ -789,6 +792,7 @@ NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs 
 HICON   WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type );
 INT     WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count );
 BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
+BOOL    WINAPI NtUserIsMouseInPointerEnabled(void);
 BOOL    WINAPI NtUserInvalidateRect( HWND hwnd, const RECT *rect, BOOL erase );
 BOOL    WINAPI NtUserInvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase );
 BOOL    WINAPI NtUserKillTimer( HWND hwnd, UINT_PTR id );
