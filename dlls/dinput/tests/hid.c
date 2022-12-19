@@ -710,35 +710,40 @@ BOOL bus_device_start(void)
 void hid_device_stop( struct hid_device_desc *desc )
 {
     HANDLE control;
-    BOOL ret;
+    DWORD ret;
 
     ResetEvent( device_removed );
 
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
     ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
-    ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, desc, sizeof(*desc), NULL, 0, INFINITE );
+    ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, desc, sizeof(*desc), NULL, 0, 5000 );
     ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
     CloseHandle( control );
 
-    if (ret) WaitForSingleObject( device_removed, INFINITE );
+    if (ret)
+    {
+        ret = WaitForSingleObject( device_removed, 5000 );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    }
 }
 
 BOOL hid_device_start( struct hid_device_desc *desc )
 {
     HANDLE control;
-    BOOL ret;
+    DWORD ret;
 
     ResetEvent( device_added );
 
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
     ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
-    ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, desc, sizeof(*desc), NULL, 0, INFINITE );
+    ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, desc, sizeof(*desc), NULL, 0, 5000 );
     ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
     CloseHandle( control );
 
-    WaitForSingleObject( device_added, INFINITE );
+    ret = WaitForSingleObject( device_added, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
 
     return TRUE;
 }
@@ -889,13 +894,14 @@ BOOL sync_ioctl_( const char *file, int line, HANDLE device, DWORD code, void *i
     if (!ret && GetLastError() == ERROR_IO_PENDING)
     {
         res = WaitForSingleObject( ovl.hEvent, timeout );
-        ok_(file, line)( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+        ok_(file, line)( !res, "WaitForSingleObject returned %#lx\n", res );
         ret = GetOverlappedResult( device, &ovl, &out_len, FALSE );
         ok_(file, line)( ret, "GetOverlappedResult returned %lu\n", GetLastError() );
         if (!ret)
         {
             CancelIoEx( device, &ovl );
-            WaitForSingleObject( ovl.hEvent, timeout );
+            res = WaitForSingleObject( ovl.hEvent, timeout );
+            ok_(file, line)( !res, "WaitForSingleObject returned %#lx\n", res );
         }
     }
     CloseHandle( ovl.hEvent );
@@ -926,14 +932,14 @@ void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_devi
 
     fill_context_( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
     size = sizeof(*desc) + strlen( buffer + sizeof(*desc) ) + 1;
-    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, INFINITE );
+    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, 5000 );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
 
     if (expect) memcpy( buffer + sizeof(*desc), expect, expect_size );
     else memset( buffer + sizeof(*desc), 0, expect_size );
 
     size = sizeof(*desc) + expect_size;
-    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_EXPECT, buffer, size, NULL, 0, INFINITE );
+    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_EXPECT, buffer, size, NULL, 0, 5000 );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %lu\n", GetLastError() );
 }
 
@@ -970,14 +976,14 @@ void send_hid_input_( const char *file, int line, HANDLE device, struct hid_devi
 
     fill_context_( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
     size = sizeof(*desc) + strlen( buffer + sizeof(*desc) ) + 1;
-    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, INFINITE );
+    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, 5000 );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
 
     if (expect) memcpy( buffer + sizeof(*desc), expect, expect_size );
     else memset( buffer + sizeof(*desc), 0, expect_size );
 
     size = sizeof(*desc) + expect_size;
-    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SEND_INPUT, buffer, size, NULL, 0, INFINITE );
+    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SEND_INPUT, buffer, size, NULL, 0, 5000 );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SEND_INPUT failed, last error %lu\n", GetLastError() );
 }
 
@@ -1067,7 +1073,7 @@ static void test_hidp_get_input( HANDLE file, int report_id, ULONG report_len, P
 
     SetLastError( 0xdeadbeef );
     length = report_len * 2;
-    ret = sync_ioctl( file, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, report, &length, INFINITE );
+    ret = sync_ioctl( file, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, report, &length, 5000 );
     ok( ret, "IOCTL_HID_GET_INPUT_REPORT failed, last error %lu\n", GetLastError() );
     ok( length == 3, "got length %lu, expected 3\n", length );
     ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
@@ -1161,7 +1167,7 @@ static void test_hidp_get_feature( HANDLE file, int report_id, ULONG report_len,
 
     length = report_len * 2;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_GET_FEATURE, NULL, 0, report, &length, INFINITE );
+    ret = sync_ioctl( file, IOCTL_HID_GET_FEATURE, NULL, 0, report, &length, 5000 );
     ok( ret, "IOCTL_HID_GET_FEATURE failed, last error %lu\n", GetLastError() );
     ok( length == 3, "got length %lu, expected 3\n", length );
     ok( report[0] == report_id, "got report[0] %02x, expected %02x\n", report[0], report_id );
@@ -1258,13 +1264,13 @@ static void test_hidp_set_feature( HANDLE file, int report_id, ULONG report_len,
 
     length = report_len * 2;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, NULL, 0, report, &length, INFINITE );
+    ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, NULL, 0, report, &length, 5000 );
     ok( !ret, "IOCTL_HID_SET_FEATURE succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_USER_BUFFER, "IOCTL_HID_SET_FEATURE returned error %lu\n",
         GetLastError() );
     length = 0;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, report, report_len * 2, NULL, &length, INFINITE );
+    ret = sync_ioctl( file, IOCTL_HID_SET_FEATURE, report, report_len * 2, NULL, &length, 5000 );
     ok( ret, "IOCTL_HID_SET_FEATURE failed, last error %lu\n", GetLastError() );
     ok( length == 3, "got length %lu, expected 3\n", length );
 
@@ -1353,13 +1359,13 @@ static void test_hidp_set_output( HANDLE file, int report_id, ULONG report_len, 
 
     length = report_len * 2;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, NULL, 0, report, &length, INFINITE );
+    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, NULL, 0, report, &length, 5000 );
     ok( !ret, "IOCTL_HID_SET_OUTPUT_REPORT succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_USER_BUFFER,
         "IOCTL_HID_SET_OUTPUT_REPORT returned error %lu\n", GetLastError() );
     length = 0;
     SetLastError( 0xdeadbeef );
-    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, report, report_len * 2, NULL, &length, INFINITE );
+    ret = sync_ioctl( file, IOCTL_HID_SET_OUTPUT_REPORT, report, report_len * 2, NULL, &length, 5000 );
     ok( ret, "IOCTL_HID_SET_OUTPUT_REPORT failed, last error %lu\n", GetLastError() );
     ok( length == 3, "got length %lu, expected 3\n", length );
 
@@ -2443,7 +2449,7 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
 
         value = 10;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &value, sizeof(ULONG), NULL, NULL, INFINITE );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &value, sizeof(ULONG), NULL, NULL, 5000 );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
 
         Sleep( 600 );
@@ -2597,14 +2603,18 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
     ULONG count, poll_freq, out_len;
     WCHAR device_path[MAX_PATH];
     HANDLE file, async_file;
-    BOOL ret;
+    DWORD ret;
 
     winetest_push_context( "id %ld%s", report_id, polled ? " poll" : "" );
 
     /* Win7 has a spurious device removal event with polled HID devices */
     if (!polled || !strcmp(winetest_platform, "wine")) ret = WAIT_TIMEOUT;
     else ret = WaitForSingleObject( device_removed, 2000 );
-    if (!ret && InterlockedOr( &device_added_count, 0 ) == 1) WaitForSingleObject( device_added, INFINITE );
+    if (!ret && InterlockedOr( &device_added_count, 0 ) == 1)
+    {
+        ret = WaitForSingleObject( device_added, 5000 );
+        ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    }
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", vid, pid );
     ret = find_hid_device_path( device_path );
@@ -2671,7 +2681,7 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
     {
         out_len = sizeof(ULONG);
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, INFINITE );
+        ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, 5000 );
         ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
         ok( out_len == sizeof(ULONG), "got out_len %lu, expected sizeof(ULONG)\n", out_len );
         todo_wine
@@ -2680,27 +2690,27 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
         out_len = 0;
         poll_freq = 500;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, 5000 );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
         ok( out_len == 0, "got out_len %lu, expected 0\n", out_len );
 
         out_len = 0;
         poll_freq = 10001;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, 5000 );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
         ok( out_len == 0, "got out_len %lu, expected 0\n", out_len );
 
         out_len = 0;
         poll_freq = 0;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, 5000 );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
         ok( out_len == 0, "got out_len %lu, expected 0\n", out_len );
 
         out_len = sizeof(ULONG);
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, INFINITE );
+        ret = sync_ioctl( file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, 5000 );
         ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
         ok( out_len == sizeof(ULONG), "got out_len %lu, expected sizeof(ULONG)\n", out_len );
         ok( poll_freq == 10000, "got poll_freq %lu, expected 10000\n", poll_freq );
@@ -2708,13 +2718,13 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
         out_len = 0;
         poll_freq = 500;
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, INFINITE );
+        ret = sync_ioctl( file, IOCTL_HID_SET_POLL_FREQUENCY_MSEC, &poll_freq, sizeof(ULONG), NULL, &out_len, 5000 );
         ok( ret, "IOCTL_HID_SET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
         ok( out_len == 0, "got out_len %lu, expected 0\n", out_len );
 
         out_len = sizeof(ULONG);
         SetLastError( 0xdeadbeef );
-        ret = sync_ioctl( async_file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, INFINITE );
+        ret = sync_ioctl( async_file, IOCTL_HID_GET_POLL_FREQUENCY_MSEC, NULL, 0, &poll_freq, &out_len, 5000 );
         ok( ret, "IOCTL_HID_GET_POLL_FREQUENCY_MSEC failed last error %lu\n", GetLastError() );
         ok( out_len == sizeof(ULONG), "got out_len %lu, expected sizeof(ULONG)\n", out_len );
         ok( poll_freq == 500, "got poll_freq %lu, expected 500\n", poll_freq );
@@ -3609,13 +3619,16 @@ void dinput_test_init_( const char *file, int line )
 
 void dinput_test_exit(void)
 {
+    DWORD ret;
+
     UnmapViewOfFile( test_data );
     CloseHandle( test_data_mapping );
     CloseHandle( okfile );
     DeleteFileW( L"C:\\windows\\winetest_dinput_okfile" );
 
     SetEvent( monitor_stop );
-    WaitForSingleObject( monitor_thread, INFINITE );
+    ret = WaitForSingleObject( monitor_thread, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     CloseHandle( monitor_thread );
     CloseHandle( monitor_stop );
     CloseHandle( device_removed );
@@ -3747,13 +3760,15 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
         .caps = caps,
         .attributes = attributes,
     };
+    DWORD ret;
 
     desc.report_descriptor_len = sizeof(gamepad_desc);
     memcpy( desc.report_descriptor_buf, gamepad_desc, sizeof(gamepad_desc) );
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     hid_device_start( &desc );
-    WaitForSingleObject( stop_event, INFINITE );
+    ret = WaitForSingleObject( stop_event, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     hid_device_stop( &desc );
 
     return 0;
@@ -3796,7 +3811,7 @@ static void test_bus_driver(void)
 
     WCHAR device_path[MAX_PATH];
     HANDLE control;
-    BOOL ret;
+    DWORD ret;
 
     if (!bus_device_start()) goto done;
 
@@ -3821,10 +3836,11 @@ static void test_bus_driver(void)
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
     ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
-    ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, &desc, sizeof(desc), NULL, 0, INFINITE );
+    ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, &desc, sizeof(desc), NULL, 0, 5000 );
     ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
 
-    WaitForSingleObject( device_added, INFINITE );
+    ret = WaitForSingleObject( device_added, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", LOWORD(EXPECT_VIDPID), HIWORD(EXPECT_VIDPID) );
     ret = find_hid_device_path( device_path );
@@ -3832,11 +3848,12 @@ static void test_bus_driver(void)
 
     ResetEvent( device_removed );
 
-    ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, &desc, sizeof(desc), NULL, 0, INFINITE );
+    ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, &desc, sizeof(desc), NULL, 0, 5000 );
     ok( ret, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
     CloseHandle( control );
 
-    WaitForSingleObject( device_removed, INFINITE );
+    ret = WaitForSingleObject( device_removed, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
 
 done:
     bus_device_stop();

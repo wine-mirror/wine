@@ -3925,6 +3925,7 @@ static void test_windows_gaming_input(void)
     UINT32 size;
     HSTRING str;
     HRESULT hr;
+    DWORD res;
 
     if (!load_combase_functions()) return;
 
@@ -3964,7 +3965,8 @@ static void test_windows_gaming_input(void)
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc )) goto done;
-    WaitForSingleObject( controller_added.event, INFINITE );
+    res = WaitForSingleObject( controller_added.event, 5000 );
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
     CloseHandle( controller_added.event );
 
     hr = IVectorView_RawGameController_get_Size( controllers_view, &size );
@@ -4047,7 +4049,8 @@ static void test_windows_gaming_input(void)
     ok( controller_added_token.value, "got token %I64u\n", controller_added_token.value );
 
     if (!hid_device_start( &desc )) goto done;
-    WaitForSingleObject( controller_added.event, INFINITE );
+    res = WaitForSingleObject( controller_added.event, 5000 );
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
     CloseHandle( controller_added.event );
 
     hr = IRawGameControllerStatics_get_RawGameControllers( controller_statics, &controllers_view );
@@ -4343,7 +4346,8 @@ static void test_rawinput(void)
 
         send_hid_input( file, &injected_input[i], sizeof(*injected_input) );
 
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, QS_ALLINPUT );
+        res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 5000, QS_ALLINPUT );
+        ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
         while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
         ok( !wm_input_device_change_count, "got %u WM_INPUT_DEVICE_CHANGE\n", wm_input_device_change_count );

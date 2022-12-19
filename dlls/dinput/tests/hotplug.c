@@ -75,10 +75,10 @@ failed:
 
 static DWORD wait_for_events( DWORD count, HANDLE *events, DWORD timeout )
 {
-    DWORD ret, end = GetTickCount() + timeout;
+    DWORD ret, end = GetTickCount() + min( timeout, 5000 );
     MSG msg;
 
-    while ((ret = MsgWaitForMultipleObjects( count, events, FALSE, timeout, QS_ALLINPUT )) <= count)
+    while ((ret = MsgWaitForMultipleObjects( count, events, FALSE, min( timeout, 5000 ), QS_ALLINPUT )) <= count)
     {
         while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
         {
@@ -86,12 +86,13 @@ static DWORD wait_for_events( DWORD count, HANDLE *events, DWORD timeout )
             DispatchMessageW( &msg );
         }
         if (ret < count) return ret;
-        if (timeout == INFINITE) continue;
+        if (timeout >= 5000) continue;
         if (end <= GetTickCount()) timeout = 0;
         else timeout = end - GetTickCount();
     }
 
-    ok( ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+    if (timeout >= 5000) ok( 0, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+    else ok( ret == WAIT_TIMEOUT, "MsgWaitForMultipleObjects returned %#lx\n", ret );
     return ret;
 }
 
@@ -312,6 +313,7 @@ static void test_RegisterDeviceNotification(void)
     DEV_BROADCAST_HDR *header = (DEV_BROADCAST_HDR *)buffer;
     HANDLE hwnd, thread, stop_event;
     HDEVNOTIFY devnotify;
+    DWORD ret;
     MSG msg;
 
     RegisterClassExW( &class );
@@ -394,7 +396,9 @@ static void test_RegisterDeviceNotification(void)
 
     while (device_change_count < device_change_expect)
     {
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, QS_ALLINPUT );
+        ret = MsgWaitForMultipleObjects( 0, NULL, FALSE, 5000, QS_ALLINPUT );
+        ok( !ret, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+        if (ret) break;
         while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
         {
             TranslateMessage( &msg );
@@ -404,7 +408,8 @@ static void test_RegisterDeviceNotification(void)
         if (device_change_count == device_change_expect / 2) SetEvent( stop_event );
     }
 
-    WaitForSingleObject( thread, INFINITE );
+    ret = WaitForSingleObject( thread, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     CloseHandle( thread );
     CloseHandle( stop_event );
 
@@ -428,7 +433,9 @@ static void test_RegisterDeviceNotification(void)
 
     while (device_change_count < device_change_expect)
     {
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, QS_ALLINPUT );
+        ret = MsgWaitForMultipleObjects( 0, NULL, FALSE, 5000, QS_ALLINPUT );
+        ok( !ret, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+        if (ret) break;
         while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
         {
             TranslateMessage( &msg );
@@ -438,7 +445,8 @@ static void test_RegisterDeviceNotification(void)
         if (device_change_count == device_change_expect / 2) SetEvent( stop_event );
     }
 
-    WaitForSingleObject( thread, INFINITE );
+    ret = WaitForSingleObject( thread, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     CloseHandle( thread );
     CloseHandle( stop_event );
 
@@ -459,7 +467,9 @@ static void test_RegisterDeviceNotification(void)
 
     while (device_change_count < device_change_expect)
     {
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, INFINITE, QS_ALLINPUT );
+        ret = MsgWaitForMultipleObjects( 0, NULL, FALSE, 5000, QS_ALLINPUT );
+        ok( !ret, "MsgWaitForMultipleObjects returned %#lx\n", ret );
+        if (ret) break;
         while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
         {
             TranslateMessage( &msg );
@@ -469,7 +479,8 @@ static void test_RegisterDeviceNotification(void)
         if (device_change_count == device_change_expect / 2) SetEvent( stop_event );
     }
 
-    WaitForSingleObject( thread, INFINITE );
+    ret = WaitForSingleObject( thread, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     CloseHandle( thread );
     CloseHandle( stop_event );
 
@@ -1036,7 +1047,7 @@ static void test_windows_gaming_input(void)
     thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
     ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
 
-    wait_for_events( 1, &controller_added.event, INFINITE );
+    wait_for_events( 1, &controller_added.event, 5000 );
 
     ok( controller_added.invoked, "controller added handler not invoked\n" );
     ok( !controller_removed.invoked, "controller removed handler invoked\n" );
@@ -1073,7 +1084,7 @@ static void test_windows_gaming_input(void)
     IRawGameController_Release( raw_controller );
 
     SetEvent( stop_event );
-    wait_for_events( 1, &controller_removed.event, INFINITE );
+    wait_for_events( 1, &controller_removed.event, 5000 );
 
     ok( controller_added.invoked, "controller added handler not invoked\n" );
     ok( controller_removed.invoked, "controller removed handler not invoked\n" );
@@ -1113,7 +1124,8 @@ static void test_windows_gaming_input(void)
 
     IVectorView_RawGameController_Release( controller_view );
 
-    WaitForSingleObject( thread, INFINITE );
+    res = WaitForSingleObject( thread, 5000 );
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
     CloseHandle( thread );
     while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE )) DispatchMessageW( &msg );
 
@@ -1134,7 +1146,7 @@ static void test_windows_gaming_input(void)
 
     thread = CreateThread( NULL, 0, dinput_test_device_thread, stop_event, 0, NULL );
     ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
-    wait_for_events( 1, &controller_added.event, INFINITE );
+    wait_for_events( 1, &controller_added.event, 5000 );
     res = wait_for_events( 1, &custom_factory.added_event, 500 );
     todo_wine
     ok( !res, "wait_for_events returned %#lx\n", res );
@@ -1185,7 +1197,7 @@ next:
     res = wait_for_events( 1, &custom_factory.removed_event, 500 );
     todo_wine
     ok( !res, "wait_for_events returned %#lx\n", res );
-    wait_for_events( 1, &controller_removed.event, INFINITE );
+    wait_for_events( 1, &controller_removed.event, 5000 );
 
     hr = IRawGameControllerStatics_remove_RawGameControllerAdded( statics, controller_added_token );
     ok( hr == S_OK, "remove_RawGameControllerAdded returned %#lx\n", hr );
@@ -1199,7 +1211,8 @@ next:
     IGameControllerFactoryManagerStatics2_Release( manager_statics2 );
     IGameControllerFactoryManagerStatics_Release( manager_statics );
     IRawGameControllerStatics_Release( statics );
-    WaitForSingleObject( thread, INFINITE );
+    res = WaitForSingleObject( thread, 5000 );
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
     CloseHandle( thread );
     CloseHandle( stop_event );
 

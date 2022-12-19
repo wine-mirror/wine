@@ -5793,7 +5793,8 @@ static void test_windows_gaming_input(void)
     fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc )) goto done;
-    WaitForSingleObject( controller_added.event, INFINITE );
+    ret = WaitForSingleObject( controller_added.event, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
     CloseHandle( controller_added.event );
 
     if (FAILED(hr = dinput_test_create_device( 0x800, &devinst, &device ))) goto done;
