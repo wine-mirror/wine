@@ -1,0 +1,9 @@
+MODULE  = windows.perception.stub.dll
+IMPORTS = combase
+
+C_SRCS = \
+	main.c \
+	observer.c
+
+IDL_SRCS = \
+	classes.idl

@@ -1453,6 +1453,7 @@ enable_windows_media_devices
 enable_windows_media_speech
 enable_windows_media
 enable_windows_networking
+enable_windows_perception_stub
 enable_windows_system_profile_systemmanufacturers
 enable_windows_ui
 enable_windowscodecs
@@ -21706,6 +21707,8 @@ wine_fn_config_makefile dlls/windows.media.speech/tests enable_tests
 wine_fn_config_makefile dlls/windows.media enable_windows_media
 wine_fn_config_makefile dlls/windows.media/tests enable_tests
 wine_fn_config_makefile dlls/windows.networking enable_windows_networking
+wine_fn_config_makefile dlls/windows.perception.stub enable_windows_perception_stub
+wine_fn_config_makefile dlls/windows.perception.stub/tests enable_tests
 wine_fn_config_makefile dlls/windows.system.profile.systemmanufacturers enable_windows_system_profile_systemmanufacturers
 wine_fn_config_makefile dlls/windows.system.profile.systemmanufacturers/tests enable_tests
 wine_fn_config_makefile dlls/windows.ui enable_windows_ui
