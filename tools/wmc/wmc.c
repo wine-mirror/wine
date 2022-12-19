@@ -160,6 +160,8 @@ static void init_argv0_dir( const char *argv0 )
     char *path = xmalloc( path_size );
     if (!sysctl( pathname, ARRAY_SIZE(pathname), path, &path_size, NULL, 0 ))
         dir = realpath( path, NULL );
+    else
+        dir = NULL;
     free( path );
 #else
     dir = realpath( argv0, NULL );
