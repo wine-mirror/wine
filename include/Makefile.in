@@ -749,6 +749,7 @@ SOURCES = \
 	uiautomationcore.idl \
 	uiautomationcoreapi.h \
 	uiribbon.idl \
+	uiviewsettingsinterop.idl \
 	unexposeenums2managed.h \
 	unknwn.idl \
 	urlhist.idl \
