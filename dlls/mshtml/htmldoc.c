@@ -4823,9 +4823,53 @@ static HRESULT WINAPI MarkupServices_ParseString(IMarkupServices *iface,
     OLECHAR *pchHTML, DWORD dwFlags, IMarkupContainer **ppContainerResult,
     IMarkupPointer *pPointerStart, IMarkupPointer *pPointerFinish)
 {
+    HRESULT hres;
+    IMarkupContainer *container;
+    IHTMLDocument2 *doc;
+    IHTMLDOMNode *node, *html_node, *new_html_node = NULL;
+    IHTMLElement *html, *body;
     HTMLDocumentNode *This = impl_from_IMarkupServices(iface);
-    FIXME("(%p)->(%s,%lx,%p,%p,%p)\n", This, debugstr_w(pchHTML), dwFlags, ppContainerResult, pPointerStart, pPointerFinish);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s,%lx,%p,%p,%p)\n", This, debugstr_w(pchHTML), dwFlags, ppContainerResult, pPointerStart, pPointerFinish);
+
+    if(dwFlags != 0)
+        FIXME("flags %lx not implemented.\n", dwFlags);
+    if(pPointerStart || pPointerFinish) {
+        FIXME("Pointers not implemented.\n");
+        return E_NOTIMPL;
+    }
+
+    hres = IMarkupServices_CreateMarkupContainer(iface, &container);
+    if(FAILED(hres))
+        return hres;
+
+    IMarkupContainer_QueryInterface(container, &IID_IHTMLDocument2, (void**)&doc);
+    IHTMLDocument2_QueryInterface(doc, &IID_IHTMLDOMNode, (void**)&node);
+    IHTMLDocument2_createElement(&This->IHTMLDocument2_iface, (BSTR)L"html", &html);
+
+    IHTMLElement_put_innerHTML(html, (BSTR)L"<head><title></title></head><body></body>");
+    IHTMLElement_QueryInterface(html, &IID_IHTMLDOMNode, (void**)&html_node);
+    IHTMLElement_Release(html);
+
+    IHTMLDOMNode_appendChild(node, html_node, &new_html_node);
+    IHTMLDOMNode_Release(node);
+    IHTMLDOMNode_Release(html_node);
+    IHTMLDOMNode_Release(new_html_node);
+
+    IHTMLDocument2_get_body(doc, &body);
+    hres = IHTMLElement_put_innerHTML(body, pchHTML);
+    if (FAILED(hres))
+    {
+        ERR("Failed put_innerHTML hr %#lx\n", hres);
+        IMarkupContainer_Release(container);
+        container = NULL;
+    }
+
+    IHTMLDocument2_Release(doc);
+    IHTMLElement_Release(body);
+
+    *ppContainerResult = container;
+
+    return hres;
 }
 
 static HRESULT WINAPI MarkupServices_ParseGlobal(IMarkupServices *iface,

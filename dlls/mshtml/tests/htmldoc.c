@@ -8428,8 +8428,8 @@ static void test_MarkupServices_ParseString(IMarkupServices *markup_services, IH
     IMarkupContainer *markup_container = NULL;
 
     hres = IMarkupServices_ParseString(markup_services, (OLECHAR*)L"<div>Hello World</div>", 0, &markup_container, NULL, NULL);
-    todo_wine ok(hres == S_OK, "got 0x%08lx\n", hres);
-    todo_wine ok(markup_container != NULL, "MarkupContainer is null.\n");
+    ok(hres == S_OK, "got 0x%08lx\n", hres);
+    ok(markup_container != NULL, "MarkupContainer is null.\n");
     if (!markup_container) return;
 
     hres = IMarkupContainer_QueryInterface(markup_container, &IID_IHTMLDocument2, (void**)&markup_container_doc);
