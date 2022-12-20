@@ -3305,6 +3305,7 @@ static void test_wndproc(void)
         skip("Failed to create a D3D device, skipping tests.\n");
         goto done;
     }
+    SetForegroundWindow(focus_window);  /* make sure that the window has focus */
 
     filter_messages = NULL;
 
