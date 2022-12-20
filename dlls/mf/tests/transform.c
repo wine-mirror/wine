@@ -4956,30 +4956,11 @@ static void test_wmv_decoder_media_object(void)
     ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputType returned %#lx.\n", hr);
 
     /* Test GetOutputType after setting input type. */
-    for (i = 0; i < ARRAY_SIZE(expected_input_types); ++i)
-    {
-        const GUID *subtype = &expected_input_types[i].subtype;
-        if (IsEqualGUID(subtype, &MEDIASUBTYPE_WMV2)
-                || IsEqualGUID(subtype, &MEDIASUBTYPE_WMVA)
-                || IsEqualGUID(subtype, &MEDIASUBTYPE_WVP2)
-                || IsEqualGUID(subtype, &MEDIASUBTYPE_WVC1)
-                || IsEqualGUID(subtype, &MFVideoFormat_VC1S))
-        {
-            skip("Skipping GetOutputType tests for input subtype %s.\n", debugstr_guid(subtype));
-            continue;
-        }
-
-        winetest_push_context("in %lu", i);
-
-        init_dmo_media_type_video(input_type, &expected_input_types[i].subtype, 16, 16);
-        hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
-        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
-
-        todo_wine
-        check_dmo_get_output_type(media_object, expected_output_types, ARRAY_SIZE(expected_output_types));
-
-        winetest_pop_context();
-    }
+    init_dmo_media_type_video(input_type, &expected_input_types[0].subtype, 16, 16);
+    hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    todo_wine
+    check_dmo_get_output_type(media_object, expected_output_types, ARRAY_SIZE(expected_output_types));
 
     ret = IMediaObject_Release(media_object);
     ok(ret == 0, "Release returned %lu\n", ret);
