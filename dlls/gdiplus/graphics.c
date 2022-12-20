@@ -6887,13 +6887,15 @@ GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_spac
 
     if (dst_space != src_space)
     {
-        scale_x = units_to_pixels(1.0, graphics->unit, graphics->xres, graphics->printer_display);
-        scale_y = units_to_pixels(1.0, graphics->unit, graphics->yres, graphics->printer_display);
-
         if(graphics->unit != UnitDisplay)
         {
-            scale_x *= graphics->scale;
-            scale_y *= graphics->scale;
+            scale_x = units_to_pixels(graphics->scale, graphics->unit, graphics->xres, graphics->printer_display);
+            scale_y = units_to_pixels(graphics->scale, graphics->unit, graphics->yres, graphics->printer_display);
+        }
+        else
+        {
+            scale_x = units_to_pixels(1.0, graphics->unit, graphics->xres, graphics->printer_display);
+            scale_y = units_to_pixels(1.0, graphics->unit, graphics->yres, graphics->printer_display);
         }
 
         if (dst_space < src_space)
@@ -6903,12 +6905,11 @@ GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_spac
             {
             case WineCoordinateSpaceGdiDevice:
             {
-                GpMatrix gdixform;
-                gdixform = graphics->gdi_transform;
+                GpMatrix gdixform = graphics->gdi_transform;
                 stat = GdipInvertMatrix(&gdixform);
                 if (stat != Ok)
                     break;
-                GdipMultiplyMatrix(matrix, &gdixform, MatrixOrderAppend);
+                memcpy(matrix->matrix, gdixform.matrix, sizeof(matrix->matrix));
                 if (dst_space == CoordinateSpaceDevice)
                     break;
                 /* else fall-through */
@@ -6934,7 +6935,7 @@ GpStatus get_graphics_transform(GpGraphics *graphics, GpCoordinateSpace dst_spac
             switch ((int)src_space)
             {
             case CoordinateSpaceWorld:
-                GdipMultiplyMatrix(matrix, &graphics->worldtrans, MatrixOrderAppend);
+                memcpy(matrix->matrix, &graphics->worldtrans, sizeof(matrix->matrix));
                 if (dst_space == CoordinateSpacePage)
                     break;
                 /* else fall-through */
