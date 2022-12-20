@@ -1329,7 +1329,9 @@ static void udev_add_device(struct udev_device *dev, int fd)
     if (!strcmp(subsystem, "hidraw"))
     {
         static const WCHAR hidraw[] = {'h','i','d','r','a','w',0};
+#ifdef HAVE_LINUX_HIDRAW_H
         char product[MAX_PATH];
+#endif
 
         if (!desc.manufacturer[0]) memcpy(desc.manufacturer, hidraw, sizeof(hidraw));
 
