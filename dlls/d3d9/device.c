@@ -3010,7 +3010,7 @@ static HRESULT d3d9_device_upload_sysmem_index_buffer(struct d3d9_device *device
     return S_OK;
 }
 
-void d3d9_device_upload_managed_textures(struct d3d9_device *device)
+static void d3d9_device_upload_managed_textures(struct d3d9_device *device)
 {
     const struct wined3d_stateblock_state *state = device->stateblock_state;
     unsigned int i;

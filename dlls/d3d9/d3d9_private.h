@@ -125,7 +125,6 @@ struct d3d9_device
 HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wined3d *wined3d,
         UINT adapter, D3DDEVTYPE device_type, HWND focus_window, DWORD flags,
         D3DPRESENT_PARAMETERS *parameters, D3DDISPLAYMODEEX *mode) DECLSPEC_HIDDEN;
-void d3d9_device_upload_managed_textures(struct d3d9_device *device);
 
 struct d3d9_resource
 {

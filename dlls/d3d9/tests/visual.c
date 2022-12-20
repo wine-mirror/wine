@@ -27903,7 +27903,7 @@ static void test_managed_generate_mipmap(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     draw_textured_quad(&context, texture);
-    check_rt_color_todo(context.backbuffer, 0x0000ff00);
+    check_rt_color(context.backbuffer, 0x0000ff00);
 
     IDirect3DTexture9_Release(texture);
     release_test_context(&context);
