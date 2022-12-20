@@ -3619,6 +3619,60 @@ CPTABLEINFO *get_cptable( WORD cp )
     return &tables[i];
 }
 
+/* Based on NlsValidateLocale */
+const NLS_LOCALE_DATA *get_locale_data( LCID lcid )
+{
+    static const NLS_LOCALE_HEADER *locale_table;
+    static const NLS_LOCALE_LCID_INDEX *lcids_index;
+    int min = 0, max;
+
+    if (!locale_table)
+    {
+        LARGE_INTEGER size;
+        void *addr;
+        LCID lcid;
+        NTSTATUS status;
+        static struct
+        {
+            UINT ctypes;
+            UINT unknown1;
+            UINT unknown2;
+            UINT unknown3;
+            UINT locales;
+            UINT charmaps;
+            UINT geoids;
+            UINT scripts;
+        } *header;
+
+        status = NtInitializeNlsFiles( &addr, &lcid, &size );
+        if (status)
+        {
+            ERR( "Failed to load nls file\n" );
+            return NULL;
+        }
+
+        if (InterlockedCompareExchangePointer( (void **)&header, addr, NULL ))
+            NtUnmapViewOfSection( GetCurrentProcess(), addr );
+
+        locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
+        lcids_index = (const NLS_LOCALE_LCID_INDEX *)((char *)locale_table + locale_table->lcids_offset);
+    }
+
+    max = locale_table->nb_lcids - 1;
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (lcid < lcids_index[pos].id) max = pos - 1;
+        else if (lcid > lcids_index[pos].id) min = pos + 1;
+        else
+        {
+            ULONG offset = locale_table->locales_offset + pos * locale_table->locale_size;
+            return (const NLS_LOCALE_DATA *)((const char *)locale_table + offset);
+        }
+    }
+    return NULL;
+}
+
 DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *src, DWORD srclen )
 {
     DWORD ret;
@@ -3663,6 +3717,34 @@ DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *sr
         RtlCustomCPToUnicodeN( info, dst, dstlen * sizeof(WCHAR), &ret, src, srclen );
 
     return ret / sizeof(WCHAR);
+}
+
+DWORD win32u_mbtowc_size( CPTABLEINFO *info, const char *src, DWORD srclen )
+{
+    DWORD ret;
+
+    if (info->CodePage == CP_UTF8)
+    {
+        RtlUTF8ToUnicodeN( NULL, 0, &ret, src, srclen );
+        ret /= sizeof(WCHAR);
+    }
+    else if (info->DBCSCodePage)
+    {
+        for (ret = 0; srclen; srclen--, src++, ret++)
+        {
+            if (info->DBCSOffsets[(unsigned char)*src] && srclen > 1)
+            {
+                src++;
+                srclen--;
+            }
+        }
+    }
+    else
+    {
+        ret = srclen;
+    }
+
+    return ret;
 }
 
 static BOOL wc_to_index( UINT cp, WCHAR wc, unsigned char *dst, BOOL allow_default )
