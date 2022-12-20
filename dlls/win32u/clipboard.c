@@ -720,7 +720,11 @@ HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *
             params->data_size = size;
             return 0;
         }
-        if (status == STATUS_OBJECT_NAME_NOT_FOUND) return 0; /* no such format */
+        if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+        {
+            RtlSetLastWin32Error( ERROR_NOT_FOUND ); /* no such format */
+            return 0;
+        }
         if (status)
         {
             RtlSetLastWin32Error( RtlNtStatusToDosError( status ));

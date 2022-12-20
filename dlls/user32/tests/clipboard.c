@@ -986,7 +986,9 @@ static void test_synthesized(void)
 
     SetLastError(0xdeadbeef);
     data = GetClipboardData( CF_TEXT );
-    ok(GetLastError() == 0xdeadbeef, "bad last error %ld\n", GetLastError());
+    ok(GetLastError() == ERROR_NOT_FOUND /* win11 */ ||
+       broken(GetLastError() == 0xdeadbeef),
+       "bad last error %ld\n", GetLastError());
     ok(!data, "GetClipboardData() should have returned NULL\n");
 
     r = CloseClipboard();
@@ -1587,7 +1589,9 @@ static void test_handles( HWND hwnd )
 
     SetLastError( 0xdeadbeef );
     data = GetClipboardData( CF_RIFF );
-    ok( GetLastError() == 0xdeadbeef, "unexpected last error %ld\n", GetLastError() );
+    ok( GetLastError() == ERROR_NOT_FOUND /* win11 */ ||
+        broken(GetLastError() == 0xdeadbeef),
+        "unexpected last error %ld\n", GetLastError() );
     ok( !data, "wrong data %p\n", data );
 
     h = SetClipboardData( CF_PRIVATEFIRST + 7, htext4 );
