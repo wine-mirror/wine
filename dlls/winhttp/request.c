@@ -2871,38 +2871,39 @@ static DWORD receive_response( struct request *request )
 {
     BOOL async_mode = request->connect->hdr.flags & WINHTTP_FLAG_ASYNC;
     DWORD ret, size, query, status;
-    BOOL return_to_send;
 
     TRACE( "request state %d.\n", request->state );
 
-    if (request->state >= REQUEST_RESPONSE_STATE_RESPONSE_RECEIVED)
+    switch (request->state)
     {
-        ret = ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
-        goto done;
-    }
-
-    if (request->state == REQUEST_RESPONSE_RECURSIVE_REQUEST)
-    {
+    case REQUEST_RESPONSE_RECURSIVE_REQUEST:
         TRACE( "Sending request.\n" );
         if ((ret = send_request( request, NULL, 0, request->optional, request->optional_len, 0, 0, FALSE ))) goto done;
-    }
-
-    return_to_send = async_mode && request->state == REQUEST_RESPONSE_STATE_SENDING_REQUEST;
-    if (request->state < REQUEST_RESPONSE_STATE_REQUEST_SENT && !return_to_send)
-    {
-        ret = ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
-        goto done;
-    }
-
-    if (request->state == REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REQUEST_SENT)
-        request->state = REQUEST_RESPONSE_STATE_REQUEST_SENT;
-    else
         send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
+        break;
 
-    if (return_to_send)
-    {
+    case REQUEST_RESPONSE_STATE_SENDING_REQUEST:
+        if (!async_mode)
+        {
+            ret = ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+            goto done;
+        }
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
         request->state = REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED;
         return queue_receive_response( request );
+
+
+    case REQUEST_RESPONSE_STATE_REQUEST_SENT:
+        send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RECEIVING_RESPONSE, NULL, 0 );
+        break;
+
+    case REQUEST_RESPONSE_STATE_READ_RESPONSE_QUEUED_REQUEST_SENT:
+        request->state = REQUEST_RESPONSE_STATE_REQUEST_SENT;
+        break;
+
+    default:
+        ret = ERROR_WINHTTP_INCORRECT_HANDLE_STATE;
+        goto done;
     }
 
     send_callback( &request->hdr, WINHTTP_CALLBACK_STATUS_RESPONSE_RECEIVED,
