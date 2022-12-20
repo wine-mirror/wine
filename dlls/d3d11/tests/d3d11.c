@@ -34355,11 +34355,10 @@ static void test_dynamic_map_synchronization(void)
 {
     static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
     static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
-    ID3D11DeviceContext *immediate, *deferred;
     struct d3d11_test_context test_context;
     D3D11_BUFFER_DESC buffer_desc = {0};
     D3D11_MAPPED_SUBRESOURCE map_desc;
-    ID3D11CommandList *list;
+    ID3D11DeviceContext *immediate;
     ID3D11Device *device;
     unsigned int x, y;
     HRESULT hr;
@@ -34368,9 +34367,6 @@ static void test_dynamic_map_synchronization(void)
         return;
     device = test_context.device;
     immediate = test_context.immediate_context;
-
-    hr = ID3D11Device_CreateDeferredContext(device, 0, &deferred);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     buffer_desc.ByteWidth = 200 * 4 * sizeof(struct vec3);
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
@@ -34383,33 +34379,14 @@ static void test_dynamic_map_synchronization(void)
 
     for (y = 0; y < 200; ++y)
     {
-        if (y % 2)
-        {
-            hr = ID3D11DeviceContext_Map(immediate, (ID3D11Resource *)test_context.vb,
-                    0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID3D11DeviceContext_Map(immediate, (ID3D11Resource *)test_context.vb,
+                0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-            fill_dynamic_vb_quad(&map_desc, 0, y);
+        fill_dynamic_vb_quad(&map_desc, 0, y);
 
-            ID3D11DeviceContext_Unmap(immediate, (ID3D11Resource *)test_context.vb, 0);
-            draw_color_quad(&test_context, &green);
-        }
-        else
-        {
-            hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)test_context.vb,
-                    0, D3D11_MAP_WRITE_DISCARD, 0, &map_desc);
-            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-            fill_dynamic_vb_quad(&map_desc, 0, y);
-
-            ID3D11DeviceContext_Unmap(deferred, (ID3D11Resource *)test_context.vb, 0);
-
-            hr = ID3D11DeviceContext_FinishCommandList(deferred, FALSE, &list);
-            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-            ID3D11DeviceContext_ExecuteCommandList(immediate, list, TRUE);
-            ID3D11CommandList_Release(list);
-            draw_color_quad(&test_context, &green);
-        }
+        ID3D11DeviceContext_Unmap(immediate, (ID3D11Resource *)test_context.vb, 0);
+        draw_color_quad(&test_context, &green);
 
         for (x = 1; x < 200; ++x)
         {
@@ -34426,7 +34403,6 @@ static void test_dynamic_map_synchronization(void)
 
     check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
 
-    ID3D11DeviceContext_Release(deferred);
     release_test_context(&test_context);
 }
 
