@@ -1177,21 +1177,21 @@ static void check_dmo_get_input_type(IMediaObject *media_object, const DMO_MEDIA
     DWORD i;
 
     hr = IMediaObject_GetInputType(media_object, 1, 0, NULL);
-    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 1, 0, &media_type);
-    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 1, count, &media_type);
-    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 0, count, &media_type);
-    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 0, count, NULL);
-    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 0, 0xdeadbeef, NULL);
-    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 0, count - 1, NULL);
-    ok(hr == S_OK, "GetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetInputType(media_object, 0, count - 1, &media_type);
-    ok(hr == S_OK, "GetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetInputType returned %#lx.\n", hr);
     if (hr == S_OK)
         MoFreeMediaType(&media_type);
 
@@ -1204,7 +1204,7 @@ static void check_dmo_get_input_type(IMediaObject *media_object, const DMO_MEDIA
         winetest_pop_context();
     }
 
-    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetInputType returned %#lx.\n", hr);
     ok(i == count, "%lu types.\n", i);
 }
 
@@ -1215,21 +1215,21 @@ static void check_dmo_get_output_type(IMediaObject *media_object, const DMO_MEDI
     DWORD i;
 
     hr = IMediaObject_GetOutputType(media_object, 1, 0, NULL);
-    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(media_object, 1, 0, &media_type);
-    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(media_object, 1, count, &media_type);
-    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_INVALIDSTREAMINDEX, "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(media_object, 0, count, &media_type);
-    ok(hr == DMO_E_NO_MORE_ITEMS, "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(media_object, 0, count, NULL);
-    ok(hr == DMO_E_NO_MORE_ITEMS || broken(hr == S_OK), "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_NO_MORE_ITEMS || broken(hr == S_OK), "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(media_object, 0, 0xdeadbeef, NULL);
-    ok(hr == DMO_E_NO_MORE_ITEMS || broken(hr == S_OK), "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_NO_MORE_ITEMS || broken(hr == S_OK), "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(media_object, 0, count - 1, NULL);
-    ok(hr == S_OK, "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(media_object, 0, count - 1, &media_type);
-    ok(hr == S_OK, "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "GetOutputType returned %#lx.\n", hr);
     if (hr == S_OK)
         MoFreeMediaType(&media_type);
 
@@ -1242,7 +1242,7 @@ static void check_dmo_get_output_type(IMediaObject *media_object, const DMO_MEDI
         winetest_pop_context();
     }
 
-    ok(hr == DMO_E_NO_MORE_ITEMS, "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_NO_MORE_ITEMS, "GetOutputType returned %#lx.\n", hr);
     ok(i == count, "%lu types.\n", i);
 }
 
@@ -4826,9 +4826,9 @@ static void test_wmv_decoder_media_object(void)
         /* Test setting the type. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
         hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
         header->dwBitRate = 0xdeadbeef;
         header->dwBitErrorRate = 0xdeadbeef;
         header->AvgTimePerFrame = 0xdeadbeef;
@@ -4838,102 +4838,102 @@ static void test_wmv_decoder_media_object(void)
         header->bmiHeader.biXPelsPerMeter = 0xdead;
         header->bmiHeader.biYPelsPerMeter = 0xdead;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
         /* Test invalid major type. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         input_type->majortype = MFMediaType_Default;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
         /* Test invalid subtype. */
         init_dmo_media_type_video(input_type, &MEDIASUBTYPE_None, 96, 96);
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
         /* Test invalid format type. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         input_type->formattype = FORMAT_None;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
         /* Test invalid format size. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         input_type->cbFormat = 1;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
         /* Test NULL format pointer. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         input_type->pbFormat = NULL;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
         /* Test video header struct size. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         header->bmiHeader.biSize = 0;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
         todo_wine
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biSize = 1;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
         todo_wine
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biSize = 0xdeadbeef;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
         todo_wine
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
 
         /* Test width. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         header->bmiHeader.biWidth = 0;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
         todo_wine
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biWidth = -1;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
         todo_wine
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biWidth = 4096 + 1;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
         todo_wine
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biWidth = 4096;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
         /* Test height. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         header->bmiHeader.biHeight = 0;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
         todo_wine
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biHeight = 4096 + 1;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
         todo_wine
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biHeight = 4096;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biHeight = -4096;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
         /* Test compression. */
         init_dmo_media_type_video(input_type, subtype, 96, 96);
         header->bmiHeader.biCompression = 0;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
         todo_wine
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biCompression = 1;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biCompression = 2;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
         header->bmiHeader.biCompression = 0xdeadbeef;
         hr = IMediaObject_SetInputType(media_object, 0, input_type, DMO_SET_TYPEF_TEST_ONLY);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
         winetest_pop_context();
     }
@@ -4956,17 +4956,17 @@ static void test_wmv_decoder_media_object(void)
             type = NULL;
 
         hr = IMediaObject_SetInputType(media_object, test->stream_index, type, test->flags);
-        ok(hr == test->hr, "SetInputType returned unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
+        ok(hr == test->hr, "SetInputType returned %#lx, expected %#lx.\n", hr, test->hr);
 
         winetest_pop_context();
     }
 
     /* Test GetOutputType without setting input type. */
     hr = IMediaObject_SetInputType(media_object, 0, NULL, DMO_SET_TYPEF_CLEAR);
-    ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputType(media_object, 0, 0, &media_type);
     todo_wine
-    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputType returned unexpected hr %#lx.\n", hr);
+    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputType returned %#lx.\n", hr);
 
     /* Test GetOutputType after setting input type. */
     for (i = 0; i < ARRAY_SIZE(expected_input_types); ++i)
@@ -4986,7 +4986,7 @@ static void test_wmv_decoder_media_object(void)
 
         init_dmo_media_type_video(input_type, &expected_input_types[i].subtype, 16, 16);
         hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
-        ok(hr == S_OK, "SetInputType returned unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
 
         todo_wine
         check_dmo_get_output_type(media_object, expected_output_types, ARRAY_SIZE(expected_output_types));
