@@ -27983,7 +27983,7 @@ static void test_mipmap_upload(void)
             ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
             draw_textured_quad(&context, texture);
-            check_rt_color_todo_if(context.backbuffer, 0x00111111 * (j + 1), j > 0);
+            check_rt_color(context.backbuffer, 0x00111111 * (j + 1));
 
             winetest_pop_context();
         }

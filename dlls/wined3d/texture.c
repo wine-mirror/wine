@@ -3697,7 +3697,7 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     struct wined3d_bo_address data;
     unsigned int texture_level;
     BYTE *base_memory;
-    BOOL ret;
+    BOOL ret = TRUE;
 
     TRACE("resource %p, sub_resource_idx %u, map_ptr %p, box %s, flags %#x.\n",
             resource, sub_resource_idx, map_ptr, debug_box(box), flags);
@@ -3732,7 +3732,20 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
     {
         if (resource->usage & WINED3DUSAGE_DYNAMIC)
             WARN_(d3d_perf)("Mapping a dynamic texture without WINED3D_MAP_DISCARD.\n");
-        ret = wined3d_texture_load_location(texture, sub_resource_idx, context, resource->map_binding);
+        if (!texture_level)
+        {
+            unsigned int i;
+
+            for (i = 0; i < texture->level_count; ++i)
+            {
+                if (!(ret = wined3d_texture_load_location(texture, sub_resource_idx + i, context, resource->map_binding)))
+                    break;
+            }
+        }
+        else
+        {
+            ret = wined3d_texture_load_location(texture, sub_resource_idx, context, resource->map_binding);
+        }
     }
 
     if (!ret)
@@ -3748,7 +3761,19 @@ static HRESULT texture_resource_sub_resource_map(struct wined3d_resource *resour
         wined3d_texture_dirty_region_add(texture, sub_resource_idx / texture->level_count, box);
 
     if (flags & WINED3D_MAP_WRITE)
-        wined3d_texture_invalidate_location(texture, sub_resource_idx, ~resource->map_binding);
+    {
+        if (!texture_level)
+        {
+            unsigned int i;
+
+            for (i = 0; i < texture->level_count; ++i)
+                wined3d_texture_invalidate_location(texture, sub_resource_idx + i, ~resource->map_binding);
+        }
+        else
+        {
+            wined3d_texture_invalidate_location(texture, sub_resource_idx, ~resource->map_binding);
+        }
+    }
 
     wined3d_texture_get_bo_address(texture, sub_resource_idx, &data, resource->map_binding);
     base_memory = wined3d_context_map_bo_address(context, &data, sub_resource->size, flags);
