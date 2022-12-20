@@ -246,9 +246,9 @@ void set_variant( VARTYPE, LONGLONG, void *, VARIANT * ) DECLSPEC_HIDDEN;
 HRESULT create_signature( enum wbm_namespace ns, const WCHAR *, const WCHAR *, enum param_direction,
                           IWbemClassObject ** ) DECLSPEC_HIDDEN;
 
-HRESULT WbemLocator_create(LPVOID *) DECLSPEC_HIDDEN;
+HRESULT WbemLocator_create(LPVOID *, REFIID) DECLSPEC_HIDDEN;
 HRESULT WbemServices_create(const WCHAR *, IWbemContext *, LPVOID *) DECLSPEC_HIDDEN;
-HRESULT WbemContext_create(void **) DECLSPEC_HIDDEN;
+HRESULT WbemContext_create(void **, REFIID) DECLSPEC_HIDDEN;
 HRESULT create_class_object(enum wbm_namespace ns, const WCHAR *, IEnumWbemClassObject *, UINT,
                             struct record *, IWbemClassObject **) DECLSPEC_HIDDEN;
 HRESULT EnumWbemClassObject_create(struct query *, LPVOID *) DECLSPEC_HIDDEN;

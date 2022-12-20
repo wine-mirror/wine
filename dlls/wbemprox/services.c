@@ -1058,7 +1058,7 @@ static HRESULT WINAPI wbem_context_Clone(
 
     TRACE("%p, %p\n", iface, newcopy);
 
-    if (SUCCEEDED(hr = WbemContext_create( (void **)&cloned_context )))
+    if (SUCCEEDED(hr = WbemContext_create( (void **)&cloned_context, &IID_IWbemContext )))
     {
         LIST_FOR_EACH_ENTRY( value, &context->values, struct wbem_context_value, entry )
         {
@@ -1225,11 +1225,15 @@ static const IWbemContextVtbl wbem_context_vtbl =
     wbem_context_DeleteAll,
 };
 
-HRESULT WbemContext_create( void **obj )
+HRESULT WbemContext_create( void **obj, REFIID riid )
 {
     struct wbem_context *context;
 
     TRACE("(%p)\n", obj);
+
+    if ( !IsEqualGUID( riid, &IID_IWbemContext ) &&
+         !IsEqualGUID( riid, &IID_IUnknown ) )
+        return E_NOINTERFACE;
 
     if (!(context = malloc( sizeof(*context) ))) return E_OUTOFMEMORY;
 

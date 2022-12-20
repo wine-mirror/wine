@@ -37,7 +37,7 @@ static HINSTANCE instance;
 
 struct list *table_list[WBEMPROX_NAMESPACE_LAST];
 
-typedef HRESULT (*fnCreateInstance)( LPVOID *ppObj );
+typedef HRESULT (*fnCreateInstance)( LPVOID *ppObj, REFIID riid );
 
 typedef struct
 {
@@ -77,8 +77,6 @@ static HRESULT WINAPI wbemprox_cf_CreateInstance( IClassFactory *iface, LPUNKNOW
                                                   REFIID riid, LPVOID *ppobj )
 {
     wbemprox_cf *This = impl_from_IClassFactory( iface );
-    HRESULT r;
-    IUnknown *punk;
 
     TRACE("%p %s %p\n", pOuter, debugstr_guid(riid), ppobj);
 
@@ -87,13 +85,7 @@ static HRESULT WINAPI wbemprox_cf_CreateInstance( IClassFactory *iface, LPUNKNOW
     if (pOuter)
         return CLASS_E_NOAGGREGATION;
 
-    r = This->pfnCreateInstance( (LPVOID *)&punk );
-    if (FAILED(r))
-        return r;
-
-    r = IUnknown_QueryInterface( punk, riid, ppobj );
-    IUnknown_Release( punk );
-    return r;
+    return This->pfnCreateInstance( ppobj, riid );
 }
 
 static HRESULT WINAPI wbemprox_cf_LockServer( IClassFactory *iface, BOOL dolock )
