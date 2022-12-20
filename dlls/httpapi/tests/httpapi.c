@@ -572,27 +572,39 @@ static void test_v1_short_buffer(void)
     ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
     memset(req_buffer, 0xcc, sizeof(req_buffer));
+
+    ret_size = 1;
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(HTTP_REQUEST_V1) - 1, &ret_size, NULL);
     ok(ret == ERROR_INSUFFICIENT_BUFFER, "Got error %u.\n", ret);
+    ok(ret_size == 1 /* win < 10 */ || !ret_size, "Got size %lu.\n", ret_size);
+
+    ret_size = 1;
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(HTTP_REQUEST_V1), &ret_size, NULL);
     ok(ret == ERROR_MORE_DATA, "Got error %u.\n", ret);
     ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
+
     ok(!!req->ConnectionId, "Got connection ID %s.\n", wine_dbgstr_longlong(req->ConnectionId));
     ok(!!req->RequestId, "Got request ID %s.\n", wine_dbgstr_longlong(req->RequestId));
     ok(!req->Version.MajorVersion || req->Version.MajorVersion == 0xcccc /* < Vista */,
             "Got major version %u.\n", req->Version.MajorVersion);
     ok(!req->BytesReceived || req->BytesReceived == ((ULONGLONG)0xcccccccc << 32 | 0xcccccccc) /* < Vista */,
             "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
+    req_id = req->RequestId;
 
     /* At this point the request has been assigned a specific ID, and one cannot
      * receive it by calling with HTTP_NULL_ID. */
     ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req2, sizeof(req_buffer2), NULL, &ovl);
     ok(ret == ERROR_IO_PENDING, "Got error %u.\n", ret);
 
-    req_id = req->RequestId;
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, req_id, 0, (HTTP_REQUEST *)req, ret_size - 1, &ret_size, NULL);
     ok(ret == ERROR_MORE_DATA, "Got error %u.\n", ret);
+    ok(req->RequestId == req_id, "Got request ID %s.\n", wine_dbgstr_longlong(req->RequestId));
+
+    memset(req_buffer, 0xcc, sizeof(req_buffer));
+    ret = HttpReceiveHttpRequest(queue, req_id, 0, (HTTP_REQUEST *)req, ret_size - 1, NULL, NULL);
+    ok(ret == ERROR_MORE_DATA, "Got error %u.\n", ret);
+    ok(req->RequestId == req_id, "Got request ID %s.\n", wine_dbgstr_longlong(req->RequestId));
 
     memset(req_buffer, 0xcc, sizeof(req_buffer));
     ret = HttpReceiveHttpRequest(queue, req_id, 0, (HTTP_REQUEST *)req, ret_size, &ret_size, NULL);
@@ -828,11 +840,15 @@ static void test_v1_entity_body(void)
     ok(ret_size == 2, "Got size %lu.\n", ret_size);
     ok(!memcmp(recv_body, "pi", 2), "Entity body didn't match.\n");
 
+    ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, 1, NULL, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+    ok(!memcmp(recv_body, "n", 1), "Entity body didn't match.\n");
+
     ret_size = 0xdeadbeef;
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, 4, &ret_size, NULL);
     ok(!ret, "Got error %u.\n", ret);
-    ok(ret_size == 3, "Got size %lu.\n", ret_size);
-    ok(!memcmp(recv_body, "ng", 3), "Entity body didn't match.\n");
+    ok(ret_size == 2, "Got size %lu.\n", ret_size);
+    ok(!memcmp(recv_body, "g", 2), "Entity body didn't match.\n");
 
     ret_size = 0xdeadbeef;
     ret = HttpReceiveRequestEntityBody(queue, req->RequestId, 0, recv_body, sizeof(recv_body), &ret_size, NULL);
