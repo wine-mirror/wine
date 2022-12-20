@@ -694,10 +694,148 @@ static void test_NtUserDisplayConfigGetDeviceInfo(void)
     ok(status == STATUS_UNSUCCESSFUL || status == STATUS_NOT_SUPPORTED, "got %#lx.\n", status);
 }
 
+static LRESULT WINAPI test_ipc_message_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch (msg)
+    {
+    case WM_SETTEXT:
+    case CB_FINDSTRING:
+        ok( !wcscmp( (const WCHAR *)lparam, L"test" ),
+            "lparam = %s\n", wine_dbgstr_w( (const WCHAR *)lparam ));
+        return 6;
+
+    case WM_GETTEXT:
+    case EM_GETLINE:
+    case CB_GETLBTEXT:
+        ok( wparam == 100, "wparam = %Iu\n", wparam );
+        wcscpy( (void *)lparam, L"Test" );
+        return 4;
+
+    case WM_GETTEXTLENGTH:
+        return 99;
+
+    case WM_MDICREATE:
+        {
+            MDICREATESTRUCTW *mdi = (MDICREATESTRUCTW *)lparam;
+            ok( !wcscmp( mdi->szClass, L"TestClass" ), "szClass = %s\n", wine_dbgstr_w( mdi->szClass ));
+            ok( !wcscmp( mdi->szTitle, L"TestTitle" ), "szTitle = %s\n", wine_dbgstr_w( mdi->szTitle ));
+            return 0xdeadbeef;
+        }
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static void test_inter_process_messages( const char *argv0 )
+{
+    WNDCLASSW cls = { 0 };
+    char path[MAX_PATH];
+    PROCESS_INFORMATION pi;
+    STARTUPINFOA startup;
+    MSG msg;
+    HWND hwnd;
+    BOOL ret;
+
+    cls.lpfnWndProc = test_ipc_message_proc;
+    cls.lpszClassName = L"TestIPCClass";
+    RegisterClassW( &cls );
+
+    hwnd = CreateWindowExW( 0, L"TestIPCClass", NULL, WS_POPUP | CBS_HASSTRINGS, 0,0,0,0,0,0,0, NULL );
+
+    memset( &startup, 0, sizeof(startup) );
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+    sprintf( path, "%s win32u ipcmsg %Ix", argv0, (INT_PTR)hwnd );
+    ret = CreateProcessA( NULL, path, NULL, NULL, TRUE, 0, NULL, NULL, &startup, &pi );
+    ok( ret, "CreateProcess '%s' failed err %lu.\n", path, GetLastError() );
+
+    do
+    {
+        GetMessageW( &msg, NULL, 0, 0 );
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    } while (msg.message != WM_USER);
+
+    wait_child_process( pi.hProcess );
+
+    CloseHandle( pi.hThread );
+    CloseHandle( pi.hProcess );
+
+    DestroyWindow( hwnd );
+    UnregisterClassW( L"TestIPCClass", NULL );
+}
+
+static void test_inter_process_child( HWND hwnd )
+{
+    MDICREATESTRUCTA mdi;
+    WCHAR bufW[100];
+    char buf[100];
+    int res;
+
+    res = SendMessageA( hwnd, WM_SETTEXT, 0, (LPARAM)"test" );
+    ok( res == 6, "WM_SETTEXT returned %d\n", res );
+
+    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)"test", NULL, NtUserSendMessage, TRUE );
+    ok( res == 6, "res = %d\n", res );
+
+    res = NtUserMessageCall( hwnd, CB_FINDSTRING, 0, (LPARAM)"test", NULL, NtUserSendMessage, TRUE );
+    ok( res == 6, "res = %d\n", res );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    res = NtUserMessageCall( hwnd, WM_GETTEXT, sizeof(buf), (LPARAM)buf, NULL, NtUserSendMessage, TRUE );
+    ok( res == 4, "res = %d\n", res );
+    ok( !strcmp( buf, "Test" ), "buf = %s\n", buf );
+
+    memset( bufW, 0xcc, sizeof(bufW) );
+    res = NtUserMessageCall( hwnd, WM_GETTEXT, ARRAYSIZE(bufW), (LPARAM)bufW, NULL, NtUserSendMessage, FALSE );
+    ok( res == 4, "res = %d\n", res );
+    ok( !wcscmp( bufW, L"Test" ), "buf = %s\n", buf );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    res = NtUserMessageCall( hwnd, CB_GETLBTEXT, 100, (LPARAM)buf, NULL, NtUserSendMessage, TRUE );
+    todo_wine
+    ok( res == 1, "res = %d\n", res );
+    ok( buf[0] == 'T', "buf[0] = %c\n", buf[0] );
+    todo_wine
+    ok( buf[1] == (char)0xcc, "buf[1] = %x\n", buf[1] );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    *(DWORD *)buf = ARRAYSIZE(buf);
+    res = NtUserMessageCall( hwnd, EM_GETLINE, sizeof(buf), (LPARAM)buf, NULL, NtUserSendMessage, TRUE );
+    ok( res == 4, "res = %d\n", res );
+    ok( !strcmp( buf, "Test" ), "buf = %s\n", buf );
+
+    res = NtUserMessageCall( hwnd, WM_GETTEXTLENGTH, 0, 0, NULL, NtUserSendMessage, TRUE );
+    ok( res == 4, "res = %d\n", res );
+
+    mdi.szClass = "TestClass";
+    mdi.szTitle = "TestTitle";
+    mdi.hOwner = 0;
+    mdi.x = mdi.y = 10;
+    mdi.cx = mdi.cy = 100;
+    mdi.style = 0;
+    mdi.lParam = 0xdeadbeef;
+    res = NtUserMessageCall( hwnd, WM_MDICREATE, 0, (LPARAM)&mdi, NULL, NtUserSendMessage, TRUE );
+    ok( res == 0xdeadbeef, "res = %d\n", res );
+
+    PostMessageA( hwnd, WM_USER, 0, 0 );
+}
+
 START_TEST(win32u)
 {
+    char **argv;
+    int argc;
+
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
     GetDesktopWindow();
+
+    argc = winetest_get_mainargs( &argv );
+    if (argc > 3 && !strcmp( argv[2], "ipcmsg" ))
+    {
+        test_inter_process_child( LongToHandle( strtol( argv[3], NULL, 16 )));
+        return;
+    }
 
     test_NtUserEnumDisplayDevices();
     test_window_props();
@@ -709,6 +847,7 @@ START_TEST(win32u)
     test_menu();
     test_message_filter();
     test_timer();
+    test_inter_process_messages( argv[0] );
 
     test_NtUserCloseWindowStation();
     test_NtUserDisplayConfigGetDeviceInfo();
