@@ -2269,7 +2269,7 @@ static void test_string_data(void)
             memcpy( bufferW, test_data[i].strW, test_data[i].len );
             bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
             ok( !memcmp( data, bufferW, test_data[i].len ),
-                "wrong data %s\n", wine_dbgstr_wn( data, (test_data[i].len + 1) / sizeof(WCHAR) ));
+                "wrong data %s\n", wine_dbgstr_an( data, test_data[i].len ));
         }
         r = CloseClipboard();
         ok( r, "gle %ld\n", GetLastError() );
@@ -2314,8 +2314,7 @@ static void test_string_data_process( int i )
         ok( len == test_data[i].len, "wrong size %u / %u\n", len, test_data[i].len );
         memcpy( bufferW, test_data[i].strW, test_data[i].len );
         bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
-        ok( !memcmp( data, bufferW, len ),
-            "wrong data %s\n", wine_dbgstr_wn( data, (len + 1) / sizeof(WCHAR) ));
+        ok( !memcmp( data, bufferW, len ), "wrong data %s\n", wine_dbgstr_an( data, len ));
         data = GetClipboardData( CF_TEXT );
         if (test_data[i].len >= sizeof(WCHAR))
         {
@@ -2325,7 +2324,8 @@ static void test_string_data_process( int i )
                                         bufferA, ARRAY_SIZE(bufferA), NULL, NULL );
             bufferA[len2 - 1] = 0;
             ok( len == len2, "wrong size %u / %u\n", len, len2 );
-            ok( !memcmp( data, bufferA, len ), "wrong data %.*s\n", len, (char *)data );
+            ok( !memcmp( data, bufferA, len ), "wrong data %s, expected %s\n",
+                wine_dbgstr_an( data, len ), wine_dbgstr_an( bufferA, len2 ));
         }
         else
         {
