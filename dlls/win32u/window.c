@@ -3116,6 +3116,7 @@ static UINT calc_ncsize( WINDOWPOS *winpos, const RECT *old_window_rect, const R
     {
         NCCALCSIZE_PARAMS params;
         WINDOWPOS winposCopy;
+        UINT class_style;
 
         params.rgrc[0] = *new_window_rect;
         params.rgrc[1] = *old_window_rect;
@@ -3135,7 +3136,11 @@ static UINT calc_ncsize( WINDOWPOS *winpos, const RECT *old_window_rect, const R
             winposCopy.cy = old_window_rect->bottom - old_window_rect->top;
         }
 
-        wvr_flags = send_message( winpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
+        class_style = get_class_long( winpos->hwnd, GCL_STYLE, FALSE );
+        if (class_style & CS_VREDRAW) wvr_flags |= WVR_VREDRAW;
+        if (class_style & CS_HREDRAW) wvr_flags |= WVR_HREDRAW;
+
+        wvr_flags |= send_message( winpos->hwnd, WM_NCCALCSIZE, TRUE, (LPARAM)&params );
 
         *new_client_rect = params.rgrc[0];
 

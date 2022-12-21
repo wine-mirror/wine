@@ -9475,7 +9475,6 @@ static void subtest_hvredraw(HWND hparent, const char *classname, DWORD style)
         CombineRgn( hrgn_expect, hrgn_new_vis, hrgn_old_vis, is_redraw ? RGN_COPY : RGN_DIFF );
 
         rgn_ok = EqualRgn( hrgn_expect, hrgn_actual );
-        todo_wine_if( is_redraw )
         ok( !!rgn_ok, "Update region shall match expected region\n" );
 
         if (!rgn_ok && winetest_debug > 1)
