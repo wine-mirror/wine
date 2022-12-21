@@ -425,6 +425,55 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_buf = {0x03,0x01,0x02,0x08,0x01,0x00,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
         },
     };
+    struct hid_expect expect_download_3[] =
+    {
+        /* set periodic */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {0x05,0x19},
+        },
+        /* set envelope */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 7,
+            .report_buf = {0x06,0x19,0x4c,0x01,0x00,0x04,0x00},
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0xff,0xff,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
+        },
+    };
+    struct hid_expect expect_download_4[] =
+    {
+        /* set periodic */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {0x05,0x19},
+        },
+        /* set envelope (wine) */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 6,
+            .report_len = 7,
+            .report_buf = {0x06,0x19,0x4c,0x01,0x00,0x04,0x00},
+            .todo = TRUE, .wine_only = TRUE,
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 11,
+            .report_buf = {0x03,0x01,0x02,0x08,0xff,0xff,version >= 0x700 ? 0x06 : 0x00,0x00,0x01,0x55,0xd5},
+        },
+    };
     struct hid_expect expect_update[] =
     {
         /* update effect */
@@ -1437,6 +1486,32 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
     hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD | DIEP_ENVELOPE );
     ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
     set_hid_expect( file, expect_set_envelope, sizeof(expect_set_envelope) );
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc, 0 );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
+    wait_hid_expect( file, 100 ); /* these updates are sent asynchronously */
+
+    set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
+    hr = IDirectInputEffect_Unload( effect );
+    ok( hr == DI_OK, "Unload returned %#lx\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc, DIEP_NODOWNLOAD );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
+    set_hid_expect( file, expect_download_3, sizeof(expect_download_3) );
+    hr = IDirectInputEffect_SetParameters( effect, &expect_desc, 0 );
+    ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
+    wait_hid_expect( file, 100 ); /* these updates are sent asynchronously */
+
+    set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
+    hr = IDirectInputEffect_Unload( effect );
+    ok( hr == DI_OK, "Unload returned %#lx\n", hr );
+    set_hid_expect( file, NULL, 0 );
+
+    desc = expect_desc;
+    desc.lpEnvelope = NULL;
+    hr = IDirectInputEffect_SetParameters( effect, &desc, DIEP_NODOWNLOAD | DIEP_ENVELOPE );
+    ok( hr == DI_DOWNLOADSKIPPED, "SetParameters returned %#lx\n", hr );
+    set_hid_expect( file, expect_download_4, sizeof(expect_download_4) );
     hr = IDirectInputEffect_SetParameters( effect, &expect_desc, 0 );
     ok( hr == DI_OK, "SetParameters returned %#lx\n", hr );
     wait_hid_expect( file, 100 ); /* these updates are sent asynchronously */
