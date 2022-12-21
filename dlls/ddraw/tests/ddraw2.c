@@ -7409,12 +7409,18 @@ static void test_mipmap(void)
     }
     tests[] =
     {
-        {DDSD_MIPMAPCOUNT, DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 128, 32, 3, DD_OK,               3},
-        {DDSD_MIPMAPCOUNT, DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 128, 32, 0, DDERR_INVALIDPARAMS, 0},
+        {0,                DDSCAPS_MIPMAP,                                     128, 32, 0, DDERR_INVALIDCAPS},
+        {0,                DDSCAPS_COMPLEX,                                    128, 32, 0, DDERR_INVALIDCAPS},
+        {0,                DDSCAPS_MIPMAP | DDSCAPS_COMPLEX,                   128, 32, 0, DDERR_INVALIDCAPS},
         {0,                DDSCAPS_TEXTURE | DDSCAPS_MIPMAP,                   128, 32, 0, DD_OK,               1},
-        {0,                DDSCAPS_MIPMAP,                                     128, 32, 0, DDERR_INVALIDCAPS,   0},
+        {0,                DDSCAPS_TEXTURE | DDSCAPS_COMPLEX,                  128, 32, 0, DDERR_INVALIDCAPS},
         {0,                DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 128, 32, 0, DD_OK,               6},
         {0,                DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 32,  64, 0, DD_OK,               6},
+
+        {DDSD_MIPMAPCOUNT, DDSCAPS_TEXTURE | DDSCAPS_MIPMAP,                   128, 32, 1, DDERR_INVALIDCAPS},
+        {DDSD_MIPMAPCOUNT, DDSCAPS_TEXTURE | DDSCAPS_MIPMAP,                   128, 32, 3, DDERR_INVALIDCAPS},
+        {DDSD_MIPMAPCOUNT, DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 128, 32, 3, DD_OK,               3},
+        {DDSD_MIPMAPCOUNT, DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 128, 32, 0, DDERR_INVALIDPARAMS},
     };
 
     window = create_window();
@@ -7446,9 +7452,16 @@ static void test_mipmap(void)
         if (tests[i].flags & DDSD_MIPMAPCOUNT)
             U2(surface_desc).dwMipMapCount = tests[i].mipmap_count_in;
         hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
-        ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        todo_wine_if (i == 1 || i == 4 || i == 7 || i == 8)
+            ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (FAILED(hr))
             continue;
+
+        if (FAILED(tests[i].hr))
+        {
+            IDirectDrawSurface_Release(surface);
+            continue;
+        }
 
         hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface2, (void **)&surface);
         ok(SUCCEEDED(hr), "Test %u: Failed to get IDirectDrawSurface2 interface, hr %#lx.\n", i, hr);
