@@ -694,14 +694,16 @@ static void propagate_console_signal( struct console *console,
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-    /* FIXME: should support the other events (like CTRL_BREAK) */
-    if (sig != CTRL_C_EVENT)
+    switch (sig)
     {
+    case CTRL_C_EVENT:     csi.signal = SIGINT; break;
+    case CTRL_BREAK_EVENT: csi.signal = SIGQUIT; break;
+    default:
+        /* FIXME: should support the other events */
         set_error( STATUS_NOT_IMPLEMENTED );
         return;
     }
     csi.console = console;
-    csi.signal  = SIGINT;
     csi.group   = group_id;
 
     enum_processes(propagate_console_signal_cb, &csi);

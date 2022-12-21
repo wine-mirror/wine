@@ -1463,6 +1463,29 @@ static NTSTATUS read_console( struct console *console, unsigned int ioctl, size_
     return process_console_input( console );
 }
 
+static BOOL map_to_ctrlevent( struct console *console, const INPUT_RECORD *record,
+                              unsigned int* event)
+{
+    if (record->EventType == KEY_EVENT)
+    {
+        if (record->Event.KeyEvent.uChar.UnicodeChar == 'C' - 64 &&
+            !(record->Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
+        {
+            *event = CTRL_C_EVENT;
+            return TRUE;
+        }
+        /* we want to get ctrl-pause/break, but it's already translated by user32 into VK_CANCEL */
+        if (record->Event.KeyEvent.uChar.UnicodeChar == 0 &&
+            record->Event.KeyEvent.wVirtualKeyCode == VK_CANCEL &&
+            record->Event.KeyEvent.dwControlKeyState == LEFT_CTRL_PRESSED)
+        {
+            *event = CTRL_BREAK_EVENT;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 /* add input events to a console input queue */
 NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *records,
                               unsigned int count, BOOL flush )
@@ -1485,9 +1508,9 @@ NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *recor
         unsigned int i = 0;
         while (i < count)
         {
-            if (records[i].EventType == KEY_EVENT &&
-		records[i].Event.KeyEvent.uChar.UnicodeChar == 'C' - 64 &&
-		!(records[i].Event.KeyEvent.dwControlKeyState & ENHANCED_KEY))
+            unsigned int event;
+
+            if (map_to_ctrlevent(console, &records[i], &event))
             {
                 if (i != count - 1)
                     memcpy( &console->records[console->record_count + i],
@@ -1499,7 +1522,7 @@ NTSTATUS write_console_input( struct console *console, const INPUT_RECORD *recor
                     struct condrv_ctrl_event ctrl_event;
                     IO_STATUS_BLOCK io;
 
-                    ctrl_event.event = CTRL_C_EVENT;
+                    ctrl_event.event = event;
                     ctrl_event.group_id = 0;
                     NtDeviceIoControlFile( console->server, NULL, NULL, NULL, &io, IOCTL_CONDRV_CTRL_EVENT,
                                            &ctrl_event, sizeof(ctrl_event), NULL, 0 );
