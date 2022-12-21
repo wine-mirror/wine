@@ -1821,6 +1821,13 @@ static void test_wglChoosePixelFormatARB(HDC hdc)
         WGL_SUPPORT_OPENGL_ARB, 1,
         0
     };
+    static int attrib_list_flags[] =
+    {
+        WGL_DRAW_TO_WINDOW_ARB, 1,
+        WGL_SUPPORT_OPENGL_ARB, 1,
+        WGL_SUPPORT_GDI_ARB, 1,
+        0
+    };
 
     PIXELFORMATDESCRIPTOR fmt, last_fmt;
     BYTE depth, last_depth;
@@ -1866,6 +1873,27 @@ static void test_wglChoosePixelFormatARB(HDC hdc)
             ok(last_depth <= depth, "Got unexpected depth %u, last_depth %u, i %u, format %u.\n",
                     depth, last_depth, i, formats[i]);
         }
+    }
+
+    format_count = 0;
+    res = pwglChoosePixelFormatARB(hdc, attrib_list_flags, NULL, ARRAY_SIZE(formats), formats, &format_count);
+    ok(res, "Got unexpected result %d.\n", res);
+
+    for (i = 0; i < format_count; ++i)
+    {
+        PIXELFORMATDESCRIPTOR format = {0};
+        BOOL ret;
+
+        winetest_push_context("%u", i);
+
+        ret = DescribePixelFormat(hdc, formats[i], sizeof(format), &format);
+        ok(ret, "DescribePixelFormat failed, error %lu\n", GetLastError());
+
+        ok(format.dwFlags & PFD_DRAW_TO_WINDOW, "got dwFlags %#lx\n", format.dwFlags);
+        ok(format.dwFlags & PFD_SUPPORT_OPENGL, "got dwFlags %#lx\n", format.dwFlags);
+        todo_wine ok(format.dwFlags & PFD_SUPPORT_GDI, "got dwFlags %#lx\n", format.dwFlags);
+
+        winetest_pop_context();
     }
 }
 
