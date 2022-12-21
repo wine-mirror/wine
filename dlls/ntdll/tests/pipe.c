@@ -1679,6 +1679,7 @@ static DWORD WINAPI blocking_thread(void *arg)
             ok(is_signaled(ctx->pipe), "pipe is not signaled\n");
             ret = WriteFile(ctx->pipe, buf, 1, &num_bytes, NULL);
             ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+            ok(is_signaled(ctx->pipe), "pipe is not signaled\n");
             break;
         case BLOCKING_THREAD_READ:
             Sleep(100);
@@ -1689,6 +1690,7 @@ static DWORD WINAPI blocking_thread(void *arg)
             ok(is_signaled(ctx->pipe), "pipe is not signaled\n");
             ret = ReadFile(ctx->pipe, read_buf, 1, &num_bytes, NULL);
             ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+            ok(is_signaled(ctx->pipe), "pipe is not signaled\n");
             break;
         case BLOCKING_THREAD_QUIT:
             return 0;
@@ -1748,7 +1750,6 @@ static void test_blocking(ULONG options)
     ok(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
     ok(io.Information == 1, "Information = %Iu\n", io.Information);
     ok(is_signaled(ctx.client), "client is not signaled\n");
-    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
 
     res = WaitForSingleObject(ctx.done, 10000);
     ok(res == WAIT_OBJECT_0, "wait returned %lx\n", res);
@@ -1767,7 +1768,6 @@ static void test_blocking(ULONG options)
     ok(is_signaled(ctx.event), "event is not signaled\n");
     todo_wine
     ok(is_signaled(ctx.client), "client is not signaled\n");
-    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
 
     if (!(options & FILE_SYNCHRONOUS_IO_ALERT))
         ok(!ioapc_called, "ioapc called\n");
@@ -1797,7 +1797,6 @@ static void test_blocking(ULONG options)
     res = WaitForSingleObject(ctx.done, 10000);
     ok(res == WAIT_OBJECT_0, "wait returned %lx\n", res);
 
-    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
     CloseHandle(ctx.pipe);
     CloseHandle(ctx.client);
 
@@ -1806,13 +1805,11 @@ static void test_blocking(ULONG options)
                      PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE, 4096);
 
     ok(is_signaled(ctx.client), "client is not signaled\n");
-    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
 
     ret = WriteFile(ctx.client, read_buf, 1, &num_bytes, NULL);
     ok(ret, "WriteFile failed, error %lu\n", GetLastError());
 
     ok(is_signaled(ctx.client), "client is not signaled\n");
-    ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
 
     ioapc_called = FALSE;
     memset(&io, 0xff, sizeof(io));
