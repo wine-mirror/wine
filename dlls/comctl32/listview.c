@@ -10712,15 +10712,15 @@ static LRESULT LISTVIEW_NCPaint(const LISTVIEW_INFO *infoPtr, HRGN region)
     if (region != (HRGN)1)
         CombineRgn (cliprgn, cliprgn, region, RGN_AND);
 
-    OffsetRect(&r, -r.left, -r.top);
+    dc = GetDCEx(infoPtr->hwndSelf, region, DCX_WINDOW | DCX_INTERSECTRGN);
     if (infoPtr->hwndHeader && LISTVIEW_IsHeaderEnabled(infoPtr))
     {
         GetWindowRect(infoPtr->hwndHeader, &window_rect);
-        r.top = min(r.bottom, r.top + window_rect.bottom - window_rect.top);
+        OffsetRect(&window_rect, -r.left, -r.top);
+        ExcludeClipRect(dc, window_rect.left, window_rect.top, window_rect.right, window_rect.bottom);
     }
 
-    dc = GetDCEx(infoPtr->hwndSelf, region, DCX_WINDOW|DCX_INTERSECTRGN);
-
+    OffsetRect(&r, -r.left, -r.top);
     if (IsThemeBackgroundPartiallyTransparent (theme, 0, 0))
         DrawThemeParentBackground(infoPtr->hwndSelf, dc, &r);
     DrawThemeBackground (theme, dc, 0, 0, &r, 0);
