@@ -1357,6 +1357,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
             break;
         case MAKEFOURCC('I','M','C','2'):
         case MAKEFOURCC('I','M','C','4'):
+        case MAKEFOURCC('N','V','1','1'):
             plane_size = stride * 3 / 2 * height;
             break;
         case MAKEFOURCC('N','V','1','2'):
@@ -1379,6 +1380,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
         case MAKEFOURCC('I','M','C','3'):
         case MAKEFOURCC('I','M','C','4'):
         case MAKEFOURCC('Y','V','1','2'):
+        case MAKEFOURCC('N','V','1','1'):
             row_alignment = MF_128_BYTE_ALIGNMENT;
             break;
         default:
@@ -1397,6 +1399,7 @@ static HRESULT create_2d_buffer(DWORD width, DWORD height, DWORD fourcc, BOOL bo
         case MAKEFOURCC('Y','V','1','2'):
         case MAKEFOURCC('I','M','C','2'):
         case MAKEFOURCC('I','M','C','4'):
+        case MAKEFOURCC('N','V','1','1'):
             max_length = pitch * height * 3 / 2;
             break;
         default:

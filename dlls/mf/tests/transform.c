@@ -5752,8 +5752,8 @@ static void test_video_processor(void)
                 && !IsEqualGUID(&guid, &MEDIASUBTYPE_Y42T))
         {
             hr = MFCalculateImageSize(&guid, 16, 16, (UINT32 *)&input_info.cbSize);
-            todo_wine_if(IsEqualGUID(&guid, &MFVideoFormat_NV11) || IsEqualGUID(&guid, &MFVideoFormat_YVYU)
-                    || IsEqualGUID(&guid, &MFVideoFormat_Y216) || IsEqualGUID(&guid, &MFVideoFormat_v410)
+            todo_wine_if(IsEqualGUID(&guid, &MFVideoFormat_Y216)
+                    || IsEqualGUID(&guid, &MFVideoFormat_v410)
                     || IsEqualGUID(&guid, &MFVideoFormat_Y41P))
             ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         }

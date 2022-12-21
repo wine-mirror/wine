@@ -4390,10 +4390,7 @@ static void test_MFCalculateImageSize(void)
                 IsEqualGUID(ptr->subtype, &MFVideoFormat_A2R10G10B10);
 
         hr = MFCalculateImageSize(ptr->subtype, ptr->width, ptr->height, &size);
-        todo_wine_if(is_MEDIASUBTYPE_RGB(ptr->subtype) || IsEqualGUID(ptr->subtype, &MFVideoFormat_NV11))
         ok(hr == S_OK || (is_broken && hr == E_INVALIDARG), "%u: failed to calculate image size, hr %#lx.\n", i, hr);
-        todo_wine_if(is_MEDIASUBTYPE_RGB(ptr->subtype)
-                || IsEqualGUID(ptr->subtype, &MFVideoFormat_NV11))
         ok(size == ptr->size, "%u: unexpected image size %u, expected %u. Size %u x %u, format %s.\n", i, size, ptr->size,
                 ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->subtype->Data1, 4));
     }
@@ -4425,7 +4422,6 @@ static void test_MFGetPlaneSize(void)
 
         hr = pMFGetPlaneSize(ptr->subtype->Data1, ptr->width, ptr->height, &size);
         ok(hr == S_OK, "%u: failed to get plane size, hr %#lx.\n", i, hr);
-        todo_wine_if(IsEqualGUID(ptr->subtype, &MFVideoFormat_NV11))
         ok(size == plane_size, "%u: unexpected plane size %lu, expected %u. Size %u x %u, format %s.\n", i, size, plane_size,
                 ptr->width, ptr->height, wine_dbgstr_an((char*)&ptr->subtype->Data1, 4));
     }
@@ -5762,9 +5758,7 @@ static void test_MFGetStrideForBitmapInfoHeader(void)
     for (i = 0; i < ARRAY_SIZE(stride_tests); ++i)
     {
         hr = pMFGetStrideForBitmapInfoHeader(stride_tests[i].subtype->Data1, stride_tests[i].width, &stride);
-        todo_wine_if(IsEqualGUID(stride_tests[i].subtype, &MFVideoFormat_NV11))
         ok(hr == S_OK, "%u: failed to get stride, hr %#lx.\n", i, hr);
-        todo_wine_if(IsEqualGUID(stride_tests[i].subtype, &MFVideoFormat_NV11))
         ok(stride == stride_tests[i].stride, "%u: format %s, unexpected stride %ld, expected %ld.\n", i,
                 wine_dbgstr_an((char *)&stride_tests[i].subtype->Data1, 4), stride, stride_tests[i].stride);
     }
@@ -5977,10 +5971,7 @@ static void test_MFCreate2DMediaBuffer(void)
             continue;
 
         hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->subtype->Data1, FALSE, &buffer);
-        todo_wine_if(IsEqualGUID(ptr->subtype, &MFVideoFormat_NV11))
         ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
-        if (hr != S_OK)
-            continue;
 
         hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
@@ -6121,10 +6112,7 @@ static void test_MFCreate2DMediaBuffer(void)
             continue;
 
         hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->subtype->Data1, FALSE, &buffer);
-        todo_wine_if(IsEqualGUID(ptr->subtype, &MFVideoFormat_NV11))
         ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
-        if (hr != S_OK)
-            continue;
 
         hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
         ok(hr == S_OK, "Failed to get interface, hr %#lx.\n", hr);
