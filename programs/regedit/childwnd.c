@@ -79,17 +79,6 @@ static void ResizeWnd(int cx, int cy)
     EndDeferWindowPos(hdwp);
 }
 
-static void OnPaint(HWND hWnd)
-{
-    PAINTSTRUCT ps;
-    RECT rt;
-
-    GetClientRect(hWnd, &rt);
-    BeginPaint(hWnd, &ps);
-    FillRect(ps.hdc, &rt, GetSysColorBrush(COLOR_BTNFACE));
-    EndPaint(hWnd, &ps);
-}
-
 static LPWSTR CombinePaths(LPCWSTR pPaths[], int nPaths) {
     int i, len, pos;
     LPWSTR combined;
@@ -455,9 +444,6 @@ LRESULT CALLBACK ChildWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
             goto def;
         }
         break;
-    case WM_PAINT:
-        OnPaint(hWnd);
-        return 0;
     case WM_SETCURSOR:
         if (LOWORD(lParam) == HTCLIENT) {
             POINT pt;
