@@ -458,14 +458,6 @@ static void test_periodic_effect( IDirectInputDevice8W *device, HANDLE file, DWO
             .report_len = 2,
             .report_buf = {0x05,0x19},
         },
-        /* set envelope (wine) */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 6,
-            .report_len = 7,
-            .report_buf = {0x06,0x19,0x4c,0x01,0x00,0x04,0x00},
-            .todo = TRUE, .wine_only = TRUE,
-        },
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
@@ -5683,14 +5675,6 @@ static void test_windows_gaming_input(void)
             .report_len = 10,
             .report_buf = {7,0x01,0x10,0x27,0x00,0x00,0x70,0xff,0xe8,0x03},
         },
-        /* set envelope (wine) */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 8,
-            .report_len = 8,
-            .report_buf = {8,0x01,0x00,0x00,0x00,0x00,0x00,0x00},
-            .todo = TRUE, .wine_only = TRUE,
-        },
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
@@ -5822,14 +5806,6 @@ static void test_windows_gaming_input(void)
             .report_len = 4,
             .report_buf = {9,0x01,0x18,0xfc},
         },
-        /* set envelope (wine) */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 8,
-            .report_len = 8,
-            .report_buf = {8,0x01,0x00,0x00,0x00,0x00,0x00,0x00},
-            .todo = TRUE, .wine_only = TRUE,
-        },
         /* update effect (wine) */
         {
             .code = IOCTL_HID_WRITE_REPORT,
@@ -5908,14 +5884,6 @@ static void test_windows_gaming_input(void)
             .report_len = 6,
             .report_buf = {10,0x01,0xe8,0x03,0xa0,0x0f},
         },
-        /* set envelope (wine) */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 8,
-            .report_len = 8,
-            .report_buf = {8,0x01,0x00,0x00,0x00,0x00,0x00,0x00},
-            .todo = TRUE, .wine_only = TRUE,
-        },
         /* update effect (wine) */
         {
             .code = IOCTL_HID_WRITE_REPORT,
@@ -5955,14 +5923,6 @@ static void test_windows_gaming_input(void)
             .report_id = 10,
             .report_len = 6,
             .report_buf = {10,0x01,0x18,0xfc,0x60,0xf0},
-        },
-        /* set envelope (wine) */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 8,
-            .report_len = 8,
-            .report_buf = {8,0x01,0x00,0x00,0x00,0x00,0x00,0x00},
-            .todo = TRUE, .wine_only = TRUE,
         },
         /* update effect (wine) */
         {

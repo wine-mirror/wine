@@ -2641,13 +2641,22 @@ static HRESULT WINAPI hid_joystick_effect_SetParameters( IDirectInputEffect *ifa
         impl->params.cbTypeSpecificParams = params->cbTypeSpecificParams;
     }
 
-    if ((flags & DIEP_ENVELOPE) && params->lpEnvelope)
+    if (!(flags & DIEP_ENVELOPE))
+        TRACE( "Keeping previous effect envelope\n" );
+    else if (params->lpEnvelope)
     {
         if (params->lpEnvelope->dwSize != sizeof(DIENVELOPE)) return DIERR_INVALIDPARAM;
         impl->params.lpEnvelope = &impl->envelope;
         if (memcmp( impl->params.lpEnvelope, params->lpEnvelope, sizeof(DIENVELOPE) ))
             impl->modified |= DIEP_ENVELOPE;
         memcpy( impl->params.lpEnvelope, params->lpEnvelope, sizeof(DIENVELOPE) );
+    }
+    else
+    {
+        flags &= ~DIEP_ENVELOPE;
+        impl->flags &= ~DIEP_ENVELOPE;
+        impl->modified &= ~DIEP_ENVELOPE;
+        impl->params.lpEnvelope = NULL;
     }
 
     if (flags & DIEP_DURATION)
