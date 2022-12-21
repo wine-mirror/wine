@@ -1778,6 +1778,12 @@ static DWORD WINAPI tty_input( void *param )
             case 0x1b:
                 i += process_input_escape( console, buf + i + 1, count - i - 1 );
                 break;
+            case 0x1c: /* map ctrl-\ unix-ism into ctrl-break/pause windows-ism for unix consoles */
+                if (console->is_unix)
+                    key_press( console, 0, VK_CANCEL, LEFT_CTRL_PRESSED );
+                else
+                    char_key_press( console, ch, 0 );
+                break;
             case 0x7f:
                 key_press( console, '\b', VK_BACK, 0 );
                 break;

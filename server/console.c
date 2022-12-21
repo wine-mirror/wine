@@ -1183,7 +1183,7 @@ static void console_server_ioctl( struct fd *fd, ioctl_code_t code, struct async
                 return;
             }
             term = server->termios;
-            term.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN);
+            term.c_lflag &= ~(ECHO | ECHONL | ICANON | IEXTEN | ISIG);
             term.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
             term.c_cflag &= ~(CSIZE | PARENB);
             term.c_cflag |= CS8;
