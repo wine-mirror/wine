@@ -9416,6 +9416,120 @@ static void test_swp_paint_regions(void)
     subtest_swp_paint_regions( 0, "SimpleWindowClassWithParentDC", "SimpleWindowClass" );
 }
 
+static void subtest_hvredraw(HWND hparent, const char *classname, DWORD style)
+{
+    static const struct movesize_test {
+        int dx, dy, dw, dh;
+    } movesize_tests[] = {
+        {   0,   0,   0,  50 },
+        {   0,   0,  50,   0 },
+        {   0,   0,  50,  50 },
+        {   0,   0, -50, -50 },
+        { -50, -50,   0,  50 },
+        { -50, -50,  50,   0 },
+        { -50, -50,  50,  50 },
+    };
+    HRGN hrgn_old_vis = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_new_vis = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_expect = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_actual = CreateRectRgn( 0, 0, 0, 0 );
+    const int x0 = 100, y0 = 100, w0 = 200, h0 = 200;
+    size_t i;
+    HWND hwnd;
+    UINT class_style;
+
+    hwnd = CreateWindowExA( 0, classname, "Test window", style, x0, y0, w0, h0, hparent, 0, 0, NULL );
+    ok(hwnd != NULL, "Failed to create the window\n");
+
+    class_style = GetClassLongA( hwnd, GCL_STYLE );
+
+    ShowWindow( hwnd, SW_SHOW );
+    UpdateWindow( hwnd );
+
+    for (i = 0; i < ARRAY_SIZE(movesize_tests); i++)
+    {
+        const struct movesize_test *test = &movesize_tests[i];
+        int is_redraw = (test->dw != 0 && (class_style & CS_HREDRAW)) ||
+                        (test->dh != 0 && (class_style & CS_VREDRAW));
+        RECT rect_old_vis, rect_new_vis;
+        BOOL rgn_ok;
+
+        winetest_push_context( "%s %08lx SetWindowPos redraw #%Id (%d, %d, %d, %d)",
+                               classname, style, i, test->dx, test->dy, test->dw, test->dh );
+
+        SetWindowPos( hwnd, HWND_TOP, x0, y0, w0, h0, SWP_NOACTIVATE );
+
+        GetClientRect( hwnd, &rect_old_vis );
+        SetRectRgn( hrgn_old_vis, rect_old_vis.left, rect_old_vis.top, rect_old_vis.right, rect_old_vis.bottom );
+
+        UpdateWindow( hparent );
+        flush_events();
+
+        SetWindowPos( hwnd, HWND_TOP,
+                      x0 + test->dx, y0 + test->dy,
+                      w0 + test->dw, h0 + test->dh, SWP_NOACTIVATE );
+        ok( GetUpdateRgn( hwnd, hrgn_actual, FALSE ) != ERROR, "GetUpdateRgn shall succeed\n" );
+
+        GetClientRect( hwnd, &rect_new_vis );
+        SetRectRgn( hrgn_new_vis, rect_new_vis.left, rect_new_vis.top, rect_new_vis.right, rect_new_vis.bottom );
+        CombineRgn( hrgn_expect, hrgn_new_vis, hrgn_old_vis, is_redraw ? RGN_COPY : RGN_DIFF );
+
+        rgn_ok = EqualRgn( hrgn_expect, hrgn_actual );
+        todo_wine_if( is_redraw )
+        ok( !!rgn_ok, "Update region shall match expected region\n" );
+
+        if (!rgn_ok && winetest_debug > 1)
+        {
+            trace( "Expected update region: " );
+            dump_region( hrgn_expect );
+            trace( "Actual update region: " );
+            dump_region( hrgn_actual );
+            trace( "Old window visible area: %s\n", wine_dbgstr_rect( &rect_old_vis ) );
+            trace( "New window visible area: %s\n", wine_dbgstr_rect( &rect_new_vis ) );
+        }
+
+        if (winetest_interactive)
+        {
+            if (!rgn_ok)
+            {
+                visualize_region_differences( hwnd, NULL, hrgn_expect, hrgn_actual );
+            }
+
+            /* Let the position change be visible to the user */
+            flush_events();
+        }
+
+        winetest_pop_context();
+    }
+
+    DestroyWindow( hwnd );
+    DeleteObject( hrgn_actual );
+    DeleteObject( hrgn_expect );
+    DeleteObject( hrgn_new_vis );
+    DeleteObject( hrgn_old_vis );
+}
+
+
+static void test_hvredraw(void)
+{
+    HWND htoplevel;
+
+    subtest_hvredraw( NULL, "SimpleWindowClassWithHRedraw", WS_OVERLAPPEDWINDOW );
+    subtest_hvredraw( NULL, "SimpleWindowClassWithVRedraw", WS_OVERLAPPEDWINDOW );
+    subtest_hvredraw( NULL, "SimpleWindowClassWithHVRedraw", WS_OVERLAPPEDWINDOW );
+
+    htoplevel = CreateWindowExA( 0, "SimpleWindowClass", "Test toplevel",
+                                 WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN | WS_VISIBLE,
+                                 100, 100, 400, 400, 0, 0, 0, NULL );
+    ok( htoplevel != 0, "Failed to create top-level window: %lu\n", GetLastError() );
+
+    subtest_hvredraw( htoplevel, "SimpleWindowClassWithHRedraw", WS_CHILD | WS_BORDER );
+    subtest_hvredraw( htoplevel, "SimpleWindowClassWithVRedraw", WS_CHILD | WS_BORDER );
+    subtest_hvredraw( htoplevel, "SimpleWindowClassWithHVRedraw", WS_CHILD | WS_BORDER );
+
+    DestroyWindow( htoplevel );
+}
+
 struct wnd_event
 {
     HWND hwnd;
@@ -10764,6 +10878,21 @@ static BOOL RegisterWindowClasses(void)
     cls.lpfnWndProc = DefWindowProcA;
     cls.style = CS_PARENTDC;
     cls.lpszClassName = "SimpleWindowClassWithParentDC";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.style = CS_HREDRAW;
+    cls.lpszClassName = "SimpleWindowClassWithHRedraw";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.style = CS_VREDRAW;
+    cls.lpszClassName = "SimpleWindowClassWithVRedraw";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.style = CS_HREDRAW | CS_VREDRAW;
+    cls.lpszClassName = "SimpleWindowClassWithHVRedraw";
     if(!RegisterClassA(&cls)) return FALSE;
 
     clsW.style = 0;
@@ -19521,6 +19650,7 @@ START_TEST(msg)
     test_wmime_keydown_message();
     test_paint_messages();
     test_swp_paint_regions();
+    test_hvredraw();
     test_interthread_messages();
     test_message_conversion();
     test_accelerators();
