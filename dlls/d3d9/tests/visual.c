@@ -26608,6 +26608,7 @@ static void test_mismatched_sample_types(void)
 
         colour = getPixelColor(device, 320, 240);
 
+        todo_wine_if(!color_match(colour, tests[i].expected_colour, 1))
         ok(color_match(colour, tests[i].expected_colour, 1)
                 || broken(tests[i].expected_broken && color_match(colour, tests[i].expected_broken, 1))
                 || broken(tests[i].expected_broken2 && color_match(colour, tests[i].expected_broken2, 1)),
