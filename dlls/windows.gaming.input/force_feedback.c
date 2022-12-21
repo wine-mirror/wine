@@ -124,8 +124,8 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
     case WineForceFeedbackEffectType_Constant:
         impl->repeat_count = params.constant.repeat_count;
         impl->constant_force.lMagnitude = round( params.constant.gain * params.constant.direction.X * 10000 );
-        impl->params.dwDuration = params.constant.duration.Duration / 10;
-        impl->params.dwStartDelay = params.constant.start_delay.Duration / 10;
+        impl->params.dwDuration = min( max( params.constant.duration.Duration / 10, 0 ), INFINITE );
+        impl->params.dwStartDelay = min( max( params.constant.start_delay.Duration / 10, 0 ), INFINITE );
         if (impl->axes[count] == DIJOFS_X) impl->directions[count++] = round( -params.constant.direction.X * 10000 );
         if (impl->axes[count] == DIJOFS_Y) impl->directions[count++] = round( -params.constant.direction.Y * 10000 );
         if (impl->axes[count] == DIJOFS_Z) impl->directions[count++] = round( -params.constant.direction.Z * 10000 );
@@ -135,8 +135,8 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
         impl->repeat_count = params.ramp.repeat_count;
         impl->ramp_force.lStart = round( params.ramp.gain * params.ramp.start_vector.X * 10000 );
         impl->ramp_force.lEnd = round( params.ramp.gain * params.ramp.end_vector.X * 10000 );
-        impl->params.dwDuration = params.ramp.duration.Duration / 10;
-        impl->params.dwStartDelay = params.ramp.start_delay.Duration / 10;
+        impl->params.dwDuration = min( max( params.ramp.duration.Duration / 10, 0 ), INFINITE );
+        impl->params.dwStartDelay = min( max( params.ramp.start_delay.Duration / 10, 0 ), INFINITE );
         if (impl->axes[count] == DIJOFS_X) impl->directions[count++] = round( -params.ramp.start_vector.X * 10000 );
         if (impl->axes[count] == DIJOFS_Y) impl->directions[count++] = round( -params.ramp.start_vector.Y * 10000 );
         if (impl->axes[count] == DIJOFS_Z) impl->directions[count++] = round( -params.ramp.start_vector.Z * 10000 );
@@ -152,8 +152,8 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
         impl->periodic.dwPeriod = 1000000 / params.periodic.frequency;
         impl->periodic.dwPhase = round( params.periodic.phase * 36000 );
         impl->periodic.lOffset = round( params.periodic.bias * 10000 );
-        impl->params.dwDuration = params.periodic.duration.Duration / 10;
-        impl->params.dwStartDelay = params.periodic.start_delay.Duration / 10;
+        impl->params.dwDuration = min( max( params.periodic.duration.Duration / 10, 0 ), INFINITE );
+        impl->params.dwStartDelay = min( max( params.periodic.start_delay.Duration / 10, 0 ), INFINITE );
         if (impl->axes[count] == DIJOFS_X) impl->directions[count++] = round( -params.periodic.direction.X * 10000 );
         if (impl->axes[count] == DIJOFS_Y) impl->directions[count++] = round( -params.periodic.direction.Y * 10000 );
         if (impl->axes[count] == DIJOFS_Z) impl->directions[count++] = round( -params.periodic.direction.Z * 10000 );
@@ -181,9 +181,9 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
     if (!envelope) impl->params.lpEnvelope = NULL;
     else
     {
-        impl->envelope.dwAttackTime = envelope->attack_duration.Duration / 10;
+        impl->envelope.dwAttackTime = min( max( envelope->attack_duration.Duration / 10, 0 ), INFINITE );
         impl->envelope.dwAttackLevel = round( envelope->attack_gain * 10000 );
-        impl->envelope.dwFadeTime = impl->params.dwDuration - envelope->release_duration.Duration / 10;
+        impl->envelope.dwFadeTime = impl->params.dwDuration - min( max( envelope->release_duration.Duration / 10, 0 ), INFINITE );
         impl->envelope.dwFadeLevel = round( envelope->release_gain * 10000 );
         impl->params.lpEnvelope = &impl->envelope;
     }

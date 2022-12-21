@@ -5884,21 +5884,12 @@ static void test_windows_gaming_input(void)
             .report_len = 6,
             .report_buf = {10,0x01,0xe8,0x03,0xa0,0x0f},
         },
-        /* update effect (wine) */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 18,
-            .report_buf = {3,0x01,0x05,0x04,0x8f,0xe4,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x4e,0x01,0x00,0x00},
-            .todo = TRUE, .wine_only = TRUE,
-        },
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
             .report_buf = {3,0x01,0x05,0x04,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x4e,0x01,0x00,0x00},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_create_ramp_neg[] =
