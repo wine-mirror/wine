@@ -4294,7 +4294,6 @@ static void test_wndproc(void)
 
         SetForegroundWindow(GetDesktopWindow());
         ShowWindow(device_window, SW_MINIMIZE);
-        ShowWindow(device_window, SW_RESTORE);
         ShowWindow(focus_window, SW_MINIMIZE);
         ShowWindow(focus_window, SW_RESTORE);
         SetForegroundWindow(focus_window);
@@ -4339,7 +4338,6 @@ static void test_wndproc(void)
         }
         filter_messages = NULL;
         SetForegroundWindow(focus_window); /* For KDE. */
-        flush_events();
 
         expect_messages = focus_loss_messages_filtered;
         windowposchanged_received = 0;
@@ -4415,6 +4413,10 @@ static void test_wndproc(void)
 
         ref = IDirect3DDevice9_Release(device);
         ok(!ref, "Unexpected refcount %lu, i=%u.\n", ref, i);
+
+        ShowWindow(device_window, SW_RESTORE);
+        SetForegroundWindow(focus_window);
+        flush_events();
 
         filter_messages = focus_window;
         device_desc.device_window = device_window;
