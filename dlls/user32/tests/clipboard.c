@@ -2224,11 +2224,11 @@ static const struct
     { "", {}, 0 },
     { "", {'f'}, 1 },                 /* 5 */
     { "", {'f'}, 2 },
-    { "", {'f','o','o'}, 5 },
-    { "", {'f','o','o'}, 6 },
-    { "", {'f','o','o',0}, 7 },       /* 10 */
-    { "", {'f','o','o',0}, 8 },
-    { "", {'f','o','o',0,'b'}, 9 },
+    { "", {0x3b1,0x3b2,0x3b3}, 5 }, /* Alpha, beta, ... */
+    { "", {0x3b1,0x3b2,0x3b3}, 6 },
+    { "", {0x3b1,0x3b2,0x3b3,0}, 7 }, /* 10 */
+    { "", {0x3b1,0x3b2,0x3b3,0}, 8 },
+    { "", {0x3b1,0x3b2,0x3b3,0,0x3b4}, 9 },
     { "", {'f','o','o',0,'b','a','r'}, 7 * sizeof(WCHAR) },
     { "", {'f','o','o',0,'b','a','r',0}, 8 * sizeof(WCHAR) },
 };
@@ -2274,7 +2274,7 @@ static void test_string_data(void)
             {
                 ok( clip == data, "SetClipboardData() returned %p != %p\n", clip, data );
                 memcpy( bufferW, test_data[i].strW, test_data[i].len );
-                bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
+                *((WCHAR *)((char *)bufferW + test_data[i].len) - 1) = 0;
                 ok( !memcmp( data, bufferW, test_data[i].len ),
                     "wrong data %s\n", wine_dbgstr_an( data, test_data[i].len ));
             }
@@ -2336,7 +2336,7 @@ static void test_string_data_process( int i )
             len = GlobalSize( data );
             ok( len == test_data[i].len, "wrong size %u / %u\n", len, test_data[i].len );
             memcpy( bufferW, test_data[i].strW, test_data[i].len );
-            bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
+            *((WCHAR *)((char *)bufferW + test_data[i].len) - 1) = 0;
             ok( !memcmp( data, bufferW, len ), "wrong data %s\n", wine_dbgstr_an( data, len ));
         }
 

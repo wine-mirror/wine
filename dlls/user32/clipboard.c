@@ -157,12 +157,13 @@ static HANDLE marshal_data( UINT format, HANDLE handle, size_t *ret_size )
         }
     case CF_UNICODETEXT:
         {
-            WCHAR *ptr;
+            char *ptr;
             if (!(size = GlobalSize( handle ))) return 0;
             if ((data_size_t)size != size) return 0;
             if (size < sizeof(WCHAR)) return 0;
             if (!(ptr = GlobalLock( handle ))) return 0;
-            ptr[(size + 1) / sizeof(WCHAR) - 1] = 0;  /* enforce null-termination */
+            /* enforce nul-termination the Windows way: ignoring alignment */
+            *((WCHAR *)(ptr + size) - 1) = 0;
             GlobalUnlock( handle );
             *ret_size = size;
             return handle;
