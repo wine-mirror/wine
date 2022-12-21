@@ -7452,7 +7452,7 @@ static void test_mipmap(void)
         if (tests[i].flags & DDSD_MIPMAPCOUNT)
             U2(surface_desc).dwMipMapCount = tests[i].mipmap_count_in;
         hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
-        todo_wine_if (i == 1 || i == 4 || i == 7 || i == 8)
+        todo_wine_if (i == 7 || i == 8)
             ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (FAILED(hr))
             continue;

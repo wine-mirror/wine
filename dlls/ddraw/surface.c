@@ -6117,6 +6117,15 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     /* Ensure DDSD_CAPS is always set. */
     desc->dwFlags |= DDSD_CAPS;
 
+    if ((desc->ddsCaps.dwCaps & DDSCAPS_COMPLEX)
+            && !(desc->ddsCaps.dwCaps & (DDSCAPS_FLIP | DDSCAPS_MIPMAP))
+            && !(desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
+    {
+        WARN("DDSCAPS_COMPLEX specified for a surface which is neither flippable, mipmapped, nor a cubemap.\n");
+        heap_free(texture);
+        return DDERR_INVALIDCAPS;
+    }
+
     if (desc->ddsCaps.dwCaps & DDSCAPS_FLIP)
     {
         if (!(desc->dwFlags & DDSD_BACKBUFFERCOUNT) || !desc->u5.dwBackBufferCount)
