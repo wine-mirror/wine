@@ -6323,16 +6323,9 @@ static void test_mipmap(void)
         if (tests[i].flags & DDSD_MIPMAPCOUNT)
             U2(surface_desc).dwMipMapCount = tests[i].mipmap_count_in;
         hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &surface, NULL);
-        todo_wine_if (i == 7 || i == 8)
-            ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#lx.\n", i, hr);
         if (FAILED(hr))
             continue;
-
-        if (FAILED(tests[i].hr))
-        {
-            IDirectDrawSurface_Release(surface);
-            continue;
-        }
 
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);

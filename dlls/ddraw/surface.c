@@ -6126,6 +6126,14 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         return DDERR_INVALIDCAPS;
     }
 
+    if ((desc->dwFlags & DDSD_MIPMAPCOUNT) && !(desc->ddsCaps.dwCaps & DDSCAPS_COMPLEX))
+    {
+        /* This is illegal even if there is only one mipmap level. */
+        WARN("DDSD_MIPMAPCOUNT specified without DDSCAPS_COMPLEX.\n");
+        heap_free(texture);
+        return DDERR_INVALIDCAPS;
+    }
+
     if (desc->ddsCaps.dwCaps & DDSCAPS_FLIP)
     {
         if (!(desc->dwFlags & DDSD_BACKBUFFERCOUNT) || !desc->u5.dwBackBufferCount)
