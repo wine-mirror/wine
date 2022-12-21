@@ -3977,11 +3977,11 @@ static BOOL can_do_https(void)
     ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
     ok(ses != NULL, "InternetOpen failed\n");
 
-    con = InternetConnectA(ses, "test.winehq.org", INTERNET_DEFAULT_HTTPS_PORT,
+    con = InternetConnectA(ses, "gitlab.winehq.org", INTERNET_DEFAULT_HTTPS_PORT,
             NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(con != NULL, "InternetConnect failed\n");
 
-    req = HttpOpenRequestA(con, "GET", "/tests/hello.html", NULL, NULL, NULL,
+    req = HttpOpenRequestA(con, "GET", "/robots.txt", NULL, NULL, NULL,
             INTERNET_FLAG_SECURE, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
