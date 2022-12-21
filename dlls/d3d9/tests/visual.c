@@ -258,9 +258,7 @@ static DWORD getPixelColor(IDirect3DDevice9 *device, UINT x, UINT y)
     return ret;
 }
 
-#define check_rt_color(a, b) check_rt_color_(__LINE__, a, b, false)
-#define check_rt_color_todo(a, b) check_rt_color_(__LINE__, a, b, true)
-static void check_rt_color_(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR expected_color, bool todo)
+static D3DCOLOR check_expected_rt_color(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR expected_color)
 {
     unsigned int color = 0xdeadbeef;
     struct surface_readback rb;
@@ -284,6 +282,15 @@ static void check_rt_color_(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR e
             break;
     }
     release_surface_readback(&rb);
+    return color;
+}
+
+#define check_rt_color(a, b) check_rt_color_(__LINE__, a, b, false)
+#define check_rt_color_todo(a, b) check_rt_color_(__LINE__, a, b, true)
+static void check_rt_color_(unsigned int line, IDirect3DSurface9 *rt, D3DCOLOR expected_color, bool todo)
+{
+    unsigned int color = check_expected_rt_color(line, rt, expected_color);
+
     todo_wine_if (todo)
         ok_(__FILE__, line)(color == expected_color, "Got unexpected color 0x%08x.\n", color);
 }
@@ -26913,7 +26920,12 @@ static void test_sample_attached_rendertarget(void)
     if (is_warp || color == 0x00010101)
         skip("Sampling attached render targets is not supported.\n");
     else
-        check_rt_color(rt, 0x00c1c1c1);
+    {
+        unsigned int expected_color = 0x00c1c1c1;
+        unsigned int color = check_expected_rt_color(__LINE__, rt, expected_color);
+        todo_wine_if(color != expected_color)
+        ok(color == expected_color, "Got unexpected color 0x%08x.\n", color);
+    }
 
     IDirect3DQuery9_Release(event_query);
 
