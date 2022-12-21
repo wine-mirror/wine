@@ -24,6 +24,3 @@
 #define WINE_PRODUCTVERSION_STR "9.0.0.4503"
 
 #include "wine/wine_common_ver.rc"
-
-/* @makedep: qasf.rgs */
-1 WINE_REGISTRY qasf.rgs
