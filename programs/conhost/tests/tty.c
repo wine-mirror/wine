@@ -628,12 +628,22 @@ static void _test_cursor_pos(unsigned line, int expect_x, int expect_y)
                        info.dwCursorPosition.Y, expect_y);
 }
 
-static void test_write_console(void)
+static BOOL test_write_console(void)
 {
     child_set_output_mode(ENABLE_PROCESSED_OUTPUT | ENABLE_WRAP_AT_EOL_OUTPUT | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
 
     child_string_request(REQ_WRITE_CONSOLE, L"abc");
     skip_hide_cursor();
+    if (skip_sequence("\x1b[H       \x1b[32m0\x1b[41m1\x1b[30m2"))
+    {
+        /* we get this on w1064v1909 (and more discrepancies afterwards).
+         * This is inconsistent with ulterior w10 versions. Assume it's
+         * immature result, and skip rest of tests.
+         */
+        console_output_count = 0;
+        return FALSE;
+    }
+
     expect_output_sequence("abc");
     skip_sequence("\x1b[?25h");            /* show cursor */
 
@@ -961,9 +971,11 @@ static void test_write_console(void)
     skip_sequence("\x1b[?25h");               /* show cursor */
     expect_empty_output();
     test_cursor_pos(1, 23);
+
+    return TRUE;
 }
 
-static void test_tty_output(void)
+static BOOL test_tty_output(void)
 {
     CHAR_INFO char_info_buf[2048], char_info;
     HANDLE sb, sb2;
@@ -1197,7 +1209,7 @@ static void test_tty_output(void)
     expect_output_sequence("\x1b[?25h");   /* show cursor */
     expect_empty_output();
 
-    test_write_console();
+    if (!test_write_console()) return FALSE;
 
     sb = child_create_screen_buffer();
     child_set_active(sb);
@@ -1244,6 +1256,8 @@ static void test_tty_output(void)
     expect_output_sequence("\x1b[H");      /* set cursor */
     expect_output_sequence("\x1b[?25h");   /* show cursor */
     expect_empty_output();
+
+    return TRUE;
 }
 
 static void write_console_pipe(const char *buf)
@@ -1836,12 +1850,16 @@ static void test_pseudoconsole(void)
 
     if (!broken_version)
     {
-        test_tty_output();
-        test_read_console_control();
-        test_read_console();
-        test_tty_input();
+        if (test_tty_output())
+        {
+            test_read_console_control();
+            test_read_console();
+            test_tty_input();
+        }
+        else
+            win_skip("Partially supported windows version. Skipping rest of the tests\n");
     }
-    else win_skip("Skipping tty output tests on broken Windows version\n");
+    else win_skip("Skipping tty tests on broken Windows version\n");
 
     CloseHandle(child_pipe);
     wait_child_process(child_process);
