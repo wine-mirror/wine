@@ -160,6 +160,7 @@ static HANDLE marshal_data( UINT format, HANDLE handle, size_t *ret_size )
             WCHAR *ptr;
             if (!(size = GlobalSize( handle ))) return 0;
             if ((data_size_t)size != size) return 0;
+            if (size < sizeof(WCHAR)) return 0;
             if (!(ptr = GlobalLock( handle ))) return 0;
             ptr[(size + 1) / sizeof(WCHAR) - 1] = 0;  /* enforce null-termination */
             GlobalUnlock( handle );

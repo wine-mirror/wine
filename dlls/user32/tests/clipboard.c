@@ -2217,35 +2217,39 @@ static const struct
     UINT  len;
 } test_data[] =
 {
-    { "foo", {}, 3 },      /* 0 */
+    { "foo", {}, 3 },                 /* 0 */
     { "foo", {}, 4 },
     { "foo\0bar", {}, 7 },
     { "foo\0bar", {}, 8 },
-    { "", {'f','o','o'}, 3 * sizeof(WCHAR) },
-    { "", {'f','o','o',0}, 4 * sizeof(WCHAR) },     /* 5 */
+    { "", {}, 0 },
+    { "", {'f'}, 1 },                 /* 5 */
+    { "", {'f'}, 2 },
+    { "", {'f','o','o'}, 5 },
+    { "", {'f','o','o'}, 6 },
+    { "", {'f','o','o',0}, 7 },       /* 10 */
+    { "", {'f','o','o',0}, 8 },
+    { "", {'f','o','o',0,'b'}, 9 },
     { "", {'f','o','o',0,'b','a','r'}, 7 * sizeof(WCHAR) },
     { "", {'f','o','o',0,'b','a','r',0}, 8 * sizeof(WCHAR) },
-    { "", {'f','o','o'}, 1 },
-    { "", {'f','o','o'}, 2 },
-    { "", {'f','o','o'}, 5 },     /* 10 */
-    { "", {'f','o','o',0}, 7 },
-    { "", {'f','o','o',0}, 9 },
 };
 
 static void test_string_data(void)
 {
     UINT i;
     BOOL r;
-    HANDLE data;
+    HANDLE data, clip;
     char cmd[16];
     char bufferA[12];
     WCHAR bufferW[12];
 
     for (i = 0; i < ARRAY_SIZE(test_data); i++)
     {
-        /* 1-byte Unicode strings crash on Win64 */
 #ifdef _WIN64
-        if (!test_data[i].strA[0] && test_data[i].len < sizeof(WCHAR)) continue;
+        /* Before Windows 11 1-byte Unicode strings crash on Win64
+         * because it underflows when 'appending' a 2 bytes NUL character!
+         */
+        if (!test_data[i].strA[0] && test_data[i].len < sizeof(WCHAR) &&
+            strcmp(winetest_platform, "windows") == 0) continue;
 #endif
         winetest_push_context("%d", i);
         r = open_clipboard( 0 );
@@ -2265,11 +2269,17 @@ static void test_string_data(void)
         else
         {
             memcpy( data, test_data[i].strW, test_data[i].len );
-            SetClipboardData( CF_UNICODETEXT, data );
-            memcpy( bufferW, test_data[i].strW, test_data[i].len );
-            bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
-            ok( !memcmp( data, bufferW, test_data[i].len ),
-                "wrong data %s\n", wine_dbgstr_an( data, test_data[i].len ));
+            clip = SetClipboardData( CF_UNICODETEXT, data );
+            if (test_data[i].len >= sizeof(WCHAR))
+            {
+                ok( clip == data, "SetClipboardData() returned %p != %p\n", clip, data );
+                memcpy( bufferW, test_data[i].strW, test_data[i].len );
+                bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
+                ok( !memcmp( data, bufferW, test_data[i].len ),
+                    "wrong data %s\n", wine_dbgstr_an( data, test_data[i].len ));
+            }
+            else
+                ok( !clip || broken(clip != NULL), "expected SetClipboardData() to fail\n" );
         }
         r = CloseClipboard();
         ok( r, "gle %ld\n", GetLastError() );
@@ -2309,12 +2319,27 @@ static void test_string_data_process( int i )
     else
     {
         data = GetClipboardData( CF_UNICODETEXT );
-        ok( data != 0, "could not get data\n" );
-        len = GlobalSize( data );
-        ok( len == test_data[i].len, "wrong size %u / %u\n", len, test_data[i].len );
-        memcpy( bufferW, test_data[i].strW, test_data[i].len );
-        bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
-        ok( !memcmp( data, bufferW, len ), "wrong data %s\n", wine_dbgstr_an( data, len ));
+        if (!data)
+        {
+            ok( test_data[i].len < sizeof(WCHAR), "got no data for len=%d\n", test_data[i].len );
+            ok( !IsClipboardFormatAvailable( CF_UNICODETEXT ), "unicode available\n" );
+        }
+        else if (test_data[i].len == 0)
+        {
+            /* 0-byte string handling is broken on Windows <= 10 */
+            len = GlobalSize( data );
+            ok( broken(len == 1), "wrong size %u / 0\n", len );
+            ok( broken(*((char*)data) == 0), "wrong data %s\n", wine_dbgstr_an( data, len ));
+        }
+        else
+        {
+            len = GlobalSize( data );
+            ok( len == test_data[i].len, "wrong size %u / %u\n", len, test_data[i].len );
+            memcpy( bufferW, test_data[i].strW, test_data[i].len );
+            bufferW[(test_data[i].len + 1) / sizeof(WCHAR) - 1] = 0;
+            ok( !memcmp( data, bufferW, len ), "wrong data %s\n", wine_dbgstr_an( data, len ));
+        }
+
         data = GetClipboardData( CF_TEXT );
         if (test_data[i].len >= sizeof(WCHAR))
         {
@@ -2329,8 +2354,10 @@ static void test_string_data_process( int i )
         }
         else
         {
+            BOOL available = IsClipboardFormatAvailable( CF_TEXT );
+            ok( !available || broken(available /* win10 */),
+                "available text %d\n", available );
             ok( !data, "got data for empty string\n" );
-            ok( IsClipboardFormatAvailable( CF_TEXT ), "text not available\n" );
         }
     }
     r = CloseClipboard();
