@@ -5739,6 +5739,9 @@ static void test_MFGetStrideForBitmapInfoHeader(void)
         { &MFVideoFormat_IYUV, 2, 2 },
         { &MFVideoFormat_IYUV, 3, 3 },
         { &MFVideoFormat_IYUV, 320, 320 },
+        { &MFVideoFormat_NV11, 1, 1 },
+        { &MFVideoFormat_NV11, 2, 2 },
+        { &MFVideoFormat_NV11, 3, 3 },
     };
     unsigned int i;
     LONG stride;
@@ -5756,7 +5759,9 @@ static void test_MFGetStrideForBitmapInfoHeader(void)
     for (i = 0; i < ARRAY_SIZE(stride_tests); ++i)
     {
         hr = pMFGetStrideForBitmapInfoHeader(stride_tests[i].subtype->Data1, stride_tests[i].width, &stride);
+        todo_wine_if(IsEqualGUID(stride_tests[i].subtype, &MFVideoFormat_NV11))
         ok(hr == S_OK, "%u: failed to get stride, hr %#lx.\n", i, hr);
+        todo_wine_if(IsEqualGUID(stride_tests[i].subtype, &MFVideoFormat_NV11))
         ok(stride == stride_tests[i].stride, "%u: format %s, unexpected stride %ld, expected %ld.\n", i,
                 wine_dbgstr_an((char *)&stride_tests[i].subtype->Data1, 4), stride, stride_tests[i].stride);
     }
