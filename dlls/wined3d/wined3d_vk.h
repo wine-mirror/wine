@@ -842,4 +842,21 @@ void wined3d_texture_vk_make_generic(struct wined3d_texture_vk *texture_vk,
 BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
         struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 
+struct wined3d_sampler_vk
+{
+    struct wined3d_sampler s;
+
+    VkDescriptorImageInfo vk_image_info;
+    uint64_t command_buffer_id;
+};
+
+static inline struct wined3d_sampler_vk *wined3d_sampler_vk(struct wined3d_sampler *sampler)
+{
+    return CONTAINING_RECORD(sampler, struct wined3d_sampler_vk, s);
+}
+
+void wined3d_sampler_vk_init(struct wined3d_sampler_vk *sampler_vk,
+        struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
+        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_WINED3D_VK */
