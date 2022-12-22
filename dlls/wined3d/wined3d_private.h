@@ -113,7 +113,6 @@ static inline const char *wined3d_get_line(const char **ptr, const char *end)
 struct wined3d_fragment_pipe_ops;
 struct wined3d_adapter;
 struct wined3d_context;
-struct wined3d_context_vk;
 struct wined3d_gl_info;
 struct wined3d_state;
 struct wined3d_swapchain_gl;
@@ -5829,68 +5828,6 @@ static inline void wined3d_context_destroy_bo(struct wined3d_context *context, s
     context->device->adapter->adapter_ops->adapter_destroy_bo(context, bo);
 }
 
-#include "wined3d_vk.h"
-
-static inline void wined3d_context_vk_reference_bo(const struct wined3d_context_vk *context_vk,
-        struct wined3d_bo_vk *bo)
-{
-    bo->command_buffer_id = context_vk->current_command_buffer.id;
-}
-
-static inline void wined3d_context_vk_reference_image(const struct wined3d_context_vk *context_vk,
-        struct wined3d_image_vk *image)
-{
-    image->command_buffer_id = context_vk->current_command_buffer.id;
-}
-
-static inline void wined3d_context_vk_reference_texture(const struct wined3d_context_vk *context_vk,
-        struct wined3d_texture_vk *texture_vk)
-{
-    wined3d_context_vk_reference_image(context_vk, &texture_vk->image);
-}
-
-static inline void wined3d_context_vk_reference_resource(const struct wined3d_context_vk *context_vk,
-        struct wined3d_resource *resource)
-{
-    if (resource->type == WINED3D_RTYPE_BUFFER)
-        wined3d_context_vk_reference_bo(context_vk, wined3d_bo_vk(buffer_from_resource(resource)->buffer_object));
-    else
-        wined3d_context_vk_reference_texture(context_vk, wined3d_texture_vk(texture_from_resource(resource)));
-}
-
-static inline void wined3d_context_vk_reference_query(const struct wined3d_context_vk *context_vk,
-        struct wined3d_query_vk *query_vk)
-{
-    query_vk->command_buffer_id = context_vk->current_command_buffer.id;
-}
-
-static inline void wined3d_context_vk_reference_sampler(const struct wined3d_context_vk *context_vk,
-        struct wined3d_sampler_vk *sampler_vk)
-{
-    sampler_vk->command_buffer_id = context_vk->current_command_buffer.id;
-}
-
-static inline void wined3d_context_vk_reference_rendertarget_view(const struct wined3d_context_vk *context_vk,
-        struct wined3d_rendertarget_view_vk *rtv_vk)
-{
-    wined3d_context_vk_reference_resource(context_vk, rtv_vk->v.resource);
-    rtv_vk->command_buffer_id = context_vk->current_command_buffer.id;
-}
-
-static inline void wined3d_context_vk_reference_shader_resource_view(const struct wined3d_context_vk *context_vk,
-        struct wined3d_shader_resource_view_vk *srv_vk)
-{
-    wined3d_context_vk_reference_resource(context_vk, srv_vk->v.resource);
-    srv_vk->view_vk.command_buffer_id = context_vk->current_command_buffer.id;
-}
-
-static inline void wined3d_context_vk_reference_unordered_access_view(const struct wined3d_context_vk *context_vk,
-        struct wined3d_unordered_access_view_vk *uav_vk)
-{
-    wined3d_context_vk_reference_resource(context_vk, uav_vk->v.resource);
-    uav_vk->view_vk.command_buffer_id = context_vk->current_command_buffer.id;
-}
-
 static inline BOOL wined3d_dsv_srv_conflict(const struct wined3d_rendertarget_view *dsv,
         const struct wined3d_format *srv_format)
 {
@@ -6076,6 +6013,8 @@ static inline bool isStateDirty(const struct wined3d_context *context, unsigned 
 {
     return wined3d_context_is_graphics_state_dirty(context, state_id);
 }
+
+#include "wined3d_vk.h"
 
 static inline VkImageAspectFlags vk_aspect_mask_from_format(const struct wined3d_format *format)
 {
