@@ -5995,10 +5995,11 @@ static HRESULT ddraw_surface_reserve_memory(struct wined3d_texture *wined3d_text
     return hr;
 }
 
-static HRESULT ddraw_surface_create_wined3d_texture(struct wined3d_device *wined3d_device,
+static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
         const struct wined3d_resource_desc *wined3d_desc, unsigned int layers, unsigned int levels,
         struct ddraw_texture *texture, struct wined3d_texture **wined3d_texture)
 {
+    struct wined3d_device *wined3d_device = ddraw->wined3d_device;
     const DDSURFACEDESC2 *desc = &texture->surface_desc;
     struct wined3d_resource_desc draw_texture_desc;
     struct wined3d_texture *draw_texture;
@@ -6006,6 +6007,30 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct wined3d_device *wined
     unsigned int bind_flags;
     unsigned int i;
     HRESULT hr;
+
+    /* Validate the pitch. */
+    if (desc->dwFlags & DDSD_LPSURFACE)
+    {
+        if (format_is_compressed(&desc->u4.ddpfPixelFormat))
+        {
+            if ((desc->dwFlags & DDSD_LINEARSIZE)
+                    && desc->u1.dwLinearSize < wined3d_calculate_format_pitch(ddraw->wined3d_adapter,
+                            wined3d_desc->format, wined3d_desc->width) * ((wined3d_desc->height + 3) / 4))
+            {
+                WARN("Invalid linear size %lu specified.\n", desc->u1.dwLinearSize);
+                return DDERR_INVALIDPARAMS;
+            }
+        }
+        else
+        {
+            if (desc->u1.lPitch < wined3d_calculate_format_pitch(ddraw->wined3d_adapter,
+                    wined3d_desc->format, wined3d_desc->width) || desc->u1.lPitch & 3)
+            {
+                WARN("Invalid pitch %lu specified.\n", desc->u1.lPitch);
+                return DDERR_INVALIDPARAMS;
+            }
+        }
+    }
 
     bind_flags = 0;
     if ((desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
@@ -6526,29 +6551,12 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 heap_free(texture);
                 return DDERR_INVALIDPARAMS;
             }
-
-            if ((desc->dwFlags & DDSD_LINEARSIZE)
-                    && desc->u1.dwLinearSize < wined3d_calculate_format_pitch(ddraw->wined3d_adapter,
-                            wined3d_desc.format, wined3d_desc.width) * ((desc->dwHeight + 3) / 4))
-            {
-                WARN("Invalid linear size %lu specified.\n", desc->u1.dwLinearSize);
-                heap_free(texture);
-                return DDERR_INVALIDPARAMS;
-            }
         }
         else
         {
             if (!(desc->dwFlags & DDSD_PITCH))
             {
                 WARN("User memory surfaces should explicitly specify the pitch.\n");
-                heap_free(texture);
-                return DDERR_INVALIDPARAMS;
-            }
-
-            if (desc->u1.lPitch < wined3d_calculate_format_pitch(ddraw->wined3d_adapter,
-                    wined3d_desc.format, wined3d_desc.width) || desc->u1.lPitch & 3)
-            {
-                WARN("Invalid pitch %lu specified.\n", desc->u1.lPitch);
                 heap_free(texture);
                 return DDERR_INVALIDPARAMS;
             }
@@ -6590,7 +6598,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         layers = 6;
     }
 
-    if (FAILED(hr = ddraw_surface_create_wined3d_texture(ddraw->wined3d_device, &wined3d_desc, layers, levels,
+    if (FAILED(hr = ddraw_surface_create_wined3d_texture(ddraw, &wined3d_desc, layers, levels,
             texture, &wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
@@ -6724,7 +6732,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 desc->ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
             desc->u5.dwBackBufferCount = 0;
 
-            if (FAILED(hr = ddraw_surface_create_wined3d_texture(ddraw->wined3d_device, &wined3d_desc, 1, 1,
+            if (FAILED(hr = ddraw_surface_create_wined3d_texture(ddraw, &wined3d_desc, 1, 1,
                     texture, &wined3d_texture)))
             {
                 heap_free(texture);
