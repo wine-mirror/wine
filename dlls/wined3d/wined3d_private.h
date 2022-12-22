@@ -6014,22 +6014,6 @@ static inline bool isStateDirty(const struct wined3d_context *context, unsigned 
     return wined3d_context_is_graphics_state_dirty(context, state_id);
 }
 
-#include "wined3d_vk.h"
-
-static inline VkImageAspectFlags vk_aspect_mask_from_format(const struct wined3d_format *format)
-{
-    VkImageAspectFlags mask = 0;
-
-    if (format->depth_size)
-        mask |= VK_IMAGE_ASPECT_DEPTH_BIT;
-    if (format->stencil_size)
-        mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-    if (!mask || format->red_size || format->green_size || format->blue_size || format->alpha_size)
-        mask |= VK_IMAGE_ASPECT_COLOR_BIT;
-
-    return mask;
-}
-
 static inline bool wined3d_primitive_type_is_list(enum wined3d_primitive_type t)
 {
     return t == WINED3D_PT_POINTLIST
@@ -6063,5 +6047,7 @@ static inline bool wined3d_map_persistent(void)
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
 
 extern CRITICAL_SECTION wined3d_command_cs;
+
+#include "wined3d_vk.h"
 
 #endif
