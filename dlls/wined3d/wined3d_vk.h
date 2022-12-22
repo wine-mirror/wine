@@ -249,6 +249,7 @@ VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage) DECLSPE
 VkPipelineStageFlags vk_pipeline_stage_mask_from_buffer_usage(VkBufferUsageFlags usage) DECLSPEC_HIDDEN;
 VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags) DECLSPEC_HIDDEN;
 VkMemoryPropertyFlags vk_memory_type_from_access_flags(uint32_t access, uint32_t usage) DECLSPEC_HIDDEN;
+void wined3d_vk_swizzle_from_color_fixup(VkComponentMapping *mapping, struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 const char *wined3d_debug_vkresult(VkResult vr) DECLSPEC_HIDDEN;
 
 struct wined3d_bo_vk
@@ -812,5 +813,33 @@ void wined3d_device_vk_destroy_null_views(struct wined3d_device_vk *device_vk,
 
 void wined3d_device_vk_uav_clear_state_init(struct wined3d_device_vk *device_vk) DECLSPEC_HIDDEN;
 void wined3d_device_vk_uav_clear_state_cleanup(struct wined3d_device_vk *device_vk) DECLSPEC_HIDDEN;
+
+struct wined3d_texture_vk
+{
+    struct wined3d_texture t;
+
+    struct wined3d_image_vk image;
+    enum VkImageLayout layout;
+    uint32_t bind_mask;
+
+    VkDescriptorImageInfo default_image_info;
+};
+
+static inline struct wined3d_texture_vk *wined3d_texture_vk(struct wined3d_texture *texture)
+{
+    return CONTAINING_RECORD(texture, struct wined3d_texture_vk, t);
+}
+
+void wined3d_texture_vk_barrier(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk, uint32_t bind_mask) DECLSPEC_HIDDEN;
+const VkDescriptorImageInfo *wined3d_texture_vk_get_default_image_info(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+HRESULT wined3d_texture_vk_init(struct wined3d_texture_vk *texture_vk, struct wined3d_device *device,
+        const struct wined3d_resource_desc *desc, unsigned int layer_count, unsigned int level_count,
+        uint32_t flags, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+void wined3d_texture_vk_make_generic(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_WINED3D_VK */

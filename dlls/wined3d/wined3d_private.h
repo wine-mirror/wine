@@ -3715,8 +3715,6 @@ void wined3d_allocator_cleanup(struct wined3d_allocator *allocator) DECLSPEC_HID
 bool wined3d_allocator_init(struct wined3d_allocator *allocator,
         size_t pool_count, const struct wined3d_allocator_ops *allocator_ops) DECLSPEC_HIDDEN;
 
-#include "wined3d_vk.h"
-
 struct wined3d_device_gl
 {
     struct wined3d_device d;
@@ -4191,7 +4189,6 @@ HRESULT wined3d_texture_no3d_init(struct wined3d_texture *texture_no3d, struct w
         uint32_t flags, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 void wined3d_gl_texture_swizzle_from_color_fixup(GLint swizzle[4], struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
-void wined3d_vk_swizzle_from_color_fixup(VkComponentMapping *mapping, struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 
 struct gl_texture
 {
@@ -4268,34 +4265,6 @@ void wined3d_texture_gl_set_compatible_renderbuffer(struct wined3d_texture_gl *t
         struct wined3d_context_gl *context_gl, unsigned int level,
         const struct wined3d_rendertarget_info *rt) DECLSPEC_HIDDEN;
 
-struct wined3d_texture_vk
-{
-    struct wined3d_texture t;
-
-    struct wined3d_image_vk image;
-    enum VkImageLayout layout;
-    uint32_t bind_mask;
-
-    VkDescriptorImageInfo default_image_info;
-};
-
-static inline struct wined3d_texture_vk *wined3d_texture_vk(struct wined3d_texture *texture)
-{
-    return CONTAINING_RECORD(texture, struct wined3d_texture_vk, t);
-}
-
-void wined3d_texture_vk_barrier(struct wined3d_texture_vk *texture_vk,
-        struct wined3d_context_vk *context_vk, uint32_t bind_mask) DECLSPEC_HIDDEN;
-const VkDescriptorImageInfo *wined3d_texture_vk_get_default_image_info(struct wined3d_texture_vk *texture_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-HRESULT wined3d_texture_vk_init(struct wined3d_texture_vk *texture_vk, struct wined3d_device *device,
-        const struct wined3d_resource_desc *desc, unsigned int layer_count, unsigned int level_count,
-        uint32_t flags, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-void wined3d_texture_vk_make_generic(struct wined3d_texture_vk *texture_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-BOOL wined3d_texture_vk_prepare_texture(struct wined3d_texture_vk *texture_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-
 struct wined3d_renderbuffer_entry
 {
     struct list entry;
@@ -4355,6 +4324,8 @@ void wined3d_sampler_gl_bind(struct wined3d_sampler_gl *sampler_gl, unsigned int
 void wined3d_sampler_gl_init(struct wined3d_sampler_gl *sampler_gl,
         struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
+#include "wined3d_vk.h"
 
 struct wined3d_sampler_vk
 {
