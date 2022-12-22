@@ -4995,36 +4995,6 @@ HRESULT wined3d_swapchain_gl_init(struct wined3d_swapchain_gl *swapchain_gl,
         struct wined3d_swapchain_state_parent *state_parent, void *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-#include "wined3d_vk.h"
-
-struct wined3d_swapchain_vk
-{
-    struct wined3d_swapchain s;
-
-    VkSwapchainKHR vk_swapchain;
-    VkSurfaceKHR vk_surface;
-    VkImage *vk_images;
-    struct
-    {
-        VkSemaphore available;
-        VkSemaphore presentable;
-        uint64_t command_buffer_id;
-    } *vk_semaphores;
-    unsigned int current, image_count;
-    unsigned int width, height;
-};
-
-static inline struct wined3d_swapchain_vk *wined3d_swapchain_vk(struct wined3d_swapchain *swapchain)
-{
-    return CONTAINING_RECORD(swapchain, struct wined3d_swapchain_vk, s);
-}
-
-void wined3d_swapchain_vk_cleanup(struct wined3d_swapchain_vk *swapchain_vk) DECLSPEC_HIDDEN;
-HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain_vk *swapchain_vk,
-        struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
-        struct wined3d_swapchain_state_parent *state_parent, void *parent,
-        const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-
 /*****************************************************************************
  * Utility function prototypes
  */
@@ -5544,6 +5514,8 @@ struct wined3d_format
 
     enum wined3d_format_id typeless_id;
 };
+
+#include "wined3d_vk.h"
 
 const struct wined3d_format *wined3d_get_format(const struct wined3d_adapter *adapter,
         enum wined3d_format_id format_id, unsigned int bind_flags) DECLSPEC_HIDDEN;

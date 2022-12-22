@@ -993,4 +993,32 @@ HRESULT wined3d_unordered_access_view_vk_init(struct wined3d_unordered_access_vi
 void wined3d_unordered_access_view_vk_update(struct wined3d_unordered_access_view_vk *view_vk,
         struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 
+struct wined3d_swapchain_vk
+{
+    struct wined3d_swapchain s;
+
+    VkSwapchainKHR vk_swapchain;
+    VkSurfaceKHR vk_surface;
+    VkImage *vk_images;
+    struct
+    {
+        VkSemaphore available;
+        VkSemaphore presentable;
+        uint64_t command_buffer_id;
+    } *vk_semaphores;
+    unsigned int current, image_count;
+    unsigned int width, height;
+};
+
+static inline struct wined3d_swapchain_vk *wined3d_swapchain_vk(struct wined3d_swapchain *swapchain)
+{
+    return CONTAINING_RECORD(swapchain, struct wined3d_swapchain_vk, s);
+}
+
+void wined3d_swapchain_vk_cleanup(struct wined3d_swapchain_vk *swapchain_vk) DECLSPEC_HIDDEN;
+HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain_vk *swapchain_vk,
+        struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
+        struct wined3d_swapchain_state_parent *state_parent, void *parent,
+        const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_WINED3D_VK */
