@@ -1219,7 +1219,7 @@ static void test_char_from_pos(void)
     SendMessageA(hwEdit, WM_SETTEXT, 0, (LPARAM)"aa");
     lo = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 1, 0));
-    mid = lo + (hi - lo) / 2;
+    mid = lo + (hi - lo + 1) / 2;
 
     for (i = lo; i < mid; i++)
     {
@@ -1241,7 +1241,7 @@ static void test_char_from_pos(void)
     SendMessageA(hwEdit, WM_SETTEXT, 0, (LPARAM)"aa");
     lo = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 1, 0));
-    mid = lo + (hi - lo) / 2;
+    mid = lo + (hi - lo + 1) / 2;
 
     for (i = lo; i < mid; i++)
     {
@@ -1263,7 +1263,7 @@ static void test_char_from_pos(void)
     SendMessageA(hwEdit, WM_SETTEXT, 0, (LPARAM)"aa");
     lo = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 1, 0));
-    mid = lo + (hi - lo) / 2;
+    mid = lo + (hi - lo + 1) / 2;
 
     for (i = lo; i < mid; i++)
     {
@@ -1285,7 +1285,7 @@ static void test_char_from_pos(void)
     SendMessageA(hwEdit, WM_SETTEXT, 0, (LPARAM)"aa");
     lo = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 1, 0));
-    mid = lo + (hi - lo) / 2 + 1;
+    mid = lo + (hi - lo + 1) / 2;
 
     for (i = lo; i < mid; i++)
     {
@@ -1307,7 +1307,7 @@ static void test_char_from_pos(void)
     SendMessageA(hwEdit, WM_SETTEXT, 0, (LPARAM)"aa");
     lo = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 1, 0));
-    mid = lo + (hi - lo) / 2 + 1;
+    mid = lo + (hi - lo + 1) / 2;
 
     for (i = lo; i < mid; i++)
     {
@@ -1329,7 +1329,7 @@ static void test_char_from_pos(void)
     SendMessageA(hwEdit, WM_SETTEXT, 0, (LPARAM)"aa");
     lo = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 0, 0));
     hi = LOWORD(SendMessageA(hwEdit, EM_POSFROMCHAR, 1, 0));
-    mid = lo + (hi - lo) / 2 + 1;
+    mid = lo + (hi - lo + 1) / 2;
 
     for (i = lo; i < mid; i++)
     {
