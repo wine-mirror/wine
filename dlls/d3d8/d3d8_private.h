@@ -217,6 +217,7 @@ struct d3d8_vertexbuffer
     IDirect3DDevice8 *parent_device;
     struct wined3d_buffer *draw_buffer;
     DWORD fvf, usage;
+    bool discarded;
 };
 
 HRESULT vertexbuffer_init(struct d3d8_vertexbuffer *buffer, struct d3d8_device *device,
@@ -232,6 +233,7 @@ struct d3d8_indexbuffer
     enum wined3d_format_id format;
     DWORD usage;
     bool sysmem;
+    bool discarded;
 };
 
 HRESULT indexbuffer_init(struct d3d8_indexbuffer *buffer, struct d3d8_device *device,

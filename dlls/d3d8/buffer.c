@@ -192,6 +192,11 @@ static HRESULT WINAPI d3d8_vertexbuffer_Lock(IDirect3DVertexBuffer8 *iface, UINT
     TRACE("iface %p, offset %u, size %u, data %p, flags %#lx.\n",
             iface, offset, size, data, flags);
 
+    if (buffer->discarded)
+        flags &= ~D3DLOCK_DISCARD;
+    if (flags & D3DLOCK_DISCARD)
+        buffer->discarded = true;
+
     wined3d_box.left = offset;
     wined3d_box.right = offset + size;
     wined3d_resource = wined3d_buffer_get_resource(buffer->wined3d_buffer);
@@ -507,6 +512,11 @@ static HRESULT WINAPI d3d8_indexbuffer_Lock(IDirect3DIndexBuffer8 *iface, UINT o
 
     TRACE("iface %p, offset %u, size %u, data %p, flags %#lx.\n",
             iface, offset, size, data, flags);
+
+    if (buffer->discarded)
+        flags &= ~D3DLOCK_DISCARD;
+    if (flags & D3DLOCK_DISCARD)
+        buffer->discarded = true;
 
     wined3d_box.left = offset;
     wined3d_box.right = offset + size;

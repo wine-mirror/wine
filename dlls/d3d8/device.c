@@ -2516,7 +2516,8 @@ static HRESULT WINAPI d3d8_device_DrawPrimitive(IDirect3DDevice8 *iface,
         D3DPRIMITIVETYPE primitive_type, UINT start_vertex, UINT primitive_count)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    unsigned int vertex_count;
+    struct d3d8_vertexbuffer *vb;
+    unsigned int vertex_count, i;
 
     TRACE("iface %p, primitive_type %#x, start_vertex %u, primitive_count %u.\n",
             iface, primitive_type, start_vertex, primitive_count);
@@ -2529,6 +2530,16 @@ static HRESULT WINAPI d3d8_device_DrawPrimitive(IDirect3DDevice8 *iface,
             wined3d_primitive_type_from_d3d(primitive_type), 0);
     wined3d_device_apply_stateblock(device->wined3d_device, device->state);
     wined3d_device_context_draw(device->immediate_context, start_vertex, vertex_count, 0, 0);
+
+    for (i = 0; i < ARRAY_SIZE(device->stateblock_state->streams); ++i)
+    {
+        if (device->stateblock_state->streams[i].buffer)
+        {
+            vb = wined3d_buffer_get_parent(device->stateblock_state->streams[i].buffer);
+            vb->discarded = false;
+        }
+    }
+
     wined3d_mutex_unlock();
 
     return D3D_OK;
@@ -2539,7 +2550,9 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitive(IDirect3DDevice8 *iface,
         UINT start_idx, UINT primitive_count)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    unsigned int index_count;
+    struct d3d8_vertexbuffer *vb;
+    struct d3d8_indexbuffer *ib;
+    unsigned int index_count, i;
     int base_vertex_index;
     HRESULT hr;
 
@@ -2566,6 +2579,17 @@ static HRESULT WINAPI d3d8_device_DrawIndexedPrimitive(IDirect3DDevice8 *iface,
         return hr;
     }
     wined3d_device_context_draw_indexed(device->immediate_context, base_vertex_index, start_idx, index_count, 0, 0);
+
+    ib = wined3d_buffer_get_parent(device->stateblock_state->index_buffer);
+    ib->discarded = false;
+    for (i = 0; i < ARRAY_SIZE(device->stateblock_state->streams); ++i)
+    {
+        if (device->stateblock_state->streams[i].buffer)
+        {
+            vb = wined3d_buffer_get_parent(device->stateblock_state->streams[i].buffer);
+            vb->discarded = false;
+        }
+    }
 
     wined3d_mutex_unlock();
 
