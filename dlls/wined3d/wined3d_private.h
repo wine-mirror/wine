@@ -4869,47 +4869,6 @@ HRESULT wined3d_shader_resource_view_gl_init(struct wined3d_shader_resource_view
 void wined3d_shader_resource_view_gl_update(struct wined3d_shader_resource_view_gl *srv_gl,
         struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
 
-#include "wined3d_vk.h"
-
-struct wined3d_view_vk
-{
-    struct wined3d_bo_user bo_user;
-    union
-    {
-        VkBufferView vk_buffer_view;
-        VkDescriptorImageInfo vk_image_info;
-    } u;
-    uint64_t command_buffer_id;
-};
-
-struct wined3d_shader_resource_view_vk
-{
-    struct wined3d_shader_resource_view v;
-    struct wined3d_view_vk view_vk;
-};
-
-static inline struct wined3d_shader_resource_view_vk *wined3d_shader_resource_view_vk(
-        struct wined3d_shader_resource_view *view)
-{
-    return CONTAINING_RECORD(view, struct wined3d_shader_resource_view_vk, v);
-}
-
-static inline void wined3d_shader_resource_view_vk_barrier(struct wined3d_shader_resource_view_vk *srv_vk,
-        struct wined3d_context_vk *context_vk, uint32_t bind_mask)
-{
-    wined3d_resource_vk_barrier(srv_vk->v.resource, context_vk, bind_mask);
-}
-
-void wined3d_shader_resource_view_vk_generate_mipmap(struct wined3d_shader_resource_view_vk *srv_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-HRESULT wined3d_shader_resource_view_vk_init(struct wined3d_shader_resource_view_vk *view_vk,
-        const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-void wined3d_shader_resource_view_vk_update_buffer(struct wined3d_shader_resource_view_vk *view_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-void wined3d_shader_resource_view_vk_update_layout(struct wined3d_shader_resource_view_vk *srv_vk,
-        VkImageLayout layout) DECLSPEC_HIDDEN;
-
 struct wined3d_unordered_access_view
 {
     LONG refcount;
@@ -4953,6 +4912,8 @@ HRESULT wined3d_unordered_access_view_gl_init(struct wined3d_unordered_access_vi
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 void wined3d_unordered_access_view_gl_update(struct wined3d_unordered_access_view_gl *uav_gl,
         struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
+
+#include "wined3d_vk.h"
 
 struct wined3d_unordered_access_view_vk
 {
