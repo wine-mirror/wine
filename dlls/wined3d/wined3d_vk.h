@@ -20,9 +20,12 @@
 #define __WINE_WINED3D_VK_H
 
 #include "stdint.h"
+#include "wine/list.h"
 #include "wine/wined3d.h"
 #define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"
+
+struct wined3d_device_vk;
 
 #define VK_INSTANCE_FUNCS() \
     VK_INSTANCE_PFN(vkCreateDevice) \
@@ -301,5 +304,62 @@ struct wined3d_image_vk
     VkDeviceMemory vk_memory;
     uint64_t command_buffer_id;
 };
+
+struct wined3d_query_pool_vk
+{
+    struct list entry;
+    struct list completed_entry;
+
+    struct list *free_list;
+    VkQueryPool vk_query_pool;
+    VkEvent vk_event;
+
+    uint32_t allocated[WINED3D_BITMAP_SIZE(WINED3D_QUERY_POOL_SIZE)];
+    uint32_t completed[WINED3D_BITMAP_SIZE(WINED3D_QUERY_POOL_SIZE)];
+};
+
+bool wined3d_query_pool_vk_allocate_query(struct wined3d_query_pool_vk *pool_vk, size_t *idx) DECLSPEC_HIDDEN;
+void wined3d_query_pool_vk_mark_free(struct wined3d_context_vk *context_vk, struct wined3d_query_pool_vk *pool_vk,
+        uint32_t start, uint32_t count) DECLSPEC_HIDDEN;
+void wined3d_query_pool_vk_cleanup(struct wined3d_query_pool_vk *pool_vk,
+        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+bool wined3d_query_pool_vk_init(struct wined3d_query_pool_vk *pool_vk, struct wined3d_context_vk *context_vk,
+        enum wined3d_query_type type, struct list *free_pools) DECLSPEC_HIDDEN;
+
+struct wined3d_query_pool_idx_vk
+{
+    struct wined3d_query_pool_vk *pool_vk;
+    size_t idx;
+};
+
+#define WINED3D_QUERY_VK_FLAG_ACTIVE       0x00000001
+#define WINED3D_QUERY_VK_FLAG_STARTED      0x00000002
+#define WINED3D_QUERY_VK_FLAG_RENDER_PASS  0x00000004
+
+struct wined3d_query_vk
+{
+    struct wined3d_query q;
+
+    struct list entry;
+    struct wined3d_query_pool_idx_vk pool_idx;
+    uint8_t flags;
+    uint64_t command_buffer_id;
+    uint32_t control_flags;
+    VkEvent vk_event;
+    SIZE_T pending_count, pending_size;
+    struct wined3d_query_pool_idx_vk *pending;
+};
+
+static inline struct wined3d_query_vk *wined3d_query_vk(struct wined3d_query *query)
+{
+    return CONTAINING_RECORD(query, struct wined3d_query_vk, q);
+}
+
+bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk, struct wined3d_device_vk *device_vk,
+        const struct wined3d_query_pool_idx_vk *pool_idx) DECLSPEC_HIDDEN;
+HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_query_type type, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query) DECLSPEC_HIDDEN;
+void wined3d_query_vk_resume(struct wined3d_query_vk *query_vk, struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+void wined3d_query_vk_suspend(struct wined3d_query_vk *query_vk, struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_WINED3D_VK */

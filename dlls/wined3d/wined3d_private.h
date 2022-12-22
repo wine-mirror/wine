@@ -2096,67 +2096,6 @@ struct wined3d_pipeline_statistics_query
 
 #define WINED3D_QUERY_POOL_SIZE 256
 
-#include "wined3d_vk.h"
-
-struct wined3d_query_pool_vk
-{
-    struct list entry;
-    struct list completed_entry;
-
-    struct list *free_list;
-    VkQueryPool vk_query_pool;
-    VkEvent vk_event;
-
-    uint32_t allocated[WINED3D_BITMAP_SIZE(WINED3D_QUERY_POOL_SIZE)];
-    uint32_t completed[WINED3D_BITMAP_SIZE(WINED3D_QUERY_POOL_SIZE)];
-};
-
-bool wined3d_query_pool_vk_allocate_query(struct wined3d_query_pool_vk *pool_vk, size_t *idx) DECLSPEC_HIDDEN;
-void wined3d_query_pool_vk_mark_free(struct wined3d_context_vk *context_vk, struct wined3d_query_pool_vk *pool_vk,
-        uint32_t start, uint32_t count) DECLSPEC_HIDDEN;
-void wined3d_query_pool_vk_cleanup(struct wined3d_query_pool_vk *pool_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-bool wined3d_query_pool_vk_init(struct wined3d_query_pool_vk *pool_vk, struct wined3d_context_vk *context_vk,
-        enum wined3d_query_type type, struct list *free_pools) DECLSPEC_HIDDEN;
-
-struct wined3d_query_pool_idx_vk
-{
-    struct wined3d_query_pool_vk *pool_vk;
-    size_t idx;
-};
-
-#define WINED3D_QUERY_VK_FLAG_ACTIVE       0x00000001
-#define WINED3D_QUERY_VK_FLAG_STARTED      0x00000002
-#define WINED3D_QUERY_VK_FLAG_RENDER_PASS  0x00000004
-
-struct wined3d_query_vk
-{
-    struct wined3d_query q;
-
-    struct list entry;
-    struct wined3d_query_pool_idx_vk pool_idx;
-    uint8_t flags;
-    uint64_t command_buffer_id;
-    uint32_t control_flags;
-    VkEvent vk_event;
-    SIZE_T pending_count, pending_size;
-    struct wined3d_query_pool_idx_vk *pending;
-};
-
-static inline struct wined3d_query_vk *wined3d_query_vk(struct wined3d_query *query)
-{
-    return CONTAINING_RECORD(query, struct wined3d_query_vk, q);
-}
-
-struct wined3d_device_vk;
-
-bool wined3d_query_vk_accumulate_data(struct wined3d_query_vk *query_vk, struct wined3d_device_vk *device_vk,
-        const struct wined3d_query_pool_idx_vk *pool_idx) DECLSPEC_HIDDEN;
-HRESULT wined3d_query_vk_create(struct wined3d_device *device, enum wined3d_query_type type, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query) DECLSPEC_HIDDEN;
-void wined3d_query_vk_resume(struct wined3d_query_vk *query_vk, struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-void wined3d_query_vk_suspend(struct wined3d_query_vk *query_vk, struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-
 struct wined3d_gl_view
 {
     GLenum target;
@@ -2445,6 +2384,8 @@ void wined3d_context_gl_unmap_bo_address(struct wined3d_context_gl *context_gl, 
 void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context_gl,
         const struct wined3d_state *state) DECLSPEC_HIDDEN;
 void wined3d_context_gl_wait_command_fence(struct wined3d_context_gl *context_gl, uint64_t id) DECLSPEC_HIDDEN;
+
+#include "wined3d_vk.h"
 
 struct wined3d_command_buffer_vk
 {
