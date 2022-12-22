@@ -431,6 +431,11 @@ static int update_desktop_cursor_pos( struct desktop *desktop, user_handle_t win
     return updated;
 }
 
+static void update_desktop_cursor_handle( struct desktop *desktop, user_handle_t handle )
+{
+    desktop->cursor.handle = handle;
+}
+
 /* set the cursor position and queue the corresponding mouse message */
 static void set_cursor_pos( struct desktop *desktop, int x, int y )
 {
@@ -3355,6 +3360,12 @@ DECL_HANDLER(set_cursor)
     if (req->flags & SET_CURSOR_POS) set_cursor_pos( desktop, req->x, req->y );
     if (req->flags & SET_CURSOR_CLIP) set_clip_rectangle( desktop, &req->clip, 0 );
     if (req->flags & SET_CURSOR_NOCLIP) set_clip_rectangle( desktop, NULL, 0 );
+
+    if (req->flags & (SET_CURSOR_HANDLE | SET_CURSOR_COUNT))
+    {
+        if (input->cursor_count < 0) update_desktop_cursor_handle( desktop, 0 );
+        else update_desktop_cursor_handle( desktop, input->cursor );
+    }
 
     reply->new_x       = desktop->cursor.x;
     reply->new_y       = desktop->cursor.y;

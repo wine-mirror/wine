@@ -59,6 +59,7 @@ struct global_cursor
     rectangle_t          clip;             /* cursor clip rectangle */
     unsigned int         last_change;      /* time of last position change */
     user_handle_t        win;              /* window that contains the cursor */
+    user_handle_t        handle;           /* last set cursor handle */
 };
 
 struct desktop
