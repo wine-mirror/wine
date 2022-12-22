@@ -1637,22 +1637,6 @@ static inline void wined3d_colour_srgb_from_linear(struct wined3d_color *colour_
     colour_srgb->a = colour->a;
 }
 
-void wined3d_check_gl_call(const struct wined3d_gl_info *gl_info,
-        const char *file, unsigned int line, const char *name) DECLSPEC_HIDDEN;
-
-/* Checking of API calls */
-/* --------------------- */
-#ifndef WINE_NO_DEBUG_MSGS
-#define checkGLcall(A)                                              \
-do {                                                                \
-    if (__WINE_IS_DEBUG_ON(_ERR, &__wine_dbch_d3d)                  \
-            && !gl_info->supported[ARB_DEBUG_OUTPUT])               \
-        wined3d_check_gl_call(gl_info, __FILE__, __LINE__, A);      \
-} while(0)
-#else
-#define checkGLcall(A) do {} while(0)
-#endif
-
 struct wined3d_bo
 {
     /* client_map_count and map_ptr are accessed from both the client and CS
@@ -2866,16 +2850,6 @@ enum wined3d_pci_device
     CARD_INTEL_UHD630_2             = 0x3e91,
 };
 
-void wined3d_gl_limits_get_texture_unit_range(const struct wined3d_gl_limits *gl_limits,
-        enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count) DECLSPEC_HIDDEN;
-void wined3d_gl_limits_get_uniform_block_range(const struct wined3d_gl_limits *gl_limits,
-        enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count) DECLSPEC_HIDDEN;
-
-static inline BOOL wined3d_fence_supported(const struct wined3d_gl_info *gl_info)
-{
-    return gl_info->supported[ARB_SYNC] || gl_info->supported[NV_FENCE] || gl_info->supported[APPLE_FENCE];
-}
-
 /* The driver names reflect the lowest GPU supported
  * by a certain driver, so DRIVER_AMD_R300 supports
  * R3xx, R4xx and R5xx GPUs. */
@@ -3124,8 +3098,6 @@ UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount) DECL
 
 BOOL wined3d_caps_gl_ctx_test_viewport_subpixel_bits(struct wined3d_caps_gl_ctx *ctx) DECLSPEC_HIDDEN;
 bool wined3d_caps_gl_ctx_test_filling_convention(struct wined3d_caps_gl_ctx *ctx, float offset) DECLSPEC_HIDDEN;
-
-void install_gl_compat_wrapper(struct wined3d_gl_info *gl_info, enum wined3d_gl_extension ext) DECLSPEC_HIDDEN;
 
 enum wined3d_projection_type
 {
@@ -4650,8 +4622,6 @@ static inline const struct wined3d_buffer_gl *wined3d_buffer_gl_const(const stru
     return CONTAINING_RECORD(buffer, struct wined3d_buffer_gl, b);
 }
 
-GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *gl_info,
-        uint32_t bind_flags) DECLSPEC_HIDDEN;
 HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined3d_device *device,
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
@@ -5272,9 +5242,6 @@ struct ps_np2fixup_info {
     WORD              active; /* bitfield indicating if we can apply the fixup */
     WORD              num_consts;
 };
-
-void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id, BOOL program) DECLSPEC_HIDDEN;
-void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint program) DECLSPEC_HIDDEN;
 
 struct wined3d_palette
 {
