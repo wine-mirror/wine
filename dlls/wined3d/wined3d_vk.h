@@ -294,4 +294,12 @@ void *wined3d_bo_slab_vk_map(struct wined3d_bo_slab_vk *slab_vk,
 void wined3d_bo_slab_vk_unmap(struct wined3d_bo_slab_vk *slab_vk,
         struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 
+struct wined3d_image_vk
+{
+    VkImage vk_image;
+    struct wined3d_allocator_block *memory;
+    VkDeviceMemory vk_memory;
+    uint64_t command_buffer_id;
+};
+
 #endif /* __WINE_WINED3D_VK */

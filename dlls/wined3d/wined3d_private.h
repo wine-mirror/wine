@@ -1714,8 +1714,6 @@ struct wined3d_bo_user
     bool valid;
 };
 
-#include "wined3d_vk.h"
-
 struct wined3d_bo_address
 {
     struct wined3d_bo *buffer_object;
@@ -1732,14 +1730,6 @@ static inline struct wined3d_const_bo_address *wined3d_const_bo_address(const st
 {
     return (struct wined3d_const_bo_address *)data;
 }
-
-struct wined3d_image_vk
-{
-    VkImage vk_image;
-    struct wined3d_allocator_block *memory;
-    VkDeviceMemory vk_memory;
-    uint64_t command_buffer_id;
-};
 
 struct wined3d_stream_info_element
 {
@@ -2105,6 +2095,8 @@ struct wined3d_pipeline_statistics_query
 };
 
 #define WINED3D_QUERY_POOL_SIZE 256
+
+#include "wined3d_vk.h"
 
 struct wined3d_query_pool_vk
 {
