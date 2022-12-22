@@ -2385,8 +2385,6 @@ void wined3d_context_gl_update_stream_sources(struct wined3d_context_gl *context
         const struct wined3d_state *state) DECLSPEC_HIDDEN;
 void wined3d_context_gl_wait_command_fence(struct wined3d_context_gl *context_gl, uint64_t id) DECLSPEC_HIDDEN;
 
-#include "wined3d_vk.h"
-
 typedef void (*APPLYSTATEFUNC)(struct wined3d_context *ctx, const struct wined3d_state *state, DWORD state_id);
 
 struct wined3d_state_entry
@@ -3188,6 +3186,9 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
 void wined3d_adapter_cleanup(struct wined3d_adapter *adapter) DECLSPEC_HIDDEN;
 BOOL wined3d_get_primary_adapter_luid(LUID *luid) DECLSPEC_HIDDEN;
 
+struct wined3d_adapter *wined3d_adapter_vk_create(unsigned int ordinal,
+        unsigned int wined3d_creation_flags) DECLSPEC_HIDDEN;
+
 struct wined3d_adapter_gl
 {
     struct wined3d_adapter a;
@@ -3209,32 +3210,6 @@ static inline const struct wined3d_adapter_gl *wined3d_adapter_gl_const(const st
 struct wined3d_adapter *wined3d_adapter_gl_create(unsigned int ordinal,
         unsigned int wined3d_creation_flags) DECLSPEC_HIDDEN;
 
-struct wined3d_adapter_vk
-{
-    struct wined3d_adapter a;
-
-    struct wined3d_vk_info vk_info;
-    unsigned int device_extension_count;
-    const char **device_extensions;
-    VkPhysicalDevice physical_device;
-
-    VkPhysicalDeviceLimits device_limits;
-    VkPhysicalDeviceMemoryProperties memory_properties;
-};
-
-static inline struct wined3d_adapter_vk *wined3d_adapter_vk(struct wined3d_adapter *adapter)
-{
-    return CONTAINING_RECORD(adapter, struct wined3d_adapter_vk, a);
-}
-
-struct wined3d_adapter *wined3d_adapter_vk_create(unsigned int ordinal,
-        unsigned int wined3d_creation_flags) DECLSPEC_HIDDEN;
-unsigned int wined3d_adapter_vk_get_memory_type_index(const struct wined3d_adapter_vk *adapter_vk,
-        uint32_t memory_type_mask, VkMemoryPropertyFlags flags) DECLSPEC_HIDDEN;
-void adapter_vk_copy_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *dst,
-        const struct wined3d_bo_address *src,
-        unsigned int range_count, const struct wined3d_range *ranges) DECLSPEC_HIDDEN;
-
 struct wined3d_caps_gl_ctx
 {
     HDC dc;
@@ -3254,8 +3229,6 @@ struct wined3d_caps_gl_ctx
 BOOL wined3d_adapter_gl_init_format_info(struct wined3d_adapter *adapter,
         struct wined3d_caps_gl_ctx *ctx) DECLSPEC_HIDDEN;
 BOOL wined3d_adapter_no3d_init_format_info(struct wined3d_adapter *adapter) DECLSPEC_HIDDEN;
-BOOL wined3d_adapter_vk_init_format_info(struct wined3d_adapter_vk *adapter_vk,
-        const struct wined3d_vk_info *vk_info) DECLSPEC_HIDDEN;
 ssize_t adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, ssize_t size) DECLSPEC_HIDDEN;
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount) DECLSPEC_HIDDEN;
 
@@ -3672,6 +3645,8 @@ static inline struct wined3d_device_no3d *wined3d_device_no3d(struct wined3d_dev
 {
     return CONTAINING_RECORD(device, struct wined3d_device_no3d, d);
 }
+
+#include "wined3d_vk.h"
 
 struct wined3d_null_resources_vk
 {

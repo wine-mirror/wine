@@ -664,4 +664,30 @@ void wined3d_context_vk_wait_command_buffer(struct wined3d_context_vk *context_v
 VkDescriptorSet wined3d_context_vk_create_vk_descriptor_set(struct wined3d_context_vk *context_vk,
         VkDescriptorSetLayout vk_set_layout) DECLSPEC_HIDDEN;
 
+struct wined3d_adapter_vk
+{
+    struct wined3d_adapter a;
+
+    struct wined3d_vk_info vk_info;
+    unsigned int device_extension_count;
+    const char **device_extensions;
+    VkPhysicalDevice physical_device;
+
+    VkPhysicalDeviceLimits device_limits;
+    VkPhysicalDeviceMemoryProperties memory_properties;
+};
+
+static inline struct wined3d_adapter_vk *wined3d_adapter_vk(struct wined3d_adapter *adapter)
+{
+    return CONTAINING_RECORD(adapter, struct wined3d_adapter_vk, a);
+}
+
+void adapter_vk_copy_bo_address(struct wined3d_context *context, const struct wined3d_bo_address *dst,
+        const struct wined3d_bo_address *src,
+        unsigned int range_count, const struct wined3d_range *ranges) DECLSPEC_HIDDEN;
+unsigned int wined3d_adapter_vk_get_memory_type_index(const struct wined3d_adapter_vk *adapter_vk,
+        uint32_t memory_type_mask, VkMemoryPropertyFlags flags) DECLSPEC_HIDDEN;
+BOOL wined3d_adapter_vk_init_format_info(struct wined3d_adapter_vk *adapter_vk,
+        const struct wined3d_vk_info *vk_info) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_WINED3D_VK */
