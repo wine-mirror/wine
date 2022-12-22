@@ -5995,10 +5995,11 @@ static HRESULT ddraw_surface_reserve_memory(struct wined3d_texture *wined3d_text
     return hr;
 }
 
-static HRESULT ddraw_surface_create_wined3d_texture(DDSURFACEDESC2 *desc, struct wined3d_device *wined3d_device,
+static HRESULT ddraw_surface_create_wined3d_texture(struct wined3d_device *wined3d_device,
         const struct wined3d_resource_desc *wined3d_desc, unsigned int layers, unsigned int levels,
         struct ddraw_texture *texture, struct wined3d_texture **wined3d_texture)
 {
+    const DDSURFACEDESC2 *desc = &texture->surface_desc;
     struct wined3d_resource_desc draw_texture_desc;
     struct wined3d_texture *draw_texture;
     struct ddraw_surface *parent;
@@ -6589,7 +6590,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         layers = 6;
     }
 
-    if (FAILED(hr = ddraw_surface_create_wined3d_texture(desc, ddraw->wined3d_device, &wined3d_desc, layers, levels,
+    if (FAILED(hr = ddraw_surface_create_wined3d_texture(ddraw->wined3d_device, &wined3d_desc, layers, levels,
             texture, &wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
@@ -6723,7 +6724,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 desc->ddsCaps.dwCaps |= DDSCAPS_BACKBUFFER;
             desc->u5.dwBackBufferCount = 0;
 
-            if (FAILED(hr = ddraw_surface_create_wined3d_texture(desc, ddraw->wined3d_device, &wined3d_desc, 1, 1,
+            if (FAILED(hr = ddraw_surface_create_wined3d_texture(ddraw->wined3d_device, &wined3d_desc, 1, 1,
                     texture, &wined3d_texture)))
             {
                 heap_free(texture);
