@@ -3646,35 +3646,6 @@ static inline struct wined3d_device_no3d *wined3d_device_no3d(struct wined3d_dev
     return CONTAINING_RECORD(device, struct wined3d_device_no3d, d);
 }
 
-#include "wined3d_vk.h"
-
-struct wined3d_null_resources_vk
-{
-    struct wined3d_bo_vk bo;
-    VkDescriptorBufferInfo buffer_info;
-
-    struct wined3d_image_vk image_1d;
-    struct wined3d_image_vk image_2d;
-    struct wined3d_image_vk image_2dms;
-    struct wined3d_image_vk image_3d;
-};
-
-struct wined3d_null_views_vk
-{
-    VkBufferView vk_view_buffer_uint;
-    VkBufferView vk_view_buffer_float;
-
-    VkDescriptorImageInfo vk_info_1d;
-    VkDescriptorImageInfo vk_info_2d;
-    VkDescriptorImageInfo vk_info_2dms;
-    VkDescriptorImageInfo vk_info_3d;
-    VkDescriptorImageInfo vk_info_cube;
-    VkDescriptorImageInfo vk_info_1d_array;
-    VkDescriptorImageInfo vk_info_2d_array;
-    VkDescriptorImageInfo vk_info_2dms_array;
-    VkDescriptorImageInfo vk_info_cube_array;
-};
-
 #define WINED3D_ALLOCATOR_CHUNK_SIZE        (64 * 1024 * 1024)
 #define WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT 15
 #define WINED3D_ALLOCATOR_MIN_BLOCK_SIZE    (WINED3D_ALLOCATOR_CHUNK_SIZE >> (WINED3D_ALLOCATOR_CHUNK_ORDER_COUNT - 1))
@@ -3705,22 +3676,6 @@ static inline struct wined3d_allocator_chunk_gl *wined3d_allocator_chunk_gl(stru
 {
     return CONTAINING_RECORD(chunk, struct wined3d_allocator_chunk_gl, c);
 }
-
-struct wined3d_allocator_chunk_vk
-{
-    struct wined3d_allocator_chunk c;
-    VkDeviceMemory vk_memory;
-};
-
-static inline struct wined3d_allocator_chunk_vk *wined3d_allocator_chunk_vk(struct wined3d_allocator_chunk *chunk)
-{
-    return CONTAINING_RECORD(chunk, struct wined3d_allocator_chunk_vk, c);
-}
-
-void *wined3d_allocator_chunk_vk_map(struct wined3d_allocator_chunk_vk *chunk_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-void wined3d_allocator_chunk_vk_unmap(struct wined3d_allocator_chunk_vk *chunk_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
 
 struct wined3d_allocator_block
 {
@@ -3760,85 +3715,7 @@ void wined3d_allocator_cleanup(struct wined3d_allocator *allocator) DECLSPEC_HID
 bool wined3d_allocator_init(struct wined3d_allocator *allocator,
         size_t pool_count, const struct wined3d_allocator_ops *allocator_ops) DECLSPEC_HIDDEN;
 
-struct wined3d_uav_clear_pipelines_vk
-{
-    VkPipeline buffer;
-    VkPipeline image_1d;
-    VkPipeline image_1d_array;
-    VkPipeline image_2d;
-    VkPipeline image_2d_array;
-    VkPipeline image_3d;
-};
-
-struct wined3d_uav_clear_state_vk
-{
-    struct wined3d_uav_clear_pipelines_vk float_pipelines;
-    struct wined3d_uav_clear_pipelines_vk uint_pipelines;
-
-    struct wined3d_shader_thread_group_size buffer_group_size;
-    struct wined3d_shader_thread_group_size image_1d_group_size;
-    struct wined3d_shader_thread_group_size image_1d_array_group_size;
-    struct wined3d_shader_thread_group_size image_2d_group_size;
-    struct wined3d_shader_thread_group_size image_2d_array_group_size;
-    struct wined3d_shader_thread_group_size image_3d_group_size;
-
-    struct wined3d_pipeline_layout_vk *image_layout;
-    struct wined3d_pipeline_layout_vk *buffer_layout;
-};
-
-struct wined3d_device_vk
-{
-    struct wined3d_device d;
-
-    struct wined3d_context_vk context_vk;
-
-    VkDevice vk_device;
-    VkQueue vk_queue;
-    uint32_t vk_queue_family_index;
-    uint32_t timestamp_bits;
-
-    struct wined3d_vk_info vk_info;
-
-    struct wined3d_null_resources_vk null_resources_vk;
-    struct wined3d_null_views_vk null_views_vk;
-
-    CRITICAL_SECTION allocator_cs;
-    struct wined3d_allocator allocator;
-
-    struct wined3d_uav_clear_state_vk uav_clear_state;
-};
-
-static inline struct wined3d_device_vk *wined3d_device_vk(struct wined3d_device *device)
-{
-    return CONTAINING_RECORD(device, struct wined3d_device_vk, d);
-}
-
-static inline struct wined3d_device_vk *wined3d_device_vk_from_allocator(struct wined3d_allocator *allocator)
-{
-    return CONTAINING_RECORD(allocator, struct wined3d_device_vk, allocator);
-}
-
-static inline void wined3d_device_vk_allocator_lock(struct wined3d_device_vk *device_vk)
-{
-    EnterCriticalSection(&device_vk->allocator_cs);
-}
-
-static inline void wined3d_device_vk_allocator_unlock(struct wined3d_device_vk *device_vk)
-{
-    LeaveCriticalSection(&device_vk->allocator_cs);
-}
-
-bool wined3d_device_vk_create_null_resources(struct wined3d_device_vk *device_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-bool wined3d_device_vk_create_null_views(struct wined3d_device_vk *device_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-void wined3d_device_vk_destroy_null_resources(struct wined3d_device_vk *device_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-void wined3d_device_vk_destroy_null_views(struct wined3d_device_vk *device_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-
-void wined3d_device_vk_uav_clear_state_init(struct wined3d_device_vk *device_vk) DECLSPEC_HIDDEN;
-void wined3d_device_vk_uav_clear_state_cleanup(struct wined3d_device_vk *device_vk) DECLSPEC_HIDDEN;
+#include "wined3d_vk.h"
 
 struct wined3d_device_gl
 {
