@@ -880,4 +880,49 @@ HRESULT wined3d_buffer_vk_init(struct wined3d_buffer_vk *buffer_vk, struct wined
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
+static inline void wined3d_resource_vk_barrier(struct wined3d_resource *resource,
+        struct wined3d_context_vk *context_vk, uint32_t bind_mask)
+{
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+        wined3d_buffer_vk_barrier(wined3d_buffer_vk(buffer_from_resource(resource)), context_vk, bind_mask);
+    else
+        wined3d_texture_vk_barrier(wined3d_texture_vk(texture_from_resource(resource)), context_vk, bind_mask);
+}
+
+struct wined3d_rendertarget_view_vk
+{
+    struct wined3d_rendertarget_view v;
+
+    VkImageView vk_image_view;
+    uint64_t command_buffer_id;
+};
+
+static inline struct wined3d_rendertarget_view_vk *wined3d_rendertarget_view_vk(
+        struct wined3d_rendertarget_view *view)
+{
+    return CONTAINING_RECORD(view, struct wined3d_rendertarget_view_vk, v);
+}
+
+static inline void wined3d_rendertarget_view_vk_barrier(struct wined3d_rendertarget_view_vk *rtv_vk,
+        struct wined3d_context_vk *context_vk, uint32_t bind_mask)
+{
+    wined3d_resource_vk_barrier(rtv_vk->v.resource, context_vk, bind_mask);
+}
+
+static inline VkImageView wined3d_rendertarget_view_vk_get_image_view(struct wined3d_rendertarget_view_vk *rtv_vk,
+        struct wined3d_context_vk *context_vk)
+{
+    struct wined3d_texture_vk *texture_vk;
+
+    if (rtv_vk->vk_image_view)
+        return rtv_vk->vk_image_view;
+
+    texture_vk = wined3d_texture_vk(wined3d_texture_from_resource(rtv_vk->v.resource));
+    return wined3d_texture_vk_get_default_image_info(texture_vk, context_vk)->imageView;
+}
+
+HRESULT wined3d_rendertarget_view_vk_init(struct wined3d_rendertarget_view_vk *view_vk,
+        const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
+        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_WINED3D_VK */
