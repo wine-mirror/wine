@@ -6048,6 +6048,4 @@ static inline bool wined3d_map_persistent(void)
 
 extern CRITICAL_SECTION wined3d_command_cs;
 
-#include "wined3d_vk.h"
-
 #endif

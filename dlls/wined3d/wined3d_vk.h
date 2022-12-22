@@ -24,6 +24,7 @@
 #include "wine/wined3d.h"
 #define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"
+#include "wined3d_private.h"
 
 struct wined3d_buffer_vk;
 struct wined3d_context_vk;

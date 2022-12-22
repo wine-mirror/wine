@@ -27,6 +27,8 @@
 #include "initguid.h"
 #include "wined3d_private.h"
 #include "d3d12.h"
+#define VK_NO_PROTOTYPES
+#include "wine/vulkan.h"
 #include <vkd3d.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
