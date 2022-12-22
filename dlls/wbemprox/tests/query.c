@@ -1795,6 +1795,45 @@ static void test_Win32_VideoController( IWbemServices *services )
     SysFreeString( wql );
 }
 
+static void test_Win32_Volume( IWbemServices *services )
+{
+    BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_Volume" );
+    IEnumWbemClassObject *result;
+    IWbemClassObject *obj;
+    HRESULT hr;
+    VARIANT val;
+    CIMTYPE type;
+    DWORD count;
+
+    hr = IWbemServices_ExecQuery( services, wql, query, 0, NULL, &result );
+    if (hr != S_OK)
+    {
+        win_skip( "Win32_Volume not available\n" );
+        return;
+    }
+
+    for (;;)
+    {
+        hr = IEnumWbemClassObject_Next( result, 10000, 1, &obj, &count );
+        if (hr != S_OK) break;
+
+        check_property( obj, L"DeviceID", VT_BSTR, CIM_STRING );
+
+        type = 0xdeadbeef;
+        memset( &val, 0, sizeof(val) );
+        hr = IWbemClassObject_Get( obj, L"DriveLetter", 0, &val, &type, NULL );
+        ok( hr == S_OK, "got %#lx\n", hr );
+        ok( V_VT( &val ) == VT_BSTR || V_VT( &val ) == VT_NULL, "unexpected variant type 0x%x\n", V_VT( &val ) );
+        ok( type == CIM_STRING, "unexpected type %#lx\n", type );
+        trace( "driveletter %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+        VariantClear( &val );
+    }
+
+    IEnumWbemClassObject_Release( result );
+    SysFreeString( query );
+    SysFreeString( wql );
+}
+
 static void test_Win32_Printer( IWbemServices *services )
 {
     BSTR wql = SysAllocString( L"wql" ), query = SysAllocString( L"SELECT * FROM Win32_Printer" );
@@ -2349,6 +2388,7 @@ START_TEST(query)
     test_Win32_SoundDevice( services );
     test_Win32_SystemEnclosure( services );
     test_Win32_VideoController( services );
+    test_Win32_Volume( services );
     test_Win32_WinSAT( services );
     test_SystemRestore( services );
     test_empty_namespace( locator );
