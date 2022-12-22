@@ -54,7 +54,6 @@
 #include "objbase.h"
 #include "wine/wined3d.h"
 #include "wined3d_gl.h"
-#include "wined3d_vk.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
 #include "wine/wgl_driver.h"
@@ -1715,51 +1714,7 @@ struct wined3d_bo_user
     bool valid;
 };
 
-struct wined3d_bo_vk
-{
-    struct wined3d_bo b;
-
-    VkBuffer vk_buffer;
-    struct wined3d_allocator_block *memory;
-    struct wined3d_bo_slab_vk *slab;
-
-    VkDeviceMemory vk_memory;
-
-    VkDeviceSize size;
-    VkBufferUsageFlags usage;
-    VkMemoryPropertyFlags memory_type;
-
-    uint64_t command_buffer_id;
-    bool host_synced;
-};
-
-static inline struct wined3d_bo_vk *wined3d_bo_vk(struct wined3d_bo *bo)
-{
-    return CONTAINING_RECORD(bo, struct wined3d_bo_vk, b);
-}
-
-struct wined3d_bo_slab_vk_key
-{
-    VkMemoryPropertyFlags memory_type;
-    VkBufferUsageFlags usage;
-    VkDeviceSize size;
-};
-
-struct wined3d_bo_slab_vk
-{
-    struct wine_rb_entry entry;
-    struct wined3d_bo_slab_vk *next;
-    VkMemoryPropertyFlags requested_memory_type;
-    struct wined3d_bo_vk bo;
-    unsigned int map_count;
-    void *map_ptr;
-    uint32_t map;
-};
-
-void *wined3d_bo_slab_vk_map(struct wined3d_bo_slab_vk *slab_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
-void wined3d_bo_slab_vk_unmap(struct wined3d_bo_slab_vk *slab_vk,
-        struct wined3d_context_vk *context_vk) DECLSPEC_HIDDEN;
+#include "wined3d_vk.h"
 
 struct wined3d_bo_address
 {
