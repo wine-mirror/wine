@@ -112,7 +112,6 @@ static inline const char *wined3d_get_line(const char **ptr, const char *end)
 
 struct wined3d_fragment_pipe_ops;
 struct wined3d_adapter;
-struct wined3d_buffer_vk;
 struct wined3d_context;
 struct wined3d_context_vk;
 struct wined3d_gl_info;
@@ -4777,26 +4776,6 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 #include "wined3d_vk.h"
-
-struct wined3d_buffer_vk
-{
-    struct wined3d_buffer b;
-
-    VkDescriptorBufferInfo buffer_info;
-    uint32_t bind_mask;
-};
-
-static inline struct wined3d_buffer_vk *wined3d_buffer_vk(struct wined3d_buffer *buffer)
-{
-    return CONTAINING_RECORD(buffer, struct wined3d_buffer_vk, b);
-}
-
-void wined3d_buffer_vk_barrier(struct wined3d_buffer_vk *buffer_vk,
-        struct wined3d_context_vk *context_vk, uint32_t bind_mask) DECLSPEC_HIDDEN;
-const VkDescriptorBufferInfo *wined3d_buffer_vk_get_buffer_info(struct wined3d_buffer_vk *buffer_vk) DECLSPEC_HIDDEN;
-HRESULT wined3d_buffer_vk_init(struct wined3d_buffer_vk *buffer_vk, struct wined3d_device *device,
-        const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
 static inline void wined3d_resource_vk_barrier(struct wined3d_resource *resource,
         struct wined3d_context_vk *context_vk, uint32_t bind_mask)
