@@ -5515,8 +5515,6 @@ struct wined3d_format
     enum wined3d_format_id typeless_id;
 };
 
-#include "wined3d_vk.h"
-
 const struct wined3d_format *wined3d_get_format(const struct wined3d_adapter *adapter,
         enum wined3d_format_id format_id, unsigned int bind_flags) DECLSPEC_HIDDEN;
 enum wined3d_format_id wined3d_get_typed_format_id(const struct wined3d_adapter *adapter,
@@ -5525,8 +5523,6 @@ void wined3d_format_calculate_pitch(const struct wined3d_format *format, unsigne
         unsigned int width, unsigned int height, unsigned int *row_pitch, unsigned int *slice_pitch) DECLSPEC_HIDDEN;
 UINT wined3d_format_calculate_size(const struct wined3d_format *format,
         UINT alignment, UINT width, UINT height, UINT depth) DECLSPEC_HIDDEN;
-void wined3d_format_colour_to_vk(const struct wined3d_format *format, const struct wined3d_color *c,
-        VkClearColorValue *retval) DECLSPEC_HIDDEN;
 void wined3d_format_convert_from_float(const struct wined3d_format *format,
         const struct wined3d_color *color, void *ret) DECLSPEC_HIDDEN;
 void wined3d_format_copy_data(const struct wined3d_format *format, const uint8_t *src,
@@ -5561,18 +5557,6 @@ struct wined3d_format_gl
 static inline const struct wined3d_format_gl *wined3d_format_gl(const struct wined3d_format *format)
 {
     return CONTAINING_RECORD(format, struct wined3d_format_gl, f);
-}
-
-struct wined3d_format_vk
-{
-    struct wined3d_format f;
-
-    VkFormat vk_format;
-};
-
-static inline const struct wined3d_format_vk *wined3d_format_vk(const struct wined3d_format *format)
-{
-    return CONTAINING_RECORD(format, struct wined3d_format_vk, f);
 }
 
 BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size) DECLSPEC_HIDDEN;
@@ -5844,6 +5828,8 @@ static inline void wined3d_context_destroy_bo(struct wined3d_context *context, s
 {
     context->device->adapter->adapter_ops->adapter_destroy_bo(context, bo);
 }
+
+#include "wined3d_vk.h"
 
 static inline void wined3d_context_vk_reference_bo(const struct wined3d_context_vk *context_vk,
         struct wined3d_bo_vk *bo)

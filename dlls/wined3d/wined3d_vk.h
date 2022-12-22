@@ -250,6 +250,8 @@ VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage) DECLSPE
 VkPipelineStageFlags vk_pipeline_stage_mask_from_buffer_usage(VkBufferUsageFlags usage) DECLSPEC_HIDDEN;
 VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags) DECLSPEC_HIDDEN;
 VkMemoryPropertyFlags vk_memory_type_from_access_flags(uint32_t access, uint32_t usage) DECLSPEC_HIDDEN;
+void wined3d_format_colour_to_vk(const struct wined3d_format *format, const struct wined3d_color *c,
+        VkClearColorValue *retval) DECLSPEC_HIDDEN;
 void wined3d_vk_swizzle_from_color_fixup(VkComponentMapping *mapping, struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 const char *wined3d_debug_vkresult(VkResult vr) DECLSPEC_HIDDEN;
 
@@ -1020,5 +1022,17 @@ HRESULT wined3d_swapchain_vk_init(struct wined3d_swapchain_vk *swapchain_vk,
         struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
         struct wined3d_swapchain_state_parent *state_parent, void *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+
+struct wined3d_format_vk
+{
+    struct wined3d_format f;
+
+    VkFormat vk_format;
+};
+
+static inline const struct wined3d_format_vk *wined3d_format_vk(const struct wined3d_format *format)
+{
+    return CONTAINING_RECORD(format, struct wined3d_format_vk, f);
+}
 
 #endif /* __WINE_WINED3D_VK */
