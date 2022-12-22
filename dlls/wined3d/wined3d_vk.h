@@ -19,6 +19,8 @@
 #ifndef __WINE_WINED3D_VK_H
 #define __WINE_WINED3D_VK_H
 
+#include "stdint.h"
+#include "wine/wined3d.h"
 #define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"
 
@@ -228,5 +230,22 @@ struct wined3d_vk_info
 };
 
 #define VK_CALL(f) (vk_info->vk_ops.f)
+
+static const VkAccessFlags WINED3D_READ_ONLY_ACCESS_FLAGS = VK_ACCESS_INDIRECT_COMMAND_READ_BIT
+        | VK_ACCESS_INDEX_READ_BIT | VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT | VK_ACCESS_UNIFORM_READ_BIT
+        | VK_ACCESS_INPUT_ATTACHMENT_READ_BIT | VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_READ_BIT
+        | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_TRANSFER_READ_BIT | VK_ACCESS_HOST_READ_BIT
+        | VK_ACCESS_MEMORY_READ_BIT;
+
+VkAccessFlags vk_access_mask_from_bind_flags(uint32_t bind_flags) DECLSPEC_HIDDEN;
+VkCompareOp vk_compare_op_from_wined3d(enum wined3d_cmp_func op) DECLSPEC_HIDDEN;
+VkImageViewType vk_image_view_type_from_wined3d(enum wined3d_resource_type type, uint32_t flags) DECLSPEC_HIDDEN;
+VkPipelineStageFlags vk_pipeline_stage_mask_from_bind_flags(uint32_t bind_flags) DECLSPEC_HIDDEN;
+VkShaderStageFlagBits vk_shader_stage_from_wined3d(enum wined3d_shader_type shader_type) DECLSPEC_HIDDEN;
+VkAccessFlags vk_access_mask_from_buffer_usage(VkBufferUsageFlags usage) DECLSPEC_HIDDEN;
+VkPipelineStageFlags vk_pipeline_stage_mask_from_buffer_usage(VkBufferUsageFlags usage) DECLSPEC_HIDDEN;
+VkBufferUsageFlags vk_buffer_usage_from_bind_flags(uint32_t bind_flags) DECLSPEC_HIDDEN;
+VkMemoryPropertyFlags vk_memory_type_from_access_flags(uint32_t access, uint32_t usage) DECLSPEC_HIDDEN;
+const char *wined3d_debug_vkresult(VkResult vr) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_WINED3D_VK */
