@@ -6017,6 +6017,7 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
     struct wined3d_texture *draw_texture = NULL;
     struct ddraw_surface *parent;
     unsigned int bind_flags;
+    unsigned int pitch = 0;
     unsigned int i;
     HRESULT hr;
 
@@ -6041,6 +6042,8 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
                 WARN("Invalid pitch %lu specified.\n", desc->u1.lPitch);
                 return DDERR_INVALIDPARAMS;
             }
+
+            pitch = desc->u1.lPitch;
         }
     }
 
@@ -6112,6 +6115,14 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
             return hr;
     }
 
+    if ((desc->dwFlags & DDSD_LPSURFACE) && FAILED(hr = wined3d_texture_update_desc(*wined3d_texture, 0,
+            wined3d_desc->width, wined3d_desc->height, wined3d_desc->format,
+            WINED3D_MULTISAMPLE_NONE, 0, desc->lpSurface, pitch)))
+    {
+        ERR("Failed to set surface memory, hr %#lx.\n", hr);
+        return hr;
+    }
+
     wined3d_texture_decref(*wined3d_texture);
 
     TRACE("Surface %p, created draw_texture %p, wined3d_texture %p.\n",
@@ -6132,7 +6143,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     struct ddraw_texture *texture;
     BOOL sysmem_fallback = FALSE;
     unsigned int layers = 1;
-    unsigned int pitch = 0;
     BOOL reserve_memory;
     UINT levels, i, j;
     HRESULT hr;
@@ -6579,8 +6589,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 heap_free(texture);
                 return DDERR_INVALIDPARAMS;
             }
-
-            pitch = desc->u1.lPitch;
         }
     }
 
@@ -6704,14 +6712,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             *attach = mip;
             attach = &mip->complex_array[0];
         }
-    }
-
-    if ((desc->dwFlags & DDSD_LPSURFACE) && FAILED(hr = wined3d_texture_update_desc(wined3d_texture, 0,
-            wined3d_desc.width, wined3d_desc.height, wined3d_desc.format,
-            WINED3D_MULTISAMPLE_NONE, 0, desc->lpSurface, pitch)))
-    {
-        ERR("Failed to set surface memory, hr %#lx.\n", hr);
-        goto fail;
     }
 
     reserve_memory = !(desc->dwFlags & DDSD_LPSURFACE)
