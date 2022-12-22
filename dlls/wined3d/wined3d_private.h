@@ -25,8 +25,6 @@
 #ifndef __WINE_WINED3D_PRIVATE_H
 #define __WINE_WINED3D_PRIVATE_H
 
-#define WINE_GLAPI __stdcall
-
 #include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -54,7 +52,6 @@
 #include "wined3d_gl.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
-#include "wine/wgl_driver.h"
 
 static inline size_t align(size_t addr, size_t alignment)
 {
@@ -88,18 +85,6 @@ static inline const char *wined3d_get_line(const char **ptr, const char *end)
 }
 
 #define MAKEDWORD_VERSION(maj, min) (((maj & 0xffffu) << 16) | (min & 0xffffu))
-
-/* Driver quirks */
-#define WINED3D_QUIRK_ARB_VS_OFFSET_LIMIT       0x00000001
-#define WINED3D_QUIRK_GLSL_CLIP_VARYING         0x00000004
-#define WINED3D_QUIRK_ALLOWS_SPECULAR_ALPHA     0x00000008
-#define WINED3D_QUIRK_NV_CLIP_BROKEN            0x00000010
-#define WINED3D_QUIRK_FBO_TEX_UPDATE            0x00000020
-#define WINED3D_QUIRK_BROKEN_RGBA16             0x00000040
-#define WINED3D_QUIRK_INFO_LOG_SPAM             0x00000080
-#define WINED3D_QUIRK_LIMITED_TEX_FILTERING     0x00000100
-#define WINED3D_QUIRK_BROKEN_ARB_FOG            0x00000200
-#define WINED3D_QUIRK_NO_INDEPENDENT_BIT_DEPTHS 0x00000400
 
 #define WINED3D_MAX_DIRTY_REGION_COUNT 7
 
@@ -2881,104 +2866,10 @@ enum wined3d_pci_device
     CARD_INTEL_UHD630_2             = 0x3e91,
 };
 
-struct wined3d_fbo_ops
-{
-    GLboolean (WINE_GLAPI *glIsRenderbuffer)(GLuint renderbuffer);
-    void (WINE_GLAPI *glBindRenderbuffer)(GLenum target, GLuint renderbuffer);
-    void (WINE_GLAPI *glDeleteRenderbuffers)(GLsizei n, const GLuint *renderbuffers);
-    void (WINE_GLAPI *glGenRenderbuffers)(GLsizei n, GLuint *renderbuffers);
-    void (WINE_GLAPI *glRenderbufferStorage)(GLenum target, GLenum internalformat,
-            GLsizei width, GLsizei height);
-    void (WINE_GLAPI *glRenderbufferStorageMultisample)(GLenum target, GLsizei samples,
-            GLenum internalformat, GLsizei width, GLsizei height);
-    void (WINE_GLAPI *glGetRenderbufferParameteriv)(GLenum target, GLenum pname, GLint *params);
-    GLboolean (WINE_GLAPI *glIsFramebuffer)(GLuint framebuffer);
-    void (WINE_GLAPI *glBindFramebuffer)(GLenum target, GLuint framebuffer);
-    void (WINE_GLAPI *glDeleteFramebuffers)(GLsizei n, const GLuint *framebuffers);
-    void (WINE_GLAPI *glGenFramebuffers)(GLsizei n, GLuint *framebuffers);
-    GLenum (WINE_GLAPI *glCheckFramebufferStatus)(GLenum target);
-    void (WINE_GLAPI *glFramebufferTexture)(GLenum target, GLenum attachment,
-            GLuint texture, GLint level);
-    void (WINE_GLAPI *glFramebufferTexture1D)(GLenum target, GLenum attachment,
-            GLenum textarget, GLuint texture, GLint level);
-    void (WINE_GLAPI *glFramebufferTexture2D)(GLenum target, GLenum attachment,
-            GLenum textarget, GLuint texture, GLint level);
-    void (WINE_GLAPI *glFramebufferTexture3D)(GLenum target, GLenum attachment,
-            GLenum textarget, GLuint texture, GLint level, GLint layer);
-    void (WINE_GLAPI *glFramebufferTextureLayer)(GLenum target, GLenum attachment,
-            GLuint texture, GLint level, GLint layer);
-    void (WINE_GLAPI *glFramebufferRenderbuffer)(GLenum target, GLenum attachment,
-            GLenum renderbuffertarget, GLuint renderbuffer);
-    void (WINE_GLAPI *glGetFramebufferAttachmentParameteriv)(GLenum target, GLenum attachment,
-            GLenum pname, GLint *params);
-    void (WINE_GLAPI *glBlitFramebuffer)(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
-            GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
-    void (WINE_GLAPI *glGenerateMipmap)(GLenum target);
-};
-
-struct wined3d_gl_limits
-{
-    UINT buffers;
-    UINT lights;
-    UINT textures;
-    UINT texture_coords;
-    unsigned int uniform_blocks[WINED3D_SHADER_TYPE_COUNT];
-    unsigned int samplers[WINED3D_SHADER_TYPE_COUNT];
-    unsigned int graphics_samplers;
-    unsigned int combined_samplers;
-    UINT general_combiners;
-    UINT user_clip_distances;
-    unsigned int texture_size;
-    UINT texture3d_size;
-    UINT anisotropy;
-    float shininess;
-    UINT samples;
-    UINT vertex_attribs;
-
-    unsigned int texture_buffer_offset_alignment;
-
-    unsigned int framebuffer_width;
-    unsigned int framebuffer_height;
-    unsigned int viewport_subpixel_bits;
-
-    UINT glsl_varyings;
-    UINT glsl_vs_float_constants;
-    UINT glsl_ps_float_constants;
-
-    UINT arb_vs_float_constants;
-    UINT arb_vs_native_constants;
-    UINT arb_vs_instructions;
-    UINT arb_vs_temps;
-    UINT arb_ps_float_constants;
-    UINT arb_ps_local_constants;
-    UINT arb_ps_native_constants;
-    UINT arb_ps_instructions;
-    UINT arb_ps_temps;
-};
-
 void wined3d_gl_limits_get_texture_unit_range(const struct wined3d_gl_limits *gl_limits,
         enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count) DECLSPEC_HIDDEN;
 void wined3d_gl_limits_get_uniform_block_range(const struct wined3d_gl_limits *gl_limits,
         enum wined3d_shader_type shader_type, unsigned int *base, unsigned int *count) DECLSPEC_HIDDEN;
-
-struct wined3d_gl_info
-{
-    unsigned int selected_gl_version;
-    unsigned int glsl_version;
-    struct wined3d_gl_limits limits;
-    DWORD reserved_glsl_constants, reserved_arb_constants;
-    DWORD quirks;
-    BOOL supported[WINED3D_GL_EXT_COUNT];
-    GLint wrap_lookup[WINED3D_TADDRESS_MIRROR_ONCE - WINED3D_TADDRESS_WRAP + 1];
-    float filling_convention_offset;
-
-    HGLRC (WINAPI *p_wglCreateContextAttribsARB)(HDC dc, HGLRC share, const GLint *attribs);
-    struct opengl_funcs gl_ops;
-    struct wined3d_fbo_ops fbo_ops;
-
-    void (WINE_GLAPI *p_glDisableWINE)(GLenum cap);
-    void (WINE_GLAPI *p_glEnableWINE)(GLenum cap);
-};
 
 static inline BOOL wined3d_fence_supported(const struct wined3d_gl_info *gl_info)
 {
