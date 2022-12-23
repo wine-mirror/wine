@@ -75,7 +75,7 @@ static HRESULT to_i4_array( DWORD *values, DWORD count, VARIANT *var )
     return S_OK;
 }
 
-static unsigned int reg_get_access_mask( IWbemContext *context )
+static unsigned int get_access_mask( IWbemContext *context )
 {
     VARIANT value;
 
@@ -106,7 +106,7 @@ static HRESULT create_key( HKEY root, const WCHAR *subkey, IWbemContext *context
 
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
-    res = RegCreateKeyExW( root, subkey, 0, NULL, 0, reg_get_access_mask( context ), NULL, &hkey, NULL );
+    res = RegCreateKeyExW( root, subkey, 0, NULL, 0, get_access_mask( context ), NULL, &hkey, NULL );
     set_variant( VT_UI4, res, NULL, retval );
     if (!res)
     {
@@ -172,7 +172,7 @@ static HRESULT enum_key( HKEY root, const WCHAR *subkey, VARIANT *names, IWbemCo
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
     if (!(strings = malloc( count * sizeof(BSTR) ))) return E_OUTOFMEMORY;
-    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_ENUMERATE_SUB_KEYS | reg_get_access_mask( context ), &hkey )))
+    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_ENUMERATE_SUB_KEYS | get_access_mask( context ), &hkey )))
     {
         set_variant( VT_UI4, res, NULL, retval );
         free( strings );
@@ -282,7 +282,7 @@ static HRESULT enum_values( HKEY root, const WCHAR *subkey, VARIANT *names, VARI
 
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
-    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_QUERY_VALUE | reg_get_access_mask( context ), &hkey ))) goto done;
+    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_QUERY_VALUE | get_access_mask( context ), &hkey ))) goto done;
     if ((res = RegQueryInfoKeyW( hkey, NULL, NULL, NULL, NULL, NULL, NULL, &count, &buflen, NULL, NULL, NULL )))
         goto done;
 
@@ -395,7 +395,7 @@ static HRESULT get_stringvalue( HKEY root, const WCHAR *subkey, const WCHAR *nam
 
     TRACE("%p, %s, %s\n", root, debugstr_w(subkey), debugstr_w(name));
 
-    mask = reg_get_access_mask( context );
+    mask = get_access_mask( context );
 
     if (mask & KEY_WOW64_64KEY)
         flags |= RRF_SUBKEY_WOW6464KEY;
@@ -504,7 +504,7 @@ static HRESULT get_binaryvalue( HKEY root, const WCHAR *subkey, const WCHAR *nam
 
     TRACE("%p, %s, %s\n", root, debugstr_w(subkey), debugstr_w(name));
 
-    mask = reg_get_access_mask( context );
+    mask = get_access_mask( context );
 
     if (mask & KEY_WOW64_64KEY)
         flags |= RRF_SUBKEY_WOW6464KEY;
@@ -592,7 +592,7 @@ static void set_stringvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, 
 
     TRACE("%p, %s, %s, %s\n", root, debugstr_w(subkey), debugstr_w(name), debugstr_w(value));
 
-    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_SET_VALUE | reg_get_access_mask( context ), &hkey )))
+    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_SET_VALUE | get_access_mask( context ), &hkey )))
     {
         set_variant( VT_UI4, res, NULL, retval );
         return;
@@ -675,7 +675,7 @@ static void set_dwordvalue( HKEY root, const WCHAR *subkey, const WCHAR *name, D
 
     TRACE( "%p, %s, %s, %#lx\n", root, debugstr_w(subkey), debugstr_w(name), value );
 
-    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_SET_VALUE | reg_get_access_mask( context ), &hkey )))
+    if ((res = RegOpenKeyExW( root, subkey, 0, KEY_SET_VALUE | get_access_mask( context ), &hkey )))
     {
         set_variant( VT_UI4, res, NULL, retval );
         return;
@@ -752,7 +752,7 @@ static void delete_key( HKEY root, const WCHAR *subkey, IWbemContext *context, V
 
     TRACE("%p, %s\n", root, debugstr_w(subkey));
 
-    res = RegDeleteKeyExW( root, subkey, reg_get_access_mask( context ), 0 );
+    res = RegDeleteKeyExW( root, subkey, get_access_mask( context ), 0 );
     set_variant( VT_UI4, res, NULL, retval );
 }
 
