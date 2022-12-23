@@ -166,7 +166,8 @@ static void load_registry_key( HKEY key, struct console_config *config )
     RegQueryValueExW( key, L"FaceName", 0, &type, (BYTE *)&config->face_name, &count );
 
     count = sizeof(val);
-    if (!RegQueryValueExW( key, L"FontPitchFamily", 0, &type, (BYTE *)&val, &count ))
+    if (!RegQueryValueExW( key, L"FontFamily", 0, &type, (BYTE *)&val, &count ) ||
+        !RegQueryValueExW( key, L"FontPitchFamily", 0, &type, (BYTE *)&val, &count ))
         config->font_pitch_family = val;
 
     count = sizeof(val);
@@ -330,7 +331,7 @@ static void save_registry_key( HKEY key, const struct console_config *config, BO
     if (save_all || config->font_pitch_family != default_config.font_pitch_family)
     {
         val = config->font_pitch_family;
-        RegSetValueExW( key, L"FontPitchFamily", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
+        RegSetValueExW( key, L"FontFamily", 0, REG_DWORD, (BYTE *)&val, sizeof(val) );
     }
 
     if (save_all || config->cell_height != default_config.cell_height ||
