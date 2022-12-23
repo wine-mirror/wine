@@ -259,6 +259,7 @@ HRESULT process_create(IWbemClassObject *obj, IWbemContext *context, IWbemClassO
 HRESULT reg_create_key(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 HRESULT reg_enum_key(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 HRESULT reg_enum_values(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
+HRESULT reg_get_binaryvalue(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 HRESULT reg_get_stringvalue(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 HRESULT reg_set_stringvalue(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 HRESULT reg_set_dwordvalue(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;

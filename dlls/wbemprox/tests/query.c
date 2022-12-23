@@ -1042,6 +1042,49 @@ static void test_StdRegProv( IWbemServices *services )
     IWbemClassObject_Release( out );
     IWbemClassObject_Release( sig_in );
 
+    hr = IWbemClassObject_GetMethod( reg, L"GetBinaryValue", 0, &sig_in, NULL );
+    ok( hr == S_OK, "failed to get GetStringValue method %#lx\n", hr );
+
+    hr = IWbemClassObject_SpawnInstance( sig_in, 0, &in );
+    ok( hr == S_OK, "failed to spawn instance %#lx\n", hr );
+
+    V_VT( &defkey ) = VT_I4;
+    V_I4( &defkey ) = 0x80000001;
+    hr = IWbemClassObject_Put( in, L"hDefKey", 0, &defkey, 0 );
+    ok( hr == S_OK, "failed to set root %#lx\n", hr );
+
+    V_VT( &subkey ) = VT_BSTR;
+    V_BSTR( &subkey ) = SysAllocString( L"Control Panel\\Desktop" );
+    hr = IWbemClassObject_Put( in, L"sSubKeyName", 0, &subkey, 0 );
+    ok( hr == S_OK, "failed to set subkey %#lx\n", hr );
+
+    V_VT( &valuename ) = VT_BSTR;
+    V_BSTR( &valuename ) = SysAllocString( L"UserPreferencesMask" );
+    hr = IWbemClassObject_Put( in, L"sValueName", 0, &valuename, 0 );
+    ok( hr == S_OK, "failed to set value name %#lx\n", hr );
+
+    out = NULL;
+    method = SysAllocString( L"GetBinaryValue" );
+    hr = IWbemServices_ExecMethod( services, class, method, 0, NULL, in, &out, NULL );
+    ok( hr == S_OK, "failed to execute method %#lx\n", hr );
+    SysFreeString( method );
+
+    type = 0xdeadbeef;
+    VariantInit( &retval );
+    hr = IWbemClassObject_Get( out, L"ReturnValue", 0, &retval, &type, NULL );
+    ok( hr == S_OK, "failed to get return value %#lx\n", hr );
+    ok( V_VT( &retval ) == VT_I4, "unexpected variant type %#x\n", V_VT( &retval ) );
+    ok( !V_I4( &retval ), "unexpected error %ld\n", V_I4( &retval ) );
+    ok( type == CIM_UINT32, "unexpected type %#lx\n", type );
+
+    check_property( out, L"uValue", VT_UI1|VT_ARRAY, CIM_UINT8|CIM_FLAG_ARRAY );
+
+    VariantClear( &valuename );
+    VariantClear( &subkey );
+    IWbemClassObject_Release( in );
+    IWbemClassObject_Release( out );
+    IWbemClassObject_Release( sig_in );
+
     IWbemClassObject_Release( reg );
     SysFreeString( class );
 }
