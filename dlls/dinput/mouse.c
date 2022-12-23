@@ -91,6 +91,17 @@ HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance,
     return DI_OK;
 }
 
+static BOOL CALLBACK init_object_properties( const DIDEVICEOBJECTINSTANCEW *instance, void *data )
+{
+    struct mouse *impl = (struct mouse *)data;
+    struct object_properties *properties = impl->base.object_properties + instance->dwOfs / sizeof(LONG);
+
+    properties->range_min = DIPROPRANGE_NOMIN;
+    properties->range_max = DIPROPRANGE_NOMAX;
+
+    return DIENUM_CONTINUE;
+}
+
 HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
     struct mouse *impl;
@@ -111,6 +122,15 @@ HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInp
     impl->base.caps.dwFirmwareRevision = 100;
     impl->base.caps.dwHardwareRevision = 100;
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
+
+    /* One object_properties per axis */
+    impl->base.object_properties = calloc( 3, sizeof(struct object_properties) );
+    if (!impl->base.object_properties)
+    {
+        IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
+        return E_OUTOFMEMORY;
+    }
+    IDirectInputDevice8_EnumObjects( &impl->base.IDirectInputDevice8W_iface, init_object_properties, impl, DIDFT_RELAXIS );
 
     get_app_key(&hkey, &appkey);
     if (!get_config_key( hkey, appkey, L"MouseWarpOverride", buffer, sizeof(buffer) ))

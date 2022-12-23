@@ -1063,7 +1063,8 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
         case (DWORD_PTR)DIPROP_DEADZONE:
         case (DWORD_PTR)DIPROP_SATURATION:
         case (DWORD_PTR)DIPROP_CALIBRATIONMODE:
-            if (!impl->object_properties) return DIERR_UNSUPPORTED;
+            /* not supported on the mouse or keyboard */
+            if (!(impl->caps.dwDevType & DIDEVTYPE_HID)) return DIERR_UNSUPPORTED;
             break;
 
         case (DWORD_PTR)DIPROP_FFLOAD:
