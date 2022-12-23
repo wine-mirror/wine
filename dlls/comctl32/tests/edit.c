@@ -2073,30 +2073,75 @@ do { \
     edit_pos_ok(test_left, format_rect.left - left_margin, left); \
 } while(0)
 
-static void test_text_position_style(DWORD style)
-{
-    HWND hwEdit;
-    HFONT font, oldFont;
-    HDC dc;
-    TEXTMETRICA metrics;
-    INT b, bm, b2, b3;
-    BOOL xb, single_line = !(style & ES_MULTILINE);
+/* Starting with Win10, multiline edit controls can have any value for height.
+ * Before, they always have a height which is a multiple of the font height.
+ * So detect which model we're running the tests on, and adjust the expected
+ * height accordingly.
+ */
 
-    b = GetSystemMetrics(SM_CYBORDER) + 1;
-    b2 = 2 * b;
-    b3 = 3 * b;
-    bm = b2 - 1;
+static BOOL old_height_model;
+
+static DWORD compute_height(BOOL single_line, unsigned line_height, unsigned incr, unsigned limit)
+{
+    if (single_line) return line_height;
+    if (incr >= limit) incr -= limit;
+    return old_height_model ? (line_height + incr) - ((line_height + incr) % line_height) : line_height + incr;
+}
+
+static void get_font_and_metrics(HFONT *font, TEXTMETRICA *metrics)
+{
+    HDC dc;
+    HFONT old_font;
+    BOOL xb;
 
     /* Get a stock font for which we can determine the metrics */
-    font = GetStockObject(SYSTEM_FONT);
-    ok (font != NULL, "GetStockObject SYSTEM_FONT failed\n");
+    *font = GetStockObject(SYSTEM_FONT);
+    ok (*font != NULL, "GetStockObject SYSTEM_FONT failed\n");
     dc = GetDC(NULL);
     ok (dc != NULL, "GetDC() failed\n");
-    oldFont = SelectObject(dc, font);
-    xb = GetTextMetricsA(dc, &metrics);
+    old_font = SelectObject(dc, font);
+    xb = GetTextMetricsA(dc, metrics);
     ok (xb, "GetTextMetrics failed\n");
-    SelectObject(dc, oldFont);
+    SelectObject(dc, old_font);
     ReleaseDC(NULL, dc);
+}
+
+static BOOL determine_height_model(void)
+{
+    HWND hedit;
+    HFONT font;
+    TEXTMETRICA metrics;
+    RECT format_rect;
+    BOOL ret = TRUE;
+
+    get_font_and_metrics(&font, &metrics);
+    hedit = create_child_editcontrol(ES_MULTILINE | ES_AUTOHSCROLL | ES_AUTOVSCROLL | WS_VISIBLE, 0);
+    SendMessageA(hedit, WM_SETFONT, (WPARAM) font, FALSE);
+
+    set_client_height(hedit, metrics.tmHeight + 1);
+    SendMessageA(hedit, EM_GETRECT, 0, (LPARAM) &format_rect);
+
+    old_height_model = TRUE;
+    if (format_rect.bottom - format_rect.top == metrics.tmHeight + 1)
+        old_height_model = FALSE;
+    else
+        ret = format_rect.bottom - format_rect.top == metrics.tmHeight;
+
+    destroy_child_editcontrol(hedit);
+    return ret;
+}
+
+static void test_text_position_style(DWORD style)
+{
+    HWND hedit;
+    HFONT font;
+    TEXTMETRICA metrics;
+    INT b, b2, incr;
+    BOOL single_line = !(style & ES_MULTILINE);
+
+    get_font_and_metrics(&font, &metrics);
+    b = GetSystemMetrics(SM_CYBORDER) + 1;
+    b2 = 2 * b;
 
     /* Windows' edit control has some bugs in multi-line mode:
      * - Sometimes the format rectangle doesn't get updated
@@ -2108,94 +2153,87 @@ static void test_text_position_style(DWORD style)
 
     /* Edit controls that are in a parent window */
 
-    hwEdit = create_child_editcontrol(style | WS_VISIBLE, 0);
-    SendMessageA(hwEdit, WM_SETFONT, (WPARAM) font, FALSE);
+    hedit = create_child_editcontrol(style | WS_VISIBLE, 0);
+    SendMessageA(hedit, WM_SETFONT, (WPARAM) font, FALSE);
     if (single_line)
-    check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 0);
-    check_pos(hwEdit, metrics.tmHeight     , 0, metrics.tmHeight    , 0);
-    check_pos(hwEdit, metrics.tmHeight +  1, 0, metrics.tmHeight    , 0);
-    check_pos(hwEdit, metrics.tmHeight +  2, 0, metrics.tmHeight    , 0);
-    check_pos(hwEdit, metrics.tmHeight + 10, 0, metrics.tmHeight    , 0);
-    destroy_child_editcontrol(hwEdit);
+    check_pos(hedit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 0);
+    for (incr = 0; incr < 4 * metrics.tmHeight; incr++)
+        check_pos(hedit, metrics.tmHeight + incr, 0,
+                  compute_height(single_line, metrics.tmHeight, incr, 0), 0);
+    destroy_child_editcontrol(hedit);
 
-    hwEdit = create_child_editcontrol(style | WS_BORDER | WS_VISIBLE, 0);
-    SendMessageA(hwEdit, WM_SETFONT, (WPARAM) font, FALSE);
+    hedit = create_child_editcontrol(style | WS_BORDER | WS_VISIBLE, 0);
+    SendMessageA(hedit, WM_SETFONT, (WPARAM) font, FALSE);
     if (single_line)
-    check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, b);
-    check_pos(hwEdit, metrics.tmHeight     , 0, metrics.tmHeight    , b);
-    check_pos(hwEdit, metrics.tmHeight +  1, 0, metrics.tmHeight    , b);
-    check_pos(hwEdit, metrics.tmHeight + bm, 0, metrics.tmHeight    , b);
-    check_pos(hwEdit, metrics.tmHeight + b2, b, metrics.tmHeight    , b);
-    check_pos(hwEdit, metrics.tmHeight + b3, b, metrics.tmHeight    , b);
-    destroy_child_editcontrol(hwEdit);
+    check_pos(hedit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, b);
+    for (incr = 0; incr < 4 * metrics.tmHeight; incr++)
+        check_pos(hedit, metrics.tmHeight + incr, incr >= b2 ? b : 0,
+                  compute_height(single_line, metrics.tmHeight, incr, b2), b);
+    destroy_child_editcontrol(hedit);
 
-    hwEdit = create_child_editcontrol(style | WS_VISIBLE, WS_EX_CLIENTEDGE);
-    SendMessageA(hwEdit, WM_SETFONT, (WPARAM) font, FALSE);
+    hedit = create_child_editcontrol(style | WS_VISIBLE, WS_EX_CLIENTEDGE);
+    SendMessageA(hedit, WM_SETFONT, (WPARAM) font, FALSE);
     if (single_line)
-    check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
-    check_pos(hwEdit, metrics.tmHeight     , 0, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight +  1, 0, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight +  2, 1, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight + 10, 1, metrics.tmHeight    , 1);
-    destroy_child_editcontrol(hwEdit);
+    check_pos(hedit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
+    for (incr = 0; incr < 4 * metrics.tmHeight; incr++)
+        check_pos(hedit, metrics.tmHeight + incr, incr >= 2 ? 1 : 0,
+                  compute_height(single_line, metrics.tmHeight, incr, 2), 1);
+    destroy_child_editcontrol(hedit);
 
-    hwEdit = create_child_editcontrol(style | WS_BORDER | WS_VISIBLE, WS_EX_CLIENTEDGE);
-    SendMessageA(hwEdit, WM_SETFONT, (WPARAM) font, FALSE);
+    hedit = create_child_editcontrol(style | WS_BORDER | WS_VISIBLE, WS_EX_CLIENTEDGE);
+    SendMessageA(hedit, WM_SETFONT, (WPARAM) font, FALSE);
     if (single_line)
-    check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
-    check_pos(hwEdit, metrics.tmHeight     , 0, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight +  1, 0, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight +  2, 1, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight + 10, 1, metrics.tmHeight    , 1);
-    destroy_child_editcontrol(hwEdit);
+    check_pos(hedit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
+    for (incr = 0; incr < 4 * metrics.tmHeight; incr++)
+        check_pos(hedit, metrics.tmHeight + incr, incr >= 2 ? 1 : 0,
+                  compute_height(single_line, metrics.tmHeight, incr, 2), 1);
+    destroy_child_editcontrol(hedit);
 
 
     /* Edit controls that are popup windows */
 
-    hwEdit = create_editcontrol(style | WS_POPUP, 0);
-    SendMessageA(hwEdit, WM_SETFONT, (WPARAM) font, FALSE);
+    hedit = create_editcontrol(style | WS_POPUP, 0);
+    SendMessageA(hedit, WM_SETFONT, (WPARAM) font, FALSE);
     if (single_line)
-    check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 0);
-    check_pos(hwEdit, metrics.tmHeight     , 0, metrics.tmHeight    , 0);
-    check_pos(hwEdit, metrics.tmHeight +  1, 0, metrics.tmHeight    , 0);
-    check_pos(hwEdit, metrics.tmHeight +  2, 0, metrics.tmHeight    , 0);
-    check_pos(hwEdit, metrics.tmHeight + 10, 0, metrics.tmHeight    , 0);
-    DestroyWindow(hwEdit);
+    check_pos(hedit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 0);
+    for (incr = 0; incr < 4 * metrics.tmHeight; incr++)
+        check_pos(hedit, metrics.tmHeight + incr, 0,
+                  compute_height(single_line, metrics.tmHeight, incr, 0), 0);
+    DestroyWindow(hedit);
 
-    hwEdit = create_editcontrol(style | WS_POPUP | WS_BORDER, 0);
-    SendMessageA(hwEdit, WM_SETFONT, (WPARAM) font, FALSE);
+    hedit = create_editcontrol(style | WS_POPUP | WS_BORDER, 0);
+    SendMessageA(hedit, WM_SETFONT, (WPARAM) font, FALSE);
     if (single_line)
-    check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, b);
-    check_pos(hwEdit, metrics.tmHeight     , 0, metrics.tmHeight    , b);
-    check_pos(hwEdit, metrics.tmHeight +  1, 0, metrics.tmHeight    , b);
-    check_pos(hwEdit, metrics.tmHeight + bm, 0, metrics.tmHeight    , b);
-    check_pos(hwEdit, metrics.tmHeight + b2, b, metrics.tmHeight    , b);
-    check_pos(hwEdit, metrics.tmHeight + b3, b, metrics.tmHeight    , b);
-    DestroyWindow(hwEdit);
+    check_pos(hedit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, b);
+    for (incr = 0; incr < 4 * metrics.tmHeight; incr++)
+        check_pos(hedit, metrics.tmHeight + incr, incr >= b2 ? b : 0,
+                  compute_height(single_line, metrics.tmHeight, incr, b2), b);
+    DestroyWindow(hedit);
 
-    hwEdit = create_editcontrol(style | WS_POPUP, WS_EX_CLIENTEDGE);
-    SendMessageA(hwEdit, WM_SETFONT, (WPARAM) font, FALSE);
+    hedit = create_editcontrol(style | WS_POPUP, WS_EX_CLIENTEDGE);
+    SendMessageA(hedit, WM_SETFONT, (WPARAM) font, FALSE);
     if (single_line)
-    check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
-    check_pos(hwEdit, metrics.tmHeight     , 0, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight +  1, 0, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight +  2, 1, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight + 10, 1, metrics.tmHeight    , 1);
-    DestroyWindow(hwEdit);
+    check_pos(hedit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
+    for (incr = 0; incr < 4 * metrics.tmHeight; incr++)
+        check_pos(hedit, metrics.tmHeight + incr, incr >= 2 ? 1 : 0,
+                  compute_height(single_line, metrics.tmHeight, incr, 2), 1);
+    DestroyWindow(hedit);
 
-    hwEdit = create_editcontrol(style | WS_POPUP | WS_BORDER, WS_EX_CLIENTEDGE);
-    SendMessageA(hwEdit, WM_SETFONT, (WPARAM) font, FALSE);
+    hedit = create_editcontrol(style | WS_POPUP | WS_BORDER, WS_EX_CLIENTEDGE);
+    SendMessageA(hedit, WM_SETFONT, (WPARAM) font, FALSE);
     if (single_line)
-    check_pos(hwEdit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
-    check_pos(hwEdit, metrics.tmHeight     , 0, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight +  1, 0, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight +  2, 1, metrics.tmHeight    , 1);
-    check_pos(hwEdit, metrics.tmHeight + 10, 1, metrics.tmHeight    , 1);
-    DestroyWindow(hwEdit);
+    check_pos(hedit, metrics.tmHeight -  1, 0, metrics.tmHeight - 1, 1);
+    for (incr = 0; incr < 4 * metrics.tmHeight; incr++)
+        check_pos(hedit, metrics.tmHeight + incr, incr >= 2 ? 1 : 0,
+                  compute_height(single_line, metrics.tmHeight, incr, 2), 1);
+    DestroyWindow(hedit);
 }
 
 static void test_text_position(void)
 {
+    ok (determine_height_model(), "Unable to guess the height model, forcing old one\n");
+    trace("EDIT: Using %s model for height computation\n", old_height_model ? "old" : "new");
+
     trace("EDIT: Text position (Single line)\n");
     test_text_position_style(ES_AUTOHSCROLL | ES_AUTOVSCROLL);
     trace("EDIT: Text position (Multi line)\n");
