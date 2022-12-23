@@ -67,6 +67,7 @@ struct object_properties
     LONG deadzone;
     LONG saturation;
     DWORD calibration_mode;
+    DWORD granularity;
 };
 
 enum device_status

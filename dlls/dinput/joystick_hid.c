@@ -1696,6 +1696,7 @@ static BOOL init_object_properties( struct hid_joystick *impl, struct hid_value_
     }
 
     properties->saturation = 10000;
+    properties->granularity = 1;
     return DIENUM_CONTINUE;
 }
 

@@ -1823,7 +1823,6 @@ static void test_sys_mouse( DWORD version )
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
     ok( hr == DI_OK, "GetProperty DIPROP_GRANULARITY returned %#lx\n", hr );
-    todo_wine
     ok( prop_dword.dwData == WHEEL_DELTA, "got %ld expected %ld\n", prop_dword.dwData, (DWORD)WHEEL_DELTA );
     prop_range.lMin = 0xdeadbeef;
     prop_range.lMax = 0xdeadbeef;

@@ -99,6 +99,12 @@ static BOOL CALLBACK init_object_properties( const DIDEVICEOBJECTINSTANCEW *inst
     properties->range_min = DIPROPRANGE_NOMIN;
     properties->range_max = DIPROPRANGE_NOMAX;
 
+    /* The z-axis (wheel) has a different granularity */
+    if (instance->dwOfs == DIMOFS_Z)
+        properties->granularity = WHEEL_DELTA;
+    else
+        properties->granularity = 1;
+
     return DIENUM_CONTINUE;
 }
 

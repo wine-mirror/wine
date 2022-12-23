@@ -1103,6 +1103,7 @@ static BOOL CALLBACK get_object_property( const DIDEVICEOBJECTINSTANCEW *instanc
     {
         .range_min = DIPROPRANGE_NOMIN,
         .range_max = DIPROPRANGE_NOMAX,
+        .granularity = 1,
     };
     struct get_object_property_params *params = context;
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( params->iface );
@@ -1155,7 +1156,7 @@ static BOOL CALLBACK get_object_property( const DIDEVICEOBJECTINSTANCEW *instanc
     case (DWORD_PTR)DIPROP_GRANULARITY:
     {
         DIPROPDWORD *value = (DIPROPDWORD *)params->header;
-        value->dwData = 1;
+        value->dwData = properties->granularity;
         return DIENUM_STOP;
     }
     case (DWORD_PTR)DIPROP_KEYNAME:
