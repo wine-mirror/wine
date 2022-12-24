@@ -6014,8 +6014,7 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
 {
     struct wined3d_device *wined3d_device = ddraw->wined3d_device;
     const DDSURFACEDESC2 *desc = &texture->surface_desc;
-    struct wined3d_resource_desc draw_texture_desc;
-    struct wined3d_texture *draw_texture;
+    struct wined3d_texture *draw_texture = NULL;
     struct ddraw_surface *parent;
     unsigned int bind_flags;
     unsigned int i;
@@ -6055,21 +6054,21 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
     else if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
         bind_flags |= WINED3D_BIND_RENDER_TARGET;
 
-    if (!need_draw_texture(bind_flags, wined3d_desc))
-        goto no_draw_texture;
-
-    draw_texture_desc = *wined3d_desc;
-    draw_texture_desc.bind_flags = bind_flags;
-    draw_texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
-    draw_texture_desc.usage = WINED3DUSAGE_PRIVATE;
-
-    if (FAILED(hr = wined3d_texture_create(wined3d_device, &draw_texture_desc, layers,
-            levels, 0, NULL, texture, &ddraw_texture_wined3d_parent_ops, &draw_texture)))
+    if (need_draw_texture(bind_flags, wined3d_desc))
     {
-        WARN("Failed to create draw texture, hr %#lx.\n", hr);
-        goto no_draw_texture;
+        struct wined3d_resource_desc draw_texture_desc;
+
+        draw_texture_desc = *wined3d_desc;
+        draw_texture_desc.bind_flags = bind_flags;
+        draw_texture_desc.access = WINED3D_RESOURCE_ACCESS_GPU;
+        draw_texture_desc.usage = WINED3DUSAGE_PRIVATE;
+
+        if (SUCCEEDED(hr = wined3d_texture_create(wined3d_device, &draw_texture_desc, layers,
+                levels, 0, NULL, texture, &ddraw_texture_wined3d_parent_ops, &draw_texture)))
+            wined3d_texture_decref(draw_texture);
+        else
+            WARN("Failed to create draw texture, hr %#lx.\n", hr);
     }
-    wined3d_texture_decref(draw_texture);
 
     /* Some applications assume surfaces will always be mapped at the same
      * address. Some of those also assume that this address is valid even when
@@ -6077,40 +6076,47 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
      * visible on the screen. The game Nox is such an application,
      * Commandos: Behind Enemy Lines is another. Setting
      * WINED3D_TEXTURE_CREATE_GET_DC_LENIENT will ensure this. */
-    if (FAILED(hr = wined3d_texture_create(wined3d_device, wined3d_desc, layers, levels,
-            WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL, NULL, &ddraw_null_wined3d_parent_ops,
-            wined3d_texture)))
-    {
-        parent = wined3d_texture_get_sub_resource_parent(draw_texture, 0);
-        if (texture->version == 7)
-            IDirectDrawSurface7_Release(&parent->IDirectDrawSurface7_iface);
-        else if (texture->version == 4)
-            IDirectDrawSurface4_Release(&parent->IDirectDrawSurface4_iface);
-        else
-            IDirectDrawSurface_Release(&parent->IDirectDrawSurface_iface);
-        return hr;
-    }
-    wined3d_resource_set_parent(wined3d_texture_get_resource(*wined3d_texture), texture);
-    for (i = 0; i < layers * levels; ++i)
-    {
-        parent = wined3d_texture_get_sub_resource_parent(draw_texture, i);
-        assert(parent->wined3d_texture == draw_texture);
-        parent->draw_texture = draw_texture;
-        parent->wined3d_texture = *wined3d_texture;
-        wined3d_texture_set_sub_resource_parent(*wined3d_texture, i, parent);
-        wined3d_texture_incref(*wined3d_texture);
-    }
-    wined3d_texture_decref(*wined3d_texture);
-    TRACE("Surface %p, created draw_texture %p, wined3d_texture %p.\n",
-            wined3d_texture_get_sub_resource_parent(draw_texture, 0), draw_texture, wined3d_texture);
-    return D3D_OK;
 
-no_draw_texture:
-    if (SUCCEEDED(hr = wined3d_texture_create(wined3d_device, wined3d_desc, layers, levels,
-            WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL, texture, &ddraw_texture_wined3d_parent_ops,
-            wined3d_texture)))
-        wined3d_texture_decref(*wined3d_texture);
-    return hr;
+    if (draw_texture)
+    {
+        if (FAILED(hr = wined3d_texture_create(wined3d_device, wined3d_desc,
+                layers, levels, WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL,
+                NULL, &ddraw_null_wined3d_parent_ops, wined3d_texture)))
+        {
+            parent = wined3d_texture_get_sub_resource_parent(draw_texture, 0);
+            if (texture->version == 7)
+                IDirectDrawSurface7_Release(&parent->IDirectDrawSurface7_iface);
+            else if (texture->version == 4)
+                IDirectDrawSurface4_Release(&parent->IDirectDrawSurface4_iface);
+            else
+                IDirectDrawSurface_Release(&parent->IDirectDrawSurface_iface);
+            return hr;
+        }
+
+        wined3d_resource_set_parent(wined3d_texture_get_resource(*wined3d_texture), texture);
+        for (i = 0; i < layers * levels; ++i)
+        {
+            parent = wined3d_texture_get_sub_resource_parent(draw_texture, i);
+            assert(parent->wined3d_texture == draw_texture);
+            parent->draw_texture = draw_texture;
+            parent->wined3d_texture = *wined3d_texture;
+            wined3d_texture_set_sub_resource_parent(*wined3d_texture, i, parent);
+            wined3d_texture_incref(*wined3d_texture);
+        }
+    }
+    else
+    {
+        if (FAILED(hr = wined3d_texture_create(wined3d_device, wined3d_desc,
+                layers, levels, WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL,
+                texture, &ddraw_texture_wined3d_parent_ops, wined3d_texture)))
+            return hr;
+    }
+
+    wined3d_texture_decref(*wined3d_texture);
+
+    TRACE("Surface %p, created draw_texture %p, wined3d_texture %p.\n",
+            wined3d_texture_get_sub_resource_parent(*wined3d_texture, 0), draw_texture, *wined3d_texture);
+    return D3D_OK;
 }
 
 HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
