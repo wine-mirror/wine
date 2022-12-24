@@ -4329,7 +4329,7 @@ void * CDECL wined3d_texture_get_sub_resource_parent(struct wined3d_texture *tex
 }
 
 void CDECL wined3d_texture_set_sub_resource_parent(struct wined3d_texture *texture,
-        unsigned int sub_resource_idx, void *parent)
+        unsigned int sub_resource_idx, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     TRACE("texture %p, sub_resource_idx %u, parent %p.\n", texture, sub_resource_idx, parent);
 
@@ -4337,6 +4337,7 @@ void CDECL wined3d_texture_set_sub_resource_parent(struct wined3d_texture *textu
         return;
 
     texture->sub_resources[sub_resource_idx].parent = parent;
+    texture->sub_resources[sub_resource_idx].parent_ops = parent_ops;
 }
 
 HRESULT CDECL wined3d_texture_get_sub_resource_desc(const struct wined3d_texture *texture,

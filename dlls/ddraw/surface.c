@@ -29,6 +29,8 @@ WINE_DECLARE_DEBUG_CHANNEL(fps);
 static struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSurface2 *iface);
 static struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface);
 
+static const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops;
+
 static inline struct ddraw_surface *impl_from_IDirectDrawGammaControl(IDirectDrawGammaControl *iface)
 {
     return CONTAINING_RECORD(iface, struct ddraw_surface, IDirectDrawGammaControl_iface);
@@ -1343,9 +1345,16 @@ static void ddraw_texture_rename_to(struct ddraw_texture *dst_texture, struct wi
     if (dst_surface->sub_resource_idx)
         ERR("Invalid sub-resource index %u for surface %p.\n", dst_surface->sub_resource_idx, dst_surface);
 
-    wined3d_texture_set_sub_resource_parent(wined3d_texture, 0, dst_surface);
     if (draw_texture)
-        wined3d_texture_set_sub_resource_parent(draw_texture, 0, dst_surface);
+    {
+        wined3d_texture_set_sub_resource_parent(draw_texture, 0, dst_surface, &ddraw_surface_wined3d_parent_ops);
+        wined3d_texture_set_sub_resource_parent(wined3d_texture, 0, dst_surface, &ddraw_null_wined3d_parent_ops);
+    }
+    else
+    {
+        wined3d_texture_set_sub_resource_parent(wined3d_texture, 0, dst_surface, &ddraw_surface_wined3d_parent_ops);
+    }
+
     wined3d_resource_set_parent(wined3d_texture_get_resource(wined3d_texture), dst_texture);
     if (draw_texture)
         wined3d_resource_set_parent(wined3d_texture_get_resource(draw_texture), dst_texture);
@@ -6132,7 +6141,7 @@ static HRESULT ddraw_texture_init(struct ddraw_texture *texture, struct ddraw *d
             assert(parent->wined3d_texture == draw_texture);
             parent->draw_texture = draw_texture;
             parent->wined3d_texture = wined3d_texture;
-            wined3d_texture_set_sub_resource_parent(wined3d_texture, i, parent);
+            wined3d_texture_set_sub_resource_parent(wined3d_texture, i, parent, &ddraw_null_wined3d_parent_ops);
             wined3d_texture_incref(wined3d_texture);
         }
     }
