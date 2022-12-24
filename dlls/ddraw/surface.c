@@ -4664,22 +4664,6 @@ static HRESULT WINAPI ddraw_surface1_SetClipper(IDirectDrawSurface *iface, IDire
     return ddraw_surface7_SetClipper(&surface->IDirectDrawSurface7_iface, clipper);
 }
 
-/*****************************************************************************
- * IDirectDrawSurface7::SetSurfaceDesc
- *
- * Sets the surface description. It can override the pixel format, the surface
- * memory, ...
- * It's not really tested.
- *
- * Params:
- * DDSD: Pointer to the new surface description to set
- * Flags: Some flags
- *
- * Returns:
- *  DD_OK on success
- *  DDERR_INVALIDPARAMS if DDSD is NULL
- *
- *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, DDSURFACEDESC2 *DDSD, DWORD Flags)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
@@ -4709,8 +4693,6 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
         return DDERR_INVALIDSURFACETYPE;
     }
 
-    /* Tests show that only LPSURFACE and PIXELFORMAT can be set, and LPSURFACE is required
-     * for PIXELFORMAT to work */
     if (DDSD->dwFlags & ~allowed_flags)
     {
         WARN("Invalid flags %#lx set, returning DDERR_INVALIDPARAMS\n", DDSD->dwFlags);
