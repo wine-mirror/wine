@@ -5995,6 +5995,19 @@ static HRESULT ddraw_surface_reserve_memory(struct wined3d_texture *wined3d_text
     return hr;
 }
 
+static bool need_draw_texture(unsigned int draw_bind_flags, const struct wined3d_resource_desc *desc)
+{
+    if (!draw_bind_flags)
+        return false;
+
+    /* If we have a GPU texture that includes all the necessary bind flags, we
+     * don't need a separate draw texture. */
+    if ((desc->access & WINED3D_RESOURCE_ACCESS_GPU) && ((desc->bind_flags & draw_bind_flags) == draw_bind_flags))
+        return false;
+
+    return true;
+}
+
 static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
         const struct wined3d_resource_desc *wined3d_desc, unsigned int layers, unsigned int levels,
         struct ddraw_texture *texture, struct wined3d_texture **wined3d_texture)
@@ -6042,7 +6055,7 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
     else if (desc->ddsCaps.dwCaps & DDSCAPS_3DDEVICE)
         bind_flags |= WINED3D_BIND_RENDER_TARGET;
 
-    if (!bind_flags || (wined3d_desc->access & WINED3D_RESOURCE_ACCESS_GPU && !(bind_flags & ~wined3d_desc->bind_flags)))
+    if (!need_draw_texture(bind_flags, wined3d_desc))
         goto no_draw_texture;
 
     draw_texture_desc = *wined3d_desc;
