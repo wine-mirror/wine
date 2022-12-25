@@ -6175,6 +6175,7 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
         {
             struct wined3d_sub_resource_desc wined3d_mip_desc;
             unsigned int sub_resource_idx = i * levels + j;
+            unsigned int row_pitch, slice_pitch;
             struct ddraw_surface *mip;
             DDSURFACEDESC2 *mip_desc;
 
@@ -6182,6 +6183,30 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
 
             mip->sysmem_fallback = sysmem_fallback;
             mip_desc = &mip->surface_desc;
+
+            *mip_desc = *desc;
+
+            wined3d_texture_get_pitch(*wined3d_texture, j, &row_pitch, &slice_pitch);
+            if (format_is_compressed(&desc->u4.ddpfPixelFormat))
+            {
+                if (desc->dwFlags & DDSD_LPSURFACE)
+                    mip_desc->u1.dwLinearSize = ~0u;
+                else
+                    mip_desc->u1.dwLinearSize = slice_pitch;
+                mip_desc->dwFlags |= DDSD_LINEARSIZE;
+                mip_desc->dwFlags &= ~DDSD_PITCH;
+            }
+            else
+            {
+                if (!(desc->dwFlags & DDSD_LPSURFACE))
+                    mip_desc->u1.lPitch = row_pitch;
+                mip_desc->dwFlags |= DDSD_PITCH;
+                mip_desc->dwFlags &= ~DDSD_LINEARSIZE;
+            }
+
+            mip_desc->dwFlags &= ~DDSD_LPSURFACE;
+            mip_desc->lpSurface = NULL;
+
             if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
                 mip_desc->u2.dwMipMapCount = levels - j;
 
@@ -6788,8 +6813,6 @@ void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
         const struct wined3d_parent_ops **parent_ops)
 {
     struct ddraw_texture *texture = wined3d_texture_get_parent(wined3d_texture);
-    unsigned int texture_level, row_pitch, slice_pitch;
-    DDSURFACEDESC2 *desc = &surface->surface_desc;
     unsigned int version = texture->version;
 
     surface->IDirectDrawSurface7_iface.lpVtbl = &ddraw_surface7_vtbl;
@@ -6820,28 +6843,7 @@ void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
         surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface_iface;
     }
 
-    *desc = texture->surface_desc;
     surface->first_attached = surface;
-
-    texture_level = desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP ? sub_resource_idx % desc->u2.dwMipMapCount : 0;
-    wined3d_texture_get_pitch(wined3d_texture, texture_level, &row_pitch, &slice_pitch);
-    if (format_is_compressed(&desc->u4.ddpfPixelFormat))
-    {
-        if (desc->dwFlags & DDSD_LPSURFACE)
-            desc->u1.dwLinearSize = ~0u;
-        else
-            desc->u1.dwLinearSize = slice_pitch;
-        desc->dwFlags |= DDSD_LINEARSIZE;
-        desc->dwFlags &= ~(DDSD_LPSURFACE | DDSD_PITCH);
-    }
-    else
-    {
-        if (!(desc->dwFlags & DDSD_LPSURFACE))
-            desc->u1.lPitch = row_pitch;
-        desc->dwFlags |= DDSD_PITCH;
-        desc->dwFlags &= ~(DDSD_LPSURFACE | DDSD_LINEARSIZE);
-    }
-    desc->lpSurface = NULL;
 
     wined3d_texture_incref(surface->wined3d_texture = wined3d_texture);
     surface->sub_resource_idx = sub_resource_idx;
