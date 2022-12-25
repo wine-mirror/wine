@@ -1325,6 +1325,36 @@ static unsigned int ddraw_swap_interval_from_flags(DWORD flags)
     }
 }
 
+static void ddraw_texture_rename_to(struct ddraw_texture *dst_texture, struct wined3d_texture *wined3d_texture,
+        struct wined3d_texture *draw_texture, struct wined3d_rendertarget_view *rtv, void *texture_memory)
+{
+    struct ddraw_surface *dst_surface = dst_texture->root;
+    struct wined3d_rendertarget_view *current_rtv;
+
+    /* We don't have to worry about potential texture bindings, since
+     * flippable surfaces can never be textures. */
+
+    current_rtv = wined3d_device_context_get_rendertarget_view(dst_surface->ddraw->immediate_context, 0);
+    if (current_rtv == dst_surface->wined3d_rtv)
+        wined3d_device_context_set_rendertarget_views(dst_surface->ddraw->immediate_context, 0, 1, &rtv, FALSE);
+    wined3d_rendertarget_view_set_parent(rtv, dst_surface);
+    dst_surface->wined3d_rtv = rtv;
+
+    if (dst_surface->sub_resource_idx)
+        ERR("Invalid sub-resource index %u for surface %p.\n", dst_surface->sub_resource_idx, dst_surface);
+
+    wined3d_texture_set_sub_resource_parent(wined3d_texture, 0, dst_surface);
+    if (draw_texture)
+        wined3d_texture_set_sub_resource_parent(draw_texture, 0, dst_surface);
+    wined3d_resource_set_parent(wined3d_texture_get_resource(wined3d_texture), dst_texture);
+    if (draw_texture)
+        wined3d_resource_set_parent(wined3d_texture_get_resource(draw_texture), dst_texture);
+    dst_surface->wined3d_texture = wined3d_texture;
+    dst_surface->draw_texture = draw_texture;
+
+    dst_texture->texture_memory = texture_memory;
+}
+
 /* FRAPS hooks IDirectDrawSurface::Flip and expects the version 1 method to be called when the
  * game uses later interfaces. */
 static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *iface,
@@ -1333,9 +1363,9 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
     struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface(iface);
     struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface(src);
     struct ddraw_texture *dst_ddraw_texture, *src_ddraw_texture;
-    struct wined3d_rendertarget_view *tmp_rtv, *src_rtv, *rtv;
-    DDSCAPS caps = {DDSCAPS_FLIP};
     struct wined3d_texture *texture, *draw_texture;
+    struct wined3d_rendertarget_view *tmp_rtv;
+    DDSCAPS caps = {DDSCAPS_FLIP};
     IDirectDrawSurface *current;
     void *texture_memory;
     HRESULT hr;
@@ -1359,10 +1389,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
     }
 
     tmp_rtv = ddraw_surface_get_rendertarget_view(dst_impl);
-    if (dst_impl->sub_resource_idx)
-        ERR("Invalid sub-resource index %u on surface %p.\n", dst_impl->sub_resource_idx, dst_impl);
     texture = dst_impl->wined3d_texture;
-    rtv = wined3d_device_context_get_rendertarget_view(dst_impl->ddraw->immediate_context, 0);
     dst_ddraw_texture = wined3d_texture_get_parent(dst_impl->wined3d_texture);
     texture_memory = dst_ddraw_texture->texture_memory;
     draw_texture = dst_impl->draw_texture;
@@ -1386,24 +1413,12 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
             }
         }
 
-        src_rtv = ddraw_surface_get_rendertarget_view(src_impl);
-        if (rtv == dst_impl->wined3d_rtv)
-            wined3d_device_context_set_rendertarget_views(dst_impl->ddraw->immediate_context, 0, 1, &src_rtv, FALSE);
-        wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
-        dst_impl->wined3d_rtv = src_rtv;
-        wined3d_texture_set_sub_resource_parent(src_impl->wined3d_texture, 0, dst_impl);
-        if (src_impl->draw_texture)
-            wined3d_texture_set_sub_resource_parent(src_impl->draw_texture, 0, dst_impl);
         src_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
-        dst_ddraw_texture->texture_memory = src_ddraw_texture->texture_memory;
-        wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), dst_ddraw_texture);
-        if (src_impl->draw_texture)
-            wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->draw_texture), dst_ddraw_texture);
+
+        ddraw_texture_rename_to(dst_ddraw_texture, src_impl->wined3d_texture, src_impl->draw_texture,
+                ddraw_surface_get_rendertarget_view(src_impl), src_ddraw_texture->texture_memory);
+
         dst_ddraw_texture = src_ddraw_texture;
-        if (src_impl->sub_resource_idx)
-            ERR("Invalid sub-resource index %u on surface %p.\n", src_impl->sub_resource_idx, src_impl);
-        dst_impl->wined3d_texture = src_impl->wined3d_texture;
-        dst_impl->draw_texture = src_impl->draw_texture;
     }
     else
     {
@@ -1423,44 +1438,17 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
             }
 
             src_impl = impl_from_IDirectDrawSurface(current);
-            src_rtv = ddraw_surface_get_rendertarget_view(src_impl);
-            if (rtv == dst_impl->wined3d_rtv)
-                wined3d_device_context_set_rendertarget_views(dst_impl->ddraw->immediate_context,
-                        0, 1, &src_rtv, FALSE);
-            wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
-            dst_impl->wined3d_rtv = src_rtv;
-            wined3d_texture_set_sub_resource_parent(src_impl->wined3d_texture, 0, dst_impl);
-            if (src_impl->draw_texture)
-                wined3d_texture_set_sub_resource_parent(src_impl->draw_texture, 0, dst_impl);
             src_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
-            dst_ddraw_texture->texture_memory = src_ddraw_texture->texture_memory;
-            wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), dst_ddraw_texture);
-            if (src_impl->draw_texture)
-                wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->draw_texture), dst_ddraw_texture);
+
+            ddraw_texture_rename_to(dst_ddraw_texture, src_impl->wined3d_texture, src_impl->draw_texture,
+                    ddraw_surface_get_rendertarget_view(src_impl), src_ddraw_texture->texture_memory);
+
             dst_ddraw_texture = src_ddraw_texture;
-            if (src_impl->sub_resource_idx)
-                ERR("Invalid sub-resource index %u on surface %p.\n", src_impl->sub_resource_idx, src_impl);
-            dst_impl->wined3d_texture = src_impl->wined3d_texture;
-            dst_impl->draw_texture = src_impl->draw_texture;
             dst_impl = src_impl;
         }
     }
 
-    /* We don't have to worry about potential texture bindings, since
-     * flippable surfaces can never be textures. */
-    if (rtv == src_impl->wined3d_rtv)
-        wined3d_device_context_set_rendertarget_views(dst_impl->ddraw->immediate_context, 0, 1, &tmp_rtv, FALSE);
-    wined3d_rendertarget_view_set_parent(tmp_rtv, src_impl);
-    src_impl->wined3d_rtv = tmp_rtv;
-    wined3d_texture_set_sub_resource_parent(texture, 0, src_impl);
-    if (draw_texture)
-        wined3d_texture_set_sub_resource_parent(draw_texture, 0, src_impl);
-    dst_ddraw_texture->texture_memory = texture_memory;
-    wined3d_resource_set_parent(wined3d_texture_get_resource(texture), dst_ddraw_texture);
-    if (draw_texture)
-        wined3d_resource_set_parent(wined3d_texture_get_resource(draw_texture), dst_ddraw_texture);
-    src_impl->wined3d_texture = texture;
-    src_impl->draw_texture = draw_texture;
+    ddraw_texture_rename_to(dst_ddraw_texture, texture, draw_texture, tmp_rtv, texture_memory);
 
     if (flags & ~(DDFLIP_NOVSYNC | DDFLIP_INTERVAL2 | DDFLIP_INTERVAL3 | DDFLIP_INTERVAL4))
     {
