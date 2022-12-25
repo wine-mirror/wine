@@ -2294,6 +2294,38 @@ static void test_permanence(void)
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "got %#lx\n", status);
 }
 
+static void test_driver_object_extension(void)
+{
+    NTSTATUS (WINAPI *pIoAllocateDriverObjectExtension)(PDRIVER_OBJECT, PVOID, ULONG, PVOID *);
+    PVOID (WINAPI *pIoGetDriverObjectExtension)(PDRIVER_OBJECT, PVOID);
+    NTSTATUS status;
+    void *driver_obj_ext = NULL;
+    void *get_obj_ext = NULL;
+
+    pIoAllocateDriverObjectExtension = get_proc_address("IoAllocateDriverObjectExtension");
+    pIoGetDriverObjectExtension = get_proc_address("IoGetDriverObjectExtension");
+
+    if (!pIoAllocateDriverObjectExtension)
+    {
+        win_skip("IoAllocateDriverObjectExtension is not available.\n");
+        return;
+    }
+
+    status = pIoAllocateDriverObjectExtension(driver_obj, NULL, 100, &driver_obj_ext);
+    todo_wine ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+    todo_wine ok(driver_obj_ext != NULL, "got NULL\n");
+
+    get_obj_ext = pIoGetDriverObjectExtension(driver_obj, NULL);
+    todo_wine ok(get_obj_ext == driver_obj_ext && get_obj_ext != NULL, "got %p != %p\n", get_obj_ext, driver_obj_ext);
+
+    status = pIoAllocateDriverObjectExtension(driver_obj, NULL, 100, &driver_obj_ext);
+    todo_wine ok(status == STATUS_OBJECT_NAME_COLLISION, "got %#lx\n", status);
+    ok(driver_obj_ext == NULL, "got %p\n", driver_obj_ext);
+
+    get_obj_ext = pIoGetDriverObjectExtension(driver_obj, (void *)0xdead);
+    ok(get_obj_ext == NULL, "got %p\n", get_obj_ext);
+}
+
 static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *stack)
 {
     void *buffer = irp->AssociatedIrp.SystemBuffer;
@@ -2337,6 +2369,7 @@ static NTSTATUS main_test(DEVICE_OBJECT *device, IRP *irp, IO_STACK_LOCATION *st
     test_dpc();
     test_process_memory(test_input);
     test_permanence();
+    test_driver_object_extension();
 
     IoMarkIrpPending(irp);
     IoQueueWorkItem(work_item, main_test_task, DelayedWorkQueue, irp);
