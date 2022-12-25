@@ -5912,6 +5912,49 @@ static const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops =
     ddraw_surface_wined3d_object_destroyed,
 };
 
+static void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
+        struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx)
+{
+    struct ddraw_texture *texture = wined3d_texture_get_parent(wined3d_texture);
+    unsigned int version = texture->version;
+
+    surface->IDirectDrawSurface7_iface.lpVtbl = &ddraw_surface7_vtbl;
+    surface->IDirectDrawSurface4_iface.lpVtbl = &ddraw_surface4_vtbl;
+    surface->IDirectDrawSurface3_iface.lpVtbl = &ddraw_surface3_vtbl;
+    surface->IDirectDrawSurface2_iface.lpVtbl = &ddraw_surface2_vtbl;
+    surface->IDirectDrawSurface_iface.lpVtbl = &ddraw_surface1_vtbl;
+    surface->IDirectDrawGammaControl_iface.lpVtbl = &ddraw_gamma_control_vtbl;
+    surface->IDirect3DTexture2_iface.lpVtbl = &d3d_texture2_vtbl;
+    surface->IDirect3DTexture_iface.lpVtbl = &d3d_texture1_vtbl;
+    surface->iface_count = 1;
+    surface->version = version;
+    surface->ddraw = ddraw;
+
+    if (version == 7)
+    {
+        surface->ref7 = 1;
+        surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface7_iface;
+    }
+    else if (version == 4)
+    {
+        surface->ref4 = 1;
+        surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface4_iface;
+    }
+    else
+    {
+        surface->ref1 = 1;
+        surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface_iface;
+    }
+
+    surface->first_attached = surface;
+
+    wined3d_texture_incref(surface->wined3d_texture = wined3d_texture);
+    surface->sub_resource_idx = sub_resource_idx;
+    surface->texture_location = DDRAW_SURFACE_LOCATION_DEFAULT;
+
+    wined3d_private_store_init(&surface->private_store);
+}
+
 static void STDMETHODCALLTYPE ddraw_texture_wined3d_object_destroyed(void *parent)
 {
     struct ddraw_texture *texture = parent;
@@ -6834,49 +6877,6 @@ fail:
         IDirectDrawSurface_Release(&root->IDirectDrawSurface_iface);
 
     return hr;
-}
-
-void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
-        struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx)
-{
-    struct ddraw_texture *texture = wined3d_texture_get_parent(wined3d_texture);
-    unsigned int version = texture->version;
-
-    surface->IDirectDrawSurface7_iface.lpVtbl = &ddraw_surface7_vtbl;
-    surface->IDirectDrawSurface4_iface.lpVtbl = &ddraw_surface4_vtbl;
-    surface->IDirectDrawSurface3_iface.lpVtbl = &ddraw_surface3_vtbl;
-    surface->IDirectDrawSurface2_iface.lpVtbl = &ddraw_surface2_vtbl;
-    surface->IDirectDrawSurface_iface.lpVtbl = &ddraw_surface1_vtbl;
-    surface->IDirectDrawGammaControl_iface.lpVtbl = &ddraw_gamma_control_vtbl;
-    surface->IDirect3DTexture2_iface.lpVtbl = &d3d_texture2_vtbl;
-    surface->IDirect3DTexture_iface.lpVtbl = &d3d_texture1_vtbl;
-    surface->iface_count = 1;
-    surface->version = version;
-    surface->ddraw = ddraw;
-
-    if (version == 7)
-    {
-        surface->ref7 = 1;
-        surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface7_iface;
-    }
-    else if (version == 4)
-    {
-        surface->ref4 = 1;
-        surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface4_iface;
-    }
-    else
-    {
-        surface->ref1 = 1;
-        surface->texture_outer = (IUnknown *)&surface->IDirectDrawSurface_iface;
-    }
-
-    surface->first_attached = surface;
-
-    wined3d_texture_incref(surface->wined3d_texture = wined3d_texture);
-    surface->sub_resource_idx = sub_resource_idx;
-    surface->texture_location = DDRAW_SURFACE_LOCATION_DEFAULT;
-
-    wined3d_private_store_init(&surface->private_store);
 }
 
 static void STDMETHODCALLTYPE view_wined3d_object_destroyed(void *parent)
