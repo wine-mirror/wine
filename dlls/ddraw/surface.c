@@ -30,6 +30,7 @@ static struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface2(IDirectDrawSur
 static struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSurface3 *iface);
 
 static const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops;
+static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops;
 
 static inline struct ddraw_surface *impl_from_IDirectDrawGammaControl(IDirectDrawGammaControl *iface)
 {
@@ -1349,15 +1350,18 @@ static void ddraw_texture_rename_to(struct ddraw_texture *dst_texture, struct wi
     {
         wined3d_texture_set_sub_resource_parent(draw_texture, 0, dst_surface, &ddraw_surface_wined3d_parent_ops);
         wined3d_texture_set_sub_resource_parent(wined3d_texture, 0, dst_surface, &ddraw_null_wined3d_parent_ops);
+        wined3d_resource_set_parent(wined3d_texture_get_resource(draw_texture),
+                dst_texture, &ddraw_texture_wined3d_parent_ops);
+        wined3d_resource_set_parent(wined3d_texture_get_resource(wined3d_texture),
+                dst_texture, &ddraw_null_wined3d_parent_ops);
     }
     else
     {
         wined3d_texture_set_sub_resource_parent(wined3d_texture, 0, dst_surface, &ddraw_surface_wined3d_parent_ops);
+        wined3d_resource_set_parent(wined3d_texture_get_resource(wined3d_texture),
+                dst_texture, &ddraw_texture_wined3d_parent_ops);
     }
 
-    wined3d_resource_set_parent(wined3d_texture_get_resource(wined3d_texture), dst_texture);
-    if (draw_texture)
-        wined3d_resource_set_parent(wined3d_texture_get_resource(draw_texture), dst_texture);
     dst_surface->wined3d_texture = wined3d_texture;
     dst_surface->draw_texture = draw_texture;
 
@@ -6134,7 +6138,9 @@ static HRESULT ddraw_texture_init(struct ddraw_texture *texture, struct ddraw *d
                 NULL, &ddraw_null_wined3d_parent_ops, &wined3d_texture)))
             goto fail;
 
-        wined3d_resource_set_parent(wined3d_texture_get_resource(wined3d_texture), texture);
+        wined3d_resource_set_parent(wined3d_texture_get_resource(wined3d_texture),
+                texture, &ddraw_null_wined3d_parent_ops);
+
         for (i = 0; i < layers * levels; ++i)
         {
             parent = wined3d_texture_get_sub_resource_parent(draw_texture, i);

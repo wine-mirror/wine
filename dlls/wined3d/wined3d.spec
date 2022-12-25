@@ -195,7 +195,7 @@
 @ cdecl wined3d_resource_get_priority(ptr)
 @ cdecl wined3d_resource_map(ptr long ptr ptr long)
 @ cdecl wined3d_resource_preload(ptr)
-@ cdecl wined3d_resource_set_parent(ptr ptr)
+@ cdecl wined3d_resource_set_parent(ptr ptr ptr)
 @ cdecl wined3d_resource_set_priority(ptr long)
 @ cdecl wined3d_resource_unmap(ptr long)
 
