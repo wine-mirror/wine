@@ -6051,13 +6051,13 @@ static bool need_draw_texture(unsigned int draw_bind_flags, const struct wined3d
 
 static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
         unsigned int layers, unsigned int levels, struct ddraw_texture *texture,
-        bool sysmem_fallback, struct wined3d_texture **wined3d_texture)
+        bool sysmem_fallback, bool reserve_memory, struct wined3d_texture **wined3d_texture)
 {
     struct wined3d_device *wined3d_device = ddraw->wined3d_device;
     const DDSURFACEDESC2 *desc = &texture->surface_desc;
     struct wined3d_texture *draw_texture = NULL;
     struct wined3d_resource_desc wined3d_desc;
-    struct ddraw_surface *parent;
+    struct ddraw_surface *parent, *root;
     unsigned int bind_flags;
     unsigned int pitch = 0;
     unsigned int i;
@@ -6135,16 +6135,7 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
         if (FAILED(hr = wined3d_texture_create(wined3d_device, &wined3d_desc,
                 layers, levels, WINED3D_TEXTURE_CREATE_GET_DC_LENIENT, NULL,
                 NULL, &ddraw_null_wined3d_parent_ops, wined3d_texture)))
-        {
-            parent = wined3d_texture_get_sub_resource_parent(draw_texture, 0);
-            if (texture->version == 7)
-                IDirectDrawSurface7_Release(&parent->IDirectDrawSurface7_iface);
-            else if (texture->version == 4)
-                IDirectDrawSurface4_Release(&parent->IDirectDrawSurface4_iface);
-            else
-                IDirectDrawSurface_Release(&parent->IDirectDrawSurface_iface);
-            return hr;
-        }
+            goto fail;
 
         wined3d_resource_set_parent(wined3d_texture_get_resource(*wined3d_texture), texture);
         for (i = 0; i < layers * levels; ++i)
@@ -6170,8 +6161,26 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
             WINED3D_MULTISAMPLE_NONE, 0, desc->lpSurface, pitch)))
     {
         ERR("Failed to set surface memory, hr %#lx.\n", hr);
-        return hr;
+        goto fail;
     }
+
+    root = wined3d_texture_get_sub_resource_parent(*wined3d_texture, 0);
+    texture->root = root;
+
+    wined3d_device_incref(texture->wined3d_device = ddraw->wined3d_device);
+
+    if (desc->dwFlags & DDSD_CKDESTOVERLAY)
+        ddraw_surface_set_wined3d_textures_colour_key(root, DDCKEY_DESTOVERLAY,
+                (struct wined3d_color_key *)&desc->u3.ddckCKDestOverlay);
+    if (desc->dwFlags & DDSD_CKDESTBLT)
+        ddraw_surface_set_wined3d_textures_colour_key(root, DDCKEY_DESTBLT,
+                (struct wined3d_color_key *)&desc->ddckCKDestBlt);
+    if (desc->dwFlags & DDSD_CKSRCOVERLAY)
+        ddraw_surface_set_wined3d_textures_colour_key(root, DDCKEY_SRCOVERLAY,
+                (struct wined3d_color_key *)&desc->ddckCKSrcOverlay);
+    if (desc->dwFlags & DDSD_CKSRCBLT)
+        ddraw_surface_set_wined3d_textures_colour_key(root, DDCKEY_SRCBLT,
+                (struct wined3d_color_key *)&desc->ddckCKSrcBlt);
 
     for (i = 0; i < layers * levels; ++i)
     {
@@ -6182,9 +6191,24 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
 
     wined3d_texture_decref(*wined3d_texture);
 
-    TRACE("Surface %p, created draw_texture %p, wined3d_texture %p.\n",
-            wined3d_texture_get_sub_resource_parent(*wined3d_texture, 0), draw_texture, *wined3d_texture);
+    if (reserve_memory && FAILED(hr = ddraw_surface_reserve_memory(*wined3d_texture, 1)))
+    {
+        hr = hr_ddraw_from_wined3d(hr);
+        goto fail;
+    }
+
+    TRACE("Surface %p, created draw_texture %p, wined3d_texture %p.\n", root, draw_texture, *wined3d_texture);
     return D3D_OK;
+
+fail:
+    parent = wined3d_texture_get_sub_resource_parent(draw_texture, 0);
+    if (texture->version == 7)
+        IDirectDrawSurface7_Release(&parent->IDirectDrawSurface7_iface);
+    else if (texture->version == 4)
+        IDirectDrawSurface4_Release(&parent->IDirectDrawSurface4_iface);
+    else
+        IDirectDrawSurface_Release(&parent->IDirectDrawSurface_iface);
+    return hr;
 }
 
 HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
@@ -6199,7 +6223,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     struct ddraw_texture *texture;
     BOOL sysmem_fallback = FALSE;
     unsigned int layers = 1;
-    BOOL reserve_memory;
+    bool reserve_memory;
     UINT levels, i, j;
     HRESULT hr;
 
@@ -6622,32 +6646,20 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
         layers = 6;
 
+    reserve_memory = !(desc->dwFlags & DDSD_LPSURFACE)
+            && desc->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY
+            && wined3d_display_mode_format.u1.dwRGBBitCount <= 16;
+
     if (FAILED(hr = ddraw_surface_create_wined3d_texture(ddraw, layers, levels,
-            texture, sysmem_fallback, &wined3d_texture)))
+            texture, sysmem_fallback, reserve_memory, &wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
         heap_free(texture);
         return hr_ddraw_from_wined3d(hr);
     }
 
-    root = wined3d_texture_get_sub_resource_parent(wined3d_texture, 0);
-
+    root = texture->root;
     root->is_root = TRUE;
-    texture->root = root;
-    wined3d_device_incref(texture->wined3d_device = ddraw->wined3d_device);
-
-    if (desc->dwFlags & DDSD_CKDESTOVERLAY)
-        ddraw_surface_set_wined3d_textures_colour_key(root, DDCKEY_DESTOVERLAY,
-                (struct wined3d_color_key *)&desc->u3.ddckCKDestOverlay);
-    if (desc->dwFlags & DDSD_CKDESTBLT)
-        ddraw_surface_set_wined3d_textures_colour_key(root, DDCKEY_DESTBLT,
-                (struct wined3d_color_key *)&desc->ddckCKDestBlt);
-    if (desc->dwFlags & DDSD_CKSRCOVERLAY)
-        ddraw_surface_set_wined3d_textures_colour_key(root, DDCKEY_SRCOVERLAY,
-                (struct wined3d_color_key *)&desc->ddckCKSrcOverlay);
-    if (desc->dwFlags & DDSD_CKSRCBLT)
-        ddraw_surface_set_wined3d_textures_colour_key(root, DDCKEY_SRCBLT,
-                (struct wined3d_color_key *)&desc->ddckCKSrcBlt);
 
     for (i = 0; i < layers; ++i)
     {
@@ -6709,16 +6721,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         }
     }
 
-    reserve_memory = !(desc->dwFlags & DDSD_LPSURFACE)
-            && desc->ddsCaps.dwCaps & DDSCAPS_VIDEOMEMORY
-            && wined3d_display_mode_format.u1.dwRGBBitCount <= 16;
-
-    if (reserve_memory && FAILED(hr = ddraw_surface_reserve_memory(wined3d_texture, layers * levels)))
-    {
-        ERR("Failed to reserve surface memory, hr %#lx.\n", hr);
-        goto fail;
-    }
-
     if (desc->dwFlags & DDSD_BACKBUFFERCOUNT)
     {
         unsigned int count = desc->u5.dwBackBufferCount;
@@ -6747,35 +6749,15 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             desc->u5.dwBackBufferCount = 0;
 
             if (FAILED(hr = ddraw_surface_create_wined3d_texture(ddraw, 1, 1,
-                    texture, sysmem_fallback, &wined3d_texture)))
+                    texture, sysmem_fallback, reserve_memory, &wined3d_texture)))
             {
                 heap_free(texture);
                 hr = hr_ddraw_from_wined3d(hr);
                 goto fail;
             }
 
-            last = wined3d_texture_get_sub_resource_parent(wined3d_texture, 0);
-            texture->root = last;
-            wined3d_device_incref(texture->wined3d_device = ddraw->wined3d_device);
+            last = texture->root;
 
-            if (desc->dwFlags & DDSD_CKDESTOVERLAY)
-                wined3d_texture_set_color_key(wined3d_texture, DDCKEY_DESTOVERLAY,
-                        (struct wined3d_color_key *)&desc->u3.ddckCKDestOverlay);
-            if (desc->dwFlags & DDSD_CKDESTBLT)
-                wined3d_texture_set_color_key(wined3d_texture, DDCKEY_DESTBLT,
-                        (struct wined3d_color_key *)&desc->ddckCKDestBlt);
-            if (desc->dwFlags & DDSD_CKSRCOVERLAY)
-                wined3d_texture_set_color_key(wined3d_texture, DDCKEY_SRCOVERLAY,
-                        (struct wined3d_color_key *)&desc->ddckCKSrcOverlay);
-            if (desc->dwFlags & DDSD_CKSRCBLT)
-                wined3d_texture_set_color_key(wined3d_texture, DDCKEY_SRCBLT,
-                        (struct wined3d_color_key *)&desc->ddckCKSrcBlt);
-
-            if (reserve_memory && FAILED(hr = ddraw_surface_reserve_memory(wined3d_texture, 1)))
-            {
-                hr = hr_ddraw_from_wined3d(hr);
-                goto fail;
-            }
             *attach = last;
             attach = &last->complex_array[0];
         }
