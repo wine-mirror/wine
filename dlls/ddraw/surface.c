@@ -6060,7 +6060,7 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
     struct ddraw_surface *parent, *root;
     unsigned int bind_flags;
     unsigned int pitch = 0;
-    unsigned int i;
+    unsigned int i, j;
     HRESULT hr;
 
     wined3d_resource_desc_from_ddraw(ddraw, &wined3d_desc, desc);
@@ -6167,6 +6167,73 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
     root = wined3d_texture_get_sub_resource_parent(*wined3d_texture, 0);
     texture->root = root;
 
+    for (i = 0; i < layers; ++i)
+    {
+        struct ddraw_surface **attach = &root->complex_array[layers - 1 - i];
+
+        for (j = 0; j < levels; ++j)
+        {
+            struct wined3d_sub_resource_desc wined3d_mip_desc;
+            unsigned int sub_resource_idx = i * levels + j;
+            struct ddraw_surface *mip;
+            DDSURFACEDESC2 *mip_desc;
+
+            mip = wined3d_texture_get_sub_resource_parent(*wined3d_texture, sub_resource_idx);
+
+            mip->sysmem_fallback = sysmem_fallback;
+            mip_desc = &mip->surface_desc;
+            if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
+                mip_desc->u2.dwMipMapCount = levels - j;
+
+            if (j)
+            {
+                wined3d_texture_get_sub_resource_desc(*wined3d_texture, sub_resource_idx, &wined3d_mip_desc);
+                mip_desc->dwWidth = wined3d_mip_desc.width;
+                mip_desc->dwHeight = wined3d_mip_desc.height;
+
+                mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
+            }
+            else
+            {
+                mip_desc->ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
+            }
+
+            if (mip_desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+            {
+                mip_desc->ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
+
+                switch (i)
+                {
+                    case WINED3D_CUBEMAP_FACE_POSITIVE_X:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_NEGATIVE_X:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_POSITIVE_Y:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_NEGATIVE_Y:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_POSITIVE_Z:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ;
+                        break;
+                    case WINED3D_CUBEMAP_FACE_NEGATIVE_Z:
+                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ;
+                        break;
+                }
+
+            }
+
+            if (mip == root)
+                continue;
+
+            *attach = mip;
+            attach = &mip->complex_array[0];
+        }
+    }
+
     wined3d_device_incref(texture->wined3d_device = ddraw->wined3d_device);
 
     if (desc->dwFlags & DDSD_CKDESTOVERLAY)
@@ -6181,13 +6248,6 @@ static HRESULT ddraw_surface_create_wined3d_texture(struct ddraw *ddraw,
     if (desc->dwFlags & DDSD_CKSRCBLT)
         ddraw_surface_set_wined3d_textures_colour_key(root, DDCKEY_SRCBLT,
                 (struct wined3d_color_key *)&desc->ddckCKSrcBlt);
-
-    for (i = 0; i < layers * levels; ++i)
-    {
-        struct ddraw_surface *surface = wined3d_texture_get_sub_resource_parent(*wined3d_texture, i);
-
-        surface->sysmem_fallback = sysmem_fallback;
-    }
 
     wined3d_texture_decref(*wined3d_texture);
 
@@ -6214,17 +6274,16 @@ fail:
 HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
         struct ddraw_surface **surface, IUnknown *outer_unknown, unsigned int version)
 {
-    struct wined3d_sub_resource_desc wined3d_mip_desc;
-    struct ddraw_surface *root, *mip, **attach;
     DDPIXELFORMAT wined3d_display_mode_format;
     struct wined3d_texture *wined3d_texture;
+    struct ddraw_surface *root, **attach;
     struct wined3d_display_mode mode;
-    DDSURFACEDESC2 *desc, *mip_desc;
     struct ddraw_texture *texture;
     BOOL sysmem_fallback = FALSE;
     unsigned int layers = 1;
+    DDSURFACEDESC2 *desc;
     bool reserve_memory;
-    UINT levels, i, j;
+    UINT levels, i;
     HRESULT hr;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p, version %u.\n",
@@ -6660,66 +6719,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
     root = texture->root;
     root->is_root = TRUE;
-
-    for (i = 0; i < layers; ++i)
-    {
-        attach = &root->complex_array[layers - 1 - i];
-
-        for (j = 0; j < levels; ++j)
-        {
-            mip = wined3d_texture_get_sub_resource_parent(wined3d_texture, i * levels + j);
-            mip_desc = &mip->surface_desc;
-            if (desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP)
-                mip_desc->u2.dwMipMapCount = levels - j;
-
-            if (j)
-            {
-                wined3d_texture_get_sub_resource_desc(wined3d_texture, i * levels + j, &wined3d_mip_desc);
-                mip_desc->dwWidth = wined3d_mip_desc.width;
-                mip_desc->dwHeight = wined3d_mip_desc.height;
-
-                mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
-            }
-            else
-            {
-                mip_desc->ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
-            }
-
-            if (mip_desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-            {
-                mip_desc->ddsCaps.dwCaps2 &= ~DDSCAPS2_CUBEMAP_ALLFACES;
-
-                switch (i)
-                {
-                    case WINED3D_CUBEMAP_FACE_POSITIVE_X:
-                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEX;
-                        break;
-                    case WINED3D_CUBEMAP_FACE_NEGATIVE_X:
-                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEX;
-                        break;
-                    case WINED3D_CUBEMAP_FACE_POSITIVE_Y:
-                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEY;
-                        break;
-                    case WINED3D_CUBEMAP_FACE_NEGATIVE_Y:
-                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEY;
-                        break;
-                    case WINED3D_CUBEMAP_FACE_POSITIVE_Z:
-                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_POSITIVEZ;
-                        break;
-                    case WINED3D_CUBEMAP_FACE_NEGATIVE_Z:
-                        mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_CUBEMAP_NEGATIVEZ;
-                        break;
-                }
-
-            }
-
-            if (mip == root)
-                continue;
-
-            *attach = mip;
-            attach = &mip->complex_array[0];
-        }
-    }
 
     if (desc->dwFlags & DDSD_BACKBUFFERCOUNT)
     {
