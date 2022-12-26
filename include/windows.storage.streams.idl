@@ -30,14 +30,19 @@ namespace Windows.Storage.Streams {
     interface IBufferStatics;
     interface IContentTypeProvider;
     interface IInputStream;
+    interface IInputStreamReference;
     interface IOutputStream;
     interface IRandomAccessStream;
+    interface IRandomAccessStreamReference;
+    interface IRandomAccessStreamStatics;
     interface IRandomAccessStreamWithContentType;
     runtimeclass Buffer;
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IBuffer *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.Streams.IRandomAccessStream *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IBuffer *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.Streams.IRandomAccessStream *>;
     }
 
     [
@@ -76,6 +81,26 @@ namespace Windows.Storage.Streams {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(905a0fe1-bc53-11df-8c49-001e4fc686da),
+    ]
+    interface IRandomAccessStream : IInspectable
+        requires Windows.Foundation.IClosable,
+                 Windows.Storage.Streams.IInputStream,
+                 Windows.Storage.Streams.IOutputStream
+    {
+        [propget] HRESULT Size([out, retval] UINT64 *value);
+        [propput] HRESULT Size([in] UINT64 value);
+        HRESULT GetInputStreamAt([in] UINT64 position, [out, retval] Windows.Storage.Streams.IInputStream **stream);
+        HRESULT GetOutputStreamAt([in] UINT64 position, [out, retval] Windows.Storage.Streams.IOutputStream **stream);
+        [propget] HRESULT Position([out, retval] UINT64 *value);
+        HRESULT Seek([in] UINT64 position);
+        HRESULT CloneStream([out, retval] Windows.Storage.Streams.IRandomAccessStream **stream);
+        [propget] HRESULT CanRead([out, retval] boolean *value);
+        [propget] HRESULT CanWrite([out, retval] boolean *value);
+    }
+
+    [
         uuid(cc254827-4b3d-438f-9232-10c76bc7e038),
     ]
     interface IRandomAccessStreamWithContentType : IInspectable
@@ -85,6 +110,15 @@ namespace Windows.Storage.Streams {
             Windows.Storage.Streams.IInputStream,
             Windows.Storage.Streams.IOutputStream,
             Windows.Storage.Streams.IContentTypeProvider
+    {
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Storage.Streams.IRandomAccessStreamStatics, Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    runtimeclass RandomAccessStream
     {
     }
 
