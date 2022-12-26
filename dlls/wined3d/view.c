@@ -414,11 +414,13 @@ void * CDECL wined3d_rendertarget_view_get_sub_resource_parent(const struct wine
     return texture->sub_resources[view->sub_resource_idx].parent;
 }
 
-void CDECL wined3d_rendertarget_view_set_parent(struct wined3d_rendertarget_view *view, void *parent)
+void CDECL wined3d_rendertarget_view_set_parent(struct wined3d_rendertarget_view *view,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    TRACE("view %p, parent %p.\n", view, parent);
+    TRACE("view %p, parent %p, parent_ops %p.\n", view, parent, parent_ops);
 
     view->parent = parent;
+    view->parent_ops = parent_ops;
 }
 
 struct wined3d_resource * CDECL wined3d_rendertarget_view_get_resource(const struct wined3d_rendertarget_view *view)

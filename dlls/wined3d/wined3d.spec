@@ -188,7 +188,7 @@
 @ cdecl wined3d_rendertarget_view_get_resource(ptr)
 @ cdecl wined3d_rendertarget_view_get_sub_resource_parent(ptr)
 @ cdecl wined3d_rendertarget_view_incref(ptr)
-@ cdecl wined3d_rendertarget_view_set_parent(ptr ptr)
+@ cdecl wined3d_rendertarget_view_set_parent(ptr ptr ptr)
 
 @ cdecl wined3d_resource_get_desc(ptr ptr)
 @ cdecl wined3d_resource_get_parent(ptr)

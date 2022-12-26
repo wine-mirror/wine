@@ -31,6 +31,7 @@ static struct ddraw_surface *unsafe_impl_from_IDirectDrawSurface3(IDirectDrawSur
 
 static const struct wined3d_parent_ops ddraw_surface_wined3d_parent_ops;
 static const struct wined3d_parent_ops ddraw_texture_wined3d_parent_ops;
+static const struct wined3d_parent_ops ddraw_view_wined3d_parent_ops;
 
 static inline struct ddraw_surface *impl_from_IDirectDrawGammaControl(IDirectDrawGammaControl *iface)
 {
@@ -1340,7 +1341,7 @@ static void ddraw_texture_rename_to(struct ddraw_texture *dst_texture, struct wi
     current_rtv = wined3d_device_context_get_rendertarget_view(dst_surface->ddraw->immediate_context, 0);
     if (current_rtv == dst_surface->wined3d_rtv)
         wined3d_device_context_set_rendertarget_views(dst_surface->ddraw->immediate_context, 0, 1, &rtv, FALSE);
-    wined3d_rendertarget_view_set_parent(rtv, dst_surface);
+    wined3d_rendertarget_view_set_parent(rtv, dst_surface, &ddraw_view_wined3d_parent_ops);
     dst_surface->wined3d_rtv = rtv;
 
     if (dst_surface->sub_resource_idx)
