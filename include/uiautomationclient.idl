@@ -69,6 +69,7 @@ typedef void * UIA_HWND;
 [
     uuid(944de083-8fb8-45cf-bcb7-c477acb2f897),
     lcid(0),
+    id(2),
     version(1.0)
 ]
 library UIAutomationClient {

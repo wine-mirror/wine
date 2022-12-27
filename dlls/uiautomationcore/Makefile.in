@@ -11,4 +11,6 @@ C_SRCS = \
 	uia_provider.c
 
 IDL_SRCS = \
-	uia_classes.idl
+	uia_classes.idl \
+	uia_classes_client.idl \
+	uia_classes_core.idl
