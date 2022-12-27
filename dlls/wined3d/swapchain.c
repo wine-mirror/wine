@@ -275,6 +275,13 @@ struct wined3d_texture * CDECL wined3d_swapchain_get_back_buffer(const struct wi
     return swapchain->back_buffers[back_buffer_idx];
 }
 
+struct wined3d_texture * CDECL wined3d_swapchain_get_front_buffer(const struct wined3d_swapchain *swapchain)
+{
+    TRACE("swapchain %p.\n", swapchain);
+
+    return swapchain->front_buffer;
+}
+
 struct wined3d_output * wined3d_swapchain_get_output(const struct wined3d_swapchain *swapchain)
 {
     TRACE("swapchain %p.\n", swapchain);
