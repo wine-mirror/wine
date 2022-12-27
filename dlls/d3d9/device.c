@@ -1419,9 +1419,7 @@ static HRESULT WINAPI d3d9_device_CreateTexture(IDirect3DDevice9Ex *iface,
     if (set_mem)
     {
         wined3d_mutex_lock();
-        wined3d_texture_update_desc(object->wined3d_texture, 0, width, height,
-                wined3dformat_from_d3dformat(format), WINED3D_MULTISAMPLE_NONE, 0,
-                *shared_handle, 0);
+        wined3d_texture_update_desc(object->wined3d_texture, 0, *shared_handle, 0);
         wined3d_mutex_unlock();
     }
 
@@ -1685,8 +1683,7 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, unsigned i
     IDirect3DSurface9_AddRef(*surface);
 
     if (user_mem)
-        wined3d_texture_update_desc(texture, 0, width, height, desc.format,
-                multisample_type, multisample_quality, user_mem, 0);
+        wined3d_texture_update_desc(texture, 0, user_mem, 0);
 
     wined3d_texture_decref(texture);
 

@@ -4812,8 +4812,8 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
     {
         /* Updating memory only. */
 
-        if (FAILED(hr = wined3d_texture_update_desc(surface->wined3d_texture, surface->sub_resource_idx,
-                width, height, format_id, WINED3D_MULTISAMPLE_NONE, 0, DDSD->lpSurface, pitch)))
+        if (FAILED(hr = wined3d_texture_update_desc(surface->wined3d_texture,
+                surface->sub_resource_idx, DDSD->lpSurface, pitch)))
         {
             WARN("Failed to update surface desc, hr %#lx.\n", hr);
             wined3d_mutex_unlock();
@@ -4856,8 +4856,7 @@ static HRESULT WINAPI ddraw_surface7_SetSurfaceDesc(IDirectDrawSurface7 *iface, 
             return hr_ddraw_from_wined3d(hr);
         }
 
-        if (FAILED(hr = wined3d_texture_update_desc(new_texture, 0, width, height,
-                format_id, WINED3D_MULTISAMPLE_NONE, 0, DDSD->lpSurface, pitch)))
+        if (FAILED(hr = wined3d_texture_update_desc(new_texture, 0, DDSD->lpSurface, pitch)))
         {
             ERR("Failed to set user memory, hr %#lx.\n", hr);
             wined3d_texture_decref(new_texture);
@@ -6154,8 +6153,6 @@ static HRESULT ddraw_surface_reserve_memory(struct wined3d_texture *wined3d_text
         wined3d_texture_get_pitch(wined3d_texture, i, &pitch, &slice_pitch);
 
         if (FAILED(hr = wined3d_texture_update_desc(wined3d_texture, i,
-                desc.width, desc.height, resource_desc.format,
-                desc.multisample_type, desc.multisample_quality,
                 (BYTE *)texture->texture_memory + offset, pitch)))
         {
             heap_free(texture->texture_memory);
@@ -6336,9 +6333,8 @@ static HRESULT ddraw_texture_init(struct ddraw_texture *texture, struct ddraw *d
             return hr;
     }
 
-    if ((desc->dwFlags & DDSD_LPSURFACE) && FAILED(hr = wined3d_texture_update_desc(wined3d_texture, 0,
-            wined3d_desc.width, wined3d_desc.height, wined3d_desc.format,
-            WINED3D_MULTISAMPLE_NONE, 0, desc->lpSurface, pitch)))
+    if ((desc->dwFlags & DDSD_LPSURFACE)
+            && FAILED(hr = wined3d_texture_update_desc(wined3d_texture, 0, desc->lpSurface, pitch)))
     {
         ERR("Failed to set surface memory, hr %#lx.\n", hr);
         goto fail;
