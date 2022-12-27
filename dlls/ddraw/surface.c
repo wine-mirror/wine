@@ -133,7 +133,7 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface,
         if (swap_interval)
             dst_texture = wined3d_swapchain_get_back_buffer(ddraw->wined3d_swapchain, 0);
         else
-            dst_texture = ddraw->wined3d_frontbuffer;
+            dst_texture = wined3d_swapchain_get_front_buffer(ddraw->wined3d_swapchain);
 
         if (SUCCEEDED(hr = wined3d_device_context_blt(ddraw->immediate_context, dst_texture, 0, rect,
                 ddraw_surface_get_any_texture(surface, DDRAW_SURFACE_READ), surface->sub_resource_idx, rect, 0,

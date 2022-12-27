@@ -938,7 +938,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
             }
 
             rtv = wined3d_device_context_get_rendertarget_view(ddraw->immediate_context, 0);
-            /* Rendering to ddraw->wined3d_frontbuffer. */
+            /* Rendering to the wined3d frontbuffer. */
             if (rtv && !wined3d_rendertarget_view_get_sub_resource_parent(rtv))
                 rtv = NULL;
             else if (rtv)
@@ -5042,42 +5042,22 @@ static HRESULT CDECL device_parent_texture_sub_resource_created(struct wined3d_d
     return DD_OK;
 }
 
-static void STDMETHODCALLTYPE ddraw_frontbuffer_destroyed(void *parent)
-{
-    struct ddraw *ddraw = parent;
-    ddraw->wined3d_frontbuffer = NULL;
-}
-
-static const struct wined3d_parent_ops ddraw_frontbuffer_parent_ops =
-{
-    ddraw_frontbuffer_destroyed,
-};
-
 static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_device_parent *device_parent,
         void *container_parent, const struct wined3d_resource_desc *desc, DWORD texture_flags,
         struct wined3d_texture **texture)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
-    const struct wined3d_parent_ops *parent_ops;
     HRESULT hr;
 
     TRACE("device_parent %p, container_parent %p, desc %p, texture flags %#lx, texture %p.\n",
             device_parent, container_parent, desc, texture_flags, texture);
 
-    if (!ddraw->wined3d_frontbuffer)
-        parent_ops = &ddraw_frontbuffer_parent_ops;
-    else
-        parent_ops = &ddraw_null_wined3d_parent_ops;
-
     if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, desc, 1, 1,
-            texture_flags, NULL, ddraw, parent_ops, texture)))
+            texture_flags, NULL, ddraw, &ddraw_null_wined3d_parent_ops, texture)))
     {
         WARN("Failed to create texture, hr %#lx.\n", hr);
         return hr;
     }
-
-    if (!ddraw->wined3d_frontbuffer)
-        ddraw->wined3d_frontbuffer = *texture;
 
     return hr;
 }
