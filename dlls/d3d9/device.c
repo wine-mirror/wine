@@ -1045,8 +1045,9 @@ static HRESULT d3d9_device_get_swapchains(struct d3d9_device *device)
 static HRESULT d3d9_device_reset(struct d3d9_device *device,
         D3DPRESENT_PARAMETERS *present_parameters, D3DDISPLAYMODEEX *mode)
 {
+    struct wined3d_swapchain_desc swapchain_desc, old_swapchain_desc;
+    struct d3d9_surface **old_backbuffers = NULL;
     BOOL extended = device->d3d_parent->extended;
-    struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_display_mode wined3d_mode;
     struct wined3d_rendertarget_view *rtv;
     struct d3d9_swapchain *d3d9_swapchain;
@@ -1089,9 +1090,53 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
         wined3d_stateblock_reset(device->state);
     }
 
+    if (FAILED(hr = d3d9_device_get_swapchains(device)))
+    {
+        wined3d_mutex_unlock();
+        return hr;
+    }
+    d3d9_swapchain = wined3d_swapchain_get_parent(device->implicit_swapchains[0]);
+
+    wined3d_swapchain_get_desc(d3d9_swapchain->wined3d_swapchain, &old_swapchain_desc);
+
+    /* wined3d_device_reset() may recreate swapchain textures.
+     *
+     * If the device is not extended, we don't need to remove the reference to
+     * the wined3d swapchain from the old d3d9 surfaces: we will fail the reset
+     * if they have 0 references, and therefore they are not actually holding a
+     * reference to the wined3d swapchain, and will not do anything with it when
+     * they are destroyed.
+     *
+     * If the device is extended, those swapchain textures can survive the
+     * reset, and need to be detached from the implicit swapchain here. To add
+     * some complexity, we need to add a temporary reference, but we can only do
+     * that in the extended case, otherwise we'll try to validate that there are
+     * 0 reference and fail. */
+
+    if (extended)
+    {
+        if (!(old_backbuffers = malloc(old_swapchain_desc.backbuffer_count * sizeof(*old_backbuffers))))
+        {
+            wined3d_mutex_unlock();
+            return hr;
+        }
+
+        for (i = 0; i < old_swapchain_desc.backbuffer_count; ++i)
+        {
+            old_backbuffers[i] = wined3d_texture_get_sub_resource_parent(
+                    wined3d_swapchain_get_back_buffer(d3d9_swapchain->wined3d_swapchain, i), 0);
+            /* Resetting might drop the last reference, so grab an extra one here.
+             * This also lets us always decref the swapchain, without needing to
+             * worry about whether it's externally referenced. */
+            IDirect3DSurface9_AddRef(&old_backbuffers[i]->IDirect3DSurface9_iface);
+        }
+    }
+
     if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
             mode ? &wined3d_mode : NULL, reset_enum_callback, !extended)))
     {
+        struct d3d9_surface *surface;
+
         heap_free(device->implicit_swapchains);
 
         if (!extended)
@@ -1116,6 +1161,29 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
             present_parameters->BackBufferHeight = swapchain_desc.backbuffer_height;
             present_parameters->BackBufferFormat = d3dformat_from_wined3dformat(swapchain_desc.backbuffer_format);
             present_parameters->BackBufferCount = swapchain_desc.backbuffer_count;
+
+            if (extended)
+            {
+                for (i = 0; i < old_swapchain_desc.backbuffer_count; ++i)
+                {
+                    surface = old_backbuffers[i];
+                    /* We have a reference to this surface, so we can assert that it's
+                     * currently holding a reference to the swapchain. */
+                    wined3d_swapchain_decref(surface->swapchain);
+                    surface->swapchain = NULL;
+                    surface->container = (IUnknown *)&device->IDirect3DDevice9Ex_iface;
+                }
+            }
+
+            /* FIXME: This should be the new backbuffer count, but we don't support
+             * changing the backbuffer count in wined3d yet. */
+            for (i = 0; i < old_swapchain_desc.backbuffer_count; ++i)
+            {
+                struct wined3d_texture *backbuffer = wined3d_swapchain_get_back_buffer(d3d9_swapchain->wined3d_swapchain, i);
+
+                if ((surface = d3d9_surface_create(backbuffer, 0, (IUnknown *)&device->IDirect3DDevice9Ex_iface)))
+                    surface->parent_device = &device->IDirect3DDevice9Ex_iface;
+            }
 
             device->device_state = D3D9_DEVICE_STATE_OK;
 
@@ -1146,7 +1214,6 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
         if ((rtv = wined3d_device_context_get_depth_stencil_view(device->immediate_context)))
         {
             struct wined3d_resource *resource = wined3d_rendertarget_view_get_resource(rtv);
-            struct d3d9_surface *surface;
 
             if ((surface = d3d9_surface_create(wined3d_texture_from_resource(resource), 0,
                     (IUnknown *)&device->IDirect3DDevice9Ex_iface)))
@@ -1156,6 +1223,13 @@ static HRESULT d3d9_device_reset(struct d3d9_device *device,
     else if (!extended)
     {
         device->device_state = D3D9_DEVICE_STATE_NOT_RESET;
+    }
+
+    if (extended)
+    {
+        for (i = 0; i < old_swapchain_desc.backbuffer_count; ++i)
+            IDirect3DSurface9_Release(&old_backbuffers[i]->IDirect3DSurface9_iface);
+        free(old_backbuffers);
     }
 
     wined3d_mutex_unlock();

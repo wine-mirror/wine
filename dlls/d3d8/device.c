@@ -940,8 +940,8 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
 static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
         D3DPRESENT_PARAMETERS *present_parameters)
 {
+    struct wined3d_swapchain_desc swapchain_desc, old_swapchain_desc;
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    struct wined3d_swapchain_desc swapchain_desc;
     struct d3d8_swapchain *implicit_swapchain;
     unsigned int output_idx;
     HRESULT hr;
@@ -964,16 +964,26 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
     wined3d_streaming_buffer_cleanup(&device->vertex_buffer);
     wined3d_streaming_buffer_cleanup(&device->index_buffer);
 
+    wined3d_swapchain_get_desc(device->implicit_swapchain, &old_swapchain_desc);
+
     if (device->recording)
         wined3d_stateblock_decref(device->recording);
     device->recording = NULL;
     device->update_state = device->state;
     wined3d_stateblock_reset(device->state);
 
+    /* wined3d_device_reset() may recreate swapchain textures.
+     * We do not need to remove the reference to the wined3d swapchain from the
+     * old d3d8 surfaces: we will fail the reset if they have 0 references,
+     * and therefore they are not actually holding a reference to the wined3d
+     * swapchain, and will not do anything with it when they are destroyed. */
+
     if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
             NULL, reset_enum_callback, TRUE)))
     {
         struct wined3d_rendertarget_view *rtv;
+        struct d3d8_surface *surface;
+        unsigned int i;
 
         present_parameters->BackBufferCount = swapchain_desc.backbuffer_count;
         implicit_swapchain = wined3d_swapchain_get_parent(device->implicit_swapchain);
@@ -984,10 +994,19 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
                 !!swapchain_desc.enable_auto_depth_stencil);
         device_reset_viewport_state(device);
 
+        /* FIXME: This should be the new backbuffer count, but we don't support
+         * changing the backbuffer count in wined3d yet. */
+        for (i = 0; i < old_swapchain_desc.backbuffer_count; ++i)
+        {
+            struct wined3d_texture *backbuffer = wined3d_swapchain_get_back_buffer(device->implicit_swapchain, i);
+
+            if ((surface = d3d8_surface_create(backbuffer, 0, (IUnknown *)&device->IDirect3DDevice8_iface)))
+                surface->parent_device = &device->IDirect3DDevice8_iface;
+        }
+
         if ((rtv = wined3d_device_context_get_depth_stencil_view(device->immediate_context)))
         {
             struct wined3d_resource *resource = wined3d_rendertarget_view_get_resource(rtv);
-            struct d3d8_surface *surface;
 
             if ((surface = d3d8_surface_create(wined3d_texture_from_resource(resource), 0,
                     (IUnknown *)&device->IDirect3DDevice8_iface)))

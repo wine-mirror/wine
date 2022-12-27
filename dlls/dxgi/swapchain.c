@@ -507,6 +507,9 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_GetDesc(IDXGISwapChain1 *iface,
     return S_OK;
 }
 
+static HRESULT d3d11_swapchain_create_d3d11_textures(struct d3d11_swapchain *swapchain,
+        IWineDXGIDevice *device, struct wined3d_swapchain_desc *desc);
+
 static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeBuffers(IDXGISwapChain1 *iface,
         UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
 {
@@ -540,6 +543,12 @@ static HRESULT STDMETHODCALLTYPE d3d11_swapchain_ResizeBuffers(IDXGISwapChain1 *
         wined3d_desc.backbuffer_format = wined3dformat_from_dxgi_format(format);
     hr = wined3d_swapchain_resize_buffers(swapchain->wined3d_swapchain, buffer_count, width, height,
             wined3d_desc.backbuffer_format, wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
+    /* wined3d_swapchain_resize_buffers() may recreate swapchain textures.
+     * We do not need to remove the reference to the wined3d swapchain from the
+     * old d3d11 textures: we just validated above that they have 0 references,
+     * and therefore they are not actually holding a reference to the wined3d
+     * swapchain, and will not do anything with it when they are destroyed. */
+    d3d11_swapchain_create_d3d11_textures(swapchain, swapchain->device, &wined3d_desc);
     wined3d_mutex_unlock();
 
     return hr;
@@ -827,14 +836,14 @@ static const struct wined3d_swapchain_state_parent_ops d3d11_swapchain_state_par
 };
 
 static HRESULT d3d11_swapchain_create_d3d11_textures(struct d3d11_swapchain *swapchain,
-        struct dxgi_device *device, struct wined3d_swapchain_desc *desc)
+        IWineDXGIDevice *device, struct wined3d_swapchain_desc *desc)
 {
     IWineDXGIDeviceParent *dxgi_device_parent;
     unsigned int texture_flags = 0;
     unsigned int i;
     HRESULT hr;
 
-    if (FAILED(hr = IWineDXGIDevice_QueryInterface(&device->IWineDXGIDevice_iface,
+    if (FAILED(hr = IWineDXGIDevice_QueryInterface(device,
             &IID_IWineDXGIDeviceParent, (void **)&dxgi_device_parent)))
     {
         ERR("Device should implement IWineDXGIDeviceParent.\n");
@@ -898,7 +907,7 @@ HRESULT d3d11_swapchain_init(struct d3d11_swapchain *swapchain, struct dxgi_devi
         goto cleanup;
     }
 
-    if (FAILED(hr = d3d11_swapchain_create_d3d11_textures(swapchain, device, desc)))
+    if (FAILED(hr = d3d11_swapchain_create_d3d11_textures(swapchain, &device->IWineDXGIDevice_iface, desc)))
     {
         ERR("Failed to create d3d11 textures, hr %#lx.\n", hr);
         goto cleanup;

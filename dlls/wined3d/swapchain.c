@@ -1929,7 +1929,7 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
         enum wined3d_multisample_type multisample_type, unsigned int multisample_quality)
 {
     struct wined3d_swapchain_desc *desc = &swapchain->state.desc;
-    BOOL update_desc = FALSE;
+    bool recreate = false;
 
     TRACE("swapchain %p, buffer_count %u, width %u, height %u, format %s, "
             "multisample_type %#x, multisample_quality %#x.\n",
@@ -1968,7 +1968,7 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
     {
         desc->backbuffer_width = width;
         desc->backbuffer_height = height;
-        update_desc = TRUE;
+        recreate = true;
     }
 
     if (format_id == WINED3DFMT_UNKNOWN)
@@ -1981,7 +1981,7 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
     if (format_id != desc->backbuffer_format)
     {
         desc->backbuffer_format = format_id;
-        update_desc = TRUE;
+        recreate = true;
     }
 
     if (multisample_type != desc->multisample_type
@@ -1989,25 +1989,35 @@ HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapcha
     {
         desc->multisample_type = multisample_type;
         desc->multisample_quality = multisample_quality;
-        update_desc = TRUE;
+        recreate = true;
     }
 
-    if (update_desc)
+    if (recreate)
     {
+        struct wined3d_texture *new_texture;
         HRESULT hr;
         UINT i;
 
-        if (FAILED(hr = wined3d_texture_update_desc(swapchain->front_buffer, 0, desc->backbuffer_width,
-                desc->backbuffer_height, desc->backbuffer_format,
-                desc->multisample_type, desc->multisample_quality, NULL, 0)))
+        TRACE("Recreating swapchain textures.\n");
+
+        if (FAILED(hr = swapchain_create_texture(swapchain, true, false, &new_texture)))
             return hr;
+        wined3d_texture_set_swapchain(swapchain->front_buffer, NULL);
+        if (wined3d_texture_decref(swapchain->front_buffer))
+            ERR("Something's still holding the front buffer (%p).\n", swapchain->front_buffer);
+        swapchain->front_buffer = new_texture;
+
+        wined3d_texture_validate_location(swapchain->front_buffer, 0, WINED3D_LOCATION_DRAWABLE);
+        wined3d_texture_invalidate_location(swapchain->front_buffer, 0, ~WINED3D_LOCATION_DRAWABLE);
 
         for (i = 0; i < desc->backbuffer_count; ++i)
         {
-            if (FAILED(hr = wined3d_texture_update_desc(swapchain->back_buffers[i], 0, desc->backbuffer_width,
-                    desc->backbuffer_height, desc->backbuffer_format,
-                    desc->multisample_type, desc->multisample_quality, NULL, 0)))
+            if (FAILED(hr = swapchain_create_texture(swapchain, false, false, &new_texture)))
                 return hr;
+            wined3d_texture_set_swapchain(swapchain->back_buffers[i], NULL);
+            if (wined3d_texture_decref(swapchain->back_buffers[i]))
+                ERR("Something's still holding back buffer %u (%p).\n", i, swapchain->back_buffers[i]);
+            swapchain->back_buffers[i] = new_texture;
         }
     }
 

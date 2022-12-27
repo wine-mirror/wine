@@ -3887,8 +3887,8 @@ static void test_backbuffer_resize(void)
     old_backbuffer = backbuffer;
     hr = IDirect3DSurface9_GetDesc(old_backbuffer, &surface_desc);
     ok(SUCCEEDED(hr), "Failed to get surface desc, hr %#lx.\n", hr);
-    todo_wine ok(surface_desc.Width == 640, "Got unexpected width %u.\n", surface_desc.Width);
-    todo_wine ok(surface_desc.Height == 480, "Got unexpected height %u.\n", surface_desc.Height);
+    ok(surface_desc.Width == 640, "Got unexpected width %u.\n", surface_desc.Width);
+    ok(surface_desc.Height == 480, "Got unexpected height %u.\n", surface_desc.Height);
 
     hr = IDirect3DDevice9_GetSwapChain(device, 0, &swapchain);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -3897,25 +3897,20 @@ static void test_backbuffer_resize(void)
     IDirect3DSwapChain9_Release(old_swapchain);
 
     hr = IDirect3DSurface9_GetContainer(old_backbuffer, &IID_IDirect3DSwapChain9, (void **)&swapchain);
-    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-        IDirect3DSwapChain9_Release(swapchain);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     hr = IDirect3DSurface9_GetContainer(old_backbuffer, &IID_IDirect3DBaseTexture9, (void **)&texture);
     ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     hr = IDirect3DSurface9_GetContainer(old_backbuffer, &IID_IDirect3DDevice9, (void **)&device2);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr == S_OK)
-    {
-        ok(device2 == device, "Devices didn't match.\n");
-        IDirect3DDevice9_Release(device2);
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(device2 == device, "Devices didn't match.\n");
+    IDirect3DDevice9_Release(device2);
 
     refcount = IDirect3DSurface9_Release(old_backbuffer);
     ok(!refcount, "Surface has %lu references left.\n", refcount);
 
     hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#lx.\n", hr);
-    todo_wine ok(backbuffer != old_backbuffer, "Expected new backbuffer surface.\n");
+    ok(backbuffer != old_backbuffer, "Expected new backbuffer surface.\n");
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#lx.\n", hr);
