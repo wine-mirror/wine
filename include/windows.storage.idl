@@ -33,7 +33,10 @@ import "windows.system.idl";
 
 namespace Windows.Storage {
     typedef enum FileAccessMode FileAccessMode;
+    typedef enum FileAttributes FileAttributes;
     typedef enum NameCollisionOption NameCollisionOption;
+    typedef enum StorageDeleteOption StorageDeleteOption;
+    typedef enum StorageItemTypes StorageItemTypes;
 
     interface IStorageFolder;
     interface IStorageFolderStatics;
@@ -63,6 +66,21 @@ namespace Windows.Storage {
     };
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum FileAttributes
+    {
+        Normal            = 0x0,
+        ReadOnly          = 0x1,
+        Directory         = 0x10,
+        Archive           = 0x20,
+        Temporary         = 0x100,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        LocallyIncomplete = 0x200,
+    };
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
     ]
     enum NameCollisionOption
@@ -70,6 +88,26 @@ namespace Windows.Storage {
         GenerateUniqueName = 0,
         ReplaceExisting    = 1,
         FailIfExists       = 2,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum StorageDeleteOption
+    {
+        Default         = 0,
+        PermanentDelete = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        flags
+    ]
+    enum StorageItemTypes
+    {
+        None   = 0x0,
+        File   = 0x1,
+        Folder = 0x2,
     };
 
     [
@@ -121,6 +159,28 @@ namespace Windows.Storage {
             [in] Windows.Storage.NameCollisionOption option,
             [out, retval] Windows.Foundation.IAsyncAction **operation);
         HRESULT MoveAndReplaceAsync([in] Windows.Storage.IStorageFile *file, [out, retval] Windows.Foundation.IAsyncAction **operation);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(4207a996-ca2f-42f7-bde8-8b10457a7f30)
+    ]
+    interface IStorageItem : IInspectable
+    {
+        [overload("RenameAsync")]
+        HRESULT RenameAsyncOverloadDefaultOptions([in] HSTRING name, [out, retval] Windows.Foundation.IAsyncAction **operation);
+        [overload("RenameAsync")]
+        HRESULT RenameAsync([in] HSTRING name, [in] Windows.Storage.NameCollisionOption option, [out, retval] Windows.Foundation.IAsyncAction **operation);
+        [overload("DeleteAsync")]
+        HRESULT DeleteAsyncOverloadDefaultOptions([out, retval] Windows.Foundation.IAsyncAction **operation);
+        [overload("DeleteAsync")]
+        HRESULT DeleteAsync([in] Windows.Storage.StorageDeleteOption option, [out, retval] Windows.Foundation.IAsyncAction **operation);
+        HRESULT GetBasicPropertiesAsync([out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.FileProperties.BasicProperties *> **operation);
+        [propget] HRESULT Name([out, retval] HSTRING *value);
+        [propget] HRESULT Path([out, retval] HSTRING *value);
+        [propget] HRESULT Attributes([out, retval] Windows.Storage.FileAttributes *value);
+        [propget] HRESULT DateCreated([out, retval] Windows.Foundation.DateTime *value);
+        HRESULT IsOfType([in] Windows.Storage.StorageItemTypes type, [out, retval] boolean *value);
     }
 
     [
