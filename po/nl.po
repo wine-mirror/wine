@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-12-03 18:45+0100\n"
+"PO-Revision-Date: 2022-12-28 23:15+0100\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -43,7 +43,7 @@ msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
-"Om een programma te installeren vanaf een diskette, CD-ROM, of uw harde "
+"Om een programma te installeren vanaf een diskette, CD-ROM, of de harde "
 "schijf, klik op Installeren."
 
 #: dlls/appwiz.cpl/appwiz.rc:62
@@ -169,13 +169,12 @@ msgid ""
 "href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
-"Wine kon geen Gecko-pakket vinden. Gecko is nodig voor programma's die "
-"gebruik maken van embedded HTML. Wine kan het automatisch voor u downloaden "
-"en installeren.\n"
+"Wine kon geen Gecko-pakket vinden. Gecko is nodig voor programma's die HTML "
+"ingebed gebruiken. Wine kan het automatisch downloaden en installeren.\n"
 "\n"
-"Noot: Het wordt aanbevolen om distributiepakketten te gebruiken. Zie <a "
-"href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> "
-"voor details."
+"Opmerking: Het wordt aanbevolen om de pakketten van de distributie te "
+"gebruiken. Lees de <a href=\"https://wiki.winehq.org/Gecko\">WineHQ Wiki</a> "
+"voor meer informatie."
 
 #: dlls/appwiz.cpl/appwiz.rc:109 dlls/appwiz.cpl/appwiz.rc:124
 msgid "&Install"
@@ -239,12 +238,11 @@ msgid ""
 "details."
 msgstr ""
 "Wine kon geen wine-mono-pakket vinden. Mono is nodig voor programma's die "
-"gebruik maken van het .NET raamwerk . Wine kan het automatisch voor u "
-"downloaden en installeren.\n"
+"gebruik maken van .NET. Wine kan het automatisch downloaden en installeren.\n"
 "\n"
-"Noot: Het wordt aanbevolen om distributiepakketten te gebruiken. Zie <a "
-"href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> voor "
-"details."
+"Opmerking: Het wordt aanbevolen om de pakketten van de distributie te "
+"gebruiken. Lees de <a href=\"https://wiki.winehq.org/Mono\">WineHQ Wiki</a> "
+"voor meer informatie."
 
 #: dlls/appwiz.cpl/appwiz.rc:31
 msgid "Add/Remove Programs"
@@ -255,8 +253,8 @@ msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
-"Hiermee installeert u nieuwe programma's, of verwijdert u bestaande "
-"programma's van uw computer."
+"Nieuwe programma's op de computer installeren of bestaande programma's "
+"wijzigen en verwijderen."
 
 #: dlls/appwiz.cpl/appwiz.rc:33 programs/taskmgr/taskmgr.rc:262
 #: programs/winecfg/winecfg.rc:32
@@ -268,8 +266,8 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"Het deïnstallatie-programma '%s' kan niet gestart worden. Wilt u de "
-"deïnstallatie-informatie verwijderen uit het register?"
+"Het deïnstallatie-programma '%s' kan niet gestart worden. De deïnstallatie-"
+"informatie verwijderen uit het register?"
 
 #: dlls/appwiz.cpl/appwiz.rc:36
 msgid "Not specified"
@@ -968,8 +966,8 @@ msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
-"Dit bestand bestaat nog niet.\n"
-"Wilt u het bestand aanmaken?"
+"Bestand bestaat niet.\n"
+"Het bestand aanmaken?"
 
 #: dlls/comdlg32/comdlg32.rc:36
 msgid ""
@@ -977,7 +975,7 @@ msgid ""
 "Do you want to replace it?"
 msgstr ""
 "Bestand bestaat al.\n"
-"Wilt u het vervangen?"
+"Het bestand vervangen?"
 
 #: dlls/comdlg32/comdlg32.rc:37
 msgid "Invalid character(s) in path"
@@ -1114,7 +1112,7 @@ msgid ""
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Deze waarde ligt niet binnen het paginabereik\n"
-"Voert u s.v.p. een waarde tussen %1!d! en %2!d! in."
+"Voer een waarde tussen %1!d! en %2!d! in."
 
 #: dlls/comdlg32/comdlg32.rc:61
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -1126,7 +1124,7 @@ msgid ""
 "Please reenter margins."
 msgstr ""
 "De marges overlappen of vallen buiten het papier.\n"
-"Voer a.u.b. nieuwe marges in."
+"Voer nieuwe marges in."
 
 #: dlls/comdlg32/comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
@@ -1137,7 +1135,7 @@ msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
-"Uw printer ondersteunt dergelijke hoeveelheid kopieen niet.\n"
+"De printer ondersteunt deze hoeveelheid kopieën niet.\n"
 "Voer een waarde tussen 1 en %d in."
 
 #: dlls/comdlg32/comdlg32.rc:68
@@ -1169,9 +1167,8 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Voordat u printer-gerelateerde taken zoals pagina instellingen of het "
-"printen van een document kun uitvoeren, moet u een printer installeren. "
-"Installeer een printer en probeer het opnieuw."
+"Voordat printer gerelateerde taken uitgevoerd kunnen worden, moet er een "
+"printer geïnstalleerd worden. Installeer een printer en probeer het opnieuw."
 
 #: dlls/comdlg32/comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
@@ -1227,7 +1224,7 @@ msgstr "Papier is op; "
 
 #: dlls/comdlg32/comdlg32.rc:90
 msgid "Feed paper manual; "
-msgstr "Voer s.v.p. met de hand papier in; "
+msgstr "Voer papier met de hand in; "
 
 #: dlls/comdlg32/comdlg32.rc:91
 msgid "Paper problem; "
@@ -1369,8 +1366,8 @@ msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
-"Controleer of uw gebruikersnaam\n"
-"en wachtwoord correct zijn."
+"Controleer of de gebruikersnaam\n"
+"en het wachtwoord correct zijn."
 
 #: dlls/credui/credui.rc:35
 msgid ""
@@ -1379,10 +1376,10 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
-"Met Caps Lock aan kan uw wachtwoord verkeerd worden ingevoerd.\n"
+"Met Caps Lock aan kan het wachtwoord verkeerd worden ingevoerd.\n"
 "\n"
-"Druk op de Caps Lock toets op uw toetsenbord om Caps Lock uit\n"
-"te zetten voor invoer van uw wachtwoord."
+"Druk op de Caps Lock toets op het toetsenbord om Caps Lock uit\n"
+"te schakelen voordat het wachtwoord wordt ingevoerd."
 
 #: dlls/credui/credui.rc:34
 msgid "Caps Lock is On"
@@ -1603,7 +1600,7 @@ msgstr "Straat/Adres"
 
 #: dlls/crypt32/crypt32.rc:83
 msgid "Serial Number"
-msgstr "Registratie Nummer"
+msgstr "Registratienummer"
 
 #: dlls/crypt32/crypt32.rc:84
 msgid "CA Version"
@@ -1727,7 +1724,7 @@ msgstr "PKCS 7 Samengevat"
 
 #: dlls/crypt32/crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr "PKCS 7 Gecodeerd"
+msgstr "PKCS 7 Versleuteling"
 
 #: dlls/crypt32/crypt32.rc:115
 msgid "Previous CA Certificate Hash"
@@ -1759,7 +1756,7 @@ msgstr "Ondernemings Basis OID"
 
 #: dlls/crypt32/crypt32.rc:122
 msgid "Dummy Signer"
-msgstr "Dummie Tekenaar"
+msgstr "Dummie Ondertekenaar"
 
 #: dlls/crypt32/crypt32.rc:123
 msgid "Encrypted Private Key"
@@ -2339,7 +2336,7 @@ msgstr "Selecteer certificatenopslag"
 
 #: dlls/cryptui/cryptui.rc:276
 msgid "Select the certificate store you want to use:"
-msgstr "Selecteer de certificatenopslag die u wilt gebruiken:"
+msgstr "Selecteer de certificatenopslag die gebruikt moet worden:"
 
 #: dlls/cryptui/cryptui.rc:279
 msgid "&Show physical stores"
@@ -2349,11 +2346,11 @@ msgstr "&Toon fysieke opslagen"
 #: dlls/cryptui/cryptui.rc:313 dlls/cryptui/cryptui.rc:327
 #: dlls/cryptui/cryptui.rc:71
 msgid "Certificate Import Wizard"
-msgstr "Certificaat importeerhulp"
+msgstr "Certificaat Importeerhulp"
 
 #: dlls/cryptui/cryptui.rc:288
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Welkom bij de certificaat importeerhulp"
+msgstr "Welkom bij de Certificaat Importeerhulp"
 
 #: dlls/cryptui/cryptui.rc:291
 msgid ""
@@ -2367,12 +2364,12 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Deze wizard helpt u certificaten, lijsten van herroepen certificaten en "
+"Deze wizard helpt bij certificaten, lijsten van herroepen certificaten en "
 "lijsten van vertrouwde certificaten uit een bestand in een certificaatkluis "
 "te importeren.\n"
 "\n"
-"Een certificaat kan gebruikt worden om u of de computer waarmee u "
-"communiceert te identificeren. Het kan ook gebruikt worden voor "
+"Een certificaat kan gebruikt worden om de computer of het apparaat waarmee "
+"gecommuniceerd wordt te identificeren. Het kan ook gebruikt worden voor "
 "authenticatie en om berichten te ondertekenen. Een certificaatkluis bevat "
 "een verzameling van certificaten, lijsten van herroepen certificaten en "
 "lijsten van vertrouwde certificaten.\n"
@@ -2393,7 +2390,7 @@ msgid ""
 "Note: The following file formats may contain more than one certificate, "
 "certificate revocation list, or certificate trust list:"
 msgstr ""
-"Noot: De volgende bestandsformaten kunnen meer dan één certificaat, "
+"Opmerking: De volgende bestandsformaten kunnen meer dan één certificaat, "
 "certificaat terugroeplijst of certificaat vertrouwenslijst bevatten:"
 
 #: dlls/cryptui/cryptui.rc:304
@@ -2414,8 +2411,8 @@ msgid ""
 "Wine can automatically select the certificate store, or you can specify a "
 "location for the certificates."
 msgstr ""
-"Wine kan automatisch de certificatenopslag selecteren, of u kunt een locatie "
-"opgeven voor de certificaten."
+"Wine kan automatisch de certificatenopslag selecteren, of er kan een locatie "
+"opgeven worden voor de certificaten."
 
 #: dlls/cryptui/cryptui.rc:318
 msgid "&Automatically select certificate store"
@@ -2427,15 +2424,15 @@ msgstr "&Plaats alle certificaten in de volgende opslag:"
 
 #: dlls/cryptui/cryptui.rc:330
 msgid "Completing the Certificate Import Wizard"
-msgstr "Afronden van de certificaat importeerhulp"
+msgstr "Afronden van de Certificaat Importeerhulp"
 
 #: dlls/cryptui/cryptui.rc:332
 msgid "You have successfully completed the Certificate Import Wizard."
-msgstr "U heeft de certificaat importeerhulp succesvol afgerond."
+msgstr "De Certificaat Importeerhulp is succesvol afgerond."
 
 #: dlls/cryptui/cryptui.rc:334 dlls/cryptui/cryptui.rc:448
 msgid "You have specified the following settings:"
-msgstr "U heeft de volgende instellingen ingegeven:"
+msgstr "De volgende instellingen zijn gegeven:"
 
 #: dlls/cryptui/cryptui.rc:342 dlls/cryptui/cryptui.rc:122
 #: dlls/inetcpl.cpl/inetcpl.rc:111
@@ -2500,7 +2497,7 @@ msgstr "Certificaat Exporteerhulp"
 
 #: dlls/cryptui/cryptui.rc:378
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Welkom bij de Certificaat exporteerhulp"
+msgstr "Welkom bij de Certificaat Exporteerhulp"
 
 #: dlls/cryptui/cryptui.rc:381
 msgid ""
@@ -2514,12 +2511,12 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Deze wizard helpt u certificaten, lijsten van herroepen certificaten en "
+"Deze wizard helpt certificaten, lijsten van herroepen certificaten en "
 "lijsten van vertrouwde certificaten van een certificaatkluis naar een "
 "bestand te exporteren.\n"
 "\n"
-"Een certificaat kan gebruikt worden om u of de computer waarmee u "
-"communiceert te identificeren. Het kan ook gebruikt worden voor "
+"Een certificaat kan gebruikt worden om de computer of het apparaat waarmee "
+"gecommuniceerd wordt te identificeren. Het kan ook gebruikt worden voor "
 "authenticatie en om berichten te ondertekenen. Een certificaatkluis bevat "
 "een verzameling van certificaten, lijsten van herroepen certificaten en "
 "lijsten van vertrouwde certificaten.\n"
@@ -2531,12 +2528,12 @@ msgid ""
 "If you choose to export the private key, you will be prompted for a password "
 "to protect the private key on a later page."
 msgstr ""
-"Als u de persoonlijke sleutel wilt exporteren zult u later verzocht worden "
-"een wachtwoord in te geven om de sleutel te beveiligen."
+"Als de persoonlijke sleutel geëxporteerd wordt, zal later verzocht worden "
+"eenwachtwoord in te geven om de sleutel te beveiligen."
 
 #: dlls/cryptui/cryptui.rc:390
 msgid "Do you wish to export the private key?"
-msgstr "Wilt u de persoonlijke sleutel exporteren?"
+msgstr "De persoonlijke sleutel exporteren?"
 
 #: dlls/cryptui/cryptui.rc:391
 msgid "&Yes, export the private key"
@@ -2552,7 +2549,7 @@ msgstr "&Bevestig wachtwoord:"
 
 #: dlls/cryptui/cryptui.rc:412
 msgid "Select the format you want to use:"
-msgstr "Selecteer het formaat dat u wilt gebruiken:"
+msgstr "Selecteer het formaat dat gebruikt moet worden:"
 
 #: dlls/cryptui/cryptui.rc:413
 msgid "&DER-encoded X.509 (*.cer)"
@@ -2592,7 +2589,7 @@ msgstr "Afronden van de Certificaat exporteerhulp"
 
 #: dlls/cryptui/cryptui.rc:446
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr "U heeft de Certificaat exporteerhulp succesvol afgerond."
+msgstr "De Certificaat Exporteerhulp is succesvol afgerond."
 
 #: dlls/cryptui/cryptui.rc:456 dlls/cryptui/cryptui.rc:179
 msgid "Select Certificate"
@@ -2600,7 +2597,7 @@ msgstr "Selecteer Certificaat"
 
 #: dlls/cryptui/cryptui.rc:459
 msgid "Select a certificate you want to use"
-msgstr "Selecteer het certificaat dat u wilt gebruiken"
+msgstr "Selecteer het certificaat dat gebruikt moet worden"
 
 #: dlls/cryptui/cryptui.rc:30 dlls/cryptui/cryptui.rc:93
 msgid "Certificate"
@@ -2608,14 +2605,14 @@ msgstr "Certificaat"
 
 #: dlls/cryptui/cryptui.rc:31
 msgid "Certificate Information"
-msgstr "Certificaat informatie"
+msgstr "Certificaat Informatie"
 
 #: dlls/cryptui/cryptui.rc:32
 msgid ""
 "This certificate has an invalid signature. The certificate may have been "
 "altered or corrupted."
 msgstr ""
-"Dit certificaat heeft een foutieve handtekening. Het certificaat kan "
+"Dit certificaat heeft een ongeldige handtekening. Het certificaat kan "
 "gewijzigd of gemanipuleerd zijn."
 
 #: dlls/cryptui/cryptui.rc:33
@@ -2623,12 +2620,12 @@ msgid ""
 "This root certificate is not trusted. To trust it, add it to your system's "
 "trusted root certificate store."
 msgstr ""
-"Dit basis certificaat wordt niet vertrouwd. Om het te vertrouwen, voeg het "
-"toe aan het vertrouwde basiscertificaatarchief van uw systeem."
+"Dit basiscertificaat wordt niet vertrouwd. Om het te vertrouwen, voeg het "
+"toe aan het vertrouwde basiscertificaatarchief van het systeem."
 
 #: dlls/cryptui/cryptui.rc:34
 msgid "This certificate could not be validated to a trusted root certificate."
-msgstr "Dit certificaat heeft geen vertrouwd basis certificaat."
+msgstr "Dit certificaat heeft geen vertrouwd basiscertificaat."
 
 #: dlls/cryptui/cryptui.rc:35
 msgid "This certificate's issuer could not be found."
@@ -2660,7 +2657,7 @@ msgstr " tot "
 
 #: dlls/cryptui/cryptui.rc:42
 msgid "This certificate has an invalid signature."
-msgstr "Dit certificaat heeft een foutieve handtekening."
+msgstr "Dit certificaat heeft een ongeldige handtekening."
 
 #: dlls/cryptui/cryptui.rc:43
 msgid "This certificate has expired or is not yet valid."
@@ -2760,7 +2757,7 @@ msgstr "Certificaat eigenschappen"
 
 #: dlls/cryptui/cryptui.rc:67
 msgid "Please enter an OID in the form 1.2.3.4"
-msgstr "Geef aub. een OID in in de vorm van 1.2.3.4"
+msgstr "Geef een OID in in de vorm van 1.2.3.4"
 
 #: dlls/cryptui/cryptui.rc:68
 msgid "The OID you entered already exists."
@@ -2768,7 +2765,7 @@ msgstr "De ingegeven OID bestaat reeds."
 
 #: dlls/cryptui/cryptui.rc:70
 msgid "Please select a certificate store."
-msgstr "Selecteer aub. een certificatenopslag."
+msgstr "Selecteer een certificatenopslag."
 
 #: dlls/cryptui/cryptui.rc:72
 msgid ""
@@ -2776,7 +2773,7 @@ msgid ""
 "select another file."
 msgstr ""
 "Het bestand bevat objecten die niet voldoen aan de opgegeven criteria. "
-"Selecteer a.u.b. een ander bestand."
+"Selecteer een ander bestand."
 
 #: dlls/cryptui/cryptui.rc:73
 msgid "File to Import"
@@ -2784,7 +2781,7 @@ msgstr "Bestand om te importeren"
 
 #: dlls/cryptui/cryptui.rc:74
 msgid "Specify the file you want to import."
-msgstr "Specificeer het bestand dat u wilt importeren."
+msgstr "Specificeer het bestand dat geïmporteerd moet worden."
 
 #: dlls/cryptui/cryptui.rc:75 dlls/cryptui/cryptui.rc:98
 msgid "Certificate Store"
@@ -2824,8 +2821,7 @@ msgstr "Selecteer een bestand."
 
 #: dlls/cryptui/cryptui.rc:85
 msgid "The file format is not recognized. Please select another file."
-msgstr ""
-"Het bestandsformaat wordt niet herkend. Selecteer a.u.b. een ander bestand."
+msgstr "Het bestandsformaat wordt niet herkend. Selecteer een ander bestand."
 
 #: dlls/cryptui/cryptui.rc:86
 msgid "Could not open "
@@ -2909,9 +2905,9 @@ msgid ""
 "sign messages with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"U kunt niet langer berichten ontcijferen of ondertekenen met dit "
+"Berichten kunnen niet langer ontcijfert of ondertekent worden met dit "
 "certificaat.\n"
-"Weet u zeker dat u dit certificaat wilt verwijderen?"
+"Moet dit certificaat verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:111
 msgid ""
@@ -2919,9 +2915,9 @@ msgid ""
 "sign messages with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"U kunt niet langer berichten ontcijferen of ondertekenen met deze "
+"Berichten kunnen niet langer ontcijfert of ondertekent worden met deze "
 "certificaten.\n"
-"Weet u zeker dat u deze certificaten wilt verwijderen?"
+"Moeten deze certificaten verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:112
 msgid ""
@@ -2929,8 +2925,9 @@ msgid ""
 "verify messages signed with it.\n"
 "Are you sure you want to remove this certificate?"
 msgstr ""
-"U kunt niet langer berichten coderen of verifiëren met dit certificaat.\n"
-"Weet u zeker dat u dit certificaat wilt verwijderen?"
+"Berichten kunnen niet langer versleuteld of geverifieerd worden met dit "
+"certificaat.\n"
+"Moet dit certificaat verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:113
 msgid ""
@@ -2938,8 +2935,9 @@ msgid ""
 "verify messages signed with them.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"U kunt niet langer berichten coderen of verifiëren met deze certificaten.\n"
-"Weet u zeker dat u deze certificaten wilt verwijderen?"
+"Berichten kunnen niet langer versleuteld of geverifieerd worden met deze "
+"certificaten.\n"
+"Moeten deze certificaten verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:114
 msgid ""
@@ -2949,7 +2947,7 @@ msgid ""
 msgstr ""
 "Certificaten uitgegeven door deze certificaten autoriteit zullen niet meer "
 "vertrouwd worden.\n"
-"Weet u zeker dat u dit certificaat wilt verwijderen?"
+"Moet dit certificaat verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:115
 msgid ""
@@ -2959,7 +2957,7 @@ msgid ""
 msgstr ""
 "Certificaten uitgegeven door deze certificaten autoriteiten zullen niet meer "
 "vertrouwd worden.\n"
-"Weet u zeker dat u deze certificaten wilt verwijderen?"
+"Moeten deze certificaten verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:116
 msgid ""
@@ -2967,10 +2965,10 @@ msgid ""
 "certification authorities it issued, will no longer be trusted.\n"
 "Are you sure you want to remove this trusted root certificate?"
 msgstr ""
-"Certificaten uitgegeven door deze basic certificaten autoriteit, alsmede "
-"enige certificatie autoriteit die hij verstrekt, zullen niet meer vertrouwd "
+"Certificaten uitgegeven door deze basiscertificaten autoriteit, alsmede "
+"enige certificatie autoriteit die zij verstrekt, zullen niet meer vertrouwd "
 "worden.\n"
-"Weet u zeker dat u dit vertrouwde basic certificaat wilt verwijderen?"
+"Moet dit vertrouwde basiscertificaat verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:117
 msgid ""
@@ -2978,10 +2976,10 @@ msgid ""
 "certification authorities they issued, will no longer be trusted.\n"
 "Are you sure you want to remove these trusted root certificates?"
 msgstr ""
-"Certificaten uitgegeven door deze basic certificaten autoriteiten, alsmede "
+"Certificaten uitgegeven door deze basiscertificaten autoriteiten, alsmede "
 "enige certificatie autoriteit die zij verstrekken, zullen niet meer "
 "vertrouwd worden.\n"
-"Weet u zeker dat u deze vertrouwde basic certificaten wilt verwijderen?"
+"Moeten deze vertrouwde basiscertificaten verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:118
 msgid ""
@@ -2989,7 +2987,7 @@ msgid ""
 "Are you sure you want to remove this certificate?"
 msgstr ""
 "Software ondertekend door deze uitgever zal niet meer vertrouwd worden.\n"
-"Weet u zeker dat u dit certificaat wilt verwijderen?"
+"Moet dit certificaat wilt verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:119
 msgid ""
@@ -2997,15 +2995,15 @@ msgid ""
 "Are you sure you want to remove these certificates?"
 msgstr ""
 "Software ondertekend door deze uitgevers zal niet meer vertrouwd worden.\n"
-"Weet u zeker dat u deze certificaten wilt verwijderen?"
+"Moeten deze certificaten verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:120
 msgid "Are you sure you want to remove this certificate?"
-msgstr "Weet u zeker dat u dit certificaat wilt verwijderen?"
+msgstr "Moet dit certificaat verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:121
 msgid "Are you sure you want to remove these certificates?"
-msgstr "Weet u zeker dat u deze certificaten wilt verwijderen?"
+msgstr "Moeten deze certificaten verwijderd worden?"
 
 #: dlls/cryptui/cryptui.rc:124
 msgid "Ensures the identity of a remote computer"
@@ -3013,7 +3011,7 @@ msgstr "Bewijst de identiteit van een andere computer"
 
 #: dlls/cryptui/cryptui.rc:125
 msgid "Proves your identity to a remote computer"
-msgstr "Bewijst uw identiteit aan een andere computer"
+msgstr "Bewijst de identiteit aan een andere computer"
 
 #: dlls/cryptui/cryptui.rc:126
 msgid ""
@@ -3037,11 +3035,11 @@ msgstr "Laat data ondertekend worden met de huidige tijd"
 
 #: dlls/cryptui/cryptui.rc:130
 msgid "Allows you to digitally sign a certificate trust list"
-msgstr "Laat u een certificaat vertrouwenslijst digitaal ondertekenen"
+msgstr "Een certificaat-vertrouwenslijst digitaal ondertekenen"
 
 #: dlls/cryptui/cryptui.rc:131
 msgid "Allows data on disk to be encrypted"
-msgstr "Laat data op de disk gecodeerd worden"
+msgstr "Maakt het mogelijk gegevens op schijf te versleutelen"
 
 #: dlls/cryptui/cryptui.rc:147
 msgid "Private Key Archival"
@@ -3049,7 +3047,7 @@ msgstr "Persoonlijke sleutel archiefbescheiden"
 
 #: dlls/cryptui/cryptui.rc:151
 msgid "Export Format"
-msgstr "Export formaat"
+msgstr "Uitvoerformaat"
 
 #: dlls/cryptui/cryptui.rc:152
 msgid "Choose the format in which the content will be saved."
@@ -3057,7 +3055,7 @@ msgstr "Selecteer het formaat waarin de inhoud zal worden opgeslagen."
 
 #: dlls/cryptui/cryptui.rc:153
 msgid "Export Filename"
-msgstr "Exporteer bestandsnaam"
+msgstr "Uitvoer Bestandsnaam"
 
 #: dlls/cryptui/cryptui.rc:154
 msgid "Specify the name of the file in which the content will be saved."
@@ -3065,7 +3063,7 @@ msgstr "Geef de naam van het bestand waarin de inhoud zal worden opgeslagen."
 
 #: dlls/cryptui/cryptui.rc:155
 msgid "The specified file already exists. Do you want to replace it?"
-msgstr "Het gespecifeerde bestand bestaat reeds. Wilt u het vervangen?"
+msgstr "Dit bestand bestaat al. Het bestand vervangen?"
 
 #: dlls/cryptui/cryptui.rc:156
 msgid "DER-Encoded Binary X.509 (*.cer)"
@@ -3121,7 +3119,7 @@ msgstr "Voer wachtwoord in"
 
 #: dlls/cryptui/cryptui.rc:173
 msgid "You may password-protect a private key."
-msgstr "U kunt een persoonlijke sleutel beveiligen met een wachtwoord."
+msgstr "Een persoonlijke sleutel beveiligen met een wachtwoord."
 
 #: dlls/cryptui/cryptui.rc:174
 msgid "The passwords do not match."
@@ -3130,12 +3128,14 @@ msgstr "De wachtwoorden zijn niet gelijk."
 #: dlls/cryptui/cryptui.rc:175
 msgid "Note: The private key for this certificate could not be opened."
 msgstr ""
-"Noot: De persoonlijke sleutel voor dit certificaat kon niet geopend worden."
+"Opmerking: De persoonlijke sleutel voor dit certificaat kon niet geopend "
+"worden."
 
 #: dlls/cryptui/cryptui.rc:176
 msgid "Note: The private key for this certificate is not exportable."
 msgstr ""
-"Noot: De privé sleutel voor dit certificaat kan niet geëxporteerd worden."
+"Opmerking: De persoonlijke sleutel voor dit certificaat kan niet "
+"geëxporteerd worden."
 
 #: dlls/cryptui/cryptui.rc:177
 msgid "Intended Use"
@@ -3152,7 +3152,7 @@ msgstr "Selecteer een certificaat"
 #: dlls/cryptui/cryptui.rc:181 programs/winefile/winefile.rc:101
 #: programs/winhlp32/winhlp32.rc:110 programs/winhlp32/winhlp32.rc:85
 msgid "Not yet implemented"
-msgstr "Nog niet geimplementeerd"
+msgstr "Nog niet geïmplementeerd"
 
 #: dlls/dinput/dinput.rc:34
 msgid "Configure Devices"
@@ -3515,7 +3515,7 @@ msgstr "Open URL"
 
 #: dlls/ieframe/ieframe.rc:93
 msgid "Specify the URL you wish to open in Internet Explorer"
-msgstr "Specificeer de URL die u wilt openen in Internet Explorer"
+msgstr "Geef de URL die geopend moet worden in Internet Explorer"
 
 #: dlls/ieframe/ieframe.rc:94
 msgid "Open:"
@@ -3556,7 +3556,7 @@ msgstr "Homepage"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:50
 msgid "You can choose the address that will be used as your home page."
-msgstr "Hier kunt u het adres kiezen dat gebruikt wordt als uw startpagina."
+msgstr "Geef het adres dat gebruikt zal worden als startpagina."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:53
 msgid "&Current page"
@@ -3576,8 +3576,7 @@ msgstr "Browsegeschiedenis"
 
 #: dlls/inetcpl.cpl/inetcpl.rc:57
 msgid "You can delete cached pages, cookies and other data."
-msgstr ""
-"U kunt tijdelijke opgeslagen pagina's, cookies en andere data verwijderen."
+msgstr "Tijdelijk opgeslagen pagina's, cookies en andere data verwijderen."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:59
 msgid "Delete &files..."
@@ -3597,7 +3596,7 @@ msgid ""
 "Cached copies of web pages, images and certificates."
 msgstr ""
 "Tijdelijke internetbestanden\n"
-"Tussenopslag van webpagina's, afbeeldingen en certificaten."
+"Opgeslagen webpagina's, afbeeldingen en certificaten."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:73
 msgid ""
@@ -3606,8 +3605,8 @@ msgid ""
 "preferences and login information."
 msgstr ""
 "Cookies\n"
-"Bestanden opgeslagen op je computer door websites, waarin dingen zoals "
-"voorkeuren en logininformatie worden bewaard."
+"Bestanden opgeslagen op de computer door websites. In deze bestanden worden "
+"onder andere voorkeuren en aanmeldinformatie bewaard."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:75
 msgid ""
@@ -3615,7 +3614,7 @@ msgid ""
 "List of websites you have accessed."
 msgstr ""
 "Geschiedenis\n"
-"Lijst van websites waar u bent geweest."
+"Lijst van websites die bezocht zijn."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:77
 msgid ""
@@ -3623,7 +3622,7 @@ msgid ""
 "Usernames and other information you have entered into forms."
 msgstr ""
 "Formuliergegevens\n"
-"Gebruikersnamen en andere informatie die u in formulieren heeft ingevuld."
+"Gebruikersnamen en andere informatie die in formulieren zijn ingevuld."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:79
 msgid ""
@@ -3631,7 +3630,7 @@ msgid ""
 "Saved passwords you have entered into forms."
 msgstr ""
 "Wachtwoorden\n"
-"Opgeslagen wachtwoorden die u in formulieren heeft ingevuld."
+"Opgeslagen wachtwoorden die in formulieren zijn ingevuld."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:82 programs/progman/progman.rc:67
 msgid "Delete"
@@ -3642,7 +3641,7 @@ msgid ""
 "Certificates are used for your personal identification and to identify "
 "certificate authorities and publishers."
 msgstr ""
-"Certificaten worden gebruikt voor uw persoonlijke identificatie en om "
+"Certificaten worden gebruikt voor persoonlijke identificatie en om "
 "certificaatautoriteiten en uitgevers te identificeren."
 
 #: dlls/inetcpl.cpl/inetcpl.rc:114
@@ -4345,7 +4344,7 @@ msgstr "Netwerktoegang geweigerd.\n"
 
 #: dlls/kernelbase/winerror.mc:298
 msgid "Bad device type.\n"
-msgstr "Slecht devicetype.\n"
+msgstr "Slecht apparaattype.\n"
 
 #: dlls/kernelbase/winerror.mc:303
 msgid "Bad network name.\n"
@@ -4897,7 +4896,7 @@ msgstr "Uitgebreide attribuuttoegang geweigerd.\n"
 
 #: dlls/kernelbase/winerror.mc:998
 msgid "I/O operation aborted.\n"
-msgstr "I/O operatie onderbroken.\n"
+msgstr "I/O-bewerking onderbroken.\n"
 
 #: dlls/kernelbase/winerror.mc:1003
 msgid "Overlapped I/O incomplete.\n"
@@ -5109,7 +5108,7 @@ msgstr "Opstart al geaccepteerd als laatste goede configuratie.\n"
 
 #: dlls/kernelbase/winerror.mc:1263
 msgid "Service not started since last boot.\n"
-msgstr "Service niet gestart sinds laatste boot.\n"
+msgstr "Service niet gestart sinds laatste keer opstarten.\n"
 
 #: dlls/kernelbase/winerror.mc:1268
 msgid "Duplicate service name.\n"
@@ -5165,7 +5164,7 @@ msgstr "Ongeldige bloklengte.\n"
 
 #: dlls/kernelbase/winerror.mc:1333
 msgid "Device not partitioned.\n"
-msgstr "Device niet gepartitioneerd.\n"
+msgstr "Apparaat niet gepartitioneerd.\n"
 
 #: dlls/kernelbase/winerror.mc:1338
 msgid "Unable to lock media.\n"
@@ -5205,11 +5204,11 @@ msgstr "Niet bezig af te sluiten.\n"
 
 #: dlls/kernelbase/winerror.mc:1383
 msgid "I/O device error.\n"
-msgstr "I/O device-fout.\n"
+msgstr "I/O-apparaatfout.\n"
 
 #: dlls/kernelbase/winerror.mc:1388
 msgid "No serial devices found.\n"
-msgstr "Geen seriële devices gevonden.\n"
+msgstr "Geen seriële apparaten gevonden.\n"
 
 #: dlls/kernelbase/winerror.mc:1393
 msgid "Shared IRQ busy.\n"
@@ -5245,7 +5244,7 @@ msgstr "Harde schijf rekalibratie mislukt.\n"
 
 #: dlls/kernelbase/winerror.mc:1433
 msgid "Hard disk operation failed.\n"
-msgstr "Harde schijf operatie mislukt.\n"
+msgstr "Harde schijf bewerking mislukt.\n"
 
 #: dlls/kernelbase/winerror.mc:1438
 msgid "Hard disk reset failed.\n"
@@ -5281,7 +5280,7 @@ msgstr "Te veel links.\n"
 
 #: dlls/kernelbase/winerror.mc:1478
 msgid "Newer Windows version needed.\n"
-msgstr "Nieuwere windows-versie nodig.\n"
+msgstr "Nieuwere Windows-versie nodig.\n"
 
 #: dlls/kernelbase/winerror.mc:1483
 msgid "Wrong operating system.\n"
@@ -5329,7 +5328,7 @@ msgstr "Het doelelement is vol.\n"
 
 #: dlls/kernelbase/winerror.mc:1538
 msgid "The element address is invalid.\n"
-msgstr "De elementadres is ongeldig.\n"
+msgstr "Het elementadres is ongeldig.\n"
 
 #: dlls/kernelbase/winerror.mc:1543
 msgid "The magazine is not present.\n"
@@ -5493,7 +5492,7 @@ msgstr "Geen netwerk.\n"
 
 #: dlls/kernelbase/winerror.mc:1748
 msgid "Operation canceled by user.\n"
-msgstr "Operatie geannuleerd door gebruiker.\n"
+msgstr "Bewerking geannuleerd door gebruiker.\n"
 
 #: dlls/kernelbase/winerror.mc:1753
 msgid "File has a user-mapped section.\n"
@@ -5549,7 +5548,7 @@ msgstr "Verbinding afgebroken.\n"
 
 #: dlls/kernelbase/winerror.mc:1818
 msgid "Please retry operation.\n"
-msgstr "Probeer operatie a.u.b. opnieuw.\n"
+msgstr "Probeer de bewerking opnieuw.\n"
 
 #: dlls/kernelbase/winerror.mc:1823
 msgid "Connection count limit reached.\n"
@@ -5593,7 +5592,7 @@ msgstr "Reeds geïnitialiseerd.\n"
 
 #: dlls/kernelbase/winerror.mc:1873
 msgid "No more local devices.\n"
-msgstr "Niet meer lokale devices.\n"
+msgstr "Niet meer lokale apparaten.\n"
 
 #: dlls/kernelbase/winerror.mc:1878
 msgid "The site does not exist.\n"
@@ -5609,7 +5608,7 @@ msgstr "Alleen ondersteund in verbonden toestand.\n"
 
 #: dlls/kernelbase/winerror.mc:1893
 msgid "Perform operation even when nothing changed.\n"
-msgstr "Voer de operatie ook uit als er niets veranderd is.\n"
+msgstr "Voer de bewerking ook uit als er niets veranderd is.\n"
 
 #: dlls/kernelbase/winerror.mc:1898
 msgid "The user profile is invalid.\n"
@@ -6626,11 +6625,11 @@ msgstr "Onbekende autorisatieservice.\n"
 
 #: dlls/kernelbase/winerror.mc:3173
 msgid "Invalid entry.\n"
-msgstr "Ongeldige entry.\n"
+msgstr "Ongeldige invoer.\n"
 
 #: dlls/kernelbase/winerror.mc:3178
 msgid "Can't perform operation.\n"
-msgstr "Kan operatie niet uitvoeren.\n"
+msgstr "Kan bewerking niet uitvoeren.\n"
 
 #: dlls/kernelbase/winerror.mc:3183
 msgid "Endpoints not registered.\n"
@@ -6678,7 +6677,7 @@ msgstr "Ongeldige netwerkadresfamilie.\n"
 
 #: dlls/kernelbase/winerror.mc:3238
 msgid "Operation not supported.\n"
-msgstr "Operatie niet ondersteund.\n"
+msgstr "Bewerking niet ondersteund.\n"
 
 #: dlls/kernelbase/winerror.mc:3243
 msgid "No security context available.\n"
@@ -6806,7 +6805,7 @@ msgstr "Onbekende poort.\n"
 
 #: dlls/kernelbase/winerror.mc:3398
 msgid "Unknown printer driver.\n"
-msgstr "Onbekende printerdriver.\n"
+msgstr "Onbekend printerstuurprogramma.\n"
 
 #: dlls/kernelbase/winerror.mc:3403
 msgid "Unknown print processor.\n"
@@ -7295,7 +7294,7 @@ msgstr "Envelop Monarch"
 
 #: dlls/localspl/localspl.rc:74
 msgid "6 3/4 Envelope"
-msgstr "6 3/4 envelope"
+msgstr "6 3/4 Envelop"
 
 #: dlls/localspl/localspl.rc:75
 msgid "US Std Fanfold"
@@ -7653,7 +7652,7 @@ msgstr "Deze poort heeft geen opties om in te stellen"
 #: dlls/mapi32/mapi32.rc:31
 msgid "Mail sending failed as you do not have a MAPI mail client installed."
 msgstr ""
-"Mail kan niet worden verstuurd aangezien er geen MAPI mail client is "
+"Mail kan niet worden verstuurd omdat er geen MAPI mail-cliënt is "
 "geïnstalleerd."
 
 #: dlls/mapi32/mapi32.rc:32
@@ -8058,7 +8057,7 @@ msgstr "Voer het Netwerk Wachtwoord in"
 
 #: dlls/mpr/mpr.rc:38 dlls/wininet/wininet.rc:51 dlls/wininet/wininet.rc:71
 msgid "Please enter your username and password:"
-msgstr "Voer a.u.b. uw gebruikersnaam en wachtwoord in:"
+msgstr "Voer de gebruikersnaam en het wachtwoord in:"
 
 #: dlls/mpr/mpr.rc:39 dlls/wininet/wininet.rc:52
 msgid "Proxy"
@@ -8654,7 +8653,7 @@ msgid ""
 "that you can access it."
 msgstr ""
 "Bronbestand niet gevonden{{(cabinet)}}: [2]. Controleer of het bestand "
-"bestaat en of u toegang tot het bestand hebt."
+"bestaat en of er toegang tot het bestand is."
 
 #: dlls/msrle32/msrle32.rc:31
 msgid "Wine MS-RLE video codec"
@@ -8750,7 +8749,7 @@ msgstr "venster"
 
 #: dlls/oleacc/oleacc.rc:41
 msgid "client"
-msgstr "client"
+msgstr "cliënt"
 
 #: dlls/oleacc/oleacc.rc:42
 msgid "popup menu"
@@ -9150,7 +9149,7 @@ msgstr "Leverancier"
 
 #: dlls/oledb32/version.rc:59
 msgid "Select the data you want to connect to:"
-msgstr "Selecteer met welke gegevens u verbinging wilt maken:"
+msgstr "Selecteer met welke gegevens verbinding gemaakt moet worden:"
 
 #: dlls/oledb32/version.rc:66
 msgid "Connection"
@@ -9374,15 +9373,15 @@ msgstr "Wijzig p&ictogram..."
 
 #: dlls/oledlg/oledlg.rc:28
 msgid "Insert a new %s object into your document"
-msgstr "Voeg een nieuw %s object in uw document in"
+msgstr "Voeg in het document een nieuw %s object in"
 
 #: dlls/oledlg/oledlg.rc:29
 msgid ""
 "Insert the contents of the file as an object into your document so that you "
 "may activate it using the program which created it."
 msgstr ""
-"Voeg de inhoud van het bestand als object in uw document in, zodat u het "
-"later kunt bewerken met het programma waarmee u het heeft gemaakt."
+"Voeg de inhoud van het bestand als object in het document in. Hierdoor kan "
+"het later bewerkt worden met het programma waarmee het gemaakt is."
 
 #: dlls/oledlg/oledlg.rc:30 dlls/shell32/shell32.rc:195
 msgid "Browse"
@@ -9416,23 +9415,23 @@ msgstr "&Object"
 
 #: dlls/oledlg/oledlg.rc:41
 msgid "Inserts the contents of the clipboard into your document as %s."
-msgstr "Voegt de inhoud van het klembord in uw document in als %s."
+msgstr "Voegt de inhoud van het klembord toe in het document als %s."
 
 #: dlls/oledlg/oledlg.rc:42
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
 msgstr ""
-"Voegt de inhoud van het klembord in uw document in, zodat u het kan "
-"activeren met %s."
+"Voegt de inhoud van het klembord toe in het document. Hierdoor kan het "
+"gebruikt worden met %s."
 
 #: dlls/oledlg/oledlg.rc:43
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
 msgstr ""
-"Voegt de inhoud van het klembord in uw document in, zodat u het kan "
-"activeren met %s. Het zal als een pictogram weergegeven worden."
+"Voegt de inhoud van het klembord toe in het document. Hierdoor kan het "
+"gebruikt worden met %s. Het zal als een pictogram weergegeven worden."
 
 #: dlls/oledlg/oledlg.rc:44
 msgid ""
@@ -9440,9 +9439,9 @@ msgid ""
 "linked to the source file so that changes to the file will be reflected in "
 "your document."
 msgstr ""
-"De inhoud van het klembord in uw document invoegen als %s. De gegevens zijn "
+"De inhoud van het klembord in het document invoegen als %s. De gegevens zijn "
 "verbonden met het bestand, zodat wijzigingen in dat bestand worden getoond "
-"in uw document."
+"in het document."
 
 #: dlls/oledlg/oledlg.rc:45
 msgid ""
@@ -9450,9 +9449,9 @@ msgid ""
 "is linked to the source file so that changes to the file will be reflected "
 "in your document."
 msgstr ""
-"Een afbeelding vanuit het klembord invoegen in uw document. De afbeelding is "
-"verbonden met het bestand, zodat wijzigingen in dat bestand worden getoond "
-"in uw document."
+"Een afbeelding vanuit het klembord invoegen in het document. De afbeelding "
+"is verbonden met het bestand, zodat wijzigingen in het bestand worden "
+"getoond in het document."
 
 #: dlls/oledlg/oledlg.rc:46
 msgid ""
@@ -9462,11 +9461,11 @@ msgid ""
 msgstr ""
 "Een verwijzing die wijst naar de locatie van de inhoud van het klembord "
 "invoegen. De verwijzing is verbonden met het bestand, zodat wijzigingen in "
-"dat bestand worden getoond in uw document."
+"het bestand worden getoond in het document."
 
 #: dlls/oledlg/oledlg.rc:47
 msgid "Inserts the contents of the clipboard into your document."
-msgstr "De inhoud van het klembord in uw document toevoegen."
+msgstr "De inhoud van het klembord in het document toevoegen."
 
 #: dlls/oledlg/oledlg.rc:48 programs/regedit/regedit.rc:435
 msgid "Unknown Type"
@@ -9848,7 +9847,7 @@ msgstr "Scroll naar rechts"
 
 #: dlls/shdoclc/shdoclc.rc:28
 msgid "Wine Internet Explorer"
-msgstr "Wine Internet Verkenner"
+msgstr "Wine Internet Explorer"
 
 #: dlls/shdoclc/shdoclc.rc:33
 msgid "&w&bPage &p"
@@ -10126,7 +10125,7 @@ msgstr "Herstarten"
 
 #: dlls/shell32/shell32.rc:188
 msgid "Do you want to simulate a Windows reboot?"
-msgstr "Wilt u een Windows herstart simuleren?"
+msgstr "Een Windows herstart simuleren?"
 
 #: dlls/shell32/shell32.rc:189
 msgid "Shutdown"
@@ -10134,7 +10133,7 @@ msgstr "Afsluiten"
 
 #: dlls/shell32/shell32.rc:190
 msgid "Do you want to shutdown your Wine session?"
-msgstr "Wilt u uw Wine sessie afsluiten?"
+msgstr "De Wine sessie afsluiten?"
 
 #: dlls/shell32/shell32.rc:201 programs/progman/progman.rc:83
 msgid "Programs"
@@ -10232,19 +10231,19 @@ msgstr "Model"
 
 #: dlls/shell32/shell32.rc:226
 msgid "Sample Music"
-msgstr "Voorbeelden van muziek"
+msgstr "Voorbeeld Muziek"
 
 #: dlls/shell32/shell32.rc:227
 msgid "Sample Pictures"
-msgstr "Voorbeelden van afbeeldingen"
+msgstr "Voorbeeld Afbeeldingen"
 
 #: dlls/shell32/shell32.rc:228
 msgid "Sample Playlists"
-msgstr "Voorbeelden van afspeellijsten"
+msgstr "Voorbeeld Afspeellijsten"
 
 #: dlls/shell32/shell32.rc:229
 msgid "Sample Videos"
-msgstr "Voorbeelden van video's"
+msgstr "Voorbeeld Video's"
 
 #: dlls/shell32/shell32.rc:230
 msgid "Saved Games"
@@ -10280,11 +10279,11 @@ msgstr "Bevestig mapverwijdering"
 
 #: dlls/shell32/shell32.rc:171
 msgid "Are you sure you want to delete '%1'?"
-msgstr "Weet u zeker dat u '%1' wilt verwijderen?"
+msgstr "Moet '%1' verwijderd worden?"
 
 #: dlls/shell32/shell32.rc:172
 msgid "Are you sure you want to delete these %1 items?"
-msgstr "Weet u zeker dat u deze %1 bestanden wilt verwijderen?"
+msgstr "Moeten deze %1 bestanden verwijderd worden?"
 
 #: dlls/shell32/shell32.rc:179
 msgid "Confirm file overwrite"
@@ -10298,33 +10297,31 @@ msgid ""
 msgstr ""
 "Deze map bevat reeds een bestand genaamd '%1'.\n"
 "\n"
-"Wilt u het vervangen?"
+"Moet deze vervangen worden?"
 
 #: dlls/shell32/shell32.rc:173
 msgid "Are you sure you want to delete the selected item(s)?"
-msgstr "Weet u zeker dat u de geselecteerde bestand(en) wilt verwijderen?"
+msgstr "Moeten de geselecteerde bestanden verwijderd worden?"
 
 #: dlls/shell32/shell32.rc:175
 msgid ""
 "Are you sure that you want to send '%1' and all its content to the Trash?"
 msgstr ""
-"Weet u zeker dat u '%1' en zijn gehele inhoud naar de Prullenbak wilt "
-"verplaatsen?"
+"Moet '%1' en de gehele inhoud ervan naar de Prullenbak verplaatst worden?"
 
 #: dlls/shell32/shell32.rc:174
 msgid "Are you sure that you want to send '%1' to the Trash?"
-msgstr "Weet u zeker dat u '%1' naar de Prullenbak wilt verplaatsen?"
+msgstr "Moet '%1' naar de Prullenbak verplaatst worden?"
 
 #: dlls/shell32/shell32.rc:176
 msgid "Are you sure that you want to send these %1 items to the Trash?"
-msgstr ""
-"Weet u zeker dat u deze %1 bestanden naar de Prullenbak wilt verplaatsen?"
+msgstr "Moeten deze %1 bestanden naar de Prullenbak verplaatst worden?"
 
 #: dlls/shell32/shell32.rc:177
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
 msgstr ""
-"Bestand '%1' kan niet naar de Prullenbak worden verplaatst. Wilt u het "
-"bestand permanent verwijderen?"
+"Bestand '%1' kan niet naar de Prullenbak worden verplaatst. Moet het bestand "
+"permanent verwijderd worden?"
 
 #: dlls/shell32/shell32.rc:184
 msgid ""
@@ -10337,8 +10334,7 @@ msgstr ""
 "Deze map bevat reeds een map genaamd '%1'.\n"
 "\n"
 "Als de bestanden in de doelmap dezelfde naam hebben als de bestanden in de\n"
-"geselecteerde map zullen ze worden overschreven. Wilt u alsnog de map "
-"kopiëren\n"
+"geselecteerde map zullen ze worden overschreven. De map alsnog kopiëren\n"
 "of verplaatsen?"
 
 #: dlls/shell32/shell32.rc:238
@@ -10364,11 +10360,11 @@ msgstr ""
 
 #: dlls/shell32/shell32.rc:244
 msgid "Are you sure you wish to permanently delete '%1'?"
-msgstr "Weet u zeker dat u '%1' permanent wilt verwijderen?"
+msgstr "Moet '%1' permanent verwijderd worden?"
 
 #: dlls/shell32/shell32.rc:245
 msgid "Are you sure you wish to permanently delete these %1 items?"
-msgstr "Weet u zeker dat u deze %1 bestanden permanent wilt verwijderen?"
+msgstr "Moeten deze %1 bestanden permanent verwijderd worden?"
 
 #: dlls/shell32/shell32.rc:246
 msgid "Confirm deletion"
@@ -10382,7 +10378,7 @@ msgid ""
 msgstr ""
 "Bestand bestaat al in het pad %1.\n"
 "\n"
-"Wilt u het vervangen?"
+"Moet het vervangen worden?"
 
 #: dlls/shell32/shell32.rc:248
 msgid ""
@@ -10392,7 +10388,7 @@ msgid ""
 msgstr ""
 "Map bestaat al in het pad %1.\n"
 "\n"
-"Wilt u het vervangen?"
+"Moet het vervangen worden?"
 
 #: dlls/shell32/shell32.rc:249
 msgid "Confirm overwrite"
@@ -12372,7 +12368,7 @@ msgstr "Veiligheidswaarschuwing"
 
 #: dlls/urlmon/urlmon.rc:35
 msgid "Do you want to install this software?"
-msgstr "Wilt u deze software installeren?"
+msgstr "Deze software installeren?"
 
 #: dlls/urlmon/urlmon.rc:39
 msgid "Don't install"
@@ -12383,9 +12379,9 @@ msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"Indien geinstalleerd, heeft een ActiveX component volledige toegang tot uw "
-"computer. Klik niet op install als u bovenstaande bron niet volledig "
-"vertrouwt."
+"Indien geïnstalleerd, heeft een ActiveX component volledige toegang tot de "
+"computer. Klik niet op installeren als de bovenstaande bron niet volledig "
+"vertrouwt is."
 
 #: dlls/urlmon/urlmon.rc:51
 msgid "Installation of component failed: %08x"
@@ -12482,7 +12478,7 @@ msgstr "Type komt niet overeen"
 
 #: dlls/vbscript/vbscript.rc:36
 msgid "Device I/O error"
-msgstr "I/O apparaatfout"
+msgstr "I/O-apparaatfout"
 
 #: dlls/vbscript/vbscript.rc:37
 msgid "File already exists"
@@ -12646,7 +12642,7 @@ msgstr "Er is een probleem met het certificaat voor deze site."
 
 #: dlls/wininet/wininet.rc:93
 msgid "Do you want to continue anyway?"
-msgstr "Wilt u toch doorgaan?"
+msgstr "Toch doorgaan?"
 
 #: dlls/wininet/wininet.rc:28
 msgid "LAN Connection"
@@ -12762,7 +12758,7 @@ msgstr "Ongedefinieerde fout van buitenaf."
 #: dlls/winmm/winmm.rc:34
 msgid "A device ID has been used that is out of range for your system."
 msgstr ""
-"Een apparaat-ID werd gebruikt dat buiten de grenzen van uw systeem ligt."
+"Een apparaat-ID werd gebruikt dat buiten de grenzen van het systeem ligt."
 
 #: dlls/winmm/winmm.rc:35
 msgid "The driver was not enabled."
@@ -12782,7 +12778,7 @@ msgstr "De gespecificeerde apparaatverwijzing is ongeldig."
 
 #: dlls/winmm/winmm.rc:38
 msgid "There is no driver installed on your system!"
-msgstr "Er is geen stuurprogramma geïnstalleerd op uw systeem!"
+msgstr "Er is geen stuurprogramma geïnstalleerd op het systeem!"
 
 #: dlls/winmm/winmm.rc:39 dlls/winmm/winmm.rc:65
 msgid ""
@@ -12888,24 +12884,24 @@ msgstr ""
 #: dlls/winmm/winmm.rc:60
 msgid "Invalid MCI device ID. Use the ID returned when opening the MCI device."
 msgstr ""
-"Ongeldig MCI-apparaat-ID. Gebruik het teruggegeven ID als u dit MCI-apparaat "
-"opent."
+"Ongeldig MCI-apparaat-ID. Gebruik het ID dat wordt weergegeven als dit MCI-"
+"apparaat wordt geopend."
 
 #: dlls/winmm/winmm.rc:61
 msgid "The driver cannot recognize the specified command parameter."
-msgstr "De driver herkent de opgegeven opdrachtparameter niet."
+msgstr "Het stuurprogramma herkent de opgegeven opdrachtparameter niet."
 
 #: dlls/winmm/winmm.rc:62
 msgid "The driver cannot recognize the specified command."
-msgstr "De driver herkent de opgegeven opdracht niet."
+msgstr "Het stuurprogramma herkent de opgegeven opdracht niet."
 
 #: dlls/winmm/winmm.rc:63
 msgid ""
 "There is a problem with your media device. Make sure it is working correctly "
 "or contact the device manufacturer."
 msgstr ""
-"Er is een probleem met uw media-apparaat. Controleer of het correct werkt of "
-"neem contact op met de leverancier."
+"Er is een probleem met het media-apparaat. Controleer of het correct werkt "
+"of neem contact op met de leverancier."
 
 #: dlls/winmm/winmm.rc:64
 msgid "The specified device is not open or is not recognized by MCI."
@@ -12968,11 +12964,11 @@ msgstr ""
 
 #: dlls/winmm/winmm.rc:74
 msgid "The specified command requires a parameter. Please supply one."
-msgstr "De gegeven opdracht heeft een parameter nodig. Vult u deze a.u.b. in."
+msgstr "De gegeven opdracht heeft een parameter nodig. Vul deze in."
 
 #: dlls/winmm/winmm.rc:75
 msgid "The MCI device you are using does not support the specified command."
-msgstr "Het MCI-apparaat dat u gebruikt ondersteund het gegeven commando niet."
+msgstr "Het gebruikte MCI-apparaat ondersteunt dit commando niet."
 
 #: dlls/winmm/winmm.rc:76
 msgid ""
@@ -13030,15 +13026,15 @@ msgid ""
 "still connected to the network."
 msgstr ""
 "Kan het opgegeven bestand niet opslaan. Zorg ervoor dat er voldoende "
-"schijfruimte is of dat u nog steeds met het netwerk verbonden bent."
+"schijfruimte is of dat er nog steeds verbinding met het netwerk is."
 
 #: dlls/winmm/winmm.rc:86
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
-"Kan het opgegeven apparaat niet vinden. Verzeker u ervan dat het "
-"geïnstalleerd is en dat de apparaatnaam correct is opgegeven."
+"Kan het opgegeven apparaat niet vinden. Zorg ervoor dat het geïnstalleerd is "
+"en dat de apparaatnaam correct is opgegeven."
 
 #: dlls/winmm/winmm.rc:87
 msgid ""
@@ -13065,8 +13061,8 @@ msgid ""
 "The device driver is already in use. To share it, use the 'shareable' "
 "parameter with each 'open' command."
 msgstr ""
-"Het stuurprogramma is al in gebruik. Om het te delen, moet u de parameter "
-"'deelbaar' bij elke opdracht 'openen' gebruiken."
+"Het stuurprogramma is al in gebruik. Om het te delen, moet de parameter "
+"'deelbaar' bij elke opdracht 'openen' gebruikt worden."
 
 #: dlls/winmm/winmm.rc:91
 msgid ""
@@ -13115,7 +13111,7 @@ msgstr "Kan een bestand zonder naam niet opslaan. Geef een bestandsnaam op."
 
 #: dlls/winmm/winmm.rc:98
 msgid "You must specify an alias when using the 'new' parameter."
-msgstr "U moet een alias opgeven als u de 'new' parameter gebruikt."
+msgstr "Een alias moet opgeven worden als de 'new' parameter gebruikt wordt."
 
 #: dlls/winmm/winmm.rc:99
 msgid "Cannot use the 'notify' flag with auto-opened devices."
@@ -13256,9 +13252,7 @@ msgstr ""
 msgid ""
 "The device you are trying to play to cannot recognize the current file "
 "format."
-msgstr ""
-"Het apparaat waar u mee probeert af te spelen is niet in staat om het "
-"huidige formaat te herkennen."
+msgstr "Het afspeelapparaat herkent het huidige bestandsformaat niet."
 
 #: dlls/winmm/winmm.rc:120
 msgid ""
@@ -13273,9 +13267,7 @@ msgstr ""
 msgid ""
 "The device you are trying to record from cannot recognize the current file "
 "format."
-msgstr ""
-"Het apparaat waar u mee probeert op te nemen is niet in staat om het huidige "
-"formaat te herkennen."
+msgstr "Het opname apparaat herkent het huidige bestandsformaat niet."
 
 #: dlls/winmm/winmm.rc:126
 msgid ""
@@ -13283,7 +13275,7 @@ msgid ""
 "You can't use them together."
 msgstr ""
 "Van de tijdsformaten \"song pointer\" en SMPTE kan er maar één in gebruik "
-"zijn. U kunt ze niet beide tegelijkertijd gebruiken."
+"zijn. Ze kunnen niet beide tegelijkertijd gebruikt worden."
 
 #: dlls/winmm/winmm.rc:128
 msgid ""
@@ -13375,7 +13367,7 @@ msgstr "&Bestandsnaam:"
 
 #: dlls/winspool.drv/winspool.rc:31
 msgid "The output file already exists. Click OK to overwrite."
-msgstr "Het uitvoerbestand bestaat al. Klik OK om het te overschrijven."
+msgstr "Het bestand bestaat al. Klik OK om het te overschrijven."
 
 #: dlls/winspool.drv/winspool.rc:32
 msgid "Unable to create the output file."
@@ -13599,7 +13591,7 @@ msgstr "Kan geen verbinding maken met LDAP-server"
 
 #: dlls/wldap32/wldap32.rc:124
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "Operatie niet ondersteund door deze versie van het LDAP-protocol"
+msgstr "Bewerking niet ondersteund door deze versie van het LDAP-protocol"
 
 #: dlls/wldap32/wldap32.rc:125
 msgid "Specified control was not found in message"
@@ -13831,7 +13823,7 @@ msgstr ""
 "De FOR opdracht wordt gebruikt om een opdracht uit te voeren voor ieder van\n"
 "een verzameling bestanden.\n"
 "\n"
-"Syntax: FOR %variabele IN (verzameling) DO opdracht\n"
+"Gebruik: FOR %variabele IN (verzameling) DO opdracht\n"
 "\n"
 "Het % teken moet verdubbeld worden als FOR in een batch bestand wordt\n"
 "gebruikt.\n"
@@ -13882,9 +13874,9 @@ msgid ""
 msgstr ""
 "IF wordt gebruikt om een opdracht voorwaardelijk uit te voeren.\n"
 "\n"
-"Syntax: IF [NOT] EXIST bestandsnaam opdracht\n"
-"        IF [NOT] tekenreeks1==tekenreeks2 opdracht\n"
-"        IF [NOT] ERRORLEVEL getal opdracht\n"
+"Gebruik: IF [NOT] EXIST bestandsnaam opdracht\n"
+"         IF [NOT] tekenreeks1==tekenreeks2 opdracht\n"
+"         IF [NOT] ERRORLEVEL getal opdracht\n"
 "\n"
 "In de tweede vorm van de opdracht moeten tekenreeks1 en tekenreeks2 tussen\n"
 "dubbele aanhalingstekens staan. De vergelijking is niet gevoelig voor het\n"
@@ -13900,10 +13892,9 @@ msgid ""
 msgstr ""
 "LABEL wordt gebruikt om een schijflabel te wijzigen.\n"
 "\n"
-"Syntax: LABEL [schijf:]\n"
-"De opdracht vraagt u om een nieuw label in te tikken voor de opgegeven "
-"schijf.\n"
-"U kunt het label van een schijf tonen met behulp van de VOL opdracht.\n"
+"Gebruik: LABEL [schijf:]\n"
+"De opdracht vraagt om een nieuwe label voor de opgegeven schijf.\n"
+"Het label van een schijf kan getoond worden met behulp van de VOL opdracht.\n"
 
 #: programs/cmd/cmd.rc:121
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
@@ -13946,11 +13937,11 @@ msgstr ""
 "PATH toon of wijzigt het zoekpad van cmd.\n"
 "\n"
 "De opdracht PATH toont het huidige zoekpad (de beginwaarde wordt uit het\n"
-"register gehaald). Om het zoekpad te wijzigen laat u de PATH opdracht door\n"
-"de nieuwe waarde.\n"
+"register gehaald). Om het zoekpad te wijzigen gebruik de PATH opdracht\n"
+"gevolgd door de nieuwe waarde.\n"
 "\n"
 "Het is ook mogelijk om het zoekpad te wijzigen met behulp van de PATH\n"
-"omgevingsvariabele, bij voorbeeld:\n"
+"omgevingsvariabele, bijvoorbeeld:\n"
 "PATH %PATH%;c:\\temp\n"
 
 #: programs/cmd/cmd.rc:148
@@ -14178,7 +14169,7 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:256
 msgid "VER displays the version of cmd you are running.\n"
-msgstr "VER toont de versie van cmd die u draait.\n"
+msgstr "VER toont de versie van cmd die draait.\n"
 
 #: programs/cmd/cmd.rc:259
 msgid "VOL shows the volume label of a disk device.\n"
@@ -14399,7 +14390,7 @@ msgstr ""
 
 #: programs/cmd/cmd.rc:365
 msgid "Are you sure?"
-msgstr "Weet u het zeker?"
+msgstr "Zeker weten?"
 
 #: programs/cmd/cmd.rc:366 programs/reg/reg.rc:126 programs/xcopy/xcopy.rc:43
 msgctxt "Yes key"
@@ -14429,7 +14420,7 @@ msgstr "Meer..."
 
 #: programs/cmd/cmd.rc:372
 msgid "Line in Batch processing possibly truncated. Using:\n"
-msgstr "Regel in Batch proces mogelijk afgebroken. We gebruiken:\n"
+msgstr "Regel in Batch proces mogelijk afgebroken. Gebruikt:\n"
 
 #: programs/cmd/cmd.rc:374
 msgid "Argument missing\n"
@@ -14441,7 +14432,7 @@ msgstr "Syntaxisfout\n"
 
 #: programs/cmd/cmd.rc:377
 msgid "No help available for %1\n"
-msgstr "Geen help beschikbaar voor %1\n"
+msgstr "Help niet beschikbaar voor %1\n"
 
 #: programs/cmd/cmd.rc:378
 msgid "Target to GOTO not found\n"
@@ -14653,11 +14644,11 @@ msgstr "Bufferzone"
 
 #: programs/conhost/conhost.rc:96
 msgid "&Width:"
-msgstr "&Breedte :"
+msgstr "&Breedte:"
 
 #: programs/conhost/conhost.rc:99
 msgid "&Height:"
-msgstr "&Hoogte :"
+msgstr "&Hoogte:"
 
 #: programs/conhost/conhost.rc:103
 msgid "Window size"
@@ -14665,15 +14656,15 @@ msgstr "Venstergrootte"
 
 #: programs/conhost/conhost.rc:104
 msgid "W&idth:"
-msgstr "B&reedte :"
+msgstr "B&reedte:"
 
 #: programs/conhost/conhost.rc:107
 msgid "H&eight:"
-msgstr "H&oogte :"
+msgstr "H&oogte:"
 
 #: programs/conhost/conhost.rc:111
 msgid "End of program"
-msgstr "Einde programma"
+msgstr "Programma einde"
 
 #: programs/conhost/conhost.rc:112
 msgid "&Close console"
@@ -14780,7 +14771,7 @@ msgstr ""
 
 #: programs/fsutil/fsutil.mc:40
 msgid "Syntax: fsutil hardlink create <new> <existing>\n"
-msgstr "Syntax: fsutil hardlink create <nieuw> <bestaand>\n"
+msgstr "Gebruik: fsutil hardlink create <nieuw> <bestaand>\n"
 
 #: programs/hostname/hostname.rc:30
 msgid "Usage: hostname\n"
@@ -14887,7 +14878,7 @@ msgid ""
 "\n"
 "Where 'command' is one of HELP, START, STOP or USE.\n"
 msgstr ""
-"Gebruik van dit commando is:\n"
+"Gebruik deze opdracht als volgt:\n"
 "\n"
 "NET opdracht [argumenten]\n"
 "    -of-\n"
@@ -14904,7 +14895,7 @@ msgid ""
 "Displays the list of running services if 'service' is omitted. Otherwise "
 "'service' is the name of the service to start.\n"
 msgstr ""
-"De syntax van deze opdracht is:\n"
+"Gebruik deze opdracht als volgt:\n"
 "\n"
 "NET START [service]\n"
 "\n"
@@ -14919,7 +14910,7 @@ msgid ""
 "\n"
 "Where 'service' is the name of the service to stop.\n"
 msgstr ""
-"De syntax van deze opdracht is:\n"
+"Gebruik deze opdracht als volgt:\n"
 "\n"
 "NET STOP service\n"
 "\n"
@@ -15340,7 +15331,7 @@ msgid ""
 msgstr ""
 "Bestand '%s' bestaat niet.\n"
 "\n"
-"Wilt u een nieuw bestand maken?"
+"Een nieuw bestand maken?"
 
 #: programs/notepad/notepad.rc:87
 msgid ""
@@ -15350,7 +15341,7 @@ msgid ""
 msgstr ""
 "Bestand '%s' is gewijzigd.\n"
 "\n"
-"Wilt u de wijzigingen opslaan?"
+"De wijzigingen opslaan?"
 
 #: programs/notepad/notepad.rc:88
 msgid "'%s' could not be found."
@@ -15382,7 +15373,7 @@ msgstr ""
 "als dit bestand wordt opgeslagen in de %2 codering.\n"
 "Klik op Annuleren om deze tekens te behouden, en selecteer\n"
 "daarna één van de Unicode-opties in de coderingskeuzelijst.\n"
-"Wilt u doorgaan?"
+"Doorgaan?"
 
 #: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
@@ -15887,11 +15878,11 @@ msgstr "Informatie"
 
 #: programs/progman/progman.rc:68
 msgid "Delete group `%s'?"
-msgstr "Wilt u groep `%s' verwijderen?"
+msgstr "Verwijder groep `%s'?"
 
 #: programs/progman/progman.rc:69
 msgid "Delete program `%s'?"
-msgstr "Wilt u programma `%s' verwijderen?"
+msgstr "Verwijder programma `%s'?"
 
 #: programs/progman/progman.rc:70
 msgid "Not implemented"
@@ -15911,7 +15902,7 @@ msgid ""
 "Should it be tried further on?"
 msgstr ""
 "Het groepsbestand `%s' kan niet worden geopend.\n"
-"Wilt u het nogmaals proberen?"
+"Nogmaals proberen?"
 
 #: programs/progman/progman.rc:77
 msgid "Help not available."
@@ -16451,7 +16442,7 @@ msgstr "reg: Register data type wordt niet ondersteund [%1]\n"
 
 #: programs/reg/reg.rc:125
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "De registerwaarde '%1' bestand bestaat al. Wilt u het vervangen?"
+msgstr "De registerwaarde '%1' bestand bestaat al. Deze vervangen?"
 
 #: programs/reg/reg.rc:118
 msgid "reg: Invalid command line parameters\n"
@@ -16465,20 +16456,19 @@ msgstr "reg: De bron- en de doelsleutel kunnen niet hetzelfde zijn\n"
 msgid ""
 "The value '%1\\%2' already exists in the destination key. Do you want to "
 "overwrite it?"
-msgstr ""
-"De waarde '%1\\%2' komt al voor in de doelsleutel. Wilt u het overschrijven?"
+msgstr "De waarde '%1\\%2' komt al voor in de doelsleutel. Deze overschrijven?"
 
 #: programs/reg/reg.rc:133
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Weet u zeker dat u de registerwaarde '%1' wilt verwijderen?"
+msgstr "Moet de registerwaarde '%1' verwijderd worden?"
 
 #: programs/reg/reg.rc:134
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Weet u zeker dat u alle registerwaardes in '%1' wilt verwijderen?"
+msgstr "Moeten alle registerwaardes in '%1' verwijderd worden?"
 
 #: programs/reg/reg.rc:135
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Weet u zeker dat u registersleutel '%1' wilt verwijderen?"
+msgstr "Moet de registersleutel '%1' verwijderd worden?"
 
 #: programs/reg/reg.rc:137
 msgid "reg: Unable to delete all registry values in '%1'\n"
@@ -16486,7 +16476,7 @@ msgstr "reg: Kan niet alle registerwaardes in '%1' verwijderen.\n"
 
 #: programs/reg/reg.rc:173
 msgid "The file '%1' already exists. Do you want to overwrite it?"
-msgstr "Het bestand '%1' bestaat al. Wilt u het overschrijven?"
+msgstr "Het bestand '%1' bestaat al. Overschrijven?"
 
 #: programs/reg/reg.rc:151
 msgid "reg: Unrecognized escape sequence [\\%1!c!]\n"
@@ -17036,7 +17026,7 @@ msgstr "Kan dit type registersleutel (%1!u!) niet bewerken."
 
 #: programs/regedit/regedit.rc:212
 msgid "The value is too big (%1!u!)."
-msgstr "De waarde te groot (%1!u!)."
+msgstr "De waarde is te groot (%1!u!)."
 
 #: programs/regedit/regedit.rc:213
 msgid "Confirm Value Delete"
@@ -17044,7 +17034,7 @@ msgstr "Waarde verwijderen bevestigen"
 
 #: programs/regedit/regedit.rc:214
 msgid "Are you sure you want to delete the selected registry value?"
-msgstr "Weet u zeker dat u deze registerwaarden wilt verwijderen?"
+msgstr "Moeten deze registerwaarden verwijderd worden?"
 
 #: programs/regedit/regedit.rc:220
 msgid "Search complete. The string '%1' was not found."
@@ -17052,15 +17042,15 @@ msgstr "Zoeken voltooid. Tekenreeks '%1' is niet gevonden."
 
 #: programs/regedit/regedit.rc:215
 msgid "Are you sure you want to delete these values?"
-msgstr "Weet u zeker dat u deze waarden wilt verwijderen?"
+msgstr "Moeten deze waarden verwijderd worden?"
 
 #: programs/regedit/regedit.rc:218
 msgid "New Key #%d"
-msgstr "Nieuwe sleutel #%d"
+msgstr "Nieuwe sleutel %d"
 
 #: programs/regedit/regedit.rc:219
 msgid "New Value #%d"
-msgstr "Nieuwe waarde #%d"
+msgstr "Nieuwe waarde %d"
 
 #: programs/regedit/regedit.rc:209
 msgid "Unable to query the registry key '%1'."
@@ -17095,7 +17085,7 @@ msgstr "Deze registersleutel met alle subsleutels verwijderen?"
 
 #: programs/regedit/regedit.rc:203
 msgid "Expands or collapses the selected node"
-msgstr "Vouwt het geselecteerde knooppunt uit of samen"
+msgstr "Vouwt de geselecteerde map uit of samen"
 
 #: programs/regedit/regedit.rc:236
 msgid "Collapse"
@@ -17225,8 +17215,7 @@ msgid ""
 "/ProgIDOpen    Open a document using the specified progID.\n"
 "/?             Display this help and exit.\n"
 msgstr ""
-"Start een programma, of open een document met het programma dat normaal "
-"voor\n"
+"Start een programma, of open een document met het programma dat normaal voor "
 "deze extensie gebruikt wordt.\n"
 "Gebruik:\n"
 "start [opties] programma-naam [...]\n"
@@ -17826,7 +17815,7 @@ msgstr ""
 #: programs/taskmgr/taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
-"Taakbeheer minimaliseert zich als een 'Wissel naar' operatie uitgevoerd wordt"
+"Taakbeheer minimaliseert als een 'Wissel naar' bewerking uitgevoerd wordt"
 
 #: programs/taskmgr/taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
@@ -17926,7 +17915,7 @@ msgstr "Brengt de taak naar de voorgrond en wisselt focus naar de taak"
 
 #: programs/taskmgr/taskmgr.rc:227
 msgid "Tells the selected tasks to close"
-msgstr "Zegt de geselecteerde taken zich te beëindigen"
+msgstr "Vraagt de geselecteerde taken om te beëindigen"
 
 #: programs/taskmgr/taskmgr.rc:228
 msgid "Switches the focus to the process of the selected task"
@@ -18070,9 +18059,9 @@ msgid ""
 "cause undesired results including system instability. Are you\n"
 "sure you want to change the priority class?"
 msgstr ""
-"WAARSCHUWING: Het veranderen van de prioriteitsklasse van dit\n"
-"proces kan ongewenste gevolgen hebben zoals instabiliteit van\n"
-"het systeem. Weet u zeker dat u de prioriteitsklasse wilt veranderen?"
+"WAARSCHUWING: Het veranderen van de prioriteitsklasse van dit proces kan "
+"ongewenste gevolgen hebben zoals instabiliteit van het systeem. De "
+"prioriteitsklasse veranderen?"
 
 #: programs/taskmgr/taskmgr.rc:305
 msgid "Unable to Change Priority"
@@ -18086,11 +18075,10 @@ msgid ""
 "data before it is terminated. Are you sure you want to\n"
 "terminate the process?"
 msgstr ""
-"WAARSCHUWING: Het stoppen van een proces kan ongewenste\n"
-"gevolgen hebben zoals verlies van gegevens en instabiliteit\n"
-"van het systeem. Het proces zal geen mogelijkheid worden gegeven\n"
-"om zijn gegevens of status op te slaan. Weet u zeker dat u dit proces\n"
-"wilt stoppen?"
+"WAARSCHUWING: Het stoppen van een proces kan ongewenste gevolgen hebben "
+"zoals verlies van gegevens en instabiliteit van het systeem. Het proces zal "
+"geen mogelijkheid worden gegeven om zijn gegevens of status op te slaan. Dit "
+"proces stoppen?"
 
 #: programs/taskmgr/taskmgr.rc:311
 msgid "Unable to Terminate Process"
@@ -18101,8 +18089,9 @@ msgid ""
 "WARNING: Debugging this process may result in loss of data.\n"
 "Are you sure you wish to attach the debugger?"
 msgstr ""
-"WAARSCHUWING: Het debuggen van dit proces kan verlies van data tot\n"
-"gevolg hebben. Weet u zeker dat u de debugger wilt koppelen?"
+"WAARSCHUWING: Het debuggen van dit proces kan verlies van data tot gevolg "
+"hebben.\n"
+"Moet de debugger gekoppeld worden?"
 
 #: programs/taskmgr/taskmgr.rc:314
 msgid "Unable to Debug Process"
@@ -18148,7 +18137,7 @@ msgid ""
 msgstr ""
 "Het uitvoeren van de verwijderopdracht '%s' is mislukt, wellicht vanwege een "
 "ontbrekend bestand.\n"
-"Wilt u de verwijdersleutel verwijderen uit het register?"
+"De vermelding verwijderen uit het register?"
 
 #: programs/uninstaller/uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
@@ -18197,7 +18186,7 @@ msgstr ""
 "  --list\t    Toon alle geïnstalleerde programma's in deze Wine prefix.\n"
 "  --remove {GUID}   Verwijder het programma.\n"
 "\t\t    Gebruik '--list' om de GUID te bepalen.\n"
-"  [geen optie]       Start de grafische versie van dit programma.\n"
+"  [geen optie]\t    Start de grafische versie van dit programma.\n"
 "\n"
 
 #: programs/view/view.rc:36
@@ -18242,7 +18231,7 @@ msgstr ""
 "Een gesimuleerde uitlog- of afsluitactie is bezig, maar dit programma "
 "reageert niet.\n"
 "\n"
-"Als u het proces beëindigt kunt u alle niet-opgeslagen data verliezen."
+"Als het proces beëindigd wordt kan alle niet-opgeslagen data verloren gaan."
 
 #: programs/wineboot/wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."
@@ -18553,7 +18542,7 @@ msgstr "Thema-bestanden (*.msstyles; *.theme)"
 
 #: programs/winecfg/winecfg.rc:46
 msgid "Select a theme file"
-msgstr "Thema-bestanden kiezen"
+msgstr "Thema-bestand kiezen"
 
 #: programs/winecfg/winecfg.rc:47
 msgid "Folder"
@@ -18604,8 +18593,9 @@ msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
-"Veranderen van de laadvolgorde van deze bibliotheek wordt niet aanbevolen\n"
-". Weet u zeker dat u dit wilt doen?"
+"Het veranderen van de laadvolgorde van deze bibliotheek wordt niet "
+"aanbevolen.\n"
+"Doorgaan?"
 
 #: programs/winecfg/winecfg.rc:54
 msgid "Warning: system library"
@@ -18673,7 +18663,7 @@ msgid ""
 "\n"
 "Each drive must have a letter, from A to Z, so you cannot have more than 26."
 msgstr ""
-"U kunt geen schijven meer toevoegen.\n"
+"Er kan geen schijf meer toegevoegd worden.\n"
 "\n"
 "Elke schijf moet een letter van A tot Z hebben. Het kunnen er dus niet meer "
 "dan 26 zijn."
@@ -18689,11 +18679,10 @@ msgid ""
 "Most Windows applications expect drive C to exist, and will die messily if "
 "it doesn't. If you proceed, remember to recreate it!"
 msgstr ""
-"Weet u zeker dat u de C-schijf wilt verwijderen?\n"
+"Moet de C-schijf verwijderd worden?\n"
 "\n"
-"De meeste Windows toepassingen verwachten dat er C-schijf bestaat en zullen, "
-"met onverwachte resultaten, afbreken. Als u doorgaat vergeet dan niet om de "
-"C-schijf opnieuw aan te maken!"
+"De meeste Windows toepassingen verwachten dat er C-schijf bestaat en zullen "
+"niet werken. Vergeet niet om de C-schijf opnieuw aan te maken!"
 
 #: programs/winecfg/winecfg.rc:76
 msgctxt "Drive letter"
@@ -18710,9 +18699,9 @@ msgid ""
 "\n"
 "Remember to click 'Add' in the Drives tab to create one!\n"
 msgstr ""
-"U heeft geen C-schijf. Dit kan tot problemen leiden.\n"
+"Er is geen C-schijf. Dit kan tot problemen leiden.\n"
 "\n"
-"Vergeet niet om m.b.v. de knop 'Toevoegen' in het 'Schijven'-tabblad een\n"
+"Vergeet niet om met de knop 'Toevoegen' in het 'Schijven'-tabblad een\n"
 "C-schijf aan te maken!\n"
 
 #: programs/winecfg/winecfg.rc:98
@@ -18884,17 +18873,18 @@ msgid ""
 "button, then <a href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> "
 "and attach that file to the report."
 msgstr ""
-"Indien dit probleem zich niet voordoet onder Windows en het probleem nog "
-"niet is gerapporteerd, dan kunt u gedetailleerde informatie in een bestand "
-"opslaan met de \"Opslaan als\" knop. Dit bestand kunt u via <a "
-"href=\"https://wiki.winehq.org/Bugs\">file a bug report</a> versturen."
+"Als dit probleem zich niet voordoet onder Windows en het probleem nog niet "
+"is gerapporteerd, dan kan gedetailleerde informatie in een bestand worden "
+"opgeslagen met de \"Opslaan als\" knop. Maak een nieuwe <a href=\"https://"
+"wiki.winehq.org/Bugs\">foutrapportage</a> aan en voeg het bestand toe aan de "
+"foutrapportage."
 
 #: programs/winedbg/winedbg.rc:40
 msgid ""
 "A program on your system has crashed, but WineDbg was unable to attach to "
 "the process to obtain a backtrace."
 msgstr ""
-"Een programma op uw computer is vastgelopen, maar WineDbg kon niet aan het "
+"Een programma op de computer is vastgelopen, maar WineDbg kon niet aan het "
 "proces vastgemaakt worden om een backtrace te verkrijgen."
 
 #: programs/winedbg/winedbg.rc:41
@@ -18907,7 +18897,7 @@ msgstr "Opslaan mislukt"
 
 #: programs/winedbg/winedbg.rc:45
 msgid "Loading detailed information, please wait..."
-msgstr "Even geduld a.u.b. Gedetailleerde informatie wordt geladen..."
+msgstr "Gedetailleerde informatie wordt geladen, even geduld..."
 
 #: programs/winefile/winefile.rc:29
 msgid "&Open\tEnter"
@@ -19160,7 +19150,7 @@ msgstr "Gefeliciteerd!"
 
 #: programs/winemine/winemine.rc:82
 msgid "Please enter your name"
-msgstr "Voer uw naam in"
+msgstr "Voer een naam in"
 
 #: programs/winemine/winemine.rc:90
 msgid "Custom Game"
@@ -19180,7 +19170,7 @@ msgstr "Mijnen"
 
 #: programs/winemine/winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr "Alle resultaten worden gewist. Weet u het zeker?"
+msgstr "Alle resultaten worden gewist. Doorgaan?"
 
 #: programs/winemine/winemine.rc:30
 msgid "WineMine"
@@ -19272,7 +19262,7 @@ msgstr "Helpbestanden (*.hlp)"
 
 #: programs/winhlp32/winhlp32.rc:92
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "Kan '%s' niet openen. Wilt u zelf dit bestand zoeken?"
+msgstr "Kan '%s' niet openen. Dit bestand zelf zoeken?"
 
 #: programs/winhlp32/winhlp32.rc:93
 msgid "Cannot find a richedit implementation... Aborting"
@@ -19488,7 +19478,7 @@ msgstr "Geen regelafbraak"
 
 #: programs/wordpad/wordpad.rc:269
 msgid "Wrap text by the &window border"
-msgstr "Breek tekst af bij &venster rand"
+msgstr "Breek tekst af bij &vensterrand"
 
 #: programs/wordpad/wordpad.rc:270
 msgid "Wrap text by the &margin"
@@ -19649,8 +19639,8 @@ msgid ""
 "You have chosen to save in plain text format, which will cause all "
 "formatting to be lost. Are you sure that you wish to do this?"
 msgstr ""
-"U koos voor opslaan in gewoon tekst formaat, waardoor alle formattering "
-"verloren zal gaan. Weet u zeker dat u dit wilt?"
+"Bij het opslaan in het kale tekst formaat zal alle formattering verloren "
+"gaan. Doorgaan?"
 
 #: programs/wordpad/wordpad.rc:198
 msgid "Invalid number format."
