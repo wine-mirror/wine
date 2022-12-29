@@ -2419,7 +2419,8 @@ void __cdecl wined3d_device_set_software_vertex_processing(struct wined3d_device
 BOOL __cdecl wined3d_device_show_cursor(struct wined3d_device *device, BOOL show);
 HRESULT __cdecl wined3d_device_update_texture(struct wined3d_device *device,
         struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture);
-HRESULT __cdecl wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes);
+HRESULT __cdecl wined3d_device_validate_device(const struct wined3d_device *device,
+        const struct wined3d_stateblock_state *state, DWORD *num_passes);
 
 HRESULT __cdecl wined3d_device_context_blt(struct wined3d_device_context *context,
         struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx, const RECT *dst_rect,

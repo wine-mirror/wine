@@ -2424,8 +2424,7 @@ static HRESULT WINAPI d3d8_device_ValidateDevice(IDirect3DDevice8 *iface, DWORD 
     TRACE("iface %p, pass_count %p.\n", iface, pass_count);
 
     wined3d_mutex_lock();
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    hr = wined3d_device_validate_device(device->wined3d_device, pass_count);
+    hr = wined3d_device_validate_device(device->wined3d_device, device->stateblock_state, pass_count);
     wined3d_mutex_unlock();
 
     /* In d3d8, texture filters are not validated, so errors concerning

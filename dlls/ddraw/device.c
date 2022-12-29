@@ -5079,8 +5079,7 @@ static HRESULT d3d_device7_ValidateDevice(IDirect3DDevice7 *iface, DWORD *pass_c
     TRACE("iface %p, pass_count %p.\n", iface, pass_count);
 
     wined3d_mutex_lock();
-    wined3d_device_apply_stateblock(device->wined3d_device, device->state);
-    hr = wined3d_device_validate_device(device->wined3d_device, pass_count);
+    hr = wined3d_device_validate_device(device->wined3d_device, device->stateblock_state, pass_count);
     wined3d_mutex_unlock();
 
     return hr;

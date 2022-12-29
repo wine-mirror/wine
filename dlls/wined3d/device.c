@@ -3701,9 +3701,9 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes)
+HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device, const struct wined3d_stateblock_state *state, DWORD *num_passes)
 {
-    const struct wined3d_state *state = device->cs->c.state;
+    const struct wined3d_state *device_state = device->cs->c.state;
     struct wined3d_texture *texture;
     unsigned i;
 
@@ -3744,11 +3744,10 @@ HRESULT CDECL wined3d_device_validate_device(const struct wined3d_device *device
         }
     }
 
-    if (wined3d_state_uses_depth_buffer(state)
-            || (state->depth_stencil_state && state->depth_stencil_state->desc.stencil))
+    if (state->rs[WINED3D_RS_ZENABLE] || state->rs[WINED3D_RS_ZWRITEENABLE] || state->rs[WINED3D_RS_STENCILENABLE])
     {
-        struct wined3d_rendertarget_view *rt = state->fb.render_targets[0];
-        struct wined3d_rendertarget_view *ds = state->fb.depth_stencil;
+        struct wined3d_rendertarget_view *rt = device_state->fb.render_targets[0];
+        struct wined3d_rendertarget_view *ds = device_state->fb.depth_stencil;
 
         if (ds && rt && (ds->width < rt->width || ds->height < rt->height))
         {

@@ -87,7 +87,7 @@
 @ cdecl wined3d_device_set_software_vertex_processing(ptr long)
 @ cdecl wined3d_device_show_cursor(ptr long)
 @ cdecl wined3d_device_update_texture(ptr ptr ptr)
-@ cdecl wined3d_device_validate_device(ptr ptr)
+@ cdecl wined3d_device_validate_device(ptr ptr ptr)
 
 @ cdecl wined3d_device_context_blt(ptr ptr long ptr ptr long ptr long ptr long)
 @ cdecl wined3d_device_context_clear_rendertarget_view(ptr ptr ptr long ptr float long)
