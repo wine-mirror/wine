@@ -489,7 +489,7 @@ void state_unbind_resources(struct wined3d_state *state)
     }
 }
 
-void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state)
+static void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state)
 {
     struct wined3d_light_info *light, *cursor;
     struct wined3d_vertex_declaration *decl;
@@ -2065,7 +2065,7 @@ static void stateblock_state_init_default(struct wined3d_stateblock_state *state
         state->streams[i].frequency = 1;
 }
 
-void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state,
+static void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state,
         const struct wined3d_device *device, uint32_t flags)
 {
     rb_init(&state->light_state->lights_tree, lights_compare);

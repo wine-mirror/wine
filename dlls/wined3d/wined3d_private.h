@@ -3608,10 +3608,6 @@ struct wined3d_stateblock
     unsigned int              num_contained_sampler_states;
 };
 
-void wined3d_stateblock_state_init(struct wined3d_stateblock_state *state,
-        const struct wined3d_device *device, uint32_t flags) DECLSPEC_HIDDEN;
-void wined3d_stateblock_state_cleanup(struct wined3d_stateblock_state *state) DECLSPEC_HIDDEN;
-
 bool wined3d_light_state_enable_light(struct wined3d_light_state *state, const struct wined3d_d3d_info *d3d_info,
         struct wined3d_light_info *light_info, BOOL enable) DECLSPEC_HIDDEN;
 struct wined3d_light_info *wined3d_light_state_get_light(const struct wined3d_light_state *state,
