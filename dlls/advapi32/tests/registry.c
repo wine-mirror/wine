@@ -1672,7 +1672,8 @@ static void test_reg_load_app_key(void)
     RegCloseKey(appkey);
 
     wait_file_available(hivefilepath);
-    ok(DeleteFileA(hivefilepath), "couldn't delete hive file %ld\n", GetLastError());
+    ret = DeleteFileA(hivefilepath);
+    ok(ret, "couldn't delete hive file %ld\n", GetLastError());
 }
 
 /* tests that show that RegConnectRegistry and
