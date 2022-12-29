@@ -4224,6 +4224,7 @@ static void test_PrefetchVirtualMemory(void)
     char stackmem[] = "Test stack mem";
     static char testmem[] = "Test memory range data";
     unsigned int page_size = si.dwPageSize;
+    BOOL ret;
 
     if (!pPrefetchVirtualMemory)
     {
@@ -4236,28 +4237,28 @@ static void test_PrefetchVirtualMemory(void)
 
     entries[0].VirtualAddress = ULongToPtr(PtrToUlong(testmem) & -(ULONG_PTR)page_size);
     entries[0].NumberOfBytes = page_size;
-    ok( pPrefetchVirtualMemory( GetCurrentProcess(), 1, entries, 0 ) ||
-        broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
+    ret = pPrefetchVirtualMemory( GetCurrentProcess(), 1, entries, 0 );
+    ok( ret || broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
         "PrefetchVirtualMemory unexpected status on 1 page-aligned entry: %ld\n", GetLastError() );
 
     entries[0].VirtualAddress = testmem;
     entries[0].NumberOfBytes = sizeof(testmem);
-    ok( pPrefetchVirtualMemory( GetCurrentProcess(), 1, entries, 0 ) ||
-        broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
+    ret = pPrefetchVirtualMemory( GetCurrentProcess(), 1, entries, 0 );
+    ok( ret || broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
         "PrefetchVirtualMemory unexpected status on 1 entry: %ld\n", GetLastError() );
 
     entries[0].VirtualAddress = NULL;
     entries[0].NumberOfBytes = page_size;
-    ok( pPrefetchVirtualMemory( GetCurrentProcess(), 1, entries, 0 ) ||
-        broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
+    ret = pPrefetchVirtualMemory( GetCurrentProcess(), 1, entries, 0 );
+    ok( ret ||broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
         "PrefetchVirtualMemory unexpected status on 1 unmapped entry: %ld\n", GetLastError() );
 
     entries[0].VirtualAddress = ULongToPtr(PtrToUlong(testmem) & -(ULONG_PTR)page_size);
     entries[0].NumberOfBytes = page_size;
     entries[1].VirtualAddress = ULongToPtr(PtrToUlong(stackmem) & -(ULONG_PTR)page_size);
     entries[1].NumberOfBytes = page_size;
-    ok( pPrefetchVirtualMemory( GetCurrentProcess(), 2, entries, 0 ) ||
-        broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
+    ret = pPrefetchVirtualMemory( GetCurrentProcess(), 2, entries, 0 );
+    ok( ret ||broken( is_wow64 && GetLastError() == ERROR_INVALID_PARAMETER ) /* win10 1507 */,
         "PrefetchVirtualMemory unexpected status on 2 page-aligned entries: %ld\n", GetLastError() );
 }
 
