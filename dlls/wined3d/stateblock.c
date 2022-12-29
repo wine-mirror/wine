@@ -2398,30 +2398,22 @@ static void wined3d_device_set_light_enable(struct wined3d_device *device, unsig
         wined3d_device_context_emit_set_light_enable(&device->cs->c, light_idx, enable);
 }
 
-static HRESULT wined3d_device_set_clip_plane(struct wined3d_device *device,
+static void wined3d_device_set_clip_plane(struct wined3d_device *device,
         unsigned int plane_idx, const struct wined3d_vec4 *plane)
 {
     struct wined3d_vec4 *clip_planes = device->cs->c.state->clip_planes;
 
     TRACE("device %p, plane_idx %u, plane %p.\n", device, plane_idx, plane);
 
-    if (plane_idx >= device->adapter->d3d_info.limits.max_clip_distances)
-    {
-        TRACE("Application has requested clipplane this device doesn't support.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if (!memcmp(&clip_planes[plane_idx], plane, sizeof(*plane)))
     {
         TRACE("Application is setting old values over, nothing to do.\n");
-        return WINED3D_OK;
+        return;
     }
 
     clip_planes[plane_idx] = *plane;
 
     wined3d_device_context_emit_set_clip_plane(&device->cs->c, plane_idx, plane);
-
-    return WINED3D_OK;
 }
 
 static void resolve_depth_buffer(struct wined3d_device *device)
@@ -2446,12 +2438,6 @@ static void resolve_depth_buffer(struct wined3d_device *device)
 static void wined3d_device_set_render_state(struct wined3d_device *device,
         enum wined3d_render_state state, unsigned int value)
 {
-    if (state > WINEHIGHEST_RENDER_STATE)
-    {
-        WARN("Unhandled render state %#x.\n", state);
-        return;
-    }
-
     if (value == device->cs->c.state->render_states[state])
     {
         TRACE("Application is setting the old value over, nothing to do.\n");
@@ -2472,17 +2458,8 @@ static void wined3d_device_set_render_state(struct wined3d_device *device,
 static void wined3d_device_set_texture_stage_state(struct wined3d_device *device,
         unsigned int stage, enum wined3d_texture_stage_state state, uint32_t value)
 {
-    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
-
     TRACE("device %p, stage %u, state %s, value %#x.\n",
             device, stage, debug_d3dtexturestate(state), value);
-
-    if (stage >= d3d_info->limits.ffp_blend_stages)
-    {
-        WARN("Attempting to set stage %u which is higher than the max stage %u, ignoring.\n",
-                stage, d3d_info->limits.ffp_blend_stages - 1);
-        return;
-    }
 
     if (value == device->cs->c.state->texture_states[stage][state])
     {
@@ -2518,12 +2495,6 @@ static void wined3d_device_set_texture(struct wined3d_device *device,
     struct wined3d_texture *prev;
 
     TRACE("device %p, stage %u, texture %p.\n", device, stage, texture);
-
-    if (stage >= ARRAY_SIZE(state->textures))
-    {
-        WARN("Ignoring invalid stage %u.\n", stage);
-        return;
-    }
 
     prev = state->textures[stage];
     TRACE("Previous texture %p.\n", prev);
