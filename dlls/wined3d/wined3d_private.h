@@ -3549,65 +3549,6 @@ struct wined3d_vertex_declaration
     BOOL position_transformed;
 };
 
-struct wined3d_saved_states
-{
-    uint32_t vs_consts_f[WINED3D_BITMAP_SIZE(WINED3D_MAX_VS_CONSTS_F)];
-    WORD vertexShaderConstantsI;                /* WINED3D_MAX_CONSTS_I, 16 */
-    WORD vertexShaderConstantsB;                /* WINED3D_MAX_CONSTS_B, 16 */
-    uint32_t ps_consts_f[WINED3D_BITMAP_SIZE(WINED3D_MAX_PS_CONSTS_F)];
-    WORD pixelShaderConstantsI;                 /* WINED3D_MAX_CONSTS_I, 16 */
-    WORD pixelShaderConstantsB;                 /* WINED3D_MAX_CONSTS_B, 16 */
-    uint32_t transform[WINED3D_BITMAP_SIZE(WINED3D_HIGHEST_TRANSFORM_STATE + 1)];
-    WORD streamSource;                          /* WINED3D_MAX_STREAMS, 16 */
-    WORD streamFreq;                            /* WINED3D_MAX_STREAMS, 16 */
-    uint32_t renderState[WINED3D_BITMAP_SIZE(WINEHIGHEST_RENDER_STATE + 1)];
-    DWORD textureState[WINED3D_MAX_TEXTURES];   /* WINED3D_HIGHEST_TEXTURE_STATE + 1, 18 */
-    WORD samplerState[WINED3D_MAX_COMBINED_SAMPLERS];   /* WINED3D_HIGHEST_SAMPLER_STATE + 1, 14 */
-    DWORD clipplane;                            /* WINED3D_MAX_CLIP_DISTANCES, 8 */
-    DWORD textures : 20;                        /* WINED3D_MAX_COMBINED_SAMPLERS, 20 */
-    DWORD indices : 1;
-    DWORD material : 1;
-    DWORD viewport : 1;
-    DWORD vertexDecl : 1;
-    DWORD pixelShader : 1;
-    DWORD vertexShader : 1;
-    DWORD scissorRect : 1;
-    DWORD store_stream_offset : 1;
-    DWORD alpha_to_coverage : 1;
-    DWORD lights : 1;
-    DWORD transforms : 1;
-    DWORD padding : 1;
-
-    struct list changed_lights;
-};
-
-struct StageState {
-    DWORD stage;
-    DWORD state;
-};
-
-struct wined3d_stateblock
-{
-    LONG                      ref;     /* Note: Ref counting not required */
-    struct wined3d_device *device;
-
-    /* Array indicating whether things have been set or changed */
-    struct wined3d_saved_states changed;
-
-    struct wined3d_stateblock_state stateblock_state;
-    struct wined3d_light_state light_state;
-
-    /* Contained state management */
-    DWORD                     contained_render_states[WINEHIGHEST_RENDER_STATE + 1];
-    unsigned int              num_contained_render_states;
-    DWORD                     contained_transform_states[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
-    unsigned int              num_contained_transform_states;
-    struct StageState         contained_tss_states[WINED3D_MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1)];
-    unsigned int              num_contained_tss_states;
-    struct StageState         contained_sampler_states[WINED3D_MAX_COMBINED_SAMPLERS * WINED3D_HIGHEST_SAMPLER_STATE];
-    unsigned int              num_contained_sampler_states;
-};
-
 bool wined3d_light_state_enable_light(struct wined3d_light_state *state, const struct wined3d_d3d_info *d3d_info,
         struct wined3d_light_info *light_info, BOOL enable) DECLSPEC_HIDDEN;
 struct wined3d_light_info *wined3d_light_state_get_light(const struct wined3d_light_state *state,

@@ -28,6 +28,63 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+struct wined3d_saved_states
+{
+    uint32_t vs_consts_f[WINED3D_BITMAP_SIZE(WINED3D_MAX_VS_CONSTS_F)];
+    uint16_t vertexShaderConstantsI;                        /* WINED3D_MAX_CONSTS_I, 16 */
+    uint16_t vertexShaderConstantsB;                        /* WINED3D_MAX_CONSTS_B, 16 */
+    uint32_t ps_consts_f[WINED3D_BITMAP_SIZE(WINED3D_MAX_PS_CONSTS_F)];
+    uint16_t pixelShaderConstantsI;                         /* WINED3D_MAX_CONSTS_I, 16 */
+    uint16_t pixelShaderConstantsB;                         /* WINED3D_MAX_CONSTS_B, 16 */
+    uint32_t transform[WINED3D_BITMAP_SIZE(WINED3D_HIGHEST_TRANSFORM_STATE + 1)];
+    uint16_t streamSource;                                  /* WINED3D_MAX_STREAMS, 16 */
+    uint16_t streamFreq;                                    /* WINED3D_MAX_STREAMS, 16 */
+    uint32_t renderState[WINED3D_BITMAP_SIZE(WINEHIGHEST_RENDER_STATE + 1)];
+    uint32_t textureState[WINED3D_MAX_TEXTURES];            /* WINED3D_HIGHEST_TEXTURE_STATE + 1, 18 */
+    uint16_t samplerState[WINED3D_MAX_COMBINED_SAMPLERS];   /* WINED3D_HIGHEST_SAMPLER_STATE + 1, 14 */
+    uint32_t clipplane;                                     /* WINED3D_MAX_CLIP_DISTANCES, 8 */
+    uint32_t textures : 20;                                 /* WINED3D_MAX_COMBINED_SAMPLERS, 20 */
+    uint32_t indices : 1;
+    uint32_t material : 1;
+    uint32_t viewport : 1;
+    uint32_t vertexDecl : 1;
+    uint32_t pixelShader : 1;
+    uint32_t vertexShader : 1;
+    uint32_t scissorRect : 1;
+    uint32_t store_stream_offset : 1;
+    uint32_t alpha_to_coverage : 1;
+    uint32_t lights : 1;
+    uint32_t transforms : 1;
+    uint32_t padding : 1;
+
+    struct list changed_lights;
+};
+
+struct stage_state
+{
+    unsigned int stage, state;
+};
+
+struct wined3d_stateblock
+{
+    LONG ref;
+    struct wined3d_device *device;
+
+    struct wined3d_saved_states changed;
+
+    struct wined3d_stateblock_state stateblock_state;
+    struct wined3d_light_state light_state;
+
+    unsigned int contained_render_states[WINEHIGHEST_RENDER_STATE + 1];
+    unsigned int num_contained_render_states;
+    unsigned int contained_transform_states[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
+    unsigned int num_contained_transform_states;
+    struct stage_state contained_tss_states[WINED3D_MAX_TEXTURES * (WINED3D_HIGHEST_TEXTURE_STATE + 1)];
+    unsigned int num_contained_tss_states;
+    struct stage_state contained_sampler_states[WINED3D_MAX_COMBINED_SAMPLERS * WINED3D_HIGHEST_SAMPLER_STATE];
+    unsigned int num_contained_sampler_states;
+};
+
 static const DWORD pixel_states_render[] =
 {
     WINED3D_RS_ALPHABLENDENABLE,
