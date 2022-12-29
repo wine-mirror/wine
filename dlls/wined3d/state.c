@@ -3451,7 +3451,7 @@ static void sampler_texmatrix(struct wined3d_context *context, const struct wine
     }
 }
 
-static enum wined3d_texture_address wined3d_texture_gl_address_mode(const struct wined3d_texture_gl *texture_gl,
+static enum wined3d_texture_address wined3d_texture_address_mode(const struct wined3d_texture *texture,
         enum wined3d_texture_address t)
 {
     if (t < WINED3D_TADDRESS_WRAP || t > WINED3D_TADDRESS_MIRROR_ONCE)
@@ -3461,8 +3461,8 @@ static enum wined3d_texture_address wined3d_texture_gl_address_mode(const struct
     }
 
     /* Cubemaps are always set to clamp, regardless of the sampler state. */
-    if (texture_gl->target == GL_TEXTURE_CUBE_MAP_ARB || ((texture_gl->t.flags & WINED3D_TEXTURE_COND_NP2)
-            && t == WINED3D_TADDRESS_WRAP))
+    if ((texture->resource.usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+            || ((texture->flags & WINED3D_TEXTURE_COND_NP2) && t == WINED3D_TADDRESS_WRAP))
         return WINED3D_TADDRESS_CLAMP;
 
     return t;
@@ -3470,7 +3470,7 @@ static enum wined3d_texture_address wined3d_texture_gl_address_mode(const struct
 
 static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
         const struct wined3d_context_gl *context_gl, const uint32_t *sampler_states,
-        const struct wined3d_texture_gl *texture_gl)
+        const struct wined3d_texture *texture)
 {
     union
     {
@@ -3478,9 +3478,9 @@ static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc
         DWORD d;
     } lod_bias;
 
-    desc->address_u = wined3d_texture_gl_address_mode(texture_gl, sampler_states[WINED3D_SAMP_ADDRESS_U]);
-    desc->address_v = wined3d_texture_gl_address_mode(texture_gl, sampler_states[WINED3D_SAMP_ADDRESS_V]);
-    desc->address_w = wined3d_texture_gl_address_mode(texture_gl, sampler_states[WINED3D_SAMP_ADDRESS_W]);
+    desc->address_u = wined3d_texture_address_mode(texture, sampler_states[WINED3D_SAMP_ADDRESS_U]);
+    desc->address_v = wined3d_texture_address_mode(texture, sampler_states[WINED3D_SAMP_ADDRESS_V]);
+    desc->address_w = wined3d_texture_address_mode(texture, sampler_states[WINED3D_SAMP_ADDRESS_W]);
     wined3d_color_from_d3dcolor((struct wined3d_color *)desc->border_color,
             sampler_states[WINED3D_SAMP_BORDER_COLOR]);
     if (sampler_states[WINED3D_SAMP_MAG_FILTER] > WINED3D_TEXF_ANISOTROPIC)
@@ -3504,20 +3504,20 @@ static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc
     if ((sampler_states[WINED3D_SAMP_MAG_FILTER] != WINED3D_TEXF_ANISOTROPIC
                 && sampler_states[WINED3D_SAMP_MIN_FILTER] != WINED3D_TEXF_ANISOTROPIC
                 && sampler_states[WINED3D_SAMP_MIP_FILTER] != WINED3D_TEXF_ANISOTROPIC)
-            || (texture_gl->t.flags & WINED3D_TEXTURE_COND_NP2))
+            || (texture->flags & WINED3D_TEXTURE_COND_NP2))
         desc->max_anisotropy = 1;
-    desc->compare = texture_gl->t.resource.format_caps & WINED3D_FORMAT_CAP_SHADOW;
+    desc->compare = texture->resource.format_caps & WINED3D_FORMAT_CAP_SHADOW;
     desc->comparison_func = WINED3D_CMP_LESSEQUAL;
     desc->srgb_decode = is_srgb_enabled(sampler_states);
 
-    if (!(texture_gl->t.resource.format_caps & WINED3D_FORMAT_CAP_FILTERING))
+    if (!(texture->resource.format_caps & WINED3D_FORMAT_CAP_FILTERING))
     {
         desc->mag_filter = WINED3D_TEXF_POINT;
         desc->min_filter = WINED3D_TEXF_POINT;
         desc->mip_filter = WINED3D_TEXF_NONE;
     }
 
-    if (texture_gl->t.flags & WINED3D_TEXTURE_COND_NP2)
+    if (texture->flags & WINED3D_TEXTURE_COND_NP2)
     {
         desc->mip_filter = WINED3D_TEXF_NONE;
         if (context_gl->gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
@@ -3557,7 +3557,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         struct wined3d_sampler *sampler;
         struct wine_rb_entry *entry;
 
-        wined3d_sampler_desc_from_sampler_states(&desc, context_gl, sampler_states, texture_gl);
+        wined3d_sampler_desc_from_sampler_states(&desc, context_gl, sampler_states, &texture_gl->t);
 
         wined3d_texture_gl_bind(texture_gl, context_gl, srgb);
 
