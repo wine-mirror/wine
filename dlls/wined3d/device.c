@@ -1545,111 +1545,6 @@ static void wined3d_device_get_transform(const struct wined3d_device *device,
     *matrix = device->cs->c.state->transforms[state];
 }
 
-/* Note lights are real special cases. Although the device caps state only
- * e.g. 8 are supported, you can reference any indexes you want as long as
- * that number max are enabled at any one point in time. Therefore since the
- * indices can be anything, we need a hashmap of them. However, this causes
- * stateblock problems. When capturing the state block, I duplicate the
- * hashmap, but when recording, just build a chain pretty much of commands to
- * be replayed. */
-static void wined3d_device_context_set_light(struct wined3d_device_context *context,
-        unsigned int light_idx, const struct wined3d_light *light)
-{
-    struct wined3d_light_info *object = NULL;
-    float rho;
-
-    if (FAILED(wined3d_light_state_set_light(&context->state->light_state, light_idx, light, &object)))
-        return;
-
-    /* Initialize the object. */
-    TRACE("Light %u setting to type %#x, diffuse %s, specular %s, ambient %s, "
-            "position {%.8e, %.8e, %.8e}, direction {%.8e, %.8e, %.8e}, "
-            "range %.8e, falloff %.8e, theta %.8e, phi %.8e.\n",
-            light_idx, light->type, debug_color(&light->diffuse),
-            debug_color(&light->specular), debug_color(&light->ambient),
-            light->position.x, light->position.y, light->position.z,
-            light->direction.x, light->direction.y, light->direction.z,
-            light->range, light->falloff, light->theta, light->phi);
-
-    switch (light->type)
-    {
-        case WINED3D_LIGHT_POINT:
-            /* Position */
-            object->position.x = light->position.x;
-            object->position.y = light->position.y;
-            object->position.z = light->position.z;
-            object->position.w = 1.0f;
-            object->cutoff = 180.0f;
-            /* FIXME: Range */
-            break;
-
-        case WINED3D_LIGHT_DIRECTIONAL:
-            /* Direction */
-            object->direction.x = -light->direction.x;
-            object->direction.y = -light->direction.y;
-            object->direction.z = -light->direction.z;
-            object->direction.w = 0.0f;
-            object->exponent = 0.0f;
-            object->cutoff = 180.0f;
-            break;
-
-        case WINED3D_LIGHT_SPOT:
-            /* Position */
-            object->position.x = light->position.x;
-            object->position.y = light->position.y;
-            object->position.z = light->position.z;
-            object->position.w = 1.0f;
-
-            /* Direction */
-            object->direction.x = light->direction.x;
-            object->direction.y = light->direction.y;
-            object->direction.z = light->direction.z;
-            object->direction.w = 0.0f;
-
-            /* opengl-ish and d3d-ish spot lights use too different models
-             * for the light "intensity" as a function of the angle towards
-             * the main light direction, so we only can approximate very
-             * roughly. However, spot lights are rather rarely used in games
-             * (if ever used at all). Furthermore if still used, probably
-             * nobody pays attention to such details. */
-            if (!light->falloff)
-            {
-                /* Falloff = 0 is easy, because d3d's and opengl's spot light
-                 * equations have the falloff resp. exponent parameter as an
-                 * exponent, so the spot light lighting will always be 1.0 for
-                 * both of them, and we don't have to care for the rest of the
-                 * rather complex calculation. */
-                object->exponent = 0.0f;
-            }
-            else
-            {
-                rho = light->theta + (light->phi - light->theta) / (2 * light->falloff);
-                if (rho < 0.0001f)
-                    rho = 0.0001f;
-                object->exponent = -0.3f / logf(cosf(rho / 2));
-            }
-
-            if (object->exponent > 128.0f)
-                object->exponent = 128.0f;
-
-            object->cutoff = (float)(light->phi * 90 / M_PI);
-            /* FIXME: Range */
-            break;
-
-        case WINED3D_LIGHT_PARALLELPOINT:
-            object->position.x = light->position.x;
-            object->position.y = light->position.y;
-            object->position.z = light->position.z;
-            object->position.w = 1.0f;
-            break;
-
-        default:
-            FIXME("Unrecognized light type %#x.\n", light->type);
-    }
-
-    wined3d_device_context_emit_set_light(context, object);
-}
-
 HRESULT CDECL wined3d_device_set_clip_status(struct wined3d_device *device,
         const struct wined3d_clip_status *clip_status)
 {
@@ -1758,8 +1653,7 @@ void CDECL wined3d_device_context_reset_state(struct wined3d_device_context *con
 
 void CDECL wined3d_device_context_set_state(struct wined3d_device_context *context, struct wined3d_state *state)
 {
-    struct wined3d_light_info *light;
-    unsigned int i, j;
+    unsigned int i;
 
     TRACE("context %p, state %p.\n", context, state);
 
@@ -1795,64 +1689,8 @@ void CDECL wined3d_device_context_set_state(struct wined3d_device_context *conte
         wined3d_device_context_emit_set_unordered_access_views(context, i, 0, MAX_UNORDERED_ACCESS_VIEWS,
                 state->unordered_access_view[i], NULL);
 
-    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_F,
-            0, WINED3D_MAX_VS_CONSTS_F, state->vs_consts_f);
-    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_I,
-            0, WINED3D_MAX_CONSTS_I, state->vs_consts_i);
-    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_VS_B,
-            0, WINED3D_MAX_CONSTS_B, state->vs_consts_b);
-
-    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_F,
-            0, WINED3D_MAX_PS_CONSTS_F, state->ps_consts_f);
-    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_I,
-            0, WINED3D_MAX_CONSTS_I, state->ps_consts_i);
-    wined3d_device_context_push_constants(context, WINED3D_PUSH_CONSTANTS_PS_B,
-            0, WINED3D_MAX_CONSTS_B, state->ps_consts_b);
-
-    for (i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
-    {
-        wined3d_device_context_emit_set_texture(context, i, state->textures[i]);
-        for (j = 0; j < WINED3D_HIGHEST_SAMPLER_STATE + 1; ++j)
-        {
-            wined3d_device_context_emit_set_sampler_state(context, i, j, state->sampler_states[i][j]);
-        }
-    }
-
-    for (i = 0; i < WINED3D_MAX_TEXTURES; ++i)
-    {
-        for (j = 0; j < WINED3D_HIGHEST_TEXTURE_STATE + 1; ++j)
-        {
-            wined3d_device_context_emit_set_texture_state(context, i, j, state->texture_states[i][j]);
-        }
-    }
-
-    for (i = 0; i < WINED3D_HIGHEST_TRANSFORM_STATE + 1; ++i)
-    {
-        if (context->device->state_table[STATE_TRANSFORM(i)].representative)
-            wined3d_device_context_emit_set_transform(context, i, state->transforms + i);
-    }
-
-    for (i = 0; i < WINED3D_MAX_CLIP_DISTANCES; ++i)
-    {
-        wined3d_device_context_emit_set_clip_plane(context, i, state->clip_planes + i);
-    }
-
-    wined3d_device_context_emit_set_material(context, &state->material);
-
     wined3d_device_context_emit_set_viewports(context, state->viewport_count, state->viewports);
     wined3d_device_context_emit_set_scissor_rects(context, state->scissor_rect_count, state->scissor_rects);
-
-    RB_FOR_EACH_ENTRY(light, &state->light_state.lights_tree, struct wined3d_light_info, entry)
-    {
-        wined3d_device_context_set_light(context, light->OriginalIndex, &light->OriginalParms);
-        wined3d_device_context_emit_set_light_enable(context, light->OriginalIndex, light->glIndex != -1);
-    }
-
-    for (i = 0; i < WINEHIGHEST_RENDER_STATE + 1; ++i)
-    {
-        if (context->device->state_table[STATE_RENDER(i)].representative)
-            wined3d_device_context_emit_set_render_state(context, i, state->render_states[i]);
-    }
 
     wined3d_device_context_emit_set_blend_state(context, state->blend_state, &state->blend_factor, state->sample_mask);
     wined3d_device_context_emit_set_depth_stencil_state(context, state->depth_stencil_state, state->stencil_ref);
