@@ -222,7 +222,6 @@ struct d3d9_texture
     struct list rtv_list;
     DWORD usage;
     BOOL flags;
-    struct wined3d_shader_resource_view *wined3d_srv;
     D3DTEXTUREFILTERTYPE autogen_filter_type;
 };
 
