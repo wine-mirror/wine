@@ -3499,7 +3499,15 @@ static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc
     desc->lod_bias = lod_bias.f;
     desc->min_lod = -1000.0f;
     desc->max_lod = 1000.0f;
-    desc->mip_base_level = sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL];
+
+    /* The LOD is already clamped to texture->level_count in wined3d_texture_set_lod(). */
+    if (texture->flags & WINED3D_TEXTURE_COND_NP2)
+        desc->mip_base_level = 0;
+    else if (desc->mip_filter == WINED3D_TEXF_NONE)
+        desc->mip_base_level = texture->lod;
+    else
+        desc->mip_base_level = min(max(sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL], texture->lod), texture->level_count - 1);
+
     desc->max_anisotropy = sampler_states[WINED3D_SAMP_MAX_ANISOTROPY];
     if ((sampler_states[WINED3D_SAMP_MAG_FILTER] != WINED3D_TEXF_ANISOTROPIC
                 && sampler_states[WINED3D_SAMP_MIN_FILTER] != WINED3D_TEXF_ANISOTROPIC

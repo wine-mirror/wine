@@ -5920,7 +5920,7 @@ static void apply_texture_blit_state(const struct wined3d_gl_info *gl_info, stru
     texture->sampler_desc.address_u = WINED3D_TADDRESS_CLAMP;
     texture->sampler_desc.address_v = WINED3D_TADDRESS_CLAMP;
     texture->sampler_desc.srgb_decode = FALSE;
-    texture->base_level = level;
+    texture->sampler_desc.mip_base_level = level;
 }
 
 /* Context activation is done by the caller. */

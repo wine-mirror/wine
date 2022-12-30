@@ -943,7 +943,6 @@ static inline void wined3d_context_gl_reference_buffer(struct wined3d_context_gl
 struct gl_texture
 {
     struct wined3d_sampler_desc sampler_desc;
-    unsigned int base_level;
     GLuint name;
 };
 

@@ -1350,7 +1350,7 @@ void wined3d_shader_resource_view_gl_generate_mipmap(struct wined3d_shader_resou
 
     if (!view_gl->gl_view.name)
     {
-        gl_tex->base_level = base_level;
+        gl_tex->sampler_desc.mip_base_level = base_level;
         gl_info->gl_ops.gl.p_glTexParameteri(texture_gl->target,
                 GL_TEXTURE_MAX_LEVEL, texture_gl->t.level_count - 1);
     }

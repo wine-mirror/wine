@@ -1319,7 +1319,7 @@ void wined3d_texture_gl_bind(struct wined3d_texture_gl *texture_gl,
         gl_tex->sampler_desc.srgb_decode = TRUE;
     else
         gl_tex->sampler_desc.srgb_decode = srgb;
-    gl_tex->base_level = 0;
+    gl_tex->sampler_desc.mip_base_level = 0;
     wined3d_texture_set_dirty(&texture_gl->t);
 
     wined3d_context_gl_bind_texture(context_gl, target, gl_tex->name);
@@ -1757,8 +1757,8 @@ unsigned int CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, unsi
         wined3d_resource_wait_idle(resource);
         texture->lod = lod;
 
-        wined3d_texture_gl(texture)->texture_rgb.base_level = ~0u;
-        wined3d_texture_gl(texture)->texture_srgb.base_level = ~0u;
+        wined3d_texture_gl(texture)->texture_rgb.sampler_desc.mip_base_level = ~0u;
+        wined3d_texture_gl(texture)->texture_srgb.sampler_desc.mip_base_level = ~0u;
         if (resource->bind_count)
             wined3d_device_context_emit_set_sampler_state(&device->cs->c, texture->sampler, WINED3D_SAMP_MAX_MIP_LEVEL,
                     device->cs->c.state->sampler_states[texture->sampler][WINED3D_SAMP_MAX_MIP_LEVEL]);
