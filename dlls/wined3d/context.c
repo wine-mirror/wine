@@ -353,18 +353,22 @@ static bool is_resource_rtv_bound(const struct wined3d_state *state,
 
 /* Context activation is done by the caller. */
 static void context_preload_texture(struct wined3d_context *context,
-        const struct wined3d_state *state, unsigned int idx)
+        const struct wined3d_state *state, enum wined3d_shader_type shader_type, unsigned int idx)
 {
     struct wined3d_texture *texture;
+    unsigned int texture_idx = idx;
 
-    if (!(texture = state->textures[idx]))
+    if (shader_type == WINED3D_SHADER_TYPE_VERTEX)
+        texture_idx += WINED3D_VERTEX_SAMPLER_OFFSET;
+
+    if (!(texture = state->textures[texture_idx]))
         return;
 
     if (is_resource_rtv_bound(state, &texture->resource)
             || (state->fb.depth_stencil && state->fb.depth_stencil->resource == &texture->resource))
         context->uses_fbo_attached_resources = 1;
 
-    wined3d_texture_load(texture, context, is_srgb_enabled(state->sampler_states[idx]));
+    wined3d_texture_load(texture, context, is_srgb_enabled(state->sampler_states[texture_idx]));
 }
 
 /* Context activation is done by the caller. */
@@ -377,7 +381,7 @@ void context_preload_textures(struct wined3d_context *context, const struct wine
         for (i = 0; i < WINED3D_MAX_VERTEX_SAMPLERS; ++i)
         {
             if (state->shader[WINED3D_SHADER_TYPE_VERTEX]->reg_maps.resource_info[i].type)
-                context_preload_texture(context, state, WINED3D_MAX_FRAGMENT_SAMPLERS + i);
+                context_preload_texture(context, state, WINED3D_SHADER_TYPE_VERTEX, i);
         }
     }
 
@@ -386,7 +390,7 @@ void context_preload_textures(struct wined3d_context *context, const struct wine
         for (i = 0; i < WINED3D_MAX_FRAGMENT_SAMPLERS; ++i)
         {
             if (state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.resource_info[i].type)
-                context_preload_texture(context, state, i);
+                context_preload_texture(context, state, WINED3D_SHADER_TYPE_PIXEL, i);
         }
     }
     else
@@ -396,7 +400,7 @@ void context_preload_textures(struct wined3d_context *context, const struct wine
         while (ffu_map)
         {
             i = wined3d_bit_scan(&ffu_map);
-            context_preload_texture(context, state, i);
+            context_preload_texture(context, state, WINED3D_SHADER_TYPE_PIXEL, i);
         }
     }
 }
