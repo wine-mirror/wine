@@ -2798,6 +2798,8 @@ HRESULT __cdecl wined3d_stateblock_set_stream_source(struct wined3d_stateblock *
         UINT stream_idx, struct wined3d_buffer *buffer, UINT offset, UINT stride);
 HRESULT __cdecl wined3d_stateblock_set_stream_source_freq(struct wined3d_stateblock *stateblock, UINT stream_idx, UINT divider);
 void __cdecl wined3d_stateblock_set_texture(struct wined3d_stateblock *stateblock, UINT stage, struct wined3d_texture *texture);
+unsigned int __cdecl wined3d_stateblock_set_texture_lod(struct wined3d_stateblock *stateblock,
+        struct wined3d_texture *texture, unsigned int lod);
 void __cdecl wined3d_stateblock_set_texture_stage_state(struct wined3d_stateblock *stateblock,
         UINT stage, enum wined3d_texture_stage_state state, unsigned int value);
 void __cdecl wined3d_stateblock_set_transform(struct wined3d_stateblock *stateblock,
@@ -2888,7 +2890,6 @@ ULONG __cdecl wined3d_texture_incref(struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_release_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC dc);
 HRESULT __cdecl wined3d_texture_set_color_key(struct wined3d_texture *texture,
         uint32_t flags, const struct wined3d_color_key *color_key);
-unsigned int __cdecl wined3d_texture_set_lod(struct wined3d_texture *texture, unsigned int lod);
 HRESULT __cdecl wined3d_texture_set_overlay_position(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, LONG x, LONG y);
 void __cdecl wined3d_texture_set_sub_resource_parent(struct wined3d_texture *texture,

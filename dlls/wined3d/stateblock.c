@@ -1997,8 +1997,6 @@ static void state_init_default(struct wined3d_state *state, const struct wined3d
         init_default_texture_state(i, state->texture_states[i]);
     }
 
-    init_default_sampler_states(state->sampler_states);
-
     state->blend_factor.r = 1.0f;
     state->blend_factor.g = 1.0f;
     state->blend_factor.b = 1.0f;
@@ -2529,22 +2527,6 @@ static void wined3d_device_set_texture_stage_state(struct wined3d_device *device
     wined3d_device_context_emit_set_texture_state(&device->cs->c, stage, state, value);
 }
 
-static void wined3d_device_set_sampler_state(struct wined3d_device *device,
-        unsigned int sampler_idx, enum wined3d_sampler_state state, unsigned int value)
-{
-    TRACE("device %p, sampler_idx %u, state %s, value %#x.\n",
-            device, sampler_idx, debug_d3dsamplerstate(state), value);
-
-    if (value == device->cs->c.state->sampler_states[sampler_idx][state])
-    {
-        TRACE("Application is setting the old value over, nothing to do.\n");
-        return;
-    }
-
-    device->cs->c.state->sampler_states[sampler_idx][state] = value;
-    wined3d_device_context_emit_set_sampler_state(&device->cs->c, sampler_idx, state, value);
-}
-
 static void wined3d_device_set_texture(struct wined3d_device *device,
         unsigned int stage, struct wined3d_texture *texture)
 {
@@ -2605,6 +2587,90 @@ static void wined3d_device_set_transform(struct wined3d_device *device,
 
     device->cs->c.state->transforms[state] = *matrix;
     wined3d_device_context_emit_set_transform(&device->cs->c, state, matrix);
+}
+
+static enum wined3d_texture_address get_texture_address_mode(const struct wined3d_texture *texture,
+        enum wined3d_texture_address t)
+{
+    if (t < WINED3D_TADDRESS_WRAP || t > WINED3D_TADDRESS_MIRROR_ONCE)
+    {
+        FIXME("Unrecognized or unsupported texture address mode %#x.\n", t);
+        return WINED3D_TADDRESS_WRAP;
+    }
+
+    /* Cubemaps are always set to clamp, regardless of the sampler state. */
+    if ((texture->resource.usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+            || ((texture->flags & WINED3D_TEXTURE_COND_NP2) && t == WINED3D_TADDRESS_WRAP))
+        return WINED3D_TADDRESS_CLAMP;
+
+    return t;
+}
+
+static void sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
+        const uint32_t *sampler_states, const struct wined3d_texture *texture)
+{
+    const struct wined3d_d3d_info *d3d_info = &texture->resource.device->adapter->d3d_info;
+
+    desc->address_u = get_texture_address_mode(texture, sampler_states[WINED3D_SAMP_ADDRESS_U]);
+    desc->address_v = get_texture_address_mode(texture, sampler_states[WINED3D_SAMP_ADDRESS_V]);
+    desc->address_w = get_texture_address_mode(texture, sampler_states[WINED3D_SAMP_ADDRESS_W]);
+    wined3d_color_from_d3dcolor((struct wined3d_color *)desc->border_color,
+            sampler_states[WINED3D_SAMP_BORDER_COLOR]);
+    if (sampler_states[WINED3D_SAMP_MAG_FILTER] > WINED3D_TEXF_ANISOTROPIC)
+        FIXME("Unrecognized or unsupported WINED3D_SAMP_MAG_FILTER %#x.\n",
+                sampler_states[WINED3D_SAMP_MAG_FILTER]);
+    desc->mag_filter = min(max(sampler_states[WINED3D_SAMP_MAG_FILTER], WINED3D_TEXF_POINT), WINED3D_TEXF_LINEAR);
+    if (sampler_states[WINED3D_SAMP_MIN_FILTER] > WINED3D_TEXF_ANISOTROPIC)
+        FIXME("Unrecognized or unsupported WINED3D_SAMP_MIN_FILTER %#x.\n",
+                sampler_states[WINED3D_SAMP_MIN_FILTER]);
+    desc->min_filter = min(max(sampler_states[WINED3D_SAMP_MIN_FILTER], WINED3D_TEXF_POINT), WINED3D_TEXF_LINEAR);
+    if (sampler_states[WINED3D_SAMP_MIP_FILTER] > WINED3D_TEXF_ANISOTROPIC)
+        FIXME("Unrecognized or unsupported WINED3D_SAMP_MIP_FILTER %#x.\n",
+                sampler_states[WINED3D_SAMP_MIP_FILTER]);
+    desc->mip_filter = min(max(sampler_states[WINED3D_SAMP_MIP_FILTER], WINED3D_TEXF_NONE), WINED3D_TEXF_LINEAR);
+    desc->lod_bias = int_to_float(sampler_states[WINED3D_SAMP_MIPMAP_LOD_BIAS]);
+    desc->min_lod = -1000.0f;
+    desc->max_lod = 1000.0f;
+
+    /* The LOD is already clamped to texture->level_count in wined3d_stateblock_set_texture_lod(). */
+    if (texture->flags & WINED3D_TEXTURE_COND_NP2)
+        desc->mip_base_level = 0;
+    else if (desc->mip_filter == WINED3D_TEXF_NONE)
+        desc->mip_base_level = texture->lod;
+    else
+        desc->mip_base_level = min(max(sampler_states[WINED3D_SAMP_MAX_MIP_LEVEL], texture->lod), texture->level_count - 1);
+
+    desc->max_anisotropy = sampler_states[WINED3D_SAMP_MAX_ANISOTROPY];
+    if ((sampler_states[WINED3D_SAMP_MAG_FILTER] != WINED3D_TEXF_ANISOTROPIC
+                && sampler_states[WINED3D_SAMP_MIN_FILTER] != WINED3D_TEXF_ANISOTROPIC
+                && sampler_states[WINED3D_SAMP_MIP_FILTER] != WINED3D_TEXF_ANISOTROPIC)
+            || (texture->flags & WINED3D_TEXTURE_COND_NP2))
+        desc->max_anisotropy = 1;
+    desc->compare = texture->resource.format_caps & WINED3D_FORMAT_CAP_SHADOW;
+    desc->comparison_func = WINED3D_CMP_LESSEQUAL;
+
+    /* Only use the LSB of the WINED3D_SAMP_SRGB_TEXTURE value. This matches
+     * the behaviour of the AMD Windows driver.
+     *
+     * Might & Magic: Heroes VI - Shades of Darkness sets
+     * WINED3D_SAMP_SRGB_TEXTURE to a large value that looks like a
+     * pointer—presumably by accident—and expects sRGB decoding to be
+     * disabled. */
+    desc->srgb_decode = sampler_states[WINED3D_SAMP_SRGB_TEXTURE] & 0x1;
+
+    if (!(texture->resource.format_caps & WINED3D_FORMAT_CAP_FILTERING))
+    {
+        desc->mag_filter = WINED3D_TEXF_POINT;
+        desc->min_filter = WINED3D_TEXF_POINT;
+        desc->mip_filter = WINED3D_TEXF_NONE;
+    }
+
+    if (texture->flags & WINED3D_TEXTURE_COND_NP2)
+    {
+        desc->mip_filter = WINED3D_TEXF_NONE;
+        if (d3d_info->normalized_texrect)
+            desc->min_filter = WINED3D_TEXF_POINT;
+    }
 }
 
 void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
@@ -3159,11 +3225,43 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
 
     for (i = 0; i < ARRAY_SIZE(changed->samplerState); ++i)
     {
-        map = changed->samplerState[i];
-        while (map)
+        enum wined3d_shader_type shader_type = WINED3D_SHADER_TYPE_PIXEL;
+        struct wined3d_sampler_desc desc;
+        struct wined3d_texture *texture;
+        struct wined3d_sampler *sampler;
+        unsigned int bind_index = i;
+        struct wine_rb_entry *entry;
+
+        if (!changed->samplerState[i] && !(changed->textures & (1u << i)))
+            continue;
+
+        if (!(texture = state->textures[i]))
+            continue;
+
+        memset(&desc, 0, sizeof(desc));
+        sampler_desc_from_sampler_states(&desc, state->sampler_states[i], texture);
+
+        if (i >= WINED3D_VERTEX_SAMPLER_OFFSET)
         {
-            j = wined3d_bit_scan(&map);
-            wined3d_device_set_sampler_state(device, i, j, state->sampler_states[i][j]);
+            shader_type = WINED3D_SHADER_TYPE_VERTEX;
+            bind_index -= WINED3D_VERTEX_SAMPLER_OFFSET;
+        }
+
+        if ((entry = wine_rb_get(&device->samplers, &desc)))
+        {
+            sampler = WINE_RB_ENTRY_VALUE(entry, struct wined3d_sampler, entry);
+
+            wined3d_device_context_set_samplers(context, shader_type, bind_index, 1, &sampler);
+        }
+        else if (SUCCEEDED(wined3d_sampler_create(device, &desc, NULL, &wined3d_null_parent_ops, &sampler)))
+        {
+            wined3d_device_context_set_samplers(context, shader_type, bind_index, 1, &sampler);
+
+            if (wine_rb_put(&device->samplers, &desc, &sampler->entry) == -1)
+            {
+                ERR("Failed to insert sampler.\n");
+                wined3d_sampler_decref(sampler);
+            }
         }
     }
 
@@ -3219,4 +3317,47 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
     list_init(&stateblock->changed.changed_lights);
 
     TRACE("Applied stateblock %p.\n", stateblock);
+}
+
+unsigned int CDECL wined3d_stateblock_set_texture_lod(struct wined3d_stateblock *stateblock,
+        struct wined3d_texture *texture, unsigned int lod)
+{
+    struct wined3d_resource *resource;
+    unsigned int old = texture->lod;
+
+    TRACE("texture %p, lod %u.\n", texture, lod);
+
+    /* The d3d9:texture test shows that SetLOD is ignored on non-managed
+     * textures. The call always returns 0, and GetLOD always returns 0. */
+    resource = &texture->resource;
+    if (!(resource->usage & WINED3DUSAGE_MANAGED))
+    {
+        TRACE("Ignoring LOD on texture with resource access %s.\n",
+                wined3d_debug_resource_access(resource->access));
+        return 0;
+    }
+
+    if (lod >= texture->level_count)
+        lod = texture->level_count - 1;
+
+    if (texture->lod != lod)
+    {
+        texture->lod = lod;
+
+        for (unsigned int i = 0; i < WINED3D_MAX_COMBINED_SAMPLERS; ++i)
+        {
+            /* Mark the texture as changed. The next time the appplication
+             * draws from this texture, wined3d_device_apply_stateblock() will
+             * recompute the texture LOD.
+             *
+             * We only need to do this for the primary stateblock.
+             * If a recording stateblock uses a texture whose LOD is changed,
+             * that texture will be invalidated on the primary stateblock
+             * anyway when the recording stateblock is applied. */
+            if (stateblock->stateblock_state.textures[i] == texture)
+                stateblock->changed.textures |= (1u << i);
+        }
+    }
+
+    return old;
 }

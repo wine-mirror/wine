@@ -4330,9 +4330,9 @@ static HRESULT WINAPI ddraw_surface7_SetLOD(IDirectDrawSurface7 *iface, DWORD Ma
         return DDERR_INVALIDOBJECT;
     }
 
-    hr = wined3d_texture_set_lod(surface->wined3d_texture, MaxLOD);
+    hr = wined3d_stateblock_set_texture_lod(surface->ddraw->state, surface->wined3d_texture, MaxLOD);
     if (SUCCEEDED(hr) && surface->draw_texture)
-        hr = wined3d_texture_set_lod(surface->draw_texture, MaxLOD);
+        hr = wined3d_stateblock_set_texture_lod(surface->ddraw->state, surface->draw_texture, MaxLOD);
     wined3d_mutex_unlock();
 
     return hr;

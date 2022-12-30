@@ -1730,43 +1730,6 @@ void CDECL wined3d_texture_get_pitch(const struct wined3d_texture *texture,
             width, height, row_pitch, slice_pitch);
 }
 
-unsigned int CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, unsigned int lod)
-{
-    struct wined3d_resource *resource;
-    unsigned int old = texture->lod;
-
-    TRACE("texture %p, lod %u.\n", texture, lod);
-
-    /* The d3d9:texture test shows that SetLOD is ignored on non-managed
-     * textures. The call always returns 0, and GetLOD always returns 0. */
-    resource = &texture->resource;
-    if (!(resource->usage & WINED3DUSAGE_MANAGED))
-    {
-        TRACE("Ignoring LOD on texture with resource access %s.\n",
-                wined3d_debug_resource_access(resource->access));
-        return 0;
-    }
-
-    if (lod >= texture->level_count)
-        lod = texture->level_count - 1;
-
-    if (texture->lod != lod)
-    {
-        struct wined3d_device *device = resource->device;
-
-        wined3d_resource_wait_idle(resource);
-        texture->lod = lod;
-
-        wined3d_texture_gl(texture)->texture_rgb.sampler_desc.mip_base_level = ~0u;
-        wined3d_texture_gl(texture)->texture_srgb.sampler_desc.mip_base_level = ~0u;
-        if (resource->bind_count)
-            wined3d_device_context_emit_set_sampler_state(&device->cs->c, texture->sampler, WINED3D_SAMP_MAX_MIP_LEVEL,
-                    device->cs->c.state->sampler_states[texture->sampler][WINED3D_SAMP_MAX_MIP_LEVEL]);
-    }
-
-    return old;
-}
-
 unsigned int CDECL wined3d_texture_get_lod(const struct wined3d_texture *texture)
 {
     TRACE("texture %p, returning %u.\n", texture, texture->lod);

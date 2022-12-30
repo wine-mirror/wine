@@ -226,7 +226,8 @@ static DWORD WINAPI d3d8_texture_2d_SetLOD(IDirect3DTexture8 *iface, DWORD lod)
     TRACE("iface %p, lod %lu.\n", iface, lod);
 
     wined3d_mutex_lock();
-    ret = wined3d_texture_set_lod(d3d8_texture_get_draw_texture(texture), lod);
+    ret = wined3d_stateblock_set_texture_lod(texture->parent_device->state,
+            d3d8_texture_get_draw_texture(texture), lod);
     wined3d_mutex_unlock();
 
     return ret;
@@ -527,7 +528,8 @@ static DWORD WINAPI d3d8_texture_cube_SetLOD(IDirect3DCubeTexture8 *iface, DWORD
     TRACE("iface %p, lod %lu.\n", iface, lod);
 
     wined3d_mutex_lock();
-    ret = wined3d_texture_set_lod(d3d8_texture_get_draw_texture(texture), lod);
+    ret = wined3d_stateblock_set_texture_lod(texture->parent_device->state,
+            d3d8_texture_get_draw_texture(texture), lod);
     wined3d_mutex_unlock();
 
     return ret;
@@ -851,7 +853,8 @@ static DWORD WINAPI d3d8_texture_3d_SetLOD(IDirect3DVolumeTexture8 *iface, DWORD
     TRACE("iface %p, lod %lu.\n", iface, lod);
 
     wined3d_mutex_lock();
-    ret = wined3d_texture_set_lod(d3d8_texture_get_draw_texture(texture), lod);
+    ret = wined3d_stateblock_set_texture_lod(texture->parent_device->state,
+            d3d8_texture_get_draw_texture(texture), lod);
     wined3d_mutex_unlock();
 
     return ret;

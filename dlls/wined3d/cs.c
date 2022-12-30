@@ -114,7 +114,6 @@ enum wined3d_cs_op
     WINED3D_CS_OP_SET_DEPTH_BOUNDS,
     WINED3D_CS_OP_SET_RENDER_STATE,
     WINED3D_CS_OP_SET_TEXTURE_STATE,
-    WINED3D_CS_OP_SET_SAMPLER_STATE,
     WINED3D_CS_OP_SET_TRANSFORM,
     WINED3D_CS_OP_SET_CLIP_PLANE,
     WINED3D_CS_OP_SET_COLOR_KEY,
@@ -365,14 +364,6 @@ struct wined3d_cs_set_texture_state
     DWORD value;
 };
 
-struct wined3d_cs_set_sampler_state
-{
-    enum wined3d_cs_op opcode;
-    UINT sampler_idx;
-    enum wined3d_sampler_state state;
-    DWORD value;
-};
-
 struct wined3d_cs_set_transform
 {
     enum wined3d_cs_op opcode;
@@ -604,7 +595,6 @@ static const char *debug_cs_op(enum wined3d_cs_op op)
         WINED3D_TO_STR(WINED3D_CS_OP_SET_DEPTH_BOUNDS);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_RENDER_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TEXTURE_STATE);
-        WINED3D_TO_STR(WINED3D_CS_OP_SET_SAMPLER_STATE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_TRANSFORM);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_CLIP_PLANE);
         WINED3D_TO_STR(WINED3D_CS_OP_SET_COLOR_KEY);
@@ -1649,7 +1639,14 @@ static void wined3d_cs_exec_set_samplers(struct wined3d_cs *cs, const void *data
     unsigned int i;
 
     for (i = 0; i < op->count; ++i)
+    {
         cs->state.sampler[op->type][op->start_idx + i] = op->samplers[i];
+
+        if (op->type == WINED3D_SHADER_TYPE_PIXEL && i < WINED3D_MAX_FRAGMENT_SAMPLERS)
+            device_invalidate_state(cs->c.device, STATE_SAMPLER(i));
+        else if (op->type == WINED3D_SHADER_TYPE_VERTEX && i < WINED3D_MAX_VERTEX_SAMPLERS)
+            device_invalidate_state(cs->c.device, STATE_SAMPLER(WINED3D_VERTEX_SAMPLER_OFFSET + i));
+    }
 
     if (op->type != WINED3D_SHADER_TYPE_COMPUTE)
         device_invalidate_state(cs->c.device, STATE_GRAPHICS_SHADER_RESOURCE_BINDING);
@@ -1839,28 +1836,6 @@ void wined3d_device_context_emit_set_texture_state(struct wined3d_device_context
     op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
     op->opcode = WINED3D_CS_OP_SET_TEXTURE_STATE;
     op->stage = stage;
-    op->state = state;
-    op->value = value;
-
-    wined3d_device_context_submit(context, WINED3D_CS_QUEUE_DEFAULT);
-}
-
-static void wined3d_cs_exec_set_sampler_state(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_set_sampler_state *op = data;
-
-    cs->state.sampler_states[op->sampler_idx][op->state] = op->value;
-    device_invalidate_state(cs->c.device, STATE_SAMPLER(op->sampler_idx));
-}
-
-void wined3d_device_context_emit_set_sampler_state(struct wined3d_device_context *context, unsigned int sampler_idx,
-        enum wined3d_sampler_state state, unsigned int value)
-{
-    struct wined3d_cs_set_sampler_state *op;
-
-    op = wined3d_device_context_require_space(context, sizeof(*op), WINED3D_CS_QUEUE_DEFAULT);
-    op->opcode = WINED3D_CS_OP_SET_SAMPLER_STATE;
-    op->sampler_idx = sampler_idx;
     op->state = state;
     op->value = value;
 
@@ -2918,7 +2893,6 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_SET_DEPTH_BOUNDS            */ wined3d_cs_exec_set_depth_bounds,
     /* WINED3D_CS_OP_SET_RENDER_STATE            */ wined3d_cs_exec_set_render_state,
     /* WINED3D_CS_OP_SET_TEXTURE_STATE           */ wined3d_cs_exec_set_texture_state,
-    /* WINED3D_CS_OP_SET_SAMPLER_STATE           */ wined3d_cs_exec_set_sampler_state,
     /* WINED3D_CS_OP_SET_TRANSFORM               */ wined3d_cs_exec_set_transform,
     /* WINED3D_CS_OP_SET_CLIP_PLANE              */ wined3d_cs_exec_set_clip_plane,
     /* WINED3D_CS_OP_SET_COLOR_KEY               */ wined3d_cs_exec_set_color_key,

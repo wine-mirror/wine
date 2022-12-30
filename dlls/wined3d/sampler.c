@@ -311,10 +311,6 @@ static void texture_gl_apply_base_level(struct wined3d_texture_gl *texture_gl,
     gl_tex = wined3d_texture_gl_get_gl_texture(texture_gl, texture_gl->t.flags & WINED3D_TEXTURE_IS_SRGB);
     if (desc->mip_base_level != gl_tex->sampler_desc.mip_base_level)
     {
-        /* Note that WINED3D_SAMP_MAX_MIP_LEVEL specifies the largest mipmap
-         * (default 0), while GL_TEXTURE_MAX_LEVEL specifies the smallest
-         * mipmap used (default 1000). So WINED3D_SAMP_MAX_MIP_LEVEL
-         * corresponds to GL_TEXTURE_BASE_LEVEL. */
         gl_info->gl_ops.gl.p_glTexParameteri(texture_gl->target, GL_TEXTURE_BASE_LEVEL, desc->mip_base_level);
         gl_tex->sampler_desc.mip_base_level = desc->mip_base_level;
     }

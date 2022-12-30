@@ -2885,7 +2885,6 @@ struct wined3d_state
     struct wined3d_unordered_access_view *unordered_access_view[WINED3D_PIPELINE_COUNT][MAX_UNORDERED_ACCESS_VIEWS];
 
     struct wined3d_texture *textures[WINED3D_MAX_COMBINED_SAMPLERS];
-    uint32_t sampler_states[WINED3D_MAX_COMBINED_SAMPLERS][WINED3D_HIGHEST_SAMPLER_STATE + 1];
     uint32_t texture_states[WINED3D_MAX_FFP_TEXTURES][WINED3D_HIGHEST_TEXTURE_STATE + 1];
 
     struct wined3d_matrix transforms[WINED3D_HIGHEST_TRANSFORM_STATE + 1];
@@ -3719,8 +3718,6 @@ void wined3d_device_context_emit_set_rendertarget_views(struct wined3d_device_co
         unsigned int count, struct wined3d_rendertarget_view *const *views) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_samplers(struct wined3d_device_context *context, enum wined3d_shader_type type,
         unsigned int start_idx, unsigned int count, struct wined3d_sampler *const *samplers) DECLSPEC_HIDDEN;
-void wined3d_device_context_emit_set_sampler_state(struct wined3d_device_context *context, unsigned int sampler_idx,
-        enum wined3d_sampler_state state, unsigned int value) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_scissor_rects(struct wined3d_device_context *context,
         unsigned int rect_count, const RECT *rects) DECLSPEC_HIDDEN;
 void wined3d_device_context_emit_set_shader(struct wined3d_device_context *context, enum wined3d_shader_type type,
@@ -4570,6 +4567,9 @@ uint32_t wined3d_format_pack(const struct wined3d_format *format, const struct w
 BOOL wined3d_formats_are_srgb_variants(enum wined3d_format_id format1,
         enum wined3d_format_id format2) DECLSPEC_HIDDEN;
 
+void wined3d_stateblock_invalidate_texture_lod(struct wined3d_stateblock *stateblock,
+        struct wined3d_texture *texture) DECLSPEC_HIDDEN;
+
 BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size) DECLSPEC_HIDDEN;
 
 static inline BOOL wined3d_format_is_typeless(const struct wined3d_format *format)
@@ -4605,18 +4605,6 @@ static inline void context_apply_state(struct wined3d_context *context,
     const struct wined3d_state_entry *state_table = context->state_table;
     unsigned int rep = state_table[state_id].representative;
     state_table[rep].apply(context, state, rep);
-}
-
-static inline BOOL is_srgb_enabled(const uint32_t *sampler_states)
-{
-    /* Only use the LSB of the WINED3D_SAMP_SRGB_TEXTURE value. This matches
-     * the behaviour of the AMD Windows driver.
-     *
-     * Might & Magic: Heroes VI - Shades of Darkness sets
-     * WINED3D_SAMP_SRGB_TEXTURE to a large value that looks like a
-     * pointer—presumably by accident—and expects sRGB decoding to be
-     * disabled. */
-    return sampler_states[WINED3D_SAMP_SRGB_TEXTURE] & 0x1;
 }
 
 static inline BOOL needs_separate_srgb_gl_texture(const struct wined3d_context *context,
