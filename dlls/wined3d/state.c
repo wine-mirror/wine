@@ -1965,13 +1965,6 @@ static void state_sample_mask_w(struct wined3d_context *context, const struct wi
     WARN("Unsupported in local OpenGL implementation: glSampleMaski.\n");
 }
 
-static void state_tessellation(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
-{
-    if (state->render_states[WINED3D_RS_ENABLEADAPTIVETESSELLATION])
-        FIXME("WINED3D_RS_ENABLEADAPTIVETESSELLATION %#x not yet implemented.\n",
-                state->render_states[WINED3D_RS_ENABLEADAPTIVETESSELLATION]);
-}
-
 static void get_src_and_opr(uint32_t arg, BOOL is_alpha, GLenum* source, GLenum* operand) {
     /* The WINED3DTA_ALPHAREPLICATE flag specifies the alpha component of the
     * input should be used for all input components. The WINED3DTA_COMPLEMENT
@@ -4589,7 +4582,6 @@ const struct wined3d_state_entry_template misc_state_template_gl[] =
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern   }, WINED3D_GL_LEGACY_CONTEXT       },
     { STATE_RENDER(WINED3D_RS_LINEPATTERN),               { STATE_RENDER(WINED3D_RS_LINEPATTERN),               state_linepattern_w }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_DITHERENABLE),              { STATE_RENDER(WINED3D_RS_DITHERENABLE),              state_ditherenable  }, WINED3D_GL_EXT_NONE             },
-    { STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),{ STATE_RENDER(WINED3D_RS_ENABLEADAPTIVETESSELLATION),state_tessellation  }, WINED3D_GL_EXT_NONE             },
     { STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),      { STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),      state_msaa          }, ARB_MULTISAMPLE                 },
     { STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),      { STATE_RENDER(WINED3D_RS_MULTISAMPLEANTIALIAS),      state_msaa_w        }, WINED3D_GL_EXT_NONE             },
     /* Samplers */
@@ -5358,8 +5350,7 @@ static void validate_state_table(struct wined3d_state_entry *state_table)
         {149, 150},
         {153, 153},
         {162, 165},
-        {167, 183},
-        {185, 193},
+        {167, 193},
         {195, 209},
         {  0,   0},
     };

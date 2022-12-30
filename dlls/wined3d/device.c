@@ -4230,6 +4230,12 @@ void CDECL wined3d_device_apply_stateblock(struct wined3d_device *device,
                 case WINED3D_RS_MAXTESSELLATIONLEVEL:
                     break;
 
+                case WINED3D_RS_ENABLEADAPTIVETESSELLATION:
+                    if (state->rs[WINED3D_RS_ENABLEADAPTIVETESSELLATION])
+                        FIXME("WINED3D_RS_ENABLEADAPTIVETESSELLATION %#x not yet implemented.\n",
+                                state->rs[WINED3D_RS_ENABLEADAPTIVETESSELLATION]);
+                    break;
+
                 default:
                     wined3d_device_set_render_state(device, idx, state->rs[idx]);
                     break;
