@@ -1210,6 +1210,7 @@ enable_msacm32
 enable_msado15
 enable_msadp32_acm
 enable_msasn1
+enable_msauddecmft
 enable_mscat32
 enable_mscms
 enable_mscoree
@@ -21358,6 +21359,7 @@ wine_fn_config_makefile dlls/msado15/tests enable_tests
 wine_fn_config_makefile dlls/msadp32.acm enable_msadp32_acm
 wine_fn_config_makefile dlls/msasn1 enable_msasn1
 wine_fn_config_makefile dlls/msasn1/tests enable_tests
+wine_fn_config_makefile dlls/msauddecmft enable_msauddecmft
 wine_fn_config_makefile dlls/mscat32 enable_mscat32
 wine_fn_config_makefile dlls/mscms enable_mscms
 wine_fn_config_makefile dlls/mscms/tests enable_tests
