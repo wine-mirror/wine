@@ -1174,6 +1174,36 @@ static BOOL heap_validate( const struct heap *heap )
         }
     }
 
+    if (heap->pending_free)
+    {
+        unsigned int i;
+
+        for (i = 0; i < MAX_FREE_PENDING; i++)
+        {
+            if (!(block = heap->pending_free[i])) break;
+
+            subheap = find_subheap( heap, block, FALSE );
+            if (!subheap)
+            {
+                ERR( "heap %p: cannot find valid subheap for delayed freed block %p\n", heap, block );
+                if (TRACE_ON(heap)) heap_dump( heap );
+                return FALSE;
+            }
+
+            if (!validate_used_block( heap, subheap, block, BLOCK_TYPE_DEAD )) return FALSE;
+        }
+
+        for (; i < MAX_FREE_PENDING; i++)
+        {
+            if ((block = heap->pending_free[i]))
+            {
+                ERR( "heap %p: unexpected delayed freed block %p at slot %u\n", heap, block, i );
+                if (TRACE_ON(heap)) heap_dump( heap );
+                return FALSE;
+            }
+        }
+    }
+
     LIST_FOR_EACH_ENTRY( large_arena, &heap->large_list, ARENA_LARGE, entry )
         if (!validate_large_block( heap, &large_arena->block )) return FALSE;
 
