@@ -1457,13 +1457,17 @@ void wined3d_device_context_emit_set_constant_buffers(struct wined3d_device_cont
 static bool texture_binding_might_invalidate_ps(struct wined3d_texture *texture,
         struct wined3d_texture *prev, const struct wined3d_d3d_info *d3d_info)
 {
+    unsigned int old_usage, new_usage, old_caps, new_caps;
     const struct wined3d_format *old_format, *new_format;
-    unsigned int old_caps, new_caps;
 
     if (!prev)
         return true;
 
-    if (wined3d_texture_gl(texture)->target != wined3d_texture_gl(prev)->target)
+    /* 1.x pixel shaders need to be recompiled based on the resource type. */
+    old_usage = prev->resource.usage;
+    new_usage = texture->resource.usage;
+    if (texture->resource.type != prev->resource.type
+            || ((old_usage & WINED3DUSAGE_LEGACY_CUBEMAP) != (new_usage & WINED3DUSAGE_LEGACY_CUBEMAP)))
         return true;
 
     old_format = prev->resource.format;
