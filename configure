@@ -1235,6 +1235,7 @@ enable_msimtf
 enable_msisip
 enable_msisys_ocx
 enable_msls31
+enable_msmpeg2vdec
 enable_msnet32
 enable_mspatcha
 enable_msports
@@ -21390,6 +21391,7 @@ wine_fn_config_makefile dlls/msimtf enable_msimtf
 wine_fn_config_makefile dlls/msisip enable_msisip
 wine_fn_config_makefile dlls/msisys.ocx enable_msisys_ocx
 wine_fn_config_makefile dlls/msls31 enable_msls31
+wine_fn_config_makefile dlls/msmpeg2vdec enable_msmpeg2vdec
 wine_fn_config_makefile dlls/msnet32 enable_msnet32
 wine_fn_config_makefile dlls/mspatcha enable_mspatcha
 wine_fn_config_makefile dlls/mspatcha/tests enable_tests
