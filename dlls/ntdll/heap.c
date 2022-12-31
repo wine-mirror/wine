@@ -1067,7 +1067,8 @@ static BOOL validate_free_block( const struct heap *heap, const SUBHEAP *subheap
 }
 
 
-static BOOL validate_used_block( const struct heap *heap, const SUBHEAP *subheap, const struct block *block )
+static BOOL validate_used_block( const struct heap *heap, const SUBHEAP *subheap, const struct block *block,
+                                 unsigned int expected_block_type )
 {
     const char *err = NULL, *base = subheap_base( subheap ), *commit_end = subheap_commit_end( subheap );
     DWORD flags = heap->flags;
@@ -1078,6 +1079,8 @@ static BOOL validate_used_block( const struct heap *heap, const SUBHEAP *subheap
         err = "invalid block BLOCK_ALIGN";
     else if (block_get_type( block ) != BLOCK_TYPE_USED && block_get_type( block ) != BLOCK_TYPE_DEAD)
         err = "invalid block header";
+    else if (expected_block_type && block_get_type( block ) != expected_block_type)
+        err = "invalid block type";
     else if (block_get_flags( block ) & BLOCK_FLAG_FREE)
         err = "invalid block flags";
     else if (!contains( base, commit_end - base, block, block_get_size( block ) ))
@@ -1138,7 +1141,7 @@ static BOOL heap_validate_ptr( const struct heap *heap, const void *ptr )
         return validate_large_block( heap, block );
     }
 
-    return validate_used_block( heap, subheap, block );
+    return validate_used_block( heap, subheap, block, BLOCK_TYPE_USED );
 }
 
 static BOOL heap_validate( const struct heap *heap )
@@ -1164,7 +1167,7 @@ static BOOL heap_validate( const struct heap *heap )
             }
             else
             {
-                if (!validate_used_block( heap, subheap, block )) return FALSE;
+                if (!validate_used_block( heap, subheap, block, 0 )) return FALSE;
             }
         }
     }
