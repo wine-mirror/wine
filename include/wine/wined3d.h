@@ -1583,6 +1583,9 @@ enum wined3d_memory_segment_group
 #define WINED3D_VIEW_TEXTURE_ARRAY                              0x00000010
 #define WINED3D_VIEW_READ_ONLY_DEPTH                            0x00000020
 #define WINED3D_VIEW_READ_ONLY_STENCIL                          0x00000040
+/* The view shares a reference count with its resource.
+ * See wined3d_texture_acquire_identity_srv(). */
+#define WINED3D_VIEW_FORWARD_REFERENCE                          0x00000080
 
 #define WINED3D_MAX_VIEWPORTS                                   16
 
@@ -2866,6 +2869,7 @@ HRESULT __cdecl wined3d_swapchain_state_resize_target(struct wined3d_swapchain_s
 HRESULT __cdecl wined3d_swapchain_state_set_fullscreen(struct wined3d_swapchain_state *state,
         const struct wined3d_swapchain_desc *desc, const struct wined3d_display_mode *mode);
 
+struct wined3d_shader_resource_view * __cdecl wined3d_texture_acquire_identity_srv(struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         UINT layer, const struct wined3d_box *dirty_region);
 HRESULT __cdecl wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,

@@ -3335,6 +3335,8 @@ struct wined3d_texture
     unsigned int row_pitch;
     unsigned int slice_pitch;
 
+    struct wined3d_shader_resource_view *identity_srv;
+
     /* May only be accessed from the command stream worker thread. */
     struct wined3d_texture_async
     {
@@ -3935,6 +3937,7 @@ struct wined3d_shader_resource_view
 };
 
 void wined3d_shader_resource_view_cleanup(struct wined3d_shader_resource_view *view);
+void wined3d_shader_resource_view_destroy(struct wined3d_shader_resource_view *view);
 
 static inline struct wined3d_texture *wined3d_state_get_ffp_texture(const struct wined3d_state *state, unsigned int idx)
 {

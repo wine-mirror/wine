@@ -1648,6 +1648,12 @@ ULONG CDECL wined3d_texture_decref(struct wined3d_texture *texture)
     {
         bool in_cs_thread = GetCurrentThreadId() == texture->resource.device->cs->thread_id;
 
+        if (texture->identity_srv)
+        {
+            assert(!in_cs_thread);
+            wined3d_shader_resource_view_destroy(texture->identity_srv);
+        }
+
         /* This is called from the CS thread to destroy temporary textures. */
         if (!in_cs_thread)
             wined3d_mutex_lock();
@@ -4665,6 +4671,42 @@ void wined3d_texture_update_sub_resource(struct wined3d_texture *texture, unsign
 
     wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_invalidate_location(texture, sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
+}
+
+struct wined3d_shader_resource_view * CDECL wined3d_texture_acquire_identity_srv(struct wined3d_texture *texture)
+{
+    struct wined3d_view_desc desc;
+    HRESULT hr;
+
+    TRACE("texture %p.\n", texture);
+
+    if (texture->identity_srv)
+        return texture->identity_srv;
+
+    desc.format_id = texture->resource.format->id;
+    /* The texture owns a reference to the SRV, so we can't have the SRV hold
+     * a reference to the texture.
+     * At the same time, a view must be destroyed before its texture, and we
+     * need a bound SRV to keep the texture alive even if it doesn't have any
+     * other references.
+     * In order to achieve this we have the objects share reference counts.
+     * This means the view doesn't hold a reference to the resource, but any
+     * references to the view are forwarded to the resource instead. The view
+     * is destroyed manually when all references are released. */
+    desc.flags = WINED3D_VIEW_FORWARD_REFERENCE;
+    desc.u.texture.level_idx = 0;
+    desc.u.texture.level_count = texture->level_count;
+    desc.u.texture.layer_idx = 0;
+    desc.u.texture.layer_count = texture->layer_count;
+    if (FAILED(hr = wined3d_shader_resource_view_create(&desc, &texture->resource,
+            NULL, &wined3d_null_parent_ops, &texture->identity_srv)))
+    {
+        ERR("Failed to create shader resource view, hr %#lx.\n", hr);
+        return NULL;
+    }
+    wined3d_shader_resource_view_decref(texture->identity_srv);
+
+    return texture->identity_srv;
 }
 
 static void wined3d_texture_no3d_upload_data(struct wined3d_context *context,

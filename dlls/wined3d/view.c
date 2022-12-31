@@ -959,8 +959,12 @@ HRESULT CDECL wined3d_rendertarget_view_create_from_sub_resource(struct wined3d_
 
 ULONG CDECL wined3d_shader_resource_view_incref(struct wined3d_shader_resource_view *view)
 {
-    unsigned int refcount = InterlockedIncrement(&view->refcount);
+    unsigned int refcount;
 
+    if (view->desc.flags & WINED3D_VIEW_FORWARD_REFERENCE)
+        return wined3d_resource_incref(view->resource);
+
+    refcount = InterlockedIncrement(&view->refcount);
     TRACE("%p increasing refcount to %u.\n", view, refcount);
 
     return refcount;
@@ -971,10 +975,21 @@ void wined3d_shader_resource_view_cleanup(struct wined3d_shader_resource_view *v
     view->parent_ops->wined3d_object_destroyed(view->parent);
 }
 
+void wined3d_shader_resource_view_destroy(struct wined3d_shader_resource_view *view)
+{
+    wined3d_mutex_lock();
+    view->resource->device->adapter->adapter_ops->adapter_destroy_shader_resource_view(view);
+    wined3d_mutex_unlock();
+}
+
 ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_view *view)
 {
-    unsigned int refcount = InterlockedDecrement(&view->refcount);
+    unsigned int refcount;
 
+    if (view->desc.flags & WINED3D_VIEW_FORWARD_REFERENCE)
+        return wined3d_resource_decref(view->resource);
+
+    refcount = InterlockedDecrement(&view->refcount);
     TRACE("%p decreasing refcount to %u.\n", view, refcount);
 
     if (!refcount)
@@ -986,9 +1001,7 @@ ULONG CDECL wined3d_shader_resource_view_decref(struct wined3d_shader_resource_v
          *   device, which the resource implicitly provides.
          * - We shouldn't free buffer resources until after we've removed the
          *   view from its bo_user list. */
-        wined3d_mutex_lock();
-        resource->device->adapter->adapter_ops->adapter_destroy_shader_resource_view(view);
-        wined3d_mutex_unlock();
+        wined3d_shader_resource_view_destroy(view);
         wined3d_resource_decref(resource);
     }
 
@@ -1091,6 +1104,10 @@ static HRESULT wined3d_shader_resource_view_init(struct wined3d_shader_resource_
         return E_INVALIDARG;
     view->desc = *desc;
 
+    /* If WINED3D_VIEW_FORWARD_REFERENCE, the view shouldn't take a reference
+     * to the resource. However, the reference to the view returned by this
+     * function should translate to a resource reference, so we increment the
+     * resource's reference count anyway. */
     wined3d_resource_incref(view->resource = resource);
 
     return WINED3D_OK;

@@ -298,6 +298,7 @@
 @ cdecl wined3d_swapchain_state_resize_target(ptr ptr)
 @ cdecl wined3d_swapchain_state_set_fullscreen(ptr ptr ptr)
 
+@ cdecl wined3d_texture_acquire_identity_srv(ptr)
 @ cdecl wined3d_texture_add_dirty_region(ptr long ptr)
 @ cdecl wined3d_texture_create(ptr ptr long long long ptr ptr ptr ptr)
 @ cdecl wined3d_texture_decref(ptr)
