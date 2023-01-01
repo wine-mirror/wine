@@ -1706,6 +1706,11 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
     struct syscall_frame *frame = amd64_thread_data()->syscall_frame;
     void *args_data = (void *)((frame->rsp - len) & ~15);
     ULONG_PTR *stack = args_data;
+    struct {
+        void *args;
+        ULONG id;
+        ULONG len;
+    } *params = (void *)((ULONG_PTR)args_data - 0x18);
 
     /* if we have no syscall frame, call the callback directly */
     if ((char *)&frame < (char *)ntdll_get_thread_data()->kernel_stack ||
@@ -1719,9 +1724,12 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         return STATUS_STACK_OVERFLOW;
 
     memcpy( args_data, args, len );
+    params->args = args_data;
+    params->id = id;
+    params->len = len;
     *(--stack) = 0;
     *(--stack) = len;
-    *(--stack) = (ULONG_PTR)args_data;
+    *(--stack) = (ULONG_PTR)params;
     *(--stack) = id;
     *(--stack) = 0xdeadbabe;
 
