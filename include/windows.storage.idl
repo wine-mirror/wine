@@ -27,7 +27,7 @@ import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.storage.fileproperties.idl";
 /* import "windows.storage.provider.idl"; */
-/* import "windows.storage.search.idl"; */
+import "windows.storage.search.idl";
 import "windows.storage.streams.idl";
 import "windows.system.idl";
 
