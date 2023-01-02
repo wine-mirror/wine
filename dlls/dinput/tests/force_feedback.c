@@ -5806,21 +5806,12 @@ static void test_windows_gaming_input(void)
             .report_len = 4,
             .report_buf = {9,0x01,0x18,0xfc},
         },
-        /* update effect (wine) */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 18,
-            .report_buf = {3,0x01,0x04,0x04,0x28,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x7f,0x99,0x00,0x00,0x00},
-            .wine_only = TRUE, .todo = TRUE,
-        },
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
             .report_buf = {3,0x01,0x04,0x04,0x28,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x7f,0x4e,0x01,0x00,0x00},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_create_ramp[] =
@@ -5915,21 +5906,12 @@ static void test_windows_gaming_input(void)
             .report_len = 6,
             .report_buf = {10,0x01,0x18,0xfc,0x60,0xf0},
         },
-        /* update effect (wine) */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 18,
-            .report_buf = {3,0x01,0x05,0x04,0x8f,0xe4,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x99,0x00,0x00,0x00},
-            .wine_only = TRUE, .todo = TRUE,
-        },
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
             .report_buf = {3,0x01,0x05,0x04,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x4e,0x01,0x00,0x00},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_effect_start =

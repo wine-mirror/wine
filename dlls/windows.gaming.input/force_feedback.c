@@ -117,10 +117,12 @@ static int effect_reorient_direction( const WineForceFeedbackEffectParameters *p
     {
     case WineForceFeedbackEffectType_Constant:
         *direction = params->constant.direction;
+        sign = params->constant.direction.X < 0 ? -1 : +1;
         break;
 
     case WineForceFeedbackEffectType_Ramp:
         *direction = params->ramp.start_vector;
+        sign = params->ramp.start_vector.X < 0 ? -1 : +1;
         break;
 
     case WineForceFeedbackEffectType_Periodic_SineWave:
@@ -152,6 +154,7 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
 {
     struct effect *impl = impl_from_IWineForceFeedbackEffectImpl( iface );
     Vector3 direction = {0};
+    double magnitude = 0;
     DWORD count = 0;
     HRESULT hr;
     int sign;
@@ -161,19 +164,21 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
     EnterCriticalSection( &impl->cs );
 
     sign = effect_reorient_direction( &params, &direction );
+    /* Y and Z axes seems to be always ignored, is it really the case? */
+    magnitude += direction.X * direction.X;
 
     switch (params.type)
     {
     case WineForceFeedbackEffectType_Constant:
         impl->repeat_count = params.constant.repeat_count;
-        impl->constant_force.lMagnitude = -sign * round( params.constant.gain * direction.X * 10000 );
+        impl->constant_force.lMagnitude = sign * round( params.constant.gain * sqrt( magnitude ) * 10000 );
         impl->params.dwDuration = min( max( params.constant.duration.Duration / 10, 0 ), INFINITE );
         impl->params.dwStartDelay = min( max( params.constant.start_delay.Duration / 10, 0 ), INFINITE );
         break;
 
     case WineForceFeedbackEffectType_Ramp:
         impl->repeat_count = params.ramp.repeat_count;
-        impl->ramp_force.lStart = -sign * round( params.ramp.gain * direction.X * 10000 );
+        impl->ramp_force.lStart = sign * round( params.ramp.gain * sqrt( magnitude ) * 10000 );
         impl->ramp_force.lEnd = round( params.ramp.gain * params.ramp.end_vector.X * 10000 );
         impl->params.dwDuration = min( max( params.ramp.duration.Duration / 10, 0 ), INFINITE );
         impl->params.dwStartDelay = min( max( params.ramp.start_delay.Duration / 10, 0 ), INFINITE );
