@@ -513,7 +513,7 @@ static HRESULT WINAPI controller_handler_QueryInterface( IEventHandler_RawGameCo
         return S_OK;
     }
 
-    trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    if (winetest_debug > 1) trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
 }
@@ -533,7 +533,7 @@ static HRESULT WINAPI controller_handler_Invoke( IEventHandler_RawGameController
 {
     struct controller_handler *impl = impl_from_IEventHandler_RawGameController( iface );
 
-    trace( "iface %p, sender %p, controller %p\n", iface, sender, controller );
+    if (winetest_debug > 1) trace( "iface %p, sender %p, controller %p\n", iface, sender, controller );
 
     ok( sender == NULL, "got sender %p\n", sender );
     impl->invoked = TRUE;
@@ -720,7 +720,7 @@ static HRESULT WINAPI input_sink_OnInputResumed( IGameControllerInputSink *iface
 {
     struct custom_controller *impl = impl_from_IGameControllerInputSink( iface );
 
-    trace( "iface %p, timestamp %I64u\n", iface, timestamp );
+    if (winetest_debug > 1) trace( "iface %p, timestamp %I64u\n", iface, timestamp );
 
     ok( !controller_added.invoked, "controller added handler invoked\n" );
     ok( !impl->on_input_resumed_called, "OnInputResumed already called\n" );
@@ -733,7 +733,7 @@ static HRESULT WINAPI input_sink_OnInputSuspended( IGameControllerInputSink *ifa
 {
     struct custom_controller *impl = impl_from_IGameControllerInputSink( iface );
 
-    trace( "iface %p, timestamp %I64u\n", iface, timestamp );
+    if (winetest_debug > 1) trace( "iface %p, timestamp %I64u\n", iface, timestamp );
 
     ok( !controller_removed.invoked, "controller removed handler invoked\n" );
     ok( !impl->on_input_suspended_called, "OnInputSuspended already called\n" );
@@ -851,7 +851,7 @@ static HRESULT WINAPI custom_factory_CreateGameController( ICustomGameController
 {
     struct custom_factory *impl = impl_from_ICustomGameControllerFactory( iface );
 
-    trace( "iface %p, provider %p, value %p\n", iface, provider, value );
+    if (winetest_debug > 1) trace( "iface %p, provider %p, value %p\n", iface, provider, value );
 
     ok( !controller_added.invoked, "controller added handler invoked\n" );
     ok( !impl->create_controller_called, "unexpected call\n" );
@@ -875,7 +875,7 @@ static HRESULT WINAPI custom_factory_OnGameControllerAdded( ICustomGameControlle
 {
     struct custom_factory *impl = impl_from_ICustomGameControllerFactory( iface );
 
-    trace( "iface %p, value %p\n", iface, value );
+    if (winetest_debug > 1) trace( "iface %p, value %p\n", iface, value );
 
     ok( controller_added.invoked, "controller added handler not invoked\n" );
     ok( impl->create_controller_called, "CreateGameController not called\n" );
@@ -894,7 +894,7 @@ static HRESULT WINAPI custom_factory_OnGameControllerRemoved( ICustomGameControl
 {
     struct custom_factory *impl = impl_from_ICustomGameControllerFactory( iface );
 
-    trace( "iface %p, value %p\n", iface, value );
+    if (winetest_debug > 1) trace( "iface %p, value %p\n", iface, value );
 
     ok( controller_removed.invoked, "controller removed handler invoked\n" );
     ok( custom_controller.on_input_suspended_called, "OnInputSuspended not called\n" );

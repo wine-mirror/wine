@@ -4588,7 +4588,7 @@ static HRESULT WINAPI controller_handler_QueryInterface( IEventHandler_RawGameCo
         return S_OK;
     }
 
-    trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    if (winetest_debug > 1) trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
 }
@@ -4608,7 +4608,7 @@ static HRESULT WINAPI controller_handler_Invoke( IEventHandler_RawGameController
 {
     struct controller_handler *impl = impl_from_IEventHandler_RawGameController( iface );
 
-    trace( "iface %p, sender %p, controller %p\n", iface, sender, controller );
+    if (winetest_debug > 1) trace( "iface %p, sender %p, controller %p\n", iface, sender, controller );
 
     ok( sender == NULL, "got sender %p\n", sender );
     impl->invoked = TRUE;
@@ -4756,7 +4756,7 @@ static HRESULT WINAPI bool_async_handler_QueryInterface( IAsyncOperationComplete
         return S_OK;
     }
 
-    trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    if (winetest_debug > 1) trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
 }
@@ -4776,7 +4776,7 @@ static HRESULT WINAPI bool_async_handler_Invoke( IAsyncOperationCompletedHandler
 {
     struct bool_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_boolean( iface );
 
-    trace( "iface %p, async %p, status %u\n", iface, async, status );
+    if (winetest_debug > 1) trace( "iface %p, async %p, status %u\n", iface, async, status );
 
     ok( !impl->invoked, "invoked twice\n" );
     impl->invoked = TRUE;
@@ -4841,7 +4841,7 @@ static HRESULT WINAPI result_async_handler_QueryInterface( IAsyncOperationComple
         return S_OK;
     }
 
-    trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    if (winetest_debug > 1) trace( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
     *out = NULL;
     return E_NOINTERFACE;
 }
@@ -4861,7 +4861,7 @@ static HRESULT WINAPI result_async_handler_Invoke( IAsyncOperationCompletedHandl
 {
     struct result_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult( iface );
 
-    trace( "iface %p, async %p, status %u\n", iface, async, status );
+    if (winetest_debug > 1) trace( "iface %p, async %p, status %u\n", iface, async, status );
 
     ok( !impl->invoked, "invoked twice\n" );
     impl->invoked = TRUE;
