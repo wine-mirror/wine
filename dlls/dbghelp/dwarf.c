@@ -1764,7 +1764,7 @@ static struct symt* dwarf2_parse_udt_type(dwarf2_debug_info_t* di,
 
     /* quirk... FIXME provide real support for anonymous UDTs */
     if (!dwarf2_find_attribute(di, DW_AT_name, &name))
-        name.u.string = "zz_anon_zz";
+        name.u.string = "<unnamed-tag>";
     if (!dwarf2_find_attribute(di, DW_AT_byte_size, &size)) size.u.uvalue = 0;
 
     di->symt = &symt_new_udt(di->unit_ctx->module_ctx->module, dwarf2_get_cpp_name(di, name.u.string),
