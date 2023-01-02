@@ -5747,6 +5747,54 @@ static void test_windows_gaming_input(void)
             .report_buf = {3,0x01,0x04,0x04,0x5a,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0x7f,0x4e,0x01,0x00,0x00},
         },
     };
+    struct hid_expect expect_create_constant_neg[] =
+    {
+        /* create new effect */
+        {
+            .code = IOCTL_HID_SET_FEATURE,
+            .report_id = 2,
+            .report_len = 3,
+            .report_buf = {2,0x04,0x00},
+        },
+        /* block load */
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .report_id = 3,
+            .report_len = 5,
+            .report_buf = {3,0x01,0x01,0x00,0x00},
+        },
+        /* set constant */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 9,
+            .report_len = 4,
+            .report_buf = {9,0x01,0x18,0xfc},
+        },
+        /* set envelope (wine) */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 8,
+            .report_len = 8,
+            .report_buf = {8,0x01,0x00,0x00,0x00,0x00,0x00,0x00},
+            .todo = TRUE, .wine_only = TRUE,
+        },
+        /* update effect (wine) */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 18,
+            .report_buf = {3,0x01,0x04,0x04,0x28,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x7f,0x99,0x00,0x00,0x00},
+            .wine_only = TRUE, .todo = TRUE,
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 18,
+            .report_buf = {3,0x01,0x04,0x04,0x28,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x7f,0x4e,0x01,0x00,0x00},
+            .todo = TRUE,
+        },
+    };
     struct hid_expect expect_create_ramp[] =
     {
         /* create new effect */
@@ -6547,6 +6595,35 @@ static void test_windows_gaming_input(void)
     set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
     hr = IForceFeedbackEffect_Stop( effect );
     ok( hr == S_OK, "Stop returned %#lx\n", hr );
+
+    set_hid_expect( file, expect_unload, sizeof(expect_unload) );
+    hr = IForceFeedbackMotor_TryUnloadEffectAsync( motor, effect, &bool_async );
+    ok( hr == S_OK, "TryUnloadEffectAsync returned %#lx\n", hr );
+    await_bool( bool_async );
+    check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
+    IAsyncOperation_boolean_Release( bool_async );
+    set_hid_expect( file, NULL, 0 );
+
+
+    hr = IForceFeedbackEffect_QueryInterface( effect, &IID_IConstantForceEffect, (void **)&constant_effect );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    direction.X = -direction.X;
+    direction.Y = -direction.Y;
+    direction.Z = -direction.Z;
+    hr = IConstantForceEffect_SetParameters( constant_effect, direction, duration );
+    ok( hr == S_OK, "SetParameters returned %#lx\n", hr );
+    direction.X = -direction.X;
+    direction.Y = -direction.Y;
+    direction.Z = -direction.Z;
+    IConstantForceEffect_Release( constant_effect );
+
+    set_hid_expect( file, expect_create_constant_neg, sizeof(expect_create_constant_neg) );
+    hr = IForceFeedbackMotor_LoadEffectAsync( motor, effect, &result_async );
+    ok( hr == S_OK, "LoadEffectAsync returned %#lx\n", hr );
+    await_result( result_async );
+    check_result_async( result_async, 1, Completed, S_OK, ForceFeedbackLoadEffectResult_Succeeded );
+    IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
+    set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, expect_unload, sizeof(expect_unload) );
     hr = IForceFeedbackMotor_TryUnloadEffectAsync( motor, effect, &bool_async );
