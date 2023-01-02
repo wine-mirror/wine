@@ -109,37 +109,74 @@ static ULONG WINAPI effect_impl_Release( IWineForceFeedbackEffectImpl *iface )
     return ref;
 }
 
+static int effect_reorient_direction( const WineForceFeedbackEffectParameters *params, Vector3 *direction )
+{
+    int sign = +1;
+
+    switch (params->type)
+    {
+    case WineForceFeedbackEffectType_Constant:
+        *direction = params->constant.direction;
+        break;
+
+    case WineForceFeedbackEffectType_Ramp:
+        *direction = params->ramp.start_vector;
+        break;
+
+    case WineForceFeedbackEffectType_Periodic_SineWave:
+    case WineForceFeedbackEffectType_Periodic_TriangleWave:
+    case WineForceFeedbackEffectType_Periodic_SquareWave:
+    case WineForceFeedbackEffectType_Periodic_SawtoothWaveDown:
+    case WineForceFeedbackEffectType_Periodic_SawtoothWaveUp:
+        *direction = params->periodic.direction;
+        break;
+
+    case WineForceFeedbackEffectType_Condition_Spring:
+    case WineForceFeedbackEffectType_Condition_Damper:
+    case WineForceFeedbackEffectType_Condition_Inertia:
+    case WineForceFeedbackEffectType_Condition_Friction:
+        *direction = params->condition.direction;
+        sign = -1;
+        break;
+    }
+
+    direction->X *= -sign;
+    direction->Y *= -sign;
+    direction->Z *= -sign;
+
+    return sign;
+}
+
 static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *iface, WineForceFeedbackEffectParameters params,
                                                   WineForceFeedbackEffectEnvelope *envelope )
 {
     struct effect *impl = impl_from_IWineForceFeedbackEffectImpl( iface );
+    Vector3 direction = {0};
     DWORD count = 0;
     HRESULT hr;
+    int sign;
 
     TRACE( "iface %p, params %p, envelope %p.\n", iface, &params, envelope );
 
     EnterCriticalSection( &impl->cs );
+
+    sign = effect_reorient_direction( &params, &direction );
+
     switch (params.type)
     {
     case WineForceFeedbackEffectType_Constant:
         impl->repeat_count = params.constant.repeat_count;
-        impl->constant_force.lMagnitude = round( params.constant.gain * params.constant.direction.X * 10000 );
+        impl->constant_force.lMagnitude = -sign * round( params.constant.gain * direction.X * 10000 );
         impl->params.dwDuration = min( max( params.constant.duration.Duration / 10, 0 ), INFINITE );
         impl->params.dwStartDelay = min( max( params.constant.start_delay.Duration / 10, 0 ), INFINITE );
-        if (impl->axes[count] == DIJOFS_X) impl->directions[count++] = round( -params.constant.direction.X * 10000 );
-        if (impl->axes[count] == DIJOFS_Y) impl->directions[count++] = round( -params.constant.direction.Y * 10000 );
-        if (impl->axes[count] == DIJOFS_Z) impl->directions[count++] = round( -params.constant.direction.Z * 10000 );
         break;
 
     case WineForceFeedbackEffectType_Ramp:
         impl->repeat_count = params.ramp.repeat_count;
-        impl->ramp_force.lStart = round( params.ramp.gain * params.ramp.start_vector.X * 10000 );
+        impl->ramp_force.lStart = -sign * round( params.ramp.gain * direction.X * 10000 );
         impl->ramp_force.lEnd = round( params.ramp.gain * params.ramp.end_vector.X * 10000 );
         impl->params.dwDuration = min( max( params.ramp.duration.Duration / 10, 0 ), INFINITE );
         impl->params.dwStartDelay = min( max( params.ramp.start_delay.Duration / 10, 0 ), INFINITE );
-        if (impl->axes[count] == DIJOFS_X) impl->directions[count++] = round( -params.ramp.start_vector.X * 10000 );
-        if (impl->axes[count] == DIJOFS_Y) impl->directions[count++] = round( -params.ramp.start_vector.Y * 10000 );
-        if (impl->axes[count] == DIJOFS_Z) impl->directions[count++] = round( -params.ramp.start_vector.Z * 10000 );
         break;
 
     case WineForceFeedbackEffectType_Periodic_SineWave:
@@ -154,9 +191,6 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
         impl->periodic.lOffset = round( params.periodic.bias * 10000 );
         impl->params.dwDuration = min( max( params.periodic.duration.Duration / 10, 0 ), INFINITE );
         impl->params.dwStartDelay = min( max( params.periodic.start_delay.Duration / 10, 0 ), INFINITE );
-        if (impl->axes[count] == DIJOFS_X) impl->directions[count++] = round( -params.periodic.direction.X * 10000 );
-        if (impl->axes[count] == DIJOFS_Y) impl->directions[count++] = round( -params.periodic.direction.Y * 10000 );
-        if (impl->axes[count] == DIJOFS_Z) impl->directions[count++] = round( -params.periodic.direction.Z * 10000 );
         break;
 
     case WineForceFeedbackEffectType_Condition_Spring:
@@ -172,11 +206,12 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
         impl->condition.lOffset = round( params.condition.bias * 10000 );
         impl->params.dwDuration = -1;
         impl->params.dwStartDelay = 0;
-        if (impl->axes[count] == DIJOFS_X) impl->directions[count++] = round( params.condition.direction.X * 10000 );
-        if (impl->axes[count] == DIJOFS_Y) impl->directions[count++] = round( params.condition.direction.Y * 10000 );
-        if (impl->axes[count] == DIJOFS_Z) impl->directions[count++] = round( params.condition.direction.Z * 10000 );
         break;
     }
+
+    if (impl->axes[count] == DIJOFS_X) impl->directions[count++] = round( direction.X * 10000 );
+    if (impl->axes[count] == DIJOFS_Y) impl->directions[count++] = round( direction.Y * 10000 );
+    if (impl->axes[count] == DIJOFS_Z) impl->directions[count++] = round( direction.Z * 10000 );
 
     if (!envelope) impl->params.lpEnvelope = NULL;
     else
