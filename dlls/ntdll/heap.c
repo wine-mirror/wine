@@ -1136,7 +1136,7 @@ static BOOL heap_validate_ptr( const struct heap *heap, const void *ptr )
     {
         if (!find_large_block( heap, block ))
         {
-            if (WARN_ON(heap)) WARN("heap %p, ptr %p: block region not found\n", heap, ptr );
+            WARN("heap %p, ptr %p: block region not found\n", heap, ptr );
             return FALSE;
         }
 
