@@ -1350,6 +1350,7 @@ static IHTMLDocument2 *_get_doc_node(unsigned line, IHTMLDocument2 *doc)
     hres = IHTMLWindow2_get_document(window, &ret);
     ok_(__FILE__,line)(hres == S_OK, "get_document failed: %08lx\n", hres);
     ok_(__FILE__,line)(ret != NULL, "document = NULL\n");
+    IHTMLWindow2_Release(window);
 
     return ret;
 }
@@ -6313,6 +6314,7 @@ static void test_location(IHTMLDocument2 *doc)
     ok(hres == S_OK, "get_location failed: %08lx\n", hres);
     ok(location == location2, "location != location2\n");
     IHTMLLocation_Release(location2);
+    IHTMLWindow2_Release(window);
 
     test_ifaces((IUnknown*)location, location_iids);
     test_disp2((IUnknown*)location, &DIID_DispHTMLLocation, &IID_IHTMLLocation, NULL, L"about:blank");
@@ -7564,6 +7566,7 @@ static void test_xhr(IHTMLDocument2 *doc)
     SysFreeString(str);
 
     IHTMLWindow2_Release(window);
+    IDispatchEx_Release(dispex);
 }
 
 static void test_defaults(IHTMLDocument2 *doc)
