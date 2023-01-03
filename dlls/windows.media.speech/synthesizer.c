@@ -375,7 +375,7 @@ static HRESULT WINAPI synthesizer_GetTrustLevel( ISpeechSynthesizer *iface, Trus
     return E_NOTIMPL;
 }
 
-static HRESULT CALLBACK text_to_stream_operation( IInspectable *invoker, IInspectable **result )
+static HRESULT synthesizer_synthesize_text_to_stream_async( IInspectable *invoker, IInspectable **result )
 {
     return synthesis_stream_create((ISpeechSynthesisStream **)result);
 }
@@ -385,10 +385,10 @@ static HRESULT WINAPI synthesizer_SynthesizeTextToStreamAsync( ISpeechSynthesize
 {
     TRACE("iface %p, text %p, operation %p.\n", iface, text, operation);
     return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechSynthesisStream, NULL,
-                                              text_to_stream_operation, (IAsyncOperation_IInspectable **)operation);
+                                              synthesizer_synthesize_text_to_stream_async, (IAsyncOperation_IInspectable **)operation);
 }
 
-static HRESULT CALLBACK ssml_to_stream_operation( IInspectable *invoker, IInspectable **result )
+static HRESULT synthesizer_synthesize_ssml_to_stream_async( IInspectable *invoker, IInspectable **result )
 {
     return synthesis_stream_create((ISpeechSynthesisStream **)result);
 }
@@ -398,7 +398,7 @@ static HRESULT WINAPI synthesizer_SynthesizeSsmlToStreamAsync( ISpeechSynthesize
 {
     TRACE("iface %p, ssml %p, operation %p.\n", iface, ssml, operation);
     return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechSynthesisStream, NULL,
-                                              ssml_to_stream_operation, (IAsyncOperation_IInspectable **)operation);
+                                              synthesizer_synthesize_ssml_to_stream_async, (IAsyncOperation_IInspectable **)operation);
 }
 
 static HRESULT WINAPI synthesizer_put_Voice( ISpeechSynthesizer *iface, IVoiceInformation *value )
