@@ -1343,28 +1343,33 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
     return VFW_S_NO_MORE_ITEMS;
 }
 
-static BOOL parser_init_gstreamer(void)
-{
-    if (!init_gstreamer())
-        return FALSE;
-    return TRUE;
-}
-
-HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
+static HRESULT parser_create(enum wg_parser_type type, struct parser **parser)
 {
     struct parser *object;
 
-    if (!parser_init_gstreamer())
+    if (!init_gstreamer())
         return E_FAIL;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (!(object->wg_parser = wg_parser_create(WG_PARSER_DECODEBIN, false)))
+    if (!(object->wg_parser = wg_parser_create(type, false)))
     {
         free(object);
         return E_OUTOFMEMORY;
     }
+
+    *parser = object;
+    return S_OK;
+}
+
+HRESULT decodebin_parser_create(IUnknown *outer, IUnknown **out)
+{
+    struct parser *object;
+    HRESULT hr;
+
+    if (FAILED(hr = parser_create(WG_PARSER_DECODEBIN, &object)))
+        return hr;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_decodebin_parser, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, L"input pin", &sink_ops, NULL);
@@ -1881,18 +1886,10 @@ static HRESULT wave_parser_source_get_media_type(struct parser_source *pin,
 HRESULT wave_parser_create(IUnknown *outer, IUnknown **out)
 {
     struct parser *object;
+    HRESULT hr;
 
-    if (!parser_init_gstreamer())
-        return E_FAIL;
-
-    if (!(object = calloc(1, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (!(object->wg_parser = wg_parser_create(WG_PARSER_WAVPARSE, false)))
-    {
-        free(object);
-        return E_OUTOFMEMORY;
-    }
+    if (FAILED(hr = parser_create(WG_PARSER_WAVPARSE, &object)))
+        return hr;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WAVEParser, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, L"input pin", &wave_parser_sink_ops, NULL);
@@ -1967,18 +1964,10 @@ static HRESULT avi_splitter_source_get_media_type(struct parser_source *pin,
 HRESULT avi_splitter_create(IUnknown *outer, IUnknown **out)
 {
     struct parser *object;
+    HRESULT hr;
 
-    if (!parser_init_gstreamer())
-        return E_FAIL;
-
-    if (!(object = calloc(1, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (!(object->wg_parser = wg_parser_create(WG_PARSER_AVIDEMUX, false)))
-    {
-        free(object);
-        return E_OUTOFMEMORY;
-    }
+    if (FAILED(hr = parser_create(WG_PARSER_AVIDEMUX, &object)))
+        return hr;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_AviSplitter, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, L"input pin", &avi_splitter_sink_ops, NULL);
@@ -2074,18 +2063,10 @@ static const struct strmbase_filter_ops mpeg_splitter_ops =
 HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out)
 {
     struct parser *object;
+    HRESULT hr;
 
-    if (!parser_init_gstreamer())
-        return E_FAIL;
-
-    if (!(object = calloc(1, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (!(object->wg_parser = wg_parser_create(WG_PARSER_MPEGAUDIOPARSE, false)))
-    {
-        free(object);
-        return E_OUTOFMEMORY;
-    }
+    if (FAILED(hr = parser_create(WG_PARSER_MPEGAUDIOPARSE, &object)))
+        return hr;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_MPEG1Splitter, &mpeg_splitter_ops);
     strmbase_sink_init(&object->sink, &object->filter, L"Input", &mpeg_splitter_sink_ops, NULL);
