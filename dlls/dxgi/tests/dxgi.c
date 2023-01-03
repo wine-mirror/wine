@@ -3358,25 +3358,42 @@ static void test_resize_target(IUnknown *device, BOOL is_d3d12)
     ok(refcount == !is_d3d12, "Got unexpected refcount %lu.\n", refcount);
 }
 
+struct resize_target_data
+{
+    IDXGISwapChain *swapchain;
+    BOOL test_nested_sfs;
+};
+
 static LRESULT CALLBACK resize_target_wndproc(HWND hwnd, unsigned int message, WPARAM wparam, LPARAM lparam)
 {
-    IDXGISwapChain *swapchain = (IDXGISwapChain *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    struct resize_target_data *data = (struct resize_target_data *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
     DXGI_SWAP_CHAIN_DESC desc;
     HRESULT hr;
+    BOOL fs;
 
     switch (message)
     {
         case WM_SIZE:
-            ok(!!swapchain, "GWLP_USERDATA is NULL.\n");
-            hr = IDXGISwapChain_GetDesc(swapchain, &desc);
+            ok(!!data, "GWLP_USERDATA is NULL.\n");
+            hr = IDXGISwapChain_GetDesc(data->swapchain, &desc);
             ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             ok(desc.BufferDesc.Width == 800, "Got unexpected buffer width %u.\n", desc.BufferDesc.Width);
             ok(desc.BufferDesc.Height == 600, "Got unexpected buffer height %u.\n", desc.BufferDesc.Height);
             return 0;
 
-        default:
-            return DefWindowProcA(hwnd, message, wparam, lparam);
+        case WM_WINDOWPOSCHANGED:
+            if (!data->test_nested_sfs)
+                break;
+
+            /* We are not supposed to deadlock if the window is owned by a different thread.
+             * The current fullscreen state and consequently the return value of the nested
+             * SetFullscreenState call are racy on Windows, do not test them. */
+            hr = IDXGISwapChain_GetFullscreenState(data->swapchain, &fs, NULL);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            IDXGISwapChain_SetFullscreenState(data->swapchain, FALSE, NULL);
+            break;
     }
+    return DefWindowProcA(hwnd, message, wparam, lparam);
 }
 
 struct window_thread_data
@@ -3425,6 +3442,7 @@ static DWORD WINAPI window_thread(void *data)
 
 static void test_resize_target_wndproc(IUnknown *device, BOOL is_d3d12)
 {
+    struct resize_target_data window_data = {0};
     struct window_thread_data thread_data;
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     IDXGISwapChain *swapchain;
@@ -3436,6 +3454,7 @@ static void test_resize_target_wndproc(IUnknown *device, BOOL is_d3d12)
     HANDLE thread;
     HRESULT hr;
     RECT rect;
+    BOOL fs;
 
     get_factory(device, is_d3d12, &factory);
 
@@ -3468,7 +3487,8 @@ static void test_resize_target_wndproc(IUnknown *device, BOOL is_d3d12)
     hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-    data = SetWindowLongPtrA(thread_data.window, GWLP_USERDATA, (LONG_PTR)swapchain);
+    window_data.swapchain = swapchain;
+    data = SetWindowLongPtrA(thread_data.window, GWLP_USERDATA, (LONG_PTR)&window_data);
     ok(!data, "Got unexpected GWLP_USERDATA %p.\n", (void *)data);
 
     memset(&mode, 0, sizeof(mode));
@@ -3488,6 +3508,21 @@ static void test_resize_target_wndproc(IUnknown *device, BOOL is_d3d12)
     ok(ret, "Failed to get client rect.\n");
     ok(rect.right == mode.Width && rect.bottom == mode.Height,
             "Got unexpected client rect %s.\n", wine_dbgstr_rect(&rect));
+
+    /* Win7 testbot reports no output for the swapchain and can't switch to fullscreen. */
+    window_data.test_nested_sfs = TRUE;
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+    ok(hr == S_OK || broken(hr == DXGI_ERROR_UNSUPPORTED), "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        hr = IDXGISwapChain_GetFullscreenState(swapchain, &fs, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(fs, "Got unexpected fullscreen state %x.\n", fs);
+    }
+    window_data.test_nested_sfs = FALSE;
+
+    hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     refcount = IDXGISwapChain_Release(swapchain);
     ok(!refcount, "IDXGISwapChain has %lu references left.\n", refcount);
