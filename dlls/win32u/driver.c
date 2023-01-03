@@ -207,18 +207,13 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case BITSPIXEL:
     {
         UNICODE_STRING display;
-        DEVMODEW devmode;
         DC *dc;
 
         if (NtGdiGetDeviceCaps( dev->hdc, TECHNOLOGY ) == DT_RASDISPLAY)
         {
             dc = get_nulldrv_dc( dev );
-            memset( &devmode, 0, sizeof(devmode) );
-            devmode.dmSize = sizeof(devmode);
             RtlInitUnicodeString( &display, dc->display );
-            if (NtUserEnumDisplaySettings( &display, ENUM_CURRENT_SETTINGS, &devmode, 0 ) &&
-                (devmode.dmFields & DM_BITSPERPEL) && devmode.dmBitsPerPel)
-                return devmode.dmBitsPerPel;
+            return get_display_depth( &display );
         }
         return 32;
     }
@@ -764,6 +759,11 @@ static BOOL nulldrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, LP
     return FALSE; /* use default implementation */
 }
 
+static INT nulldrv_GetDisplayDepth( LPCWSTR name, BOOL is_primary )
+{
+    return 32;
+}
+
 static BOOL nulldrv_UpdateDisplayDevices( const struct gdi_device_manager *manager, BOOL force, void *param )
 {
     return FALSE;
@@ -1077,6 +1077,11 @@ static BOOL loaderdrv_GetCurrentDisplaySettings( LPCWSTR name, BOOL is_primary, 
     return load_driver()->pGetCurrentDisplaySettings( name, is_primary, mode );
 }
 
+static INT loaderdrv_GetDisplayDepth( LPCWSTR name, BOOL is_primary )
+{
+    return load_driver()->pGetDisplayDepth( name, is_primary );
+}
+
 static void loaderdrv_SetCursor( HCURSOR cursor )
 {
     load_driver()->pSetCursor( cursor );
@@ -1179,6 +1184,7 @@ static const struct user_driver_funcs lazy_load_driver =
     /* display modes */
     loaderdrv_ChangeDisplaySettings,
     loaderdrv_GetCurrentDisplaySettings,
+    loaderdrv_GetDisplayDepth,
     loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
     loaderdrv_CreateDesktopWindow,
@@ -1254,6 +1260,7 @@ void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(ChangeDisplaySettings);
     SET_USER_FUNC(GetCurrentDisplaySettings);
+    SET_USER_FUNC(GetDisplayDepth);
     SET_USER_FUNC(UpdateDisplayDevices);
     SET_USER_FUNC(CreateDesktopWindow);
     SET_USER_FUNC(CreateWindow);

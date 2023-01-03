@@ -405,6 +405,7 @@ static const struct user_driver_funcs x11drv_funcs =
     .pClipCursor = X11DRV_ClipCursor,
     .pChangeDisplaySettings = X11DRV_ChangeDisplaySettings,
     .pGetCurrentDisplaySettings = X11DRV_GetCurrentDisplaySettings,
+    .pGetDisplayDepth = X11DRV_GetDisplayDepth,
     .pUpdateDisplayDevices = X11DRV_UpdateDisplayDevices,
     .pCreateDesktopWindow = X11DRV_CreateDesktopWindow,
     .pCreateWindow = X11DRV_CreateWindow,

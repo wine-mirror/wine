@@ -124,6 +124,7 @@ extern BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags) DECLSPEC_HIDDEN;
 extern void macdrv_Beep(void) DECLSPEC_HIDDEN;
 extern LONG macdrv_ChangeDisplaySettings(LPDEVMODEW displays, LPCWSTR primary_name, HWND hwnd, DWORD flags, LPVOID lpvoid) DECLSPEC_HIDDEN;
 extern BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR name, BOOL is_primary, LPDEVMODEW devmode) DECLSPEC_HIDDEN;
+extern INT macdrv_GetDisplayDepth(LPCWSTR name, BOOL is_primary) DECLSPEC_HIDDEN;
 extern LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
 extern BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
                                          BOOL force, void *param ) DECLSPEC_HIDDEN;

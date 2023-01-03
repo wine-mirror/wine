@@ -299,6 +299,7 @@ struct user_driver_funcs
     /* display modes */
     LONG    (*pChangeDisplaySettings)(LPDEVMODEW,LPCWSTR,HWND,DWORD,LPVOID);
     BOOL    (*pGetCurrentDisplaySettings)(LPCWSTR,BOOL,LPDEVMODEW);
+    INT     (*pGetDisplayDepth)(LPCWSTR,BOOL);
     BOOL    (*pUpdateDisplayDevices)(const struct gdi_device_manager *,BOOL,void*);
     /* windowing functions */
     BOOL    (*pCreateDesktopWindow)(HWND);

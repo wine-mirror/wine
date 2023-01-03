@@ -2655,6 +2655,31 @@ static unsigned int active_monitor_count(void)
     return count;
 }
 
+INT get_display_depth( UNICODE_STRING *name )
+{
+    struct display_device *device;
+    INT depth;
+
+    if (!lock_display_devices())
+        return 32;
+
+    if (name && name->Length)
+        device = find_adapter_device_by_name( name );
+    else
+        device = find_adapter_device_by_id( 0 ); /* use primary adapter */
+
+    if (!device)
+    {
+        unlock_display_devices();
+        return 32;
+    }
+
+    depth = user_driver->pGetDisplayDepth( device->device_name,
+                                           !!(device->state_flags & DISPLAY_DEVICE_PRIMARY_DEVICE) );
+    unlock_display_devices();
+    return depth;
+}
+
 /***********************************************************************
  *	     NtUserEnumDisplayMonitors    (win32u.@)
  */

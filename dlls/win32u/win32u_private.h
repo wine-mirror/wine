@@ -334,6 +334,7 @@ extern BOOL enable_thunk_lock DECLSPEC_HIDDEN;
 extern HBRUSH get_55aa_brush(void) DECLSPEC_HIDDEN;
 extern DWORD get_dialog_base_units(void) DECLSPEC_HIDDEN;
 extern LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, int *height ) DECLSPEC_HIDDEN;
+extern INT get_display_depth( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
 extern RECT get_display_rect( const WCHAR *display ) DECLSPEC_HIDDEN;
 extern UINT get_monitor_dpi( HMONITOR monitor ) DECLSPEC_HIDDEN;
 extern BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info ) DECLSPEC_HIDDEN;

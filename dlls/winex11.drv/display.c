@@ -239,6 +239,16 @@ static DWORD get_display_depth(ULONG_PTR display_id)
     return screen_bpp;
 }
 
+INT X11DRV_GetDisplayDepth(LPCWSTR name, BOOL is_primary)
+{
+    ULONG_PTR id;
+
+    if (settings_handler.get_id( name, is_primary, &id ))
+        return get_display_depth( id );
+
+    return screen_bpp;
+}
+
 /***********************************************************************
  *      GetCurrentDisplaySettings  (X11DRV.@)
  *

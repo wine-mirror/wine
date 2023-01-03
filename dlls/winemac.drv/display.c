@@ -927,6 +927,14 @@ BOOL macdrv_GetCurrentDisplaySettings(LPCWSTR devname, BOOL is_primary, LPDEVMOD
     return TRUE;
 }
 
+/***********************************************************************
+ *              GetDisplayDepth  (MACDRV.@)
+ *
+ */
+INT macdrv_GetDisplayDepth(LPCWSTR name, BOOL is_primary)
+{
+    return get_default_bpp();
+}
 
 /***********************************************************************
  *              GetDeviceGammaRamp (MACDRV.@)
