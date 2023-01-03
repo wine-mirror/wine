@@ -54,19 +54,22 @@ struct parser
 
     struct wg_parser *wg_parser;
 
-    /* This protects the "streaming" field, accessed by both the application
-     * and streaming threads.
+    /* This protects the "streaming" and "flushing" fields, accessed by both
+     * the application and streaming threads.
      * We cannot use the filter lock for this, since that is held while waiting
      * for the streaming thread, and hence the streaming thread cannot take the
      * filter lock.
      * This lock must not be acquired before acquiring the filter lock or
      * flushing_cs. */
     CRITICAL_SECTION streaming_cs;
+    CONDITION_VARIABLE flushing_cv;
 
     /* FIXME: It would be nice to avoid duplicating these with strmbase.
      * However, synchronization is tricky; we need access to be protected by a
      * separate lock. */
     bool streaming, sink_connected;
+
+    bool flushing;
 
     HANDLE read_thread;
 
@@ -986,11 +989,16 @@ static DWORD CALLBACK stream_thread(void *arg)
         struct wg_parser_buffer buffer;
 
         EnterCriticalSection(&filter->streaming_cs);
+
+        while (filter->flushing)
+            SleepConditionVariableCS(&filter->flushing_cv, &filter->streaming_cs, INFINITE);
+
         if (!filter->streaming)
         {
             LeaveCriticalSection(&filter->streaming_cs);
             break;
         }
+
         LeaveCriticalSection(&filter->streaming_cs);
 
         EnterCriticalSection(&pin->flushing_cs);
@@ -1384,6 +1392,8 @@ static HRESULT parser_create(enum wg_parser_type type, struct parser **parser)
     InitializeCriticalSection(&object->streaming_cs);
     object->streaming_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": parser.streaming_cs");
 
+    InitializeConditionVariable(&object->flushing_cv);
+
     *parser = object;
     return S_OK;
 }
@@ -1532,8 +1542,13 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
             IAsyncReader_BeginFlush(filter->reader);
     }
 
-    /* Acquire the flushing locks. This blocks the streaming threads, and
-     * ensures the seek is serialized between flushes. */
+    /* Signal the streaming threads to "pause". */
+    EnterCriticalSection(&filter->streaming_cs);
+    filter->flushing = true;
+    LeaveCriticalSection(&filter->streaming_cs);
+
+    /* Acquire the flushing locks, to make sure the streaming threads really
+     * are paused. This ensures the seek is serialized between flushes. */
     for (i = 0; i < filter->source_count; ++i)
     {
         struct parser_source *flush_pin = filter->sources[i];
@@ -1575,6 +1590,12 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
             WakeConditionVariable(&flush_pin->eos_cv);
         }
     }
+
+    /* Signal the streaming threads to resume. */
+    EnterCriticalSection(&filter->streaming_cs);
+    filter->flushing = false;
+    LeaveCriticalSection(&filter->streaming_cs);
+    WakeConditionVariable(&filter->flushing_cv);
 
     return S_OK;
 }
