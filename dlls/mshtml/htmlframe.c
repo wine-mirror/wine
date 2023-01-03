@@ -48,9 +48,14 @@ static HRESULT set_frame_doc(HTMLFrameBase *frame, nsIDOMDocument *nsdoc)
         return E_FAIL;
 
     window = mozwindow_to_window(mozwindow);
-    if(!window && frame->element.node.doc->browser)
+    if(!window && frame->element.node.doc->browser) {
         hres = create_outer_window(frame->element.node.doc->browser, mozwindow,
                 frame->element.node.doc->outer_window, &window);
+
+        /* Don't hold ref to the created window; the parent keeps ref to it */
+        if(SUCCEEDED(hres))
+            IHTMLWindow2_Release(&window->base.IHTMLWindow2_iface);
+    }
     mozIDOMWindowProxy_Release(mozwindow);
     if(FAILED(hres))
         return hres;
