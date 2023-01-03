@@ -6154,6 +6154,7 @@ static void test_hwnd_target(BOOL d3d11)
     D2D1_SIZE_U size;
     unsigned int i;
     HRESULT hr;
+    ULONG ref;
 
     static const struct format_test
     {
@@ -6235,6 +6236,8 @@ static void test_hwnd_target(BOOL d3d11)
         {
             todo_wine
             ok(FAILED(hr), "Got unexpected hr %#lx.\n", hr);
+            if (SUCCEEDED(hr))
+                ID2D1HwndRenderTarget_Release(rt);
             winetest_pop_context();
             continue;
         }
@@ -6251,7 +6254,8 @@ static void test_hwnd_target(BOOL d3d11)
     }
 
     DestroyWindow(hwnd_rt_desc.hwnd);
-    ID2D1Factory_Release(factory);
+    ref = ID2D1Factory_Release(factory);
+    ok(!ref, "Factory has %lu references left.\n", ref);
 }
 
 #define test_compatible_target_size(r) test_compatible_target_size_(__LINE__, r)
