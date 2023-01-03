@@ -855,8 +855,10 @@ static ULONG WINAPI HTMLImageElementFactory_Release(IHTMLImageElementFactory *if
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if(!ref)
+    if(!ref) {
+        release_dispex(&This->dispex);
         free(This);
+    }
 
     return ref;
 }
