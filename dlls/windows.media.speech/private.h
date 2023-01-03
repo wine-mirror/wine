@@ -23,6 +23,7 @@
 #include <stdarg.h>
 
 #define COBJMACROS
+#include "corerror.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winstring.h"

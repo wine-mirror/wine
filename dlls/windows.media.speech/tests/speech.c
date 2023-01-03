@@ -1744,8 +1744,8 @@ static void test_Recognition(void)
 
     action2 = (void *)0xdeadbeef;
     hr = ISpeechContinuousRecognitionSession_StartAsync(session, &action2);
-    todo_wine ok(hr == COR_E_INVALIDOPERATION, "ISpeechContinuousRecognitionSession_StartAsync failed, hr %#lx.\n", hr);
-    todo_wine ok(action2 == NULL, "action2 was %p.\n", action2);
+    ok(hr == COR_E_INVALIDOPERATION, "ISpeechContinuousRecognitionSession_StartAsync failed, hr %#lx.\n", hr);
+    ok(action2 == NULL, "action2 was %p.\n", action2);
 
     hr = IAsyncAction_QueryInterface(action, &IID_IAsyncInfo, (void **)&info);
     ok(hr == S_OK, "IAsyncAction_QueryInterface failed, hr %#lx.\n", hr);
@@ -1863,8 +1863,8 @@ static void test_Recognition(void)
 
     /* Try stopping, when already stopped. */
     hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action);
-    todo_wine ok(hr == COR_E_INVALIDOPERATION, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
-    todo_wine ok(action == NULL, "action was %p.\n", action);
+    ok(hr == COR_E_INVALIDOPERATION, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
+    ok(action == NULL, "action was %p.\n", action);
 
     hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);

@@ -160,6 +160,10 @@ struct session
 
     struct list completed_handlers;
     struct list result_handlers;
+
+    HANDLE worker_thread, worker_control_event;
+    BOOLEAN worker_running;
+    CRITICAL_SECTION cs;
 };
 
 /*
@@ -171,6 +175,31 @@ struct session
 static inline struct session *impl_from_ISpeechContinuousRecognitionSession( ISpeechContinuousRecognitionSession *iface )
 {
     return CONTAINING_RECORD(iface, struct session, ISpeechContinuousRecognitionSession_iface);
+}
+
+static DWORD CALLBACK session_worker_thread_cb( void *args )
+{
+    ISpeechContinuousRecognitionSession *iface = args;
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+    BOOLEAN running = TRUE;
+    DWORD status;
+
+    SetThreadDescription(GetCurrentThread(), L"wine_speech_recognition_session_worker");
+
+    while (running)
+    {
+        status = WaitForMultipleObjects(1, &impl->worker_control_event, FALSE, INFINITE);
+        if (status == 0) /* worker_control_event signaled */
+        {
+            EnterCriticalSection(&impl->cs);
+            running = impl->worker_running;
+            LeaveCriticalSection(&impl->cs);
+        }
+
+        /* TODO: Send mic data to recognizer and handle results. */
+    }
+
+    return 0;
 }
 
 static HRESULT WINAPI session_QueryInterface( ISpeechContinuousRecognitionSession *iface, REFIID iid, void **out )
@@ -208,8 +237,24 @@ static ULONG WINAPI session_Release( ISpeechContinuousRecognitionSession *iface 
 
     if (!ref)
     {
+        HANDLE thread;
+
+        EnterCriticalSection(&impl->cs);
+        thread = impl->worker_thread;
+        impl->worker_running = FALSE;
+        impl->worker_thread = INVALID_HANDLE_VALUE;
+        LeaveCriticalSection(&impl->cs);
+
+        SetEvent(impl->worker_control_event);
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
+
         typed_event_handlers_clear(&impl->completed_handlers);
         typed_event_handlers_clear(&impl->result_handlers);
+
+        impl->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&impl->cs);
+
         IVector_ISpeechRecognitionConstraint_Release(impl->constraints);
         free(impl);
     }
@@ -254,8 +299,37 @@ static HRESULT session_start_async( IInspectable *invoker )
 
 static HRESULT WINAPI session_StartAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
 {
-    FIXME("iface %p, action %p stub!\n", iface, action);
-    return async_action_create(NULL, session_start_async, action);
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, action %p.\n", iface, action);
+
+    if (FAILED(hr = async_action_create(NULL, session_start_async, action)))
+        return hr;
+
+    EnterCriticalSection(&impl->cs);
+    if (impl->worker_running || impl->worker_thread)
+    {
+        hr = COR_E_INVALIDOPERATION;
+    }
+    else if (!(impl->worker_thread = CreateThread(NULL, 0, session_worker_thread_cb, impl, 0, NULL)))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        impl->worker_running = FALSE;
+    }
+    else
+    {
+        impl->worker_running = TRUE;
+    }
+    LeaveCriticalSection(&impl->cs);
+
+    if (FAILED(hr))
+    {
+        IAsyncAction_Release(*action);
+        *action = NULL;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI session_StartWithModeAsync( ISpeechContinuousRecognitionSession *iface,
@@ -273,8 +347,45 @@ static HRESULT session_stop_async( IInspectable *invoker )
 
 static HRESULT WINAPI session_StopAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
 {
-    FIXME("iface %p, action %p stub!\n", iface, action);
-    return async_action_create(NULL, session_stop_async, action);
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+    HANDLE thread;
+    HRESULT hr;
+
+    TRACE("iface %p, action %p.\n", iface, action);
+
+    if (FAILED(hr = async_action_create(NULL, session_stop_async, action)))
+        return hr;
+
+    EnterCriticalSection(&impl->cs);
+    if (impl->worker_running && impl->worker_thread)
+    {
+        thread = impl->worker_thread;
+        impl->worker_thread = INVALID_HANDLE_VALUE;
+        impl->worker_running = FALSE;
+    }
+    else
+    {
+        hr = COR_E_INVALIDOPERATION;
+    }
+    LeaveCriticalSection(&impl->cs);
+
+    if (SUCCEEDED(hr))
+    {
+        SetEvent(impl->worker_control_event);
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
+
+        EnterCriticalSection(&impl->cs);
+        impl->worker_thread = NULL;
+        LeaveCriticalSection(&impl->cs);
+    }
+    else
+    {
+        IAsyncAction_Release(*action);
+        *action = NULL;
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI session_CancelAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
@@ -818,8 +929,17 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     list_init(&session->completed_handlers);
     list_init(&session->result_handlers);
 
+    if (!(session->worker_control_event = CreateEventW(NULL, FALSE, FALSE, NULL)))
+    {
+        hr = HRESULT_FROM_WIN32(GetLastError());
+        goto error;
+    }
+
     if (FAILED(hr = vector_inspectable_create(&constraints_iids, (IVector_IInspectable**)&session->constraints)))
         goto error;
+
+    InitializeCriticalSection(&session->cs);
+    session->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": recognition_session.cs");
 
     /* Init ISpeechRecognizer */
     impl->ISpeechRecognizer_iface.lpVtbl = &speech_recognizer_vtbl;
@@ -828,13 +948,13 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     impl->session = &session->ISpeechContinuousRecognitionSession_iface;
     impl->ref = 1;
 
-    TRACE("created SpeechRecognizer %p.\n", impl);
-
     *speechrecognizer = &impl->ISpeechRecognizer_iface;
+    TRACE("created SpeechRecognizer %p.\n", *speechrecognizer);
     return S_OK;
 
 error:
     if (session->constraints) IVector_ISpeechRecognitionConstraint_Release(session->constraints);
+    if (session->worker_control_event) CloseHandle(session->worker_control_event);
     free(session);
     free(impl);
 
