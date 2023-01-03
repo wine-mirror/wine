@@ -18,6 +18,7 @@
 #define COBJMACROS
 #include <stdarg.h>
 
+#include "corerror.h"
 #include "windef.h"
 #include "winbase.h"
 #include "winerror.h"
@@ -1741,6 +1742,11 @@ static void test_Recognition(void)
 
     await_async_void(action, &action_handler);
 
+    action2 = (void *)0xdeadbeef;
+    hr = ISpeechContinuousRecognitionSession_StartAsync(session, &action2);
+    todo_wine ok(hr == COR_E_INVALIDOPERATION, "ISpeechContinuousRecognitionSession_StartAsync failed, hr %#lx.\n", hr);
+    todo_wine ok(action2 == NULL, "action2 was %p.\n", action2);
+
     hr = IAsyncAction_QueryInterface(action, &IID_IAsyncInfo, (void **)&info);
     ok(hr == S_OK, "IAsyncAction_QueryInterface failed, hr %#lx.\n", hr);
     check_async_info((IInspectable *)action, 1, Completed, S_OK);
@@ -1784,6 +1790,17 @@ static void test_Recognition(void)
     todo_wine ok(recog_state == SpeechRecognizerState_Paused || /* Broken on Win10 1507 */
                   broken(recog_state == SpeechRecognizerState_Capturing) , "recog_state was %u.\n", recog_state);
 
+    /* Check what happens if we try to pause again, when the session is already paused. */
+    hr = ISpeechContinuousRecognitionSession_PauseAsync(session, &action2);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_PauseAsync failed, hr %#lx.\n", hr);
+    await_async_void(action2, &action_handler);
+    check_async_info((IInspectable *)action2, 4, Completed, S_OK);
+    IAsyncAction_Release(action2);
+
+    hr = ISpeechContinuousRecognitionSession_Resume(session);
+    todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_Resume failed, hr %#lx.\n", hr);
+
+    /* Resume when already resumed. */
     hr = ISpeechContinuousRecognitionSession_Resume(session);
     todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_Resume failed, hr %#lx.\n", hr);
 
@@ -1823,7 +1840,7 @@ static void test_Recognition(void)
 
     hr = IAsyncInfo_Close(info); /* If IAsyncInfo_Close would wait for the handler to finish, the test would get stuck here. */
     ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
-    check_async_info((IInspectable *)action2, 4, AsyncStatus_Closed, S_OK);
+    check_async_info((IInspectable *)action2, 5, AsyncStatus_Closed, S_OK);
 
     set = SetEvent(action_handler.event_block);
     ok(set == TRUE, "Event 'event_block' wasn't set.\n");
@@ -1843,6 +1860,11 @@ static void test_Recognition(void)
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
     todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
     todo_wine ok(recog_state == SpeechRecognizerState_Idle, "recog_state was %u.\n", recog_state);
+
+    /* Try stopping, when already stopped. */
+    hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action);
+    todo_wine ok(hr == COR_E_INVALIDOPERATION, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
+    todo_wine ok(action == NULL, "action was %p.\n", action);
 
     hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);
