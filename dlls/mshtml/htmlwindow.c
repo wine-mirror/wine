@@ -3593,8 +3593,6 @@ static HRESULT WINAPI WindowDispEx_GetDispID(IDispatchEx *iface, BSTR bstrName, 
         if(SUCCEEDED(hres) && frame) {
             global_prop_t *prop;
 
-            IHTMLWindow2_Release(&frame->base.IHTMLWindow2_iface);
-
             prop = alloc_global_prop(window, GLOBAL_FRAMEVAR, bstrName);
             if(!prop)
                 return E_OUTOFMEMORY;
