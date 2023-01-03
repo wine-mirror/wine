@@ -646,7 +646,6 @@ static dispex_static_data_t HTMLOptionElementFactory_dispex = {
     &HTMLOptionElementFactory_dispex_vtbl,
     IHTMLOptionElementFactory_tid,
     HTMLOptionElementFactory_iface_tids,
-    HTMLElement_init_dispex_info
 };
 
 HRESULT HTMLOptionElementFactory_Create(HTMLInnerWindow *window, HTMLOptionElementFactory **ret_ptr)
