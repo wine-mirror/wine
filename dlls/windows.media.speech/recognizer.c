@@ -162,7 +162,7 @@ struct session
     struct list result_handlers;
 
     HANDLE worker_thread, worker_control_event;
-    BOOLEAN worker_running;
+    BOOLEAN worker_running, worker_paused;
     CRITICAL_SECTION cs;
 };
 
@@ -362,6 +362,7 @@ static HRESULT WINAPI session_StopAsync( ISpeechContinuousRecognitionSession *if
         thread = impl->worker_thread;
         impl->worker_thread = INVALID_HANDLE_VALUE;
         impl->worker_running = FALSE;
+        impl->worker_paused = FALSE;
     }
     else
     {
@@ -401,14 +402,44 @@ static HRESULT session_pause_async( IInspectable *invoker )
 
 static HRESULT WINAPI session_PauseAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
 {
-    FIXME("iface %p, action %p stub!\n", iface, action);
-    return async_action_create(NULL, session_pause_async, action);
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("iface %p, action %p.\n", iface, action);
+
+    *action = NULL;
+
+    if (FAILED(hr = async_action_create(NULL, session_pause_async, action)))
+        return hr;
+
+    EnterCriticalSection(&impl->cs);
+    if (impl->worker_running)
+    {
+        impl->worker_paused = TRUE;
+    }
+    LeaveCriticalSection(&impl->cs);
+
+    SetEvent(impl->worker_control_event);
+
+    return hr;
 }
 
 static HRESULT WINAPI session_Resume( ISpeechContinuousRecognitionSession *iface )
 {
-    FIXME("iface %p stub!\n", iface);
-    return E_NOTIMPL;
+    struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    EnterCriticalSection(&impl->cs);
+    if (impl->worker_running)
+    {
+        impl->worker_paused = FALSE;
+    }
+    LeaveCriticalSection(&impl->cs);
+
+    SetEvent(impl->worker_control_event);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI session_add_Completed( ISpeechContinuousRecognitionSession *iface,

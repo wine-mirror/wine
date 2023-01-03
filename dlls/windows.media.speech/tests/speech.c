@@ -1798,11 +1798,11 @@ static void test_Recognition(void)
     IAsyncAction_Release(action2);
 
     hr = ISpeechContinuousRecognitionSession_Resume(session);
-    todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_Resume failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_Resume failed, hr %#lx.\n", hr);
 
     /* Resume when already resumed. */
     hr = ISpeechContinuousRecognitionSession_Resume(session);
-    todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_Resume failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_Resume failed, hr %#lx.\n", hr);
 
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
