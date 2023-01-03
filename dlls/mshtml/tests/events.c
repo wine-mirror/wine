@@ -1270,6 +1270,7 @@ static HRESULT WINAPI submit_onclick_attached_check_cancel(IDispatchEx *iface, D
     ok(event != NULL, "event == NULL\n");
 
     test_event_cancelbubble(event, VARIANT_TRUE);
+    IHTMLEventObj_Release(event);
     return S_OK;
 }
 
