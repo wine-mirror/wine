@@ -54,6 +54,15 @@ struct parser
 
     struct wg_parser *wg_parser;
 
+    /* This protects the "streaming" field, accessed by both the application
+     * and streaming threads.
+     * We cannot use the filter lock for this, since that is held while waiting
+     * for the streaming thread, and hence the streaming thread cannot take the
+     * filter lock.
+     * This lock must not be acquired before acquiring the filter lock or
+     * flushing_cs. */
+    CRITICAL_SECTION streaming_cs;
+
     /* FIXME: It would be nice to avoid duplicating these with strmbase.
      * However, synchronization is tricky; we need access to be protected by a
      * separate lock. */
@@ -972,9 +981,17 @@ static DWORD CALLBACK stream_thread(void *arg)
 
     TRACE("Starting streaming thread for pin %p.\n", pin);
 
-    while (filter->streaming)
+    for (;;)
     {
         struct wg_parser_buffer buffer;
+
+        EnterCriticalSection(&filter->streaming_cs);
+        if (!filter->streaming)
+        {
+            LeaveCriticalSection(&filter->streaming_cs);
+            break;
+        }
+        LeaveCriticalSection(&filter->streaming_cs);
 
         EnterCriticalSection(&pin->flushing_cs);
 
@@ -1095,6 +1112,9 @@ static void parser_destroy(struct strmbase_filter *iface)
 
     wg_parser_destroy(filter->wg_parser);
 
+    filter->streaming_cs.DebugInfo->Spare[0] = 0;
+    DeleteCriticalSection(&filter->streaming_cs);
+
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
@@ -1167,7 +1187,9 @@ static HRESULT parser_cleanup_stream(struct strmbase_filter *iface)
     if (!filter->sink_connected)
         return S_OK;
 
+    EnterCriticalSection(&filter->streaming_cs);
     filter->streaming = false;
+    LeaveCriticalSection(&filter->streaming_cs);
 
     for (i = 0; i < filter->source_count; ++i)
     {
@@ -1358,6 +1380,9 @@ static HRESULT parser_create(enum wg_parser_type type, struct parser **parser)
         free(object);
         return E_OUTOFMEMORY;
     }
+
+    InitializeCriticalSection(&object->streaming_cs);
+    object->streaming_cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": parser.streaming_cs");
 
     *parser = object;
     return S_OK;
