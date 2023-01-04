@@ -4618,7 +4618,9 @@ static void state_cb(struct wined3d_context *context, const struct wined3d_state
         buffer = buffer_state->buffer;
         bo_gl = wined3d_bo_gl(buffer->buffer_object);
         GL_EXTCALL(glBindBufferRange(GL_UNIFORM_BUFFER, base + i,
-                bo_gl->id, bo_gl->b.buffer_offset + buffer_state->offset, buffer_state->size));
+                bo_gl->id, bo_gl->b.buffer_offset + buffer_state->offset,
+                min(buffer_state->size, buffer->resource.size - buffer_state->offset)));
+
         buffer->bo_user.valid = true;
     }
     checkGLcall("bind constant buffers");
