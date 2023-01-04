@@ -863,7 +863,7 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
                 IsEqualGUID(&subtype, &MFAudioFormat_WMAudioV9) ||
                 IsEqualGUID(&subtype, &MFAudioFormat_WMAudio_Lossless))
             mf_media_type_to_wg_format_audio_wma(type, &subtype, format);
-        else if (IsEqualGUID(&subtype, &MFAudioFormat_AAC))
+        else if (IsEqualGUID(&subtype, &MFAudioFormat_AAC) || IsEqualGUID(&subtype, &MFAudioFormat_RAW_AAC))
             mf_media_type_to_wg_format_audio_mpeg4(type, format);
         else
             mf_media_type_to_wg_format_audio(type, &subtype, format);

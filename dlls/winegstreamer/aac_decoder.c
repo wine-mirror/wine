@@ -30,8 +30,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
-extern const GUID MFAudioFormat_RAW_AAC;
-
 static struct
 {
     const GUID *const guid;
