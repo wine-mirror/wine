@@ -3255,7 +3255,7 @@ static void test_h264_decoder(void)
     {
         ATTR_UINT32(MF_LOW_LATENCY, 0),
         ATTR_UINT32(MF_SA_D3D_AWARE, 1, .todo = TRUE),
-        ATTR_UINT32(MF_SA_D3D11_AWARE, 1, .todo = TRUE),
+        ATTR_UINT32(MF_SA_D3D11_AWARE, 1),
         ATTR_UINT32(MFT_DECODER_EXPOSE_OUTPUT_TYPES_IN_NATIVE_ORDER, 0, .todo = TRUE),
         /* more H264 decoder specific attributes from CODECAPI */
         {0},
