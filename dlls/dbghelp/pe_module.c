@@ -26,6 +26,8 @@
 #include <string.h>
 #include <assert.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "dbghelp_private.h"
 #include "image_private.h"
 #include "winternl.h"
@@ -796,7 +798,31 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
             return NULL;
         opened = TRUE;
     }
-    else if (name) lstrcpyW(loaded_name, name);
+    else
+    {
+        ULONG sz = sizeof(OBJECT_NAME_INFORMATION) + MAX_PATH * sizeof(WCHAR), needed;
+        OBJECT_NAME_INFORMATION *obj_name;
+        NTSTATUS nts;
+
+        obj_name = RtlAllocateHeap(GetProcessHeap(), 0, sz);
+        if (obj_name)
+        {
+            nts = NtQueryObject(hFile, ObjectNameInformation, obj_name, sz, &needed);
+            if (nts == STATUS_BUFFER_OVERFLOW)
+            {
+                sz = needed;
+                obj_name = RtlReAllocateHeap(GetProcessHeap(), 0, obj_name, sz);
+                nts = NtQueryObject(hFile, ObjectNameInformation, obj_name, sz, &needed);
+            }
+            if (!nts)
+            {
+                obj_name->Name.Buffer[obj_name->Name.Length / sizeof(WCHAR)] = L'\0';
+                real_path = wcsdup(obj_name->Name.Buffer);
+            }
+            RtlFreeHeap(GetProcessHeap(), 0, obj_name);
+        }
+        if (name) lstrcpyW(loaded_name, name);
+    }
     if (!(modfmt = HeapAlloc(GetProcessHeap(), 0, sizeof(struct module_format) + sizeof(struct pe_module_info))))
         return NULL;
     modfmt->u.pe_info = (struct pe_module_info*)(modfmt + 1);
