@@ -820,7 +820,7 @@ int __thiscall streambuf_xsputn(streambuf *this, const char *data, int length)
 
     while (copied < length) {
         if (this->unbuffered || this->pptr == this->epptr) {
-            if (call_streambuf_overflow(this, data[copied]) == EOF)
+            if (call_streambuf_overflow(this, (unsigned char)data[copied]) == EOF)
                 break;
             copied++;
         } else {
