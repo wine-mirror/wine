@@ -784,6 +784,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
     BOOL                        opened = FALSE;
     struct module_format*       modfmt;
     WCHAR                       loaded_name[MAX_PATH];
+    WCHAR*                      real_path = NULL;
 
     loaded_name[0] = '\0';
     if (!hFile)
@@ -802,11 +803,12 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
     if (pe_map_file(hFile, &modfmt->u.pe_info->fmap, DMT_PE))
     {
         struct builtin_search builtin = { NULL };
-        if (modfmt->u.pe_info->fmap.u.pe.builtin && search_dll_path(pcs, loaded_name, search_builtin_pe, &builtin))
+        if (opened && modfmt->u.pe_info->fmap.u.pe.builtin && search_dll_path(pcs, loaded_name, search_builtin_pe, &builtin))
         {
             TRACE("reloaded %s from %s\n", debugstr_w(loaded_name), debugstr_w(builtin.path));
             image_unmap_file(&modfmt->u.pe_info->fmap);
             modfmt->u.pe_info->fmap = builtin.fmap;
+            real_path = builtin.path;
         }
         if (!base) base = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, ImageBase);
         if (!size) size = PE_FROM_OPTHDR(&modfmt->u.pe_info->fmap, SizeOfImage);
@@ -817,7 +819,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
                             modfmt->u.pe_info->fmap.u.pe.file_header.Machine);
         if (module)
         {
-            module->real_path = builtin.path;
+            module->real_path = real_path;
             modfmt->module = module;
             modfmt->remove = pe_module_remove;
             modfmt->loc_compute = NULL;
@@ -827,7 +829,7 @@ struct module* pe_load_native_module(struct process* pcs, const WCHAR* name,
         else
         {
             ERR("could not load the module '%s'\n", debugstr_w(loaded_name));
-            heap_free(builtin.path);
+            heap_free(real_path);
             image_unmap_file(&modfmt->u.pe_info->fmap);
         }
     }
