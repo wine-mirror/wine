@@ -12140,8 +12140,6 @@ static void glsl_fragment_pipe_free(struct wined3d_device *device, struct wined3
 static void glsl_fragment_pipe_shader(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
-    context->last_was_pshader = use_ps(state);
-
     context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
 }
 
