@@ -377,7 +377,7 @@ BOOL dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade)
 
 BOOL dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD_PTR base, DWORD size)
 {
-    BOOL ret = SymLoadModuleExW(hProc, NULL, name, NULL, base, size, NULL, 0);
+    BOOL ret = SymLoadModuleExW(hProc, hFile, name, NULL, base, size, NULL, 0);
     if (ret)
     {
         IMAGEHLP_MODULEW64      ihm;
