@@ -206,7 +206,13 @@ static void test_notifications(void)
     params.fnNotificationCallback = notification_cb;
 
     hr = IXACT3Engine_Initialize(engine, &params);
-    ok(hr == S_OK, "Cannot initialize engine, hr %#lx\n", hr);
+    ok(hr == S_OK || broken(hr == XAUDIO2_E_INVALID_CALL), "Cannot initialize engine, hr %#lx\n", hr);
+    if(FAILED(hr))
+    {
+        win_skip("Unable to Initialize XACT. No speakers attached?\n");
+        IXACT3Engine_Release(engine);
+        return;
+    }
 
     notification_desc.type = 0;
     notification_desc.flags = 0;
