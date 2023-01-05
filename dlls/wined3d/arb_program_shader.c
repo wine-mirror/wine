@@ -270,7 +270,6 @@ struct arb_vshader_private {
 struct shader_arb_priv
 {
     GLuint                  current_vprogram_id;
-    GLuint                  current_fprogram_id;
     const struct arb_ps_compiled_shader *compiled_fprog;
     const struct arb_vs_compiled_shader *compiled_vprog;
     BOOL                    use_arbfp_fixed_func;
@@ -4581,12 +4580,11 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
         TRACE("Using pixel shader %p.\n", ps);
         find_arb_ps_compile_args(state, context_gl, ps, &compile_args);
         compiled = find_arb_pshader(context_gl, ps, &compile_args);
-        priv->current_fprogram_id = compiled->prgId;
         priv->compiled_fprog = compiled;
 
         /* Bind the fragment program */
-        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id));
-        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, priv->current_fprogram_id);");
+        GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, compiled->prgId));
+        checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, compiled->prgId);");
 
         if (!priv->use_arbfp_fixed_func)
             priv->fragment_pipe->fp_enable(context, FALSE);
@@ -4595,7 +4593,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
         gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
 
-        TRACE("Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB\n", priv->current_fprogram_id);
+        TRACE("Bound fragment program %u and enabled GL_FRAGMENT_PROGRAM_ARB.\n", compiled->prgId);
 
         /* Pixel Shader 1.x constants are clamped to [-1;1], Pixel Shader 2.0 constants are not. If switching between
          * a 1.x and newer shader, reload the first 8 constants
@@ -4634,7 +4632,6 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
              * function replacement shader. */
             gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
             checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
-            priv->current_fprogram_id = 0;
         }
         priv->fragment_pipe->fp_enable(context, TRUE);
     }
@@ -4718,7 +4715,6 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
     {
         gl_info->gl_ops.gl.p_glDisable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glDisable(GL_FRAGMENT_PROGRAM_ARB)");
-        priv->current_fprogram_id = 0;
     }
     priv->fragment_pipe->fp_enable(context, FALSE);
 
@@ -6634,7 +6630,6 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
          */
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, desc->shader));
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, desc->shader)");
-        priv->current_fprogram_id = desc->shader;
 
         if (device->shader_backend == &arb_program_shader_backend && context->last_was_pshader)
         {
