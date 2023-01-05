@@ -1931,14 +1931,14 @@ static BOOL glxdrv_wglShareLists(struct wgl_context *org, struct wgl_context *de
      * current or when it hasn't shared display lists before.
      */
 
-    if((org->has_been_current && dest->has_been_current) || dest->has_been_current)
+    if(dest->has_been_current)
     {
-        ERR("Could not share display lists, one of the contexts has been current already !\n");
+        ERR("Could not share display lists because the destination context has already been current\n");
         return FALSE;
     }
     else if(dest->sharing)
     {
-        ERR("Could not share display lists because hglrc2 has already shared lists before\n");
+        ERR("Could not share display lists because the destination context has already shared lists\n");
         return FALSE;
     }
     else
