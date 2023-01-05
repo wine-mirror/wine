@@ -271,7 +271,6 @@ struct shader_arb_priv
 {
     const struct arb_ps_compiled_shader *compiled_fprog;
     const struct arb_vs_compiled_shader *compiled_vprog;
-    BOOL                    use_arbfp_fixed_func;
     struct wine_rb_tree     fragment_shaders;
     BOOL                    last_ps_const_clamped;
     BOOL                    last_vs_color_unclamp;
@@ -4677,7 +4676,7 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
     }
     else
     {
-        if (gl_info->supported[ARB_FRAGMENT_PROGRAM] && !priv->use_arbfp_fixed_func)
+        if (gl_info->supported[ARB_FRAGMENT_PROGRAM] && context->device->adapter->fragment_pipe != &arbfp_fragment_pipeline)
         {
             /* Disable only if we're not using arbfp fixed function fragment
              * processing. If this is used, keep GL_FRAGMENT_PROGRAM_ARB
@@ -5759,15 +5758,13 @@ static void *arbfp_alloc(const struct wined3d_shader_backend_ops *shader_backend
 
     /* Share private data between the shader backend and the pipeline
      * replacement, if both are the arb implementation. This is needed to
-     * figure out whether ARBfp should be disabled if no pixel shader is bound
-     * or not. */
+     * invalidate some data when switching between FFP and fragment shaders. */
     if (shader_backend == &arb_program_shader_backend)
         priv = shader_priv;
     else if (!(priv = heap_alloc_zero(sizeof(*priv))))
         return NULL;
 
     wine_rb_init(&priv->fragment_shaders, wined3d_ffp_frag_program_key_compare);
-    priv->use_arbfp_fixed_func = TRUE;
 
     return priv;
 }
@@ -5792,7 +5789,6 @@ static void arbfp_free(struct wined3d_device *device, struct wined3d_context *co
     struct shader_arb_priv *priv = device->fragment_priv;
 
     wine_rb_destroy(&priv->fragment_shaders, arbfp_free_ffpshader, context_gl);
-    priv->use_arbfp_fixed_func = FALSE;
 
     if (device->shader_backend != &arb_program_shader_backend)
         heap_free(device->fragment_priv);
