@@ -111,6 +111,7 @@ void*    hash_table_iter_up(struct hash_table_iter* hti) DECLSPEC_HIDDEN;
 
 extern unsigned dbghelp_options DECLSPEC_HIDDEN;
 extern BOOL     dbghelp_opt_native DECLSPEC_HIDDEN;
+extern BOOL     dbghelp_opt_real_path DECLSPEC_HIDDEN;
 extern SYSTEM_INFO sysinfo DECLSPEC_HIDDEN;
 
 /* FIXME: this could be optimized later on by using relative offsets and smaller integral sizes */

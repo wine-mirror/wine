@@ -1765,7 +1765,7 @@ static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVO
 static enum packet_return packet_query_libraries(struct gdb_context* gdbctx)
 {
     struct reply_buffer* reply = &gdbctx->qxfer_buffer;
-    BOOL opt;
+    BOOL opt_native, opt_real_path;
 
     if (!gdbctx->process) return packet_error;
 
@@ -1776,9 +1776,12 @@ static enum packet_return packet_query_libraries(struct gdb_context* gdbctx)
     SymLoadModule(gdbctx->process->handle, 0, 0, 0, 0, 0);
 
     reply_buffer_append_str(reply, "<library-list>");
-    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+    /* request also ELF modules, and also real path to loaded modules */
+    opt_native = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+    opt_real_path = SymSetExtendedOption(SYMOPT_EX_WINE_MODULE_REAL_PATH, TRUE);
     SymEnumerateModules64(gdbctx->process->handle, packet_query_libraries_cb, gdbctx);
-    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
+    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt_native);
+    SymSetExtendedOption(SYMOPT_EX_WINE_MODULE_REAL_PATH, opt_real_path);
     reply_buffer_append_str(reply, "</library-list>");
 
     return packet_send_buffer;

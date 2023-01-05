@@ -1439,6 +1439,9 @@ BOOL  WINAPI SymGetModuleInfoW64(HANDLE hProcess, DWORD64 dwAddr,
 
     miw64 = module->module;
 
+    if (dbghelp_opt_real_path && module->real_path)
+        lstrcpynW(miw64.LoadedImageName, module->real_path, ARRAY_SIZE(miw64.LoadedImageName));
+
     /* update debug information from container if any */
     if (module->module.SymType == SymNone)
     {
