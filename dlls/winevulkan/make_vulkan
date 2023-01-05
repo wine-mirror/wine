@@ -97,7 +97,6 @@ UNSUPPORTED_EXTENSIONS = [
     # Device extensions
     "VK_AMD_display_native_hdr",
     "VK_EXT_full_screen_exclusive",
-    "VK_EXT_hdr_metadata", # Needs WSI work.
     "VK_GOOGLE_display_timing",
     "VK_KHR_external_fence_win32",
     "VK_KHR_external_semaphore_win32",

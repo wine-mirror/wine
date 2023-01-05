@@ -6033,6 +6033,20 @@ typedef struct VkDebugUtilsObjectTagInfoEXT32
     PTR32 pTag;
 } VkDebugUtilsObjectTagInfoEXT32;
 
+typedef struct VkHdrMetadataEXT32
+{
+    VkStructureType sType;
+    PTR32 pNext;
+    VkXYColorEXT displayPrimaryRed;
+    VkXYColorEXT displayPrimaryGreen;
+    VkXYColorEXT displayPrimaryBlue;
+    VkXYColorEXT whitePoint;
+    float maxLuminance;
+    float minLuminance;
+    float maxContentLightLevel;
+    float maxFrameAverageLightLevel;
+} VkHdrMetadataEXT32;
+
 typedef struct VkSemaphoreSignalInfo32
 {
     VkStructureType sType;
@@ -25208,6 +25222,40 @@ static inline void convert_VkDebugUtilsObjectTagInfoEXT_win32_to_host(const VkDe
         FIXME("Unexpected pNext\n");
 }
 
+static inline void convert_VkHdrMetadataEXT_win32_to_host(const VkHdrMetadataEXT32 *in, VkHdrMetadataEXT *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = NULL;
+    out->displayPrimaryRed = in->displayPrimaryRed;
+    out->displayPrimaryGreen = in->displayPrimaryGreen;
+    out->displayPrimaryBlue = in->displayPrimaryBlue;
+    out->whitePoint = in->whitePoint;
+    out->maxLuminance = in->maxLuminance;
+    out->minLuminance = in->minLuminance;
+    out->maxContentLightLevel = in->maxContentLightLevel;
+    out->maxFrameAverageLightLevel = in->maxFrameAverageLightLevel;
+    if (in->pNext)
+        FIXME("Unexpected pNext\n");
+}
+
+static inline const VkHdrMetadataEXT *convert_VkHdrMetadataEXT_array_win32_to_host(struct conversion_context *ctx, const VkHdrMetadataEXT32 *in, uint32_t count)
+{
+    VkHdrMetadataEXT *out;
+    unsigned int i;
+
+    if (!in || !count) return NULL;
+
+    out = conversion_context_alloc(ctx, count * sizeof(*out));
+    for (i = 0; i < count; i++)
+    {
+        convert_VkHdrMetadataEXT_win32_to_host(&in[i], &out[i]);
+    }
+
+    return out;
+}
+
 static inline void convert_VkSemaphoreSignalInfo_win32_to_host(const VkSemaphoreSignalInfo32 *in, VkSemaphoreSignalInfo *out)
 {
     if (!in) return;
@@ -39447,6 +39495,39 @@ static NTSTATUS thunk32_vkSetEvent(void *args)
 }
 
 #ifdef _WIN64
+static NTSTATUS thunk64_vkSetHdrMetadataEXT(void *args)
+{
+    struct vkSetHdrMetadataEXT_params *params = args;
+
+    TRACE("%p, %u, %p, %p\n", params->device, params->swapchainCount, params->pSwapchains, params->pMetadata);
+
+    wine_device_from_handle(params->device)->funcs.p_vkSetHdrMetadataEXT(wine_device_from_handle(params->device)->device, params->swapchainCount, params->pSwapchains, params->pMetadata);
+    return STATUS_SUCCESS;
+}
+#endif /* _WIN64 */
+
+static NTSTATUS thunk32_vkSetHdrMetadataEXT(void *args)
+{
+    struct
+    {
+        PTR32 device;
+        uint32_t swapchainCount;
+        PTR32 pSwapchains;
+        PTR32 pMetadata;
+    } *params = args;
+    const VkHdrMetadataEXT *pMetadata_host;
+    struct conversion_context ctx;
+
+    TRACE("%#x, %u, %#x, %#x\n", params->device, params->swapchainCount, params->pSwapchains, params->pMetadata);
+
+    init_conversion_context(&ctx);
+    pMetadata_host = convert_VkHdrMetadataEXT_array_win32_to_host(&ctx, (const VkHdrMetadataEXT32 *)UlongToPtr(params->pMetadata), params->swapchainCount);
+    wine_device_from_handle((VkDevice)UlongToPtr(params->device))->funcs.p_vkSetHdrMetadataEXT(wine_device_from_handle((VkDevice)UlongToPtr(params->device))->device, params->swapchainCount, (const VkSwapchainKHR *)UlongToPtr(params->pSwapchains), pMetadata_host);
+    free_conversion_context(&ctx);
+    return STATUS_SUCCESS;
+}
+
+#ifdef _WIN64
 static NTSTATUS thunk64_vkSetPrivateData(void *args)
 {
     struct vkSetPrivateData_params *params = args;
@@ -40027,6 +40108,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_global_priority",
     "VK_EXT_global_priority_query",
     "VK_EXT_graphics_pipeline_library",
+    "VK_EXT_hdr_metadata",
     "VK_EXT_host_query_reset",
     "VK_EXT_image_2d_view_of_3d",
     "VK_EXT_image_compression_control",
@@ -40783,6 +40865,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk64_vkSetDebugUtilsObjectTagEXT,
     thunk64_vkSetDeviceMemoryPriorityEXT,
     thunk64_vkSetEvent,
+    thunk64_vkSetHdrMetadataEXT,
     thunk64_vkSetPrivateData,
     thunk64_vkSetPrivateDataEXT,
     thunk64_vkSignalSemaphore,
@@ -41324,6 +41407,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     thunk32_vkSetDebugUtilsObjectTagEXT,
     thunk32_vkSetDeviceMemoryPriorityEXT,
     thunk32_vkSetEvent,
+    thunk32_vkSetHdrMetadataEXT,
     thunk32_vkSetPrivateData,
     thunk32_vkSetPrivateDataEXT,
     thunk32_vkSignalSemaphore,

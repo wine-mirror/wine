@@ -186,6 +186,8 @@
 #define VK_EXT_DEPTH_CLIP_ENABLE_EXTENSION_NAME "VK_EXT_depth_clip_enable"
 #define VK_EXT_SWAPCHAIN_COLOR_SPACE_SPEC_VERSION 4
 #define VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME "VK_EXT_swapchain_colorspace"
+#define VK_EXT_HDR_METADATA_SPEC_VERSION 2
+#define VK_EXT_HDR_METADATA_EXTENSION_NAME "VK_EXT_hdr_metadata"
 #define VK_KHR_IMAGELESS_FRAMEBUFFER_SPEC_VERSION 1
 #define VK_KHR_IMAGELESS_FRAMEBUFFER_EXTENSION_NAME "VK_KHR_imageless_framebuffer"
 #define VK_KHR_CREATE_RENDERPASS_2_SPEC_VERSION 1
@@ -3879,6 +3881,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_CONSERVATIVE_STATE_CREATE_INFO_EXT = 1000101001,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DEPTH_CLIP_ENABLE_FEATURES_EXT = 1000102000,
     VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_DEPTH_CLIP_STATE_CREATE_INFO_EXT = 1000102001,
+    VK_STRUCTURE_TYPE_HDR_METADATA_EXT = 1000105000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGELESS_FRAMEBUFFER_FEATURES = 1000108000,
     VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENTS_CREATE_INFO = 1000108001,
     VK_STRUCTURE_TYPE_FRAMEBUFFER_ATTACHMENT_IMAGE_INFO = 1000108002,
@@ -10553,6 +10556,12 @@ typedef struct VkWriteDescriptorSetInlineUniformBlock
 } VkWriteDescriptorSetInlineUniformBlock;
 typedef VkWriteDescriptorSetInlineUniformBlock VkWriteDescriptorSetInlineUniformBlockEXT;
 
+typedef struct VkXYColorEXT
+{
+    float x;
+    float y;
+} VkXYColorEXT;
+
 typedef struct VkAccelerationStructureGeometryAabbsDataKHR
 {
     VkStructureType sType;
@@ -10940,6 +10949,20 @@ typedef struct VkGeometryNV
     VkGeometryDataNV WINE_VK_ALIGN(8) geometry;
     VkGeometryFlagsKHR flags;
 } VkGeometryNV;
+
+typedef struct VkHdrMetadataEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkXYColorEXT displayPrimaryRed;
+    VkXYColorEXT displayPrimaryGreen;
+    VkXYColorEXT displayPrimaryBlue;
+    VkXYColorEXT whitePoint;
+    float maxLuminance;
+    float minLuminance;
+    float maxContentLightLevel;
+    float maxFrameAverageLightLevel;
+} VkHdrMetadataEXT;
 
 typedef struct VkImageBlit
 {
@@ -12079,6 +12102,7 @@ typedef VkResult (VKAPI_PTR *PFN_vkSetDebugUtilsObjectNameEXT)(VkDevice, const V
 typedef VkResult (VKAPI_PTR *PFN_vkSetDebugUtilsObjectTagEXT)(VkDevice, const VkDebugUtilsObjectTagInfoEXT *);
 typedef void (VKAPI_PTR *PFN_vkSetDeviceMemoryPriorityEXT)(VkDevice, VkDeviceMemory, float);
 typedef VkResult (VKAPI_PTR *PFN_vkSetEvent)(VkDevice, VkEvent);
+typedef void (VKAPI_PTR *PFN_vkSetHdrMetadataEXT)(VkDevice, uint32_t, const VkSwapchainKHR *, const VkHdrMetadataEXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkSetPrivateData)(VkDevice, VkObjectType, uint64_t, VkPrivateDataSlot, uint64_t);
 typedef VkResult (VKAPI_PTR *PFN_vkSetPrivateDataEXT)(VkDevice, VkObjectType, uint64_t, VkPrivateDataSlot, uint64_t);
 typedef VkResult (VKAPI_PTR *PFN_vkSignalSemaphore)(VkDevice, const VkSemaphoreSignalInfo *);
@@ -12613,6 +12637,7 @@ VkResult VKAPI_CALL vkSetDebugUtilsObjectNameEXT(VkDevice device, const VkDebugU
 VkResult VKAPI_CALL vkSetDebugUtilsObjectTagEXT(VkDevice device, const VkDebugUtilsObjectTagInfoEXT *pTagInfo);
 void VKAPI_CALL vkSetDeviceMemoryPriorityEXT(VkDevice device, VkDeviceMemory memory, float priority);
 VkResult VKAPI_CALL vkSetEvent(VkDevice device, VkEvent event);
+void VKAPI_CALL vkSetHdrMetadataEXT(VkDevice device, uint32_t swapchainCount, const VkSwapchainKHR *pSwapchains, const VkHdrMetadataEXT *pMetadata);
 VkResult VKAPI_CALL vkSetPrivateData(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t data);
 VkResult VKAPI_CALL vkSetPrivateDataEXT(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t data);
 VkResult VKAPI_CALL vkSignalSemaphore(VkDevice device, const VkSemaphoreSignalInfo *pSignalInfo);
