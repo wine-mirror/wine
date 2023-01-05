@@ -269,7 +269,6 @@ struct arb_vshader_private {
 
 struct shader_arb_priv
 {
-    GLuint                  current_vprogram_id;
     const struct arb_ps_compiled_shader *compiled_fprog;
     const struct arb_vs_compiled_shader *compiled_vprog;
     BOOL                    use_arbfp_fixed_func;
@@ -4656,19 +4655,18 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
 
         compiled = find_arb_vshader(vs, gl_info, context->stream_info.use_map,
                 &compile_args, ps_input_sig);
-        priv->current_vprogram_id = compiled->prgId;
         priv->compiled_vprog = compiled;
 
         /* Bind the vertex program */
-        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id));
-        checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, priv->current_vprogram_id);");
+        GL_EXTCALL(glBindProgramARB(GL_VERTEX_PROGRAM_ARB, compiled->prgId));
+        checkGLcall("glBindProgramARB(GL_VERTEX_PROGRAM_ARB, compiled->prgId);");
 
         priv->vertex_pipe->vp_enable(context, FALSE);
 
         /* Enable OpenGL vertex programs */
         gl_info->gl_ops.gl.p_glEnable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glEnable(GL_VERTEX_PROGRAM_ARB);");
-        TRACE("Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", priv->current_vprogram_id);
+        TRACE("Bound vertex program %u and enabled GL_VERTEX_PROGRAM_ARB\n", compiled->prgId);
         shader_arb_vs_local_constants(compiled, context_gl, state);
 
         if(priv->last_vs_color_unclamp != compiled->need_color_unclamp) {
@@ -4690,7 +4688,6 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
     {
         if (gl_info->supported[ARB_VERTEX_PROGRAM])
         {
-            priv->current_vprogram_id = 0;
             gl_info->gl_ops.gl.p_glDisable(GL_VERTEX_PROGRAM_ARB);
             checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
         }
@@ -4720,7 +4717,6 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
 
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
-        priv->current_vprogram_id = 0;
         gl_info->gl_ops.gl.p_glDisable(GL_VERTEX_PROGRAM_ARB);
         checkGLcall("glDisable(GL_VERTEX_PROGRAM_ARB)");
     }
