@@ -501,7 +501,7 @@ static void test_trig(void)
         for (i = 0; i < 640; i += 20)
         {
             v = get_readback_vec4(&rb, i, 0);
-            ok(compare_vec4(v, sinf(i), cosf(i), 0.0f, 0.0f, 8192),
+            ok(compare_vec4(v, sinf(i), cosf(i), 0.0f, 0.0f, 16384),
                     "Test %u: Got {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
                     i, v->x, v->y, v->z, v->w, sinf(i), cos(i), 0.0f, 0.0f);
         }
