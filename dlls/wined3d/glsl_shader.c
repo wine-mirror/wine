@@ -11563,7 +11563,7 @@ const struct wined3d_shader_backend_ops glsl_shader_backend =
     shader_glsl_shader_compile,
 };
 
-static void glsl_vertex_pipe_vp_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state) {}
+static void glsl_vertex_pipe_vp_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state) {}
 
 static void glsl_vertex_pipe_vp_disable(const struct wined3d_context *context) {}
 
@@ -12060,8 +12060,7 @@ const struct wined3d_vertex_pipe_ops glsl_vertex_pipe =
     .vp_states = glsl_vertex_pipe_vp_states,
 };
 
-static void glsl_fragment_pipe_apply_draw_state(
-        const struct wined3d_context *context, const struct wined3d_state *state)
+static void glsl_fragment_pipe_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
     /* Nothing to do. */
 }

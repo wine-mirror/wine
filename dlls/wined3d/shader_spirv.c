@@ -1136,7 +1136,7 @@ const struct wined3d_shader_backend_ops *wined3d_spirv_shader_backend_init_vk(vo
     return &spirv_shader_backend_vk;
 }
 
-static void spirv_vertex_pipe_vk_vp_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state)
+static void spirv_vertex_pipe_vk_vp_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
     /* Nothing to do. */
 }
@@ -1219,7 +1219,7 @@ const struct wined3d_vertex_pipe_ops *wined3d_spirv_vertex_pipe_init_vk(void)
 }
 
 static void spirv_fragment_pipe_vk_fp_apply_draw_state(
-        const struct wined3d_context *context, const struct wined3d_state *state)
+        struct wined3d_context *context, const struct wined3d_state *state)
 {
     /* Nothing to do. */
 }

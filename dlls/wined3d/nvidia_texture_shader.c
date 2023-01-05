@@ -660,7 +660,7 @@ static void nvrc_texfactor(struct wined3d_context *context, const struct wined3d
 }
 
 /* Context activation is done by the caller. */
-static void nvrc_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state)
+static void nvrc_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
 
@@ -685,7 +685,7 @@ static void nvrc_disable(const struct wined3d_context *context)
 }
 
 /* Context activation is done by the caller. */
-static void nvts_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state)
+static void nvts_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
 

@@ -4840,7 +4840,7 @@ static const struct wined3d_state_entry_template ffp_fragmentstate_template[] = 
 };
 
 /* Context activation is done by the caller. */
-static void ffp_pipe_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state) {}
+static void ffp_pipe_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state) {}
 
 static void ffp_pipe_disable(const struct wined3d_context *context) {}
 
@@ -4967,7 +4967,7 @@ const struct wined3d_fragment_pipe_ops ffp_fragment_pipeline =
     .states = ffp_fragmentstate_template,
 };
 
-static void none_pipe_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state) {}
+static void none_pipe_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state) {}
 
 static void none_pipe_disable(const struct wined3d_context *context) {}
 

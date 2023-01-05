@@ -5740,7 +5740,7 @@ struct arbfp_ffp_desc
 };
 
 /* Context activation is done by the caller. */
-static void arbfp_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state)
+static void arbfp_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
 

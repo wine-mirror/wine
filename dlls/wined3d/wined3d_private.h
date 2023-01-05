@@ -2001,7 +2001,7 @@ struct wined3d_state_entry_template
 
 struct wined3d_fragment_pipe_ops
 {
-    void (*fp_apply_draw_state)(const struct wined3d_context *context, const struct wined3d_state *state);
+    void (*fp_apply_draw_state)(struct wined3d_context *context, const struct wined3d_state *state);
     void (*fp_disable)(const struct wined3d_context *context);
     void (*get_caps)(const struct wined3d_adapter *adapter, struct fragment_caps *caps);
     unsigned int (*get_emul_mask)(const struct wined3d_adapter *adapter);
@@ -2029,7 +2029,7 @@ struct wined3d_vertex_caps
 
 struct wined3d_vertex_pipe_ops
 {
-    void (*vp_apply_draw_state)(const struct wined3d_context *context, const struct wined3d_state *state);
+    void (*vp_apply_draw_state)(struct wined3d_context *context, const struct wined3d_state *state);
     void (*vp_disable)(const struct wined3d_context *context);
     void (*vp_get_caps)(const struct wined3d_adapter *adapter, struct wined3d_vertex_caps *caps);
     unsigned int (*vp_get_emul_mask)(const struct wined3d_adapter *adapter);

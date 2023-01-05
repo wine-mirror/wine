@@ -1251,7 +1251,7 @@ static const struct wined3d_state_entry_template atifs_fragmentstate_template[] 
 };
 
 /* Context activation is done by the caller. */
-static void atifs_apply_draw_state(const struct wined3d_context *context, const struct wined3d_state *state)
+static void atifs_apply_draw_state(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = wined3d_context_gl_const(context)->gl_info;
 
