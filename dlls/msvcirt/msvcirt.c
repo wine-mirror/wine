@@ -2670,15 +2670,12 @@ ostream* __thiscall ostream_write(ostream *this, const char *str, int count)
     return this;
 }
 
-/* ?writepad@ostream@@AAEAAV1@PBD0@Z */
-/* ?writepad@ostream@@AEAAAEAV1@PEBD0@Z */
-DEFINE_THISCALL_WRAPPER(ostream_writepad, 12)
-ostream* __thiscall ostream_writepad(ostream *this, const char *str1, const char *str2)
+static ostream* ostream_writepad_len(ostream *this, const char *str1, const char *str2, int len2)
 {
     ios *base = ostream_get_ios(this);
-    int len1 = strlen(str1), len2 = strlen(str2), i;
+    int len1 = strlen(str1), i;
 
-    TRACE("(%p %p %p)\n", this, str1, str2);
+    TRACE("(%p %p %p %d)\n", this, str1, str2, len2);
 
     /* left of the padding */
     if (base->flags & (FLAGS_left|FLAGS_internal)) {
@@ -2701,6 +2698,14 @@ ostream* __thiscall ostream_writepad(ostream *this, const char *str1, const char
             base->state |= IOSTATE_failbit | IOSTATE_badbit;
     }
     return this;
+}
+
+/* ?writepad@ostream@@AAEAAV1@PBD0@Z */
+/* ?writepad@ostream@@AEAAAEAV1@PEBD0@Z */
+DEFINE_THISCALL_WRAPPER(ostream_writepad, 12)
+ostream* __thiscall ostream_writepad(ostream *this, const char *str1, const char *str2)
+{
+    return ostream_writepad_len(this, str1, str2, strlen(str2));
 }
 
 static ostream* ostream_internal_print_integer(ostream *ostr, int n, BOOL unsig, BOOL shrt)
@@ -2792,12 +2797,10 @@ static ostream* ostream_internal_print_float(ostream *ostr, double d, BOOL dbl)
 DEFINE_THISCALL_WRAPPER(ostream_print_char, 8)
 ostream* __thiscall ostream_print_char(ostream *this, char c)
 {
-    const char c_str[2] = {c, 0};
-
-    TRACE("(%p %c)\n", this, c);
+    TRACE("(%p %d)\n", this, c);
 
     if (ostream_opfx(this)) {
-        ostream_writepad(this, "", c_str);
+        ostream_writepad_len(this, "", &c, 1);
         ostream_osfx(this);
     }
     return this;
