@@ -4639,10 +4639,10 @@ static void shader_arb_select(void *shader_priv, struct wined3d_context *context
         GL_EXTCALL(glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, compiled->prgId));
         checkGLcall("glBindProgramARB(GL_FRAGMENT_PROGRAM_ARB, compiled->prgId);");
 
-        if (!priv->use_arbfp_fixed_func)
-            priv->fragment_pipe->fp_enable(context, FALSE);
+        priv->fragment_pipe->fp_enable(context, FALSE);
 
-        /* Enable OpenGL fragment programs. */
+        /* Enable OpenGL fragment programs. Note that we may have already
+         * disabled them when disabling the fragment pipeline. */
         gl_info->gl_ops.gl.p_glEnable(GL_FRAGMENT_PROGRAM_ARB);
         checkGLcall("glEnable(GL_FRAGMENT_PROGRAM_ARB);");
 
