@@ -436,4 +436,33 @@ static inline GLuint wined3d_bo_gl_id(struct wined3d_bo *bo)
     return bo ? wined3d_bo_gl(bo)->id : 0;
 }
 
+union wined3d_gl_fence_object
+{
+    GLuint id;
+    GLsync sync;
+};
+
+enum wined3d_fence_result
+{
+    WINED3D_FENCE_OK,
+    WINED3D_FENCE_WAITING,
+    WINED3D_FENCE_NOT_STARTED,
+    WINED3D_FENCE_WRONG_THREAD,
+    WINED3D_FENCE_ERROR,
+};
+
+struct wined3d_fence
+{
+    struct list entry;
+    union wined3d_gl_fence_object object;
+    struct wined3d_context_gl *context_gl;
+};
+
+HRESULT wined3d_fence_create(struct wined3d_device *device, struct wined3d_fence **fence);
+void wined3d_fence_destroy(struct wined3d_fence *fence);
+void wined3d_fence_issue(struct wined3d_fence *fence, struct wined3d_device *device);
+enum wined3d_fence_result wined3d_fence_wait(const struct wined3d_fence *fence, struct wined3d_device *device);
+enum wined3d_fence_result wined3d_fence_test(const struct wined3d_fence *fence,
+        struct wined3d_device *device, uint32_t flags);
+
 #endif /* __WINE_WINED3D_GL */

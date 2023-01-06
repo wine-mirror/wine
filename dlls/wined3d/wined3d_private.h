@@ -1611,8 +1611,6 @@ struct wined3d_bo
     bool coherent;
 };
 
-#include "wined3d_gl.h"
-
 struct wined3d_bo_user
 {
     struct list entry;
@@ -1845,35 +1843,7 @@ enum fogsource {
     FOGSOURCE_COORD,
 };
 
-union wined3d_gl_fence_object
-{
-    GLuint id;
-    GLsync sync;
-};
-
-enum wined3d_fence_result
-{
-    WINED3D_FENCE_OK,
-    WINED3D_FENCE_WAITING,
-    WINED3D_FENCE_NOT_STARTED,
-    WINED3D_FENCE_WRONG_THREAD,
-    WINED3D_FENCE_ERROR,
-};
-
-struct wined3d_fence
-{
-    struct list entry;
-    union wined3d_gl_fence_object object;
-    struct wined3d_context_gl *context_gl;
-};
-
-HRESULT wined3d_fence_create(struct wined3d_device *device, struct wined3d_fence **fence) DECLSPEC_HIDDEN;
-void wined3d_fence_destroy(struct wined3d_fence *fence) DECLSPEC_HIDDEN;
-void wined3d_fence_issue(struct wined3d_fence *fence, struct wined3d_device *device) DECLSPEC_HIDDEN;
-enum wined3d_fence_result wined3d_fence_wait(const struct wined3d_fence *fence,
-        struct wined3d_device *device) DECLSPEC_HIDDEN;
-enum wined3d_fence_result wined3d_fence_test(const struct wined3d_fence *fence,
-        struct wined3d_device *device, uint32_t flags) DECLSPEC_HIDDEN;
+#include "wined3d_gl.h"
 
 /* Direct3D terminology with little modifications. We do not have an issued
  * state because only the driver knows about it, but we have a created state
