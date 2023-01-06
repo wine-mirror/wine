@@ -4006,8 +4006,6 @@ struct wined3d_shader_resource_view
 
 void wined3d_shader_resource_view_cleanup(struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
 
-#include "wined3d_gl.h"
-
 struct wined3d_unordered_access_view
 {
     LONG refcount;
@@ -4030,27 +4028,7 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
 void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_view *view,
         unsigned int value) DECLSPEC_HIDDEN;
 
-struct wined3d_unordered_access_view_gl
-{
-    struct wined3d_unordered_access_view v;
-    struct wined3d_bo_user bo_user;
-    struct wined3d_gl_view gl_view;
-    struct wined3d_bo_gl counter_bo;
-};
-
-static inline struct wined3d_unordered_access_view_gl *wined3d_unordered_access_view_gl(
-        struct wined3d_unordered_access_view *view)
-{
-    return CONTAINING_RECORD(view, struct wined3d_unordered_access_view_gl, v);
-}
-
-void wined3d_unordered_access_view_gl_clear(struct wined3d_unordered_access_view_gl *view_gl,
-        const struct wined3d_uvec4 *clear_value, struct wined3d_context_gl *context_gl, bool fp) DECLSPEC_HIDDEN;
-HRESULT wined3d_unordered_access_view_gl_init(struct wined3d_unordered_access_view_gl *view_gl,
-        const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-void wined3d_unordered_access_view_gl_update(struct wined3d_unordered_access_view_gl *uav_gl,
-        struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
+#include "wined3d_gl.h"
 
 struct wined3d_swapchain_state
 {
