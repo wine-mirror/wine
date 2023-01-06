@@ -574,6 +574,30 @@ struct wined3d_command_fence_gl
 
 #define MAX_GL_FRAGMENT_SAMPLERS 32
 
+struct wined3d_fbo_resource
+{
+    GLuint object;
+    GLenum target;
+    GLuint level, layer;
+};
+
+#define WINED3D_FBO_ENTRY_FLAG_ATTACHED      0x1
+#define WINED3D_FBO_ENTRY_FLAG_DEPTH         0x2
+#define WINED3D_FBO_ENTRY_FLAG_STENCIL       0x4
+
+struct fbo_entry
+{
+    struct list entry;
+    uint32_t flags;
+    uint32_t rt_mask;
+    GLuint id;
+    struct wined3d_fbo_entry_key
+    {
+        uint32_t rb_namespace;
+        struct wined3d_fbo_resource objects[WINED3D_MAX_RENDER_TARGETS + 1];
+    } key;
+};
+
 struct wined3d_context_gl
 {
     struct wined3d_context c;
