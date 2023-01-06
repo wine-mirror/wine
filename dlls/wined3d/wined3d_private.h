@@ -49,7 +49,6 @@
 
 #include "objbase.h"
 #include "wine/wined3d.h"
-#include "wined3d_gl.h"
 #include "wine/list.h"
 #include "wine/rbtree.h"
 
@@ -145,6 +144,8 @@ enum wined3d_ffp_emit_idx
     WINED3D_FFP_EMIT_COUNT,
 };
 
+#include "wined3d_gl.h"
+
 /* Texture format fixups */
 
 enum fixup_channel_source
@@ -202,24 +203,9 @@ struct wined3d_d3d_limits
     float pointsize_max;
 };
 
-typedef void (WINE_GLAPI *wined3d_ffp_attrib_func)(const void *data);
-typedef void (WINE_GLAPI *wined3d_ffp_texcoord_func)(GLenum unit, const void *data);
-typedef void (WINE_GLAPI *wined3d_generic_attrib_func)(GLuint idx, const void *data);
-
-struct wined3d_ffp_attrib_ops
-{
-    wined3d_ffp_attrib_func position[WINED3D_FFP_EMIT_COUNT];
-    wined3d_ffp_attrib_func diffuse[WINED3D_FFP_EMIT_COUNT];
-    wined3d_ffp_attrib_func specular[WINED3D_FFP_EMIT_COUNT];
-    wined3d_ffp_attrib_func normal[WINED3D_FFP_EMIT_COUNT];
-    wined3d_ffp_texcoord_func texcoord[WINED3D_FFP_EMIT_COUNT];
-    wined3d_generic_attrib_func generic[WINED3D_FFP_EMIT_COUNT];
-};
-
 struct wined3d_d3d_info
 {
     struct wined3d_d3d_limits limits;
-    struct wined3d_ffp_attrib_ops ffp_attrib_ops;
     uint32_t wined3d_creation_flags;
     uint32_t xyzrhw : 1;
     uint32_t emulated_flatshading : 1;

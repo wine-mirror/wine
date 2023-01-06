@@ -4666,15 +4666,17 @@ static void wined3d_context_gl_draw_primitive_arrays(struct wined3d_context_gl *
         const struct wined3d_state *state, const void *idx_data, unsigned int idx_size, int base_vertex_idx,
         unsigned int start_idx, unsigned int count, unsigned int start_instance, unsigned int instance_count)
 {
-    const struct wined3d_ffp_attrib_ops *ops = &context_gl->c.d3d_info->ffp_attrib_ops;
     GLenum idx_type = idx_size == 2 ? GL_UNSIGNED_SHORT : GL_UNSIGNED_INT;
     const struct wined3d_stream_info *si = &context_gl->c.stream_info;
     GLenum mode = gl_primitive_type_from_d3d(state->primitive_type);
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     unsigned int instanced_elements[ARRAY_SIZE(si->elements)];
+    const struct wined3d_ffp_attrib_ops *ops;
     unsigned int instanced_element_count = 0;
     const void *indices;
     unsigned int i, j;
+
+    ops = &gl_info->ffp_attrib_ops;
 
     indices = (const char *)idx_data + idx_size * start_idx;
 
@@ -4840,7 +4842,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
     if (idx_size)
         idx_data = (uint8_t *)wined3d_buffer_load_sysmem(state->index_buffer, &context_gl->c) + state->index_offset;
 
-    ops = &d3d_info->ffp_attrib_ops;
+    ops = &gl_info->ffp_attrib_ops;
 
     gl_info->gl_ops.gl.p_glBegin(gl_primitive_type_from_d3d(state->primitive_type));
 

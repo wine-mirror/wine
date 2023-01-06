@@ -4018,9 +4018,9 @@ static void WINE_GLAPI generic_float16_4(GLuint idx, const void *data)
 
 static void wined3d_adapter_init_ffp_attrib_ops(struct wined3d_adapter_gl *adapter_gl)
 {
-    const struct wined3d_gl_info *gl_info = &adapter_gl->gl_info;
-    struct wined3d_d3d_info *d3d_info = &adapter_gl->a.d3d_info;
-    struct wined3d_ffp_attrib_ops *ops = &d3d_info->ffp_attrib_ops;
+    const struct wined3d_d3d_info *d3d_info = &adapter_gl->a.d3d_info;
+    struct wined3d_gl_info *gl_info = &adapter_gl->gl_info;
+    struct wined3d_ffp_attrib_ops *ops = &gl_info->ffp_attrib_ops;
     unsigned int i;
 
     for (i = 0; i < WINED3D_FFP_EMIT_COUNT; ++i)
