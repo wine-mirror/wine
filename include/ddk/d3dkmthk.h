@@ -667,6 +667,20 @@ typedef struct _D3DKMT_ESCAPE
     D3DKMT_HANDLE      hContext;
 } D3DKMT_ESCAPE;
 
+typedef struct _D3DKMT_ADAPTERINFO
+{
+  D3DKMT_HANDLE hAdapter;
+  LUID          AdapterLuid;
+  ULONG         NumOfSources;
+  BOOL          bPrecisePresentRegionsPreferred;
+} D3DKMT_ADAPTERINFO;
+
+typedef struct _D3DKMT_ENUMADAPTERS2
+{
+  ULONG               NumAdapters;
+  D3DKMT_ADAPTERINFO *pAdapters;
+} D3DKMT_ENUMADAPTERS2;
+
 #ifdef __cplusplus
 extern "C"
 {
