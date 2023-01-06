@@ -2095,8 +2095,6 @@ struct wined3d_blitter_ops
             enum wined3d_texture_filter_type filter, const struct wined3d_format *resolve_format);
 };
 
-#include "wined3d_gl.h"
-
 struct wined3d_blitter *wined3d_cpu_blitter_create(void) DECLSPEC_HIDDEN;
 void wined3d_vk_blitter_create(struct wined3d_blitter **next) DECLSPEC_HIDDEN;
 
@@ -2661,53 +2659,14 @@ BOOL wined3d_get_primary_adapter_luid(LUID *luid) DECLSPEC_HIDDEN;
 struct wined3d_adapter *wined3d_adapter_vk_create(unsigned int ordinal,
         unsigned int wined3d_creation_flags) DECLSPEC_HIDDEN;
 
-struct wined3d_adapter_gl
-{
-    struct wined3d_adapter a;
-
-    struct wined3d_gl_info gl_info;
-
-    struct wined3d_pixel_format *pixel_formats;
-    unsigned int pixel_format_count;
-};
-
-static inline struct wined3d_adapter_gl *wined3d_adapter_gl(struct wined3d_adapter *adapter)
-{
-    return CONTAINING_RECORD(adapter, struct wined3d_adapter_gl, a);
-}
-
-static inline const struct wined3d_adapter_gl *wined3d_adapter_gl_const(const struct wined3d_adapter *adapter)
-{
-    return CONTAINING_RECORD(adapter, struct wined3d_adapter_gl, a);
-}
+#include "wined3d_gl.h"
 
 struct wined3d_adapter *wined3d_adapter_gl_create(unsigned int ordinal,
         unsigned int wined3d_creation_flags) DECLSPEC_HIDDEN;
 
-struct wined3d_caps_gl_ctx
-{
-    HDC dc;
-    HWND wnd;
-    HGLRC gl_ctx;
-    HDC restore_dc;
-    HGLRC restore_gl_ctx;
-
-    const struct wined3d_gl_info *gl_info;
-    GLuint test_vbo;
-    GLuint test_program_id;
-
-    const struct wined3d_gpu_description *gpu_description;
-    UINT64 vram_bytes;
-};
-
-BOOL wined3d_adapter_gl_init_format_info(struct wined3d_adapter *adapter,
-        struct wined3d_caps_gl_ctx *ctx) DECLSPEC_HIDDEN;
 BOOL wined3d_adapter_no3d_init_format_info(struct wined3d_adapter *adapter) DECLSPEC_HIDDEN;
 ssize_t adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, ssize_t size) DECLSPEC_HIDDEN;
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount) DECLSPEC_HIDDEN;
-
-BOOL wined3d_caps_gl_ctx_test_viewport_subpixel_bits(struct wined3d_caps_gl_ctx *ctx) DECLSPEC_HIDDEN;
-bool wined3d_caps_gl_ctx_test_filling_convention(struct wined3d_caps_gl_ctx *ctx, float offset) DECLSPEC_HIDDEN;
 
 enum wined3d_projection_type
 {

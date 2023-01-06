@@ -759,4 +759,45 @@ void wined3d_ffp_blitter_create(struct wined3d_blitter **next, const struct wine
 struct wined3d_blitter *wined3d_glsl_blitter_create(struct wined3d_blitter **next, const struct wined3d_device *device);
 void wined3d_raw_blitter_create(struct wined3d_blitter **next, const struct wined3d_gl_info *gl_info);
 
+struct wined3d_caps_gl_ctx
+{
+    HDC dc;
+    HWND wnd;
+    HGLRC gl_ctx;
+    HDC restore_dc;
+    HGLRC restore_gl_ctx;
+
+    const struct wined3d_gl_info *gl_info;
+    GLuint test_vbo;
+    GLuint test_program_id;
+
+    const struct wined3d_gpu_description *gpu_description;
+    UINT64 vram_bytes;
+};
+
+BOOL wined3d_caps_gl_ctx_test_viewport_subpixel_bits(struct wined3d_caps_gl_ctx *ctx);
+bool wined3d_caps_gl_ctx_test_filling_convention(struct wined3d_caps_gl_ctx *ctx, float offset);
+
+struct wined3d_adapter_gl
+{
+    struct wined3d_adapter a;
+
+    struct wined3d_gl_info gl_info;
+
+    struct wined3d_pixel_format *pixel_formats;
+    unsigned int pixel_format_count;
+};
+
+static inline struct wined3d_adapter_gl *wined3d_adapter_gl(struct wined3d_adapter *adapter)
+{
+    return CONTAINING_RECORD(adapter, struct wined3d_adapter_gl, a);
+}
+
+static inline const struct wined3d_adapter_gl *wined3d_adapter_gl_const(const struct wined3d_adapter *adapter)
+{
+    return CONTAINING_RECORD(adapter, struct wined3d_adapter_gl, a);
+}
+
+BOOL wined3d_adapter_gl_init_format_info(struct wined3d_adapter *adapter, struct wined3d_caps_gl_ctx *ctx);
+
 #endif /* __WINE_WINED3D_GL */
