@@ -3991,8 +3991,6 @@ HRESULT wined3d_rendertarget_view_no3d_init(struct wined3d_rendertarget_view *vi
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-#include "wined3d_gl.h"
-
 struct wined3d_shader_resource_view
 {
     LONG refcount;
@@ -4008,28 +4006,7 @@ struct wined3d_shader_resource_view
 
 void wined3d_shader_resource_view_cleanup(struct wined3d_shader_resource_view *view) DECLSPEC_HIDDEN;
 
-struct wined3d_shader_resource_view_gl
-{
-    struct wined3d_shader_resource_view v;
-    struct wined3d_bo_user bo_user;
-    struct wined3d_gl_view gl_view;
-};
-
-static inline struct wined3d_shader_resource_view_gl *wined3d_shader_resource_view_gl(
-        struct wined3d_shader_resource_view *view)
-{
-    return CONTAINING_RECORD(view, struct wined3d_shader_resource_view_gl, v);
-}
-
-void wined3d_shader_resource_view_gl_bind(struct wined3d_shader_resource_view_gl *view_gl, unsigned int unit,
-        struct wined3d_sampler_gl *sampler_gl, struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
-void wined3d_shader_resource_view_gl_generate_mipmap(struct wined3d_shader_resource_view_gl *srv_gl,
-        struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
-HRESULT wined3d_shader_resource_view_gl_init(struct wined3d_shader_resource_view_gl *view_gl,
-        const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
-void wined3d_shader_resource_view_gl_update(struct wined3d_shader_resource_view_gl *srv_gl,
-        struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
+#include "wined3d_gl.h"
 
 struct wined3d_unordered_access_view
 {
