@@ -32,6 +32,7 @@
 #include "wine/wgl.h"
 #include "wine/wgl_driver.h"
 
+struct wined3d_swapchain_gl;
 struct wined3d_texture_gl;
 
 #define GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI 0x8837  /* not in the gl spec */
@@ -1112,5 +1113,21 @@ HRESULT wined3d_unordered_access_view_gl_init(struct wined3d_unordered_access_vi
         void *parent, const struct wined3d_parent_ops *parent_ops);
 void wined3d_unordered_access_view_gl_update(struct wined3d_unordered_access_view_gl *uav_gl,
         struct wined3d_context_gl *context_gl);
+
+struct wined3d_swapchain_gl
+{
+    struct wined3d_swapchain s;
+};
+
+static inline struct wined3d_swapchain_gl *wined3d_swapchain_gl(struct wined3d_swapchain *swapchain)
+{
+    return CONTAINING_RECORD(swapchain, struct wined3d_swapchain_gl, s);
+}
+
+void wined3d_swapchain_gl_cleanup(struct wined3d_swapchain_gl *swapchain_gl);
+struct wined3d_context_gl *wined3d_swapchain_gl_get_context(struct wined3d_swapchain_gl *swapchain_gl);
+HRESULT wined3d_swapchain_gl_init(struct wined3d_swapchain_gl *swapchain_gl, struct wined3d_device *device,
+        const struct wined3d_swapchain_desc *desc, struct wined3d_swapchain_state_parent *state_parent,
+        void *parent, const struct wined3d_parent_ops *parent_ops);
 
 #endif /* __WINE_WINED3D_GL */

@@ -97,7 +97,6 @@ struct wined3d_adapter;
 struct wined3d_context;
 struct wined3d_gl_info;
 struct wined3d_state;
-struct wined3d_swapchain_gl;
 struct wined3d_vertex_pipe_ops;
 
 enum wined3d_ffp_idx
@@ -4028,8 +4027,6 @@ void wined3d_unordered_access_view_invalidate_location(struct wined3d_unordered_
 void wined3d_unordered_access_view_set_counter(struct wined3d_unordered_access_view *view,
         unsigned int value) DECLSPEC_HIDDEN;
 
-#include "wined3d_gl.h"
-
 struct wined3d_swapchain_state
 {
     struct wined3d *wined3d;
@@ -4095,22 +4092,7 @@ HRESULT wined3d_swapchain_no3d_init(struct wined3d_swapchain *swapchain_no3d,
         struct wined3d_swapchain_state_parent *state_parent, void *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-struct wined3d_swapchain_gl
-{
-    struct wined3d_swapchain s;
-};
-
-static inline struct wined3d_swapchain_gl *wined3d_swapchain_gl(struct wined3d_swapchain *swapchain)
-{
-    return CONTAINING_RECORD(swapchain, struct wined3d_swapchain_gl, s);
-}
-
-void wined3d_swapchain_gl_cleanup(struct wined3d_swapchain_gl *swapchain_gl) DECLSPEC_HIDDEN;
-struct wined3d_context_gl *wined3d_swapchain_gl_get_context(struct wined3d_swapchain_gl *swapchain_gl) DECLSPEC_HIDDEN;
-HRESULT wined3d_swapchain_gl_init(struct wined3d_swapchain_gl *swapchain_gl,
-        struct wined3d_device *device, const struct wined3d_swapchain_desc *desc,
-        struct wined3d_swapchain_state_parent *state_parent, void *parent,
-        const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+#include "wined3d_gl.h"
 
 /*****************************************************************************
  * Utility function prototypes
