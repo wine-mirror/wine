@@ -354,6 +354,7 @@ void draw_scroll_bar( HWND hwnd, HDC hdc, int bar, enum SCROLL_HITTEST hit_test,
     params.hdc = hdc;
     params.bar = bar;
     params.hit_test = hit_test;
+    params.tracking_info = *tracking_info;
     params.arrows = draw_arrows;
     params.interior = draw_interior;
     KeUserModeCallback( NtUserDrawScrollBar, &params, sizeof(params), &ret_ptr, &ret_len );
