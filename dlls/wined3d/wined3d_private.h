@@ -1882,15 +1882,7 @@ struct wined3d_query
     bool poll_in_cs;
 };
 
-#include "wined3d_gl.h"
-
 #define WINED3D_QUERY_POOL_SIZE 256
-
-struct wined3d_gl_view
-{
-    GLenum target;
-    GLuint name;
-};
 
 struct wined3d_range
 {
@@ -1898,13 +1890,7 @@ struct wined3d_range
     unsigned int size;
 };
 
-struct wined3d_rendertarget_info
-{
-    struct wined3d_gl_view gl_view;
-    struct wined3d_resource *resource;
-    unsigned int sub_resource_idx;
-    unsigned int layer_count;
-};
+#include "wined3d_gl.h"
 
 struct wined3d_fb_state
 {

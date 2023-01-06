@@ -550,4 +550,18 @@ struct wined3d_pipeline_statistics_query
     BOOL started;
 };
 
+struct wined3d_gl_view
+{
+    GLenum target;
+    GLuint name;
+};
+
+struct wined3d_rendertarget_info
+{
+    struct wined3d_gl_view gl_view;
+    struct wined3d_resource *resource;
+    unsigned int sub_resource_idx;
+    unsigned int layer_count;
+};
+
 #endif /* __WINE_WINED3D_GL */
