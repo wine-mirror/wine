@@ -1016,4 +1016,21 @@ void wined3d_texture_gl_prepare_texture(struct wined3d_texture_gl *texture_gl,
 void wined3d_texture_gl_set_compatible_renderbuffer(struct wined3d_texture_gl *texture_gl,
         struct wined3d_context_gl *context_gl, unsigned int level, const struct wined3d_rendertarget_info *rt);
 
+struct wined3d_sampler_gl
+{
+    struct wined3d_sampler s;
+
+    GLuint name;
+};
+
+static inline struct wined3d_sampler_gl *wined3d_sampler_gl(struct wined3d_sampler *sampler)
+{
+    return CONTAINING_RECORD(sampler, struct wined3d_sampler_gl, s);
+}
+
+void wined3d_sampler_gl_bind(struct wined3d_sampler_gl *sampler_gl, unsigned int unit,
+        struct wined3d_texture_gl *texture_gl, const struct wined3d_context_gl *context_gl);
+void wined3d_sampler_gl_init(struct wined3d_sampler_gl *sampler_gl, struct wined3d_device *device,
+        const struct wined3d_sampler_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops);
+
 #endif /* __WINE_WINED3D_GL */

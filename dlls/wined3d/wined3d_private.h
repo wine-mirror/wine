@@ -3515,8 +3515,6 @@ HRESULT wined3d_texture_no3d_init(struct wined3d_texture *texture_no3d, struct w
         const struct wined3d_resource_desc *desc, unsigned int layer_count, unsigned int level_count,
         uint32_t flags, void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-#include "wined3d_gl.h"
-
 struct wined3d_sampler
 {
     struct wine_rb_entry entry;
@@ -3527,23 +3525,7 @@ struct wined3d_sampler
     struct wined3d_sampler_desc desc;
 };
 
-struct wined3d_sampler_gl
-{
-    struct wined3d_sampler s;
-
-    GLuint name;
-};
-
-static inline struct wined3d_sampler_gl *wined3d_sampler_gl(struct wined3d_sampler *sampler)
-{
-    return CONTAINING_RECORD(sampler, struct wined3d_sampler_gl, s);
-}
-
-void wined3d_sampler_gl_bind(struct wined3d_sampler_gl *sampler_gl, unsigned int unit,
-        struct wined3d_texture_gl *texture_gl, const struct wined3d_context_gl *context_gl) DECLSPEC_HIDDEN;
-void wined3d_sampler_gl_init(struct wined3d_sampler_gl *sampler_gl,
-        struct wined3d_device *device, const struct wined3d_sampler_desc *desc,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+#include "wined3d_gl.h"
 
 struct wined3d_vertex_declaration_element
 {
