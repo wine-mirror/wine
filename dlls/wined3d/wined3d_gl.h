@@ -1134,4 +1134,36 @@ HRESULT wined3d_swapchain_gl_init(struct wined3d_swapchain_gl *swapchain_gl, str
         const struct wined3d_swapchain_desc *desc, struct wined3d_swapchain_state_parent *state_parent,
         void *parent, const struct wined3d_parent_ops *parent_ops);
 
+struct wined3d_format_gl
+{
+    struct wined3d_format f;
+
+    GLenum vtx_type;
+    GLint vtx_format;
+
+    GLint internal;
+    GLint srgb_internal;
+    GLint rt_internal;
+    GLint format;
+    GLint type;
+
+    GLenum view_class;
+};
+
+static inline const struct wined3d_format_gl *wined3d_format_gl(const struct wined3d_format *format)
+{
+    return CONTAINING_RECORD(format, struct wined3d_format_gl, f);
+}
+
+static inline GLuint wined3d_gl_get_internal_format(struct wined3d_resource *resource,
+    const struct wined3d_format_gl *format_gl, bool srgb)
+{
+    if (srgb)
+        return format_gl->srgb_internal;
+    else if ((resource->bind_flags & WINED3D_BIND_RENDER_TARGET) && wined3d_resource_is_offscreen(resource))
+        return format_gl->rt_internal;
+    else
+        return format_gl->internal;
+}
+
 #endif /* __WINE_WINED3D_GL */

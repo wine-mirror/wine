@@ -4625,27 +4625,6 @@ BOOL wined3d_formats_are_srgb_variants(enum wined3d_format_id format1,
 
 #include "wined3d_gl.h"
 
-struct wined3d_format_gl
-{
-    struct wined3d_format f;
-
-    GLenum vtx_type;
-    GLint vtx_format;
-
-    GLint internal;
-    GLint srgb_internal;
-    GLint rt_internal;
-    GLint format;
-    GLint type;
-
-    GLenum view_class;
-};
-
-static inline const struct wined3d_format_gl *wined3d_format_gl(const struct wined3d_format *format)
-{
-    return CONTAINING_RECORD(format, struct wined3d_format_gl, f);
-}
-
 BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size) DECLSPEC_HIDDEN;
 
 static inline BOOL wined3d_format_is_typeless(const struct wined3d_format *format)
@@ -4727,17 +4706,6 @@ static inline GLuint wined3d_texture_gl_get_texture_name(const struct wined3d_te
 {
     return srgb && needs_separate_srgb_gl_texture(context, &texture_gl->t)
             ? texture_gl->texture_srgb.name : texture_gl->texture_rgb.name;
-}
-
-static inline GLuint wined3d_gl_get_internal_format(struct wined3d_resource *resource,
-    const struct wined3d_format_gl *format_gl, bool srgb)
-{
-    if (srgb)
-        return format_gl->srgb_internal;
-    else if (resource->bind_flags & WINED3D_BIND_RENDER_TARGET && wined3d_resource_is_offscreen(resource))
-        return format_gl->rt_internal;
-    else
-        return format_gl->internal;
 }
 
 static inline BOOL can_use_texture_swizzle(const struct wined3d_d3d_info *d3d_info, const struct wined3d_format *format)
