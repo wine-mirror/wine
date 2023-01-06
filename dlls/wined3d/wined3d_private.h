@@ -144,8 +144,6 @@ enum wined3d_ffp_emit_idx
     WINED3D_FFP_EMIT_COUNT,
 };
 
-#include "wined3d_gl.h"
-
 /* Texture format fixups */
 
 enum fixup_channel_source
@@ -1613,31 +1611,7 @@ struct wined3d_bo
     bool coherent;
 };
 
-struct wined3d_bo_gl
-{
-    struct wined3d_bo b;
-
-    GLuint id;
-
-    struct wined3d_allocator_block *memory;
-
-    GLsizeiptr size;
-    GLenum binding;
-    GLenum usage;
-
-    GLbitfield flags;
-    uint64_t command_fence_id;
-};
-
-static inline struct wined3d_bo_gl *wined3d_bo_gl(struct wined3d_bo *bo)
-{
-    return CONTAINING_RECORD(bo, struct wined3d_bo_gl, b);
-}
-
-static inline GLuint wined3d_bo_gl_id(struct wined3d_bo *bo)
-{
-    return bo ? wined3d_bo_gl(bo)->id : 0;
-}
+#include "wined3d_gl.h"
 
 struct wined3d_bo_user
 {
