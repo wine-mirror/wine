@@ -1104,7 +1104,7 @@ static void spirv_vertex_pipe_vk_vp_get_caps(const struct wined3d_adapter *adapt
     caps->ffp_generic_attributes = TRUE;
 }
 
-static unsigned int spirv_vertex_pipe_vk_vp_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int spirv_vertex_pipe_vk_vp_get_emul_mask(const struct wined3d_adapter *adapter)
 {
     return 0;
 }
@@ -1178,7 +1178,7 @@ static void spirv_fragment_pipe_vk_fp_get_caps(const struct wined3d_adapter *ada
     memset(caps, 0, sizeof(*caps));
 }
 
-static unsigned int spirv_fragment_pipe_vk_fp_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int spirv_fragment_pipe_vk_fp_get_emul_mask(const struct wined3d_adapter *adapter)
 {
     return 0;
 }

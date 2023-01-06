@@ -1315,7 +1315,7 @@ static void atifs_get_caps(const struct wined3d_adapter *adapter, struct fragmen
     caps->MaxSimultaneousTextures = 6;
 }
 
-static unsigned int atifs_get_emul_mask(const struct wined3d_gl_info *gl_info)
+static unsigned int atifs_get_emul_mask(const struct wined3d_adapter *adapter)
 {
     return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
 }
