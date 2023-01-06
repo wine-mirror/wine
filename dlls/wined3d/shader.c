@@ -3052,7 +3052,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
 static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_device *device,
         const struct wined3d_shader_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     unsigned int i, highest_reg_used = 0, num_regs_used = 0;
     HRESULT hr;
 
@@ -3060,7 +3060,7 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
         return hr;
 
     if (FAILED(hr = shader_set_function(shader, device,
-            WINED3D_SHADER_TYPE_PIXEL, device->adapter->d3d_info.limits.ps_uniform_count)))
+            WINED3D_SHADER_TYPE_PIXEL, d3d_info->limits.ps_uniform_count)))
     {
         shader_cleanup(shader);
         return hr;
@@ -3077,11 +3077,11 @@ static HRESULT pixel_shader_init(struct wined3d_shader *shader, struct wined3d_d
 
     /* Don't do any register mapping magic if it is not needed, or if we can't
      * achieve anything anyway */
-    if (highest_reg_used < (gl_info->limits.glsl_varyings / 4)
-            || num_regs_used > (gl_info->limits.glsl_varyings / 4)
+    if (highest_reg_used < (d3d_info->limits.varying_count / 4)
+            || num_regs_used > (d3d_info->limits.varying_count / 4)
             || shader->reg_maps.shader_version.major >= 4)
     {
-        if (num_regs_used > (gl_info->limits.glsl_varyings / 4))
+        if (num_regs_used > (d3d_info->limits.varying_count / 4))
         {
             /* This happens with relative addressing. The input mapper function
              * warns about this if the higher registers are declared too, so
