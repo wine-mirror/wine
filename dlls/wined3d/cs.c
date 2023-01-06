@@ -17,6 +17,7 @@
  */
 
 #include "wined3d_private.h"
+#include "wined3d_gl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
@@ -186,7 +187,7 @@ struct wined3d_cs_draw
 {
     enum wined3d_cs_op opcode;
     enum wined3d_primitive_type primitive_type;
-    GLint patch_vertex_count;
+    unsigned int patch_vertex_count;
     struct wined3d_draw_parameters parameters;
 };
 

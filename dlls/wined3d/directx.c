@@ -22,6 +22,7 @@
  */
 
 #include "wined3d_private.h"
+#include "wined3d_gl.h"
 #include "winternl.h"
 #include "wine/list.h"
 

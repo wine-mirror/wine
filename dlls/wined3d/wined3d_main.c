@@ -26,6 +26,7 @@
 #define VKD3D_NO_WIN32_TYPES
 #include "initguid.h"
 #include "wined3d_private.h"
+#include "wined3d_gl.h"
 #include "d3d12.h"
 #define VK_NO_PROTOTYPES
 #include "wine/vulkan.h"
