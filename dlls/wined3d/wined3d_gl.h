@@ -465,4 +465,89 @@ enum wined3d_fence_result wined3d_fence_wait(const struct wined3d_fence *fence, 
 enum wined3d_fence_result wined3d_fence_test(const struct wined3d_fence *fence,
         struct wined3d_device *device, uint32_t flags);
 
+HRESULT wined3d_query_gl_create(struct wined3d_device *device, enum wined3d_query_type type, void *parent,
+        const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query);
+void wined3d_query_gl_destroy_buffer_object(struct wined3d_context_gl *context_gl, struct wined3d_query *query);
+
+struct wined3d_event_query
+{
+    struct wined3d_query query;
+
+    struct wined3d_fence fence;
+    BOOL signalled;
+};
+
+struct wined3d_occlusion_query
+{
+    struct wined3d_query query;
+
+    struct list entry;
+    GLuint id;
+    struct wined3d_context_gl *context_gl;
+    uint64_t samples;
+    BOOL started;
+};
+
+struct wined3d_timestamp_query
+{
+    struct wined3d_query query;
+
+    struct list entry;
+    GLuint id;
+    struct wined3d_context_gl *context_gl;
+    uint64_t timestamp;
+};
+
+union wined3d_gl_so_statistics_query
+{
+    GLuint id[2];
+    struct
+    {
+        GLuint written;
+        GLuint generated;
+    } query;
+};
+
+struct wined3d_so_statistics_query
+{
+    struct wined3d_query query;
+
+    struct list entry;
+    union wined3d_gl_so_statistics_query u;
+    struct wined3d_context_gl *context_gl;
+    unsigned int stream_idx;
+    struct wined3d_query_data_so_statistics statistics;
+    BOOL started;
+};
+
+union wined3d_gl_pipeline_statistics_query
+{
+    GLuint id[11];
+    struct
+    {
+        GLuint vertices;
+        GLuint primitives;
+        GLuint vertex_shader;
+        GLuint tess_control_shader;
+        GLuint tess_eval_shader;
+        GLuint geometry_shader;
+        GLuint geometry_primitives;
+        GLuint fragment_shader;
+        GLuint compute_shader;
+        GLuint clipping_input;
+        GLuint clipping_output;
+    } query;
+};
+
+struct wined3d_pipeline_statistics_query
+{
+    struct wined3d_query query;
+
+    struct list entry;
+    union wined3d_gl_pipeline_statistics_query u;
+    struct wined3d_context_gl *context_gl;
+    struct wined3d_query_data_pipeline_statistics statistics;
+    BOOL started;
+};
+
 #endif /* __WINE_WINED3D_GL */

@@ -1843,8 +1843,6 @@ enum fogsource {
     FOGSOURCE_COORD,
 };
 
-#include "wined3d_gl.h"
-
 /* Direct3D terminology with little modifications. We do not have an issued
  * state because only the driver knows about it, but we have a created state
  * because D3D allows GetData() on a created query, but OpenGL doesn't. */
@@ -1878,96 +1876,13 @@ struct wined3d_query
     LONG counter_main, counter_retrieved;
     struct list poll_list_entry;
 
-    GLuint buffer_object;
+    /* FIXME: This is GL-specific. */
+    unsigned int buffer_object;
     UINT64 *map_ptr;
     bool poll_in_cs;
 };
 
-HRESULT wined3d_query_gl_create(struct wined3d_device *device, enum wined3d_query_type type, void *parent,
-        const struct wined3d_parent_ops *parent_ops, struct wined3d_query **query) DECLSPEC_HIDDEN;
-void wined3d_query_gl_destroy_buffer_object(struct wined3d_context_gl *context_gl,
-        struct wined3d_query *query) DECLSPEC_HIDDEN;
-
-struct wined3d_event_query
-{
-    struct wined3d_query query;
-
-    struct wined3d_fence fence;
-    BOOL signalled;
-};
-
-struct wined3d_occlusion_query
-{
-    struct wined3d_query query;
-
-    struct list entry;
-    GLuint id;
-    struct wined3d_context_gl *context_gl;
-    UINT64 samples;
-    BOOL started;
-};
-
-struct wined3d_timestamp_query
-{
-    struct wined3d_query query;
-
-    struct list entry;
-    GLuint id;
-    struct wined3d_context_gl *context_gl;
-    UINT64 timestamp;
-};
-
-union wined3d_gl_so_statistics_query
-{
-    GLuint id[2];
-    struct
-    {
-        GLuint written;
-        GLuint generated;
-    } query;
-};
-
-struct wined3d_so_statistics_query
-{
-    struct wined3d_query query;
-
-    struct list entry;
-    union wined3d_gl_so_statistics_query u;
-    struct wined3d_context_gl *context_gl;
-    unsigned int stream_idx;
-    struct wined3d_query_data_so_statistics statistics;
-    BOOL started;
-};
-
-union wined3d_gl_pipeline_statistics_query
-{
-    GLuint id[11];
-    struct
-    {
-        GLuint vertices;
-        GLuint primitives;
-        GLuint vertex_shader;
-        GLuint tess_control_shader;
-        GLuint tess_eval_shader;
-        GLuint geometry_shader;
-        GLuint geometry_primitives;
-        GLuint fragment_shader;
-        GLuint compute_shader;
-        GLuint clipping_input;
-        GLuint clipping_output;
-    } query;
-};
-
-struct wined3d_pipeline_statistics_query
-{
-    struct wined3d_query query;
-
-    struct list entry;
-    union wined3d_gl_pipeline_statistics_query u;
-    struct wined3d_context_gl *context_gl;
-    struct wined3d_query_data_pipeline_statistics statistics;
-    BOOL started;
-};
+#include "wined3d_gl.h"
 
 #define WINED3D_QUERY_POOL_SIZE 256
 
