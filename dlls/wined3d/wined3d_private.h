@@ -1640,7 +1640,7 @@ struct wined3d_stream_info_element
 {
     const struct wined3d_format *format;
     struct wined3d_bo_address data;
-    GLsizei stride;
+    unsigned int stride;
     unsigned int stream_idx;
     unsigned int divisor;
     bool instanced;
