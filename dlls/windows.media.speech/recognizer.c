@@ -19,6 +19,10 @@
 
 #include "private.h"
 
+#include "initguid.h"
+#include "audioclient.h"
+#include "mmdeviceapi.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(speech);
@@ -161,7 +165,11 @@ struct session
     struct list completed_handlers;
     struct list result_handlers;
 
-    HANDLE worker_thread, worker_control_event;
+    IAudioClient *audio_client;
+    IAudioCaptureClient *capture_client;
+    WAVEFORMATEX capture_wfx;
+
+    HANDLE worker_thread, worker_control_event, audio_buf_event;
     BOOLEAN worker_running, worker_paused;
     CRITICAL_SECTION cs;
 };
@@ -181,25 +189,73 @@ static DWORD CALLBACK session_worker_thread_cb( void *args )
 {
     ISpeechContinuousRecognitionSession *iface = args;
     struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
-    BOOLEAN running = TRUE;
-    DWORD status;
+    BOOLEAN running = TRUE, paused = FALSE;
+    DWORD flags, status;
+    HANDLE events[2];
+    BYTE *audio_buf;
+    HRESULT hr;
 
     SetThreadDescription(GetCurrentThread(), L"wine_speech_recognition_session_worker");
 
+    if (FAILED(hr = IAudioClient_Start(impl->audio_client)))
+        goto error;
+
     while (running)
     {
-        status = WaitForMultipleObjects(1, &impl->worker_control_event, FALSE, INFINITE);
+        BOOLEAN old_paused = paused;
+        UINT32 count = 0;
+
+        events[count++] = impl->worker_control_event;
+        if (!paused) events[count++] = impl->audio_buf_event;
+
+        status = WaitForMultipleObjects(count, events, FALSE, INFINITE);
         if (status == 0) /* worker_control_event signaled */
         {
             EnterCriticalSection(&impl->cs);
+            paused = impl->worker_paused;
             running = impl->worker_running;
             LeaveCriticalSection(&impl->cs);
-        }
 
-        /* TODO: Send mic data to recognizer and handle results. */
+            if (old_paused < paused)
+            {
+                if (FAILED(hr = IAudioClient_Stop(impl->audio_client))) goto error;
+                if (FAILED(hr = IAudioClient_Reset(impl->audio_client))) goto error;
+                TRACE("session worker paused.\n");
+            }
+            else if (old_paused > paused)
+            {
+                if (FAILED(hr = IAudioClient_Start(impl->audio_client))) goto error;
+                TRACE("session worker resumed.\n");
+            }
+        }
+        else if (status == 1) /* audio_buf_event signaled */
+        {
+            UINT32 frames_available = 0;
+
+            while (IAudioCaptureClient_GetBuffer(impl->capture_client, &audio_buf, &frames_available, &flags, NULL, NULL) == S_OK)
+            {
+                /* TODO: Send mic data to recognizer and handle results. */
+                IAudioCaptureClient_ReleaseBuffer(impl->capture_client, frames_available);
+            }
+        }
+        else
+        {
+            ERR("Unexpected state entered. Aborting worker.\n");
+            break;
+        }
     }
 
+    if (FAILED(hr = IAudioClient_Stop(impl->audio_client)))
+        ERR("IAudioClient_Stop failed with %#lx.\n", hr);
+
+    if (FAILED(hr = IAudioClient_Reset(impl->audio_client)))
+        ERR("IAudioClient_Reset failed with %#lx.\n", hr);
+
     return 0;
+
+error:
+    ERR("The recognition session worker encountered a serious error and needs to stop. hr: %lx.\n", hr);
+    return 1;
 }
 
 static HRESULT WINAPI session_QueryInterface( ISpeechContinuousRecognitionSession *iface, REFIID iid, void **out )
@@ -251,6 +307,9 @@ static ULONG WINAPI session_Release( ISpeechContinuousRecognitionSession *iface 
 
         typed_event_handlers_clear(&impl->completed_handlers);
         typed_event_handlers_clear(&impl->result_handlers);
+
+        IAudioCaptureClient_Release(impl->capture_client);
+        IAudioClient_Release(impl->audio_client);
 
         impl->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&impl->cs);
@@ -926,6 +985,55 @@ static const struct IActivationFactoryVtbl activation_factory_vtbl =
 
 DEFINE_IINSPECTABLE(recognizer_factory, ISpeechRecognizerFactory, struct recognizer_statics, IActivationFactory_iface)
 
+static HRESULT recognizer_factory_create_audio_capture(struct session *session)
+{
+    const REFERENCE_TIME buffer_duration = 5000000; /* 0.5 second */
+    IMMDeviceEnumerator *mm_enum = NULL;
+    IMMDevice *mm_device = NULL;
+    WAVEFORMATEX wfx = { 0 };
+    WCHAR *str = NULL;
+    HRESULT hr = S_OK;
+
+    if (!(session->audio_buf_event = CreateEventW(NULL, FALSE, FALSE, NULL)))
+        return HRESULT_FROM_WIN32(GetLastError());
+
+    if (FAILED(hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL, CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void **)&mm_enum)))
+        goto cleanup;
+
+    if (FAILED(hr = IMMDeviceEnumerator_GetDefaultAudioEndpoint(mm_enum, eCapture, eMultimedia, &mm_device)))
+        goto cleanup;
+
+    if (FAILED(hr = IMMDevice_Activate(mm_device, &IID_IAudioClient, CLSCTX_INPROC_SERVER, NULL, (void **)&session->audio_client)))
+        goto cleanup;
+
+    hr = IMMDevice_GetId(mm_device, &str);
+    TRACE("selected capture device ID: %s, hr %#lx\n", debugstr_w(str), hr);
+
+    wfx.wFormatTag = WAVE_FORMAT_PCM;
+    wfx.nSamplesPerSec = 16000;
+    wfx.nChannels = 1;
+    wfx.wBitsPerSample = 16;
+    wfx.nBlockAlign = (wfx.wBitsPerSample + 7) / 8 * wfx.nChannels;
+    wfx.nAvgBytesPerSec = wfx.nSamplesPerSec * wfx.nBlockAlign;
+    TRACE("wfx tag %u, channels %u, samples %lu, bits %u, align %u.\n", wfx.wFormatTag, wfx.nChannels, wfx.nSamplesPerSec, wfx.wBitsPerSample, wfx.nBlockAlign);
+
+    if (FAILED(hr = IAudioClient_Initialize(session->audio_client, AUDCLNT_SHAREMODE_SHARED, AUDCLNT_STREAMFLAGS_EVENTCALLBACK, buffer_duration, 0, &wfx, NULL)))
+        goto cleanup;
+
+    if (FAILED(hr = IAudioClient_SetEventHandle(session->audio_client, session->audio_buf_event)))
+        goto cleanup;
+
+    hr = IAudioClient_GetService(session->audio_client, &IID_IAudioCaptureClient, (void **)&session->capture_client);
+
+    session->capture_wfx = wfx;
+
+cleanup:
+    if (mm_device) IMMDevice_Release(mm_device);
+    if (mm_enum) IMMDeviceEnumerator_Release(mm_enum);
+    CoTaskMemFree(str);
+    return hr;
+}
+
 static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface, ILanguage *language, ISpeechRecognizer **speechrecognizer )
 {
     struct recognizer *impl;
@@ -969,6 +1077,9 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     if (FAILED(hr = vector_inspectable_create(&constraints_iids, (IVector_IInspectable**)&session->constraints)))
         goto error;
 
+    if (FAILED(hr = recognizer_factory_create_audio_capture(session)))
+        goto error;
+
     InitializeCriticalSection(&session->cs);
     session->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": recognition_session.cs");
 
@@ -984,6 +1095,9 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     return S_OK;
 
 error:
+    if (session->capture_client) IAudioCaptureClient_Release(session->capture_client);
+    if (session->audio_client) IAudioClient_Release(session->audio_client);
+    if (session->audio_buf_event) CloseHandle(session->audio_buf_event);
     if (session->constraints) IVector_ISpeechRecognitionConstraint_Release(session->constraints);
     if (session->worker_control_event) CloseHandle(session->worker_control_event);
     free(session);
