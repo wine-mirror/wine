@@ -297,35 +297,14 @@ static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup
 #define MAX_TGSM_REGISTERS          8192
 #define MAX_VERTEX_BLENDS           4
 
-struct min_lookup
-{
-    GLenum mip[WINED3D_TEXF_LINEAR + 1];
-};
-
-extern const struct min_lookup minMipLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
-extern const GLenum magLookup[WINED3D_TEXF_LINEAR + 1] DECLSPEC_HIDDEN;
-
 static const uint32_t WINED3D_READ_ONLY_BIND_MASK = WINED3D_BIND_VERTEX_BUFFER | WINED3D_BIND_INDEX_BUFFER
         | WINED3D_BIND_CONSTANT_BUFFER | WINED3D_BIND_SHADER_RESOURCE | WINED3D_BIND_INDIRECT_BUFFER;
-
-GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f) DECLSPEC_HIDDEN;
 
 static inline enum wined3d_cmp_func wined3d_sanitize_cmp_func(enum wined3d_cmp_func func)
 {
     if (func < WINED3D_CMP_NEVER || func > WINED3D_CMP_ALWAYS)
         return WINED3D_CMP_ALWAYS;
     return func;
-}
-
-static inline GLenum wined3d_gl_mag_filter(enum wined3d_texture_filter_type mag_filter)
-{
-    return magLookup[mag_filter];
-}
-
-static inline GLenum wined3d_gl_min_mip_filter(enum wined3d_texture_filter_type min_filter,
-        enum wined3d_texture_filter_type mip_filter)
-{
-    return minMipLookup[min_filter].mip[mip_filter];
 }
 
 /* float_16_to_32() and float_32_to_16() convert 16 bit floats in the
@@ -4856,9 +4835,6 @@ const char *debug_d3dtexturefiltertype(enum wined3d_texture_filter_type filter_t
 const char *debug_d3dtexturestate(enum wined3d_texture_stage_state state) DECLSPEC_HIDDEN;
 const char *debug_d3dtop(enum wined3d_texture_op d3dtop) DECLSPEC_HIDDEN;
 const char *debug_d3dtstype(enum wined3d_transform_state tstype) DECLSPEC_HIDDEN;
-const char *debug_fboattachment(GLenum attachment) DECLSPEC_HIDDEN;
-const char *debug_fbostatus(GLenum status) DECLSPEC_HIDDEN;
-const char *debug_glerror(GLenum error) DECLSPEC_HIDDEN;
 const char *debug_ivec4(const struct wined3d_ivec4 *v) DECLSPEC_HIDDEN;
 const char *debug_uvec4(const struct wined3d_uvec4 *v) DECLSPEC_HIDDEN;
 const char *debug_shader_type(enum wined3d_shader_type shader_type) DECLSPEC_HIDDEN;

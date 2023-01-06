@@ -366,6 +366,31 @@ GLenum wined3d_buffer_gl_binding_from_bind_flags(const struct wined3d_gl_info *g
 void wined3d_check_gl_call(const struct wined3d_gl_info *gl_info,
         const char *file, unsigned int line, const char *name);
 
+struct min_lookup
+{
+    GLenum mip[WINED3D_TEXF_LINEAR + 1];
+};
+
+extern const struct min_lookup minMipLookup[WINED3D_TEXF_LINEAR + 1];
+extern const GLenum magLookup[WINED3D_TEXF_LINEAR + 1];
+
+static inline GLenum wined3d_gl_mag_filter(enum wined3d_texture_filter_type mag_filter)
+{
+    return magLookup[mag_filter];
+}
+
+static inline GLenum wined3d_gl_min_mip_filter(enum wined3d_texture_filter_type min_filter,
+        enum wined3d_texture_filter_type mip_filter)
+{
+    return minMipLookup[min_filter].mip[mip_filter];
+}
+
+GLenum wined3d_gl_compare_func(enum wined3d_cmp_func f);
+
+const char *debug_fboattachment(GLenum attachment);
+const char *debug_fbostatus(GLenum status);
+const char *debug_glerror(GLenum error);
+
 static inline bool wined3d_fence_supported(const struct wined3d_gl_info *gl_info)
 {
     return gl_info->supported[ARB_SYNC] || gl_info->supported[NV_FENCE] || gl_info->supported[APPLE_FENCE];
