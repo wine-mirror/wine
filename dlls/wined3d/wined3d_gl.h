@@ -1033,4 +1033,23 @@ void wined3d_sampler_gl_bind(struct wined3d_sampler_gl *sampler_gl, unsigned int
 void wined3d_sampler_gl_init(struct wined3d_sampler_gl *sampler_gl, struct wined3d_device *device,
         const struct wined3d_sampler_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops);
 
+struct wined3d_buffer_gl
+{
+    struct wined3d_buffer b;
+};
+
+static inline struct wined3d_buffer_gl *wined3d_buffer_gl(struct wined3d_buffer *buffer)
+{
+    return CONTAINING_RECORD(buffer, struct wined3d_buffer_gl, b);
+}
+
+static inline const struct wined3d_buffer_gl *wined3d_buffer_gl_const(const struct wined3d_buffer *buffer)
+{
+    return CONTAINING_RECORD(buffer, struct wined3d_buffer_gl, b);
+}
+
+HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined3d_device *device,
+        const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
+        void *parent, const struct wined3d_parent_ops *parent_ops);
+
 #endif /* __WINE_WINED3D_GL */
