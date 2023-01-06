@@ -3951,8 +3951,6 @@ HRESULT wined3d_buffer_no3d_init(struct wined3d_buffer *buffer_no3d, struct wine
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-#include "wined3d_gl.h"
-
 struct wined3d_rendertarget_view
 {
     LONG refcount;
@@ -3993,21 +3991,7 @@ HRESULT wined3d_rendertarget_view_no3d_init(struct wined3d_rendertarget_view *vi
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
         void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-struct wined3d_rendertarget_view_gl
-{
-    struct wined3d_rendertarget_view v;
-    struct wined3d_gl_view gl_view;
-};
-
-static inline struct wined3d_rendertarget_view_gl *wined3d_rendertarget_view_gl(
-        struct wined3d_rendertarget_view *view)
-{
-    return CONTAINING_RECORD(view, struct wined3d_rendertarget_view_gl, v);
-}
-
-HRESULT wined3d_rendertarget_view_gl_init(struct wined3d_rendertarget_view_gl *view_gl,
-        const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
-        void *parent, const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
+#include "wined3d_gl.h"
 
 struct wined3d_shader_resource_view
 {

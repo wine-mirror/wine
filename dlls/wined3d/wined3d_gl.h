@@ -1052,4 +1052,20 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops);
 
+struct wined3d_rendertarget_view_gl
+{
+    struct wined3d_rendertarget_view v;
+    struct wined3d_gl_view gl_view;
+};
+
+static inline struct wined3d_rendertarget_view_gl *wined3d_rendertarget_view_gl(
+        struct wined3d_rendertarget_view *view)
+{
+    return CONTAINING_RECORD(view, struct wined3d_rendertarget_view_gl, v);
+}
+
+HRESULT wined3d_rendertarget_view_gl_init(struct wined3d_rendertarget_view_gl *view_gl,
+        const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
+        void *parent, const struct wined3d_parent_ops *parent_ops);
+
 #endif /* __WINE_WINED3D_GL */
