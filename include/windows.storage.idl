@@ -32,6 +32,7 @@ import "windows.storage.streams.idl";
 import "windows.system.idl";
 
 namespace Windows.Storage {
+    typedef enum CreationCollisionOption CreationCollisionOption;
     typedef enum FileAccessMode FileAccessMode;
     typedef enum FileAttributes FileAttributes;
     typedef enum NameCollisionOption NameCollisionOption;
@@ -50,11 +51,35 @@ namespace Windows.Storage {
     runtimeclass StorageStreamTransaction;
 
     declare {
+        interface Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *> *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *> *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *> *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.StorageFile *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.StorageFolder *>;
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Storage.StorageStreamTransaction *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *> *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *> *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *> *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.IStorageItem *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFile *>;
+        interface Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFolder *>;
         interface Windows.Foundation.IAsyncOperation<Windows.Storage.StorageStreamTransaction *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum CreationCollisionOption
+    {
+        GenerateUniqueName = 0,
+        ReplaceExisting    = 1,
+        FailIfExists       = 2,
+        OpenIfExists       = 3,
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0)
@@ -163,6 +188,52 @@ namespace Windows.Storage {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(72d1cb78-b3ef-4f75-a80b-6fd9dae2944b)
+    ]
+    interface IStorageFolder : IInspectable
+        requires Windows.Storage.IStorageItem
+    {
+        [overload("CreateFileAsync")]
+        HRESULT CreateFileAsyncOverloadDefaultOptions(
+            [in] HSTRING name,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFile *> **operation
+        );
+        [overload("CreateFileAsync")]
+        HRESULT CreateFileAsync(
+            [in] HSTRING name,
+            [in] Windows.Storage.CreationCollisionOption options,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFile *> **operation
+        );
+        [overload("CreateFolderAsync")]
+        HRESULT CreateFolderAsyncOverloadDefaultOptions(
+            [in] HSTRING name,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFolder *> **operation
+        );
+        [overload("CreateFolderAsync")]
+        HRESULT CreateFolderAsync(
+            [in] HSTRING name,
+            [in] Windows.Storage.CreationCollisionOption options,
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFolder *> **operation
+        );
+        HRESULT GetFileAsync([in] HSTRING name, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFile *> **operation);
+        HRESULT GetFolderAsync([in] HSTRING name, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.StorageFolder *> **operation);
+        HRESULT GetItemAsync([in] HSTRING name, [out, retval] Windows.Foundation.IAsyncOperation<Windows.Storage.IStorageItem *> **operation);
+        [overload("GetFilesAsync")]
+        HRESULT GetFilesAsyncOverloadDefaultOptionsStartAndCount(
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFile *> *> **operation
+        );
+        [overload("GetFoldersAsync")]
+        HRESULT GetFoldersAsyncOverloadDefaultOptionsStartAndCount(
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.StorageFolder *> *> **operation
+        );
+        [overload("GetItemsAsync")]
+        HRESULT GetItemsAsyncOverloadDefaultStartAndCount(
+            [out, retval] Windows.Foundation.IAsyncOperation<Windows.Foundation.Collections.IVectorView<Windows.Storage.IStorageItem *> *> **operation
+        );
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         uuid(4207a996-ca2f-42f7-bde8-8b10457a7f30)
     ]
     interface IStorageItem : IInspectable
@@ -216,11 +287,20 @@ namespace Windows.Storage {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
-        static(Windows.Storage.IStorageFolderStatics, Windows.Foundation.UniversalApiContract, 1.0)
+        static(Windows.Storage.IStorageFolderStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        static(Windows.Storage.IStorageFolderStatics2, Windows.Foundation.UniversalApiContract, 10.0)
     ]
     runtimeclass StorageFolder
     {
         [default] interface Windows.Storage.IStorageFolder;
+        interface Windows.Storage.IStorageItem;
+        interface Windows.Storage.Search.IStorageFolderQueryOperations;
+        interface Windows.Storage.IStorageItemProperties;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemProperties2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItem2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageFolder2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.Storage.IStorageItemPropertiesWithProvider;
+        [contract(Windows.Foundation.UniversalApiContract, 6.0)] interface Windows.Storage.IStorageFolder3;
     }
 
     [
