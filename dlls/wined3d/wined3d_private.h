@@ -248,6 +248,7 @@ struct wined3d_d3d_info
     uint32_t viewport_array_index_any_shader : 1;
     uint32_t texture_npot : 1;
     uint32_t texture_npot_conditional : 1;
+    uint32_t normalized_texrect : 1;
     uint32_t draw_base_vertex_offset : 1;
     uint32_t vertex_bgra : 1;
     uint32_t texture_swizzle : 1;

@@ -60,7 +60,6 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     const struct wined3d_d3d_info *d3d_info = &device->adapter->d3d_info;
     enum wined3d_gl_resource_type base_type = WINED3D_GL_RES_TYPE_COUNT;
     enum wined3d_gl_resource_type gl_type = WINED3D_GL_RES_TYPE_COUNT;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     BOOL tex_2d_ok = FALSE;
     unsigned int i;
 
@@ -143,8 +142,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
             continue;
         }
         if (((width & (width - 1)) || (height & (height - 1)))
-                && !d3d_info->texture_npot
-                && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
+                && !d3d_info->texture_npot && !d3d_info->normalized_texrect
                 && gl_type == WINED3D_GL_RES_TYPE_TEX_2D)
         {
             TRACE("Skipping 2D texture type to try texture rectangle.\n");

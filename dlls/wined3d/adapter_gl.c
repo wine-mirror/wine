@@ -5215,6 +5215,7 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->texture_npot = !!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO];
     d3d_info->texture_npot_conditional = gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT]
             || gl_info->supported[ARB_TEXTURE_RECTANGLE];
+    d3d_info->normalized_texrect = gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT];
     d3d_info->draw_base_vertex_offset = !!gl_info->supported[ARB_DRAW_ELEMENTS_BASE_VERTEX];
     d3d_info->vertex_bgra = !!gl_info->supported[ARB_VERTEX_ARRAY_BGRA];
     d3d_info->texture_swizzle = !!gl_info->supported[ARB_TEXTURE_SWIZZLE];
