@@ -3156,7 +3156,6 @@ struct wined3d_adapter
 {
     unsigned int ordinal;
 
-    struct wined3d_gl_info  gl_info;
     struct wined3d_d3d_info d3d_info;
     struct wined3d_driver_info driver_info;
     struct wined3d_output *outputs;
@@ -3190,6 +3189,8 @@ struct wined3d_adapter *wined3d_adapter_vk_create(unsigned int ordinal,
 struct wined3d_adapter_gl
 {
     struct wined3d_adapter a;
+
+    struct wined3d_gl_info gl_info;
 
     struct wined3d_pixel_format *pixel_formats;
     unsigned int pixel_format_count;

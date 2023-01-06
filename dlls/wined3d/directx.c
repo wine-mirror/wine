@@ -2856,6 +2856,8 @@ static HRESULT adapter_no3d_create_device(struct wined3d *wined3d, const struct 
         const enum wined3d_feature_level *levels, unsigned int level_count,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device)
 {
+    /* No extensions in the state table, only extension 0, which is implicitly supported. */
+    static const BOOL supported_extensions[] = {TRUE};
     struct wined3d_device_no3d *device_no3d;
     HRESULT hr;
 
@@ -2863,7 +2865,7 @@ static HRESULT adapter_no3d_create_device(struct wined3d *wined3d, const struct 
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = wined3d_device_init(&device_no3d->d, wined3d, adapter->ordinal, device_type, focus_window,
-            flags, surface_alignment, levels, level_count, adapter->gl_info.supported, device_parent)))
+            flags, surface_alignment, levels, level_count, supported_extensions, device_parent)))
     {
         WARN("Failed to initialize device, hr %#lx.\n", hr);
         heap_free(device_no3d);

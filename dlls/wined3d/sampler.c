@@ -134,7 +134,7 @@ void wined3d_sampler_gl_init(struct wined3d_sampler_gl *sampler_gl, struct wined
 
     wined3d_sampler_init(&sampler_gl->s, device, desc, parent, parent_ops);
 
-    if (device->adapter->gl_info.supported[ARB_SAMPLER_OBJECTS])
+    if (wined3d_adapter_gl(device->adapter)->gl_info.supported[ARB_SAMPLER_OBJECTS])
         wined3d_cs_init_object(device->cs, wined3d_sampler_gl_cs_init, sampler_gl);
 }
 

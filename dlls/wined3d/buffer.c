@@ -1426,7 +1426,7 @@ HRESULT wined3d_buffer_gl_init(struct wined3d_buffer_gl *buffer_gl, struct wined
         const struct wined3d_buffer_desc *desc, const struct wined3d_sub_resource_data *data,
         void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl(device->adapter)->gl_info;
 
     TRACE("buffer_gl %p, device %p, desc %p, data %p, parent %p, parent_ops %p.\n",
             buffer_gl, device, desc, data, parent, parent_ops);

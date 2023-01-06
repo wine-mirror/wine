@@ -5109,7 +5109,7 @@ static void ffp_free(struct wined3d_device *device, struct wined3d_context *cont
 
 static void vp_ffp_get_caps(const struct wined3d_adapter *adapter, struct wined3d_vertex_caps *caps)
 {
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
 
     caps->xyzrhw = FALSE;
     caps->ffp_generic_attributes = FALSE;
@@ -5147,7 +5147,7 @@ const struct wined3d_vertex_pipe_ops ffp_vertex_pipe =
 
 static void ffp_fragment_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
 
     caps->wined3d_caps = 0;
     caps->PrimitiveMiscCaps = 0;

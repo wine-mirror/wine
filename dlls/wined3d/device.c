@@ -1114,8 +1114,8 @@ static bool use_buffer_chunk_suballocation(struct wined3d_device_gl *device_gl,
 bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl, struct wined3d_context_gl *context_gl,
         GLsizeiptr size, GLenum binding, GLenum usage, bool coherent, GLbitfield flags, struct wined3d_bo_gl *bo)
 {
+    const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl(device_gl->d.adapter)->gl_info;
     unsigned int memory_type_idx = wined3d_device_gl_find_memory_type(flags);
-    const struct wined3d_gl_info *gl_info = &device_gl->d.adapter->gl_info;
     struct wined3d_allocator_block *memory = NULL;
     GLsizeiptr buffer_offset = 0;
     GLuint id = 0;

@@ -4218,7 +4218,7 @@ BOOL wined3d_adapter_no3d_init_format_info(struct wined3d_adapter *adapter)
 /* Context activation is done by the caller. */
 BOOL wined3d_adapter_gl_init_format_info(struct wined3d_adapter *adapter, struct wined3d_caps_gl_ctx *ctx)
 {
-    struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    struct wined3d_gl_info *gl_info = &wined3d_adapter_gl(adapter)->gl_info;
 
     if (!wined3d_adapter_init_format_info(adapter, sizeof(struct wined3d_format_gl)))
         return FALSE;

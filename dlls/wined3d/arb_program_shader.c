@@ -4878,7 +4878,7 @@ static void shader_arb_init_context_state(struct wined3d_context *context) {}
 
 static void shader_arb_get_caps(const struct wined3d_adapter *adapter, struct shader_caps *caps)
 {
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
 
     if (gl_info->supported[ARB_VERTEX_PROGRAM])
     {
@@ -5764,7 +5764,7 @@ static void arbfp_free(struct wined3d_device *device, struct wined3d_context *co
 
 static void arbfp_get_caps(const struct wined3d_adapter *adapter, struct fragment_caps *caps)
 {
-    const struct wined3d_gl_info *gl_info = &adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl_const(adapter)->gl_info;
 
     caps->wined3d_caps = WINED3D_FRAGMENT_CAP_PROJ_CONTROL
             | WINED3D_FRAGMENT_CAP_SRGB_WRITE
@@ -7972,7 +7972,7 @@ static const struct wined3d_blitter_ops arbfp_blitter_ops =
 
 void wined3d_arbfp_blitter_create(struct wined3d_blitter **next, const struct wined3d_device *device)
 {
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
+    const struct wined3d_gl_info *gl_info = &wined3d_adapter_gl(device->adapter)->gl_info;
     struct wined3d_arbfp_blitter *blitter;
 
     if (device->shader_backend != &arb_program_shader_backend

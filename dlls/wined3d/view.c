@@ -1014,7 +1014,7 @@ static void wined3d_shader_resource_view_gl_cs_init(void *object)
     TRACE("view_gl %p.\n", view_gl);
 
     view_format = view_gl->v.format;
-    gl_info = &resource->device->adapter->gl_info;
+    gl_info = &wined3d_adapter_gl(resource->device->adapter)->gl_info;
     desc = &view_gl->v.desc;
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
@@ -1725,7 +1725,7 @@ static void wined3d_unordered_access_view_gl_cs_init(void *object)
 
     TRACE("view_gl %p.\n", view_gl);
 
-    gl_info = &resource->device->adapter->gl_info;
+    gl_info = &wined3d_adapter_gl(resource->device->adapter)->gl_info;
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
