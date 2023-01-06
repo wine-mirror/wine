@@ -2290,6 +2290,7 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     struct wined3d_physical_device_info device_info;
     struct wined3d_vertex_caps vertex_caps;
     struct fragment_caps fragment_caps;
+    unsigned int sample_counts_mask;
     struct shader_caps shader_caps;
 
     get_physical_device_info(adapter_vk, &device_info);
@@ -2316,6 +2317,11 @@ static void wined3d_adapter_vk_init_d3d_info(struct wined3d_adapter_vk *adapter_
     d3d_info->limits.max_clip_distances = WINED3D_MAX_CLIP_DISTANCES;
     d3d_info->limits.texture_size = adapter_vk->device_limits.maxImageDimension2D;
     d3d_info->limits.pointsize_max = adapter_vk->device_limits.pointSizeRange[1];
+    sample_counts_mask = adapter_vk->device_limits.framebufferColorSampleCounts
+            | adapter_vk->device_limits.framebufferDepthSampleCounts
+            | adapter_vk->device_limits.framebufferStencilSampleCounts
+            | adapter_vk->device_limits.framebufferNoAttachmentsSampleCounts;
+    d3d_info->limits.sample_count = (1u << wined3d_log2i(sample_counts_mask));
 
     d3d_info->wined3d_creation_flags = wined3d_creation_flags;
 

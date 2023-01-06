@@ -1353,7 +1353,6 @@ static void wined3d_swapchain_apply_sample_count_override(const struct wined3d_s
         enum wined3d_format_id format_id, enum wined3d_multisample_type *type, unsigned int *quality)
 {
     const struct wined3d_adapter *adapter;
-    const struct wined3d_gl_info *gl_info;
     const struct wined3d_format *format;
     enum wined3d_multisample_type t;
 
@@ -1361,11 +1360,10 @@ static void wined3d_swapchain_apply_sample_count_override(const struct wined3d_s
         return;
 
     adapter = swapchain->device->adapter;
-    gl_info = &adapter->gl_info;
     if (!(format = wined3d_get_format(adapter, format_id, WINED3D_BIND_RENDER_TARGET)))
         return;
 
-    if ((t = min(wined3d_settings.sample_count, gl_info->limits.samples)))
+    if ((t = min(wined3d_settings.sample_count, adapter->d3d_info.limits.sample_count)))
         while (!(format->multisample_types & 1u << (t - 1)))
             ++t;
     TRACE("Using sample count %u.\n", t);

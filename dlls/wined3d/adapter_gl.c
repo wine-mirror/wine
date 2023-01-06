@@ -5195,6 +5195,7 @@ static void wined3d_adapter_gl_init_d3d_info(struct wined3d_adapter_gl *adapter_
     d3d_info->limits.max_rt_count = gl_info->limits.buffers;
     d3d_info->limits.max_clip_distances = gl_info->limits.user_clip_distances;
     d3d_info->limits.texture_size = gl_info->limits.texture_size;
+    d3d_info->limits.sample_count = gl_info->limits.samples;
 
     gl_info->gl_ops.gl.p_glGetFloatv(gl_info->supported[WINED3D_GL_LEGACY_CONTEXT]
             ? GL_ALIASED_POINT_SIZE_RANGE : GL_POINT_SIZE_RANGE, f);

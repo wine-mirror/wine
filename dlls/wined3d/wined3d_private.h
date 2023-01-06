@@ -213,6 +213,7 @@ struct wined3d_d3d_limits
     unsigned int max_rt_count;
     unsigned int max_clip_distances;
     unsigned int texture_size;
+    unsigned int sample_count;
     float pointsize_max;
 };
 
