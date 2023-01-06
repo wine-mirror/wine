@@ -2659,8 +2659,6 @@ BOOL wined3d_get_primary_adapter_luid(LUID *luid) DECLSPEC_HIDDEN;
 struct wined3d_adapter *wined3d_adapter_vk_create(unsigned int ordinal,
         unsigned int wined3d_creation_flags) DECLSPEC_HIDDEN;
 
-#include "wined3d_gl.h"
-
 struct wined3d_adapter *wined3d_adapter_gl_create(unsigned int ordinal,
         unsigned int wined3d_creation_flags) DECLSPEC_HIDDEN;
 
@@ -2939,21 +2937,6 @@ static inline bool wined3d_state_uses_depth_buffer(const struct wined3d_state *s
             || state->depth_stencil_state->desc.stencil;
 }
 
-struct wined3d_dummy_textures
-{
-    GLuint tex_1d;
-    GLuint tex_2d;
-    GLuint tex_rect;
-    GLuint tex_3d;
-    GLuint tex_cube;
-    GLuint tex_cube_array;
-    GLuint tex_1d_array;
-    GLuint tex_2d_array;
-    GLuint tex_buffer;
-    GLuint tex_2d_ms;
-    GLuint tex_2d_ms_array;
-};
-
 #define WINED3D_UNMAPPED_STAGE ~0u
 
 /* Multithreaded flag. Removed from the public header to signal that
@@ -3101,18 +3084,6 @@ void wined3d_allocator_chunk_cleanup(struct wined3d_allocator_chunk *chunk) DECL
 bool wined3d_allocator_chunk_init(struct wined3d_allocator_chunk *chunk,
         struct wined3d_allocator *allocator) DECLSPEC_HIDDEN;
 
-struct wined3d_allocator_chunk_gl
-{
-    struct wined3d_allocator_chunk c;
-    unsigned int memory_type;
-    GLuint gl_buffer;
-};
-
-static inline struct wined3d_allocator_chunk_gl *wined3d_allocator_chunk_gl(struct wined3d_allocator_chunk *chunk)
-{
-    return CONTAINING_RECORD(chunk, struct wined3d_allocator_chunk_gl, c);
-}
-
 struct wined3d_allocator_block
 {
     struct list entry;
@@ -3151,68 +3122,7 @@ void wined3d_allocator_cleanup(struct wined3d_allocator *allocator) DECLSPEC_HID
 bool wined3d_allocator_init(struct wined3d_allocator *allocator,
         size_t pool_count, const struct wined3d_allocator_ops *allocator_ops) DECLSPEC_HIDDEN;
 
-struct wined3d_device_gl
-{
-    struct wined3d_device d;
-
-    /* Textures for when no other textures are bound. */
-    struct wined3d_dummy_textures dummy_textures;
-
-    CRITICAL_SECTION allocator_cs;
-    struct wined3d_allocator allocator;
-    uint64_t completed_fence_id;
-    uint64_t current_fence_id;
-    uint64_t retired_bo_size;
-
-    struct wined3d_retired_block_gl
-    {
-        struct wined3d_allocator_block *block;
-        uint64_t fence_id;
-    } *retired_blocks;
-    SIZE_T retired_blocks_size;
-    SIZE_T retired_block_count;
-
-    HWND backup_wnd;
-    HDC backup_dc;
-};
-
-static inline struct wined3d_device_gl *wined3d_device_gl(struct wined3d_device *device)
-{
-    return CONTAINING_RECORD(device, struct wined3d_device_gl, d);
-}
-
-static inline struct wined3d_device_gl *wined3d_device_gl_from_allocator(struct wined3d_allocator *allocator)
-{
-    return CONTAINING_RECORD(allocator, struct wined3d_device_gl, allocator);
-}
-
-static inline void wined3d_device_gl_allocator_lock(struct wined3d_device_gl *device_gl)
-{
-    EnterCriticalSection(&device_gl->allocator_cs);
-}
-
-static inline void wined3d_device_gl_allocator_unlock(struct wined3d_device_gl *device_gl)
-{
-    LeaveCriticalSection(&device_gl->allocator_cs);
-}
-
-static inline void wined3d_allocator_chunk_gl_lock(struct wined3d_allocator_chunk_gl *chunk_gl)
-{
-    wined3d_device_gl_allocator_lock(wined3d_device_gl_from_allocator(chunk_gl->c.allocator));
-}
-
-static inline void wined3d_allocator_chunk_gl_unlock(struct wined3d_allocator_chunk_gl *chunk_gl)
-{
-    wined3d_device_gl_allocator_unlock(wined3d_device_gl_from_allocator(chunk_gl->c.allocator));
-}
-
-bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl,
-        struct wined3d_context_gl *context_gl, GLsizeiptr size, GLenum binding,
-        GLenum usage, bool coherent, GLbitfield flags, struct wined3d_bo_gl *bo) DECLSPEC_HIDDEN;
-void wined3d_device_gl_create_primary_opengl_context_cs(void *object) DECLSPEC_HIDDEN;
-void wined3d_device_gl_delete_opengl_contexts_cs(void *object) DECLSPEC_HIDDEN;
-HDC wined3d_device_gl_get_backup_dc(struct wined3d_device_gl *device_gl) DECLSPEC_HIDDEN;
-GLbitfield wined3d_device_gl_get_memory_type_flags(unsigned int memory_type_idx) DECLSPEC_HIDDEN;
+#include "wined3d_gl.h"
 
 static inline float wined3d_alpha_ref(const struct wined3d_state *state)
 {

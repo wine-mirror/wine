@@ -800,4 +800,94 @@ static inline const struct wined3d_adapter_gl *wined3d_adapter_gl_const(const st
 
 BOOL wined3d_adapter_gl_init_format_info(struct wined3d_adapter *adapter, struct wined3d_caps_gl_ctx *ctx);
 
+struct wined3d_allocator_chunk_gl
+{
+    struct wined3d_allocator_chunk c;
+    unsigned int memory_type;
+    GLuint gl_buffer;
+};
+
+static inline struct wined3d_allocator_chunk_gl *wined3d_allocator_chunk_gl(struct wined3d_allocator_chunk *chunk)
+{
+    return CONTAINING_RECORD(chunk, struct wined3d_allocator_chunk_gl, c);
+}
+
+struct wined3d_dummy_textures
+{
+    GLuint tex_1d;
+    GLuint tex_2d;
+    GLuint tex_rect;
+    GLuint tex_3d;
+    GLuint tex_cube;
+    GLuint tex_cube_array;
+    GLuint tex_1d_array;
+    GLuint tex_2d_array;
+    GLuint tex_buffer;
+    GLuint tex_2d_ms;
+    GLuint tex_2d_ms_array;
+};
+
+struct wined3d_device_gl
+{
+    struct wined3d_device d;
+
+    /* Textures for when no other textures are bound. */
+    struct wined3d_dummy_textures dummy_textures;
+
+    CRITICAL_SECTION allocator_cs;
+    struct wined3d_allocator allocator;
+    uint64_t completed_fence_id;
+    uint64_t current_fence_id;
+    uint64_t retired_bo_size;
+
+    struct wined3d_retired_block_gl
+    {
+        struct wined3d_allocator_block *block;
+        uint64_t fence_id;
+    } *retired_blocks;
+    SIZE_T retired_blocks_size;
+    SIZE_T retired_block_count;
+
+    HWND backup_wnd;
+    HDC backup_dc;
+};
+
+static inline struct wined3d_device_gl *wined3d_device_gl(struct wined3d_device *device)
+{
+    return CONTAINING_RECORD(device, struct wined3d_device_gl, d);
+}
+
+static inline struct wined3d_device_gl *wined3d_device_gl_from_allocator(struct wined3d_allocator *allocator)
+{
+    return CONTAINING_RECORD(allocator, struct wined3d_device_gl, allocator);
+}
+
+static inline void wined3d_device_gl_allocator_lock(struct wined3d_device_gl *device_gl)
+{
+    EnterCriticalSection(&device_gl->allocator_cs);
+}
+
+static inline void wined3d_device_gl_allocator_unlock(struct wined3d_device_gl *device_gl)
+{
+    LeaveCriticalSection(&device_gl->allocator_cs);
+}
+
+static inline void wined3d_allocator_chunk_gl_lock(struct wined3d_allocator_chunk_gl *chunk_gl)
+{
+    wined3d_device_gl_allocator_lock(wined3d_device_gl_from_allocator(chunk_gl->c.allocator));
+}
+
+static inline void wined3d_allocator_chunk_gl_unlock(struct wined3d_allocator_chunk_gl *chunk_gl)
+{
+    wined3d_device_gl_allocator_unlock(wined3d_device_gl_from_allocator(chunk_gl->c.allocator));
+}
+
+bool wined3d_device_gl_create_bo(struct wined3d_device_gl *device_gl,
+        struct wined3d_context_gl *context_gl, GLsizeiptr size, GLenum binding,
+        GLenum usage, bool coherent, GLbitfield flags, struct wined3d_bo_gl *bo);
+void wined3d_device_gl_create_primary_opengl_context_cs(void *object);
+void wined3d_device_gl_delete_opengl_contexts_cs(void *object);
+HDC wined3d_device_gl_get_backup_dc(struct wined3d_device_gl *device_gl);
+GLbitfield wined3d_device_gl_get_memory_type_flags(unsigned int memory_type_idx);
+
 #endif /* __WINE_WINED3D_GL */
