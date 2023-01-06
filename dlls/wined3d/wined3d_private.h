@@ -4623,8 +4623,6 @@ uint32_t wined3d_format_pack(const struct wined3d_format *format, const struct w
 BOOL wined3d_formats_are_srgb_variants(enum wined3d_format_id format1,
         enum wined3d_format_id format2) DECLSPEC_HIDDEN;
 
-#include "wined3d_gl.h"
-
 BOOL wined3d_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size) DECLSPEC_HIDDEN;
 
 static inline BOOL wined3d_format_is_typeless(const struct wined3d_format *format)
@@ -4699,13 +4697,6 @@ static inline BOOL needs_srgb_write(const struct wined3d_d3d_info *d3d_info,
     return (!(d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
             || state->render_states[WINED3D_RS_SRGBWRITEENABLE])
             && fb->render_targets[0] && fb->render_targets[0]->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
-}
-
-static inline GLuint wined3d_texture_gl_get_texture_name(const struct wined3d_texture_gl *texture_gl,
-        const struct wined3d_context *context, BOOL srgb)
-{
-    return srgb && needs_separate_srgb_gl_texture(context, &texture_gl->t)
-            ? texture_gl->texture_srgb.name : texture_gl->texture_rgb.name;
 }
 
 static inline BOOL can_use_texture_swizzle(const struct wined3d_d3d_info *d3d_info, const struct wined3d_format *format)
@@ -5080,20 +5071,6 @@ static inline bool wined3d_primitive_type_is_list(enum wined3d_primitive_type t)
             || t == WINED3D_PT_PATCH;
 }
 
-static inline void wined3d_context_gl_reference_bo(struct wined3d_context_gl *context_gl, struct wined3d_bo_gl *bo_gl)
-{
-    struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
-
-    bo_gl->command_fence_id = device_gl->current_fence_id;
-}
-
-static inline void wined3d_context_gl_reference_buffer(struct wined3d_context_gl *context_gl,
-        struct wined3d_buffer *buffer)
-{
-    if (buffer->buffer_object)
-        wined3d_context_gl_reference_bo(context_gl, wined3d_bo_gl(buffer->buffer_object));
-}
-
 static inline bool wined3d_map_persistent(void)
 {
     return sizeof(void *) >= sizeof(uint64_t);
@@ -5103,5 +5080,7 @@ static inline bool wined3d_map_persistent(void)
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
 
 extern CRITICAL_SECTION wined3d_command_cs;
+
+#include "wined3d_gl.h"
 
 #endif

@@ -925,6 +925,20 @@ GLbitfield wined3d_resource_gl_map_flags(const struct wined3d_bo_gl *bo, DWORD d
 GLenum wined3d_resource_gl_legacy_map_flags(DWORD d3d_flags);
 GLbitfield wined3d_resource_gl_storage_flags(const struct wined3d_resource *resource);
 
+static inline void wined3d_context_gl_reference_bo(struct wined3d_context_gl *context_gl, struct wined3d_bo_gl *bo_gl)
+{
+    struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
+
+    bo_gl->command_fence_id = device_gl->current_fence_id;
+}
+
+static inline void wined3d_context_gl_reference_buffer(struct wined3d_context_gl *context_gl,
+        struct wined3d_buffer *buffer)
+{
+    if (buffer->buffer_object)
+        wined3d_context_gl_reference_bo(context_gl, wined3d_bo_gl(buffer->buffer_object));
+}
+
 struct gl_texture
 {
     struct wined3d_sampler_desc sampler_desc;
@@ -980,6 +994,14 @@ static inline GLenum wined3d_texture_gl_get_sub_resource_target(const struct win
     if (texture_gl->t.resource.usage & WINED3DUSAGE_LEGACY_CUBEMAP)
         return cube_targets[sub_resource_idx / texture_gl->t.level_count];
     return texture_gl->target;
+}
+
+static inline GLuint wined3d_texture_gl_get_texture_name(const struct wined3d_texture_gl *texture_gl,
+        const struct wined3d_context *context, bool srgb)
+{
+    if (srgb && needs_separate_srgb_gl_texture(context, &texture_gl->t))
+        return texture_gl->texture_srgb.name;
+    return texture_gl->texture_rgb.name;
 }
 
 static inline bool wined3d_texture_gl_is_multisample_location(const struct wined3d_texture_gl *texture_gl,
