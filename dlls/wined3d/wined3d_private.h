@@ -1976,8 +1976,6 @@ void context_update_stream_info(struct wined3d_context *context, const struct wi
 HRESULT wined3d_context_no3d_init(struct wined3d_context *context_no3d,
         struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;
 
-#include "wined3d_gl.h"
-
 typedef void (*APPLYSTATEFUNC)(struct wined3d_context *ctx, const struct wined3d_state *state, DWORD state_id);
 
 struct wined3d_state_entry
@@ -2097,17 +2095,9 @@ struct wined3d_blitter_ops
             enum wined3d_texture_filter_type filter, const struct wined3d_format *resolve_format);
 };
 
-void wined3d_arbfp_blitter_create(struct wined3d_blitter **next,
-        const struct wined3d_device *device) DECLSPEC_HIDDEN;
+#include "wined3d_gl.h"
+
 struct wined3d_blitter *wined3d_cpu_blitter_create(void) DECLSPEC_HIDDEN;
-void wined3d_fbo_blitter_create(struct wined3d_blitter **next,
-        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-void wined3d_ffp_blitter_create(struct wined3d_blitter **next,
-        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
-struct wined3d_blitter *wined3d_glsl_blitter_create(struct wined3d_blitter **next,
-        const struct wined3d_device *device) DECLSPEC_HIDDEN;
-void wined3d_raw_blitter_create(struct wined3d_blitter **next,
-        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void wined3d_vk_blitter_create(struct wined3d_blitter **next) DECLSPEC_HIDDEN;
 
 BOOL wined3d_clip_blit(const RECT *clip_rect, RECT *clipped, RECT *other) DECLSPEC_HIDDEN;
