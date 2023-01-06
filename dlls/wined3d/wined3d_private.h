@@ -95,7 +95,6 @@ static inline const char *wined3d_get_line(const char **ptr, const char *end)
 struct wined3d_fragment_pipe_ops;
 struct wined3d_adapter;
 struct wined3d_context;
-struct wined3d_gl_info;
 struct wined3d_state;
 struct wined3d_vertex_pipe_ops;
 
@@ -4092,8 +4091,6 @@ HRESULT wined3d_swapchain_no3d_init(struct wined3d_swapchain *swapchain_no3d,
         struct wined3d_swapchain_state_parent *state_parent, void *parent,
         const struct wined3d_parent_ops *parent_ops) DECLSPEC_HIDDEN;
 
-#include "wined3d_gl.h"
-
 /*****************************************************************************
  * Utility function prototypes
  */
@@ -4128,11 +4125,6 @@ void dump_color_fixup_desc(struct color_fixup_desc fixup) DECLSPEC_HIDDEN;
 
 BOOL is_invalid_op(const struct wined3d_state *state, int stage,
         enum wined3d_texture_op op, DWORD arg1, DWORD arg2, DWORD arg3) DECLSPEC_HIDDEN;
-void set_tex_op_nvrc(const struct wined3d_gl_info *gl_info, const struct wined3d_state *state,
-        BOOL is_alpha, int stage, enum wined3d_texture_op op, uint32_t arg1, uint32_t arg2, uint32_t arg3,
-        INT texture_idx, DWORD dst) DECLSPEC_HIDDEN;
-void texture_activate_dimensions(struct wined3d_texture *texture,
-        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void sampler_texdim(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void tex_alphaop(struct wined3d_context *context,
@@ -4630,6 +4622,8 @@ const struct wined3d_color_key_conversion * wined3d_format_get_color_key_convers
 uint32_t wined3d_format_pack(const struct wined3d_format *format, const struct wined3d_uvec4 *value) DECLSPEC_HIDDEN;
 BOOL wined3d_formats_are_srgb_variants(enum wined3d_format_id format1,
         enum wined3d_format_id format2) DECLSPEC_HIDDEN;
+
+#include "wined3d_gl.h"
 
 struct wined3d_format_gl
 {
