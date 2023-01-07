@@ -462,6 +462,20 @@ static UINT kbd_tables_get_mod_bits( const KBDTABLES *tables, UINT mod )
     return -1;
 }
 
+static UINT kbd_tables_get_mod_num( const KBDTABLES *tables, const BYTE *state, BOOL caps )
+{
+    const MODIFIERS *mods = tables->pCharModifiers;
+    const VK_TO_BIT *entry;
+    WORD bits = 0;
+
+    for (entry = mods->pVkToBit; entry->Vk; ++entry)
+        if (state[entry->Vk] & 0x80) bits |= entry->ModBits;
+    if (caps) bits |= KBDSHIFT;
+
+    if (bits > mods->wMaxModBits) return -1;
+    return mods->ModNumber[bits];
+}
+
 static WORD kbd_tables_wchar_to_vkey( const KBDTABLES *tables, WCHAR wch )
 {
     const VK_TO_WCHAR_TABLE *table;
@@ -486,6 +500,37 @@ static WORD kbd_tables_wchar_to_vkey( const KBDTABLES *tables, WCHAR wch )
 
     if (wch >= 0x0001 && wch <= 0x001a) return (0x200) | ('A' + wch - 1);  /* CTRL + A-Z */
     return wch >= 0x0080 ? -1 : 0;
+}
+
+static WCHAR kbd_tables_vkey_to_wchar( const KBDTABLES *tables, UINT vkey, const BYTE *state )
+{
+    UINT mod, caps_mod, alt, ctrl, caps;
+    const VK_TO_WCHAR_TABLE *table;
+    const VK_TO_WCHARS1 *entry;
+
+    alt = state[VK_MENU] & 0x80;
+    ctrl = state[VK_CONTROL] & 0x80;
+    caps = state[VK_CAPITAL] & 1;
+
+    if (ctrl && alt) return WCH_NONE;
+    if (!ctrl && vkey == VK_ESCAPE) return VK_ESCAPE;
+
+    mod = caps_mod = kbd_tables_get_mod_num( tables, state, FALSE );
+    if (caps) caps_mod = kbd_tables_get_mod_num( tables, state, TRUE );
+
+    for (table = tables->pVkToWcharTable; table->pVkToWchars; table++)
+    {
+        if (table->nModifications <= mod) continue;
+        for (entry = table->pVkToWchars; entry->VirtualKey; entry = NEXT_ENTRY(table, entry))
+        {
+            if (entry->VirtualKey != vkey) continue;
+            if ((entry->Attributes & CAPLOK) && table->nModifications > caps_mod) return entry->wch[caps_mod];
+            return entry->wch[mod];
+        }
+    }
+
+    if (ctrl && vkey >= 'A' && vkey <= 'Z') return vkey - 'A' + 1;
+    return WCH_NONE;
 }
 
 #undef NEXT_ENTRY
@@ -1079,86 +1124,23 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
 INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                               WCHAR *str, int size, UINT flags, HKL layout )
 {
-    BOOL shift, ctrl, alt, numlock;
-    WCHAR buffer[2];
+    const KBDTABLES *kbd_tables = &kbdus_tables;
+    WCHAR buffer[2] = {0};
     INT len;
 
-    TRACE_(keyboard)( "virt %u, scan %u, state %p, str %p, size %d, flags %x, layout %p.\n",
+    TRACE_(keyboard)( "virt %#x, scan %#x, state %p, str %p, size %d, flags %#x, layout %p.\n",
                       virt, scan, state, str, size, flags, layout );
 
     if (!state) return 0;
     if ((len = user_driver->pToUnicodeEx( virt, scan, state, str, size, flags, layout )) >= -1)
         return len;
 
-    alt = state[VK_MENU] & 0x80;
-    shift = state[VK_SHIFT] & 0x80;
-    ctrl = state[VK_CONTROL] & 0x80;
-    numlock = state[VK_NUMLOCK] & 0x01;
-
-    /* FIXME: English keyboard layout specific */
-
     if (scan & 0x8000) buffer[0] = 0; /* key up */
-    else if (virt == VK_ESCAPE) buffer[0] = VK_ESCAPE;
-    else if (!ctrl)
-    {
-        switch (virt)
-        {
-        case VK_BACK:       buffer[0] = '\b'; break;
-        case VK_OEM_1:      buffer[0] = shift ? ':' : ';'; break;
-        case VK_OEM_2:      buffer[0] = shift ? '?' : '/'; break;
-        case VK_OEM_3:      buffer[0] = shift ? '~' : '`'; break;
-        case VK_OEM_4:      buffer[0] = shift ? '{' : '['; break;
-        case VK_OEM_5:      buffer[0] = shift ? '|' : '\\'; break;
-        case VK_OEM_6:      buffer[0] = shift ? '}' : ']'; break;
-        case VK_OEM_7:      buffer[0] = shift ? '"' : '\''; break;
-        case VK_OEM_COMMA:  buffer[0] = shift ? '<' : ','; break;
-        case VK_OEM_MINUS:  buffer[0] = shift ? '_' : '-'; break;
-        case VK_OEM_PERIOD: buffer[0] = shift ? '>' : '.'; break;
-        case VK_OEM_PLUS:   buffer[0] = shift ? '+' : '='; break;
-        case VK_RETURN:     buffer[0] = '\r'; break;
-        case VK_SPACE:      buffer[0] = ' '; break;
-        case VK_TAB:        buffer[0] = '\t'; break;
-        case VK_MULTIPLY:   buffer[0] = '*'; break;
-        case VK_ADD:        buffer[0] = '+'; break;
-        case VK_SUBTRACT:   buffer[0] = '-'; break;
-        case VK_DIVIDE:     buffer[0] = '/'; break;
-        default:
-            if (virt >= '0' && virt <= '9')
-                buffer[0] = shift ? ")!@#$%^&*("[virt - '0'] : virt;
-            else if (virt >= 'A' && virt <= 'Z')
-                buffer[0] = shift || (state[VK_CAPITAL] & 0x01) ? virt : virt + 'a' - 'A';
-            else if (virt >= VK_NUMPAD0 && virt <= VK_NUMPAD9 && numlock && !shift)
-                buffer[0] = '0' + virt - VK_NUMPAD0;
-            else if (virt == VK_DECIMAL && numlock && !shift)
-                buffer[0] = '.';
-            else
-                buffer[0] = 0;
-            break;
-        }
-    }
-    else if (!alt) /* Control codes */
-    {
-        switch (virt)
-        {
-        case VK_OEM_4:     buffer[0] = 0x1b; break;
-        case VK_OEM_5:     buffer[0] = 0x1c; break;
-        case VK_OEM_6:     buffer[0] = 0x1d; break;
-        case '6':          buffer[0] = shift ? 0x1e : 0; break;
-        case VK_OEM_MINUS: buffer[0] = shift ? 0x1f : 0; break;
-        case VK_BACK:      buffer[0] = 0x7f; break;
-        case VK_RETURN:    buffer[0] = shift ? 0 : '\n'; break;
-        case '2':          buffer[0] = shift ? 0xffff : 0xf000; break;
-        case VK_SPACE:     buffer[0] = ' '; break;
-        default:
-            if (virt >= 'A' && virt <= 'Z') buffer[0] = virt - 'A' + 1;
-            else buffer[0] = 0;
-            break;
-        }
-    }
-    else buffer[0] = 0;
-    buffer[1] = 0;
-    len = lstrlenW( buffer );
-    if (buffer[0] == 0xffff) buffer[0] = 0;
+    else buffer[0] = kbd_tables_vkey_to_wchar( kbd_tables, virt, state );
+
+    if (buffer[0] != WCH_NONE) len = 1;
+    else buffer[0] = len = 0;
+
     lstrcpynW( str, buffer, size );
 
     TRACE_(keyboard)( "ret %d, str %s.\n", len, debugstr_w(str) );
