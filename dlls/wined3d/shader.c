@@ -26,7 +26,6 @@
 #include <string.h>
 
 #include "wined3d_private.h"
-#include "wined3d_gl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d_shader);
 
@@ -2845,6 +2844,8 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     {
         for (i = 0; i < shader->limits->sampler; ++i)
         {
+            enum wined3d_shader_tex_types type = WINED3D_SHADER_TEX_2D;
+
             if (!shader->reg_maps.resource_info[i].type)
                 continue;
 
@@ -2855,20 +2856,24 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
                 continue;
             texture = texture_from_resource(view->resource);
 
-            switch (wined3d_texture_gl(texture)->target)
+            switch (texture->resource.type)
             {
-                /* RECT textures are distinguished from 2D textures via np2_fixup */
-                default:
+                case WINED3D_RTYPE_NONE:
+                case WINED3D_RTYPE_BUFFER:
+                case WINED3D_RTYPE_TEXTURE_1D:
+                    assert(0);
+
+                case WINED3D_RTYPE_TEXTURE_2D:
+                    if (texture->resource.usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+                        type = WINED3D_SHADER_TEX_CUBE;
                     break;
 
-                case GL_TEXTURE_3D:
-                    args->tex_types |= WINED3D_SHADER_TEX_3D << i * WINED3D_PSARGS_TEXTYPE_SHIFT;
-                    break;
-
-                case GL_TEXTURE_CUBE_MAP_ARB:
-                    args->tex_types |= WINED3D_SHADER_TEX_CUBE << i * WINED3D_PSARGS_TEXTYPE_SHIFT;
+                case WINED3D_RTYPE_TEXTURE_3D:
+                    type = WINED3D_SHADER_TEX_3D;
                     break;
             }
+
+            args->tex_types |= (type << (i * WINED3D_PSARGS_TEXTYPE_SHIFT));
         }
     }
     else if (shader->reg_maps.shader_version.major <= 3)
