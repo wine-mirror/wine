@@ -124,6 +124,119 @@ static const WCHAR left_windowsW[] = {'L','e','f','t',' ','W','i','n','d','o','w
 static const WCHAR right_windowsW[] = {'R','i','g','h','t',' ','W','i','n','d','o','w','s',0};
 static const WCHAR applicationW[] = {'A','p','p','l','i','c','a','t','i','o','n',0};
 
+static const VK_TO_BIT vk_to_bit[] =
+{
+    {.Vk = VK_SHIFT, .ModBits = KBDSHIFT},
+    {.Vk = VK_CONTROL, .ModBits = KBDCTRL},
+    {.Vk = VK_MENU, .ModBits = KBDALT},
+    {0},
+};
+
+static const MODIFIERS modifiers =
+{
+    .pVkToBit = (VK_TO_BIT *)vk_to_bit,
+    .wMaxModBits = 3,
+    .ModNumber = {0, 1, 2, 3},
+};
+
+static const VK_TO_WCHARS2 vk_to_wchars2[] =
+{
+    {.VirtualKey = VK_OEM_3,      .wch = {'`', '~'}},
+    {.VirtualKey = '1',           .wch = {'1', '!'}},
+    {.VirtualKey = '3',           .wch = {'3', '#'}},
+    {.VirtualKey = '4',           .wch = {'4', '$'}},
+    {.VirtualKey = '5',           .wch = {'5', '%'}},
+    {.VirtualKey = '7',           .wch = {'7', '&'}},
+    {.VirtualKey = '8',           .wch = {'8', '*'}},
+    {.VirtualKey = '9',           .wch = {'9', '('}},
+    {.VirtualKey = '0',           .wch = {'0', ')'}},
+    {.VirtualKey = VK_OEM_PLUS,   .wch = {'=', '+'}},
+    {.VirtualKey = 'Q',           .wch = {'q', 'Q'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'W',           .wch = {'w', 'W'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'E',           .wch = {'e', 'E'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'R',           .wch = {'r', 'R'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'T',           .wch = {'t', 'T'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'Y',           .wch = {'y', 'Y'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'U',           .wch = {'u', 'U'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'I',           .wch = {'i', 'I'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'O',           .wch = {'o', 'O'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'P',           .wch = {'p', 'P'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'A',           .wch = {'a', 'A'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'S',           .wch = {'s', 'S'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'D',           .wch = {'d', 'D'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'F',           .wch = {'f', 'F'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'G',           .wch = {'g', 'G'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'H',           .wch = {'h', 'H'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'J',           .wch = {'j', 'J'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'K',           .wch = {'k', 'K'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'L',           .wch = {'l', 'L'}, .Attributes = CAPLOK},
+    {.VirtualKey = VK_OEM_1,      .wch = {';', ':'}},
+    {.VirtualKey = VK_OEM_7,      .wch = {'\'', '\"'}},
+    {.VirtualKey = 'Z',           .wch = {'z', 'Z'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'X',           .wch = {'x', 'X'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'C',           .wch = {'c', 'C'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'V',           .wch = {'v', 'V'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'B',           .wch = {'b', 'B'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'N',           .wch = {'n', 'N'}, .Attributes = CAPLOK},
+    {.VirtualKey = 'M',           .wch = {'m', 'M'}, .Attributes = CAPLOK},
+    {.VirtualKey = VK_OEM_COMMA,  .wch = {',', '<'}},
+    {.VirtualKey = VK_OEM_PERIOD, .wch = {'.', '>'}},
+    {.VirtualKey = VK_OEM_2,      .wch = {'/', '?'}},
+    {.VirtualKey = VK_DECIMAL,    .wch = {'.', '.'}},
+    {.VirtualKey = VK_TAB,        .wch = {'\t', '\t'}},
+    {.VirtualKey = VK_ADD,        .wch = {'+', '+'}},
+    {.VirtualKey = VK_DIVIDE,     .wch = {'/', '/'}},
+    {.VirtualKey = VK_MULTIPLY,   .wch = {'*', '*'}},
+    {.VirtualKey = VK_SUBTRACT,   .wch = {'-', '-'}},
+    {0},
+};
+
+static const VK_TO_WCHARS3 vk_to_wchars3[] =
+{
+    {.VirtualKey = VK_OEM_4,   .wch = {'[', '{', '\x001b'}},
+    {.VirtualKey = VK_OEM_6,   .wch = {']', '}', '\x001d'}},
+    {.VirtualKey = VK_OEM_5,   .wch = {'\\', '|', '\x001c'}},
+    {.VirtualKey = VK_OEM_102, .wch = {'\\', '|', '\x001c'}},
+    {.VirtualKey = VK_BACK,    .wch = {'\b', '\b', '\x007f'}},
+    {.VirtualKey = VK_ESCAPE,  .wch = {'\x001b', '\x001b', '\x001b'}},
+    {.VirtualKey = VK_RETURN,  .wch = {'\r', '\r', '\n'}},
+    {.VirtualKey = VK_SPACE,   .wch = {' ', ' ', ' '}},
+    {.VirtualKey = VK_CANCEL,  .wch = {'\x0003', '\x0003', '\x0003'}},
+    {0},
+};
+
+static const VK_TO_WCHARS4 vk_to_wchars4[] =
+{
+    {.VirtualKey = '2',          .wch = {'2', '@', WCH_NONE, '\x0000'}},
+    {.VirtualKey = '6',          .wch = {'6', '^', WCH_NONE, '\x001e'}},
+    {.VirtualKey = VK_OEM_MINUS, .wch = {'-', '_', WCH_NONE, '\x001f'}},
+    {0},
+};
+
+static const VK_TO_WCHARS1 vk_to_wchars1[] =
+{
+    {.VirtualKey = VK_NUMPAD0, .wch = {'0'}},
+    {.VirtualKey = VK_NUMPAD1, .wch = {'1'}},
+    {.VirtualKey = VK_NUMPAD2, .wch = {'2'}},
+    {.VirtualKey = VK_NUMPAD3, .wch = {'3'}},
+    {.VirtualKey = VK_NUMPAD4, .wch = {'4'}},
+    {.VirtualKey = VK_NUMPAD5, .wch = {'5'}},
+    {.VirtualKey = VK_NUMPAD6, .wch = {'6'}},
+    {.VirtualKey = VK_NUMPAD7, .wch = {'7'}},
+    {.VirtualKey = VK_NUMPAD8, .wch = {'8'}},
+    {.VirtualKey = VK_NUMPAD9, .wch = {'9'}},
+    {0},
+};
+
+static const VK_TO_WCHAR_TABLE vk_to_wchar_table[] =
+{
+    {.pVkToWchars = (VK_TO_WCHARS1 *)vk_to_wchars3, .nModifications = 3, .cbSize = sizeof(vk_to_wchars3[0])},
+    {.pVkToWchars = (VK_TO_WCHARS1 *)vk_to_wchars4, .nModifications = 4, .cbSize = sizeof(vk_to_wchars4[0])},
+    {.pVkToWchars = (VK_TO_WCHARS1 *)vk_to_wchars2, .nModifications = 2, .cbSize = sizeof(vk_to_wchars2[0])},
+    {.pVkToWchars = (VK_TO_WCHARS1 *)vk_to_wchars1, .nModifications = 1, .cbSize = sizeof(vk_to_wchars1[0])},
+    {0},
+};
+
 static const VSC_LPWSTR key_names[] =
 {
     {.vsc = 0x01, .pwsz = (WCHAR *)escW},
@@ -280,12 +393,15 @@ static const VSC_VK vsc_to_vk_e1[] =
 
 static const KBDTABLES kbdus_tables =
 {
+    .pCharModifiers = (MODIFIERS *)&modifiers,
+    .pVkToWcharTable = (VK_TO_WCHAR_TABLE *)vk_to_wchar_table,
     .pKeyNames = (VSC_LPWSTR *)key_names,
     .pKeyNamesExt = (VSC_LPWSTR *)key_names_ext,
     .pusVSCtoVK = (USHORT *)vsc_to_vk,
     .bMaxVSCtoVK = sizeof(vsc_to_vk) / sizeof(vsc_to_vk[0]),
     .pVSCtoVK_E0 = (VSC_VK *)vsc_to_vk_e0,
     .pVSCtoVK_E1 = (VSC_VK *)vsc_to_vk_e1,
+    .fLocaleFlags = MAKELONG(0, KBD_VERSION),
 };
 
 
@@ -315,6 +431,27 @@ static void kbd_tables_init_vsc2vk( const KBDTABLES *tables, BYTE vsc2vk[0x300] 
         vsc2vk[entry->Vsc + 0x200] = (BYTE)entry->Vk;
     }
 }
+
+#define NEXT_ENTRY(t, e) ((void *)&(e)->wch[(t)->nModifications])
+
+static void kbd_tables_init_vk2char( const KBDTABLES *tables, BYTE vk2char[0x100] )
+{
+    const VK_TO_WCHAR_TABLE *table;
+    const VK_TO_WCHARS1 *entry;
+
+    memset( vk2char, 0, 0x100 );
+
+    for (table = tables->pVkToWcharTable; table->pVkToWchars; table++)
+    {
+        for (entry = table->pVkToWchars; entry->VirtualKey; entry = NEXT_ENTRY(table, entry))
+        {
+            if (entry->VirtualKey & ~0xff) continue;
+            vk2char[entry->VirtualKey] = entry->wch[0];
+        }
+    }
+}
+
+#undef NEXT_ENTRY
 
 /**********************************************************************
  *	     NtUserAttachThreadInput    (win32u.@)
@@ -816,25 +953,6 @@ WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
     return ret;
 }
 
-static const UINT kbd_en_vk2char[] =
-{
-    0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x08, 0x09, 0x00, 0x00, 0x00, 0x0d, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1b, 0x00, 0x00, 0x00, 0x00,
-     ' ', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-     '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7', '8',  '9', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00,  'A',  'B',  'C',  'D',  'E',  'F',  'G', 'H',  'I',  'J',  'K',  'L',  'M',  'N',  'O',
-     'P',  'Q',  'R',  'S',  'T',  'U',  'V',  'W', 'X',  'Y',  'Z', 0x00, 0x00, 0x00, 0x00, 0x00,
-     '0',  '1',  '2',  '3',  '4',  '5',  '6',  '7', '8',  '9',  '*',  '+', 0x00,  '-',  '.',  '/',
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  ';',  '=',  ',',  '-',  '.',  '/',
-     '`', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  '[', '\\',  ']', '\'', 0x00,
-    0x00, 0x00, '\\', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-};
 
 /******************************************************************************
  *	     NtUserMapVirtualKeyEx    (win32u.@)
@@ -842,9 +960,7 @@ static const UINT kbd_en_vk2char[] =
 UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
 {
     const KBDTABLES *kbd_tables = &kbdus_tables;
-    const UINT *vk2char;
-    BYTE vsc2vk[0x300];
-    UINT vk2char_size;
+    BYTE vsc2vk[0x300], vk2char[0x100];
     UINT ret;
 
     TRACE_(keyboard)( "code %u, type %u, layout %p.\n", code, type, layout );
@@ -852,9 +968,7 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
     if ((ret = user_driver->pMapVirtualKeyEx( code, type, layout )) != -1) return ret;
 
     kbd_tables_init_vsc2vk( kbd_tables, vsc2vk );
-
-    vk2char = kbd_en_vk2char;
-    vk2char_size = ARRAYSIZE(kbd_en_vk2char);
+    kbd_tables_init_vk2char( kbd_tables, vk2char );
 
     switch (type)
     {
@@ -905,7 +1019,8 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
         }
         break;
     case MAPVK_VK_TO_CHAR:
-        if (code >= vk2char_size) ret = 0;
+        if (code >= ARRAY_SIZE(vk2char)) ret = 0;
+        else if (code >= 'A' && code <= 'Z') ret = code;
         else ret = vk2char[code];
         break;
     default:
