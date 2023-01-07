@@ -36,6 +36,7 @@
 #include "ntuser_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
+#include "kbd.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 WINE_DECLARE_DEBUG_CHANNEL(keyboard);
@@ -48,6 +49,168 @@ static const WCHAR keyboard_layouts_keyW[] =
     '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
     '\\','C','o','n','t','r','o','l',
     '\\','K','e','y','b','o','a','r','d',' ','L','a','y','o','u','t','s'
+};
+static const WCHAR escW[] = {'E','s','c',0};
+static const WCHAR backspaceW[] = {'B','a','c','k','s','p','a','c','e',0};
+static const WCHAR tabW[] = {'T','a','b',0};
+static const WCHAR enterW[] = {'E','n','t','e','r',0};
+static const WCHAR ctrlW[] = {'C','t','r','l',0};
+static const WCHAR shiftW[] = {'S','h','i','f','t',0};
+static const WCHAR right_shiftW[] = {'R','i','g','h','t',' ','S','h','i','f','t',0};
+static const WCHAR num_mulW[] = {'N','u','m',' ','*',0};
+static const WCHAR altW[] = {'A','l','t',0};
+static const WCHAR spaceW[] = {'S','p','a','c','e',0};
+static const WCHAR caps_lockW[] = {'C','a','p','s',' ','L','o','c','k',0};
+static const WCHAR f1W[] = {'F','1',0};
+static const WCHAR f2W[] = {'F','2',0};
+static const WCHAR f3W[] = {'F','3',0};
+static const WCHAR f4W[] = {'F','4',0};
+static const WCHAR f5W[] = {'F','5',0};
+static const WCHAR f6W[] = {'F','6',0};
+static const WCHAR f7W[] = {'F','7',0};
+static const WCHAR f8W[] = {'F','8',0};
+static const WCHAR f9W[] = {'F','9',0};
+static const WCHAR f10W[] = {'F','1','0',0};
+static const WCHAR pauseW[] = {'P','a','u','s','e',0};
+static const WCHAR scroll_lockW[] = {'S','c','r','o','l','l',' ','L','o','c','k',0};
+static const WCHAR num_7W[] = {'N','u','m',' ','7',0};
+static const WCHAR num_8W[] = {'N','u','m',' ','8',0};
+static const WCHAR num_9W[] = {'N','u','m',' ','9',0};
+static const WCHAR num_minusW[] = {'N','u','m',' ','-',0};
+static const WCHAR num_4W[] = {'N','u','m',' ','4',0};
+static const WCHAR num_5W[] = {'N','u','m',' ','5',0};
+static const WCHAR num_6W[] = {'N','u','m',' ','6',0};
+static const WCHAR num_plusW[] = {'N','u','m',' ','+',0};
+static const WCHAR num_1W[] = {'N','u','m',' ','1',0};
+static const WCHAR num_2W[] = {'N','u','m',' ','2',0};
+static const WCHAR num_3W[] = {'N','u','m',' ','3',0};
+static const WCHAR num_0W[] = {'N','u','m',' ','0',0};
+static const WCHAR num_delW[] = {'N','u','m',' ','D','e','l',0};
+static const WCHAR sys_reqW[] = {'S','y','s',' ','R','e','q',0};
+static const WCHAR f11W[] = {'F','1','1',0};
+static const WCHAR f12W[] = {'F','1','2',0};
+static const WCHAR f13W[] = {'F','1','3',0};
+static const WCHAR f14W[] = {'F','1','4',0};
+static const WCHAR f15W[] = {'F','1','5',0};
+static const WCHAR f16W[] = {'F','1','6',0};
+static const WCHAR f17W[] = {'F','1','7',0};
+static const WCHAR f18W[] = {'F','1','8',0};
+static const WCHAR f19W[] = {'F','1','9',0};
+static const WCHAR f20W[] = {'F','2','0',0};
+static const WCHAR f21W[] = {'F','2','1',0};
+static const WCHAR f22W[] = {'F','2','2',0};
+static const WCHAR f23W[] = {'F','2','3',0};
+static const WCHAR f24W[] = {'F','2','4',0};
+static const WCHAR num_enterW[] = {'N','u','m',' ','E','n','t','e','r',0};
+static const WCHAR right_ctrlW[] = {'R','i','g','h','t',' ','C','t','r','l',0};
+static const WCHAR num_divW[] = {'N','u','m',' ','/',0};
+static const WCHAR prnt_scrnW[] = {'P','r','n','t',' ','S','c','r','n',0};
+static const WCHAR right_altW[] = {'R','i','g','h','t',' ','A','l','t',0};
+static const WCHAR num_lockW[] = {'N','u','m',' ','L','o','c','k',0};
+static const WCHAR breakW[] = {'B','r','e','a','k',0};
+static const WCHAR homeW[] = {'H','o','m','e',0};
+static const WCHAR upW[] = {'U','p',0};
+static const WCHAR page_upW[] = {'P','a','g','e',' ','U','p',0};
+static const WCHAR leftW[] = {'L','e','f','t',0};
+static const WCHAR rightW[] = {'R','i','g','h','t',0};
+static const WCHAR endW[] = {'E','n','d',0};
+static const WCHAR downW[] = {'D','o','w','n',0};
+static const WCHAR page_downW[] = {'P','a','g','e',' ','D','o','w','n',0};
+static const WCHAR insertW[] = {'I','n','s','e','r','t',0};
+static const WCHAR deleteW[] = {'D','e','l','e','t','e',0};
+static const WCHAR zerozeroW[] = {'<','0','0','>',0};
+static const WCHAR helpW[] = {'H','e','l','p',0};
+static const WCHAR left_windowsW[] = {'L','e','f','t',' ','W','i','n','d','o','w','s',0};
+static const WCHAR right_windowsW[] = {'R','i','g','h','t',' ','W','i','n','d','o','w','s',0};
+static const WCHAR applicationW[] = {'A','p','p','l','i','c','a','t','i','o','n',0};
+
+static const VSC_LPWSTR key_names[] =
+{
+    {.vsc = 0x01, .pwsz = (WCHAR *)escW},
+    {.vsc = 0x0e, .pwsz = (WCHAR *)backspaceW},
+    {.vsc = 0x0f, .pwsz = (WCHAR *)tabW},
+    {.vsc = 0x1c, .pwsz = (WCHAR *)enterW},
+    {.vsc = 0x1d, .pwsz = (WCHAR *)ctrlW},
+    {.vsc = 0x2a, .pwsz = (WCHAR *)shiftW},
+    {.vsc = 0x36, .pwsz = (WCHAR *)right_shiftW},
+    {.vsc = 0x37, .pwsz = (WCHAR *)num_mulW},
+    {.vsc = 0x38, .pwsz = (WCHAR *)altW},
+    {.vsc = 0x39, .pwsz = (WCHAR *)spaceW},
+    {.vsc = 0x3a, .pwsz = (WCHAR *)caps_lockW},
+    {.vsc = 0x3b, .pwsz = (WCHAR *)f1W},
+    {.vsc = 0x3c, .pwsz = (WCHAR *)f2W},
+    {.vsc = 0x3d, .pwsz = (WCHAR *)f3W},
+    {.vsc = 0x3e, .pwsz = (WCHAR *)f4W},
+    {.vsc = 0x3f, .pwsz = (WCHAR *)f5W},
+    {.vsc = 0x40, .pwsz = (WCHAR *)f6W},
+    {.vsc = 0x41, .pwsz = (WCHAR *)f7W},
+    {.vsc = 0x42, .pwsz = (WCHAR *)f8W},
+    {.vsc = 0x43, .pwsz = (WCHAR *)f9W},
+    {.vsc = 0x44, .pwsz = (WCHAR *)f10W},
+    {.vsc = 0x45, .pwsz = (WCHAR *)pauseW},
+    {.vsc = 0x46, .pwsz = (WCHAR *)scroll_lockW},
+    {.vsc = 0x47, .pwsz = (WCHAR *)num_7W},
+    {.vsc = 0x48, .pwsz = (WCHAR *)num_8W},
+    {.vsc = 0x49, .pwsz = (WCHAR *)num_9W},
+    {.vsc = 0x4a, .pwsz = (WCHAR *)num_minusW},
+    {.vsc = 0x4b, .pwsz = (WCHAR *)num_4W},
+    {.vsc = 0x4c, .pwsz = (WCHAR *)num_5W},
+    {.vsc = 0x4d, .pwsz = (WCHAR *)num_6W},
+    {.vsc = 0x4e, .pwsz = (WCHAR *)num_plusW},
+    {.vsc = 0x4f, .pwsz = (WCHAR *)num_1W},
+    {.vsc = 0x50, .pwsz = (WCHAR *)num_2W},
+    {.vsc = 0x51, .pwsz = (WCHAR *)num_3W},
+    {.vsc = 0x52, .pwsz = (WCHAR *)num_0W},
+    {.vsc = 0x53, .pwsz = (WCHAR *)num_delW},
+    {.vsc = 0x54, .pwsz = (WCHAR *)sys_reqW},
+    {.vsc = 0x57, .pwsz = (WCHAR *)f11W},
+    {.vsc = 0x58, .pwsz = (WCHAR *)f12W},
+    {.vsc = 0x7c, .pwsz = (WCHAR *)f13W},
+    {.vsc = 0x7d, .pwsz = (WCHAR *)f14W},
+    {.vsc = 0x7e, .pwsz = (WCHAR *)f15W},
+    {.vsc = 0x7f, .pwsz = (WCHAR *)f16W},
+    {.vsc = 0x80, .pwsz = (WCHAR *)f17W},
+    {.vsc = 0x81, .pwsz = (WCHAR *)f18W},
+    {.vsc = 0x82, .pwsz = (WCHAR *)f19W},
+    {.vsc = 0x83, .pwsz = (WCHAR *)f20W},
+    {.vsc = 0x84, .pwsz = (WCHAR *)f21W},
+    {.vsc = 0x85, .pwsz = (WCHAR *)f22W},
+    {.vsc = 0x86, .pwsz = (WCHAR *)f23W},
+    {.vsc = 0x87, .pwsz = (WCHAR *)f24W},
+    {0},
+};
+
+static const VSC_LPWSTR key_names_ext[] =
+{
+    {.vsc = 0x1c, .pwsz = (WCHAR *)num_enterW},
+    {.vsc = 0x1d, .pwsz = (WCHAR *)right_ctrlW},
+    {.vsc = 0x35, .pwsz = (WCHAR *)num_divW},
+    {.vsc = 0x37, .pwsz = (WCHAR *)prnt_scrnW},
+    {.vsc = 0x38, .pwsz = (WCHAR *)right_altW},
+    {.vsc = 0x45, .pwsz = (WCHAR *)num_lockW},
+    {.vsc = 0x46, .pwsz = (WCHAR *)breakW},
+    {.vsc = 0x47, .pwsz = (WCHAR *)homeW},
+    {.vsc = 0x48, .pwsz = (WCHAR *)upW},
+    {.vsc = 0x49, .pwsz = (WCHAR *)page_upW},
+    {.vsc = 0x4b, .pwsz = (WCHAR *)leftW},
+    {.vsc = 0x4d, .pwsz = (WCHAR *)rightW},
+    {.vsc = 0x4f, .pwsz = (WCHAR *)endW},
+    {.vsc = 0x50, .pwsz = (WCHAR *)downW},
+    {.vsc = 0x51, .pwsz = (WCHAR *)page_downW},
+    {.vsc = 0x52, .pwsz = (WCHAR *)insertW},
+    {.vsc = 0x53, .pwsz = (WCHAR *)deleteW},
+    {.vsc = 0x54, .pwsz = (WCHAR *)zerozeroW},
+    {.vsc = 0x56, .pwsz = (WCHAR *)helpW},
+    {.vsc = 0x5b, .pwsz = (WCHAR *)left_windowsW},
+    {.vsc = 0x5c, .pwsz = (WCHAR *)right_windowsW},
+    {.vsc = 0x5d, .pwsz = (WCHAR *)applicationW},
+    {0},
+};
+
+static const KBDTABLES kbdus_tables =
+{
+    .pKeyNames = (VSC_LPWSTR *)key_names,
+    .pKeyNamesExt = (VSC_LPWSTR *)key_names_ext,
 };
 
 
@@ -628,43 +791,6 @@ static const UINT kbd_en_vk2char[] =
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-static const char *kbd_en_vscname[] =
-{
-    0, "Esc", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Backspace", "Tab",
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Enter", "Ctrl", 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Shift", 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, "Right Shift", "Num *", "Alt", "Space", "Caps Lock", "F1", "F2", "F3", "F4", "F5",
-    "F6", "F7", "F8", "F9", "F10", "Pause", "Scroll Lock", "Num 7", "Num 8", "Num 9", "Num -", "Num 4", "Num 5", "Num 6", "Num +", "Num 1",
-    "Num 2", "Num 3", "Num 0", "Num Del", "Sys Req", 0, 0, "F11", "F12", 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "F13", "F14", "F15", "F16",
-    "F17", "F18", "F19", "F20", "F21", "F22", "F23", "F24", 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    /* extended */
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "Num Enter", "Right Ctrl", 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, "Num /", 0, "Prnt Scrn", "Right Alt", 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, "Num Lock", "Break", "Home", "Up", "Page Up", 0, "Left", 0, "Right", 0, "End",
-    "Down", "Page Down", "Insert", "Delete", "<00>", 0, "Help", 0, 0, 0, 0, "Left Windows", "Right Windows", "Application", 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
-
 /******************************************************************************
  *	     NtUserMapVirtualKeyEx    (win32u.@)
  */
@@ -752,11 +878,12 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
 INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
 {
     INT code = ((lparam >> 16) & 0x1ff), vkey, len;
-    UINT vsc2vk_size, vscname_size;
-    const char *const *vscname;
+    const KBDTABLES *kbd_tables = &kbdus_tables;
+    VSC_LPWSTR *key_name;
     const UINT *vsc2vk;
+    UINT vsc2vk_size;
 
-    TRACE_(keyboard)( "lparam %d, buffer %p, size %d.\n", (int)lparam, buffer, size );
+    TRACE_(keyboard)( "lparam %#x, buffer %p, size %d.\n", (int)lparam, buffer, size );
 
     if (!buffer || !size) return 0;
     if ((len = user_driver->pGetKeyNameText( lparam, buffer, size )) >= 0) return len;
@@ -765,8 +892,6 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
 
     vsc2vk = kbd_en_vsc2vk;
     vsc2vk_size = ARRAYSIZE(kbd_en_vsc2vk);
-    vscname = kbd_en_vscname;
-    vscname_size = ARRAYSIZE(kbd_en_vscname);
 
     if (lparam & 0x2000000)
     {
@@ -781,20 +906,21 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
         }
     }
 
-    if (code < vscname_size)
+    if (code < 0x100) key_name = kbd_tables->pKeyNames;
+    else key_name = kbd_tables->pKeyNamesExt;
+    while (key_name->vsc && key_name->vsc != (BYTE)code) key_name++;
+
+    if (key_name->vsc == (BYTE)code)
     {
-        if (vscname[code])
-        {
-            len = min( size - 1, strlen(vscname[code]) );
-            ascii_to_unicode( buffer, vscname[code], len );
-        }
-        else if (size > 1)
-        {
-            HKL hkl = NtUserGetKeyboardLayout( 0 );
-            vkey = NtUserMapVirtualKeyEx( code & 0xff, MAPVK_VSC_TO_VK, hkl );
-            buffer[0] = NtUserMapVirtualKeyEx( vkey, MAPVK_VK_TO_CHAR, hkl );
-            len = 1;
-        }
+        len = min( size - 1, wcslen( key_name->pwsz ) );
+        memcpy( buffer, key_name->pwsz, len * sizeof(WCHAR) );
+    }
+    else if (size > 1)
+    {
+        HKL hkl = NtUserGetKeyboardLayout( 0 );
+        vkey = NtUserMapVirtualKeyEx( code & 0xff, MAPVK_VSC_TO_VK, hkl );
+        buffer[0] = NtUserMapVirtualKeyEx( vkey, MAPVK_VK_TO_CHAR, hkl );
+        len = 1;
     }
     buffer[len] = 0;
 
