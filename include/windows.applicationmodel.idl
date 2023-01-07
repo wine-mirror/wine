@@ -95,6 +95,16 @@ namespace Windows.ApplicationModel {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.ApplicationModel.Package),
+        uuid(4e534bdf-2960-4878-97a4-9624deb72f2d)
+    ]
+    interface IPackageStatics : IInspectable
+    {
+        [propget] HRESULT Current([out, retval] Windows.ApplicationModel.Package **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
         marshaling_behavior(agile),
         static(Windows.ApplicationModel.IPackageStatics, Windows.Foundation.UniversalApiContract, 1.0),
         threading(both)
@@ -102,6 +112,14 @@ namespace Windows.ApplicationModel {
     runtimeclass Package
     {
         [default] interface Windows.ApplicationModel.IPackage;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackage2;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackage3;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.ApplicationModel.IPackageWithMetadata;
+        [contract(Windows.Foundation.UniversalApiContract, 3.0)] interface Windows.ApplicationModel.IPackage4;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.ApplicationModel.IPackage5;
+        [contract(Windows.Foundation.UniversalApiContract, 7.0)] interface Windows.ApplicationModel.IPackage6;
+        [contract(Windows.Foundation.UniversalApiContract, 8.0)] interface Windows.ApplicationModel.IPackage7;
+        [contract(Windows.Foundation.UniversalApiContract, 10.0)] interface Windows.ApplicationModel.IPackage8;
     }
 
     [
