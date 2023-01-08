@@ -83,15 +83,21 @@ typedef struct _KSEMAPHORE {
 } KSEMAPHORE, *PKSEMAPHORE, *PRKSEMAPHORE;
 
 typedef struct _KDPC {
-  CSHORT  Type;
-  UCHAR  Number;
-  UCHAR  Importance;
-  LIST_ENTRY  DpcListEntry;
+  union {
+    ULONG TargetInfoAsUlong;
+    struct {
+      UCHAR  Type;
+      UCHAR  Importance;
+      volatile USHORT  Number;
+    } DUMMYSTRUCTNAME;
+  } DUMMYUNIONNAME;
+  SINGLE_LIST_ENTRY  DpcListEntry;
+  KAFFINITY  ProcessorHistory;
   PKDEFERRED_ROUTINE  DeferredRoutine;
   PVOID  DeferredContext;
   PVOID  SystemArgument1;
   PVOID  SystemArgument2;
-  PULONG_PTR  Lock;
+  PVOID  DpcData;
 } KDPC, *PKDPC, *RESTRICTED_POINTER PRKDPC;
 
 typedef enum _KDPC_IMPORTANCE {
