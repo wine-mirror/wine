@@ -451,6 +451,43 @@ static void kbd_tables_init_vk2char( const KBDTABLES *tables, BYTE vk2char[0x100
     }
 }
 
+static UINT kbd_tables_get_mod_bits( const KBDTABLES *tables, UINT mod )
+{
+    const MODIFIERS *mods = tables->pCharModifiers;
+    WORD bits;
+
+    for (bits = 0; bits <= mods->wMaxModBits; ++bits)
+        if (mods->ModNumber[bits] == mod) return bits;
+
+    return -1;
+}
+
+static WORD kbd_tables_wchar_to_vkey( const KBDTABLES *tables, WCHAR wch )
+{
+    const VK_TO_WCHAR_TABLE *table;
+    const VK_TO_WCHARS1 *entry;
+    WORD bits;
+    BYTE mod;
+
+    if (wch == '\x001b') return VK_ESCAPE;
+
+    for (table = tables->pVkToWcharTable; table->pVkToWchars; table++)
+    {
+        for (entry = table->pVkToWchars; entry->VirtualKey; entry = NEXT_ENTRY(table, entry))
+        {
+            for (mod = 0; mod < table->nModifications; ++mod)
+            {
+                if (entry->wch[mod] == WCH_NONE || entry->wch[mod] != wch) continue;
+                bits = kbd_tables_get_mod_bits( tables, mod );
+                return (bits << 8) | entry->VirtualKey;
+            }
+        }
+    }
+
+    if (wch >= 0x0001 && wch <= 0x001a) return (0x200) | ('A' + wch - 1);  /* CTRL + A-Z */
+    return wch >= 0x0080 ? -1 : 0;
+}
+
 #undef NEXT_ENTRY
 
 /**********************************************************************
@@ -893,61 +930,13 @@ BOOL WINAPI NtUserSetKeyboardState( BYTE *state )
  */
 WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
 {
-    WORD shift = 0x100, ctrl = 0x200;
+    const KBDTABLES *kbd_tables = &kbdus_tables;
     SHORT ret;
 
     TRACE_(keyboard)( "chr %s, layout %p\n", debugstr_wn(&chr, 1), layout );
 
     if ((ret = user_driver->pVkKeyScanEx( chr, layout )) != -256) return ret;
-
-    /* FIXME: English keyboard layout specific */
-
-    if (chr == VK_CANCEL || chr == VK_BACK || chr == VK_TAB || chr == VK_RETURN ||
-        chr == VK_ESCAPE || chr == VK_SPACE) ret = chr;
-    else if (chr >= '0' && chr <= '9') ret = chr;
-    else if (chr == ')') ret = shift + '0';
-    else if (chr == '!') ret = shift + '1';
-    else if (chr == '@') ret = shift + '2';
-    else if (chr == '#') ret = shift + '3';
-    else if (chr == '$') ret = shift + '4';
-    else if (chr == '%') ret = shift + '5';
-    else if (chr == '^') ret = shift + '6';
-    else if (chr == '&') ret = shift + '7';
-    else if (chr == '*') ret = shift + '8';
-    else if (chr == '(') ret = shift + '9';
-    else if (chr >= 'a' && chr <= 'z') ret = chr - 'a' + 'A';
-    else if (chr >= 'A' && chr <= 'Z') ret = shift + chr;
-    else if (chr == ';') ret = VK_OEM_1;
-    else if (chr == '=') ret = VK_OEM_PLUS;
-    else if (chr == ',') ret = VK_OEM_COMMA;
-    else if (chr == '-') ret = VK_OEM_MINUS;
-    else if (chr == '.') ret = VK_OEM_PERIOD;
-    else if (chr == '/') ret = VK_OEM_2;
-    else if (chr == '`') ret = VK_OEM_3;
-    else if (chr == '[') ret = VK_OEM_4;
-    else if (chr == '\\') ret = VK_OEM_5;
-    else if (chr == ']') ret = VK_OEM_6;
-    else if (chr == '\'') ret = VK_OEM_7;
-    else if (chr == ':') ret = shift + VK_OEM_1;
-    else if (chr == '+') ret = shift + VK_OEM_PLUS;
-    else if (chr == '<') ret = shift + VK_OEM_COMMA;
-    else if (chr == '_') ret = shift + VK_OEM_MINUS;
-    else if (chr == '>') ret = shift + VK_OEM_PERIOD;
-    else if (chr == '?') ret = shift + VK_OEM_2;
-    else if (chr == '~') ret = shift + VK_OEM_3;
-    else if (chr == '{') ret = shift + VK_OEM_4;
-    else if (chr == '|') ret = shift + VK_OEM_5;
-    else if (chr == '}') ret = shift + VK_OEM_6;
-    else if (chr == '\"') ret = shift + VK_OEM_7;
-    else if (chr == 0x7f) ret = ctrl + VK_BACK;
-    else if (chr == '\n') ret = ctrl + VK_RETURN;
-    else if (chr == 0xf000) ret = ctrl + '2';
-    else if (chr == 0x0000) ret = ctrl + shift + '2';
-    else if (chr >= 0x0001 && chr <= 0x001a) ret = ctrl + 'A' + chr - 1;
-    else if (chr >= 0x001c && chr <= 0x001d) ret = ctrl + VK_OEM_3 + chr;
-    else if (chr == 0x001e) ret = ctrl + shift + '6';
-    else if (chr == 0x001f) ret = ctrl + shift + VK_OEM_MINUS;
-    else ret = -1;
+    ret = kbd_tables_wchar_to_vkey( kbd_tables, chr );
 
     TRACE_(keyboard)( "ret %04x\n", ret );
     return ret;
