@@ -3418,7 +3418,7 @@ static DWORD WINAPI window_thread(void *data)
     DestroyWindow(thread_data->window);
     thread_data->window = NULL;
 
-    UnregisterClassA("dxgi_test_wndproc_wc", GetModuleHandleA(NULL));
+    UnregisterClassA("dxgi_resize_target_wndproc_wc", GetModuleHandleA(NULL));
 
     return 0;
 }
