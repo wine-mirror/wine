@@ -3423,15 +3423,13 @@ static DWORD WINAPI window_thread(void *data)
     return 0;
 }
 
-static void test_resize_target_wndproc(void)
+static void test_resize_target_wndproc(IUnknown *device, BOOL is_d3d12)
 {
     struct window_thread_data thread_data;
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     IDXGISwapChain *swapchain;
     IDXGIFactory *factory;
-    IDXGIAdapter *adapter;
     DXGI_MODE_DESC mode;
-    IDXGIDevice *device;
     unsigned int ret;
     ULONG refcount;
     LONG_PTR data;
@@ -3439,11 +3437,7 @@ static void test_resize_target_wndproc(void)
     HRESULT hr;
     RECT rect;
 
-    if (!(device = create_device(0)))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
+    get_factory(device, is_d3d12, &factory);
 
     memset(&thread_data, 0, sizeof(thread_data));
     thread_data.window_created = CreateEventA(NULL, FALSE, FALSE, NULL);
@@ -3456,11 +3450,6 @@ static void test_resize_target_wndproc(void)
     ret = WaitForSingleObject(thread_data.window_created, INFINITE);
     ok(ret == WAIT_OBJECT_0, "Failed to wait for thread, ret %#x, last error %#lx.\n", ret, GetLastError());
 
-    hr = IDXGIDevice_GetAdapter(device, &adapter);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
     swapchain_desc.BufferDesc.Width = 800;
     swapchain_desc.BufferDesc.Height = 600;
     swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
@@ -3471,12 +3460,12 @@ static void test_resize_target_wndproc(void)
     swapchain_desc.SampleDesc.Count = 1;
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchain_desc.BufferCount = 1;
+    swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
     swapchain_desc.OutputWindow = thread_data.window;
     swapchain_desc.Windowed = TRUE;
-    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     data = SetWindowLongPtrA(thread_data.window, GWLP_USERDATA, (LONG_PTR)swapchain);
@@ -3503,11 +3492,8 @@ static void test_resize_target_wndproc(void)
     refcount = IDXGISwapChain_Release(swapchain);
     ok(!refcount, "IDXGISwapChain has %lu references left.\n", refcount);
 
-    IDXGIAdapter_Release(adapter);
-    refcount = IDXGIDevice_Release(device);
-    ok(!refcount, "Device has %lu references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
-    ok(!refcount, "Factory has %lu references left.\n", refcount);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %lu.\n", refcount);
 
     ret = SetEvent(thread_data.finished);
     ok(ret, "Failed to set event, last error %#lx.\n", GetLastError());
@@ -7715,7 +7701,6 @@ START_TEST(dxgi)
     queue_test(test_parents);
     queue_test(test_output);
     queue_test(test_find_closest_matching_mode);
-    queue_test(test_resize_target_wndproc);
     queue_test(test_create_factory);
     queue_test(test_private_data);
     queue_test(test_maximum_frame_latency);
@@ -7747,6 +7732,7 @@ START_TEST(dxgi)
     run_on_d3d10(test_default_fullscreen_target_output);
     run_on_d3d10(test_mode_change);
     run_on_d3d10(test_swapchain_present_count);
+    run_on_d3d10(test_resize_target_wndproc);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -7778,6 +7764,7 @@ START_TEST(dxgi)
     run_on_d3d12(test_default_fullscreen_target_output);
     run_on_d3d12(test_mode_change);
     run_on_d3d12(test_swapchain_present_count);
+    run_on_d3d12(test_resize_target_wndproc);
 
     FreeLibrary(d3d12_module);
 }
