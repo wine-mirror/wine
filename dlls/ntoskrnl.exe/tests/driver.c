@@ -2123,9 +2123,26 @@ static void WINAPI test_dpc_func(PKDPC Dpc, void *context, void *cpu_count,
 static void test_dpc(void)
 {
     void (WINAPI *pKeGenericCallDpc)(PKDEFERRED_ROUTINE routine, void *context);
+    void (WINAPI *pKeInitializeDpc)(PKDPC dpc, PKDEFERRED_ROUTINE routine, void *context);
     struct test_dpc_func_context data;
     KAFFINITY cpu_mask;
     ULONG cpu_count;
+    struct _KDPC dpc = {0};
+
+    pKeInitializeDpc = get_proc_address("KeInitializeDpc");
+    if(!pKeInitializeDpc)
+    {
+        win_skip("KeInitializeDpc is not available.\n");
+        return;
+    }
+
+    pKeInitializeDpc(&dpc, test_dpc_func, &data);
+
+    ok(dpc.Number == 0, "Got unexpected Dpc Number %u.\n", dpc.Number);
+    todo_wine ok(dpc.Type == 0x13, "Got unexpected Dpc Type %u.\n", dpc.Type);
+    todo_wine ok(dpc.Importance == MediumImportance, "Got unexpected Dpc Importance %u.\n", dpc.Importance);
+    ok(dpc.DeferredRoutine == test_dpc_func, "Got unexpected Dpc DeferredRoutine %p.\n", dpc.DeferredRoutine);
+    ok(dpc.DeferredContext == &data, "Got unexpected Dpc DeferredContext %p.\n", dpc.DeferredContext);
 
     pKeGenericCallDpc = get_proc_address("KeGenericCallDpc");
     if (!pKeGenericCallDpc)
