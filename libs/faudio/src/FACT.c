@@ -352,6 +352,16 @@ uint32_t FACTAudioEngine_ShutDown(FACTAudioEngine *pEngine)
 		FAudio_StopEngine(pEngine->audio);
 	}
 
+	/* Purge All pending notifactions */
+	while (pEngine->wb_notifications_list)
+	{
+		FACTNotification *note = (FACTNotification*) pEngine->wb_notifications_list->entry;
+		pEngine->notificationCallback(note);
+		LinkedList_RemoveEntry(&pEngine->wb_notifications_list, note, pEngine->apiLock, pEngine->pFree);
+	}
+
+	pEngine->notifications = 0;
+
 	/* This method destroys all existing cues, sound banks, and wave banks.
 	 * It blocks until all cues are destroyed.
 	 */
