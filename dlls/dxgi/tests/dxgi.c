@@ -5873,14 +5873,12 @@ static LRESULT CALLBACK test_wndproc(HWND hwnd, unsigned int message, WPARAM wpa
     return DefWindowProcA(hwnd, message, wparam, lparam);
 }
 
-static void test_swapchain_window_messages(void)
+static void test_swapchain_window_messages(IUnknown *device, BOOL is_d3d12)
 {
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     IDXGISwapChain *swapchain;
     DXGI_MODE_DESC mode_desc;
     IDXGIFactory *factory;
-    IDXGIAdapter *adapter;
-    IDXGIDevice *device;
     ULONG refcount;
     WNDCLASSA wc;
     HWND window;
@@ -5942,12 +5940,6 @@ static void test_swapchain_window_messages(void)
         {0,                    FALSE, 0},
     };
 
-    if (!(device = create_device(0)))
-    {
-        skip("Failed to create device.\n");
-        return;
-    }
-
     memset(&wc, 0, sizeof(wc));
     wc.lpfnWndProc = test_wndproc;
     wc.lpszClassName = "dxgi_test_wndproc_wc";
@@ -5955,11 +5947,7 @@ static void test_swapchain_window_messages(void)
     window = CreateWindowA("dxgi_test_wndproc_wc", "dxgi_test", 0, 0, 0, 400, 200, 0, 0, 0, 0);
     ok(!!window, "Failed to create window.\n");
 
-    hr = IDXGIDevice_GetAdapter(device, &adapter);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    IDXGIAdapter_Release(adapter);
+    get_factory(device, is_d3d12, &factory);
 
     swapchain_desc.BufferDesc.Width = 800;
     swapchain_desc.BufferDesc.Height = 600;
@@ -5971,16 +5959,16 @@ static void test_swapchain_window_messages(void)
     swapchain_desc.SampleDesc.Count = 1;
     swapchain_desc.SampleDesc.Quality = 0;
     swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-    swapchain_desc.BufferCount = 1;
+    swapchain_desc.BufferCount = is_d3d12 ? 2 : 1;
     swapchain_desc.OutputWindow = window;
     swapchain_desc.Windowed = TRUE;
-    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.SwapEffect = is_d3d12 ? DXGI_SWAP_EFFECT_FLIP_DISCARD : DXGI_SWAP_EFFECT_DISCARD;
     swapchain_desc.Flags = 0;
 
     /* create swapchain */
     flush_events();
     expect_no_messages = TRUE;
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     flush_events();
     expect_no_messages = FALSE;
@@ -6045,7 +6033,7 @@ static void test_swapchain_window_messages(void)
 
     expect_messages = enter_fullscreen_messages;
     expect_messages_broken = enter_fullscreen_messages_vista;
-    hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
+    hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     flush_events();
     todo_wine
@@ -6067,10 +6055,8 @@ done:
     ok(!refcount, "IDXGISwapChain has %lu references left.\n", refcount);
     DestroyWindow(window);
 
-    refcount = IDXGIDevice_Release(device);
-    ok(!refcount, "Device has %lu references left.\n", refcount);
     refcount = IDXGIFactory_Release(factory);
-    ok(!refcount, "Factory has %lu references left.\n", refcount);
+    ok(refcount == !is_d3d12, "Got unexpected refcount %lu.\n", refcount);
 
     UnregisterClassA("dxgi_test_wndproc_wc", GetModuleHandleA(NULL));
 }
@@ -7717,7 +7703,6 @@ START_TEST(dxgi)
     test_gamma_control();
     test_multi_adapter();
     test_swapchain_parameters();
-    test_swapchain_window_messages();
     test_swapchain_window_styles();
     run_on_d3d10(test_set_fullscreen);
     run_on_d3d10(test_resize_target);
@@ -7733,6 +7718,7 @@ START_TEST(dxgi)
     run_on_d3d10(test_mode_change);
     run_on_d3d10(test_swapchain_present_count);
     run_on_d3d10(test_resize_target_wndproc);
+    run_on_d3d10(test_swapchain_window_messages);
 
     if (!(d3d12_module = LoadLibraryA("d3d12.dll")))
     {
@@ -7765,6 +7751,7 @@ START_TEST(dxgi)
     run_on_d3d12(test_mode_change);
     run_on_d3d12(test_swapchain_present_count);
     run_on_d3d12(test_resize_target_wndproc);
+    run_on_d3d12(test_swapchain_window_messages);
 
     FreeLibrary(d3d12_module);
 }
