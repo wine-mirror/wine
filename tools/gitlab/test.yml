@@ -71,3 +71,31 @@ debian-64:
     - job: build-daily-linux
   script:
     - wine usr/local/lib/wine/x86_64-windows/winetest.exe -q -t gitlab-$CI_JOB_NAME -u $CI_JOB_URL
+
+win10-21h2-32:
+  stage: test
+  interruptible: true
+  variables:
+    GIT_STRATEGY: none
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  needs:
+    - job: build-winetest
+  tags:
+    - win10-21h2
+  script:
+    - ./winetest.exe -q -t gitlab-$CI_JOB_NAME -u $CI_JOB_URL
+
+win10-21h2-64:
+  stage: test
+  interruptible: true
+  variables:
+    GIT_STRATEGY: none
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  needs:
+    - job: build-winetest
+  tags:
+    - win10-21h2
+  script:
+    - ./winetest64.exe -q -t gitlab-$CI_JOB_NAME -u $CI_JOB_URL

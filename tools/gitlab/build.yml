@@ -63,7 +63,7 @@ build-daily-linux:
 
 build-winetest:
   stage: build
-  image: $CI_DEPENDENCY_PROXY_DIRECT_GROUP_IMAGE_PREFIX/debian:bullseye
+  image: $CI_REGISTRY/wine/wine:debian-bullseye
   rules:
     - if: $CI_PIPELINE_SOURCE == 'trigger' && $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   needs:
