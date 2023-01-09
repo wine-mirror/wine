@@ -37,6 +37,13 @@ static int __cdecl uia_event_guid_compare(const void *a, const void *b)
     return memcmp(guid, event->guid, sizeof(*guid));
 }
 
+static int __cdecl uia_pattern_guid_compare(const void *a, const void *b)
+{
+    const GUID *guid = a;
+    const struct uia_pattern_info *pattern = b;
+    return memcmp(guid, pattern->guid, sizeof(*guid));
+}
+
 /* Sorted by GUID. */
 static const struct uia_prop_info default_uia_properties[] = {
     { &AutomationId_Property_GUID,                       UIA_AutomationIdPropertyId,
@@ -402,6 +409,89 @@ static const struct uia_event_info *uia_event_info_from_guid(const GUID *guid)
     return NULL;
 }
 
+/* Sorted by GUID. */
+static const struct uia_pattern_info default_uia_patterns[] = {
+    { &ScrollItem_Pattern_GUID,         UIA_ScrollItemPatternId,
+      &IID_IScrollItemProvider, },
+    { &Tranform_Pattern2_GUID,          UIA_TransformPattern2Id,
+      &IID_ITransformProvider2, },
+    { &ItemContainer_Pattern_GUID,      UIA_ItemContainerPatternId,
+      &IID_IItemContainerProvider, },
+    { &Drag_Pattern_GUID,               UIA_DragPatternId,
+      &IID_IDragProvider, },
+    { &Window_Pattern_GUID,             UIA_WindowPatternId,
+      &IID_IWindowProvider, },
+    { &VirtualizedItem_Pattern_GUID,    UIA_VirtualizedItemPatternId,
+      &IID_IVirtualizedItemProvider, },
+    { &Dock_Pattern_GUID,               UIA_DockPatternId,
+      &IID_IDockProvider, },
+    { &Styles_Pattern_GUID,             UIA_StylesPatternId,
+      &IID_IStylesProvider, },
+    { &DropTarget_Pattern_GUID,         UIA_DropTargetPatternId,
+      &IID_IDropTargetProvider, },
+    { &Text_Pattern_GUID,               UIA_TextPatternId,
+      &IID_ITextProvider, },
+    { &Toggle_Pattern_GUID,             UIA_TogglePatternId,
+      &IID_IToggleProvider, },
+    { &GridItem_Pattern_GUID,           UIA_GridItemPatternId,
+      &IID_IGridItemProvider, },
+    { &RangeValue_Pattern_GUID,         UIA_RangeValuePatternId,
+      &IID_IRangeValueProvider, },
+    { &TextEdit_Pattern_GUID,           UIA_TextEditPatternId,
+      &IID_ITextEditProvider, },
+    { &CustomNavigation_Pattern_GUID,   UIA_CustomNavigationPatternId,
+      &IID_ICustomNavigationProvider, },
+    { &Table_Pattern_GUID,              UIA_TablePatternId,
+      &IID_ITableProvider, },
+    { &Value_Pattern_GUID,              UIA_ValuePatternId,
+      &IID_IValueProvider, },
+    { &LegacyIAccessible_Pattern_GUID,  UIA_LegacyIAccessiblePatternId,
+      &IID_ILegacyIAccessibleProvider, },
+    { &Text_Pattern2_GUID,              UIA_TextPattern2Id,
+      &IID_ITextProvider2, },
+    { &ExpandCollapse_Pattern_GUID,     UIA_ExpandCollapsePatternId,
+      &IID_IExpandCollapseProvider, },
+    { &SynchronizedInput_Pattern_GUID,  UIA_SynchronizedInputPatternId,
+      &IID_ISynchronizedInputProvider, },
+    { &Scroll_Pattern_GUID,             UIA_ScrollPatternId,
+      &IID_IScrollProvider, },
+    { &TextChild_Pattern_GUID,          UIA_TextChildPatternId,
+      &IID_ITextChildProvider, },
+    { &TableItem_Pattern_GUID,          UIA_TableItemPatternId,
+      &IID_ITableItemProvider, },
+    { &Spreadsheet_Pattern_GUID,        UIA_SpreadsheetPatternId,
+      &IID_ISpreadsheetProvider, },
+    { &Grid_Pattern_GUID,               UIA_GridPatternId,
+      &IID_IGridProvider, },
+    { &Annotation_Pattern_GUID,         UIA_AnnotationPatternId,
+      &IID_IAnnotationProvider, },
+    { &Transform_Pattern_GUID,          UIA_TransformPatternId,
+      &IID_ITransformProvider, },
+    { &MultipleView_Pattern_GUID,       UIA_MultipleViewPatternId,
+      &IID_IMultipleViewProvider, },
+    { &Selection_Pattern_GUID,          UIA_SelectionPatternId,
+      &IID_ISelectionProvider, },
+    { &SelectionItem_Pattern_GUID,      UIA_SelectionItemPatternId,
+      &IID_ISelectionItemProvider, },
+    { &Invoke_Pattern_GUID,             UIA_InvokePatternId,
+      &IID_IInvokeProvider, },
+    { &ObjectModel_Pattern_GUID,        UIA_ObjectModelPatternId,
+      &IID_IObjectModelProvider, },
+    { &SpreadsheetItem_Pattern_GUID,    UIA_SpreadsheetItemPatternId,
+      &IID_ISpreadsheetItemProvider, },
+};
+
+static const struct uia_pattern_info *uia_pattern_info_from_guid(const GUID *guid)
+{
+    struct uia_pattern_info *pattern;
+
+    if ((pattern = bsearch(guid, default_uia_patterns, ARRAY_SIZE(default_uia_patterns), sizeof(*pattern),
+            uia_pattern_guid_compare)))
+        return pattern;
+
+    return NULL;
+}
+
 /***********************************************************************
  *          UiaLookupId (uiautomationcore.@)
  */
@@ -438,6 +528,17 @@ int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid)
     }
 
     case AutomationIdentifierType_Pattern:
+    {
+        const struct uia_pattern_info *pattern = uia_pattern_info_from_guid(guid);
+
+        if (pattern)
+            ret_id = pattern->pattern_id;
+        else
+            FIXME("Failed to find patternId for GUID %s\n", debugstr_guid(guid));
+
+        break;
+    }
+
     case AutomationIdentifierType_ControlType:
     case AutomationIdentifierType_TextAttribute:
     case AutomationIdentifierType_LandmarkType:

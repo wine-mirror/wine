@@ -4063,6 +4063,45 @@ static const struct uia_lookup_id uia_event_lookup_ids[] = {
     { &Notification_Event_GUID,                                   UIA_NotificationEventId },
 };
 
+static const struct uia_lookup_id uia_pattern_lookup_ids[] = {
+    { &Invoke_Pattern_GUID,            UIA_InvokePatternId },
+    { &Selection_Pattern_GUID,         UIA_SelectionPatternId },
+    { &Value_Pattern_GUID,             UIA_ValuePatternId },
+    { &RangeValue_Pattern_GUID,        UIA_RangeValuePatternId },
+    { &Scroll_Pattern_GUID,            UIA_ScrollPatternId },
+    { &ExpandCollapse_Pattern_GUID,    UIA_ExpandCollapsePatternId },
+    { &Grid_Pattern_GUID,              UIA_GridPatternId },
+    { &GridItem_Pattern_GUID,          UIA_GridItemPatternId },
+    { &MultipleView_Pattern_GUID,      UIA_MultipleViewPatternId },
+    { &Window_Pattern_GUID,            UIA_WindowPatternId },
+    { &SelectionItem_Pattern_GUID,     UIA_SelectionItemPatternId },
+    { &Dock_Pattern_GUID,              UIA_DockPatternId },
+    { &Table_Pattern_GUID,             UIA_TablePatternId },
+    { &TableItem_Pattern_GUID,         UIA_TableItemPatternId },
+    { &Text_Pattern_GUID,              UIA_TextPatternId },
+    { &Toggle_Pattern_GUID,            UIA_TogglePatternId },
+    { &Transform_Pattern_GUID,         UIA_TransformPatternId },
+    { &ScrollItem_Pattern_GUID,        UIA_ScrollItemPatternId },
+    { &LegacyIAccessible_Pattern_GUID, UIA_LegacyIAccessiblePatternId },
+    { &ItemContainer_Pattern_GUID,     UIA_ItemContainerPatternId },
+    { &VirtualizedItem_Pattern_GUID,   UIA_VirtualizedItemPatternId },
+    { &SynchronizedInput_Pattern_GUID, UIA_SynchronizedInputPatternId },
+    /* Implemented on Win8+ */
+    { &ObjectModel_Pattern_GUID,       UIA_ObjectModelPatternId },
+    { &Annotation_Pattern_GUID,        UIA_AnnotationPatternId },
+    { &Text_Pattern2_GUID,             UIA_TextPattern2Id },
+    { &Styles_Pattern_GUID,            UIA_StylesPatternId },
+    { &Spreadsheet_Pattern_GUID,       UIA_SpreadsheetPatternId },
+    { &SpreadsheetItem_Pattern_GUID,   UIA_SpreadsheetItemPatternId },
+    { &Tranform_Pattern2_GUID,         UIA_TransformPattern2Id },
+    { &TextChild_Pattern_GUID,         UIA_TextChildPatternId },
+    { &Drag_Pattern_GUID,              UIA_DragPatternId },
+    { &DropTarget_Pattern_GUID,        UIA_DropTargetPatternId },
+    { &TextEdit_Pattern_GUID,          UIA_TextEditPatternId },
+    /* Implemented on Win10+. */
+    { &CustomNavigation_Pattern_GUID,  UIA_CustomNavigationPatternId },
+};
+
 static void test_UiaLookupId(void)
 {
     static const struct {
@@ -4074,6 +4113,7 @@ static void test_UiaLookupId(void)
     {
         { "property", AutomationIdentifierType_Property, uia_property_lookup_ids, ARRAY_SIZE(uia_property_lookup_ids) },
         { "event",    AutomationIdentifierType_Event,    uia_event_lookup_ids,    ARRAY_SIZE(uia_event_lookup_ids) },
+        { "pattern",  AutomationIdentifierType_Pattern,  uia_pattern_lookup_ids,  ARRAY_SIZE(uia_pattern_lookup_ids) },
     };
     unsigned int i, y;
 
