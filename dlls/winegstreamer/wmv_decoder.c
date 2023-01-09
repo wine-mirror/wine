@@ -82,6 +82,7 @@ struct wmv_decoder
 
     struct wg_format input_format;
     struct wg_format output_format;
+    GUID output_subtype;
 };
 
 static bool wg_format_is_set(struct wg_format *format)
@@ -549,7 +550,10 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         return DMO_E_TYPE_NOT_ACCEPTED;
 
     if (!(flags & DMO_SET_TYPEF_TEST_ONLY))
+    {
+        decoder->output_subtype = type->subtype;
         decoder->output_format = wg_format;
+    }
 
     return S_OK;
 }
@@ -576,8 +580,25 @@ static HRESULT WINAPI media_object_GetInputSizeInfo(IMediaObject *iface, DWORD i
 
 static HRESULT WINAPI media_object_GetOutputSizeInfo(IMediaObject *iface, DWORD index, DWORD *size, DWORD *alignment)
 {
-    FIXME("iface %p, index %lu, size %p, alignment %p stub!\n", iface, index, size, alignment);
-    return E_NOTIMPL;
+    struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, index %lu, size %p, alignment %p.\n", iface, index, size, alignment);
+
+    if (index > 0)
+        return DMO_E_INVALIDSTREAMINDEX;
+    if (!wg_format_is_set(&decoder->output_format))
+        return DMO_E_TYPE_NOT_SET;
+
+    if (FAILED(hr = MFCalculateImageSize(&decoder->output_subtype,
+            decoder->output_format.u.video.width, decoder->output_format.u.video.height, (UINT32 *)size)))
+    {
+        FIXME("Failed to get image size of subtype %s.\n", debugstr_guid(&decoder->output_subtype));
+        return hr;
+    }
+    *alignment = 1;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI media_object_GetInputMaxLatency(IMediaObject *iface, DWORD index, REFERENCE_TIME *latency)

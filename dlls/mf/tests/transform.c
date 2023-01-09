@@ -5090,7 +5090,6 @@ static void test_wmv_decoder_media_object(void)
     hr = IMediaObject_SetOutputType(media_object, 0, NULL, DMO_SET_TYPEF_CLEAR);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     hr = IMediaObject_GetOutputSizeInfo(media_object, 0, &size, &alignment);
-    todo_wine
     ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputSizeInfo returned %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(expected_output_types); ++i)
@@ -5120,12 +5119,9 @@ static void test_wmv_decoder_media_object(void)
             ok(hr == S_OK, "MFCalculateImageSize returned %#lx.\n", hr);
 
             hr = IMediaObject_GetOutputSizeInfo(media_object, 0, &size, &alignment);
-            todo_wine
-            {
             ok(hr == S_OK, "GetOutputSizeInfo returned %#lx.\n", hr);
             ok(size == expected_size, "Got unexpected size %lu, expected %lu.\n", size, expected_size);
             ok(alignment == 1, "Got unexpected alignment %lu.\n", alignment);
-            }
         }
         winetest_pop_context();
     }
