@@ -6741,6 +6741,16 @@ static void test_FindNLSStringEx(void)
         { localeW, FIND_ENDSWITH, L"SimpleSimple", L"Simp", -1, 0xdeadbeef},
         { localeW, FIND_FROMSTART, comb_s_accent1W, comb_s_accent2W, 0, 6 },
         { localeW, FIND_FROMSTART, comb_q_accent1W, comb_q_accent2W, 2, 7 },
+        { localeW, FIND_STARTSWITH, L"--Option", L"--", 0, 2},
+        { localeW, FIND_ENDSWITH, L"Option--", L"--", 6, 2},
+        { localeW, FIND_FROMSTART, L"----", L"--", 0, 2},
+        { localeW, FIND_FROMEND, L"----", L"--", 2, 2},
+        { localeW, FIND_FROMSTART, L"opt1--opt2--opt3", L"--", 4, 2},
+        { localeW, FIND_FROMEND, L"opt1--opt2--opt3", L"--", 10, 2},
+        { localeW, FIND_FROMSTART, L"x-oss-security", L"x-oss-", 0, 6},
+        { localeW, FIND_FROMSTART, L"x-oss-security", L"-oss", 1, 4},
+        { localeW, FIND_FROMSTART, L"x-oss-security", L"-oss--", -1, 0xdeadbeef},
+        { localeW, FIND_FROMEND, L"x-oss-oss2", L"-oss", 5, 4},
     };
     unsigned int i;
 

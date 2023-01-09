@@ -3892,7 +3892,7 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
     struct sortkey_state val;
     BYTE primary[32];
     BYTE primary_val[256];
-    int i, start, found = -1, foundlen, pos = 0;
+    int i, start, len, found = -1, foundlen = 0, pos = 0;
     BOOL have_extra, have_extra_val;
     BYTE case_mask = 0x3f;
     UINT except = sortid->except;
@@ -3915,43 +3915,47 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
 
     for (start = 0; start < srclen; start++)
     {
-        pos = start;
-        while (pos < srclen && s.primary_pos < val.key_primary.len)
+        for (len = start + 1; len <= srclen; len++)
         {
-            while (pos < srclen && !s.key_primary.len)
-                pos += append_weights( sortid, flags, src, srclen, pos,
-                                       case_mask, except, compr_tables, &s, TRUE );
+            pos = start;
+            while (pos < len && s.primary_pos <= val.key_primary.len)
+            {
+                while (pos < len && !s.key_primary.len)
+                    pos += append_weights( sortid, flags, src, srclen, pos,
+                                           case_mask, except, compr_tables, &s, TRUE );
 
-            if (s.primary_pos + s.key_primary.len > val.key_primary.len) goto next;
-            if (memcmp( primary, val.key_primary.buf + s.primary_pos, s.key_primary.len )) goto next;
-            s.primary_pos += s.key_primary.len;
-            s.key_primary.len = 0;
+                if (s.primary_pos + s.key_primary.len > val.key_primary.len) goto next;
+                if (memcmp( primary, val.key_primary.buf + s.primary_pos, s.key_primary.len )) goto next;
+                s.primary_pos += s.key_primary.len;
+                s.key_primary.len = 0;
+            }
+            if (s.primary_pos < val.key_primary.len) goto next;
+
+            have_extra = remove_unneeded_weights( sortid, &s );
+            if (compare_sortkeys( &s.key_diacritic, &val.key_diacritic, FALSE )) goto next;
+            if (compare_sortkeys( &s.key_case, &val.key_case, FALSE )) goto next;
+
+            if (have_extra && have_extra_val)
+            {
+                for (i = 0; i < 4; i++)
+                    if (compare_sortkeys( &s.key_extra[i], &val.key_extra[i], i != 1 )) goto next;
+            }
+            else if (have_extra || have_extra_val) goto next;
+
+            if (compare_sortkeys( &s.key_special, &val.key_special, FALSE )) goto next;
+
+            found = start;
+            foundlen = pos - start;
+            len = srclen;  /* no need to continue checking longer strings */
+
+        next:
+            /* reset state */
+            s.key_primary.len = s.key_diacritic.len = s.key_case.len = s.key_special.len = 0;
+            s.key_extra[0].len = s.key_extra[1].len = s.key_extra[2].len = s.key_extra[3].len = 0;
+            s.primary_pos = 0;
         }
-        if (s.primary_pos < val.key_primary.len) goto next;
-
-        have_extra = remove_unneeded_weights( sortid, &s );
-        if (compare_sortkeys( &s.key_diacritic, &val.key_diacritic, FALSE )) goto next;
-        if (compare_sortkeys( &s.key_case, &val.key_case, FALSE )) goto next;
-
-        if (have_extra && have_extra_val)
-        {
-            for (i = 0; i < 4; i++)
-                if (compare_sortkeys( &s.key_extra[i], &val.key_extra[i], i != 1 )) goto next;
-        }
-        else if (have_extra || have_extra_val) goto next;
-
-        if (compare_sortkeys( &s.key_special, &val.key_special, FALSE )) goto next;
-
-        found = start;
-        foundlen = pos - start;
-        if (flags & FIND_FROMSTART) break;
-
-    next:
         if (flags & FIND_STARTSWITH) break;
-        /* reset state */
-        s.key_primary.len = s.key_diacritic.len = s.key_case.len = s.key_special.len = 0;
-        s.key_extra[0].len = s.key_extra[1].len = s.key_extra[2].len = s.key_extra[3].len = 0;
-        s.primary_pos = 0;
+        if (flags & FIND_FROMSTART && found != -1) break;
     }
 
     if (found != -1)
