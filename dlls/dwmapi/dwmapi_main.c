@@ -235,7 +235,7 @@ static int get_display_frequency(void)
  */
 HRESULT WINAPI DwmGetCompositionTimingInfo(HWND hwnd, DWM_TIMING_INFO *info)
 {
-    LARGE_INTEGER performance_frequency;
+    LARGE_INTEGER performance_frequency, qpc;
     static int i, display_frequency;
 
     if (!info)
@@ -257,6 +257,9 @@ HRESULT WINAPI DwmGetCompositionTimingInfo(HWND hwnd, DWM_TIMING_INFO *info)
 
     QueryPerformanceFrequency(&performance_frequency);
     info->qpcRefreshPeriod = performance_frequency.QuadPart / display_frequency;
+
+    QueryPerformanceCounter(&qpc);
+    info->qpcVBlank = (qpc.QuadPart / info->qpcRefreshPeriod) * info->qpcRefreshPeriod;
 
     return S_OK;
 }
