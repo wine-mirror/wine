@@ -79,6 +79,39 @@ static void test_AuthenticatorStatics(void)
     ok( ref == 1, "got ref %ld.\n", ref );
 }
 
+static void test_TicketStatics(void)
+{
+    static const WCHAR *ticket_statics_name = L"Windows.Security.Authentication.OnlineId.OnlineIdServiceTicketRequest";
+    IOnlineIdServiceTicketRequest *ticket_statics = (void *)0xdeadbeef;
+    IActivationFactory *factory = (void *)0xdeadbeef;
+    HSTRING str;
+    HRESULT hr;
+    LONG ref;
+
+    hr = WindowsCreateString( ticket_statics_name, wcslen( ticket_statics_name ), &str );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
+    WindowsDeleteString( str );
+    ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip( "%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w( ticket_statics_name ) );
+        return;
+    }
+
+    check_interface( factory, &IID_IUnknown );
+    check_interface( factory, &IID_IInspectable );
+
+    hr = IActivationFactory_QueryInterface( factory, &IID_IOnlineIdServiceTicketRequestFactory, (void **)&ticket_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IOnlineIdServiceTicketRequest_Release( ticket_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
+    ref = IActivationFactory_Release( factory );
+    ok( ref == 1, "got ref %ld.\n", ref );
+}
+
 START_TEST(onlineid)
 {
     HRESULT hr;
@@ -87,6 +120,7 @@ START_TEST(onlineid)
     ok( hr == S_OK, "RoInitialize failed, hr %#lx\n", hr );
 
     test_AuthenticatorStatics();
+    test_TicketStatics();
 
     RoUninitialize();
 }

@@ -72,6 +72,23 @@ namespace Windows.Security.Authentication.OnlineId {
     }
 
     [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Security.Authentication.OnlineId.OnlineIdServiceTicketRequest),
+        uuid(bebb0a08-9e73-4077-9614-08614c0bc245)
+    ]
+    interface IOnlineIdServiceTicketRequestFactory : IInspectable
+    {
+        HRESULT CreateOnlineIdServiceTicketRequest(
+            [in] HSTRING service, [in] HSTRING policy,
+            [out, retval] Windows.Security.Authentication.OnlineId.OnlineIdServiceTicketRequest **request
+        );
+        HRESULT CreateOnlineIdServiceTicketRequestAdvanced(
+            [in] HSTRING service,
+            [out, retval] Windows.Security.Authentication.OnlineId.OnlineIdServiceTicketRequest **request
+        );
+    }
+
+    [
         contract(Windows.Foundation.UniversalApiContract, 4.0),
         exclusiveto(Windows.Security.Authentication.OnlineId.OnlineIdSystemAuthenticatorForUser),
         uuid(5798befb-1de4-4186-a2e6-b563f86aaf44)
