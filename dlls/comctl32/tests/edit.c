@@ -72,6 +72,35 @@ static void flush_events(void)
     }
 }
 
+static BOOL open_clipboard(HWND hwnd)
+{
+    DWORD start = GetTickCount();
+    while (1)
+    {
+        BOOL ret = OpenClipboard(hwnd);
+        if (ret || GetLastError() != ERROR_ACCESS_DENIED)
+            return ret;
+        if (GetTickCount() - start > 100)
+        {
+            char classname[256];
+            DWORD le = GetLastError();
+            HWND clipwnd = GetOpenClipboardWindow();
+            /* Provide a hint as to the source of interference:
+             * - The class name would typically be CLIPBRDWNDCLASS if the
+             *   clipboard was opened by a Windows application using the
+             *   ole32 API.
+             * - And it would be __wine_clipboard_manager if it was opened in
+             *   response to a native application.
+             */
+            GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
+            trace("%p (%s) opened the clipboard\n", clipwnd, classname);
+            SetLastError(le);
+            return ret;
+        }
+        Sleep(15);
+    }
+}
+
 static INT_PTR CALLBACK multi_edit_dialog_proc(HWND hdlg, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     static int num_ok_commands = 0;
@@ -2264,7 +2293,7 @@ static void test_espassword(void)
     ok(r == strlen(password), "Expected: %s, got len %ld\n", password, r);
     ok(strcmp(buffer, password) == 0, "expected %s, got %s\n", password, buffer);
 
-    r = OpenClipboard(hwEdit);
+    r = open_clipboard(hwEdit);
     ok(r == TRUE, "expected %d, got %ld\n", TRUE, r);
     r = EmptyClipboard();
     ok(r == TRUE, "expected %d, got %ld\n", TRUE, r);
@@ -3237,7 +3266,7 @@ static void test_paste(void)
     strcpy(buffer, str);
     GlobalUnlock(hmem);
 
-    r = OpenClipboard(hEdit);
+    r = open_clipboard(hEdit);
     ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
     r = EmptyClipboard();
     ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
@@ -3260,7 +3289,7 @@ static void test_paste(void)
     strcpy(buffer, str2);
     GlobalUnlock(hmem);
 
-    r = OpenClipboard(hEdit);
+    r = open_clipboard(hEdit);
     ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
     r = EmptyClipboard();
     ok(r == TRUE, "expected %d, got %d\n", TRUE, r);
