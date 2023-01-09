@@ -4999,11 +4999,12 @@ static void test_wmv_decoder_media_object(void)
         {MFMediaType_Video, MEDIASUBTYPE_RGB555, TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[11]},
         {MFMediaType_Video, MEDIASUBTYPE_RGB8,   TRUE, FALSE, 256,  FORMAT_VideoInfo, NULL, 1112, (BYTE *)&expected_output_info[12]},
     };
-    DMO_MEDIA_TYPE media_type, *input_type;
+    const POINT test_size[] = {{16, 16}, {96, 96}, {320, 240}};
+    DWORD in_count, out_count, size, expected_size, alignment;
+    DMO_MEDIA_TYPE media_type, *type;
     IMediaObject *media_object;
-    DWORD in_count, out_count;
     char buffer[1024];
-    ULONG ret, i;
+    ULONG ret, i, j;
     HRESULT hr;
 
     winetest_push_context("wmvdec");
@@ -5015,7 +5016,7 @@ static void test_wmv_decoder_media_object(void)
         return;
     }
 
-    input_type = (DMO_MEDIA_TYPE *)buffer;
+    type = (DMO_MEDIA_TYPE *)buffer;
 
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "CoInitialize failed, hr %#lx.\n", hr);
@@ -5068,8 +5069,8 @@ static void test_wmv_decoder_media_object(void)
     ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputType returned %#lx.\n", hr);
 
     /* Test GetOutputType after setting input type. */
-    init_dmo_media_type_video(input_type, &expected_input_types[0].subtype, 16, 16);
-    hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
+    init_dmo_media_type_video(type, &expected_input_types[0].subtype, 16, 16);
+    hr = IMediaObject_SetInputType(media_object, 0, type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     check_dmo_get_output_type(media_object, expected_output_types, ARRAY_SIZE(expected_output_types));
 
@@ -5080,10 +5081,54 @@ static void test_wmv_decoder_media_object(void)
     ok(hr == DMO_E_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
 
     /* Test SetOutputType after setting input type. */
-    init_dmo_media_type_video(input_type, &expected_input_types[0].subtype, 16, 16);
-    hr = IMediaObject_SetInputType(media_object, 0, input_type, 0);
+    init_dmo_media_type_video(type, &expected_input_types[0].subtype, 16, 16);
+    hr = IMediaObject_SetInputType(media_object, 0, type, 0);
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     check_dmo_set_output_type(media_object, &MEDIASUBTYPE_RGB24);
+
+    /* Test GetOutputSizeInfo. */
+    hr = IMediaObject_SetOutputType(media_object, 0, NULL, DMO_SET_TYPEF_CLEAR);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    hr = IMediaObject_GetOutputSizeInfo(media_object, 0, &size, &alignment);
+    todo_wine
+    ok(hr == DMO_E_TYPE_NOT_SET, "GetOutputSizeInfo returned %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(expected_output_types); ++i)
+    {
+        const GUID *subtype = &expected_output_types[i].subtype;
+        if (IsEqualGUID(subtype, &MEDIASUBTYPE_RGB565)
+                || IsEqualGUID(subtype, &MEDIASUBTYPE_RGB8))
+        {
+            skip("Skipping GetOutputSizeInfo tests for video subtype %s.\n", debugstr_guid(subtype));
+            continue;
+        }
+
+        winetest_push_context("out %lu", i);
+        for (j = 0; j < ARRAY_SIZE(test_size); ++j)
+        {
+            init_dmo_media_type_video(type, &expected_output_types[i].subtype, test_size[j].x, test_size[j].y);
+            hr = IMediaObject_SetOutputType(media_object, 0, type, 0);
+            todo_wine_if(IsEqualGUID(subtype, &MEDIASUBTYPE_NV11)
+                    || IsEqualGUID(subtype, &MEDIASUBTYPE_IYUV))
+            ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+            if (hr != S_OK)
+                continue;
+
+            size = 0xdeadbeef;
+            alignment = 0xdeadbeef;
+            hr = MFCalculateImageSize(subtype, test_size[j].x, test_size[j].y, (UINT32 *)&expected_size);
+            ok(hr == S_OK, "MFCalculateImageSize returned %#lx.\n", hr);
+
+            hr = IMediaObject_GetOutputSizeInfo(media_object, 0, &size, &alignment);
+            todo_wine
+            {
+            ok(hr == S_OK, "GetOutputSizeInfo returned %#lx.\n", hr);
+            ok(size == expected_size, "Got unexpected size %lu, expected %lu.\n", size, expected_size);
+            ok(alignment == 1, "Got unexpected alignment %lu.\n", alignment);
+            }
+        }
+        winetest_pop_context();
+    }
 
     ret = IMediaObject_Release(media_object);
     ok(ret == 0, "Release returned %lu\n", ret);
