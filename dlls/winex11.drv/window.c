@@ -625,6 +625,7 @@ static void fetch_icon_data( HWND hwnd, HICON icon_big, HICON icon_small )
     unsigned long *bits;
     Pixmap icon_pixmap, mask_pixmap;
 
+    icon_big = get_icon_info( icon_big, &ii );
     if (!icon_big)
     {
         icon_big = get_icon_info( (HICON)send_message( hwnd, WM_GETICON, ICON_BIG, 0 ), &ii );
@@ -637,6 +638,8 @@ static void fetch_icon_data( HWND hwnd, HICON icon_big, HICON icon_small )
             icon_big = get_icon_info( icon_big, &ii );
         }
     }
+
+    icon_small = get_icon_info( icon_small, &ii_small );
     if (!icon_small)
     {
         icon_small = get_icon_info( (HICON)send_message( hwnd, WM_GETICON, ICON_SMALL, 0 ), &ii_small );
