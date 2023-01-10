@@ -88,6 +88,7 @@ SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 /* wow64win syscall table */
 static const SYSTEM_SERVICE_TABLE *psdwhwin32;
+static HMODULE win32u_module;
 
 /* cpu backend dll functions */
 static void *   (WINAPI *pBTCpuGetBopCode)(void);
@@ -393,17 +394,6 @@ static DWORD get_syscall_num( const BYTE *syscall )
 
 
 /**********************************************************************
- *           init_image_mapping
- */
-void init_image_mapping( HMODULE module )
-{
-    void **ptr = RtlFindExportedRoutineByName( module, "Wow64Transition" );
-
-    if (ptr) *ptr = pBTCpuGetBopCode();
-}
-
-
-/**********************************************************************
  *           init_syscall_table
  */
 static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_TABLE *orig_table )
@@ -468,6 +458,23 @@ static void init_syscall_table( HMODULE module, ULONG idx, const SYSTEM_SERVICE_
 
 
 /**********************************************************************
+ *           init_image_mapping
+ */
+void init_image_mapping( HMODULE module )
+{
+    void **ptr = RtlFindExportedRoutineByName( module, "Wow64Transition" );
+
+    if (!ptr) return;
+    *ptr = pBTCpuGetBopCode();
+    if (!win32u_module && RtlFindExportedRoutineByName( module, "NtUserInitializeClientPfnArrays" ))
+    {
+        win32u_module = module;
+        init_syscall_table( win32u_module, 1, psdwhwin32 );
+    }
+}
+
+
+/**********************************************************************
  *           load_64bit_module
  */
 static HMODULE load_64bit_module( const WCHAR *name )
@@ -486,48 +493,6 @@ static HMODULE load_64bit_module( const WCHAR *name )
         NtTerminateProcess( GetCurrentProcess(), status );
     }
     return module;
-}
-
-
-/**********************************************************************
- *           load_32bit_module
- */
-static HMODULE load_32bit_module( const WCHAR *name )
-{
-    NTSTATUS status;
-    UNICODE_STRING str;
-    WCHAR path[MAX_PATH];
-    HANDLE file, mapping;
-    LARGE_INTEGER size;
-    IO_STATUS_BLOCK io;
-    OBJECT_ATTRIBUTES attr;
-    SIZE_T len = 0;
-    void *module = NULL;
-    const WCHAR *dir = get_machine_wow64_dir( current_machine );
-
-    swprintf( path, MAX_PATH, L"%s\\%s", dir, name );
-    RtlInitUnicodeString( &str, path );
-    InitializeObjectAttributes( &attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL );
-    if ((status = NtOpenFile( &file, GENERIC_READ | SYNCHRONIZE, &attr, &io,
-                              FILE_SHARE_READ | FILE_SHARE_DELETE,
-                              FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE ))) goto failed;
-
-    size.QuadPart = 0;
-    status = NtCreateSection( &mapping, STANDARD_RIGHTS_REQUIRED | SECTION_QUERY |
-                              SECTION_MAP_READ | SECTION_MAP_EXECUTE,
-                              NULL, &size, PAGE_EXECUTE_READ, SEC_IMAGE, file );
-    NtClose( file );
-    if (status) goto failed;
-
-    status = NtMapViewOfSection( mapping, GetCurrentProcess(), &module, 0, 0, NULL, &len,
-                                 ViewShare, 0, PAGE_EXECUTE_READ );
-    NtClose( mapping );
-    if (!status) return module;
-
-failed:
-    ERR( "failed to load dll %lx\n", status );
-    NtTerminateProcess( GetCurrentProcess(), status );
-    return NULL;
 }
 
 
@@ -588,10 +553,6 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     init_syscall_table( module, 0, &ntdll_syscall_table );
     *(void **)RtlFindExportedRoutineByName( module, "__wine_syscall_dispatcher" ) = pBTCpuGetBopCode();
     *(void **)RtlFindExportedRoutineByName( module, "__wine_unix_call_dispatcher" ) = p__wine_get_unix_opcode();
-
-    module = load_32bit_module( L"win32u.dll" );
-    init_syscall_table( module, 1, psdwhwin32 );
-    NtUnmapViewOfSection( GetCurrentProcess(), module );
 
     init_file_redirects();
     return TRUE;
