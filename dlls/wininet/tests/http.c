@@ -6897,7 +6897,7 @@ static void test_secure_connection(void)
     ok(con != NULL, "InternetConnect failed\n");
 
     req = HttpOpenRequestA(con, "GET", "/tests/hello.html", NULL, NULL, NULL,
-                          INTERNET_FLAG_SECURE, 0);
+                           INTERNET_FLAG_SECURE | INTERNET_FLAG_RELOAD, 0);
     ok(req != NULL, "HttpOpenRequest failed\n");
 
     ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
