@@ -1104,12 +1104,8 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
 
       /* set window procedure to our own and save the current one */
       stack->is_unicode = IsWindowUnicode (hWnd);
-      if (stack->is_unicode)
-         stack->origproc = (WNDPROC)SetWindowLongPtrW (hWnd, GWLP_WNDPROC,
-                                                   (DWORD_PTR)COMCTL32_SubclassProc);
-      else
-         stack->origproc = (WNDPROC)SetWindowLongPtrA (hWnd, GWLP_WNDPROC,
-                                                   (DWORD_PTR)COMCTL32_SubclassProc);
+      stack->origproc = (WNDPROC)SetWindowLongPtrW (hWnd, GWLP_WNDPROC,
+                                                (DWORD_PTR)COMCTL32_SubclassProc);
    }
    else {
       /* Check to see if we have called this function with the same uIDSubClass
@@ -1332,10 +1328,7 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
    /* If we are at the end of stack then we have to call the original
     * window procedure */
    if (!stack->stackpos) {
-      if (stack->is_unicode)
-         ret = CallWindowProcW (stack->origproc, hWnd, uMsg, wParam, lParam);
-      else
-         ret = CallWindowProcA (stack->origproc, hWnd, uMsg, wParam, lParam);
+      ret = CallWindowProcW (stack->origproc, hWnd, uMsg, wParam, lParam);
    } else {
       const SUBCLASSPROCS *proc = stack->stackpos;
       stack->stackpos = stack->stackpos->next; 

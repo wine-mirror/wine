@@ -202,7 +202,7 @@ static LRESULT WINAPI wnd_proc_1(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
     DWORD flags = GetWindowLongA(hwnd, GWLP_USERDATA);
     struct message msg;
 
-    todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
+    check_unicode(hwnd, flags);
     
     if(message == WM_USER) {
         msg.wParam = wParam;
@@ -234,7 +234,7 @@ static LRESULT WINAPI wnd_proc_sub(HWND hwnd, UINT message, WPARAM wParam, LPARA
     DWORD flags = GetWindowLongA(hwnd, GWLP_USERDATA);
     struct message msg;
 
-    todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
+    check_unicode(hwnd, flags);
     
     if(message == WM_USER) {
         msg.wParam = wParam;
@@ -245,22 +245,21 @@ static LRESULT WINAPI wnd_proc_sub(HWND hwnd, UINT message, WPARAM wParam, LPARA
             if(dwRefData & DELETE_SELF) {
                 pRemoveWindowSubclass(hwnd, wnd_proc_sub, uldSubclass);
                 pRemoveWindowSubclass(hwnd, wnd_proc_sub, uldSubclass);
-                todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
+                check_unicode(hwnd, flags);
             }
             if(dwRefData & DELETE_PREV)
             {
                 pRemoveWindowSubclass(hwnd, wnd_proc_sub, uldSubclass-1);
-                todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
+                check_unicode(hwnd, flags);
             }
             if(dwRefData & SEND_NEST)
             {
                 SendMessageA(hwnd, WM_USER, wParam+1, 0);
-                todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
+                check_unicode(hwnd, flags);
             }
         }
     }
     if (message == WM_CHAR) {
-        todo_wine
         ok(wParam == 0x30c2, "got wParam %#Ix\n", wParam);
     }
     return pDefSubclassProc(hwnd, message, wParam, lParam);
@@ -277,7 +276,7 @@ static void test_subclass(void)
 
     ret = pSetWindowSubclass(hwnd, wnd_proc_sub, 2, 0);
     ok(ret == TRUE, "Expected TRUE\n");
-    todo_wine check_unicode(hwnd, EXPECT_UNICODE);
+    check_unicode(hwnd, EXPECT_UNICODE);
     SetWindowLongA(hwnd, GWLP_USERDATA, EXPECT_UNICODE);
 
     SendMessageA(hwnd, WM_USER, 1, 0);
@@ -287,7 +286,7 @@ static void test_subclass(void)
 
     ret = pSetWindowSubclass(hwnd, wnd_proc_sub, 2, DELETE_SELF);
     ok(ret == TRUE, "Expected TRUE\n");
-    todo_wine check_unicode(hwnd, EXPECT_UNICODE);
+    check_unicode(hwnd, EXPECT_UNICODE);
 
     SendMessageA(hwnd, WM_USER, 1, 1);
     ok_sequence(Sub_DeletedTest, "Deleted");
