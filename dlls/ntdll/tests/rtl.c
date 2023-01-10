@@ -1409,7 +1409,7 @@ static const struct
     /* win_broken: XP and Vista do not handle this correctly
         ex_fail: Ex function does need the string to be terminated, non-Ex does not.
         ex_skip: test doesn't make sense for Ex (f.e. it's invalid for non-Ex but valid for Ex) */
-    enum { normal_6, win_broken_6 = 1, ex_fail_6 = 2, ex_skip_6 = 4 } flags;
+    enum { normal_6, win_broken_6 = 1, ex_fail_6 = 2, ex_skip_6 = 4, win_extra_zero = 8 } flags;
 } ipv6_tests[] =
 {
     { "0000:0000:0000:0000:0000:0000:0000:0000",        STATUS_SUCCESS,             39,
@@ -1576,12 +1576,12 @@ static const struct
             { 0, 0, 0, 0, 0, 0, 0, 0 } },
     { "::0:0:0:0:0:0",                                  STATUS_SUCCESS,             13,
             { 0, 0, 0, 0, 0, 0, 0, 0 } },
-    /* this one and the next one are incorrectly parsed by windows,
+    /* this one and the next one are incorrectly parsed before Windows 11,
         it adds one zero too many in front, cutting off the last digit. */
-    { "::0:0:0:0:0:0:0",                                STATUS_SUCCESS,             13,
-            { 0, 0, 0, 0, 0, 0, 0, 0 }, ex_fail_6 },
-    { "::0:a:b:c:d:e:f",                                STATUS_SUCCESS,             13,
-            { 0, 0, 0, 0xa00, 0xb00, 0xc00, 0xd00, 0xe00 }, ex_fail_6 },
+    { "::0:0:0:0:0:0:0",                                STATUS_SUCCESS,             15,
+            { 0, 0, 0, 0, 0, 0, 0, 0 }, win_broken_6|win_extra_zero },
+    { "::0:a:b:c:d:e:f",                                STATUS_SUCCESS,             15,
+            { 0, 0, 0xa00, 0xb00, 0xc00, 0xd00, 0xe00, 0xf00 }, win_broken_6|win_extra_zero },
     { "::123.123.123.123",                              STATUS_SUCCESS,             17,
             { 0, 0, 0, 0, 0, 0, 0x7b7b, 0x7b7b } },
     { "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",        STATUS_SUCCESS,             39,
@@ -2103,19 +2103,32 @@ static void test_RtlIpv6StringToAddress(void)
         }
         else
         {
-            ok(terminator == ipv6_tests[i].address + ipv6_tests[i].terminator_offset,
-               "[%s] terminator = %p, expected %p\n",
-               ipv6_tests[i].address, terminator, ipv6_tests[i].address + ipv6_tests[i].terminator_offset);
+            if (ipv6_tests[i].flags & win_extra_zero)
+                ok(terminator == ipv6_tests[i].address + ipv6_tests[i].terminator_offset ||
+                   broken(terminator != ipv6_tests[i].address + ipv6_tests[i].terminator_offset),
+                   "[%s] terminator = %p, expected %p\n",
+                   ipv6_tests[i].address, terminator, ipv6_tests[i].address + ipv6_tests[i].terminator_offset);
+            else
+                ok(terminator == ipv6_tests[i].address + ipv6_tests[i].terminator_offset,
+                   "[%s] terminator = %p, expected %p\n",
+                   ipv6_tests[i].address, terminator, ipv6_tests[i].address + ipv6_tests[i].terminator_offset);
         }
 
         init_ip6(&expected_ip, ipv6_tests[i].ip);
-        ok(!memcmp(&ip, &expected_ip, sizeof(ip)),
-           "[%s] ip = %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
-           ipv6_tests[i].address,
-           ip.s6_words[0], ip.s6_words[1], ip.s6_words[2], ip.s6_words[3],
-           ip.s6_words[4], ip.s6_words[5], ip.s6_words[6], ip.s6_words[7],
-           expected_ip.s6_words[0], expected_ip.s6_words[1], expected_ip.s6_words[2], expected_ip.s6_words[3],
-           expected_ip.s6_words[4], expected_ip.s6_words[5], expected_ip.s6_words[6], expected_ip.s6_words[7]);
+        if (ipv6_tests[i].flags & win_extra_zero)
+            ok(!memcmp(&ip, &expected_ip, sizeof(ip)) || broken(memcmp(&ip, &expected_ip, sizeof(ip))),
+               "[%s] ip = %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
+               ipv6_tests[i].address, ip.s6_words[0], ip.s6_words[1], ip.s6_words[2], ip.s6_words[3],
+               ip.s6_words[4], ip.s6_words[5], ip.s6_words[6], ip.s6_words[7],
+               expected_ip.s6_words[0], expected_ip.s6_words[1], expected_ip.s6_words[2], expected_ip.s6_words[3],
+               expected_ip.s6_words[4], expected_ip.s6_words[5], expected_ip.s6_words[6], expected_ip.s6_words[7]);
+        else
+            ok(!memcmp(&ip, &expected_ip, sizeof(ip)),
+               "[%s] ip = %x:%x:%x:%x:%x:%x:%x:%x, expected %x:%x:%x:%x:%x:%x:%x:%x\n",
+               ipv6_tests[i].address, ip.s6_words[0], ip.s6_words[1], ip.s6_words[2], ip.s6_words[3],
+               ip.s6_words[4], ip.s6_words[5], ip.s6_words[6], ip.s6_words[7],
+               expected_ip.s6_words[0], expected_ip.s6_words[1], expected_ip.s6_words[2], expected_ip.s6_words[3],
+               expected_ip.s6_words[4], expected_ip.s6_words[5], expected_ip.s6_words[6], expected_ip.s6_words[7]);
     }
 }
 

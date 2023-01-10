@@ -1126,9 +1126,7 @@ static NTSTATUS ipv6_string_to_address(const WCHAR *str, BOOL ex,
     {
         if (str[1] != ':') goto error;
         str++;
-        /* Windows bug: a double colon at the beginning is treated as 4 bytes of zeros instead of 2 */
         address->u.Word[0] = 0;
-        n_bytes = 2;
     }
 
     for (;;)

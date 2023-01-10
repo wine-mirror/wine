@@ -1078,12 +1078,12 @@ static void test_inet_pton(void)
         memset(addr, 0xab, sizeof(addr));
         ret = p_inet_pton(AF_INET6, ipv6_tests[i].input, addr);
         if (ipv6_tests[i].broken)
-            todo_wine_if (i == 82 || i == 83) ok(ret == ipv6_tests[i].ret || broken(ret == ipv6_tests[i].broken_ret), "got %d\n", ret);
+            ok(ret == ipv6_tests[i].ret || broken(ret == ipv6_tests[i].broken_ret), "got %d\n", ret);
         else
             ok(ret == ipv6_tests[i].ret, "got %d\n", ret);
         ok(WSAGetLastError() == 0xdeadbeef, "got error %u\n", WSAGetLastError());
         if (ipv6_tests[i].broken)
-            todo_wine_if (i == 83) ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)) || broken(memcmp(addr, ipv6_tests[i].addr, sizeof(addr))),
+            ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)) || broken(memcmp(addr, ipv6_tests[i].addr, sizeof(addr))),
                "address didn't match\n");
         else
             ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)), "address didn't match\n");
@@ -1093,12 +1093,12 @@ static void test_inet_pton(void)
         memset(addr, 0xab, sizeof(addr));
         ret = pInetPtonW(AF_INET6, inputW, addr);
         if (ipv6_tests[i].broken)
-            todo_wine ok(ret == ipv6_tests[i].ret || broken(ret == ipv6_tests[i].broken_ret), "got %d\n", ret);
+            ok(ret == ipv6_tests[i].ret || broken(ret == ipv6_tests[i].broken_ret), "got %d\n", ret);
         else
             ok(ret == ipv6_tests[i].ret, "got %d\n", ret);
         ok(WSAGetLastError() == (ret ? 0xdeadbeef : WSAEINVAL), "got error %u\n", WSAGetLastError());
         if (ipv6_tests[i].broken)
-            todo_wine_if (i == 83) ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)) || broken(memcmp(addr, ipv6_tests[i].addr, sizeof(addr))),
+            ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)) || broken(memcmp(addr, ipv6_tests[i].addr, sizeof(addr))),
                "address didn't match\n");
         else
             ok(!memcmp(addr, ipv6_tests[i].addr, sizeof(addr)), "address didn't match\n");
@@ -1561,11 +1561,11 @@ static void test_WSAStringToAddress(void)
 
             if (ipv6_tests[j].broken)
             {
-                todo_wine ok( ret == (ipv6_tests[j].error ? SOCKET_ERROR : 0) ||
+                ok( ret == (ipv6_tests[j].error ? SOCKET_ERROR : 0) ||
                     broken(ret == (ipv6_tests[j].broken_error ? SOCKET_ERROR : 0)), "got %d\n", ret );
-                todo_wine ok( WSAGetLastError() == ipv6_tests[j].error ||
+                ok( WSAGetLastError() == ipv6_tests[j].error ||
                     broken(WSAGetLastError() == ipv6_tests[j].broken_error), "got error %d\n", WSAGetLastError() );
-                todo_wine ok( !memcmp( &sockaddr6.sin6_addr, ipv6_tests[j].address, sizeof(sockaddr6.sin6_addr) ) ||
+                ok( !memcmp( &sockaddr6.sin6_addr, ipv6_tests[j].address, sizeof(sockaddr6.sin6_addr) ) ||
                     broken(memcmp( &sockaddr6.sin6_addr, ipv6_tests[j].address, sizeof(sockaddr6.sin6_addr) )),
                     "got addr %x:%x:%x:%x:%x:%x:%x:%x\n",
                     sockaddr6.sin6_addr.s6_words[0], sockaddr6.sin6_addr.s6_words[1],

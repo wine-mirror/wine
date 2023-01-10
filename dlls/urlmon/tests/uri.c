@@ -5118,8 +5118,6 @@ static const invalid_uri invalid_uri_tests[] = {
     {"http://[1:192.0.1.0]",0,FALSE},
     /* Not allowed to have partial IPv4 in IPv6. */
     {"http://[::192.0]",0,FALSE},
-    /* Can't have elision of 1 h16 at beginning of address. */
-    {"http://[::2:3:4:5:6:7:8]",0,FALSE},
     /* Expects a valid IP Literal. */
     {"ftp://[not.valid.uri]/",0,FALSE},
     /* Expects valid port for a known scheme type. */
