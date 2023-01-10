@@ -1103,7 +1103,8 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
       SetPropW (hWnd, COMCTL32_wSubclass, stack);
 
       /* set window procedure to our own and save the current one */
-      if (IsWindowUnicode (hWnd))
+      stack->is_unicode = IsWindowUnicode (hWnd);
+      if (stack->is_unicode)
          stack->origproc = (WNDPROC)SetWindowLongPtrW (hWnd, GWLP_WNDPROC,
                                                    (DWORD_PTR)COMCTL32_SubclassProc);
       else
@@ -1127,7 +1128,7 @@ BOOL WINAPI SetWindowSubclass (HWND hWnd, SUBCLASSPROC pfnSubclass,
    proc = Alloc(sizeof(SUBCLASSPROCS));
    if (!proc) {
       ERR ("Failed to allocate subclass entry in stack\n");
-      if (IsWindowUnicode (hWnd))
+      if (stack->is_unicode)
          SetWindowLongPtrW (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       else
          SetWindowLongPtrA (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
@@ -1246,7 +1247,7 @@ BOOL WINAPI RemoveWindowSubclass(HWND hWnd, SUBCLASSPROC pfnSubclass, UINT_PTR u
    if (!stack->SubclassProcs && !stack->running) {
       TRACE("Last Subclass removed, cleaning up\n");
       /* clean up our heap and reset the original window procedure */
-      if (IsWindowUnicode (hWnd))
+      if (stack->is_unicode)
          SetWindowLongPtrW (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       else
          SetWindowLongPtrA (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
@@ -1288,7 +1289,7 @@ static LRESULT WINAPI COMCTL32_SubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam
    if (!stack->SubclassProcs && !stack->running) {
       TRACE("Last Subclass removed, cleaning up\n");
       /* clean up our heap and reset the original window procedure */
-      if (IsWindowUnicode (hWnd))
+      if (stack->is_unicode)
          SetWindowLongPtrW (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
       else
          SetWindowLongPtrA (hWnd, GWLP_WNDPROC, (DWORD_PTR)stack->origproc);
@@ -1331,7 +1332,7 @@ LRESULT WINAPI DefSubclassProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
    /* If we are at the end of stack then we have to call the original
     * window procedure */
    if (!stack->stackpos) {
-      if (IsWindowUnicode (hWnd))
+      if (stack->is_unicode)
          ret = CallWindowProcW (stack->origproc, hWnd, uMsg, wParam, lParam);
       else
          ret = CallWindowProcA (stack->origproc, hWnd, uMsg, wParam, lParam);
