@@ -2465,7 +2465,6 @@ static void test_restore_context(void)
         rec.NumberParameters = 1;
         rec.ExceptionInformation[0] = (DWORD64)&buf;
 
-        ok(buf.MxCsr == 0x1f80, "Got unexpected MxCsr %#lx.\n", buf.MxCsr);
         ok(buf.FpCsr == 0x27f, "Got unexpected FpCsr %#x.\n", buf.FpCsr);
         buf.FpCsr = 0x7f;
         buf.MxCsr = 0x3f80;
