@@ -10496,6 +10496,26 @@ static void test_copy_context(void)
 
     enabled_features = pRtlGetEnabledExtendedFeatures(~(ULONG64)0);
 
+    memset(dst_context_buffer, 0xdd, sizeof(dst_context_buffer));
+    memset(src_context_buffer, 0xcc, sizeof(src_context_buffer));
+
+    status = pRtlInitializeExtendedContext(src_context_buffer, CONTEXT_ALL | CONTEXT_XSTATE, &src_ex);
+    if (!status)
+    {
+        src = pRtlLocateLegacyContext(src_ex, NULL);
+        dst = (CONTEXT *)dst_context_buffer;
+        dst->ContextFlags = CONTEXT_ALL;
+        status = pRtlCopyContext(dst, dst->ContextFlags, src);
+        ok(!status, "Got status %#lx.\n", status);
+        check_changes_in_range((BYTE *)dst, CONTEXT_ALL & CONTEXT_AMD64 ? &ranges_amd64[0] : &ranges_x86[0],
+                CONTEXT_ALL, sizeof(CONTEXT));
+    }
+    else
+    {
+        ok(status == STATUS_NOT_SUPPORTED, "Got status %#lx.\n", status);
+        skip("Extended context is not supported.\n");
+    }
+
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
         flags = tests[i];
