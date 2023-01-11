@@ -10524,10 +10524,13 @@ static void test_copy_context(void)
         *(DWORD *)((BYTE *)dst + flags_offset) = 0;
         *(DWORD *)((BYTE *)src + flags_offset) = 0;
 
-        src_xs = (XSTATE *)((BYTE *)src_ex + src_ex->XState.Offset);
-        memset(src_xs, 0xcc, sizeof(XSTATE));
-        src_xs->Mask = 3;
-        src_xs->CompactionMask = ~(ULONG64)0;
+        if (flags & 0x40)
+        {
+            src_xs = (XSTATE *)((BYTE *)src_ex + src_ex->XState.Offset);
+            memset(src_xs, 0xcc, sizeof(XSTATE));
+            src_xs->Mask = 3;
+            src_xs->CompactionMask = ~(ULONG64)0;
+        }
 
         status = pRtlCopyExtendedContext(dst_ex, flags, src_ex);
         ok(!status, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
