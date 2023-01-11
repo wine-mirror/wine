@@ -1140,7 +1140,7 @@ static void test_SHExtractIcons(void)
     ok(ret == ~0u, "got %u\n", ret);
 
     ret = pSHExtractIconsW(notepadW, 0, 16, 16, NULL, NULL, 1, 0);
-    ok(ret == 1 || broken(ret == 2) /* win2k */, "got %u\n", ret);
+    ok(ret == 1 || ret == 4 /* win11 */, "got %u\n", ret);
 
     icons[0] = (HICON)0xdeadbeef;
     ret = pSHExtractIconsW(notepadW, 0, 16, 16, icons, NULL, 1, 0);
