@@ -34,9 +34,14 @@ static BOOL (WINAPI *pSetWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR, DWORD_PTR
 static BOOL (WINAPI *pRemoveWindowSubclass)(HWND, SUBCLASSPROC, UINT_PTR);
 static LRESULT (WINAPI *pDefSubclassProc)(HWND, UINT, WPARAM, LPARAM);
 
+#define IS_WNDPROC_HANDLE(x) (((ULONG_PTR)(x) >> 16) == (~0u >> 16))
+
 #define SEND_NEST   0x01
 #define DELETE_SELF 0x02
 #define DELETE_PREV 0x04
+#define EXPECT_UNICODE    0x10
+#define EXPECT_WNDPROC_1  0x20
+#define EXPECT_WNDPROC_3  0x40
 
 struct message {
     int procnum;           /* WndProc id message is expected from */
@@ -166,14 +171,46 @@ static void ok_sequence(const struct message *expected, const char *context)
     flush_sequence();
 }
 
+static LRESULT WINAPI wnd_proc_1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+static LRESULT WINAPI wnd_proc_3(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+#define check_unicode(a, b) check_unicode_(__LINE__, a, b)
+static void check_unicode_(int line, HWND hwnd, DWORD flags)
+{
+    WNDPROC proc;
+    BOOL ret;
+
+    ret = IsWindowUnicode(hwnd);
+    ok_(__FILE__, line)(ret == !!(flags & EXPECT_UNICODE), "IsWindowUnicode returned %u\n", ret);
+
+    proc = (WNDPROC)GetWindowLongPtrW(hwnd, GWLP_WNDPROC);
+    ok_(__FILE__, line)(IS_WNDPROC_HANDLE(proc) == !(flags & EXPECT_UNICODE), "got proc %p\n", proc);
+
+    proc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_WNDPROC);
+    if (flags & EXPECT_UNICODE)
+        ok_(__FILE__, line)(IS_WNDPROC_HANDLE(proc), "got proc %p\n", proc);
+    else if (flags & EXPECT_WNDPROC_1)
+        ok_(__FILE__, line)(proc == wnd_proc_1, "got proc %p\n", proc);
+    else if (flags & EXPECT_WNDPROC_3)
+        todo_wine_if(proc == wnd_proc_1) ok_(__FILE__, line)(proc == wnd_proc_3, "got proc %p\n", proc);
+    else
+        ok_(__FILE__, line)(!IS_WNDPROC_HANDLE(proc), "got proc %p\n", proc);
+}
+
 static LRESULT WINAPI wnd_proc_1(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    DWORD flags = GetWindowLongA(hwnd, GWLP_USERDATA);
     struct message msg;
+
+    todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
     
     if(message == WM_USER) {
         msg.wParam = wParam;
         msg.procnum = 1;
         add_message(&msg);
+    }
+    if (message == WM_CHAR) {
+        ok(!(wParam & ~0xff), "got wParam %#Ix\n", wParam);
     }
     return DefWindowProcA(hwnd, message, wParam, lParam);
 }
@@ -194,7 +231,10 @@ static LRESULT WINAPI wnd_proc_3(HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 
 static LRESULT WINAPI wnd_proc_sub(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uldSubclass, DWORD_PTR dwRefData)
 {
+    DWORD flags = GetWindowLongA(hwnd, GWLP_USERDATA);
     struct message msg;
+
+    todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
     
     if(message == WM_USER) {
         msg.wParam = wParam;
@@ -205,12 +245,23 @@ static LRESULT WINAPI wnd_proc_sub(HWND hwnd, UINT message, WPARAM wParam, LPARA
             if(dwRefData & DELETE_SELF) {
                 pRemoveWindowSubclass(hwnd, wnd_proc_sub, uldSubclass);
                 pRemoveWindowSubclass(hwnd, wnd_proc_sub, uldSubclass);
+                todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
             }
             if(dwRefData & DELETE_PREV)
+            {
                 pRemoveWindowSubclass(hwnd, wnd_proc_sub, uldSubclass-1);
+                todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
+            }
             if(dwRefData & SEND_NEST)
+            {
                 SendMessageA(hwnd, WM_USER, wParam+1, 0);
+                todo_wine_if(flags & EXPECT_UNICODE) check_unicode(hwnd, flags);
+            }
         }
+    }
+    if (message == WM_CHAR) {
+        todo_wine
+        ok(wParam == 0x30c2, "got wParam %#Ix\n", wParam);
     }
     return pDefSubclassProc(hwnd, message, wParam, lParam);
 }
@@ -221,17 +272,27 @@ static void test_subclass(void)
     HWND hwnd = CreateWindowExA(0, "TestSubclass", "Test subclass", WS_OVERLAPPEDWINDOW,
                            100, 100, 200, 200, 0, 0, 0, NULL);
     ok(hwnd != NULL, "failed to create test subclass wnd\n");
+    check_unicode(hwnd, EXPECT_WNDPROC_1);
+    SetWindowLongA(hwnd, GWLP_USERDATA, EXPECT_WNDPROC_1);
 
     ret = pSetWindowSubclass(hwnd, wnd_proc_sub, 2, 0);
     ok(ret == TRUE, "Expected TRUE\n");
+    todo_wine check_unicode(hwnd, EXPECT_UNICODE);
+    SetWindowLongA(hwnd, GWLP_USERDATA, EXPECT_UNICODE);
+
     SendMessageA(hwnd, WM_USER, 1, 0);
     SendMessageA(hwnd, WM_USER, 2, 0);
     ok_sequence(Sub_BasicTest, "Basic");
+    SendMessageW(hwnd, WM_CHAR, 0x30c2, 1);
 
     ret = pSetWindowSubclass(hwnd, wnd_proc_sub, 2, DELETE_SELF);
     ok(ret == TRUE, "Expected TRUE\n");
+    todo_wine check_unicode(hwnd, EXPECT_UNICODE);
+
     SendMessageA(hwnd, WM_USER, 1, 1);
     ok_sequence(Sub_DeletedTest, "Deleted");
+    check_unicode(hwnd, EXPECT_WNDPROC_1);
+    SetWindowLongA(hwnd, GWLP_USERDATA, EXPECT_WNDPROC_1);
 
     SendMessageA(hwnd, WM_USER, 1, 0);
     ok_sequence(Sub_AfterDeletedTest, "After Deleted");
@@ -239,14 +300,21 @@ static void test_subclass(void)
     ret = pSetWindowSubclass(hwnd, wnd_proc_sub, 2, 0);
     ok(ret == TRUE, "Expected TRUE\n");
     orig_proc_3 = (WNDPROC)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (LONG_PTR)wnd_proc_3);
+    check_unicode(hwnd, EXPECT_WNDPROC_3);
+    SetWindowLongA(hwnd, GWLP_USERDATA, EXPECT_WNDPROC_3);
+
     SendMessageA(hwnd, WM_USER, 1, 0);
     SendMessageA(hwnd, WM_USER, 2, 0);
     ok_sequence(Sub_OldAfterNewTest, "Old after New");
 
     ret = pSetWindowSubclass(hwnd, wnd_proc_sub, 4, 0);
     ok(ret == TRUE, "Expected TRUE\n");
+    check_unicode(hwnd, EXPECT_WNDPROC_3);
+
     SendMessageA(hwnd, WM_USER, 1, 0);
     ok_sequence(Sub_MixTest, "Mix");
+
+    check_unicode(hwnd, EXPECT_WNDPROC_3);
 
     /* Now the fun starts */
     ret = pSetWindowSubclass(hwnd, wnd_proc_sub, 4, SEND_NEST);
@@ -274,6 +342,8 @@ static void test_subclass(void)
 
     pRemoveWindowSubclass(hwnd, wnd_proc_sub, 2);
     pRemoveWindowSubclass(hwnd, wnd_proc_sub, 5);
+
+    check_unicode(hwnd, EXPECT_WNDPROC_3);
 
     DestroyWindow(hwnd);
 }
