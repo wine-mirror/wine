@@ -2048,10 +2048,46 @@ static enum wined3d_channel_type map_channel_type(char t)
     }
 }
 
+static void parse_channel_desc(struct wined3d_format *format, const char *channel_desc)
+{
+    unsigned int component_count = 0;
+    unsigned int attrs = 0;
+    unsigned int j;
+
+    for (j = 0; j < strlen(channel_desc); ++j)
+    {
+        enum wined3d_channel_type channel_type = map_channel_type(channel_desc[j]);
+
+        if (channel_type == WINED3D_CHANNEL_TYPE_UNORM || channel_type == WINED3D_CHANNEL_TYPE_SNORM)
+            attrs |= WINED3D_FORMAT_ATTR_NORMALISED;
+        if (channel_type == WINED3D_CHANNEL_TYPE_UINT || channel_type == WINED3D_CHANNEL_TYPE_SINT)
+            attrs |= WINED3D_FORMAT_ATTR_INTEGER;
+        if (channel_type == WINED3D_CHANNEL_TYPE_FLOAT)
+            attrs |= WINED3D_FORMAT_ATTR_FLOAT;
+        if (channel_type != WINED3D_CHANNEL_TYPE_UNUSED)
+            ++component_count;
+
+        if (channel_type == WINED3D_CHANNEL_TYPE_DEPTH && !format->depth_size)
+        {
+            format->depth_size = format->red_size;
+            format->red_size = format->red_offset = 0;
+        }
+
+        if (channel_type == WINED3D_CHANNEL_TYPE_STENCIL && !format->stencil_size)
+        {
+            format->stencil_size = format->green_size;
+            format->green_size = format->green_offset = 0;
+        }
+    }
+
+    format->attrs |= attrs;
+    format->component_count = component_count;
+}
+
 static BOOL init_format_base_info(struct wined3d_adapter *adapter)
 {
     struct wined3d_format *format;
-    unsigned int i, j;
+    unsigned int i;
 
     for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
@@ -2078,8 +2114,6 @@ static BOOL init_format_base_info(struct wined3d_adapter *adapter)
     for (i = 0; i < ARRAY_SIZE(typed_formats); ++i)
     {
         struct wined3d_format *typeless_format;
-        unsigned int component_count = 0;
-        unsigned int attrs = 0;
 
         if (!(format = get_format_internal(adapter, typed_formats[i].id)))
             return FALSE;
@@ -2106,34 +2140,7 @@ static BOOL init_format_base_info(struct wined3d_adapter *adapter)
 
         typeless_format->typeless_id = typeless_format->id;
 
-        for (j = 0; j < strlen(typed_formats[i].channels); ++j)
-        {
-            enum wined3d_channel_type channel_type = map_channel_type(typed_formats[i].channels[j]);
-
-            if (channel_type == WINED3D_CHANNEL_TYPE_UNORM || channel_type == WINED3D_CHANNEL_TYPE_SNORM)
-                attrs |= WINED3D_FORMAT_ATTR_NORMALISED;
-            if (channel_type == WINED3D_CHANNEL_TYPE_UINT || channel_type == WINED3D_CHANNEL_TYPE_SINT)
-                attrs |= WINED3D_FORMAT_ATTR_INTEGER;
-            if (channel_type == WINED3D_CHANNEL_TYPE_FLOAT)
-                attrs |= WINED3D_FORMAT_ATTR_FLOAT;
-            if (channel_type != WINED3D_CHANNEL_TYPE_UNUSED)
-                ++component_count;
-
-            if (channel_type == WINED3D_CHANNEL_TYPE_DEPTH && !format->depth_size)
-            {
-                format->depth_size = format->red_size;
-                format->red_size = format->red_offset = 0;
-            }
-
-            if (channel_type == WINED3D_CHANNEL_TYPE_STENCIL && !format->stencil_size)
-            {
-                format->stencil_size = format->green_size;
-                format->green_size = format->green_offset = 0;
-            }
-        }
-
-        format->component_count = component_count;
-        format->attrs |= attrs;
+        parse_channel_desc(format, typed_formats[i].channels);
     }
 
     for (i = 0; i < ARRAY_SIZE(ddi_formats); ++i)
