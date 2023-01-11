@@ -19611,8 +19611,7 @@ static void test_vertex_formats(void)
         ID3D10Device_PSSetShader(device, test_context.ps);
         ID3D10Device_Draw(device, 4, 0);
 
-        todo_wine_if (tests[i].format == DXGI_FORMAT_R11G11B10_FLOAT)
-            check_texture_vec4(rt, &tests[i].expect, 1);
+        check_texture_vec4(rt, &tests[i].expect, 1);
 
         ID3D10InputLayout_Release(input_layout);
 

@@ -34903,8 +34903,7 @@ static void test_vertex_formats(void)
         ID3D11DeviceContext_PSSetShader(context, test_context.ps, NULL, 0);
         ID3D11DeviceContext_Draw(context, 4, 0);
 
-        todo_wine_if (tests[i].format == DXGI_FORMAT_R11G11B10_FLOAT)
-            check_texture_vec4(rt, &tests[i].expect, 1);
+        check_texture_vec4(rt, &tests[i].expect, 1);
 
         ID3D11InputLayout_Release(input_layout);
 
