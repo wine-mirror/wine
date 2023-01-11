@@ -2601,7 +2601,9 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl %edx,0x274(%ecx)\n\t"
                    "movl %edx,0x278(%ecx)\n\t"
                    "movl %edx,0x27c(%ecx)\n\t"
-                   "xsavec 0x40(%ecx)\n\t"
+                   /* The xsavec instruction is not supported by
+                    * binutils < 2.25. */
+                   ".byte 0x0f, 0xc7, 0x61, 0x40\n\t" /* xsavec 0x40(%ecx) */
                    "jmp 4f\n"
                    "1:\txsave 0x40(%ecx)\n\t"
                    "jmp 4f\n"
