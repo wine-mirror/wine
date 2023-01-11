@@ -77,7 +77,7 @@ static BOOL get_relocbase(caddr_t mapbase, caddr_t *relocbase)
  */
 void __wine_init_so_dll(void)
 {
-#if defined(HAVE_DLADDR1) || defined(HAVE_DLINFO)
+#if defined(HAVE_DLADDR1) || (defined(HAVE_DLINFO) && defined(RTLD_SELF))
     struct link_map *map;
     void (*init_func)(int, char **, char **) = NULL;
     void (**init_array)(int, char **, char **) = NULL;
