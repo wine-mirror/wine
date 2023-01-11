@@ -96,6 +96,7 @@ static struct screen_buffer *create_screen_buffer( struct console *console, int 
         screen_buffer->attr       = console->active->attr;
         screen_buffer->popup_attr = console->active->attr;
         screen_buffer->font       = console->active->font;
+        memcpy( screen_buffer->color_map, console->active->color_map, sizeof(console->active->color_map) );
 
         if (screen_buffer->font.face_len)
         {
