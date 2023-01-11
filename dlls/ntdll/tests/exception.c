@@ -198,7 +198,7 @@ static int test_stage;
 #if defined(__i386__) || defined(__x86_64__)
 static void test_debugger_xstate(HANDLE thread, CONTEXT *ctx, int stage)
 {
-    char context_buffer[sizeof(CONTEXT) + sizeof(CONTEXT_EX) + sizeof(XSTATE) + 63];
+    char context_buffer[sizeof(CONTEXT) + sizeof(CONTEXT_EX) + sizeof(XSTATE) + 1024];
     CONTEXT_EX *c_ex;
     NTSTATUS status;
     YMMCONTEXT *ymm;
@@ -9487,6 +9487,7 @@ static void test_extended_context(void)
             8,
         },
     };
+    const ULONG64 supported_features = 7, supported_compaction_mask = supported_features | ((ULONG64)1 << 63);
     ULONG expected_length, expected_length_xstate, context_flags, expected_offset;
     ULONG64 enabled_features, expected_compaction;
     DECLSPEC_ALIGN(64) BYTE context_buffer2[2048];
@@ -9999,7 +10000,7 @@ static void test_extended_context(void)
         mask = 0xdeadbeef;
         bret = pGetXStateFeaturesMask(context, &mask);
         if (flags & CONTEXT_NATIVE)
-            ok(bret && mask == enabled_features,
+            ok(bret && mask == (enabled_features & supported_features),
                     "Got unexpected bret %#x, mask %s, flags %#lx.\n", bret, wine_dbgstr_longlong(mask), flags);
         else
             ok(!bret && mask == 0xdeadbeef,
@@ -10243,9 +10244,9 @@ static void test_extended_context(void)
     expected_compaction = compaction_enabled ? ((ULONG64)1 << 63) | 4 : 0;
 
     xs = (XSTATE *)((BYTE *)context_ex + context_ex->XState.Offset);
-    ok(xs->Mask == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
-    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
-            wine_dbgstr_longlong(xs->CompactionMask));
+    ok((xs->Mask & supported_features) == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
+    ok((xs->CompactionMask & (supported_features | ((ULONG64)1 << 63))) == expected_compaction,
+            "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(xs->CompactionMask));
 
     for (i = 4; i < 8; ++i)
         ok(!data[i], "Got unexpected data %#x, i %u.\n", data[i], i);
@@ -10291,9 +10292,10 @@ static void test_extended_context(void)
     bret = GetThreadContext(thread, context);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     todo_wine_if (!xsaveopt_enabled)
-        ok(xs->Mask == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
-    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
-            wine_dbgstr_longlong(xs->CompactionMask));
+        ok((xs->Mask & supported_features) == (xsaveopt_enabled ? 0 : 4), "Got unexpected Mask %#I64x.\n", xs->Mask);
+    ok((xs->CompactionMask & supported_compaction_mask) == expected_compaction,
+            "Got unexpected CompactionMask %s.\n", wine_dbgstr_longlong(xs->CompactionMask));
+
     for (i = 0; i < 16 * 4; ++i)
         ok(((ULONG *)&xs->YmmContext)[i] == ((xs->Mask & 4) ? 0 : 0xcccccccc),
                 "Got unexpected value %#lx, i %u.\n", ((ULONG *)&xs->YmmContext)[i], i);
@@ -10306,8 +10308,9 @@ static void test_extended_context(void)
     memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
     bret = GetThreadContext(thread, context);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
-    ok(!xs->Mask || broken(xs->Mask == 4), "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
-    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
+    ok(!(xs->Mask & supported_features) || broken((xs->Mask & supported_features) == 4), "Got unexpected Mask %s.\n",
+            wine_dbgstr_longlong(xs->Mask));
+    ok((xs->CompactionMask & supported_compaction_mask) == expected_compaction, "Got unexpected CompactionMask %s.\n",
             wine_dbgstr_longlong(xs->CompactionMask));
     for (i = 0; i < 16 * 4; ++i)
         ok(((ULONG *)&xs->YmmContext)[i] == 0xcccccccc || broken(xs->Mask == 4 && !((ULONG *)&xs->YmmContext)[i]),
@@ -10320,8 +10323,8 @@ static void test_extended_context(void)
     memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
     bret = GetThreadContext(thread, context);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
-    ok(xs->Mask == 4, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
-    ok(xs->CompactionMask == expected_compaction, "Got unexpected CompactionMask %s.\n",
+    ok((xs->Mask & supported_features) == 4, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok((xs->CompactionMask & supported_compaction_mask) == expected_compaction, "Got unexpected CompactionMask %s.\n",
             wine_dbgstr_longlong(xs->CompactionMask));
     for (i = 0; i < 16 * 4; ++i)
         ok(((ULONG *)&xs->YmmContext)[i] == 0x28282828, "Got unexpected value %#lx, i %u.\n",
@@ -10341,7 +10344,7 @@ static void test_extended_context(void)
     memset(&xs->YmmContext, 0xcc, sizeof(xs->YmmContext));
     bret = GetThreadContext(thread, context);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
-    ok(xs->Mask == 4, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
+    ok((xs->Mask & supported_features) == 4, "Got unexpected Mask %s.\n", wine_dbgstr_longlong(xs->Mask));
 
     for (i = 0; i < 4; ++i)
         ok(((ULONG *)&xs->YmmContext)[i] == 0x68686868, "Got unexpected value %#lx, i %u.\n",
@@ -10353,9 +10356,10 @@ static void test_extended_context(void)
     bret = GetThreadContext(thread, context);
     ok(bret, "Got unexpected bret %#x, GetLastError() %lu.\n", bret, GetLastError());
     todo_wine_if (!xsaveopt_enabled && sizeof(void *) != 4)
-        ok(xs->Mask == (xsaveopt_enabled ? 0 : 4) || (sizeof(void *) == 4 && xs->Mask == 4),
-                "Got unexpected Mask %#I64x.\n", xs->Mask);
-    if (xs->Mask == 4)
+        ok((xs->Mask & supported_features) == (xsaveopt_enabled ? 0 : 4)
+                || (sizeof(void *) == 4 && (xs->Mask & supported_features) == 4),
+                "Got unexpected Mask %#I64x, supported_features.\n", xs->Mask);
+    if ((xs->Mask & supported_features) == 4)
     {
         for (i = 0; i < 8 * sizeof(void *); ++i)
             ok(((ULONG *)&xs->YmmContext)[i] == 0,
@@ -10431,13 +10435,13 @@ static void check_changes_in_range_(const char *file, unsigned int line, const B
 
 static void test_copy_context(void)
 {
-    static const struct modified_range ranges_amd64[] =
+    static struct modified_range ranges_amd64[] =
     {
         {0x30, ~0}, {0x38, 0x1}, {0x3a, 0x4}, {0x42, 0x1}, {0x48, 0x10}, {0x78, 0x2}, {0x98, 0x1},
         {0xa0, 0x2}, {0xf8, 0x1}, {0x100, 0x8}, {0x2a0, 0x80000008}, {0x4b0, 0x10}, {0x4d0, ~0},
         {0x4e8, 0}, {0x500, ~0}, {0x640, 0}, {0x1000, 0},
     };
-    static const struct modified_range ranges_x86[] =
+    static struct modified_range ranges_x86[] =
     {
         {0x0, ~0}, {0x4, 0x10}, {0x1c, 0x8}, {0x8c, 0x4}, {0x9c, 0x2}, {0xb4, 0x1}, {0xcc, 0x20}, {0x1ec, 0x80000020},
         {0x2cc, ~0}, {0x294, 0}, {0x1000, 0},
@@ -10524,18 +10528,23 @@ static void test_copy_context(void)
         *(DWORD *)((BYTE *)dst + flags_offset) = 0;
         *(DWORD *)((BYTE *)src + flags_offset) = 0;
 
+        context_length = (BYTE *)dst_ex - (BYTE *)dst + dst_ex->All.Length;
+
         if (flags & 0x40)
         {
             src_xs = (XSTATE *)((BYTE *)src_ex + src_ex->XState.Offset);
-            memset(src_xs, 0xcc, sizeof(XSTATE));
-            src_xs->Mask = 3;
+            memset(src_xs, 0xcc, src_ex->XState.Length);
+            src_xs->Mask = enabled_features & ~(ULONG64)4;
             src_xs->CompactionMask = ~(ULONG64)0;
+            if (flags & CONTEXT_AMD64)
+                ranges_amd64[ARRAY_SIZE(ranges_amd64) - 2].start = 0x640 + src_ex->XState.Length - sizeof(XSTATE);
+            else
+                ranges_x86[ARRAY_SIZE(ranges_x86) - 2].start = 0x294 + src_ex->XState.Length - sizeof(XSTATE);
         }
 
         status = pRtlCopyExtendedContext(dst_ex, flags, src_ex);
         ok(!status, "Got unexpected status %#lx, flags %#lx.\n", status, flags);
 
-        context_length = (BYTE *)dst_ex - (BYTE *)dst + dst_ex->All.Length;
         check_changes_in_range((BYTE *)dst, flags & CONTEXT_AMD64 ? &ranges_amd64[0] : &ranges_x86[0],
                 flags, context_length);
 
