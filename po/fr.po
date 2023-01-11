@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-01-04 15:28+0100\n"
+"PO-Revision-Date: 2023-01-11 12:06+0100\n"
 "Last-Translator: Eric Pouech <eric.pouech@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -3783,17 +3783,15 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:60
 msgid "POVs"
-msgstr ""
+msgstr "Points de vue"
 
 #: dlls/joy.cpl/joy.rc:61
 msgid "Buttons"
 msgstr "Boutons"
 
 #: dlls/joy.cpl/joy.rc:62
-#, fuzzy
-#| msgid "Test Force Feedback"
 msgid "Force Feedback Effect"
-msgstr "Tester le retour de force"
+msgstr "Effet de retour de force"
 
 #: dlls/joy.cpl/joy.rc:64
 msgid ""
@@ -3808,28 +3806,20 @@ msgid "XInput"
 msgstr ""
 
 #: dlls/joy.cpl/joy.rc:73
-#, fuzzy
-#| msgid "User"
 msgid "User #0"
-msgstr "Utilisateur"
+msgstr "Utilisateur #0"
 
 #: dlls/joy.cpl/joy.rc:74
-#, fuzzy
-#| msgid "User"
 msgid "User #1"
-msgstr "Utilisateur"
+msgstr "Utilisateur #1"
 
 #: dlls/joy.cpl/joy.rc:75
-#, fuzzy
-#| msgid "User"
 msgid "User #2"
-msgstr "Utilisateur"
+msgstr "Utilisateur #2"
 
 #: dlls/joy.cpl/joy.rc:76
-#, fuzzy
-#| msgid "User"
 msgid "User #3"
-msgstr "Utilisateur"
+msgstr "Utilisateur #3"
 
 #: dlls/joy.cpl/joy.rc:78
 msgid ""
@@ -7105,28 +7095,20 @@ msgid "This network connection does not exist.\n"
 msgstr "Cette connexion réseau n'existe pas.\n"
 
 #: dlls/kernelbase/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "Non valide au moment de l'interruption.\n"
+msgstr "Appel interrompu.\n"
 
 #: dlls/kernelbase/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "Descripteur invalide.\n"
+msgstr "Descripteur de fichier non valide.\n"
 
 #: dlls/kernelbase/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "Adresse réseau invalide.\n"
+msgstr "Adresse de pointeur non valide.\n"
 
 #: dlls/kernelbase/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "Nom non valide.\n"
+msgstr "Argument non valide.\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Connection reset by peer.\n"
@@ -7145,8 +7127,6 @@ msgid "Nonauthoritative host not found.\n"
 msgstr "L'attribut n'a pas été trouvé.\n"
 
 #: dlls/kernelbase/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
 msgstr "Une erreur irrécupérable s'est produite.\n"
 
@@ -8334,7 +8314,7 @@ msgstr "Recherche d'applications associées"
 
 #: dlls/msi/msi.rc:103
 msgid "Copying network install files"
-msgstr ""
+msgstr "Copie des fichiers d'installation pour le réseau"
 
 #: dlls/msi/msi.rc:104
 msgid "Copying new files"
@@ -8406,7 +8386,7 @@ msgstr "Enregistrement des applications et composants COM+"
 
 #: dlls/msi/msi.rc:121
 msgid "Registering extension servers"
-msgstr ""
+msgstr "Enregistrement des serveurs d'extension"
 
 #: dlls/msi/msi.rc:122
 msgid "Registering fonts"
@@ -8422,7 +8402,7 @@ msgstr "Enregistrement du produit"
 
 #: dlls/msi/msi.rc:125
 msgid "Registering program identifiers"
-msgstr ""
+msgstr "Enregistrement des identifiants de programme"
 
 #: dlls/msi/msi.rc:126
 msgid "Registering type libraries"
@@ -8510,7 +8490,7 @@ msgstr "Suppression de l'enregistrement des applications et composants COM+"
 
 #: dlls/msi/msi.rc:148
 msgid "Unregistering extension servers"
-msgstr ""
+msgstr "Dépublication des serveurs d'extension"
 
 #: dlls/msi/msi.rc:149
 msgid "Unregistering fonts"
@@ -10557,20 +10537,14 @@ msgid "(UTC+08:00) Beijing, Chongqing, Hong Kong, Urumqi"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:249
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "North Korea Standard Time"
 msgctxt "maximum 31 characters"
 msgid "North Asia Standard Time"
-msgstr "Heure de Corée du Nord"
+msgstr "Heure d'Asie du Nord"
 
 #: dlls/tzres/tzres.rc:250
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "North Korea Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "North Asia Daylight Time"
-msgstr "Heure d'été de Corée du Nord"
+msgstr "Heure d'été d'Asie du Nord"
 
 #: dlls/tzres/tzres.rc:251
 msgid "(UTC+07:00) Krasnoyarsk"
@@ -10605,40 +10579,28 @@ msgid "(UTC+12:00) Coordinated Universal Time+12"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:234
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Cuba Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Nepal Standard Time"
-msgstr "Heure de Cuba"
+msgstr "Heure du Népal"
 
 #: dlls/tzres/tzres.rc:235
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Cuba Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Nepal Daylight Time"
-msgstr "Heure d'été de Cuba"
+msgstr "Heure d'été du Népal"
 
 #: dlls/tzres/tzres.rc:236
 msgid "(UTC+05:45) Kathmandu"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:72
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Cuba Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Cape Verde Standard Time"
-msgstr "Heure de Cuba"
+msgstr "Heure du Cap-Vert"
 
 #: dlls/tzres/tzres.rc:73
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Cuba Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Cape Verde Daylight Time"
-msgstr "Heure d'été de Cuba"
+msgstr "Heure d'été du Cap-Vert"
 
 #: dlls/tzres/tzres.rc:74
 msgid "(UTC-01:00) Cabo Verde Is."
@@ -10673,18 +10635,14 @@ msgid "(UTC+01:00) Sarajevo, Skopje, Warsaw, Zagreb"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:216
-#, fuzzy
-#| msgid "&Standard bar"
 msgctxt "maximum 31 characters"
 msgid "Morocco Standard Time"
-msgstr "Barre &standard"
+msgstr "Heure du Maroc"
 
 #: dlls/tzres/tzres.rc:217
-#, fuzzy
-#| msgid "Date and time"
 msgctxt "maximum 31 characters"
 msgid "Morocco Daylight Time"
-msgstr "Date et heure"
+msgstr "Heure d'été du Maroc"
 
 #: dlls/tzres/tzres.rc:218
 msgid "(UTC+01:00) Casablanca"
@@ -10728,24 +10686,18 @@ msgid "(UTC+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:174
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Sudan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Iran Standard Time"
-msgstr "Heure du Soudan"
+msgstr "Heure de l'Iran"
 
 #: dlls/tzres/tzres.rc:175
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Sudan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Iran Daylight Time"
-msgstr "Heure d'été du Soudan"
+msgstr "Heure d'été de l'Iran"
 
 #: dlls/tzres/tzres.rc:176
 msgid "(UTC+03:30) Tehran"
-msgstr ""
+msgstr "(UTC+03:30) Téhéran"
 
 #: dlls/tzres/tzres.rc:300
 msgctxt "maximum 31 characters"
@@ -10776,40 +10728,28 @@ msgid "(UTC+00:00) Sao Tome"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:231
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Haiti Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Namibia Standard Time"
-msgstr "Heure d'Haïti"
+msgstr "Heure de Namibie"
 
 #: dlls/tzres/tzres.rc:232
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Haiti Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Namibia Daylight Time"
-msgstr "Heure d'Haïti"
+msgstr "Heure d'été de Namibie"
 
 #: dlls/tzres/tzres.rc:233
 msgid "(UTC+02:00) Windhoek"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:351
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "China Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Tonga Standard Time"
-msgstr "Heure de Chine"
+msgstr "Heure du Tonga"
 
 #: dlls/tzres/tzres.rc:352
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "China Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Tonga Daylight Time"
-msgstr "Heure d'été de Chine"
+msgstr "Heure d'été du Tonga"
 
 #: dlls/tzres/tzres.rc:353
 msgid "(UTC+13:00) Nuku'alofa"
@@ -10862,20 +10802,14 @@ msgid "(UTC+02:00) Juba"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:84
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Central European Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Central Asia Standard Time"
-msgstr "Heure d'Europe centrale"
+msgstr "Heure d'Asie centrale"
 
 #: dlls/tzres/tzres.rc:85
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Central European Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Central Asia Daylight Time"
-msgstr "Heure d'été Europe centrale"
+msgstr "Heure d'été d'Asie centrale"
 
 #: dlls/tzres/tzres.rc:86
 msgid "(UTC+06:00) Astana"
@@ -11018,19 +10952,14 @@ msgid "(UTC-08:00) Pacific Time (US & Canada)"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:51
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Aleutian Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Azerbaijan Standard Time"
-msgstr "Heure des Îles Aléoutiennes"
+msgstr "Heure de l'Azerbaïdjan"
 
 #: dlls/tzres/tzres.rc:52
-#, fuzzy
-#| msgid "Aleutian Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Azerbaijan Daylight Time"
-msgstr "Heure d'été des Îles Aléoutiennes"
+msgstr "Heure d'été de l'Azerbaïdjan"
 
 #: dlls/tzres/tzres.rc:53
 msgid "(UTC+04:00) Baku"
@@ -11055,20 +10984,14 @@ msgid "(UTC-03:00) Punta Arenas"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:306
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Saratov Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Samoa Standard Time"
-msgstr "Heure de Saratov"
+msgstr "Heure des Îles Samoa"
 
 #: dlls/tzres/tzres.rc:307
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Saratov Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Samoa Daylight Time"
-msgstr "Heure d'été de Saratov"
+msgstr "Heure d'été des Îles Samoa"
 
 #: dlls/tzres/tzres.rc:308
 msgid "(UTC+13:00) Samoa"
@@ -11133,20 +11056,14 @@ msgid "(UTC+02:00) Beirut"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:345
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Tomsk Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Tokyo Standard Time"
-msgstr "Heure de Tomsk"
+msgstr "Heure de Tokyo"
 
 #: dlls/tzres/tzres.rc:346
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Tomsk Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Tokyo Daylight Time"
-msgstr "Heure d'été de Tomsk"
+msgstr "Heure d'été de Tokyo"
 
 #: dlls/tzres/tzres.rc:347
 msgid "(UTC+09:00) Osaka, Sapporo, Tokyo"
@@ -11187,20 +11104,14 @@ msgid "(UTC-05:00) Havana"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:180
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Sudan Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Jordan Standard Time"
-msgstr "Heure du Soudan"
+msgstr "Heure de Jordanie"
 
 #: dlls/tzres/tzres.rc:181
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Sudan Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Jordan Daylight Time"
-msgstr "Heure d'été du Soudan"
+msgstr "Heure d'été de Jordanie"
 
 #: dlls/tzres/tzres.rc:182
 msgid "(UTC+02:00) Amman"
@@ -11250,20 +11161,14 @@ msgid "(UTC+04:00) Volgograd"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:54
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Tomsk Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Azores Standard Time"
-msgstr "Heure de Tomsk"
+msgstr "Heure des Açores"
 
 #: dlls/tzres/tzres.rc:55
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Tomsk Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Azores Daylight Time"
-msgstr "Heure d'été de Tomsk"
+msgstr "Heure d'été des Açores"
 
 #: dlls/tzres/tzres.rc:56
 msgid "(UTC-01:00) Azores"
@@ -11299,19 +11204,14 @@ msgid "(UTC-11:00) Coordinated Universal Time-11"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:33
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Aleutian Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Argentina Standard Time"
-msgstr "Heure des Îles Aléoutiennes"
+msgstr "Heure d'Argentine"
 
 #: dlls/tzres/tzres.rc:34
-#, fuzzy
-#| msgid "Aleutian Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Argentina Daylight Time"
-msgstr "Heure d'été des Îles Aléoutiennes"
+msgstr "Heure d'été d'Argentine"
 
 #: dlls/tzres/tzres.rc:35
 msgid "(UTC-03:00) City of Buenos Aires"
@@ -11379,20 +11279,14 @@ msgid "(UTC) Coordinated Universal Time"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:171
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "China Standard Time"
 msgctxt "maximum 31 characters"
 msgid "India Standard Time"
-msgstr "Heure de Chine"
+msgstr "Heure de l'Inde"
 
 #: dlls/tzres/tzres.rc:172
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "China Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "India Daylight Time"
-msgstr "Heure d'été de Chine"
+msgstr "Heure d'été de l'Inde"
 
 #: dlls/tzres/tzres.rc:173
 msgid "(UTC+05:30) Chennai, Kolkata, Mumbai, New Delhi"
@@ -11413,20 +11307,14 @@ msgid "(UTC+02:00) Athens, Bucharest"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:357
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Yukon Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Turkey Standard Time"
-msgstr "Heure du Yucon"
+msgstr "Heure de la Turquie"
 
 #: dlls/tzres/tzres.rc:358
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Yukon Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Turkey Daylight Time"
-msgstr "Heure d'été du Yucon"
+msgstr "Heure d'été de la Turquie"
 
 #: dlls/tzres/tzres.rc:359
 msgid "(UTC+03:00) Istanbul"
@@ -11447,20 +11335,14 @@ msgid "(UTC+04:00) Astrakhan, Ulyanovsk"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:144
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Haiti Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Fiji Standard Time"
-msgstr "Heure d'Haïti"
+msgstr "Heure des Îles Fidji"
 
 #: dlls/tzres/tzres.rc:145
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Haiti Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Fiji Daylight Time"
-msgstr "Heure d'Haïti"
+msgstr "Heure d'été des Îles Fidji"
 
 #: dlls/tzres/tzres.rc:146
 msgid "(UTC+12:00) Fiji"
@@ -11557,20 +11439,14 @@ msgid "(UTC-03:00) Montevideo"
 msgstr ""
 
 #: dlls/tzres/tzres.rc:267
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Haiti Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Pakistan Standard Time"
-msgstr "Heure d'Haïti"
+msgstr "Heure du Pakistan"
 
 #: dlls/tzres/tzres.rc:268
-#, fuzzy
-#| msgctxt "maximum 31 characters"
-#| msgid "Haiti Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Pakistan Daylight Time"
-msgstr "Heure d'Haïti"
+msgstr "Heure d'été du Pakistan"
 
 #: dlls/tzres/tzres.rc:269
 msgid "(UTC+05:00) Islamabad, Karachi"
@@ -13151,6 +13027,8 @@ msgstr "La classe ne supporte pas l'automatisation"
 #: dlls/vbscript/vbscript.rc:48
 msgid "File name or class name not found during Automation operation"
 msgstr ""
+"Le nom de fichier ou de classe n'a pas été trouvé pendant l'opération "
+"d'automatisation."
 
 #: dlls/vbscript/vbscript.rc:51
 msgid "Object doesn't support named arguments"
@@ -15884,13 +15762,11 @@ msgstr "&Haut :"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "Aller à la ligne"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "Numéro de la LRC"
+msgstr "Numéro de &Ligne:"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
@@ -17256,10 +17132,8 @@ msgstr "Valeur &DWORD"
 
 #: programs/regedit/regedit.rc:52 programs/regedit/regedit.rc:105
 #: programs/regedit/regedit.rc:128
-#, fuzzy
-#| msgid "&DWORD Value"
 msgid "&QWORD Value"
-msgstr "Valeur &DWORD"
+msgstr "Valeur &QWORD"
 
 #: programs/regedit/regedit.rc:53 programs/regedit/regedit.rc:106
 #: programs/regedit/regedit.rc:129
@@ -17831,16 +17705,12 @@ msgid "Collapse"
 msgstr "Réduire"
 
 #: programs/regedit/regedit.rc:178
-#, fuzzy
-#| msgid "Adds a new 32-bit value"
 msgid "Adds a new 64-bit value"
-msgstr "Ajoute une nouvelle valeur de 32 bits"
+msgstr "Ajoute une nouvelle valeur de 64 bits"
 
 #: programs/regedit/regedit.rc:221
-#, fuzzy
-#| msgid "Edit DWORD"
 msgid "Edit QWORD"
-msgstr "Modification de la valeur DWORD"
+msgstr "Modification de la valeur QWORD"
 
 #: programs/regsvr32/regsvr32.rc:33
 msgid ""
