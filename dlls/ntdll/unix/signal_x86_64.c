@@ -2429,7 +2429,9 @@ void signal_init_process(void)
         {
             amd64_thread_data()->fs = fs32_sel = (sel << 3) | 3;
             syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
+#ifdef AT_HWCAP2
             if (getauxval( AT_HWCAP2 ) & 2) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
+#endif
         }
         else ERR_(seh)( "failed to allocate %%fs selector\n" );
     }
