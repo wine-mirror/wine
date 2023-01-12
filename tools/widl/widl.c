@@ -135,6 +135,7 @@ char *regscript_name;
 char *regscript_token;
 static char *idfile_name;
 char *temp_name;
+const char *temp_dir = NULL;
 const char *prefix_client = "";
 const char *prefix_server = "";
 static const char *includedir;
@@ -931,4 +932,6 @@ static void rm_tempfile(void)
     unlink(proxy_name);
   if (do_typelib)
     unlink(typelib_name);
+  if (temp_dir)
+    rmdir(temp_dir);
 }

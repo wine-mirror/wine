@@ -147,6 +147,7 @@ static const char *output_file_name;
 static const char *output_debug_file;
 static const char *output_implib;
 static int keep_generated = 0;
+const char *temp_dir = NULL;
 static struct strarray tmp_files;
 #ifdef HAVE_SIGSET_T
 static sigset_t signal_mask;
@@ -222,6 +223,7 @@ static void clean_temp_files(void)
 
     for (i = 0; i < tmp_files.count; i++)
 	unlink(tmp_files.str[i]);
+    if (temp_dir) rmdir( temp_dir );
 }
 
 /* clean things up when aborting on a signal */

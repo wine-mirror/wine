@@ -29,6 +29,7 @@
 
 #include "build.h"
 
+const char *temp_dir = NULL;
 static struct strarray tmp_files;
 static const char *output_file_source_name;
 
@@ -37,6 +38,7 @@ void cleanup_tmp_files(void)
 {
     unsigned int i;
     for (i = 0; i < tmp_files.count; i++) if (tmp_files.str[i]) unlink( tmp_files.str[i] );
+    if (temp_dir) rmdir( temp_dir );
 }
 
 
