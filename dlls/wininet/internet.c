@@ -2522,6 +2522,37 @@ static WCHAR *get_proxy_autoconfig_url(void)
     return ret;
 }
 
+static WCHAR *copy_optionW(WCHAR *value)
+{
+    DWORD len;
+    void *tmp;
+
+    if (!value)
+        return NULL;
+
+    len = (wcslen(value) + 1) * sizeof(WCHAR);
+    if (!(tmp = HeapAlloc(GetProcessHeap(), 0, len)))
+        return NULL;
+
+    return memcpy(tmp, value, len);
+}
+
+static char *copy_optionA(WCHAR *value)
+{
+    DWORD len;
+    void *tmp;
+
+    if (!value)
+        return NULL;
+
+    len = wcslen(value) * 3 + 1;
+    if (!(tmp = HeapAlloc(GetProcessHeap(), 0, len)))
+        return NULL;
+
+    WideCharToMultiByte(CP_ACP, 0, value, -1, tmp, len, NULL, NULL);
+    return tmp;
+}
+
 static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL unicode)
 {
     /* FIXME: This function currently handles more options than it should. Options requiring
@@ -2642,25 +2673,25 @@ static DWORD query_global_option(DWORD option, void *buffer, DWORD *size, BOOL u
 
             case INTERNET_PER_CONN_PROXY_SERVER:
                 if (unicode)
-                    optionW->Value.pszValue = wcsdup(pi.proxy);
+                    optionW->Value.pszValue = copy_optionW(pi.proxy);
                 else
-                    optionA->Value.pszValue = strdupWtoA(pi.proxy);
+                    optionA->Value.pszValue = copy_optionA(pi.proxy);
                 break;
 
             case INTERNET_PER_CONN_PROXY_BYPASS:
                 if (unicode)
-                    optionW->Value.pszValue = wcsdup(pi.proxyBypass);
+                    optionW->Value.pszValue = copy_optionW(pi.proxyBypass);
                 else
-                    optionA->Value.pszValue = strdupWtoA(pi.proxyBypass);
+                    optionA->Value.pszValue = copy_optionA(pi.proxyBypass);
                 break;
 
             case INTERNET_PER_CONN_AUTOCONFIG_URL:
                 if (!url)
                     optionW->Value.pszValue = NULL;
                 else if (unicode)
-                    optionW->Value.pszValue = wcsdup(url);
+                    optionW->Value.pszValue = copy_optionW(url);
                 else
-                    optionA->Value.pszValue = strdupWtoA(url);
+                    optionA->Value.pszValue = copy_optionA(url);
                 break;
 
             case INTERNET_PER_CONN_AUTODISCOVERY_FLAGS:

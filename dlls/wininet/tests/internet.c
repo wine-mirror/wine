@@ -1307,6 +1307,9 @@ static void test_Option_PerConnectionOption(void)
             list.pOptions[1].Value.dwValue);
     verifyProxyEnable(1);
 
+    ret = HeapValidate(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
+    ok(ret, "HeapValidate failed, last error %lu\n", GetLastError());
+
     HeapFree(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
