@@ -1167,9 +1167,12 @@ static void test_query_logicalproc(void)
 
 static void test_query_logicalprocex(void)
 {
-    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *infoex, *infoex_public, *infoex_core, *infoex_numa,
-                                            *infoex_cache, *infoex_package, *infoex_group, *ex;
-    DWORD relationship, len, len_public, len_core, len_numa, len_cache, len_package, len_group, len_union, ret_len;
+    static const char * const names[] = { "Core", "NumaNode", "Cache", "Package", "Group", "Die", "NumaNodeEx", "Module" };
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *infoex, *infoex_public, *infoex_core, *infoex_numa, *infoex_cache,
+                                            *infoex_package, *infoex_group, *infoex_die, *infoex_numa_ex,
+                                            *infoex_module, *ex;
+    DWORD relationship, len, len_public, len_core, len_numa, len_cache, len_package, len_group, len_die, len_numa_ex,
+          len_module, len_union, ret_len;
     unsigned int i, j;
     NTSTATUS status;
     BOOL ret;
@@ -1213,6 +1216,23 @@ static void test_query_logicalprocex(void)
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08lx\n", status);
     ok(len_group > 0, "got %lu\n", len_group);
 
+    relationship = RelationProcessorDie;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len_die);
+    todo_wine ok(status == STATUS_INFO_LENGTH_MISMATCH || status == STATUS_UNSUCCESSFUL || broken(status == STATUS_SUCCESS),
+       "got 0x%08lx\n", status);
+
+    len_numa_ex = 0;
+    relationship = RelationNumaNodeEx;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len_numa_ex);
+    todo_wine ok(status == STATUS_INFO_LENGTH_MISMATCH || status == STATUS_UNSUCCESSFUL || broken(status == STATUS_SUCCESS),
+       "got 0x%08lx\n", status);
+
+    len_module = 0;
+    relationship = RelationProcessorModule;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len_module);
+    todo_wine ok(status == STATUS_INFO_LENGTH_MISMATCH || status == STATUS_UNSUCCESSFUL || broken(status == STATUS_SUCCESS),
+       "got 0x%08lx\n", status);
+
     len_public = 0;
     ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len_public);
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %ld\n", ret, GetLastError());
@@ -1225,6 +1245,9 @@ static void test_query_logicalprocex(void)
     infoex_cache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_cache);
     infoex_package = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_package);
     infoex_group = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_group);
+    infoex_die = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_die);
+    infoex_numa_ex = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_numa_ex);
+    infoex_module = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len_module);
 
     relationship = RelationAll;
     status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex, len, &ret_len);
@@ -1252,7 +1275,9 @@ static void test_query_logicalprocex(void)
         {
         case RelationProcessorCore:
         case RelationProcessorPackage:
-            trace("infoex[%u].Relationship: 0x%x (%s)\n", i, ex->Relationship, ex->Relationship == RelationProcessorCore ? "Core" : "Package");
+        case RelationProcessorDie:
+        case RelationProcessorModule:
+            trace("infoex[%u].Relationship: 0x%x (%s)\n", i, ex->Relationship, names[ex->Relationship]);
             trace("infoex[%u].Processor.Flags: 0x%x\n", i, ex->Processor.Flags);
             trace("infoex[%u].Processor.EfficiencyClass: 0x%x\n", i, ex->Processor.EfficiencyClass);
             trace("infoex[%u].Processor.GroupCount: 0x%x\n", i, ex->Processor.GroupCount);
@@ -1263,7 +1288,8 @@ static void test_query_logicalprocex(void)
             }
             break;
         case RelationNumaNode:
-            trace("infoex[%u].Relationship: 0x%x (NumaNode)\n", i, ex->Relationship);
+        case RelationNumaNodeEx:
+            trace("infoex[%u].Relationship: 0x%x (%s)\n", i, ex->Relationship, names[ex->Relationship]);
             trace("infoex[%u].NumaNode.NodeNumber: 0x%lx\n", i, ex->NumaNode.NodeNumber);
             trace("infoex[%u].NumaNode.GroupMask.Mask: 0x%Ix\n", i, ex->NumaNode.GroupMask.Mask);
             trace("infoex[%u].NumaNode.GroupMask.Group: 0x%x\n", i, ex->NumaNode.GroupMask.Group);
@@ -1359,8 +1385,8 @@ static void test_query_logicalprocex(void)
         i += ex->Size;
     }
 
-    len_union = len_core + len_numa + len_cache + len_package + len_group;
-    ok(len == len_union, "Expected 0x%lx, got 0x%0lx\n", len, len_union);
+    len_union = len_core + len_numa + len_cache + len_package + len_group + len_module;
+    ok(len == len_union, "Expected %lu, got %lu\n", len, len_union);
 
     HeapFree(GetProcessHeap(), 0, infoex);
     HeapFree(GetProcessHeap(), 0, infoex_public);
@@ -1369,6 +1395,9 @@ static void test_query_logicalprocex(void)
     HeapFree(GetProcessHeap(), 0, infoex_cache);
     HeapFree(GetProcessHeap(), 0, infoex_package);
     HeapFree(GetProcessHeap(), 0, infoex_group);
+    HeapFree(GetProcessHeap(), 0, infoex_die);
+    HeapFree(GetProcessHeap(), 0, infoex_numa_ex);
+    HeapFree(GetProcessHeap(), 0, infoex_module);
 }
 
 static void test_query_cpusetinfo(void)
