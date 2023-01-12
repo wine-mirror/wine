@@ -143,6 +143,7 @@ typedef struct {
     USHORT MaximumLength;
     const char *Buffer;
     NTSTATUS result;
+    int broken_len;
 } largeint2str_t;
 
 /*
@@ -271,17 +272,17 @@ static const largeint2str_t largeint2str[] = {
  */
 
     { 2,        32768, 16, 17, "1000000000000000\0--------------------------------------------------", STATUS_SUCCESS},
-    { 2,        32768, 16, 16, "1000000000000000---------------------------------------------------",  STATUS_SUCCESS},
+    { 2,        32768, 16, 16, "1000000000000000---------------------------------------------------",  STATUS_SUCCESS, 1},
     { 2,        65536, 17, 18, "10000000000000000\0-------------------------------------------------", STATUS_SUCCESS},
-    { 2,        65536, 17, 17, "10000000000000000--------------------------------------------------",  STATUS_SUCCESS},
+    { 2,        65536, 17, 17, "10000000000000000--------------------------------------------------",  STATUS_SUCCESS, 1},
     { 2,       131072, 18, 19, "100000000000000000\0------------------------------------------------", STATUS_SUCCESS},
-    { 2,       131072, 18, 18, "100000000000000000-------------------------------------------------",  STATUS_SUCCESS},
+    { 2,       131072, 18, 18, "100000000000000000-------------------------------------------------",  STATUS_SUCCESS, 1},
     {16,   0xffffffff,  8,  9, "FFFFFFFF\0----------------------------------------------------------", STATUS_SUCCESS},
-    {16,   0xffffffff,  8,  8, "FFFFFFFF-----------------------------------------------------------",  STATUS_SUCCESS},
-    {16,   0xffffffff,  8,  7, "-------------------------------------------------------------------",  STATUS_BUFFER_OVERFLOW},
+    {16,   0xffffffff,  8,  8, "FFFFFFFF-----------------------------------------------------------",  STATUS_SUCCESS, 1},
+    {16,   0xffffffff,  8,  7, "-------------------------------------------------------------------",  STATUS_BUFFER_OVERFLOW, 1},
     {16,          0xa,  1,  2, "A\0-----------------------------------------------------------------", STATUS_SUCCESS},
-    {16,          0xa,  1,  1, "A------------------------------------------------------------------",  STATUS_SUCCESS},
-    {16,            0,  1,  0, "-------------------------------------------------------------------",  STATUS_BUFFER_OVERFLOW},
+    {16,          0xa,  1,  1, "A------------------------------------------------------------------",  STATUS_SUCCESS, 1},
+    {16,            0,  1,  0, "-------------------------------------------------------------------",  STATUS_BUFFER_OVERFLOW, 1},
     {20,   0xdeadbeef,  0,  9, "-------------------------------------------------------------------",  STATUS_INVALID_PARAMETER},
     {-8,     07654321,  0, 12, "-------------------------------------------------------------------",  STATUS_INVALID_PARAMETER},
 };
@@ -355,7 +356,8 @@ static void one_RtlInt64ToUnicodeString_test(int test_num, const largeint2str_t 
     ok(memcmp(unicode_string.Buffer, expected_unicode_string.Buffer, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
        "(test %d): RtlInt64ToUnicodeString(0x%I64x, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
        test_num, largeint2str->value, largeint2str->base, ansi_str.Buffer, expected_ansi_str.Buffer);
-    ok(unicode_string.Length == expected_unicode_string.Length,
+    ok(unicode_string.Length == expected_unicode_string.Length ||
+       broken(largeint2str->broken_len && !unicode_string.Length) /* win11 */,
        "(test %d): RtlInt64ToUnicodeString(0x%s, %d, [out]) string has Length %d, expected: %d\n",
        test_num, wine_dbgstr_longlong(largeint2str->value), largeint2str->base,
        unicode_string.Length, expected_unicode_string.Length);
