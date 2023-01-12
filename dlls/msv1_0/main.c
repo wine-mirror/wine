@@ -1078,7 +1078,7 @@ static NTSTATUS NTAPI ntlm_SpAcceptLsaModeContext( LSA_SEC_HANDLE cred_handle, L
     }
 
 done:
-    if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED)
+    if (status != SEC_E_OK && status != SEC_I_CONTINUE_NEEDED && !ctx_handle)
     {
         ntlm_cleanup( ctx );
         free( ctx );
