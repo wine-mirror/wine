@@ -576,7 +576,7 @@ static LRESULT WINAPI ProgressWindowProc(HWND hwnd, UINT message,
 
     case WM_DESTROY:
         TRACE("Progress Ctrl destruction, hwnd=%p\n", hwnd);
-        free (infoPtr);
+        Free (infoPtr);
         SetWindowLongPtrW(hwnd, 0, 0);
         theme = GetWindowTheme (hwnd);
         CloseThemeData (theme);
