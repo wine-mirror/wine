@@ -167,6 +167,51 @@ static const int ip_protocol_map[][2] =
 
 #undef MAP
 
+static pthread_once_t hash_init_once = PTHREAD_ONCE_INIT;
+static BYTE byte_hash[256];
+
+static void init_hash(void)
+{
+    unsigned i, index;
+    NTSTATUS status;
+    BYTE *buf, tmp;
+    ULONG buf_len;
+
+    for (i = 0; i < sizeof(byte_hash); ++i)
+        byte_hash[i] = i;
+
+    buf_len = sizeof(SYSTEM_INTERRUPT_INFORMATION) * NtCurrentTeb()->Peb->NumberOfProcessors;
+    if (!(buf = malloc( buf_len )))
+    {
+        ERR( "No memory.\n" );
+        return;
+    }
+
+    for (i = 0; i < sizeof(byte_hash) - 1; ++i)
+    {
+        if (!(i % buf_len) && (status = NtQuerySystemInformation( SystemInterruptInformation, buf,
+                                                                  buf_len, &buf_len )))
+        {
+            ERR( "Failed to get random bytes.\n" );
+            free( buf );
+            return;
+        }
+        index = i + buf[i % buf_len] % (sizeof(byte_hash) - i);
+        tmp = byte_hash[index];
+        byte_hash[index] = byte_hash[i];
+        byte_hash[i] = tmp;
+    }
+    free( buf );
+}
+
+static void hash_random( BYTE *d, const BYTE *s, unsigned int len )
+{
+    unsigned int i;
+
+    for (i = 0; i < len; ++i)
+        d[i] = byte_hash[s[i]];
+}
+
 static int addrinfo_flags_from_unix( int flags )
 {
     int ws_flags = 0;
@@ -889,6 +934,44 @@ static NTSTATUS unix_gethostbyaddr( void *args )
 #endif
 }
 
+static int compare_addrs_hashed( const void *a1, const void *a2, int addr_len )
+{
+    char a1_hashed[16], a2_hashed[16];
+
+    assert( addr_len <= sizeof(a1_hashed) );
+    hash_random( (BYTE *)a1_hashed, a1, addr_len );
+    hash_random( (BYTE *)a2_hashed, a2, addr_len );
+    return memcmp( a1_hashed, a2_hashed, addr_len );
+}
+
+static void sort_addrs_hashed( struct hostent *host )
+{
+    /* On Unix gethostbyname() may return IP addresses in random order on each call. On Windows the order of
+     * IP addresses is not determined as well but it is the same on consequent calls (changes after network
+     * resets and probably DNS timeout expiration).
+     * Life is Strange Remastered depends on gethostbyname() returning IP addresses in the same order to reuse
+     * the established TLS connection and avoid timeouts that happen in game when establishing multiple extra TLS
+     * connections.
+     * Just sorting the addresses would break server load balancing provided by gethostbyname(), so randomize the
+     * sort once per process. */
+    unsigned int i, j;
+    char *tmp;
+
+    pthread_once( &hash_init_once, init_hash );
+
+    for (i = 0; host->h_addr_list[i]; ++i)
+    {
+        for (j = i + 1; host->h_addr_list[j]; ++j)
+        {
+            if (compare_addrs_hashed( host->h_addr_list[j], host->h_addr_list[i], host->h_length ) < 0)
+            {
+                tmp = host->h_addr_list[j];
+                host->h_addr_list[j] = host->h_addr_list[i];
+                host->h_addr_list[i] = tmp;
+            }
+        }
+    }
+}
 
 #ifdef HAVE_LINUX_GETHOSTBYNAME_R_6
 static NTSTATUS unix_gethostbyname( void *args )
@@ -915,9 +998,14 @@ static NTSTATUS unix_gethostbyname( void *args )
     }
 
     if (!unix_host)
+    {
         ret = (locerr < 0 ? errno_from_unix( errno ) : host_errno_from_unix( locerr ));
+    }
     else
+    {
+        sort_addrs_hashed( unix_host );
         ret = hostent_from_unix( unix_host, params->host, params->size );
+    }
 
     free( unix_buffer );
     return ret;
@@ -938,6 +1026,7 @@ static NTSTATUS unix_gethostbyname( void *args )
         return ret;
     }
 
+    sort_addrs_hashed( unix_host );
     ret = hostent_from_unix( unix_host, params->host, params->size );
 
     pthread_mutex_unlock( &host_mutex );
