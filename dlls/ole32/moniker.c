@@ -1033,8 +1033,8 @@ static ULONG   WINAPI EnumMonikerImpl_Release(IEnumMoniker* iface)
         TRACE("(%p) Deleting\n",This);
 
         for (i = 0; i < This->moniker_list->size; i++)
-            HeapFree(GetProcessHeap(), 0, This->moniker_list->interfaces[i]);
-        HeapFree(GetProcessHeap(), 0, This->moniker_list);
+            free(This->moniker_list->interfaces[i]);
+        free(This->moniker_list);
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1119,7 +1119,7 @@ static HRESULT   WINAPI EnumMonikerImpl_Clone(IEnumMoniker* iface, IEnumMoniker 
 
     *ppenum = NULL;
 
-    moniker_list = HeapAlloc(GetProcessHeap(), 0, FIELD_OFFSET(InterfaceList, interfaces[This->moniker_list->size]));
+    moniker_list = malloc(FIELD_OFFSET(InterfaceList, interfaces[This->moniker_list->size]));
     if (!moniker_list)
         return E_OUTOFMEMORY;
 
@@ -1127,13 +1127,13 @@ static HRESULT   WINAPI EnumMonikerImpl_Clone(IEnumMoniker* iface, IEnumMoniker 
     for (i = 0; i < This->moniker_list->size; i++)
     {
         SIZE_T size = FIELD_OFFSET(InterfaceData, abData[This->moniker_list->interfaces[i]->ulCntData]);
-        moniker_list->interfaces[i] = HeapAlloc(GetProcessHeap(), 0, size);
+        moniker_list->interfaces[i] = malloc(size);
         if (!moniker_list->interfaces[i])
         {
             ULONG end = i;
             for (i = 0; i < end; i++)
-                HeapFree(GetProcessHeap(), 0, moniker_list->interfaces[i]);
-            HeapFree(GetProcessHeap(), 0, moniker_list);
+                free(moniker_list->interfaces[i]);
+            free(moniker_list);
             return E_OUTOFMEMORY;
         }
         memcpy(moniker_list->interfaces[i], This->moniker_list->interfaces[i], size);
