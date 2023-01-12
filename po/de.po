@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-09-05 10:50+0200\n"
+"PO-Revision-Date: 2023-01-12 16:46+0100\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3740,7 +3740,7 @@ msgstr "Verbunden"
 
 #: dlls/joy.cpl/joy.rc:46
 msgid "Connected (xinput device)"
-msgstr "Verbunden (xinput-Geräte)"
+msgstr "Verbunden (XInput-Geräte)"
 
 #: dlls/joy.cpl/joy.rc:48
 msgid "Disabled"
@@ -3756,25 +3756,23 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:55
 msgid "DInput"
-msgstr ""
+msgstr "DInput"
 
 #: dlls/joy.cpl/joy.rc:59
 msgid "Axes"
-msgstr ""
+msgstr "Achsen"
 
 #: dlls/joy.cpl/joy.rc:60
 msgid "POVs"
-msgstr ""
+msgstr "POVs"
 
 #: dlls/joy.cpl/joy.rc:61
 msgid "Buttons"
 msgstr "Tasten"
 
 #: dlls/joy.cpl/joy.rc:62
-#, fuzzy
-#| msgid "Test Force Feedback"
 msgid "Force Feedback Effect"
-msgstr "Force Feedback testen"
+msgstr "Force-Feedback-Effekt"
 
 #: dlls/joy.cpl/joy.rc:64
 msgid ""
@@ -3787,60 +3785,60 @@ msgstr ""
 
 #: dlls/joy.cpl/joy.rc:70
 msgid "XInput"
-msgstr ""
+msgstr "XInput"
 
 #: dlls/joy.cpl/joy.rc:73
-#, fuzzy
-#| msgid "User"
 msgid "User #0"
-msgstr "Benutzername"
+msgstr "Benutzer #0"
 
 #: dlls/joy.cpl/joy.rc:74
-#, fuzzy
-#| msgid "User"
 msgid "User #1"
-msgstr "Benutzername"
+msgstr "Benutzer #1"
 
 #: dlls/joy.cpl/joy.rc:75
-#, fuzzy
-#| msgid "User"
 msgid "User #2"
-msgstr "Benutzername"
+msgstr "Benutzer #2"
 
 #: dlls/joy.cpl/joy.rc:76
-#, fuzzy
-#| msgid "User"
 msgid "User #3"
-msgstr "Benutzername"
+msgstr "Benutzer #3"
 
 #: dlls/joy.cpl/joy.rc:78
 msgid ""
 "No user detected on slot #0, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"Kein Gerät auf Platz #0 erkannt, stellen Sie sicher, dass Ihr Gamepad "
+"eingesteckt ist und nicht im Joysticks-Tab für DInput überschrieben wurde."
 
 #: dlls/joy.cpl/joy.rc:82
 msgid ""
 "No user detected on slot #1, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"Kein Gerät auf Platz #1 erkannt, stellen Sie sicher, dass Ihr Gamepad "
+"eingesteckt ist und nicht im Joysticks-Tab für DInput überschrieben wurde."
 
 #: dlls/joy.cpl/joy.rc:86
 msgid ""
 "No user detected on slot #2, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"Kein Gerät auf Platz #2 erkannt, stellen Sie sicher, dass Ihr Gamepad "
+"eingesteckt ist und nicht im Joysticks-Tab für DInput überschrieben wurde."
 
 #: dlls/joy.cpl/joy.rc:90
 msgid ""
 "No user detected on slot #3, make sure your gamepad is plugged in, and not "
 "overridden for DInput in the Joysticks tab."
 msgstr ""
+"Kein Gerät auf Platz #3 erkannt, stellen Sie sicher, dass Ihr Gamepad "
+"eingesteckt ist und nicht im Joysticks-Tab für DInput überschrieben wurde."
 
 #: dlls/joy.cpl/joy.rc:95 dlls/joy.cpl/joy.rc:96 dlls/joy.cpl/joy.rc:97
 #: dlls/joy.cpl/joy.rc:98
 msgid "Rumble"
-msgstr ""
+msgstr "Rumble"
 
 #: dlls/joy.cpl/joy.rc:31
 msgid "Game Controllers"
@@ -15198,7 +15196,7 @@ msgstr "&Zeilenumbruch"
 
 #: programs/notepad/notepad.rc:56
 msgid "&Search...\tCtrl+F"
-msgstr "Suchen...\tStrg+F"
+msgstr "&Suchen...\tStrg+F"
 
 #: programs/notepad/notepad.rc:57
 msgid "&Search next\tF3"
@@ -15209,10 +15207,8 @@ msgid "&Replace...\tCtrl+H"
 msgstr "Erset&zen...\tStrg+H"
 
 #: programs/notepad/notepad.rc:59
-#, fuzzy
-#| msgid "&New...\tCtrl+N"
 msgid "&Go To...\tCtrl+G"
-msgstr "&Neu...\tStrg+N"
+msgstr "Zu &Zeile...\tStrg+G"
 
 #: programs/notepad/notepad.rc:63 programs/oleview/oleview.rc:68
 #: programs/oleview/oleview.rc:90 programs/winefile/winefile.rc:67
@@ -15255,17 +15251,15 @@ msgstr "&Oben:"
 
 #: programs/notepad/notepad.rc:132
 msgid "Go To Line"
-msgstr ""
+msgstr "Zu Zeile springen"
 
 #: programs/notepad/notepad.rc:134
-#, fuzzy
-#| msgid "CRL Number"
 msgid "&Line Number:"
-msgstr "CRL-Nummer"
+msgstr "&Zeilennummer:"
 
 #: programs/notepad/notepad.rc:137
 msgid "Go To"
-msgstr ""
+msgstr "Springen"
 
 #: programs/notepad/notepad.rc:145
 msgid "Encoding:"
@@ -15331,7 +15325,7 @@ msgstr "Z"
 #: programs/notepad/notepad.rc:162
 msgctxt "accelerator GoTo"
 msgid "G"
-msgstr ""
+msgstr "G"
 
 #: programs/notepad/notepad.rc:74
 msgid "Page &p"
@@ -15408,7 +15402,7 @@ msgstr ""
 
 #: programs/notepad/notepad.rc:90
 msgid "Ln %ld, Col %ld"
-msgstr ""
+msgstr "Z. %ld, Sp. %ld"
 
 #: programs/oleview/oleview.rc:32
 msgid "&Bind to file..."
