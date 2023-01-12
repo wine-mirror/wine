@@ -1509,14 +1509,16 @@ static HRESULT WINAPI uia_iface_CheckNotSupported(IUIAutomation6 *iface, VARIANT
 
 static HRESULT WINAPI uia_iface_get_ReservedNotSupportedValue(IUIAutomation6 *iface, IUnknown **out_unk)
 {
-    FIXME("%p, %p: stub\n", iface, out_unk);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", iface, out_unk);
+
+    return UiaGetReservedNotSupportedValue(out_unk);
 }
 
 static HRESULT WINAPI uia_iface_get_ReservedMixedAttributeValue(IUIAutomation6 *iface, IUnknown **out_unk)
 {
-    FIXME("%p, %p: stub\n", iface, out_unk);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", iface, out_unk);
+
+    return UiaGetReservedMixedAttributeValue(out_unk);
 }
 
 static HRESULT WINAPI uia_iface_ElementFromIAccessible(IUIAutomation6 *iface, IAccessible *acc, int cid,

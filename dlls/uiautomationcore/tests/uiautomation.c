@@ -10109,6 +10109,7 @@ static const struct uia_com_classes com_classes[] = {
 static void test_CUIAutomation(void)
 {
     IUIAutomation *uia_iface;
+    IUnknown *unk1, *unk2;
     BOOL has_cui8 = TRUE;
     HRESULT hr;
     int i;
@@ -10151,6 +10152,25 @@ static void test_CUIAutomation(void)
                 (void **)&uia_iface);
     ok(hr == S_OK, "Failed to create IUIAutomation interface, hr %#lx\n", hr);
     ok(!!uia_iface, "uia_iface == NULL\n");
+
+    /* Reserved value retrieval methods. */
+    hr = UiaGetReservedNotSupportedValue(&unk1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomation_get_ReservedNotSupportedValue(uia_iface, &unk2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(unk1 == unk2, "unk1 != unk2\n");
+    IUnknown_Release(unk1);
+    IUnknown_Release(unk2);
+
+    hr = UiaGetReservedMixedAttributeValue(&unk1);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomation_get_ReservedMixedAttributeValue(uia_iface, &unk2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(unk1 == unk2, "unk1 != unk2\n");
+    IUnknown_Release(unk1);
+    IUnknown_Release(unk2);
 
     test_CUIAutomation_value_conversion(uia_iface);
     test_ElementFromHandle(uia_iface, has_cui8);
