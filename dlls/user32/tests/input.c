@@ -2296,12 +2296,14 @@ static LRESULT CALLBACK rawinputbuffer_wndproc(HWND hwnd, UINT msg, WPARAM wpara
 
 static void test_GetRawInputBuffer(void)
 {
-    unsigned int size, count, rawinput_size, header_size;
+    unsigned int size, count, rawinput_size, header_size, scan_code;
     RAWINPUTDEVICE raw_devices[1];
     char buffer[16 * sizeof(RAWINPUT64)];
     HWND hwnd;
     BOOL ret;
     POINT pt;
+
+#define HEADER_FIELD(field) (is_wow64 ? ((RAWINPUT64 *)buffer)->header.field : ((RAWINPUT *)buffer)->header.field)
 
     if (is_wow64) rawinput_size = sizeof(RAWINPUT64);
     else rawinput_size = sizeof(RAWINPUT);
@@ -2392,6 +2394,8 @@ static void test_GetRawInputBuffer(void)
     count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
     ok(count == 1U, "GetRawInputBuffer returned %u\n", count);
     ok(size == sizeof(buffer), "GetRawInputBuffer returned unexpected size: %u\n", size);
+    ok(HEADER_FIELD(dwType) == RIM_TYPEMOUSE, "Unexpected rawinput dwType: %ld\n", HEADER_FIELD(dwType));
+    ok(HEADER_FIELD(wParam) == 0 || HEADER_FIELD(wParam) == 1, "Expected wparam 0 or 1, got %Iu\n", (WPARAM)HEADER_FIELD(wParam));
     ok(rawinput_buffer_mouse_x(buffer, 0) == 5, "Unexpected rawinput data: %d\n", rawinput_buffer_mouse_x(buffer, 0));
 
 
@@ -2428,7 +2432,44 @@ static void test_GetRawInputBuffer(void)
     ok(ret, "RegisterRawInputDevices failed\n");
     ok(GetLastError() == 0xdeadbeef, "RegisterRawInputDevices returned %08lx\n", GetLastError());
 
+
+    /* some keyboard tests to better check fields under wow64 */
+    raw_devices[0].usUsagePage = 0x01;
+    raw_devices[0].usUsage = 0x06;
+    raw_devices[0].dwFlags = RIDEV_INPUTSINK;
+    raw_devices[0].hwndTarget = hwnd;
+
+    SetLastError(0xdeadbeef);
+    ret = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
+    ok(ret, "RegisterRawInputDevices failed\n");
+    ok(GetLastError() == 0xdeadbeef, "RegisterRawInputDevices returned %08lx\n", GetLastError());
+
+    keybd_event('X', 0x2d, 0, 0);
+    keybd_event('X', 0x2d, KEYEVENTF_KEYUP, 0);
+
+    size = sizeof(buffer);
+    memset(buffer, 0, sizeof(buffer));
+    count = GetRawInputBuffer((RAWINPUT*)buffer, &size, sizeof(RAWINPUTHEADER));
+    ok(count == 2U, "GetRawInputBuffer returned %u\n", count);
+    ok(size == sizeof(buffer), "GetRawInputBuffer returned unexpected size: %u\n", size);
+
+    ok(HEADER_FIELD(dwType) == RIM_TYPEKEYBOARD, "Unexpected rawinput dwType: %ld\n", HEADER_FIELD(dwType));
+    todo_wine_if(is_wow64)
+    ok(HEADER_FIELD(wParam) == 0 || HEADER_FIELD(wParam) == 1, "Expected wparam 0 or 1, got %Iu\n", (WPARAM)HEADER_FIELD(wParam));
+    scan_code = is_wow64 ? ((RAWINPUT64 *)buffer)->data.keyboard.MakeCode : ((RAWINPUT *)buffer)->data.keyboard.MakeCode;
+    ok(scan_code == 0x2d, "Unexpected rawinput keyboard scan code: %x\n", scan_code);
+
+    raw_devices[0].dwFlags = RIDEV_REMOVE;
+    raw_devices[0].hwndTarget = 0;
+
+    SetLastError(0xdeadbeef);
+    ret = RegisterRawInputDevices(raw_devices, ARRAY_SIZE(raw_devices), sizeof(RAWINPUTDEVICE));
+    ok(ret, "RegisterRawInputDevices failed\n");
+    ok(GetLastError() == 0xdeadbeef, "RegisterRawInputDevices returned %08lx\n", GetLastError());
+
     DestroyWindow(hwnd);
+
+#undef HEADER_FIELD
 }
 
 static BOOL rawinput_test_received_legacy;
