@@ -1363,10 +1363,10 @@ HRESULT MonikerMarshal_Create(IMoniker *inner, IUnknown **outer)
 
 void * __RPC_USER MIDL_user_allocate(SIZE_T size)
 {
-    return HeapAlloc(GetProcessHeap(), 0, size);
+    return malloc(size);
 }
 
 void __RPC_USER MIDL_user_free(void *p)
 {
-    HeapFree(GetProcessHeap(), 0, p);
+    free(p);
 }
