@@ -1406,11 +1406,16 @@ static void release_test_context_(unsigned int line, struct d3d10core_test_conte
     ok_(__FILE__, line)(!ref, "Device has %lu references left.\n", ref);
 }
 
-static void clear_backbuffer_rtv(struct d3d10core_test_context *test_context, const struct vec4 *v)
+static void clear_rtv(struct d3d10core_test_context *test_context, ID3D10RenderTargetView *rtv, const struct vec4 *v)
 {
     /* Cast to (const float *) instead of passing &v->x, since gcc warns about
      * overreading a float[4] from a float otherwise. */
     ID3D10Device_ClearRenderTargetView(test_context->device, test_context->backbuffer_rtv, (const float *)v);
+}
+
+static void clear_backbuffer_rtv(struct d3d10core_test_context *test_context, const struct vec4 *v)
+{
+    clear_rtv(test_context, test_context->backbuffer_rtv, v);
 }
 
 #define draw_quad(context) draw_quad_vs_(__LINE__, context, NULL, 0)
@@ -19430,6 +19435,195 @@ static void test_stencil_only_write_after_clear(void)
     release_test_context(&test_context);
 }
 
+static void test_vertex_formats(void)
+{
+    struct d3d10core_test_context test_context;
+    ID3D10RenderTargetView *rtv;
+    ID3D10Device *device;
+    ID3D10Texture2D *rt;
+    unsigned int i;
+    HRESULT hr;
+
+    static const D3D10_TEXTURE2D_DESC rt_desc =
+    {
+        .Width = 4,
+        .Height = 4,
+        .MipLevels = 1,
+        .ArraySize = 1,
+        .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .SampleDesc.Count = 1,
+        .Usage = D3D10_USAGE_DEFAULT,
+        .BindFlags = D3D10_BIND_RENDER_TARGET,
+    };
+
+    static const struct quad
+    {
+        struct vec2 position;
+        unsigned int color[4];
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f}, {0x87654321, 0x12345678, 0xcccccccc, 0xdeadbeef}},
+        {{-1.0f,  1.0f}, {0x87654321, 0x12345678, 0xcccccccc, 0xdeadbeef}},
+        {{ 1.0f, -1.0f}, {0x87654321, 0x12345678, 0xcccccccc, 0xdeadbeef}},
+        {{ 1.0f,  1.0f}, {0x87654321, 0x12345678, 0xcccccccc, 0xdeadbeef}},
+    };
+
+    static const unsigned int vs_code[] =
+    {
+#if 0
+        void main(inout float4 position : sv_position, inout float4 color : COLOR)
+        {
+        }
+#endif
+        0x43425844, 0xc2f6fe60, 0x8a304938, 0x14c1a190, 0xe6f3e35e, 0x00000001, 0x00000144, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000d4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x705f7673, 0x7469736f, 0x006e6f69, 0x4f4c4f43, 0xabab0052,
+        0x4e47534f, 0x0000004c, 0x00000002, 0x00000008, 0x00000038, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000, 0x00000003, 0x00000001, 0x0000000f,
+        0x705f7673, 0x7469736f, 0x006e6f69, 0x4f4c4f43, 0xabab0052, 0x52444853, 0x00000068, 0x00010040,
+        0x0000001a, 0x0300005f, 0x001010f2, 0x00000000, 0x0300005f, 0x001010f2, 0x00000001, 0x04000067,
+        0x001020f2, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000001, 0x05000036, 0x001020f2,
+        0x00000000, 0x00101e46, 0x00000000, 0x05000036, 0x001020f2, 0x00000001, 0x00101e46, 0x00000001,
+        0x0100003e,
+    };
+
+    static const unsigned int ps_code[] =
+    {
+#if 0
+        float4 main(float4 position : sv_position, float4 color : COLOR) : sv_target
+        {
+            return color;
+        }
+#endif
+        0x43425844, 0xb9b047ca, 0x73193a19, 0xb9a919ed, 0x21c2ff5f, 0x00000001, 0x000000f4, 0x00000003,
+        0x0000002c, 0x00000080, 0x000000b4, 0x4e475349, 0x0000004c, 0x00000002, 0x00000008, 0x00000038,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x00000044, 0x00000000, 0x00000000,
+        0x00000003, 0x00000001, 0x00000f0f, 0x705f7673, 0x7469736f, 0x006e6f69, 0x4f4c4f43, 0xabab0052,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x745f7673, 0x65677261, 0xabab0074, 0x52444853, 0x00000038, 0x00000040,
+        0x0000000e, 0x03001062, 0x001010f2, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x05000036,
+        0x001020f2, 0x00000000, 0x00101e46, 0x00000001, 0x0100003e,
+    };
+
+    static const struct vec4 white = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    static const struct
+    {
+        DXGI_FORMAT format;
+        struct vec4 expect;
+    }
+    tests[] =
+    {
+        {DXGI_FORMAT_R32G32B32A32_FLOAT,    {-1.72477726e-34,  5.69045661e-28, -1.07374176e+08, -6.25985340e+18}},
+        {DXGI_FORMAT_R32G32B32_FLOAT,       {-1.72477726e-34,  5.69045661e-28, -1.07374176e+08,  1.0}},
+        {DXGI_FORMAT_R32G32_FLOAT,          {-1.72477726e-34,  5.69045661e-28,  0.0,             1.0}},
+        {DXGI_FORMAT_R32_FLOAT,             {-1.72477726e-34,  0.0,             0.0,             1.0}},
+
+        {DXGI_FORMAT_R10G10B10A2_UNORM,     { 7.82991230e-01,  3.28445762e-01,  1.15347020e-01,  6.66666666e-01}},
+
+        {DXGI_FORMAT_R11G11B10_FLOAT,       { 1.89453125e-01,  1.30000000e+01,  3.81250000e+00,  1.0}},
+
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,    { 3.56445313e+00, -1.12831593e-04,  1.03500000e+02,  7.57217407e-04}},
+        {DXGI_FORMAT_R16G16B16A16_UNORM,    { 2.62226284e-01,  5.28892934e-01,  3.37773710e-01,  7.11070448e-02}},
+        {DXGI_FORMAT_R16G16B16A16_SNORM,    { 5.24460614e-01, -9.42258954e-01,  6.75557733e-01,  1.42216250e-01}},
+        {DXGI_FORMAT_R16G16_FLOAT,          { 3.56445313e+00, -1.12831593e-04,  0.0,             1.0}},
+        {DXGI_FORMAT_R16G16_UNORM,          { 2.62226284e-01,  5.28892934e-01,  0.0,             1.0}},
+        {DXGI_FORMAT_R16G16_SNORM,          { 5.24460614e-01, -9.42258954e-01,  0.0,             1.0}},
+        {DXGI_FORMAT_R16_FLOAT,             { 3.56445313e+00,  0.0,             0.0,             1.0}},
+        {DXGI_FORMAT_R16_UNORM,             { 2.62226284e-01,  0.0,             0.0,             1.0}},
+        {DXGI_FORMAT_R16_SNORM,             { 5.24460614e-01,  0.0,             0.0,             1.0}},
+
+        {DXGI_FORMAT_R8G8B8A8_UNORM,        { 1.29411772e-01,  2.62745112e-01,  3.96078438e-01,  5.29411793e-01}},
+        {DXGI_FORMAT_R8G8B8A8_SNORM,        { 2.59842515e-01,  5.27559042e-01,  7.95275569e-01, -9.52755928e-01}},
+        {DXGI_FORMAT_R8G8_UNORM,            { 1.29411772e-01,  2.62745112e-01,  0.0,             1.0}},
+        {DXGI_FORMAT_R8G8_SNORM,            { 2.59842515e-01,  5.27559042e-01,  0.0,             1.0}},
+        {DXGI_FORMAT_R8_UNORM,              { 1.29411772e-01,  0.0,             0.0,             1.0}},
+        {DXGI_FORMAT_R8_SNORM,              { 2.59842515e-01,  0.0,             0.0,             1.0}},
+
+        {DXGI_FORMAT_B8G8R8A8_UNORM,        { 3.96078438e-01,  2.62745112e-01,  1.29411772e-01,  5.29411793e-01}},
+        {DXGI_FORMAT_B8G8R8X8_UNORM,        { 3.96078438e-01,  2.62745112e-01,  1.29411772e-01,  1.0}},
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    hr = ID3D10Device_CreateTexture2D(device, &rt_desc, NULL, &rt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)rt, NULL, &rtv);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D10Device_CreateVertexShader(device, vs_code, sizeof(vs_code), &test_context.vs);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &test_context.ps);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    test_context.vb = create_buffer(device, D3D10_BIND_VERTEX_BUFFER, sizeof(quad), quad);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        const D3D10_INPUT_ELEMENT_DESC layout_desc[] =
+        {
+            {
+                .SemanticName = "sv_position",
+                .SemanticIndex = 0,
+                .Format = DXGI_FORMAT_R32G32_FLOAT,
+                .InputSlot = 0,
+                .AlignedByteOffset = offsetof(struct quad, position),
+                .InputSlotClass = D3D10_INPUT_PER_VERTEX_DATA,
+            },
+            {
+                .SemanticName = "COLOR",
+                .SemanticIndex = 0,
+                .Format = tests[i].format,
+                .InputSlot = 0,
+                .AlignedByteOffset = offsetof(struct quad, color),
+                .InputSlotClass = D3D10_INPUT_PER_VERTEX_DATA,
+            },
+        };
+
+        static const unsigned int stride = sizeof(*quad);
+        static const unsigned int offset = 0;
+        ID3D10InputLayout *input_layout;
+        unsigned int format_support;
+
+        hr = ID3D10Device_CheckFormatSupport(device, tests[i].format, &format_support);
+        ok(hr == S_OK || hr == E_FAIL, "Got hr %#lx.\n", hr);
+
+        if (!(format_support & D3D10_FORMAT_SUPPORT_IA_VERTEX_BUFFER))
+            continue;
+
+        winetest_push_context("Format %#x", tests[i].format);
+
+        hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
+                vs_code, sizeof(vs_code), &input_layout);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+        clear_rtv(&test_context, rtv, &white);
+        ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+        ID3D10Device_IASetInputLayout(device, input_layout);
+        ID3D10Device_IASetPrimitiveTopology(device, D3D10_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+        ID3D10Device_IASetVertexBuffers(device, 0, 1, &test_context.vb, &stride, &offset);
+        ID3D10Device_VSSetShader(device, test_context.vs);
+        ID3D10Device_PSSetShader(device, test_context.ps);
+        ID3D10Device_Draw(device, 4, 0);
+
+        todo_wine_if (tests[i].format == DXGI_FORMAT_R11G11B10_FLOAT)
+            check_texture_vec4(rt, &tests[i].expect, 1);
+
+        ID3D10InputLayout_Release(input_layout);
+
+        winetest_pop_context();
+    }
+
+    ID3D10RenderTargetView_Release(rtv);
+    ID3D10Texture2D_Release(rt);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -19562,6 +19756,7 @@ START_TEST(d3d10core)
     queue_test(test_dynamic_map_synchronization);
     queue_test(test_rtv_depth_slice);
     queue_test(test_stencil_only_write_after_clear);
+    queue_test(test_vertex_formats);
 
     run_queued_tests();
 
