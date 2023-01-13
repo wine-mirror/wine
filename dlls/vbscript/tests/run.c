@@ -147,6 +147,7 @@ DEFINE_EXPECT(OnLeaveScript);
 #define DISPID_GLOBAL_UNKOBJ          1026
 #define DISPID_GLOBAL_THROWEXCEPTION  1027
 #define DISPID_GLOBAL_ISARRAYFIXED    1028
+#define DISPID_GLOBAL_MAXCHARSIZE     1029
 
 #define DISPID_TESTOBJ_PROPGET      2000
 #define DISPID_TESTOBJ_PROPPUT      2001
@@ -158,6 +159,7 @@ DEFINE_EXPECT(OnLeaveScript);
 #define MAKE_VBSERROR(code) MAKE_HRESULT(SEVERITY_ERROR, FACILITY_VBS, code)
 
 static BOOL strict_dispid_check, is_english, allow_ui;
+static UINT MaxCharSize;
 static int first_day_of_week;
 static const char *test_name = "(null)";
 static int test_counter;
@@ -229,12 +231,16 @@ static const char *vt2a(VARIANT *v)
  */
 static void detect_locale(void)
 {
+    CPINFOEXA cpinfo;
     HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
     LANGID (WINAPI *pGetThreadUILanguage)(void) = (void*)GetProcAddress(kernel32, "GetThreadUILanguage");
 
     is_english = ((!pGetThreadUILanguage || PRIMARYLANGID(pGetThreadUILanguage()) == LANG_ENGLISH) &&
                   PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_ENGLISH &&
                   PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH);
+
+    GetCPInfoExA( CP_ACP, 0, &cpinfo );
+    MaxCharSize = cpinfo.MaxCharSize;
 
     GetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_IFIRSTDAYOFWEEK | LOCALE_RETURN_NUMBER,
                    (void*)&first_day_of_week, sizeof(first_day_of_week));
@@ -1142,6 +1148,7 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         { L"reportSuccess",   DISPID_GLOBAL_REPORTSUCCESS, REF_EXPECT(global_success_d) },
         { L"getVT",           DISPID_GLOBAL_GETVT },
         { L"isEnglishLang",   DISPID_GLOBAL_ISENGLANG },
+        { L"MaxCharSize",     DISPID_GLOBAL_MAXCHARSIZE },
         { L"firstDayOfWeek",  DISPID_GLOBAL_WEEKSTARTDAY },
         { L"globalCallback",  DISPID_GLOBAL_GLOBALCALLBACK },
         { L"testObj",         DISPID_GLOBAL_TESTOBJ },
@@ -1262,6 +1269,11 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         V_VT(pvarRes) = VT_BOOL;
         V_BOOL(pvarRes) = is_english ? VARIANT_TRUE : VARIANT_FALSE;
+        return S_OK;
+
+    case DISPID_GLOBAL_MAXCHARSIZE:
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = MaxCharSize;
         return S_OK;
 
     case DISPID_GLOBAL_WEEKSTARTDAY:
