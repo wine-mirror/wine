@@ -1409,7 +1409,8 @@ static void test_desktop_window(void)
     swapchain_desc.Width = rect.right;
     swapchain_desc.Height = rect.bottom;
     hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, queue, window, &swapchain_desc, NULL, NULL, &swapchain);
-    ok(hr == E_ACCESSDENIED, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == E_ACCESSDENIED || broken(hr == E_OUTOFMEMORY /* win10 1709 */),
+       "Got unexpected hr %#lx.\n", hr);
 
     IDXGIFactory4_Release(factory);
     destroy_test_context(&context);
