@@ -38,6 +38,7 @@ DEFINE_GUID(DMOVideoFormat_RGB555,D3DFMT_X1R5G5B5,0x524f,0x11ce,0x9f,0x53,0x00,0
 DEFINE_GUID(DMOVideoFormat_RGB8,D3DFMT_P8,0x524f,0x11ce,0x9f,0x53,0x00,0x20,0xaf,0x0b,0xa7,0x70);
 DEFINE_MEDIATYPE_GUID(MFAudioFormat_RAW_AAC,WAVE_FORMAT_RAW_AAC1);
 DEFINE_MEDIATYPE_GUID(MFVideoFormat_VC1S,MAKEFOURCC('V','C','1','S'));
+DEFINE_MEDIATYPE_GUID(MFVideoFormat_IV50,MAKEFOURCC('I','V','5','0'));
 
 struct class_factory
 {
@@ -557,6 +558,7 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_VIDEO_H264:
         case WG_MAJOR_TYPE_VIDEO_WMV:
+        case WG_MAJOR_TYPE_VIDEO_INDEO:
             FIXME("Format %u not implemented!\n", format->major_type);
             /* fallthrough */
         case WG_MAJOR_TYPE_UNKNOWN:
@@ -810,6 +812,33 @@ static void mf_media_type_to_wg_format_video_h264(IMFMediaType *type, struct wg_
         format->u.video_h264.level = level;
 }
 
+static void mf_media_type_to_wg_format_video_indeo(IMFMediaType *type, uint32_t version, struct wg_format *format)
+{
+    UINT64 frame_rate, frame_size;
+
+    memset(format, 0, sizeof(*format));
+    format->major_type = WG_MAJOR_TYPE_VIDEO_INDEO;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
+    {
+        format->u.video_indeo.width = frame_size >> 32;
+        format->u.video_indeo.height = (UINT32)frame_size;
+    }
+
+    if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &frame_rate)) && (UINT32)frame_rate)
+    {
+        format->u.video_indeo.fps_n = frame_rate >> 32;
+        format->u.video_indeo.fps_d = (UINT32)frame_rate;
+    }
+    else
+    {
+        format->u.video_indeo.fps_n = 1;
+        format->u.video_indeo.fps_d = 1;
+    }
+
+    format->u.video_indeo.version = version;
+}
+
 void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
 {
     GUID major_type, subtype;
@@ -843,6 +872,8 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
     {
         if (IsEqualGUID(&subtype, &MFVideoFormat_H264))
             mf_media_type_to_wg_format_video_h264(type, format);
+        else if (IsEqualGUID(&subtype, &MFVideoFormat_IV50))
+            mf_media_type_to_wg_format_video_indeo(type, 5, format);
         else
             mf_media_type_to_wg_format_video(type, &subtype, format);
     }

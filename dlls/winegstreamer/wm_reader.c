@@ -1579,6 +1579,8 @@ static const char *get_major_type_string(enum wg_major_type type)
             return "h264";
         case WG_MAJOR_TYPE_VIDEO_WMV:
             return "wmv";
+        case WG_MAJOR_TYPE_VIDEO_INDEO:
+            return "indeo";
         case WG_MAJOR_TYPE_UNKNOWN:
             return "unknown";
     }
@@ -1934,6 +1936,7 @@ static HRESULT WINAPI reader_GetOutputFormat(IWMSyncReader2 *iface,
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_VIDEO_H264:
         case WG_MAJOR_TYPE_VIDEO_WMV:
+        case WG_MAJOR_TYPE_VIDEO_INDEO:
             FIXME("Format %u not implemented!\n", format.major_type);
             break;
         case WG_MAJOR_TYPE_UNKNOWN:
@@ -1975,6 +1978,7 @@ static HRESULT WINAPI reader_GetOutputFormatCount(IWMSyncReader2 *iface, DWORD o
         case WG_MAJOR_TYPE_VIDEO_CINEPAK:
         case WG_MAJOR_TYPE_VIDEO_H264:
         case WG_MAJOR_TYPE_VIDEO_WMV:
+        case WG_MAJOR_TYPE_VIDEO_INDEO:
             FIXME("Format %u not implemented!\n", format.major_type);
             /* fallthrough */
         case WG_MAJOR_TYPE_AUDIO:

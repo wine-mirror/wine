@@ -573,6 +573,25 @@ static GstCaps *wg_format_to_caps_video_wmv(const struct wg_format *format)
     return caps;
 }
 
+static GstCaps *wg_format_to_caps_video_indeo(const struct wg_format *format)
+{
+    GstCaps *caps;
+
+    if (!(caps = gst_caps_new_empty_simple("video/x-indeo")))
+        return NULL;
+
+    if (format->u.video_indeo.width)
+        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video_indeo.width, NULL);
+    if (format->u.video_indeo.height)
+        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video_indeo.height, NULL);
+    if (format->u.video_indeo.fps_d || format->u.video_indeo.fps_n)
+        gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video_indeo.fps_n, format->u.video_indeo.fps_d, NULL);
+    if (format->u.video_indeo.version)
+        gst_caps_set_simple(caps, "indeoversion", G_TYPE_INT, format->u.video_indeo.version, NULL);
+
+    return caps;
+}
+
 GstCaps *wg_format_to_caps(const struct wg_format *format)
 {
     switch (format->major_type)
@@ -595,6 +614,8 @@ GstCaps *wg_format_to_caps(const struct wg_format *format)
             return wg_format_to_caps_video_h264(format);
         case WG_MAJOR_TYPE_VIDEO_WMV:
             return wg_format_to_caps_video_wmv(format);
+        case WG_MAJOR_TYPE_VIDEO_INDEO:
+            return wg_format_to_caps_video_indeo(format);
     }
     assert(0);
     return NULL;
@@ -612,6 +633,7 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
         case WG_MAJOR_TYPE_AUDIO_WMA:
         case WG_MAJOR_TYPE_VIDEO_H264:
         case WG_MAJOR_TYPE_VIDEO_WMV:
+        case WG_MAJOR_TYPE_VIDEO_INDEO:
             GST_FIXME("Format %u not implemented!", a->major_type);
             /* fallthrough */
         case WG_MAJOR_TYPE_UNKNOWN:
