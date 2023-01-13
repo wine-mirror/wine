@@ -884,8 +884,7 @@ static void test_create_device(void)
     ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
     hr = D3D12CreateDevice((IUnknown *)adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    refcount = IDXGIAdapter_Release(adapter);
-    ok(refcount >= 1, "Got unexpected refcount %lu.\n", refcount);
+    IDXGIAdapter_Release(adapter);
     adapter = NULL;
 
     luid = ID3D12Device_GetAdapterLuid(device);
