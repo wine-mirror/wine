@@ -1156,8 +1156,9 @@ static void STDMETHODCALLTYPE d3d11_device_context_OMSetRenderTargetsAndUnordere
         }
     }
 
-    wined3d_device_context_set_render_targets_and_unordered_access_views(context->wined3d_context, ARRAY_SIZE(wined3d_rtvs),
-            wined3d_rtvs, dsv ? dsv->wined3d_view : NULL, ARRAY_SIZE(wined3d_uavs), wined3d_uavs,
+    wined3d_device_context_set_render_targets_and_unordered_access_views(context->wined3d_context,
+            render_target_view_count == ~0u ? ~0u : ARRAY_SIZE(wined3d_rtvs), wined3d_rtvs,
+            dsv ? dsv->wined3d_view : NULL, uav_count == ~0u ? ~0u : ARRAY_SIZE(wined3d_uavs), wined3d_uavs,
             wined3d_initial_counts);
 }
 
