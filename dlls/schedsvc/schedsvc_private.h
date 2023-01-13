@@ -19,8 +19,6 @@
 #ifndef __WINE_SCHEDSVC_PRIVATE_H__
 #define __WINE_SCHEDSVC_PRIVATE_H__
 
-#include "wine/heap.h"
-
 void schedsvc_auto_start(void) DECLSPEC_HIDDEN;
 void add_job(const WCHAR *name) DECLSPEC_HIDDEN;
 void remove_job(const WCHAR *name) DECLSPEC_HIDDEN;
