@@ -660,7 +660,7 @@ HRESULT __cdecl SchRpcEnumFolders(const WCHAR *path, DWORD flags, DWORD *start_i
             {
                 TASK_NAMES new_list;
                 allocated *= 2;
-                new_list = heap_realloc(list, allocated * sizeof(list[0]));
+                new_list = realloc(list, allocated * sizeof(list[0]));
                 if (!new_list)
                 {
                     hr = E_OUTOFMEMORY;
