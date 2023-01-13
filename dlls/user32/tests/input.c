@@ -2454,7 +2454,6 @@ static void test_GetRawInputBuffer(void)
     ok(size == sizeof(buffer), "GetRawInputBuffer returned unexpected size: %u\n", size);
 
     ok(HEADER_FIELD(dwType) == RIM_TYPEKEYBOARD, "Unexpected rawinput dwType: %ld\n", HEADER_FIELD(dwType));
-    todo_wine_if(is_wow64)
     ok(HEADER_FIELD(wParam) == 0 || HEADER_FIELD(wParam) == 1, "Expected wparam 0 or 1, got %Iu\n", (WPARAM)HEADER_FIELD(wParam));
     scan_code = is_wow64 ? ((RAWINPUT64 *)buffer)->data.keyboard.MakeCode : ((RAWINPUT *)buffer)->data.keyboard.MakeCode;
     ok(scan_code == 0x2d, "Unexpected rawinput keyboard scan code: %x\n", scan_code);
