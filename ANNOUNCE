@@ -1,11 +1,11 @@
-The Wine development release 8.0-rc3 is now available.
+The Wine development release 8.0-rc4 is now available.
 
 What's new in this release:
   - Bug fixes only, we are in code freeze.
 
 The source is available at:
 
-  https://dl.winehq.org/wine/source/8.0/wine-8.0-rc3.tar.xz
+  https://dl.winehq.org/wine/source/8.0/wine-8.0-rc4.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -21,111 +21,113 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 8.0-rc3 (total 28):
+Bugs fixed in 8.0-rc4 (total 25):
 
- - #35126  AirBuccaneers hangs on exit
- - #41339  Minor regression: Wine loads with "/wine/dlls/ntdll/loader.c: loader_section" errors when creating a new prefix or running an application
- - #47438  Bloodstained: Ritual of the Night freeze at whitescreen
- - #47536  Can't aim in Overwatch after alt-tabbing
- - #47828  regedit: Random crashes on selecting an entry (thread-related?)
- - #48322  World of Warcraft Classic: Mouse movement can block keydown events from registering
- - #49164  Call of Cthulhu: Dark Corners of the Earth crashes after start
- - #50519  Adobe Digital Editions 4.5 crash on Wine 6.0
- - #52563  d3d11:d3d11 fails in test_dynamic_map_synchronization() on cw-rx460 in Wine
- - #52903  Resizing Dn-FamiTracker fails to redraw pattern editor and status bar
- - #53101  Public Peer silently exits
- - #53403  winegstreamer "flush" removal breaks radio in fallout 3
- - #53627  Max Payne: mouse scroll behaves erratically
- - #53640  Bully: Scholarship Edition hangs on loading screen and doesn't play intros
- - #53680  urlmon:url - test_BindToStorage() fails on Windows <= 8.1
- - #53743  Vivisector has graphical glitches
- - #53748  Sacred Gold (GOG): missing audio in .wmv videos
- - #53752  Rayman 3: glitched graphics (black textures)
- - #53785  Need for Speed: Payback crashes on launch with OpenGL renderer
- - #53863  Tsui no Stella = Stella of the End: doesn't launch anymore (GL_INVALID_OPERATION)
- - #53908  Comptes.exe errors with "dxLockMessage fails"
- - #53995  d2d1:d2d1 runs out of GL memory and crashes on the debian 11 VM
- - #54023  d3d11:d3d11 - test_dynamic_map_synchronization() fails on w11pro64_nv
- - #54049  ddraw:ddraw2 test_texture_wrong_caps test triggers use after free bug
- - #54170  20XX: invisible character
- - #54184  Multiple applications fail http requests when WinHttpSendRequest() doesn't contain full request data
- - #54191  Agarest 1 stopped showing Videos after implementing ASF Reader filter
- - #54268  Moving the separator in regedit don't repaint listview
+ - #48553  Catia (CAD software) refuse to run installation on newest wine   (<=4.18)
+ - #51268  Assembler messages: Error: no such instruction: `xsavec (%esp)'
+ - #51301  Any action that locks the cursor into place inside the Roblox Client window causes the cursor to freeze
+ - #51420  Running any program in Wine causes 100% cpu usage in Xorg
+ - #52089  d2d1:d2d1 fails in test_draw_geometry() on Wine
+ - #52152  comctl32:edit gets unexpected heights in test_text_position_style() on Windows 10 1809+
+ - #52429  Guild Wars: login not possible
+ - #52557  GetNetworkParams loops forever on musl
+ - #52749  winetricks dotnet35sp1: printfilterpipelinesvc.exe crashes in background
+ - #52932  comctl32:edit & user32:edit have test_char_from_pos() failures on Windows with the UTF-8 codepage
+ - #52994  mstask:task_trigger - test_GetNextRunTime() fails in Wine on date change
+ - #53382  Slow rendering when connected to external monitor
+ - #53536  ntdll:rtl - The 32-bit RtlUlonglongByteSwap() breaks test_RtlDecompressBuffer() on Windows
+ - #53583  FindNLSStringEx reimplementation doesn't match native
+ - #53671  No objects are being rendered in any DX10/11 apps with older GPU drivers
+ - #53837  HS_hevo_gc 8.6.1.2 fails to install
+ - #54045  ntdll:rtl - test_RtlIpv6StringToAddress() fails on Windows 11
+ - #54151  xactengine3_7:xact3 crashes when no speaker is connected
+ - #54172  ddraw:ddraw1, ddraw:ddraw2, ddraw:ddraw4, ddraw:ddraw7 - test_window_position() gets the size of the wrong screen in Wine
+ - #54180  Petz 4 has corrupt .pet files at startup
+ - #54210  Wine fails to compile with Linux 4.11 headers (use of undefined AT_HWCAP2)
+ - #54218  RTLD_SELF use breaks musl build since 8.0-rc1
+ - #54263  Build of 7.22 fails with mingw-w64 10.0
+ - #54264  Hyperdimension Neptunia Re;Birth1 crashes on exit in xactengine notification callback
+ - #54287  wineconsole: alternate screen buffer does not work
 
 ----------------------------------------------------------------
 
-Changes since 8.0-rc2:
+Changes since 8.0-rc3:
 
-Alexandre Julliard (3):
-      d3d9/tests: Mark a texture sampling test as todo.
-      d3d9/tests: Mark a render target color test as todo.
-      d3d9/tests: Fix some activation/focus test failures.
+Alexandre Julliard (6):
+      Update copyright info for 2023.
+      gitlab: Add a daily win10 test run.
+      kernelbase: Fix FindNLSStringEx for strings with no primary weights.
+      wow64: Initialize win32u syscall table when it is mapped.
+      winecrt0: Check for RTLD_SELF support to enable ELF constructors.
+      tools: Create a temporary directory to store temp files.
 
-Alistair Leslie-Hughes (2):
-      xactengine3_7/tests: Skip tests when XACTEngine Initialization fails.
-      include: Add missing enum XHR_PROP_ values.
+Alistair Leslie-Hughes (1):
+      faudio: Purge and clear notifications on ShutDown.
 
-André Zwing (3):
-      advapi32/tests: Don't test function directly when reporting GetLastError().
-      kernel32/tests: Don't test function directly when reporting GetLastError().
-      setupapi/tests: Don't test function directly when reporting GetLastError().
+Conor McCarthy (1):
+      d3d11: Apply the 'KEEP' options when sending RTVs and UAVs to wined3d.
 
-Biswapriyo Nath (1):
-      include: Add missing constants in d3d11.idl.
+Eric Pouech (7):
+      user32/tests: Retry when opening the clipboard.
+      user32/tests: Fix failing WM_PASTE tests for edit control on Win10+.
+      comctl32/tests: Retry when opening the clipboard.
+      comctl32/tests: Fix failing WM_PASTE tests for edit control on Win10+.
+      conhost: Reset console attribute upon exit in unix mode.
+      conhost: Initialize color_map when creating an alternate screen buffer.
+      po: Update French translations.
 
-Eric Pouech (2):
-      comctl32/tests: Fix failing test on Windows in Arabic UTF-8.
-      comctl32/test: Adapt the edit tests for height to Win10+.
+Gabriel Ivăncescu (2):
+      win32u: Initialize the tracking_info for NtUserDrawScrollBar params.
+      winex11.drv: Obtain icon info for icons passed to fetch_icon_data().
 
-Floris Renaud (1):
-      po: Update Dutch translation.
+Gerald Pfeifer (1):
+      wrc: Avoid undefined behavior in the FreeBSD case.
 
-Jinoh Kang (4):
-      user32/tests: Add tests for CS_HREDRAW and CS_VREDRAW.
-      win32u: Honor CS_HREDRAW and CS_VREDRAW when resizing window.
-      regedit: Use the default WM_PAINT implementation for REGEDIT window.
-      regedit: Clip siblings when drawing list and tree views.
+Hans Leidekker (7):
+      iphlpapi: Handle errors from DnsQueryConfig(DnsConfigDnsServerList).
+      wininet/tests: Pass INTERNET_FLAG_RELOAD in secure connection tests.
+      shell32/tests: Fix a test failure on Windows 11.
+      ws2_32/tests: Fix test failures on Windows 11.
+      ntdll: Conform to Windows 11 behavior in RtlIpv6StringToAddress().
+      ntdll: Fix a test failure on Windows 11.
+      ntdll/tests: Mark some test results on Windows 11 as broken.
 
-Nikolay Sivov (1):
-      comctl32/tests: Ignore some IME messages in monthcal tests.
+Hugh McMaster (1):
+      conhost: Migrate from FontPitchFamily to FontFamily.
 
-Philip K. Gisslow (1):
-      msi: Initialize all members of WINTRUST_DATA.
+Jacek Caban (2):
+      include: Add vadefs.h header.
+      include: Add stdarg.h header.
 
-Piotr Caban (2):
-      msvcirt: Don't fail in streambuf_xsputn on 0xff character.
-      msvcirt: Fix ostream_print_char on 0 character.
+Julian Rüger (1):
+      po: Update German translation.
 
-Rémi Bernon (5):
-      dinput/tests: Reduce tests verbosity.
-      dinput/tests: Test W.G.I ramp effect with negative directions.
-      dinput/tests: Test W.G.I constant effect with negative direction.
-      dinput/tests: Test W.G.I periodic effect with negative direction.
-      dinput/tests: Test W.G.I condition effect with negative direction.
+Paul Gofman (3):
+      dwmapi: Fill qpcVBlank in DwmGetCompositionTimingInfo().
+      cryptnet: Check cached revocation status in verify_cert_revocation().
+      cryptnet: Also cache revocation status when using OCSP.
 
-Tim Clem (3):
-      dinput/tests: Test granularity of the mouse z-axis.
-      dinput: Create object_properties for each mouse axis.
-      dinput: Add granularity to object_properties.
+Rémi Bernon (10):
+      ole32: Use CRT allocation for MIDL_user_(allocate/free).
+      ole32: Allocate IEnumSTATDATA data with the process heap.
+      ole32: Reset IMoniker data pointer to NULL on failure.
+      ole32: Allocate and free moniker lists with CRT allocations.
+      dinput/tests: Remove the async cancel tests.
+      rpcrt4/tests: Avoid invalid free of static string.
+      msv1_0: Avoid double free when SpAcceptLsaModeContext fails.
+      msv1_0: Avoid double free when SpInitLsaModeContext fails.
+      wininet: Allocate returned options strings with the process heap.
+      comctl32: Avoid mismatching heap in ProgressWindowProc.
 
-Vladislav Timonin (1):
-      comctl32/listview: Exclude header area in WM_NCPAINT.
+Stefan Dösinger (1):
+      wined3d: Clamp the bound buffer range to the buffer size.
 
-Zebediah Figura (10):
-      ntdll/tests: Avoid testing the server pipe signaled state from the main thread.
-      d3d11/tests: Do not test deferred contexts in test_dynamic_map_synchronization().
-      d3d9/tests: Test uploading the whole mipmap chain in one map.
-      d3d8/tests: Test uploading the whole mipmap chain in one map.
-      wined3d: Load and invalidate every mipmap level when mapping the top mipmap level.
-      wined3d: Ignore DISCARD and NOOVERWRITE on buffers which are not GPU-accessible.
-      winegstreamer: Factor out a parser_create() helper.
-      winegstreamer: Protect the "streaming" member of struct parser with a separate lock.
-      winegstreamer: Explicitly sleep in the streaming thread when flushing.
-      d3d8: Filter out redundant buffer discards.
+Zebediah Figura (4):
+      ntdll: Check for AT_HWCAP2 definition before using it.
+      ntdll: Manually write byte code for the xsavec instruction.
+      wined3d: Map the destination BO with WINED3D_MAP_DISCARD when replacing the entire destination in wined3d_context_gl_copy_bo_address().
+      wined3d: Write into a mapped BO when replacing the entire destination in wined3d_context_gl_copy_bo_address().
 
-Zhiyi Zhang (1):
-      d2d1/tests: Fix memory leaks.
-
-Ziqing Hui (2):
-      mfplat/tests: Test MFGetStrideForBitmapInfoHeader for NV11.
-      mfplat/tests: Add more RGB24 image size tests.
+Zhiyi Zhang (2):
+      win32u: Introduce a get_display_depth() helper to retrieve emulated display depth.
+      ddraw/tests: Do not create a fullscreen test window in test_window_position_cb().
