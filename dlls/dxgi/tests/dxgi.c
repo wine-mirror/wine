@@ -5889,14 +5889,54 @@ static BOOL check_message(const struct message *expected,
 
 static LRESULT CALLBACK test_wndproc(HWND hwnd, unsigned int message, WPARAM wparam, LPARAM lparam)
 {
+    IDXGISwapChain *swapchain = (IDXGISwapChain *)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+    static BOOL reentry;
+    IDXGIOutput *target;
+    HRESULT hr, hr2;
+    BOOL fs;
+
     flaky
     ok(!expect_no_messages, "Got unexpected message %#x, hwnd %p, wparam %#Ix, lparam %#Ix.\n",
             message, hwnd, wparam, lparam);
 
+    ok(!reentry, "Re-entered wndproc in nested SetFullscreenState call\n");
+
     if (expect_messages)
     {
         if (check_message(expect_messages, hwnd, message, wparam, lparam))
+        {
             ++expect_messages;
+
+            if (swapchain)
+            {
+                reentry = TRUE;
+
+                hr = IDXGISwapChain_GetFullscreenState(swapchain, &fs, NULL);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+                /* Priority of error values. */
+                hr = IDXGISwapChain_GetContainingOutput(swapchain, &target);
+                ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+                hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, target);
+                ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", DXGI_ERROR_INVALID_CALL);
+                IDXGIOutput_Release(target);
+
+                hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
+                hr2 = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
+
+                if (fs)
+                {
+                    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+                    ok(hr2 == DXGI_STATUS_MODE_CHANGE_IN_PROGRESS, "Got unexpected hr %#lx.\n", hr);
+                }
+                else
+                {
+                    ok(hr == DXGI_STATUS_MODE_CHANGE_IN_PROGRESS, "Got unexpected hr %#lx.\n", hr);
+                    ok(hr2 == S_OK, "Got unexpected hr %#lx.\n", hr);
+                }
+                reentry = FALSE;
+            }
+        }
     }
 
     if (expect_messages_broken)
@@ -6028,12 +6068,14 @@ static void test_swapchain_window_messages(IUnknown *device, BOOL is_d3d12)
     ok(!expect_messages->message, "Expected message %#x.\n", expect_messages->message);
 
     /* enter fullscreen */
+    SetWindowLongPtrA(window, GWLP_USERDATA, (LONG_PTR)swapchain);
     expect_messages = enter_fullscreen_messages;
     expect_messages_broken = enter_fullscreen_messages_vista;
     hr = IDXGISwapChain_SetFullscreenState(swapchain, TRUE, NULL);
     ok(hr == S_OK || hr == DXGI_ERROR_NOT_CURRENTLY_AVAILABLE
              || broken(hr == DXGI_ERROR_UNSUPPORTED), /* Win 7 testbot */
             "Got unexpected hr %#lx.\n", hr);
+    SetWindowLongPtrA(window, GWLP_USERDATA, (LONG_PTR)NULL);
     if (FAILED(hr))
     {
         skip("Could not change fullscreen state.\n");
@@ -6078,9 +6120,11 @@ static void test_swapchain_window_messages(IUnknown *device, BOOL is_d3d12)
     expect_messages_broken = NULL;
 
     /* leave fullscreen */
+    SetWindowLongPtrA(window, GWLP_USERDATA, (LONG_PTR)swapchain);
     expect_messages = leave_fullscreen_messages;
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    SetWindowLongPtrA(window, GWLP_USERDATA, (LONG_PTR)NULL);
     flush_events();
     ok(!expect_messages->message, "Expected message %#x.\n", expect_messages->message);
     expect_messages = NULL;
