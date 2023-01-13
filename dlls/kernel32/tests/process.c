@@ -3710,7 +3710,7 @@ static void test_process_info(HANDLE hproc)
         0 /* FIXME: sizeof(?) ProcessTlsInformation */,
         sizeof(ULONG) /* ProcessCookie */,
         sizeof(SECTION_IMAGE_INFORMATION) /* ProcessImageInformation */,
-        0 /* FIXME: sizeof(PROCESS_CYCLE_TIME_INFORMATION) ProcessCycleTime */,
+        sizeof(PROCESS_CYCLE_TIME_INFORMATION) /* ProcessCycleTime */,
         sizeof(ULONG) /* ProcessPagePriority */,
         40 /* ProcessInstrumentationCallback */,
         0 /* FIXME: sizeof(PROCESS_STACK_ALLOCATION_INFORMATION) ProcessThreadStackAllocation */,
@@ -3780,6 +3780,7 @@ static void test_process_info(HANDLE hproc)
         case ProcessHandleCount:
         case ProcessImageFileName:
         case ProcessImageInformation:
+        case ProcessCycleTime:
         case ProcessPagePriority:
         case ProcessImageFileNameWin32:
             ok(status == STATUS_SUCCESS, "for info %lu expected STATUS_SUCCESS, got %08lx (ret_len %lu)\n", i, status, ret_len);

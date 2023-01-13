@@ -1506,6 +1506,25 @@ NTSTATUS WINAPI NtQueryInformationProcess( HANDLE handle, PROCESSINFOCLASS class
         else ret = STATUS_INFO_LENGTH_MISMATCH;
         break;
 
+    case ProcessCycleTime:
+        len = sizeof(PROCESS_CYCLE_TIME_INFORMATION);
+        if (size == len)
+        {
+            if (!info) ret = STATUS_ACCESS_VIOLATION;
+            else
+            {
+                PROCESS_CYCLE_TIME_INFORMATION cycles;
+
+                FIXME( "ProcessCycleTime (%p,%p,0x%08x,%p) stub\n", handle, info, (int)size, ret_len );
+                cycles.AccumulatedCycles = 0;
+                cycles.CurrentCycleCount = 0;
+
+                memcpy(info, &cycles, sizeof(PROCESS_CYCLE_TIME_INFORMATION));
+            }
+        }
+        else ret = STATUS_INFO_LENGTH_MISMATCH;
+        break;
+
     case ProcessWineLdtCopy:
         if (handle == NtCurrentProcess())
         {
