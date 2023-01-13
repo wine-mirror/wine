@@ -244,7 +244,7 @@ void schedsvc_auto_start(void)
     {
         if (!QueryServiceConfigW(service, NULL, 0, &cfg_size) && GetLastError() == ERROR_INSUFFICIENT_BUFFER)
         {
-            cfg = HeapAlloc(GetProcessHeap(), 0, cfg_size);
+            cfg = malloc(cfg_size);
             if (cfg)
             {
                 if (QueryServiceConfigW(service, cfg, cfg_size, &cfg_size))
@@ -257,7 +257,7 @@ void schedsvc_auto_start(void)
                             start_type = SERVICE_AUTO_START;
                     }
                 }
-                HeapFree(GetProcessHeap(), 0, cfg);
+                free(cfg);
             }
         }
         else
