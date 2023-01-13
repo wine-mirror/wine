@@ -383,6 +383,8 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
     struct wined3d_swapchain_desc swapchain_desc;
     struct wined3d_swapchain_state *state;
     struct dxgi_output *dxgi_output;
+    LONG in_set_fullscreen_state;
+    BOOL old_fs;
     HRESULT hr;
 
     TRACE("iface %p, fullscreen %#x, target %p.\n", iface, fullscreen, target);
@@ -403,6 +405,18 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
         return hr;
     }
     dxgi_output = unsafe_impl_from_IDXGIOutput(target);
+
+    /* DXGI catches nested SetFullscreenState invocations, earlier versions of d3d
+     * do not. Final Fantasy XIV depends on this behavior. It tries to call SFS on
+     * WM_WINDOWPOSCHANGED messages. */
+    in_set_fullscreen_state = InterlockedExchange(&swapchain->in_set_fullscreen_state, 1);
+    if (in_set_fullscreen_state)
+    {
+        WARN("Nested invocation of SetFullscreenState.\n");
+        IDXGIOutput_Release(target);
+        IDXGISwapChain1_GetFullscreenState(iface, &old_fs, NULL);
+        return old_fs == fullscreen ? S_OK : DXGI_STATUS_MODE_CHANGE_IN_PROGRESS;
+    }
 
     wined3d_mutex_lock();
     state = wined3d_swapchain_get_state(swapchain->wined3d_swapchain);
@@ -429,6 +443,7 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d11_swapchain_SetFullscreen
 
 done:
     wined3d_mutex_unlock();
+    InterlockedExchange(&swapchain->in_set_fullscreen_state, 0);
     return hr;
 }
 
@@ -1016,6 +1031,7 @@ struct d3d12_swapchain
     IDXGIOutput *target;
     DXGI_SWAP_CHAIN_DESC1 desc;
     DXGI_SWAP_CHAIN_FULLSCREEN_DESC fullscreen_desc;
+    LONG in_set_fullscreen_state;
 
     ID3D12Fence *frame_latency_fence;
     HANDLE frame_latency_event;
@@ -2077,6 +2093,8 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
     const DXGI_SWAP_CHAIN_DESC1 *swapchain_desc = &swapchain->desc;
     struct wined3d_swapchain_desc wined3d_desc;
     HWND window = swapchain->window;
+    LONG in_set_fullscreen_state;
+    BOOL old_fs;
     HRESULT hr;
 
     TRACE("iface %p, fullscreen %#x, target %p.\n", iface, fullscreen, target);
@@ -2104,6 +2122,15 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
         return hr;
     }
 
+    in_set_fullscreen_state = InterlockedExchange(&swapchain->in_set_fullscreen_state, 1);
+    if (in_set_fullscreen_state)
+    {
+        WARN("Nested invocation of SetFullscreenState.\n");
+        IDXGIOutput_Release(target);
+        IDXGISwapChain4_GetFullscreenState(iface, &old_fs, NULL);
+        return old_fs == fullscreen ? S_OK : DXGI_STATUS_MODE_CHANGE_IN_PROGRESS;
+    }
+
     wined3d_mutex_lock();
     wined3d_desc.windowed = !fullscreen;
     hr = wined3d_swapchain_state_set_fullscreen(swapchain->state, &wined3d_desc, NULL);
@@ -2127,6 +2154,7 @@ static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH d3d12_swapchain_SetFullscreen
 
 done:
     wined3d_mutex_unlock();
+    InterlockedExchange(&swapchain->in_set_fullscreen_state, 0);
     return hr;
 }
 
