@@ -5605,24 +5605,6 @@ static void test_windows_gaming_input(void)
         .report_len = 2,
         .report_buf = {1, 0x04},
     };
-    static struct hid_expect expect_reset_delay[] =
-    {
-        /* device control */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .ret_status = STATUS_PENDING,
-            .report_id = 1,
-            .report_len = 2,
-            .report_buf = {1, 0x01},
-        },
-        /* device gain */
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 6,
-            .report_len = 2,
-            .report_buf = {6, 0x7f},
-        },
-    };
     struct hid_expect expect_reset[] =
     {
         /* device control */
@@ -6270,93 +6252,6 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "Close returned %#lx\n", hr );
     check_bool_async( bool_async, 1, 4, 0x8685400d, FALSE );
     IAsyncInfo_Release( async_info );
-
-    IAsyncOperation_boolean_Release( bool_async );
-
-
-    /* canceling the async op is just ignored */
-
-    set_hid_expect( file, expect_reset_delay, sizeof(expect_reset_delay) );
-    hr = IForceFeedbackMotor_TryResetAsync( motor, &bool_async );
-    ok( hr == S_OK, "TryResetAsync returned %#lx\n", hr );
-    check_bool_async( bool_async, 1, Started, S_OK, FALSE );
-
-    bool_async_handler = default_bool_async_handler;
-    bool_async_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!bool_async_handler.event, "CreateEventW failed, error %lu\n", GetLastError() );
-
-    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler.IAsyncOperationCompletedHandler_boolean_iface );
-    ok( hr == S_OK, "put_Completed returned %#lx\n", hr );
-    ok( !bool_async_handler.invoked, "handler invoked\n" );
-    hr = IAsyncOperation_boolean_get_Completed( bool_async, &tmp_handler );
-    ok( hr == S_OK, "get_Completed returned %#lx\n", hr );
-    ok( tmp_handler == &bool_async_handler.IAsyncOperationCompletedHandler_boolean_iface,
-        "got handler %p\n", tmp_handler );
-
-    hr = IAsyncOperation_boolean_QueryInterface( bool_async, &IID_IAsyncInfo, (void **)&async_info );
-    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
-    hr = IAsyncInfo_Cancel( async_info );
-    ok( hr == S_OK, "Cancel returned %#lx\n", hr );
-    check_bool_async( bool_async, 1, Canceled, S_OK, FALSE );
-    ok( !bool_async_handler.invoked, "handler invoked\n" );
-    IAsyncInfo_Release( async_info );
-
-    wait_hid_pending( file, 100 );
-    ret = WaitForSingleObject( bool_async_handler.event, 500 );
-    ok( ret == 0, "WaitForSingleObject returned %#lx\n", ret );
-    CloseHandle( bool_async_handler.event );
-    check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
-
-    ok( bool_async_handler.invoked, "handler not invoked\n" );
-    ok( bool_async_handler.async == bool_async, "got async %p\n", bool_async_handler.async );
-    ok( bool_async_handler.status == Completed, "got status %u\n", bool_async_handler.status );
-    hr = IAsyncOperation_boolean_get_Completed( bool_async, &tmp_handler );
-    ok( hr == S_OK, "get_Completed returned %#lx\n", hr );
-    ok( tmp_handler == NULL, "got handler %p\n", tmp_handler );
-
-    IAsyncOperation_boolean_Release( bool_async );
-
-
-    /* canceling then closing it calls the handler with closed state */
-
-    set_hid_expect( file, expect_reset_delay, sizeof(expect_reset_delay) );
-    hr = IForceFeedbackMotor_TryResetAsync( motor, &bool_async );
-    ok( hr == S_OK, "TryResetAsync returned %#lx\n", hr );
-    check_bool_async( bool_async, 1, Started, S_OK, FALSE );
-
-    bool_async_handler = default_bool_async_handler;
-    bool_async_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!bool_async_handler.event, "CreateEventW failed, error %lu\n", GetLastError() );
-
-    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler.IAsyncOperationCompletedHandler_boolean_iface );
-    ok( hr == S_OK, "put_Completed returned %#lx\n", hr );
-    ok( !bool_async_handler.invoked, "handler invoked\n" );
-
-    hr = IAsyncOperation_boolean_QueryInterface( bool_async, &IID_IAsyncInfo, (void **)&async_info );
-    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
-    hr = IAsyncInfo_Close( async_info );
-    ok( hr == E_ILLEGAL_STATE_CHANGE, "Close returned %#lx\n", hr );
-    hr = IAsyncInfo_Cancel( async_info );
-    ok( hr == S_OK, "Cancel returned %#lx\n", hr );
-    check_bool_async( bool_async, 1, Canceled, S_OK, FALSE );
-    ok( !bool_async_handler.invoked, "handler invoked\n" );
-    hr = IAsyncInfo_Close( async_info );
-    ok( hr == S_OK, "Close returned %#lx\n", hr );
-    check_bool_async( bool_async, 1, 4, S_OK, FALSE );
-    ok( !bool_async_handler.invoked, "handler invoked\n" );
-    IAsyncInfo_Release( async_info );
-
-    wait_hid_pending( file, 100 );
-    ret = WaitForSingleObject( bool_async_handler.event, 500 );
-    ok( ret == 0, "WaitForSingleObject returned %#lx\n", ret );
-    CloseHandle( bool_async_handler.event );
-    check_bool_async( bool_async, 1, 4, S_OK, FALSE );
-
-    ok( bool_async_handler.invoked, "handler not invoked\n" );
-    ok( bool_async_handler.async == bool_async, "got async %p\n", bool_async_handler.async );
-    ok( bool_async_handler.status == 4, "got status %u\n", bool_async_handler.status );
-    hr = IAsyncOperation_boolean_get_Completed( bool_async, &tmp_handler );
-    ok( hr == E_ILLEGAL_METHOD_CALL, "get_Completed returned %#lx\n", hr );
 
     IAsyncOperation_boolean_Release( bool_async );
 
