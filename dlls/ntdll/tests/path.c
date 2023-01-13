@@ -128,10 +128,10 @@ static void test_RtlIsDosDeviceName_U(void)
         { "c:\\nul\\",     0, 0 },
         { "c:\\nul\\foo",  0, 0 },
         { "c:\\nul::",     6, 6 },
-        { "c:\\nul::::::", 6, 6 },
-        { "c:prn     ",    4, 6 },
-        { "c:prn.......",  4, 6 },
-        { "c:prn... ...",  4, 6 },
+        { "c:\\nul::::::", 6, 6, TRUE }, /* fails on win11 */
+        { "c:prn     ",    4, 6, TRUE }, /* fails on win11 */
+        { "c:prn.......",  4, 6, TRUE }, /* fails on win11 */
+        { "c:prn... ...",  4, 6, TRUE }, /* fails on win11 */
         { "c:NUL  ....  ", 4, 6 },
         { "c: . . .",      0, 0 },
         { "c:",            0, 0 },
@@ -140,14 +140,14 @@ static void test_RtlIsDosDeviceName_U(void)
         { "c:nul. . . :",  4, 6 },
         { "c:nul . . :",   4, 6 },
         { "c:nul0",        0, 0 },
-        { "c:prn:aaa",     4, 6 },
-        { "c:PRN:.txt",    4, 6 },
-        { "c:aux:.txt...", 4, 6 },
-        { "c:prn:.txt:",   4, 6 },
-        { "c:nul:aaa",     4, 6 },
+        { "c:prn:aaa",     4, 6, TRUE }, /* fails on win11 */
+        { "c:PRN:.txt",    4, 6, TRUE }, /* fails on win11 */
+        { "c:aux:.txt...", 4, 6, TRUE }, /* fails on win11 */
+        { "c:prn:.txt:",   4, 6, TRUE }, /* fails on win11 */
+        { "c:nul:aaa",     4, 6, TRUE }, /* fails on win11 */
         { "con:",          0, 6 },
         { "lpt1:",         0, 8 },
-        { "c:com5:",       4, 8 },
+        { "c:com5:",       4, 8, TRUE }, /* fails on win11 */
         { "CoM4:",         0, 8 },
         { "lpt9:",         0, 8 },
         { "c:\\lpt0.txt",  0, 0 },
@@ -159,14 +159,14 @@ static void test_RtlIsDosDeviceName_U(void)
         { "\\??\\CONIN$",  8, 12, TRUE }, /* fails on win7 */
         { "\\??\\CONOUT$", 8, 14, TRUE }, /* fails on win7 */
         { "\\??\\CONERR$", 0, 0 },
-        { "\\??\\CON",     8, 6 },
+        { "\\??\\CON",     8, 6, TRUE }, /* fails on win11 */
         { "c:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\nul.txt", 1000, 6 },
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\\nul.txt", 1000, 6, TRUE }, /* fails on win11 */
         { NULL, 0 }
     };
 
@@ -321,7 +321,8 @@ static void test_RtlGetFullPathName_U(void)
             { "foo/..",                      "C:\\windows",      "windows"},
             { "\\windows\\nul",              "\\\\.\\nul",       NULL},
             { "C:\\nonexistent\\nul",        "\\\\.\\nul",       NULL},
-            { "C:\\con\\con",                "\\\\.\\con",       NULL},
+            { "C:\\con\\con",                "\\\\.\\con",       NULL,
+                                             "C:\\con\\con",     "con"}, /* win11 */
             { "C:NUL.",                      "\\\\.\\NUL",       NULL},
             { "C:NUL",                       "\\\\.\\NUL",       NULL},
             { "AUX",                         "\\\\.\\AUX",       NULL},
@@ -564,7 +565,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {L"CONERR$",        L"\\??\\C:\\windows\\CONERR$",  15},
     };
     static const WCHAR *error_paths[] = {
-        NULL, L"", L" ", L"C:\\nonexistent\\nul", L"C:\\con\\con"
+        NULL, L"", L" ", L"C:\\nonexistent\\nul"
     };
 
     GetCurrentDirectoryA(sizeof(curdir), curdir);
