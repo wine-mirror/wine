@@ -768,7 +768,7 @@ HRESULT __cdecl SchRpcEnumTasks(const WCHAR *path, DWORD flags, DWORD *start_ind
             {
                 TASK_NAMES new_list;
                 allocated *= 2;
-                new_list = heap_realloc(list, allocated * sizeof(list[0]));
+                new_list = realloc(list, allocated * sizeof(list[0]));
                 if (!new_list)
                 {
                     hr = E_OUTOFMEMORY;
