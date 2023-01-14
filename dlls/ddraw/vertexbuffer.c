@@ -115,7 +115,7 @@ static HRESULT d3d_vertex_buffer_create_wined3d_buffer(struct d3d_vertex_buffer 
     if (dynamic)
         desc.usage |= WINED3DUSAGE_DYNAMIC;
     desc.bind_flags = WINED3D_BIND_VERTEX_BUFFER;
-    if (buffer->Caps & D3DVBCAPS_SYSTEMMEMORY)
+    if (buffer->sysmem)
         desc.access = WINED3D_RESOURCE_ACCESS_CPU | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     else
         desc.access = WINED3D_RESOURCE_ACCESS_GPU | WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
@@ -460,6 +460,19 @@ HRESULT d3d_vertex_buffer_create(struct d3d_vertex_buffer **vertex_buf,
     buffer->Caps = desc->dwCaps;
     buffer->fvf = desc->dwFVF;
     buffer->size = get_flexible_vertex_size(desc->dwFVF) * desc->dwNumVertices;
+
+    /* ddraw4 vertex buffers ignore DISCARD and NOOVERWRITE, even on
+     * pretransformed geometry, which means that a GPU-based buffer cannot
+     * perform well.
+     *
+     * While at least one contemporaneous card (Geforce 4) does seem to show a
+     * difference in its performance characteristics based on whether
+     * D3DVBCAPS_SYSTEMMEMORY is set, it also doesn't *improve* performance to
+     * use a non-SYSTEMMEMORY buffer with ddraw4. For wined3d it should always
+     * be better to use sysmem.
+     *
+     * This improves performance in Prince of Persia 3D. */
+    buffer->sysmem = ((buffer->Caps & D3DVBCAPS_SYSTEMMEMORY) || buffer->version < 7);
 
     wined3d_mutex_lock();
 

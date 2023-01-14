@@ -593,6 +593,7 @@ struct d3d_vertex_buffer
     DWORD                size;
     BOOL                 dynamic;
     bool discarded;
+    bool sysmem;
 };
 
 HRESULT d3d_vertex_buffer_create(struct d3d_vertex_buffer **buffer, struct ddraw *ddraw,

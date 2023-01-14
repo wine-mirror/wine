@@ -4119,7 +4119,7 @@ static HRESULT d3d_device7_DrawPrimitiveVB(IDirect3DDevice7 *iface, D3DPRIMITIVE
 
     stride = get_flexible_vertex_size(vb_impl->fvf);
 
-    if (vb_impl->Caps & D3DVBCAPS_SYSTEMMEMORY)
+    if (vb_impl->sysmem)
     {
         TRACE("Drawing from D3DVBCAPS_SYSTEMMEMORY vertex buffer, forwarding to DrawPrimitive().\n");
         wined3d_mutex_lock();
@@ -4237,7 +4237,7 @@ static HRESULT d3d_device7_DrawIndexedPrimitiveVB(IDirect3DDevice7 *iface,
 
     vb_impl->discarded = false;
 
-    if (vb_impl->Caps & D3DVBCAPS_SYSTEMMEMORY)
+    if (vb_impl->sysmem)
     {
         TRACE("Drawing from D3DVBCAPS_SYSTEMMEMORY vertex buffer, forwarding to DrawIndexedPrimitive().\n");
         wined3d_mutex_lock();
