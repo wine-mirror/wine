@@ -1787,8 +1787,8 @@ static void test_Recognition(void)
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
     todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    todo_wine ok(recog_state == SpeechRecognizerState_Paused || /* Broken on Win10 1507 */
-                  broken(recog_state == SpeechRecognizerState_Capturing) , "recog_state was %u.\n", recog_state);
+    todo_wine ok(recog_state == SpeechRecognizerState_Paused ||
+                 broken(recog_state == SpeechRecognizerState_Capturing) /* Broken on Win10 1507 */, "recog_state was %u.\n", recog_state);
 
     /* Check what happens if we try to pause again, when the session is already paused. */
     hr = ISpeechContinuousRecognitionSession_PauseAsync(session, &action2);
@@ -1844,7 +1844,7 @@ static void test_Recognition(void)
 
     set = SetEvent(action_handler.event_block);
     ok(set == TRUE, "Event 'event_block' wasn't set.\n");
-    ok(!WaitForSingleObject(put_thread , 1000), "Wait for put_thread failed.\n");
+    ok(!WaitForSingleObject(put_thread, 1000), "Wait for put_thread failed.\n");
     IAsyncInfo_Release(info);
 
     CloseHandle(action_handler.event_finished);
@@ -1865,6 +1865,50 @@ static void test_Recognition(void)
     hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action);
     ok(hr == COR_E_INVALIDOPERATION, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
     ok(action == NULL, "action was %p.\n", action);
+
+    /* Test, if Start/StopAsync resets the pause state. */
+    hr = ISpeechContinuousRecognitionSession_StartAsync(session, &action);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StartAsync failed, hr %#lx.\n", hr);
+    await_async_void(action, &action_handler);
+    IAsyncAction_Release(action);
+
+    hr = ISpeechContinuousRecognitionSession_PauseAsync(session, &action);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_PauseAsync failed, hr %#lx.\n", hr);
+    await_async_void(action, &action_handler);
+    IAsyncAction_Release(action);
+
+    recog_state = 0xdeadbeef;
+    hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
+    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    todo_wine ok(recog_state == SpeechRecognizerState_Paused ||
+                 broken(recog_state == SpeechRecognizerState_Capturing) /* Broken on Win10 1507 */, "recog_state was %u.\n", recog_state);
+
+    hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_PauseAsync failed, hr %#lx.\n", hr);
+    await_async_void(action, &action_handler);
+    IAsyncAction_Release(action);
+
+    recog_state = 0xdeadbeef;
+    hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
+    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    todo_wine ok(recog_state == SpeechRecognizerState_Idle, "recog_state was %u.\n", recog_state);
+
+    hr = ISpeechContinuousRecognitionSession_StartAsync(session, &action);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_PauseAsync failed, hr %#lx.\n", hr);
+    await_async_void(action, &action_handler);
+    IAsyncAction_Release(action);
+
+    recog_state = 0xdeadbeef;
+    hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
+    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    todo_wine ok(recog_state == SpeechRecognizerState_Capturing
+                 || broken(recog_state == SpeechRecognizerState_Idle) /* Sometimes Windows is a little behind. */,
+                 "recog_state was %u.\n", recog_state);
+
+    hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_PauseAsync failed, hr %#lx.\n", hr);
+    await_async_void(action, &action_handler);
+    IAsyncAction_Release(action);
 
     hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);
