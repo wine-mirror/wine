@@ -97,6 +97,7 @@ static inline errno_t ctime_s(char *res, size_t len, const __time64_t *t) { retu
 static inline double difftime(time_t t1, time_t t2) { return _difftime64(t1, t2); }
 static inline struct tm* gmtime(const time_t *t) { return _gmtime64(t); }
 static inline struct tm* localtime(const time_t *t) { return _localtime64(t); }
+static inline errno_t localtime_s(struct tm *res, const time_t *t) { return _localtime64_s(res, t); }
 static inline time_t mktime(struct tm *tm) { return _mktime64(tm); }
 static inline time_t time(time_t *t) { return _time64(t); }
 #elif defined(_UCRT)
@@ -105,6 +106,7 @@ static inline errno_t ctime_s(char *res, size_t len, const __time32_t *t) { retu
 static inline double difftime(time_t t1, time_t t2) { return _difftime32(t1, t2); }
 static inline struct tm* gmtime(const time_t *t) { return _gmtime32(t); }
 static inline struct tm* localtime(const time_t *t) { return _localtime32(t); }
+static inline errno_t localtime_s(struct tm *res, const time_t *t) { return _localtime32_s(res, t); }
 static inline time_t mktime(struct tm *tm) { return _mktime32(tm); }
 static inline time_t time(time_t *t) { return _time32(t); }
 #endif
