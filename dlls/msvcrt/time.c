@@ -1715,7 +1715,7 @@ char * CDECL _ctime64(const __time64_t *time)
 /*********************************************************************
  *		_ctime64_s (MSVCRT.@)
  */
-int CDECL _ctime64_s(char *res, size_t len, const __time64_t *time)
+errno_t CDECL _ctime64_s(char *res, size_t len, const __time64_t *time)
 {
     struct tm *t;
 
@@ -1744,7 +1744,7 @@ char * CDECL _ctime32(const __time32_t *time)
 /*********************************************************************
  *		_ctime32_s (MSVCRT.@)
  */
-int CDECL _ctime32_s(char *res, size_t len, const __time32_t *time)
+errno_t CDECL _ctime32_s(char *res, size_t len, const __time32_t *time)
 {
     struct tm *t;
 
