@@ -1721,8 +1721,8 @@ static void test_Recognition(void)
 
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
-    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    todo_wine ok(recog_state == SpeechRecognizerState_Idle, "recog_state was %u.\n", recog_state);
+    ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    ok(recog_state == SpeechRecognizerState_Idle, "recog_state was %u.\n", recog_state);
 
     hr = ISpeechRecognizer_CompileConstraintsAsync(recognizer, &operation);
     ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
@@ -1771,8 +1771,8 @@ static void test_Recognition(void)
 
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
-    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    todo_wine ok(recog_state == SpeechRecognizerState_Capturing, "recog_state was %u.\n", recog_state);
+    ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    ok(recog_state == SpeechRecognizerState_Capturing, "recog_state was %u.\n", recog_state);
 
     /*
      * TODO: Use a loopback device together with prerecorded audio files to test the recognizer's functionality.
@@ -1786,9 +1786,9 @@ static void test_Recognition(void)
 
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
-    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    todo_wine ok(recog_state == SpeechRecognizerState_Paused ||
-                 broken(recog_state == SpeechRecognizerState_Capturing) /* Broken on Win10 1507 */, "recog_state was %u.\n", recog_state);
+    ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    ok(recog_state == SpeechRecognizerState_Paused ||
+       broken(recog_state == SpeechRecognizerState_Capturing) /* Broken on Win10 1507 */, "recog_state was %u.\n", recog_state);
 
     /* Check what happens if we try to pause again, when the session is already paused. */
     hr = ISpeechContinuousRecognitionSession_PauseAsync(session, &action2);
@@ -1806,8 +1806,8 @@ static void test_Recognition(void)
 
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
-    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    todo_wine ok(recog_state == SpeechRecognizerState_Capturing, "recog_state was %u.\n", recog_state);
+    ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    ok(recog_state == SpeechRecognizerState_Capturing, "recog_state was %u.\n", recog_state);
 
     hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action2);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
@@ -1858,8 +1858,8 @@ static void test_Recognition(void)
 
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
-    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    todo_wine ok(recog_state == SpeechRecognizerState_Idle, "recog_state was %u.\n", recog_state);
+    ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    ok(recog_state == SpeechRecognizerState_Idle, "recog_state was %u.\n", recog_state);
 
     /* Try stopping, when already stopped. */
     hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action);
@@ -1879,9 +1879,9 @@ static void test_Recognition(void)
 
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
-    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    todo_wine ok(recog_state == SpeechRecognizerState_Paused ||
-                 broken(recog_state == SpeechRecognizerState_Capturing) /* Broken on Win10 1507 */, "recog_state was %u.\n", recog_state);
+    ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    ok(recog_state == SpeechRecognizerState_Paused ||
+       broken(recog_state == SpeechRecognizerState_Capturing) /* Broken on Win10 1507 */, "recog_state was %u.\n", recog_state);
 
     hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_PauseAsync failed, hr %#lx.\n", hr);
@@ -1890,8 +1890,8 @@ static void test_Recognition(void)
 
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
-    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    todo_wine ok(recog_state == SpeechRecognizerState_Idle, "recog_state was %u.\n", recog_state);
+    ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    ok(recog_state == SpeechRecognizerState_Idle, "recog_state was %u.\n", recog_state);
 
     hr = ISpeechContinuousRecognitionSession_StartAsync(session, &action);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_PauseAsync failed, hr %#lx.\n", hr);
@@ -1900,10 +1900,10 @@ static void test_Recognition(void)
 
     recog_state = 0xdeadbeef;
     hr = ISpeechRecognizer2_get_State(recognizer2, &recog_state);
-    todo_wine ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
-    todo_wine ok(recog_state == SpeechRecognizerState_Capturing
-                 || broken(recog_state == SpeechRecognizerState_Idle) /* Sometimes Windows is a little behind. */,
-                 "recog_state was %u.\n", recog_state);
+    ok(hr == S_OK, "ISpeechRecognizer2_get_State failed, hr %#lx.\n", hr);
+    ok(recog_state == SpeechRecognizerState_Capturing
+       || broken(recog_state == SpeechRecognizerState_Idle) /* Sometimes Windows is a little behind. */,
+       "recog_state was %u.\n", recog_state);
 
     hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_PauseAsync failed, hr %#lx.\n", hr);

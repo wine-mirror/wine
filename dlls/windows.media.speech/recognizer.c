@@ -162,6 +162,8 @@ struct session
 
     IVector_ISpeechRecognitionConstraint *constraints;
 
+    SpeechRecognizerState recognizer_state;
+
     struct list completed_handlers;
     struct list result_handlers;
 
@@ -379,6 +381,7 @@ static HRESULT WINAPI session_StartAsync( ISpeechContinuousRecognitionSession *i
     else
     {
         impl->worker_running = TRUE;
+        impl->recognizer_state = SpeechRecognizerState_Capturing;
     }
     LeaveCriticalSection(&impl->cs);
 
@@ -422,6 +425,7 @@ static HRESULT WINAPI session_StopAsync( ISpeechContinuousRecognitionSession *if
         impl->worker_thread = INVALID_HANDLE_VALUE;
         impl->worker_running = FALSE;
         impl->worker_paused = FALSE;
+        impl->recognizer_state = SpeechRecognizerState_Idle;
     }
     else
     {
@@ -475,6 +479,7 @@ static HRESULT WINAPI session_PauseAsync( ISpeechContinuousRecognitionSession *i
     if (impl->worker_running)
     {
         impl->worker_paused = TRUE;
+        impl->recognizer_state = SpeechRecognizerState_Paused;
     }
     LeaveCriticalSection(&impl->cs);
 
@@ -493,6 +498,7 @@ static HRESULT WINAPI session_Resume( ISpeechContinuousRecognitionSession *iface
     if (impl->worker_running)
     {
         impl->worker_paused = FALSE;
+        impl->recognizer_state = SpeechRecognizerState_Capturing;
     }
     LeaveCriticalSection(&impl->cs);
 
@@ -816,8 +822,19 @@ static HRESULT WINAPI recognizer2_get_ContinuousRecognitionSession( ISpeechRecog
 
 static HRESULT WINAPI recognizer2_get_State( ISpeechRecognizer2 *iface, SpeechRecognizerState *state )
 {
-    FIXME("iface %p, state %p stub!\n", iface, state);
-    return E_NOTIMPL;
+    struct recognizer *impl = impl_from_ISpeechRecognizer2(iface);
+    struct session *session = impl_from_ISpeechContinuousRecognitionSession(impl->session);
+
+    FIXME("iface %p, state %p not all states are supported, yet.\n", iface, state);
+
+    if (!state)
+        return E_POINTER;
+
+    EnterCriticalSection(&session->cs);
+    *state = session->recognizer_state;
+    LeaveCriticalSection(&session->cs);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI recognizer2_StopRecognitionAsync( ISpeechRecognizer2 *iface, IAsyncAction **action )
