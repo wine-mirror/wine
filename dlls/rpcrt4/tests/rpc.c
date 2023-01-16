@@ -158,41 +158,27 @@ static void test_UuidFromString(void)
 static void test_DceErrorInqTextA(void)
 {
     char bufferInvalid [1024];
-    char buffer [1024]; /* The required size is not documented but would
-                         * appear to be 256.
-                         */
+    char buffer [1024];
     DWORD dwCount;
+    RPC_STATUS status;
 
     dwCount = FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL,
             RPC_S_NOT_RPC_ERROR, 0, bufferInvalid, ARRAY_SIZE(bufferInvalid), NULL);
+    ok(dwCount, "Cannot set up for DceErrorInqText\n");
 
-    /* A random sample of DceErrorInqText */
     /* 0 is success */
-    ok ((DceErrorInqTextA (0, (unsigned char*)buffer) == RPC_S_OK),
-            "DceErrorInqTextA(0...)\n");
-    /* A real RPC_S error */
-    ok ((DceErrorInqTextA (RPC_S_INVALID_STRING_UUID, (unsigned char*)buffer) == RPC_S_OK),
-            "DceErrorInqTextA(valid...)\n");
+    status = DceErrorInqTextA(0, (unsigned char*)buffer);
+    ok(status == RPC_S_OK, "got %lx\n", status);
 
-    if (dwCount)
-    {
-        /* A message for which FormatMessage should fail
-         * which should return RPC_S_OK and the 
-         * fixed "not valid" message
-         */
-        ok ((DceErrorInqTextA (35, (unsigned char*)buffer) == RPC_S_OK &&
-                    strcmp (buffer, bufferInvalid) == 0),
-                "DceErrorInqTextA(unformattable...)\n");
-        /* One for which FormatMessage should succeed but 
-         * DceErrorInqText should "fail"
-         * 3814 is generally quite a long message
-         */
-        ok ((DceErrorInqTextA (3814, (unsigned char*)buffer) == RPC_S_OK &&
-                    strcmp (buffer, bufferInvalid) == 0),
-                "DceErrorInqTextA(deviation...)\n");
-    }
-    else
-        ok (0, "Cannot set up for DceErrorInqText\n");
+    /* A real RPC_S error */
+    status = DceErrorInqTextA(RPC_S_INVALID_STRING_UUID, (unsigned char*)buffer);
+    ok(status == RPC_S_OK, "got %lx\n", status);
+
+    /* A message for which FormatMessage should fail which should return RPC_S_OK and the
+     * fixed "not valid" message  */
+    status = DceErrorInqTextA(35, (unsigned char*)buffer);
+    ok(status == RPC_S_OK, "got %lx\n", status);
+    ok(!strcmp(buffer, bufferInvalid), "got %s vs %s\n", wine_dbgstr_a(buffer), wine_dbgstr_a(bufferInvalid));
 }
 
 static RPC_DISPATCH_FUNCTION IFoo_table[] =
