@@ -250,6 +250,7 @@ struct dbg_module
 {
     struct list                 entry;
     DWORD_PTR                   base;
+    DWORD_PTR                   tls_index_offset;
 };
 
 struct dbg_delayed_bp

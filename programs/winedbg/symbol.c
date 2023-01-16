@@ -61,6 +61,43 @@ static BOOL symbol_get_debug_start(const struct dbg_type* func, ULONG64* start)
     return FALSE;
 }
 
+static BOOL fetch_tls_lvalue(const SYMBOL_INFO* sym, struct dbg_lvalue* lvalue)
+{
+    struct dbg_module*        mod = dbg_get_module(dbg_curr_process, sym->ModBase);
+    unsigned                  tlsindex;
+    struct dbg_lvalue         lv_teb_tls, lv_index_addr, lv_module_tls;
+    dbg_lgint_t               teb_tls_addr, index_addr, tls_module_addr;
+    char*                     teb_tls_storage;
+
+    if (!mod || !mod->tls_index_offset || !dbg_curr_thread)
+        return FALSE;
+    /* get ThreadLocalStoragePointer offset depending on debuggee bitness */
+    teb_tls_storage = (char*)dbg_curr_thread->teb;
+    if (ADDRSIZE == sizeof(void*))
+        /* debugger and debuggee have same bitness */
+        teb_tls_storage += offsetof(TEB, ThreadLocalStoragePointer);
+    else
+        /* debugger is 64bit, while debuggee is 32bit */
+        teb_tls_storage += 0x2000 /* TEB64 => TEB32 */ + offsetof(TEB32, ThreadLocalStoragePointer);
+    init_lvalue(&lv_teb_tls, TRUE, teb_tls_storage);
+
+    if (!memory_fetch_integer(&lv_teb_tls, ADDRSIZE, FALSE, &teb_tls_addr))
+        return FALSE;
+
+    init_lvalue(&lv_index_addr, TRUE, (void*)(DWORD_PTR)(sym->ModBase + mod->tls_index_offset));
+    if (!memory_fetch_integer(&lv_index_addr, ADDRSIZE, FALSE, &index_addr))
+        return FALSE;
+
+    if (!dbg_read_memory((const char*)(DWORD_PTR)index_addr, &tlsindex, sizeof(tlsindex)))
+        return FALSE;
+
+    init_lvalue(&lv_module_tls, TRUE, (void*)(DWORD_PTR)(teb_tls_addr + tlsindex * ADDRSIZE));
+    if (!memory_fetch_integer(&lv_module_tls, ADDRSIZE, FALSE, &tls_module_addr))
+        return FALSE;
+    init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)(tls_module_addr + sym->Address));
+    return TRUE;
+}
+
 static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
                             struct dbg_lvalue* lvalue, char* buffer, size_t sz)
 {
@@ -128,46 +165,11 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
     }
     else if (sym->Flags & SYMFLAG_TLSREL)
     {
-        PROCESS_BASIC_INFORMATION pbi;
-        THREAD_BASIC_INFORMATION  tbi;
-        DWORD_PTR                 addr;
-        PEB                       peb;
-        PEB_LDR_DATA              ldr_data;
-        PLIST_ENTRY               head, current;
-        LDR_DATA_TABLE_ENTRY      ldr_module;
-        unsigned                  tlsindex = -1;
-
-        if (NtQueryInformationProcess(dbg_curr_process->handle, ProcessBasicInformation,
-                                      &pbi, sizeof(pbi), NULL) ||
-            NtQueryInformationThread(dbg_curr_thread->handle, ThreadBasicInformation,
-                                     &tbi, sizeof(tbi), NULL))
+        if (!fetch_tls_lvalue(sym, lvalue))
         {
-        tls_error:
             if (buffer) snprintf(buffer, sz, "Cannot read TLS address\n");
             return FALSE;
         }
-        addr = (DWORD_PTR)&(((TEB*)tbi.TebBaseAddress)->ThreadLocalStoragePointer);
-        if (!dbg_read_memory((void*)addr, &addr, sizeof(addr)) ||
-            !dbg_read_memory(pbi.PebBaseAddress, &peb, sizeof(peb)) ||
-            !dbg_read_memory(peb.LdrData, &ldr_data, sizeof(ldr_data)))
-            goto tls_error;
-        current = ldr_data.InLoadOrderModuleList.Flink;
-        head = &((PEB_LDR_DATA*)peb.LdrData)->InLoadOrderModuleList;
-        do
-        {
-            if (!dbg_read_memory(CONTAINING_RECORD(current, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks),
-                                 &ldr_module, sizeof(ldr_module))) goto tls_error;
-            if ((DWORD_PTR)ldr_module.DllBase == sym->ModBase)
-            {
-                tlsindex = ldr_module.TlsIndex;
-                break;
-            }
-            current = ldr_module.InLoadOrderLinks.Flink;
-        } while (current != head);
-
-        addr += tlsindex * sizeof(DWORD_PTR);
-        if (!dbg_read_memory((void*)addr, &addr, sizeof(addr))) goto tls_error;
-        init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)(addr + sym->Address));
     }
     else
     {

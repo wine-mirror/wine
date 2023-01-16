@@ -386,6 +386,8 @@ BOOL dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD_PTR ba
     struct dbg_process* pcs = dbg_get_process_h(hProc);
     struct dbg_module* mod;
     IMAGEHLP_MODULEW64 info;
+    HANDLE hMap;
+    void* image;
 
     if (!pcs) return FALSE;
     mod = malloc(sizeof(struct dbg_module));
@@ -398,6 +400,33 @@ BOOL dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD_PTR ba
     mod->base = base;
     list_add_head(&pcs->modules, &mod->entry);
 
+    mod->tls_index_offset = 0;
+    if ((hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL)))
+    {
+        if ((image = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)))
+        {
+            IMAGE_NT_HEADERS* nth = RtlImageNtHeader(image);
+            const void* tlsdir;
+            ULONG sz;
+
+            tlsdir = RtlImageDirectoryEntryToData(image, TRUE, IMAGE_DIRECTORY_ENTRY_TLS, &sz);
+            switch (nth->OptionalHeader.Magic)
+            {
+            case IMAGE_NT_OPTIONAL_HDR32_MAGIC:
+                if (tlsdir && sz >= sizeof(IMAGE_TLS_DIRECTORY32))
+                    mod->tls_index_offset = (const char*)tlsdir - (const char*)image +
+                        offsetof(IMAGE_TLS_DIRECTORY32, AddressOfIndex);
+                break;
+            case IMAGE_NT_OPTIONAL_HDR64_MAGIC:
+                if (tlsdir && sz >= sizeof(IMAGE_TLS_DIRECTORY64))
+                    mod->tls_index_offset = (const char*)tlsdir - (const char*)image +
+                        offsetof(IMAGE_TLS_DIRECTORY64, AddressOfIndex);
+                break;
+            }
+            UnmapViewOfFile(image);
+        }
+        CloseHandle(hMap);
+    }
     info.SizeOfStruct = sizeof(info);
     if (SymGetModuleInfoW64(hProc, base, &info))
     if (info.PdbUnmatched || info.DbgUnmatched)
