@@ -295,7 +295,7 @@ static int load_file( const char *input_name, const char *output_name )
 static void init_argv0_dir( const char *argv0 )
 {
 #ifndef _WIN32
-    char *dir;
+    char *dir = NULL;
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     dir = realpath( "/proc/self/exe", NULL );
@@ -305,13 +305,9 @@ static void init_argv0_dir( const char *argv0 )
     char *path = xmalloc( path_size );
     if (!sysctl( pathname, ARRAY_SIZE(pathname), path, &path_size, NULL, 0 ))
         dir = realpath( path, NULL );
-    else
-        dir = NULL;
     free( path );
-#else
-    dir = realpath( argv0, NULL );
 #endif
-    if (!dir) return;
+    if (!dir && !(dir = realpath( argv0, NULL ))) return;
     dir = get_dirname( dir );
     includedir = strmake( "%s/%s", dir, BIN_TO_INCLUDEDIR );
     if (strendswith( dir, "/tools/wrc" )) nlsdirs[0] = strmake( "%s/../../nls", dir );

@@ -483,7 +483,7 @@ void write_id_data(const statement_list_t *stmts)
 static void init_argv0_dir( const char *argv0 )
 {
 #ifndef _WIN32
-    char *dir;
+    char *dir = NULL;
 
 #if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
     dir = realpath( "/proc/self/exe", NULL );
@@ -494,10 +494,8 @@ static void init_argv0_dir( const char *argv0 )
     if (!sysctl( pathname, ARRAY_SIZE(pathname), path, &path_size, NULL, 0 ))
         dir = realpath( path, NULL );
     free( path );
-#else
-    dir = realpath( argv0, NULL );
 #endif
-    if (!dir) return;
+    if (!dir && !(dir = realpath( argv0, NULL ))) return;
     includedir = strmake( "%s/%s", get_dirname( dir ), BIN_TO_INCLUDEDIR );
     dlldir = strmake( "%s/%s", get_dirname( dir ), BIN_TO_DLLDIR );
 #endif
