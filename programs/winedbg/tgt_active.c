@@ -501,8 +501,7 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
                    de->dwProcessId, de->dwThreadId,
                    de->u.UnloadDll.lpBaseOfDll);
         break_delete_xpoints_from_module((DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
-        types_unload_module((DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
-        SymUnloadModule64(dbg_curr_process->handle, (DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
+        dbg_unload_module(dbg_curr_process, (DWORD_PTR)de->u.UnloadDll.lpBaseOfDll);
         break;
 
     case OUTPUT_DEBUG_STRING_EVENT:

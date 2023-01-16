@@ -1205,16 +1205,16 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
     return TRUE;
 }
 
-BOOL types_unload_module(DWORD_PTR linear)
+BOOL types_unload_module(struct dbg_process* pcs, DWORD_PTR linear)
 {
     unsigned i;
-    if (!dbg_curr_process) return FALSE;
-    for (i = 0; i < dbg_curr_process->num_synthetized_types; i++)
+    if (!pcs) return FALSE;
+    for (i = 0; i < pcs->num_synthetized_types; i++)
     {
-        if (dbg_curr_process->synthetized_types[i].module == linear)
+        if (pcs->synthetized_types[i].module == linear)
         {
-            dbg_curr_process->synthetized_types[i].module = 0;
-            dbg_curr_process->synthetized_types[i].id = dbg_itype_none;
+            pcs->synthetized_types[i].module = 0;
+            pcs->synthetized_types[i].id = dbg_itype_none;
         }
     }
     return TRUE;

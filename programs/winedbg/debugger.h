@@ -246,6 +246,12 @@ struct dbg_thread
     BOOL                        suspended;
 };
 
+struct dbg_module
+{
+    struct list                 entry;
+    DWORD_PTR                   base;
+};
+
 struct dbg_delayed_bp
 {
     BOOL                        is_symbol;
@@ -271,6 +277,7 @@ struct dbg_process
     void*                       pio_data;
     const WCHAR*		imageName;
     struct list           	threads;
+    struct list                 modules;
     struct backend_cpu*         be_cpu;
     HANDLE                      event_on_first_exception;
     BOOL                        active_debuggee;
@@ -503,7 +510,7 @@ extern BOOL             types_is_integral_type(const struct dbg_lvalue*);
 extern BOOL             types_is_float_type(const struct dbg_lvalue*);
 extern BOOL             types_is_pointer_type(const struct dbg_lvalue*);
 extern BOOL             types_find_basic(const WCHAR*, const char*, struct dbg_type* type);
-extern BOOL             types_unload_module(DWORD_PTR linear);
+extern BOOL             types_unload_module(struct dbg_process* pcs, DWORD_PTR linear);
 
   /* winedbg.c */
 #ifdef __GNUC__
@@ -524,6 +531,9 @@ extern struct dbg_thread* dbg_get_thread(struct dbg_process* p, DWORD tid);
 extern void             dbg_del_thread(struct dbg_thread* t);
 extern BOOL             dbg_init(HANDLE hProc, const WCHAR* in, BOOL invade);
 extern BOOL             dbg_load_module(HANDLE hProc, HANDLE hFile, const WCHAR* name, DWORD_PTR base, DWORD size);
+extern struct dbg_module* dbg_get_module(struct dbg_process* pcs, DWORD_PTR base);
+extern void             dbg_del_module(struct dbg_module* mod);
+extern BOOL             dbg_unload_module(struct dbg_process* pcs, DWORD_PTR base);
 extern void             dbg_set_option(const char*, const char*);
 extern void             dbg_start_interactive(const char*, HANDLE hFile);
 extern void             dbg_init_console(void);
