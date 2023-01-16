@@ -34,6 +34,8 @@
 
 #include "dinput_test.h"
 
+#include "wine/hid.h"
+
 #include "initguid.h"
 
 DEFINE_GUID(GUID_keyboard_action_mapping,0x00000001,0x0002,0x0003,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b);
@@ -1761,6 +1763,273 @@ done:
     winetest_pop_context();
 }
 
+static UINT pointer_enter_count;
+static UINT pointer_down_count;
+static UINT pointer_up_count;
+static UINT pointer_leave_count;
+
+static LRESULT CALLBACK touch_screen_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == WM_POINTERENTER) pointer_enter_count++;
+    if (msg == WM_POINTERDOWN) pointer_down_count++;
+    if (msg == WM_POINTERUP) pointer_up_count++;
+    if (msg == WM_POINTERLEAVE) pointer_leave_count++;
+    return DefWindowProcA( hwnd, msg, wparam, lparam );
+}
+
+static void test_hid_touch_screen(void)
+{
+#include "psh_hid_macros.h"
+    const unsigned char report_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_DIGITIZER),
+        USAGE(1, HID_USAGE_DIGITIZER_TOUCH_SCREEN),
+        COLLECTION(1, Application),
+            REPORT_ID(1, 1),
+
+            USAGE(1, HID_USAGE_DIGITIZER_CONTACT_COUNT),
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(1, 0x7f),
+            REPORT_COUNT(1, 1),
+            REPORT_SIZE(1, 8),
+            INPUT(1, Data|Var|Abs),
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_DIGITIZER),
+            USAGE(1, HID_USAGE_DIGITIZER_FINGER),
+            COLLECTION(1, Logical),
+                USAGE(1, HID_USAGE_DIGITIZER_TIP_SWITCH),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_DIGITIZER_CONTACT_ID),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_DIGITIZER),
+            USAGE(1, HID_USAGE_DIGITIZER_FINGER),
+            COLLECTION(1, Logical),
+                USAGE(1, HID_USAGE_DIGITIZER_TIP_SWITCH),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_DIGITIZER_CONTACT_ID),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                INPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+
+            USAGE_PAGE(1, HID_USAGE_PAGE_DIGITIZER),
+            USAGE(1, HID_USAGE_DIGITIZER_CONTACT_COUNT_MAX),
+            LOGICAL_MINIMUM(1, 0),
+            LOGICAL_MAXIMUM(1, 2),
+            REPORT_COUNT(1, 1),
+            REPORT_SIZE(1, 8),
+            FEATURE(1, Data|Var|Abs),
+        END_COLLECTION
+    };
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
+#include "pop_hid_macros.h"
+
+    const HID_DEVICE_ATTRIBUTES attributes =
+    {
+        .Size = sizeof(HID_DEVICE_ATTRIBUTES),
+        .VendorID = LOWORD(EXPECT_VIDPID),
+        .ProductID = 0x0004,
+        .VersionNumber = 0x0100,
+    };
+    struct hid_device_desc desc =
+    {
+        .caps = { .InputReportByteLength = 10, .FeatureReportByteLength = 2 },
+        .attributes = attributes,
+        .use_report_id = 1,
+    };
+    struct hid_expect touch_single =
+    {
+        .code = IOCTL_HID_READ_REPORT,
+        .report_buf = {1, 1, 0x01,0x02,0x08,0x10},
+    };
+    struct hid_expect touch_multiple =
+    {
+        .code = IOCTL_HID_READ_REPORT,
+        .report_buf = {1, 2, 0x01,0x02,0x08,0x10, 0x01,0x03,0x18,0x20},
+    };
+    struct hid_expect touch_release =
+    {
+        .code = IOCTL_HID_READ_REPORT,
+        .report_buf = {1, 0},
+    };
+    struct hid_expect expect_max_count =
+    {
+        .code = IOCTL_HID_GET_FEATURE,
+        .report_id = 1,
+        .report_len = 2,
+        .report_buf = {1,0x02},
+        .todo = TRUE,
+    };
+
+    WCHAR device_path[MAX_PATH];
+    HANDLE file;
+    DWORD res;
+    HWND hwnd;
+    BOOL ret;
+
+    desc.report_descriptor_len = sizeof(report_desc);
+    memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    desc.expect_size = sizeof(expect_max_count);
+    memcpy( desc.expect, &expect_max_count, sizeof(expect_max_count) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
+
+    if (!hid_device_start( &desc, 1 )) goto done;
+
+    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc.attributes.VendorID,
+              desc.attributes.ProductID );
+    ret = find_hid_device_path( device_path );
+    ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
+
+
+    /* windows doesn't let us open HID touch_screen devices */
+
+    file = CreateFileW( device_path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+    /* except on Win7 which doesn't seem to support HID touch screen */
+    if (broken(sizeof(void *) == 4 && file != INVALID_HANDLE_VALUE))
+    {
+        win_skip( "HID touchscreen unsupported, skipping tests\n" );
+        CloseHandle( file );
+        goto done;
+    }
+
+    todo_wine
+    ok( file == INVALID_HANDLE_VALUE, "CreateFileW succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_SHARING_VIOLATION, "got error %lu\n", GetLastError() );
+    CloseHandle( file );
+
+
+    file = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                        NULL, OPEN_EXISTING, 0, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+
+
+    /* check basic touch_screen input injection to window message */
+
+    SetCursorPos( 0, 0 );
+
+    hwnd = create_foreground_window( TRUE );
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)touch_screen_wndproc );
+
+
+    pointer_enter_count = pointer_down_count = pointer_up_count = pointer_leave_count = 0;
+    bus_send_hid_input( file, &desc, &touch_single, sizeof(touch_single) );
+
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    todo_wine
+    ok( pointer_enter_count == 1, "got pointer_enter_count %u\n", pointer_enter_count );
+    todo_wine
+    ok( pointer_down_count == 1, "got pointer_down_count %u\n", pointer_down_count );
+    ok( pointer_up_count == 0, "got pointer_up_count %u\n", pointer_up_count );
+    ok( pointer_leave_count == 0, "got pointer_leave_count %u\n", pointer_leave_count );
+
+
+    pointer_enter_count = pointer_down_count = pointer_up_count = pointer_leave_count = 0;
+    bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
+
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    ok( pointer_enter_count == 0, "got pointer_enter_count %u\n", pointer_enter_count );
+    ok( pointer_down_count == 0, "got pointer_down_count %u\n", pointer_down_count );
+    todo_wine
+    ok( pointer_up_count == 1, "got pointer_up_count %u\n", pointer_up_count );
+    todo_wine
+    ok( pointer_leave_count == 1, "got pointer_leave_count %u\n", pointer_leave_count );
+
+
+
+    pointer_enter_count = pointer_down_count = pointer_up_count = pointer_leave_count = 0;
+    bus_send_hid_input( file, &desc, &touch_multiple, sizeof(touch_multiple) );
+
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    todo_wine
+    ok( pointer_enter_count == 2, "got pointer_enter_count %u\n", pointer_enter_count );
+    todo_wine
+    ok( pointer_down_count == 2, "got pointer_down_count %u\n", pointer_down_count );
+    ok( pointer_up_count == 0, "got pointer_up_count %u\n", pointer_up_count );
+    ok( pointer_leave_count == 0, "got pointer_leave_count %u\n", pointer_leave_count );
+
+
+    pointer_enter_count = pointer_down_count = pointer_up_count = pointer_leave_count = 0;
+    bus_send_hid_input( file, &desc, &touch_release, sizeof(touch_release) );
+
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_POINTER );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    ok( pointer_enter_count == 0, "got pointer_enter_count %u\n", pointer_enter_count );
+    ok( pointer_down_count == 0, "got pointer_down_count %u\n", pointer_down_count );
+    todo_wine
+    ok( pointer_up_count == 2, "got pointer_up_count %u\n", pointer_up_count );
+    todo_wine
+    ok( pointer_leave_count == 2, "got pointer_leave_count %u\n", pointer_leave_count );
+
+
+    DestroyWindow( hwnd );
+
+    CloseHandle( file );
+
+done:
+    hid_device_stop( &desc, 1 );
+}
+
 static void test_dik_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwnd, DWORD version )
 {
     static const struct key2dik
@@ -2665,6 +2934,7 @@ START_TEST(device8)
 
     test_hid_mouse();
     test_hid_keyboard();
+    test_hid_touch_screen();
 
 done:
     bus_device_stop();
