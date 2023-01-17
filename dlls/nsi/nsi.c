@@ -70,6 +70,7 @@ DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWOR
         memset( data, 0, sizeof(data) );
         err = NsiEnumerateObjectsAllParameters( unk, 0, module, table, NULL, 0, NULL, 0, NULL, 0, NULL, 0, &num );
         if (err) return err;
+        err = ERROR_OUTOFMEMORY; /* fail if this is the last attempt */
     }
 
     if (!err)
