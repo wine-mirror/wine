@@ -134,7 +134,7 @@ static void save_blackbox(const char* logfile, void* blackbox, int size, const c
     DWORD written;
     BOOL ret;
 
-    hFile = CreateFileA(logfile, GENERIC_WRITE, FILE_SHARE_READ, NULL, CREATE_ALWAYS, 0, 0);
+    hFile = CreateFileA(logfile, GENERIC_WRITE, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, 0);
     ok(hFile != INVALID_HANDLE_VALUE, "Couldn't create %s: %lu\n", logfile, GetLastError());
     if (hFile == INVALID_HANDLE_VALUE)
         return;
@@ -156,7 +156,7 @@ static int _load_blackbox(unsigned int line, const char* logfile, void* blackbox
     BOOL ret;
     char buf[4096];
 
-    hFile = CreateFileA(logfile, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, 0);
+    hFile = CreateFileA(logfile, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
     if (hFile == INVALID_HANDLE_VALUE)
     {
         ok_(__FILE__, line)(0, "unable to open '%s': %#lx\n", logfile, GetLastError());
