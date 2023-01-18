@@ -3142,7 +3142,9 @@ static void test_MapFile(void)
 static void test_GetFileType(void)
 {
     DWORD type, type2;
-    HANDLE h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    HANDLE h, h2;
+    BOOL ret;
+    h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
     ok( h != INVALID_HANDLE_VALUE, "open %s failed\n", filename );
     type = GetFileType(h);
     ok( type == FILE_TYPE_DISK, "expected type disk got %ld\n", type );
@@ -3158,6 +3160,73 @@ static void test_GetFileType(void)
     type = GetFileType( (HANDLE)STD_OUTPUT_HANDLE );
     type2 = GetFileType( h );
     ok(type == type2, "expected type %ld for STD_OUTPUT_HANDLE got %ld\n", type2, type);
+
+    ret = CreatePipe( &h, &h2, NULL, 0 );
+    ok( ret, "CreatePipe failed\n" );
+    type = GetFileType( h );
+    ok( type == FILE_TYPE_PIPE, "expected type pipe got %ld\n", type );
+    type = GetFileType( h2 );
+    ok( type == FILE_TYPE_PIPE, "expected type pipe got %ld\n", type );
+    CloseHandle( h2 );
+    CloseHandle( h );
+
+    h = CreateNamedPipeW( L"\\\\.\\pipe\\wine_test", PIPE_ACCESS_DUPLEX, 0, 2, 32, 32, 0, NULL );
+    ok( h != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n" );
+    type = GetFileType( h );
+    ok( type == FILE_TYPE_PIPE, "expected type pipe got %ld\n", type );
+    CloseHandle( h );
+
+    h = CreateFileA( filename, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( h != INVALID_HANDLE_VALUE, "open %s failed\n", filename );
+    h2 = CreateFileMappingW( h, NULL, PAGE_READWRITE, 0, 0x1000, NULL );
+    ok( h2 != NULL, "CreateFileMapping failed\n" );
+    SetLastError( 12345678 );
+    type = GetFileType( h2 );
+    todo_wine
+    ok( type == FILE_TYPE_UNKNOWN, "expected type unknown got %ld\n", type );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE got %lx\n", GetLastError() );
+    CloseHandle( h2 );
+    CloseHandle( h );
+    DeleteFileA( filename );
+
+    h = CreateFileMappingW( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 0x1000, NULL );
+    ok( h != NULL, "CreateFileMapping failed\n" );
+    SetLastError( 12345678 );
+    type = GetFileType( h );
+    todo_wine
+    ok( type == FILE_TYPE_UNKNOWN, "expected type unknown got %ld\n", type );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE got %lx\n", GetLastError() );
+    CloseHandle( h );
+
+    h = CreateMailslotW( L"\\\\.\\mailslot\\wine_test", 0, 0, NULL );
+    ok( h != INVALID_HANDLE_VALUE, "CreateMailslot failed\n" );
+    SetLastError( 12345678 );
+    type = GetFileType( h );
+    todo_wine
+    ok( type == FILE_TYPE_UNKNOWN, "expected type unknown got %ld\n", type );
+    todo_wine
+    ok( GetLastError() == NO_ERROR, "expected ERROR_NO_ERROR got %lx\n", GetLastError() );
+    CloseHandle( h );
+
+    SetLastError( 12345678 );
+    type = GetFileType( GetCurrentProcess() );
+    ok( type == FILE_TYPE_UNKNOWN, "expected type unknown got %ld\n", type );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE got %lx\n", GetLastError() );
+
+    SetLastError( 12345678 );
+    type = GetFileType( GetCurrentThread() );
+    ok( type == FILE_TYPE_UNKNOWN, "expected type unknown got %ld\n", type );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE got %lx\n", GetLastError() );
+
+    h = CreateMutexW( NULL, TRUE, NULL );
+    ok( h != NULL, "CreateMutex failed\n" );
+    SetLastError( 12345678 );
+    type = GetFileType( h );
+    ok( type == FILE_TYPE_UNKNOWN, "expected type unknown got %ld\n", type );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE got %lx\n", GetLastError() );
+    CloseHandle( h );
 }
 
 static int completion_count;
