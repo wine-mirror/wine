@@ -1819,9 +1819,9 @@ static void test_GetAdaptersAddresses(void)
                 dns_eligible_found = TRUE;
 
             if(ua->Address.lpSockaddr->sa_family == AF_INET)
-                todo_wine ok(aa->Ipv4Enabled == TRUE, "expected Ipv4Enabled flag to be set in interface %ls\n", aa->FriendlyName);
+                ok(aa->Ipv4Enabled == TRUE, "expected Ipv4Enabled flag to be set in interface %ls\n", aa->FriendlyName);
             else if(ua->Address.lpSockaddr->sa_family == AF_INET6)
-                todo_wine ok(aa->Ipv6Enabled == TRUE, "expected Ipv6Enabled flag to be set in interface %ls\n", aa->FriendlyName);
+                ok(aa->Ipv6Enabled == TRUE, "expected Ipv6Enabled flag to be set in interface %ls\n", aa->FriendlyName);
 
             ua = ua->Next;
         }

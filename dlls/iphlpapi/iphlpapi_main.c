@@ -959,12 +959,14 @@ static DWORD unicast_addresses_alloc( IP_ADAPTER_ADDRESSES *aa, ULONG family, UL
             {
                 SOCKADDR_IN *in = (SOCKADDR_IN *)addr->Address.lpSockaddr;
                 in->sin_addr = key4->addr;
+                aa->Ipv4Enabled = TRUE;
             }
             else
             {
                 SOCKADDR_IN6 *in6 = (SOCKADDR_IN6 *)addr->Address.lpSockaddr;
                 in6->sin6_addr = key6->addr;
                 in6->sin6_scope_id = dyn[i].scope_id;
+                aa->Ipv6Enabled = TRUE;
             }
             addr->PrefixOrigin = rw[i].prefix_origin;
             addr->SuffixOrigin = rw[i].suffix_origin;
