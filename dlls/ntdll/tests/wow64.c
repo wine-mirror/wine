@@ -662,7 +662,8 @@ static NTSTATUS call_func64( ULONG64 func64, int nb_args, ULONG64 *args )
     return func( func64, nb_args, args );
 }
 
-static ULONG64 main_module, ntdll_module, wow64_module, wow64cpu_module, wow64win_module;
+static ULONG64 main_module, ntdll_module, wow64_module, wow64base_module, wow64con_module,
+               wow64cpu_module, wow64win_module;
 
 static void enum_modules64( void (*func)(ULONG64,const WCHAR *) )
 {
@@ -776,6 +777,8 @@ static void check_module( ULONG64 base, const WCHAR *name )
 #define CHECK_MODULE(mod) if (!wcsicmp( name, L"" #mod ".dll" )) { mod ## _module = base; return; }
     CHECK_MODULE(ntdll);
     CHECK_MODULE(wow64);
+    CHECK_MODULE(wow64base);
+    CHECK_MODULE(wow64con);
     CHECK_MODULE(wow64cpu);
     CHECK_MODULE(wow64win);
 #undef CHECK_MODULE
