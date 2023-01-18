@@ -23,6 +23,19 @@
 extern "C" {
 #endif
 
+#define ERROR_DEPENDENT_APPLICATIONS_EXIST  0xe0000300
+#define ERROR_NO_DEVICE_ID                  0xe0000301
+#define ERROR_DRIVER_PACKAGE_NOT_IN_STORE   0xe0000302
+#define ERROR_MISSING_FILE                  0xe0000303
+#define ERROR_INVALID_CATALOG_DATA          0xe0000304
+
+#define DRIVER_PACKAGE_REPAIR                   0x00000001
+#define DRIVER_PACKAGE_SILENT                   0x00000002
+#define DRIVER_PACKAGE_FORCE                    0x00000004
+#define DRIVER_PACKAGE_ONLY_IF_DEVICE_PRESENT   0x00000008
+#define DRIVER_PACKAGE_LEGACY_MODE              0x00000010
+#define DRIVER_PACKAGE_DELETE_FILES             0x00000020
+
 typedef struct _INSTALLERINFO_A
 {
     PSTR pApplicationId;
