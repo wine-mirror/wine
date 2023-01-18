@@ -1818,6 +1818,11 @@ static void test_GetAdaptersAddresses(void)
             if (ua->Flags & IP_ADAPTER_ADDRESS_DNS_ELIGIBLE)
                 dns_eligible_found = TRUE;
 
+            if(ua->Address.lpSockaddr->sa_family == AF_INET)
+                todo_wine ok(aa->Ipv4Enabled == TRUE, "expected Ipv4Enabled flag to be set in interface %ls\n", aa->FriendlyName);
+            else if(ua->Address.lpSockaddr->sa_family == AF_INET6)
+                todo_wine ok(aa->Ipv6Enabled == TRUE, "expected Ipv6Enabled flag to be set in interface %ls\n", aa->FriendlyName);
+
             ua = ua->Next;
         }
         for (i = 0, temp[0] = '\0'; i < ARRAY_SIZE(aa->ZoneIndices); i++)
