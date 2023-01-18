@@ -557,6 +557,23 @@ sync_test("stylesheet_props", function() {
     test_exposed("rules", true);
 });
 
+sync_test("rect_props", function() {
+    document.body.innerHTML = '<div>test</div>';
+    var elem = document.body.firstChild;
+    var rect = elem.getBoundingClientRect();
+    function test_exposed(prop, expect) {
+        if(expect)
+            ok(prop in rect, prop + " not found in rect object.");
+        else
+            ok(!(prop in rect), prop + " found in rect object.");
+    }
+
+    var v = document.documentMode;
+
+    test_exposed("width", v >= 9);
+    test_exposed("height", v >= 9);
+});
+
 sync_test("xhr open", function() {
     var e = false;
     try {

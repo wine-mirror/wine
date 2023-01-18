@@ -529,6 +529,7 @@ HRESULT create_element(HTMLDocumentNode *doc, const WCHAR *tag, HTMLElement **re
 typedef struct {
     DispatchEx dispex;
     IHTMLRect IHTMLRect_iface;
+    IHTMLRect2 IHTMLRect2_iface;
 
     LONG ref;
 
@@ -550,6 +551,8 @@ static HRESULT WINAPI HTMLRect_QueryInterface(IHTMLRect *iface, REFIID riid, voi
         *ppv = &This->IHTMLRect_iface;
     }else if(IsEqualGUID(&IID_IHTMLRect, riid)) {
         *ppv = &This->IHTMLRect_iface;
+    }else if (IsEqualGUID(&IID_IHTMLRect2, riid)) {
+        *ppv = &This->IHTMLRect2_iface;
     }else if(dispex_query_interface(&This->dispex, riid, ppv)) {
         return *ppv ? S_OK : E_NOINTERFACE;
     }else {
@@ -723,6 +726,91 @@ static HRESULT WINAPI HTMLRect_get_bottom(IHTMLRect *iface, LONG *p)
     return S_OK;
 }
 
+static inline HTMLRect *impl_from_IHTMLRect2(IHTMLRect2 *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLRect, IHTMLRect2_iface);
+}
+
+static HRESULT WINAPI HTMLRect2_QueryInterface(IHTMLRect2 *iface, REFIID riid, void **ppv)
+{
+    HTMLRect *This = impl_from_IHTMLRect2(iface);
+    return IHTMLRect_QueryInterface(&This->IHTMLRect_iface, riid, ppv);
+}
+
+static ULONG WINAPI HTMLRect2_AddRef(IHTMLRect2 *iface)
+{
+    HTMLRect *This = impl_from_IHTMLRect2(iface);
+    return IHTMLRect_AddRef(&This->IHTMLRect_iface);
+}
+
+static ULONG WINAPI HTMLRect2_Release(IHTMLRect2 *iface)
+{
+    HTMLRect *This = impl_from_IHTMLRect2(iface);
+    return IHTMLRect_Release(&This->IHTMLRect_iface);
+}
+
+static HRESULT WINAPI HTMLRect2_GetTypeInfoCount(IHTMLRect2 *iface, UINT *pctinfo)
+{
+    HTMLRect *This = impl_from_IHTMLRect2(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI HTMLRect2_GetTypeInfo(IHTMLRect2 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **ppTInfo)
+{
+    HTMLRect *This = impl_from_IHTMLRect2(iface);
+    return IDispatchEx_GetTypeInfo(&This->dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI HTMLRect2_GetIDsOfNames(IHTMLRect2 *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    HTMLRect *This = impl_from_IHTMLRect2(iface);
+    return IDispatchEx_GetIDsOfNames(&This->dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI HTMLRect2_Invoke(IHTMLRect2 *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams,
+        VARIANT *pVarResult, EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    HTMLRect *This = impl_from_IHTMLRect2(iface);
+    return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid, wFlags,
+            pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI HTMLRect2_get_width(IHTMLRect2 *iface, FLOAT *p)
+{
+    HTMLRect *This = impl_from_IHTMLRect2(iface);
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMClientRect_GetWidth(This->nsrect, p);
+    if (NS_FAILED(nsres)) {
+        ERR("GetWidth failed: %08lx\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI HTMLRect2_get_height(IHTMLRect2 *iface, FLOAT *p)
+{
+    HTMLRect *This = impl_from_IHTMLRect2(iface);
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    nsres = nsIDOMClientRect_GetHeight(This->nsrect, p);
+    if (NS_FAILED(nsres)) {
+        ERR("GetHeight failed: %08lx\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
+}
+
 static const IHTMLRectVtbl HTMLRectVtbl = {
     HTMLRect_QueryInterface,
     HTMLRect_AddRef,
@@ -741,6 +829,24 @@ static const IHTMLRectVtbl HTMLRectVtbl = {
     HTMLRect_get_bottom
 };
 
+static const IHTMLRect2Vtbl HTMLRect2Vtbl = {
+    HTMLRect2_QueryInterface,
+    HTMLRect2_AddRef,
+    HTMLRect2_Release,
+    HTMLRect2_GetTypeInfoCount,
+    HTMLRect2_GetTypeInfo,
+    HTMLRect2_GetIDsOfNames,
+    HTMLRect2_Invoke,
+    HTMLRect2_get_width,
+    HTMLRect2_get_height,
+};
+
+void HTMLRect_init_dispex_info(dispex_data_t *info, compat_mode_t mode)
+{
+    if (mode >= COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLRect2_tid, NULL);
+}
+
 static const tid_t HTMLRect_iface_tids[] = {
     IHTMLRect_tid,
     0
@@ -749,7 +855,8 @@ static dispex_static_data_t HTMLRect_dispex = {
     L"ClientRect",
     NULL,
     IHTMLRect_tid,
-    HTMLRect_iface_tids
+    HTMLRect_iface_tids,
+    HTMLRect_init_dispex_info
 };
 
 static HRESULT create_html_rect(nsIDOMClientRect *nsrect, compat_mode_t compat_mode, IHTMLRect **ret)
@@ -761,6 +868,7 @@ static HRESULT create_html_rect(nsIDOMClientRect *nsrect, compat_mode_t compat_m
         return E_OUTOFMEMORY;
 
     rect->IHTMLRect_iface.lpVtbl = &HTMLRectVtbl;
+    rect->IHTMLRect2_iface.lpVtbl = &HTMLRect2Vtbl;
     rect->ref = 1;
 
     init_dispatch(&rect->dispex, (IUnknown*)&rect->IHTMLRect_iface, &HTMLRect_dispex, compat_mode);

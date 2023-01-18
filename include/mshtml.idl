@@ -7938,6 +7938,24 @@ interface IHTMLRect : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLRect2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051076c-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLRect2 : IDispatch
+{
+    [propget, id(DISPID_IHTMLRECT2_WIDTH)]
+    HRESULT width([retval, out] FLOAT *p);
+
+    [propget, id(DISPID_IHTMLRECT2_HEIGHT)]
+    HRESULT height([retval, out] FLOAT *p);
+}
+
+/*****************************************************************************
  *    IHTMLRectCollection interface
  */
 [
