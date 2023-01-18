@@ -391,12 +391,25 @@ static void next_event_(unsigned line, struct debugger_context *ctx, unsigned ti
     ctx->current_thread = get_debuggee_thread(ctx, ctx->ev.dwThreadId);
 }
 
+static DWORD event_mask(DWORD ev)
+{
+    return (ev >= 1 && ev <= 7) ? (1LU << ev) : 0;
+}
+
+#define next_event_filter(a, b,c) next_event_filter_(__LINE__, (a), (b), (c))
+static void next_event_filter_(unsigned line, struct debugger_context *ctx, DWORD timeout, DWORD mask)
+{
+    do
+    {
+        next_event_(line, ctx, timeout);
+    } while (event_mask(ctx->ev.dwDebugEventCode) & mask);
+}
+
 #define wait_for_breakpoint(a) wait_for_breakpoint_(__LINE__,a)
 static void wait_for_breakpoint_(unsigned line, struct debugger_context *ctx)
 {
-    do next_event_(line, ctx, WAIT_EVENT_TIMEOUT);
-    while (ctx->ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT || ctx->ev.dwDebugEventCode == UNLOAD_DLL_DEBUG_EVENT
-           || ctx->ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT);
+    next_event_filter_(line, ctx, WAIT_EVENT_TIMEOUT,
+                       event_mask(LOAD_DLL_DEBUG_EVENT) | event_mask(UNLOAD_DLL_DEBUG_EVENT) | event_mask(CREATE_THREAD_DEBUG_EVENT));
 
     ok_(__FILE__,line)(ctx->ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %ld\n", ctx->ev.dwDebugEventCode);
     ok_(__FILE__,line)(ctx->ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %lx\n",
@@ -1710,6 +1723,8 @@ static void test_debugger(const char *argv0)
 
     if (sizeof(loop_code) > 1)
     {
+        unsigned event_order = 0;
+
         memset(buf, OP_BP, sizeof(buf));
         memcpy(proc_code, &loop_code, sizeof(loop_code));
         ret = WriteProcessMemory(pi.hProcess, mem, buf, sizeof(buf), NULL);
@@ -1720,11 +1735,14 @@ static void test_debugger(const char *argv0)
         worker_cnt = 20;
         for (i = 0; i < worker_cnt; i++)
         {
-            thread = CreateRemoteThread(pi.hProcess, NULL, 0, (void*)thread_proc, NULL, 0, NULL);
+            DWORD tid;
+            thread = CreateRemoteThread(pi.hProcess, NULL, 0, (void*)thread_proc, NULL, 0, &tid);
             ok(thread != NULL, "CreateRemoteThread failed: %lu\n", GetLastError());
 
             next_event(&ctx, WAIT_EVENT_TIMEOUT);
             ok(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT, "dwDebugEventCode = %ld\n", ctx.ev.dwDebugEventCode);
+            ok(ctx.ev.dwThreadId == tid, "Unexpected thread id\n");
+            ok(ctx.ev.u.CreateThread.lpStartAddress == (void*)thread_proc, "Unexpected thread's start address\n");
 
             ret = CloseHandle(thread);
             ok(ret, "CloseHandle failed, last error %ld.\n", GetLastError());
@@ -1741,6 +1759,11 @@ static void test_debugger(const char *argv0)
         ret = WriteProcessMemory(pi.hProcess, thread_proc + 1, &byte, 1, NULL);
         ok(ret, "WriteProcessMemory failed: %lu\n", GetLastError());
 
+        /* One would expect that we get all exception debug events (for the worker threads
+         * that hit the BP instruction), then the exit thread events for all created threads.
+         * It happens that on Windows, the exception & exit thread events can be intertwined.
+         * So detect this situation.
+         */
         for (;;)
         {
             DEBUG_EVENT ev;
@@ -1753,26 +1776,31 @@ static void test_debugger(const char *argv0)
             ret = WaitForDebugEvent(&ev, 10);
             ok(GetLastError() == ERROR_SEM_TIMEOUT, "WaitForDebugEvent returned %x(%lu)\n", ret, GetLastError());
 
-            next_event(&ctx, POLL_EVENT_TIMEOUT);
-            if (ctx.ev.dwDebugEventCode != EXCEPTION_DEBUG_EVENT) break;
+            for (;;)
+            {
+                next_event_filter(&ctx, POLL_EVENT_TIMEOUT, event_mask(CREATE_THREAD_DEBUG_EVENT));
+                if (ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT) break;
+                if (ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT)
+                {
+                    if (event_order == 0) event_order = 1; /* first exit thread event */
+                    if (!--worker_cnt) break;
+                }
+            }
+            if (!worker_cnt) break;
+
+            ok(ctx.ev.dwDebugEventCode == EXCEPTION_DEBUG_EVENT, "dwDebugEventCode = %ld\n", ctx.ev.dwDebugEventCode);
             trace("exception at %p in thread %04lx\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress, ctx.ev.dwThreadId);
             ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode = %lx\n",
                ctx.ev.u.Exception.ExceptionRecord.ExceptionCode);
             ok(ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress == thread_proc + 1,
                "ExceptionAddress = %p\n", ctx.ev.u.Exception.ExceptionRecord.ExceptionAddress);
             exception_cnt++;
+            if (event_order == 1) event_order = 2; /* exception debug event after exit thread event */
         }
 
         trace("received %u exceptions\n", exception_cnt);
-
-        for (;;)
-        {
-            ok(ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT
-               || broken(ctx.ev.dwDebugEventCode == CREATE_THREAD_DEBUG_EVENT), /* sometimes happens on vista */
-               "dwDebugEventCode = %ld\n", ctx.ev.dwDebugEventCode);
-            if (ctx.ev.dwDebugEventCode == EXIT_THREAD_DEBUG_EVENT && !--worker_cnt) break;
-            next_event(&ctx, WAIT_EVENT_TIMEOUT);
-        }
+        ok(!worker_cnt, "Missing %u exit thread events\n", worker_cnt);
+        ok(event_order == 1 || broken(event_order == 2), "Intertwined exit thread & exception debug events\n");
     }
 
     if (OP_BP)
