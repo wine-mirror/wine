@@ -108,7 +108,7 @@ static WINDOWPROC *find_winproc( WNDPROC func, BOOL ansi )
 
 /* return the window proc for a given handle, or NULL for an invalid handle,
  * or WINPROC_PROC16 for a handle to a 16-bit proc. */
-WINDOWPROC *get_winproc_ptr( WNDPROC handle )
+static WINDOWPROC *get_winproc_ptr( WNDPROC handle )
 {
     UINT index = LOWORD(handle);
     if ((ULONG_PTR)handle >> 16 != WINPROC_HANDLE) return NULL;
