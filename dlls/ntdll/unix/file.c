@@ -1618,7 +1618,7 @@ static int fd_set_dos_attrib( int fd, UINT attr )
 
 
 /* set the stat info and file attributes for a file (by file descriptor) */
-NTSTATUS fd_set_file_info( int fd, UINT attr )
+static NTSTATUS fd_set_file_info( int fd, UINT attr )
 {
     struct stat st;
 
