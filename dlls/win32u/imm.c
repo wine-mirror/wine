@@ -403,7 +403,7 @@ BOOL WINAPI DECLSPEC_HIDDEN ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM
     return KeUserModeCallback( NtUserImmProcessKey, &params, sizeof(params), &ret_ptr, &ret_len );
 }
 
-BOOL WINAPI ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM key_data )
+BOOL WINAPI DECLSPEC_HIDDEN ImmTranslateMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM key_data )
 {
     struct imm_translate_message_params params =
         { .hwnd = hwnd, .msg = msg, .wparam = wparam, .key_data = key_data };
