@@ -1935,7 +1935,7 @@ static BOOL handle_syscall_trap( ucontext_t *sigcontext )
     }
     else if ((void *)RIP_sig( sigcontext ) == __wine_unix_call_dispatcher)
     {
-        extern void __wine_unix_call_dispatcher_prolog_end(void);
+        extern void __wine_unix_call_dispatcher_prolog_end(void) DECLSPEC_HIDDEN;
 
         RIP_sig( sigcontext ) = (ULONG64)__wine_unix_call_dispatcher_prolog_end;
         R10_sig( sigcontext ) = RCX_sig( sigcontext );
