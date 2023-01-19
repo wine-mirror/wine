@@ -1292,7 +1292,7 @@ static BOOL draw_push_button( HDC dc, RECT *r, UINT flags )
     return TRUE;
 }
 
-BOOL draw_frame_caption( HDC dc, RECT *r, UINT flags )
+static BOOL draw_frame_caption( HDC dc, RECT *r, UINT flags )
 {
     RECT rect;
     int small_diam = make_square_rect( r, &rect ) - 2;
