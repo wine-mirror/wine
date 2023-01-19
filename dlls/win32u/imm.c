@@ -394,7 +394,7 @@ void cleanup_imm_thread(void)
     NtUserDestroyInputContext( UlongToHandle( thread_info->client_info.default_imc ));
 }
 
-BOOL WINAPI ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM key_data, DWORD unknown )
+BOOL WINAPI DECLSPEC_HIDDEN ImmProcessKey( HWND hwnd, HKL hkl, UINT vkey, LPARAM key_data, DWORD unknown )
 {
     struct imm_process_key_params params =
         { .hwnd = hwnd, .hkl = hkl, .vkey = vkey, .key_data = key_data };
