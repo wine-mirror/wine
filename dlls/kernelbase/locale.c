@@ -7245,7 +7245,19 @@ BOOL WINAPI SetUserGeoName(PWSTR geo_name)
 
 static void grouping_to_string( UINT grouping, WCHAR *buffer )
 {
+    UINT last_digit = grouping % 10;
     WCHAR tmp[10], *p = tmp;
+
+    /* The string is confusingly different when it comes to repetitions (trailing zeros). For a string,
+     * a 0 signals that the format needs to be repeated, which is the opposite of the grouping integer. */
+    if (last_digit == 0)
+    {
+        grouping /= 10;
+
+        /* Special case: two or more trailing zeros result in zero-sided groupings, with no repeats */
+        if (grouping % 10 == 0)
+            last_digit = ~0;
+    }
 
     while (grouping)
     {
@@ -7256,6 +7268,17 @@ static void grouping_to_string( UINT grouping, WCHAR *buffer )
     {
         *buffer++ = *(--p);
         if (p > tmp) *buffer++ = ';';
+    }
+    if (last_digit != 0)
+    {
+        *buffer++ = ';';
+        *buffer++ = '0';
+        if (last_digit == ~0)
+        {
+            /* Add another trailing zero due to the weird way trailing zeros work in grouping string */
+            *buffer++ = ';';
+            *buffer++ = '0';
+        }
     }
     *buffer = 0;
 }
@@ -7272,9 +7295,9 @@ static WCHAR *prepend_str( WCHAR *end, const WCHAR *str )
 static WCHAR *format_number( WCHAR *end, const WCHAR *value, const WCHAR *decimal_sep,
                              const WCHAR *thousand_sep, const WCHAR *grouping, UINT digits, BOOL lzero )
 {
+    BOOL round = FALSE, repeat = FALSE;
+    UINT i, len = 0, prev = ~0;
     const WCHAR *frac = NULL;
-    BOOL round = FALSE;
-    UINT i, len = 0;
 
     *(--end) = 0;
 
@@ -7327,9 +7350,43 @@ static WCHAR *format_number( WCHAR *end, const WCHAR *value, const WCHAR *decima
     }
     if (len) lzero = FALSE;
 
+    /* leading 0s are ignored */
+    while (grouping[0] == '0' && grouping[1] == ';')
+        grouping += 2;
+
     while (len)
     {
-        UINT limit = *grouping == '0' ? ~0u : *grouping - '0';
+        UINT limit = prev;
+
+        if (!repeat)
+        {
+            limit = *grouping - '0';
+            if (grouping[1] == ';')
+            {
+                grouping += 2;
+                if (limit)
+                    prev = limit;
+                else
+                {
+                    /* Trailing 0;0 is a special case */
+                    prev = ~0;
+                    if (grouping[0] == '0' && grouping[1] != ';')
+                    {
+                        repeat = TRUE;
+                        limit = prev;
+                    }
+                }
+            }
+            else
+            {
+                repeat = TRUE;
+                if (!limit)
+                    limit = prev;
+                else
+                    prev = ~0;
+            }
+        }
+
         while (len && limit--)
         {
             WCHAR ch = value[--len];
@@ -7345,7 +7402,6 @@ static WCHAR *format_number( WCHAR *end, const WCHAR *value, const WCHAR *decima
             *(--end) = ch;
         }
         if (len) end = prepend_str( end, thousand_sep );
-        if (grouping[1] == ';') grouping += 2;
     }
     if (round) *(--end) = '1';
     else if (lzero) *(--end) = '0';
@@ -7356,7 +7412,7 @@ static WCHAR *format_number( WCHAR *end, const WCHAR *value, const WCHAR *decima
 static int get_number_format( const NLS_LOCALE_DATA *locale, DWORD flags, const WCHAR *value,
                               const NUMBERFMTW *format, WCHAR *buffer, int len )
 {
-    WCHAR *num, fmt_decimal[4], fmt_thousand[4], fmt_neg[5], grouping[20], output[256];
+    WCHAR *num, fmt_decimal[4], fmt_thousand[4], fmt_neg[5], grouping[24], output[256];
     const WCHAR *decimal_sep = fmt_decimal, *thousand_sep = fmt_thousand;
     DWORD digits, lzero, order;
     int ret = 0;

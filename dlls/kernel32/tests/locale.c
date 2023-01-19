@@ -1404,6 +1404,7 @@ static void test_GetNumberFormatA(void)
   static char szComma[] = { ',', '\0' };
   int ret;
   LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+  WCHAR grouping[32], t1000[8], dec[8], frac[8], lzero[8];
   char buffer[BUFFER_SIZE];
   NUMBERFMTA format;
 
@@ -1522,6 +1523,22 @@ static void test_GetNumberFormatA(void)
   ret = GetNumberFormatA(lcid, 0, "123456789", &format, buffer, ARRAY_SIZE(buffer));
   expect_str(ret, buffer, "1234,567,89.0");
 
+  format.Grouping = 203;
+  ret = GetNumberFormatA(lcid, 0, "123456789", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "1,234,567,,89.0");
+
+  format.Grouping = 2030;
+  ret = GetNumberFormatA(lcid, 0, "123456789", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "1234,567,,89.0");
+
+  format.Grouping = 2003;
+  ret = GetNumberFormatA(lcid, 0, "123456789", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "1,234,567,,,89.0");
+
+  format.Grouping = 1200;
+  ret = GetNumberFormatA(lcid, 0, "123456789", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "123456,,78,9.0");
+
   /* Grouping of a negative number */
   format.NegativeOrder = NEG_LEFT;
   format.Grouping = 3;
@@ -1562,6 +1579,67 @@ static void test_GetNumberFormatA(void)
   {
     ret = GetNumberFormatA(lcid, NUO, "-12345", NULL, buffer, ARRAY_SIZE(buffer));
     expect_str(ret, buffer, "-12\xa0\x33\x34\x35,00"); /* Non breaking space */
+  }
+
+  /* Test the actual LOCALE_SGROUPING string, the rules for repeats are opposite */
+  if (GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, grouping, ARRAY_SIZE(grouping)) &&
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, t1000, ARRAY_SIZE(t1000)) &&
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, dec, ARRAY_SIZE(dec)) &&
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IDIGITS, frac, ARRAY_SIZE(frac)) &&
+      GetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_ILZERO, lzero, ARRAY_SIZE(lzero)))
+  {
+    static const struct
+    {
+        const char *grouping;
+        const char *expected;
+    } tests[] = {
+        { "3;0",                "1,234,567,890.54321" },
+        { "2;3",                "12345,678,90.54321" },
+        { "1",                  "123456789,0.54321" },
+        { "1;0",                "1,2,3,4,5,6,7,8,9,0.54321" },
+        { "1;0;3",              "123456,789,,0.54321" },
+        { "0",                  "1234567890.54321" },
+        { "0;0",                "1234567890.54321" },
+        { "0;1",                "123456789,0.54321" },
+        { "0;0;0",              "1234567890.54321" },
+        { "0;1;0",              "1,2,3,4,5,6,7,8,9,0.54321" },
+        { "2;0;0",              "12345678,90.54321" },
+        { "2;0;0;0",            "12345678,,90.54321" },
+        { "2;0;0;0;0",          "12345678,,,90.54321" },
+        { "2;0;0;1;0",          "1,2,3,4,5,6,7,8,,,90.54321" },
+        { "1;3;2",              "1234,56,789,0.54321" },
+        { "1;3;2;0",            "12,34,56,789,0.54321" },
+        { "3;1;1;2;0",          "1,23,45,6,7,890.54321" },
+        { "6;1",                "123,4,567890.54321" },
+    };
+    unsigned i;
+
+    SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, ",");
+    SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, ".");
+    SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_IDIGITS, "5");
+    SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_ILZERO, "0");
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+      SetLocaleInfoA(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, tests[i].grouping);
+      SetLastError(0xdeadbeef);
+      ret = GetNumberFormatA(LOCALE_USER_DEFAULT, 0, "1234567890.54321", NULL, buffer, ARRAY_SIZE(buffer));
+      if (ret)
+      {
+        ok(GetLastError() == 0xdeadbeef, "[%u] unexpected error %lu\n", i, GetLastError());
+        ok(ret == strlen(tests[i].expected) + 1, "[%u] unexpected ret %d\n", i, ret);
+        ok(!strcmp(buffer, tests[i].expected), "[%u] unexpected string %s\n", i, buffer);
+      }
+      else
+        ok(0, "[%u] expected success, got error %ld\n", i, GetLastError());
+    }
+
+    /* Restore */
+    ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SGROUPING, grouping), "Restoring SGROUPING failed\n");
+    ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_STHOUSAND, t1000), "Restoring STHOUSAND failed\n");
+    ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, dec), "Restoring SDECIMAL failed\n");
+    ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_IDIGITS, frac), "Restoring IDIGITS failed\n");
+    ok(SetLocaleInfoW(LOCALE_USER_DEFAULT, LOCALE_ILZERO, lzero), "Restoring ILZERO failed\n");
   }
 }
 
