@@ -2929,8 +2929,8 @@ static BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping 
  *
  * Call a window procedure, translating args from Ansi to Unicode.
  */
-LRESULT call_messageAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, WPARAM wparam,
-                          LPARAM lparam, LRESULT *result, void *arg, enum wm_char_mapping mapping )
+static LRESULT call_messageAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, WPARAM wparam,
+                                 LPARAM lparam, LRESULT *result, void *arg, enum wm_char_mapping mapping )
 {
     LRESULT ret = 0;
 
