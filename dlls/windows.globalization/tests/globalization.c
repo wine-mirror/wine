@@ -29,6 +29,8 @@
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
+#define WIDL_using_Windows_Globalization
+#include "windows.globalization.h"
 #define WIDL_using_Windows_System_UserProfile
 #include "windows.system.userprofile.h"
 
@@ -227,6 +229,90 @@ static void test_GlobalizationPreferences(void)
     RoUninitialize();
 }
 
+static void test_Language(void)
+{
+    static const WCHAR *class_name = L"Windows.Globalization.Language";
+
+    IAgileObject *agile_object, *tmp_agile_object;
+    IInspectable *inspectable, *tmp_inspectable;
+    WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+    ILanguageFactory *language_factory;
+    IActivationFactory *factory;
+    ILanguage *language;
+    HSTRING tag, str;
+    const WCHAR *buf;
+    HRESULT hr;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = WindowsCreateString(class_name, wcslen(class_name), &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "Unexpected hr %#lx.\n", hr);
+    WindowsDeleteString(str);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("%s runtimeclass not registered, skipping tests.\n", wine_dbgstr_w(class_name));
+        RoUninitialize();
+        return;
+    }
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IInspectable, (void **)&inspectable);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_IAgileObject, (void **)&agile_object);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IActivationFactory_QueryInterface(factory, &IID_ILanguageFactory, (void **)&language_factory);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = ILanguageFactory_QueryInterface(language_factory, &IID_IInspectable, (void **)&tmp_inspectable);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_inspectable == inspectable, "Unexpected interface pointer %p, expected %p.\n", tmp_inspectable, inspectable);
+    IInspectable_Release(tmp_inspectable);
+
+    hr = ILanguageFactory_QueryInterface(language_factory, &IID_IAgileObject, (void **)&tmp_agile_object);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_agile_object == agile_object, "Unexpected interface pointer %p, expected %p.\n", tmp_agile_object, agile_object);
+    IAgileObject_Release(tmp_agile_object);
+
+    /* Invalid language tag */
+    hr = WindowsCreateString(L"test-tag", 8, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ILanguageFactory_CreateLanguage(language_factory, str, &language);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr))
+        ILanguage_Release(language);
+    WindowsDeleteString(str);
+
+    hr = WindowsCreateString(L"en-us", 5, &str);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    hr = ILanguageFactory_CreateLanguage(language_factory, str, &language);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    WindowsDeleteString(str);
+
+    hr = ILanguage_get_LanguageTag(language, &tag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    buf = WindowsGetStringRawBuffer(tag, NULL);
+    ok(!wcscmp(buf, L"en-US"), "Unexpected tag %s.\n", debugstr_w(buf));
+    GetLocaleInfoEx(L"en-us", LOCALE_SNAME, buffer, ARRAY_SIZE(buffer));
+    ok(!wcscmp(buf, buffer), "Unexpected tag %s, locale name %s.\n", debugstr_w(buf), debugstr_w(buffer));
+
+    WindowsDeleteString(tag);
+
+    ILanguage_Release(language);
+
+    ILanguageFactory_Release(language_factory);
+
+    IAgileObject_Release(agile_object);
+    IInspectable_Release(inspectable);
+    IActivationFactory_Release(factory);
+
+    RoUninitialize();
+}
+
 START_TEST(globalization)
 {
     HMODULE kernel32;
@@ -235,4 +321,5 @@ START_TEST(globalization)
     pGetUserDefaultGeoName = (void*)GetProcAddress(kernel32, "GetUserDefaultGeoName");
 
     test_GlobalizationPreferences();
+    test_Language();
 }

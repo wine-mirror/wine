@@ -234,15 +234,155 @@ struct windows_globalization
     LONG ref;
 };
 
+struct language_factory
+{
+    IActivationFactory IActivationFactory_iface;
+    ILanguageFactory ILanguageFactory_iface;
+    LONG ref;
+};
+
+struct language
+{
+    ILanguage ILanguage_iface;
+    LONG ref;
+    WCHAR name[LOCALE_NAME_MAX_LENGTH];
+};
+
 static inline struct windows_globalization *impl_from_IActivationFactory(IActivationFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct windows_globalization, IActivationFactory_iface);
+}
+
+static inline struct language_factory *impl_language_factory_from_IActivationFactory(IActivationFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct language_factory, IActivationFactory_iface);
 }
 
 static inline struct windows_globalization *impl_from_IGlobalizationPreferencesStatics(IGlobalizationPreferencesStatics *iface)
 {
     return CONTAINING_RECORD(iface, struct windows_globalization, IGlobalizationPreferencesStatics_iface);
 }
+
+static inline struct language_factory *impl_from_ILanguageFactory(ILanguageFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct language_factory, ILanguageFactory_iface);
+}
+
+static inline struct language *impl_from_ILanguage(ILanguage *iface)
+{
+    return CONTAINING_RECORD(iface, struct language, ILanguage_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE language_QueryInterface(
+        ILanguage *iface, REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_ILanguage))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE language_AddRef(
+        ILanguage *iface)
+{
+    struct language *language = impl_from_ILanguage(iface);
+    ULONG ref = InterlockedIncrement(&language->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE language_Release(
+        ILanguage *iface)
+{
+    struct language *language = impl_from_ILanguage(iface);
+    ULONG ref = InterlockedDecrement(&language->ref);
+
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+
+    if (!ref)
+        free(language);
+
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE language_GetIids(
+        ILanguage *iface, ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE language_GetRuntimeClassName(
+        ILanguage *iface, HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE language_GetTrustLevel(
+        ILanguage *iface, TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE language_get_LanguageTag(
+        ILanguage *iface, HSTRING *value)
+{
+    struct language *language = impl_from_ILanguage(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    return WindowsCreateString(language->name, wcslen(language->name), value);
+}
+
+static HRESULT STDMETHODCALLTYPE language_get_DisplayName(
+        ILanguage *iface, HSTRING *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE language_get_NativeName(
+        ILanguage *iface, HSTRING *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE language_get_Script(
+        ILanguage *iface, HSTRING *value)
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct ILanguageVtbl language_vtbl =
+{
+    language_QueryInterface,
+    language_AddRef,
+    language_Release,
+    /* IInspectable methods */
+    language_GetIids,
+    language_GetRuntimeClassName,
+    language_GetTrustLevel,
+    /* ILanguage methods */
+    language_get_LanguageTag,
+    language_get_DisplayName,
+    language_get_NativeName,
+    language_get_Script,
+};
 
 static HRESULT STDMETHODCALLTYPE windows_globalization_QueryInterface(
         IActivationFactory *iface, REFIID iid, void **out)
@@ -454,10 +594,138 @@ static const struct IGlobalizationPreferencesStaticsVtbl globalization_preferenc
     globalization_preferences_get_WeekStartsOn,
 };
 
-static struct windows_globalization windows_globalization =
+static struct windows_globalization userprofile_preferences =
 {
     {&activation_factory_vtbl},
     {&globalization_preferences_vtbl},
+    0
+};
+
+static HRESULT STDMETHODCALLTYPE windows_globalization_language_factory_QueryInterface(
+        IActivationFactory *iface, REFIID iid, void **out)
+{
+    struct language_factory *factory = impl_language_factory_from_IActivationFactory(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IActivationFactory))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_ILanguageFactory))
+    {
+        IUnknown_AddRef(iface);
+        *out = &factory->ILanguageFactory_iface;
+        return S_OK;
+    }
+
+    FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static const struct IActivationFactoryVtbl activation_factory_language_vtbl =
+{
+    windows_globalization_language_factory_QueryInterface,
+    windows_globalization_AddRef,
+    windows_globalization_Release,
+    /* IInspectable methods */
+    windows_globalization_GetIids,
+    windows_globalization_GetRuntimeClassName,
+    windows_globalization_GetTrustLevel,
+    /* IActivationFactory methods */
+    windows_globalization_ActivateInstance,
+};
+
+static HRESULT STDMETHODCALLTYPE language_factory_QueryInterface(
+        ILanguageFactory *iface, REFIID iid, void **object)
+{
+    struct language_factory *factory = impl_from_ILanguageFactory(iface);
+    return IActivationFactory_QueryInterface(&factory->IActivationFactory_iface, iid, object);
+}
+
+static ULONG STDMETHODCALLTYPE language_factory_AddRef(
+        ILanguageFactory *iface)
+{
+    struct language_factory *factory = impl_from_ILanguageFactory(iface);
+    return IActivationFactory_AddRef(&factory->IActivationFactory_iface);
+}
+
+static ULONG STDMETHODCALLTYPE language_factory_Release(
+        ILanguageFactory *iface)
+{
+    struct language_factory *factory = impl_from_ILanguageFactory(iface);
+    return IActivationFactory_Release(&factory->IActivationFactory_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE language_factory_GetIids(
+        ILanguageFactory *iface, ULONG *iid_count, IID **iids)
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE language_factory_GetRuntimeClassName(
+        ILanguageFactory *iface, HSTRING *class_name)
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE language_factory_GetTrustLevel(
+        ILanguageFactory *iface, TrustLevel *trust_level)
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE language_factory_CreateLanguage(
+        ILanguageFactory *iface, HSTRING tag, ILanguage **value)
+{
+    const WCHAR *name = WindowsGetStringRawBuffer(tag, NULL);
+    WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+    struct language *language;
+
+    TRACE("iface %p, tag %p, value %p.\n", iface, tag, value);
+
+    if (!GetLocaleInfoEx(name, LOCALE_SNAME, buffer, ARRAY_SIZE(buffer)))
+        return E_INVALIDARG;
+
+    if (!(language = calloc(1, sizeof(*language))))
+        return E_OUTOFMEMORY;
+
+    language->ILanguage_iface.lpVtbl = &language_vtbl;
+    language->ref = 1;
+    wcscpy(language->name, buffer);
+
+    *value = &language->ILanguage_iface;
+
+    return S_OK;
+}
+
+static const struct ILanguageFactoryVtbl language_factory_vtbl =
+{
+    language_factory_QueryInterface,
+    language_factory_AddRef,
+    language_factory_Release,
+    /* IInspectable methods */
+    language_factory_GetIids,
+    language_factory_GetRuntimeClassName,
+    language_factory_GetTrustLevel,
+    /* ILanguageFactory methods */
+    language_factory_CreateLanguage,
+};
+
+static struct language_factory language_factory =
+{
+    {&activation_factory_language_vtbl},
+    {&language_factory_vtbl},
     0
 };
 
@@ -469,8 +737,23 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **out)
 
 HRESULT WINAPI DllGetActivationFactory(HSTRING classid, IActivationFactory **factory)
 {
+    const WCHAR *name = WindowsGetStringRawBuffer(classid, NULL);
+
     TRACE("classid %s, factory %p.\n", debugstr_hstring(classid), factory);
-    *factory = &windows_globalization.IActivationFactory_iface;
-    IUnknown_AddRef(*factory);
-    return S_OK;
+
+    *factory = NULL;
+
+    if (!wcscmp(name, RuntimeClass_Windows_System_UserProfile_GlobalizationPreferences))
+    {
+        *factory = &userprofile_preferences.IActivationFactory_iface;
+        IUnknown_AddRef(*factory);
+    }
+    else if (!wcscmp(name, RuntimeClass_Windows_Globalization_Language))
+    {
+        *factory = &language_factory.IActivationFactory_iface;
+        IUnknown_AddRef(*factory);
+    }
+
+    if (*factory) return S_OK;
+    return CLASS_E_CLASSNOTAVAILABLE;
 }
