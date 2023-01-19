@@ -1573,7 +1573,7 @@ NTSTATUS call_user_exception_dispatcher( EXCEPTION_RECORD *rec, CONTEXT *context
  *           call_user_mode_callback
  */
 extern NTSTATUS CDECL call_user_mode_callback( void *func, void *stack, void **ret_ptr,
-                                               ULONG *ret_len, TEB *teb );
+                                               ULONG *ret_len, TEB *teb ) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( call_user_mode_callback,
                    "subq $0xe8,%rsp\n\t"
                    __ASM_SEH(".seh_stackalloc 0xf0\n\t")
