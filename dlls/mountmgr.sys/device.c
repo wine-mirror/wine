@@ -899,6 +899,14 @@ static BOOL get_volume_device_info( struct volume *volume )
     }
     else
     {
+        if(GetLastError() == ERROR_NOT_READY)
+        {
+            TRACE( "%s: removable drive with no inserted media\n", debugstr_a(unix_device) );
+            volume->fs_type = FS_UNKNOWN;
+            CloseHandle( handle );
+            return TRUE;
+        }
+
         volume->fs_type = VOLUME_ReadFATSuperblock( handle, superblock );
         if (volume->fs_type == FS_UNKNOWN) volume->fs_type = VOLUME_ReadCDSuperblock( handle, superblock );
     }
