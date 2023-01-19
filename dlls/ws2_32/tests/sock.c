@@ -12209,6 +12209,8 @@ static void test_bind(void)
     {
         const IP_ADAPTER_UNICAST_ADDRESS *unicast_addr;
 
+        if (adapter->OperStatus != IfOperStatusUp) continue;
+
         for (unicast_addr = adapter->FirstUnicastAddress; unicast_addr != NULL; unicast_addr = unicast_addr->Next)
         {
             short family = unicast_addr->Address.lpSockaddr->sa_family;
