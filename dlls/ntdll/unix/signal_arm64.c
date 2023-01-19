@@ -919,7 +919,7 @@ __ASM_GLOBAL_FUNC( call_user_mode_callback,
  *           user_mode_callback_return
  */
 extern void CDECL DECLSPEC_NORETURN user_mode_callback_return( void *ret_ptr, ULONG ret_len,
-                                                               NTSTATUS status, TEB *teb );
+                                                               NTSTATUS status, TEB *teb ) DECLSPEC_HIDDEN;
 __ASM_GLOBAL_FUNC( user_mode_callback_return,
                    "ldr x4, [x3, #0x2f8]\n\t"     /* arm64_thread_data()->syscall_frame */
                    "ldr x5, [x4, #0x110]\n\t"     /* prev_frame */
