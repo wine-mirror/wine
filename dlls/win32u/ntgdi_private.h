@@ -160,7 +160,7 @@ extern void free_brush_pattern( struct brush_pattern *pattern ) DECLSPEC_HIDDEN;
 extern BOOL clip_device_rect( DC *dc, RECT *dst, const RECT *src ) DECLSPEC_HIDDEN;
 extern BOOL clip_visrect( DC *dc, RECT *dst, const RECT *src ) DECLSPEC_HIDDEN;
 extern void set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect,
-                                const RECT *device_rect, struct window_surface *surface );
+                                const RECT *device_rect, struct window_surface *surface ) DECLSPEC_HIDDEN;
 extern void update_dc_clipping( DC * dc ) DECLSPEC_HIDDEN;
 
 /* Return the total DC region (if any) */
