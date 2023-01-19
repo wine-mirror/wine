@@ -282,7 +282,7 @@ static BOOL get_scroll_bar_rect( HWND hwnd, int bar, RECT *rect, int *arrow_size
  *
  * Redraw the whole scrollbar.
  */
-void draw_scroll_bar( HWND hwnd, HDC hdc, int bar, enum SCROLL_HITTEST hit_test,
+static void draw_scroll_bar( HWND hwnd, HDC hdc, int bar, enum SCROLL_HITTEST hit_test,
                       const struct SCROLL_TRACKING_INFO *tracking_info, BOOL draw_arrows,
                       BOOL draw_interior )
 {
