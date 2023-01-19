@@ -1441,7 +1441,7 @@ LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, 
     return set_window_long( hwnd, offset, sizeof(LONG_PTR), newval, ansi );
 }
 
-static BOOL set_window_pixel_format( HWND hwnd, int format )
+BOOL win32u_set_window_pixel_format( HWND hwnd, int format )
 {
     WND *win = get_win_ptr( hwnd );
 
@@ -5554,9 +5554,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
     case NtUserCallHwndParam_SetWindowContextHelpId:
         return set_window_context_help_id( hwnd, param );
-
-    case NtUserCallHwndParam_SetWindowPixelFormat:
-        return set_window_pixel_format( hwnd, param );
 
     case NtUserCallHwndParam_ShowOwnedPopups:
         return show_owned_popups( hwnd, param );

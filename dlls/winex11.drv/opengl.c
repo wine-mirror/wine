@@ -1402,7 +1402,7 @@ static BOOL set_win_format( HWND hwnd, const struct wgl_pixel_format *format, BO
     XFlush( gdi_display );
     release_gl_drawable( gl );
 
-    NtUserSetWindowPixelFormat( hwnd, pixel_format_index( format ));
+    win32u_set_window_pixel_format( hwnd, pixel_format_index( format ));
     return TRUE;
 }
 
@@ -1512,7 +1512,7 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
     else
     {
         destroy_gl_drawable( hwnd );
-        NtUserSetWindowPixelFormat( hwnd, 0 );
+        win32u_set_window_pixel_format( hwnd, 0 );
     }
     release_gl_drawable( old );
 }

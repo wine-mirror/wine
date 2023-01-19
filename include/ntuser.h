@@ -1331,7 +1331,6 @@ enum
     NtUserCallHwndParam_SetDialogInfo,
     NtUserCallHwndParam_SetMDIClientInfo,
     NtUserCallHwndParam_SetWindowContextHelpId,
-    NtUserCallHwndParam_SetWindowPixelFormat,
     NtUserCallHwndParam_ShowOwnedPopups,
     /* temporary exports */
     NtUserSetWindowStyle,
@@ -1496,11 +1495,6 @@ static inline void NtUserSetMDIClientInfo( HWND hwnd, void *info )
 static inline BOOL NtUserSetWindowContextHelpId( HWND hwnd, DWORD id )
 {
     return NtUserCallHwndParam( hwnd, id, NtUserCallHwndParam_SetWindowContextHelpId );
-}
-
-static inline BOOL NtUserSetWindowPixelFormat( HWND hwnd, int format )
-{
-    return NtUserCallHwndParam( hwnd, format, NtUserCallHwndParam_SetWindowPixelFormat );
 }
 
 static inline BOOL NtUserShowOwnedPopups( HWND hwnd, BOOL show )

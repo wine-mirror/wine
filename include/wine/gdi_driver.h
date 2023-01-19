@@ -339,6 +339,8 @@ struct user_driver_funcs
 
 extern void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version );
 
+extern BOOL win32u_set_window_pixel_format( HWND hwnd, int format );
+
 #endif /* WINE_UNIX_LIB */
 
 #endif /* __WINE_WINE_GDI_DRIVER_H */
