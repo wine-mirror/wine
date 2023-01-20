@@ -1,11 +1,12 @@
-The Wine development release 8.0-rc4 is now available.
+The Wine development release 8.0-rc5 is now available. This is
+expected to be the last release candidate before the final 8.0.
 
 What's new in this release:
   - Bug fixes only, we are in code freeze.
 
 The source is available at:
 
-  https://dl.winehq.org/wine/source/8.0/wine-8.0-rc4.tar.xz
+  https://dl.winehq.org/wine/source/8.0/wine-8.0-rc5.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -21,113 +22,61 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 8.0-rc4 (total 25):
+Bugs fixed in 8.0-rc5 (total 9):
 
- - #48553  Catia (CAD software) refuse to run installation on newest wine   (<=4.18)
- - #51268  Assembler messages: Error: no such instruction: `xsavec (%esp)'
- - #51301  Any action that locks the cursor into place inside the Roblox Client window causes the cursor to freeze
- - #51420  Running any program in Wine causes 100% cpu usage in Xorg
- - #52089  d2d1:d2d1 fails in test_draw_geometry() on Wine
- - #52152  comctl32:edit gets unexpected heights in test_text_position_style() on Windows 10 1809+
- - #52429  Guild Wars: login not possible
- - #52557  GetNetworkParams loops forever on musl
- - #52749  winetricks dotnet35sp1: printfilterpipelinesvc.exe crashes in background
- - #52932  comctl32:edit & user32:edit have test_char_from_pos() failures on Windows with the UTF-8 codepage
- - #52994  mstask:task_trigger - test_GetNextRunTime() fails in Wine on date change
- - #53382  Slow rendering when connected to external monitor
- - #53536  ntdll:rtl - The 32-bit RtlUlonglongByteSwap() breaks test_RtlDecompressBuffer() on Windows
- - #53583  FindNLSStringEx reimplementation doesn't match native
- - #53671  No objects are being rendered in any DX10/11 apps with older GPU drivers
- - #53837  HS_hevo_gc 8.6.1.2 fails to install
- - #54045  ntdll:rtl - test_RtlIpv6StringToAddress() fails on Windows 11
- - #54151  xactengine3_7:xact3 crashes when no speaker is connected
- - #54172  ddraw:ddraw1, ddraw:ddraw2, ddraw:ddraw4, ddraw:ddraw7 - test_window_position() gets the size of the wrong screen in Wine
- - #54180  Petz 4 has corrupt .pet files at startup
- - #54210  Wine fails to compile with Linux 4.11 headers (use of undefined AT_HWCAP2)
- - #54218  RTLD_SELF use breaks musl build since 8.0-rc1
- - #54263  Build of 7.22 fails with mingw-w64 10.0
- - #54264  Hyperdimension Neptunia Re;Birth1 crashes on exit in xactengine notification callback
- - #54287  wineconsole: alternate screen buffer does not work
+ - #26822  Double click the icon in the title bar should close the window
+ - #32643  getsockopt() does not indicate WSAEFAULT when setting optlen too small
+ - #45542  WeGame hangs after login.
+ - #50351  Slow text rendering in dofus linked to fnIMLangFontLink2_GetCharCodePages calling WideCharToMultiByte with CP_UNICODE
+ - #51227  urlmon:url breaks the wininet:http test on Windows 10 1709+ (7 failures)
+ - #51906  Multiple games fail to play videos (War Mongrels, The Medium, Sherlock Holmes Chapter One)
+ - #53408  Dark Souls: Remastered has slow performance with OpenGL renderer
+ - #53761  Broken rendering in Mafia III: Definitive Edition
+ - #54283  dinput:force_feedback - test_windows_gaming_input() sometimes crashes on Windows
 
 ----------------------------------------------------------------
 
-Changes since 8.0-rc3:
+Changes since 8.0-rc4:
 
-Alexandre Julliard (6):
-      Update copyright info for 2023.
-      gitlab: Add a daily win10 test run.
-      kernelbase: Fix FindNLSStringEx for strings with no primary weights.
-      wow64: Initialize win32u syscall table when it is mapped.
-      winecrt0: Check for RTLD_SELF support to enable ELF constructors.
-      tools: Create a temporary directory to store temp files.
+Alexandre Julliard (1):
+      tools: Always fall back to argv[0] to find the tools directory.
 
-Alistair Leslie-Hughes (1):
-      faudio: Purge and clear notifications on ShutDown.
+Brendan Shanks (1):
+      kernel32/tests: Test GetFileType() with additional types of handles.
 
-Conor McCarthy (1):
-      d3d11: Apply the 'KEEP' options when sending RTVs and UAVs to wined3d.
+Byeong-Sik Jeon (1):
+      po: Update Korean translation.
 
-Eric Pouech (7):
-      user32/tests: Retry when opening the clipboard.
-      user32/tests: Fix failing WM_PASTE tests for edit control on Win10+.
-      comctl32/tests: Retry when opening the clipboard.
-      comctl32/tests: Fix failing WM_PASTE tests for edit control on Win10+.
-      conhost: Reset console attribute upon exit in unix mode.
-      conhost: Initialize color_map when creating an alternate screen buffer.
-      po: Update French translations.
+Eric Pouech (3):
+      kernel32/tests: Extend share right for debugger's black box tests.
+      kernel32/tests: Merge two debug event loops in test_debugger().
+      kernel32/tests: Filter spurious thread creation debug events.
 
-Gabriel Ivăncescu (2):
-      win32u: Initialize the tracking_info for NtUserDrawScrollBar params.
-      winex11.drv: Obtain icon info for icons passed to fetch_icon_data().
+Fan WenJie (1):
+      winebuild: Only set thumb_mode on ARM targets.
 
-Gerald Pfeifer (1):
-      wrc: Avoid undefined behavior in the FreeBSD case.
+François Gouget (4):
+      d3d12/tests: Allow a broken Windows 10 1709 hresult.
+      nsi: Return an error if NsiAllocateAndGetTable() fails to allocate the tables.
+      nsi: Add some margin to the tables size in NsiAllocateAndGetTable().
+      win32u: Document the font_lock handling in font_EnumFonts().
 
-Hans Leidekker (7):
-      iphlpapi: Handle errors from DnsQueryConfig(DnsConfigDnsServerList).
-      wininet/tests: Pass INTERNET_FLAG_RELOAD in secure connection tests.
-      shell32/tests: Fix a test failure on Windows 11.
-      ws2_32/tests: Fix test failures on Windows 11.
-      ntdll: Conform to Windows 11 behavior in RtlIpv6StringToAddress().
-      ntdll: Fix a test failure on Windows 11.
-      ntdll/tests: Mark some test results on Windows 11 as broken.
+Gabriel Ivăncescu (1):
+      notepad: Fix uninitialized upper 64-bits of `pos` in DoFind.
 
-Hugh McMaster (1):
-      conhost: Migrate from FontPitchFamily to FontFamily.
+Jactry Zeng (1):
+      po: Update Simplified Chinese translation.
 
-Jacek Caban (2):
-      include: Add vadefs.h header.
-      include: Add stdarg.h header.
+Lauri Kenttä (1):
+      po: Update Finnish translation.
 
-Julian Rüger (1):
-      po: Update German translation.
+Robert Wilhelm (1):
+      vbscript/tests: Fix chr() tests with double-byte character sets.
 
-Paul Gofman (3):
-      dwmapi: Fill qpcVBlank in DwmGetCompositionTimingInfo().
-      cryptnet: Check cached revocation status in verify_cert_revocation().
-      cryptnet: Also cache revocation status when using OCSP.
+Santino Mazza (2):
+      iphlpapi/tests: Test for Ipv4Enabled and Ipv6Enabled flags.
+      iphlpapi: Set Ipv4Enabled and Ipv6Enabled flags accordingly.
 
-Rémi Bernon (10):
-      ole32: Use CRT allocation for MIDL_user_(allocate/free).
-      ole32: Allocate IEnumSTATDATA data with the process heap.
-      ole32: Reset IMoniker data pointer to NULL on failure.
-      ole32: Allocate and free moniker lists with CRT allocations.
-      dinput/tests: Remove the async cancel tests.
-      rpcrt4/tests: Avoid invalid free of static string.
-      msv1_0: Avoid double free when SpAcceptLsaModeContext fails.
-      msv1_0: Avoid double free when SpInitLsaModeContext fails.
-      wininet: Allocate returned options strings with the process heap.
-      comctl32: Avoid mismatching heap in ProgressWindowProc.
-
-Stefan Dösinger (1):
-      wined3d: Clamp the bound buffer range to the buffer size.
-
-Zebediah Figura (4):
-      ntdll: Check for AT_HWCAP2 definition before using it.
-      ntdll: Manually write byte code for the xsavec instruction.
-      wined3d: Map the destination BO with WINED3D_MAP_DISCARD when replacing the entire destination in wined3d_context_gl_copy_bo_address().
-      wined3d: Write into a mapped BO when replacing the entire destination in wined3d_context_gl_copy_bo_address().
-
-Zhiyi Zhang (2):
-      win32u: Introduce a get_display_depth() helper to retrieve emulated display depth.
-      ddraw/tests: Do not create a fullscreen test window in test_window_position_cb().
+Tim Clem (2):
+      user32/tests: Test GetRawInputBuffer header fields more thoroughly.
+      win32u: Correct GetRawInputBuffer alignment under WoW64.
