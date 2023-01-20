@@ -8858,29 +8858,19 @@ static void test_pixel_format(void)
     IDirectDrawClipper *clipper = NULL;
     DDSURFACEDESC2 ddsd;
     IDirectDrawSurface4 *primary = NULL, *offscreen;
+    ULONG refcount;
     DDBLTFX fx;
     HRESULT hr;
 
-    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            100, 100, 160, 160, NULL, NULL, NULL, NULL);
-    if (!window)
-    {
-        skip("Failed to create window\n");
-        return;
-    }
-
-    window2 = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-            100, 100, 160, 160, NULL, NULL, NULL, NULL);
+    window = create_window();
+    ok(!!window, "Failed to create window.\n");
+    window2 = create_window();
+    ok(!!window2, "Failed to create window.\n");
 
     hdc = GetDC(window);
-    if (!hdc)
-    {
-        skip("Failed to get DC\n");
-        goto cleanup;
-    }
-
-    if (window2)
-        hdc2 = GetDC(window2);
+    ok(!!hdc, "Failed to get DC.\n");
+    hdc2 = GetDC(window2);
+    ok(!!hdc2, "Failed to get DC.\n");
 
     gl = LoadLibraryA("opengl32.dll");
     ok(!!gl, "failed to load opengl32.dll; SetPixelFormat()/GetPixelFormat() may not work right\n");
@@ -8907,14 +8897,10 @@ static void test_pixel_format(void)
         goto cleanup;
     }
 
-    if (!hdc2 || !SetPixelFormat(hdc2, format, &pfd) || GetPixelFormat(hdc2) != format)
+    if (!SetPixelFormat(hdc2, format, &pfd) || GetPixelFormat(hdc2) != format)
     {
         skip("failed to set pixel format on second window\n");
-        if (hdc2)
-        {
-            ReleaseDC(window2, hdc2);
-            hdc2 = NULL;
-        }
+        goto cleanup;
     }
 
     ddraw = create_ddraw();
@@ -8924,28 +8910,20 @@ static void test_pixel_format(void)
     ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
 
     hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
-    if (FAILED(hr))
-    {
-        skip("Failed to set cooperative level, hr %#lx.\n", hr);
-        goto cleanup;
-    }
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_format = GetPixelFormat(hdc);
     ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
 
-    if (hdc2)
-    {
-        hr = IDirectDraw4_CreateClipper(ddraw, 0, &clipper, NULL);
-        ok(SUCCEEDED(hr), "Failed to create clipper, hr %#lx.\n", hr);
-        hr = IDirectDrawClipper_SetHWnd(clipper, 0, window2);
-        ok(SUCCEEDED(hr), "Failed to set clipper window, hr %#lx.\n", hr);
+    hr = IDirectDraw4_CreateClipper(ddraw, 0, &clipper, NULL);
+    ok(SUCCEEDED(hr), "Failed to create clipper, hr %#lx.\n", hr);
+    hr = IDirectDrawClipper_SetHWnd(clipper, 0, window2);
+    ok(SUCCEEDED(hr), "Failed to set clipper window, hr %#lx.\n", hr);
 
-        test_format = GetPixelFormat(hdc);
-        ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
-
-        test_format = GetPixelFormat(hdc2);
-        ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
-    }
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+    test_format = GetPixelFormat(hdc2);
+    ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -8957,24 +8935,16 @@ static void test_pixel_format(void)
 
     test_format = GetPixelFormat(hdc);
     ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+    test_format = GetPixelFormat(hdc2);
+    ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
 
-    if (hdc2)
-    {
-        test_format = GetPixelFormat(hdc2);
-        ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
-    }
+    hr = IDirectDrawSurface4_SetClipper(primary, clipper);
+    ok(SUCCEEDED(hr), "Failed to set clipper, hr %#lx.\n", hr);
 
-    if (clipper)
-    {
-        hr = IDirectDrawSurface4_SetClipper(primary, clipper);
-        ok(SUCCEEDED(hr), "Failed to set clipper, hr %#lx.\n", hr);
-
-        test_format = GetPixelFormat(hdc);
-        ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
-
-        test_format = GetPixelFormat(hdc2);
-        ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
-    }
+    test_format = GetPixelFormat(hdc);
+    ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
+    test_format = GetPixelFormat(hdc2);
+    ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -8997,24 +8967,22 @@ static void test_pixel_format(void)
 
     test_format = GetPixelFormat(hdc);
     ok(test_format == format, "window has pixel format %d, expected %d\n", test_format, format);
-
-    if (hdc2)
-    {
-        test_format = GetPixelFormat(hdc2);
-        ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
-    }
+    test_format = GetPixelFormat(hdc2);
+    ok(test_format == format, "second window has pixel format %d, expected %d\n", test_format, format);
 
     IDirectDrawSurface4_Release(offscreen);
+    IDirectDrawSurface4_Release(primary);
+    refcount = IDirectDrawClipper_Release(clipper);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
+    refcount = IDirectDraw4_Release(ddraw);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
 cleanup:
-    if (primary) IDirectDrawSurface4_Release(primary);
-    if (clipper) IDirectDrawClipper_Release(clipper);
-    if (ddraw) IDirectDraw4_Release(ddraw);
-    if (gl) FreeLibrary(gl);
-    if (hdc) ReleaseDC(window, hdc);
-    if (hdc2) ReleaseDC(window2, hdc2);
+    FreeLibrary(gl);
+    ReleaseDC(window2, hdc2);
+    ReleaseDC(window, hdc);
+    DestroyWindow(window2);
     DestroyWindow(window);
-    if (window2) DestroyWindow(window2);
 }
 
 static void test_create_surface_pitch(void)
