@@ -174,7 +174,7 @@ static void set_target( const char *name )
     target_alias = xstrdup( name );
 
     if (!parse_target( name, &target )) fatal_error( "Unrecognized target '%s'\n", name );
-    if (target.cpu == CPU_ARM && is_pe()) thumb_mode = 1;
+    thumb_mode = target.cpu == CPU_ARM && is_pe();
     if (is_pe()) unwind_tables = 1;
 }
 
