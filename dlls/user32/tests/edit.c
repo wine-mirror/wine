@@ -3404,12 +3404,12 @@ static void test_dbcs_WM_CHAR(void)
 
         n = GetWindowTextW(hwnd[i], strW, ARRAY_SIZE(strW));
         ok(n > 0, "GetWindowTextW failed\n");
-        todo_wine ok(!wcscmp(strW, textW), "got %s, expected %s\n",
+        ok(!wcscmp(strW, textW), "got %s, expected %s\n",
            wine_dbgstr_w(strW), wine_dbgstr_w(textW));
 
         n = GetWindowTextA(hwnd[i], str, ARRAY_SIZE(str));
         ok(n > 0, "GetWindowText failed\n");
-        todo_wine ok(!strcmp(str, (char*)bytes), "got %s, expected %s\n",
+        ok(!strcmp(str, (char*)bytes), "got %s, expected %s\n",
            wine_dbgstr_a(str), wine_dbgstr_a((char *)bytes));
 
         DestroyWindow(hwnd[i]);

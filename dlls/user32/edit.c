@@ -113,6 +113,7 @@ typedef struct
 					   should be sent to the first parent. */
 	HWND hwndListBox;		/* handle of ComboBox's listbox or NULL */
 	INT wheelDeltaRemainder;        /* scroll wheel delta left over after scrolling whole lines */
+	BYTE lead_byte;			/* DBCS lead byte store for WM_CHAR */
 	/*
 	 *	only for multi line controls
 	 */
@@ -4975,8 +4976,24 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 		    charW = wParam;
 		else
 		{
-		    CHAR charA = wParam;
-		    MultiByteToWideChar(CP_ACP, 0, &charA, 1, &charW, 1);
+		    BYTE low = wParam;
+		    DWORD cp = get_input_codepage();
+		    if (es->lead_byte)
+		    {
+			char ch[2];
+			ch[0] = es->lead_byte;
+			ch[1] = low;
+			MultiByteToWideChar(cp, 0, ch, 2, &charW, 1);
+		    }
+		    else if (IsDBCSLeadByteEx(cp, low))
+		    {
+			es->lead_byte = low;
+			result = 1;
+			break;
+		    }
+		    else
+			MultiByteToWideChar(cp, 0, (char *)&low, 1, &charW, 1);
+		    es->lead_byte = 0;
 		}
 
                 if (es->hwndListBox)
