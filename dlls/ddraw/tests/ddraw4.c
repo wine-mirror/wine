@@ -8849,18 +8849,19 @@ static void test_private_data(void)
 
 static void test_pixel_format(void)
 {
-    HWND window, window2 = NULL;
-    HDC hdc, hdc2 = NULL;
+    HWND window, window2, window3;
     HMODULE gl = NULL;
     int format, test_format;
     PIXELFORMATDESCRIPTOR pfd;
     IDirectDraw4 *ddraw = NULL;
     IDirectDrawClipper *clipper = NULL;
     DDSURFACEDESC2 ddsd;
+    HDC hdc, hdc2, hdc3;
     IDirectDrawSurface4 *primary = NULL, *offscreen;
     ULONG refcount;
     DDBLTFX fx;
     HRESULT hr;
+    BOOL ret;
 
     window = create_window();
     ok(!!window, "Failed to create window.\n");
@@ -8976,6 +8977,66 @@ static void test_pixel_format(void)
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
     refcount = IDirectDraw4_Release(ddraw);
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
+
+    /* Test that creating a device doesn't set a pixel format on a window which
+     * never had one. */
+
+    window3 = create_window();
+    hdc3 = GetDC(window3);
+
+    test_format = GetPixelFormat(hdc3);
+    ok(!test_format, "Expected no format, got %d.\n", test_format);
+
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window3, DDSCL_NORMAL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    test_format = GetPixelFormat(hdc3);
+    todo_wine ok(!test_format, "Expected no format, got %d.\n", test_format);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &primary, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    memset(&ddsd, 0, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    ddsd.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    ddsd.dwWidth = ddsd.dwHeight = 64;
+    hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &offscreen, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#lx.\n",hr);
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    hr = IDirectDrawSurface4_Blt(offscreen, NULL, NULL, NULL, DDBLT_WAIT | DDBLT_COLORFILL, &fx);
+    ok(SUCCEEDED(hr), "Failed to clear source surface, hr %#lx.\n", hr);
+
+    hr = IDirectDrawSurface4_Blt(primary, NULL, offscreen, NULL, DDBLT_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to blit to primary surface, hr %#lx.\n", hr);
+
+    test_format = GetPixelFormat(hdc3);
+    todo_wine ok(!test_format, "Expected no format, got %d.\n", test_format);
+
+    IDirectDrawSurface4_Release(offscreen);
+    IDirectDrawSurface4_Release(primary);
+    refcount = IDirectDraw4_Release(ddraw);
+    ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
+
+    test_format = GetPixelFormat(hdc3);
+    todo_wine ok(!test_format, "Expected no format, got %d.\n", test_format);
+
+    ret = SetPixelFormat(hdc3, format, &pfd);
+    ok(ret, "Failed to set pixel format %d.\n", format);
+
+    test_format = GetPixelFormat(hdc3);
+    ok(test_format == format, "Expected pixel format %d, got %d.\n", format, test_format);
+
+    ReleaseDC(window3, hdc3);
+    DestroyWindow(window3);
 
 cleanup:
     FreeLibrary(gl);
