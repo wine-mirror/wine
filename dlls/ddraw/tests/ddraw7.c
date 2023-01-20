@@ -8861,7 +8861,7 @@ static void test_pixel_format(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_format = GetPixelFormat(hdc3);
-    todo_wine ok(!test_format, "Expected no format, got %d.\n", test_format);
+    ok(!test_format, "Expected no format, got %d.\n", test_format);
 
     memset(&ddsd, 0, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
@@ -8887,7 +8887,7 @@ static void test_pixel_format(void)
     ok(SUCCEEDED(hr), "Failed to blit to primary surface, hr %#lx.\n", hr);
 
     test_format = GetPixelFormat(hdc3);
-    todo_wine ok(!test_format, "Expected no format, got %d.\n", test_format);
+    ok(!test_format, "Expected no format, got %d.\n", test_format);
 
     IDirectDrawSurface7_Release(offscreen);
     IDirectDrawSurface7_Release(primary);
@@ -8895,7 +8895,7 @@ static void test_pixel_format(void)
     ok(!refcount, "Got unexpected refcount %lu.\n", refcount);
 
     test_format = GetPixelFormat(hdc3);
-    todo_wine ok(!test_format, "Expected no format, got %d.\n", test_format);
+    ok(!test_format, "Expected no format, got %d.\n", test_format);
 
     ret = SetPixelFormat(hdc3, format, &pfd);
     ok(ret, "Failed to set pixel format %d.\n", format);

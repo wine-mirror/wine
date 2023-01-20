@@ -11207,20 +11207,20 @@ static void test_pixel_format(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_format = GetPixelFormat(hdc3);
-    todo_wine ok(!test_format, "Expected no format, got %d.\n", test_format);
+    ok(!test_format, "Expected no format, got %d.\n", test_format);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     test_format = GetPixelFormat(hdc3);
-    todo_wine ok(!test_format, "Expected no format, got %d.\n", test_format);
+    ok(!test_format, "Expected no format, got %d.\n", test_format);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
     IDirect3D9_Release(d3d9);
 
     test_format = GetPixelFormat(hdc3);
-    todo_wine ok(!test_format, "Expected no format, got %d.\n", test_format);
+    ok(!test_format, "Expected no format, got %d.\n", test_format);
 
     ret = SetPixelFormat(hdc3, format, &pfd);
     ok(ret, "Failed to set pixel format %d.\n", format);
