@@ -1329,12 +1329,11 @@ static BOOL init_gl_info(void)
 }
 
 
-static int get_dc_pixel_format(HDC hdc)
+static int get_dc_pixel_format(HWND hwnd, HDC hdc)
 {
     int format;
-    HWND hwnd;
 
-    if ((hwnd = NtUserWindowFromDC(hdc)))
+    if (hwnd)
     {
         struct macdrv_win_data *data;
 
@@ -2719,7 +2718,7 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
 
     TRACE("hdc %p, share_context %p, attrib_list %p\n", hdc, share_context, attrib_list);
 
-    format = get_dc_pixel_format(hdc);
+    format = get_dc_pixel_format(NtUserWindowFromDC(hdc), hdc);
 
     if (!is_valid_pixel_format(format))
     {
@@ -4417,8 +4416,12 @@ static BOOL macdrv_wglDeleteContext(struct wgl_context *context)
 static int macdrv_wglGetPixelFormat(HDC hdc)
 {
     int format;
+    HWND hwnd;
 
-    format = get_dc_pixel_format(hdc);
+    if ((hwnd = NtUserWindowFromDC( hdc )))
+        return win32u_get_window_pixel_format( hwnd );
+
+    format = get_dc_pixel_format(NULL, hdc);
 
     if (!is_valid_pixel_format(format))  /* not set yet */
         format = 0;
