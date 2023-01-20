@@ -1457,6 +1457,23 @@ BOOL win32u_set_window_pixel_format( HWND hwnd, int format )
     return TRUE;
 }
 
+int win32u_get_window_pixel_format( HWND hwnd )
+{
+    WND *win = get_win_ptr( hwnd );
+    int ret;
+
+    if (!win || win == WND_DESKTOP || win == WND_OTHER_PROCESS)
+    {
+        WARN( "getting format on win %p not supported\n", hwnd );
+        return 0;
+    }
+
+    ret = win->pixel_format;
+    release_win_ptr( win );
+
+    return ret;
+}
+
 /***********************************************************************
  *           NtUserGetProp   (win32u.@)
  *
