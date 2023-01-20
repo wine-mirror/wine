@@ -1687,8 +1687,12 @@ static int glxdrv_wglGetPixelFormat( HDC hdc )
 {
     struct gl_drawable *gl;
     int ret = 0;
+    HWND hwnd;
 
-    if ((gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
+    if ((hwnd = NtUserWindowFromDC( hdc )))
+        return win32u_get_window_pixel_format( hwnd );
+
+    if ((gl = get_gl_drawable( NULL, hdc )))
     {
         ret = pixel_format_index( gl->format );
         /* Offscreen formats can't be used with traditional WGL calls.
