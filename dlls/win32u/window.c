@@ -1441,7 +1441,7 @@ LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, 
     return set_window_long( hwnd, offset, sizeof(LONG_PTR), newval, ansi );
 }
 
-BOOL win32u_set_window_pixel_format( HWND hwnd, int format )
+BOOL win32u_set_window_pixel_format( HWND hwnd, int format, BOOL internal )
 {
     WND *win = get_win_ptr( hwnd );
 
@@ -1450,7 +1450,10 @@ BOOL win32u_set_window_pixel_format( HWND hwnd, int format )
         WARN( "setting format %d on win %p not supported\n", format, hwnd );
         return FALSE;
     }
-    win->pixel_format = format;
+    if (internal)
+        win->internal_pixel_format = format;
+    else
+        win->pixel_format = format;
     release_win_ptr( win );
 
     update_window_state( hwnd );
@@ -1852,7 +1855,8 @@ static BOOL apply_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
             wine_server_add_data( req, extra_rects, sizeof(extra_rects) );
         }
         if (new_surface) req->paint_flags |= SET_WINPOS_PAINT_SURFACE;
-        if (win->pixel_format) req->paint_flags |= SET_WINPOS_PIXEL_FORMAT;
+        if (win->pixel_format || win->internal_pixel_format)
+            req->paint_flags |= SET_WINPOS_PIXEL_FORMAT;
 
         if ((ret = !wine_server_call( req )))
         {

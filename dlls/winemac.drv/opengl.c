@@ -1587,7 +1587,8 @@ static BOOL set_pixel_format(HDC hdc, int fmt, BOOL allow_reset)
 
 done:
     release_win_data(data);
-    if (ret && gl_surface_mode == GL_SURFACE_BEHIND) win32u_set_window_pixel_format(hwnd, fmt);
+    if (ret && gl_surface_mode == GL_SURFACE_BEHIND)
+        win32u_set_window_pixel_format(hwnd, fmt, FALSE);
     return ret;
 }
 
