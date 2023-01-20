@@ -3366,6 +3366,58 @@ static void test_wordbreak_proc(void)
     DestroyWindow(hwnd);
 }
 
+static void test_dbcs_WM_CHAR(void)
+{
+    WCHAR textW[] = { 0x4e00, 0x4e8c, 0x4e09, 0 }; /* one, two, three */
+    unsigned char bytes[7];
+    HWND hwnd[2];
+    int i;
+
+    WideCharToMultiByte(CP_ACP, 0, textW, -1, (char *)bytes, ARRAY_SIZE(bytes), NULL, NULL);
+    if (!IsDBCSLeadByte(bytes[0]))
+    {
+        skip("Skipping DBCS WM_CHAR test in this codepage\n");
+        return;
+    }
+    hwnd[0] = create_editcontrol(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
+    hwnd[1] = create_editcontrolW(ES_AUTOHSCROLL | ES_AUTOVSCROLL, 0);
+
+    for (i = 0; i < ARRAY_SIZE(hwnd); i++)
+    {
+        const unsigned char* p;
+        WCHAR strW[4];
+        char str[7];
+        MSG msg;
+        BOOL r;
+        int n;
+
+        winetest_push_context("%c", i ? 'W' : 'A');
+
+        r = SetWindowTextA(hwnd[i], "");
+        ok(r, "SetWindowText failed\n");
+
+        for (p = bytes; *p; p++)
+            PostMessageA(hwnd[i], WM_CHAR, *p, 1);
+
+        while (PeekMessageA(&msg, hwnd[i], 0, 0, PM_REMOVE))
+            DispatchMessageA(&msg);
+
+        n = GetWindowTextW(hwnd[i], strW, ARRAY_SIZE(strW));
+        ok(n > 0, "GetWindowTextW failed\n");
+        todo_wine ok(!wcscmp(strW, textW), "got %s, expected %s\n",
+           wine_dbgstr_w(strW), wine_dbgstr_w(textW));
+
+        n = GetWindowTextA(hwnd[i], str, ARRAY_SIZE(str));
+        ok(n > 0, "GetWindowText failed\n");
+        todo_wine ok(!strcmp(str, (char*)bytes), "got %s, expected %s\n",
+           wine_dbgstr_a(str), wine_dbgstr_a((char *)bytes));
+
+        DestroyWindow(hwnd[i]);
+
+        winetest_pop_context();
+    }
+}
+
 START_TEST(edit)
 {
     BOOL b;
@@ -3403,6 +3455,7 @@ START_TEST(edit)
     test_paste();
     test_EM_GETLINE();
     test_wordbreak_proc();
+    test_dbcs_WM_CHAR();
 
     UnregisterWindowClasses();
 }
