@@ -86,9 +86,6 @@ static struct list acquired_rawmouse_list = LIST_INIT( acquired_rawmouse_list );
 static struct list acquired_keyboard_list = LIST_INIT( acquired_keyboard_list );
 static struct list acquired_device_list = LIST_INIT( acquired_device_list );
 
-static HRESULT initialize_directinput_instance( struct dinput *impl, DWORD version );
-static void uninitialize_directinput_instance( struct dinput *impl );
-
 void dinput_hooks_acquire_device( IDirectInputDevice8W *iface )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
@@ -139,6 +136,8 @@ static HRESULT dinput_create( IUnknown **out )
     impl->IDirectInput8W_iface.lpVtbl = &dinput8_vtbl;
     impl->IDirectInputJoyConfig8_iface.lpVtbl = &joy_config_vtbl;
     impl->ref = 1;
+
+    list_init( &impl->device_players );
 
 #if DIRECTINPUT_VERSION == 0x0700
     *out = (IUnknown *)&impl->IDirectInput7W_iface;
@@ -299,7 +298,11 @@ static ULONG WINAPI dinput7_Release( IDirectInput7W *iface )
 
     if (ref == 0)
     {
-        uninitialize_directinput_instance( impl );
+        struct DevicePlayer *device_player, *device_player2;
+
+        LIST_FOR_EACH_ENTRY_SAFE( device_player, device_player2, &impl->device_players, struct DevicePlayer, entry )
+            free( device_player );
+
         free( impl );
     }
 
@@ -395,34 +398,6 @@ static void unregister_di_em_win_class(void)
         WARN( "Unable to unregister message window class\n" );
 }
 
-static HRESULT initialize_directinput_instance( struct dinput *impl, DWORD version )
-{
-    if (!impl->initialized)
-    {
-        impl->dwVersion = version;
-        impl->evsequence = 1;
-
-        list_init( &impl->device_players );
-
-        impl->initialized = TRUE;
-    }
-
-    return DI_OK;
-}
-
-static void uninitialize_directinput_instance( struct dinput *impl )
-{
-    if (impl->initialized)
-    {
-        struct DevicePlayer *device_player, *device_player2;
-
-        LIST_FOR_EACH_ENTRY_SAFE ( device_player, device_player2, &impl->device_players, struct DevicePlayer, entry )
-            free( device_player );
-
-        impl->initialized = FALSE;
-    }
-}
-
 enum directinput_versions
 {
     DIRECTINPUT_VERSION_300 = 0x0300,
@@ -452,7 +427,13 @@ static HRESULT WINAPI dinput7_Initialize( IDirectInput7W *iface, HINSTANCE hinst
              version != DIRECTINPUT_VERSION_700 && version != DIRECTINPUT_VERSION)
         return DIERR_BETADIRECTINPUTVERSION;
 
-    return initialize_directinput_instance( impl, version );
+    if (!impl->dwVersion)
+    {
+        impl->dwVersion = version;
+        impl->evsequence = 1;
+    }
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI dinput7_GetDeviceStatus( IDirectInput7W *iface, const GUID *guid )
@@ -464,7 +445,7 @@ static HRESULT WINAPI dinput7_GetDeviceStatus( IDirectInput7W *iface, const GUID
     TRACE( "iface %p, guid %s.\n", iface, debugstr_guid( guid ) );
 
     if (!guid) return E_POINTER;
-    if (!impl->initialized) return DIERR_NOTINITIALIZED;
+    if (!impl->dwVersion) return DIERR_NOTINITIALIZED;
 
     hr = IDirectInput_CreateDevice( iface, guid, &device, NULL );
     if (hr != DI_OK) return DI_NOTATTACHED;
@@ -485,7 +466,7 @@ static HRESULT WINAPI dinput7_RunControlPanel( IDirectInput7W *iface, HWND owner
 
     if (owner && !IsWindow( owner )) return E_HANDLE;
     if (flags) return DIERR_INVALIDPARAM;
-    if (!impl->initialized) return DIERR_NOTINITIALIZED;
+    if (!impl->dwVersion) return DIERR_NOTINITIALIZED;
 
     if (!CreateProcessW( NULL, control_exe, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi ))
         return HRESULT_FROM_WIN32(GetLastError());
@@ -514,7 +495,7 @@ static HRESULT WINAPI dinput7_CreateDeviceEx( IDirectInput7W *iface, const GUID 
     *out = NULL;
 
     if (!guid) return E_POINTER;
-    if (!impl->initialized) return DIERR_NOTINITIALIZED;
+    if (!impl->dwVersion) return DIERR_NOTINITIALIZED;
 
     if (IsEqualGUID( &GUID_SysKeyboard, guid )) hr = keyboard_create_device( impl, guid, &device );
     else if (IsEqualGUID( &GUID_SysMouse, guid )) hr = mouse_create_device( impl, guid, &device );
@@ -593,7 +574,7 @@ static HRESULT WINAPI dinput8_EnumDevices( IDirectInput8W *iface, DWORD type, LP
                   DIEDFL_INCLUDEPHANTOMS | DIEDFL_INCLUDEHIDDEN))
         return DIERR_INVALIDPARAM;
 
-    if (!impl->initialized) return DIERR_NOTINITIALIZED;
+    if (!impl->dwVersion) return DIERR_NOTINITIALIZED;
 
     if (type <= DI8DEVCLASS_GAMECTRL) device_class = type;
     else device_type = type;
@@ -652,7 +633,13 @@ static HRESULT WINAPI dinput8_Initialize( IDirectInput8W *iface, HINSTANCE hinst
     else if (version > DIRECTINPUT_VERSION)
         return DIERR_OLDDIRECTINPUTVERSION;
 
-    return initialize_directinput_instance( impl, version );
+    if (!impl->dwVersion)
+    {
+        impl->dwVersion = version;
+        impl->evsequence = 1;
+    }
+
+    return DI_OK;
 }
 
 static HRESULT WINAPI dinput8_FindDevice( IDirectInput8W *iface, const GUID *guid, const WCHAR *name, GUID *instance_guid )

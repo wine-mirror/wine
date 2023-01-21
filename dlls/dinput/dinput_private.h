@@ -38,7 +38,6 @@ struct dinput
     IDirectInputJoyConfig8 IDirectInputJoyConfig8_iface;
     LONG ref;
 
-    BOOL initialized;
     DWORD dwVersion;            /* direct input version number */
     DWORD evsequence;           /* unique sequence number for events */
     struct list device_players; /* device instance guid to player name */
