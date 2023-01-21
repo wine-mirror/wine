@@ -1525,7 +1525,7 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
  *
  * Implementation of wglSetPixelFormat and wglSetPixelFormatWINE.
  */
-static BOOL set_pixel_format(HDC hdc, int fmt, BOOL allow_reset)
+static BOOL set_pixel_format(HDC hdc, int fmt, BOOL internal)
 {
     struct macdrv_win_data *data;
     const pixel_format *pf;
@@ -1540,16 +1540,19 @@ static BOOL set_pixel_format(HDC hdc, int fmt, BOOL allow_reset)
         return FALSE;
     }
 
+    if (!internal)
+    {
+        /* cannot change it if already set */
+        int prev = win32u_get_window_pixel_format( hwnd );
+
+        if (prev)
+            return prev == fmt;
+    }
+
     if (!(data = get_win_data(hwnd)))
     {
         FIXME("DC for window %p of other process: not implemented\n", hwnd);
         return FALSE;
-    }
-
-    if (!allow_reset && data->pixel_format)  /* cannot change it if already set */
-    {
-        ret = (data->pixel_format == fmt);
-        goto done;
     }
 
     /* Check if fmt is in our list of supported formats to see if it is supported. */
@@ -1588,7 +1591,7 @@ static BOOL set_pixel_format(HDC hdc, int fmt, BOOL allow_reset)
 done:
     release_win_data(data);
     if (ret && gl_surface_mode == GL_SURFACE_BEHIND)
-        win32u_set_window_pixel_format(hwnd, fmt, FALSE);
+        win32u_set_window_pixel_format(hwnd, fmt, internal);
     return ret;
 }
 
