@@ -8,6 +8,7 @@ C_SRCS = \
 	config.c \
 	data_formats.c \
 	device.c \
+	dinput.c \
 	dinput_main.c \
 	joystick_hid.c \
 	keyboard.c \
