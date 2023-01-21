@@ -29,7 +29,6 @@
 
 extern HINSTANCE DINPUT_instance;
 
-/* Implementation specification */
 struct dinput
 {
     IDirectInput7A IDirectInput7A_iface;

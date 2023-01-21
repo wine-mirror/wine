@@ -77,7 +77,6 @@ enum device_status
     STATUS_UNPLUGGED,
 };
 
-/* Device implementation */
 struct dinput_device
 {
     IDirectInputDevice8W        IDirectInputDevice8W_iface;
@@ -132,8 +131,6 @@ extern void dinput_device_destroy( IDirectInputDevice8W *iface );
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
 extern DWORD get_config_key( HKEY, HKEY, const WCHAR *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;
 extern BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override ) DECLSPEC_HIDDEN;
-
-/* Routines to do DataFormat / WineFormat conversions */
 extern void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD time, DWORD seq ) DECLSPEC_HIDDEN;
 
 extern const GUID dinput_pidvid_guid DECLSPEC_HIDDEN;

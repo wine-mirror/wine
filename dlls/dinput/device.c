@@ -19,12 +19,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-/* This file contains all the Device specific functions that can be used as stubs
-   by real device implementations.
-
-   It also contains all the helper functions.
-*/
-
 #include <stdarg.h>
 #include <string.h>
 #include <math.h>
@@ -87,9 +81,6 @@ static inline BOOL is_exclusively_acquired( struct dinput_device *device )
     return device->status == STATUS_ACQUIRED && (device->dwCoopLevel & DISCL_EXCLUSIVE);
 }
 
-/******************************************************************************
- *	Various debugging tools
- */
 static void _dump_cooperativelevel_DI(DWORD dwFlags) {
     if (TRACE_ON(dinput)) {
 	unsigned int   i;
@@ -113,9 +104,6 @@ static void _dump_cooperativelevel_DI(DWORD dwFlags) {
     }
 }
 
-/******************************************************************************
- * Get the default and the app-specific config keys.
- */
 BOOL get_app_key(HKEY *defkey, HKEY *appkey)
 {
     char buffer[MAX_PATH+16];
@@ -148,9 +136,6 @@ BOOL get_app_key(HKEY *defkey, HKEY *appkey)
     return *defkey || *appkey;
 }
 
-/******************************************************************************
- * Get a config key from either the app-specific or the default config
- */
 DWORD get_config_key( HKEY defkey, HKEY appkey, const WCHAR *name, WCHAR *buffer, DWORD size )
 {
     if (appkey && !RegQueryValueExW( appkey, name, 0, NULL, (LPBYTE)buffer, &size )) return 0;
@@ -507,10 +492,6 @@ static BOOL set_app_data( struct dinput_device *dev, int offset, UINT_PTR app_da
     return TRUE;
 }
 
-/******************************************************************************
- *	queue_event - add new event to the ring queue
- */
-
 void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD time, DWORD seq )
 {
     static ULONGLONG notify_ms = 0;
@@ -561,10 +542,6 @@ void queue_event( IDirectInputDevice8W *iface, int inst_id, DWORD data, DWORD ti
     /* Send event if asked */
 }
 
-/******************************************************************************
- *	Acquire
- */
-
 static HRESULT WINAPI dinput_device_Acquire( IDirectInputDevice8W *iface )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
@@ -593,10 +570,6 @@ static HRESULT WINAPI dinput_device_Acquire( IDirectInputDevice8W *iface )
     return hr;
 }
 
-/******************************************************************************
- *	Unacquire
- */
-
 static HRESULT WINAPI dinput_device_Unacquire( IDirectInputDevice8W *iface )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
@@ -616,10 +589,6 @@ static HRESULT WINAPI dinput_device_Unacquire( IDirectInputDevice8W *iface )
 
     return hr;
 }
-
-/******************************************************************************
- *	IDirectInputDeviceA
- */
 
 static HRESULT WINAPI dinput_device_SetDataFormat( IDirectInputDevice8W *iface, const DIDATAFORMAT *format )
 {
@@ -653,11 +622,6 @@ static HRESULT WINAPI dinput_device_SetDataFormat( IDirectInputDevice8W *iface, 
     return res;
 }
 
-/******************************************************************************
-  *     SetCooperativeLevel
-  *
-  *  Set cooperative level and the source window for the events.
-  */
 static HRESULT WINAPI dinput_device_SetCooperativeLevel( IDirectInputDevice8W *iface, HWND hwnd, DWORD flags )
 {
     struct dinput_device *This = impl_from_IDirectInputDevice8W( iface );
@@ -685,7 +649,6 @@ static HRESULT WINAPI dinput_device_SetCooperativeLevel( IDirectInputDevice8W *i
         (IsEqualGUID( &This->guid, &GUID_SysMouse ) || IsEqualGUID( &This->guid, &GUID_SysKeyboard )))
         return DIERR_UNSUPPORTED;
 
-    /* Store the window which asks for the mouse */
     EnterCriticalSection(&This->crit);
     if (This->status == STATUS_ACQUIRED) hr = DIERR_ACQUIRED;
     else
@@ -718,9 +681,6 @@ static HRESULT WINAPI dinput_device_GetDeviceInfo( IDirectInputDevice8W *iface, 
     return S_OK;
 }
 
-/******************************************************************************
-  *     SetEventNotification : specifies event to be sent on state change
-  */
 static HRESULT WINAPI dinput_device_SetEventNotification( IDirectInputDevice8W *iface, HANDLE event )
 {
     struct dinput_device *This = impl_from_IDirectInputDevice8W( iface );
@@ -742,11 +702,9 @@ void dinput_device_destroy( IDirectInputDevice8W *iface )
     free( This->object_properties );
     free( This->data_queue );
 
-    /* Free data format */
     free( This->device_format.rgodf );
     dinput_device_release_user_format( This );
 
-    /* Free action mapping */
     free( This->action_map );
 
     IDirectInput_Release(&This->dinput->IDirectInput7A_iface);

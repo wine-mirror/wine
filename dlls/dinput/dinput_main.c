@@ -20,15 +20,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-/* Status:
- *
- * - Tomb Raider 2 Demo:
- *   Playable using keyboard only.
- * - WingCommander Prophecy Demo:
- *   Doesn't get Input Focus.
- *
- * - Fallout : works great in X and DGA mode
- */
 
 #include <assert.h>
 #include <stdarg.h>
@@ -157,9 +148,6 @@ static HRESULT dinput_create( IUnknown **out )
     return DI_OK;
 }
 
-/******************************************************************************
- *	DirectInputCreateEx (DINPUT.@)
- */
 HRESULT WINAPI DirectInputCreateEx( HINSTANCE hinst, DWORD version, REFIID iid, void **out, IUnknown *outer )
 {
     IUnknown *unknown;
@@ -190,9 +178,6 @@ HRESULT WINAPI DirectInputCreateEx( HINSTANCE hinst, DWORD version, REFIID iid, 
     return DI_OK;
 }
 
-/******************************************************************************
- *	DirectInput8Create (DINPUT8.@)
- */
 HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create( HINSTANCE hinst, DWORD version, REFIID iid, void **out, IUnknown *outer )
 {
     IUnknown *unknown;
@@ -225,17 +210,11 @@ HRESULT WINAPI DECLSPEC_HOTPATCH DirectInput8Create( HINSTANCE hinst, DWORD vers
     return S_OK;
 }
 
-/******************************************************************************
- *	DirectInputCreateA (DINPUT.@)
- */
 HRESULT WINAPI DECLSPEC_HOTPATCH DirectInputCreateA( HINSTANCE hinst, DWORD version, IDirectInputA **out, IUnknown *outer )
 {
     return DirectInputCreateEx( hinst, version, &IID_IDirectInput7A, (void **)out, outer );
 }
 
-/******************************************************************************
- *	DirectInputCreateW (DINPUT.@)
- */
 HRESULT WINAPI DECLSPEC_HOTPATCH DirectInputCreateW( HINSTANCE hinst, DWORD version, IDirectInputW **out, IUnknown *outer )
 {
     return DirectInputCreateEx( hinst, version, &IID_IDirectInput7W, (void **)out, outer );
@@ -287,9 +266,6 @@ __ASM_GLOBAL_FUNC( enum_callback_wrapper,
 #define enum_callback_wrapper(callback, instance, ref) (callback)((instance), (ref))
 #endif
 
-/******************************************************************************
- *	IDirectInputW_EnumDevices
- */
 static HRESULT WINAPI dinput7_EnumDevices( IDirectInput7W *iface, DWORD type, LPDIENUMDEVICESCALLBACKW callback,
                                            void *context, DWORD flags )
 {
@@ -562,10 +538,6 @@ static HRESULT WINAPI dinput7_CreateDevice( IDirectInput7W *iface, const GUID *g
 {
     return IDirectInput7_CreateDeviceEx( iface, guid, &IID_IDirectInputDeviceW, (void **)out, outer );
 }
-
-/*******************************************************************************
- *      DirectInput8
- */
 
 static ULONG WINAPI dinput8_AddRef( IDirectInput8W *iface )
 {
@@ -841,10 +813,6 @@ static HRESULT WINAPI dinput8_ConfigureDevices( IDirectInput8W *iface, LPDICONFI
     /* Call helper function in config.c to do the real work */
     return _configure_devices( iface, callback, params, flags, context );
 }
-
-/*****************************************************************************
- * IDirectInputJoyConfig8 interface
- */
 
 static inline struct dinput *impl_from_IDirectInputJoyConfig8( IDirectInputJoyConfig8 *iface )
 {
@@ -1124,9 +1092,6 @@ static const IClassFactoryVtbl class_factory_vtbl =
 
 static struct class_factory class_factory = {{&class_factory_vtbl}};
 
-/***********************************************************************
- *		DllGetClassObject (DINPUT.@)
- */
 HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **out )
 {
     TRACE( "clsid %s, iid %s, out %p.\n", debugstr_guid( clsid ), debugstr_guid( iid ), out );
@@ -1142,10 +1107,6 @@ HRESULT WINAPI DllGetClassObject( REFCLSID clsid, REFIID iid, void **out )
     WARN( "%s not implemented, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid( clsid ) );
     return CLASS_E_CLASSNOTAVAILABLE;
 }
-
-/******************************************************************************
- *	DInput hook thread
- */
 
 static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
 {

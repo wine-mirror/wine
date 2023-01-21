@@ -256,7 +256,6 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
     LeaveCriticalSection( &impl->base.crit );
 }
 
-/* low-level mouse hook */
 int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam )
 {
     MSLLHOOKSTRUCT *hook = (MSLLHOOKSTRUCT *)lparam;
@@ -416,7 +415,6 @@ static HRESULT mouse_acquire( IDirectInputDevice8W *iface )
     DIMOUSESTATE2 *state = (DIMOUSESTATE2 *)impl->base.device_state;
     POINT point;
 
-    /* Init the mouse state */
     GetCursorPos( &point );
     if (impl->base.user_format.dwFlags & DIDF_ABSAXIS)
     {
@@ -436,7 +434,7 @@ static HRESULT mouse_acquire( IDirectInputDevice8W *iface )
 
     if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
     {
-        ShowCursor( FALSE ); /* hide cursor */
+        ShowCursor( FALSE );
         warp_check( impl, TRUE );
     }
     else if (impl->warp_override == WARP_FORCE_ON)
@@ -461,7 +459,7 @@ static HRESULT mouse_unacquire( IDirectInputDevice8W *iface )
     if (impl->base.dwCoopLevel & DISCL_EXCLUSIVE)
     {
         ClipCursor( NULL );
-        ShowCursor( TRUE ); /* show cursor */
+        ShowCursor( TRUE );
         impl->clipped = FALSE;
     }
 
