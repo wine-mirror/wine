@@ -208,11 +208,10 @@ void update_gl_drawable( HWND hwnd )
     }
 }
 
-static BOOL set_pixel_format( HDC hdc, int format, BOOL allow_change )
+static BOOL set_pixel_format( HDC hdc, int format, BOOL internal )
 {
     struct gl_drawable *gl;
     HWND hwnd = NtUserWindowFromDC( hdc );
-    int prev = 0;
 
     if (!hwnd || hwnd == NtUserGetDesktopWindow())
     {
@@ -226,10 +225,18 @@ static BOOL set_pixel_format( HDC hdc, int format, BOOL allow_change )
     }
     TRACE( "%p/%p format %d\n", hdc, hwnd, format );
 
+    if (!internal)
+    {
+        /* cannot change it if already set */
+        int prev = win32u_get_window_pixel_format( hwnd );
+
+        if (prev)
+            return prev == format;
+    }
+
     if ((gl = get_gl_drawable( hwnd, 0 )))
     {
-        prev = gl->format;
-        if (allow_change)
+        if (internal)
         {
             EGLint pf;
             p_eglGetConfigAttrib( display, pixel_formats[format - 1].config, EGL_NATIVE_VISUAL_ID, &pf );
@@ -241,8 +248,7 @@ static BOOL set_pixel_format( HDC hdc, int format, BOOL allow_change )
 
     release_gl_drawable( gl );
 
-    if (prev && prev != format && !allow_change) return FALSE;
-    if (win32u_set_window_pixel_format( hwnd, format, FALSE )) return TRUE;
+    if (win32u_set_window_pixel_format( hwnd, format, internal )) return TRUE;
     destroy_gl_drawable( hwnd );
     return FALSE;
 }
