@@ -498,8 +498,8 @@ static HRESULT WINAPI dinput8_EnumDevicesBySemantics( IDirectInput8W *iface, con
     static const GUID *guids[2] = {&GUID_SysKeyboard, &GUID_SysMouse};
     static const DWORD actionMasks[] = {DIKEYBOARD_MASK, DIMOUSE_MASK};
     struct dinput *impl = impl_from_IDirectInput8W( iface );
+    IDirectInputDevice8W *device;
     DIDEVICEINSTANCEW didevi;
-    IDirectInputDevice8W *lpdid;
     unsigned int i = 0;
     HRESULT hr;
     int remain;
@@ -530,15 +530,15 @@ static HRESULT WINAPI dinput8_EnumDevicesBySemantics( IDirectInput8W *iface, con
     for (i = 0; i < params.instance_count; i++)
     {
         callbackFlags = diactionformat_priorityW( action_format, action_format->dwGenre );
-        IDirectInput_CreateDevice( iface, &params.instances[i].guidInstance, &lpdid, NULL );
+        IDirectInput_CreateDevice( iface, &params.instances[i].guidInstance, &device, NULL );
 
-        if (callback( &params.instances[i], lpdid, callbackFlags, --remain, context ) == DIENUM_STOP)
+        if (callback( &params.instances[i], device, callbackFlags, --remain, context ) == DIENUM_STOP)
         {
             free( params.instances );
-            IDirectInputDevice_Release( lpdid );
+            IDirectInputDevice_Release( device );
             return DI_OK;
         }
-        IDirectInputDevice_Release( lpdid );
+        IDirectInputDevice_Release( device );
     }
 
     free( params.instances );
@@ -552,15 +552,15 @@ static HRESULT WINAPI dinput8_EnumDevicesBySemantics( IDirectInput8W *iface, con
         {
             callbackFlags = diactionformat_priorityW( action_format, actionMasks[i] );
 
-            IDirectInput_CreateDevice( iface, guids[i], &lpdid, NULL );
-            IDirectInputDevice_GetDeviceInfo( lpdid, &didevi );
+            IDirectInput_CreateDevice( iface, guids[i], &device, NULL );
+            IDirectInputDevice_GetDeviceInfo( device, &didevi );
 
-            if (callback( &didevi, lpdid, callbackFlags, --remain, context ) == DIENUM_STOP)
+            if (callback( &didevi, device, callbackFlags, --remain, context ) == DIENUM_STOP)
             {
-                IDirectInputDevice_Release( lpdid );
+                IDirectInputDevice_Release( device );
                 return DI_OK;
             }
-            IDirectInputDevice_Release( lpdid );
+            IDirectInputDevice_Release( device );
         }
     }
 
