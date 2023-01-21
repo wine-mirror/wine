@@ -1210,7 +1210,8 @@ static BOOL wined3d_context_gl_set_pixel_format(struct wined3d_context_gl *conte
         return FALSE;
 
     current = gl_info->gl_ops.wgl.p_wglGetPixelFormat(dc);
-    if (current == format) goto success;
+    if ((current == format) || (!current && context_gl->internal_format_set))
+        goto success;
 
     /* By default WGL doesn't allow pixel format adjustments but we need it
      * here. For this reason there's a Wine specific wglSetPixelFormat()
@@ -1225,6 +1226,7 @@ static BOOL wined3d_context_gl_set_pixel_format(struct wined3d_context_gl *conte
                     format, dc);
             return FALSE;
         }
+        context_gl->internal_format_set = 1;
     }
     else if (current)
     {
@@ -1346,6 +1348,7 @@ static void wined3d_context_gl_update_window(struct wined3d_context_gl *context_
     context_gl->dc_has_format = FALSE;
     context_gl->needs_set = 1;
     context_gl->valid = 1;
+    context_gl->internal_format_set = 0;
 
     if (!(context_gl->dc = GetDCEx(context_gl->window, 0, DCX_USESTYLE | DCX_CACHE)))
     {
@@ -1673,9 +1676,13 @@ static void wined3d_context_gl_enter(struct wined3d_context_gl *context_gl)
             context_gl->restore_dc = wglGetCurrentDC();
             context_gl->needs_set = 1;
         }
-        else if (!context_gl->needs_set && !(context_gl->dc_is_private && context_gl->dc_has_format)
-                && context_gl->pixel_format != context_gl->gl_info->gl_ops.wgl.p_wglGetPixelFormat(context_gl->dc))
-            context_gl->needs_set = 1;
+        else if (!context_gl->needs_set && !(context_gl->dc_is_private && context_gl->dc_has_format))
+        {
+            int current = context_gl->gl_info->gl_ops.wgl.p_wglGetPixelFormat(context_gl->dc);
+
+            if ((current && current != context_gl->pixel_format) || (!current && !context_gl->internal_format_set))
+                context_gl->needs_set = 1;
+        }
     }
 }
 

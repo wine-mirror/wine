@@ -2346,8 +2346,9 @@ struct wined3d_context_gl
     uint32_t rebind_fbo : 1;
     uint32_t untracked_material_count : 2; /* Max value 2 */
     uint32_t needs_set : 1;
+    uint32_t internal_format_set : 1;
     uint32_t valid : 1;
-    uint32_t padding : 23;
+    uint32_t padding : 22;
 
     uint32_t default_attrib_value_set;
 
