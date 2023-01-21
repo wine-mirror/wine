@@ -1021,6 +1021,15 @@ static const struct message wm_stylechanged_combox_seq[] =
     {0}
 };
 
+static const struct message wm_stylechanged_listview_report_seq[] =
+{
+    {WM_STYLECHANGED, sent},
+    {WM_ERASEBKGND, sent | defwinproc},
+    {WM_PAINT, sent},
+    {WM_ERASEBKGND, sent | defwinproc},
+    {0}
+};
+
 static const struct message wm_stylechanged_pager_seq[] =
 {
     {WM_STYLECHANGED, sent},
@@ -1081,37 +1090,39 @@ static void test_WM_STYLECHANGED(void)
     static const struct test
     {
         const CHAR *class_name;
+        DWORD add_style;
         const struct message *seq;
         BOOL todo;
     }
     tests[] =
     {
-        {ANIMATE_CLASSA, wm_stylechanged_seq},
-        {WC_BUTTONA, wm_stylechanged_seq},
-        {WC_COMBOBOXA, wm_stylechanged_combox_seq, TRUE},
-        {WC_COMBOBOXEXA, wm_stylechanged_seq},
-        {DATETIMEPICK_CLASSA, wm_stylechanged_seq},
-        {WC_EDITA, wm_stylechanged_seq},
-        {WC_HEADERA, wm_stylechanged_repaint_seq, TRUE},
-        {HOTKEY_CLASSA, wm_stylechanged_seq},
-        {WC_IPADDRESSA, wm_stylechanged_seq},
-        {WC_LISTBOXA, wm_stylechanged_repaint_seq, TRUE},
-        {WC_LISTVIEWA, wm_stylechanged_seq},
-        {MONTHCAL_CLASSA, wm_stylechanged_repaint_seq, TRUE},
-        {WC_NATIVEFONTCTLA, wm_stylechanged_seq},
-        {WC_PAGESCROLLERA, wm_stylechanged_pager_seq, TRUE},
-        {PROGRESS_CLASSA, wm_stylechanged_progress_seq},
-        {REBARCLASSNAMEA, wm_stylechanged_seq},
-        {WC_STATICA, wm_stylechanged_seq},
-        {STATUSCLASSNAMEA, wm_stylechanged_seq},
-        {"SysLink", wm_stylechanged_seq},
-        {WC_TABCONTROLA, wm_stylechanged_seq},
-        {TOOLBARCLASSNAMEA, wm_stylechanged_seq},
-        {TOOLTIPS_CLASSA, wm_stylechanged_seq},
-        {TRACKBAR_CLASSA, wm_stylechanged_trackbar_seq, TRUE},
-        {WC_TREEVIEWA, wm_stylechanged_seq},
-        {UPDOWN_CLASSA, wm_stylechanged_seq},
-        {WC_SCROLLBARA, wm_stylechanged_seq},
+        {ANIMATE_CLASSA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_BUTTONA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_COMBOBOXA, WS_TABSTOP, wm_stylechanged_combox_seq, TRUE},
+        {WC_COMBOBOXEXA, WS_TABSTOP, wm_stylechanged_seq},
+        {DATETIMEPICK_CLASSA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_EDITA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_HEADERA, WS_TABSTOP, wm_stylechanged_repaint_seq, TRUE},
+        {HOTKEY_CLASSA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_IPADDRESSA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_LISTBOXA, WS_TABSTOP, wm_stylechanged_repaint_seq, TRUE},
+        {WC_LISTVIEWA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_LISTVIEWA, LVS_REPORT, wm_stylechanged_listview_report_seq, TRUE},
+        {MONTHCAL_CLASSA, WS_TABSTOP, wm_stylechanged_repaint_seq, TRUE},
+        {WC_NATIVEFONTCTLA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_PAGESCROLLERA, WS_TABSTOP, wm_stylechanged_pager_seq, TRUE},
+        {PROGRESS_CLASSA, WS_TABSTOP, wm_stylechanged_progress_seq},
+        {REBARCLASSNAMEA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_STATICA, WS_TABSTOP, wm_stylechanged_seq},
+        {STATUSCLASSNAMEA, WS_TABSTOP, wm_stylechanged_seq},
+        {"SysLink", WS_TABSTOP, wm_stylechanged_seq},
+        {WC_TABCONTROLA, WS_TABSTOP, wm_stylechanged_seq},
+        {TOOLBARCLASSNAMEA, WS_TABSTOP, wm_stylechanged_seq},
+        {TOOLTIPS_CLASSA, WS_TABSTOP, wm_stylechanged_seq},
+        {TRACKBAR_CLASSA, WS_TABSTOP, wm_stylechanged_trackbar_seq, TRUE},
+        {WC_TREEVIEWA, WS_TABSTOP, wm_stylechanged_seq},
+        {UPDOWN_CLASSA, WS_TABSTOP, wm_stylechanged_seq},
+        {WC_SCROLLBARA, WS_TABSTOP, wm_stylechanged_seq},
     };
 
     parent = CreateWindowA(WC_STATICA, "parent", WS_POPUP | WS_VISIBLE, 100, 100, 100, 100,
@@ -1137,7 +1148,7 @@ static void test_WM_STYLECHANGED(void)
         flush_sequences(sequences, NUM_MSG_SEQUENCES);
 
         style.styleOld = GetWindowLongA(hwnd, GWL_STYLE);
-        style.styleNew = style.styleOld | WS_TABSTOP;
+        style.styleNew = style.styleOld | tests[i].add_style;
         SendMessageA(hwnd, WM_STYLECHANGED, GWL_STYLE, (LPARAM)&style);
         flush_events();
         ok_sequence(sequences, CHILD_SEQ_INDEX, tests[i].seq, "WM_STYLECHANGED", tests[i].todo);
