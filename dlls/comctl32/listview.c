@@ -11184,7 +11184,7 @@ static void LISTVIEW_UpdateSize(LISTVIEW_INFO *infoPtr)
 	    wp.cy = 0;
 	}
 
-	SetWindowPos(wp.hwnd, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
+	SetWindowPos(infoPtr->hwndHeader, wp.hwndInsertAfter, wp.x, wp.y, wp.cx, wp.cy, wp.flags);
 	TRACE("  after SWP wp=%d,%d (%dx%d)\n", wp.x, wp.y, wp.cx, wp.cy);
 
 	infoPtr->rcList.top = max(wp.cy, 0);

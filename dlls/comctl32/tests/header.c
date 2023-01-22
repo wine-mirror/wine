@@ -873,9 +873,12 @@ static void test_hdm_layout(HWND hParent)
     ok_sequence(sequences, PARENT_SEQ_INDEX, add_header_to_parent_seq,
                                     "adder header control to parent", FALSE);
 
+    windowPos.hwnd = (HWND)0xdeadbeef;
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     retVal = SendMessageA(hChild, HDM_LAYOUT, 0, (LPARAM) &hdLayout);
     expect(TRUE, retVal);
+    ok(windowPos.hwnd == (HWND)0xdeadbeef, "Unexpected value %p.\n", windowPos.hwnd);
+    ok(!windowPos.hwndInsertAfter, "Unexpected value %p.\n", windowPos.hwndInsertAfter);
 
     ok_sequence(sequences, HEADER_SEQ_INDEX, layout_seq, "layout sequence testing", FALSE);
 
@@ -1884,6 +1887,7 @@ START_TEST(header)
     test_hdf_fixedwidth(parent_hwnd);
     test_hds_nosizing(parent_hwnd);
     test_item_auto_format(parent_hwnd);
+    test_hdm_layout(parent_hwnd);
 
     unload_v6_module(ctx_cookie, hCtx);
 

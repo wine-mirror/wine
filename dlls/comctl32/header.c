@@ -1465,7 +1465,6 @@ HEADER_InsertItemT (HEADER_INFO *infoPtr, INT nItem, const HDITEMW *phdi, BOOL b
 static LRESULT
 HEADER_Layout (HEADER_INFO *infoPtr, LPHDLAYOUT lpLayout)
 {
-    lpLayout->pwpos->hwnd = infoPtr->hwndSelf;
     lpLayout->pwpos->hwndInsertAfter = 0;
     lpLayout->pwpos->x = lpLayout->prc->left;
     lpLayout->pwpos->y = lpLayout->prc->top;
