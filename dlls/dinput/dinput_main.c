@@ -52,6 +52,8 @@ struct input_thread_state
 {
     UINT events_count;
     UINT devices_count;
+    HHOOK mouse_ll_hook;
+    HHOOK keyboard_ll_hook;
     struct dinput_device *devices[INPUT_THREAD_MAX_DEVICES];
     HANDLE events[INPUT_THREAD_MAX_DEVICES];
 };
@@ -167,7 +169,7 @@ static void unregister_di_em_win_class(void)
         WARN( "Unable to unregister message window class\n" );
 }
 
-static LRESULT CALLBACK LL_hook_proc( int code, WPARAM wparam, LPARAM lparam )
+static LRESULT CALLBACK input_thread_ll_hook_proc( int code, WPARAM wparam, LPARAM lparam )
 {
     struct dinput_device *impl;
     int skip = 0;
@@ -243,8 +245,8 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
 
 static void input_thread_update_device_list( struct input_thread_state *state )
 {
+    UINT count = 0, keyboard_count, mouse_count;
     struct dinput_device *device;
-    UINT count = 0;
 
     EnterCriticalSection( &dinput_hook_crit );
     LIST_FOR_EACH_ENTRY( device, &acquired_device_list, struct dinput_device, entry )
@@ -256,14 +258,32 @@ static void input_thread_update_device_list( struct input_thread_state *state )
     }
     state->events_count = count;
     state->devices_count = count;
+
+    keyboard_count = list_count( &acquired_keyboard_list );
+    mouse_count = list_count( &acquired_mouse_list );
     LeaveCriticalSection( &dinput_hook_crit );
+
+    if (keyboard_count && !state->keyboard_ll_hook)
+        state->keyboard_ll_hook = SetWindowsHookExW( WH_KEYBOARD_LL, input_thread_ll_hook_proc, DINPUT_instance, 0 );
+    else if (!keyboard_count && state->keyboard_ll_hook)
+    {
+        UnhookWindowsHookEx( state->keyboard_ll_hook );
+        state->keyboard_ll_hook = NULL;
+    }
+
+    if (mouse_count && !state->mouse_ll_hook)
+        state->mouse_ll_hook = SetWindowsHookExW( WH_MOUSE_LL, input_thread_ll_hook_proc, DINPUT_instance, 0 );
+    else if (!mouse_count && state->mouse_ll_hook)
+    {
+        UnhookWindowsHookEx( state->mouse_ll_hook );
+        state->mouse_ll_hook = NULL;
+    }
 }
 
 static DWORD WINAPI dinput_thread_proc( void *params )
 {
     HANDLE finished_event, start_event = params;
     struct input_thread_state state = {0};
-    static HHOOK kbd_hook, mouse_hook;
     struct dinput_device *device;
     DWORD ret;
     MSG msg;
@@ -276,8 +296,6 @@ static DWORD WINAPI dinput_thread_proc( void *params )
 
     while ((ret = MsgWaitForMultipleObjectsEx( state.events_count, state.events, INFINITE, QS_ALLINPUT, 0 )) <= state.events_count)
     {
-        UINT kbd_cnt = 0, mice_cnt = 0;
-
         if (ret < state.events_count)
         {
             if ((device = state.devices[ret]) && FAILED( device->vtbl->read( &device->IDirectInputDevice8W_iface ) ))
@@ -286,6 +304,11 @@ static DWORD WINAPI dinput_thread_proc( void *params )
                 dinput_device_internal_unacquire( &device->IDirectInputDevice8W_iface );
                 LeaveCriticalSection( &dinput_hook_crit );
                 device->status = STATUS_UNPLUGGED;
+
+                state.events[ret] = state.events[--state.events_count];
+                state.devices[ret] = state.devices[state.events_count];
+                state.devices[state.events_count] = state.devices[--state.devices_count];
+                dinput_device_internal_release( device );
             }
         }
 
@@ -304,38 +327,17 @@ static DWORD WINAPI dinput_thread_proc( void *params )
 
             if (!msg.wParam)
             {
-                if (kbd_hook) UnhookWindowsHookEx( kbd_hook );
-                if (mouse_hook) UnhookWindowsHookEx( mouse_hook );
-                kbd_hook = mouse_hook = NULL;
+                if (state.keyboard_ll_hook) UnhookWindowsHookEx( state.keyboard_ll_hook );
+                if (state.mouse_ll_hook) UnhookWindowsHookEx( state.mouse_ll_hook );
+                state.keyboard_ll_hook = state.mouse_ll_hook = NULL;
                 goto done;
             }
 
-            EnterCriticalSection( &dinput_hook_crit );
-            kbd_cnt = list_count( &acquired_keyboard_list );
-            mice_cnt = list_count( &acquired_mouse_list );
-            LeaveCriticalSection( &dinput_hook_crit );
-
-            if (kbd_cnt && !kbd_hook)
-                kbd_hook = SetWindowsHookExW( WH_KEYBOARD_LL, LL_hook_proc, DINPUT_instance, 0 );
-            else if (!kbd_cnt && kbd_hook)
-            {
-                UnhookWindowsHookEx( kbd_hook );
-                kbd_hook = NULL;
-            }
-
-            if (mice_cnt && !mouse_hook)
-                mouse_hook = SetWindowsHookExW( WH_MOUSE_LL, LL_hook_proc, DINPUT_instance, 0 );
-            else if (!mice_cnt && mouse_hook)
-            {
-                UnhookWindowsHookEx( mouse_hook );
-                mouse_hook = NULL;
-            }
+            while (state.devices_count--) dinput_device_internal_release( state.devices[state.devices_count] );
+            input_thread_update_device_list( &state );
 
             SetEvent(finished_event);
         }
-
-        while (state.devices_count--) dinput_device_internal_release( state.devices[state.devices_count] );
-        input_thread_update_device_list( &state );
     }
 
     if (ret != state.events_count) ERR("Unexpected termination, ret %#lx\n", ret);
