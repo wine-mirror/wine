@@ -107,7 +107,7 @@ void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface )
     LeaveCriticalSection( &dinput_hook_crit );
 }
 
-static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface )
+static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface, DWORD status )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
 
@@ -117,7 +117,7 @@ static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface )
     if (impl->status == STATUS_ACQUIRED)
     {
         impl->vtbl->unacquire( iface );
-        impl->status = STATUS_UNACQUIRED;
+        impl->status = status;
         list_remove( &impl->entry );
     }
     LeaveCriticalSection( &impl->crit );
@@ -211,7 +211,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
         if (msg->hwnd == impl->win && msg->hwnd != foreground)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
-            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface );
+            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
         }
     }
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_mouse_list, struct dinput_device, entry )
@@ -219,7 +219,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
         if (msg->hwnd == impl->win && msg->hwnd != foreground)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
-            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface );
+            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
         }
     }
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_rawmouse_list, struct dinput_device, entry )
@@ -227,7 +227,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
         if (msg->hwnd == impl->win && msg->hwnd != foreground)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
-            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface );
+            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
         }
     }
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_keyboard_list, struct dinput_device, entry )
@@ -235,7 +235,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
         if (msg->hwnd == impl->win && msg->hwnd != foreground)
         {
             TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
-            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface );
+            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
         }
     }
     LeaveCriticalSection( &dinput_hook_crit );
@@ -301,9 +301,8 @@ static DWORD WINAPI dinput_thread_proc( void *params )
             if ((device = state.devices[ret]) && FAILED( device->vtbl->read( &device->IDirectInputDevice8W_iface ) ))
             {
                 EnterCriticalSection( &dinput_hook_crit );
-                dinput_device_internal_unacquire( &device->IDirectInputDevice8W_iface );
+                dinput_device_internal_unacquire( &device->IDirectInputDevice8W_iface, STATUS_UNPLUGGED );
                 LeaveCriticalSection( &dinput_hook_crit );
-                device->status = STATUS_UNPLUGGED;
 
                 state.events[ret] = state.events[--state.events_count];
                 state.devices[ret] = state.devices[state.events_count];
