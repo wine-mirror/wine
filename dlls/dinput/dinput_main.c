@@ -54,6 +54,7 @@ struct input_thread_state
     UINT devices_count;
     HHOOK mouse_ll_hook;
     HHOOK keyboard_ll_hook;
+    HHOOK callwndproc_hook;
     struct dinput_device *devices[INPUT_THREAD_MAX_DEVICES];
     HANDLE events[INPUT_THREAD_MAX_DEVICES];
 };
@@ -251,23 +252,44 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
 
 static void input_thread_update_device_list( struct input_thread_state *state )
 {
-    UINT count = 0, keyboard_count, mouse_count;
+    UINT count = 0, keyboard_count = 0, mouse_count = 0, foreground_count = 0;
     struct dinput_device *device;
 
     EnterCriticalSection( &dinput_hook_crit );
     LIST_FOR_EACH_ENTRY( device, &acquired_device_list, struct dinput_device, entry )
     {
+        if (device->dwCoopLevel & DISCL_FOREGROUND) foreground_count++;
         if (!device->read_event || !device->vtbl->read) continue;
         state->events[count] = device->read_event;
         dinput_device_internal_addref( (state->devices[count] = device) );
         if (++count >= INPUT_THREAD_MAX_DEVICES) break;
     }
     state->events_count = count;
-    state->devices_count = count;
 
-    keyboard_count = list_count( &acquired_keyboard_list );
-    mouse_count = list_count( &acquired_mouse_list );
+    LIST_FOR_EACH_ENTRY( device, &acquired_rawmouse_list, struct dinput_device, entry )
+    {
+        if (device->dwCoopLevel & DISCL_FOREGROUND) foreground_count++;
+    }
+    LIST_FOR_EACH_ENTRY( device, &acquired_mouse_list, struct dinput_device, entry )
+    {
+        if (device->dwCoopLevel & DISCL_FOREGROUND) foreground_count++;
+        mouse_count++;
+    }
+    LIST_FOR_EACH_ENTRY( device, &acquired_keyboard_list, struct dinput_device, entry )
+    {
+        if (device->dwCoopLevel & DISCL_FOREGROUND) foreground_count++;
+        keyboard_count++;
+    }
+    state->devices_count = count;
     LeaveCriticalSection( &dinput_hook_crit );
+
+    if (foreground_count && !state->callwndproc_hook)
+        state->callwndproc_hook = SetWindowsHookExW( WH_CALLWNDPROC, callwndproc_proc, DINPUT_instance, GetCurrentThreadId() );
+    else if (!foreground_count && state->callwndproc_hook)
+    {
+        UnhookWindowsHookEx( state->callwndproc_hook );
+        state->callwndproc_hook = NULL;
+    }
 
     if (keyboard_count && !state->keyboard_ll_hook)
         state->keyboard_ll_hook = SetWindowsHookExW( WH_KEYBOARD_LL, input_thread_ll_hook_proc, DINPUT_instance, 0 );
@@ -341,6 +363,7 @@ static DWORD WINAPI dinput_thread_proc( void *params )
 
 done:
     while (state.devices_count--) dinput_device_internal_release( state.devices[state.devices_count] );
+    if (state.callwndproc_hook) UnhookWindowsHookEx( state.callwndproc_hook );
     if (state.keyboard_ll_hook) UnhookWindowsHookEx( state.keyboard_ll_hook );
     if (state.mouse_ll_hook) UnhookWindowsHookEx( state.mouse_ll_hook );
     DestroyWindow( di_em_win );
@@ -385,29 +408,10 @@ void input_thread_remove_user(void)
 
 void check_dinput_hooks( IDirectInputDevice8W *iface, BOOL acquired )
 {
-    static HHOOK callwndproc_hook;
-    static ULONG foreground_cnt;
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     HANDLE hook_change_finished_event = NULL;
 
     EnterCriticalSection(&dinput_hook_crit);
-
-    if (impl->dwCoopLevel & DISCL_FOREGROUND)
-    {
-        if (acquired)
-            foreground_cnt++;
-        else
-            foreground_cnt--;
-    }
-
-    if (foreground_cnt && !callwndproc_hook)
-        callwndproc_hook = SetWindowsHookExW( WH_CALLWNDPROC, callwndproc_proc,
-                                              DINPUT_instance, GetCurrentThreadId() );
-    else if (!foreground_cnt && callwndproc_hook)
-    {
-        UnhookWindowsHookEx( callwndproc_hook );
-        callwndproc_hook = NULL;
-    }
 
     if (impl->use_raw_input)
     {
