@@ -565,7 +565,6 @@ static HRESULT WINAPI dinput_device_Acquire( IDirectInputDevice8W *iface )
     if (hr != DI_OK) return hr;
 
     dinput_hooks_acquire_device( iface );
-    check_dinput_hooks( iface, TRUE );
 
     return hr;
 }
@@ -585,7 +584,6 @@ static HRESULT WINAPI dinput_device_Unacquire( IDirectInputDevice8W *iface )
     if (hr != DI_OK) return hr;
 
     dinput_hooks_unacquire_device( iface );
-    check_dinput_hooks( iface, FALSE );
 
     return hr;
 }

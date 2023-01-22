@@ -51,6 +51,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 struct input_thread_state
 {
+    BOOL running;
     UINT events_count;
     UINT devices_count;
     HHOOK mouse_ll_hook;
@@ -69,10 +70,9 @@ static inline struct dinput_device *impl_from_IDirectInputDevice8W( IDirectInput
 HINSTANCE DINPUT_instance;
 
 static HWND di_em_win;
-
 static HANDLE dinput_thread;
-static DWORD dinput_thread_id;
 static UINT input_thread_user_count;
+static struct input_thread_state *input_thread_state;
 
 static CRITICAL_SECTION dinput_hook_crit;
 static CRITICAL_SECTION_DEBUG dinput_critsect_debug =
@@ -100,6 +100,8 @@ void dinput_hooks_acquire_device( IDirectInputDevice8W *iface )
     else
         list_add_tail( &acquired_device_list, &impl->entry );
     LeaveCriticalSection( &dinput_hook_crit );
+
+    SendMessageW( di_em_win, WM_USER + 0x10, 1, 0 );
 }
 
 void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface )
@@ -109,6 +111,8 @@ void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface )
     EnterCriticalSection( &dinput_hook_crit );
     list_remove( &impl->entry );
     LeaveCriticalSection( &dinput_hook_crit );
+
+    SendMessageW( di_em_win, WM_USER + 0x10, 1, 0 );
 }
 
 static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface, DWORD status )
@@ -298,6 +302,22 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         }
     }
 
+    if (msg == WM_USER + 0x10)
+    {
+        struct input_thread_state *state = input_thread_state;
+
+        TRACE( "Processing hook change notification wparam %#Ix, lparam %#Ix.\n", wparam, lparam );
+
+        if (!wparam) state->running = FALSE;
+        else
+        {
+            while (state->devices_count--) dinput_device_internal_release( state->devices[state->devices_count] );
+            input_thread_update_device_list( state );
+        }
+
+        return 0;
+    }
+
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
@@ -323,19 +343,18 @@ static void unregister_di_em_win_class(void)
 
 static DWORD WINAPI dinput_thread_proc( void *params )
 {
-    struct input_thread_state state = {0};
+    struct input_thread_state state = {.running = TRUE};
     struct dinput_device *device;
     HANDLE start_event = params;
     DWORD ret;
     MSG msg;
 
+    input_thread_state = &state;
     di_em_win = CreateWindowW( L"DIEmWin", L"DIEmWin", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, DINPUT_instance, NULL );
-
-    /* Force creation of the message queue */
     PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );
     SetEvent( start_event );
 
-    while ((ret = MsgWaitForMultipleObjectsEx( state.events_count, state.events, INFINITE, QS_ALLINPUT, 0 )) <= state.events_count)
+    while (state.running && (ret = MsgWaitForMultipleObjectsEx( state.events_count, state.events, INFINITE, QS_ALLINPUT, 0 )) <= state.events_count)
     {
         if (ret < state.events_count)
         {
@@ -354,27 +373,17 @@ static DWORD WINAPI dinput_thread_proc( void *params )
 
         while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
         {
-            if (msg.message != WM_USER+0x10)
-            {
-                TranslateMessage(&msg);
-                DispatchMessageW(&msg);
-                continue;
-            }
-
-            TRACE( "Processing hook change notification wparam %#Ix, lparam %#Ix.\n", msg.wParam, msg.lParam );
-
-            if (!msg.wParam) goto done;
-
-            while (state.devices_count--) dinput_device_internal_release( state.devices[state.devices_count] );
-            input_thread_update_device_list( &state );
-            SetEvent( (HANDLE)msg.lParam );
+            TranslateMessage(&msg);
+            DispatchMessageW(&msg);
         }
     }
 
-    ERR( "Unexpected termination, ret %#lx\n", ret );
-    dinput_unacquire_window_devices( 0 );
+    if (state.running)
+    {
+        ERR( "Unexpected termination, ret %#lx\n", ret );
+        dinput_unacquire_window_devices( 0 );
+    }
 
-done:
     while (state.devices_count--) dinput_device_internal_release( state.devices[state.devices_count] );
     if (state.callwndproc_hook) UnhookWindowsHookEx( state.callwndproc_hook );
     if (state.keyboard_ll_hook) UnhookWindowsHookEx( state.keyboard_ll_hook );
@@ -395,7 +404,7 @@ void input_thread_add_user(void)
 
         if (!(start_event = CreateEventW( NULL, FALSE, FALSE, NULL )))
             ERR( "Failed to create start event, error %lu\n", GetLastError() );
-        else if (!(dinput_thread = CreateThread( NULL, 0, dinput_thread_proc, start_event, 0, &dinput_thread_id )))
+        else if (!(dinput_thread = CreateThread( NULL, 0, dinput_thread_proc, start_event, 0, NULL )))
             ERR( "Failed to create internal thread, error %lu\n", GetLastError() );
         else
             WaitForSingleObject( start_event, INFINITE );
@@ -412,26 +421,11 @@ void input_thread_remove_user(void)
     {
         TRACE( "Stopping input thread.\n" );
 
-        PostThreadMessageW( dinput_thread_id, WM_USER + 0x10, 0, 0 );
+        SendMessageW( di_em_win, WM_USER + 0x10, 0, 0 );
         WaitForSingleObject( dinput_thread, INFINITE );
         CloseHandle( dinput_thread );
     }
     LeaveCriticalSection( &dinput_hook_crit );
-}
-
-void check_dinput_hooks( IDirectInputDevice8W *iface, BOOL acquired )
-{
-    HANDLE hook_change_finished_event = NULL;
-
-    EnterCriticalSection(&dinput_hook_crit);
-
-    hook_change_finished_event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    PostThreadMessageW( dinput_thread_id, WM_USER + 0x10, 1, (LPARAM)hook_change_finished_event );
-
-    LeaveCriticalSection(&dinput_hook_crit);
-
-    WaitForSingleObject(hook_change_finished_event, INFINITE);
-    CloseHandle(hook_change_finished_event);
 }
 
 void check_dinput_events(void)
