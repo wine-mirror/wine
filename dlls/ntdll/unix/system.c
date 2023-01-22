@@ -1885,7 +1885,7 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
 
         if ((fp = fopen("/proc/meminfo", "r")))
         {
-            unsigned long long value;
+            unsigned long long value, mem_available = 0;
             char line[64];
 
             while (fgets(line, sizeof(line), fp))
@@ -1902,8 +1902,11 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
                     freeram += value * 1024;
                 else if (sscanf(line, "Cached: %llu", &value))
                     freeram += value * 1024;
+                else if (sscanf(line, "MemAvailable: %llu", &value))
+                    mem_available = value * 1024;
             }
             fclose(fp);
+            if (mem_available) freeram = mem_available;
         }
     }
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__) || \
