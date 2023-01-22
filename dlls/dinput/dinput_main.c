@@ -127,52 +127,6 @@ static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface, DWORD
     LeaveCriticalSection( &impl->crit );
 }
 
-static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    struct dinput_device *impl;
-    RAWINPUT ri;
-    UINT size = sizeof(ri);
-    int rim = GET_RAWINPUT_CODE_WPARAM( wparam );
-
-    TRACE( "%p %d %Ix %Ix\n", hwnd, msg, wparam, lparam );
-
-    if (msg == WM_INPUT && (rim == RIM_INPUT || rim == RIM_INPUTSINK))
-    {
-        size = GetRawInputData( (HRAWINPUT)lparam, RID_INPUT, &ri, &size, sizeof(RAWINPUTHEADER) );
-        if (size == (UINT)-1 || size < sizeof(RAWINPUTHEADER))
-            WARN( "Unable to read raw input data\n" );
-        else if (ri.header.dwType == RIM_TYPEMOUSE)
-        {
-            EnterCriticalSection( &dinput_hook_crit );
-            LIST_FOR_EACH_ENTRY( impl, &acquired_rawmouse_list, struct dinput_device, entry )
-                dinput_mouse_rawinput_hook( &impl->IDirectInputDevice8W_iface, wparam, lparam, &ri );
-            LeaveCriticalSection( &dinput_hook_crit );
-        }
-    }
-
-    return DefWindowProcW( hwnd, msg, wparam, lparam );
-}
-
-static void register_di_em_win_class(void)
-{
-    WNDCLASSEXW class;
-
-    memset(&class, 0, sizeof(class));
-    class.cbSize = sizeof(class);
-    class.lpfnWndProc = di_em_win_wndproc;
-    class.hInstance = DINPUT_instance;
-    class.lpszClassName = L"DIEmWin";
-
-    if (!RegisterClassExW( &class ) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-        WARN( "Unable to register message window class\n" );
-}
-
-static void unregister_di_em_win_class(void)
-{
-    if (!UnregisterClassW( L"DIEmWin", NULL ) && GetLastError() != ERROR_CLASS_DOES_NOT_EXIST)
-        WARN( "Unable to unregister message window class\n" );
-}
-
 static LRESULT CALLBACK input_thread_ll_hook_proc( int code, WPARAM wparam, LPARAM lparam )
 {
     struct dinput_device *impl;
@@ -319,6 +273,52 @@ static void input_thread_update_device_list( struct input_thread_state *state )
         WARN( "Failed to (un)register rawinput mouse device.\n" );
 
     state->rawinput_devices[0] = rawinput_mouse;
+}
+
+static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    struct dinput_device *impl;
+    RAWINPUT ri;
+    UINT size = sizeof(ri);
+    int rim = GET_RAWINPUT_CODE_WPARAM( wparam );
+
+    TRACE( "%p %d %Ix %Ix\n", hwnd, msg, wparam, lparam );
+
+    if (msg == WM_INPUT && (rim == RIM_INPUT || rim == RIM_INPUTSINK))
+    {
+        size = GetRawInputData( (HRAWINPUT)lparam, RID_INPUT, &ri, &size, sizeof(RAWINPUTHEADER) );
+        if (size == (UINT)-1 || size < sizeof(RAWINPUTHEADER))
+            WARN( "Unable to read raw input data\n" );
+        else if (ri.header.dwType == RIM_TYPEMOUSE)
+        {
+            EnterCriticalSection( &dinput_hook_crit );
+            LIST_FOR_EACH_ENTRY( impl, &acquired_rawmouse_list, struct dinput_device, entry )
+                dinput_mouse_rawinput_hook( &impl->IDirectInputDevice8W_iface, wparam, lparam, &ri );
+            LeaveCriticalSection( &dinput_hook_crit );
+        }
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static void register_di_em_win_class(void)
+{
+    WNDCLASSEXW class;
+
+    memset(&class, 0, sizeof(class));
+    class.cbSize = sizeof(class);
+    class.lpfnWndProc = di_em_win_wndproc;
+    class.hInstance = DINPUT_instance;
+    class.lpszClassName = L"DIEmWin";
+
+    if (!RegisterClassExW( &class ) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+        WARN( "Unable to register message window class\n" );
+}
+
+static void unregister_di_em_win_class(void)
+{
+    if (!UnregisterClassW( L"DIEmWin", NULL ) && GetLastError() != ERROR_CLASS_DOES_NOT_EXIST)
+        WARN( "Unable to unregister message window class\n" );
 }
 
 static DWORD WINAPI dinput_thread_proc( void *params )
