@@ -3689,7 +3689,6 @@ HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, ID
         ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
 
         ref = IDirectInput8_Release( di8 );
-        todo_wine
         ok( ref == 0, "Release returned %ld\n", ref );
     }
     else
@@ -3716,7 +3715,6 @@ HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, ID
         ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
 
         ref = IDirectInput_Release( di );
-        todo_wine
         ok( ref == 0, "Release returned %ld\n", ref );
     }
 

@@ -716,7 +716,7 @@ void dinput_device_internal_release( struct dinput_device *impl )
 
         free( impl->action_map );
 
-        IDirectInput_Release( &impl->dinput->IDirectInput7A_iface );
+        dinput_internal_release( impl->dinput );
         impl->crit.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &impl->crit );
 
@@ -2125,8 +2125,7 @@ void dinput_device_init( struct dinput_device *device, const struct dinput_devic
     device->device_gain = 10000;
     device->force_feedback_state = DIGFFS_STOPPED | DIGFFS_EMPTY;
     InitializeCriticalSection( &device->crit );
-    device->dinput = dinput;
-    IDirectInput_AddRef( &dinput->IDirectInput7A_iface );
+    dinput_internal_addref( (device->dinput = dinput) );
     device->vtbl = vtbl;
 }
 

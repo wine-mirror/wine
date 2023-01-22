@@ -36,6 +36,7 @@ struct dinput
     IDirectInput8A IDirectInput8A_iface;
     IDirectInput8W IDirectInput8W_iface;
     IDirectInputJoyConfig8 IDirectInputJoyConfig8_iface;
+    LONG internal_ref;
     LONG ref;
 
     DWORD dwVersion;            /* direct input version number */
@@ -45,6 +46,9 @@ struct dinput
 
 extern const IDirectInput7AVtbl dinput7_a_vtbl DECLSPEC_HIDDEN;
 extern const IDirectInput8AVtbl dinput8_a_vtbl DECLSPEC_HIDDEN;
+
+extern void dinput_internal_addref( struct dinput *dinput );
+extern void dinput_internal_release( struct dinput *dinput );
 
 extern HRESULT mouse_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instance, DWORD version );
 extern HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInputDevice8W **out );

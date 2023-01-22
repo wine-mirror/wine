@@ -116,7 +116,6 @@ static HRESULT create_dinput_device( DWORD version, const GUID *guid, IDirectInp
     ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
 
     ref = IDirectInput_Release( dinput );
-    todo_wine
     ok( ref == 0, "Release returned %ld\n", ref );
 
     return DI_OK;

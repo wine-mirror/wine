@@ -107,6 +107,28 @@ static HRESULT WINAPI dinput7_EnumDevices( IDirectInput7W *iface, DWORD type, LP
     return IDirectInput8_EnumDevices( &impl->IDirectInput8W_iface, type, callback, context, flags );
 }
 
+void dinput_internal_addref( struct dinput *impl )
+{
+    ULONG ref = InterlockedIncrement( &impl->internal_ref );
+    TRACE( "impl %p, internal ref %lu.\n", impl, ref );
+}
+
+void dinput_internal_release( struct dinput *impl )
+{
+    ULONG ref = InterlockedDecrement( &impl->internal_ref );
+    TRACE( "impl %p, internal ref %lu.\n", impl, ref );
+
+    if (!ref)
+    {
+        struct DevicePlayer *device_player, *device_player2;
+
+        LIST_FOR_EACH_ENTRY_SAFE( device_player, device_player2, &impl->device_players, struct DevicePlayer, entry )
+            free( device_player );
+
+        free( impl );
+    }
+}
+
 static ULONG WINAPI dinput7_AddRef( IDirectInput7W *iface )
 {
     struct dinput *impl = impl_from_IDirectInput7W( iface );
@@ -124,12 +146,7 @@ static ULONG WINAPI dinput7_Release( IDirectInput7W *iface )
 
     if (!ref)
     {
-        struct DevicePlayer *device_player, *device_player2;
-
-        LIST_FOR_EACH_ENTRY_SAFE( device_player, device_player2, &impl->device_players, struct DevicePlayer, entry )
-            free( device_player );
-
-        free( impl );
+        dinput_internal_release( impl );
     }
 
     return ref;
@@ -792,6 +809,7 @@ static HRESULT dinput_create( IUnknown **out )
     impl->IDirectInput8A_iface.lpVtbl = &dinput8_a_vtbl;
     impl->IDirectInput8W_iface.lpVtbl = &dinput8_vtbl;
     impl->IDirectInputJoyConfig8_iface.lpVtbl = &joy_config_vtbl;
+    impl->internal_ref = 1;
     impl->ref = 1;
 
     list_init( &impl->device_players );
