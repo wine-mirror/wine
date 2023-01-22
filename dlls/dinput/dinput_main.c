@@ -237,6 +237,22 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
     return CallNextHookEx( 0, code, wparam, lparam );
 }
 
+static void input_thread_update_device_list( struct input_thread_state *state )
+{
+    struct dinput_device *device;
+    UINT count = 0;
+
+    EnterCriticalSection( &dinput_hook_crit );
+    LIST_FOR_EACH_ENTRY( device, &acquired_device_list, struct dinput_device, entry )
+    {
+        if (!device->read_event || !device->vtbl->read) continue;
+        state->events[count] = device->read_event;
+        if (++count >= ARRAY_SIZE(state->events)) break;
+    }
+    state->events_count = count;
+    LeaveCriticalSection( &dinput_hook_crit );
+}
+
 static DWORD WINAPI dinput_thread_proc( void *params )
 {
     HANDLE finished_event, start_event = params;
@@ -319,15 +335,7 @@ static DWORD WINAPI dinput_thread_proc( void *params )
             SetEvent(finished_event);
         }
 
-        state.events_count = 0;
-        EnterCriticalSection( &dinput_hook_crit );
-        LIST_FOR_EACH_ENTRY( impl, &acquired_device_list, struct dinput_device, entry )
-        {
-            if (!impl->read_event || !impl->vtbl->read) continue;
-            if (state.events_count >= ARRAY_SIZE(state.events)) break;
-            state.events[state.events_count++] = impl->read_event;
-        }
-        LeaveCriticalSection( &dinput_hook_crit );
+        input_thread_update_device_list( &state );
     }
 
     if (ret != state.events_count) ERR("Unexpected termination, ret %#lx\n", ret);
