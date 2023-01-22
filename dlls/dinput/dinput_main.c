@@ -35,6 +35,7 @@
 #include "objbase.h"
 #include "rpcproxy.h"
 #include "devguid.h"
+#include "hidusage.h"
 #include "initguid.h"
 #include "dinputd.h"
 
@@ -55,6 +56,7 @@ struct input_thread_state
     HHOOK mouse_ll_hook;
     HHOOK keyboard_ll_hook;
     HHOOK callwndproc_hook;
+    RAWINPUTDEVICE rawinput_devices[2];
     struct dinput_device *devices[INPUT_THREAD_MAX_DEVICES];
     HANDLE events[INPUT_THREAD_MAX_DEVICES];
 };
@@ -252,6 +254,7 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
 
 static void input_thread_update_device_list( struct input_thread_state *state )
 {
+    RAWINPUTDEVICE rawinput_mouse = {.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_MOUSE, .dwFlags = RIDEV_REMOVE};
     UINT count = 0, keyboard_count = 0, mouse_count = 0, foreground_count = 0;
     struct dinput_device *device;
 
@@ -269,6 +272,10 @@ static void input_thread_update_device_list( struct input_thread_state *state )
     LIST_FOR_EACH_ENTRY( device, &acquired_rawmouse_list, struct dinput_device, entry )
     {
         if (device->dwCoopLevel & DISCL_FOREGROUND) foreground_count++;
+        if (device->dwCoopLevel & DISCL_BACKGROUND) rawinput_mouse.dwFlags |= RIDEV_INPUTSINK;
+        if (device->dwCoopLevel & DISCL_EXCLUSIVE) rawinput_mouse.dwFlags |= RIDEV_NOLEGACY | RIDEV_CAPTUREMOUSE;
+        rawinput_mouse.dwFlags &= ~RIDEV_REMOVE;
+        rawinput_mouse.hwndTarget = di_em_win;
     }
     LIST_FOR_EACH_ENTRY( device, &acquired_mouse_list, struct dinput_device, entry )
     {
@@ -306,6 +313,12 @@ static void input_thread_update_device_list( struct input_thread_state *state )
         UnhookWindowsHookEx( state->mouse_ll_hook );
         state->mouse_ll_hook = NULL;
     }
+
+    if (!rawinput_mouse.hwndTarget != !state->rawinput_devices[0].hwndTarget &&
+        !RegisterRawInputDevices( &rawinput_mouse, 1, sizeof(RAWINPUTDEVICE) ))
+        WARN( "Failed to (un)register rawinput mouse device.\n" );
+
+    state->rawinput_devices[0] = rawinput_mouse;
 }
 
 static DWORD WINAPI dinput_thread_proc( void *params )
@@ -408,35 +421,9 @@ void input_thread_remove_user(void)
 
 void check_dinput_hooks( IDirectInputDevice8W *iface, BOOL acquired )
 {
-    struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     HANDLE hook_change_finished_event = NULL;
 
     EnterCriticalSection(&dinput_hook_crit);
-
-    if (impl->use_raw_input)
-    {
-        if (acquired)
-        {
-            impl->raw_device.dwFlags = 0;
-            if (impl->dwCoopLevel & DISCL_BACKGROUND)
-                impl->raw_device.dwFlags |= RIDEV_INPUTSINK;
-            if (impl->dwCoopLevel & DISCL_EXCLUSIVE)
-                impl->raw_device.dwFlags |= RIDEV_NOLEGACY;
-            if ((impl->dwCoopLevel & DISCL_EXCLUSIVE) && impl->raw_device.usUsage == 2)
-                impl->raw_device.dwFlags |= RIDEV_CAPTUREMOUSE;
-            if ((impl->dwCoopLevel & DISCL_EXCLUSIVE) && impl->raw_device.usUsage == 6)
-                impl->raw_device.dwFlags |= RIDEV_NOHOTKEYS;
-            impl->raw_device.hwndTarget = di_em_win;
-        }
-        else
-        {
-            impl->raw_device.dwFlags = RIDEV_REMOVE;
-            impl->raw_device.hwndTarget = NULL;
-        }
-
-        if (!RegisterRawInputDevices( &impl->raw_device, 1, sizeof(RAWINPUTDEVICE) ))
-            WARN( "Unable to (un)register raw device %x:%x\n", impl->raw_device.usUsagePage, impl->raw_device.usUsage );
-    }
 
     hook_change_finished_event = CreateEventW( NULL, FALSE, FALSE, NULL );
     PostThreadMessageW( dinput_thread_id, WM_USER + 0x10, 1, (LPARAM)hook_change_finished_event );

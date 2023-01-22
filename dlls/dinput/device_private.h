@@ -94,9 +94,7 @@ struct dinput_device
     DWORD                       dwCoopLevel;
     HWND                        win;
     enum device_status          status;
-
     BOOL                        use_raw_input; /* use raw input instead of low-level messages */
-    RAWINPUTDEVICE              raw_device;    /* raw device to (un)register */
 
     LPDIDEVICEOBJECTDATA        data_queue;  /* buffer for 'GetDeviceData'.                 */
     int                         queue_len;   /* valid size of the queue                     */

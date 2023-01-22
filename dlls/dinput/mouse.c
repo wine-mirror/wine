@@ -148,11 +148,7 @@ HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInp
     if (hkey) RegCloseKey(hkey);
 
     if (dinput->dwVersion >= 0x0800)
-    {
         impl->base.use_raw_input = TRUE;
-        impl->base.raw_device.usUsagePage = 1; /* HID generic device page */
-        impl->base.raw_device.usUsage = 2;     /* HID generic mouse */
-    }
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
