@@ -146,6 +146,7 @@ static ULONG WINAPI dinput7_Release( IDirectInput7W *iface )
 
     if (!ref)
     {
+        input_thread_remove_user();
         dinput_internal_release( impl );
     }
 
@@ -819,6 +820,8 @@ static HRESULT dinput_create( IUnknown **out )
 #else
     *out = (IUnknown *)&impl->IDirectInput8W_iface;
 #endif
+
+    input_thread_add_user();
     return DI_OK;
 }
 

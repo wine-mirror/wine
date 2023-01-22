@@ -69,6 +69,7 @@ static HWND di_em_win;
 
 static HANDLE dinput_thread;
 static DWORD dinput_thread_id;
+static UINT input_thread_user_count;
 
 static CRITICAL_SECTION dinput_hook_crit;
 static CRITICAL_SECTION_DEBUG dinput_critsect_debug =
@@ -347,34 +348,39 @@ done:
     return 0;
 }
 
-static BOOL WINAPI dinput_thread_start_once( INIT_ONCE *once, void *param, void **context )
+void input_thread_add_user(void)
 {
-    HANDLE start_event;
+    EnterCriticalSection( &dinput_hook_crit );
+    if (!input_thread_user_count++)
+    {
+        HANDLE start_event;
 
-    start_event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    if (!start_event) ERR( "failed to create start event, error %lu\n", GetLastError() );
+        TRACE( "Starting input thread.\n" );
 
-    dinput_thread = CreateThread( NULL, 0, dinput_thread_proc, start_event, 0, &dinput_thread_id );
-    if (!dinput_thread) ERR( "failed to create internal thread, error %lu\n", GetLastError() );
+        if (!(start_event = CreateEventW( NULL, FALSE, FALSE, NULL )))
+            ERR( "Failed to create start event, error %lu\n", GetLastError() );
+        else if (!(dinput_thread = CreateThread( NULL, 0, dinput_thread_proc, start_event, 0, &dinput_thread_id )))
+            ERR( "Failed to create internal thread, error %lu\n", GetLastError() );
+        else
+            WaitForSingleObject( start_event, INFINITE );
 
-    WaitForSingleObject( start_event, INFINITE );
-    CloseHandle( start_event );
-
-    return TRUE;
+        CloseHandle( start_event );
+    }
+    LeaveCriticalSection( &dinput_hook_crit );
 }
 
-static void dinput_thread_start(void)
+void input_thread_remove_user(void)
 {
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-    InitOnceExecuteOnce( &init_once, dinput_thread_start_once, NULL, NULL );
-}
+    EnterCriticalSection( &dinput_hook_crit );
+    if (!--input_thread_user_count)
+    {
+        TRACE( "Stopping input thread.\n" );
 
-static void dinput_thread_stop(void)
-{
-    PostThreadMessageW( dinput_thread_id, WM_USER + 0x10, 0, 0 );
-    if (WaitForSingleObject( dinput_thread, 500 ) == WAIT_TIMEOUT)
-        WARN("Timeout while waiting for internal thread\n");
-    CloseHandle( dinput_thread );
+        PostThreadMessageW( dinput_thread_id, WM_USER + 0x10, 0, 0 );
+        WaitForSingleObject( dinput_thread, INFINITE );
+        CloseHandle( dinput_thread );
+    }
+    LeaveCriticalSection( &dinput_hook_crit );
 }
 
 void check_dinput_hooks( IDirectInputDevice8W *iface, BOOL acquired )
@@ -383,8 +389,6 @@ void check_dinput_hooks( IDirectInputDevice8W *iface, BOOL acquired )
     static ULONG foreground_cnt;
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     HANDLE hook_change_finished_event = NULL;
-
-    dinput_thread_start();
 
     EnterCriticalSection(&dinput_hook_crit);
 
@@ -468,7 +472,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, void *reserved )
         break;
       case DLL_PROCESS_DETACH:
         if (reserved) break;
-        dinput_thread_stop();
         unregister_di_em_win_class();
         break;
     }

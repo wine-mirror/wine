@@ -63,6 +63,9 @@ struct DevicePlayer {
     struct list entry;
 };
 
+extern void input_thread_add_user(void);
+extern void input_thread_remove_user(void);
+
 extern void dinput_hooks_acquire_device( IDirectInputDevice8W *iface );
 extern void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface );
 extern int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam );

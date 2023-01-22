@@ -734,6 +734,7 @@ static ULONG WINAPI dinput_device_Release( IDirectInputDevice8W *iface )
     if (!ref)
     {
         IDirectInputDevice_Unacquire( iface );
+        input_thread_remove_user();
         dinput_device_internal_release( impl );
     }
 
@@ -2127,6 +2128,8 @@ void dinput_device_init( struct dinput_device *device, const struct dinput_devic
     InitializeCriticalSection( &device->crit );
     dinput_internal_addref( (device->dinput = dinput) );
     device->vtbl = vtbl;
+
+    input_thread_add_user();
 }
 
 static const GUID *object_instance_guid( const DIDEVICEOBJECTINSTANCEW *instance )
