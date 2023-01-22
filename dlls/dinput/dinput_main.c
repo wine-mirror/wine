@@ -46,6 +46,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
+struct input_thread_state
+{
+    UINT events_count;
+    HANDLE events[128];
+};
+
 static inline struct dinput_device *impl_from_IDirectInputDevice8W( IDirectInputDevice8W *iface )
 {
     return CONTAINING_RECORD( iface, struct dinput_device, IDirectInputDevice8W_iface );
@@ -233,11 +239,10 @@ static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam
 
 static DWORD WINAPI dinput_thread_proc( void *params )
 {
-    HANDLE events[128], start_event = params;
+    HANDLE finished_event, start_event = params;
+    struct input_thread_state state = {0};
     static HHOOK kbd_hook, mouse_hook;
     struct dinput_device *impl, *next;
-    SIZE_T events_count = 0;
-    HANDLE finished_event;
     DWORD ret;
     MSG msg;
 
@@ -247,16 +252,16 @@ static DWORD WINAPI dinput_thread_proc( void *params )
     PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );
     SetEvent( start_event );
 
-    while ((ret = MsgWaitForMultipleObjectsEx( events_count, events, INFINITE, QS_ALLINPUT, 0 )) <= events_count)
+    while ((ret = MsgWaitForMultipleObjectsEx( state.events_count, state.events, INFINITE, QS_ALLINPUT, 0 )) <= state.events_count)
     {
         UINT kbd_cnt = 0, mice_cnt = 0;
 
-        if (ret < events_count)
+        if (ret < state.events_count)
         {
             EnterCriticalSection( &dinput_hook_crit );
             LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_device_list, struct dinput_device, entry )
             {
-                if (impl->read_event == events[ret])
+                if (impl->read_event == state.events[ret])
                 {
                     if (FAILED( impl->vtbl->read( &impl->IDirectInputDevice8W_iface ) ))
                     {
@@ -314,18 +319,18 @@ static DWORD WINAPI dinput_thread_proc( void *params )
             SetEvent(finished_event);
         }
 
-        events_count = 0;
+        state.events_count = 0;
         EnterCriticalSection( &dinput_hook_crit );
         LIST_FOR_EACH_ENTRY( impl, &acquired_device_list, struct dinput_device, entry )
         {
             if (!impl->read_event || !impl->vtbl->read) continue;
-            if (events_count >= ARRAY_SIZE(events)) break;
-            events[events_count++] = impl->read_event;
+            if (state.events_count >= ARRAY_SIZE(state.events)) break;
+            state.events[state.events_count++] = impl->read_event;
         }
         LeaveCriticalSection( &dinput_hook_crit );
     }
 
-    if (ret != events_count) ERR("Unexpected termination, ret %#lx\n", ret);
+    if (ret != state.events_count) ERR("Unexpected termination, ret %#lx\n", ret);
 
 done:
     DestroyWindow( di_em_win );
