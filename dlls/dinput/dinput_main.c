@@ -234,6 +234,8 @@ static void input_thread_update_device_list( struct input_thread_state *state )
         if (device->dwCoopLevel & DISCL_EXCLUSIVE) rawinput_mouse.dwFlags |= RIDEV_NOLEGACY | RIDEV_CAPTUREMOUSE;
         rawinput_mouse.dwFlags &= ~RIDEV_REMOVE;
         rawinput_mouse.hwndTarget = di_em_win;
+        dinput_device_internal_addref( (state->devices[count] = device) );
+        if (++count >= INPUT_THREAD_MAX_DEVICES) break;
     }
     LIST_FOR_EACH_ENTRY( device, &acquired_mouse_list, struct dinput_device, entry )
     {
@@ -281,10 +283,10 @@ static void input_thread_update_device_list( struct input_thread_state *state )
 
 static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-    struct dinput_device *impl;
-    RAWINPUT ri;
-    UINT size = sizeof(ri);
+    struct input_thread_state *state = input_thread_state;
     int rim = GET_RAWINPUT_CODE_WPARAM( wparam );
+    UINT i, size = sizeof(RAWINPUT);
+    RAWINPUT ri;
 
     TRACE( "%p %d %Ix %Ix\n", hwnd, msg, wparam, lparam );
 
@@ -295,17 +297,25 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             WARN( "Unable to read raw input data\n" );
         else if (ri.header.dwType == RIM_TYPEMOUSE)
         {
-            EnterCriticalSection( &dinput_hook_crit );
-            LIST_FOR_EACH_ENTRY( impl, &acquired_rawmouse_list, struct dinput_device, entry )
-                dinput_mouse_rawinput_hook( &impl->IDirectInputDevice8W_iface, wparam, lparam, &ri );
-            LeaveCriticalSection( &dinput_hook_crit );
+            for (i = state->events_count; i < state->devices_count; ++i)
+            {
+                struct dinput_device *device = state->devices[i];
+                if (!device->use_raw_input) continue;
+                if (device->instance.dwDevType & DIDEVTYPE_HID) continue;
+                switch (GET_DIDEVICE_TYPE( device->instance.dwDevType ))
+                {
+                case DIDEVTYPE_MOUSE:
+                case DI8DEVTYPE_MOUSE:
+                    dinput_mouse_rawinput_hook( &device->IDirectInputDevice8W_iface, wparam, lparam, &ri );
+                    break;
+                default: break;
+                }
+            }
         }
     }
 
     if (msg == WM_USER + 0x10)
     {
-        struct input_thread_state *state = input_thread_state;
-
         TRACE( "Processing hook change notification wparam %#Ix, lparam %#Ix.\n", wparam, lparam );
 
         if (!wparam) state->running = FALSE;
@@ -349,9 +359,8 @@ static DWORD WINAPI dinput_thread_proc( void *params )
     DWORD ret;
     MSG msg;
 
-    input_thread_state = &state;
     di_em_win = CreateWindowW( L"DIEmWin", L"DIEmWin", 0, 0, 0, 0, 0, HWND_MESSAGE, 0, DINPUT_instance, NULL );
-    PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE );
+    input_thread_state = &state;
     SetEvent( start_event );
 
     while (state.running && (ret = MsgWaitForMultipleObjectsEx( state.events_count, state.events, INFINITE, QS_ALLINPUT, 0 )) <= state.events_count)
