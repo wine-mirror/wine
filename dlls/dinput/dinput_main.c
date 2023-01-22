@@ -282,9 +282,9 @@ static void input_thread_update_device_list( struct input_thread_state *state )
 
 static DWORD WINAPI dinput_thread_proc( void *params )
 {
-    HANDLE finished_event, start_event = params;
     struct input_thread_state state = {0};
     struct dinput_device *device;
+    HANDLE start_event = params;
     DWORD ret;
     MSG msg;
 
@@ -320,22 +320,13 @@ static DWORD WINAPI dinput_thread_proc( void *params )
                 continue;
             }
 
-            finished_event = (HANDLE)msg.lParam;
-
             TRACE( "Processing hook change notification wparam %#Ix, lparam %#Ix.\n", msg.wParam, msg.lParam );
 
-            if (!msg.wParam)
-            {
-                if (state.keyboard_ll_hook) UnhookWindowsHookEx( state.keyboard_ll_hook );
-                if (state.mouse_ll_hook) UnhookWindowsHookEx( state.mouse_ll_hook );
-                state.keyboard_ll_hook = state.mouse_ll_hook = NULL;
-                goto done;
-            }
+            if (!msg.wParam) goto done;
 
             while (state.devices_count--) dinput_device_internal_release( state.devices[state.devices_count] );
             input_thread_update_device_list( &state );
-
-            SetEvent(finished_event);
+            SetEvent( (HANDLE)msg.lParam );
         }
     }
 
@@ -343,6 +334,8 @@ static DWORD WINAPI dinput_thread_proc( void *params )
 
 done:
     while (state.devices_count--) dinput_device_internal_release( state.devices[state.devices_count] );
+    if (state.keyboard_ll_hook) UnhookWindowsHookEx( state.keyboard_ll_hook );
+    if (state.mouse_ll_hook) UnhookWindowsHookEx( state.mouse_ll_hook );
     DestroyWindow( di_em_win );
     di_em_win = NULL;
     return 0;
