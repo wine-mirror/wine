@@ -36,7 +36,7 @@ typedef struct
 
 struct dinput_device_vtbl
 {
-    void (*release)( IDirectInputDevice8W *iface );
+    void (*destroy)( IDirectInputDevice8W *iface );
     HRESULT (*poll)( IDirectInputDevice8W *iface );
     HRESULT (*read)( IDirectInputDevice8W *iface );
     HRESULT (*acquire)( IDirectInputDevice8W *iface );
@@ -81,7 +81,9 @@ struct dinput_device
 {
     IDirectInputDevice8W        IDirectInputDevice8W_iface;
     IDirectInputDevice8A        IDirectInputDevice8A_iface;
+    LONG                        internal_ref;
     LONG                        ref;
+
     GUID                        guid;
     CRITICAL_SECTION            crit;
     struct dinput              *dinput;
@@ -125,8 +127,10 @@ struct dinput_device
 
 extern void dinput_device_init( struct dinput_device *device, const struct dinput_device_vtbl *vtbl,
                                 const GUID *guid, struct dinput *dinput );
+extern void dinput_device_internal_addref( struct dinput_device *device );
+extern void dinput_device_internal_release( struct dinput_device *device );
+
 extern HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface );
-extern void dinput_device_destroy( IDirectInputDevice8W *iface );
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
 extern DWORD get_config_key( HKEY, HKEY, const WCHAR *, WCHAR *, DWORD ) DECLSPEC_HIDDEN;

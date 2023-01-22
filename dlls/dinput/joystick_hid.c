@@ -172,7 +172,6 @@ struct pid_effect_state
 struct hid_joystick
 {
     struct dinput_device base;
-    LONG internal_ref;
 
     HANDLE device;
     OVERLAPPED read_ovl;
@@ -775,30 +774,18 @@ static void set_report_value( struct hid_joystick *impl, char *report_buf,
                                              caps->usage_page, caps->usage_min, status );
 }
 
-static void hid_joystick_addref( IDirectInputDevice8W *iface )
+static void hid_joystick_destroy( IDirectInputDevice8W *iface )
 {
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    ULONG ref = InterlockedIncrement( &impl->internal_ref );
-    TRACE( "iface %p, internal ref %lu.\n", iface, ref );
-}
+    TRACE( "iface %p.\n", iface );
 
-static void hid_joystick_release( IDirectInputDevice8W *iface )
-{
-    struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
-    ULONG ref = InterlockedDecrement( &impl->internal_ref );
-    TRACE( "iface %p, internal ref %lu.\n", iface, ref );
-
-    if (!ref)
-    {
-        free( impl->usages_buf );
-        free( impl->feature_report_buf );
-        free( impl->output_report_buf );
-        free( impl->input_report_buf );
-        HidD_FreePreparsedData( impl->preparsed );
-        CloseHandle( impl->base.read_event );
-        CloseHandle( impl->device );
-        dinput_device_destroy( iface );
-    }
+    free( impl->usages_buf );
+    free( impl->feature_report_buf );
+    free( impl->output_report_buf );
+    free( impl->input_report_buf );
+    HidD_FreePreparsedData( impl->preparsed );
+    CloseHandle( impl->base.read_event );
+    CloseHandle( impl->device );
 }
 
 static HRESULT hid_joystick_get_property( IDirectInputDevice8W *iface, DWORD property,
@@ -1367,7 +1354,7 @@ static HRESULT hid_joystick_enum_objects( IDirectInputDevice8W *iface, const DIP
 
 static const struct dinput_device_vtbl hid_joystick_vtbl =
 {
-    hid_joystick_release,
+    hid_joystick_destroy,
     NULL,
     hid_joystick_read,
     hid_joystick_acquire,
@@ -2036,7 +2023,6 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
     impl->base.read_event = CreateEventW( NULL, TRUE, FALSE, NULL );
-    impl->internal_ref = 1;
 
     if (memcmp( device_path_guid.Data4, guid->Data4, sizeof(device_path_guid.Data4) ))
         hr = hid_joystick_device_open( -1, guid, &impl->base.instance, impl->device_path, &impl->device, &impl->preparsed,
@@ -2163,7 +2149,7 @@ static ULONG WINAPI hid_joystick_effect_Release( IDirectInputEffect *iface )
         EnterCriticalSection( &impl->joystick->base.crit );
         list_remove( &impl->entry );
         LeaveCriticalSection( &impl->joystick->base.crit );
-        hid_joystick_release( &impl->joystick->base.IDirectInputDevice8W_iface );
+        dinput_device_internal_release( &impl->joystick->base );
         free( impl->set_envelope_buf );
         free( impl->type_specific_buf );
         free( impl->effect_update_buf );
@@ -3155,7 +3141,7 @@ static HRESULT hid_joystick_create_effect( IDirectInputDevice8W *iface, IDirectI
     impl->IDirectInputEffect_iface.lpVtbl = &hid_joystick_effect_vtbl;
     impl->ref = 1;
     impl->joystick = joystick;
-    hid_joystick_addref( &joystick->base.IDirectInputDevice8W_iface );
+    dinput_device_internal_addref( &joystick->base );
 
     EnterCriticalSection( &joystick->base.crit );
     list_add_tail( &joystick->effect_list, &impl->entry );

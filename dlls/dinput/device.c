@@ -693,25 +693,35 @@ static HRESULT WINAPI dinput_device_SetEventNotification( IDirectInputDevice8W *
     return DI_OK;
 }
 
-void dinput_device_destroy( IDirectInputDevice8W *iface )
+void dinput_device_internal_addref( struct dinput_device *impl )
 {
-    struct dinput_device *This = impl_from_IDirectInputDevice8W( iface );
+    ULONG ref = InterlockedIncrement( &impl->internal_ref );
+    TRACE( "impl %p, internal ref %lu.\n", impl, ref );
+}
 
-    TRACE( "iface %p.\n", iface );
+void dinput_device_internal_release( struct dinput_device *impl )
+{
+    ULONG ref = InterlockedDecrement( &impl->internal_ref );
+    TRACE( "impl %p, internal ref %lu.\n", impl, ref );
 
-    free( This->object_properties );
-    free( This->data_queue );
+    if (!ref)
+    {
+        if (impl->vtbl->destroy) impl->vtbl->destroy( &impl->IDirectInputDevice8W_iface );
 
-    free( This->device_format.rgodf );
-    dinput_device_release_user_format( This );
+        free( impl->object_properties );
+        free( impl->data_queue );
 
-    free( This->action_map );
+        free( impl->device_format.rgodf );
+        dinput_device_release_user_format( impl );
 
-    IDirectInput_Release(&This->dinput->IDirectInput7A_iface);
-    This->crit.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection(&This->crit);
+        free( impl->action_map );
 
-    free( This );
+        IDirectInput_Release( &impl->dinput->IDirectInput7A_iface );
+        impl->crit.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection( &impl->crit );
+
+        free( impl );
+    }
 }
 
 static ULONG WINAPI dinput_device_Release( IDirectInputDevice8W *iface )
@@ -724,8 +734,7 @@ static ULONG WINAPI dinput_device_Release( IDirectInputDevice8W *iface )
     if (!ref)
     {
         IDirectInputDevice_Unacquire( iface );
-        if (impl->vtbl->release) impl->vtbl->release( iface );
-        else dinput_device_destroy( iface );
+        dinput_device_internal_release( impl );
     }
 
     return ref;
@@ -2107,6 +2116,7 @@ void dinput_device_init( struct dinput_device *device, const struct dinput_devic
 {
     device->IDirectInputDevice8A_iface.lpVtbl = &dinput_device_a_vtbl;
     device->IDirectInputDevice8W_iface.lpVtbl = &dinput_device_w_vtbl;
+    device->internal_ref = 1;
     device->ref = 1;
     device->guid = *guid;
     device->instance.dwSize = sizeof(DIDEVICEINSTANCEW);
