@@ -68,14 +68,17 @@ static NTSTATUS get_value_caps_range( struct hid_preparsed_data *preparsed, HIDP
     return HIDP_STATUS_SUCCESS;
 }
 
+#define USAGE_MASK  0xffff
+#define USAGE_ANY  0x10000
+
 struct caps_filter
 {
     BOOLEAN buttons;
     BOOLEAN values;
     BOOLEAN array;
-    USAGE   usage_page;
+    DWORD   usage_page;
     USHORT  collection;
-    USAGE   usage;
+    DWORD   usage;
     UCHAR   report_id;
 };
 
@@ -84,10 +87,10 @@ static BOOL match_value_caps( const struct hid_value_caps *caps, const struct ca
     if (!caps->usage_min && !caps->usage_max) return FALSE;
     if (filter->buttons && !(caps->flags & HID_VALUE_CAPS_IS_BUTTON)) return FALSE;
     if (filter->values && (caps->flags & HID_VALUE_CAPS_IS_BUTTON)) return FALSE;
-    if (filter->usage_page && filter->usage_page != caps->usage_page) return FALSE;
+    if (filter->usage_page != USAGE_ANY && (filter->usage_page & USAGE_MASK) != caps->usage_page) return FALSE;
     if (filter->collection && filter->collection != caps->link_collection) return FALSE;
-    if (!filter->usage) return TRUE;
-    return caps->usage_min <= filter->usage && caps->usage_max >= filter->usage;
+    if (filter->usage == USAGE_ANY) return TRUE;
+    return caps->usage_min <= (filter->usage & USAGE_MASK) && caps->usage_max >= (filter->usage & USAGE_MASK);
 }
 
 typedef NTSTATUS (*enum_value_caps_callback)( const struct hid_value_caps *caps, void *user );
@@ -384,7 +387,7 @@ NTSTATUS WINAPI HidP_GetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, 
 {
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct get_usage_params params = {.usages = usages, .usages_end = usages + *usages_len, .report_buf = report_buf};
-    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection};
+    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection, .usage = USAGE_ANY};
     NTSTATUS status;
     USHORT limit = -1;
 
@@ -441,7 +444,7 @@ static NTSTATUS get_usage_list_length( const struct hid_value_caps *caps, void *
 ULONG WINAPI HidP_MaxUsageListLength( HIDP_REPORT_TYPE report_type, USAGE usage_page, PHIDP_PREPARSED_DATA preparsed_data )
 {
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
-    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page};
+    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page | USAGE_ANY, .usage = USAGE_ANY};
     USHORT limit = -1;
     ULONG count = 0;
 
@@ -590,7 +593,7 @@ NTSTATUS WINAPI HidP_SetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page, 
 {
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct set_usage_params params = {.report_buf = report_buf};
-    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection};
+    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection, .usage = USAGE_ANY};
     NTSTATUS status;
     USHORT limit = 1;
     ULONG i, count = *usage_count;
@@ -656,7 +659,7 @@ NTSTATUS WINAPI HidP_UnsetUsages( HIDP_REPORT_TYPE report_type, USAGE usage_page
 {
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
     struct unset_usage_params params = {.report_buf = report_buf, .found = FALSE};
-    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection};
+    struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection, .usage = USAGE_ANY};
     NTSTATUS status;
     USHORT limit = 1;
     ULONG i, count = *usage_count;
@@ -739,7 +742,7 @@ NTSTATUS WINAPI HidP_GetSpecificButtonCaps( HIDP_REPORT_TYPE report_type, USAGE 
                                             PHIDP_PREPARSED_DATA preparsed_data )
 {
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
-    const struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
+    const struct caps_filter filter = {.buttons = TRUE, .usage_page = usage_page | USAGE_ANY, .collection = collection, .usage = usage | USAGE_ANY};
 
     TRACE( "report_type %d, usage_page %u, collection %u, usage %u, caps %p, caps_count %p, preparsed_data %p.\n",
            report_type, usage_page, collection, usage, caps, caps_count, preparsed_data );
@@ -806,7 +809,7 @@ NTSTATUS WINAPI HidP_GetSpecificValueCaps( HIDP_REPORT_TYPE report_type, USAGE u
                                            PHIDP_PREPARSED_DATA preparsed_data )
 {
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
-    const struct caps_filter filter = {.values = TRUE, .usage_page = usage_page, .collection = collection, .usage = usage};
+    const struct caps_filter filter = {.values = TRUE, .usage_page = usage_page | USAGE_ANY, .collection = collection, .usage = usage | USAGE_ANY};
 
     TRACE( "report_type %d, usage_page %u, collection %u, usage %u, caps %p, caps_count %p, preparsed_data %p.\n",
            report_type, usage_page, collection, usage, caps, caps_count, preparsed_data );
@@ -869,7 +872,7 @@ NTSTATUS WINAPI HidP_GetUsagesEx( HIDP_REPORT_TYPE report_type, USHORT collectio
 {
     struct get_usage_and_page_params params = {.usages = usages, .usages_end = usages + *usages_len, .report_buf = report_buf};
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
-    struct caps_filter filter = {.buttons = TRUE, .collection = collection};
+    struct caps_filter filter = {.buttons = TRUE, .usage_page = USAGE_ANY, .collection = collection, .usage = USAGE_ANY};
     NTSTATUS status;
     USHORT limit = -1;
 
@@ -899,7 +902,7 @@ static NTSTATUS count_data( const struct hid_value_caps *caps, void *user )
 ULONG WINAPI HidP_MaxDataListLength( HIDP_REPORT_TYPE report_type, PHIDP_PREPARSED_DATA preparsed_data )
 {
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
-    struct caps_filter filter = {};
+    struct caps_filter filter = {.usage_page = USAGE_ANY, .usage = USAGE_ANY};
     USHORT limit = -1;
     ULONG count = 0;
 
@@ -981,7 +984,7 @@ NTSTATUS WINAPI HidP_GetData( HIDP_REPORT_TYPE report_type, HIDP_DATA *data, ULO
 {
     struct find_all_data_params params = {.data = data, .data_end = data + *data_len, .report_buf = report_buf};
     struct hid_preparsed_data *preparsed = (struct hid_preparsed_data *)preparsed_data;
-    struct caps_filter filter = {};
+    struct caps_filter filter = {.usage_page = USAGE_ANY, .usage = USAGE_ANY};
     NTSTATUS status;
     USHORT limit = -1;
 
