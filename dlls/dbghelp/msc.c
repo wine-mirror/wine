@@ -2862,7 +2862,7 @@ static void pdb_location_compute(struct process* pcs,
             case S_DEFRANGE_FRAMEPOINTER_REL:
             case S_DEFRANGE_FRAMEPOINTER_REL_FULL_SCOPE:
                 loc->kind = loc_regrel;
-                loc->reg = dbghelp_current_cpu->frame_regno;
+                loc->reg = modfmt->module->cpu->frame_regno;
                 loc->offset = locinfo->offset;
                 return;
             }
