@@ -1729,7 +1729,7 @@ INT WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
     TRACE( "%p, %d,%d update_rgn=%p update_rect = %p %s %04x\n",
            hwnd, dx, dy, update_rgn, update_rect, wine_dbgstr_rect(rect), flags );
     TRACE( "clip_rect = %s\n", wine_dbgstr_rect(clip_rect) );
-    if (flags & ~(SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE))
+    if (flags & ~(SW_SCROLLCHILDREN | SW_INVALIDATE | SW_ERASE | SW_NODCCACHE))
         FIXME( "some flags (%04x) are unhandled\n", flags );
 
     rdw_flags = (flags & SW_ERASE) && (flags & SW_INVALIDATE) ?
