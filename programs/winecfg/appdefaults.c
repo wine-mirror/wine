@@ -37,6 +37,7 @@ struct win_version
 {
     const WCHAR *szVersion;
     const WCHAR *szDescription;
+    const WCHAR *szCurrentVersion;
     DWORD        dwMajorVersion;
     DWORD        dwMinorVersion;
     DWORD        dwBuildNumber;
@@ -49,28 +50,28 @@ struct win_version
 
 static const struct win_version win_versions[] =
 {
-    { L"win11",     L"Windows 11",       10,  0, 22000, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
-    { L"win10",     L"Windows 10",       10,  0, 18362, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
-    { L"win81",     L"Windows 8.1",       6,  3,  9600, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
-    { L"win8",      L"Windows 8",         6,  2,  9200, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
-    { L"win2008r2", L"Windows 2008 R2",   6,  1,  7601, VER_PLATFORM_WIN32_NT, L"Service Pack 1", 1, 0, L"ServerNT"},
-    { L"win7",      L"Windows 7",         6,  1,  7601, VER_PLATFORM_WIN32_NT, L"Service Pack 1", 1, 0, L"WinNT"},
-    { L"win2008",   L"Windows 2008",      6,  0,  6002, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"ServerNT"},
-    { L"vista",     L"Windows Vista",     6,  0,  6002, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"WinNT"},
-    { L"win2003",   L"Windows 2003",      5,  2,  3790, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"ServerNT"},
+    { L"win11",     L"Windows 11",      L"6.3", 10,  0, 22000, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
+    { L"win10",     L"Windows 10",      L"6.3", 10,  0, 18362, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
+    { L"win81",     L"Windows 8.1",     NULL,    6,  3,  9600, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
+    { L"win8",      L"Windows 8",       NULL,    6,  2,  9200, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
+    { L"win2008r2", L"Windows 2008 R2", NULL,    6,  1,  7601, VER_PLATFORM_WIN32_NT, L"Service Pack 1", 1, 0, L"ServerNT"},
+    { L"win7",      L"Windows 7",       NULL,    6,  1,  7601, VER_PLATFORM_WIN32_NT, L"Service Pack 1", 1, 0, L"WinNT"},
+    { L"win2008",   L"Windows 2008",    NULL,    6,  0,  6002, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"ServerNT"},
+    { L"vista",     L"Windows Vista",   NULL,    6,  0,  6002, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"WinNT"},
+    { L"win2003",   L"Windows 2003",    NULL,    5,  2,  3790, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"ServerNT"},
 #ifdef _WIN64
-    { L"winxp64",   L"Windows XP",        5,  2,  3790, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"WinNT"},
+    { L"winxp64",   L"Windows XP",      NULL,    5,  2,  3790, VER_PLATFORM_WIN32_NT, L"Service Pack 2", 2, 0, L"WinNT"},
 #else
-    { L"winxp",     L"Windows XP",        5,  1,  2600, VER_PLATFORM_WIN32_NT, L"Service Pack 3", 3, 0, L"WinNT"},
-    { L"win2k",     L"Windows 2000",      5,  0,  2195, VER_PLATFORM_WIN32_NT, L"Service Pack 4", 4, 0, L"WinNT"},
-    { L"winme",     L"Windows ME",        4, 90,  3000, VER_PLATFORM_WIN32_WINDOWS, L" ", 0, 0, L""},
-    { L"win98",     L"Windows 98",        4, 10,  2222, VER_PLATFORM_WIN32_WINDOWS, L" A ", 0, 0, L""},
-    { L"win95",     L"Windows 95",        4,  0,   950, VER_PLATFORM_WIN32_WINDOWS, L"", 0, 0, L""},
-    { L"nt40",      L"Windows NT 4.0",    4,  0,  1381, VER_PLATFORM_WIN32_NT, L"Service Pack 6a", 6, 0, L"WinNT"},
-    { L"nt351",     L"Windows NT 3.51",   3, 51,  1057, VER_PLATFORM_WIN32_NT, L"Service Pack 5", 5, 0, L"WinNT"},
-    { L"win31",     L"Windows 3.1",       3, 10,     0, VER_PLATFORM_WIN32s, L"Win32s 1.3", 0, 0, L""},
-    { L"win30",     L"Windows 3.0",       3,  0,     0, VER_PLATFORM_WIN32s, L"Win32s 1.3", 0, 0, L""},
-    { L"win20",     L"Windows 2.0",       2,  0,     0, VER_PLATFORM_WIN32s, L"Win32s 1.3", 0, 0, L""}
+    { L"winxp",     L"Windows XP",      NULL,    5,  1,  2600, VER_PLATFORM_WIN32_NT, L"Service Pack 3", 3, 0, L"WinNT"},
+    { L"win2k",     L"Windows 2000",    NULL,    5,  0,  2195, VER_PLATFORM_WIN32_NT, L"Service Pack 4", 4, 0, L"WinNT"},
+    { L"winme",     L"Windows ME",      NULL,    4, 90,  3000, VER_PLATFORM_WIN32_WINDOWS, L" ", 0, 0, L""},
+    { L"win98",     L"Windows 98",      NULL,    4, 10,  2222, VER_PLATFORM_WIN32_WINDOWS, L" A ", 0, 0, L""},
+    { L"win95",     L"Windows 95",      NULL,    4,  0,   950, VER_PLATFORM_WIN32_WINDOWS, L"", 0, 0, L""},
+    { L"nt40",      L"Windows NT 4.0",  NULL,    4,  0,  1381, VER_PLATFORM_WIN32_NT, L"Service Pack 6a", 6, 0, L"WinNT"},
+    { L"nt351",     L"Windows NT 3.51", NULL,    3, 51,  1057, VER_PLATFORM_WIN32_NT, L"Service Pack 5", 5, 0, L"WinNT"},
+    { L"win31",     L"Windows 3.1",     NULL,    3, 10,     0, VER_PLATFORM_WIN32s, L"Win32s 1.3", 0, 0, L""},
+    { L"win30",     L"Windows 3.0",     NULL,    3,  0,     0, VER_PLATFORM_WIN32s, L"Win32s 1.3", 0, 0, L""},
+    { L"win20",     L"Windows 2.0",     NULL,    2,  0,     0, VER_PLATFORM_WIN32s, L"Win32s 1.3", 0, 0, L""}
 #endif
 };
 
@@ -80,9 +81,20 @@ static const WCHAR szKey9x[] = L"Software\\Microsoft\\Windows\\CurrentVersion";
 static const WCHAR szKeyNT[] = L"Software\\Microsoft\\Windows NT\\CurrentVersion";
 static const WCHAR szKeyProdNT[] = L"System\\CurrentControlSet\\Control\\ProductOptions";
 
+static DWORD get_reg_dword( HKEY root, const WCHAR *subkey, const WCHAR *value )
+{
+    HKEY hkey;
+    DWORD ret, len = sizeof(ret), type;
+
+    if (RegOpenKeyExW( root, subkey, 0, KEY_QUERY_VALUE, &hkey )) return 0;
+    if (RegQueryValueExW( hkey, value, NULL, &type, (BYTE *)&ret, &len ) || type != REG_DWORD) ret = 0;
+    RegCloseKey( hkey );
+    return ret;
+}
+
 static int get_registry_version(void)
 {
-    int i, best = -1, platform, major, minor = 0, build = 0;
+    int i, best = -1, platform, major = 0, minor = 0, build = 0;
     WCHAR *p, *ver, *type = NULL;
 
     if ((ver = get_reg_key( HKEY_LOCAL_MACHINE, szKeyNT, L"CurrentVersion", NULL )))
@@ -90,6 +102,9 @@ static int get_registry_version(void)
         WCHAR *build_str;
 
         platform = VER_PLATFORM_WIN32_NT;
+
+        major = get_reg_dword( HKEY_LOCAL_MACHINE, szKeyNT, L"CurrentMajorVersionNumber" );
+        minor = get_reg_dword( HKEY_LOCAL_MACHINE, szKeyNT, L"CurrentMinorVersionNumber" );
 
         build_str = get_reg_key( HKEY_LOCAL_MACHINE, szKeyNT, L"CurrentBuildNumber", NULL );
         build = wcstol(build_str, NULL, 10);
@@ -101,19 +116,22 @@ static int get_registry_version(void)
     else
         return -1;
 
-    if ((p = wcschr( ver, '.' )))
+    if (!major)
     {
-        WCHAR *minor_str = p;
-        *minor_str++ = 0;
-        if ((p = wcschr( minor_str, '.' )))
+        if ((p = wcschr( ver, '.' )))
         {
-            WCHAR *build_str = p;
-            *build_str++ = 0;
-            build = wcstol(build_str, NULL, 10);
+            WCHAR *minor_str = p;
+            *minor_str++ = 0;
+            if ((p = wcschr( minor_str, '.' )))
+            {
+                WCHAR *build_str = p;
+                *build_str++ = 0;
+                build = wcstol(build_str, NULL, 10);
+            }
+            minor = wcstol(minor_str, NULL, 10);
         }
-        minor = wcstol(minor_str, NULL, 10);
+        major = wcstol(ver, NULL, 10);
     }
-    major = wcstol(ver, NULL, 10);
 
     for (i = 0; i < ARRAY_SIZE(win_versions); i++)
     {
@@ -428,9 +446,13 @@ static void set_winver(const struct win_version *version)
             break;
 
         case VER_PLATFORM_WIN32_NT:
-            swprintf(buffer, ARRAY_SIZE(buffer), L"%d.%d", version->dwMajorVersion,
-                        version->dwMinorVersion);
-            set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, L"CurrentVersion", buffer);
+            if (version->szCurrentVersion)
+                set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, L"CurrentVersion", version->szCurrentVersion);
+            else
+            {
+                swprintf(buffer, ARRAY_SIZE(buffer), L"%d.%d", version->dwMajorVersion, version->dwMinorVersion);
+                set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, L"CurrentVersion", buffer);
+            }
             set_reg_key_dword(HKEY_LOCAL_MACHINE, szKeyNT, L"CurrentMajorVersionNumber", version->dwMajorVersion);
             set_reg_key_dword(HKEY_LOCAL_MACHINE, szKeyNT, L"CurrentMinorVersionNumber", version->dwMinorVersion);
             set_reg_key(HKEY_LOCAL_MACHINE, szKeyNT, L"CSDVersion", version->szCSDVersion);
