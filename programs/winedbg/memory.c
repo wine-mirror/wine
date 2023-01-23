@@ -248,13 +248,13 @@ void memory_examine(const struct dbg_lvalue *lvalue, int count, char format)
     case 'd': DO_DUMP(unsigned int, 4, " %4.4d"); break;
     case 'w': DO_DUMP(unsigned short, 8, " %04x"); break;
     case 'a':
-        if (sizeof(DWORD_PTR) == 4)
+        if (ADDRSIZE == 4)
         {
-            DO_DUMP(DWORD_PTR, 4, " %8.8Ix");
+            DO_DUMP(DWORD, 4, " %8.8lx");
         }
         else
         {
-            DO_DUMP(DWORD_PTR, 2, " %16.16Ix");
+            DO_DUMP(DWORD64, 2, " %16.16I64x");
         }
         break;
     case 'c': DO_DUMP2(char, 32, " %c", (_v < 0x20) ? ' ' : _v); break;
