@@ -55,6 +55,7 @@ typedef enum
     WIN8,    /* Windows 8 */
     WIN81,   /* Windows 8.1 */
     WIN10,   /* Windows 10 */
+    WIN11,   /* Windows 11 */
     NB_WINDOWS_VERSIONS
 } WINDOWS_VERSION;
 
@@ -170,7 +171,11 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
         sizeof(RTL_OSVERSIONINFOEXW), 10, 0, 18362, VER_PLATFORM_WIN32_NT,
         L"", 0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
     },
-
+    /* WIN11 */
+    {
+        sizeof(RTL_OSVERSIONINFOEXW), 10, 0, 22000, VER_PLATFORM_WIN32_NT,
+        L"", 0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
+    },
 };
 
 static const struct { WCHAR name[12]; WINDOWS_VERSION ver; } version_names[] =
@@ -201,6 +206,7 @@ static const struct { WCHAR name[12]; WINDOWS_VERSION ver; } version_names[] =
     { L"win8", WIN8 },
     { L"win81", WIN81 },
     { L"win10", WIN10 },
+    { L"win11", WIN11 },
 };
 
 

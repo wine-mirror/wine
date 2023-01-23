@@ -50,6 +50,7 @@ struct win_version
 
 static const struct win_version win_versions[] =
 {
+    { L"win11",     L"Windows 11",       10,  0, 22000, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
     { L"win10",     L"Windows 10",       10,  0, 18362, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
     { L"win81",     L"Windows 8.1",       6,  3,  9600, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
     { L"win8",      L"Windows 8",         6,  2,  9200, VER_PLATFORM_WIN32_NT, L"", 0, 0, L"WinNT"},
