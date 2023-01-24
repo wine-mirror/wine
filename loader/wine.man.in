@@ -228,6 +228,18 @@ existing prefix, Wine will refuse to start if
 .B WINEARCH
 doesn't match the prefix architecture.
 .TP
+.B WINE_D3D_CONFIG
+Specifies Direct3D configuration options. It can be used instead of
+modifying the
+.B HKEY_CURRENT_USER\\\\Software\\\\Wine\\\\Direct3D
+registry key. The value is a comma- or semicolon-separated list
+of key-value pairs. For example:
+.IP
+WINE_D3D_CONFIG="renderer=vulkan;VideoPciVendorID=0xc0de"
+.IP
+If an individual setting is specified in both
+the environment variable and the registry, the former takes precedence.
+.TP
 .B DISPLAY
 Specifies the X11 display to use.
 .TP
