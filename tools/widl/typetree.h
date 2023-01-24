@@ -32,13 +32,6 @@ enum name_type {
     NAME_C
 };
 
-attr_list_t *check_apicontract_attrs(const char *name, attr_list_t *attrs);
-attr_list_t *check_coclass_attrs(const char *name, attr_list_t *attrs);
-attr_list_t *check_dispiface_attrs(const char *name, attr_list_t *attrs);
-attr_list_t *check_interface_attrs(const char *name, attr_list_t *attrs);
-attr_list_t *check_module_attrs(const char *name, attr_list_t *attrs);
-attr_list_t *check_runtimeclass_attrs(const char *name, attr_list_t *attrs);
-
 type_t *find_parameterized_type(type_t *type, typeref_list_t *params);
 
 type_t *type_new_function(var_list_t *args);
@@ -80,12 +73,9 @@ int type_is_equal(const type_t *type1, const type_t *type2);
 const char *type_get_decl_name(const type_t *type, enum name_type name_type);
 const char *type_get_name(const type_t *type, enum name_type name_type);
 char *gen_name(void);
-extern int is_attr(const attr_list_t *list, enum attr_type t);
 
 typeref_t *make_typeref(type_t *type);
 typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref);
-attr_t *make_attrp(enum attr_type type, void *val);
-attr_list_t *append_attr(attr_list_t *list, attr_t *attr);
 
 /* FIXME: shouldn't need to export this */
 type_t *duptype(type_t *t, int dupname);
@@ -354,6 +344,11 @@ static inline int type_array_is_decl_as_ptr(const type_t *type)
 static inline int type_is_alias(const type_t *type)
 {
     return type->type_type == TYPE_ALIAS;
+}
+
+static inline int type_is_ptr( const type_t *type )
+{
+    return type->type_type == TYPE_POINTER;
 }
 
 static inline const decl_spec_t *type_alias_get_aliasee(const type_t *type)

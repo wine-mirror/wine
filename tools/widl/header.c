@@ -65,63 +65,6 @@ static void write_line(FILE *f, int delta, const char *fmt, ...)
     fprintf(f, "\n");
 }
 
-int is_ptrchain_attr(const var_t *var, enum attr_type t)
-{
-    if (is_attr(var->attrs, t))
-        return 1;
-    else
-    {
-        type_t *type = var->declspec.type;
-        for (;;)
-        {
-            if (is_attr(type->attrs, t))
-                return 1;
-            else if (type_is_alias(type))
-                type = type_alias_get_aliasee_type(type);
-            else if (is_ptr(type))
-                type = type_pointer_get_ref_type(type);
-            else return 0;
-        }
-    }
-}
-
-int is_aliaschain_attr(const type_t *type, enum attr_type attr)
-{
-    const type_t *t = type;
-    for (;;)
-    {
-        if (is_attr(t->attrs, attr))
-            return 1;
-        else if (type_is_alias(t))
-            t = type_alias_get_aliasee_type(t);
-        else return 0;
-    }
-}
-
-int is_attr(const attr_list_t *list, enum attr_type t)
-{
-    const attr_t *attr;
-    if (list) LIST_FOR_EACH_ENTRY( attr, list, const attr_t, entry )
-        if (attr->type == t) return 1;
-    return 0;
-}
-
-void *get_attrp(const attr_list_t *list, enum attr_type t)
-{
-    const attr_t *attr;
-    if (list) LIST_FOR_EACH_ENTRY( attr, list, const attr_t, entry )
-        if (attr->type == t) return attr->u.pval;
-    return NULL;
-}
-
-unsigned int get_attrv(const attr_list_t *list, enum attr_type t)
-{
-    const attr_t *attr;
-    if (list) LIST_FOR_EACH_ENTRY( attr, list, const attr_t, entry )
-        if (attr->type == t) return attr->u.ival;
-    return 0;
-}
-
 static char *format_parameterized_type_args(const type_t *type, const char *prefix, const char *suffix)
 {
     typeref_list_t *params;

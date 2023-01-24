@@ -2,6 +2,7 @@ PROGRAMS = widl
 PARENTSRC = ../wrc
 
 C_SRCS = \
+	attribute.c \
 	client.c \
 	expr.c \
 	hash.c \

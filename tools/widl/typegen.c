@@ -185,19 +185,6 @@ static const char *string_of_type(unsigned char type)
     }
 }
 
-static void *get_aliaschain_attrp(const type_t *type, enum attr_type attr)
-{
-    const type_t *t = type;
-    for (;;)
-    {
-        if (is_attr(t->attrs, attr))
-            return get_attrp(t->attrs, attr);
-        else if (type_is_alias(t))
-            t = type_alias_get_aliasee_type(t);
-        else return NULL;
-    }
-}
-
 unsigned char get_basic_fc(const type_t *type)
 {
     int sign = type_basic_get_sign(type);

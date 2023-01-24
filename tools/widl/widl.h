@@ -95,4 +95,42 @@ extern void write_dlldata(const statement_list_t *stmts);
 extern void start_cplusplus_guard(FILE *fp);
 extern void end_cplusplus_guard(FILE *fp);
 
+/* attribute.c */
+
+extern attr_t *make_attr( enum attr_type attr_type );
+extern attr_t *make_attrv( enum attr_type attr_type, unsigned int val );
+extern attr_t *make_attrp( enum attr_type attr_type, void *val );
+extern attr_t *make_custom_attr( struct uuid *id, expr_t *pval );
+
+extern int is_attr( const attr_list_t *list, enum attr_type attr_type );
+extern int is_ptrchain_attr( const var_t *var, enum attr_type attr_type );
+extern int is_aliaschain_attr( const type_t *type, enum attr_type attr_type );
+
+extern unsigned int get_attrv( const attr_list_t *list, enum attr_type attr_type );
+extern void *get_attrp( const attr_list_t *list, enum attr_type attr_type );
+extern void *get_aliaschain_attrp( const type_t *type, enum attr_type attr_type );
+
+typedef int (*map_attrs_filter_t)( attr_list_t *, const attr_t * );
+extern attr_list_t *append_attr( attr_list_t *list, attr_t *attr );
+extern attr_list_t *append_attr_list( attr_list_t *new_list, attr_list_t *old_list );
+extern attr_list_t *append_attribs( attr_list_t *, attr_list_t * );
+extern attr_list_t *map_attrs( const attr_list_t *list, map_attrs_filter_t filter );
+extern attr_list_t *move_attr( attr_list_t *dst, attr_list_t *src, enum attr_type type );
+
+extern attr_list_t *check_apicontract_attrs( const char *name, attr_list_t *attrs );
+extern attr_list_t *check_coclass_attrs( const char *name, attr_list_t *attrs );
+extern attr_list_t *check_dispiface_attrs( const char *name, attr_list_t *attrs );
+extern attr_list_t *check_enum_attrs( attr_list_t *attrs );
+extern attr_list_t *check_enum_member_attrs( attr_list_t *attrs );
+extern attr_list_t *check_field_attrs( const char *name, attr_list_t *attrs );
+extern attr_list_t *check_function_attrs( const char *name, attr_list_t *attrs );
+extern attr_list_t *check_interface_attrs( const char *name, attr_list_t *attrs );
+extern attr_list_t *check_library_attrs( const char *name, attr_list_t *attrs );
+extern attr_list_t *check_module_attrs( const char *name, attr_list_t *attrs );
+extern attr_list_t *check_runtimeclass_attrs( const char *name, attr_list_t *attrs );
+extern attr_list_t *check_struct_attrs( attr_list_t *attrs );
+extern attr_list_t *check_typedef_attrs( attr_list_t *attrs );
+extern attr_list_t *check_union_attrs( attr_list_t *attrs );
+extern void check_arg_attrs( const var_t *arg );
+
 #endif
