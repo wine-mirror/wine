@@ -20,6 +20,7 @@
 
 %option stack
 %option noinput nounput noyy_top_state
+%option noyywrap
 %option 8bit never-interactive prefix="parser_"
 
 nl	\r?\n
@@ -231,13 +232,6 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
                             yyterminate();
 			}
 %%
-
-#ifndef parser_wrap
-int parser_wrap(void)
-{
-	return 1;
-}
-#endif
 
 struct keyword {
 	const char *kw;
