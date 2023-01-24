@@ -24,6 +24,7 @@ import "inspectable.idl";
 import "asyncinfo.idl";
 import "windowscontracts.idl";
 /* import "eventtoken.idl"; */
+import "ivectorchangedeventargs.idl";
 
 namespace Windows {
     namespace Foundation {
@@ -103,6 +104,16 @@ cpp_quote("#endif")
             interface IIterable<T> : IInspectable
             {
                 HRESULT First([out, retval] Windows.Foundation.Collections.IIterator<T> **value);
+            }
+
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(9939f4df-050a-4c0f-aa60-77075f9c4777)
+            ]
+            interface IMapChangedEventArgs<T> : IInspectable
+            {
+                [propget] HRESULT CollectionChanged([out, retval] Windows.Foundation.Collections.CollectionChange *value);
+                [propget] HRESULT Key([out, retval] T *key);
             }
 
             [
