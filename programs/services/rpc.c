@@ -102,6 +102,8 @@ static void sc_notify_release(struct sc_notify_handle *notify)
     if (r == 0)
     {
         CloseHandle(notify->event);
+        if (notify->params_list)
+            free(notify->params_list->NotifyParamsArray[0].params);
         free(notify->params_list);
         free(notify);
     }
@@ -841,11 +843,14 @@ static void fill_notify(struct sc_notify_handle *notify, struct service_entry *s
     SC_RPC_NOTIFY_PARAMS_LIST *list;
     SERVICE_NOTIFY_STATUS_CHANGE_PARAMS_2 *cparams;
 
-    list = calloc(1, sizeof(SC_RPC_NOTIFY_PARAMS_LIST) + sizeof(SERVICE_NOTIFY_STATUS_CHANGE_PARAMS_2));
+    list = calloc(1, sizeof(SC_RPC_NOTIFY_PARAMS_LIST));
     if (!list)
         return;
-
-    cparams = (SERVICE_NOTIFY_STATUS_CHANGE_PARAMS_2 *)(list + 1);
+    if (!(cparams = calloc(1, sizeof(SERVICE_NOTIFY_STATUS_CHANGE_PARAMS_2))))
+    {
+        free(list);
+        return;
+    }
 
     cparams->dwNotifyMask = notify->notify_mask;
     fill_status_process(&cparams->ServiceStatus, service);
