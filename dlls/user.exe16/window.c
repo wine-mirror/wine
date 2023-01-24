@@ -1671,7 +1671,7 @@ BOOL16 WINAPI GetClassInfoEx16( HINSTANCE16 hInst16, SEGPTR name, WNDCLASSEX16 *
         wc->hCursor       = get_icon_16( wc32.hCursor );
         wc->hbrBackground = HBRUSH_16(wc32.hbrBackground);
         wc->lpszClassName = 0;
-        wc->lpszMenuName  = MapLS(wc32.lpszMenuName);  /* FIXME: leak */
+        wc->lpszMenuName  = MapLS((void *)wc32.lpszMenuName);  /* FIXME: leak */
     }
     return ret;
 }

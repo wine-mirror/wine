@@ -290,8 +290,8 @@ static LRESULT CALLBACK call_WH_CBT( INT code, WPARAM wp, LPARAM lp )
             cs16.y              = cbtcw32->lpcs->y;
             cs16.x              = cbtcw32->lpcs->x;
             cs16.style          = cbtcw32->lpcs->style;
-            cs16.lpszName       = MapLS( cbtcw32->lpcs->lpszName );
-            cs16.lpszClass      = MapLS( cbtcw32->lpcs->lpszClass );
+            cs16.lpszName       = MapLS( (void *)cbtcw32->lpcs->lpszName );
+            cs16.lpszClass      = MapLS( (void *)cbtcw32->lpcs->lpszClass );
             cs16.dwExStyle      = cbtcw32->lpcs->dwExStyle;
 
             cbtcw16.lpcs = (CREATESTRUCT16 *)MapLS( &cs16 );

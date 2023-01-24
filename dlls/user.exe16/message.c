@@ -945,15 +945,15 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             BOOL mdi_child = (GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD);
 
             CREATESTRUCT32Ato16( cs32, &cs );
-            cs.lpszName  = MapLS( cs32->lpszName );
-            cs.lpszClass = MapLS( cs32->lpszClass );
+            cs.lpszName  = MapLS( (void *)cs32->lpszName );
+            cs.lpszClass = MapLS( (void *)cs32->lpszClass );
 
             if (mdi_child)
             {
                 MDICREATESTRUCTA *mdi_cs = cs32->lpCreateParams;
                 MDICREATESTRUCT32Ato16( mdi_cs, &mdi_cs16 );
-                mdi_cs16.szTitle = MapLS( mdi_cs->szTitle );
-                mdi_cs16.szClass = MapLS( mdi_cs->szClass );
+                mdi_cs16.szTitle = MapLS( (void *)mdi_cs->szTitle );
+                mdi_cs16.szClass = MapLS( (void *)mdi_cs->szClass );
                 cs.lpCreateParams = MapLS( &mdi_cs16 );
             }
             lParam = MapLS( &cs );
@@ -975,8 +975,8 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
             MDICREATESTRUCT16 cs;
 
             MDICREATESTRUCT32Ato16( cs32, &cs );
-            cs.szTitle = MapLS( cs32->szTitle );
-            cs.szClass = MapLS( cs32->szClass );
+            cs.szTitle = MapLS( (void *)cs32->szTitle );
+            cs.szClass = MapLS( (void *)cs32->szClass );
             lParam = MapLS( &cs );
             ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
             UnMapLS( lParam );

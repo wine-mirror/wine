@@ -515,7 +515,7 @@ static struct mapls_entry *first_entry;
  *
  * Maps linear pointer to segmented.
  */
-SEGPTR WINAPI MapLS( LPCVOID ptr )
+SEGPTR WINAPI MapLS( void *ptr )
 {
     struct mapls_entry *entry, *free = NULL;
     const void *base;
