@@ -140,7 +140,6 @@ struct uuid *parse_uuid(const char *u)
  */
 %%
 <INITIAL>^{ws}*\#{ws}*pragma{ws}+ yy_push_state(PP_PRAGMA);
-<INITIAL,ATTR>^{ws}*\#{ws}*	yy_push_state(PP_LINE);
 <PP_LINE>[^\n]*         {
                             int lineno;
                             char *cptr, *fname;
@@ -202,20 +201,11 @@ struct uuid *parse_uuid(const char *u)
 <SQUOTE>\\\'	addcchar(yytext[1]);
 <QUOTE,WSTRQUOTE,SQUOTE>\\.	addcchar('\\'); addcchar(yytext[1]);
 <QUOTE,WSTRQUOTE,SQUOTE>.	addcchar(yytext[0]);
-<INITIAL,ATTR>\[	yy_push_state(ATTR); return '[';
 <ATTR>\]		yy_pop_state(); return ']';
 <ATTR>{cident}		return attr_token(yytext, yylval);
 <ATTR>{uuid}			{
 				yylval->uuid = parse_uuid(yytext);
 				return aUUID;
-			}
-<INITIAL,ATTR>{hex}	{
-				yylval->num = xstrtoul(yytext, NULL, 0);
-				return aHEXNUM;
-			}
-<INITIAL,ATTR>{int}	{
-				yylval->num = xstrtoul(yytext, NULL, 0);
-				return aNUM;
 			}
 <INITIAL>{double}	{
 				yylval->dbl = strtod(yytext, NULL);
@@ -223,19 +213,35 @@ struct uuid *parse_uuid(const char *u)
 			}
 SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 {cident}		return kw_token(yytext, yylval);
-<INITIAL,ATTR>\n	line_number++;
-<INITIAL,ATTR>{ws}
-<INITIAL,ATTR>\<\<	return SHL;
-<INITIAL,ATTR>\>\>	return SHR;
-<INITIAL,ATTR>\-\>	return MEMBERPTR;
-<INITIAL,ATTR>==	return EQUALITY;
-<INITIAL,ATTR>!=	return INEQUALITY;
-<INITIAL,ATTR>\>=	return GREATEREQUAL;
-<INITIAL,ATTR>\<=	return LESSEQUAL;
-<INITIAL,ATTR>\|\|	return LOGICALOR;
-<INITIAL,ATTR>&&	return LOGICALAND;
-<INITIAL,ATTR>\.\.\.	return ELLIPSIS;
-<INITIAL,ATTR>.		return yytext[0];
+
+<INITIAL,ATTR>{
+    ^{ws}*\#{ws}*                               { yy_push_state(PP_LINE); }
+    \[                                          { yy_push_state(ATTR); return '['; }
+
+    {hex}                                       {
+                                                    yylval->num = xstrtoul(yytext, NULL, 0);
+                                                    return aHEXNUM;
+                                                }
+    {int}                                       {
+                                                    yylval->num = xstrtoul(yytext, NULL, 0);
+                                                    return aNUM;
+                                                }
+
+    \n                                          { line_number++; }
+    {ws}                                        {}
+    \<\<                                        { return SHL; }
+    \>\>                                        { return SHR; }
+    \-\>                                        { return MEMBERPTR; }
+    ==                                          { return EQUALITY; }
+    !=                                          { return INEQUALITY; }
+    \>=                                         { return GREATEREQUAL; }
+    \<=                                         { return LESSEQUAL; }
+    \|\|                                        { return LOGICALOR; }
+    &&                                          { return LOGICALAND; }
+    \.\.\.                                      { return ELLIPSIS; }
+    .                                           { return yytext[0]; }
+}
+
 <<EOF>>			{
                             if (!list_empty( &import_stack ))
                                 return aEOF;
