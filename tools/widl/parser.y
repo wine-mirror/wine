@@ -366,9 +366,13 @@ input: gbl_statements m_acf			{ $1 = append_parameterized_type_stmts($1);
 						}
 	;
 
-m_acf: /* empty */ | aACF acf_statements
+m_acf
+	: %empty
+	| aACF acf_statements
+	;
 
-decl_statements:				{ $$ = NULL; }
+decl_statements
+	: %empty				{ $$ = NULL; }
 	| decl_statements tINTERFACE qualified_type '<' parameterized_type_args '>' ';'
 						{ parameterized_type_stmts = append_statement(parameterized_type_stmts, make_statement_parameterized_type($3, $5));
 						  $$ = append_statement($1, make_statement_reference(type_parameterized_type_specialize_declare($3, $5)));
@@ -376,15 +380,18 @@ decl_statements:				{ $$ = NULL; }
 	;
 
 decl_block: tDECLARE '{' decl_statements '}' { $$ = $3; }
+	;
 
-imp_decl_statements:				{ $$ = NULL; }
+imp_decl_statements
+	: %empty				{ $$ = NULL; }
 	| imp_decl_statements tINTERFACE qualified_type '<' parameterized_type_args '>' ';'
 						{ $$ = append_statement($1, make_statement_reference(type_parameterized_type_specialize_declare($3, $5))); }
 	;
 
 imp_decl_block: tDECLARE '{' imp_decl_statements '}' { $$ = $3; }
 
-gbl_statements:					{ $$ = NULL; }
+gbl_statements
+	: %empty				{ $$ = NULL; }
 	| gbl_statements namespacedef '{' { push_namespaces($2); } gbl_statements '}'
 						{ pop_namespaces($2); $$ = append_statements($1, $5); }
 	| gbl_statements interface ';'		{ $$ = append_statement($1, make_statement_reference($2)); }
@@ -409,7 +416,8 @@ gbl_statements:					{ $$ = NULL; }
 	| gbl_statements decl_block		{ $$ = append_statements($1, $2); }
 	;
 
-imp_statements:					{ $$ = NULL; }
+imp_statements
+	: %empty				{ $$ = NULL; }
 	| imp_statements interface ';'		{ $$ = append_statement($1, make_statement_reference($2)); }
 	| imp_statements dispinterface ';'	{ $$ = append_statement($1, make_statement_reference($2)); }
 	| imp_statements namespacedef '{' { push_namespaces($2); } imp_statements '}'
@@ -433,11 +441,13 @@ imp_statements:					{ $$ = NULL; }
 	| imp_statements imp_decl_block		{ $$ = append_statements($1, $2); }
 	;
 
-int_statements:					{ $$ = NULL; }
+int_statements
+	: %empty				{ $$ = NULL; }
 	| int_statements statement		{ $$ = append_statement($1, $2); }
 	;
 
-semicolon_opt:
+semicolon_opt
+	: %empty
 	| ';'
 	;
 
@@ -512,7 +522,8 @@ librarydef: library_start imp_statements '}'
 	    semicolon_opt			{ $$ = $1; $$->stmts = $2; }
 	;
 
-m_args:						{ $$ = NULL; }
+m_args
+	: %empty				{ $$ = NULL; }
 	| args
 	;
 
@@ -545,7 +556,8 @@ array:	  '[' expr ']'				{ $$ = $2;
 	| '[' ']'				{ $$ = make_expr(EXPR_VOID); }
 	;
 
-m_attributes:					{ $$ = NULL; }
+m_attributes
+	: %empty				{ $$ = NULL; }
 	| attributes
 	;
 
@@ -590,8 +602,10 @@ activatable_attr:
 						  $$ = make_exprt(EXPR_MEMBER, declare_var(NULL, $1, make_declarator(NULL), 0), $3);
 						}
 	| contract_req				{ $$ = $1; } /* activatable on the default activation factory */
+	;
 
-attribute:					{ $$ = NULL; }
+attribute
+	: %empty				{ $$ = NULL; }
 	| tACTIVATABLE '(' activatable_attr ')'	{ $$ = make_attrp(ATTR_ACTIVATABLE, $3); }
 	| tAGGREGATABLE				{ $$ = make_attr(ATTR_AGGREGATABLE); }
 	| tANNOTATION '(' aSTRING ')'		{ $$ = make_attrp(ATTR_ANNOTATION, $3); }
@@ -723,7 +737,8 @@ callconv: tCDECL				{ $$ = xstrdup("__cdecl"); }
 	| tSTDCALL				{ $$ = xstrdup("__stdcall"); }
 	;
 
-cases:						{ $$ = NULL; }
+cases
+	: %empty				{ $$ = NULL; }
 	| cases case				{ $$ = append_var( $1, $2 ); }
 	;
 
@@ -737,7 +752,8 @@ case:	  tCASE expr_int_const ':' union_field	{ attr_t *a = make_attrp(ATTR_CASE,
 						}
 	;
 
-enums:						{ $$ = NULL; }
+enums
+	: %empty				{ $$ = NULL; }
 	| enum_list ','				{ $$ = $1; }
 	| enum_list
 	;
@@ -779,7 +795,8 @@ m_exprs:  m_expr                                { $$ = append_expr( NULL, $1 ); 
 	| m_exprs ',' m_expr                    { $$ = append_expr( $1, $3 ); }
 	;
 
-m_expr:						{ $$ = make_expr(EXPR_VOID); }
+m_expr
+	: %empty				{ $$ = make_expr(EXPR_VOID); }
 	| expr
 	;
 
@@ -844,7 +861,8 @@ expr_const: expr				{ $$ = $1;
 						}
 	;
 
-fields:						{ $$ = NULL; }
+fields
+	: %empty				{ $$ = NULL; }
 	| fields field				{ $$ = append_var_list($1, $2); }
 	;
 
@@ -864,7 +882,8 @@ ne_union_field:
 	| attributes ';'			{ $$ = make_var(NULL); $$->attrs = $1; }
         ;
 
-ne_union_fields:				{ $$ = NULL; }
+ne_union_fields
+	: %empty				{ $$ = NULL; }
 	| ne_union_fields ne_union_field	{ $$ = append_var( $1, $2 ); }
 	;
 
@@ -900,11 +919,13 @@ declaration:
 						}
 	;
 
-m_ident:					{ $$ = NULL; }
+m_ident
+	: %empty				{ $$ = NULL; }
 	| ident
 	;
 
-m_typename:					{ $$ = NULL; }
+m_typename
+	: %empty				{ $$ = NULL; }
 	| typename
 	;
 
@@ -928,7 +949,8 @@ base_type: tBYTE				{ $$ = find_type_or_error(NULL, $<str>1); }
 	| tHANDLET				{ $$ = find_type_or_error(NULL, $<str>1); }
 	;
 
-m_int:
+m_int
+	: %empty
 	| tINT
 	;
 
@@ -996,7 +1018,8 @@ namespacedef: tNAMESPACE aIDENTIFIER		{ $$ = append_str( NULL, $2 ); }
 	| namespacedef '.' aIDENTIFIER		{ $$ = append_str( $1, $3 ); }
 	;
 
-class_interfaces:				{ $$ = NULL; }
+class_interfaces
+	: %empty				{ $$ = NULL; }
 	| class_interfaces class_interface	{ $$ = append_typeref( $1, $2 ); }
 	;
 
@@ -1026,7 +1049,8 @@ dispinterfacedef:
 						{ $$ = type_dispinterface_define_from_iface($2, $1, $4); }
 	;
 
-inherit:					{ $$ = NULL; }
+inherit
+	: %empty				{ $$ = NULL; }
 	| ':' qualified_type                    { $$ = $2; }
 	| ':' parameterized_type		{ $$ = $2; }
 	;
@@ -1062,8 +1086,10 @@ required_types:
 	| parameterized_type			{ $$ = append_typeref(NULL, make_typeref($1)); }
 	| required_types ',' qualified_type	{ $$ = append_typeref($1, make_typeref($3)); }
 	| required_types ',' parameterized_type	{ $$ = append_typeref($1, make_typeref($3)); }
+	;
 
-requires:					{ $$ = NULL; }
+requires
+	: %empty				{ $$ = NULL; }
 	| tREQUIRES required_types		{ $$ = $2; }
 	;
 
@@ -1114,7 +1140,8 @@ type_qualifier:
 	  tCONST				{ $$ = TYPE_QUALIFIER_CONST; }
 	;
 
-m_type_qual_list:				{ $$ = 0; }
+m_type_qual_list
+	: %empty				{ $$ = 0; }
 	| m_type_qual_list type_qualifier	{ $$ = $1 | $2; }
 	;
 
@@ -1129,7 +1156,8 @@ unqualified_decl_spec: unqualified_type m_decl_spec_no_type
 						{ $$ = make_decl_spec($2, $1, $3, STG_NONE, 0, 0); }
 	;
 
-m_decl_spec_no_type:				{ $$ = NULL; }
+m_decl_spec_no_type
+	: %empty				{ $$ = NULL; }
 	| decl_spec_no_type
 	;
 
@@ -1169,7 +1197,8 @@ abstract_declarator_no_direct:
 	;
 
 /* abstract declarator or empty */
-m_abstract_declarator: 				{ $$ = make_declarator(NULL); }
+m_abstract_declarator
+	: %empty 				{ $$ = make_declarator(NULL); }
 	| abstract_declarator
 	;
 
@@ -1204,7 +1233,8 @@ any_declarator_no_direct:
 	;
 
 /* abstract or non-abstract declarator or empty */
-m_any_declarator: 				{ $$ = make_declarator(NULL); }
+m_any_declarator
+	: %empty 				{ $$ = make_declarator(NULL); }
 	| any_declarator
 	;
 
@@ -1231,7 +1261,8 @@ declarator_list:
 	| declarator_list ',' declarator	{ $$ = append_declarator( $1, $3 ); }
 	;
 
-m_bitfield:					{ $$ = NULL; }
+m_bitfield
+	: %empty				{ $$ = NULL; }
 	| ':' expr_const			{ $$ = $2; }
 	;
 
@@ -1310,12 +1341,12 @@ version:
 	;
 
 acf_statements
-        : /* empty */
+        : %empty
         | acf_interface acf_statements
 	;
 
 acf_int_statements
-        : /* empty */
+        : %empty
         | acf_int_statement acf_int_statements
 	;
 
@@ -1336,7 +1367,7 @@ acf_interface
 	;
 
 acf_attributes
-        : /* empty */                           { $$ = NULL; };
+        : %empty                                { $$ = NULL; };
         | '[' acf_attribute_list ']'            { $$ = $2; };
 	;
 
