@@ -1683,7 +1683,8 @@ static const CRL_CONTEXT *retrieve_crl_from_dist_points(const CRYPT_URL_ARRAY *a
 }
 
 static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *value, const CERT_CONTEXT *cert,
-        FILETIME *time, DWORD flags, const CERT_REVOCATION_PARA *params, CERT_REVOCATION_STATUS *status)
+        FILETIME *time, DWORD flags, const CERT_REVOCATION_PARA *params, CERT_REVOCATION_STATUS *status,
+        FILETIME *next_update)
 {
     DWORD url_array_size, error;
     CRYPT_URL_ARRAY *url_array;
@@ -1719,7 +1720,7 @@ static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *
 
     error = verify_cert_revocation_with_crl_online(cert, crl, time, status);
 
-    cache_revocation_status(&cert->pCertInfo->SerialNumber, &crl->pCrlInfo->NextUpdate, status);
+    *next_update = crl->pCrlInfo->NextUpdate;
 
     CertFreeCRLContext(crl);
     CryptMemFree(url_array);
@@ -1920,12 +1921,11 @@ static DWORD check_ocsp_response_info(const CERT_INFO *cert, const CERT_INFO *is
 }
 
 static DWORD verify_signed_ocsp_response_info(const CERT_INFO *cert, const CERT_INFO *issuer,
-                                              const CRYPT_OBJID_BLOB *blob)
+                                              const CRYPT_OBJID_BLOB *blob, FILETIME *next_update)
 {
     OCSP_BASIC_SIGNED_RESPONSE_INFO *info;
     DWORD size, error, status = CRYPT_E_REVOCATION_OFFLINE;
     CRYPT_ALGORITHM_IDENTIFIER *alg;
-    FILETIME next_update;
     CRYPT_BIT_BLOB *sig;
     HCRYPTPROV prov = 0;
     HCRYPTHASH hash = 0;
@@ -1935,7 +1935,7 @@ static DWORD verify_signed_ocsp_response_info(const CERT_INFO *cert, const CERT_
     if (!CryptDecodeObjectEx(X509_ASN_ENCODING, OCSP_BASIC_SIGNED_RESPONSE, blob->pbData, blob->cbData,
                              CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size)) return GetLastError();
 
-    if ((error = check_ocsp_response_info(cert, issuer, &info->ToBeSigned, &status, &next_update))) goto done;
+    if ((error = check_ocsp_response_info(cert, issuer, &info->ToBeSigned, &status, next_update))) goto done;
 
     alg = &info->SignatureInfo.SignatureAlgorithm;
     if (!alg->pszObjId || !(algid = CertOIDToAlgId(alg->pszObjId)))
@@ -1964,16 +1964,6 @@ static DWORD verify_signed_ocsp_response_info(const CERT_INFO *cert, const CERT_
     else error = ERROR_SUCCESS;
 
 done:
-    if (next_update.dwLowDateTime || next_update.dwHighDateTime)
-    {
-        CERT_REVOCATION_STATUS rev_status;
-
-        memset(&rev_status, 0, sizeof(rev_status));
-        rev_status.cbSize = sizeof(rev_status);
-        rev_status.dwError = status;
-        cache_revocation_status(&cert->SerialNumber, &next_update, &rev_status);
-    }
-
     CryptDestroyKey(key);
     CryptDestroyHash(hash);
     CryptReleaseContext(prov, 0);
@@ -1983,7 +1973,7 @@ done:
 }
 
 static DWORD handle_ocsp_response(const CERT_INFO *cert, const CERT_INFO *issuer, const BYTE *encoded,
-                                  DWORD encoded_size)
+                                  DWORD encoded_size, FILETIME *next_update)
 {
     OCSP_RESPONSE_INFO *info;
     DWORD size, error = CRYPT_E_NO_REVOCATION_CHECK;
@@ -1999,7 +1989,7 @@ static DWORD handle_ocsp_response(const CERT_INFO *cert, const CERT_INFO *issuer
             FIXME("unhandled response type %s\n", debugstr_a(info->pszObjId));
             break;
         }
-        error = verify_signed_ocsp_response_info(cert, issuer, &info->Value);
+        error = verify_signed_ocsp_response_info(cert, issuer, &info->Value, next_update);
         break;
 
     default:
@@ -2012,7 +2002,7 @@ static DWORD handle_ocsp_response(const CERT_INFO *cert, const CERT_INFO *issuer
 }
 
 static DWORD verify_cert_revocation_with_ocsp(const CERT_CONTEXT *cert, const WCHAR *base_url,
-                                              const CERT_REVOCATION_PARA *revpara)
+                                              const CERT_REVOCATION_PARA *revpara, FILETIME *next_update)
 {
     HINTERNET ses, con, req = NULL;
     BYTE *request_data = NULL, *response_data = NULL;
@@ -2081,7 +2071,8 @@ static DWORD verify_cert_revocation_with_ocsp(const CERT_CONTEXT *cert, const WC
         !response_len || !(response_data = malloc(response_len)) ||
         !InternetReadFile(req, response_data, response_len, &count) || count != response_len) goto done;
 
-    ret = handle_ocsp_response(cert->pCertInfo, revpara->pIssuerCert->pCertInfo, response_data, response_len);
+    ret = handle_ocsp_response(cert->pCertInfo, revpara->pIssuerCert->pCertInfo, response_data, response_len,
+                               next_update);
 
 done:
     free(url);
@@ -2093,7 +2084,8 @@ done:
 }
 
 static DWORD verify_cert_revocation_from_aia_ext(const CRYPT_DATA_BLOB *value, const CERT_CONTEXT *cert,
-        FILETIME *pTime, DWORD dwFlags, CERT_REVOCATION_PARA *pRevPara, CERT_REVOCATION_STATUS *pRevStatus)
+        FILETIME *pTime, DWORD dwFlags, CERT_REVOCATION_PARA *pRevPara, CERT_REVOCATION_STATUS *pRevStatus,
+        FILETIME *next_update)
 {
     BOOL ret;
     DWORD size, i, error = CRYPT_E_NO_REVOCATION_CHECK;
@@ -2111,7 +2103,7 @@ static DWORD verify_cert_revocation_from_aia_ext(const CRYPT_DATA_BLOB *value, c
             {
                 const WCHAR *url = aia->rgAccDescr[i].AccessLocation.u.pwszURL;
                 TRACE("OCSP URL = %s\n", debugstr_w(url));
-                error = verify_cert_revocation_with_ocsp(cert, url, pRevPara);
+                error = verify_cert_revocation_with_ocsp(cert, url, pRevPara, next_update);
             }
             else
             {
@@ -2157,6 +2149,7 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
         DWORD dwFlags, CERT_REVOCATION_PARA *pRevPara, CERT_REVOCATION_STATUS *pRevStatus)
 {
     DWORD error = ERROR_SUCCESS;
+    FILETIME next_update = {0};
     PCERT_EXTENSION ext;
 
     if (find_cached_revocation_status(&cert->pCertInfo->SerialNumber, pTime, pRevStatus))
@@ -2167,15 +2160,17 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
 
     if ((ext = CertFindExtension(szOID_AUTHORITY_INFO_ACCESS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
     {
-        error = verify_cert_revocation_from_aia_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus);
+        error = verify_cert_revocation_from_aia_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus,
+                                                    &next_update);
         TRACE("verify_cert_revocation_from_aia_ext() returned %08lx\n", error);
-        if (error == ERROR_SUCCESS || error == CRYPT_E_REVOKED) return error;
+        if (error == ERROR_SUCCESS || error == CRYPT_E_REVOKED) goto done;
     }
     if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
     {
-        error = verify_cert_revocation_from_dist_points_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus);
+        error = verify_cert_revocation_from_dist_points_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus,
+                                                            &next_update);
         TRACE("verify_cert_revocation_from_dist_points_ext() returned %08lx\n", error);
-        if (error == ERROR_SUCCESS || error == CRYPT_E_REVOKED) return error;
+        if (error == ERROR_SUCCESS || error == CRYPT_E_REVOKED) goto done;
     }
     if (!ext)
     {
@@ -2246,6 +2241,17 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
                 WARN("no dist points/aia extension and no issuer\n");
             error = CRYPT_E_NO_REVOCATION_CHECK;
         }
+    }
+done:
+    if ((next_update.dwLowDateTime || next_update.dwHighDateTime)
+        && (error == ERROR_SUCCESS || error == CRYPT_E_REVOKED))
+    {
+        CERT_REVOCATION_STATUS rev_status;
+
+        memset(&rev_status, 0, sizeof(rev_status));
+        rev_status.cbSize = sizeof(rev_status);
+        rev_status.dwError = error;
+        cache_revocation_status(&cert->pCertInfo->SerialNumber, &next_update, &rev_status);
     }
     return error;
 }
