@@ -3388,8 +3388,9 @@ static void session_request_sample(struct media_session *session, IMFStreamSink 
         return;
     }
 
-    if (SUCCEEDED(session_request_sample_from_node(session, upstream_node, upstream_output)))
-        sink_node->u.sink.requests++;
+    sink_node->u.sink.requests++;
+    if (FAILED(session_request_sample_from_node(session, upstream_node, upstream_output)))
+        sink_node->u.sink.requests--;
     IMFTopologyNode_Release(upstream_node);
 }
 
