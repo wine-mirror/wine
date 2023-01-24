@@ -89,6 +89,13 @@ struct {
 } import_stack[MAX_IMPORT_DEPTH];
 int import_stack_ptr = 0;
 
+struct import
+{
+    const char *name;
+    struct list entry;
+};
+static struct list imports = LIST_INIT( imports );
+
 /* converts an integer in string form to an unsigned long and prints an error
  * on overflow */
 static unsigned int xstrtoul(const char *nptr, char **endptr, int base)
@@ -513,28 +520,20 @@ void pop_import(void)
 	import_stack_ptr--;
 }
 
-struct imports {
-    char *name;
-    struct imports *next;
-} *first_import;
-
 int do_import(char *fname)
 {
     FILE *f;
     char *path, *name;
-    struct imports *import;
+    struct import *import;
     int ptr = import_stack_ptr;
     int ret;
 
-    import = first_import;
-    while (import && strcmp(import->name, fname))
-        import = import->next;
-    if (import) return 0; /* already imported */
+    LIST_FOR_EACH_ENTRY( import, &imports, struct import, entry )
+        if (!strcmp( import->name, fname )) return 0;  /* already imported */
 
-    import = xmalloc(sizeof(struct imports));
-    import->name = xstrdup(fname);
-    import->next = first_import;
-    first_import = import;
+    import = xmalloc( sizeof(struct import) );
+    import->name = xstrdup( fname );
+    list_add_tail( &imports, &import->entry );
 
     /* don't search for a file name with a path in the include directories,
      * for compatibility with MIDL */
