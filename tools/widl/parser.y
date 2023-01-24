@@ -388,7 +388,9 @@ imp_decl_statements
 						{ $$ = append_statement($1, make_statement_reference(type_parameterized_type_specialize_declare($3, $5))); }
 	;
 
-imp_decl_block: tDECLARE '{' imp_decl_statements '}' { $$ = $3; }
+imp_decl_block
+	: tDECLARE '{' imp_decl_statements '}'	{ $$ = $3; }
+	;
 
 gbl_statements
 	: %empty				{ $$ = NULL; }
@@ -585,16 +587,20 @@ contract_ver:
 	| aNUM '.' aNUM				{ $$ = MAKEVERSION($3, $1); }
 	;
 
-contract_req: decl_spec ',' contract_ver	{ if ($1->type->type_type != TYPE_APICONTRACT)
+contract_req
+	: decl_spec ',' contract_ver		{ if ($1->type->type_type != TYPE_APICONTRACT)
 						      error_loc("type %s is not an apicontract\n", $1->type->name);
 						  $$ = make_exprl(EXPR_NUM, $3);
 						  $$ = make_exprt(EXPR_GTREQL, declare_var(NULL, $1, make_declarator(NULL), 0), $$);
 						}
+	;
 
-static_attr: decl_spec ',' contract_req		{ if ($1->type->type_type != TYPE_INTERFACE)
+static_attr
+	: decl_spec ',' contract_req		{ if ($1->type->type_type != TYPE_INTERFACE)
 						      error_loc("type %s is not an interface\n", $1->type->name);
 						  $$ = make_exprt(EXPR_MEMBER, declare_var(NULL, $1, make_declarator(NULL), 0), $3);
 						}
+	;
 
 activatable_attr:
 	  decl_spec ',' contract_req		{ if ($1->type->type_type != TYPE_INTERFACE)
@@ -1367,8 +1373,8 @@ acf_interface
 	;
 
 acf_attributes
-        : %empty                                { $$ = NULL; };
-        | '[' acf_attribute_list ']'            { $$ = $2; };
+        : %empty                                { $$ = NULL; }
+        | '[' acf_attribute_list ']'            { $$ = $2; }
 	;
 
 acf_attribute_list
