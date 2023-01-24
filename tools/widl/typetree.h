@@ -87,6 +87,11 @@ const char *type_get_decl_name(const type_t *type, enum name_type name_type);
 const char *type_get_name(const type_t *type, enum name_type name_type);
 char *gen_name(void);
 
+extern char *format_namespace( const struct namespace *namespace, const char *prefix, const char *separator,
+                               const char *suffix, const char *abi_prefix );
+extern char *format_parameterized_type_name( const type_t *type, const typeref_list_t *params );
+extern char *format_parameterized_type_args( const type_t *type, const char *prefix, const char *suffix );
+
 typeref_t *make_typeref(type_t *type);
 typeref_list_t *append_typeref(typeref_list_t *list, typeref_t *ref);
 

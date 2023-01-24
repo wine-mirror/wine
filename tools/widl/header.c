@@ -66,25 +66,6 @@ static void write_line(FILE *f, int delta, const char *fmt, ...)
     fprintf(f, "\n");
 }
 
-static char *format_parameterized_type_args(const type_t *type, const char *prefix, const char *suffix)
-{
-    typeref_list_t *params;
-    typeref_t *ref;
-    size_t len = 0, pos = 0;
-    char *buf = NULL;
-
-    params = type->details.parameterized.params;
-    if (params) LIST_FOR_EACH_ENTRY(ref, params, typeref_t, entry)
-    {
-        assert(ref->type->type_type != TYPE_POINTER);
-        pos += strappend(&buf, &len, pos, "%s%s%s", prefix, ref->type->name, suffix);
-        if (list_next(params, &ref->entry)) pos += strappend(&buf, &len, pos, ", ");
-    }
-
-    if (!buf) return xstrdup("");
-    return buf;
-}
-
 static void write_guid(FILE *f, const char *guid_prefix, const char *name, const struct uuid *uuid)
 {
   if (!uuid) return;
