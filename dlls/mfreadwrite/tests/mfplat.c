@@ -782,14 +782,22 @@ static void test_source_reader(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     IMFMediaType_Release(mediatype);
 
-    hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &actual_index, &stream_flags,
-            &timestamp, &sample);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    if (hr != S_OK)
-        goto skip_read_sample;
-    ok(!actual_index, "Unexpected stream index %lu.\n", actual_index);
-    ok(!stream_flags, "Unexpected stream flags %#lx.\n", stream_flags);
-    IMFSample_Release(sample);
+    for (;;)
+    {
+        hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &actual_index, &stream_flags,
+                &timestamp, &sample);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!actual_index, "Unexpected stream index %lu.\n", actual_index);
+        ok(!(stream_flags & ~MF_SOURCE_READERF_ENDOFSTREAM), "Unexpected stream flags %#lx.\n", stream_flags);
+
+        if (stream_flags & MF_SOURCE_READERF_ENDOFSTREAM)
+        {
+            ok(!sample, "Unexpected sample object.\n");
+            break;
+        }
+
+        IMFSample_Release(sample);
+    }
 
     /* There is no video stream. */
     hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, &actual_index, &stream_flags,
@@ -804,28 +812,6 @@ static void test_source_reader(void)
 
     hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_VIDEO_STREAM, 0, NULL, NULL, &timestamp, &sample);
     ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
-
-    hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &actual_index, &stream_flags,
-            &timestamp, &sample);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    ok(!actual_index, "Unexpected stream index %lu.\n", actual_index);
-    /* TODO: gstreamer outputs .wav sample in increments of 4096, instead of 4410 */
-    todo_wine
-{
-    ok(stream_flags == MF_SOURCE_READERF_ENDOFSTREAM, "Unexpected stream flags %#lx.\n", stream_flags);
-    ok(!sample, "Unexpected sample object.\n");
-}
-    if(!stream_flags)
-    {
-        IMFSample_Release(sample);
-
-        hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, &actual_index, &stream_flags,
-                &timestamp, &sample);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!actual_index, "Unexpected stream index %lu.\n", actual_index);
-        ok(stream_flags == MF_SOURCE_READERF_ENDOFSTREAM, "Unexpected stream flags %#lx.\n", stream_flags);
-        ok(!sample, "Unexpected sample object.\n");
-    }
 
     hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_FIRST_AUDIO_STREAM, MF_SOURCE_READER_CONTROLF_DRAIN,
             &actual_index, &stream_flags, &timestamp, &sample);
@@ -861,8 +847,6 @@ static void test_source_reader(void)
     ok(actual_index == 0, "Unexpected stream index %lu.\n", actual_index);
     ok(stream_flags == MF_SOURCE_READERF_ENDOFSTREAM, "Unexpected stream flags %#lx.\n", stream_flags);
     ok(!sample, "Unexpected sample object.\n");
-
-skip_read_sample:
 
     /* Flush. */
     hr = IMFSourceReader_Flush(reader, MF_SOURCE_READER_FIRST_VIDEO_STREAM);
