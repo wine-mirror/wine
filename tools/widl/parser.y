@@ -330,7 +330,6 @@ int parser_lex( PARSER_STYPE *yylval );
 %type <num> pointer_type threading_type marshaling_behavior version
 %type <str> libraryhdr callconv cppquote importlib import
 %type <str> typename m_typename
-%type <uuid> uuid_string
 %type <str> import_start
 %type <typelib> library_start librarydef
 %type <statement> statement typedef pragma_warning
@@ -630,7 +629,7 @@ attribute
 	| tCONTRACT '(' contract_req ')'	{ $$ = make_attrp(ATTR_CONTRACT, $3); }
 	| tCONTRACTVERSION '(' contract_ver ')'	{ $$ = make_attrv(ATTR_CONTRACTVERSION, $3); }
 	| tCONTROL				{ $$ = make_attr(ATTR_CONTROL); }
-	| tCUSTOM '(' uuid_string ',' expr_const ')' { $$ = make_custom_attr($3, $5); }
+	| tCUSTOM '(' aUUID ',' expr_const ')'  { $$ = make_custom_attr($3, $5); }
 	| tDECODE				{ $$ = make_attr(ATTR_DECODE); }
 	| tDEFAULT				{ $$ = make_attr(ATTR_DEFAULT); }
 	| tDEFAULTBIND				{ $$ = make_attr(ATTR_DEFAULTBIND); }
@@ -720,8 +719,8 @@ attribute
 	| tUIDEFAULT				{ $$ = make_attr(ATTR_UIDEFAULT); }
 	| tUSESGETLASTERROR			{ $$ = make_attr(ATTR_USESGETLASTERROR); }
 	| tUSERMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_USERMARSHAL, $3); }
-	| tUUID '(' uuid_string ')'		{ $$ = make_attrp(ATTR_UUID, $3); }
-	| tASYNCUUID '(' uuid_string ')'	{ $$ = make_attrp(ATTR_ASYNCUUID, $3); }
+	| tUUID '(' aUUID ')'			{ $$ = make_attrp(ATTR_UUID, $3); }
+	| tASYNCUUID '(' aUUID ')'		{ $$ = make_attrp(ATTR_ASYNCUUID, $3); }
 	| tV1ENUM				{ $$ = make_attr(ATTR_V1ENUM); }
 	| tVARARG				{ $$ = make_attr(ATTR_VARARG); }
 	| tVERSION '(' version ')'		{ $$ = make_attrv(ATTR_VERSION, $3); }
@@ -729,13 +728,6 @@ attribute
 	| tWIREMARSHAL '(' type ')'		{ $$ = make_attrp(ATTR_WIREMARSHAL, $3); }
 	| pointer_type				{ $$ = make_attrv(ATTR_POINTERTYPE, $1); }
 	;
-
-uuid_string:
-	  aUUID
-	| aSTRING				{ if (!is_valid_uuid($1))
-						    error_loc("invalid UUID: %s\n", $1);
-						  $$ = parse_uuid($1); }
-        ;
 
 callconv: tCDECL				{ $$ = xstrdup("__cdecl"); }
 	| tFASTCALL				{ $$ = xstrdup("__fastcall"); }
@@ -3256,23 +3248,6 @@ static void check_all_user_types(const statement_list_t *stmts)
       }
     }
   }
-}
-
-int is_valid_uuid(const char *s)
-{
-  int i;
-
-  for (i = 0; i < 36; ++i)
-    if (i == 8 || i == 13 || i == 18 || i == 23)
-    {
-      if (s[i] != '-')
-        return FALSE;
-    }
-    else
-      if (!isxdigit(s[i]))
-        return FALSE;
-
-  return s[i] == '\0';
 }
 
 static statement_t *make_statement(enum statement_type type)

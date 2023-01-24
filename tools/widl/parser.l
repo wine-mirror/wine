@@ -26,13 +26,13 @@
 
 nl	\r?\n
 ws	[ \f\t\r]
+hd	[0-9a-fA-F]
 cident	[a-zA-Z_][0-9a-zA-Z_]*
 u_suffix	(u|U)
 l_suffix	(l|L)
 int	[0-9]+({l_suffix}?{u_suffix}?|{u_suffix}?{l_suffix}?)?
-hexd	[0-9a-fA-F]
-hex	0(x|X){hexd}+({l_suffix}?{u_suffix}?|{u_suffix}?{l_suffix}?)?
-uuid	{hexd}{8}-{hexd}{4}-{hexd}{4}-{hexd}{4}-{hexd}{12}
+hex	0(x|X){hd}+({l_suffix}?{u_suffix}?|{u_suffix}?{l_suffix}?)?
+uuid	{hd}{8}-{hd}{4}-{hd}{4}-{hd}{4}-{hd}{12}
 double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 
 %x ATTR
@@ -101,24 +101,36 @@ static unsigned int xstrtoul(const char *nptr, char **endptr, int base)
     return val;
 }
 
-struct uuid *parse_uuid(const char *u)
+static int token_uuid( const char *str, YYSTYPE *yylval )
 {
-  struct uuid* uuid = xmalloc(sizeof(*uuid));
-  char b[3];
-  /* it would be nice to use UuidFromStringA */
-  uuid->Data1 = strtoul(u, NULL, 16);
-  uuid->Data2 = strtoul(u+9, NULL, 16);
-  uuid->Data3 = strtoul(u+14, NULL, 16);
-  b[2] = 0;
-  memcpy(b, u+19, 2); uuid->Data4[0] = strtoul(b, NULL, 16);
-  memcpy(b, u+21, 2); uuid->Data4[1] = strtoul(b, NULL, 16);
-  memcpy(b, u+24, 2); uuid->Data4[2] = strtoul(b, NULL, 16);
-  memcpy(b, u+26, 2); uuid->Data4[3] = strtoul(b, NULL, 16);
-  memcpy(b, u+28, 2); uuid->Data4[4] = strtoul(b, NULL, 16);
-  memcpy(b, u+30, 2); uuid->Data4[5] = strtoul(b, NULL, 16);
-  memcpy(b, u+32, 2); uuid->Data4[6] = strtoul(b, NULL, 16);
-  memcpy(b, u+34, 2); uuid->Data4[7] = strtoul(b, NULL, 16);
-  return uuid;
+    struct uuid *uuid;
+    char tmp[3] = {0};
+
+    if (*str == '\"') str++;
+
+    uuid = xmalloc( sizeof(*uuid) );
+    uuid->Data1 = strtoul( str , NULL, 16 );
+    uuid->Data2 = strtoul( str + 9, NULL, 16 );
+    uuid->Data3 = strtoul( str + 14, NULL, 16 );
+    memcpy( tmp, str + 19, 2 );
+    uuid->Data4[0] = strtoul( tmp, NULL, 16 );
+    memcpy( tmp, str + 21, 2 );
+    uuid->Data4[1] = strtoul( tmp, NULL, 16 );
+    memcpy( tmp, str + 24, 2 );
+    uuid->Data4[2] = strtoul( tmp, NULL, 16 );
+    memcpy( tmp, str + 26, 2 );
+    uuid->Data4[3] = strtoul( tmp, NULL, 16 );
+    memcpy( tmp, str + 28, 2 );
+    uuid->Data4[4] = strtoul( tmp, NULL, 16 );
+    memcpy( tmp, str + 30, 2 );
+    uuid->Data4[5] = strtoul( tmp, NULL, 16 );
+    memcpy( tmp, str + 32, 2 );
+    uuid->Data4[6] = strtoul( tmp, NULL, 16 );
+    memcpy( tmp, str + 34, 2 );
+    uuid->Data4[7] = strtoul( tmp, NULL, 16 );
+
+    yylval->uuid = uuid;
+    return aUUID;
 }
 
 static int token_str( int token, const char *str, YYSTYPE *yylval )
@@ -196,11 +208,8 @@ static int token_num( int token, const char *yytext, YYSTYPE *yylval )
 <ATTR>{
     \]                                          { yy_pop_state(); return ']'; }
 
+    ({uuid}|\"{uuid}\")                         { return token_uuid( yytext, yylval ); }
     {cident}                                    { return attr_token( yytext, yylval ); }
-    {uuid}                                      {
-                                                    yylval->uuid = parse_uuid( yytext );
-                                                    return aUUID;
-                                                }
 }
 
 <INITIAL>{
