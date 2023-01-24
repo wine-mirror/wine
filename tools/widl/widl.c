@@ -701,7 +701,6 @@ int main(int argc,char *argv[])
   int i;
   int ret = 0;
   struct strarray files;
-  char *input;
 
   init_signals( exit_on_signal );
   init_argv0_dir( argv[0] );
@@ -835,27 +834,8 @@ int main(int argc,char *argv[])
   wpp_add_cmdline_define("_WIN32=1");
 
   atexit(rm_tempfile);
-  input = input_name;
   if (preprocess_only) exit( wpp_parse( input_name, stdout ) );
-
-  if (!no_preprocess)
-  {
-      FILE *output;
-      char *name;
-
-      name = make_temp_file( header_name, NULL );
-      if (!(output = fopen( name, "wt" ))) error( "Could not open fd %s for writing\n", name );
-      ret = wpp_parse( input_name, output );
-      fclose( output );
-      input = name;
-
-      if (ret) exit( 1 );
-  }
-
-  if(!(parser_in = fopen(input, "r"))) {
-    fprintf(stderr, "Could not open %s for input\n", input);
-    return 1;
-  }
+  parser_in = open_input_file( input_name );
 
   header_token = make_token(header_name);
 
