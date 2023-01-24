@@ -151,6 +151,22 @@ cpp_quote("#endif")
 
             [
                 contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(3c2925fe-8519-45c1-aa79-197b6718c1c1)
+            ]
+            interface IMap<K, V> : IInspectable
+                requires Windows.Foundation.Collections.IIterable<Windows.Foundation.Collections.IKeyValuePair<K, V> *>
+            {
+                HRESULT Lookup([in] K key, [out, retval] V *value);
+                [propget] HRESULT Size([out, retval] unsigned int *size);
+                HRESULT HasKey([in] K key, [out, retval] boolean *found);
+                HRESULT GetView([out, retval] Windows.Foundation.Collections.IMapView<K, V> **view);
+                HRESULT Insert([in] K key, [in] V value, [out, retval] boolean *replaced);
+                HRESULT Remove([in] K key);
+                HRESULT Clear();
+            }
+
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
                 uuid(bbe1fa4c-b0e3-4583-baef-1f1b2e483e56)
             ]
             interface IVectorView<T> : IInspectable
