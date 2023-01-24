@@ -356,22 +356,17 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
     FALSE                                       { return tFALSE; }
     NULL                                        { return tNULL; }
     TRUE                                        { return tTRUE; }
-    __cdecl                                     { return tCDECL; }
-    __fastcall                                  { return tFASTCALL; }
+    _?_?cdecl                                   { return token_str( tCDECL, "__cdecl", yylval ); }
+    _?_?pascal                                  { return token_str( tPASCAL, "__pascal", yylval ); }
+    _?_?stdcall                                 { return token_str( tSTDCALL, "__stdcall", yylval ); }
+    __?fastcall                                 { return token_str( tFASTCALL, "__fastcall", yylval ); }
     __int32                                     { return tINT32; }
     __int3264                                   { return tINT3264; }
     __int64                                     { return tINT64; }
-    __pascal                                    { return tPASCAL; }
-    __stdcall                                   { return tSTDCALL; }
-    _cdecl                                      { return tCDECL; }
-    _fastcall                                   { return tFASTCALL; }
-    _pascal                                     { return tPASCAL; }
-    _stdcall                                    { return tSTDCALL; }
     apicontract                                 { return token_winrt( tAPICONTRACT, yytext, yylval ); }
     boolean                                     { return tBOOLEAN; }
     byte                                        { return tBYTE; }
     case                                        { return tCASE; }
-    cdecl                                       { return tCDECL; }
     char                                        { return tCHAR; }
     coclass                                     { return tCOCLASS; }
     const                                       { return tCONST; }
@@ -397,7 +392,6 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
     methods                                     { return tMETHODS; }
     module                                      { return tMODULE; }
     namespace                                   { return token_winrt( tNAMESPACE, yytext, yylval ); }
-    pascal                                      { return tPASCAL; }
     properties                                  { return tPROPERTIES; }
     register                                    { return tREGISTER; }
     requires                                    { return token_winrt( tREQUIRES, yytext, yylval ); }
@@ -407,7 +401,6 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
     sizeof                                      { return tSIZEOF; }
     small                                       { return tSMALL; }
     static                                      { return tSTATIC; }
-    stdcall                                     { return tSTDCALL; }
     struct                                      { return tSTRUCT; }
     switch                                      { return tSWITCH; }
     typedef                                     { return tTYPEDEF; }

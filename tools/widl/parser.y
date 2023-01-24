@@ -167,6 +167,10 @@ int parser_lex( PARSER_STYPE *yylval );
 %token <num> aNUM aHEXNUM
 %token <dbl> aDOUBLE
 %token <str> aSTRING aWSTRING aSQSTRING
+%token <str> tCDECL
+%token <str> tFASTCALL
+%token <str> tPASCAL
+%token <str> tSTDCALL
 %token <uuid> aUUID
 %token aEOF aACF
 %token SHL SHR
@@ -182,7 +186,7 @@ int parser_lex( PARSER_STYPE *yylval );
 %token tAPICONTRACT
 %token tAPPOBJECT tASYNC tASYNCUUID
 %token tAUTOHANDLE tBINDABLE tBOOLEAN tBROADCAST tBYTE tBYTECOUNT
-%token tCALLAS tCALLBACK tCASE tCDECL tCHAR tCOCLASS tCODE tCOMMSTATUS
+%token tCALLAS tCALLBACK tCASE tCHAR tCOCLASS tCODE tCOMMSTATUS
 %token tCONST tCONTEXTHANDLE tCONTEXTHANDLENOSERIALIZE
 %token tCONTEXTHANDLESERIALIZE
 %token tCONTRACT
@@ -204,7 +208,7 @@ int parser_lex( PARSER_STYPE *yylval );
 %token tEXCLUSIVETO
 %token tEXPLICITHANDLE tEXTERN
 %token tFALSE
-%token tFASTCALL tFAULTSTATUS
+%token tFAULTSTATUS
 %token tFLAGS
 %token tFLOAT tFORCEALLOCATE
 %token tHANDLE
@@ -241,7 +245,7 @@ int parser_lex( PARSER_STYPE *yylval );
 %token tOPTIMIZE tOPTIONAL
 %token tOUT
 %token tOVERLOAD
-%token tPARTIALIGNORE tPASCAL
+%token tPARTIALIGNORE
 %token tPOINTERDEFAULT
 %token tPRAGMA_WARNING
 %token tPROGID tPROPERTIES
@@ -264,7 +268,6 @@ int parser_lex( PARSER_STYPE *yylval );
 %token tSOURCE
 %token tSTANDARD
 %token tSTATIC
-%token tSTDCALL
 %token tSTRICTCONTEXTHANDLE
 %token tSTRING tSTRUCT
 %token tSWITCH tSWITCHIS tSWITCHTYPE
@@ -729,10 +732,10 @@ attribute
 	| pointer_type				{ $$ = make_attrv(ATTR_POINTERTYPE, $1); }
 	;
 
-callconv: tCDECL				{ $$ = xstrdup("__cdecl"); }
-	| tFASTCALL				{ $$ = xstrdup("__fastcall"); }
-	| tPASCAL				{ $$ = xstrdup("__pascal"); }
-	| tSTDCALL				{ $$ = xstrdup("__stdcall"); }
+callconv: tCDECL
+	| tFASTCALL
+	| tPASCAL
+	| tSTDCALL
 	;
 
 cases
