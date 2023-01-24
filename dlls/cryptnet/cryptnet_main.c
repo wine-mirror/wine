@@ -1537,11 +1537,16 @@ BOOL WINAPI CryptRetrieveObjectByUrlW(LPCWSTR pszURL, LPCSTR pszObjectOid,
 
 static const char revocation_cache_signature[] = "Wine cached revocation";
 
-static FILE *open_cached_revocation_file(const CRYPT_INTEGER_BLOB *serial, const WCHAR *mode, int sharing)
+#define CACHED_CERT_HASH_SIZE 20
+
+static FILE *open_cached_revocation_file(const CERT_CONTEXT *cert, const WCHAR *mode, int sharing)
 {
+    BYTE hash_data[CACHED_CERT_HASH_SIZE];
     WCHAR path[MAX_PATH];
     WCHAR *appdata_path;
-    DWORD len, i;
+    DWORD len, i, size;
+    HCRYPTPROV prov;
+    HCRYPTHASH hash;
     HRESULT hr;
 
     if (FAILED(hr = SHGetKnownFolderPath(&FOLDERID_LocalAppDataLow, 0, NULL, &appdata_path)))
@@ -1553,24 +1558,32 @@ static FILE *open_cached_revocation_file(const CRYPT_INTEGER_BLOB *serial, const
     len = swprintf(path, ARRAY_SIZE(path), L"%s\\Microsoft\\CryptnetUrlCache\\Content\\", appdata_path);
     CoTaskMemFree(appdata_path);
 
-    if (len + serial->cbData * 2 * sizeof(WCHAR) > ARRAY_SIZE(path) - 1)
+    if (len + CACHED_CERT_HASH_SIZE * 2 * sizeof(WCHAR) > ARRAY_SIZE(path) - 1)
     {
-        WARN("Serial length exceeds static buffer; not caching.\n");
+        WARN("Hash length exceeds static buffer; not caching.\n");
         return INVALID_HANDLE_VALUE;
     }
 
+    CryptAcquireContextW(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
+    CryptCreateHash(prov, CALG_SHA1, 0, 0, &hash);
+    CryptHashData(hash, cert->pbCertEncoded, cert->cbCertEncoded, 0);
+    size = sizeof(hash_data);
+    CryptGetHashParam(hash, HP_HASHVAL, hash_data, &size, 0);
+    CryptDestroyHash(hash);
+    CryptReleaseContext(prov, 0);
+
     SHCreateDirectoryExW(NULL, path, NULL);
 
-    for (i = 0; i < serial->cbData; ++i)
+    for (i = 0; i < CACHED_CERT_HASH_SIZE; ++i)
     {
-        swprintf(path + len, 3, L"%02x", serial->pbData[i]);
+        swprintf(path + len, 3, L"%02x", hash_data[i]);
         len += 2;
     }
 
     return _wfsopen(path, mode, sharing);
 }
 
-static BOOL find_cached_revocation_status(const CRYPT_INTEGER_BLOB *serial,
+static BOOL find_cached_revocation_status(const CERT_CONTEXT *cert,
         const FILETIME *time, CERT_REVOCATION_STATUS *status)
 {
     char buffer[sizeof(revocation_cache_signature)];
@@ -1578,7 +1591,7 @@ static BOOL find_cached_revocation_status(const CRYPT_INTEGER_BLOB *serial,
     FILE *file;
     int len;
 
-    if (!(file = open_cached_revocation_file(serial, L"rb", _SH_DENYWR)))
+    if (!(file = open_cached_revocation_file(cert, L"rb", _SH_DENYWR)))
         return FALSE;
 
     if ((len = fread(buffer, 1, sizeof(buffer), file)) != sizeof(buffer)
@@ -1621,12 +1634,12 @@ static BOOL find_cached_revocation_status(const CRYPT_INTEGER_BLOB *serial,
     return TRUE;
 }
 
-static void cache_revocation_status(const CRYPT_INTEGER_BLOB *serial,
+static void cache_revocation_status(const CERT_CONTEXT *cert,
         const FILETIME *time, const CERT_REVOCATION_STATUS *status)
 {
     FILE *file;
 
-    if (!(file = open_cached_revocation_file(serial, L"wb", _SH_DENYRW)))
+    if (!(file = open_cached_revocation_file(cert, L"wb", _SH_DENYRW)))
         return;
     fwrite(revocation_cache_signature, 1, sizeof(revocation_cache_signature), file);
     fwrite(time, sizeof(*time), 1, file);
@@ -2152,7 +2165,7 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
     FILETIME next_update = {0};
     PCERT_EXTENSION ext;
 
-    if (find_cached_revocation_status(&cert->pCertInfo->SerialNumber, pTime, pRevStatus))
+    if (find_cached_revocation_status(cert, pTime, pRevStatus))
     {
         if (pRevStatus->dwError == ERROR_SUCCESS || pRevStatus->dwError == CRYPT_E_REVOKED)
             return pRevStatus->dwError;
@@ -2251,7 +2264,7 @@ done:
         memset(&rev_status, 0, sizeof(rev_status));
         rev_status.cbSize = sizeof(rev_status);
         rev_status.dwError = error;
-        cache_revocation_status(&cert->pCertInfo->SerialNumber, &next_update, &rev_status);
+        cache_revocation_status(cert, &next_update, &rev_status);
     }
     return error;
 }
