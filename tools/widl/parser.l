@@ -199,12 +199,16 @@ struct uuid *parse_uuid(const char *u)
 <SQUOTE>\\\'	addcchar(yytext[1]);
 <QUOTE,WSTRQUOTE,SQUOTE>\\.	addcchar('\\'); addcchar(yytext[1]);
 <QUOTE,WSTRQUOTE,SQUOTE>.	addcchar(yytext[0]);
-<ATTR>\]		yy_pop_state(); return ']';
-<ATTR>{cident}		return attr_token(yytext, yylval);
-<ATTR>{uuid}			{
-				yylval->uuid = parse_uuid(yytext);
-				return aUUID;
-			}
+
+<ATTR>{
+    \]                                          { yy_pop_state(); return ']'; }
+
+    {cident}                                    { return attr_token( yytext, yylval ); }
+    {uuid}                                      {
+                                                    yylval->uuid = parse_uuid( yytext );
+                                                    return aUUID;
+                                                }
+}
 
 <INITIAL>{
     ^{ws}*\#{ws}*pragma{ws}+                    { yy_push_state( PP_PRAGMA ); }
