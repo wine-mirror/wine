@@ -1539,7 +1539,8 @@ static const char revocation_cache_signature[] = "Wine cached revocation";
 
 #define CACHED_CERT_HASH_SIZE 20
 
-static FILE *open_cached_revocation_file(const CERT_CONTEXT *cert, const WCHAR *mode, int sharing)
+static FILE *open_cached_revocation_file(const CERT_CONTEXT *cert, const CERT_REVOCATION_PARA *params,
+        const WCHAR *mode, int sharing)
 {
     BYTE hash_data[CACHED_CERT_HASH_SIZE];
     WCHAR path[MAX_PATH];
@@ -1567,6 +1568,16 @@ static FILE *open_cached_revocation_file(const CERT_CONTEXT *cert, const WCHAR *
     CryptAcquireContextW(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT);
     CryptCreateHash(prov, CALG_SHA1, 0, 0, &hash);
     CryptHashData(hash, cert->pbCertEncoded, cert->cbCertEncoded, 0);
+    if (params && params->pIssuerCert)
+    {
+        CryptHashData(hash, (BYTE *)&params->pIssuerCert->cbCertEncoded, sizeof(params->pIssuerCert->cbCertEncoded), 0);
+        CryptHashData(hash, params->pIssuerCert->pbCertEncoded, params->pIssuerCert->cbCertEncoded, 0);
+    }
+    else
+    {
+        size = 0;
+        CryptHashData(hash, (BYTE *)&size, sizeof(size), 0);
+    }
     size = sizeof(hash_data);
     CryptGetHashParam(hash, HP_HASHVAL, hash_data, &size, 0);
     CryptDestroyHash(hash);
@@ -1583,7 +1594,7 @@ static FILE *open_cached_revocation_file(const CERT_CONTEXT *cert, const WCHAR *
     return _wfsopen(path, mode, sharing);
 }
 
-static BOOL find_cached_revocation_status(const CERT_CONTEXT *cert,
+static BOOL find_cached_revocation_status(const CERT_CONTEXT *cert, const CERT_REVOCATION_PARA *params,
         const FILETIME *time, CERT_REVOCATION_STATUS *status)
 {
     char buffer[sizeof(revocation_cache_signature)];
@@ -1591,7 +1602,7 @@ static BOOL find_cached_revocation_status(const CERT_CONTEXT *cert,
     FILE *file;
     int len;
 
-    if (!(file = open_cached_revocation_file(cert, L"rb", _SH_DENYWR)))
+    if (!(file = open_cached_revocation_file(cert, params, L"rb", _SH_DENYWR)))
         return FALSE;
 
     if ((len = fread(buffer, 1, sizeof(buffer), file)) != sizeof(buffer)
@@ -1634,12 +1645,12 @@ static BOOL find_cached_revocation_status(const CERT_CONTEXT *cert,
     return TRUE;
 }
 
-static void cache_revocation_status(const CERT_CONTEXT *cert,
+static void cache_revocation_status(const CERT_CONTEXT *cert, const CERT_REVOCATION_PARA *params,
         const FILETIME *time, const CERT_REVOCATION_STATUS *status)
 {
     FILE *file;
 
-    if (!(file = open_cached_revocation_file(cert, L"wb", _SH_DENYRW)))
+    if (!(file = open_cached_revocation_file(cert, params, L"wb", _SH_DENYRW)))
         return;
     fwrite(revocation_cache_signature, 1, sizeof(revocation_cache_signature), file);
     fwrite(time, sizeof(*time), 1, file);
@@ -2165,10 +2176,13 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
     FILETIME next_update = {0};
     PCERT_EXTENSION ext;
 
-    if (find_cached_revocation_status(cert, pTime, pRevStatus))
+    if (find_cached_revocation_status(cert, pRevPara, pTime, pRevStatus))
     {
         if (pRevStatus->dwError == ERROR_SUCCESS || pRevStatus->dwError == CRYPT_E_REVOKED)
+        {
+            TRACE("Returning cached status.\n");
             return pRevStatus->dwError;
+        }
     }
 
     if ((ext = CertFindExtension(szOID_AUTHORITY_INFO_ACCESS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
@@ -2264,7 +2278,7 @@ done:
         memset(&rev_status, 0, sizeof(rev_status));
         rev_status.cbSize = sizeof(rev_status);
         rev_status.dwError = error;
-        cache_revocation_status(cert, &next_update, &rev_status);
+        cache_revocation_status(cert, pRevPara, &next_update, &rev_status);
     }
     return error;
 }
