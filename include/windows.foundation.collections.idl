@@ -68,6 +68,34 @@ cpp_quote("#endif")
             HRESULT GetResults([out, retval] TResult *results);
         }
 
+        interface IAsyncActionWithProgress<TProgress>;
+
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(6d844858-0cff-4590-ae89-95a5a5c8b4b8)
+        ]
+        delegate HRESULT AsyncActionProgressHandler<TProgress>([in] Windows.Foundation.IAsyncActionWithProgress<TProgress> *info,
+                                                               [in] TProgress progress);
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(9c029f91-cc84-44fd-ac26-0a6c4e555281)
+        ]
+        delegate HRESULT AsyncActionWithProgressCompletedHandler<TProgress>([in] Windows.Foundation.IAsyncActionWithProgress<TProgress> *info,
+                                                                            [in] AsyncStatus status);
+
+        [
+            contract(Windows.Foundation.FoundationContract, 1.0),
+            uuid(1f6db258-e803-48a1-9546-eb7353398884)
+        ]
+        interface IAsyncActionWithProgress<TProgress> : IInspectable
+        {
+            [propput] HRESULT Progress([in] Windows.Foundation.AsyncActionProgressHandler<TProgress> *handler);
+            [propget] HRESULT Progress([out, retval] Windows.Foundation.AsyncActionProgressHandler<TProgress> **handler);
+            [propput] HRESULT Completed([in] Windows.Foundation.AsyncActionWithProgressCompletedHandler<TProgress> *handler);
+            [propget] HRESULT Completed([out, retval] Windows.Foundation.AsyncActionWithProgressCompletedHandler<TProgress> **handler);
+            HRESULT GetResults();
+        }
+
         [
             contract(Windows.Foundation.FoundationContract, 1.0),
             uuid(9de1c534-6ae1-11e0-84e1-18a905bcc53f)
