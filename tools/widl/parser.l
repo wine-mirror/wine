@@ -31,6 +31,7 @@ cident [a-zA-Z_][0-9a-zA-Z_]*
 
 %x ATTR
 %x PP_LINE
+%x PP_FILE
 %x PP_PRAGMA
 
 %{
@@ -153,6 +154,14 @@ static int token_num( int token, const char *yytext, YYSTYPE *yylval )
     return token;
 }
 
+static void winrt_enable( int ns_prefix )
+{
+    if (!list_empty( &import_stack ) && !winrt_mode) error_loc( "WinRT IDL file imported in non-winrt mode." );
+
+    use_abi_namespace = ns_prefix;
+    winrt_mode = TRUE;
+}
+
 %}
 
 /*
@@ -161,43 +170,34 @@ static int token_num( int token, const char *yytext, YYSTYPE *yylval )
  **************************************************************************
  */
 %%
-<PP_LINE>[^\n]*         {
-                            int lineno;
-                            char *cptr, *fname;
-                            yy_pop_state();
-                            lineno = (int)strtol(yytext, &cptr, 10);
-                            if(!lineno)
-                                error_loc("Malformed '#...' line-directive; invalid linenumber\n");
-                            fname = strchr(cptr, '"');
-                            if(!fname)
-                                error_loc("Malformed '#...' line-directive; missing filename\n");
-                            fname++;
-                            cptr = strchr(fname, '"');
-                            if(!cptr)
-                                error_loc("Malformed '#...' line-directive; missing terminating \"\n");
-                            *cptr = '\0';
-                            line_number = lineno - 1;  /* We didn't read the newline */
-                            input_name = xstrdup(fname);
-                        }
-<PP_PRAGMA>midl_echo[^\n]*  yyless(9); yy_pop_state(); return tCPPQUOTE;
-<PP_PRAGMA>winrt[^\n]*  {
-                            if (!list_empty( &import_stack ))
-                            {
-                                if(!winrt_mode)
-                                    error_loc("winrt IDL file imported in non-winrt mode\n");
-                            }else {
-                                const char *ptr = yytext+5;
-
-                                winrt_mode = TRUE;
-
-                                while(isspace(*ptr))
-                                    ptr++;
-                                if(!strncmp(ptr, "ns_prefix", 9) && (!*(ptr += 9) || isspace(*ptr)))
-                                    use_abi_namespace = TRUE;
-                            }
-                            yy_pop_state();
-                        }
-<PP_PRAGMA>[^\n]*       yylval->str = xstrdup(yytext); yy_pop_state(); return aPRAGMA;
+<PP_PRAGMA>{
+    midl_echo/"("                               {
+                                                    yy_pop_state();
+                                                    return tCPPQUOTE;
+                                                }
+    winrt{ws}+ns_prefix[^\n]*                   {
+                                                    yy_pop_state();
+                                                    winrt_enable( TRUE );
+                                                }
+    winrt[^\n]*                                 {
+                                                    yy_pop_state();
+                                                    winrt_enable( FALSE );
+                                                }
+    [^\n]*                                      {
+                                                    yy_pop_state();
+                                                    return token_str( aPRAGMA, yytext, yylval );
+                                                }
+}
+<PP_LINE>[0-9]+{ws}*                            {
+                                                    line_number = strtoul( yytext, NULL, 10 ) - 1;  /* We didn't read the newline */
+                                                    yy_pop_state();
+                                                    yy_push_state(PP_FILE);
+                                                }
+<PP_FILE>\"(\\[^n]|[^"\\\n])*\"{ws}*            {
+                                                    input_name = xstrdup( yytext + 1 );
+                                                    *strchr( input_name, '"' ) = 0;
+                                                }
+<PP_FILE>[^"][^\n]*                             { yy_pop_state(); }
 
 <ATTR>{
     \]                                          { yy_pop_state(); return ']'; }
