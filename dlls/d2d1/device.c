@@ -942,6 +942,7 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGeometry(ID2D1DeviceContext
     const struct d2d_geometry *geometry_impl = unsafe_impl_from_ID2D1Geometry(geometry);
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     struct d2d_brush *brush_impl = unsafe_impl_from_ID2D1Brush(brush);
+    struct d2d_stroke_style *stroke_style_impl = unsafe_impl_from_ID2D1StrokeStyle(stroke_style);
 
     TRACE("iface %p, geometry %p, brush %p, stroke_width %.8e, stroke_style %p.\n",
             iface, geometry, brush, stroke_width, stroke_style);
@@ -955,6 +956,12 @@ static void STDMETHODCALLTYPE d2d_device_context_DrawGeometry(ID2D1DeviceContext
 
     if (stroke_style)
         FIXME("Ignoring stroke style %p.\n", stroke_style);
+
+    if (stroke_style_impl)
+    {
+        if (stroke_style_impl->desc.transformType == D2D1_STROKE_TRANSFORM_TYPE_FIXED)
+            stroke_width /= context->drawing_state.transform.m11;
+    }
 
     d2d_device_context_draw_geometry(context, geometry_impl, brush_impl, stroke_width);
 }

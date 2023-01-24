@@ -191,6 +191,14 @@ static const struct ID2D1StrokeStyle1Vtbl d2d_stroke_style_vtbl =
     d2d_stroke_style_GetStrokeTransformType
 };
 
+struct d2d_stroke_style *unsafe_impl_from_ID2D1StrokeStyle(ID2D1StrokeStyle *iface)
+{
+    if (!iface)
+        return NULL;
+    assert((const struct ID2D1StrokeStyle1Vtbl *)iface->lpVtbl == &d2d_stroke_style_vtbl);
+    return CONTAINING_RECORD(iface, struct d2d_stroke_style, ID2D1StrokeStyle1_iface);
+}
+
 HRESULT d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory,
         const D2D1_STROKE_STYLE_PROPERTIES1 *desc, const float *dashes, UINT32 dash_count)
 {

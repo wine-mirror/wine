@@ -383,6 +383,7 @@ struct d2d_stroke_style
 
 HRESULT d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory,
         const D2D1_STROKE_STYLE_PROPERTIES1 *desc, const float *dashes, UINT32 dash_count);
+struct d2d_stroke_style *unsafe_impl_from_ID2D1StrokeStyle(ID2D1StrokeStyle *iface);
 
 struct d2d_layer
 {
