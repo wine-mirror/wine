@@ -551,7 +551,10 @@ struct dwrite_fontfallback_builder
     size_t mappings_size;
 };
 
-static struct fallback_data system_fallback;
+static struct fallback_data system_fallback =
+{
+    .locales = LIST_INIT(system_fallback.locales),
+};
 
 static void release_fallback_mapping(struct fallback_mapping *mapping)
 {
