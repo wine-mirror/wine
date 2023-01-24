@@ -28,8 +28,6 @@ extern char *parser_text;
 extern int parser_debug;
 extern int yy_flex_debug;
 
-int parser_lex(void);
-
 extern int import_stack_ptr;
 int do_import(char *fname);
 void abort_import(void);

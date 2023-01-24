@@ -121,7 +121,16 @@ static typelib_t *current_typelib;
 
 %}
 
+%code provides
+{
+
+int parser_lex( PARSER_STYPE *yylval );
+
+}
+
 %define api.prefix {parser_}
+%define api.pure full
+%define parse.error verbose
 
 %union {
 	attr_t *attr;
@@ -346,8 +355,6 @@ static typelib_t *current_typelib;
 %left '*' '/' '%'
 %right '!' '~' CAST PPTR POS NEG ADDRESSOF tSIZEOF
 %left '.' MEMBERPTR '[' ']'
-
-%define parse.error verbose
 
 %%
 

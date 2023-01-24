@@ -18,6 +18,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+%option bison-bridge
 %option stack
 %option noinput nounput noyy_top_state
 %option noyywrap
@@ -59,6 +60,11 @@ double	[0-9]+\.[0-9]+([eE][+-]?[0-9]+)*
 #include "parser.h"
 #include "wpp_private.h"
 
+#define YYerror PARSER_error
+#define YYSTYPE PARSER_STYPE
+#define YYUNDEF PARSER_UNDEF
+#define yyerror parser_error
+
 #include "parser.tab.h"
 
 static void addcchar(char c);
@@ -68,8 +74,8 @@ static char *cbuffer;
 static int cbufidx;
 static int cbufalloc = 0;
 
-static int kw_token(const char *kw);
-static int attr_token(const char *kw);
+static int kw_token(const char *kw, YYSTYPE *yylval);
+static int attr_token(const char *kw, YYSTYPE *yylval);
 
 static void switch_to_acf(void);
 
@@ -162,24 +168,24 @@ struct uuid *parse_uuid(const char *u)
                             }
                             yy_pop_state();
                         }
-<PP_PRAGMA>[^\n]*       parser_lval.str = xstrdup(yytext); yy_pop_state(); return aPRAGMA;
+<PP_PRAGMA>[^\n]*       yylval->str = xstrdup(yytext); yy_pop_state(); return aPRAGMA;
 <INITIAL>^{ws}*midl_pragma{ws}+warning return tPRAGMA_WARNING;
 <INITIAL,ATTR>\"	yy_push_state(QUOTE); cbufidx = 0;
 <QUOTE>\"		{
 				yy_pop_state();
-				parser_lval.str = get_buffered_cstring();
+				yylval->str = get_buffered_cstring();
 				return aSTRING;
 			}
 <INITIAL,ATTR>L\"	yy_push_state(WSTRQUOTE); cbufidx = 0;
 <WSTRQUOTE>\"		{
 				yy_pop_state();
-				parser_lval.str = get_buffered_cstring();
+				yylval->str = get_buffered_cstring();
 				return aWSTRING;
 			}
 <INITIAL,ATTR>\'	yy_push_state(SQUOTE); cbufidx = 0;
 <SQUOTE>\'		{
 				yy_pop_state();
-				parser_lval.str = get_buffered_cstring();
+				yylval->str = get_buffered_cstring();
 				return aSQSTRING;
 			}
 <QUOTE,WSTRQUOTE,SQUOTE>\\\\	|
@@ -189,25 +195,25 @@ struct uuid *parse_uuid(const char *u)
 <QUOTE,WSTRQUOTE,SQUOTE>.	addcchar(yytext[0]);
 <INITIAL,ATTR>\[	yy_push_state(ATTR); return '[';
 <ATTR>\]		yy_pop_state(); return ']';
-<ATTR>{cident}		return attr_token(yytext);
+<ATTR>{cident}		return attr_token(yytext, yylval);
 <ATTR>{uuid}			{
-				parser_lval.uuid = parse_uuid(yytext);
+				yylval->uuid = parse_uuid(yytext);
 				return aUUID;
 			}
 <INITIAL,ATTR>{hex}	{
-				parser_lval.num = xstrtoul(yytext, NULL, 0);
+				yylval->num = xstrtoul(yytext, NULL, 0);
 				return aHEXNUM;
 			}
 <INITIAL,ATTR>{int}	{
-				parser_lval.num = xstrtoul(yytext, NULL, 0);
+				yylval->num = xstrtoul(yytext, NULL, 0);
 				return aNUM;
 			}
 <INITIAL>{double}	{
-				parser_lval.dbl = strtod(yytext, NULL);
+				yylval->dbl = strtod(yytext, NULL);
 				return aDOUBLE;
 			}
 SAFEARRAY{ws}*/\(	return tSAFEARRAY;
-{cident}		return kw_token(yytext);
+{cident}		return kw_token(yytext, yylval);
 <INITIAL,ATTR>\n	line_number++;
 <INITIAL,ATTR>{ws}
 <INITIAL,ATTR>\<\<	return SHL;
@@ -452,30 +458,30 @@ static int kw_cmp_func(const void *s1, const void *s2)
 	return strcmp(KWP(s1)->kw, KWP(s2)->kw);
 }
 
-static int kw_token(const char *kw)
+static int kw_token(const char *kw, YYSTYPE *yylval)
 {
 	struct keyword key, *kwp;
 	key.kw = kw;
 	kwp = bsearch(&key, keywords, NKEYWORDS, sizeof(keywords[0]), kw_cmp_func);
 	if (kwp && (!kwp->winrt_only || winrt_mode)) {
-		parser_lval.str = xstrdup(kwp->kw);
+		yylval->str = xstrdup(kwp->kw);
 		return kwp->token;
 	}
-	parser_lval.str = xstrdup(kw);
+	yylval->str = xstrdup(kw);
 	return is_type(kw) ? aKNOWNTYPE : aIDENTIFIER;
 }
 
-static int attr_token(const char *kw)
+static int attr_token(const char *kw, YYSTYPE *yylval)
 {
         struct keyword key, *kwp;
         key.kw = kw;
         kwp = bsearch(&key, attr_keywords, sizeof(attr_keywords)/sizeof(attr_keywords[0]),
                       sizeof(attr_keywords[0]), kw_cmp_func);
         if (kwp && (!kwp->winrt_only || winrt_mode)) {
-            parser_lval.str = xstrdup(kwp->kw);
+            yylval->str = xstrdup(kwp->kw);
             return kwp->token;
         }
-        return kw_token(kw);
+        return kw_token(kw, yylval);
 }
 
 static void addcchar(char c)
