@@ -511,6 +511,7 @@ static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *
     {
         if (format->u.video.format == video_formats[i].format)
         {
+            unsigned int stride = wg_format_get_stride(format);
             int32_t height = abs(format->u.video.height);
             int32_t width = format->u.video.width;
 
@@ -525,6 +526,12 @@ static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *
             IMFMediaType_SetUINT32(type, &MF_MT_COMPRESSED, FALSE);
             IMFMediaType_SetUINT32(type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
             IMFMediaType_SetUINT32(type, &MF_MT_VIDEO_ROTATION, MFVideoRotationFormat_0);
+
+            if (wg_video_format_is_rgb(format->u.video.format))
+                stride = -stride;
+            if (format->u.video.height < 0)
+                stride = -stride;
+            IMFMediaType_SetUINT32(type, &MF_MT_DEFAULT_STRIDE, stride);
 
             if (!IsRectEmpty(&format->u.video.padding))
             {

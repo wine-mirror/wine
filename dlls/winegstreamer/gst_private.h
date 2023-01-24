@@ -148,6 +148,10 @@ HRESULT wg_transform_read_dmo(struct wg_transform *transform, DMO_OUTPUT_DATA_BU
 
 HRESULT winegstreamer_stream_handler_create(REFIID riid, void **obj);
 
+unsigned int wg_format_get_stride(const struct wg_format *format);
+
+bool wg_video_format_is_rgb(enum wg_video_format format);
+
 HRESULT aac_decoder_create(REFIID riid, void **ret);
 HRESULT h264_decoder_create(REFIID riid, void **ret);
 HRESULT video_processor_create(REFIID riid, void **ret);
