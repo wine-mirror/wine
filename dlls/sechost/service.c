@@ -356,7 +356,7 @@ SC_HANDLE WINAPI DECLSPEC_HOTPATCH CreateServiceA( SC_HANDLE manager, const char
     display_nameW = heap_strdupAtoW( display_name );
     pathW = heap_strdupAtoW( path );
     groupW = heap_strdupAtoW( group );
-    dependenciesW = heap_strdupAtoW( dependencies );
+    dependenciesW = heap_strdup_multi_AtoW( dependencies );
     usernameW = heap_strdupAtoW( username );
     passwordW = heap_strdupAtoW( password );
 
