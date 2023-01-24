@@ -57,10 +57,10 @@ static type_t *make_safearray(type_t *type);
 static typelib_t *make_library(const char *name, const attr_list_t *attrs);
 static void append_array(declarator_t *decl, expr_t *expr);
 static void append_chain_type(declarator_t *decl, type_t *type, enum type_qualifier qual);
-static void append_chain_callconv(type_t *chain, char *callconv);
+static void append_chain_callconv( struct location where, type_t *chain, char *callconv );
 static warning_list_t *append_warning(warning_list_t *, int);
 
-static type_t *reg_typedefs(decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs);
+static type_t *reg_typedefs( struct location where, decl_spec_t *decl_spec, var_list_t *names, attr_list_t *attrs );
 static type_t *find_type_or_error(struct namespace *parent, const char *name);
 static struct namespace *find_namespace_or_error(struct namespace *namespace, const char *name);
 
@@ -607,128 +607,128 @@ activatable_attr:
 
 attribute
         : %empty                                { $$ = NULL; }
-        | tACTIVATABLE '(' activatable_attr ')' { $$ = attr_ptr( ATTR_ACTIVATABLE, $3 ); }
-        | tAGGREGATABLE                         { $$ = attr_int( ATTR_AGGREGATABLE, 0 ); }
-        | tANNOTATION '(' aSTRING ')'           { $$ = attr_ptr( ATTR_ANNOTATION, $3 ); }
-        | tAPPOBJECT                            { $$ = attr_int( ATTR_APPOBJECT, 0 ); }
-        | tASYNC                                { $$ = attr_int( ATTR_ASYNC, 0 ); }
-        | tAUTOHANDLE                           { $$ = attr_int( ATTR_AUTO_HANDLE, 0 ); }
-        | tBINDABLE                             { $$ = attr_int( ATTR_BINDABLE, 0 ); }
-        | tBROADCAST                            { $$ = attr_int( ATTR_BROADCAST, 0 ); }
-        | tCALLAS '(' ident ')'                 { $$ = attr_ptr( ATTR_CALLAS, $3 ); }
-        | tCASE '(' expr_list_int_const ')'     { $$ = attr_ptr( ATTR_CASE, $3 ); }
-        | tCODE                                 { $$ = attr_int( ATTR_CODE, 0 ); }
-        | tCOMMSTATUS                           { $$ = attr_int( ATTR_COMMSTATUS, 0 ); }
-        | tCONTEXTHANDLE                        { $$ = attr_int( ATTR_CONTEXTHANDLE, 0 ); }
-        | tCONTEXTHANDLENOSERIALIZE             { $$ = attr_int( ATTR_CONTEXTHANDLE, 0 ); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
-        | tCONTEXTHANDLESERIALIZE               { $$ = attr_int( ATTR_CONTEXTHANDLE, 0 ); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
-        | tCONTRACT '(' contract_req ')'        { $$ = attr_ptr( ATTR_CONTRACT, $3 ); }
-        | tCONTRACTVERSION '(' contract_ver ')' { $$ = attr_int( ATTR_CONTRACTVERSION, $3 ); }
-        | tCONTROL                              { $$ = attr_int( ATTR_CONTROL, 0 ); }
+        | tACTIVATABLE '(' activatable_attr ')' { $$ = attr_ptr( @$, ATTR_ACTIVATABLE, $3 ); }
+        | tAGGREGATABLE                         { $$ = attr_int( @$, ATTR_AGGREGATABLE, 0 ); }
+        | tANNOTATION '(' aSTRING ')'           { $$ = attr_ptr( @$, ATTR_ANNOTATION, $3 ); }
+        | tAPPOBJECT                            { $$ = attr_int( @$, ATTR_APPOBJECT, 0 ); }
+        | tASYNC                                { $$ = attr_int( @$, ATTR_ASYNC, 0 ); }
+        | tAUTOHANDLE                           { $$ = attr_int( @$, ATTR_AUTO_HANDLE, 0 ); }
+        | tBINDABLE                             { $$ = attr_int( @$, ATTR_BINDABLE, 0 ); }
+        | tBROADCAST                            { $$ = attr_int( @$, ATTR_BROADCAST, 0 ); }
+        | tCALLAS '(' ident ')'                 { $$ = attr_ptr( @$, ATTR_CALLAS, $3 ); }
+        | tCASE '(' expr_list_int_const ')'     { $$ = attr_ptr( @$, ATTR_CASE, $3 ); }
+        | tCODE                                 { $$ = attr_int( @$, ATTR_CODE, 0 ); }
+        | tCOMMSTATUS                           { $$ = attr_int( @$, ATTR_COMMSTATUS, 0 ); }
+        | tCONTEXTHANDLE                        { $$ = attr_int( @$, ATTR_CONTEXTHANDLE, 0 ); }
+        | tCONTEXTHANDLENOSERIALIZE             { $$ = attr_int( @$, ATTR_CONTEXTHANDLE, 0 ); /* RPC_CONTEXT_HANDLE_DONT_SERIALIZE */ }
+        | tCONTEXTHANDLESERIALIZE               { $$ = attr_int( @$, ATTR_CONTEXTHANDLE, 0 ); /* RPC_CONTEXT_HANDLE_SERIALIZE */ }
+        | tCONTRACT '(' contract_req ')'        { $$ = attr_ptr( @$, ATTR_CONTRACT, $3 ); }
+        | tCONTRACTVERSION '(' contract_ver ')' { $$ = attr_int( @$, ATTR_CONTRACTVERSION, $3 ); }
+        | tCONTROL                              { $$ = attr_int( @$, ATTR_CONTROL, 0 ); }
         | tCUSTOM '(' aUUID ',' expr_const ')'  { attr_custdata_t *data = xmalloc( sizeof(*data) );
                                                   data->id = *$3; data->pval = $5;
-                                                  $$ = attr_ptr( ATTR_CUSTOM, data );
+                                                  $$ = attr_ptr( @$, ATTR_CUSTOM, data );
                                                 }
-        | tDECODE                               { $$ = attr_int( ATTR_DECODE, 0 ); }
-        | tDEFAULT                              { $$ = attr_int( ATTR_DEFAULT, 0 ); }
-        | tDEFAULTBIND                          { $$ = attr_int( ATTR_DEFAULTBIND, 0 ); }
-        | tDEFAULTCOLLELEM                      { $$ = attr_int( ATTR_DEFAULTCOLLELEM, 0 ); }
-        | tDEFAULTVALUE '(' expr_const ')'      { $$ = attr_ptr( ATTR_DEFAULTVALUE, $3 ); }
-        | tDEFAULTVTABLE                        { $$ = attr_int( ATTR_DEFAULTVTABLE, 0 ); }
-        | tDISABLECONSISTENCYCHECK              { $$ = attr_int( ATTR_DISABLECONSISTENCYCHECK, 0 ); }
-        | tDISPLAYBIND                          { $$ = attr_int( ATTR_DISPLAYBIND, 0 ); }
-        | tDLLNAME '(' aSTRING ')'              { $$ = attr_ptr( ATTR_DLLNAME, $3 ); }
-        | tDUAL                                 { $$ = attr_int( ATTR_DUAL, 0 ); }
-        | tENABLEALLOCATE                       { $$ = attr_int( ATTR_ENABLEALLOCATE, 0 ); }
-        | tENCODE                               { $$ = attr_int( ATTR_ENCODE, 0 ); }
-        | tENDPOINT '(' str_list ')'            { $$ = attr_ptr( ATTR_ENDPOINT, $3 ); }
-        | tENTRY '(' expr_const ')'             { $$ = attr_ptr( ATTR_ENTRY, $3 ); }
-        | tEVENTADD                             { $$ = attr_int( ATTR_EVENTADD, 0 ); }
-        | tEVENTREMOVE                          { $$ = attr_int( ATTR_EVENTREMOVE, 0 ); }
+        | tDECODE                               { $$ = attr_int( @$, ATTR_DECODE, 0 ); }
+        | tDEFAULT                              { $$ = attr_int( @$, ATTR_DEFAULT, 0 ); }
+        | tDEFAULTBIND                          { $$ = attr_int( @$, ATTR_DEFAULTBIND, 0 ); }
+        | tDEFAULTCOLLELEM                      { $$ = attr_int( @$, ATTR_DEFAULTCOLLELEM, 0 ); }
+        | tDEFAULTVALUE '(' expr_const ')'      { $$ = attr_ptr( @$, ATTR_DEFAULTVALUE, $3 ); }
+        | tDEFAULTVTABLE                        { $$ = attr_int( @$, ATTR_DEFAULTVTABLE, 0 ); }
+        | tDISABLECONSISTENCYCHECK              { $$ = attr_int( @$, ATTR_DISABLECONSISTENCYCHECK, 0 ); }
+        | tDISPLAYBIND                          { $$ = attr_int( @$, ATTR_DISPLAYBIND, 0 ); }
+        | tDLLNAME '(' aSTRING ')'              { $$ = attr_ptr( @$, ATTR_DLLNAME, $3 ); }
+        | tDUAL                                 { $$ = attr_int( @$, ATTR_DUAL, 0 ); }
+        | tENABLEALLOCATE                       { $$ = attr_int( @$, ATTR_ENABLEALLOCATE, 0 ); }
+        | tENCODE                               { $$ = attr_int( @$, ATTR_ENCODE, 0 ); }
+        | tENDPOINT '(' str_list ')'            { $$ = attr_ptr( @$, ATTR_ENDPOINT, $3 ); }
+        | tENTRY '(' expr_const ')'             { $$ = attr_ptr( @$, ATTR_ENTRY, $3 ); }
+        | tEVENTADD                             { $$ = attr_int( @$, ATTR_EVENTADD, 0 ); }
+        | tEVENTREMOVE                          { $$ = attr_int( @$, ATTR_EVENTREMOVE, 0 ); }
         | tEXCLUSIVETO '(' decl_spec ')'        { if ($3->type->type_type != TYPE_RUNTIMECLASS)
                                                       error_loc( "type %s is not a runtimeclass\n", $3->type->name );
-                                                  $$ = attr_ptr( ATTR_EXCLUSIVETO, $3->type );
+                                                  $$ = attr_ptr( @$, ATTR_EXCLUSIVETO, $3->type );
                                                 }
-        | tEXPLICITHANDLE                       { $$ = attr_int( ATTR_EXPLICIT_HANDLE, 0 ); }
-        | tFAULTSTATUS                          { $$ = attr_int( ATTR_FAULTSTATUS, 0 ); }
-        | tFLAGS                                { $$ = attr_int( ATTR_FLAGS, 0 ); }
-        | tFORCEALLOCATE                        { $$ = attr_int( ATTR_FORCEALLOCATE, 0 ); }
-        | tHANDLE                               { $$ = attr_int( ATTR_HANDLE, 0 ); }
-        | tHELPCONTEXT '(' expr_int_const ')'   { $$ = attr_ptr( ATTR_HELPCONTEXT, $3 ); }
-        | tHELPFILE '(' aSTRING ')'             { $$ = attr_ptr( ATTR_HELPFILE, $3 ); }
-        | tHELPSTRING '(' aSTRING ')'           { $$ = attr_ptr( ATTR_HELPSTRING, $3 ); }
+        | tEXPLICITHANDLE                       { $$ = attr_int( @$, ATTR_EXPLICIT_HANDLE, 0 ); }
+        | tFAULTSTATUS                          { $$ = attr_int( @$, ATTR_FAULTSTATUS, 0 ); }
+        | tFLAGS                                { $$ = attr_int( @$, ATTR_FLAGS, 0 ); }
+        | tFORCEALLOCATE                        { $$ = attr_int( @$, ATTR_FORCEALLOCATE, 0 ); }
+        | tHANDLE                               { $$ = attr_int( @$, ATTR_HANDLE, 0 ); }
+        | tHELPCONTEXT '(' expr_int_const ')'   { $$ = attr_ptr( @$, ATTR_HELPCONTEXT, $3 ); }
+        | tHELPFILE '(' aSTRING ')'             { $$ = attr_ptr( @$, ATTR_HELPFILE, $3 ); }
+        | tHELPSTRING '(' aSTRING ')'           { $$ = attr_ptr( @$, ATTR_HELPSTRING, $3 ); }
         | tHELPSTRINGCONTEXT '(' expr_int_const ')'
-                                                { $$ = attr_ptr( ATTR_HELPSTRINGCONTEXT, $3 ); }
-        | tHELPSTRINGDLL '(' aSTRING ')'        { $$ = attr_ptr( ATTR_HELPSTRINGDLL, $3 ); }
-        | tHIDDEN                               { $$ = attr_int( ATTR_HIDDEN, 0 ); }
-        | tID '(' expr_int_const ')'            { $$ = attr_ptr( ATTR_ID, $3 ); }
-        | tIDEMPOTENT                           { $$ = attr_int( ATTR_IDEMPOTENT, 0 ); }
-        | tIGNORE                               { $$ = attr_int( ATTR_IGNORE, 0 ); }
-        | tIIDIS '(' expr ')'                   { $$ = attr_ptr( ATTR_IIDIS, $3 ); }
-        | tIMMEDIATEBIND                        { $$ = attr_int( ATTR_IMMEDIATEBIND, 0 ); }
-        | tIMPLICITHANDLE '(' arg ')'           { $$ = attr_ptr( ATTR_IMPLICIT_HANDLE, $3 ); }
-        | tIN                                   { $$ = attr_int( ATTR_IN, 0 ); }
-        | tINPUTSYNC                            { $$ = attr_int( ATTR_INPUTSYNC, 0 ); }
-        | tLENGTHIS '(' m_exprs ')'             { $$ = attr_ptr( ATTR_LENGTHIS, $3 ); }
-        | tLCID '(' expr_int_const ')'          { $$ = attr_ptr( ATTR_LIBLCID, $3 ); }
-        | tLCID                                 { $$ = attr_int( ATTR_PARAMLCID, 0 ); }
-        | tLICENSED                             { $$ = attr_int( ATTR_LICENSED, 0 ); }
-        | tLOCAL                                { $$ = attr_int( ATTR_LOCAL, 0 ); }
+                                                { $$ = attr_ptr( @$, ATTR_HELPSTRINGCONTEXT, $3 ); }
+        | tHELPSTRINGDLL '(' aSTRING ')'        { $$ = attr_ptr( @$, ATTR_HELPSTRINGDLL, $3 ); }
+        | tHIDDEN                               { $$ = attr_int( @$, ATTR_HIDDEN, 0 ); }
+        | tID '(' expr_int_const ')'            { $$ = attr_ptr( @$, ATTR_ID, $3 ); }
+        | tIDEMPOTENT                           { $$ = attr_int( @$, ATTR_IDEMPOTENT, 0 ); }
+        | tIGNORE                               { $$ = attr_int( @$, ATTR_IGNORE, 0 ); }
+        | tIIDIS '(' expr ')'                   { $$ = attr_ptr( @$, ATTR_IIDIS, $3 ); }
+        | tIMMEDIATEBIND                        { $$ = attr_int( @$, ATTR_IMMEDIATEBIND, 0 ); }
+        | tIMPLICITHANDLE '(' arg ')'           { $$ = attr_ptr( @$, ATTR_IMPLICIT_HANDLE, $3 ); }
+        | tIN                                   { $$ = attr_int( @$, ATTR_IN, 0 ); }
+        | tINPUTSYNC                            { $$ = attr_int( @$, ATTR_INPUTSYNC, 0 ); }
+        | tLENGTHIS '(' m_exprs ')'             { $$ = attr_ptr( @$, ATTR_LENGTHIS, $3 ); }
+        | tLCID '(' expr_int_const ')'          { $$ = attr_ptr( @$, ATTR_LIBLCID, $3 ); }
+        | tLCID                                 { $$ = attr_int( @$, ATTR_PARAMLCID, 0 ); }
+        | tLICENSED                             { $$ = attr_int( @$, ATTR_LICENSED, 0 ); }
+        | tLOCAL                                { $$ = attr_int( @$, ATTR_LOCAL, 0 ); }
         | tMARSHALINGBEHAVIOR '(' marshaling_behavior ')'
-                                                { $$ = attr_int( ATTR_MARSHALING_BEHAVIOR, $3 ); }
-        | tMAYBE                                { $$ = attr_int( ATTR_MAYBE, 0 ); }
-        | tMESSAGE                              { $$ = attr_int( ATTR_MESSAGE, 0 ); }
-        | tNOCODE                               { $$ = attr_int( ATTR_NOCODE, 0 ); }
-        | tNONBROWSABLE                         { $$ = attr_int( ATTR_NONBROWSABLE, 0 ); }
-        | tNONCREATABLE                         { $$ = attr_int( ATTR_NONCREATABLE, 0 ); }
-        | tNONEXTENSIBLE                        { $$ = attr_int( ATTR_NONEXTENSIBLE, 0 ); }
-        | tNOTIFY                               { $$ = attr_int( ATTR_NOTIFY, 0 ); }
-        | tNOTIFYFLAG                           { $$ = attr_int( ATTR_NOTIFYFLAG, 0 ); }
-        | tOBJECT                               { $$ = attr_int( ATTR_OBJECT, 0 ); }
-        | tODL                                  { $$ = attr_int( ATTR_ODL, 0 ); }
-        | tOLEAUTOMATION                        { $$ = attr_int( ATTR_OLEAUTOMATION, 0 ); }
-        | tOPTIMIZE '(' aSTRING ')'             { $$ = attr_ptr( ATTR_OPTIMIZE, $3 ); }
-        | tOPTIONAL                             { $$ = attr_int( ATTR_OPTIONAL, 0 ); }
-        | tOUT                                  { $$ = attr_int( ATTR_OUT, 0 ); }
-        | tOVERLOAD '(' aSTRING ')'             { $$ = attr_ptr( ATTR_OVERLOAD, $3 ); }
-        | tPARTIALIGNORE                        { $$ = attr_int( ATTR_PARTIALIGNORE, 0 ); }
-        | tPOINTERDEFAULT '(' pointer_type ')'  { $$ = attr_int( ATTR_POINTERDEFAULT, $3 ); }
-        | tPROGID '(' aSTRING ')'               { $$ = attr_ptr( ATTR_PROGID, $3 ); }
-        | tPROPGET                              { $$ = attr_int( ATTR_PROPGET, 0 ); }
-        | tPROPPUT                              { $$ = attr_int( ATTR_PROPPUT, 0 ); }
-        | tPROPPUTREF                           { $$ = attr_int( ATTR_PROPPUTREF, 0 ); }
-        | tPROXY                                { $$ = attr_int( ATTR_PROXY, 0 ); }
-        | tPUBLIC                               { $$ = attr_int( ATTR_PUBLIC, 0 ); }
+                                                { $$ = attr_int( @$, ATTR_MARSHALING_BEHAVIOR, $3 ); }
+        | tMAYBE                                { $$ = attr_int( @$, ATTR_MAYBE, 0 ); }
+        | tMESSAGE                              { $$ = attr_int( @$, ATTR_MESSAGE, 0 ); }
+        | tNOCODE                               { $$ = attr_int( @$, ATTR_NOCODE, 0 ); }
+        | tNONBROWSABLE                         { $$ = attr_int( @$, ATTR_NONBROWSABLE, 0 ); }
+        | tNONCREATABLE                         { $$ = attr_int( @$, ATTR_NONCREATABLE, 0 ); }
+        | tNONEXTENSIBLE                        { $$ = attr_int( @$, ATTR_NONEXTENSIBLE, 0 ); }
+        | tNOTIFY                               { $$ = attr_int( @$, ATTR_NOTIFY, 0 ); }
+        | tNOTIFYFLAG                           { $$ = attr_int( @$, ATTR_NOTIFYFLAG, 0 ); }
+        | tOBJECT                               { $$ = attr_int( @$, ATTR_OBJECT, 0 ); }
+        | tODL                                  { $$ = attr_int( @$, ATTR_ODL, 0 ); }
+        | tOLEAUTOMATION                        { $$ = attr_int( @$, ATTR_OLEAUTOMATION, 0 ); }
+        | tOPTIMIZE '(' aSTRING ')'             { $$ = attr_ptr( @$, ATTR_OPTIMIZE, $3 ); }
+        | tOPTIONAL                             { $$ = attr_int( @$, ATTR_OPTIONAL, 0 ); }
+        | tOUT                                  { $$ = attr_int( @$, ATTR_OUT, 0 ); }
+        | tOVERLOAD '(' aSTRING ')'             { $$ = attr_ptr( @$, ATTR_OVERLOAD, $3 ); }
+        | tPARTIALIGNORE                        { $$ = attr_int( @$, ATTR_PARTIALIGNORE, 0 ); }
+        | tPOINTERDEFAULT '(' pointer_type ')'  { $$ = attr_int( @$, ATTR_POINTERDEFAULT, $3 ); }
+        | tPROGID '(' aSTRING ')'               { $$ = attr_ptr( @$, ATTR_PROGID, $3 ); }
+        | tPROPGET                              { $$ = attr_int( @$, ATTR_PROPGET, 0 ); }
+        | tPROPPUT                              { $$ = attr_int( @$, ATTR_PROPPUT, 0 ); }
+        | tPROPPUTREF                           { $$ = attr_int( @$, ATTR_PROPPUTREF, 0 ); }
+        | tPROXY                                { $$ = attr_int( @$, ATTR_PROXY, 0 ); }
+        | tPUBLIC                               { $$ = attr_int( @$, ATTR_PUBLIC, 0 ); }
         | tRANGE '(' expr_int_const ',' expr_int_const ')'
                                                 { expr_list_t *list = append_expr( NULL, $3 );
                                                   list = append_expr( list, $5 );
-                                                  $$ = attr_ptr( ATTR_RANGE, list );
+                                                  $$ = attr_ptr( @$, ATTR_RANGE, list );
                                                 }
-        | tREADONLY                             { $$ = attr_int( ATTR_READONLY, 0 ); }
-        | tREPRESENTAS '(' type ')'             { $$ = attr_ptr( ATTR_REPRESENTAS, $3 ); }
-        | tREQUESTEDIT                          { $$ = attr_int( ATTR_REQUESTEDIT, 0 ); }
-        | tRESTRICTED                           { $$ = attr_int( ATTR_RESTRICTED, 0 ); }
-        | tRETVAL                               { $$ = attr_int( ATTR_RETVAL, 0 ); }
-        | tSIZEIS '(' m_exprs ')'               { $$ = attr_ptr( ATTR_SIZEIS, $3 ); }
-        | tSOURCE                               { $$ = attr_int( ATTR_SOURCE, 0 ); }
-        | tSTATIC '(' static_attr ')'           { $$ = attr_ptr( ATTR_STATIC, $3 ); }
-        | tSTRICTCONTEXTHANDLE                  { $$ = attr_int( ATTR_STRICTCONTEXTHANDLE, 0 ); }
-        | tSTRING                               { $$ = attr_int( ATTR_STRING, 0 ); }
-        | tSWITCHIS '(' expr ')'                { $$ = attr_ptr( ATTR_SWITCHIS, $3 ); }
-        | tSWITCHTYPE '(' type ')'              { $$ = attr_ptr( ATTR_SWITCHTYPE, $3 ); }
-        | tTRANSMITAS '(' type ')'              { $$ = attr_ptr( ATTR_TRANSMITAS, $3 ); }
-        | tTHREADING '(' threading_type ')'     { $$ = attr_int( ATTR_THREADING, $3 ); }
-        | tUIDEFAULT                            { $$ = attr_int( ATTR_UIDEFAULT, 0 ); }
-        | tUSESGETLASTERROR                     { $$ = attr_int( ATTR_USESGETLASTERROR, 0 ); }
-        | tUSERMARSHAL '(' type ')'             { $$ = attr_ptr( ATTR_USERMARSHAL, $3 ); }
-        | tUUID '(' aUUID ')'                   { $$ = attr_ptr( ATTR_UUID, $3 ); }
-        | tASYNCUUID '(' aUUID ')'              { $$ = attr_ptr( ATTR_ASYNCUUID, $3 ); }
-        | tV1ENUM                               { $$ = attr_int( ATTR_V1ENUM, 0 ); }
-        | tVARARG                               { $$ = attr_int( ATTR_VARARG, 0 ); }
-        | tVERSION '(' version ')'              { $$ = attr_int( ATTR_VERSION, $3 ); }
-        | tVIPROGID '(' aSTRING ')'             { $$ = attr_ptr( ATTR_VIPROGID, $3 ); }
-        | tWIREMARSHAL '(' type ')'             { $$ = attr_ptr( ATTR_WIREMARSHAL, $3 ); }
-        | pointer_type                          { $$ = attr_int( ATTR_POINTERTYPE, $1 ); }
+        | tREADONLY                             { $$ = attr_int( @$, ATTR_READONLY, 0 ); }
+        | tREPRESENTAS '(' type ')'             { $$ = attr_ptr( @$, ATTR_REPRESENTAS, $3 ); }
+        | tREQUESTEDIT                          { $$ = attr_int( @$, ATTR_REQUESTEDIT, 0 ); }
+        | tRESTRICTED                           { $$ = attr_int( @$, ATTR_RESTRICTED, 0 ); }
+        | tRETVAL                               { $$ = attr_int( @$, ATTR_RETVAL, 0 ); }
+        | tSIZEIS '(' m_exprs ')'               { $$ = attr_ptr( @$, ATTR_SIZEIS, $3 ); }
+        | tSOURCE                               { $$ = attr_int( @$, ATTR_SOURCE, 0 ); }
+        | tSTATIC '(' static_attr ')'           { $$ = attr_ptr( @$, ATTR_STATIC, $3 ); }
+        | tSTRICTCONTEXTHANDLE                  { $$ = attr_int( @$, ATTR_STRICTCONTEXTHANDLE, 0 ); }
+        | tSTRING                               { $$ = attr_int( @$, ATTR_STRING, 0 ); }
+        | tSWITCHIS '(' expr ')'                { $$ = attr_ptr( @$, ATTR_SWITCHIS, $3 ); }
+        | tSWITCHTYPE '(' type ')'              { $$ = attr_ptr( @$, ATTR_SWITCHTYPE, $3 ); }
+        | tTRANSMITAS '(' type ')'              { $$ = attr_ptr( @$, ATTR_TRANSMITAS, $3 ); }
+        | tTHREADING '(' threading_type ')'     { $$ = attr_int( @$, ATTR_THREADING, $3 ); }
+        | tUIDEFAULT                            { $$ = attr_int( @$, ATTR_UIDEFAULT, 0 ); }
+        | tUSESGETLASTERROR                     { $$ = attr_int( @$, ATTR_USESGETLASTERROR, 0 ); }
+        | tUSERMARSHAL '(' type ')'             { $$ = attr_ptr( @$, ATTR_USERMARSHAL, $3 ); }
+        | tUUID '(' aUUID ')'                   { $$ = attr_ptr( @$, ATTR_UUID, $3 ); }
+        | tASYNCUUID '(' aUUID ')'              { $$ = attr_ptr( @$, ATTR_ASYNCUUID, $3 ); }
+        | tV1ENUM                               { $$ = attr_int( @$, ATTR_V1ENUM, 0 ); }
+        | tVARARG                               { $$ = attr_int( @$, ATTR_VARARG, 0 ); }
+        | tVERSION '(' version ')'              { $$ = attr_int( @$, ATTR_VERSION, $3 ); }
+        | tVIPROGID '(' aSTRING ')'             { $$ = attr_ptr( @$, ATTR_VIPROGID, $3 ); }
+        | tWIREMARSHAL '(' type ')'             { $$ = attr_ptr( @$, ATTR_WIREMARSHAL, $3 ); }
+        | pointer_type                          { $$ = attr_int( @$, ATTR_POINTERTYPE, $1 ); }
         ;
 
 callconv: tCDECL
@@ -742,11 +742,11 @@ cases
 	| cases case				{ $$ = append_var( $1, $2 ); }
 	;
 
-case    : tCASE expr_int_const ':' union_field  { attr_t *a = attr_ptr( ATTR_CASE, append_expr( NULL, $2 ) );
+case    : tCASE expr_int_const ':' union_field  { attr_t *a = attr_ptr( @$, ATTR_CASE, append_expr( NULL, $2 ) );
                                                   $$ = $4; if (!$$) $$ = make_var( NULL );
                                                   $$->attrs = append_attr( $$->attrs, a );
                                                 }
-        | tDEFAULT ':' union_field              { attr_t *a = attr_int( ATTR_DEFAULT, 0 );
+        | tDEFAULT ':' union_field              { attr_t *a = attr_int( @$, ATTR_DEFAULT, 0 );
                                                   $$ = $3; if (!$$) $$ = make_var( NULL );
                                                   $$->attrs = append_attr( $$->attrs, a );
                                                 }
@@ -1031,7 +1031,7 @@ class_interface:
 dispinterface: tDISPINTERFACE typename		{ $$ = type_dispinterface_declare($2); }
 	;
 
-dispattributes: attributes                      { $$ = append_attr( $1, attr_int( ATTR_DISPINTERFACE, 0 ) ); }
+dispattributes: attributes                      { $$ = append_attr( $1, attr_int( @$, ATTR_DISPINTERFACE, 0 ) ); }
         ;
 
 dispint_props: tPROPERTIES ':'			{ $$ = NULL; }
@@ -1170,7 +1170,7 @@ decl_spec_no_type:
 declarator:
 	  '*' m_type_qual_list declarator %prec PPTR
 						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
-	| callconv declarator			{ $$ = $2; append_chain_callconv($$->type, $1); }
+	| callconv declarator			{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	| direct_declarator
 	;
 
@@ -1185,7 +1185,7 @@ direct_declarator:
 abstract_declarator:
 	  '*' m_type_qual_list m_abstract_declarator %prec PPTR
 						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
-	| callconv m_abstract_declarator	{ $$ = $2; append_chain_callconv($$->type, $1); }
+	| callconv m_abstract_declarator	{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	| abstract_direct_declarator
 	;
 
@@ -1193,7 +1193,7 @@ abstract_declarator:
 abstract_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
 						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
-	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
+	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	;
 
 /* abstract declarator or empty */
@@ -1221,7 +1221,7 @@ abstract_direct_declarator:
 any_declarator:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
 						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
-	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
+	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	| any_direct_declarator
 	;
 
@@ -1229,7 +1229,7 @@ any_declarator:
 any_declarator_no_direct:
 	  '*' m_type_qual_list m_any_declarator %prec PPTR
 						{ $$ = $3; append_chain_type($$, type_new_pointer(NULL), $2); }
-	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv($$->type, $1); }
+	| callconv m_any_declarator		{ $$ = $2; append_chain_callconv( @$, $$->type, $1 ); }
 	;
 
 /* abstract or non-abstract declarator or empty */
@@ -1322,7 +1322,7 @@ type:
 
 typedef: m_attributes tTYPEDEF m_attributes decl_spec declarator_list
 						{ $1 = append_attribs($1, $3);
-						  reg_typedefs($4, $5, check_typedef_attrs($1));
+						  reg_typedefs( @$, $4, $5, check_typedef_attrs( $1 ) );
 						  $$ = make_statement_typedef($5, !$4->type->defined);
 						}
 	;
@@ -1378,10 +1378,10 @@ acf_attribute_list
 
 acf_attribute
         : tALLOCATE '(' allocate_option_list ')'
-                                                { $$ = attr_int( ATTR_ALLOCATE, $3 ); }
-        | tENCODE                               { $$ = attr_int( ATTR_ENCODE, 0 ); }
-        | tDECODE                               { $$ = attr_int( ATTR_DECODE, 0 ); }
-        | tEXPLICITHANDLE                       { $$ = attr_int( ATTR_EXPLICIT_HANDLE, 0 ); }
+                                                { $$ = attr_int( @$, ATTR_ALLOCATE, $3 ); }
+        | tENCODE                               { $$ = attr_int( @$, ATTR_ENCODE, 0 ); }
+        | tDECODE                               { $$ = attr_int( @$, ATTR_DECODE, 0 ); }
+        | tEXPLICITHANDLE                       { $$ = attr_int( @$, ATTR_EXPLICIT_HANDLE, 0 ); }
         ;
 
 allocate_option_list
@@ -1636,12 +1636,12 @@ static void append_chain_type(declarator_t *decl, type_t *type, enum type_qualif
         type->attrs = move_attr(type->attrs, chain_type->attrs, ATTR_CALLCONV);
 }
 
-static void append_chain_callconv(type_t *chain, char *callconv)
+static void append_chain_callconv( struct location where, type_t *chain, char *callconv )
 {
     type_t *chain_end;
 
     if (chain && (chain_end = get_chain_end(chain)))
-        chain_end->attrs = append_attr( chain_end->attrs, attr_ptr( ATTR_CALLCONV, callconv ) );
+        chain_end->attrs = append_attr( chain_end->attrs, attr_ptr( where, ATTR_CALLCONV, callconv ) );
     else
         error_loc("calling convention applied to non-function type\n");
 }
@@ -2062,13 +2062,13 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
   return type;
 }
 
-static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, attr_list_t *attrs)
+static type_t *reg_typedefs( struct location where, decl_spec_t *decl_spec, declarator_list_t *decls, attr_list_t *attrs )
 {
   declarator_t *decl;
   type_t *type = decl_spec->type;
 
   if (is_attr(attrs, ATTR_UUID) && !is_attr(attrs, ATTR_PUBLIC))
-    attrs = append_attr( attrs, attr_int( ATTR_PUBLIC, 0 ) );
+    attrs = append_attr( attrs, attr_int( where, ATTR_PUBLIC, 0 ) );
 
   /* We must generate names for tagless enum, struct or union.
      Typedef-ing a tagless enum, struct or union means we want the typedef
@@ -2082,7 +2082,7 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
     {
       type->name = gen_name();
       if (!is_attr(attrs, ATTR_PUBLIC))
-        attrs = append_attr( attrs, attr_int( ATTR_PUBLIC, 0 ) );
+        attrs = append_attr( attrs, attr_int( where, ATTR_PUBLIC, 0 ) );
     }
 
     /* replace existing attributes when generating a typelib */
@@ -2583,7 +2583,7 @@ static void add_explicit_handle_if_necessary(const type_t *iface, var_t *func)
          * "[in] handle_t IDL_handle" as the first parameter to the
          * function */
         var_t *idl_handle = make_var(xstrdup("IDL_handle"));
-        idl_handle->attrs = append_attr( NULL, attr_int( ATTR_IN, 0 ) );
+        idl_handle->attrs = append_attr( NULL, attr_int( iface->where, ATTR_IN, 0 ) );
         idl_handle->declspec.type = find_type_or_error(NULL, "handle_t");
         type_function_add_head_arg(func->declspec.type, idl_handle);
     }
@@ -2639,7 +2639,7 @@ static int async_iface_attrs(attr_list_t *attrs, const attr_t *attr)
     case ATTR_UUID:
         return 0;
     case ATTR_ASYNCUUID:
-        append_attr( attrs, attr_ptr( ATTR_UUID, attr->u.pval ) );
+        append_attr( attrs, attr_ptr( attr->where, ATTR_UUID, attr->u.pval ) );
         return 0;
     default:
         return 1;

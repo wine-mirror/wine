@@ -24,17 +24,19 @@
 
 #include "parser.tab.h"
 
-attr_t *attr_int( enum attr_type attr_type, unsigned int val )
+attr_t *attr_int( struct location where, enum attr_type attr_type, unsigned int val )
 {
     attr_t *a = xmalloc( sizeof(attr_t) );
+    a->where = where;
     a->type = attr_type;
     a->u.ival = val;
     return a;
 }
 
-attr_t *attr_ptr( enum attr_type attr_type, void *val )
+attr_t *attr_ptr( struct location where, enum attr_type attr_type, void *val )
 {
     attr_t *a = xmalloc( sizeof(attr_t) );
+    a->where = where;
     a->type = attr_type;
     a->u.pval = val;
     return a;
@@ -338,8 +340,8 @@ attr_list_t *check_apicontract_attrs( const char *name, attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_apicontract)
-            error_loc( "inapplicable attribute %s for apicontract %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "inapplicable attribute %s for apicontract %s\n",
+                      allowed_attr[attr->type].display_name, name );
     }
     return attrs;
 }
@@ -351,8 +353,8 @@ attr_list_t *check_coclass_attrs( const char *name, attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_coclass)
-            error_loc( "inapplicable attribute %s for coclass %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "inapplicable attribute %s for coclass %s\n",
+                      allowed_attr[attr->type].display_name, name );
     }
     return attrs;
 }
@@ -364,8 +366,8 @@ attr_list_t *check_dispiface_attrs( const char *name, attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_dispinterface)
-            error_loc( "inapplicable attribute %s for dispinterface %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "inapplicable attribute %s for dispinterface %s\n",
+                      allowed_attr[attr->type].display_name, name );
     }
     return attrs;
 }
@@ -377,8 +379,8 @@ attr_list_t *check_enum_attrs( attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_enum)
-            error_loc( "inapplicable attribute %s for enum\n",
-                       allowed_attr[attr->type].display_name );
+            error_at( &attr->where, "inapplicable attribute %s for enum\n",
+                      allowed_attr[attr->type].display_name );
     }
     return attrs;
 }
@@ -390,8 +392,8 @@ attr_list_t *check_enum_member_attrs( attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_enum_member)
-            error_loc( "inapplicable attribute %s for enum member\n",
-                       allowed_attr[attr->type].display_name );
+            error_at( &attr->where, "inapplicable attribute %s for enum member\n",
+                      allowed_attr[attr->type].display_name );
     }
     return attrs;
 }
@@ -403,8 +405,8 @@ attr_list_t *check_field_attrs( const char *name, attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_field)
-            error_loc( "inapplicable attribute %s for field %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "inapplicable attribute %s for field %s\n",
+                      allowed_attr[attr->type].display_name, name );
     }
     return attrs;
 }
@@ -416,8 +418,8 @@ attr_list_t *check_function_attrs( const char *name, attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_function)
-            error_loc( "inapplicable attribute %s for function %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "inapplicable attribute %s for function %s\n",
+                      allowed_attr[attr->type].display_name, name );
     }
     return attrs;
 }
@@ -429,8 +431,8 @@ attr_list_t *check_interface_attrs( const char *name, attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_interface)
-            error_loc( "inapplicable attribute %s for interface %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "inapplicable attribute %s for interface %s\n",
+                      allowed_attr[attr->type].display_name, name );
         if (attr->type == ATTR_IMPLICIT_HANDLE)
         {
             const var_t *var = attr->u.pval;
@@ -438,8 +440,8 @@ attr_list_t *check_interface_attrs( const char *name, attr_list_t *attrs )
                 type_basic_get_type( var->declspec.type ) == TYPE_BASIC_HANDLE)
                 continue;
             if (is_aliaschain_attr( var->declspec.type, ATTR_HANDLE )) continue;
-            error_loc( "attribute %s requires a handle type in interface %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "attribute %s requires a handle type in interface %s\n",
+                      allowed_attr[attr->type].display_name, name );
         }
     }
     return attrs;
@@ -452,8 +454,8 @@ attr_list_t *check_library_attrs( const char *name, attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_library)
-            error_loc( "inapplicable attribute %s for library %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "inapplicable attribute %s for library %s\n",
+                      allowed_attr[attr->type].display_name, name );
     }
     return attrs;
 }
@@ -465,8 +467,8 @@ attr_list_t *check_module_attrs( const char *name, attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_module)
-            error_loc( "inapplicable attribute %s for module %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "inapplicable attribute %s for module %s\n",
+                      allowed_attr[attr->type].display_name, name );
     }
     return attrs;
 }
@@ -478,8 +480,8 @@ attr_list_t *check_runtimeclass_attrs( const char *name, attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_runtimeclass)
-            error_loc( "inapplicable attribute %s for runtimeclass %s\n",
-                       allowed_attr[attr->type].display_name, name );
+            error_at( &attr->where, "inapplicable attribute %s for runtimeclass %s\n",
+                      allowed_attr[attr->type].display_name, name );
     }
     return attrs;
 }
@@ -492,8 +494,8 @@ attr_list_t *check_struct_attrs( attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!(allowed_attr[attr->type].on_struct & mask))
-            error_loc( "inapplicable attribute %s for struct\n",
-                       allowed_attr[attr->type].display_name );
+            error_at( &attr->where, "inapplicable attribute %s for struct\n",
+                      allowed_attr[attr->type].display_name );
     }
     return attrs;
 }
@@ -505,8 +507,8 @@ attr_list_t *check_typedef_attrs( attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_type)
-            error_loc( "inapplicable attribute %s for typedef\n",
-                       allowed_attr[attr->type].display_name );
+            error_at( &attr->where, "inapplicable attribute %s for typedef\n",
+                      allowed_attr[attr->type].display_name );
     }
     return attrs;
 }
@@ -518,8 +520,8 @@ attr_list_t *check_union_attrs( attr_list_t *attrs )
     LIST_FOR_EACH_ENTRY( attr, attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_union)
-            error_loc( "inapplicable attribute %s for union\n",
-                       allowed_attr[attr->type].display_name );
+            error_at( &attr->where, "inapplicable attribute %s for union\n",
+                      allowed_attr[attr->type].display_name );
     }
     return attrs;
 }
@@ -531,7 +533,7 @@ void check_arg_attrs( const var_t *arg )
     LIST_FOR_EACH_ENTRY( attr, arg->attrs, const attr_t, entry )
     {
         if (!allowed_attr[attr->type].on_arg)
-            error_loc( "inapplicable attribute %s for argument %s\n",
-                       allowed_attr[attr->type].display_name, arg->name );
+            error_at( &attr->where, "inapplicable attribute %s for argument %s\n",
+                      allowed_attr[attr->type].display_name, arg->name );
     }
 }

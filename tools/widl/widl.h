@@ -97,8 +97,8 @@ extern void end_cplusplus_guard(FILE *fp);
 
 /* attribute.c */
 
-extern attr_t *attr_int( enum attr_type attr_type, unsigned int val );
-extern attr_t *attr_ptr( enum attr_type attr_type, void *val );
+extern attr_t *attr_int( struct location where, enum attr_type attr_type, unsigned int val );
+extern attr_t *attr_ptr( struct location where, enum attr_type attr_type, void *val );
 
 extern int is_attr( const attr_list_t *list, enum attr_type attr_type );
 extern int is_ptrchain_attr( const var_t *var, enum attr_type attr_type );

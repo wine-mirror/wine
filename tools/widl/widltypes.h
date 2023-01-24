@@ -341,6 +341,7 @@ struct _attr_t {
   } u;
   /* parser-internal */
   struct list entry;
+  struct location where;
 };
 
 struct _expr_t {
