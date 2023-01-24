@@ -17,6 +17,5 @@ create-release:
     - release-cli create
         --name "Wine $VERSION"
         --tag-name "$CI_COMMIT_TAG"
-        --released-at "$CI_COMMIT_TIMESTAMP"
         --description announce.md
         --assets-link "{\"name\":\"Source code\",\"url\":\"$URL\",\"link_type\":\"other\",\"filepath\":\"$FILEPATH\"}"
