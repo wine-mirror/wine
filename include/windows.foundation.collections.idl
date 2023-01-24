@@ -116,6 +116,15 @@ cpp_quote("#endif")
                 [propget] HRESULT Key([out, retval] T *key);
             }
 
+            interface IObservableMap<K, V>;
+
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(179517f3-94ee-41f8-bddc-768a895544f3)
+            ]
+            delegate HRESULT MapChangedEventHandler<K, V>([in] Windows.Foundation.Collections.IObservableMap<K, V> *sender,
+                                                          [in] Windows.Foundation.Collections.IMapChangedEventArgs<K> *args);
+
             [
                 contract(Windows.Foundation.FoundationContract, 1.0),
                 uuid(02b51929-c1c4-4a7e-8940-0312b5c18500)
