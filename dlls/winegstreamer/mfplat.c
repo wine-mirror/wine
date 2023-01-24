@@ -510,13 +510,15 @@ static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *
     {
         if (format->u.video.format == video_formats[i].format)
         {
+            int32_t height = abs(format->u.video.height);
+            int32_t width = format->u.video.width;
+
             if (FAILED(MFCreateMediaType(&type)))
                 return NULL;
 
             IMFMediaType_SetGUID(type, &MF_MT_MAJOR_TYPE, &MFMediaType_Video);
             IMFMediaType_SetGUID(type, &MF_MT_SUBTYPE, video_formats[i].subtype);
-            IMFMediaType_SetUINT64(type, &MF_MT_FRAME_SIZE,
-                    make_uint64(format->u.video.width, format->u.video.height));
+            IMFMediaType_SetUINT64(type, &MF_MT_FRAME_SIZE, make_uint64(width, height));
             IMFMediaType_SetUINT64(type, &MF_MT_FRAME_RATE,
                     make_uint64(format->u.video.fps_n, format->u.video.fps_d));
             IMFMediaType_SetUINT32(type, &MF_MT_COMPRESSED, FALSE);
@@ -529,8 +531,8 @@ static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *
                 {
                     .OffsetX = {.value = format->u.video.padding.left},
                     .OffsetY = {.value = format->u.video.padding.top},
-                    .Area.cx = format->u.video.width - format->u.video.padding.right - format->u.video.padding.left,
-                    .Area.cy = format->u.video.height - format->u.video.padding.bottom - format->u.video.padding.top,
+                    .Area.cx = width - format->u.video.padding.right - format->u.video.padding.left,
+                    .Area.cy = height - format->u.video.padding.bottom - format->u.video.padding.top,
                 };
 
                 IMFMediaType_SetBlob(type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
