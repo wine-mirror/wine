@@ -139,7 +139,6 @@ struct uuid *parse_uuid(const char *u)
  **************************************************************************
  */
 %%
-<INITIAL>^{ws}*\#{ws}*pragma{ws}+ yy_push_state(PP_PRAGMA);
 <PP_LINE>[^\n]*         {
                             int lineno;
                             char *cptr, *fname;
@@ -177,7 +176,6 @@ struct uuid *parse_uuid(const char *u)
                             yy_pop_state();
                         }
 <PP_PRAGMA>[^\n]*       yylval->str = xstrdup(yytext); yy_pop_state(); return aPRAGMA;
-<INITIAL>^{ws}*midl_pragma{ws}+warning return tPRAGMA_WARNING;
 <INITIAL,ATTR>\"	yy_push_state(QUOTE); cbufidx = 0;
 <QUOTE>\"		{
 				yy_pop_state();
@@ -207,10 +205,17 @@ struct uuid *parse_uuid(const char *u)
 				yylval->uuid = parse_uuid(yytext);
 				return aUUID;
 			}
-<INITIAL>{double}	{
-				yylval->dbl = strtod(yytext, NULL);
-				return aDOUBLE;
-			}
+
+<INITIAL>{
+    ^{ws}*\#{ws}*pragma{ws}+                    { yy_push_state( PP_PRAGMA ); }
+    ^{ws}*midl_pragma{ws}+warning               { return tPRAGMA_WARNING; }
+
+    {double}                                    {
+                                                    yylval->dbl = strtod( yytext, NULL );
+                                                    return aDOUBLE;
+                                                }
+}
+
 SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 {cident}		return kw_token(yytext, yylval);
 
