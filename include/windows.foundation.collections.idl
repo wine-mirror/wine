@@ -177,6 +177,15 @@ cpp_quote("#endif")
                 [eventremove] HRESULT MapChanged([in] EventRegistrationToken token);
             }
 
+            interface IObservableVector<T>;
+
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(0c051752-9fbf-4c70-aa0c-0e4c82d9a761)
+            ]
+            delegate HRESULT VectorChangedEventHandler<T>([in] Windows.Foundation.Collections.IObservableVector<T> *sender,
+                                                          [in] Windows.Foundation.Collections.IVectorChangedEventArgs *args);
+
             [
                 contract(Windows.Foundation.FoundationContract, 1.0),
                 uuid(bbe1fa4c-b0e3-4583-baef-1f1b2e483e56)
@@ -209,6 +218,18 @@ cpp_quote("#endif")
                 HRESULT Clear();
                 HRESULT GetMany([in] UINT32 start_index, [in] UINT32 items_size, [out] T *items, [out, retval] UINT32 *value);
                 HRESULT ReplaceAll([in] UINT32 count, [in] T *items);
+            }
+
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(5917eb53-50b4-4a0d-b309-65862b3f1dbc)
+            ]
+            interface IObservableVector<T> : IInspectable
+                requires Windows.Foundation.Collections.IVector<T>
+            {
+                [eventadd] HRESULT VectorChanged([in] Windows.Foundation.Collections.VectorChangedEventHandler<T> *handler,
+                                              [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT VectorChanged([in] EventRegistrationToken token);
             }
         }
 #endif
