@@ -23,7 +23,7 @@
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "windowscontracts.idl";
-/* import "eventtoken.idl"; */
+import "eventtoken.idl";
 import "ivectorchangedeventargs.idl";
 
 namespace Windows {
@@ -163,6 +163,18 @@ cpp_quote("#endif")
                 HRESULT Insert([in] K key, [in] V value, [out, retval] boolean *replaced);
                 HRESULT Remove([in] K key);
                 HRESULT Clear();
+            }
+
+            [
+                contract(Windows.Foundation.FoundationContract, 1.0),
+                uuid(65df2bf5-bf39-41b5-aebc-5a9d865e472b)
+            ]
+            interface IObservableMap<K, V> : IInspectable
+                requires Windows.Foundation.Collections.IMap<K, V>
+            {
+                [eventadd] HRESULT MapChanged([in] Windows.Foundation.Collections.MapChangedEventHandler<K, V> *handler,
+                                              [out, retval] EventRegistrationToken *token);
+                [eventremove] HRESULT MapChanged([in] EventRegistrationToken token);
             }
 
             [
