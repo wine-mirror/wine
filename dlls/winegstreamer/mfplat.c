@@ -699,7 +699,7 @@ static void mf_media_type_to_wg_format_video(IMFMediaType *type, const GUID *sub
 {
     UINT64 frame_rate, frame_size;
     MFVideoArea aperture;
-    UINT32 size;
+    UINT32 size, stride;
 
     if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
     {
@@ -729,6 +729,14 @@ static void mf_media_type_to_wg_format_video(IMFMediaType *type, const GUID *sub
     }
 
     format->u.video.format = mf_video_format_to_wg(subtype);
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_DEFAULT_STRIDE, &stride)))
+    {
+        if (wg_video_format_is_rgb(format->u.video.format))
+            format->u.video.height = -format->u.video.height;
+        if ((int)stride < 0)
+            format->u.video.height = -format->u.video.height;
+    }
 }
 
 static void mf_media_type_to_wg_format_audio_wma(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
