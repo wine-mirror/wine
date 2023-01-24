@@ -836,29 +836,20 @@ int main(int argc,char *argv[])
 
   atexit(rm_tempfile);
   input = input_name;
+  if (preprocess_only) exit( wpp_parse( input_name, stdout ) );
+
   if (!no_preprocess)
   {
-    chat("Starting preprocess\n");
+      FILE *output;
+      char *name;
 
-    if (!preprocess_only)
-    {
-        FILE *output;
-        char *name = make_temp_file( header_name, NULL );
+      name = make_temp_file( header_name, NULL );
+      if (!(output = fopen( name, "wt" ))) error( "Could not open fd %s for writing\n", name );
+      ret = wpp_parse( input_name, output );
+      fclose( output );
+      input = name;
 
-        if (!(output = fopen(name, "wt")))
-            error("Could not open fd %s for writing\n", name);
-
-        ret = wpp_parse( input_name, output );
-        fclose( output );
-        input = name;
-    }
-    else
-    {
-        ret = wpp_parse( input_name, stdout );
-    }
-
-    if(ret) exit(1);
-    if(preprocess_only) exit(0);
+      if (ret) exit( 1 );
   }
 
   if(!(parser_in = fopen(input, "r"))) {
