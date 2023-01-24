@@ -1,12 +1,14 @@
-The Wine development release 8.0-rc5 is now available. This is
-expected to be the last release candidate before the final 8.0.
+The Wine team is proud to announce that the stable release Wine 8.0
+is now available.
 
-What's new in this release:
-  - Bug fixes only, we are in code freeze.
+This release represents a year of development effort and over 8,600
+individual changes. It contains a large number of improvements that
+are listed in the release notes below. The main achievement is the
+completion of the conversion to PE format.
 
 The source is available at:
 
-  https://dl.winehq.org/wine/source/8.0/wine-8.0-rc5.tar.xz
+  https://dl.winehq.org/wine/source/8.0/wine-8.0.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,61 +24,336 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 8.0-rc5 (total 9):
+What's new in Wine 8.0
+======================
 
- - #26822  Double click the icon in the title bar should close the window
- - #32643  getsockopt() does not indicate WSAEFAULT when setting optlen too small
- - #45542  WeGame hangs after login.
- - #50351  Slow text rendering in dofus linked to fnIMLangFontLink2_GetCharCodePages calling WideCharToMultiByte with CP_UNICODE
- - #51227  urlmon:url breaks the wininet:http test on Windows 10 1709+ (7 failures)
- - #51906  Multiple games fail to play videos (War Mongrels, The Medium, Sherlock Holmes Chapter One)
- - #53408  Dark Souls: Remastered has slow performance with OpenGL renderer
- - #53761  Broken rendering in Mafia III: Definitive Edition
- - #54283  dinput:force_feedback - test_windows_gaming_input() sometimes crashes on Windows
+*** PE modules
 
-----------------------------------------------------------------
+- After 4 years of work, the PE conversion is finally complete: all modules can
+  be built in PE format. This is an important milestone on the road to supporting
+  various features such as copy protection, 32-bit applications on 64-bit hosts,
+  Windows debuggers, x86 applications on ARM, etc.
+  However, some modules still perform direct calls between the PE and the Unix
+  part, instead of going through the NT system call interface. The remaining
+  direct calls will be removed during the Wine 8.x development phase.
 
-Changes since 8.0-rc4:
+- A special syscall dispatcher is used for PE -> Unix transitions, to avoid the
+  overhead of a full NT system call. This minimizes the performance impact of the
+  new architecture, in particular for the OpenGL and Vulkan libraries.
 
-Alexandre Julliard (1):
-      tools: Always fall back to argv[0] to find the tools directory.
+- Building mixed Windows/Unix libraries in ELF format (.dll.so libraries) is
+  still supported for use in Winelib applications. However, such applications
+  won't support features enabled by the NT syscall interface, such as WoW64
+  without 32-bit libraries.
 
-Brendan Shanks (1):
-      kernel32/tests: Test GetFileType() with additional types of handles.
 
-Byeong-Sik Jeon (1):
-      po: Update Korean translation.
+*** WoW64
 
-Eric Pouech (3):
-      kernel32/tests: Extend share right for debugger's black box tests.
-      kernel32/tests: Merge two debug event loops in test_debugger().
-      kernel32/tests: Filter spurious thread creation debug events.
+- WoW64 thunks are implemented for essentially all Unix libraries, enabling a
+  32-bit PE module to call a 64-bit Unix library. Once the remaining direct
+  PE/Unix calls have been removed, this will make it fully possible to run
+  32-bit Windows applications without any 32-bit Unix library.
 
-Fan WenJie (1):
-      winebuild: Only set thumb_mode on ARM targets.
+- When the 32-bit Wine loader isn't found, 32-bit applications are started in
+  the new experimental "Windows-like" WoW64 mode (where 32-bit code runs inside
+  a 64-bit host process). This mode can be enabled by building with the
+  '--enable-archs' configure option. This is still under development and not yet
+  recommended for general use. Since in case of configuration errors it is
+  possible for it to be triggered inadvertently, applications started in this
+  mode print the warning "starting in experimental wow64 mode".
 
-François Gouget (4):
-      d3d12/tests: Allow a broken Windows 10 1709 hresult.
-      nsi: Return an error if NsiAllocateAndGetTable() fails to allocate the tables.
-      nsi: Add some margin to the tables size in NsiAllocateAndGetTable().
-      win32u: Document the font_lock handling in font_EnumFonts().
 
-Gabriel Ivăncescu (1):
-      notepad: Fix uninitialized upper 64-bits of `pos` in DoFind.
+*** Graphics
 
-Jactry Zeng (1):
-      po: Update Simplified Chinese translation.
+- The "Light" theme is enabled in the default configuration, for a more modern
+  look. Other themes can still be configured through WineCfg.
 
-Lauri Kenttä (1):
-      po: Update Finnish translation.
+- The graphics drivers (winex11.drv, winemac.drv, wineandroid.drv) are converted
+  to run on the Unix side of the syscall boundary, and interface with the Unix
+  side of the Win32u library.
 
-Robert Wilhelm (1):
-      vbscript/tests: Fix chr() tests with double-byte character sets.
+- The Print Processor architecture is implemented. This will be used to avoid
+  direct PE<->Unix calls in the printer driver.
 
-Santino Mazza (2):
-      iphlpapi/tests: Test for Ipv4Enabled and Ipv6Enabled flags.
-      iphlpapi: Set Ipv4Enabled and Ipv6Enabled flags accordingly.
+- Effects are supported in Direct2D, including description parsing and a number
+  of core objects.
 
-Tim Clem (2):
-      user32/tests: Test GetRawInputBuffer header fields more thoroughly.
-      win32u: Correct GetRawInputBuffer alignment under WoW64.
+- Command lists recording and playback are implemented in Direct2D.
+
+- The Vulkan driver supports up to version 1.3.237 of the Vulkan spec.
+
+
+*** Direct3D
+
+- Many optimizations related to streaming map acceleration are implemented, in
+  common code as well as in the GL renderer. Depending on the application, this
+  may result in major performance improvements.
+
+- Adapter video memory budget change notifications are implemented.
+
+- The Vulkan renderer supports setting multiple viewports and scissor rectangles.
+
+- Several Direct3D 10 and 11 features, which were already implemented, are
+  accurately reported through capability flags:
+  - Per-format support for vertex and index buffers.
+  - Per-format support for all capabilities via D3D11_FEATURE_FORMAT_SUPPORT.
+  - No-overwrite maps on shader resources and constant buffers.
+  - Partial range binding of constant buffers.
+
+- For convenience, a new WINE_D3D_CONFIG environment variable may be used instead
+  of modifying the HKEY_CURRENT_USER\Software\Wine\Direct3D registry key. The
+  value is a comma- or semicolon-separated list of key-value pairs, e.g.:
+
+      WINE_D3D_CONFIG="renderer=vulkan;VideoPciVendorID=0xc0de"
+
+  If an individual setting is specified in both the environment variable and the
+  registry, the former takes precedence.
+
+- The Direct3D graphics card database recognizes more graphics cards.
+
+- The Vulkan renderer limits the maximum Direct3D feature level based on
+  available Vulkan features.
+
+
+*** Direct3D helper libraries
+
+- A new HLSL compiler is implemented using the vkd3d-shader library.
+
+- A new HLSL disassembler is implemented using the vkd3d-shader library.
+
+- The HLSL preprocessor is reimplemented using the vkd3d-shader HLSL
+  preprocessor.
+
+- The D3DX 10 Thread Pump is implemented.
+
+- Many more expressions are supported in Direct3D 10 effects.
+
+- Cubemap projection is implemented in the D3DX 9 helper library.
+
+
+*** Audio / Video
+
+- The MPEG-1 audio decoder filter for layers 1 and 2, and the separate filter for
+  layer 3, are both implemented on top of GStreamer.
+
+- The ASF reader filter is implemented.
+
+- The OpenAL32.dll wrapper library is removed, in favor of the native
+  OpenAL32.dll library shipped by Windows applications.
+
+
+*** Media Foundation
+
+- Content type resolution is improved in the Media Foundation Player.
+
+- Rate control is implemented.
+
+- The Enhanced Video Renderer default mixer and presenter are better supported.
+
+- The DirectShow filter is implemented in the Enhanced Video Renderer.
+
+- An initial framework is implemented for the Writer encoding API.
+
+- The topology loader is better supported.
+
+
+*** Input devices
+
+- Controller hotplug support is greatly improved, and controller removal and
+  insertion are correctly dispatched to applications.
+
+- Driving wheel device detection and reporting is better implemented, using the
+  SDL library and HID usages as hints for the device types.
+
+- Force feedback effect support is improved, specifically with driving wheel
+  controllers.
+
+- The HID Haptics specification is used for left / right motor rumble and trigger
+  rumble. It makes it possible for device drivers to expose haptics support over
+  HidRaw, and overcome EvDev limitations.
+
+- The Joystick Control Panel is redesigned, with new graphics and a dedicated
+  view for XInput gamepads.
+
+- Sony DualShock and DualSense controllers are supported when the hidraw backend
+  is used, and exposed to applications in the same way as they are on Windows.
+
+- The Windows.Gaming.Input module is introduced, one of the first WinRT modules
+  in Wine, implementing a new programming interface to access gamepads, joysticks
+  and driving wheel devices.  For this new input API, hotplug notifications are
+  also implemented, as well as force feedback effects and haptics. This API is
+  the first one to support trigger rumble.
+
+
+*** Internationalization
+
+- A proper locale database, in Windows locale.nls format, is generated from the
+  Unicode CLDR database. The list of supported locales is essentially identical
+  to that of the latest Windows version.
+
+- Unicode string comparison is based on the Windows Sortkey database and
+  algorithms instead of the Unicode Collation Algorithm, yielding more compatible
+  results.
+
+- Characters from high Unicode planes (in UTF-16 encoding) are supported in most
+  functions, in particular for case mappings, BiDi formatting, and character
+  shaping.
+
+- The UTF-8 encoding is supported as Ansi codepage. It is enabled when requested
+  by the application's manifest.
+
+- Unicode character tables are based on version 15.0.0 of the Unicode Standard.
+
+- The timezone data is generated from the IANA timezone database version 2022g.
+
+
+*** Text and fonts
+
+- Font linking is enabled for most system fonts, which should fix missing glyphs
+  in CJK locales.
+
+- Font fallback in DirectWrite is reworked, with additional support for an large
+  number of scripts.
+
+
+*** Kernel
+
+- The ApiSetSchema database is implemented, replacing all the api-ms-* forwarding
+  modules. This reduces both disk space and address space usage.
+
+- DOS file attributes are persistent, and stored on disk using the filesystem's
+  extended attributes, in a format compatible with Samba.
+
+
+*** Internet and networking
+
+- The Online Certificate Status Protocol (OCSP) is implemented.
+
+- More EcmaScript features are supported in JScript standard-compliant mode.
+
+- The JScript garbage collector is implemented.
+
+- Accessibility support is enabled in Wine Gecko package.
+
+- Web Storage, Performance object and more event objects are implemented in
+  MSHTML.
+
+
+*** Mono / .NET
+
+- The Mono engine is updated to version 7.4.0. The list of changes can be viewed
+  at https://github.com/madewokherd/wine-mono/releases/tag/wine-mono-7.4.0
+
+
+*** Builtin applications
+
+- All the builtin applications use Common Controls version 6, which enables
+  theming and high-DPI rendering by default.
+
+- The Wine Debugger (winedbg) prints thread names in the 'info thread' listing,
+  for applications that set the names of their threads. All internal Wine threads
+  also set their own name.
+
+- The QWORD type is supported in the REGEDIT and REG registry tools.
+
+- Notepad has a status bar displaying the current cursor position. The Goto Line
+  functionality is also implemented.
+
+- The builtin console programs print data in the OEM codepage, for better
+  compatibility with applications reading their output.
+
+- The Service Control tool (sc.exe) supports the 'query' command.
+
+
+*** Development tools
+
+- The PE conversion has made it necessary to implement a new mechanism to run
+  static C++ constructors in Winelib ELF applications. Unfortunately, this
+  requires the corresponding modules to be rebuilt with Wine 8.0.  The rebuilt
+  modules will still run correctly on older Wine versions, but older modules will
+  no longer execute static constructors when run on Wine 8.0.
+
+- In regression tests, individual checks can be marked as "flaky". This is useful
+  for checks that depend on external factors such as network timings. The errors
+  are still reported but not counted as failures.
+
+- Test failure messages can be printed in color by setting the WINETEST_COLOR
+  environment variable, to make them easier to spot in the test log.
+
+- The Resource Compiler (WRC) and Message Compiler (WMC) use the locale.nls
+  database to detect languages and codepages, and thus support all the Windows
+  locales.
+
+- The WineDump tool supports printing the contents of Enhanced Metafile spool
+  files, as well as more contents from PDB files.
+
+
+*** Build infrastructure
+
+- PE binaries can be built for multiple architectures from the same build tree,
+  using the '--enable-archs' option to configure, for example
+  '--enable-archs=i386,x86_64'. This can be used to enable the experimental
+  WoW64 mode, where 32-bit applications can run without any 32-bit host
+  libraries. Note that this mode is still under development and not yet
+  recommended for general use.
+
+- Data types that are defined as 'long' on Windows are defined as 'long' instead
+  of 'int' on all platforms with a 32-bit long type. This is more compatible, but
+  it can cause printf format warnings with Unix compilers. In Winelib code, it
+  can be disabled by defining WINE_NO_LONG_TYPES.
+
+- Import libraries can be generated without using dlltool, by passing the
+  '--without-dlltool' option to winebuild. This is used to avoid dlltool bugs
+  with delay import libraries.
+
+- Libraries that contain only resources and no code can be built with the
+  '--data-only' option to winegcc, which makes them smaller and more efficient to
+  load.
+
+
+*** Bundled libraries
+
+- Faudio is updated to the upstream release 22.11.
+
+- LCMS2 is updated to the upstream release 2.14.
+
+- LibJPEG is updated to the upstream release 9e.
+
+- LibMPG123 is updated to the upstream release 1.31.1.
+
+- LibPng is updated to the upstream release 1.6.39.
+
+- LibTiff is updated to the upstream release 4.4.0.
+
+- LibXml2 is updated to the upstream release 2.10.3.
+
+- LibXslt is updated to the upstream release 1.1.37.
+
+- Zlib is updated to the upstream release 1.2.13.
+
+
+*** Platform-specific features
+
+- The experimental WoW64 architecture is supported on macOS versions from 10.15.
+
+- 64-bit time_t is supported on 32-bit Linux with recent Glibc versions.
+
+- Exception unwinding on ARM platforms is extended with EHABI support on ARM32
+  and Dwarf support on ARM64.
+
+
+*** Miscellaneous
+
+- RSA encryption and the RSA-PSS signing algorithm are implemented.
+
+- An initial version of the UI Automation API is implemented.
+
+- Function name demangling supports various C++11 features.
+
+
+*** External dependencies
+
+- The vkd3d and LDAP libraries are bundled in the source tree and built as
+  PE. The corresponding Unix libraries are no longer needed.
+
+- The OpenAL library is no longer used.
