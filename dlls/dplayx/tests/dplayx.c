@@ -6906,9 +6906,9 @@ START_TEST(dplayx)
     }
     strcat(path, "\\dplayx.dll");
 
-    if (!winetest_interactive && is_stub_dll(path))
+    if (!winetest_interactive && (GetFileAttributesA(path) == INVALID_FILE_ATTRIBUTES || is_stub_dll(path)))
     {
-        win_skip("dpnet is a stub dll, skipping tests\n");
+        win_skip("dplayx is missing or a stub dll, skipping tests\n");
         return;
     }
 
