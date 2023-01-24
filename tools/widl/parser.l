@@ -131,6 +131,12 @@ struct uuid *parse_uuid(const char *u)
   return uuid;
 }
 
+static int token_num( int token, const char *yytext, YYSTYPE *yylval )
+{
+    yylval->num = xstrtoul( yytext, NULL, 0 );
+    return token;
+}
+
 %}
 
 /*
@@ -227,14 +233,8 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
     ^{ws}*\#{ws}*                               { yy_push_state(PP_LINE); }
     \[                                          { yy_push_state(ATTR); return '['; }
 
-    {hex}                                       {
-                                                    yylval->num = xstrtoul(yytext, NULL, 0);
-                                                    return aHEXNUM;
-                                                }
-    {int}                                       {
-                                                    yylval->num = xstrtoul(yytext, NULL, 0);
-                                                    return aNUM;
-                                                }
+    {hex}                                       { return token_num( aHEXNUM, yytext, yylval ); }
+    {int}                                       { return token_num( aNUM, yytext, yylval ); }
 
     \n                                          { line_number++; }
     {ws}                                        {}
