@@ -260,16 +260,13 @@ attr_list_t *append_attr( attr_list_t *list, attr_t *attr )
     if (!allowed_attr[attr->type].multiple)
     {
         LIST_FOR_EACH_ENTRY( attr_existing, list, attr_t, entry )
-            if (attr_existing->type == attr->type)
-            {
-                char buffer[1024];
-                snprintf( buffer, sizeof(buffer), "duplicate attribute %s\n",
-                          get_attr_display_name( attr->type ) );
-                parser_warning( NULL, buffer );
-                /* use the last attribute, like MIDL does */
-                list_remove( &attr_existing->entry );
-                break;
-            }
+        {
+            if (attr_existing->type != attr->type) continue;
+            warning_at( &attr->where, "duplicate attribute %s\n", get_attr_display_name( attr->type ) );
+            /* use the last attribute, like MIDL does */
+            list_remove( &attr_existing->entry );
+            break;
+        }
     }
     list_add_tail( list, &attr->entry );
     return list;
