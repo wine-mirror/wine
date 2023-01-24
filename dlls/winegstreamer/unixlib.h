@@ -110,6 +110,8 @@ struct wg_format
                 WG_VIDEO_FORMAT_YV12,
                 WG_VIDEO_FORMAT_YVYU,
             } format;
+            /* Positive height indicates top-down video; negative height
+             * indicates bottom-up video. */
             int32_t width, height;
             uint32_t fps_n, fps_d;
             RECT padding;

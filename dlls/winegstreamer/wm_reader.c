@@ -1508,6 +1508,10 @@ static HRESULT init_stream(struct wm_reader *reader, QWORD file_size)
              * Shadowgrounds provides wmv3 video and assumes that the initial
              * video type will be BGR. */
             stream->format.u.video.format = WG_VIDEO_FORMAT_BGR;
+
+            /* API consumers expect RGB video to be bottom-up. */
+            if (stream->format.u.video.height > 0)
+                stream->format.u.video.height = -stream->format.u.video.height;
         }
         wg_parser_stream_enable(stream->wg_stream, &stream->format);
     }
@@ -1919,6 +1923,9 @@ static HRESULT WINAPI reader_GetOutputFormat(IWMSyncReader2 *iface,
                 return NS_E_INVALID_OUTPUT_FORMAT;
             }
             format.u.video.format = video_formats[index];
+            /* API consumers expect RGB video to be bottom-up. */
+            if (format.u.video.height > 0 && wg_video_format_is_rgb(format.u.video.format))
+                format.u.video.height = -format.u.video.height;
             break;
 
         case WG_MAJOR_TYPE_AUDIO:
@@ -2211,7 +2218,7 @@ static HRESULT WINAPI reader_SetOutputProps(IWMSyncReader2 *iface, DWORD output,
                 hr = NS_E_INVALID_OUTPUT_FORMAT;
             else if (pref_format.u.video.width != format.u.video.width)
                 hr = NS_E_INVALID_OUTPUT_FORMAT;
-            else if (pref_format.u.video.height != format.u.video.height)
+            else if (abs(pref_format.u.video.height) != abs(format.u.video.height))
                 hr = NS_E_INVALID_OUTPUT_FORMAT;
             break;
 

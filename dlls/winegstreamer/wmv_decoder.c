@@ -446,7 +446,7 @@ static HRESULT WINAPI media_object_GetOutputType(IMediaObject *iface, DWORD inde
         return DMO_E_TYPE_NOT_SET;
 
     width = decoder->input_format.u.video_wmv.width;
-    height = decoder->input_format.u.video_wmv.height;
+    height = abs(decoder->input_format.u.video_wmv.height);
     subtype = wmv_decoder_output_types[type_index].subtype;
     if (FAILED(hr = MFCalculateImageSize(subtype, width, height, &image_size)))
     {
@@ -632,7 +632,7 @@ static HRESULT WINAPI media_object_GetOutputSizeInfo(IMediaObject *iface, DWORD 
         return DMO_E_TYPE_NOT_SET;
 
     if (FAILED(hr = MFCalculateImageSize(&decoder->output_subtype,
-            decoder->output_format.u.video.width, decoder->output_format.u.video.height, (UINT32 *)size)))
+            decoder->output_format.u.video.width, abs(decoder->output_format.u.video.height), (UINT32 *)size)))
     {
         FIXME("Failed to get image size of subtype %s.\n", debugstr_guid(&decoder->output_subtype));
         return hr;

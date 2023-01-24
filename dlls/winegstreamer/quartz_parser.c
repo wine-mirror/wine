@@ -485,7 +485,7 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
 
     if (wm)
     {
-        SetRect(&video_format->rcSource, 0, 0, format->u.video.width, format->u.video.height);
+        SetRect(&video_format->rcSource, 0, 0, format->u.video.width, abs(format->u.video.height));
         video_format->rcTarget = video_format->rcSource;
     }
     if ((frame_time = MulDiv(10000000, format->u.video.fps_d, format->u.video.fps_n)) != -1)
@@ -493,6 +493,8 @@ static bool amt_from_wg_format_video(AM_MEDIA_TYPE *mt, const struct wg_format *
     video_format->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     video_format->bmiHeader.biWidth = format->u.video.width;
     video_format->bmiHeader.biHeight = format->u.video.height;
+    if (wg_video_format_is_rgb(format->u.video.format))
+        video_format->bmiHeader.biHeight = -format->u.video.height;
     video_format->bmiHeader.biPlanes = 1;
     video_format->bmiHeader.biBitCount = wg_video_format_get_depth(format->u.video.format);
     video_format->bmiHeader.biCompression = wg_video_format_get_compression(format->u.video.format);
@@ -733,6 +735,8 @@ static bool amt_to_wg_format_video(const AM_MEDIA_TYPE *mt, struct wg_format *fo
         if (IsEqualGUID(&mt->subtype, format_map[i].subtype))
         {
             format->u.video.format = format_map[i].format;
+            if (wg_video_format_is_rgb(format->u.video.format))
+                format->u.video.height = -format->u.video.height;
             return true;
         }
     }
@@ -1366,6 +1370,9 @@ static HRESULT decodebin_parser_source_get_media_type(struct parser_source *pin,
     if (format.major_type == WG_MAJOR_TYPE_VIDEO && index < ARRAY_SIZE(video_formats))
     {
         format.u.video.format = video_formats[index];
+        /* Downstream filters probably expect RGB video to be bottom-up. */
+        if (format.u.video.height > 0 && wg_video_format_is_rgb(video_formats[index]))
+            format.u.video.height = -format.u.video.height;
         if (!amt_from_wg_format(mt, &format, false))
             return E_OUTOFMEMORY;
         return S_OK;
