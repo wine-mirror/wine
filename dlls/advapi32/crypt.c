@@ -2390,7 +2390,7 @@ static CRITICAL_SECTION_DEBUG random_debug =
 };
 static CRITICAL_SECTION random_cs = { &random_debug, -1, 0, 0, 0, 0 };
 
-#define MAX_CPUS 128
+#define MAX_CPUS 256
 static char random_buf[sizeof(SYSTEM_INTERRUPT_INFORMATION) * MAX_CPUS];
 static ULONG random_len;
 static ULONG random_pos;
