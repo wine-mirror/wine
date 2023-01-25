@@ -871,8 +871,6 @@ int main(int argc,char *argv[])
   init_types();
   ret = parser_parse();
 
-  fclose(parser_in);
-
   if(ret) {
     exit(1);
   }

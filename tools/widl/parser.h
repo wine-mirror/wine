@@ -28,11 +28,9 @@ extern char *parser_text;
 extern int parser_debug;
 extern int yy_flex_debug;
 
-extern int import_stack_ptr;
+extern int parse_only;
 void push_import( char *import_name );
 void pop_import(void);
-
-#define parse_only import_stack_ptr
 
 int is_type(const char *name);
 

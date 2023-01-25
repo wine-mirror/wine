@@ -81,13 +81,15 @@ static void switch_to_acf(void);
 
 static warning_list_t *disabled_warnings = NULL;
 
-#define MAX_IMPORT_DEPTH 20
-struct {
-  YY_BUFFER_STATE state;
-  char *input_name;
-  int   line_number;
-} import_stack[MAX_IMPORT_DEPTH];
-int import_stack_ptr = 0;
+struct import_state
+{
+    YY_BUFFER_STATE buffer;
+    char *input_name;
+    int line_number;
+    struct list entry;
+};
+static struct list import_stack = LIST_INIT( import_stack );
+int parse_only = 0;
 
 struct import
 {
@@ -159,7 +161,8 @@ struct uuid *parse_uuid(const char *u)
                         }
 <PP_PRAGMA>midl_echo[^\n]*  yyless(9); yy_pop_state(); return tCPPQUOTE;
 <PP_PRAGMA>winrt[^\n]*  {
-                            if(import_stack_ptr) {
+                            if (!list_empty( &import_stack ))
+                            {
                                 if(!winrt_mode)
                                     error_loc("winrt IDL file imported in non-winrt mode\n");
                             }else {
@@ -234,7 +237,7 @@ SAFEARRAY{ws}*/\(	return tSAFEARRAY;
 <INITIAL,ATTR>\.\.\.	return ELLIPSIS;
 <INITIAL,ATTR>.		return yytext[0];
 <<EOF>>			{
-                            if (import_stack_ptr)
+                            if (!list_empty( &import_stack ))
                                 return aEOF;
                             if (acf_name)
                             {
@@ -510,32 +513,38 @@ static char *get_buffered_cstring(void)
 
 void pop_import(void)
 {
-	int ptr = import_stack_ptr-1;
+    struct list *entry = list_head( &import_stack );
+    struct import_state *state;
+    assert( entry );
 
-	if (yyin) fclose( yyin );
-	yy_delete_buffer( YY_CURRENT_BUFFER );
-	yy_switch_to_buffer( import_stack[ptr].state );
-	input_name = import_stack[ptr].input_name;
-	line_number = import_stack[ptr].line_number;
-	import_stack_ptr--;
+    state = LIST_ENTRY( entry, struct import_state, entry );
+    list_remove( &state->entry );
+    parse_only = !list_empty( &import_stack );
+
+    if (yyin) fclose( yyin );
+    yy_delete_buffer( YY_CURRENT_BUFFER );
+    yy_switch_to_buffer( state->buffer );
+    input_name = state->input_name;
+    line_number = state->line_number;
+    free( state );
 }
 
 void push_import( char *import_name )
 {
+    struct import_state *state;
     FILE *f;
     char *path, *name;
     struct import *import;
-    int ptr = import_stack_ptr;
     int ret;
 
-    if (import_stack_ptr == MAX_IMPORT_DEPTH)
-        error_loc("Exceeded max import depth\n");
+    state = xmalloc( sizeof(struct import_state ));
+    list_add_head( &import_stack, &state->entry );
+    parse_only = !list_empty( &import_stack );
 
-    import_stack[ptr].state = YY_CURRENT_BUFFER;
-    import_stack[ptr].input_name = input_name;
-    import_stack[ptr].line_number = line_number;
-    import_stack_ptr++;
-    yyin = NULL;
+    state->buffer = YY_CURRENT_BUFFER;
+    state->input_name = input_name;
+    state->line_number = line_number;
+    input_name = NULL;
 
     /* reset buffer for <<EOF>>, in case import fails or already imported */
     yy_scan_string( "" );
@@ -573,12 +582,12 @@ void push_import( char *import_name )
 
 static void switch_to_acf(void)
 {
-    int ptr = import_stack_ptr;
-    int ret;
     char *name;
+    int ret;
     FILE *f;
 
-    assert(import_stack_ptr == 0);
+    if (yyin) fclose( yyin );
+    yy_delete_buffer( YY_CURRENT_BUFFER );
 
     input_name = acf_name;
     acf_name = NULL;
@@ -595,7 +604,6 @@ static void switch_to_acf(void)
     if((f = fopen(name, "r")) == NULL)
         error_loc("Unable to open %s\n", name);
 
-    import_stack[ptr].state = YY_CURRENT_BUFFER;
     yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
 }
 
