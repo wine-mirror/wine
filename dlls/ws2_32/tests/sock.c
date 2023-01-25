@@ -2153,7 +2153,7 @@ static void test_reuseaddr(void)
     };
 
     unsigned int rc, reuse, value;
-    struct sockaddr saddr;
+    struct sockaddr_storage saddr;
     SOCKET s1, s2, s3, s4;
     unsigned int i, j;
     int size;
@@ -2245,7 +2245,7 @@ static void test_reuseaddr(void)
 
         /* The connection is delivered to the first socket. */
         size = tests[i].addrlen;
-        s4 = accept(s1, &saddr, &size);
+        s4 = accept(s1, (struct sockaddr *)&saddr, &size);
         ok(s4 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
 
         closesocket(s1);
@@ -2279,7 +2279,7 @@ static void test_reuseaddr(void)
         ok(!rc, "got error %d.\n", WSAGetLastError());
 
         size = tests[i].addrlen;
-        s4 = accept(s2, &saddr, &size);
+        s4 = accept(s2, (struct sockaddr *)&saddr, &size);
         todo_wine ok(s4 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
 
         closesocket(s1);
@@ -2313,7 +2313,7 @@ static void test_reuseaddr(void)
         rc = connect(s3, tests[i].addr_loopback, tests[i].addrlen);
         ok(!rc, "got error %d.\n", WSAGetLastError());
         size = tests[i].addrlen;
-        s4 = accept(s1, &saddr, &size);
+        s4 = accept(s1, (struct sockaddr *)&saddr, &size);
 
         ok(s4 != INVALID_SOCKET, "got error %d.\n", WSAGetLastError());
 
