@@ -886,7 +886,6 @@ int main(int argc,char *argv[])
 
 static void rm_tempfile(void)
 {
-  abort_import();
   if (do_header)
     unlink(header_name);
   if (local_stubs_name)

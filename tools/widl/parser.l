@@ -86,7 +86,6 @@ struct {
   YY_BUFFER_STATE state;
   char *input_name;
   int   line_number;
-  char *temp_name;
 } import_stack[MAX_IMPORT_DEPTH];
 int import_stack_ptr = 0;
 
@@ -567,14 +566,6 @@ int do_import(char *fname)
     import_stack[ptr].state = YY_CURRENT_BUFFER;
     yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
     return 1;
-}
-
-void abort_import(void)
-{
-	int ptr;
-
-	for (ptr=0; ptr<import_stack_ptr; ptr++)
-		unlink(import_stack[ptr].temp_name);
 }
 
 static void switch_to_acf(void)
