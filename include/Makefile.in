@@ -629,6 +629,7 @@ SOURCES = \
 	ras.h \
 	rasdlg.h \
 	raserror.h \
+	realtimeapiset.h \
 	reason.h \
 	regstr.h \
 	relogger.idl \

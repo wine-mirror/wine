@@ -46,6 +46,7 @@ extern "C" {
 #include <synchapi.h>
 #include <threadpoolapiset.h>
 #include <memoryapi.h>
+#include <realtimeapiset.h>
 
   /* Windows Exit Procedure flag values */
 #define	WEP_FREE_DLL        0
@@ -2605,8 +2606,6 @@ WINBASEAPI BOOL        WINAPI QueryInformationJobObject(HANDLE,JOBOBJECTINFOCLAS
 WINBASEAPI BOOL        WINAPI QueryMemoryResourceNotification(HANDLE,PBOOL);
 WINBASEAPI BOOL        WINAPI QueryPerformanceCounter(LARGE_INTEGER*);
 WINBASEAPI BOOL        WINAPI QueryPerformanceFrequency(LARGE_INTEGER*);
-WINBASEAPI BOOL        WINAPI QueryProcessCycleTime(HANDLE,PULONG64);
-WINBASEAPI BOOL        WINAPI QueryThreadCycleTime(HANDLE,PULONG64);
 WINBASEAPI BOOL        WINAPI QueryUmsThreadInformation(PUMS_CONTEXT,UMS_THREAD_INFO_CLASS,PVOID,ULONG,PULONG);
 WINBASEAPI DWORD       WINAPI QueueUserAPC(PAPCFUNC,HANDLE,ULONG_PTR);
 WINBASEAPI BOOL        WINAPI QueueUserWorkItem(LPTHREAD_START_ROUTINE,PVOID,ULONG);
