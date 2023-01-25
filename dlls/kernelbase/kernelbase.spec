@@ -1250,7 +1250,7 @@
 @ stdcall QueryThreadCycleTime(long ptr)
 @ stdcall QueryThreadpoolStackInformation(ptr ptr)
 @ stdcall QueryUnbiasedInterruptTime(ptr) ntdll.RtlQueryUnbiasedInterruptTime
-# @ stub QueryUnbiasedInterruptTimePrecise
+@ stdcall QueryUnbiasedInterruptTimePrecise(ptr)
 @ stdcall QueryVirtualMemoryInformation(long ptr long ptr long ptr)
 @ stdcall QueryWorkingSet(long ptr long)
 @ stdcall QueryWorkingSetEx(long ptr long)
