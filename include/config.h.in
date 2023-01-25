@@ -375,17 +375,11 @@
 /* Define to 1 if `interface_id' is a member of `sg_io_hdr_t'. */
 #undef HAVE_SG_IO_HDR_T_INTERFACE_ID
 
-/* Define if sigaddset is supported */
-#undef HAVE_SIGADDSET
-
 /* Define to 1 if `si_fd' is a member of `siginfo_t'. */
 #undef HAVE_SIGINFO_T_SI_FD
 
 /* Define to 1 if you have the `sigprocmask' function. */
 #undef HAVE_SIGPROCMASK
-
-/* Define to 1 if the system has the type `sigset_t'. */
-#undef HAVE_SIGSET_T
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H

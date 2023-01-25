@@ -27,6 +27,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <signal.h>
 #include <fcntl.h>
 #include <time.h>
 #include <errno.h>
@@ -369,7 +370,19 @@ static inline char *make_temp_file( const char *prefix, const char *suffix )
         fd = open( name, O_RDWR | O_CREAT | O_EXCL, 0600 );
         if (fd >= 0)
         {
+#ifdef HAVE_SIGPROCMASK /* block signals while manipulating the temp files list */
+            sigset_t mask_set, old_set;
+
+            sigemptyset( &mask_set );
+            sigaddset( &mask_set, SIGHUP );
+            sigaddset( &mask_set, SIGTERM );
+            sigaddset( &mask_set, SIGINT );
+            sigprocmask( SIG_BLOCK, &mask_set, &old_set );
             strarray_add( &temp_files, name );
+            sigprocmask( SIG_SETMASK, &old_set, NULL );
+#else
+            strarray_add( &temp_files, name );
+#endif
             close( fd );
             return name;
         }

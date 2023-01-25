@@ -2058,8 +2058,6 @@ fi
 dnl **** Check for types ****
 
 AC_C_INLINE
-AC_CHECK_TYPES([sigset_t],,,[#include <sys/types.h>
-#include <signal.h>])
 AC_CHECK_TYPES([request_sense],,,[#include <linux/cdrom.h>])
 
 AC_CHECK_TYPES([struct xinpgen],,,
@@ -2083,14 +2081,6 @@ AC_CHECK_TYPES([struct xinpgen],,,
 #ifdef HAVE_NETINET_IN_PCB_H
 #include <netinet/in_pcb.h>
 #endif])
-
-AC_CACHE_CHECK([for sigaddset],wine_cv_have_sigaddset,
-               AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <signal.h>]], [[sigset_t set; sigaddset(&set,SIGTERM);]])],[wine_cv_have_sigaddset=yes],[wine_cv_have_sigaddset=no]))
-if test "$wine_cv_have_sigaddset" = "yes"
-then
-  AC_DEFINE(HAVE_SIGADDSET, 1, [Define if sigaddset is supported])
-fi
-
 
 AC_CACHE_CHECK([whether we can use re-entrant gethostbyname_r Linux style],
    	wine_cv_linux_gethostbyname_r_6,

@@ -20077,17 +20077,6 @@ _ACEOF
     ;;
 esac
 
-ac_fn_c_check_type "$LINENO" "sigset_t" "ac_cv_type_sigset_t" "#include <sys/types.h>
-#include <signal.h>
-"
-if test "x$ac_cv_type_sigset_t" = xyes
-then :
-
-printf "%s\n" "#define HAVE_SIGSET_T 1" >>confdefs.h
-
-
-fi
-
 ac_fn_c_check_type "$LINENO" "request_sense" "ac_cv_type_request_sense" "#include <linux/cdrom.h>
 "
 if test "x$ac_cv_type_request_sense" = xyes
@@ -20125,42 +20114,6 @@ then :
 
 printf "%s\n" "#define HAVE_STRUCT_XINPGEN 1" >>confdefs.h
 
-
-fi
-
-
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for sigaddset" >&5
-printf %s "checking for sigaddset... " >&6; }
-if test ${wine_cv_have_sigaddset+y}
-then :
-  printf %s "(cached) " >&6
-else $as_nop
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <signal.h>
-int
-main (void)
-{
-sigset_t set; sigaddset(&set,SIGTERM);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"
-then :
-  wine_cv_have_sigaddset=yes
-else $as_nop
-  wine_cv_have_sigaddset=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.beam \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_have_sigaddset" >&5
-printf "%s\n" "$wine_cv_have_sigaddset" >&6; }
-if test "$wine_cv_have_sigaddset" = "yes"
-then
-
-printf "%s\n" "#define HAVE_SIGADDSET 1" >>confdefs.h
 
 fi
 

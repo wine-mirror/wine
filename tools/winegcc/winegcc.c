@@ -146,9 +146,6 @@ static const char *output_implib;
 static int keep_generated = 0;
 const char *temp_dir = NULL;
 struct strarray temp_files = { 0 };
-#ifdef HAVE_SIGSET_T
-static sigset_t signal_mask;
-#endif
 
 static const char *bindir;
 static const char *libdir;
@@ -221,22 +218,6 @@ static void clean_temp_files(void)
 static void exit_on_signal( int sig )
 {
     exit(1);  /* this will call the atexit functions */
-}
-
-static char* get_temp_file(const char* prefix, const char* suffix)
-{
-    char *tmp;
-
-#ifdef HAVE_SIGPROCMASK
-    sigset_t old_set;
-    /* block signals while manipulating the temp files list */
-    sigprocmask( SIG_BLOCK, &signal_mask, &old_set );
-#endif
-    tmp = make_temp_file( prefix, suffix );
-#ifdef HAVE_SIGPROCMASK
-    sigprocmask( SIG_SETMASK, &old_set, NULL );
-#endif
-    return tmp;
 }
 
 static int is_pe_target( const struct options *opts )
@@ -348,9 +329,9 @@ static struct strarray get_translator(struct options *opts)
 
 static int try_link( struct strarray prefix, struct strarray link_tool, const char *cflags )
 {
-    const char *in = get_temp_file( "try_link", ".c" );
-    const char *out = get_temp_file( "try_link", ".out" );
-    const char *err = get_temp_file( "try_link", ".err" );
+    const char *in = make_temp_file( "try_link", ".c" );
+    const char *out = make_temp_file( "try_link", ".out" );
+    const char *err = make_temp_file( "try_link", ".err" );
     struct strarray link = empty_strarray;
     int sout = -1, serr = -1;
     int ret;
@@ -407,7 +388,7 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
 
     case PLATFORM_SOLARIS:
         {
-            char *mapfile = get_temp_file( output_name, ".map" );
+            char *mapfile = make_temp_file( output_name, ".map" );
             const char *align = opts->section_align ? opts->section_align : "0x1000";
 
             create_file( mapfile, 0644, "text = A%s;\ndata = A%s;\n", align, align );
@@ -820,7 +801,7 @@ static const char* compile_to_object(struct options* opts, const char* file, con
     /* make a copy so we don't change any of the initial stuff */
     /* a shallow copy is exactly what we want in this case */
     copts = *opts;
-    copts.output_name = get_temp_file(get_basename_noext(file), ".o");
+    copts.output_name = make_temp_file(get_basename_noext(file), ".o");
     copts.compile_only = 1;
     copts.files = empty_strarray;
     strarray_add(&copts.files, file);
@@ -894,8 +875,8 @@ static char *find_static_lib( const char *dll )
 
 static const char *find_libgcc(struct strarray prefix, struct strarray link_tool)
 {
-    const char *out = get_temp_file( "find_libgcc", ".out" );
-    const char *err = get_temp_file( "find_libgcc", ".err" );
+    const char *out = make_temp_file( "find_libgcc", ".out" );
+    const char *err = make_temp_file( "find_libgcc", ".err" );
     struct strarray link = empty_strarray;
     int sout = -1, serr = -1;
     char *libgcc, *p;
@@ -984,7 +965,7 @@ static const char *build_spec_obj( struct options *opts, const char *spec_file, 
         strarray_add( &spec_args, strmake( "--ld-cmd=%s", strarray_tostring( tool, " " )));
     }
 
-    spec_o_name = get_temp_file(output_name, ".spec.o");
+    spec_o_name = make_temp_file(output_name, ".spec.o");
     if (!is_pe)
     {
         if (opts->pic) strarray_add(&spec_args, "-fPIC");
@@ -1512,12 +1493,6 @@ int main(int argc, char **argv)
 #endif
     signal( SIGTERM, exit_on_signal );
     signal( SIGINT, exit_on_signal );
-#ifdef HAVE_SIGADDSET
-    sigemptyset( &signal_mask );
-    sigaddset( &signal_mask, SIGHUP );
-    sigaddset( &signal_mask, SIGTERM );
-    sigaddset( &signal_mask, SIGINT );
-#endif
     init_argv0_dir( argv[0] );
 
     /* setup tmp file removal at exit */
