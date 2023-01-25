@@ -1043,12 +1043,8 @@ static void test_odbc_provider(void)
         ok(propidlist.cPropertyIDs == 14, "got %ld\n", propinfoset->cPropertyInfos);
 
         for (i = 0; i < propidlist.cPropertyIDs; i++)
-        {
             ok(properties[i] == propidlist.rgPropertyIDs[i], "%ld, got %ld\n", i,
                     propidlist.rgPropertyIDs[i]);
-
-            propidlist.rgPropertyIDs[i] = propinfoset->rgPropertyInfos[i].dwPropertyID;
-        }
 
         CoTaskMemFree(propidlist.rgPropertyIDs);
         CoTaskMemFree(propset);
