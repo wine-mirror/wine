@@ -512,7 +512,7 @@ void pop_import(void)
 {
 	int ptr = import_stack_ptr-1;
 
-	fclose(yyin);
+	if (yyin) fclose( yyin );
 	yy_delete_buffer( YY_CURRENT_BUFFER );
 	yy_switch_to_buffer( import_stack[ptr].state );
 	input_name = import_stack[ptr].input_name;
@@ -520,7 +520,7 @@ void pop_import(void)
 	import_stack_ptr--;
 }
 
-int do_import(char *fname)
+void push_import( char *import_name )
 {
     FILE *f;
     char *path, *name;
@@ -528,26 +528,32 @@ int do_import(char *fname)
     int ptr = import_stack_ptr;
     int ret;
 
+    if (import_stack_ptr == MAX_IMPORT_DEPTH)
+        error_loc("Exceeded max import depth\n");
+
+    import_stack[ptr].state = YY_CURRENT_BUFFER;
+    import_stack[ptr].input_name = input_name;
+    import_stack[ptr].line_number = line_number;
+    import_stack_ptr++;
+    yyin = NULL;
+
+    /* reset buffer for <<EOF>>, in case import fails or already imported */
+    yy_scan_string( "" );
+
     LIST_FOR_EACH_ENTRY( import, &imports, struct import, entry )
-        if (!strcmp( import->name, fname )) return 0;  /* already imported */
+        if (!strcmp( import->name, import_name )) return;  /* already imported */
 
     import = xmalloc( sizeof(struct import) );
-    import->name = xstrdup( fname );
+    import->name = xstrdup( import_name );
     list_add_tail( &imports, &import->entry );
 
     /* don't search for a file name with a path in the include directories,
      * for compatibility with MIDL */
-    if (strchr( fname, '/' ) || strchr( fname, '\\' ))
-        path = xstrdup( fname );
-    else if (!(path = wpp_find_include( fname, input_name )))
-        error_loc("Unable to open include file %s\n", fname);
+    if (strchr( import_name, '/' ) || strchr( import_name, '\\' ))
+        path = xstrdup( import_name );
+    else if (!(path = wpp_find_include( import_name, input_name )))
+        error_loc( "Unable to open include file %s\n", import_name );
 
-    if (import_stack_ptr == MAX_IMPORT_DEPTH)
-        error_loc("Exceeded max import depth\n");
-
-    import_stack[ptr].input_name = input_name;
-    import_stack[ptr].line_number = line_number;
-    import_stack_ptr++;
     input_name = path;
     line_number = 1;
 
@@ -562,9 +568,7 @@ int do_import(char *fname)
     if((f = fopen(name, "r")) == NULL)
         error_loc("Unable to open %s\n", name);
 
-    import_stack[ptr].state = YY_CURRENT_BUFFER;
     yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
-    return 1;
 }
 
 static void switch_to_acf(void)

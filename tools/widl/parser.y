@@ -331,7 +331,7 @@ int parser_lex( PARSER_STYPE *yylval );
 %type <str> libraryhdr callconv cppquote importlib import
 %type <str> typename m_typename
 %type <uuid> uuid_string
-%type <import> import_start
+%type <str> import_start
 %type <typelib> library_start librarydef
 %type <statement> statement typedef pragma_warning
 %type <stmt_list> gbl_statements imp_statements int_statements
@@ -504,17 +504,10 @@ typedecl:
 
 cppquote: tCPPQUOTE '(' aSTRING ')'		{ $$ = $3; }
 	;
-import_start: tIMPORT aSTRING ';'		{ $$ = xmalloc(sizeof(struct _import_t));
-						  $$->name = $2;
-						  $$->import_performed = do_import($2);
-						  if (!$$->import_performed) yychar = aEOF;
-						}
-	;
 
-import: import_start imp_statements aEOF	{ $$ = $1->name;
-						  if ($1->import_performed) pop_import();
-						  free($1);
-						}
+import_start: tIMPORT aSTRING ';'		{ $$ = $2; push_import($2); }
+	;
+import: import_start imp_statements aEOF	{ pop_import(); }
 	;
 
 importlib: tIMPORTLIB '(' aSTRING ')'
