@@ -671,7 +671,7 @@ void output_res_o_file( DLLSPEC *spec )
         return;
     }
 
-    res_file = get_temp_file_name( output_file_name, ".res" );
+    res_file = make_temp_file( output_file_name, ".res" );
     flush_output_buffer( res_file );
 
     args = find_tool( "windres", NULL );

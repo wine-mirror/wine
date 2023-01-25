@@ -260,8 +260,6 @@ extern struct strarray find_link_tool(void);
 extern struct strarray get_as_command(void);
 extern struct strarray get_ld_command(void);
 extern const char *get_nm_command(void);
-extern void cleanup_tmp_files(void);
-extern char *get_temp_file_name( const char *prefix, const char *suffix );
 extern void output_standard_file_header(void);
 extern FILE *open_input_file( const char *srcdir, const char *name );
 extern void close_input_file( FILE *file );

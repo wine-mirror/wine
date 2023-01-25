@@ -131,7 +131,7 @@ char *server_token;
 char *regscript_name;
 char *regscript_token;
 static char *idfile_name;
-char *temp_name;
+struct strarray temp_files = { 0 };
 const char *temp_dir = NULL;
 const char *prefix_client = "";
 const char *prefix_server = "";
@@ -702,6 +702,7 @@ int main(int argc,char *argv[])
   int i;
   int ret = 0;
   struct strarray files;
+  char *input;
 
   signal( SIGTERM, exit_on_signal );
   signal( SIGINT, exit_on_signal );
@@ -839,6 +840,7 @@ int main(int argc,char *argv[])
   wpp_add_cmdline_define("_WIN32=1");
 
   atexit(rm_tempfile);
+  input = input_name;
   if (!no_preprocess)
   {
     chat("Starting preprocess\n");
@@ -846,16 +848,14 @@ int main(int argc,char *argv[])
     if (!preprocess_only)
     {
         FILE *output;
-        int fd;
-        char *name;
+        char *name = make_temp_file( header_name, NULL );
 
-        fd = make_temp_file( header_name, NULL, &name );
-        temp_name = name;
-        if (!(output = fdopen(fd, "wt")))
+        if (!(output = fopen(name, "wt")))
             error("Could not open fd %s for writing\n", name);
 
         ret = wpp_parse( input_name, output );
         fclose( output );
+        input = name;
     }
     else
     {
@@ -864,16 +864,11 @@ int main(int argc,char *argv[])
 
     if(ret) exit(1);
     if(preprocess_only) exit(0);
-    if(!(parser_in = fopen(temp_name, "r"))) {
-      fprintf(stderr, "Could not open %s for input\n", temp_name);
-      return 1;
-    }
   }
-  else {
-    if(!(parser_in = fopen(input_name, "r"))) {
-      fprintf(stderr, "Could not open %s for input\n", input_name);
-      return 1;
-    }
+
+  if(!(parser_in = fopen(input, "r"))) {
+    fprintf(stderr, "Could not open %s for input\n", input);
+    return 1;
   }
 
   header_token = make_token(header_name);
@@ -897,8 +892,6 @@ int main(int argc,char *argv[])
 static void rm_tempfile(void)
 {
   abort_import();
-  if(temp_name)
-    unlink(temp_name);
   if (do_header)
     unlink(header_name);
   if (local_stubs_name)
@@ -915,6 +908,5 @@ static void rm_tempfile(void)
     unlink(proxy_name);
   if (do_typelib)
     unlink(typelib_name);
-  if (temp_dir)
-    rmdir(temp_dir);
+  remove_temp_files();
 }

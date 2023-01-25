@@ -145,7 +145,7 @@ static const char *output_debug_file;
 static const char *output_implib;
 static int keep_generated = 0;
 const char *temp_dir = NULL;
-static struct strarray tmp_files;
+struct strarray temp_files = { 0 };
 #ifdef HAVE_SIGSET_T
 static sigset_t signal_mask;
 #endif
@@ -214,13 +214,7 @@ static void cleanup_output_files(void)
 
 static void clean_temp_files(void)
 {
-    unsigned int i;
-
-    if (keep_generated) return;
-
-    for (i = 0; i < tmp_files.count; i++)
-	unlink(tmp_files.str[i]);
-    if (temp_dir) rmdir( temp_dir );
+    if (!keep_generated) remove_temp_files();
 }
 
 /* clean things up when aborting on a signal */
@@ -231,7 +225,6 @@ static void exit_on_signal( int sig )
 
 static char* get_temp_file(const char* prefix, const char* suffix)
 {
-    int fd;
     char *tmp;
 
 #ifdef HAVE_SIGPROCMASK
@@ -239,9 +232,7 @@ static char* get_temp_file(const char* prefix, const char* suffix)
     /* block signals while manipulating the temp files list */
     sigprocmask( SIG_BLOCK, &signal_mask, &old_set );
 #endif
-    fd = make_temp_file( prefix, suffix, &tmp );
-    close( fd );
-    strarray_add(&tmp_files, tmp);
+    tmp = make_temp_file( prefix, suffix );
 #ifdef HAVE_SIGPROCMASK
     sigprocmask( SIG_SETMASK, &old_set, NULL );
 #endif
@@ -421,7 +412,6 @@ static struct strarray get_link_args( struct options *opts, const char *output_n
 
             create_file( mapfile, 0644, "text = A%s;\ndata = A%s;\n", align, align );
             strarray_add( &flags, strmake("-Wl,-M,%s", mapfile) );
-            strarray_add( &tmp_files, mapfile );
         }
         break;
 

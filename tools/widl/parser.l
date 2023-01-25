@@ -509,11 +509,6 @@ void pop_import(void)
 	fclose(yyin);
 	yy_delete_buffer( YY_CURRENT_BUFFER );
 	yy_switch_to_buffer( import_stack[ptr].state );
-	if (temp_name) {
-		unlink(temp_name);
-		free(temp_name);
-	}
-	temp_name = import_stack[ptr].temp_name;
 	input_name = import_stack[ptr].input_name;
 	line_number = import_stack[ptr].line_number;
 	import_stack_ptr--;
@@ -530,7 +525,7 @@ int do_import(char *fname)
     char *path, *name;
     struct imports *import;
     int ptr = import_stack_ptr;
-    int ret, fd;
+    int ret;
 
     import = first_import;
     while (import && strcmp(import->name, fname))
@@ -552,24 +547,22 @@ int do_import(char *fname)
     if (import_stack_ptr == MAX_IMPORT_DEPTH)
         error_loc("Exceeded max import depth\n");
 
-    import_stack[ptr].temp_name = temp_name;
     import_stack[ptr].input_name = input_name;
     import_stack[ptr].line_number = line_number;
     import_stack_ptr++;
     input_name = path;
     line_number = 1;
 
-    fd = make_temp_file( "widl-pp", NULL, &name );
-    temp_name = name;
-    if (!(f = fdopen(fd, "wt")))
+    name = make_temp_file( "widl-pp", NULL );
+    if (!(f = fopen(name, "wt")))
         error("Could not open fd %s for writing\n", name);
 
     ret = wpp_parse( path, f );
     fclose( f );
     if (ret) exit(1);
 
-    if((f = fopen(temp_name, "r")) == NULL)
-        error_loc("Unable to open %s\n", temp_name);
+    if((f = fopen(name, "r")) == NULL)
+        error_loc("Unable to open %s\n", name);
 
     import_stack[ptr].state = YY_CURRENT_BUFFER;
     yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));
@@ -587,7 +580,7 @@ void abort_import(void)
 static void switch_to_acf(void)
 {
     int ptr = import_stack_ptr;
-    int ret, fd;
+    int ret;
     char *name;
     FILE *f;
 
@@ -597,17 +590,16 @@ static void switch_to_acf(void)
     acf_name = NULL;
     line_number = 1;
 
-    fd = make_temp_file( "widl-acf", NULL, &name );
-    temp_name = name;
-    if (!(f = fdopen(fd, "wt")))
+    name = make_temp_file( "widl-acf", NULL );
+    if (!(f = fopen(name, "wt")))
         error("Could not open fd %s for writing\n", name);
 
     ret = wpp_parse(input_name, f);
     fclose(f);
     if (ret) exit(1);
 
-    if((f = fopen(temp_name, "r")) == NULL)
-        error_loc("Unable to open %s\n", temp_name);
+    if((f = fopen(name, "r")) == NULL)
+        error_loc("Unable to open %s\n", name);
 
     import_stack[ptr].state = YY_CURRENT_BUFFER;
     yy_switch_to_buffer(yy_create_buffer(f, YY_BUF_SIZE));

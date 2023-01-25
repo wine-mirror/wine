@@ -627,7 +627,7 @@ static char *create_undef_symbols_file( DLLSPEC *spec )
     output_gnu_stack_note();
     fclose( output_file );
 
-    obj_file = get_temp_file_name( output_file_name, ".o" );
+    obj_file = make_temp_file( output_file_name, ".o" );
     assemble_file( as_file, obj_file );
     return obj_file;
 }
@@ -640,7 +640,7 @@ static const char *ldcombine_files( DLLSPEC *spec, struct strarray files )
     struct strarray args = get_ld_command();
 
     undef_file = create_undef_symbols_file( spec );
-    ld_tmp_file = get_temp_file_name( output_file_name, ".o" );
+    ld_tmp_file = make_temp_file( output_file_name, ".o" );
 
     strarray_add( &args, "-r" );
     strarray_add( &args, "-o" );
@@ -1566,7 +1566,7 @@ static void assemble_files( const char *prefix )
 
     for (i = 0; i < as_files.count; i++)
     {
-        char *obj = get_temp_file_name( prefix, ".o" );
+        char *obj = make_temp_file( prefix, ".o" );
         assemble_file( as_files.str[i], obj );
         as_files.str[i] = obj;
     }

@@ -30,17 +30,8 @@
 #include "build.h"
 
 const char *temp_dir = NULL;
-static struct strarray tmp_files;
+struct strarray temp_files = { 0 };
 static const char *output_file_source_name;
-
-/* atexit handler to clean tmp files */
-void cleanup_tmp_files(void)
-{
-    unsigned int i;
-    for (i = 0; i < tmp_files.count; i++) if (tmp_files.str[i]) unlink( tmp_files.str[i] );
-    if (temp_dir) rmdir( temp_dir );
-}
-
 
 char *strupper(char *s)
 {
@@ -194,7 +185,7 @@ void spawn( struct strarray args )
 
 static const char *find_clang_tool( struct strarray clang, const char *tool )
 {
-    const char *out = get_temp_file_name( "print_tool", ".out" );
+    const char *out = make_temp_file( "print_tool", ".out" );
     struct strarray args = empty_strarray;
     int sout = -1;
     char *path, *p;
@@ -406,18 +397,6 @@ const char *get_nm_command(void)
     return nm_command.str[0];
 }
 
-/* get a name for a temp file, automatically cleaned up on exit */
-char *get_temp_file_name( const char *prefix, const char *suffix )
-{
-    char *name;
-    int fd;
-
-    if (prefix) prefix = get_basename_noext( prefix );
-    fd = make_temp_file( prefix, suffix, &name );
-    close( fd );
-    strarray_add( &tmp_files, name );
-    return name;
-}
 
 /*******************************************************************
  *         buffer management
@@ -592,7 +571,7 @@ void close_output_file(void)
  */
 char *open_temp_output_file( const char *suffix )
 {
-    char *tmp_file = get_temp_file_name( output_file_name, suffix );
+    char *tmp_file = make_temp_file( output_file_name, suffix );
     if (!(output_file = fopen( tmp_file, "w" )))
         fatal_error( "Unable to create output file '%s'\n", tmp_file );
     return tmp_file;

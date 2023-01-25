@@ -182,6 +182,7 @@ static void set_target( const char *name )
 static void cleanup(void)
 {
     if (output_file_name) unlink( output_file_name );
+    if (!save_temps) remove_temp_files();
 }
 
 /* clean things up when aborting on a signal */
@@ -631,7 +632,6 @@ int main(int argc, char **argv)
     files = parse_options( argc, argv, short_options, long_options, 0, option_callback );
 
     atexit( cleanup );  /* make sure we remove the output file on exit */
-    if (!save_temps) atexit( cleanup_tmp_files );
 
     if (spec->file_name && !strchr( spec->file_name, '.' ))
         strcat( spec->file_name, exec_mode == MODE_EXE ? ".exe" : ".dll" );

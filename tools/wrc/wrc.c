@@ -130,9 +130,9 @@ int check_utf8 = 1;  /* whether to check for valid utf8 */
 
 static char *output_name;	/* The name given by the -o option */
 const char *input_name = NULL;	/* The name given on the command-line */
-static char *temp_name = NULL;	/* Temporary file for preprocess pipe */
 static struct strarray input_files;
 const char *temp_dir = NULL;
+struct strarray temp_files = { 0 };
 
 static int stdinc = 1;
 static int po_mode;
@@ -233,7 +233,7 @@ static int load_file( const char *input_name, const char *output_name )
     if(!no_preprocess)
     {
         FILE *output;
-        int ret, fd;
+        int ret;
         char *name;
 
         /*
@@ -257,9 +257,8 @@ static int load_file( const char *input_name, const char *output_name )
             exit(0);
         }
 
-        fd = make_temp_file( output_name, "", &name );
-        temp_name = name;
-        if (!(output = fdopen(fd, "wt")))
+        name = make_temp_file( output_name, "" );
+        if (!(output = fopen(name, "wt")))
             error("Could not open fd %s for writing\n", name);
 
         ret = wpp_parse( input_name, output );
@@ -281,11 +280,6 @@ static int load_file( const char *input_name, const char *output_name )
     ret = parser_parse();
     fclose(parser_in);
     parser_lex_destroy();
-    if (temp_name)
-    {
-        unlink( temp_name );
-        temp_name = NULL;
-    }
     return ret;
 }
 
@@ -501,6 +495,5 @@ int main(int argc,char *argv[])
 static void cleanup_files(void)
 {
 	if (output_name) unlink(output_name);
-	if (temp_name) unlink(temp_name);
-        if (temp_dir) rmdir(temp_dir);
+        remove_temp_files();
 }

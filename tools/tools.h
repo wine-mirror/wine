@@ -325,6 +325,7 @@ static inline char *replace_extension( const char *name, const char *old_ext, co
 /* temp files management */
 
 extern const char *temp_dir;
+extern struct strarray temp_files;
 
 static inline char *make_temp_dir(void)
 {
@@ -351,10 +352,11 @@ static inline char *make_temp_dir(void)
     exit(1);
 }
 
-static inline int make_temp_file( const char *prefix, const char *suffix, char **name )
+static inline char *make_temp_file( const char *prefix, const char *suffix )
 {
     static unsigned int value;
     int fd, count;
+    char *name;
 
     if (!temp_dir) temp_dir = make_temp_dir();
     if (!suffix) suffix = "";
@@ -363,13 +365,26 @@ static inline int make_temp_file( const char *prefix, const char *suffix, char *
 
     for (count = 0; count < 0x8000; count++)
     {
-        *name = strmake( "%s/%s-%08x%s", temp_dir, prefix, value++, suffix );
-        fd = open( *name, O_RDWR | O_CREAT | O_EXCL, 0600 );
-        if (fd >= 0) return fd;
-        free( *name );
+        name = strmake( "%s/%s-%08x%s", temp_dir, prefix, value++, suffix );
+        fd = open( name, O_RDWR | O_CREAT | O_EXCL, 0600 );
+        if (fd >= 0)
+        {
+            strarray_add( &temp_files, name );
+            close( fd );
+            return name;
+        }
+        free( name );
     }
     fprintf( stderr, "failed to create temp file for %s%s in %s\n", prefix, suffix, temp_dir );
     exit(1);
+}
+
+static inline void remove_temp_files(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < temp_files.count; i++) if (temp_files.str[i]) unlink( temp_files.str[i] );
+    if (temp_dir) rmdir( temp_dir );
 }
 
 
