@@ -3192,7 +3192,7 @@ void virtual_map_user_shared_data(void)
 {
     static const WCHAR nameW[] = {'\\','K','e','r','n','e','l','O','b','j','e','c','t','s',
                                   '\\','_','_','w','i','n','e','_','u','s','e','r','_','s','h','a','r','e','d','_','d','a','t','a',0};
-    UNICODE_STRING name_str = { sizeof(nameW) - sizeof(WCHAR), sizeof(nameW), (WCHAR *)nameW };
+    UNICODE_STRING name_str = RTL_CONSTANT_STRING( nameW );
     OBJECT_ATTRIBUTES attr = { sizeof(attr), 0, &name_str };
     unsigned int status;
     HANDLE section;

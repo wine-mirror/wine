@@ -826,7 +826,7 @@ NTSTATUS WINAPI NtQueryLicenseValue( const UNICODE_STRING *name, ULONG *type,
                                   'S','o','f','t','w','a','r','e','\\',
                                   'W','i','n','e','\\','L','i','c','e','n','s','e',
                                   'I','n','f','o','r','m','a','t','i','o','n',0};
-    UNICODE_STRING keyW = { sizeof(nameW) - sizeof(WCHAR), sizeof(nameW), (WCHAR *)nameW };
+    UNICODE_STRING keyW = RTL_CONSTANT_STRING( nameW );
     KEY_VALUE_PARTIAL_INFORMATION *info;
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
     DWORD info_length, count;
