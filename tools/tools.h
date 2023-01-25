@@ -30,6 +30,9 @@
 #include <fcntl.h>
 #include <time.h>
 #include <errno.h>
+#ifdef HAVE_SYS_SYSCTL_H
+# include <sys/sysctl.h>
+#endif
 
 #ifdef _WIN32
 # include <direct.h>
@@ -600,6 +603,29 @@ static inline struct target init_argv0_target( const char *argv0 )
 
     free( name );
     return target;
+}
+
+
+static inline char *get_argv0_dir( const char *argv0 )
+{
+#ifndef _WIN32
+    char *dir = NULL;
+
+#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
+    dir = realpath( "/proc/self/exe", NULL );
+#elif defined (__FreeBSD__) || defined(__DragonFly__)
+    static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
+    size_t path_size = PATH_MAX;
+    char *path = xmalloc( path_size );
+    if (!sysctl( pathname, ARRAY_SIZE(pathname), path, &path_size, NULL, 0 ))
+        dir = realpath( path, NULL );
+    free( path );
+#endif
+    if (!dir && !(dir = realpath( argv0, NULL ))) return NULL;
+    return get_dirname( dir );
+#else
+    return get_dirname( argv0 );
+#endif
 }
 
 

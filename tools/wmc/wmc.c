@@ -26,9 +26,6 @@
 #include <signal.h>
 #include <limits.h>
 #include <sys/types.h>
-#ifdef HAVE_SYS_SYSCTL_H
-# include <sys/sysctl.h>
-#endif
 
 #include "wmc.h"
 #include "utils.h"
@@ -149,24 +146,11 @@ static void exit_on_signal( int sig )
 
 static void init_argv0_dir( const char *argv0 )
 {
-#ifndef _WIN32
-    char *dir = NULL;
+    char *dir = get_argv0_dir( argv0 );
 
-#if defined(__linux__) || defined(__FreeBSD_kernel__) || defined(__NetBSD__)
-    dir = realpath( "/proc/self/exe", NULL );
-#elif defined (__FreeBSD__) || defined(__DragonFly__)
-    static int pathname[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
-    size_t path_size = PATH_MAX;
-    char *path = xmalloc( path_size );
-    if (!sysctl( pathname, ARRAY_SIZE(pathname), path, &path_size, NULL, 0 ))
-        dir = realpath( path, NULL );
-    free( path );
-#endif
-    if (!dir && !(dir = realpath( argv0, NULL ))) return;
-    dir = get_dirname( dir );
+    if (!dir) return;
     if (strendswith( dir, "/tools/wmc" )) nlsdirs[0] = strmake( "%s/../../nls", dir );
     else nlsdirs[0] = strmake( "%s/%s", dir, BIN_TO_NLSDIR );
-#endif
 }
 
 static void option_callback( int optc, char *optarg )
