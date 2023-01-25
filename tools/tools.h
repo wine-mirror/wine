@@ -401,6 +401,16 @@ static inline void remove_temp_files(void)
 }
 
 
+static inline void init_signals( void (*cleanup)(int) )
+{
+    signal( SIGTERM, cleanup );
+    signal( SIGINT, cleanup );
+#ifdef SIGHUP
+    signal( SIGHUP, cleanup );
+#endif
+}
+
+
 static inline void *read_file( const char *name, size_t *size )
 {
     struct stat st;

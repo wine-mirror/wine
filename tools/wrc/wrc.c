@@ -26,7 +26,6 @@
 #include <string.h>
 #include <assert.h>
 #include <ctype.h>
-#include <signal.h>
 #include <limits.h>
 #include <sys/types.h>
 
@@ -396,11 +395,7 @@ int main(int argc,char *argv[])
 {
 	int i;
 
-        signal( SIGTERM, exit_on_signal );
-        signal( SIGINT, exit_on_signal );
-#ifdef SIGHUP
-        signal( SIGHUP, exit_on_signal );
-#endif
+        init_signals( exit_on_signal );
 	init_argv0_dir( argv[0] );
 
 	/* Set the default defined stuff */

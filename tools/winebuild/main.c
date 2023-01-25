@@ -26,7 +26,6 @@
 
 #include <assert.h>
 #include <stdio.h>
-#include <signal.h>
 #include <errno.h>
 #include <string.h>
 #include <stdarg.h>
@@ -619,12 +618,7 @@ int main(int argc, char **argv)
     struct strarray files;
     DLLSPEC *spec = main_spec = alloc_dll_spec();
 
-#ifdef SIGHUP
-    signal( SIGHUP, exit_on_signal );
-#endif
-    signal( SIGTERM, exit_on_signal );
-    signal( SIGINT, exit_on_signal );
-
+    init_signals( exit_on_signal );
     target = init_argv0_target( argv[0] );
     if (target.platform == PLATFORM_CYGWIN) target.platform = PLATFORM_MINGW;
     if (is_pe()) unwind_tables = 1;

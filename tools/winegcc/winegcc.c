@@ -91,7 +91,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
@@ -1488,11 +1487,7 @@ int main(int argc, char **argv)
     char* lang = 0;
     char* str;
 
-#ifdef SIGHUP
-    signal( SIGHUP, exit_on_signal );
-#endif
-    signal( SIGTERM, exit_on_signal );
-    signal( SIGINT, exit_on_signal );
+    init_signals( exit_on_signal );
     init_argv0_dir( argv[0] );
 
     /* setup tmp file removal at exit */

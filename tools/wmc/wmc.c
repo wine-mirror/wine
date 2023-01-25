@@ -23,7 +23,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <signal.h>
 #include <limits.h>
 #include <sys/types.h>
 
@@ -221,11 +220,7 @@ int main(int argc,char *argv[])
         struct strarray files;
 
 	atexit( cleanup_files );
-	signal( SIGTERM, exit_on_signal );
-	signal( SIGINT, exit_on_signal );
-#ifdef SIGHUP
-	signal( SIGHUP, exit_on_signal );
-#endif
+        init_signals( exit_on_signal );
         init_argv0_dir( argv[0] );
 
 	/* First rebuild the commandline to put in destination */

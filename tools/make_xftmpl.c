@@ -20,7 +20,6 @@
 
 #include "config.h"
 
-#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -478,11 +477,7 @@ int main(int argc, char **argv)
     } else {
         output_file = option_outfile_name;
         atexit(cleanup_files);
-        signal(SIGTERM, exit_on_signal);
-        signal(SIGINT, exit_on_signal);
-#ifdef SIGHUP
-        signal(SIGHUP, exit_on_signal);
-#endif
+        init_signals( exit_on_signal );
         if (!(outfile = fopen(output_file, "wb"))) {
             perror(option_outfile_name);
             goto error;
