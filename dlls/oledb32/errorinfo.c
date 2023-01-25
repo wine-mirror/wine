@@ -120,7 +120,7 @@ static ULONG WINAPI errorrecords_Release(IErrorInfo* iface)
                 IUnknown_Release(This->records[i].custom_error);
 
             for (j = 0; j < dispparams->cArgs && dispparams->rgvarg; j++)
-                VariantClear(&dispparams->rgvarg[i]);
+                VariantClear(&dispparams->rgvarg[j]);
             CoTaskMemFree(dispparams->rgvarg);
             CoTaskMemFree(dispparams->rgdispidNamedArgs);
         }
