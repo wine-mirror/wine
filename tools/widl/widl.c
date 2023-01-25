@@ -911,6 +911,12 @@ FILE *open_input_file( const char *path )
     char *name;
     int ret;
 
+    if (no_preprocess)
+    {
+        if (!(file = fopen( path, "r" ))) error_loc( "Unable to open %s\n", path );
+        return file;
+    }
+
     name = make_temp_file( "widl", NULL );
     if (!(file = fopen( name, "wt" ))) error_loc( "Could not open %s for writing\n", name );
     ret = wpp_parse( path, file );
