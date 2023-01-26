@@ -870,6 +870,25 @@ void WINAPI vkCmdDraw(VkCommandBuffer commandBuffer, uint32_t vertexCount, uint3
     UNIX_CALL(vkCmdDraw, &params);
 }
 
+void WINAPI vkCmdDrawClusterHUAWEI(VkCommandBuffer commandBuffer, uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ)
+{
+    struct vkCmdDrawClusterHUAWEI_params params;
+    params.commandBuffer = commandBuffer;
+    params.groupCountX = groupCountX;
+    params.groupCountY = groupCountY;
+    params.groupCountZ = groupCountZ;
+    UNIX_CALL(vkCmdDrawClusterHUAWEI, &params);
+}
+
+void WINAPI vkCmdDrawClusterIndirectHUAWEI(VkCommandBuffer commandBuffer, VkBuffer buffer, VkDeviceSize offset)
+{
+    struct vkCmdDrawClusterIndirectHUAWEI_params params;
+    params.commandBuffer = commandBuffer;
+    params.buffer = buffer;
+    params.offset = offset;
+    UNIX_CALL(vkCmdDrawClusterIndirectHUAWEI, &params);
+}
+
 void WINAPI vkCmdDrawIndexed(VkCommandBuffer commandBuffer, uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t vertexOffset, uint32_t firstInstance)
 {
     struct vkCmdDrawIndexed_params params;
@@ -5747,6 +5766,8 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdDispatchBaseKHR", vkCmdDispatchBaseKHR},
     {"vkCmdDispatchIndirect", vkCmdDispatchIndirect},
     {"vkCmdDraw", vkCmdDraw},
+    {"vkCmdDrawClusterHUAWEI", vkCmdDrawClusterHUAWEI},
+    {"vkCmdDrawClusterIndirectHUAWEI", vkCmdDrawClusterIndirectHUAWEI},
     {"vkCmdDrawIndexed", vkCmdDrawIndexed},
     {"vkCmdDrawIndexedIndirect", vkCmdDrawIndexedIndirect},
     {"vkCmdDrawIndexedIndirectCount", vkCmdDrawIndexedIndirectCount},

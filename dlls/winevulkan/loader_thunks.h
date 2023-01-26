@@ -100,6 +100,8 @@ enum unix_call
     unix_vkCmdDispatchBaseKHR,
     unix_vkCmdDispatchIndirect,
     unix_vkCmdDraw,
+    unix_vkCmdDrawClusterHUAWEI,
+    unix_vkCmdDrawClusterIndirectHUAWEI,
     unix_vkCmdDrawIndexed,
     unix_vkCmdDrawIndexedIndirect,
     unix_vkCmdDrawIndexedIndirectCount,
@@ -1213,6 +1215,21 @@ struct vkCmdDraw_params
     uint32_t instanceCount;
     uint32_t firstVertex;
     uint32_t firstInstance;
+};
+
+struct vkCmdDrawClusterHUAWEI_params
+{
+    VkCommandBuffer commandBuffer;
+    uint32_t groupCountX;
+    uint32_t groupCountY;
+    uint32_t groupCountZ;
+};
+
+struct vkCmdDrawClusterIndirectHUAWEI_params
+{
+    VkCommandBuffer commandBuffer;
+    VkBuffer DECLSPEC_ALIGN(8) buffer;
+    VkDeviceSize DECLSPEC_ALIGN(8) offset;
 };
 
 struct vkCmdDrawIndexed_params
