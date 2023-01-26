@@ -180,10 +180,14 @@ static inline VARIANT *get_arg(DISPPARAMS *dp, DWORD i)
     return dp->rgvarg + dp->cArgs-i-1;
 }
 
+#define SP_CALLER_UNINITIALIZED ((IServiceProvider*)IntToPtr(-1))
+
 struct vbcaller {
     IServiceProvider IServiceProvider_iface;
 
     LONG ref;
+
+    IServiceProvider *caller;
 };
 
 struct _script_ctx_t {

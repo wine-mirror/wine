@@ -413,6 +413,8 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     vbdisp_t *This = impl_from_IDispatchEx(iface);
+    IServiceProvider *prev_caller;
+    HRESULT hres;
 
     TRACE("(%p)->(%lx %lx %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
 
@@ -422,7 +424,17 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if(pvarRes)
         V_VT(pvarRes) = VT_EMPTY;
 
-    return invoke_vbdisp(This, id, wFlags, TRUE, pdp, pvarRes);
+    prev_caller = This->desc->ctx->vbcaller->caller;
+    This->desc->ctx->vbcaller->caller = pspCaller;
+    if(pspCaller)
+        IServiceProvider_AddRef(pspCaller);
+
+    hres = invoke_vbdisp(This, id, wFlags, TRUE, pdp, pvarRes);
+
+    This->desc->ctx->vbcaller->caller = prev_caller;
+    if(pspCaller)
+        IServiceProvider_Release(pspCaller);
+    return hres;
 }
 
 static HRESULT WINAPI DispatchEx_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)
@@ -1414,6 +1426,7 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     ScriptDisp *This = ScriptDisp_from_IDispatchEx(iface);
+    IServiceProvider *prev_caller;
     HRESULT hres;
 
     TRACE("(%p)->(%lx %lx %x %p %p %p %p)\n", This, id, lcid, wFlags, pdp, pvarRes, pei, pspCaller);
@@ -1421,11 +1434,18 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     if (!This->ctx)
         return E_UNEXPECTED;
 
+    prev_caller = This->ctx->vbcaller->caller;
+    This->ctx->vbcaller->caller = pspCaller;
+    if(pspCaller)
+        IServiceProvider_AddRef(pspCaller);
+
     if (id & DISPID_FUNCTION_MASK)
     {
         id &= ~DISPID_FUNCTION_MASK;
-        if (id > This->global_funcs_cnt)
-            return DISP_E_MEMBERNOTFOUND;
+        if (id > This->global_funcs_cnt) {
+            hres = DISP_E_MEMBERNOTFOUND;
+            goto done;
+        }
 
         switch (wFlags)
         {
@@ -1438,19 +1458,28 @@ static HRESULT WINAPI ScriptDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             hres = E_NOTIMPL;
         }
 
-        return hres;
+        goto done;
     }
 
-    if (id > This->global_vars_cnt)
-        return DISP_E_MEMBERNOTFOUND;
+    if (id > This->global_vars_cnt) {
+        hres = DISP_E_MEMBERNOTFOUND;
+        goto done;
+    }
 
     if (This->global_vars[id - 1]->is_const)
     {
         FIXME("const not supported\n");
-        return E_NOTIMPL;
+        hres = E_NOTIMPL;
+        goto done;
     }
 
-    return invoke_variant_prop(This->ctx, &This->global_vars[id - 1]->v, wFlags, pdp, pvarRes);
+    hres = invoke_variant_prop(This->ctx, &This->global_vars[id - 1]->v, wFlags, pdp, pvarRes);
+
+done:
+    This->ctx->vbcaller->caller = prev_caller;
+    if(pspCaller)
+        IServiceProvider_Release(pspCaller);
+    return hres;
 }
 
 static HRESULT WINAPI ScriptDisp_DeleteMemberByName(IDispatchEx *iface, BSTR bstrName, DWORD grfdex)

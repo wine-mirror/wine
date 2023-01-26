@@ -96,6 +96,7 @@ static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res
     ScriptDisp *obj = ctx->script_obj;
     function_t *func_iter, **new_funcs;
     dynamic_var_t *var, **new_vars;
+    IServiceProvider *prev_caller;
     size_t cnt, i;
     HRESULT hres;
 
@@ -185,7 +186,12 @@ static HRESULT exec_global_code(script_ctx_t *ctx, vbscode_t *code, VARIANT *res
     }
 
     code->pending_exec = FALSE;
-    return exec_script(ctx, TRUE, &code->main_code, NULL, NULL, res);
+
+    prev_caller = ctx->vbcaller->caller;
+    ctx->vbcaller->caller = SP_CALLER_UNINITIALIZED;
+    hres = exec_script(ctx, TRUE, &code->main_code, NULL, NULL, res);
+    ctx->vbcaller->caller = prev_caller;
+    return hres;
 }
 
 static void exec_queued_code(script_ctx_t *ctx)
@@ -415,6 +421,14 @@ static HRESULT WINAPI vbcaller_QueryService(IServiceProvider *iface, REFGUID gui
 {
     struct vbcaller *This = vbcaller_from_IServiceProvider(iface);
 
+    if(IsEqualGUID(guidService, &SID_GetCaller)) {
+        TRACE("(%p)->(SID_GetCaller)\n", This);
+        *ppv = NULL;
+        if(!This->caller)
+            return S_OK;
+        return (This->caller == SP_CALLER_UNINITIALIZED) ? E_NOINTERFACE : IServiceProvider_QueryInterface(This->caller, riid, ppv);
+    }
+
     FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
 
     *ppv = NULL;
@@ -436,6 +450,7 @@ static struct vbcaller *create_vbcaller(void)
     if(ret) {
         ret->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
         ret->ref = 1;
+        ret->caller = SP_CALLER_UNINITIALIZED;
     }
     return ret;
 }
