@@ -366,6 +366,80 @@ static void decrease_state(VBScript *This, SCRIPTSTATE state)
     }
 }
 
+static inline struct vbcaller *vbcaller_from_IServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct vbcaller, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI vbcaller_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    struct vbcaller *This = vbcaller_from_IServiceProvider(iface);
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IServiceProvider, riid)) {
+        *ppv = &This->IServiceProvider_iface;
+    }else {
+        WARN("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI vbcaller_AddRef(IServiceProvider *iface)
+{
+    struct vbcaller *This = vbcaller_from_IServiceProvider(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI vbcaller_Release(IServiceProvider *iface)
+{
+    struct vbcaller *This = vbcaller_from_IServiceProvider(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    if(!ref)
+        free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI vbcaller_QueryService(IServiceProvider *iface, REFGUID guidService,
+        REFIID riid, void **ppv)
+{
+    struct vbcaller *This = vbcaller_from_IServiceProvider(iface);
+
+    FIXME("(%p)->(%s %s %p)\n", This, debugstr_guid(guidService), debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    vbcaller_QueryInterface,
+    vbcaller_AddRef,
+    vbcaller_Release,
+    vbcaller_QueryService
+};
+
+static struct vbcaller *create_vbcaller(void)
+{
+    struct vbcaller *ret;
+
+    ret = malloc(sizeof(*ret));
+    if(ret) {
+        ret->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
+        ret->ref = 1;
+    }
+    return ret;
+}
+
 static inline VBScriptError *impl_from_IActiveScriptError(IActiveScriptError *iface)
 {
     return CONTAINING_RECORD(iface, VBScriptError, IActiveScriptError_iface);
@@ -545,6 +619,7 @@ static ULONG WINAPI VBScript_Release(IActiveScript *iface)
     if(!ref) {
         decrease_state(This, SCRIPTSTATE_CLOSED);
         detach_global_objects(This->ctx);
+        IServiceProvider_Release(&This->ctx->vbcaller->IServiceProvider_iface);
         free(This->ctx);
         free(This);
     }
@@ -1102,6 +1177,7 @@ static const IObjectSafetyVtbl VBScriptSafetyVtbl = {
 
 HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
+    struct vbcaller *vbcaller;
     script_ctx_t *ctx;
     VBScript *ret;
     HRESULT hres;
@@ -1111,6 +1187,11 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
     ret = calloc(1, sizeof(*ret));
     if(!ret)
         return E_OUTOFMEMORY;
+
+    if(!(vbcaller = create_vbcaller())) {
+        free(ret);
+        return E_OUTOFMEMORY;
+    }
 
     ret->IActiveScript_iface.lpVtbl = &VBScriptVtbl;
     ret->IActiveScriptDebug_iface.lpVtbl = &VBScriptDebugVtbl;
@@ -1123,10 +1204,12 @@ HRESULT WINAPI VBScriptFactory_CreateInstance(IClassFactory *iface, IUnknown *pU
 
     ctx = ret->ctx = calloc(1, sizeof(*ctx));
     if(!ctx) {
+        IServiceProvider_Release(&vbcaller->IServiceProvider_iface);
         free(ret);
         return E_OUTOFMEMORY;
     }
 
+    ctx->vbcaller = vbcaller;
     ctx->safeopt = INTERFACE_USES_DISPEX;
     list_init(&ctx->objects);
     list_init(&ctx->code_list);
