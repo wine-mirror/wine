@@ -331,12 +331,15 @@ typedef struct {
 
 void release_cc(cc_ctx_t*) DECLSPEC_HIDDEN;
 
+#define SP_CALLER_UNINITIALIZED ((IServiceProvider*)IntToPtr(-1))
+
 typedef struct {
     IServiceProvider IServiceProvider_iface;
 
     LONG ref;
 
     script_ctx_t *ctx;
+    IServiceProvider *caller;
 } JSCaller;
 
 #include "jsval.h"

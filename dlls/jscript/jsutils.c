@@ -1034,6 +1034,14 @@ static HRESULT WINAPI JSCaller_QueryService(IServiceProvider *iface, REFGUID gui
 {
     JSCaller *This = impl_from_IServiceProvider(iface);
 
+    if(IsEqualGUID(guidService, &SID_GetCaller)) {
+        TRACE("(%p)->(SID_GetCaller)\n", This);
+        *ppv = NULL;
+        if(!This->caller)
+            return S_OK;
+        return (This->caller == SP_CALLER_UNINITIALIZED) ? E_NOINTERFACE : IServiceProvider_QueryInterface(This->caller, riid, ppv);
+    }
+
     if(IsEqualGUID(guidService, &SID_VariantConversion) && This->ctx && This->ctx->active_script) {
         TRACE("(%p)->(SID_VariantConversion)\n", This);
         return IActiveScript_QueryInterface(This->ctx->active_script, riid, ppv);
@@ -1063,6 +1071,7 @@ HRESULT create_jscaller(script_ctx_t *ctx)
     ret->IServiceProvider_iface.lpVtbl = &ServiceProviderVtbl;
     ret->ref = 1;
     ret->ctx = ctx;
+    ret->caller = SP_CALLER_UNINITIALIZED;
 
     ctx->jscaller = ret;
     return S_OK;

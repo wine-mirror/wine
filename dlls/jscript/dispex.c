@@ -1900,6 +1900,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
 {
     jsdisp_t *This = impl_from_IDispatchEx(iface);
+    IServiceProvider *prev_caller;
     dispex_prop_t *prop;
     jsexcept_t ei;
     HRESULT hres;
@@ -1916,6 +1917,11 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
     }
 
     enter_script(This->ctx, &ei);
+
+    prev_caller = This->ctx->jscaller->caller;
+    This->ctx->jscaller->caller = pspCaller;
+    if(pspCaller)
+        IServiceProvider_AddRef(pspCaller);
 
     switch(wFlags) {
     case DISPATCH_METHOD|DISPATCH_PROPERTYGET:
@@ -2000,6 +2006,9 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         break;
     }
 
+    This->ctx->jscaller->caller = prev_caller;
+    if(pspCaller)
+        IServiceProvider_Release(pspCaller);
     return leave_script(This->ctx, hres);
 }
 
