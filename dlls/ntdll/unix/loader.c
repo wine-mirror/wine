@@ -640,8 +640,6 @@ static void init_paths( char *argv[] )
                 bin_dir = realpath_dirname( path );
             free( path );
         }
-#else
-        bin_dir = realpath_dirname( argv[0] );
 #endif
         if (!bin_dir) bin_dir = build_path( dll_dir, DLL_TO_BINDIR );
         data_dir = build_path( bin_dir, BIN_TO_DATADIR );
