@@ -38,12 +38,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static HRESULT get_url(HTMLLocation *This, const WCHAR **ret)
 {
-    if(!This->window || !This->window->base.outer_window || !This->window->base.outer_window->url) {
-        FIXME("No current URL\n");
-        return E_NOTIMPL;
-    }
-
-    *ret = This->window->base.outer_window->url;
+    if(!This->window || !This->window->base.outer_window || !This->window->base.outer_window->url)
+        *ret = L"about:blank";
+    else
+        *ret = This->window->base.outer_window->url;
     return S_OK;
 }
 
@@ -295,10 +293,8 @@ static HRESULT WINAPI HTMLLocation_get_protocol(IHTMLLocation *iface, BSTR *p)
     if(!p)
         return E_POINTER;
 
-    if(!(uri = get_uri(This))) {
-        FIXME("No current URI\n");
-        return E_NOTIMPL;
-    }
+    if(!(uri = get_uri(This)))
+        return (*p = SysAllocString(L"about:")) ? S_OK : E_OUTOFMEMORY;
 
     hres = IUri_GetSchemeName(uri, &protocol);
     if(FAILED(hres))
@@ -388,8 +384,8 @@ static HRESULT WINAPI HTMLLocation_get_hostname(IHTMLLocation *iface, BSTR *p)
         return E_POINTER;
 
     if(!(uri = get_uri(This))) {
-        FIXME("No current URI\n");
-        return E_NOTIMPL;
+        *p = NULL;
+        return S_OK;
     }
 
     hres = IUri_GetHost(uri, &hostname);
@@ -425,8 +421,8 @@ static HRESULT WINAPI HTMLLocation_get_port(IHTMLLocation *iface, BSTR *p)
         return E_POINTER;
 
     if(!(uri = get_uri(This))) {
-        FIXME("No current URI\n");
-        return E_NOTIMPL;
+        *p = NULL;
+        return S_OK;
     }
 
     hres = IUri_GetPort(uri, &port);
@@ -466,10 +462,8 @@ static HRESULT WINAPI HTMLLocation_get_pathname(IHTMLLocation *iface, BSTR *p)
     if(!p)
         return E_POINTER;
 
-    if(!(uri = get_uri(This))) {
-        FIXME("No current URI\n");
-        return E_NOTIMPL;
-    }
+    if(!(uri = get_uri(This)))
+        return (*p = SysAllocString(L"blank")) ? S_OK : E_OUTOFMEMORY;
 
     hres = IUri_GetPath(uri, &path);
     if(FAILED(hres))
@@ -504,8 +498,8 @@ static HRESULT WINAPI HTMLLocation_get_search(IHTMLLocation *iface, BSTR *p)
         return E_POINTER;
 
     if(!(uri = get_uri(This))) {
-        FIXME("No current URI\n");
-        return E_NOTIMPL;
+        *p = NULL;
+        return S_OK;
     }
 
     hres = IUri_GetQuery(uri, &query);
@@ -562,8 +556,8 @@ static HRESULT WINAPI HTMLLocation_get_hash(IHTMLLocation *iface, BSTR *p)
         return E_POINTER;
 
     if(!(uri = get_uri(This))) {
-        FIXME("No current URI\n");
-        return E_NOTIMPL;
+        *p = NULL;
+        return S_OK;
     }
 
     hres = IUri_GetFragment(uri, &hash);

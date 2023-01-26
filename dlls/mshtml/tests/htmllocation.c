@@ -40,6 +40,18 @@ struct location_test {
 
 static const struct location_test location_tests[] = {
     {
+        "Empty",
+        NULL,
+        "about:blank",
+        "about:",
+        NULL,
+        NULL,
+        NULL,
+        "blank",
+        NULL,
+        NULL
+    },
+    {
         "HTTP",
         "http://www.winehq.org?search#hash",
         "http://www.winehq.org/?search#hash",
@@ -187,7 +199,7 @@ static void test_hostname(IHTMLLocation *loc, IHTMLDocument2 *doc, const struct 
     SysFreeString(str);
 
     hres = IHTMLDocument2_get_domain(doc, &str);
-    ok(hres == S_OK, "%s: get_domain failed: 0x%08lx\n", test->name, hres);
+    ok(hres == (test->url ? S_OK : E_FAIL), "%s: get_domain failed: 0x%08lx\n", test->name, hres);
     if(hres == S_OK)
         ok(str_eq_wa(str, test->hostname ? test->hostname : ""),
                 "%s: expected retrieved domain to be L\"%s\", was: %s\n",
@@ -280,7 +292,7 @@ static void perform_test(const struct location_test* test)
     WCHAR url[INTERNET_MAX_URL_LENGTH];
     HRESULT hres;
     IBindCtx *bc;
-    IMoniker *url_mon;
+    IMoniker *url_mon = NULL;
     IPersistMoniker *persist_mon;
     IHTMLDocument2 *doc;
     IHTMLDocument6 *doc6;
@@ -291,12 +303,14 @@ static void perform_test(const struct location_test* test)
     if(FAILED(hres))
         return;
 
-    MultiByteToWideChar(CP_ACP, 0, test->url, -1, url, ARRAY_SIZE(url));
-    hres = CreateURLMoniker(NULL, url, &url_mon);
-    ok(hres == S_OK, "%s: CreateURLMoniker failed: 0x%08lx\n", test->name, hres);
-    if(FAILED(hres)){
-        IBindCtx_Release(bc);
-        return;
+    if(test->url) {
+        MultiByteToWideChar(CP_ACP, 0, test->url, -1, url, ARRAY_SIZE(url));
+        hres = CreateURLMoniker(NULL, url, &url_mon);
+        ok(hres == S_OK, "%s: CreateURLMoniker failed: 0x%08lx\n", test->name, hres);
+        if(FAILED(hres)){
+            IBindCtx_Release(bc);
+            return;
+        }
     }
 
     hres = CoCreateInstance(&CLSID_HTMLDocument, NULL,
@@ -307,7 +321,7 @@ static void perform_test(const struct location_test* test)
 #endif
     ok(hres == S_OK, "%s: CoCreateInstance failed: 0x%08lx\n", test->name, hres);
     if(FAILED(hres)){
-        IMoniker_Release(url_mon);
+        if(url_mon) IMoniker_Release(url_mon);
         IBindCtx_Release(bc);
         return;
     }
@@ -317,38 +331,39 @@ static void perform_test(const struct location_test* test)
         IHTMLDocument6_Release(doc6);
     }else{
         win_skip("%s: Could not get IHTMLDocument6, probably too old IE. Requires IE 8+\n", test->name);
-        IMoniker_Release(url_mon);
+        if(url_mon) IMoniker_Release(url_mon);
         IBindCtx_Release(bc);
         return;
     }
 
-    hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistMoniker,
-            (void**)&persist_mon);
-    ok(hres == S_OK, "%s: IHTMlDocument2_QueryInterface failed: 0x%08lx\n", test->name, hres);
-    if(FAILED(hres)){
-        IHTMLDocument2_Release(doc);
-        IMoniker_Release(url_mon);
-        IBindCtx_Release(bc);
-        return;
-    }
+    if(url_mon) {
+        hres = IHTMLDocument2_QueryInterface(doc, &IID_IPersistMoniker,
+                (void**)&persist_mon);
+        ok(hres == S_OK, "%s: IHTMlDocument2_QueryInterface failed: 0x%08lx\n", test->name, hres);
+        if(FAILED(hres)){
+            IHTMLDocument2_Release(doc);
+            IMoniker_Release(url_mon);
+            IBindCtx_Release(bc);
+            return;
+        }
 
-    hres = IPersistMoniker_Load(persist_mon, FALSE, url_mon, bc,
-            STGM_SHARE_EXCLUSIVE | STGM_READWRITE);
-    ok(hres == S_OK, "%s: IPersistMoniker_Load failed: 0x%08lx\n", test->name, hres);
-    if(FAILED(hres)){
+        hres = IPersistMoniker_Load(persist_mon, FALSE, url_mon, bc,
+                STGM_SHARE_EXCLUSIVE | STGM_READWRITE);
+        ok(hres == S_OK, "%s: IPersistMoniker_Load failed: 0x%08lx\n", test->name, hres);
         IPersistMoniker_Release(persist_mon);
-        IHTMLDocument2_Release(doc);
         IMoniker_Release(url_mon);
-        IBindCtx_Release(bc);
-        return;
+
+        if(FAILED(hres)){
+            IHTMLDocument2_Release(doc);
+            IBindCtx_Release(bc);
+            return;
+        }
     }
 
     hres = IHTMLDocument2_get_location(doc, &location);
     ok(hres == S_OK, "%s: IHTMLDocument2_get_location failed: 0x%08lx\n", test->name, hres);
     if(FAILED(hres)){
-        IPersistMoniker_Release(persist_mon);
         IHTMLDocument2_Release(doc);
-        IMoniker_Release(url_mon);
         IBindCtx_Release(bc);
         return;
     }
@@ -363,9 +378,7 @@ static void perform_test(const struct location_test* test)
     test_hash(location, test);
 
     IHTMLLocation_Release(location);
-    IPersistMoniker_Release(persist_mon);
     IHTMLDocument2_Release(doc);
-    IMoniker_Release(url_mon);
     IBindCtx_Release(bc);
 }
 

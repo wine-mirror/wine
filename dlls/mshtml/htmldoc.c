@@ -1159,6 +1159,9 @@ static HRESULT WINAPI HTMLDocument_get_domain(IHTMLDocument2 *iface, BSTR *p)
         return E_NOTIMPL;
     }
 
+    if(This->outer_window && !This->outer_window->uri)
+        return E_FAIL;
+
     nsAString_Init(&nsstr, NULL);
     nsres = nsIDOMHTMLDocument_GetDomain(This->html_document, &nsstr);
     if(NS_SUCCEEDED(nsres) && This->outer_window && This->outer_window->uri) {
