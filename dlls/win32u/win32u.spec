@@ -971,7 +971,7 @@
 @ stub NtUserGetPointerDeviceRects
 @ stub NtUserGetPointerDevices
 @ stub NtUserGetPointerFrameTimes
-@ stub NtUserGetPointerInfoList
+@ stdcall -syscall NtUserGetPointerInfoList(long long long long long ptr ptr ptr)
 @ stub NtUserGetPointerInputTransform
 @ stub NtUserGetPointerProprietaryId
 @ stub NtUserGetPointerType

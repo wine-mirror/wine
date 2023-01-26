@@ -2246,6 +2246,20 @@ NTSTATUS WINAPI wow64_NtUserGetOpenClipboardWindow( UINT *args )
     return HandleToUlong( NtUserGetOpenClipboardWindow() );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetPointerInfoList( UINT *args )
+{
+    UINT id = get_ulong( &args );
+    UINT type = get_ulong( &args );
+    UINT unk0 = get_ulong( &args );
+    UINT unk1 = get_ulong( &args );
+    UINT size = get_ulong( &args );
+    void *entry_count = get_ptr( &args );
+    void *pointer_count = get_ptr( &args );
+    void *pointer_info = get_ptr( &args );
+
+    return NtUserGetPointerInfoList( id, type, unk0, unk1, size, entry_count, pointer_count, pointer_info );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetPriorityClipboardFormat( UINT *args )
 {
     UINT *list = get_ptr( &args );

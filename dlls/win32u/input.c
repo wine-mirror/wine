@@ -2174,6 +2174,17 @@ BOOL WINAPI NtUserIsMouseInPointerEnabled(void)
     return FALSE;
 }
 
+/**********************************************************************
+ *       NtUserGetPointerInfoList    (win32u.@)
+ */
+BOOL WINAPI NtUserGetPointerInfoList( UINT32 id, POINTER_INPUT_TYPE type, UINT_PTR unk0, UINT_PTR unk1, SIZE_T size,
+                                      UINT32 *entry_count, UINT32 *pointer_count, void *pointer_info )
+{
+    FIXME( "id %#x, type %#x, unk0 %#zx, unk1 %#zx, size %#zx, entry_count %p, pointer_count %p, pointer_info %p stub!\n",
+           id, (int)type, unk0, unk1, (size_t)size, entry_count, pointer_count, pointer_info );
+    RtlSetLastWin32Error( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
 
 HWND get_shell_window(void)
 {

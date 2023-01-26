@@ -193,6 +193,7 @@ static void * const syscalls[] =
     NtUserGetMouseMovePointsEx,
     NtUserGetObjectInformation,
     NtUserGetOpenClipboardWindow,
+    NtUserGetPointerInfoList,
     NtUserGetPriorityClipboardFormat,
     NtUserGetProcessDpiAwarenessContext,
     NtUserGetProcessWindowStation,
