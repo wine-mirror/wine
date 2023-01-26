@@ -265,6 +265,7 @@ static void wined3d_disable_vulkan_features(struct wined3d_physical_device_info 
     features->shaderInt16 = VK_FALSE;
     features->shaderResourceResidency = VK_FALSE;
     features->shaderResourceMinLod = VK_FALSE;
+    features->shaderTessellationAndGeometryPointSize = VK_FALSE;
     features->sparseBinding = VK_FALSE;
     features->sparseResidencyBuffer = VK_FALSE;
     features->sparseResidencyImage2D = VK_FALSE;

@@ -25,7 +25,8 @@ static const struct wined3d_shader_backend_ops spirv_shader_backend_vk;
 
 static const struct vkd3d_shader_compile_option spirv_compile_options[] =
 {
-    {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_3},
+    {VKD3D_SHADER_COMPILE_OPTION_API_VERSION, VKD3D_SHADER_API_VERSION_1_7},
+    {VKD3D_SHADER_COMPILE_OPTION_WRITE_TESS_GEOM_POINT_SIZE, 0},
 };
 
 struct shader_spirv_resource_bindings
