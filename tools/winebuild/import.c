@@ -28,8 +28,8 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "wine/list.h"
 #include "build.h"
+#include "wine/list.h"
 
 /* standard C functions that are also exported from ntdll */
 static const char *stdc_names[] =
