@@ -304,8 +304,8 @@ static void WinHttpCreateUrl_test( void )
     SetLastError( 0xdeadbeef );
     ret = WinHttpCreateUrl( &uc, ICU_ESCAPE, url, &len );
     err = GetLastError();
-    ok( !ret, "expected failure\n" );
-    ok( err == ERROR_INVALID_PARAMETER, "got %lu\n", err );
+    ok( !ret || GetACP() == CP_UTF8, "expected failure\n" );
+    ok( err == ERROR_INVALID_PARAMETER || (!err && GetACP() == CP_UTF8), "got %lu\n", err );
 
     /* extra info with Unicode characters, no ICU_ESCAPE */
     memset( &uc, 0, sizeof(uc) );
@@ -344,8 +344,8 @@ static void WinHttpCreateUrl_test( void )
     SetLastError( 0xdeadbeef );
     ret = WinHttpCreateUrl( &uc, ICU_ESCAPE, url, &len );
     err = GetLastError();
-    ok( !ret, "expected failure\n" );
-    ok( err == ERROR_INVALID_PARAMETER, "got %lu\n", err );
+    ok( !ret || GetACP() == CP_UTF8, "expected failure\n" );
+    ok( err == ERROR_INVALID_PARAMETER || (!err && GetACP() == CP_UTF8), "got %lu\n", err );
 
     /* path with Unicode characters, no ICU_ESCAPE */
     memset( &uc, 0, sizeof(uc) );
