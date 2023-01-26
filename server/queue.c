@@ -531,12 +531,6 @@ static inline void clear_queue_bits( struct msg_queue *queue, unsigned int bits 
     }
 }
 
-/* check whether msg is a keyboard message */
-static inline int is_keyboard_msg( struct message *msg )
-{
-    return (msg->msg >= WM_KEYFIRST && msg->msg <= WM_KEYLAST);
-}
-
 /* check if message is matched by the filter */
 static inline int check_msg_filter( unsigned int msg, unsigned int first, unsigned int last )
 {
@@ -563,7 +557,7 @@ static inline int get_hardware_msg_bit( struct message *msg )
 {
     if (msg->msg == WM_INPUT_DEVICE_CHANGE || msg->msg == WM_INPUT) return QS_RAWINPUT;
     if (msg->msg == WM_MOUSEMOVE || msg->msg == WM_NCMOUSEMOVE) return QS_MOUSEMOVE;
-    if (is_keyboard_msg( msg )) return QS_KEY;
+    if (msg->msg >= WM_KEYFIRST && msg->msg <= WM_KEYLAST) return QS_KEY;
     return QS_MOUSEBUTTON;
 }
 
@@ -1507,24 +1501,27 @@ static user_handle_t find_hardware_message_window( struct desktop *desktop, stru
 
     *thread = NULL;
     *msg_code = msg->msg;
-    if (msg->msg == WM_INPUT || msg->msg == WM_INPUT_DEVICE_CHANGE)
+    switch (get_hardware_msg_bit( msg ))
     {
+    case QS_RAWINPUT:
         if (!(win = msg->win) && input) win = input->focus;
-    }
-    else if (is_keyboard_msg( msg ))
-    {
+        break;
+    case QS_KEY:
         if (input && !(win = input->focus))
         {
             win = input->active;
             if (*msg_code < WM_SYSKEYDOWN) *msg_code += WM_SYSKEYDOWN - WM_KEYDOWN;
         }
-    }
-    else if (!input || !(win = input->capture)) /* mouse message */
-    {
-        if (is_window_visible( msg->win ) && !is_window_transparent( msg->win )) win = msg->win;
-        else win = shallow_window_from_point( desktop, msg->x, msg->y );
-
-        *thread = window_thread_from_point( win, msg->x, msg->y );
+        break;
+    case QS_MOUSEMOVE:
+    case QS_MOUSEBUTTON:
+        if (!input || !(win = input->capture))
+        {
+            if (is_window_visible( msg->win ) && !is_window_transparent( msg->win )) win = msg->win;
+            else win = shallow_window_from_point( desktop, msg->x, msg->y );
+            *thread = window_thread_from_point( win, msg->x, msg->y );
+        }
+        break;
     }
 
     if (!*thread)
@@ -1568,20 +1565,19 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
     last_input_time = get_tick_count();
     if (msg->msg != WM_MOUSEMOVE) always_queue = 1;
 
-    if (is_keyboard_msg( msg ))
+    switch (get_hardware_msg_bit( msg ))
     {
+    case QS_KEY:
         if (queue_hotkey_message( desktop, msg )) return;
         if (desktop->keystate[VK_MENU] & 0x80) msg->lparam |= KF_ALTDOWN << 16;
         if (msg->wparam == VK_SHIFT || msg->wparam == VK_LSHIFT || msg->wparam == VK_RSHIFT)
             msg->lparam &= ~(KF_EXTENDED << 16);
-    }
-    else if (msg->msg != WM_INPUT && msg->msg != WM_INPUT_DEVICE_CHANGE)
-    {
-        if (msg->msg == WM_MOUSEMOVE)
-        {
-            prepend_cursor_history( msg->x, msg->y, msg->time, msg_data->info );
-            if (update_desktop_cursor_pos( desktop, msg->x, msg->y )) always_queue = 1;
-        }
+        break;
+    case QS_MOUSEMOVE:
+        prepend_cursor_history( msg->x, msg->y, msg->time, msg_data->info );
+        if (update_desktop_cursor_pos( desktop, msg->x, msg->y )) always_queue = 1;
+        /* fallthrough */
+    case QS_MOUSEBUTTON:
         if (desktop->keystate[VK_LBUTTON] & 0x80)  msg->wparam |= MK_LBUTTON;
         if (desktop->keystate[VK_MBUTTON] & 0x80)  msg->wparam |= MK_MBUTTON;
         if (desktop->keystate[VK_RBUTTON] & 0x80)  msg->wparam |= MK_RBUTTON;
@@ -1589,6 +1585,7 @@ static void queue_hardware_message( struct desktop *desktop, struct message *msg
         if (desktop->keystate[VK_CONTROL] & 0x80)  msg->wparam |= MK_CONTROL;
         if (desktop->keystate[VK_XBUTTON1] & 0x80) msg->wparam |= MK_XBUTTON1;
         if (desktop->keystate[VK_XBUTTON2] & 0x80) msg->wparam |= MK_XBUTTON2;
+        break;
     }
     msg->x = desktop->cursor.x;
     msg->y = desktop->cursor.y;
@@ -2186,7 +2183,7 @@ static int get_hardware_message( struct thread *thread, unsigned int hw_id, user
 
         data->hw_id = msg->unique_id;
         set_reply_data( msg->data, msg->data_size );
-        if ((msg->msg == WM_INPUT || msg->msg == WM_INPUT_DEVICE_CHANGE) && (flags & PM_REMOVE))
+        if (get_hardware_msg_bit( msg ) == QS_RAWINPUT && (flags & PM_REMOVE))
             release_hardware_message( current->queue, data->hw_id );
         return 1;
     }
