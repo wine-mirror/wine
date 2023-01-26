@@ -1446,7 +1446,7 @@ static BOOL get_icon_info( HICON handle, ICONINFOEXW *ret )
 /***********************************************************************
  *           ANDROID_SetCursor
  */
-void ANDROID_SetCursor( HCURSOR handle )
+void ANDROID_SetCursor( HWND hwnd, HCURSOR handle )
 {
     static HCURSOR last_cursor;
     static DWORD last_cursor_change;

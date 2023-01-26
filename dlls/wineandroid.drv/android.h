@@ -86,13 +86,12 @@ extern pthread_mutex_t win_data_mutex DECLSPEC_HIDDEN;
 extern INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size ) DECLSPEC_HIDDEN;
 extern UINT ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl ) DECLSPEC_HIDDEN;
 extern SHORT ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl ) DECLSPEC_HIDDEN;
-extern void ANDROID_SetCursor( HCURSOR handle ) DECLSPEC_HIDDEN;
+extern void ANDROID_SetCursor( HWND hwnd, HCURSOR handle ) DECLSPEC_HIDDEN;
 extern BOOL ANDROID_CreateDesktop( const WCHAR *name, UINT width, UINT height ) DECLSPEC_HIDDEN;
 extern BOOL ANDROID_CreateWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void ANDROID_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL ANDROID_ProcessEvents( DWORD mask ) DECLSPEC_HIDDEN;
 extern LRESULT ANDROID_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) DECLSPEC_HIDDEN;
-extern void ANDROID_SetCursor( HCURSOR handle ) DECLSPEC_HIDDEN;
 extern void ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha,
                                                 DWORD flags ) DECLSPEC_HIDDEN;
 extern void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent ) DECLSPEC_HIDDEN;

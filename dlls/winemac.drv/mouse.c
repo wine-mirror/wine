@@ -744,12 +744,12 @@ static BOOL get_icon_info(HICON handle, ICONINFOEXW *ret)
 /***********************************************************************
  *              SetCursor (MACDRV.@)
  */
-void macdrv_SetCursor(HCURSOR cursor)
+void macdrv_SetCursor(HWND hwnd, HCURSOR cursor)
 {
     CFStringRef cursor_name = NULL;
     CFArrayRef cursor_frames = NULL;
 
-    TRACE("%p\n", cursor);
+    TRACE("%p %p\n", hwnd, cursor);
 
     if (cursor)
     {

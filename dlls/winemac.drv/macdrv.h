@@ -159,7 +159,7 @@ extern void macdrv_WindowPosChanged(HWND hwnd, HWND insert_after, UINT swp_flags
 extern void macdrv_DestroyCursorIcon(HCURSOR cursor) DECLSPEC_HIDDEN;
 extern BOOL macdrv_GetCursorPos(LPPOINT pos) DECLSPEC_HIDDEN;
 extern void macdrv_SetCapture(HWND hwnd, UINT flags) DECLSPEC_HIDDEN;
-extern void macdrv_SetCursor(HCURSOR cursor) DECLSPEC_HIDDEN;
+extern void macdrv_SetCursor(HWND hwnd, HCURSOR cursor) DECLSPEC_HIDDEN;
 extern BOOL macdrv_SetCursorPos(INT x, INT y) DECLSPEC_HIDDEN;
 extern BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey) DECLSPEC_HIDDEN;
 extern void macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey) DECLSPEC_HIDDEN;

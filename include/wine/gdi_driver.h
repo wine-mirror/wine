@@ -298,7 +298,7 @@ struct user_driver_funcs
     void    (*pNotifyIMEStatus)(HWND,UINT);
     /* cursor/icon functions */
     void    (*pDestroyCursorIcon)(HCURSOR);
-    void    (*pSetCursor)(HCURSOR);
+    void    (*pSetCursor)(HWND,HCURSOR);
     BOOL    (*pGetCursorPos)(LPPOINT);
     BOOL    (*pSetCursorPos)(INT,INT);
     BOOL    (*pClipCursor)(const RECT*,BOOL);

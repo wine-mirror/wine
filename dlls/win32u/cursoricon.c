@@ -101,8 +101,8 @@ INT WINAPI NtUserShowCursor( BOOL show )
 
     TRACE("%d, count=%d\n", show, count );
 
-    if (show && !count) user_driver->pSetCursor( cursor );
-    else if (!show && count == -1) user_driver->pSetCursor( 0 );
+    if (show && !count) user_driver->pSetCursor( 0, cursor );
+    else if (!show && count == -1) user_driver->pSetCursor( 0, 0 );
 
     return count;
 }
@@ -132,7 +132,7 @@ HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )
     SERVER_END_REQ;
     if (!ret) return 0;
 
-    user_driver->pSetCursor( show_count >= 0 ? cursor : 0 );
+    user_driver->pSetCursor( 0, show_count >= 0 ? cursor : 0 );
 
     if (!(obj = get_icon_ptr( old_cursor ))) return 0;
     release_user_handle_ptr( obj );

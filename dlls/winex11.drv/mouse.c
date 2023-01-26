@@ -1402,7 +1402,7 @@ void X11DRV_DestroyCursorIcon( HCURSOR handle )
 /***********************************************************************
  *		SetCursor (X11DRV.@)
  */
-void X11DRV_SetCursor( HCURSOR handle )
+void X11DRV_SetCursor( HWND hwnd, HCURSOR handle )
 {
     if (InterlockedExchangePointer( (void **)&last_cursor, handle ) != handle ||
         NtGetTickCount() - last_cursor_change > 100)

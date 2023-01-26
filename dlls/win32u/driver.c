@@ -738,7 +738,7 @@ static void nulldrv_DestroyCursorIcon( HCURSOR cursor )
 {
 }
 
-static void nulldrv_SetCursor( HCURSOR cursor )
+static void nulldrv_SetCursor( HWND hwnd, HCURSOR cursor )
 {
 }
 
@@ -1118,9 +1118,9 @@ static INT loaderdrv_GetDisplayDepth( LPCWSTR name, BOOL is_primary )
     return load_driver()->pGetDisplayDepth( name, is_primary );
 }
 
-static void loaderdrv_SetCursor( HCURSOR cursor )
+static void loaderdrv_SetCursor( HWND hwnd, HCURSOR cursor )
 {
-    load_driver()->pSetCursor( cursor );
+    load_driver()->pSetCursor( hwnd, cursor );
 }
 
 static BOOL loaderdrv_GetCursorPos( POINT *pt )
