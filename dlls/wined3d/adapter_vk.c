@@ -244,6 +244,7 @@ struct wined3d_physical_device_info
     VkPhysicalDeviceTransformFeedbackFeaturesEXT xfb_features;
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT vertex_divisor_features;
     VkPhysicalDeviceHostQueryResetFeatures host_query_reset_features;
+    VkPhysicalDeviceShaderDrawParametersFeatures draw_parameters_features;
 
     VkPhysicalDeviceFeatures2 features2;
 };
@@ -336,6 +337,7 @@ static const struct wined3d_allocator_ops wined3d_allocator_vk_ops =
 static void get_physical_device_info(const struct wined3d_adapter_vk *adapter_vk, struct wined3d_physical_device_info *info)
 {
     VkPhysicalDeviceVertexAttributeDivisorFeaturesEXT *vertex_divisor_features = &info->vertex_divisor_features;
+    VkPhysicalDeviceShaderDrawParametersFeatures *draw_parameters_features = &info->draw_parameters_features;
     VkPhysicalDeviceHostQueryResetFeatures *host_query_reset_features = &info->host_query_reset_features;
     VkPhysicalDeviceTransformFeedbackFeaturesEXT *xfb_features = &info->xfb_features;
     VkPhysicalDevice physical_device = adapter_vk->physical_device;
@@ -343,6 +345,11 @@ static void get_physical_device_info(const struct wined3d_adapter_vk *adapter_vk
     VkPhysicalDeviceFeatures2 *features2 = &info->features2;
 
     memset(info, 0, sizeof(*info));
+
+    draw_parameters_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
+
+    if (vk_info->api_version >= VK_API_VERSION_1_1)
+        xfb_features->pNext = draw_parameters_features;
 
     xfb_features->sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_TRANSFORM_FEEDBACK_FEATURES_EXT;
 
