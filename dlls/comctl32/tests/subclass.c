@@ -192,7 +192,7 @@ static void check_unicode_(int line, HWND hwnd, DWORD flags)
     else if (flags & EXPECT_WNDPROC_1)
         ok_(__FILE__, line)(proc == wnd_proc_1, "got proc %p\n", proc);
     else if (flags & EXPECT_WNDPROC_3)
-        todo_wine_if(proc == wnd_proc_1) ok_(__FILE__, line)(proc == wnd_proc_3, "got proc %p\n", proc);
+        ok_(__FILE__, line)(proc == wnd_proc_3, "got proc %p\n", proc);
     else
         ok_(__FILE__, line)(!IS_WNDPROC_HANDLE(proc), "got proc %p\n", proc);
 }
