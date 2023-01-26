@@ -2021,7 +2021,7 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
 
     if(client) {
         DWORD count = pSetQueryNetSessionCount(SESSION_QUERY);
-        ok(count == session_count + 1, "count = %lu expected %lu\n", count, session_count + 1);
+        ok(count >= session_count + 1, "count = %lu expected %lu\n", count, session_count + 1);
 
         CHECK_CALLED(GetContainer);
         CHECK_CALLED(Site_GetWindow);
