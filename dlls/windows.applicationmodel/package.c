@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(model);
 struct package_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IPackageStatics IPackageStatics_iface;
     LONG ref;
 };
 
@@ -45,6 +46,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         *out = &impl->IActivationFactory_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IPackageStatics ))
+    {
+        *out = &impl->IPackageStatics_iface;
         IInspectable_AddRef( *out );
         return S_OK;
     }
@@ -107,9 +115,31 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( package_statics, IPackageStatics, struct package_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI package_statics_get_Current( IPackageStatics *iface, IPackage **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IPackageStaticsVtbl package_statics_vtbl =
+{
+    package_statics_QueryInterface,
+    package_statics_AddRef,
+    package_statics_Release,
+    /* IInspectable methods */
+    package_statics_GetIids,
+    package_statics_GetRuntimeClassName,
+    package_statics_GetTrustLevel,
+    /* IPackageStatics methods */
+    package_statics_get_Current,
+};
+
 static struct package_statics package_statics =
 {
     {&factory_vtbl},
+    {&package_statics_vtbl},
     1,
 };
 

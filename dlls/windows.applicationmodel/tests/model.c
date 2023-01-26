@@ -541,6 +541,7 @@ skip_tests:
 static void test_PackageStatics(void)
 {
     static const WCHAR *package_statics_name = L"Windows.ApplicationModel.Package";
+    IPackageStatics *package_statics;
     IActivationFactory *factory;
     HSTRING str;
     HRESULT hr;
@@ -561,6 +562,11 @@ static void test_PackageStatics(void)
     check_interface( factory, &IID_IUnknown );
     check_interface( factory, &IID_IInspectable );
 
+    hr = IActivationFactory_QueryInterface( factory, &IID_IPackageStatics, (void **)&package_statics );
+    ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    ref = IPackageStatics_Release( package_statics );
+    ok( ref == 2, "got ref %ld.\n", ref );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }
