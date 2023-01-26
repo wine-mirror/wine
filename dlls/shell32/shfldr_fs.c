@@ -347,7 +347,7 @@ IShellFolder_fnParseDisplayName (IShellFolder2 * iface,
         /* Special case for the root folder. */
         if (!wcsicmp( szPath, L"\\\\?\\unix\\" ))
         {
-            *ppidl = SHAlloc(sizeof(*ppidl));
+            *ppidl = SHAlloc(sizeof(**ppidl));
             if (!*ppidl) return E_FAIL;
             (*ppidl)->mkid.cb = 0; /* Terminate the ITEMIDLIST */
             return S_OK;
