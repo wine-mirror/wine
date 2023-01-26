@@ -1188,7 +1188,7 @@ static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDis
     struct script_host *factory_host, *host;
     struct scriptlet_instance *obj;
     IDispatch *script_dispatch;
-    HRESULT hres;
+    HRESULT hres = S_OK;
 
     if (!(obj = calloc(1, sizeof(*obj))))
         return E_OUTOFMEMORY;
