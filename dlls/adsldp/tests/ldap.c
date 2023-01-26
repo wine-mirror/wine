@@ -190,6 +190,11 @@ static void test_ParseDisplayName(void)
 
         count = 0xdeadbeef;
         hr = MkParseDisplayName(bc, test[i].path, &count, &mk);
+        if (hr == HRESULT_FROM_WIN32(ERROR_DS_SERVER_DOWN))
+        {
+            skip("server is down\n");
+            break;
+        }
         todo_wine_if(i == 0 || i == 1 || i == 11 || i == 12)
         ok(hr == test[i].hr, "%d: got %#lx, expected %#lx\n", i, hr, test[i].hr);
         if (hr == S_OK)
