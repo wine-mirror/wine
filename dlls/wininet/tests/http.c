@@ -6109,6 +6109,80 @@ static void test_http_read(int port)
     skip_receive_notification_tests = FALSE;
 }
 
+static void test_file_pointer(int port)
+{
+    INTERNET_BUFFERSW ib;
+    test_request_t req;
+    char buf[24000];
+    DWORD pos, read_size;
+
+    skip_receive_notification_tests = TRUE;
+
+    memset(&ib, 0, sizeof(ib));
+    ib.dwStructSize = sizeof(ib);
+    ib.lpvBuffer = buf;
+
+    open_read_test_request(port, &req,
+                           "HTTP/1.1 200 OK\r\n"
+                           "Server: winetest\r\n"
+                           "Content-Length: 100\r\n"
+                           "\r\n"
+                           "xyz");
+
+    SET_OPTIONAL(INTERNET_STATUS_RECEIVING_RESPONSE);
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "xyz", 0);
+    CLEAR_NOTIFIED(INTERNET_STATUS_RECEIVING_RESPONSE);
+
+    /* jump back to 2nd byte */
+    pos = InternetSetFilePointer(req.request, 2, NULL, FILE_BEGIN, 0);
+    ok(pos == 2, "pos = %ld (gle %lu)\n", pos, GetLastError());
+
+    expect_data_available(req.request, 1);
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, sizeof(buf), "z", 0);
+
+    /* jump forward to 5th byte (not yet available) */
+    pos = InternetSetFilePointer(req.request, 5, NULL, FILE_BEGIN, 0);
+    ok(pos == 5, "pos = %ld (gle %lu)\n", pos, GetLastError());
+
+    /* querying available data will wait until we have enough data */
+    async_query_data_available(req.request, &read_size);
+    send_response_and_wait("12345", FALSE, NULL, &read_size, NULL, 3, 3, 61);
+    expect_data_available(req.request, 3);
+
+    /* skip one byte and verify that we're at expected position by reading one byte */
+    pos = InternetSetFilePointer(req.request, 1, NULL, FILE_CURRENT, 0);
+    ok(pos == 6, "pos = %ld (gle %lu)\n", pos, GetLastError());
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, 1, "4", 0);
+
+    /* jump past available bytes, read will wait for available data */
+    pos = InternetSetFilePointer(req.request, 2, NULL, FILE_CURRENT, 0);
+    ok(pos == 9, "pos = %ld (gle %lu)\n", pos, GetLastError());
+
+    readex_expect_async(req.request, IRF_ASYNC, &ib, 3, "");
+    send_response_ex_and_wait("abcde", FALSE, &ib, "bcd", 0, 61);
+
+    /* jump back to the beginning */
+    pos = InternetSetFilePointer(req.request, 0, NULL, FILE_BEGIN, 0);
+    ok(pos == 0, "pos = %ld (gle %lu)\n", pos, GetLastError());
+    readex_expect_sync_data(req.request, IRF_NO_WAIT, &ib, 12, "xyz12345abcd", 0);
+
+    /* jump past the available data then send more data and close the connection */
+    pos = InternetSetFilePointer(req.request, 3, NULL, FILE_CURRENT, 0);
+    ok(pos == 15, "pos = %ld (gle %lu)\n", pos, GetLastError());
+    readex_expect_async(req.request, IRF_ASYNC, &ib, sizeof(buf), "");
+    send_response_ex_and_wait("12345", TRUE, &ib, "345", 0, 61);
+
+    SET_EXPECT(INTERNET_STATUS_CLOSING_CONNECTION);
+    SET_EXPECT(INTERNET_STATUS_CONNECTION_CLOSED);
+    close_async_handle(req.session, 2);
+    todo_wine
+    CHECK_NOTIFIED(INTERNET_STATUS_CLOSING_CONNECTION);
+    todo_wine
+    CHECK_NOTIFIED(INTERNET_STATUS_CONNECTION_CLOSED);
+
+    skip_receive_notification_tests = FALSE;
+}
+
 static void test_connection_break(int port)
 {
     INTERNET_BUFFERSW ib;
@@ -6559,6 +6633,7 @@ static void test_http_connection(void)
     test_basic_auth_credentials_cached_manual(si.port);
     test_async_read(si.port);
     test_http_read(si.port);
+    test_file_pointer(si.port);
     test_connection_break(si.port);
     test_long_url(si.port);
     test_redirect(si.port);
