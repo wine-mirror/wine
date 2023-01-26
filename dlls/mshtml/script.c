@@ -201,9 +201,33 @@ static BOOL init_script_engine(ScriptHost *script_host, IActiveScript *script)
     hres = IActiveScript_AddNamedItem(script, L"window",
             SCRIPTITEM_ISVISIBLE|SCRIPTITEM_ISSOURCE|SCRIPTITEM_GLOBALMEMBERS);
     if(SUCCEEDED(hres)) {
+        ScriptHost *first_host;
+
         V_VT(&var) = VT_BOOL;
         V_BOOL(&var) = VARIANT_TRUE;
+
+        LIST_FOR_EACH_ENTRY(first_host, &script_host->window->script_hosts, ScriptHost, entry) {
+            if(first_host->script) {
+                V_BOOL(&var) = VARIANT_FALSE;
+                break;
+            }
+        }
         set_script_prop(script, SCRIPTPROP_ABBREVIATE_GLOBALNAME_RESOLUTION, &var);
+
+        /* if this was second engine initialized, also set it to first engine, since it used to be TRUE */
+        if(!V_BOOL(&var)) {
+            struct list *iter = &first_host->entry;
+            BOOL is_second_init = TRUE;
+
+            while((iter = list_next(&script_host->window->script_hosts, iter))) {
+                if(LIST_ENTRY(iter, ScriptHost, entry)->script) {
+                    is_second_init = FALSE;
+                    break;
+                }
+            }
+            if(is_second_init)
+                set_script_prop(first_host->script, SCRIPTPROP_ABBREVIATE_GLOBALNAME_RESOLUTION, &var);
+        }
     }else {
        WARN("AddNamedItem failed: %08lx\n", hres);
     }
