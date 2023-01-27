@@ -27,6 +27,7 @@
 #define COMDLG32_Atom   MAKEINTATOM(0xa000)     /* MS uses this one to identify props */
 
 extern HINSTANCE	COMDLG32_hInstance DECLSPEC_HIDDEN;
+extern HANDLE	COMDLG32_hActCtx DECLSPEC_HIDDEN;
 
 void	COMDLG32_SetCommDlgExtendedError(DWORD err) DECLSPEC_HIDDEN;
 LPVOID	COMDLG32_AllocMem(int size) __WINE_ALLOC_SIZE(1) DECLSPEC_HIDDEN;

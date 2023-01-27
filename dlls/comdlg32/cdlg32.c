@@ -40,6 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 
 DECLSPEC_HIDDEN HINSTANCE	COMDLG32_hInstance = 0;
+HANDLE	COMDLG32_hActCtx = INVALID_HANDLE_VALUE;
 
 static DWORD COMDLG32_TlsIndex = TLS_OUT_OF_INDEXES;
 
@@ -59,13 +60,26 @@ BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD Reason, LPVOID Reserved)
 	switch(Reason)
 	{
 	case DLL_PROCESS_ATTACH:
+	{
+		ACTCTXW actctx = {0};
+
 		COMDLG32_hInstance = hInstance;
 		DisableThreadLibraryCalls(hInstance);
-		break;
 
+		actctx.cbSize = sizeof(actctx);
+		actctx.hModule = COMDLG32_hInstance;
+		actctx.lpResourceName = MAKEINTRESOURCEW(123);
+		actctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
+		COMDLG32_hActCtx = CreateActCtxW(&actctx);
+		if (COMDLG32_hActCtx == INVALID_HANDLE_VALUE)
+			ERR("failed to create activation context, last error %lu\n", GetLastError());
+
+		break;
+	}
 	case DLL_PROCESS_DETACH:
             if (Reserved) break;
             if (COMDLG32_TlsIndex != TLS_OUT_OF_INDEXES) TlsFree(COMDLG32_TlsIndex);
+            if (COMDLG32_hActCtx != INVALID_HANDLE_VALUE) ReleaseActCtx(COMDLG32_hActCtx);
             break;
 	}
 	return TRUE;
