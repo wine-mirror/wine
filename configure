@@ -1454,6 +1454,7 @@ enable_windows_media_speech
 enable_windows_media
 enable_windows_networking
 enable_windows_system_profile_systemmanufacturers
+enable_windows_ui
 enable_windowscodecs
 enable_windowscodecsext
 enable_winealsa_drv
@@ -21761,6 +21762,8 @@ wine_fn_config_makefile dlls/windows.media/tests enable_tests
 wine_fn_config_makefile dlls/windows.networking enable_windows_networking
 wine_fn_config_makefile dlls/windows.system.profile.systemmanufacturers enable_windows_system_profile_systemmanufacturers
 wine_fn_config_makefile dlls/windows.system.profile.systemmanufacturers/tests enable_tests
+wine_fn_config_makefile dlls/windows.ui enable_windows_ui
+wine_fn_config_makefile dlls/windows.ui/tests enable_tests
 wine_fn_config_makefile dlls/windowscodecs enable_windowscodecs
 wine_fn_config_makefile dlls/windowscodecs/tests enable_tests
 wine_fn_config_makefile dlls/windowscodecsext enable_windowscodecsext

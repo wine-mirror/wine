@@ -1,0 +1,9 @@
+MODULE  = windows.ui.dll
+IMPORTS = combase
+
+C_SRCS = \
+	main.c \
+	uisettings.c
+
+IDL_SRCS = \
+	classes.idl
