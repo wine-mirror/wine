@@ -567,7 +567,7 @@ static void test_IStream_Read(void)
 static void test_IStream_Write(void)
 {
   struct dummystream streamobj;
-  char buff[256];
+  char buff[256] = {0};
   HRESULT hRet;
 
   if (!pIStream_Write)
