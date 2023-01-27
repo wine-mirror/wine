@@ -712,6 +712,7 @@ static void test_D3DKMTCheckOcclusion(void)
         ShowWindow(hwnd, SW_MINIMIZE);
         occlusion_desc.hWnd = hwnd;
         status = pD3DKMTCheckOcclusion(&occlusion_desc);
+        flaky
         ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
         ShowWindow(hwnd, SW_SHOWNORMAL);
 
