@@ -28,7 +28,7 @@ extern "C" {
 #ifdef NDEBUG
 #define assert(_expr) ((void)0)
 #else
-_ACRTIMP void __cdecl _assert(const char *, const char *, unsigned int);
+_ACRTIMP DECLSPEC_NORETURN void __cdecl _assert(const char *, const char *, unsigned int);
 #define assert(_expr) (void)((!!(_expr)) || (_assert(#_expr, __FILE__, __LINE__), 0))
 #endif
 
