@@ -1,0 +1,167 @@
+/*
+ * Copyright (C) 2023 Mohamad Al-Jaf
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#ifdef __WIDL__
+#pragma winrt ns_prefix
+#endif
+
+import "inspectable.idl";
+import "asyncinfo.idl";
+import "eventtoken.idl";
+import "windowscontracts.idl";
+import "windows.foundation.idl";
+import "windows.devices.enumeration.idl";
+/* import "windows.phone.idl"; */
+import "windows.ui.idl";
+/* import "windows.ui.core.idl"; */
+/* import "windows.ui.popups.idl"; */
+/* import "windows.ui.windowmanagement.idl"; */
+
+namespace Windows.UI.ViewManagement
+{
+    typedef enum HandPreference HandPreference;
+    typedef enum UIColorType UIColorType;
+    typedef enum UIElementType UIElementType;
+
+    interface IUISettings;
+    interface IUISettings3;
+
+    runtimeclass UISettings;
+
+    declare {
+        interface Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, IInspectable *>;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum HandPreference
+    {
+        LeftHanded  = 0,
+        RightHanded = 1,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum UIColorType
+    {
+        Background   = 0,
+        Foreground   = 1,
+        AccentDark3  = 2,
+        AccentDark2  = 3,
+        AccentDark1  = 4,
+        Accent       = 5,
+        AccentLight1 = 6,
+        AccentLight2 = 7,
+        AccentLight3 = 8,
+        Complement   = 9,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0)
+    ]
+    enum UIElementType
+    {
+        ActiveCaption        = 0,
+        Background           = 1,
+        ButtonFace           = 2,
+        ButtonText           = 3,
+        CaptionText          = 4,
+        GrayText             = 5,
+        Highlight            = 6,
+        HighlightText        = 7,
+        Hotlight             = 8,
+        InactiveCaption      = 9,
+        InactiveCaptionText  = 10,
+        Window               = 11,
+        WindowText           = 12,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        AccentColor          = 1000,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        TextHigh             = 1001,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        TextMedium           = 1002,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        TextLow              = 1003,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        TextContrastWithHigh = 1004,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NonTextHigh          = 1005,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NonTextMediumHigh    = 1006,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NonTextMedium        = 1007,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NonTextMediumLow     = 1008,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        NonTextLow           = 1009,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        PageBackground       = 1010,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        PopupBackground      = 1011,
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
+        OverlayOutsidePopup  = 1012,
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.UISettings),
+        uuid(85361600-1c63-4627-bcb1-3a89e0bc9c55)
+    ]
+    interface IUISettings : IInspectable
+    {
+        [propget] HRESULT HandPreference([out, retval] Windows.UI.ViewManagement.HandPreference *value);
+        [propget] HRESULT CursorSize([out, retval] Windows.Foundation.Size *value);
+        [propget] HRESULT ScrollBarSize([out, retval] Windows.Foundation.Size *value);
+        [propget] HRESULT ScrollBarArrowSize([out, retval] Windows.Foundation.Size *value);
+        [propget] HRESULT ScrollBarThumbBoxSize([out, retval] Windows.Foundation.Size *value);
+        [propget] HRESULT MessageDuration([out, retval] UINT32 *value);
+        [propget] HRESULT AnimationsEnabled([out, retval] boolean *value);
+        [propget] HRESULT CaretBrowsingEnabled([out, retval] boolean *value);
+        [propget] HRESULT CaretBlinkRate([out, retval] UINT32 *value);
+        [propget] HRESULT CaretWidth([out, retval] UINT32 *value);
+        [propget] HRESULT DoubleClickTime([out, retval] UINT32 *value);
+        [propget] HRESULT MouseHoverTime([out, retval] UINT32 *value);
+        HRESULT UIElementColor([in] Windows.UI.ViewManagement.UIElementType element, [out, retval] Windows.UI.Color *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.UI.ViewManagement.UISettings),
+        uuid(03021be4-5254-4781-8194-5168f7d06d7b)
+    ]
+    interface IUISettings3 : IInspectable
+    {
+        HRESULT GetColorValue([in] Windows.UI.ViewManagement.UIColorType color, [out, retval] Windows.UI.Color *value);
+        [eventadd] HRESULT ColorValuesChanged([in] Windows.Foundation.TypedEventHandler<Windows.UI.ViewManagement.UISettings *, IInspectable *> *handler,
+                                              [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT ColorValuesChanged([in] EventRegistrationToken cookie);
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile)
+    ]
+    runtimeclass UISettings
+    {
+        [default] interface Windows.UI.ViewManagement.IUISettings;
+        [contract(Windows.Foundation.UniversalApiContract, 1.0)] interface Windows.UI.ViewManagement.IUISettings3;
+    }
+}

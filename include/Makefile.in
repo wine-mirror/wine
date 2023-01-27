@@ -826,6 +826,7 @@ SOURCES = \
 	windows.system.threading.idl \
 	windows.system.userprofile.idl \
 	windows.ui.idl \
+	windows.ui.viewmanagement.idl \
 	windowscontracts.idl \
 	windowsx.h \
 	wine/afd.h \
