@@ -269,7 +269,7 @@ static ULONG WINAPI TestCrash_IUnknown_Release(LPUNKNOWN iface)
     UnlockModule();
     if(!cLocks) {
         trace("crashing...\n");
-        *(int**)0xc = 0;
+        RaiseException( EXCEPTION_ACCESS_VIOLATION, EXCEPTION_NONCONTINUABLE, 0, NULL );
     }
     return 1; /* non-heap-based object */
 }
