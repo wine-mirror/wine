@@ -2744,7 +2744,8 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     if (source->file->flags & FLAG_RC_HEADER) return;
     if (source->file->flags & FLAG_GENERATED) strarray_add( &make->clean_files, source->name );
     if (linguas.count && (source->file->flags & FLAG_RC_PO)) po_dir = "po";
-    for (arch = 0; arch < archs.count; arch++) strarray_add( &make->res_files[arch], res_file );
+    for (arch = 0; arch < archs.count; arch++)
+        if (!make->disabled[arch]) strarray_add( &make->res_files[arch], res_file );
     if (source->file->flags & FLAG_RC_PO)
     {
         strarray_add( &make->pot_files, strmake( "%s.pot", obj ));
@@ -2781,7 +2782,8 @@ static void output_source_mc( struct makefile *make, struct incl_file *source, c
     char *obj_path = obj_dir_path( make, obj );
     char *res_file = strmake( "%s.res", obj );
 
-    for (arch = 0; arch < archs.count; arch++) strarray_add( &make->res_files[arch], res_file );
+    for (arch = 0; arch < archs.count; arch++)
+        if (!make->disabled[arch]) strarray_add( &make->res_files[arch], res_file );
     strarray_add( &make->pot_files, strmake( "%s.pot", obj ));
     output( "%s.pot %s.res: %s", obj_path, obj_path, source->filename );
     output_filename( tools_path( make, "wmc" ));
@@ -2806,6 +2808,7 @@ static void output_source_mc( struct makefile *make, struct incl_file *source, c
  */
 static void output_source_res( struct makefile *make, struct incl_file *source, const char *obj )
 {
+    if (make->disabled[source->arch]) return;
     strarray_add( &make->res_files[source->arch], source->name );
 }
 
@@ -2817,6 +2820,7 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
 {
     struct strarray defines = get_source_defines( make, source, obj );
     struct strarray headers = empty_strarray;
+    struct strarray deps = empty_strarray;
     struct strarray multiarch_targets[MAX_ARCHS] = { empty_strarray };
     const char *dest;
     unsigned int i, arch;
@@ -2846,6 +2850,7 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
         for (arch = 0; arch < archs.count; arch++)
         {
             if (!is_multiarch( arch )) continue;
+            if (make->disabled[arch]) continue;
             dest = strmake( "%s%s%s", arch_dirs[arch], obj, idl_outputs[i].ext );
             if (!find_src_file( make, dest )) strarray_add( &make->clean_files, dest );
             strarray_add( &multiarch_targets[arch], dest );
@@ -2854,9 +2859,12 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
 
     for (arch = 0; arch < archs.count; arch++)
     {
-        if (multiarch_targets[arch].count + (arch ? 0 : headers.count) == 0) continue;
-        if (!arch) output_filenames_obj_dir( make, headers );
-        output_filenames_obj_dir( make, multiarch_targets[arch] );
+        struct strarray arch_deps = empty_strarray;
+
+        if (!arch) strarray_addall( &arch_deps, headers );
+        strarray_addall( &arch_deps, multiarch_targets[arch] );
+        if (!arch_deps.count) continue;
+        output_filenames_obj_dir( make, arch_deps );
         output( ":\n" );
         output( "\t%s%s -o $@", cmd_prefix( "WIDL" ), tools_path( make, "widl" ) );
         output_filenames( target_flags[arch] );
@@ -2867,15 +2875,18 @@ static void output_source_idl( struct makefile *make, struct incl_file *source, 
         output_filenames( get_expanded_file_local_var( make, obj, "EXTRAIDLFLAGS" ));
         output_filename( source->filename );
         output( "\n" );
+        strarray_addall( &deps, arch_deps );
     }
 
-    output_filenames_obj_dir( make, headers );
-    for (arch = 0; arch < archs.count; arch++) output_filenames_obj_dir( make, multiarch_targets[arch] );
-    output( ":" );
-    output_filename( tools_path( make, "widl" ));
-    output_filename( source->filename );
-    output_filenames( source->dependencies );
-    output( "\n" );
+    if (deps.count)
+    {
+        output_filenames_obj_dir( make, deps );
+        output( ":" );
+        output_filename( tools_path( make, "widl" ));
+        output_filename( source->filename );
+        output_filenames( source->dependencies );
+        output( "\n" );
+    }
 
     if (source->importlibdeps.count)
     {
@@ -3124,6 +3135,8 @@ static void output_source_one_arch( struct makefile *make, struct incl_file *sou
 {
     const char *obj_name;
 
+    if (make->disabled[arch] && !(source->file->flags & FLAG_C_IMPLIB)) return;
+
     if (arch)
     {
         if (source->file->flags & FLAG_C_UNIX) return;
@@ -3263,6 +3276,8 @@ static void output_fake_module( struct makefile *make )
     unsigned int arch = 0;  /* fake modules are always native */
     const char *spec_file = NULL, *name = strmake( "%s%s", arch_pe_dirs[arch], make->module );
 
+    if (make->disabled[arch]) return;
+
     if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
 
     strarray_add( &make->all_targets[arch], name );
@@ -3300,6 +3315,8 @@ static void output_module( struct makefile *make, unsigned int arch )
     const char *debug_file;
     char *spec_file = NULL;
     unsigned int i;
+
+    if (make->disabled[arch]) return;
 
     if (!make->is_exe) spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
 
@@ -3405,6 +3422,8 @@ static void output_unix_lib( struct makefile *make )
     struct strarray unix_deps = empty_strarray;
     struct strarray unix_libs = add_unix_libraries( make, &unix_deps );
     unsigned int arch = 0;  /* unix libs are always native */
+
+    if (make->disabled[arch]) return;
 
     strarray_add( &make->all_targets[arch], make->unixlib );
     add_install_rule( make, make->module, arch, make->unixlib,
@@ -4040,16 +4059,6 @@ static void output_stub_makefile( struct makefile *make )
     const char *make_var = strarray_get_value( &top_makefile->vars, "MAKE" );
     unsigned int i, arch;
 
-    if (make->obj_dir) create_dir( make->obj_dir );
-
-    output_file_name = obj_dir_path( make, "Makefile" );
-    output_file = create_temp_file( output_file_name );
-
-    output( "# Auto-generated stub makefile; all rules forward to the top-level makefile\n\n" );
-
-    if (make_var) output( "MAKE = %s\n\n", make_var );
-    output( "all:\n" );
-
     for (arch = 0; arch < archs.count; arch++)
         if (make->all_targets[arch].count) strarray_add_uniq( &targets, "all" );
 
@@ -4067,6 +4076,16 @@ static void output_stub_makefile( struct makefile *make )
         strarray_add( &targets, "testclean" );
     }
 
+    if (!targets.count && !make->clean_files.count) return;
+
+    output_file_name = obj_dir_path( make, "Makefile" );
+    output_file = create_temp_file( output_file_name );
+
+    output( "# Auto-generated stub makefile; all rules forward to the top-level makefile\n\n" );
+
+    if (make_var) output( "MAKE = %s\n\n", make_var );
+
+    output( "all:\n" );
     output_filenames( targets );
     output_filenames( make->clean_files );
     output( ":\n" );
