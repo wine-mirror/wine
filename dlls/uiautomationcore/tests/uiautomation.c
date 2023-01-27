@@ -10108,10 +10108,11 @@ static const struct uia_com_classes com_classes[] = {
 
 static void test_CUIAutomation(void)
 {
+    BOOL has_cui8 = TRUE, tmp_b;
     IUIAutomation *uia_iface;
     IUnknown *unk1, *unk2;
-    BOOL has_cui8 = TRUE;
     HRESULT hr;
+    VARIANT v;
     int i;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
@@ -10160,6 +10161,13 @@ static void test_CUIAutomation(void)
     hr = IUIAutomation_get_ReservedNotSupportedValue(uia_iface, &unk2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(unk1 == unk2, "unk1 != unk2\n");
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = unk1;
+    hr = IUIAutomation_CheckNotSupported(uia_iface, v, &tmp_b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_b == TRUE, "tmp_b != TRUE\n");
+
     IUnknown_Release(unk1);
     IUnknown_Release(unk2);
 
@@ -10169,6 +10177,13 @@ static void test_CUIAutomation(void)
     hr = IUIAutomation_get_ReservedMixedAttributeValue(uia_iface, &unk2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(unk1 == unk2, "unk1 != unk2\n");
+
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = unk1;
+    hr = IUIAutomation_CheckNotSupported(uia_iface, v, &tmp_b);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_b == FALSE, "tmp_b != FALSE\n");
+
     IUnknown_Release(unk1);
     IUnknown_Release(unk2);
 

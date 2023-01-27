@@ -1503,8 +1503,16 @@ static HRESULT WINAPI uia_iface_PollForPotentialSupportedProperties(IUIAutomatio
 
 static HRESULT WINAPI uia_iface_CheckNotSupported(IUIAutomation6 *iface, VARIANT in_val, BOOL *match)
 {
-    FIXME("%p, %s, %p: stub\n", iface, debugstr_variant(&in_val), match);
-    return E_NOTIMPL;
+    IUnknown *unk;
+
+    TRACE("%p, %s, %p\n", iface, debugstr_variant(&in_val), match);
+
+    *match = FALSE;
+    UiaGetReservedNotSupportedValue(&unk);
+    if (V_VT(&in_val) == VT_UNKNOWN && (V_UNKNOWN(&in_val) == unk))
+        *match = TRUE;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI uia_iface_get_ReservedNotSupportedValue(IUIAutomation6 *iface, IUnknown **out_unk)
