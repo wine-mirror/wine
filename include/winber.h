@@ -29,12 +29,12 @@ typedef unsigned int ber_len_t;
 void CDECL ber_free( BerElement *, int );
 void CDECL ber_bvfree( BERVAL * );
 
-BerElement * CDECL ber_alloc_t( int ) __WINE_DEALLOC(ber_free) __WINE_MALLOC;
-BERVAL * CDECL ber_bvdup( BERVAL * ) __WINE_DEALLOC(ber_bvfree) __WINE_MALLOC;
+BerElement * CDECL ber_alloc_t( int ) __WINE_DEALLOC(ber_free);
+BERVAL * CDECL ber_bvdup( BERVAL * ) __WINE_DEALLOC(ber_bvfree);
 void CDECL ber_bvecfree( BERVAL ** );
 ULONG CDECL ber_first_element( BerElement *, ULONG *, char ** );
 int CDECL ber_flatten( BerElement *, BERVAL ** );
-BerElement * CDECL ber_init( BERVAL * ) __WINE_DEALLOC(ber_free) __WINE_MALLOC;
+BerElement * CDECL ber_init( BERVAL * ) __WINE_DEALLOC(ber_free);
 ULONG CDECL ber_next_element( BerElement *, ULONG *, char * );
 ULONG CDECL ber_peek_tag( BerElement *, ULONG * );
 int WINAPIV ber_printf( BerElement *, char *, ... );

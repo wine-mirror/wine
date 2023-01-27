@@ -33,17 +33,17 @@ WINBASEAPI void        WINAPI CloseThreadpoolIo(TP_IO*);
 WINBASEAPI void        WINAPI CloseThreadpoolTimer(PTP_TIMER);
 WINBASEAPI void        WINAPI CloseThreadpoolWait(PTP_WAIT);
 WINBASEAPI void        WINAPI CloseThreadpoolWork(PTP_WORK);
-WINBASEAPI TP_POOL*    WINAPI CreateThreadpool(void*) __WINE_DEALLOC(CloseThreadpool) __WINE_MALLOC;
+WINBASEAPI TP_POOL*    WINAPI CreateThreadpool(void*) __WINE_DEALLOC(CloseThreadpool);
 WINBASEAPI TP_CLEANUP_GROUP* WINAPI CreateThreadpoolCleanupGroup(void)
-                                    __WINE_DEALLOC(CloseThreadpoolCleanupGroup) __WINE_MALLOC;
+                                    __WINE_DEALLOC(CloseThreadpoolCleanupGroup);
 WINBASEAPI TP_IO*      WINAPI CreateThreadpoolIo(HANDLE,PTP_WIN32_IO_CALLBACK,void*,TP_CALLBACK_ENVIRON*)
-                              __WINE_DEALLOC(CloseThreadpoolIo) __WINE_MALLOC;
+                              __WINE_DEALLOC(CloseThreadpoolIo);
 WINBASEAPI TP_TIMER*   WINAPI CreateThreadpoolTimer(PTP_TIMER_CALLBACK,void*,TP_CALLBACK_ENVIRON*)
-                              __WINE_DEALLOC(CloseThreadpoolTimer) __WINE_MALLOC;
+                              __WINE_DEALLOC(CloseThreadpoolTimer);
 WINBASEAPI TP_WAIT*    WINAPI CreateThreadpoolWait(PTP_WAIT_CALLBACK,void*,TP_CALLBACK_ENVIRON*)
-                              __WINE_DEALLOC(CloseThreadpoolWait) __WINE_MALLOC;
+                              __WINE_DEALLOC(CloseThreadpoolWait);
 WINBASEAPI TP_WORK*    WINAPI CreateThreadpoolWork(PTP_WORK_CALLBACK,void*,TP_CALLBACK_ENVIRON*)
-                              __WINE_DEALLOC(CloseThreadpoolWork) __WINE_MALLOC;
+                              __WINE_DEALLOC(CloseThreadpoolWork);
 WINBASEAPI void        WINAPI DisassociateCurrentThreadFromCallback(PTP_CALLBACK_INSTANCE);
 WINBASEAPI void        WINAPI FreeLibraryWhenCallbackReturns(PTP_CALLBACK_INSTANCE,HMODULE);
 WINBASEAPI BOOL        WINAPI IsThreadpoolTimerSet(PTP_TIMER);
