@@ -21,6 +21,7 @@
 #ifndef __WINE_TOOLS_H
 #define __WINE_TOOLS_H
 
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
