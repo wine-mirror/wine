@@ -653,7 +653,7 @@ static SUBHEAP *find_subheap( const struct heap *heap, const struct block *block
         if (!check_subheap( subheap, heap )) return NULL;
         if (contains( first_block( subheap ), blocks_size, block, sizeof(*block) )) return subheap;
         /* outside of blocks region, possible corruption or heap_walk */
-        if (contains( subheap_base( subheap ), subheap_size( subheap ), block, 0 )) return heap_walk ? subheap : NULL;
+        if (contains( subheap_base( subheap ), subheap_size( subheap ), block, 1 )) return heap_walk ? subheap : NULL;
     }
 
     return NULL;
