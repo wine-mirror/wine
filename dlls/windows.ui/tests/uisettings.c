@@ -53,6 +53,8 @@ static void test_UISettings(void)
 {
     static const WCHAR *uisettings_name = L"Windows.UI.ViewManagement.UISettings";
     IActivationFactory *factory;
+    IUISettings3 *uisettings3;
+    IInspectable *inspectable;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -61,7 +63,6 @@ static void test_UISettings(void)
     ok( hr == S_OK, "got hr %#lx.\n", hr );
 
     hr = RoGetActivationFactory( str, &IID_IActivationFactory, (void **)&factory );
-    WindowsDeleteString( str );
     ok( hr == S_OK || broken( hr == REGDB_E_CLASSNOTREG ), "got hr %#lx.\n", hr );
     if (hr == REGDB_E_CLASSNOTREG)
     {
@@ -72,7 +73,26 @@ static void test_UISettings(void)
     check_interface( factory, &IID_IUnknown, TRUE );
     check_interface( factory, &IID_IInspectable, TRUE );
     check_interface( factory, &IID_IAgileObject, FALSE );
+    check_interface( factory, &IID_IUISettings3, FALSE );
 
+    hr = RoActivateInstance( str, &inspectable );
+    ok( hr == S_OK, "Got unexpected hr %#lx.\n", hr );
+    WindowsDeleteString( str );
+
+    hr = IInspectable_QueryInterface( inspectable, &IID_IUISettings3, (void **)&uisettings3 );
+    ok( hr == S_OK || broken( hr == E_NOINTERFACE ), "Got unexpected hr %#lx.\n", hr );
+    if (FAILED(hr))
+    {
+        win_skip( "IUISettings3 not supported.\n" );
+        goto skip_uisettings3;
+    }
+
+    check_interface( inspectable, &IID_IAgileObject, TRUE );
+
+    IUISettings3_Release( uisettings3 );
+
+skip_uisettings3:
+    IInspectable_Release( inspectable );
     ref = IActivationFactory_Release( factory );
     ok( ref == 1, "got ref %ld.\n", ref );
 }

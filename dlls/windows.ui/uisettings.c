@@ -23,6 +23,108 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ui);
 
+struct uisettings
+{
+    IUISettings3 IUISettings3_iface;
+    LONG ref;
+};
+
+static inline struct uisettings *impl_from_IUISettings3( IUISettings3 *iface )
+{
+    return CONTAINING_RECORD( iface, struct uisettings, IUISettings3_iface );
+}
+
+static HRESULT WINAPI uisettings3_QueryInterface( IUISettings3 *iface, REFIID iid, void **out )
+{
+    struct uisettings *impl = impl_from_IUISettings3( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IUISettings3 ))
+    {
+        *out = &impl->IUISettings3_iface;
+        IInspectable_AddRef( *out );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI uisettings3_AddRef( IUISettings3 *iface )
+{
+    struct uisettings *impl = impl_from_IUISettings3( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI uisettings3_Release( IUISettings3 *iface )
+{
+    struct uisettings *impl = impl_from_IUISettings3( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p, ref %lu.\n", iface, ref );
+
+    if (!ref) free( impl );
+    return ref;
+}
+
+static HRESULT WINAPI uisettings3_GetIids( IUISettings3 *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uisettings3_GetRuntimeClassName( IUISettings3 *iface, HSTRING *class_name )
+{
+    FIXME( "iface %p, class_name %p stub!\n", iface, class_name );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uisettings3_GetTrustLevel( IUISettings3 *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uisettings3_GetColorValue( IUISettings3 *iface, UIColorType type, Color *value )
+{
+    FIXME( "iface %p, type %d, color %p stub!\n", iface, type, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uisettings3_add_ColorValuesChanged( IUISettings3 *iface, ITypedEventHandler_UISettings_IInspectable *handler, EventRegistrationToken *cookie )
+{
+    FIXME( "iface %p, handler %p, cookie %p stub!\n", iface, handler, cookie );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uisettings3_remove_ColorValuesChanged( IUISettings3 *iface, EventRegistrationToken cookie )
+{
+    FIXME( "iface %p, cookie %#I64x stub!\n", iface, cookie.value );
+    return E_NOTIMPL;
+}
+
+static const struct IUISettings3Vtbl uisettings3_vtbl =
+{
+    uisettings3_QueryInterface,
+    uisettings3_AddRef,
+    uisettings3_Release,
+    /* IInspectable methods */
+    uisettings3_GetIids,
+    uisettings3_GetRuntimeClassName,
+    uisettings3_GetTrustLevel,
+    /* IUISettings3 methods */
+    uisettings3_GetColorValue,
+    uisettings3_add_ColorValuesChanged,
+    uisettings3_remove_ColorValuesChanged,
+};
+
 struct uisettings_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -90,8 +192,21 @@ static HRESULT WINAPI factory_GetTrustLevel( IActivationFactory *iface, TrustLev
 
 static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInspectable **instance )
 {
-    FIXME( "iface %p, instance %p stub!\n", iface, instance );
-    return E_NOTIMPL;
+    struct uisettings *impl;
+
+    TRACE( "iface %p, instance %p.\n", iface, instance );
+
+    if (!(impl = calloc( 1, sizeof(*impl) )))
+    {
+        *instance = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    impl->IUISettings3_iface.lpVtbl = &uisettings3_vtbl;
+    impl->ref = 1;
+
+    *instance = (IInspectable *)&impl->IUISettings3_iface;
+    return S_OK;
 }
 
 static const struct IActivationFactoryVtbl factory_vtbl =
