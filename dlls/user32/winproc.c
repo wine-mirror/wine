@@ -831,7 +831,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
             if (!check_string( str, size )) return FALSE;
             cs.lpszClass = str;
         }
-        memcpy( &ps->cs, &cs, sizeof(cs) );
+        memcpy( *buffer, &cs, sizeof(cs) );
         break;
     }
     case WM_GETTEXT:
@@ -865,7 +865,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         dis.hDC        = unpack_handle( ps->dis.hDC );
         dis.rcItem     = ps->dis.rcItem;
         dis.itemData   = (ULONG_PTR)unpack_ptr( ps->dis.itemData );
-        memcpy( &ps->dis, &dis, sizeof(dis) );
+        memcpy( *buffer, &dis, sizeof(dis) );
         break;
     }
     case WM_MEASUREITEM:
@@ -878,7 +878,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         mis.itemWidth  = ps->mis.itemWidth;
         mis.itemHeight = ps->mis.itemHeight;
         mis.itemData   = (ULONG_PTR)unpack_ptr( ps->mis.itemData );
-        memcpy( &ps->mis, &mis, sizeof(mis) );
+        memcpy( *buffer, &mis, sizeof(mis) );
         break;
     }
     case WM_DELETEITEM:
@@ -890,7 +890,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         dls.itemID     = ps->dls.itemID;
         dls.hwndItem   = unpack_handle( ps->dls.hwndItem );
         dls.itemData   = (ULONG_PTR)unpack_ptr( ps->dls.itemData );
-        memcpy( &ps->dls, &dls, sizeof(dls) );
+        memcpy( *buffer, &dls, sizeof(dls) );
         break;
     }
     case WM_COMPAREITEM:
@@ -905,7 +905,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         cis.itemID2    = ps->cis.itemID2;
         cis.itemData2  = (ULONG_PTR)unpack_ptr( ps->cis.itemData2 );
         cis.dwLocaleId = ps->cis.dwLocaleId;
-        memcpy( &ps->cis, &cis, sizeof(cis) );
+        memcpy( *buffer, &cis, sizeof(cis) );
         break;
     }
     case WM_WINDOWPOSCHANGING:
@@ -920,7 +920,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         wp.cx              = ps->wp.cx;
         wp.cy              = ps->wp.cy;
         wp.flags           = ps->wp.flags;
-        memcpy( &ps->wp, &wp, sizeof(wp) );
+        memcpy( *buffer, &wp, sizeof(wp) );
         break;
     }
     case WM_COPYDATA:
@@ -1080,7 +1080,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
         mnm.hmenuIn   = unpack_handle( ps->mnm.hmenuIn );
         mnm.hmenuNext = unpack_handle( ps->mnm.hmenuNext );
         mnm.hwndNext  = unpack_handle( ps->mnm.hwndNext );
-        memcpy( &ps->mnm, &mnm, sizeof(mnm) );
+        memcpy( *buffer, &mnm, sizeof(mnm) );
         break;
     }
     case WM_SIZING:
@@ -1116,7 +1116,7 @@ static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lpa
             if (!check_string( str, size )) return FALSE;
             mcs.szTitle = str;
         }
-        memcpy( &ps->mcs, &mcs, sizeof(mcs) );
+        memcpy( *buffer, &mcs, sizeof(mcs) );
         break;
     }
     case WM_MDIGETACTIVE:
