@@ -1396,7 +1396,7 @@ static WCHAR *load_ttf_name_id( const BYTE *mem, DWORD_PTR size, DWORD id )
     const tt_header *header;
     const tt_name_table *name_table;
     const tt_name_record *name_record;
-    DWORD pos, ofs, count;
+    DWORD pos, ofs = 0, count;
     int i, res, best_lang = 0, best_index = -1;
 
     if (sizeof(tt_header) > size)
