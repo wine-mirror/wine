@@ -1222,6 +1222,9 @@ static HRESULT Global_UBound(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt,
     case VT_VARIANT|VT_ARRAY|VT_BYREF:
         sa = *V_ARRAYREF(arg);
         break;
+    case VT_EMPTY:
+    case VT_NULL:
+        return MAKE_VBSERROR(VBSE_TYPE_MISMATCH);
     default:
         FIXME("arg %s not supported\n", debugstr_variant(arg));
         return E_NOTIMPL;
