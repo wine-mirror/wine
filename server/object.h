@@ -139,12 +139,12 @@ struct wait_queue_entry
     struct thread_wait *wait;
 };
 
-extern void *mem_alloc( size_t size );  /* malloc wrapper */
-extern void *memdup( const void *data, size_t len );
+extern void *mem_alloc( size_t size ) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(free) __WINE_MALLOC;
+extern void *memdup( const void *data, size_t len ) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(free);
 extern void *alloc_object( const struct object_ops *ops );
 extern void namespace_add( struct namespace *namespace, struct object_name *ptr );
 extern const WCHAR *get_object_name( struct object *obj, data_size_t *len );
-extern WCHAR *default_get_full_name( struct object *obj, data_size_t *ret_len );
+extern WCHAR *default_get_full_name( struct object *obj, data_size_t *ret_len ) __WINE_DEALLOC(free) __WINE_MALLOC;
 extern void dump_object_name( struct object *obj );
 extern struct object *lookup_named_object( struct object *root, const struct unicode_str *name,
                                            unsigned int attr, struct unicode_str *name_left );
