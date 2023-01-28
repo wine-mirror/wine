@@ -4566,6 +4566,12 @@ NTSTATUS WINAPI KdEnableDebugger(void)
     return STATUS_DEBUGGER_INACTIVE;
 }
 
+KPROCESSOR_MODE WINAPI ExGetPreviousMode(void)
+{
+    TRACE("\n");
+    return PsIsSystemThread((PETHREAD)KeGetCurrentThread()) ? KernelMode : UserMode;
+}
+
 #ifdef __x86_64__
 
 void WINAPI KfRaiseIrql(KIRQL new, KIRQL *old)
