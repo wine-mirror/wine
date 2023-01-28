@@ -1,5 +1,5 @@
 MODULE  = windows.ui.dll
-IMPORTS = combase
+IMPORTS = combase advapi32
 
 C_SRCS = \
 	main.c \

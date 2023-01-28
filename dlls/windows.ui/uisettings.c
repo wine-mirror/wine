@@ -92,10 +92,52 @@ static HRESULT WINAPI uisettings3_GetTrustLevel( IUISettings3 *iface, TrustLevel
     return E_NOTIMPL;
 }
 
+static DWORD get_app_theme(void)
+{
+    static const WCHAR *subkey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
+    static const WCHAR *name = L"AppsUseLightTheme";
+    static const HKEY root = HKEY_CURRENT_USER;
+    DWORD ret = 0, len = sizeof(ret), type;
+    HKEY hkey;
+
+    if (RegOpenKeyExW( root, subkey, 0, KEY_QUERY_VALUE, &hkey )) return 1;
+    if (RegQueryValueExW( hkey, name, NULL, &type, (BYTE *)&ret, &len ) || type != REG_DWORD) ret = 1;
+    RegCloseKey( hkey );
+    return ret;
+}
+
+static void set_color_value( BYTE a, BYTE r, BYTE g, BYTE b, Color *out )
+{
+    out->A = a;
+    out->R = r;
+    out->G = g;
+    out->B = b;
+}
+
 static HRESULT WINAPI uisettings3_GetColorValue( IUISettings3 *iface, UIColorType type, Color *value )
 {
-    FIXME( "iface %p, type %d, color %p stub!\n", iface, type, value );
-    return E_NOTIMPL;
+    DWORD theme;
+
+    TRACE( "iface %p, type %d, value %p.\n", iface, type, value );
+
+    switch (type)
+    {
+    case UIColorType_Foreground:
+    case UIColorType_Background:
+        theme = get_app_theme();
+        break;
+    default:
+        FIXME( "type %d not implemented.\n", type );
+        return E_NOTIMPL;
+    }
+
+    if (type == UIColorType_Foreground)
+        set_color_value( 255, theme ? 0 : 255, theme ? 0 : 255, theme ? 0 : 255, value );
+    else
+        set_color_value( 255, theme ? 255 : 0, theme ? 255 : 0, theme ? 255 : 0, value );
+
+    TRACE( "Returning value.A = %d, value.R = %d, value.G = %d, value.B = %d\n", value->A, value->R, value->G, value->B );
+    return S_OK;
 }
 
 static HRESULT WINAPI uisettings3_add_ColorValuesChanged( IUISettings3 *iface, ITypedEventHandler_UISettings_IInspectable *handler, EventRegistrationToken *cookie )

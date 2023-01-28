@@ -134,15 +134,15 @@ static void test_UISettings(void)
     reset_color( &value );
     type = UIColorType_Foreground;
     hr = IUISettings3_GetColorValue( uisettings3, type, &value );
-    todo_wine ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
-    todo_wine ok( value.A == 255 && value.R == 0 && value.G == 0 && value.B == 0,
+    ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
+    ok( value.A == 255 && value.R == 0 && value.G == 0 && value.B == 0,
         "got unexpected value.A == %d value.R == %d value.G == %d value.B == %d\n", value.A, value.R, value.G, value.B );
 
     reset_color( &value );
     type = UIColorType_Background;
     hr = IUISettings3_GetColorValue( uisettings3, type, &value );
-    todo_wine ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
-    todo_wine ok( value.A == 255 && value.R == 255 && value.G == 255 && value.B == 255,
+    ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
+    ok( value.A == 255 && value.R == 255 && value.G == 255 && value.B == 255,
         "got unexpected value.A == %d value.R == %d value.G == %d value.B == %d\n", value.A, value.R, value.G, value.B );
 
     /* Dark Theme */
@@ -151,14 +151,14 @@ static void test_UISettings(void)
     reset_color( &value );
     type = UIColorType_Foreground;
     hr = IUISettings3_GetColorValue( uisettings3, type, &value );
-    todo_wine ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
+    ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
     todo_wine ok( value.A == 255 && value.R == 255 && value.G == 255 && value.B == 255,
                   "got unexpected value.A == %d value.R == %d value.G == %d value.B == %d\n", value.A, value.R, value.G, value.B );
 
     reset_color( &value );
     type = UIColorType_Background;
     hr = IUISettings3_GetColorValue( uisettings3, type, &value );
-    todo_wine ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
+    ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
     todo_wine ok( value.A == 255 && value.R == 0 && value.G == 0 && value.B == 0,
                   "got unexpected value.A == %d value.R == %d value.G == %d value.B == %d\n", value.A, value.R, value.G, value.B );
 
