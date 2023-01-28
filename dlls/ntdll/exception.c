@@ -191,7 +191,7 @@ LONG call_vectored_handlers( EXCEPTION_RECORD *rec, CONTEXT *context )
  *
  * Implementation of RtlRaiseStatus with a specific exception record.
  */
-void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
+void DECLSPEC_NORETURN raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
 {
     EXCEPTION_RECORD ExceptionRec;
 
@@ -208,7 +208,7 @@ void raise_status( NTSTATUS status, EXCEPTION_RECORD *rec )
  *
  * Raise an exception with ExceptionCode = status
  */
-void WINAPI RtlRaiseStatus( NTSTATUS status )
+void DECLSPEC_NORETURN WINAPI RtlRaiseStatus( NTSTATUS status )
 {
     raise_status( status, NULL );
 }
