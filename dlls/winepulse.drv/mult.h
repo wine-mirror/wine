@@ -20,11 +20,6 @@
 
 #include <windef.h>
 
-#if 0
-#pragma makedep unix
-#endif
-
-
 /**********************************************************************
  * A-law and u-law sample manipulation functions
  * Multiply with the given volume (vol must be between 0...1 inclusive)
@@ -32,7 +27,7 @@
  * These were taken from PulseAudio's sources but adjusted to directly
  * fit our usage (since we use floats directly) so they should be exact.
  */
-UINT8 mult_alaw_sample(UINT8 sample, float vol)
+static UINT8 mult_alaw_sample(UINT8 sample, float vol)
 {
     static const float decode_to_13bits_float[1 << 8] =
     {
@@ -708,7 +703,7 @@ UINT8 mult_alaw_sample(UINT8 sample, float vol)
     return encode[(int)(vol * decode_to_13bits_float[sample]) + ARRAY_SIZE(encode) / 2];
 }
 
-UINT8 mult_ulaw_sample(UINT8 sample, float vol)
+static UINT8 mult_ulaw_sample(UINT8 sample, float vol)
 {
     static const float decode_to_14bits_float[1 << 8] =
     {

@@ -44,6 +44,8 @@
 
 #include "../mmdevapi/unixlib.h"
 
+#include "mult.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
 
 enum phys_device_bus_type {
@@ -116,9 +118,6 @@ static const REFERENCE_TIME DefaultPeriod = 100000;
 
 static pthread_mutex_t pulse_mutex;
 static pthread_cond_t pulse_cond = PTHREAD_COND_INITIALIZER;
-
-UINT8 mult_alaw_sample(UINT8, float);
-UINT8 mult_ulaw_sample(UINT8, float);
 
 static void pulse_lock(void)
 {

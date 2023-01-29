@@ -6,5 +6,4 @@ UNIX_CFLAGS  = $(PULSE_CFLAGS)
 
 C_SRCS = \
 	mmdevdrv.c \
-	mult.c \
 	pulse.c
