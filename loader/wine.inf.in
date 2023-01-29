@@ -171,6 +171,7 @@ AddService=EventLog,0x800,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=RpcSs,0,RpcSsService
+AddService=scardsvr,0,ScardSvrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
@@ -190,6 +191,7 @@ AddService=EventLog,0x800,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=RpcSs,0,RpcSsService
+AddService=scardsvr,0,ScardSvrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
@@ -209,6 +211,7 @@ AddService=EventLog,0x800,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=RpcSs,0,RpcSsService
+AddService=scardsvr,0,ScardSvrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
@@ -228,6 +231,7 @@ AddService=EventLog,0x800,EventLogService
 AddService=HTTP,0,HTTPService
 AddService=MSIServer,0,MSIService
 AddService=RpcSs,0,RpcSsService
+AddService=scardsvr,0,ScardSvrService
 AddService=Spooler,0,SpoolerService
 AddService=StiSvc,0,StiService
 AddService=TermService,0,TerminalServices
@@ -2320,6 +2324,19 @@ ServiceBinary="%11%\rpcss.exe"
 ServiceType=32
 StartType=3
 ErrorControl=1
+
+[ScardSvrService]
+AddReg=ScardSvrServiceKeys
+DisplayName="Smart card server"
+ServiceBinary="%11%\svchost.exe -k netsvcs"
+ServiceType=32
+StartType=3
+ErrorControl=1
+
+[ScardSvrServiceKeys]
+HKR,Parameters,"ServiceDll",,"%11%\scardsvr.dll"
+HKR,Parameters,"ServiceMain",,"CalaisMain"
+HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010008,"scardsvr"
 
 [SpoolerService]
 AddReg=SpoolerServiceKeys

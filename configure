@@ -1358,6 +1358,7 @@ enable_sane_ds
 enable_sapi
 enable_sas
 enable_scarddlg
+enable_scardsvr
 enable_sccbase
 enable_schannel
 enable_schedsvc
@@ -21590,6 +21591,7 @@ wine_fn_config_makefile dlls/sapi enable_sapi
 wine_fn_config_makefile dlls/sapi/tests enable_tests
 wine_fn_config_makefile dlls/sas enable_sas
 wine_fn_config_makefile dlls/scarddlg enable_scarddlg
+wine_fn_config_makefile dlls/scardsvr enable_scardsvr
 wine_fn_config_makefile dlls/sccbase enable_sccbase
 wine_fn_config_makefile dlls/schannel enable_schannel
 wine_fn_config_makefile dlls/schannel/tests enable_tests
