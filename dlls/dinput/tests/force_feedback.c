@@ -4726,6 +4726,8 @@ static void check_result_async_( int line, IAsyncOperation_ForceFeedbackLoadEffe
 struct bool_async_handler
 {
     IAsyncOperationCompletedHandler_boolean IAsyncOperationCompletedHandler_boolean_iface;
+    LONG refcount;
+
     IAsyncOperation_boolean *async;
     AsyncStatus status;
     BOOL invoked;
@@ -4755,12 +4757,16 @@ static HRESULT WINAPI bool_async_handler_QueryInterface( IAsyncOperationComplete
 
 static ULONG WINAPI bool_async_handler_AddRef( IAsyncOperationCompletedHandler_boolean *iface )
 {
-    return 2;
+    struct bool_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_boolean( iface );
+    return InterlockedIncrement( &impl->refcount );
 }
 
 static ULONG WINAPI bool_async_handler_Release( IAsyncOperationCompletedHandler_boolean *iface )
 {
-    return 1;
+    struct bool_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_boolean( iface );
+    ULONG ref = InterlockedDecrement( &impl->refcount );
+    if (!ref) free( impl );
+    return ref;
 }
 
 static HRESULT WINAPI bool_async_handler_Invoke( IAsyncOperationCompletedHandler_boolean *iface,
@@ -4789,28 +4795,46 @@ static IAsyncOperationCompletedHandler_booleanVtbl bool_async_handler_vtbl =
     bool_async_handler_Invoke,
 };
 
-static struct bool_async_handler default_bool_async_handler = {{&bool_async_handler_vtbl}};
+static IAsyncOperationCompletedHandler_boolean *bool_async_handler_create( HANDLE event )
+{
+    struct bool_async_handler *impl;
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return NULL;
+    impl->IAsyncOperationCompletedHandler_boolean_iface.lpVtbl = &bool_async_handler_vtbl;
+    impl->event = event;
+    impl->refcount = 1;
+
+    return &impl->IAsyncOperationCompletedHandler_boolean_iface;
+}
 
 #define await_bool( a ) await_bool_( __LINE__, a )
 static void await_bool_( int line, IAsyncOperation_boolean *async )
 {
-    struct bool_async_handler handler = default_bool_async_handler;
+    IAsyncOperationCompletedHandler_boolean *handler;
+    HANDLE event;
     HRESULT hr;
     DWORD ret;
 
-    handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok_(__FILE__, line)( !!handler.event, "CreateEventW failed, error %lu\n", GetLastError() );
-    hr = IAsyncOperation_boolean_put_Completed( async, &handler.IAsyncOperationCompletedHandler_boolean_iface );
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok_(__FILE__, line)( !!event, "CreateEventW failed, error %lu\n", GetLastError() );
+
+    handler = bool_async_handler_create( event );
+    ok_(__FILE__, line)( !!handler, "bool_async_handler_create failed\n" );
+    hr = IAsyncOperation_boolean_put_Completed( async, handler );
     ok_(__FILE__, line)( hr == S_OK, "put_Completed returned %#lx\n", hr );
-    ret = WaitForSingleObject( handler.event, 5000 );
+    IAsyncOperationCompletedHandler_boolean_Release( handler );
+
+    ret = WaitForSingleObject( event, 5000 );
     ok_(__FILE__, line)( !ret, "WaitForSingleObject returned %#lx\n", ret );
-    ret = CloseHandle( handler.event );
+    ret = CloseHandle( event );
     ok_(__FILE__, line)( ret, "CloseHandle failed, error %lu\n", GetLastError() );
 }
 
 struct result_async_handler
 {
     IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult_iface;
+    LONG refcount;
+
     IAsyncOperation_ForceFeedbackLoadEffectResult *async;
     AsyncStatus status;
     BOOL invoked;
@@ -4840,12 +4864,16 @@ static HRESULT WINAPI result_async_handler_QueryInterface( IAsyncOperationComple
 
 static ULONG WINAPI result_async_handler_AddRef( IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult *iface )
 {
-    return 2;
+    struct result_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult( iface );
+    return InterlockedIncrement( &impl->refcount );
 }
 
 static ULONG WINAPI result_async_handler_Release( IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult *iface )
 {
-    return 1;
+    struct result_async_handler *impl = impl_from_IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult( iface );
+    ULONG ref = InterlockedDecrement( &impl->refcount );
+    if (!ref) free( impl );
+    return ref;
 }
 
 static HRESULT WINAPI result_async_handler_Invoke( IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult *iface,
@@ -4874,22 +4902,38 @@ static IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResultVtbl result_
     result_async_handler_Invoke,
 };
 
-static struct result_async_handler default_result_async_handler = {{&result_async_handler_vtbl}};
+static IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult *result_async_handler_create( HANDLE event )
+{
+    struct result_async_handler *impl;
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return NULL;
+    impl->IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult_iface.lpVtbl = &result_async_handler_vtbl;
+    impl->event = event;
+    impl->refcount = 1;
+
+    return &impl->IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult_iface;
+}
 
 #define await_result( a ) await_result_( __LINE__, a )
 static void await_result_( int line, IAsyncOperation_ForceFeedbackLoadEffectResult *async )
 {
-    struct result_async_handler handler = default_result_async_handler;
+    IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult *handler;
+    HANDLE event;
     HRESULT hr;
     DWORD ret;
 
-    handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok_(__FILE__, line)( !!handler.event, "CreateEventW failed, error %lu\n", GetLastError() );
-    hr = IAsyncOperation_ForceFeedbackLoadEffectResult_put_Completed( async, &handler.IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult_iface );
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok_(__FILE__, line)( !!event, "CreateEventW failed, error %lu\n", GetLastError() );
+
+    handler = result_async_handler_create( event );
+    ok_(__FILE__, line)( !!handler, "result_async_handler_create failed\n" );
+    hr = IAsyncOperation_ForceFeedbackLoadEffectResult_put_Completed( async, handler );
     ok_(__FILE__, line)( hr == S_OK, "put_Completed returned %#lx\n", hr );
-    ret = WaitForSingleObject( handler.event, 5000 );
+    IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult_Release( handler );
+
+    ret = WaitForSingleObject( event, 5000 );
     ok_(__FILE__, line)( !ret, "WaitForSingleObject returned %#lx\n", ret );
-    ret = CloseHandle( handler.event );
+    ret = CloseHandle( event );
     ok_(__FILE__, line)( ret, "CloseHandle failed, error %lu\n", GetLastError() );
 }
 
@@ -5971,7 +6015,7 @@ static void test_windows_gaming_input(void)
     IRawGameControllerStatics *controller_statics;
     EventRegistrationToken controller_added_token;
     IPeriodicForceEffectFactory *periodic_factory;
-    struct bool_async_handler bool_async_handler;
+    struct bool_async_handler *bool_async_handler;
     ForceFeedbackEffectAxes supported_axes, axes;
     IVectorView_ForceFeedbackMotor *motors_view;
     IConditionForceEffect *condition_effect;
@@ -6134,21 +6178,27 @@ static void test_windows_gaming_input(void)
     hr = IAsyncOperation_boolean_get_Completed( bool_async, &tmp_handler );
     ok( hr == S_OK, "get_Completed returned %#lx\n", hr );
     ok( tmp_handler == NULL, "got handler %p\n", tmp_handler );
-    bool_async_handler = default_bool_async_handler;
-    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler.IAsyncOperationCompletedHandler_boolean_iface );
+
+    bool_async_handler = impl_from_IAsyncOperationCompletedHandler_boolean( bool_async_handler_create( NULL ) );
+    ok( !!bool_async_handler, "bool_async_handler_create failed\n" );
+    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler->IAsyncOperationCompletedHandler_boolean_iface );
     ok( hr == S_OK, "put_Completed returned %#lx\n", hr );
-    ok( bool_async_handler.invoked, "handler not invoked\n" );
-    ok( bool_async_handler.async == bool_async, "got async %p\n", bool_async_handler.async );
-    ok( bool_async_handler.status == Completed, "got status %u\n", bool_async_handler.status );
+    ok( bool_async_handler->invoked, "handler not invoked\n" );
+    ok( bool_async_handler->async == bool_async, "got async %p\n", bool_async_handler->async );
+    ok( bool_async_handler->status == Completed, "got status %u\n", bool_async_handler->status );
     hr = IAsyncOperation_boolean_get_Completed( bool_async, &tmp_handler );
     ok( hr == S_OK, "get_Completed returned %#lx\n", hr );
     ok( tmp_handler == NULL, "got handler %p\n", tmp_handler );
-    bool_async_handler = default_bool_async_handler;
-    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler.IAsyncOperationCompletedHandler_boolean_iface );
+    IAsyncOperationCompletedHandler_boolean_Release( &bool_async_handler->IAsyncOperationCompletedHandler_boolean_iface );
+
+    bool_async_handler = impl_from_IAsyncOperationCompletedHandler_boolean( bool_async_handler_create( NULL ) );
+    ok( !!bool_async_handler, "bool_async_handler_create failed\n" );
+    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler->IAsyncOperationCompletedHandler_boolean_iface );
     ok( hr == E_ILLEGAL_DELEGATE_ASSIGNMENT, "put_Completed returned %#lx\n", hr );
-    ok( !bool_async_handler.invoked, "handler invoked\n" );
-    ok( bool_async_handler.async == NULL, "got async %p\n", bool_async_handler.async );
-    ok( bool_async_handler.status == Started, "got status %u\n", bool_async_handler.status );
+    ok( !bool_async_handler->invoked, "handler invoked\n" );
+    ok( bool_async_handler->async == NULL, "got async %p\n", bool_async_handler->async );
+    ok( bool_async_handler->status == Started, "got status %u\n", bool_async_handler->status );
+    IAsyncOperationCompletedHandler_boolean_Release( &bool_async_handler->IAsyncOperationCompletedHandler_boolean_iface );
 
     hr = IAsyncOperation_boolean_QueryInterface( bool_async, &IID_IAsyncInfo, (void **)&async_info );
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
@@ -6169,12 +6219,14 @@ static void test_windows_gaming_input(void)
     wait_hid_expect( file, 100 );
     check_bool_async( bool_async, 1, Error, 0x8685400d, FALSE );
 
-    bool_async_handler = default_bool_async_handler;
-    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler.IAsyncOperationCompletedHandler_boolean_iface );
+    bool_async_handler = impl_from_IAsyncOperationCompletedHandler_boolean( bool_async_handler_create( NULL ) );
+    ok( !!bool_async_handler, "bool_async_handler_create failed\n" );
+    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler->IAsyncOperationCompletedHandler_boolean_iface );
     ok( hr == S_OK, "put_Completed returned %#lx\n", hr );
-    ok( bool_async_handler.invoked, "handler not invoked\n" );
-    ok( bool_async_handler.async == bool_async, "got async %p\n", bool_async_handler.async );
-    ok( bool_async_handler.status == Error, "got status %u\n", bool_async_handler.status );
+    ok( bool_async_handler->invoked, "handler not invoked\n" );
+    ok( bool_async_handler->async == bool_async, "got async %p\n", bool_async_handler->async );
+    ok( bool_async_handler->status == Error, "got status %u\n", bool_async_handler->status );
+    IAsyncOperationCompletedHandler_boolean_Release( &bool_async_handler->IAsyncOperationCompletedHandler_boolean_iface );
 
     hr = IAsyncOperation_boolean_QueryInterface( bool_async, &IID_IAsyncInfo, (void **)&async_info );
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
