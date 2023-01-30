@@ -1,42 +1,42 @@
 # Tamil translations for Wine
 #
+# Isira Seneviratne <isirasen96@gmail.com>, 2019
+# K.B.Dharun Krishna <kbdharunkrishna@gmail.com>, 2022
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2019-03-29 20:31+0530\n"
+"PO-Revision-Date: 2022-12-29 22:48+0530\n"
 "Last-Translator: Isira Seneviratne <isirasen96@gmail.com>\n"
 "Language-Team: Tamil\n"
 "Language: ta\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 18.12.3\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Poedit 3.2.2\n"
 
 #: dlls/aclui/aclui.rc:29 dlls/inetcpl.cpl/inetcpl.rc:90
 #: programs/winefile/winefile.rc:114
 msgid "Security"
-msgstr ""
+msgstr "பாதுகாப்பு"
 
 #: dlls/aclui/aclui.rc:32
 msgid "&Group or user names:"
-msgstr ""
+msgstr "&குழு அல்லது பயனர் பெயர்கள்:"
 
 #: dlls/aclui/aclui.rc:38
-#, fuzzy
-#| msgid "Yellow"
 msgid "Allow"
-msgstr "மஞ்சள்"
+msgstr "அனுமதி"
 
 #: dlls/aclui/aclui.rc:39
 msgid "Deny"
-msgstr ""
+msgstr "மறுக்கவும்"
 
 #: dlls/aclui/aclui.rc:47
 msgid "Permissions for %1"
-msgstr ""
+msgstr "% 1க்கான அனுமதிகள்"
 
 #: dlls/appwiz.cpl/appwiz.rc:58
 msgid "Install/Uninstall"
@@ -47,10 +47,12 @@ msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
+"ஃப்ளாப்பி டிஸ்க், சிடி-ரோம் (CD-ROM) டிரைவ் அல்லது உங்கள் ஹார்ட் டிரைவிலிருந்து புதிய "
+"நிரலை நிறுவ, நிறுவு என்பதைக் கிளிக் செய்யவும்."
 
 #: dlls/appwiz.cpl/appwiz.rc:62
 msgid "&Install..."
-msgstr "நிறுவு..."
+msgstr "நிறுவு... (&I)"
 
 #: dlls/appwiz.cpl/appwiz.rc:65
 msgid ""
@@ -58,6 +60,9 @@ msgid ""
 "to modify its installed components, select it from the list and click Modify/"
 "Remove."
 msgstr ""
+"பின்வரும் மென்பொருளை தானாக நீக்க முடியும். ஒரு நிரலை அகற்ற அல்லது அதன் நிறுவப்பட்ட "
+"கூறுகளை மாற்ற, பட்டியலிலிருந்து அதைத் தேர்ந்தெடுத்து, மாற்றவும்/நீக்கு என்பதைக் கிளிக் "
+"செய்யவும்."
 
 #: dlls/appwiz.cpl/appwiz.rc:67
 msgid "&Support Information"
@@ -66,7 +71,7 @@ msgstr "ஆதரவு தகவல் (&S)"
 #: dlls/appwiz.cpl/appwiz.rc:68 programs/regedit/regedit.rc:136
 #: programs/regedit/regedit.rc:237
 msgid "&Modify..."
-msgstr "திருத்து... (&M)"
+msgstr "மாற்று... (&M)"
 
 #: dlls/appwiz.cpl/appwiz.rc:69 dlls/appwiz.cpl/appwiz.rc:45
 #: dlls/cryptui/cryptui.rc:351 dlls/msacm32/msacm32.rc:40
@@ -118,7 +123,7 @@ msgstr "சரி"
 
 #: dlls/appwiz.cpl/appwiz.rc:79
 msgid "The following information can be used to get technical support for %s:"
-msgstr ""
+msgstr "%sக்கான தொழில்நுட்ப ஆதரவைப் பெற பின்வரும் தகவலைப் பயன்படுத்தலாம்:"
 
 #: dlls/appwiz.cpl/appwiz.rc:80
 msgid "Publisher:"
@@ -138,7 +143,7 @@ msgstr "ஆதரவு தகவல்:"
 
 #: dlls/appwiz.cpl/appwiz.rc:84
 msgid "Support Telephone:"
-msgstr ""
+msgstr "ஆதரவு தொலைபேசி:"
 
 #: dlls/appwiz.cpl/appwiz.rc:85
 msgid "Readme:"
@@ -146,15 +151,15 @@ msgstr "பயனர் உதவி:"
 
 #: dlls/appwiz.cpl/appwiz.rc:86
 msgid "Product Updates:"
-msgstr ""
+msgstr "தயாரிப்பு புதுப்பிப்புகள்:"
 
 #: dlls/appwiz.cpl/appwiz.rc:87
 msgid "Comments:"
-msgstr ""
+msgstr "கருத்துகள்:"
 
 #: dlls/appwiz.cpl/appwiz.rc:100
 msgid "Wine Gecko Installer"
-msgstr "Wine Gecko நிறுவி"
+msgstr "ஒயின் கெக்கோ நிறுவி"
 
 #: dlls/appwiz.cpl/appwiz.rc:103
 msgid ""
@@ -166,10 +171,16 @@ msgid ""
 "href=\"https://wiki.winehq.org/Gecko\">https://wiki.winehq.org/Gecko</a> for "
 "details."
 msgstr ""
+"HTML உட்பொதிக்கும் பயன்பாடுகள் சரியாக வேலை செய்வதற்குத் தேவையான கெக்கோ தொகுப்பை ஒயினால் "
+"கண்டுபிடிக்க முடியவில்லை. ஒயின் உங்களுக்காக தானாகவே பதிவிறக்கம் செய்து நிறுவும்.\n"
+"\n"
+"குறிப்பு: அதற்குப் பதிலாக உங்கள் விநியோகத் தொகுப்புகளைப் பயன்படுத்த "
+"பரிந்துரைக்கப்படுகிறது. விவரங்களுக்கு <a href=\"https://wiki.winehq.org/"
+"Gecko\">https://wiki.winehq.org/Gecko</a> ஐப் பார்க்கவும்."
 
 #: dlls/appwiz.cpl/appwiz.rc:109 dlls/appwiz.cpl/appwiz.rc:124
 msgid "&Install"
-msgstr "நிறுவு"
+msgstr "நிறுவு (&I)"
 
 #: dlls/appwiz.cpl/appwiz.rc:110 dlls/appwiz.cpl/appwiz.rc:125
 #: dlls/avifil32/avifil32.rc:55 dlls/browseui/browseui.rc:45
@@ -212,11 +223,11 @@ msgstr "நிறுவு"
 #: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
 #: programs/wordpad/wordpad.rc:258
 msgid "Cancel"
-msgstr "ரத்து"
+msgstr "ரத்துசெய்"
 
 #: dlls/appwiz.cpl/appwiz.rc:115
 msgid "Wine Mono Installer"
-msgstr "Wine Mono நிறுவி"
+msgstr "ஒயின் மோனோ நிறுவி"
 
 #: dlls/appwiz.cpl/appwiz.rc:118
 msgid ""
@@ -228,16 +239,24 @@ msgid ""
 "href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a> for "
 "details."
 msgstr ""
+".NET பயன்பாடுகள் சரியாக வேலை செய்வதற்குத் தேவையான ஒயின்-மோனோ தொகுப்பை ஒயினால் "
+"கண்டுபிடிக்க முடியவில்லை. ஒயின் உங்களுக்காக தானாகவே பதிவிறக்கம் செய்து நிறுவும்.\n"
+"\n"
+"குறிப்பு: அதற்குப் பதிலாக உங்கள் விநியோகத் தொகுப்புகளைப் பயன்படுத்த "
+"பரிந்துரைக்கப்படுகிறது. விவரங்களுக்கு <a href=\"https://wiki.winehq.org/"
+"Mono\">https://wiki.winehq.org/Mono</a> ஐப் பார்க்கவும்."
 
 #: dlls/appwiz.cpl/appwiz.rc:31
 msgid "Add/Remove Programs"
-msgstr ""
+msgstr "நிரல்களைச் சேர்க்கவும்/அகற்றவும்"
 
 #: dlls/appwiz.cpl/appwiz.rc:32
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
 msgstr ""
+"புதிய மென்பொருளை நிறுவ அல்லது ஏற்கனவே உள்ள மென்பொருளை உங்கள் கணினியிலிருந்து அகற்ற "
+"உங்களை அனுமதிக்கிறது."
 
 #: dlls/appwiz.cpl/appwiz.rc:33 programs/taskmgr/taskmgr.rc:262
 #: programs/winecfg/winecfg.rc:32
@@ -249,10 +268,12 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
+"நிறுவல் நீக்கியை இயக்க முடியவில்லை, '%s'. இந்த நிரலுக்கான நிறுவல் நீக்கம் உள்ளீட்டை "
+"பதிவேட்டில் இருந்து அகற்ற விரும்புகிறீர்களா?"
 
 #: dlls/appwiz.cpl/appwiz.rc:36
 msgid "Not specified"
-msgstr ""
+msgstr "குறிப்பிடப்படவில்லை"
 
 #: dlls/appwiz.cpl/appwiz.rc:38 dlls/oledb32/version.rc:38
 #: dlls/shell32/shell32.rc:144 dlls/shell32/shell32.rc:239
@@ -286,7 +307,7 @@ msgstr "அனைத்து கோப்புகள் (*.*)"
 
 #: dlls/appwiz.cpl/appwiz.rc:46
 msgid "&Modify/Remove"
-msgstr ""
+msgstr "மாற்று/நீக்கு (&M)"
 
 #: dlls/appwiz.cpl/appwiz.rc:51
 msgid "Downloading..."
@@ -301,14 +322,16 @@ msgid ""
 "Unexpected checksum of downloaded file. Aborting installation of corrupted "
 "file."
 msgstr ""
+"பதிவிறக்கம் செய்யப்பட்ட கோப்பின் எதிர்பாராத செக்சம். சிதைந்த கோப்பின் நிறுவலை "
+"நிறுத்துகிறது."
 
 #: dlls/avifil32/avifil32.rc:42
 msgid "Compress options"
-msgstr ""
+msgstr "சுருக்க விருப்பங்கள்"
 
 #: dlls/avifil32/avifil32.rc:45
 msgid "&Choose a stream:"
-msgstr ""
+msgstr "ஒரு ஓடையைத் தேர்ந்தெடுக்கவும் (&C):"
 
 #: dlls/avifil32/avifil32.rc:48 programs/wordpad/wordpad.rc:76
 msgid "&Options..."
@@ -316,15 +339,15 @@ msgstr "விருப்பங்கள்... (&O)"
 
 #: dlls/avifil32/avifil32.rc:49
 msgid "&Interleave every"
-msgstr ""
+msgstr "ஒவ்வொன்றையும் இடைவிடவும் (&I)"
 
 #: dlls/avifil32/avifil32.rc:51 dlls/msvfw32/msvfw32.rc:51
 msgid "frames"
-msgstr ""
+msgstr "பிரேம்கள்"
 
 #: dlls/avifil32/avifil32.rc:52
 msgid "Current format:"
-msgstr ""
+msgstr "தற்போதைய வடிவம்:"
 
 #: dlls/avifil32/avifil32.rc:30
 msgid "Waveform: %s"
@@ -336,7 +359,7 @@ msgstr "அலைவடிவம்"
 
 #: dlls/avifil32/avifil32.rc:32
 msgid "All multimedia files"
-msgstr ""
+msgstr "அனைத்து மல்டிமீடியா கோப்புகள்"
 
 #: dlls/avifil32/avifil32.rc:34
 msgid "video"
@@ -348,23 +371,23 @@ msgstr "ஆடியோ"
 
 #: dlls/avifil32/avifil32.rc:36
 msgid "Wine AVI-default-filehandler"
-msgstr ""
+msgstr "ஒயின் AVI-இயல்புநிலை-கோப்புகையாளுபவர்"
 
 #: dlls/avifil32/avifil32.rc:37
 msgid "uncompressed"
-msgstr ""
+msgstr "சுருக்கப்படாதவை"
 
 #: dlls/browseui/browseui.rc:28
 msgid "Canceling..."
-msgstr ""
+msgstr "ரத்துசெய்கிறது..."
 
 #: dlls/browseui/browseui.rc:29
 msgid "%1!u! %2 remaining"
-msgstr ""
+msgstr "%1!u! % 2 மீதமுள்ளது"
 
 #: dlls/browseui/browseui.rc:30
 msgid "%1!u! %2 and %3!u! %4 remaining"
-msgstr ""
+msgstr "%1!u! %2 மற்றும் %3!u! % 4 மீதமுள்ளது"
 
 #: dlls/browseui/browseui.rc:31
 msgid "seconds"
@@ -376,15 +399,15 @@ msgstr "நிமிடங்கள்"
 
 #: dlls/browseui/browseui.rc:33
 msgid "hours"
-msgstr "மணி"
+msgstr "மணிநேரம்"
 
 #: dlls/comctl32/comctl32.rc:68 programs/winefile/winefile.rc:156
 msgid "Properties for %s"
-msgstr ""
+msgstr "%sக்கான பண்புகள்"
 
 #: dlls/comctl32/comctl32.rc:73 dlls/comdlg32/comdlg32.rc:265
 msgid "&Apply"
-msgstr ""
+msgstr "விண்ணப்பிக்கவும் (&A)"
 
 #: dlls/comctl32/comctl32.rc:74 dlls/comctl32/comctl32.rc:88
 #: dlls/comdlg32/comdlg32.rc:309 dlls/user32/user32.rc:88
@@ -392,24 +415,25 @@ msgid "Help"
 msgstr "உதவி"
 
 #: dlls/comctl32/comctl32.rc:81
+#, fuzzy
 msgid "Wizard"
-msgstr ""
+msgstr "வழிகாட்டி"
 
 #: dlls/comctl32/comctl32.rc:84
 msgid "< &Back"
-msgstr ""
+msgstr "< திரும்பவும் (&B)"
 
 #: dlls/comctl32/comctl32.rc:85 dlls/oledb32/version.rc:61
 msgid "&Next >"
-msgstr ""
+msgstr "அடுத்து (&N)>"
 
 #: dlls/comctl32/comctl32.rc:86
 msgid "Finish"
-msgstr "முடிப்பு"
+msgstr "முடிக்கவும்"
 
 #: dlls/comctl32/comctl32.rc:97
 msgid "Customize Toolbar"
-msgstr ""
+msgstr "கருவிப்பட்டியைத் தனிப்பயனாக்கு"
 
 #: dlls/comctl32/comctl32.rc:100 dlls/comctl32/comctl32.rc:57
 #: dlls/cryptui/cryptui.rc:356 dlls/ieframe/ieframe.rc:43
@@ -421,7 +445,7 @@ msgstr "மூடு (&C)"
 
 #: dlls/comctl32/comctl32.rc:101
 msgid "R&eset"
-msgstr "மீட்டமை (&E)"
+msgstr "மீட்டமை (&e)"
 
 #: dlls/comctl32/comctl32.rc:102 dlls/comdlg32/comdlg32.rc:173
 #: dlls/comdlg32/comdlg32.rc:195 dlls/comdlg32/comdlg32.rc:266
@@ -445,19 +469,19 @@ msgstr "உதவி (&H)"
 
 #: dlls/comctl32/comctl32.rc:103
 msgid "Move &Up"
-msgstr ""
+msgstr "மேலே நகர்த்தவும் (&U)"
 
 #: dlls/comctl32/comctl32.rc:104
 msgid "Move &Down"
-msgstr ""
+msgstr "கீழே நகர்த்தவும் (&D)"
 
 #: dlls/comctl32/comctl32.rc:105
 msgid "A&vailable buttons:"
-msgstr ""
+msgstr "கிடைக்கும் பொத்தான்கள் (&v):"
 
 #: dlls/comctl32/comctl32.rc:107
 msgid "&Add ->"
-msgstr "சேர் (&A) ->"
+msgstr "சேர் (&A)->"
 
 #: dlls/comctl32/comctl32.rc:108
 msgid "<- &Remove"
@@ -465,7 +489,7 @@ msgstr "<- அகற்று (&R)"
 
 #: dlls/comctl32/comctl32.rc:109
 msgid "&Toolbar buttons:"
-msgstr ""
+msgstr "&கருவிப்பட்டி பொத்தான்கள்:"
 
 #: dlls/comctl32/comctl32.rc:42
 msgid "Separator"
@@ -474,7 +498,7 @@ msgstr "பிரிப்பான்"
 #: dlls/comctl32/comctl32.rc:47 programs/progman/progman.rc:81
 msgctxt "hotkey"
 msgid "None"
-msgstr ""
+msgstr "இல்லை"
 
 #: dlls/comctl32/comctl32.rc:52 dlls/shell32/shell32.rc:307
 #: dlls/shlwapi/shlwapi.rc:46 dlls/user32/user32.rc:79
@@ -488,15 +512,15 @@ msgstr "இல்லை (&N)"
 
 #: dlls/comctl32/comctl32.rc:54 dlls/user32/user32.rc:82
 msgid "&Retry"
-msgstr ""
+msgstr "மீண்டும் முயற்சிக்கவும் (&R)"
 
 #: dlls/comctl32/comctl32.rc:62
 msgid "Hide details"
-msgstr ""
+msgstr "விவரங்களை மறைக்கவும்"
 
 #: dlls/comctl32/comctl32.rc:63
 msgid "See details"
-msgstr ""
+msgstr "விவரங்களைப் பார்க்கவும்"
 
 #: dlls/comctl32/comctl32.rc:31 dlls/cryptui/cryptui.rc:235
 #: programs/regedit/regedit.rc:291 programs/taskmgr/taskmgr.rc:434
@@ -511,7 +535,7 @@ msgstr "இன்று:"
 
 #: dlls/comctl32/comctl32.rc:37
 msgid "Go to today"
-msgstr ""
+msgstr "இன்றைக்குச் செல்லுங்கள்"
 
 #: dlls/comdlg32/comdlg32.rc:158 dlls/comdlg32/comdlg32.rc:171
 #: dlls/comdlg32/comdlg32.rc:462 dlls/comdlg32/comdlg32.rc:487
@@ -522,25 +546,25 @@ msgstr "திற"
 
 #: dlls/comdlg32/comdlg32.rc:161 dlls/comdlg32/comdlg32.rc:183
 msgid "File &Name:"
-msgstr ""
+msgstr "கோப்பு (&N) பெயர்:"
 
 #: dlls/comdlg32/comdlg32.rc:164 dlls/comdlg32/comdlg32.rc:186
 msgid "&Directories:"
-msgstr ""
+msgstr "அடைவுகள் (&D):"
 
 #: dlls/comdlg32/comdlg32.rc:167 dlls/comdlg32/comdlg32.rc:189
 msgid "List Files of &Type:"
-msgstr ""
+msgstr "(&T) வகை கோப்புகளின் பட்டியல்:"
 
 #: dlls/comdlg32/comdlg32.rc:169 dlls/comdlg32/comdlg32.rc:191
 msgid "Dri&ves:"
-msgstr ""
+msgstr "இயக்கிகள் (&v):"
 
 #: dlls/comdlg32/comdlg32.rc:174 dlls/comdlg32/comdlg32.rc:196
 #: dlls/shell32/shell32.rc:368 dlls/shell32/shell32.rc:405
 #: programs/winefile/winefile.rc:172
 msgid "&Read Only"
-msgstr ""
+msgstr "படிக்க மட்டும் (&R)"
 
 #: dlls/comdlg32/comdlg32.rc:180
 msgid "Save As..."
@@ -554,100 +578,101 @@ msgstr "இவ்வாறு சேமி"
 #: dlls/comdlg32/comdlg32.rc:358 dlls/comdlg32/comdlg32.rc:55
 #: dlls/hhctrl.ocx/hhctrl.rc:49 programs/wordpad/wordpad.rc:173
 msgid "Print"
-msgstr ""
+msgstr "அச்சிடுக"
 
 #: dlls/comdlg32/comdlg32.rc:205
 msgid "Printer:"
-msgstr ""
+msgstr "அச்சுப்பொறி:"
 
 #: dlls/comdlg32/comdlg32.rc:207 dlls/comdlg32/comdlg32.rc:375
 msgid "Print range"
-msgstr ""
+msgstr "அச்சு வரம்பு:"
 
 #: dlls/comdlg32/comdlg32.rc:208 dlls/comdlg32/comdlg32.rc:376
 #: programs/regedit/regedit.rc:273
 msgid "&All"
-msgstr ""
+msgstr "அனைத்தும் (&A)"
 
 #: dlls/comdlg32/comdlg32.rc:209
 msgid "S&election"
-msgstr ""
+msgstr "தேர்வு (&e)"
 
 #: dlls/comdlg32/comdlg32.rc:210
 msgid "&Pages"
-msgstr ""
+msgstr "பக்கங்கள் (&P)"
 
 #: dlls/comdlg32/comdlg32.rc:213 dlls/comdlg32/comdlg32.rc:235
 msgid "&Setup"
-msgstr ""
+msgstr "அமைவு (&S)"
 
 #: dlls/comdlg32/comdlg32.rc:214
 msgid "&From:"
-msgstr ""
+msgstr "இருந்து (&F):"
 
 #: dlls/comdlg32/comdlg32.rc:215
 msgid "&To:"
-msgstr ""
+msgstr "பெறுநர் (&T):"
 
 #: dlls/comdlg32/comdlg32.rc:216 dlls/wineps.drv/wineps.rc:42
 msgid "Print &Quality:"
-msgstr ""
+msgstr "அச்சு தரம் (&Q):"
 
 #: dlls/comdlg32/comdlg32.rc:218
 msgid "Print to Fi&le"
-msgstr ""
+msgstr "கோப்பிற்கு அச்சிடவும் (&l)"
 
 #: dlls/comdlg32/comdlg32.rc:219
 msgid "Condensed"
-msgstr ""
+msgstr "ஒடுங்கியது"
 
 #: dlls/comdlg32/comdlg32.rc:225 dlls/comdlg32/comdlg32.rc:397
 msgid "Print Setup"
-msgstr ""
+msgstr "அச்சு அமைப்பு"
 
 #: dlls/comdlg32/comdlg32.rc:228 dlls/comdlg32/comdlg32.rc:361
 #: dlls/comdlg32/comdlg32.rc:400
 msgid "Printer"
-msgstr ""
+msgstr "அச்சுப்பொறி"
 
 #: dlls/comdlg32/comdlg32.rc:229
 msgid "&Default Printer"
-msgstr ""
+msgstr "இயல்புநிலை அச்சுப்பொறி (&D)"
 
 #: dlls/comdlg32/comdlg32.rc:230
 msgid "[none]"
-msgstr ""
+msgstr "[எதுவுமில்லை]"
 
 #: dlls/comdlg32/comdlg32.rc:231
 msgid "Specific &Printer"
-msgstr ""
+msgstr "குறிப்பிட்ட அச்சுப்பொறி (&P)"
 
 #: dlls/comdlg32/comdlg32.rc:236 dlls/comdlg32/comdlg32.rc:419
 #: dlls/comdlg32/comdlg32.rc:443 dlls/wineps.drv/wineps.rc:34
 msgid "Orientation"
-msgstr ""
+msgstr "நோக்குநிலை"
 
 #: dlls/comdlg32/comdlg32.rc:237
+#, fuzzy
 msgid "Po&rtrait"
-msgstr ""
+msgstr "உருவப்படம் (&r)"
 
 #: dlls/comdlg32/comdlg32.rc:238 dlls/comdlg32/comdlg32.rc:445
 #: dlls/wineps.drv/wineps.rc:37
 msgid "&Landscape"
-msgstr ""
+msgstr "நிலப்பரப்பு (&L)"
 
 #: dlls/comdlg32/comdlg32.rc:241 dlls/comdlg32/comdlg32.rc:413
 #: dlls/comdlg32/comdlg32.rc:438 dlls/wineps.drv/wineps.rc:28
 msgid "Paper"
-msgstr ""
+msgstr "காகிதம்"
 
 #: dlls/comdlg32/comdlg32.rc:242
 msgid "Si&ze"
-msgstr ""
+msgstr "அளவு (&z)"
 
 #: dlls/comdlg32/comdlg32.rc:243
 msgid "&Source"
-msgstr ""
+msgstr "மூல (&S)"
 
 #: dlls/comdlg32/comdlg32.rc:251 programs/conhost/conhost.rc:76
 msgid "Font"
@@ -659,24 +684,25 @@ msgstr "எழுத்துரு (&F):"
 
 #: dlls/comdlg32/comdlg32.rc:257
 msgid "Font St&yle:"
-msgstr ""
+msgstr "எழுத்துரு வகை (&y):"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
 #: programs/winecfg/winecfg.rc:292
 msgid "&Size:"
-msgstr ""
+msgstr "அளவு (&S):"
 
 #: dlls/comdlg32/comdlg32.rc:267
+#, fuzzy
 msgid "Effects"
-msgstr ""
+msgstr "விளைவுகள்"
 
 #: dlls/comdlg32/comdlg32.rc:268
 msgid "Stri&keout"
-msgstr ""
+msgstr "வேலைநிறுத்தம் (&k)"
 
 #: dlls/comdlg32/comdlg32.rc:269
 msgid "&Underline"
-msgstr ""
+msgstr "அடிக்கோடு (&U)"
 
 #: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:290
 msgid "&Color:"
@@ -684,11 +710,11 @@ msgstr "நிறம் (&C):"
 
 #: dlls/comdlg32/comdlg32.rc:273
 msgid "Sample"
-msgstr ""
+msgstr "மாதிரி"
 
 #: dlls/comdlg32/comdlg32.rc:275
 msgid "Scr&ipt:"
-msgstr ""
+msgstr "ஸ்கிரிப்ட் (&i):"
 
 #: dlls/comdlg32/comdlg32.rc:283 dlls/comdlg32/comdlg32.rc:288
 msgid "Color"
@@ -696,15 +722,15 @@ msgstr "நிறம்"
 
 #: dlls/comdlg32/comdlg32.rc:286
 msgid "&Basic Colors:"
-msgstr ""
+msgstr "அடிப்படை நிறங்கள் (&B):"
 
 #: dlls/comdlg32/comdlg32.rc:287
 msgid "&Custom Colors:"
-msgstr ""
+msgstr "பிரத்தியேக நிறங்கள் (&C):"
 
 #: dlls/comdlg32/comdlg32.rc:289
 msgid "|S&olid"
-msgstr ""
+msgstr "|திடமான (&o)"
 
 #: dlls/comdlg32/comdlg32.rc:290
 msgid "&Red:"
@@ -716,96 +742,95 @@ msgstr "பச்சை (&G):"
 
 #: dlls/comdlg32/comdlg32.rc:294
 msgid "&Blue:"
-msgstr "நீல (&B):"
+msgstr "நீலம் (&B):"
 
 #: dlls/comdlg32/comdlg32.rc:296
 msgid "&Hue:"
-msgstr ""
+msgstr "சாயல் (&H):"
 
 #: dlls/comdlg32/comdlg32.rc:298
+#, fuzzy
 msgctxt "Saturation"
 msgid "&Sat:"
-msgstr ""
+msgstr "செறிவூட்டல் (&S):"
 
 #: dlls/comdlg32/comdlg32.rc:300
 msgctxt "Luminance"
 msgid "&Lum:"
-msgstr ""
+msgstr "ஒளிர்வு (&L):"
 
 #: dlls/comdlg32/comdlg32.rc:310
 msgid "&Add to Custom Colors"
-msgstr ""
+msgstr "தனிப்பயன் வண்ணங்களில் சேர்க்கவும் (&A)"
 
 #: dlls/comdlg32/comdlg32.rc:311
 msgid "&Define Custom Colors >>"
-msgstr ""
+msgstr "தனிப்பயன் நிறங்களை வரையறுக்கவும் (&D) >>"
 
 #: dlls/comdlg32/comdlg32.rc:312
-#, fuzzy
-#| msgid "&No"
 msgctxt "Solid"
 msgid "&o"
-msgstr "இல்லை (&N)"
+msgstr "&o"
 
 #: dlls/comdlg32/comdlg32.rc:318 programs/regedit/regedit.rc:280
 #: programs/regedit/regedit.rc:290
 msgid "Find"
-msgstr ""
+msgstr "கண்டுபிடி"
 
 #: dlls/comdlg32/comdlg32.rc:321 dlls/comdlg32/comdlg32.rc:340
 msgid "Fi&nd What:"
-msgstr ""
+msgstr "எதைக் கண்டுபிடி (&n):"
 
 #: dlls/comdlg32/comdlg32.rc:323 dlls/comdlg32/comdlg32.rc:344
 msgid "Match &Whole Word Only"
-msgstr ""
+msgstr "முழு (&W) வார்த்தையை மட்டும் பொருத்தவும்"
 
 #: dlls/comdlg32/comdlg32.rc:324 dlls/comdlg32/comdlg32.rc:345
 msgid "Match &Case"
-msgstr ""
+msgstr "பொருத்தம் கேஸ் (&C)"
 
 #: dlls/comdlg32/comdlg32.rc:325
 msgid "Direction"
-msgstr ""
+msgstr "திசை"
 
 #: dlls/comdlg32/comdlg32.rc:326 programs/view/view.rc:42
 msgid "&Up"
-msgstr ""
+msgstr "மேலே (&U)"
 
 #: dlls/comdlg32/comdlg32.rc:327 programs/view/view.rc:43
 msgid "&Down"
-msgstr ""
+msgstr "கீழே (&D)"
 
 #: dlls/comdlg32/comdlg32.rc:329 dlls/comdlg32/comdlg32.rc:347
 msgid "&Find Next"
-msgstr ""
+msgstr "அடுத்ததை தேடு (&F)"
 
 #: dlls/comdlg32/comdlg32.rc:337
 msgid "Replace"
-msgstr ""
+msgstr "மாற்றவும்"
 
 #: dlls/comdlg32/comdlg32.rc:342
 msgid "Re&place With:"
-msgstr ""
+msgstr "இதனுடன் மாற்றவும் (&p):"
 
 #: dlls/comdlg32/comdlg32.rc:348
 msgid "&Replace"
-msgstr ""
+msgstr "மாற்றவும் (&R)"
 
 #: dlls/comdlg32/comdlg32.rc:349
 msgid "Replace &All"
-msgstr ""
+msgstr "அனைத்தையும் மாற்று (&A)"
 
 #: dlls/comdlg32/comdlg32.rc:363 dlls/comdlg32/comdlg32.rc:403
 #: dlls/ieframe/ieframe.rc:42 dlls/shdoclc/shdoclc.rc:61
 #: dlls/shell32/shell32.rc:108 programs/clock/clock.rc:31
 #: programs/conhost/conhost.rc:34
 msgid "&Properties"
-msgstr ""
+msgstr "பண்புகள் (&P)"
 
 #: dlls/comdlg32/comdlg32.rc:364
 msgid "Print to fi&le"
-msgstr ""
+msgstr "கோப்பிற்கு அச்சிடவும் (&l)"
 
 #: dlls/comdlg32/comdlg32.rc:365 dlls/comdlg32/comdlg32.rc:401
 #: dlls/msacm32/msacm32.rc:34 programs/winefile/winefile.rc:137
@@ -814,111 +839,112 @@ msgstr "பெயர் (&N):"
 
 #: dlls/comdlg32/comdlg32.rc:366 dlls/comdlg32/comdlg32.rc:404
 msgid "Status:"
-msgstr ""
+msgstr "நிலை:"
 
 #: dlls/comdlg32/comdlg32.rc:368 dlls/comdlg32/comdlg32.rc:406
 msgid "Type:"
-msgstr ""
+msgstr "வகை:"
 
 #: dlls/comdlg32/comdlg32.rc:370 dlls/comdlg32/comdlg32.rc:408
 msgid "Where:"
-msgstr ""
+msgstr "எங்கே:"
 
 #: dlls/comdlg32/comdlg32.rc:372 dlls/comdlg32/comdlg32.rc:410
 msgid "Comment:"
-msgstr ""
+msgstr "கருத்து:"
 
 #: dlls/comdlg32/comdlg32.rc:377
 msgid "Pa&ges"
-msgstr ""
+msgstr "பக்கங்கள் (&g)"
 
 #: dlls/comdlg32/comdlg32.rc:378
 msgid "&Selection"
-msgstr ""
+msgstr "தேர்வு (&S)"
 
 #: dlls/comdlg32/comdlg32.rc:381
 msgid "&from:"
-msgstr ""
+msgstr "இருந்து (&f):"
 
 #: dlls/comdlg32/comdlg32.rc:382
 msgid "&to:"
-msgstr ""
+msgstr "பெறுநர் (&t):"
 
 #: dlls/comdlg32/comdlg32.rc:384
 msgid "Copies"
-msgstr ""
+msgstr "பிரதிகள்"
 
 #: dlls/comdlg32/comdlg32.rc:385
 msgid "Number of &copies:"
-msgstr ""
+msgstr "பிரதிகளின் (&c) எண்ணிக்கை:"
 
 #: dlls/comdlg32/comdlg32.rc:387
+#, fuzzy
 msgid "C&ollate"
-msgstr ""
+msgstr "தொகுக்கவும் (&o)"
 
 #: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:298
 msgid "Si&ze:"
-msgstr ""
+msgstr "அளவு (&z):"
 
 #: dlls/comdlg32/comdlg32.rc:416
 msgid "&Source:"
-msgstr ""
+msgstr "&மூல (&S):"
 
 #: dlls/comdlg32/comdlg32.rc:421
 msgid "P&ortrait"
-msgstr ""
+msgstr "உருவப்படம் (&o)"
 
 #: dlls/comdlg32/comdlg32.rc:422
 msgid "L&andscape"
-msgstr ""
+msgstr "நிலப்பரப்பு (&a)"
 
 #: dlls/comdlg32/comdlg32.rc:432
 msgid "Setup Page"
-msgstr ""
+msgstr "அமைவு பக்கம்"
 
 #: dlls/comdlg32/comdlg32.rc:441
 msgid "&Tray:"
-msgstr ""
+msgstr "தட்டு (&T):"
 
 #: dlls/comdlg32/comdlg32.rc:444 dlls/wineps.drv/wineps.rc:35
 msgid "&Portrait"
-msgstr ""
+msgstr "உருவப்படம் (&P)"
 
 #: dlls/comdlg32/comdlg32.rc:447
 msgid "L&eft:"
-msgstr ""
+msgstr "இடது (&e):"
 
 #: dlls/comdlg32/comdlg32.rc:449 programs/notepad/notepad.rc:119
 msgid "&Right:"
-msgstr ""
+msgstr "வலது (&R):"
 
 #: dlls/comdlg32/comdlg32.rc:451
 msgid "T&op:"
-msgstr ""
+msgstr "மேலே (&o):"
 
 #: dlls/comdlg32/comdlg32.rc:453 programs/notepad/notepad.rc:121
 msgid "&Bottom:"
-msgstr ""
+msgstr "கீழே (&B):"
 
 #: dlls/comdlg32/comdlg32.rc:457
 msgid "P&rinter..."
-msgstr ""
+msgstr "அச்சுப்பொறி(&r)..."
 
 #: dlls/comdlg32/comdlg32.rc:465 dlls/comdlg32/comdlg32.rc:490
 msgid "Look &in:"
-msgstr ""
+msgstr "பாருங்கள் (&i):"
 
 #: dlls/comdlg32/comdlg32.rc:471 dlls/comdlg32/comdlg32.rc:497
 msgid "File &name:"
-msgstr ""
+msgstr "கோப்பு பெயர் (&n):"
 
 #: dlls/comdlg32/comdlg32.rc:475 dlls/comdlg32/comdlg32.rc:501
 msgid "Files of &type:"
-msgstr ""
+msgstr "(&t) வகை கோப்புகள்:"
 
 #: dlls/comdlg32/comdlg32.rc:478 dlls/comdlg32/comdlg32.rc:504
 msgid "Open as &read-only"
-msgstr ""
+msgstr "படிக்க-மட்டுமே (&r) எனத் திறக்கவும்"
 
 #: dlls/comdlg32/comdlg32.rc:480 dlls/comdlg32/comdlg32.rc:506
 #: dlls/comdlg32/comdlg32.rc:524 dlls/shdoclc/shdoclc.rc:127
@@ -928,89 +954,95 @@ msgstr "திற (&O)"
 
 #: dlls/comdlg32/comdlg32.rc:517
 msgid "File name:"
-msgstr ""
+msgstr "கோப்பு பெயர்:"
 
 #: dlls/comdlg32/comdlg32.rc:520
 msgid "Files of type:"
-msgstr ""
+msgstr "வகையின் கோப்புக்கள்:"
 
 #: dlls/comdlg32/comdlg32.rc:33 dlls/vbscript/vbscript.rc:35
 msgid "File not found"
-msgstr ""
+msgstr "கோப்பு கிடைக்கவில்லை"
 
 #: dlls/comdlg32/comdlg32.rc:34
 msgid "Please verify that the correct file name was given"
-msgstr ""
+msgstr "சரியான கோப்பு பெயர் கொடுக்கப்பட்டுள்ளதா என்பதை சரிபார்க்கவும்"
 
 #: dlls/comdlg32/comdlg32.rc:35
 msgid ""
 "File does not exist.\n"
 "Do you want to create file?"
 msgstr ""
+"கோப்பு எதுவும் இல்லை\n"
+"கோப்பை உருவாக்க விரும்புகிறீர்களா?"
 
 #: dlls/comdlg32/comdlg32.rc:36
 msgid ""
 "File already exists.\n"
 "Do you want to replace it?"
 msgstr ""
+"கோப்பு ஏற்கனவே உள்ளது.\n"
+"நீங்கள் அதை மாற்ற விரும்புகிறீர்களா?"
 
 #: dlls/comdlg32/comdlg32.rc:37
 msgid "Invalid character(s) in path"
-msgstr ""
+msgstr "பாதையில் தவறான எழுத்து(கள்)."
 
 #: dlls/comdlg32/comdlg32.rc:38
 msgid ""
 "A filename cannot contain any of the following characters:\n"
 "                          / : < > |"
 msgstr ""
+"ஒரு கோப்புப் பெயரில் பின்வரும் எழுத்துக்கள் எதுவும் இருக்கக்கூடாது:\n"
+"                           / : < > |"
 
 #: dlls/comdlg32/comdlg32.rc:39
 msgid "Path does not exist"
-msgstr ""
+msgstr "பாதை இல்லை"
 
 #: dlls/comdlg32/comdlg32.rc:40
 msgid "File does not exist"
-msgstr ""
+msgstr "கோப்பு இல்லை"
 
 #: dlls/comdlg32/comdlg32.rc:41
 msgid "The selection contains a non-folder object"
-msgstr ""
+msgstr "தேர்வில் கோப்புறை அல்லாத பொருள் உள்ளது"
 
 #: dlls/comdlg32/comdlg32.rc:46
 msgid "Up One Level"
-msgstr ""
+msgstr "ஒரு நிலை வரை"
 
 #: dlls/comdlg32/comdlg32.rc:47
 msgid "Create New Folder"
-msgstr ""
+msgstr "புதிய கோப்புறையை உருவாக்கவும்"
 
 #: dlls/comdlg32/comdlg32.rc:48
 msgid "List"
-msgstr ""
+msgstr "பட்டியல்"
 
 #: dlls/comdlg32/comdlg32.rc:49 dlls/cryptui/cryptui.rc:201
 msgid "Details"
-msgstr ""
+msgstr "விவரங்கள்"
 
 #: dlls/comdlg32/comdlg32.rc:50
 msgid "Browse to Desktop"
-msgstr ""
+msgstr "டெஸ்க்டாப்பில் உலாவவும்"
 
 #: dlls/comdlg32/comdlg32.rc:114
 msgid "Regular"
-msgstr ""
+msgstr "வழக்கமான"
 
 #: dlls/comdlg32/comdlg32.rc:115
 msgid "Bold"
-msgstr ""
+msgstr "தடித்த"
 
 #: dlls/comdlg32/comdlg32.rc:116
 msgid "Italic"
-msgstr ""
+msgstr "சாய்வு"
 
 #: dlls/comdlg32/comdlg32.rc:117
 msgid "Bold Italic"
-msgstr ""
+msgstr "தடித்த சாய்வு"
 
 #: dlls/comdlg32/comdlg32.rc:122 programs/wordpad/wordpad.rc:125
 msgid "Black"
@@ -1079,67 +1111,76 @@ msgstr "வெள்ளை"
 
 #: dlls/comdlg32/comdlg32.rc:57
 msgid "Unreadable Entry"
-msgstr ""
+msgstr "படிக்க முடியாத பதிவு"
 
 #: dlls/comdlg32/comdlg32.rc:59
 msgid ""
 "This value does not lie within the page range.\n"
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
+"இந்த மதிப்பு பக்க வரம்பிற்குள் இல்லை.\n"
+"% 1!d க்கு இடையில் மதிப்பை உள்ளிடவும்! மற்றும் %2!d!."
 
 #: dlls/comdlg32/comdlg32.rc:61
+#, fuzzy
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr ""
+msgstr "'இருந்து' உள்ளீடு 'வரை' உள்ளீட்டை விட அதிகமாக இருக்கக்கூடாது."
 
 #: dlls/comdlg32/comdlg32.rc:63
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
+"விளிம்புகள் ஒன்றுடன் ஒன்று அல்லது காகித எல்லைகளுக்கு வெளியே விழும்.\n"
+"விளிம்புகளை மீண்டும் உள்ளிடவும்."
 
 #: dlls/comdlg32/comdlg32.rc:65
 msgid "The 'Number of copies' field cannot be empty."
-msgstr ""
+msgstr "'நகல்களின் எண்ணிக்கை' புலம் காலியாக இருக்கக்கூடாது."
 
 #: dlls/comdlg32/comdlg32.rc:67
 msgid ""
 "This large number of copies is not supported by your printer.\n"
 "Please enter a value between 1 and %d."
 msgstr ""
+"இந்த அதிக எண்ணிக்கையிலான நகல்களை உங்கள் அச்சுப்பொறி ஆதரிக்கவில்லை.\n"
+"1 மற்றும் %d இடையே உள்ள மதிப்பை உள்ளிடவும்."
 
 #: dlls/comdlg32/comdlg32.rc:68
 msgid "A printer error occurred."
-msgstr ""
+msgstr "அச்சுப்பொறி பிழை ஏற்பட்டது."
 
 #: dlls/comdlg32/comdlg32.rc:69
 msgid "No default printer defined."
-msgstr ""
+msgstr "இயல்புநிலை அச்சுப்பொறி வரையறுக்கப்படவில்லை."
 
 #: dlls/comdlg32/comdlg32.rc:70
 msgid "Cannot find the printer."
-msgstr ""
+msgstr "அச்சுப்பொறியைக் கண்டறிய முடியவில்லை."
 
 #: dlls/comdlg32/comdlg32.rc:71 programs/progman/progman.rc:76
 msgid "Out of memory."
-msgstr ""
+msgstr "நினைவகம் இல்லை."
 
 #: dlls/comdlg32/comdlg32.rc:72
 msgid "An error occurred."
-msgstr ""
+msgstr "பிழை ஏற்பட்டது."
 
 #: dlls/comdlg32/comdlg32.rc:73
 msgid "Unknown printer driver."
-msgstr ""
+msgstr "தெரியாத அச்சுப்பொறி இயக்கி."
 
 #: dlls/comdlg32/comdlg32.rc:76
 msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
+"பக்க அமைவு அல்லது ஆவணத்தை அச்சிடுதல் போன்ற அச்சுப்பொறி தொடர்பான பணிகளைச் செய்வதற்கு முன், "
+"நீங்கள் ஒரு பிரிண்டரை நிறுவ வேண்டும். ஒன்றை நிறுவி மீண்டும் முயற்சிக்கவும்."
 
 #: dlls/comdlg32/comdlg32.rc:142
 msgid "Select a font size between %1!d! and %2!d! points."
-msgstr ""
+msgstr "%1!d! மற்றும் %2!d! புள்ளிகளுக்கு இடைப்பட்ட எழுத்துரு அளவைத் தேர்ந்தெடுக்கவும்!."
 
 #: dlls/comdlg32/comdlg32.rc:143 dlls/ieframe/ieframe.rc:35
 msgid "&Save"
@@ -1147,7 +1188,7 @@ msgstr "சேமி (&S)"
 
 #: dlls/comdlg32/comdlg32.rc:144
 msgid "Save &in:"
-msgstr ""
+msgstr "இதில் (&i) சேமி:"
 
 #: dlls/comdlg32/comdlg32.rc:145
 msgid "Save"
@@ -1155,23 +1196,23 @@ msgstr "சேமி"
 
 #: dlls/comdlg32/comdlg32.rc:147
 msgid "Open File"
-msgstr ""
+msgstr "கோப்பைத் திறக்கவும்"
 
 #: dlls/comdlg32/comdlg32.rc:148
 msgid "Select Folder"
-msgstr ""
+msgstr "கோப்புறையைத் தேர்ந்தெடுக்கவும்"
 
 #: dlls/comdlg32/comdlg32.rc:149
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "எழுத்துரு அளவு ஒரு எண்ணாக இருக்க வேண்டும்."
 
 #: dlls/comdlg32/comdlg32.rc:84 programs/oleview/oleview.rc:98
 msgid "Ready"
-msgstr ""
+msgstr "தயார்"
 
 #: dlls/comdlg32/comdlg32.rc:85
 msgid "Paused; "
-msgstr ""
+msgstr "இடைநிறுத்தப்பட்டது; "
 
 #: dlls/comdlg32/comdlg32.rc:86
 msgid "Error; "
@@ -1179,160 +1220,163 @@ msgstr "பிழை; "
 
 #: dlls/comdlg32/comdlg32.rc:87
 msgid "Pending deletion; "
-msgstr ""
+msgstr "நிலுவையில் உள்ள நீக்கம்; "
 
 #: dlls/comdlg32/comdlg32.rc:88
 msgid "Paper jam; "
-msgstr ""
+msgstr "காகித ஜாம்; "
 
 #: dlls/comdlg32/comdlg32.rc:89
 msgid "Out of paper; "
-msgstr ""
+msgstr "அச்சுத்தாள் தீர்ந்து விட்டது; "
 
 #: dlls/comdlg32/comdlg32.rc:90
 msgid "Feed paper manual; "
-msgstr ""
+msgstr "காகிதத்தை கைமுறையாக ஊட்டவும்; "
 
 #: dlls/comdlg32/comdlg32.rc:91
 msgid "Paper problem; "
-msgstr ""
+msgstr "காகித பிரச்சனை; "
 
 #: dlls/comdlg32/comdlg32.rc:92
 msgid "Printer offline; "
-msgstr ""
+msgstr "அச்சுப்பொறி ஆஃப்லைன்;"
 
 #: dlls/comdlg32/comdlg32.rc:93
 msgid "I/O Active; "
-msgstr ""
+msgstr "I/O செயலில்; "
 
 #: dlls/comdlg32/comdlg32.rc:94
+#, fuzzy
 msgid "Busy; "
-msgstr ""
+msgstr "பரபரப்பு; "
 
 #: dlls/comdlg32/comdlg32.rc:95
 msgid "Printing; "
-msgstr ""
+msgstr "அச்சிடுதல்; "
 
 #: dlls/comdlg32/comdlg32.rc:96
 msgid "Output tray is full; "
-msgstr ""
+msgstr "வெளியீட்டு தட்டு நிரம்பியுள்ளது; "
 
 #: dlls/comdlg32/comdlg32.rc:97
 msgid "Not available; "
-msgstr ""
+msgstr "கிடைக்கவில்லை; "
 
 #: dlls/comdlg32/comdlg32.rc:98
 msgid "Waiting; "
-msgstr ""
+msgstr "காத்திருக்கிறது; "
 
 #: dlls/comdlg32/comdlg32.rc:99
 msgid "Processing; "
-msgstr ""
+msgstr "செயலாக்குகிறது; "
 
 #: dlls/comdlg32/comdlg32.rc:100
 msgid "Initializing; "
-msgstr ""
+msgstr "துவக்குகிறது; "
 
 #: dlls/comdlg32/comdlg32.rc:101
 msgid "Warming up; "
-msgstr ""
+msgstr "வெப்பமடைகிறது; "
 
 #: dlls/comdlg32/comdlg32.rc:102
 msgid "Toner low; "
-msgstr ""
+msgstr "டோனர் குறைவாக உள்ளது;  "
 
 #: dlls/comdlg32/comdlg32.rc:103
 msgid "No toner; "
-msgstr ""
+msgstr "டோனர் இல்லை;"
 
 #: dlls/comdlg32/comdlg32.rc:104
 msgid "Page punt; "
-msgstr ""
+msgstr "பக்கம் பண்ட்; "
 
 #: dlls/comdlg32/comdlg32.rc:105
 msgid "Interrupted by user; "
-msgstr ""
+msgstr "பயனரால் குறுக்கிடப்பட்டது; "
 
 #: dlls/comdlg32/comdlg32.rc:106
 msgid "Out of memory; "
-msgstr ""
+msgstr "நினைவகம் இல்லை; "
 
 #: dlls/comdlg32/comdlg32.rc:107
 msgid "The printer door is open; "
-msgstr ""
+msgstr "அச்சுப்பொறி கதவு திறந்திருக்கிறது; "
 
 #: dlls/comdlg32/comdlg32.rc:108
 msgid "Print server unknown; "
-msgstr ""
+msgstr "அச்சு சேவையகம் தெரியவில்லை; "
 
 #: dlls/comdlg32/comdlg32.rc:109
 msgid "Power save mode; "
-msgstr ""
+msgstr "மின்ஆற்றல் சேமிப்பு நிலை; "
 
 #: dlls/comdlg32/comdlg32.rc:78
 msgid "Default Printer; "
-msgstr ""
+msgstr "இயல்புநிலை அச்சுப்பொறி; "
 
 #: dlls/comdlg32/comdlg32.rc:79
 msgid "There are %d documents in the queue"
-msgstr ""
+msgstr "வரிசையில் %d ஆவணங்கள் உள்ளன"
 
 #: dlls/comdlg32/comdlg32.rc:80
 msgid "Margins [inches]"
-msgstr ""
+msgstr "விளிம்புகள் [அங்குலங்கள்]"
 
 #: dlls/comdlg32/comdlg32.rc:81
 msgid "Margins [mm]"
-msgstr ""
+msgstr "விளிம்புகள் [மில்லிமீட்டர்]"
 
 #: dlls/comdlg32/comdlg32.rc:82 dlls/sane.ds/sane.rc:33
 msgctxt "unit: millimeters"
 msgid "mm"
-msgstr ""
+msgstr "மில்லிமீட்டர்"
 
 #: dlls/compstui/compstui.rc:29 dlls/shell32/shell32.rc:74
 msgid "Properties"
-msgstr ""
+msgstr "பண்புகள்"
 
 #: dlls/compstui/compstui.rc:30 dlls/hhctrl.ocx/hhctrl.rc:50
 #: programs/conhost/conhost.rc:51 programs/wordpad/wordpad.rc:166
 msgid "Options"
-msgstr ""
+msgstr "விருப்பங்கள்"
 
 #: dlls/compstui/compstui.rc:31
 msgid "Default"
-msgstr ""
+msgstr "இயல்புநிலை"
 
 #: dlls/credui/credui.rc:45
 msgid "&User name:"
-msgstr ""
+msgstr "பயனர் பெயர் (&U):"
 
 #: dlls/credui/credui.rc:48 dlls/cryptui/cryptui.rc:402
 #: dlls/oledb32/version.rc:81
 msgid "&Password:"
-msgstr ""
+msgstr "கடவுச்சொல் (&P):"
 
 #: dlls/credui/credui.rc:50
 msgid "&Remember my password"
-msgstr ""
+msgstr "எனது கடவுச்சொல்லை (&R) நினைவில் கொள்க"
 
 #: dlls/credui/credui.rc:30
 msgid "Connect to %s"
-msgstr ""
+msgstr "%s உடன் இணைக்கவும்"
 
 #: dlls/credui/credui.rc:31
 msgid "Connecting to %s"
-msgstr ""
+msgstr "%s உடன் இணைக்கிறது"
 
 #: dlls/credui/credui.rc:32
 msgid "Logon unsuccessful"
-msgstr ""
+msgstr "உள்நுழைவு தோல்வியடைந்தது"
 
 #: dlls/credui/credui.rc:33
 msgid ""
 "Make sure that your user name\n"
 "and password are correct."
 msgstr ""
+"உறுதிப்படுத்தவும் உங்கள் பயனர்பெயர் \n"
+"மற்றும் கடவுச்சொல் சரியாக உள்ளதா என்பதை."
 
 #: dlls/credui/credui.rc:35
 msgid ""
@@ -1341,227 +1385,231 @@ msgid ""
 "Press the Caps Lock key on your keyboard to turn off Caps Lock before\n"
 "entering your password."
 msgstr ""
+"Caps Lock ஆன் செய்யப்பட்டிருந்தால், உங்கள் கடவுச்சொல்லை தவறாக உள்ளிடலாம்.\n"
+"\n"
+"Caps Lock கை ஆஃப் செய்ய உங்கள் விசைப்பலகையில் உள்ள Caps Lock கீயை அழுத்தவும்\n"
+"உங்கள் கடவுச்சொல்லை உள்ளிடுவதற்கு முன்."
 
 #: dlls/credui/credui.rc:34
 msgid "Caps Lock is On"
-msgstr ""
+msgstr "Caps Lock இயக்கத்தில் உள்ளது"
 
 #: dlls/crypt32/crypt32.rc:30
 msgid "Authority Key Identifier"
-msgstr ""
+msgstr "அதிகாரச் சாவி அடையாளங்காட்டி"
 
 #: dlls/crypt32/crypt32.rc:31
 msgid "Key Attributes"
-msgstr ""
+msgstr "சாவி பண்புக்கூறுகள்"
 
 #: dlls/crypt32/crypt32.rc:32
 msgid "Key Usage Restriction"
-msgstr ""
+msgstr "சாவி பயன்பாட்டு கட்டுப்பாடு"
 
 #: dlls/crypt32/crypt32.rc:33
 msgid "Subject Alternative Name"
-msgstr ""
+msgstr "பொருள் மாற்று பெயர்"
 
 #: dlls/crypt32/crypt32.rc:34
 msgid "Issuer Alternative Name"
-msgstr ""
+msgstr "வழங்குபவரின் மாற்று பெயர்"
 
 #: dlls/crypt32/crypt32.rc:35
 msgid "Basic Constraints"
-msgstr ""
+msgstr "அடிப்படை கட்டுப்பாடுகள்"
 
 #: dlls/crypt32/crypt32.rc:36
 msgid "Key Usage"
-msgstr ""
+msgstr "சாவி பயன்பாடு"
 
 #: dlls/crypt32/crypt32.rc:37
 msgid "Certificate Policies"
-msgstr ""
+msgstr "சான்றிதழ் கொள்கைகள்"
 
 #: dlls/crypt32/crypt32.rc:38
 msgid "Subject Key Identifier"
-msgstr ""
+msgstr "பொருள் விசை அடையாளங்காட்டி"
 
 #: dlls/crypt32/crypt32.rc:39
 msgid "CRL Reason Code"
-msgstr ""
+msgstr "CRL காரணக் குறியீடு"
 
 #: dlls/crypt32/crypt32.rc:40
 msgid "CRL Distribution Points"
-msgstr ""
+msgstr "CRL விநியோக புள்ளிகள்"
 
 #: dlls/crypt32/crypt32.rc:41
 msgid "Enhanced Key Usage"
-msgstr ""
+msgstr "மேம்படுத்தப்பட்ட முக்கிய பயன்பாடு"
 
 #: dlls/crypt32/crypt32.rc:42
 msgid "Authority Information Access"
-msgstr ""
+msgstr "அதிகாரசபை தகவல் அணுகல்"
 
 #: dlls/crypt32/crypt32.rc:43
 msgid "Certificate Extensions"
-msgstr ""
+msgstr "சான்றிதழ் நீட்டிப்புகள்"
 
 #: dlls/crypt32/crypt32.rc:44
 msgid "Next Update Location"
-msgstr ""
+msgstr "அடுத்த புதுப்பிப்பு இருப்பிடம்"
 
 #: dlls/crypt32/crypt32.rc:45
 msgid "Yes or No Trust"
-msgstr ""
+msgstr "ஆம் அல்லது இல்லை நம்பிக்கை"
 
 #: dlls/crypt32/crypt32.rc:46
 msgid "Email Address"
-msgstr ""
+msgstr "மின்னஞ்சல் முகவரி"
 
 #: dlls/crypt32/crypt32.rc:47
 msgid "Unstructured Name"
-msgstr ""
+msgstr "கட்டமைக்கப்படாத பெயர்"
 
 #: dlls/crypt32/crypt32.rc:48
 msgid "Content Type"
-msgstr ""
+msgstr "உள்ளடக்க வகை"
 
 #: dlls/crypt32/crypt32.rc:49
 msgid "Message Digest"
-msgstr ""
+msgstr "செய்தி டிஜஸ்ட்"
 
 #: dlls/crypt32/crypt32.rc:50
 msgid "Signing Time"
-msgstr ""
+msgstr "கையொப்பமிடும் நேரம்"
 
 #: dlls/crypt32/crypt32.rc:51
 msgid "Counter Sign"
-msgstr ""
+msgstr "எதிர் கையெழுத்து"
 
 #: dlls/crypt32/crypt32.rc:52
 msgid "Challenge Password"
-msgstr ""
+msgstr "சவால் கடவுச்சொல்"
 
 #: dlls/crypt32/crypt32.rc:53
 msgid "Unstructured Address"
-msgstr ""
+msgstr "கட்டமைக்கப்படாத முகவரி"
 
 #: dlls/crypt32/crypt32.rc:54
 msgid "S/MIME Capabilities"
-msgstr ""
+msgstr "S/MIME திறன்கள்"
 
 #: dlls/crypt32/crypt32.rc:55
 msgid "Prefer Signed Data"
-msgstr ""
+msgstr "கையொப்பமிடப்பட்ட தரவை விரும்பு"
 
 #: dlls/crypt32/crypt32.rc:56 dlls/cryptdlg/cryptdlg.rc:34
 msgctxt "Certification Practice Statement"
 msgid "CPS"
-msgstr ""
+msgstr "CPS (சிபிஎஸ்)"
 
 #: dlls/crypt32/crypt32.rc:57 dlls/cryptdlg/cryptdlg.rc:35
 msgid "User Notice"
-msgstr ""
+msgstr "பயனர் அறிவிப்பு"
 
 #: dlls/crypt32/crypt32.rc:58
 msgid "On-line Certificate Status Protocol"
-msgstr ""
+msgstr "ஆன்-லைன் சான்றிதழ் நிலை நெறிமுறை"
 
 #: dlls/crypt32/crypt32.rc:59
 msgid "Certification Authority Issuer"
-msgstr ""
+msgstr "சான்றிதழ் ஆணையம் வழங்குபவர்"
 
 #: dlls/crypt32/crypt32.rc:60
 msgid "Certification Template Name"
-msgstr ""
+msgstr "சான்றிதழ் டெம்ப்ளேட் பெயர்"
 
 #: dlls/crypt32/crypt32.rc:61
 msgid "Certificate Type"
-msgstr ""
+msgstr "சான்றிதழ் வகை"
 
 #: dlls/crypt32/crypt32.rc:62
 msgid "Certificate Manifold"
-msgstr ""
+msgstr "சான்றிதழ் பன்மடங்கு"
 
 #: dlls/crypt32/crypt32.rc:63
 msgid "Netscape Cert Type"
-msgstr ""
+msgstr "நெட்ஸ்கேப் சான்றிதழ் வகை"
 
 #: dlls/crypt32/crypt32.rc:64
 msgid "Netscape Base URL"
-msgstr ""
+msgstr "நெட்ஸ்கேப் அடிப்படை URL"
 
 #: dlls/crypt32/crypt32.rc:65
 msgid "Netscape Revocation URL"
-msgstr ""
+msgstr "நெட்ஸ்கேப் திரும்பப்பெறுதல் URL"
 
 #: dlls/crypt32/crypt32.rc:66
 msgid "Netscape CA Revocation URL"
-msgstr ""
+msgstr "Netscape CA திரும்பப்பெறுதல் URL"
 
 #: dlls/crypt32/crypt32.rc:67
 msgid "Netscape Cert Renewal URL"
-msgstr ""
+msgstr "நெட்ஸ்கேப் சான்றிதழின் புதுப்பித்தல் URL"
 
 #: dlls/crypt32/crypt32.rc:68
 msgid "Netscape CA Policy URL"
-msgstr ""
+msgstr "நெட்ஸ்கேப் CA கொள்கை URL"
 
 #: dlls/crypt32/crypt32.rc:69
 msgid "Netscape SSL ServerName"
-msgstr ""
+msgstr "நெட்ஸ்கேப் SSL சர்வர் பெயர்"
 
 #: dlls/crypt32/crypt32.rc:70
 msgid "Netscape Comment"
-msgstr ""
+msgstr "நெட்ஸ்கேப் கருத்து"
 
 #: dlls/crypt32/crypt32.rc:71
 msgid "Country/Region"
-msgstr ""
+msgstr "நாடு/பிராந்தியம்"
 
 #: dlls/crypt32/crypt32.rc:72
 msgid "Organization"
-msgstr ""
+msgstr "அமைப்பு/நிறுவனம்"
 
 #: dlls/crypt32/crypt32.rc:73
 msgid "Organizational Unit"
-msgstr ""
+msgstr "நிறுவன அலகு"
 
 #: dlls/crypt32/crypt32.rc:74
 msgid "Common Name"
-msgstr ""
+msgstr "பொது பெயர்"
 
 #: dlls/crypt32/crypt32.rc:75
 msgid "Locality"
-msgstr ""
+msgstr "உள்ளூர்"
 
 #: dlls/crypt32/crypt32.rc:76
 msgid "State or Province"
-msgstr ""
+msgstr "மாநிலம் அல்லது பிராந்தியம்"
 
 #: dlls/crypt32/crypt32.rc:77
 msgid "Title"
-msgstr ""
+msgstr "தலைப்பு"
 
 #: dlls/crypt32/crypt32.rc:78
 msgid "Given Name"
-msgstr ""
+msgstr "கொடுக்கப்பட்ட பெயர்"
 
 #: dlls/crypt32/crypt32.rc:79
 msgid "Initials"
-msgstr ""
+msgstr "முதலெழுத்துக்கள்"
 
 #: dlls/crypt32/crypt32.rc:80
 msgid "Surname"
-msgstr ""
+msgstr "இயற்பெயர்"
 
 #: dlls/crypt32/crypt32.rc:81
 msgid "Domain Component"
-msgstr ""
+msgstr "டொமைன் கூறு"
 
 #: dlls/crypt32/crypt32.rc:82
 msgid "Street Address"
-msgstr ""
+msgstr "தெரு முகவரி"
 
 #: dlls/crypt32/crypt32.rc:83
 msgid "Serial Number"
-msgstr ""
+msgstr "வரிசை எண்"
 
 #: dlls/crypt32/crypt32.rc:84
 msgid "CA Version"
@@ -1569,195 +1617,195 @@ msgstr "CA பதிப்பு"
 
 #: dlls/crypt32/crypt32.rc:85
 msgid "Cross CA Version"
-msgstr ""
+msgstr "குறுக்கு CA பதிப்பு"
 
 #: dlls/crypt32/crypt32.rc:86
 msgid "Serialized Signature Serial Number"
-msgstr ""
+msgstr "வரிசைப்படுத்தப்பட்ட கையொப்ப வரிசை எண்"
 
 #: dlls/crypt32/crypt32.rc:87
 msgid "Principal Name"
-msgstr ""
+msgstr "முதன்மை பெயர்"
 
 #: dlls/crypt32/crypt32.rc:88
 msgid "Windows Product Update"
-msgstr ""
+msgstr "விண்டோஸ் தயாரிப்பு புதுப்பிப்பு"
 
 #: dlls/crypt32/crypt32.rc:89
 msgid "Enrollment Name Value Pair"
-msgstr ""
+msgstr "பதிவு பெயர் மதிப்பு ஜோடி"
 
 #: dlls/crypt32/crypt32.rc:90
 msgid "OS Version"
-msgstr ""
+msgstr "OS பதிப்பு"
 
 #: dlls/crypt32/crypt32.rc:91
 msgid "Enrollment CSP"
-msgstr ""
+msgstr "பதிவு CSP"
 
 #: dlls/crypt32/crypt32.rc:92
 msgid "CRL Number"
-msgstr ""
+msgstr "CRL எண்"
 
 #: dlls/crypt32/crypt32.rc:93
 msgid "Delta CRL Indicator"
-msgstr ""
+msgstr "டெல்டா CRL காட்டி"
 
 #: dlls/crypt32/crypt32.rc:94
 msgid "Issuing Distribution Point"
-msgstr ""
+msgstr "விநியோக புள்ளியை வழங்குதல்"
 
 #: dlls/crypt32/crypt32.rc:95
 msgid "Freshest CRL"
-msgstr ""
+msgstr "புதிதான CRL"
 
 #: dlls/crypt32/crypt32.rc:96
 msgid "Name Constraints"
-msgstr ""
+msgstr "பெயர் கட்டுப்பாடுகள்"
 
 #: dlls/crypt32/crypt32.rc:97
 msgid "Policy Mappings"
-msgstr ""
+msgstr "கொள்கை வரைபடங்கள்"
 
 #: dlls/crypt32/crypt32.rc:98
 msgid "Policy Constraints"
-msgstr ""
+msgstr "கொள்கைக் கட்டுப்பாடுகள்"
 
 #: dlls/crypt32/crypt32.rc:99
 msgid "Cross-Certificate Distribution Points"
-msgstr ""
+msgstr "குறுக்கு-சான்றிதழ் விநியோக புள்ளிகள்"
 
 #: dlls/crypt32/crypt32.rc:100
 msgid "Application Policies"
-msgstr ""
+msgstr "பயன்பாட்டுக் கொள்கைகள்"
 
 #: dlls/crypt32/crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr ""
+msgstr "பயன்பாட்டுக் கொள்கை வரைபடங்கள்"
 
 #: dlls/crypt32/crypt32.rc:102
 msgid "Application Policy Constraints"
-msgstr ""
+msgstr "பயன்பாட்டுக் கொள்கைக் கட்டுப்பாடுகள்"
 
 #: dlls/crypt32/crypt32.rc:103
 msgid "CMC Data"
-msgstr ""
+msgstr "CMC தரவு"
 
 #: dlls/crypt32/crypt32.rc:104
 msgid "CMC Response"
-msgstr ""
+msgstr "CMC பதில்"
 
 #: dlls/crypt32/crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr ""
+msgstr "கையொப்பமிடாத CMC கோரிக்கை"
 
 #: dlls/crypt32/crypt32.rc:106
 msgid "CMC Status Info"
-msgstr ""
+msgstr "CMC நிலை தகவல்"
 
 #: dlls/crypt32/crypt32.rc:107
 msgid "CMC Extensions"
-msgstr ""
+msgstr "CMC நீட்டிப்புகள்"
 
 #: dlls/crypt32/crypt32.rc:108
 msgid "CMC Attributes"
-msgstr ""
+msgstr "CMC பண்புக்கூறுகள்"
 
 #: dlls/crypt32/crypt32.rc:109
 msgid "PKCS 7 Data"
-msgstr ""
+msgstr "PKCS 7 தரவு"
 
 #: dlls/crypt32/crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr ""
+msgstr "PKCS 7 கையொப்பமிடப்பட்டது"
 
 #: dlls/crypt32/crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr ""
+msgstr "PKCS 7 உறையிடப்பட்டது"
 
 #: dlls/crypt32/crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr ""
+msgstr "PKCS 7 கையொப்பமிடப்பட்டு உறையிடப்பட்டது"
 
 #: dlls/crypt32/crypt32.rc:113
 msgid "PKCS 7 Digested"
-msgstr ""
+msgstr "PKCS 7 செரிக்கப்பட்டது"
 
 #: dlls/crypt32/crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr ""
+msgstr "PKCS 7 குறியாக்கம் செய்யப்பட்டது"
 
 #: dlls/crypt32/crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr ""
+msgstr "முந்தைய CA சான்றிதழ் ஹாஷ்"
 
 #: dlls/crypt32/crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr ""
+msgstr "மெய்நிகர் அடிப்படை CRL எண்"
 
 #: dlls/crypt32/crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr ""
+msgstr "அடுத்த CRL வெளியீடு"
 
 #: dlls/crypt32/crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr ""
+msgstr "CA குறியாக்கச் சான்றிதழ்"
 
 #: dlls/crypt32/crypt32.rc:119 dlls/cryptui/cryptui.rc:148
 msgid "Key Recovery Agent"
-msgstr ""
+msgstr "விசை மீட்பு முகவர்"
 
 #: dlls/crypt32/crypt32.rc:120
 msgid "Certificate Template Information"
-msgstr ""
+msgstr "சான்றிதழ் வார்ப்புரு தகவல்"
 
 #: dlls/crypt32/crypt32.rc:121
 msgid "Enterprise Root OID"
-msgstr ""
+msgstr "எண்டர்பிரைஸ் ரூட் OID"
 
 #: dlls/crypt32/crypt32.rc:122
 msgid "Dummy Signer"
-msgstr ""
+msgstr "போலி கையொப்பம் செய்பவர்"
 
 #: dlls/crypt32/crypt32.rc:123
 msgid "Encrypted Private Key"
-msgstr ""
+msgstr "மறைகுறியாக்கப்பட்ட தனிப்பட்ட விசை"
 
 #: dlls/crypt32/crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr ""
+msgstr "வெளியிடப்பட்ட CRL இருப்பிடங்கள்"
 
 #: dlls/crypt32/crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
-msgstr ""
+msgstr "சான்றிதழ் சங்கிலிக் கொள்கையைச் செயல்படுத்தவும்"
 
 #: dlls/crypt32/crypt32.rc:126
 msgid "Transaction Id"
-msgstr ""
+msgstr "பரிவர்த்தனை ஐடி"
 
 #: dlls/crypt32/crypt32.rc:127
 msgid "Sender Nonce"
-msgstr ""
+msgstr "அனுப்பியவர் நோன்ஸ"
 
 #: dlls/crypt32/crypt32.rc:128
 msgid "Recipient Nonce"
-msgstr ""
+msgstr "பெறுநர் நோன்ஸ்"
 
 #: dlls/crypt32/crypt32.rc:129
 msgid "Reg Info"
-msgstr ""
+msgstr "பதிவு தகவல்"
 
 #: dlls/crypt32/crypt32.rc:130
 msgid "Get Certificate"
-msgstr ""
+msgstr "சான்றிதழைப் பெறுங்கள்"
 
 #: dlls/crypt32/crypt32.rc:131
 msgid "Get CRL"
-msgstr ""
+msgstr "CRL ஐப் பெறவும்"
 
 #: dlls/crypt32/crypt32.rc:132
 msgid "Revoke Request"
-msgstr ""
+msgstr "கோரிக்கையை திரும்பப் பெறவும்"
 
 #: dlls/crypt32/crypt32.rc:133
 msgid "Query Pending"
