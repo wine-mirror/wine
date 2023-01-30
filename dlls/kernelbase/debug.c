@@ -876,6 +876,13 @@ static BOOL get_ldr_module32( HANDLE process, HMODULE module, LDR_DATA_TABLE_ENT
     struct module_iterator iter;
     INT ret;
 
+#ifdef _WIN64
+    if ((ULONG_PTR)module >> 32)
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return FALSE;
+    }
+#endif
     if (!init_module_iterator( &iter, process, TRUE )) return FALSE;
 
     while ((ret = module_iterator_next( &iter )) > 0)
@@ -1320,7 +1327,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleBaseNameA( HANDLE process, HMODULE modul
 DWORD WINAPI DECLSPEC_HOTPATCH GetModuleBaseNameW( HANDLE process, HMODULE module,
                                                    WCHAR *name, DWORD size )
 {
-    BOOL wow64;
+    BOOL wow64, found = FALSE;
 
     if (!IsWow64Process( process, &wow64 )) return 0;
 
@@ -1328,13 +1335,15 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleBaseNameW( HANDLE process, HMODULE modul
     {
         LDR_DATA_TABLE_ENTRY32 ldr_module32;
 
-        if (!get_ldr_module32(process, module, &ldr_module32)) return 0;
-        size = min( ldr_module32.BaseDllName.Length / sizeof(WCHAR), size );
-        if (!ReadProcessMemory( process, (void *)(DWORD_PTR)ldr_module32.BaseDllName.Buffer,
-                                name, size * sizeof(WCHAR), NULL ))
-            return 0;
+        if (get_ldr_module32(process, module, &ldr_module32))
+        {
+            size = min( ldr_module32.BaseDllName.Length / sizeof(WCHAR), size );
+            if (ReadProcessMemory( process, (void *)(DWORD_PTR)ldr_module32.BaseDllName.Buffer,
+                                   name, size * sizeof(WCHAR), NULL ))
+                found = TRUE;
+        }
     }
-    else
+    if (!found)
     {
         LDR_DATA_TABLE_ENTRY ldr_module;
 

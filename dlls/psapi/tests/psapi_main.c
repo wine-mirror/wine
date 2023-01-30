@@ -241,7 +241,6 @@ static BOOL test_EnumProcessModulesEx_snapshot(HANDLE proc, struct moduleex_snap
                 case LIST_MODULES_64BIT:   break;
                 }
             ret = GetModuleBaseNameA(proc, mxsnap[i].modules[j], buffer, sizeof(buffer));
-            todo_wine_if(fail)
             ok(ret, "GetModuleBaseName failed: %lu (%u/%lu=%p)\n", GetLastError(), j, mxsnap[i].num_modules, mxsnap[i].modules[j]);
             ret = GetModuleFileNameExA(proc, mxsnap[i].modules[j], buffer, sizeof(buffer));
             todo_wine_if(fail)
