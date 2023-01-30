@@ -143,33 +143,41 @@ static void test_EnumProcessModules(void)
 
         strcpy(buffer, "C:\\windows\\syswow64\\notepad.exe");
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
-        ok(ret, "CreateProcess failed: %lu\n", GetLastError());
+        if (ret)
+        {
+            ret = WaitForInputIdle(pi.hProcess, 5000);
+            ok(!ret, "wait timed out\n");
 
-        ret = WaitForInputIdle(pi.hProcess, 5000);
-        ok(!ret, "wait timed out\n");
+            SetLastError(0xdeadbeef);
+            hMod = NULL;
+            ret = EnumProcessModules(pi.hProcess, &hMod, sizeof(HMODULE), &cbNeeded);
+            ok(ret == 1, "got %ld, error %lu\n", ret, GetLastError());
+            ok(!!hMod, "expected non-NULL module\n");
+            ok(cbNeeded % sizeof(hMod) == 0, "got %lu\n", cbNeeded);
 
-        SetLastError(0xdeadbeef);
-        hMod = NULL;
-        ret = EnumProcessModules(pi.hProcess, &hMod, sizeof(HMODULE), &cbNeeded);
-        ok(ret == 1, "got %ld, error %lu\n", ret, GetLastError());
-        ok(!!hMod, "expected non-NULL module\n");
-        ok(cbNeeded % sizeof(hMod) == 0, "got %lu\n", cbNeeded);
+            ret = GetModuleBaseNameA(pi.hProcess, hMod, name, sizeof(name));
+            ok(ret, "got error %lu\n", GetLastError());
+            ok(!strcmp(name, "notepad.exe"), "got %s\n", name);
 
-        ret = GetModuleBaseNameA(pi.hProcess, hMod, name, sizeof(name));
-        ok(ret, "got error %lu\n", GetLastError());
-        ok(!strcmp(name, "notepad.exe"), "got %s\n", name);
+            ret = GetModuleFileNameExA(pi.hProcess, hMod, name, sizeof(name));
+            ok(ret, "got error %lu\n", GetLastError());
+            ok(!strcmp(name, buffer), "got %s\n", name);
 
-        ret = GetModuleFileNameExA(pi.hProcess, hMod, name, sizeof(name));
-        ok(ret, "got error %lu\n", GetLastError());
-        ok(!strcmp(name, buffer), "got %s\n", name);
+            ret = GetModuleInformation(pi.hProcess, hMod, &info, sizeof(info));
+            ok(ret, "got error %lu\n", GetLastError());
+            ok(info.lpBaseOfDll == hMod, "expected %p, got %p\n", hMod, info.lpBaseOfDll);
+            ok(info.SizeOfImage, "image size was 0\n");
+            ok(info.EntryPoint >= info.lpBaseOfDll, "got entry point %p\n", info.EntryPoint);
 
-        ret = GetModuleInformation(pi.hProcess, hMod, &info, sizeof(info));
-        ok(ret, "got error %lu\n", GetLastError());
-        ok(info.lpBaseOfDll == hMod, "expected %p, got %p\n", hMod, info.lpBaseOfDll);
-        ok(info.SizeOfImage, "image size was 0\n");
-        ok(info.EntryPoint >= info.lpBaseOfDll, "got entry point %p\n", info.EntryPoint);
-
-        TerminateProcess(pi.hProcess, 0);
+            TerminateProcess(pi.hProcess, 0);
+        }
+        else
+        {
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                skip("Skip wow64 test on non compatible platform\n");
+            else
+                ok(ret, "CreateProcess failed: %lu\n", GetLastError());
+        }
     }
     else if (wow64)
     {
