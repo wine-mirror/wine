@@ -772,19 +772,19 @@ struct module_iterator
 };
 
 
-static BOOL init_module_iterator( struct module_iterator *iter, HANDLE process )
+/* Caller must ensure that wow64=TRUE is only passed from 64bit for 'process' being a wow64 process */
+static BOOL init_module_iterator( struct module_iterator *iter, HANDLE process, BOOL wow64 )
 {
     PROCESS_BASIC_INFORMATION pbi;
     PPEB_LDR_DATA ldr_data;
-
-    if (!IsWow64Process( process, &iter->wow64 )) return FALSE;
 
     /* get address of PEB */
     if (!set_ntstatus( NtQueryInformationProcess( process, ProcessBasicInformation,
                                                   &pbi, sizeof(pbi), NULL )))
         return FALSE;
 
-    if (is_win64 && iter->wow64)
+    iter->wow64 = wow64;
+    if (wow64)
     {
         PEB_LDR_DATA32 *ldr_data32_ptr;
         DWORD ldr_data32, first_module;
@@ -807,6 +807,12 @@ static BOOL init_module_iterator( struct module_iterator *iter, HANDLE process )
     if (!ReadProcessMemory( process, &pbi.PebBaseAddress->LdrData, &ldr_data, sizeof(ldr_data), NULL ))
         return FALSE;
 
+    /* This happens when running "old" wow64 configuration. Mark it as such. */
+    if (!ldr_data)
+    {
+        SetLastError( ERROR_EMPTY );
+        return FALSE;
+    }
     /* read address of first module from LdrData */
     if (!ReadProcessMemory( process, &ldr_data->InLoadOrderModuleList.Flink,
                             &iter->current, sizeof(iter->current), NULL ))
@@ -849,7 +855,7 @@ static BOOL get_ldr_module( HANDLE process, HMODULE module, LDR_DATA_TABLE_ENTRY
     struct module_iterator iter;
     INT ret;
 
-    if (!init_module_iterator( &iter, process )) return FALSE;
+    if (!init_module_iterator( &iter, process, FALSE )) return FALSE;
 
     while ((ret = module_iterator_next( &iter )) > 0)
         /* When hModule is NULL we return the process image - which will be
@@ -870,7 +876,7 @@ static BOOL get_ldr_module32( HANDLE process, HMODULE module, LDR_DATA_TABLE_ENT
     struct module_iterator iter;
     INT ret;
 
-    if (!init_module_iterator( &iter, process )) return FALSE;
+    if (!init_module_iterator( &iter, process, TRUE )) return FALSE;
 
     while ((ret = module_iterator_next( &iter )) > 0)
         /* When hModule is NULL we return the process image - which will be
@@ -939,6 +945,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumProcessModules( HANDLE process, HMODULE *modul
 {
     struct module_iterator iter;
     DWORD size = 0;
+    BOOL target_wow64;
     INT ret;
 
     if (process == GetCurrentProcess())
@@ -972,7 +979,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumProcessModules( HANDLE process, HMODULE *modul
         return TRUE;
     }
 
-    if (!init_module_iterator( &iter, process )) return FALSE;
+    if (!IsWow64Process( process, &target_wow64 )) return FALSE;
+    if (!init_module_iterator( &iter, process, is_win64 && target_wow64 )) return FALSE;
 
     if (count && !module)
     {
@@ -1003,6 +1011,41 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumProcessModules( HANDLE process, HMODULE *modul
 }
 
 
+struct module_push
+{
+    HMODULE *module;
+    unsigned count;
+    unsigned size;
+};
+
+static void module_push( struct module_push *mp, HMODULE module )
+{
+    if (mp->count >= sizeof(HMODULE))
+    {
+        *mp->module++ = module;
+        mp->count -= sizeof(HMODULE);
+    }
+    mp->size += sizeof(HMODULE);
+}
+
+static void module_push_iter( struct module_push *mp, struct module_iterator *iter )
+{
+    if (is_win64 && iter->wow64)
+        module_push( mp, (HMODULE) (DWORD_PTR)iter->ldr_module32.BaseAddress );
+    else
+        module_push( mp, iter->ldr_module.DllBase );
+}
+
+static int module_push_all( struct module_push *mp, struct module_iterator *iter )
+{
+    int ret;
+
+    while ((ret = module_iterator_next( iter )) > 0)
+        module_push_iter( mp, iter );
+
+    return ret;
+}
+
 /***********************************************************************
  *         EnumProcessModulesEx   (kernelbase.@)
  *         K32EnumProcessModulesEx   (kernelbase.@)
@@ -1010,8 +1053,96 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumProcessModules( HANDLE process, HMODULE *modul
 BOOL WINAPI EnumProcessModulesEx( HANDLE process, HMODULE *module, DWORD count,
                                   DWORD *needed, DWORD filter )
 {
-    FIXME( "(%p, %p, %ld, %p, %ld) semi-stub\n", process, module, count, needed, filter );
-    return EnumProcessModules( process, module, count, needed );
+    struct module_push mp = {module, count, 0};
+    unsigned list_mode;
+    BOOL target_wow64;
+    INT ret = 0;
+
+    TRACE( "(%p, %p, %ld, %p, %ld)\n", process, module, count, needed, filter );
+
+    if (process != GetCurrentProcess())
+    {
+        if (!IsWow64Process( process, &target_wow64 )) return FALSE;
+    }
+    else target_wow64 = is_wow64;
+
+    if (filter & ~LIST_MODULES_ALL)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    list_mode = filter & LIST_MODULES_ALL;
+    /* Can't access 64bit process from (wow64) 32bit */
+    if (is_wow64 && !target_wow64)
+    {
+        SetLastError( ERROR_PARTIAL_COPY );
+        return FALSE;
+    }
+    if (count && !module)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+
+    if (process == GetCurrentProcess())
+    {
+        if (!(is_win64 && list_mode == LIST_MODULES_32BIT))
+        {
+            PPEB_LDR_DATA ldr_data = NtCurrentTeb()->Peb->LdrData;
+            PLIST_ENTRY head = &ldr_data->InLoadOrderModuleList;
+            PLIST_ENTRY entry = head->Flink;
+
+            while (entry != head)
+            {
+                LDR_DATA_TABLE_ENTRY *ldr = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks );
+                module_push( &mp, ldr->DllBase );
+                entry = entry->Flink;
+            }
+        }
+    }
+    else
+    {
+        struct module_iterator iter;
+
+        if (is_win64 && target_wow64 && (list_mode & LIST_MODULES_32BIT))
+        {
+            if (!init_module_iterator( &iter, process, TRUE ) || module_push_all( &mp, &iter ) < 0)
+                return FALSE;
+        }
+        if (!(is_win64 && list_mode == LIST_MODULES_32BIT))
+        {
+            if (init_module_iterator( &iter, process, FALSE ))
+            {
+                if (is_win64 && target_wow64 && (list_mode & LIST_MODULES_64BIT))
+                    /* Don't add main module twice in _ALL mode */
+                    ret = module_iterator_next( &iter );
+                if (ret >= 0) ret = module_push_all( &mp, &iter );
+            }
+            else if (GetLastError() == ERROR_EMPTY)
+            {
+                /* We're running on "old" wow configuration.
+                 * Fallback to PEB32 to get at least main module if requested.
+                 */
+                if (list_mode == LIST_MODULES_DEFAULT)
+                {
+                    if (init_module_iterator( &iter, process, TRUE ) && module_iterator_next( &iter ) > 0)
+                        module_push_iter( &mp, &iter );
+                    else
+                        ret = -1;
+                }
+            }
+            else
+                return FALSE;
+        }
+    }
+
+    if (!needed)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+    *needed = mp.size;
+    return ret == 0;
 }
 
 
