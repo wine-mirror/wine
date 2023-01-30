@@ -391,7 +391,7 @@ static void testRegStoreSavedCerts(void)
         cert1 = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert, sizeof(bigCert));
         ok (cert1 != NULL, "Create cert context failed at %ld, %lx\n", i, GetLastError());
         ret = CertAddCertificateContextToStore(store, cert1, CERT_STORE_ADD_REPLACE_EXISTING, NULL);
-        /* Addittional skip per Win7, it allows opening HKLM store, but disallows adding certs */
+        /* Additional skip per Win7, it allows opening HKLM store, but disallows adding certs */
         err = GetLastError();
         if (!ret)
         {
