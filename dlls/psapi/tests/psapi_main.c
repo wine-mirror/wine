@@ -215,10 +215,6 @@ static BOOL test_EnumProcessModulesEx_snapshot(HANDLE proc, struct moduleex_snap
     MODULEINFO info;
     int i, j;
     BOOL ret;
-    BOOL fail, wow64;
-
-    ret = IsWow64Process(proc, &wow64);
-    ok(ret, "IsWow64Process failed: %lu\n", GetLastError());
 
     for (i = 0; i < numsnap; i++)
     {
@@ -231,27 +227,16 @@ static BOOL test_EnumProcessModulesEx_snapshot(HANDLE proc, struct moduleex_snap
         mxsnap[i].num_modules = min(needed, sizeof(mxsnap[i].modules)) / sizeof(HMODULE);
         for (j = 0; j < mxsnap[i].num_modules; j++)
         {
-            /* temporary todo until GetModuleBaseName and friends are fixed */
-            if ((fail = sizeof(void*) == 8 && wow64))
-                switch (mxsnap[i].list)
-                {
-                case LIST_MODULES_32BIT:   fail = FALSE; break;
-                case LIST_MODULES_DEFAULT: fail = j >= 1; break;
-                case LIST_MODULES_ALL:     fail = j >= mxsnap[0].num_modules; break;
-                case LIST_MODULES_64BIT:   break;
-                }
             ret = GetModuleBaseNameA(proc, mxsnap[i].modules[j], buffer, sizeof(buffer));
             ok(ret, "GetModuleBaseName failed: %lu (%u/%lu=%p)\n", GetLastError(), j, mxsnap[i].num_modules, mxsnap[i].modules[j]);
             ret = GetModuleFileNameExA(proc, mxsnap[i].modules[j], buffer, sizeof(buffer));
             ok(ret, "GetModuleFileNameEx failed: %lu (%u/%lu=%p)\n", GetLastError(), j, mxsnap[i].num_modules, mxsnap[i].modules[j]);
             memset(&info, 0, sizeof(info));
             ret = GetModuleInformation(proc, mxsnap[i].modules[j], &info, sizeof(info));
-            todo_wine_if(fail) {
             ok(ret, "GetModuleInformation failed: %lu\n", GetLastError());
             ok(info.lpBaseOfDll == mxsnap[i].modules[j], "expected %p, got %p\n", mxsnap[i].modules[j], info.lpBaseOfDll);
             ok(info.SizeOfImage, "image size was 0\n");
             /* info.EntryPoint to be checked */
-            }
         }
         winetest_pop_context();
     }

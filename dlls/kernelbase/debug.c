@@ -1458,7 +1458,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameExW( HANDLE process, HMODULE mod
  */
 BOOL WINAPI GetModuleInformation( HANDLE process, HMODULE module, MODULEINFO *modinfo, DWORD count )
 {
-    BOOL wow64;
+    BOOL wow64, found = FALSE;
 
     if (count < sizeof(MODULEINFO))
     {
@@ -1472,12 +1472,15 @@ BOOL WINAPI GetModuleInformation( HANDLE process, HMODULE module, MODULEINFO *mo
     {
         LDR_DATA_TABLE_ENTRY32 ldr_module32;
 
-        if (!get_ldr_module32( process, module, &ldr_module32 )) return FALSE;
-        modinfo->lpBaseOfDll = (void *)(DWORD_PTR)ldr_module32.BaseAddress;
-        modinfo->SizeOfImage = ldr_module32.SizeOfImage;
-        modinfo->EntryPoint  = (void *)(DWORD_PTR)ldr_module32.EntryPoint;
+        if (get_ldr_module32( process, module, &ldr_module32 ))
+        {
+            modinfo->lpBaseOfDll = (void *)(DWORD_PTR)ldr_module32.BaseAddress;
+            modinfo->SizeOfImage = ldr_module32.SizeOfImage;
+            modinfo->EntryPoint  = (void *)(DWORD_PTR)ldr_module32.EntryPoint;
+            found = TRUE;
+        }
     }
-    else
+    if (!found)
     {
         LDR_DATA_TABLE_ENTRY ldr_module;
 
