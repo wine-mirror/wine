@@ -21,6 +21,10 @@
 #ifndef __WINE_TOOLS_H
 #define __WINE_TOOLS_H
 
+#ifndef __WINE_CONFIG_H
+# error You must include config.h to use this header
+#endif
+
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>

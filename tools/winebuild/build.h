@@ -23,10 +23,6 @@
 #ifndef __WINE_BUILD_H
 #define __WINE_BUILD_H
 
-#ifndef __WINE_CONFIG_H
-# error You must include config.h to use this header
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include "../tools.h"
