@@ -27,12 +27,14 @@
 
 #define IDT_CHANGEFILETYPE 500
 #define IDT_CLOSEDIALOG    501
+#define IDT_SHOWDIALOG     502
 
 typedef enum {
     IFDEVENT_TEST_NONE = 0,
     IFDEVENT_TEST1     = 0x1,
     IFDEVENT_TEST2     = 0x2,
-    IFDEVENT_TEST3     = 0x3
+    IFDEVENT_TEST3     = 0x3,
+    IFDEVENT_TEST4     = 0x4,
 } FileDialogEventsTest;
 
 static HRESULT (WINAPI *pSHCreateShellItem)(LPCITEMIDLIST,IShellFolder*,LPCITEMIDLIST,IShellItem**);
@@ -193,6 +195,15 @@ static LRESULT CALLBACK test_customize_dlgproc(HWND hwnd, UINT message, WPARAM w
             br = PostMessageW(hwnd, WM_COMMAND, IDCANCEL, 0);
             ok(br, "Failed\n");
             return TRUE;
+        case IDT_SHOWDIALOG:
+        {
+            HRESULT hr;
+            KillTimer(hwnd, IDT_SHOWDIALOG);
+            hr = IFileDialog_Show(pfd, NULL);
+            ok(hr == E_UNEXPECTED, "got 0x%08lx.\n", hr);
+            SetTimer(hwnd, IDT_CLOSEDIALOG, 100, 0);
+            return TRUE;
+        }
         }
     }
 
@@ -248,6 +259,9 @@ static HRESULT WINAPI IFileDialogEvents_fnOnFolderChange(IFileDialogEvents *ifac
             break;
         case IFDEVENT_TEST3:
             SetTimer(dlg_hwnd, IDT_CHANGEFILETYPE, 100, 0);
+            break;
+        case IFDEVENT_TEST4:
+            SetTimer(dlg_hwnd, IDT_SHOWDIALOG, 100, 0);
             break;
         default:
             ok(FALSE, "Should not happen (%d)\n", This->events_test);
@@ -2496,6 +2510,35 @@ static void test_customize_remove_from_empty_combobox(void)
     IFileDialog_Release(pfod);
 }
 
+static void test_double_show(void)
+{
+    IFileDialogEventsImpl *pfdeimpl;
+    IFileDialogEvents *pfde;
+    IFileDialog *pfd;
+    DWORD cookie;
+    HRESULT hr;
+
+    hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&pfd);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
+
+    pfde = IFileDialogEvents_Constructor();
+    pfdeimpl = impl_from_IFileDialogEvents(pfde);
+    pfdeimpl->events_test = IFDEVENT_TEST4;
+
+    hr = IFileDialog_Advise(pfd, pfde, &cookie);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
+
+    hr = IFileDialog_Show(pfd, NULL);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_CANCELLED), "got 0x%08lx.\n", hr);
+
+    hr = IFileDialog_Unadvise(pfd, cookie);
+    ok(hr == S_OK, "got 0x%08lx.\n", hr);
+
+    IFileDialogEvents_Release(pfde);
+    IFileDialog_Release(pfd);
+}
+
 START_TEST(itemdlg)
 {
     OleInitialize(NULL);
@@ -2521,6 +2564,7 @@ START_TEST(itemdlg)
         test_persistent_state();
         test_overwrite();
         test_customize_remove_from_empty_combobox();
+        test_double_show();
     }
     else
         skip("Skipping all Item Dialog tests.\n");

@@ -2246,6 +2246,9 @@ static HRESULT create_dialog(FileDialogImpl *This, HWND parent)
 {
     INT_PTR res;
 
+    if (This->dlg_hwnd)
+        return E_UNEXPECTED;
+
     SetLastError(0);
     res = DialogBoxParamW(COMDLG32_hInstance,
                           MAKEINTRESOURCEW(NEWFILEOPENV3ORD),
