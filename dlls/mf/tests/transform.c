@@ -55,6 +55,97 @@ DEFINE_GUID(MFVideoFormat_WMV_Unknown,0x7ce12ca9,0xbfbf,0x43d9,0x9d,0x00,0x82,0x
 
 DEFINE_GUID(mft_output_sample_incomplete,0xffffff,0xffff,0xffff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff);
 
+struct media_buffer
+{
+    IMediaBuffer IMediaBuffer_iface;
+    LONG refcount;
+    DWORD length;
+    DWORD max_length;
+    BYTE data[];
+};
+
+static inline struct media_buffer *impl_from_IMediaBuffer(IMediaBuffer *iface)
+{
+    return CONTAINING_RECORD(iface, struct media_buffer, IMediaBuffer_iface);
+}
+
+static HRESULT WINAPI media_buffer_QueryInterface(IMediaBuffer *iface, REFIID iid, void **obj)
+{
+    if (IsEqualIID(iid, &IID_IMediaBuffer)
+            || IsEqualIID(iid, &IID_IUnknown))
+    {
+        *obj = iface;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI media_buffer_AddRef(IMediaBuffer *iface)
+{
+    struct media_buffer *buffer = impl_from_IMediaBuffer(iface);
+    return InterlockedIncrement(&buffer->refcount);
+}
+
+static ULONG WINAPI media_buffer_Release(IMediaBuffer *iface)
+{
+    struct media_buffer *buffer = impl_from_IMediaBuffer(iface);
+    ULONG ref = InterlockedDecrement(&buffer->refcount);
+    if (!ref)
+        free(buffer);
+    return ref;
+}
+
+static HRESULT WINAPI media_buffer_SetLength(IMediaBuffer *iface, DWORD length)
+{
+    struct media_buffer *buffer = impl_from_IMediaBuffer(iface);
+    if (length > buffer->max_length)
+        return E_INVALIDARG;
+    buffer->length = length;
+    return S_OK;
+}
+
+static HRESULT WINAPI media_buffer_GetMaxLength(IMediaBuffer *iface, DWORD *max_length)
+{
+    struct media_buffer *buffer = impl_from_IMediaBuffer(iface);
+    if (!max_length)
+        return E_POINTER;
+    *max_length = buffer->max_length;
+    return S_OK;
+}
+
+static HRESULT WINAPI media_buffer_GetBufferAndLength(IMediaBuffer *iface, BYTE **data, DWORD *length)
+{
+    struct media_buffer *buffer = impl_from_IMediaBuffer(iface);
+    if (!data || ! length)
+        return E_POINTER;
+    *data = buffer->data;
+    *length = buffer->length;
+    return S_OK;
+}
+
+static IMediaBufferVtbl media_buffer_vtbl = {
+    media_buffer_QueryInterface,
+    media_buffer_AddRef,
+    media_buffer_Release,
+    media_buffer_SetLength,
+    media_buffer_GetMaxLength,
+    media_buffer_GetBufferAndLength,
+};
+
+HRESULT media_buffer_create(DWORD max_length, struct media_buffer **ret)
+{
+    struct media_buffer *buffer;
+
+    if (!(buffer = calloc(1, offsetof(struct media_buffer, data[max_length]))))
+        return E_OUTOFMEMORY;
+    buffer->IMediaBuffer_iface.lpVtbl = &media_buffer_vtbl;
+    buffer->refcount = 1;
+    buffer->length = 0;
+    buffer->max_length = max_length;
+    *ret = buffer;
+    return S_OK;
+}
+
 static BOOL is_compressed_subtype(const GUID *subtype)
 {
     if (IsEqualGUID(subtype, &MEDIASUBTYPE_WMV1)
@@ -1525,7 +1616,6 @@ static void check_dmo_set_output_type(IMediaObject *media_object, const GUID *su
         ok(hr == S_OK, "SetOutputType returned %#lx for flag %#lx.\n", hr, flag);
     }
 }
-
 
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
@@ -5078,10 +5168,14 @@ static void test_wmv_decoder_media_object(void)
         {MFMediaType_Video, MEDIASUBTYPE_RGB555, TRUE, FALSE, 512,  FORMAT_VideoInfo, NULL, 88,   (BYTE *)&expected_output_info[11]},
         {MFMediaType_Video, MEDIASUBTYPE_RGB8,   TRUE, FALSE, 256,  FORMAT_VideoInfo, NULL, 1112, (BYTE *)&expected_output_info[12]},
     };
+    const DWORD data_width = 96, data_height = 96;
     const POINT test_size[] = {{16, 16}, {96, 96}, {320, 240}};
-    DWORD in_count, out_count, size, expected_size, alignment;
+    DWORD in_count, out_count, size, expected_size, alignment, wmv_data_length, status;
+    struct media_buffer *input_media_buffer = NULL, *output_media_buffer = NULL;
+    DMO_OUTPUT_DATA_BUFFER output_data_buffer;
     DMO_MEDIA_TYPE media_type, *type;
     IMediaObject *media_object;
+    const BYTE *wmv_data;
     char buffer[1024];
     ULONG ret, i, j;
     HRESULT hr;
@@ -5204,6 +5298,44 @@ static void test_wmv_decoder_media_object(void)
         }
         winetest_pop_context();
     }
+
+    /* Test ProcessInput. */
+    load_resource(L"wmvencdata.bin", &wmv_data, &wmv_data_length);
+    wmv_data_length = *((DWORD *)wmv_data);
+    wmv_data += sizeof(DWORD);
+    hr = media_buffer_create(wmv_data_length, &input_media_buffer);
+    ok(hr == S_OK, "Failed to create input media buffer.\n");
+    memcpy(input_media_buffer->data, wmv_data, wmv_data_length);
+    input_media_buffer->length = wmv_data_length;
+
+    init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height);
+    hr = IMediaObject_SetInputType(media_object, 0, type, 0);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    init_dmo_media_type_video(type, &MEDIASUBTYPE_NV12, data_width, data_height);
+    hr = IMediaObject_SetOutputType(media_object, 0, type, 0);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+
+    hr = IMediaObject_ProcessInput(media_object, 0, &input_media_buffer->IMediaBuffer_iface, 0, 0, 0);
+    todo_wine
+    ok(hr == S_OK, "ProcessInput returned %#lx.\n", hr);
+
+    /* Test ProcessOutput. */
+    hr = IMediaObject_GetOutputSizeInfo(media_object, 0, &size, &alignment);
+    ok(hr == S_OK, "GetOutputSizeInfo returned %#lx.\n", hr);
+    hr = media_buffer_create(size, &output_media_buffer);
+    ok(hr == S_OK, "Failed to create output media buffer.\n");
+    output_data_buffer.pBuffer = &output_media_buffer->IMediaBuffer_iface;
+    output_data_buffer.dwStatus = 0xdeadbeef;
+    output_data_buffer.rtTimestamp = 0xdeadbeef;
+    output_data_buffer.rtTimelength = 0xdeadbeef;
+    hr = IMediaObject_ProcessOutput(media_object, 0, 1, &output_data_buffer, &status);
+    todo_wine
+    ok(hr == S_OK, "ProcessOutput returned %#lx.\n", hr);
+
+    ret = IMediaBuffer_Release(&output_media_buffer->IMediaBuffer_iface);
+    ok(ret == 0, "Release returned %lu\n", ret);
+    ret = IMediaBuffer_Release(&input_media_buffer->IMediaBuffer_iface);
+    ok(ret == 0, "Release returned %lu\n", ret);
 
     ret = IMediaObject_Release(media_object);
     ok(ret == 0, "Release returned %lu\n", ret);
