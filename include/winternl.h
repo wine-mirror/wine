@@ -1574,6 +1574,7 @@ typedef enum _PROCESSINFOCLASS {
     ProcessConsoleHostProcess = 49,
     ProcessWindowInformation = 50,
     ProcessHandleInformation = 51,
+    ProcessHandleTable = 58,
     ProcessPowerThrottlingState = 77,
     ProcessLeapSecondInformation = 97,
     MaxProcessInfoClass,
