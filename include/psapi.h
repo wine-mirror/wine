@@ -137,6 +137,12 @@ extern "C" {
 #define GetProcessImageFileNameW    K32GetProcessImageFileNameW
 #endif
 
+/* filter flags for EnumProcessModulesEx */
+#define LIST_MODULES_32BIT   0x01
+#define LIST_MODULES_64BIT   0x02
+#define LIST_MODULES_ALL     0x03
+#define LIST_MODULES_DEFAULT 0x00
+
 BOOL  WINAPI EnumProcesses(DWORD*, DWORD, DWORD*);
 BOOL  WINAPI EnumProcessModules(HANDLE, HMODULE*, DWORD, LPDWORD);
 BOOL  WINAPI EnumProcessModulesEx(HANDLE, HMODULE*, DWORD, LPDWORD, DWORD);
