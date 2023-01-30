@@ -1409,7 +1409,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameExA( HANDLE process, HMODULE mod
 DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameExW( HANDLE process, HMODULE module,
                                                      WCHAR *name, DWORD size )
 {
-    BOOL wow64;
+    BOOL wow64, found = FALSE;
     DWORD len;
 
     if (!size) return 0;
@@ -1420,13 +1420,15 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetModuleFileNameExW( HANDLE process, HMODULE mod
     {
         LDR_DATA_TABLE_ENTRY32 ldr_module32;
 
-        if (!get_ldr_module32( process, module, &ldr_module32 )) return 0;
-        len = ldr_module32.FullDllName.Length / sizeof(WCHAR);
-        if (!ReadProcessMemory( process, (void *)(DWORD_PTR)ldr_module32.FullDllName.Buffer,
-                                name, min( len, size ) * sizeof(WCHAR), NULL ))
-            return 0;
+        if (get_ldr_module32( process, module, &ldr_module32 ))
+        {
+            len = ldr_module32.FullDllName.Length / sizeof(WCHAR);
+            if (ReadProcessMemory( process, (void *)(DWORD_PTR)ldr_module32.FullDllName.Buffer,
+                                   name, min( len, size ) * sizeof(WCHAR), NULL ))
+                found = TRUE;
+        }
     }
-    else
+    if (!found)
     {
         LDR_DATA_TABLE_ENTRY ldr_module;
 
