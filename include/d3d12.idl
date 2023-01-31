@@ -66,6 +66,7 @@ const UINT D3D12_CONSTANT_BUFFER_DATA_PLACEMENT_ALIGNMENT = 256;
 const UINT D3D12_DEFAULT_MSAA_RESOURCE_PLACEMENT_ALIGNMENT = 4194304;
 const UINT D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT = 65536;
 const UINT D3D12_RAW_UAV_SRV_BYTE_ALIGNMENT = 16;
+const UINT D3D12_SDK_VERSION = 4;
 const UINT D3D12_SMALL_MSAA_RESOURCE_PLACEMENT_ALIGNMENT = 65536;
 const UINT D3D12_SMALL_RESOURCE_PLACEMENT_ALIGNMENT = 4096;
 const UINT D3D12_STANDARD_MAXIMUM_ELEMENT_ALIGNMENT_BYTE_MULTIPLE = 4;
@@ -2589,3 +2590,55 @@ typedef HRESULT (__stdcall *PFN_D3D12_GET_DEBUG_INTERFACE)(REFIID iid, void **de
 
 [local] HRESULT __stdcall D3D12EnableExperimentalFeatures(UINT feature_count,
         const IID *iids, void *configurations, UINT *configurations_sizes);
+
+cpp_quote("DEFINE_GUID(CLSID_D3D12Debug,                     0xf2352aeb, 0xdd84, 0x49fe, 0xb9, 0x7b, 0xa9, 0xdc, 0xfd, 0xcc, 0x1b, 0x4f);")
+cpp_quote("DEFINE_GUID(CLSID_D3D12Tools,                     0xe38216b1, 0x3c8c, 0x4833, 0xaa, 0x09, 0x0a, 0x06, 0xb6, 0x5d, 0x96, 0xc8);")
+cpp_quote("DEFINE_GUID(CLSID_D3D12DeviceRemovedExtendedData, 0x4a75bbc4, 0x9ff4, 0x4ad8, 0x9f, 0x18, 0xab, 0xae, 0x84, 0xdc, 0x5f, 0xf2);")
+cpp_quote("DEFINE_GUID(CLSID_D3D12SDKConfiguration,          0x7cda6aca, 0xa03e, 0x49c8, 0x94, 0x58, 0x03, 0x34, 0xd2, 0x0e, 0x07, 0xce);")
+
+typedef enum D3D12_DRED_ENABLEMENT
+{
+    D3D12_DRED_ENABLEMENT_SYSTEM_CONTROLLED = 0,
+    D3D12_DRED_ENABLEMENT_FORCED_OFF        = 1,
+    D3D12_DRED_ENABLEMENT_FORCED_ON         = 2,
+} D3D12_DRED_ENABLEMENT;
+
+typedef HRESULT (__stdcall *PFN_D3D12_GET_INTERFACE)(REFCLSID clsid, REFIID iid, void **debug);
+
+[local] HRESULT __stdcall D3D12GetInterface(REFCLSID clsid, REFIID iid, void **debug);
+
+[
+    uuid(7071e1f0-e84b-4b33-974f-12fa49de65c5),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12Tools : IUnknown
+{
+    void EnableShaderInstrumentation(BOOL enable);
+    BOOL ShaderInstrumentationEnabled();
+}
+
+[
+    uuid(82bc481c-6b9b-4030-aedb-7ee3d1df1e63),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12DeviceRemovedExtendedDataSettings : IUnknown
+{
+    void SetAutoBreadcrumbsEnablement(D3D12_DRED_ENABLEMENT enablement);
+    void SetPageFaultEnablement(D3D12_DRED_ENABLEMENT enablement);
+    void SetWatsonDumpEnablement(D3D12_DRED_ENABLEMENT enablement);
+};
+
+[
+    uuid(e9eb5314-33aa-42b2-a718-d77f58b1f1c7),
+    object,
+    local,
+    pointer_default(unique)
+]
+interface ID3D12SDKConfiguration : IUnknown
+{
+    HRESULT SetSDKVersion(UINT version, const char *path);
+}
