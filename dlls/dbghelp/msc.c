@@ -2874,8 +2874,8 @@ static void pdb_location_compute(struct process* pcs,
     loc->reg = loc_err_internal;
 }
 
-static void* pdb_read_file(const struct pdb_file_info* pdb_file, DWORD file_nr);
-static unsigned pdb_get_file_size(const struct pdb_file_info* pdb_file, DWORD file_nr);
+static void* pdb_read_stream(const struct pdb_file_info* pdb_file, DWORD stream_nr);
+static unsigned pdb_get_stream_size(const struct pdb_file_info* pdb_file, DWORD stream_nr);
 
 static BOOL codeview_snarf_sym_hashtable(const struct msc_debug_info* msc_dbg, const BYTE* symroot, DWORD symsize,
                                          const BYTE* hashroot, DWORD hashsize,
@@ -3067,58 +3067,58 @@ static void* pdb_ds_read(const struct PDB_DS_HEADER* pdb, const UINT *block_list
     return buffer;
 }
 
-static void* pdb_read_jg_file(const struct PDB_JG_HEADER* pdb,
-                              const struct PDB_JG_TOC* toc, DWORD file_nr)
+static void* pdb_read_jg_stream(const struct PDB_JG_HEADER* pdb,
+                                const struct PDB_JG_TOC* toc, DWORD stream_nr)
 {
     const WORD*                 block_list;
     DWORD                       i;
 
-    if (!toc || file_nr >= toc->num_files) return NULL;
+    if (!toc || stream_nr >= toc->num_streams) return NULL;
 
-    block_list = (const WORD*) &toc->file[toc->num_files];
-    for (i = 0; i < file_nr; i++)
-        block_list += (toc->file[i].size + pdb->block_size - 1) / pdb->block_size;
+    block_list = (const WORD*) &toc->streams[toc->num_streams];
+    for (i = 0; i < stream_nr; i++)
+        block_list += (toc->streams[i].size + pdb->block_size - 1) / pdb->block_size;
 
-    return pdb_jg_read(pdb, block_list, toc->file[file_nr].size);
+    return pdb_jg_read(pdb, block_list, toc->streams[stream_nr].size);
 }
 
-static void* pdb_read_ds_file(const struct PDB_DS_HEADER* pdb,
-                              const struct PDB_DS_TOC* toc, DWORD file_nr)
+static void* pdb_read_ds_stream(const struct PDB_DS_HEADER* pdb,
+                                const struct PDB_DS_TOC* toc, DWORD stream_nr)
 {
     const UINT *block_list;
     DWORD                       i;
 
-    if (!toc || file_nr >= toc->num_files) return NULL;
-    if (toc->file_size[file_nr] == 0 || toc->file_size[file_nr] == 0xFFFFFFFF) return NULL;
+    if (!toc || stream_nr >= toc->num_streams) return NULL;
+    if (toc->stream_size[stream_nr] == 0 || toc->stream_size[stream_nr] == 0xFFFFFFFF) return NULL;
 
-    block_list = &toc->file_size[toc->num_files];
-    for (i = 0; i < file_nr; i++)
-        block_list += (toc->file_size[i] + pdb->block_size - 1) / pdb->block_size;
+    block_list = &toc->stream_size[toc->num_streams];
+    for (i = 0; i < stream_nr; i++)
+        block_list += (toc->stream_size[i] + pdb->block_size - 1) / pdb->block_size;
 
-    return pdb_ds_read(pdb, block_list, toc->file_size[file_nr]);
+    return pdb_ds_read(pdb, block_list, toc->stream_size[stream_nr]);
 }
 
-static void* pdb_read_file(const struct pdb_file_info* pdb_file,
-                           DWORD file_nr)
+static void* pdb_read_stream(const struct pdb_file_info* pdb_file,
+                             DWORD stream_nr)
 {
     switch (pdb_file->kind)
     {
     case PDB_JG:
-        return pdb_read_jg_file((const struct PDB_JG_HEADER*)pdb_file->image,
-                                pdb_file->u.jg.toc, file_nr);
+        return pdb_read_jg_stream((const struct PDB_JG_HEADER*)pdb_file->image,
+                                pdb_file->u.jg.toc, stream_nr);
     case PDB_DS:
-        return pdb_read_ds_file((const struct PDB_DS_HEADER*)pdb_file->image,
-                                pdb_file->u.ds.toc, file_nr);
+        return pdb_read_ds_stream((const struct PDB_DS_HEADER*)pdb_file->image,
+                                pdb_file->u.ds.toc, stream_nr);
     }
     return NULL;
 }
 
-static unsigned pdb_get_file_size(const struct pdb_file_info* pdb_file, DWORD file_nr)
+static unsigned pdb_get_stream_size(const struct pdb_file_info* pdb_file, DWORD stream_nr)
 {
     switch (pdb_file->kind)
     {
-    case PDB_JG: return pdb_file->u.jg.toc->file[file_nr].size;
-    case PDB_DS: return pdb_file->u.ds.toc->file_size[file_nr];
+    case PDB_JG: return pdb_file->u.jg.toc->streams[stream_nr].size;
+    case PDB_DS: return pdb_file->u.ds.toc->stream_size[stream_nr];
     }
     return 0;
 }
@@ -3205,9 +3205,9 @@ static PDB_STRING_TABLE* pdb_read_strings(const struct pdb_file_info* pdb_file)
     idx = pdb_get_stream_by_name(pdb_file, "/names");
     if (idx != -1)
     {
-        ret = pdb_read_file( pdb_file, idx );
+        ret = pdb_read_stream( pdb_file, idx );
         if (ret && ret->magic == 0xeffeeffe &&
-            sizeof(*ret) + ret->length <= pdb_get_file_size(pdb_file, idx)) return ret;
+            sizeof(*ret) + ret->length <= pdb_get_stream_size(pdb_file, idx)) return ret;
         pdb_free( ret );
     }
     WARN("string table not found\n");
@@ -3248,7 +3248,7 @@ static BOOL pdb_convert_types_header(PDB_TYPES* types, const BYTE* image)
         types->type_size   = old->type_size;
         types->first_index = old->first_index;
         types->last_index  = old->last_index;
-        types->hash_file   = old->hash_file;
+        types->hash_stream = old->hash_stream;
     }
     else
     {
@@ -3268,15 +3268,15 @@ static void pdb_convert_symbols_header(PDB_SYMBOLS* symbols,
     {
         /* Old version of the symbols record header */
         const PDB_SYMBOLS_OLD*  old = (const PDB_SYMBOLS_OLD*)image;
-        symbols->version         = 0;
-        symbols->module_size     = old->module_size;
-        symbols->offset_size     = old->offset_size;
-        symbols->hash_size       = old->hash_size;
-        symbols->srcmodule_size  = old->srcmodule_size;
-        symbols->pdbimport_size  = 0;
-        symbols->global_hash_file= old->global_hash_file;
-        symbols->public_file     = old->public_file;
-        symbols->gsym_file       = old->gsym_file;
+        symbols->version            = 0;
+        symbols->module_size        = old->module_size;
+        symbols->offset_size        = old->offset_size;
+        symbols->hash_size          = old->hash_size;
+        symbols->srcmodule_size     = old->srcmodule_size;
+        symbols->pdbimport_size     = 0;
+        symbols->global_hash_stream = old->global_hash_stream;
+        symbols->public_stream      = old->public_stream;
+        symbols->gsym_stream        = old->gsym_stream;
 
         *header_size = sizeof(PDB_SYMBOLS_OLD);
     }
@@ -3288,8 +3288,8 @@ static void pdb_convert_symbols_header(PDB_SYMBOLS* symbols,
     }
 }
 
-static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols, 
-                                    PDB_SYMBOL_FILE_EX* sfile, 
+static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
+                                    PDB_SYMBOL_FILE_EX* sfile,
                                     unsigned* size, const void* image)
 
 {
@@ -3297,10 +3297,10 @@ static void pdb_convert_symbol_file(const PDB_SYMBOLS* symbols,
     {
         const PDB_SYMBOL_FILE *sym_file = image;
         memset(sfile, 0, sizeof(*sfile));
-        sfile->file        = sym_file->file;
-        sfile->range.index = sym_file->range.index;
-        sfile->symbol_size = sym_file->symbol_size;
-        sfile->lineno_size = sym_file->lineno_size;
+        sfile->stream       = sym_file->stream;
+        sfile->range.index  = sym_file->range.index;
+        sfile->symbol_size  = sym_file->symbol_size;
+        sfile->lineno_size  = sym_file->lineno_size;
         sfile->lineno2_size = sym_file->lineno2_size;
         *size = sizeof(PDB_SYMBOL_FILE) - 1;
     }
@@ -3392,7 +3392,7 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
         ERR("-Unsupported hash of size %u\n", ctp->header.hash_value_size);
         return FALSE;
     }
-    ctp->hash_stream = pdb_read_file(pdb_file, ctp->header.hash_file);
+    ctp->hash_stream = pdb_read_stream(pdb_file, ctp->header.hash_stream);
     /* FIXME always present? if not reconstruct ?*/
     if (!ctp->hash_stream)
     {
@@ -3402,7 +3402,7 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
 
     ctp->module = msc_dbg->module;
     /* Reconstruct the types offset table
-     * Note: the hash subfile of the PDB_TYPES only contains a partial table
+     * Note: the hash stream of the PDB_TYPES only contains a partial table
      * (not all the indexes are present, so it requires first a binary search in partial table,
      * followed by a linear search...)
      */
@@ -3472,7 +3472,7 @@ static void pdb_process_types(const struct msc_debug_info* msc_dbg,
                               const struct pdb_file_info* pdb_file)
 {
     struct codeview_type_parse ctp;
-    BYTE* types_image = pdb_read_file(pdb_file, 2);
+    BYTE* types_image = pdb_read_stream(pdb_file, 2);
 
     if (types_image)
     {
@@ -3513,7 +3513,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
         struct PDB_JG_ROOT*         root;
 
         pdb_file->u.jg.toc = pdb_jg_read(pdb, pdb->toc_block, pdb->toc.size);
-        root = pdb_read_jg_file(pdb, pdb_file->u.jg.toc, 1);
+        root = pdb_read_jg_stream(pdb, pdb_file->u.jg.toc, 1);
         if (!root)
         {
             ERR("-Unable to get root from .PDB in %s\n", pdb_lookup->filename);
@@ -3557,7 +3557,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
         pdb_file->u.ds.toc =
             pdb_ds_read(pdb, (const UINT*)((const char*)pdb + pdb->toc_block * pdb->block_size),
                         pdb->toc_size);
-        root = pdb_read_ds_file(pdb, pdb_file->u.ds.toc, 1);
+        root = pdb_read_ds_stream(pdb, pdb_file->u.ds.toc, 1);
         if (!root)
         {
             ERR("-Unable to get root from .PDB in %s\n", pdb_lookup->filename);
@@ -3589,20 +3589,20 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
 
     if (0) /* some tool to dump the internal files from a PDB file */
     {
-        int     i, num_files;
-        
+        int     i, num_streams;
+
         switch (pdb_file->kind)
         {
-        case PDB_JG: num_files = pdb_file->u.jg.toc->num_files; break;
-        case PDB_DS: num_files = pdb_file->u.ds.toc->num_files; break;
+        case PDB_JG: num_streams = pdb_file->u.jg.toc->num_streams; break;
+        case PDB_DS: num_streams = pdb_file->u.ds.toc->num_streams; break;
         }
 
-        for (i = 1; i < num_files; i++)
+        for (i = 1; i < num_streams; i++)
         {
-            unsigned char* x = pdb_read_file(pdb_file, i);
+            unsigned char* x = pdb_read_stream(pdb_file, i);
             FIXME("********************** [%u]: size=%08x\n",
-                  i, pdb_get_file_size(pdb_file, i));
-            dump(x, pdb_get_file_size(pdb_file, i));
+                  i, pdb_get_stream_size(pdb_file, i));
+            dump(x, pdb_get_stream_size(pdb_file, i));
             pdb_free(x);
         }
     }
@@ -3711,7 +3711,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
 
     pdb_file->hMap = hMap;
     pdb_file->image = image;
-    symbols_image = pdb_read_file(pdb_file, 3);
+    symbols_image = pdb_read_stream(pdb_file, 3);
     if (symbols_image)
     {
         PDB_SYMBOLS symbols;
@@ -3761,23 +3761,23 @@ static BOOL pdb_process_internal(const struct process* pcs,
                                    pdb_lookup, pdb_module_info, module_index);
         pdb_process_types(msc_dbg, pdb_file);
 
-        ipi_image = pdb_read_file(pdb_file, 4);
+        ipi_image = pdb_read_stream(pdb_file, 4);
         ipi_ok = pdb_init_type_parse(msc_dbg, pdb_file, &ipi_ctp, ipi_image);
 
         /* Read global types first, so that lookup by name in module (=compilation unit)
          * streams' loading can succeed them.
          */
-        globalimage = pdb_read_file(pdb_file, symbols.gsym_file);
+        globalimage = pdb_read_stream(pdb_file, symbols.gsym_stream);
         if (globalimage)
         {
             const BYTE* data;
-            unsigned global_size = pdb_get_file_size(pdb_file, symbols.gsym_file);
+            unsigned global_size = pdb_get_stream_size(pdb_file, symbols.gsym_stream);
 
-            data = pdb_read_file(pdb_file, symbols.global_hash_file);
+            data = pdb_read_stream(pdb_file, symbols.global_hash_stream);
             if (data)
             {
                 codeview_snarf_sym_hashtable(msc_dbg, globalimage, global_size,
-                                             data, pdb_get_file_size(pdb_file, symbols.global_hash_file),
+                                             data, pdb_get_stream_size(pdb_file, symbols.global_hash_stream),
                                              pdb_global_feed_types);
                 pdb_free((void*)data);
             }
@@ -3794,7 +3794,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             HeapValidate(GetProcessHeap(), 0, NULL);
             pdb_convert_symbol_file(&symbols, &sfile, &size, file);
 
-            modimage = pdb_read_file(pdb_file, sfile.file);
+            modimage = pdb_read_stream(pdb_file, sfile.stream);
             file_name = (const char*)file + size;
             if (modimage)
             {
@@ -3820,20 +3820,20 @@ static BOOL pdb_process_internal(const struct process* pcs,
         if (globalimage)
         {
             const BYTE* data;
-            unsigned global_size = pdb_get_file_size(pdb_file, symbols.gsym_file);
+            unsigned global_size = pdb_get_stream_size(pdb_file, symbols.gsym_stream);
 
-            data = pdb_read_file(pdb_file, symbols.global_hash_file);
+            data = pdb_read_stream(pdb_file, symbols.global_hash_stream);
             if (data)
             {
                 codeview_snarf_sym_hashtable(msc_dbg, globalimage, global_size,
-                                             data, pdb_get_file_size(pdb_file, symbols.global_hash_file),
+                                             data, pdb_get_stream_size(pdb_file, symbols.global_hash_stream),
                                              pdb_global_feed_variables);
                 pdb_free((void*)data);
             }
-            if (!(dbghelp_options & SYMOPT_NO_PUBLICS) && (data = pdb_read_file(pdb_file, symbols.public_file)))
+            if (!(dbghelp_options & SYMOPT_NO_PUBLICS) && (data = pdb_read_stream(pdb_file, symbols.public_stream)))
             {
                 const DBI_PUBLIC_HEADER* pubhdr = (const DBI_PUBLIC_HEADER*)data;
-                codeview_snarf_sym_hashtable(msc_dbg, globalimage, pdb_get_file_size(pdb_file, symbols.gsym_file),
+                codeview_snarf_sym_hashtable(msc_dbg, globalimage, pdb_get_stream_size(pdb_file, symbols.gsym_stream),
                                              (const BYTE*)(pubhdr + 1), pubhdr->hash_size, pdb_global_feed_public);
                 pdb_free((void*)data);
             }
@@ -4209,8 +4209,8 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
 
     strbase = pdb_read_strings(&pdb_info->pdb_files[0]);
     if (!strbase) return FALSE;
-    fpoext = pdb_read_file(&pdb_info->pdb_files[0], pdb_info->pdb_files[0].fpoext_stream);
-    size = pdb_get_file_size(&pdb_info->pdb_files[0], pdb_info->pdb_files[0].fpoext_stream);
+    fpoext = pdb_read_stream(&pdb_info->pdb_files[0], pdb_info->pdb_files[0].fpoext_stream);
+    size = pdb_get_stream_size(&pdb_info->pdb_files[0], pdb_info->pdb_files[0].fpoext_stream);
     if (fpoext && (size % sizeof(*fpoext)) == 0)
     {
         size /= sizeof(*fpoext);
