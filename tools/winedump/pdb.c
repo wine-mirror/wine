@@ -1120,7 +1120,7 @@ static BOOL pdb_ds_init(struct pdb_reader* reader)
     if (!reader->u.ds.header) return FALSE;
     reader->read_file = pdb_ds_read_file;
     reader->u.ds.toc = pdb_ds_read(reader->u.ds.header,
-                                   (const UINT *)((const char*)reader->u.ds.header + reader->u.ds.header->toc_page * reader->u.ds.header->block_size),
+                                   (const UINT *)((const char*)reader->u.ds.header + reader->u.ds.header->toc_block * reader->u.ds.header->block_size),
                                    reader->u.ds.header->toc_size);
     memset(reader->file_used, 0, sizeof(reader->file_used));
     return TRUE;
@@ -1137,20 +1137,20 @@ static void pdb_ds_dump(void)
            "\tsignature:        %.*s\n"
            "\tblock_size:       %08x\n"
            "\tunknown1:         %08x\n"
-           "\tnum_pages:        %08x\n"
+           "\tnum_blocks:       %08x\n"
            "\ttoc_size:         %08x\n"
            "\tunknown2:         %08x\n"
-           "\ttoc_page:         %08x\n",
+           "\ttoc_block:        %08x\n",
            (int)sizeof(pdb7) - 1, reader.u.ds.header->signature,
            reader.u.ds.header->block_size,
            reader.u.ds.header->unknown1,
-           reader.u.ds.header->num_pages,
+           reader.u.ds.header->num_blocks,
            reader.u.ds.header->toc_size,
            reader.u.ds.header->unknown2,
-           reader.u.ds.header->toc_page);
+           reader.u.ds.header->toc_block);
 
     /* files with static indexes:
-     *  0: JG says old toc pages
+     *  0: JG says old toc blocks
      *  1: root structure
      *  2: types
      *  3: modules

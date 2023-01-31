@@ -2398,10 +2398,10 @@ struct PDB_DS_HEADER
     char                signature[32];
     unsigned int        block_size;
     unsigned int        unknown1;
-    unsigned int        num_pages;
+    unsigned int        num_blocks;
     unsigned int        toc_size;
     unsigned int        unknown2;
-    unsigned int        toc_page;
+    unsigned int        toc_block;
 };
 
 struct PDB_JG_TOC
