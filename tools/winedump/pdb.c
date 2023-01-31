@@ -997,15 +997,15 @@ static void pdb_jg_dump(void)
      */
     pdb_jg_init(&reader);
     printf("Header (JG):\n"
-           "\tident:      %.*s\n"
-           "\tsignature:  %08x\n"
-           "\tblock_size: %08x\n"
-           "\tfree_list:  %04x\n"
-           "\ttotal_alloc:%04x\n",
+           "\tident:             %.*s\n"
+           "\tsignature:         %08x\n"
+           "\tblock_size:        %08x\n"
+           "\tfree_list_block:   %04x\n"
+           "\ttotal_alloc:       %04x\n",
            (int)sizeof(pdb2) - 1, reader.u.jg.header->ident,
            reader.u.jg.header->signature,
            reader.u.jg.header->block_size,
-           reader.u.jg.header->free_list,
+           reader.u.jg.header->free_list_block,
            reader.u.jg.header->total_alloc);
 
     reader.u.jg.root = reader.read_file(&reader, 1);
@@ -1136,14 +1136,14 @@ static void pdb_ds_dump(void)
     printf("Header (DS)\n"
            "\tsignature:        %.*s\n"
            "\tblock_size:       %08x\n"
-           "\tunknown1:         %08x\n"
+           "\tfree_list_block:  %08x\n"
            "\tnum_blocks:       %08x\n"
            "\ttoc_size:         %08x\n"
            "\tunknown2:         %08x\n"
            "\ttoc_block:        %08x\n",
            (int)sizeof(pdb7) - 1, reader.u.ds.header->signature,
            reader.u.ds.header->block_size,
-           reader.u.ds.header->unknown1,
+           reader.u.ds.header->free_list_block,
            reader.u.ds.header->num_blocks,
            reader.u.ds.header->toc_size,
            reader.u.ds.header->unknown2,

@@ -2387,7 +2387,7 @@ struct PDB_JG_HEADER
     char                ident[40];
     unsigned int        signature;
     unsigned int        block_size;
-    unsigned short      free_list;
+    unsigned short      free_list_block;
     unsigned short      total_alloc;
     struct PDB_FILE     toc;
     unsigned short      toc_block[1];
@@ -2397,7 +2397,7 @@ struct PDB_DS_HEADER
 {
     char                signature[32];
     unsigned int        block_size;
-    unsigned int        unknown1;
+    unsigned int        free_list_block;
     unsigned int        num_blocks;
     unsigned int        toc_size;
     unsigned int        unknown2;
