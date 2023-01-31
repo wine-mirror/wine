@@ -782,8 +782,8 @@ static BOOL codeview_type_extract_name(const union codeview_type* cvtype,
 
 static unsigned pdb_read_hash_value(const struct codeview_type_parse* ctp, unsigned idx)
 {
-    const void* where = ctp->hash_stream + ctp->header.hash_offset + (idx - ctp->header.first_index) * ctp->header.hash_size;
-    switch (ctp->header.hash_size)
+    const void* where = ctp->hash_stream + ctp->header.hash_offset + (idx - ctp->header.first_index) * ctp->header.hash_value_size;
+    switch (ctp->header.hash_value_size)
     {
     case 2: return *(unsigned short*)where;
     case 4: return *(unsigned*)where;
@@ -2888,16 +2888,16 @@ static BOOL codeview_snarf_sym_hashtable(const struct msc_debug_info* msc_dbg, c
     if (hashsize < sizeof(DBI_HASH_HEADER) ||
         hash_hdr->signature != 0xFFFFFFFF ||
         hash_hdr->version != 0xeffe0000 + 19990810 ||
-        (hash_hdr->size_hash_records % sizeof(DBI_HASH_RECORD)) != 0 ||
-        sizeof(DBI_HASH_HEADER) + hash_hdr->size_hash_records + DBI_BITMAP_HASH_SIZE > hashsize ||
-        (hashsize - (sizeof(DBI_HASH_HEADER) + hash_hdr->size_hash_records + DBI_BITMAP_HASH_SIZE)) % sizeof(unsigned))
+        (hash_hdr->hash_records_size % sizeof(DBI_HASH_RECORD)) != 0 ||
+        sizeof(DBI_HASH_HEADER) + hash_hdr->hash_records_size + DBI_BITMAP_HASH_SIZE > hashsize ||
+        (hashsize - (sizeof(DBI_HASH_HEADER) + hash_hdr->hash_records_size + DBI_BITMAP_HASH_SIZE)) % sizeof(unsigned))
     {
         FIXME("Incorrect hash structure\n");
         return FALSE;
     }
 
     hr = (DBI_HASH_RECORD*)(hash_hdr + 1);
-    num_hash_records = hash_hdr->size_hash_records / sizeof(DBI_HASH_RECORD);
+    num_hash_records = hash_hdr->hash_records_size / sizeof(DBI_HASH_RECORD);
 
     /* Only iterate over the records listed in the hash table.
      * We assume that records present in stream, but not listed in hash table, are
@@ -3387,9 +3387,9 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
         ERR("-Unknown type info version %d\n", ctp->header.version);
         return FALSE;
     }
-    if (ctp->header.hash_size != 2 && ctp->header.hash_size != 4)
+    if (ctp->header.hash_value_size != 2 && ctp->header.hash_value_size != 4)
     {
-        ERR("-Unsupported hash of size %u\n", ctp->header.hash_size);
+        ERR("-Unsupported hash of size %u\n", ctp->header.hash_value_size);
         return FALSE;
     }
     ctp->hash_stream = pdb_read_file(pdb_file, ctp->header.hash_file);
@@ -3429,7 +3429,7 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
     /* parse the remap table
      * => move listed type_id at first position of their hash buckets so that we force remap to them
      */
-    if (ctp->header.type_remap_len)
+    if (ctp->header.type_remap_size)
     {
         const unsigned* remap = (const unsigned*)((const BYTE*)ctp->hash_stream + ctp->header.type_remap_offset);
         unsigned i, capa, count_present;

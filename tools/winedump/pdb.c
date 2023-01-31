@@ -240,25 +240,25 @@ static void dump_dbi_hash_table(const BYTE* root, unsigned size, const char* nam
         printf("%s%s symbols hash:\n", pfx, name);
         printf("%s\tSignature: 0x%x\n", pfx, hdr->signature);
         printf("%s\tVersion: 0x%x (%u)\n", pfx, hdr->version, hdr->version - 0xeffe0000);
-        printf("%s\tSize of hash records: %u\n", pfx, hdr->size_hash_records);
+        printf("%s\tSize of hash records: %u\n", pfx, hdr->hash_records_size);
         printf("%s\tUnknown: %u\n", pfx, hdr->unknown);
 
         if (hdr->signature != 0xFFFFFFFF ||
             hdr->version != 0xeffe0000 + 19990810 ||
-            (hdr->size_hash_records % sizeof(DBI_HASH_RECORD)) != 0 ||
-            sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE > size ||
-            (size - (sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE)) % sizeof(unsigned))
+            (hdr->hash_records_size % sizeof(DBI_HASH_RECORD)) != 0 ||
+            sizeof(DBI_HASH_HEADER) + hdr->hash_records_size + DBI_BITMAP_HASH_SIZE > size ||
+            (size - (sizeof(DBI_HASH_HEADER) + hdr->hash_records_size + DBI_BITMAP_HASH_SIZE)) % sizeof(unsigned))
         {
             printf("%s\t\tIncorrect hash structure\n", pfx);
         }
         else
         {
             unsigned i;
-            unsigned num_hash_records = hdr->size_hash_records / sizeof(DBI_HASH_RECORD);
+            unsigned num_hash_records = hdr->hash_records_size / sizeof(DBI_HASH_RECORD);
             const DBI_HASH_RECORD* hr = (const DBI_HASH_RECORD*)(hdr + 1);
-            unsigned* bitmap = (unsigned*)((char*)(hdr + 1) + hdr->size_hash_records);
-            unsigned* buckets = (unsigned*)((char*)(hdr + 1) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE);
-            unsigned index, last_index = (size - (sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE)) / sizeof(unsigned);
+            unsigned* bitmap = (unsigned*)((char*)(hdr + 1) + hdr->hash_records_size);
+            unsigned* buckets = (unsigned*)((char*)(hdr + 1) + hdr->hash_records_size + DBI_BITMAP_HASH_SIZE);
+            unsigned index, last_index = (size - (sizeof(DBI_HASH_HEADER) + hdr->hash_records_size + DBI_BITMAP_HASH_SIZE)) / sizeof(unsigned);
 
             /* Yes, offsets for accessiong hr[] are stored as multiple of 12; and not
              * as multiple of sizeof(*hr) = 8 as one might expect.
@@ -279,10 +279,10 @@ static void dump_dbi_hash_table(const BYTE* root, unsigned size, const char* nam
                     printf("%s\t[%u] <<empty>>\n", pfx, i);
             }
             /* shouldn't happen */
-            if (sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE + index * sizeof(unsigned) > size)
+            if (sizeof(DBI_HASH_HEADER) + hdr->hash_records_size + DBI_BITMAP_HASH_SIZE + index * sizeof(unsigned) > size)
             {
                 printf("%s-- left over %u bytes\n", pfx,
-                       size - (unsigned)(sizeof(DBI_HASH_HEADER) + hdr->size_hash_records + DBI_BITMAP_HASH_SIZE + index * sizeof(unsigned)));
+                       size - (unsigned)(sizeof(DBI_HASH_HEADER) + hdr->hash_records_size + DBI_BITMAP_HASH_SIZE + index * sizeof(unsigned)));
             }
         }
     }
@@ -727,10 +727,10 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
 
     printf("Types (%s) hash:\n", strmname);
     strmsize = pdb_get_file_size(reader, types->hash_file);
-    if (types->hash_offset + types->hash_len > strmsize ||
-        (types->last_index - types->first_index) * types->hash_size != types->hash_len ||
-        types->search_offset + types->search_len > strmsize ||
-        types->type_remap_offset + types->type_remap_len > strmsize)
+    if (types->hash_offset + types->hash_size > strmsize ||
+        (types->last_index - types->first_index) * types->hash_value_size != types->hash_size ||
+        types->search_offset + types->search_size > strmsize ||
+        types->type_remap_offset + types->type_remap_size > strmsize)
     {
         printf("\nIncoherent sizes... skipping\n");
         return;
@@ -739,7 +739,7 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
     for (i = types->first_index; i < types->last_index; i++)
     {
         printf("\t\t%08x => ", i);
-        pdb_dump_hash_value((const BYTE*)hash + types->hash_offset + (i - types->first_index) * types->hash_size, types->hash_size);
+        pdb_dump_hash_value((const BYTE*)hash + types->hash_offset + (i - types->first_index) * types->hash_value_size, types->hash_value_size);
         printf("\n");
     }
     /* print collisions in hash table (if any) */
@@ -749,7 +749,7 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
         unsigned head_printed = 0;
 
         collision_arg.hash = (const BYTE*)hash + types->hash_offset;
-        collision_arg.hash_size = types->hash_size;
+        collision_arg.hash_size = types->hash_value_size;
 
         for (i = 0; i < types->last_index - types->first_index; i++) collision[i] = i;
         qsort(collision, types->last_index - types->first_index, sizeof(unsigned), collision_compar);
@@ -757,9 +757,9 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
         {
             unsigned j;
             for (j = i + 1; j < types->last_index - types->first_index; j++)
-                if (memcmp((const BYTE*)hash + types->hash_offset + collision[i] * types->hash_size,
-                           (const BYTE*)hash + types->hash_offset + collision[j] * types->hash_size,
-                           types->hash_size))
+                if (memcmp((const BYTE*)hash + types->hash_offset + collision[i] * types->hash_value_size,
+                           (const BYTE*)hash + types->hash_offset + collision[j] * types->hash_value_size,
+                           types->hash_value_size))
                     break;
             if (j > i + 1)
             {
@@ -770,7 +770,7 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
                     head_printed = 1;
                 }
                 printf("\t\t\tHash ");
-                pdb_dump_hash_value((const BYTE*)hash + types->hash_offset + collision[i] * types->hash_size, types->hash_size);
+                pdb_dump_hash_value((const BYTE*)hash + types->hash_offset + collision[i] * types->hash_value_size, types->hash_value_size);
                 printf(":");
                 for (k = i; k < j; k++)
                     printf(" %x", types->first_index + collision[k]);
@@ -782,11 +782,11 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
     }
     printf("\n\tIndexes => offsets:\n");
     table = (const unsigned*)((const BYTE*)hash + types->search_offset);
-    for (i = 0; i < types->search_len / (2 * sizeof(unsigned)); i += 2)
+    for (i = 0; i < types->search_size / (2 * sizeof(unsigned)); i += 2)
     {
         printf("\t\t%08x => %08x\n", table[2 * i + 0], table[2 * i + 1]);
     }
-    if (types->type_remap_len && (strbase = read_string_table(reader)))
+    if (types->type_remap_size && (strbase = read_string_table(reader)))
     {
         unsigned num, capa, count_present, count_deleted;
         const unsigned* present_bitset;
@@ -823,8 +823,8 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
             if (is_bit_set(present_bitset, count_present, i))
             {
                 printf(" %s => ", pdb_get_string_table_entry(strbase, *table++));
-                pdb_dump_hash_value((const BYTE*)table, types->hash_size);
-                table = (const unsigned*)((const BYTE*)table + types->hash_size);
+                pdb_dump_hash_value((const BYTE*)table, types->hash_value_size);
+                table = (const unsigned*)((const BYTE*)table + types->hash_value_size);
             }
             printf("\n");
         }
@@ -875,14 +875,14 @@ static void pdb_dump_types(struct pdb_reader* reader, unsigned strmidx, const ch
            "\ttype_size:         %x\n"
            "\thash_file:         %x\n"
            "\tpad:               %x\n"
-           "\thash_size:         %x\n"
+           "\thash_value_size:   %x\n"
            "\thash_buckets       %x\n"
            "\thash_offset:       %x\n"
-           "\thash_len:          %x\n"
+           "\thash_size:         %x\n"
            "\tsearch_offset:     %x\n"
-           "\tsearch_len:        %x\n"
+           "\tsearch_size:       %x\n"
            "\ttype_remap_offset: %x\n"
-           "\ttype_remap_len:    %x\n",
+           "\ttype_remap_size:   %x\n",
            strmname,
            types->version,
            types->type_offset,
@@ -891,14 +891,14 @@ static void pdb_dump_types(struct pdb_reader* reader, unsigned strmidx, const ch
            types->type_size,
            types->hash_file,
            types->pad,
-           types->hash_size,
+           types->hash_value_size,
            types->hash_num_buckets,
            types->hash_offset,
-           types->hash_len,
+           types->hash_size,
            types->search_offset,
-           types->search_len,
+           types->search_size,
            types->type_remap_offset,
-           types->type_remap_len);
+           types->type_remap_size);
     codeview_dump_types_from_block((const char*)types + types->type_offset, types->type_size);
     pdb_dump_types_hash(reader, types, strmname);
     free(types);

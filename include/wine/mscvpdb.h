@@ -2454,14 +2454,14 @@ typedef struct _PDB_TYPES
     unsigned int   type_size;
     unsigned short hash_file;
     unsigned short pad;
-    unsigned int   hash_size;
+    unsigned int   hash_value_size;
     unsigned int   hash_num_buckets;
     unsigned int   hash_offset;
-    unsigned int   hash_len;
+    unsigned int   hash_size;
     unsigned int   search_offset;
-    unsigned int   search_len;
+    unsigned int   search_size;
     unsigned int   type_remap_offset;
-    unsigned int   type_remap_len;
+    unsigned int   type_remap_size;
 } PDB_TYPES, *PPDB_TYPES;
 
 typedef struct _PDB_SYMBOL_RANGE
@@ -2631,11 +2631,11 @@ typedef struct
 {
     unsigned signature;
     unsigned version;
-    unsigned size_hash_records;
+    unsigned hash_records_size;
     unsigned unknown;
 } DBI_HASH_HEADER;
 /* This header is followed by:
- * - DBI_HASH_RECORDS (on hdr:size_hash_records bytes)
+ * - DBI_HASH_RECORDS (on hdr:hash_records_size bytes)
  * - a bitmap of DBI_MAX_HASH + 1 entries (on DBI_BITMAP_HASH_SIZE bytes)
  * - a table (one entry per present bit in bitmap) as index into hdr:num_records
  */
