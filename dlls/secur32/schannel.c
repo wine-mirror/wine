@@ -1149,8 +1149,8 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryContextAttributesW(
     TRACE("context_handle %p, attribute %#lx, buffer %p\n",
             context_handle, attribute, buffer);
 
-    if (!context_handle) return SEC_E_INVALID_HANDLE;
-    ctx = schan_get_object(context_handle->dwLower, SCHAN_HANDLE_CTX);
+    if (!context_handle || !(ctx = schan_get_object(context_handle->dwLower, SCHAN_HANDLE_CTX)))
+        return SEC_E_INVALID_HANDLE;
 
     switch(attribute)
     {

@@ -1529,6 +1529,10 @@ static void test_communication(void)
 
 done:
     DeleteSecurityContext(&context);
+
+    status = QueryContextAttributesW(&context, SECPKG_ATTR_REMOTE_CERT_CONTEXT, (void*)&cert);
+    ok(status == SEC_E_INVALID_HANDLE, "QueryContextAttributesW(SECPKG_ATTR_REMOTE_CERT_CONTEXT) got %08lx\n", status);
+
     FreeCredentialsHandle(&cred_handle);
 
     CertFreeCertificateContext(cert);
