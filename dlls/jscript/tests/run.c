@@ -114,6 +114,9 @@ DEFINE_EXPECT(testobj_newenum);
 DEFINE_EXPECT(testobj_getidfail_d);
 DEFINE_EXPECT(testobj_tolocalestr_d);
 DEFINE_EXPECT(testobj_tolocalestr_i);
+DEFINE_EXPECT(test_caller_get);
+DEFINE_EXPECT(test_caller_null);
+DEFINE_EXPECT(test_caller_obj);
 DEFINE_EXPECT(testdestrobj);
 DEFINE_EXPECT(enumvariant_next_0);
 DEFINE_EXPECT(enumvariant_next_1);
@@ -332,6 +335,44 @@ static IEnumVARIANTVtbl testEnumVARIANTVtbl = {
 };
 
 static IEnumVARIANT testEnumVARIANT = { &testEnumVARIANTVtbl };
+
+static HRESULT WINAPI sp_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IServiceProvider, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    *ppv = NULL;
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI sp_AddRef(IServiceProvider *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI sp_Release(IServiceProvider *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI sp_QueryService(IServiceProvider *iface, REFGUID guidService, REFIID riid, void **ppv)
+{
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(guidService));
+    *ppv = NULL;
+    return E_NOTIMPL;
+}
+
+static const IServiceProviderVtbl sp_vtbl = {
+    sp_QueryInterface,
+    sp_AddRef,
+    sp_Release,
+    sp_QueryService
+};
+
+static IServiceProvider sp_obj = { &sp_vtbl };
 
 static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid, void **ppv)
 {
@@ -628,6 +669,61 @@ static IDispatchExVtbl testObjVtbl = {
 };
 
 static IDispatchEx testObj = { &testObjVtbl };
+
+static HRESULT WINAPI testcallerobj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
+        VARIANT *pvarRes, EXCEPINFO *pei, IServiceProvider *pspCaller)
+{
+    ok(id == DISPID_VALUE, "id = %ld\n", id);
+    ok(pdp != NULL, "pdp == NULL\n");
+    ok(pvarRes != NULL, "pvarRes == NULL\n");
+    ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+    if(wFlags == DISPATCH_PROPERTYGET) {
+        CHECK_EXPECT(test_caller_get);
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pei != NULL, "pei == NULL\n");
+        ok(pspCaller != NULL, "pspCaller == NULL\n");
+        ok(pspCaller != &sp_obj, "pspCaller == sp_obj\n");
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)iface;
+    }else if(pspCaller) {
+        CHECK_EXPECT(test_caller_obj);
+        ok(wFlags == DISPATCH_METHOD, "wFlags = %04x\n", wFlags);
+        ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+        ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pspCaller == &sp_obj, "pspCaller != sp_obj\n");
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = 137;
+    }else {
+        CHECK_EXPECT(test_caller_null);
+        ok(wFlags == DISPATCH_METHOD, "wFlags = %04x\n", wFlags);
+        ok(pdp->rgdispidNamedArgs != NULL, "rgdispidNamedArgs == NULL\n");
+        ok(pdp->cNamedArgs == 1, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = 42;
+    }
+    return S_OK;
+}
+
+static IDispatchExVtbl testcallerobj_vtbl = {
+    DispatchEx_QueryInterface,
+    DispatchEx_AddRef,
+    DispatchEx_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    testcallerobj_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx testcallerobj = { &testcallerobj_vtbl };
 
 static LONG test_destr_ref;
 
@@ -3214,6 +3310,7 @@ static void test_script_exprs(void)
 
 static void test_invokeex(void)
 {
+    static DISPID propput_dispid = DISPID_PROPERTYPUT;
     DISPPARAMS dp = {NULL}, dp_max = {NULL};
     DISPID func_id, max_id, prop_id;
     IActiveScript *script;
@@ -3439,6 +3536,52 @@ static void test_invokeex(void)
     ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == 42, "V_I4(v) = %s\n", wine_dbgstr_variant(&v));
+
+    IDispatchEx_Release(dispex);
+    IActiveScript_Release(script);
+
+    /* test InvokeEx with host prop and custom caller */
+    hres = parse_script_expr(L"var o = {}; o", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+    VariantClear(&v);
+
+    str = SysAllocString(L"caller");
+    hres = IDispatchEx_GetDispID(dispex, str, fdexNameEnsure, &func_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+
+    SET_EXPECT(test_caller_get);
+    dp.cArgs = dp.cNamedArgs = 1;
+    dp.rgvarg = &arg;
+    dp.rgdispidNamedArgs = &propput_dispid;
+    V_VT(&arg) = VT_DISPATCH;
+    V_DISPATCH(&arg) = (IDispatch*)&testcallerobj;
+    hres = IDispatchEx_InvokeEx(dispex, func_id, 0, DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    todo_wine
+    CHECK_CALLED(test_caller_get);
+
+    SET_EXPECT(test_caller_null);
+    dp.cArgs = dp.cNamedArgs = 0;
+    dp.rgvarg = NULL;
+    dp.rgdispidNamedArgs = NULL;
+    hres = IDispatchEx_InvokeEx(dispex, func_id, 0, DISPATCH_METHOD, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 42, "V_I4(v) = %s\n", wine_dbgstr_variant(&v));
+    CHECK_CALLED(test_caller_null);
+    V_VT(&v) = VT_EMPTY;
+
+    SET_EXPECT(test_caller_obj);
+    hres = IDispatchEx_InvokeEx(dispex, func_id, 0, DISPATCH_METHOD, &dp, &v, NULL, &sp_obj);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 137, "V_I4(v) = %s\n", wine_dbgstr_variant(&v));
+    CHECK_CALLED(test_caller_obj);
 
     IDispatchEx_Release(dispex);
     IActiveScript_Release(script);
