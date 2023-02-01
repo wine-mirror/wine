@@ -19401,6 +19401,327 @@ interface IHTMLEventObj : IDispatch
 }
 
 /*****************************************************************************
+ *    IHTMLEventObj2 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f48B-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLEventObj2 : IDispatch
+{
+    [id(DISPID_IHTMLEVENTOBJ2_SETATTRIBUTE)]
+    HRESULT setAttribute(
+            [in] BSTR strAttributeName,
+            [in] VARIANT AttributeValue,
+            [in, defaultvalue(1)] LONG lFlags);
+
+    [id(DISPID_IHTMLEVENTOBJ2_GETATTRIBUTE)]
+    HRESULT getAttribute(
+            [in] BSTR strAttributeName,
+            [in, defaultvalue(0)] LONG lFlags,
+            [out, retval] VARIANT *AttributeValue);
+
+    [id(DISPID_IHTMLEVENTOBJ2_REMOVEATTRIBUTE)]
+    HRESULT removeAttribute(
+            [in] BSTR strAttributeName,
+            [in, defaultvalue(1)] LONG lFlags,
+            [out, retval] VARIANT_BOOL *pfSuccess);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_PROPERTYNAME)]
+    HRESULT propertyName([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_PROPERTYNAME)]
+    HRESULT propertyName([out, retval] BSTR *p);
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_BOOKMARKS)]
+    HRESULT bookmarks([in] IHTMLBookmarkCollection *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_BOOKMARKS)]
+    HRESULT bookmarks([out, retval] IHTMLBookmarkCollection **p);
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_RECORDSET)]
+    HRESULT recordset([in] IDispatch *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_RECORDSET)]
+    HRESULT recordset([out, retval] IDispatch **p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_DATAFLD)]
+    HRESULT dataFld([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_DATAFLD)]
+    HRESULT dataFld([out, retval] BSTR *p);
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_BOUNDELEMENTS)]
+    HRESULT boundElements([in] IHTMLElementCollection *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_BOUNDELEMENTS)]
+    HRESULT boundElements([out, retval] IHTMLElementCollection **p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_REPEAT)]
+    HRESULT repeat([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_REPEAT)]
+    HRESULT repeat([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_SRCURN)]
+    HRESULT srcUrn([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SRCURN)]
+    HRESULT srcUrn([out, retval] BSTR *p);
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_SRCELEMENT)]
+    HRESULT srcElement([in] IHTMLElement *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SRCELEMENT)]
+    HRESULT srcElement([out, retval] IHTMLElement **p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_ALTKEY)]
+    HRESULT altKey([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_ALTKEY)]
+    HRESULT altKey([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_CTRLKEY)]
+    HRESULT ctrlKey([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_CTRLKEY)]
+    HRESULT ctrlKey([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_SHIFTKEY)]
+    HRESULT shiftKey([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SHIFTKEY)]
+    HRESULT shiftKey([out, retval] VARIANT_BOOL *p);
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_FROMELEMENT)]
+    HRESULT fromElement([in] IHTMLElement *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_FROMELEMENT)]
+    HRESULT fromElement([out, retval] IHTMLElement **p);
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_TOELEMENT)]
+    HRESULT toElement([in] IHTMLElement *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_TOELEMENT)]
+    HRESULT toElement([out, retval] IHTMLElement **p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_BUTTON)]
+    HRESULT button([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_BUTTON)]
+    HRESULT button([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_TYPE)]
+    HRESULT type([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_TYPE)]
+    HRESULT type([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_QUALIFIER)]
+    HRESULT qualifier([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_QUALIFIER)]
+    HRESULT qualifier([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_REASON)]
+    HRESULT reason([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_REASON)]
+    HRESULT reason([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_X)]
+    HRESULT x([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_X)]
+    HRESULT x([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_Y)]
+    HRESULT y([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_Y)]
+    HRESULT y([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_CLIENTX)]
+    HRESULT clientX([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_CLIENTX)]
+    HRESULT clientX([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_CLIENTY)]
+    HRESULT clientY([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_CLIENTY)]
+    HRESULT clientY([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_OFFSETX)]
+    HRESULT offsetX([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_OFFSETX)]
+    HRESULT offsetX([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_OFFSETY)]
+    HRESULT offsetY([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_OFFSETY)]
+    HRESULT offsetY([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_SCREENX)]
+    HRESULT screenX([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SCREENX)]
+    HRESULT screenX([out, retval] long *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ2_SCREENY)]
+    HRESULT screenY([in] long v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SCREENY)]
+    HRESULT screenY([out, retval] long *p);
+
+    [propputref, id(DISPID_IHTMLEVENTOBJ2_SRCFILTER)]
+    HRESULT srcFilter([in] IDispatch *v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_SRCFILTER)]
+    HRESULT srcFilter([out, retval] IDispatch **p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ2_DATATRANSFER)]
+    HRESULT dataTransfer([out, retval] IHTMLDataTransfer **p);
+}
+
+/*****************************************************************************
+ *    IHTMLEventObj3 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f680-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLEventObj3 : IDispatch
+{
+    [propget, id(DISPID_IHTMLEVENTOBJ3_CONTENTOVERFLOW)]
+    HRESULT contentOverflow([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ3_SHIFTLEFT)]
+    HRESULT shiftLeft([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_SHIFTLEFT)]
+    HRESULT shiftLeft([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ3_ALTLEFT)]
+    HRESULT altLeft([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_ALTLEFT)]
+    HRESULT altLeft([out, retval] VARIANT_BOOL *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ3_CTRLLEFT)]
+    HRESULT ctrlLeft([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_CTRLLEFT)]
+    HRESULT ctrlLeft([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMECOMPOSITIONCHANGE), hidden, restricted, nonbrowsable]
+    HRESULT imeCompositionChange([out, retval] LONG_PTR *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMENOTIFYCOMMAND), hidden, restricted, nonbrowsable]
+    HRESULT imeNotifyCommand([out, retval] LONG_PTR *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMENOTIFYDATA), hidden, restricted, nonbrowsable]
+    HRESULT imeNotifyData([out, retval] LONG_PTR *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMEREQUEST), hidden, restricted, nonbrowsable]
+    HRESULT imeRequest([out, retval] LONG_PTR *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_IMEREQUESTDATA), hidden, restricted, nonbrowsable]
+    HRESULT imeRequestData([out, retval] LONG_PTR *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_KEYBOARDLAYOUT), hidden, restricted, nonbrowsable]
+    HRESULT keyboardLayout([out, retval] LONG_PTR *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_BEHAVIORCOOKIE)]
+    HRESULT behaviorCookie([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_BEHAVIORPART)]
+    HRESULT behaviorPart([out, retval] long *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ3_NEXTPAGE)]
+    HRESULT nextPage([out, retval] BSTR *p);
+}
+
+/*****************************************************************************
+ *    IHTMLEventObj4 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3050f814-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLEventObj4 : IDispatch
+{
+    [propget, id(DISPID_IHTMLEVENTOBJ4_WHEELDELTA)]
+    HRESULT wheelDelta([out, retval] long *p);
+}
+
+/*****************************************************************************
+ *    IHTMLEventObj5 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510478-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLEventObj5 : IDispatch
+{
+    [propput, id(DISPID_IHTMLEVENTOBJ5_URL)]
+    HRESULT url([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_URL)]
+    HRESULT url([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ5_DATA)]
+    HRESULT data([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_DATA)]
+    HRESULT data([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_SOURCE)]
+    HRESULT source([out, retval] IDispatch **p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ5_ORIGIN)]
+    HRESULT origin([in] BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_ORIGIN)]
+    HRESULT origin([out, retval] BSTR *p);
+
+    [propput, id(DISPID_IHTMLEVENTOBJ5_ISSESSION), hidden, restricted, nonbrowsable]
+    HRESULT issession([in] VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_ISSESSION), hidden, restricted, nonbrowsable]
+    HRESULT issession([out, retval] VARIANT_BOOL *p);
+}
+
+/*****************************************************************************
+ *    IHTMLEventObj6 interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(30510734-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IHTMLEventObj6 : IDispatch
+{
+    [propget, id(DISPID_IHTMLEVENTOBJ6_ACTIONURL)]
+    HRESULT actionURL([out, retval] BSTR *p);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ6_BUTTONID)]
+    HRESULT buttonID([out, retval] long *p);
+}
+
+/*****************************************************************************
  *    DispCEventObj dispinterface
  */
 [
@@ -19653,6 +19974,42 @@ methods:
 
     [propget, id(DISPID_IHTMLEVENTOBJ4_WHEELDELTA)]
     LONG wheelDelta();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ5_URL)]
+    void url(BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_URL)]
+    BSTR url();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ5_DATA)]
+    void data(BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_DATA)]
+    BSTR data();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_SOURCE)]
+    IDispatch *source();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ5_ORIGIN)]
+    void origin(BSTR v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_ORIGIN)]
+    BSTR origin();
+
+    [propput, id(DISPID_IHTMLEVENTOBJ5_ISSESSION), hidden, restricted, nonbrowsable]
+    void issession(VARIANT_BOOL v);
+
+    [propget, id(DISPID_IHTMLEVENTOBJ5_ISSESSION), hidden, restricted, nonbrowsable]
+    VARIANT_BOOL issession();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ6_ACTIONURL)]
+    BSTR actionURL();
+
+    [propget, id(DISPID_IHTMLEVENTOBJ6_BUTTONID)]
+    long buttonID();
+
+    [propget, id(DISPID_IHTMLDOMCONSTRUCTOR_CONSTRUCTOR), hidden]
+    IDispatch *constructor();
 }
 
 /*****************************************************************************
