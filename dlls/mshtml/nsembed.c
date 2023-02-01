@@ -2268,7 +2268,7 @@ static HRESULT init_browser(GeckoBrowser *browser)
     nsres = nsIWebBrowser_QueryInterface(browser->webbrowser, &IID_nsIScrollable, (void**)&scrollable);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIScrollable_SetDefaultScrollbarPreferences(scrollable,
-                ScrollOrientation_Y, Scrollbar_Always);
+                ScrollOrientation_Y, Scrollbar_Auto);
         if(NS_FAILED(nsres))
             ERR("Could not set default Y scrollbar prefs: %08lx\n", nsres);
 

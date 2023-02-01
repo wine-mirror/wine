@@ -363,7 +363,7 @@ static void update_hostinfo(HTMLDocumentObj *This, DOCHOSTUIINFO *hostinfo)
     nsres = nsIWebBrowser_QueryInterface(This->nscontainer->webbrowser, &IID_nsIScrollable, (void**)&scrollable);
     if(NS_SUCCEEDED(nsres)) {
         nsres = nsIScrollable_SetDefaultScrollbarPreferences(scrollable, ScrollOrientation_Y,
-                (hostinfo->dwFlags & DOCHOSTUIFLAG_SCROLL_NO) ? Scrollbar_Never : Scrollbar_Always);
+                (hostinfo->dwFlags & DOCHOSTUIFLAG_SCROLL_NO) ? Scrollbar_Never : Scrollbar_Auto);
         if(NS_FAILED(nsres))
             ERR("Could not set default Y scrollbar prefs: %08lx\n", nsres);
 
