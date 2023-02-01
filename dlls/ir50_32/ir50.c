@@ -72,8 +72,23 @@ static LRESULT IV50_Decompress( IMFTransform *decoder, ICDECOMPRESS *icd, DWORD 
 
 static LRESULT IV50_GetInfo( ICINFO *icinfo, DWORD dwSize )
 {
-    FIXME("ICM_GETINFO %p %lu\n", icinfo, dwSize);
-    return ICERR_UNSUPPORTED;
+    TRACE("ICM_GETINFO %p %lu\n", icinfo, dwSize);
+
+    if ( !icinfo ) return sizeof(ICINFO);
+    if ( dwSize < sizeof(ICINFO) ) return 0;
+
+    icinfo->dwSize       = sizeof(ICINFO);
+    icinfo->fccType      = ICTYPE_VIDEO;
+    icinfo->fccHandler   = IV50_MAGIC;
+    icinfo->dwFlags      = 0;
+    icinfo->dwVersion    = ICVERSION;
+    icinfo->dwVersionICM = ICVERSION;
+
+    LoadStringW( IR50_32_hModule, IDS_NAME, icinfo->szName, ARRAY_SIZE(icinfo->szName) );
+    LoadStringW( IR50_32_hModule, IDS_DESCRIPTION, icinfo->szDescription, ARRAY_SIZE(icinfo->szDescription) );
+    /* msvfw32 will fill icinfo->szDriver for us */
+
+    return sizeof(ICINFO);
 }
 
 /***********************************************************************
