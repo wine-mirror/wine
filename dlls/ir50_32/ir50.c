@@ -97,8 +97,28 @@ IV50_DecompressQuery( LPBITMAPINFO in, LPBITMAPINFO out )
 static LRESULT
 IV50_DecompressGetFormat( LPBITMAPINFO in, LPBITMAPINFO out )
 {
-    FIXME("ICM_DECOMPRESS_GETFORMAT %p %p\n", in, out);
-    return ICERR_UNSUPPORTED;
+    DWORD size;
+
+    TRACE("ICM_DECOMPRESS_GETFORMAT %p %p\n", in, out);
+
+    if ( !in )
+        return ICERR_BADPARAM;
+
+    if ( in->bmiHeader.biCompression != IV50_MAGIC )
+        return ICERR_BADFORMAT;
+
+    size = in->bmiHeader.biSize;
+    if ( out )
+    {
+        memcpy( out, in, size );
+        out->bmiHeader.biHeight = abs(in->bmiHeader.biHeight);
+        out->bmiHeader.biCompression = BI_RGB;
+        out->bmiHeader.biBitCount = 32;
+        out->bmiHeader.biSizeImage = out->bmiHeader.biWidth * out->bmiHeader.biHeight * 4;
+        return ICERR_OK;
+    }
+
+    return size;
 }
 
 static LRESULT IV50_DecompressBegin( IMFTransform *decoder, LPBITMAPINFO in, LPBITMAPINFO out )
