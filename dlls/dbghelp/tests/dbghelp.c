@@ -240,7 +240,6 @@ static void test_modules(void)
         ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
         ok(im.BaseOfImage == base2, "Wrong base address\n");
-        todo_wine_if(sizeof(void*) == 8)
         ok(im.MachineType == get_module_machine("C:\\windows\\syswow64\\notepad.exe"),
            "Wrong machine %lx\n", im.MachineType);
     }
@@ -272,7 +271,6 @@ static void test_modules(void)
         ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
         ok(im.BaseOfImage == base2, "Wrong base address\n");
-        todo_wine_if(sizeof(void*) == 8)
         ok(im.MachineType == get_module_machine("C:\\windows\\syswow64\\notepad.exe"),
            "Wrong machine %lx\n", im.MachineType);
     }

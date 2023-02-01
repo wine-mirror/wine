@@ -1445,7 +1445,7 @@ static BOOL elf_search_and_load_file(struct process* pcs, const WCHAR* filename,
         load_elf.elf_info    = elf_info;
 
         ret = search_unix_path(filename, process_getenv(pcs, L"LD_LIBRARY_PATH"), elf_load_file_cb, &load_elf)
-            || search_dll_path(pcs, filename, elf_load_file_cb, &load_elf);
+            || search_dll_path(pcs, filename, IMAGE_FILE_MACHINE_UNKNOWN, elf_load_file_cb, &load_elf);
     }
 
     return ret;

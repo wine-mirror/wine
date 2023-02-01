@@ -722,7 +722,7 @@ static BOOL try_match_file(const WCHAR *name, BOOL (*match)(void*, HANDLE, const
     return FALSE;
 }
 
-BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*match)(void*, HANDLE, const WCHAR*), void *param)
+BOOL search_dll_path(const struct process *process, const WCHAR *name, WORD machine, BOOL (*match)(void*, HANDLE, const WCHAR*), void *param)
 {
     const WCHAR *env;
     WCHAR *p, *end;
@@ -733,7 +733,8 @@ BOOL search_dll_path(const struct process *process, const WCHAR *name, BOOL (*ma
 
     name = file_name(name);
 
-    cpu = process_get_cpu(process);
+    cpu = machine == IMAGE_FILE_MACHINE_UNKNOWN ? process_get_cpu(process) : cpu_find(machine);
+
     for (machine_dir = all_machine_dir; machine_dir < all_machine_dir + ARRAY_SIZE(all_machine_dir); machine_dir++)
         if (machine_dir->machine == cpu->machine) break;
     if (machine_dir >= all_machine_dir + ARRAY_SIZE(all_machine_dir)) return FALSE;
