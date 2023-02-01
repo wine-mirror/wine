@@ -1234,7 +1234,7 @@
 @ stdcall QueryFullProcessImageNameW(ptr long ptr ptr)
 # @ stub QueryIdleProcessorCycleTime
 # @ stub QueryIdleProcessorCycleTimeEx
-# @ stub QueryInterruptTime
+@ stdcall QueryInterruptTime(ptr)
 # @ stub QueryInterruptTimePrecise
 @ stdcall QueryMemoryResourceNotification(ptr ptr)
 # @ stub QueryOptionalDelayLoadedAPI
