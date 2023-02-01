@@ -24,6 +24,929 @@
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
 /*
+ * IUIAutomationElement interface.
+ */
+struct uia_element {
+    IUIAutomationElement9 IUIAutomationElement9_iface;
+    LONG ref;
+
+    BOOL from_cui8;
+    HUIANODE node;
+};
+
+static inline struct uia_element *impl_from_IUIAutomationElement9(IUIAutomationElement9 *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_element, IUIAutomationElement9_iface);
+}
+
+static HRESULT WINAPI uia_element_QueryInterface(IUIAutomationElement9 *iface, REFIID riid, void **ppv)
+{
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IUIAutomationElement) || (element->from_cui8 &&
+            (IsEqualIID(riid, &IID_IUIAutomationElement2) || IsEqualIID(riid, &IID_IUIAutomationElement3) ||
+            IsEqualIID(riid, &IID_IUIAutomationElement4) || IsEqualIID(riid, &IID_IUIAutomationElement5) ||
+            IsEqualIID(riid, &IID_IUIAutomationElement6) || IsEqualIID(riid, &IID_IUIAutomationElement7) ||
+            IsEqualIID(riid, &IID_IUIAutomationElement8) || IsEqualIID(riid, &IID_IUIAutomationElement9))))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IUIAutomationElement9_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_element_AddRef(IUIAutomationElement9 *iface)
+{
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    ULONG ref = InterlockedIncrement(&element->ref);
+
+    TRACE("%p, refcount %ld\n", element, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_element_Release(IUIAutomationElement9 *iface)
+{
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    ULONG ref = InterlockedDecrement(&element->ref);
+
+    TRACE("%p, refcount %ld\n", element, ref);
+    if (!ref)
+    {
+        UiaNodeRelease(element->node);
+        heap_free(element);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_element_SetFocus(IUIAutomationElement9 *iface)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetRuntimeId(IUIAutomationElement9 *iface, SAFEARRAY **runtime_id)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_FindFirst(IUIAutomationElement9 *iface, enum TreeScope scope,
+        IUIAutomationCondition *condition, IUIAutomationElement **found)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_FindAll(IUIAutomationElement9 *iface, enum TreeScope scope,
+        IUIAutomationCondition *condition, IUIAutomationElementArray **found)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_FindFirstBuildCache(IUIAutomationElement9 *iface, enum TreeScope scope,
+        IUIAutomationCondition *condition, IUIAutomationCacheRequest *cache_req, IUIAutomationElement **found)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_FindAllBuildCache(IUIAutomationElement9 *iface, enum TreeScope scope,
+        IUIAutomationCondition *condition, IUIAutomationCacheRequest *cache_req, IUIAutomationElementArray **found)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_BuildUpdatedCache(IUIAutomationElement9 *iface, IUIAutomationCacheRequest *cache_req,
+        IUIAutomationElement **updated_elem)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCurrentPropertyValue(IUIAutomationElement9 *iface, PROPERTYID prop_id,
+        VARIANT *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCurrentPropertyValueEx(IUIAutomationElement9 *iface, PROPERTYID prop_id,
+        BOOL ignore_default, VARIANT *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCachedPropertyValue(IUIAutomationElement9 *iface, PROPERTYID prop_id,
+        VARIANT *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCachedPropertyValueEx(IUIAutomationElement9 *iface, PROPERTYID prop_id,
+        BOOL ignore_default, VARIANT *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCurrentPatternAs(IUIAutomationElement9 *iface, PATTERNID pattern_id,
+        REFIID riid, void **out_pattern)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCachedPatternAs(IUIAutomationElement9 *iface, PATTERNID pattern_id,
+        REFIID riid, void **out_pattern)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCurrentPattern(IUIAutomationElement9 *iface, PATTERNID pattern_id,
+        IUnknown **out_pattern)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCachedPattern(IUIAutomationElement9 *iface, PATTERNID pattern_id,
+        IUnknown **patternObject)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCachedParent(IUIAutomationElement9 *iface, IUIAutomationElement **parent)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCachedChildren(IUIAutomationElement9 *iface,
+        IUIAutomationElementArray **children)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentProcessId(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentControlType(IUIAutomationElement9 *iface, CONTROLTYPEID *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentLocalizedControlType(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentName(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentAcceleratorKey(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentAccessKey(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentHasKeyboardFocus(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsKeyboardFocusable(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsEnabled(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentAutomationId(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentClassName(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentHelpText(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentCulture(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsControlElement(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsContentElement(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsPassword(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentNativeWindowHandle(IUIAutomationElement9 *iface, UIA_HWND *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentItemType(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsOffscreen(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentOrientation(IUIAutomationElement9 *iface, enum OrientationType *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentFrameworkId(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsRequiredForForm(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentItemStatus(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentBoundingRectangle(IUIAutomationElement9 *iface, RECT *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentLabeledBy(IUIAutomationElement9 *iface, IUIAutomationElement **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentAriaRole(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentAriaProperties(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsDataValidForForm(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentControllerFor(IUIAutomationElement9 *iface,
+        IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentDescribedBy(IUIAutomationElement9 *iface,
+        IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentFlowsTo(IUIAutomationElement9 *iface, IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentProviderDescription(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedProcessId(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedControlType(IUIAutomationElement9 *iface, CONTROLTYPEID *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedLocalizedControlType(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedName(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedAcceleratorKey(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedAccessKey(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedHasKeyboardFocus(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsKeyboardFocusable(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsEnabled(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedAutomationId(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedClassName(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedHelpText(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedCulture(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsControlElement(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsContentElement(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsPassword(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedNativeWindowHandle(IUIAutomationElement9 *iface, UIA_HWND *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedItemType(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsOffscreen(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedOrientation(IUIAutomationElement9 *iface,
+        enum OrientationType *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedFrameworkId(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsRequiredForForm(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedItemStatus(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedBoundingRectangle(IUIAutomationElement9 *iface, RECT *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedLabeledBy(IUIAutomationElement9 *iface, IUIAutomationElement **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedAriaRole(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedAriaProperties(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsDataValidForForm(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedControllerFor(IUIAutomationElement9 *iface,
+        IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedDescribedBy(IUIAutomationElement9 *iface,
+        IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedFlowsTo(IUIAutomationElement9 *iface, IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedProviderDescription(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetClickablePoint(IUIAutomationElement9 *iface, POINT *clickable, BOOL *got_clickable)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentOptimizeForVisualContent(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedOptimizeForVisualContent(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentLiveSetting(IUIAutomationElement9 *iface, enum LiveSetting *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedLiveSetting(IUIAutomationElement9 *iface, enum LiveSetting *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentFlowsFrom(IUIAutomationElement9 *iface,
+        IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedFlowsFrom(IUIAutomationElement9 *iface, IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_ShowContextMenu(IUIAutomationElement9 *iface)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsPeripheral(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsPeripheral(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentPositionInSet(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentSizeOfSet(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentLevel(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentAnnotationTypes(IUIAutomationElement9 *iface, SAFEARRAY **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentAnnotationObjects(IUIAutomationElement9 *iface,
+        IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedPositionInSet(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedSizeOfSet(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedLevel(IUIAutomationElement9 *iface, int *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedAnnotationTypes(IUIAutomationElement9 *iface, SAFEARRAY **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedAnnotationObjects(IUIAutomationElement9 *iface,
+        IUIAutomationElementArray **ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentLandmarkType(IUIAutomationElement9 *iface, LANDMARKTYPEID *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentLocalizedLandmarkType(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedLandmarkType(IUIAutomationElement9 *iface, LANDMARKTYPEID *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedLocalizedLandmarkType(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentFullDescription(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedFullDescription(IUIAutomationElement9 *iface, BSTR *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_FindFirstWithOptions(IUIAutomationElement9 *iface, enum TreeScope scope,
+        IUIAutomationCondition *condition, enum TreeTraversalOptions traversal_opts, IUIAutomationElement *root,
+        IUIAutomationElement **found)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_FindAllWithOptions(IUIAutomationElement9 *iface, enum TreeScope scope,
+        IUIAutomationCondition *condition, enum TreeTraversalOptions traversal_opts, IUIAutomationElement *root,
+        IUIAutomationElementArray **found)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_FindFirstWithOptionsBuildCache(IUIAutomationElement9 *iface, enum TreeScope scope,
+        IUIAutomationCondition *condition, IUIAutomationCacheRequest *cache_req,
+        enum TreeTraversalOptions traversal_opts, IUIAutomationElement *root, IUIAutomationElement **found)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_FindAllWithOptionsBuildCache(IUIAutomationElement9 *iface, enum TreeScope scope,
+        IUIAutomationCondition *condition, IUIAutomationCacheRequest *cache_req,
+        enum TreeTraversalOptions traversal_opts, IUIAutomationElement *root, IUIAutomationElementArray **found)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_GetCurrentMetadataValue(IUIAutomationElement9 *iface, int target_id,
+        METADATAID metadata_id, VARIANT *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentHeadingLevel(IUIAutomationElement9 *iface, HEADINGLEVELID *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedHeadingLevel(IUIAutomationElement9 *iface, HEADINGLEVELID *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CurrentIsDialog(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_element_get_CachedIsDialog(IUIAutomationElement9 *iface, BOOL *ret_val)
+{
+    FIXME("%p: stub\n", iface);
+    return E_NOTIMPL;
+}
+
+static const IUIAutomationElement9Vtbl uia_element_vtbl = {
+    uia_element_QueryInterface,
+    uia_element_AddRef,
+    uia_element_Release,
+    uia_element_SetFocus,
+    uia_element_GetRuntimeId,
+    uia_element_FindFirst,
+    uia_element_FindAll,
+    uia_element_FindFirstBuildCache,
+    uia_element_FindAllBuildCache,
+    uia_element_BuildUpdatedCache,
+    uia_element_GetCurrentPropertyValue,
+    uia_element_GetCurrentPropertyValueEx,
+    uia_element_GetCachedPropertyValue,
+    uia_element_GetCachedPropertyValueEx,
+    uia_element_GetCurrentPatternAs,
+    uia_element_GetCachedPatternAs,
+    uia_element_GetCurrentPattern,
+    uia_element_GetCachedPattern,
+    uia_element_GetCachedParent,
+    uia_element_GetCachedChildren,
+    uia_element_get_CurrentProcessId,
+    uia_element_get_CurrentControlType,
+    uia_element_get_CurrentLocalizedControlType,
+    uia_element_get_CurrentName,
+    uia_element_get_CurrentAcceleratorKey,
+    uia_element_get_CurrentAccessKey,
+    uia_element_get_CurrentHasKeyboardFocus,
+    uia_element_get_CurrentIsKeyboardFocusable,
+    uia_element_get_CurrentIsEnabled,
+    uia_element_get_CurrentAutomationId,
+    uia_element_get_CurrentClassName,
+    uia_element_get_CurrentHelpText,
+    uia_element_get_CurrentCulture,
+    uia_element_get_CurrentIsControlElement,
+    uia_element_get_CurrentIsContentElement,
+    uia_element_get_CurrentIsPassword,
+    uia_element_get_CurrentNativeWindowHandle,
+    uia_element_get_CurrentItemType,
+    uia_element_get_CurrentIsOffscreen,
+    uia_element_get_CurrentOrientation,
+    uia_element_get_CurrentFrameworkId,
+    uia_element_get_CurrentIsRequiredForForm,
+    uia_element_get_CurrentItemStatus,
+    uia_element_get_CurrentBoundingRectangle,
+    uia_element_get_CurrentLabeledBy,
+    uia_element_get_CurrentAriaRole,
+    uia_element_get_CurrentAriaProperties,
+    uia_element_get_CurrentIsDataValidForForm,
+    uia_element_get_CurrentControllerFor,
+    uia_element_get_CurrentDescribedBy,
+    uia_element_get_CurrentFlowsTo,
+    uia_element_get_CurrentProviderDescription,
+    uia_element_get_CachedProcessId,
+    uia_element_get_CachedControlType,
+    uia_element_get_CachedLocalizedControlType,
+    uia_element_get_CachedName,
+    uia_element_get_CachedAcceleratorKey,
+    uia_element_get_CachedAccessKey,
+    uia_element_get_CachedHasKeyboardFocus,
+    uia_element_get_CachedIsKeyboardFocusable,
+    uia_element_get_CachedIsEnabled,
+    uia_element_get_CachedAutomationId,
+    uia_element_get_CachedClassName,
+    uia_element_get_CachedHelpText,
+    uia_element_get_CachedCulture,
+    uia_element_get_CachedIsControlElement,
+    uia_element_get_CachedIsContentElement,
+    uia_element_get_CachedIsPassword,
+    uia_element_get_CachedNativeWindowHandle,
+    uia_element_get_CachedItemType,
+    uia_element_get_CachedIsOffscreen,
+    uia_element_get_CachedOrientation,
+    uia_element_get_CachedFrameworkId,
+    uia_element_get_CachedIsRequiredForForm,
+    uia_element_get_CachedItemStatus,
+    uia_element_get_CachedBoundingRectangle,
+    uia_element_get_CachedLabeledBy,
+    uia_element_get_CachedAriaRole,
+    uia_element_get_CachedAriaProperties,
+    uia_element_get_CachedIsDataValidForForm,
+    uia_element_get_CachedControllerFor,
+    uia_element_get_CachedDescribedBy,
+    uia_element_get_CachedFlowsTo,
+    uia_element_get_CachedProviderDescription,
+    uia_element_GetClickablePoint,
+    uia_element_get_CurrentOptimizeForVisualContent,
+    uia_element_get_CachedOptimizeForVisualContent,
+    uia_element_get_CurrentLiveSetting,
+    uia_element_get_CachedLiveSetting,
+    uia_element_get_CurrentFlowsFrom,
+    uia_element_get_CachedFlowsFrom,
+    uia_element_ShowContextMenu,
+    uia_element_get_CurrentIsPeripheral,
+    uia_element_get_CachedIsPeripheral,
+    uia_element_get_CurrentPositionInSet,
+    uia_element_get_CurrentSizeOfSet,
+    uia_element_get_CurrentLevel,
+    uia_element_get_CurrentAnnotationTypes,
+    uia_element_get_CurrentAnnotationObjects,
+    uia_element_get_CachedPositionInSet,
+    uia_element_get_CachedSizeOfSet,
+    uia_element_get_CachedLevel,
+    uia_element_get_CachedAnnotationTypes,
+    uia_element_get_CachedAnnotationObjects,
+    uia_element_get_CurrentLandmarkType,
+    uia_element_get_CurrentLocalizedLandmarkType,
+    uia_element_get_CachedLandmarkType,
+    uia_element_get_CachedLocalizedLandmarkType,
+    uia_element_get_CurrentFullDescription,
+    uia_element_get_CachedFullDescription,
+    uia_element_FindFirstWithOptions,
+    uia_element_FindAllWithOptions,
+    uia_element_FindFirstWithOptionsBuildCache,
+    uia_element_FindAllWithOptionsBuildCache,
+    uia_element_GetCurrentMetadataValue,
+    uia_element_get_CurrentHeadingLevel,
+    uia_element_get_CachedHeadingLevel,
+    uia_element_get_CurrentIsDialog,
+    uia_element_get_CachedIsDialog,
+};
+
+static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, HUIANODE node)
+{
+    struct uia_element *element = heap_alloc_zero(sizeof(*element));
+
+    *iface = NULL;
+    if (!element)
+        return E_OUTOFMEMORY;
+
+    element->IUIAutomationElement9_iface.lpVtbl = &uia_element_vtbl;
+    element->ref = 1;
+    element->from_cui8 = from_cui8;
+    element->node = node;
+
+    *iface = (IUIAutomationElement *)&element->IUIAutomationElement9_iface;
+    return S_OK;
+}
+
+/*
  * IUIAutomation interface.
  */
 struct uia_iface {
@@ -101,8 +1024,17 @@ static HRESULT WINAPI uia_iface_GetRootElement(IUIAutomation6 *iface, IUIAutomat
 
 static HRESULT WINAPI uia_iface_ElementFromHandle(IUIAutomation6 *iface, UIA_HWND hwnd, IUIAutomationElement **out_elem)
 {
-    FIXME("%p, %p, %p: stub\n", iface, hwnd, out_elem);
-    return E_NOTIMPL;
+    struct uia_iface *uia_iface = impl_from_IUIAutomation6(iface);
+    HUIANODE node;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p\n", iface, hwnd, out_elem);
+
+    hr = UiaNodeFromHandle((HWND)hwnd, &node);
+    if (FAILED(hr))
+        return hr;
+
+    return create_uia_element(out_elem, uia_iface->is_cui8, node);
 }
 
 static HRESULT WINAPI uia_iface_ElementFromPoint(IUIAutomation6 *iface, POINT pt, IUIAutomationElement **out_elem)

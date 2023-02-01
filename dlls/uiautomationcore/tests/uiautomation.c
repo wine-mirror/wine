@@ -9629,6 +9629,79 @@ static void test_UiaFind(void)
     CoUninitialize();
 }
 
+static HWND create_test_hwnd(const char *class_name)
+{
+    WNDCLASSA cls = { 0 };
+
+    cls.lpfnWndProc = test_wnd_proc;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.lpszClassName = class_name;
+    RegisterClassA(&cls);
+
+    return CreateWindowA(class_name, "Test window", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, NULL, NULL, NULL, NULL);
+}
+
+static IUIAutomationElement *create_test_element_from_hwnd(IUIAutomation *uia_iface, HWND hwnd)
+{
+    IUIAutomationElement *element;
+    HRESULT hr;
+    VARIANT v;
+
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, hwnd, TRUE);
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent on Win7. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = IUIAutomation_ElementFromHandle(uia_iface, hwnd, &element);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!element, "element == NULL\n");
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+
+    hr = IUIAutomationElement_GetCurrentPropertyValueEx(element, UIA_ProviderDescriptionPropertyId, TRUE, &v);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        check_node_provider_desc_prefix(V_BSTR(&v), GetCurrentProcessId(), hwnd);
+        check_node_provider_desc(V_BSTR(&v), L"Main", L"Provider", FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Nonclient", NULL, FALSE);
+        check_node_provider_desc(V_BSTR(&v), L"Hwnd", NULL, TRUE);
+        VariantClear(&v);
+    }
+
+    ok_method_sequence(node_from_hwnd2, "create_test_element");
+
+    return element;
+}
+
+static void test_ElementFromHandle(IUIAutomation *uia_iface, BOOL is_cui8)
+{
+    HWND hwnd = create_test_hwnd("test_ElementFromHandle class");
+    IUIAutomationElement2 *element_2;
+    IUIAutomationElement *element;
+    HRESULT hr;
+
+    element = create_test_element_from_hwnd(uia_iface, hwnd);
+    hr = IUIAutomationElement_QueryInterface(element, &IID_IUIAutomationElement2, (void **)&element_2);
+    if (is_cui8)
+    {
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!!element_2, "element_2 == NULL\n");
+        IUIAutomationElement2_Release(element_2);
+    }
+    else
+        ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+
+    IUIAutomationElement_Release(element);
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+
+    DestroyWindow(hwnd);
+    UnregisterClassA("test_ElementFromHandle class", NULL);
+    prov_root = NULL;
+}
+
 struct uia_com_classes {
     const GUID *clsid;
     const GUID *iid;
@@ -9648,6 +9721,8 @@ static const struct uia_com_classes com_classes[] = {
 
 static void test_CUIAutomation(void)
 {
+    IUIAutomation *uia_iface;
+    BOOL has_cui8 = TRUE;
     HRESULT hr;
     int i;
 
@@ -9663,6 +9738,7 @@ static void test_CUIAutomation(void)
         if ((com_classes[i].clsid == &CLSID_CUIAutomation8) && (hr == REGDB_E_CLASSNOTREG))
         {
             win_skip("CLSID_CUIAutomation8 class not registered, skipping further tests.\n");
+            has_cui8 = FALSE;
             break;
         }
         else if ((com_classes[i].clsid == &CLSID_CUIAutomation8) && (hr == E_NOINTERFACE) &&
@@ -9680,6 +9756,18 @@ static void test_CUIAutomation(void)
         IUnknown_Release(iface);
     }
 
+    if (has_cui8)
+        hr = CoCreateInstance(&CLSID_CUIAutomation8, NULL, CLSCTX_INPROC_SERVER, &IID_IUIAutomation,
+                (void **)&uia_iface);
+    else
+        hr = CoCreateInstance(&CLSID_CUIAutomation, NULL, CLSCTX_INPROC_SERVER, &IID_IUIAutomation,
+                (void **)&uia_iface);
+    ok(hr == S_OK, "Failed to create IUIAutomation interface, hr %#lx\n", hr);
+    ok(!!uia_iface, "uia_iface == NULL\n");
+
+    test_ElementFromHandle(uia_iface, has_cui8);
+
+    IUIAutomation_Release(uia_iface);
     CoUninitialize();
 }
 
