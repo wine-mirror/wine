@@ -222,6 +222,18 @@ void WINAPI DECLSPEC_HOTPATCH QueryInterruptTime( ULONGLONG *time )
 }
 
 
+/******************************************************************************
+ *           QueryInterruptTimePrecise  (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH QueryInterruptTimePrecise( ULONGLONG *time )
+{
+    static int once;
+    if (!once++) FIXME( "(%p) semi-stub\n", time );
+
+    QueryInterruptTime( time );
+}
+
+
 /***********************************************************************
  * Waits
  ***********************************************************************/

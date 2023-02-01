@@ -1235,7 +1235,7 @@
 # @ stub QueryIdleProcessorCycleTime
 # @ stub QueryIdleProcessorCycleTimeEx
 @ stdcall QueryInterruptTime(ptr)
-# @ stub QueryInterruptTimePrecise
+@ stdcall QueryInterruptTimePrecise(ptr)
 @ stdcall QueryMemoryResourceNotification(ptr ptr)
 # @ stub QueryOptionalDelayLoadedAPI
 @ stdcall QueryPerformanceCounter(ptr) ntdll.RtlQueryPerformanceCounter
