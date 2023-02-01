@@ -3271,7 +3271,7 @@ static void pdb_convert_symbols_header(PDB_SYMBOLS* symbols,
         symbols->version            = 0;
         symbols->module_size        = old->module_size;
         symbols->sectcontrib_size   = old->sectcontrib_size;
-        symbols->hash_size          = old->hash_size;
+        symbols->segmap_size        = old->segmap_size;
         symbols->srcmodule_size     = old->srcmodule_size;
         symbols->pdbimport_size     = 0;
         symbols->global_hash_stream = old->global_hash_stream;
@@ -3635,7 +3635,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
 
         imp = (const PDB_SYMBOL_IMPORT*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) +
                                          symbols->module_size + symbols->sectcontrib_size +
-                                         symbols->hash_size + symbols->srcmodule_size);
+                                         symbols->segmap_size + symbols->srcmodule_size);
         first = imp;
         last = (const char*)imp + symbols->pdbimport_size;
         while (imp < (const PDB_SYMBOL_IMPORT*)last)
@@ -3746,7 +3746,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
         case sizeof(PDB_STREAM_INDEXES):
             psi = (PDB_STREAM_INDEXES*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) +
                                         symbols.module_size + symbols.sectcontrib_size +
-                                        symbols.hash_size + symbols.srcmodule_size +
+                                        symbols.segmap_size + symbols.srcmodule_size +
                                         symbols.pdbimport_size + symbols.unknown2_size);
             pdb_file->fpoext_stream = psi->FPO_EXT;
             break;

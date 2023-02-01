@@ -371,7 +371,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
            "\trbldVer:            %u\n"
            "\tmodule_size:        %08x\n"
            "\tsectcontrib_size:   %08x\n"
-           "\thash_size:          %08x\n"
+           "\tsegmap_size:        %08x\n"
            "\tsrc_module_size:    %08x\n"
            "\tpdbimport_size:     %08x\n"
            "\tresvd0:             %08x\n"
@@ -391,7 +391,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
            symbols->rbldVer,
            symbols->module_size,
            symbols->sectcontrib_size,
-           symbols->hash_size,
+           symbols->segmap_size,
            symbols->srcmodule_size,
            symbols->pdbimport_size,
            symbols->resvd0,
@@ -474,7 +474,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
 
         printf("\t----------src module------------\n");
         src = (const PDB_SYMBOL_SOURCE*)((const char*)symbols + sizeof(PDB_SYMBOLS) +
-                                         symbols->module_size + symbols->sectcontrib_size + symbols->hash_size);
+                                         symbols->module_size + symbols->sectcontrib_size + symbols->segmap_size);
         printf("\tSource Modules\n"
                "\t\tnModules:         %u\n"
                "\t\tnSrcFiles:        %u\n",
@@ -521,7 +521,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
         printf("\t------------import--------------\n");
         imp = (const PDB_SYMBOL_IMPORT*)((const char*)symbols + sizeof(PDB_SYMBOLS) +
                                          symbols->module_size + symbols->sectcontrib_size +
-                                         symbols->hash_size + symbols->srcmodule_size);
+                                         symbols->segmap_size + symbols->srcmodule_size);
         first = (const char*)imp;
         last = (const char*)imp + symbols->pdbimport_size;
         while (imp < (const PDB_SYMBOL_IMPORT*)last)
@@ -544,6 +544,37 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
             imp = (const PDB_SYMBOL_IMPORT*)(first + ((ptr - first + strlen(ptr) + 1 + 3) & ~3));
         }
     }
+    if (symbols->segmap_size)
+    {
+        const struct OMFSegMap* segmap = (const struct OMFSegMap*)((const BYTE*)symbols + sizeof(PDB_SYMBOLS) +
+                                                                   symbols->module_size + symbols->sectcontrib_size);
+        const struct OMFSegMapDesc* desc = (const struct OMFSegMapDesc*)(segmap + 1);
+
+        printf("\t--------------segment map----------------\n");
+        printf("\tNumber of segments: %x\n", segmap->cSeg);
+        printf("\tNumber of logical segments: %x\n", segmap->cSegLog);
+        /* FIXME check mapping old symbols */
+        for (; (const BYTE*)(desc + 1) <= ((const BYTE*)(segmap + 1) + symbols->segmap_size); desc++)
+        {
+            printf("\t\tSegment descriptor #%tu\n", desc - (const struct OMFSegMapDesc*)(segmap + 1));
+            printf("\t\t\tFlags: %04x (%c%c%c%s%s%s%s)\n",
+                   desc->flags,
+                   (desc->flags & 0x01) ? 'R' : '-',
+                   (desc->flags & 0x02) ? 'W' : '-',
+                   (desc->flags & 0x04) ? 'X' : '-',
+                   (desc->flags & 0x08) ? " 32bit-linear" : "",
+                   (desc->flags & 0x100) ? " selector" : "",
+                   (desc->flags & 0x200) ? " absolute" : "",
+                   (desc->flags & 0x400) ? " group" : "");
+            printf("\t\t\tOverlay: %04x\n", desc->ovl);
+            printf("\t\t\tGroup: %04x\n", desc->group);
+            printf("\t\t\tFrame: %04x\n", desc->frame);
+            printf("\t\t\tSegment name: %s\n", desc->iSegName == 0xffff ? "none" : pdb_get_string_table_entry(filesimage, desc->iSegName));
+            printf("\t\t\tClass name: %s\n",  desc->iClassName == 0xffff ? "none" : pdb_get_string_table_entry(filesimage, desc->iClassName));
+            printf("\t\t\tOffset: %08x\n", desc->offset);
+            printf("\t\t\tSize: %04x\n", desc->cbSeg);
+        }
+    }
     if (symbols->stream_index_size)
     {
         printf("\t------------stream indexes--------------\n");
@@ -555,7 +586,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
              */
             memcpy(sidx,
                    (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
-                   symbols->sectcontrib_size + symbols->hash_size + symbols->srcmodule_size +
+                   symbols->sectcontrib_size + symbols->segmap_size + symbols->srcmodule_size +
                    symbols->pdbimport_size + symbols->unknown2_size,
                    sizeof(PDB_STREAM_INDEXES_OLD));
             printf("\tFPO:                  %04x\n"
@@ -570,7 +601,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
         case sizeof(PDB_STREAM_INDEXES):
             memcpy(sidx,
                    (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
-                   symbols->sectcontrib_size + symbols->hash_size + symbols->srcmodule_size +
+                   symbols->sectcontrib_size + symbols->segmap_size + symbols->srcmodule_size +
                    symbols->pdbimport_size + symbols->unknown2_size,
                    sizeof(*sidx));
             printf("\tFPO:                  %04x\n"
