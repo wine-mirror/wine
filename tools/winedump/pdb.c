@@ -637,6 +637,9 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     /* Read per-module symbol / linenumber tables */
     file = (const char*)symbols + sizeof(PDB_SYMBOLS);
     while (file - (const char*)symbols < sizeof(PDB_SYMBOLS) + symbols->module_size)
+    while ((file - (const char*)symbols + sizeof(symbols->version) < sizeof(PDB_SYMBOLS) + symbols->module_size) &&
+           (file - (const char*)symbols +
+            symbols->version < 19970000 ? sizeof(PDB_SYMBOL_FILE) : sizeof(PDB_SYMBOL_FILE_EX)) < sizeof(PDB_SYMBOLS) + symbols->module_size)
     {
         int stream_nr, symbol_size, lineno_size, lineno2_size;
         const char* file_name;
