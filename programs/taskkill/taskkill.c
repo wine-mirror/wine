@@ -341,7 +341,7 @@ static int terminate_processes(void)
                 continue;
             }
 
-            if (!TerminateProcess(process, 0))
+            if (!TerminateProcess(process, 1))
             {
                 taskkill_message_printfW(STRING_TERMINATE_FAILED, task_list[i]);
                 status_code = 1;
@@ -381,7 +381,7 @@ static int terminate_processes(void)
                         continue;
                     }
 
-                    if (!TerminateProcess(process, 0))
+                    if (!TerminateProcess(process, 1))
                     {
                         taskkill_message_printfW(STRING_TERMINATE_FAILED, task_list[i]);
                         status_code = 1;
