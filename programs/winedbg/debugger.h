@@ -387,7 +387,7 @@ extern BOOL             expr_print(const struct expr* exp);
   /* info.c */
 extern void             print_help(void);
 extern void             info_help(void);
-extern void             info_win32_module(DWORD64 mod);
+extern void             info_win32_module(DWORD64 mod, BOOL multi_machine);
 extern void             info_win32_class(HWND hWnd, const char* clsName);
 extern void             info_win32_window(HWND hWnd, BOOL detailed);
 extern void             info_win32_processes(void);

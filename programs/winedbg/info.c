@@ -166,12 +166,33 @@ struct info_modules
     unsigned            num_used;
 };
 
-static void module_print_info(const struct info_module *module, BOOL is_embedded)
+static const char* get_machine_str(DWORD machine)
 {
-    dbg_printf("%*.*I64x-%*.*I64x\t%-16s%s\n",
-               ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage,
-               ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage + module->mi.ImageSize,
-               is_embedded ? "\\" : get_symtype_str(&module->mi), module->name);
+    static char tmp[32];
+    switch (machine)
+    {
+    case IMAGE_FILE_MACHINE_AMD64: return "x86_64";
+    case IMAGE_FILE_MACHINE_I386:  return "i386";
+    case IMAGE_FILE_MACHINE_ARM64: return "arm64";
+    case IMAGE_FILE_MACHINE_ARM:
+    case IMAGE_FILE_MACHINE_ARMNT: return "arm";
+    default: sprintf(tmp, "<%lx>", machine); return tmp;
+    }
+}
+
+static void module_print_info(const struct info_module *module, BOOL is_embedded, BOOL multi_machine)
+{
+    if (multi_machine)
+        dbg_printf("%16I64x-%16I64x\t%s\t%-16s%s\n",
+                   module->mi.BaseOfImage,
+                   module->mi.BaseOfImage + module->mi.ImageSize,
+                   get_machine_str(module->mi.MachineType),
+                   is_embedded ? "\\" : get_symtype_str(&module->mi), module->name);
+    else
+        dbg_printf("%*.*I64x-%*.*I64x\t%-16s%s\n",
+                   ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage,
+                   ADDRWIDTH, ADDRWIDTH, module->mi.BaseOfImage + module->mi.ImageSize,
+                   is_embedded ? "\\" : get_symtype_str(&module->mi), module->name);
 }
 
 static int __cdecl module_compare(const void* p1, const void* p2)
@@ -220,11 +241,12 @@ static BOOL CALLBACK info_mod_cb(PCSTR mod_name, DWORD64 base, PVOID ctx)
  *
  * Display information about a given module (DLL or EXE), or about all modules
  */
-void info_win32_module(DWORD64 base)
+void info_win32_module(DWORD64 base, BOOL multi_machine)
 {
     struct info_modules im;
     UINT                i, j, num_printed = 0;
     BOOL                opt;
+    DWORD               machine;
 
     if (!dbg_curr_process)
     {
@@ -242,27 +264,42 @@ void info_win32_module(DWORD64 base)
     SymEnumerateModules64(dbg_curr_process->handle, info_mod_cb, &im);
     SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
 
-    qsort(im.modules, im.num_used, sizeof(im.modules[0]), module_compare);
+    if (!im.num_used) return;
 
-    dbg_printf("Module\tAddress\t\t\t%sDebug info\tName (%d modules)\n",
-	       ADDRWIDTH == 16 ? "\t\t" : "", im.num_used);
+    qsort(im.modules, im.num_used, sizeof(im.modules[0]), module_compare);
+    machine = im.modules[0].mi.MachineType;
+
+    if (multi_machine)
+        dbg_printf("Module\tAddress\t\t\t\t\tMachine\tDebug info\tName (%d modules)\n", im.num_used);
+    else
+    {
+        unsigned same_machine = 0;
+        for (i = 0; i < im.num_used; i++)
+            if (machine == im.modules[i].mi.MachineType) same_machine++;
+        dbg_printf("Module\tAddress\t\t\t%sDebug info\tName (%d modules",
+                   ADDRWIDTH == 16 ? "\t\t" : "", same_machine);
+        if (same_machine != im.num_used)
+            dbg_printf(", %u for wow64 not listed", im.num_used - same_machine);
+        dbg_printf(")\n");
+    }
 
     for (i = 0; i < im.num_used; i++)
     {
-        if (base && 
+        if (base &&
             (base < im.modules[i].mi.BaseOfImage || base >= im.modules[i].mi.BaseOfImage + im.modules[i].mi.ImageSize))
             continue;
+        if (!multi_machine && machine != im.modules[i].mi.MachineType) continue;
         if (strstr(im.modules[i].name, "<elf>"))
         {
             dbg_printf("ELF\t");
-            module_print_info(&im.modules[i], FALSE);
+            module_print_info(&im.modules[i], FALSE, multi_machine);
             /* print all modules embedded in this one */
             for (j = 0; j < im.num_used; j++)
             {
                 if (!strstr(im.modules[j].name, "<elf>") && module_is_container(&im.modules[i], &im.modules[j]))
                 {
                     dbg_printf("  \\-PE\t");
-                    module_print_info(&im.modules[j], TRUE);
+                    module_print_info(&im.modules[j], TRUE, multi_machine);
                 }
             }
         }
@@ -279,7 +316,7 @@ void info_win32_module(DWORD64 base)
                 dbg_printf("ELF\t");
             else
                 dbg_printf("PE\t");
-            module_print_info(&im.modules[i], FALSE);
+            module_print_info(&im.modules[i], FALSE, multi_machine);
         }
         num_printed++;
     }

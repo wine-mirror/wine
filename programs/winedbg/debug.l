@@ -216,6 +216,7 @@ STRING     \"(\\[^\n]|[^\\"\n])*\"
 <INITIAL>show|sho|sh			{ BEGIN(SHOW_CMD); return tSHOW; }
 <INITIAL,NOPROCESS>source|sourc|sour|src { BEGIN(PATH_EXPECTED); return tSOURCE; }
 <INITIAL>symbolfile|symbols|symbol|sf   { BEGIN(PATH_EXPECTED); return tSYMBOLFILE; }
+<INITIAL,INFO_CMD>wow                   { return tWOW; }
 
 <INITIAL,INFO_CMD,BD_CMD>break|brea|bre|br|b	{ BEGIN(PATH_ACCEPTED); return tBREAK; }
 <INITIAL,INFO_CMD,BD_CMD>hbreak|hbrea|hbre|hbr|hb { BEGIN(PATH_ACCEPTED); return tHBREAK; }

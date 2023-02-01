@@ -59,7 +59,7 @@ static void parser(const char*);
 %token <integer> tNUM tFORMAT
 %token <type> tTYPEDEF
 %token tSYMBOLFILE tRUN tATTACH tDETACH tKILL tMAINTENANCE tTYPE tMINIDUMP
-%token tNOPROCESS
+%token tNOPROCESS tWOW
 
 /* can be prefixed by module name */
 %token <string> tVOID tCHAR tWCHAR tSHORT tINT tLONG tFLOAT tDOUBLE tUNSIGNED tSIGNED
@@ -269,8 +269,9 @@ display_command:
 
 info_command:
       tINFO tBREAK              { break_info(); }
-    | tINFO tSHARE     		{ info_win32_module(0); }
-    | tINFO tSHARE expr_rvalue  { info_win32_module($3); }
+    | tINFO tSHARE              { info_win32_module(0, FALSE); }
+    | tINFO tWOW tSHARE         { info_win32_module(0, TRUE); }
+    | tINFO tSHARE expr_rvalue  { info_win32_module($3, FALSE); }
     | tINFO tREGS               { dbg_curr_process->be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 0); }
     | tINFO tALLREGS            { dbg_curr_process->be_cpu->print_context(dbg_curr_thread->handle, &dbg_context, 1); }
     | tINFO tSEGMENTS expr_rvalue { info_win32_segments($3 >> 3, 1); }
