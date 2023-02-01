@@ -2038,6 +2038,11 @@ static HRESULT WINAPI HTMLWindow5_get_XMLHttpRequest(IHTMLWindow5 *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    if(This->outer_window->readystate == READYSTATE_UNINITIALIZED) {
+        V_VT(p) = VT_EMPTY;
+        return S_OK;
+    }
+
     if(!window->xhr_factory) {
         HRESULT hres;
 

@@ -3135,9 +3135,22 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 static void test_doc_obj(IHTMLDocument2 *doc)
 {
     DISPID dispid, import_node_id, has_own_prop_id;
+    IHTMLOptionElementFactory *option, *option2;
+    IHTMLImageElementFactory *image, *image2;
+    IHTMLXMLHttpRequestFactory *xhr, *xhr2;
+    IHTMLDocument2 *doc_node, *doc_node2;
+    IOmNavigator *navigator, *navigator2;
+    IHTMLLocation *location, *location2;
     int orig_doc_mode = document_mode;
+    IHTMLStorage *storage, *storage2;
+    IHTMLPerformance *perf, *perf2;
+    IOmHistory *history, *history2;
+    IHTMLScreen *screen, *screen2;
     IEventTarget *event_target;
     DISPPARAMS dp = { 0 };
+    IHTMLWindow7 *window7;
+    IHTMLWindow6 *window6;
+    IHTMLWindow5 *window5;
     IDispatchEx *dispex;
     IHTMLElement *body;
     VARIANT res, arg;
@@ -3246,6 +3259,54 @@ static void test_doc_obj(IHTMLDocument2 *doc)
         SysFreeString(V_BSTR(&arg));
     }
 
+    /* test window props during navigation */
+    hres = IHTMLWindow2_get_document(window, &doc_node);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_location(window, &location);
+    ok(hres == S_OK, "get_location failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_navigator(window, &navigator);
+    ok(hres == S_OK, "get_navigator failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_history(window, &history);
+    ok(hres == S_OK, "get_history failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_screen(window, &screen);
+    ok(hres == S_OK, "get_screen failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_Image(window, &image);
+    ok(hres == S_OK, "get_image failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_Option(window, &option);
+    ok(hres == S_OK, "get_option failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow5, (void**)&window5);
+    ok(hres == S_OK, "Could not get IHTMLWindow5: %08lx\n", hres);
+    hres = IHTMLWindow5_get_XMLHttpRequest(window5, &res);
+    ok(hres == S_OK, "get_XMLHttpRequest failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(XMLHttpRequest) = %d\n", V_VT(&res));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&res), &IID_IHTMLXMLHttpRequestFactory, (void**)&xhr);
+    ok(hres == S_OK, "Could not get IHTMLXMLHttpRequestFactory: %08lx\n", hres);
+    IHTMLWindow5_Release(window5);
+    VariantClear(&res);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow6, (void**)&window6);
+    ok(hres == S_OK, "Could not get IHTMLWindow6: %08lx\n", hres);
+    hres = IHTMLWindow6_get_sessionStorage(window6, &storage);
+    ok(hres == S_OK, "get_sessionStorage failed: %08lx\n", hres);
+    IHTMLWindow6_Release(window6);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow7, (void**)&window7);
+    ok(hres == S_OK, "Could not get IHTMLWindow7: %08lx\n", hres);
+    hres = IHTMLWindow7_get_performance(window7, &res);
+    ok(hres == S_OK, "get_performance failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(performance) = %d\n", V_VT(&res));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&res), &IID_IHTMLPerformance, (void**)&perf);
+    ok(hres == S_OK, "Could not get IHTMLPerformance: %08lx\n", hres);
+    IHTMLWindow7_Release(window7);
+    VariantClear(&res);
+
     /* Navigate to a different document mode page, checking using the same doc obj.
        Test that it breaks COM rules, since IEventTarget is conditionally exposed.
        All the events registered on the old doc node are also removed.
@@ -3286,6 +3347,84 @@ static void test_doc_obj(IHTMLDocument2 *doc)
         ok(hres == S_OK, "GetIDsOfNames(importNode) returned: %08lx\n", hres);
         ok(dispid != import_node_id, "importNode on new doc node == old created importNode\n");
     }
+
+    hres = IHTMLWindow2_get_document(window, &doc_node2);
+    ok(hres == S_OK, "get_document failed: %08lx\n", hres);
+    ok(doc_node != doc_node2, "doc_node == doc_node2\n");
+    IHTMLDocument2_Release(doc_node2);
+    IHTMLDocument2_Release(doc_node);
+
+    hres = IHTMLWindow2_get_location(window, &location2);
+    ok(hres == S_OK, "get_location failed: %08lx\n", hres);
+    todo_wine
+    ok(location == location2, "location != location2\n");
+    IHTMLLocation_Release(location2);
+    IHTMLLocation_Release(location);
+
+    hres = IHTMLWindow2_get_navigator(window, &navigator2);
+    ok(hres == S_OK, "get_navigator failed: %08lx\n", hres);
+    ok(navigator != navigator2, "navigator == navigator2\n");
+    IOmNavigator_Release(navigator2);
+    IOmNavigator_Release(navigator);
+
+    hres = IHTMLWindow2_get_history(window, &history2);
+    ok(hres == S_OK, "get_history failed: %08lx\n", hres);
+    ok(history != history2, "history == history2\n");
+    IOmHistory_Release(history2);
+    IOmHistory_Release(history);
+
+    hres = IHTMLWindow2_get_screen(window, &screen2);
+    ok(hres == S_OK, "get_screen failed: %08lx\n", hres);
+    ok(screen != screen2, "screen == screen2\n");
+    IHTMLScreen_Release(screen2);
+    IHTMLScreen_Release(screen);
+
+    hres = IHTMLWindow2_get_Image(window, &image2);
+    ok(hres == S_OK, "get_image failed: %08lx\n", hres);
+    ok(image != image2, "image == image2\n");
+    IHTMLImageElementFactory_Release(image2);
+    IHTMLImageElementFactory_Release(image);
+
+    hres = IHTMLWindow2_get_Option(window, &option2);
+    ok(hres == S_OK, "get_option failed: %08lx\n", hres);
+    ok(option != option2, "option == option2\n");
+    IHTMLOptionElementFactory_Release(option2);
+    IHTMLOptionElementFactory_Release(option);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow5, (void**)&window5);
+    ok(hres == S_OK, "Could not get IHTMLWindow5: %08lx\n", hres);
+    hres = IHTMLWindow5_get_XMLHttpRequest(window5, &res);
+    ok(hres == S_OK, "get_XMLHttpRequest failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(XMLHttpRequest) = %d\n", V_VT(&res));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&res), &IID_IHTMLXMLHttpRequestFactory, (void**)&xhr2);
+    ok(hres == S_OK, "Could not get IHTMLXMLHttpRequestFactory: %08lx\n", hres);
+    ok(xhr != xhr2, "xhr == xhr2\n");
+    IHTMLXMLHttpRequestFactory_Release(xhr2);
+    IHTMLXMLHttpRequestFactory_Release(xhr);
+    IHTMLWindow5_Release(window5);
+    VariantClear(&res);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow6, (void**)&window6);
+    ok(hres == S_OK, "Could not get IHTMLWindow6: %08lx\n", hres);
+    hres = IHTMLWindow6_get_sessionStorage(window6, &storage2);
+    ok(hres == S_OK, "get_sessionStorage failed: %08lx\n", hres);
+    ok(storage != storage2, "storage == storage2\n");
+    IHTMLStorage_Release(storage2);
+    IHTMLStorage_Release(storage);
+    IHTMLWindow6_Release(window6);
+
+    hres = IHTMLWindow2_QueryInterface(window, &IID_IHTMLWindow7, (void**)&window7);
+    ok(hres == S_OK, "Could not get IHTMLWindow7: %08lx\n", hres);
+    hres = IHTMLWindow7_get_performance(window7, &res);
+    ok(hres == S_OK, "get_performance failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(performance) = %d\n", V_VT(&res));
+    hres = IDispatch_QueryInterface(V_DISPATCH(&res), &IID_IHTMLPerformance, (void**)&perf2);
+    ok(hres == S_OK, "Could not get IHTMLPerformance: %08lx\n", hres);
+    ok(perf != perf2, "perf == perf2\n");
+    IHTMLPerformance_Release(perf2);
+    IHTMLPerformance_Release(perf);
+    IHTMLWindow7_Release(window7);
+    VariantClear(&res);
 }
 
 static void test_create_event(IHTMLDocument2 *doc)
