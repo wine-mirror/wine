@@ -67,19 +67,13 @@ static inline BOOL is_outer_window(HTMLWindow *window)
     return &window->outer_window->base == window;
 }
 
-static HRESULT get_location(HTMLOuterWindow *This, HTMLLocation **ret)
+static void get_location(HTMLOuterWindow *This, HTMLLocation **ret)
 {
-    if(!This->location) {
-        HRESULT hres;
+    if(!This->location.dispex.outer)
+        HTMLLocation_Init(&This->location);
 
-        hres = HTMLLocation_Create(This, &This->location);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    IHTMLLocation_AddRef(&This->location->IHTMLLocation_iface);
-    *ret = This->location;
-    return S_OK;
+    IHTMLLocation_AddRef(&This->location.IHTMLLocation_iface);
+    *ret = &This->location;
 }
 
 void get_top_window(HTMLOuterWindow *window, HTMLOuterWindow **ret)
@@ -133,8 +127,8 @@ static void detach_inner_window(HTMLInnerWindow *window)
     if(doc)
         detach_document_node(doc);
 
-    if(outer_window && outer_window->location)
-        dispex_unlink(&outer_window->location->dispex);
+    if(outer_window && outer_window->location.dispex.outer)
+        dispex_unlink(&outer_window->location.dispex);
 
     abort_window_bindings(window);
     remove_target_tasks(window->task_magic);
@@ -240,10 +234,8 @@ static void release_outer_window(HTMLOuterWindow *This)
     if(This->base.inner_window)
         detach_inner_window(This->base.inner_window);
 
-    if(This->location) {
-        This->location->window = NULL;
-        IHTMLLocation_Release(&This->location->IHTMLLocation_iface);
-    }
+    if(This->location.dispex.outer)
+        release_dispex(&This->location.dispex);
 
     if(This->frame_element)
         This->frame_element->content_window = NULL;
@@ -808,14 +800,10 @@ static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocatio
 {
     HTMLWindow *This = impl_from_IHTMLWindow2(iface);
     HTMLLocation *location;
-    HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = get_location(This->outer_window, &location);
-    if(FAILED(hres))
-        return hres;
-
+    get_location(This->outer_window, &location);
     *p = &location->IHTMLLocation_iface;
     return S_OK;
 }
@@ -3925,9 +3913,7 @@ static HRESULT IHTMLWindow2_location_hook(DispatchEx *dispex, WORD flags, DISPPA
 
     TRACE("forwarding to location.href\n");
 
-    hres = get_location(This->base.outer_window, &location);
-    if(FAILED(hres))
-        return hres;
+    get_location(This->base.outer_window, &location);
 
     hres = IDispatchEx_InvokeEx(&location->dispex.IDispatchEx_iface, DISPID_VALUE, 0, flags, dp, res, ei, caller);
     IHTMLLocation_Release(&location->IHTMLLocation_iface);
