@@ -3505,6 +3505,7 @@ static void test_h264_decoder(void)
     IMFMediaType *media_type;
     IMFTransform *transform;
     ULONG i, ret, ref;
+    DWORD flags;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -3540,6 +3541,11 @@ static void test_h264_decoder(void)
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#lx\n", hr);
+
+    flags = 0xdeadbeef;
+    hr = IMFTransform_GetInputStatus(transform, 0, &flags);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "Got %#lx\n", hr);
+    ok(flags == 0xdeadbeef, "Got flags %#lx.\n", flags);
 
     /* setting output media type first doesn't work */
     check_mft_set_output_type(transform, output_type_desc, MF_E_TRANSFORM_TYPE_NOT_SET);
@@ -3629,12 +3635,20 @@ static void test_h264_decoder(void)
         ret = IMFSample_Release(output_sample);
         ok(ret == 0, "Release returned %lu\n", ret);
 
+        flags = 0;
+        hr = IMFTransform_GetInputStatus(transform, 0, &flags);
+        ok(hr == S_OK, "Got %#lx\n", hr);
+        ok(flags == MFT_INPUT_STATUS_ACCEPT_DATA, "Got flags %#lx.\n", flags);
         hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
         ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
         ret = IMFSample_Release(input_sample);
         ok(ret <= 1, "Release returned %lu\n", ret);
         input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
 
+        flags = 0;
+        hr = IMFTransform_GetInputStatus(transform, 0, &flags);
+        ok(hr == S_OK, "Got %#lx\n", hr);
+        ok(flags == MFT_INPUT_STATUS_ACCEPT_DATA, "Got flags %#lx.\n", flags);
         hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
         ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
         ret = IMFSample_Release(input_sample);
@@ -3756,6 +3770,23 @@ static void test_h264_decoder(void)
     ok(output_status == 0, "got output[0].dwStatus %#lx\n", output_status);
     ret = IMFSample_Release(output_sample);
     ok(ret == 0, "Release returned %lu\n", ret);
+
+    do
+    {
+        flags = 0;
+        hr = IMFTransform_GetInputStatus(transform, 0, &flags);
+        ok(hr == S_OK, "Got %#lx\n", hr);
+        ok(flags == MFT_INPUT_STATUS_ACCEPT_DATA, "Got flags %#lx.\n", flags);
+        hr = IMFTransform_ProcessInput(transform, 0, input_sample, 0);
+        ok(hr == S_OK || hr == MF_E_NOTACCEPTING, "Got %#lx\n", hr);
+        input_sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+    } while (hr == S_OK);
+
+    ok(hr == MF_E_NOTACCEPTING, "Got %#lx\n", hr);
+    flags = 0;
+    hr = IMFTransform_GetInputStatus(transform, 0, &flags);
+    ok(hr == S_OK, "Got %#lx\n", hr);
+    ok(flags == MFT_INPUT_STATUS_ACCEPT_DATA, "Got flags %#lx.\n", flags);
 
     ret = IMFTransform_Release(transform);
     ok(ret == 0, "Release returned %lu\n", ret);
