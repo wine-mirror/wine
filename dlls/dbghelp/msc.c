@@ -3270,7 +3270,7 @@ static void pdb_convert_symbols_header(PDB_SYMBOLS* symbols,
         const PDB_SYMBOLS_OLD*  old = (const PDB_SYMBOLS_OLD*)image;
         symbols->version            = 0;
         symbols->module_size        = old->module_size;
-        symbols->offset_size        = old->offset_size;
+        symbols->sectcontrib_size   = old->sectcontrib_size;
         symbols->hash_size          = old->hash_size;
         symbols->srcmodule_size     = old->srcmodule_size;
         symbols->pdbimport_size     = 0;
@@ -3633,8 +3633,8 @@ static void pdb_process_symbol_imports(const struct process* pcs,
         int                     i = 0;
         struct pdb_file_info    sf0 = pdb_module_info->pdb_files[0];
 
-        imp = (const PDB_SYMBOL_IMPORT*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) + 
-                                         symbols->module_size + symbols->offset_size + 
+        imp = (const PDB_SYMBOL_IMPORT*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) +
+                                         symbols->module_size + symbols->sectcontrib_size +
                                          symbols->hash_size + symbols->srcmodule_size);
         first = imp;
         last = (const char*)imp + symbols->pdbimport_size;
@@ -3745,7 +3745,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             break;
         case sizeof(PDB_STREAM_INDEXES):
             psi = (PDB_STREAM_INDEXES*)((const char*)symbols_image + sizeof(PDB_SYMBOLS) +
-                                        symbols.module_size + symbols.offset_size +
+                                        symbols.module_size + symbols.sectcontrib_size +
                                         symbols.hash_size + symbols.srcmodule_size +
                                         symbols.pdbimport_size + symbols.unknown2_size);
             pdb_file->fpoext_stream = psi->FPO_EXT;

@@ -2539,7 +2539,7 @@ typedef struct _PDB_SYMBOLS_OLD
     unsigned short gsym_stream;
     unsigned short pad;
     unsigned int   module_size;
-    unsigned int   offset_size;
+    unsigned int   sectcontrib_size;
     unsigned int   hash_size;
     unsigned int   srcmodule_size;
 } PDB_SYMBOLS_OLD, *PPDB_SYMBOLS_OLD;
@@ -2556,7 +2556,7 @@ typedef struct _PDB_SYMBOLS
     unsigned short gsym_stream;
     unsigned short rbldVer;
     unsigned int   module_size;
-    unsigned int   offset_size;
+    unsigned int   sectcontrib_size;
     unsigned int   hash_size;
     unsigned int   srcmodule_size;
     unsigned int   pdbimport_size;

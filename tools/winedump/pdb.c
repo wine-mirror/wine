@@ -370,7 +370,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
            "\tgsym_stream:        %u\n"
            "\trbldVer:            %u\n"
            "\tmodule_size:        %08x\n"
-           "\toffset_size:        %08x\n"
+           "\tsectcontrib_size:   %08x\n"
            "\thash_size:          %08x\n"
            "\tsrc_module_size:    %08x\n"
            "\tpdbimport_size:     %08x\n"
@@ -390,7 +390,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
            symbols->gsym_stream,
            symbols->rbldVer,
            symbols->module_size,
-           symbols->offset_size,
+           symbols->sectcontrib_size,
            symbols->hash_size,
            symbols->srcmodule_size,
            symbols->pdbimport_size,
@@ -401,13 +401,64 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
            get_machine_str( symbols->machine ),
            symbols->resvd4);
 
-    if (symbols->offset_size)
+    if (symbols->sectcontrib_size)
     {
-        const BYTE*                 src;
+        const BYTE*                 src = (const BYTE*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size;
+        const BYTE*                 last = src + symbols->sectcontrib_size;
+        unsigned                    version, size;
 
-        printf("\t----------offsets------------\n");
-        src = (const BYTE*)((const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size);
-        dump_data(src, symbols->offset_size, "    ");
+        printf("\t----------section contrib------------\n");
+        version = *(unsigned*)src;
+        printf("\tVersion:      %#x (%d)\n", version, version - 0xeffe0000);
+        switch (version)
+        {
+        case 0xeffe0000 + 19970605: size = sizeof(PDB_SYMBOL_RANGE_EX); break;
+        case 0xeffe0000 + 20140516: size = sizeof(PDB_SYMBOL_RANGE_EX) + sizeof(unsigned); break;
+        default: printf("\t\tUnsupported version number\n"); size = 0;
+        }
+        if (size)
+        {
+            const PDB_SYMBOL_RANGE_EX* range;
+
+            if ((symbols->sectcontrib_size - sizeof(unsigned)) % size)
+                printf("Incoherent size: %zu = %zu * %u + %zu\n",
+                       symbols->sectcontrib_size - sizeof(unsigned),
+                       (symbols->sectcontrib_size - sizeof(unsigned)) / size,
+                       size,
+                       (symbols->sectcontrib_size - sizeof(unsigned)) % size);
+            if ((symbols->sectcontrib_size - sizeof(unsigned)) % size)
+            if ((symbols->sectcontrib_size - sizeof(unsigned)) % size)
+            src += sizeof(unsigned);
+            while (src + size <= last)
+            {
+                range = (const PDB_SYMBOL_RANGE_EX*)(src + sizeof(unsigned));
+                printf("\tRange #%tu\n",
+                       ((const BYTE*)range - ((const BYTE*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size)) / size);
+                printf("\t\tsegment:         %04x\n"
+                       "\t\tpad1:            %04x\n"
+                       "\t\toffset:          %08x\n"
+                       "\t\tsize:            %08x\n"
+                       "\t\tcharacteristics: %08x",
+                       range->segment,
+                       range->pad1,
+                       range->offset,
+                       range->size,
+                       range->characteristics);
+                dump_section_characteristics(range->characteristics, " ");
+                printf("\n"
+                       "\t\tindex:           %04x\n"
+                       "\t\tpad2:            %04x\n"
+                       "\t\ttimestamp:       %08x\n"
+                       "\t\tunknown:         %08x\n",
+                       range->index,
+                       range->pad2,
+                       range->timestamp,
+                       range->unknown);
+                if (version == 0xeffe0000 + 20140516)
+                    printf("\t\tcoff_section:    %08x\n", *(unsigned*)(range + 1));
+                src += size;
+            }
+        }
     }
 
     if (!(filesimage = read_string_table(reader))) printf("string table not found\n");
@@ -422,8 +473,8 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
         const char*             cstr;
 
         printf("\t----------src module------------\n");
-        src = (const PDB_SYMBOL_SOURCE*)((const char*)symbols + sizeof(PDB_SYMBOLS) + 
-                                         symbols->module_size + symbols->offset_size + symbols->hash_size);
+        src = (const PDB_SYMBOL_SOURCE*)((const char*)symbols + sizeof(PDB_SYMBOLS) +
+                                         symbols->module_size + symbols->sectcontrib_size + symbols->hash_size);
         printf("\tSource Modules\n"
                "\t\tnModules:         %u\n"
                "\t\tnSrcFiles:        %u\n",
@@ -468,8 +519,8 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
         const char* ptr;
 
         printf("\t------------import--------------\n");
-        imp = (const PDB_SYMBOL_IMPORT*)((const char*)symbols + sizeof(PDB_SYMBOLS) + 
-                                         symbols->module_size + symbols->offset_size + 
+        imp = (const PDB_SYMBOL_IMPORT*)((const char*)symbols + sizeof(PDB_SYMBOLS) +
+                                         symbols->module_size + symbols->sectcontrib_size +
                                          symbols->hash_size + symbols->srcmodule_size);
         first = (const char*)imp;
         last = (const char*)imp + symbols->pdbimport_size;
@@ -504,7 +555,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
              */
             memcpy(sidx,
                    (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
-                   symbols->offset_size + symbols->hash_size + symbols->srcmodule_size +
+                   symbols->sectcontrib_size + symbols->hash_size + symbols->srcmodule_size +
                    symbols->pdbimport_size + symbols->unknown2_size,
                    sizeof(PDB_STREAM_INDEXES_OLD));
             printf("\tFPO:                  %04x\n"
@@ -519,7 +570,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
         case sizeof(PDB_STREAM_INDEXES):
             memcpy(sidx,
                    (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
-                   symbols->offset_size + symbols->hash_size + symbols->srcmodule_size +
+                   symbols->sectcontrib_size + symbols->hash_size + symbols->srcmodule_size +
                    symbols->pdbimport_size + symbols->unknown2_size,
                    sizeof(*sidx));
             printf("\tFPO:                  %04x\n"
@@ -578,7 +629,15 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    "\t\t\tpad1:            %04x\n"
                    "\t\t\toffset:          %08x\n"
                    "\t\t\tsize:            %08x\n"
-                   "\t\t\tcharacteristics: %08x\n"
+                   "\t\t\tcharacteristics: %08x",
+                   sym_file->unknown1,
+                   sym_file->range.segment,
+                   sym_file->range.pad1,
+                   sym_file->range.offset,
+                   sym_file->range.size,
+                   sym_file->range.characteristics);
+            dump_section_characteristics(sym_file->range.characteristics, " ");
+            printf("\n"
                    "\t\t\tindex:           %04x\n"
                    "\t\t\tpad2:            %04x\n"
                    "\t\tflag:       %04x\n"
@@ -588,12 +647,6 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    "\t\tline2 size: %08x\n"
                    "\t\tnSrcFiles:  %08x\n"
                    "\t\tattribute:  %08x\n",
-                   sym_file->unknown1,
-                   sym_file->range.segment,
-                   sym_file->range.pad1,
-                   sym_file->range.offset,
-                   sym_file->range.size,
-                   sym_file->range.characteristics,
                    sym_file->range.index,
                    sym_file->range.pad2,
                    sym_file->flag,
@@ -623,7 +676,15 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    "\t\t\tpad1:            %04x\n"
                    "\t\t\toffset:          %08x\n"
                    "\t\t\tsize:            %08x\n"
-                   "\t\t\tcharacteristics: %08x\n"
+                   "\t\t\tcharacteristics: %08x",
+                   sym_file->unknown1,
+                   sym_file->range.segment,
+                   sym_file->range.pad1,
+                   sym_file->range.offset,
+                   sym_file->range.size,
+                   sym_file->range.characteristics);
+            dump_section_characteristics(sym_file->range.characteristics, " ");
+            printf("\n"
                    "\t\t\tindex:           %04x\n"
                    "\t\t\tpad2:            %04x\n"
                    "\t\t\ttimestamp:       %08x\n"
@@ -637,12 +698,6 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    "\t\tattribute:  %08x\n"
                    "\t\treserved/0: %08x\n"
                    "\t\treserved/1: %08x\n",
-                   sym_file->unknown1,
-                   sym_file->range.segment,
-                   sym_file->range.pad1,
-                   sym_file->range.offset,
-                   sym_file->range.size,
-                   sym_file->range.characteristics,
                    sym_file->range.index,
                    sym_file->range.pad2,
                    sym_file->range.timestamp,
