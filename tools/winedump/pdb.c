@@ -249,7 +249,10 @@ static void dump_dbi_hash_table(const BYTE* root, unsigned size, const char* nam
             sizeof(DBI_HASH_HEADER) + hdr->hash_records_size + DBI_BITMAP_HASH_SIZE > size ||
             (size - (sizeof(DBI_HASH_HEADER) + hdr->hash_records_size + DBI_BITMAP_HASH_SIZE)) % sizeof(unsigned))
         {
-            printf("%s\t\tIncorrect hash structure\n", pfx);
+            if (size >= sizeof(DBI_HASH_HEADER) && !hdr->hash_records_size)
+                printf("%s\t\tEmpty hash structure\n", pfx);
+            else
+                printf("%s\t\tIncorrect hash structure\n", pfx);
         }
         else
         {
