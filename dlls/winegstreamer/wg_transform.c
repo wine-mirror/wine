@@ -931,3 +931,12 @@ NTSTATUS wg_transform_read_data(void *args)
     wg_allocator_release_sample(transform->allocator, sample, discard_data);
     return STATUS_SUCCESS;
 }
+
+NTSTATUS wg_transform_get_status(void *args)
+{
+    struct wg_transform_get_status_params *params = args;
+    struct wg_transform *transform = params->transform;
+
+    params->accepts_input = gst_atomic_queue_length(transform->input_queue) < transform->input_max_length;
+    return STATUS_SUCCESS;
+}

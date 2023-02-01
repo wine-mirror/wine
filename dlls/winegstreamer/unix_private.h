@@ -37,6 +37,7 @@ extern NTSTATUS wg_transform_destroy(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_transform_set_output_format(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_transform_push_data(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_transform_read_data(void *args) DECLSPEC_HIDDEN;
+extern NTSTATUS wg_transform_get_status(void *args) DECLSPEC_HIDDEN;
 
 /* wg_allocator_release_sample can be used to release any sample that was requested. */
 typedef struct wg_sample *(*wg_allocator_request_sample_cb)(gsize size, void *context);

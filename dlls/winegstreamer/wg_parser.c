@@ -1815,4 +1815,5 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
     X(wg_transform_push_data),
     X(wg_transform_read_data),
+    X(wg_transform_get_status),
 };

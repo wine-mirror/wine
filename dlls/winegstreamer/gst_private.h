@@ -104,6 +104,7 @@ struct wg_transform *wg_transform_create(const struct wg_format *input_format,
         const struct wg_format *output_format);
 void wg_transform_destroy(struct wg_transform *transform);
 bool wg_transform_set_output_format(struct wg_transform *transform, struct wg_format *format);
+bool wg_transform_get_status(struct wg_transform *transform, bool *accepts_input);
 
 unsigned int wg_format_get_max_size(const struct wg_format *format);
 

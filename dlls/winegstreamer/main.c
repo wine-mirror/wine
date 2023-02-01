@@ -384,6 +384,22 @@ HRESULT wg_transform_read_data(struct wg_transform *transform, struct wg_sample 
     return params.result;
 }
 
+bool wg_transform_get_status(struct wg_transform *transform, bool *accepts_input)
+{
+    struct wg_transform_get_status_params params =
+    {
+        .transform = transform,
+    };
+
+    TRACE("transform %p, accepts_input %p.\n", transform, accepts_input);
+
+    if (WINE_UNIX_CALL(unix_wg_transform_get_status, &params))
+        return false;
+
+    *accepts_input = params.accepts_input;
+    return true;
+}
+
 bool wg_transform_set_output_format(struct wg_transform *transform, struct wg_format *format)
 {
     struct wg_transform_set_output_format_params params =
