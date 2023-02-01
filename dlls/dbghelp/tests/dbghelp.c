@@ -20,6 +20,7 @@
 #include "verrsrc.h"
 #include "dbghelp.h"
 #include "wine/test.h"
+#include "winternl.h"
 
 #if defined(__i386__) || defined(__x86_64__)
 
@@ -190,6 +191,96 @@ static void test_search_path(void)
     ok(!strcmp(search_path, "."), "Got search path '%s', expected '.'\n", search_path);
 }
 
+static USHORT get_module_machine(const char* path)
+{
+    BOOL ret;
+    HANDLE hFile, hMap;
+    void* mapping;
+    IMAGE_NT_HEADERS *nthdr;
+    USHORT machine;
+
+    hFile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    ok(hFile != INVALID_HANDLE_VALUE, "Couldn't open file %s (%lu)\n", path, GetLastError());
+    hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+    ok(hMap != NULL, "Couldn't create map (%lu)\n", GetLastError());
+    mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
+    ok(mapping != NULL, "Couldn't map (%lu)\n", GetLastError());
+    nthdr = RtlImageNtHeader(mapping);
+    ok(nthdr != NULL, "Cannot get NT headers out of %s\n", path);
+    machine = nthdr ? nthdr->FileHeader.Machine : IMAGE_FILE_MACHINE_UNKNOWN;
+    ret = UnmapViewOfFile(mapping);
+    ok(ret, "Couldn't unmap (%lu)\n", GetLastError());
+    CloseHandle(hMap);
+    CloseHandle(hFile);
+    return machine;
+}
+
+static void test_modules(void)
+{
+    BOOL ret;
+    DWORD attr;
+    const DWORD64 base1 = 0x00010000;
+    const DWORD64 base2 = 0x08010000;
+    IMAGEHLP_MODULEW64 im;
+
+    im.SizeOfStruct = sizeof(im);
+
+    /* can sym load an exec of different bitness even if 32Bit flag not set */
+
+    SymSetOptions(SymGetOptions() & ~SYMOPT_INCLUDE_32BIT_MODULES);
+    ret = SymInitialize(GetCurrentProcess(), 0, FALSE);
+    ok(ret, "SymInitialize failed: %lu\n", GetLastError());
+
+    /* not always present */
+    attr = GetFileAttributesA("C:\\windows\\syswow64\\notepad.exe");
+    todo_wine_if(sizeof(void*) == 8)
+    if (attr != INVALID_FILE_ATTRIBUTES)
+    {
+        ret = SymLoadModule(GetCurrentProcess(), NULL, "C:\\windows\\syswow64\\notepad.exe", NULL, base2, 0);
+        ok(ret, "SymLoadModule failed: %lu\n", GetLastError());
+        ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
+        ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
+        ok(im.BaseOfImage == base2, "Wrong base address\n");
+        ok(im.MachineType == get_module_machine("C:\\windows\\syswow64\\notepad.exe"),
+           "Wrong machine %lx\n", im.MachineType);
+    }
+
+    ret = SymLoadModule(GetCurrentProcess(), NULL, "C:\\windows\\system32\\notepad.exe", NULL, base1, 0);
+    ok(ret, "SymLoadModule failed: %lu\n", GetLastError());
+    ret = SymGetModuleInfoW64(GetCurrentProcess(), base1, &im);
+    /* we want to access IMAGEHLP_MODULE.MachineType, so ensure that error stems from a too old
+     * dbghelp (on Windows), not supporting new enlarged IMAGEHLP_MODULE structures.
+     */
+    if (broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER))
+    {
+        IMAGEHLP_MODULE im0 = {sizeof(im0)};
+        ret = SymGetModuleInfo(GetCurrentProcess(), base1, &im0);
+        ok(ret, "Unexpected error: %lu\n", GetLastError());
+        skip("Too old dbghelp. Skipping module tests\n");
+        ret = SymCleanup(GetCurrentProcess());
+        ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+        return;
+    }
+    ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
+    ok(im.BaseOfImage == base1, "Wrong base address\n");
+    ok(im.MachineType == get_module_machine("C:\\windows\\system32\\notepad.exe"),
+       "Wrong machine %lx\n", im.MachineType);
+
+    /* still can access first module after loading second */
+    todo_wine_if(sizeof(void*) == 8)
+    if (attr != INVALID_FILE_ATTRIBUTES)
+    {
+        ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
+        ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
+        ok(im.BaseOfImage == base2, "Wrong base address\n");
+        ok(im.MachineType == get_module_machine("C:\\windows\\syswow64\\notepad.exe"),
+           "Wrong machine %lx\n", im.MachineType);
+    }
+
+    ret = SymCleanup(GetCurrentProcess());
+    ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+}
+
 START_TEST(dbghelp)
 {
     BOOL ret;
@@ -206,4 +297,6 @@ START_TEST(dbghelp)
 
     ret = SymCleanup(GetCurrentProcess());
     ok(ret, "got error %lu\n", GetLastError());
+
+    test_modules();
 }
