@@ -1548,6 +1548,7 @@ static HRESULT WINAPI ZoneMgrImpl_CreateZoneEnumerator(IInternetZoneManagerEx2* 
     ZoneMgrImpl* This = impl_from_IInternetZoneManagerEx2(iface);
     LPDWORD * new_maps;
     LPDWORD data;
+    DWORD new_map_count;
     DWORD i;
 
     TRACE("(%p)->(%p, %p, 0x%08lx)\n", This, pdwEnum, pdwCount, dwFlags);
@@ -1569,25 +1570,15 @@ static HRESULT WINAPI ZoneMgrImpl_CreateZoneEnumerator(IInternetZoneManagerEx2* 
         }
     }
 
-    if (This->zonemaps) {
-        /* try to double the nr. of pointers in the array */
-        new_maps = realloc(This->zonemaps, This->zonemap_count * 2 * sizeof(DWORD*));
-        if (new_maps) {
-            memset(new_maps + This->zonemap_count, 0, This->zonemap_count * sizeof(DWORD*));
-            This->zonemap_count *= 2;
-        }
-    }
-    else
-    {
-        This->zonemap_count = 2;
-        new_maps = calloc(This->zonemap_count, sizeof(DWORD*));
-    }
-
+    /* try to double the number of pointers in the array */
+    new_map_count = This->zonemaps ? This->zonemap_count * 2 : 2;
+    new_maps = _recalloc(This->zonemaps, new_map_count, sizeof(DWORD*));
     if (!new_maps) {
         free(data);
         return E_FAIL;
     }
     This->zonemaps = new_maps;
+    This->zonemap_count = new_map_count;
     This->zonemaps[i] = data;
     *pdwEnum = i;
     *pdwCount = data[0];
