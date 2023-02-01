@@ -3744,6 +3744,16 @@ msgstr ""
 msgid "High"
 msgstr ""
 
+#: dlls/ir50_32/ir50_32.rc:28
+#, fuzzy
+msgid "Indeo5"
+msgstr "&Съдържание"
+
+#: dlls/ir50_32/ir50_32.rc:29
+#, fuzzy
+msgid "Indeo Video Interactive version 5 video codec"
+msgstr "Wine MS-RLE видео кодек"
+
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
 msgstr ""

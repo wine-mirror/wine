@@ -3681,6 +3681,18 @@ msgstr "Zvýšená"
 msgid "High"
 msgstr "Vysoká"
 
+#: dlls/ir50_32/ir50_32.rc:28
+#, fuzzy
+#| msgid "Index"
+msgid "Indeo5"
+msgstr "Rejstřík"
+
+#: dlls/ir50_32/ir50_32.rc:29
+#, fuzzy
+#| msgid "Wine Video 1 video codec"
+msgid "Indeo Video Interactive version 5 video codec"
+msgstr "Videokodek Wine Video 1"
+
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
 msgstr "Pákové ovladače"

@@ -3720,6 +3720,18 @@ msgstr "Verhoogd"
 msgid "High"
 msgstr "Hoog"
 
+#: dlls/ir50_32/ir50_32.rc:28
+#, fuzzy
+#| msgid "Index"
+msgid "Indeo5"
+msgstr "Index"
+
+#: dlls/ir50_32/ir50_32.rc:29
+#, fuzzy
+#| msgid "Wine Video 1 video codec"
+msgid "Indeo Video Interactive version 5 video codec"
+msgstr "Wine Video 1 video codec"
+
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
 msgstr "Joysticks"

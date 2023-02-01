@@ -3692,6 +3692,14 @@ msgstr ""
 msgid "High"
 msgstr ""
 
+#: dlls/ir50_32/ir50_32.rc:28
+msgid "Indeo5"
+msgstr ""
+
+#: dlls/ir50_32/ir50_32.rc:29
+msgid "Indeo Video Interactive version 5 video codec"
+msgstr ""
+
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
 msgstr ""
