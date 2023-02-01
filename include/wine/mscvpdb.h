@@ -2575,7 +2575,7 @@ typedef struct
     unsigned short unk1;
     unsigned short unk2;
     unsigned short unk3;
-    unsigned short segments;
+    unsigned short sections_stream;
 } PDB_STREAM_INDEXES_OLD;
 
 typedef struct
@@ -2585,7 +2585,7 @@ typedef struct
     unsigned short unk1;
     unsigned short unk2;
     unsigned short unk3;
-    unsigned short segments;
+    unsigned short sections_stream;
     unsigned short unk4;
     unsigned short unk5;
     unsigned short unk6;

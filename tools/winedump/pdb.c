@@ -336,7 +336,7 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     PDB_STRING_TABLE*   filesimage;
     char                tcver[32];
 
-    sidx->FPO = sidx->unk0 = sidx->unk1 = sidx->unk2 = sidx->unk3 = sidx->segments =
+    sidx->FPO = sidx->unk0 = sidx->unk1 = sidx->unk2 = sidx->unk3 = sidx->sections_stream =
         sidx->unk4 = sidx->unk5 = sidx->unk6 = sidx->FPO_EXT = sidx->unk7 = -1;
 
     symbols = reader->read_stream(reader, 3);
@@ -509,9 +509,9 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
-                   "\tSegments:             %04x\n",
+                   "\tSections stream:      %04x\n",
                    sidx->FPO, sidx->unk0, sidx->unk1, sidx->unk2, sidx->unk3,
-                   sidx->segments);
+                   sidx->sections_stream);
             break;
         case sizeof(PDB_STREAM_INDEXES):
             memcpy(sidx,
@@ -524,14 +524,14 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
-                   "\tSegments:             %04x\n"
+                   "\tSection stream:       %04x\n"
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
                    "\t?:                    %04x\n"
                    "\tFPO-ext:              %04x\n"
                    "\t?:                    %04x\n",
                    sidx->FPO, sidx->unk0, sidx->unk1, sidx->unk2, sidx->unk3,
-                   sidx->segments, sidx->unk4, sidx->unk5, sidx->unk6, sidx->FPO_EXT,
+                   sidx->sections_stream, sidx->unk4, sidx->unk5, sidx->unk6, sidx->FPO_EXT,
                    sidx->unk7);
             break;
         default:
@@ -957,33 +957,36 @@ static void pdb_dump_fpo_ext(struct pdb_reader* reader, unsigned stream_idx)
     free(strbase);
 }
 
-static void pdb_dump_segments(struct pdb_reader* reader, unsigned stream_idx)
+static void pdb_dump_sections(struct pdb_reader* reader, unsigned stream_idx)
 {
-    const char* segs;
-    DWORD       size;
-    const char* ptr;
+    const char*                 segs;
+    DWORD                       size;
+    const IMAGE_SECTION_HEADER* sect_hdr;
 
     if (stream_idx == (WORD)-1) return;
     segs = reader->read_stream(reader, stream_idx);
 
     if (segs)
     {
+        printf("Sections:\n");
         size = pdb_get_stream_size(reader, stream_idx);
-        for (ptr = segs; ptr < segs + size; )
+        for (sect_hdr = (const IMAGE_SECTION_HEADER*)segs; (const char*)sect_hdr < segs + size; sect_hdr++)
         {
-            printf("Segment %s\n", ptr);
-            ptr += (strlen(ptr) + 1 + 3) & ~3;
-            printf("\tdword[0]: %08x\n", *(UINT *)ptr); ptr += 4;
-            printf("\tdword[1]: %08x\n", *(UINT *)ptr); ptr += 4;
-            printf("\tdword[2]: %08x\n", *(UINT *)ptr); ptr += 4;
-            printf("\tdword[3]: %08x\n", *(UINT *)ptr); ptr += 4;
-            printf("\tdword[4]: %08x\n", *(UINT *)ptr); ptr += 4;
-            printf("\tdword[5]: %08x\n", *(UINT *)ptr); ptr += 4;
-            printf("\tdword[6]: %08x\n", *(UINT *)ptr); ptr += 4;
-            printf("\tdword[7]: %08x\n", *(UINT *)ptr); ptr += 4;
+            printf("\tSection:                %-8.8s\n", sect_hdr->Name);
+            printf("\t\tVirtual size:         %08x\n",   (unsigned)sect_hdr->Misc.VirtualSize);
+            printf("\t\tVirtualAddress:       %08x\n",   (unsigned)sect_hdr->VirtualAddress);
+            printf("\t\tSizeOfRawData:        %08x\n",   (unsigned)sect_hdr->SizeOfRawData);
+            printf("\t\tPointerToRawData:     %08x\n",   (unsigned)sect_hdr->PointerToRawData);
+            printf("\t\tPointerToRelocations: %08x\n",   (unsigned)sect_hdr->PointerToRelocations);
+            printf("\t\tPointerToLinenumbers: %08x\n",   (unsigned)sect_hdr->PointerToLinenumbers);
+            printf("\t\tNumberOfRelocations:  %u\n",     (unsigned)sect_hdr->NumberOfRelocations);
+            printf("\t\tNumberOfLinenumbers:  %u\n",     (unsigned)sect_hdr->NumberOfLinenumbers);
+            printf("\t\tCharacteristics:      %08x",     (unsigned)sect_hdr->Characteristics);
+            dump_section_characteristics(sect_hdr->Characteristics, " ");
+            printf("\n");
         }
         free((char*)segs);
-    } else printf("nosdfsdffd\n");
+    }
 }
 
 static const char       pdb2[] = "Microsoft C/C++ program database 2.00";
@@ -1071,7 +1074,7 @@ static void pdb_jg_dump(void)
         pdb_dump_types(&reader, 4, "IPI");
         pdb_dump_symbols(&reader, &sidx);
         pdb_dump_fpo(&reader, sidx.FPO);
-        pdb_dump_segments(&reader, sidx.segments);
+        pdb_dump_sections(&reader, sidx.sections_stream);
     }
     else printf("-Unable to get root\n");
 
@@ -1161,7 +1164,7 @@ static void pdb_ds_dump(void)
      * - global and public streams: from symbol stream header
      * those streams get their indexes out of the PDB_STREAM_INDEXES object
      * - FPO data
-     * - segments
+     * - sections
      * - extended FPO data
      */
     mark_stream_been_read(&reader, 0); /* mark stream #0 as read */
@@ -1219,7 +1222,7 @@ static void pdb_ds_dump(void)
         pdb_dump_symbols(&reader, &sidx);
         pdb_dump_fpo(&reader, sidx.FPO);
         pdb_dump_fpo_ext(&reader, sidx.FPO_EXT);
-        pdb_dump_segments(&reader, sidx.segments);
+        pdb_dump_sections(&reader, sidx.sections_stream);
     }
     else printf("-Unable to get root\n");
 
