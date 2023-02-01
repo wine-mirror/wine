@@ -1692,7 +1692,9 @@ static BOOL CALLBACK packet_query_libraries_cb(PCSTR mod_name, DWORD64 base, PVO
     char buffer[0x400];
 
     mod.SizeOfStruct = sizeof(mod);
-    SymGetModuleInfo64(gdbctx->process->handle, base, &mod);
+    if (!SymGetModuleInfo64(gdbctx->process->handle, base, &mod) ||
+        mod.MachineType != gdbctx->process->be_cpu->machine)
+        return TRUE;
 
     reply_buffer_append_str(reply, "<library name=\"");
     if (strcmp(mod.LoadedImageName, "[vdso].so") == 0)
