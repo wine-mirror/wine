@@ -83,7 +83,7 @@ void ProcessPage_OnEndProcess(void)
         return;
     }
 
-    if (!TerminateProcess(hProcess, 0))
+    if (!TerminateProcess(hProcess, 1))
     {
         GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText,wszUnable2Terminate, MB_OK|MB_ICONSTOP);
@@ -133,7 +133,7 @@ void ProcessPage_OnEndProcessTree(void)
         return;
     }
 
-    if (!TerminateProcess(hProcess, 0))
+    if (!TerminateProcess(hProcess, 1))
     {
         GetLastErrorText(wstrErrorText, ARRAY_SIZE(wstrErrorText));
         MessageBoxW(hMainWnd, wstrErrorText,wszUnable2Terminate, MB_OK|MB_ICONSTOP);
