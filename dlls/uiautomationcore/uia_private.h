@@ -104,6 +104,9 @@ int get_node_provider_type_at_idx(struct uia_node *node, int idx) DECLSPEC_HIDDE
 HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE *out_node,
         BOOL get_hwnd_providers) DECLSPEC_HIDDEN;
 
+/* uia_com_client.c */
+HRESULT create_uia_iface(IUnknown **iface, BOOL is_cui8) DECLSPEC_HIDDEN;
+
 /* uia_ids.c */
 const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_HIDDEN;
 const struct uia_pattern_info *uia_pattern_info_from_id(PATTERNID pattern_id) DECLSPEC_HIDDEN;

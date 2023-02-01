@@ -412,3 +412,126 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 
     return TRUE;
 }
+
+/* UIAutomation ClassFactory */
+struct uia_cf {
+    IClassFactory IClassFactory_iface;
+    LONG ref;
+
+    const GUID *clsid;
+};
+
+static struct uia_cf *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_cf, IClassFactory_iface);
+}
+
+static HRESULT WINAPI uia_cf_QueryInterface(IClassFactory *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IClassFactory) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IClassFactory_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_cf_AddRef(IClassFactory *iface)
+{
+    struct uia_cf *cf = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedIncrement(&cf->ref);
+
+    TRACE("%p, refcount %ld\n", cf, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI uia_cf_Release(IClassFactory *iface)
+{
+    struct uia_cf *cf = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedDecrement(&cf->ref);
+
+    TRACE("%p, refcount %ld\n", cf, ref);
+
+    if (!ref)
+        heap_free(cf);
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_cf_CreateInstance(IClassFactory *iface, IUnknown *pouter, REFIID riid, void **ppv)
+{
+    struct uia_cf *cf = impl_from_IClassFactory(iface);
+    IUnknown *obj = NULL;
+    HRESULT hr;
+
+    TRACE("%p, %p, %s, %p\n", iface, pouter, debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    if (pouter)
+        return CLASS_E_NOAGGREGATION;
+
+    if (IsEqualGUID(cf->clsid, &CLSID_CUIAutomation))
+        hr = create_uia_iface(&obj, FALSE);
+    else if (IsEqualGUID(cf->clsid, &CLSID_CUIAutomation8))
+        hr = create_uia_iface(&obj, TRUE);
+    else
+        return E_NOINTERFACE;
+
+    if (SUCCEEDED(hr))
+    {
+        hr = IUnknown_QueryInterface(obj, riid, ppv);
+        IUnknown_Release(obj);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI uia_cf_LockServer(IClassFactory *iface, BOOL do_lock)
+{
+    FIXME("%p, %d: stub\n", iface, do_lock);
+    return S_OK;
+}
+
+static const IClassFactoryVtbl uia_cf_Vtbl =
+{
+    uia_cf_QueryInterface,
+    uia_cf_AddRef,
+    uia_cf_Release,
+    uia_cf_CreateInstance,
+    uia_cf_LockServer
+};
+
+static inline HRESULT create_uia_cf(REFCLSID clsid, REFIID riid, void **ppv)
+{
+    struct uia_cf *cf = heap_alloc_zero(sizeof(*cf));
+    HRESULT hr;
+
+    *ppv = NULL;
+    if (!cf)
+        return E_OUTOFMEMORY;
+
+    cf->IClassFactory_iface.lpVtbl = &uia_cf_Vtbl;
+    cf->clsid = clsid;
+    cf->ref = 1;
+
+    hr = IClassFactory_QueryInterface(&cf->IClassFactory_iface, riid, ppv);
+    IClassFactory_Release(&cf->IClassFactory_iface);
+
+    return hr;
+}
+
+/***********************************************************************
+ *          DllGetClassObject (uiautomationcore.@)
+ */
+HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID riid, void **ppv)
+{
+    TRACE("(%s, %s, %p)\n", debugstr_guid(clsid), debugstr_guid(riid), ppv);
+
+    if (IsEqualGUID(clsid, &CLSID_CUIAutomation) || IsEqualGUID(clsid, &CLSID_CUIAutomation8))
+        return create_uia_cf(clsid, riid, ppv);
+
+    return CLASS_E_CLASSNOTAVAILABLE;
+}

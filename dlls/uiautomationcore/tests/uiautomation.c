@@ -9629,6 +9629,60 @@ static void test_UiaFind(void)
     CoUninitialize();
 }
 
+struct uia_com_classes {
+    const GUID *clsid;
+    const GUID *iid;
+};
+
+static const struct uia_com_classes com_classes[] = {
+    { &CLSID_CUIAutomation,  &IID_IUnknown },
+    { &CLSID_CUIAutomation,  &IID_IUIAutomation },
+    { &CLSID_CUIAutomation8, &IID_IUnknown },
+    { &CLSID_CUIAutomation8, &IID_IUIAutomation },
+    { &CLSID_CUIAutomation8, &IID_IUIAutomation2 },
+    { &CLSID_CUIAutomation8, &IID_IUIAutomation3 },
+    { &CLSID_CUIAutomation8, &IID_IUIAutomation4 },
+    { &CLSID_CUIAutomation8, &IID_IUIAutomation5 },
+    { &CLSID_CUIAutomation8, &IID_IUIAutomation6 },
+};
+
+static void test_CUIAutomation(void)
+{
+    HRESULT hr;
+    int i;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    for (i = 0; i < ARRAY_SIZE(com_classes); i++)
+    {
+        IUnknown *iface = NULL;
+
+        hr = CoCreateInstance(com_classes[i].clsid, NULL, CLSCTX_INPROC_SERVER, com_classes[i].iid,
+                (void **)&iface);
+
+        if ((com_classes[i].clsid == &CLSID_CUIAutomation8) && (hr == REGDB_E_CLASSNOTREG))
+        {
+            win_skip("CLSID_CUIAutomation8 class not registered, skipping further tests.\n");
+            break;
+        }
+        else if ((com_classes[i].clsid == &CLSID_CUIAutomation8) && (hr == E_NOINTERFACE) &&
+                (com_classes[i].iid != &IID_IUIAutomation2) && (com_classes[i].iid != &IID_IUIAutomation) &&
+                (com_classes[i].iid != &IID_IUnknown))
+        {
+            win_skip("No object for clsid %s, iid %s, skipping further tests.\n", debugstr_guid(com_classes[i].clsid),
+                debugstr_guid(com_classes[i].iid));
+            break;
+        }
+
+        ok(hr == S_OK, "Failed to create interface for clsid %s, iid %s, hr %#lx\n",
+                debugstr_guid(com_classes[i].clsid), debugstr_guid(com_classes[i].iid), hr);
+        ok(!!iface, "iface == NULL\n");
+        IUnknown_Release(iface);
+    }
+
+    CoUninitialize();
+}
+
 /*
  * Once a process returns a UI Automation provider with
  * UiaReturnRawElementProvider it ends up in an implicit MTA until exit. This
@@ -9695,6 +9749,7 @@ START_TEST(uiautomation)
     test_UiaGetUpdatedCache();
     test_UiaNavigate();
     test_UiaFind();
+    test_CUIAutomation();
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
