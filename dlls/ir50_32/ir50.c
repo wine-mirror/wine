@@ -47,8 +47,51 @@ IV50_Open( const ICINFO *icinfo )
 static LRESULT
 IV50_DecompressQuery( LPBITMAPINFO in, LPBITMAPINFO out )
 {
-    FIXME("ICM_DECOMPRESS_QUERY %p %p\n", in, out);
-    return ICERR_UNSUPPORTED;
+    TRACE("ICM_DECOMPRESS_QUERY %p %p\n", in, out);
+
+    TRACE("in->planes  = %d\n", in->bmiHeader.biPlanes);
+    TRACE("in->bpp     = %d\n", in->bmiHeader.biBitCount);
+    TRACE("in->height  = %ld\n", in->bmiHeader.biHeight);
+    TRACE("in->width   = %ld\n", in->bmiHeader.biWidth);
+    TRACE("in->compr   = %#lx\n", in->bmiHeader.biCompression);
+
+    if ( in->bmiHeader.biCompression != IV50_MAGIC )
+    {
+        TRACE("can't do %#lx compression\n", in->bmiHeader.biCompression);
+        return ICERR_BADFORMAT;
+    }
+
+    /* output must be same dimensions as input */
+    if ( out )
+    {
+        TRACE("out->planes = %d\n", out->bmiHeader.biPlanes);
+        TRACE("out->bpp    = %d\n", out->bmiHeader.biBitCount);
+        TRACE("out->height = %ld\n", out->bmiHeader.biHeight);
+        TRACE("out->width  = %ld\n", out->bmiHeader.biWidth);
+        TRACE("out->compr  = %#lx\n", out->bmiHeader.biCompression);
+
+        if ( out->bmiHeader.biCompression != BI_RGB )
+        {
+            TRACE("incompatible compression requested\n");
+            return ICERR_BADFORMAT;
+        }
+
+        if ( out->bmiHeader.biBitCount != 32 && out->bmiHeader.biBitCount != 16 )
+        {
+            TRACE("incompatible depth requested\n");
+            return ICERR_BADFORMAT;
+        }
+
+        if ( in->bmiHeader.biPlanes != out->bmiHeader.biPlanes ||
+             in->bmiHeader.biHeight != abs(out->bmiHeader.biHeight) ||
+             in->bmiHeader.biWidth  != out->bmiHeader.biWidth )
+        {
+            TRACE("incompatible output dimensions requested\n");
+            return ICERR_BADFORMAT;
+        }
+    }
+
+    return ICERR_OK;
 }
 
 static LRESULT
