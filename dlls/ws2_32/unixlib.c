@@ -102,6 +102,7 @@
 #include "ws2_32_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #ifndef HAVE_LINUX_GETHOSTBYNAME_R_6
 static pthread_mutex_t host_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -463,6 +464,7 @@ static int addrinfo_err_from_unix( int err )
         case EAI_SERVICE:   return WS_EAI_SERVICE;
         case EAI_SOCKTYPE:  return WS_EAI_SOCKTYPE;
         case EAI_SYSTEM:
+            if (errno == EBUSY) ERR_(winediag)("getaddrinfo() returned EBUSY. You may be missing a libnss plugin\n");
             /* some broken versions of glibc return EAI_SYSTEM and set errno to
              * 0 instead of returning EAI_NONAME */
             return errno ? errno_from_unix( errno ) : WS_EAI_NONAME;
