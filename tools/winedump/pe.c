@@ -381,27 +381,9 @@ static	void	dump_pe_header(void)
     dump_optional_header((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader, PE_nt_headers->FileHeader.SizeOfOptionalHeader);
 }
 
-void dump_section(const IMAGE_SECTION_HEADER *sectHead, const char* strtable)
+void dump_section_characteristics(DWORD characteristics, const char* sep)
 {
-        unsigned offset;
-
-        /* long section name ? */
-        if (strtable && sectHead->Name[0] == '/' &&
-            ((offset = atoi((const char*)sectHead->Name + 1)) < *(const DWORD*)strtable))
-            printf("  %.8s (%s)", sectHead->Name, strtable + offset);
-        else
-	    printf("  %-8.8s", sectHead->Name);
-	printf("   VirtSize: 0x%08x  VirtAddr:  0x%08x\n",
-               (UINT)sectHead->Misc.VirtualSize, (UINT)sectHead->VirtualAddress);
-	printf("    raw data offs:   0x%08x  raw data size: 0x%08x\n",
-	       (UINT)sectHead->PointerToRawData, (UINT)sectHead->SizeOfRawData);
-	printf("    relocation offs: 0x%08x  relocations:   0x%08x\n",
-	       (UINT)sectHead->PointerToRelocations, (UINT)sectHead->NumberOfRelocations);
-	printf("    line # offs:     %-8u  line #'s:      %-8u\n",
-	       (UINT)sectHead->PointerToLinenumbers, (UINT)sectHead->NumberOfLinenumbers);
-	printf("    characteristics: 0x%08x\n", (UINT)sectHead->Characteristics);
-	printf("    ");
-#define X(b,s)	if (sectHead->Characteristics & b) printf("  " s)
+#define X(b,s)	if (characteristics & b) printf("%s%s", sep, s)
 /* #define IMAGE_SCN_TYPE_REG			0x00000000 - Reserved */
 /* #define IMAGE_SCN_TYPE_DSECT			0x00000001 - Reserved */
 /* #define IMAGE_SCN_TYPE_NOLOAD		0x00000002 - Reserved */
@@ -409,57 +391,81 @@ void dump_section(const IMAGE_SECTION_HEADER *sectHead, const char* strtable)
 /* #define IMAGE_SCN_TYPE_NO_PAD		0x00000008 - Reserved */
 /* #define IMAGE_SCN_TYPE_COPY			0x00000010 - Reserved */
 
-	X(IMAGE_SCN_CNT_CODE, 			"CODE");
-	X(IMAGE_SCN_CNT_INITIALIZED_DATA, 	"INITIALIZED_DATA");
-	X(IMAGE_SCN_CNT_UNINITIALIZED_DATA, 	"UNINITIALIZED_DATA");
+    X(IMAGE_SCN_CNT_CODE, 		"CODE");
+    X(IMAGE_SCN_CNT_INITIALIZED_DATA, 	"INITIALIZED_DATA");
+    X(IMAGE_SCN_CNT_UNINITIALIZED_DATA, "UNINITIALIZED_DATA");
 
-	X(IMAGE_SCN_LNK_OTHER, 			"LNK_OTHER");
-	X(IMAGE_SCN_LNK_INFO, 			"LNK_INFO");
+    X(IMAGE_SCN_LNK_OTHER, 		"LNK_OTHER");
+    X(IMAGE_SCN_LNK_INFO, 		"LNK_INFO");
 /* #define	IMAGE_SCN_TYPE_OVER		0x00000400 - Reserved */
-	X(IMAGE_SCN_LNK_REMOVE, 		"LNK_REMOVE");
-	X(IMAGE_SCN_LNK_COMDAT, 		"LNK_COMDAT");
+    X(IMAGE_SCN_LNK_REMOVE, 		"LNK_REMOVE");
+    X(IMAGE_SCN_LNK_COMDAT, 		"LNK_COMDAT");
 
-/* 						0x00002000 - Reserved */
-/* #define IMAGE_SCN_MEM_PROTECTED 		0x00004000 - Obsolete */
-	X(IMAGE_SCN_MEM_FARDATA, 		"MEM_FARDATA");
+/* 					0x00002000 - Reserved */
+/* #define IMAGE_SCN_MEM_PROTECTED 	0x00004000 - Obsolete */
+    X(IMAGE_SCN_MEM_FARDATA, 		"MEM_FARDATA");
 
-/* #define IMAGE_SCN_MEM_SYSHEAP		0x00010000 - Obsolete */
-	X(IMAGE_SCN_MEM_PURGEABLE, 		"MEM_PURGEABLE");
-	X(IMAGE_SCN_MEM_16BIT, 			"MEM_16BIT");
-	X(IMAGE_SCN_MEM_LOCKED, 		"MEM_LOCKED");
-	X(IMAGE_SCN_MEM_PRELOAD, 		"MEM_PRELOAD");
+/* #define IMAGE_SCN_MEM_SYSHEAP	0x00010000 - Obsolete */
+    X(IMAGE_SCN_MEM_PURGEABLE, 		"MEM_PURGEABLE");
+    X(IMAGE_SCN_MEM_16BIT, 		"MEM_16BIT");
+    X(IMAGE_SCN_MEM_LOCKED, 		"MEM_LOCKED");
+    X(IMAGE_SCN_MEM_PRELOAD, 		"MEM_PRELOAD");
 
-        switch (sectHead->Characteristics & IMAGE_SCN_ALIGN_MASK)
-        {
-#define X2(b,s)	case b: printf("  " s); break
-        X2(IMAGE_SCN_ALIGN_1BYTES, 		"ALIGN_1BYTES");
-        X2(IMAGE_SCN_ALIGN_2BYTES, 		"ALIGN_2BYTES");
-        X2(IMAGE_SCN_ALIGN_4BYTES, 		"ALIGN_4BYTES");
-        X2(IMAGE_SCN_ALIGN_8BYTES, 		"ALIGN_8BYTES");
-        X2(IMAGE_SCN_ALIGN_16BYTES, 		"ALIGN_16BYTES");
-        X2(IMAGE_SCN_ALIGN_32BYTES, 		"ALIGN_32BYTES");
-        X2(IMAGE_SCN_ALIGN_64BYTES, 		"ALIGN_64BYTES");
-        X2(IMAGE_SCN_ALIGN_128BYTES, 		"ALIGN_128BYTES");
-        X2(IMAGE_SCN_ALIGN_256BYTES, 		"ALIGN_256BYTES");
-        X2(IMAGE_SCN_ALIGN_512BYTES, 		"ALIGN_512BYTES");
-        X2(IMAGE_SCN_ALIGN_1024BYTES, 		"ALIGN_1024BYTES");
-        X2(IMAGE_SCN_ALIGN_2048BYTES, 		"ALIGN_2048BYTES");
-        X2(IMAGE_SCN_ALIGN_4096BYTES, 		"ALIGN_4096BYTES");
-        X2(IMAGE_SCN_ALIGN_8192BYTES, 		"ALIGN_8192BYTES");
+    switch (characteristics & IMAGE_SCN_ALIGN_MASK)
+    {
+#define X2(b,s)	case b: printf("%s%s", sep, s); break
+        X2(IMAGE_SCN_ALIGN_1BYTES, 	"ALIGN_1BYTES");
+        X2(IMAGE_SCN_ALIGN_2BYTES, 	"ALIGN_2BYTES");
+        X2(IMAGE_SCN_ALIGN_4BYTES, 	"ALIGN_4BYTES");
+        X2(IMAGE_SCN_ALIGN_8BYTES, 	"ALIGN_8BYTES");
+        X2(IMAGE_SCN_ALIGN_16BYTES, 	"ALIGN_16BYTES");
+        X2(IMAGE_SCN_ALIGN_32BYTES, 	"ALIGN_32BYTES");
+        X2(IMAGE_SCN_ALIGN_64BYTES, 	"ALIGN_64BYTES");
+        X2(IMAGE_SCN_ALIGN_128BYTES, 	"ALIGN_128BYTES");
+        X2(IMAGE_SCN_ALIGN_256BYTES, 	"ALIGN_256BYTES");
+        X2(IMAGE_SCN_ALIGN_512BYTES, 	"ALIGN_512BYTES");
+        X2(IMAGE_SCN_ALIGN_1024BYTES, 	"ALIGN_1024BYTES");
+        X2(IMAGE_SCN_ALIGN_2048BYTES, 	"ALIGN_2048BYTES");
+        X2(IMAGE_SCN_ALIGN_4096BYTES, 	"ALIGN_4096BYTES");
+        X2(IMAGE_SCN_ALIGN_8192BYTES, 	"ALIGN_8192BYTES");
 #undef X2
-        }
+    }
 
-	X(IMAGE_SCN_LNK_NRELOC_OVFL, 		"LNK_NRELOC_OVFL");
+    X(IMAGE_SCN_LNK_NRELOC_OVFL, 	"LNK_NRELOC_OVFL");
 
-	X(IMAGE_SCN_MEM_DISCARDABLE, 		"MEM_DISCARDABLE");
-	X(IMAGE_SCN_MEM_NOT_CACHED, 		"MEM_NOT_CACHED");
-	X(IMAGE_SCN_MEM_NOT_PAGED, 		"MEM_NOT_PAGED");
-	X(IMAGE_SCN_MEM_SHARED, 		"MEM_SHARED");
-	X(IMAGE_SCN_MEM_EXECUTE, 		"MEM_EXECUTE");
-	X(IMAGE_SCN_MEM_READ, 			"MEM_READ");
-	X(IMAGE_SCN_MEM_WRITE, 			"MEM_WRITE");
+    X(IMAGE_SCN_MEM_DISCARDABLE, 	"MEM_DISCARDABLE");
+    X(IMAGE_SCN_MEM_NOT_CACHED, 	"MEM_NOT_CACHED");
+    X(IMAGE_SCN_MEM_NOT_PAGED, 		"MEM_NOT_PAGED");
+    X(IMAGE_SCN_MEM_SHARED, 		"MEM_SHARED");
+    X(IMAGE_SCN_MEM_EXECUTE, 		"MEM_EXECUTE");
+    X(IMAGE_SCN_MEM_READ, 		"MEM_READ");
+    X(IMAGE_SCN_MEM_WRITE, 		"MEM_WRITE");
 #undef X
-	printf("\n\n");
+}
+
+void dump_section(const IMAGE_SECTION_HEADER *sectHead, const char* strtable)
+{
+    unsigned offset;
+
+    /* long section name ? */
+    if (strtable && sectHead->Name[0] == '/' &&
+        ((offset = atoi((const char*)sectHead->Name + 1)) < *(const DWORD*)strtable))
+        printf("  %.8s (%s)", sectHead->Name, strtable + offset);
+    else
+        printf("  %-8.8s", sectHead->Name);
+    printf("   VirtSize: 0x%08x  VirtAddr:  0x%08x\n",
+           (UINT)sectHead->Misc.VirtualSize, (UINT)sectHead->VirtualAddress);
+    printf("    raw data offs:   0x%08x  raw data size: 0x%08x\n",
+           (UINT)sectHead->PointerToRawData, (UINT)sectHead->SizeOfRawData);
+    printf("    relocation offs: 0x%08x  relocations:   0x%08x\n",
+           (UINT)sectHead->PointerToRelocations, (UINT)sectHead->NumberOfRelocations);
+    printf("    line # offs:     %-8u  line #'s:      %-8u\n",
+           (UINT)sectHead->PointerToLinenumbers, (UINT)sectHead->NumberOfLinenumbers);
+    printf("    characteristics: 0x%08x\n", (UINT)sectHead->Characteristics);
+    printf("    ");
+    dump_section_characteristics(sectHead->Characteristics, "  ");
+
+    printf("\n\n");
 }
 
 static void dump_sections(const void *base, const void* addr, unsigned num_sect)

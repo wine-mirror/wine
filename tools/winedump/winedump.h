@@ -233,6 +233,7 @@ void            print_fake_dll(void);
 void            dump_file_header(const IMAGE_FILE_HEADER *);
 void            dump_optional_header(const IMAGE_OPTIONAL_HEADER32 *, UINT);
 void            dump_section(const IMAGE_SECTION_HEADER *, const char* strtable);
+void            dump_section_characteristics(DWORD characteristics, const char* sep);
 
 enum FileSig    get_kind_exec(void);
 void            dos_dump( void );
