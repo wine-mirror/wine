@@ -473,7 +473,14 @@ static BOOL i386_stack_walk(struct cpu_stack_walk *csw, STACKFRAME64 *frame,
         union ctx newctx = *context;
 
         if (!fetch_next_frame32(csw, &newctx, frame->AddrPC.Offset - deltapc))
-            goto done_err;
+        {
+            /* When running on wow64 setup, frame below can a 64 bit frame.
+             * As we don't expose 64bit frames for now, pretend it's the first frame.
+             */
+            if (frame->AddrPC.Offset == 0)
+                goto done_err;
+            newctx.x86.Eip = 0;
+        }
         frame->AddrReturn.Mode = AddrModeFlat;
         frame->AddrReturn.Offset = newctx.x86.Eip;
 
