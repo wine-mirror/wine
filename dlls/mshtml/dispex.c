@@ -2024,12 +2024,7 @@ void dispex_unlink(DispatchEx *This)
         return;
 
     for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
-        if(V_VT(&prop->var) == VT_DISPATCH) {
-            V_VT(&prop->var) = VT_EMPTY;
-            IDispatch_Release(V_DISPATCH(&prop->var));
-        }else {
-            VariantClear(&prop->var);
-        }
+        VariantClear(&prop->var);
     }
 
     if(This->dynamic_data->func_disps) {
