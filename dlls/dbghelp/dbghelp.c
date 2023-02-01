@@ -350,7 +350,8 @@ const struct cpu* process_get_cpu(const struct process* pcs)
 static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
 {
     PROCESS_BASIC_INFORMATION pbi;
-    ULONG_PTR base = 0, env = 0;
+    DWORD64 base = 0, env = 0;
+    const char* peb_addr;
 
     if (!GetProcessId(pcs->handle)) return FALSE;
     if (GetEnvironmentVariableA("DBGHELP_NOLIVE", NULL, 0)) return FALSE;
@@ -359,27 +360,44 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
                                    &pbi, sizeof(pbi), NULL ))
         return FALSE;
 
+    /* Note: we have to deal with the PEB64 and PEB32 in debuggee process
+     * while debugger can be in same or different bitness.
+     * For a 64 bit debuggee, use PEB64 and underlying ELF/system 64 (easy).
+     * For a 32 bit debuggee,
+     * - for environment variables, we need PEB32
+     * - for ELF/system base address, we need PEB32 when run in pure 32bit
+     *   or run in old wow configuration, but PEB64 when run in new wow
+     *   configuration.
+     * - this must be read from a debugger in either 32 or 64 bit setup.
+     */
+    peb_addr = (const char*)pbi.PebBaseAddress;
     if (!pcs->is_64bit)
     {
-        const char* peb32_addr;
         DWORD env32;
         PEB32 peb32;
 
         C_ASSERT(sizeof(void*) != 4 || FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS, Environment) == 0x48);
-        peb32_addr = (const char*)pbi.PebBaseAddress;
+
         if (!wow64 && child_wow64)
             /* current process is 64bit, while child process is 32 bit, need to read 32bit PEB */
-            peb32_addr += 0x1000;
-        if (!ReadProcessMemory(pcs->handle, peb32_addr, &peb32, sizeof(peb32), NULL)) return FALSE;
-        if (!ReadProcessMemory(pcs->handle, peb32_addr + 0x460 /* CloudFileFlags */, &base, sizeof(base), NULL)) return FALSE;
+            peb_addr += 0x1000;
+        if (!ReadProcessMemory(pcs->handle, peb_addr, &peb32, sizeof(peb32), NULL)) return FALSE;
+        base = *(const DWORD*)((const char*)&peb32 + 0x460 /* CloudFileFlags */);
+        pcs->is_system_64bit = FALSE;
         if (read_process_memory(pcs, peb32.ProcessParameters + 0x48, &env32, sizeof(env32))) env = env32;
     }
-    else
+    if (pcs->is_64bit || base == 0)
     {
-        PEB peb;
-        if (!ReadProcessMemory(pcs->handle, pbi.PebBaseAddress, &peb, sizeof(peb), NULL)) return FALSE;
-        if (!ReadProcessMemory(pcs->handle, (char *)pbi.PebBaseAddress + FIELD_OFFSET(PEB, CloudFileFlags), &base, sizeof(base), NULL)) return FALSE;
-        ReadProcessMemory(pcs->handle, (char *)peb.ProcessParameters + FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS, Environment), &env, sizeof(env), NULL);
+        PEB64 peb;
+
+        if (!pcs->is_64bit) peb_addr -= 0x1000; /* PEB32 => PEB64 */
+        if (!ReadProcessMemory(pcs->handle, peb_addr, &peb, sizeof(peb), NULL)) return FALSE;
+        base = peb.CloudFileFlags;
+        pcs->is_system_64bit = TRUE;
+        if (pcs->is_64bit)
+            ReadProcessMemory(pcs->handle,
+                              (char *)(ULONG_PTR)peb.ProcessParameters + FIELD_OFFSET(RTL_USER_PROCESS_PARAMETERS, Environment),
+                              &env, sizeof(env), NULL);
     }
 
     /* read debuggee environment block */
@@ -420,9 +438,9 @@ static BOOL check_live_target(struct process* pcs, BOOL wow64, BOOL child_wow64)
 
     if (!base) return FALSE;
 
-    TRACE("got debug info address %#Ix from PEB %p\n", base, pbi.PebBaseAddress);
+    TRACE("got debug info address %#I64x from PEB %p\n", base, pbi.PebBaseAddress);
     if (!elf_read_wine_loader_dbg_info(pcs, base) && !macho_read_wine_loader_dbg_info(pcs, base))
-        WARN("couldn't load process debug info at %#Ix\n", base);
+        WARN("couldn't load process debug info at %#I64x\n", base);
     return TRUE;
 }
 
