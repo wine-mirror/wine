@@ -3631,6 +3631,7 @@ static WCHAR *get_osbuildnumber( OSVERSIONINFOEXW *ver )
     if (ret) swprintf( ret, 11, L"%u", ver->dwBuildNumber );
     return ret;
 }
+
 static WCHAR *get_oscaption( OSVERSIONINFOEXW *ver )
 {
     static const WCHAR windowsW[] = L"Microsoft Windows ";
@@ -3645,12 +3646,17 @@ static WCHAR *get_oscaption( OSVERSIONINFOEXW *ver )
     static const WCHAR win8W[] = L"8 Pro";
     static const WCHAR win81W[] = L"8.1 Pro";
     static const WCHAR win10W[] = L"10 Pro";
+    static const WCHAR win11W[] = L"11 Pro";
     int len = ARRAY_SIZE( windowsW ) - 1;
     WCHAR *ret;
 
     if (!(ret = malloc( len * sizeof(WCHAR) + sizeof(win2003W) ))) return NULL;
     memcpy( ret, windowsW, sizeof(windowsW) );
-    if (ver->dwMajorVersion == 10 && ver->dwMinorVersion == 0) memcpy( ret + len, win10W, sizeof(win10W) );
+    if (ver->dwMajorVersion == 10 && ver->dwMinorVersion == 0)
+    {
+        if (ver->dwBuildNumber >= 22000) memcpy( ret + len, win11W, sizeof(win11W) );
+        else memcpy( ret + len, win10W, sizeof(win10W) );
+    }
     else if (ver->dwMajorVersion == 6 && ver->dwMinorVersion == 3) memcpy( ret + len, win81W, sizeof(win81W) );
     else if (ver->dwMajorVersion == 6 && ver->dwMinorVersion == 2) memcpy( ret + len, win8W, sizeof(win8W) );
     else if (ver->dwMajorVersion == 6 && ver->dwMinorVersion == 1)
@@ -3672,6 +3678,7 @@ static WCHAR *get_oscaption( OSVERSIONINFOEXW *ver )
     else memcpy( ret + len, win2000W, sizeof(win2000W) );
     return ret;
 }
+
 static WCHAR *get_osname( const WCHAR *caption )
 {
     static const WCHAR partitionW[] = L"|C:\\WINDOWS|\\Device\\Harddisk0\\Partition1";
@@ -3697,6 +3704,7 @@ static WCHAR *get_osversion( OSVERSIONINFOEXW *ver )
     if (ret) swprintf( ret, 33, L"%u.%u.%u", ver->dwMajorVersion, ver->dwMinorVersion, ver->dwBuildNumber );
     return ret;
 }
+
 static DWORD get_operatingsystemsku(void)
 {
     DWORD ret = PRODUCT_UNDEFINED;
