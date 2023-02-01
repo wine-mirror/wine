@@ -2025,6 +2025,7 @@ void dispex_unlink(DispatchEx *This)
 
     for(prop = This->dynamic_data->props; prop < This->dynamic_data->props + This->dynamic_data->prop_cnt; prop++) {
         VariantClear(&prop->var);
+        prop->flags |= DYNPROP_DELETED;
     }
 
     if(This->dynamic_data->func_disps) {

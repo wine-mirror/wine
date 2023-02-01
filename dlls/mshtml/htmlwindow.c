@@ -67,7 +67,7 @@ static inline BOOL is_outer_window(HTMLWindow *window)
     return &window->outer_window->base == window;
 }
 
-static HRESULT get_location(HTMLInnerWindow *This, HTMLLocation **ret)
+static HRESULT get_location(HTMLOuterWindow *This, HTMLLocation **ret)
 {
     if(!This->location) {
         HRESULT hres;
@@ -132,6 +132,9 @@ static void detach_inner_window(HTMLInnerWindow *window)
 
     if(doc)
         detach_document_node(doc);
+
+    if(outer_window && outer_window->location)
+        dispex_unlink(&outer_window->location->dispex);
 
     abort_window_bindings(window);
     remove_target_tasks(window->task_magic);
@@ -237,6 +240,11 @@ static void release_outer_window(HTMLOuterWindow *This)
     if(This->base.inner_window)
         detach_inner_window(This->base.inner_window);
 
+    if(This->location) {
+        This->location->window = NULL;
+        IHTMLLocation_Release(&This->location->IHTMLLocation_iface);
+    }
+
     if(This->frame_element)
         This->frame_element->content_window = NULL;
 
@@ -268,11 +276,6 @@ static void release_inner_window(HTMLInnerWindow *This)
     for(i=0; i < This->global_prop_cnt; i++)
         free(This->global_props[i].name);
     free(This->global_props);
-
-    if(This->location) {
-        This->location->window = NULL;
-        IHTMLLocation_Release(&This->location->IHTMLLocation_iface);
-    }
 
     if(This->image_factory) {
         This->image_factory->window = NULL;
@@ -809,7 +812,7 @@ static HRESULT WINAPI HTMLWindow2_get_location(IHTMLWindow2 *iface, IHTMLLocatio
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    hres = get_location(This->inner_window, &location);
+    hres = get_location(This->outer_window, &location);
     if(FAILED(hres))
         return hres;
 
@@ -3922,7 +3925,7 @@ static HRESULT IHTMLWindow2_location_hook(DispatchEx *dispex, WORD flags, DISPPA
 
     TRACE("forwarding to location.href\n");
 
-    hres = get_location(This, &location);
+    hres = get_location(This->base.outer_window, &location);
     if(FAILED(hres))
         return hres;
 

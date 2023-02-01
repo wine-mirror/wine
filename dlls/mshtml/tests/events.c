@@ -3134,6 +3134,7 @@ static void test_iframe_connections(IHTMLDocument2 *doc)
 
 static void test_doc_obj(IHTMLDocument2 *doc)
 {
+    static DISPID propput_dispid = DISPID_PROPERTYPUT;
     DISPID dispid, import_node_id, has_own_prop_id;
     IHTMLOptionElementFactory *option, *option2;
     IHTMLImageElementFactory *image, *image2;
@@ -3307,6 +3308,28 @@ static void test_doc_obj(IHTMLDocument2 *doc)
     IHTMLWindow7_Release(window7);
     VariantClear(&res);
 
+    /* Add props to location, since it gets lost on navigation, despite being same object */
+    bstr = SysAllocString(L"wineTestProp");
+    hres = IHTMLLocation_QueryInterface(location, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameEnsure, &dispid);
+    ok(hres == S_OK, "GetDispID(wineTestProp) returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    dp.cArgs = dp.cNamedArgs = 1;
+    dp.rgdispidNamedArgs = &propput_dispid;
+    dp.rgvarg = &arg;
+    V_VT(&arg) = VT_I4;
+    V_I4(&arg) = 42;
+    bstr = SysAllocString(L"reload");
+    hres = IDispatchEx_GetDispID(dispex, bstr, 0, &dispid);
+    ok(hres == S_OK, "GetDispID(reload) returned: %08lx\n", hres);
+    hres = IDispatchEx_InvokeEx(dispex, dispid, 0, DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
+    todo_wine_if(document_mode < 9)
+    ok(hres == (document_mode < 9 ? E_NOTIMPL : S_OK), "InvokeEx returned: %08lx\n", hres);
+    IDispatchEx_Release(dispex);
+    SysFreeString(bstr);
+
     /* Navigate to a different document mode page, checking using the same doc obj.
        Test that it breaks COM rules, since IEventTarget is conditionally exposed.
        All the events registered on the old doc node are also removed.
@@ -3356,10 +3379,24 @@ static void test_doc_obj(IHTMLDocument2 *doc)
 
     hres = IHTMLWindow2_get_location(window, &location2);
     ok(hres == S_OK, "get_location failed: %08lx\n", hres);
-    todo_wine
     ok(location == location2, "location != location2\n");
+
+    bstr = SysAllocString(L"wineTestProp");
+    hres = IHTMLLocation_GetIDsOfNames(location2, &IID_NULL, &bstr, 1, 0, &dispid);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetIDsOfNames(wineTestProp) returned: %08lx\n", hres);
+    SysFreeString(bstr);
+
+    memset(&dp, 0, sizeof(dp));
+    bstr = SysAllocString(L"reload");
+    hres = IHTMLLocation_GetIDsOfNames(location2, &IID_NULL, &bstr, 1, 0, &dispid);
+    ok(hres == S_OK, "GetIDsOfNames(reload) returned: %08lx\n", hres);
+    hres = IHTMLLocation_Invoke(location2, dispid, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &res, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    ok(V_VT(&res) == VT_DISPATCH, "VT = %d\n", V_VT(&res));
     IHTMLLocation_Release(location2);
     IHTMLLocation_Release(location);
+    SysFreeString(bstr);
+    VariantClear(&res);
 
     hres = IHTMLWindow2_get_navigator(window, &navigator2);
     ok(hres == S_OK, "get_navigator failed: %08lx\n", hres);

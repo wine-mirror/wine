@@ -11813,11 +11813,14 @@ static void test_document_mode_lock(void)
     IHTMLWindow7 *window7;
     IHTMLWindow5 *window5;
     IHTMLWindow2 *window;
+    IDispatchEx *dispex;
     IStream *stream;
+    DISPID dispid;
     HRESULT hres;
     HGLOBAL mem;
     VARIANT var;
     SIZE_T len;
+    BSTR bstr;
     MSG msg;
 
     notif_doc = doc = create_document();
@@ -11872,6 +11875,14 @@ static void test_document_mode_lock(void)
     IHTMLWindow2_Release(window);
     VariantClear(&var);
 
+    bstr = SysAllocString(L"wineTestProp");
+    hres = IHTMLLocation_QueryInterface(location, &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx: %08lx\n", hres);
+    hres = IDispatchEx_GetDispID(dispex, bstr, fdexNameEnsure, &dispid);
+    ok(hres == S_OK, "GetDispID(wineTestProp) returned: %08lx\n", hres);
+    IDispatchEx_Release(dispex);
+    SysFreeString(bstr);
+
     len = strlen(doc_blank_ie9);
     mem = GlobalAlloc(0, len);
     memcpy(mem, doc_blank_ie9, len);
@@ -11909,10 +11920,14 @@ static void test_document_mode_lock(void)
 
     hres = IHTMLWindow2_get_location(window, &location2);
     ok(hres == S_OK, "get_location failed: %08lx\n", hres);
-    todo_wine
     ok(location == location2, "location != location2\n");
+
+    bstr = SysAllocString(L"wineTestProp");
+    hres = IHTMLLocation_GetIDsOfNames(location2, &IID_NULL, &bstr, 1, 0, &dispid);
+    ok(hres == DISP_E_UNKNOWNNAME, "GetIDsOfNames(wineTestProp) returned: %08lx\n", hres);
     IHTMLLocation_Release(location2);
     IHTMLLocation_Release(location);
+    SysFreeString(bstr);
 
     hres = IHTMLWindow2_get_navigator(window, &navigator2);
     ok(hres == S_OK, "get_navigator failed: %08lx\n", hres);

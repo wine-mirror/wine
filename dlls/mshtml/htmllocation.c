@@ -38,18 +38,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(mshtml);
 
 static HRESULT get_url(HTMLLocation *This, const WCHAR **ret)
 {
-    if(!This->window || !This->window->base.outer_window || !This->window->base.outer_window->url)
+    if(!This->window || !This->window->url)
         *ret = L"about:blank";
     else
-        *ret = This->window->base.outer_window->url;
+        *ret = This->window->url;
     return S_OK;
 }
 
 static IUri *get_uri(HTMLLocation *This)
 {
-    if(!This->window || !This->window->base.outer_window)
-        return NULL;
-    return This->window->base.outer_window->uri;
+    return This->window ? This->window->uri : NULL;
 }
 
 static HRESULT get_url_components(HTMLLocation *This, URL_COMPONENTSW *url)
@@ -165,12 +163,12 @@ static HRESULT WINAPI HTMLLocation_put_href(IHTMLLocation *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->window || !This->window->base.outer_window) {
+    if(!This->window) {
         FIXME("No window available\n");
         return E_FAIL;
     }
 
-    return navigate_url(This->window->base.outer_window, v, This->window->base.outer_window->uri, BINDING_NAVIGATED);
+    return navigate_url(This->window, v, This->window->uri, BINDING_NAVIGATED);
 }
 
 static HRESULT WINAPI HTMLLocation_get_href(IHTMLLocation *iface, BSTR *p)
@@ -523,7 +521,7 @@ static HRESULT WINAPI HTMLLocation_put_hash(IHTMLLocation *iface, BSTR v)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(v));
 
-    if(!This->window || !This->window->base.outer_window) {
+    if(!This->window) {
         FIXME("No window available\n");
         return E_FAIL;
     }
@@ -536,7 +534,7 @@ static HRESULT WINAPI HTMLLocation_put_hash(IHTMLLocation *iface, BSTR v)
         memcpy(hash + 1, v, size - sizeof(WCHAR));
     }
 
-    hres = navigate_url(This->window->base.outer_window, hash, This->window->base.outer_window->uri, BINDING_NAVIGATED);
+    hres = navigate_url(This->window, hash, This->window->uri, BINDING_NAVIGATED);
 
     if(hash != v)
         free(hash);
@@ -585,12 +583,12 @@ static HRESULT WINAPI HTMLLocation_reload(IHTMLLocation *iface, VARIANT_BOOL fla
     }
 
     /* reload is supposed to fail if called from a script with different origin, but IE doesn't care */
-    if(!is_main_content_window(This->window->base.outer_window)) {
+    if(!is_main_content_window(This->window)) {
         FIXME("Unsupported on iframe\n");
         return E_NOTIMPL;
     }
 
-    return reload_page(This->window->base.outer_window);
+    return reload_page(This->window);
 }
 
 static HRESULT WINAPI HTMLLocation_replace(IHTMLLocation *iface, BSTR bstr)
@@ -599,13 +597,12 @@ static HRESULT WINAPI HTMLLocation_replace(IHTMLLocation *iface, BSTR bstr)
 
     TRACE("(%p)->(%s)\n", This, debugstr_w(bstr));
 
-    if(!This->window || !This->window->base.outer_window) {
+    if(!This->window) {
         FIXME("No window available\n");
         return E_FAIL;
     }
 
-    return navigate_url(This->window->base.outer_window, bstr, This->window->base.outer_window->uri,
-            BINDING_NAVIGATED|BINDING_REPLACE);
+    return navigate_url(This->window, bstr, This->window->uri, BINDING_NAVIGATED | BINDING_REPLACE);
 }
 
 static HRESULT WINAPI HTMLLocation_assign(IHTMLLocation *iface, BSTR bstr)
@@ -659,14 +656,14 @@ static const tid_t HTMLLocation_iface_tids[] = {
     0
 };
 static dispex_static_data_t HTMLLocation_dispex = {
-    L"Object",
+    L"Location",
     NULL,
     DispHTMLLocation_tid,
     HTMLLocation_iface_tids
 };
 
 
-HRESULT HTMLLocation_Create(HTMLInnerWindow *window, HTMLLocation **ret)
+HRESULT HTMLLocation_Create(HTMLOuterWindow *window, HTMLLocation **ret)
 {
     HTMLLocation *location;
 
@@ -679,7 +676,7 @@ HRESULT HTMLLocation_Create(HTMLInnerWindow *window, HTMLLocation **ret)
     location->window = window;
 
     init_dispatch(&location->dispex, (IUnknown*)&location->IHTMLLocation_iface, &HTMLLocation_dispex,
-                  dispex_compat_mode(&window->event_target.dispex));
+                  COMPAT_MODE_QUIRKS);
 
     *ret = location;
     return S_OK;
