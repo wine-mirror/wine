@@ -2003,7 +2003,17 @@ void dispex_traverse(DispatchEx *This, nsCycleCollectionTraversalCallback *cb)
             note_cc_edge((nsISupports*)V_DISPATCH(&prop->var), "dispex_data", cb);
     }
 
-    /* FIXME: Traverse func_disps */
+    if(This->dynamic_data->func_disps) {
+        func_obj_entry_t *iter = This->dynamic_data->func_disps, *end = iter + This->info->func_disp_cnt;
+
+        for(iter = This->dynamic_data->func_disps; iter < end; iter++) {
+            if(!iter->func_obj)
+                continue;
+            note_cc_edge((nsISupports*)&iter->func_obj->dispex.IDispatchEx_iface, "func_obj", cb);
+            if(V_VT(&iter->val) == VT_DISPATCH)
+                note_cc_edge((nsISupports*)V_DISPATCH(&iter->val), "func_val", cb);
+        }
+    }
 }
 
 void dispex_unlink(DispatchEx *This)
@@ -2020,6 +2030,21 @@ void dispex_unlink(DispatchEx *This)
         }else {
             VariantClear(&prop->var);
         }
+    }
+
+    if(This->dynamic_data->func_disps) {
+        func_obj_entry_t *iter = This->dynamic_data->func_disps, *end = iter + This->info->func_disp_cnt;
+
+        for(iter = This->dynamic_data->func_disps; iter < end; iter++) {
+            if(!iter->func_obj)
+                continue;
+            iter->func_obj->obj = NULL;
+            IDispatchEx_Release(&iter->func_obj->dispex.IDispatchEx_iface);
+            VariantClear(&iter->val);
+        }
+
+        free(This->dynamic_data->func_disps);
+        This->dynamic_data->func_disps = NULL;
     }
 }
 
