@@ -233,7 +233,6 @@ static void test_modules(void)
 
     /* not always present */
     attr = GetFileAttributesA("C:\\windows\\syswow64\\notepad.exe");
-    todo_wine_if(sizeof(void*) == 8)
     if (attr != INVALID_FILE_ATTRIBUTES)
     {
         ret = SymLoadModule(GetCurrentProcess(), NULL, "C:\\windows\\syswow64\\notepad.exe", NULL, base2, 0);
@@ -241,6 +240,7 @@ static void test_modules(void)
         ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
         ok(im.BaseOfImage == base2, "Wrong base address\n");
+        todo_wine_if(sizeof(void*) == 8)
         ok(im.MachineType == get_module_machine("C:\\windows\\syswow64\\notepad.exe"),
            "Wrong machine %lx\n", im.MachineType);
     }
@@ -267,12 +267,12 @@ static void test_modules(void)
        "Wrong machine %lx\n", im.MachineType);
 
     /* still can access first module after loading second */
-    todo_wine_if(sizeof(void*) == 8)
     if (attr != INVALID_FILE_ATTRIBUTES)
     {
         ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
         ok(im.BaseOfImage == base2, "Wrong base address\n");
+        todo_wine_if(sizeof(void*) == 8)
         ok(im.MachineType == get_module_machine("C:\\windows\\syswow64\\notepad.exe"),
            "Wrong machine %lx\n", im.MachineType);
     }
