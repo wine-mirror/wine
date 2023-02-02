@@ -667,7 +667,7 @@ void wined3d_context_vk_destroy_vk_framebuffer(struct wined3d_context_vk *contex
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         VK_CALL(vkDestroyFramebuffer(device_vk->vk_device, vk_framebuffer, NULL));
         TRACE("Destroyed framebuffer 0x%s.\n", wine_dbgstr_longlong(vk_framebuffer));
@@ -708,7 +708,7 @@ static void wined3d_context_vk_reset_vk_descriptor_pool(struct wined3d_context_v
 {
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         wined3d_context_vk_return_vk_descriptor_pool(context_vk, vk_descriptor_pool);
         TRACE("Reset descriptor pool 0x%s.\n", wine_dbgstr_longlong(vk_descriptor_pool));
@@ -733,7 +733,7 @@ void wined3d_context_vk_destroy_vk_memory(struct wined3d_context_vk *context_vk,
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         VK_CALL(vkFreeMemory(device_vk->vk_device, vk_memory, NULL));
         TRACE("Freed memory 0x%s.\n", wine_dbgstr_longlong(vk_memory));
@@ -756,7 +756,7 @@ void wined3d_context_vk_destroy_allocator_block(struct wined3d_context_vk *conte
 {
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         wined3d_context_vk_free_memory(context_vk, block);
         TRACE("Freed block %p.\n", block);
@@ -811,7 +811,7 @@ static void wined3d_context_vk_destroy_bo_slab_slice(struct wined3d_context_vk *
 {
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         wined3d_bo_slab_vk_free_slice(slab, idx, context_vk);
         return;
@@ -836,7 +836,7 @@ static void wined3d_context_vk_destroy_vk_buffer(struct wined3d_context_vk *cont
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         VK_CALL(vkDestroyBuffer(device_vk->vk_device, vk_buffer, NULL));
         TRACE("Destroyed buffer 0x%s.\n", wine_dbgstr_longlong(vk_buffer));
@@ -861,7 +861,7 @@ void wined3d_context_vk_destroy_vk_image(struct wined3d_context_vk *context_vk,
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         VK_CALL(vkDestroyImage(device_vk->vk_device, vk_image, NULL));
         TRACE("Destroyed image 0x%s.\n", wine_dbgstr_longlong(vk_image));
@@ -886,7 +886,7 @@ void wined3d_context_vk_destroy_vk_buffer_view(struct wined3d_context_vk *contex
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         VK_CALL(vkDestroyBufferView(device_vk->vk_device, vk_view, NULL));
         TRACE("Destroyed buffer view 0x%s.\n", wine_dbgstr_longlong(vk_view));
@@ -911,7 +911,7 @@ void wined3d_context_vk_destroy_vk_image_view(struct wined3d_context_vk *context
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         VK_CALL(vkDestroyImageView(device_vk->vk_device, vk_view, NULL));
         TRACE("Destroyed image view 0x%s.\n", wine_dbgstr_longlong(vk_view));
@@ -971,7 +971,7 @@ void wined3d_context_vk_destroy_vk_pipeline(struct wined3d_context_vk *context_v
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         VK_CALL(vkDestroyPipeline(device_vk->vk_device, vk_pipeline, NULL));
         TRACE("Destroyed pipeline 0x%s.\n", wine_dbgstr_longlong(vk_pipeline));
@@ -997,7 +997,7 @@ void wined3d_context_vk_destroy_vk_sampler(struct wined3d_context_vk *context_vk
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         VK_CALL(vkDestroySampler(device_vk->vk_device, vk_sampler, NULL));
         TRACE("Destroyed sampler 0x%s.\n", wine_dbgstr_longlong(vk_sampler));
@@ -1022,7 +1022,7 @@ void wined3d_context_vk_destroy_vk_event(struct wined3d_context_vk *context_vk,
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_retired_object_vk *o;
 
-    if (context_vk->completed_command_buffer_id > command_buffer_id)
+    if (context_vk->completed_command_buffer_id >= command_buffer_id)
     {
         VK_CALL(vkDestroyEvent(device_vk->vk_device, vk_event, NULL));
         TRACE("Destroyed event 0x%s.\n", wine_dbgstr_longlong(vk_event));
