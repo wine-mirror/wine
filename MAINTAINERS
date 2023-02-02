@@ -212,6 +212,7 @@ F:	dlls/winegstreamer/aac_decoder.c
 F:	dlls/winegstreamer/color_convert.c
 F:	dlls/winegstreamer/h264_decoder.c
 F:	dlls/winegstreamer/resampler.c
+F:	dlls/winegstreamer/video_decoder.c
 F:	dlls/winegstreamer/video_processor.c
 F:	dlls/winegstreamer/wg_sample.c
 F:	dlls/winegstreamer/wg_transform.c

@@ -16,6 +16,7 @@ C_SRCS = \
 	quartz_parser.c \
 	quartz_transform.c \
 	resampler.c \
+	video_decoder.c \
 	video_processor.c \
 	wg_allocator.c \
 	wg_format.c \
