@@ -182,6 +182,7 @@ SOURCES = \
 	dciddi.h \
 	dciman.h \
 	dcommon.idl \
+	dcomptypes.idl \
 	dde.h \
 	dde.rh \
 	ddeml.h \
