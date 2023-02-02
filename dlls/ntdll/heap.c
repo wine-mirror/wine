@@ -86,11 +86,14 @@ struct rtl_heap_entry
 
 struct block
 {
-    WORD block_size;   /* block size in multiple of BLOCK_ALIGN */
+    /* block size in multiple of BLOCK_ALIGN */
+    WORD block_size;
+    /* unused size (used block) / high size bits (free block) */
+    WORD tail_size;
+    /* offset to region base */
+    WORD base_offset;
+    BYTE block_type;
     BYTE block_flags;
-    BYTE tail_size;    /* unused size (used block) / high size bits (free block) */
-    WORD base_offset;  /* offset to the region base in multiple of REGION_ALIGN */
-    WORD block_type;
 };
 
 C_ASSERT( sizeof(struct block) == 8 );
@@ -131,10 +134,10 @@ typedef struct
 C_ASSERT( sizeof(ARENA_LARGE) == offsetof(ARENA_LARGE, block) + sizeof(struct block) );
 C_ASSERT( sizeof(ARENA_LARGE) == 4 * BLOCK_ALIGN );
 
-#define BLOCK_TYPE_USED        0x5355
-#define BLOCK_TYPE_DEAD        0xdead
-#define BLOCK_TYPE_FREE        0x5246
-#define BLOCK_TYPE_LARGE       0x614c
+#define BLOCK_TYPE_USED        'u'
+#define BLOCK_TYPE_DEAD        'D'
+#define BLOCK_TYPE_FREE        'F'
+#define BLOCK_TYPE_LARGE       'L'
 
 #define BLOCK_FILL_USED        0x55
 #define BLOCK_FILL_TAIL        0xab
@@ -157,8 +160,9 @@ C_ASSERT( sizeof(struct entry) <= HEAP_MIN_BLOCK_SIZE );
 #define HEAP_MAX_BLOCK_REGION_SIZE  (FIELD_MAX( struct block, base_offset ) * REGION_ALIGN)
 
 C_ASSERT( HEAP_MAX_USED_BLOCK_SIZE == 512 * 1024 * (sizeof(void *) / 4) - BLOCK_ALIGN );
-C_ASSERT( HEAP_MAX_FREE_BLOCK_SIZE == 128 * 1024 * 1024 * (sizeof(void *) / 4) - BLOCK_ALIGN );
-C_ASSERT( HEAP_MAX_BLOCK_REGION_SIZE >= HEAP_MAX_FREE_BLOCK_SIZE );
+C_ASSERT( HEAP_MAX_FREE_BLOCK_SIZE >= 128 * 1024 * 1024 * (sizeof(void *) / 4) - BLOCK_ALIGN );
+C_ASSERT( HEAP_MAX_BLOCK_REGION_SIZE >= 128 * 1024 * 1024 * (sizeof(void *) / 4) - BLOCK_ALIGN );
+C_ASSERT( HEAP_MAX_FREE_BLOCK_SIZE >= HEAP_MAX_BLOCK_REGION_SIZE );
 
 /* minimum size to start allocating large blocks */
 #define HEAP_MIN_LARGE_BLOCK_SIZE  (HEAP_MAX_USED_BLOCK_SIZE - 0x1000)
