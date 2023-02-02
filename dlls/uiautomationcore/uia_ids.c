@@ -44,6 +44,13 @@ static int __cdecl uia_pattern_guid_compare(const void *a, const void *b)
     return memcmp(guid, pattern->guid, sizeof(*guid));
 }
 
+static int __cdecl uia_control_type_guid_compare(const void *a, const void *b)
+{
+    const GUID *guid = a;
+    const struct uia_control_type_info *control = b;
+    return memcmp(guid, control->guid, sizeof(*guid));
+}
+
 /* Sorted by GUID. */
 static const struct uia_prop_info default_uia_properties[] = {
     { &AutomationId_Property_GUID,                       UIA_AutomationIdPropertyId,
@@ -514,6 +521,62 @@ const struct uia_pattern_info *uia_pattern_info_from_id(PATTERNID pattern_id)
     return &default_uia_patterns[pattern_id_idx[pattern_id - PATTERN_ID_MIN]];
 }
 
+/* Sorted by GUID. */
+static const struct uia_control_type_info default_uia_control_types[] = {
+    { &Table_Control_GUID,        UIA_TableControlTypeId },
+    { &StatusBar_Control_GUID,    UIA_StatusBarControlTypeId },
+    { &Group_Control_GUID,        UIA_GroupControlTypeId },
+    { &SplitButton_Control_GUID,  UIA_SplitButtonControlTypeId },
+    { &CheckBox_Control_GUID,     UIA_CheckBoxControlTypeId },
+    { &Hyperlink_Control_GUID,    UIA_HyperlinkControlTypeId },
+    { &Tab_Control_GUID,          UIA_TabControlTypeId },
+    { &ScrollBar_Control_GUID,    UIA_ScrollBarControlTypeId },
+    { &Spinner_Control_GUID,      UIA_SpinnerControlTypeId },
+    { &Menu_Control_GUID,         UIA_MenuControlTypeId },
+    { &Window_Control_GUID,       UIA_WindowControlTypeId },
+    { &DataItem_Control_GUID,     UIA_DataItemControlTypeId },
+    { &SemanticZoom_Control_GUID, UIA_SemanticZoomControlTypeId },
+    { &Slider_Control_GUID,       UIA_SliderControlTypeId },
+    { &TabItem_Control_GUID,      UIA_TabItemControlTypeId },
+    { &MenuBar_Control_GUID,      UIA_MenuBarControlTypeId },
+    { &ToolBar_Control_GUID,      UIA_ToolBarControlTypeId },
+    { &Pane_Control_GUID,         UIA_PaneControlTypeId },
+    { &Button_Control_GUID,       UIA_ButtonControlTypeId },
+    { &ComboBox_Control_GUID,     UIA_ComboBoxControlTypeId },
+    { &Document_Control_GUID,     UIA_DocumentControlTypeId },
+    { &Thumb_Control_GUID,        UIA_ThumbControlTypeId },
+    { &ProgressBar_Control_GUID,  UIA_ProgressBarControlTypeId },
+    { &Calendar_Control_GUID,     UIA_CalendarControlTypeId },
+    { &AppBar_Control_GUID,       UIA_AppBarControlTypeId },
+    { &Tree_Control_GUID,         UIA_TreeControlTypeId },
+    { &Separator_Control_GUID,    UIA_SeparatorControlTypeId },
+    { &DataGrid_Control_GUID,     UIA_DataGridControlTypeId },
+    { &TreeItem_Control_GUID,     UIA_TreeItemControlTypeId },
+    { &TitleBar_Control_GUID,     UIA_TitleBarControlTypeId },
+    { &Custom_Control_GUID,       UIA_CustomControlTypeId },
+    { &Edit_Control_GUID,         UIA_EditControlTypeId },
+    { &HeaderItem_Control_GUID,   UIA_HeaderItemControlTypeId },
+    { &Header_Control_GUID,       UIA_HeaderControlTypeId },
+    { &ToolTip_Control_GUID,      UIA_ToolTipControlTypeId },
+    { &MenuItem_Control_GUID,     UIA_MenuItemControlTypeId },
+    { &RadioButton_Control_GUID,  UIA_RadioButtonControlTypeId },
+    { &Text_Control_GUID,         UIA_TextControlTypeId },
+    { &List_Control_GUID,         UIA_ListControlTypeId },
+    { &Image_Control_GUID,        UIA_ImageControlTypeId },
+    { &ListItem_Control_GUID,     UIA_ListItemControlTypeId },
+};
+
+static const struct uia_control_type_info *uia_control_type_info_from_guid(const GUID *guid)
+{
+    struct uia_control_type_info *control_type;
+
+    if ((control_type = bsearch(guid, default_uia_control_types, ARRAY_SIZE(default_uia_control_types),
+                    sizeof(*control_type), uia_control_type_guid_compare)))
+        return control_type;
+
+    return NULL;
+}
+
 /***********************************************************************
  *          UiaLookupId (uiautomationcore.@)
  */
@@ -562,6 +625,17 @@ int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid)
     }
 
     case AutomationIdentifierType_ControlType:
+    {
+        const struct uia_control_type_info *control_type = uia_control_type_info_from_guid(guid);
+
+        if (control_type)
+            ret_id = control_type->control_type_id;
+        else
+            FIXME("Failed to find control type Id for GUID %s\n", debugstr_guid(guid));
+
+        break;
+    }
+
     case AutomationIdentifierType_TextAttribute:
     case AutomationIdentifierType_LandmarkType:
     case AutomationIdentifierType_Annotation:

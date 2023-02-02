@@ -4342,6 +4342,51 @@ static const struct uia_lookup_id uia_pattern_lookup_ids[] = {
     { &CustomNavigation_Pattern_GUID,  UIA_CustomNavigationPatternId },
 };
 
+static const struct uia_lookup_id uia_control_type_lookup_ids[] = {
+    { &Button_Control_GUID,       UIA_ButtonControlTypeId },
+    { &Calendar_Control_GUID,     UIA_CalendarControlTypeId },
+    { &CheckBox_Control_GUID,     UIA_CheckBoxControlTypeId },
+    { &ComboBox_Control_GUID,     UIA_ComboBoxControlTypeId },
+    { &Edit_Control_GUID,         UIA_EditControlTypeId },
+    { &Hyperlink_Control_GUID,    UIA_HyperlinkControlTypeId },
+    { &Image_Control_GUID,        UIA_ImageControlTypeId },
+    { &ListItem_Control_GUID,     UIA_ListItemControlTypeId },
+    { &List_Control_GUID,         UIA_ListControlTypeId },
+    { &Menu_Control_GUID,         UIA_MenuControlTypeId },
+    { &MenuBar_Control_GUID,      UIA_MenuBarControlTypeId },
+    { &MenuItem_Control_GUID,     UIA_MenuItemControlTypeId },
+    { &ProgressBar_Control_GUID,  UIA_ProgressBarControlTypeId },
+    { &RadioButton_Control_GUID,  UIA_RadioButtonControlTypeId },
+    { &ScrollBar_Control_GUID,    UIA_ScrollBarControlTypeId },
+    { &Slider_Control_GUID,       UIA_SliderControlTypeId },
+    { &Spinner_Control_GUID,      UIA_SpinnerControlTypeId },
+    { &StatusBar_Control_GUID,    UIA_StatusBarControlTypeId },
+    { &Tab_Control_GUID,          UIA_TabControlTypeId },
+    { &TabItem_Control_GUID,      UIA_TabItemControlTypeId },
+    { &Text_Control_GUID,         UIA_TextControlTypeId },
+    { &ToolBar_Control_GUID,      UIA_ToolBarControlTypeId },
+    { &ToolTip_Control_GUID,      UIA_ToolTipControlTypeId },
+    { &Tree_Control_GUID,         UIA_TreeControlTypeId },
+    { &TreeItem_Control_GUID,     UIA_TreeItemControlTypeId },
+    { &Custom_Control_GUID,       UIA_CustomControlTypeId },
+    { &Group_Control_GUID,        UIA_GroupControlTypeId },
+    { &Thumb_Control_GUID,        UIA_ThumbControlTypeId },
+    { &DataGrid_Control_GUID,     UIA_DataGridControlTypeId },
+    { &DataItem_Control_GUID,     UIA_DataItemControlTypeId },
+    { &Document_Control_GUID,     UIA_DocumentControlTypeId },
+    { &SplitButton_Control_GUID,  UIA_SplitButtonControlTypeId },
+    { &Window_Control_GUID,       UIA_WindowControlTypeId },
+    { &Pane_Control_GUID,         UIA_PaneControlTypeId },
+    { &Header_Control_GUID,       UIA_HeaderControlTypeId },
+    { &HeaderItem_Control_GUID,   UIA_HeaderItemControlTypeId },
+    { &Table_Control_GUID,        UIA_TableControlTypeId },
+    { &TitleBar_Control_GUID,     UIA_TitleBarControlTypeId },
+    { &Separator_Control_GUID,    UIA_SeparatorControlTypeId },
+    /* Implemented on Win8+ */
+    { &SemanticZoom_Control_GUID, UIA_SemanticZoomControlTypeId },
+    { &AppBar_Control_GUID,       UIA_AppBarControlTypeId },
+};
+
 static void test_UiaLookupId(void)
 {
     static const struct {
@@ -4354,6 +4399,7 @@ static void test_UiaLookupId(void)
         { "property", AutomationIdentifierType_Property, uia_property_lookup_ids, ARRAY_SIZE(uia_property_lookup_ids) },
         { "event",    AutomationIdentifierType_Event,    uia_event_lookup_ids,    ARRAY_SIZE(uia_event_lookup_ids) },
         { "pattern",  AutomationIdentifierType_Pattern,  uia_pattern_lookup_ids,  ARRAY_SIZE(uia_pattern_lookup_ids) },
+        { "control_type", AutomationIdentifierType_ControlType, uia_control_type_lookup_ids, ARRAY_SIZE(uia_control_type_lookup_ids) },
     };
     unsigned int i, y;
 

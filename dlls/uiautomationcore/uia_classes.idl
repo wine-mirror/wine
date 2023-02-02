@@ -40,6 +40,11 @@ struct uia_pattern_info {
     const GUID *pattern_iid;
 };
 
+struct uia_control_type_info {
+    const GUID *guid;
+    int control_type_id;
+};
+
 [
    version(1.0),
    uuid(8a9ca8eb-856b-43d9-abd7-4a590054064f),
