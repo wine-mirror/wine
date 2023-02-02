@@ -1899,11 +1899,16 @@ static void test_wglChoosePixelFormatARB(HDC hdc)
 
 static void test_copy_context(HDC hdc)
 {
-    HGLRC ctx, ctx2;
+    HGLRC ctx, ctx2, old_ctx;
     BOOL ret;
+
+    old_ctx = wglGetCurrentContext();
+    ok(!!old_ctx, "wglGetCurrentContext failed, last error %#lx.\n", GetLastError());
 
     ctx = wglCreateContext(hdc);
     ok(!!ctx, "Failed to create GL context, last error %#lx.\n", GetLastError());
+    ret = wglMakeCurrent(hdc, ctx);
+    ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
     ctx2 = wglCreateContext(hdc);
     ok(!!ctx2, "Failed to create GL context, last error %#lx.\n", GetLastError());
 
@@ -1911,10 +1916,15 @@ static void test_copy_context(HDC hdc)
     todo_wine
     ok(ret, "Failed to copy GL context, last error %#lx.\n", GetLastError());
 
+    ret = wglMakeCurrent(NULL, NULL);
+    ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
     ret = wglDeleteContext(ctx2);
     ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
     ret = wglDeleteContext(ctx);
     ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
+
+    ret = wglMakeCurrent(hdc, old_ctx);
+    ok(ret, "wglMakeCurrent failed, last error %#lx.\n", GetLastError());
 }
 
 START_TEST(opengl)
