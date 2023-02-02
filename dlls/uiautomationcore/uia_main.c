@@ -358,6 +358,16 @@ HRESULT WINAPI UiaRaiseNotificationEvent(IRawElementProviderSimple *provider, en
     return S_OK;
 }
 
+/***********************************************************************
+ *          UiaRaiseChangesEvent (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaRaiseChangesEvent(IRawElementProviderSimple *provider, int event_id_count,
+        struct UiaChangeInfo *uia_changes)
+{
+    FIXME("(%p, %d, %p): stub\n", provider, event_id_count, uia_changes);
+    return S_OK;
+}
+
 HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **provider)
 {
     struct hwnd_host_provider *host_prov;

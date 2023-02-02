@@ -87,7 +87,7 @@
 @ stdcall UiaRaiseAsyncContentLoadedEvent(ptr long double)
 @ stdcall UiaRaiseAutomationEvent(ptr long)
 @ stdcall UiaRaiseAutomationPropertyChangedEvent(ptr long int128 int128)
-#@ stub UiaRaiseChangesEvent
+@ stdcall UiaRaiseChangesEvent(ptr long ptr)
 @ stdcall UiaRaiseNotificationEvent(ptr long long wstr wstr)
 @ stdcall UiaRaiseStructureChangedEvent(ptr long ptr long)
 @ stdcall UiaRaiseTextEditTextChangedEvent(ptr long ptr)
