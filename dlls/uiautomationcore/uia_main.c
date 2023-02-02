@@ -337,6 +337,16 @@ HRESULT WINAPI UiaRaiseAsyncContentLoadedEvent(IRawElementProviderSimple *provid
     return S_OK;
 }
 
+/***********************************************************************
+ *          UiaRaiseTextEditTextChangedEvent (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaRaiseTextEditTextChangedEvent(IRawElementProviderSimple *provider,
+        enum TextEditChangeType text_edit_change_type, SAFEARRAY *changed_data)
+{
+    FIXME("(%p, %d, %p): stub\n", provider, text_edit_change_type, changed_data);
+    return S_OK;
+}
+
 HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **provider)
 {
     struct hwnd_host_provider *host_prov;
