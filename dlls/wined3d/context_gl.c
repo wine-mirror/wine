@@ -2726,7 +2726,7 @@ static void wined3d_context_gl_destroy_allocator_block(struct wined3d_context_gl
     struct wined3d_device_gl *device_gl = wined3d_device_gl(context_gl->c.device);
     struct wined3d_retired_block_gl *r;
 
-    if (device_gl->completed_fence_id > fence_id)
+    if (device_gl->completed_fence_id >= fence_id)
     {
         wined3d_device_gl_free_memory(device_gl, block);
         TRACE("Freed block %p.\n", block);
