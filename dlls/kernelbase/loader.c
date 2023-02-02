@@ -352,10 +352,21 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetModuleHandleExA( DWORD flags, LPCSTR name, HMOD
 {
     WCHAR *nameW;
 
+    if (!module)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
     if (!name || (flags & GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS))
         return GetModuleHandleExW( flags, (LPCWSTR)name, module );
 
-    if (!(nameW = file_name_AtoW( name, FALSE ))) return FALSE;
+    if (!(nameW = file_name_AtoW( name, FALSE )))
+    {
+        *module = NULL;
+        SetLastError( ERROR_MOD_NOT_FOUND );
+        return FALSE;
+    }
     return GetModuleHandleExW( flags, nameW, module );
 }
 

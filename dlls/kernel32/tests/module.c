@@ -953,6 +953,10 @@ static void init_pointers(void)
 
 static void testGetModuleHandleEx(void)
 {
+    static const char longname[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                                   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                                   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                                   "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
     static const WCHAR kernel32W[] = {'k','e','r','n','e','l','3','2',0};
     static const WCHAR nosuchmodW[] = {'n','o','s','u','c','h','m','o','d',0};
     BOOL ret;
@@ -981,6 +985,20 @@ static void testGetModuleHandleEx(void)
     SetLastError( 0xdeadbeef );
     mod = (HMODULE)0xdeadbeef;
     ret = GetModuleHandleExA( 0, "nosuchmod", &mod );
+    error = GetLastError();
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_MOD_NOT_FOUND, "got %lu\n", error );
+    ok( mod == NULL, "got %p\n", mod );
+
+    SetLastError( 0xdeadbeef );
+    ret = GetModuleHandleExA( 0, longname, NULL );
+    error = GetLastError();
+    ok( !ret, "unexpected success\n" );
+    ok( error == ERROR_INVALID_PARAMETER, "got %lu\n", error );
+
+    SetLastError( 0xdeadbeef );
+    mod = (HMODULE)0xdeadbeef;
+    ret = GetModuleHandleExA( 0, longname, &mod );
     error = GetLastError();
     ok( !ret, "unexpected success\n" );
     ok( error == ERROR_MOD_NOT_FOUND, "got %lu\n", error );
