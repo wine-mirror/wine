@@ -1617,6 +1617,50 @@ static void check_dmo_set_output_type(IMediaObject *media_object, const GUID *su
     }
 }
 
+#define check_dmo_output_data_buffer(a, b, c) check_dmo_output_data_buffer_(__LINE__, a, b, c)
+static DWORD check_dmo_output_data_buffer_(int line, DMO_OUTPUT_DATA_BUFFER *output_data_buffer,
+        const struct sample_desc *sample_desc, const WCHAR *expect_data_filename)
+{
+    const struct buffer_desc *buffer_desc = &sample_desc->buffers[0];
+    DWORD diff, data_length, buffer_length, expect_length;
+    BYTE *data, *buffer;
+    HRESULT hr;
+
+    if (output_data_buffer->dwStatus & DMO_OUTPUT_DATA_BUFFERF_TIME)
+        ok_(__FILE__, line)(output_data_buffer->rtTimestamp == sample_desc->sample_time,
+                "Unexpected time %I64d, expected %I64d.\n",
+                output_data_buffer->rtTimestamp, sample_desc->sample_time);
+    if (output_data_buffer->dwStatus & DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH)
+        ok_(__FILE__, line)(output_data_buffer->rtTimelength == sample_desc->sample_duration,
+                "Unexpected duration %I64d, expected %I64d.\n",
+                output_data_buffer->rtTimelength, sample_desc->sample_duration);
+
+    load_resource(expect_data_filename, (const BYTE **)&data, &data_length);
+
+    expect_length = buffer_desc->length;
+    if (expect_length == -1)
+    {
+        expect_length = *(DWORD *)data;
+        data += sizeof(DWORD);
+        data_length = data_length - sizeof(DWORD);
+    }
+
+    hr = IMediaBuffer_GetBufferAndLength(output_data_buffer->pBuffer, &buffer, &buffer_length);
+    ok(hr == S_OK, "GetBufferAndLength returned %#lx.\n", hr);
+    ok_(__FILE__, line)(buffer_length == expect_length, "Unexpected length %#lx, expected %#lx\n", buffer_length, expect_length);
+
+    diff = 0;
+    if (data_length < buffer_length)
+        ok_(__FILE__, line)(0, "Missing %#lx bytes\n", buffer_length - data_length);
+    else if (!buffer_desc->compare)
+        diff = compare_bytes(buffer, &buffer_length, NULL, data);
+    else
+        diff = buffer_desc->compare(buffer, &buffer_length, &buffer_desc->rect, data);
+
+    return diff;
+}
+
+
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IUnknown))
@@ -5170,7 +5214,17 @@ static void test_wmv_decoder_media_object(void)
     };
     const DWORD data_width = 96, data_height = 96;
     const POINT test_size[] = {{16, 16}, {96, 96}, {320, 240}};
-    DWORD in_count, out_count, size, expected_size, alignment, wmv_data_length, status;
+    const struct buffer_desc output_buffer_desc_nv12 =
+    {
+        .length = data_width * data_height * 3 / 2,
+        .compare = compare_nv12, .dump = dump_nv12, .rect = {.right = 82, .bottom = 84},
+    };
+    const struct sample_desc output_sample_desc_nv12 =
+    {
+        .sample_time = 0, .sample_duration = 333333,
+        .buffer_count = 1, .buffers = &output_buffer_desc_nv12,
+    };
+    DWORD in_count, out_count, size, expected_size, alignment, wmv_data_length, status, expected_status, diff;
     struct media_buffer *input_media_buffer = NULL, *output_media_buffer = NULL;
     DMO_OUTPUT_DATA_BUFFER output_data_buffer;
     DMO_MEDIA_TYPE media_type, *type;
@@ -5315,7 +5369,7 @@ static void test_wmv_decoder_media_object(void)
     hr = IMediaObject_SetOutputType(media_object, 0, type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
 
-    hr = IMediaObject_ProcessInput(media_object, 0, &input_media_buffer->IMediaBuffer_iface, 0, 0, 0);
+    hr = IMediaObject_ProcessInput(media_object, 0, &input_media_buffer->IMediaBuffer_iface, 0, 0, 333333);
     todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx.\n", hr);
 
@@ -5331,6 +5385,14 @@ static void test_wmv_decoder_media_object(void)
     hr = IMediaObject_ProcessOutput(media_object, 0, 1, &output_data_buffer, &status);
     todo_wine
     ok(hr == S_OK, "ProcessOutput returned %#lx.\n", hr);
+    expected_status = DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT | DMO_OUTPUT_DATA_BUFFERF_TIME | DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH;
+    todo_wine
+    ok(output_data_buffer.dwStatus == expected_status, "Got unexpected dwStatus %#lx.\n", output_data_buffer.dwStatus);
+    if (hr == S_OK)
+    {
+    diff = check_dmo_output_data_buffer(&output_data_buffer, &output_sample_desc_nv12, L"nv12frame.bmp");
+    ok(diff == 0, "Got %lu%% diff.\n", diff);
+    }
 
     ret = IMediaBuffer_Release(&output_media_buffer->IMediaBuffer_iface);
     ok(ret == 0, "Release returned %lu\n", ret);
