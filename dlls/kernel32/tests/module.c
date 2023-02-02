@@ -1885,6 +1885,98 @@ static void test_dont_resolve_dll_references(void)
     ok( !!ret, "DeleteFileA returned %lu\n", ret );
 }
 
+#define check_dll_path(a, b) check_dll_path_( __LINE__, a, b )
+static void check_dll_path_( unsigned int line, HMODULE h, const char *expected )
+{
+    char path[MAX_PATH];
+    DWORD ret;
+
+    *path = 0;
+    ret = GetModuleFileNameA( h, path, MAX_PATH);
+    ok_(__FILE__, line)( ret && ret < MAX_PATH, "Got %lu.\n", ret );
+    ok_(__FILE__, line)( !stricmp( path, expected ), "Got %s.\n", debugstr_a(path) );
+}
+
+static void test_known_dlls_load(void)
+{
+    static const char apiset_dll[] = "ext-ms-win-base-psapi-l1-1-0.dll";
+    char system_path[MAX_PATH], local_path[MAX_PATH];
+    static const char dll[] = "psapi.dll";
+    HMODULE hlocal, hsystem, hapiset, h;
+    BOOL ret;
+
+    if (GetModuleHandleA( dll ) || GetModuleHandleA( apiset_dll ))
+    {
+        skip( "%s is already loaded, skipping test.\n", dll );
+        return;
+    }
+
+    hapiset = LoadLibraryA( apiset_dll );
+    if (!hapiset)
+    {
+        win_skip( "%s is not available.\n", apiset_dll );
+        return;
+    }
+    FreeLibrary( hapiset );
+
+    GetSystemDirectoryA( system_path, sizeof(system_path) );
+    strcat( system_path, "\\" );
+    strcat( system_path, dll );
+
+    GetCurrentDirectoryA( sizeof(local_path), local_path );
+    strcat( local_path, "\\" );
+    strcat( local_path, dll );
+
+    /* Known dll is always found in system dir, regardless of its presence in the application dir. */
+    ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_USER_DIRS );
+    ok( ret, "SetDefaultDllDirectories failed err %lu\n", GetLastError() );
+    h = LoadLibraryA( dll );
+    ret = pSetDefaultDllDirectories( LOAD_LIBRARY_SEARCH_DEFAULT_DIRS );
+    ok( ret, "SetDefaultDllDirectories failed err %lu\n", GetLastError() );
+    ok( !!h, "Got NULL.\n" );
+    check_dll_path( h, system_path );
+    hapiset = GetModuleHandleA( apiset_dll );
+    ok( hapiset == h, "Got %p, %p.\n", hapiset, h );
+    FreeLibrary( h );
+
+    h = LoadLibraryExA( dll, 0, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+    ok( !!h, "Got NULL.\n" );
+    check_dll_path( h, system_path );
+    hapiset = GetModuleHandleA( apiset_dll );
+    ok( hapiset == h, "Got %p, %p.\n", hapiset, h );
+    FreeLibrary( h );
+
+    /* Put dll to the current directory. */
+    create_test_dll( dll );
+
+    h = LoadLibraryExA( dll, 0, LOAD_LIBRARY_SEARCH_APPLICATION_DIR );
+    ok( !!h, "Got NULL.\n" );
+    check_dll_path( h, system_path );
+    hapiset = GetModuleHandleA( apiset_dll );
+    ok( hapiset == h, "Got %p, %p.\n", hapiset, h );
+    FreeLibrary( h );
+
+    /* Local version can still be loaded if dll name contains path. */
+    hlocal = LoadLibraryA( local_path );
+    ok( !!hlocal, "Got NULL.\n" );
+    check_dll_path( hlocal, local_path );
+
+    /* dll without path will match the loaded one. */
+    hsystem = LoadLibraryA( dll );
+    ok( hsystem == hlocal, "Got %p, %p.\n", hsystem, hlocal );
+    h = GetModuleHandleA( dll );
+    ok( h == hlocal, "Got %p, %p.\n", h, hlocal );
+
+    /* apiset dll won't match the one loaded not from system dir. */
+    hapiset = GetModuleHandleA( apiset_dll );
+    ok( !hapiset, "Got %p.\n", hapiset );
+
+    FreeLibrary( hsystem );
+    FreeLibrary( hlocal );
+
+    DeleteFileA( dll );
+}
+
 START_TEST(module)
 {
     WCHAR filenameW[MAX_PATH];
@@ -1925,4 +2017,5 @@ START_TEST(module)
     test_base_address_index_tree();
     test_hash_links();
     test_dont_resolve_dll_references();
+    test_known_dlls_load();
 }
