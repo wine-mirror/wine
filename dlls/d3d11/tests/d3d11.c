@@ -21839,7 +21839,7 @@ static void test_stencil_separate(void)
     rs_desc.ScissorEnable = FALSE;
     rs_desc.MultisampleEnable = FALSE;
     rs_desc.AntialiasedLineEnable = FALSE;
-    ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
+    hr = ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     ID3D11DeviceContext_ClearRenderTargetView(context, test_context.backbuffer_rtv, red);
@@ -21859,7 +21859,7 @@ static void test_stencil_separate(void)
 
     ID3D11RasterizerState_Release(rs);
     rs_desc.FrontCounterClockwise = TRUE;
-    ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
+    hr = ID3D11Device_CreateRasterizerState(device, &rs_desc, &rs);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     ID3D11DeviceContext_RSSetState(context, rs);
 
@@ -28408,7 +28408,7 @@ static void test_depth_bias(void)
                 for (k = 0; k < ARRAY_SIZE(bias_clamp_tests); ++k)
                 {
                     rasterizer_desc.DepthBiasClamp = bias_clamp_tests[k];
-                    ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
+                    hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
                     ok(hr == S_OK, "Format %#x, quad %u, bias %u, clamp %u: Got unexpected hr %#lx.\n",
                             format, i, j, k, hr);
                     ID3D11DeviceContext_RSSetState(context, rs);
@@ -28492,7 +28492,7 @@ static void test_depth_bias(void)
                 {
                     BOOL all_match = TRUE;
                     rasterizer_desc.DepthBiasClamp = bias_clamp_tests[k];
-                    ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
+                    hr = ID3D11Device_CreateRasterizerState(device, &rasterizer_desc, &rs);
                     ok(hr == S_OK, "Format %#x, slope %u, bias %u, clamp %u: Got unexpected hr %#lx.\n",
                             format, i, j, k, hr);
                     ID3D11DeviceContext_RSSetState(context, rs);
