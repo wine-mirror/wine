@@ -134,11 +134,46 @@ static HRESULT WINAPI uia_element_GetCurrentPropertyValue(IUIAutomationElement9 
     return E_NOTIMPL;
 }
 
+static HRESULT create_uia_element(IUIAutomationElement **iface, BOOL from_cui8, HUIANODE node);
 static HRESULT WINAPI uia_element_GetCurrentPropertyValueEx(IUIAutomationElement9 *iface, PROPERTYID prop_id,
         BOOL ignore_default, VARIANT *ret_val)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    const struct uia_prop_info *prop_info = uia_prop_info_from_id(prop_id);
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    HRESULT hr;
+
+    TRACE("%p, %d, %d, %p\n", iface, prop_id, ignore_default, ret_val);
+
+    if (!ignore_default)
+        FIXME("Default values currently unimplemented\n");
+
+    VariantInit(ret_val);
+    if (prop_info->type == UIAutomationType_ElementArray)
+    {
+        FIXME("ElementArray property types currently unsupported for IUIAutomationElement\n");
+        return E_NOTIMPL;
+    }
+
+    hr = UiaGetPropertyValue(element->node, prop_id, ret_val);
+    if ((prop_info->type == UIAutomationType_Element) && (V_VT(ret_val) != VT_UNKNOWN))
+    {
+        IUIAutomationElement *out_elem;
+        HUIANODE node;
+
+        hr = UiaHUiaNodeFromVariant(ret_val, &node);
+        VariantClear(ret_val);
+        if (FAILED(hr))
+            return hr;
+
+        hr = create_uia_element(&out_elem, element->from_cui8, node);
+        if (SUCCEEDED(hr))
+        {
+            V_VT(ret_val) = VT_UNKNOWN;
+            V_UNKNOWN(ret_val) = (IUnknown *)out_elem;
+        }
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI uia_element_GetCachedPropertyValue(IUIAutomationElement9 *iface, PROPERTYID prop_id,
