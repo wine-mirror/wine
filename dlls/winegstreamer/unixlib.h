@@ -130,9 +130,17 @@ struct wg_format
         } video_h264;
         struct
         {
+            enum wg_wmv_video_format
+            {
+                WG_WMV_VIDEO_FORMAT_UNKNOWN,
+                WG_WMV_VIDEO_FORMAT_WMV1,
+                WG_WMV_VIDEO_FORMAT_WMV2,
+                WG_WMV_VIDEO_FORMAT_WMV3,
+                WG_WMV_VIDEO_FORMAT_WMVA,
+                WG_WMV_VIDEO_FORMAT_WVC1,
+            } format;
             int32_t width, height;
             uint32_t fps_n, fps_d;
-            uint32_t version;
         } video_wmv;
         struct
         {

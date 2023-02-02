@@ -763,11 +763,17 @@ static bool amt_to_wg_format_video_wmv(const AM_MEDIA_TYPE *mt, struct wg_format
     format->u.video_wmv.fps_d = video_format->AvgTimePerFrame;
 
     if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV1))
-        format->u.video_wmv.version = 1;
+        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMV1;
     else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV2))
-        format->u.video_wmv.version = 2;
+        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMV2;
+    else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMV3))
+        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMV3;
+    else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WMVA))
+        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMVA;
+    else if (IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_WVC1))
+        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WVC1;
     else
-        format->u.video_wmv.version = 3;
+        format->u.video_wmv.format = WG_WMV_VIDEO_FORMAT_UNKNOWN;
 
     return true;
 }

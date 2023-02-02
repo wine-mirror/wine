@@ -556,19 +556,54 @@ static GstCaps *wg_format_to_caps_video_h264(const struct wg_format *format)
 
 static GstCaps *wg_format_to_caps_video_wmv(const struct wg_format *format)
 {
+    unsigned int wmv_version;
+    const char *wmv_format;
     GstCaps *caps;
 
     if (!(caps = gst_caps_new_empty_simple("video/x-wmv")))
         return NULL;
 
+    switch (format->u.video_wmv.format)
+    {
+        case WG_WMV_VIDEO_FORMAT_WMV1:
+            wmv_format = "WMV1";
+            wmv_version = 1;
+            break;
+        case WG_WMV_VIDEO_FORMAT_WMV2:
+            wmv_format = "WMV2";
+            wmv_version = 2;
+            break;
+        case WG_WMV_VIDEO_FORMAT_WMV3:
+            wmv_format = "WMV3";
+            wmv_version = 3;
+            break;
+        case WG_WMV_VIDEO_FORMAT_WMVA:
+            wmv_format = "WMVA";
+            wmv_version = 3;
+            break;
+        case WG_WMV_VIDEO_FORMAT_WVC1:
+            wmv_format = "WVC1";
+            wmv_version = 3;
+            break;
+        default:
+            GST_WARNING("Unknown WMV format %u.", format->u.video_wmv.format);
+            /* fallthrough */
+        case WG_WMV_VIDEO_FORMAT_UNKNOWN:
+            wmv_format = NULL;
+            wmv_version = 0;
+            break;
+    }
+
+    if (wmv_format)
+        gst_caps_set_simple(caps, "format", G_TYPE_STRING, wmv_format, NULL);
+    if (wmv_version)
+        gst_caps_set_simple(caps, "wmvversion", G_TYPE_INT, wmv_version, NULL);
     if (format->u.video_wmv.width)
         gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.video_wmv.width, NULL);
     if (format->u.video_wmv.height)
         gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.video_wmv.height, NULL);
     if (format->u.video_wmv.fps_d || format->u.video_wmv.fps_n)
         gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.video_wmv.fps_n, format->u.video_wmv.fps_d, NULL);
-    if (format->u.video_wmv.version)
-        gst_caps_set_simple(caps, "wmvversion", G_TYPE_INT, format->u.video_wmv.version, NULL);
 
     return caps;
 }
