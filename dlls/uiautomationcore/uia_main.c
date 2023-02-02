@@ -327,6 +327,16 @@ HRESULT WINAPI UiaRaiseStructureChangedEvent(IRawElementProviderSimple *provider
     return S_OK;
 }
 
+/***********************************************************************
+ *          UiaRaiseAsyncContentLoadedEvent (uiautomationcore.@)
+ */
+HRESULT WINAPI UiaRaiseAsyncContentLoadedEvent(IRawElementProviderSimple *provider,
+        enum AsyncContentLoadedState async_content_loaded_state, double percent_complete)
+{
+    FIXME("(%p, %d, %f): stub\n", provider, async_content_loaded_state, percent_complete);
+    return S_OK;
+}
+
 HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **provider)
 {
     struct hwnd_host_provider *host_prov;

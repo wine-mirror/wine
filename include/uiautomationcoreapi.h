@@ -476,6 +476,8 @@ HRESULT WINAPI UiaGetReservedMixedAttributeValue(IUnknown **value);
 HRESULT WINAPI UiaGetReservedNotSupportedValue(IUnknown **value);
 int WINAPI UiaLookupId(enum AutomationIdentifierType type, const GUID *guid);
 BOOL WINAPI UiaPatternRelease(HUIAPATTERNOBJECT hobj);
+HRESULT WINAPI UiaRaiseAsyncContentLoadedEvent(IRawElementProviderSimple *provider,
+        enum AsyncContentLoadedState async_content_loaded_state, double percent_complete);
 HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *provider, EVENTID id);
 HRESULT WINAPI UiaRaiseAutomationPropertyChangedEvent(IRawElementProviderSimple *, PROPERTYID, VARIANT, VARIANT);
 HRESULT WINAPI UiaRaiseStructureChangedEvent(IRawElementProviderSimple *provider, enum StructureChangeType struct_change_type,
