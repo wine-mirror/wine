@@ -480,6 +480,8 @@ HRESULT WINAPI UiaRaiseAsyncContentLoadedEvent(IRawElementProviderSimple *provid
         enum AsyncContentLoadedState async_content_loaded_state, double percent_complete);
 HRESULT WINAPI UiaRaiseAutomationEvent(IRawElementProviderSimple *provider, EVENTID id);
 HRESULT WINAPI UiaRaiseAutomationPropertyChangedEvent(IRawElementProviderSimple *, PROPERTYID, VARIANT, VARIANT);
+HRESULT WINAPI UiaRaiseNotificationEvent(IRawElementProviderSimple *provider, enum NotificationKind notification_kind,
+        enum NotificationProcessing notification_processing, BSTR display_str, BSTR activity_id);
 HRESULT WINAPI UiaRaiseStructureChangedEvent(IRawElementProviderSimple *provider, enum StructureChangeType struct_change_type,
         int *runtime_id, int runtime_id_len);
 HRESULT WINAPI UiaRaiseTextEditTextChangedEvent(IRawElementProviderSimple *provider, enum TextEditChangeType text_edit_change_type,
