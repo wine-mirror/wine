@@ -3170,7 +3170,7 @@ static void test_doc_obj(IHTMLDocument2 *doc)
         ok(!!event_target, "event_target = NULL\n");
 
         bstr = SysAllocString(L"click");
-        IEventTarget_addEventListener(event_target, bstr, (IDispatch*)&docobj_onclick_obj, TRUE);
+        hres = IEventTarget_addEventListener(event_target, bstr, (IDispatch*)&docobj_onclick_obj, TRUE);
         ok(hres == S_OK, "addEventListener failed: %08lx\n", hres);
         SysFreeString(bstr);
 
