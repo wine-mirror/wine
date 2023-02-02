@@ -239,8 +239,26 @@ static HRESULT WINAPI uia_element_get_CurrentProcessId(IUIAutomationElement9 *if
 
 static HRESULT WINAPI uia_element_get_CurrentControlType(IUIAutomationElement9 *iface, CONTROLTYPEID *ret_val)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    const struct uia_control_type_info *control_type_info = NULL;
+    HRESULT hr;
+    VARIANT v;
+
+    TRACE("%p, %p\n", iface, ret_val);
+
+    VariantInit(&v);
+    *ret_val = UIA_CustomControlTypeId;
+    hr = UiaGetPropertyValue(element->node, UIA_ControlTypePropertyId, &v);
+    if (SUCCEEDED(hr) && V_VT(&v) == VT_I4)
+    {
+        if ((control_type_info = uia_control_type_info_from_id(V_I4(&v))))
+            *ret_val = control_type_info->control_type_id;
+        else
+            WARN("Provider returned invalid control type ID %ld\n", V_I4(&v));
+    }
+
+    VariantClear(&v);
+    return hr;
 }
 
 static HRESULT WINAPI uia_element_get_CurrentLocalizedControlType(IUIAutomationElement9 *iface, BSTR *ret_val)

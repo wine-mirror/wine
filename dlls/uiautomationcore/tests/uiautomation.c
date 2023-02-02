@@ -9792,9 +9792,10 @@ static void test_Element_GetPropertyValue(IUIAutomation *uia_iface)
 {
     HWND hwnd = create_test_hwnd("test_Element_GetPropertyValue class");
     const struct uia_element_property *elem_prop;
+    struct Provider_prop_override prop_override;
     IUIAutomationElement *element;
+    int i, prop_id, tmp_int;
     IUnknown *unk_ns;
-    int i, prop_id;
     HRESULT hr;
     VARIANT v;
 
@@ -9848,6 +9849,41 @@ static void test_Element_GetPropertyValue(IUIAutomation *uia_iface)
 
         winetest_pop_context();
     }
+
+    /*
+     * IUIAutomationElement_get_CurrentControlType tests. If the value
+     * returned for UIA_ControlTypePropertyId is not a registered control
+     * type ID, we'll get back UIA_CustomControlTypeId.
+     */
+    tmp_int = 0xdeadb33f;
+    hr = IUIAutomationElement_get_CurrentControlType(element, &tmp_int);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /*
+     * Win10v1507 and below don't check whether or not the returned control
+     * type ID is valid.
+     */
+    ok(tmp_int == UIA_CustomControlTypeId || broken(tmp_int == 0xdeadbeef), "Unexpected control type %#x\n", tmp_int);
+    ok_method_sequence(get_prop_seq, NULL);
+
+    Provider.ret_invalid_prop_type = TRUE;
+    tmp_int = 0xdeadbeef;
+    hr = IUIAutomationElement_get_CurrentControlType(element, &tmp_int);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_int == UIA_CustomControlTypeId, "Unexpected control type %#x\n", tmp_int);
+    Provider.ret_invalid_prop_type = FALSE;
+    ok_method_sequence(get_prop_invalid_type_seq, NULL);
+
+    /* Finally, a valid control type. */
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = UIA_HyperlinkControlTypeId;
+    set_property_override(&prop_override, UIA_ControlTypePropertyId, &v);
+    set_provider_prop_override(&Provider, &prop_override, 1);
+    hr = IUIAutomationElement_get_CurrentControlType(element, &tmp_int);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(tmp_int == UIA_HyperlinkControlTypeId, "Unexpected control type %#x\n", tmp_int);
+    set_provider_prop_override(&Provider, NULL, 0);
+    ok_method_sequence(get_prop_seq, NULL);
 
     IUIAutomationElement_Release(element);
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);

@@ -566,6 +566,18 @@ static const struct uia_control_type_info default_uia_control_types[] = {
     { &ListItem_Control_GUID,     UIA_ListItemControlTypeId },
 };
 
+static const int control_type_id_idx[] = {
+    0x12, 0x17, 0x04, 0x13, 0x1f, 0x05, 0x27, 0x28,
+    0x26, 0x09, 0x0f, 0x23, 0x16, 0x24, 0x07, 0x0d,
+    0x08, 0x01, 0x06, 0x0e, 0x25, 0x10, 0x22, 0x19,
+    0x1c, 0x1e, 0x02, 0x15, 0x1b, 0x0b, 0x14, 0x03,
+    0x0a, 0x11, 0x21, 0x20, 0x00, 0x1d, 0x1a, 0x0c,
+    0x18,
+};
+
+#define CONTROL_TYPE_ID_MIN 50000
+#define CONTROL_TYPE_ID_MAX (CONTROL_TYPE_ID_MIN + ARRAY_SIZE(default_uia_control_types))
+
 static const struct uia_control_type_info *uia_control_type_info_from_guid(const GUID *guid)
 {
     struct uia_control_type_info *control_type;
@@ -575,6 +587,14 @@ static const struct uia_control_type_info *uia_control_type_info_from_guid(const
         return control_type;
 
     return NULL;
+}
+
+const struct uia_control_type_info *uia_control_type_info_from_id(CONTROLTYPEID control_type_id)
+{
+    if ((control_type_id < CONTROL_TYPE_ID_MIN) || (control_type_id > CONTROL_TYPE_ID_MAX))
+        return NULL;
+
+    return &default_uia_control_types[control_type_id_idx[control_type_id - CONTROL_TYPE_ID_MIN]];
 }
 
 /***********************************************************************
