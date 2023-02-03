@@ -9796,6 +9796,7 @@ static void test_Element_GetPropertyValue(IUIAutomation *uia_iface)
     IUIAutomationElement *element;
     int i, prop_id, tmp_int;
     IUnknown *unk_ns;
+    BSTR tmp_bstr;
     HRESULT hr;
     VARIANT v;
 
@@ -9884,6 +9885,25 @@ static void test_Element_GetPropertyValue(IUIAutomation *uia_iface)
     ok(tmp_int == UIA_HyperlinkControlTypeId, "Unexpected control type %#x\n", tmp_int);
     set_provider_prop_override(&Provider, NULL, 0);
     ok_method_sequence(get_prop_seq, NULL);
+
+    /*
+     * IUIAutomationElement_get_CurrentName tests.
+     */
+    tmp_bstr = NULL;
+    hr = IUIAutomationElement_get_CurrentName(element, &tmp_bstr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(tmp_bstr, uia_bstr_prop_str), "Unexpected BSTR %s\n", wine_dbgstr_w(tmp_bstr));
+    SysFreeString(tmp_bstr);
+    ok_method_sequence(get_prop_seq, NULL);
+
+    tmp_bstr = NULL;
+    Provider.ret_invalid_prop_type = TRUE;
+    hr = IUIAutomationElement_get_CurrentName(element, &tmp_bstr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!lstrcmpW(tmp_bstr, L""), "Unexpected BSTR %s\n", wine_dbgstr_w(tmp_bstr));
+    SysFreeString(tmp_bstr);
+    Provider.ret_invalid_prop_type = FALSE;
+    ok_method_sequence(get_prop_invalid_type_seq, NULL);
 
     IUIAutomationElement_Release(element);
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
