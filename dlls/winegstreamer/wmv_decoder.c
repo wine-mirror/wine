@@ -687,16 +687,35 @@ static HRESULT WINAPI media_object_GetInputStatus(IMediaObject *iface, DWORD ind
 static HRESULT WINAPI media_object_ProcessInput(IMediaObject *iface, DWORD index,
         IMediaBuffer *buffer, DWORD flags, REFERENCE_TIME timestamp, REFERENCE_TIME timelength)
 {
-    FIXME("iface %p, index %lu, buffer %p, flags %#lx, timestamp %s, timelength %s stub!\n", iface,
-            index, buffer, flags, wine_dbgstr_longlong(timestamp), wine_dbgstr_longlong(timelength));
-    return E_NOTIMPL;
+    struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
+
+    TRACE("iface %p, index %lu, buffer %p, flags %#lx, timestamp %s, timelength %s.\n", iface,
+             index, buffer, flags, wine_dbgstr_longlong(timestamp), wine_dbgstr_longlong(timelength));
+
+    if (!decoder->wg_transform)
+        return DMO_E_TYPE_NOT_SET;
+
+    return wg_transform_push_dmo(decoder->wg_transform, buffer, flags, timestamp, timelength, decoder->wg_sample_queue);
 }
 
 static HRESULT WINAPI media_object_ProcessOutput(IMediaObject *iface, DWORD flags, DWORD count,
         DMO_OUTPUT_DATA_BUFFER *buffers, DWORD *status)
 {
-    FIXME("iface %p, flags %#lx, count %lu, buffers %p, status %p stub!\n", iface, flags, count, buffers, status);
-    return E_NOTIMPL;
+    struct wmv_decoder *decoder = impl_from_IMediaObject(iface);
+    HRESULT hr;
+
+    TRACE("iface %p, flags %#lx, count %lu, buffers %p, status %p.\n", iface, flags, count, buffers, status);
+
+    if (!decoder->wg_transform)
+        return DMO_E_TYPE_NOT_SET;
+
+    if ((hr = wg_transform_read_dmo(decoder->wg_transform, buffers)) == MF_E_TRANSFORM_STREAM_CHANGE)
+        hr = wg_transform_read_dmo(decoder->wg_transform, buffers);
+
+    if (SUCCEEDED(hr))
+        wg_sample_queue_flush(decoder->wg_sample_queue, false);
+
+    return hr;
 }
 
 static HRESULT WINAPI media_object_Lock(IMediaObject *iface, LONG lock)

@@ -57,6 +57,10 @@ struct sample
         {
             IMediaSample *sample;
         } quartz;
+        struct
+        {
+            IMediaBuffer *buffer;
+        } dmo;
     } u;
 };
 
@@ -163,6 +167,60 @@ HRESULT wg_sample_create_quartz(IMediaSample *media_sample, struct wg_sample **o
     TRACE_(quartz)("Created wg_sample %p for IMediaSample %p.\n", &sample->wg_sample, media_sample);
     *out = &sample->wg_sample;
     return S_OK;
+}
+
+static const struct wg_sample_ops dmo_sample_ops;
+
+static inline struct sample *unsafe_dmo_from_wg_sample(struct wg_sample *wg_sample)
+{
+    struct sample *sample = CONTAINING_RECORD(wg_sample, struct sample, wg_sample);
+    if (sample->ops != &dmo_sample_ops) return NULL;
+    return sample;
+}
+
+static void dmo_sample_destroy(struct wg_sample *wg_sample)
+{
+    struct sample *sample = unsafe_dmo_from_wg_sample(wg_sample);
+
+    TRACE_(mfplat)("wg_sample %p.\n", wg_sample);
+
+    IMediaBuffer_Release(sample->u.dmo.buffer);
+}
+
+static const struct wg_sample_ops dmo_sample_ops =
+{
+    dmo_sample_destroy,
+};
+
+HRESULT wg_sample_create_dmo(IMediaBuffer *media_buffer, struct wg_sample **out)
+{
+    DWORD length, max_length;
+    struct sample *sample;
+    BYTE *buffer;
+    HRESULT hr;
+
+    if (!(sample = calloc(1, sizeof(*sample))))
+        return E_OUTOFMEMORY;
+    if (FAILED(hr = IMediaBuffer_GetBufferAndLength(media_buffer, &buffer, &length)))
+        goto fail;
+    if (FAILED(hr = IMediaBuffer_GetMaxLength(media_buffer, &max_length)))
+        goto fail;
+
+    IMediaBuffer_AddRef((sample->u.dmo.buffer = media_buffer));
+    sample->wg_sample.data = buffer;
+    sample->wg_sample.size = length;
+    sample->wg_sample.max_size = max_length;
+    sample->ops = &dmo_sample_ops;
+
+    *out = &sample->wg_sample;
+    TRACE_(mfplat)("Created wg_sample %p for IMediaBuffer %p.\n", *out, media_buffer);
+    return S_OK;
+
+fail:
+    if (sample->u.dmo.buffer)
+        IMediaBuffer_Release(sample->u.dmo.buffer);
+    free(sample);
+    return hr;
 }
 
 void wg_sample_release(struct wg_sample *wg_sample)
@@ -407,4 +465,77 @@ HRESULT wg_transform_read_quartz(struct wg_transform *transform, struct wg_sampl
     IMediaSample_SetDiscontinuity(sample->u.quartz.sample, value);
 
     return S_OK;
+}
+
+HRESULT wg_transform_push_dmo(struct wg_transform *transform, IMediaBuffer *media_buffer,
+        DWORD flags, REFERENCE_TIME time_stamp, REFERENCE_TIME time_length, struct wg_sample_queue *queue)
+{
+    struct wg_sample *wg_sample;
+    HRESULT hr;
+
+    TRACE_(mfplat)("transform %p, media_buffer %p, flags %#lx, time_stamp %s, time_length %s, queue %p.\n",
+            transform, media_buffer, flags, wine_dbgstr_longlong(time_stamp), wine_dbgstr_longlong(time_length), queue);
+
+    if (FAILED(hr = wg_sample_create_dmo(media_buffer, &wg_sample)))
+        return hr;
+
+    if (flags & DMO_INPUT_DATA_BUFFERF_SYNCPOINT)
+        wg_sample->flags |= WG_SAMPLE_FLAG_SYNC_POINT;
+    if (flags & DMO_INPUT_DATA_BUFFERF_TIME)
+    {
+        wg_sample->flags |= WG_SAMPLE_FLAG_HAS_PTS;
+        wg_sample->pts = time_stamp;
+    }
+    if (flags & DMO_INPUT_DATA_BUFFERF_TIMELENGTH)
+    {
+        wg_sample->flags |= WG_SAMPLE_FLAG_HAS_DURATION;
+        wg_sample->pts = time_length;
+    }
+
+    wg_sample_queue_begin_append(queue, wg_sample);
+    hr = wg_transform_push_data(transform, wg_sample);
+    wg_sample_queue_end_append(queue, wg_sample);
+
+    return hr;
+}
+
+HRESULT wg_transform_read_dmo(struct wg_transform *transform, DMO_OUTPUT_DATA_BUFFER *buffer)
+{
+    struct wg_sample *wg_sample;
+    HRESULT hr;
+
+    TRACE_(mfplat)("transform %p, buffer %p.\n", transform, buffer);
+
+    if (FAILED(hr = wg_sample_create_dmo(buffer->pBuffer, &wg_sample)))
+        return hr;
+    wg_sample->size = 0;
+
+    if (FAILED(hr = wg_transform_read_data(transform, wg_sample, NULL)))
+    {
+        if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
+            TRACE_(mfplat)("Stream format changed.\n");
+        wg_sample_release(wg_sample);
+        return hr;
+    }
+
+    buffer->dwStatus = 0;
+    if (wg_sample->flags & WG_SAMPLE_FLAG_INCOMPLETE)
+        buffer->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_INCOMPLETE;
+    if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
+    {
+        buffer->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_TIME;
+        buffer->rtTimestamp = wg_sample->pts;
+    }
+    if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_DURATION)
+    {
+        buffer->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH;
+        buffer->rtTimelength = wg_sample->duration;
+    }
+    if (wg_sample->flags & WG_SAMPLE_FLAG_SYNC_POINT)
+        buffer->dwStatus |= DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT;
+
+    IMediaBuffer_SetLength(buffer->pBuffer, wg_sample->size);
+
+    wg_sample_release(wg_sample);
+    return hr;
 }

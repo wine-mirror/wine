@@ -1631,6 +1631,7 @@ static DWORD check_dmo_output_data_buffer_(int line, DMO_OUTPUT_DATA_BUFFER *out
                 "Unexpected time stamp %I64d, expected %I64d.\n",
                 output_data_buffer->rtTimestamp, time_stamp);
     if (output_data_buffer->dwStatus & DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH)
+        todo_wine
         ok_(__FILE__, line)(output_data_buffer->rtTimelength == time_length,
                 "Unexpected time length %I64d, expected %I64d.\n",
                 output_data_buffer->rtTimelength, time_length);
@@ -5369,7 +5370,6 @@ static void test_wmv_decoder_media_object(void)
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
 
     hr = IMediaObject_ProcessInput(media_object, 0, &input_media_buffer->IMediaBuffer_iface, 0, 0, 0);
-    todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx.\n", hr);
 
     /* Test ProcessOutput. */
@@ -5382,16 +5382,11 @@ static void test_wmv_decoder_media_object(void)
     output_data_buffer.rtTimestamp = 0xdeadbeef;
     output_data_buffer.rtTimelength = 0xdeadbeef;
     hr = IMediaObject_ProcessOutput(media_object, 0, 1, &output_data_buffer, &status);
-    todo_wine
     ok(hr == S_OK, "ProcessOutput returned %#lx.\n", hr);
     expected_status = DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT | DMO_OUTPUT_DATA_BUFFERF_TIME | DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH;
-    todo_wine
     ok(output_data_buffer.dwStatus == expected_status, "Got unexpected dwStatus %#lx.\n", output_data_buffer.dwStatus);
-    if (hr == S_OK)
-    {
     diff = check_dmo_output_data_buffer(&output_data_buffer, &output_buffer_desc_nv12, L"nv12frame.bmp", 0, 0);
     ok(diff == 0, "Got %lu%% diff.\n", diff);
-    }
 
     /* Test ProcessOutput with setting framerate. */
     init_dmo_media_type_video(type, &MEDIASUBTYPE_WMV1, data_width, data_height);
@@ -5404,7 +5399,6 @@ static void test_wmv_decoder_media_object(void)
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
 
     hr = IMediaObject_ProcessInput(media_object, 0, &input_media_buffer->IMediaBuffer_iface, 0, 0, 300000);
-    todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx.\n", hr);
 
     output_media_buffer->length = 0;
@@ -5413,20 +5407,16 @@ static void test_wmv_decoder_media_object(void)
     output_data_buffer.rtTimestamp = 0xdeadbeef;
     output_data_buffer.rtTimelength = 0xdeadbeef;
     hr = IMediaObject_ProcessOutput(media_object, 0, 1, &output_data_buffer, &status);
-    todo_wine
     ok(hr == S_OK, "ProcessOutput returned %#lx.\n", hr);
     expected_status = DMO_OUTPUT_DATA_BUFFERF_SYNCPOINT | DMO_OUTPUT_DATA_BUFFERF_TIME | DMO_OUTPUT_DATA_BUFFERF_TIMELENGTH;
-    todo_wine
     ok(output_data_buffer.dwStatus == expected_status, "Got unexpected dwStatus %#lx.\n", output_data_buffer.dwStatus);
-    if (hr == S_OK)
-    {
     diff = check_dmo_output_data_buffer(&output_data_buffer, &output_buffer_desc_nv12, L"nv12frame.bmp", 0, 300000);
     ok(diff == 0, "Got %lu%% diff.\n", diff);
-    }
 
     ret = IMediaBuffer_Release(&output_media_buffer->IMediaBuffer_iface);
     ok(ret == 0, "Release returned %lu\n", ret);
     ret = IMediaBuffer_Release(&input_media_buffer->IMediaBuffer_iface);
+    todo_wine
     ok(ret == 0, "Release returned %lu\n", ret);
 
     ret = IMediaObject_Release(media_object);
