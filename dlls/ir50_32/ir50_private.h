@@ -31,4 +31,6 @@
 #define IDS_NAME        100
 #define IDS_DESCRIPTION 101
 
+HRESULT WINAPI winegstreamer_create_video_decoder(IMFTransform **out);
+
 #endif /* __IR50_PRIVATE_H */

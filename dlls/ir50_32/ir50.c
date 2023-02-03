@@ -35,13 +35,23 @@ WINE_DEFAULT_DEBUG_CHANNEL(ir50_32);
 static HINSTANCE IR50_32_hModule;
 
 #define IV50_MAGIC mmioFOURCC('I','V','5','0')
+#define compare_fourcc(fcc1, fcc2) (((fcc1)^(fcc2))&~0x20202020)
 
 
 static LRESULT
 IV50_Open( const ICINFO *icinfo )
 {
-    FIXME("DRV_OPEN %p\n", icinfo);
-    return 0;
+    IMFTransform *decoder = NULL;
+
+    TRACE("DRV_OPEN %p\n", icinfo);
+
+    if ( icinfo && compare_fourcc( icinfo->fccType, ICTYPE_VIDEO ) )
+        return 0;
+
+    if ( FAILED(winegstreamer_create_video_decoder( &decoder )) )
+        return 0;
+
+    return (LRESULT)decoder;
 }
 
 static LRESULT
@@ -177,7 +187,10 @@ LRESULT WINAPI IV50_DriverProc( DWORD_PTR dwDriverId, HDRVR hdrvr, UINT msg,
         break;
 
     case DRV_CLOSE:
-        FIXME("DRV_CLOSE\n");
+        TRACE("DRV_CLOSE\n");
+        if ( decoder )
+            IMFTransform_Release( decoder );
+        r = 1;
         break;
 
     case DRV_ENABLE:
