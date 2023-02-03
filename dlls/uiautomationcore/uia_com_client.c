@@ -402,8 +402,31 @@ static HRESULT WINAPI uia_element_get_CurrentItemStatus(IUIAutomationElement9 *i
 
 static HRESULT WINAPI uia_element_get_CurrentBoundingRectangle(IUIAutomationElement9 *iface, RECT *ret_val)
 {
-    FIXME("%p: stub\n", iface);
-    return E_NOTIMPL;
+    struct uia_element *element = impl_from_IUIAutomationElement9(iface);
+    HRESULT hr;
+    VARIANT v;
+
+    TRACE("%p, %p\n", element, ret_val);
+
+    memset(ret_val, 0, sizeof(*ret_val));
+    VariantInit(&v);
+    hr = UiaGetPropertyValue(element->node, UIA_BoundingRectanglePropertyId, &v);
+    if (SUCCEEDED(hr) && V_VT(&v) == (VT_R8 | VT_ARRAY))
+    {
+        double vals[4];
+        LONG idx;
+
+        for (idx = 0; idx < ARRAY_SIZE(vals); idx++)
+            SafeArrayGetElement(V_ARRAY(&v), &idx, &vals[idx]);
+
+        ret_val->left = vals[0];
+        ret_val->top = vals[1];
+        ret_val->right = ret_val->left + vals[2];
+        ret_val->bottom = ret_val->top + vals[3];
+    }
+
+    VariantClear(&v);
+    return hr;
 }
 
 static HRESULT WINAPI uia_element_get_CurrentLabeledBy(IUIAutomationElement9 *iface, IUIAutomationElement **ret_val)
