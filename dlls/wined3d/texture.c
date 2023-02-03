@@ -4313,6 +4313,11 @@ HRESULT CDECL wined3d_texture_update_overlay(struct wined3d_texture *texture, un
     return WINED3D_OK;
 }
 
+struct wined3d_swapchain * CDECL wined3d_texture_get_swapchain(struct wined3d_texture *texture)
+{
+    return texture->swapchain;
+}
+
 void * CDECL wined3d_texture_get_sub_resource_parent(struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
     TRACE("texture %p, sub_resource_idx %u.\n", texture, sub_resource_idx);

@@ -2857,6 +2857,7 @@ struct wined3d_resource * __cdecl wined3d_texture_get_resource(struct wined3d_te
 HRESULT __cdecl wined3d_texture_get_sub_resource_desc(const struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc);
 void * __cdecl wined3d_texture_get_sub_resource_parent(struct wined3d_texture *texture, unsigned int sub_resource_idx);
+struct wined3d_swapchain * __cdecl wined3d_texture_get_swapchain(struct wined3d_texture *texture);
 ULONG __cdecl wined3d_texture_incref(struct wined3d_texture *texture);
 HRESULT __cdecl wined3d_texture_release_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC dc);
 HRESULT __cdecl wined3d_texture_set_color_key(struct wined3d_texture *texture,
