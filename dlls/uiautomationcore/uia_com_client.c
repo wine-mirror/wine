@@ -1373,8 +1373,48 @@ static HRESULT WINAPI uia_iface_IntNativeArrayToSafeArray(IUIAutomation6 *iface,
 static HRESULT WINAPI uia_iface_IntSafeArrayToNativeArray(IUIAutomation6 *iface, SAFEARRAY *sa, int **out_arr,
         int *out_arr_count)
 {
-    FIXME("%p, %p, %p, %p: stub\n", iface, sa, out_arr, out_arr_count);
-    return E_NOTIMPL;
+    LONG lbound, elems;
+    int *arr, *sa_arr;
+    VARTYPE vt;
+    HRESULT hr;
+
+    TRACE("%p, %p, %p, %p\n", iface, sa, out_arr, out_arr_count);
+
+    if (!sa || !out_arr || !out_arr_count)
+        return E_INVALIDARG;
+
+    *out_arr = NULL;
+    hr = SafeArrayGetVartype(sa, &vt);
+    if (FAILED(hr))
+        return hr;
+
+    if (vt != VT_I4)
+        return E_INVALIDARG;
+
+    hr = get_safearray_bounds(sa, &lbound, &elems);
+    if (FAILED(hr))
+        return hr;
+
+    if (!(arr = CoTaskMemAlloc(elems * sizeof(*arr))))
+        return E_OUTOFMEMORY;
+
+    hr = SafeArrayAccessData(sa, (void **)&sa_arr);
+    if (FAILED(hr))
+        goto exit;
+
+    memcpy(arr, sa_arr, sizeof(*arr) * elems);
+    hr = SafeArrayUnaccessData(sa);
+    if (FAILED(hr))
+        goto exit;
+
+    *out_arr = arr;
+    *out_arr_count = elems;
+
+exit:
+    if (FAILED(hr))
+        CoTaskMemFree(arr);
+
+    return hr;
 }
 
 static HRESULT WINAPI uia_iface_RectToVariant(IUIAutomation6 *iface, RECT rect, VARIANT *out_var)

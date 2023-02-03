@@ -107,7 +107,7 @@ static HRESULT get_safearray_dim_bounds(SAFEARRAY *sa, UINT dim, LONG *lbound, L
     return S_OK;
 }
 
-static HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems)
+HRESULT get_safearray_bounds(SAFEARRAY *sa, LONG *lbound, LONG *elems)
 {
     UINT dims;
 

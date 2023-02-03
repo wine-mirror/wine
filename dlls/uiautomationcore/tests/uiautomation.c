@@ -10014,6 +10014,41 @@ exit:
     UnregisterClassA("test_Element_GetPropertyValue class", NULL);
 }
 
+static void test_CUIAutomation_value_conversion(IUIAutomation *uia_iface)
+{
+    static const VARTYPE invalid_int_vts[] = { VT_I8, VT_INT };
+    int *out_arr, out_arr_count, i;
+    SAFEARRAY *sa;
+    VARTYPE vt;
+    HRESULT hr;
+
+    for (i = 0; i < ARRAY_SIZE(invalid_int_vts); i++)
+    {
+        vt = invalid_int_vts[i];
+        sa = SafeArrayCreateVector(vt, 0, 2);
+        ok(!!sa, "sa == NULL\n");
+
+        out_arr_count = 0xdeadbeef;
+        out_arr = (int *)0xdeadbeef;
+        hr = IUIAutomation_IntSafeArrayToNativeArray(uia_iface, sa, &out_arr, &out_arr_count);
+        ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+        ok(!out_arr, "out_arr != NULL\n");
+        ok(out_arr_count == 0xdeadbeef, "Unexpected out_arr_count %#x\n", out_arr_count);
+        SafeArrayDestroy(sa);
+    }
+
+    /* Only accepts VT_I4 as an input array type. */
+    sa = create_i4_safearray();
+    hr = IUIAutomation_IntSafeArrayToNativeArray(uia_iface, sa, &out_arr, &out_arr_count);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(out_arr_count == ARRAY_SIZE(uia_i4_arr_prop_val), "Unexpected out_arr_count %#x\n", out_arr_count);
+    for (i = 0; i < ARRAY_SIZE(uia_i4_arr_prop_val); i++)
+        ok(out_arr[i] == uia_i4_arr_prop_val[i], "out_arr[%d]: Expected %ld, got %d\n", i, uia_i4_arr_prop_val[i], out_arr[i]);
+
+    SafeArrayDestroy(sa);
+    CoTaskMemFree(out_arr);
+}
+
 struct uia_com_classes {
     const GUID *clsid;
     const GUID *iid;
@@ -10077,6 +10112,7 @@ static void test_CUIAutomation(void)
     ok(hr == S_OK, "Failed to create IUIAutomation interface, hr %#lx\n", hr);
     ok(!!uia_iface, "uia_iface == NULL\n");
 
+    test_CUIAutomation_value_conversion(uia_iface);
     test_ElementFromHandle(uia_iface, has_cui8);
     test_Element_GetPropertyValue(uia_iface);
 
