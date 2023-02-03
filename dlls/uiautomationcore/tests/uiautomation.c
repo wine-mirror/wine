@@ -1128,8 +1128,10 @@ static struct Provider
     HWND override_hwnd;
     struct Provider_prop_override *prop_override;
     int prop_override_count;
+    struct UiaRect bounds_rect;
 } Provider, Provider2, Provider_child, Provider_child2;
 static struct Provider Provider_hwnd, Provider_nc, Provider_proxy, Provider_proxy2, Provider_override;
+static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd, BOOL initialize_nav_links);
 
 static const WCHAR *uia_bstr_prop_str = L"uia-string";
 static const ULONG uia_i4_prop_val = 0xdeadbeef;
@@ -1187,6 +1189,7 @@ enum {
     FRAG_NAVIGATE,
     FRAG_GET_RUNTIME_ID,
     FRAG_GET_FRAGMENT_ROOT,
+    FRAG_GET_BOUNDING_RECT,
     HWND_OVERRIDE_GET_OVERRIDE_PROVIDER,
 };
 
@@ -1197,6 +1200,7 @@ static const char *prov_method_str[] = {
     "Navigate",
     "GetRuntimeId",
     "get_FragmentRoot",
+    "get_BoundingRectangle",
     "GetOverrideProviderForHwnd",
 };
 
@@ -1221,6 +1225,31 @@ struct prov_method_sequence {
 
 static int sequence_cnt, sequence_size;
 static struct prov_method_sequence *sequence;
+
+/*
+ * This sequence of method calls is always used when creating an HUIANODE from
+ * an IRawElementProviderSimple.
+ */
+#define NODE_CREATE_SEQ(prov) \
+    { prov , PROV_GET_PROVIDER_OPTIONS }, \
+    /* Win10v1507 and below call this. */ \
+    { prov , PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */ \
+    { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER }, \
+    { prov , PROV_GET_PROPERTY_VALUE }, \
+    { prov , FRAG_NAVIGATE }, /* NavigateDirection_Parent */ \
+    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
+
+/*
+ * This sequence of method calls is always used when creating an HUIANODE from
+ * an IRawElementProviderSimple that returns an HWND from get_HostRawElementProvider.
+ */
+#define NODE_CREATE_SEQ2(prov) \
+    { prov , PROV_GET_PROVIDER_OPTIONS }, \
+    /* Win10v1507 and below call this. */ \
+    { prov , PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */ \
+    { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER }, \
+    { prov , FRAG_NAVIGATE }, /* NavigateDirection_Parent */ \
+    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
 
 static void flush_method_sequence(void)
 {
@@ -1891,8 +1920,15 @@ static HRESULT WINAPI ProviderFragment_GetRuntimeId(IRawElementProviderFragment 
 static HRESULT WINAPI ProviderFragment_get_BoundingRectangle(IRawElementProviderFragment *iface,
         struct UiaRect *ret_val)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    struct Provider *This = impl_from_ProviderFragment(iface);
+
+    add_method_call(This, FRAG_GET_BOUNDING_RECT);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
+
+    *ret_val = This->bounds_rect;
+    return S_OK;
 }
 
 static HRESULT WINAPI ProviderFragment_GetEmbeddedFragmentRoots(IRawElementProviderFragment *iface,
@@ -4663,6 +4699,80 @@ static const struct prov_method_sequence get_elem_arr_prop_seq[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence get_bounding_rect_seq[] = {
+    NODE_CREATE_SEQ(&Provider_child),
+    { &Provider_child, FRAG_GET_BOUNDING_RECT },
+    /*
+     * Win10v21H2+ and above call these, attempting to get the fragment root's
+     * HWND. I'm guessing this is an attempt to get the HWND's DPI for DPI scaling.
+     */
+    { &Provider_child, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_OPTIONAL },
+    { 0 }
+};
+
+static const struct prov_method_sequence get_empty_bounding_rect_seq[] = {
+    { &Provider_child, FRAG_GET_BOUNDING_RECT },
+    { 0 }
+};
+
+static void set_uia_rect(struct UiaRect *rect, double left, double top, double width, double height)
+{
+    rect->left = left;
+    rect->top = top;
+    rect->width = width;
+    rect->height = height;
+}
+
+#define check_uia_rect_val( v, rect ) \
+        check_uia_rect_val_( (v), (rect), __FILE__, __LINE__)
+static void check_uia_rect_val_(VARIANT *v, struct UiaRect *rect, const char *file, int line)
+{
+    LONG lbound, ubound, elems, idx;
+    SAFEARRAY *sa;
+    double tmp[4];
+    VARTYPE vt;
+    HRESULT hr;
+    UINT dims;
+
+    ok_(file, line)(V_VT(v) == (VT_R8 | VT_ARRAY), "Unexpected rect VT hr %d.\n", V_VT(v));
+    if (V_VT(v) != (VT_R8 | VT_ARRAY))
+        return;
+
+    sa = V_ARRAY(v);
+    hr = SafeArrayGetVartype(sa, &vt);
+    ok_(file, line)(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(file, line)(vt == VT_R8, "Unexpected vt %d\n", vt);
+
+    dims = SafeArrayGetDim(sa);
+    ok_(file, line)(dims == 1, "Unexpected dims %d\n", dims);
+
+    lbound = ubound = elems = 0;
+    hr = SafeArrayGetLBound(sa, 1, &lbound);
+    ok_(file, line)(hr == S_OK, "Unexpected hr %#lx for SafeArrayGetLBound\n", hr);
+    ok_(file, line)(lbound == 0, "Unexpected lbound %ld\n", lbound);
+
+    hr = SafeArrayGetUBound(sa, 1, &ubound);
+    ok_(file, line)(hr == S_OK, "Unexpected hr %#lx for SafeArrayGetUBound\n", hr);
+    ok_(file, line)(ubound == 3, "Unexpected ubound %ld\n", ubound);
+
+    elems = (ubound - lbound) + 1;
+    ok_(file, line)(elems == 4, "Unexpected rect elems %ld\n", elems);
+
+    for (idx = 0; idx < ARRAY_SIZE(tmp); idx++)
+    {
+        hr = SafeArrayGetElement(sa, &idx, &tmp[idx]);
+        ok_(file, line)(hr == S_OK, "Unexpected hr %#lx for SafeArrayGetElement at idx %ld.\n", hr, idx);
+    }
+
+    ok_(file, line)(tmp[0] == rect->left, "Unexpected left value %f, expected %f\n", tmp[0], rect->left);
+    ok_(file, line)(tmp[1] == rect->top, "Unexpected top value %f, expected %f\n", tmp[1], rect->top);
+    ok_(file, line)(tmp[2] == rect->width, "Unexpected width value %f, expected %f\n", tmp[2], rect->width);
+    ok_(file, line)(tmp[3] == rect->height, "Unexpected height value %f, expected %f\n", tmp[3], rect->height);
+}
+
 static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, VARIANT *v)
 {
     LONG idx;
@@ -4858,6 +4968,7 @@ static const struct uia_element_property element_properties[] = {
 static void test_UiaGetPropertyValue(void)
 {
     const struct uia_element_property *elem_prop;
+    struct UiaRect rect;
     IUnknown *unk_ns;
     unsigned int i;
     HUIANODE node;
@@ -4920,9 +5031,51 @@ static void test_UiaGetPropertyValue(void)
         winetest_pop_context();
     }
 
-    Provider.ret_invalid_prop_type = FALSE;
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider, NULL, FALSE);
+
+    /*
+     * Windows 7 will call get_FragmentRoot in an endless loop until the fragment root returns an HWND.
+     * It's the only version with this behavior.
+     */
+    if (!UiaLookupId(AutomationIdentifierType_Property, &OptimizeForVisualContent_Property_GUID))
+    {
+        win_skip("Skipping UIA_BoundingRectanglePropertyId tests for Win7\n");
+        goto exit;
+    }
+
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, FALSE);
+    node = (void *)0xdeadbeef;
+    hr = UiaNodeFromProvider(&Provider_child.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    /* Non-empty bounding rectangle, will return a VT_R8 SAFEARRAY. */
+    set_uia_rect(&rect, 0, 0, 50, 50);
+    Provider_child.bounds_rect = rect;
+    hr = UiaGetPropertyValue(node, UIA_BoundingRectanglePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    check_uia_rect_val(&v, &rect);
+    VariantClear(&v);
+
+    ok_method_sequence(get_bounding_rect_seq, "get_bounding_rect_seq");
+
+    /* Empty bounding rectangle will return ReservedNotSupportedValue. */
+    set_uia_rect(&rect, 0, 0, 0, 0);
+    Provider_child.bounds_rect = rect;
+    hr = UiaGetPropertyValue(node, UIA_BoundingRectanglePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+    ok(V_UNKNOWN(&v) == unk_ns, "unexpected IUnknown %p\n", V_UNKNOWN(&v));
+    VariantClear(&v);
+    ok_method_sequence(get_empty_bounding_rect_seq, "get_empty_bounding_rect_seq");
+
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+    initialize_provider(&Provider_child, ProviderOptions_ServerSideProvider, NULL, FALSE);
+
+exit:
 
     IUnknown_Release(unk_ns);
     CoUninitialize();
@@ -6994,19 +7147,6 @@ static void test_cache_req_sa_(SAFEARRAY *sa, LONG exp_lbound[2], LONG exp_elems
     }
 }
 
-/*
- * This sequence of method calls is always used when creating an HUIANODE from
- * an IRawElementProviderSimple.
- */
-#define NODE_CREATE_SEQ(prov) \
-    { prov , PROV_GET_PROVIDER_OPTIONS }, \
-    /* Win10v1507 and below call this. */ \
-    { prov , PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */ \
-    { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER }, \
-    { prov , PROV_GET_PROPERTY_VALUE }, \
-    { prov , FRAG_NAVIGATE }, /* NavigateDirection_Parent */ \
-    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
-
 static const struct prov_method_sequence cache_req_seq1[] = {
     { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_ProviderDescriptionPropertyId. */
     { 0 }
@@ -7504,18 +7644,6 @@ static void test_UiaGetUpdatedCache(void)
 
     CoUninitialize();
 }
-
-/*
- * This sequence of method calls is always used when creating an HUIANODE from
- * an IRawElementProviderSimple that returns an HWND from get_HostRawElementProvider.
- */
-#define NODE_CREATE_SEQ2(prov) \
-    { prov , PROV_GET_PROVIDER_OPTIONS }, \
-    /* Win10v1507 and below call this. */ \
-    { prov , PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */ \
-    { prov , PROV_GET_HOST_RAW_ELEMENT_PROVIDER }, \
-    { prov , FRAG_NAVIGATE }, /* NavigateDirection_Parent */ \
-    { prov , PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL } \
 
 static const struct prov_method_sequence nav_seq1[] = {
     NODE_CREATE_SEQ2(&Provider),
@@ -8333,6 +8461,7 @@ static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd,
     prov->override_hwnd = NULL;
     prov->prop_override = NULL;
     prov->prop_override_count = 0;
+    memset(&prov->bounds_rect, 0, sizeof(prov->bounds_rect));
     if (initialize_nav_links)
     {
         prov->frag_root = NULL;

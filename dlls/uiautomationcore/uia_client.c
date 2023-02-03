@@ -1391,6 +1391,45 @@ static HRESULT uia_provider_get_special_prop_val(struct uia_provider *prov,
         break;
     }
 
+    case UIA_BoundingRectanglePropertyId:
+    {
+        IRawElementProviderFragment *elfrag;
+        struct UiaRect rect = { 0 };
+        double rect_vals[4];
+        SAFEARRAY *sa;
+        LONG idx;
+
+        hr = IRawElementProviderSimple_QueryInterface(prov->elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+        if (FAILED(hr) || !elfrag)
+            break;
+
+        hr = IRawElementProviderFragment_get_BoundingRectangle(elfrag, &rect);
+        IRawElementProviderFragment_Release(elfrag);
+        if (FAILED(hr) || (rect.width <= 0 || rect.height <= 0))
+            break;
+
+        if (!(sa = SafeArrayCreateVector(VT_R8, 0, ARRAY_SIZE(rect_vals))))
+            break;
+
+        rect_vals[0] = rect.left;
+        rect_vals[1] = rect.top;
+        rect_vals[2] = rect.width;
+        rect_vals[3] = rect.height;
+        for (idx = 0; idx < ARRAY_SIZE(rect_vals); idx++)
+        {
+            hr = SafeArrayPutElement(sa, &idx, &rect_vals[idx]);
+            if (FAILED(hr))
+            {
+                SafeArrayDestroy(sa);
+                break;
+            }
+        }
+
+        V_VT(ret_val) = VT_R8 | VT_ARRAY;
+        V_ARRAY(ret_val) = sa;
+        break;
+    }
+
     default:
         break;
     }
