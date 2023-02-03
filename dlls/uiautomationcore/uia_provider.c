@@ -868,8 +868,34 @@ static HRESULT WINAPI msaa_fragment_GetRuntimeId(IRawElementProviderFragment *if
 static HRESULT WINAPI msaa_fragment_get_BoundingRectangle(IRawElementProviderFragment *iface,
         struct UiaRect *ret_val)
 {
-    FIXME("%p, %p: stub!\n", iface, ret_val);
-    return E_NOTIMPL;
+    struct msaa_provider *msaa_prov = impl_from_msaa_fragment(iface);
+    LONG left, top, width, height;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", iface, ret_val);
+
+    memset(ret_val, 0, sizeof(*ret_val));
+
+    /*
+     * If this IAccessible is at the root of its HWND, the BaseHwnd provider
+     * will supply the bounding rectangle.
+     */
+    if (msaa_check_root_acc(msaa_prov))
+        return S_OK;
+
+    if (msaa_check_acc_state(msaa_prov->acc, msaa_prov->cid, STATE_SYSTEM_OFFSCREEN))
+        return S_OK;
+
+    hr = IAccessible_accLocation(msaa_prov->acc, &left, &top, &width, &height, msaa_prov->cid);
+    if (FAILED(hr))
+        return hr;
+
+    ret_val->left = left;
+    ret_val->top = top;
+    ret_val->width = width;
+    ret_val->height = height;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI msaa_fragment_GetEmbeddedFragmentRoots(IRawElementProviderFragment *iface,

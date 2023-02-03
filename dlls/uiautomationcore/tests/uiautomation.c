@@ -3440,7 +3440,9 @@ static void test_UiaProviderFromIAccessible(void)
 {
     ILegacyIAccessibleProvider *accprov;
     IRawElementProviderSimple *elprov, *elprov2;
+    IRawElementProviderFragment *elfrag;
     enum ProviderOptions prov_opt;
+    struct UiaRect rect;
     IAccessible *acc;
     IUnknown *unk;
     WNDCLASSA cls;
@@ -3957,6 +3959,83 @@ static void test_UiaProviderFromIAccessible(void)
 
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * Test IRawElementProviderFragment_get_BoundingRectangle.
+     */
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 0, L"acc_name", 25, 25, 50, 50);
+    /* Test the case where Accessible is not the root for its HWND. */
+    acc_client = NULL;
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_accLocation);
+    hr = IRawElementProviderFragment_get_BoundingRectangle(elfrag, &rect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(rect.left == (double)Accessible.left, "Unexpected left value %f\n", rect.left);
+    ok(rect.top == (double)Accessible.top, "Unexpected top value %f\n", rect.top);
+    ok(rect.width == (double)Accessible.width, "Unexpected width value %f\n", rect.width);
+    ok(rect.height == (double)Accessible.height, "Unexpected height value %f\n", rect.height);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_accLocation);
+
+    /* If Accessible has STATE_SYSTEM_OFFSCREEN, it will return an empty rect. */
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_OFFSCREEN, 0, L"acc_name", 0, 0, 50, 50);
+    SET_EXPECT(Accessible_get_accState);
+    hr = IRawElementProviderFragment_get_BoundingRectangle(elfrag, &rect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(rect.left == 0.0, "Unexpected left value %f\n", rect.left);
+    ok(rect.top == 0.0, "Unexpected top value %f\n", rect.top);
+    ok(rect.width == 0.0, "Unexpected width value %f\n", rect.width);
+    ok(rect.height == 0.0, "Unexpected height value %f\n", rect.height);
+    CHECK_CALLED(Accessible_get_accState);
+
+    IRawElementProviderFragment_Release(elfrag);
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /* Test case where accessible is the root accessible. */
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, 0, 0, L"acc_name", 0, 0, 0, 0);
+    acc_client = &Accessible.IAccessible_iface;
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    hr = IRawElementProviderFragment_get_BoundingRectangle(elfrag, &rect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(rect.left == 0.0, "Unexpected left value %f\n", rect.left);
+    ok(rect.top == 0.0, "Unexpected top value %f\n", rect.top);
+    ok(rect.width == 0.0, "Unexpected width value %f\n", rect.width);
+    ok(rect.height == 0.0, "Unexpected height value %f\n", rect.height);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    /* Second call does nothing. */
+    hr = IRawElementProviderFragment_get_BoundingRectangle(elfrag, &rect);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(rect.left == 0.0, "Unexpected left value %f\n", rect.left);
+    ok(rect.top == 0.0, "Unexpected top value %f\n", rect.top);
+    ok(rect.width == 0.0, "Unexpected width value %f\n", rect.width);
+    ok(rect.height == 0.0, "Unexpected height value %f\n", rect.height);
+
+    IRawElementProviderFragment_Release(elfrag);
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+    acc_client = NULL;
 
     test_uia_prov_from_acc_properties();
     test_uia_prov_from_acc_navigation();
