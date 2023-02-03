@@ -4016,6 +4016,7 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
 {
     DXGI_SWAP_CHAIN_DESC swapchain_desc;
     DXGI_SWAP_EFFECT swap_effect;
+    IDXGIResource *dxgi_resource;
     IDXGISwapChain3 *swapchain3;
     IUnknown *present_queue[2];
     IDXGISwapChain *swapchain;
@@ -4056,13 +4057,18 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
 
     hr = IDXGIFactory_CreateSwapChain(factory, device, &swapchain_desc, &swapchain);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+
     expected_hr = is_d3d12 ? E_NOINTERFACE : S_OK;
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGIResource, (void **)&dxgi_resource);
+    ok(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
+    ok(!dxgi_resource || hr == S_OK, "Got unexpected pointer %p.\n", dxgi_resource);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
     ok(!surface || hr == S_OK, "Got unexpected pointer %p.\n", surface);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D10Texture2D, (void **)&texture);
     ok(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
     ok(!texture || hr == S_OK, "Got unexpected pointer %p.\n", texture);
+
     expected_hr = is_d3d12 ? S_OK : E_NOINTERFACE;
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D12Resource, (void **)&resource);
     ok(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
@@ -4175,16 +4181,23 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
         check_resource_desc(resource, &swapchain_desc);
         ID3D12Resource_Release(resource);
     }
+    if (dxgi_resource)
+        IDXGIResource_Release(dxgi_resource);
 
     hr = IDXGISwapChain_ResizeBuffers(swapchain, 2, 320, 240, DXGI_FORMAT_B8G8R8A8_UNORM, 0);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+
     expected_hr = is_d3d12 ? E_NOINTERFACE : S_OK;
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGIResource, (void **)&dxgi_resource);
+    ok(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
+    ok(!surface || hr == S_OK, "Got unexpected pointer %p.\n", surface);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
     ok(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
     ok(!surface || hr == S_OK, "Got unexpected pointer %p.\n", surface);
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D10Texture2D, (void **)&texture);
     ok(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
     ok(!texture || hr == S_OK, "Got unexpected pointer %p.\n", texture);
+
     expected_hr = is_d3d12 ? S_OK : E_NOINTERFACE;
     hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D12Resource, (void **)&resource);
     ok(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
@@ -4246,6 +4259,8 @@ static void test_swapchain_resize(IUnknown *device, BOOL is_d3d12)
         check_resource_desc(resource, &swapchain_desc);
         ID3D12Resource_Release(resource);
     }
+    if (dxgi_resource)
+        IDXGIResource_Release(dxgi_resource);
 
     hr = IDXGISwapChain_ResizeBuffers(swapchain, 0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -4495,9 +4510,7 @@ static void test_swapchain_parameters(void)
 
         expected_usage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER;
         hr = IDXGIResource_GetUsage(resource, &usage);
-        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
-        todo_wine
         ok((usage & expected_usage) == expected_usage, "Got usage %x, expected %x, test %u.\n",
                 usage, expected_usage, i);
 
@@ -4534,9 +4547,7 @@ static void test_swapchain_parameters(void)
                 broken_usage |= DXGI_USAGE_READ_ONLY;
 
             hr = IDXGIResource_GetUsage(resource, &usage);
-            todo_wine
             ok(hr == S_OK, "Got unexpected hr %#lx, test %u, buffer %u.\n", hr, i, j);
-            todo_wine
             ok(usage == expected_usage || broken(usage == broken_usage),
                     "Got usage %x, expected %x, test %u, buffer %u.\n",
                     usage, expected_usage, i, j);
@@ -4607,9 +4618,7 @@ static void test_swapchain_parameters(void)
         ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
         expected_usage = usage | DXGI_USAGE_BACK_BUFFER | DXGI_USAGE_DISCARD_ON_PRESENT;
         hr = IDXGIResource_GetUsage(resource, &usage);
-        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx, test %u.\n", hr, i);
-        todo_wine_if(i != 7)
         ok(usage == expected_usage, "Got usage %x, expected %x, test %u.\n", usage, expected_usage, i);
         IDXGIResource_Release(resource);
 

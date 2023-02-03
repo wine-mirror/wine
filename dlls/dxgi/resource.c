@@ -350,9 +350,35 @@ static HRESULT STDMETHODCALLTYPE dxgi_resource_GetSharedHandle(IDXGIResource *if
 
 static HRESULT STDMETHODCALLTYPE dxgi_resource_GetUsage(IDXGIResource *iface, DXGI_USAGE *usage)
 {
-    FIXME("iface %p, usage %p stub!\n", iface, usage);
+    struct dxgi_resource *resource = impl_from_IDXGIResource(iface);
+    struct wined3d_resource_desc resource_desc;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, usage %p.\n", iface, usage);
+
+    wined3d_resource_get_desc(resource->wined3d_resource, &resource_desc);
+
+    *usage = dxgi_usage_from_wined3d_bind_flags(resource_desc.bind_flags);
+
+    if (resource_desc.resource_type != WINED3D_RTYPE_BUFFER)
+    {
+        struct wined3d_texture *texture = wined3d_texture_from_resource(resource->wined3d_resource);
+        struct wined3d_swapchain_desc swapchain_desc;
+        struct wined3d_swapchain *swapchain;
+
+        if ((swapchain = wined3d_texture_get_swapchain(texture)))
+        {
+            *usage |= DXGI_USAGE_BACK_BUFFER;
+
+            wined3d_swapchain_get_desc(swapchain, &swapchain_desc);
+            if (swapchain_desc.swap_effect == WINED3D_SWAP_EFFECT_DISCARD)
+                *usage |= DXGI_USAGE_DISCARD_ON_PRESENT;
+
+            if (wined3d_swapchain_get_back_buffer(swapchain, 0) != texture)
+                *usage |= DXGI_USAGE_READ_ONLY;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_resource_SetEvictionPriority(IDXGIResource *iface, UINT eviction_priority)

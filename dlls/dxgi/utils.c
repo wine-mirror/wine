@@ -494,9 +494,6 @@ DXGI_USAGE dxgi_usage_from_wined3d_bind_flags(unsigned int wined3d_bind_flags)
     if (wined3d_bind_flags & WINED3D_BIND_UNORDERED_ACCESS)
         dxgi_usage |= DXGI_USAGE_UNORDERED_ACCESS;
 
-    wined3d_bind_flags &= ~(WINED3D_BIND_SHADER_RESOURCE | WINED3D_BIND_RENDER_TARGET | WINED3D_BIND_UNORDERED_ACCESS);
-    if (wined3d_bind_flags)
-        FIXME("Unhandled wined3d bind flags %#x.\n", wined3d_bind_flags);
     return dxgi_usage;
 }
 
