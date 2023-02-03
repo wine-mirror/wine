@@ -1437,6 +1437,46 @@ static HRESULT uia_provider_get_special_prop_val(struct uia_provider *prov,
     return S_OK;
 }
 
+static HRESULT uia_provider_get_pattern_prop_val(struct uia_provider *prov,
+        const struct uia_prop_info *prop_info, VARIANT *ret_val)
+{
+    const struct uia_pattern_info *pattern_info = uia_pattern_info_from_id(prop_info->pattern_id);
+    IUnknown *unk, *pattern_prov;
+    HRESULT hr;
+
+    unk = pattern_prov = NULL;
+    hr = IRawElementProviderSimple_GetPatternProvider(prov->elprov, prop_info->pattern_id, &unk);
+    if (FAILED(hr) || !unk)
+        return S_OK;
+
+    hr = IUnknown_QueryInterface(unk, pattern_info->pattern_iid, (void **)&pattern_prov);
+    IUnknown_Release(unk);
+    if (FAILED(hr) || !pattern_prov)
+    {
+        WARN("Failed to get pattern interface from object\n");
+        return S_OK;
+    }
+
+    switch (prop_info->prop_id)
+    {
+    case UIA_ValueIsReadOnlyPropertyId:
+    {
+        BOOL val;
+
+        hr = IValueProvider_get_IsReadOnly((IValueProvider *)pattern_prov, &val);
+        if (SUCCEEDED(hr))
+            variant_init_bool(ret_val, val);
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    IUnknown_Release(pattern_prov);
+    return S_OK;
+}
+
 static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
         const struct uia_prop_info *prop_info, VARIANT *ret_val)
 {
@@ -1452,6 +1492,9 @@ static HRESULT WINAPI uia_provider_get_prop_val(IWineUiaProvider *iface,
 
     case PROP_TYPE_SPECIAL:
         return uia_provider_get_special_prop_val(prov, prop_info, ret_val);
+
+    case PROP_TYPE_PATTERN_PROP:
+        return uia_provider_get_pattern_prop_val(prov, prop_info, ret_val);
 
     default:
         break;

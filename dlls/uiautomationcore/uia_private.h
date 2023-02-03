@@ -28,6 +28,7 @@ enum uia_prop_type {
     PROP_TYPE_UNKNOWN,
     PROP_TYPE_ELEM_PROP,
     PROP_TYPE_SPECIAL,
+    PROP_TYPE_PATTERN_PROP,
 };
 
 /*
@@ -91,6 +92,12 @@ static inline struct uia_provider *impl_from_IWineUiaProvider(IWineUiaProvider *
     return CONTAINING_RECORD(iface, struct uia_provider, IWineUiaProvider_iface);
 }
 
+static inline void variant_init_bool(VARIANT *v, BOOL val)
+{
+    V_VT(v) = VT_BOOL;
+    V_BOOL(v) = val ? VARIANT_TRUE : VARIANT_FALSE;
+}
+
 /* uia_client.c */
 int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type) DECLSPEC_HIDDEN;
 int get_node_provider_type_at_idx(struct uia_node *node, int idx) DECLSPEC_HIDDEN;
@@ -99,6 +106,7 @@ HRESULT create_uia_node_from_elprov(IRawElementProviderSimple *elprov, HUIANODE 
 
 /* uia_ids.c */
 const struct uia_prop_info *uia_prop_info_from_id(PROPERTYID prop_id) DECLSPEC_HIDDEN;
+const struct uia_pattern_info *uia_pattern_info_from_id(PATTERNID pattern_id) DECLSPEC_HIDDEN;
 
 /* uia_provider.c */
 void uia_stop_provider_thread(void) DECLSPEC_HIDDEN;

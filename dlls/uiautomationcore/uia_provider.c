@@ -35,12 +35,6 @@ static void variant_init_i4(VARIANT *v, int val)
     V_I4(v) = val;
 }
 
-static void variant_init_bool(VARIANT *v, BOOL val)
-{
-    V_VT(v) = VT_BOOL;
-    V_BOOL(v) = val ? VARIANT_TRUE : VARIANT_FALSE;
-}
-
 static BOOL msaa_check_acc_state(IAccessible *acc, VARIANT cid, ULONG flag)
 {
     HRESULT hr;

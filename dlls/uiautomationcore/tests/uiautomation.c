@@ -1103,12 +1103,19 @@ struct Provider_prop_override
     VARIANT val;
 };
 
+struct Provider_value_pattern_data
+{
+    BOOL is_supported;
+    BOOL is_read_only;
+};
+
 static struct Provider
 {
     IRawElementProviderSimple IRawElementProviderSimple_iface;
     IRawElementProviderFragment IRawElementProviderFragment_iface;
     IRawElementProviderFragmentRoot IRawElementProviderFragmentRoot_iface;
     IRawElementProviderHwndOverride IRawElementProviderHwndOverride_iface;
+    IValueProvider IValueProvider_iface;
     LONG ref;
 
     const char *prov_name;
@@ -1129,6 +1136,7 @@ static struct Provider
     struct Provider_prop_override *prop_override;
     int prop_override_count;
     struct UiaRect bounds_rect;
+    struct Provider_value_pattern_data value_pattern_data;
 } Provider, Provider2, Provider_child, Provider_child2;
 static struct Provider Provider_hwnd, Provider_nc, Provider_proxy, Provider_proxy2, Provider_override;
 static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd, BOOL initialize_nav_links);
@@ -1184,6 +1192,7 @@ static SAFEARRAY *create_unk_safearray(void)
 
 enum {
     PROV_GET_PROVIDER_OPTIONS,
+    PROV_GET_PATTERN_PROV,
     PROV_GET_PROPERTY_VALUE,
     PROV_GET_HOST_RAW_ELEMENT_PROVIDER,
     FRAG_NAVIGATE,
@@ -1195,6 +1204,7 @@ enum {
 
 static const char *prov_method_str[] = {
     "get_ProviderOptions",
+    "GetPatternProvider",
     "GetPropertyValue",
     "get_HostRawElementProvider",
     "Navigate",
@@ -1544,6 +1554,8 @@ HRESULT WINAPI ProviderSimple_QueryInterface(IRawElementProviderSimple *iface, R
         *ppv = &This->IRawElementProviderFragmentRoot_iface;
     else if (IsEqualIID(riid, &IID_IRawElementProviderHwndOverride))
         *ppv = &This->IRawElementProviderHwndOverride_iface;
+    else if (IsEqualIID(riid, &IID_IValueProvider))
+        *ppv = &This->IValueProvider_iface;
     else
         return E_NOINTERFACE;
 
@@ -1586,8 +1598,29 @@ HRESULT WINAPI ProviderSimple_get_ProviderOptions(IRawElementProviderSimple *ifa
 HRESULT WINAPI ProviderSimple_GetPatternProvider(IRawElementProviderSimple *iface,
         PATTERNID pattern_id, IUnknown **ret_val)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    struct Provider *This = impl_from_ProviderSimple(iface);
+
+    add_method_call(This, PROV_GET_PATTERN_PROV);
+    if (This->expected_tid)
+        ok(This->expected_tid == GetCurrentThreadId(), "Unexpected tid %ld\n", GetCurrentThreadId());
+    This->last_call_tid = GetCurrentThreadId();
+
+    *ret_val = NULL;
+    switch (pattern_id)
+    {
+    case UIA_ValuePatternId:
+        if (This->value_pattern_data.is_supported)
+            *ret_val = (IUnknown *)iface;
+        break;
+
+    default:
+        break;
+    }
+
+    if (*ret_val)
+        IUnknown_AddRef(*ret_val);
+
+    return S_OK;
 }
 
 HRESULT WINAPI ProviderSimple_GetPropertyValue(IRawElementProviderSimple *iface,
@@ -2071,12 +2104,67 @@ static const IRawElementProviderHwndOverrideVtbl ProviderHwndOverrideVtbl = {
     ProviderHwndOverride_GetOverrideProviderForHwnd,
 };
 
+static inline struct Provider *impl_from_ProviderValuePattern(IValueProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct Provider, IValueProvider_iface);
+}
+
+static HRESULT WINAPI ProviderValuePattern_QueryInterface(IValueProvider *iface, REFIID riid,
+        void **ppv)
+{
+    struct Provider *Provider = impl_from_ProviderValuePattern(iface);
+    return IRawElementProviderSimple_QueryInterface(&Provider->IRawElementProviderSimple_iface, riid, ppv);
+}
+
+static ULONG WINAPI ProviderValuePattern_AddRef(IValueProvider *iface)
+{
+    struct Provider *Provider = impl_from_ProviderValuePattern(iface);
+    return IRawElementProviderSimple_AddRef(&Provider->IRawElementProviderSimple_iface);
+}
+
+static ULONG WINAPI ProviderValuePattern_Release(IValueProvider *iface)
+{
+    struct Provider *Provider = impl_from_ProviderValuePattern(iface);
+    return IRawElementProviderSimple_Release(&Provider->IRawElementProviderSimple_iface);
+}
+
+static HRESULT WINAPI ProviderValuePattern_SetValue(IValueProvider *iface, LPCWSTR val)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderValuePattern_get_Value(IValueProvider *iface, BSTR *ret_val)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderValuePattern_get_IsReadOnly(IValueProvider *iface, BOOL *ret_val)
+{
+    struct Provider *Provider = impl_from_ProviderValuePattern(iface);
+
+    *ret_val = Provider->value_pattern_data.is_read_only;
+
+    return S_OK;
+}
+
+static const IValueProviderVtbl ProviderValuePatternVtbl = {
+    ProviderValuePattern_QueryInterface,
+    ProviderValuePattern_AddRef,
+    ProviderValuePattern_Release,
+    ProviderValuePattern_SetValue,
+    ProviderValuePattern_get_Value,
+    ProviderValuePattern_get_IsReadOnly,
+};
+
 static struct Provider Provider =
 {
     { &ProviderSimpleVtbl },
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderValuePatternVtbl },
     1,
     "Provider",
     NULL, NULL,
@@ -2091,6 +2179,7 @@ static struct Provider Provider2 =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderValuePatternVtbl },
     1,
     "Provider2",
     NULL, NULL,
@@ -2105,6 +2194,7 @@ static struct Provider Provider_child =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderValuePatternVtbl },
     1,
     "Provider_child",
     &Provider.IRawElementProviderFragment_iface, &Provider.IRawElementProviderFragmentRoot_iface,
@@ -2119,6 +2209,7 @@ static struct Provider Provider_child2 =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderValuePatternVtbl },
     1,
     "Provider_child2",
     &Provider.IRawElementProviderFragment_iface, &Provider.IRawElementProviderFragmentRoot_iface,
@@ -2133,6 +2224,7 @@ static struct Provider Provider_hwnd =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderValuePatternVtbl },
     1,
     "Provider_hwnd",
     NULL, NULL,
@@ -2147,6 +2239,7 @@ static struct Provider Provider_nc =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderValuePatternVtbl },
     1,
     "Provider_nc",
     NULL, NULL,
@@ -2162,6 +2255,7 @@ static struct Provider Provider_proxy =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderValuePatternVtbl },
     1,
     "Provider_proxy",
     NULL, NULL,
@@ -2177,6 +2271,7 @@ static struct Provider Provider_proxy2 =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderValuePatternVtbl },
     1,
     "Provider_proxy2",
     NULL, NULL,
@@ -2192,6 +2287,7 @@ static struct Provider Provider_override =
     { &ProviderFragmentVtbl },
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
+    { &ProviderValuePatternVtbl },
     1,
     "Provider_override",
     NULL, NULL,
@@ -2208,6 +2304,7 @@ static struct Provider Provider_override =
         { &ProviderFragmentVtbl }, \
         { &ProviderFragmentRootVtbl }, \
         { &ProviderHwndOverrideVtbl }, \
+        { &ProviderValuePatternVtbl }, \
         1, \
         "Provider_" # name "", \
         NULL, NULL, \
@@ -4699,6 +4796,11 @@ static const struct prov_method_sequence get_elem_arr_prop_seq[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence get_pattern_prop_seq[] = {
+    { &Provider, PROV_GET_PATTERN_PROV },
+    { 0 }
+};
+
 static const struct prov_method_sequence get_bounding_rect_seq[] = {
     NODE_CREATE_SEQ(&Provider_child),
     { &Provider_child, FRAG_GET_BOUNDING_RECT },
@@ -5029,6 +5131,28 @@ static void test_UiaGetPropertyValue(void)
         }
 
         winetest_pop_context();
+    }
+
+    /* IValueProvider pattern property IDs. */
+    Provider.value_pattern_data.is_supported = FALSE;
+    hr = UiaGetPropertyValue(node, UIA_ValueIsReadOnlyPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+    ok(V_UNKNOWN(&v) == unk_ns, "unexpected IUnknown %p\n", V_UNKNOWN(&v));
+    ok_method_sequence(get_pattern_prop_seq, NULL);
+    VariantClear(&v);
+
+    Provider.value_pattern_data.is_supported = TRUE;
+    for (i = 0; i < 2; i++)
+    {
+        Provider.value_pattern_data.is_read_only = i;
+
+        hr = UiaGetPropertyValue(node, UIA_ValueIsReadOnlyPropertyId, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(V_VT(&v) == VT_BOOL, "Unexpected VT %d\n", V_VT(&v));
+        ok(check_variant_bool(&v, i), "Unexpected BOOL %#x\n", V_BOOL(&v));
+        ok_method_sequence(get_pattern_prop_seq, NULL);
+        VariantClear(&v);
     }
 
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
@@ -8462,6 +8586,7 @@ static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd,
     prov->prop_override = NULL;
     prov->prop_override_count = 0;
     memset(&prov->bounds_rect, 0, sizeof(prov->bounds_rect));
+    memset(&prov->value_pattern_data, 0, sizeof(prov->value_pattern_data));
     if (initialize_nav_links)
     {
         prov->frag_root = NULL;

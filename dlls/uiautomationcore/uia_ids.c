@@ -97,7 +97,9 @@ static const struct uia_prop_info default_uia_properties[] = {
     { &IsDropTargetPatternAvailable_Property_GUID,       UIA_IsDropTargetPatternAvailablePropertyId, },
     { &Dock_DockPosition_Property_GUID,                  UIA_DockDockPositionPropertyId, },
     { &Styles_StyleId_Property_GUID,                     UIA_StylesStyleIdPropertyId, },
-    { &Value_IsReadOnly_Property_GUID,                   UIA_ValueIsReadOnlyPropertyId, },
+    { &Value_IsReadOnly_Property_GUID,                   UIA_ValueIsReadOnlyPropertyId,
+      PROP_TYPE_PATTERN_PROP,                            UIAutomationType_Bool,
+      UIA_ValuePatternId, },
     { &IsSpreadsheetPatternAvailable_Property_GUID,      UIA_IsSpreadsheetPatternAvailablePropertyId, },
     { &Styles_StyleName_Property_GUID,                   UIA_StylesStyleNamePropertyId, },
     { &IsAnnotationPatternAvailable_Property_GUID,       UIA_IsAnnotationPatternAvailablePropertyId, },
@@ -482,6 +484,17 @@ static const struct uia_pattern_info default_uia_patterns[] = {
       &IID_ISpreadsheetItemProvider, },
 };
 
+static const int pattern_id_idx[] = {
+    0x1f, 0x1d, 0x10, 0x0c, 0x15, 0x13, 0x19, 0x0b,
+    0x1c, 0x04, 0x1e, 0x06, 0x0f, 0x17, 0x09, 0x0a,
+    0x1b, 0x00, 0x11, 0x02, 0x05, 0x14, 0x20, 0x1a,
+    0x12, 0x07, 0x18, 0x21, 0x01, 0x16, 0x03, 0x08,
+    0x0d, 0x0e,
+};
+
+#define PATTERN_ID_MIN 10000
+#define PATTERN_ID_MAX (PATTERN_ID_MIN + ARRAY_SIZE(default_uia_patterns))
+
 static const struct uia_pattern_info *uia_pattern_info_from_guid(const GUID *guid)
 {
     struct uia_pattern_info *pattern;
@@ -491,6 +504,14 @@ static const struct uia_pattern_info *uia_pattern_info_from_guid(const GUID *gui
         return pattern;
 
     return NULL;
+}
+
+const struct uia_pattern_info *uia_pattern_info_from_id(PATTERNID pattern_id)
+{
+    if ((pattern_id < PATTERN_ID_MIN) || (pattern_id > PATTERN_ID_MAX))
+        return NULL;
+
+    return &default_uia_patterns[pattern_id_idx[pattern_id - PATTERN_ID_MIN]];
 }
 
 /***********************************************************************
