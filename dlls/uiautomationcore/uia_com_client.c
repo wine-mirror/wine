@@ -1366,8 +1366,33 @@ static HRESULT WINAPI uia_iface_RemoveAllEventHandlers(IUIAutomation6 *iface)
 static HRESULT WINAPI uia_iface_IntNativeArrayToSafeArray(IUIAutomation6 *iface, int *arr, int arr_count,
         SAFEARRAY **out_sa)
 {
-    FIXME("%p, %p, %d, %p: stub\n", iface, arr, arr_count, out_sa);
-    return E_NOTIMPL;
+    HRESULT hr = S_OK;
+    SAFEARRAY *sa;
+    int *sa_arr;
+
+    TRACE("%p, %p, %d, %p\n", iface, arr, arr_count, out_sa);
+
+    if (!out_sa || !arr || !arr_count)
+        return E_INVALIDARG;
+
+    *out_sa = NULL;
+    if (!(sa = SafeArrayCreateVector(VT_I4, 0, arr_count)))
+        return E_OUTOFMEMORY;
+
+    hr = SafeArrayAccessData(sa, (void **)&sa_arr);
+    if (FAILED(hr))
+        goto exit;
+
+    memcpy(sa_arr, arr, sizeof(*arr) * arr_count);
+    hr = SafeArrayUnaccessData(sa);
+    if (SUCCEEDED(hr))
+        *out_sa = sa;
+
+exit:
+    if (FAILED(hr))
+        SafeArrayDestroy(sa);
+
+    return hr;
 }
 
 static HRESULT WINAPI uia_iface_IntSafeArrayToNativeArray(IUIAutomation6 *iface, SAFEARRAY *sa, int **out_arr,

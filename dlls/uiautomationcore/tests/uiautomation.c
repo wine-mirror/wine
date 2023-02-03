@@ -10017,11 +10017,17 @@ exit:
 static void test_CUIAutomation_value_conversion(IUIAutomation *uia_iface)
 {
     static const VARTYPE invalid_int_vts[] = { VT_I8, VT_INT };
+    int in_arr[3] = { 0xdeadbeef, 0xfeedbeef, 0x1337b33f };
     int *out_arr, out_arr_count, i;
+    LONG lbound, ubound;
     SAFEARRAY *sa;
     VARTYPE vt;
     HRESULT hr;
+    UINT dims;
 
+    /*
+     * Conversion from VT_I4 SAFEARRAY to native int array.
+     */
     for (i = 0; i < ARRAY_SIZE(invalid_int_vts); i++)
     {
         vt = invalid_int_vts[i];
@@ -10047,6 +10053,40 @@ static void test_CUIAutomation_value_conversion(IUIAutomation *uia_iface)
 
     SafeArrayDestroy(sa);
     CoTaskMemFree(out_arr);
+
+    /*
+     * Conversion from native int array to VT_I4 SAFEARRAY.
+     */
+    sa = NULL;
+    hr = IUIAutomation_IntNativeArrayToSafeArray(uia_iface, in_arr, ARRAY_SIZE(in_arr), &sa);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = SafeArrayGetVartype(sa, &vt);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(vt == VT_I4, "Unexpected vt %d.\n", vt);
+
+    dims = SafeArrayGetDim(sa);
+    ok(dims == 1, "Unexpected array dims %d\n", dims);
+
+    hr = SafeArrayGetLBound(sa, 1, &lbound);
+    ok(hr == S_OK, "Failed to get LBound with hr %#lx\n", hr);
+    ok(lbound == 0, "Unexpected LBound %#lx\n", lbound);
+
+    hr = SafeArrayGetUBound(sa, 1, &ubound);
+    ok(hr == S_OK, "Failed to get UBound with hr %#lx\n", hr);
+    ok(((ubound - lbound) + 1) == ARRAY_SIZE(in_arr), "Unexpected array size %#lx\n", ((ubound - lbound) + 1));
+
+    for (i = 0; i < ARRAY_SIZE(in_arr); i++)
+    {
+        LONG idx = lbound + i;
+        int tmp_val;
+
+        hr = SafeArrayGetElement(sa, &idx, &tmp_val);
+        ok(hr == S_OK, "Failed to get element at idx %ld, hr %#lx\n", idx, hr);
+        ok(tmp_val == in_arr[i], "Expected %d at idx %d, got %d\n", in_arr[i], i, tmp_val);
+    }
+
+    SafeArrayDestroy(sa);
 }
 
 struct uia_com_classes {
