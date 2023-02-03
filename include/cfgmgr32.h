@@ -242,6 +242,7 @@ CMAPI WORD      WINAPI CM_Get_Version(void);
 CMAPI CONFIGRET WINAPI CM_Locate_DevNodeA(PDEVINST,DEVINSTID_A,ULONG);
 CMAPI CONFIGRET WINAPI CM_Locate_DevNodeW(PDEVINST,DEVINSTID_W,ULONG);
 #define     CM_Locate_DevNode WINELIB_NAME_AW(CM_Locate_DevNode)
+CMAPI DWORD     WINAPI CM_MapCrToWin32Err(CONFIGRET,DWORD);
 CMAPI CONFIGRET WINAPI CM_Open_DevNode_Key(DEVINST dnDevInst, REGSAM access, ULONG ulHardwareProfile,
                                            REGDISPOSITION disposition, PHKEY phkDevice, ULONG ulFlags);
 CMAPI CONFIGRET WINAPI CM_Request_Device_EjectA(DEVINST dev, PPNP_VETO_TYPE type, LPSTR name, ULONG length, ULONG flags);
