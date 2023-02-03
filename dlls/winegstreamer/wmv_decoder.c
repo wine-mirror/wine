@@ -28,6 +28,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 extern const GUID MEDIASUBTYPE_VC1S;
 
@@ -83,6 +84,9 @@ struct wmv_decoder
     struct wg_format input_format;
     struct wg_format output_format;
     GUID output_subtype;
+
+    struct wg_transform *wg_transform;
+    struct wg_sample_queue *wg_sample_queue;
 };
 
 static bool wg_format_is_set(struct wg_format *format)
@@ -140,7 +144,12 @@ static ULONG WINAPI unknown_Release(IUnknown *iface)
     TRACE("iface %p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
+    {
+        if (impl->wg_transform)
+            wg_transform_destroy(impl->wg_transform);
+        wg_sample_queue_destroy(impl->wg_sample_queue);
         free(impl);
+    }
 
     return refcount;
 }
@@ -489,6 +498,11 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
         if (flags & DMO_SET_TYPEF_CLEAR)
         {
             memset(&decoder->input_format, 0, sizeof(decoder->input_format));
+            if (decoder->wg_transform)
+            {
+                wg_transform_destroy(decoder->wg_transform);
+                decoder->wg_transform = NULL;
+            }
             return S_OK;
         }
         return DMO_E_TYPE_NOT_ACCEPTED;
@@ -509,8 +523,15 @@ static HRESULT WINAPI media_object_SetInputType(IMediaObject *iface, DWORD index
     wg_format.u.video_wmv.fps_n = 0;
     wg_format.u.video_wmv.fps_d = 0;
 
-    if (!(flags & DMO_SET_TYPEF_TEST_ONLY))
-        decoder->input_format = wg_format;
+    if (flags & DMO_SET_TYPEF_TEST_ONLY)
+        return S_OK;
+
+    decoder->input_format = wg_format;
+    if (decoder->wg_transform)
+    {
+        wg_transform_destroy(decoder->wg_transform);
+        decoder->wg_transform = NULL;
+    }
 
     return S_OK;
 }
@@ -532,6 +553,11 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
         if (flags & DMO_SET_TYPEF_CLEAR)
         {
             memset(&decoder->output_format, 0, sizeof(decoder->output_format));
+            if (decoder->wg_transform)
+            {
+                wg_transform_destroy(decoder->wg_transform);
+                decoder->wg_transform = NULL;
+            }
             return S_OK;
         }
         return E_POINTER;
@@ -555,11 +581,20 @@ static HRESULT WINAPI media_object_SetOutputType(IMediaObject *iface, DWORD inde
     wg_format.u.video.fps_n = 0;
     wg_format.u.video.fps_d = 0;
 
-    if (!(flags & DMO_SET_TYPEF_TEST_ONLY))
+    if (flags & DMO_SET_TYPEF_TEST_ONLY)
+        return S_OK;
+
+    decoder->output_subtype = type->subtype;
+    decoder->output_format = wg_format;
+
+    /* Set up wg_transform. */
+    if (decoder->wg_transform)
     {
-        decoder->output_subtype = type->subtype;
-        decoder->output_format = wg_format;
+        wg_transform_destroy(decoder->wg_transform);
+        decoder->wg_transform = NULL;
     }
+    if (!(decoder->wg_transform = wg_transform_create(&decoder->input_format, &decoder->output_format)))
+        return E_FAIL;
 
     return S_OK;
 }
@@ -804,22 +839,51 @@ static const IPropertyStoreVtbl property_store_vtbl =
 
 HRESULT wmv_decoder_create(IUnknown *outer, IUnknown **out)
 {
-    struct wmv_decoder *impl;
+    static const struct wg_format input_format =
+    {
+        .major_type = WG_MAJOR_TYPE_VIDEO_WMV,
+        .u.video_wmv.format = WG_WMV_VIDEO_FORMAT_WMV3,
+    };
+    static const struct wg_format output_format =
+    {
+        .major_type = WG_MAJOR_TYPE_VIDEO,
+        .u.video =
+        {
+            .format = WG_VIDEO_FORMAT_NV12,
+            .width = 1920,
+            .height = 1080,
+        },
+    };
+    struct wg_transform *transform;
+    struct wmv_decoder *decoder;
+    HRESULT hr;
 
     TRACE("outer %p, out %p.\n", outer, out);
 
-    if (!(impl = calloc(1, sizeof(*impl))))
+    if (!(transform = wg_transform_create(&input_format, &output_format)))
+    {
+        ERR_(winediag)("GStreamer doesn't support WMV decoding, please install appropriate plugins.\n");
+        return E_FAIL;
+    }
+    wg_transform_destroy(transform);
+
+    if (!(decoder = calloc(1, sizeof(*decoder))))
         return E_OUTOFMEMORY;
+    if (FAILED(hr = wg_sample_queue_create(&decoder->wg_sample_queue)))
+    {
+        free(decoder);
+        return hr;
+    }
 
-    impl->IUnknown_inner.lpVtbl = &unknown_vtbl;
-    impl->IMFTransform_iface.lpVtbl = &transform_vtbl;
-    impl->IMediaObject_iface.lpVtbl = &media_object_vtbl;
-    impl->IPropertyBag_iface.lpVtbl = &property_bag_vtbl;
-    impl->IPropertyStore_iface.lpVtbl = &property_store_vtbl;
-    impl->refcount = 1;
-    impl->outer = outer ? outer : &impl->IUnknown_inner;
+    decoder->IUnknown_inner.lpVtbl = &unknown_vtbl;
+    decoder->IMFTransform_iface.lpVtbl = &transform_vtbl;
+    decoder->IMediaObject_iface.lpVtbl = &media_object_vtbl;
+    decoder->IPropertyBag_iface.lpVtbl = &property_bag_vtbl;
+    decoder->IPropertyStore_iface.lpVtbl = &property_store_vtbl;
+    decoder->refcount = 1;
+    decoder->outer = outer ? outer : &decoder->IUnknown_inner;
 
-    *out = &impl->IUnknown_inner;
+    *out = &decoder->IUnknown_inner;
     TRACE("Created %p\n", *out);
     return S_OK;
 }

@@ -5243,8 +5243,12 @@ static void test_wmv_decoder_media_object(void)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "CoInitialize failed, hr %#lx.\n", hr);
 
-    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&media_object);
-    ok(hr == S_OK, "CoCreateInstance returned %#lx.\n", hr);
+    if (FAILED(hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMediaObject, (void **)&media_object)))
+    {
+        CoUninitialize();
+        winetest_pop_context();
+        return;
+    }
 
     /* Test GetStreamCount. */
     in_count = out_count = 0xdeadbeef;
