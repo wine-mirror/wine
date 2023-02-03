@@ -34,6 +34,10 @@
 
 #include "wine/test.h"
 
+static const WCHAR *subkey = L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize";
+static const WCHAR *name = L"AppsUseLightTheme";
+static const HKEY root = HKEY_CURRENT_USER;
+
 #define check_interface( obj, iid, exp ) check_interface_( __LINE__, obj, iid, exp )
 static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL supported )
 {
@@ -49,12 +53,45 @@ static void check_interface_( unsigned int line, void *obj, const IID *iid, BOOL
         IUnknown_Release( unk );
 }
 
+static DWORD get_app_theme(void)
+{
+    DWORD ret = 0, len = sizeof(ret), type;
+    HKEY hkey;
+
+    if (RegOpenKeyExW( root, subkey, 0, KEY_QUERY_VALUE, &hkey )) return 1;
+    if (RegQueryValueExW( hkey, name, NULL, &type, (BYTE *)&ret, &len ) || type != REG_DWORD) ret = 1;
+    RegCloseKey( hkey );
+    return ret;
+}
+
+static DWORD set_app_theme( DWORD mode )
+{
+    DWORD ret = 1, len = sizeof(ret);
+    HKEY hkey;
+
+    if (RegOpenKeyExW( root, subkey, 0, KEY_SET_VALUE, &hkey )) return 0;
+    if (RegSetValueExW( hkey, name, 0, REG_DWORD, (const BYTE *)&mode, len )) ret = 0;
+    RegCloseKey( hkey );
+    return ret;
+}
+
+static void reset_color( Color *value )
+{
+    value->A = 1;
+    value->R = 1;
+    value->G = 1;
+    value->B = 1;
+}
+
 static void test_UISettings(void)
 {
     static const WCHAR *uisettings_name = L"Windows.UI.ViewManagement.UISettings";
     IActivationFactory *factory;
     IUISettings3 *uisettings3;
     IInspectable *inspectable;
+    DWORD default_theme;
+    UIColorType type;
+    Color value;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -89,6 +126,44 @@ static void test_UISettings(void)
 
     check_interface( inspectable, &IID_IAgileObject, TRUE );
 
+    default_theme = get_app_theme();
+
+    /* Light Theme */
+    if (!set_app_theme( 1 )) goto done;
+
+    reset_color( &value );
+    type = UIColorType_Foreground;
+    hr = IUISettings3_GetColorValue( uisettings3, type, &value );
+    todo_wine ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
+    todo_wine ok( value.A == 255 && value.R == 0 && value.G == 0 && value.B == 0,
+        "got unexpected value.A == %d value.R == %d value.G == %d value.B == %d\n", value.A, value.R, value.G, value.B );
+
+    reset_color( &value );
+    type = UIColorType_Background;
+    hr = IUISettings3_GetColorValue( uisettings3, type, &value );
+    todo_wine ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
+    todo_wine ok( value.A == 255 && value.R == 255 && value.G == 255 && value.B == 255,
+        "got unexpected value.A == %d value.R == %d value.G == %d value.B == %d\n", value.A, value.R, value.G, value.B );
+
+    /* Dark Theme */
+    if (!set_app_theme( 0 )) goto done;
+
+    reset_color( &value );
+    type = UIColorType_Foreground;
+    hr = IUISettings3_GetColorValue( uisettings3, type, &value );
+    todo_wine ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
+    todo_wine ok( value.A == 255 && value.R == 255 && value.G == 255 && value.B == 255,
+                  "got unexpected value.A == %d value.R == %d value.G == %d value.B == %d\n", value.A, value.R, value.G, value.B );
+
+    reset_color( &value );
+    type = UIColorType_Background;
+    hr = IUISettings3_GetColorValue( uisettings3, type, &value );
+    todo_wine ok( hr == S_OK, "GetColorValue returned %#lx\n", hr );
+    todo_wine ok( value.A == 255 && value.R == 0 && value.G == 0 && value.B == 0,
+                  "got unexpected value.A == %d value.R == %d value.G == %d value.B == %d\n", value.A, value.R, value.G, value.B );
+
+done:
+    set_app_theme( default_theme );
     IUISettings3_Release( uisettings3 );
 
 skip_uisettings3:
