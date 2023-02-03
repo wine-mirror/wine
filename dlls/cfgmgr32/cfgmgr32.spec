@@ -126,6 +126,7 @@
 @ stdcall CM_Locate_DevNodeW(ptr wstr long) setupapi.CM_Locate_DevNodeW
 @ stdcall CM_Locate_DevNode_ExA(ptr str long long) setupapi.CM_Locate_DevNode_ExA
 @ stdcall CM_Locate_DevNode_ExW(ptr wstr long long) setupapi.CM_Locate_DevNode_ExW
+@ stdcall CM_MapCrToWin32Err(long long)
 @ stub CM_Merge_Range_List
 @ stub CM_Modify_Res_Des
 @ stub CM_Modify_Res_Des_Ex
