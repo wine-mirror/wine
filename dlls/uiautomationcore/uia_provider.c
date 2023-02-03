@@ -664,6 +664,19 @@ HRESULT WINAPI msaa_provider_GetPropertyValue(IRawElementProviderSimple *iface,
                     STATE_SYSTEM_PROTECTED));
         break;
 
+    case UIA_NamePropertyId:
+    {
+        BSTR name;
+
+        hr = IAccessible_get_accName(msaa_prov->acc, msaa_prov->cid, &name);
+        if (SUCCEEDED(hr) && name)
+        {
+            V_VT(ret_val) = VT_BSTR;
+            V_BSTR(ret_val) = name;
+        }
+        break;
+    }
+
     default:
         FIXME("Unimplemented propertyId %d\n", prop_id);
         break;

@@ -3434,6 +3434,34 @@ static void test_uia_prov_from_acc_properties(void)
 
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /* UIA_NamePropertyId tests. */
+    set_accessible_props(&Accessible, 0, 0, 0, L"Accessible", 0, 0, 0, 0);
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    SET_EXPECT(Accessible_get_accName);
+    VariantInit(&v);
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_NamePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "Unexpected VT %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), Accessible.name), "Unexpected BSTR %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    CHECK_CALLED(Accessible_get_accName);
+
+    /* Name is not cached. */
+    set_accessible_props(&Accessible, 0, 0, 0, L"Accessible2", 0, 0, 0, 0);
+    SET_EXPECT(Accessible_get_accName);
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_NamePropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "Unexpected VT %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), Accessible.name), "Unexpected BSTR %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+    CHECK_CALLED(Accessible_get_accName);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
 }
 
 static void test_UiaProviderFromIAccessible(void)
