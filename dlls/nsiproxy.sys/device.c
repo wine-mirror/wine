@@ -305,12 +305,10 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
 static int add_device( DRIVER_OBJECT *driver )
 {
-    UNICODE_STRING name, link;
+    UNICODE_STRING name = RTL_CONSTANT_STRING( L"\\Device\\Nsi" );
+    UNICODE_STRING link = RTL_CONSTANT_STRING( L"\\??\\Nsi" );
     DEVICE_OBJECT *device;
     NTSTATUS status;
-
-    RtlInitUnicodeString( &name, L"\\Device\\Nsi" );
-    RtlInitUnicodeString( &link, L"\\??\\Nsi" );
 
     if (!(status = IoCreateDevice( driver, 0, &name, FILE_DEVICE_NETWORK, FILE_DEVICE_SECURE_OPEN, FALSE, &device )))
         status = IoCreateSymbolicLink( &link, &name );
