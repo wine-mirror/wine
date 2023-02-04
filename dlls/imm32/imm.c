@@ -2377,6 +2377,9 @@ BOOL WINAPI ImmSetCompositionStringA(
     if (!data)
         return FALSE;
 
+    if (IMM_IsCrossThreadAccess(NULL, hIMC))
+        return FALSE;
+
     if (!(dwIndex == SCS_SETSTR ||
           dwIndex == SCS_CHANGEATTR ||
           dwIndex == SCS_CHANGECLAUSE ||
@@ -2430,6 +2433,9 @@ BOOL WINAPI ImmSetCompositionStringW(
             hIMC, dwIndex, lpComp, dwCompLen, lpRead, dwReadLen);
 
     if (!data)
+        return FALSE;
+
+    if (IMM_IsCrossThreadAccess(NULL, hIMC))
         return FALSE;
 
     if (!(dwIndex == SCS_SETSTR ||

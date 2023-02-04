@@ -984,6 +984,14 @@ static void test_ImmThreads(void)
     rc = ImmSetCompositionFontA(threadinfo.u_himc, &lf);
     ok(rc == 0, "ImmSetCompositionFont should fail\n");
 
+    /* CompositionString */
+    rc = ImmSetCompositionStringA(himc, SCS_SETSTR, "a", 2, NULL, 0);
+    ok(rc, "failed.\n");
+    rc = ImmSetCompositionStringA(otherHimc, SCS_SETSTR, "a", 2, NULL, 0);
+    ok(!rc, "should fail.\n");
+    rc = ImmSetCompositionStringA(threadinfo.u_himc, SCS_SETSTR, "a", 2, NULL, 0);
+    ok(!rc, "should fail.\n");
+
     /* CompositionWindow */
     rc = ImmSetCompositionWindow(himc, &cf);
     ok(rc != 0, "ImmSetCompositionWindow failed\n");
