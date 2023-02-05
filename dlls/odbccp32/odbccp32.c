@@ -271,7 +271,7 @@ static HMODULE load_config_driver(const WCHAR *driver)
         return NULL;
     }
 
-    hmod = LoadLibraryW(filename);
+    hmod = LoadLibraryExW(filename, NULL, LOAD_LIBRARY_SEARCH_DLL_LOAD_DIR | LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
     HeapFree(GetProcessHeap(), 0, filename);
 
     if(!hmod)
