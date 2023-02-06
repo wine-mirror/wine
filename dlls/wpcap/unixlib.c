@@ -26,6 +26,7 @@
 #ifdef HAVE_PCAP_PCAP_H
 #include <pcap/pcap.h>
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -40,78 +41,98 @@
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static NTSTATUS wrap_activate( void *args )
 {
-    struct pcap *pcap = args;
-    return pcap_activate( pcap->handle );
+    const struct activate_params *params = args;
+    return pcap_activate( (pcap_t *)(ULONG_PTR)params->handle );
 }
 
 static NTSTATUS wrap_breakloop( void *args )
 {
-    struct pcap *pcap = args;
-    pcap_breakloop( pcap->handle );
+    const struct breakloop_params *params = args;
+    pcap_breakloop( (pcap_t *)(ULONG_PTR)params->handle );
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS wrap_can_set_rfmon( void *args )
 {
-    struct pcap *pcap = args;
-    return pcap_can_set_rfmon( pcap->handle );
+    const struct can_set_rfmon_params *params = args;
+    return pcap_can_set_rfmon( (pcap_t *)(ULONG_PTR)params->handle );
 }
 
 static NTSTATUS wrap_close( void *args )
 {
-    struct pcap *pcap = args;
-    pcap_close( pcap->handle );
-    free( pcap );
+    const struct close_params *params = args;
+    pcap_close( (pcap_t *)(ULONG_PTR)params->handle );
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS wrap_compile( void *args )
 {
-    const struct compile_params *params = args;
-    return pcap_compile( params->pcap->handle, params->program, params->buf, params->optimize, params->mask );
+    struct compile_params *params = args;
+    struct bpf_program program;
+    int ret;
+
+    if (!(ret = pcap_compile( (pcap_t *)(ULONG_PTR)params->handle, &program, params->str, params->optimize,
+                              params->mask )))
+    {
+        if (*params->program_len < program.bf_len) ret = STATUS_BUFFER_TOO_SMALL;
+        else memcpy( params->program_insns, program.bf_insns, program.bf_len * sizeof(*program.bf_insns) );
+        *params->program_len = program.bf_len;
+        pcap_freecode( &program );
+    }
+    return ret;
 }
 
 static NTSTATUS wrap_create( void *args )
 {
-    const struct create_params *params = args;
-    struct pcap *ret = malloc( sizeof(*ret) );
-
-    if (ret && !(ret->handle = pcap_create( params->src, params->errbuf )))
-    {
-        free( ret );
-        ret = NULL;
-    }
-    *params->ret = ret;
+    struct create_params *params = args;
+    if (!(*params->handle = (ULONG_PTR)pcap_create( params->source, params->errbuf ))) return STATUS_NO_MEMORY;
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS wrap_datalink( void *args )
 {
-    struct pcap *pcap = args;
-    return pcap_datalink( pcap->handle );
+    struct datalink_params *params = args;
+    return pcap_datalink( (pcap_t *)(ULONG_PTR)params->handle );
 }
 
 static NTSTATUS wrap_datalink_name_to_val( void *args )
 {
-    const struct datalink_name_to_val_params *params = args;
+    struct datalink_name_to_val_params *params = args;
     return pcap_datalink_name_to_val( params->name );
 }
 
 static NTSTATUS wrap_datalink_val_to_description( void *args )
 {
     const struct datalink_val_to_description_params *params = args;
-    *params->ret = pcap_datalink_val_to_description( params->link );
+    const char *str = pcap_datalink_val_to_description( params->link );
+    int len;
+
+    if (!str || !params->buf) return STATUS_INVALID_PARAMETER;
+    if ((len = strlen( str )) >= *params->buflen)
+    {
+        *params->buflen = len + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    strcpy( params->buf, str );
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS wrap_datalink_val_to_name( void *args )
 {
     const struct datalink_val_to_name_params *params = args;
-    *params->ret = pcap_datalink_val_to_name( params->link );
+    const char *str = pcap_datalink_val_to_name( params->link );
+    int len;
+
+    if (!str || !params->buf) return STATUS_INVALID_PARAMETER;
+    if ((len = strlen( str )) >= *params->buflen)
+    {
+        *params->buflen = len + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    strcpy( params->buf, str );
     return STATUS_SUCCESS;
 }
 
@@ -131,65 +152,69 @@ static NTSTATUS wrap_dump( void *args )
 static NTSTATUS wrap_dump_open( void *args )
 {
     const struct dump_open_params *params = args;
-    *params->ret = pcap_dump_open( params->pcap->handle, params->name );
+    *params->ret_handle = (ULONG_PTR)pcap_dump_open( (pcap_t *)(ULONG_PTR)params->handle, params->name );
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS wrap_findalldevs( void *args )
 {
     const struct findalldevs_params *params = args;
-    int ret;
-    ret = pcap_findalldevs( (pcap_if_t **)params->devs, params->errbuf );
-    if (params->devs && !*params->devs)
-        ERR_(winediag)( "Failed to access raw network (pcap), this requires special permissions.\n" );
+    pcap_if_t *devs = NULL, *src;
+    struct pcap_interface_offsets *dst = (struct pcap_interface_offsets *)params->buf;
+    int ret, len_total = 0;
+
+    if ((ret = pcap_findalldevs( &devs, params->errbuf ))) return ret;
+
+    src = devs;
+    while (src)
+    {
+        int len_name = strlen( src->name ) + 1, len_description = src->description ? strlen( src->description ) + 1 : 0;
+        int len = sizeof(*dst) + len_name + len_description;
+
+        if (*params->buflen >= len_total + len)
+        {
+            dst->name_offset = sizeof(*dst);
+            dst->name_len = len_name;
+            strcpy( (char *)dst + dst->name_offset, src->name );
+            if (!len_description) dst->description_offset = dst->description_len = 0;
+            else
+            {
+                dst->description_offset = dst->name_offset + len_name;
+                dst->description_len = len_description;
+                strcpy( (char *)dst + dst->description_offset, src->description );
+            }
+            dst->flags = src->flags;
+            dst = (struct pcap_interface_offsets *)((char *)dst + len);
+        }
+        len_total += len;
+        src = src->next;
+    }
+
+    if (*params->buflen < len_total) ret = STATUS_BUFFER_TOO_SMALL;
+    *params->buflen = len_total;
+    pcap_freealldevs( devs );
     return ret;
-}
-
-static NTSTATUS wrap_free_datalinks( void *args )
-{
-    int *links = args;
-    pcap_free_datalinks( links );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS wrap_free_tstamp_types( void *args )
-{
-    int *types = args;
-    pcap_free_tstamp_types( types );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS wrap_freealldevs( void *args )
-{
-    struct pcap_interface *devs = args;
-    pcap_freealldevs( (pcap_if_t *)devs );
-    return STATUS_SUCCESS;
-}
-
-static NTSTATUS wrap_freecode( void *args )
-{
-    void *program = args;
-    pcap_freecode( program );
-    return STATUS_SUCCESS;
 }
 
 static NTSTATUS wrap_get_tstamp_precision( void *args )
 {
-    struct pcap *pcap = args;
-    return pcap_get_tstamp_precision( pcap->handle );
+    const struct get_tstamp_precision_params *params = args;
+    return pcap_get_tstamp_precision( (pcap_t *)(ULONG_PTR)params->handle );
 }
 
 static NTSTATUS wrap_geterr( void *args )
 {
     const struct geterr_params *params = args;
-    *params->ret = pcap_geterr( params->pcap->handle );
+    char *errbuf = pcap_geterr( (pcap_t *)(ULONG_PTR)params->handle );
+    assert( strlen(errbuf) < PCAP_ERRBUF_SIZE );
+    strcpy( params->errbuf, errbuf );
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS wrap_getnonblock( void *args )
 {
     const struct getnonblock_params *params = args;
-    return pcap_getnonblock( params->pcap->handle, params->errbuf );
+    return pcap_getnonblock( (pcap_t *)(ULONG_PTR)params->handle, params->errbuf );
 }
 
 static NTSTATUS wrap_lib_version( void *args )
@@ -197,6 +222,7 @@ static NTSTATUS wrap_lib_version( void *args )
     const struct lib_version_params *params = args;
     const char *str = pcap_lib_version();
     unsigned int len = min( strlen(str) + 1, params->size );
+
     memcpy( params->version, str, len );
     params->version[len - 1] = 0;
     return STATUS_SUCCESS;
@@ -205,13 +231,33 @@ static NTSTATUS wrap_lib_version( void *args )
 static NTSTATUS wrap_list_datalinks( void *args )
 {
     const struct list_datalinks_params *params = args;
-    return pcap_list_datalinks( params->pcap->handle, params->buf );
+    NTSTATUS status = STATUS_SUCCESS;
+    int *links = NULL, count;
+
+    if ((count = pcap_list_datalinks( (pcap_t *)(ULONG_PTR)params->handle, &links )) > 0)
+    {
+        if (*params->count < count) status = STATUS_BUFFER_TOO_SMALL;
+        else memcpy( params->links, links, count * sizeof(*links) );
+    }
+    pcap_free_datalinks( links );
+    *params->count = count;
+    return status;
 }
 
 static NTSTATUS wrap_list_tstamp_types( void *args )
 {
     const struct list_tstamp_types_params *params = args;
-    return pcap_list_tstamp_types( params->pcap->handle, params->types );
+    NTSTATUS status = STATUS_SUCCESS;
+    int *types = NULL, count;
+
+    if ((count = pcap_list_tstamp_types( (pcap_t *)(ULONG_PTR)params->handle, &types )) > 0)
+    {
+        if (*params->count < count) status = STATUS_BUFFER_TOO_SMALL;
+        else memcpy( params->types, types, count * sizeof(*types) );
+    }
+    pcap_free_tstamp_types( types );
+    *params->count = count;
+    return status;
 }
 
 static NTSTATUS wrap_lookupnet( void *args )
@@ -222,31 +268,29 @@ static NTSTATUS wrap_lookupnet( void *args )
 
 static NTSTATUS wrap_major_version( void *args )
 {
-    struct pcap *pcap = args;
-    return pcap_major_version( pcap->handle );
+    const struct major_version_params *params = args;
+    return pcap_major_version( (pcap_t *)(ULONG_PTR)params->handle );
 }
 
 static NTSTATUS wrap_minor_version( void *args )
 {
-    struct pcap *pcap = args;
-    return pcap_minor_version( pcap->handle );
+    const struct minor_version_params *params = args;
+    return pcap_minor_version( (pcap_t *)(ULONG_PTR)params->handle );
 }
 
 static NTSTATUS wrap_next_ex( void *args )
 {
-    const struct next_ex_params *params = args;
-    struct pcap *pcap = params->pcap;
+    struct next_ex_params *params = args;
     struct pcap_pkthdr *hdr_unix;
     int ret;
 
-    if ((ret = pcap_next_ex( pcap->handle, &hdr_unix, params->data )) == 1)
+    if ((ret = pcap_next_ex( (pcap_t *)(ULONG_PTR)params->handle, &hdr_unix, params->data )) == 1)
     {
         if (hdr_unix->ts.tv_sec > INT_MAX || hdr_unix->ts.tv_usec > INT_MAX) WARN( "truncating timeval values(s)\n" );
-        pcap->hdr.ts.tv_sec  = hdr_unix->ts.tv_sec;
-        pcap->hdr.ts.tv_usec = hdr_unix->ts.tv_usec;
-        pcap->hdr.caplen     = hdr_unix->caplen;
-        pcap->hdr.len        = hdr_unix->len;
-        *params->hdr = &pcap->hdr;
+        params->hdr->ts.tv_sec  = hdr_unix->ts.tv_sec;
+        params->hdr->ts.tv_usec = hdr_unix->ts.tv_usec;
+        params->hdr->caplen     = hdr_unix->caplen;
+        params->hdr->len        = hdr_unix->len;
     }
     return ret;
 }
@@ -254,100 +298,100 @@ static NTSTATUS wrap_next_ex( void *args )
 static NTSTATUS wrap_open_live( void *args )
 {
     const struct open_live_params *params = args;
-    struct pcap *ret = malloc( sizeof(*ret) );
-    if (ret && !(ret->handle = pcap_open_live( params->source, params->snaplen, params->promisc,
-                                               params->to_ms, params->errbuf )))
-    {
-        free( ret );
-        ret = NULL;
-    }
-    *params->ret = ret;
+    if (!(*params->handle = (ULONG_PTR)pcap_open_live( params->source, params->snaplen, params->promisc,
+                                                       params->timeout, params->errbuf ))) return STATUS_NO_MEMORY;
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS wrap_sendpacket( void *args )
 {
     const struct sendpacket_params *params = args;
-    return pcap_sendpacket( params->pcap->handle, params->buf, params->size );
+    return pcap_sendpacket( (pcap_t *)(ULONG_PTR)params->handle, params->buf, params->size );
 }
 
 static NTSTATUS wrap_set_buffer_size( void *args )
 {
     const struct set_buffer_size_params *params = args;
-    return pcap_set_buffer_size( params->pcap->handle, params->size );
+    return pcap_set_buffer_size( (pcap_t *)(ULONG_PTR)params->handle, params->size );
 }
 
 static NTSTATUS wrap_set_datalink( void *args )
 {
     const struct set_datalink_params *params = args;
-    return pcap_set_datalink( params->pcap->handle, params->link );
+    return pcap_set_datalink( (pcap_t *)(ULONG_PTR)params->handle, params->link );
 }
 
 static NTSTATUS wrap_set_promisc( void *args )
 {
     const struct set_promisc_params *params = args;
-    return pcap_set_promisc( params->pcap->handle, params->enable );
+    return pcap_set_promisc( (pcap_t *)(ULONG_PTR)params->handle, params->enable );
 }
 
 static NTSTATUS wrap_set_rfmon( void *args )
 {
     const struct set_rfmon_params *params = args;
-    return pcap_set_rfmon( params->pcap->handle, params->enable );
+    return pcap_set_rfmon( (pcap_t *)(ULONG_PTR)params->handle, params->enable );
 }
 
 static NTSTATUS wrap_set_snaplen( void *args )
 {
     const struct set_snaplen_params *params = args;
-    return pcap_set_snaplen( params->pcap->handle, params->len );
+    return pcap_set_snaplen( (pcap_t *)(ULONG_PTR)params->handle, params->len );
 }
 
 static NTSTATUS wrap_set_timeout( void *args )
 {
     const struct set_timeout_params *params = args;
-    return pcap_set_timeout( params->pcap->handle, params->timeout );
+    return pcap_set_timeout( (pcap_t *)(ULONG_PTR)params->handle, params->timeout );
 }
 
 static NTSTATUS wrap_set_tstamp_precision( void *args )
 {
     const struct set_tstamp_precision_params *params = args;
-    return pcap_set_tstamp_precision( params->pcap->handle, params->precision );
+    return pcap_set_tstamp_precision( (pcap_t *)(ULONG_PTR)params->handle, params->precision );
 }
 
 static NTSTATUS wrap_set_tstamp_type( void *args )
 {
     const struct set_tstamp_type_params *params = args;
-    return pcap_set_tstamp_type( params->pcap->handle, params->type );
+    return pcap_set_tstamp_type( (pcap_t *)(ULONG_PTR)params->handle, params->type );
 }
 
 static NTSTATUS wrap_setfilter( void *args )
 {
     const struct setfilter_params *params = args;
-    return pcap_setfilter( params->pcap->handle, params->program );
+    struct bpf_program program = { params->program_len, params->program_insns };
+    return pcap_setfilter( (pcap_t *)(ULONG_PTR)params->handle, &program );
 }
 
 static NTSTATUS wrap_setnonblock( void *args )
 {
     const struct setnonblock_params *params = args;
-    return pcap_setnonblock( params->pcap->handle, params->nonblock, params->errbuf );
+    return pcap_setnonblock( (pcap_t *)(ULONG_PTR)params->handle, params->nonblock, params->errbuf );
 }
 
 static NTSTATUS wrap_snapshot( void *args )
 {
-    struct pcap *pcap = args;
-    return pcap_snapshot( pcap->handle );
+    const struct snapshot_params *params = args;
+    return pcap_snapshot( (pcap_t *)(ULONG_PTR)params->handle );
 }
 
 static NTSTATUS wrap_stats( void *args )
 {
-    const struct stats_params *params = args;
-    return pcap_stats( params->pcap->handle, params->stats );
-}
+    struct stats_params *params = args;
+    struct pcap_stat stat;
+    int ret;
 
-static NTSTATUS wrap_statustostr( void *args )
-{
-    const struct statustostr_params *params = args;
-    *params->ret = pcap_statustostr( params->status );
-    return STATUS_SUCCESS;
+    if (!(ret = pcap_stats( (pcap_t *)(ULONG_PTR)params->handle, &stat )))
+    {
+        params->stat.ps_recv    = stat.ps_recv;
+        params->stat.ps_drop    = stat.ps_drop;
+        params->stat.ps_ifdrop  = stat.ps_ifdrop;
+        params->stat.ps_capt    = 0;
+        params->stat.ps_sent    = 0;
+        params->stat.ps_netdrop = 0;
+    }
+    return ret;
 }
 
 static NTSTATUS wrap_tstamp_type_name_to_val( void *args )
@@ -359,14 +403,32 @@ static NTSTATUS wrap_tstamp_type_name_to_val( void *args )
 static NTSTATUS wrap_tstamp_type_val_to_description( void *args )
 {
     const struct tstamp_type_val_to_description_params *params = args;
-    *params->ret = pcap_tstamp_type_val_to_description( params->val );
+    const char *str = pcap_tstamp_type_val_to_description( params->type );
+    int len;
+
+    if (!str || !params->buf) return STATUS_INVALID_PARAMETER;
+    if ((len = strlen( str )) >= *params->buflen)
+    {
+        *params->buflen = len + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    strcpy( params->buf, str );
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS wrap_tstamp_type_val_to_name( void *args )
 {
     const struct tstamp_type_val_to_name_params *params = args;
-    *params->ret = pcap_tstamp_type_val_to_name( params->val );
+    const char *str = pcap_tstamp_type_val_to_name( params->type );
+    int len;
+
+    if (!str || !params->buf) return STATUS_INVALID_PARAMETER;
+    if ((len = strlen( str )) >= *params->buflen)
+    {
+        *params->buflen = len + 1;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    strcpy( params->buf, str );
     return STATUS_SUCCESS;
 }
 
@@ -382,14 +444,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_datalink_name_to_val,
     wrap_datalink_val_to_description,
     wrap_datalink_val_to_name,
-    /* wrap_dispatch, */
     wrap_dump,
     wrap_dump_open,
     wrap_findalldevs,
-    wrap_free_datalinks,
-    wrap_free_tstamp_types,
-    wrap_freealldevs,
-    wrap_freecode,
     wrap_get_tstamp_precision,
     wrap_geterr,
     wrap_getnonblock,
@@ -397,7 +454,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_list_datalinks,
     wrap_list_tstamp_types,
     wrap_lookupnet,
-    /* wrap_loop, */
     wrap_major_version,
     wrap_minor_version,
     wrap_next_ex,
@@ -415,7 +471,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_setnonblock,
     wrap_snapshot,
     wrap_stats,
-    wrap_statustostr,
     wrap_tstamp_type_name_to_val,
     wrap_tstamp_type_val_to_description,
     wrap_tstamp_type_val_to_name,

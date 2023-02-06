@@ -35,6 +35,15 @@ struct pcap_interface
     unsigned int flags;
 };
 
+struct pcap_interface_offsets
+{
+    unsigned int name_offset;
+    unsigned int name_len;
+    unsigned int description_offset;
+    unsigned int description_len;
+    unsigned int flags;
+};
+
 struct pcap_pkthdr_win32
 {
     struct
@@ -46,26 +55,56 @@ struct pcap_pkthdr_win32
     unsigned int len;
 };
 
-struct pcap
+struct pcap_stat_win32
 {
-    void *handle;
-    struct pcap_pkthdr_win32 hdr;
+    unsigned int ps_recv;
+    unsigned int ps_drop;
+    unsigned int ps_ifdrop;
+    unsigned int ps_capt;
+    unsigned int ps_sent;
+    unsigned int ps_netdrop;
+};
+
+struct activate_params
+{
+    UINT64 handle;
+};
+
+struct breakloop_params
+{
+    UINT64 handle;
+};
+
+struct can_set_rfmon_params
+{
+    UINT64 handle;
+};
+
+struct close_params
+{
+    UINT64 handle;
 };
 
 struct compile_params
 {
-    struct pcap *pcap;
-    void *program;
-    const char *buf;
+    UINT64 handle;
+    unsigned int *program_len;
+    struct bpf_insn *program_insns;
+    const char *str;
     int optimize;
     unsigned int mask;
 };
 
 struct create_params
 {
-    const char *src;
+    char *source;
     char *errbuf;
-    struct pcap **ret;
+    UINT64 *handle;
+};
+
+struct datalink_params
+{
+    UINT64 handle;
 };
 
 struct datalink_name_to_val_params
@@ -76,13 +115,15 @@ struct datalink_name_to_val_params
 struct datalink_val_to_description_params
 {
     int link;
-    const char **ret;
+    char *buf;
+    unsigned int *buflen;
 };
 
 struct datalink_val_to_name_params
 {
     int link;
-    const char **ret;
+    char *buf;
+    unsigned int *buflen;
 };
 
 struct dump_params
@@ -94,27 +135,33 @@ struct dump_params
 
 struct dump_open_params
 {
-    struct pcap *pcap;
-    const char *name;
-    void **ret;
+    UINT64 handle;
+    char *name;
+    UINT64 *ret_handle;
 };
 
 struct findalldevs_params
 {
-    struct pcap_interface **devs;
+    char *buf;
+    unsigned int *buflen;
     char *errbuf;
 };
 
 struct geterr_params
 {
-    struct pcap *pcap;
-    char **ret;
+    UINT64 handle;
+    char *errbuf;
 };
 
 struct getnonblock_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     char *errbuf;
+};
+
+struct get_tstamp_precision_params
+{
+    UINT64 handle;
 };
 
 struct lib_version_params
@@ -125,119 +172,131 @@ struct lib_version_params
 
 struct list_datalinks_params
 {
-    struct pcap *pcap;
-    int **buf;
+    UINT64 handle;
+    int *links;
+    int *count;
 };
 
 struct list_tstamp_types_params
 {
-    struct pcap *pcap;
-    int **types;
+    UINT64 handle;
+    int *types;
+    int *count;
 };
 
 struct lookupnet_params
 {
-    const char *device;
+    char *device;
     unsigned int *net;
     unsigned int *mask;
     char *errbuf;
 };
 
+struct major_version_params
+{
+    UINT64 handle;
+};
+
+struct minor_version_params
+{
+    UINT64 handle;
+};
+
 struct next_ex_params
 {
-    struct pcap *pcap;
-    struct pcap_pkthdr_win32 **hdr;
+    UINT64 handle;
+    struct pcap_pkthdr_win32 *hdr;
     const unsigned char **data;
 };
 
 struct open_live_params
 {
-    const char *source;
+    char *source;
     int snaplen;
     int promisc;
-    int to_ms;
+    int timeout;
     char *errbuf;
-    struct pcap **ret;
+    UINT64 *handle;
 };
 
 struct sendpacket_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     const unsigned char *buf;
     int size;
 };
 
 struct set_buffer_size_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     int size;
 };
 
 struct set_datalink_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     int link;
 };
 
 struct set_promisc_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     int enable;
 };
 
 struct set_rfmon_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     int enable;
 };
 
 struct set_snaplen_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     int len;
 };
 
 struct set_timeout_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     int timeout;
 };
 
 struct set_tstamp_precision_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     int precision;
 };
 
 struct set_tstamp_type_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     int type;
 };
 
 struct setfilter_params
 {
-    struct pcap *pcap;
-    void *program;
+    UINT64 handle;
+    unsigned int program_len;
+    struct bpf_insn *program_insns;
 };
 
 struct setnonblock_params
 {
-    struct pcap *pcap;
+    UINT64 handle;
     int nonblock;
     char *errbuf;
 };
 
-struct stats_params
+struct snapshot_params
 {
-    struct pcap *pcap;
-    void *stats;
+    UINT64 handle;
 };
 
-struct statustostr_params
+struct stats_params
 {
-    int status;
-    const char **ret;
+    UINT64 handle;
+    struct pcap_stat_win32 stat;
 };
 
 struct tstamp_type_name_to_val_params
@@ -247,14 +306,16 @@ struct tstamp_type_name_to_val_params
 
 struct tstamp_type_val_to_description_params
 {
-    int val;
-    const char **ret;
+    int type;
+    char *buf;
+    unsigned int *buflen;
 };
 
 struct tstamp_type_val_to_name_params
 {
-    int val;
-    const char **ret;
+    int type;
+    char *buf;
+    unsigned int *buflen;
 };
 
 enum pcap_funcs
@@ -269,14 +330,9 @@ enum pcap_funcs
     unix_datalink_name_to_val,
     unix_datalink_val_to_description,
     unix_datalink_val_to_name,
-    /* unix_dispatch, */
     unix_dump,
     unix_dump_open,
     unix_findalldevs,
-    unix_free_datalinks,
-    unix_free_tstamp_types,
-    unix_freealldevs,
-    unix_freecode,
     unix_get_tstamp_precision,
     unix_geterr,
     unix_getnonblock,
@@ -284,7 +340,6 @@ enum pcap_funcs
     unix_list_datalinks,
     unix_list_tstamp_types,
     unix_lookupnet,
-    /* unix_loop, */
     unix_major_version,
     unix_minor_version,
     unix_next_ex,
@@ -302,7 +357,6 @@ enum pcap_funcs
     unix_setnonblock,
     unix_snapshot,
     unix_stats,
-    unix_statustostr,
     unix_tstamp_type_name_to_val,
     unix_tstamp_type_val_to_description,
     unix_tstamp_type_val_to_name,
