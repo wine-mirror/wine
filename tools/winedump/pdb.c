@@ -49,6 +49,7 @@ struct pdb_reader
     } u;
     void*       (*read_stream)(struct pdb_reader*, DWORD);
     DWORD       stream_used[1024];
+    PDB_STRING_TABLE* global_string_table;
 };
 
 static inline BOOL has_stream_been_read(struct pdb_reader* reader, unsigned stream_nr)
@@ -154,7 +155,7 @@ static void pdb_exit(struct pdb_reader* reader)
             free(stream);
         }
     }
-
+    free(reader->global_string_table);
     if (reader->read_stream == pdb_jg_read_stream)
     {
         free((char*)reader->u.jg.root);
@@ -346,7 +347,7 @@ static void dump_public_symbol(struct pdb_reader* reader, unsigned stream)
 }
 
 static const void* pdb_dump_dbi_module(struct pdb_reader* reader, const PDB_SYMBOL_FILE_EX* sym_file,
-                                       const char* file_name, PDB_STRING_TABLE* filesimage)
+                                       const char* file_name)
 {
     const char* lib_name;
     unsigned char* modimage;
@@ -414,7 +415,7 @@ static const void* pdb_dump_dbi_module(struct pdb_reader* reader, const PDB_SYMB
             codeview_dump_linetab((const char*)modimage + sym_file->symbol_size, TRUE, "        ");
         else if (sym_file->lineno2_size) /* actually, only one of the 2 lineno should be present */
             codeview_dump_linetab2((const char*)modimage + sym_file->symbol_size, sym_file->lineno2_size,
-                                   filesimage, "        ");
+                                   reader->global_string_table, "        ");
         /* what's that part ??? */
         if (0)
             dump_data(modimage + sym_file->symbol_size + sym_file->lineno_size + sym_file->lineno2_size,
@@ -429,7 +430,6 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     PDB_SYMBOLS*        symbols;
     unsigned char*      modimage;
     const char*         file;
-    PDB_STRING_TABLE*   filesimage;
     char                tcver[32];
     PDB_STREAM_INDEXES  sidx;
 
@@ -558,8 +558,6 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
         }
     }
 
-    if (!(filesimage = read_string_table(reader))) printf("string table not found\n");
-
     if (symbols->srcmodule_size && globals_dump_sect("DBI"))
     {
         const PDB_SYMBOL_SOURCE*src;
@@ -666,8 +664,8 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
             printf("\t\t\tOverlay: %04x\n", desc->ovl);
             printf("\t\t\tGroup: %04x\n", desc->group);
             printf("\t\t\tFrame: %04x\n", desc->frame);
-            printf("\t\t\tSegment name: %s\n", desc->iSegName == 0xffff ? "none" : pdb_get_string_table_entry(filesimage, desc->iSegName));
-            printf("\t\t\tClass name: %s\n",  desc->iClassName == 0xffff ? "none" : pdb_get_string_table_entry(filesimage, desc->iClassName));
+            printf("\t\t\tSegment name: %s\n", desc->iSegName == 0xffff ? "none" : pdb_get_string_table_entry(reader->global_string_table, desc->iSegName));
+            printf("\t\t\tClass name: %s\n",  desc->iClassName == 0xffff ? "none" : pdb_get_string_table_entry(reader->global_string_table, desc->iClassName));
             printf("\t\t\tOffset: %08x\n", desc->offset);
             printf("\t\t\tSize: %04x\n", desc->cbSeg);
         }
@@ -763,10 +761,10 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
                 copy.attribute = sym_file->attribute;
                 copy.reserved[0] = 0;
                 copy.reserved[1] = 0;
-                file = pdb_dump_dbi_module(reader, &copy, sym_file->filename, filesimage);
+                file = pdb_dump_dbi_module(reader, &copy, sym_file->filename);
             }
             else
-                file = pdb_dump_dbi_module(reader, (const PDB_SYMBOL_FILE_EX*)file, NULL, filesimage);
+                file = pdb_dump_dbi_module(reader, (const PDB_SYMBOL_FILE_EX*)file, NULL);
         }
     }
     dump_global_symbol(reader, symbols->global_hash_stream);
@@ -780,7 +778,6 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
     }
 
     free(symbols);
-    free(filesimage);
 }
 
 static BOOL is_bit_set(const unsigned* dw, unsigned len, unsigned i)
@@ -819,7 +816,6 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
     void*  hash = NULL;
     unsigned i, strmsize;
     const unsigned* table;
-    PDB_STRING_TABLE* strbase;
     unsigned *collision;
 
     if (!globals_dump_sect("hash")) return;
@@ -887,7 +883,8 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
     {
         printf("\t\t%08x => %08x\n", table[2 * i + 0], table[2 * i + 1]);
     }
-    if (types->type_remap_size && (strbase = read_string_table(reader)))
+
+    if (types->type_remap_size)
     {
         unsigned num, capa, count_present, count_deleted;
         const unsigned* present_bitset;
@@ -923,13 +920,12 @@ static void pdb_dump_types_hash(struct pdb_reader* reader, const PDB_TYPES* type
                    is_bit_set(deleted_bitset, count_deleted, i) ? 'D' : '_');
             if (is_bit_set(present_bitset, count_present, i))
             {
-                printf(" %s => ", pdb_get_string_table_entry(strbase, *table++));
+                printf(" %s => ", pdb_get_string_table_entry(reader->global_string_table, *table++));
                 pdb_dump_hash_value((const BYTE*)table, types->hash_value_size);
                 table = (const unsigned*)((const BYTE*)table + types->hash_value_size);
             }
             printf("\n");
         }
-        free(strbase);
         printf("\n");
     }
     free(hash);
@@ -1034,11 +1030,8 @@ static void pdb_dump_fpo_ext(struct pdb_reader* reader, unsigned stream_idx)
 {
     PDB_FPO_DATA*       fpoext;
     unsigned            i, size;
-    PDB_STRING_TABLE*   strbase;
 
     if (stream_idx == (WORD)-1) return;
-    strbase = read_string_table(reader);
-    if (!strbase) return;
 
     fpoext = reader->read_stream(reader, stream_idx);
     size = pdb_get_stream_size(reader, stream_idx);
@@ -1052,11 +1045,10 @@ static void pdb_dump_fpo_ext(struct pdb_reader* reader, unsigned stream_idx)
             printf("\t%08x %08x %8x %8x %8x %6x   %8x %08x %s\n",
                    fpoext[i].start, fpoext[i].func_size, fpoext[i].locals_size, fpoext[i].params_size,
                    fpoext[i].maxstack_size, fpoext[i].prolog_size, fpoext[i].savedregs_size, fpoext[i].flags,
-                   pdb_get_string_table_entry(strbase, fpoext[i].str_offset));
+                   pdb_get_string_table_entry(reader->global_string_table, fpoext[i].str_offset));
         }
     }
     free(fpoext);
-    free(strbase);
 }
 
 static void pdb_dump_sections(struct pdb_reader* reader, unsigned stream_idx)
@@ -1372,6 +1364,8 @@ void pdb_dump(void)
         pdb_ds_dump_header_root(&reader);
     }
     mark_stream_been_read(&reader, 0); /* mark stream #0 (old TOC) as read */
+
+    reader.global_string_table = read_string_table(&reader);
 
     pdb_dump_types(&reader, 2, "TPI");
     pdb_dump_types(&reader, 4, "IPI");
