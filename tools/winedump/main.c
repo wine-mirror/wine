@@ -226,7 +226,9 @@ static const struct my_option option_table[] = {
   {"-j",    DUMP, 1, do_dumpsect, "-j <sect_name>  Dump the content of section 'sect_name'\n"
                                   "                        (use '-j sect_name,sect_name2' to dump several sections)\n"
                                   "                        for NE: export, resource\n"
-                                  "                        for PE: import, export, debug, resource, tls, loadcfg, clr, reloc, except, apiset"},
+                                  "                        for PE: import, export, debug, resource, tls, loadcfg, clr, reloc, except, apiset\n"
+                                  "                        for PDB: PDB, TPI, DBI, IPI, public, image\n"
+                                  "                                 and suboptions: hash (PDB, TPI, TPI, DBI, public) and line (DBI)"},
   {"-t",    DUMP, 0, do_symtable, "-t              Dump symbol table"},
   {"-x",    DUMP, 0, do_dumpall,  "-x              Dump everything"},
   {"sym",   DMGL, 0, do_demangle, "sym <sym>       Demangle C++ symbol <sym> and exit"},
