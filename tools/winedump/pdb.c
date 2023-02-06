@@ -218,6 +218,46 @@ static unsigned get_stream_by_name(struct pdb_reader* reader, const char* name)
     return -1;
 }
 
+static void dump_string_table(const PDB_STRING_TABLE* strtable, const char* name, const char* pfx)
+{
+    const char* end;
+    const char* ptr;
+    unsigned* table;
+    unsigned num_buckets;
+    unsigned i;
+
+    if (!strtable)
+    {
+        printf("%sString table (%s) isn't present\n", pfx, name);
+        return;
+    }
+    printf("%sString table (%s)\n"
+           "%s\tHeader:       %08x\n"
+           "%s\tLength:       %08x\n"
+           "%s\tHash version: %u\n",
+           pfx, name, pfx, strtable->magic, pfx, strtable->length, pfx, strtable->hash_version);
+    ptr = (const char*)(strtable + 1);
+    end = ptr + strtable->length;
+    while (ptr < end)
+    {
+        printf("%s\t%zu]     %s\n", pfx, ptr - (const char*)(strtable + 1), ptr);
+        ptr += strlen(ptr) + 1;
+    }
+    table = (unsigned *)((char*)(strtable + 1) + strtable->length);
+    num_buckets = *table++;
+
+    if (globals_dump_sect("hash"))
+    {
+        printf("%s\tHash:\n"
+               "%s\t\tnum_strings: %x\n"
+               "%s\t\tnum_buckets: %x\n",
+               pfx, pfx, table[num_buckets], pfx, num_buckets);
+
+        for (i = 0; i < num_buckets; i++)
+            printf("%s\t\t%x] %x\n", pfx, i, table[i]);
+    }
+}
+
 static PDB_STRING_TABLE* read_string_table(struct pdb_reader* reader)
 {
     unsigned            stream_idx;
@@ -229,6 +269,7 @@ static PDB_STRING_TABLE* read_string_table(struct pdb_reader* reader)
     ret = reader->read_stream(reader, stream_idx);
     if (!ret) return NULL;
     stream_size = pdb_get_stream_size(reader, stream_idx);
+    if (globals_dump_sect("PDB")) dump_string_table(ret, "Global", "    ");
     if (ret->magic == 0xeffeeffe && sizeof(*ret) + ret->length < stream_size) return ret;
     printf("Improper string table header (magic=%x)\n", ret->magic);
     dump_data((const unsigned char*)ret, stream_size, "    ");
@@ -669,6 +710,14 @@ static void pdb_dump_symbols(struct pdb_reader* reader)
             printf("\t\t\tOffset: %08x\n", desc->offset);
             printf("\t\t\tSize: %04x\n", desc->cbSeg);
         }
+    }
+    if (symbols->unknown2_size && globals_dump_sect("PDB"))
+    {
+        const char* ptr = (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size +
+            symbols->sectcontrib_size + symbols->segmap_size + symbols->srcmodule_size +
+            symbols->pdbimport_size;
+        printf("\t------------Unknown2--------------\n");
+        dump_string_table((const PDB_STRING_TABLE*)ptr, "Unknown from DBI", "\t");
     }
     if (symbols->stream_index_size && globals_dump_sect("image"))
     {
