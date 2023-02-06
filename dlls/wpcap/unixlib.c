@@ -498,4 +498,469 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_tstamp_type_val_to_name,
 };
 
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_compile( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 program_len;
+        PTR32 program_insns;
+        PTR32 str;
+        int optimize;
+        unsigned int mask;
+    } const *params32 = args;
+
+    struct compile_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->program_len),
+        ULongToPtr(params32->program_insns),
+        ULongToPtr(params32->str),
+        params32->optimize,
+        params32->mask
+    };
+    return wrap_compile( &params );
+}
+
+static NTSTATUS wow64_create( void *args )
+{
+    struct
+    {
+        PTR32 source;
+        PTR32 errbuf;
+        PTR32 handle;
+    } const *params32 = args;
+
+    struct create_params params =
+    {
+        ULongToPtr(params32->source),
+        ULongToPtr(params32->errbuf),
+        ULongToPtr(params32->handle),
+    };
+    return wrap_create( &params );
+}
+
+static NTSTATUS wow64_datalink_name_to_val( void *args )
+{
+    struct
+    {
+        PTR32 name;
+    } const *params32 = args;
+
+    struct datalink_name_to_val_params params =
+    {
+        ULongToPtr(params32->name),
+    };
+    return wrap_datalink_name_to_val( &params );
+}
+
+static NTSTATUS wow64_datalink_val_to_description( void *args )
+{
+    struct
+    {
+        int link;
+        PTR32 buf;
+        PTR32 buflen;
+    } const *params32 = args;
+
+    struct datalink_val_to_description_params params =
+    {
+        params32->link,
+        ULongToPtr(params32->buf),
+        ULongToPtr(params32->buflen)
+    };
+    return wrap_datalink_val_to_description( &params );
+}
+
+static NTSTATUS wow64_datalink_val_to_name( void *args )
+{
+    struct
+    {
+        int link;
+        PTR32 buf;
+        PTR32 buflen;
+    } const *params32 = args;
+
+    struct datalink_val_to_name_params params =
+    {
+        params32->link,
+        ULongToPtr(params32->buf),
+        ULongToPtr(params32->buflen)
+    };
+    return wrap_datalink_val_to_name( &params );
+}
+
+static NTSTATUS wow64_dump( void *args )
+{
+    struct
+    {
+        PTR32 user;
+        PTR32 hdr;
+        PTR32 packet;
+    } const *params32 = args;
+
+    struct dump_params params =
+    {
+        ULongToPtr(params32->user),
+        ULongToPtr(params32->hdr),
+        ULongToPtr(params32->packet)
+    };
+    return wrap_dump( &params );
+}
+
+static NTSTATUS wow64_dump_open( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 name;
+        PTR32 ret_handle;
+    } const *params32 = args;
+
+    struct datalink_val_to_name_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->name),
+        ULongToPtr(params32->ret_handle)
+    };
+    return wrap_dump_open( &params );
+}
+
+static NTSTATUS wow64_findalldevs( void *args )
+{
+    struct
+    {
+        PTR32 buf;
+        PTR32 buflen;
+        PTR32 errbuf;
+    } const *params32 = args;
+
+    struct findalldevs_params params =
+    {
+        ULongToPtr(params32->buf),
+        ULongToPtr(params32->buflen),
+        ULongToPtr(params32->errbuf)
+    };
+    return wrap_findalldevs( &params );
+}
+
+static NTSTATUS wow64_geterr( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 errbuf;
+    } const *params32 = args;
+
+    struct geterr_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->errbuf)
+    };
+    return wrap_geterr( &params );
+}
+
+static NTSTATUS wow64_getnonblock( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 errbuf;
+    } const *params32 = args;
+
+    struct getnonblock_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->errbuf)
+    };
+    return wrap_getnonblock( &params );
+}
+
+static NTSTATUS wow64_init( void *args )
+{
+    struct
+    {
+        int opt;
+        PTR32 errbuf;
+    } const *params32 = args;
+
+    struct init_params params =
+    {
+        params32->opt,
+        ULongToPtr(params32->errbuf)
+    };
+    return wrap_init( &params );
+}
+
+static NTSTATUS wow64_lib_version( void *args )
+{
+    struct
+    {
+        PTR32 version;
+        unsigned int size;
+    } const *params32 = args;
+
+    struct lib_version_params params =
+    {
+        ULongToPtr(params32->version),
+        params32->size
+    };
+    return wrap_lib_version( &params );
+}
+
+static NTSTATUS wow64_list_datalinks( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 links;
+        PTR32 count;
+    } const *params32 = args;
+
+    struct list_datalinks_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->links),
+        ULongToPtr(params32->count)
+    };
+    return wrap_list_datalinks( &params );
+}
+
+static NTSTATUS wow64_list_tstamp_types( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 types;
+        PTR32 count;
+    } const *params32 = args;
+
+    struct list_tstamp_types_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->types),
+        ULongToPtr(params32->count)
+    };
+    return wrap_list_tstamp_types( &params );
+}
+
+static NTSTATUS wow64_lookupnet( void *args )
+{
+    struct
+    {
+        PTR32 device;
+        PTR32 net;
+        PTR32 mask;
+        PTR32 errbuf;
+    } const *params32 = args;
+
+    struct lookupnet_params params =
+    {
+        ULongToPtr(params32->device),
+        ULongToPtr(params32->net),
+        ULongToPtr(params32->mask),
+        ULongToPtr(params32->errbuf)
+    };
+    return wrap_lookupnet( &params );
+}
+
+static NTSTATUS wow64_next_ex( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 hdr;
+        PTR32 data;
+    } const *params32 = args;
+
+    struct next_ex_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->hdr),
+        ULongToPtr(params32->data)
+    };
+    return wrap_next_ex( &params );
+}
+
+static NTSTATUS wow64_open_live( void *args )
+{
+    struct
+    {
+        PTR32 source;
+        int snaplen;
+        int promisc;
+        int timeout;
+        PTR32 errbuf;
+        PTR32 handle;
+    } const *params32 = args;
+
+    struct open_live_params params =
+    {
+        ULongToPtr(params32->source),
+        params32->snaplen,
+        params32->promisc,
+        params32->timeout,
+        ULongToPtr(params32->errbuf),
+        ULongToPtr(params32->handle)
+    };
+    return wrap_open_live( &params );
+}
+
+static NTSTATUS wow64_sendpacket( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 buf;
+        int size;
+    } const *params32 = args;
+
+    struct sendpacket_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->buf),
+        params32->size
+    };
+    return wrap_sendpacket( &params );
+}
+
+static NTSTATUS wow64_setfilter( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        unsigned int program_len;
+        PTR32 program_insns;
+    } const *params32 = args;
+
+    struct setfilter_params params =
+    {
+        params32->handle,
+        params32->program_len,
+        ULongToPtr(params32->program_insns)
+    };
+    return wrap_setfilter( &params );
+}
+
+static NTSTATUS wow64_setnonblock( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        int nonblock;
+        PTR32 errbuf;
+    } const *params32 = args;
+
+    struct setnonblock_params params =
+    {
+        params32->handle,
+        params32->nonblock,
+        ULongToPtr(params32->errbuf)
+    };
+    return wrap_setnonblock( &params );
+}
+
+static NTSTATUS wow64_tstamp_type_name_to_val( void *args )
+{
+    struct
+    {
+        PTR32 name;
+    } const *params32 = args;
+
+    struct tstamp_type_name_to_val_params params =
+    {
+        ULongToPtr(params32->name)
+    };
+    return wrap_tstamp_type_name_to_val( &params );
+}
+
+static NTSTATUS wow64_tstamp_type_val_to_description( void *args )
+{
+    struct
+    {
+        int type;
+        PTR32 buf;
+        PTR32 buflen;
+    } const *params32 = args;
+
+    struct tstamp_type_val_to_description_params params =
+    {
+        params32->type,
+        ULongToPtr(params32->buf),
+        ULongToPtr(params32->buflen)
+    };
+    return wrap_tstamp_type_val_to_description( &params );
+}
+
+static NTSTATUS wow64_tstamp_type_val_to_name( void *args )
+{
+    struct
+    {
+        int type;
+        PTR32 buf;
+        PTR32 buflen;
+    } const *params32 = args;
+
+    struct tstamp_type_val_to_name_params params =
+    {
+        params32->type,
+        ULongToPtr(params32->buf),
+        ULongToPtr(params32->buflen)
+    };
+    return wrap_tstamp_type_val_to_name( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    wrap_activate,
+    wrap_breakloop,
+    wrap_bufsize,
+    wrap_can_set_rfmon,
+    wrap_close,
+    wow64_compile,
+    wow64_create,
+    wrap_datalink,
+    wow64_datalink_name_to_val,
+    wow64_datalink_val_to_description,
+    wow64_datalink_val_to_name,
+    wow64_dump,
+    wrap_dump_close,
+    wow64_dump_open,
+    wow64_findalldevs,
+    wrap_get_tstamp_precision,
+    wow64_geterr,
+    wow64_getnonblock,
+    wow64_init,
+    wow64_lib_version,
+    wow64_list_datalinks,
+    wow64_list_tstamp_types,
+    wow64_lookupnet,
+    wrap_major_version,
+    wrap_minor_version,
+    wow64_next_ex,
+    wow64_open_live,
+    wow64_sendpacket,
+    wrap_set_buffer_size,
+    wrap_set_datalink,
+    wrap_set_promisc,
+    wrap_set_rfmon,
+    wrap_set_snaplen,
+    wrap_set_timeout,
+    wrap_set_tstamp_precision,
+    wrap_set_tstamp_type,
+    wow64_setfilter,
+    wow64_setnonblock,
+    wrap_snapshot,
+    wrap_stats,
+    wow64_tstamp_type_name_to_val,
+    wow64_tstamp_type_val_to_description,
+    wow64_tstamp_type_val_to_name,
+};
+
+#endif /* _WIN64 */
+
 #endif /* HAVE_PCAP_PCAP_H */
