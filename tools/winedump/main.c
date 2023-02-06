@@ -169,7 +169,23 @@ static void do_dumphead (const char *arg)
 
 static void do_dumpsect (const char* arg)
 {
-    globals.dumpsect = arg;
+    unsigned count = 2;
+    char* p;
+    const char** out;
+
+    for (p = (char*)arg; (p = strchr(p, ',')) != NULL; p++, count++);
+    out = malloc(count * sizeof(char*));
+    globals.dumpsect = out;
+    count = 0;
+    p = strdup(arg);
+    for (;;)
+    {
+        out[count++] = p;
+        p = strchr(p, ',');
+        if (!p) break;
+        *p++ = '\0';
+    }
+    out[count] = NULL;
 }
 
 static void do_rawdebug (const char *arg)
@@ -182,7 +198,7 @@ static void do_dumpall(const char *arg)
     globals.do_dumpheader = TRUE;
     globals.do_dump_rawdata = TRUE;
     globals.do_symbol_table = TRUE;
-    globals.dumpsect = "ALL";
+    do_dumpsect ("ALL");
 }
 
 static void do_symtable(const char* arg)
@@ -207,8 +223,10 @@ static const struct my_option option_table[] = {
   {"-C",    DUMP, 0, do_symdmngl, "-C              Turn on symbol demangling"},
   {"-f",    DUMP, 0, do_dumphead, "-f              Dump file header information"},
   {"-G",    DUMP, 0, do_rawdebug, "-G              Dump raw debug information"},
-  {"-j",    DUMP, 1, do_dumpsect, "-j <sect_name>  Dump only the content of section 'sect_name'\n"
-                            "                        (import, export, debug, resource, tls, loadcfg, clr, reloc, except, apiset)"},
+  {"-j",    DUMP, 1, do_dumpsect, "-j <sect_name>  Dump the content of section 'sect_name'\n"
+                                  "                        (use '-j sect_name,sect_name2' to dump several sections)\n"
+                                  "                        for NE: export, resource\n"
+                                  "                        for PE: import, export, debug, resource, tls, loadcfg, clr, reloc, except, apiset"},
   {"-t",    DUMP, 0, do_symtable, "-t              Dump symbol table"},
   {"-x",    DUMP, 0, do_dumpall,  "-x              Dump everything"},
   {"sym",   DMGL, 0, do_demangle, "sym <sym>       Demangle C++ symbol <sym> and exit"},
@@ -368,6 +386,16 @@ static BOOL symbol_finish(void)
         printf("\t%s\n",search_symbol->symbolname);
     }
     return started;
+}
+
+BOOL globals_dump_sect(const char* s)
+{
+    const char** sect;
+
+    if (!s || !globals.dumpsect) return FALSE;
+    for (sect = globals.dumpsect; *sect; sect++)
+        if (!strcmp(*sect, s) || !strcmp(*sect, "ALL")) return TRUE;
+    return FALSE;
 }
 
 /*******************************************************************

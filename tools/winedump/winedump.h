@@ -135,12 +135,14 @@ typedef struct __globals
   const char *uc_dll_name;       /* -o */
 
   /* Option arguments: dump mode */
-  const char *dumpsect;    /* -j */
+  const char **dumpsect;   /* -j */
 } _globals;
 
 extern _globals globals;
 extern void *dump_base;
 extern size_t dump_total_len;
+
+BOOL globals_dump_sect(const char*);
 
 /* Names to use for output DLL */
 #define OUTPUT_DLL_NAME \

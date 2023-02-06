@@ -2525,8 +2525,6 @@ enum FileSig get_kind_exec(void)
 
 void pe_dump(void)
 {
-    int	all = (globals.dumpsect != NULL) && strcmp(globals.dumpsect, "ALL") == 0;
-
     PE_nt_headers = get_nt_header();
     print_fake_dll();
 
@@ -2543,32 +2541,30 @@ void pe_dump(void)
 	dump_pe_header();
     }
 
-    if (globals.dumpsect)
+    if (globals_dump_sect("import"))
     {
-	if (all || !strcmp(globals.dumpsect, "import"))
-        {
-	    dump_dir_imported_functions();
-	    dump_dir_delay_imported_functions();
-        }
-	if (all || !strcmp(globals.dumpsect, "export"))
-	    dump_dir_exported_functions();
-	if (all || !strcmp(globals.dumpsect, "debug"))
-	    dump_dir_debug();
-	if (all || !strcmp(globals.dumpsect, "resource"))
-	    dump_dir_resource();
-	if (all || !strcmp(globals.dumpsect, "tls"))
-	    dump_dir_tls();
-	if (all || !strcmp(globals.dumpsect, "loadcfg"))
-	    dump_dir_loadconfig();
-	if (all || !strcmp(globals.dumpsect, "clr"))
-	    dump_dir_clr_header();
-	if (all || !strcmp(globals.dumpsect, "reloc"))
-	    dump_dir_reloc();
-	if (all || !strcmp(globals.dumpsect, "except"))
-	    dump_dir_exceptions();
-	if (all || !strcmp(globals.dumpsect, "apiset"))
-	    dump_section_apiset();
+        dump_dir_imported_functions();
+        dump_dir_delay_imported_functions();
     }
+    if (globals_dump_sect("export"))
+        dump_dir_exported_functions();
+    if (globals_dump_sect("debug"))
+        dump_dir_debug();
+    if (globals_dump_sect("resource"))
+        dump_dir_resource();
+    if (globals_dump_sect("tls"))
+        dump_dir_tls();
+    if (globals_dump_sect("loadcfg"))
+        dump_dir_loadconfig();
+    if (globals_dump_sect("clr"))
+        dump_dir_clr_header();
+    if (globals_dump_sect("reloc"))
+        dump_dir_reloc();
+    if (globals_dump_sect("except"))
+        dump_dir_exceptions();
+    if (globals_dump_sect("apiset"))
+        dump_section_apiset();
+
     if (globals.do_symbol_table)
         dump_symbol_table();
     if (globals.do_debug)

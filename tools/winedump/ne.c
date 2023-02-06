@@ -429,15 +429,11 @@ void ne_dump( void )
         dump_ne_header( ne );
     if (globals.do_dumpheader)
         dump_ne_names( ne );
-    if (globals.dumpsect)
-    {
-        BOOL	all = strcmp(globals.dumpsect, "ALL") == 0;
 
-        if (all || !strcmp(globals.dumpsect, "resource"))
-            dump_ne_resources( ne );
-        if (all || !strcmp(globals.dumpsect, "export"))
-            dump_ne_exports( ne );
-    }
+    if (globals_dump_sect("resource"))
+        dump_ne_resources( ne );
+    if (globals_dump_sect("export"))
+        dump_ne_exports( ne );
     if (globals.do_dumpheader)
         for (i = 1; i <= ne->ne_cseg; i++) dump_ne_segment( ne, i );
 }
