@@ -1192,7 +1192,7 @@ LONG WINAPI BroadcastSystemMessageW( DWORD flags, LPDWORD recipients, UINT msg, 
 LONG WINAPI BroadcastSystemMessageExA( DWORD flags, LPDWORD recipients, UINT msg, WPARAM wp, LPARAM lp, PBSMINFO pinfo )
 {
     map_wparam_AtoW( msg, &wp, WMCHAR_MAP_NOMAPPING );
-    return BroadcastSystemMessageExW( flags, recipients, msg, wp, lp, NULL );
+    return BroadcastSystemMessageExW( flags, recipients, msg, wp, lp, pinfo );
 }
 
 
