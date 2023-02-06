@@ -3915,9 +3915,9 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
 
     for (start = 0; start < srclen; start++)
     {
+        pos = start;
         for (len = start + 1; len <= srclen; len++)
         {
-            pos = start;
             while (pos < len && s.primary_pos <= val.key_primary.len)
             {
                 while (pos < len && !s.key_primary.len)
@@ -3933,7 +3933,7 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
                 s.primary_pos += s.key_primary.len;
                 s.key_primary.len = 0;
             }
-            if (s.primary_pos < val.key_primary.len) goto next;
+            if (s.primary_pos < val.key_primary.len) continue;
 
             have_extra = remove_unneeded_weights( sortid, &s );
             if (compare_sortkeys( &s.key_diacritic, &val.key_diacritic, FALSE )) goto next;
@@ -3957,6 +3957,7 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
             s.key_primary.len = s.key_diacritic.len = s.key_case.len = s.key_special.len = 0;
             s.key_extra[0].len = s.key_extra[1].len = s.key_extra[2].len = s.key_extra[3].len = 0;
             s.primary_pos = 0;
+            pos = start;
         }
         if (flags & FIND_STARTSWITH) break;
         if (flags & FIND_FROMSTART && found != -1) break;
