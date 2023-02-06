@@ -2656,11 +2656,11 @@ typedef struct
     unsigned hash_size;
     unsigned address_map_size;
     unsigned num_thunks;
-    unsigned size_thunk;
+    unsigned thunk_size;
     unsigned short section_thunk_table;
     unsigned short _pad0;
     unsigned offset_thunk_table;
-    unsigned num_sects;
+    unsigned num_sections;
 } DBI_PUBLIC_HEADER;
 
 #include "poppack.h"

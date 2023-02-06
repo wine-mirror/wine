@@ -366,6 +366,8 @@ static void dump_public_symbol(struct pdb_reader* reader, unsigned stream)
 {
     unsigned            size;
     DBI_PUBLIC_HEADER*  hdr;
+    const BYTE*         ptr;
+    unsigned            i;
 
     if (!globals_dump_sect("public")) return;
     hdr = reader->read_stream(reader, stream);
@@ -378,12 +380,31 @@ static void dump_public_symbol(struct pdb_reader* reader, unsigned stream)
     printf("\tHash size:              %u\n", hdr->hash_size);
     printf("\tAddress map size:       %u\n", hdr->address_map_size);
     printf("\tNumber of thunks:       %u\n", hdr->num_thunks);
-    printf("\tSize of thunk:          %u\n", hdr->size_thunk);
+    printf("\tSize of thunk map:      %u\n", hdr->thunk_size);
     printf("\tSection of thunk table: %u\n", hdr->section_thunk_table);
     printf("\tOffset of thunk table:  %u\n", hdr->offset_thunk_table);
-    printf("\tNumber of sections:     %u\n", hdr->num_sects);
+    printf("\tNumber of sections:     %u\n", hdr->num_sections);
 
-    dump_dbi_hash_table((const BYTE*)(hdr + 1), hdr->hash_size, "Public", "\t");
+    ptr = (const BYTE*)(hdr + 1);
+    dump_dbi_hash_table(ptr, hdr->hash_size, "Public", "\t");
+
+    ptr += hdr->hash_size;
+    printf("\tAddress map:\n");
+    for (i = 0; i < hdr->address_map_size / sizeof(unsigned); i++)
+        printf("\t\t%u]     %08x\n", i, ((const unsigned*)ptr)[i]);
+
+    ptr += hdr->address_map_size;
+    printf("\tThunk map:\n");
+    for (i = 0; i < hdr->num_thunks; i++)
+        printf("\t\t%u]      %08x\n", i, ((const unsigned*)ptr)[i]);
+
+    ptr += hdr->num_thunks * sizeof(unsigned);
+    printf("\tSection map:\n");
+    for (i = 0; i < hdr->num_sections; i++)
+        printf("\t\t%u]      %04x:%08x\n", i, (unsigned short)((const unsigned*)ptr)[2 * i + 1], ((const unsigned*)ptr)[2 * i + 0]);
+
+    if (ptr + hdr->num_sections * 8 != ((const BYTE*)hdr) + size)
+        printf("Incorrect stream\n");
     free(hdr);
 }
 
