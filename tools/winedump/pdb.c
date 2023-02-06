@@ -331,6 +331,85 @@ static void dump_public_symbol(struct pdb_reader* reader, unsigned stream)
     free(hdr);
 }
 
+static const void* pdb_dump_dbi_module(struct pdb_reader* reader, const PDB_SYMBOL_FILE_EX* sym_file,
+                                       const char* file_name, PDB_STRING_TABLE* filesimage)
+{
+    const char* lib_name;
+    unsigned char* modimage;
+    BOOL new_format = !file_name;
+
+    if (new_format) file_name = sym_file->filename;
+    printf("\t--------symbol file-----------\n");
+    printf("\tName: %s\n", file_name);
+    lib_name = file_name + strlen(file_name) + 1;
+    if (strcmp(file_name, lib_name)) printf("\tLibrary: %s\n", lib_name);
+    printf("\t\tunknown1:   %08x\n"
+           "\t\trange\n"
+           "\t\t\tsegment:         %04x\n"
+           "\t\t\tpad1:            %04x\n"
+           "\t\t\toffset:          %08x\n"
+           "\t\t\tsize:            %08x\n"
+           "\t\t\tcharacteristics: %08x",
+           sym_file->unknown1,
+           sym_file->range.segment,
+           sym_file->range.pad1,
+           sym_file->range.offset,
+           sym_file->range.size,
+           sym_file->range.characteristics);
+    dump_section_characteristics(sym_file->range.characteristics, " ");
+    printf("\n"
+           "\t\t\tindex:           %04x\n"
+           "\t\t\tpad2:            %04x\n",
+           sym_file->range.index,
+           sym_file->range.pad2);
+    if (new_format)
+        printf("\t\t\ttimestamp:       %08x\n"
+               "\t\t\tunknown:         %08x\n",
+               sym_file->range.timestamp,
+               sym_file->range.unknown);
+    printf("\t\tflag:       %04x\n"
+           "\t\tstream:     %04x\n"
+           "\t\tsymb size:  %08x\n"
+           "\t\tline size:  %08x\n"
+           "\t\tline2 size: %08x\n"
+           "\t\tnSrcFiles:  %08x\n"
+           "\t\tattribute:  %08x\n",
+           sym_file->flag,
+           sym_file->stream,
+           sym_file->symbol_size,
+           sym_file->lineno_size,
+           sym_file->lineno2_size,
+           sym_file->nSrcFiles,
+           sym_file->attribute);
+    if (new_format)
+        printf("\t\treserved/0: %08x\n"
+               "\t\treserved/1: %08x\n",
+               sym_file->reserved[0],
+               sym_file->reserved[1]);
+
+    modimage = reader->read_stream(reader, sym_file->stream);
+    if (modimage)
+    {
+        int total_size = pdb_get_stream_size(reader, sym_file->stream);
+
+        if (sym_file->symbol_size)
+            codeview_dump_symbols((const char*)modimage, sizeof(DWORD), sym_file->symbol_size);
+
+        /* line number info */
+        if (sym_file->lineno_size)
+            codeview_dump_linetab((const char*)modimage + sym_file->symbol_size, TRUE, "        ");
+        else if (sym_file->lineno2_size) /* actually, only one of the 2 lineno should be present */
+            codeview_dump_linetab2((const char*)modimage + sym_file->symbol_size, sym_file->lineno2_size,
+                                   filesimage, "        ");
+        /* what's that part ??? */
+        if (0)
+            dump_data(modimage + sym_file->symbol_size + sym_file->lineno_size + sym_file->lineno2_size,
+                      total_size - (sym_file->symbol_size + sym_file->lineno_size + sym_file->lineno2_size), "    ");
+        free(modimage);
+    }
+    return (const void*)((DWORD_PTR)(lib_name + strlen(lib_name) + 1 + 3) & ~3);
+}
+
 static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx)
 {
     PDB_SYMBOLS*        symbols;
@@ -635,139 +714,42 @@ static void pdb_dump_symbols(struct pdb_reader* reader, PDB_STREAM_INDEXES* sidx
     }
 
     /* Read per-module symbol / linenumber tables */
-    file = (const char*)symbols + sizeof(PDB_SYMBOLS);
-    while (file - (const char*)symbols < sizeof(PDB_SYMBOLS) + symbols->module_size)
-    while ((file - (const char*)symbols + sizeof(symbols->version) < sizeof(PDB_SYMBOLS) + symbols->module_size) &&
-           (file - (const char*)symbols +
-            symbols->version < 19970000 ? sizeof(PDB_SYMBOL_FILE) : sizeof(PDB_SYMBOL_FILE_EX)) < sizeof(PDB_SYMBOLS) + symbols->module_size)
+    if (symbols->module_size)
     {
-        int stream_nr, symbol_size, lineno_size, lineno2_size;
-        const char* file_name;
-        const char* lib_name;
+        SIZE_T module_header_size = symbols->version < 19970000 ? sizeof(PDB_SYMBOL_FILE) : sizeof(PDB_SYMBOL_FILE_EX);
 
-        if (symbols->version < 19970000)
+        file = (const char*)symbols + sizeof(PDB_SYMBOLS);
+        while (file + module_header_size <= (const char*)symbols + sizeof(PDB_SYMBOLS) + symbols->module_size)
         {
-            const PDB_SYMBOL_FILE*      sym_file = (const PDB_SYMBOL_FILE*) file;
-            stream_nr   = sym_file->stream;
-            file_name   = sym_file->filename;
-            lib_name    = file_name + strlen(file_name) + 1;
-            symbol_size = sym_file->symbol_size;
-            lineno_size = sym_file->lineno_size;
-            lineno2_size = sym_file->lineno2_size;
-            printf("\t--------symbol file-----------\n");
-            printf("\tName: %s\n", file_name);
-            if (strcmp(file_name, lib_name)) printf("\tLibrary: %s\n", lib_name);
-            printf("\t\tunknown1:   %08x\n"
-                   "\t\trange\n"
-                   "\t\t\tsegment:         %04x\n"
-                   "\t\t\tpad1:            %04x\n"
-                   "\t\t\toffset:          %08x\n"
-                   "\t\t\tsize:            %08x\n"
-                   "\t\t\tcharacteristics: %08x",
-                   sym_file->unknown1,
-                   sym_file->range.segment,
-                   sym_file->range.pad1,
-                   sym_file->range.offset,
-                   sym_file->range.size,
-                   sym_file->range.characteristics);
-            dump_section_characteristics(sym_file->range.characteristics, " ");
-            printf("\n"
-                   "\t\t\tindex:           %04x\n"
-                   "\t\t\tpad2:            %04x\n"
-                   "\t\tflag:       %04x\n"
-                   "\t\tstream:     %04x\n"
-                   "\t\tsymb size:  %08x\n"
-                   "\t\tline size:  %08x\n"
-                   "\t\tline2 size: %08x\n"
-                   "\t\tnSrcFiles:  %08x\n"
-                   "\t\tattribute:  %08x\n",
-                   sym_file->range.index,
-                   sym_file->range.pad2,
-                   sym_file->flag,
-                   sym_file->stream,
-                   sym_file->symbol_size,
-                   sym_file->lineno_size,
-                   sym_file->lineno2_size,
-                   sym_file->nSrcFiles,
-                   sym_file->attribute);
+            if (symbols->version < 19970000)
+            {
+                PDB_SYMBOL_FILE_EX copy;
+                const PDB_SYMBOL_FILE* sym_file = (const PDB_SYMBOL_FILE*)file;
+
+                copy.unknown1 = sym_file->unknown1;
+                copy.range.segment = sym_file->range.segment;
+                copy.range.pad1 = sym_file->range.pad1;
+                copy.range.offset = sym_file->range.offset;
+                copy.range.size = sym_file->range.size;
+                copy.range.characteristics = sym_file->range.characteristics;
+                copy.range.index = sym_file->range.index;
+                copy.range.pad2 = sym_file->range.pad2;
+                copy.range.timestamp = 0;
+                copy.range.unknown = 0;
+                copy.flag = sym_file->flag;
+                copy.stream = sym_file->stream;
+                copy.symbol_size = sym_file->symbol_size;
+                copy.lineno_size = sym_file->lineno_size;
+                copy.lineno2_size = sym_file->lineno2_size;
+                copy.nSrcFiles = sym_file->nSrcFiles;
+                copy.attribute = sym_file->attribute;
+                copy.reserved[0] = 0;
+                copy.reserved[1] = 0;
+                file = pdb_dump_dbi_module(reader, &copy, sym_file->filename, filesimage);
+            }
+            else
+                file = pdb_dump_dbi_module(reader, (const PDB_SYMBOL_FILE_EX*)file, NULL, filesimage);
         }
-        else
-        {
-            const PDB_SYMBOL_FILE_EX*   sym_file = (const PDB_SYMBOL_FILE_EX*) file;
-
-            stream_nr     = sym_file->stream;
-            file_name   = sym_file->filename;
-            lib_name    = file_name + strlen(file_name) + 1;
-            symbol_size = sym_file->symbol_size;
-            lineno_size = sym_file->lineno_size;
-            lineno2_size = sym_file->lineno2_size;
-            printf("\t--------symbol file-----------\n");
-            printf("\tName: %s\n", file_name);
-            if (strcmp(file_name, lib_name)) printf("\tLibrary: %s\n", lib_name);
-            printf("\t\tunknown1:   %08x\n"
-                   "\t\trange\n"
-                   "\t\t\tsegment:         %04x\n"
-                   "\t\t\tpad1:            %04x\n"
-                   "\t\t\toffset:          %08x\n"
-                   "\t\t\tsize:            %08x\n"
-                   "\t\t\tcharacteristics: %08x",
-                   sym_file->unknown1,
-                   sym_file->range.segment,
-                   sym_file->range.pad1,
-                   sym_file->range.offset,
-                   sym_file->range.size,
-                   sym_file->range.characteristics);
-            dump_section_characteristics(sym_file->range.characteristics, " ");
-            printf("\n"
-                   "\t\t\tindex:           %04x\n"
-                   "\t\t\tpad2:            %04x\n"
-                   "\t\t\ttimestamp:       %08x\n"
-                   "\t\t\tunknown:         %08x\n"
-                   "\t\tflag:       %04x\n"
-                   "\t\tstream:     %04x\n"
-                   "\t\tsymb size:  %08x\n"
-                   "\t\tline size:  %08x\n"
-                   "\t\tline2 size: %08x\n"
-                   "\t\tnSrcFiles:  %08x\n"
-                   "\t\tattribute:  %08x\n"
-                   "\t\treserved/0: %08x\n"
-                   "\t\treserved/1: %08x\n",
-                   sym_file->range.index,
-                   sym_file->range.pad2,
-                   sym_file->range.timestamp,
-                   sym_file->range.unknown,
-                   sym_file->flag,
-                   sym_file->stream,
-                   sym_file->symbol_size,
-                   sym_file->lineno_size,
-                   sym_file->lineno2_size,
-                   sym_file->nSrcFiles,
-                   sym_file->attribute,
-                   sym_file->reserved[0],
-                   sym_file->reserved[1]);
-        }
-        modimage = reader->read_stream(reader, stream_nr);
-        if (modimage)
-        {
-            int total_size = pdb_get_stream_size(reader, stream_nr);
-
-            if (symbol_size)
-                codeview_dump_symbols((const char*)modimage, sizeof(DWORD), symbol_size);
-
-            /* line number info */
-            if (lineno_size)
-                codeview_dump_linetab((const char*)modimage + symbol_size, TRUE, "        ");
-            else if (lineno2_size) /* actually, only one of the 2 lineno should be present */
-                codeview_dump_linetab2((const char*)modimage + symbol_size, lineno2_size,
-                                       filesimage, "        ");
-            /* what's that part ??? */
-            if (0)
-                dump_data(modimage + symbol_size + lineno_size + lineno2_size,
-                          total_size - (symbol_size + lineno_size + lineno2_size), "    ");
-            free(modimage);
-        }
-
-        file = (char*)((DWORD_PTR)(lib_name + strlen(lib_name) + 1 + 3) & ~3);
     }
     dump_global_symbol(reader, symbols->global_hash_stream);
     dump_public_symbol(reader, symbols->public_stream);
