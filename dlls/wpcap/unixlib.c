@@ -155,6 +155,13 @@ static NTSTATUS wrap_dump( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wrap_dump_close( void *args )
+{
+    const struct dump_close_params *params = args;
+    pcap_dump_close( (pcap_dumper_t *)(ULONG_PTR)params->handle );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS wrap_dump_open( void *args )
 {
     const struct dump_open_params *params = args;
@@ -452,6 +459,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_datalink_val_to_description,
     wrap_datalink_val_to_name,
     wrap_dump,
+    wrap_dump_close,
     wrap_dump_open,
     wrap_findalldevs,
     wrap_get_tstamp_precision,

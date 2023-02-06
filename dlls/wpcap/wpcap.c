@@ -301,6 +301,18 @@ struct dumper
     UINT64 handle;
 };
 
+void CDECL pcap_dump_close( struct dumper *dumper )
+{
+    struct dump_close_params params;
+
+    TRACE( "%p\n", dumper );
+
+    if (!dumper) return;
+    params.handle = dumper->handle;
+    PCAP_CALL( dump, &params );
+    free( dumper );
+}
+
 static inline WCHAR *strdup_from_utf8( const char *str )
 {
     WCHAR *ret = NULL;

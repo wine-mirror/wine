@@ -138,6 +138,11 @@ struct dump_params
     const unsigned char *packet;
 };
 
+struct dump_close_params
+{
+    UINT64 handle;
+};
+
 struct dump_open_params
 {
     UINT64 handle;
@@ -337,6 +342,7 @@ enum pcap_funcs
     unix_datalink_val_to_description,
     unix_datalink_val_to_name,
     unix_dump,
+    unix_dump_close,
     unix_dump_open,
     unix_findalldevs,
     unix_get_tstamp_precision,

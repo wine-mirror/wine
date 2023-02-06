@@ -20,7 +20,7 @@
 @ cdecl pcap_datalink_val_to_name(long)
 @ cdecl pcap_dispatch(ptr long ptr ptr)
 @ cdecl pcap_dump(ptr ptr str)
-@ stub pcap_dump_close
+@ cdecl pcap_dump_close(ptr)
 @ stub pcap_dump_file
 @ stub pcap_dump_flush
 @ stub pcap_dump_ftell
