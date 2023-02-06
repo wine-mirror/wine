@@ -444,7 +444,7 @@ static struct sockaddr *get_address( const IP_ADAPTER_UNICAST_ADDRESS *addr )
 static void convert_length_to_ipv6_mask( ULONG length, IN6_ADDR *mask )
 {
     unsigned int i;
-    for (i = 0; i < length / 8; i++) mask->u.Byte[i] = 0xff;
+    for (i = 0; i < length / 8 - 1; i++) mask->u.Byte[i] = 0xff;
     mask->u.Byte[i] = 0xff << (8 - length % 8);
 }
 
