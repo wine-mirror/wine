@@ -11161,6 +11161,8 @@ static void test_message_conversion(void)
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "SendMessageCallback on sync only message returned %Id, last error %ld\n", lRes, GetLastError());
 
+    DestroyWindow(hwnd);
+
     /* Check WM_GETTEXTLENGTH A->W behaviour, whether WM_GETTEXT is also sent or not */
 
     hwnd = CreateWindowW (testWindowClassW, wszUnicode,
