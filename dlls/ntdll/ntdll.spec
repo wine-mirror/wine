@@ -487,7 +487,7 @@
 # @ stub RtlAddRefMemoryStream
 @ stdcall RtlAddVectoredContinueHandler(long ptr)
 @ stdcall RtlAddVectoredExceptionHandler(long ptr)
-# @ stub RtlAddressInSectionTable
+@ stdcall RtlAddressInSectionTable(ptr long long)
 @ stdcall RtlAdjustPrivilege(long long long ptr)
 @ stdcall RtlAllocateAndInitializeSid (ptr long long long long long long long long long ptr)
 @ stdcall RtlAllocateHandle(ptr ptr)

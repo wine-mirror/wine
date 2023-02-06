@@ -4311,6 +4311,15 @@ PVOID WINAPI RtlImageRvaToVa( const IMAGE_NT_HEADERS *nt, HMODULE module,
 
 
 /***********************************************************************
+ *           RtlAddressInSectionTable   (NTDLL.@)
+ */
+PVOID WINAPI RtlAddressInSectionTable( const IMAGE_NT_HEADERS *nt, HMODULE module,
+                                       DWORD rva )
+{
+    return RtlImageRvaToVa( nt, module, rva, NULL );
+}
+
+/***********************************************************************
  *           RtlPcToFileHeader   (NTDLL.@)
  */
 PVOID WINAPI RtlPcToFileHeader( PVOID pc, PVOID *address )
