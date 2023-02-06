@@ -119,6 +119,13 @@ static const WCHAR testWindowClassW[] =
 
 static LRESULT WINAPI ParentMsgCheckProcA(HWND, UINT, WPARAM, LPARAM);
 
+static void register_class(const WNDCLASSA *class)
+{
+    BOOL ret = RegisterClassA(class);
+    ok(ret, "Failed to register class %s, error %lu.\n",
+            debugstr_a(class->lpszClassName), GetLastError());
+}
+
 /*
 FIXME: add tests for these
 Window Edge Styles (Win31/Win95/98 look), in order of precedence:
@@ -4099,7 +4106,7 @@ static LRESULT WINAPI mdi_frame_wnd_proc(HWND hwnd, UINT message, WPARAM wParam,
     return ret;
 }
 
-static BOOL mdi_RegisterWindowClasses(void)
+static void mdi_register_classes(void)
 {
     WNDCLASSA cls;
 
@@ -4113,20 +4120,18 @@ static BOOL mdi_RegisterWindowClasses(void)
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "MDI_frame_class";
-    if (!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = mdi_child_wnd_proc;
     cls.lpszClassName = "MDI_child_class";
-    if (!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     if (!GetClassInfoA(0, "MDIClient", &cls)) assert(0);
     old_mdi_client_proc = cls.lpfnWndProc;
     cls.hInstance = GetModuleHandleA(0);
     cls.lpfnWndProc = mdi_client_hook_proc;
     cls.lpszClassName = "MDI_client_class";
-    if (!RegisterClassA(&cls)) assert(0);
-
-    return TRUE;
+    register_class(&cls);
 }
 
 static void test_mdi_messages(void)
@@ -4139,7 +4144,7 @@ static void test_mdi_messages(void)
     HMENU hMenu = CreateMenu();
     LONG val;
 
-    if (!mdi_RegisterWindowClasses()) assert(0);
+    mdi_register_classes();
 
     flush_sequence();
 
@@ -6742,7 +6747,7 @@ static void subclass_button(void)
     cls.lpfnWndProc = button_hook_proc;
     cls.lpszClassName = "my_button_class";
     UnregisterClassA(cls.lpszClassName, cls.hInstance);
-    if (!RegisterClassA(&cls)) assert(0);
+    register_class(&cls);
 }
 
 static void test_button_messages(void)
@@ -7672,7 +7677,7 @@ static void subclass_static(void)
     cls.lpfnWndProc = static_hook_proc;
     cls.lpszClassName = "my_static_class";
     UnregisterClassA(cls.lpszClassName, cls.hInstance);
-    if (!RegisterClassA(&cls)) assert(0);
+    register_class(&cls);
 }
 
 static void test_static_messages(void)
@@ -7947,7 +7952,7 @@ static void subclass_combobox(void)
     cls.lpfnWndProc = combobox_hook_proc;
     cls.lpszClassName = "my_combobox_class";
     UnregisterClassA(cls.lpszClassName, cls.hInstance);
-    if (!RegisterClassA(&cls)) assert(0);
+    register_class(&cls);
 }
 
 static void test_combobox_messages(void)
@@ -8129,7 +8134,7 @@ static void register_wmime_keydown_class(void)
     cls.lpfnWndProc = wmime_keydown_procA;
     cls.hInstance = GetModuleHandleA(0);
     cls.lpszClassName = "wmime_keydown_class";
-    if (!RegisterClassA(&cls)) assert(0);
+    register_class(&cls);
 }
 
 static void test_wmime_keydown_message(void)
@@ -10817,7 +10822,7 @@ static LRESULT WINAPI HotkeyMsgCheckProcA(HWND hwnd, UINT message, WPARAM wParam
     return ret;
 }
 
-static BOOL RegisterWindowClasses(void)
+static void register_classes(void)
 {
     WNDCLASSA cls;
     WNDCLASSW clsW;
@@ -10832,39 +10837,39 @@ static BOOL RegisterWindowClasses(void)
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "TestWindowClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = HotkeyMsgCheckProcA;
     cls.lpszClassName = "HotkeyWindowClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = ShowWindowProcA;
     cls.lpszClassName = "ShowWindowClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = PopupMsgCheckProcA;
     cls.lpszClassName = "TestPopupClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = ParentMsgCheckProcA;
     cls.lpszClassName = "TestParentClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = StopQuitMsgCheckProcA;
     cls.lpszClassName = "StopQuitClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = DefWindowProcA;
     cls.lpszClassName = "SimpleWindowClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = PaintLoopProcA;
     cls.lpszClassName = "PaintLoopWindowClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.style = CS_NOCLOSE;
     cls.lpszClassName = "NoCloseWindowClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     ok(GetClassInfoA(0, "#32770", &cls), "GetClassInfo failed\n");
     cls.style = 0;
@@ -10872,27 +10877,27 @@ static BOOL RegisterWindowClasses(void)
     cls.hbrBackground = 0;
     cls.lpfnWndProc = TestDlgProcA;
     cls.lpszClassName = "TestDialogClass";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = DefWindowProcA;
     cls.style = CS_PARENTDC;
     cls.lpszClassName = "SimpleWindowClassWithParentDC";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = DefWindowProcA;
     cls.style = CS_HREDRAW;
     cls.lpszClassName = "SimpleWindowClassWithHRedraw";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = DefWindowProcA;
     cls.style = CS_VREDRAW;
     cls.lpszClassName = "SimpleWindowClassWithVRedraw";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     cls.lpfnWndProc = DefWindowProcA;
     cls.style = CS_HREDRAW | CS_VREDRAW;
     cls.lpszClassName = "SimpleWindowClassWithHVRedraw";
-    if(!RegisterClassA(&cls)) return FALSE;
+    register_class(&cls);
 
     clsW.style = 0;
     clsW.lpfnWndProc = MsgCheckProcW;
@@ -10905,8 +10910,6 @@ static BOOL RegisterWindowClasses(void)
     clsW.lpszMenuName = NULL;
     clsW.lpszClassName = testWindowClassW;
     RegisterClassW(&clsW);  /* ignore error, this fails on Win9x */
-
-    return TRUE;
 }
 
 static BOOL is_our_logged_class(HWND hwnd)
@@ -12816,7 +12819,7 @@ static void subclass_edit(void)
     cls.lpfnWndProc = edit_hook_proc;
     cls.lpszClassName = "my_edit_class";
     UnregisterClassA(cls.lpszClassName, cls.hInstance);
-    if (!RegisterClassA(&cls)) assert(0);
+    register_class(&cls);
 }
 
 static void test_edit_messages(void)
@@ -15143,7 +15146,7 @@ static void test_dialog_messages(void)
     cls.hInstance = GetModuleHandleA(NULL);
     /* need a cast since a dlgproc is used as a wndproc */
     cls.lpfnWndProc = (WNDPROC)test_dlg_proc;
-    if (!RegisterClassA(&cls)) assert(0);
+    register_class(&cls);
 
     SetFocus(0);
     flush_sequence();
@@ -15183,7 +15186,7 @@ static void test_dialog_messages(void)
 
     UnregisterClassA( cls.lpszClassName, cls.hInstance );
     cls.lpfnWndProc = test_dlg_proc4;
-    ok( RegisterClassA(&cls), "failed to register class again\n" );
+    register_class(&cls);
     hdlg = CreateDialogParamA(0, "FOCUS_TEST_DIALOG_4", 0, test_dlg_proc3, 0);
     ok(IsWindow(hdlg), "CreateDialogParam failed\n");
     ok_sequence(WmCreateDialogParamSeq_4, "CreateDialogParam_4", TRUE);
@@ -15296,7 +15299,7 @@ static void test_EndDialog(void)
     cls.lpszClassName = "MyDialogClass";
     cls.hInstance = GetModuleHandleA(NULL);
     cls.lpfnWndProc = (WNDPROC)test_dlg_proc;
-    if (!RegisterClassA(&cls)) assert(0);
+    register_class(&cls);
 
     flush_sequence();
     SetForegroundWindow(hother);
@@ -16641,7 +16644,7 @@ static void test_menu_messages(void)
     cls.lpszMenuName = NULL;
     cls.lpszClassName = "TestMenuClass";
     UnregisterClassA(cls.lpszClassName, cls.hInstance);
-    if (!RegisterClassA(&cls)) assert(0);
+    register_class(&cls);
 
     SetLastError(0xdeadbeef);
     hwnd = CreateWindowExA(0, "TestMenuClass", NULL, WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -17112,8 +17115,7 @@ static void test_desktop_winproc(void)
     cls.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
     cls.hbrBackground = GetStockObject(WHITE_BRUSH);
     cls.lpszClassName = "TestDesktopClass";
-    ret = !!RegisterClassA(&cls);
-    ok(ret, "Failed to register class.\n");
+    register_class(&cls);
 
     hwnd = CreateWindowExA(0, cls.lpszClassName, "test_desktop_wndproc",
             WS_VISIBLE | WS_CAPTION | WS_OVERLAPPEDWINDOW, 0, 0, 500, 100, 0, 0, 0, NULL);
@@ -17601,7 +17603,7 @@ static void do_wait_idle_child( int arg )
     cls.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     cls.hCursor       = LoadCursorA(0, (LPCSTR)IDC_ARROW);
     cls.lpszClassName = "TestClass";
-    RegisterClassA( &cls );
+    register_class(&cls);
 
     PeekMessageA( &msg, 0, 0, 0, PM_NOREMOVE );  /* create the msg queue */
 
@@ -17758,7 +17760,7 @@ static DWORD CALLBACK wait_idle_thread( void *arg )
     cls.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     cls.hCursor       = LoadCursorA(0, (LPCSTR)IDC_ARROW);
     cls.lpszClassName = "TestClass";
-    RegisterClassA( &cls );
+    register_class(&cls);
 
     hwnd = CreateWindowExA(0, "TestClass", NULL, WS_POPUP, 0, 0, 10, 10, 0, 0, 0, NULL);
     while (GetMessageA( &msg, 0, 0, 0 )) DispatchMessageA( &msg );
@@ -19306,7 +19308,7 @@ static void test_InSendMessage(void)
     cls.lpfnWndProc = insendmessage_wnd_proc;
     cls.hInstance = GetModuleHandleA(NULL);
     cls.lpszClassName = "InSendMessage_test";
-    RegisterClassA(&cls);
+    register_class(&cls);
 
     win = CreateWindowA( "InSendMessage_test", NULL, 0, 0, 0, 0, 0, NULL, 0, NULL, 0 );
     ok( win != NULL, "CreateWindow failed: %ld\n", GetLastError() );
@@ -19598,7 +19600,7 @@ START_TEST(msg)
     init_procs();
     ImmDisableIME(0);
 
-    if (!RegisterWindowClasses()) assert(0);
+    register_classes();
 
     if (pSetWinEventHook)
     {
