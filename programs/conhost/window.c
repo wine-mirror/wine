@@ -932,6 +932,8 @@ void update_console_font( struct console *console, const WCHAR *face_name, size_
 {
     LOGFONTW lf;
 
+    if (!console->window) return;
+
     fill_logfont( &lf, face_name, face_name_size, height, weight );
 
     set_console_font( console, &lf );
