@@ -42,7 +42,6 @@
 #define AsyncStatus_Closed 4
 
 #define SPERR_WINRT_INTERNAL_ERROR 0x800455a0
-#define SPERR_WINRT_INCORRECT_FORMAT 0x80131537
 
 #define IHandler_RecognitionResult ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgs
 #define IHandler_RecognitionResultVtbl ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionResultGeneratedEventArgsVtbl
@@ -1044,7 +1043,7 @@ static void test_SpeechSynthesizer(void)
     operation_ss_stream = (void *)0xdeadbeef;
     hr = ISpeechSynthesizer_SynthesizeSsmlToStreamAsync(synthesizer, str, &operation_ss_stream);
     /* Broken on Win 8 + 8.1 */
-    ok(hr == S_OK || broken(hr == SPERR_WINRT_INCORRECT_FORMAT), "ISpeechSynthesizer_SynthesizeSsmlToStreamAsync failed, hr %#lx\n", hr);
+    ok(hr == S_OK || broken(hr == COR_E_FORMAT), "ISpeechSynthesizer_SynthesizeSsmlToStreamAsync failed, hr %#lx\n", hr);
 
     if (hr == S_OK)
     {
