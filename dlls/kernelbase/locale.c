@@ -3924,8 +3924,12 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
                     pos += append_weights( sortid, flags, src, srclen, pos,
                                            case_mask, except, compr_tables, &s, TRUE );
 
-                if (s.primary_pos + s.key_primary.len > val.key_primary.len) goto next;
-                if (memcmp( primary, val.key_primary.buf + s.primary_pos, s.key_primary.len )) goto next;
+                if (s.primary_pos + s.key_primary.len > val.key_primary.len ||
+                    memcmp( primary, val.key_primary.buf + s.primary_pos, s.key_primary.len ))
+                {
+                    len = srclen + 1;
+                    goto next;
+                }
                 s.primary_pos += s.key_primary.len;
                 s.key_primary.len = 0;
             }
