@@ -4754,6 +4754,7 @@ static void test_GetGlyphOutline(void)
     if (GetLastError() != ERROR_CALL_NOT_IMPLEMENTED)
     {
         ok(ret == 0, "GetGlyphOutlineW should return 0 buffer size for space char\n");
+        ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", GetLastError());
         ok(gm.gmBlackBoxX == 1, "Expected 1, got %u\n", gm.gmBlackBoxX);
         ok(gm.gmBlackBoxY == 1, "Expected 1, got %u\n", gm.gmBlackBoxY);
     }
@@ -4789,6 +4790,7 @@ static void test_GetGlyphOutline(void)
                 ok(ret != GDI_ERROR, "%2d:GetGlyphOutlineW should succeed, got %d\n", fmt[i], ret);
             else
                 ok(ret == 0, "%2d:GetGlyphOutlineW should return 0, got %d\n", fmt[i], ret);
+            ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", GetLastError());
             ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
             ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxY);
         }
@@ -4802,6 +4804,7 @@ static void test_GetGlyphOutline(void)
                 ok(ret != GDI_ERROR, "%2d:GetGlyphOutlineW should succeed, got %d\n", fmt[i], ret);
             else
                 ok(ret == 0, "%2d:GetGlyphOutlineW should return 0, got %d\n", fmt[i], ret);
+            ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", GetLastError());
             ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
             ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxY);
         }
@@ -4815,6 +4818,7 @@ static void test_GetGlyphOutline(void)
                 ok(ret != GDI_ERROR, "%2d:GetGlyphOutlineW should succeed, got %d\n", fmt[i], ret);
             else
                 ok(ret == 0, "%2d:GetGlyphOutlineW should return 0, got %d\n", fmt[i], ret);
+            ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %lu\n", GetLastError());
             ok(gm.gmBlackBoxX == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxX);
             ok(gm.gmBlackBoxY == 1, "%2d:expected 1, got %u\n", fmt[i], gm.gmBlackBoxY);
         }
