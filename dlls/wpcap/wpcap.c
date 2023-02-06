@@ -1424,6 +1424,7 @@ int CDECL pcap_wsockinit( void )
 }
 
 #define PCAP_CHAR_ENC_LOCAL 0
+#define PCAP_CHAR_ENC_UTF_8 1
 
 int CDECL pcap_init( unsigned int opt, char *errbuf )
 {
@@ -1442,10 +1443,19 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
     switch (reason)
     {
     case DLL_PROCESS_ATTACH:
+    {
         DisableThreadLibraryCalls( hinst );
-        if (__wine_init_unix_call())
-            ERR( "No pcap support, expect problems\n" );
+        if (__wine_init_unix_call()) ERR( "No pcap support, expect problems\n" );
+        else
+        {
+            char errbuf[PCAP_ERRBUF_SIZE];
+            struct init_params params = { PCAP_CHAR_ENC_UTF_8, errbuf };
+
+            if (PCAP_CALL( init, &params ) == PCAP_ERROR)
+                WARN( "failed to enable UTF-8 encoding %s\n", debugstr_a(errbuf) );
+        }
         break;
+    }
     case DLL_PROCESS_DETACH:
         if (reserved) break;
         free_datalinks();
