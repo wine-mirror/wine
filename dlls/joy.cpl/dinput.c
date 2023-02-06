@@ -564,6 +564,7 @@ LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam
         hdc = BeginPaint( hwnd, &paint );
 
         GetClientRect( hwnd, &rect );
+        FillRect( hdc, &rect, (HBRUSH)(COLOR_WINDOW + 1) );
 
         size = (rect.right - rect.left - space) / step;
         offs = (rect.right - rect.left - step * size - space) / 2;
@@ -762,6 +763,8 @@ INT_PTR CALLBACK test_di_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
 
             SendDlgItemMessageW( hwnd, IDC_DI_EFFECTS, LB_SETCURSEL, 0, 0 );
             handle_di_effects_change( hwnd );
+
+            update_device_views( hwnd );
             break;
 
         case MAKEWPARAM( IDC_DI_EFFECTS, LBN_SELCHANGE ):
