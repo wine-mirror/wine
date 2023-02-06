@@ -103,14 +103,18 @@ static void* pdb_jg_read_stream(struct pdb_reader* reader, DWORD stream_nr)
                        reader->u.jg.toc->streams[stream_nr].size);
 }
 
-static void pdb_jg_init(struct pdb_reader* reader)
+static BOOL pdb_jg_init(struct pdb_reader* reader)
 {
     reader->u.jg.header = PRD(0, sizeof(struct PDB_JG_HEADER));
+    if (!reader->u.jg.header) return FALSE;
     reader->read_stream = pdb_jg_read_stream;
     reader->u.jg.toc = pdb_jg_read(reader->u.jg.header,
                                    reader->u.jg.header->toc_block,
                                    reader->u.jg.header->toc.size);
     memset(reader->stream_used, 0, sizeof(reader->stream_used));
+    reader->u.jg.root = reader->read_stream(reader, 1);
+    if (!reader->u.jg.root) return FALSE;
+    return TRUE;
 }
 
 static DWORD    pdb_get_num_streams(const struct pdb_reader* reader)
@@ -1089,91 +1093,77 @@ static void pdb_dump_sections(struct pdb_reader* reader, unsigned stream_idx)
 
 static const char       pdb2[] = "Microsoft C/C++ program database 2.00";
 
-static void pdb_jg_dump(void)
+static void pdb_jg_dump_header_root(struct pdb_reader* reader)
 {
-    struct pdb_reader   reader;
+    UINT *pdw, *ok_bits;
+    UINT i, numok, count;
 
-    /*
-     * Read in TOC and well-known streams
-     */
-    pdb_jg_init(&reader);
+    if (!globals_dump_sect("PDB")) return;
+
     printf("Header (JG):\n"
            "\tident:             %.*s\n"
            "\tsignature:         %08x\n"
            "\tblock_size:        %08x\n"
            "\tfree_list_block:   %04x\n"
            "\ttotal_alloc:       %04x\n",
-           (int)sizeof(pdb2) - 1, reader.u.jg.header->ident,
-           reader.u.jg.header->signature,
-           reader.u.jg.header->block_size,
-           reader.u.jg.header->free_list_block,
-           reader.u.jg.header->total_alloc);
+           (int)sizeof(pdb2) - 1, reader->u.jg.header->ident,
+           reader->u.jg.header->signature,
+           reader->u.jg.header->block_size,
+           reader->u.jg.header->free_list_block,
+           reader->u.jg.header->total_alloc);
 
-    reader.u.jg.root = reader.read_stream(&reader, 1);
-    if (reader.u.jg.root)
+    printf("Root:\n"
+           "\tVersion:       %u\n"
+           "\tTimeDateStamp: %08x\n"
+           "\tAge:           %08x\n"
+           "\tnames:         %d\n",
+           reader->u.jg.root->Version,
+           reader->u.jg.root->TimeDateStamp,
+           reader->u.jg.root->Age,
+           (unsigned)reader->u.jg.root->cbNames);
+
+    pdw = (UINT *)(reader->u.jg.root->names + reader->u.jg.root->cbNames);
+    numok = *pdw++;
+    count = *pdw++;
+    printf("\tStreams directory:\n"
+           "\t\tok:        %08x\n"
+           "\t\tcount:     %08x\n"
+           "\t\ttable:\n",
+           numok, count);
+
+    /* bitfield: first dword is len (in dword), then data */
+    ok_bits = pdw;
+    pdw += *ok_bits++ + 1;
+    if (*pdw++ != 0)
     {
-        UINT *pdw, *ok_bits;
-        UINT i, numok, count;
-
-        printf("Root:\n"
-               "\tVersion:       %u\n"
-               "\tTimeDateStamp: %08x\n"
-               "\tAge:           %08x\n"
-               "\tnames:         %d\n",
-               reader.u.jg.root->Version,
-               reader.u.jg.root->TimeDateStamp,
-               reader.u.jg.root->Age,
-               (unsigned)reader.u.jg.root->cbNames);
-
-        pdw = (UINT *)(reader.u.jg.root->names + reader.u.jg.root->cbNames);
-        numok = *pdw++;
-        count = *pdw++;
-        printf("\tStreams directory:\n"
-               "\t\tok:        %08x\n"
-               "\t\tcount:     %08x\n"
-               "\t\ttable:\n",
-               numok, count);
-
-        /* bitfield: first dword is len (in dword), then data */
-        ok_bits = pdw;
-        pdw += *ok_bits++ + 1;
-        if (*pdw++ != 0)
-        {
-            printf("unexpected value\n");
-            return;
-        }
-
-        for (i = 0; i < count; i++)
-        {
-            if (ok_bits[i / 32] & (1 << (i % 32)))
-            {
-                UINT string_idx, stream_idx;
-                string_idx = *pdw++;
-                stream_idx = *pdw++;
-                printf("\t\t\t%2d) %-20s => %x\n", i, &reader.u.jg.root->names[string_idx], stream_idx);
-                numok--;
-            }
-        }
-        if (numok) printf(">>> unmatched present field with found\n");
-
-        /* Check for unknown versions */
-        switch (reader.u.jg.root->Version)
-        {
-        case 19950623:      /* VC 4.0 */
-        case 19950814:
-        case 19960307:      /* VC 5.0 */
-        case 19970604:      /* VC 6.0 */
-            break;
-        default:
-            printf("-Unknown root block version %d\n", reader.u.jg.root->Version);
-        }
-        pdb_dump_types(&reader, 2, "TPI");
-        pdb_dump_types(&reader, 4, "IPI");
-        pdb_dump_symbols(&reader);
+        printf("unexpected value\n");
+        return;
     }
-    else printf("-Unable to get root\n");
 
-    pdb_exit(&reader);
+    for (i = 0; i < count; i++)
+    {
+        if (ok_bits[i / 32] & (1 << (i % 32)))
+        {
+            UINT string_idx, stream_idx;
+            string_idx = *pdw++;
+            stream_idx = *pdw++;
+            printf("\t\t\t%2d) %-20s => %x\n", i, &reader->u.jg.root->names[string_idx], stream_idx);
+            numok--;
+        }
+    }
+    if (numok) printf(">>> unmatched present field with found\n");
+
+    /* Check for unknown versions */
+    switch (reader->u.jg.root->Version)
+    {
+    case 19950623:      /* VC 4.0 */
+    case 19950814:
+    case 19960307:      /* VC 5.0 */
+    case 19970604:      /* VC 6.0 */
+        break;
+    default:
+        printf("-Unknown root block version %d\n", reader->u.jg.root->Version);
+    }
 }
 
 static void* pdb_ds_read(const struct PDB_DS_HEADER* header, const UINT *block_list, int size)
@@ -1221,16 +1211,23 @@ static BOOL pdb_ds_init(struct pdb_reader* reader)
                                    (const UINT *)((const char*)reader->u.ds.header + reader->u.ds.header->toc_block * reader->u.ds.header->block_size),
                                    reader->u.ds.header->toc_size);
     memset(reader->stream_used, 0, sizeof(reader->stream_used));
+    reader->u.ds.root = reader->read_stream(reader, 1);
+    if (!reader->u.ds.root) return FALSE;
     return TRUE;
 }
 
 static const char       pdb7[] = "Microsoft C/C++ MSF 7.00";
 
-static void pdb_ds_dump(void)
+static void pdb_ds_dump_header_root(struct pdb_reader* reader)
 {
-    struct pdb_reader   reader;
+    unsigned int i, j, ofs;
+    const UINT *block_list;
+    UINT *pdw, *ok_bits;
+    UINT numok, count;
+    unsigned strmsize;
 
-    pdb_ds_init(&reader);
+    if (!globals_dump_sect("PDB")) return;
+    strmsize = pdb_get_stream_size(reader, 1);
     printf("Header (DS)\n"
            "\tsignature:        %.*s\n"
            "\tblock_size:       %08x\n"
@@ -1239,85 +1236,98 @@ static void pdb_ds_dump(void)
            "\ttoc_size:         %08x\n"
            "\tunknown2:         %08x\n"
            "\ttoc_block:        %08x\n",
-           (int)sizeof(pdb7) - 1, reader.u.ds.header->signature,
-           reader.u.ds.header->block_size,
-           reader.u.ds.header->free_list_block,
-           reader.u.ds.header->num_blocks,
-           reader.u.ds.header->toc_size,
-           reader.u.ds.header->unknown2,
-           reader.u.ds.header->toc_block);
+           (int)sizeof(pdb7) - 1, reader->u.ds.header->signature,
+           reader->u.ds.header->block_size,
+           reader->u.ds.header->free_list_block,
+           reader->u.ds.header->num_blocks,
+           reader->u.ds.header->toc_size,
+           reader->u.ds.header->unknown2,
+           reader->u.ds.header->toc_block);
 
-    /* streams with static indexes:
-     *  0: JG says old toc blocks
-     *  1: root structure
-     *  2: types
-     *  3: modules
-     *  4: types (second stream)
-     * other known streams:
-     * - string table: its index is in the stream table from ROOT object under "/names"
-     * - type hash table: its index is in the types header (2 and 4)
-     * - global and public streams: from symbol stream header
-     * those streams get their indexes out of the PDB_STREAM_INDEXES object
-     * - FPO data
-     * - sections
-     * - extended FPO data
-     */
-    mark_stream_been_read(&reader, 0); /* mark stream #0 as read */
-    reader.u.ds.root = reader.read_stream(&reader, 1);
-    if (reader.u.ds.root)
+    block_list = reader->u.ds.toc->stream_size + reader->u.ds.toc->num_streams;
+    printf("\t\tnum_streams:    %u\n", reader->u.ds.toc->num_streams);
+    for (ofs = i = 0; i < reader->u.ds.toc->num_streams; i++)
     {
-        UINT *pdw, *ok_bits;
-        UINT i, numok, count;
-
-        printf("Root:\n"
-               "\tVersion:              %u\n"
-               "\tTimeDateStamp:        %08x\n"
-               "\tAge:                  %08x\n"
-               "\tguid                  %s\n"
-               "\tcbNames:              %08x\n",
-               reader.u.ds.root->Version,
-               reader.u.ds.root->TimeDateStamp,
-               reader.u.ds.root->Age,
-               get_guid_str(&reader.u.ds.root->guid),
-               reader.u.ds.root->cbNames);
-        pdw = (UINT *)(reader.u.ds.root->names + reader.u.ds.root->cbNames);
-        numok = *pdw++;
-        count = *pdw++;
-        printf("\tStreams directory:\n"
-               "\t\tok:        %08x\n"
-               "\t\tcount:     %08x\n"
-               "\t\ttable:\n",
-               numok, count);
-
-        /* bitfield: first dword is len (in dword), then data */
-        ok_bits = pdw;
-        pdw += *ok_bits++ + 1;
-        if (*pdw++ != 0)
+        unsigned int nblk = (reader->u.ds.toc->stream_size[i] + reader->u.ds.header->block_size - 1) / reader->u.ds.header->block_size;
+        printf("\t\tstream[%#x]:\tsize: %u\n", i, reader->u.ds.toc->stream_size[i]);
+        if (nblk)
         {
-            printf("unexpected value\n");
-            return;
-        }
-
-        for (i = 0; i < count; i++)
-        {
-            if (ok_bits[i / 32] & (1 << (i % 32)))
+            for (j = 0; j < nblk; j++)
             {
-                UINT string_idx, stream_idx;
-                string_idx = *pdw++;
-                stream_idx = *pdw++;
-                printf("\t\t\t%2d) %-20s => %x\n", i, &reader.u.ds.root->names[string_idx], stream_idx);
-                numok--;
+                if (j % 16 == 0) printf("\t\t\t");
+                printf("%4x ", block_list[ofs + j]);
+                if (j % 16 == 15 || (j + 1 == nblk)) printf("\n");
             }
+            ofs += nblk;
         }
-        if (numok) printf(">>> unmatched present field with found\n");
-
-        pdb_dump_types(&reader, 2, "TPI");
-        pdb_dump_types(&reader, 4, "IPI");
-        pdb_dump_symbols(&reader);
     }
-    else printf("-Unable to get root\n");
 
-    pdb_exit(&reader);
+    printf("Root:\n"
+           "\tVersion:              %u\n"
+           "\tTimeDateStamp:        %08x\n"
+           "\tAge:                  %08x\n"
+           "\tguid                  %s\n"
+           "\tcbNames:              %08x\n",
+           reader->u.ds.root->Version,
+           reader->u.ds.root->TimeDateStamp,
+           reader->u.ds.root->Age,
+           get_guid_str(&reader->u.ds.root->guid),
+           reader->u.ds.root->cbNames);
+    pdw = (UINT *)(reader->u.ds.root->names + reader->u.ds.root->cbNames);
+    numok = *pdw++;
+    count = *pdw++;
+    printf("\tStreams directory:\n"
+           "\t\tok:        %08x\n"
+           "\t\tcount:     %08x\n"
+           "\t\ttable:\n",
+           numok, count);
+
+    /* bitfield: first dword is len (in dword), then data */
+    ok_bits = pdw;
+    pdw += *ok_bits++ + 1;
+    if (*pdw++ != 0)
+    {
+        printf("unexpected value\n");
+        return;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        if (ok_bits[i / 32] & (1 << (i % 32)))
+        {
+            UINT string_idx, stream_idx;
+            string_idx = *pdw++;
+            stream_idx = *pdw++;
+            printf("\t\t\t%2d) %-20s => %x\n", i, &reader->u.ds.root->names[string_idx], stream_idx);
+            numok--;
+        }
+    }
+    if (numok) printf(">>> unmatched present field with found\n");
+    if (*pdw++ != 0)
+    {
+        printf("unexpected value\n");
+        return;
+    }
+
+    if (pdw + 1 <= (UINT*)((char*)reader->u.ds.root + strmsize))
+    {
+        /* extra information (version reference and features) */
+        printf("\tVersion and features\n");
+        while (pdw + 1 <= (UINT*)((char*)reader->u.ds.root + strmsize))
+        {
+            switch (*pdw)
+            {
+            /* version reference */
+            case 20091201:              printf("\t\tVC110\n"); break;
+            case 20140508:              printf("\t\tVC140\n"); break;
+            /* features */
+            case 0x4D544F4E /* NOTM */: printf("\t\tNo type merge\n"); break;
+            case 0x494E494D /* MINI */: printf("\t\tMinimal debug info\n"); break;
+            default:                    printf("\t\tUnknown value %x\n", *pdw);
+            }
+            pdw++;
+        }
+    }
 }
 
 enum FileSig get_kind_pdb(void)
@@ -1335,20 +1345,39 @@ enum FileSig get_kind_pdb(void)
 
 void pdb_dump(void)
 {
-    const char* head;
+    const BYTE* head;
+    const char** saved_dumpsect = globals.dumpsect;
+    static const char* default_dumpsect[] = {"DBI", "TPI", "IPI", NULL};
+    struct pdb_reader reader;
 
-/*    init_types(); */
-    head = PRD(0, sizeof(pdb2) - 1);
-    if (head && !memcmp(head, pdb2, sizeof(pdb2) - 1))
+    if (!globals.dumpsect) globals.dumpsect = default_dumpsect;
+
+    if ((head = PRD(0, sizeof(pdb2) - 1)) && !memcmp(head, pdb2, sizeof(pdb2) - 1))
     {
-        pdb_jg_dump();
-        return;
+        if (!pdb_jg_init(&reader))
+        {
+            printf("Unable to get header information\n");
+            return;
+        }
+
+        pdb_jg_dump_header_root(&reader);
     }
-    head = PRD(0, sizeof(pdb7) - 1);
-    if (head && !memcmp(head, pdb7, sizeof(pdb7) - 1))
+    else if ((head = PRD(0, sizeof(pdb7) - 1)) && !memcmp(head, pdb7, sizeof(pdb7) - 1))
     {
-        pdb_ds_dump();
-        return;
+        if (!pdb_ds_init(&reader))
+        {
+            printf("Unable to get header information\n");
+            return;
+        }
+        pdb_ds_dump_header_root(&reader);
     }
-    printf("Unrecognized header %s\n", head);
+    mark_stream_been_read(&reader, 0); /* mark stream #0 (old TOC) as read */
+
+    pdb_dump_types(&reader, 2, "TPI");
+    pdb_dump_types(&reader, 4, "IPI");
+    pdb_dump_symbols(&reader);
+
+    pdb_exit(&reader);
+
+    globals.dumpsect = saved_dumpsect;
 }
