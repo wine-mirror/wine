@@ -75,6 +75,11 @@ struct breakloop_params
     UINT64 handle;
 };
 
+struct bufsize_params
+{
+    UINT64 handle;
+};
+
 struct can_set_rfmon_params
 {
     UINT64 handle;
@@ -322,6 +327,7 @@ enum pcap_funcs
 {
     unix_activate,
     unix_breakloop,
+    unix_bufsize,
     unix_can_set_rfmon,
     unix_close,
     unix_compile,

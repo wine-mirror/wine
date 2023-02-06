@@ -55,6 +55,12 @@ static NTSTATUS wrap_breakloop( void *args )
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wrap_bufsize( void *args )
+{
+    const struct bufsize_params *params = args;
+    return pcap_bufsize( (pcap_t *)(ULONG_PTR)params->handle );
+}
+
 static NTSTATUS wrap_can_set_rfmon( void *args )
 {
     const struct can_set_rfmon_params *params = args;
@@ -436,6 +442,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     wrap_activate,
     wrap_breakloop,
+    wrap_bufsize,
     wrap_can_set_rfmon,
     wrap_close,
     wrap_compile,

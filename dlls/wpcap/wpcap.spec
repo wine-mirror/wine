@@ -4,7 +4,7 @@
 @ stub bpf_validate
 @ stub eproto_db
 @ cdecl pcap_activate(ptr)
-@ stub pcap_bufsize
+@ cdecl pcap_bufsize(ptr)
 @ cdecl pcap_breakloop(ptr)
 @ cdecl pcap_can_set_rfmon(ptr)
 @ cdecl pcap_close(ptr)

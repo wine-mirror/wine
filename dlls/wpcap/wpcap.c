@@ -108,6 +108,17 @@ void CDECL pcap_breakloop( struct pcap *pcap )
     PCAP_CALL( breakloop, &params );
 }
 
+int CDECL pcap_bufsize( struct pcap *pcap )
+{
+    struct bufsize_params params;
+
+    TRACE( "%p\n", pcap );
+
+    if (!pcap) return 0;
+    params.handle = pcap->handle;
+    return PCAP_CALL( bufsize, &params );
+}
+
 int CDECL pcap_can_set_rfmon( struct pcap *pcap )
 {
     struct can_set_rfmon_params params;
