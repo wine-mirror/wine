@@ -1425,6 +1425,7 @@ int CDECL pcap_wsockinit( void )
 
 #define PCAP_CHAR_ENC_LOCAL 0
 #define PCAP_CHAR_ENC_UTF_8 1
+#define PCAP_MMAP_32BIT     2
 
 int CDECL pcap_init( unsigned int opt, char *errbuf )
 {
@@ -1450,9 +1451,16 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
         {
             char errbuf[PCAP_ERRBUF_SIZE];
             struct init_params params = { PCAP_CHAR_ENC_UTF_8, errbuf };
+            BOOL is_wow64;
 
             if (PCAP_CALL( init, &params ) == PCAP_ERROR)
                 WARN( "failed to enable UTF-8 encoding %s\n", debugstr_a(errbuf) );
+            if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
+            {
+                params.opt = PCAP_MMAP_32BIT;
+                if (PCAP_CALL( init, &params ) == PCAP_ERROR)
+                    WARN( "failed to enable 32-bit mmap() %s\n", debugstr_a(errbuf) );
+            }
         }
         break;
     }
