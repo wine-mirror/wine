@@ -1767,57 +1767,47 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
     return !status;
 }
 
-static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block *block, SIZE_T block_size,
+static NTSTATUS heap_resize_large( struct heap *heap, ULONG flags, struct block *block, SIZE_T block_size,
                                    SIZE_T size, SIZE_T *old_size, void **ret )
 {
+    ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
+    SIZE_T old_block_size = large->block_size;
+    *old_size = large->data_size;
+
+    if (block_size < HEAP_MIN_LARGE_BLOCK_SIZE / 4) return STATUS_NO_MEMORY;  /* shrinking large block to small block */
+    if (old_block_size < block_size) return STATUS_NO_MEMORY;
+
+    /* FIXME: we could remap zero-pages instead */
+    valgrind_notify_resize( block + 1, *old_size, size );
+    initialize_block( block, *old_size, size, flags );
+
+    large->data_size = size;
+    valgrind_make_noaccess( (char *)block + sizeof(*block) + large->data_size,
+                            old_block_size - sizeof(*block) - large->data_size );
+
+    *ret = block + 1;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block *block, SIZE_T block_size,
+                                   SIZE_T size, SIZE_T old_block_size, SIZE_T *old_size, void **ret )
+{
     SUBHEAP *subheap = block_get_subheap( heap, block );
-    SIZE_T old_bin, old_block_size;
-    struct entry *entry;
     struct block *next;
-
-    if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
-    {
-        ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
-        old_block_size = large->block_size;
-        *old_size = large->data_size;
-
-        if (block_size < HEAP_MIN_LARGE_BLOCK_SIZE / 4) return STATUS_NO_MEMORY;  /* shrinking large block to small block */
-        if (old_block_size < block_size) return STATUS_NO_MEMORY;
-
-        /* FIXME: we could remap zero-pages instead */
-        valgrind_notify_resize( block + 1, *old_size, size );
-        initialize_block( block, *old_size, size, flags );
-
-        large->data_size = size;
-        valgrind_make_noaccess( (char *)block + sizeof(*block) + large->data_size,
-                                old_block_size - sizeof(*block) - large->data_size );
-
-        *ret = block + 1;
-        return STATUS_SUCCESS;
-    }
-
-    old_block_size = block_get_size( block );
-    *old_size = old_block_size - block_get_overhead( block );
-    old_bin = BLOCK_SIZE_BIN( old_block_size );
-
-    if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE) return STATUS_NO_MEMORY;  /* growing small block to large block */
-
-    heap_lock( heap, flags );
 
     if (block_size > old_block_size)
     {
-        if (!(next = next_block( subheap, block )) || !(block_get_flags( next ) & BLOCK_FLAG_FREE) ||
-            block_size > old_block_size + block_get_size( next ) || !subheap_commit( heap, subheap, block, block_size ))
-        {
-            heap_unlock( heap, flags );
-            return STATUS_NO_MEMORY;
-        }
+        /* need to grow block, make sure it's followed by large enough free block */
+        if (!(next = next_block( subheap, block ))) return STATUS_NO_MEMORY;
+        if (!(block_get_flags( next ) & BLOCK_FLAG_FREE)) return STATUS_NO_MEMORY;
+        if (block_size > old_block_size + block_get_size( next )) return STATUS_NO_MEMORY;
+        if (!subheap_commit( heap, subheap, block, block_size )) return STATUS_NO_MEMORY;
     }
 
     if ((next = next_block( subheap, block )) && (block_get_flags( next ) & BLOCK_FLAG_FREE))
     {
         /* merge with next block if it is free */
-        entry = (struct entry *)next;
+        struct entry *entry = (struct entry *)next;
         list_remove( &entry->entry );
         old_block_size += block_get_size( next );
     }
@@ -1836,9 +1826,30 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block 
 
     if ((next = next_block( subheap, block ))) block_set_flags( next, BLOCK_FLAG_PREV_FREE, 0 );
 
+    *ret = block + 1;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS heap_resize_in_place( struct heap *heap, ULONG flags, struct block *block, SIZE_T block_size,
+                                      SIZE_T size, SIZE_T *old_size, void **ret )
+{
+    SIZE_T old_bin, old_block_size;
+    NTSTATUS status;
+
+    if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
+        return heap_resize_large( heap, flags, block, block_size, size, old_size, ret );
+
+    old_block_size = block_get_size( block );
+    *old_size = old_block_size - block_get_overhead( block );
+    old_bin = BLOCK_SIZE_BIN( old_block_size );
+
+    if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE) return STATUS_NO_MEMORY;  /* growing small block to large block */
+
+    heap_lock( heap, flags );
+    status = heap_resize_block( heap, flags, block, block_size, size, old_block_size, old_size, ret );
     heap_unlock( heap, flags );
 
-    if (heap->bins)
+    if (!status && heap->bins)
     {
         SIZE_T new_bin = BLOCK_SIZE_BIN( block_size );
         InterlockedIncrement( &heap->bins[old_bin].count_freed );
@@ -1846,8 +1857,7 @@ static NTSTATUS heap_resize_block( struct heap *heap, ULONG flags, struct block 
         if (!ReadNoFence( &heap->bins[new_bin].enabled )) bin_try_enable( heap, &heap->bins[new_bin] );
     }
 
-    *ret = block + 1;
-    return STATUS_SUCCESS;
+    return status;
 }
 
 /***********************************************************************
@@ -1870,8 +1880,8 @@ void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T si
         status = STATUS_NO_MEMORY;
     else if (!(block = unsafe_block_from_ptr( heap, heap_flags, ptr )))
         status = STATUS_INVALID_PARAMETER;
-    else if ((status = heap_resize_block( heap, heap_flags, block, block_size, size,
-                                          &old_size, &ret )))
+    else if ((status = heap_resize_in_place( heap, heap_flags, block, block_size, size,
+                                        &old_size, &ret )))
     {
         if (flags & HEAP_REALLOC_IN_PLACE_ONLY)
             status = STATUS_NO_MEMORY;
