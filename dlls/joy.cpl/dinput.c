@@ -236,7 +236,7 @@ static BOOL CALLBACK enum_devices( const DIDEVICEINSTANCEW *instance, void *cont
     if (!(entry = calloc( 1, sizeof(*entry) ))) return DIENUM_STOP;
 
     IDirectInput8_CreateDevice( dinput, &instance->guidInstance, &entry->device, NULL );
-    IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick );
+    IDirectInputDevice8_SetDataFormat( entry->device, &c_dfDIJoystick2 );
     IDirectInputDevice8_GetCapabilities( entry->device, &caps );
 
     list_add_tail( &devices, &entry->entry );
@@ -266,7 +266,7 @@ static DWORD WINAPI input_thread( void *param )
     while (WaitForMultipleObjects( 2, events, FALSE, INFINITE ) != 0)
     {
         IDirectInputEffect *effect;
-        DIJOYSTATE state = {0};
+        DIJOYSTATE2 state = {0};
         unsigned int i;
 
         SendMessageW( dialog_hwnd, WM_USER, 0, 0 );
@@ -437,7 +437,7 @@ LRESULT CALLBACK test_di_axes_window_proc( HWND hwnd, UINT msg, WPARAM wparam, L
     {
         DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
         IDirectInputDevice8W *device;
-        DIJOYSTATE state = {0};
+        DIJOYSTATE2 state = {0};
         RECT rect, tmp_rect;
         PAINTSTRUCT paint;
         HDC hdc;
@@ -503,7 +503,7 @@ LRESULT CALLBACK test_di_povs_window_proc( HWND hwnd, UINT msg, WPARAM wparam, L
     {
         DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
         IDirectInputDevice8W *device;
-        DIJOYSTATE state = {0};
+        DIJOYSTATE2 state = {0};
         PAINTSTRUCT paint;
         RECT rect;
         HDC hdc;
@@ -547,7 +547,7 @@ LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam
         DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
         UINT i, j, offs, size, step, space = 2;
         IDirectInputDevice8W *device;
-        DIJOYSTATE state = {0};
+        DIJOYSTATE2 state = {0};
         PAINTSTRUCT paint;
         RECT rect;
         HDC hdc;
