@@ -174,6 +174,12 @@ struct get_tstamp_precision_params
     UINT64 handle;
 };
 
+struct init_params
+{
+    int opt;
+    char *errbuf;
+};
+
 struct lib_version_params
 {
     char *version;
@@ -348,6 +354,7 @@ enum pcap_funcs
     unix_get_tstamp_precision,
     unix_geterr,
     unix_getnonblock,
+    unix_init,
     unix_lib_version,
     unix_list_datalinks,
     unix_list_tstamp_types,

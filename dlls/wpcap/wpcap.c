@@ -1399,6 +1399,20 @@ int CDECL pcap_wsockinit( void )
     return 0;
 }
 
+#define PCAP_CHAR_ENC_LOCAL 0
+
+int CDECL pcap_init( unsigned int opt, char *errbuf )
+{
+    struct init_params params;
+
+    TRACE( "%u, %p\n", opt, errbuf );
+    if (opt == PCAP_CHAR_ENC_LOCAL) FIXME( "need to convert to/from local encoding\n" );
+
+    params.opt    = opt;
+    params.errbuf = errbuf;
+    return PCAP_CALL( init, &params );
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     switch (reason)

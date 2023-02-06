@@ -45,7 +45,7 @@
 @ cdecl pcap_getnonblock(ptr ptr)
 @ stub pcap_hopen_offline
 @ stub pcap_hopen_offline_with_tstamp_precision
-@ stub pcap_init
+@ cdecl pcap_init(long ptr)
 @ stub pcap_inject
 @ stub pcap_is_swapped
 @ cdecl pcap_lib_version()

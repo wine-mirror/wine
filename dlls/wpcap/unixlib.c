@@ -230,6 +230,12 @@ static NTSTATUS wrap_getnonblock( void *args )
     return pcap_getnonblock( (pcap_t *)(ULONG_PTR)params->handle, params->errbuf );
 }
 
+static NTSTATUS wrap_init( void *args )
+{
+    const struct init_params *params = args;
+    return pcap_init( params->opt, params->errbuf );
+}
+
 static NTSTATUS wrap_lib_version( void *args )
 {
     const struct lib_version_params *params = args;
@@ -465,6 +471,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wrap_get_tstamp_precision,
     wrap_geterr,
     wrap_getnonblock,
+    wrap_init,
     wrap_lib_version,
     wrap_list_datalinks,
     wrap_list_tstamp_types,
