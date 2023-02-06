@@ -22,6 +22,7 @@
 
 #include <limits.h>
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 #include "windef.h"
@@ -11038,8 +11039,14 @@ static void CALLBACK win_event_proc(HWINEVENTHOOK hevent,
 static const WCHAR wszUnicode[] = {'U','n','i','c','o','d','e',0};
 static const WCHAR wszAnsi[] = {'U',0};
 
+static const GUID iface_guid = {0x66666666};
+static bool got_device_broadcast;
+
 static LRESULT CALLBACK MsgConversionProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    const DEV_BROADCAST_DEVICEINTERFACE_A *ifaceA = (const void *)lParam;
+    const DEV_BROADCAST_DEVICEINTERFACE_W *ifaceW = (const void *)lParam;
+
     switch (uMsg)
     {
     case CB_FINDSTRINGEXACT:
@@ -11048,6 +11055,30 @@ static LRESULT CALLBACK MsgConversionProcW(HWND hwnd, UINT uMsg, WPARAM wParam, 
         if (!lstrcmpW((LPCWSTR)lParam, wszAnsi))
             return 0;
         return -1;
+
+    case WM_DEVICECHANGE:
+        if (wParam == DBT_DEVICEARRIVAL && IsEqualGUID(&ifaceA->dbcc_classguid, &iface_guid))
+        {
+            DWORD expect_size = offsetof(DEV_BROADCAST_DEVICEINTERFACE_A, dbcc_name[strlen(ifaceA->dbcc_name)]);
+
+            ok(ifaceA->dbcc_size == expect_size, "Expected %lu, got %lu.\n", expect_size, ifaceA->dbcc_size);
+            ok(ifaceA->dbcc_devicetype == DBT_DEVTYP_DEVICEINTERFACE,
+                    "Got notification type %#lx.\n", ifaceA->dbcc_devicetype);
+            ok(!ifaceA->dbcc_reserved, "Got reserved %#lx.\n", ifaceA->dbcc_reserved);
+            ok(!strcmp(ifaceA->dbcc_name, "test name"), "Got name %s.\n", debugstr_a(ifaceA->dbcc_name));
+            return 2;
+        }
+        else if (wParam == DBT_CUSTOMEVENT && IsEqualGUID(&ifaceA->dbcc_classguid, &iface_guid))
+        {
+            DWORD expect_size = offsetof(DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name[wcslen(ifaceW->dbcc_name) + 1]);
+
+            ok(ifaceW->dbcc_size == expect_size, "Expected %lu, got %lu.\n", expect_size, ifaceW->dbcc_size);
+            ok(ifaceW->dbcc_devicetype == DBT_DEVTYP_DEVICEINTERFACE,
+                    "Got notification type %#lx.\n", ifaceW->dbcc_devicetype);
+            ok(!ifaceW->dbcc_reserved, "Got reserved %#lx.\n", ifaceW->dbcc_reserved);
+            ok(!wcscmp(ifaceW->dbcc_name, L"test name"), "Got name %s.\n", debugstr_w(ifaceW->dbcc_name));
+            got_device_broadcast = true;
+        }
     }
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
 }
@@ -11079,6 +11110,8 @@ static void test_message_conversion(void)
 {
     static const WCHAR wszMsgConversionClass[] =
         {'M','s','g','C','o','n','v','e','r','s','i','o','n','C','l','a','s','s',0};
+    char buffer[200];
+    DEV_BROADCAST_DEVICEINTERFACE_A *dev_interface = (void *)buffer;
     WNDCLASSW cls;
     LRESULT lRes;
     HWND hwnd;
@@ -11160,6 +11193,20 @@ static void test_message_conversion(void)
     lRes = SendMessageCallbackW(hwnd, CB_FINDSTRINGEXACT, 0, (LPARAM)wszUnicode, NULL, 0);
     ok(lRes == 0 && (GetLastError() == ERROR_MESSAGE_SYNC_ONLY || GetLastError() == ERROR_INVALID_PARAMETER),
         "SendMessageCallback on sync only message returned %Id, last error %ld\n", lRes, GetLastError());
+
+    /* Test WM_DEVICECHANGE. */
+
+    dev_interface->dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE;
+    dev_interface->dbcc_reserved = 0;
+    dev_interface->dbcc_classguid = iface_guid;
+    strcpy(dev_interface->dbcc_name, "test name");
+    dev_interface->dbcc_size = offsetof(DEV_BROADCAST_DEVICEINTERFACE_A,
+            dbcc_name[strlen(dev_interface->dbcc_name)]);
+    lRes = SendMessageA(hwnd, WM_DEVICECHANGE, DBT_DEVICEARRIVAL, (LPARAM)dev_interface);
+    ok(lRes == 2, "Got %Id, error %lu.\n", lRes, GetLastError());
+    lRes = BroadcastSystemMessageA(0, NULL, WM_DEVICECHANGE, DBT_CUSTOMEVENT, (LPARAM)dev_interface);
+    todo_wine ok(!lRes, "Got %Id, error %lu.\n", lRes, GetLastError());
+    todo_wine ok(got_device_broadcast, "Device broadcast was not received.\n");
 
     DestroyWindow(hwnd);
 
