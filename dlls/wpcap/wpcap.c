@@ -865,7 +865,7 @@ const char * CDECL pcap_tstamp_type_val_to_name( int val )
     return ret;
 }
 
-int CDECL wsockinit( void )
+int CDECL pcap_wsockinit( void )
 {
     WSADATA wsadata;
     TRACE( "\n" );

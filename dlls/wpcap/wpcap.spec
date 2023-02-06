@@ -2,11 +2,9 @@
 @ stub bpf_filter
 @ stub bpf_image
 @ stub bpf_validate
-@ stub endservent
 @ stub eproto_db
-@ stub getservent
-@ stub install_bpf_program
 @ cdecl pcap_activate(ptr)
+@ stub pcap_bufsize
 @ cdecl pcap_breakloop(ptr)
 @ cdecl pcap_can_set_rfmon(ptr)
 @ cdecl pcap_close(ptr)
@@ -14,9 +12,11 @@
 @ stub pcap_compile_nopcap
 @ cdecl pcap_create(str ptr)
 @ stub pcap_createsrcstr
+@ stub pcap_datalink_ext
 @ cdecl pcap_datalink(ptr)
 @ cdecl pcap_datalink_name_to_val(str)
 @ cdecl pcap_datalink_val_to_description(long)
+@ stub pcap_datalink_val_to_description_or_dlt
 @ cdecl pcap_datalink_val_to_name(long)
 @ cdecl pcap_dispatch(ptr long ptr ptr)
 @ cdecl pcap_dump(ptr ptr str)
@@ -24,7 +24,12 @@
 @ stub pcap_dump_file
 @ stub pcap_dump_flush
 @ stub pcap_dump_ftell
+@ stub pcap_dump_ftell64
+@ stub pcap_dump_hopen
 @ cdecl pcap_dump_open(ptr str)
+@ stub pcap_dump_open_append
+@ stub pcap_ether_aton
+@ stub pcap_ether_hostton
 @ stub pcap_file
 @ stub pcap_fileno
 @ cdecl pcap_findalldevs(ptr ptr)
@@ -38,6 +43,10 @@
 @ cdecl pcap_geterr(ptr)
 @ stub pcap_getevent
 @ cdecl pcap_getnonblock(ptr ptr)
+@ stub pcap_hopen_offline
+@ stub pcap_hopen_offline_with_tstamp_precision
+@ stub pcap_init
+@ stub pcap_inject
 @ stub pcap_is_swapped
 @ cdecl pcap_lib_version()
 @ cdecl pcap_list_datalinks(ptr ptr)
@@ -53,15 +62,18 @@
 @ stub pcap_next_etherent
 @ cdecl pcap_next_ex(ptr ptr ptr)
 @ stub pcap_offline_filter
-@ stub pcap_offline_read
+@ stub pcap_oid_get_request
+@ stub pcap_oid_set_request
 @ cdecl pcap_open(str long long long ptr ptr)
 @ stub pcap_open_dead
+@ stub pcap_open_dead_with_tstamp_precision
 @ cdecl pcap_open_live(str long long long ptr)
 @ stub pcap_open_offline
+@ stub pcap_open_offline_with_tstamp_precision
 @ cdecl pcap_parsesrcstr(str ptr ptr ptr ptr ptr)
 @ stub pcap_perror
-@ stub pcap_read
 @ stub pcap_remoteact_accept
+@ stub pcap_remoteact_accept_ex
 @ stub pcap_remoteact_cleanup
 @ stub pcap_remoteact_close
 @ stub pcap_remoteact_list
@@ -72,6 +84,7 @@
 @ stub pcap_sendqueue_transmit
 @ cdecl pcap_set_buffer_size(ptr long)
 @ cdecl pcap_set_datalink(ptr long)
+@ stub pcap_set_immediate_mode
 @ cdecl pcap_set_promisc(ptr long)
 @ cdecl pcap_set_rfmon(ptr long)
 @ cdecl pcap_set_snaplen(ptr long)
@@ -79,6 +92,7 @@
 @ cdecl pcap_set_tstamp_precision(ptr long)
 @ cdecl pcap_set_tstamp_type(ptr long)
 @ cdecl pcap_setbuff(ptr long)
+@ stub pcap_setdirection
 @ cdecl pcap_setfilter(ptr ptr)
 @ stub pcap_setmintocopy
 @ stub pcap_setmode
@@ -93,4 +107,5 @@
 @ cdecl pcap_tstamp_type_name_to_val(str)
 @ cdecl pcap_tstamp_type_val_to_description(long)
 @ cdecl pcap_tstamp_type_val_to_name(long)
-@ cdecl wsockinit()
+@ stub pcap_version
+@ cdecl pcap_wsockinit()
