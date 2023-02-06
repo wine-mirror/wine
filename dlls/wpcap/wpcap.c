@@ -909,15 +909,6 @@ int CDECL pcap_lookupnet( const char *device, unsigned int *net, unsigned int *m
     return ret;
 }
 
-int CDECL pcap_loop( struct pcap *pcap, int count,
-                     void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
-                     unsigned char *user)
-{
-    /* FIXME: reimplement on top of pcap_next_ex */
-    FIXME( "%p, %d, %p, %p: not implemented\n", pcap, count, callback, user );
-    return -1;
-}
-
 int CDECL pcap_major_version( struct pcap *pcap )
 {
     struct major_version_params params;
@@ -987,6 +978,39 @@ int CDECL pcap_dispatch( struct pcap *pcap, int count,
             processed++;
         else if (ret == 0)
             break;
+        else if (ret == PCAP_ERROR_BREAK)
+        {
+            if (processed == 0) return PCAP_ERROR_BREAK;
+            break;
+        }
+        else
+            return ret;
+
+        callback( user, hdr, data );
+    }
+
+    return processed;
+}
+
+int CDECL pcap_loop( struct pcap *pcap, int count,
+                     void (CALLBACK *callback)(unsigned char *, const struct pcap_pkthdr_win32 *, const unsigned char *),
+                     unsigned char *user)
+{
+    int processed = 0;
+
+    TRACE( "%p, %d, %p, %p\n", pcap, count, callback, user );
+
+    while (processed < count)
+    {
+        struct pcap_pkthdr_win32 *hdr = NULL;
+        const unsigned char *data = NULL;
+
+        int ret = pcap_next_ex( pcap, &hdr, &data );
+
+        if (ret == 1)
+            processed++;
+        else if (ret == 0)
+            continue;
         else if (ret == PCAP_ERROR_BREAK)
         {
             if (processed == 0) return PCAP_ERROR_BREAK;
