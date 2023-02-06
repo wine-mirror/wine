@@ -417,7 +417,8 @@ static void draw_button_view( HDC hdc, RECT rect, BOOL set, const WCHAR *name )
     SelectObject( hdc, GetStockObject( DC_BRUSH ) );
     SelectObject( hdc, GetStockObject( DC_PEN ) );
 
-    Ellipse( hdc, rect.left, rect.top, rect.right, rect.bottom );
+    if (rect.right - rect.left < 16) Rectangle( hdc, rect.left, rect.top, rect.right, rect.bottom );
+    else Ellipse( hdc, rect.left, rect.top, rect.right, rect.bottom );
 
     color = SetTextColor( hdc, GetSysColor( set ? COLOR_HIGHLIGHTTEXT : COLOR_WINDOWTEXT ) );
     font = SelectObject( hdc, GetStockObject( ANSI_VAR_FONT ) );
@@ -559,7 +560,7 @@ LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam
         }
 
         if (caps.dwButtons <= 48) step = 16;
-        else step = 32;
+        else step = 24;
 
         hdc = BeginPaint( hwnd, &paint );
 
@@ -579,7 +580,8 @@ LRESULT CALLBACK test_di_buttons_window_proc( HWND hwnd, UINT msg, WPARAM wparam
             for (j = 0; j < step && i < caps.dwButtons; j++, i++)
             {
                 WCHAR buffer[3];
-                swprintf( buffer, ARRAY_SIZE(buffer), L"%d", i );
+                if (step == 24) swprintf( buffer, ARRAY_SIZE(buffer), L"%02x", i );
+                else swprintf( buffer, ARRAY_SIZE(buffer), L"%d", i );
                 draw_button_view( hdc, rect, state.rgbButtons[i], buffer );
                 OffsetRect( &rect, size, 0 );
             }
@@ -675,7 +677,7 @@ static void create_device_views( HWND hwnd )
     GetClientRect( parent, &rect );
     rect.top += 10;
 
-    margin = (rect.bottom - rect.top) * 10 / 100;
+    margin = (rect.bottom - rect.top) * 5 / 100;
     InflateRect( &rect, -margin, -margin );
 
     CreateWindowW( L"JoyCplDInputButtons", NULL, WS_CHILD | WS_VISIBLE, rect.left, rect.top,
