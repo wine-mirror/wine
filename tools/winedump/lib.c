@@ -243,7 +243,7 @@ void lib_dump(void)
 
             if (globals.do_dumpheader)
             {
-                dump_file_header(fh);
+                dump_file_header(fh, FALSE);
                 if (fh->SizeOfOptionalHeader)
                 {
                     const IMAGE_OPTIONAL_HEADER32 *oh = (const IMAGE_OPTIONAL_HEADER32 *)((const char *)fh + sizeof(*fh));

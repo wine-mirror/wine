@@ -3603,50 +3603,116 @@ typedef struct _FPO_DATA {
   WORD  cbFrame  : 2;
 } FPO_DATA, *PFPO_DATA;
 
+typedef struct _IMAGE_LOAD_CONFIG_CODE_INTEGRITY
+{
+  WORD    Flags;
+  WORD    Catalog;
+  DWORD   CatalogOffset;
+  DWORD   Reserved;
+} IMAGE_LOAD_CONFIG_CODE_INTEGRITY, *PIMAGE_LOAD_CONFIG_CODE_INTEGRITY;
+
 typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY64 {
-  DWORD     Size;
+  DWORD     Size;                                 /* 000 */
   DWORD     TimeDateStamp;
   WORD      MajorVersion;
   WORD      MinorVersion;
   DWORD     GlobalFlagsClear;
-  DWORD     GlobalFlagsSet;
+  DWORD     GlobalFlagsSet;                       /* 010 */
   DWORD     CriticalSectionDefaultTimeout;
   ULONGLONG DeCommitFreeBlockThreshold;
-  ULONGLONG DeCommitTotalFreeThreshold;
+  ULONGLONG DeCommitTotalFreeThreshold;           /* 020 */
   ULONGLONG LockPrefixTable;
-  ULONGLONG MaximumAllocationSize;
+  ULONGLONG MaximumAllocationSize;                /* 030 */
   ULONGLONG VirtualMemoryThreshold;
-  ULONGLONG ProcessAffinityMask;
+  ULONGLONG ProcessAffinityMask;                  /* 040 */
   DWORD     ProcessHeapFlags;
   WORD      CSDVersion;
-  WORD      Reserved1;
-  ULONGLONG EditList;
+  WORD      DependentLoadFlags;
+  ULONGLONG EditList;                             /* 050 */
   ULONGLONG SecurityCookie;
-  ULONGLONG SEHandlerTable;
+  ULONGLONG SEHandlerTable;                       /* 060 */
   ULONGLONG SEHandlerCount;
+  ULONGLONG GuardCFCheckFunctionPointer;          /* 070 */
+  ULONGLONG GuardCFDispatchFunctionPointer;
+  ULONGLONG GuardCFFunctionTable;                 /* 080 */
+  ULONGLONG GuardCFFunctionCount;
+  DWORD     GuardFlags;                           /* 090 */
+  IMAGE_LOAD_CONFIG_CODE_INTEGRITY CodeIntegrity;
+  ULONGLONG GuardAddressTakenIatEntryTable;       /* 0a0 */
+  ULONGLONG GuardAddressTakenIatEntryCount;
+  ULONGLONG GuardLongJumpTargetTable;             /* 0b0 */
+  ULONGLONG GuardLongJumpTargetCount;
+  ULONGLONG DynamicValueRelocTable;               /* 0c0 */
+  ULONGLONG CHPEMetadataPointer;
+  ULONGLONG GuardRFFailureRoutine;                /* 0d0 */
+  ULONGLONG GuardRFFailureRoutineFunctionPointer;
+  DWORD     DynamicValueRelocTableOffset;         /* 0e0 */
+  WORD      DynamicValueRelocTableSection;
+  WORD      Reserved2;
+  ULONGLONG GuardRFVerifyStackPointerFunctionPointer;
+  DWORD     HotPatchTableOffset;                  /* 0f0 */
+  DWORD     Reserved3;
+  ULONGLONG EnclaveConfigurationPointer;
+  ULONGLONG VolatileMetadataPointer;              /* 100 */
+  ULONGLONG GuardEHContinuationTable;
+  ULONGLONG GuardEHContinuationCount;             /* 110 */
+  ULONGLONG GuardXFGCheckFunctionPointer;
+  ULONGLONG GuardXFGDispatchFunctionPointer;      /* 120 */
+  ULONGLONG GuardXFGTableDispatchFunctionPointer;
+  ULONGLONG CastGuardOsDeterminedFailureMode;     /* 130 */
+  ULONGLONG GuardMemcpyFunctionPointer;
 } IMAGE_LOAD_CONFIG_DIRECTORY64, *PIMAGE_LOAD_CONFIG_DIRECTORY64;
 
 typedef struct _IMAGE_LOAD_CONFIG_DIRECTORY32 {
-  DWORD Size;
+  DWORD Size;                                     /* 000 */
   DWORD TimeDateStamp;
   WORD  MajorVersion;
   WORD  MinorVersion;
   DWORD GlobalFlagsClear;
-  DWORD GlobalFlagsSet;
+  DWORD GlobalFlagsSet;                           /* 010 */
   DWORD CriticalSectionDefaultTimeout;
   DWORD DeCommitFreeBlockThreshold;
   DWORD DeCommitTotalFreeThreshold;
-  PVOID LockPrefixTable;
+  DWORD LockPrefixTable;                          /* 020 */
   DWORD MaximumAllocationSize;
   DWORD VirtualMemoryThreshold;
   DWORD ProcessHeapFlags;
-  DWORD ProcessAffinityMask;
+  DWORD ProcessAffinityMask;                      /* 030 */
   WORD  CSDVersion;
-  WORD  Reserved1;
-  PVOID EditList;
+  WORD  DependentLoadFlags;
+  DWORD EditList;
   DWORD SecurityCookie;
-  DWORD SEHandlerTable;
+  DWORD SEHandlerTable;                           /* 040 */
   DWORD SEHandlerCount;
+  DWORD GuardCFCheckFunctionPointer;
+  DWORD GuardCFDispatchFunctionPointer;
+  DWORD GuardCFFunctionTable;                     /* 050 */
+  DWORD GuardCFFunctionCount;
+  DWORD GuardFlags;
+  IMAGE_LOAD_CONFIG_CODE_INTEGRITY CodeIntegrity;
+  DWORD GuardAddressTakenIatEntryTable;
+  DWORD GuardAddressTakenIatEntryCount;
+  DWORD GuardLongJumpTargetTable;                 /* 070 */
+  DWORD GuardLongJumpTargetCount;
+  DWORD DynamicValueRelocTable;
+  DWORD CHPEMetadataPointer;
+  DWORD GuardRFFailureRoutine;                    /* 080 */
+  DWORD GuardRFFailureRoutineFunctionPointer;
+  DWORD DynamicValueRelocTableOffset;
+  WORD  DynamicValueRelocTableSection;
+  WORD  Reserved2;
+  DWORD GuardRFVerifyStackPointerFunctionPointer; /* 090 */
+  DWORD HotPatchTableOffset;
+  DWORD Reserved3;
+  DWORD EnclaveConfigurationPointer;
+  DWORD VolatileMetadataPointer;                  /* 0a0 */
+  DWORD GuardEHContinuationTable;
+  DWORD GuardEHContinuationCount;
+  DWORD GuardXFGCheckFunctionPointer;
+  DWORD GuardXFGDispatchFunctionPointer;          /* 0b0 */
+  DWORD GuardXFGTableDispatchFunctionPointer;
+  DWORD CastGuardOsDeterminedFailureMode;
+  DWORD GuardMemcpyFunctionPointer;
 } IMAGE_LOAD_CONFIG_DIRECTORY32, *PIMAGE_LOAD_CONFIG_DIRECTORY32;
 
 #ifdef _WIN64

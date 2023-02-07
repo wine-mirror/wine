@@ -154,6 +154,28 @@ static const char *get_magic_type(WORD magic)
     return "???";
 }
 
+static ULONGLONG get_hybrid_metadata(void)
+{
+    unsigned int size;
+
+    if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        const IMAGE_LOAD_CONFIG_DIRECTORY64 *cfg = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size);
+        if (!cfg) return 0;
+        size = min( size, cfg->Size );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, CHPEMetadataPointer )) return 0;
+        return cfg->CHPEMetadataPointer;
+    }
+    else
+    {
+        const IMAGE_LOAD_CONFIG_DIRECTORY32 *cfg = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size);
+        if (!cfg) return 0;
+        size = min( size, cfg->Size );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, CHPEMetadataPointer )) return 0;
+        return cfg->CHPEMetadataPointer;
+    }
+}
+
 static inline void print_word(const char *title, WORD value)
 {
     printf("  %-34s 0x%-4X         %u\n", title, value, value);
@@ -340,12 +362,22 @@ void dump_optional_header(const IMAGE_OPTIONAL_HEADER32 *optionalHeader, UINT he
     }
 }
 
-void dump_file_header(const IMAGE_FILE_HEADER *fileHeader)
+void dump_file_header(const IMAGE_FILE_HEADER *fileHeader, BOOL is_hybrid)
 {
+    const char *name = get_machine_str(fileHeader->Machine);
+
     printf("File Header\n");
 
-    printf("  Machine:                      %04X (%s)\n",
-	   fileHeader->Machine, get_machine_str(fileHeader->Machine));
+    if (is_hybrid)
+    {
+        switch (fileHeader->Machine)
+        {
+        case IMAGE_FILE_MACHINE_I386: name = "CHPE"; break;
+        case IMAGE_FILE_MACHINE_AMD64: name = "ARM64EC"; break;
+        case IMAGE_FILE_MACHINE_ARM64: name = "ARM64X"; break;
+        }
+    }
+    printf("  Machine:                      %04X (%s)\n", fileHeader->Machine, name);
     printf("  Number of Sections:           %d\n", fileHeader->NumberOfSections);
     printf("  TimeDateStamp:                %08X (%s) offset %lu\n",
 	   (UINT)fileHeader->TimeDateStamp, get_time_str(fileHeader->TimeDateStamp),
@@ -377,7 +409,7 @@ void dump_file_header(const IMAGE_FILE_HEADER *fileHeader)
 
 static	void	dump_pe_header(void)
 {
-    dump_file_header(&PE_nt_headers->FileHeader);
+    dump_file_header(&PE_nt_headers->FileHeader, get_hybrid_metadata() != 0);
     dump_optional_header((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader, PE_nt_headers->FileHeader.SizeOfOptionalHeader);
 }
 
@@ -1726,10 +1758,12 @@ static	void	dump_dir_imported_functions(void)
 
 static void dump_dir_loadconfig(void)
 {
-    const IMAGE_LOAD_CONFIG_DIRECTORY32 *loadcfg32 = get_dir(IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG);
+    unsigned int size;
+    const IMAGE_LOAD_CONFIG_DIRECTORY32 *loadcfg32 = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size);
     const IMAGE_LOAD_CONFIG_DIRECTORY64 *loadcfg64 = (void*)loadcfg32;
 
     if (!loadcfg32) return;
+    size = min( size, loadcfg32->Size );
 
     printf( "Loadconfig\n" );
     print_dword( "Size",                                loadcfg32->Size );
@@ -1749,10 +1783,55 @@ static void dump_dir_loadconfig(void)
         print_dword(    "ProcessHeapFlags",             loadcfg64->ProcessHeapFlags );
         print_longlong( "ProcessAffinityMask",          loadcfg64->ProcessAffinityMask );
         print_word(     "CSDVersion",                   loadcfg64->CSDVersion );
-        print_word(     "Reserved",                     loadcfg64->Reserved1 );
+        print_word(     "DependentLoadFlags",           loadcfg64->DependentLoadFlags );
         print_longlong( "SecurityCookie",               loadcfg64->SecurityCookie );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, SEHandlerTable )) return;
         print_longlong( "SEHandlerTable",               loadcfg64->SEHandlerTable );
         print_longlong( "SEHandlerCount",               loadcfg64->SEHandlerCount );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, GuardCFCheckFunctionPointer )) return;
+        print_longlong( "GuardCFCheckFunctionPointer",  loadcfg64->GuardCFCheckFunctionPointer );
+        print_longlong( "GuardCFDispatchFunctionPointer", loadcfg64->GuardCFDispatchFunctionPointer );
+        print_longlong( "GuardCFFunctionTable",         loadcfg64->GuardCFFunctionTable );
+        print_longlong( "GuardCFFunctionCount",         loadcfg64->GuardCFFunctionCount );
+        print_dword(    "GuardFlags",                   loadcfg64->GuardFlags );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, CodeIntegrity )) return;
+        print_word(     "CodeIntegrity.Flags",          loadcfg64->CodeIntegrity.Flags );
+        print_word(     "CodeIntegrity.Catalog",        loadcfg64->CodeIntegrity.Catalog );
+        print_dword(    "CodeIntegrity.CatalogOffset",  loadcfg64->CodeIntegrity.CatalogOffset );
+        print_dword(    "CodeIntegrity.Reserved",       loadcfg64->CodeIntegrity.Reserved );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, GuardAddressTakenIatEntryTable )) return;
+        print_longlong( "GuardAddressTakenIatEntryTable", loadcfg64->GuardAddressTakenIatEntryTable );
+        print_longlong( "GuardAddressTakenIatEntryCount", loadcfg64->GuardAddressTakenIatEntryCount );
+        print_longlong( "GuardLongJumpTargetTable",     loadcfg64->GuardLongJumpTargetTable );
+        print_longlong( "GuardLongJumpTargetCount",     loadcfg64->GuardLongJumpTargetCount );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTable )) return;
+        print_longlong( "DynamicValueRelocTable",       loadcfg64->DynamicValueRelocTable );
+        print_longlong( "CHPEMetadataPointer",          loadcfg64->CHPEMetadataPointer );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFFailureRoutine )) return;
+        print_longlong( "GuardRFFailureRoutine",        loadcfg64->GuardRFFailureRoutine );
+        print_longlong( "GuardRFFailureRoutineFunctionPointer", loadcfg64->GuardRFFailureRoutineFunctionPointer );
+        print_dword(    "DynamicValueRelocTableOffset", loadcfg64->DynamicValueRelocTableOffset );
+        print_word(     "DynamicValueRelocTableSection",loadcfg64->DynamicValueRelocTableSection );
+        print_word(     "Reserved2",                    loadcfg64->Reserved2 );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, GuardRFVerifyStackPointerFunctionPointer )) return;
+        print_longlong( "GuardRFVerifyStackPointerFunctionPointer", loadcfg64->GuardRFVerifyStackPointerFunctionPointer );
+        print_dword(    "HotPatchTableOffset",          loadcfg64->HotPatchTableOffset );
+        print_dword(    "Reserved3",                    loadcfg64->Reserved3 );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, EnclaveConfigurationPointer )) return;
+        print_longlong( "EnclaveConfigurationPointer",  loadcfg64->EnclaveConfigurationPointer );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, VolatileMetadataPointer )) return;
+        print_longlong( "VolatileMetadataPointer",      loadcfg64->VolatileMetadataPointer );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, GuardEHContinuationTable )) return;
+        print_longlong( "GuardEHContinuationTable",     loadcfg64->GuardEHContinuationTable );
+        print_longlong( "GuardEHContinuationCount",     loadcfg64->GuardEHContinuationCount );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, GuardXFGCheckFunctionPointer )) return;
+        print_longlong( "GuardXFGCheckFunctionPointer", loadcfg64->GuardXFGCheckFunctionPointer );
+        print_longlong( "GuardXFGDispatchFunctionPointer", loadcfg64->GuardXFGDispatchFunctionPointer );
+        print_longlong( "GuardXFGTableDispatchFunctionPointer", loadcfg64->GuardXFGTableDispatchFunctionPointer );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, CastGuardOsDeterminedFailureMode )) return;
+        print_longlong( "CastGuardOsDeterminedFailureMode", loadcfg64->CastGuardOsDeterminedFailureMode );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, GuardMemcpyFunctionPointer )) return;
+        print_longlong( "GuardMemcpyFunctionPointer",   loadcfg64->GuardMemcpyFunctionPointer );
     }
     else
     {
@@ -1763,10 +1842,55 @@ static void dump_dir_loadconfig(void)
         print_dword( "ProcessHeapFlags",                loadcfg32->ProcessHeapFlags );
         print_dword( "ProcessAffinityMask",             loadcfg32->ProcessAffinityMask );
         print_word(  "CSDVersion",                      loadcfg32->CSDVersion );
-        print_word(  "Reserved",                        loadcfg32->Reserved1 );
+        print_word(  "DependentLoadFlags",              loadcfg32->DependentLoadFlags );
         print_dword( "SecurityCookie",                  loadcfg32->SecurityCookie );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, SEHandlerTable )) return;
         print_dword( "SEHandlerTable",                  loadcfg32->SEHandlerTable );
         print_dword( "SEHandlerCount",                  loadcfg32->SEHandlerCount );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, GuardCFCheckFunctionPointer )) return;
+        print_dword( "GuardCFCheckFunctionPointer",     loadcfg32->GuardCFCheckFunctionPointer );
+        print_dword( "GuardCFDispatchFunctionPointer",  loadcfg32->GuardCFDispatchFunctionPointer );
+        print_dword( "GuardCFFunctionTable",            loadcfg32->GuardCFFunctionTable );
+        print_dword( "GuardCFFunctionCount",            loadcfg32->GuardCFFunctionCount );
+        print_dword( "GuardFlags",                      loadcfg32->GuardFlags );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, CodeIntegrity )) return;
+        print_word(  "CodeIntegrity.Flags",             loadcfg32->CodeIntegrity.Flags );
+        print_word(  "CodeIntegrity.Catalog",           loadcfg32->CodeIntegrity.Catalog );
+        print_dword( "CodeIntegrity.CatalogOffset",     loadcfg32->CodeIntegrity.CatalogOffset );
+        print_dword( "CodeIntegrity.Reserved",          loadcfg32->CodeIntegrity.Reserved );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, GuardAddressTakenIatEntryTable )) return;
+        print_dword( "GuardAddressTakenIatEntryTable",  loadcfg32->GuardAddressTakenIatEntryTable );
+        print_dword( "GuardAddressTakenIatEntryCount",  loadcfg32->GuardAddressTakenIatEntryCount );
+        print_dword( "GuardLongJumpTargetTable",        loadcfg32->GuardLongJumpTargetTable );
+        print_dword( "GuardLongJumpTargetCount",        loadcfg32->GuardLongJumpTargetCount );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTable )) return;
+        print_dword( "DynamicValueRelocTable",          loadcfg32->DynamicValueRelocTable );
+        print_dword( "CHPEMetadataPointer",             loadcfg32->CHPEMetadataPointer );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFFailureRoutine )) return;
+        print_dword( "GuardRFFailureRoutine",           loadcfg32->GuardRFFailureRoutine );
+        print_dword( "GuardRFFailureRoutineFunctionPointer", loadcfg32->GuardRFFailureRoutineFunctionPointer );
+        print_dword( "DynamicValueRelocTableOffset",    loadcfg32->DynamicValueRelocTableOffset );
+        print_word(  "DynamicValueRelocTableSection",   loadcfg32->DynamicValueRelocTableSection );
+        print_word(  "Reserved2",                       loadcfg32->Reserved2 );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, GuardRFVerifyStackPointerFunctionPointer )) return;
+        print_dword( "GuardRFVerifyStackPointerFunctionPointer", loadcfg32->GuardRFVerifyStackPointerFunctionPointer );
+        print_dword( "HotPatchTableOffset",             loadcfg32->HotPatchTableOffset );
+        print_dword( "Reserved3",                       loadcfg32->Reserved3 );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, EnclaveConfigurationPointer )) return;
+        print_dword( "EnclaveConfigurationPointer",     loadcfg32->EnclaveConfigurationPointer );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, VolatileMetadataPointer )) return;
+        print_dword( "VolatileMetadataPointer",         loadcfg32->VolatileMetadataPointer );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, GuardEHContinuationTable )) return;
+        print_dword( "GuardEHContinuationTable",        loadcfg32->GuardEHContinuationTable );
+        print_dword( "GuardEHContinuationCount",        loadcfg32->GuardEHContinuationCount );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, GuardXFGCheckFunctionPointer )) return;
+        print_dword( "GuardXFGCheckFunctionPointer",    loadcfg32->GuardXFGCheckFunctionPointer );
+        print_dword( "GuardXFGDispatchFunctionPointer", loadcfg32->GuardXFGDispatchFunctionPointer );
+        print_dword( "GuardXFGTableDispatchFunctionPointer", loadcfg32->GuardXFGTableDispatchFunctionPointer );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, CastGuardOsDeterminedFailureMode )) return;
+        print_dword( "CastGuardOsDeterminedFailureMode", loadcfg32->CastGuardOsDeterminedFailureMode );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, GuardMemcpyFunctionPointer )) return;
+        print_dword( "GuardMemcpyFunctionPointer",      loadcfg32->GuardMemcpyFunctionPointer );
     }
 }
 
