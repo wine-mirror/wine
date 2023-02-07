@@ -619,25 +619,22 @@ static inline void get_dyld_func( const char *name, void **func )
 static void fixup_stack( void *stack )
 {
     int *pargc;
-    char **argv, **env, **apple, **apple_end;
+    char **argv, **env_new;
+    static char dummyvar[] = "WINEPRELOADERDUMMYVAR=1";
 
     pargc = stack;
     argv = (char **)pargc + 1;
-    env = &argv[*pargc-1] + 2;
 
-    apple = env;
-    while (*apple)
-        apple++;
-    apple++;
-
-    apple_end = apple;
-    while (*apple_end)
-        apple_end++;
-    apple_end++;
-
-    /* decrement argc, and move all the data between &argv[1] and apple_end down to start at &argv[0] */
+    /* decrement argc, and "remove" argv[0] */
     *pargc = *pargc - 1;
-    memmove(&argv[0], &argv[1], (char *)apple_end - (char *)&argv[1]);
+    memmove( &argv[0], &argv[1], (*pargc + 1) * sizeof(char *) );
+
+    env_new = &argv[*pargc-1] + 2;
+    /* In the launched binary on some OSes, _NSGetEnviron() returns
+     * the original 'environ' pointer, so env_new[0] would be ignored.
+     * Put a dummy variable in env_new[0], so nothing is lost in this case.
+     */
+    env_new[0] = dummyvar;
 }
 
 static void set_program_vars( void *stack, void *mod )
