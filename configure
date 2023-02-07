@@ -15708,9 +15708,9 @@ fi
 
 if test "$ac_cv_header_pcap_pcap_h" = "yes"
 then
-    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for pcap_create in -lpcap" >&5
-printf %s "checking for pcap_create in -lpcap... " >&6; }
-if test ${ac_cv_lib_pcap_pcap_create+y}
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for pcap_init in -lpcap" >&5
+printf %s "checking for pcap_init in -lpcap... " >&6; }
+if test ${ac_cv_lib_pcap_pcap_init+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
@@ -15722,35 +15722,35 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* Override any GCC internal prototype to avoid an error.
    Use char because int might match the return type of a GCC
    builtin and then its argument prototype would still apply.  */
-char pcap_create ();
+char pcap_init ();
 int
 main (void)
 {
-return pcap_create ();
+return pcap_init ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"
 then :
-  ac_cv_lib_pcap_pcap_create=yes
+  ac_cv_lib_pcap_pcap_init=yes
 else $as_nop
-  ac_cv_lib_pcap_pcap_create=no
+  ac_cv_lib_pcap_pcap_init=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.beam \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pcap_pcap_create" >&5
-printf "%s\n" "$ac_cv_lib_pcap_pcap_create" >&6; }
-if test "x$ac_cv_lib_pcap_pcap_create" = xyes
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pcap_pcap_init" >&5
+printf "%s\n" "$ac_cv_lib_pcap_pcap_init" >&6; }
+if test "x$ac_cv_lib_pcap_pcap_init" = xyes
 then :
   PCAP_LIBS="-lpcap"
 
 fi
 
 fi
-if test "x$ac_cv_lib_pcap_pcap_create" != xyes
+if test "x$ac_cv_lib_pcap_pcap_init" != xyes
 then :
   case "x$with_pcap" in
   x)   as_fn_append wine_notices "|pcap ${notice_platform}development files not found, wpcap won't be supported." ;;
