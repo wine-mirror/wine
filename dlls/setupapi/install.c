@@ -233,8 +233,27 @@ static bool append_multi_sz_value( HKEY hkey, const WCHAR *value, const WCHAR *s
 {
     DWORD size, type, total;
     WCHAR *buffer, *p;
+    LONG ret;
 
-    if (RegQueryValueExW( hkey, value, NULL, &type, NULL, &size )) return true;
+    if ((ret = RegQueryValueExW( hkey, value, NULL, &type, NULL, &size )))
+    {
+        if (ret != ERROR_FILE_NOT_FOUND)
+        {
+            ERR( "failed to query value %s, error %lu\n", debugstr_w(value), ret );
+            SetLastError( ret );
+            return false;
+        }
+
+        if ((ret = RegSetValueExW( hkey, value, 0, REG_MULTI_SZ, (BYTE *)strings, str_size * sizeof(WCHAR) )))
+        {
+            ERR( "failed to set value %s, error %lu\n", debugstr_w(value), ret );
+            SetLastError( ret );
+            return false;
+        }
+
+        return true;
+    }
+
     if (type != REG_MULTI_SZ)
     {
         WARN( "value %s exists but has wrong type %#lx\n", debugstr_w(value), type );
