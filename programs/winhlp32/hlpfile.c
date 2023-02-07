@@ -966,6 +966,7 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, HLPFILE* file, const BYTE* 
     const BYTE*         pict_beg;
     BYTE*               alloc = NULL;
     BITMAPINFO*         bi;
+    BITMAPINFO*         new_bi;
     ULONG               off, csz;
     unsigned            nc = 0;
     BOOL                clrImportant = FALSE;
@@ -1013,8 +1014,13 @@ static BOOL HLPFILE_RtfAddBitmap(struct RtfData* rd, HLPFILE* file, const BYTE* 
         if (!nc && bi->bmiHeader.biBitCount <= 8)
             nc = 1 << bi->bmiHeader.biBitCount;
 
-        bi = realloc(bi, sizeof(*bi) + nc * sizeof(RGBQUAD));
-        if (!bi) return FALSE;
+        new_bi = realloc(bi, sizeof(*bi) + nc * sizeof(RGBQUAD));
+        if (!new_bi)
+        {
+            free(bi);
+            return FALSE;
+        }
+        bi = new_bi;
         for (i = 0; i < nc; i++)
         {
             bi->bmiColors[i].rgbBlue     = ptr[0];
