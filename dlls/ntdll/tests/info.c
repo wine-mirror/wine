@@ -199,7 +199,7 @@ static void test_query_basic(void)
             "info is different\n" );
     }
 #else
-    ok( status == STATUS_INVALID_INFO_CLASS || broken(STATUS_NOT_IMPLEMENTED), /* vista */
+    ok( status == STATUS_INVALID_INFO_CLASS || broken(status == STATUS_SUCCESS), /* some Win8 */
         "got %08lx\n", status);
     status = pRtlGetNativeSystemInformation( SystemNativeBasicInformation, &sbi3, sizeof(sbi3), &ReturnLength );
     ok( !status || status == STATUS_INFO_LENGTH_MISMATCH ||
@@ -3219,9 +3219,9 @@ static void test_ThreadEnableAlignmentFaultFixup(void)
 
     dummy = 0;
     status = NtQueryInformationThread( GetCurrentThread(), ThreadEnableAlignmentFaultFixup, &dummy, sizeof(ULONG), NULL );
-    ok( status == STATUS_INVALID_INFO_CLASS || broken(STATUS_NOT_IMPLEMENTED), "Expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status );
+    ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status );
     status = NtQueryInformationThread( GetCurrentThread(), ThreadEnableAlignmentFaultFixup, &dummy, 1, NULL );
-    ok( status == STATUS_INVALID_INFO_CLASS || broken(STATUS_NOT_IMPLEMENTED), "Expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status );
+    ok( status == STATUS_INVALID_INFO_CLASS, "Expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status );
 
     dummy = 1;
     status = pNtSetInformationThread( GetCurrentThread(), ThreadEnableAlignmentFaultFixup, &dummy, sizeof(ULONG) );
