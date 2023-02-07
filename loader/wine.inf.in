@@ -2370,15 +2370,15 @@ ErrorControl=1
 
 [BITSServiceKeys]
 HKR,Parameters,"ServiceDll",,"%11%\qmgr.dll"
-HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010000,"BITS"
+HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010008,"BITS"
 
 [EventLogServiceKeys]
 HKR,Parameters,"ServiceDll",,"%11%\wevtsvc.dll"
-HKLM,%CurrentVersionNT%\SvcHost,"LocalServiceNetworkRestricted",0x00010000,"EventLog"
+HKLM,%CurrentVersionNT%\SvcHost,"LocalServiceNetworkRestricted",0x00010008,"EventLog"
 
 [StiServiceKeys]
 HKR,Parameters,"ServiceDll",,"%11%\wiaservc.dll"
-HKLM,%CurrentVersionNT%\SvcHost,"imgsvc",0x00010000,"StiSvc"
+HKLM,%CurrentVersionNT%\SvcHost,"imgsvc",0x00010008,"StiSvc"
 
 [PlugPlayService]
 Description="Enables automatic configuration of devices"
