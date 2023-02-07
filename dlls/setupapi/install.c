@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdbool.h>
 
 #define COBJMACROS
 
@@ -227,17 +228,26 @@ static HKEY get_root_key( const WCHAR *name, HKEY def_root )
  *
  * Append a multisz string to a multisz registry value.
  */
-static void append_multi_sz_value( HKEY hkey, const WCHAR *value, const WCHAR *strings,
+static bool append_multi_sz_value( HKEY hkey, const WCHAR *value, const WCHAR *strings,
                                    DWORD str_size )
 {
     DWORD size, type, total;
     WCHAR *buffer, *p;
 
-    if (RegQueryValueExW( hkey, value, NULL, &type, NULL, &size )) return;
-    if (type != REG_MULTI_SZ) return;
+    if (RegQueryValueExW( hkey, value, NULL, &type, NULL, &size )) return true;
+    if (type != REG_MULTI_SZ)
+    {
+        WARN( "value %s exists but has wrong type %#lx\n", debugstr_w(value), type );
+        SetLastError( ERROR_INVALID_DATA );
+        return false;
+    }
 
-    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (size + str_size) * sizeof(WCHAR) ))) return;
-    if (RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)buffer, &size )) goto done;
+    if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (size + str_size) * sizeof(WCHAR) ))) return false;
+    if (RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)buffer, &size ))
+    {
+        HeapFree( GetProcessHeap(), 0, buffer );
+        return false;
+    }
 
     /* compare each string against all the existing ones */
     total = size;
@@ -261,8 +271,9 @@ static void append_multi_sz_value( HKEY hkey, const WCHAR *value, const WCHAR *s
         TRACE( "setting value %s to %s\n", debugstr_w(value), debugstr_w(buffer) );
         RegSetValueExW( hkey, value, 0, REG_MULTI_SZ, (BYTE *)buffer, total );
     }
- done:
+
     HeapFree( GetProcessHeap(), 0, buffer );
+    return true;
 }
 
 
@@ -374,7 +385,11 @@ static BOOL do_reg_operation( HKEY hkey, const WCHAR *value, INFCONTEXT *context
             if (flags & FLG_ADDREG_APPEND)
             {
                 if (!str) return TRUE;
-                append_multi_sz_value( hkey, value, str, size );
+                if (!append_multi_sz_value( hkey, value, str, size ))
+                {
+                    HeapFree( GetProcessHeap(), 0, str );
+                    return FALSE;
+                }
                 HeapFree( GetProcessHeap(), 0, str );
                 return TRUE;
             }
