@@ -1,0 +1,4 @@
+TESTDLL  = wpcap.dll
+
+C_SRCS = \
+	wpcap.c

@@ -21833,6 +21833,7 @@ wine_fn_config_makefile dlls/wow64win enable_wow64win
 wine_fn_config_makefile dlls/wpc enable_wpc
 wine_fn_config_makefile dlls/wpc/tests enable_tests
 wine_fn_config_makefile dlls/wpcap enable_wpcap
+wine_fn_config_makefile dlls/wpcap/tests enable_tests
 wine_fn_config_makefile dlls/ws2_32 enable_ws2_32
 wine_fn_config_makefile dlls/ws2_32/tests enable_tests
 wine_fn_config_makefile dlls/wsdapi enable_wsdapi
