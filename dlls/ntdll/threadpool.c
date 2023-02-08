@@ -1152,7 +1152,8 @@ static NTSTATUS tp_new_worker_thread( struct threadpool *pool )
     HANDLE thread;
     NTSTATUS status;
 
-    status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, 0, 0, 0,
+    status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, 0,
+                                  pool->stack_info.StackReserve, pool->stack_info.StackCommit,
                                   threadpool_worker_proc, pool, &thread, NULL );
     if (status == STATUS_SUCCESS)
     {
