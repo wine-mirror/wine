@@ -285,7 +285,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
                     "Got length %u.\n", device->child_symlink.Length);
             ok(device->child_symlink.MaximumLength == sizeof(expect_symlink),
                     "Got maximum length %u.\n", device->child_symlink.MaximumLength);
-            todo_wine ok(!kmemcmp(device->child_symlink.Buffer, expect_symlink, device->child_symlink.MaximumLength),
+            ok(!kmemcmp(device->child_symlink.Buffer, expect_symlink, device->child_symlink.MaximumLength),
                     "Got symlink \"%ls\".\n", device->child_symlink.Buffer);
 
             IoSetDeviceInterfaceState(&device->child_symlink, TRUE);
