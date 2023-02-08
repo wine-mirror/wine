@@ -32,6 +32,9 @@ extern "C" {
 #define SQL_WVARCHAR          (-9)
 #define SQL_WLONGVARCHAR      (-10)
 
+SQLRETURN WINAPI SQLColAttributesW(SQLHSTMT hstmt, SQLUSMALLINT icol, SQLUSMALLINT fDescType,
+            SQLPOINTER rgbDesc, SQLSMALLINT cbDescMax, SQLSMALLINT *pcbDesc, SQLLEN *pfDesc);
+
 SQLRETURN WINAPI SQLConnectW(SQLHDBC ConnectionHandle,
            SQLWCHAR *ServerName, SQLSMALLINT NameLength1,
            SQLWCHAR *UserName, SQLSMALLINT NameLength2,
@@ -42,6 +45,11 @@ SQLRETURN WINAPI SQLDescribeColW(SQLHSTMT StatementHandle,
            SQLSMALLINT BufferLength, SQLSMALLINT *NameLength,
            SQLSMALLINT *DataType, SQLULEN *ColumnSize,
            SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable);
+
+SQLRETURN WINAPI SQLDriverConnectW(SQLHDBC ConnectionHandle,
+           SQLHWND WindowHandle, WCHAR *InConnectionString,
+           SQLSMALLINT Length, WCHAR *OutConnectionString, SQLSMALLINT BufferLength,
+           SQLSMALLINT *Length2, SQLUSMALLINT DriverCompletion);
 
 SQLRETURN WINAPI SQLExecDirectW(SQLHSTMT StatementHandle,
            SQLWCHAR *StatementText, SQLINTEGER TextLength);
