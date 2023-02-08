@@ -2242,7 +2242,7 @@ system.ini, drivers32,,"msacm.msgsm610=msgsm32.acm"
 system.ini, drivers32,,"vidc.mrle=msrle32.dll"
 system.ini, drivers32,,"vidc.msvc=msvidc32.dll"
 system.ini, drivers32,,"vidc.cvid=iccvid.dll"
-system.ini, drivers32,,"; vidc.IV50=ir50_32.dll"
+system.ini, drivers32,,"vidc.IV50=ir50_32.dll"
 system.ini, drivers32,,"; vidc.IV31=ir32_32.dll"
 system.ini, drivers32,,"; vidc.IV32=ir32_32.dll"
 
