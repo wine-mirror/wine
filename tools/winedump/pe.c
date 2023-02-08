@@ -176,6 +176,17 @@ static ULONGLONG get_hybrid_metadata(void)
     }
 }
 
+static inline const char *longlong_str( ULONGLONG value )
+{
+    static char buffer[20];
+
+    if (sizeof(value) > sizeof(unsigned long) && value >> 32)
+        sprintf(buffer, "%lx%08lx", (unsigned long)(value >> 32), (unsigned long)value);
+    else
+        sprintf(buffer, "%lx", (unsigned long)value);
+    return buffer;
+}
+
 static inline void print_word(const char *title, WORD value)
 {
     printf("  %-34s 0x%-4X         %u\n", title, value, value);
@@ -188,11 +199,7 @@ static inline void print_dword(const char *title, UINT value)
 
 static inline void print_longlong(const char *title, ULONGLONG value)
 {
-    printf("  %-34s 0x", title);
-    if (sizeof(value) > sizeof(unsigned long) && value >> 32)
-        printf("%lx%08lx\n", (unsigned long)(value >> 32), (unsigned long)value);
-    else
-        printf("%lx\n", (unsigned long)value);
+    printf("  %-34s 0x%s\n", title, longlong_str(value));
 }
 
 static inline void print_ver(const char *title, BYTE major, BYTE minor)
@@ -2060,6 +2067,146 @@ static void dump_dir_clr_header(void)
     printf("\n");
 }
 
+static void dump_dynamic_relocs_arm64x( const IMAGE_BASE_RELOCATION *base_reloc, unsigned int size )
+{
+    unsigned int i;
+    const IMAGE_BASE_RELOCATION *base_end = (const IMAGE_BASE_RELOCATION *)((const char *)base_reloc + size);
+
+    printf( "Relocations ARM64X\n" );
+    while (base_reloc < base_end - 1 && base_reloc->SizeOfBlock)
+    {
+        const USHORT *rel = (const USHORT *)(base_reloc + 1);
+        const USHORT *end = (const USHORT *)base_reloc + base_reloc->SizeOfBlock / sizeof(USHORT);
+        printf( "  Page %x\n", (UINT)base_reloc->VirtualAddress );
+        while (rel < end && *rel)
+        {
+            USHORT offset = *rel & 0xfff;
+            USHORT type = (*rel >> 12) & 3;
+            USHORT arg = *rel >> 14;
+            rel++;
+            switch (type)
+            {
+            case 0:  /* zero-fill */
+                printf( "    off %04x zero-fill %u bytes\n", offset, 1 << arg );
+                break;
+            case 1:  /* set value */
+                printf( "    off %04x set %u bytes value ", offset, 1 << arg );
+                for (i = (1 << arg ) / sizeof(USHORT); i > 0; i--) printf( "%04x", rel[i - 1] );
+                rel += (1 << arg) / sizeof(USHORT);
+                printf( "\n" );
+                break;
+            case 2:  /* add value */
+                printf( "    off %04x add offset ", offset );
+                if (arg & 1) printf( "-" );
+                printf( "%08x\n", (UINT)*rel++ * ((arg & 2) ? 8 : 4) );
+                break;
+            default:
+                printf( "    off %04x unknown (arg %x)\n", offset, arg );
+                break;
+            }
+        }
+        base_reloc = (const IMAGE_BASE_RELOCATION *)end;
+    }
+}
+
+static void dump_dynamic_relocs( const char *ptr, unsigned int size, ULONGLONG symbol )
+{
+    switch (symbol)
+    {
+    case IMAGE_DYNAMIC_RELOCATION_GUARD_RF_PROLOGUE:
+        printf( "Relocations GUARD_RF_PROLOGUE\n" );
+        break;
+    case IMAGE_DYNAMIC_RELOCATION_GUARD_RF_EPILOGUE:
+        printf( "Relocations GUARD_RF_EPILOGUE\n" );
+        break;
+    case IMAGE_DYNAMIC_RELOCATION_GUARD_IMPORT_CONTROL_TRANSFER:
+        printf( "Relocations GUARD_IMPORT_CONTROL_TRANSFER\n" );
+        break;
+    case IMAGE_DYNAMIC_RELOCATION_GUARD_INDIR_CONTROL_TRANSFER:
+        printf( "Relocations GUARD_INDIR_CONTROL_TRANSFER\n" );
+        break;
+    case IMAGE_DYNAMIC_RELOCATION_GUARD_SWITCHTABLE_BRANCH:
+        printf( "Relocations GUARD_SWITCHTABLE_BRANCH\n" );
+        break;
+    case IMAGE_DYNAMIC_RELOCATION_ARM64X:
+        dump_dynamic_relocs_arm64x( (const IMAGE_BASE_RELOCATION *)ptr, size );
+        break;
+    default:
+        printf( "Unknown relocation symbol %s\n", longlong_str(symbol) );
+        break;
+    }
+}
+
+static void dump_dir_dynamic_reloc(void)
+{
+    unsigned int size, section, offset;
+    const char *ptr, *end;
+    const IMAGE_SECTION_HEADER *sec;
+    const IMAGE_DYNAMIC_RELOCATION_TABLE *table;
+
+    if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        const IMAGE_LOAD_CONFIG_DIRECTORY64 *cfg = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size);
+        if (!cfg) return;
+        size = min( size, cfg->Size );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, DynamicValueRelocTableSection )) return;
+        offset = cfg->DynamicValueRelocTableOffset;
+        section = cfg->DynamicValueRelocTableSection;
+    }
+    else
+    {
+        const IMAGE_LOAD_CONFIG_DIRECTORY32 *cfg = get_dir_and_size(IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &size);
+        if (!cfg) return;
+        size = min( size, cfg->Size );
+        if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, DynamicValueRelocTableSection )) return;
+        offset = cfg->DynamicValueRelocTableOffset;
+        section = cfg->DynamicValueRelocTableSection;
+    }
+    if (!section || section > PE_nt_headers->FileHeader.NumberOfSections) return;
+    sec = IMAGE_FIRST_SECTION( PE_nt_headers ) + section - 1;
+    if (offset >= sec->SizeOfRawData) return;
+    table = PRD( sec->PointerToRawData + offset, sizeof(*table) );
+
+    printf( "Dynamic relocations (version %u)\n\n", (UINT)table->Version );
+    ptr = (const char *)(table + 1);
+    end = ptr + table->Size;
+    while (ptr < end)
+    {
+        switch (table->Version)
+        {
+        case 1:
+            if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+            {
+                const IMAGE_DYNAMIC_RELOCATION64 *reloc = (const IMAGE_DYNAMIC_RELOCATION64 *)ptr;
+                dump_dynamic_relocs( (const char *)(reloc + 1), reloc->BaseRelocSize, reloc->Symbol );
+                ptr += sizeof(*reloc) + reloc->BaseRelocSize;
+            }
+            else
+            {
+                const IMAGE_DYNAMIC_RELOCATION32 *reloc = (const IMAGE_DYNAMIC_RELOCATION32 *)ptr;
+                dump_dynamic_relocs( (const char *)(reloc + 1), reloc->BaseRelocSize, reloc->Symbol );
+                ptr += sizeof(*reloc) + reloc->BaseRelocSize;
+            }
+            break;
+        case 2:
+            if (PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+            {
+                const IMAGE_DYNAMIC_RELOCATION64_V2 *reloc = (const IMAGE_DYNAMIC_RELOCATION64_V2 *)ptr;
+                dump_dynamic_relocs( ptr + reloc->HeaderSize, reloc->FixupInfoSize, reloc->Symbol );
+                ptr += reloc->HeaderSize + reloc->FixupInfoSize;
+            }
+            else
+            {
+                const IMAGE_DYNAMIC_RELOCATION32_V2 *reloc = (const IMAGE_DYNAMIC_RELOCATION32_V2 *)ptr;
+                dump_dynamic_relocs( ptr + reloc->HeaderSize, reloc->FixupInfoSize, reloc->Symbol );
+                ptr += reloc->HeaderSize + reloc->FixupInfoSize;
+            }
+            break;
+        }
+    }
+    printf( "\n" );
+}
+
 static void dump_dir_reloc(void)
 {
     unsigned int i, size = 0;
@@ -2560,6 +2707,8 @@ void pe_dump(void)
         dump_dir_clr_header();
     if (globals_dump_sect("reloc"))
         dump_dir_reloc();
+    if (globals_dump_sect("dynreloc"))
+        dump_dir_dynamic_reloc();
     if (globals_dump_sect("except"))
         dump_dir_exceptions();
     if (globals_dump_sect("apiset"))
