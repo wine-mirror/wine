@@ -2572,12 +2572,12 @@ static HRESULT Global_Join(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, V
 
 static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    BSTR str, string, delimiter = NULL;
+    BSTR string, delimiter = NULL;
     int count, max, mode, len, start, end, ret, delimiterlen = 1;
     int i, *indices = NULL, *new_indices, indices_max = 8;
     SAFEARRAYBOUND bounds;
     SAFEARRAY *sa = NULL;
-    VARIANT *data, var;
+    VARIANT *data;
     HRESULT hres = S_OK;
 
     TRACE("%s %u...\n", debugstr_variant(args), args_cnt);
@@ -2685,18 +2685,12 @@ static HRESULT Global_Split(BuiltinDisp *This, VARIANT *args, unsigned args_cnt,
 
     start = 0;
     for (i = 0; i < count; i++) {
-        str = SysAllocStringLen(string + start, indices[i] - start);
-        if (!str) {
+        V_VT(&data[i]) = VT_BSTR;
+        V_BSTR(&data[i]) = SysAllocStringLen(string + start, indices[i] - start);
+
+        if (!V_BSTR(&data[i])) {
             hres = E_OUTOFMEMORY;
             break;
-        }
-        V_VT(&var) = VT_BSTR;
-        V_BSTR(&var) = str;
-
-        hres = VariantCopyInd(data+i, &var);
-        if(FAILED(hres)) {
-            SafeArrayUnaccessData(sa);
-            goto error;
         }
         start = indices[i]+delimiterlen;
     }
