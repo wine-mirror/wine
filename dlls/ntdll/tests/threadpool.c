@@ -1898,6 +1898,7 @@ static void CALLBACK multi_wait_cb(TP_CALLBACK_INSTANCE *instance, void *userdat
 
 static void test_tp_multi_wait(void)
 {
+    TP_POOL_STACK_INFORMATION stack_info;
     TP_CALLBACK_ENVIRON environment;
     HANDLE semaphores[512];
     TP_WAIT *waits[512];
@@ -1917,6 +1918,11 @@ static void test_tp_multi_wait(void)
     status = pTpAllocPool(&pool, NULL);
     ok(!status, "TpAllocPool failed with status %lx\n", status);
     ok(pool != NULL, "expected pool != NULL\n");
+    /* many threads -> use the smallest stack possible */
+    stack_info.StackReserve = 256 * 1024;
+    stack_info.StackCommit = 4 * 1024;
+    status = pTpSetPoolStackInformation(pool, &stack_info);
+    ok(!status, "TpQueryPoolStackInformation failed: %lx\n", status);
 
     memset(&environment, 0, sizeof(environment));
     environment.Version = 1;
