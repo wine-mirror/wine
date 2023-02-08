@@ -12811,14 +12811,14 @@ static void test_empty_recv(void)
     WSASetLastError(0xdeadbeef);
     ret = WSARecv(client, NULL, 0, NULL, &flags, &overlapped, NULL);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
 
     wsabuf.buf = buffer;
     wsabuf.len = 0;
     WSASetLastError(0xdeadbeef);
     ret = WSARecv(client, &wsabuf, 0, NULL, &flags, &overlapped, NULL);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAEINVAL, "got error %u\n", WSAGetLastError());
 
     WSASetLastError(0xdeadbeef);
     ret = WSARecv(client, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
