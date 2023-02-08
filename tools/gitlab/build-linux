@@ -7,7 +7,7 @@ set -Eeuxo pipefail
 
 ./tools/make_requests
 ./tools/make_makefiles
-autoreconf
+autoreconf -f
 
 cd build64
 ../configure -q -C --enable-win64 --enable-werror --with-mingw
