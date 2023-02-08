@@ -1029,9 +1029,10 @@ static HRESULT WINAPI rowset_colsinfo_GetColumnInfo(IColumnsInfo *iface, DBORDIN
             dbcolumn[i].pTypeInfo = NULL;
             dbcolumn[i].iOrdinal = i+1;
 
-            ret = SQLColAttribute(rowset->hstmt, i+1, SQL_DESC_UNSIGNED, NULL, 0, NULL, &length);
+            ret = SQLColAttributesW (rowset->hstmt, i+1, SQL_DESC_UNSIGNED, NULL, 0, NULL, &length);
             if (!SQL_SUCCEEDED(ret))
             {
+                dump_sql_diag_records(SQL_HANDLE_STMT, rowset->hstmt);
                 CoTaskMemFree(ptr);
                 CoTaskMemFree(dbcolumn);
                 ERR("Failed to get column %d attribute\n", i+1);
@@ -1043,7 +1044,7 @@ static HRESULT WINAPI rowset_colsinfo_GetColumnInfo(IColumnsInfo *iface, DBORDIN
 
             dbcolumn[i].dwFlags = DBCOLUMNFLAGS_WRITE;
 
-            ret = SQLColAttribute(rowset->hstmt, i+1, SQL_DESC_LENGTH, NULL, 0, NULL, &length);
+            ret = SQLColAttributesW(rowset->hstmt, i+1, SQL_DESC_LENGTH, NULL, 0, NULL, &length);
             if (!SQL_SUCCEEDED(ret))
             {
                 CoTaskMemFree(ptr);
@@ -1062,7 +1063,7 @@ static HRESULT WINAPI rowset_colsinfo_GetColumnInfo(IColumnsInfo *iface, DBORDIN
             if (is_fixed_length(ColumnDataType))
                 dbcolumn[i].dwFlags |= DBCOLUMNFLAGS_ISFIXEDLENGTH;
 
-            ret = SQLColAttribute(rowset->hstmt, i+1, SQL_DESC_SCALE, NULL, 0, NULL, &length);
+            ret = SQLColAttributesW(rowset->hstmt, i+1, SQL_DESC_SCALE, NULL, 0, NULL, &length);
             if (!SQL_SUCCEEDED(ret))
             {
                 CoTaskMemFree(ptr);
@@ -1074,7 +1075,7 @@ static HRESULT WINAPI rowset_colsinfo_GetColumnInfo(IColumnsInfo *iface, DBORDIN
                 length = 255;
             dbcolumn[i].bScale = length;
 
-            ret = SQLColAttribute(rowset->hstmt, i+1, SQL_DESC_PRECISION, NULL, 0, NULL, &length);
+            ret = SQLColAttributesW(rowset->hstmt, i+1, SQL_DESC_PRECISION, NULL, 0, NULL, &length);
             if (!SQL_SUCCEEDED(ret))
             {
                 CoTaskMemFree(ptr);
