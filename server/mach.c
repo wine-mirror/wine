@@ -31,6 +31,9 @@
 #ifdef HAVE_SYS_SYSCALL_H
 #include <sys/syscall.h>
 #endif
+#ifdef HAVE_SYS_SYSCTL_H
+#include <sys/sysctl.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -72,6 +75,25 @@ static void mach_set_error(kern_return_t mach_error)
 static mach_port_t get_process_port( struct process *process )
 {
     return process->trace_data;
+}
+
+static int is_rosetta( void )
+{
+    static int rosetta_status, did_check = 0;
+    if (!did_check)
+    {
+        /* returns 0 for native process or on error, 1 for translated */
+        int ret = 0;
+        size_t size = sizeof(ret);
+        if (sysctlbyname( "sysctl.proc_translated", &ret, &size, NULL, 0 ) == -1)
+            rosetta_status = 0;
+        else
+            rosetta_status = ret;
+
+        did_check = 1;
+    }
+
+    return rosetta_status;
 }
 
 /* initialize the process control mechanism */
@@ -165,6 +187,14 @@ void get_thread_context( struct thread *thread, context_t *context, unsigned int
     /* all other regs are handled on the client side */
     assert( flags == SERVER_CTX_DEBUG_REGISTERS );
 
+    if (is_rosetta())
+    {
+        /* getting debug registers of a translated process is not supported cross-process, return all zeroes */
+        memset( &context->debug, 0, sizeof(context->debug) );
+        context->flags |= SERVER_CTX_DEBUG_REGISTERS;
+        return;
+    }
+
     if (thread->unix_pid == -1 || !process_port ||
         mach_port_extract_right( process_port, thread->unix_tid,
                                  MACH_MSG_TYPE_COPY_SEND, &port, &type ))
@@ -248,6 +278,15 @@ void set_thread_context( struct thread *thread, const context_t *context, unsign
                                  MACH_MSG_TYPE_COPY_SEND, &port, &type ))
     {
         set_error( STATUS_ACCESS_DENIED );
+        return;
+    }
+
+    if (is_rosetta())
+    {
+        /* Setting debug registers of a translated process is not supported cross-process
+         * (and even in-process, setting debug registers never has the desired effect).
+         */
+        set_error( STATUS_UNSUCCESSFUL );
         return;
     }
 
