@@ -307,7 +307,7 @@ static void test_enum_hosts(void)
     hr = IDirectPlay8Client_CancelAsyncOperation(client, async, 0);
     ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08lx\n", hr);
     todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08lx\n", lastAsyncCode);
-    todo_wine ok(lastAsyncHandle == async, "got 0x%08lx\n", async);
+    todo_wine ok(lastAsyncHandle == async, "got 0x%08lx\n", lastAsyncHandle);
 
     hr = IDirectPlay8Client_Initialize(client2, NULL, DirectPlayMessageHandler, 0);
     ok(hr == S_OK, "got %lx\n", hr);
@@ -322,7 +322,7 @@ static void test_enum_hosts(void)
     ok(hr == S_OK, "IDirectPlay8Client_CancelAsyncOperation failed with 0x%08lx\n", hr);
     flaky
     todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08lx\n", lastAsyncCode);
-    todo_wine ok(lastAsyncHandle == async2, "got 0x%08lx\n", async2);
+    todo_wine ok(lastAsyncHandle == async2, "got 0x%08lx\n", lastAsyncHandle);
 
     IDirectPlay8Address_Release(local);
     IDirectPlay8Address_Release(host);
@@ -745,7 +745,7 @@ static void test_enum_hosts_peer(void)
     hr = IDirectPlay8Peer_CancelAsyncOperation(peer, async, 0);
     todo_wine ok(hr == S_OK, "IDirectPlay8Peer_CancelAsyncOperation failed with 0x%08lx\n", hr);
     todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08lx\n", lastAsyncCode);
-    todo_wine ok(lastAsyncHandle == async, "got 0x%08lx\n", async);
+    todo_wine ok(lastAsyncHandle == async, "got 0x%08lx\n", lastAsyncHandle);
 
     lastAsyncCode = E_FAIL;
     lastAsyncHandle = 0xdeadbeef;
@@ -754,7 +754,7 @@ static void test_enum_hosts_peer(void)
     flaky
     todo_wine ok(lastAsyncCode == DPNERR_USERCANCEL, "got 0x%08lx\n", lastAsyncCode);
     flaky
-    todo_wine ok(lastAsyncHandle == async2, "got 0x%08lx\n", async2);
+    todo_wine ok(lastAsyncHandle == async2, "got 0x%08lx\n", lastAsyncHandle);
 
     IDirectPlay8Peer_Release(peer2);
     IDirectPlay8Address_Release(local);
