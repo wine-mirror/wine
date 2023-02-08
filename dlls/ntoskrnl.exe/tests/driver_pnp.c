@@ -34,6 +34,19 @@
 #include "driver.h"
 #include "utils.h"
 
+/* memcmp() isn't exported from ntoskrnl on i386 */
+static int kmemcmp( const void *ptr1, const void *ptr2, size_t n )
+{
+    const unsigned char *p1, *p2;
+
+    for (p1 = ptr1, p2 = ptr2; n; n--, p1++, p2++)
+    {
+        if (*p1 < *p2) return -1;
+        if (*p1 > *p2) return 1;
+    }
+    return 0;
+}
+
 static const GUID bus_class     = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc1}};
 static const GUID child_class   = {0xdeadbeef, 0x29ef, 0x4538, {0xa5, 0xfd, 0xb6, 0x95, 0x73, 0xa3, 0x62, 0xc2}};
 static UNICODE_STRING control_symlink, bus_symlink;
@@ -178,7 +191,7 @@ static NTSTATUS fdo_pnp(IRP *irp)
 
 static NTSTATUS query_id(struct device *device, IRP *irp, BUS_QUERY_ID_TYPE type)
 {
-    static const WCHAR device_id[] = L"wine\\test";
+    static const WCHAR device_id[] = L"Wine\\Test";
     WCHAR *id = NULL;
 
     irp->IoStatus.Information = 0;
@@ -256,6 +269,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
 
         case IRP_MN_START_DEVICE:
         {
+            static const WCHAR expect_symlink[] = L"\\??\\Wine#Test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}";
             static const LARGE_INTEGER wait_time = {.QuadPart = -500 * 10000};
             POWER_STATE state = {.DeviceState = PowerDeviceD0};
             NTSTATUS status;
@@ -267,6 +281,12 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
 
             status = IoRegisterDeviceInterface(device_obj, &child_class, NULL, &device->child_symlink);
             ok(!status, "Failed to register interface, status %#lx.\n", status);
+            ok(device->child_symlink.Length == sizeof(expect_symlink) - sizeof(WCHAR),
+                    "Got length %u.\n", device->child_symlink.Length);
+            ok(device->child_symlink.MaximumLength == sizeof(expect_symlink),
+                    "Got maximum length %u.\n", device->child_symlink.MaximumLength);
+            todo_wine ok(!kmemcmp(device->child_symlink.Buffer, expect_symlink, device->child_symlink.MaximumLength),
+                    "Got symlink \"%ls\".\n", device->child_symlink.Buffer);
 
             IoSetDeviceInterfaceState(&device->child_symlink, TRUE);
 

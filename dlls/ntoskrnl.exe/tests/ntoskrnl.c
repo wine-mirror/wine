@@ -1406,7 +1406,7 @@ static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wpara
             else if (IsEqualGUID(&iface->dbcc_classguid, &child_class))
             {
                 ++got_child_arrival;
-                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\wine#test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
+                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\Wine#Test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
                         "got name %s\n", debugstr_a(iface->dbcc_name));
             }
             break;
@@ -1434,7 +1434,7 @@ static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wpara
             else if (IsEqualGUID(&iface->dbcc_classguid, &child_class))
             {
                 ++got_child_removal;
-                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\wine#test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
+                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\Wine#Test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
                         "got name %s\n", debugstr_a(iface->dbcc_name));
             }
             break;
@@ -1506,7 +1506,7 @@ static void test_pnp_devices(void)
 
     ret = SetupDiGetDeviceInstanceIdA(set, &device, buffer, sizeof(buffer), NULL);
     ok(ret, "failed to get device ID, error %#lx\n", GetLastError());
-    ok(!strcasecmp(buffer, "root\\winetest\\0"), "got ID %s\n", debugstr_a(buffer));
+    ok(!strcmp(buffer, "ROOT\\WINETEST\\0"), "got ID %s\n", debugstr_a(buffer));
 
     ret = SetupDiEnumDeviceInterfaces(set, NULL, &control_class, 0, &iface);
     ok(ret, "failed to get interface, error %#lx\n", GetLastError());
@@ -1517,7 +1517,7 @@ static void test_pnp_devices(void)
     iface_detail->cbSize = sizeof(*iface_detail);
     ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, iface_detail, sizeof(buffer), NULL, NULL);
     ok(ret, "failed to get interface path, error %#lx\n", GetLastError());
-    ok(!strcasecmp(iface_detail->DevicePath, "\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}"),
+    ok(!strcmp(iface_detail->DevicePath, "\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}"),
             "wrong path %s\n", debugstr_a(iface_detail->DevicePath));
 
     SetupDiDestroyDeviceInfoList(set);
@@ -1614,7 +1614,7 @@ static void test_pnp_devices(void)
 
     ret = SetupDiGetDeviceInstanceIdA(set, &device, buffer, sizeof(buffer), NULL);
     ok(ret, "failed to get device ID, error %#lx\n", GetLastError());
-    ok(!strcasecmp(buffer, "wine\\test\\1"), "got ID %s\n", debugstr_a(buffer));
+    ok(!strcmp(buffer, "WINE\\TEST\\1"), "got ID %s\n", debugstr_a(buffer));
 
     ret = SetupDiGetDeviceRegistryPropertyA(set, &device, SPDRP_CAPABILITIES,
             &type, (BYTE *)&dword, sizeof(dword), NULL);
@@ -1679,6 +1679,18 @@ static void test_pnp_devices(void)
         ok(type == REG_SZ, "got type %lu\n", type);
         ok(!strcmp(buffer, "\\Device\\winetest_pnp_1"), "got PDO name %s\n", debugstr_a(buffer));
     }
+
+    ret = SetupDiEnumDeviceInterfaces(set, NULL, &child_class, 0, &iface);
+    ok(ret, "failed to get interface, error %#lx\n", GetLastError());
+    ok(IsEqualGUID(&iface.InterfaceClassGuid, &child_class),
+            "wrong class %s\n", debugstr_guid(&iface.InterfaceClassGuid));
+    ok(iface.Flags == SPINT_ACTIVE, "got flags %#lx\n", iface.Flags);
+
+    iface_detail->cbSize = sizeof(*iface_detail);
+    ret = SetupDiGetDeviceInterfaceDetailA(set, &iface, iface_detail, sizeof(buffer), NULL, NULL);
+    ok(ret, "failed to get interface path, error %#lx\n", GetLastError());
+    ok(!strcmp(iface_detail->DevicePath, "\\\\?\\wine#test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
+            "wrong path %s\n", debugstr_a(iface_detail->DevicePath));
 
     SetupDiDestroyDeviceInfoList(set);
 
