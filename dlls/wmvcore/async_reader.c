@@ -544,7 +544,8 @@ static HRESULT WINAPI WMReader_QueryInterface(IWMReader *iface, REFIID iid, void
         *out = &reader->IReferenceClock_iface;
     else
     {
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        *out = NULL;
         return E_NOINTERFACE;
     }
 
