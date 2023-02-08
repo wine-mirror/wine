@@ -1375,24 +1375,31 @@ static HRESULT interp_redim_preserve(exec_ctx_t *ctx)
     if(array == NULL || array->cDims == 0) {
         /* can initially allocate the array */
         array = SafeArrayCreate(VT_VARIANT, dim_cnt, bounds);
-        VariantClear(v);
-        V_VT(v) = VT_ARRAY|VT_VARIANT;
-        V_ARRAY(v) = array;
-        return S_OK;
+        if(!array)
+            hres = E_OUTOFMEMORY;
+	else {
+            VariantClear(v);
+            V_VT(v) = VT_ARRAY|VT_VARIANT;
+            V_ARRAY(v) = array;
+        }
     } else if(array->cDims != dim_cnt) {
         /* can't otherwise change the number of dimensions */
         TRACE("Can't resize %s, cDims %d != %d\n", debugstr_w(identifier), array->cDims, dim_cnt);
-        return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+        hres = MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
     } else {
         /* can resize the last dimensions (if others match */
         for(i = 0; i+1 < dim_cnt; ++i) {
             if(array->rgsabound[array->cDims - 1 - i].cElements != bounds[i].cElements) {
                 TRACE("Can't resize %s, bound[%d] %ld != %ld\n", debugstr_w(identifier), i, array->rgsabound[i].cElements, bounds[i].cElements);
-                return MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+                hres = MAKE_VBSERROR(VBSE_OUT_OF_BOUNDS);
+                break;
             }
         }
-        return SafeArrayRedim(array, &bounds[dim_cnt-1]);
+        if(SUCCEEDED(hres))
+            hres = SafeArrayRedim(array, &bounds[dim_cnt-1]);
     }
+    free(bounds);
+    return hres;
 }
 
 static HRESULT interp_step(exec_ctx_t *ctx)
