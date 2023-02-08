@@ -530,26 +530,35 @@ static ULONG WINAPI dbinit_Release(IDBInitialize *iface)
 static HRESULT WINAPI dbinit_Initialize(IDBInitialize *iface)
 {
     struct msdasql *provider = impl_from_IDBInitialize(iface);
-    int i;
+    int i, len;
     SQLRETURN ret;
+    WCHAR connection[1024], *p = connection, outstr[1024];
 
     FIXME("%p semi-stub\n", provider);
 
-    for(i=0; i < sizeof(provider->properties); i++)
+    *p = 0;
+    for(i=0; i < ARRAY_SIZE(provider->properties); i++)
     {
         if (provider->properties[i].id == DBPROP_INIT_DATASOURCE)
-            break;
+        {
+            len = swprintf(p, ARRAY_SIZE(connection) - (p - connection),
+                           L"DSN=%s;", V_BSTR(&provider->properties[i].value));
+            p+= len;
+        }
+        else if (provider->properties[i].id == DBPROP_INIT_PROVIDERSTRING)
+        {
+            if (V_VT(&provider->properties[i].value) == VT_BSTR && SysStringLen(V_BSTR(&provider->properties[i].value)) )
+            {
+                len = swprintf(p, ARRAY_SIZE(connection) - (p - connection),
+                               L"%s;", V_BSTR(&provider->properties[i].value));
+                p+= len;
+            }
+        }
     }
 
-    if (i >= sizeof(provider->properties))
-    {
-        ERR("Datasource not found\n");
-        return E_FAIL;
-    }
-
-    ret = SQLConnectW( provider->hdbc, (SQLWCHAR *)V_BSTR(&provider->properties[i].value),
-        SQL_NTS, NULL, SQL_NTS, NULL, SQL_NTS );
-    TRACE("SQLConnectW ret %d\n", ret);
+    ret = SQLDriverConnectW( provider->hdbc, NULL, connection, wcslen(connection),
+                             outstr, ARRAY_SIZE(outstr), NULL, 0);
+    TRACE("SQLDriverConnectW ret %d\n", ret);
     if (ret != SQL_SUCCESS)
     {
         dump_sql_diag_records(SQL_HANDLE_DBC, provider->hdbc);
