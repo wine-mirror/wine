@@ -1406,7 +1406,7 @@ static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wpara
             else if (IsEqualGUID(&iface->dbcc_classguid, &child_class))
             {
                 ++got_child_arrival;
-                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\Wine#Test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
+                ok(!strcmp(iface->dbcc_name, "\\\\?\\Wine#Test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
                         "got name %s\n", debugstr_a(iface->dbcc_name));
             }
             break;
@@ -1434,7 +1434,7 @@ static LRESULT WINAPI device_notify_proc(HWND window, UINT message, WPARAM wpara
             else if (IsEqualGUID(&iface->dbcc_classguid, &child_class))
             {
                 ++got_child_removal;
-                todo_wine ok(!strcmp(iface->dbcc_name, "\\\\?\\Wine#Test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
+                ok(!strcmp(iface->dbcc_name, "\\\\?\\Wine#Test#1#{deadbeef-29ef-4538-a5fd-b69573a362c2}"),
                         "got name %s\n", debugstr_a(iface->dbcc_name));
             }
             break;
