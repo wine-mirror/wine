@@ -495,9 +495,49 @@ BOOL WINAPI UnloadKeyboardLayout( HKL layout )
 }
 
 
-static DWORD CALLBACK devnotify_window_callback(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header)
+static DWORD CALLBACK devnotify_window_callbackW(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header)
 {
     SendMessageTimeoutW(handle, WM_DEVICECHANGE, flags, (LPARAM)header, SMTO_ABORTIFHUNG, 2000, NULL);
+    return 0;
+}
+
+static DWORD CALLBACK devnotify_window_callbackA(HANDLE handle, DWORD flags, DEV_BROADCAST_HDR *header)
+{
+    if (flags & 0x8000)
+    {
+        switch (header->dbch_devicetype)
+        {
+        case DBT_DEVTYP_DEVICEINTERFACE:
+        {
+            const DEV_BROADCAST_DEVICEINTERFACE_W *ifaceW = (const DEV_BROADCAST_DEVICEINTERFACE_W *)header;
+            size_t lenW = wcslen( ifaceW->dbcc_name );
+            DEV_BROADCAST_DEVICEINTERFACE_A *ifaceA;
+            DWORD lenA;
+
+            if (!(ifaceA = malloc( offsetof(DEV_BROADCAST_DEVICEINTERFACE_A, dbcc_name[lenW * 3 + 1]) )))
+                return 0;
+            lenA = WideCharToMultiByte( CP_ACP, 0, ifaceW->dbcc_name, lenW + 1,
+                                        ifaceA->dbcc_name, lenW * 3 + 1, NULL, NULL );
+
+            ifaceA->dbcc_size = offsetof(DEV_BROADCAST_DEVICEINTERFACE_A, dbcc_name[lenA + 1]);
+            ifaceA->dbcc_devicetype = ifaceW->dbcc_devicetype;
+            ifaceA->dbcc_reserved = ifaceW->dbcc_reserved;
+            ifaceA->dbcc_classguid = ifaceW->dbcc_classguid;
+            SendMessageTimeoutA( handle, WM_DEVICECHANGE, flags, (LPARAM)ifaceA, SMTO_ABORTIFHUNG, 2000, NULL );
+            free( ifaceA );
+            return 0;
+        }
+
+        default:
+            FIXME( "unimplemented W to A mapping for %#lx\n", header->dbch_devicetype );
+            /* fall through */
+        case DBT_DEVTYP_HANDLE:
+        case DBT_DEVTYP_OEM:
+            break;
+        }
+    }
+
+    SendMessageTimeoutA( handle, WM_DEVICECHANGE, flags, (LPARAM)header, SMTO_ABORTIFHUNG, 2000, NULL );
     return 0;
 }
 
@@ -580,8 +620,10 @@ HDEVNOTIFY WINAPI RegisterDeviceNotificationW( HANDLE handle, void *filter, DWOR
 
     if (flags & DEVICE_NOTIFY_SERVICE_HANDLE)
         details.cb = devnotify_service_callback;
+    else if (IsWindowUnicode( handle ))
+        details.cb = devnotify_window_callbackW;
     else
-        details.cb = devnotify_window_callback;
+        details.cb = devnotify_window_callbackA;
 
     return I_ScRegisterDeviceNotification( &details, filter, 0 );
 }
