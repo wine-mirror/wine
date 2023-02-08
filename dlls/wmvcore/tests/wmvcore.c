@@ -134,7 +134,7 @@ static WCHAR *load_resource(const WCHAR *name)
 static HRESULT check_interface_(unsigned int line, void *iface, REFIID riid, BOOL supported)
 {
     HRESULT hr, expected_hr;
-    IUnknown *unknown = iface, *out;
+    IUnknown *unknown = iface, *out = (IUnknown *)0xbeef;
 
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
@@ -142,6 +142,8 @@ static HRESULT check_interface_(unsigned int line, void *iface, REFIID riid, BOO
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(out);
+    else if (!supported)
+        ok_(__FILE__, line)(out == NULL, "Expected out == NULL\n");
     return hr;
 }
 
