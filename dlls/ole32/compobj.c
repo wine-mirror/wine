@@ -252,7 +252,7 @@ static HKEY create_classes_root_hkey(DWORD access)
 {
     HKEY hkey, ret = 0;
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING name;
+    UNICODE_STRING name = RTL_CONSTANT_STRING(L"\\Registry\\Machine\\Software\\Classes");
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -260,7 +260,6 @@ static HKEY create_classes_root_hkey(DWORD access)
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &name, L"\\Registry\\Machine\\Software\\Classes" );
     if (create_key( &hkey, access, &attr )) return 0;
     TRACE( "%s -> %p\n", debugstr_w(attr.ObjectName->Buffer), hkey );
 
