@@ -1323,11 +1323,11 @@ static void check_dmo_set_input_type(IMediaObject *media_object, const GUID *sub
     {
         flag = flags[i];
         hr = IMediaObject_SetInputType(media_object, 1, NULL, flag);
-        ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetInputType returned %#lx for flag %#lx.", hr, flag);
+        ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetInputType returned %#lx for flag %#lx.\n", hr, flag);
         hr = IMediaObject_SetInputType(media_object, 1, &bad_media_type, flag);
-        ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetInputType returned %#lx for flag %#lx.", hr, flag);
+        ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetInputType returned %#lx for flag %#lx.\n", hr, flag);
         hr = IMediaObject_SetInputType(media_object, 1, good_media_type, flag);
-        ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetInputType returned %#lx for flag %#lx.", hr, flag);
+        ok(hr == DMO_E_INVALIDSTREAMINDEX, "SetInputType returned %#lx for flag %#lx.\n", hr, flag);
     }
 
     /* Test unaccepted type. */
@@ -1337,10 +1337,10 @@ static void check_dmo_set_input_type(IMediaObject *media_object, const GUID *sub
         if (!(flag & DMO_SET_TYPEF_CLEAR))
         {
             hr = IMediaObject_SetInputType(media_object, 0, NULL, flag);
-            ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx for flag %#lx.", hr, flag);
+            ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx for flag %#lx.\n", hr, flag);
         }
         hr = IMediaObject_SetInputType(media_object, 0, &bad_media_type, flag);
-        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx for flag %#lx.", hr, flag);
+        ok(hr == DMO_E_TYPE_NOT_ACCEPTED, "SetInputType returned %#lx for flag %#lx.\n", hr, flag);
     }
 
     /* Test clearing the type. */
@@ -1348,7 +1348,7 @@ static void check_dmo_set_input_type(IMediaObject *media_object, const GUID *sub
     {
         flag = DMO_SET_TYPEF_CLEAR | flags[i];
         hr = IMediaObject_SetInputType(media_object, 0, NULL, flag);
-        ok(hr == S_OK, "SetInputType returned %#lx for flag %#lx.", hr, flag);
+        ok(hr == S_OK, "SetInputType returned %#lx for flag %#lx.\n", hr, flag);
     }
 
     /* Test accepted type. */
@@ -1356,7 +1356,7 @@ static void check_dmo_set_input_type(IMediaObject *media_object, const GUID *sub
     {
         flag = flags[i];
         hr = IMediaObject_SetInputType(media_object, 0, good_media_type, flag);
-        ok(hr == S_OK, "SetInputType returned %#lx for flag %#lx.", hr, flag);
+        ok(hr == S_OK, "SetInputType returned %#lx for flag %#lx.\n", hr, flag);
     }
 
     /* Test unconsidered header member.*/
