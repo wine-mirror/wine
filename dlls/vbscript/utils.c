@@ -28,6 +28,7 @@ typedef struct {
     LONG ref;
 
     SAFEARRAY *sa;
+    BOOL owned;
     ULONG i, size;
 } safearray_iter;
 
@@ -75,8 +76,11 @@ static ULONG WINAPI safearray_iter_IEnumVARIANT_Release(IEnumVARIANT *iface)
     TRACE("(%p) ref=%ld\n", iface, ref);
 
     if(!ref) {
-        if(This->sa)
+        if(This->sa) {
             SafeArrayUnlock(This->sa);
+            if(This->owned)
+                SafeArrayDestroy(This->sa);
+	}
         free(This);
     }
 
@@ -160,7 +164,7 @@ static ULONG get_safearray_size(SAFEARRAY *sa)
     return ret;
 }
 
-HRESULT create_safearray_iter(SAFEARRAY *sa, IEnumVARIANT **ev)
+HRESULT create_safearray_iter(SAFEARRAY *sa, BOOL owned, IEnumVARIANT **ev)
 {
     safearray_iter *iter;
     HRESULT hres;
@@ -185,6 +189,7 @@ HRESULT create_safearray_iter(SAFEARRAY *sa, IEnumVARIANT **ev)
     iter->IEnumVARIANT_iface.lpVtbl = &safearray_iter_EnumVARIANTVtbl;
     iter->ref = 1;
     iter->sa = sa;
+    iter->owned = owned;
     iter->i = 0;
     iter->size = get_safearray_size(sa);
 

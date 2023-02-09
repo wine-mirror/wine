@@ -1480,7 +1480,7 @@ static HRESULT interp_newenum(exec_ctx_t *ctx)
     case VT_VARIANT|VT_ARRAY|VT_BYREF: {
         IEnumVARIANT *iter;
 
-        hres = create_safearray_iter(V_ISBYREF(v.v) ? *V_ARRAYREF(v.v) : V_ARRAY(v.v), &iter);
+        hres = create_safearray_iter(V_ISBYREF(v.v) ? *V_ARRAYREF(v.v) : V_ARRAY(v.v), v.owned && !V_ISBYREF(v.v), &iter);
         if(FAILED(hres))
             return hres;
 
