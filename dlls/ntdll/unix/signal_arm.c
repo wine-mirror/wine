@@ -1701,7 +1701,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "ldr r5, [r4]\n\t"               /* table->ServiceTable */
                    "ldr ip, [r5, ip, lsl #2]\n\t"
                    "blx ip\n"
-                   ".L__wine_syscall_dispatcher_return:\n\t"
+                   __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
                    "ldr ip, [r8, #0x44]\n\t"    /* frame->restore_flags */
 #ifndef __SOFTFP__
                    "tst ip, #4\n\t"                 /* CONTEXT_FLOATING_POINT */
@@ -1722,12 +1722,12 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "5:\tmovw r0, #0x000d\n\t" /* STATUS_INVALID_PARAMETER */
                    "movt r0, #0xc000\n\t"
                    "add sp, sp, #0x10\n\t"
-                   "b .L__wine_syscall_dispatcher_return\n\t"
+                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "mov r8, r0\n\t"
                    "mov r0, r1\n\t"
-                   "b .L__wine_syscall_dispatcher_return" )
+                   "b " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************
@@ -1762,7 +1762,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "ldr sp, [r8, #0x38]\n\t"
                    "add r8, r8, #0x10\n\t"
                    "ldm r8, {r4-r12,pc}\n\t"
-                   "1:\tb .L__wine_syscall_dispatcher_return" )
+                   "1:\tb " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************

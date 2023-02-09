@@ -2757,7 +2757,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "leaq -0x98(%rbp),%rcx\n\t"
                    /* $rcx is now pointing to "frame" again */
                    __ASM_CFI(".cfi_restore_state\n")
-                   ".L__wine_syscall_dispatcher_return:\n\t"
+                   __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\n\t"
                    "movl 0x94(%rcx),%edx\n\t"  /* frame->restore_flags */
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
@@ -2849,7 +2849,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
                    "movl 0xb0(%rcx),%r14d\n\t"     /* frame->syscall_flags */
                    "movq %rdx,%rax\n\t"
-                   "jmp .L__wine_syscall_dispatcher_return" )
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************
@@ -2930,7 +2930,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    "movdqa 0x240(%rcx),%xmm14\n\t"
                    "movdqa 0x250(%rcx),%xmm15\n\t"
                    "testl $0xffff,0x94(%rcx)\n\t"  /* frame->restore_flags */
-                   "jnz .L__wine_syscall_dispatcher_return\n\t"
+                   "jnz " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
 #ifdef __linux__
                    "testl $12,%r14d\n\t"           /* SYSCALL_HAVE_PTHREAD_TEB | SYSCALL_HAVE_WRFSGSBASE */
                    "jz 1f\n\t"

@@ -2630,7 +2630,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "call *(%eax,%edx,4)\n\t"
                    "leal -0x34(%ebp),%esp\n"
 
-                   ".L__wine_syscall_dispatcher_return:\t"
+                   __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") ":\t"
                    __ASM_CFI_CFA_IS_AT1(esp, 0x0c)
                    __ASM_CFI_REG_IS_AT1(esp, esp, 0x0c)
                    __ASM_CFI_REG_IS_AT1(eip, esp, 0x08)
@@ -2707,7 +2707,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "iret\n"
                    __ASM_CFI("\t.cfi_restore_state\n")
                    "6:\tmovl $0xc000000d,%eax\n\t" /* STATUS_INVALID_PARAMETER */
-                   "jmp .L__wine_syscall_dispatcher_return\n\t"
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
 
                    ".globl " __ASM_NAME("__wine_syscall_dispatcher_return") "\n"
                    __ASM_NAME("__wine_syscall_dispatcher_return") ":\n\t"
@@ -2722,7 +2722,7 @@ __ASM_GLOBAL_FUNC( __wine_syscall_dispatcher,
                    "movl 8(%esp),%eax\n\t"
                    "movl 4(%esp),%esp\n\t"
                    __ASM_CFI(".cfi_restore_state\n\t")
-                   "jmp .L__wine_syscall_dispatcher_return" )
+                   "jmp " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") )
 
 
 /***********************************************************************
@@ -2769,7 +2769,7 @@ __ASM_GLOBAL_FUNC( __wine_unix_call_dispatcher,
                    __ASM_CFI_REG_IS_AT1(esi, esp, 0x30)
                    __ASM_CFI_REG_IS_AT1(ebp, esp, 0x34)
                    "testw $0xffff,2(%esp)\n\t" /* frame->restore_flags */
-                   "jnz .L__wine_syscall_dispatcher_return\n\t"
+                   "jnz " __ASM_LOCAL_LABEL("__wine_syscall_dispatcher_return") "\n\t"
                    "movl 0x08(%esp),%ecx\n\t"  /* frame->eip */
                    __ASM_CFI(".cfi_register %eip, %ecx\n\t")
                    "movl 0x0c(%esp),%esp\n\t"  /* frame->esp */
