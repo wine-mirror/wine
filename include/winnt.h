@@ -118,6 +118,8 @@ extern "C" {
 #define DECLSPEC_SELECTANY __declspec(selectany)
 #elif defined(__MINGW32__)
 #define DECLSPEC_SELECTANY __attribute__((selectany))
+#elif defined(__GNUC__)
+#define DECLSPEC_SELECTANY __attribute__((weak))
 #else
 #define DECLSPEC_SELECTANY
 #endif
