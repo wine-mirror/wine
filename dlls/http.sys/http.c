@@ -1199,19 +1199,18 @@ static void WINAPI unload(DRIVER_OBJECT *driver)
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 {
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
-    UNICODE_STRING string;
+    UNICODE_STRING device_http = RTL_CONSTANT_STRING(L"\\Device\\Http");
+    UNICODE_STRING device_http_req_queue = RTL_CONSTANT_STRING(L"\\Device\\Http\\ReqQueue");
     WSADATA wsadata;
     NTSTATUS ret;
 
     TRACE("driver %p, path %s.\n", driver, debugstr_w(path->Buffer));
 
-    RtlInitUnicodeString(&string, L"\\Device\\Http");
-    attr.ObjectName = &string;
+    attr.ObjectName = &device_http;
     if ((ret = NtCreateDirectoryObject(&directory_obj, 0, &attr)) && ret != STATUS_OBJECT_NAME_COLLISION)
         ERR("Failed to create \\Device\\Http directory, status %#lx.\n", ret);
 
-    RtlInitUnicodeString(&string, L"\\Device\\Http\\ReqQueue");
-    if ((ret = IoCreateDevice(driver, 0, &string, FILE_DEVICE_UNKNOWN, 0, FALSE, &device_obj)))
+    if ((ret = IoCreateDevice(driver, 0, &device_http_req_queue, FILE_DEVICE_UNKNOWN, 0, FALSE, &device_obj)))
     {
         ERR("Failed to create request queue device, status %#lx.\n", ret);
         NtClose(directory_obj);
