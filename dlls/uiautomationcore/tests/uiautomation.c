@@ -10560,6 +10560,171 @@ static void test_CUIAutomation_condition_ifaces(IUIAutomation *uia_iface)
     IUIAutomationBoolCondition_Release(bool_cond);
 }
 
+static void test_CUIAutomation_cache_request_iface(IUIAutomation *uia_iface)
+{
+    IUIAutomationPropertyCondition *prop_cond;
+    enum PropertyConditionFlags prop_flags;
+    IUIAutomationCacheRequest *cache_req;
+    enum AutomationElementMode elem_mode;
+    IUIAutomationCondition *cond, *cond2;
+    IUIAutomationNotCondition *not_cond;
+    enum TreeScope scope;
+    PROPERTYID prop_id;
+    HRESULT hr;
+    VARIANT v;
+
+    hr = IUIAutomation_CreateCacheRequest(uia_iface, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    /*
+     * CreateCacheRequest returns an IUIAutomationCacheRequest with the
+     * default cache request values set.
+     */
+    cache_req = NULL;
+    hr = IUIAutomation_CreateCacheRequest(uia_iface, &cache_req);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cache_req, "cache_req == NULL\n");
+
+    /*
+     * TreeScope tests.
+     */
+    hr = IUIAutomationCacheRequest_get_TreeScope(cache_req, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    scope = 0;
+    hr = IUIAutomationCacheRequest_get_TreeScope(cache_req, &scope);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(scope == TreeScope_Element, "Unexpected scope %#x\n", scope);
+
+    /* Set it to something invalid. */
+    hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, 0);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, TreeScope_Parent);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, TreeScope_Ancestors);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, TreeScope_Parent | TreeScope_Element);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, TreeScope_Ancestors | TreeScope_Element);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, ~(TreeScope_SubTree | TreeScope_Parent | TreeScope_Ancestors));
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    /* Invalid values don't change anything. */
+    scope = 0;
+    hr = IUIAutomationCacheRequest_get_TreeScope(cache_req, &scope);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(scope == TreeScope_Element, "Unexpected scope %#x\n", scope);
+
+    /* Now set it to TreeScope_Children. */
+    hr = IUIAutomationCacheRequest_put_TreeScope(cache_req, TreeScope_Children);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    scope = 0;
+    hr = IUIAutomationCacheRequest_get_TreeScope(cache_req, &scope);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(scope == TreeScope_Children, "Unexpected scope %#x\n", scope);
+
+    /*
+     * TreeFilter tests.
+     */
+    cond = NULL;
+    hr = IUIAutomationCacheRequest_get_TreeFilter(cache_req, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    cond = NULL;
+    hr = IUIAutomationCacheRequest_put_TreeFilter(cache_req, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    cond = NULL;
+    hr = IUIAutomationCacheRequest_put_TreeFilter(cache_req, (IUIAutomationCondition *)&Object);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+
+    /* Default IUIAutomationCacheRequest has the ControlView condition. */
+    cond = NULL;
+    hr = IUIAutomationCacheRequest_get_TreeFilter(cache_req, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationNotCondition, (void **)&not_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!not_cond, "not_cond == NULL\n");
+
+    cond = NULL;
+    hr = IUIAutomationNotCondition_GetChild(not_cond, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCondition_QueryInterface(cond, &IID_IUIAutomationPropertyCondition, (void **)&prop_cond);
+    IUIAutomationCondition_Release(cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!prop_cond, "prop_cond == NULL\n");
+
+    hr = IUIAutomationPropertyCondition_get_PropertyId(prop_cond, &prop_id);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(prop_id == UIA_IsControlElementPropertyId, "Unexpected prop_id %d.\n", prop_id);
+
+    VariantInit(&v);
+    hr = IUIAutomationPropertyCondition_get_PropertyValue(prop_cond, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(check_variant_bool(&v, FALSE), "Unexpected BOOL %#x\n", V_BOOL(&v));
+    VariantClear(&v);
+
+    hr = IUIAutomationPropertyCondition_get_PropertyConditionFlags(prop_cond, &prop_flags);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(prop_flags == PropertyConditionFlags_None, "Unexpected flags %#x.\n", prop_flags);
+
+    IUIAutomationPropertyCondition_Release(prop_cond);
+    IUIAutomationNotCondition_Release(not_cond);
+
+    /* Set a new TreeFilter condition. */
+    cond = NULL;
+    hr = IUIAutomation_CreateTrueCondition(uia_iface, &cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond, "cond == NULL\n");
+
+    hr = IUIAutomationCacheRequest_put_TreeFilter(cache_req, cond);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomationCacheRequest_get_TreeFilter(cache_req, &cond2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!cond2, "cond2 == NULL\n");
+    ok(iface_cmp((IUnknown *)cond, (IUnknown *)cond2), "cond != cond2\n");
+    IUIAutomationCondition_Release(cond);
+    IUIAutomationCondition_Release(cond2);
+
+    /*
+     * AutomationElementMode tests.
+     */
+    hr = IUIAutomationCacheRequest_get_AutomationElementMode(cache_req, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    elem_mode = 0;
+    hr = IUIAutomationCacheRequest_get_AutomationElementMode(cache_req, &elem_mode);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(elem_mode == AutomationElementMode_Full, "Unexpected element mode %#x\n", elem_mode);
+
+    /* Invalid value - maximum is AutomationElementMode_Full, 0x01. */
+    hr = IUIAutomationCacheRequest_put_AutomationElementMode(cache_req, 0x02);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = IUIAutomationCacheRequest_put_AutomationElementMode(cache_req, AutomationElementMode_None);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    elem_mode = 0;
+    hr = IUIAutomationCacheRequest_get_AutomationElementMode(cache_req, &elem_mode);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(elem_mode == AutomationElementMode_None, "Unexpected element mode %#x\n", elem_mode);
+
+    IUIAutomationCacheRequest_Release(cache_req);
+}
+
 struct uia_com_classes {
     const GUID *clsid;
     const GUID *iid;
@@ -10660,6 +10825,7 @@ static void test_CUIAutomation(void)
 
     test_CUIAutomation_condition_ifaces(uia_iface);
     test_CUIAutomation_value_conversion(uia_iface);
+    test_CUIAutomation_cache_request_iface(uia_iface);
     test_ElementFromHandle(uia_iface, has_cui8);
     test_Element_GetPropertyValue(uia_iface);
 

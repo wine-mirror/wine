@@ -593,6 +593,264 @@ static HRESULT get_uia_condition_struct_from_iface(IUIAutomationCondition *condi
     return S_OK;
 }
 
+static HRESULT create_control_view_condition_iface(IUIAutomationCondition **out_condition)
+{
+    IUIAutomationCondition *prop_cond, *not_cond;
+    HRESULT hr;
+    VARIANT v;
+
+    if (!out_condition)
+        return E_POINTER;
+
+    *out_condition = NULL;
+
+    VariantInit(&v);
+    V_VT(&v) = VT_BOOL;
+    V_BOOL(&v) = VARIANT_FALSE;
+    hr = create_uia_property_condition_iface(&prop_cond, UIA_IsControlElementPropertyId, v, PropertyConditionFlags_None);
+    if (FAILED(hr))
+        return hr;
+
+    hr = create_uia_not_condition_iface(&not_cond, prop_cond);
+    if (FAILED(hr))
+    {
+        IUIAutomationCondition_Release(prop_cond);
+        return hr;
+    }
+
+    *out_condition = not_cond;
+
+    return S_OK;
+}
+
+/*
+ * IUIAutomationCacheRequest interface.
+ */
+struct uia_cache_request {
+    IUIAutomationCacheRequest IUIAutomationCacheRequest_iface;
+    LONG ref;
+
+    IUIAutomationCondition *view_condition;
+    struct UiaCacheRequest cache_req;
+};
+
+static inline struct uia_cache_request *impl_from_IUIAutomationCacheRequest(IUIAutomationCacheRequest *iface)
+{
+    return CONTAINING_RECORD(iface, struct uia_cache_request, IUIAutomationCacheRequest_iface);
+}
+
+static HRESULT WINAPI uia_cache_request_QueryInterface(IUIAutomationCacheRequest *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUIAutomationCacheRequest) || IsEqualIID(riid, &IID_IUnknown))
+        *ppv = iface;
+    else
+        return E_NOINTERFACE;
+
+    IUIAutomationCacheRequest_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI uia_cache_request_AddRef(IUIAutomationCacheRequest *iface)
+{
+    struct uia_cache_request *uia_cache_request = impl_from_IUIAutomationCacheRequest(iface);
+    ULONG ref = InterlockedIncrement(&uia_cache_request->ref);
+
+    TRACE("%p, refcount %ld\n", uia_cache_request, ref);
+    return ref;
+}
+
+static ULONG WINAPI uia_cache_request_Release(IUIAutomationCacheRequest *iface)
+{
+    struct uia_cache_request *uia_cache_request = impl_from_IUIAutomationCacheRequest(iface);
+    ULONG ref = InterlockedDecrement(&uia_cache_request->ref);
+
+    TRACE("%p, refcount %ld\n", uia_cache_request, ref);
+
+    if (!ref)
+    {
+        IUIAutomationCondition_Release(uia_cache_request->view_condition);
+        heap_free(uia_cache_request);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI uia_cache_request_AddProperty(IUIAutomationCacheRequest *iface, PROPERTYID prop_id)
+{
+    FIXME("%p, %d: stub\n", iface, prop_id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_cache_request_AddPattern(IUIAutomationCacheRequest *iface, PATTERNID pattern_id)
+{
+    FIXME("%p, %d: stub\n", iface, pattern_id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_cache_request_Clone(IUIAutomationCacheRequest *iface, IUIAutomationCacheRequest **out_req)
+{
+    FIXME("%p, %p: stub\n", iface, out_req);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI uia_cache_request_get_TreeScope(IUIAutomationCacheRequest *iface, enum TreeScope *scope)
+{
+    struct uia_cache_request *uia_cache_request = impl_from_IUIAutomationCacheRequest(iface);
+
+    TRACE("%p, %p\n", iface, scope);
+
+    if (!scope)
+        return E_POINTER;
+
+    *scope = uia_cache_request->cache_req.Scope;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_cache_request_put_TreeScope(IUIAutomationCacheRequest *iface, enum TreeScope scope)
+{
+    struct uia_cache_request *uia_cache_request = impl_from_IUIAutomationCacheRequest(iface);
+
+    TRACE("%p, %#x\n", iface, scope);
+
+    if (!scope || (scope & ~TreeScope_SubTree))
+        return E_INVALIDARG;
+
+    if ((scope & TreeScope_Children) || (scope & TreeScope_Descendants))
+    {
+        FIXME("Unimplemented TreeScope %#x\n", scope);
+        return E_NOTIMPL;
+    }
+
+    uia_cache_request->cache_req.Scope = scope;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_cache_request_get_TreeFilter(IUIAutomationCacheRequest *iface,
+        IUIAutomationCondition **filter)
+{
+    struct uia_cache_request *uia_cache_request = impl_from_IUIAutomationCacheRequest(iface);
+
+    TRACE("%p, %p\n", iface, filter);
+
+    if (!filter)
+        return E_POINTER;
+
+    IUIAutomationCondition_AddRef(uia_cache_request->view_condition);
+    *filter = uia_cache_request->view_condition;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_cache_request_put_TreeFilter(IUIAutomationCacheRequest *iface, IUIAutomationCondition *filter)
+{
+    struct uia_cache_request *uia_cache_request = impl_from_IUIAutomationCacheRequest(iface);
+    struct UiaCondition *cond_struct;
+    HRESULT hr;
+
+    TRACE("%p, %p\n", iface, filter);
+
+    if (!filter)
+        return E_POINTER;
+
+    hr = get_uia_condition_struct_from_iface(filter, &cond_struct);
+    if (FAILED(hr))
+        return hr;
+
+    uia_cache_request->cache_req.pViewCondition = cond_struct;
+    IUIAutomationCondition_Release(uia_cache_request->view_condition);
+    uia_cache_request->view_condition = filter;
+    IUIAutomationCondition_AddRef(filter);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_cache_request_get_AutomationElementMode(IUIAutomationCacheRequest *iface,
+        enum AutomationElementMode *mode)
+{
+    struct uia_cache_request *uia_cache_request = impl_from_IUIAutomationCacheRequest(iface);
+
+    TRACE("%p, %p\n", iface, mode);
+
+    if (!mode)
+        return E_POINTER;
+
+    *mode = uia_cache_request->cache_req.automationElementMode;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI uia_cache_request_put_AutomationElementMode(IUIAutomationCacheRequest *iface,
+        enum AutomationElementMode mode)
+{
+    struct uia_cache_request *uia_cache_request = impl_from_IUIAutomationCacheRequest(iface);
+
+    TRACE("%p, %d\n", iface, mode);
+
+    if ((mode != AutomationElementMode_Full) && (mode != AutomationElementMode_None))
+        return E_INVALIDARG;
+
+    if (mode == AutomationElementMode_None)
+    {
+        FIXME("AutomationElementMode_None unsupported\n");
+        return E_NOTIMPL;
+    }
+
+    uia_cache_request->cache_req.automationElementMode = mode;
+
+    return S_OK;
+}
+
+static const IUIAutomationCacheRequestVtbl uia_cache_request_vtbl = {
+    uia_cache_request_QueryInterface,
+    uia_cache_request_AddRef,
+    uia_cache_request_Release,
+    uia_cache_request_AddProperty,
+    uia_cache_request_AddPattern,
+    uia_cache_request_Clone,
+    uia_cache_request_get_TreeScope,
+    uia_cache_request_put_TreeScope,
+    uia_cache_request_get_TreeFilter,
+    uia_cache_request_put_TreeFilter,
+    uia_cache_request_get_AutomationElementMode,
+    uia_cache_request_put_AutomationElementMode,
+};
+
+static HRESULT create_uia_cache_request_iface(IUIAutomationCacheRequest **out_cache_req)
+{
+    struct uia_cache_request *uia_cache_request;
+    IUIAutomationCondition *view_condition;
+    HRESULT hr;
+
+    if (!out_cache_req)
+        return E_POINTER;
+
+    *out_cache_req = NULL;
+    hr = create_control_view_condition_iface(&view_condition);
+    if (FAILED(hr))
+        return hr;
+
+    uia_cache_request = heap_alloc_zero(sizeof(*uia_cache_request));
+    if (!uia_cache_request)
+    {
+        IUIAutomationCondition_Release(view_condition);
+        return E_OUTOFMEMORY;
+    }
+
+    uia_cache_request->IUIAutomationCacheRequest_iface.lpVtbl = &uia_cache_request_vtbl;
+    uia_cache_request->ref = 1;
+
+    uia_cache_request->view_condition = view_condition;
+    get_uia_condition_struct_from_iface(view_condition, &uia_cache_request->cache_req.pViewCondition);
+    uia_cache_request->cache_req.Scope = TreeScope_Element;
+    uia_cache_request->cache_req.automationElementMode = AutomationElementMode_Full;
+
+    *out_cache_req = &uia_cache_request->IUIAutomationCacheRequest_iface;
+    return S_OK;
+}
+
 /*
  * IUIAutomationElementArray interface.
  */
@@ -1969,34 +2227,9 @@ static HRESULT WINAPI uia_iface_get_RawViewCondition(IUIAutomation6 *iface, IUIA
 
 static HRESULT WINAPI uia_iface_get_ControlViewCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)
 {
-    IUIAutomationCondition *prop_cond, *not_cond;
-    HRESULT hr;
-    VARIANT v;
-
     TRACE("%p, %p\n", iface, out_condition);
 
-    if (!out_condition)
-        return E_POINTER;
-
-    *out_condition = NULL;
-
-    VariantInit(&v);
-    V_VT(&v) = VT_BOOL;
-    V_BOOL(&v) = VARIANT_FALSE;
-    hr = create_uia_property_condition_iface(&prop_cond, UIA_IsControlElementPropertyId, v, PropertyConditionFlags_None);
-    if (FAILED(hr))
-        return hr;
-
-    hr = create_uia_not_condition_iface(&not_cond, prop_cond);
-    if (FAILED(hr))
-    {
-        IUIAutomationCondition_Release(prop_cond);
-        return hr;
-    }
-
-    *out_condition = not_cond;
-
-    return S_OK;
+    return create_control_view_condition_iface(out_condition);
 }
 
 static HRESULT WINAPI uia_iface_get_ContentViewCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)
@@ -2007,8 +2240,9 @@ static HRESULT WINAPI uia_iface_get_ContentViewCondition(IUIAutomation6 *iface, 
 
 static HRESULT WINAPI uia_iface_CreateCacheRequest(IUIAutomation6 *iface, IUIAutomationCacheRequest **out_cache_req)
 {
-    FIXME("%p, %p: stub\n", iface, out_cache_req);
-    return E_NOTIMPL;
+    TRACE("%p, %p\n", iface, out_cache_req);
+
+    return create_uia_cache_request_iface(out_cache_req);
 }
 
 static HRESULT WINAPI uia_iface_CreateTrueCondition(IUIAutomation6 *iface, IUIAutomationCondition **out_condition)
