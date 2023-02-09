@@ -78,7 +78,7 @@ msgstr "&Изменить..."
 
 #: dlls/appwiz.cpl/appwiz.rc:69 dlls/appwiz.cpl/appwiz.rc:45
 #: dlls/cryptui/cryptui.rc:351 dlls/msacm32/msacm32.rc:40
-#: programs/winecfg/winecfg.rc:199 programs/winecfg/winecfg.rc:236
+#: programs/winecfg/winecfg.rc:205 programs/winecfg/winecfg.rc:242
 #: programs/wordpad/wordpad.rc:256
 msgid "&Remove"
 msgstr "&Удалить"
@@ -114,8 +114,8 @@ msgstr "Сведения о поддержке"
 #: programs/regedit/regedit.rc:312 programs/regedit/regedit.rc:325
 #: programs/regedit/regedit.rc:341 programs/regedit/regedit.rc:354
 #: programs/regedit/regedit.rc:367 programs/taskmgr/taskmgr.rc:442
-#: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
-#: programs/winecfg/winecfg.rc:223 programs/winefile/winefile.rc:127
+#: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:219
+#: programs/winecfg/winecfg.rc:229 programs/winefile/winefile.rc:127
 #: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
 #: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
 #: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
@@ -222,8 +222,8 @@ msgstr "&Установить"
 #: programs/regedit/regedit.rc:326 programs/regedit/regedit.rc:342
 #: programs/regedit/regedit.rc:355 programs/regedit/regedit.rc:368
 #: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
-#: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
-#: programs/winecfg/winecfg.rc:224 programs/winefile/winefile.rc:128
+#: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:220
+#: programs/winecfg/winecfg.rc:230 programs/winefile/winefile.rc:128
 #: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
 #: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
 #: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
@@ -691,7 +691,7 @@ msgid "Font St&yle:"
 msgstr "&Начертание:"
 
 #: dlls/comdlg32/comdlg32.rc:260 dlls/comdlg32/comdlg32.rc:439
-#: programs/winecfg/winecfg.rc:292
+#: programs/winecfg/winecfg.rc:300
 msgid "&Size:"
 msgstr "&Размер:"
 
@@ -707,7 +707,7 @@ msgstr "&Зачёркнутый"
 msgid "&Underline"
 msgstr "Под&чёркнутый"
 
-#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:290
+#: dlls/comdlg32/comdlg32.rc:270 programs/winecfg/winecfg.rc:298
 msgid "&Color:"
 msgstr "Цвет:"
 
@@ -885,7 +885,7 @@ msgstr "Число &копий:"
 msgid "C&ollate"
 msgstr "&Разбить"
 
-#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:298
+#: dlls/comdlg32/comdlg32.rc:414 programs/winecfg/winecfg.rc:306
 msgid "Si&ze:"
 msgstr "Размер:"
 
@@ -2391,7 +2391,7 @@ msgid "&File name:"
 msgstr "Имя &файла:"
 
 #: dlls/cryptui/cryptui.rc:301 dlls/cryptui/cryptui.rc:323
-#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:311
+#: dlls/cryptui/cryptui.rc:437 programs/winecfg/winecfg.rc:319
 msgid "B&rowse..."
 msgstr "&Обзор..."
 
@@ -3741,7 +3741,7 @@ msgstr "Видео кодек Wine Video 1"
 msgid "Joysticks"
 msgstr "Джойстики"
 
-#: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:212
+#: dlls/joy.cpl/joy.rc:40 programs/winecfg/winecfg.rc:218
 msgid "&Disable"
 msgstr "&Отключить"
 
@@ -4113,7 +4113,7 @@ msgid "Wine kernel DLL"
 msgstr "Библиотека ядра Wine"
 
 #: include/wine/wine_common_ver.rc:143 dlls/winemac.drv/winemac.rc:32
-#: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:137
+#: programs/wineboot/wineboot.rc:42 programs/winecfg/winecfg.rc:143
 msgid "Wine"
 msgstr "Wine"
 
@@ -8168,7 +8168,7 @@ msgstr "Ссылка"
 msgid "Hyperlink Information"
 msgstr "Информация о ссылке"
 
-#: dlls/mshtml/mshtml.rc:43 programs/winecfg/winecfg.rc:243
+#: dlls/mshtml/mshtml.rc:43 programs/winecfg/winecfg.rc:249
 msgid "&Type:"
 msgstr "&Тип:"
 
@@ -9572,7 +9572,7 @@ msgid "b"
 msgstr "бит"
 
 #: dlls/sane.ds/sane.rc:34 dlls/wineps.drv/wineps.rc:49
-#: programs/winecfg/winecfg.rc:182
+#: programs/winecfg/winecfg.rc:188
 msgctxt "unit: dots/inch"
 msgid "dpi"
 msgstr "т/дюйм"
@@ -10089,7 +10089,7 @@ msgstr "&Открыть:"
 
 #: dlls/shell32/shell32.rc:341 programs/progman/progman.rc:182
 #: programs/progman/progman.rc:201 programs/progman/progman.rc:218
-#: programs/winecfg/winecfg.rc:241 programs/winefile/winefile.rc:129
+#: programs/winecfg/winecfg.rc:247 programs/winefile/winefile.rc:129
 msgid "&Browse..."
 msgstr "&Обзор..."
 
@@ -10175,7 +10175,7 @@ msgstr "Исходное местонахождение"
 msgid "Date deleted"
 msgstr "Время удаления"
 
-#: dlls/shell32/shell32.rc:154 programs/winecfg/winecfg.rc:100
+#: dlls/shell32/shell32.rc:154 programs/winecfg/winecfg.rc:106
 #: programs/winefile/winefile.rc:99
 msgctxt "display name"
 msgid "Desktop"
@@ -14104,7 +14104,7 @@ msgid "Digi&tal"
 msgstr "&Цифровые"
 
 #: programs/clock/clock.rc:35 programs/notepad/notepad.rc:53
-#: programs/winecfg/winecfg.rc:305 programs/winefile/winefile.rc:63
+#: programs/winecfg/winecfg.rc:313 programs/winefile/winefile.rc:63
 #: programs/wordpad/wordpad.rc:84
 msgid "&Font..."
 msgstr "&Шрифт..."
@@ -18425,7 +18425,7 @@ msgstr ""
 msgid "The Wine configuration in %s is being updated, please wait..."
 msgstr "Выполняется обновление конфигурации Wine %s. Пожалуйста, подождите..."
 
-#: programs/winecfg/winecfg.rc:140
+#: programs/winecfg/winecfg.rc:146
 msgid ""
 "This program is free software; you can redistribute it and/or modify it "
 "under the terms of the GNU Lesser General Public License as published by the "
@@ -18437,23 +18437,23 @@ msgstr ""
 "General Public License версии 2.1 или более поздней по вашему выбору. "
 "Лицензия опубликована Free Software Foundation."
 
-#: programs/winecfg/winecfg.rc:142
+#: programs/winecfg/winecfg.rc:148
 msgid "Windows registration information"
 msgstr "Регистрационная информация Windows"
 
-#: programs/winecfg/winecfg.rc:143
+#: programs/winecfg/winecfg.rc:149
 msgid "&Owner:"
 msgstr "Имя:"
 
-#: programs/winecfg/winecfg.rc:145
+#: programs/winecfg/winecfg.rc:151
 msgid "Organi&zation:"
 msgstr "Организация:"
 
-#: programs/winecfg/winecfg.rc:153
+#: programs/winecfg/winecfg.rc:159
 msgid "Application settings"
 msgstr "Настройка приложений"
 
-#: programs/winecfg/winecfg.rc:154
+#: programs/winecfg/winecfg.rc:160
 msgid ""
 "Wine can mimic different Windows versions for each application. This tab is "
 "linked to the Libraries and Graphics tabs to allow you to change system-wide "
@@ -18464,55 +18464,55 @@ msgstr ""
 "позволяет изменять настройки в этих вкладках как для определённого "
 "приложения, так и глобально."
 
-#: programs/winecfg/winecfg.rc:158
+#: programs/winecfg/winecfg.rc:164
 msgid "Add appli&cation..."
 msgstr "&Добавить приложение..."
 
-#: programs/winecfg/winecfg.rc:159
+#: programs/winecfg/winecfg.rc:165
 msgid "&Remove application"
 msgstr "&Удалить приложение"
 
-#: programs/winecfg/winecfg.rc:160
+#: programs/winecfg/winecfg.rc:166
 msgid "&Windows Version:"
 msgstr "&Версия Windows:"
 
-#: programs/winecfg/winecfg.rc:168
+#: programs/winecfg/winecfg.rc:174
 msgid "Window settings"
 msgstr "Настройки окон"
 
-#: programs/winecfg/winecfg.rc:169
+#: programs/winecfg/winecfg.rc:175
 msgid "Automatically capture the &mouse in full-screen windows"
 msgstr "Автоматически &удерживать мышь в полноэкранных окнах"
 
-#: programs/winecfg/winecfg.rc:170
+#: programs/winecfg/winecfg.rc:176
 msgid "Allow the window manager to &decorate the windows"
 msgstr "Разрешить менеджеру окон &декорировать окна"
 
-#: programs/winecfg/winecfg.rc:171
+#: programs/winecfg/winecfg.rc:177
 msgid "Allow the &window manager to control the windows"
 msgstr "Разрешить менеджеру окон управлять &окнами Wine"
 
-#: programs/winecfg/winecfg.rc:172
+#: programs/winecfg/winecfg.rc:178
 msgid "&Emulate a virtual desktop"
 msgstr "&Эмулировать виртуальный рабочий стол"
 
-#: programs/winecfg/winecfg.rc:174
+#: programs/winecfg/winecfg.rc:180
 msgid "Desktop &size:"
 msgstr "&Рабочий стол:"
 
-#: programs/winecfg/winecfg.rc:179
+#: programs/winecfg/winecfg.rc:185
 msgid "Screen resolution"
 msgstr "Разрешение экрана"
 
-#: programs/winecfg/winecfg.rc:183
+#: programs/winecfg/winecfg.rc:189
 msgid "This is a sample text using 10 point Tahoma"
 msgstr "Пример текста, шрифт Tahoma 10 пунктов"
 
-#: programs/winecfg/winecfg.rc:190
+#: programs/winecfg/winecfg.rc:196
 msgid "DLL overrides"
 msgstr "Замещения DLL"
 
-#: programs/winecfg/winecfg.rc:191
+#: programs/winecfg/winecfg.rc:197
 msgid ""
 "Dynamic Link Libraries can be specified individually to be either builtin "
 "(provided by Wine) or native (taken from Windows or provided by the "
@@ -18521,55 +18521,55 @@ msgstr ""
 "Здесь указывается, какую динамически подключаемую библиотеку (DLL) "
 "использовать: встроенную в Wine или стороннюю (из Windows)."
 
-#: programs/winecfg/winecfg.rc:193
+#: programs/winecfg/winecfg.rc:199
 msgid "&New override for library:"
 msgstr "Новое замещение для библиотеки:"
 
-#: programs/winecfg/winecfg.rc:195
+#: programs/winecfg/winecfg.rc:201
 msgid "A&dd"
 msgstr "&Добавить"
 
-#: programs/winecfg/winecfg.rc:196
+#: programs/winecfg/winecfg.rc:202
 msgid "Existing &overrides:"
 msgstr "Существующие замещения:"
 
-#: programs/winecfg/winecfg.rc:198
+#: programs/winecfg/winecfg.rc:204
 msgid "&Edit..."
 msgstr "&Изменить..."
 
-#: programs/winecfg/winecfg.rc:204
+#: programs/winecfg/winecfg.rc:210
 msgid "Edit Override"
 msgstr "Изменить замещение"
 
-#: programs/winecfg/winecfg.rc:207
+#: programs/winecfg/winecfg.rc:213
 msgid "Load order"
 msgstr "Порядок загрузки"
 
-#: programs/winecfg/winecfg.rc:208
+#: programs/winecfg/winecfg.rc:214
 msgid "&Builtin (Wine)"
 msgstr "&Встроенная (Wine)"
 
-#: programs/winecfg/winecfg.rc:209
+#: programs/winecfg/winecfg.rc:215
 msgid "&Native (Windows)"
 msgstr "&Сторонняя (Windows)"
 
-#: programs/winecfg/winecfg.rc:210
+#: programs/winecfg/winecfg.rc:216
 msgid "Buil&tin then Native"
 msgstr "Вс&троенная, затем сторонняя"
 
-#: programs/winecfg/winecfg.rc:211
+#: programs/winecfg/winecfg.rc:217
 msgid "Nati&ve then Builtin"
 msgstr "Сто&ронняя, затем встроенная"
 
-#: programs/winecfg/winecfg.rc:219
+#: programs/winecfg/winecfg.rc:225
 msgid "Select Drive Letter"
 msgstr "Выберите букву диска"
 
-#: programs/winecfg/winecfg.rc:231
+#: programs/winecfg/winecfg.rc:237
 msgid "Drive configuration"
 msgstr "Настройка дисков"
 
-#: programs/winecfg/winecfg.rc:232
+#: programs/winecfg/winecfg.rc:238
 msgid ""
 "Failed to connect to the mount manager; the drive configuration cannot be "
 "edited."
@@ -18577,107 +18577,111 @@ msgstr ""
 "Не удалось подключиться к mount manager, редактирование конфигурации дисков "
 "недоступно."
 
-#: programs/winecfg/winecfg.rc:235
+#: programs/winecfg/winecfg.rc:241
 msgid "A&dd..."
 msgstr "&Добавить..."
 
-#: programs/winecfg/winecfg.rc:239
+#: programs/winecfg/winecfg.rc:245
 msgid "&Path:"
 msgstr "&Путь:"
 
-#: programs/winecfg/winecfg.rc:246 programs/winecfg/winecfg.rc:37
+#: programs/winecfg/winecfg.rc:252 programs/winecfg/winecfg.rc:37
 msgid "Show Advan&ced"
 msgstr "До&полнительно"
 
-#: programs/winecfg/winecfg.rc:247
+#: programs/winecfg/winecfg.rc:253
 msgid "De&vice:"
 msgstr "У&стройство:"
 
-#: programs/winecfg/winecfg.rc:249
+#: programs/winecfg/winecfg.rc:255
 msgid "Bro&wse..."
 msgstr "Об&зор..."
 
-#: programs/winecfg/winecfg.rc:251
+#: programs/winecfg/winecfg.rc:257
 msgid "&Label:"
 msgstr "&Метка:"
 
-#: programs/winecfg/winecfg.rc:253
+#: programs/winecfg/winecfg.rc:259
 msgid "S&erial:"
 msgstr "Сер. &номер:"
 
-#: programs/winecfg/winecfg.rc:256
+#: programs/winecfg/winecfg.rc:262
 msgid "&Show dot files"
 msgstr "Показывать файлы, начинающиеся с &точки"
 
-#: programs/winecfg/winecfg.rc:263
+#: programs/winecfg/winecfg.rc:269
 msgid "Driver diagnostics"
 msgstr "Диагностика драйвера"
 
-#: programs/winecfg/winecfg.rc:265
+#: programs/winecfg/winecfg.rc:271
 msgid "Defaults"
 msgstr "По умолчанию"
 
-#: programs/winecfg/winecfg.rc:266
+#: programs/winecfg/winecfg.rc:272
 msgid "Output device:"
 msgstr "Устройство вывода:"
 
-#: programs/winecfg/winecfg.rc:267
+#: programs/winecfg/winecfg.rc:273
 msgid "Voice output device:"
 msgstr "Уст-во речевого вывода:"
 
-#: programs/winecfg/winecfg.rc:268
+#: programs/winecfg/winecfg.rc:274
 msgid "Input device:"
 msgstr "Устройство ввода:"
 
-#: programs/winecfg/winecfg.rc:269
+#: programs/winecfg/winecfg.rc:275
 msgid "Voice input device:"
 msgstr "Уст-во речевого ввода:"
 
-#: programs/winecfg/winecfg.rc:274
+#: programs/winecfg/winecfg.rc:280
 msgid "&Test Sound"
 msgstr "&Проверить звук"
 
-#: programs/winecfg/winecfg.rc:275 programs/winecfg/winecfg.rc:89
+#: programs/winecfg/winecfg.rc:281 programs/winecfg/winecfg.rc:89
 msgid "Speaker configuration"
 msgstr "Конфигурация каналов"
 
-#: programs/winecfg/winecfg.rc:278
+#: programs/winecfg/winecfg.rc:284
 msgid "Speakers:"
 msgstr "Каналы:"
 
-#: programs/winecfg/winecfg.rc:286
+#: programs/winecfg/winecfg.rc:292
 msgid "Appearance"
 msgstr "Внешний вид"
 
-#: programs/winecfg/winecfg.rc:287
+#: programs/winecfg/winecfg.rc:293
 msgid "&Theme:"
 msgstr "&Тема:"
 
-#: programs/winecfg/winecfg.rc:289
+#: programs/winecfg/winecfg.rc:295
+msgid "&WinRT app theme:"
+msgstr ""
+
+#: programs/winecfg/winecfg.rc:297
 msgid "&Install theme..."
 msgstr "Установить тему..."
 
-#: programs/winecfg/winecfg.rc:294
+#: programs/winecfg/winecfg.rc:302
 msgid "It&em:"
 msgstr "Элемент:"
 
-#: programs/winecfg/winecfg.rc:296
+#: programs/winecfg/winecfg.rc:304
 msgid "C&olor:"
 msgstr "Цвет:"
 
-#: programs/winecfg/winecfg.rc:302
+#: programs/winecfg/winecfg.rc:310
 msgid "MIME types"
 msgstr "Типы MIME"
 
-#: programs/winecfg/winecfg.rc:303
+#: programs/winecfg/winecfg.rc:311
 msgid "Manage file &associations"
 msgstr "Управлять &ассоциациями файлов"
 
-#: programs/winecfg/winecfg.rc:306
+#: programs/winecfg/winecfg.rc:314
 msgid "Folders"
 msgstr "Папки"
 
-#: programs/winecfg/winecfg.rc:309
+#: programs/winecfg/winecfg.rc:317
 msgid "&Link to:"
 msgstr "Привязать к:"
 
@@ -18772,6 +18776,16 @@ msgstr "Стерео"
 #: programs/winecfg/winecfg.rc:93
 msgid "Mono"
 msgstr "Моно"
+
+#: programs/winecfg/winecfg.rc:98
+#, fuzzy
+#| msgid "Right"
+msgid "Light"
+msgstr "По правому краю"
+
+#: programs/winecfg/winecfg.rc:99
+msgid "Dark"
+msgstr ""
 
 #: programs/winecfg/winecfg.rc:53
 msgid ""
@@ -18887,127 +18901,127 @@ msgstr ""
 "\n"
 "Не забудьте его создать!\n"
 
-#: programs/winecfg/winecfg.rc:98
+#: programs/winecfg/winecfg.rc:104
 msgid "Controls Background"
 msgstr "Элементы управления - фон"
 
-#: programs/winecfg/winecfg.rc:99
+#: programs/winecfg/winecfg.rc:105
 msgid "Controls Text"
 msgstr "Элементы управления - текст"
 
-#: programs/winecfg/winecfg.rc:101
+#: programs/winecfg/winecfg.rc:107
 msgid "Menu Background"
 msgstr "Меню - фон"
 
-#: programs/winecfg/winecfg.rc:102
+#: programs/winecfg/winecfg.rc:108
 msgid "Menu Text"
 msgstr "Меню - текст"
 
-#: programs/winecfg/winecfg.rc:103
+#: programs/winecfg/winecfg.rc:109
 msgid "Scrollbar"
 msgstr "Полоса прокрутки"
 
-#: programs/winecfg/winecfg.rc:104
+#: programs/winecfg/winecfg.rc:110
 msgid "Selection Background"
 msgstr "Выделение - фон"
 
-#: programs/winecfg/winecfg.rc:105
+#: programs/winecfg/winecfg.rc:111
 msgid "Selection Text"
 msgstr "Выделение - текст"
 
-#: programs/winecfg/winecfg.rc:106
+#: programs/winecfg/winecfg.rc:112
 msgid "Tooltip Background"
 msgstr "Подсказка - фон"
 
-#: programs/winecfg/winecfg.rc:107
+#: programs/winecfg/winecfg.rc:113
 msgid "Tooltip Text"
 msgstr "Подсказка - текст"
 
-#: programs/winecfg/winecfg.rc:108
+#: programs/winecfg/winecfg.rc:114
 msgid "Window Background"
 msgstr "Содержимое окна - фон"
 
-#: programs/winecfg/winecfg.rc:109
+#: programs/winecfg/winecfg.rc:115
 msgid "Window Text"
 msgstr "Содержимое окна - текст"
 
-#: programs/winecfg/winecfg.rc:110
+#: programs/winecfg/winecfg.rc:116
 msgid "Active Title Bar"
 msgstr "Активное окно"
 
-#: programs/winecfg/winecfg.rc:111
+#: programs/winecfg/winecfg.rc:117
 msgid "Active Title Text"
 msgstr "Активное окно - текст"
 
-#: programs/winecfg/winecfg.rc:112
+#: programs/winecfg/winecfg.rc:118
 msgid "Inactive Title Bar"
 msgstr "Пассивное окно"
 
-#: programs/winecfg/winecfg.rc:113
+#: programs/winecfg/winecfg.rc:119
 msgid "Inactive Title Text"
 msgstr "Пассивное окно - текст"
 
-#: programs/winecfg/winecfg.rc:114
+#: programs/winecfg/winecfg.rc:120
 msgid "Message Box Text"
 msgstr "Окно сообщения - текст"
 
-#: programs/winecfg/winecfg.rc:115
+#: programs/winecfg/winecfg.rc:121
 msgid "Application Workspace"
 msgstr "Содержимое окна MDI - фон"
 
-#: programs/winecfg/winecfg.rc:116
+#: programs/winecfg/winecfg.rc:122
 msgid "Window Frame"
 msgstr "Окно - рамка"
 
-#: programs/winecfg/winecfg.rc:117
+#: programs/winecfg/winecfg.rc:123
 msgid "Active Border"
 msgstr "Активное окно - рамка"
 
-#: programs/winecfg/winecfg.rc:118
+#: programs/winecfg/winecfg.rc:124
 msgid "Inactive Border"
 msgstr "Пассивное окно - рамка"
 
-#: programs/winecfg/winecfg.rc:119
+#: programs/winecfg/winecfg.rc:125
 msgid "Controls Shadow"
 msgstr "Элементы управления - тень"
 
-#: programs/winecfg/winecfg.rc:120
+#: programs/winecfg/winecfg.rc:126
 msgid "Gray Text"
 msgstr "Недоступный элемент"
 
-#: programs/winecfg/winecfg.rc:121
+#: programs/winecfg/winecfg.rc:127
 msgid "Controls Highlight"
 msgstr "Элементы управления - светлая рамка"
 
-#: programs/winecfg/winecfg.rc:122
+#: programs/winecfg/winecfg.rc:128
 msgid "Controls Dark Shadow"
 msgstr "Элементы управления - тёмная тень"
 
-#: programs/winecfg/winecfg.rc:123
+#: programs/winecfg/winecfg.rc:129
 msgid "Controls Light"
 msgstr "Элементы управления - свет"
 
-#: programs/winecfg/winecfg.rc:124
+#: programs/winecfg/winecfg.rc:130
 msgid "Controls Alternate Background"
 msgstr "Элементы управления - фон 2"
 
-#: programs/winecfg/winecfg.rc:125
+#: programs/winecfg/winecfg.rc:131
 msgid "Hot Tracked Item"
 msgstr "Ссылка, Подсветка"
 
-#: programs/winecfg/winecfg.rc:126
+#: programs/winecfg/winecfg.rc:132
 msgid "Active Title Bar Gradient"
 msgstr "Градиент активного окна"
 
-#: programs/winecfg/winecfg.rc:127
+#: programs/winecfg/winecfg.rc:133
 msgid "Inactive Title Bar Gradient"
 msgstr "Градиент пассивного окна"
 
-#: programs/winecfg/winecfg.rc:128
+#: programs/winecfg/winecfg.rc:134
 msgid "Menu Highlight"
 msgstr "Плоское меню - подсветка"
 
-#: programs/winecfg/winecfg.rc:129
+#: programs/winecfg/winecfg.rc:135
 msgid "Menu Bar"
 msgstr "Плоское меню - фон"
 

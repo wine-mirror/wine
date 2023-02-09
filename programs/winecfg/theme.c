@@ -418,11 +418,48 @@ static void enable_size_and_color_controls (HWND dialog, BOOL enable)
     EnableWindow (GetDlgItem (dialog, IDC_THEME_SIZECOMBO), enable);
     EnableWindow (GetDlgItem (dialog, IDC_THEME_SIZETEXT), enable);
 }
+
+static DWORD get_app_theme(void)
+{
+    DWORD ret = 0, len = sizeof(ret), type;
+    HKEY hkey;
+
+    if (RegOpenKeyExW( HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", 0, KEY_QUERY_VALUE, &hkey ))
+        return 1;
+    if (RegQueryValueExW( hkey, L"AppsUseLightTheme", NULL, &type, (BYTE *)&ret, &len ) || type != REG_DWORD)
+        ret = 1;
+
+    RegCloseKey( hkey );
+    return ret;
+}
   
 static void init_dialog (HWND dialog)
 {
-    SendDlgItemMessageW(dialog, IDC_SYSPARAM_SIZE_UD, UDM_SETBUDDY,
-                        (WPARAM)GetDlgItem(dialog, IDC_SYSPARAM_SIZE), 0);
+    DWORD apps_use_light_theme;
+    WCHAR apps_theme_str[256];
+
+    static const struct
+    {
+        int id;
+        DWORD value;
+    }
+    app_themes[] =
+    {
+        { IDC_THEME_APPCOMBO_LIGHT, 1 },
+        { IDC_THEME_APPCOMBO_DARK,  0 },
+    };
+
+    SendDlgItemMessageW( dialog, IDC_THEME_APPCOMBO, CB_RESETCONTENT, 0, 0 );
+
+    LoadStringW( GetModuleHandleW(NULL), app_themes[0].id, apps_theme_str, ARRAY_SIZE(apps_theme_str) );
+    SendDlgItemMessageW( dialog, IDC_THEME_APPCOMBO, CB_ADDSTRING, 0, (LPARAM)apps_theme_str );
+    LoadStringW( GetModuleHandleW(NULL), app_themes[1].id, apps_theme_str, ARRAY_SIZE(apps_theme_str) );
+    SendDlgItemMessageW( dialog, IDC_THEME_APPCOMBO, CB_ADDSTRING, 0, (LPARAM)apps_theme_str );
+
+    apps_use_light_theme = get_app_theme();
+    SendDlgItemMessageW( dialog, IDC_THEME_APPCOMBO, CB_SETCURSEL, app_themes[apps_use_light_theme].value, 0 );
+
+    SendDlgItemMessageW( dialog, IDC_SYSPARAM_SIZE_UD, UDM_SETBUDDY, (WPARAM)GetDlgItem(dialog, IDC_SYSPARAM_SIZE), 0 );
 }
 
 static void update_dialog (HWND dialog)
@@ -450,8 +487,9 @@ static void update_dialog (HWND dialog)
 }
 
 static void on_theme_changed(HWND dialog) {
-    int index = SendMessageW (GetDlgItem (dialog, IDC_THEME_THEMECOMBO),
-        CB_GETCURSEL, 0, 0);
+    int index;
+
+    index = SendMessageW (GetDlgItem (dialog, IDC_THEME_THEMECOMBO), CB_GETCURSEL, 0, 0);
     if (!update_color_and_size (index, GetDlgItem (dialog, IDC_THEME_COLORCOMBO),
         GetDlgItem (dialog, IDC_THEME_SIZECOMBO)))
     {
@@ -463,6 +501,11 @@ static void on_theme_changed(HWND dialog) {
     {
         enable_size_and_color_controls (dialog, TRUE);
     }
+
+    index = SendMessageW (GetDlgItem (dialog, IDC_THEME_APPCOMBO), CB_GETCURSEL, 0, 0);
+    set_reg_key_dword(HKEY_CURRENT_USER, L"Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+                      L"AppsUseLightTheme", !index);
+
     theme_dirty = TRUE;
 }
 
@@ -1148,6 +1191,7 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                     if (updating_ui) break;
                     switch (LOWORD(wParam))
                     {
+                        case IDC_THEME_APPCOMBO: /* fall through */
                         case IDC_THEME_THEMECOMBO: on_theme_changed(hDlg); break;
                         case IDC_THEME_COLORCOMBO: /* fall through */
                         case IDC_THEME_SIZECOMBO: theme_dirty = TRUE; break;
