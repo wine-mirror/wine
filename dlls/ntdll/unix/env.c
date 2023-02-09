@@ -1848,9 +1848,9 @@ static void init_peb( RTL_USER_PROCESS_PARAMETERS *params, void *module )
 {
     peb->ImageBaseAddress           = module;
     peb->ProcessParameters          = params;
-    peb->OSMajorVersion             = 6;
-    peb->OSMinorVersion             = 1;
-    peb->OSBuildNumber              = 0x1db1;
+    peb->OSMajorVersion             = 10;
+    peb->OSMinorVersion             = 0;
+    peb->OSBuildNumber              = 18362;
     peb->OSPlatformId               = VER_PLATFORM_WIN32_NT;
     peb->ImageSubSystem             = main_image_info.SubSystemType;
     peb->ImageSubSystemMajorVersion = main_image_info.MajorSubsystemVersion;
