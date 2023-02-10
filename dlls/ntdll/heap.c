@@ -264,7 +264,7 @@ struct bin
     LONG enabled;
 
     /* list of groups with free blocks */
-    struct list groups;
+    SLIST_HEADER groups;
 };
 
 struct heap
@@ -1535,7 +1535,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
         NtAllocateVirtualMemory( NtCurrentProcess(), (void *)&heap->bins,
                                  0, &size, MEM_COMMIT, PAGE_READWRITE );
         for (i = 0; i < BLOCK_SIZE_BIN_COUNT; ++i)
-            list_init( &heap->bins[i].groups );
+            RtlInitializeSListHead( &heap->bins[i].groups );
     }
 
     /* link it into the per-process heap list */
@@ -1690,7 +1690,7 @@ static NTSTATUS heap_allocate_block( struct heap *heap, ULONG flags, SIZE_T bloc
 /* header for every LFH block group */
 struct DECLSPEC_ALIGN(BLOCK_ALIGN) group
 {
-    struct list entry;
+    SLIST_ENTRY entry;
     /* one bit for each free block and the highest bit for GROUP_FLAG_FREE */
     LONG free_bits;
     /* first block of a group, required for alignment */
@@ -1699,7 +1699,6 @@ struct DECLSPEC_ALIGN(BLOCK_ALIGN) group
 
 #define GROUP_BLOCK_COUNT     (sizeof(((struct group *)0)->free_bits) * 8 - 1)
 #define GROUP_FLAG_FREE       (1u << GROUP_BLOCK_COUNT)
-#define GROUP_FREE_BITS_MASK  (GROUP_FLAG_FREE - 1)
 
 static inline UINT block_get_group_index( const struct block *block )
 {
@@ -1728,10 +1727,10 @@ static inline struct block *group_get_block( struct group *group, SIZE_T block_s
 /* lookup a free block using the group free_bits, the current thread must own the group */
 static inline struct block *group_find_free_block( struct group *group, SIZE_T block_size )
 {
-    ULONG i, free_bits = group->free_bits;
+    ULONG i, free_bits = ReadNoFence( &group->free_bits );
     /* free_bits will never be 0 as the group is unlinked when it's fully used */
     BitScanForward( &i, free_bits );
-    group->free_bits &= ~(1 << i);
+    InterlockedAnd( &group->free_bits, ~(1 << i) );
     return group_get_block( group, block_size, i );
 }
 
@@ -1745,10 +1744,14 @@ static struct group *group_allocate( struct heap *heap, ULONG flags, SIZE_T bloc
     group_size = offsetof( struct group, first_block ) + GROUP_BLOCK_COUNT * block_size;
     group_block_size = heap_get_block_size( heap, flags, group_size );
 
+    heap_lock( heap, flags );
+
     if (group_block_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
         status = heap_allocate_large( heap, flags & ~HEAP_ZERO_MEMORY, group_block_size, group_size, (void **)&group );
     else
         status = heap_allocate_block( heap, flags & ~HEAP_ZERO_MEMORY, group_block_size, group_size, (void **)&group );
+
+    heap_unlock( heap, flags );
 
     if (status) return NULL;
 
@@ -1775,6 +1778,8 @@ static NTSTATUS group_release( struct heap *heap, ULONG flags, struct bin *bin, 
     struct block *block = (struct block *)group - 1;
     NTSTATUS status;
 
+    heap_lock( heap, flags );
+
     block_set_flags( block, BLOCK_FLAG_LFH, 0 );
 
     if (block_get_flags( block ) & BLOCK_FLAG_LARGE)
@@ -1782,21 +1787,18 @@ static NTSTATUS group_release( struct heap *heap, ULONG flags, struct bin *bin, 
     else
         status = heap_free_block( heap, flags, block );
 
+    heap_unlock( heap, flags );
+
     return status;
 }
 
 /* acquire a group from the bin, thread takes ownership of a shared group or allocates a new one */
 static struct group *heap_acquire_bin_group( struct heap *heap, ULONG flags, SIZE_T block_size, struct bin *bin )
 {
-    struct group *group;
-    struct list *entry;
+    SLIST_ENTRY *entry;
 
-    if ((entry = list_head( &bin->groups )))
-    {
-        group = LIST_ENTRY( entry, struct group, entry );
-        list_remove( &group->entry );
-        return group;
-    }
+    if ((entry = RtlInterlockedPopEntrySList( &bin->groups )))
+        return CONTAINING_RECORD( entry, struct group, entry );
 
     return group_allocate( heap, flags, block_size );
 }
@@ -1805,9 +1807,9 @@ static struct group *heap_acquire_bin_group( struct heap *heap, ULONG flags, SIZ
 static NTSTATUS heap_release_bin_group( struct heap *heap, ULONG flags, struct bin *bin, struct group *group )
 {
     /* try re-using the block group instead of releasing it */
-    if (list_empty( &bin->groups ))
+    if (!RtlQueryDepthSList( &bin->groups ))
     {
-        list_add_tail( &bin->groups, &group->entry );
+        RtlInterlockedPushEntrySList( &bin->groups, &group->entry );
         return STATUS_SUCCESS;
     }
 
@@ -1826,12 +1828,10 @@ static struct block *find_free_bin_block( struct heap *heap, ULONG flags, SIZE_T
     block = group_find_free_block( group, block_size );
 
     /* serialize with heap_free_block_lfh: atomically set GROUP_FLAG_FREE when the free bits are all 0. */
-    if (!group->free_bits)
-        group->free_bits = GROUP_FLAG_FREE;
-    else
+    if (ReadNoFence( &group->free_bits ) || InterlockedCompareExchange( &group->free_bits, GROUP_FLAG_FREE, 0 ))
     {
         /* if GROUP_FLAG_FREE isn't set, thread is responsible for putting it back into group list. */
-        list_add_tail( &bin->groups, &group->entry );
+        RtlInterlockedPushEntrySList( &bin->groups, &group->entry );
     }
 
     return block;
@@ -1851,7 +1851,6 @@ static NTSTATUS heap_allocate_block_lfh( struct heap *heap, ULONG flags, SIZE_T 
 
     block_size = BLOCK_BIN_SIZE( BLOCK_SIZE_BIN( block_size ) );
 
-    heap_lock( heap, flags );
     if ((block = find_free_bin_block( heap, flags, block_size, bin )))
     {
         block_set_type( block, BLOCK_TYPE_USED );
@@ -1861,7 +1860,6 @@ static NTSTATUS heap_allocate_block_lfh( struct heap *heap, ULONG flags, SIZE_T 
         mark_block_tail( block, flags );
         *ret = block + 1;
     }
-    heap_unlock( heap, flags );
 
     return block ? STATUS_SUCCESS : STATUS_NO_MEMORY;
 }
@@ -1884,19 +1882,13 @@ static NTSTATUS heap_free_block_lfh( struct heap *heap, ULONG flags, struct bloc
     block_set_flags( block, ~BLOCK_FLAG_LFH, BLOCK_FLAG_FREE );
     mark_block_free( block + 1, (char *)block + block_size - (char *)(block + 1), flags );
 
-    heap_lock( heap, flags );
-
-    group->free_bits |= (1 << i);
-
     /* if this was the last used block in a group and GROUP_FLAG_FREE was set */
-    if (group->free_bits == (GROUP_FREE_BITS_MASK | GROUP_FLAG_FREE))
+    if (InterlockedOr( &group->free_bits, 1 << i ) == ~(1 << i))
     {
         /* thread now owns the group, and can release it to its bin */
         group->free_bits = ~GROUP_FLAG_FREE;
         status = heap_release_bin_group( heap, flags, bin, group );
     }
-
-    heap_unlock( heap, flags );
 
     return status;
 }
