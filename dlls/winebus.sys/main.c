@@ -645,17 +645,16 @@ static void sdl_bus_free_mappings(struct sdl_bus_options *options)
 static void sdl_bus_load_mappings(struct sdl_bus_options *options)
 {
     ULONG idx = 0, len, count = 0, capacity, info_size, info_max_size;
+    UNICODE_STRING path = RTL_CONSTANT_STRING(L"map");
     KEY_VALUE_FULL_INFORMATION *info;
     OBJECT_ATTRIBUTES attr = {0};
     char **mappings = NULL;
-    UNICODE_STRING path;
     NTSTATUS status;
     HANDLE key;
 
     options->mappings_count = 0;
     options->mappings = NULL;
 
-    RtlInitUnicodeString(&path, L"map");
     InitializeObjectAttributes(&attr, &path, OBJ_CASE_INSENSITIVE | OBJ_KERNEL_HANDLE, driver_key, NULL);
     status = NtOpenKey(&key, KEY_ALL_ACCESS, &attr);
     if (status) return;
