@@ -270,15 +270,3 @@ BOOL DSOUND_check_supported(IAudioClient *client, DWORD rate,
         DWORD depth, WORD channels) DECLSPEC_HIDDEN;
 HRESULT enumerate_mmdevices(EDataFlow flow, GUID *guids,
         LPDSENUMCALLBACKW cb, void *user) DECLSPEC_HIDDEN;
-
-static inline WCHAR *strdupW( const WCHAR *str )
-{
-    size_t size;
-    WCHAR *ret;
-
-    if (!str) return NULL;
-    size = (lstrlenW( str ) + 1) * sizeof(WCHAR);
-    ret = HeapAlloc( GetProcessHeap(), 0, size );
-    if (ret) memcpy( ret, str, size );
-    return ret;
-}

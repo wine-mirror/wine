@@ -93,7 +93,7 @@ static void capturebuffer_destroy(IDirectSoundCaptureBufferImpl *This)
     }
     CloseHandle(This->sleepev);
 
-    HeapFree(GetProcessHeap(),0, This->pdscbd);
+    free(This->pdscbd);
 
     if (This->device->client) {
         IAudioClient_Release(This->device->client);
@@ -108,9 +108,9 @@ static void capturebuffer_destroy(IDirectSoundCaptureBufferImpl *This)
     /* remove from DirectSoundCaptureDevice */
     This->device->capture_buffer = NULL;
 
-    HeapFree(GetProcessHeap(), 0, This->notifies);
+    free(This->notifies);
     TRACE("(%p) released\n", This);
-    HeapFree(GetProcessHeap(), 0, This);
+    free(This);
 }
 
 /*******************************************************************************
@@ -178,13 +178,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(IDirectSou
     if (howmuch > 0) {
 	/* Make an internal copy of the caller-supplied array.
 	 * Replace the existing copy if one is already present. */
-        if (This->notifies)
-            This->notifies = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, This->notifies,
-                    howmuch * sizeof(DSBPOSITIONNOTIFY));
-	else
-            This->notifies = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    howmuch * sizeof(DSBPOSITIONNOTIFY));
-
+        This->notifies = _recalloc(This->notifies, howmuch, sizeof(DSBPOSITIONNOTIFY));
         if (!This->notifies) {
 	    WARN("out of memory\n");
 	    return DSERR_OUTOFMEMORY;
@@ -192,7 +186,7 @@ static HRESULT WINAPI IDirectSoundNotifyImpl_SetNotificationPositions(IDirectSou
         CopyMemory(This->notifies, notify, howmuch * sizeof(DSBPOSITIONNOTIFY));
         This->nrofnotifies = howmuch;
     } else {
-        HeapFree(GetProcessHeap(), 0, This->notifies);
+        free(This->notifies);
         This->notifies = NULL;
         This->nrofnotifies = 0;
     }
@@ -708,8 +702,7 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
     if ( device->pwfx == NULL )
 	return DSERR_OUTOFMEMORY;
 
-    This = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-        sizeof(IDirectSoundCaptureBufferImpl));
+    This = calloc(1, sizeof(IDirectSoundCaptureBufferImpl));
 
     if ( This == NULL ) {
 	WARN("out of memory\n");
@@ -726,14 +719,13 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
         This->device->capture_buffer = This;
         This->nrofnotifies = 0;
 
-        This->pdscbd = HeapAlloc(GetProcessHeap(),HEAP_ZERO_MEMORY,
-            lpcDSCBufferDesc->dwSize);
+        This->pdscbd = calloc(1, lpcDSCBufferDesc->dwSize);
         if (This->pdscbd)
             CopyMemory(This->pdscbd, lpcDSCBufferDesc, lpcDSCBufferDesc->dwSize);
         else {
             WARN("no memory\n");
             This->device->capture_buffer = 0;
-            HeapFree( GetProcessHeap(), 0, This );
+            free(This);
             return DSERR_OUTOFMEMORY;
         }
 
@@ -744,9 +736,9 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
                 CLSCTX_INPROC_SERVER, NULL, (void**)&device->client);
         if(FAILED(err)){
             WARN("Activate failed: %08lx\n", err);
-            HeapFree(GetProcessHeap(), 0, This->pdscbd);
+            free(This->pdscbd);
             This->device->capture_buffer = 0;
-            HeapFree( GetProcessHeap(), 0, This );
+            free(This);
             return err;
         }
 
@@ -757,9 +749,9 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             WARN("Initialize failed: %08lx\n", err);
             IAudioClient_Release(device->client);
             device->client = NULL;
-            HeapFree(GetProcessHeap(), 0, This->pdscbd);
+            free(This->pdscbd);
             This->device->capture_buffer = 0;
-            HeapFree( GetProcessHeap(), 0, This );
+            free(This);
             if(err == AUDCLNT_E_UNSUPPORTED_FORMAT)
                 return DSERR_BADFORMAT;
             return err;
@@ -773,9 +765,9 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             IAudioClient_Release(device->client);
             device->client = NULL;
             CloseHandle(This->sleepev);
-            HeapFree(GetProcessHeap(), 0, This->pdscbd);
+            free(This->pdscbd);
             This->device->capture_buffer = 0;
-            HeapFree( GetProcessHeap(), 0, This );
+            free(This);
             return err;
         }
 
@@ -786,27 +778,24 @@ static HRESULT IDirectSoundCaptureBufferImpl_Create(
             IAudioClient_Release(device->client);
             device->client = NULL;
             CloseHandle(This->sleepev);
-            HeapFree(GetProcessHeap(), 0, This->pdscbd);
+            free(This->pdscbd);
             This->device->capture_buffer = 0;
-            HeapFree( GetProcessHeap(), 0, This );
+            free(This);
             return err;
         }
 
         buflen = lpcDSCBufferDesc->dwBufferBytes;
         TRACE("desired buflen=%ld, old buffer=%p\n", buflen, device->buffer);
-        if (device->buffer)
-            newbuf = HeapReAlloc(GetProcessHeap(),0,device->buffer,buflen);
-        else
-            newbuf = HeapAlloc(GetProcessHeap(),0,buflen);
+        newbuf = realloc(device->buffer, buflen);
         if (newbuf == NULL) {
             IAudioClient_Release(device->client);
             device->client = NULL;
             IAudioCaptureClient_Release(device->capture);
             device->capture = NULL;
             CloseHandle(This->sleepev);
-            HeapFree(GetProcessHeap(), 0, This->pdscbd);
+            free(This->pdscbd);
             This->device->capture_buffer = 0;
-            HeapFree( GetProcessHeap(), 0, This );
+            free(This);
             return DSERR_OUTOFMEMORY;
         }
         device->buffer = newbuf;
@@ -832,7 +821,7 @@ static HRESULT DirectSoundCaptureDevice_Create(
     TRACE("(%p)\n", ppDevice);
 
     /* Allocate memory */
-    device = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DirectSoundCaptureDevice));
+    device = calloc(1, sizeof(DirectSoundCaptureDevice));
 
     if (device == NULL) {
 	WARN("out of memory\n");
@@ -868,11 +857,11 @@ static ULONG DirectSoundCaptureDevice_Release(
 
         if(device->mmdevice)
             IMMDevice_Release(device->mmdevice);
-        HeapFree(GetProcessHeap(), 0, device->pwfx);
+        free(device->pwfx);
         device->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &(device->lock) );
         TRACE("(%p) released\n", device);
-        HeapFree(GetProcessHeap(), 0, device);
+        free(device);
     }
     return ref;
 }
@@ -1060,7 +1049,7 @@ static HRESULT DirectSoundCaptureDevice_Initialize(
     if(FAILED(hr)){
         device->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&device->lock);
-        HeapFree(GetProcessHeap(), 0, device);
+        free(device);
         LeaveCriticalSection(&DSOUND_capturers_lock);
         return DSERR_NODRIVER;
     }
@@ -1102,7 +1091,7 @@ static void capture_destroy(IDirectSoundCaptureImpl *This)
     if (This->device)
         DirectSoundCaptureDevice_Release(This->device);
     TRACE("(%p) released\n", This);
-    HeapFree(GetProcessHeap(),0,This);
+    free(This);
 }
 
 /*******************************************************************************
@@ -1317,7 +1306,7 @@ HRESULT IDirectSoundCaptureImpl_Create(IUnknown *outer_unk, REFIID riid, void **
     TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
 
     *ppv = NULL;
-    obj = HeapAlloc(GetProcessHeap(), 0, sizeof(*obj));
+    obj = malloc(sizeof(*obj));
     if (obj == NULL) {
         WARN("out of memory\n");
         return DSERR_OUTOFMEMORY;
