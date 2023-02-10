@@ -96,6 +96,7 @@ static void *   (WINAPI *pBTCpuGetBopCode)(void);
 static NTSTATUS (WINAPI *pBTCpuGetContext)(HANDLE,HANDLE,void *,void *);
 static void     (WINAPI *pBTCpuProcessInit)(void);
 static NTSTATUS (WINAPI *pBTCpuSetContext)(HANDLE,HANDLE,void *,void *);
+static void     (WINAPI *pBTCpuThreadInit)(void);
 static void     (WINAPI *pBTCpuSimulate)(void);
 static NTSTATUS (WINAPI *pBTCpuResetToConsistentState)( EXCEPTION_POINTERS * );
 static void *   (WINAPI *p__wine_get_unix_opcode)(void);
@@ -771,6 +772,7 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
     GET_PTR( BTCpuGetBopCode );
     GET_PTR( BTCpuGetContext );
     GET_PTR( BTCpuProcessInit );
+    GET_PTR( BTCpuThreadInit );
     GET_PTR( BTCpuResetToConsistentState );
     GET_PTR( BTCpuSetContext );
     GET_PTR( BTCpuSimulate );
@@ -802,6 +804,7 @@ static void thread_init(void)
     void *cpu_area_ctx;
 
     RtlWow64GetCurrentCpuArea( NULL, &cpu_area_ctx, NULL );
+    if (pBTCpuThreadInit) pBTCpuThreadInit();
 
     /* update initial context to jump to 32-bit LdrInitializeThunk (cf. 32-bit call_init_thunk) */
     switch (current_machine)
