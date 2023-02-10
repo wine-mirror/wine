@@ -353,7 +353,7 @@ void * WINAPI __wine_get_unix_opcode(void)
  */
 NTSTATUS WINAPI BTCpuGetContext( HANDLE thread, HANDLE process, void *unknown, I386_CONTEXT *ctx )
 {
-    return NtQueryInformationThread( thread, ThreadWow64Context, ctx, sizeof(*ctx), NULL );
+    return RtlWow64GetThreadContext( thread, ctx );
 }
 
 
@@ -362,7 +362,7 @@ NTSTATUS WINAPI BTCpuGetContext( HANDLE thread, HANDLE process, void *unknown, I
  */
 NTSTATUS WINAPI BTCpuSetContext( HANDLE thread, HANDLE process, void *unknown, I386_CONTEXT *ctx )
 {
-    return NtSetInformationThread( thread, ThreadWow64Context, ctx, sizeof(*ctx) );
+    return RtlWow64SetThreadContext( thread, ctx );
 }
 
 
