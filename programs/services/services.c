@@ -1074,9 +1074,9 @@ found:
         CreateEnvironmentBlock(&environment, token, FALSE);
         if (GetEnvironmentVariableW( L"WINEBOOTSTRAPMODE", val, ARRAY_SIZE(val) ))
         {
-            UNICODE_STRING name, value;
+            UNICODE_STRING name = RTL_CONSTANT_STRING(L"WINEBOOTSTRAPMODE");
+            UNICODE_STRING value;
 
-            RtlInitUnicodeString( &name, L"WINEBOOTSTRAPMODE" );
             RtlInitUnicodeString( &value, val );
             RtlSetEnvironmentVariable( (WCHAR **)&environment, &name, &value );
         }
