@@ -255,6 +255,9 @@ C_ASSERT( BLOCK_BIN_SIZE( 0x80 ) == ~(SIZE_T)0 );
 /* difference between block classes and all possible validation overhead must fit into block tail_size */
 C_ASSERT( BIN_SIZE_STEP_7 + 3 * BLOCK_ALIGN <= FIELD_MAX( struct block, tail_size ) );
 
+static BYTE affinity_mapping[] = {20,6,31,15,14,29,27,4,18,24,26,13,0,9,2,30,17,7,23,25,10,19,12,3,22,21,5,16,1,28,11,8};
+static LONG next_thread_affinity;
+
 /* a bin, tracking heap blocks of a certain size */
 struct bin
 {
@@ -265,7 +268,19 @@ struct bin
 
     /* list of groups with free blocks */
     SLIST_HEADER groups;
+
+    /* array of affinity reserved groups, interleaved with other bins to keep
+     * all pointers of the same affinity and different bin grouped together,
+     * and pointers of the same bin and different affinity away from each other,
+     * hopefully in separate cache lines.
+     */
+    struct group **affinity_group_base;
 };
+
+static inline struct group **bin_get_affinity_group( struct bin *bin, BYTE affinity )
+{
+    return bin->affinity_group_base + affinity * BLOCK_SIZE_BIN_COUNT;
+}
 
 struct heap
 {                                  /* win32/win64 */
@@ -1531,11 +1546,16 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, void *addr, SIZE_T total_size, SIZE_T 
 
     if (heap->flags & HEAP_GROWABLE)
     {
-        SIZE_T size = sizeof(struct bin) * BLOCK_SIZE_BIN_COUNT;
+        SIZE_T size = (sizeof(struct bin) + sizeof(struct group *) * ARRAY_SIZE(affinity_mapping)) * BLOCK_SIZE_BIN_COUNT;
         NtAllocateVirtualMemory( NtCurrentProcess(), (void *)&heap->bins,
                                  0, &size, MEM_COMMIT, PAGE_READWRITE );
-        for (i = 0; i < BLOCK_SIZE_BIN_COUNT; ++i)
+
+        for (i = 0; heap->bins && i < BLOCK_SIZE_BIN_COUNT; ++i)
+        {
             RtlInitializeSListHead( &heap->bins[i].groups );
+            /* offset affinity_group_base to interleave the bin affinity group pointers */
+            heap->bins[i].affinity_group_base = (struct group **)(heap->bins + BLOCK_SIZE_BIN_COUNT) + i;
+        }
     }
 
     /* link it into the per-process heap list */
@@ -1693,6 +1713,8 @@ struct DECLSPEC_ALIGN(BLOCK_ALIGN) group
     SLIST_ENTRY entry;
     /* one bit for each free block and the highest bit for GROUP_FLAG_FREE */
     LONG free_bits;
+    /* affinity of the thread which last allocated from this group */
+    LONG affinity;
     /* first block of a group, required for alignment */
     struct block first_block;
 };
@@ -1792,10 +1814,29 @@ static NTSTATUS group_release( struct heap *heap, ULONG flags, struct bin *bin, 
     return status;
 }
 
+static inline ULONG heap_current_thread_affinity(void)
+{
+    ULONG affinity;
+
+    if (!(affinity = NtCurrentTeb()->HeapVirtualAffinity))
+    {
+        affinity = InterlockedIncrement( &next_thread_affinity );
+        affinity = affinity_mapping[affinity % ARRAY_SIZE(affinity_mapping)];
+        NtCurrentTeb()->HeapVirtualAffinity = affinity;
+    }
+
+    return affinity;
+}
+
 /* acquire a group from the bin, thread takes ownership of a shared group or allocates a new one */
 static struct group *heap_acquire_bin_group( struct heap *heap, ULONG flags, SIZE_T block_size, struct bin *bin )
 {
+    ULONG affinity = NtCurrentTeb()->HeapVirtualAffinity;
+    struct group *group;
     SLIST_ENTRY *entry;
+
+    if ((group = InterlockedExchangePointer( (void *)bin_get_affinity_group( bin, affinity ), NULL )))
+        return group;
 
     if ((entry = RtlInterlockedPopEntrySList( &bin->groups )))
         return CONTAINING_RECORD( entry, struct group, entry );
@@ -1806,8 +1847,16 @@ static struct group *heap_acquire_bin_group( struct heap *heap, ULONG flags, SIZ
 /* release a thread owned and fully freed group to the bin shared group, or free its memory */
 static NTSTATUS heap_release_bin_group( struct heap *heap, ULONG flags, struct bin *bin, struct group *group )
 {
+    ULONG affinity = group->affinity;
+
+    /* using InterlockedExchangePointer here would possibly return a group that has used blocks,
+     * we prefer keeping our fully freed group instead for reduced memory consumption.
+     */
+    if (!InterlockedCompareExchangePointer( (void *)bin_get_affinity_group( bin, affinity ), group, NULL ))
+        return STATUS_SUCCESS;
+
     /* try re-using the block group instead of releasing it */
-    if (!RtlQueryDepthSList( &bin->groups ))
+    if (RtlQueryDepthSList( &bin->groups ) <= ARRAY_SIZE(affinity_mapping))
     {
         RtlInterlockedPushEntrySList( &bin->groups, &group->entry );
         return STATUS_SUCCESS;
@@ -1818,6 +1867,7 @@ static NTSTATUS heap_release_bin_group( struct heap *heap, ULONG flags, struct b
 
 static struct block *find_free_bin_block( struct heap *heap, ULONG flags, SIZE_T block_size, struct bin *bin )
 {
+    ULONG affinity = heap_current_thread_affinity();
     struct block *block;
     struct group *group;
 
@@ -1825,13 +1875,16 @@ static struct block *find_free_bin_block( struct heap *heap, ULONG flags, SIZE_T
      * some other thread might still set the free bits if they are freeing blocks.
      */
     if (!(group = heap_acquire_bin_group( heap, flags, block_size, bin ))) return NULL;
+    group->affinity = affinity;
+
     block = group_find_free_block( group, block_size );
 
     /* serialize with heap_free_block_lfh: atomically set GROUP_FLAG_FREE when the free bits are all 0. */
     if (ReadNoFence( &group->free_bits ) || InterlockedCompareExchange( &group->free_bits, GROUP_FLAG_FREE, 0 ))
     {
         /* if GROUP_FLAG_FREE isn't set, thread is responsible for putting it back into group list. */
-        RtlInterlockedPushEntrySList( &bin->groups, &group->entry );
+        if ((group = InterlockedExchangePointer( (void *)bin_get_affinity_group( bin, affinity ), group )))
+            RtlInterlockedPushEntrySList( &bin->groups, &group->entry );
     }
 
     return block;
@@ -1920,6 +1973,35 @@ static void bin_try_enable( struct heap *heap, struct bin *bin )
      * queries the heap.
      */
     WriteRelease( &bin->enabled, TRUE );
+}
+
+static void heap_thread_detach_bin_groups( struct heap *heap )
+{
+    ULONG i, affinity = NtCurrentTeb()->HeapVirtualAffinity;
+
+    if (!heap->bins) return;
+
+    for (i = 0; i < BLOCK_SIZE_BIN_COUNT; ++i)
+    {
+        struct bin *bin = heap->bins + i;
+        struct group *group;
+        if (!(group = InterlockedExchangePointer( (void *)bin_get_affinity_group( bin, affinity ), NULL ))) continue;
+        RtlInterlockedPushEntrySList( &bin->groups, &group->entry );
+    }
+}
+
+void heap_thread_detach(void)
+{
+    struct heap *heap;
+
+    RtlEnterCriticalSection( &process_heap->cs );
+
+    LIST_FOR_EACH_ENTRY( heap, &process_heap->entry, struct heap, entry )
+        heap_thread_detach_bin_groups( heap );
+
+    heap_thread_detach_bin_groups( process_heap );
+
+    RtlLeaveCriticalSection( &process_heap->cs );
 }
 
 /***********************************************************************

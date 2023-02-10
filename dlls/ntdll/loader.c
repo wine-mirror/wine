@@ -3778,6 +3778,8 @@ void WINAPI LdrShutdownThread(void)
     /* don't call DbgUiGetThreadDebugObject as some apps hook it and terminate if called */
     if (NtCurrentTeb()->DbgSsReserved[1]) NtClose( NtCurrentTeb()->DbgSsReserved[1] );
     RtlFreeThreadActivationContextStack();
+
+    heap_thread_detach();
 }
 
 
