@@ -193,35 +193,58 @@ static void test_search_path(void)
 
 static USHORT get_module_machine(const char* path)
 {
-    BOOL ret;
     HANDLE hFile, hMap;
     void* mapping;
     IMAGE_NT_HEADERS *nthdr;
-    USHORT machine;
+    USHORT machine = IMAGE_FILE_MACHINE_UNKNOWN;
 
     hFile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-    ok(hFile != INVALID_HANDLE_VALUE, "Couldn't open file %s (%lu)\n", path, GetLastError());
-    hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
-    ok(hMap != NULL, "Couldn't create map (%lu)\n", GetLastError());
-    mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
-    ok(mapping != NULL, "Couldn't map (%lu)\n", GetLastError());
-    nthdr = RtlImageNtHeader(mapping);
-    ok(nthdr != NULL, "Cannot get NT headers out of %s\n", path);
-    machine = nthdr ? nthdr->FileHeader.Machine : IMAGE_FILE_MACHINE_UNKNOWN;
-    ret = UnmapViewOfFile(mapping);
-    ok(ret, "Couldn't unmap (%lu)\n", GetLastError());
-    CloseHandle(hMap);
-    CloseHandle(hFile);
+    if (hFile != INVALID_HANDLE_VALUE)
+    {
+        hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+        if (hMap != NULL)
+        {
+            mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
+            if (mapping != NULL)
+            {
+                nthdr = RtlImageNtHeader(mapping);
+                if (nthdr != NULL) machine = nthdr->FileHeader.Machine;
+                UnmapViewOfFile(mapping);
+            }
+            CloseHandle(hMap);
+        }
+        CloseHandle(hFile);
+    }
     return machine;
+}
+
+static BOOL skip_too_old_dbghelp(HANDLE proc, DWORD64 base)
+{
+    IMAGEHLP_MODULE im0 = {sizeof(im0)};
+    BOOL ret;
+
+    /* test if get module info succeeds with oldest structure format */
+    ret = SymGetModuleInfo(proc, base, &im0);
+    if (ret)
+    {
+        skip("Too old dbghelp. Skipping module tests.\n");
+        ret = SymCleanup(proc);
+        ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+        return TRUE;
+    }
+    ok(ret, "SymGetModuleInfo failed: %lu\n", GetLastError());
+    return FALSE;
 }
 
 static void test_modules(void)
 {
     BOOL ret;
-    DWORD attr;
+    char file_system[MAX_PATH];
+    char file_wow64[MAX_PATH];
     const DWORD64 base1 = 0x00010000;
     const DWORD64 base2 = 0x08010000;
     IMAGEHLP_MODULEW64 im;
+    USHORT machine_wow, machine2;
 
     im.SizeOfStruct = sizeof(im);
 
@@ -231,48 +254,42 @@ static void test_modules(void)
     ret = SymInitialize(GetCurrentProcess(), 0, FALSE);
     ok(ret, "SymInitialize failed: %lu\n", GetLastError());
 
+    GetSystemWow64DirectoryA(file_wow64, MAX_PATH);
+    strcat(file_wow64, "\\notepad.exe");
+
     /* not always present */
-    attr = GetFileAttributesA("C:\\windows\\syswow64\\notepad.exe");
-    if (attr != INVALID_FILE_ATTRIBUTES)
+    machine_wow = get_module_machine(file_wow64);
+    if (machine_wow != IMAGE_FILE_MACHINE_UNKNOWN)
     {
-        ret = SymLoadModule(GetCurrentProcess(), NULL, "C:\\windows\\syswow64\\notepad.exe", NULL, base2, 0);
+        ret = SymLoadModule(GetCurrentProcess(), NULL, file_wow64, NULL, base2, 0);
         ok(ret, "SymLoadModule failed: %lu\n", GetLastError());
         ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
+        if (!ret && skip_too_old_dbghelp(GetCurrentProcess(), base2)) return;
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
         ok(im.BaseOfImage == base2, "Wrong base address\n");
-        ok(im.MachineType == get_module_machine("C:\\windows\\syswow64\\notepad.exe"),
-           "Wrong machine %lx\n", im.MachineType);
+        ok(im.MachineType == machine_wow, "Wrong machine %lx (expecting %u)\n", im.MachineType, machine_wow);
     }
 
-    ret = SymLoadModule(GetCurrentProcess(), NULL, "C:\\windows\\system32\\notepad.exe", NULL, base1, 0);
+    GetSystemDirectoryA(file_system, MAX_PATH);
+    strcat(file_system, "\\notepad.exe");
+
+    ret = SymLoadModule(GetCurrentProcess(), NULL, file_system, NULL, base1, 0);
     ok(ret, "SymLoadModule failed: %lu\n", GetLastError());
     ret = SymGetModuleInfoW64(GetCurrentProcess(), base1, &im);
-    /* we want to access IMAGEHLP_MODULE.MachineType, so ensure that error stems from a too old
-     * dbghelp (on Windows), not supporting new enlarged IMAGEHLP_MODULE structures.
-     */
-    if (broken(!ret && GetLastError() == ERROR_INVALID_PARAMETER))
-    {
-        IMAGEHLP_MODULE im0 = {sizeof(im0)};
-        ret = SymGetModuleInfo(GetCurrentProcess(), base1, &im0);
-        ok(ret, "Unexpected error: %lu\n", GetLastError());
-        skip("Too old dbghelp. Skipping module tests\n");
-        ret = SymCleanup(GetCurrentProcess());
-        ok(ret, "SymCleanup failed: %lu\n", GetLastError());
-        return;
-    }
+    if (!ret && skip_too_old_dbghelp(GetCurrentProcess(), base1)) return;
     ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
     ok(im.BaseOfImage == base1, "Wrong base address\n");
-    ok(im.MachineType == get_module_machine("C:\\windows\\system32\\notepad.exe"),
-       "Wrong machine %lx\n", im.MachineType);
+    machine2 = get_module_machine(file_system);
+    ok(machine2 != IMAGE_FILE_MACHINE_UNKNOWN, "Unexpected machine %u\n", machine2);
+    ok(im.MachineType == machine2, "Wrong machine %lx (expecting %u)\n", im.MachineType, machine2);
 
     /* still can access first module after loading second */
-    if (attr != INVALID_FILE_ATTRIBUTES)
+    if (machine_wow != IMAGE_FILE_MACHINE_UNKNOWN)
     {
         ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
         ok(im.BaseOfImage == base2, "Wrong base address\n");
-        ok(im.MachineType == get_module_machine("C:\\windows\\syswow64\\notepad.exe"),
-           "Wrong machine %lx\n", im.MachineType);
+        ok(im.MachineType == machine_wow, "Wrong machine %lx (expecting %u)\n", im.MachineType, machine_wow);
     }
 
     ret = SymCleanup(GetCurrentProcess());
