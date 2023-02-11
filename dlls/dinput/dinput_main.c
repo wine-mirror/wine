@@ -163,36 +163,46 @@ static void dinput_unacquire_window_devices( HWND window )
 
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_device_list, struct dinput_device, entry )
     {
-        if (!window || window == impl->win)
-        {
-            TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
-            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
-        }
+        if (window != impl->win) continue;
+        TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
+        dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
     }
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_mouse_list, struct dinput_device, entry )
     {
-        if (!window || window == impl->win)
-        {
-            TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
-            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
-        }
+        if (window != impl->win) continue;
+        TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
+        dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
     }
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_rawmouse_list, struct dinput_device, entry )
     {
-        if (!window || window == impl->win)
-        {
-            TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
-            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
-        }
+        if (window != impl->win) continue;
+        TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
+        dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
     }
     LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_keyboard_list, struct dinput_device, entry )
     {
-        if (!window || window == impl->win)
-        {
-            TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
-            dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
-        }
+        if (window != impl->win) continue;
+        TRACE( "%p window is not foreground - unacquiring %p\n", impl->win, impl );
+        dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
     }
+
+    LeaveCriticalSection( &dinput_hook_crit );
+}
+
+static void dinput_unacquire_devices(void)
+{
+    struct dinput_device *impl, *next;
+
+    EnterCriticalSection( &dinput_hook_crit );
+
+    LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_device_list, struct dinput_device, entry )
+        dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
+    LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_mouse_list, struct dinput_device, entry )
+        dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
+    LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_rawmouse_list, struct dinput_device, entry )
+        dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
+    LIST_FOR_EACH_ENTRY_SAFE( impl, next, &acquired_keyboard_list, struct dinput_device, entry )
+        dinput_device_internal_unacquire( &impl->IDirectInputDevice8W_iface, STATUS_UNACQUIRED );
 
     LeaveCriticalSection( &dinput_hook_crit );
 }
@@ -390,7 +400,7 @@ static DWORD WINAPI dinput_thread_proc( void *params )
     if (state.running)
     {
         ERR( "Unexpected termination, ret %#lx\n", ret );
-        dinput_unacquire_window_devices( 0 );
+        dinput_unacquire_devices();
     }
 
     while (state.devices_count--) dinput_device_internal_release( state.devices[state.devices_count] );
