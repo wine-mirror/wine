@@ -165,7 +165,7 @@ static const WCHAR **load_list( HKEY hkey, const WCHAR *value )
 static DWORD WINAPI init_debug_lists( RTL_RUN_ONCE *once, void *param, void **context )
 {
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING name;
+    UNICODE_STRING name = RTL_CONSTANT_STRING( L"Software\\Wine\\Debug" );
     HANDLE root, hkey;
 
     RtlOpenCurrentUser( KEY_ALL_ACCESS, &root );
@@ -175,7 +175,6 @@ static DWORD WINAPI init_debug_lists( RTL_RUN_ONCE *once, void *param, void **co
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &name, L"Software\\Wine\\Debug" );
 
     /* @@ Wine registry key: HKCU\Software\Wine\Debug */
     if (NtOpenKey( &hkey, KEY_ALL_ACCESS, &attr )) hkey = 0;
