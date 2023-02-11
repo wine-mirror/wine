@@ -836,7 +836,7 @@ static void test_BCryptGenerateSymmetricKey(void)
     ok(!memcmp(ciphertext, expected, sizeof(expected)), "wrong data\n");
     for (i = 0; i < 16; i++)
         ok(ciphertext[i] == expected[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
 
     size = 0;
     memset(ciphertext, 0, sizeof(ciphertext));
@@ -855,7 +855,7 @@ static void test_BCryptGenerateSymmetricKey(void)
     ok(!memcmp(ciphertext, expected3, sizeof(expected3)), "wrong data\n");
     for (i = 0; i < 16; i++)
         ok(ciphertext[i] == expected3[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected3[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
 
     key2 = (void *)0xdeadbeef;
     ret = BCryptDuplicateKey(NULL, &key2, NULL, 0, 0);
@@ -883,7 +883,7 @@ static void test_BCryptGenerateSymmetricKey(void)
         ok(!memcmp(ciphertext, expected, sizeof(expected)), "wrong data\n");
         for (i = 0; i < 16; i++)
             ok(ciphertext[i] == expected[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected[i]);
-        todo_wine ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
+        ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
 
         ret = BCryptDestroyKey(key2);
         ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
@@ -907,7 +907,7 @@ static void test_BCryptGenerateSymmetricKey(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 16, "got %lu\n", size);
     ok(!memcmp(plaintext, data, sizeof(data)), "wrong data\n");
-    todo_wine ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
 
     memset(mode, 0, sizeof(mode));
     ret = BCryptGetProperty(key, BCRYPT_CHAINING_MODE, mode, sizeof(mode), &size, 0);
@@ -1121,7 +1121,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected, sizeof(expected)), "wrong data\n");
     for (i = 0; i < 16; i++)
         ok(ciphertext[i] == expected[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
 
     /* NULL initialization vector */
     size = 0;
@@ -1141,7 +1141,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected9, sizeof(expected9)), "wrong data\n");
     for (i = 0; i < 16; i++)
         ok(ciphertext[i] == expected9[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected9[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
 
     /* input size is not a multiple of block size */
     size = 0;
@@ -1167,7 +1167,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected2, sizeof(expected2)), "wrong data\n");
     for (i = 0; i < 32; i++)
         ok(ciphertext[i] == expected2[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected2[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext + 32 - 16, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext + 32 - 16, sizeof(iv)), "wrong iv data.\n");
 
     /* input size is a multiple of block size, block padding set */
     size = 0;
@@ -1186,7 +1186,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected3, sizeof(expected3)), "wrong data\n");
     for (i = 0; i < 48; i++)
         ok(ciphertext[i] == expected3[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected3[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext + 48 - 16, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext + 48 - 16, sizeof(iv)), "wrong iv data.\n");
 
     /* output size too small */
     size = 0;
@@ -1236,7 +1236,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected10, sizeof(expected10)), "wrong data\n");
     for (i = 0; i < 48; i++)
         ok(ciphertext[i] == expected10[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected10[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext + 48 - 16, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext + 48 - 16, sizeof(iv)), "wrong iv data.\n");
 
     ret = BCryptDestroyKey(key);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
@@ -1548,7 +1548,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected11, sizeof(expected11)), "wrong data\n");
     for (i = 0; i < 16; i++)
         ok(ciphertext[i] == expected11[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected11[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
 
     /* NULL initialization vector */
     size = 0;
@@ -1568,7 +1568,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected13, sizeof(expected13)), "wrong data\n");
     for (i = 0; i < 16; i++)
         ok(ciphertext[i] == expected13[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected13[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext, sizeof(iv)), "wrong iv data.\n");
 
     /* input size is not a multiple of block size */
     size = 0;
@@ -1594,7 +1594,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected14, sizeof(expected14)), "wrong data\n");
     for (i = 0; i < 32; i++)
         ok(ciphertext[i] == expected14[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected14[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext + 32 - 16, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext + 32 - 16, sizeof(iv)), "wrong iv data.\n");
 
     /* input size is a multiple of block size, block padding set */
     size = 0;
@@ -1612,7 +1612,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected15, sizeof(expected15)), "wrong data\n");
     for (i = 0; i < 48; i++)
         ok(ciphertext[i] == expected15[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected15[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext + 48 - 16, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext + 48 - 16, sizeof(iv)), "wrong iv data.\n");
 
     /* output size too small */
     size = 0;
@@ -1664,7 +1664,7 @@ static void test_BCryptEncrypt(void)
     ok(!memcmp(ciphertext, expected16, sizeof(expected16)), "wrong data\n");
     for (i = 0; i < 48; i++)
         ok(ciphertext[i] == expected16[i], "%lu: %02x != %02x\n", i, ciphertext[i], expected16[i]);
-    todo_wine ok(!memcmp(ivbuf, ciphertext + 48 - 16, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext + 48 - 16, sizeof(iv)), "wrong iv data.\n");
 
     ret = BCryptCloseAlgorithmProvider(aes, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
@@ -1768,7 +1768,7 @@ static void test_BCryptDecrypt(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 32, "got %lu\n", size);
     ok(!memcmp(plaintext, expected, sizeof(expected)), "wrong data\n");
-    todo_wine ok(!memcmp(ivbuf, ciphertext + size - sizeof(iv), sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext + size - sizeof(iv), sizeof(iv)), "wrong iv data.\n");
 
     size = 0;
     ++ivbuf[0];
@@ -1776,8 +1776,8 @@ static void test_BCryptDecrypt(void)
     ret = BCryptDecrypt(key, ciphertext, 32, NULL, ivbuf, 16, plaintext, 32, &size, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 32, "got %lu\n", size);
-    todo_wine ok(!memcmp(plaintext, expected5, sizeof(expected)), "wrong data\n");
-    todo_wine ok(!memcmp(ivbuf, ciphertext + 32 - 16, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(plaintext, expected5, sizeof(expected)), "wrong data\n");
+    ok(!memcmp(ivbuf, ciphertext + 32 - 16, sizeof(iv)), "wrong iv data.\n");
 
     size = 0;
     memset(plaintext, 0, sizeof(plaintext));
@@ -1801,15 +1801,15 @@ static void test_BCryptDecrypt(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 17, "got %lu\n", size);
     ok(!memcmp(plaintext, expected2, sizeof(expected2)), "wrong data\n");
-    todo_wine ok(!memcmp(ivbuf, ciphertext2 + 32 - sizeof(iv), sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext2 + 32 - sizeof(iv), sizeof(iv)), "wrong iv data.\n");
 
     size = 0;
     memset(plaintext, 0, sizeof(plaintext));
     ret = BCryptDecrypt(key, ciphertext2, 32, NULL, ivbuf, 16, plaintext, 17, &size, BCRYPT_BLOCK_PADDING);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 17, "got %lu\n", size);
-    todo_wine ok(!memcmp(plaintext, expected4, size), "wrong data\n");
-    todo_wine ok(!memcmp(ivbuf, ciphertext2 + 32 - 16, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(plaintext, expected4, size), "wrong data\n");
+    ok(!memcmp(ivbuf, ciphertext2 + 32 - 16, sizeof(iv)), "wrong iv data.\n");
 
     /* test with padding of block size */
     size = 0;
@@ -1826,7 +1826,7 @@ static void test_BCryptDecrypt(void)
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 32, "got %lu\n", size);
     ok(!memcmp(plaintext, expected3, sizeof(expected3)), "wrong data\n");
-    todo_wine ok(!memcmp(ivbuf, ciphertext3 + 48 - 16, sizeof(iv)), "wrong iv data.\n");
+    ok(!memcmp(ivbuf, ciphertext3 + 48 - 16, sizeof(iv)), "wrong iv data.\n");
 
     /* output size too small */
     size = 0;
@@ -3256,7 +3256,7 @@ static void test_aes_vector(void)
     ret = BCryptEncrypt(key, input, sizeof(input), NULL, iv, sizeof(iv), output, sizeof(output), &size, 0);
     ok(!ret, "got %#lx\n", ret);
     ok(size == 16, "got %lu\n", size);
-    todo_wine ok(!memcmp(output, expect3, sizeof(expect3)), "wrong cipher text\n");
+    ok(!memcmp(output, expect3, sizeof(expect3)), "wrong cipher text\n");
 
     ret = BCryptDestroyKey(key);
     ok(!ret, "got %#lx\n", ret);

@@ -1418,6 +1418,16 @@ static NTSTATUS key_symmetric_encrypt( struct key *key,  UCHAR *input, ULONG inp
         free( buf );
     }
 
+    if (!status)
+    {
+        if (key->u.s.vector && *ret_len >= key->u.s.vector_len)
+        {
+            memcpy( key->u.s.vector, output + *ret_len - key->u.s.vector_len, key->u.s.vector_len );
+            if (iv) memcpy( iv, key->u.s.vector, min( iv_len, key->u.s.vector_len ));
+        }
+        else FIXME( "Unexpected vector len %lu, *ret_len %lu.\n", key->u.s.vector_len, *ret_len );
+    }
+
     return status;
 }
 
@@ -1513,6 +1523,16 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
         }
         else status = STATUS_UNSUCCESSFUL; /* FIXME: invalid padding */
         free( buf );
+    }
+
+    if (!status)
+    {
+        if (key->u.s.vector && input_len >= key->u.s.vector_len)
+        {
+            memcpy( key->u.s.vector, input + input_len - key->u.s.vector_len, key->u.s.vector_len );
+            if (iv) memcpy( iv, key->u.s.vector, min( iv_len, key->u.s.vector_len ));
+        }
+        else FIXME( "Unexpected vector len %lu, *ret_len %lu.\n", key->u.s.vector_len, *ret_len );
     }
 
     return status;
