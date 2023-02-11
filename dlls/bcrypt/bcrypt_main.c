@@ -1149,12 +1149,12 @@ static BOOL is_equal_vector( const UCHAR *vector, ULONG len, const UCHAR *vector
 static NTSTATUS key_symmetric_set_vector( struct key *key, UCHAR *vector, ULONG vector_len, BOOL force_reset )
 {
     BOOL needs_reset = force_reset || !is_equal_vector( key->u.s.vector, key->u.s.vector_len, vector, vector_len );
-
-    free( key->u.s.vector );
-    key->u.s.vector = NULL;
-    key->u.s.vector_len = 0;
     if (vector)
     {
+        free( key->u.s.vector );
+        key->u.s.vector = NULL;
+        key->u.s.vector_len = 0;
+
         if (!(key->u.s.vector = malloc( vector_len ))) return STATUS_NO_MEMORY;
         memcpy( key->u.s.vector, vector, vector_len );
         key->u.s.vector_len = vector_len;

@@ -843,7 +843,7 @@ static void test_BCryptGenerateSymmetricKey(void)
     ret = BCryptEncrypt(key, data, 16, NULL, NULL, 0, ciphertext, 16, &size, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 16, "got %lu\n", size);
-    todo_wine ok(!memcmp(ciphertext, expected2, sizeof(expected2)), "wrong data\n");
+    ok(!memcmp(ciphertext, expected2, sizeof(expected2)), "wrong data\n");
 
     size = 0;
     memcpy(ivbuf, iv, sizeof(iv));
@@ -1129,7 +1129,7 @@ static void test_BCryptEncrypt(void)
     ret = BCryptEncrypt(key, data, 16, NULL, NULL, 0, ciphertext, 16, &size, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 16, "got %lu\n", size);
-    todo_wine ok(!memcmp(ciphertext, expected8, sizeof(expected8)), "wrong data\n");
+    ok(!memcmp(ciphertext, expected8, sizeof(expected8)), "wrong data\n");
 
     /* all zero initialization vector */
     size = 0;
@@ -1556,7 +1556,7 @@ static void test_BCryptEncrypt(void)
     ret = BCryptEncrypt(key, data, 16, NULL, NULL, 0, ciphertext, 16, &size, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 16, "got %lu\n", size);
-    todo_wine ok(!memcmp(ciphertext, expected12, sizeof(expected12)), "wrong data\n");
+    ok(!memcmp(ciphertext, expected12, sizeof(expected12)), "wrong data\n");
 
     /* all zero initialization vector */
     size = 0;
@@ -1784,7 +1784,7 @@ static void test_BCryptDecrypt(void)
     ret = BCryptDecrypt(key, ciphertext, 32, NULL, NULL, 0, plaintext, 32, &size, 0);
     ok(ret == STATUS_SUCCESS, "got %#lx\n", ret);
     ok(size == 32, "got %lu\n", size);
-    todo_wine ok(!memcmp(plaintext, expected4, sizeof(expected4)), "wrong data\n");
+    ok(!memcmp(plaintext, expected4, sizeof(expected4)), "wrong data\n");
 
     /* test with padding smaller than block size */
     size = 0;
