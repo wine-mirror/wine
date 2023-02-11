@@ -618,7 +618,11 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 #ifdef _WIN64
     HKEY wow64_ports_key = NULL;
 #endif
-    UNICODE_STRING nameW, linkW;
+    UNICODE_STRING device_mount_point_manager = RTL_CONSTANT_STRING( L"\\Device\\MountPointManager" );
+    UNICODE_STRING object_mount_point_manager = RTL_CONSTANT_STRING( L"\\??\\MountPointManager" );
+    UNICODE_STRING driver_harddisk = RTL_CONSTANT_STRING( L"\\Driver\\Harddisk" );
+    UNICODE_STRING driver_serial = RTL_CONSTANT_STRING( L"\\Driver\\Serial" );
+    UNICODE_STRING driver_parallel = RTL_CONSTANT_STRING( L"\\Driver\\Parallel" );
     DEVICE_OBJECT *device;
     HKEY devicemap_key;
     NTSTATUS status;
@@ -631,10 +635,8 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
 
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = mountmgr_ioctl;
 
-    RtlInitUnicodeString( &nameW, L"\\Device\\MountPointManager" );
-    RtlInitUnicodeString( &linkW, L"\\??\\MountPointManager" );
-    if (!(status = IoCreateDevice( driver, 0, &nameW, 0, 0, FALSE, &device )))
-        status = IoCreateSymbolicLink( &linkW, &nameW );
+    if (!(status = IoCreateDevice( driver, 0, &device_mount_point_manager, 0, 0, FALSE, &device )))
+        status = IoCreateSymbolicLink( &object_mount_point_manager, &device_mount_point_manager );
     if (status)
     {
         FIXME( "failed to create device error %lx\n", status );
@@ -648,8 +650,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
                           KEY_ALL_ACCESS, NULL, &devicemap_key, NULL ))
         RegCloseKey( devicemap_key );
 
-    RtlInitUnicodeString( &nameW, L"\\Driver\\Harddisk" );
-    status = IoCreateDriver( &nameW, harddisk_driver_entry );
+    status = IoCreateDriver( &driver_harddisk, harddisk_driver_entry );
 
     thread = CreateThread( NULL, 0, device_op_thread, NULL, 0, NULL );
     CloseHandle( CreateThread( NULL, 0, run_loop_thread, thread, 0, NULL ));
@@ -664,11 +665,8 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     RegCloseKey( wow64_ports_key );
 #endif
 
-    RtlInitUnicodeString( &nameW, L"\\Driver\\Serial" );
-    IoCreateDriver( &nameW, serial_driver_entry );
-
-    RtlInitUnicodeString( &nameW, L"\\Driver\\Parallel" );
-    IoCreateDriver( &nameW, parallel_driver_entry );
+    IoCreateDriver( &driver_serial, serial_driver_entry );
+    IoCreateDriver( &driver_parallel, parallel_driver_entry );
 
     return status;
 }
