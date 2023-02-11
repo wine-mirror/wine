@@ -792,7 +792,16 @@ INT_PTR CALLBACK test_di_dialog_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM
         case PSN_RESET:
         case PSN_KILLACTIVE:
             SetEvent( thread_stop );
-            MsgWaitForMultipleObjects( 1, &thread, FALSE, INFINITE, 0 );
+            /* wait for the input thread to stop, processing any WM_USER message from it */
+            while (MsgWaitForMultipleObjects( 1, &thread, FALSE, INFINITE, QS_ALLINPUT ) == 1)
+            {
+                MSG msg;
+                while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+                {
+                    TranslateMessage( &msg );
+                    DispatchMessageW( &msg );
+                }
+            }
             CloseHandle( state_event );
             CloseHandle( thread_stop );
             CloseHandle( thread );
