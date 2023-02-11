@@ -642,7 +642,6 @@ static BOOL add_printer_driver( const WCHAR *name, const WCHAR *ppd_dir )
     WCHAR raw[] = L"RAW", driver_nt[] = L"wineps.drv";
 
     if (!ppd) return FALSE;
-    RtlInitUnicodeString( &nt_ppd, NULL );
     if (!RtlDosPathNameToNtPathName_U( ppd, &nt_ppd, NULL, NULL )) goto end;
 
     ppd_params.printer = name;
