@@ -138,24 +138,30 @@ static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface, DWORD
 
 static LRESULT CALLBACK input_thread_ll_hook_proc( int code, WPARAM wparam, LPARAM lparam )
 {
-    struct dinput_device *impl;
-    int skip = 0;
+    struct input_thread_state *state = input_thread_state;
+    int i, skip = 0;
 
     if (code != HC_ACTION) return CallNextHookEx( 0, code, wparam, lparam );
 
-    EnterCriticalSection( &dinput_hook_crit );
-    LIST_FOR_EACH_ENTRY( impl, &acquired_mouse_list, struct dinput_device, entry )
+    for (i = state->events_count; i < state->devices_count; ++i)
     {
-        TRACE( "calling dinput_mouse_hook (%p %Ix %Ix)\n", impl, wparam, lparam );
-        skip |= dinput_mouse_hook( &impl->IDirectInputDevice8W_iface, wparam, lparam );
+        struct dinput_device *device = state->devices[i];
+        if (device->use_raw_input) continue;
+        if (device->instance.dwDevType & DIDEVTYPE_HID) continue;
+        switch (GET_DIDEVICE_TYPE( device->instance.dwDevType ))
+        {
+        case DIDEVTYPE_MOUSE:
+        case DI8DEVTYPE_MOUSE:
+            TRACE( "calling dinput_mouse_hook (%p %Ix %Ix)\n", device, wparam, lparam );
+            skip |= dinput_mouse_hook( &device->IDirectInputDevice8W_iface, wparam, lparam );
+            break;
+        case DIDEVTYPE_KEYBOARD:
+        case DI8DEVTYPE_KEYBOARD:
+            TRACE( "calling dinput_keyboard_hook (%p %Ix %Ix)\n", device, wparam, lparam );
+            skip |= dinput_keyboard_hook( &device->IDirectInputDevice8W_iface, wparam, lparam );
+            break;
+        }
     }
-    LIST_FOR_EACH_ENTRY( impl, &acquired_keyboard_list, struct dinput_device, entry )
-    {
-        if (impl->use_raw_input) continue;
-        TRACE( "calling dinput_keyboard_hook (%p %Ix %Ix)\n", impl, wparam, lparam );
-        skip |= dinput_keyboard_hook( &impl->IDirectInputDevice8W_iface, wparam, lparam );
-    }
-    LeaveCriticalSection( &dinput_hook_crit );
 
     return skip ? 1 : CallNextHookEx( 0, code, wparam, lparam );
 }
@@ -248,18 +254,19 @@ static void input_thread_update_device_list( struct input_thread_state *state )
         if (device->dwCoopLevel & DISCL_EXCLUSIVE) rawinput_mouse.dwFlags |= RIDEV_NOLEGACY | RIDEV_CAPTUREMOUSE;
         rawinput_mouse.dwFlags &= ~RIDEV_REMOVE;
         rawinput_mouse.hwndTarget = di_em_win;
-        dinput_device_internal_addref( (state->devices[count] = device) );
-        if (++count >= INPUT_THREAD_MAX_DEVICES) break;
+        if (count < INPUT_THREAD_MAX_DEVICES) dinput_device_internal_addref( (state->devices[count++] = device) );
     }
     LIST_FOR_EACH_ENTRY( device, &acquired_mouse_list, struct dinput_device, entry )
     {
         if (device->dwCoopLevel & DISCL_FOREGROUND) foreground_count++;
         mouse_count++;
+        if (count < INPUT_THREAD_MAX_DEVICES) dinput_device_internal_addref( (state->devices[count++] = device) );
     }
     LIST_FOR_EACH_ENTRY( device, &acquired_keyboard_list, struct dinput_device, entry )
     {
         if (device->dwCoopLevel & DISCL_FOREGROUND) foreground_count++;
         keyboard_count++;
+        if (count < INPUT_THREAD_MAX_DEVICES) dinput_device_internal_addref( (state->devices[count++] = device) );
     }
     state->devices_count = count;
     LeaveCriticalSection( &dinput_hook_crit );
