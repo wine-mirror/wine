@@ -3823,7 +3823,7 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
 {
     struct afd_create_params create_params;
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING string;
+    UNICODE_STRING string = RTL_CONSTANT_STRING(L"\\Device\\Afd");
     IO_STATUS_BLOCK io;
     NTSTATUS status;
     HANDLE handle;
@@ -3901,7 +3901,6 @@ SOCKET WINAPI WSASocketW(int af, int type, int protocol,
         }
     }
 
-    RtlInitUnicodeString(&string, L"\\Device\\Afd");
     InitializeObjectAttributes(&attr, &string, (flags & WSA_FLAG_NO_HANDLE_INHERIT) ? 0 : OBJ_INHERIT, NULL, NULL);
     if ((status = NtOpenFile(&handle, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE, &attr,
             &io, 0, (flags & WSA_FLAG_OVERLAPPED) ? 0 : FILE_SYNCHRONOUS_IO_NONALERT)))
