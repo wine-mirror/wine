@@ -115,6 +115,18 @@ static void keyboard_handle_event( struct keyboard *impl, DWORD vkey, DWORD scan
     LeaveCriticalSection( &impl->base.crit );
 }
 
+void dinput_keyboard_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam, RAWINPUT *ri )
+{
+    struct keyboard *impl = impl_from_IDirectInputDevice8W( iface );
+    DWORD scan_code;
+
+    TRACE("(%p) wparam %Ix, lparam %Ix\n", iface, wparam, lparam);
+
+    scan_code = ri->data.keyboard.MakeCode & 0xff;
+    if (ri->data.keyboard.Flags & RI_KEY_E0) scan_code |= 0x100;
+    keyboard_handle_event( impl, ri->data.keyboard.VKey, scan_code, ri->data.keyboard.Flags & RI_KEY_BREAK );
+}
+
 int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam )
 {
     struct keyboard *impl = impl_from_IDirectInputDevice8W( iface );
@@ -188,6 +200,9 @@ HRESULT keyboard_create_device( struct dinput *dinput, const GUID *guid, IDirect
     impl->base.caps.dwDevType = impl->base.instance.dwDevType;
     impl->base.caps.dwFirmwareRevision = 100;
     impl->base.caps.dwHardwareRevision = 100;
+
+    if (dinput->dwVersion >= 0x0800)
+        impl->base.use_raw_input = TRUE;
 
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;

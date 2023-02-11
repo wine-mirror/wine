@@ -200,6 +200,7 @@ static LRESULT CALLBACK cbt_hook_proc( int code, WPARAM wparam, LPARAM lparam )
 
 static void input_thread_update_device_list( struct input_thread_state *state )
 {
+    RAWINPUTDEVICE rawinput_keyboard = {.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_KEYBOARD, .dwFlags = RIDEV_REMOVE};
     RAWINPUTDEVICE rawinput_mouse = {.usUsagePage = HID_USAGE_PAGE_GENERIC, .usUsage = HID_USAGE_GENERIC_MOUSE, .dwFlags = RIDEV_REMOVE};
     UINT count = 0, keyboard_ll_count = 0, mouse_ll_count = 0, foreground_count = 0;
     struct dinput_device *device;
@@ -230,7 +231,9 @@ static void input_thread_update_device_list( struct input_thread_state *state )
             break;
         case DIDEVTYPE_KEYBOARD:
         case DI8DEVTYPE_KEYBOARD:
+            if (device->dwCoopLevel & DISCL_EXCLUSIVE) rawinput_keyboard.dwFlags |= RIDEV_NOHOTKEYS;
             if (!device->use_raw_input) keyboard_ll_count++;
+            else rawinput_device = &rawinput_keyboard;
             break;
         }
 
@@ -274,8 +277,12 @@ static void input_thread_update_device_list( struct input_thread_state *state )
     if (!rawinput_mouse.hwndTarget != !state->rawinput_devices[0].hwndTarget &&
         !RegisterRawInputDevices( &rawinput_mouse, 1, sizeof(RAWINPUTDEVICE) ))
         WARN( "Failed to (un)register rawinput mouse device.\n" );
+    if (!rawinput_keyboard.hwndTarget != !state->rawinput_devices[1].hwndTarget &&
+        !RegisterRawInputDevices( &rawinput_keyboard, 1, sizeof(RAWINPUTDEVICE) ))
+        WARN( "Failed to (un)register rawinput mouse device.\n" );
 
     state->rawinput_devices[0] = rawinput_mouse;
+    state->rawinput_devices[1] = rawinput_keyboard;
 }
 
 static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -292,7 +299,9 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         size = GetRawInputData( (HRAWINPUT)lparam, RID_INPUT, &ri, &size, sizeof(RAWINPUTHEADER) );
         if (size == (UINT)-1 || size < sizeof(RAWINPUTHEADER))
             WARN( "Unable to read raw input data\n" );
-        else if (ri.header.dwType == RIM_TYPEMOUSE)
+        else if (ri.header.dwType == RIM_TYPEHID)
+            WARN( "Unexpected HID rawinput message\n" );
+        else
         {
             for (i = state->events_count; i < state->devices_count; ++i)
             {
@@ -303,7 +312,13 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
                 {
                 case DIDEVTYPE_MOUSE:
                 case DI8DEVTYPE_MOUSE:
+                    if (ri.header.dwType != RIM_TYPEMOUSE) break;
                     dinput_mouse_rawinput_hook( &device->IDirectInputDevice8W_iface, wparam, lparam, &ri );
+                    break;
+                case DIDEVTYPE_KEYBOARD:
+                case DI8DEVTYPE_KEYBOARD:
+                    if (ri.header.dwType != RIM_TYPEKEYBOARD) break;
+                    dinput_keyboard_rawinput_hook( &device->IDirectInputDevice8W_iface, wparam, lparam, &ri );
                     break;
                 default: break;
                 }

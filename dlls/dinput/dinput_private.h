@@ -72,6 +72,8 @@ extern int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM
 extern int dinput_keyboard_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam );
 extern void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam,
                                         RAWINPUT *raw );
+extern void dinput_keyboard_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam,
+                                           RAWINPUT *raw );
 
 extern void check_dinput_events(void) DECLSPEC_HIDDEN;
 
