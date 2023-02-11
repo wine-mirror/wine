@@ -257,11 +257,10 @@ static void create_user_shared_data(void)
     SYSTEM_BASIC_INFORMATION sbi;
     BOOLEAN *features;
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
-    UNICODE_STRING name;
+    UNICODE_STRING name = RTL_CONSTANT_STRING( L"\\KernelObjects\\__wine_user_shared_data" );
     NTSTATUS status;
     HANDLE handle;
 
-    RtlInitUnicodeString( &name, L"\\KernelObjects\\__wine_user_shared_data" );
     InitializeObjectAttributes( &attr, &name, OBJ_OPENIF, NULL, NULL );
     if ((status = NtOpenSection( &handle, SECTION_ALL_ACCESS, &attr )))
     {
@@ -1609,7 +1608,7 @@ int __cdecl main( int argc, char *argv[] )
     BOOL end_session, force, init, kill, restart, shutdown, update;
     HANDLE event;
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
+    UNICODE_STRING nameW = RTL_CONSTANT_STRING( L"\\KernelObjects\\__wineboot_event" );
     BOOL is_wow64;
 
     end_session = force = init = kill = restart = shutdown = update = FALSE;
@@ -1690,7 +1689,6 @@ int __cdecl main( int argc, char *argv[] )
 
     /* create event to be inherited by services.exe */
     InitializeObjectAttributes( &attr, &nameW, OBJ_OPENIF | OBJ_INHERIT, 0, NULL );
-    RtlInitUnicodeString( &nameW, L"\\KernelObjects\\__wineboot_event" );
     NtCreateEvent( &event, EVENT_ALL_ACCESS, &attr, NotificationEvent, 0 );
 
     ResetEvent( event );  /* in case this is a restart */
