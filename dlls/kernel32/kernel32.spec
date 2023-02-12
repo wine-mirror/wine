@@ -272,8 +272,8 @@
 @ stdcall -import CreateDirectoryA(str ptr)
 @ stdcall CreateDirectoryExA(str str ptr)
 @ stdcall -import CreateDirectoryExW(wstr wstr ptr)
-# @ stub CreateDirectoryTransactedA
-# @ stub CreateDirectoryTransactedW
+@ stdcall CreateDirectoryTransactedA(str str ptr ptr)
+@ stdcall CreateDirectoryTransactedW(wstr wstr ptr ptr)
 @ stdcall -import CreateDirectoryW(wstr ptr)
 @ stdcall -import CreateEventA(ptr long long str)
 @ stdcall -import CreateEventExA(ptr str long long)

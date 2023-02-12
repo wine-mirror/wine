@@ -185,6 +185,24 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateFileTransactedW( LPCWSTR name, DWORD acces
     return CreateFileW(name, access, sharing, sa, creation, attributes, template);
 }
 
+/***********************************************************************
+ *           CreateDirectoryTransactedA   (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryTransactedA(LPCSTR template, LPCSTR path, LPSECURITY_ATTRIBUTES sa, HANDLE transaction)
+{
+    FIXME("(%s %s %p %p): semi-stub\n", debugstr_a(template), debugstr_a(path), sa, transaction);
+    return CreateDirectoryExA(template, path, sa);
+}
+
+/***********************************************************************
+ *           CreateDirectoryTransactedW   (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryTransactedW(LPCWSTR template, LPCWSTR path, LPSECURITY_ATTRIBUTES sa, HANDLE transaction)
+{
+    FIXME("(%s %s %p %p): semi-stub\n", debugstr_w(template), debugstr_w(path), sa, transaction);
+    return CreateDirectoryExW(template, path, sa);
+}
+
 /**************************************************************************
  *           MoveFileWithProgressA   (KERNEL32.@)
  */
