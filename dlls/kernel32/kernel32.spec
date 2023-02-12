@@ -1294,8 +1294,8 @@
 @ stdcall -import ReplaceFile(wstr wstr wstr long ptr ptr) ReplaceFileW
 @ stdcall ReplaceFileA(str str str long ptr ptr)
 @ stdcall -import ReplaceFileW(wstr wstr wstr long ptr ptr)
-# @ stub RemoveDirectoryTransactedA
-# @ stub RemoveDirectoryTransactedW
+@ stdcall RemoveDirectoryTransactedA(str ptr)
+@ stdcall RemoveDirectoryTransactedW(wstr ptr)
 @ stdcall -import RemoveDllDirectory(ptr)
 # @ stub RemoveSecureMemoryCacheCallback
 # @ stub ReplacePartitionUnit

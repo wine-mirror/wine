@@ -262,6 +262,24 @@ DWORD WINAPI DECLSPEC_HOTPATCH GetFileAttributesTransactedW(LPCWSTR name, GET_FI
     return GetFileAttributesExW(name, level, ptr);
 }
 
+/***********************************************************************
+ *           RemoveDirectoryTransactedA   (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH RemoveDirectoryTransactedA(LPCSTR path, HANDLE transaction)
+{
+    FIXME("(%s %p): semi-stub\n", debugstr_a(path), transaction);
+    return RemoveDirectoryA(path);
+}
+
+/***********************************************************************
+ *           RemoveDirectoryTransactedW   (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH RemoveDirectoryTransactedW(LPCWSTR path, HANDLE transaction)
+{
+    FIXME("(%s %p): semi-stub\n", debugstr_w(path), transaction);
+    return RemoveDirectoryW(path);
+}
+
 /**************************************************************************
  *           MoveFileWithProgressA   (KERNEL32.@)
  */
