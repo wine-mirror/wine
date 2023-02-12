@@ -203,6 +203,24 @@ BOOL WINAPI DECLSPEC_HOTPATCH CreateDirectoryTransactedW(LPCWSTR template, LPCWS
     return CreateDirectoryExW(template, path, sa);
 }
 
+/***********************************************************************
+ *           DeleteFileTransactedA   (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH DeleteFileTransactedA(LPCSTR path, HANDLE transaction)
+{
+    FIXME("(%s %p): semi-stub\n", debugstr_a(path), transaction);
+    return DeleteFileA(path);
+}
+
+/***********************************************************************
+ *           DeleteFileTransactedW   (KERNEL32.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH DeleteFileTransactedW(LPCWSTR path, HANDLE transaction)
+{
+    FIXME("(%s %p): semi-stub\n", debugstr_w(path), transaction);
+    return DeleteFileW(path);
+}
+
 /**************************************************************************
  *           MoveFileWithProgressA   (KERNEL32.@)
  */
