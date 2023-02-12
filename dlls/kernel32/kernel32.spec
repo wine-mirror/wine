@@ -679,8 +679,8 @@
 @ stdcall -import GetFileAttributesA(str)
 @ stdcall -import GetFileAttributesExA(str long ptr)
 @ stdcall -import GetFileAttributesExW(wstr long ptr)
-# @ stub GetFileAttributesTransactedA
-# @ stub GetFileAttributesTransactedW
+@ stdcall GetFileAttributesTransactedA(str long ptr ptr)
+@ stdcall GetFileAttributesTransactedW(wstr long ptr ptr)
 @ stdcall -import GetFileAttributesW(wstr)
 # @ stub GetFileBandwidthReservation
 @ stdcall -import GetFileInformationByHandle(long ptr)

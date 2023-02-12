@@ -243,6 +243,25 @@ HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileTransactedW( LPCWSTR filename, FIND
     return FindFirstFileExW(filename, level, data, search_op, filter, flags);
 }
 
+
+/**************************************************************************
+ *           GetFileAttributesTransactedA   (KERNEL32.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetFileAttributesTransactedA(LPCSTR name, GET_FILEEX_INFO_LEVELS level, void *ptr, HANDLE transaction)
+{
+    FIXME("(%s %p): semi-stub\n", debugstr_a(name), transaction);
+    return GetFileAttributesExA(name, level, ptr);
+}
+
+/**************************************************************************
+ *           GetFileAttributesTransactedW   (KERNEL32.@)
+ */
+DWORD WINAPI DECLSPEC_HOTPATCH GetFileAttributesTransactedW(LPCWSTR name, GET_FILEEX_INFO_LEVELS level, void *ptr, HANDLE transaction)
+{
+    FIXME("(%s %p): semi-stub\n", debugstr_w(name), transaction);
+    return GetFileAttributesExW(name, level, ptr);
+}
+
 /**************************************************************************
  *           MoveFileWithProgressA   (KERNEL32.@)
  */
