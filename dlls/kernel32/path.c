@@ -221,6 +221,28 @@ BOOL WINAPI DECLSPEC_HOTPATCH DeleteFileTransactedW(LPCWSTR path, HANDLE transac
     return DeleteFileW(path);
 }
 
+/******************************************************************************
+ *           FindFirstFileTransactedA   (KERNEL32.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileTransactedA( LPCSTR filename, FINDEX_INFO_LEVELS level,
+                                                          LPVOID data, FINDEX_SEARCH_OPS search_op,
+                                                          LPVOID filter, DWORD flags, HANDLE transaction )
+{
+    FIXME("(%s %d %p %d %p %lx %p): semi-stub\n", debugstr_a(filename), level, data, search_op, filter, flags, transaction);
+    return FindFirstFileExA(filename, level, data, search_op, filter, flags);
+}
+
+/******************************************************************************
+ *           FindFirstFileTransactedW   (KERNEL32.@)
+ */
+HANDLE WINAPI DECLSPEC_HOTPATCH FindFirstFileTransactedW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
+                                                          LPVOID data, FINDEX_SEARCH_OPS search_op,
+                                                          LPVOID filter, DWORD flags, HANDLE transaction )
+{
+    FIXME("(%s %d %p %d %p %lx %p): semi-stub\n", debugstr_w(filename), level, data, search_op, filter, flags, transaction);
+    return FindFirstFileExW(filename, level, data, search_op, filter, flags);
+}
+
 /**************************************************************************
  *           MoveFileWithProgressA   (KERNEL32.@)
  */

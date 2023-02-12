@@ -490,8 +490,8 @@
 @ stdcall -import FindFirstFileExW(wstr long ptr long ptr long)
 # @ stub FindFirstFileNameTransactedW
 # @ stub FindFirstFileNameW
-# @ stub FindFirstFileTransactedA
-# @ stub FindFirstFileTransactedW
+@ stdcall FindFirstFileTransactedA(str long ptr long ptr long ptr)
+@ stdcall FindFirstFileTransactedW(wstr long ptr long ptr long ptr)
 @ stdcall -import FindFirstFileW(wstr ptr)
 # @ stub FindFirstStreamTransactedW
 @ stdcall -import FindFirstStreamW(wstr long ptr long)
