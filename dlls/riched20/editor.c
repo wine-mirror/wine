@@ -1609,9 +1609,17 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
   {
     style = editor->pBuffer->pDefaultStyle;
     ME_AddRefStyle(style);
-    set_selection_cursors(editor, 0, 0);
-    ME_InternalDeleteText(editor, &editor->pCursors[1],
-                          ME_GetTextLength(editor), FALSE);
+    if (format & SFF_SELECTION)
+    {
+      ME_GetSelection(editor, &selStart, &selEnd);
+      ME_InternalDeleteText(editor, selStart, to - from, FALSE);
+    }
+    else
+    {
+      set_selection_cursors(editor, 0, 0);
+      ME_InternalDeleteText(editor, &editor->pCursors[1],
+                            ME_GetTextLength(editor), FALSE);
+    }
     from = to = 0;
     ME_ClearTempStyle(editor);
     editor_set_default_para_fmt( editor, &editor->pCursors[0].para->fmt );

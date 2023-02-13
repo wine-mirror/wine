@@ -1482,7 +1482,6 @@ static void test_EM_SETTEXTMODE(void)
   SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
 
   len = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
-  todo_wine
   ok(len == 8 /*winewine*/, "Unexpected text length %u\n", len);
 
   /*Select a character from the first "wine" string*/
