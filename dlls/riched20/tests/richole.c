@@ -4907,6 +4907,35 @@ static void test_character_movement(void)
   ITextRange_Release(range);
 }
 
+static BOOL open_clipboard(HWND hwnd)
+{
+    DWORD start = GetTickCount();
+    while (1)
+    {
+        BOOL ret = OpenClipboard(hwnd);
+        if (ret || GetLastError() != ERROR_ACCESS_DENIED)
+            return ret;
+        if (GetTickCount() - start > 100)
+        {
+            char classname[256];
+            DWORD le = GetLastError();
+            HWND clipwnd = GetOpenClipboardWindow();
+            /* Provide a hint as to the source of interference:
+             * - The class name would typically be CLIPBRDWNDCLASS if the
+             *   clipboard was opened by a Windows application using the
+             *   ole32 API.
+             * - And it would be __wine_clipboard_manager if it was opened in
+             *   response to a native application.
+             */
+            GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
+            trace("%p (%s) opened the clipboard\n", clipwnd, classname);
+            SetLastError(le);
+            return ret;
+        }
+        Sleep(15);
+    }
+}
+
 #define CLIPBOARD_RANGE_CONTAINS(range, start, end, expected) _clipboard_range_contains(range, start, end, expected, __LINE__, 0);
 #define TODO_CLIPBOARD_RANGE_CONTAINS(range, start, end, expected) _clipboard_range_contains(range, start, end, expected, __LINE__, 1);
 static void _clipboard_range_contains(ITextRange *range, LONG start, LONG end, const char *expected, int line, int todo)
@@ -4921,7 +4950,7 @@ static void _clipboard_range_contains(ITextRange *range, LONG start, LONG end, c
   hr = ITextRange_Copy(range, NULL);
   ok_(__FILE__,line)(hr == S_OK, "Copy failed: 0x%08lx\n", hr);
 
-  clipboard_open = OpenClipboard(NULL);
+  clipboard_open = open_clipboard(NULL);
   ok_(__FILE__,line)(clipboard_open, "OpenClipboard failed: %ld\n", GetLastError());
   global = GetClipboardData(CF_TEXT);
   ok_(__FILE__,line)(global != NULL, "GetClipboardData failed: %p\n", global);
