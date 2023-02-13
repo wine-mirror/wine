@@ -984,7 +984,7 @@ static void update_net_wm_fullscreen_monitors( struct x11drv_win_data *data )
     if (!(data->net_wm_state & (1 << NET_WM_STATE_FULLSCREEN)) || is_virtual_desktop())
         return;
 
-    /* If the current display device handler can not detect dynamic device changes, do not use
+    /* If the current display device handler cannot detect dynamic device changes, do not use
      * _NET_WM_FULLSCREEN_MONITORS because xinerama_get_fullscreen_monitors() may report wrong
      * indices because of stale xinerama monitor information */
     if (!X11DRV_DisplayDevices_SupportEventHandlers())
