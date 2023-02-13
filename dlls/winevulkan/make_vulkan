@@ -2392,7 +2392,7 @@ class StructConversionFunction(object):
 
             body += "        default:\n"
             if self.direction == Direction.INPUT:
-                body += ident + "FIXME(\"Unhandled sType %u.\", in_header->sType);\n"
+                body += ident + "FIXME(\"Unhandled sType %u.\\n\", in_header->sType);\n"
             body += "            break;\n"
             body += "        }\n"
             body += "    }\n"

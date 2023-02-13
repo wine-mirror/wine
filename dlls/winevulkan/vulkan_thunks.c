@@ -6256,7 +6256,7 @@ static inline void convert_VkDescriptorSetAllocateInfo_win32_to_host(struct conv
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -6386,7 +6386,7 @@ static inline void convert_VkMemoryAllocateInfo_win32_to_host(struct conversion_
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -6491,7 +6491,7 @@ static inline void convert_VkCommandBufferInheritanceInfo_win32_to_host(struct c
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -6541,7 +6541,7 @@ static inline void convert_VkCommandBufferBeginInfo_win32_to_host(struct convers
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -6654,7 +6654,7 @@ static inline void convert_VkBindBufferMemoryInfo_win32_to_host(struct conversio
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -6762,7 +6762,7 @@ static inline void convert_VkBindImageMemoryInfo_win32_to_host(struct conversion
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -6869,7 +6869,7 @@ static inline void convert_VkAccelerationStructureGeometryTrianglesDataKHR_win32
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -7191,7 +7191,7 @@ static inline void convert_VkRenderPassBeginInfo_win32_to_host(struct conversion
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -7327,7 +7327,7 @@ static inline void convert_VkRenderingInfo_win32_to_host(struct conversion_conte
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -7361,7 +7361,7 @@ static inline void convert_VkDescriptorBufferBindingInfoEXT_win32_to_host(struct
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -7413,7 +7413,7 @@ static inline void convert_VkImageBlit2_win32_to_host(struct conversion_context 
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -7693,7 +7693,7 @@ static inline void convert_VkBufferImageCopy2_win32_to_host(struct conversion_co
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -7932,7 +7932,7 @@ static inline void convert_VkSubpassEndInfo_win32_to_host(struct conversion_cont
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -8130,7 +8130,7 @@ static inline void convert_VkImageMemoryBarrier_win32_to_host(struct conversion_
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -8256,7 +8256,7 @@ static inline void convert_VkImageMemoryBarrier2_win32_to_host(struct conversion
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -8404,7 +8404,7 @@ static inline void convert_VkWriteDescriptorSet_win32_to_host(struct conversion_
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -8687,7 +8687,7 @@ static inline void convert_VkAccelerationStructureCreateInfoKHR_win32_to_host(st
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -8721,7 +8721,7 @@ static inline void convert_VkAccelerationStructureCreateInfoNV_win32_to_host(str
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -8803,7 +8803,7 @@ static inline void convert_VkBufferCreateInfo_win32_to_host(struct conversion_co
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -9012,7 +9012,7 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win64_to_host(struct 
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -9113,7 +9113,7 @@ static inline void convert_VkPipelineShaderStageCreateInfo_win32_to_host(struct 
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -9204,7 +9204,7 @@ static inline void convert_VkComputePipelineCreateInfo_win32_to_host(struct conv
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -9402,7 +9402,7 @@ static inline void convert_VkDescriptorPoolCreateInfo_win32_to_host(struct conve
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -9477,7 +9477,7 @@ static inline void convert_VkDescriptorSetLayoutCreateInfo_win32_to_host(struct 
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -9593,7 +9593,7 @@ static inline void convert_VkDeviceQueueCreateInfo_win32_to_host(struct conversi
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -11498,7 +11498,7 @@ static inline void convert_VkDeviceCreateInfo_win64_to_host(struct conversion_co
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -13371,7 +13371,7 @@ static inline void convert_VkDeviceCreateInfo_win32_to_host(struct conversion_co
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -13415,7 +13415,7 @@ static inline void convert_VkFenceCreateInfo_win32_to_host(struct conversion_con
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -13488,7 +13488,7 @@ static inline void convert_VkFramebufferCreateInfo_win32_to_host(struct conversi
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -13560,7 +13560,7 @@ static inline void convert_VkPipelineVertexInputStateCreateInfo_win32_to_host(st
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -13610,7 +13610,7 @@ static inline void convert_VkPipelineTessellationStateCreateInfo_win32_to_host(s
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -13818,7 +13818,7 @@ static inline void convert_VkPipelineViewportStateCreateInfo_win32_to_host(struc
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -13939,7 +13939,7 @@ static inline void convert_VkPipelineRasterizationStateCreateInfo_win32_to_host(
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -14035,7 +14035,7 @@ static inline void convert_VkPipelineMultisampleStateCreateInfo_win32_to_host(st
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -14139,7 +14139,7 @@ static inline void convert_VkPipelineColorBlendStateCreateInfo_win32_to_host(str
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -14388,7 +14388,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win64_to_host(struct con
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -14592,7 +14592,7 @@ static inline void convert_VkGraphicsPipelineCreateInfo_win32_to_host(struct con
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -14791,7 +14791,7 @@ static inline void convert_VkImageCreateInfo_win32_to_host(struct conversion_con
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -14886,7 +14886,7 @@ static inline void convert_VkImageViewCreateInfo_win32_to_host(struct conversion
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15056,7 +15056,7 @@ static inline void convert_VkInstanceCreateInfo_win64_to_host(struct conversion_
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15140,7 +15140,7 @@ static inline void convert_VkInstanceCreateInfo_win32_to_host(struct conversion_
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15199,7 +15199,7 @@ static inline void convert_VkOpticalFlowSessionCreateInfoNV_win32_to_host(struct
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15287,7 +15287,7 @@ static inline void convert_VkQueryPoolCreateInfo_win32_to_host(struct conversion
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15457,7 +15457,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoKHR_win32_to_host(struc
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15624,7 +15624,7 @@ static inline void convert_VkRayTracingPipelineCreateInfoNV_win32_to_host(struct
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15797,7 +15797,7 @@ static inline void convert_VkRenderPassCreateInfo_win32_to_host(struct conversio
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15839,7 +15839,7 @@ static inline void convert_VkAttachmentDescription2_win32_to_host(struct convers
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15890,7 +15890,7 @@ static inline void convert_VkAttachmentReference2_win32_to_host(struct conversio
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -15997,7 +15997,7 @@ static inline void convert_VkSubpassDescription2_win32_to_host(struct conversion
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -16056,7 +16056,7 @@ static inline void convert_VkSubpassDependency2_win32_to_host(struct conversion_
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -16135,7 +16135,7 @@ static inline void convert_VkRenderPassCreateInfo2_win32_to_host(struct conversi
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -16229,7 +16229,7 @@ static inline void convert_VkSamplerCreateInfo_win32_to_host(struct conversion_c
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -16292,7 +16292,7 @@ static inline void convert_VkSemaphoreCreateInfo_win32_to_host(struct conversion
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -16327,7 +16327,7 @@ static inline void convert_VkShaderModuleCreateInfo_win32_to_host(struct convers
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -16462,7 +16462,7 @@ static inline void convert_VkSwapchainCreateInfoKHR_win32_to_host(struct convers
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -16894,7 +16894,7 @@ static inline void convert_VkMemoryRequirements2_win32_to_host(struct conversion
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -17090,7 +17090,7 @@ static inline void convert_VkDescriptorSetLayoutSupport_win32_to_host(struct con
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -17539,7 +17539,7 @@ static inline void convert_VkImageMemoryRequirementsInfo2_win32_to_host(struct c
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -17636,7 +17636,7 @@ static inline void convert_VkSubresourceLayout2EXT_win32_to_host(struct conversi
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -17930,7 +17930,7 @@ static inline void convert_VkPhysicalDeviceExternalSemaphoreInfo_win32_to_host(s
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -19756,7 +19756,7 @@ static inline void convert_VkPhysicalDeviceFeatures2_win32_to_host(struct conver
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -21315,7 +21315,7 @@ static inline void convert_VkFormatProperties2_win32_to_host(struct conversion_c
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -21506,7 +21506,7 @@ static inline void convert_VkPhysicalDeviceImageFormatInfo2_win32_to_host(struct
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -21572,7 +21572,7 @@ static inline void convert_VkImageFormatProperties2_win32_to_host(struct convers
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -21698,7 +21698,7 @@ static inline void convert_VkPhysicalDeviceMemoryProperties2_win32_to_host(struc
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -22558,7 +22558,7 @@ static inline void convert_VkPhysicalDeviceProperties2_win32_to_host(struct conv
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -23638,7 +23638,7 @@ static inline void convert_VkQueueFamilyProperties2_win32_to_host(struct convers
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -23854,7 +23854,7 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_unwrapped_ho
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -23911,7 +23911,7 @@ static inline void convert_VkSurfaceCapabilities2KHR_win32_to_host(struct conver
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -24006,7 +24006,7 @@ static inline void convert_VkPhysicalDeviceSurfaceInfo2KHR_win32_to_host(struct 
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -24036,7 +24036,7 @@ static inline void convert_VkSurfaceFormat2KHR_win32_to_host(struct conversion_c
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -24824,7 +24824,7 @@ static inline void convert_VkBindSparseInfo_win32_to_host(struct conversion_cont
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -24970,7 +24970,7 @@ static inline void convert_VkPresentInfoKHR_win32_to_host(struct conversion_cont
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -25067,7 +25067,7 @@ static inline void convert_VkSubmitInfo_win32_to_host(struct conversion_context 
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -25245,7 +25245,7 @@ static inline void convert_VkSubmitInfo2_win32_to_host(struct conversion_context
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
@@ -25509,7 +25509,7 @@ static inline void convert_VkDebugUtilsMessengerCallbackDataEXT_win32_to_host(st
             break;
         }
         default:
-            FIXME("Unhandled sType %u.", in_header->sType);
+            FIXME("Unhandled sType %u.\n", in_header->sType);
             break;
         }
     }
