@@ -170,6 +170,7 @@ static const WCHAR monitorW[] = {'M','o','n','i','t','o','r',0};
 static const WCHAR yesW[] = {'Y','e','s',0};
 static const WCHAR noW[] = {'N','o',0};
 static const WCHAR mode_countW[] = {'M','o','d','e','C','o','u','n','t',0};
+static const WCHAR edidW[] = {'E','D','I','D',0};
 
 static const char  guid_devclass_displayA[] = "{4D36E968-E325-11CE-BFC1-08002BE10318}";
 static const WCHAR guid_devclass_displayW[] =
@@ -238,6 +239,7 @@ struct monitor
     RECT rc_monitor;
     RECT rc_work;
     BOOL is_clone;
+    struct edid_monitor_info edid_info;
 };
 
 static struct list adapters = LIST_INIT(adapters);
@@ -749,7 +751,7 @@ static BOOL read_monitor_settings( struct adapter *adapter, UINT index, struct m
     char buffer[4096];
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     WCHAR *device_name, *value_str = (WCHAR *)value->Data, *ptr;
-    HKEY hkey;
+    HKEY hkey, subkey;
     DWORD size, len;
 
     monitor->flags = adapter->id ? 0 : MONITORINFOF_PRIMARY;
@@ -855,6 +857,14 @@ static BOOL read_monitor_settings( struct adapter *adapter, UINT index, struct m
     memcpy( monitor->dev.device_id, value_str, size * sizeof(WCHAR) );
     monitor->dev.device_id[size++] = '\\';
     lstrcpyW( monitor->dev.device_id + size, device_name );
+
+    /* EDID */
+    if ((subkey = reg_open_key( hkey, device_parametersW, sizeof(device_parametersW) )))
+    {
+        if (query_reg_value( subkey, edidW, value, sizeof(buffer) ))
+            get_monitor_info_from_edid( &monitor->edid_info, value->Data, value->DataLength );
+        NtClose( subkey );
+    }
 
     NtClose( hkey );
     return TRUE;
@@ -1380,7 +1390,6 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     if ((subkey = reg_create_key( hkey, device_parametersW, sizeof(device_parametersW), 0, NULL )))
     {
         static const WCHAR bad_edidW[] = {'B','A','D','_','E','D','I','D',0};
-        static const WCHAR edidW[] = {'E','D','I','D',0};
 
         if (monitor->edid_len)
             set_reg_value( subkey, edidW, REG_BINARY, monitor->edid, monitor->edid_len );
