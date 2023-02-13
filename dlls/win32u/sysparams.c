@@ -218,6 +218,14 @@ struct adapter
     DEVMODEW *modes;
 };
 
+#define MONITOR_INFO_HAS_MONITOR_ID 0x00000001
+struct edid_monitor_info
+{
+    unsigned int flags;
+    /* MONITOR_INFO_HAS_MONITOR_ID */
+    char monitor_id_string[8];
+};
+
 struct monitor
 {
     struct list entry;
@@ -437,6 +445,30 @@ static void adapter_release( struct adapter *adapter )
 }
 
 C_ASSERT(sizeof(DEVMODEW) - offsetof(DEVMODEW, dmFields) == 0x94);
+
+static void get_monitor_info_from_edid( struct edid_monitor_info *info, const unsigned char *edid, unsigned int edid_len )
+{
+    unsigned short w;
+    unsigned char d;
+    unsigned int i;
+
+    info->flags = 0;
+    if (!edid || edid_len < 128) return;
+
+    w = (edid[8] << 8) | edid[9]; /* Manufacturer ID, big endian. */
+    for (i = 0; i < 3; ++i)
+    {
+        d = w & 0x1f;
+        if (!d || d - 1 > 'Z' - 'A') return;
+        info->monitor_id_string[2 - i] = 'A' + d - 1;
+        w >>= 5;
+    }
+    if (w) return;
+    w = edid[10] | (edid[11] << 8); /* Product code, little endian. */
+    sprintf( info->monitor_id_string + 3, "%04X", w );
+    info->flags = MONITOR_INFO_HAS_MONITOR_ID;
+    TRACE( "Monitor id %s.\n", info->monitor_id_string );
+}
 
 static BOOL write_adapter_mode( HKEY adapter_key, UINT index, const DEVMODEW *mode )
 {
@@ -871,7 +903,7 @@ static void prepare_devices(void)
                                                 REG_OPTION_VOLATILE, NULL );
 
     /* delete monitors */
-    reg_empty_key( enum_key, "DISPLAY\\DEFAULT_MONITOR" );
+    reg_empty_key( enum_key, "DISPLAY" );
     sprintf( buffer, "Class\\%s", guid_devclass_monitorA );
     hkey = reg_create_key( control_key, bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR),
                            0, NULL );
@@ -1305,19 +1337,25 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     struct device_manager_ctx *ctx = param;
     char buffer[MAX_PATH], instance[64];
     unsigned int monitor_index, output_index;
+    struct edid_monitor_info monitor_info;
+    char monitor_id_string[16];
     WCHAR bufferW[MAX_PATH];
     HKEY hkey, subkey;
-
-    static const WCHAR default_monitorW[] =
-        {'M','O','N','I','T','O','R','\\','D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
+    unsigned int len;
 
     monitor_index = ctx->monitor_count++;
     output_index = ctx->output_count++;
 
     TRACE( "%u %s %s\n", monitor_index, wine_dbgstr_rect(&monitor->rc_monitor), wine_dbgstr_rect(&monitor->rc_work) );
 
+    get_monitor_info_from_edid( &monitor_info, monitor->edid, monitor->edid_len );
+    if (monitor_info.flags & MONITOR_INFO_HAS_MONITOR_ID)
+        strcpy( monitor_id_string, monitor_info.monitor_id_string );
+    else
+        strcpy( monitor_id_string, "Default_Monitor" );
+
     sprintf( buffer, "MonitorID%u", monitor_index );
-    sprintf( instance, "DISPLAY\\Default_Monitor\\%04X&%04X", ctx->video_count - 1, monitor_index );
+    sprintf( instance, "DISPLAY\\%s\\%04X&%04X", monitor_id_string, ctx->video_count - 1, monitor_index );
     set_reg_ascii_value( ctx->adapter_key, buffer, instance );
 
     hkey = reg_create_key( enum_key, bufferW, asciiz_to_unicode( bufferW, instance ) - sizeof(WCHAR),
@@ -1333,7 +1371,11 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     sprintf( buffer, "%s\\%04X", guid_devclass_monitorA, output_index );
     set_reg_ascii_value( hkey, "Driver", buffer );
     set_reg_value( hkey, class_guidW, REG_SZ, guid_devclass_monitorW, sizeof(guid_devclass_monitorW) );
-    set_reg_value( hkey, hardware_idW, REG_MULTI_SZ, default_monitorW, sizeof(default_monitorW) );
+
+    sprintf( buffer, "MONITOR\\%s", monitor_id_string );
+    len = asciiz_to_unicode( bufferW, buffer );
+    bufferW[len / sizeof(WCHAR)] = 0;
+    set_reg_value( hkey, hardware_idW, REG_MULTI_SZ, bufferW, len + sizeof(WCHAR) );
 
     if ((subkey = reg_create_key( hkey, device_parametersW, sizeof(device_parametersW), 0, NULL )))
     {
