@@ -220,12 +220,15 @@ struct adapter
 };
 
 #define MONITOR_INFO_HAS_MONITOR_ID 0x00000001
+#define MONITOR_INFO_HAS_MONITOR_NAME 0x00000002
 struct edid_monitor_info
 {
     unsigned int flags;
     /* MONITOR_INFO_HAS_MONITOR_ID */
     unsigned short manufacturer, product_code;
     char monitor_id_string[8];
+    /* MONITOR_INFO_HAS_MONITOR_NAME */
+    WCHAR monitor_name[14];
 };
 
 struct monitor
@@ -451,9 +454,10 @@ C_ASSERT(sizeof(DEVMODEW) - offsetof(DEVMODEW, dmFields) == 0x94);
 
 static void get_monitor_info_from_edid( struct edid_monitor_info *info, const unsigned char *edid, unsigned int edid_len )
 {
+    unsigned int i, j;
     unsigned short w;
     unsigned char d;
-    unsigned int i;
+    const char *s;
 
     info->flags = 0;
     if (!edid || edid_len < 128) return;
@@ -473,6 +477,19 @@ static void get_monitor_info_from_edid( struct edid_monitor_info *info, const un
     sprintf( info->monitor_id_string + 3, "%04X", w );
     info->flags = MONITOR_INFO_HAS_MONITOR_ID;
     TRACE( "Monitor id %s.\n", info->monitor_id_string );
+
+    for (i = 0; i < 4; ++i)
+    {
+        if (edid[54 + i * 18 + 3] != 0xfc) continue;
+        /* "Display name" ASCII descriptor. */
+        s = (const char *)&edid[54 + i * 18 + 5];
+        for (j = 0; s[j] && j < 13; ++j)
+            info->monitor_name[j] = s[j];
+        while (j && isspace(s[j - 1])) --j;
+        info->monitor_name[j] = 0;
+        info->flags |= MONITOR_INFO_HAS_MONITOR_NAME;
+        break;
+    }
 }
 
 static BOOL write_adapter_mode( HKEY adapter_key, UINT index, const DEVMODEW *mode )
@@ -5731,7 +5748,6 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
                 continue;
 
             target_name->outputTechnology = DISPLAYCONFIG_OUTPUT_TECHNOLOGY_INTERNAL;
-            /* FIXME: get real monitor name. */
             snprintf( buffer, ARRAY_SIZE(buffer), "Display%u", monitor->output_id + 1 );
             asciiz_to_unicode( target_name->monitorFriendlyDeviceName, buffer );
             lstrcpyW( target_name->monitorDevicePath, monitor->dev.interface_name );
@@ -5740,6 +5756,11 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
                 target_name->edidManufactureId = monitor->edid_info.manufacturer;
                 target_name->edidProductCodeId = monitor->edid_info.product_code;
                 target_name->flags.edidIdsValid = 1;
+            }
+            if (monitor->edid_info.flags & MONITOR_INFO_HAS_MONITOR_NAME)
+            {
+                wcscpy( target_name->monitorFriendlyDeviceName, monitor->edid_info.monitor_name );
+                target_name->flags.friendlyNameFromEdid = 1;
             }
             ret = STATUS_SUCCESS;
             break;
