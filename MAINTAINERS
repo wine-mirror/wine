@@ -395,10 +395,6 @@ WinINet
 P:	Jacek Caban <jacek@codeweavers.com>
 F:	dlls/wininet/
 
-WPcap
-M:	André Zwing <nerv@dawncrow.de>
-F:	dlls/wpcap/
-
 X11 Driver
 M:	Alexandre Julliard <julliard@winehq.org>
 P:	Rémi Bernon <rbernon@codeweavers.com>
