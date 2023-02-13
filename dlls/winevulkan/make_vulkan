@@ -1168,7 +1168,7 @@ class VkVariable(object):
         parent = self.parent
         len = prefix
 
-        # check if lenght is a member of another struct (for example pAllocateInfo->commandBufferCount)
+        # check if length is a member of another struct (for example pAllocateInfo->commandBufferCount)
         i = len_str.find("->")
         if i != -1:
             var = parent[parent.index(len_str[0:i])]
