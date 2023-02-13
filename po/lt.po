@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-12-01 23:35+0200\n"
+"PO-Revision-Date: 2023-02-13 23:59+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3711,16 +3711,12 @@ msgid "High"
 msgstr "Aukštos"
 
 #: dlls/ir50_32/ir50_32.rc:28
-#, fuzzy
-#| msgid "Index"
 msgid "Indeo5"
-msgstr "Indeksas"
+msgstr "Indeo5"
 
 #: dlls/ir50_32/ir50_32.rc:29
-#, fuzzy
-#| msgid "Wine Video 1 video codec"
 msgid "Indeo Video Interactive version 5 video codec"
-msgstr "„Wine“ Video 1 vaizdo kodekas"
+msgstr "Indeo Video 5 interaktyvus vaizdo kodekas"
 
 #: dlls/joy.cpl/joy.rc:37
 msgid "Joysticks"
