@@ -49,6 +49,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 #define INPUT_THREAD_MAX_DEVICES 128
 
+#define INPUT_THREAD_NOTIFY     (WM_USER + 0x10)
+#define NOTIFY_THREAD_STOP      0
+#define NOTIFY_REFRESH_DEVICES  1
+
 struct input_thread_state
 {
     BOOL running;
@@ -101,7 +105,7 @@ void dinput_hooks_acquire_device( IDirectInputDevice8W *iface )
         list_add_tail( &acquired_device_list, &impl->entry );
     LeaveCriticalSection( &dinput_hook_crit );
 
-    SendMessageW( di_em_win, WM_USER + 0x10, 1, 0 );
+    SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0 );
 }
 
 void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface )
@@ -112,7 +116,7 @@ void dinput_hooks_unacquire_device( IDirectInputDevice8W *iface )
     list_remove( &impl->entry );
     LeaveCriticalSection( &dinput_hook_crit );
 
-    SendMessageW( di_em_win, WM_USER + 0x10, 1, 0 );
+    SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_REFRESH_DEVICES, 0 );
 }
 
 static void dinput_device_internal_unacquire( IDirectInputDevice8W *iface, DWORD status )
@@ -324,15 +328,19 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         }
     }
 
-    if (msg == WM_USER + 0x10)
+    if (msg == INPUT_THREAD_NOTIFY)
     {
         TRACE( "Processing hook change notification wparam %#Ix, lparam %#Ix.\n", wparam, lparam );
 
-        if (!wparam) state->running = FALSE;
-        else
+        switch (wparam)
         {
+        case NOTIFY_THREAD_STOP:
+            state->running = FALSE;
+            break;
+        case NOTIFY_REFRESH_DEVICES:
             while (state->devices_count--) dinput_device_internal_release( state->devices[state->devices_count] );
             input_thread_update_device_list( state );
+            break;
         }
 
         return 0;
@@ -440,7 +448,7 @@ void input_thread_remove_user(void)
     {
         TRACE( "Stopping input thread.\n" );
 
-        SendMessageW( di_em_win, WM_USER + 0x10, 0, 0 );
+        SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_THREAD_STOP, 0 );
         WaitForSingleObject( dinput_thread, INFINITE );
         CloseHandle( dinput_thread );
     }
