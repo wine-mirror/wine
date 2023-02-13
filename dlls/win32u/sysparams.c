@@ -224,6 +224,7 @@ struct edid_monitor_info
 {
     unsigned int flags;
     /* MONITOR_INFO_HAS_MONITOR_ID */
+    unsigned short manufacturer, product_code;
     char monitor_id_string[8];
 };
 
@@ -467,6 +468,8 @@ static void get_monitor_info_from_edid( struct edid_monitor_info *info, const un
     }
     if (w) return;
     w = edid[10] | (edid[11] << 8); /* Product code, little endian. */
+    info->manufacturer = *(unsigned short *)(edid + 8);
+    info->product_code = w;
     sprintf( info->monitor_id_string + 3, "%04X", w );
     info->flags = MONITOR_INFO_HAS_MONITOR_ID;
     TRACE( "Monitor id %s.\n", info->monitor_id_string );
@@ -5732,6 +5735,12 @@ NTSTATUS WINAPI NtUserDisplayConfigGetDeviceInfo( DISPLAYCONFIG_DEVICE_INFO_HEAD
             snprintf( buffer, ARRAY_SIZE(buffer), "Display%u", monitor->output_id + 1 );
             asciiz_to_unicode( target_name->monitorFriendlyDeviceName, buffer );
             lstrcpyW( target_name->monitorDevicePath, monitor->dev.interface_name );
+            if (monitor->edid_info.flags & MONITOR_INFO_HAS_MONITOR_ID)
+            {
+                target_name->edidManufactureId = monitor->edid_info.manufacturer;
+                target_name->edidProductCodeId = monitor->edid_info.product_code;
+                target_name->flags.edidIdsValid = 1;
+            }
             ret = STATUS_SUCCESS;
             break;
         }
