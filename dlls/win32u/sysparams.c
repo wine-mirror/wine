@@ -1311,11 +1311,10 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
     static const WCHAR default_monitorW[] =
         {'M','O','N','I','T','O','R','\\','D','e','f','a','u','l','t','_','M','o','n','i','t','o','r',0,0};
 
-    TRACE( "%s %s %s\n", debugstr_w(monitor->name), wine_dbgstr_rect(&monitor->rc_monitor),
-           wine_dbgstr_rect(&monitor->rc_work) );
-
     monitor_index = ctx->monitor_count++;
     output_index = ctx->output_count++;
+
+    TRACE( "%u %s %s\n", monitor_index, wine_dbgstr_rect(&monitor->rc_monitor), wine_dbgstr_rect(&monitor->rc_work) );
 
     sprintf( buffer, "MonitorID%u", monitor_index );
     sprintf( instance, "DISPLAY\\Default_Monitor\\%04X&%04X", ctx->video_count - 1, monitor_index );
@@ -1327,8 +1326,7 @@ static void add_monitor( const struct gdi_monitor *monitor, void *param )
 
     link_device( bufferW, guid_devinterface_monitorW );
 
-    lstrcpyW( bufferW, monitor->name );
-    if (!bufferW[0]) asciiz_to_unicode( bufferW, "Generic Non-PnP Monitor" );
+    asciiz_to_unicode( bufferW, "Generic Non-PnP Monitor" );
     set_reg_value( hkey, device_descW, REG_SZ, bufferW, (lstrlenW( bufferW ) + 1) * sizeof(WCHAR) );
 
     set_reg_value( hkey, classW, REG_SZ, monitorW, sizeof(monitorW) );

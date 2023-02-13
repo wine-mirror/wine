@@ -287,9 +287,6 @@ static void xinerama_free_adapters( struct gdi_adapter *adapters )
 
 static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **new_monitors, int *count )
 {
-    static const WCHAR generic_nonpnp_monitorW[] = {
-        'G','e','n','e','r','i','c',' ',
-        'N','o','n','-','P','n','P',' ','M','o','n','i','t','o','r',0};
     struct gdi_monitor *monitor;
     INT first = (INT)adapter_id;
     INT monitor_count = 0;
@@ -319,7 +316,6 @@ static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **ne
             || (EqualRect( &monitors[i].rcMonitor, &monitors[first].rcMonitor )
                 && !IsRectEmpty( &monitors[first].rcMonitor )))
         {
-            lstrcpyW( monitor[index].name, generic_nonpnp_monitorW );
             monitor[index].rc_monitor = monitors[i].rcMonitor;
             monitor[index].rc_work = monitors[i].rcWork;
             /* Xinerama only reports monitors already attached */

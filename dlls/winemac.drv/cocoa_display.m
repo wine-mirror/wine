@@ -675,7 +675,6 @@ int macdrv_get_monitors(uint32_t adapter_id, struct macdrv_monitor** new_monitor
                 if (j == 0)
                     primary_index = monitor_count;
 
-                strcpy(monitors[monitor_count].name, "Generic Non-PnP Monitor");
                 monitors[monitor_count].state_flags = DISPLAY_DEVICE_ATTACHED | DISPLAY_DEVICE_ACTIVE;
                 monitors[monitor_count].rc_monitor = displays[j].frame;
                 monitors[monitor_count].rc_work = displays[j].work_frame;

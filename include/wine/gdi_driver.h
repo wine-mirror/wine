@@ -253,7 +253,6 @@ struct gdi_adapter
 
 struct gdi_monitor
 {
-    WCHAR name[128];      /* name */
     RECT rc_monitor;      /* RcMonitor in MONITORINFO struct */
     RECT rc_work;         /* RcWork in MONITORINFO struct */
     DWORD state_flags;    /* StateFlags in DISPLAY_DEVICE struct */

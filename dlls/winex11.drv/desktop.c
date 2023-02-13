@@ -287,15 +287,11 @@ static void X11DRV_desktop_free_adapters( struct gdi_adapter *adapters )
 
 static BOOL X11DRV_desktop_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **new_monitors, int *count )
 {
-    static const WCHAR generic_nonpnp_monitorW[] = {
-        'G','e','n','e','r','i','c',' ',
-        'N','o','n','-','P','n','P',' ','M','o','n','i','t','o','r',0};
     struct gdi_monitor *monitor;
 
     monitor = calloc( 1, sizeof(*monitor) );
     if (!monitor) return FALSE;
 
-    lstrcpyW( monitor->name, generic_nonpnp_monitorW );
     SetRect( &monitor->rc_monitor, 0, 0, desktop_width, desktop_height );
     SetRect( &monitor->rc_work, 0, 0, desktop_width, desktop_height );
     query_desktop_work_area( &monitor->rc_work );

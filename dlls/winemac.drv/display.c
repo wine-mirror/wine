@@ -1192,9 +1192,6 @@ BOOL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manage
                     .rc_work = rect_from_cgrect(monitor->rc_work),
                     .state_flags = monitor->state_flags,
                 };
-                RtlUTF8ToUnicodeN(gdi_monitor.name, sizeof(gdi_monitor.name), &len,
-                                  monitor->name, strlen(monitor->name));
-                TRACE("monitor: %s\n", debugstr_a(monitor->name));
                 device_manager->add_monitor( &gdi_monitor, param );
             }
 
