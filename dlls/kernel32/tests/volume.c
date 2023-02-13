@@ -87,7 +87,7 @@ static void test_query_dos_deviceA(void)
         for (;;) {
             if (!*p) break;
             ret2 = QueryDosDeviceA( p, buffer2, sizeof(buffer2) );
-            /* Win10+ exposes security device which requires extra priviledges to be queried. So skip it */
+            /* Win10+ exposes the security device which requires extra privileges to be queried. So skip it */
             ok(ret2 || broken( !strcmp( p, "MSSECFLTSYS" ) && GetLastError() == ERROR_ACCESS_DENIED ),
                "QueryDosDeviceA failed to return current mapping for %s, last error %lu\n", p, GetLastError());
             p += strlen(p) + 1;
