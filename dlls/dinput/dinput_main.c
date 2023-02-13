@@ -52,6 +52,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 #define INPUT_THREAD_NOTIFY     (WM_USER + 0x10)
 #define NOTIFY_THREAD_STOP      0
 #define NOTIFY_REFRESH_DEVICES  1
+#define NOTIFY_FOREGROUND_LOST  2
 
 struct input_thread_state
 {
@@ -211,15 +212,14 @@ static void dinput_unacquire_devices(void)
     LeaveCriticalSection( &dinput_hook_crit );
 }
 
-static LRESULT CALLBACK callwndproc_proc( int code, WPARAM wparam, LPARAM lparam )
+static LRESULT CALLBACK cbt_hook_proc( int code, WPARAM wparam, LPARAM lparam )
 {
-    CWPSTRUCT *msg = (CWPSTRUCT *)lparam;
-
-    if (code != HC_ACTION || (msg->message != WM_KILLFOCUS &&
-        msg->message != WM_ACTIVATEAPP && msg->message != WM_ACTIVATE))
-        return CallNextHookEx( 0, code, wparam, lparam );
-
-    if (msg->hwnd != GetForegroundWindow()) dinput_unacquire_window_devices( msg->hwnd );
+    if (code == HCBT_ACTIVATE && di_em_win)
+    {
+        CBTACTIVATESTRUCT *data = (CBTACTIVATESTRUCT *)lparam;
+        SendMessageW( di_em_win, INPUT_THREAD_NOTIFY, NOTIFY_FOREGROUND_LOST,
+                      (LPARAM)data->hWndActive );
+    }
 
     return CallNextHookEx( 0, code, wparam, lparam );
 }
@@ -265,7 +265,7 @@ static void input_thread_update_device_list( struct input_thread_state *state )
     LeaveCriticalSection( &dinput_hook_crit );
 
     if (foreground_count && !state->callwndproc_hook)
-        state->callwndproc_hook = SetWindowsHookExW( WH_CALLWNDPROC, callwndproc_proc, DINPUT_instance, GetCurrentThreadId() );
+        state->callwndproc_hook = SetWindowsHookExW( WH_CBT, cbt_hook_proc, DINPUT_instance, 0 );
     else if (!foreground_count && state->callwndproc_hook)
     {
         UnhookWindowsHookEx( state->callwndproc_hook );
@@ -340,6 +340,9 @@ static LRESULT WINAPI di_em_win_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
         case NOTIFY_REFRESH_DEVICES:
             while (state->devices_count--) dinput_device_internal_release( state->devices[state->devices_count] );
             input_thread_update_device_list( state );
+            break;
+        case NOTIFY_FOREGROUND_LOST:
+            dinput_unacquire_window_devices( (HWND)lparam );
             break;
         }
 
