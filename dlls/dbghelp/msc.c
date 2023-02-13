@@ -2276,7 +2276,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
     struct symt_compiland*              compiland = NULL;
     struct location                     loc;
 
-    /* overwrite compiland name from outter context (if any) */
+    /* overwrite compiland name from outer context (if any) */
     if (objname)
         compiland = codeview_new_compiland(msc_dbg, objname);
     /*
