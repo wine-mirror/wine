@@ -147,7 +147,7 @@ int uia_compare_safearrays(SAFEARRAY *sa1, SAFEARRAY *sa2, int prop_type)
 
     if (prop_type != UIAutomationType_IntArray)
     {
-        FIXME("Array type %#x value comparsion currently unimplemented.\n", prop_type);
+        FIXME("Array type %#x value comparison currently unimplemented.\n", prop_type);
         return -1;
     }
 
