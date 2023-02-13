@@ -1405,6 +1405,43 @@ static void test_EM_SETCHARFORMAT(void)
   DestroyWindow(hwndRichEdit);
 }
 
+/* As the clipboard is a shared resource, it happens (on Windows) that the WM_PASTE
+ * is a no-op; likely because another app has opened the clipboard for inspection.
+ * In this case, WM_PASTE does nothing, and doesn't return an error code.
+ * So retry pasting a couple of times.
+ * Don't use this function if the paste operation shouldn't change the content of the
+ * editor (clipboard is empty without selection, edit control is read only...).
+ * Also impact on undo stack is not managed.
+ */
+#define send_paste(a) _send_paste(__LINE__, (a))
+static void _send_paste(unsigned int line, HWND wnd)
+{
+    int retries;
+
+    SendMessageA(wnd, EM_SETMODIFY, FALSE, 0);
+
+    for (retries = 0; retries < 7; retries++)
+    {
+        if (retries) Sleep(15);
+        SendMessageA(wnd, WM_PASTE, 0, 0);
+        if (SendMessageA(wnd, EM_GETMODIFY, 0, 0)) return;
+    }
+    ok_(__FILE__, line)(0, "Failed to paste clipboard content\n");
+    {
+        char classname[256];
+        HWND clipwnd = GetOpenClipboardWindow();
+        /* Provide a hint as to the source of interference:
+         * - The class name would typically be CLIPBRDWNDCLASS if the
+         *   clipboard was opened by a Windows application using the
+         *   ole32 API.
+         * - And it would be __wine_clipboard_manager if it was opened in
+         *   response to a native application.
+         */
+        GetClassNameA(clipwnd, classname, ARRAY_SIZE(classname));
+        trace("%p (%s) opened the clipboard\n", clipwnd, classname);
+    }
+}
+
 static void test_EM_SETTEXTMODE(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
@@ -1479,7 +1516,7 @@ static void test_EM_SETTEXTMODE(void)
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
 
   /*Paste the italicized "wine" into the control*/
-  SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+  send_paste(hwndRichEdit);
 
   len = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
   ok(len == 8 /*winewine*/, "Unexpected text length %u\n", len);
@@ -1525,7 +1562,7 @@ static void test_EM_SETTEXTMODE(void)
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"wine");
 
   /*Paste italicized "wine" into the control*/
-  SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+  send_paste(hwndRichEdit);
 
   /*Select text from the first "wine" string*/
   cr.cpMin = 1;
@@ -1671,7 +1708,7 @@ static void test_TM_PLAINTEXT(void)
   /*Paste the plain text "wine" string, which should take the insert
    formatting, which at the moment is bold italics*/
 
-  SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+  send_paste(hwndRichEdit);
 
   /*Select the first "wine" string and retrieve its formatting*/
 
@@ -4851,7 +4888,7 @@ static void test_EM_GETMODIFY(void)
   SendMessageA(hwndRichEdit, EM_SETMODIFY, FALSE, 0);
   SendMessageA(hwndRichEdit, EM_SETSEL, 0, 2);
   SendMessageA(hwndRichEdit, WM_COPY, 0, 0);
-  SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+  send_paste(hwndRichEdit);
   result = SendMessageA(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok (result != 0,
       "EM_GETMODIFY returned zero, instead of non-zero when pasting identical text\n");
@@ -4861,7 +4898,7 @@ static void test_EM_GETMODIFY(void)
   SendMessageA(hwndRichEdit, EM_SETSEL, 0, 2);
   SendMessageA(hwndRichEdit, WM_COPY, 0, 0);
   SendMessageA(hwndRichEdit, EM_SETSEL, 0, 3);
-  SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+  send_paste(hwndRichEdit);
   result = SendMessageA(hwndRichEdit, EM_GETMODIFY, 0, 0);
   ok (result != 0,
       "EM_GETMODIFY returned zero, instead of non-zero when pasting different text\n");
@@ -5561,7 +5598,7 @@ static void test_WM_PASTE(void)
                 (MapVirtualKeyA('C', MAPVK_VK_TO_VSC) << 16) | 1);
     release_key(VK_CONTROL);
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
-    SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+    send_paste(hwndRichEdit);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     result = strcmp(buffer,"testing");
     ok(result == 0,
@@ -5582,7 +5619,7 @@ static void test_WM_PASTE(void)
     ok(result == 0,
         "test paste: strcmp = %i, actual = '%s'\n", result, buffer);
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
-    SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+    send_paste(hwndRichEdit);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     result = strcmp(buffer,"cut\r\n");
     ok(result == 0,
@@ -5632,7 +5669,7 @@ static void test_WM_PASTE(void)
 
     /* Paste multi-line text into single-line control */
     hwndRichEdit = new_richedit_with_style(NULL, 0);
-    SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+    send_paste(hwndRichEdit);
     SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
     result = strcmp(buffer, "testing paste");
     ok(result == 0,
