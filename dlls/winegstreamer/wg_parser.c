@@ -1411,7 +1411,7 @@ static NTSTATUS wg_parser_connect(void *args)
         struct wg_parser_stream *stream = parser->streams[i];
         gint64 duration;
 
-        /* If we receieved a buffer waiting for tags or caps does not make sense anymore. */
+        /* If we received a buffer, waiting for tags or caps does not make sense anymore. */
         while ((!stream->has_caps || !stream->has_tags) && !parser->error && !stream->has_buffer)
             pthread_cond_wait(&parser->init_cond, &parser->mutex);
 
