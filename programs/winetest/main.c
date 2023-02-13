@@ -1122,7 +1122,7 @@ run_tests (char *logname, char *outdir)
         logfile = create_temp_file( tmpname );
         logname = tmpname;
     }
-    report (R_OUT, logname);
+    report (R_OUT, "%s", logname);
 
     if (logfile == INVALID_HANDLE_VALUE)
         report (R_FATAL, "Could not open logfile: %u", GetLastError());
@@ -1148,7 +1148,7 @@ run_tests (char *logname, char *outdir)
     if (!newdir && (!outdir || GetLastError() != ERROR_ALREADY_EXISTS))
         report (R_FATAL, "Could not create directory %s (%d)", tempdir, GetLastError());
 
-    report (R_DIR, tempdir);
+    report (R_DIR, "%s", tempdir);
 
     xprintf ("Version 4\n");
     xprintf ("Tests from build %s\n", build_id[0] ? build_id : "-" );
