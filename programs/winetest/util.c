@@ -56,6 +56,7 @@ static char *vstrfmtmake (size_t *lenp, const char *fmt, va_list ap)
     char *p;
     int n;
 
+    if (!fmt) fmt = "";
     p = xalloc(size);
     while (1) {
         n = vsnprintf (p, size, fmt, ap);
