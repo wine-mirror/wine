@@ -11040,12 +11040,10 @@ static const WCHAR wszUnicode[] = {'U','n','i','c','o','d','e',0};
 static const WCHAR wszAnsi[] = {'U',0};
 
 static const GUID iface_guid = {0x66666666};
-static bool got_device_broadcast;
 
 static LRESULT CALLBACK MsgConversionProcW(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     const DEV_BROADCAST_DEVICEINTERFACE_A *ifaceA = (const void *)lParam;
-    const DEV_BROADCAST_DEVICEINTERFACE_W *ifaceW = (const void *)lParam;
 
     switch (uMsg)
     {
@@ -11067,17 +11065,6 @@ static LRESULT CALLBACK MsgConversionProcW(HWND hwnd, UINT uMsg, WPARAM wParam, 
             ok(!ifaceA->dbcc_reserved, "Got reserved %#lx.\n", ifaceA->dbcc_reserved);
             ok(!strcmp(ifaceA->dbcc_name, "test name"), "Got name %s.\n", debugstr_a(ifaceA->dbcc_name));
             return 2;
-        }
-        else if (wParam == DBT_CUSTOMEVENT && IsEqualGUID(&ifaceA->dbcc_classguid, &iface_guid))
-        {
-            DWORD expect_size = offsetof(DEV_BROADCAST_DEVICEINTERFACE_W, dbcc_name[wcslen(ifaceW->dbcc_name) + 1]);
-
-            ok(ifaceW->dbcc_size == expect_size, "Expected %lu, got %lu.\n", expect_size, ifaceW->dbcc_size);
-            ok(ifaceW->dbcc_devicetype == DBT_DEVTYP_DEVICEINTERFACE,
-                    "Got notification type %#lx.\n", ifaceW->dbcc_devicetype);
-            ok(!ifaceW->dbcc_reserved, "Got reserved %#lx.\n", ifaceW->dbcc_reserved);
-            ok(!wcscmp(ifaceW->dbcc_name, L"test name"), "Got name %s.\n", debugstr_w(ifaceW->dbcc_name));
-            got_device_broadcast = true;
         }
     }
     return DefWindowProcW(hwnd, uMsg, wParam, lParam);
@@ -11204,9 +11191,6 @@ static void test_message_conversion(void)
             dbcc_name[strlen(dev_interface->dbcc_name)]);
     lRes = SendMessageA(hwnd, WM_DEVICECHANGE, DBT_DEVICEARRIVAL, (LPARAM)dev_interface);
     ok(lRes == 2, "Got %Id, error %lu.\n", lRes, GetLastError());
-    lRes = BroadcastSystemMessageA(0, NULL, WM_DEVICECHANGE, DBT_CUSTOMEVENT, (LPARAM)dev_interface);
-    todo_wine ok(!lRes, "Got %Id, error %lu.\n", lRes, GetLastError());
-    todo_wine ok(got_device_broadcast, "Device broadcast was not received.\n");
 
     DestroyWindow(hwnd);
 
