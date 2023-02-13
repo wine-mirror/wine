@@ -1409,6 +1409,7 @@ static void test_EM_SETTEXTMODE(void)
 {
   HWND hwndRichEdit = new_richedit(NULL);
   CHARFORMAT2A cf2, cf2test;
+  unsigned int len;
   CHARRANGE cr;
   int rc = 0;
 
@@ -1479,6 +1480,10 @@ static void test_EM_SETTEXTMODE(void)
 
   /*Paste the italicized "wine" into the control*/
   SendMessageA(hwndRichEdit, WM_PASTE, 0, 0);
+
+  len = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
+  todo_wine
+  ok(len == 8 /*winewine*/, "Unexpected text length %u\n", len);
 
   /*Select a character from the first "wine" string*/
   cr.cpMin = 2;
