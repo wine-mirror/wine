@@ -1273,11 +1273,18 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
     WCHAR       baseW[256], modW[256];
     DWORD       i, sz;
     MODULEINFO  mi;
+    BOOL        wow64;
+    DWORD       filter = LIST_MODULES_DEFAULT;
 
     hMods = HeapAlloc(GetProcessHeap(), 0, 256 * sizeof(hMods[0]));
     if (!hMods) return FALSE;
 
-    if (!EnumProcessModules(hProcess, hMods, 256 * sizeof(hMods[0]), &sz))
+    if (sizeof(void*) > sizeof(int) &&
+        IsWow64Process(hProcess, &wow64) &&
+        wow64)
+        filter = LIST_MODULES_32BIT;
+
+    if (!EnumProcessModulesEx(hProcess, hMods, 256 * sizeof(hMods[0]), &sz, filter))
     {
         /* hProcess should also be a valid process handle !! */
         HeapFree(GetProcessHeap(), 0, hMods);
@@ -1286,7 +1293,7 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
     if (sz > 256 * sizeof(hMods[0]))
     {
         hMods = HeapReAlloc(GetProcessHeap(), 0, hMods, sz);
-        if (!hMods || !EnumProcessModules(hProcess, hMods, sz, &sz))
+        if (!hMods || !EnumProcessModulesEx(hProcess, hMods, sz, &sz, filter))
             return FALSE;
     }
     sz /= sizeof(HMODULE);
