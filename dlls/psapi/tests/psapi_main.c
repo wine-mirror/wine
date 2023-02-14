@@ -310,6 +310,23 @@ static void snapshot_check_first_main_module(const struct moduleex_snapshot* sna
     winetest_pop_context();
 }
 
+static unsigned int snapshot_count_in_dir(const struct moduleex_snapshot* snap, HANDLE proc, const char* dirname)
+{
+    unsigned int count = 0;
+    char buffer[128];
+    size_t dirname_len = strlen(dirname);
+    BOOL ret;
+    int i;
+
+    for (i = 0; i < snap->num_modules; i++)
+    {
+        ret = GetModuleFileNameExA(proc, snap->modules[i], buffer, sizeof(buffer));
+        ok(ret, "got error %lu\n", GetLastError());
+        if (!strncasecmp(buffer, dirname, dirname_len)) count++;
+    }
+    return count;
+}
+
 static void test_EnumProcessModulesEx(void)
 {
     char buffer[200] = "C:\\windows\\system32\\notepad.exe";
@@ -430,6 +447,8 @@ static void test_EnumProcessModulesEx(void)
 
     if (sizeof(void *) == 8)
     {
+        unsigned int count;
+
         strcpy(buffer, "C:\\windows\\syswow64\\notepad.exe");
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
         if (ret)
@@ -456,6 +475,17 @@ static void test_EnumProcessModulesEx(void)
             ok(!snapshot_contains(&snap[1], snap[0].modules[0]), "main module shouldn't be present in 64bit list\n");
             snapshot_check_first_main_module(&snap[2], pi.hProcess, buffer);
             snapshot_check_first_main_module(&snap[3], pi.hProcess, buffer);
+
+            ret = GetSystemWow64DirectoryA(buffer, sizeof(buffer));
+            ok(ret, "GetSystemWow64DirectoryA failed: %lu\n", GetLastError());
+            count = snapshot_count_in_dir(snap, pi.hProcess, buffer);
+            todo_wine
+            ok(count <= 1, "Wrong count %u in %s\n", count, buffer); /* notepad can be from system wow64 */
+            ret = GetSystemDirectoryA(buffer, sizeof(buffer));
+            ok(ret, "GetSystemDirectoryA failed: %lu\n", GetLastError());
+            count = snapshot_count_in_dir(snap, pi.hProcess, buffer);
+            todo_wine
+            ok(count > 2, "Wrong count %u in %s\n", count, buffer);
 
             /* in fact, this error is only returned when (list & 3 == 0), otherwise the corresponding
              * list is returned without errors.
