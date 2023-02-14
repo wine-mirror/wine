@@ -4369,7 +4369,9 @@ HRESULT WINAPI VarAbs(LPVARIANT pVarIn, LPVARIANT pVarOut)
     case VT_INT:
     ABS_CASE(I4,I4_MIN);
     ABS_CASE(I8,I8_MIN);
-    ABS_CASE(R4,R4_MIN);
+    case VT_R4:
+        if (V_R4(pVarOut) < 0.0) V_R4(pVarOut) = -V_R4(pVarOut);
+        break;
     case VT_BSTR:
         hRet = VarR8FromStr(V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(&varIn));
         if (FAILED(hRet))
@@ -4378,7 +4380,9 @@ HRESULT WINAPI VarAbs(LPVARIANT pVarIn, LPVARIANT pVarOut)
         pVarIn = &varIn;
         /* Fall through ... */
     case VT_DATE:
-    ABS_CASE(R8,R8_MIN);
+    case VT_R8:
+        if (V_R8(pVarOut) < 0.0) V_R8(pVarOut) = -V_R8(pVarOut);
+        break;
     case VT_CY:
         hRet = VarCyAbs(V_CY(pVarIn), & V_CY(pVarOut));
         break;
