@@ -1698,6 +1698,7 @@
 @ stdcall __wine_ctrl_routine(ptr)
 @ extern -private __wine_syscall_dispatcher
 @ extern -private __wine_unix_call_dispatcher
+@ extern -private __wine_unixlib_handle
 @ extern -arch=arm64 __wine_current_teb
 
 # Debugging

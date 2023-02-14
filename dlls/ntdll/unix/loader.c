@@ -117,7 +117,6 @@ void     (WINAPI *p__wine_ctrl_routine)(void*);
 SYSTEM_DLL_INIT_BLOCK *pLdrSystemDllInitBlock = NULL;
 
 static void *p__wine_syscall_dispatcher;
-static void **p__wine_unix_call_dispatcher;
 
 static void * const syscalls[] =
 {
@@ -398,7 +397,6 @@ const char **dll_paths = NULL;
 const char **system_dll_paths = NULL;
 const char *user_name = NULL;
 SECTION_IMAGE_INFORMATION main_image_info = { NULL };
-HMODULE ntdll_module = 0;
 static const IMAGE_EXPORT_DIRECTORY *ntdll_exports;
 
 /* adjust an array of pointers to make them into RVAs */
@@ -1037,6 +1035,9 @@ static const void *get_module_data_dir( HMODULE module, ULONG dir, ULONG *size )
 
 static void load_ntdll_functions( HMODULE module )
 {
+    void **p__wine_unix_call_dispatcher;
+    unixlib_handle_t *p__wine_unixlib_handle;
+
     ntdll_exports = get_module_data_dir( module, IMAGE_FILE_EXPORT_DIRECTORY, NULL );
     assert( ntdll_exports );
 
@@ -1055,6 +1056,9 @@ static void load_ntdll_functions( HMODULE module )
     GET_FUNC( __wine_ctrl_routine );
     GET_FUNC( __wine_syscall_dispatcher );
     GET_FUNC( __wine_unix_call_dispatcher );
+    GET_FUNC( __wine_unixlib_handle );
+    *p__wine_unix_call_dispatcher = __wine_unix_call_dispatcher;
+    *p__wine_unixlib_handle = (UINT_PTR)__wine_unix_call_funcs;
 #ifdef __aarch64__
     {
         void **p__wine_current_teb;
@@ -1086,6 +1090,14 @@ static void load_ntdll_wow64_functions( HMODULE module )
 #undef GET_FUNC
 
     p__wine_ctrl_routine = (void *)find_named_export( module, exports, "__wine_ctrl_routine" );
+
+#ifdef _WIN64
+    {
+        unixlib_handle_t *p__wine_unixlib_handle = (void *)find_named_export( module, exports,
+                                                                              "__wine_unixlib_handle" );
+        *p__wine_unixlib_handle = (UINT_PTR)__wine_unix_call_wow64_funcs;
+    }
+#endif
 
     /* also set the 32-bit LdrSystemDllInitBlock */
     memcpy( (void *)(ULONG_PTR)pLdrSystemDllInitBlock->pLdrSystemDllInitBlock,
@@ -1905,7 +1917,6 @@ static void load_ntdll(void)
     else if (status) fatal_error( "failed to load %s error %x\n", name, status );
     free( name );
     load_ntdll_functions( module );
-    ntdll_module = module;
 }
 
 
@@ -2099,7 +2110,6 @@ static void start_main_thread(void)
     if (main_image_info.Machine != current_machine) load_wow64_ntdll( main_image_info.Machine );
     load_apiset_dll();
     ntdll_init_syscalls( 0, &syscall_table, p__wine_syscall_dispatcher );
-    *p__wine_unix_call_dispatcher = __wine_unix_call_dispatcher;
     server_init_process_done();
 }
 

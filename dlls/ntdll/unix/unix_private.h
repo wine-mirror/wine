@@ -41,7 +41,6 @@ static const WORD current_machine = IMAGE_FILE_MACHINE_ARMNT;
 static const WORD current_machine = IMAGE_FILE_MACHINE_ARM64;
 #endif
 extern WORD native_machine DECLSPEC_HIDDEN;
-extern HMODULE ntdll_module DECLSPEC_HIDDEN;
 
 extern const unixlib_entry_t __wine_unix_call_funcs[] DECLSPEC_HIDDEN;
 extern const unixlib_entry_t __wine_unix_call_wow64_funcs[] DECLSPEC_HIDDEN;
