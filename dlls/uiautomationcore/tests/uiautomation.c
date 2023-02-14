@@ -3556,6 +3556,9 @@ static void test_uia_prov_from_acc_properties(void)
     for (i = 0; i < ARRAY_SIZE(msaa_role_uia_types); i++)
     {
         const struct msaa_role_uia_type *role = &msaa_role_uia_types[i];
+        ILegacyIAccessibleProvider *accprov;
+        DWORD role_val;
+        IUnknown *unk;
 
         /*
          * Roles get cached once a valid one is mapped, so create a new
@@ -3588,6 +3591,22 @@ static void test_uia_prov_from_acc_properties(void)
         if (!role->uia_control_type)
             CHECK_CALLED(Accessible_get_accRole);
 
+        hr = IRawElementProviderSimple_GetPatternProvider(elprov, UIA_LegacyIAccessiblePatternId, &unk);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!!unk, "unk == NULL\n");
+
+        hr = IUnknown_QueryInterface(unk, &IID_ILegacyIAccessibleProvider, (void **)&accprov);
+        IUnknown_Release(unk);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!!accprov, "accprov == NULL\n");
+
+        SET_EXPECT(Accessible_get_accRole);
+        hr = ILegacyIAccessibleProvider_get_Role(accprov, &role_val);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(role_val == Accessible.role, "role_val != Accessible.role\n");
+        CHECK_CALLED(Accessible_get_accRole);
+
+        ILegacyIAccessibleProvider_Release(accprov);
         IRawElementProviderSimple_Release(elprov);
         ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
     }

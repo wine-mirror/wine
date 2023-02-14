@@ -1066,8 +1066,19 @@ static HRESULT WINAPI msaa_acc_provider_get_Description(ILegacyIAccessibleProvid
 
 static HRESULT WINAPI msaa_acc_provider_get_Role(ILegacyIAccessibleProvider *iface, DWORD *out_role)
 {
-    FIXME("%p, %p: stub!\n", iface, out_role);
-    return E_NOTIMPL;
+    struct msaa_provider *msaa_prov = impl_from_msaa_acc_provider(iface);
+    HRESULT hr;
+    VARIANT v;
+
+    TRACE("%p, %p\n", iface, out_role);
+
+    *out_role = 0;
+    VariantInit(&v);
+    hr = IAccessible_get_accRole(msaa_prov->acc, msaa_prov->cid, &v);
+    if (SUCCEEDED(hr) && V_VT(&v) == VT_I4)
+        *out_role = V_I4(&v);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI msaa_acc_provider_get_State(ILegacyIAccessibleProvider *iface, DWORD *out_state)
