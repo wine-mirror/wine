@@ -141,6 +141,7 @@ static void test_EnumProcessModules(void)
     {
         MODULEINFO info;
         char name[40];
+        HMODULE hmods[3];
 
         strcpy(buffer, "C:\\windows\\syswow64\\notepad.exe");
         ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
@@ -150,26 +151,39 @@ static void test_EnumProcessModules(void)
             ok(!ret, "wait timed out\n");
 
             SetLastError(0xdeadbeef);
-            hMod = NULL;
-            ret = EnumProcessModules(pi.hProcess, &hMod, sizeof(HMODULE), &cbNeeded);
+            hmods[0] = NULL;
+            ret = EnumProcessModules(pi.hProcess, hmods, sizeof(hmods), &cbNeeded);
             ok(ret == 1, "got %ld, error %lu\n", ret, GetLastError());
-            ok(!!hMod, "expected non-NULL module\n");
-            ok(cbNeeded % sizeof(hMod) == 0, "got %lu\n", cbNeeded);
+            ok(cbNeeded >= sizeof(HMODULE), "expected at least one module\n");
+            ok(!!hmods[0], "expected non-NULL module\n");
+            ok(cbNeeded % sizeof(hmods[0]) == 0, "got %lu\n", cbNeeded);
 
-            ret = GetModuleBaseNameA(pi.hProcess, hMod, name, sizeof(name));
+            ret = GetModuleBaseNameA(pi.hProcess, hmods[0], name, sizeof(name));
             ok(ret, "got error %lu\n", GetLastError());
             ok(!strcmp(name, "notepad.exe"), "got %s\n", name);
 
-            ret = GetModuleFileNameExA(pi.hProcess, hMod, name, sizeof(name));
+            ret = GetModuleFileNameExA(pi.hProcess, hmods[0], name, sizeof(name));
             ok(ret, "got error %lu\n", GetLastError());
             ok(!strcmp(name, buffer), "got %s\n", name);
 
-            ret = GetModuleInformation(pi.hProcess, hMod, &info, sizeof(info));
+            ret = GetModuleInformation(pi.hProcess, hmods[0], &info, sizeof(info));
             ok(ret, "got error %lu\n", GetLastError());
-            ok(info.lpBaseOfDll == hMod, "expected %p, got %p\n", hMod, info.lpBaseOfDll);
+            ok(info.lpBaseOfDll == hmods[0], "expected %p, got %p\n", hmods[0], info.lpBaseOfDll);
             ok(info.SizeOfImage, "image size was 0\n");
             ok(info.EntryPoint >= info.lpBaseOfDll, "got entry point %p\n", info.EntryPoint);
 
+            /* "old" Wine wow64 will only return main DLL; while windows & multi-arch Wine Wow64 setup
+             * will return main module, ntdll.dll and one of the wow64*.dll.
+             */
+            todo_wine_if(cbNeeded == sizeof(HMODULE))
+            ok(cbNeeded >= 3 * sizeof(HMODULE), "Wrong count of DLLs\n");
+            if (cbNeeded >= 3 * sizeof(HMODULE))
+            {
+                ret = GetModuleBaseNameA(pi.hProcess, hmods[2], name, sizeof(name));
+                ok(ret, "got error %lu\n", GetLastError());
+                todo_wine
+                ok(strstr(CharLowerA(name), "wow64") != NULL, "third DLL in wow64 should be one of wow*.dll (%s)\n", name);
+            }
             TerminateProcess(pi.hProcess, 0);
         }
         else
