@@ -1119,6 +1119,7 @@ struct Provider_legacy_accessible_pattern_data
 {
     BOOL is_supported;
     int child_id;
+    DWORD role;
 };
 
 static struct Provider
@@ -2269,8 +2270,10 @@ static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_Description(ILegacyIA
 
 static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_Role(ILegacyIAccessibleProvider *iface, DWORD *out_role)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    struct Provider *Provider = impl_from_ProviderLegacyIAccessiblePattern(iface);
+
+    *out_role = Provider->legacy_acc_pattern_data.role;
+    return S_OK;
 }
 
 static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_State(ILegacyIAccessibleProvider *iface, DWORD *out_state)
@@ -5701,6 +5704,18 @@ static void test_UiaGetPropertyValue(void)
         Provider.legacy_acc_pattern_data.child_id = i;
 
         hr = UiaGetPropertyValue(node, UIA_LegacyIAccessibleChildIdPropertyId, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+        ok(V_I4(&v) == i, "Unexpected I4 %#lx\n", V_I4(&v));
+        ok_method_sequence(get_pattern_prop_seq, NULL);
+        VariantClear(&v);
+    }
+
+    for (i = 0; i < 2; i++)
+    {
+        Provider.legacy_acc_pattern_data.role = i;
+
+        hr = UiaGetPropertyValue(node, UIA_LegacyIAccessibleRolePropertyId, &v);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
         ok(V_I4(&v) == i, "Unexpected I4 %#lx\n", V_I4(&v));
