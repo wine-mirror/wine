@@ -282,7 +282,7 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
     {
         struct unwind_builtin_dll_params params = { type, dispatch, context };
 
-        status = NTDLL_UNIX_CALL( unwind_builtin_dll, &params );
+        status = WINE_UNIX_CALL( unix_unwind_builtin_dll, &params );
         if (!status && dispatch->LanguageHandler && !module)
         {
             FIXME( "calling personality routine in system library not supported yet\n" );

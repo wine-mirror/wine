@@ -77,7 +77,7 @@ static DWORD (WINAPI *pCtrlRoutine)(void *);
 
 SYSTEM_DLL_INIT_BLOCK LdrSystemDllInitBlock = { 0xf0 };
 
-unixlib_handle_t ntdll_unix_handle = 0;
+unixlib_handle_t __wine_unixlib_handle = 0;
 
 /* windows directory */
 const WCHAR windows_dir[] = L"C:\\windows";
@@ -2627,7 +2627,7 @@ static NTSTATUS load_so_dll( LPCWSTR load_path, const UNICODE_STRING *nt_name,
     struct load_so_dll_params params = { *nt_name, &module };
 
     TRACE( "trying %s as so lib\n", debugstr_us(nt_name) );
-    if ((status = NTDLL_UNIX_CALL( load_so_dll, &params )))
+    if ((status = WINE_UNIX_CALL( unix_load_so_dll, &params )))
     {
         WARN( "failed to load .so lib %s\n", debugstr_us(nt_name) );
         if (status == STATUS_INVALID_IMAGE_FORMAT) status = STATUS_INVALID_IMAGE_NOT_MZ;
@@ -3153,7 +3153,7 @@ static NTSTATUS load_dll( const WCHAR *load_path, const WCHAR *libname, DWORD fl
     switch (nts)
     {
     case STATUS_INVALID_IMAGE_NOT_MZ:  /* not in PE format, maybe it's a .so file */
-        if (ntdll_unix_handle) nts = load_so_dll( load_path, &nt_name, flags, pwm );
+        if (__wine_unixlib_handle) nts = load_so_dll( load_path, &nt_name, flags, pwm );
         break;
 
     case STATUS_SUCCESS:  /* valid PE file */
@@ -4121,7 +4121,7 @@ void WINAPI LdrInitializeThunk( CONTEXT *context, ULONG_PTR unknown2, ULONG_PTR 
         NtQueryVirtualMemory( GetCurrentProcess(), LdrInitializeThunk, MemoryBasicInformation,
                               &meminfo, sizeof(meminfo), NULL );
         NtQueryVirtualMemory( GetCurrentProcess(), meminfo.AllocationBase, MemoryWineUnixFuncs,
-                              &ntdll_unix_handle, sizeof(ntdll_unix_handle), NULL );
+                              &__wine_unixlib_handle, sizeof(__wine_unixlib_handle), NULL );
 
         peb->LdrData            = &ldr;
         peb->FastPebLock        = &peb_lock;

@@ -374,7 +374,7 @@ LONGLONG WINAPI RtlGetSystemTimePrecise( void )
 {
     LONGLONG ret;
 
-    NTDLL_UNIX_CALL( system_time_precise, &ret );
+    WINE_UNIX_CALL( unix_system_time_precise, &ret );
     return ret;
 }
 

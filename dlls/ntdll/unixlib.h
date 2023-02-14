@@ -45,8 +45,6 @@ enum ntdll_unix_funcs
     unix_system_time_precise,
 };
 
-extern unixlib_handle_t ntdll_unix_handle;
-
-#define NTDLL_UNIX_CALL( func, params ) __wine_unix_call_dispatcher( ntdll_unix_handle, unix_ ## func, params )
+extern unixlib_handle_t __wine_unixlib_handle DECLSPEC_HIDDEN;
 
 #endif /* __NTDLL_UNIXLIB_H */
