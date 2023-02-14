@@ -21,8 +21,6 @@
 #ifndef __WOW64_STRUCT32_H
 #define __WOW64_STRUCT32_H
 
-#include "wine/server.h"
-
 typedef struct
 {
     ULONG Length;

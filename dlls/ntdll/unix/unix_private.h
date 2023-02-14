@@ -286,11 +286,13 @@ extern void set_async_direct_result( HANDLE *async_handle, NTSTATUS status, ULON
 extern NTSTATUS unixcall_wine_dbg_write( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS unixcall_wine_server_call( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS unixcall_wine_server_fd_to_handle( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS unixcall_wine_server_handle_to_fd( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS unixcall_wine_spawnvp( void *args ) DECLSPEC_HIDDEN;
 #ifdef _WIN64
 extern NTSTATUS wow64_wine_dbg_write( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wine_server_call( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wine_server_fd_to_handle( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_wine_server_handle_to_fd( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wine_spawnvp( void *args ) DECLSPEC_HIDDEN;
 #endif
 

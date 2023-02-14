@@ -1690,7 +1690,7 @@
 # Server interface
 @ cdecl -norelay wine_server_call(ptr)
 @ cdecl wine_server_fd_to_handle(long long long ptr)
-@ cdecl -syscall wine_server_handle_to_fd(long long ptr ptr)
+@ cdecl wine_server_handle_to_fd(long long ptr ptr)
 
 # Unix interface
 @ stdcall __wine_unix_call(int64 long ptr)

@@ -1133,6 +1133,17 @@ NTSTATUS CDECL wine_server_handle_to_fd( HANDLE handle, unsigned int access, int
 
 
 /***********************************************************************
+ *           unixcall_wine_server_handle_to_fd
+ */
+NTSTATUS unixcall_wine_server_handle_to_fd( void *args )
+{
+    struct wine_server_handle_to_fd_params *params = args;
+
+    return wine_server_handle_to_fd( params->handle, params->access, params->unix_fd, params->options );
+}
+
+
+/***********************************************************************
  *           server_pipe
  *
  * Create a pipe for communicating with the server.
@@ -1844,6 +1855,23 @@ NTSTATUS wow64_wine_server_fd_to_handle( void *args )
     ret = wine_server_fd_to_handle( params32->fd, params32->access, params32->attributes, &handle );
     *handle32 = HandleToULong( handle );
     return ret;
+}
+
+/**********************************************************************
+ *           wow64_wine_server_handle_to_fd
+ */
+NTSTATUS wow64_wine_server_handle_to_fd( void *args )
+{
+    struct
+    {
+        ULONG        handle;
+        unsigned int access;
+        ULONG        unix_fd;
+        ULONG        options;
+    } const *params32 = args;
+
+    return wine_server_handle_to_fd( ULongToHandle( params32->handle ), params32->access,
+                                     ULongToPtr( params32->unix_fd ), ULongToPtr( params32->options ));
 }
 
 #endif /* _WIN64 */

@@ -945,20 +945,6 @@ NTSTATUS WINAPI wow64_wine_nt_to_unix_file_name( UINT *args )
 
 
 /**********************************************************************
- *           wow64_wine_server_handle_to_fd
- */
-NTSTATUS WINAPI wow64_wine_server_handle_to_fd( UINT *args )
-{
-    HANDLE handle = get_handle( &args );
-    ACCESS_MASK access = get_ulong( &args );
-    int *unix_fd = get_ptr( &args );
-    unsigned int *options = get_ptr( &args );
-
-    return wine_server_handle_to_fd( handle, access, unix_fd, options );
-}
-
-
-/**********************************************************************
  *           wow64_wine_unix_to_nt_file_name
  */
 NTSTATUS WINAPI wow64_wine_unix_to_nt_file_name( UINT *args )
