@@ -314,7 +314,7 @@ ElseIfs
     | ElseIf ElseIfs                        { $1->next = $2; $$ = $1; }
 
 ElseIf
-    : tELSEIF Expression tTHEN tNL StatementsNl_opt
+    : tELSEIF Expression tTHEN StSep_opt StatementsNl_opt
                                             { $$ = new_elseif_decl(ctx, @$, $2, $5); }
 
 Else_opt
