@@ -624,7 +624,7 @@ static void mf_media_type_to_wg_format_audio(IMFMediaType *type, const GUID *sub
     FIXME("Unrecognized audio subtype %s, depth %u.\n", debugstr_guid(subtype), depth);
 }
 
-static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, struct wg_format *format)
+static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
 {
     /* Audio specific config is stored at after HEAACWAVEINFO in MF_MT_USER_DATA
      * https://docs.microsoft.com/en-us/windows/win32/api/mmreg/ns-mmreg-heaacwaveformat
@@ -646,6 +646,7 @@ static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, struct wg
     BYTE buffer[64];
     HEAACWAVEFORMAT *user_data = (HEAACWAVEFORMAT *)buffer;
     UINT32 codec_data_size;
+    BOOL raw_aac;
 
     if (FAILED(IMFMediaType_GetBlob(type, &MF_MT_USER_DATA, buffer, sizeof(buffer), &codec_data_size)))
     {
@@ -653,12 +654,18 @@ static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, struct wg
         return;
     }
 
-    codec_data_size -= min(codec_data_size, offsetof(HEAACWAVEFORMAT, pbAudioSpecificConfig));
+    raw_aac = IsEqualGUID(subtype, &MFAudioFormat_RAW_AAC);
+    if (!raw_aac)
+        codec_data_size -= min(codec_data_size, offsetof(HEAACWAVEFORMAT, pbAudioSpecificConfig));
     if (codec_data_size > sizeof(format->u.audio_mpeg4.codec_data))
     {
         FIXME("Codec data needs %u bytes.\n", codec_data_size);
         return;
     }
+    if (raw_aac)
+        memcpy(format->u.audio_mpeg4.codec_data, buffer, codec_data_size);
+    else
+        memcpy(format->u.audio_mpeg4.codec_data, user_data->pbAudioSpecificConfig, codec_data_size);
 
     format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG4;
 
@@ -666,7 +673,6 @@ static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, struct wg
         format->u.audio_mpeg4.payload_type = -1;
 
     format->u.audio_mpeg4.codec_data_len = codec_data_size;
-    memcpy(format->u.audio_mpeg4.codec_data, user_data->pbAudioSpecificConfig, codec_data_size);
 }
 
 static enum wg_video_format mf_video_format_to_wg(const GUID *subtype)
@@ -864,7 +870,7 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
                 IsEqualGUID(&subtype, &MFAudioFormat_WMAudio_Lossless))
             mf_media_type_to_wg_format_audio_wma(type, &subtype, format);
         else if (IsEqualGUID(&subtype, &MFAudioFormat_AAC) || IsEqualGUID(&subtype, &MFAudioFormat_RAW_AAC))
-            mf_media_type_to_wg_format_audio_mpeg4(type, format);
+            mf_media_type_to_wg_format_audio_mpeg4(type, &subtype, format);
         else
             mf_media_type_to_wg_format_audio(type, &subtype, format);
     }
