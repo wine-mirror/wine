@@ -1672,6 +1672,7 @@ Call ok(Abs(True) = 1, "Abs(True) = " & Abs(True))
 Call ok(getVT(Abs(True)) = "VT_I2", "getVT(Abs(True)) = " & getVT(Abs(True)))
 Call ok(Abs(CByte(1)) = 1, "Abs(CByte(1)) = " & Abs(CByte(1)))
 Call ok(getVT(Abs(CByte(1))) = "VT_UI1", "getVT(Abs(CByte(1))) = " & getVT(Abs(CByte(1))))
+Call ok(Abs("30000") = 30000, "Abs(""30000"") = " & Abs("30000"))
 
 Sub testAbsError(strings, error_num1, error_num2)
     on error resume next

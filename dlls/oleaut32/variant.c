@@ -4329,7 +4329,6 @@ VarOr_Exit:
  */
 HRESULT WINAPI VarAbs(LPVARIANT pVarIn, LPVARIANT pVarOut)
 {
-    VARIANT varIn;
     HRESULT hRet = S_OK;
     VARIANT temp;
 
@@ -4373,11 +4372,10 @@ HRESULT WINAPI VarAbs(LPVARIANT pVarIn, LPVARIANT pVarOut)
         if (V_R4(pVarOut) < 0.0) V_R4(pVarOut) = -V_R4(pVarOut);
         break;
     case VT_BSTR:
-        hRet = VarR8FromStr(V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(&varIn));
+        hRet = VarR8FromStr(V_BSTR(pVarIn), LOCALE_USER_DEFAULT, 0, &V_R8(pVarOut));
         if (FAILED(hRet))
             break;
         V_VT(pVarOut) = VT_R8;
-        pVarIn = &varIn;
         /* Fall through ... */
     case VT_DATE:
     case VT_R8:
