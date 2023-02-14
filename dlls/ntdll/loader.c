@@ -3199,6 +3199,17 @@ NTSTATUS WINAPI __wine_unix_call( unixlib_handle_t handle, unsigned int code, vo
 }
 
 
+/***********************************************************************
+ *           __wine_unix_spawnvp
+ */
+NTSTATUS WINAPI __wine_unix_spawnvp( char * const argv[], int wait )
+{
+    struct wine_spawnvp_params params = { (char **)argv, wait };
+
+    return WINE_UNIX_CALL( unix_wine_spawnvp, &params );
+}
+
+
 /******************************************************************
  *		LdrLoadDll (NTDLL.@)
  */

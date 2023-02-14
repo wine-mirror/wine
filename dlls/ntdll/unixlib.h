@@ -31,6 +31,12 @@ struct wine_dbg_write_params
     unsigned int len;
 };
 
+struct wine_spawnvp_params
+{
+    char       **argv;
+    int          wait;
+};
+
 struct load_so_dll_params
 {
     UNICODE_STRING              nt_name;
@@ -49,6 +55,7 @@ enum ntdll_unix_funcs
     unix_load_so_dll,
     unix_unwind_builtin_dll,
     unix_wine_dbg_write,
+    unix_wine_spawnvp,
     unix_system_time_precise,
 };
 

@@ -539,6 +539,44 @@ NTSTATUS WINAPI __wine_unix_spawnvp( char * const argv[], int wait )
 
 
 /***********************************************************************
+ *           unixcall_wine_spawnvp
+ */
+NTSTATUS unixcall_wine_spawnvp( void *args )
+{
+    struct wine_spawnvp_params *params = args;
+
+    return __wine_unix_spawnvp( params->argv, params->wait );
+}
+
+
+#ifdef _WIN64
+/***********************************************************************
+ *		wow64_wine_spawnvp
+ */
+NTSTATUS wow64_wine_spawnvp( void *args )
+{
+    struct
+    {
+        ULONG argv;
+        int   wait;
+    } const *params32 = args;
+
+    ULONG *argv32 = ULongToPtr( params32->argv );
+    unsigned int i, count = 0;
+    char **argv;
+    NTSTATUS ret;
+
+    while (argv32[count]) count++;
+    argv = malloc( (count + 1) * sizeof(*argv) );
+    for (i = 0; i < count; i++) argv[i] = ULongToPtr( argv32[i] );
+    argv[count] = NULL;
+    ret = __wine_unix_spawnvp( argv, params32->wait );
+    free( argv );
+    return ret;
+}
+#endif
+
+/***********************************************************************
  *           fork_and_exec
  *
  * Fork and exec a new Unix binary, checking for errors.

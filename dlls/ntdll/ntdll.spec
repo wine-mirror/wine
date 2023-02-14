@@ -1694,7 +1694,7 @@
 
 # Unix interface
 @ stdcall __wine_unix_call(int64 long ptr)
-@ stdcall -syscall __wine_unix_spawnvp(long ptr)
+@ stdcall __wine_unix_spawnvp(long ptr)
 @ stdcall __wine_ctrl_routine(ptr)
 @ extern -private __wine_syscall_dispatcher
 @ extern -private __wine_unix_call_dispatcher
