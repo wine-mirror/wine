@@ -134,6 +134,8 @@ static HRESULT debug_target_init_modules_info(struct target_process *target)
     HMODULE *modules;
     MODULEINFO info;
     DWORD needed;
+    BOOL wow64;
+    DWORD filter = LIST_MODULES_DEFAULT;
 
     if (target->modules.initialized)
         return S_OK;
@@ -141,8 +143,13 @@ static HRESULT debug_target_init_modules_info(struct target_process *target)
     if (!target->handle)
         return E_UNEXPECTED;
 
+    if (sizeof(void*) > sizeof(int) &&
+        IsWow64Process(target->handle, &wow64) &&
+        wow64)
+        filter = LIST_MODULES_32BIT;
+
     needed = 0;
-    EnumProcessModules(target->handle, NULL, 0, &needed);
+    EnumProcessModulesEx(target->handle, NULL, 0, &needed, filter);
     if (!needed)
         return E_FAIL;
 
@@ -157,7 +164,7 @@ static HRESULT debug_target_init_modules_info(struct target_process *target)
         return E_OUTOFMEMORY;
     }
 
-    if (EnumProcessModules(target->handle, modules, count * sizeof(*modules), &needed))
+    if (EnumProcessModulesEx(target->handle, modules, count * sizeof(*modules), &needed, filter))
     {
         for (i = 0; i < count; ++i)
         {
