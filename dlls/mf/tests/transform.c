@@ -2223,7 +2223,7 @@ failed:
     CoUninitialize();
 }
 
-static void test_aac_decoder(void)
+static void test_aac_decoder_subtype(const struct attribute_desc *input_type_desc)
 {
     const GUID *const class_id = &CLSID_MSAACDecMFT;
     const struct transform_info expect_mft_info =
@@ -2311,19 +2311,6 @@ static void test_aac_decoder(void)
     {
         ATTR_UINT32(MFT_SUPPORT_DYNAMIC_FORMAT_CHANGE, !has_video_processor /* 1 on W7 */, .todo = TRUE),
         /* more AAC decoder specific attributes from CODECAPI */
-        {0},
-    };
-    const struct attribute_desc input_type_desc[] =
-    {
-        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC, .required = TRUE),
-        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
-        ATTR_BLOB(MF_MT_USER_DATA, aac_codec_data, sizeof(aac_codec_data), .required = TRUE),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
-        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 12000),
-        ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 41),
-        ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 0),
         {0},
     };
     static const struct attribute_desc output_type_desc[] =
@@ -2543,6 +2530,36 @@ static void test_aac_decoder(void)
 failed:
     winetest_pop_context();
     CoUninitialize();
+}
+
+static void test_aac_decoder(void)
+{
+    static const BYTE aac_raw_codec_data[] = {0x12, 0x08};
+    static const struct attribute_desc raw_aac_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_RAW_AAC1, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_raw_codec_data, sizeof(aac_raw_codec_data), .required = TRUE),
+        {0},
+    };
+    static const struct attribute_desc aac_input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio, .required = TRUE),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_AAC, .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100, .required = TRUE),
+        ATTR_BLOB(MF_MT_USER_DATA, aac_codec_data, sizeof(aac_codec_data), .required = TRUE),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 1),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 12000),
+        ATTR_UINT32(MF_MT_AAC_AUDIO_PROFILE_LEVEL_INDICATION, 41),
+        ATTR_UINT32(MF_MT_AAC_PAYLOAD_TYPE, 0),
+        {0},
+    };
+
+    test_aac_decoder_subtype(aac_input_type_desc);
+    test_aac_decoder_subtype(raw_aac_input_type_desc);
 }
 
 static const BYTE wma_codec_data[10] = {0, 0x44, 0, 0, 0x17, 0, 0, 0, 0, 0};
