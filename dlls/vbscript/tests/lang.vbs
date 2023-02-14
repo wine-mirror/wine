@@ -337,6 +337,23 @@ ElseIf not False Then
 End If
 Call ok(x, "elseif not called?")
 
+' ElseIf with statement on same line
+x = false
+If false Then
+   Call ok(false, "inside if false")
+ElseIf not False Then x = true
+End If
+Call ok(x, "elseif not called?")
+
+' ElseIf with statement following statement separator
+x = false
+If false Then
+   Call ok(false, "inside if false")
+ElseIf not False Then
+: x = true
+End If
+Call ok(x, "elseif not called?")
+
 x = false
 if 1 then x = true
 Call ok(x, "if 1 not run?")
