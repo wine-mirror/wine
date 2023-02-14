@@ -99,6 +99,12 @@ static inline void variant_init_bool(VARIANT *v, BOOL val)
     V_BOOL(v) = val ? VARIANT_TRUE : VARIANT_FALSE;
 }
 
+static inline void variant_init_i4(VARIANT *v, int val)
+{
+    V_VT(v) = VT_I4;
+    V_I4(v) = val;
+}
+
 static inline BOOL uia_array_reserve(void **elements, SIZE_T *capacity, SIZE_T count, SIZE_T size)
 {
     SIZE_T max_capacity, new_capacity;

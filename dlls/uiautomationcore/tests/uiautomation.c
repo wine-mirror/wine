@@ -1115,6 +1115,12 @@ struct Provider_value_pattern_data
     BOOL is_read_only;
 };
 
+struct Provider_legacy_accessible_pattern_data
+{
+    BOOL is_supported;
+    int child_id;
+};
+
 static struct Provider
 {
     IRawElementProviderSimple IRawElementProviderSimple_iface;
@@ -1122,6 +1128,7 @@ static struct Provider
     IRawElementProviderFragmentRoot IRawElementProviderFragmentRoot_iface;
     IRawElementProviderHwndOverride IRawElementProviderHwndOverride_iface;
     IValueProvider IValueProvider_iface;
+    ILegacyIAccessibleProvider ILegacyIAccessibleProvider_iface;
     LONG ref;
 
     const char *prov_name;
@@ -1143,6 +1150,7 @@ static struct Provider
     int prop_override_count;
     struct UiaRect bounds_rect;
     struct Provider_value_pattern_data value_pattern_data;
+    struct Provider_legacy_accessible_pattern_data legacy_acc_pattern_data;
 } Provider, Provider2, Provider_child, Provider_child2;
 static struct Provider Provider_hwnd, Provider_nc, Provider_proxy, Provider_proxy2, Provider_override;
 static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd, BOOL initialize_nav_links);
@@ -1571,6 +1579,8 @@ HRESULT WINAPI ProviderSimple_QueryInterface(IRawElementProviderSimple *iface, R
         *ppv = &This->IRawElementProviderHwndOverride_iface;
     else if (IsEqualIID(riid, &IID_IValueProvider))
         *ppv = &This->IValueProvider_iface;
+    else if (IsEqualIID(riid, &IID_ILegacyIAccessibleProvider))
+        *ppv = &This->ILegacyIAccessibleProvider_iface;
     else
         return E_NOINTERFACE;
 
@@ -1625,6 +1635,11 @@ HRESULT WINAPI ProviderSimple_GetPatternProvider(IRawElementProviderSimple *ifac
     {
     case UIA_ValuePatternId:
         if (This->value_pattern_data.is_supported)
+            *ret_val = (IUnknown *)iface;
+        break;
+
+    case UIA_LegacyIAccessiblePatternId:
+        if (This->legacy_acc_pattern_data.is_supported)
             *ret_val = (IUnknown *)iface;
         break;
 
@@ -2176,6 +2191,141 @@ static const IValueProviderVtbl ProviderValuePatternVtbl = {
     ProviderValuePattern_get_IsReadOnly,
 };
 
+static inline struct Provider *impl_from_ProviderLegacyIAccessiblePattern(ILegacyIAccessibleProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct Provider, ILegacyIAccessibleProvider_iface);
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_QueryInterface(ILegacyIAccessibleProvider *iface, REFIID riid,
+        void **ppv)
+{
+    struct Provider *Provider = impl_from_ProviderLegacyIAccessiblePattern(iface);
+    return IRawElementProviderSimple_QueryInterface(&Provider->IRawElementProviderSimple_iface, riid, ppv);
+}
+
+static ULONG WINAPI ProviderLegacyIAccessiblePattern_AddRef(ILegacyIAccessibleProvider *iface)
+{
+    struct Provider *Provider = impl_from_ProviderLegacyIAccessiblePattern(iface);
+    return IRawElementProviderSimple_AddRef(&Provider->IRawElementProviderSimple_iface);
+}
+
+static ULONG WINAPI ProviderLegacyIAccessiblePattern_Release(ILegacyIAccessibleProvider *iface)
+{
+    struct Provider *Provider = impl_from_ProviderLegacyIAccessiblePattern(iface);
+    return IRawElementProviderSimple_Release(&Provider->IRawElementProviderSimple_iface);
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_Select(ILegacyIAccessibleProvider *iface, LONG select_flags)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_DoDefaultAction(ILegacyIAccessibleProvider *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_SetValue(ILegacyIAccessibleProvider *iface, LPCWSTR val)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_GetIAccessible(ILegacyIAccessibleProvider *iface,
+        IAccessible **out_acc)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_ChildId(ILegacyIAccessibleProvider *iface, int *out_cid)
+{
+    struct Provider *Provider = impl_from_ProviderLegacyIAccessiblePattern(iface);
+
+    *out_cid = Provider->legacy_acc_pattern_data.child_id;
+    return S_OK;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_Name(ILegacyIAccessibleProvider *iface, BSTR *out_name)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_Value(ILegacyIAccessibleProvider *iface, BSTR *out_value)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_Description(ILegacyIAccessibleProvider *iface,
+        BSTR *out_description)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_Role(ILegacyIAccessibleProvider *iface, DWORD *out_role)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_State(ILegacyIAccessibleProvider *iface, DWORD *out_state)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_Help(ILegacyIAccessibleProvider *iface, BSTR *out_help)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_KeyboardShortcut(ILegacyIAccessibleProvider *iface,
+        BSTR *out_kbd_shortcut)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_GetSelection(ILegacyIAccessibleProvider *iface,
+        SAFEARRAY **out_selected)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ProviderLegacyIAccessiblePattern_get_DefaultAction(ILegacyIAccessibleProvider *iface,
+        BSTR *out_default_action)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const ILegacyIAccessibleProviderVtbl ProviderLegacyIAccessiblePatternVtbl = {
+    ProviderLegacyIAccessiblePattern_QueryInterface,
+    ProviderLegacyIAccessiblePattern_AddRef,
+    ProviderLegacyIAccessiblePattern_Release,
+    ProviderLegacyIAccessiblePattern_Select,
+    ProviderLegacyIAccessiblePattern_DoDefaultAction,
+    ProviderLegacyIAccessiblePattern_SetValue,
+    ProviderLegacyIAccessiblePattern_GetIAccessible,
+    ProviderLegacyIAccessiblePattern_get_ChildId,
+    ProviderLegacyIAccessiblePattern_get_Name,
+    ProviderLegacyIAccessiblePattern_get_Value,
+    ProviderLegacyIAccessiblePattern_get_Description,
+    ProviderLegacyIAccessiblePattern_get_Role,
+    ProviderLegacyIAccessiblePattern_get_State,
+    ProviderLegacyIAccessiblePattern_get_Help,
+    ProviderLegacyIAccessiblePattern_get_KeyboardShortcut,
+    ProviderLegacyIAccessiblePattern_GetSelection,
+    ProviderLegacyIAccessiblePattern_get_DefaultAction,
+};
+
 static struct Provider Provider =
 {
     { &ProviderSimpleVtbl },
@@ -2183,6 +2333,7 @@ static struct Provider Provider =
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
     { &ProviderValuePatternVtbl },
+    { &ProviderLegacyIAccessiblePatternVtbl },
     1,
     "Provider",
     NULL, NULL,
@@ -2198,6 +2349,7 @@ static struct Provider Provider2 =
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
     { &ProviderValuePatternVtbl },
+    { &ProviderLegacyIAccessiblePatternVtbl },
     1,
     "Provider2",
     NULL, NULL,
@@ -2213,6 +2365,7 @@ static struct Provider Provider_child =
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
     { &ProviderValuePatternVtbl },
+    { &ProviderLegacyIAccessiblePatternVtbl },
     1,
     "Provider_child",
     &Provider.IRawElementProviderFragment_iface, &Provider.IRawElementProviderFragmentRoot_iface,
@@ -2228,6 +2381,7 @@ static struct Provider Provider_child2 =
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
     { &ProviderValuePatternVtbl },
+    { &ProviderLegacyIAccessiblePatternVtbl },
     1,
     "Provider_child2",
     &Provider.IRawElementProviderFragment_iface, &Provider.IRawElementProviderFragmentRoot_iface,
@@ -2243,6 +2397,7 @@ static struct Provider Provider_hwnd =
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
     { &ProviderValuePatternVtbl },
+    { &ProviderLegacyIAccessiblePatternVtbl },
     1,
     "Provider_hwnd",
     NULL, NULL,
@@ -2258,6 +2413,7 @@ static struct Provider Provider_nc =
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
     { &ProviderValuePatternVtbl },
+    { &ProviderLegacyIAccessiblePatternVtbl },
     1,
     "Provider_nc",
     NULL, NULL,
@@ -2274,6 +2430,7 @@ static struct Provider Provider_proxy =
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
     { &ProviderValuePatternVtbl },
+    { &ProviderLegacyIAccessiblePatternVtbl },
     1,
     "Provider_proxy",
     NULL, NULL,
@@ -2290,6 +2447,7 @@ static struct Provider Provider_proxy2 =
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
     { &ProviderValuePatternVtbl },
+    { &ProviderLegacyIAccessiblePatternVtbl },
     1,
     "Provider_proxy2",
     NULL, NULL,
@@ -2306,6 +2464,7 @@ static struct Provider Provider_override =
     { &ProviderFragmentRootVtbl },
     { &ProviderHwndOverrideVtbl },
     { &ProviderValuePatternVtbl },
+    { &ProviderLegacyIAccessiblePatternVtbl },
     1,
     "Provider_override",
     NULL, NULL,
@@ -2323,6 +2482,7 @@ static struct Provider Provider_override =
         { &ProviderFragmentRootVtbl }, \
         { &ProviderHwndOverrideVtbl }, \
         { &ProviderValuePatternVtbl }, \
+        { &ProviderLegacyIAccessiblePatternVtbl }, \
         1, \
         "Provider_" # name "", \
         NULL, NULL, \
@@ -5065,6 +5225,12 @@ static const struct prov_method_sequence get_pattern_prop_seq[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence get_pattern_prop_seq2[] = {
+    { &Provider, PROV_GET_PATTERN_PROV },
+    { &Provider, FRAG_GET_FRAGMENT_ROOT, METHOD_TODO },
+    { 0 }
+};
+
 static const struct prov_method_sequence get_bounding_rect_seq[] = {
     NODE_CREATE_SEQ(&Provider_child),
     { &Provider_child, FRAG_GET_BOUNDING_RECT },
@@ -5516,6 +5682,28 @@ static void test_UiaGetPropertyValue(void)
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(V_VT(&v) == VT_BOOL, "Unexpected VT %d\n", V_VT(&v));
         ok(check_variant_bool(&v, i), "Unexpected BOOL %#x\n", V_BOOL(&v));
+        ok_method_sequence(get_pattern_prop_seq, NULL);
+        VariantClear(&v);
+    }
+
+    /* ILegacyIAccessibleProvider pattern property IDs. */
+    Provider.legacy_acc_pattern_data.is_supported = FALSE;
+    hr = UiaGetPropertyValue(node, UIA_LegacyIAccessibleChildIdPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+    ok(V_UNKNOWN(&v) == unk_ns, "unexpected IUnknown %p\n", V_UNKNOWN(&v));
+    ok_method_sequence(get_pattern_prop_seq2, NULL);
+    VariantClear(&v);
+
+    Provider.legacy_acc_pattern_data.is_supported = TRUE;
+    for (i = 0; i < 2; i++)
+    {
+        Provider.legacy_acc_pattern_data.child_id = i;
+
+        hr = UiaGetPropertyValue(node, UIA_LegacyIAccessibleChildIdPropertyId, &v);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(V_VT(&v) == VT_I4, "Unexpected VT %d\n", V_VT(&v));
+        ok(V_I4(&v) == i, "Unexpected I4 %#lx\n", V_I4(&v));
         ok_method_sequence(get_pattern_prop_seq, NULL);
         VariantClear(&v);
     }
@@ -9013,6 +9201,7 @@ static void initialize_provider(struct Provider *prov, int prov_opts, HWND hwnd,
     prov->prop_override_count = 0;
     memset(&prov->bounds_rect, 0, sizeof(prov->bounds_rect));
     memset(&prov->value_pattern_data, 0, sizeof(prov->value_pattern_data));
+    memset(&prov->legacy_acc_pattern_data, 0, sizeof(prov->legacy_acc_pattern_data));
     if (initialize_nav_links)
     {
         prov->frag_root = NULL;

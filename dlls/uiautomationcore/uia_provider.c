@@ -28,12 +28,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
 DEFINE_GUID(SID_AccFromDAWrapper, 0x33f139ee, 0xe509, 0x47f7, 0xbf,0x39, 0x83,0x76,0x44,0xf7,0x45,0x76);
 
-static void variant_init_i4(VARIANT *v, int val)
-{
-    V_VT(v) = VT_I4;
-    V_I4(v) = val;
-}
-
 static BOOL msaa_check_acc_state(IAccessible *acc, VARIANT cid, ULONG flag)
 {
     HRESULT hr;

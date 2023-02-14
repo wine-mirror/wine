@@ -1571,6 +1571,16 @@ static HRESULT uia_provider_get_pattern_prop_val(struct uia_provider *prov,
         break;
     }
 
+    case UIA_LegacyIAccessibleChildIdPropertyId:
+    {
+        int val;
+
+        hr = ILegacyIAccessibleProvider_get_ChildId((ILegacyIAccessibleProvider *)pattern_prov, &val);
+        if (SUCCEEDED(hr))
+            variant_init_i4(ret_val, val);
+        break;
+    }
+
     default:
         break;
     }
