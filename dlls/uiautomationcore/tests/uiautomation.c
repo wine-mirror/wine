@@ -3383,6 +3383,7 @@ static void test_uia_prov_from_acc_navigation(void)
 static void test_uia_prov_from_acc_properties(void)
 {
     IRawElementProviderSimple *elprov;
+    RECT rect[2] = { 0 };
     HRESULT hr;
     VARIANT v;
     int i, x;
@@ -3475,6 +3476,88 @@ static void test_uia_prov_from_acc_properties(void)
         }
     }
     Accessible.state = 0;
+
+    /*
+     * UIA_IsOffscreenPropertyId relies upon either STATE_SYSTEM_OFFSCREEN
+     * being set, or accLocation returning a location that is within the
+     * client area bounding box of the HWND it is contained within.
+     */
+    set_accessible_props(&Accessible, 0, STATE_SYSTEM_OFFSCREEN, 0, L"Accessible", 0, 0, 0, 0);
+    SET_EXPECT(Accessible_get_accState);
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_IsOffscreenPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(check_variant_bool(&v, TRUE), "Unexpected BOOL %#x\n", V_BOOL(&v));
+    CHECK_CALLED(Accessible_get_accState);
+
+    /* accLocation fails, will return FALSE. */
+    set_accessible_props(&Accessible, 0, ~STATE_SYSTEM_OFFSCREEN, 0, L"Accessible", 0, 0, 0, 0);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_accLocation);
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_IsOffscreenPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(check_variant_bool(&v, FALSE), "Unexpected BOOL %#x\n", V_BOOL(&v));
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_accLocation);
+
+    /* Window is visible, Accessible is within its bounds. */
+    ShowWindow(Accessible.ow_hwnd, SW_SHOW);
+    ok(GetClientRect(Accessible.ow_hwnd, &rect[0]), "GetClientRect returned FALSE\n");
+    MapWindowPoints(Accessible.ow_hwnd, NULL, (POINT *)&rect[0], 2);
+
+    set_accessible_props(&Accessible, 0, ~STATE_SYSTEM_OFFSCREEN, 0, L"Accessible", rect[0].left, rect[0].top,
+            (rect[0].right - rect[0].left), (rect[0].bottom - rect[0].top));
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_accLocation);
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_IsOffscreenPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BOOL, "Unexpected VT %d\n", V_VT(&v));
+    ok(check_variant_bool(&v, FALSE), "Unexpected BOOL %#x\n", V_BOOL(&v));
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_accLocation);
+
+    /*
+     * Window is invisible, Accessible is within its bounds. Window visibility
+     * doesn't effect whether or not an IAccessible is considered offscreen.
+     */
+    ShowWindow(Accessible.ow_hwnd, SW_HIDE);
+    set_accessible_props(&Accessible, 0, ~STATE_SYSTEM_OFFSCREEN, 0, L"Accessible", rect[0].left, rect[0].top,
+            (rect[0].right - rect[0].left), (rect[0].bottom - rect[0].top));
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_accLocation);
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_IsOffscreenPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BOOL, "Unexpected VT %d\n", V_VT(&v));
+    ok(check_variant_bool(&v, FALSE), "Unexpected BOOL %#x\n", V_BOOL(&v));
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_accLocation);
+
+    /* Accessible now outside of its window's bounds. */
+    set_accessible_props(&Accessible, 0, ~STATE_SYSTEM_OFFSCREEN, 0, L"Accessible", rect[0].right, rect[0].bottom,
+            10, 10);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_accLocation);
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_IsOffscreenPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(check_variant_bool(&v, TRUE), "Unexpected BOOL %#x\n", V_BOOL(&v));
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_accLocation);
+
+    /* Accessible within window bounds, but not client area bounds. */
+    ok(GetWindowRect(Accessible.ow_hwnd, &rect[1]), "GetWindowRect returned FALSE\n");
+    set_accessible_props(&Accessible, 0, ~STATE_SYSTEM_OFFSCREEN, 0, L"Accessible", rect[1].left, rect[1].top,
+            (rect[0].left - rect[1].left) - 1, (rect[0].top - rect[1].top) - 1);
+
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_accLocation);
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_IsOffscreenPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(&v) = %d\n", V_VT(&v));
+    ok(check_variant_bool(&v, TRUE), "Unexpected BOOL %#x\n", V_BOOL(&v));
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_accLocation);
 
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
