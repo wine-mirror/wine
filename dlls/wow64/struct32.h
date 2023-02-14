@@ -667,24 +667,6 @@ typedef struct
     ULONG NumberOfBytes;
 } MEMORY_RANGE_ENTRY32;
 
-struct __server_iovec32
-{
-    ULONG        ptr;
-    data_size_t  size;
-};
-
-struct __server_request_info32
-{
-    union
-    {
-        union generic_request req;
-        union generic_reply   reply;
-    } u;
-    unsigned int            data_count;
-    ULONG                   reply_data;
-    struct __server_iovec32 data[__SERVER_MAX_DATA];
-};
-
 typedef struct
 {
   ULONG LowestStartingAddress;

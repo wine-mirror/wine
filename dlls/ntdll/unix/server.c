@@ -287,6 +287,17 @@ unsigned int CDECL wine_server_call( void *req_ptr )
 
 
 /***********************************************************************
+ *           unixcall_wine_server_call
+ *
+ * Perform a server call.
+ */
+NTSTATUS unixcall_wine_server_call( void *args )
+{
+    return wine_server_call( args );
+}
+
+
+/***********************************************************************
  *           server_enter_uninterrupted_section
  */
 void server_enter_uninterrupted_section( pthread_mutex_t *mutex, sigset_t *sigset )
@@ -1764,3 +1775,42 @@ NTSTATUS WINAPI NtClose( HANDLE handle )
     }
     return ret;
 }
+
+#ifdef _WIN64
+
+struct __server_request_info32
+{
+    union
+    {
+        union generic_request req;
+        union generic_reply   reply;
+    } u;
+    unsigned int            data_count;
+    ULONG                   reply_data;
+    struct { ULONG ptr; data_size_t size; } data[__SERVER_MAX_DATA];
+};
+
+/**********************************************************************
+ *		wow64_wine_server_call
+ */
+NTSTATUS wow64_wine_server_call( void *args )
+{
+    struct __server_request_info32 *req32 = args;
+    unsigned int i;
+    NTSTATUS status;
+    struct __server_request_info req;
+
+    req.u.req = req32->u.req;
+    req.data_count = req32->data_count;
+    for (i = 0; i < req.data_count; i++)
+    {
+        req.data[i].ptr = ULongToPtr( req32->data[i].ptr );
+        req.data[i].size = req32->data[i].size;
+    }
+    req.reply_data = ULongToPtr( req32->reply_data );
+    status = wine_server_call( &req );
+    req32->u.reply = req.u.reply;
+    return status;
+}
+
+#endif /* _WIN64 */

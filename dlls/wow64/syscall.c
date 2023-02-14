@@ -542,31 +542,6 @@ NTSTATUS WINAPI wow64_NtSetDefaultUILanguage( UINT *args )
 
 
 /**********************************************************************
- *           wow64_wine_server_call
- */
-NTSTATUS WINAPI wow64_wine_server_call( UINT *args )
-{
-    struct __server_request_info32 *req32 = get_ptr( &args );
-
-    unsigned int i;
-    NTSTATUS status;
-    struct __server_request_info req;
-
-    req.u.req = req32->u.req;
-    req.data_count = req32->data_count;
-    for (i = 0; i < req.data_count; i++)
-    {
-        req.data[i].ptr = ULongToPtr( req32->data[i].ptr );
-        req.data[i].size = req32->data[i].size;
-    }
-    req.reply_data = ULongToPtr( req32->reply_data );
-    status = wine_server_call( &req );
-    req32->u.reply = req.u.reply;
-    return status;
-}
-
-
-/**********************************************************************
  *           get_syscall_num
  */
 static DWORD get_syscall_num( const BYTE *syscall )

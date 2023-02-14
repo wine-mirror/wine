@@ -284,9 +284,11 @@ extern void add_completion( HANDLE handle, ULONG_PTR value, NTSTATUS status, ULO
 extern void set_async_direct_result( HANDLE *async_handle, NTSTATUS status, ULONG_PTR information, BOOL mark_pending ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS unixcall_wine_dbg_write( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS unixcall_wine_server_call( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS unixcall_wine_spawnvp( void *args ) DECLSPEC_HIDDEN;
 #ifdef _WIN64
 extern NTSTATUS wow64_wine_dbg_write( void *args ) DECLSPEC_HIDDEN;
+extern NTSTATUS wow64_wine_server_call( void *args ) DECLSPEC_HIDDEN;
 extern NTSTATUS wow64_wine_spawnvp( void *args ) DECLSPEC_HIDDEN;
 #endif
 

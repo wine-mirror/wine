@@ -258,7 +258,6 @@
     SYSCALL_ENTRY( NtWriteVirtualMemory ) \
     SYSCALL_ENTRY( NtYieldExecution ) \
     SYSCALL_ENTRY( wine_nt_to_unix_file_name ) \
-    SYSCALL_ENTRY( wine_server_call ) \
     SYSCALL_ENTRY( wine_server_fd_to_handle ) \
     SYSCALL_ENTRY( wine_server_handle_to_fd ) \
     SYSCALL_ENTRY( wine_unix_to_nt_file_name )

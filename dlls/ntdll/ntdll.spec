@@ -1688,7 +1688,7 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 
 # Server interface
-@ cdecl -syscall -norelay wine_server_call(ptr)
+@ cdecl -norelay wine_server_call(ptr)
 @ cdecl -syscall wine_server_fd_to_handle(long long long ptr)
 @ cdecl -syscall wine_server_handle_to_fd(long long ptr ptr)
 

@@ -3210,6 +3210,15 @@ NTSTATUS WINAPI __wine_unix_spawnvp( char * const argv[], int wait )
 }
 
 
+/***********************************************************************
+ *           wine_server_call
+ */
+unsigned int CDECL wine_server_call( void *req_ptr )
+{
+    return WINE_UNIX_CALL( unix_wine_server_call, req_ptr );
+}
+
+
 /******************************************************************
  *		LdrLoadDll (NTDLL.@)
  */
