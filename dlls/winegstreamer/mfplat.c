@@ -670,7 +670,7 @@ static void mf_media_type_to_wg_format_audio_mpeg4(IMFMediaType *type, const GUI
     format->major_type = WG_MAJOR_TYPE_AUDIO_MPEG4;
 
     if (FAILED(IMFMediaType_GetUINT32(type, &MF_MT_AAC_PAYLOAD_TYPE, &format->u.audio_mpeg4.payload_type)))
-        format->u.audio_mpeg4.payload_type = -1;
+        format->u.audio_mpeg4.payload_type = 0;
 
     format->u.audio_mpeg4.codec_data_len = codec_data_size;
 }
