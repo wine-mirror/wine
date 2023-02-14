@@ -357,7 +357,6 @@ static void * const syscalls[] =
     NtWriteFileGather,
     NtWriteVirtualMemory,
     NtYieldExecution,
-    __wine_dbg_write,
     __wine_unix_spawnvp,
     wine_nt_to_unix_file_name,
     wine_server_call,
@@ -2061,6 +2060,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     load_so_dll,
     unwind_builtin_dll,
+    unixcall_wine_dbg_write,
     system_time_precise,
 };
 
@@ -2077,6 +2077,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     wow64_load_so_dll,
     wow64_unwind_builtin_dll,
+    wow64_wine_dbg_write,
     system_time_precise,
 };
 

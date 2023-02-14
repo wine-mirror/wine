@@ -158,6 +158,16 @@ int __cdecl __wine_dbg_header( enum __wine_debug_class cls, struct __wine_debug_
 }
 
 /***********************************************************************
+ *		__wine_dbg_write  (NTDLL.@)
+ */
+int WINAPI __wine_dbg_write( const char *str, unsigned int len )
+{
+    struct wine_dbg_write_params params = { str, len };
+
+    return WINE_UNIX_CALL( unix_wine_dbg_write, &params );
+}
+
+/***********************************************************************
  *		__wine_dbg_output  (NTDLL.@)
  */
 int __cdecl __wine_dbg_output( const char *str )

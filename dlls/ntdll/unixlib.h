@@ -25,6 +25,12 @@
 
 struct _DISPATCHER_CONTEXT;
 
+struct wine_dbg_write_params
+{
+    const char  *str;
+    unsigned int len;
+};
+
 struct load_so_dll_params
 {
     UNICODE_STRING              nt_name;
@@ -42,6 +48,7 @@ enum ntdll_unix_funcs
 {
     unix_load_so_dll,
     unix_unwind_builtin_dll,
+    unix_wine_dbg_write,
     unix_system_time_precise,
 };
 
