@@ -31,6 +31,14 @@ struct wine_dbg_write_params
     unsigned int len;
 };
 
+struct wine_server_fd_to_handle_params
+{
+    int          fd;
+    unsigned int access;
+    unsigned int attributes;
+    HANDLE      *handle;
+};
+
 struct wine_spawnvp_params
 {
     char       **argv;
@@ -56,6 +64,7 @@ enum ntdll_unix_funcs
     unix_unwind_builtin_dll,
     unix_wine_dbg_write,
     unix_wine_server_call,
+    unix_wine_server_fd_to_handle,
     unix_wine_spawnvp,
     unix_system_time_precise,
 };

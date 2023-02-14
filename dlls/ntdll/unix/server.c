@@ -1103,6 +1103,17 @@ NTSTATUS CDECL wine_server_fd_to_handle( int fd, unsigned int access, unsigned i
 
 
 /***********************************************************************
+ *           unixcall_wine_server_fd_to_handle
+ */
+NTSTATUS unixcall_wine_server_fd_to_handle( void *args )
+{
+    struct wine_server_fd_to_handle_params *params = args;
+
+    return wine_server_fd_to_handle( params->fd, params->access, params->attributes, params->handle );
+}
+
+
+/***********************************************************************
  *           wine_server_handle_to_fd
  *
  * Retrieve the file descriptor corresponding to a file handle.
@@ -1811,6 +1822,28 @@ NTSTATUS wow64_wine_server_call( void *args )
     status = wine_server_call( &req );
     req32->u.reply = req.u.reply;
     return status;
+}
+
+/***********************************************************************
+ *		wow64_wine_server_fd_to_handle
+ */
+NTSTATUS wow64_wine_server_fd_to_handle( void *args )
+{
+    struct
+    {
+        int          fd;
+        unsigned int access;
+        unsigned int attributes;
+        ULONG        handle;
+    } const *params32 = args;
+
+    ULONG *handle32 = ULongToPtr( params32->handle );
+    HANDLE handle;
+    NTSTATUS ret;
+
+    ret = wine_server_fd_to_handle( params32->fd, params32->access, params32->attributes, &handle );
+    *handle32 = HandleToULong( handle );
+    return ret;
 }
 
 #endif /* _WIN64 */

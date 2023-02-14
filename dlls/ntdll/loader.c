@@ -3219,6 +3219,18 @@ unsigned int CDECL wine_server_call( void *req_ptr )
 }
 
 
+/***********************************************************************
+ *           wine_server_fd_to_handle
+ */
+NTSTATUS CDECL wine_server_fd_to_handle( int fd, unsigned int access, unsigned int attributes,
+                                         HANDLE *handle )
+{
+    struct wine_server_fd_to_handle_params params = { fd, access, attributes, handle };
+
+    return WINE_UNIX_CALL( unix_wine_server_fd_to_handle, &params );
+}
+
+
 /******************************************************************
  *		LdrLoadDll (NTDLL.@)
  */
