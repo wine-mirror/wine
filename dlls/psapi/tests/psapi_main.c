@@ -181,7 +181,6 @@ static void test_EnumProcessModules(void)
             {
                 ret = GetModuleBaseNameA(pi.hProcess, hmods[2], name, sizeof(name));
                 ok(ret, "got error %lu\n", GetLastError());
-                todo_wine
                 ok(strstr(CharLowerA(name), "wow64") != NULL, "third DLL in wow64 should be one of wow*.dll (%s)\n", name);
             }
             TerminateProcess(pi.hProcess, 0);
@@ -207,7 +206,6 @@ static void test_EnumProcessModules(void)
         SetLastError(0xdeadbeef);
         ret = EnumProcessModules(pi.hProcess, &hMod, sizeof(HMODULE), &cbNeeded);
         ok(!ret, "got %ld\n", ret);
-        todo_wine
         ok(GetLastError() == ERROR_PARTIAL_COPY, "got error %lu\n", GetLastError());
 
         TerminateProcess(pi.hProcess, 0);

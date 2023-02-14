@@ -949,71 +949,7 @@ BOOL WINAPI /* DECLSPEC_HOTPATCH */ EnumPageFilesW( PENUM_PAGE_FILE_CALLBACKW ca
 BOOL WINAPI DECLSPEC_HOTPATCH EnumProcessModules( HANDLE process, HMODULE *module,
                                                   DWORD count, DWORD *needed )
 {
-    struct module_iterator iter;
-    DWORD size = 0;
-    BOOL target_wow64;
-    INT ret;
-
-    if (process == GetCurrentProcess())
-    {
-        PPEB_LDR_DATA ldr_data = NtCurrentTeb()->Peb->LdrData;
-        PLIST_ENTRY head = &ldr_data->InLoadOrderModuleList;
-        PLIST_ENTRY entry = head->Flink;
-
-        if (count && !module)
-        {
-            SetLastError( ERROR_NOACCESS );
-            return FALSE;
-        }
-        while (entry != head)
-        {
-            LDR_DATA_TABLE_ENTRY *ldr = CONTAINING_RECORD( entry, LDR_DATA_TABLE_ENTRY, InLoadOrderLinks );
-            if (count >= sizeof(HMODULE))
-            {
-                *module++ = ldr->DllBase;
-                count -= sizeof(HMODULE);
-            }
-            size += sizeof(HMODULE);
-            entry = entry->Flink;
-        }
-        if (!needed)
-        {
-            SetLastError( ERROR_NOACCESS );
-            return FALSE;
-        }
-        *needed = size;
-        return TRUE;
-    }
-
-    if (!IsWow64Process( process, &target_wow64 )) return FALSE;
-    if (!init_module_iterator( &iter, process, is_win64 && target_wow64 )) return FALSE;
-
-    if (count && !module)
-    {
-        SetLastError( ERROR_NOACCESS );
-        return FALSE;
-    }
-
-    while ((ret = module_iterator_next( &iter )) > 0)
-    {
-        if (count >= sizeof(HMODULE))
-        {
-            if (sizeof(void *) == 8 && iter.wow64)
-                *module++ = (HMODULE) (DWORD_PTR)iter.ldr_module32.BaseAddress;
-            else
-                *module++ = iter.ldr_module.DllBase;
-            count -= sizeof(HMODULE);
-        }
-        size += sizeof(HMODULE);
-    }
-
-    if (!needed)
-    {
-        SetLastError( ERROR_NOACCESS );
-        return FALSE;
-    }
-    *needed = size;
-    return ret == 0;
+    return EnumProcessModulesEx( process, module, count, needed, LIST_MODULES_DEFAULT );
 }
 
 
