@@ -3177,7 +3177,6 @@ static void test_ToAscii(void)
     const BYTE HIGHEST_BIT = 0x80;
     int ret, len;
     DWORD gle;
-    BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
 
     memset(state, 0, sizeof(state));
 
@@ -3202,7 +3201,16 @@ static void test_ToAscii(void)
     else
         /* ToAscii() can only return 2 chars => it fails if len > 2 */
         ok(ret == 0, "ToAscii(A) returned %i, expected 0\n", ret);
-    if (us_kbd) ok(character == 'a', "ToAscii for character 'A' was %i (expected %i)\n", character, 'a');
+    switch ((ULONG_PTR)GetKeyboardLayout(0))
+    {
+    case 0x04090409: /* Qwerty */
+    case 0x04070407: /* Qwertz */
+    case 0x040c040c: /* Azerty */
+        ok(lstrcmpW(wstr, L"a") == 0, "ToUnicode(A) returned %s\n", wine_dbgstr_w(wstr));
+        ok(character == 'a', "ToAscii(A) returned char=%i, expected %i\n", character, 'a');
+        break;
+    /* Other keyboard layouts may or may not return 'a' */
+    }
 
     state[VK_CONTROL] |= HIGHEST_BIT;
     state[VK_LCONTROL] |= HIGHEST_BIT;
