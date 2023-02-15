@@ -23,6 +23,7 @@
 #include <winbase.h>
 #include <winerror.h>
 #include <wincrypt.h>
+#include <winnls.h>
 
 #include "wine/test.h"
 
@@ -1079,8 +1080,155 @@ static void test_CertGetNameString(void)
     CertFreeCertificateContext(context);
 }
 
+static void test_quoted_RDN(void)
+{
+    static const WCHAR str1[] = { '1',0x00a0,0 };
+    static const WCHAR str2[] = { '1',0x3000,0 };
+    static const struct
+    {
+        const WCHAR *CN;
+        const WCHAR *X500_CN;
+    } test[] =
+    {
+        { L"1", L"1" },
+        { L" 1", L"\" 1\"" },
+        { L"1 ", L"\"1 \"" },
+        { L"\"1\"", L"\"\"\"1\"\"\"" },
+        { L"\" 1 \"", L"\"\"\" 1 \"\"\"" },
+        { L"\"\"\"1\"\"\"", L"\"\"\"\"\"\"\"1\"\"\"\"\"\"\"" },
+        { L"1+", L"\"1+\"" },
+        { L"1=", L"\"1=\"" },
+        { L"1\"", L"\"1\"\"\"" },
+        { L"1<", L"\"1<\"" },
+        { L"1>", L"\"1>\"" },
+        { L"1#", L"\"1#\"" },
+        { L"1+", L"\"1+\"" },
+        { L"1\t", L"\"1\t\"" },
+        { L"1\r", L"\"1\r\"" },
+        { L"1\n", L"\"1\n\"" },
+        { str1, str1 },
+        { str2, str2 },
+    };
+    CERT_RDN_ATTR attr;
+    CERT_RDN rdn;
+    CERT_NAME_INFO info;
+    CERT_NAME_BLOB blob;
+    BYTE *buf;
+    WCHAR str[256];
+    DWORD size, ret, i;
+
+    for (i = 0; i < ARRAY_SIZE(test); i++)
+    {
+        winetest_push_context("%lu", i);
+
+        attr.pszObjId = (LPSTR)szOID_COMMON_NAME;
+        attr.dwValueType = CERT_RDN_UNICODE_STRING;
+        attr.Value.cbData = wcslen(test[i].CN) * sizeof(WCHAR);
+        attr.Value.pbData = (BYTE *)test[i].CN;
+        rdn.cRDNAttr = 1;
+        rdn.rgRDNAttr = &attr;
+        info.cRDN = 1;
+        info.rgRDN = &rdn;
+        buf = NULL;
+        size = 0;
+        ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_UNICODE_NAME, &info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+        ok(ret, "CryptEncodeObjectEx error %08lx\n", GetLastError());
+
+        blob.pbData = buf;
+        blob.cbData = size;
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, 0, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcscmp(str, test[i].X500_CN), "got %s, expected %s\n", debugstr_w(str), debugstr_w(test[i].X500_CN));
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_SIMPLE_NAME_STR, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcscmp(str, test[i].X500_CN), "got %s, expected %s\n", debugstr_w(str), debugstr_w(test[i].X500_CN));
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_OID_NAME_STR, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcsncmp(str, L"2.5.4.3=", 8), "got %s\n", debugstr_w(str));
+        ok(!wcscmp(&str[8], test[i].X500_CN), "got %s, expected %s\n", debugstr_w(&str[8]), debugstr_w(test[i].X500_CN));
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_X500_NAME_STR, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcsncmp(str, L"CN=", 3), "got %s\n", debugstr_w(str));
+        ok(!wcscmp(&str[3], test[i].X500_CN), "got %s, expected %s\n", debugstr_w(&str[3]), debugstr_w(test[i].X500_CN));
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_X500_NAME_STR | CERT_NAME_STR_NO_QUOTING_FLAG, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcsncmp(str, L"CN=", 3), "got %s\n", debugstr_w(str));
+        todo_wine_if(i != 0 && i != 13 && i != 14)
+        ok(!wcscmp(&str[3], test[i].CN), "got %s, expected %s\n", debugstr_w(&str[3]), debugstr_w(test[i].CN));
+
+        LocalFree(buf);
+
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test); i++)
+    {
+        winetest_push_context("%lu", i);
+
+        attr.pszObjId = (LPSTR)szOID_COMMON_NAME;
+        attr.dwValueType = CERT_RDN_UTF8_STRING;
+        attr.Value.cbData = wcslen(test[i].CN) * sizeof(WCHAR);
+        attr.Value.pbData = (BYTE *)test[i].CN;
+        rdn.cRDNAttr = 1;
+        rdn.rgRDNAttr = &attr;
+        info.cRDN = 1;
+        info.rgRDN = &rdn;
+        buf = NULL;
+        size = 0;
+        ret = CryptEncodeObjectEx(X509_ASN_ENCODING, X509_UNICODE_NAME, &info, CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
+        ok(ret, "CryptEncodeObjectEx error %08lx\n", GetLastError());
+
+        blob.pbData = buf;
+        blob.cbData = size;
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, 0, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcscmp(str, test[i].X500_CN), "got %s, expected %s\n", debugstr_w(str), debugstr_w(test[i].X500_CN));
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_SIMPLE_NAME_STR, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcscmp(str, test[i].X500_CN), "got %s, expected %s\n", debugstr_w(str), debugstr_w(test[i].X500_CN));
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_OID_NAME_STR, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcsncmp(str, L"2.5.4.3=", 8), "got %s\n", debugstr_w(str));
+        ok(!wcscmp(&str[8], test[i].X500_CN), "got %s, expected %s\n", debugstr_w(&str[8]), debugstr_w(test[i].X500_CN));
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_X500_NAME_STR, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcsncmp(str, L"CN=", 3), "got %s\n", debugstr_w(str));
+        ok(!wcscmp(&str[3], test[i].X500_CN), "got %s, expected %s\n", debugstr_w(&str[3]), debugstr_w(test[i].X500_CN));
+
+        str[0] = 0;
+        ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_X500_NAME_STR | CERT_NAME_STR_NO_QUOTING_FLAG, str, ARRAY_SIZE(str));
+        ok(ret, "CertNameToStr error %08lx\n", GetLastError());
+        ok(!wcsncmp(str, L"CN=", 3), "got %s\n", debugstr_w(str));
+        todo_wine_if(i != 0 && i != 13 && i != 14)
+        ok(!wcscmp(&str[3], test[i].CN), "got %s, expected %s\n", debugstr_w(&str[3]), debugstr_w(test[i].CN));
+
+        LocalFree(buf);
+
+        winetest_pop_context();
+    }
+}
+
 START_TEST(str)
 {
+    test_quoted_RDN();
     test_CertRDNValueToStrA();
     test_CertRDNValueToStrW();
     test_CertNameToStrA();
