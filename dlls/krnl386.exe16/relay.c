@@ -85,27 +85,23 @@ static const char **build_list( const WCHAR *buffer )
 void RELAY16_InitDebugLists(void)
 {
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING name;
     char buffer[1024];
     HANDLE root, hkey;
     DWORD count;
     WCHAR *str;
-    static const WCHAR configW[] = {'S','o','f','t','w','a','r','e','\\',
-                                    'W','i','n','e','\\',
-                                    'D','e','b','u','g',0};
-    static const WCHAR RelayIncludeW[] = {'R','e','l','a','y','I','n','c','l','u','d','e',0};
-    static const WCHAR RelayExcludeW[] = {'R','e','l','a','y','E','x','c','l','u','d','e',0};
-    static const WCHAR SnoopIncludeW[] = {'S','n','o','o','p','I','n','c','l','u','d','e',0};
-    static const WCHAR SnoopExcludeW[] = {'S','n','o','o','p','E','x','c','l','u','d','e',0};
+    UNICODE_STRING config = RTL_CONSTANT_STRING( L"Software\\Wine\\Debug" );
+    UNICODE_STRING relay_include = RTL_CONSTANT_STRING( L"RelayInclude" );
+    UNICODE_STRING relay_exclude = RTL_CONSTANT_STRING( L"RelayExclude" );
+    UNICODE_STRING snoop_include = RTL_CONSTANT_STRING( L"SnoopInclude" );
+    UNICODE_STRING snoop_exclude = RTL_CONSTANT_STRING( L"SnoopExclude" );
 
     RtlOpenCurrentUser( KEY_READ, &root );
     attr.Length = sizeof(attr);
     attr.RootDirectory = root;
-    attr.ObjectName = &name;
+    attr.ObjectName = &config;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &name, configW );
 
     /* @@ Wine registry key: HKCU\Software\Wine\Debug */
     if (NtOpenKey( &hkey, KEY_READ, &attr )) hkey = 0;
@@ -113,26 +109,22 @@ void RELAY16_InitDebugLists(void)
     if (!hkey) return;
 
     str = (WCHAR *)((KEY_VALUE_PARTIAL_INFORMATION *)buffer)->Data;
-    RtlInitUnicodeString( &name, RelayIncludeW );
-    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    if (!NtQueryValueKey( hkey, &relay_include, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
     {
         debug_relay_includelist = build_list( str );
     }
 
-    RtlInitUnicodeString( &name, RelayExcludeW );
-    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    if (!NtQueryValueKey( hkey, &relay_exclude, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
     {
         debug_relay_excludelist = build_list( str );
     }
 
-    RtlInitUnicodeString( &name, SnoopIncludeW );
-    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    if (!NtQueryValueKey( hkey, &snoop_include, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
     {
         debug_snoop_includelist = build_list( str );
     }
 
-    RtlInitUnicodeString( &name, SnoopExcludeW );
-    if (!NtQueryValueKey( hkey, &name, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
+    if (!NtQueryValueKey( hkey, &snoop_exclude, KeyValuePartialInformation, buffer, sizeof(buffer), &count ))
     {
         debug_snoop_excludelist = build_list( str );
     }
