@@ -473,7 +473,7 @@ static int parse_next_token(void *lval, unsigned *loc, parser_ctx_t *ctx)
     case '#':
         return parse_date_literal(ctx, lval);
     case '&':
-        if(*++ctx->ptr == 'h' || *ctx->ptr == 'H')
+        if((*++ctx->ptr == 'h' || *ctx->ptr == 'H') && hex_to_int(ctx->ptr[1]) != -1)
             return parse_hex_literal(ctx, lval);
         return '&';
     case '=':
