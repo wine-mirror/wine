@@ -2598,14 +2598,14 @@ static WCHAR *field_format_detailed_cert_name(PCERT_NAME_BLOB name)
 {
     WCHAR *str = NULL;
     DWORD len = CertNameToStrW(X509_ASN_ENCODING, name,
-     CERT_X500_NAME_STR | CERT_NAME_STR_CRLF_FLAG, NULL, 0);
+     CERT_X500_NAME_STR | CERT_NAME_STR_CRLF_FLAG | CERT_NAME_STR_NO_QUOTING_FLAG, NULL, 0);
 
     if (len)
     {
         str = malloc(len * sizeof(WCHAR));
         if (str)
             CertNameToStrW(X509_ASN_ENCODING, name,
-             CERT_X500_NAME_STR | CERT_NAME_STR_CRLF_FLAG, str, len);
+             CERT_X500_NAME_STR | CERT_NAME_STR_CRLF_FLAG | CERT_NAME_STR_NO_QUOTING_FLAG, str, len);
     }
     return str;
 }
