@@ -720,8 +720,6 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
         'C','o','n','t','r','o','l','\\',
         'D','e','v','i','c','e','C','l','a','s','s','e','s','\\',0};
-    static const WCHAR controlW[] = {'C','o','n','t','r','o','l',0};
-    static const WCHAR linkedW[] = {'L','i','n','k','e','d',0};
     static const WCHAR slashW[] = {'\\',0};
     static const WCHAR hashW[] = {'#',0};
 
@@ -732,6 +730,8 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
     HANDLE iface_key, control_key;
     OBJECT_ATTRIBUTES attr = {0};
     struct wine_rb_entry *entry;
+    UNICODE_STRING control = RTL_CONSTANT_STRING( L"Control" );
+    UNICODE_STRING linked = RTL_CONSTANT_STRING( L"Linked" );
     UNICODE_STRING string;
     DWORD data = enable;
     NTSTATUS ret;
@@ -780,14 +780,14 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         return ret;
 
     attr.RootDirectory = iface_key;
-    RtlInitUnicodeString( &string, controlW );
+    attr.ObjectName = &control;
     ret = NtCreateKey( &control_key, KEY_SET_VALUE, &attr, 0, NULL, REG_OPTION_VOLATILE, NULL );
     NtClose( iface_key );
     if (ret)
         return ret;
 
-    RtlInitUnicodeString( &string, linkedW );
-    ret = NtSetValueKey( control_key, &string, 0, REG_DWORD, &data, sizeof(data) );
+    attr.ObjectName = &linked;
+    ret = NtSetValueKey( control_key, &linked, 0, REG_DWORD, &data, sizeof(data) );
     if (ret)
     {
         NtClose( control_key );
@@ -800,7 +800,7 @@ NTSTATUS WINAPI IoSetDeviceInterfaceState( UNICODE_STRING *name, BOOLEAN enable 
         ret = IoDeleteSymbolicLink( name );
     if (ret)
     {
-        NtDeleteValueKey( control_key, &string );
+        NtDeleteValueKey( control_key, &linked );
         NtClose( control_key );
         return ret;
     }
@@ -1141,15 +1141,13 @@ static DWORD CALLBACK device_enum_thread_proc(void *arg)
 
 void pnp_manager_start(void)
 {
-    static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r','\\','P','n','p','M','a','n','a','g','e','r',0};
     WCHAR endpoint[] = L"\\pipe\\wine_plugplay";
     WCHAR protseq[] = L"ncacn_np";
-    UNICODE_STRING driver_nameU;
+    UNICODE_STRING driver_nameU = RTL_CONSTANT_STRING( L"\\Driver\\PnpManager" );
     RPC_WSTR binding_str;
     NTSTATUS status;
     RPC_STATUS err;
 
-    RtlInitUnicodeString( &driver_nameU, driver_nameW );
     if ((status = IoCreateDriver( &driver_nameU, pnp_manager_driver_entry )))
         ERR("Failed to create PnP manager driver, status %#lx.\n", status);
 
