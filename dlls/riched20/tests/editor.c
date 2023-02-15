@@ -5784,6 +5784,7 @@ static void test_EM_FORMATRANGE(void)
     SIZE stringsize;
     int len;
 
+    winetest_push_context("%d", i);
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)fmtstrings[i].string);
 
     gtl.flags = GTL_NUMCHARS | GTL_PRECISE;
@@ -5840,6 +5841,7 @@ static void test_EM_FORMATRANGE(void)
     todo_wine {
     ok(r == len, "Expected %d, got %d\n", len, r);
     }
+    winetest_pop_context();
   }
 
   ReleaseDC(NULL, hdc);
