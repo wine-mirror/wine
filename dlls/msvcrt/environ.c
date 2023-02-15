@@ -26,18 +26,21 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
 /*********************************************************************
- *		getenv (MSVCRT.@)
+ *              getenv (MSVCRT.@)
  */
 char * CDECL getenv(const char *name)
 {
     char **env;
-    unsigned int length=strlen(name);
+    size_t len;
+
+    if (!MSVCRT_CHECK_PMT(name != NULL)) return NULL;
+    len = strlen(name);
 
     for (env = MSVCRT__environ; *env; env++)
     {
         char *str = *env;
         char *pos = strchr(str,'=');
-        if (pos && ((pos - str) == length) && !_strnicmp(str,name,length))
+        if (pos && ((pos - str) == len) && !_strnicmp(str, name, len))
         {
             TRACE("(%s): got %s\n", debugstr_a(name), debugstr_a(pos + 1));
             return pos + 1;
