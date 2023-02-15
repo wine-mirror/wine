@@ -27,6 +27,12 @@
 # define __ASM_NAME(name) name
 #endif
 
+#if defined(__APPLE__)
+# define __ASM_LOCAL_LABEL(label) "L" label
+#else
+# define __ASM_LOCAL_LABEL(label) ".L" label
+#endif
+
 #if defined(__WINE_PE_BUILD) && defined(__i386__)
 # define __ASM_STDCALL(name,args)  "_" name "@" #args
 # define __ASM_FASTCALL(name,args) "@" name "@" #args
