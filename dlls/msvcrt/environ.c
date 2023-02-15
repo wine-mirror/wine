@@ -56,15 +56,12 @@ char * CDECL getenv(const char *name)
     return getenv_helper(name);
 }
 
-/*********************************************************************
- *              _wgetenv (MSVCRT.@)
- */
-wchar_t * CDECL _wgetenv(const wchar_t *name)
+static wchar_t * wgetenv_helper(const wchar_t *name)
 {
     wchar_t **env;
     size_t len;
 
-    if (!MSVCRT_CHECK_PMT(name != NULL)) return NULL;
+    if (!name) return NULL;
     len = wcslen(name);
 
     /* Initialize the _wenviron array if it's not already created. */
@@ -82,6 +79,16 @@ wchar_t * CDECL _wgetenv(const wchar_t *name)
         }
     }
     return NULL;
+}
+
+/*********************************************************************
+ *              _wgetenv (MSVCRT.@)
+ */
+wchar_t * CDECL _wgetenv(const wchar_t *name)
+{
+    if (!MSVCRT_CHECK_PMT(name != NULL)) return NULL;
+
+    return wgetenv_helper(name);
 }
 
 /*********************************************************************
@@ -306,25 +313,21 @@ int CDECL getenv_s(size_t *ret_len, char* buffer, size_t len, const char *varnam
 /******************************************************************
  *		_wgetenv_s (MSVCRT.@)
  */
-int CDECL _wgetenv_s(size_t *pReturnValue, wchar_t *buffer, size_t numberOfElements,
+int CDECL _wgetenv_s(size_t *ret_len, wchar_t *buffer, size_t len,
                      const wchar_t *varname)
 {
     wchar_t *e;
 
-    if (!MSVCRT_CHECK_PMT(pReturnValue != NULL)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(!(buffer == NULL && numberOfElements > 0))) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(ret_len != NULL)) return EINVAL;
+    *ret_len = 0;
+    if (!MSVCRT_CHECK_PMT((buffer && len > 0) || (!buffer && !len))) return EINVAL;
+    if (buffer) buffer[0] = 0;
 
-    if (!(e = _wgetenv(varname)))
-    {
-        *pReturnValue = 0;
-        return *_errno() = EINVAL;
-    }
-    *pReturnValue = wcslen(e) + 1;
-    if (numberOfElements < *pReturnValue)
-    {
-        return *_errno() = ERANGE;
-    }
+    if (!(e = wgetenv_helper(varname))) return 0;
+    *ret_len = wcslen(e) + 1;
+    if (!len) return 0;
+    if (len < *ret_len) return ERANGE;
+
     wcscpy(buffer, e);
     return 0;
 }
