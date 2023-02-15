@@ -3169,11 +3169,14 @@ static void test_ToUnicode(void)
 
 static void test_ToAscii(void)
 {
+    WCHAR wstr[16];
+    char str[16];
     WORD character;
     BYTE state[256];
     const BYTE SC_RETURN = 0x1c, SC_A = 0x1e;
     const BYTE HIGHEST_BIT = 0x80;
-    int ret;
+    int ret, len;
+    DWORD gle;
     BOOL us_kbd = (GetKeyboardLayout(0) == (HKL)(ULONG_PTR)0x04090409);
 
     memset(state, 0, sizeof(state));
@@ -3183,9 +3186,22 @@ static void test_ToAscii(void)
     ok(ret == 1, "ToAscii for Return key didn't return 1 (was %i)\n", ret);
     ok(character == '\r', "ToAscii for Return was %i (expected 13)\n", character);
 
+    wstr[0] = 0;
+    ret = ToUnicode('A', SC_A, state, wstr, sizeof(wstr), 0);
+    ok(ret == 1, "ToUnicode(A) returned %i, expected 1\n", ret);
+
+    str[0] = '\0';
+    len = WideCharToMultiByte(CP_ACP, 0, wstr, -1, str, sizeof(str), NULL, NULL);
+    gle = GetLastError();
+    ok(len > 0, "Could not convert %s (gle %lu)\n", wine_dbgstr_w(wstr), gle);
+
     character = 0;
     ret = ToAscii('A', SC_A, state, &character, 0);
-    ok(ret == 1, "ToAscii for character 'A' didn't return 1 (was %i)\n", ret);
+    if (len == 1 || len == 2)
+        ok(ret == 1, "ToAscii(A) returned %i, expected 1\n", ret);
+    else
+        /* ToAscii() can only return 2 chars => it fails if len > 2 */
+        ok(ret == 0, "ToAscii(A) returned %i, expected 0\n", ret);
     if (us_kbd) ok(character == 'a', "ToAscii for character 'A' was %i (expected %i)\n", character, 'a');
 
     state[VK_CONTROL] |= HIGHEST_BIT;
