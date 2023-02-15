@@ -50,6 +50,7 @@ static void (__cdecl *p_get_environ)(char ***);
 static void (__cdecl *p_get_wenviron)(WCHAR ***);
 static errno_t (__cdecl *p_putenv_s)(const char*, const char*);
 static errno_t (__cdecl *p_wputenv_s)(const wchar_t*, const wchar_t*);
+static errno_t (__cdecl *p_getenv_s)(size_t*, char*, size_t, const char*);
 
 static char ***p_environ;
 static WCHAR ***p_wenviron;
@@ -66,6 +67,7 @@ static void init(void)
     p_get_wenviron = (void *)GetProcAddress(hmod, "_get_wenviron");
     p_putenv_s = (void *)GetProcAddress(hmod, "_putenv_s");
     p_wputenv_s = (void *)GetProcAddress(hmod, "_wputenv_s");
+    p_getenv_s = (void *)GetProcAddress(hmod, "getenv_s");
 }
 
 static void test_system(void)
@@ -242,11 +244,20 @@ static void test__wenviron(void)
 
 static void test_environment_manipulation(void)
 {
+    char buf[256];
     errno_t ret;
+    size_t len;
 
     ok( _putenv("cat=") == 0, "_putenv failed on deletion of nonexistent environment variable\n" );
     ok( _putenv("cat=dog") == 0, "failed setting cat=dog\n" );
     ok( strcmp(getenv("cat"), "dog") == 0, "getenv did not return 'dog'\n" );
+    if (p_getenv_s)
+    {
+        ret = p_getenv_s(&len, buf, sizeof(buf), "cat");
+        ok( !ret, "getenv_s returned %d\n", ret );
+        ok( len == 4, "getenv_s returned length is %Id\n", len);
+        ok( !strcmp(buf, "dog"), "getenv_s did not return 'dog'\n");
+    }
     ok( _putenv("cat=") == 0, "failed deleting cat\n" );
 
     ok( _putenv("=") == -1, "should not accept '=' as input\n" );
@@ -281,6 +292,27 @@ static void test_environment_manipulation(void)
         ok( !ret, "_wputenv_s returned %d\n", ret);
         ret = p_wputenv_s(L"cat", L"");
         ok( !ret, "_wputenv_s returned %d\n", ret);
+    }
+
+    if (p_getenv_s)
+    {
+        buf[0] = 'x';
+        len = 1;
+        errno = 0xdeadbeef;
+        ret = p_getenv_s(&len, buf, sizeof(buf), "nonexistent");
+        ok( !ret, "_getenv_s returned %d\n", ret);
+        ok( !len, "getenv_s returned length is %Id\n", len);
+        ok( !buf[0], "buf = %s\n", buf);
+        ok( errno == 0xdeadbeef, "errno = %d\n", errno);
+
+        buf[0] = 'x';
+        len = 1;
+        errno = 0xdeadbeef;
+        ret = p_getenv_s(&len, buf, sizeof(buf), NULL);
+        ok( !ret, "_getenv_s returned %d\n", ret);
+        ok( !len, "getenv_s returned length is %Id\n", len);
+        ok( !buf[0], "buf = %s\n", buf);
+        ok( errno == 0xdeadbeef, "errno = %d\n", errno);
     }
 }
 
