@@ -18,7 +18,7 @@
 
 OPTION EXPLICIT  : : DIM W
 
-dim x, y, z, e
+dim x, y, z, e, hi
 Dim obj
 
 call ok(true, "true is not true?")
@@ -61,6 +61,11 @@ Call ok(&hffff& = 65535, "&hffff& <> -1")
 Call ok(&hfffe& = 65534, "&hfffe& <> -2")
 Call ok(&hffffffff& = -1, "&hffffffff& <> -1")
 Call ok((&h01or&h02)=3,"&h01or&h02 <> 3")
+
+' Test concat when no space and var begins with h
+hi = "y"
+x = "x" &hi
+Call ok(x = "xy", "x = " & x & " expected ""xy""")
 
 W = 5
 Call ok(W = 5, "W = " & W & " expected " & 5)
