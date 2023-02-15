@@ -50,12 +50,15 @@ char * CDECL getenv(const char *name)
 }
 
 /*********************************************************************
- *		_wgetenv (MSVCRT.@)
+ *              _wgetenv (MSVCRT.@)
  */
 wchar_t * CDECL _wgetenv(const wchar_t *name)
 {
     wchar_t **env;
-    unsigned int length=wcslen(name);
+    size_t len;
+
+    if (!MSVCRT_CHECK_PMT(name != NULL)) return NULL;
+    len = wcslen(name);
 
     /* Initialize the _wenviron array if it's not already created. */
     if (!MSVCRT__wenviron)
@@ -65,7 +68,7 @@ wchar_t * CDECL _wgetenv(const wchar_t *name)
     {
         wchar_t *str = *env;
         wchar_t *pos = wcschr(str,'=');
-        if (pos && ((pos - str) == length) && !_wcsnicmp(str,name,length))
+        if (pos && ((pos - str) == len) && !_wcsnicmp(str, name, len))
         {
             TRACE("(%s): got %s\n", debugstr_w(name), debugstr_w(pos + 1));
             return pos + 1;
