@@ -25,15 +25,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
-/*********************************************************************
- *              getenv (MSVCRT.@)
- */
-char * CDECL getenv(const char *name)
+static char * getenv_helper(const char *name)
 {
     char **env;
     size_t len;
 
-    if (!MSVCRT_CHECK_PMT(name != NULL)) return NULL;
+    if (!name) return NULL;
     len = strlen(name);
 
     for (env = MSVCRT__environ; *env; env++)
@@ -47,6 +44,16 @@ char * CDECL getenv(const char *name)
         }
     }
     return NULL;
+}
+
+/*********************************************************************
+ *              getenv (MSVCRT.@)
+ */
+char * CDECL getenv(const char *name)
+{
+    if (!MSVCRT_CHECK_PMT(name != NULL)) return NULL;
+
+    return getenv_helper(name);
 }
 
 /*********************************************************************
@@ -278,24 +285,20 @@ int CDECL _wdupenv_s(wchar_t **buffer, size_t *numberOfElements,
 /******************************************************************
  *		getenv_s (MSVCRT.@)
  */
-int CDECL getenv_s(size_t *pReturnValue, char* buffer, size_t numberOfElements, const char *varname)
+int CDECL getenv_s(size_t *ret_len, char* buffer, size_t len, const char *varname)
 {
     char *e;
 
-    if (!MSVCRT_CHECK_PMT(pReturnValue != NULL)) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(!(buffer == NULL && numberOfElements > 0))) return EINVAL;
-    if (!MSVCRT_CHECK_PMT(varname != NULL)) return EINVAL;
+    if (!MSVCRT_CHECK_PMT(ret_len != NULL)) return EINVAL;
+    *ret_len = 0;
+    if (!MSVCRT_CHECK_PMT((buffer && len > 0) || (!buffer && !len))) return EINVAL;
+    if (buffer) buffer[0] = 0;
 
-    if (!(e = getenv(varname)))
-    {
-        *pReturnValue = 0;
-        return *_errno() = EINVAL;
-    }
-    *pReturnValue = strlen(e) + 1;
-    if (numberOfElements < *pReturnValue)
-    {
-        return *_errno() = ERANGE;
-    }
+    if (!(e = getenv_helper(varname))) return 0;
+    *ret_len = strlen(e) + 1;
+    if (!len) return 0;
+    if (len < *ret_len) return ERANGE;
+
     strcpy(buffer, e);
     return 0;
 }
