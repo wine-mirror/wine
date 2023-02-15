@@ -107,7 +107,7 @@ static BOOL is_wow6432node( const UNICODE_STRING *name )
 static HANDLE open_wow6432node( HANDLE key )
 {
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
+    UNICODE_STRING nameW = RTL_CONSTANT_STRING( L"Wow6432Node" );
     HANDLE ret;
 
     attr.Length = sizeof(attr);
@@ -116,7 +116,6 @@ static HANDLE open_wow6432node( HANDLE key )
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, L"Wow6432Node" );
     if (NtOpenKeyEx( &ret, MAXIMUM_ALLOWED, &attr, 0 )) ret = 0;
     return ret;
 }
@@ -2312,7 +2311,7 @@ LSTATUS WINAPI RegLoadKeyW( HKEY hkey, LPCWSTR subkey, LPCWSTR filename )
  */
 LSTATUS WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
 {
-    UNICODE_STRING subkeyW, filenameW;
+    UNICODE_STRING subkeyW = { 0, 0, NULL }, filenameW = { 0, 0, NULL };
     STRING subkeyA, filenameA;
     NTSTATUS status;
     LONG ret;
@@ -2320,8 +2319,6 @@ LSTATUS WINAPI RegLoadKeyA( HKEY hkey, LPCSTR subkey, LPCSTR filename )
     RtlInitAnsiString(&subkeyA, subkey);
     RtlInitAnsiString(&filenameA, filename);
 
-    RtlInitUnicodeString(&subkeyW, NULL);
-    RtlInitUnicodeString(&filenameW, NULL);
     if (!(status = RtlAnsiStringToUnicodeString(&subkeyW, &subkeyA, TRUE)) &&
         !(status = RtlAnsiStringToUnicodeString(&filenameW, &filenameA, TRUE)))
     {

@@ -398,7 +398,7 @@ static void format_exception_msg( const EXCEPTION_POINTERS *ptr, char *buffer, i
 static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
 {
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
+    UNICODE_STRING nameW = RTL_CONSTANT_STRING( L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" );
     WCHAR *cmdline, *env, *p, *format = NULL;
     HANDLE dbg_key;
     DWORD autostart = TRUE;
@@ -416,7 +416,6 @@ static BOOL start_debugger( EXCEPTION_POINTERS *epointers, HANDLE event )
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\Software\\Microsoft\\Windows NT\\CurrentVersion\\AeDebug" );
 
     if (!NtOpenKey( &dbg_key, KEY_READ, &attr ))
     {

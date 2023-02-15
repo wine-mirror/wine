@@ -148,7 +148,9 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
     static const int info_size = FIELD_OFFSET( KEY_VALUE_PARTIAL_INFORMATION, Data );
 
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW, source_name, dest_name;
+    UNICODE_STRING session_manager = RTL_CONSTANT_STRING( L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Session Manager" );
+    UNICODE_STRING pending_file_rename_operations = RTL_CONSTANT_STRING( L"PendingFileRenameOperations" );
+    UNICODE_STRING source_name, dest_name;
     KEY_VALUE_PARTIAL_INFORMATION *info;
     BOOL rc = FALSE;
     HANDLE key = 0;
@@ -172,11 +174,10 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
-    attr.ObjectName = &nameW;
+    attr.ObjectName = &session_manager;
     attr.Attributes = 0;
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
-    RtlInitUnicodeString( &nameW, L"\\Registry\\Machine\\System\\CurrentControlSet\\Control\\Session Manager" );
 
     if (NtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL ) != STATUS_SUCCESS)
     {
@@ -194,14 +195,12 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
     }
     else len2 = sizeof(WCHAR); /* minimum is the 0 characters for the empty second string */
 
-    RtlInitUnicodeString( &nameW, L"PendingFileRenameOperations" );
-
     /* First we check if the key exists and if so how many bytes it already contains. */
-    if (NtQueryValueKey( key, &nameW, KeyValuePartialInformation,
+    if (NtQueryValueKey( key, &pending_file_rename_operations, KeyValuePartialInformation,
                          NULL, 0, &size ) == STATUS_BUFFER_TOO_SMALL)
     {
         if (!(buffer = HeapAlloc( GetProcessHeap(), 0, size + len1 + len2 + sizeof(WCHAR) ))) goto done;
-        if (NtQueryValueKey( key, &nameW, KeyValuePartialInformation, buffer, size, &size )) goto done;
+        if (NtQueryValueKey( key, &pending_file_rename_operations, KeyValuePartialInformation, buffer, size, &size )) goto done;
         info = (KEY_VALUE_PARTIAL_INFORMATION *)buffer;
         if (info->Type != REG_MULTI_SZ) goto done;
         if (size > sizeof(info)) size -= sizeof(WCHAR);  /* remove terminating null (will be added back later) */
@@ -231,7 +230,7 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
     p = (WCHAR *)(buffer + size);
     *p = 0;
     size += sizeof(WCHAR);
-    rc = !NtSetValueKey( key, &nameW, 0, REG_MULTI_SZ, buffer + info_size, size - info_size );
+    rc = !NtSetValueKey( key, &pending_file_rename_operations, 0, REG_MULTI_SZ, buffer + info_size, size - info_size );
 
  done:
     RtlFreeUnicodeString( &source_name );

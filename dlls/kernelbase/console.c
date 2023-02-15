@@ -205,12 +205,11 @@ static COORD get_console_font_size( HANDLE handle, DWORD index )
 static HANDLE create_console_server( void )
 {
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
-    UNICODE_STRING string;
+    UNICODE_STRING string = RTL_CONSTANT_STRING( L"\\Device\\ConDrv\\Server" );
     IO_STATUS_BLOCK iosb;
     HANDLE handle;
     NTSTATUS status;
 
-    RtlInitUnicodeString( &string, L"\\Device\\ConDrv\\Server" );
     attr.ObjectName = &string;
     attr.Attributes = OBJ_INHERIT;
     status = NtCreateFile( &handle, FILE_WRITE_PROPERTIES | FILE_READ_PROPERTIES | SYNCHRONIZE,
@@ -222,12 +221,11 @@ static HANDLE create_console_server( void )
 static HANDLE create_console_reference( HANDLE root )
 {
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
-    UNICODE_STRING string;
+    UNICODE_STRING string = RTL_CONSTANT_STRING( L"Reference" );
     IO_STATUS_BLOCK iosb;
     HANDLE handle;
     NTSTATUS status;
 
-    RtlInitUnicodeString( &string, L"Reference" );
     attr.RootDirectory = root;
     attr.ObjectName = &string;
     status = NtCreateFile( &handle, FILE_READ_DATA | FILE_WRITE_DATA | FILE_WRITE_PROPERTIES |
@@ -466,7 +464,7 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateConsoleScreenBuffer( DWORD access, DWORD s
 {
     OBJECT_ATTRIBUTES attr = {sizeof(attr)};
     IO_STATUS_BLOCK iosb;
-    UNICODE_STRING name;
+    UNICODE_STRING name = RTL_CONSTANT_STRING( L"\\Device\\ConDrv\\ScreenBuffer" );
     HANDLE handle;
     NTSTATUS status;
 
@@ -478,7 +476,6 @@ HANDLE WINAPI DECLSPEC_HOTPATCH CreateConsoleScreenBuffer( DWORD access, DWORD s
 	return INVALID_HANDLE_VALUE;
     }
 
-    RtlInitUnicodeString( &name, L"\\Device\\ConDrv\\ScreenBuffer" );
     attr.ObjectName = &name;
     attr.SecurityDescriptor = sa ? sa->lpSecurityDescriptor : NULL;
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
