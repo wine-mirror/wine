@@ -95,6 +95,7 @@ struct dinput_device
     HWND                        win;
     enum device_status          status;
     BOOL                        use_raw_input; /* use raw input instead of low-level messages */
+    HHOOK                       cbt_hook;    /* CBT hook to track foreground changes */
 
     LPDIDEVICEOBJECTDATA        data_queue;  /* buffer for 'GetDeviceData'.                 */
     int                         queue_len;   /* valid size of the queue                     */
