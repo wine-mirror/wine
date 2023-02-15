@@ -5856,7 +5856,7 @@ static void test_EM_FORMATRANGE(void)
     else if (! skip_non_english)
       ok (r < len, "Expected < %d, got %d\n", len, r);
 
-    /* There is at least on more page, but we don't care */
+    /* There is at least one more page, but we don't care */
 
     r = SendMessageA(hwndRichEdit, EM_FORMATRANGE, TRUE, 0);
     todo_wine {
