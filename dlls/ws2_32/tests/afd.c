@@ -569,13 +569,7 @@ static void test_poll(void)
 
         ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
         ok(ret == -1, "got %d\n", ret);
-        todo_wine ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-        if (WSAGetLastError() == WSAECONNABORTED)
-        {
-            ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
-            ok(ret == -1, "got %d\n", ret);
-            ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-        }
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
         /* A subsequent poll call returns no events, or times out. However, this
          * can't be reliably tested, as e.g. Linux will fail the connection

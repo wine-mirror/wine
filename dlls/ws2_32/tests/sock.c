@@ -4352,13 +4352,7 @@ static void test_select(void)
 
         ret = connect(fdWrite, (const struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
         ok(ret == -1, "got %d\n", ret);
-        todo_wine ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-        if (WSAGetLastError() == WSAECONNABORTED)
-        {
-            ret = connect(fdWrite, (const struct sockaddr *)&invalid_addr, sizeof(invalid_addr));
-            ok(ret == -1, "got %d\n", ret);
-            ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-        }
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
         len = sizeof(id);
         id = 0xdeadbeef;
@@ -4380,13 +4374,7 @@ static void test_select(void)
         ok(!ret, "got error %u\n", WSAGetLastError());
         ret = connect(fdWrite, (const struct sockaddr *)&address, sizeof(address));
         ok(ret == -1, "got %d\n", ret);
-        todo_wine ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-        if (WSAGetLastError() == WSAECONNABORTED)
-        {
-            ret = connect(fdWrite, (const struct sockaddr *)&address, sizeof(address));
-            ok(ret == -1, "got %d\n", ret);
-            ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-        }
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
         FD_ZERO_ALL();
         FD_SET(fdWrite, &readfds);
@@ -8320,7 +8308,6 @@ static void test_connect(void)
 
     closesocket(connector);
     closesocket(acceptor);
-    closesocket(listener);
 
     tcp_socketpair(&connector, &acceptor);
 
@@ -8380,6 +8367,30 @@ static void test_connect(void)
 
     WSACloseEvent(overlapped.hEvent);
     closesocket(connector);
+
+    /* Test connect after previous connect attempt failure. */
+    connector = socket(AF_INET, SOCK_STREAM, 0);
+    ok(connector != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
+
+    conaddress.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    conaddress.sin_port = htons(255);
+    iret = connect(connector, (struct sockaddr *)&conaddress, sizeof(conaddress));
+    ok(iret == -1, "connection succeeded.\n");
+
+    ok(WSAGetLastError() == WSAECONNREFUSED, "got error %u\n", WSAGetLastError());
+    set_blocking( connector, FALSE );
+    iret = getsockname(listener, (struct sockaddr*)&address, &addrlen);
+    ok(!iret, "failed to get address, error %u\n", WSAGetLastError());
+
+    iret = connect(connector, (struct sockaddr *)&address, sizeof(address));
+    ok(iret == -1 && WSAGetLastError() == WSAEWOULDBLOCK, "unexpected iret %d, error %d.\n",
+            iret, WSAGetLastError());
+    acceptor = accept(listener, NULL, NULL);
+    ok(acceptor != INVALID_SOCKET, "could not accept socket error %d\n", WSAGetLastError());
+
+    closesocket(acceptor);
+    closesocket(connector);
+    closesocket(listener);
 }
 
 static void test_AcceptEx(void)

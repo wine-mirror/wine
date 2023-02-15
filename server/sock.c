@@ -2602,6 +2602,17 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             unix_addr.in.sin_addr.s_addr = htonl( INADDR_LOOPBACK );
 
         ret = connect( unix_fd, &unix_addr.addr, unix_len );
+        if (ret < 0 && errno == ECONNABORTED)
+        {
+            /* On Linux with nonblocking socket if the previous connect() failed for any reason (including
+             * timeout), next connect will fail. If the error code was queried by getsockopt( SO_ERROR )
+             * the error code returned now is ECONNABORTED (otherwise that is the actual connect() failure
+             * error code). If we got here after previous connect attempt on the socket that means
+             * we already queried SO_ERROR in sock_error(), so retrying on ECONNABORTED only is
+             * sufficient. */
+            ret = connect( unix_fd, &unix_addr.addr, unix_len );
+        }
+
         if (ret < 0 && errno != EINPROGRESS)
         {
             set_error( sock_get_ntstatus( errno ) );
