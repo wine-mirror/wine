@@ -139,6 +139,11 @@ static inline BOOL is_quotable_char(WCHAR c)
     }
 }
 
+static inline BOOL is_spaceW(WCHAR c)
+{
+    return c <= 0x7f && isspace((char)c);
+}
+
 static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
  PCERT_RDN_VALUE_BLOB pValue, LPWSTR psz, DWORD csz)
 {
@@ -195,9 +200,9 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
     case CERT_RDN_BMP_STRING:
     case CERT_RDN_UTF8_STRING:
         strLen = len = pValue->cbData / sizeof(WCHAR);
-        if (pValue->cbData && isspace(pValue->pbData[0]))
+        if (strLen && is_spaceW(((LPCWSTR)pValue->pbData)[0]))
             needsQuotes = TRUE;
-        if (pValue->cbData && isspace(pValue->pbData[strLen - 1]))
+        if (strLen && _spaceW(((LPCWSTR)pValue->pbData)[strLen - 1]))
             needsQuotes = TRUE;
         for (i = 0; i < strLen; i++)
         {
