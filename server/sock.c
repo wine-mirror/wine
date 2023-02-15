@@ -39,6 +39,9 @@
 #ifdef HAVE_NETINET_IN_H
 # include <netinet/in.h>
 #endif
+#ifdef HAVE_NETINET_TCP_H
+# include <netinet/tcp.h>
+#endif
 #include <poll.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -1921,9 +1924,12 @@ static int init_socket( struct sock *sock, int family, int type, int protocol )
 
     if (is_tcp_socket( sock ))
     {
-        int reuse = 1;
-
-        setsockopt( sockfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse) );
+        value = 1;
+        setsockopt( sockfd, SOL_SOCKET, SO_REUSEADDR, &value, sizeof(value) );
+#ifdef TCP_SYNCNT
+        value = 4;
+        setsockopt( sockfd, IPPROTO_TCP, TCP_SYNCNT, &value, sizeof(value) );
+#endif
     }
 
     if (sock->fd)
