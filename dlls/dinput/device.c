@@ -546,6 +546,7 @@ static HRESULT WINAPI dinput_device_Acquire( IDirectInputDevice8W *iface )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     HRESULT hr = DI_OK;
+    DWORD pid;
 
     TRACE( "iface %p.\n", iface );
 
@@ -556,6 +557,8 @@ static HRESULT WINAPI dinput_device_Acquire( IDirectInputDevice8W *iface )
         hr = DIERR_INVALIDPARAM;
     else if ((impl->dwCoopLevel & DISCL_FOREGROUND) && impl->win != GetForegroundWindow())
         hr = DIERR_OTHERAPPHASPRIO;
+    else if ((impl->dwCoopLevel & DISCL_FOREGROUND) && (!GetWindowThreadProcessId( impl->win, &pid ) || pid != GetCurrentProcessId()))
+        hr = DIERR_INVALIDPARAM;
     else
     {
         impl->status = STATUS_ACQUIRED;
