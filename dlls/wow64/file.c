@@ -59,12 +59,12 @@ static inline ULONG starts_with_path( const WCHAR *name, ULONG name_len, const W
 void init_file_redirects(void)
 {
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING nameW;
+    UNICODE_STRING windows = RTL_CONSTANT_STRING( L"\\??\\C:\\windows" );
+    UNICODE_STRING system32 = RTL_CONSTANT_STRING( L"\\??\\C:\\windows\\system32" );
     IO_STATUS_BLOCK io;
     HANDLE handle;
 
-    InitializeObjectAttributes( &attr, &nameW, OBJ_CASE_INSENSITIVE, 0, NULL );
-    RtlInitUnicodeString( &nameW, L"\\??\\C:\\windows" );
+    InitializeObjectAttributes( &attr, &windows, OBJ_CASE_INSENSITIVE, 0, NULL );
     if (!NtOpenFile( &handle, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io,
                      FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT |
                      FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE ))
@@ -72,7 +72,7 @@ void init_file_redirects(void)
         get_file_id( handle, &windir_id );
         NtClose( handle );
     }
-    RtlInitUnicodeString( &nameW, L"\\??\\C:\\windows\\system32" );
+    attr.ObjectName = &system32;
     if (!NtOpenFile( &handle, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io,
                      FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT |
                      FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE ))

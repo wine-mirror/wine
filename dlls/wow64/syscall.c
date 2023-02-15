@@ -696,7 +696,7 @@ static const WCHAR *get_cpu_dll_name(void)
 static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **context )
 {
     HMODULE module;
-    UNICODE_STRING str;
+    UNICODE_STRING str = RTL_CONSTANT_STRING( L"ntdll.dll" );
     SYSTEM_BASIC_INFORMATION info;
 
     RtlWow64GetProcessMachines( GetCurrentProcess(), &current_machine, &native_machine );
@@ -708,7 +708,6 @@ static DWORD WINAPI process_init( RTL_RUN_ONCE *once, void *param, void **contex
 
 #define GET_PTR(name) p ## name = RtlFindExportedRoutineByName( module, #name )
 
-    RtlInitUnicodeString( &str, L"ntdll.dll" );
     LdrGetDllHandle( NULL, 0, &str, &module );
     GET_PTR( LdrSystemDllInitBlock );
 
