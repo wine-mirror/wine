@@ -456,7 +456,6 @@ static void test_modules_overlap(void)
         }
         else
         {
-            todo_wine_if(i == 6 || i == 7)
             ok(base == tests[i].input.base, "SymLoadModuleEx failed: %lu\n", GetLastError());
         }
         for (j = 0; j < ARRAY_SIZE(tests[i].outputs); j++)
@@ -471,13 +470,10 @@ static void test_modules_overlap(void)
                 break;
             }
             ok(nth.index == -1, "Expecting more modules\n");
-            todo_wine_if(i == 6 || i == 7)
             ok(nth.module.BaseOfImage == tests[i].outputs[j].base, "Wrong base\n");
             if (!nth.will_fail)
             {
-                todo_wine_if(i == 7)
                 ok(nth.module.ImageSize == tests[i].outputs[j].size, "Wrong size\n");
-                todo_wine_if(i == 6 || i == 7)
                 ok(!strcasecmp(nth.module.ModuleName, tests[i].outputs[j].name), "Wrong name\n");
             }
         }

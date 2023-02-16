@@ -992,17 +992,10 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
     }
     if (altmodule)
     {
-        /* we have a conflict as the new module cannot be found by its base address
-         * we need to get rid of one on the two modules
+        /* We have a conflict as the new module cannot be found by its base address
+         * (it's hidden by altmodule).
+         * We need to decide which one the two modules we need to get rid of.
          */
-        if (lstrcmpW(module->modulename, altmodule->modulename) != 0)
-        {
-            /* module overlaps an existing but different module... unload new module and return error */
-            WARN("%ls overlaps %ls\n", module->modulename, altmodule->modulename);
-            module_remove(pcs, module);
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return 0;
-        }
         /* loading same module at same address... don't change anything */
         if (module->module.BaseOfImage == altmodule->module.BaseOfImage)
         {
@@ -1010,9 +1003,10 @@ DWORD64 WINAPI  SymLoadModuleExW(HANDLE hProcess, HANDLE hFile, PCWSTR wImageNam
             SetLastError(ERROR_SUCCESS);
             return 0;
         }
-        /* replace old module with new one, which will look like a shift of base address */
-        WARN("Shift module %ls from %I64x to %I64x\n",
-             module->modulename, altmodule->module.BaseOfImage, module->module.BaseOfImage);
+        /* replace old module with new one */
+        WARN("Replace module %ls at %I64x by module %ls at %I64x\n",
+             altmodule->module.ImageName, altmodule->module.BaseOfImage,
+             module->module.ImageName, module->module.BaseOfImage);
         module_remove(pcs, altmodule);
     }
 
