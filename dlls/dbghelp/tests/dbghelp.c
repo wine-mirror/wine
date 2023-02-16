@@ -241,6 +241,7 @@ static void test_modules(void)
     BOOL ret;
     char file_system[MAX_PATH];
     char file_wow64[MAX_PATH];
+    DWORD64 base;
     const DWORD64 base1 = 0x00010000;
     const DWORD64 base2 = 0x08010000;
     IMAGEHLP_MODULEW64 im;
@@ -261,8 +262,8 @@ static void test_modules(void)
     machine_wow = get_module_machine(file_wow64);
     if (machine_wow != IMAGE_FILE_MACHINE_UNKNOWN)
     {
-        ret = SymLoadModule(GetCurrentProcess(), NULL, file_wow64, NULL, base2, 0);
-        ok(ret, "SymLoadModule failed: %lu\n", GetLastError());
+        base = SymLoadModule(GetCurrentProcess(), NULL, file_wow64, NULL, base2, 0);
+        ok(base == base2, "SymLoadModule failed: %lu\n", GetLastError());
         ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
         if (!ret && skip_too_old_dbghelp(GetCurrentProcess(), base2)) return;
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
@@ -273,8 +274,8 @@ static void test_modules(void)
     GetSystemDirectoryA(file_system, MAX_PATH);
     strcat(file_system, "\\notepad.exe");
 
-    ret = SymLoadModule(GetCurrentProcess(), NULL, file_system, NULL, base1, 0);
-    ok(ret, "SymLoadModule failed: %lu\n", GetLastError());
+    base = SymLoadModule(GetCurrentProcess(), NULL, file_system, NULL, base1, 0);
+    ok(base == base1, "SymLoadModule failed: %lu\n", GetLastError());
     ret = SymGetModuleInfoW64(GetCurrentProcess(), base1, &im);
     if (!ret && skip_too_old_dbghelp(GetCurrentProcess(), base1)) return;
     ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
