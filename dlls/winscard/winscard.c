@@ -369,6 +369,75 @@ LONG WINAPI SCardCancel( SCARDCONTEXT context )
     return ret;
 }
 
+LONG WINAPI SCardListReaderGroupsA( SCARDCONTEXT context, char *groups, DWORD *groups_len )
+{
+    struct handle *handle = (struct handle *)context;
+    struct scard_list_reader_groups_params params;
+    UINT64 groups_len_utf8;
+    LONG ret;
+
+    TRACE( "%Ix, %p, %p\n", context, groups, groups_len );
+
+    if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!groups_len) return SCARD_E_INVALID_PARAMETER;
+    if (*groups_len == SCARD_AUTOALLOCATE)
+    {
+        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
+        return SCARD_F_INTERNAL_ERROR;
+    }
+
+    params.handle = handle->unix_handle;
+    params.groups = NULL;
+    params.groups_len = &groups_len_utf8;
+    if ((ret = UNIX_CALL( scard_list_reader_groups, &params ))) goto done;
+
+    params.handle = handle->unix_handle;
+    if (!(params.groups = malloc( groups_len_utf8 ))) return SCARD_E_NO_MEMORY;
+    if (!(ret = UNIX_CALL( scard_list_reader_groups, &params )))
+    {
+        ret = copy_multiszA( params.groups, groups, groups_len );
+    }
+
+done:
+    free( params.groups );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
+LONG WINAPI SCardListReaderGroupsW( SCARDCONTEXT context, WCHAR *groups, DWORD *groups_len )
+{
+    struct handle *handle = (struct handle *)context;
+    struct scard_list_reader_groups_params params;
+    UINT64 groups_len_utf8;
+    LONG ret;
+
+    TRACE( "%Ix, %p, %p\n", context, groups, groups_len );
+
+    if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!groups_len) return SCARD_E_INVALID_PARAMETER;
+    if (*groups_len == SCARD_AUTOALLOCATE)
+    {
+        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
+        return SCARD_F_INTERNAL_ERROR;
+    }
+
+    params.handle = handle->unix_handle;
+    params.groups = NULL;
+    params.groups_len = &groups_len_utf8;
+    if ((ret = UNIX_CALL( scard_list_reader_groups, &params ))) goto done;
+
+    if (!(params.groups = malloc( groups_len_utf8 ))) return SCARD_E_NO_MEMORY;
+    if (!(ret = UNIX_CALL( scard_list_reader_groups, &params )))
+    {
+        ret = copy_multiszW( params.groups, groups, groups_len );
+    }
+
+done:
+    TRACE( "returning %#lx\n", ret );
+    free( params.groups );
+    return ret;
+}
+
 static LONG map_states_inA( const SCARD_READERSTATEA *src, struct reader_state *dst, DWORD count )
 {
     DWORD i;
