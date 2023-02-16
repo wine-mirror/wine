@@ -144,8 +144,8 @@ static inline BOOL is_spaceW(WCHAR c)
     return c <= 0x7f && isspace((char)c);
 }
 
-static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
- PCERT_RDN_VALUE_BLOB pValue, LPWSTR psz, DWORD csz)
+static DWORD quote_rdn_value_to_str_w(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
+                                      DWORD dwStrType, LPWSTR psz, DWORD csz)
 {
     DWORD ret = 0, len, i, strLen;
     BOOL needsQuotes = FALSE;
@@ -165,19 +165,22 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
     case CERT_RDN_VISIBLE_STRING:
     case CERT_RDN_GENERAL_STRING:
         len = pValue->cbData;
-        if (pValue->cbData && isspace(pValue->pbData[0]))
-            needsQuotes = TRUE;
-        if (pValue->cbData && isspace(pValue->pbData[pValue->cbData - 1]))
-            needsQuotes = TRUE;
-        for (i = 0; i < pValue->cbData; i++)
+        if (!(dwStrType & CERT_NAME_STR_NO_QUOTING_FLAG))
         {
-            if (is_quotable_char(pValue->pbData[i]))
+            if (pValue->cbData && isspace(pValue->pbData[0]))
                 needsQuotes = TRUE;
-            if (pValue->pbData[i] == '"')
-                len += 1;
+            if (pValue->cbData && isspace(pValue->pbData[pValue->cbData - 1]))
+                needsQuotes = TRUE;
+            for (i = 0; i < pValue->cbData; i++)
+            {
+                if (is_quotable_char(pValue->pbData[i]))
+                    needsQuotes = TRUE;
+                if (pValue->pbData[i] == '"')
+                    len += 1;
+            }
+            if (needsQuotes)
+                len += 2;
         }
-        if (needsQuotes)
-            len += 2;
         if (!psz || !csz)
             ret = len;
         else
@@ -189,7 +192,8 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
             for (i = 0; i < pValue->cbData && ptr - psz < csz; ptr++, i++)
             {
                 *ptr = pValue->pbData[i];
-                if (pValue->pbData[i] == '"' && ptr - psz < csz - 1)
+                if (!(dwStrType & CERT_NAME_STR_NO_QUOTING_FLAG) &&
+                    pValue->pbData[i] == '"' && ptr - psz < csz - 1)
                     *(++ptr) = '"';
             }
             if (needsQuotes && ptr - psz < csz)
@@ -200,19 +204,22 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
     case CERT_RDN_BMP_STRING:
     case CERT_RDN_UTF8_STRING:
         strLen = len = pValue->cbData / sizeof(WCHAR);
-        if (strLen && is_spaceW(((LPCWSTR)pValue->pbData)[0]))
-            needsQuotes = TRUE;
-        if (strLen && _spaceW(((LPCWSTR)pValue->pbData)[strLen - 1]))
-            needsQuotes = TRUE;
-        for (i = 0; i < strLen; i++)
+        if (!(dwStrType & CERT_NAME_STR_NO_QUOTING_FLAG))
         {
-            if (is_quotable_char(((LPCWSTR)pValue->pbData)[i]))
+            if (strLen && is_spaceW(((LPCWSTR)pValue->pbData)[0]))
                 needsQuotes = TRUE;
-            if (((LPCWSTR)pValue->pbData)[i] == '"')
-                len += 1;
+            if (strLen && is_spaceW(((LPCWSTR)pValue->pbData)[strLen - 1]))
+                needsQuotes = TRUE;
+            for (i = 0; i < strLen; i++)
+            {
+                if (is_quotable_char(((LPCWSTR)pValue->pbData)[i]))
+                    needsQuotes = TRUE;
+                if (((LPCWSTR)pValue->pbData)[i] == '"')
+                    len += 1;
+            }
+            if (needsQuotes)
+                len += 2;
         }
-        if (needsQuotes)
-            len += 2;
         if (!psz || !csz)
             ret = len;
         else
@@ -224,7 +231,8 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
             for (i = 0; i < strLen && ptr - psz < csz; ptr++, i++)
             {
                 *ptr = ((LPCWSTR)pValue->pbData)[i];
-                if (((LPCWSTR)pValue->pbData)[i] == '"' && ptr - psz < csz - 1)
+                if (!(dwStrType & CERT_NAME_STR_NO_QUOTING_FLAG) &&
+                    ((LPCWSTR)pValue->pbData)[i] == '"' && ptr - psz < csz - 1)
                     *(++ptr) = '"';
             }
             if (needsQuotes && ptr - psz < csz)
@@ -328,8 +336,7 @@ static const WCHAR indent[] = L"     ";
 DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
  const CERT_NAME_BLOB *pName, DWORD dwStrType, LPWSTR psz, DWORD csz)
 {
-    static const DWORD unsupportedFlags = CERT_NAME_STR_NO_QUOTING_FLAG |
-     CERT_NAME_STR_ENABLE_T61_UNICODE_FLAG;
+    static const DWORD unsupportedFlags = CERT_NAME_STR_ENABLE_T61_UNICODE_FLAG;
     DWORD ret = 0, bytes = 0;
     BOOL bRet;
     CERT_NAME_INFO *info;
@@ -419,7 +426,7 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
                 }
                 if (psz && ret + 1 == csz) break;
 
-                chars = quote_rdn_value_to_str_w(rdn->rgRDNAttr[j].dwValueType, &rdn->rgRDNAttr[j].Value,
+                chars = quote_rdn_value_to_str_w(rdn->rgRDNAttr[j].dwValueType, &rdn->rgRDNAttr[j].Value, dwStrType,
                                                  psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                 ret += chars;
                 if (j < rdn->cRDNAttr - 1)

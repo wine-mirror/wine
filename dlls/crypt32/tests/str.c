@@ -1163,7 +1163,6 @@ static void test_quoted_RDN(void)
         ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_X500_NAME_STR | CERT_NAME_STR_NO_QUOTING_FLAG, str, ARRAY_SIZE(str));
         ok(ret, "CertNameToStr error %08lx\n", GetLastError());
         ok(!wcsncmp(str, L"CN=", 3), "got %s\n", debugstr_w(str));
-        todo_wine_if(i != 0 && i != 13 && i != 14)
         ok(!wcscmp(&str[3], test[i].CN), "got %s, expected %s\n", debugstr_w(&str[3]), debugstr_w(test[i].CN));
 
         LocalFree(buf);
@@ -1217,7 +1216,6 @@ static void test_quoted_RDN(void)
         ret = CertNameToStrW(X509_ASN_ENCODING, &blob, CERT_X500_NAME_STR | CERT_NAME_STR_NO_QUOTING_FLAG, str, ARRAY_SIZE(str));
         ok(ret, "CertNameToStr error %08lx\n", GetLastError());
         ok(!wcsncmp(str, L"CN=", 3), "got %s\n", debugstr_w(str));
-        todo_wine_if(i != 0 && i != 13 && i != 14)
         ok(!wcscmp(&str[3], test[i].CN), "got %s, expected %s\n", debugstr_w(&str[3]), debugstr_w(test[i].CN));
 
         LocalFree(buf);
