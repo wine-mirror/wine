@@ -42,6 +42,8 @@ LONG SCardConnect( UINT64, const char *, UINT64, UINT64, UINT64 *, UINT64 * );
 LONG SCardStatus( UINT64, char *, UINT64 *, UINT64 *, UINT64 *, BYTE *, UINT64 * );
 LONG SCardDisconnect( UINT64, UINT64 );
 LONG SCardReconnect( UINT64, UINT64, UINT64, UINT64, UINT64 * );
+LONG SCardBeginTransaction( UINT64 );
+LONG SCardEndTransaction( UINT64, UINT64 );
 
 static NTSTATUS scard_establish_context( void *args )
 {
@@ -112,6 +114,18 @@ static NTSTATUS scard_disconnect( void *args )
     return SCardDisconnect( params->handle, params->disposition );
 }
 
+static NTSTATUS scard_begin_transaction( void *args )
+{
+    struct scard_begin_transaction_params *params = args;
+    return SCardBeginTransaction( params->handle );
+}
+
+static NTSTATUS scard_end_transaction( void *args )
+{
+    struct scard_end_transaction_params *params = args;
+    return SCardEndTransaction( params->handle, params->disposition );
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     scard_establish_context,
@@ -125,4 +139,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     scard_status,
     scard_reconnect,
     scard_disconnect,
+    scard_begin_transaction,
+    scard_end_transaction,
 };

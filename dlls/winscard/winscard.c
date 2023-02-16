@@ -753,6 +753,39 @@ LONG WINAPI SCardDisconnect( SCARDHANDLE connect, DWORD disposition )
     return ret;
 }
 
+LONG WINAPI SCardBeginTransaction( SCARDHANDLE connect )
+{
+    struct handle *handle = (struct handle *)connect;
+    struct scard_begin_transaction_params params;
+    LONG ret;
+
+    TRACE( "%Ix\n", connect );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+
+    params.handle = handle->unix_handle;
+    ret = UNIX_CALL( scard_begin_transaction, &params );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
+LONG WINAPI SCardEndTransaction( SCARDHANDLE connect, DWORD disposition )
+{
+    struct handle *handle = (struct handle *)connect;
+    struct scard_end_transaction_params params;
+    LONG ret;
+
+    TRACE( "%Ix, %#lx\n", connect, disposition );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+
+    params.handle = handle->unix_handle;
+    params.disposition = disposition;
+    ret = UNIX_CALL( scard_end_transaction, &params );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     switch (reason)

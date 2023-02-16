@@ -110,6 +110,17 @@ struct scard_disconnect_params
     UINT64 disposition;
 };
 
+struct scard_begin_transaction_params
+{
+    UINT64 handle;
+};
+
+struct scard_end_transaction_params
+{
+    UINT64 handle;
+    UINT64 disposition;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
@@ -123,4 +134,6 @@ enum winscard_funcs
     unix_scard_status,
     unix_scard_reconnect,
     unix_scard_disconnect,
+    unix_scard_begin_transaction,
+    unix_scard_end_transaction,
 };

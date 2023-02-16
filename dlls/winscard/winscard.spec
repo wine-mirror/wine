@@ -5,13 +5,13 @@
 @ stdcall SCardAccessStartedEvent()
 @ stdcall SCardAddReaderToGroupA(long str str)
 @ stdcall SCardAddReaderToGroupW(long wstr wstr)
-@ stub SCardBeginTransaction
+@ stdcall SCardBeginTransaction(long)
 @ stdcall SCardCancel(long)
 @ stdcall SCardConnectA(long str long long ptr ptr)
 @ stdcall SCardConnectW(long wstr long long ptr ptr)
 @ stub SCardControl
 @ stdcall SCardDisconnect(long long)
-@ stub SCardEndTransaction
+@ stdcall SCardEndTransaction(long long)
 @ stdcall SCardEstablishContext(long ptr ptr ptr)
 @ stub SCardForgetCardTypeA
 @ stub SCardForgetCardTypeW
