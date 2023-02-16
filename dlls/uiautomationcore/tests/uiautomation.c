@@ -6305,6 +6305,16 @@ static const struct prov_method_sequence node_from_hwnd9[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence node_from_hwnd10[] = {
+    NODE_CREATE_SEQ(&Provider),
+    /* Next two only done on Windows 8+. */
+    { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL },
+    { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL },
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    { &Provider, FRAG_GET_RUNTIME_ID, METHOD_OPTIONAL }, /* Only done on Win11+. */
+    { 0 }
+};
+
 static const struct prov_method_sequence disconnect_prov1[] = {
     { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
     /* Win10v1507 and below call this. */
@@ -6569,6 +6579,28 @@ static DWORD WINAPI uia_node_from_handle_test_thread(LPVOID param)
     if (Provider_child.ref != 1)
         Sleep(50);
     ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    /* Win10v1809 can be slow to call Release on Provider. */
+    if (Provider.ref != 1)
+        Sleep(50);
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+
+    /* ProviderOptions_UseComThreading test from a separate thread. */
+    SET_EXPECT(winproc_GETOBJECT_UiaRoot);
+    /* Only sent on Win7. */
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    prov_root = &Provider.IRawElementProviderSimple_iface;
+    initialize_provider(&Provider, ProviderOptions_ServerSideProvider | ProviderOptions_UseComThreading, NULL, FALSE);
+    Provider.frag_root = NULL;
+    Provider.runtime_id[0] = Provider.runtime_id[1] = 0xdeadbeef;
+    hr = UiaNodeFromHandle(hwnd, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    CHECK_CALLED(winproc_GETOBJECT_UiaRoot);
+    called_winproc_GETOBJECT_CLIENT = expect_winproc_GETOBJECT_CLIENT = 0;
+
+    ok_method_sequence(node_from_hwnd10, "node_from_hwnd10");
 
     ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     /* Win10v1809 can be slow to call Release on Provider. */

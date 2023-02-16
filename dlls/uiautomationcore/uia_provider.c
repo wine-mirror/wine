@@ -1744,19 +1744,15 @@ exit:
     LeaveCriticalSection(&provider_thread_cs);
 }
 
-static HRESULT uia_provider_thread_add_node(HUIANODE node)
+static HRESULT uia_provider_thread_add_node(HUIANODE node, SAFEARRAY *rt_id)
 {
     struct uia_node *node_data = impl_from_IWineUiaNode((IWineUiaNode *)node);
     int prov_type = get_node_provider_type_at_idx(node_data, 0);
     struct uia_provider *prov_data;
-    SAFEARRAY *sa;
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     prov_data = impl_from_IWineUiaProvider(node_data->prov[prov_type]);
     node_data->nested_node = prov_data->return_nested_node = TRUE;
-    hr = UiaGetRuntimeId(node, &sa);
-    if (FAILED(hr))
-        return hr;
 
     TRACE("Adding node %p\n", node);
 
@@ -1764,38 +1760,40 @@ static HRESULT uia_provider_thread_add_node(HUIANODE node)
     list_add_tail(&provider_thread.nodes_list, &node_data->prov_thread_list_entry);
 
     /* If we have a runtime ID, create an entry in the rb tree. */
-    if (sa)
+    if (rt_id)
     {
         struct uia_provider_thread_map_entry *prov_map;
         struct rb_entry *rb_entry;
 
-        if ((rb_entry = rb_get(&provider_thread.node_map, sa)))
-        {
+        if ((rb_entry = rb_get(&provider_thread.node_map, rt_id)))
             prov_map = RB_ENTRY_VALUE(rb_entry, struct uia_provider_thread_map_entry, entry);
-            SafeArrayDestroy(sa);
-        }
         else
         {
             prov_map = heap_alloc_zero(sizeof(*prov_map));
             if (!prov_map)
             {
-                SafeArrayDestroy(sa);
-                LeaveCriticalSection(&provider_thread_cs);
-                return E_OUTOFMEMORY;
+                hr = E_OUTOFMEMORY;
+                goto exit;
             }
 
-            prov_map->runtime_id = sa;
+            hr = SafeArrayCopy(rt_id, &prov_map->runtime_id);
+            if (FAILED(hr))
+            {
+                heap_free(prov_map);
+                goto exit;
+            }
             list_init(&prov_map->nodes_list);
-            rb_put(&provider_thread.node_map, sa, &prov_map->entry);
+            rb_put(&provider_thread.node_map, prov_map->runtime_id, &prov_map->entry);
         }
 
         list_add_tail(&prov_map->nodes_list, &node_data->node_map_list_entry);
         node_data->map = prov_map;
     }
 
+exit:
     LeaveCriticalSection(&provider_thread_cs);
 
-    return S_OK;
+    return hr;
 }
 
 #define WM_GET_OBJECT_UIA_NODE (WM_USER + 1)
@@ -1807,13 +1805,13 @@ static LRESULT CALLBACK uia_provider_thread_msg_proc(HWND hwnd, UINT msg, WPARAM
     {
     case WM_GET_OBJECT_UIA_NODE:
     {
+        SAFEARRAY *rt_id = (SAFEARRAY *)wparam;
         HUIANODE node = (HUIANODE)lparam;
         LRESULT lr;
 
-        if (FAILED(uia_provider_thread_add_node(node)))
+        if (FAILED(uia_provider_thread_add_node(node, rt_id)))
         {
             WARN("Failed to add node %p to provider thread list.\n", node);
-            UiaNodeRelease(node);
             return 0;
         }
 
@@ -1828,11 +1826,6 @@ static LRESULT CALLBACK uia_provider_thread_msg_proc(HWND hwnd, UINT msg, WPARAM
             lr = 0;
         }
 
-        /*
-         * LresultFromObject increases refcnt by 1. If LresultFromObject
-         * failed, this is expected to release the node.
-         */
-        UiaNodeRelease(node);
         return lr;
     }
 
@@ -1948,13 +1941,24 @@ void uia_stop_provider_thread(void)
  */
 LRESULT uia_lresult_from_node(HUIANODE huianode)
 {
-    if (!uia_start_provider_thread())
-    {
-        UiaNodeRelease(huianode);
-        return 0;
-    }
+    SAFEARRAY *rt_id;
+    LRESULT lr = 0;
+    HRESULT hr;
 
-    return SendMessageW(provider_thread.hwnd, WM_GET_OBJECT_UIA_NODE, 0, (LPARAM)huianode);
+    hr = UiaGetRuntimeId(huianode, &rt_id);
+    if (SUCCEEDED(hr) && uia_start_provider_thread())
+        lr = SendMessageW(provider_thread.hwnd, WM_GET_OBJECT_UIA_NODE, (WPARAM)rt_id, (LPARAM)huianode);
+
+    if (FAILED(hr))
+        WARN("UiaGetRuntimeId failed with hr %#lx\n", hr);
+
+    /*
+     * LresultFromObject increases refcnt by 1. If LresultFromObject
+     * failed or wasn't called, this is expected to release the node.
+     */
+    UiaNodeRelease(huianode);
+    SafeArrayDestroy(rt_id);
+    return lr;
 }
 
 /***********************************************************************
