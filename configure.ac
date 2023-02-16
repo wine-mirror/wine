@@ -50,6 +50,7 @@ AC_ARG_WITH(osmesa,     AS_HELP_STRING([--without-osmesa],[do not use the OSMesa
 AC_ARG_WITH(oss,       AS_HELP_STRING([--without-oss],[do not use the OSS sound support]))
 AC_ARG_WITH(pcap,      AS_HELP_STRING([--without-pcap],[do not use the Packet Capture library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pcap_pcap_h=no; fi])
+AC_ARG_WITH(pcsclite,  AS_HELP_STRING([--without-pcsclite],[do not use PCSC lite]))
 AC_ARG_WITH(pthread,   AS_HELP_STRING([--without-pthread],[do not use the pthread library]),
             [if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi])
 AC_ARG_WITH(pulse,     AS_HELP_STRING([--without-pulse],[do not use PulseAudio sound support]))
@@ -1376,6 +1377,15 @@ fi
 WINE_NOTICE_WITH(pcap,[test "x$ac_cv_lib_pcap_pcap_init" != xyes],
                  [pcap ${notice_platform}development files not found, wpcap won't be supported.],
                  [enable_wpcap])
+
+dnl **** Check for libpcsclite ****
+if test "x$with_pcsclite" != "xno"
+then
+    AC_CHECK_LIB(pcsclite,SCardEstablishContext,[AC_SUBST(PCSCLITE_LIBS,["-lpcsclite"])])
+fi
+WINE_NOTICE_WITH(pcsclite,[test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes],
+                 [libpcsclite not found, smart cards won't be supported.],
+                 [enable_winscard])
 
 dnl **** Check for inotify ****
 if test "x$with_inotify" != "xno"

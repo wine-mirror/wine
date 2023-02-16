@@ -1,5 +1,6 @@
 /*
  * Copyright 2007 Mounir IDRASSI  (mounir.idrassi@idrix.fr, for IDRIX)
+ * Copyright 2022 Hans Leidekker for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,38 +20,22 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-#include "wine/debug.h"
 #include "winscard.h"
 #include "winternl.h"
 
+#include "wine/debug.h"
+#include "wine/unixlib.h"
+#include "unixlib.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(winscard);
 
-static HANDLE g_startedEvent = NULL;
+#define UNIX_CALL( func, params ) WINE_UNIX_CALL( unix_ ## func, params )
+
+static HANDLE g_startedEvent;
 
 const SCARD_IO_REQUEST g_rgSCardT0Pci = { SCARD_PROTOCOL_T0, 8 };
 const SCARD_IO_REQUEST g_rgSCardT1Pci = { SCARD_PROTOCOL_T1, 8 };
 const SCARD_IO_REQUEST g_rgSCardRawPci = { SCARD_PROTOCOL_RAW, 8 };
-
-
-BOOL WINAPI DllMain (HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
-{
-    TRACE("%p,%lx,%p\n", hinstDLL, fdwReason, lpvReserved);
-
-    switch (fdwReason)
-    {
-        case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            /* FIXME: for now, we act as if the pcsc daemon is always started */
-            g_startedEvent = CreateEventA(NULL,TRUE,TRUE,NULL);
-            break;
-        case DLL_PROCESS_DETACH:
-            if (lpvReserved) break;
-            CloseHandle(g_startedEvent);
-            break;
-    }
-
-    return TRUE;
-}
 
 HANDLE WINAPI SCardAccessStartedEvent(void)
 {
@@ -81,12 +66,32 @@ LONG WINAPI SCardAddReaderToGroupW(SCARDCONTEXT context, LPCWSTR reader, LPCWSTR
     return SCARD_S_SUCCESS;
 }
 
-LONG WINAPI SCardEstablishContext(DWORD dwScope, LPCVOID pvReserved1,
-    LPCVOID pvReserved2, LPSCARDCONTEXT phContext)
+#define CONTEXT_MAGIC (('C' << 24) | ('T' << 16) | ('X' << 8) | '0')
+struct handle
 {
-    FIXME("(%lx,%p,%p,%p) stub\n", dwScope, pvReserved1, pvReserved2, phContext);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return SCARD_F_INTERNAL_ERROR;
+    DWORD  magic;
+    UINT64 unix_handle;
+};
+
+LONG WINAPI SCardEstablishContext( DWORD scope, const void *reserved1, const void *reserved2, SCARDCONTEXT *context )
+{
+    struct scard_establish_context_params params;
+    struct handle *handle;
+    LONG ret;
+
+    TRACE( "%#lx, %p, %p, %p\n", scope, reserved1, reserved2, context );
+
+    if (!context) return SCARD_E_INVALID_PARAMETER;
+    if (!(handle = malloc( sizeof(*handle) ))) return SCARD_E_NO_MEMORY;
+    handle->magic = CONTEXT_MAGIC;
+
+    params.scope = scope;
+    params.handle = &handle->unix_handle;
+    if (!(ret = UNIX_CALL( scard_establish_context, &params ))) *context = (SCARDCONTEXT)handle;
+    else free( handle );
+
+    TRACE( "returning %#lx\n", ret );
+    return ret;
 }
 
 LONG WINAPI SCardIsValidContext(SCARDCONTEXT context)
@@ -103,11 +108,23 @@ LONG WINAPI SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr, LPCGUID rgguid
     return SCARD_F_INTERNAL_ERROR;
 }
 
-LONG WINAPI SCardReleaseContext(SCARDCONTEXT context)
+LONG WINAPI SCardReleaseContext( SCARDCONTEXT context )
 {
-    FIXME("(%Ix) stub\n", context);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return SCARD_F_INTERNAL_ERROR;
+    struct handle *handle = (struct handle *)context;
+    struct scard_release_context_params params;
+    LONG ret;
+
+    TRACE( "%Ix\n", context );
+
+    if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
+
+    params.handle = handle->unix_handle;
+    ret = UNIX_CALL( scard_release_context, &params );
+    handle->magic = 0;
+    free( handle );
+
+    TRACE( "returning %#lx\n", ret );
+    return ret;
 }
 
 LONG WINAPI SCardStatusA(SCARDHANDLE context, LPSTR szReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState, LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen)
@@ -146,4 +163,26 @@ LONG WINAPI SCardCancel(SCARDCONTEXT context)
     FIXME("(%Ix) stub\n", context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
+}
+
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( hinst );
+        if (__wine_init_unix_call()) ERR( "no pcsclite support, expect problems\n" );
+
+        /* FIXME: for now, we act as if the pcsc daemon is always started */
+        g_startedEvent = CreateEventW( NULL, TRUE, TRUE, NULL );
+        break;
+
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+        CloseHandle( g_startedEvent );
+        g_startedEvent = NULL;
+        break;
+    }
+
+    return TRUE;
 }

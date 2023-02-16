@@ -700,6 +700,7 @@ DBUS_LIBS
 DBUS_CFLAGS
 INOTIFY_LIBS
 INOTIFY_CFLAGS
+PCSCLITE_LIBS
 PCAP_LIBS
 X_EXTRA_LIBS
 X_LIBS
@@ -928,6 +929,7 @@ with_opengl
 with_osmesa
 with_oss
 with_pcap
+with_pcsclite
 with_pthread
 with_pulse
 with_sane
@@ -2445,6 +2447,7 @@ Optional Packages:
   --without-osmesa        do not use the OSMesa library
   --without-oss           do not use the OSS sound support
   --without-pcap          do not use the Packet Capture library
+  --without-pcsclite      do not use PCSC lite
   --without-pthread       do not use the pthread library
   --without-pulse         do not use PulseAudio sound support
   --without-sane          do not use SANE (scanner support)
@@ -4308,6 +4311,13 @@ then :
 fi
 
 
+# Check whether --with-pcsclite was given.
+if test ${with_pcsclite+y}
+then :
+  withval=$with_pcsclite;
+fi
+
+
 # Check whether --with-pthread was given.
 if test ${with_pthread+y}
 then :
@@ -5864,11 +5874,11 @@ if test x$ac_prog_cxx_stdcxx = xno
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CXX option to enable C++11 features" >&5
 printf %s "checking for $CXX option to enable C++11 features... " >&6; }
-if test ${ac_cv_prog_cxx_11+y}
+if test ${ac_cv_prog_cxx_cxx11+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  ac_cv_prog_cxx_11=no
+  ac_cv_prog_cxx_cxx11=no
 ac_save_CXX=$CXX
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -5910,11 +5920,11 @@ if test x$ac_prog_cxx_stdcxx = xno
 then :
   { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CXX option to enable C++98 features" >&5
 printf %s "checking for $CXX option to enable C++98 features... " >&6; }
-if test ${ac_cv_prog_cxx_98+y}
+if test ${ac_cv_prog_cxx_cxx98+y}
 then :
   printf %s "(cached) " >&6
 else $as_nop
-  ac_cv_prog_cxx_98=no
+  ac_cv_prog_cxx_cxx98=no
 ac_save_CXX=$CXX
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -15761,6 +15771,61 @@ esac
 enable_wpcap=${enable_wpcap:-no}
 fi
 
+if test "x$with_pcsclite" != "xno"
+then
+    { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for SCardEstablishContext in -lpcsclite" >&5
+printf %s "checking for SCardEstablishContext in -lpcsclite... " >&6; }
+if test ${ac_cv_lib_pcsclite_SCardEstablishContext+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpcsclite  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+char SCardEstablishContext ();
+int
+main (void)
+{
+return SCardEstablishContext ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"
+then :
+  ac_cv_lib_pcsclite_SCardEstablishContext=yes
+else $as_nop
+  ac_cv_lib_pcsclite_SCardEstablishContext=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pcsclite_SCardEstablishContext" >&5
+printf "%s\n" "$ac_cv_lib_pcsclite_SCardEstablishContext" >&6; }
+if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" = xyes
+then :
+  PCSCLITE_LIBS="-lpcsclite"
+
+fi
+
+fi
+if test "x$ac_cv_lib_pcsclite_SCardEstablishContext" != xyes
+then :
+  case "x$with_pcsclite" in
+  x)   as_fn_append wine_notices "|libpcsclite not found, smart cards won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libpcsclite not found, smart cards won't be supported.
+This is an error since --with-pcsclite was requested." "$LINENO" 5 ;;
+esac
+enable_winscard=${enable_winscard:-no}
+fi
+
 if test "x$with_inotify" != "xno"
 then
     rm -f conftest.err
@@ -23087,6 +23152,7 @@ X_PRE_LIBS = $X_PRE_LIBS
 X_LIBS = $X_LIBS
 X_EXTRA_LIBS = $X_EXTRA_LIBS
 PCAP_LIBS = $PCAP_LIBS
+PCSCLITE_LIBS = $PCSCLITE_LIBS
 INOTIFY_CFLAGS = $INOTIFY_CFLAGS
 INOTIFY_LIBS = $INOTIFY_LIBS
 DBUS_CFLAGS = $DBUS_CFLAGS

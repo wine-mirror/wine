@@ -1,7 +1,10 @@
 MODULE    = winscard.dll
 IMPORTLIB = winscard
+UNIXLIB   = winscard.so
+UNIX_LIBS = $(PCSCLITE_LIBS)
 
 C_SRCS = \
+	unixlib.c \
 	winscard.c
 
 RC_SRCS = \
