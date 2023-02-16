@@ -239,6 +239,79 @@ static BOOL skip_too_old_dbghelp(HANDLE proc, DWORD64 base)
     return FALSE;
 }
 
+static DWORD get_module_size(const char* path)
+{
+    BOOL ret;
+    HANDLE hFile, hMap;
+    void* mapping;
+    IMAGE_NT_HEADERS *nthdr;
+    DWORD size;
+
+    hFile = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+    ok(hFile != INVALID_HANDLE_VALUE, "Couldn't open file %s (%lu)\n", path, GetLastError());
+    hMap = CreateFileMappingW(hFile, NULL, PAGE_READONLY, 0, 0, NULL);
+    ok(hMap != NULL, "Couldn't create map (%lu)\n", GetLastError());
+    mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0);
+    ok(mapping != NULL, "Couldn't map (%lu)\n", GetLastError());
+    nthdr = RtlImageNtHeader(mapping);
+    ok(nthdr != NULL, "Cannot get NT headers out of %s\n", path);
+    size = nthdr ? nthdr->OptionalHeader.SizeOfImage : 0;
+    ret = UnmapViewOfFile(mapping);
+    ok(ret, "Couldn't unmap (%lu)\n", GetLastError());
+    CloseHandle(hMap);
+    CloseHandle(hFile);
+    return size;
+}
+
+static BOOL CALLBACK count_module_cb(const char* name, DWORD64 base, void* usr)
+{
+    (*(unsigned*)usr)++;
+    return TRUE;
+}
+
+static unsigned get_module_count(HANDLE proc)
+{
+    unsigned count = 0;
+    BOOL ret;
+
+    ret = SymEnumerateModules64(proc, count_module_cb, &count);
+    ok(ret, "SymEnumerateModules64 failed: %lu\n", GetLastError());
+    return count;
+}
+
+struct nth_module
+{
+    HANDLE              proc;
+    unsigned int        index;
+    BOOL                will_fail;
+    IMAGEHLP_MODULE64   module;
+    BOOL                with_todo_wine;
+};
+
+static BOOL CALLBACK nth_module_cb(const char* name, DWORD64 base, void* usr)
+{
+    struct nth_module* nth = usr;
+    BOOL ret;
+
+    if (nth->index--) return TRUE;
+    nth->module.SizeOfStruct = sizeof(nth->module);
+    ret = SymGetModuleInfo64(nth->proc, base, &nth->module);
+    todo_wine_if(nth->with_todo_wine)
+    {
+    if (nth->will_fail)
+    {
+        ok(!ret, "SymGetModuleInfo64 should have failed\n");
+        nth->module.BaseOfImage = base;
+    }
+    else
+    {
+        ok(ret, "SymGetModuleInfo64 failed: %lu\n", GetLastError());
+        ok(nth->module.BaseOfImage == base, "Wrong base\n");
+    }
+    }
+    return FALSE;
+}
+
 static BOOL test_modules(void)
 {
     BOOL ret;
@@ -249,6 +322,9 @@ static BOOL test_modules(void)
     const DWORD64 base2 = 0x08010000;
     IMAGEHLP_MODULEW64 im;
     USHORT machine_wow, machine2;
+    HANDLE dummy = (HANDLE)(ULONG_PTR)0xcafef00d;
+    const char* target_dll = "c:\\windows\\system32\\kernel32.dll";
+    unsigned count;
 
     im.SizeOfStruct = sizeof(im);
 
@@ -298,7 +374,120 @@ static BOOL test_modules(void)
 
     ret = SymCleanup(GetCurrentProcess());
     ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+
+    ret = SymInitialize(dummy, NULL, FALSE);
+    ok(ret, "got error %lu\n", GetLastError());
+
+    count = get_module_count(dummy);
+    ok(count == 0, "Unexpected count (%u instead of 0)\n", count);
+
+    /* loading with 0 size succeeds */
+    base = SymLoadModuleEx(dummy, NULL, target_dll, NULL, base1, 0, NULL, 0);
+    ok(base == base1, "SymLoadModuleEx failed: %lu\n", GetLastError());
+
+    ret = SymUnloadModule64(dummy, base1);
+    ok(ret, "SymUnloadModule64 failed: %lu\n", GetLastError());
+
+    count = get_module_count(dummy);
+    ok(count == 0, "Unexpected count (%u instead of 0)\n", count);
+
+    ret = SymCleanup(dummy);
+    ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+
     return TRUE;
+}
+
+static void test_modules_overlap(void)
+{
+    BOOL ret;
+    DWORD64 base;
+    const DWORD64 base1 = 0x00010000;
+    HANDLE dummy = (HANDLE)(ULONG_PTR)0xcafef00d;
+    const char* target1_dll = "c:\\windows\\system32\\kernel32.dll";
+    const char* target2_dll = "c:\\windows\\system32\\winmm.dll";
+    DWORD imsize = get_module_size(target1_dll);
+    int i, j;
+    struct test_module
+    {
+        DWORD64             base;
+        DWORD               size;
+        const char*         name;
+    };
+    const struct test
+    {
+        struct test_module  input;
+        DWORD               error_code;
+        struct test_module  outputs[2];
+    }
+    tests[] =
+    {
+        /* cases where first module is left "untouched" and second not loaded */
+        {{base1,              0,          target1_dll}, ERROR_SUCCESS, {{base1, imsize, "kernel32"},{0}}},
+        {{base1,              imsize,     target1_dll}, ERROR_SUCCESS, {{base1, imsize, "kernel32"},{0}}},
+        {{base1,              imsize / 2, target1_dll}, ERROR_SUCCESS, {{base1, imsize, "kernel32"},{0}}},
+        {{base1,              imsize * 2, target1_dll}, ERROR_SUCCESS, {{base1, imsize, "kernel32"},{0}}},
+
+        /* cases where first module is unloaded and replaced by second module */
+        {{base1 + imsize / 2, imsize,     target1_dll}, ~0,            {{base1 + imsize / 2, imsize,     "kernel32"},{0}}},
+        {{base1 + imsize / 3, imsize / 3, target1_dll}, ~0,            {{base1 + imsize / 3, imsize / 3, "kernel32"},{0}}},
+        {{base1 + imsize / 2, imsize,     target2_dll}, ~0,            {{base1 + imsize / 2, imsize,     "winmm"},{0}}},
+        {{base1 + imsize / 3, imsize / 3, target2_dll}, ~0,            {{base1 + imsize / 3, imsize / 3, "winmm"},{0}}},
+
+        /* cases where second module is actually loaded */
+        {{base1 + imsize,     imsize,     target1_dll}, ~0,            {{base1, imsize, "kernel32"}, {base1 + imsize, imsize, "kernel32"}}},
+        {{base1 - imsize / 2, imsize,     target1_dll}, ~0,            {{base1, imsize, "kernel32"}, {base1 - imsize / 2, imsize, NULL}}},
+        /* we mark with a NULL modulename the cases where the module is loaded, but isn't visible
+         * (SymGetModuleInfo fails in callback) as it's base address is inside the first loaded module.
+         */
+        {{base1 + imsize,     imsize,     target2_dll}, ~0,            {{base1, imsize, "kernel32"}, {base1 + imsize, imsize, "winmm"}}},
+        {{base1 - imsize / 2, imsize,     target2_dll}, ~0,            {{base1, imsize, "kernel32"}, {base1 - imsize / 2, imsize, NULL}}},
+    };
+
+    ok(imsize, "Cannot get image size\n");
+
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        ret = SymInitialize(dummy, NULL, FALSE);
+        ok(ret, "SymInitialize failed: %lu\n", GetLastError());
+
+        base = SymLoadModuleEx(dummy, NULL, target1_dll, NULL, base1, 0, NULL, 0);
+        ok(base == base1, "SymLoadModuleEx failed: %lu\n", GetLastError());
+        base = SymLoadModuleEx(dummy, NULL, tests[i].input.name, NULL, tests[i].input.base, tests[i].input.size, NULL, 0);
+        if (tests[i].error_code != ~0)
+        {
+            ok(base == 0, "SymLoadModuleEx should have failed\n");
+            ok(GetLastError() == tests[i].error_code, "Wrong error %lu\n", GetLastError());
+        }
+        else
+        {
+            todo_wine_if(i == 6 || i == 7)
+            ok(base == tests[i].input.base, "SymLoadModuleEx failed: %lu\n", GetLastError());
+        }
+        for (j = 0; j < ARRAY_SIZE(tests[i].outputs); j++)
+        {
+            struct nth_module nth = {dummy, j, !tests[i].outputs[j].name, {0}, i == 9 || i == 11};
+
+            ret = SymEnumerateModules64(dummy, nth_module_cb, &nth);
+            ok(ret, "SymEnumerateModules64 failed: %lu\n", GetLastError());
+            if (!tests[i].outputs[j].base)
+            {
+                ok(nth.index != -1, "Got more modules than expected %d, %d\n", nth.index, j);
+                break;
+            }
+            ok(nth.index == -1, "Expecting more modules\n");
+            todo_wine_if(i >= 6)
+            ok(nth.module.BaseOfImage == tests[i].outputs[j].base, "Wrong base\n");
+            if (!nth.will_fail)
+            {
+                todo_wine_if(i == 7 || i == 9 || i == 11)
+                ok(nth.module.ImageSize == tests[i].outputs[j].size, "Wrong size\n");
+                todo_wine_if(i >= 6 && i != 8)
+                ok(!strcasecmp(nth.module.ModuleName, tests[i].outputs[j].name), "Wrong name\n");
+            }
+        }
+        ret = SymCleanup(dummy);
+        ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+    }
 }
 
 struct loaded_module_aggregation
@@ -527,6 +716,7 @@ START_TEST(dbghelp)
 
     if (test_modules())
     {
+        test_modules_overlap();
         test_loaded_modules();
     }
 }
