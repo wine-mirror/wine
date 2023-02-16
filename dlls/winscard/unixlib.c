@@ -176,3 +176,356 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     scard_get_attrib,
     scard_set_attrib,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_scard_establish_context( void *args )
+{
+    struct
+    {
+        UINT64 scope;
+        PTR32 handle;
+    } const *params32 = args;
+
+    struct scard_establish_context_params params =
+    {
+        params32->scope,
+        ULongToPtr(params32->handle)
+    };
+    return scard_establish_context( &params );
+}
+
+static NTSTATUS wow64_scard_release_context( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+    } const *params32 = args;
+
+    struct scard_release_context_params params =
+    {
+        params32->handle
+    };
+    return scard_release_context( &params );
+}
+
+static NTSTATUS wow64_scard_is_valid_context( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+    } const *params32 = args;
+
+    struct scard_is_valid_context_params params =
+    {
+        params32->handle
+    };
+    return scard_is_valid_context( &params );
+}
+
+static NTSTATUS wow64_scard_get_status_change( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        UINT64 timeout;
+        PTR32 states;
+        UINT64 count;
+    } const *params32 = args;
+
+    struct scard_get_status_change_params params =
+    {
+        params32->handle,
+        params32->timeout,
+        ULongToPtr(params32->states),
+        params32->count,
+    };
+    return scard_get_status_change( &params );
+}
+
+static NTSTATUS wow64_scard_cancel( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+    } const *params32 = args;
+
+    struct scard_cancel_params params =
+    {
+        params32->handle
+    };
+    return scard_cancel( &params );
+}
+
+static NTSTATUS wow64_scard_list_readers( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 groups;
+        PTR32 readers;
+        PTR32 readers_len;
+    } *params32 = args;
+
+    struct scard_list_readers_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->groups),
+        ULongToPtr(params32->readers),
+        ULongToPtr(params32->readers_len)
+    };
+    return scard_list_readers( &params );
+};
+
+static NTSTATUS wow64_scard_list_reader_groups( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 groups;
+        PTR32 groups_len;
+    } *params32 = args;
+
+    struct scard_list_reader_groups_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->groups),
+        ULongToPtr(params32->groups_len)
+    };
+    return scard_list_reader_groups( &params );
+}
+
+static NTSTATUS wow64_scard_connect( void *args )
+{
+    struct
+    {
+        UINT64 context_handle;
+        PTR32 reader;
+        UINT64 share_mode;
+        UINT64 preferred_protocols;
+        PTR32 connect_handle;
+        PTR32 protocol;
+    } *params32 = args;
+
+    struct scard_connect_params params =
+    {
+        params32->context_handle,
+        ULongToPtr(params32->reader),
+        params32->share_mode,
+        params32->preferred_protocols,
+        ULongToPtr(params32->connect_handle),
+        ULongToPtr(params32->protocol)
+    };
+    return scard_connect( &params );
+}
+
+static NTSTATUS wow64_scard_status( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 names;
+        PTR32 names_len;
+        PTR32 state;
+        PTR32 protocol;
+        PTR32 atr;
+        PTR32 atr_len;
+    } *params32 = args;
+
+    struct scard_status_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->names),
+        ULongToPtr(params32->names_len),
+        ULongToPtr(params32->state),
+        ULongToPtr(params32->protocol),
+        ULongToPtr(params32->atr),
+        ULongToPtr(params32->atr_len)
+    };
+    return scard_status( &params );
+};
+
+static NTSTATUS wow64_scard_reconnect( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        UINT64 share_mode;
+        UINT64 preferred_protocols;
+        UINT64 initialization;
+        PTR32 protocol;
+    } *params32 = args;
+
+    struct scard_reconnect_params params =
+    {
+        params32->handle,
+        params32->share_mode,
+        params32->preferred_protocols,
+        params32->initialization,
+        ULongToPtr(params32->protocol)
+    };
+    return scard_reconnect( &params );
+}
+
+static NTSTATUS wow64_scard_disconnect( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        UINT64 disposition;
+    } *params32 = args;
+
+    struct scard_disconnect_params params =
+    {
+        params32->handle,
+        params32->disposition
+    };
+    return scard_disconnect( &params );
+}
+
+static NTSTATUS wow64_scard_begin_transaction( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+    } *params32 = args;
+
+    struct scard_begin_transaction_params params =
+    {
+        params32->handle
+    };
+    return scard_begin_transaction( &params );
+}
+
+static NTSTATUS wow64_scard_end_transaction( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        UINT64 disposition;
+    } *params32 = args;
+
+    struct scard_end_transaction_params params =
+    {
+        params32->handle,
+        params32->disposition
+    };
+    return scard_end_transaction( &params );
+}
+
+static NTSTATUS wow64_scard_transmit( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        PTR32 send;
+        PTR32 send_buf;
+        UINT64 send_buflen;
+        PTR32 recv;
+        PTR32 recv_buf;
+        PTR32 recv_buflen;
+    } *params32 = args;
+
+    struct scard_transmit_params params =
+    {
+        params32->handle,
+        ULongToPtr(params32->send),
+        ULongToPtr(params32->send_buf),
+        params32->send_buflen,
+        ULongToPtr(params32->recv),
+        ULongToPtr(params32->recv_buf),
+        ULongToPtr(params32->recv_buflen)
+    };
+    return scard_transmit( &params );
+};
+
+static NTSTATUS wow64_scard_control( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        UINT64 code;
+        PTR32 in_buf;
+        UINT64 in_buflen;
+        PTR32 out_buf;
+        UINT64 out_buflen;
+        PTR32 ret_len;
+    } *params32 = args;
+
+    struct scard_control_params params =
+    {
+        params32->handle,
+        params32->code,
+        ULongToPtr(params32->in_buf),
+        params32->in_buflen,
+        ULongToPtr(params32->out_buf),
+        params32->out_buflen,
+        ULongToPtr(params32->ret_len)
+    };
+    return scard_control( &params );
+};
+
+static NTSTATUS wow64_scard_get_attrib( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        UINT64 id;
+        PTR32 attr;
+        PTR32 attr_len;
+    } *params32 = args;
+
+    struct scard_get_attrib_params params =
+    {
+        params32->handle,
+        params32->id,
+        ULongToPtr(params32->attr),
+        ULongToPtr(params32->attr_len)
+    };
+    return scard_get_attrib( &params );
+}
+
+static NTSTATUS wow64_scard_set_attrib( void *args )
+{
+    struct
+    {
+        UINT64 handle;
+        UINT64 id;
+        PTR32 attr;
+        UINT64 attr_len;
+    } *params32 = args;
+
+    struct scard_set_attrib_params params =
+    {
+        params32->handle,
+        params32->id,
+        ULongToPtr(params32->attr),
+        params32->attr_len
+    };
+    return scard_set_attrib( &params );
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    wow64_scard_establish_context,
+    wow64_scard_release_context,
+    wow64_scard_is_valid_context,
+    wow64_scard_get_status_change,
+    wow64_scard_cancel,
+    wow64_scard_list_readers,
+    wow64_scard_list_reader_groups,
+    wow64_scard_connect,
+    wow64_scard_status,
+    wow64_scard_reconnect,
+    wow64_scard_disconnect,
+    wow64_scard_begin_transaction,
+    wow64_scard_end_transaction,
+    wow64_scard_transmit,
+    wow64_scard_control,
+    wow64_scard_get_attrib,
+    wow64_scard_set_attrib,
+};
+
+#endif  /* _WIN64 */
