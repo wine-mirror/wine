@@ -21863,6 +21863,7 @@ wine_fn_config_makefile dlls/winnls.dll16 enable_win16
 wine_fn_config_makefile dlls/winnls32 enable_winnls32
 wine_fn_config_makefile dlls/winprint enable_winprint
 wine_fn_config_makefile dlls/winscard enable_winscard
+wine_fn_config_makefile dlls/winscard/tests enable_tests
 wine_fn_config_makefile dlls/winsock.dll16 enable_win16
 wine_fn_config_makefile dlls/winspool.drv enable_winspool_drv
 wine_fn_config_makefile dlls/winspool.drv/tests enable_tests
