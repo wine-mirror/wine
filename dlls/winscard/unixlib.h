@@ -35,9 +35,29 @@ struct scard_is_valid_context_params
     UINT64 handle;
 };
 
+#define MAX_ATR_SIZE 33
+struct reader_state
+{
+    UINT64 reader;
+    UINT64 userdata;
+    UINT64 current_state;
+    UINT64 event_state;
+    UINT64 atr_size;
+    unsigned char atr[MAX_ATR_SIZE];
+};
+
+struct scard_get_status_change_params
+{
+    UINT64 handle;
+    UINT64 timeout;
+    struct reader_state *states;
+    UINT64 count;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
     unix_scard_release_context,
     unix_scard_is_valid_context,
+    unix_scard_get_status_change,
 };

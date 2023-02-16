@@ -25,8 +25,8 @@
 @ stub SCardGetCardTypeProviderNameW
 @ stub SCardGetProviderIdA
 @ stub SCardGetProviderIdW
-@ stub SCardGetStatusChangeA
-@ stub SCardGetStatusChangeW
+@ stdcall SCardGetStatusChangeA(long long ptr long)
+@ stdcall SCardGetStatusChangeW(long long ptr long)
 @ stub SCardIntroduceCardTypeA
 @ stub SCardIntroduceCardTypeW
 @ stub SCardIntroduceReaderA

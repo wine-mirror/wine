@@ -34,6 +34,7 @@
 LONG SCardEstablishContext( UINT64, const void *, const void *, UINT64 * );
 LONG SCardReleaseContext( UINT64 );
 LONG SCardIsValidContext( UINT64 );
+LONG SCardGetStatusChange( UINT64, UINT64, struct reader_state *, UINT64 );
 
 static NTSTATUS scard_establish_context( void *args )
 {
@@ -53,9 +54,16 @@ static NTSTATUS scard_is_valid_context( void *args )
     return SCardIsValidContext( params->handle );
 }
 
+static NTSTATUS scard_get_status_change( void *args )
+{
+    struct scard_get_status_change_params *params = args;
+    return SCardGetStatusChange( params->handle, params->timeout, params->states, params->count );
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     scard_establish_context,
     scard_release_context,
     scard_is_valid_context,
+    scard_get_status_change,
 };
