@@ -1242,6 +1242,7 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
     RETCODE ret;
     SQLHSTMT hstmt = command->hstmt;
     SQLLEN results = -1;
+    BOOL free_hstmt = TRUE;
 
     TRACE("%p, %p, %s, %p %p %p\n", command, outer, debugstr_guid(riid), params, affected, rowset);
 
@@ -1272,21 +1273,23 @@ static HRESULT WINAPI command_Execute(ICommandText *iface, IUnknown *outer, REFI
         msrowset->refs = 1;
         ICommandText_QueryInterface(iface, &IID_IUnknown, (void**)&msrowset->caller);
         msrowset->hstmt = hstmt;
+        free_hstmt = FALSE;
 
         hr = IRowset_QueryInterface(&msrowset->IRowset_iface, riid, (void**)rowset);
         IRowset_Release(&msrowset->IRowset_iface);
     }
-    else
+
+    if (affected)
     {
         ret = SQLRowCount(hstmt, &results);
         if (ret != SQL_SUCCESS)
             ERR("SQLRowCount failed (%d)\n", ret);
 
-        SQLFreeStmt(hstmt, SQL_CLOSE);
+        *affected = results;
     }
 
-    if (affected)
-        *affected = results;
+    if (free_hstmt)
+        SQLFreeStmt(hstmt, SQL_CLOSE);
 
     return hr;
 }

@@ -569,6 +569,13 @@ static void test_command_rowset(IUnknown *cmd)
     if (unk)
         IUnknown_Release(unk);
 
+    /* Ensure all rows are deleted - Interactive Test */
+    hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"delete from testing");
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+
+    hr = ICommandText_Execute(command_text, NULL, &IID_NULL, NULL, NULL, NULL);
+    ok(hr == S_OK, "got 0x%08lx\n", hr);
+
     hr = ICommandText_SetCommandText(command_text, &DBGUID_DEFAULT, L"insert into testing values(1, 'red', 1.0)");
     ok(hr == S_OK, "got 0x%08lx\n", hr);
 
@@ -594,7 +601,7 @@ static void test_command_rowset(IUnknown *cmd)
         DBCOLUMNINFO *dbcolinfo;
         OLECHAR *stringsbuffer;
 
-        todo_wine ok(affected == -1, "got %Id\n", affected);
+        ok(affected == -1 || affected == 1, "got %Iu\n", affected);
 
         hr = IUnknown_QueryInterface(unk, &IID_IRowset, (void**)&rowset);
         ok(hr == S_OK, "got 0x%08lx\n", hr);
