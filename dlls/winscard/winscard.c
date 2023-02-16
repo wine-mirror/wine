@@ -115,27 +115,28 @@ HANDLE WINAPI SCardAccessStartedEvent(void)
     return g_startedEvent;
 }
 
-LONG WINAPI SCardAddReaderToGroupA(SCARDCONTEXT context, LPCSTR reader, LPCSTR group)
+LONG WINAPI SCardAddReaderToGroupA( SCARDCONTEXT context, const char *reader, const char *group )
 {
-    LONG retval;
-    UNICODE_STRING readerW, groupW;
+    WCHAR *readerW = NULL, *groupW = NULL;
+    LONG ret;
 
-    if(reader) RtlCreateUnicodeStringFromAsciiz(&readerW,reader);
-    else readerW.Buffer = NULL;
-    if(group) RtlCreateUnicodeStringFromAsciiz(&groupW,group);
-    else groupW.Buffer = NULL;
+    TRACE( "%Ix, %s, %s\n", context, debugstr_a(reader), debugstr_a(group) );
 
-    retval = SCardAddReaderToGroupW(context, readerW.Buffer, groupW.Buffer);
-
-    RtlFreeUnicodeString(&readerW);
-    RtlFreeUnicodeString(&groupW);
-
-    return retval;
+    if (reader && !(readerW = ansi_to_utf16( reader ))) return SCARD_E_NO_MEMORY;
+    if (group && !(groupW = ansi_to_utf16( group )))
+    {
+        free( readerW );
+        return SCARD_E_NO_MEMORY;
+    }
+    ret = SCardAddReaderToGroupW( context, readerW, groupW );
+    free( readerW );
+    free( groupW );
+    return ret;
 }
 
-LONG WINAPI SCardAddReaderToGroupW(SCARDCONTEXT context, LPCWSTR reader, LPCWSTR group)
+LONG WINAPI SCardAddReaderToGroupW( SCARDCONTEXT context, const WCHAR *reader, const WCHAR *group )
 {
-    FIXME("%x %s %s\n", (unsigned int) context, debugstr_w(reader), debugstr_w(group));
+    FIXME( "%Ix, %s, %s\n", context, debugstr_w(reader), debugstr_w(group) );
     return SCARD_S_SUCCESS;
 }
 
