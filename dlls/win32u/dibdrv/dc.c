@@ -731,7 +731,6 @@ struct windrv_physdev
     struct gdi_physdev     dev;
     struct dibdrv_physdev *dibdrv;
     struct window_surface *surface;
-    DWORD                  start_ticks;
 };
 
 static const struct gdi_dc_funcs window_driver;
@@ -745,13 +744,14 @@ static inline void lock_surface( struct windrv_physdev *dev )
 {
     /* gdi_lock should not be locked */
     dev->surface->funcs->lock( dev->surface );
-    if (IsRectEmpty( dev->dibdrv->bounds )) dev->start_ticks = NtGetTickCount();
+    if (IsRectEmpty( dev->dibdrv->bounds )) dev->surface->draw_start_ticks = NtGetTickCount();
 }
 
 static inline void unlock_surface( struct windrv_physdev *dev )
 {
+    BOOL should_flush = NtGetTickCount() - dev->surface->draw_start_ticks > FLUSH_PERIOD;
     dev->surface->funcs->unlock( dev->surface );
-    if (NtGetTickCount() - dev->start_ticks > FLUSH_PERIOD) dev->surface->funcs->flush( dev->surface );
+    if (should_flush) dev->surface->funcs->flush( dev->surface );
 }
 
 static void CDECL unlock_bits_surface( struct gdi_image_bits *bits )
