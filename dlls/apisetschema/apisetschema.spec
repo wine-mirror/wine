@@ -384,6 +384,7 @@ apiset ext-ms-win-mm-pehelper-l1-1-0 = mf.dll
 apiset ext-ms-win-mm-wmvcore-l1-1-0 = wmvcore.dll
 apiset ext-ms-win-msi-misc-l1-1-0 = msi.dll
 apiset ext-ms-win-msimg-draw-l1-1-0 = msimg32.dll
+apiset ext-ms-win-networking-wlanapi-l1-1-0 = wlanapi.dll
 apiset ext-ms-win-ntdsapi-activedirectoryclient-l1-1-1 = ntdsapi.dll
 apiset ext-ms-win-ntuser-caret-l1-1-0 = user32.dll
 apiset ext-ms-win-ntuser-chartranslation-l1-1-0 = user32.dll
