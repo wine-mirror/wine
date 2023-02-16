@@ -71,6 +71,45 @@ static inline char *ansi_to_utf8( const char *src )
     return dst;
 }
 
+static inline WCHAR *utf8_to_utf16( const char *src )
+{
+    WCHAR *dst = NULL;
+    if (src)
+    {
+        int len = MultiByteToWideChar( CP_UTF8, 0, src, -1, NULL, 0 );
+        if ((dst = malloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_UTF8, 0, src, -1, dst, len );
+    }
+    return dst;
+}
+
+static inline char *utf16_to_ansi( const WCHAR *src )
+{
+    char *dst = NULL;
+    if (src)
+    {
+        int len = WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, src, -1, NULL, 0, NULL, NULL );
+        if (*src && !len)
+        {
+            FIXME( "can't convert %s to ANSI codepage\n", debugstr_w(src) );
+            return NULL;
+        }
+        if ((dst = malloc( len ))) WideCharToMultiByte( CP_ACP, WC_NO_BEST_FIT_CHARS, src, -1, dst, len, NULL, NULL );
+    }
+    return dst;
+}
+
+static inline char *utf8_to_ansi( const char *src )
+{
+    char *dst = NULL;
+    if (src)
+    {
+        WCHAR *tmp;
+        if ((tmp = utf8_to_utf16( src ))) dst = utf16_to_ansi( tmp );
+        free( tmp );
+    }
+    return dst;
+}
+
 HANDLE WINAPI SCardAccessStartedEvent(void)
 {
     return g_startedEvent;
@@ -170,11 +209,53 @@ LONG WINAPI SCardReleaseContext( SCARDCONTEXT context )
     return ret;
 }
 
+static LONG copy_multiszA( const char *src, char *dst, DWORD *dst_len )
+{
+    DWORD len, total_len = 0;
+    const char *ptr = src;
+
+    while (*ptr)
+    {
+        char *str;
+        if (!(str = utf8_to_ansi( ptr ))) return SCARD_E_NO_MEMORY;
+        len = strlen( str ) + 1;
+        if (dst && dst_len && *dst_len > total_len + len) strcpy( dst + total_len, str );
+        total_len += len;
+        ptr += strlen( ptr ) + 1;
+        free( str );
+    }
+
+    if (dst && dst_len && *dst_len > total_len + 1) dst[total_len] = 0;
+    if (dst_len) *dst_len = total_len + 1;
+    return SCARD_S_SUCCESS;
+}
+
 LONG WINAPI SCardStatusA(SCARDHANDLE context, LPSTR szReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState, LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen)
 {
     FIXME("(%Ix) stub\n", context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
+}
+
+static LONG copy_multiszW( const char *src, WCHAR *dst, DWORD *dst_len )
+{
+    DWORD len, total_len = 0;
+    const char *ptr = src;
+
+    while (*ptr)
+    {
+        WCHAR *str;
+        if (!(str = utf8_to_utf16( ptr ))) return SCARD_E_NO_MEMORY;
+        len = wcslen( str ) + 1;
+        if (dst && dst_len && *dst_len > total_len + len) wcscpy( dst + total_len, str );
+        total_len += len;
+        ptr += strlen( ptr ) + 1;
+        free( str );
+    }
+
+    if (dst && dst_len && *dst_len > total_len + 1) dst[total_len] = 0;
+    if (dst_len) *dst_len = total_len + 1;
+    return SCARD_S_SUCCESS;
 }
 
 LONG WINAPI SCardStatusW(SCARDHANDLE context, LPWSTR szReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState,LPDWORD pdwProtocol,LPBYTE pbAtr,LPDWORD pcbArtLen)
@@ -189,16 +270,87 @@ void WINAPI SCardReleaseStartedEvent(void)
     FIXME("stub\n");
 }
 
-LONG WINAPI SCardListReadersA(SCARDCONTEXT context, const CHAR *groups, CHAR *readers, DWORD *buflen)
+LONG WINAPI SCardListReadersA( SCARDCONTEXT context, const char *groups, char *readers, DWORD *readers_len )
 {
-    FIXME("(%Ix, %s, %p, %p) stub\n", context, debugstr_a(groups), readers, buflen);
-    return SCARD_E_NO_READERS_AVAILABLE;
+    struct handle *handle = (struct handle *)context;
+    struct scard_list_readers_params params;
+    UINT64 readers_len_utf8;
+    LONG ret;
+
+    TRACE( "%Ix, %s, %p, %p\n", context, debugstr_a(groups), readers, readers_len );
+
+    if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!readers_len) return SCARD_E_INVALID_PARAMETER;
+    if (*readers_len == SCARD_AUTOALLOCATE)
+    {
+        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
+        return SCARD_F_INTERNAL_ERROR;
+    }
+
+    params.handle = handle->unix_handle;
+    if (!groups) params.groups = NULL;
+    else if (!(params.groups = ansi_to_utf8( groups ))) return SCARD_E_NO_MEMORY;
+    params.readers = NULL;
+    params.readers_len = &readers_len_utf8;
+    if ((ret = UNIX_CALL( scard_list_readers, &params ))) goto done;
+
+    if (!(params.readers = malloc( readers_len_utf8 )))
+    {
+        free( (void *)params.groups );
+        return SCARD_E_NO_MEMORY;
+    }
+    if (!(ret = UNIX_CALL( scard_list_readers, &params )))
+    {
+        ret = copy_multiszA( params.readers, readers, readers_len );
+    }
+
+done:
+    free( (void *)params.groups );
+    free( params.readers );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
 }
 
-LONG WINAPI SCardListReadersW(SCARDCONTEXT context, const WCHAR *groups, WCHAR *readers, DWORD *buflen)
+LONG WINAPI SCardListReadersW( SCARDCONTEXT context, const WCHAR *groups, WCHAR *readers, DWORD *readers_len )
 {
-    FIXME("(%Ix, %s, %p, %p) stub\n", context, debugstr_w(groups), readers, buflen);
-    return SCARD_E_NO_READERS_AVAILABLE;
+    struct handle *handle = (struct handle *)context;
+    struct scard_list_readers_params params;
+    UINT64 readers_len_utf8;
+    LONG ret;
+
+    TRACE( "%Ix, %s, %p, %p\n", context, debugstr_w(groups), readers, readers_len );
+
+    if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!readers_len) return SCARD_E_INVALID_PARAMETER;
+    if (*readers_len == SCARD_AUTOALLOCATE)
+    {
+        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
+        return SCARD_F_INTERNAL_ERROR;
+    }
+
+    params.handle = handle->unix_handle;
+    if (!groups) params.groups = NULL;
+    else if (!(params.groups = utf16_to_utf8( groups ))) return SCARD_E_NO_MEMORY;
+    params.readers = NULL;
+    params.readers_len = &readers_len_utf8;
+    if ((ret = UNIX_CALL( scard_list_readers, &params ))) goto done;
+
+    params.handle = handle->unix_handle;
+    if (!(params.readers = malloc( readers_len_utf8 )))
+    {
+        free( (void *)params.groups );
+        return SCARD_E_NO_MEMORY;
+    }
+    if (!(ret = UNIX_CALL( scard_list_readers, &params )))
+    {
+        ret = copy_multiszW( params.readers, readers, readers_len );
+    }
+
+done:
+    free( (void *)params.groups );
+    free( params.readers );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
 }
 
 LONG WINAPI SCardCancel( SCARDCONTEXT context )
