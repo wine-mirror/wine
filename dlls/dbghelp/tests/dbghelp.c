@@ -16,11 +16,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "windef.h"
+#include "windows.h"
+#include "psapi.h"
 #include "verrsrc.h"
 #include "dbghelp.h"
 #include "wine/test.h"
 #include "winternl.h"
+
+static const BOOL is_win64 = sizeof(void*) > sizeof(int);
 
 #if defined(__i386__) || defined(__x86_64__)
 
@@ -236,7 +239,7 @@ static BOOL skip_too_old_dbghelp(HANDLE proc, DWORD64 base)
     return FALSE;
 }
 
-static void test_modules(void)
+static BOOL test_modules(void)
 {
     BOOL ret;
     char file_system[MAX_PATH];
@@ -265,7 +268,7 @@ static void test_modules(void)
         base = SymLoadModule(GetCurrentProcess(), NULL, file_wow64, NULL, base2, 0);
         ok(base == base2, "SymLoadModule failed: %lu\n", GetLastError());
         ret = SymGetModuleInfoW64(GetCurrentProcess(), base2, &im);
-        if (!ret && skip_too_old_dbghelp(GetCurrentProcess(), base2)) return;
+        if (!ret && skip_too_old_dbghelp(GetCurrentProcess(), base2)) return FALSE;
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
         ok(im.BaseOfImage == base2, "Wrong base address\n");
         ok(im.MachineType == machine_wow, "Wrong machine %lx (expecting %u)\n", im.MachineType, machine_wow);
@@ -277,7 +280,7 @@ static void test_modules(void)
     base = SymLoadModule(GetCurrentProcess(), NULL, file_system, NULL, base1, 0);
     ok(base == base1, "SymLoadModule failed: %lu\n", GetLastError());
     ret = SymGetModuleInfoW64(GetCurrentProcess(), base1, &im);
-    if (!ret && skip_too_old_dbghelp(GetCurrentProcess(), base1)) return;
+    if (!ret && skip_too_old_dbghelp(GetCurrentProcess(), base1)) return FALSE;
     ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
     ok(im.BaseOfImage == base1, "Wrong base address\n");
     machine2 = get_module_machine(file_system);
@@ -295,6 +298,139 @@ static void test_modules(void)
 
     ret = SymCleanup(GetCurrentProcess());
     ok(ret, "SymCleanup failed: %lu\n", GetLastError());
+    return TRUE;
+}
+
+struct loaded_module_aggregation
+{
+    HANDLE       proc;
+    unsigned int count_exe;
+};
+
+static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOID usr)
+{
+    struct loaded_module_aggregation* aggregation = usr;
+    IMAGEHLP_MODULEW64 im;
+    size_t image_len;
+    BOOL ret;
+
+    memset(&im, 0, sizeof(im));
+    im.SizeOfStruct = sizeof(im);
+
+    image_len = wcslen(imagename);
+
+    ret = SymGetModuleInfoW64(aggregation->proc, base, &im);
+    if (ret)
+        ok(aggregation->count_exe && image_len >= 4 && !wcscmp(imagename + image_len - 4, L".exe"),
+           "%ls shouldn't already be loaded\n", imagename);
+    else
+    {
+        ok(!ret, "Module %ls shouldn't be loaded\n", imagename);
+        ret = SymLoadModuleExW(aggregation->proc, NULL, imagename, NULL, base, sz, NULL, 0);
+        todo_wine
+        ok(ret, "SymLoadModuleExW failed on %ls: %lu\n", imagename, GetLastError());
+        ret = SymGetModuleInfoW64(aggregation->proc, base, &im);
+        todo_wine
+        ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
+    }
+    if (image_len >= 4 && !wcsicmp(imagename + image_len - 4, L".exe"))
+        aggregation->count_exe++;
+
+    return TRUE;
+}
+
+
+static void test_loaded_modules(void)
+{
+    BOOL ret;
+    char buffer[200];
+    PROCESS_INFORMATION pi = {0};
+    STARTUPINFOA si = {0};
+    struct loaded_module_aggregation aggregation = {0};
+
+    ret = GetSystemDirectoryA(buffer, sizeof(buffer));
+    ok(ret, "got error %lu\n", GetLastError());
+    strcat(buffer, "\\notepad.exe");
+
+    /* testing with child process of different machines */
+    ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ok(ret, "CreateProcess failed: %lu\n", GetLastError());
+
+    ret = WaitForInputIdle(pi.hProcess, 5000);
+    ok(!ret, "wait timed out\n");
+
+    ret = SymInitialize(pi.hProcess, NULL, FALSE);
+    ok(ret, "SymInitialize failed: %lu\n", GetLastError());
+    memset(&aggregation, 0, sizeof(aggregation));
+    aggregation.proc = pi.hProcess;
+
+    ret = EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation);
+    ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
+
+    SymCleanup(pi.hProcess);
+    TerminateProcess(pi.hProcess, 0);
+
+    if (is_win64)
+    {
+        ret = GetSystemWow64DirectoryA(buffer, sizeof(buffer));
+        ok(ret, "got error %lu\n", GetLastError());
+        strcat(buffer, "\\notepad.exe");
+
+        SymSetOptions(SymGetOptions() & ~SYMOPT_INCLUDE_32BIT_MODULES);
+
+        ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+        if (ret)
+        {
+            ret = WaitForInputIdle(pi.hProcess, 5000);
+            ok(!ret, "wait timed out\n");
+
+            ret = SymInitialize(pi.hProcess, NULL, FALSE);
+            ok(ret, "SymInitialize failed: %lu\n", GetLastError());
+            memset(&aggregation, 0, sizeof(aggregation));
+            aggregation.proc = pi.hProcess;
+
+            ret = EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation);
+            ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
+
+            SymCleanup(pi.hProcess);
+            TerminateProcess(pi.hProcess, 0);
+        }
+        else
+        {
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                skip("Skip wow64 test on non compatible platform\n");
+            else
+                ok(ret, "CreateProcess failed: %lu\n", GetLastError());
+        }
+
+        SymSetOptions(SymGetOptions() | SYMOPT_INCLUDE_32BIT_MODULES);
+
+        ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+        if (ret)
+        {
+            struct loaded_module_aggregation aggregation2 = {0};
+
+            ret = WaitForInputIdle(pi.hProcess, 5000);
+            ok(!ret, "wait timed out\n");
+
+            ret = SymInitialize(pi.hProcess, NULL, FALSE);
+            ok(ret, "SymInitialize failed: %lu\n", GetLastError());
+            memset(&aggregation2, 0, sizeof(aggregation2));
+            aggregation2.proc = pi.hProcess;
+            ret = EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation2);
+            ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
+
+            SymCleanup(pi.hProcess);
+            TerminateProcess(pi.hProcess, 0);
+        }
+        else
+        {
+            if (GetLastError() == ERROR_FILE_NOT_FOUND)
+                skip("Skip wow64 test on non compatible platform\n");
+            else
+                ok(ret, "CreateProcess failed: %lu\n", GetLastError());
+        }
+    }
 }
 
 START_TEST(dbghelp)
@@ -314,5 +450,8 @@ START_TEST(dbghelp)
     ret = SymCleanup(GetCurrentProcess());
     ok(ret, "got error %lu\n", GetLastError());
 
-    test_modules();
+    if (test_modules())
+    {
+        test_loaded_modules();
+    }
 }
