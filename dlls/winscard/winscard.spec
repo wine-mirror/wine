@@ -10,7 +10,7 @@
 @ stdcall SCardConnectA(long str long long ptr ptr)
 @ stdcall SCardConnectW(long wstr long long ptr ptr)
 @ stub SCardControl
-@ stub SCardDisconnect
+@ stdcall SCardDisconnect(long long)
 @ stub SCardEndTransaction
 @ stdcall SCardEstablishContext(long ptr ptr ptr)
 @ stub SCardForgetCardTypeA
@@ -46,7 +46,7 @@
 @ stub SCardLocateCardsByATRA
 @ stub SCardLocateCardsByATRW
 @ stub SCardLocateCardsW
-@ stub SCardReconnect
+@ stdcall SCardReconnect(long long long long ptr)
 @ stdcall SCardReleaseContext(long)
 @ stdcall SCardReleaseStartedEvent()
 @ stub SCardRemoveReaderFromGroupA

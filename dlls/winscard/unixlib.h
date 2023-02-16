@@ -95,6 +95,21 @@ struct scard_status_params
     UINT64 *atr_len;
 };
 
+struct scard_reconnect_params
+{
+    UINT64 handle;
+    UINT64 share_mode;
+    UINT64 preferred_protocols;
+    UINT64 initialization;
+    UINT64 *protocol;
+};
+
+struct scard_disconnect_params
+{
+    UINT64 handle;
+    UINT64 disposition;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
@@ -106,4 +121,6 @@ enum winscard_funcs
     unix_scard_list_reader_groups,
     unix_scard_connect,
     unix_scard_status,
+    unix_scard_reconnect,
+    unix_scard_disconnect,
 };

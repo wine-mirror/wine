@@ -710,6 +710,49 @@ LONG WINAPI SCardConnectW( SCARDCONTEXT context, const WCHAR *reader, DWORD shar
     return ret;
 }
 
+LONG WINAPI SCardReconnect( SCARDHANDLE connect, DWORD share_mode, DWORD preferred_protocols, DWORD initalization,
+                            DWORD *protocol )
+{
+    struct handle *handle = (struct handle *)connect;
+    struct scard_reconnect_params params;
+    UINT64 protocol64;
+    LONG ret;
+
+    TRACE( "%Ix, %#lx, %#lx, %#lx, %p\n", connect, share_mode, preferred_protocols, initalization, protocol );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+
+    params.handle = handle->unix_handle;
+    params.share_mode = share_mode;
+    params.preferred_protocols = preferred_protocols;
+    params.initialization = initalization;
+    params.protocol = &protocol64;
+    if (!(ret = UNIX_CALL( scard_reconnect, &params )) && protocol) *protocol = protocol64;
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
+LONG WINAPI SCardDisconnect( SCARDHANDLE connect, DWORD disposition )
+{
+    struct handle *handle = (struct handle *)connect;
+    struct scard_disconnect_params params;
+    LONG ret;
+
+    TRACE( "%Ix, %#lx\n", connect, disposition );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+
+    params.handle = handle->unix_handle;
+    params.disposition = disposition;
+    if (!(ret = UNIX_CALL( scard_disconnect, &params )))
+    {
+        handle->magic = 0;
+        free( handle );
+    }
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     switch (reason)
