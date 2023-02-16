@@ -231,11 +231,48 @@ static LONG copy_multiszA( const char *src, char *dst, DWORD *dst_len )
     return SCARD_S_SUCCESS;
 }
 
-LONG WINAPI SCardStatusA(SCARDHANDLE context, LPSTR szReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState, LPDWORD pdwProtocol, LPBYTE pbAtr, LPDWORD pcbAtrLen)
+LONG WINAPI SCardStatusA( SCARDHANDLE connect, char *names, DWORD *names_len, DWORD *state, DWORD *protocol,
+                          BYTE *atr, DWORD *atr_len )
 {
-    FIXME("(%Ix) stub\n", context);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return SCARD_F_INTERNAL_ERROR;
+    struct handle *handle = (struct handle *)connect;
+    struct scard_status_params params;
+    UINT64 state64, protocol64, atr_len64, names_len_utf8 = 0;
+    LONG ret;
+
+    TRACE( "%Ix, %p, %p, %p, %p, %p, %p\n", connect, names, names_len, state, protocol, atr, atr_len );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+    if ((names_len && *names_len == SCARD_AUTOALLOCATE) || (atr_len && *atr_len == SCARD_AUTOALLOCATE))
+    {
+        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
+        return SCARD_F_INTERNAL_ERROR;
+    }
+
+    params.handle = handle->unix_handle;
+    params.names = NULL;
+    params.names_len = &names_len_utf8;
+    params.state = &state64;
+    params.protocol = &protocol64;
+    params.atr = NULL;
+    if (!atr_len) params.atr_len = NULL;
+    else
+    {
+        atr_len64 = *atr_len;
+        params.atr_len = &atr_len64;
+    }
+    if ((ret = UNIX_CALL( scard_status, &params ))) return ret;
+
+    if (!(params.names = malloc( names_len_utf8 ))) return SCARD_E_NO_MEMORY;
+    if (!(ret = UNIX_CALL( scard_status, &params )) && !(ret = copy_multiszA( params.names, names, names_len )))
+    {
+        if (state) *state = state64;
+        if (protocol) *protocol = protocol64;
+        if (atr_len) *atr_len = atr_len64;
+    }
+
+    free( params.names );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
 }
 
 static LONG copy_multiszW( const char *src, WCHAR *dst, DWORD *dst_len )
@@ -259,11 +296,48 @@ static LONG copy_multiszW( const char *src, WCHAR *dst, DWORD *dst_len )
     return SCARD_S_SUCCESS;
 }
 
-LONG WINAPI SCardStatusW(SCARDHANDLE context, LPWSTR szReaderName, LPDWORD pcchReaderLen, LPDWORD pdwState,LPDWORD pdwProtocol,LPBYTE pbAtr,LPDWORD pcbArtLen)
+LONG WINAPI SCardStatusW( SCARDHANDLE connect, WCHAR *names, DWORD *names_len, DWORD *state, DWORD *protocol,
+                          BYTE *atr, DWORD *atr_len )
 {
-    FIXME("(%Ix) stub\n", context);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return SCARD_F_INTERNAL_ERROR;
+    struct handle *handle = (struct handle *)connect;
+    struct scard_status_params params;
+    UINT64 state64, protocol64, atr_len64, names_len_utf8 = 0;
+    LONG ret;
+
+    TRACE( "%Ix, %p, %p, %p, %p, %p, %p\n", connect, names, names_len, state, protocol, atr, atr_len );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+    if ((names_len && *names_len == SCARD_AUTOALLOCATE) || (atr_len && *atr_len == SCARD_AUTOALLOCATE))
+    {
+        FIXME( "SCARD_AUTOALLOCATE not supported\n" );
+        return SCARD_F_INTERNAL_ERROR;
+    }
+
+    params.handle = handle->unix_handle;
+    params.names = NULL;
+    params.names_len = &names_len_utf8;
+    params.state = &state64;
+    params.protocol = &protocol64;
+    params.atr = atr;
+    if (!atr_len) params.atr_len = NULL;
+    else
+    {
+        atr_len64 = *atr_len;
+        params.atr_len = &atr_len64;
+    }
+    if ((ret = UNIX_CALL( scard_status, &params ))) return ret;
+
+    if (!(params.names = malloc( names_len_utf8 ))) return SCARD_E_NO_MEMORY;
+    if (!(ret = UNIX_CALL( scard_status, &params )) && !(ret = copy_multiszW( params.names, names, names_len )))
+    {
+        if (state) *state = state64;
+        if (protocol) *protocol = protocol64;
+        if (atr_len) *atr_len = atr_len64;
+    }
+
+    free( params.names );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
 }
 
 void WINAPI SCardReleaseStartedEvent(void)

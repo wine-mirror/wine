@@ -84,6 +84,17 @@ struct scard_connect_params
     UINT64 *protocol;
 };
 
+struct scard_status_params
+{
+    UINT64 handle;
+    char *names;
+    UINT64 *names_len;
+    UINT64 *state;
+    UINT64 *protocol;
+    BYTE *atr;
+    UINT64 *atr_len;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
@@ -94,4 +105,5 @@ enum winscard_funcs
     unix_scard_list_readers,
     unix_scard_list_reader_groups,
     unix_scard_connect,
+    unix_scard_status,
 };

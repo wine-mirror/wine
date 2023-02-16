@@ -39,6 +39,7 @@ LONG SCardCancel( UINT64 );
 LONG SCardListReaders( UINT64, const char *, char *, UINT64 * );
 LONG SCardListReaderGroups( UINT64, char *, UINT64 * );
 LONG SCardConnect( UINT64, const char *, UINT64, UINT64, UINT64 *, UINT64 * );
+LONG SCardStatus( UINT64, char *, UINT64 *, UINT64 *, UINT64 *, BYTE *, UINT64 * );
 
 static NTSTATUS scard_establish_context( void *args )
 {
@@ -89,6 +90,13 @@ static NTSTATUS scard_connect( void *args )
                          params->connect_handle, params->protocol );
 }
 
+static NTSTATUS scard_status( void *args )
+{
+    struct scard_status_params *params = args;
+    return SCardStatus( params->handle, params->names, params->names_len, params->state, params->protocol,
+                        params->atr, params->atr_len );
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     scard_establish_context,
@@ -99,4 +107,5 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     scard_list_readers,
     scard_list_reader_groups,
     scard_connect,
+    scard_status,
 };
