@@ -744,7 +744,8 @@ static inline void lock_surface( struct windrv_physdev *dev )
 {
     /* gdi_lock should not be locked */
     dev->surface->funcs->lock( dev->surface );
-    if (IsRectEmpty( dev->dibdrv->bounds )) dev->surface->draw_start_ticks = NtGetTickCount();
+    if (IsRectEmpty( dev->dibdrv->bounds ) || dev->surface->draw_start_ticks == 0)
+        dev->surface->draw_start_ticks = NtGetTickCount();
 }
 
 static inline void unlock_surface( struct windrv_physdev *dev )
