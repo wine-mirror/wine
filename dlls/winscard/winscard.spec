@@ -57,7 +57,7 @@
 @ stub SCardState
 @ stdcall SCardStatusA(long str ptr ptr ptr ptr ptr)
 @ stdcall SCardStatusW(long wstr ptr ptr ptr ptr ptr)
-@ stub SCardTransmit
+@ stdcall SCardTransmit(long ptr ptr long ptr ptr ptr)
 @ extern g_rgSCardRawPci
 @ extern g_rgSCardT0Pci
 @ extern g_rgSCardT1Pci

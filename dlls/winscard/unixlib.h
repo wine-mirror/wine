@@ -121,6 +121,23 @@ struct scard_end_transaction_params
     UINT64 disposition;
 };
 
+struct io_request
+{
+    UINT64 protocol;
+    UINT64 pci_len;
+};
+
+struct scard_transmit_params
+{
+    UINT64 handle;
+    const struct io_request *send;
+    const BYTE *send_buf;
+    UINT64 send_buflen;
+    struct io_request *recv;
+    BYTE *recv_buf;
+    UINT64 *recv_buflen;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
@@ -136,4 +153,5 @@ enum winscard_funcs
     unix_scard_disconnect,
     unix_scard_begin_transaction,
     unix_scard_end_transaction,
+    unix_scard_transmit,
 };

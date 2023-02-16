@@ -786,6 +786,42 @@ LONG WINAPI SCardEndTransaction( SCARDHANDLE connect, DWORD disposition )
     return ret;
 }
 
+LONG WINAPI SCardTransmit( SCARDHANDLE connect, const SCARD_IO_REQUEST *send, const BYTE *send_buf,
+                           DWORD send_buflen, SCARD_IO_REQUEST *recv, BYTE *recv_buf, DWORD *recv_buflen )
+{
+    struct handle *handle = (struct handle *)connect;
+    struct scard_transmit_params params;
+    struct io_request send64 = { send->dwProtocol, send->cbPciLength }, recv64;
+    UINT64 recv_buflen64;
+    LONG ret;
+
+    TRACE( "%Ix, %p, %p, %lu, %p, %p, %p\n", connect, send, send_buf, send_buflen, recv, recv_buf, recv_buflen );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!recv_buflen) return SCARD_E_INVALID_PARAMETER;
+
+    params.handle = handle->unix_handle;
+    params.send = &send64;
+    params.send_buf = send_buf;
+    params.send_buflen = send_buflen;
+    params.recv = &recv64;
+    params.recv_buf = recv_buf;
+    recv_buflen64 = *recv_buflen;
+    params.recv_buflen = &recv_buflen64;
+    if (!(ret = UNIX_CALL( scard_transmit, &params )))
+    {
+        if (recv)
+        {
+            recv->dwProtocol = recv64.protocol;
+            recv->cbPciLength = recv64.pci_len;
+        }
+        *recv_buflen = recv_buflen64;
+    }
+
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     switch (reason)
