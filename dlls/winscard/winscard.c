@@ -201,11 +201,20 @@ LONG WINAPI SCardListReadersW(SCARDCONTEXT context, const WCHAR *groups, WCHAR *
     return SCARD_E_NO_READERS_AVAILABLE;
 }
 
-LONG WINAPI SCardCancel(SCARDCONTEXT context)
+LONG WINAPI SCardCancel( SCARDCONTEXT context )
 {
-    FIXME("(%Ix) stub\n", context);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return SCARD_F_INTERNAL_ERROR;
+    struct handle *handle = (struct handle *)context;
+    struct scard_cancel_params params;
+    LONG ret;
+
+    TRACE( "%Ix\n", context );
+
+    if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
+
+    params.handle = handle->unix_handle;
+    ret = UNIX_CALL( scard_cancel, &params );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
 }
 
 static LONG map_states_inA( const SCARD_READERSTATEA *src, struct reader_state *dst, DWORD count )

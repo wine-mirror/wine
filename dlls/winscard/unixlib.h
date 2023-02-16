@@ -54,10 +54,16 @@ struct scard_get_status_change_params
     UINT64 count;
 };
 
+struct scard_cancel_params
+{
+    UINT64 handle;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
     unix_scard_release_context,
     unix_scard_is_valid_context,
     unix_scard_get_status_change,
+    unix_scard_cancel,
 };
