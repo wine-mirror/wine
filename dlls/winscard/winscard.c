@@ -888,6 +888,14 @@ LONG WINAPI SCardSetAttrib( SCARDHANDLE connect, DWORD id, const BYTE *attr, DWO
     return ret;
 }
 
+LONG WINAPI SCardFreeMemory( SCARDCONTEXT context, const void *mem )
+{
+    TRACE( "%Ix, %p\n", context, mem );
+
+    free( (void *)mem );
+    return SCARD_S_SUCCESS;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     switch (reason)
