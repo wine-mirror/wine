@@ -74,6 +74,16 @@ struct scard_list_reader_groups_params
     UINT64 *groups_len;
 };
 
+struct scard_connect_params
+{
+    UINT64 context_handle;
+    const char *reader;
+    UINT64 share_mode;
+    UINT64 preferred_protocols;
+    UINT64 *connect_handle;
+    UINT64 *protocol;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
@@ -83,4 +93,5 @@ enum winscard_funcs
     unix_scard_cancel,
     unix_scard_list_readers,
     unix_scard_list_reader_groups,
+    unix_scard_connect,
 };

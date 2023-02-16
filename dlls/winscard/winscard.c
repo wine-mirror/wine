@@ -140,6 +140,7 @@ LONG WINAPI SCardAddReaderToGroupW(SCARDCONTEXT context, LPCWSTR reader, LPCWSTR
 }
 
 #define CONTEXT_MAGIC (('C' << 24) | ('T' << 16) | ('X' << 8) | '0')
+#define CONNECT_MAGIC (('C' << 24) | ('O' << 16) | ('N' << 8) | '0')
 struct handle
 {
     DWORD  magic;
@@ -547,6 +548,90 @@ LONG WINAPI SCardGetStatusChangeW( SCARDCONTEXT context, DWORD timeout, SCARD_RE
     }
 
     free_states( states_utf8, count );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
+LONG WINAPI SCardConnectA( SCARDCONTEXT context, const char *reader, DWORD share_mode, DWORD preferred_protocols,
+                           SCARDHANDLE *connect, DWORD *protocol )
+{
+    struct handle *context_handle = (struct handle *)context, *connect_handle;
+    struct scard_connect_params params;
+    char *reader_utf8;
+    UINT64 protocol64;
+    LONG ret;
+
+    TRACE( "%Ix, %s, %#lx, %#lx, %p, %p\n", context, debugstr_a(reader), share_mode, preferred_protocols, connect,
+           protocol );
+
+    if (!context_handle || context_handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!connect) return SCARD_E_INVALID_PARAMETER;
+
+    if (!(connect_handle = malloc( sizeof(*connect_handle) ))) return SCARD_E_NO_MEMORY;
+    connect_handle->magic = CONNECT_MAGIC;
+
+    if (!(reader_utf8 = ansi_to_utf8( reader )))
+    {
+        free( connect_handle );
+        return SCARD_E_NO_MEMORY;
+    }
+
+    params.context_handle = context_handle->unix_handle;
+    params.reader = reader_utf8;
+    params.share_mode = share_mode;
+    params.preferred_protocols = preferred_protocols;
+    params.connect_handle = &connect_handle->unix_handle;
+    params.protocol = &protocol64;
+    if ((ret = UNIX_CALL( scard_connect, &params ))) free( connect_handle );
+    else
+    {
+        *connect = (SCARDHANDLE)connect_handle;
+        if (protocol) *protocol = protocol64;
+    }
+
+    free( reader_utf8 );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
+LONG WINAPI SCardConnectW( SCARDCONTEXT context, const WCHAR *reader, DWORD share_mode, DWORD preferred_protocols,
+                           SCARDHANDLE *connect, DWORD *protocol )
+{
+    struct handle *context_handle = (struct handle *)context, *connect_handle;
+    struct scard_connect_params params;
+    char *reader_utf8;
+    UINT64 protocol64;
+    LONG ret;
+
+    TRACE( "%Ix, %s, %#lx, %#lx, %p, %p\n", context, debugstr_w(reader), share_mode, preferred_protocols, connect,
+           protocol );
+
+    if (!context_handle || context_handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!connect) return SCARD_E_INVALID_PARAMETER;
+
+    if (!(connect_handle = malloc( sizeof(*connect_handle) ))) return SCARD_E_NO_MEMORY;
+    connect_handle->magic = CONNECT_MAGIC;
+
+    if (!(reader_utf8 = utf16_to_utf8( reader )))
+    {
+        free( connect_handle );
+        return SCARD_E_NO_MEMORY;
+    }
+
+    params.context_handle = context_handle->unix_handle;
+    params.reader = reader_utf8;
+    params.share_mode = share_mode;
+    params.preferred_protocols = preferred_protocols;
+    params.connect_handle = &connect_handle->unix_handle;
+    params.protocol = &protocol64;
+    if ((ret = UNIX_CALL( scard_connect, &params ))) free( connect_handle );
+    else
+    {
+        *connect = (SCARDHANDLE)connect_handle;
+        if (protocol) *protocol = protocol64;
+    }
+
+    free( reader_utf8 );
     TRACE( "returning %#lx\n", ret );
     return ret;
 }
