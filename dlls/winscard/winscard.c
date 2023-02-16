@@ -822,6 +822,31 @@ LONG WINAPI SCardTransmit( SCARDHANDLE connect, const SCARD_IO_REQUEST *send, co
     return ret;
 }
 
+LONG WINAPI SCardControl( SCARDHANDLE connect, DWORD code, const void *in_buf, DWORD in_buflen, void *out_buf,
+                          DWORD out_buflen, DWORD *ret_len )
+{
+    struct handle *handle = (struct handle *)connect;
+    struct scard_control_params params;
+    UINT64 ret_len64;
+    LONG ret;
+
+    TRACE( "%Ix, %#lx, %p, %lu, %p, %lu, %p\n", connect, code, in_buf, in_buflen, out_buf, out_buflen, ret_len );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!ret_len) return SCARD_E_INVALID_PARAMETER;
+
+    params.handle = handle->unix_handle;
+    params.code = code;
+    params.in_buf = in_buf;
+    params.in_buflen = in_buflen;
+    params.out_buf = out_buf;
+    params.out_buflen = out_buflen;
+    params.ret_len = &ret_len64;
+    if (!(ret = UNIX_CALL( scard_control, &params ))) *ret_len = ret_len64;
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     switch (reason)

@@ -9,7 +9,7 @@
 @ stdcall SCardCancel(long)
 @ stdcall SCardConnectA(long str long long ptr ptr)
 @ stdcall SCardConnectW(long wstr long long ptr ptr)
-@ stub SCardControl
+@ stdcall SCardControl(long long ptr long ptr long ptr)
 @ stdcall SCardDisconnect(long long)
 @ stdcall SCardEndTransaction(long long)
 @ stdcall SCardEstablishContext(long ptr ptr ptr)

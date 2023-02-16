@@ -138,6 +138,17 @@ struct scard_transmit_params
     UINT64 *recv_buflen;
 };
 
+struct scard_control_params
+{
+    UINT64 handle;
+    UINT64 code;
+    const void *in_buf;
+    UINT64 in_buflen;
+    void *out_buf;
+    UINT64 out_buflen;
+    UINT64 *ret_len;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
@@ -154,4 +165,5 @@ enum winscard_funcs
     unix_scard_begin_transaction,
     unix_scard_end_transaction,
     unix_scard_transmit,
+    unix_scard_control,
 };
