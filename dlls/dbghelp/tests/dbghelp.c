@@ -285,7 +285,6 @@ struct nth_module
     unsigned int        index;
     BOOL                will_fail;
     IMAGEHLP_MODULE64   module;
-    BOOL                with_todo_wine;
 };
 
 static BOOL CALLBACK nth_module_cb(const char* name, DWORD64 base, void* usr)
@@ -296,8 +295,6 @@ static BOOL CALLBACK nth_module_cb(const char* name, DWORD64 base, void* usr)
     if (nth->index--) return TRUE;
     nth->module.SizeOfStruct = sizeof(nth->module);
     ret = SymGetModuleInfo64(nth->proc, base, &nth->module);
-    todo_wine_if(nth->with_todo_wine)
-    {
     if (nth->will_fail)
     {
         ok(!ret, "SymGetModuleInfo64 should have failed\n");
@@ -307,7 +304,6 @@ static BOOL CALLBACK nth_module_cb(const char* name, DWORD64 base, void* usr)
     {
         ok(ret, "SymGetModuleInfo64 failed: %lu\n", GetLastError());
         ok(nth->module.BaseOfImage == base, "Wrong base\n");
-    }
     }
     return FALSE;
 }
@@ -465,7 +461,7 @@ static void test_modules_overlap(void)
         }
         for (j = 0; j < ARRAY_SIZE(tests[i].outputs); j++)
         {
-            struct nth_module nth = {dummy, j, !tests[i].outputs[j].name, {0}, i == 9 || i == 11};
+            struct nth_module nth = {dummy, j, !tests[i].outputs[j].name, {0}};
 
             ret = SymEnumerateModules64(dummy, nth_module_cb, &nth);
             ok(ret, "SymEnumerateModules64 failed: %lu\n", GetLastError());
@@ -475,13 +471,13 @@ static void test_modules_overlap(void)
                 break;
             }
             ok(nth.index == -1, "Expecting more modules\n");
-            todo_wine_if(i >= 6)
+            todo_wine_if(i == 6 || i == 7)
             ok(nth.module.BaseOfImage == tests[i].outputs[j].base, "Wrong base\n");
             if (!nth.will_fail)
             {
-                todo_wine_if(i == 7 || i == 9 || i == 11)
+                todo_wine_if(i == 7)
                 ok(nth.module.ImageSize == tests[i].outputs[j].size, "Wrong size\n");
-                todo_wine_if(i >= 6 && i != 8)
+                todo_wine_if(i == 6 || i == 7)
                 ok(!strcasecmp(nth.module.ModuleName, tests[i].outputs[j].name), "Wrong name\n");
             }
         }

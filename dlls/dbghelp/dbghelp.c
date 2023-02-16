@@ -333,10 +333,8 @@ const struct cpu* process_get_cpu(const struct process* pcs)
 {
     const struct module* m = pcs->lmodules;
 
-    /* main module is the last one in list */
-    if (!m) return dbghelp_current_cpu;
-    while (m->next) m = m->next;
-    return m->cpu;
+    /* return cpu of main module, which is the first module in process's modules list */
+    return (m) ? m->cpu : dbghelp_current_cpu;
 }
 
 /******************************************************************

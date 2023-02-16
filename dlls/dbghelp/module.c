@@ -177,14 +177,16 @@ struct module* module_new(struct process* pcs, const WCHAR* name,
                           ULONG_PTR stamp, ULONG_PTR checksum, WORD machine)
 {
     struct module*      module;
+    struct module**     pmodule;
     unsigned            i;
 
     assert(type == DMT_ELF || type == DMT_PE || type == DMT_MACHO);
     if (!(module = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*module))))
 	return NULL;
 
-    module->next = pcs->lmodules;
-    pcs->lmodules = module;
+    for (pmodule = &pcs->lmodules; *pmodule; pmodule = &(*pmodule)->next);
+    module->next = NULL;
+    *pmodule = module;
 
     TRACE("=> %s %I64x-%I64x %s\n",
           get_module_type(type, virtual), mod_addr, mod_addr + size, debugstr_w(name));
