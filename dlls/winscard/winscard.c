@@ -94,11 +94,20 @@ LONG WINAPI SCardEstablishContext( DWORD scope, const void *reserved1, const voi
     return ret;
 }
 
-LONG WINAPI SCardIsValidContext(SCARDCONTEXT context)
+LONG WINAPI SCardIsValidContext( SCARDCONTEXT context )
 {
-    FIXME("(%Ix) stub\n", context);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return SCARD_F_INTERNAL_ERROR;
+    struct handle *handle = (struct handle *)context;
+    struct scard_is_valid_context_params params;
+    LONG ret;
+
+    TRACE( "%Ix\n", context );
+
+    if (!handle || handle->magic != CONTEXT_MAGIC) return ERROR_INVALID_HANDLE;
+
+    params.handle = handle->unix_handle;
+    ret = UNIX_CALL( scard_is_valid_context, &params );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
 }
 
 LONG WINAPI SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr, LPCGUID rgguidInterfaces, DWORD cguidInterfaceCount, LPSTR mszCards, LPDWORD pcchCards)

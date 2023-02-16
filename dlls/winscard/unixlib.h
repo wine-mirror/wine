@@ -30,8 +30,14 @@ struct scard_release_context_params
     UINT64 handle;
 };
 
+struct scard_is_valid_context_params
+{
+    UINT64 handle;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
     unix_scard_release_context,
+    unix_scard_is_valid_context,
 };
