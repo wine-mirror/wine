@@ -304,7 +304,12 @@ static BOOL test_modules(void)
 struct loaded_module_aggregation
 {
     HANDLE       proc;
+    unsigned int count_32bit;
+    unsigned int count_64bit;
     unsigned int count_exe;
+    unsigned int count_ntdll;
+    unsigned int count_systemdir;
+    unsigned int count_wowdir;
 };
 
 static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOID usr)
@@ -312,7 +317,8 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
     struct loaded_module_aggregation* aggregation = usr;
     IMAGEHLP_MODULEW64 im;
     size_t image_len;
-    BOOL ret;
+    BOOL ret, wow64;
+    WCHAR buffer[MAX_PATH];
 
     memset(&im, 0, sizeof(im));
     im.SizeOfStruct = sizeof(im);
@@ -331,8 +337,35 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
         ret = SymGetModuleInfoW64(aggregation->proc, base, &im);
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
     }
+
+    switch (im.MachineType)
+    {
+    case IMAGE_FILE_MACHINE_UNKNOWN:
+        break;
+    case IMAGE_FILE_MACHINE_I386:
+    case IMAGE_FILE_MACHINE_ARM:
+    case IMAGE_FILE_MACHINE_ARMNT:
+        aggregation->count_32bit++;
+        break;
+    case IMAGE_FILE_MACHINE_AMD64:
+    case IMAGE_FILE_MACHINE_ARM64:
+        aggregation->count_64bit++;
+        break;
+    default:
+        ok(0, "Unsupported machine %lx\n", im.MachineType);
+        break;
+    }
     if (image_len >= 4 && !wcsicmp(imagename + image_len - 4, L".exe"))
         aggregation->count_exe++;
+    if (!wcsicmp(im.ModuleName, L"ntdll"))
+        aggregation->count_ntdll++;
+    if (GetSystemDirectoryW(buffer, ARRAY_SIZE(buffer)) &&
+        !wcsnicmp(imagename, buffer, wcslen(buffer)))
+        aggregation->count_systemdir++;
+    if (is_win64 && IsWow64Process(aggregation->proc, &wow64) && wow64 &&
+        GetSystemWow64DirectoryW(buffer, ARRAY_SIZE(buffer)) &&
+        !wcsnicmp(imagename, buffer, wcslen(buffer)))
+        aggregation->count_wowdir++;
 
     return TRUE;
 }
@@ -365,6 +398,30 @@ static void test_loaded_modules(void)
     ret = EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation);
     ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
 
+    if (is_win64)
+    {
+        ok(!aggregation.count_32bit && aggregation.count_64bit, "Wrong bitness aggregation count %u %u\n",
+           aggregation.count_32bit, aggregation.count_64bit);
+        ok(aggregation.count_exe == 1 && aggregation.count_ntdll == 1, "Wrong kind aggregation count %u %u\n",
+           aggregation.count_exe, aggregation.count_ntdll);
+        ok(aggregation.count_systemdir > 2 && !aggregation.count_wowdir, "Wrong directory aggregation count %u %u\n",
+           aggregation.count_systemdir, aggregation.count_wowdir);
+    }
+    else
+    {
+        BOOL is_wow64;
+        ret = IsWow64Process(pi.hProcess, &is_wow64);
+        ok(ret, "IsWow64Process failed: %lu\n", GetLastError());
+
+        ok(aggregation.count_32bit && !aggregation.count_64bit, "Wrong bitness aggregation count %u %u\n",
+           aggregation.count_32bit, aggregation.count_64bit);
+        ok(aggregation.count_exe == 1 && aggregation.count_ntdll == 1, "Wrong kind aggregation count %u %u\n",
+           aggregation.count_exe, aggregation.count_ntdll);
+        todo_wine_if(is_wow64)
+        ok(aggregation.count_systemdir > 2 && !aggregation.count_wowdir, "Wrong directory aggregation count %u %u\n",
+           aggregation.count_systemdir, aggregation.count_wowdir);
+    }
+
     SymCleanup(pi.hProcess);
     TerminateProcess(pi.hProcess, 0);
 
@@ -389,6 +446,16 @@ static void test_loaded_modules(void)
 
             ret = EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation);
             ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
+
+            todo_wine
+            ok(aggregation.count_32bit == 1 && aggregation.count_64bit, "Wrong bitness aggregation count %u %u\n",
+               aggregation.count_32bit, aggregation.count_64bit);
+            ok(aggregation.count_exe == 1 && aggregation.count_ntdll == 1, "Wrong kind aggregation count %u %u\n",
+               aggregation.count_exe, aggregation.count_ntdll);
+            todo_wine
+            ok(aggregation.count_systemdir > 2 && aggregation.count_64bit == aggregation.count_systemdir && aggregation.count_wowdir == 1,
+               "Wrong directory aggregation count %u %u\n",
+               aggregation.count_systemdir, aggregation.count_wowdir);
 
             SymCleanup(pi.hProcess);
             TerminateProcess(pi.hProcess, 0);
@@ -417,6 +484,16 @@ static void test_loaded_modules(void)
             aggregation2.proc = pi.hProcess;
             ret = EnumerateLoadedModulesW64(pi.hProcess, aggregate_cb, &aggregation2);
             ok(ret, "EnumerateLoadedModulesW64 failed: %lu\n", GetLastError());
+
+            ok(aggregation2.count_32bit && aggregation2.count_64bit, "Wrong bitness aggregation count %u %u\n",
+               aggregation2.count_32bit, aggregation2.count_64bit);
+            todo_wine
+            ok(aggregation2.count_exe == 2 && aggregation2.count_ntdll == 2, "Wrong kind aggregation count %u %u\n",
+               aggregation2.count_exe, aggregation2.count_ntdll);
+            todo_wine
+            ok(aggregation2.count_systemdir > 2 && aggregation2.count_64bit == aggregation2.count_systemdir && aggregation2.count_wowdir > 2,
+               "Wrong directory aggregation count %u %u\n",
+               aggregation2.count_systemdir, aggregation2.count_wowdir);
 
             SymCleanup(pi.hProcess);
             TerminateProcess(pi.hProcess, 0);
