@@ -2285,7 +2285,9 @@ static DWORD WINAPI com_initialization_thread(void *arg)
 
 static void test_com_initialization(void)
 {
+    APTTYPEQUALIFIER qualifier;
     HANDLE thread;
+    APTTYPE type;
     HRESULT hr;
     HWND wnd;
     BOOL r;
@@ -2340,13 +2342,17 @@ static void test_com_initialization(void)
     ok(hr == S_OK, "CoInitialize returned %lx\n", hr);
     test_apttype(APTTYPE_MTA);
     DestroyWindow(wnd);
-    test_apttype(-1);
+
+    hr = CoGetApartmentType(&type, &qualifier);
+    ok(hr == CO_E_NOTINITIALIZED || broken(hr == S_OK) /* w10v22H2 */,
+       "CoGetApartmentType returned %#lx\n", hr);
+    test_apttype(hr == S_OK ? APTTYPE_MTA : -1);
 
     wnd = CreateWindowA("static", "static", WS_POPUP, 0, 0, 100, 100, 0, 0, 0, 0);
     ok(wnd != NULL, "CreateWindow failed\n");
-    test_apttype(-1);
+    test_apttype(hr == S_OK ? APTTYPE_MTA : -1);
     ShowWindow(wnd, SW_SHOW);
-    test_apttype(APTTYPE_MAINSTA);
+    test_apttype(hr == S_OK ? APTTYPE_MTA : APTTYPE_MAINSTA);
     DestroyWindow(wnd);
     test_apttype(-1);
 }
