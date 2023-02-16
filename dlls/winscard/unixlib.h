@@ -149,6 +149,22 @@ struct scard_control_params
     UINT64 *ret_len;
 };
 
+struct scard_get_attrib_params
+{
+    UINT64 handle;
+    UINT64 id;
+    void *attr;
+    UINT64 *attr_len;
+};
+
+struct scard_set_attrib_params
+{
+    UINT64 handle;
+    UINT64 id;
+    const void *attr;
+    UINT64 attr_len;
+};
+
 enum winscard_funcs
 {
     unix_scard_establish_context,
@@ -166,4 +182,6 @@ enum winscard_funcs
     unix_scard_end_transaction,
     unix_scard_transmit,
     unix_scard_control,
+    unix_scard_get_attrib,
+    unix_scard_set_attrib,
 };

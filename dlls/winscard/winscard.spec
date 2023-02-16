@@ -20,7 +20,7 @@
 @ stub SCardForgetReaderGroupW
 @ stub SCardForgetReaderW
 @ stub SCardFreeMemory
-@ stub SCardGetAttrib
+@ stdcall SCardGetAttrib(long long ptr ptr)
 @ stub SCardGetCardTypeProviderNameA
 @ stub SCardGetCardTypeProviderNameW
 @ stub SCardGetProviderIdA
@@ -51,7 +51,7 @@
 @ stdcall SCardReleaseStartedEvent()
 @ stub SCardRemoveReaderFromGroupA
 @ stub SCardRemoveReaderFromGroupW
-@ stub SCardSetAttrib
+@ stdcall SCardSetAttrib(long long ptr long)
 @ stub SCardSetCardTypeProviderNameA
 @ stub SCardSetCardTypeProviderNameW
 @ stub SCardState

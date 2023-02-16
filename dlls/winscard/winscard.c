@@ -847,6 +847,47 @@ LONG WINAPI SCardControl( SCARDHANDLE connect, DWORD code, const void *in_buf, D
     return ret;
 }
 
+LONG WINAPI SCardGetAttrib( SCARDHANDLE connect, DWORD id, BYTE *attr, DWORD *attr_len )
+{
+    struct handle *handle = (struct handle *)connect;
+    struct scard_get_attrib_params params;
+    UINT64 attr_len64;
+    LONG ret;
+
+    TRACE( "%Ix, %#lx, %p, %p\n", connect, id, attr, attr_len );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+    if (!attr_len) return SCARD_E_INVALID_PARAMETER;
+
+    params.handle = handle->unix_handle;
+    params.id = id;
+    params.attr = attr;
+    attr_len64 = *attr_len;
+    params.attr_len = &attr_len64;
+    if (!(ret = UNIX_CALL( scard_get_attrib, &params ))) *attr_len = attr_len64;
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
+LONG WINAPI SCardSetAttrib( SCARDHANDLE connect, DWORD id, const BYTE *attr, DWORD attr_len )
+{
+    struct handle *handle = (struct handle *)connect;
+    struct scard_set_attrib_params params;
+    LONG ret;
+
+    TRACE( "%Ix, %#lx, %p, %lu\n", connect, id, attr, attr_len );
+
+    if (!handle || handle->magic != CONNECT_MAGIC) return ERROR_INVALID_HANDLE;
+
+    params.handle = handle->unix_handle;
+    params.id = id;
+    params.attr = attr;
+    params.attr_len = attr_len;
+    ret = UNIX_CALL( scard_set_attrib, &params );
+    TRACE( "returning %#lx\n", ret );
+    return ret;
+}
+
 BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
 {
     switch (reason)

@@ -46,6 +46,8 @@ LONG SCardBeginTransaction( UINT64 );
 LONG SCardEndTransaction( UINT64, UINT64 );
 LONG SCardTransmit( UINT64, const struct io_request *, const BYTE *, UINT64, struct io_request *, BYTE *, UINT64 * );
 LONG SCardControl( UINT64, UINT64, const void *, UINT64, void *, UINT64, UINT64 * );
+LONG SCardGetAttrib( UINT64, UINT64, BYTE *, UINT64 * );
+LONG SCardSetAttrib( UINT64, UINT64, const BYTE *, UINT64 );
 
 static NTSTATUS scard_establish_context( void *args )
 {
@@ -142,6 +144,18 @@ static NTSTATUS scard_control( void *args )
                          params->out_buflen, params->ret_len );
 }
 
+static NTSTATUS scard_get_attrib( void *args )
+{
+    struct scard_get_attrib_params *params = args;
+    return SCardGetAttrib( params->handle, params->id, params->attr, params->attr_len );
+}
+
+static NTSTATUS scard_set_attrib( void *args )
+{
+    struct scard_set_attrib_params *params = args;
+    return SCardSetAttrib( params->handle, params->id, params->attr, params->attr_len );
+}
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     scard_establish_context,
@@ -159,4 +173,6 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     scard_end_transaction,
     scard_transmit,
     scard_control,
+    scard_get_attrib,
+    scard_set_attrib,
 };
