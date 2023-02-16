@@ -169,7 +169,7 @@ static const char *get_magic_type(WORD magic)
     return "???";
 }
 
-static ULONGLONG get_hybrid_metadata(void)
+static const void *get_hybrid_metadata(void)
 {
     unsigned int size;
 
@@ -179,7 +179,7 @@ static ULONGLONG get_hybrid_metadata(void)
         if (!cfg) return 0;
         size = min( size, cfg->Size );
         if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY64, CHPEMetadataPointer )) return 0;
-        return cfg->CHPEMetadataPointer;
+        return RVA( cfg->CHPEMetadataPointer - ((const IMAGE_OPTIONAL_HEADER64 *)&PE_nt_headers->OptionalHeader)->ImageBase, 1 );
     }
     else
     {
@@ -187,7 +187,7 @@ static ULONGLONG get_hybrid_metadata(void)
         if (!cfg) return 0;
         size = min( size, cfg->Size );
         if (size <= offsetof( IMAGE_LOAD_CONFIG_DIRECTORY32, CHPEMetadataPointer )) return 0;
-        return cfg->CHPEMetadataPointer;
+        return RVA( cfg->CHPEMetadataPointer - PE_nt_headers->OptionalHeader.ImageBase, 1 );
     }
 }
 
@@ -430,7 +430,7 @@ void dump_file_header(const IMAGE_FILE_HEADER *fileHeader, BOOL is_hybrid)
 
 static	void	dump_pe_header(void)
 {
-    dump_file_header(&PE_nt_headers->FileHeader, get_hybrid_metadata() != 0);
+    dump_file_header(&PE_nt_headers->FileHeader, get_hybrid_metadata() != NULL);
     dump_optional_header((const IMAGE_OPTIONAL_HEADER32*)&PE_nt_headers->OptionalHeader,
                          PE_nt_headers->FileHeader.SizeOfOptionalHeader);
     if (!PE_alt_headers) return;
@@ -1799,6 +1799,104 @@ static	void	dump_dir_imported_functions(void)
     printf("\n");
 }
 
+static void dump_hybrid_metadata(void)
+{
+    unsigned int i;
+    const struct
+    {
+        unsigned int version;
+        unsigned int code_map;
+        unsigned int code_map_count;
+        unsigned int code_ranges_to_ep;
+        unsigned int redir_metadata;
+        unsigned int __os_arm64x_dispatch_call_no_redirect;
+        unsigned int __os_arm64x_dispatch_ret;
+        unsigned int __os_arm64x_check_call;
+        unsigned int __os_arm64x_check_icall;
+        unsigned int __os_arm64x_check_icall_cfg;
+        unsigned int alt_entry;
+        unsigned int aux_iat;
+        unsigned int code_ranges_to_ep_count;
+        unsigned int redir_metadata_count;
+        unsigned int __os_arm64x_get_x64_information;
+        unsigned int __os_arm64x_set_x64_information;
+        unsigned int except_data;
+        unsigned int except_data_size;
+        unsigned int __os_arm64x_jump;
+        unsigned int aux_iat_copy;
+    } *data = get_hybrid_metadata();
+
+    if (!data) return;
+    printf( "Hybrid metadata\n" );
+    print_dword( "Version", data->version );
+    print_dword( "Code map", data->code_map );
+    print_dword( "Code map count", data->code_map_count );
+    print_dword( "Code ranges to entry points", data->code_ranges_to_ep );
+    print_dword( "Redirection metadata", data->redir_metadata );
+    print_dword( "__os_arm64x_dispatch_call_no_redirect", data->__os_arm64x_dispatch_call_no_redirect );
+    print_dword( "__os_arm64x_dispatch_ret", data->__os_arm64x_dispatch_ret );
+    print_dword( "__os_arm64x_check_call", data->__os_arm64x_check_call );
+    print_dword( "__os_arm64x_check_icall", data->__os_arm64x_check_icall );
+    print_dword( "__os_arm64x_check_icall_cfg", data->__os_arm64x_check_icall_cfg );
+    print_dword( "Alternate entry point", data->alt_entry );
+    print_dword( "Auxiliary IAT", data->aux_iat );
+    print_dword( "Code ranges to entry points count", data->code_ranges_to_ep_count );
+    print_dword( "Redirection metadata count", data->redir_metadata_count );
+    print_dword( "__os_arm64x_get_x64_information", data->__os_arm64x_get_x64_information );
+    print_dword( "__os_arm64x_set_x64_information", data->__os_arm64x_set_x64_information );
+    print_dword( "Exception data", data->except_data );
+    print_dword( "Exception data size", data->except_data_size );
+    print_dword( "__os_arm64x_jump", data->__os_arm64x_jump );
+    print_dword( "Auxiliary IAT copy", data->aux_iat_copy );
+
+    if (data->code_map)
+    {
+        const struct
+        {
+            unsigned int start : 30;
+            unsigned int type : 2;
+            unsigned int len;
+        } *map = RVA( data->code_map, data->code_map_count * sizeof(*map) );
+
+        printf( "\nCode ranges\n" );
+        for (i = 0; i < data->code_map_count; i++)
+        {
+            static const char *types[] = { "ARM64", "ARM64EC", "x64", "??" };
+            unsigned int start = map[i].start & ~0x3;
+            unsigned int type = map[i].start & 0x3;
+            printf(  "  %08x - %08x  %s\n", start, start + map[i].len, types[type] );
+        }
+    }
+
+    if (data->code_ranges_to_ep)
+    {
+        const struct
+        {
+            unsigned int start;
+            unsigned int end;
+            unsigned int func;
+        } *map = RVA( data->code_ranges_to_ep, data->code_ranges_to_ep_count * sizeof(*map) );
+
+        printf( "\nCode ranges to entry points\n" );
+        printf( "    Start  -   End      Entry point\n" );
+        for (i = 0; i < data->code_ranges_to_ep_count; i++)
+            printf(  "  %08x - %08x   %08x\n", map[i].start, map[i].end, map[i].func );
+    }
+
+    if (data->redir_metadata)
+    {
+        const struct
+        {
+            unsigned int func;
+            unsigned int redir;
+        } *map = RVA( data->redir_metadata, data->redir_metadata_count * sizeof(*map) );
+
+        printf( "\nEntry point redirection\n" );
+        for (i = 0; i < data->redir_metadata_count; i++)
+            printf(  "  %08x -> %08x\n", map[i].func, map[i].redir );
+    }
+}
+
 static void dump_dir_loadconfig(void)
 {
     unsigned int dir, size, sizes[2];
@@ -1946,6 +2044,8 @@ static void dump_dir_loadconfig(void)
             print_dword( "GuardMemcpyFunctionPointer",      loadcfg32->GuardMemcpyFunctionPointer );
         }
     }
+    printf( "\n" );
+    dump_hybrid_metadata();
 }
 
 static void dump_dir_delay_imported_functions(void)
