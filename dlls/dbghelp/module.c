@@ -1270,7 +1270,7 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
                                        PVOID UserContext)
 {
     HMODULE*    hMods;
-    WCHAR       baseW[256], modW[256];
+    WCHAR       imagenameW[MAX_PATH];
     DWORD       i, sz;
     MODULEINFO  mi;
     BOOL        wow64;
@@ -1300,10 +1300,9 @@ BOOL  WINAPI EnumerateLoadedModulesW64(HANDLE hProcess,
     for (i = 0; i < sz; i++)
     {
         if (!GetModuleInformation(hProcess, hMods[i], &mi, sizeof(mi)) ||
-            !GetModuleBaseNameW(hProcess, hMods[i], baseW, ARRAY_SIZE(baseW)))
+            !GetModuleFileNameExW(hProcess, hMods[i], imagenameW, ARRAY_SIZE(imagenameW)))
             continue;
-        module_fill_module(baseW, modW, ARRAY_SIZE(modW));
-        EnumLoadedModulesCallback(modW, (DWORD_PTR)mi.lpBaseOfDll, mi.SizeOfImage,
+        EnumLoadedModulesCallback(imagenameW, (DWORD_PTR)mi.lpBaseOfDll, mi.SizeOfImage,
                                   UserContext);
     }
     HeapFree(GetProcessHeap(), 0, hMods);

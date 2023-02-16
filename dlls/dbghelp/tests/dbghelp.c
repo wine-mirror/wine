@@ -327,10 +327,8 @@ static BOOL CALLBACK aggregate_cb(PCWSTR imagename, DWORD64 base, ULONG sz, PVOI
     {
         ok(!ret, "Module %ls shouldn't be loaded\n", imagename);
         ret = SymLoadModuleExW(aggregation->proc, NULL, imagename, NULL, base, sz, NULL, 0);
-        todo_wine
         ok(ret, "SymLoadModuleExW failed on %ls: %lu\n", imagename, GetLastError());
         ret = SymGetModuleInfoW64(aggregation->proc, base, &im);
-        todo_wine
         ok(ret, "SymGetModuleInfoW64 failed: %lu\n", GetLastError());
     }
     if (image_len >= 4 && !wcsicmp(imagename + image_len - 4, L".exe"))

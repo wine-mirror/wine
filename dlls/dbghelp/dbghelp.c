@@ -306,13 +306,9 @@ BOOL WINAPI SymGetSearchPath(HANDLE hProcess, PSTR szSearchPath,
  */
 static BOOL WINAPI process_invade_cb(PCWSTR name, ULONG64 base, ULONG size, PVOID user)
 {
-    WCHAR       tmp[MAX_PATH];
     HANDLE      hProcess = user;
 
-    if (!GetModuleFileNameExW(hProcess, (HMODULE)(DWORD_PTR)base, tmp, ARRAY_SIZE(tmp)))
-        lstrcpynW(tmp, name, ARRAY_SIZE(tmp));
-
-    SymLoadModuleExW(hProcess, 0, tmp, name, base, size, NULL, 0);
+    SymLoadModuleExW(hProcess, 0, name, NULL, base, size, NULL, 0);
     return TRUE;
 }
 

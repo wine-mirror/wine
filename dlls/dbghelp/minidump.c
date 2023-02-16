@@ -213,12 +213,8 @@ static BOOL add_module(struct dump_context* dc, const WCHAR* name,
         dc->alloc_modules = dc->num_modules = 0;
         return FALSE;
     }
-    if (is_elf ||
-        !GetModuleFileNameExW(dc->process->handle, (HMODULE)(DWORD_PTR)base,
-                              dc->modules[dc->num_modules].name,
-                              ARRAY_SIZE(dc->modules[dc->num_modules].name)))
-        lstrcpynW(dc->modules[dc->num_modules].name, name,
-                  ARRAY_SIZE(dc->modules[dc->num_modules].name));
+    lstrcpynW(dc->modules[dc->num_modules].name, name,
+              ARRAY_SIZE(dc->modules[dc->num_modules].name));
     dc->modules[dc->num_modules].base = base;
     dc->modules[dc->num_modules].size = size;
     dc->modules[dc->num_modules].timestamp = timestamp;
