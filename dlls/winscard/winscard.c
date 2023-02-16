@@ -112,6 +112,7 @@ static inline char *utf8_to_ansi( const char *src )
 
 HANDLE WINAPI SCardAccessStartedEvent(void)
 {
+    FIXME( "stub\n" );
     return g_startedEvent;
 }
 
@@ -185,9 +186,10 @@ LONG WINAPI SCardIsValidContext( SCARDCONTEXT context )
     return ret;
 }
 
-LONG WINAPI SCardListCardsA(SCARDCONTEXT hContext, LPCBYTE pbAtr, LPCGUID rgguidInterfaces, DWORD cguidInterfaceCount, LPSTR mszCards, LPDWORD pcchCards)
+LONG WINAPI SCardListCardsA( SCARDCONTEXT context, const BYTE *atr, const GUID *interfaces, DWORD interface_count,
+                             char *cards, DWORD *cards_len )
 {
-    FIXME(": stub\n");
+    FIXME( "%Ix, %p, %p, %lu, %p, %p stub\n", context, atr, interfaces, interface_count, cards, cards_len );
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return SCARD_F_INTERNAL_ERROR;
 }
@@ -343,7 +345,7 @@ LONG WINAPI SCardStatusW( SCARDHANDLE connect, WCHAR *names, DWORD *names_len, D
 
 void WINAPI SCardReleaseStartedEvent(void)
 {
-    FIXME("stub\n");
+    FIXME( "stub\n" );
 }
 
 LONG WINAPI SCardListReadersA( SCARDCONTEXT context, const char *groups, char *readers, DWORD *readers_len )
