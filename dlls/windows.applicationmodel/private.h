@@ -33,6 +33,7 @@
 #define WIDL_using_Windows_Foundation_Collections
 #include "windows.foundation.h"
 #define WIDL_using_Windows_ApplicationModel
+#define WIDL_using_Windows_Storage
 #include "windows.applicationmodel.h"
 
 extern IActivationFactory *package_factory;

@@ -543,6 +543,7 @@ static void test_PackageStatics(void)
     static const WCHAR *package_statics_name = L"Windows.ApplicationModel.Package";
     IPackageStatics *package_statics;
     IActivationFactory *factory;
+    IPackage *package;
     HSTRING str;
     HRESULT hr;
     LONG ref;
@@ -564,6 +565,12 @@ static void test_PackageStatics(void)
 
     hr = IActivationFactory_QueryInterface( factory, &IID_IPackageStatics, (void **)&package_statics );
     ok( hr == S_OK, "got hr %#lx.\n", hr );
+
+    hr = IPackageStatics_get_Current( package_statics, NULL );
+    ok( hr == E_INVALIDARG, "got hr %#lx.\n", hr );
+    hr = IPackageStatics_get_Current( package_statics, &package );
+    todo_wine ok( hr == 0x80073d54, "got hr %#lx.\n", hr );
+    todo_wine ok( !package, "got package %p.\n", package );
 
     ref = IPackageStatics_Release( package_statics );
     ok( ref == 2, "got ref %ld.\n", ref );
