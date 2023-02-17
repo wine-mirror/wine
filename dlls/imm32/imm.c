@@ -1728,52 +1728,49 @@ HWND WINAPI ImmGetDefaultIMEWnd(HWND hWnd)
 }
 
 /***********************************************************************
- *		ImmGetDescriptionA (IMM32.@)
+ *      ImmGetDescriptionA (IMM32.@)
  */
-UINT WINAPI ImmGetDescriptionA(
-  HKL hKL, LPSTR lpszDescription, UINT uBufLen)
+UINT WINAPI ImmGetDescriptionA( HKL hkl, LPSTR bufferA, UINT lengthA )
 {
-  WCHAR *buf;
-  DWORD len;
+    WCHAR *bufferW;
+    DWORD lengthW;
 
-  TRACE("%p %p %d\n", hKL, lpszDescription, uBufLen);
+    TRACE( "hkl %p, bufferA %p, lengthA %d\n", hkl, bufferA, lengthA );
 
-  /* find out how many characters in the unicode buffer */
-  len = ImmGetDescriptionW( hKL, NULL, 0 );
-  if (!len)
-    return 0;
+    if (!(lengthW = ImmGetDescriptionW( hkl, NULL, 0 ))) return 0;
+    if (!(bufferW = malloc( (lengthW + 1) * sizeof(WCHAR) ))) return 0;
+    lengthW = ImmGetDescriptionW( hkl, bufferW, lengthW + 1 );
+    lengthA = WideCharToMultiByte( CP_ACP, 0, bufferW, lengthW, bufferA,
+                                   bufferA ? lengthA : 0, NULL, NULL );
+    if (bufferA) bufferA[lengthA] = 0;
+    free( bufferW );
 
-  /* allocate a buffer of that size */
-  buf = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof (WCHAR) );
-  if( !buf )
-  return 0;
-
-  /* fetch the unicode buffer */
-  len = ImmGetDescriptionW( hKL, buf, len + 1 );
-
-  /* convert it back to ANSI */
-  len = WideCharToMultiByte( CP_ACP, 0, buf, len + 1,
-                             lpszDescription, uBufLen, NULL, NULL );
-
-  HeapFree( GetProcessHeap(), 0, buf );
-
-  if (len == 0)
-    return 0;
-
-  return len - 1;
+    return lengthA;
 }
 
 /***********************************************************************
  *		ImmGetDescriptionW (IMM32.@)
  */
-UINT WINAPI ImmGetDescriptionW(HKL hKL, LPWSTR lpszDescription, UINT uBufLen)
+UINT WINAPI ImmGetDescriptionW( HKL hkl, WCHAR *buffer, UINT length )
 {
-  FIXME("(%p, %p, %d): semi stub\n", hKL, lpszDescription, uBufLen);
+    WCHAR path[MAX_PATH];
+    HKEY hkey = 0;
+    DWORD size;
 
-  if (!hKL) return 0;
-  if (!uBufLen) return lstrlenW(L"Wine XIM" );
-  lstrcpynW( lpszDescription, L"Wine XIM", uBufLen );
-  return lstrlenW( lpszDescription );
+    TRACE( "hkl %p, buffer %p, length %u\n", hkl, buffer, length );
+
+    swprintf( path, ARRAY_SIZE(path), layouts_formatW, (ULONG)(ULONG_PTR)hkl );
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, path, &hkey )) return 0;
+
+    size = ARRAY_SIZE(path) * sizeof(WCHAR);
+    if (RegGetValueW( hkey, NULL, L"Layout Text", RRF_RT_REG_SZ, NULL, path, &size )) *path = 0;
+    RegCloseKey( hkey );
+
+    size = wcslen( path );
+    if (!buffer) return size;
+
+    lstrcpynW( buffer, path, length );
+    return wcslen( buffer );
 }
 
 /***********************************************************************

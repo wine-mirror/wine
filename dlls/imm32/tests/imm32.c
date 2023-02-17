@@ -2851,10 +2851,8 @@ static void test_ImmGetDescription(void)
     ret = ImmGetDescriptionA( NULL, NULL, 100 );
     ok( !ret, "ImmGetDescriptionA returned %lu\n", ret );
     ret = ImmGetDescriptionW( hkl, bufferW, 100 );
-    todo_wine
     ok( !ret, "ImmGetDescriptionW returned %lu\n", ret );
     ret = ImmGetDescriptionA( hkl, bufferA, 100 );
-    todo_wine
     ok( !ret, "ImmGetDescriptionA returned %lu\n", ret );
     ret = GetLastError();
     ok( ret == 0xdeadbeef, "got error %lu\n", ret );
@@ -2868,46 +2866,33 @@ static void test_ImmGetDescription(void)
     memset( bufferA, 0xcd, sizeof(bufferA) );
     ret = ImmGetDescriptionA( hkl, bufferA, 2 );
     ok( ret == 0, "ImmGetDescriptionA returned %lu\n", ret );
-    todo_wine
     ok( !strcmp( bufferA, "" ), "got bufferA %s\n", debugstr_a(bufferA) );
 
     memset( bufferW, 0xcd, sizeof(bufferW) );
     ret = ImmGetDescriptionW( hkl, bufferW, 11 );
-    todo_wine
     ok( ret == 10, "ImmGetDescriptionW returned %lu\n", ret );
-    todo_wine
     ok( !wcscmp( bufferW, L"WineTest I" ), "got bufferW %s\n", debugstr_w(bufferW) );
     memset( bufferA, 0xcd, sizeof(bufferA) );
     ret = ImmGetDescriptionA( hkl, bufferA, 11 );
-    todo_wine
     ok( ret == 0, "ImmGetDescriptionA returned %lu\n", ret );
-    todo_wine
     ok( !strcmp( bufferA, "" ), "got bufferA %s\n", debugstr_a(bufferA) );
 
     memset( bufferW, 0xcd, sizeof(bufferW) );
     ret = ImmGetDescriptionW( hkl, bufferW, 12 );
-    todo_wine
     ok( ret == 11, "ImmGetDescriptionW returned %lu\n", ret );
-    todo_wine
     ok( !wcscmp( bufferW, L"WineTest IM" ), "got bufferW %s\n", debugstr_w(bufferW) );
     memset( bufferA, 0xcd, sizeof(bufferA) );
     ret = ImmGetDescriptionA( hkl, bufferA, 12 );
-    todo_wine
     ok( ret == 12, "ImmGetDescriptionA returned %lu\n", ret );
-    todo_wine
     ok( !strcmp( bufferA, "WineTest IME" ), "got bufferA %s\n", debugstr_a(bufferA) );
 
     memset( bufferW, 0xcd, sizeof(bufferW) );
     ret = ImmGetDescriptionW( hkl, bufferW, 13 );
-    todo_wine
     ok( ret == 12, "ImmGetDescriptionW returned %lu\n", ret );
-    todo_wine
     ok( !wcscmp( bufferW, L"WineTest IME" ), "got bufferW %s\n", debugstr_w(bufferW) );
     memset( bufferA, 0xcd, sizeof(bufferA) );
     ret = ImmGetDescriptionA( hkl, bufferA, 13 );
-    todo_wine
     ok( ret == 12, "ImmGetDescriptionA returned %lu\n", ret );
-    todo_wine
     ok( !strcmp( bufferA, "WineTest IME" ), "got bufferA %s\n", debugstr_a(bufferA) );
 
     ime_cleanup( hkl );
