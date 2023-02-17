@@ -1108,8 +1108,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
             args[0] = lpcf->nSizeMin;
             args[1] = lpcf->nSizeMax;
             FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                           format, 0, 0, msgW, ARRAY_SIZE(msgW),
-                           (__ms_va_list*)args);
+                           format, 0, 0, msgW, ARRAY_SIZE(msgW), (va_list *)args);
             MessageBoxW(hDlg, msgW, NULL, MB_OK);
         }
         return(TRUE);

@@ -696,9 +696,7 @@ static BOOL PRINTDLG_UpdatePrintDlgW(HWND hDlg,
                 args[0] = lppd->nMinPage;
                 args[1] = lppd->nMaxPage;
                 FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                               resourcestr, 0, 0, resultstr,
-                               ARRAY_SIZE(resultstr),
-                               (__ms_va_list*)args);
+                               resourcestr, 0, 0, resultstr, ARRAY_SIZE(resultstr), (va_list *)args);
 		LoadStringW(COMDLG32_hInstance, PD32_PRINT_TITLE,
 			    resourcestr, 255);
 		MessageBoxW(hDlg, resultstr, resourcestr,
