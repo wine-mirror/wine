@@ -331,11 +331,11 @@ struct string_buffer
 
 static void WINAPIV append_id(struct string_buffer *buffer, const WCHAR *format, ...)
 {
-    __ms_va_list args;
+    va_list args;
     WCHAR *string;
     int len;
 
-    __ms_va_start(args, format);
+    va_start(args, format);
 
     len = _vsnwprintf(NULL, 0, format, args) + 1;
     if (!(string = ExAllocatePool(PagedPool, (buffer->len + len) * sizeof(WCHAR))))
@@ -354,7 +354,7 @@ static void WINAPIV append_id(struct string_buffer *buffer, const WCHAR *format,
     buffer->string = string;
     buffer->len += len;
 
-    __ms_va_end(args);
+    va_end(args);
 }
 
 static void get_device_id(const struct usb_device *device, struct string_buffer *buffer)
