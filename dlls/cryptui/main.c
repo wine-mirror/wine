@@ -2712,7 +2712,7 @@ static WCHAR *field_format_public_key(PCCERT_CONTEXT cert)
                 args[1] = CertGetPublicKeyLength(X509_ASN_ENCODING,
                               &cert->pCertInfo->SubjectPublicKeyInfo);
                 FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                               fmt, 0, 0, buf, len, (__ms_va_list*)args);
+                               fmt, 0, 0, buf, len, (va_list *)args);
             }
         }
     }
