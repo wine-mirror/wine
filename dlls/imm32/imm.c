@@ -1802,82 +1802,49 @@ DWORD WINAPI ImmGetGuideLineW(HIMC hIMC, DWORD dwIndex, LPWSTR lpBuf, DWORD dwBu
 }
 
 /***********************************************************************
- *		ImmGetIMEFileNameA (IMM32.@)
+ *      ImmGetIMEFileNameA (IMM32.@)
  */
-UINT WINAPI ImmGetIMEFileNameA( HKL hKL, LPSTR lpszFileName, UINT uBufLen)
+UINT WINAPI ImmGetIMEFileNameA( HKL hkl, char *bufferA, UINT lengthA )
 {
-    LPWSTR bufW = NULL;
-    UINT wBufLen = uBufLen;
-    UINT rc;
+    WCHAR *bufferW;
+    DWORD lengthW;
 
-    if (uBufLen && lpszFileName)
-        bufW = HeapAlloc(GetProcessHeap(),0,uBufLen * sizeof(WCHAR));
-    else /* We need this to get the number of byte required */
-    {
-        bufW = HeapAlloc(GetProcessHeap(),0,MAX_PATH * sizeof(WCHAR));
-        wBufLen = MAX_PATH;
-    }
+    TRACE( "hkl %p, bufferA %p, lengthA %d\n", hkl, bufferA, lengthA );
 
-    rc = ImmGetIMEFileNameW(hKL,bufW,wBufLen);
+    if (!(lengthW = ImmGetIMEFileNameW( hkl, NULL, 0 ))) return 0;
+    if (!(bufferW = malloc( (lengthW + 1) * sizeof(WCHAR) ))) return 0;
+    lengthW = ImmGetIMEFileNameW( hkl, bufferW, lengthW + 1 );
+    lengthA = WideCharToMultiByte( CP_ACP, 0, bufferW, lengthW, bufferA,
+                                   bufferA ? lengthA : 0, NULL, NULL );
+    if (bufferA) bufferA[lengthA] = 0;
+    free( bufferW );
 
-    if (rc > 0)
-    {
-        if (uBufLen && lpszFileName)
-            rc = WideCharToMultiByte(CP_ACP, 0, bufW, -1, lpszFileName,
-                                 uBufLen, NULL, NULL);
-        else /* get the length */
-            rc = WideCharToMultiByte(CP_ACP, 0, bufW, -1, NULL, 0, NULL,
-                                     NULL);
-    }
-
-    HeapFree(GetProcessHeap(),0,bufW);
-    return rc;
+    return lengthA;
 }
 
 /***********************************************************************
  *		ImmGetIMEFileNameW (IMM32.@)
  */
-UINT WINAPI ImmGetIMEFileNameW(HKL hKL, LPWSTR lpszFileName, UINT uBufLen)
+UINT WINAPI ImmGetIMEFileNameW( HKL hkl, WCHAR *buffer, UINT length )
 {
-    HKEY hkey;
-    DWORD length;
-    DWORD rc;
-    WCHAR regKey[ARRAY_SIZE(layouts_formatW)+8];
+    WCHAR path[MAX_PATH];
+    HKEY hkey = 0;
+    DWORD size;
 
-    wsprintfW( regKey, layouts_formatW, (ULONG_PTR)hKL );
-    rc = RegOpenKeyW( HKEY_LOCAL_MACHINE, regKey, &hkey);
-    if (rc != ERROR_SUCCESS)
-    {
-        SetLastError(rc);
-        return 0;
-    }
+    TRACE( "hkl %p, buffer %p, length %u\n", hkl, buffer, length );
 
-    length = 0;
-    rc = RegGetValueW(hkey, NULL, L"Ime File", RRF_RT_REG_SZ, NULL, NULL, &length);
+    swprintf( path, ARRAY_SIZE(path), layouts_formatW, (ULONG)(ULONG_PTR)hkl );
+    if (RegOpenKeyW( HKEY_LOCAL_MACHINE, path, &hkey )) return 0;
 
-    if (rc != ERROR_SUCCESS)
-    {
-        RegCloseKey(hkey);
-        SetLastError(rc);
-        return 0;
-    }
-    if (length > uBufLen * sizeof(WCHAR) || !lpszFileName)
-    {
-        RegCloseKey(hkey);
-        if (lpszFileName)
-        {
-            SetLastError(ERROR_INSUFFICIENT_BUFFER);
-            return 0;
-        }
-        else
-            return length / sizeof(WCHAR);
-    }
+    size = ARRAY_SIZE(path) * sizeof(WCHAR);
+    if (RegGetValueW( hkey, NULL, L"Ime File", RRF_RT_REG_SZ, NULL, path, &size )) *path = 0;
+    RegCloseKey( hkey );
 
-    RegGetValueW(hkey, NULL, L"Ime File", RRF_RT_REG_SZ, NULL, lpszFileName, &length);
+    size = wcslen( path );
+    if (!buffer) return size;
 
-    RegCloseKey(hkey);
-
-    return length / sizeof(WCHAR);
+    lstrcpynW( buffer, path, length );
+    return wcslen( buffer );
 }
 
 /***********************************************************************
