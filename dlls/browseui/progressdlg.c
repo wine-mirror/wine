@@ -457,10 +457,10 @@ static void update_time_remaining(ProgressDialog *This, ULONGLONG ullCompleted, 
 
     if (i > 0 && remaining < 2 && remainder != 0)
         FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-               This->remainingMsg[1], 0, 0, line, ARRAY_SIZE(line), (__ms_va_list*)args);
+               This->remainingMsg[1], 0, 0, line, ARRAY_SIZE(line), (va_list *)args);
     else
         FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-               This->remainingMsg[0], 0, 0, line, ARRAY_SIZE(line), (__ms_va_list*)args);
+               This->remainingMsg[0], 0, 0, line, ARRAY_SIZE(line), (va_list *)args);
 
     set_buffer(&This->lines[2], line);
     This->dwUpdate |= UPDATE_LINE3;
