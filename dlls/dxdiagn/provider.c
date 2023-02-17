@@ -697,7 +697,7 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
     args[0] = usedpage_mb;
     args[1] = availpage_mb;
     FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY, localized_pagefile_fmt,
-                   0, 0, print_buf, ARRAY_SIZE(print_buf), (__ms_va_list*)args);
+                   0, 0, print_buf, ARRAY_SIZE(print_buf), (va_list *)args);
 
     hr = add_bstr_property(node, L"szPageFileLocalized", print_buf);
     if (FAILED(hr))
