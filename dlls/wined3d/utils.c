@@ -6479,11 +6479,7 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const st
 
         if (!i && texture && state->render_states[WINED3D_RS_COLORKEYENABLE])
         {
-            GLenum texture_dimensions;
-
-            texture_dimensions = wined3d_texture_gl(texture)->target;
-
-            if (texture_dimensions == GL_TEXTURE_2D || texture_dimensions == GL_TEXTURE_RECTANGLE_ARB)
+            if (!(texture->resource.usage & WINED3DUSAGE_LEGACY_CUBEMAP))
             {
                 if (texture->async.color_key_flags & WINED3D_CKEY_SRC_BLT && !texture->resource.format->alpha_size)
                 {
