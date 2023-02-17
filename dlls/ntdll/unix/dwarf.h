@@ -934,7 +934,7 @@ static ULONG_PTR eval_expression( const unsigned char *p, CONTEXT *context,
         case DW_OP_eq:          stack[sp-1] = (stack[sp-1] == stack[sp]); sp--; break;
         case DW_OP_ne:          stack[sp-1] = (stack[sp-1] != stack[sp]); sp--; break;
         case DW_OP_skip:        tmp = (short)dwarf_get_u2(&p); p += tmp; break;
-        case DW_OP_bra:         tmp = (short)dwarf_get_u2(&p); if (!stack[sp--]) p += tmp; break;
+        case DW_OP_bra:         tmp = (short)dwarf_get_u2(&p); if (!stack[sp--]) { p += tmp; } break;
         case DW_OP_GNU_encoded_addr: tmp = *p++; stack[++sp] = dwarf_get_ptr( &p, tmp, bases ); break;
         case DW_OP_regx:        stack[++sp] = *(ULONG_PTR *)get_context_reg( context, dwarf_get_uleb128(&p) ); break;
         case DW_OP_bregx:
