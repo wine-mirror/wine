@@ -6437,30 +6437,9 @@ void wined3d_ffp_get_fs_settings(const struct wined3d_context *context, const st
             else
                 settings->op[i].color_fixup = texture->resource.format->color_fixup;
             if (ignore_textype)
-            {
                 settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_1D;
-            }
             else
-            {
-                switch (wined3d_texture_gl(texture)->target)
-                {
-                    case GL_TEXTURE_1D:
-                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_1D;
-                        break;
-                    case GL_TEXTURE_2D:
-                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_2D;
-                        break;
-                    case GL_TEXTURE_3D:
-                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_3D;
-                        break;
-                    case GL_TEXTURE_CUBE_MAP_ARB:
-                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
-                        break;
-                    case GL_TEXTURE_RECTANGLE_ARB:
-                        settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_RECT;
-                        break;
-                }
-            }
+                settings->op[i].tex_type = texture->resource.gl_type;
         } else {
             settings->op[i].color_fixup = COLOR_FIXUP_IDENTITY;
             settings->op[i].tex_type = WINED3D_GL_RES_TYPE_TEX_1D;
