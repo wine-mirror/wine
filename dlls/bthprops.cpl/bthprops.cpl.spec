@@ -42,7 +42,7 @@
 @ stub BluetoothMapClassOfDeviceToImageIndex
 @ stub BluetoothMapClassOfDeviceToString
 @ stub BluetoothRegisterForAuthentication
-@ stub BluetoothRegisterForAuthenticationEx
+@ stdcall -import BluetoothRegisterForAuthenticationEx(ptr ptr ptr ptr)
 @ stub BluetoothRemoveDevice
 @ stub BluetoothSdpEnumAttributes
 @ stub BluetoothSdpGetAttributeValue

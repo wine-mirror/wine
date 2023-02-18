@@ -99,3 +99,13 @@ BOOL WINAPI BluetoothFindNextDevice(HBLUETOOTH_DEVICE_FIND find, BLUETOOTH_DEVIC
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
+
+/*********************************************************************
+ *  BluetoothRegisterForAuthenticationEx
+ */
+DWORD WINAPI BluetoothRegisterForAuthenticationEx(const BLUETOOTH_DEVICE_INFO *info, HBLUETOOTH_AUTHENTICATION_REGISTRATION *out,
+                                                  PFN_AUTHENTICATION_CALLBACK_EX callback, void *param)
+{
+    FIXME("(%p, %p, %p, %p): stub!\n", info, out, callback, param);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
