@@ -33,6 +33,7 @@ typedef enum tid_t {
     Field_tid,
     Fields_tid,
     Properties_tid,
+    Property_tid,
     Recordset_tid,
     Stream_tid,
     LAST_tid

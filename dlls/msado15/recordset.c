@@ -74,6 +74,9 @@ struct field
     LONG                attrs;
     LONG                index;
     struct recordset   *recordset;
+
+    /* Field Properties */
+    VARIANT             optimize;
 };
 
 static inline struct field *impl_from_Field( Field *iface )
@@ -567,10 +570,193 @@ static HRESULT WINAPI field_props_Refresh(Properties *iface)
     return E_NOTIMPL;
 }
 
+
+struct field_property
+{
+    Property Property_iface;
+    LONG refs;
+    VARIANT *value;
+};
+
+static inline struct field_property *impl_from_Property( Property *iface )
+{
+    return CONTAINING_RECORD( iface, struct field_property, Property_iface );
+}
+
+static ULONG WINAPI field_property_AddRef(Property *iface)
+{
+    struct field_property *property = impl_from_Property( iface );
+    LONG refs = InterlockedIncrement( &property->refs );
+    TRACE( "%p new refcount %ld\n", property, refs );
+    return refs;
+}
+
+static ULONG WINAPI field_property_Release(Property *iface)
+{
+    struct field_property *property = impl_from_Property( iface );
+    LONG refs = InterlockedDecrement( &property->refs );
+    TRACE( "%p new refcount %ld\n", property, refs );
+    if (!refs)
+    {
+        free( property );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI field_property_QueryInterface(Property *iface, REFIID riid, void **obj)
+{
+    struct field_property *property = impl_from_Property( iface );
+    TRACE( "%p, %s, %p\n", property, debugstr_guid(riid), obj );
+
+    if (IsEqualGUID( riid, &IID_Property )
+        || IsEqualGUID( riid, &IID_IDispatch )
+        || IsEqualGUID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        return E_NOINTERFACE;
+    }
+    field_property_AddRef( iface );
+    return S_OK;
+}
+
+static HRESULT WINAPI field_property_GetTypeInfoCount(Property *iface, UINT *count)
+{
+    struct field_property *property = impl_from_Property( iface );
+    TRACE( "%p, %p\n", property, count );
+    *count = 1;
+    return S_OK;
+}
+
+static HRESULT WINAPI field_property_GetTypeInfo(Property *iface, UINT index, LCID lcid, ITypeInfo **info)
+{
+    struct field_property *property = impl_from_Property( iface );
+    TRACE( "%p, %u, %lu, %p\n", property, index, lcid, info );
+    return get_typeinfo(Property_tid, info);
+}
+
+static HRESULT WINAPI field_property_GetIDsOfNames(Property *iface, REFIID riid, LPOLESTR *names, UINT count,
+                                                    LCID lcid, DISPID *dispid)
+{
+    struct field_property *property = impl_from_Property( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %s, %p, %u, %lu, %p\n", property, debugstr_guid(riid), names, count, lcid, dispid );
+
+    hr = get_typeinfo(Property_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_GetIDsOfNames(typeinfo, names, count, dispid);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI field_property_Invoke(Property *iface, DISPID member, REFIID riid, LCID lcid,
+    WORD flags, DISPPARAMS *params, VARIANT *result, EXCEPINFO *excep_info, UINT *arg_err)
+{
+    struct field_property *property = impl_from_Property( iface );
+    HRESULT hr;
+    ITypeInfo *typeinfo;
+
+    TRACE( "%p, %ld, %s, %ld, %d, %p, %p, %p, %p\n", property, member, debugstr_guid(riid), lcid, flags, params,
+           result, excep_info, arg_err );
+
+    hr = get_typeinfo(Property_tid, &typeinfo);
+    if(SUCCEEDED(hr))
+    {
+        hr = ITypeInfo_Invoke(typeinfo, &property->Property_iface, member, flags, params,
+                               result, excep_info, arg_err);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hr;
+}
+
+static HRESULT WINAPI field_property_get_Value(Property *iface, VARIANT *val)
+{
+    struct field_property *property = impl_from_Property( iface );
+    TRACE("%p, %p\n", property, val);
+    VariantCopy(val, property->value);
+    return S_OK;
+}
+
+static HRESULT WINAPI field_property_put_Value(Property *iface, VARIANT val)
+{
+    struct field_property *property = impl_from_Property( iface );
+    TRACE("%p, %s\n", property, debugstr_variant(&val));
+    VariantCopy(property->value, &val);
+    return S_OK;
+}
+
+static HRESULT WINAPI field_property_get_Name(Property *iface, BSTR *str)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_property_get_Type(Property *iface, DataTypeEnum *type)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_property_get_Attributes(Property *iface, LONG *attributes)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI field_property_put_Attributes(Property *iface, LONG attributes)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static struct PropertyVtbl field_property_vtbl =
+{
+    field_property_QueryInterface,
+    field_property_AddRef,
+    field_property_Release,
+    field_property_GetTypeInfoCount,
+    field_property_GetTypeInfo,
+    field_property_GetIDsOfNames,
+    field_property_Invoke,
+    field_property_get_Value,
+    field_property_put_Value,
+    field_property_get_Name,
+    field_property_get_Type,
+    field_property_get_Attributes,
+    field_property_put_Attributes
+};
+
 static HRESULT WINAPI field_props_get_Item(Properties *iface, VARIANT index, Property **object)
 {
     struct field *field = impl_from_Properties( iface );
-    FIXME( "%p, %s, %p\n", field, debugstr_variant(&index), object);
+    struct field_property *prop;
+
+    TRACE( "%p, %s, %p\n", field, debugstr_variant(&index), object);
+
+    if (V_VT(&index) == VT_BSTR)
+    {
+        if(!wcscmp(L"Optimize", V_BSTR(&index)))
+        {
+            prop = malloc (sizeof(struct field_property));
+            prop->Property_iface.lpVtbl = &field_property_vtbl;
+            prop->value = &field->optimize;
+
+            *object = &prop->Property_iface;
+            return S_OK;
+        }
+    }
+
+    FIXME("Unsupported property %s\n", debugstr_variant(&index));
+
     return MAKE_ADO_HRESULT(adErrItemNotFound);
 }
 
