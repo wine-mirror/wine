@@ -8,30 +8,30 @@
 @ stub BluetoothEnumerateInstalledServices
 @ stub BluetoothFindBrowseGroupClose
 @ stub BluetoothFindClassIdClose
-@ stdcall BluetoothFindDeviceClose(ptr) bthprops.cpl.BluetoothFindDeviceClose
+@ stdcall -import BluetoothFindDeviceClose(ptr)
 @ stub BluetoothFindFirstBrowseGroup
 @ stub BluetoothFindFirstClassId
-@ stdcall BluetoothFindFirstDevice(ptr ptr) bthprops.cpl.BluetoothFindFirstDevice
+@ stdcall -import BluetoothFindFirstDevice(ptr ptr)
 @ stub BluetoothFindFirstProfileDescriptor
 @ stub BluetoothFindFirstProtocolDescriptorStack
 @ stub BluetoothFindFirstProtocolEntry
-@ stdcall BluetoothFindFirstRadio(ptr ptr) bthprops.cpl.BluetoothFindFirstRadio
+@ stdcall -import BluetoothFindFirstRadio(ptr ptr)
 @ stub BluetoothFindFirstService
 @ stub BluetoothFindNextBrowseGroup
 @ stub BluetoothFindNextClassId
-@ stdcall BluetoothFindNextDevice(ptr ptr) bthprops.cpl.BluetoothFindNextDevice
+@ stdcall -import BluetoothFindNextDevice(ptr ptr)
 @ stub BluetoothFindNextProfileDescriptor
 @ stub BluetoothFindNextProtocolDescriptorStack
 @ stub BluetoothFindNextProtocolEntry
-@ stdcall BluetoothFindNextRadio(ptr ptr) bthprops.cpl.BluetoothFindNextRadio
+@ stdcall -import BluetoothFindNextRadio(ptr ptr)
 @ stub BluetoothFindNextService
 @ stub BluetoothFindProfileDescriptorClose
 @ stub BluetoothFindProtocolDescriptorStackClose
 @ stub BluetoothFindProtocolEntryClose
-@ stdcall BluetoothFindRadioClose(ptr) bthprops.cpl.BluetoothFindRadioClose
+@ stdcall -import BluetoothFindRadioClose(ptr)
 @ stub BluetoothFindServiceClose
 @ stub BluetoothGetDeviceInfo
-@ stdcall BluetoothGetRadioInfo(ptr ptr) bthprops.cpl.BluetoothGetRadioInfo
+@ stdcall -import BluetoothGetRadioInfo(ptr ptr)
 @ stub BluetoothIsConnectable
 @ stub BluetoothIsDiscoverable
 @ stub BluetoothMapClassOfDeviceToImageIndex

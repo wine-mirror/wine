@@ -1,1 +1,2 @@
-MODULE    = irprops.cpl
+MODULE  = irprops.cpl
+IMPORTS = bluetoothapis

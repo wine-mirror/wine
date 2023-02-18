@@ -1,5 +1,5 @@
 /*
- * Bluetooth properties control panel
+ * Bluetooth APIs
  *
  * Copyright 2016 Austin English
  *
@@ -27,7 +27,7 @@
 #include "bthsdpdef.h"
 #include "bluetoothapis.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(bthpropscpl);
+WINE_DEFAULT_DEBUG_CHANNEL(bluetoothapis);
 
 /*********************************************************************
  *  BluetoothFindFirstDevice
