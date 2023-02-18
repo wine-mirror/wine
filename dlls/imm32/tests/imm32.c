@@ -2818,6 +2818,89 @@ static void test_ImmGetDescription(void)
     ime_cleanup( hkl );
 }
 
+static void test_ImmGetIMEFileName(void)
+{
+    HKL hkl = GetKeyboardLayout( 0 );
+    WCHAR bufferW[MAX_PATH], expectW[16];
+    char bufferA[MAX_PATH], expectA[16];
+    DWORD ret;
+
+    SetLastError( 0xdeadbeef );
+    ret = ImmGetIMEFileNameW( NULL, NULL, 0 );
+    ok( !ret, "ImmGetIMEFileNameW returned %lu\n", ret );
+    ret = ImmGetIMEFileNameA( NULL, NULL, 0 );
+    ok( !ret, "ImmGetIMEFileNameA returned %lu\n", ret );
+    ret = ImmGetIMEFileNameW( NULL, NULL, 100 );
+    ok( !ret, "ImmGetIMEFileNameW returned %lu\n", ret );
+    ret = ImmGetIMEFileNameA( NULL, NULL, 100 );
+    ok( !ret, "ImmGetIMEFileNameA returned %lu\n", ret );
+    ret = ImmGetIMEFileNameW( hkl, bufferW, 100 );
+    ok( !ret, "ImmGetIMEFileNameW returned %lu\n", ret );
+    ret = ImmGetIMEFileNameA( hkl, bufferA, 100 );
+    ok( !ret, "ImmGetIMEFileNameA returned %lu\n", ret );
+    ret = GetLastError();
+    todo_wine
+    ok( ret == 0xdeadbeef, "got error %lu\n", ret );
+
+    if (!(hkl = ime_install())) return;
+
+    memset( bufferW, 0xcd, sizeof(bufferW) );
+    ret = ImmGetIMEFileNameW( hkl, bufferW, 2 );
+    todo_wine
+    ok( ret == 1, "ImmGetIMEFileNameW returned %lu\n", ret );
+    todo_wine
+    ok( !wcscmp( bufferW, L"W" ), "got bufferW %s\n", debugstr_w(bufferW) );
+    memset( bufferA, 0xcd, sizeof(bufferA) );
+    ret = ImmGetIMEFileNameA( hkl, bufferA, 2 );
+    ok( ret == 0, "ImmGetIMEFileNameA returned %lu\n", ret );
+    todo_wine
+    ok( !strcmp( bufferA, "" ), "got bufferA %s\n", debugstr_a(bufferA) );
+
+    swprintf( expectW, ARRAY_SIZE(expectW), L"WINE%04X.I", ime_count - 1 );
+    memset( bufferW, 0xcd, sizeof(bufferW) );
+    ret = ImmGetIMEFileNameW( hkl, bufferW, 11 );
+    todo_wine
+    ok( ret == 10, "ImmGetIMEFileNameW returned %lu\n", ret );
+    todo_wine
+    ok( !wcscmp( bufferW, expectW ), "got bufferW %s\n", debugstr_w(bufferW) );
+    memset( bufferA, 0xcd, sizeof(bufferA) );
+    ret = ImmGetIMEFileNameA( hkl, bufferA, 11 );
+    ok( ret == 0, "ImmGetIMEFileNameA returned %lu\n", ret );
+    todo_wine
+    ok( !strcmp( bufferA, "" ), "got bufferA %s\n", debugstr_a(bufferA) );
+
+    swprintf( expectW, ARRAY_SIZE(expectW), L"WINE%04X.IM", ime_count - 1 );
+    memset( bufferW, 0xcd, sizeof(bufferW) );
+    ret = ImmGetIMEFileNameW( hkl, bufferW, 12 );
+    todo_wine
+    ok( ret == 11, "ImmGetIMEFileNameW returned %lu\n", ret );
+    todo_wine
+    ok( !wcscmp( bufferW, expectW ), "got bufferW %s\n", debugstr_w(bufferW) );
+    snprintf( expectA, ARRAY_SIZE(expectA), "WINE%04X.IME", ime_count - 1 );
+    memset( bufferA, 0xcd, sizeof(bufferA) );
+    ret = ImmGetIMEFileNameA( hkl, bufferA, 12 );
+    todo_wine
+    ok( ret == 12, "ImmGetIMEFileNameA returned %lu\n", ret );
+    todo_wine
+    ok( !strcmp( bufferA, expectA ), "got bufferA %s\n", debugstr_a(bufferA) );
+
+    swprintf( expectW, ARRAY_SIZE(expectW), L"WINE%04X.IME", ime_count - 1 );
+    memset( bufferW, 0xcd, sizeof(bufferW) );
+    ret = ImmGetIMEFileNameW( hkl, bufferW, 13 );
+    todo_wine
+    ok( ret == 12, "ImmGetIMEFileNameW returned %lu\n", ret );
+    todo_wine
+    ok( !wcscmp( bufferW, expectW ), "got bufferW %s\n", debugstr_w(bufferW) );
+    memset( bufferA, 0xcd, sizeof(bufferA) );
+    ret = ImmGetIMEFileNameA( hkl, bufferA, 13 );
+    todo_wine
+    ok( ret == 12, "ImmGetIMEFileNameA returned %lu\n", ret );
+    todo_wine
+    ok( !strcmp( bufferA, expectA ), "got bufferA %s\n", debugstr_a(bufferA) );
+
+    ime_cleanup( hkl );
+}
+
 START_TEST(imm32)
 {
     if (!is_ime_enabled())
@@ -2830,6 +2913,7 @@ START_TEST(imm32)
 
     test_ImmInstallIME();
     test_ImmGetDescription();
+    test_ImmGetIMEFileName();
 
     if (init())
     {
