@@ -896,7 +896,7 @@ static ULONG format_double( const double *ptr, unsigned char *buf )
     static const double precision = 0.0000000000000001;
     unsigned char *p = buf;
     double val = *ptr;
-    int neg, mag, mag2, use_exp;
+    int neg, mag, mag2 = 0, use_exp;
 
     if (isnan( val ))
     {
