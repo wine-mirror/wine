@@ -2472,6 +2472,7 @@ DEFINE_EXPECT( ImeInquire );
 static BOOL todo_ImeDestroy;
 DEFINE_EXPECT( ImeDestroy );
 DEFINE_EXPECT( ImeEscape );
+DEFINE_EXPECT( ImeEnumRegisterWord );
 static BOOL todo_IME_DLL_PROCESS_ATTACH;
 DEFINE_EXPECT( IME_DLL_PROCESS_ATTACH );
 static BOOL todo_IME_DLL_PROCESS_DETACH;
@@ -2528,7 +2529,28 @@ static UINT WINAPI ime_ImeEnumRegisterWord( REGISTERWORDENUMPROCW proc, const WC
 {
     ime_trace( "proc %p, reading %s, style %lu, string %s, data %p\n",
                proc, debugstr_w(reading), style, debugstr_w(string), data );
-    ok( 0, "unexpected call\n" );
+
+    CHECK_EXPECT( ImeEnumRegisterWord );
+
+    if (!style)
+    {
+        ok_eq( 0, reading, const void *, "%p" );
+        ok_eq( 0, string, const void *, "%p" );
+    }
+    else if (ime_info.fdwProperty & IME_PROP_UNICODE)
+    {
+        ok_eq( 0xdeadbeef, style, UINT, "%#x" );
+        ok_wcs( L"Reading", reading );
+        ok_wcs( L"String", string );
+    }
+    else
+    {
+        ok_eq( 0xdeadbeef, style, UINT, "%#x" );
+        ok_str( "Reading", (char *)reading );
+        ok_str( "String", (char *)string );
+    }
+
+    if (style) return proc( reading, style, string, data );
     return 0;
 }
 
@@ -3300,6 +3322,78 @@ cleanup:
     winetest_pop_context();
 }
 
+static int CALLBACK enum_register_wordA( const char *reading, DWORD style, const char *string, void *user )
+{
+    ime_trace( "reading %s, style %#lx, string %s, user %p\n", debugstr_a(reading), style, debugstr_a(string), user );
+
+    ok_eq( 0xdeadbeef, style, UINT, "%#x" );
+    todo_wine_if( reading[1] == 0 )
+    ok_str( "Reading", reading );
+    todo_wine_if( string[1] == 0 )
+    ok_str( "String", string );
+
+    return 0xdeadbeef;
+}
+
+static int CALLBACK enum_register_wordW( const WCHAR *reading, DWORD style, const WCHAR *string, void *user )
+{
+    ime_trace( "reading %s, style %#lx, string %s, user %p\n", debugstr_w(reading), style, debugstr_w(string), user );
+
+    ok_eq( 0xdeadbeef, style, UINT, "%#x" );
+    todo_wine_if( reading[0] != 'R' )
+    ok_wcs( L"Reading", reading );
+    todo_wine_if( string[0] != 'S' )
+    ok_wcs( L"String", string );
+
+    return 0xdeadbeef;
+}
+
+static void test_ImmEnumRegisterWord( BOOL unicode )
+{
+    HKL hkl = GetKeyboardLayout( 0 );
+
+    winetest_push_context( unicode ? "unicode" : "ansi" );
+
+    SET_ENABLE( ImeEnumRegisterWord, TRUE );
+
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, ImmEnumRegisterWordW( NULL, enum_register_wordW, NULL, 0, NULL, NULL ) );
+    ok_ret( 0, ImmEnumRegisterWordA( NULL, enum_register_wordA, NULL, 0, NULL, NULL ) );
+    ok_ret( 0, ImmEnumRegisterWordW( hkl, enum_register_wordW, NULL, 0, NULL, NULL ) );
+    ok_ret( 0, ImmEnumRegisterWordA( hkl, enum_register_wordA, NULL, 0, NULL, NULL ) );
+    todo_wine
+    ok_ret( 0xdeadbeef, GetLastError() );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+    if (unicode) ime_info.fdwProperty |= IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    SET_EXPECT( ImeEnumRegisterWord );
+    ok_ret( 0, ImmEnumRegisterWordW( hkl, enum_register_wordW, NULL, 0, NULL, NULL ) );
+    CHECK_CALLED( ImeEnumRegisterWord );
+
+    SET_EXPECT( ImeEnumRegisterWord );
+    ok_ret( 0, ImmEnumRegisterWordA( hkl, enum_register_wordA, NULL, 0, NULL, NULL ) );
+    CHECK_CALLED( ImeEnumRegisterWord );
+
+    SET_EXPECT( ImeEnumRegisterWord );
+    ok_ret( 0xdeadbeef, ImmEnumRegisterWordW( hkl, enum_register_wordW, L"Reading", 0xdeadbeef, L"String", NULL ) );
+    CHECK_CALLED( ImeEnumRegisterWord );
+
+    SET_EXPECT( ImeEnumRegisterWord );
+    ok_ret( 0xdeadbeef, ImmEnumRegisterWordA( hkl, enum_register_wordA, "Reading", 0xdeadbeef, "String", NULL ) );
+    CHECK_CALLED( ImeEnumRegisterWord );
+
+    ime_cleanup( hkl );
+
+cleanup:
+    SET_ENABLE( ImeEnumRegisterWord, FALSE );
+
+    winetest_pop_context();
+}
+
 START_TEST(imm32)
 {
     if (!is_ime_enabled())
@@ -3318,6 +3412,8 @@ START_TEST(imm32)
 
     test_ImmEscape( FALSE );
     test_ImmEscape( TRUE );
+    test_ImmEnumRegisterWord( FALSE );
+    test_ImmEnumRegisterWord( TRUE );
 
     if (init())
     {
