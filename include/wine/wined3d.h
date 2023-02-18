@@ -2753,7 +2753,19 @@ HRESULT __cdecl wined3d_stateblock_create(struct wined3d_device *device, const s
 ULONG __cdecl wined3d_stateblock_decref(struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_stateblock_get_light(const struct wined3d_stateblock *stateblock,
         UINT light_idx, struct wined3d_light *light, BOOL *enabled);
+HRESULT __cdecl wined3d_stateblock_get_ps_consts_b(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, BOOL *constants);
+HRESULT __cdecl wined3d_stateblock_get_ps_consts_f(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, struct wined3d_vec4 *constants);
+HRESULT __cdecl wined3d_stateblock_get_ps_consts_i(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, struct wined3d_ivec4 *constants);
 const struct wined3d_stateblock_state * __cdecl wined3d_stateblock_get_state(const struct wined3d_stateblock *stateblock);
+HRESULT __cdecl wined3d_stateblock_get_vs_consts_b(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, BOOL *constants);
+HRESULT __cdecl wined3d_stateblock_get_vs_consts_f(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, struct wined3d_vec4 *constants);
+HRESULT __cdecl wined3d_stateblock_get_vs_consts_i(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, struct wined3d_ivec4 *constants);
 ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_init_contained_states(struct wined3d_stateblock *stateblock);
 void __cdecl wined3d_stateblock_multiply_transform(struct wined3d_stateblock *stateblock,

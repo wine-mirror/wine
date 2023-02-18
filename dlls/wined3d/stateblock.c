@@ -1245,6 +1245,50 @@ HRESULT CDECL wined3d_stateblock_set_vs_consts_b(struct wined3d_stateblock *stat
     return WINED3D_OK;
 }
 
+HRESULT CDECL wined3d_stateblock_get_vs_consts_f(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, struct wined3d_vec4 *constants)
+{
+    const struct wined3d_d3d_info *d3d_info = &stateblock->device->adapter->d3d_info;
+
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n", stateblock, start_idx, count, constants);
+
+    if (!constants || !wined3d_bound_range(start_idx, count, d3d_info->limits.vs_uniform_count))
+        return WINED3DERR_INVALIDCALL;
+
+    memcpy(constants, &stateblock->stateblock_state.vs_consts_f[start_idx], count * sizeof(*constants));
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_get_vs_consts_i(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, struct wined3d_ivec4 *constants)
+{
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n", stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
+        return WINED3DERR_INVALIDCALL;
+
+    if (count > WINED3D_MAX_CONSTS_I - start_idx)
+        count = WINED3D_MAX_CONSTS_I - start_idx;
+
+    memcpy(constants, &stateblock->stateblock_state.vs_consts_i[start_idx], count * sizeof(*constants));
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_get_vs_consts_b(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, BOOL *constants)
+{
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n", stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
+        return WINED3DERR_INVALIDCALL;
+
+    if (count > WINED3D_MAX_CONSTS_B - start_idx)
+        count = WINED3D_MAX_CONSTS_B - start_idx;
+
+    memcpy(constants, &stateblock->stateblock_state.vs_consts_b[start_idx], count * sizeof(*constants));
+    return WINED3D_OK;
+}
+
 void CDECL wined3d_stateblock_set_pixel_shader(struct wined3d_stateblock *stateblock, struct wined3d_shader *shader)
 {
     TRACE("stateblock %p, shader %p.\n", stateblock, shader);
@@ -1310,6 +1354,48 @@ HRESULT CDECL wined3d_stateblock_set_ps_consts_b(struct wined3d_stateblock *stat
     memcpy(&stateblock->stateblock_state.ps_consts_b[start_idx], constants, count * sizeof(*constants));
     for (i = start_idx; i < count + start_idx; ++i)
         stateblock->changed.pixelShaderConstantsB |= (1u << i);
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_get_ps_consts_f(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, struct wined3d_vec4 *constants)
+{
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n", stateblock, start_idx, count, constants);
+
+    if (!constants || !wined3d_bound_range(start_idx, count, WINED3D_MAX_PS_CONSTS_F))
+        return WINED3DERR_INVALIDCALL;
+
+    memcpy(constants, &stateblock->stateblock_state.ps_consts_f[start_idx], count * sizeof(*constants));
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_get_ps_consts_i(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, struct wined3d_ivec4 *constants)
+{
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n", stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
+        return WINED3DERR_INVALIDCALL;
+
+    if (count > WINED3D_MAX_CONSTS_I - start_idx)
+        count = WINED3D_MAX_CONSTS_I - start_idx;
+
+    memcpy(constants, &stateblock->stateblock_state.ps_consts_i[start_idx], count * sizeof(*constants));
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_stateblock_get_ps_consts_b(struct wined3d_stateblock *stateblock,
+        unsigned int start_idx, unsigned int count, BOOL *constants)
+{
+    TRACE("stateblock %p, start_idx %u, count %u, constants %p.\n", stateblock, start_idx, count, constants);
+
+    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
+        return WINED3DERR_INVALIDCALL;
+
+    if (count > WINED3D_MAX_CONSTS_B - start_idx)
+        count = WINED3D_MAX_CONSTS_B - start_idx;
+
+    memcpy(constants, &stateblock->stateblock_state.ps_consts_b[start_idx], count * sizeof(*constants));
     return WINED3D_OK;
 }
 

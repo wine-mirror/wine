@@ -3678,26 +3678,15 @@ static HRESULT WINAPI d3d9_device_GetVertexShaderConstantF(IDirect3DDevice9Ex *i
         UINT start_idx, float *constants, UINT count)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    const struct wined3d_vec4 *src;
+    HRESULT hr;
 
     TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (!constants)
-        return D3DERR_INVALIDCALL;
-
-    if (!wined3d_bound_range(start_idx, count, device->vs_uniform_count))
-    {
-        WARN("Trying to access %u constants, but d3d9 only supports %u\n",
-             start_idx + count, device->vs_uniform_count);
-        return D3DERR_INVALIDCALL;
-    }
-
     wined3d_mutex_lock();
-    src = device->stateblock_state->vs_consts_f;
-    memcpy(constants, &src[start_idx], count * sizeof(*src));
+    hr = wined3d_stateblock_get_vs_consts_f(device->state, start_idx, count, (struct wined3d_vec4 *)constants);
     wined3d_mutex_unlock();
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d9_device_SetVertexShaderConstantI(IDirect3DDevice9Ex *iface,
@@ -3720,21 +3709,15 @@ static HRESULT WINAPI d3d9_device_GetVertexShaderConstantI(IDirect3DDevice9Ex *i
         UINT start_idx, int *constants, UINT count)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    const struct wined3d_ivec4 *src;
+    HRESULT hr;
 
     TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
-        return WINED3DERR_INVALIDCALL;
-    if (count > WINED3D_MAX_CONSTS_I - start_idx)
-        count = WINED3D_MAX_CONSTS_I - start_idx;
-
     wined3d_mutex_lock();
-    src = device->stateblock_state->vs_consts_i;
-    memcpy(constants, &src[start_idx], count * sizeof(*src));
+    hr = wined3d_stateblock_get_vs_consts_i(device->state, start_idx, count, (struct wined3d_ivec4 *)constants);
     wined3d_mutex_unlock();
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d9_device_SetVertexShaderConstantB(IDirect3DDevice9Ex *iface,
@@ -3756,19 +3739,15 @@ static HRESULT WINAPI d3d9_device_GetVertexShaderConstantB(IDirect3DDevice9Ex *i
         UINT start_idx, BOOL *constants, UINT count)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    HRESULT hr;
 
     TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_B)
-        return WINED3DERR_INVALIDCALL;
-    if (count > WINED3D_MAX_CONSTS_B - start_idx)
-        count = WINED3D_MAX_CONSTS_B - start_idx;
-
     wined3d_mutex_lock();
-    memcpy(constants, &device->stateblock_state->vs_consts_b[start_idx], count * sizeof(*constants));
+    hr = wined3d_stateblock_get_vs_consts_b(device->state, start_idx, count, constants);
     wined3d_mutex_unlock();
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d9_device_SetStreamSource(IDirect3DDevice9Ex *iface,
@@ -4028,19 +4007,15 @@ static HRESULT WINAPI d3d9_device_GetPixelShaderConstantF(IDirect3DDevice9Ex *if
         UINT start_idx, float *constants, UINT count)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    const struct wined3d_vec4 *src;
+    HRESULT hr;
 
     TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (!constants || !wined3d_bound_range(start_idx, count, WINED3D_MAX_PS_CONSTS_F))
-        return WINED3DERR_INVALIDCALL;
-
     wined3d_mutex_lock();
-    src = device->stateblock_state->ps_consts_f;
-    memcpy(constants, &src[start_idx], count * sizeof(*src));
+    hr = wined3d_stateblock_get_ps_consts_f(device->state, start_idx, count, (struct wined3d_vec4 *)constants);
     wined3d_mutex_unlock();
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d9_device_SetPixelShaderConstantI(IDirect3DDevice9Ex *iface,
@@ -4063,21 +4038,15 @@ static HRESULT WINAPI d3d9_device_GetPixelShaderConstantI(IDirect3DDevice9Ex *if
         UINT start_idx, int *constants, UINT count)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
-    const struct wined3d_ivec4 *src;
+    HRESULT hr;
 
     TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
-        return WINED3DERR_INVALIDCALL;
-    if (count > WINED3D_MAX_CONSTS_I - start_idx)
-        count = WINED3D_MAX_CONSTS_I - start_idx;
-
     wined3d_mutex_lock();
-    src = device->stateblock_state->ps_consts_i;
-    memcpy(constants, &src[start_idx], count * sizeof(*src));
+    hr = wined3d_stateblock_get_ps_consts_i(device->state, start_idx, count, (struct wined3d_ivec4 *)constants);
     wined3d_mutex_unlock();
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d9_device_SetPixelShaderConstantB(IDirect3DDevice9Ex *iface,
@@ -4099,19 +4068,15 @@ static HRESULT WINAPI d3d9_device_GetPixelShaderConstantB(IDirect3DDevice9Ex *if
         UINT start_idx, BOOL *constants, UINT count)
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    HRESULT hr;
 
     TRACE("iface %p, start_idx %u, constants %p, count %u.\n", iface, start_idx, constants, count);
 
-    if (!constants || start_idx >= WINED3D_MAX_CONSTS_I)
-        return WINED3DERR_INVALIDCALL;
-    if (count > WINED3D_MAX_CONSTS_I - start_idx)
-        count = WINED3D_MAX_CONSTS_I - start_idx;
-
     wined3d_mutex_lock();
-    memcpy(constants, &device->stateblock_state->ps_consts_b[start_idx], count * sizeof(*constants));
+    hr = wined3d_stateblock_get_ps_consts_b(device->state, start_idx, count, constants);
     wined3d_mutex_unlock();
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d9_device_DrawRectPatch(IDirect3DDevice9Ex *iface, UINT handle,

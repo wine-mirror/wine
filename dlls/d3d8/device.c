@@ -3051,26 +3051,15 @@ static HRESULT WINAPI d3d8_device_GetVertexShaderConstant(IDirect3DDevice8 *ifac
         DWORD start_idx, void *constants, DWORD count)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    const struct wined3d_vec4 *src;
+    HRESULT hr;
 
     TRACE("iface %p, start_idx %lu, constants %p, count %lu.\n", iface, start_idx, constants, count);
 
-    if (!constants)
-        return D3DERR_INVALIDCALL;
-
-    if (!wined3d_bound_range(start_idx, count, device->vs_uniform_count))
-    {
-        WARN("Trying to access %lu constants, but d3d8 only supports %u.\n",
-             start_idx + count, device->vs_uniform_count);
-        return D3DERR_INVALIDCALL;
-    }
-
     wined3d_mutex_lock();
-    src = device->stateblock_state->vs_consts_f;
-    memcpy(constants, &src[start_idx], count * sizeof(*src));
+    hr = wined3d_stateblock_get_vs_consts_f(device->state, start_idx, count, constants);
     wined3d_mutex_unlock();
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d8_device_GetVertexShaderDeclaration(IDirect3DDevice8 *iface,
@@ -3353,19 +3342,18 @@ static HRESULT WINAPI d3d8_device_GetPixelShaderConstant(IDirect3DDevice8 *iface
         DWORD start_idx, void *constants, DWORD count)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    const struct wined3d_vec4 *src;
+    HRESULT hr;
 
     TRACE("iface %p, start_idx %lu, constants %p, count %lu.\n", iface, start_idx, constants, count);
 
-    if (!constants || !wined3d_bound_range(start_idx, count, D3D8_MAX_PIXEL_SHADER_CONSTANTF))
+    if (!wined3d_bound_range(start_idx, count, D3D8_MAX_PIXEL_SHADER_CONSTANTF))
         return WINED3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
-    src = device->stateblock_state->ps_consts_f;
-    memcpy(constants, &src[start_idx], count * sizeof(*src));
+    hr = wined3d_stateblock_get_ps_consts_f(device->state, start_idx, count, constants);
     wined3d_mutex_unlock();
 
-    return D3D_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3d8_device_GetPixelShaderFunction(IDirect3DDevice8 *iface,
