@@ -109,3 +109,13 @@ DWORD WINAPI BluetoothRegisterForAuthenticationEx(const BLUETOOTH_DEVICE_INFO *i
     FIXME("(%p, %p, %p, %p): stub!\n", info, out, callback, param);
     return ERROR_CALL_NOT_IMPLEMENTED;
 }
+
+/*********************************************************************
+ *  BluetoothUnregisterAuthentication
+ */
+BOOL WINAPI BluetoothUnregisterAuthentication(HBLUETOOTH_AUTHENTICATION_REGISTRATION handle)
+{
+    FIXME("(%p): stub!\n", handle);
+    if (!handle) SetLastError(ERROR_INVALID_HANDLE);
+    return FALSE;
+}

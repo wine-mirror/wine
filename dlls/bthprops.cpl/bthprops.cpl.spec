@@ -55,7 +55,7 @@
 @ stub BluetoothSendAuthenticationResponseEx
 @ stub BluetoothSetLocalServiceInfo
 @ stub BluetoothSetServiceState
-@ stub BluetoothUnregisterAuthentication
+@ stdcall -import BluetoothUnregisterAuthentication(long)
 @ stub BluetoothUpdateDeviceRecord
 @ stub BthpEnableAllServices
 @ stub BthpFindPnpInfo

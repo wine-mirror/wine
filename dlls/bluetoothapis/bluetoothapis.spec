@@ -63,7 +63,7 @@
 @ stub BluetoothSetLocalServiceInfo
 @ stub BluetoothSetServiceState
 @ stub BluetoothSetServiceStateEx
-@ stub BluetoothUnregisterAuthentication
+@ stdcall BluetoothUnregisterAuthentication(long)
 @ stub BluetoothUpdateDeviceRecord
 @ stub BthpCheckForUnsupportedGuid
 @ stub BthpCleanupBRDeviceNode

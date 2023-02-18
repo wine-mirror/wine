@@ -47,6 +47,6 @@
 @ stub BluetoothSelectDevicesFree
 @ stub BluetoothSendAuthenticationResponse
 @ stub BluetoothSetServiceState
-@ stub BluetoothUnregisterAuthentication
+@ stdcall -import BluetoothUnregisterAuthentication(long)
 @ stub BluetoothUpdateDeviceRecord
 #@ stub CPlApplet
