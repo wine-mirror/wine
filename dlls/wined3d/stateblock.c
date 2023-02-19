@@ -2180,7 +2180,6 @@ static void wined3d_device_set_vs_consts_b(struct wined3d_device *device,
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n", device, start_idx, count, constants);
 
-    memcpy(&device->cs->c.state->vs_consts_b[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
     {
         for (i = 0; i < count; ++i)
@@ -2197,7 +2196,6 @@ static void wined3d_device_set_vs_consts_i(struct wined3d_device *device,
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n", device, start_idx, count, constants);
 
-    memcpy(&device->cs->c.state->vs_consts_i[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
     {
         for (i = 0; i < count; ++i)
@@ -2214,7 +2212,6 @@ static void wined3d_device_set_vs_consts_f(struct wined3d_device *device,
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n", device, start_idx, count, constants);
 
-    memcpy(&device->cs->c.state->vs_consts_f[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
     {
         for (i = 0; i < count; ++i)
@@ -2231,7 +2228,6 @@ static void wined3d_device_set_ps_consts_b(struct wined3d_device *device,
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n", device, start_idx, count, constants);
 
-    memcpy(&device->cs->c.state->ps_consts_b[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
     {
         for (i = 0; i < count; ++i)
@@ -2248,7 +2244,6 @@ static void wined3d_device_set_ps_consts_i(struct wined3d_device *device,
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n", device, start_idx, count, constants);
 
-    memcpy(&device->cs->c.state->ps_consts_i[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
     {
         for (i = 0; i < count; ++i)
@@ -2265,7 +2260,6 @@ static void wined3d_device_set_ps_consts_f(struct wined3d_device *device,
 
     TRACE("device %p, start_idx %u, count %u, constants %p.\n", device, start_idx, count, constants);
 
-    memcpy(&device->cs->c.state->ps_consts_f[start_idx], constants, count * sizeof(*constants));
     if (TRACE_ON(d3d))
     {
         for (i = 0; i < count; ++i)

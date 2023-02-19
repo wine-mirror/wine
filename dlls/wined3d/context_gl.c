@@ -4838,7 +4838,7 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
     /* Immediate mode drawing can't make use of indices in a VBO - get the
      * data from the index buffer. */
     if (idx_size)
-        idx_data = wined3d_buffer_load_sysmem(state->index_buffer, &context_gl->c) + state->index_offset;
+        idx_data = (uint8_t *)wined3d_buffer_load_sysmem(state->index_buffer, &context_gl->c) + state->index_offset;
 
     ops = &d3d_info->ffp_attrib_ops;
 

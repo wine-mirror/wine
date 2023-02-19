@@ -1178,18 +1178,24 @@ static void walk_constant_heap_clamped(const struct wined3d_gl_info *gl_info,
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_load_constants_f(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_vec4 *constants, const GLint *constant_locations, const struct constant_heap *heap,
+static void shader_glsl_load_constants_f(const struct wined3d_shader *shader, struct wined3d_context_gl *context_gl,
+        struct wined3d_buffer *constant_buffer, const GLint *constant_locations, const struct constant_heap *heap,
         unsigned char *stack, unsigned int version)
 {
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const struct wined3d_shader_lconst *lconst;
 
-    /* 1.X pshaders have the constants clamped to [-1;1] implicitly. */
-    if (shader->reg_maps.shader_version.major == 1
-            && shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
-        walk_constant_heap_clamped(gl_info, constants, constant_locations, heap, stack, version);
-    else
-        walk_constant_heap(gl_info, constants, constant_locations, heap, stack, version);
+    if (constant_buffer)
+    {
+        const struct wined3d_vec4 *constants = wined3d_buffer_load_sysmem(constant_buffer, &context_gl->c);
+
+        /* 1.X pshaders have the constants clamped to [-1;1] implicitly. */
+        if (shader->reg_maps.shader_version.major == 1
+                && shader->reg_maps.shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
+            walk_constant_heap_clamped(gl_info, constants, constant_locations, heap, stack, version);
+        else
+            walk_constant_heap(gl_info, constants, constant_locations, heap, stack, version);
+    }
 
     if (!shader->load_local_constsF)
     {
@@ -1206,17 +1212,23 @@ static void shader_glsl_load_constants_f(const struct wined3d_shader *shader, co
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_load_constants_i(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
-        const struct wined3d_ivec4 *constants, const GLint locations[WINED3D_MAX_CONSTS_I], uint32_t constants_set)
+static void shader_glsl_load_constants_i(const struct wined3d_shader *shader, struct wined3d_context_gl *context_gl,
+        struct wined3d_buffer *constant_buffer, const GLint locations[WINED3D_MAX_CONSTS_I], uint32_t constants_set)
 {
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     unsigned int i;
     struct list* ptr;
 
-    while (constants_set)
+    if (constant_buffer)
     {
-        /* We found this uniform name in the program - go ahead and send the data */
-        i = wined3d_bit_scan(&constants_set);
-        GL_EXTCALL(glUniform4iv(locations[i], 1, &constants[i].x));
+        const struct wined3d_ivec4 *constants = wined3d_buffer_load_sysmem(constant_buffer, &context_gl->c);
+
+        while (constants_set)
+        {
+            /* We found this uniform name in the program - go ahead and send the data */
+            i = wined3d_bit_scan(&constants_set);
+            GL_EXTCALL(glUniform4iv(locations[i], 1, &constants[i].x));
+        }
     }
 
     /* Load immediate constants */
@@ -1235,16 +1247,22 @@ static void shader_glsl_load_constants_i(const struct wined3d_shader *shader, co
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_load_constants_b(const struct wined3d_shader *shader, const struct wined3d_gl_info *gl_info,
-        const BOOL *constants, const GLint locations[WINED3D_MAX_CONSTS_B], uint32_t constants_set)
+static void shader_glsl_load_constants_b(const struct wined3d_shader *shader, struct wined3d_context_gl *context_gl,
+        struct wined3d_buffer *constant_buffer, const GLint locations[WINED3D_MAX_CONSTS_B], uint32_t constants_set)
 {
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     unsigned int i;
     struct list* ptr;
 
-    while (constants_set)
+    if (constant_buffer)
     {
-        i = wined3d_bit_scan(&constants_set);
-        GL_EXTCALL(glUniform1iv(locations[i], 1, &constants[i]));
+        const BOOL *constants = wined3d_buffer_load_sysmem(constant_buffer, &context_gl->c);
+
+        while (constants_set)
+        {
+            i = wined3d_bit_scan(&constants_set);
+            GL_EXTCALL(glUniform1iv(locations[i], 1, &constants[i]));
+        }
     }
 
     /* Load immediate constants */
@@ -1520,6 +1538,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     struct glsl_shader_prog_link *prog = ctx_data->glsl_program;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     float position_fixup[4 * WINED3D_MAX_VIEWPORTS];
+    struct wined3d_device *device = context->device;
     struct shader_glsl_priv *priv = shader_priv;
     unsigned int constant_version;
     DWORD update_mask;
@@ -1533,15 +1552,15 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     update_mask = context->constant_update_mask & prog->constant_update_mask;
 
     if (update_mask & WINED3D_SHADER_CONST_VS_F)
-        shader_glsl_load_constants_f(vshader, gl_info, state->vs_consts_f,
+        shader_glsl_load_constants_f(vshader, context_gl, device->push_constants[WINED3D_PUSH_CONSTANTS_VS_F],
                 prog->vs.uniform_f_locations, &priv->vconst_heap, priv->stack, constant_version);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_I)
-        shader_glsl_load_constants_i(vshader, gl_info, state->vs_consts_i,
+        shader_glsl_load_constants_i(vshader, context_gl, device->push_constants[WINED3D_PUSH_CONSTANTS_VS_I],
                 prog->vs.uniform_i_locations, vshader->reg_maps.integer_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_B)
-        shader_glsl_load_constants_b(vshader, gl_info, state->vs_consts_b,
+        shader_glsl_load_constants_b(vshader, context_gl, device->push_constants[WINED3D_PUSH_CONSTANTS_VS_B],
                 prog->vs.uniform_b_locations, vshader->reg_maps.boolean_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_VS_CLIP_PLANES)
@@ -1686,15 +1705,15 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     }
 
     if (update_mask & WINED3D_SHADER_CONST_PS_F)
-        shader_glsl_load_constants_f(pshader, gl_info, state->ps_consts_f,
+        shader_glsl_load_constants_f(pshader, context_gl, device->push_constants[WINED3D_PUSH_CONSTANTS_PS_F],
                 prog->ps.uniform_f_locations, &priv->pconst_heap, priv->stack, constant_version);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_I)
-        shader_glsl_load_constants_i(pshader, gl_info, state->ps_consts_i,
+        shader_glsl_load_constants_i(pshader, context_gl, device->push_constants[WINED3D_PUSH_CONSTANTS_PS_I],
                 prog->ps.uniform_i_locations, pshader->reg_maps.integer_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_B)
-        shader_glsl_load_constants_b(pshader, gl_info, state->ps_consts_b,
+        shader_glsl_load_constants_b(pshader, context_gl, device->push_constants[WINED3D_PUSH_CONSTANTS_PS_B],
                 prog->ps.uniform_b_locations, pshader->reg_maps.boolean_constants);
 
     if (update_mask & WINED3D_SHADER_CONST_PS_BUMP_ENV)

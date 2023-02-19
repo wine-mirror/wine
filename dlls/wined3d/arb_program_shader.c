@@ -520,10 +520,14 @@ static void shader_arb_load_np2fixup_constants(const struct arb_ps_np2fixup_info
 
 /* Context activation is done by the caller. */
 static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *gl_shader,
-        const struct wined3d_context_gl *context_gl, const struct wined3d_state *state, unsigned int rt_height)
+        struct wined3d_context_gl *context_gl, const struct wined3d_state *state, unsigned int rt_height)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct wined3d_device *device = context_gl->c.device;
+    const struct wined3d_ivec4 *int_consts;
     unsigned char i;
+
+    int_consts = wined3d_buffer_load_sysmem(device->push_constants[WINED3D_PUSH_CONSTANTS_PS_I], &context_gl->c);
 
     for(i = 0; i < gl_shader->numbumpenvmatconsts; i++)
     {
@@ -571,9 +575,9 @@ static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *g
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
             float val[4];
-            val[0] = (float)state->ps_consts_i[i].x;
-            val[1] = (float)state->ps_consts_i[i].y;
-            val[2] = (float)state->ps_consts_i[i].z;
+            val[0] = (float)int_consts[i].x;
+            val[1] = (float)int_consts[i].y;
+            val[2] = (float)int_consts[i].z;
             val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, gl_shader->int_consts[i], val));
@@ -584,9 +588,11 @@ static void shader_arb_ps_local_constants(const struct arb_ps_compiled_shader *g
 
 /* Context activation is done by the caller. */
 static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *gl_shader,
-        const struct wined3d_context_gl *context_gl, const struct wined3d_state *state)
+        struct wined3d_context_gl *context_gl, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct wined3d_device *device = context_gl->c.device;
+    const struct wined3d_ivec4 *int_consts;
     float position_fixup[4];
     unsigned char i;
 
@@ -596,14 +602,16 @@ static void shader_arb_vs_local_constants(const struct arb_vs_compiled_shader *g
 
     if (!gl_shader->num_int_consts) return;
 
+    int_consts = wined3d_buffer_load_sysmem(device->push_constants[WINED3D_PUSH_CONSTANTS_VS_I], &context_gl->c);
+
     for (i = 0; i < WINED3D_MAX_CONSTS_I; ++i)
     {
         if(gl_shader->int_consts[i] != WINED3D_CONST_NUM_UNUSED)
         {
             float val[4];
-            val[0] = (float)state->vs_consts_i[i].x;
-            val[1] = (float)state->vs_consts_i[i].y;
-            val[2] = (float)state->vs_consts_i[i].z;
+            val[0] = (float)int_consts[i].x;
+            val[1] = (float)int_consts[i].y;
+            val[2] = (float)int_consts[i].z;
             val[3] = -1.0f;
 
             GL_EXTCALL(glProgramLocalParameter4fvARB(GL_VERTEX_PROGRAM_ARB, gl_shader->int_consts[i], val));
@@ -627,6 +635,7 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv, str
 {
     const struct wined3d_d3d_info *d3d_info = context_gl->c.d3d_info;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct wined3d_device *device = context_gl->c.device;
 
     if (!from_shader_select)
     {
@@ -670,8 +679,10 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv, str
         const struct arb_vs_compiled_shader *gl_shader = priv->compiled_vprog;
 
         /* Load DirectX 9 float constants for vertex shader */
-        priv->highest_dirty_vs_const = shader_arb_load_constants_f(vshader, gl_info, GL_VERTEX_PROGRAM_ARB,
-                priv->highest_dirty_vs_const, state->vs_consts_f, priv->vshader_const_dirty);
+        priv->highest_dirty_vs_const = shader_arb_load_constants_f(vshader,
+                gl_info, GL_VERTEX_PROGRAM_ARB, priv->highest_dirty_vs_const,
+                wined3d_buffer_load_sysmem(device->push_constants[WINED3D_PUSH_CONSTANTS_VS_F], &context_gl->c),
+                priv->vshader_const_dirty);
         shader_arb_vs_local_constants(gl_shader, context_gl, state);
     }
 
@@ -682,8 +693,10 @@ static void shader_arb_load_constants_internal(struct shader_arb_priv *priv, str
         UINT rt_height = state->fb.render_targets[0]->height;
 
         /* Load DirectX 9 float constants for pixel shader */
-        priv->highest_dirty_ps_const = shader_arb_load_constants_f(pshader, gl_info, GL_FRAGMENT_PROGRAM_ARB,
-                priv->highest_dirty_ps_const, state->ps_consts_f, priv->pshader_const_dirty);
+        priv->highest_dirty_ps_const = shader_arb_load_constants_f(pshader,
+                gl_info, GL_FRAGMENT_PROGRAM_ARB, priv->highest_dirty_ps_const,
+                wined3d_buffer_load_sysmem(device->push_constants[WINED3D_PUSH_CONSTANTS_PS_F], &context_gl->c),
+                priv->pshader_const_dirty);
         shader_arb_ps_local_constants(gl_shader, context_gl, state, rt_height);
 
         if (context_gl->c.constant_update_mask & WINED3D_SHADER_CONST_PS_NP2_FIXUP)
@@ -4406,13 +4419,19 @@ static struct arb_vs_compiled_shader *find_arb_vshader(struct wined3d_shader *sh
 }
 
 static void find_arb_ps_compile_args(const struct wined3d_state *state,
-        const struct wined3d_context_gl *context_gl, const struct wined3d_shader *shader,
+        struct wined3d_context_gl *context_gl, const struct wined3d_shader *shader,
         struct arb_ps_compile_args *args)
 {
     const struct wined3d_d3d_info *d3d_info = context_gl->c.d3d_info;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct wined3d_device *device = context_gl->c.device;
+    const struct wined3d_ivec4 *int_consts;
+    const BOOL *bool_consts;
     int i;
     WORD int_skip;
+
+    bool_consts = wined3d_buffer_load_sysmem(device->push_constants[WINED3D_PUSH_CONSTANTS_PS_B], &context_gl->c);
+    int_consts = wined3d_buffer_load_sysmem(device->push_constants[WINED3D_PUSH_CONSTANTS_PS_I], &context_gl->c);
 
     find_ps_compile_args(state, shader, context_gl->c.stream_info.position_transformed, &args->super, &context_gl->c);
 
@@ -4421,7 +4440,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
 
     for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
     {
-        if (state->ps_consts_b[i])
+        if (bool_consts[i])
             args->bools |= ( 1u << i);
     }
 
@@ -4454,23 +4473,28 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
         }
         else
         {
-            args->loop_ctrl[i][0] = state->ps_consts_i[i].x;
-            args->loop_ctrl[i][1] = state->ps_consts_i[i].y;
-            args->loop_ctrl[i][2] = state->ps_consts_i[i].z;
+            args->loop_ctrl[i][0] = int_consts[i].x;
+            args->loop_ctrl[i][1] = int_consts[i].y;
+            args->loop_ctrl[i][2] = int_consts[i].z;
         }
     }
 }
 
 static void find_arb_vs_compile_args(const struct wined3d_state *state,
-        const struct wined3d_context_gl *context_gl, const struct wined3d_shader *shader,
+        struct wined3d_context_gl *context_gl, const struct wined3d_shader *shader,
         struct arb_vs_compile_args *args)
 {
     const struct wined3d_d3d_info *d3d_info = context_gl->c.d3d_info;
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     const struct wined3d_device *device = shader->device;
     const struct wined3d_adapter *adapter = device->adapter;
+    const struct wined3d_ivec4 *int_consts;
+    const BOOL *bool_consts;
     int i;
     WORD int_skip;
+
+    bool_consts = wined3d_buffer_load_sysmem(device->push_constants[WINED3D_PUSH_CONSTANTS_VS_B], &context_gl->c);
+    int_consts = wined3d_buffer_load_sysmem(device->push_constants[WINED3D_PUSH_CONSTANTS_VS_I], &context_gl->c);
 
     find_vs_compile_args(state, shader, &args->super, &context_gl->c);
 
@@ -4500,10 +4524,9 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
     args->clip.boolclip.bools = shader->reg_maps.local_bool_consts;
-    /* TODO: Figure out if it would be better to store bool constants as bitmasks in the stateblock */
     for (i = 0; i < WINED3D_MAX_CONSTS_B; ++i)
     {
-        if (state->vs_consts_b[i])
+        if (bool_consts[i])
             args->clip.boolclip.bools |= (1u << i);
     }
 
@@ -4531,9 +4554,9 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
         }
         else
         {
-            args->loop_ctrl[i][0] = state->vs_consts_i[i].x;
-            args->loop_ctrl[i][1] = state->vs_consts_i[i].y;
-            args->loop_ctrl[i][2] = state->vs_consts_i[i].z;
+            args->loop_ctrl[i][0] = int_consts[i].x;
+            args->loop_ctrl[i][1] = int_consts[i].y;
+            args->loop_ctrl[i][2] = int_consts[i].z;
         }
     }
 }

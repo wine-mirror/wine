@@ -667,7 +667,7 @@ BOOL wined3d_buffer_load_location(struct wined3d_buffer *buffer,
 }
 
 /* Context activation is done by the caller. */
-BYTE *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
+void *wined3d_buffer_load_sysmem(struct wined3d_buffer *buffer, struct wined3d_context *context)
 {
     if (wined3d_buffer_load_location(buffer, context, WINED3D_LOCATION_SYSMEM))
         buffer->resource.pin_sysmem = 1;
