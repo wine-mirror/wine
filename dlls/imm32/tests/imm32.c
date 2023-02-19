@@ -3246,7 +3246,6 @@ static void test_ImmIsIME(void)
     SET_ENABLE( IME_DLL_PROCESS_DETACH, TRUE );
 
     SetLastError( 0xdeadbeef );
-    todo_wine
     ok_ret( 0, ImmIsIME( 0 ) );
     ok_ret( 0xdeadbeef, GetLastError() );
     ok_ret( 1, ImmIsIME( hkl ) );

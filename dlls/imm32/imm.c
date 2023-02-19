@@ -2175,13 +2175,8 @@ HKL WINAPI ImmInstallIMEW( const WCHAR *filename, const WCHAR *description )
  */
 BOOL WINAPI ImmIsIME( HKL hkl )
 {
-    struct ime *ime;
-
     TRACE( "hkl %p\n", hkl );
-
-    if (!(ime = ime_acquire( hkl ))) return 0;
-    ime_release( ime );
-
+    if (!hkl) return FALSE;
     return TRUE;
 }
 
