@@ -49,6 +49,11 @@ static void test_InternetInitializeAutoProxyDll(void)
     ret = pInternetInitializeAutoProxyDll( 0, NULL, NULL, NULL, &buf );
     err = GetLastError();
     ok( !ret, "unexpected success\n" );
+    if (!ret && err == 0xdeadbeef)
+    {
+        win_skip("InternetInitializeAutoProxyDll() is not supported on Windows 11\n");
+        return;
+    }
     ok( err == ERROR_INVALID_PARAMETER, "got %lu\n", err );
 
     buf.dwScriptBufferSize = strlen(script) + 1;
@@ -105,6 +110,11 @@ static void test_InternetGetProxyInfo(void)
     SetLastError( 0xdeadbeef );
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
     err = GetLastError();
+    if (!ret && err == 0xdeadbeef)
+    {
+        win_skip("InternetGetProxyInfo() is not supported on Windows 11\n");
+        return;
+    }
     ok( !ret, "unexpected success\n" );
     ok( err == ERROR_CAN_NOT_COMPLETE, "got %lu\n", err );
 
