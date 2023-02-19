@@ -63,6 +63,7 @@ static void test_InternetInitializeAutoProxyDll(void)
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
     ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "DIRECT" ), "got \"%s\"\n", proxy );
+    ok( len == strlen(proxy) + 1, "got len=%ld for \"%s\"\n", len, proxy );
     GlobalFree( proxy );
 
     buf.dwScriptBufferSize = strlen(script2) + 1;
@@ -73,6 +74,7 @@ static void test_InternetInitializeAutoProxyDll(void)
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
     ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "PROXY 10.0.0.1:8080" ), "got \"%s\"\n", proxy );
+    ok( len == strlen(proxy) + 1, "got len=%ld for \"%s\"\n", len, proxy );
     GlobalFree( proxy );
 
     buf.dwScriptBufferSize = strlen(script2) + 2;
@@ -82,6 +84,7 @@ static void test_InternetInitializeAutoProxyDll(void)
     ret = pInternetGetProxyInfo( url, strlen(url), host, strlen(host), &proxy, &len );
     ok( ret, "got %lu\n", GetLastError() );
     ok( !strcmp( proxy, "PROXY 10.0.0.1:8080" ), "got \"%s\"\n", proxy );
+    ok( len == strlen(proxy) + 1, "got len=%ld for \"%s\"\n", len, proxy );
     GlobalFree( proxy );
 
     buf.lpszScriptBuffer = script3;
