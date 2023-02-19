@@ -2473,6 +2473,7 @@ static BOOL todo_ImeDestroy;
 DEFINE_EXPECT( ImeDestroy );
 DEFINE_EXPECT( ImeEscape );
 DEFINE_EXPECT( ImeEnumRegisterWord );
+DEFINE_EXPECT( ImeRegisterWord );
 static BOOL todo_IME_DLL_PROCESS_ATTACH;
 DEFINE_EXPECT( IME_DLL_PROCESS_ATTACH );
 static BOOL todo_IME_DLL_PROCESS_DETACH;
@@ -2643,7 +2644,21 @@ static BOOL WINAPI ime_ImeProcessKey( HIMC himc, UINT vkey, LPARAM key_data, BYT
 static BOOL WINAPI ime_ImeRegisterWord( const WCHAR *reading, DWORD style, const WCHAR *string )
 {
     ime_trace( "reading %s, style %lu, string %s\n", debugstr_w(reading), style, debugstr_w(string) );
-    ok( 0, "unexpected call\n" );
+
+    CHECK_EXPECT( ImeRegisterWord );
+
+    if (style) ok_eq( 0xdeadbeef, style, UINT, "%#x" );
+    if (ime_info.fdwProperty & IME_PROP_UNICODE)
+    {
+        if (reading) ok_wcs( L"Reading", reading );
+        if (string) ok_wcs( L"String", string );
+    }
+    else
+    {
+        if (reading) ok_str( "Reading", (char *)reading );
+        if (string) ok_str( "String", (char *)string );
+    }
+
     return FALSE;
 }
 
@@ -3394,6 +3409,68 @@ cleanup:
     winetest_pop_context();
 }
 
+static void test_ImmRegisterWord( BOOL unicode )
+{
+    HKL hkl = GetKeyboardLayout( 0 );
+
+    SET_ENABLE( ImeRegisterWord, TRUE );
+
+    winetest_push_context( unicode ? "unicode" : "ansi" );
+
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, ImmRegisterWordW( NULL, NULL, 0, NULL ) );
+    ok_ret( 0, ImmRegisterWordA( NULL, NULL, 0, NULL ) );
+    ok_ret( 0, ImmRegisterWordW( hkl, NULL, 0, NULL ) );
+    ok_ret( 0, ImmRegisterWordA( hkl, NULL, 0, NULL ) );
+    todo_wine
+    ok_ret( 0xdeadbeef, GetLastError() );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+    if (unicode) ime_info.fdwProperty |= IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    SET_EXPECT( ImeRegisterWord );
+    ok_ret( 0, ImmRegisterWordW( hkl, NULL, 0, NULL ) );
+    CHECK_CALLED( ImeRegisterWord );
+
+    SET_EXPECT( ImeRegisterWord );
+    ok_ret( 0, ImmRegisterWordA( hkl, NULL, 0, NULL ) );
+    CHECK_CALLED( ImeRegisterWord );
+
+    SET_EXPECT( ImeRegisterWord );
+    ok_ret( 0, ImmRegisterWordW( hkl, L"Reading", 0, NULL ) );
+    CHECK_CALLED( ImeRegisterWord );
+
+    SET_EXPECT( ImeRegisterWord );
+    ok_ret( 0, ImmRegisterWordA( hkl, "Reading", 0, NULL ) );
+    CHECK_CALLED( ImeRegisterWord );
+
+    SET_EXPECT( ImeRegisterWord );
+    ok_ret( 0, ImmRegisterWordW( hkl, NULL, 0xdeadbeef, NULL ) );
+    CHECK_CALLED( ImeRegisterWord );
+
+    SET_EXPECT( ImeRegisterWord );
+    ok_ret( 0, ImmRegisterWordA( hkl, NULL, 0xdeadbeef, NULL ) );
+    CHECK_CALLED( ImeRegisterWord );
+
+    SET_EXPECT( ImeRegisterWord );
+    ok_ret( 0, ImmRegisterWordW( hkl, NULL, 0, L"String" ) );
+    CHECK_CALLED( ImeRegisterWord );
+
+    SET_EXPECT( ImeRegisterWord );
+    ok_ret( 0, ImmRegisterWordA( hkl, NULL, 0, "String" ) );
+    CHECK_CALLED( ImeRegisterWord );
+
+    ime_cleanup( hkl );
+
+cleanup:
+    SET_ENABLE( ImeRegisterWord, FALSE );
+
+    winetest_pop_context();
+}
+
 START_TEST(imm32)
 {
     if (!is_ime_enabled())
@@ -3414,6 +3491,8 @@ START_TEST(imm32)
     test_ImmEscape( TRUE );
     test_ImmEnumRegisterWord( FALSE );
     test_ImmEnumRegisterWord( TRUE );
+    test_ImmRegisterWord( FALSE );
+    test_ImmRegisterWord( TRUE );
 
     if (init())
     {
