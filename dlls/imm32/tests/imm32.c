@@ -2474,6 +2474,7 @@ DEFINE_EXPECT( ImeDestroy );
 DEFINE_EXPECT( ImeEscape );
 DEFINE_EXPECT( ImeEnumRegisterWord );
 DEFINE_EXPECT( ImeRegisterWord );
+DEFINE_EXPECT( ImeGetRegisterWordStyle );
 static BOOL todo_IME_DLL_PROCESS_ATTACH;
 DEFINE_EXPECT( IME_DLL_PROCESS_ATTACH );
 static BOOL todo_IME_DLL_PROCESS_DETACH;
@@ -2607,8 +2608,25 @@ static DWORD WINAPI ime_ImeGetImeMenuItems( HIMC himc, DWORD flags, DWORD type, 
 static UINT WINAPI ime_ImeGetRegisterWordStyle( UINT item, STYLEBUFW *style )
 {
     ime_trace( "item %u, style %p\n", item, style );
-    ok( 0, "unexpected call\n" );
-    return 0;
+
+    CHECK_EXPECT( ImeGetRegisterWordStyle );
+
+    if (!style)
+        ok_eq( 16, item, UINT, "%u" );
+    else if (ime_info.fdwProperty & IME_PROP_UNICODE)
+    {
+        STYLEBUFW *styleW = style;
+        styleW->dwStyle = 0xdeadbeef;
+        wcscpy( styleW->szDescription, L"StyleDescription" );
+    }
+    else
+    {
+        STYLEBUFA *styleA = (STYLEBUFA *)style;
+        styleA->dwStyle = 0xdeadbeef;
+        strcpy( styleA->szDescription, "StyleDescription" );
+    }
+
+    return 0xdeadbeef;
 }
 
 static BOOL WINAPI ime_ImeInquire( IMEINFO *info, WCHAR *ui_class, DWORD flags )
@@ -3471,6 +3489,83 @@ cleanup:
     winetest_pop_context();
 }
 
+static void test_ImmGetRegisterWordStyle( BOOL unicode )
+{
+    HKL hkl = GetKeyboardLayout( 0 );
+    STYLEBUFW styleW;
+    STYLEBUFA styleA;
+
+    winetest_push_context( unicode ? "unicode" : "ansi" );
+
+    SET_ENABLE( ImeGetRegisterWordStyle, TRUE );
+
+    SetLastError( 0xdeadbeef );
+    ok_ret( 0, ImmGetRegisterWordStyleW( NULL, 0, &styleW ) );
+    ok_ret( 0, ImmGetRegisterWordStyleA( NULL, 0, &styleA ) );
+    ok_ret( 0, ImmGetRegisterWordStyleW( hkl, 0, &styleW ) );
+    ok_ret( 0, ImmGetRegisterWordStyleA( hkl, 0, &styleA ) );
+    todo_wine
+    ok_ret( 0xdeadbeef, GetLastError() );
+
+    /* IME_PROP_END_UNLOAD for the IME to unload / reload. */
+    ime_info.fdwProperty = IME_PROP_END_UNLOAD;
+    if (unicode) ime_info.fdwProperty |= IME_PROP_UNICODE;
+
+    if (!(hkl = ime_install())) goto cleanup;
+
+    if (!strcmp( winetest_platform, "wine" )) goto skip_null;
+
+    SET_EXPECT( ImeGetRegisterWordStyle );
+    ok_ret( 0xdeadbeef, ImmGetRegisterWordStyleW( hkl, 16, NULL ) );
+    CHECK_CALLED( ImeGetRegisterWordStyle );
+
+    SET_EXPECT( ImeGetRegisterWordStyle );
+    ok_ret( 0xdeadbeef, ImmGetRegisterWordStyleA( hkl, 16, NULL ) );
+    CHECK_CALLED( ImeGetRegisterWordStyle );
+
+skip_null:
+    SET_EXPECT( ImeGetRegisterWordStyle );
+    memset( &styleW, 0xcd, sizeof(styleW) );
+    ok_ret( 0xdeadbeef, ImmGetRegisterWordStyleW( hkl, 1, &styleW ) );
+    if (ime_info.fdwProperty & IME_PROP_UNICODE)
+    {
+        ok_eq( 0xdeadbeef, styleW.dwStyle, UINT, "%#x" );
+        ok_wcs( L"StyleDescription", styleW.szDescription );
+    }
+    else
+    {
+        todo_wine
+        ok_eq( 0xcdcdcdcd, styleW.dwStyle, UINT, "%#x" );
+        todo_wine
+        ok_eq( 0xcdcd, styleW.szDescription[0], WORD, "%#x" );
+    }
+    CHECK_CALLED( ImeGetRegisterWordStyle );
+
+    SET_EXPECT( ImeGetRegisterWordStyle );
+    memset( &styleA, 0xcd, sizeof(styleA) );
+    ok_ret( 0xdeadbeef, ImmGetRegisterWordStyleA( hkl, 1, &styleA ) );
+    if (ime_info.fdwProperty & IME_PROP_UNICODE)
+    {
+        todo_wine
+        ok_eq( 0xcdcdcdcd, styleA.dwStyle, UINT, "%#x" );
+        todo_wine
+        ok_eq( 0xcd, styleA.szDescription[0], BYTE, "%#x" );
+    }
+    else
+    {
+        ok_eq( 0xdeadbeef, styleA.dwStyle, UINT, "%#x" );
+        ok_str( "StyleDescription", styleA.szDescription );
+    }
+    CHECK_CALLED( ImeGetRegisterWordStyle );
+
+    ime_cleanup( hkl );
+
+cleanup:
+    SET_ENABLE( ImeGetRegisterWordStyle, FALSE );
+
+    winetest_pop_context();
+}
+
 START_TEST(imm32)
 {
     if (!is_ime_enabled())
@@ -3493,6 +3588,8 @@ START_TEST(imm32)
     test_ImmEnumRegisterWord( TRUE );
     test_ImmRegisterWord( FALSE );
     test_ImmRegisterWord( TRUE );
+    test_ImmGetRegisterWordStyle( FALSE );
+    test_ImmGetRegisterWordStyle( TRUE );
 
     if (init())
     {
