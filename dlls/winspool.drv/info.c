@@ -7490,9 +7490,6 @@ static BOOL is_port(const WCHAR *port_list, const WCHAR *output)
 {
     size_t len;
 
-    if (!output)
-        return FALSE;
-
     if (wcschr(output, ':'))
         return TRUE;
 
@@ -7532,7 +7529,7 @@ LPWSTR WINAPI StartDocDlgW( HANDLE hPrinter, DOCINFOW *doc )
 
     /* Check whether default port is FILE: */
     b = !doc->lpszOutput && (!pi5->pPortName || wcscmp( pi5->pPortName, L"FILE:" ));
-    if (!b)
+    if (!b && doc->lpszOutput && wcscmp( doc->lpszOutput, L"FILE:" ))
         b = is_port(pi5->pPortName, doc->lpszOutput);
     free(pi5);
     if (b)
