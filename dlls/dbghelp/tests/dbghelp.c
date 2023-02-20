@@ -402,6 +402,9 @@ static void test_modules_overlap(void)
     const char* target1_dll = "c:\\windows\\system32\\kernel32.dll";
     const char* target2_dll = "c:\\windows\\system32\\winmm.dll";
     DWORD imsize = get_module_size(target1_dll);
+    char buffer[512];
+    IMAGEHLP_SYMBOL64* sym = (void*)buffer;
+
     int i, j;
     struct test_module
     {
@@ -448,6 +451,9 @@ static void test_modules_overlap(void)
 
         base = SymLoadModuleEx(dummy, NULL, target1_dll, NULL, base1, 0, NULL, 0);
         ok(base == base1, "SymLoadModuleEx failed: %lu\n", GetLastError());
+        ret = SymAddSymbol(dummy, base1, "winetest_symbol_virtual", base1 + (3 * imsize) / 4, 13, 0);
+        ok(ret, "SymAddSymbol failed: %lu\n", GetLastError());
+
         base = SymLoadModuleEx(dummy, NULL, tests[i].input.name, NULL, tests[i].input.base, tests[i].input.size, NULL, 0);
         if (tests[i].error_code != ~0)
         {
@@ -476,6 +482,23 @@ static void test_modules_overlap(void)
                 ok(nth.module.ImageSize == tests[i].outputs[j].size, "Wrong size\n");
                 ok(!strcasecmp(nth.module.ModuleName, tests[i].outputs[j].name), "Wrong name\n");
             }
+        }
+        memset(sym, 0, sizeof(*sym));
+        sym->SizeOfStruct = sizeof(*sym);
+        sym->MaxNameLength = sizeof(buffer) - sizeof(*sym);
+        ret = SymGetSymFromName64(dummy, "winetest_symbol_virtual", sym);
+        if (tests[i].error_code == ERROR_SUCCESS || tests[i].outputs[1].base)
+        {
+            /* first module is not unloaded, so our added symbol should be present, with right attributes */
+            ok(ret, "SymGetSymFromName64 has failed: %lu (%d, %d)\n", GetLastError(), i, j);
+            ok(sym->Address == base1 + (3 * imsize) / 4, "Unexpected size %lu\n", sym->Size);
+            ok(sym->Size == 13, "Unexpected size %lu\n", sym->Size);
+            ok(sym->Flags & SYMFLAG_VIRTUAL, "Unexpected flag %lx\n", sym->Flags);
+        }
+        else
+        {
+            /* the first module is really unloaded, the our added symbol has disappead */
+            ok(!ret, "SymGetSymFromName64 should have failed %lu\n", GetLastError());
         }
         ret = SymCleanup(dummy);
         ok(ret, "SymCleanup failed: %lu\n", GetLastError());
