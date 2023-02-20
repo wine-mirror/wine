@@ -1116,7 +1116,7 @@ static int PopulateTree(void)
         args[0] = (DWORD_PTR)typelib.wszFileName;
         args[1] = hRes;
         FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                       wszError, 0, 0, wszMessage, ARRAY_SIZE(wszMessage), (__ms_va_list*)args);
+                       wszError, 0, 0, wszMessage, ARRAY_SIZE(wszMessage), (va_list *)args);
         MessageBoxW(globals.hMainWnd, wszMessage, NULL, MB_OK|MB_ICONEXCLAMATION);
         return 1;
     }
