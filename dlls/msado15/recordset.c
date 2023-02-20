@@ -198,8 +198,10 @@ static HRESULT WINAPI field_get_Properties( Field *iface, Properties **obj )
 
 static HRESULT WINAPI field_get_ActualSize( Field *iface, ADO_LONGPTR *size )
 {
-    FIXME( "%p, %p\n", iface, size );
-    return E_NOTIMPL;
+    struct field *field = impl_from_Field( iface );
+    FIXME( "%p, %p\n", field, size );
+    *size = 0;
+    return S_OK;
 }
 
 static HRESULT WINAPI field_get_Attributes( Field *iface, LONG *attrs )
