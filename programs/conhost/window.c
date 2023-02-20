@@ -1549,7 +1549,7 @@ static BOOL select_font( struct dialog_info *di )
     args[0] = di->config.cell_width;
     args[1] = di->config.cell_height;
     FormatMessageW( FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ARGUMENT_ARRAY,
-                    fmt, 0, 0, buf, ARRAY_SIZE(buf), (__ms_va_list*)args );
+                    fmt, 0, 0, buf, ARRAY_SIZE(buf), (va_list *)args );
 
     SendDlgItemMessageW( di->dialog, IDC_FNT_FONT_INFO, WM_SETTEXT, 0, (LPARAM)buf );
     return TRUE;
